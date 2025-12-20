@@ -1,430 +1,472 @@
-# Penta Core - Build Instructions
+# Build Guide - Kelly MIDI Companion
+
+Complete guide for building Kelly MIDI Companion from source.
+
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Detailed Build Instructions](#detailed-build-instructions)
+- [Build Configurations](#build-configurations)
+- [Component Builds](#component-builds)
+- [Troubleshooting](#troubleshooting)
+- [Build Options Reference](#build-options-reference)
 
 ## Prerequisites
 
-### All Platforms
+### System Requirements
 
-- CMake 3.20 or higher
-- C++20 compatible compiler
-- Python 3.8+ with development headers
-- Git (for fetching dependencies)
+- **Python**: 3.9 or later (3.11 recommended)
+- **CMake**: 3.22 or later
+- **C++ Compiler**: C++20 compatible (clang++, g++, or MSVC)
+- **Build Tools**: Ninja (recommended for faster builds) or make
+- **Git**: For fetching dependencies
 
-### Platform-Specific
+### Platform-Specific Setup
 
 #### macOS
+
 ```bash
-# Install Xcode Command Line Tools
+# Install Xcode Command Line Tools (includes clang++)
 xcode-select --install
 
-# Install CMake and Python (via Homebrew)
-brew install cmake python@3.11
+# Install CMake and Ninja via Homebrew
+brew install cmake ninja python@3.11
+
+# Verify installation
+python3 --version  # Should be 3.9+
+cmake --version    # Should be 3.22+
 ```
 
 #### Linux (Ubuntu/Debian)
+
 ```bash
 sudo apt update
-sudo apt install build-essential cmake python3-dev python3-pip git
+sudo apt install -y build-essential cmake ninja-build python3-dev python3-pip git
+
+# Verify installation
+python3 --version
+cmake --version
 ```
 
 #### Windows
-```bash
-# Install Visual Studio 2019 or later with C++ tools
-# Install CMake from cmake.org
-# Install Python from python.org
+
+```powershell
+# Install Visual Studio 2022 or later with C++ Desktop Development workload
+# Install CMake from cmake.org or via chocolatey
+choco install cmake ninja python3 -y
+
+# Verify installation
+python --version
+cmake --version
 ```
+
+### Python Dependencies
+
+The project uses multiple Python packages. Install base dependencies:
+
+```bash
+# From project root
+pip install -r requirements.txt
+
+# Or install the main package with optional dependencies
+pip install -e ".[dev]"  # Includes dev tools (pytest, black, mypy, etc.)
+pip install -e ".[ml]"   # Includes ML dependencies (torch, etc.)
+pip install -e ".[all]"  # All optional dependencies
+```
+
+Component-specific dependencies:
+
+- `ml_framework/requirements.txt` - ML framework dependencies
+- `python/requirements.txt` - Python utilities dependencies
 
 ## Quick Start
 
-### 1. Clone Repository
+### Automated Build
 
 ```bash
-git clone https://github.com/yourusername/penta-core.git
-cd penta-core
+# Full build with tests
+./build_all.sh --clean --test
+
+# Quick build (no tests, faster)
+./build_quick.sh
+
+# Build with Python bridge
+./build_all.sh --python-bridge --test
 ```
 
-### 2. Build C++ Library and Python Bindings
+### Manual Build
 
 ```bash
-# Create build directory
-mkdir build && cd build
+# 1. Setup environment (optional, creates venvs)
+./setup_workspace.sh
 
-# Configure (Release build with all features)
-cmake .. -DCMAKE_BUILD_TYPE=Release \
-         -DPENTA_BUILD_PYTHON_BINDINGS=ON \
-         -DPENTA_BUILD_JUCE_PLUGIN=ON \
-         -DPENTA_ENABLE_SIMD=ON
+# 2. Check dependencies
+./scripts/check_dependencies.sh
 
-# Build (use -j for parallel compilation)
-cmake --build . --config Release -j8
+# 3. Configure CMake
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+# 4. Build
+cmake --build build --config Release -j$(nproc)
+
+# 5. Run tests (optional)
+cd build && ctest --output-on-failure
+```
+
+## Detailed Build Instructions
+
+### Step 1: Clone Repository
+
+```bash
+git clone <repository-url>
+cd "final kel"
+```
+
+### Step 2: Setup Python Environment (Recommended)
+
+```bash
+# Run the setup script
+./setup_workspace.sh
+
+# Or manually create virtual environment
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -e ".[dev]"
+```
+
+### Step 3: Check Dependencies
+
+```bash
+./scripts/check_dependencies.sh
+```
+
+This verifies:
+
+- Python version (>=3.9)
+- CMake version (>=3.22)
+- C++ compiler availability
+- Optional tools (Ninja, Git)
+
+### Step 4: Configure Build
+
+```bash
+# Basic Release build
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+# With all options
+cmake -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_PYTHON_BRIDGE=ON \
+  -DBUILD_TESTS=ON \
+  -DENABLE_RTNEURAL=ON
+
+# Debug build with tests
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON
+```
+
+### Step 5: Build
+
+```bash
+# Using Ninja (faster)
+cmake --build build --config Release -j$(nproc)
+
+# Using make
+cmake --build build --config Release -j$(nproc)
+```
+
+On macOS/Linux, `nproc` returns CPU count. On macOS, use `sysctl -n hw.ncpu`. On Windows, omit `-j` flag or use `-j4`.
+
+### Step 6: Verify Build
+
+```bash
+# Check build artifacts
+ls -la build/KellyMidiCompanion_artefacts/Release/
 
 # Run tests
-ctest --output-on-failure
+cd build && ctest --output-on-failure
 ```
 
-### 3. Install Python Module
+## Build Configurations
 
-```bash
-# Install to user site-packages
-cmake --install . --prefix ~/.local
+### Build Types
 
-# Or install in development mode
-pip install -e .
-```
+| Type | Description | Use Case |
+|------|-------------|----------|
+| **Release** | Optimized build, no debug symbols | Production use |
+| **Debug** | Debug symbols, no optimization | Development, debugging |
+| **RelWithDebInfo** | Optimized with debug symbols | Performance testing |
+| **MinSizeRel** | Optimized for size | Embedded/distribution |
 
-### 4. Run Examples
-
-```bash
-# Test harmony analysis
-python examples/harmony_example.py
-
-# Test groove analysis
-python examples/groove_example.py
-
-# Test full integration
-python examples/integration_example.py
-```
-
-## Build Options
-
-### Core Options
+### Build Options
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `CMAKE_BUILD_TYPE` | Debug | Build type: Debug, Release, RelWithDebInfo |
-| `PENTA_BUILD_PYTHON_BINDINGS` | ON | Build pybind11 Python module |
-| `PENTA_BUILD_JUCE_PLUGIN` | ON | Build JUCE VST3/AU plugins |
-| `PENTA_BUILD_TESTS` | ON | Build unit tests |
-| `PENTA_ENABLE_SIMD` | ON | Enable SIMD optimizations (AVX2) |
-| `PENTA_ENABLE_LTO` | OFF | Enable link-time optimization |
+| `CMAKE_BUILD_TYPE` | Release | Build type (Debug/Release/etc.) |
+| `BUILD_PYTHON_BRIDGE` | OFF | Build Python-C++ bridge module |
+| `BUILD_TESTS` | ON | Build C++ unit tests |
+| `ENABLE_RTNEURAL` | ON | Enable RTNeural ML inference |
 
-### Example Configurations
-
-#### Development Build
-```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Debug \
-      -DPENTA_BUILD_TESTS=ON \
-      -DPENTA_ENABLE_SIMD=OFF
-```
-
-#### Release Build (Maximum Performance)
-```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Release \
-      -DPENTA_ENABLE_SIMD=ON \
-      -DPENTA_ENABLE_LTO=ON \
-      -DCMAKE_CXX_FLAGS="-march=native"
-```
-
-#### Python-Only Build
-```bash
-cmake -B build -DPENTA_BUILD_PYTHON_BINDINGS=ON \
-      -DPENTA_BUILD_JUCE_PLUGIN=OFF \
-      -DPENTA_BUILD_TESTS=OFF
-```
-
-#### Plugin-Only Build
-```bash
-cmake -B build -DPENTA_BUILD_PYTHON_BINDINGS=OFF \
-      -DPENTA_BUILD_JUCE_PLUGIN=ON \
-      -DPENTA_BUILD_TESTS=OFF
-```
-
-## Advanced Configuration
-
-### Custom Install Prefix
+### Example Build Commands
 
 ```bash
-cmake -B build -DCMAKE_INSTALL_PREFIX=/usr/local
-cmake --install build
+# Development build (Debug with tests)
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON
+cmake --build build --config Debug -j$(nproc)
+
+# Production build (Release, optimized)
+cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF
+cmake --build build --config Release -j$(nproc)
+
+# Full build with Python bridge
+cmake -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_PYTHON_BRIDGE=ON \
+  -DENABLE_RTNEURAL=ON
+cmake --build build --config Release -j$(nproc)
 ```
 
-### Cross-Compilation
+## Component Builds
 
-#### macOS Universal Binary (x86_64 + ARM64)
-```bash
-cmake -B build -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64"
-cmake --build build
-```
+### Main Plugin (JUCE)
 
-#### Linux ARM64
-```bash
-cmake -B build -DCMAKE_TOOLCHAIN_FILE=arm64-toolchain.cmake
-cmake --build build
-```
-
-### Using System Libraries
-
-By default, dependencies are fetched via CMake FetchContent. To use system libraries:
-
-```bash
-# Install dependencies first
-# macOS
-brew install juce pybind11
-
-# Linux
-sudo apt install libjuce-dev pybind11-dev
-
-# Configure with system libraries
-cmake -B build -DFETCHCONTENT_FULLY_DISCONNECTED=ON
-```
-
-## Building Specific Targets
-
-### C++ Library Only
-```bash
-cmake --build build --target penta_core
-```
-
-### Python Bindings Only
-```bash
-cmake --build build --target penta_core_native
-```
-
-### JUCE Plugin Only
-```bash
-cmake --build build --target PentaCorePlugin_VST3
-cmake --build build --target PentaCorePlugin_AU
-cmake --build build --target PentaCorePlugin_Standalone
-```
-
-### Tests Only
-```bash
-cmake --build build --target penta_tests
-./build/tests/penta_tests
-```
-
-## Plugin Installation
-
-### macOS
+The main JUCE plugin is built by default:
 
 ```bash
-# VST3
-cp -r build/plugins/PentaCorePlugin_artefacts/Release/VST3/PentaCorePlugin.vst3 \
-      ~/Library/Audio/Plug-Ins/VST3/
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
 
-# AU
-cp -r build/plugins/PentaCorePlugin_artefacts/Release/AU/PentaCorePlugin.component \
-      ~/Library/Audio/Plug-Ins/Components/
-
-# Standalone
-open build/plugins/PentaCorePlugin_artefacts/Release/Standalone/PentaCorePlugin.app
+# Output: build/KellyMidiCompanion_artefacts/Release/
+#   - VST3/ (macOS/Linux/Windows)
+#   - AU/ (macOS only)
+#   - Standalone/ (Standalone app)
 ```
 
-### Linux
+### Penta-Core Library
+
+Build the Penta-Core C++ library separately:
 
 ```bash
-# VST3
-cp -r build/plugins/PentaCorePlugin_artefacts/Release/VST3/PentaCorePlugin.vst3 \
-      ~/.vst3/
+cmake -B build_penta-core -S src_penta-core -DCMAKE_BUILD_TYPE=Release
+cmake --build build_penta-core --config Release
 
-# Standalone
-./build/plugins/PentaCorePlugin_artefacts/Release/Standalone/PentaCorePlugin
+# Output: build_penta-core/libpenta_core.a (static library)
 ```
 
-### Windows
+### Python-C++ Bridge
 
-```powershell
-# VST3
-copy build\plugins\PentaCorePlugin_artefacts\Release\VST3\PentaCorePlugin.vst3 ^
-     %CommonProgramFiles%\VST3\
+Build the Python bridge module (requires pybind11):
 
-# Standalone
-start build\plugins\PentaCorePlugin_artefacts\Release\Standalone\PentaCorePlugin.exe
+```bash
+cmake -B build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_PYTHON_BRIDGE=ON
+cmake --build build --config Release
+
+# Output: python/kelly_bridge.so (Linux/macOS) or kelly_bridge.pyd (Windows)
+```
+
+### Python Packages
+
+Install Python packages in development mode:
+
+```bash
+# Main package (kelly)
+pip install -e ".[dev]"
+
+# ML framework
+cd ml_framework && pip install -r requirements.txt && cd ..
+
+# Python utilities
+cd python && pip install -r requirements.txt && cd ..
+```
+
+## Build Order
+
+1. **Dependencies** - Install system dependencies (CMake, Python, compiler)
+2. **Python Environment** - Set up virtual environments, install Python packages
+3. **External Libraries** - CMake will auto-fetch JUCE, RTNeural, pybind11, Google Test
+4. **Penta-Core** - Build C++ library first (if building separately)
+5. **Main Plugin** - Build JUCE plugin
+6. **Python Bindings** - Build Python-C++ bridge (if enabled)
+7. **Tests** - Build and run test suites
+
+## Testing
+
+### C++ Tests
+
+```bash
+# Build with tests enabled
+cmake -B build -DBUILD_TESTS=ON
+cmake --build build --config Release
+
+# Run tests
+cd build
+ctest --output-on-failure
+
+# Run specific test
+./tests/KellyTests --gtest_filter="TestSuite.TestName"
+```
+
+### Python Tests
+
+```bash
+# Activate environment
+source venv/bin/activate
+
+# Run all tests
+pytest tests_music-brain/ -v
+
+# Run specific test
+pytest tests_music-brain/test_groove.py -v -k "test_extract"
+
+# With coverage
+pytest tests_music-brain/ --cov=music_brain --cov-report=html
+```
+
+### ML Framework Tests
+
+```bash
+cd ml_framework
+pytest tests/ -v
 ```
 
 ## Troubleshooting
 
-### CMake Can't Find Python
+### CMake Configuration Fails
+
+**Issue**: CMake can't find dependencies
+
+**Solutions**:
+
+- Verify CMake version: `cmake --version` (needs 3.22+)
+- Check compiler: `clang++ --version` or `g++ --version`
+- Clear CMake cache: `rm -rf build CMakeCache.txt`
+
+### Build Fails with Compiler Errors
+
+**Issue**: C++20 features not recognized
+
+**Solutions**:
+
+- Verify C++ standard in CMakeLists.txt (should be C++20)
+- Update compiler to C++20 compatible version
+- Check compiler flags: `cmake -B build -DCMAKE_CXX_FLAGS="-std=c++20"`
+
+### JUCE Not Found
+
+**Issue**: CMake can't find JUCE
+
+**Solutions**:
+
+- CMake will auto-fetch JUCE if not in `external/JUCE/`
+- Check network connection (GitHub access required)
+- Manually clone: `git clone https://github.com/juce-framework/JUCE.git external/JUCE`
+
+### Python Import Errors
+
+**Issue**: Python can't import modules after install
+
+**Solutions**:
+
+- Verify virtual environment is activated: `which python` (should point to venv)
+- Reinstall in editable mode: `pip install -e ".[dev]"`
+- Check PYTHONPATH: `echo $PYTHONPATH`
+- Verify package structure: `pip list | grep kelly`
+
+### Tests Fail
+
+**Issue**: C++ or Python tests fail
+
+**Solutions**:
+
+- Run tests with verbose output: `ctest --output-on-failure -V`
+- Check test prerequisites (test data files, etc.)
+- Verify build configuration matches test expectations
+- Check for missing dependencies in test environment
+
+### Build is Slow
+
+**Solutions**:
+
+- Use Ninja generator: `cmake -B build -G Ninja`
+- Increase parallel jobs: `cmake --build build -j$(nproc)`
+- Use ccache (if available): `export CMAKE_CXX_COMPILER_LAUNCHER=ccache`
+- Build only necessary components: `cmake --build build --target KellyMidiCompanion`
+
+### Windows-Specific Issues
+
+**Issue**: Path issues or command not found
+
+**Solutions**:
+
+- Use PowerShell or Git Bash (not cmd.exe)
+- Use forward slashes in paths: `/path/to/project`
+- Install Visual Studio Build Tools (not just runtime)
+- Use `cmake --build build --config Release` (not `make`)
+
+## Build Options Reference
+
+### CMake Variables
 
 ```bash
-# Specify Python explicitly
-cmake -B build -DPython3_EXECUTABLE=/usr/bin/python3.11
+# Build type
+-DCMAKE_BUILD_TYPE=Release          # Release, Debug, RelWithDebInfo, MinSizeRel
+
+# Component options
+-DBUILD_PYTHON_BRIDGE=ON            # Enable Python bridge
+-DBUILD_TESTS=ON                    # Build tests
+-DENABLE_RTNEURAL=ON                # Enable RTNeural ML inference
+
+# Generator (optional)
+-G Ninja                            # Use Ninja generator (faster)
+-G "Unix Makefiles"                 # Use Make generator
+-G Xcode                            # Generate Xcode project (macOS)
+
+# Toolchain (optional)
+-DCMAKE_C_COMPILER=clang            # Specify C compiler
+-DCMAKE_CXX_COMPILER=clang++        # Specify C++ compiler
+
+# Installation prefix (optional)
+-DCMAKE_INSTALL_PREFIX=/usr/local   # Installation directory
 ```
 
-### Missing pybind11
+### Environment Variables
 
 ```bash
-# Install via pip
-pip install pybind11
+# Build configuration
+export CMAKE_BUILD_TYPE=Release
+export BUILD_PYTHON_BRIDGE=ON
+export BUILD_TESTS=ON
+export ENABLE_RTNEURAL=ON
 
-# Or let CMake fetch it (default)
-cmake -B build  # FetchContent will download pybind11
+# Parallel jobs
+export CMAKE_BUILD_PARALLEL_LEVEL=8  # Number of parallel compile jobs
+
+# Compiler flags (optional)
+export CXXFLAGS="-O3 -march=native"  # Optimization flags
 ```
-
-### SIMD Compilation Errors
-
-If you get AVX2-related errors:
-
-```bash
-# Disable SIMD
-cmake -B build -DPENTA_ENABLE_SIMD=OFF
-```
-
-### JUCE Build Errors
-
-```bash
-# Fetch latest JUCE
-rm -rf build/_deps/juce-*
-cmake -B build  # Will re-fetch JUCE
-```
-
-### Link Errors on Linux
-
-```bash
-# Install missing libraries
-sudo apt install libasound2-dev libfreetype6-dev libx11-dev \
-                 libxrandr-dev libxinerama-dev libxcursor-dev
-```
-
-## Development Workflow
-
-### Incremental Builds
-
-```bash
-# Make changes to source files
-# Rebuild only changed files
-cmake --build build
-
-# Rebuild specific target
-cmake --build build --target penta_core
-```
-
-### Clean Build
-
-```bash
-# Clean build artifacts
-cmake --build build --target clean
-
-# Or remove build directory entirely
-rm -rf build
-cmake -B build
-cmake --build build
-```
-
-### Rebuilding After CMakeLists.txt Changes
-
-```bash
-# Reconfigure
-cmake -B build
-
-# Rebuild
-cmake --build build
-```
-
-## Continuous Integration
-
-### GitHub Actions Example
-
-```yaml
-name: Build
-
-on: [push, pull_request]
-
-jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        
-    steps:
-    - uses: actions/checkout@v3
-    
-    - name: Install dependencies (Ubuntu)
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt update
-        sudo apt install build-essential cmake python3-dev
-    
-    - name: Configure
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
-    
-    - name: Build
-      run: cmake --build build --config Release
-    
-    - name: Test
-      run: cd build && ctest --output-on-failure
-```
-
-## Performance Validation
-
-### Benchmark Builds
-
-```bash
-# Build with optimizations and benchmarks
-cmake -B build -DCMAKE_BUILD_TYPE=Release \
-      -DPENTA_BUILD_BENCHMARKS=ON \
-      -DPENTA_ENABLE_SIMD=ON \
-      -DPENTA_ENABLE_LTO=ON
-
-cmake --build build --target benchmarks
-
-# Run benchmarks
-./build/benchmarks/harmony_benchmark
-./build/benchmarks/groove_benchmark
-```
-
-### Profile-Guided Optimization (Advanced)
-
-```bash
-# Step 1: Build with instrumentation
-cmake -B build-pgo -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_CXX_FLAGS="-fprofile-generate"
-cmake --build build-pgo
-
-# Step 2: Run representative workload
-./build-pgo/examples/integration_example
-
-# Step 3: Rebuild with profile data
-cmake -B build -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_CXX_FLAGS="-fprofile-use"
-cmake --build build
-```
-
-## Documentation Generation
-
-### Doxygen (C++ API)
-
-```bash
-# Install Doxygen
-brew install doxygen  # macOS
-sudo apt install doxygen  # Linux
-
-# Generate docs
-doxygen Doxyfile
-
-# Open docs
-open docs/html/index.html
-```
-
-### Python API Docs
-
-```bash
-# Install Sphinx
-pip install sphinx sphinx-rtd-theme
-
-# Generate docs
-cd docs/python
-make html
-
-# Open docs
-open _build/html/index.html
-```
-
-## Support
-
-For build issues, please:
-1. Check this document first
-2. Search existing GitHub issues
-3. Create a new issue with:
-   - OS and version
-   - CMake output
-   - Compiler version
-   - Full error messages
 
 ## Next Steps
 
-After successful build:
-1. Run examples in `examples/` directory
-2. Read `docs/PHASE3_DESIGN.md` for architecture overview
-3. Check `docs/API.md` for API reference
-4. Explore unit tests for usage examples
+After building successfully:
+
+1. **Install Plugin**: Copy VST3/AU files to your DAW's plugin directory
+   - macOS: `~/Library/Audio/Plug-Ins/VST3/` or `~/Library/Audio/Plug-Ins/Components/`
+   - Linux: `~/.vst3/` or system-wide `/usr/lib/vst3/`
+   - Windows: `C:\Program Files\Common Files\VST3\`
+
+2. **Verify Installation**: Open your DAW and check plugin list
+
+3. **Run Examples**: See `examples/` directory for usage examples
+
+4. **Read Documentation**: See `DEVELOPMENT.md` for development workflow
+
+5. **Contribute**: See `CONTRIBUTING.md` for contribution guidelines
+
+## Additional Resources
+
+- [DEVELOPMENT.md](DEVELOPMENT.md) - Development setup and workflow
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
+- [Project README](README.md) - Project overview
+- [CI/CD Workflows](.github/workflows/) - Automated build configurations

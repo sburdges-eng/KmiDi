@@ -1,102 +1,296 @@
-# Contributing to Kelly
+# Contributing to Kelly MIDI Companion
 
-Thank you for your interest in contributing to Kelly!
+Thank you for your interest in contributing! This guide will help you get started.
 
-## Development Setup
+## Table of Contents
+
+- [Code of Conduct](#code-of-conduct)
+- [Getting Started](#getting-started)
+- [Development Process](#development-process)
+- [Submission Guidelines](#submission-guidelines)
+- [Code Review Process](#code-review-process)
+- [Project Philosophy](#project-philosophy)
+
+## Code of Conduct
+
+This project follows a code of conduct. By participating, you agree to maintain a respectful and inclusive environment.
+
+## Getting Started
 
 ### Prerequisites
 
-- Python 3.11+
-- CMake 3.27+
-- Qt 6
-- C++20 compatible compiler
+1. Read the [BUILD.md](BUILD.md) guide
+2. Set up development environment (see [DEVELOPMENT.md](DEVELOPMENT.md))
+3. Familiarize yourself with the project structure
+4. Review existing issues and discussions
 
-### Python Setup
+### First Contribution
 
-```bash
-# Clone the repository
-git clone https://github.com/sburdges-eng/Kelly.git
-cd Kelly
+Good first issues are labeled with `good-first-issue`. These are typically:
 
-# Install in development mode
-pip install -e ".[dev]"
+- Documentation improvements
+- Bug fixes
+- Small feature additions
+- Test improvements
 
-# Run tests
-pytest tests/python -v
-```
+## Development Process
 
-### C++ Setup
+### 1. Fork and Clone
 
 ```bash
-# Initialize submodules (JUCE, Catch2, etc.)
-git submodule update --init --recursive
-
-# Configure
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON
-
-# Build
-cmake --build build
-
-# Run tests
-cd build && ctest -V
+# Fork the repository on GitHub
+# Then clone your fork
+git clone https://github.com/yourusername/kelly-midi-companion.git
+cd kelly-midi-companion
 ```
 
-## Code Style
+### 2. Create a Branch
 
-### Python
-- Follow PEP 8 guidelines
-- Use Black for formatting: `black src/kelly tests/python`
-- Use Ruff for linting: `ruff check src/kelly tests/python`
-- Use type hints and mypy: `mypy src/kelly`
-
-### C++
-- Follow C++20 best practices
-- Use clang-format for formatting
-- Use const correctness
-- Prefer modern C++ idioms
-
-## Testing
-
-All contributions should include tests:
-
-- Python: pytest-based tests in `tests/python/`
-- C++: Catch2-based tests in `tests/cpp/`
-- Coverage: Aim for >80% code coverage
-
-## Pull Request Process
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Make your changes
-4. Add tests
-5. Ensure all tests pass
-6. Run linters and formatters
-7. Commit with descriptive messages
-8. Push to your fork
-9. Create a Pull Request
-
-## Commit Messages
-
-Use clear, descriptive commit messages:
-
-```
-Add emotion mapping for surprise category
-
-- Implement surprise emotion nodes
-- Add tests for surprise mapping
-- Update documentation
+```bash
+git checkout -b feature/my-feature
+# or
+git checkout -b fix/bug-description
 ```
 
-## Areas for Contribution
+Branch naming:
 
-- Expanding the emotion thesaurus to full 216 nodes
-- Adding more groove templates
-- Improving MIDI generation algorithms
-- Enhancing the GUI interface
-- Adding audio analysis features (librosa integration)
-- Writing documentation and examples
-- Improving test coverage
+- `feature/` - New features
+- `fix/` - Bug fixes
+- `docs/` - Documentation
+- `refactor/` - Code refactoring
+- `test/` - Test improvements
 
-## Questions?
+### 3. Make Changes
 
-Feel free to open an issue for discussion before starting work on major changes.
+- Follow code style guidelines (see [DEVELOPMENT.md](DEVELOPMENT.md))
+- Write tests for new features
+- Update documentation as needed
+- Keep commits focused and atomic
+
+### 4. Test Your Changes
+
+```bash
+# Build and test
+./build_all.sh --clean --test
+
+# Run specific tests
+pytest tests_music-brain/ -v -k "test_name"
+cd build && ctest --output-on-failure
+```
+
+### 5. Commit Changes
+
+Write clear, descriptive commit messages:
+
+```
+Short summary (50 chars or less)
+
+More detailed explanation if needed. Wrap at 72 characters.
+Explain what and why, not how.
+
+- Bullet points for multiple changes
+- Reference issues: Fixes #123
+```
+
+Example:
+
+```
+Add groove quantization to RhythmEngine
+
+Implements quantize_to_grid() method that snaps MIDI notes
+to the nearest grid position based on time signature.
+
+Fixes #456
+```
+
+### 6. Push and Create Pull Request
+
+```bash
+git push origin feature/my-feature
+```
+
+Then create a Pull Request on GitHub with:
+
+- Clear title and description
+- Reference related issues
+- List changes made
+- Screenshots/videos if UI changes
+
+## Submission Guidelines
+
+### Pull Request Checklist
+
+- [ ] Code follows style guidelines
+- [ ] Tests pass locally
+- [ ] New tests added for new features
+- [ ] Documentation updated
+- [ ] No merge conflicts
+- [ ] Commit messages are clear
+- [ ] Code is commented where needed
+
+### Code Quality
+
+**C++ Code**:
+
+- Follows C++20 standard
+- Uses consistent naming conventions
+- Includes appropriate comments
+- No memory leaks (check with Valgrind)
+- Real-time safe where required
+
+**Python Code**:
+
+- Follows PEP 8
+- Includes type hints
+- Has docstrings
+- Passes linting (ruff, black)
+
+**Tests**:
+
+- New features have tests
+- Tests are clear and focused
+- Edge cases are covered
+- Tests are fast and reliable
+
+### Documentation
+
+Update documentation for:
+
+- New features
+- API changes
+- Configuration changes
+- Build system changes
+
+Files to update:
+
+- `README.md` - Overview and quick start
+- `BUILD.md` - Build instructions
+- `DEVELOPMENT.md` - Development guide
+- Code comments - Inline documentation
+- API docs - If adding public APIs
+
+## Code Review Process
+
+### What Reviewers Look For
+
+1. **Correctness**: Does it work as intended?
+2. **Style**: Follows project conventions?
+3. **Tests**: Adequate test coverage?
+4. **Documentation**: Is it documented?
+5. **Performance**: Any performance concerns?
+6. **Security**: Any security issues?
+
+### Responding to Feedback
+
+- Be open to suggestions
+- Ask questions if unclear
+- Make requested changes
+- Discuss alternatives if needed
+- Thank reviewers for their time
+
+### Review Checklist for Authors
+
+Before requesting review:
+
+- [ ] All tests pass
+- [ ] Code is formatted
+- [ ] Documentation is updated
+- [ ] PR description is complete
+- [ ] Ready for review (not WIP)
+
+## Project Philosophy
+
+### Core Principles
+
+1. **"Interrogate Before Generate"** - The tool shouldn't finish art for people; it should make them braver.
+
+2. **Emotional Truth Over Technical Perfection** - Sometimes the "wrong" note is exactly right.
+
+3. **Real-Time Safety First** - Audio processing must never glitch or drop.
+
+4. **Documentation Matters** - Code should be self-documenting, but docs help.
+
+### Design Guidelines
+
+- **Simplicity**: Prefer simple solutions
+- **Clarity**: Code should be readable
+- **Performance**: Optimize where it matters (audio thread)
+- **Maintainability**: Future developers should understand it
+
+### Areas for Contribution
+
+**High Priority**:
+
+- Bug fixes
+- Performance improvements
+- Test coverage
+- Documentation
+
+**Medium Priority**:
+
+- New engines/features
+- UI improvements
+- ML model improvements
+- Cross-platform support
+
+**Lower Priority**:
+
+- Code style improvements
+- Refactoring
+- Additional examples
+
+## Specific Contribution Areas
+
+### C++ Development
+
+- Audio processing engines
+- MIDI generation
+- Real-time performance
+- JUCE plugin development
+
+### Python Development
+
+- ML framework
+- Music analysis tools
+- Training pipelines
+- Example scripts
+
+### Documentation
+
+- User guides
+- API documentation
+- Tutorials
+- Code comments
+
+### Testing
+
+- Unit tests
+- Integration tests
+- Performance tests
+- Test infrastructure
+
+## Getting Help
+
+### Questions?
+
+- Check existing documentation
+- Search issues and discussions
+- Ask in project discussions
+- Create an issue for bugs
+
+### Stuck?
+
+- Review similar code in the project
+- Check test examples
+- Ask for help in discussions
+- Pair with a maintainer if possible
+
+## Recognition
+
+Contributors will be:
+
+- Listed in CONTRIBUTORS.md (if file exists)
+- Credited in release notes
+- Appreciated by the community
+
+Thank you for contributing to Kelly MIDI Companion!

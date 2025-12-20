@@ -1,109 +1,281 @@
-# Penta Core Team Documentation
+# Kelly MIDI Companion - Complete Workspace
 
-Welcome to the penta-core team documentation hub. This documentation is designed to bring the team up to speed on key technologies and concepts.
+**Version:** v3.0.00+ (Development)
+**Philosophy:** *"Interrogate Before Generate"* — The tool shouldn't finish art for people; it should make them braver.
 
-## Documentation Index
+---
 
-### Development Technologies
+## Overview
 
-- **[Swift SDKs Development Guide](swift-sdks.md)**
-  Overview of Swift SDK development, Apple frameworks, and best practices for iOS/macOS development.
+Kelly MIDI Companion is a therapeutic music generation system that translates emotions into music through a 216-node emotion thesaurus and intentional rule-breaking system. This workspace contains the complete implementation including:
 
-- **[C++ Programming Guide](cpp-programming.md)**
-  Modern C++ programming concepts, memory management, templates, and audio programming with C++.
+- **C++/JUCE Plugin** (`src/`) - Real-time audio plugin for DAWs
+- **Python ML Framework** (`ml_framework/`) - CIF/LAS/QEF conscious AI systems
+- **Python Reference** (`python/`, `reference/`) - Reference implementations
+- **Data Resources** (`data/`) - Emotion mappings, chord progressions, music theory
+- **Visualization Tools** (`CODE/PYTHON CODE/`) - 3D emotion visualization
+- **Phase 2 Implementation** (`phase2/`) - Advanced features
 
-- **[Rust DAW Backend Guide](rust-daw-backend.md)** ⭐ NEW
-  Comprehensive 150-point guide to building a Rust DAW backend with MCP integration, sub-10ms latency, and VST3/AU/LV2 plugin support.
+---
 
-### Audio and Media
+## Project Structure
 
-- **[DAW (Digital Audio Workstation) Programs Guide](daw-programs.md)**
-  Comprehensive overview of DAW software, plugin formats, and audio production workflows.
+```
+final kel/
+├── src/                    # C++/JUCE plugin implementation
+│   ├── core/              # EmotionThesaurus, WoundProcessor, IntentPipeline
+│   ├── engines/           # 14 music generation engines
+│   ├── midi/              # MIDI generation and export
+│   ├── ui/                # Plugin UI components
+│   ├── plugin/            # JUCE AudioProcessor/Editor
+│   ├── voice/             # Voice synthesis (v2.0+)
+│   └── biometric/         # Biometric input (v2.0+)
+│
+├── ml_framework/          # CIF/LAS/QEF ML Framework
+│   ├── cif_las_qef/      # Core framework modules
+│   │   ├── cif/          # Conscious Integration Framework
+│   │   ├── las/          # Living Art Systems
+│   │   ├── qef/          # Quantum Emotional Field
+│   │   └── ethics/       # Resonant Ethics
+│   └── examples/         # Usage examples
+│
+├── python/                # Python wrapper and utilities
+├── reference/             # Reference implementations
+│   ├── daiw_music_brain/ # DAiW Music Brain reference
+│   └── python_kelly/     # Python Kelly implementation
+│
+├── data/                  # Data resources
+│   ├── emotions/         # Emotion JSON files
+│   ├── progressions/     # Chord progression databases
+│   ├── scales/           # Scale emotional mappings
+│   ├── grooves/          # Genre groove patterns
+│   └── rules/            # Rule-breaking database
+│
+├── CODE/                  # Python visualization code
+│   └── PYTHON CODE/      # 3D emotion visualization tools
+│
+├── phase2/                # Phase 2 advanced features
+│   ├── kelly_phase2_core.py
+│   └── kelly_phase2_agents.py
+│
+├── tests/                 # Test suite
+├── MARKDOWN/              # Documentation
+└── H T M L /              # HTML documentation
 
-- **[Audio Software/Hardware Interface Guide](audio-interfaces.md)**
-  Understanding audio interfaces, drivers (ASIO, Core Audio, JACK), MIDI, and hardware/software integration.
+```
 
-- **[Media Production Guide](media-production.md)**
-  Audio and video production workflows, formats, streaming, and development tools like FFmpeg.
+---
 
-- **[Low-Latency DAW Subjects](low-latency-daw.md)**
-  Technical subjects for building low-latency DAWs: real-time systems, DSP, audio effects, synthesis, and DAW architecture.
+## Quick Start
 
-- **[DAW Audio Engine Stability Guide](daw-engine-stability.md)** ⭐ NEW
-  100 topics for building stable, robust DAW engines: real-time thread safety, plugin stability, session management, error recovery, and production-readiness.
+### Prerequisites
 
-- **[Psychoacoustic & Cinematic Sound Design Guide](psychoacoustic-sound-design.md)** ⭐ NEW
-  90+ techniques for emotional manipulation through sound: biological triggers, harmonic subversion, temporal manipulation, spectral design, spatial audio, and film scoring applications.
+**C++ Build:**
 
-- **[DAW Track Import Methods](daw-track-import-methods.md)** ⭐ NEW
-  100 comprehensive methods for importing tracks into a DAW: file-based audio, session interchange, MIDI/score, live capture, virtual instruments, network/cloud, AI generation, and hybrid methods.
+- CMake 3.22+
+- C++20 compiler (Clang 14+, GCC 11+, or MSVC 2022)
+- JUCE 7.0+ (downloaded automatically via CMake)
+- macOS 11+ / Windows 10+ / Ubuntu 22.04+
 
-### Master Requirements & TODO
+**Python:**
 
-- **[Comprehensive System Requirements & TODO](comprehensive-system-requirements.md)** ⭐ MASTER DOC
-  400+ requirements across all systems with prioritized TODO list: Core system (100), Ghost Writer ethics (10), Prrot interrogation (10), UI/UX (10), audio engine (10), data/storage (10), hardware (10), music theory (10), collaboration (10), DSP (10), edge cases (10), and biometric/therapeutic features (100). Includes 12-phase implementation roadmap.
+- Python 3.8+
+- See `ml_framework/requirements.txt` and `python/requirements.txt`
 
-### AI & Research
+### Building the C++ Plugin
 
-- **[Music Generation Research Topics](music-generation-research.md)**
-  150 research topics spanning neural architectures, foundation models, training methods, audio representations, controllable generation, evaluation metrics, MIR integration, and synthesis.
+```bash
+# Configure
+cmake -B build -DCMAKE_BUILD_TYPE=Release
 
-- **[AI Prompting & Efficiency Guide](ai-prompting-guide.md)**
-  150 techniques for effective AI prompting: clarity, iteration, workflow automation, code generation, learning, writing, collaboration, and advanced patterns.
+# Build
+cmake --build build --config Release
 
-- **[Multi-Agent Systems & MCP Guide](multi-agent-mcp-guide.md)**
-  100 topics for designing multi-agent AI systems: cluster design, MCP fundamentals, orchestration, memory management, error handling, security, observability, and deployment.
+# Install (macOS)
+./build_and_install.sh Release
+```
 
-- **[MCP Protocol & Autonomous Debugging Strategy](mcp-protocol-debugging.md)** ⭐ NEW
-  Comprehensive MCP protocol specification and autonomous debugging strategy for operation when human operators are not active. Covers message formats, tool invocation, self-healing mechanisms, monitoring, alerting, runbooks, and implementation checklist.
+Plugins will be in:
 
-- **[DAiW Music Brain Architecture](daiw-music-brain.md)**
-  Complete project architecture for the AI-powered music composition system: groove analysis, emotional mapping, DAW integration, and knowledge vault.
+- `build/KellyMidiCompanion_artefacts/Release/VST3/`
+- `build/KellyMidiCompanion_artefacts/Release/AU/` (macOS only)
 
-- **[DAW UI Design Patterns](daw-ui-patterns.md)** ⭐ NEW
-  React/TypeScript UI patterns for modern DAW interfaces: dual-face cassette metaphor, ghost writer overlays, IMIDI/EMIDI routing, latency monitoring, and 3D flip animations.
+### Python Setup
 
-- **[Instrument Learning Research Tool](instrument-learning-research.md)** ⭐ NEW
-  Automated GitHub repository research tool for discovering music education and instrument learning applications.
+```bash
+# Install ML framework dependencies
+cd ml_framework
+pip install -r requirements.txt
 
-## Quick Links
+# Install Python utilities
+cd ../python
+pip install -r requirements.txt
+```
 
-### Getting Started
+### Running Examples
 
-1. **New to Swift?** Start with the [Swift SDKs Guide](swift-sdks.md)
-2. **New to C++?** Check out the [C++ Programming Guide](cpp-programming.md)
-3. **Working with audio?** Review the [Audio Interfaces Guide](audio-interfaces.md)
-4. **Building DAW plugins?** See the [DAW Programs Guide](daw-programs.md)
-5. **Building a Rust DAW backend?** Check out the [Rust DAW Backend Guide](rust-daw-backend.md)
-6. **Optimizing for low latency?** Read the [Low-Latency DAW Subjects](low-latency-daw.md)
-7. **Building stable audio engines?** See the [DAW Engine Stability Guide](daw-engine-stability.md)
-8. **Working on film/game audio?** Explore the [Psychoacoustic Sound Design Guide](psychoacoustic-sound-design.md)
-9. **Implementing track import?** Check out the [DAW Track Import Methods](daw-track-import-methods.md)
-10. **Looking for the master TODO?** See the [Comprehensive System Requirements](comprehensive-system-requirements.md)
-11. **Researching music AI?** Explore the [Music Generation Research Topics](music-generation-research.md)
-12. **Working with AI tools?** See the [AI Prompting & Efficiency Guide](ai-prompting-guide.md)
-13. **Building multi-agent systems?** Check out the [Multi-Agent Systems & MCP Guide](multi-agent-mcp-guide.md)
-14. **Setting up autonomous debugging?** See the [MCP Protocol & Debugging Strategy](mcp-protocol-debugging.md)
-15. **Working on DAiW Music Brain?** See the [DAiW Music Brain Architecture](daiw-music-brain.md)
-15. **Building DAW user interfaces?** Check out the [DAW UI Design Patterns](daw-ui-patterns.md)
-16. **Researching instrument learning?** See the [Instrument Learning Research Tool](instrument-learning-research.md)
+```bash
+# ML Framework examples
+cd ml_framework/examples
+python basic_usage.py
+python emotion_models_demo.py
 
-### External Resources
+# Visualization
+cd ../../CODE/PYTHON\ CODE
+python visualize_3d_emotion_wheel.py
+python visualize_quantum_emotional_field.py
+```
 
-- [Swift Documentation](https://swift.org/documentation/)
-- [C++ Reference](https://en.cppreference.com/)
-- [JUCE Framework](https://juce.com/) - Cross-platform audio plugin development
-- [FFmpeg](https://ffmpeg.org/) - Media processing toolkit
+---
+
+## Core Concepts
+
+### The Three-Phase Intent System
+
+1. **Phase 0: Wound** - "What hurts?"
+   - Describe your current emotional state
+   - System identifies the core emotional trigger
+
+2. **Phase 1: Emotion** - Map to the 216-node thesaurus
+   - Wound maps to emotions with valence, arousal, and intensity
+   - Related emotions form a network of musical possibilities
+
+3. **Phase 2: Rule-Breaks** - "What rules to break and why"
+   - Intense emotions trigger intentional music theory violations
+   - Dissonance, syncopation, extreme dynamics serve emotional truth
+
+### Emotion Thesaurus
+
+The 216-node thesaurus organizes emotions in 3D space:
+
+| Dimension | Range | Effect |
+|-----------|-------|--------|
+| **Valence** | -1.0 to +1.0 | Mode (minor ↔ major) |
+| **Arousal** | 0.0 to 1.0 | Tempo, rhythm complexity |
+| **Intensity** | 0.0 to 1.0 | Dynamic range, rule-breaking |
+
+### ML Framework Components
+
+- **CIF (Conscious Integration Framework)**: Human-AI consciousness bridge
+- **LAS (Living Art Systems)**: Self-evolving creative AI systems
+- **QEF (Quantum Emotional Field)**: Network-based collective emotion synchronization
+- **Resonant Ethics**: Ethical framework for conscious AI
+
+---
+
+## Documentation
+
+### Main Documentation
+
+- **Project Overview**: `MARKDOWN/README.md`
+- **Build Guide**: `MARKDOWN/BUILD_PYTHON_BRIDGE.md`
+- **Integration Status**: `MARKDOWN/INTEGRATION_COMPLETE.md`
+- **Phase 2 Guide**: `phase2/KELLY_PHASE2_IMPLEMENTATION_GUIDE.md`
+
+### ML Framework
+
+- **Framework Overview**: `ml_framework/README.md`
+- **Architecture**: `ml_framework/FRAMEWORK_SUMMARY.md`
+- **Emotion Models**: `ml_framework/EMOTION_MODELS.md`
+
+### Reference
+
+- **DAiW Music Brain**: `reference/daiw_music_brain/README.md`
+- **Python Kelly**: `reference/python_kelly/` (see `__init__.py`)
+
+---
+
+## Development
+
+### Running Tests
+
+```bash
+# C++ tests
+cmake -B build -DBUILD_TESTING=ON
+cmake --build build
+cd build && ctest --output-on-failure
+```
+
+### Debug Build
+
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
+# Standalone app for testing without DAW:
+./build/KellyMidiCompanion_artefacts/Debug/Standalone/Kelly\ MIDI\ Companion
+```
+
+### Code Style
+
+- **C++**: Follow JUCE coding standards
+- **Python**: PEP 8, type hints encouraged
+- See `.cursorrules` for AI assistant guidelines
+
+---
+
+## Key Features
+
+### v2.0.0+ Features
+
+- ✅ Full cassette visual design with animated tape reels
+- ✅ Emotion wheel selector with visual emotion mapping
+- ✅ Voice synthesis integration framework
+- ✅ Biometric input support framework
+- ✅ Enhanced UI with toggleable visual components
+
+### Phase 2 Features
+
+- Advanced groove engine
+- Humanization presets
+- Mix parameter automation
+- Agent-based generation
+- ORP (Organic Rhythm Protocol)
+- Biometric integration
+
+### ML Framework Features
+
+- Conscious Integration Framework (CIF)
+- Living Art Systems (LAS)
+- Quantum Emotional Field (QEF)
+- Resonant Ethics protocols
+
+---
+
+## Philosophy
+
+> *"Interrogate Before Generate"* — The tool shouldn't finish art for people; it should make them braver.
+
+Kelly exists because technical perfection is not the same as emotional truth. Sometimes the "wrong" note is exactly right.
+
+This project is dedicated to Kelly, whose memory inspires us to create tools that help people express what words cannot.
+
+---
+
+## License
+
+MIT License - See LICENSE file (if present)
+
+---
 
 ## Contributing
 
-To contribute to this documentation:
+This is an active development project. Key areas for contribution:
 
-1. Fork the repository
-2. Create a new branch for your changes
-3. Add or update documentation in the `docs/` directory
-4. Submit a pull request
+- **Testing**: Expand test coverage
+- **Documentation**: Improve guides and examples
+- **Integration**: Bridge Python-C++ more seamlessly
+- **Performance**: Optimize real-time audio processing
+- **Features**: Implement Phase 2+ features
 
-## Questions?
+---
 
-If you have questions about any of these topics, please reach out to the team or open an issue in the repository.
+## Resources
+
+- **Emotion Data**: `data/emotions/`
+- **Music Theory**: `data/progressions/`, `data/scales/`
+- **Visualization**: `CODE/PYTHON CODE/`
+- **Reference Code**: `reference/`
+
+---
+
+*Built with love, grief, and JUCE.*
