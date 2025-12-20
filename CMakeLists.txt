@@ -26,6 +26,8 @@ file(GLOB_RECURSE KELLY_CORE_SOURCES CONFIGURE_DEPENDS
 # Exclude app entry point and plugin sources from the core lib
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/gui/main.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/plugin/")
+# Exclude sources that depend on missing daiw/audio headers for now
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/audio/AudioFile.cpp$")
 
 add_library(KellyCore STATIC ${KELLY_CORE_SOURCES})
 
