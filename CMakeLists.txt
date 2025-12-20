@@ -8,7 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Options
 option(BUILD_PLUGINS "Build VST3 and CLAP plugins" ON)
-option(BUILD_TESTS "Build tests" ON)
+option(BUILD_TESTS "Build tests" OFF)
 option(ENABLE_TRACY "Enable Tracy profiling" OFF)
 
 # Find packages
@@ -101,25 +101,24 @@ endif()
 
 # Tests
 if(BUILD_TESTS)
-    enable_testing()
-    
-    # Catch2 for C++ tests
-    add_subdirectory(external/Catch2 EXCLUDE_FROM_ALL)
-    
-    add_executable(KellyTests
-        tests/cpp/test_emotion_engine.cpp
-        tests/cpp/test_midi_pipeline.cpp
-        tests/cpp/test_chord_diagnostics.cpp
-    )
-    
-    target_link_libraries(KellyTests PRIVATE
-        KellyCore
-        Catch2::Catch2WithMain
-    )
-    
-    include(CTest)
-    include(Catch2)
-    catch_discover_tests(KellyTests)
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/external/Catch2/CMakeLists.txt)
+        enable_testing()
+        add_subdirectory(external/Catch2 EXCLUDE_FROM_ALL)
+        add_executable(KellyTests
+            tests/cpp/test_emotion_engine.cpp
+            tests/cpp/test_midi_pipeline.cpp
+            tests/cpp/test_chord_diagnostics.cpp
+        )
+        target_link_libraries(KellyTests PRIVATE
+            KellyCore
+            Catch2::Catch2WithMain
+        )
+        include(CTest)
+        include(Catch2)
+        catch_discover_tests(KellyTests)
+    else()
+        message(WARNING "Catch2 not found; skipping tests. Set BUILD_TESTS=OFF or add external/Catch2.")
+    endif()
 endif()
 
 # Tracy profiling
