@@ -9,12 +9,12 @@ Implements:
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Optional
-from collections import defaultdict
+from typing import List, Tuple, Optional
 import math
 
-from ..utils.ppq import STANDARD_PPQ, ticks_to_ms
-from ..utils.instruments import get_drum_category, is_drum_channel
+# Use absolute imports so the script can run from the repository root.
+from music_brain.utils.ppq import STANDARD_PPQ, ticks_to_ms
+from music_brain.utils.instruments import get_drum_category, is_drum_channel
 
 
 # Timing thresholds (in ms at 120 BPM)

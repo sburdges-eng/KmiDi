@@ -14,6 +14,8 @@ between different PPQ values.
 
 from typing import List, Tuple, Union
 
+# Default PPQ shared across the project
+STANDARD_PPQ = 480
 
 # Common DAW PPQ values
 DAW_PPQ = {
@@ -25,14 +27,14 @@ DAW_PPQ = {
     "fl_studio_hd": 384,
     "cubase": 480,
     "reaper": 960,
-    "standard": 480,  # Most common default
+    "standard": STANDARD_PPQ,  # Most common default
 }
 
 
 def normalize_ppq(
     ticks: Union[int, List[int]],
     source_ppq: int,
-    target_ppq: int = 480,
+    target_ppq: int = STANDARD_PPQ,
 ) -> Union[int, List[int]]:
     """
     Normalize tick values from one PPQ to another.
@@ -76,7 +78,7 @@ def scale_ticks(
 
 def ticks_to_beats(
     ticks: Union[int, float],
-    ppq: int = 480,
+    ppq: int = STANDARD_PPQ,
 ) -> float:
     """
     Convert ticks to beats.
@@ -93,7 +95,7 @@ def ticks_to_beats(
 
 def beats_to_ticks(
     beats: Union[int, float],
-    ppq: int = 480,
+    ppq: int = STANDARD_PPQ,
 ) -> int:
     """
     Convert beats to ticks.
@@ -110,7 +112,7 @@ def beats_to_ticks(
 
 def ticks_to_bars(
     ticks: int,
-    ppq: int = 480,
+    ppq: int = STANDARD_PPQ,
     time_signature: Tuple[int, int] = (4, 4),
 ) -> float:
     """
@@ -131,7 +133,7 @@ def ticks_to_bars(
 
 def bars_to_ticks(
     bars: Union[int, float],
-    ppq: int = 480,
+    ppq: int = STANDARD_PPQ,
     time_signature: Tuple[int, int] = (4, 4),
 ) -> int:
     """
@@ -152,7 +154,7 @@ def bars_to_ticks(
 
 def ticks_to_seconds(
     ticks: int,
-    ppq: int = 480,
+    ppq: int = STANDARD_PPQ,
     tempo_bpm: float = 120.0,
 ) -> float:
     """
@@ -173,7 +175,7 @@ def ticks_to_seconds(
 
 def seconds_to_ticks(
     seconds: float,
-    ppq: int = 480,
+    ppq: int = STANDARD_PPQ,
     tempo_bpm: float = 120.0,
 ) -> int:
     """
@@ -192,9 +194,16 @@ def seconds_to_ticks(
     return int(beats * ppq)
 
 
+def ticks_to_ms(ticks: int, ppq: int = STANDARD_PPQ, tempo_bpm: float = 120.0) -> float:
+    """
+    Convert ticks to milliseconds.
+    """
+    return ticks_to_seconds(ticks, ppq=ppq, tempo_bpm=tempo_bpm) * 1000.0
+
+
 def quantize_ticks(
     ticks: int,
-    ppq: int = 480,
+    ppq: int = STANDARD_PPQ,
     resolution: int = 16,
 ) -> int:
     """
@@ -215,7 +224,7 @@ def quantize_ticks(
 def get_grid_positions(
     start_tick: int,
     end_tick: int,
-    ppq: int = 480,
+    ppq: int = STANDARD_PPQ,
     resolution: int = 16,
 ) -> List[int]:
     """
@@ -244,7 +253,7 @@ def get_grid_positions(
 def calculate_swing_offset(
     position_in_beat: float,
     swing_amount: float = 0.5,
-    ppq: int = 480,
+    ppq: int = STANDARD_PPQ,
 ) -> int:
     """
     Calculate swing timing offset for a position.
@@ -284,4 +293,4 @@ def get_ppq_for_daw(daw_name: str) -> int:
         PPQ value
     """
     daw_lower = daw_name.lower().replace(" ", "_").replace("-", "_")
-    return DAW_PPQ.get(daw_lower, 480)
+    return DAW_PPQ.get(daw_lower, STANDARD_PPQ)
