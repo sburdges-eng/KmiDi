@@ -64,6 +64,13 @@ target_compile_options(KellyCore PRIVATE
     $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
 )
 
+# Workaround for macOS SDK 26.2+ availability macro conflicts with JUCE
+if(APPLE)
+    target_compile_definitions(KellyCore PRIVATE
+        __CLOCK_AVAILABILITY=
+    )
+endif()
+
 # Kelly GUI Application
 add_executable(KellyApp
     src/gui/main.cpp
