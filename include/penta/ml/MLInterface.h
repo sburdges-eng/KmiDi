@@ -28,6 +28,12 @@ enum class ModelType {
     GrooveTransfer,      ///< Transfers groove/timing style
     KeyDetector,         ///< ML-enhanced key detection
     IntentMapper,        ///< Maps emotional intent to parameters
+    // Extended types used by DAiW model registry
+    EmotionRecognizer,   ///< Audio features -> emotion embedding
+    MelodyTransformer,   ///< Emotion embedding -> note probabilities
+    HarmonyPredictor,    ///< Context -> chord/harmony predictions
+    DynamicsEngine,      ///< Emotion -> expression parameters
+    GroovePredictor,     ///< Emotion -> groove/timing parameters
     Custom               ///< User-defined model
 };
 
@@ -175,6 +181,13 @@ public:
      * @return true if loaded successfully
      */
     bool loadModel(ModelType type, const std::string& path);
+
+    /**
+     * @brief Load all models defined in a registry JSON.
+     * @param registry_path Path to registry.json (see /models/registry.json)
+     * @return true if all models loaded (partial failures return false)
+     */
+    bool loadRegistry(const std::string& registry_path);
 
     /**
      * @brief Unload a model

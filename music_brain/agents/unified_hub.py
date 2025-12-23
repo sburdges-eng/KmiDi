@@ -54,8 +54,11 @@ from .crewai_music_agents import (
     MusicAgent,
     LocalLLM,
     LocalLLMConfig,
+    OnnxLLM,
+    OnnxLLMConfig,
     ToolManager,
     AGENT_ROLES,
+    LLMBackend,
 )
 from .voice_profiles import (
     VoiceProfileManager,
@@ -87,6 +90,8 @@ class HubConfig:
     # LLM
     llm_model: str = "llama3"
     llm_url: str = "http://localhost:11434"
+    llm_backend: str = "ollama"          # "ollama" or "onnx_http"
+    llm_onnx_url: str = "http://localhost:8008"
 
     # Voice
     default_voice_channel: int = 0
@@ -465,11 +470,16 @@ class UnifiedHub:
         """Start the hub and all components."""
         self._running = True
 
-        # Initialize LLM
-        self._llm = LocalLLM(LocalLLMConfig(
-            model=self.config.llm_model,
-            base_url=self.config.llm_url
-        ))
+        # Initialize LLM (Ollama by default, ONNX HTTP optional)
+        backend = LLMBackend.ONNX_HTTP if self.config.llm_backend.lower() in ["onnx", "onnx_http"] else LLMBackend.OLLAMA
+
+        if backend == LLMBackend.ONNX_HTTP:
+            self._llm = OnnxLLM(OnnxLLMConfig(base_url=self.config.llm_onnx_url))
+        else:
+            self._llm = LocalLLM(LocalLLMConfig(
+                model=self.config.llm_model,
+                base_url=self.config.llm_url
+            ))
 
         # Initialize bridge
         self._bridge = AbletonBridge(
@@ -488,10 +498,16 @@ class UnifiedHub:
         self._voice = LocalVoiceSynth(self._bridge.midi)
 
         # Initialize crew
-        self._crew = MusicCrew(LocalLLMConfig(
-            model=self.config.llm_model,
-            base_url=self.config.llm_url
-        ))
+        if backend == LLMBackend.ONNX_HTTP:
+            self._crew = MusicCrew(
+                llm_backend=backend,
+                onnx_config=OnnxLLMConfig(base_url=self.config.llm_onnx_url),
+            )
+        else:
+            self._crew = MusicCrew(LocalLLMConfig(
+                model=self.config.llm_model,
+                base_url=self.config.llm_url
+            ))
         self._crew.setup(self._bridge)
 
         return self

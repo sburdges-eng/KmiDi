@@ -122,6 +122,30 @@ services:
     # Run on-demand or as a one-time job
     # Use: docker-compose run --rm daiw-kb-analyzer
 
+  # ONNX LLM service (Llama-style models via onnxruntime-genai)
+  daiw-llm-onnx:
+    build:
+      context: .
+      dockerfile: Dockerfile.llm
+    image: daiw-llm-onnx:latest
+    container_name: daiw-llm-onnx
+    ports:
+      - "8008:8008"
+    volumes:
+      - ./models/llm:/models:ro
+    environment:
+      - LLM_ONNX_MODEL_PATH=${LLM_ONNX_MODEL_PATH:-/models/llama3-onnx}
+      - LLM_ONNX_MAX_LENGTH=${LLM_ONNX_MAX_LENGTH:-512}
+      - LLM_ONNX_TEMPERATURE=${LLM_ONNX_TEMPERATURE:-0.7}
+      - LLM_ONNX_TOP_P=${LLM_ONNX_TOP_P:-0.9}
+    networks:
+      - daiw-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8008/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 networks:
   daiw-network:
     driver: bridge

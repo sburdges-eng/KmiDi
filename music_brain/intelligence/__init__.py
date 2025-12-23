@@ -15,6 +15,10 @@ from .context_analyzer import (
     ContextAnalyzer,
     MusicalContext,
 )
+from .onnx_llm import (
+    OnnxGenAILLM,
+    OnnxLLMConfig,
+)
 
 __all__ = [
     "SuggestionEngine",
@@ -23,4 +27,6 @@ __all__ = [
     "SuggestionConfidence",
     "ContextAnalyzer",
     "MusicalContext",
+    "OnnxGenAILLM",
+    "OnnxLLMConfig",
 ]

@@ -26,6 +26,15 @@ class AutomationCurve:
     points: List[Tuple[float, float]] = field(default_factory=list)
 
 
+@dataclass
+class SectionDynamics:
+    """Section-level dynamics container."""
+
+    level: str = "mf"
+    target_db: float = -9.0
+    notes: List[str] = field(default_factory=list)
+
+
 class DynamicsEngine:
     """
     Convert emotion + structure into dynamics targets.
@@ -61,7 +70,8 @@ class DynamicsEngine:
         """
         Return per-section dynamics (0–1 scalar).
 
-        Rough rule: raise levels as sections progress; scale by emotion intensity.
+        Rough rule: raise levels as sections progress; scale by emotion
+        intensity.
         """
         levels: Dict[str, float] = {}
         intensity = (emotion.intensity_tier if emotion else 3) or 3
@@ -69,7 +79,10 @@ class DynamicsEngine:
 
         for idx, section in enumerate(structure.sections):
             key = section.lower()
-            base = self._LEVEL_TO_SCALAR.get(self._BASE_LEVELS.get(key, "mf"), 0.6)
+            base = self._LEVEL_TO_SCALAR.get(
+                self._BASE_LEVELS.get(key, "mf"),
+                0.6,
+            )
 
             # Later sections creep up slightly to simulate energy build.
             progressive_bias = idx * 0.03
@@ -99,3 +112,28 @@ class DynamicsEngine:
 
         return AutomationCurve(points=points)
 
+    def apply_section_profiles(
+        self,
+        structure: SongStructure,
+        emotion: Optional[EmotionMatch] = None,
+    ) -> Dict[str, SectionDynamics]:
+        """
+        Return section → SectionDynamics, ready for guide ingestion.
+
+        Keeps the existing scalar output for backward compatibility while
+        preparing to store richer guide-driven metadata (notes, targets).
+        """
+        scalar_levels = self.apply_section_dynamics(structure, emotion)
+        profiles: Dict[str, SectionDynamics] = {}
+
+        for section, level in scalar_levels.items():
+            profiles[section] = SectionDynamics(
+                level="mf",
+                target_db=-12.0 + (level * 12.0),
+                notes=[
+                    "TODO: replace heuristics with Dynamics and "
+                    "Arrangement Guide rules."
+                ],
+            )
+
+        return profiles

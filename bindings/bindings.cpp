@@ -9,6 +9,7 @@ void bind_harmony(py::module_& m);
 void bind_groove(py::module_& m);
 void bind_diagnostics(py::module_& m);
 void bind_osc(py::module_& m);
+void bind_ml(py::module_& m);
 
 PYBIND11_MODULE(penta_core_native, m) {
     m.doc() = "Penta Core C++ engine with Python bindings";
@@ -22,10 +23,12 @@ PYBIND11_MODULE(penta_core_native, m) {
     auto groove = m.def_submodule("groove", "Groove analysis module");
     auto diagnostics = m.def_submodule("diagnostics", "Performance diagnostics module");
     auto osc = m.def_submodule("osc", "OSC communication module");
+    auto ml = m.def_submodule("ml", "ML inference interface");
     
     // Bind submodules
     bind_harmony(harmony);
     bind_groove(groove);
     bind_diagnostics(diagnostics);
     bind_osc(osc);
+    bind_ml(ml);
 }

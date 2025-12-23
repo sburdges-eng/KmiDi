@@ -9,6 +9,7 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <fstream>
 #include <mutex>
 #include <thread>
 #include <unordered_map>
@@ -17,8 +18,11 @@
 #ifdef PENTA_HAS_ONNX
 #include <onnxruntime_cxx_api.h>
 #endif
+#include <nlohmann/json.hpp>
 
 namespace penta::ml {
+
+using json = nlohmann::json;
 
 /**
  * @brief Private implementation (PIMPL pattern)
@@ -115,6 +119,61 @@ public:
 #endif
     }
 
+    bool loadRegistry(const std::string& registry_path) {
+        std::ifstream file(registry_path);
+        if (!file.is_open()) {
+            return false;
+        }
+
+        json registry;
+        try {
+            file >> registry;
+        } catch (...) {
+            return false;
+        }
+
+        if (!registry.contains("models") || !registry["models"].is_array()) {
+            return false;
+        }
+
+        bool all_ok = true;
+        const auto base_dir = config_.model_directory;
+
+        for (const auto& model : registry["models"]) {
+            if (!model.contains("id")) {
+                all_ok = false;
+                continue;
+            }
+
+            const std::string id = model.value("id", "");
+            const std::string onnx_path = model.value("onnx_path", "");
+            const std::string file_path = model.value("file", "");
+            const size_t input_size = model.value("input_size", 0);
+
+            if (id.empty() || input_size == 0 || input_size > InferenceRequest{}.input_data.size()) {
+                all_ok = false;
+                continue;
+            }
+
+            std::string resolved_path;
+            if (!onnx_path.empty()) {
+                resolved_path = onnx_path;
+            } else if (!file_path.empty()) {
+                resolved_path = base_dir.empty() ? file_path : (base_dir + "/" + file_path);
+            } else {
+                all_ok = false;
+                continue;
+            }
+
+            const ModelType type = modelTypeFromId(id);
+            if (!loadModel(type, resolved_path)) {
+                all_ok = false;
+            }
+        }
+
+        return all_ok;
+    }
+
     void unloadModel(ModelType type) {
         std::lock_guard<std::mutex> lock(model_mutex_);
 #ifdef PENTA_HAS_ONNX
@@ -138,6 +197,18 @@ public:
     }
 
 private:
+    ModelType modelTypeFromId(const std::string& id) const {
+        if (id == "chordpredictor") return ModelType::ChordPredictor;
+        if (id == "groovepredictor") return ModelType::GroovePredictor;
+        if (id == "keydetector") return ModelType::KeyDetector;
+        if (id == "intentmapper") return ModelType::IntentMapper;
+        if (id == "emotionrecognizer") return ModelType::EmotionRecognizer;
+        if (id == "melodytransformer") return ModelType::MelodyTransformer;
+        if (id == "harmonypredictor") return ModelType::HarmonyPredictor;
+        if (id == "dynamicsengine") return ModelType::DynamicsEngine;
+        return ModelType::Custom;
+    }
+
     void inferenceLoop() {
         while (running_.load(std::memory_order_acquire)) {
             InferenceRequest request;
@@ -177,6 +248,8 @@ private:
         InferenceResult result{};
         result.model_type = request.model_type;
         result.request_id = request.request_id;
+        const size_t safe_input_size =
+            std::min<size_t>(request.input_size, request.input_data.size());
 
 #ifdef PENTA_HAS_ONNX
         std::lock_guard<std::mutex> lock(model_mutex_);
@@ -191,11 +264,11 @@ private:
             auto memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
 
             // Create input tensor
-            std::array<int64_t, 2> input_shape = {1, static_cast<int64_t>(request.input_size)};
+            std::array<int64_t, 2> input_shape = {1, static_cast<int64_t>(safe_input_size)};
             auto input_tensor = Ort::Value::CreateTensor<float>(
                 memory_info,
                 const_cast<float*>(request.input_data.data()),
-                request.input_size,
+                safe_input_size,
                 input_shape.data(),
                 input_shape.size());
 
@@ -216,7 +289,12 @@ private:
             // Copy output
             auto* output_data = output_tensors[0].GetTensorMutableData<float>();
             auto output_shape = output_tensors[0].GetTensorTypeAndShapeInfo().GetShape();
-            result.output_size = static_cast<size_t>(output_shape[1]);
+            if (output_shape.size() >= 2) {
+                result.output_size = static_cast<size_t>(output_shape[1]);
+            } else {
+                result.output_size = 0;
+            }
+            result.output_size = std::min<size_t>(result.output_size, result.output_data.size());
             std::copy(output_data, output_data + result.output_size, result.output_data.begin());
 
             // Extract confidence from model output
@@ -238,9 +316,9 @@ private:
 #else
         // Stub implementation: echo input as output
         std::copy(request.input_data.begin(),
-                  request.input_data.begin() + request.input_size,
+                  request.input_data.begin() + safe_input_size,
                   result.output_data.begin());
-        result.output_size = request.input_size;
+        result.output_size = safe_input_size;
         result.confidence = 0.5f;
         result.success = true;
 #endif
@@ -324,6 +402,10 @@ uint64_t MLInterface::getNextRequestId() noexcept {
 
 bool MLInterface::loadModel(ModelType type, const std::string& path) {
     return impl_->loadModel(type, path);
+}
+
+bool MLInterface::loadRegistry(const std::string& registry_path) {
+    return impl_->loadRegistry(registry_path);
 }
 
 void MLInterface::unloadModel(ModelType type) {

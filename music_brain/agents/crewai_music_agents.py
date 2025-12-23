@@ -21,8 +21,6 @@ Then the system runs 100% locally.
 """
 
 import os
-import json
-import threading
 import atexit
 from dataclasses import dataclass, field
 from typing import Optional, Dict, List, Any, Callable
@@ -50,6 +48,17 @@ class LLMBackend(Enum):
     OLLAMA = "ollama"
     LLAMA_CPP = "llama_cpp"
     LOCAL_AI = "local_ai"
+    ONNX_HTTP = "onnx_http"  # Calls the onnx_llm_server FastAPI service
+
+
+@dataclass
+class OnnxLLMConfig:
+    """Configuration for ONNX LLM HTTP service."""
+
+    base_url: str = "http://localhost:8008"
+    max_tokens: int = 512
+    temperature: float = 0.7
+    top_p: float = 0.9
 
 
 # =============================================================================
@@ -72,7 +81,7 @@ class LocalLLM:
         self._available = False
         self._check_availability()
 
-    def _check_availability(self):
+    def _check_availability(self) -> None:
         """Check if Ollama is running."""
         try:
             import requests
@@ -81,7 +90,7 @@ class LocalLLM:
                 timeout=2
             )
             self._available = response.status_code == 200
-        except:
+        except Exception:
             self._available = False
 
     @property
@@ -197,6 +206,95 @@ class LocalLLM:
         )
 
 
+class OnnxLLM:
+    """
+    HTTP client for the ONNX LLM FastAPI service (`daiw-llm-onnx`).
+
+    Uses the `/health`, `/generate`, and `/chat` endpoints from
+    `music_brain.intelligence.onnx_llm_server`.
+    """
+
+    def __init__(self, config: Optional[OnnxLLMConfig] = None):
+        self.config = config or OnnxLLMConfig()
+        self._available = False
+        self._check_availability()
+
+    @property
+    def is_available(self) -> bool:
+        return self._available
+
+    def _check_availability(self) -> None:
+        try:
+            import requests
+
+            resp = requests.get(f"{self.config.base_url}/health", timeout=2)
+            self._available = resp.status_code == 200 and resp.json().get("status") == "ok"
+        except Exception:
+            self._available = False
+
+    def generate(
+        self,
+        prompt: str,
+        model: Optional[str] = None,  # kept for API parity; ignored
+        system: Optional[str] = None,  # kept for API parity; prepends when provided
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> str:
+        if not self._available:
+            return self._fallback_response(prompt)
+
+        try:
+            import requests
+
+            use_prompt = f"{system}\n\n{prompt}" if system else prompt
+            payload = {
+                "prompt": use_prompt,
+                "max_tokens": max_tokens or self.config.max_tokens,
+                "temperature": temperature or self.config.temperature,
+                "top_p": self.config.top_p,
+            }
+            resp = requests.post(f"{self.config.base_url}/generate", json=payload, timeout=60)
+            if resp.status_code == 200:
+                return resp.json().get("output", "")
+            return self._fallback_response(prompt)
+        except Exception as exc:
+            print(f"ONNX LLM error: {exc}")
+            return self._fallback_response(prompt)
+
+    def chat(
+        self,
+        messages: List[Dict[str, str]],
+        model: Optional[str] = None,  # parity
+        temperature: Optional[float] = None,
+    ) -> str:
+        if not self._available:
+            user_msg = messages[-1].get("content", "") if messages else ""
+            return self._fallback_response(user_msg)
+
+        try:
+            import requests
+
+            payload = {
+                "messages": messages,
+                "max_tokens": self.config.max_tokens,
+                "temperature": temperature or self.config.temperature,
+                "top_p": self.config.top_p,
+            }
+            resp = requests.post(f"{self.config.base_url}/chat", json=payload, timeout=60)
+            if resp.status_code == 200:
+                return resp.json().get("output", "")
+            return self._fallback_response("")
+        except Exception as exc:
+            print(f"ONNX LLM chat error: {exc}")
+            return self._fallback_response("")
+
+    def _fallback_response(self, prompt: str) -> str:
+        return (
+            "[ONNX LLM not available. Start daiw-llm-onnx or set LLM backend to Ollama.]\n"
+            f"Prompt was: {prompt[:100]}..."
+        )
+
+
 # =============================================================================
 # Tool Definitions
 # =============================================================================
@@ -256,7 +354,7 @@ class ToolManager:
         self._bridge = bridge
         self._register_bridge_tools()
 
-    def set_llm(self, llm: LocalLLM):
+    def set_llm(self, llm):
         """Set the LLM for tool access."""
         self._llm = llm
 
@@ -466,7 +564,7 @@ class MusicAgent:
     def __init__(
         self,
         role: AgentRole,
-        llm: LocalLLM,
+        llm,
         tool_manager: ToolManager
     ):
         self.role = role
@@ -556,9 +654,18 @@ class MusicCrew:
         result = crew.produce("Create a lo-fi ballad about loss")
     """
 
-    def __init__(self, llm_config: Optional[LocalLLMConfig] = None):
+    def __init__(
+        self,
+        llm_config: Optional[LocalLLMConfig] = None,
+        llm_backend: LLMBackend = LLMBackend.OLLAMA,
+        onnx_config: Optional[OnnxLLMConfig] = None,
+    ):
         self.llm_config = llm_config or LocalLLMConfig()
-        self.llm = LocalLLM(self.llm_config)
+        self.llm_backend = llm_backend
+        if llm_backend == LLMBackend.ONNX_HTTP:
+            self.llm = OnnxLLM(onnx_config)
+        else:
+            self.llm = LocalLLM(self.llm_config)
         self.tools = ToolManager()
         self._agents: Dict[str, MusicAgent] = {}
         self._running = False
@@ -577,9 +684,15 @@ class MusicCrew:
         """
         # Check LLM availability
         if not self.llm.is_available:
-            print("WARNING: Local LLM (Ollama) not available.")
-            print("To enable AI agents, run: ollama serve")
-            print("And pull a model: ollama pull llama3")
+            if self.llm_backend == LLMBackend.ONNX_HTTP:
+                print("WARNING: ONNX LLM service not available.")
+                print("Start service: docker compose -f deployment/docker/docker-compose.yml "
+                      "up daiw-llm-onnx")
+                print("Or set LLM backend to Ollama.")
+            else:
+                print("WARNING: Local LLM (Ollama) not available.")
+                print("To enable AI agents, run: ollama serve")
+                print("And pull a model: ollama pull llama3")
 
         # Set up tools
         if bridge:
@@ -739,11 +852,29 @@ def song_production_task(
 _default_crew: Optional[MusicCrew] = None
 
 
-def get_crew() -> MusicCrew:
+def get_crew(
+    backend: Optional[LLMBackend] = None,
+    onnx_url: Optional[str] = None,
+) -> MusicCrew:
     """Get or create the default crew."""
     global _default_crew
+    resolved_backend = backend
+    if resolved_backend is None:
+        env_backend = os.getenv("DAIW_LLM_BACKEND", "ollama").lower()
+        if env_backend in ["onnx", "onnx_http"]:
+            resolved_backend = LLMBackend.ONNX_HTTP
+        else:
+            resolved_backend = LLMBackend.OLLAMA
+
+    onnx_cfg = None
+    if resolved_backend == LLMBackend.ONNX_HTTP and onnx_url:
+        onnx_cfg = OnnxLLMConfig(base_url=onnx_url)
+
     if _default_crew is None:
-        _default_crew = MusicCrew()
+        _default_crew = MusicCrew(
+            llm_backend=resolved_backend,
+            onnx_config=onnx_cfg,
+        )
         _default_crew.setup()
     return _default_crew
 
@@ -757,20 +888,31 @@ def shutdown_crew():
 
 
 if __name__ == "__main__":
-    print("Testing Music Agents (LOCAL - using Ollama)")
+    print("Testing Music Agents (LOCAL - using Ollama or ONNX HTTP)")
     print("=" * 50)
 
-    # Check Ollama
-    llm = LocalLLM()
-    if llm.is_available:
-        print("Ollama is running")
+    backend_env = os.getenv("DAIW_LLM_BACKEND", "ollama").lower()
+    backend = LLMBackend.ONNX_HTTP if backend_env in ["onnx", "onnx_http"] else LLMBackend.OLLAMA
+
+    if backend == LLMBackend.OLLAMA:
+        llm = LocalLLM()
+        if llm.is_available:
+            print("Ollama is running")
+        else:
+            print("Ollama not available. Start with: ollama serve")
+            print("Then pull a model: ollama pull llama3")
+            exit(1)
     else:
-        print("Ollama not available. Start with: ollama serve")
-        print("Then pull a model: ollama pull llama3")
-        exit(1)
+        llm = OnnxLLM()
+        if llm.is_available:
+            print("ONNX LLM service is reachable")
+        else:
+            print("ONNX LLM service not available. Start daiw-llm-onnx "
+                  "or set DAiW_LLM_BACKEND=ollama")
+            exit(1)
 
     # Create crew
-    with MusicCrew() as crew:
+    with MusicCrew(llm_backend=backend) as crew:
         print("\nAvailable agents:")
         for name, agent in crew.agents.items():
             print(f"  - {agent.name}: {agent.role.description}")

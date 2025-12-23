@@ -123,7 +123,8 @@ class EmotionProductionMapper:
             arrangement_density=base.arrangement_density,
             groove_template=base.groove_template,
             genre=genre,
-            notes=base.notes,
+            # Copy to avoid mutating the internal template when callers append.
+            notes=list(base.notes) if base.notes else [],
         )
 
         if intensity:

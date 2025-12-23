@@ -8,6 +8,7 @@ pybind11_add_module(penta_core_native
     groove_bindings.cpp
     diagnostics_bindings.cpp
     osc_bindings.cpp
+    ml_bindings.cpp
 )
 
 target_link_libraries(penta_core_native PRIVATE

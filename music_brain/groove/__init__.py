@@ -1,7 +1,8 @@
 """
 Groove extraction and application module.
 
-Extract timing/velocity patterns from MIDI files and apply them to other tracks.
+Extract timing/velocity patterns from MIDI files and apply them to other
+tracks.
 
 Includes:
 - GrooveTemplate extraction from existing MIDI
@@ -9,20 +10,7 @@ Includes:
 - "Drunken Drummer" humanization engine for emotionally-driven processing
 """
 
-from music_brain.groove.extractor import extract_groove, GrooveTemplate
 from music_brain.groove.applicator import apply_groove, humanize
-from music_brain.groove.templates import get_genre_template, GENRE_TEMPLATES
-from music_brain.groove.groove_engine import (
-    humanize_drums,
-    humanize_midi_file,
-    GrooveSettings,
-    settings_from_intent,
-    quick_humanize,
-    load_presets,
-    list_presets,
-    get_preset,
-    settings_from_preset,
-)
 from music_brain.groove.drum_analysis import (
     DrumAnalyzer,
     DrumTechniqueProfile,
@@ -31,13 +19,19 @@ from music_brain.groove.drum_analysis import (
     analyze_drum_technique,
 )
 from music_brain.groove.drum_humanizer import DrumHumanizer
-from music_brain.groove.drum_analysis import (
-    SnareBounceSignature,
-    HiHatAlternation,
-    DrumTechniqueProfile,
-    DrumAnalyzer,
-    analyze_drum_technique,
+from music_brain.groove.extractor import GrooveTemplate, extract_groove
+from music_brain.groove.groove_engine import (
+    GrooveSettings,
+    get_preset,
+    humanize_drums,
+    humanize_midi_file,
+    list_presets,
+    load_presets,
+    quick_humanize,
+    settings_from_intent,
+    settings_from_preset,
 )
+from music_brain.groove.templates import GENRE_TEMPLATES, get_genre_template
 
 __all__ = [
     # Extraction
@@ -66,4 +60,6 @@ __all__ = [
     "DrumTechniqueProfile",
     "DrumAnalyzer",
     "analyze_drum_technique",
+    # Drum humanization
+    "DrumHumanizer",
 ]

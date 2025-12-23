@@ -3,7 +3,8 @@ Drum humanization scaffold using Production_Workflows guide rules.
 
 Intended to sit between drum analysis and the existing groove engine:
 - Consume DrumTechniqueProfile (from drum_analysis)
-- Apply guide-derived presets (Drum Programming Guide, Humanization Cheat Sheet)
+- Apply guide-derived presets (Drum Programming Guide, Humanization
+  Cheat Sheet)
 - Output GrooveSettings or a future humanization plan
 
 TODO:
@@ -45,32 +46,43 @@ class DrumHumanizer:
                 timing_shift_ms=5.0,
                 ghost_rate=0.05,
                 velocity_variation=0.12,
-                notes=["Baseline humanization; replace with guide-driven data."],
+                notes=[
+                    "Baseline humanization; replace with guide-driven data.",
+                ],
             ),
             "jazzy": GuideRuleSet(
                 swing=0.58,
                 timing_shift_ms=12.0,
                 ghost_rate=0.12,
                 velocity_variation=0.18,
-                notes=["Pulled-back snare, heavy ghost notes, ride accenting."],
+                notes=[
+                    "Pulled-back snare, heavy ghost notes, ride accenting.",
+                ],
             ),
             "heavy": GuideRuleSet(
                 swing=0.0,
                 timing_shift_ms=3.0,
                 ghost_rate=0.02,
                 velocity_variation=0.1,
-                notes=["Tight kicks/snares; velocity accents drive impact."],
+                notes=[
+                    "Tight kicks/snares; velocity accents drive impact.",
+                ],
             ),
             "laid_back": GuideRuleSet(
                 swing=0.54,
                 timing_shift_ms=18.0,
                 ghost_rate=0.1,
                 velocity_variation=0.15,
-                notes=["Behind-the-beat feel; suitable for R&B/lo-fi pockets."],
+                notes=[
+                    "Behind-the-beat feel; suitable for R&B/lo-fi pockets.",
+                ],
             ),
         }
 
-    def create_preset_from_guide(self, style: Optional[str] = None) -> GrooveSettings:
+    def create_preset_from_guide(
+        self,
+        style: Optional[str] = None,
+    ) -> GrooveSettings:
         """
         Create a GrooveSettings object seeded by guide presets.
         """
@@ -110,15 +122,22 @@ class DrumHumanizer:
         """
         Return a JSON-serializable plan that other layers can consume.
         """
-        rules = self.guide_rules.get(style or self.default_style, self.guide_rules["standard"])
+        rules = self.guide_rules.get(
+            style or self.default_style,
+            self.guide_rules["standard"],
+        )
         return {
             "style": style or self.default_style,
             "swing": rules.swing,
             "timing_shift_ms": rules.timing_shift_ms,
             "ghost_rate": rules.ghost_rate,
             "velocity_variation": rules.velocity_variation,
-            "techniques": technique_profile.__dict__ if technique_profile else {},
+            "techniques": (
+                technique_profile.__dict__ if technique_profile else {}
+            ),
             "notes": rules.notes
-            + ["TODO: merge Drum Programming Guide + Humanization Cheat Sheet."],
+            + [
+                "TODO: merge Drum Programming Guide + Humanization "
+                "Cheat Sheet."
+            ],
         }
-

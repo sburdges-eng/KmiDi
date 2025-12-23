@@ -103,6 +103,8 @@ from .crewai_music_agents import (
     # LLM
     LocalLLM,
     LocalLLMConfig,
+    OnnxLLM,
+    OnnxLLMConfig,
     LLMBackend,
 
     # Tools
@@ -184,7 +186,12 @@ from .unified_hub import (
 
 # Shutdown aliases
 shutdown_tools = shutdown_crew
-get_tool_manager = lambda: get_crew().tools if get_crew() else None
+
+
+def get_tool_manager():
+    """Return the tool manager for the default crew, if available."""
+    crew = get_crew()
+    return crew.tools if crew else None
 
 # =============================================================================
 # Module Info
@@ -209,6 +216,8 @@ __all__ = [
     # Local LLM
     "LocalLLM",
     "LocalLLMConfig",
+    "OnnxLLM",
+    "OnnxLLMConfig",
     "LLMBackend",
 
     # Tools
