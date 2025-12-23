@@ -26,3 +26,5 @@ Zip contents (unextracted): C++ ML utilities (`src/ml/*.h`), an ML-specific CMak
 - JUCE, iPlug2, RTNeural, Neutone SDK, anira, DDSP-VST, RAVE, Neural Amp Modeler, NIH-plug (for Rust VST3/CLAP).
 
 Keep this file as reference; do not commit the zip. When ready, extract the ML bundle into a dedicated vendor folder and add it to CMake with explicit include/link paths.
+
+

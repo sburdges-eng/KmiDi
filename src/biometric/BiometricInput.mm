@@ -10,12 +10,14 @@
 namespace kelly {
 
 BiometricInput::BiometricInput()
-    : enabled_(false)
-    , adaptiveNormalization_(false)
+    : adaptiveNormalization_(false)
+    , enabled_(false)
     , streamingActive_(false)
     , lastReadingTime_(0.0)
     , healthKitInitialized_(false)
     , fitbitInitialized_(false)
+    , healthKitBridge_(nullptr)
+    , fitbitBridge_(nullptr)
     , shouldStream_(false)
 {
     dataHistory_.reserve(HISTORY_SIZE);
@@ -236,16 +238,17 @@ void BiometricInput::setBaseline(const BiometricData& baseline) {
 bool BiometricInput::initializeHealthKit() {
 #if JUCE_MAC || JUCE_IOS
     if (!healthKitBridge_) {
-        healthKitBridge_ = std::make_unique<biometric::HealthKitBridge>();
+        healthKitBridge_ = new biometric::HealthKitBridge();
     }
 
-    if (!healthKitBridge_->isAvailable()) {
+    auto* bridge = static_cast<biometric::HealthKitBridge*>(healthKitBridge_);
+    if (!bridge->isAvailable()) {
         healthKitInitialized_ = false;
         return false;
     }
 
     // Request authorization
-    if (healthKitBridge_->requestAuthorization()) {
+    if (bridge->requestAuthorization()) {
         healthKitInitialized_ = true;
         return true;
     }

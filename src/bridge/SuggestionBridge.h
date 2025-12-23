@@ -13,9 +13,14 @@
  *          without requiring direct Python embedding in audio thread.
  */
 
+#include "bridge/PythonBridgeBase.h"
 #include <string>
 #include <vector>
 #include <memory>
+
+// Forward declaration
+struct _object;
+typedef struct _object PyObject;
 
 namespace kelly {
 
@@ -25,10 +30,14 @@ namespace kelly {
  * Provides methods to get intelligent suggestions from Python SuggestionEngine
  * without requiring direct Python embedding in audio thread.
  */
-class SuggestionBridge {
+class SuggestionBridge : public bridge::PythonBridgeBase {
 public:
     SuggestionBridge();
-    ~SuggestionBridge();
+    ~SuggestionBridge() override;
+
+    // BridgeBase interface
+    bool initialize() override;
+    void shutdown() override;
 
     /**
      * Get suggestions based on current musical state.
@@ -66,23 +75,13 @@ public:
      */
     void recordSuggestionDismissed(const std::string& suggestionId);
 
-    /**
-     * Check if Python bridge is available.
-     */
-    bool isAvailable() const { return available_; }
-
 private:
-    bool available_;
-
-    // Python function pointers (if Python is embedded)
-    // These will be set up if Python is available
-    void* getSuggestionsFunc_;
-    void* recordShownFunc_;
-    void* recordAcceptedFunc_;
-    void* recordDismissedFunc_;
-
-    bool initializePython();
-    void shutdownPython();
+    // Python function pointers
+    PyObject* getSuggestionsFunc_ = nullptr;
+    PyObject* recordShownFunc_ = nullptr;
+    PyObject* recordAcceptedFunc_ = nullptr;
+    PyObject* recordDismissedFunc_ = nullptr;
+    PyObject* module_ = nullptr;
 };
 
 } // namespace kelly

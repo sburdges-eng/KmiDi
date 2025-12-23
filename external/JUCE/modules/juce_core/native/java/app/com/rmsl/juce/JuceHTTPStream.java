@@ -26,6 +26,11 @@ import java.lang.Runnable;
 import java.io.*;
 import java.net.URL;
 import java.net.HttpURLConnection;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.security.cert.X509Certificate;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
 import java.util.concurrent.Executors;
@@ -86,13 +91,31 @@ public class JuceHTTPStream
     private final HttpURLConnection createConnection(String address, boolean isPost, byte[] postData,
                                                      String headers, int timeOutMs, String httpRequestCmdToUse) throws IOException
     {
-        HttpURLConnection newConnection = (HttpURLConnection) (new URL(address).openConnection());
+        URL url = new URL(address);
+        HttpURLConnection newConnection = (HttpURLConnection) url.openConnection();
 
         try
         {
             newConnection.setInstanceFollowRedirects(false);
             newConnection.setConnectTimeout(timeOutMs);
             newConnection.setReadTimeout(timeOutMs);
+
+            // Configure TLS for HTTPS connections
+            if (newConnection instanceof HttpsURLConnection)
+            {
+                HttpsURLConnection httpsConnection = (HttpsURLConnection) newConnection;
+                try
+                {
+                    // Use default SSL context (system trust store)
+                    SSLContext sslContext = SSLContext.getDefault();
+                    httpsConnection.setSSLSocketFactory(sslContext.getSocketFactory());
+                }
+                catch (Exception e)
+                {
+                    // If SSL context setup fails, continue with default behavior
+                    // This maintains backward compatibility
+                }
+            }
 
             // headers - if not empty, this string is appended onto the headers that are used for the request. It must therefore be a valid set of HTML header directives, separated by newlines.
             // So convert headers string to an array, with an element for each line
@@ -130,8 +153,9 @@ public class JuceHTTPStream
             return newConnection;
         } catch (Throwable e)
         {
-            newConnection.disconnect();
-            throw new IOException("Connection error");
+            if (newConnection != null)
+                newConnection.disconnect();
+            throw new IOException("Connection error: " + e.getMessage(), e);
         }
     }
 
@@ -424,6 +448,8 @@ public class JuceHTTPStream
     private final Object createFutureLock = new Object();
     private AtomicBoolean hasBeenCancelled = new AtomicBoolean();
 
+    // Use a cached thread pool for better resource management
+    // Note: In production, consider using a shared executor service
     private final ExecutorService executor = Executors.newCachedThreadPool(Executors.defaultThreadFactory());
     Future<BufferedInputStream> streamFuture;
 }

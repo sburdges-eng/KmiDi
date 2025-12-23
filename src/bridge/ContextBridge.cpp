@@ -1,118 +1,81 @@
-#include "ContextBridge.h"
+#include "bridge/ContextBridge.h"
 
-// Python C API - only include if Python is available
 #ifdef PYTHON_AVAILABLE
 #include <Python.h>
 #endif
 
-#include <iostream>
 #include <sstream>
-#include <chrono>
 #include <functional>
-#include <map>
 
 namespace kelly {
 
 ContextBridge::ContextBridge()
-    : available_(false)
-    , analyzeContextFunc_(nullptr)
-    , getContextualParametersFunc_(nullptr)
-    , updateContextFunc_(nullptr)
-    , getSuggestionsFunc_(nullptr)
+    : bridge::PythonBridgeBase("ContextBridge")
+    , cache_(CACHE_TTL_MS, 50)
 {
-    available_ = initializePython();
 }
 
 ContextBridge::~ContextBridge() {
-    shutdownPython();
+    shutdown();
 }
 
-bool ContextBridge::initializePython() {
-#ifdef PYTHON_AVAILABLE
-    // Check if Python is already initialized
-    if (!Py_IsInitialized()) {
-        Py_Initialize();
-        if (!Py_IsInitialized()) {
-            std::cerr << "ContextBridge: Failed to initialize Python" << std::endl;
-            return false;
-        }
-    }
-
-    // Import the context bridge module
-    PyObject* module = PyImport_ImportModule("music_brain.intelligence.context_bridge");
-    if (!module) {
-        PyErr_Print();
-        std::cerr << "ContextBridge: Failed to import context_bridge module" << std::endl;
+bool ContextBridge::initialize() {
+    if (!PythonBridgeBase::initializePython()) {
         return false;
     }
 
-    // Get function pointers
-    analyzeContextFunc_ = PyObject_GetAttrString(module, "analyze_context");
-    getContextualParametersFunc_ = PyObject_GetAttrString(module, "get_contextual_parameters");
-    updateContextFunc_ = PyObject_GetAttrString(module, "update_context");
-    getSuggestionsFunc_ = PyObject_GetAttrString(module, "get_contextual_suggestions");
+    module_ = importModule("music_brain.intelligence.context_bridge");
+    if (!module_) {
+        return false;
+    }
 
-    Py_DECREF(module);
+    analyzeContextFunc_ = getFunction(module_, "analyze_context");
+    getContextualParametersFunc_ = getFunction(module_, "get_contextual_parameters");
+    updateContextFunc_ = getFunction(module_, "update_context");
+    getSuggestionsFunc_ = getFunction(module_, "get_contextual_suggestions");
 
     if (!analyzeContextFunc_) {
-        std::cerr << "ContextBridge: Failed to get analyze_context function" << std::endl;
+        logError("Failed to get analyze_context function");
         return false;
     }
 
+    setAvailable(true);
     return true;
-#else
-    // Python not available - bridge will use fallback
-    std::cerr << "ContextBridge: Python not available, context analysis disabled" << std::endl;
-    return false;
-#endif
 }
 
-void ContextBridge::shutdownPython() {
-#ifdef PYTHON_AVAILABLE
-    if (analyzeContextFunc_) {
-        Py_DECREF(static_cast<PyObject*>(analyzeContextFunc_));
-        analyzeContextFunc_ = nullptr;
-    }
-    if (getContextualParametersFunc_) {
-        Py_DECREF(static_cast<PyObject*>(getContextualParametersFunc_));
-        getContextualParametersFunc_ = nullptr;
-    }
-    if (updateContextFunc_) {
-        Py_DECREF(static_cast<PyObject*>(updateContextFunc_));
-        updateContextFunc_ = nullptr;
-    }
-    if (getSuggestionsFunc_) {
-        Py_DECREF(static_cast<PyObject*>(getSuggestionsFunc_));
-        getSuggestionsFunc_ = nullptr;
-    }
-#endif
-    contextCache_.clear();
+void ContextBridge::shutdown() {
+    analyzeContextFunc_ = nullptr;
+    getContextualParametersFunc_ = nullptr;
+    updateContextFunc_ = nullptr;
+    getSuggestionsFunc_ = nullptr;
+    module_ = nullptr;
+    cache_.clear();
+    PythonBridgeBase::shutdownPython();
+    setAvailable(false);
 }
 
 std::string ContextBridge::analyzeContext(const std::string& stateJson) {
-    if (!available_) {
+    if (!isAvailable()) {
         return R"({"emotion_category": "unknown", "complexity_level": "moderate"})";
     }
 
     // Check cache first
     std::string cacheKey = hashState(stateJson);
-    std::string cached = getCachedContext(cacheKey);
+    std::string cached = cache_.get(cacheKey);
     if (!cached.empty()) {
         return cached;
     }
 
 #ifdef PYTHON_AVAILABLE
-    PyObject* func = static_cast<PyObject*>(analyzeContextFunc_);
-    if (!func) {
+    if (!analyzeContextFunc_) {
         return R"({"emotion_category": "unknown"})";
     }
 
     PyObject* args = PyTuple_New(1);
     PyObject* stateStr = PyUnicode_FromString(stateJson.c_str());
-
     PyTuple_SetItem(args, 0, stateStr);
 
-    PyObject* result = PyObject_CallObject(func, args);
+    PyObject* result = PyObject_CallObject(analyzeContextFunc_, args);
     Py_DECREF(args);
 
     if (!result) {
@@ -129,7 +92,7 @@ std::string ContextBridge::analyzeContext(const std::string& stateJson) {
     }
 
     // Cache the result
-    cacheContext(cacheKey, resultStr);
+    cache_.put(cacheKey, resultStr);
 
     Py_DECREF(result);
     return resultStr;
@@ -139,16 +102,15 @@ std::string ContextBridge::analyzeContext(const std::string& stateJson) {
 }
 
 std::string ContextBridge::getContextualParameters(const std::string& stateJson) {
-    if (!available_ || !getContextualParametersFunc_) {
+    if (!isAvailable() || !getContextualParametersFunc_) {
         return "{}";
     }
 
 #ifdef PYTHON_AVAILABLE
-    PyObject* func = static_cast<PyObject*>(getContextualParametersFunc_);
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(stateJson.c_str()));
 
-    PyObject* result = PyObject_CallObject(func, args);
+    PyObject* result = PyObject_CallObject(getContextualParametersFunc_, args);
     Py_DECREF(args);
 
     if (!result) {
@@ -172,16 +134,15 @@ std::string ContextBridge::getContextualParameters(const std::string& stateJson)
 }
 
 void ContextBridge::updateContext(const std::string& stateJson) {
-    if (!available_ || !updateContextFunc_) {
+    if (!isAvailable() || !updateContextFunc_) {
         return;
     }
 
 #ifdef PYTHON_AVAILABLE
-    PyObject* func = static_cast<PyObject*>(updateContextFunc_);
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(stateJson.c_str()));
 
-    PyObject* result = PyObject_CallObject(func, args);
+    PyObject* result = PyObject_CallObject(updateContextFunc_, args);
     Py_DECREF(args);
 
     if (result) {
@@ -196,16 +157,15 @@ void ContextBridge::updateContext(const std::string& stateJson) {
 }
 
 std::string ContextBridge::getContextualSuggestions(const std::string& stateJson) {
-    if (!available_ || !getSuggestionsFunc_) {
+    if (!isAvailable() || !getSuggestionsFunc_) {
         return R"({"suggestions": []})";
     }
 
 #ifdef PYTHON_AVAILABLE
-    PyObject* func = static_cast<PyObject*>(getSuggestionsFunc_);
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(stateJson.c_str()));
 
-    PyObject* result = PyObject_CallObject(func, args);
+    PyObject* result = PyObject_CallObject(getSuggestionsFunc_, args);
     Py_DECREF(args);
 
     if (!result) {
@@ -229,51 +189,7 @@ std::string ContextBridge::getContextualSuggestions(const std::string& stateJson
 }
 
 void ContextBridge::clearCache() {
-    contextCache_.clear();
-}
-
-std::string ContextBridge::getCachedContext(const std::string& cacheKey) {
-    auto it = contextCache_.find(cacheKey);
-    if (it == contextCache_.end()) {
-        return "";
-    }
-
-    // Check if cache entry is still valid
-    auto now = std::chrono::steady_clock::now();
-    auto age = std::chrono::duration_cast<std::chrono::milliseconds>(
-        now - it->second.timestamp
-    ).count();
-
-    if (age > CACHE_TTL_MS) {
-        contextCache_.erase(it);
-        return "";
-    }
-
-    return it->second.contextJson;
-}
-
-void ContextBridge::cacheContext(
-    const std::string& cacheKey,
-    const std::string& contextJson
-) {
-    CachedContext cached;
-    cached.contextJson = contextJson;
-    cached.stateHash = cacheKey;
-    cached.timestamp = std::chrono::steady_clock::now();
-
-    contextCache_[cacheKey] = cached;
-
-    // Limit cache size (keep most recent 50 entries)
-    if (contextCache_.size() > 50) {
-        // Remove oldest entry
-        auto oldest = contextCache_.begin();
-        for (auto it = contextCache_.begin(); it != contextCache_.end(); ++it) {
-            if (it->second.timestamp < oldest->second.timestamp) {
-                oldest = it;
-            }
-        }
-        contextCache_.erase(oldest);
-    }
+    cache_.clear();
 }
 
 std::string ContextBridge::hashState(const std::string& stateJson) {

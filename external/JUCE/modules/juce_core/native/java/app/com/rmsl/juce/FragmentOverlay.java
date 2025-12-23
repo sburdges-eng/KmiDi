@@ -22,7 +22,7 @@
 
 package com.rmsl.juce;
 
-import android.app.DialogFragment;
+import androidx.fragment.app.DialogFragment;
 import android.content.Intent;
 import android.os.Bundle;
 

@@ -13,9 +13,15 @@
  *          Allows complex intents to be processed in Python when needed
  */
 
+#include "bridge/PythonBridgeBase.h"
+#include "bridge/CacheManager.h"
 #include "common/KellyTypes.h"  // Unified type system
 #include <string>
 #include <memory>
+
+// Forward declaration
+struct _object;
+typedef struct _object PyObject;
 
 namespace kelly {
 
@@ -30,10 +36,14 @@ namespace kelly {
  * - Python calls are made from worker thread, not audio thread
  * - Results are cached to avoid repeated processing
  */
-class IntentBridge {
+class IntentBridge : public bridge::PythonBridgeBase {
 public:
     IntentBridge();
-    ~IntentBridge();
+    ~IntentBridge() override;
+
+    // BridgeBase interface
+    bool initialize() override;
+    void shutdown() override;
 
     /**
      * Process intent using Python intent_processor.
@@ -106,34 +116,19 @@ public:
      */
     std::string getSuggestedRuleBreaks(const std::string& emotion);
 
-    /**
-     * Check if Python bridge is available.
-     */
-    bool isAvailable() const { return available_; }
-
 private:
-    bool available_;
-
     // Python function pointers
-    void* processIntentFunc_;
-    void* convertToCppFunc_;
-    void* convertToPythonFunc_;
-    void* validateResultFunc_;
-    void* getRuleBreaksFunc_;
+    PyObject* processIntentFunc_ = nullptr;
+    PyObject* convertToCppFunc_ = nullptr;
+    PyObject* convertToPythonFunc_ = nullptr;
+    PyObject* validateResultFunc_ = nullptr;
+    PyObject* getRuleBreaksFunc_ = nullptr;
+    PyObject* module_ = nullptr;
 
-    // Result cache (key: intent hash, value: cached result)
-    struct CachedResult {
-        std::string resultJson;
-        std::string intentHash;
-        std::chrono::steady_clock::time_point timestamp;
-    };
-    std::map<std::string, CachedResult> resultCache_;
+    // Result cache
+    bridge::CacheManager cache_;
     static constexpr int CACHE_TTL_MS = 5000;  // Cache for 5 seconds
 
-    bool initializePython();
-    void shutdownPython();
-    std::string getCachedResult(const std::string& cacheKey);
-    void cacheResult(const std::string& cacheKey, const std::string& resultJson);
     std::string hashIntent(const std::string& intentJson);
     IntentResult parseIntentResult(const std::string& resultJson);
 };

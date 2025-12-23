@@ -4,6 +4,7 @@
  */
 
 #include "daiw/memory.hpp"
+#include "daiw/types.hpp"
 #include <cassert>
 #include <algorithm>
 

@@ -1,13 +1,13 @@
-# Penta Core - Build Instructions
+# Kelly - Build Instructions
 
 ## Prerequisites
 
 ### All Platforms
 
-- CMake 3.20 or higher
+- CMake 3.27 or higher
 - C++20 compatible compiler
-- Python 3.8+ with development headers
 - Git (for fetching dependencies)
+- Qt6 (for KellyCore library)
 
 ### Platform-Specific
 
@@ -16,21 +16,21 @@
 # Install Xcode Command Line Tools
 xcode-select --install
 
-# Install CMake and Python (via Homebrew)
-brew install cmake python@3.11
+# Install CMake and Qt6 (via Homebrew)
+brew install cmake qt6
 ```
 
 #### Linux (Ubuntu/Debian)
 ```bash
 sudo apt update
-sudo apt install build-essential cmake python3-dev python3-pip git
+sudo apt install build-essential cmake qt6-base-dev git
 ```
 
 #### Windows
-```bash
+```powershell
 # Install Visual Studio 2019 or later with C++ tools
 # Install CMake from cmake.org
-# Install Python from python.org
+# Install Qt6 from qt.io or via vcpkg
 ```
 
 ## Quick Start
@@ -38,21 +38,21 @@ sudo apt install build-essential cmake python3-dev python3-pip git
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/penta-core.git
-cd penta-core
+git clone <repository-url>
+cd kelly
 ```
 
-### 2. Build C++ Library and Python Bindings
+### 2. Build Kelly Project
 
 ```bash
 # Create build directory
 mkdir build && cd build
 
 # Configure (Release build with all features)
-cmake .. -DCMAKE_BUILD_TYPE=Release \
-         -DPENTA_BUILD_PYTHON_BINDINGS=ON \
-         -DPENTA_BUILD_JUCE_PLUGIN=ON \
-         -DPENTA_ENABLE_SIMD=ON
+CMAKE_PREFIX_PATH="$(brew --prefix qt6)" cmake .. \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_PLUGINS=ON \
+    -DBUILD_TESTS=ON
 
 # Build (use -j for parallel compilation)
 cmake --build . --config Release -j8
@@ -61,27 +61,18 @@ cmake --build . --config Release -j8
 ctest --output-on-failure
 ```
 
-### 3. Install Python Module
+### 3. Install
 
 ```bash
-# Install to user site-packages
-cmake --install . --prefix ~/.local
-
-# Or install in development mode
-pip install -e .
+# Install to system or custom prefix
+cmake --install . --prefix /usr/local
 ```
 
-### 4. Run Examples
+### 4. Run Application
 
 ```bash
-# Test harmony analysis
-python examples/harmony_example.py
-
-# Test groove analysis
-python examples/groove_example.py
-
-# Test full integration
-python examples/integration_example.py
+# Run Kelly GUI application
+./build/KellyApp
 ```
 
 ## Build Options
@@ -91,41 +82,40 @@ python examples/integration_example.py
 | Option | Default | Description |
 |--------|---------|-------------|
 | `CMAKE_BUILD_TYPE` | Debug | Build type: Debug, Release, RelWithDebInfo |
-| `PENTA_BUILD_PYTHON_BINDINGS` | ON | Build pybind11 Python module |
-| `PENTA_BUILD_JUCE_PLUGIN` | ON | Build JUCE VST3/AU plugins |
-| `PENTA_BUILD_TESTS` | ON | Build unit tests |
-| `PENTA_ENABLE_SIMD` | ON | Enable SIMD optimizations (AVX2) |
-| `PENTA_ENABLE_LTO` | OFF | Enable link-time optimization |
+| `BUILD_PLUGINS` | ON | Build JUCE VST3 and CLAP plugins |
+| `BUILD_TESTS` | ON | Build unit tests |
+| `ENABLE_TRACY` | OFF | Enable Tracy profiling |
 
 ### Example Configurations
 
 #### Development Build
 ```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Debug \
-      -DPENTA_BUILD_TESTS=ON \
-      -DPENTA_ENABLE_SIMD=OFF
+CMAKE_PREFIX_PATH="$(brew --prefix qt6)" cmake -B build \
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DBUILD_TESTS=ON \
+    -DBUILD_PLUGINS=OFF
 ```
 
-#### Release Build (Maximum Performance)
+#### Release Build
 ```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Release \
-      -DPENTA_ENABLE_SIMD=ON \
-      -DPENTA_ENABLE_LTO=ON \
-      -DCMAKE_CXX_FLAGS="-march=native"
+CMAKE_PREFIX_PATH="$(brew --prefix qt6)" cmake -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_PLUGINS=ON \
+    -DBUILD_TESTS=ON
 ```
 
-#### Python-Only Build
+#### Application-Only Build
 ```bash
-cmake -B build -DPENTA_BUILD_PYTHON_BINDINGS=ON \
-      -DPENTA_BUILD_JUCE_PLUGIN=OFF \
-      -DPENTA_BUILD_TESTS=OFF
+CMAKE_PREFIX_PATH="$(brew --prefix qt6)" cmake -B build \
+    -DBUILD_PLUGINS=OFF \
+    -DBUILD_TESTS=OFF
 ```
 
 #### Plugin-Only Build
 ```bash
-cmake -B build -DPENTA_BUILD_PYTHON_BINDINGS=OFF \
-      -DPENTA_BUILD_JUCE_PLUGIN=ON \
-      -DPENTA_BUILD_TESTS=OFF
+CMAKE_PREFIX_PATH="$(brew --prefix qt6)" cmake -B build \
+    -DBUILD_PLUGINS=ON \
+    -DBUILD_TESTS=OFF
 ```
 
 ## Advanced Configuration
@@ -153,43 +143,41 @@ cmake --build build
 
 ### Using System Libraries
 
-By default, dependencies are fetched via CMake FetchContent. To use system libraries:
+JUCE is included as a git subdirectory in `external/JUCE/`. To use a system-installed JUCE:
 
 ```bash
 # Install dependencies first
 # macOS
-brew install juce pybind11
+brew install qt6
 
 # Linux
-sudo apt install libjuce-dev pybind11-dev
+sudo apt install qt6-base-dev
 
-# Configure with system libraries
-cmake -B build -DFETCHCONTENT_FULLY_DISCONNECTED=ON
+# JUCE is included in the repository, no additional installation needed
 ```
 
 ## Building Specific Targets
 
-### C++ Library Only
+### Core Library Only
 ```bash
-cmake --build build --target penta_core
+cmake --build build --target KellyCore
 ```
 
-### Python Bindings Only
+### GUI Application Only
 ```bash
-cmake --build build --target penta_core_native
+cmake --build build --target KellyApp
 ```
 
 ### JUCE Plugin Only
 ```bash
-cmake --build build --target PentaCorePlugin_VST3
-cmake --build build --target PentaCorePlugin_AU
-cmake --build build --target PentaCorePlugin_Standalone
+cmake --build build --target KellyPlugin_VST3
+cmake --build build --target KellyPlugin_CLAP
 ```
 
 ### Tests Only
 ```bash
-cmake --build build --target penta_tests
-./build/tests/penta_tests
+cmake --build build --target KellyTests
+cd build && ctest --output-on-failure
 ```
 
 ## Plugin Installation
@@ -198,81 +186,88 @@ cmake --build build --target penta_tests
 
 ```bash
 # VST3
-cp -r build/plugins/PentaCorePlugin_artefacts/Release/VST3/PentaCorePlugin.vst3 \
+cp -r build/KellyPlugin_artefacts/Release/VST3/KellyPlugin.vst3 \
       ~/Library/Audio/Plug-Ins/VST3/
 
-# AU
-cp -r build/plugins/PentaCorePlugin_artefacts/Release/AU/PentaCorePlugin.component \
-      ~/Library/Audio/Plug-Ins/Components/
-
-# Standalone
-open build/plugins/PentaCorePlugin_artefacts/Release/Standalone/PentaCorePlugin.app
+# CLAP
+cp -r build/KellyPlugin_artefacts/Release/CLAP/KellyPlugin.clap \
+      ~/Library/Audio/Plug-Ins/CLAP/
 ```
 
 ### Linux
 
 ```bash
 # VST3
-cp -r build/plugins/PentaCorePlugin_artefacts/Release/VST3/PentaCorePlugin.vst3 \
+cp -r build/KellyPlugin_artefacts/Release/VST3/KellyPlugin.vst3 \
       ~/.vst3/
 
-# Standalone
-./build/plugins/PentaCorePlugin_artefacts/Release/Standalone/PentaCorePlugin
+# CLAP
+cp -r build/KellyPlugin_artefacts/Release/CLAP/KellyPlugin.clap \
+      ~/.clap/
 ```
 
 ### Windows
 
 ```powershell
 # VST3
-copy build\plugins\PentaCorePlugin_artefacts\Release\VST3\PentaCorePlugin.vst3 ^
+copy build\KellyPlugin_artefacts\Release\VST3\KellyPlugin.vst3 ^
      %CommonProgramFiles%\VST3\
 
-# Standalone
-start build\plugins\PentaCorePlugin_artefacts\Release\Standalone\PentaCorePlugin.exe
+# CLAP
+copy build\KellyPlugin_artefacts\Release\CLAP\KellyPlugin.clap ^
+     %CommonProgramFiles%\CLAP\
 ```
 
 ## Troubleshooting
 
-### CMake Can't Find Python
+### CMake Can't Find Qt6
 
 ```bash
-# Specify Python explicitly
-cmake -B build -DPython3_EXECUTABLE=/usr/bin/python3.11
-```
+# macOS: Specify Qt6 path explicitly
+CMAKE_PREFIX_PATH="$(brew --prefix qt6)" cmake -B build
 
-### Missing pybind11
+# Linux: Install Qt6 development packages
+sudo apt install qt6-base-dev
 
-```bash
-# Install via pip
-pip install pybind11
-
-# Or let CMake fetch it (default)
-cmake -B build  # FetchContent will download pybind11
-```
-
-### SIMD Compilation Errors
-
-If you get AVX2-related errors:
-
-```bash
-# Disable SIMD
-cmake -B build -DPENTA_ENABLE_SIMD=OFF
+# Or specify Qt6_DIR manually
+cmake -B build -DQt6_DIR=/path/to/qt6/lib/cmake/Qt6
 ```
 
 ### JUCE Build Errors
 
+**JUCE Setup Status (Updated Dec 2024):**
+- JUCE 7.0.12 is installed at `external/JUCE/`
+- All required modules are present and verified
+- macOS 15.0 compatibility patch applied
+- Qt6 dependency installed via Homebrew
+
+**If JUCE is missing:**
 ```bash
-# Fetch latest JUCE
-rm -rf build/_deps/juce-*
-cmake -B build  # Will re-fetch JUCE
+# JUCE is included as a git subdirectory
+# If missing, it should be cloned automatically, or manually:
+cd external
+git clone --depth 1 --branch 7.0.12 https://github.com/juce-framework/JUCE.git JUCE
+```
+
+**If you see macOS 15.0 API errors:**
+The project includes a patch for `CGWindowListCreateImage` deprecation in `external/JUCE/modules/juce_gui_basics/native/juce_Windowing_mac.mm`. This is already applied.
+
+**Qt6 Setup:**
+```bash
+# Install Qt6 (required for KellyCore)
+brew install qt6
+
+# Configure build with Qt6 path
+CMAKE_PREFIX_PATH="$(brew --prefix qt6)" cmake -B build
 ```
 
 ### Link Errors on Linux
 
 ```bash
-# Install missing libraries
+# Install missing libraries for JUCE
 sudo apt install libasound2-dev libfreetype6-dev libx11-dev \
-                 libxrandr-dev libxinerama-dev libxcursor-dev
+                 libxrandr-dev libxinerama-dev libxcursor-dev \
+                 libxcomposite-dev libxcursor-dev libxext-dev
 ```
 
 ## Development Workflow
@@ -285,7 +280,8 @@ sudo apt install libasound2-dev libfreetype6-dev libx11-dev \
 cmake --build build
 
 # Rebuild specific target
-cmake --build build --target penta_core
+cmake --build build --target KellyCore
+cmake --build build --target KellyApp
 ```
 
 ### Clean Build
@@ -329,14 +325,24 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install qt6 cmake
+    
     - name: Install dependencies (Ubuntu)
       if: runner.os == 'Linux'
       run: |
         sudo apt update
-        sudo apt install build-essential cmake python3-dev
+        sudo apt install build-essential cmake qt6-base-dev
     
     - name: Configure
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      run: |
+        if [ "${{ runner.os }}" == "macOS" ]; then
+          CMAKE_PREFIX_PATH="$(brew --prefix qt6)" cmake -B build -DCMAKE_BUILD_TYPE=Release
+        else
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+        fi
     
     - name: Build
       run: cmake --build build --config Release
@@ -347,36 +353,33 @@ jobs:
 
 ## Performance Validation
 
-### Benchmark Builds
+### Release Build
 
 ```bash
-# Build with optimizations and benchmarks
-cmake -B build -DCMAKE_BUILD_TYPE=Release \
-      -DPENTA_BUILD_BENCHMARKS=ON \
-      -DPENTA_ENABLE_SIMD=ON \
-      -DPENTA_ENABLE_LTO=ON
+# Build with optimizations
+CMAKE_PREFIX_PATH="$(brew --prefix qt6)" cmake -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_PLUGINS=ON
 
-cmake --build build --target benchmarks
-
-# Run benchmarks
-./build/benchmarks/harmony_benchmark
-./build/benchmarks/groove_benchmark
+cmake --build build --config Release
 ```
 
 ### Profile-Guided Optimization (Advanced)
 
 ```bash
 # Step 1: Build with instrumentation
-cmake -B build-pgo -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_CXX_FLAGS="-fprofile-generate"
+CMAKE_PREFIX_PATH="$(brew --prefix qt6)" cmake -B build-pgo \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_FLAGS="-fprofile-generate"
 cmake --build build-pgo
 
 # Step 2: Run representative workload
-./build-pgo/examples/integration_example
+./build-pgo/KellyApp
 
 # Step 3: Rebuild with profile data
-cmake -B build -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_CXX_FLAGS="-fprofile-use"
+CMAKE_PREFIX_PATH="$(brew --prefix qt6)" cmake -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_FLAGS="-fprofile-use"
 cmake --build build
 ```
 
@@ -389,25 +392,11 @@ cmake --build build
 brew install doxygen  # macOS
 sudo apt install doxygen  # Linux
 
-# Generate docs
+# Generate docs (if Doxyfile exists)
 doxygen Doxyfile
 
 # Open docs
 open docs/html/index.html
-```
-
-### Python API Docs
-
-```bash
-# Install Sphinx
-pip install sphinx sphinx-rtd-theme
-
-# Generate docs
-cd docs/python
-make html
-
-# Open docs
-open _build/html/index.html
 ```
 
 ## Support
@@ -421,10 +410,42 @@ For build issues, please:
    - Compiler version
    - Full error messages
 
+## Development Progress
+
+### Current Status
+
+The Kelly project is actively under development with the following components:
+
+#### ✅ Core Library (Complete)
+- **KellyCore:** Static library with emotion engine, thesaurus, groove templates, chord diagnostics, MIDI pipeline, and intent processor
+- **JUCE Integration:** All required JUCE modules integrated and tested
+- **Qt6 Integration:** GUI framework integrated for KellyApp
+
+#### ✅ Build System (Complete)
+- **CMake Configuration:** Fully configured with JUCE 7.0.12
+- **Plugin Support:** VST3 and CLAP plugin formats supported
+- **Testing Framework:** Catch2 integration for unit tests
+- **macOS 15.0 Compatibility:** Patched for latest macOS APIs
+
+#### 🚧 GUI Application (In Progress)
+- **KellyApp:** Qt6-based GUI application
+- Basic window structure implemented
+
+#### 📋 Future Development
+- Enhanced plugin functionality
+- Additional emotion processing features
+- Advanced MIDI manipulation
+- Real-time audio processing
+
+See project documentation for detailed roadmap.
+
+---
+
 ## Next Steps
 
 After successful build:
-1. Run examples in `examples/` directory
-2. Read `docs/PHASE3_DESIGN.md` for architecture overview
-3. Check `docs/API.md` for API reference
-4. Explore unit tests for usage examples
+1. Run the Kelly GUI application: `./build/KellyApp`
+2. Build and test plugins: `cmake --build build --target KellyPlugin_VST3`
+3. Run unit tests: `cd build && ctest --output-on-failure`
+4. Explore source code in `src/` directory
+5. Check `JUCE_SETUP.md` for JUCE-specific documentation

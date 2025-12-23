@@ -119,10 +119,8 @@ private:
 
   void updateHistoricalData();
 
-#if HEALTHKIT_AVAILABLE
-  // HealthKit store (Objective-C object, forward declared)
-  void *healthStore_ = nullptr;
-#endif
+  // HealthKit implementation (Objective-C object, forward declared)
+  void *impl_ = nullptr;
 };
 
 } // namespace biometric

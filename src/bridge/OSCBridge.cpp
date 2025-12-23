@@ -1,17 +1,23 @@
 #include "bridge/OSCBridge.h"
 #include <juce_osc/juce_osc.h>
 #include <juce_core/juce_core.h>
-#include <sstream>
-#include <iostream>
 
 namespace kelly {
 namespace bridge {
 
-OSCBridge::OSCBridge() {
+OSCBridge::OSCBridge()
+    : BridgeBase("OSCBridge")
+{
+    sender_ = std::make_unique<juce::OSCSender>();
+    receiver_ = std::make_unique<juce::OSCReceiver>();
 }
 
 OSCBridge::~OSCBridge() {
     shutdown();
+}
+
+bool OSCBridge::initialize() {
+    return initialize("127.0.0.1", 5005, 5006);
 }
 
 bool OSCBridge::initialize(
@@ -19,24 +25,25 @@ bool OSCBridge::initialize(
     int brainPort,
     int listenPort)
 {
+    if (connected_) {
+        shutdown();
+    }
+
     brainHost_ = brainHost;
     brainPort_ = brainPort;
     listenPort_ = listenPort;
 
     try {
         // Create OSC sender
-        sender_ = std::make_unique<juce::OSCSender>();
         if (!sender_->connect(brainHost, brainPort)) {
-            juce::Logger::writeToLog("OSCBridge: Failed to connect sender to " +
-                                     brainHost + ":" + juce::String(brainPort));
+            logError("Failed to connect sender to " + brainHost + ":" + std::to_string(brainPort));
             return false;
         }
 
         // Create OSC receiver
-        receiver_ = std::make_unique<juce::OSCReceiver>();
         if (!receiver_->connect(listenPort)) {
-            juce::Logger::writeToLog("OSCBridge: Failed to bind receiver to port " +
-                                     juce::String(listenPort));
+            logError("Failed to bind receiver to port " + std::to_string(listenPort));
+            sender_->disconnect();
             return false;
         }
 
@@ -44,14 +51,21 @@ bool OSCBridge::initialize(
         receiver_->addListener(this);
 
         connected_ = true;
-        juce::Logger::writeToLog("OSCBridge: Connected to brain server at " +
-                                 brainHost + ":" + juce::String(brainPort));
+        setAvailable(true);
+        logInfo("Connected to brain server at " + brainHost + ":" + std::to_string(brainPort));
         return true;
     } catch (const std::exception& e) {
-        juce::Logger::writeToLog("OSCBridge: Exception during initialization: " +
-                                 std::string(e.what()));
+        logError("Exception during initialization: " + std::string(e.what()));
         return false;
     }
+}
+
+bool OSCBridge::connect(const std::string& host, int serverPort, int responsePort) {
+    return initialize(host, serverPort, responsePort);
+}
+
+void OSCBridge::disconnect() {
+    shutdown();
 }
 
 void OSCBridge::requestGenerate(
@@ -62,7 +76,7 @@ void OSCBridge::requestGenerate(
     OSCResponseHandler callback)
 {
     if (!connected_) {
-        juce::Logger::writeToLog("OSCBridge: Not connected, cannot send generate request");
+        logError("Not connected, cannot send generate request");
         return;
     }
 
@@ -78,16 +92,60 @@ void OSCBridge::requestGenerate(
 
     // Store callback
     int msgId = generateMessageId();
-    responseHandlers_[msgId] = callback;
+    PendingRequest request;
+    request.varCallback = callback;
+    request.timestamp = juce::Time::getCurrentTime();
+    pendingRequests_[msgId] = request;
 
     // Send OSC message
     juce::OSCMessage msg("/daiw/generate");
-    msg.addString(jsonParams);
+    msg.addString(jsonParams.toStdString());
     msg.addInt32(msgId);  // Include message ID for response matching
 
     if (!sender_->send(msg)) {
-        juce::Logger::writeToLog("OSCBridge: Failed to send generate request");
-        responseHandlers_.erase(msgId);
+        logError("Failed to send generate request");
+        pendingRequests_.erase(msgId);
+    }
+}
+
+void OSCBridge::requestGenerate(
+    const std::string& text,
+    float motivation,
+    float chaos,
+    float vulnerability,
+    OSCStringResponseHandler callback)
+{
+    if (!connected_) {
+        if (callback) {
+            callback(R"({"status":"error","message":"Not connected"})");
+        }
+        return;
+    }
+
+    // Create JSON request
+    juce::String jsonRequest = juce::String::formatted(
+        R"({"text":"%s","motivation":%.2f,"chaos":%.2f,"vulnerability":%.2f,"response_port":%d})",
+        text.c_str(), motivation, chaos, vulnerability, listenPort_
+    );
+
+    // Store callback
+    int msgId = generateMessageId();
+    PendingRequest request;
+    request.stringCallback = callback;
+    request.timestamp = juce::Time::getCurrentTime();
+    pendingRequests_[msgId] = request;
+
+    // Send OSC message
+    juce::OSCMessage msg("/daiw/generate");
+    msg.addString(jsonRequest.toStdString());
+    msg.addInt32(msgId);
+
+    if (!sender_->send(msg)) {
+        logError("Failed to send generate request");
+        if (callback) {
+            callback(R"({"status":"error","message":"Send failed"})");
+        }
+        pendingRequests_.erase(msgId);
     }
 }
 
@@ -98,13 +156,45 @@ void OSCBridge::requestAnalyzeChords(
     if (!connected_) return;
 
     int msgId = generateMessageId();
-    responseHandlers_[msgId] = callback;
+    PendingRequest request;
+    request.varCallback = callback;
+    request.timestamp = juce::Time::getCurrentTime();
+    pendingRequests_[msgId] = request;
 
     juce::OSCMessage msg("/daiw/analyze/chords");
     msg.addString(progression);
     msg.addInt32(msgId);
 
     sender_->send(msg);
+}
+
+void OSCBridge::requestAnalyzeChords(
+    const std::string& progression,
+    OSCStringResponseHandler callback)
+{
+    if (!connected_) {
+        if (callback) {
+            callback(R"({"status":"error","message":"Not connected"})");
+        }
+        return;
+    }
+
+    int msgId = generateMessageId();
+    PendingRequest request;
+    request.stringCallback = callback;
+    request.timestamp = juce::Time::getCurrentTime();
+    pendingRequests_[msgId] = request;
+
+    juce::OSCMessage msg("/daiw/analyze/chords");
+    msg.addString(progression);
+    msg.addInt32(msgId);
+
+    if (!sender_->send(msg)) {
+        if (callback) {
+            callback(R"({"status":"error","message":"Send failed"})");
+        }
+        pendingRequests_.erase(msgId);
+    }
 }
 
 void OSCBridge::requestIntentProcess(
@@ -114,13 +204,45 @@ void OSCBridge::requestIntentProcess(
     if (!connected_) return;
 
     int msgId = generateMessageId();
-    responseHandlers_[msgId] = callback;
+    PendingRequest request;
+    request.varCallback = callback;
+    request.timestamp = juce::Time::getCurrentTime();
+    pendingRequests_[msgId] = request;
 
     juce::OSCMessage msg("/daiw/intent/process");
     msg.addString(intentFile);
     msg.addInt32(msgId);
 
     sender_->send(msg);
+}
+
+void OSCBridge::requestIntentProcess(
+    const std::string& intentFile,
+    OSCStringResponseHandler callback)
+{
+    if (!connected_) {
+        if (callback) {
+            callback(R"({"status":"error","message":"Not connected"})");
+        }
+        return;
+    }
+
+    int msgId = generateMessageId();
+    PendingRequest request;
+    request.stringCallback = callback;
+    request.timestamp = juce::Time::getCurrentTime();
+    pendingRequests_[msgId] = request;
+
+    juce::OSCMessage msg("/daiw/intent/process");
+    msg.addString(intentFile);
+    msg.addInt32(msgId);
+
+    if (!sender_->send(msg)) {
+        if (callback) {
+            callback(R"({"status":"error","message":"Send failed"})");
+        }
+        pendingRequests_.erase(msgId);
+    }
 }
 
 void OSCBridge::requestIntentSuggest(
@@ -130,7 +252,10 @@ void OSCBridge::requestIntentSuggest(
     if (!connected_) return;
 
     int msgId = generateMessageId();
-    responseHandlers_[msgId] = callback;
+    PendingRequest request;
+    request.varCallback = callback;
+    request.timestamp = juce::Time::getCurrentTime();
+    pendingRequests_[msgId] = request;
 
     juce::OSCMessage msg("/daiw/intent/suggest");
     msg.addString(emotion);
@@ -139,17 +264,75 @@ void OSCBridge::requestIntentSuggest(
     sender_->send(msg);
 }
 
+void OSCBridge::requestIntentSuggest(
+    const std::string& emotion,
+    OSCStringResponseHandler callback)
+{
+    if (!connected_) {
+        if (callback) {
+            callback(R"({"status":"error","message":"Not connected"})");
+        }
+        return;
+    }
+
+    int msgId = generateMessageId();
+    PendingRequest request;
+    request.stringCallback = callback;
+    request.timestamp = juce::Time::getCurrentTime();
+    pendingRequests_[msgId] = request;
+
+    juce::OSCMessage msg("/daiw/intent/suggest");
+    msg.addString(emotion);
+    msg.addInt32(msgId);
+
+    if (!sender_->send(msg)) {
+        if (callback) {
+            callback(R"({"status":"error","message":"Send failed"})");
+        }
+        pendingRequests_.erase(msgId);
+    }
+}
+
 void OSCBridge::ping(OSCResponseHandler callback)
 {
     if (!connected_) return;
 
     int msgId = generateMessageId();
-    responseHandlers_[msgId] = callback;
+    PendingRequest request;
+    request.varCallback = callback;
+    request.timestamp = juce::Time::getCurrentTime();
+    pendingRequests_[msgId] = request;
 
     juce::OSCMessage msg("/daiw/ping");
     msg.addInt32(msgId);
 
     sender_->send(msg);
+}
+
+void OSCBridge::ping(OSCStringResponseHandler callback)
+{
+    if (!connected_) {
+        if (callback) {
+            callback(R"({"status":"error","message":"Not connected"})");
+        }
+        return;
+    }
+
+    int msgId = generateMessageId();
+    PendingRequest request;
+    request.stringCallback = callback;
+    request.timestamp = juce::Time::getCurrentTime();
+    pendingRequests_[msgId] = request;
+
+    juce::OSCMessage msg("/daiw/ping");
+    msg.addInt32(msgId);
+
+    if (!sender_->send(msg)) {
+        if (callback) {
+            callback(R"({"status":"error","message":"Send failed"})");
+        }
+        pendingRequests_.erase(msgId);
+    }
 }
 
 void OSCBridge::shutdown()
@@ -164,72 +347,108 @@ void OSCBridge::shutdown()
     }
 
     connected_ = false;
-    responseHandlers_.clear();
+    setAvailable(false);
+    pendingRequests_.clear();
 }
 
-bool OSCBridge::sendMessage(const OSCMessage& message)
+void OSCBridge::processMessages()
 {
-    if (!connected_ || !sender_) {
-        return false;
-    }
-
-    juce::OSCMessage oscMsg(message.address);
-    for (const auto& arg : message.arguments) {
-        // Convert juce::var to appropriate OSC argument type
-        if (arg.isInt()) {
-            oscMsg.addInt32(static_cast<int>(arg));
-        } else if (arg.isDouble() || arg.isInt64()) {
-            oscMsg.addFloat32(static_cast<float>(static_cast<double>(arg)));
-        } else if (arg.isString()) {
-            oscMsg.addString(arg.toString());
-        } else if (arg.isBool()) {
-            oscMsg.addInt32(arg ? 1 : 0);
-        }
-    }
-
-    return sender_->send(oscMsg);
+    cleanupTimedOutRequests();
 }
 
-void OSCBridge::handleOSCMessage(const juce::OSCMessage& message)
+void OSCBridge::oscMessageReceived(const juce::OSCMessage& message)
 {
-    // Extract message ID if present
+    juce::String address = message.getAddressPattern().toString();
+
+    // Extract message ID if present (usually first argument)
     int msgId = -1;
     if (message.size() > 0 && message[0].isInt32()) {
         msgId = message[0].getInt32();
     }
 
-    // Find handler
-    if (msgId > 0 && responseHandlers_.count(msgId)) {
-        auto handler = responseHandlers_[msgId];
-        responseHandlers_.erase(msgId);
-
-        // Parse response (expect JSON string)
-        if (message.size() > 1 && message[1].isString()) {
-            juce::String jsonStr = message[1].getString();
-            juce::var response = juce::JSON::parse(jsonStr);
-            handler(response);
-        } else {
-            // Fallback: pass raw message
-            juce::var response;
-            handler(response);
+    // Handle by address pattern or message ID
+    if (msgId > 0 && pendingRequests_.count(msgId)) {
+        handleResponseMessage(message, msgId);
+    } else if (address == "/daiw/generate/response" ||
+               address == "/daiw/analyze/chords/response" ||
+               address == "/daiw/intent/process/response" ||
+               address == "/daiw/intent/suggest/response" ||
+               address == "/daiw/ping/response") {
+        // Try to find matching request by address (fallback)
+        // This handles cases where message ID matching fails
+        for (auto& [id, request] : pendingRequests_) {
+            if (request.stringCallback || request.varCallback) {
+                handleResponseMessage(message, id);
+                break;
+            }
         }
     } else {
-        // No handler found or no message ID
-        juce::Logger::writeToLog("OSCBridge: Received message without handler: " +
-                                 message.getAddressPattern().toString());
+        logError("Received unknown message: " + address.toStdString());
     }
-}
-
-void OSCBridge::oscMessageReceived(const juce::OSCMessage& message)
-{
-    handleOSCMessage(message);
 }
 
 void OSCBridge::oscBundleReceived(const juce::OSCBundle& bundle)
 {
     for (const auto& element : bundle) {
         if (element.isMessage()) {
-            handleOSCMessage(element.getMessage());
+            oscMessageReceived(element.getMessage());
+        }
+    }
+}
+
+void OSCBridge::handleResponseMessage(const juce::OSCMessage& message, int msgId)
+{
+    auto it = pendingRequests_.find(msgId);
+    if (it == pendingRequests_.end()) {
+        return;
+    }
+
+    PendingRequest request = it->second;
+    pendingRequests_.erase(it);
+
+    // Extract response JSON string
+    std::string responseJson;
+    if (message.size() >= 1 && message[0].isString()) {
+        responseJson = message[0].getString().toStdString();
+    } else if (message.size() >= 2 && message[1].isString()) {
+        responseJson = message[1].getString().toStdString();
+    }
+
+    // Call appropriate callback
+    if (request.stringCallback) {
+        if (!responseJson.empty()) {
+            request.stringCallback(responseJson);
+        } else {
+            request.stringCallback(R"({"status":"error","message":"Empty response"})");
+        }
+    } else if (request.varCallback) {
+        juce::var response;
+        if (!responseJson.empty()) {
+            response = juce::JSON::parse(juce::String(responseJson));
+        }
+        request.varCallback(response);
+    }
+}
+
+void OSCBridge::cleanupTimedOutRequests()
+{
+    auto now = juce::Time::getCurrentTime();
+    auto it = pendingRequests_.begin();
+    while (it != pendingRequests_.end()) {
+        auto elapsed = now - it->second.timestamp;
+        if (elapsed.inMilliseconds() > REQUEST_TIMEOUT_MS) {
+            // Call callback with timeout error
+            if (it->second.stringCallback) {
+                it->second.stringCallback(R"({"status":"error","message":"Request timeout"})");
+            } else if (it->second.varCallback) {
+                juce::DynamicObject::Ptr errorObj = new juce::DynamicObject();
+                errorObj->setProperty("status", juce::String("error"));
+                errorObj->setProperty("message", juce::String("Request timeout"));
+                it->second.varCallback(juce::var(errorObj));
+            }
+            it = pendingRequests_.erase(it);
+        } else {
+            ++it;
         }
     }
 }

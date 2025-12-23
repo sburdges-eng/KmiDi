@@ -18,10 +18,16 @@
  * - Suggestions are returned as JSON strings for easy parsing
  */
 
+#include "bridge/PythonBridgeBase.h"
+#include "bridge/CacheManager.h"
 #include <string>
 #include <vector>
 #include <map>
 #include <memory>
+
+// Forward declaration
+struct _object;
+typedef struct _object PyObject;
 
 namespace kelly {
 
@@ -36,10 +42,14 @@ namespace kelly {
  * - Python calls are cached to avoid blocking audio thread
  * - Suggestions are returned as JSON strings for easy parsing
  */
-class EngineIntelligenceBridge {
+class EngineIntelligenceBridge : public bridge::PythonBridgeBase {
 public:
     EngineIntelligenceBridge();
-    ~EngineIntelligenceBridge();
+    ~EngineIntelligenceBridge() override;
+
+    // BridgeBase interface
+    bool initialize() override;
+    void shutdown() override;
 
     /**
      * Get suggestions for a specific engine type.
@@ -100,11 +110,6 @@ public:
     );
 
     /**
-     * Check if Python bridge is available.
-     */
-    bool isAvailable() const { return available_; }
-
-    /**
      * Clear suggestion cache (force fresh suggestions on next call).
      */
     void clearCache();
@@ -119,31 +124,18 @@ public:
     );
 
 private:
-    bool available_;
+    // Python function pointers
+    PyObject* getEngineSuggestionsFunc_ = nullptr;
+    PyObject* getBatchSuggestionsFunc_ = nullptr;
+    PyObject* recordAppliedFunc_ = nullptr;
+    PyObject* reportEngineStateFunc_ = nullptr;
+    PyObject* module_ = nullptr;
 
-    // Python function pointers (if Python is embedded)
-    void* getEngineSuggestionsFunc_;
-    void* getBatchSuggestionsFunc_;
-    void* recordAppliedFunc_;
-    void* reportEngineStateFunc_;
-
-    // Suggestion cache (key: engineType + state hash, value: cached suggestion)
-    struct CachedSuggestion {
-        std::string suggestionJson;
-        std::string stateHash;
-        std::chrono::steady_clock::time_point timestamp;
-    };
-    std::map<std::string, CachedSuggestion> suggestionCache_;
+    // Suggestion cache
+    bridge::CacheManager cache_;
     static constexpr int CACHE_TTL_MS = 1000;  // Cache for 1 second
 
-    bool initializePython();
-    void shutdownPython();
-    std::string getCachedSuggestion(const std::string& cacheKey);
-    void cacheSuggestion(const std::string& cacheKey, const std::string& suggestionJson);
     std::string hashState(const std::string& stateJson);
-    void pruneCache();
-
-    static constexpr size_t MAX_CACHE_SIZE = 100;
 };
 
 } // namespace kelly

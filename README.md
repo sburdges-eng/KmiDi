@@ -1,151 +1,93 @@
-# Kelly - Therapeutic iDAW
+# Kelly - Therapeutic iDAW (Desktop)
 
-**Kelly** is a therapeutic interactive Digital Audio Workstation (iDAW) that translates emotions into music.
+Kelly is a therapeutic desktop app that turns emotional intent into music. The current stack pairs a React + Tauri shell (UI + desktop bridge) with a Python “Music Brain” API that serves generation and interrogation endpoints.
 
-## Overview
+## What’s working
+- React + Tauri UI renders and routes buttons (Load Emotions, Generate Music, Start Interrogation, Side A/B toggle) to Tauri commands.
+- Tauri Rust commands forward to the Music Brain API at `http://127.0.0.1:8000`.
+- Error boundary and API status indicator surface connectivity issues.
 
-Kelly helps users express and process emotions through music generation, using a unique three-phase intent system:
+## Architecture (high level)
+- **Frontend:** React (Vite) bundled by Tauri. Lives in `src/` with hooks such as `useMusicBrain`.
+- **Desktop bridge:** Tauri 2 Rust commands (`get_emotions`, `generate_music`, `interrogate`) forward HTTP calls to the Music Brain API.
+- **Music Brain API (Python):** Expected to run locally on `127.0.0.1:8000`, exposing `/emotions`, `/generate`, and `/interrogate`.
 
-1. **Wound** → Identify the emotional trigger
-2. **Emotion** → Map to the 216-node emotion thesaurus
-3. **Rule-breaks** → Express through intentional musical violations
+Flow:
+```
+React UI → Tauri command → HTTP → Music Brain API → JSON response → UI
+```
 
-## Architecture
+## Prerequisites
+- Node 18+ and npm
+- Rust toolchain with Cargo (required by Tauri 2 CLI)
+- Python 3.9+ with `pip` (virtualenv recommended)
 
-### Brain (Python 3.11)
-- **music21**: Music theory and analysis
-- **librosa**: Audio analysis
-- **mido**: MIDI processing
-- **Typer**: Command-line interface
-
-### Body (C++20)
-- **JUCE 7**: Audio framework
-- **Qt 6**: GUI framework
-- **CMake 3.27+**: Build system
-
-### Plugins
-- **CLAP 1.2**: Cross-platform plugin format
-- **VST3 3.7**: Steinberg plugin format
-
-### Audio Support
-- ASIO (Windows)
-- CoreAudio (macOS)
-- JACK (Linux)
-
-### Testing
-- **pytest**: Python tests
-- **Catch2**: C++ tests
-- **GoogleTest**: Additional C++ testing
-
-### CI/CD
-- GitHub Actions for continuous integration
-- Multi-platform builds (Linux, macOS, Windows)
-
-### Profiling
-- Tracy
-- Valgrind
-- Perfetto
-
-## Features
-
-- **216-node Emotion Thesaurus**: Comprehensive emotional mapping system
-- **Groove Templates**: Rhythmic patterns for different emotional expressions
-- **Chord Diagnostics**: Analyze and generate emotionally-appropriate harmonies
-- **MIDI Pipeline**: Real-time MIDI generation based on emotional state
-- **3-Phase Intent Processing**: Wound → Emotion → Musical Rule-breaks
-
-## Quick Start
-
-### Python CLI
-
+## Setup
 ```bash
-# Install Python dependencies
-pip install -e ".[dev]"
-
-# List available emotions
-kelly list-emotions
-
-# Process an emotional wound and generate music
-kelly process "feeling of loss" --intensity 0.8 --output output.mid --tempo 90
-
-# Show version
-kelly version
+cd "/Volumes/Extreme SSD/kelly-clean"
+npm install
+python -m pip install -e ".[dev]"
 ```
 
-### Building C++ Components
+## Run (development)
+1) Start the Music Brain API server  
+   - Preferred: `./scripts/start_music_brain_api.sh`  
+   - Default host/port: `127.0.0.1:8000`
 
+2) Launch the desktop app  
+   - `npm run tauri dev` (opens the Tauri window; proxies to the dev server on http://localhost:1420)  
+   - UI-only iteration (no Tauri shell): `npm run dev` (API calls still target `127.0.0.1:8000`)
+
+3) Smoke-test the API  
 ```bash
-# Configure
-cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_PLUGINS=ON
+curl http://127.0.0.1:8000/emotions
+```
+If the call fails, the UI will show “API Offline.”
 
-# Build
-cmake --build build --config Release
+## Tauri command → API contract
+The UI uses the hook from `.agents/handoffs/CURRENT_STATE.md` (mirrored here for quick reference):
 
-# Run tests
-cd build && ctest --output-on-failure
+| Tauri command       | HTTP call                     | Purpose                       |
+|---------------------|-------------------------------|-------------------------------|
+| `get_emotions`      | `GET /emotions`               | List available emotions/presets |
+| `generate_music`    | `POST /generate`              | Generate music for an intent  |
+| `interrogate`       | `POST /interrogate`           | Ask follow-ups / refine intent |
+
+Example payloads:
+- `POST /generate`
+```json
+{
+  "intent": {
+    "core_wound": "fear of being forgotten",
+    "core_desire": "to feel seen",
+    "emotional_intent": "anxious but hopeful",
+    "technical": {
+      "key": "C",
+      "bpm": 90,
+      "progression": ["I", "V", "vi", "IV"],
+      "genre": "indie"
+    }
+  },
+  "output_format": "midi"
+}
 ```
 
-## Project Structure
-
-```
-Kelly/
-├── src/
-│   ├── kelly/          # Python package
-│   │   ├── core/       # Core emotion processing
-│   │   ├── cli.py      # CLI interface
-│   │   └── __init__.py
-│   ├── core/           # C++ core library
-│   ├── gui/            # Qt GUI application
-│   └── plugin/         # JUCE audio plugins
-├── tests/
-│   ├── python/         # pytest tests
-│   └── cpp/            # Catch2 tests
-├── docs/               # Documentation
-├── .github/
-│   └── workflows/      # CI configuration
-├── CMakeLists.txt      # C++ build configuration
-├── pyproject.toml      # Python package configuration
-└── README.md
+- `POST /interrogate`
+```json
+{
+  "message": "Make it feel more grounded",
+  "session_id": "optional-session-id",
+  "context": {}
+}
 ```
 
-## Development
+- `GET /emotions`  
+Returns a JSON list/dictionary of available emotions.
 
-### Python Development
-
-```bash
-# Install in development mode
-pip install -e ".[dev]"
-
-# Run linting
-ruff check src/kelly tests/python
-
-# Format code
-black src/kelly tests/python
-
-# Type checking
-mypy src/kelly
-
-# Run tests with coverage
-pytest tests/python -v --cov=kelly
-```
-
-### C++ Development
-
-```bash
-# Configure with tests
-cmake -B build -DBUILD_TESTS=ON -DENABLE_TRACY=ON
-
-# Build
-cmake --build build
-
-# Run tests
-cd build && ctest -V
-```
+## Troubleshooting
+- If the UI shows “API Offline,” ensure the Music Brain API server is running on `127.0.0.1:8000`.
+- Use `curl http://127.0.0.1:8000/emotions` to verify availability.
+- Tauri CLI needs Rust + system toolchain; on macOS install Xcode command line tools (`xcode-select --install`).
 
 ## License
-
 MIT
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.

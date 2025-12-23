@@ -20,25 +20,63 @@ This is a **monorepo** containing multiple subsystems:
 
 ```
 iDAW/
-├── [Root Level Python]        # Core Python modules (analyzers, engines, tools)
+├── music_brain/               # Python Music Intelligence Toolkit (main package)
 ├── mcp_workstation/           # MCP Multi-AI Workstation (orchestration)
 ├── mcp_todo/                  # MCP TODO Server (cross-AI task management)
-├── penta_core_music-brain/    # MCP Swarm Server (multi-AI aggregation)
-├── DAiW-Music-Brain/          # Python Music Intelligence Toolkit
+├── mcp_penta_swarm/           # MCP Swarm Server (multi-AI aggregation)
+├── daiw_mcp/                  # DAiW MCP Server
+│
 ├── iDAW_Core/                 # JUCE Plugin Suite (C++)
 ├── src_penta-core/            # Penta-Core C++ Engines (implementation)
-├── include/penta/             # Penta-Core C++ Headers
+├── src/                       # Additional C++ source files
+├── include/                   # C++ Headers (including penta/)
+├── cpp_music_brain/           # C++ Music Brain implementation
+├── bindings/                  # Language bindings (Python/C++)
+│
 ├── python/penta_core/         # Python bindings for Penta-Core
-├── tests/                     # C++ unit tests
-├── tests_music-brain/         # Python integration tests
-├── tests_penta-core/          # Penta-Core C++ tests
-├── examples_music-brain/      # Example scripts and MIDI files
-├── external/                  # External library stubs (oscpack, readerwriterqueue)
-├── Data_Files/                # JSON data (progressions, genres, fingerprints)
+├── scripts/                   # Standalone utility scripts
+├── tools/                     # Development tools (kb_analyzer, audio_cataloger)
+│
+├── tests/                     # All tests (C++, Python, music_brain, penta_core)
+│   ├── python/                # Python unit tests
+│   ├── music_brain/           # Music Brain integration tests
+│   └── penta_core/            # Penta-Core tests
+├── examples/                  # Example scripts (music_brain, penta_core)
+├── benchmarks/                # Performance benchmarks
+│
+├── data/                      # JSON data files
+│   ├── emotions/              # Emotion thesaurus data
+│   ├── progressions/          # Chord progression databases
+│   ├── scales/                # Scale databases
+│   ├── grooves/               # Groove and genre maps
+│   ├── rules/                 # Rule breaking databases
+│   └── music_theory/          # Music theory data
+│
+├── docs/                      # All documentation
+│   ├── sprints/               # Sprint documentation
+│   ├── summaries/             # Project summaries
+│   ├── integrations/          # Integration guides
+│   ├── ai_setup/              # AI assistant setup guides
+│   ├── music_brain/           # Music Brain docs
+│   ├── penta_core/            # Penta-Core docs
+│   └── references/            # Reference materials
+│
 ├── vault/                     # Obsidian Knowledge Base
 ├── Production_Workflows/      # Production workflow guides
 ├── Songwriting_Guides/        # Songwriting methodology guides
-└── Theory_Reference/          # Music theory reference materials
+├── Theory_Reference/          # Music theory reference materials
+├── Templates/                 # Project and document templates
+│
+├── deployment/                # Deployment configs (Docker, specs)
+├── external/                  # External libraries (JUCE, oscpack, etc.)
+├── assets/                    # SVG and image assets
+├── web/                       # Web frontend (Vite, Tailwind)
+├── mobile/                    # Mobile app code
+├── iOS/                       # iOS-specific code
+├── macOS/                     # macOS-specific code
+├── plugins/                   # Audio plugins
+├── output/                    # Generated output files
+└── legacy/                    # Archived/legacy code
 ```
 
 ---

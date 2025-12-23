@@ -18,9 +18,15 @@
  * - Context is updated asynchronously
  */
 
+#include "bridge/PythonBridgeBase.h"
+#include "bridge/CacheManager.h"
 #include <string>
 #include <map>
 #include <memory>
+
+// Forward declaration
+struct _object;
+typedef struct _object PyObject;
 
 namespace kelly {
 
@@ -35,10 +41,14 @@ namespace kelly {
  * - Python calls are cached to avoid blocking
  * - Context is updated asynchronously
  */
-class ContextBridge {
+class ContextBridge : public bridge::PythonBridgeBase {
 public:
     ContextBridge();
-    ~ContextBridge();
+    ~ContextBridge() override;
+
+    // BridgeBase interface
+    bool initialize() override;
+    void shutdown() override;
 
     /**
      * Analyze current musical context.
@@ -99,37 +109,22 @@ public:
     std::string getContextualSuggestions(const std::string& stateJson);
 
     /**
-     * Check if Python bridge is available.
-     */
-    bool isAvailable() const { return available_; }
-
-    /**
      * Clear context cache (force fresh analysis on next call).
      */
     void clearCache();
 
 private:
-    bool available_;
-
     // Python function pointers
-    void* analyzeContextFunc_;
-    void* getContextualParametersFunc_;
-    void* updateContextFunc_;
-    void* getSuggestionsFunc_;
+    PyObject* analyzeContextFunc_ = nullptr;
+    PyObject* getContextualParametersFunc_ = nullptr;
+    PyObject* updateContextFunc_ = nullptr;
+    PyObject* getSuggestionsFunc_ = nullptr;
+    PyObject* module_ = nullptr;
 
-    // Context cache (key: state hash, value: cached context)
-    struct CachedContext {
-        std::string contextJson;
-        std::string stateHash;
-        std::chrono::steady_clock::time_point timestamp;
-    };
-    std::map<std::string, CachedContext> contextCache_;
+    // Context cache
+    bridge::CacheManager cache_;
     static constexpr int CACHE_TTL_MS = 2000;  // Cache for 2 seconds
 
-    bool initializePython();
-    void shutdownPython();
-    std::string getCachedContext(const std::string& cacheKey);
-    void cacheContext(const std::string& cacheKey, const std::string& contextJson);
     std::string hashState(const std::string& stateJson);
 };
 
