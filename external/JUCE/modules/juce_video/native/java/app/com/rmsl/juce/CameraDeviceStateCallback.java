@@ -26,6 +26,7 @@
 package com.rmsl.juce;
 
 import android.hardware.camera2.CameraDevice;
+import android.util.Log;
 
 public class CameraDeviceStateCallback extends CameraDevice.StateCallback
 {
@@ -54,6 +55,21 @@ public class CameraDeviceStateCallback extends CameraDevice.StateCallback
     @Override
     public void onError (CameraDevice camera, int error)
     {
+        if (camera == null)
+        {
+            Log.d ("JUCE", "CameraDeviceStateCallback.onError: camera is null");
+            return;
+        }
+
+        // Error codes: ERROR_CAMERA_IN_USE (1), ERROR_MAX_CAMERAS_IN_USE (2),
+        // ERROR_CAMERA_DISABLED (3), ERROR_CAMERA_DEVICE (4), ERROR_CAMERA_SERVICE (5)
+        // Valid range is 1-5
+        if (error < CameraDevice.StateCallback.ERROR_CAMERA_IN_USE ||
+            error > CameraDevice.StateCallback.ERROR_CAMERA_SERVICE)
+        {
+            Log.d ("JUCE", "CameraDeviceStateCallback.onError: invalid error code: " + error);
+        }
+
         cameraDeviceStateError (host, camera, error);
     }
 

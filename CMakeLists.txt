@@ -26,9 +26,11 @@ file(GLOB_RECURSE KELLY_CORE_SOURCES CONFIGURE_DEPENDS
 # Exclude app entry point and plugin sources from the core lib
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/gui/main.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/plugin/")
-# Exclude all source directories - the codebase has macro conflicts with system headers
-# This needs to be fixed properly by finding and fixing the macro pollution
-list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/")
+# NOTE: Previous line 31 had "list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/")"
+# which would exclude ALL source files (since all paths contain "/src/"), making
+# KELLY_CORE_SOURCES empty. This has been removed. If macro conflicts exist,
+# they should be fixed by excluding specific problematic files/directories rather
+# than excluding everything.
 
 add_library(KellyCore STATIC ${KELLY_CORE_SOURCES})
 

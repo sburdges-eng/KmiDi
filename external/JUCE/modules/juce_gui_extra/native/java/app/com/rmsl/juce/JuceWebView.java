@@ -27,7 +27,9 @@ package com.rmsl.juce;
 
 import android.graphics.Bitmap;
 import android.net.http.SslError;
+import android.os.Build;
 import android.os.Message;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -75,20 +77,51 @@ public class JuceWebView
                 webViewPageLoadStarted (host, view, url);
         }
 
+        @SuppressWarnings("deprecation")
         public WebResourceResponse shouldInterceptRequest (WebView view, String url)
         {
-            synchronized (hostLock)
+            // Deprecated in API 21, but kept for backward compatibility
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
             {
-                if (host != 0)
+                synchronized (hostLock)
                 {
-                    boolean shouldLoad = webViewPageLoadStarted (host, view, url);
+                    if (host != 0)
+                    {
+                        boolean shouldLoad = webViewPageLoadStarted (host, view, url);
 
-                    if (shouldLoad)
-                        return null;
+                        if (shouldLoad)
+                            return null;
+                    }
                 }
+
+                return new WebResourceResponse ("text/html", null, null);
             }
 
-            return new WebResourceResponse ("text/html", null, null);
+            // For API 21+, use the new method
+            return null;
+        }
+
+        @Override
+        public WebResourceResponse shouldInterceptRequest (WebView view, WebResourceRequest request)
+        {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            {
+                synchronized (hostLock)
+                {
+                    if (host != 0 && request != null && request.getUrl() != null)
+                    {
+                        String url = request.getUrl().toString();
+                        boolean shouldLoad = webViewPageLoadStarted (host, view, url);
+
+                        if (shouldLoad)
+                            return null;
+                    }
+                }
+
+                return new WebResourceResponse ("text/html", null, null);
+            }
+
+            return null;
         }
 
         private native boolean webViewPageLoadStarted (long host, WebView view, String url);

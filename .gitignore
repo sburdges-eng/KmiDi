@@ -33,6 +33,8 @@ dist/
 
 # Rust / Cargo
 target/
+# Machine-specific Cargo config (contains absolute paths)
+src-tauri/.cargo/config.toml
 
 # Logs and temp
 *.log
