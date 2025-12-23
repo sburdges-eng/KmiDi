@@ -248,7 +248,7 @@ class DuplicateFinder:
                         # Normalize by dumping with sorted keys
                         normalized = json.dumps(data, sort_keys=True)
                         content_groups[normalized].append(f)
-            except (json.JSONDecodeError, IOError, OSError):
+            except (json.JSONDecodeError, UnicodeDecodeError, IOError, OSError):
                 continue
         
         for normalized, files in content_groups.items():
