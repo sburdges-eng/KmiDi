@@ -1,5 +1,7 @@
 # Core C++ library
 
+# Readerwriterqueue: header-only library with no CMakeLists.txt
+# Must explicitly create INTERFACE target and ensure SOURCE_DIR is populated
 include(FetchContent)
 if(NOT TARGET readerwriterqueue)
     FetchContent_Declare(
@@ -9,6 +11,9 @@ if(NOT TARGET readerwriterqueue)
         GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(readerwriterqueue)
+    
+    # Explicitly populate SOURCE_DIR for header-only library
+    FetchContent_GetProperties(readerwriterqueue)
 
     if(NOT TARGET readerwriterqueue)
         add_library(readerwriterqueue INTERFACE)

@@ -41,6 +41,8 @@ find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
 add_subdirectory(external/JUCE EXCLUDE_FROM_ALL)
 
 # Readerwriterqueue (lock-free queue) for RT-safe OSC
+# Note: This is a header-only library with no CMakeLists.txt, so we must
+# explicitly create an INTERFACE target and ensure SOURCE_DIR is populated.
 include(FetchContent)
 FetchContent_Declare(
     readerwriterqueue
@@ -49,6 +51,9 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(readerwriterqueue)
+
+# Explicitly populate SOURCE_DIR for header-only library without CMakeLists.txt
+FetchContent_GetProperties(readerwriterqueue)
 
 if(NOT TARGET readerwriterqueue)
     add_library(readerwriterqueue INTERFACE)
