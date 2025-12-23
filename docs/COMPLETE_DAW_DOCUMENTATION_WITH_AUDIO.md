@@ -70,6 +70,7 @@ Unprocessed versions of the same samples (same file names and structure)
 **Locations:** Multiple directories in `/Users/seanburdges/Downloads/JUCE/` and `/Downloads/JUCE 4/`
 
 Standard JUCE example audio files (repeated across multiple build directories):
+
 - `guitar_amp.wav` - Guitar amp simulation example
 - `cello.wav` - Cello sample for audio examples
 - `reverb_ir.wav` - Reverb impulse response
@@ -85,6 +86,7 @@ Complete sampled steel string acoustic guitar with note mapping:
 **Naming Convention:** `50B-[position][string][variation]-[note][octave].aif`
 
 Examples:
+
 - `50B-1GA1-D2.aif` - D note, octave 2
 - `50B-1GA1-E1.aif` through `50B-1GA1-E4.aif` - E notes across octaves
 - `50B-1GA2-A1.aif` through `50B-1GA2-A3.aif` - A notes across octaves
@@ -224,6 +226,7 @@ Examples:
 ## Project Overview
 
 DAiW-Music-Brain is a CLI toolkit and Python library for:
+
 - **Groove extraction & application** - Extract timing/velocity patterns from MIDI, apply genre templates
 - **Chord & harmony analysis** - Roman numeral analysis, key detection, borrowed chord identification
 - **Intent-based song generation** - Three-phase deep interrogation system for emotionally-driven composition

@@ -140,8 +140,10 @@ convertFromLegacyIntentResult(const IntentResult &legacy) {
 }
 } // namespace
 
-KellyBrain::KellyBrain() : pipeline_(std::make_unique<IntentPipeline>()) {
-  // IntentPipeline is initialized
+KellyBrain::KellyBrain()
+    : pipeline_(std::make_unique<IntentPipeline>())
+    , midiGenerator_(std::make_unique<MidiGenerator>()) {
+  // IntentPipeline and MidiGenerator are initialized
 }
 
 bool KellyBrain::initialize(const std::string &dataPath) {
@@ -227,27 +229,39 @@ KellyTypesIntentResult KellyBrain::fromEmotion(const std::string &emotionName,
 
 GeneratedMidi KellyBrain::generateMidi(const KellyTypesIntentResult &intent,
                                        int bars) {
-  // This is a placeholder - actual MIDI generation should use MidiGenerator
-  GeneratedMidi result;
+  // Fallback if generator is not available
+  if (!midiGenerator_) {
+    GeneratedMidi fallback;
+    fallback.tempoBpm = intent.tempoBpm;
+    fallback.bars = bars;
+    fallback.key = intent.key;
+    fallback.mode = intent.mode;
+    fallback.lengthInBeats = static_cast<double>(bars) * 4.0;
+    fallback.bpm = static_cast<float>(intent.tempoBpm);
+    return fallback;
+  }
+
+  // Prepare intent for MidiGenerator (sync emotion and tempo modifier)
+  IntentResult intentForGenerator = intent;
+  intentForGenerator.emotion = intent.sourceWound.primaryEmotion;
+  intentForGenerator.tempo =
+      static_cast<float>(intent.tempoBpm) / 120.0f; // Normalize around 120 BPM
+
+  const float complexity = 0.5f; // TODO: derive from intent when available
+  const float humanize = intent.humanization;
+  const float feel = 0.0f; // Placeholder mapping; can derive from syncopation
+  const float dynamics = intent.dynamicRange;
+
+  GeneratedMidi result = midiGenerator_->generate(
+      intentForGenerator, bars, complexity, humanize, feel, dynamics);
+
+  // Ensure metadata is populated
   result.tempoBpm = intent.tempoBpm;
   result.bars = bars;
   result.key = intent.key;
   result.mode = intent.mode;
-  // KellyTypes::GeneratedMidi doesn't have lengthInBeats or bpm fields
-  // Store in metadata if needed
-  result.metadata["lengthInBeats"] = std::to_string(bars * 4.0);
-  result.metadata["bpm"] = std::to_string(intent.tempoBpm);
-
-  // Generate basic chord progression
-  for (const auto &chordSymbol : intent.chordProgression) {
-    Chord chord;
-    chord.symbol = chordSymbol;
-    chord.root = chordSymbol.substr(0, 1); // Extract root note
-    result.chords.push_back(chord);
-  }
-
-  // TODO: Use MidiGenerator to generate actual MIDI notes
-  // For now, return empty result (notes vector is empty)
+  result.lengthInBeats = static_cast<double>(bars) * 4.0;
+  result.bpm = static_cast<float>(intent.tempoBpm);
 
   return result;
 }

@@ -17,6 +17,7 @@
 #include <atomic>
 #include <mutex>
 #include <cmath>
+#include <cstdint>
 
 #ifdef ENABLE_RTNEURAL
 #include <RTNeural/RTNeural.h>
@@ -143,11 +144,15 @@ public:
     void stop();
 
     // Non-blocking submit (audio thread safe)
-    void submitFeatures(const std::array<float, 128>& features);
+    // Returns a request id for tracking; 0 if a request is already pending.
+    uint64_t submitFeatures(const std::array<float, 128>& features);
 
     // Non-blocking result check (audio thread safe)
     bool hasResult() const;
+    bool hasResult(uint64_t requestId) const;
+
     InferenceResult getResult();
+    InferenceResult getResult(uint64_t requestId);
 
 private:
     friend class InferenceThread;  // Allow InferenceThread to call run()
@@ -158,6 +163,9 @@ private:
     std::atomic<bool> running_{false};
     std::atomic<bool> hasRequest_{false};
     std::atomic<bool> hasResult_{false};
+    std::atomic<uint64_t> nextRequestId_{1};
+    std::atomic<uint64_t> pendingRequestId_{0};
+    std::atomic<uint64_t> latestResultId_{0};
     std::array<float, 128> pendingFeatures_{};
     InferenceResult latestResult_;
 };

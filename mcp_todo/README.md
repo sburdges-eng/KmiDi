@@ -72,6 +72,7 @@ Add to `~/.config/claude/claude_desktop_config.json` (Linux) or `~/Library/Appli
 ```
 
 Restart Claude Desktop. You can now say things like:
+
 - "Add a task to fix the login bug"
 - "Show me my high priority tasks"
 - "Mark task abc123 as complete"
@@ -294,6 +295,7 @@ python -m mcp_todo.cli list --project backend
 ```
 
 Or in AI:
+
 - "Add task 'Design API' to the backend project"
 - "Show me all frontend tasks"
 

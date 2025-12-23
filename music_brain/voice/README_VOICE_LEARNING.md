@@ -38,12 +38,14 @@ audio = parrot.sing_with_learned_voice(
 ### Voice Sample Storage
 
 Samples are stored in `~/.parrot/voice_samples/samples/`:
+
 - Audio files: `{sample_id}.wav`
 - Metadata: `{sample_id}.json`
 
 ### Feature Extraction
 
 The system extracts:
+
 - **Pitch characteristics**: Mean pitch, range, variance
 - **Spectral features**: Brightness, rolloff, MFCCs
 - **Voice quality**: Breathiness, formant emphasis
@@ -52,6 +54,7 @@ The system extracts:
 ### Profile Learning
 
 Profiles aggregate features from multiple samples:
+
 - Weighted averaging by sample count
 - Incremental updates supported
 - Profiles saved to `~/.parrot/voice_samples/profiles/`

@@ -3,7 +3,7 @@
 **TL;DR (run from repo root):**
 
 ```bash
-# Ensure you're in the repository root directory
+cd /path/to/kelly-clean  # repo root (adjust to your clone)
 cat .agents/handoffs/CURRENT_STATE.md
 cat .agents/contexts/<your_agent>_context.md
 # do work...
@@ -15,8 +15,7 @@ cat .agents/contexts/<your_agent>_context.md
 ### Step 0: Go to repo root
 
 ```bash
-# Navigate to your local repository root directory
-# All commands in this guide should be run from the repo root
+cd /path/to/kelly-clean  # adjust to your clone location
 ```
 
 ### Step 1: Choose Your Agent
@@ -82,7 +81,7 @@ Edit `.agents/handoffs/CURRENT_STATE.md` with:
 
 ```bash
 # START SESSION
-# From the repository root directory:
+cd /path/to/kelly-clean  # workspace root (adjust to your clone)
 cat .agents/handoffs/CURRENT_STATE.md
 cat .agents/contexts/musicbrain_context.md
 

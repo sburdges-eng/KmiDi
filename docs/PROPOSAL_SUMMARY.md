@@ -37,6 +37,7 @@ This document catalogs **25+ files** discovered across your system containing va
   - EDM (euphoric minor, festival anthems)
   - Hip-hop/R&B (smooth major, dark trap)
   - Gospel (turnarounds, walkdowns)
+
 - Modal progressions (Dorian, Mixolydian, Lydian, Phrygian vamps)
 - Functional harmony categories (tonic, subdominant, dominant)
 - Cadence types (authentic, plagal, half, deceptive)

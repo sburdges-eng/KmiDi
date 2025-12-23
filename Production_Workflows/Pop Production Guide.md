@@ -7,6 +7,7 @@ Creating polished, catchy, radio-ready pop music.
 ## The Pop Sound
 
 Key characteristics:
+
 - **Hook-driven** — Memorable melodies that stick
 - **Polished** — Clean, professional production
 - **Vocal-forward** — Voice is the star
@@ -131,6 +132,7 @@ Hats:  x   x   x   x   x   x   x   x
 ### The Star of the Show
 
 Pop is built around the voice:
+
 - Clear, upfront
 - Present in the mix
 - Heavily produced (but natural-sounding)

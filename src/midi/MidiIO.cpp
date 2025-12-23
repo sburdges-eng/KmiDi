@@ -1,8 +1,8 @@
 #include "daiw/midi/MidiIO.h"
+
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <algorithm>
-#include <cmath>
 #include <utility>
 
 namespace daiw {
@@ -10,26 +10,19 @@ namespace midi {
 
 namespace {
 
-// Convert JUCE velocity to DAiW velocity without losing dynamics.
-static uint8_t toDaiwVelocity(float juceVelocity) {
-  // JUCE getVelocity() normally returns 0..1, but some code paths may store 0..127.
-  if (juceVelocity > 1.5f) {
-    return static_cast<uint8_t>(std::clamp(juceVelocity, 0.0f, 127.0f));
-  }
-  return static_cast<uint8_t>(std::clamp(std::round(juceVelocity * 127.0f), 0.0f, 127.0f));
-}
-
 MidiMessage juceToDaiwMessage(const juce::MidiMessage &juceMsg) {
   MidiMessage msg;
   const auto channel = static_cast<MidiChannel>(
       std::clamp(juceMsg.getChannel() - 1, 0, 15)); // JUCE is 1-16
 
   if (juceMsg.isNoteOn()) {
-    const auto velocity = toDaiwVelocity(juceMsg.getVelocity());
+    const auto velocity = static_cast<uint8_t>(
+        std::clamp(juceMsg.getVelocity() * 127.0f, 0.0f, 127.0f));
     msg = MidiMessage::noteOn(
         channel, static_cast<uint8_t>(juceMsg.getNoteNumber()), velocity);
   } else if (juceMsg.isNoteOff()) {
-    const auto velocity = toDaiwVelocity(juceMsg.getVelocity());
+    const auto velocity = static_cast<uint8_t>(
+        std::clamp(juceMsg.getVelocity() * 127.0f, 0.0f, 127.0f));
     msg = MidiMessage::noteOff(
         channel, static_cast<uint8_t>(juceMsg.getNoteNumber()), velocity);
   } else if (juceMsg.isProgramChange()) {

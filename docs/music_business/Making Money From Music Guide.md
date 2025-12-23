@@ -76,6 +76,7 @@ Revenue streams and how to actually earn a living.
 ### What It Is
 
 Your music placed in:
+
 - TV shows
 - Films
 - Commercials
@@ -176,6 +177,7 @@ See [[Sync Licensing Guide]] for details.
 ### What It Is
 
 Money earned from your SONGS (not recordings):
+
 - Radio play
 - Live performances of your songs
 - Streaming

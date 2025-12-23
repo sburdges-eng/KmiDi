@@ -3,6 +3,7 @@
 ## Your Tier: Gemini Advanced ($20/mo)
 
 You have access to:
+
 - **Gemini Ultra** - Most capable model
 - **1 million token context** - Entire vault in one prompt
 - **Google Workspace integration** - Direct Drive, Docs, Gmail access
@@ -205,6 +206,7 @@ Radiohead frequently employs modal mixture (borrowing chords from parallel modes
 ### When to Use Gemini
 
 ✅ USE FOR:
+
 - "Find examples of [technique] in songs"
 - "Research how [composer] used [technique]"
 - "What does the literature say about [topic]"
@@ -213,6 +215,7 @@ Radiohead frequently employs modal mixture (borrowing chords from parallel modes
 - Processing your entire vault
 
 ❌ DON'T USE FOR:
+
 - Creative decisions → Claude
 - Code → ChatGPT
 - Emotional/personal content → Claude

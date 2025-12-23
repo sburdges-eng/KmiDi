@@ -117,6 +117,7 @@ sprint2_core_integration:
   - Linux: g++ 7+ or clang 5+
   - macOS: Xcode 10+ (clang)
   - Windows: Visual Studio 2017+ (MSVC)
+
 - pybind11
 - JUCE framework
 - oscpack

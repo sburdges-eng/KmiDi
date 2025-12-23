@@ -254,6 +254,7 @@ EMOTIONAL_PRESETS = {
 ### Vernacular Translations
 
 When users say casual terms, translate to technical:
+
 - "fat and laid back" → `eq.low_mid: +3dB, groove.pocket: "behind", swing: 0.55`
 - "boots and cats" → Basic 4/4 beat pattern
 - "chugga chugga" → Palm-muted power chords, 8th notes

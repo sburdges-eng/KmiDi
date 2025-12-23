@@ -5,6 +5,7 @@
 ## Overview
 
 Transform the Streamlit app into a Progressive Web App (PWA) for:
+
 - Offline access
 - App-like experience on mobile
 - Home screen installation
@@ -245,11 +246,13 @@ lighthouse https://idaw.streamlit.app --only-categories=pwa
 ## Deployment
 
 PWA works with any hosting that supports:
+
 - HTTPS (required for service workers)
 - Static file serving
 - Custom headers
 
 Supported platforms:
+
 - Streamlit Cloud ✓
 - Railway ✓
 - Render ✓

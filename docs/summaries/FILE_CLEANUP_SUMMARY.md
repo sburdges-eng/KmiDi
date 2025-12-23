@@ -89,6 +89,7 @@ Remove irrelevant uploaded files and analyze TODO items to prepare the repositor
 
 #### 9. Numeric Files Without Extensions (62 files)
 Random uploaded files without proper file extensions:
+
 - Python scripts, C source files, markdown documents
 - Examples: `1033783`, `369246`, `370086`, `394440`, `723890`, etc.
 
@@ -197,6 +198,7 @@ $ python3 -c "import music_brain"
 ## Next Steps
 
 The repository is now production-ready with:
+
 - No duplicate or irrelevant files
 - Clear TODO documentation
 - Updated .gitignore to prevent future issues

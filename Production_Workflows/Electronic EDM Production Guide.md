@@ -7,6 +7,7 @@ Creating powerful electronic music with punchy drums, heavy bass, and energy.
 ## The Electronic Sound
 
 Key elements:
+
 - **Powerful kick drums** — Foundation of the genre
 - **Heavy bass** — Sub and mid presence
 - **Builds and drops** — Energy management

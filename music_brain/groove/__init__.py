@@ -23,6 +23,21 @@ from music_brain.groove.groove_engine import (
     get_preset,
     settings_from_preset,
 )
+from music_brain.groove.drum_analysis import (
+    DrumAnalyzer,
+    DrumTechniqueProfile,
+    HiHatAlternation,
+    SnareBounceSignature,
+    analyze_drum_technique,
+)
+from music_brain.groove.drum_humanizer import DrumHumanizer
+from music_brain.groove.drum_analysis import (
+    SnareBounceSignature,
+    HiHatAlternation,
+    DrumTechniqueProfile,
+    DrumAnalyzer,
+    analyze_drum_technique,
+)
 
 __all__ = [
     # Extraction
@@ -45,4 +60,10 @@ __all__ = [
     "list_presets",
     "get_preset",
     "settings_from_preset",
+    # Drum analysis
+    "SnareBounceSignature",
+    "HiHatAlternation",
+    "DrumTechniqueProfile",
+    "DrumAnalyzer",
+    "analyze_drum_technique",
 ]

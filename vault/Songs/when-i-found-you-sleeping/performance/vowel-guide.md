@@ -304,6 +304,7 @@ My      BOD-y said—
 
 **THE INCOMPLETE SENTENCE:**
 This is your second fracture point. But it's the opposite of the "fucking dawn" moment.
+
 - "Fucking dawn" = rage breaking through
 - "My body said—" = system failure, can't even finish
 - Let "said" hang. The "eh" vowel stays open. No resolution.

@@ -42,6 +42,7 @@ tests/
   - [ ] `daiw reharm` (reharmonization)
   - [ ] `daiw intent` subcommands (new, process, validate, suggest)
   - [ ] `daiw teach` (teaching mode)
+
 - [ ] Create comprehensive test suite in `tests/test_cli.py`
 - [ ] Update `__init__.py` exports
 
@@ -344,6 +345,7 @@ def test_bpm_detection():
 ## 📝 Documentation Requirements
 
 For each completed feature:
+
 - [ ] Docstrings (Google style)
 - [ ] Usage examples
 - [ ] CLI help text

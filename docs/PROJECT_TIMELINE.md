@@ -8,6 +8,7 @@
 ## 📊 Project Overview
 
 iDAW (Interrogate Before You DAW) is a merged repository combining:
+
 - **DAiW-Music-Brain**: Python-based emotional music composition toolkit
 - **penta-core**: Real-time C++ DSP engine with Python bindings
 - **MCP Servers**: Todo management and workstation tools

@@ -7,6 +7,7 @@ Making programmed piano, electric piano, and keys sound like real performances.
 ## Why Keys Sound Fake
 
 Dead giveaways:
+
 - All notes in a chord hit at exactly the same time
 - Same velocity throughout
 - No pedal expression
@@ -20,6 +21,7 @@ Dead giveaways:
 ### Piano Is Extremely Dynamic
 
 Real pianists use a huge velocity range:
+
 - Quiet passages: 30-60
 - Medium: 60-90
 - Loud: 90-127
@@ -69,6 +71,7 @@ When you draw a chord, all notes start at exactly the same tick. No human plays 
 ### The Roll/Spread
 
 Real pianists roll chords slightly:
+
 - Notes hit 5-30ms apart
 - Not perfectly even spacing
 - Usually bottom-to-top, but not always
@@ -107,6 +110,7 @@ Real pianists roll chords slightly:
 ### Variation Per Chord
 
 Don't roll every chord identically:
+
 - Some more spread
 - Some tighter
 - Some top-to-bottom
@@ -119,6 +123,7 @@ Don't roll every chord identically:
 ### Why It Matters
 
 Pedal is half of piano expression:
+
 - Connects notes (legato)
 - Adds resonance
 - Blurs or separates harmonies
@@ -155,6 +160,7 @@ Pedal: |____↑___↓_____|_____↑___↓____|
 ### Half-Pedaling
 
 Not just on/off:
+
 - Partial pedal = partial sustain
 - Draw CC64 values between 0-127
 - Adds nuance
@@ -186,6 +192,7 @@ Not just on/off:
 ### Timing Independence
 
 Hands don't play in perfect sync:
+
 - Left hand might be slightly ahead (driving)
 - Or slightly behind (relaxed)
 - Vary per phrase
@@ -325,6 +332,7 @@ Apply grooves to piano parts:
 ### Step 1: Play In (If Possible)
 
 Even imperfectly:
+
 - Play the part
 - Quantize lightly (60-75%)
 - Fix only obvious mistakes
@@ -341,6 +349,7 @@ After recording:
 ### Step 3: Chord Rolls
 
 For stacked chords:
+
 - Turn off snap
 - Nudge notes to roll
 - Not all chords identical
@@ -348,6 +357,7 @@ For stacked chords:
 ### Step 4: Pedal
 
 Record or draw CC64:
+
 - Lift before chord changes
 - Press after new chord lands
 - Leave gaps for clarity
@@ -355,6 +365,7 @@ Record or draw CC64:
 ### Step 5: Final Humanize
 
 Light humanize pass:
+
 - Position: ±5-8 ticks
 - Velocity: ±8-12
 - Length: ±3-5 ticks

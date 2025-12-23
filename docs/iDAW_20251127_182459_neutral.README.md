@@ -27,6 +27,7 @@
 ## Sample Locations
 
 Your samples are in:
+
 - Google Drive: ~/Google Drive/My Drive/audio_vault/
 - Drum Tornado 2023 (Acoustic)
 - Drum Empire 2020 (Electronic)

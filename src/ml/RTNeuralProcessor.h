@@ -39,25 +39,7 @@ public:
      * @param output Output buffer
      * @param numSamples Number of samples to process
      */
-    void process(const float* input, float* output, int numSamples) {
-        if (!isModelLoaded()) {
-            // Passthrough if no model loaded
-            std::memcpy(output, input, numSamples * sizeof(float));
-            return;
-        }
-
-#ifdef ENABLE_RTNEURAL
-        // Note: This method processes raw audio samples
-        // For emotion inference, use inferEmotion() with extracted features instead
-        // This is a simplified implementation that just passes through
-        juce::ignoreUnused(input, output, numSamples);
-        juce::Logger::writeToLog("Warning: process() called but not implemented. Use inferEmotion() instead.");
-        std::memcpy(output, input, numSamples * sizeof(float));
-#else
-        // Passthrough when RTNeural is not available
-        std::memcpy(output, input, numSamples * sizeof(float));
-#endif
-    }
+    void process(const float* input, float* output, int numSamples);
 
     /**
      * Batch inference for MIDI features (emotion vector output).

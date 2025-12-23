@@ -7,6 +7,7 @@ Creating heavy, powerful, precise metal tracks.
 ## The Metal Sound
 
 Key elements:
+
 - **Heavy guitars** — Tight, powerful, distorted
 - **Precise drums** — Fast, technical, impactful
 - **Aggressive vocals** — From clean to extreme

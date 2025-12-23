@@ -117,12 +117,14 @@ from music_brain.harmony import HarmonyGenerator, HarmonyResult, generate_midi_f
 ```
 
 Added to `__all__` list:
+
 - `HarmonyGenerator`
 - `HarmonyResult`
 - `generate_midi_from_harmony`
 
 ### README_music-brain.md
 Updated with:
+
 - New project structure showing integrated files
 - Python API examples using HarmonyGenerator
 - Emotional mapping usage examples

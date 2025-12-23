@@ -226,6 +226,7 @@ if (pos + 4 > static_cast<size_t>(received)) {
 ### Security Posture
 
 The implemented TODO items maintain a **strong security posture** appropriate for:
+
 - Development and testing environments
 - Internal/localhost network use
 - Non-internet-facing applications

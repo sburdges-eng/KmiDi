@@ -64,6 +64,7 @@ target_link_libraries(KellyCore PUBLIC
 ### macOS 15.0 Compatibility
 
 JUCE 7.0.12 includes a patch for macOS 15.0 API deprecations:
+
 - `CGWindowListCreateImage` is unavailable in macOS 15.0+
 - Patch applied in `external/JUCE/modules/juce_gui_basics/native/juce_Windowing_mac.mm`
 - The code gracefully handles the unavailable API by returning an empty Image

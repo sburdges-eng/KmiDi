@@ -7,6 +7,7 @@ Capturing the feel, freedom, and sophistication of jazz.
 ## The Jazz Sound
 
 Key elements:
+
 - **Swing feel** — That bounce and groove
 - **Improvisation** — Freedom within structure
 - **Complex harmony** — Extended chords, substitutions

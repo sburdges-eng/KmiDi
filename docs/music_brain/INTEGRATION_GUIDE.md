@@ -6,6 +6,7 @@
 **Status: ✅ COMPLETE & TESTED**
 
 A production-ready harmony generation engine that:
+
 - Translates emotional intent → chord progressions → MIDI files
 - Implements modal interchange (Kelly song: F-C-Dm-Bbm)
 - Supports avoid-resolution and parallel motion rule-breaking
@@ -25,6 +26,7 @@ Basic Progression: C - G - Am - F (I-V-vi-IV)
 **Status: ✅ COMPLETE & TESTED**
 
 A comprehensive chord analysis tool that:
+
 - Performs Roman numeral analysis
 - Detects borrowed chords and modal interchange
 - Identifies rule-breaking patterns

@@ -251,6 +251,7 @@ For this session, focus on [specific song/project].
 
 ### Option 1: Multiple Workspaces
 Create different AnythingLLM workspaces:
+
 - "Music Brain - General"
 - "Music Brain - Mixing"
 - "Music Brain - Writing"
@@ -259,6 +260,7 @@ Each with its own system prompt.
 
 ### Option 2: In-Conversation Switching
 Start a message with mode shift:
+
 - "Switching to mixing mode: [question]"
 - "Quick answer: [question]"
 - "Idea dump: [topic]"

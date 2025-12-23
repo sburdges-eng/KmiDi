@@ -128,11 +128,13 @@ To use a custom domain:
 ## Resource Limits
 
 Streamlit Cloud free tier:
+
 - 1 GB RAM
 - 1 CPU core
 - 1 GB storage
 
 For larger deployments, consider:
+
 - Streamlit Cloud Teams
 - Self-hosted on Railway/Render
 - Docker deployment
@@ -151,6 +153,7 @@ def health_check():
 ## Monitoring
 
 View logs in Streamlit Cloud dashboard:
+
 - App logs
 - Build logs
 - Crash reports

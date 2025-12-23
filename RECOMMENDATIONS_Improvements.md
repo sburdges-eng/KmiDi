@@ -1,6 +1,6 @@
 # Recommendations: Specific Improvements
 
-**Date**: 2024-12-19  
+**Date**: 2024-12-19
 **Purpose**: Detailed recommendations for code organization, features, and quality
 
 ---
@@ -35,8 +35,8 @@
      - Root: `/emotion_thesaurus.py` (Python, comprehensive)
      - Subdirectory: `/emotion_thesaurus/emotion_thesaurus.py` (duplicate?)
      - C++: `/src/kelly/core/emotion_thesaurus.py` (different implementation)
-   
-   **Recommendation**: 
+  
+   **Recommendation**:
    - Keep Python version at root for now (it's comprehensive)
    - Move to `music_brain/emotion/emotion_thesaurus.py`
    - Update all imports
@@ -219,10 +219,10 @@ if matches:
 ```python
 def export_as_preset(self, profile: DrumTechniqueProfile) -> GrooveSettings:
     """Export analysis as humanization preset."""
-    
+  
 def compare_to_guide(self, profile: DrumTechniqueProfile, style: str) -> Dict:
     """Compare analysis against guide recommendations."""
-    
+  
 def detect_style_from_profile(self, profile: DrumTechniqueProfile) -> str:
     """Detect drum style (jazzy, rock, etc.) from profile."""
 ```
@@ -254,7 +254,7 @@ class AnalysisConfig:
     alternation_window_ms: float = 200
 
 class DrumAnalyzer:
-    def __init__(self, ppq: int = 480, bpm: float = 120.0, 
+    def __init__(self, ppq: int = 480, bpm: float = 120.0,
                  config: Optional[AnalysisConfig] = None):
         self.config = config or AnalysisConfig()
         # Use self.config.flam_threshold_ms instead of FLAM_THRESHOLD_MS
@@ -357,15 +357,15 @@ Example usage:
 
     from music_brain.emotion import EmotionThesaurus, EmotionProductionMapper
     from music_brain.groove import DrumHumanizer
-    
+  
     # Get emotion
     thesaurus = EmotionThesaurus()
     emotion = thesaurus.find_by_synonym("melancholy")[0]
-    
+  
     # Get production preset
     mapper = EmotionProductionMapper(thesaurus)
     preset = mapper.get_production_preset(emotion, genre="jazz")
-    
+  
     # Apply to MIDI
     humanizer = DrumHumanizer()
     humanizer.apply_guide_rules("drums.mid", preset=preset)
@@ -407,11 +407,11 @@ Example usage:
    ```python
    # In music_brain/emotion_api.py
    from music_brain.emotion import EmotionProductionMapper
-   
+  
    class MusicBrain:
        def __init__(self):
            self.production_mapper = EmotionProductionMapper()
-       
+  
        def generate_from_intent(self, intent):
            # ... existing code ...
            # Add production preset
@@ -425,7 +425,7 @@ Example usage:
    ```python
    # In music_brain/groove/groove_engine.py
    from music_brain.groove.drum_humanizer import DrumHumanizer
-   
+  
    # Add method to use humanizer
    def humanize_with_guide(midi_path, style="standard"):
        humanizer = DrumHumanizer()
@@ -437,7 +437,7 @@ Example usage:
    ```python
    # In music_brain/arrangement/generator.py
    from music_brain.production import DynamicsEngine
-   
+  
    def generate_with_dynamics(structure, emotion):
        engine = DynamicsEngine()
        dynamics = engine.apply_section_dynamics(structure, emotion)
@@ -461,13 +461,13 @@ Example usage:
 def get_preset(emotion, genre, section):
     """Get production preset for emotion."""
     from music_brain.emotion import EmotionThesaurus, EmotionProductionMapper
-    
+  
     thesaurus = EmotionThesaurus()
     matches = thesaurus.find_by_synonym(emotion)
     if not matches:
         print(f"No emotion found for: {emotion}")
         return
-    
+  
     mapper = EmotionProductionMapper(thesaurus)
     preset = mapper.get_production_preset(matches[0], genre=genre, section=section)
     print(json.dumps(preset.__dict__, indent=2))
@@ -480,9 +480,9 @@ def humanize_drums(midi_file, style, emotion):
     """Apply drum humanization with guide rules."""
     from music_brain.groove import DrumHumanizer
     from music_brain.emotion import EmotionThesaurus, EmotionProductionMapper
-    
+  
     humanizer = DrumHumanizer()
-    
+  
     if emotion:
         # Get preset from emotion
         thesaurus = EmotionThesaurus()
@@ -534,13 +534,13 @@ def humanize_drums(midi_file, style, emotion):
        # Emotion → Preset → Humanization → Dynamics
        thesaurus = EmotionThesaurus()
        emotion = thesaurus.find_by_synonym("melancholy")[0]
-       
+  
        mapper = EmotionProductionMapper(thesaurus)
        preset = mapper.get_production_preset(emotion, genre="jazz")
-       
+  
        humanizer = DrumHumanizer()
        humanizer.apply_guide_rules("test.mid", preset=preset)
-       
+  
        engine = DynamicsEngine()
        structure = SongStructure(sections=[...])
        dynamics = engine.apply_section_dynamics(structure, emotion)
@@ -619,7 +619,7 @@ def get_production_preset_cached(emotion_id, genre, section):
 ```python
 class EmotionProductionMapper:
     _mappings_loaded = False
-    
+  
     def _load_guide_mappings(self):
         if self._mappings_loaded:
             return

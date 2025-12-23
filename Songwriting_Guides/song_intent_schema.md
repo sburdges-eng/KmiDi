@@ -23,6 +23,7 @@ The Song Intent Schema is a three-phase system for capturing what a song NEEDS t
 Traditional music generation asks: "What genre? What tempo? What key?"
 
 The Intent Schema asks:
+
 - What do you NEED to say?
 - What are you afraid to say?
 - How should you FEEL when it's done?

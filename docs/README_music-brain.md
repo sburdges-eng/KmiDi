@@ -1,7 +1,7 @@
 # DAiW - Digital Audio Intelligent Workstation
 
 > A Python toolkit for music production intelligence: groove extraction, chord analysis, arrangement generation, and AI-assisted songwriting.
-> 
+>
 > **Philosophy: "Interrogate Before Generate"** — The tool shouldn't finish art for people. It should make them braver.
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
@@ -10,6 +10,7 @@
 ## Overview
 
 DAiW (Digital Audio intelligent Workstation) combines:
+
 - **Music Brain** - Python analysis engine for MIDI/audio
 - **Intent Schema** - Three-phase deep interrogation for songwriting
 - **Rule-Breaking Engine** - Intentional theory violations for emotional impact
@@ -257,6 +258,7 @@ DAiW-Music-Brain/
 - numpy (numerical analysis)
 
 Optional:
+
 - librosa (audio analysis)
 - music21 (advanced theory)
 

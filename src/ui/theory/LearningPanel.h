@@ -12,10 +12,12 @@
  *          interactive examples, and progress tracking.
  */
 
+#include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "../../music_theory/MusicTheoryBrain.h"
 #include "../../music_theory/Types.h"
 #include <memory>
+#include <vector>
 
 namespace kelly {
 
@@ -72,10 +74,22 @@ private:
     std::string currentConcept_;
     midikompanion::theory::ExplanationType currentStyle_ =
         midikompanion::theory::ExplanationType::Intuitive;
+    midikompanion::theory::Exercise currentExercise_{};
+    bool isPlayingExample_ = false;
+    bool hasExercise_ = false;
+    juce::File exerciseMidiFile_;
+    std::unique_ptr<juce::MidiOutput> midiOutput_;
+    std::vector<int> activeExampleNotes_;
 
     void setupComponents();
     void loadExplanation(const std::string& conceptName);
     void updateExplanationDisplay();
+    void playCurrentConceptExample();
+    void stopExamplePlayback();
+    void loadNextExercise();
+    void displayExercise(const midikompanion::theory::Exercise& exercise);
+    bool ensureMidiOutputReady();
+    std::vector<int> buildExampleNotes() const;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LearningPanel)
 };

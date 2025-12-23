@@ -135,6 +135,7 @@ When files or directories existed in both repositories with the same name, the f
   - server.py, cli.py, storage.py, models.py
   - http_server.py
   - configs/ directory
+
 - `mcp_workstation/` - MCP workstation tools
 
 ### Tools

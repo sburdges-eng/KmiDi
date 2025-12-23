@@ -7,6 +7,7 @@ How to make programmed/produced music feel alive, organic, and performed by real
 ## Why Music Sounds Robotic
 
 The enemy of human feel:
+
 - **Perfect timing** — every note exactly on the grid
 - **Identical velocity** — every hit the same volume
 - **Perfect pitch** — no natural variation
@@ -210,6 +211,7 @@ Notice: downbeats louder, upbeats softer, but not identical each time.
 ### Kick & Snare: The Anchor
 
 Keep these tighter but not perfect:
+
 - Kick: slight velocity variation (±5-10)
 - Snare: moderate velocity variation (±10-15)
 - Timing: keep closer to grid than hi-hats
@@ -244,6 +246,7 @@ Snare:      g   X g   g     g   X   g
 ### Use Logic's Drummer
 
 Logic's Drummer track is already humanized:
+
 - Timing imperfections built in
 - Velocity variation
 - Musical fills
@@ -258,6 +261,7 @@ Logic's Drummer track is already humanized:
 ### Timing
 
 Bass often sits slightly behind the beat for groove:
+
 - Try shifting entire bass track 10-30ms late
 - Or program with individual notes 5-20ms behind
 - Creates "pocket" feel
@@ -290,6 +294,7 @@ Bass often sits slightly behind the beat for groove:
 ### Velocity is Everything
 
 Piano is extremely velocity-sensitive:
+
 - Wide range: 30-120
 - Melody notes louder than accompaniment
 - Inner chord voices softer than outer
@@ -298,6 +303,7 @@ Piano is extremely velocity-sensitive:
 ### Chord Voicing
 
 Humans don't play chords perfectly together:
+
 - Slight roll/arpeggiation (5-20ms between notes)
 - Bottom note often slightly first
 - Or top note first (different feel)
@@ -308,6 +314,7 @@ Humans don't play chords perfectly together:
 ### Sustain Pedal
 
 Real pianists use pedal expressively:
+
 - Not just "on" or "off"
 - Half-pedaling
 - Pedal before chord changes (catches release)
@@ -328,6 +335,7 @@ Real pianists use pedal expressively:
 ### The Hardest to Humanize
 
 Orchestral instruments are tough because:
+
 - Real players have incredible expression
 - Vibrato, dynamics, bow changes, breath
 - Section playing = slight timing differences between players
@@ -352,6 +360,7 @@ Follow the musical line — louder on high/climactic notes.
 ### Logic's Studio Strings
 
 Use articulation keyswitches:
+
 - Sustain, staccato, pizzicato, tremolo
 - Switch articulations like a real player would
 
@@ -393,6 +402,7 @@ Even real vocals can sound "produced" — here's how to keep them human:
 ### Avoid Perfect Timing Alignment
 
 When layering:
+
 - Don't align every transient perfectly
 - Slight offsets = bigger, more natural sound
 - Exception: kick and bass often need alignment
@@ -431,6 +441,7 @@ When layering:
 ### Movement in Sounds
 
 Static sounds = fake. Add:
+
 - Filter movement (cutoff automation)
 - LFO on parameters (subtle)
 - Envelope modulation
@@ -447,6 +458,7 @@ Static sounds = fake. Add:
 ### Velocity-Sensitive Patches
 
 Use instruments that respond to velocity:
+
 - Different samples for soft/hard playing
 - Filter opens with velocity
 - Attack changes with velocity
@@ -472,6 +484,7 @@ Use instruments that respond to velocity:
 Region Inspector → Quantize dropdown → Choose groove
 
 Built-in grooves:
+
 - Apple Drummer grooves
 - Classic grooves (MPC, etc.)
 - Create your own from performance
@@ -479,6 +492,7 @@ Built-in grooves:
 ### Region Parameters
 
 In Region Inspector:
+
 - **Velocity offset:** Shift all velocities +/-
 - **Dynamics:** Compress or expand velocity range
 - **Gate Time:** Shorten/lengthen all notes
@@ -486,12 +500,14 @@ In Region Inspector:
 ### Flex Time Varispeed
 
 For audio:
+
 - Flex Time can humanize perfect loops
 - Or use Varispeed for subtle tape-style variation
 
 ### Drummer Track
 
 Already humanized:
+
 - Use for realistic drum performances
 - Convert to MIDI to edit further
 - "Follow" feature matches other tracks
@@ -526,11 +542,13 @@ Already humanized:
 ### Workflow 4: The 80/20 Rule
 
 Focus humanization efforts on:
+
 - Hi-hats (most obvious)
 - Lead melody
 - Any repeating pattern
 
 Less critical:
+
 - Sub bass
 - Pads (already blurry)
 - One-shot FX

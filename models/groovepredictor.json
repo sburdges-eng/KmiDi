@@ -1,0 +1,25 @@
+{
+  "model_type": "RTNeural",
+  "version": "1.0.0",
+  "name": "GroovePredictor",
+  "description": "Emotion to groove parameters (stub model - uses fallback heuristics)",
+  "input_size": 64,
+  "output_size": 32,
+  "layers": [
+    {
+      "type": "dense",
+      "activation": "tanh",
+      "in_size": 64,
+      "out_size": 32,
+      "weights": [],
+      "bias": []
+    }
+  ],
+  "metadata": {
+    "status": "stub",
+    "note": "Replace with trained model. Fallback heuristics will be used until then.",
+    "training_data": "groove_dataset_v1",
+    "architecture": "64→128→64→32 (full version)"
+  }
+}
+

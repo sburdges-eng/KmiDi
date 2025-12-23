@@ -92,6 +92,7 @@ Compression reduces the volume of loud sounds, making the overall dynamic range 
 ### The Sweet Spot
 
 For most mixing:
+
 - 3-6 dB gain reduction
 - Compression working, but not obvious
 - Sound is controlled, not squashed

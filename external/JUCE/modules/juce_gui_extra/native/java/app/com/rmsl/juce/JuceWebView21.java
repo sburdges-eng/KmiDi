@@ -81,24 +81,20 @@ public class JuceWebView21
         public WebResourceResponse shouldInterceptRequest (WebView view, String url)
         {
             // Deprecated in API 21, but kept for backward compatibility
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+            // Maintain same blocking semantics regardless of API level
+            synchronized (hostLock)
             {
-                synchronized (hostLock)
+                if (host != 0)
                 {
-                    if (host != 0)
-                    {
-                        boolean shouldLoad = webViewPageLoadStarted (host, view, url);
+                    boolean shouldLoad = webViewPageLoadStarted (host, view, url);
 
-                        if (shouldLoad)
-                            return null;
-                    }
+                    if (shouldLoad)
+                        return null;
                 }
-
-                return new WebResourceResponse ("text/html", null, null);
             }
 
-            // For API 21+, use the new method
-            return null;
+            // Block request by returning empty response (same behavior as before)
+            return new WebResourceResponse ("text/html", null, null);
         }
 
         @Override

@@ -7,6 +7,7 @@ Complete guide to creating and using templates in your Music Brain vault.
 ## Why Templates Matter
 
 Templates save time and ensure consistency. Instead of starting from scratch, you:
+
 - Capture the same information every time
 - Don't forget important fields
 - Build a queryable database of notes
@@ -63,6 +64,7 @@ status: draft
 ```
 
 Frontmatter enables:
+
 - Dataview queries
 - Filtering and sorting
 - Metadata display
@@ -375,6 +377,7 @@ Set default template per folder:
 2. Add folder path and template
 
 Example:
+
 - `/Songs` → `Song Template`
 - `/Workflows` → `Workflow Template`
 

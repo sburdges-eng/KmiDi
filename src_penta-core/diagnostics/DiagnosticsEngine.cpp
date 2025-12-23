@@ -109,7 +109,8 @@ DiagnosticsEngine::SystemStats DiagnosticsEngine::getStats() const {
     SystemStats stats{};
     
     if (perfMonitor_) {
-        stats.cpuUsagePercent = perfMonitor_->getCpuUsagePercent(512, 48000.0);
+        const double sr = config_.sampleRate > 0.0 ? config_.sampleRate : 48000.0;
+        stats.cpuUsagePercent = perfMonitor_->getCpuUsagePercent(512, sr);
         stats.averageLatencyMs = perfMonitor_->getAverageLatencyUs() / 1000.0f;
         stats.peakLatencyMs = perfMonitor_->getPeakLatencyUs() / 1000.0f;
         stats.xrunCount = perfMonitor_->getXrunCount();
@@ -137,7 +138,8 @@ std::string DiagnosticsEngine::getPerformanceReport() const {
     if (perfMonitor_) {
         float avgLatency = perfMonitor_->getAverageLatencyUs();
         float peakLatency = perfMonitor_->getPeakLatencyUs();
-        float cpuUsage = perfMonitor_->getCpuUsagePercent(512, 48000.0);
+        const double sr = config_.sampleRate > 0.0 ? config_.sampleRate : 48000.0;
+        float cpuUsage = perfMonitor_->getCpuUsagePercent(512, sr);
         size_t xruns = perfMonitor_->getXrunCount();
         
         oss << "CPU Usage:       " << cpuUsage << "%\n";
@@ -191,6 +193,9 @@ void DiagnosticsEngine::reset() {
 
 void DiagnosticsEngine::updateConfig(const Config& config) {
     config_ = config;
+    if (audioAnalyzer_) {
+        audioAnalyzer_->reset();
+    }
 }
 
 } // namespace penta::diagnostics

@@ -6,6 +6,7 @@
 ```
 Guitar → AudioBox iTwo (INST on) → Logic Pro
 ```
+
 - Clean, flexible signal
 - Add amp sim later (Neural Amp Modeler, Logic's stock amps)
 - Good for re-amping
@@ -14,6 +15,7 @@ Guitar → AudioBox iTwo (INST on) → Logic Pro
 ```
 Guitar → Amp → Mic → AudioBox iTwo → Logic Pro
 ```
+
 - Captures real amp tone
 - Needs good room/isolation
 - Commit to sound
@@ -24,6 +26,7 @@ Guitar → DI Box → AudioBox iTwo (clean track)
          ↓
         Amp → Mic → AudioBox iTwo (amp track)
 ```
+
 - Record both simultaneously
 - Flexibility to blend or re-amp
 

@@ -7,6 +7,7 @@ Creating intimate, organic recordings with acoustic instruments.
 ## The Folk/Acoustic Sound
 
 Key elements:
+
 - **Natural, organic tone** — Real instruments, minimal processing
 - **Intimacy** — Close, personal feel
 - **Space and air** — Room to breathe

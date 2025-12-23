@@ -36,7 +36,7 @@ private:
     std::string address_;
     uint16_t port_;
     
-    // Platform-specific socket handle
+    // JUCE OSCSender wrapper
     struct SocketImpl;
     std::unique_ptr<SocketImpl> socket_;
 };

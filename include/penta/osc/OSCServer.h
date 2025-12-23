@@ -5,7 +5,7 @@
 #include <string>
 #include <memory>
 #include <atomic>
-#include <thread>
+#include <juce_osc/juce_osc.h>
 
 namespace penta::osc {
 
@@ -32,17 +32,12 @@ public:
     RTMessageQueue& getMessageQueue() { return *messageQueue_; }
     
 private:
-    void receiveThread();
-    
     std::string address_;
     uint16_t port_;
     std::atomic<bool> running_;
     std::unique_ptr<RTMessageQueue> messageQueue_;
-    std::thread receiveThread_;
-    
-    // Platform-specific socket handle
-    struct SocketImpl;
-    std::unique_ptr<SocketImpl> socket_;
+    std::unique_ptr<class OSCListener> listener_;
+    juce::OSCReceiver receiver_;
 };
 
 } // namespace penta::osc

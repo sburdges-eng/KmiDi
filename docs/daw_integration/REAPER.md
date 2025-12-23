@@ -27,6 +27,7 @@ python -m penta_core.brain_server --port 9000 --reaper-mode
 ```
 
 The server listens on:
+
 - **Port 9000:** Receives messages from Reaper
 - **Port 9001:** Sends responses back to Reaper
 
@@ -187,6 +188,7 @@ A JSFX plugin is provided for in-track processing:
 **File:** `iDAW/templates/reaper/effects/penta_core.jsfx`
 
 Features:
+
 - Real-time MIDI analysis display
 - Chord symbol overlay
 - Groove intensity control

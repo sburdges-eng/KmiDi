@@ -4,8 +4,8 @@ created: <% tp.date.now("YYYY-MM-DD") %>
 modified: <% tp.date.now("YYYY-MM-DD") %>
 type: session
 date: <% tp.date.now("YYYY-MM-DD") %>
-project: 
-duration_hours: 
+project:
+duration_hours:
 tags:
   - type/session
 ---
@@ -28,13 +28,13 @@ tags:
 ## Session Goals
 
 ### What I Set Out to Do
-- [ ] 
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
+- [ ]
 
 ### What I Actually Accomplished
-- [x] 
-- [ ] 
+- [x]
+- [ ]
 
 ---
 
@@ -68,7 +68,7 @@ Source → [Device] → [Device] → Interface → DAW
 
 ## Takes Recorded
 
-### Track: 
+### Track:
 | Take | Time | Rating | Notes |
 |------|------|--------|-------|
 | 1 | | ⭐⭐ | |
@@ -76,15 +76,15 @@ Source → [Device] → [Device] → Interface → DAW
 | 3 | | ⭐⭐⭐⭐ | Best take |
 | 4 | | | |
 
-**Comp Notes:** 
+**Comp Notes:**
 
-### Track: 
+### Track:
 | Take | Time | Rating | Notes |
 |------|------|--------|-------|
 | 1 | | | |
 | 2 | | | |
 
-**Comp Notes:** 
+**Comp Notes:**
 
 ---
 
@@ -107,7 +107,7 @@ Source → [Device] → [Device] → Interface → DAW
 
 ## Problems Encountered
 
-### Issue 1: 
+### Issue 1:
 **What happened:**
 
 **How I solved it:**
@@ -119,13 +119,13 @@ Source → [Device] → [Device] → Interface → DAW
 ## What I Learned
 
 ### Technical
-- 
+-
 
 ### Creative
-- 
+-
 
 ### Process
-- 
+-
 
 ---
 
@@ -133,9 +133,9 @@ Source → [Device] → [Device] → Interface → DAW
 
 *Capture creative ideas that emerged during the session*
 
-- 
-- 
-- 
+-
+-
+-
 
 ---
 
@@ -150,24 +150,24 @@ Source → [Device] → [Device] → Interface → DAW
 
 ## Next Session To-Do
 
-- [ ] 
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
+- [ ]
 
 ---
 
 ## Energy & Mood Log
 
 ### How I Felt
-- **Start of session:** 
-- **End of session:** 
+- **Start of session:**
+- **End of session:**
 - **Creative energy:** /5
 - **Focus level:** /5
 
 ### Environment
 - **Time of day:** Morning / Afternoon / Evening / Night
 - **Distractions:** None / Minimal / Moderate / Many
-- **Room temp/comfort:** 
+- **Room temp/comfort:**
 
 ---
 
@@ -175,9 +175,9 @@ Source → [Device] → [Device] → Interface → DAW
 
 **Overall:** ⭐⭐⭐⭐⭐
 
-**Would change:** 
+**Would change:**
 
-**Would repeat:** 
+**Would repeat:**
 
 ---
 

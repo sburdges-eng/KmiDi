@@ -1,6 +1,7 @@
 # Knowledge Base Analyzer
 
 Analyzes the repository and creates a structured knowledge base organized by:
+
 - Pipeline types (Plugins, DAW, Standalone)
 - UI/UX components for each pipeline
 - Topics and categories
@@ -58,6 +59,7 @@ output/knowledge_base/
 ## Configuration
 
 Edit `config/` files to customize:
+
 - `categories.json` - Music topic categories
 - `pipeline_patterns.json` - Pipeline detection patterns
 - `ui_ux_patterns.json` - UI/UX framework patterns

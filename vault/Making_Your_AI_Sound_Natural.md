@@ -7,6 +7,7 @@ How to customize your local AI assistant's personality, tone, and style.
 ## The Key Concept
 
 You're not "training" the model — you're **prompting** it. The system prompt tells the AI:
+
 - Who it is
 - How to talk
 - What to focus on
@@ -228,6 +229,7 @@ VOCABULARY:
 ### 1. Your Vault IS Your Training Data
 
 Every note you add to Obsidian becomes context the AI can reference. The more detailed your notes:
+
 - Song notes with your decisions and reasoning
 - Workflow docs with YOUR preferred approaches
 - Gear notes with YOUR settings

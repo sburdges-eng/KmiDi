@@ -323,18 +323,42 @@ void AsyncMLPipeline::stop() {
     }
 }
 
-void AsyncMLPipeline::submitFeatures(const std::array<float, 128>& features) {
-    if (!hasRequest_.load(std::memory_order_acquire)) {
-        pendingFeatures_ = features;
-        hasRequest_.store(true, std::memory_order_release);
+uint64_t AsyncMLPipeline::submitFeatures(const std::array<float, 128>& features) {
+    // Reject new submissions if one is in-flight or an unread result exists.
+    if (hasRequest_.load(std::memory_order_acquire) ||
+        hasResult_.load(std::memory_order_acquire)) {
+        return 0; // busy, reject submission
     }
+
+    const uint64_t requestId = nextRequestId_.fetch_add(1, std::memory_order_acq_rel);
+
+    // Clear any previous result so consumers wait for the new submission
+    hasResult_.store(false, std::memory_order_release);
+    pendingRequestId_.store(requestId, std::memory_order_release);
+    pendingFeatures_ = features;
+    hasRequest_.store(true, std::memory_order_release);
+    return requestId;
 }
 
 bool AsyncMLPipeline::hasResult() const {
     return hasResult_.load(std::memory_order_acquire);
 }
 
+bool AsyncMLPipeline::hasResult(uint64_t requestId) const {
+    return hasResult_.load(std::memory_order_acquire) &&
+           latestResultId_.load(std::memory_order_acquire) == requestId;
+}
+
 InferenceResult AsyncMLPipeline::getResult() {
+    hasResult_.store(false, std::memory_order_release);
+    return latestResult_;
+}
+
+InferenceResult AsyncMLPipeline::getResult(uint64_t requestId) {
+    if (!hasResult(requestId)) {
+        return InferenceResult{};
+    }
+
     hasResult_.store(false, std::memory_order_release);
     return latestResult_;
 }
@@ -346,6 +370,8 @@ void AsyncMLPipeline::run() {
 
             // Run inference on background thread
             latestResult_ = processor_.runFullPipeline(pendingFeatures_);
+            latestResultId_.store(pendingRequestId_.load(std::memory_order_acquire),
+                                  std::memory_order_release);
 
             hasResult_.store(true, std::memory_order_release);
         } else {

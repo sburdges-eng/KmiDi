@@ -103,6 +103,7 @@ The repository has been successfully integrated with the latest changes from mai
 ## Next Steps
 
 The integration task is complete. The repository is ready for:
+
 - Further development
 - Running full test suites (if pytest is installed)
 - Building C++ components (with CMake)

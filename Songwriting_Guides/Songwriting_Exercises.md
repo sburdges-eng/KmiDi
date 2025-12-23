@@ -383,6 +383,7 @@ Write: "Staring at your side of the bed / The coffee's cold, I can't get up"
 ### Songwriting Log
 
 Keep track of:
+
 - Date
 - What you worked on
 - How long

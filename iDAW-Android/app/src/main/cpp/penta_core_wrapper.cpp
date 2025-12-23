@@ -48,6 +48,8 @@ struct PentaCoreInstance {
         grooveEngine = std::make_unique<GrooveEngine>(grooveConfig);
         
         DiagnosticsEngine::Config diagConfig;
+        diagConfig.enableAudioAnalysis = true;
+        diagConfig.enablePerformanceMonitoring = true;
         diagConfig.sampleRate = sr;
         diagnosticsEngine = std::make_unique<DiagnosticsEngine>(diagConfig);
         
@@ -178,19 +180,31 @@ void pentaCoreProcessAudio(float* inputL, float* inputR,
         return;
     }
     
-    // Process audio through diagnostics engine
-    if (g_pentaCore->diagnosticsEngine != nullptr && inputL != nullptr) {
-        // Analyze audio for diagnostics
-        // Note: DiagnosticsEngine may need audio buffer interface
+    const bool hasInput = inputL != nullptr;
+
+    if (g_pentaCore->diagnosticsEngine != nullptr && hasInput) {
+        g_pentaCore->diagnosticsEngine->beginMeasurement();
     }
-    
-    // For now, pass-through audio
-    // In the future, this could apply harmony/groove processing
+
+    // Process audio through groove/diagnostics engines when input is present
+    if (hasInput && g_pentaCore->grooveEngine != nullptr) {
+        g_pentaCore->grooveEngine->processAudio(inputL, static_cast<size_t>(frameCount));
+    }
+    if (g_pentaCore->diagnosticsEngine != nullptr && hasInput) {
+        // Analyze using left channel only; interleaving for true stereo can be added later
+        g_pentaCore->diagnosticsEngine->analyzeAudio(inputL, static_cast<size_t>(frameCount), 1U);
+    }
+
+    // Pass-through audio (processing pipeline can be expanded later)
     if (inputL != nullptr && outputL != nullptr) {
         std::memcpy(outputL, inputL, frameCount * sizeof(float));
     }
     if (inputR != nullptr && outputR != nullptr) {
         std::memcpy(outputR, inputR, frameCount * sizeof(float));
+    }
+
+    if (g_pentaCore->diagnosticsEngine != nullptr && hasInput) {
+        g_pentaCore->diagnosticsEngine->endMeasurement();
     }
 }
 
@@ -230,9 +244,8 @@ float pentaCoreGetDetectedTempo() {
         return 0.0f;
     }
     
-    // Get tempo from groove engine
-    // Note: GrooveEngine may need tempo getter method
-    return 120.0f; // Placeholder
+    const auto& analysis = g_pentaCore->grooveEngine->getAnalysis();
+    return analysis.currentTempo;
 }
 
 //==============================================================================

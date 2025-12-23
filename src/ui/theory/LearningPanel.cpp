@@ -1,4 +1,5 @@
 #include "LearningPanel.h"
+#include <juce_audio_devices/juce_audio_devices.h>
 
 namespace kelly {
 
@@ -66,13 +67,15 @@ void LearningPanel::setupComponents() {
 
     // Buttons
     playExampleButton_.onClick = [this] {
-        // TODO: Play MIDI example for current concept
+        if (isPlayingExample_) {
+            stopExamplePlayback();
+        } else {
+            playCurrentConceptExample();
+        }
     };
     addAndMakeVisible(playExampleButton_);
 
-    nextExerciseButton_.onClick = [this] {
-        // TODO: Load next exercise
-    };
+    nextExerciseButton_.onClick = [this] { loadNextExercise(); };
     addAndMakeVisible(nextExerciseButton_);
 
     // Explanation display
@@ -158,6 +161,132 @@ void LearningPanel::updateExplanationDisplay() {
     if (!currentConcept_.empty()) {
         loadExplanation(currentConcept_);
     }
+}
+
+void LearningPanel::playCurrentConceptExample() {
+    if (isPlayingExample_) {
+        stopExamplePlayback();
+        return;
+    }
+
+    if (!brain_) {
+        explanationDisplay_.setText("Error: MusicTheoryBrain not initialized.");
+        return;
+    }
+
+    if (currentConcept_.empty()) {
+        explanationDisplay_.setText("Select a concept first, then try again.");
+        return;
+    }
+
+    // Fetch concept examples (if available) for context
+    auto examples = brain_->getKnowledge().getMusicalExamples(currentConcept_, 1);
+    juce::String exampleDescription;
+    if (!examples.empty()) {
+        exampleDescription = "Example: " + juce::String(examples.front().song) +
+                             " @ " + juce::String(examples.front().timestamp, 2) + "s\n" +
+                             juce::String(examples.front().description);
+    }
+
+    activeExampleNotes_.clear();
+    activeExampleNotes_ = buildExampleNotes();
+
+    if (!ensureMidiOutputReady()) {
+        explanationDisplay_.setText(
+            "No MIDI output device is available for playback.\n"
+            "Connect a virtual MIDI port or instrument and try again.");
+        return;
+    }
+
+    for (int note : activeExampleNotes_) {
+        midiOutput_->sendMessageNow(juce::MidiMessage::noteOn(1, note, (juce::uint8)100));
+    }
+
+    isPlayingExample_ = true;
+    playExampleButton_.setButtonText("Stop Example");
+
+    if (exampleDescription.isNotEmpty()) {
+        explanationDisplay_.setText(exampleDescription);
+    }
+
+    juce::Timer::callAfterDelay(700, [this]() { stopExamplePlayback(); });
+}
+
+void LearningPanel::stopExamplePlayback() {
+    if (midiOutput_) {
+        for (int note : activeExampleNotes_) {
+            midiOutput_->sendMessageNow(juce::MidiMessage::noteOff(1, note));
+        }
+    }
+
+    isPlayingExample_ = false;
+    activeExampleNotes_.clear();
+    playExampleButton_.setButtonText("Play Example");
+}
+
+void LearningPanel::loadNextExercise() {
+    if (!brain_) {
+        explanationDisplay_.setText("Error: MusicTheoryBrain not initialized.");
+        return;
+    }
+
+    if (currentConcept_.empty()) {
+        explanationDisplay_.setText("Select a concept from Concepts tab first.");
+        return;
+    }
+
+    // For now, use intermediate level by default
+    auto exercise = brain_->getKnowledge().generateExercise(
+        currentConcept_, midikompanion::theory::DifficultyLevel::Intermediate);
+
+    displayExercise(exercise);
+    exerciseMidiFile_ = juce::File(); // Clear any stale file path
+}
+
+void LearningPanel::displayExercise(const midikompanion::theory::Exercise& exercise) {
+    juce::String text;
+    text << "Exercise: " << juce::String(exercise.conceptName) << "\n";
+    text << "Instruction: " << juce::String(exercise.instruction) << "\n";
+
+    if (!exercise.focusArea.empty()) {
+        text << "Focus: " << juce::String(exercise.focusArea) << "\n";
+    }
+    if (!exercise.readingStrategy.empty()) {
+        text << "Strategy: " << juce::String(exercise.readingStrategy) << "\n";
+    }
+    if (!exercise.hints.empty()) {
+        text << "\nHints:\n";
+        for (const auto& hint : exercise.hints) {
+            text << " - " << juce::String(hint) << "\n";
+        }
+    }
+
+    explanationDisplay_.setText(text);
+    currentExercise_ = exercise;
+    hasExercise_ = true;
+}
+
+bool LearningPanel::ensureMidiOutputReady() {
+    if (midiOutput_) {
+        return true;
+    }
+
+    auto devices = juce::MidiOutput::getAvailableDevices();
+    if (devices.isEmpty()) {
+        return false;
+    }
+
+    midiOutput_ = juce::MidiOutput::openDevice(devices[0].identifier);
+    return static_cast<bool>(midiOutput_);
+}
+
+std::vector<int> LearningPanel::buildExampleNotes() const {
+    if (!currentExercise_.notes.empty() && currentExercise_.conceptName == currentConcept_) {
+        return currentExercise_.notes;
+    }
+
+    // Default C major triad if no exercise notes are available
+    return {60, 64, 67};
 }
 
 } // namespace kelly

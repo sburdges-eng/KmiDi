@@ -17,8 +17,8 @@
 
 ### 1. KellyBrain MIDI Generation
 
-**Status**: Placeholder implementation  
-**File**: `src/engine/KellyBrain.cpp:228-253`  
+**Status**: Placeholder implementation
+**File**: `src/engine/KellyBrain.cpp:228-253`
 **Priority**: CRITICAL - Blocks core functionality
 
 #### Overview
@@ -36,7 +36,7 @@ The `generateMidi()` method currently returns empty MIDI notes. Need to integrat
 class MidiGenerator {
 public:
     MidiGenerator();
-    
+  
     GeneratedMidi generate(
         const IntentResult& intent,
         int bars = 8,
@@ -45,7 +45,7 @@ public:
         float feel = 0.0f,
         float dynamics = 0.75f
     );
-    
+  
 private:
     ChordGenerator chordGen_;
     GrooveEngine grooveEngine_;
@@ -77,7 +77,7 @@ private:
 **Step 3: Initialize MidiGenerator in Constructor or initialize()**
 ```cpp
 // In KellyBrain.cpp
-KellyBrain::KellyBrain() 
+KellyBrain::KellyBrain()
     : pipeline_(std::make_unique<IntentPipeline>())
     , midiGenerator_(std::make_unique<MidiGenerator>())  // ADD THIS
 {
@@ -86,10 +86,10 @@ KellyBrain::KellyBrain()
 bool KellyBrain::initialize(const std::string& dataPath) {
     // Existing initialization...
     initialized_ = true;
-    
+  
     // MidiGenerator is already constructed, no additional setup needed
     // It initializes all engines internally
-    
+  
     return true;
 }
 ```
@@ -109,19 +109,19 @@ GeneratedMidi KellyBrain::generateMidi(const KellyTypesIntentResult& intent, int
         result.mode = intent.mode;
         return result;
     }
-    
+  
     // Convert KellyTypesIntentResult to IntentResult for MidiGenerator
     // Since Types.h includes KellyTypes.h, they're compatible, but sync emotion field
     IntentResult intentForGenerator = intent;
     intentForGenerator.emotion = intent.sourceWound.primaryEmotion;
     intentForGenerator.tempo = static_cast<float>(intent.tempoBpm) / 120.0f;
-    
+  
     // Extract parameters from intent
     float complexity = 0.5f;  // Default, could be derived from intent
     float humanize = intent.humanization;
     float feel = 0.0f;  // Could map from intent.syncopationLevel
     float dynamics = intent.dynamicRange;
-    
+  
     // Generate MIDI using MidiGenerator
     GeneratedMidi result = midiGenerator_->generate(
         intentForGenerator,
@@ -131,7 +131,7 @@ GeneratedMidi KellyBrain::generateMidi(const KellyTypesIntentResult& intent, int
         feel,
         dynamics
     );
-    
+  
     // Ensure result has correct metadata
     result.tempoBpm = intent.tempoBpm;
     result.bars = bars;
@@ -139,7 +139,7 @@ GeneratedMidi KellyBrain::generateMidi(const KellyTypesIntentResult& intent, int
     result.mode = intent.mode;
     result.lengthInBeats = bars * 4.0;  // Assuming 4/4 time
     result.bpm = static_cast<float>(intent.tempoBpm);
-    
+  
     return result;
 }
 ```
@@ -149,20 +149,20 @@ The MidiGenerator already handles all MIDI generation, so the `generateBasicMidi
 
 **Step 5: Helper Function for Basic MIDI Generation**
 ```cpp
-void KellyBrain::generateBasicMidiNotes(GeneratedMidi& midi, 
+void KellyBrain::generateBasicMidiNotes(GeneratedMidi& midi,
                                        const KellyTypesIntentResult& intent,
                                        int bars) {
     const float beatsPerBar = 4.0f;
     const int ticksPerBeat = 480;
     const int ticksPerBar = static_cast<int>(beatsPerBar * ticksPerBeat);
-    
+  
     int currentTick = 0;
-    
+  
     for (int bar = 0; bar < bars; ++bar) {
         for (const auto& chord : midi.chords) {
             // Generate chord notes
             std::vector<int> chordNotes = getChordNotes(chord.symbol, intent.key);
-            
+  
             // Add note-on events
             for (int note : chordNotes) {
                 MidiNote midiNote;
@@ -171,10 +171,10 @@ void KellyBrain::generateBasicMidiNotes(GeneratedMidi& midi,
                 midiNote.startTick = currentTick;
                 midiNote.durationTicks = ticksPerBeat; // Quarter note
                 midiNote.channel = 0;
-                
+  
                 midi.notes.push_back(midiNote);
             }
-            
+  
             currentTick += ticksPerBeat;
         }
     }
@@ -196,8 +196,8 @@ void KellyBrain::generateBasicMidiNotes(GeneratedMidi& midi,
 
 ### 2. MidiIO Implementation
 
-**Status**: Stub implementation  
-**File**: `src/midi/MidiIO.cpp`  
+**Status**: Stub implementation
+**File**: `src/midi/MidiIO.cpp`
 **Priority**: CRITICAL - Required for MIDI device communication
 
 #### Overview
@@ -232,27 +232,27 @@ class MidiInput {
 public:
     MidiInput();
     ~MidiInput();
-    
+  
     static std::vector<MidiDeviceInfo> getAvailableDevices();
     bool open(int deviceId);
     void close();
     void start();
     void stop();
-    
+  
     void setCallback(std::function<void(const juce::MidiMessage&)> callback);
-    
+  
 private:
     std::unique_ptr<juce::MidiInput> juceMidiInput_;
     std::function<void(const juce::MidiMessage&)> callback_;
     int deviceId_ = -1;
     bool isOpen_ = false;
     bool isRunning_ = false;
-    
+  
     // JUCE callback wrapper
     class CallbackWrapper : public juce::MidiInputCallback {
     public:
         CallbackWrapper(MidiInput* owner) : owner_(owner) {}
-        void handleIncomingMidiMessage(juce::MidiInput* source, 
+        void handleIncomingMidiMessage(juce::MidiInput* source,
                                       const juce::MidiMessage& message) override {
             if (owner_ && owner_->callback_) {
                 owner_->callback_(message);
@@ -282,7 +282,7 @@ MidiInput::~MidiInput() {
 
 std::vector<MidiDeviceInfo> MidiInput::getAvailableDevices() {
     std::vector<MidiDeviceInfo> devices;
-    
+  
     auto juceDevices = juce::MidiInput::getAvailableDevices();
     for (int i = 0; i < juceDevices.size(); ++i) {
         MidiDeviceInfo info;
@@ -291,7 +291,7 @@ std::vector<MidiDeviceInfo> MidiInput::getAvailableDevices() {
         info.identifier = juceDevices[i].identifier.toStdString();
         devices.push_back(info);
     }
-    
+  
     return devices;
 }
 
@@ -307,32 +307,32 @@ bool MidiInput::open(int deviceId) {
     if (isOpen_) {
         close();
     }
-    
+  
     auto devices = juce::MidiInput::getAvailableDevices();
-    
+  
     if (deviceId < 0 || deviceId >= devices.size()) {
-        juce::Logger::writeToLog("MidiInput::open: Invalid device ID: " + 
+        juce::Logger::writeToLog("MidiInput::open: Invalid device ID: " +
                                  juce::String(deviceId));
         return false;
     }
-    
+  
     auto device = devices[deviceId];
-    
+  
     // Open device with callback wrapper
     juceMidiInput_ = juce::MidiInput::openDevice(
-        device.identifier, 
+        device.identifier,
         callbackWrapper_.get()
     );
-    
+  
     if (juceMidiInput_) {
         deviceId_ = deviceId;
         isOpen_ = true;
-        juce::Logger::writeToLog("MidiInput::open: Successfully opened device: " + 
+        juce::Logger::writeToLog("MidiInput::open: Successfully opened device: " +
                                  device.name);
         return true;
     }
-    
-    juce::Logger::writeToLog("MidiInput::open: Failed to open device: " + 
+  
+    juce::Logger::writeToLog("MidiInput::open: Failed to open device: " +
                              device.name);
     return false;
 }
@@ -344,7 +344,7 @@ void MidiInput::start() {
     if (!isOpen_ || !juceMidiInput_) {
         return;
     }
-    
+  
     juceMidiInput_->start();
     isRunning_ = true;
 }
@@ -361,20 +361,20 @@ void MidiInput::stop() {
 ```cpp
 bool MidiOutput::open(int deviceId) {
     auto devices = juce::MidiOutput::getAvailableDevices();
-    
+  
     if (deviceId < 0 || deviceId >= devices.size()) {
         return false;
     }
-    
+  
     auto device = devices[deviceId];
     juceMidiOutput_ = juce::MidiOutput::openDevice(device.identifier);
-    
+  
     if (juceMidiOutput_) {
         deviceId_ = deviceId;
         isOpen_ = true;
         return true;
     }
-    
+  
     return false;
 }
 
@@ -382,8 +382,8 @@ bool MidiOutput::sendMessage(const MidiMessage& message) {
     if (!isOpen_ || !juceMidiOutput_) {
         return false;
     }
-    
-    juce::MidiMessage juceMsg(message.data.data(), 
+  
+    juce::MidiMessage juceMsg(message.data.data(),
                               static_cast<int>(message.data.size()));
     juceMidiOutput_->sendMessageNow(juceMsg);
     return true;
@@ -407,11 +407,11 @@ bool MidiOutput::sendMessage(const MidiMessage& message) {
 
 ### 3. OSC System Implementation
 
-**Status**: Stub implementations  
-**Files**: 
+**Status**: Stub implementations
+**Files**:
 - `src/osc/RTMessageQueue.cpp`
 - `src/osc/OSCClient.cpp`
-- `src/osc/OSCServer.cpp`  
+- `src/osc/OSCServer.cpp`
 **Priority**: CRITICAL - Required for DAW communication
 
 #### Overview
@@ -470,14 +470,14 @@ bool RTMessageQueue::push(const OSCMessage& message) noexcept {
     if (!queue_) {
         return false;
     }
-    
+  
     // RT-safe: try_enqueue never blocks
     bool success = queue_->try_enqueue(message);
-    
+  
     if (success) {
         writeIndex_.fetch_add(1, std::memory_order_relaxed);
     }
-    
+  
     return success;
 }
 
@@ -485,14 +485,14 @@ bool RTMessageQueue::pop(OSCMessage& outMessage) noexcept {
     if (!queue_) {
         return false;
     }
-    
+  
     // RT-safe: try_dequeue never blocks
     bool success = queue_->try_dequeue(outMessage);
-    
+  
     if (success) {
         readIndex_.fetch_add(1, std::memory_order_relaxed);
     }
-    
+  
     return success;
 }
 
@@ -500,7 +500,7 @@ bool RTMessageQueue::isEmpty() const noexcept {
     if (!queue_) {
         return true;
     }
-    
+  
     // RT-safe: size_approx() is lock-free
     return queue_->size_approx() == 0;
 }
@@ -509,7 +509,7 @@ size_t RTMessageQueue::size() const noexcept {
     if (!queue_) {
         return 0;
     }
-    
+  
     // RT-safe: approximate size (lock-free)
     return queue_->size_approx();
 }
@@ -550,10 +550,10 @@ OSCClient::OSCClient(const std::string& address, uint16_t port)
     socket_->address_ = juce::String(address);
     socket_->port_ = static_cast<int>(port);
     socket_->sender_ = std::make_unique<juce::OSCSender>();
-    
+  
     if (!socket_->sender_->connect(socket_->address_, socket_->port_)) {
-        juce::Logger::writeToLog("OSCClient: Failed to connect to " + 
-                                 socket_->address_ + ":" + 
+        juce::Logger::writeToLog("OSCClient: Failed to connect to " +
+                                 socket_->address_ + ":" +
                                  juce::String(socket_->port_));
     }
 }
@@ -568,14 +568,14 @@ bool OSCClient::send(const OSCMessage& message) noexcept {
     if (!socket_ || !socket_->sender_ || !socket_->sender_->isConnected()) {
         return false;
     }
-    
+  
     try {
         juce::OSCMessage juceMsg(juce::String(message.getAddress()));
-        
+  
         // Add arguments from OSCMessage
         for (size_t i = 0; i < message.getArgumentCount(); ++i) {
             const auto& arg = message.getArgument(i);
-            
+  
             if (std::holds_alternative<int32_t>(arg)) {
                 juceMsg.addInt32(std::get<int32_t>(arg));
             } else if (std::holds_alternative<float>(arg)) {
@@ -585,7 +585,7 @@ bool OSCClient::send(const OSCMessage& message) noexcept {
             }
             // Handle blob if needed
         }
-        
+  
         // RT-safe: send() is non-blocking
         return socket_->sender_->send(juceMsg);
     } catch (...) {
@@ -597,7 +597,7 @@ bool OSCClient::sendFloat(const char* address, float value) noexcept {
     if (!socket_ || !socket_->sender_ || !socket_->sender_->isConnected()) {
         return false;
     }
-    
+  
     juce::OSCMessage msg(juce::String(address));
     msg.addFloat32(value);
     return socket_->sender_->send(msg);
@@ -607,7 +607,7 @@ bool OSCClient::sendInt(const char* address, int32_t value) noexcept {
     if (!socket_ || !socket_->sender_ || !socket_->sender_->isConnected()) {
         return false;
     }
-    
+  
     juce::OSCMessage msg(juce::String(address));
     msg.addInt32(value);
     return socket_->sender_->send(msg);
@@ -617,7 +617,7 @@ bool OSCClient::sendString(const char* address, const char* value) noexcept {
     if (!socket_ || !socket_->sender_ || !socket_->sender_->isConnected()) {
         return false;
     }
-    
+  
     juce::OSCMessage msg(juce::String(address));
     msg.addString(juce::String(value));
     return socket_->sender_->send(msg);
@@ -626,7 +626,7 @@ bool OSCClient::sendString(const char* address, const char* value) noexcept {
 void OSCClient::setDestination(const std::string& address, uint16_t port) {
     address_ = address;
     port_ = port;
-    
+  
     if (socket_ && socket_->sender_) {
         socket_->sender_->disconnect();
         socket_->address_ = juce::String(address);
@@ -650,17 +650,17 @@ namespace penta::osc {
 class OSCServer::OSCListener : public juce::OSCReceiver::Listener<OSCReceiver::RealtimeCallback> {
 public:
     OSCListener(OSCServer* server) : server_(server) {}
-    
+  
     void oscMessageReceived(const juce::OSCMessage& message) override {
         if (!server_ || !server_->messageQueue_) {
             return;
         }
-        
+  
         // Convert JUCE OSC message to penta::osc::OSCMessage
         OSCMessage pentaMsg;
         pentaMsg.setAddress(message.getAddressPattern().toString().toStdString());
         pentaMsg.setTimestamp(juce::Time::getMillisecondCounterHiRes());
-        
+  
         // Add arguments
         for (const auto& arg : message) {
             if (arg.isFloat32()) {
@@ -671,11 +671,11 @@ public:
                 pentaMsg.addString(arg.getString().toStdString());
             }
         }
-        
+  
         // Push to RT-safe queue (non-blocking)
         server_->messageQueue_->push(pentaMsg);
     }
-    
+  
 private:
     OSCServer* server_;
 };
@@ -701,14 +701,14 @@ bool OSCServer::start() {
     if (running_.load()) {
         return true; // Already running
     }
-    
+  
     // Connect receiver to port
     if (!receiver_.connect(static_cast<int>(port_))) {
-        juce::Logger::writeToLog("OSCServer: Failed to bind to port " + 
+        juce::Logger::writeToLog("OSCServer: Failed to bind to port " +
                                  juce::String(port_));
         return false;
     }
-    
+  
     running_.store(true);
     juce::Logger::writeToLog("OSCServer: Started on port " + juce::String(port_));
     return true;
@@ -718,7 +718,7 @@ void OSCServer::stop() {
     if (!running_.load()) {
         return;
     }
-    
+  
     receiver_.disconnect();
     running_.store(false);
     juce::Logger::writeToLog("OSCServer: Stopped");
@@ -752,22 +752,22 @@ target_link_libraries(penta_core PUBLIC
 ```
 
 #### Testing Approach
-1. **RTMessageQueue**: 
+1. **RTMessageQueue**:
    - Test push/pop from audio thread (use JUCE AudioProcessorTest)
    - Verify lock-free behavior (no blocking)
    - Stress test with 10,000+ messages
-   
-2. **OSCClient**: 
+  
+2. **OSCClient**:
    - Send messages to test server (use `oscdump` or similar)
    - Verify message encoding/decoding
    - Test reconnection on failure
-   
-3. **OSCServer**: 
+  
+3. **OSCServer**:
    - Receive messages and verify queue
    - Test multiple simultaneous clients
    - Verify RT-safe queue operations
-   
-4. **Integration**: 
+  
+4. **Integration**:
    - Test full round-trip (Client → Server → Queue → Consumer)
    - Stress test: High-frequency message sending (1000+ msg/sec)
    - Latency test: Measure RT-safe performance (<1ms target)
@@ -781,7 +781,7 @@ target_link_libraries(penta_core PUBLIC
 #### Estimated Effort
 - **CMake setup**: 1 hour
 - **RTMessageQueue**: 2-3 hours
-- **OSCClient**: 4-5 hours  
+- **OSCClient**: 4-5 hours
 - **OSCServer**: 5-6 hours
 - **Testing**: 4-5 hours
 - **Total**: 16-20 hours
@@ -790,8 +790,8 @@ target_link_libraries(penta_core PUBLIC
 
 ### 4. Groove Engine Core Implementation
 
-**Status**: Stub implementations  
-**File**: `src/groove/GrooveEngine.cpp`  
+**Status**: Stub implementations
+**File**: `src/groove/GrooveEngine.cpp`
 **Priority**: CRITICAL - Core rhythm analysis
 
 #### Overview
@@ -824,29 +824,29 @@ void GrooveEngine::updateTempoEstimate() noexcept {
     if (onsetHistory_.size() < 2) {
         return;
     }
-    
+  
     // Calculate inter-onset intervals (IOIs)
     std::vector<float> iois;
     for (size_t i = 1; i < onsetHistory_.size(); ++i) {
         float ioi = (onsetHistory_[i] - onsetHistory_[i-1]) / sampleRate_;
         iois.push_back(ioi);
     }
-    
+  
     // Autocorrelation to find tempo
     float bestTempo = 120.0f;
     float bestCorrelation = 0.0f;
-    
+  
     // Test tempos from 60 to 200 BPM
     for (float testTempo = 60.0f; testTempo <= 200.0f; testTempo += 0.5f) {
         float testInterval = 60.0f / testTempo; // Seconds per beat
-        
+  
         float correlation = autocorrelateIOIs(iois, testInterval);
         if (correlation > bestCorrelation) {
             bestCorrelation = correlation;
             bestTempo = testTempo;
         }
     }
-    
+  
     analysis_.currentTempo = bestTempo;
     analysis_.tempoConfidence = bestCorrelation;
 }
@@ -858,10 +858,10 @@ void GrooveEngine::detectTimeSignature() noexcept {
     if (onsetHistory_.size() < 8) {
         return; // Need more data
     }
-    
+  
     // Analyze beat patterns
     std::vector<float> beatStrengths = calculateBeatStrengths();
-    
+  
     // Find strongest beats (likely downbeats)
     int strongestBeat = 0;
     float maxStrength = 0.0f;
@@ -871,10 +871,10 @@ void GrooveEngine::detectTimeSignature() noexcept {
             strongestBeat = static_cast<int>(i);
         }
     }
-    
+  
     // Count beats between strong beats
     int beatsPerMeasure = countBeatsBetweenStrongBeats(strongestBeat);
-    
+  
     // Common time signatures: 4/4, 3/4, 2/4
     if (beatsPerMeasure == 4) {
         analysis_.timeSignatureNum = 4;
@@ -895,36 +895,36 @@ void GrooveEngine::analyzeSwing() noexcept {
     if (onsetHistory_.size() < 4) {
         return;
     }
-    
+  
     // Analyze timing of off-beat notes (eighth notes)
     std::vector<float> onBeatTimings;
     std::vector<float> offBeatTimings;
-    
+  
     float beatInterval = 60.0f / analysis_.currentTempo;
-    
+  
     for (size_t i = 0; i < onsetHistory_.size(); ++i) {
         float position = onsetHistory_[i] / sampleRate_;
         float beatPosition = fmod(position, beatInterval) / beatInterval;
-        
+  
         if (beatPosition < 0.1f || beatPosition > 0.9f) {
             onBeatTimings.push_back(beatPosition);
         } else if (beatPosition > 0.4f && beatPosition < 0.6f) {
             offBeatTimings.push_back(beatPosition);
         }
     }
-    
+  
     if (offBeatTimings.empty()) {
         analysis_.swing = 0.0f; // No swing detected
         return;
     }
-    
+  
     // Calculate average off-beat timing
     float avgOffBeat = 0.0f;
     for (float timing : offBeatTimings) {
         avgOffBeat += timing;
     }
     avgOffBeat /= offBeatTimings.size();
-    
+  
     // Swing ratio: 0.5 = straight, 0.6+ = swung
     // Convert to -1.0 (straight) to 1.0 (heavy swing)
     analysis_.swing = (avgOffBeat - 0.5f) * 2.0f;
@@ -937,14 +937,14 @@ void GrooveEngine::analyzeSwing() noexcept {
 uint64_t GrooveEngine::quantizeToGrid(uint64_t timestamp) const noexcept {
     float beatInterval = (60.0f / analysis_.currentTempo) * sampleRate_;
     float beatPosition = fmod(static_cast<float>(timestamp), beatInterval);
-    
+  
     // Quantize to nearest grid point
-    float quantizedBeat = std::round(beatPosition / (beatInterval / 4.0f)) 
+    float quantizedBeat = std::round(beatPosition / (beatInterval / 4.0f))
                          * (beatInterval / 4.0f);
-    
-    uint64_t quantizedTimestamp = timestamp - static_cast<uint64_t>(beatPosition) 
+  
+    uint64_t quantizedTimestamp = timestamp - static_cast<uint64_t>(beatPosition)
                                   + static_cast<uint64_t>(quantizedBeat);
-    
+  
     return quantizedTimestamp;
 }
 ```
@@ -955,13 +955,13 @@ uint64_t GrooveEngine::applySwing(uint64_t position) const noexcept {
     float beatInterval = (60.0f / analysis_.currentTempo) * sampleRate_;
     float beatPosition = fmod(static_cast<float>(position), beatInterval);
     float beatFraction = beatPosition / beatInterval;
-    
+  
     // Apply swing to off-beats (0.5 position)
     if (beatFraction > 0.4f && beatFraction < 0.6f) {
         float swingOffset = (analysis_.swing * 0.1f) * beatInterval;
         position = static_cast<uint64_t>(position + swingOffset);
     }
-    
+  
     return position;
 }
 ```
@@ -987,10 +987,10 @@ uint64_t GrooveEngine::applySwing(uint64_t position) const noexcept {
 
 ### 5. UI Panel Implementations
 
-**Status**: Header-only files  
-**Files**: 
+**Status**: Header-only files
+**Files**:
 - `src/ui/ScoreEntryPanel.h` (485 lines)
-- `src/ui/MixerConsolePanel.h` (552 lines)  
+- `src/ui/MixerConsolePanel.h` (552 lines)
 **Priority**: HIGH - Major UI features
 
 #### Overview
@@ -1028,13 +1028,13 @@ void ScoreEntryPanel::setupComponents() {
         repaint();
     };
     addAndMakeVisible(clefSelector_);
-    
+  
     // Key signature selector
     keySelector_.addItem("C", 1);
     keySelector_.addItem("G", 2);
     // ... all keys
     addAndMakeVisible(keySelector_);
-    
+  
     // Note entry area (custom component)
     noteEntryArea_ = std::make_unique<NoteEntryArea>(*this);
     addAndMakeVisible(noteEntryArea_.get());
@@ -1042,27 +1042,27 @@ void ScoreEntryPanel::setupComponents() {
 
 void ScoreEntryPanel::paint(juce::Graphics& g) {
     g.fillAll(juce::Colour(0xff2a2a2a));
-    
+  
     // Draw staff
     drawStaff(g, getLocalBounds());
-    
+  
     // Draw key signature
     drawKeySignature(g);
-    
+  
     // Draw time signature
     drawTimeSignature(g);
-    
+  
     // Draw entered notes
     drawNotes(g);
 }
 
 void ScoreEntryPanel::drawStaff(juce::Graphics& g, const juce::Rectangle<int>& bounds) {
     g.setColour(juce::Colours::white);
-    
+  
     int staffTop = bounds.getY() + 50;
     int staffHeight = 80;
     int lineSpacing = staffHeight / 4;
-    
+  
     // Draw 5 lines
     for (int i = 0; i < 5; ++i) {
         int y = staffTop + (i * lineSpacing);
@@ -1074,13 +1074,13 @@ void ScoreEntryPanel::addNoteAtPosition(int x, int y) {
     // Convert screen position to musical note
     int pitch = screenYToPitch(y);
     double beat = screenXToBeat(x);
-    
+  
     NotationNote note;
     note.pitch = pitch;
     note.startBeat = beat;
     note.value = NoteValue::Quarter;
     note.dynamic = Dynamic::MezzoForte;
-    
+  
     score_.notes.push_back(note);
     repaint();
 }
@@ -1112,10 +1112,10 @@ void MixerConsolePanel::setupChannels() {
 
 void MixerConsolePanel::resized() {
     auto bounds = getLocalBounds();
-    
+  
     int channelWidth = 80;
     int x = 0;
-    
+  
     for (auto& channel : channels_) {
         channel->setBounds(x, 0, channelWidth, bounds.getHeight());
         x += channelWidth + 5; // 5px spacing
@@ -1151,18 +1151,18 @@ void ChannelStrip::setupControls() {
         volume_ = static_cast<float>(volumeFader_.getValue());
     };
     addAndMakeVisible(volumeFader_);
-    
+  
     // Pan knob
     panKnob_.setSliderStyle(juce::Slider::Rotary);
     panKnob_.setRange(-1.0, 1.0, 0.01);
     panKnob_.setValue(0.0);
     addAndMakeVisible(panKnob_);
-    
+  
     // Mute/Solo buttons
     muteButton_.setButtonText("M");
     muteButton_.onClick = [this] { muted_ = !muted_; };
     addAndMakeVisible(muteButton_);
-    
+  
     soloButton_.setButtonText("S");
     soloButton_.onClick = [this] { soloed_ = !soloed_; };
     addAndMakeVisible(soloButton_);
@@ -1170,12 +1170,12 @@ void ChannelStrip::setupControls() {
 
 void ChannelStrip::paint(juce::Graphics& g) {
     g.fillAll(juce::Colour(0xff1a1a1a));
-    
+  
     // Draw channel name
     g.setColour(juce::Colours::white);
-    g.drawText(name_, 0, 0, getWidth(), 20, 
+    g.drawText(name_, 0, 0, getWidth(), 20,
                juce::Justification::centred);
-    
+  
     // Draw VU meter
     drawVUMeter(g);
 }
@@ -1191,8 +1191,8 @@ void ChannelStrip::paint(juce::Graphics& g) {
 
 ### 6. LearningPanel Features
 
-**Status**: TODO comments  
-**File**: `src/ui/theory/LearningPanel.cpp:69, 74`  
+**Status**: TODO comments
+**File**: `src/ui/theory/LearningPanel.cpp:69, 74`
 **Priority**: HIGH - User experience
 
 #### Implementation Steps
@@ -1203,15 +1203,15 @@ void LearningPanel::playExampleButton_.onClick = [this] {
     if (currentConcept_.empty()) {
         return;
     }
-    
+  
     // Get MIDI example for concept
     auto midiExample = brain_->getConceptExample(currentConcept_);
-    
+  
     if (midiExample) {
         // Play MIDI using JUCE MidiPlayer or similar
         midiPlayer_.loadMidiFile(*midiExample);
         midiPlayer_.play();
-        
+  
         playExampleButton_.setButtonText("Stop");
         playExampleButton_.onClick = [this] {
             midiPlayer_.stop();
@@ -1227,10 +1227,10 @@ void LearningPanel::nextExerciseButton_.onClick = [this] {
     if (currentConcept_.empty()) {
         return;
     }
-    
+  
     // Get next exercise for concept
     auto exercise = brain_->getNextExercise(currentConcept_);
-    
+  
     if (exercise) {
         currentExercise_ = *exercise;
         displayExercise(*exercise);
@@ -1245,9 +1245,9 @@ void LearningPanel::displayExercise(const Exercise& exercise) {
     text += "Exercise: " + juce::String(exercise.title) + "\n\n";
     text += exercise.description + "\n\n";
     text += "Instructions: " + exercise.instructions;
-    
+  
     explanationDisplay_.setText(text);
-    
+  
     // Load exercise MIDI if available
     if (!exercise.midiFile.empty()) {
         exerciseMidi_ = juce::File(exercise.midiFile);
@@ -1265,10 +1265,10 @@ void LearningPanel::displayExercise(const Exercise& exercise) {
 
 ### 7. ML Inference Processing
 
-**Status**: Placeholder implementations  
-**Files**: 
+**Status**: Placeholder implementations
+**Files**:
 - `src/ml/RTNeuralProcessor.cpp`
-- `src/ml/MLBridge.cpp`  
+- `src/ml/MLBridge.cpp`
 **Priority**: HIGH - AI features
 
 #### Implementation Steps
@@ -1281,16 +1281,16 @@ bool RTNeuralProcessor::loadModel(const juce::File& jsonFile) {
     if (!file.is_open()) {
         return false;
     }
-    
+  
     nlohmann::json modelJson;
     file >> modelJson;
-    
+  
     // Parse RTNeural model structure
     // Input layer
     if (modelJson.contains("in_size")) {
         inputSize_ = modelJson["in_size"];
     }
-    
+  
     // Layers
     if (modelJson.contains("layers")) {
         for (const auto& layer : modelJson["layers"]) {
@@ -1298,7 +1298,7 @@ bool RTNeuralProcessor::loadModel(const juce::File& jsonFile) {
             parseLayer(layer);
         }
     }
-    
+  
     isLoaded_ = true;
     return true;
 #else
@@ -1315,7 +1315,7 @@ void RTNeuralProcessor::process(const float* input, float* output, int numSample
         std::memcpy(output, input, numSamples * sizeof(float));
         return;
     }
-    
+  
     // Process through model
     model_.reset();
     for (int i = 0; i < numSamples; ++i) {
@@ -1331,18 +1331,18 @@ void RTNeuralProcessor::process(const float* input, float* output, int numSample
 
 **Step 3: Implement Async ML Inference**
 ```cpp
-bool MLBridge::processAsync(const std::string& inputJson, 
+bool MLBridge::processAsync(const std::string& inputJson,
                            std::function<void(const std::string&)> callback) {
     if (!isInitialized()) {
         return false;
     }
-    
+  
     // Submit to thread pool
     threadPool_.addJob([this, inputJson, callback]() {
         std::string result = processSync(inputJson);
         callback(result);
     });
-    
+  
     return true;
 }
 ```

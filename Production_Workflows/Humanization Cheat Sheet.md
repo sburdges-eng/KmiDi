@@ -107,6 +107,7 @@ Length: ±3 to ±10 ticks
 ## What to Vary Per Repeat
 
 When you copy a section, change:
+
 - [ ] 2-3 note velocities
 - [ ] 1-2 note timings
 - [ ] Add or remove 1 note

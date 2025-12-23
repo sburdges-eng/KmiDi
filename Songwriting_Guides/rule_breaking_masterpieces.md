@@ -72,6 +72,7 @@ This document catalogs famous examples of musicians breaking formal notation rul
 - *Voicing formula:* "Monk voicings" = semitone interval at bottom of chord + 3rd on top
   - Major: 7th, root, 3rd of key (B, C, E in C major)
   - Other chords: 2nd, â™­3rd, 5th of key (D, Eâ™­, G in C melodic minor)
+
 - *Why it works:* "Wrong notes" make sense because they sound wrong in a meaningful way; creates commentary on harmonic expectations
 
 **COLTRANE - "Giant Steps" (1959) - Coltrane Changes**
@@ -79,6 +80,7 @@ This document catalogs famous examples of musicians breaking formal notation rul
 - *Notation detail:* Chord roots move by major 3rds instead of 5ths, creating three key centers
   - Original 16 bars contain 26 chord changes
   - Keys cycle: B major â†’ G major â†’ Eâ™­ major (each a major 3rd apart)
+
 - *Specific progression:* B-D7-G-Bâ™­7-Eâ™­-F#7-B...
 - *Why it works:* Each V7 resolves to I, but the I immediately becomes a passing tone to the next key; creates "sheets of sound" when improvised over because scales shift every 2 beats
 
@@ -102,6 +104,7 @@ This document catalogs famous examples of musicians breaking formal notation rul
 - *Example - "Creep":* G-B-C-Cm (I-III-IV-iv)
   - B major = borrowed from G Lydian (â™¯IV)
   - Cm = borrowed from G minor (iv)
+
 - *Example - "Everything in Its Right Place":* Oscillates between C majorised Phrygian and F majorised Aeolian
 - *Technique:* Pedal notes tie disparate chords together (same note held across all chord changes)
 - *Why it works:* Creates characteristic "happy-to-sad" emotional ambiguity
@@ -131,6 +134,7 @@ This document catalogs famous examples of musicians breaking formal notation rul
   - 4/4
   - 3/4 + 5/4 alternating
   - "4 measures of 3/4 + 1 measure of 4/4"
+
 - *Why it works:* Piano chords with no discernible pulse; meter only becomes clear when drums enter, but ambiguity remains central to the piece's unsettled quality
 
 ---

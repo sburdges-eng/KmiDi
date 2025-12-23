@@ -7,6 +7,7 @@ Creating hard-hitting, groove-heavy hip-hop beats.
 ## The Hip-Hop Sound
 
 Key elements:
+
 - **Hard-hitting drums** — Punchy kick and snare
 - **Deep bass** — 808s or heavy bass
 - **The pocket** — Behind-the-beat feel

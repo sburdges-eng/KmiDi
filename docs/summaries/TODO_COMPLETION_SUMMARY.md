@@ -126,6 +126,7 @@ daiw teach rulebreaking         # ✅ Works
 ## 📦 Installed Dependencies
 
 New packages installed for penta_core MCP server:
+
 - python-dotenv (1.2.1)
 - fastmcp (2.13.2)
 - mcp (1.23.1)
@@ -209,6 +210,7 @@ While all "Today" TODO items are complete, optional next steps include:
 ## ✨ Summary
 
 All TODO items from the INTEGRATION_GUIDE.md "Today" list have been completed:
+
 - ✅ CLI commands tested and working
 - ✅ Kelly intent JSON created and validated
 - ✅ penta_core module installed and importable

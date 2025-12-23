@@ -48,7 +48,7 @@ about changes and bugfixes please see the git log and BREAKING_CHANGES.md.
 
 ## Version 8.0.6
 
-  - Changed a Visual Studio toolchain error into a warning 
+  - Changed a Visual Studio toolchain error into a warning
 
 ## Version 8.0.5
 

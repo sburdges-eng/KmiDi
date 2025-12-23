@@ -108,7 +108,7 @@ Building an audience and promoting your music online.
 - Photos (less reach but valuable)
 - Lives (real-time connection)
 
-**Posting frequency:** 
+**Posting frequency:**
 - Feed: 3-7x per week
 - Stories: Daily
 - Reels: 3-7x per week

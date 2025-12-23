@@ -348,12 +348,14 @@ Add emotional depth:
 ### Sus Chords
 
 Create ambiguity:
+
 - **Sus2:** Open, modern (C - D - G)
 - **Sus4:** Tense, wants resolution (C - F - G)
 
 ### Add Chords
 
 Color without changing function:
+
 - **Add9:** Sparkle, openness (C - E - G - D)
 - **Add2:** Similar to add9
 
@@ -421,6 +423,7 @@ Common tones stay, others move by step
 ### Exercise 1: Four Chord Song
 
 Pick one of these and write over it:
+
 - I - V - vi - IV
 - vi - IV - I - V
 - I - IV - vi - V

@@ -7,6 +7,7 @@ A comprehensive project structure for the DAiW (Digital Audio Intelligence Works
 ## Project Overview
 
 The DAiW Music Brain is a modular AI system designed to:
+
 - Analyze and apply musical grooves and feel
 - Understand and generate emotional musical content
 - Integrate with major DAWs (Logic Pro, Ableton, Pro Tools, Reaper)

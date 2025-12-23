@@ -59,6 +59,7 @@ After setting pattern, add random variation ±5-10 velocity.
 ### Timing Looseness
 
 Hi-hats should be the LOOSEST element:
+
 - Random timing variation: ±10-20ms
 - Can push slightly ahead of beat (driving feel)
 - Or behind (lazy feel)
@@ -66,6 +67,7 @@ Hi-hats should be the LOOSEST element:
 ### Articulation Variety
 
 Don't use the same hi-hat sample every hit:
+
 - Closed tight
 - Closed loose
 - Slightly open
@@ -81,6 +83,7 @@ Cl  Cl  Cl  Lo  Cl  Cl  Cl  Op
 ### Open Hi-Hat Timing
 
 Open hi-hats typically:
+
 - Hit on an "and" (upbeat)
 - Close ON the next downbeat (not before)
 - Velocity 80-110
@@ -119,6 +122,7 @@ Vel:35  100 40    30    100 38
 ### Main Snare Variation
 
 Even the main backbeat shouldn't be identical:
+
 - Velocity range: 95-115
 - Slight timing drift: ±5-10ms
 - Maybe 2 hits per bar are slightly quieter
@@ -142,6 +146,7 @@ Even the main backbeat shouldn't be identical:
 ### Keep It Tight (Mostly)
 
 Kick can be tighter than other elements:
+
 - Timing: ±5ms (not much drift)
 - Velocity: Range of 85-110
 - Downbeats stronger
@@ -159,6 +164,7 @@ Downbeat slightly strongest.
 ### Double Kicks
 
 When programming quick double kicks:
+
 - First hit: velocity 85-95
 - Second hit: velocity 95-110 (accent on landing)
 - Or reverse for different feel
@@ -170,6 +176,7 @@ When programming quick double kicks:
 ### The Fill Trap
 
 Fills are where programmed drums die. Avoid:
+
 - Perfectly even 16th notes
 - All same velocity
 - No crescendo
@@ -192,6 +199,7 @@ Fills are where programmed drums die. Avoid:
 ### Simple vs. Complex
 
 Match fill complexity to:
+
 - Genre (jazz = simple, metal = complex)
 - Song energy
 - Drummer skill you're emulating

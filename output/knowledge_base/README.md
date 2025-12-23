@@ -10,6 +10,7 @@ This directory contains the generated knowledge base from repository analysis.
   - **plugins/** - Plugin components, systems, and UI/UX
   - **daw/** - DAW components, systems, and UI/UX
   - **standalone/** - Standalone app components, systems, and UI/UX
+
 - **topics/** - Content organized by topic (production, theory, ml_ai, etc.)
 
 ## Usage
@@ -24,6 +25,7 @@ docker-compose run --rm daiw-kb-analyzer
 ## Pipeline-Specific Knowledge
 
 Each pipeline has its own directory with:
+
 - **components.json** - All components for that pipeline
 - **systems.json** - Unified systems for that pipeline
 - **ui_ux/components.json** - UI/UX components and patterns
@@ -31,6 +33,7 @@ Each pipeline has its own directory with:
 ## Shared Components
 
 Components used across multiple pipelines are documented in `shared_components.json` with:
+
 - Which pipelines use them
 - Benefits of the overlap
 - File locations

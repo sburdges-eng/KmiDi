@@ -82,7 +82,12 @@ TEST_F(OnsetDetectorTest, RespondsToSensitivityChanges) {
 class TempoEstimatorTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        estimator = std::make_unique<TempoEstimator>(44100.0);
+        TempoEstimator::Config cfg;
+        cfg.sampleRate = 44100.0;
+        cfg.minTempo = 60.0f;
+        cfg.maxTempo = 180.0f;
+        cfg.historySize = 16;
+        estimator = std::make_unique<TempoEstimator>(cfg);
     }
     
     std::unique_ptr<TempoEstimator> estimator;
@@ -100,6 +105,7 @@ TEST_F(TempoEstimatorTest, Estimates120BPM) {
     float bpm = estimator->getCurrentTempo();
     
     EXPECT_NEAR(bpm, 120.0f, 5.0f);  // Within 5 BPM
+    EXPECT_TRUE(estimator->hasReliableEstimate());
 }
 
 TEST_F(TempoEstimatorTest, Estimates90BPM) {
@@ -118,27 +124,32 @@ TEST_F(TempoEstimatorTest, Estimates90BPM) {
 TEST_F(TempoEstimatorTest, ReturnsZeroWithNoOnsets) {
     float bpm = estimator->getCurrentTempo();
     
-    EXPECT_EQ(bpm, 0.0f);
+    EXPECT_GT(bpm, 0.0f);               // default value retained
+    EXPECT_FALSE(estimator->hasReliableEstimate());
 }
 
 TEST_F(TempoEstimatorTest, SmoothsTempoChanges) {
-    estimator->setSmoothing(0.8f);  // High smoothing
-    
-    // First tempo: 120 BPM
-    for (int i = 0; i < 4; ++i) {
+    // Lower adaptation rate to enforce smoothing
+    TempoEstimator::Config cfg;
+    cfg.sampleRate = 44100.0;
+    cfg.adaptationRate = 0.1f;
+    estimator->updateConfig(cfg);
+
+    // First tempo: ~120 BPM
+    for (int i = 0; i < 5; ++i) {
         estimator->addOnset(i * 22050);
     }
     float tempo1 = estimator->getCurrentTempo();
-    
-    // Sudden change to 140 BPM
-    estimator->reset();
-    for (int i = 0; i < 4; ++i) {
-        estimator->addOnset(i * 18900);  // 140 BPM
+
+    // Sudden change to ~140 BPM
+    for (int i = 0; i < 5; ++i) {
+        estimator->addOnset((i + 5) * 18900);
     }
     float tempo2 = estimator->getCurrentTempo();
-    
-    // Smoothing should affect the estimate
-    EXPECT_NE(tempo1, tempo2);
+
+    // With smoothing, tempo2 should be between 120 and 140, not an immediate jump
+    EXPECT_GT(tempo2, tempo1);
+    EXPECT_LT(tempo2, 140.0f);
 }
 
 // ========== RhythmQuantizer Tests ==========
@@ -208,7 +219,9 @@ TEST_F(RhythmQuantizerTest, SupportsTriplets) {
 class GrooveEngineTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        engine = std::make_unique<GrooveEngine>(44100.0);
+        GrooveEngine::Config cfg;
+        cfg.sampleRate = 44100.0;
+        engine = std::make_unique<GrooveEngine>(cfg);
     }
     
     std::unique_ptr<GrooveEngine> engine;
@@ -274,7 +287,11 @@ TEST_F(GroovePerformanceBenchmark, OnsetDetectionUnder150Microseconds) {
 }
 
 TEST_F(GroovePerformanceBenchmark, TempoEstimationUnder200Microseconds) {
-    TempoEstimator estimator(44100.0);
+    TempoEstimator::Config cfg;
+    cfg.sampleRate = 44100.0;
+    cfg.historySize = 16;
+    cfg.adaptationRate = 0.2f;
+    TempoEstimator estimator(cfg);
     constexpr int iterations = 1000;
     
     auto start = std::chrono::high_resolution_clock::now();

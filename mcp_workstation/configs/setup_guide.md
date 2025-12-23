@@ -125,6 +125,7 @@ Each AI is assigned tasks based on their strengths:
 Each AI can submit up to **3 comprehensive improvement proposals**.
 
 Proposals are voted on by all AIs:
+
 - **+1**: Approve
 - **0**: Neutral
 - **-1**: Reject

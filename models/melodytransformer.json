@@ -1,0 +1,25 @@
+{
+  "model_type": "RTNeural",
+  "version": "1.0.0",
+  "name": "MelodyTransformer",
+  "description": "Emotion embedding to note probabilities (stub model - uses fallback heuristics)",
+  "input_size": 64,
+  "output_size": 128,
+  "layers": [
+    {
+      "type": "dense",
+      "activation": "sigmoid",
+      "in_size": 64,
+      "out_size": 128,
+      "weights": [],
+      "bias": []
+    }
+  ],
+  "metadata": {
+    "status": "stub",
+    "note": "Replace with trained model. Fallback heuristics will be used until then.",
+    "training_data": "midi_melody_dataset_v1",
+    "architecture": "64→256→256→256→128 (full version)"
+  }
+}
+

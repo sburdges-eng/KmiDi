@@ -3,12 +3,12 @@ title: "<% tp.file.title %>"
 created: <% tp.date.now("YYYY-MM-DD") %>
 modified: <% tp.date.now("YYYY-MM-DD") %>
 type: plugin
-category: 
-developer: 
-version: 
+category:
+developer:
+version:
 format: AU
-price: 
-rating: 
+price:
+rating:
 tags:
   - type/plugin
 ---
@@ -46,10 +46,10 @@ tags:
 
 ## Key Features
 
-- 
-- 
-- 
-- 
+-
+-
+-
+-
 
 ---
 
@@ -75,14 +75,14 @@ tags:
 - [ ] Synths
 - [ ] Mix Bus
 - [ ] Mastering
-- [ ] Other: 
+- [ ] Other:
 
 ---
 
 ## My Go-To Settings
 
-### Preset 1: 
-**Use case:** 
+### Preset 1:
+**Use case:**
 
 | Parameter | Value |
 |-----------|-------|
@@ -90,8 +90,8 @@ tags:
 | | |
 | | |
 
-### Preset 2: 
-**Use case:** 
+### Preset 2:
+**Use case:**
 
 | Parameter | Value |
 |-----------|-------|
@@ -126,7 +126,7 @@ tags:
 
 ## Compared To
 
-### vs. 
+### vs.
 | Feature | This Plugin | Competitor |
 |---------|-------------|------------|
 | | | |
@@ -144,22 +144,22 @@ tags:
 ## Pros & Cons
 
 ### ✅ Pros
-- 
-- 
-- 
+-
+-
+-
 
 ### ❌ Cons
-- 
-- 
-- 
+-
+-
+-
 
 ---
 
 ## Tips & Tricks
 
-- 
-- 
-- 
+-
+-
+-
 
 ---
 
@@ -180,17 +180,17 @@ tags:
 ```
 
 ### Registration
-- **License Type:** 
-- **Serial:** 
-- **Account:** 
+- **License Type:**
+- **Serial:**
+- **Account:**
 
 ---
 
 ## Resources
 
-- **Manual:** 
-- **Developer Website:** 
-- **Tutorials:** 
+- **Manual:**
+- **Developer Website:**
+- **Tutorials:**
 
 ---
 

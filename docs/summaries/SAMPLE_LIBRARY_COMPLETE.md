@@ -95,6 +95,7 @@ Creates `sample_catalog.json` with full metadata.
 ```
 
 Creates **LoFi_Bedroom_Kit_01**:
+
 - GM MIDI mapping (C1-C2)
 - Compatible with MPK mini 3
 - Logic Pro setup guide included

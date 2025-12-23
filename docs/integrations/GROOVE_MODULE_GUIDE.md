@@ -34,6 +34,7 @@ groove_templates/        - Genre templates (funk, boom-bap, etc.)
   - 50% = straight
   - 58-62% = funk/soul swing
   - 66% = triplet swing (jazz)
+
 - **Push/Pull**: Per-instrument timing adjustments
   - Kick pushes +15ms = "ahead of beat"
   - Snare pulls -5ms = "lays back"
@@ -46,6 +47,7 @@ groove_templates/        - Genre templates (funk, boom-bap, etc.)
 
 ### **Genre Pockets**
 Different genres have characteristic timing:
+
 - **Funk**: 58% swing, kick pushes, snare lays back
 - **Boom-bap**: 54% swing, heavy kick/snare, quiet hats
 - **Dilla**: 62% swing (heavy), uneven accents
@@ -508,6 +510,7 @@ Your groove is "intentional imperfection."
 ## ✅ COMPLETION CHECKLIST
 
 Groove Module:
+
 - [x] Timing deviation extraction
 - [x] Swing calculation
 - [x] Push/pull per instrument
@@ -519,6 +522,7 @@ Groove Module:
 - [x] Complete examples and tests
 
 Integration:
+
 - [ ] Copy to repo structure
 - [ ] Update `__init__.py`
 - [ ] Add CLI commands

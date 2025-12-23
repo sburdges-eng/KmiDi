@@ -3,9 +3,9 @@ title: "Practice Log - <% tp.date.now('YYYY-MM-DD') %>"
 created: <% tp.date.now("YYYY-MM-DD") %>
 type: practice
 date: <% tp.date.now("YYYY-MM-DD") %>
-duration_minutes: 
-instrument: 
-focus: 
+duration_minutes:
+instrument:
+focus:
 tags:
   - type/practice
 ---
@@ -32,42 +32,42 @@ tags:
 
 
 ### Specific Exercises
-- [ ] 
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
+- [ ]
 
 ---
 
 ## Warm-Up (10 min)
 
 ### What I Did
-- [ ] Scales: 
-- [ ] Arpeggios: 
-- [ ] Stretches: 
-- [ ] Other: 
+- [ ] Scales:
+- [ ] Arpeggios:
+- [ ] Stretches:
+- [ ] Other:
 
 ### Tempo/BPM
-- Started at: 
-- Ended at: 
+- Started at:
+- Ended at:
 
 ---
 
 ## Technical Practice (20 min)
 
-### Exercise 1: 
-- **What:** 
-- **Tempo:** 
-- **Key:** 
-- **Reps/Duration:** 
+### Exercise 1:
+- **What:**
+- **Tempo:**
+- **Key:**
+- **Reps/Duration:**
 - **Difficulty:** Easy / Medium / Hard / Struggle
 
 **Notes:**
 
 
-### Exercise 2: 
-- **What:** 
-- **Tempo:** 
-- **Reps/Duration:** 
+### Exercise 2:
+- **What:**
+- **Tempo:**
+- **Reps/Duration:**
 - **Difficulty:** Easy / Medium / Hard / Struggle
 
 **Notes:**
@@ -77,16 +77,16 @@ tags:
 
 ## Song/Repertoire Work (20 min)
 
-### Song: 
-- **Section worked on:** 
+### Song:
+- **Section worked on:**
 - **Tempo:** Target: ___ | Achieved: ___
-- **Problem spots:** 
+- **Problem spots:**
 
 
-### Song: 
-- **Section worked on:** 
-- **Tempo:** 
-- **Problem spots:** 
+### Song:
+- **Section worked on:**
+- **Tempo:**
+- **Problem spots:**
 
 
 ---
@@ -94,9 +94,9 @@ tags:
 ## Creative/Improvisation (10 min)
 
 ### What I explored
-- **Key/Mode:** 
-- **Backing track:** 
-- **Ideas that emerged:** 
+- **Key/Mode:**
+- **Backing track:**
+- **Ideas that emerged:**
 
 
 
@@ -116,7 +116,7 @@ tags:
 
 ## Theory Study
 
-### Topic: 
+### Topic:
 **Key takeaway:**
 
 
@@ -127,9 +127,9 @@ tags:
 
 *What went well today?*
 
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ---
 
@@ -137,8 +137,8 @@ tags:
 
 *What's still challenging?*
 
-1. 
-2. 
+1.
+2.
 
 ---
 
@@ -146,8 +146,8 @@ tags:
 
 *New insights, techniques, or ideas*
 
-- 
-- 
+-
+-
 
 ---
 
@@ -155,14 +155,14 @@ tags:
 
 *Based on today, what should I work on next?*
 
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
 
 ---
 
 ## Weekly Goal Progress
 
-### This Week's Goal: 
+### This Week's Goal:
 
 
 ### Progress: ▓▓▓▓▓▓░░░░ 60%

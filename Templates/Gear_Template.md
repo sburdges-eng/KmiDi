@@ -3,11 +3,11 @@ title: "<% tp.file.title %>"
 created: <% tp.date.now("YYYY-MM-DD") %>
 modified: <% tp.date.now("YYYY-MM-DD") %>
 type: gear
-category: 
-manufacturer: 
-model: 
-purchase_date: 
-price: 
+category:
+manufacturer:
+model:
+purchase_date:
+price:
 tags:
   - type/gear
 ---
@@ -61,9 +61,9 @@ tags:
 | | | |
 
 ### Power
-- **Power Type:** 
-- **Voltage:** 
-- **Cable Type:** 
+- **Power Type:**
+- **Voltage:**
+- **Cable Type:**
 
 ---
 
@@ -76,12 +76,12 @@ tags:
 | | | |
 | | | |
 
-### Preset 1: 
+### Preset 1:
 | Parameter | Value |
 |-----------|-------|
 | | |
 
-### Preset 2: 
+### Preset 2:
 | Parameter | Value |
 |-----------|-------|
 | | |
@@ -105,17 +105,17 @@ tags:
 ## Tips & Tricks
 
 ### What I've Learned
-- 
-- 
-- 
+-
+-
+-
 
 ### Best Practices
-- 
-- 
+-
+-
 
 ### Things to Avoid
-- 
-- 
+-
+-
 
 ---
 
@@ -132,8 +132,8 @@ tags:
 ## Maintenance
 
 ### Regular Maintenance
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
 
 ### Last Serviced
 | Date | What Was Done |
@@ -145,17 +145,17 @@ tags:
 ## Resources
 
 ### Documentation
-- **Manual:** 
-- **Quick Start:** 
-- **Manufacturer Website:** 
+- **Manual:**
+- **Quick Start:**
+- **Manufacturer Website:**
 
 ### Tutorials/Videos
-- 
-- 
+-
+-
 
 ### Firmware/Software
-- **Current Version:** 
-- **Download Link:** 
+- **Current Version:**
+- **Download Link:**
 
 ---
 

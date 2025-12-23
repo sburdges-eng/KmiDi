@@ -3,29 +3,50 @@
 namespace penta::osc {
 
 RTMessageQueue::RTMessageQueue(size_t capacity)
-    : capacity_(capacity)
+    : queue_(std::make_unique<moodycamel::ReaderWriterQueue<OSCMessage>>(capacity))
+    , capacity_(capacity)
+    , writeIndex_(0)
+    , readIndex_(0)
+    , buffer_()
 {
-    // TODO: Week 6 implementation - lock-free queue using readerwriterqueue
+    // Reserve storage up front to avoid allocations on RT threads
+    buffer_.reserve(capacity_);
 }
 
 RTMessageQueue::~RTMessageQueue() = default;
 
-bool RTMessageQueue::push(const OSCMessage& message) noexcept { (void)message;
-    // Stub implementation
-    return true;
+bool RTMessageQueue::push(const OSCMessage& message) noexcept {
+    if (!queue_) {
+        return false;
+    }
+
+    const bool success = queue_->try_enqueue(message);
+    if (success) {
+        writeIndex_.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    return success;
 }
 
-bool RTMessageQueue::pop(OSCMessage& message) noexcept { (void)message;
-    // Stub implementation
-    return false;
+bool RTMessageQueue::pop(OSCMessage& message) noexcept {
+    if (!queue_) {
+        return false;
+    }
+
+    const bool success = queue_->try_dequeue(message);
+    if (success) {
+        readIndex_.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    return success;
 }
 
 bool RTMessageQueue::isEmpty() const noexcept {
-    return true;
+    return !queue_ || queue_->size_approx() == 0;
 }
 
 size_t RTMessageQueue::size() const noexcept {
-    return 0;
+    return queue_ ? queue_->size_approx() : 0;
 }
 
 } // namespace penta::osc

@@ -3,8 +3,8 @@ title: "<% tp.file.title %>"
 created: <% tp.date.now("YYYY-MM-DD") %>
 modified: <% tp.date.now("YYYY-MM-DD") %>
 type: sound-design
-category: 
-synth_used: 
+category:
+synth_used:
 tags:
   - type/sound-design
 ---
@@ -44,14 +44,14 @@ tags:
 | Noise | | | | |
 
 ### Wavetable Position (if applicable)
-- **Table:** 
-- **Position:** 
-- **Modulation:** 
+- **Table:**
+- **Position:**
+- **Modulation:**
 
 ### Sample Source (if applicable)
-- **Sample:** 
-- **Pitch:** 
-- **Start point:** 
+- **Sample:**
+- **Pitch:**
+- **Start point:**
 
 ---
 
@@ -160,7 +160,7 @@ tags:
 ## Performance Settings
 
 ### Polyphony
-- **Voices:** 
+- **Voices:**
 - **Mode:** Poly / Mono / Legato / Unison
 
 ### Unison (if used)
@@ -171,8 +171,8 @@ tags:
 | Spread | |
 
 ### Portamento/Glide
-- **On/Off:** 
-- **Time:** 
+- **On/Off:**
+- **Time:**
 - **Mode:** Always / Legato
 
 ---
@@ -190,14 +190,14 @@ tags:
 
 ## Variations
 
-### Variation 1: 
+### Variation 1:
 *How to modify for different context*
 
 | Change | From | To |
 |--------|------|-----|
 | | | |
 
-### Variation 2: 
+### Variation 2:
 | Change | From | To |
 |--------|------|-----|
 | | | |
@@ -207,11 +207,11 @@ tags:
 ## How to Recreate
 
 ### Step-by-Step
-1. 
-2. 
-3. 
-4. 
-5. 
+1.
+2.
+3.
+4.
+5.
 
 ### Key to the Sound
 *What's the most important element that defines this sound?*
@@ -231,7 +231,7 @@ tags:
 - [ ] Percussion
 - [ ] Atmosphere
 
-**Best genre fit:** 
+**Best genre fit:**
 
 ---
 
@@ -246,18 +246,18 @@ tags:
 
 ## Preset Location
 
-- **Synth:** 
-- **Bank:** 
-- **Preset Name:** 
-- **File Path:** 
+- **Synth:**
+- **Bank:**
+- **Preset Name:**
+- **File Path:**
 
 ---
 
 ## Audio Example
 
 *If you've bounced an example:*
-- **File:** 
-- **Location:** 
+- **File:**
+- **Location:**
 
 ---
 

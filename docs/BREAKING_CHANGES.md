@@ -56,10 +56,10 @@ containers, and returning a FocusTraverser object created using the
 
 **Rationale**
 
-Disabled components are typically rendered in a dimmed or inactive state, but 
+Disabled components are typically rendered in a dimmed or inactive state, but
 are still prominently visible for sighted users. The old behaviour made these
-components entirely missing from the accessibility tree, making them 
-non-discoverable with screen readers. 
+components entirely missing from the accessibility tree, making them
+non-discoverable with screen readers.
 
 This was in contrast to the behaviour of native OS components, that are still
 accessible using screen readers, but their disabled/dimmed state is also
@@ -738,6 +738,7 @@ which limits their usefulness.
 As part of the Unicode upgrades TextLayout codepaths have been unified across
 all platforms. As a consequence the behaviour of TextLayout on Apple platforms
 will now be different in two regards:
+
 - With certain fonts, line spacing will now be different.
 - The AttributedString option WordWrap::byChar will no longer have an effect,
   just like it didn't have an effect on non-Apple platforms previously. Wrapping
@@ -1184,6 +1185,7 @@ layout, and to handle these cases separately if necessary.
 ## Change
 
 The signatures of some member functions of ci::Device have been changed:
+
 - sendPropertyGetInquiry
 - sendPropertySetInquiry
 
@@ -1191,6 +1193,7 @@ The signature of ci::PropertyHost::sendSubscriptionUpdate has also changed.
 
 The following member functions of ci::Device have been replaced with new
 alternatives:
+
 - sendPropertySubscriptionStart
 - sendPropertySubscriptionEnd
 - getOngoingSubscriptionsForMuid
@@ -3064,8 +3067,10 @@ apps behave as expected for users.
 ## Change
 
 The Convolution class interface was changed:
+
 - `loadImpulseResponse` member functions now take `enum class` parameters
   instead of `bool`.
+
 - `copyAndLoadImpulseResponseFromBlock` and
   `copyAndLoadImpulseResponseFromBuffer` were replaced by a new
   `loadImpulseResponse` overload.

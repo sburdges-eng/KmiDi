@@ -7,6 +7,7 @@ Making programmed guitars sound like a real player — acoustic, electric, and b
 ## Why Programmed Guitar Sounds Fake
 
 The tells:
+
 - No string noise or fret sounds
 - Perfect timing on strums
 - All strings hit at once
@@ -56,6 +57,7 @@ E4:      |====
 ### Strum Pattern Variation
 
 Don't strum every chord the same way:
+
 - Some tighter (faster strum)
 - Some looser (slower strum)
 - Some partial (not all strings)
@@ -86,6 +88,7 @@ Downbeats stronger, upbeats lighter.
 ### Per-String Velocity
 
 Within a single strum:
+
 - Bass strings slightly stronger
 - High strings slightly lighter
 - Or vice versa for different feel
@@ -125,6 +128,7 @@ Type:   Long        Short Short       Long  Short
 ### Palm Muting
 
 If your guitar library has palm mute samples:
+
 - Use on rhythmic parts
 - Mix muted and open
 - Creates dynamic variation
@@ -191,6 +195,7 @@ Pitch:  ___/‾‾‾‾\___
 ### What They Are
 
 Fast notes without re-picking:
+
 - Hammer-on: Lower note → higher note (finger slams down)
 - Pull-off: Higher note → lower note (finger pulls off)
 
@@ -218,6 +223,7 @@ Note 2: velocity 75, overlaps slightly or immediately follows
 ### Power Chord Basics
 
 Just root and fifth (and often octave):
+
 - E5 = E + B
 - A5 = A + E
 
@@ -231,6 +237,7 @@ Just root and fifth (and often octave):
 
 **The Chunk:**
 Muted "chunk" sounds between power chords:
+
 - Very short notes
 - Palm mute articulation
 - Lower velocity
@@ -306,6 +313,7 @@ Treble:      G+B     G+B     G+B     G+B
 ### Why Double Track
 
 Standard practice for thick guitar sound:
+
 - Two performances (slightly different)
 - Panned left and right
 - Sounds huge
@@ -334,6 +342,7 @@ Method:
 ### What's Missing
 
 Real guitars have:
+
 - Finger squeaks on wound strings
 - Fret buzz (subtle)
 - Pick attack noise
@@ -367,6 +376,7 @@ Program notes/chords on grid with reasonable velocity.
 ### Step 2: Strum Spread
 
 For chords:
+
 - Turn off Snap
 - Stagger notes to create strum
 - Alternate up/down strum patterns
@@ -374,6 +384,7 @@ For chords:
 ### Step 3: Articulations
 
 Add expression:
+
 - Pitch bends for slides/bends
 - Velocity variation for dynamics
 - Note lengths for sustain/muting
@@ -381,6 +392,7 @@ Add expression:
 ### Step 4: Humanize Pass
 
 MIDI Transform → Humanize:
+
 - Position: ±5-10 ticks
 - Velocity: ±10-15
 - Length: ±5 ticks
@@ -396,6 +408,7 @@ Apply groove template or manually adjust timing feel.
 ### Dynamic Response
 
 Good amp sims respond to velocity/input:
+
 - Play softer = cleaner tone
 - Play harder = more breakup/drive
 - Use this dynamically
@@ -403,6 +416,7 @@ Good amp sims respond to velocity/input:
 ### Don't Over-Gain
 
 Too much distortion:
+
 - Hides mistakes (but also hides expression)
 - Loses note definition
 - Gets muddy in a mix

@@ -4,12 +4,12 @@ created: <% tp.date.now("YYYY-MM-DD") %>
 modified: <% tp.date.now("YYYY-MM-DD") %>
 type: song
 status: idea
-key: 
-bpm: 
+key:
+bpm:
 time_signature: 4/4
-duration: 
-genre: 
-mood: 
+duration:
+genre:
+mood:
 tags:
   - type/song
   - status/idea
@@ -40,9 +40,9 @@ tags:
 
 
 ### Reference tracks / Inspiration
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ---
 
@@ -68,19 +68,19 @@ tags:
 ```
 | | | | |
 ```
-Roman numerals: 
+Roman numerals:
 
 ### Chorus
 ```
 | | | | |
 ```
-Roman numerals: 
+Roman numerals:
 
 ### Bridge
 ```
 | | | | |
 ```
-Roman numerals: 
+Roman numerals:
 
 ---
 
@@ -140,8 +140,8 @@ Roman numerals:
 | | | | | |
 
 ### Arrangement Notes
-- **Intro:** 
-- **Verse 1:** 
+- **Intro:**
+- **Verse 1:**
 - **Chorus:** What elements enter?
 - **Bridge:** Strip down or build up?
 - **Outro:** How does it end?
@@ -162,7 +162,7 @@ Roman numerals:
 
 ---
 
-### Session 2: 
+### Session 2:
 **What was recorded:**
 
 
@@ -199,8 +199,8 @@ Roman numerals:
 | | |
 
 ### Automation
-- 
-- 
+-
+-
 
 ---
 
@@ -250,9 +250,9 @@ Roman numerals:
 - [ ] Distributed to platforms
 - [ ] Released
 
-**Target Release Date:** 
+**Target Release Date:**
 
-**Distribution Platform:** 
+**Distribution Platform:**
 
 ---
 

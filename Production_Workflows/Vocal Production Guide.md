@@ -7,6 +7,7 @@ Keeping vocals sounding human and natural through recording, editing, and mixing
 ## The Goal
 
 Vocals should sound:
+
 - Clear and present
 - Emotionally connected
 - Like a real person singing
@@ -124,6 +125,7 @@ Vocals should sound:
 ### The Problem with Over-Tuning
 
 100% pitch correction sounds robotic because:
+
 - No natural pitch drift
 - No scoop into notes
 - No vibrato variation
@@ -201,6 +203,7 @@ Vocals should sound:
 ### Stack Dynamics
 
 Layered vocals should:
+
 - Support the lead, not overpower
 - Be slightly lower in volume
 - Blend, not stick out

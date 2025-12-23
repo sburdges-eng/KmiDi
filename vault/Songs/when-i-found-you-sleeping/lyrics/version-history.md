@@ -305,6 +305,7 @@ Earlier structural version. Foundation for misdirection concept.
 
 ## Core Misdirection
 Song reads as love song until reveal. Same language works for both:
+
 - "My heart hit the floor" = falling in love / collapsing in grief
 - "I've never felt nothing so strongly" = intensity of love / numbness of trauma
 - "She won't let me go" = obsessive love / intrusive imagery

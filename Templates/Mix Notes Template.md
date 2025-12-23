@@ -3,7 +3,7 @@ title: "Mix Notes - <% tp.file.title %>"
 created: <% tp.date.now("YYYY-MM-DD") %>
 modified: <% tp.date.now("YYYY-MM-DD") %>
 type: mix-notes
-song: 
+song:
 version: 1
 status: in-progress
 tags:
@@ -82,7 +82,7 @@ Vocals → Vocal Bus →
 | | | |
 
 ### Mix Bus Level
-- Peak: 
+- Peak:
 - Target: -6 dB headroom
 
 ---
@@ -170,34 +170,34 @@ Vocals → Vocal Bus →
 ## Effects Returns
 
 ### Reverb 1 (Short/Room)
-- **Plugin:** 
-- **Pre-delay:** 
-- **Decay:** 
-- **Used on:** 
+- **Plugin:**
+- **Pre-delay:**
+- **Decay:**
+- **Used on:**
 
 ### Reverb 2 (Plate/Medium)
-- **Plugin:** 
-- **Pre-delay:** 
-- **Decay:** 
-- **Used on:** 
+- **Plugin:**
+- **Pre-delay:**
+- **Decay:**
+- **Used on:**
 
 ### Reverb 3 (Hall/Long)
-- **Plugin:** 
-- **Pre-delay:** 
-- **Decay:** 
-- **Used on:** 
+- **Plugin:**
+- **Pre-delay:**
+- **Decay:**
+- **Used on:**
 
 ### Delay 1 (Slapback)
-- **Plugin:** 
-- **Time:** 
-- **Feedback:** 
-- **Used on:** 
+- **Plugin:**
+- **Time:**
+- **Feedback:**
+- **Used on:**
 
 ### Delay 2 (Rhythmic)
-- **Plugin:** 
-- **Time:** 
-- **Sync:** 
-- **Used on:** 
+- **Plugin:**
+- **Time:**
+- **Sync:**
+- **Used on:**
 
 ---
 
@@ -247,15 +247,15 @@ Vocals → Vocal Bus →
 
 ## Problem Areas & Solutions
 
-### Problem 1: 
-- **Issue:** 
-- **Solution:** 
-- **Result:** 
+### Problem 1:
+- **Issue:**
+- **Solution:**
+- **Result:**
 
-### Problem 2: 
-- **Issue:** 
-- **Solution:** 
-- **Result:** 
+### Problem 2:
+- **Issue:**
+- **Solution:**
+- **Result:**
 
 ---
 

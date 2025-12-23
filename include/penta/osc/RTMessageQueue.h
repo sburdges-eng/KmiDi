@@ -2,7 +2,10 @@
 
 #include <atomic>
 #include <cstddef>
+#include <memory>
 #include <vector>
+
+#include "readerwriterqueue.h"
 
 #include "penta/osc/OSCMessage.h"
 
@@ -36,10 +39,11 @@ public:
     size_t capacity() const noexcept { return capacity_; }
     
 private:
-    std::vector<OSCMessage> buffer_;
+    std::unique_ptr<moodycamel::ReaderWriterQueue<OSCMessage>> queue_;
     size_t capacity_;
     std::atomic<size_t> writeIndex_;
     std::atomic<size_t> readIndex_;
+    std::vector<OSCMessage> buffer_;  // Preallocated scratch to minimize allocations
 };
 
 } // namespace penta::osc

@@ -77,6 +77,7 @@
   - RT-safety principles
   - Performance targets
   - Migration roadmap
+
 - ✅ `BUILD.md` - Complete build instructions
   - Prerequisites
   - Quick start
@@ -264,18 +265,21 @@ pip install penta-core
 ## Success Criteria
 
 ✅ **Functional**
+
 - [x] Builds on macOS, Linux, Windows
 - [x] Python module imports successfully
 - [x] JUCE plugin loads in DAW
 - [x] Examples run without errors
 
 ⏳ **Performance** (To be measured in implementation phases)
+
 - [ ] Harmony < 100μs @ 48kHz/512 samples
 - [ ] Groove < 200μs @ 48kHz/512 samples
 - [ ] Zero RT allocations (validated with tools)
 - [ ] CPU < 5% total on modern hardware
 
 ⏳ **Quality** (To be validated in testing phase)
+
 - [ ] Chord detection accuracy > 90%
 - [ ] Tempo tracking error < 2 BPM
 - [ ] All unit tests passing

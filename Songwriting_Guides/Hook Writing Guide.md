@@ -103,6 +103,7 @@ It's what you hum, what you remember, what makes you want to hear the song again
 **In most commercial songs, the title IS the hook.**
 
 Place the title at:
+
 - The most memorable melodic moment
 - The emotional peak
 - A repeated position

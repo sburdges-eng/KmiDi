@@ -7,6 +7,7 @@ Creating smooth, groove-driven R&B and soul tracks.
 ## The R&B Sound
 
 Key elements:
+
 - **Smooth grooves** — Laid-back, pocket-heavy drums
 - **Rich harmony** — Extended chords, jazz influence
 - **Expressive vocals** — Runs, ad-libs, emotion

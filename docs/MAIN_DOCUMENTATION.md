@@ -75,6 +75,7 @@ daiw teach modal_mixture
 **35/35 basic tests passing** (verified 2025-11-28)
 
 Tests cover:
+
 - Imports and module structure
 - Groove templates and application
 - Chord parsing and progression analysis

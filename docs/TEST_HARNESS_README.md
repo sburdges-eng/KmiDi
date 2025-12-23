@@ -28,6 +28,7 @@ ctest --output-on-failure
 ### CI/CD Pipeline
 
 The `.github/workflows/test.yml` workflow runs automatically on:
+
 - Push to `main`, `master`, `develop`, or `copilot/**` branches
 - Pull requests to `main`, `master`, or `develop`
 - Manual workflow dispatch
@@ -107,6 +108,7 @@ open docs/doxygen/html/index.html
 ### Mock Audio Device
 
 Simulates real-time audio callbacks with:
+
 - Configurable sample rate, buffer size, channels
 - Jitter simulation for stress testing
 - Thread-based RT-accurate timing
@@ -115,6 +117,7 @@ Simulates real-time audio callbacks with:
 ### RT-Safety Validator
 
 Detects non-RT-safe operations:
+
 - Memory allocations (`new`, `malloc`)
 - Mutex locks (`std::mutex`)
 - Blocking system calls
@@ -123,6 +126,7 @@ Detects non-RT-safe operations:
 ### Performance Benchmarks
 
 Validates latency targets:
+
 - Harmony Engine: <100μs per operation
 - Groove Engine: <100μs per operation
 - 10,000 iterations for statistical significance
@@ -176,12 +180,14 @@ See `next_steps.md` for detailed roadmap.
 ## Success Metrics
 
 ✅ **Test Infrastructure**
+
 - Mock audio device with RT callbacks
 - RT-safety validation framework
 - Performance benchmarking
 - 100% component coverage
 
 ✅ **CI/CD Pipeline**
+
 - Multi-platform builds (3 OSes)
 - Multiple compilers (4 variants)
 - Valgrind memory checking
@@ -189,6 +195,7 @@ See `next_steps.md` for detailed roadmap.
 - Test artifact preservation
 
 ✅ **Documentation**
+
 - Doxygen configured
 - All 15 components documented
 - API reference ready
@@ -199,6 +206,7 @@ See `next_steps.md` for detailed roadmap.
 ## Contact
 
 For questions or issues:
+
 - Review `IMPLEMENTATION_SUMMARY.md` for technical details
 - Check `blockers.md` for known limitations
 - See `next_steps.md` for future work

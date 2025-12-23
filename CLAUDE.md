@@ -7,6 +7,7 @@
 **"Interrogate Before Generate"** - The tool shouldn't finish art for people. It should make them braver.
 
 iDAW is a multi-component music production platform that combines:
+
 - Real-time C++ audio processing (JUCE-based)
 - Python-based music intelligence and AI-assisted composition
 - Multi-AI collaboration orchestration
@@ -523,6 +524,7 @@ vault/
 ```
 
 Additional guides:
+
 - `Production_Workflows/` - Production workflow documentation
 - `Songwriting_Guides/` - Songwriting methodology
 - `Theory_Reference/` - Music theory reference

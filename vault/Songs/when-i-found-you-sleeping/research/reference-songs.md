@@ -6,6 +6,7 @@
 ## GENRE: **ACOUSTIC EMO / EMO-FOLK / CONFESSIONAL ACOUSTIC**
 
 Sometimes called:
+
 - **Emo Revival** (2010s wave)
 - **Sadcore**
 - **Indie Folk-Punk**

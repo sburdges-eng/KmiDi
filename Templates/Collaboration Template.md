@@ -3,8 +3,8 @@ title: "<% tp.file.title %>"
 created: <% tp.date.now("YYYY-MM-DD") %>
 modified: <% tp.date.now("YYYY-MM-DD") %>
 type: collaboration
-collaborator: 
-project: 
+collaborator:
+project:
 status: active
 tags:
   - type/collaboration
@@ -43,27 +43,27 @@ tags:
 
 
 ### Reference Tracks
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ---
 
 ## Division of Labor
 
 ### My Responsibilities
-- [ ] 
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
+- [ ]
 
 ### Their Responsibilities
-- [ ] 
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
+- [ ]
 
 ### Shared/Joint Tasks
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
 
 ---
 
@@ -87,9 +87,9 @@ tags:
 - [ ] Dropbox
 - [ ] WeTransfer
 - [ ] iCloud
-- [ ] Other: 
+- [ ] Other:
 
-**Shared folder link:** 
+**Shared folder link:**
 
 ### Session Details
 | Setting | Value |
@@ -117,34 +117,34 @@ Example: 2025-01-15_ColabSong_Vocals_v2.wav
 ## Communication Log
 
 ### Meeting/Call 1 — <% tp.date.now("YYYY-MM-DD") %>
-**Attendees:** 
-**Duration:** 
+**Attendees:**
+**Duration:**
 
 **Discussed:**
-- 
+-
 
 **Decisions Made:**
-- 
+-
 
 **Action Items:**
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
 
 ---
 
-### Meeting/Call 2 — 
-**Attendees:** 
-**Duration:** 
+### Meeting/Call 2 —
+**Attendees:**
+**Duration:**
 
 **Discussed:**
-- 
+-
 
 **Decisions Made:**
-- 
+-
 
 **Action Items:**
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
 
 ---
 
@@ -212,25 +212,25 @@ Example: 2025-01-15_ColabSong_Vocals_v2.wav
 | | |
 
 ### Publishing
-- **Publisher:** 
-- **Split:** 
-- **PRO:** 
+- **Publisher:**
+- **Split:**
+- **PRO:**
 
 ---
 
 ## Lessons Learned
 
 ### What Worked Well
-- 
-- 
+-
+-
 
 ### What Could Improve
-- 
-- 
+-
+-
 
 ### For Next Time
-- 
-- 
+-
+-
 
 ---
 

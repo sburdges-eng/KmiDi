@@ -29,6 +29,7 @@ FOR A PARTICULAR PURPOSE, ARE DISCLAIMED.
 For more information, visit the [JUCE website](https://juce.com).
 
 Full licence terms:
+
 - [JUCE 8 End User Licence Agreement](https://juce.com/legal/juce-8-licence/)
 - [JUCE Privacy Policy](https://juce.com/legal/juce-privacy-policy/)
 - [JUCE Website Terms of Service](https://juce.com/legal/juce-website-terms-of-service/)
@@ -36,6 +37,7 @@ Full licence terms:
 ## The JUCE Framework Dependencies
 
 The JUCE modules contain the following dependencies:
+
 - [AudioUnitSDK](modules/juce_audio_plugin_client/AU/AudioUnitSDK/) ([Apache 2.0](modules/juce_audio_plugin_client/AU/AudioUnitSDK/LICENSE.txt))
 - [Oboe](modules/juce_audio_devices/native/oboe/) ([Apache 2.0](modules/juce_audio_devices/native/oboe/LICENSE))
 - [FLAC](modules/juce_audio_formats/codecs/flac/) ([BSD](modules/juce_audio_formats/codecs/flac/Flac%20Licence.txt))
@@ -57,10 +59,13 @@ The JUCE examples are licensed under the terms of the
 [ISC license](http://www.isc.org/downloads/software-support-policy/isc-license/).
 
 Dependencies in the examples:
+
 - [reaper-sdk](examples/Plugins/extern/) ([zlib](examples/Plugins/extern/LICENSE.md))
 
 Dependencies in the bundled applications:
+
 - [Projucer icons](extras/Projucer/Source/Utility/UI/jucer_Icons.cpp) ([MIT](extras/Projucer/Source/Utility/UI/jucer_Icons.cpp))
 
 Dependencies in the build system:
+
 - [Android Gradle](examples/DemoRunner/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt) ([Apache 2.0](examples/DemoRunner/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt))

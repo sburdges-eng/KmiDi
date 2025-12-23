@@ -4,6 +4,7 @@
 
 [![Build Status](https://github.com/yourusername/penta-core/workflows/Build/badge.svg)](https://github.com/yourusername/penta-core/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ## Team Documentation
 
 Check out the [team documentation](docs/README.md) to get up to speed on:

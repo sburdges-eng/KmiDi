@@ -74,6 +74,7 @@ For each chord detected:
 ### Chord Families
 
 Distribution across families:
+
 - **major**: maj, maj7, maj9, 6, add9
 - **minor**: min, min7, min9, min6
 - **dominant**: dom7, dom9
@@ -192,32 +193,38 @@ The `chord_progressions_db.json` file contains common progressions organized by 
 
 ### structure_analyses
 Main record for each analysis:
+
 - name, source_file, genre
 - key_detected, mode_detected
 - bpm, time_signature, total_bars
 
 ### chord_progressions
 Individual chord events:
+
 - bar_number, beat, root_note, chord_type
 - chord_family, duration_beats, confidence
 
 ### detected_patterns
 Recognized progression patterns:
+
 - pattern_name, start_bar
 - transposition, confidence
 
 ### melody_contours
 Phrase-by-phrase melody analysis:
+
 - start_bar, end_bar, contour_type
 - pitch_range, direction, step/leap counts
 
 ### phrase_structure
 Phrase segmentation data:
+
 - start_bar, length_bars
 - note_density
 
 ### harmonic_rhythm
 Overall harmonic pacing:
+
 - avg_chord_duration, changes_per_bar
 - rhythm_pattern, consistency
 
@@ -347,6 +354,7 @@ python structure_analyzer.py init
 - Polyphonic instruments (guitar strums) may be split incorrectly
 
 For best results:
+
 - Use MIDI with separated tracks
 - Piano roll exports work well
 - Type 1 MIDI (multi-track) preferred

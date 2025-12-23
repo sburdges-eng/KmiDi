@@ -49,6 +49,7 @@ Hi [Name if known],
 I'm [Name], a [genre] artist based in [city]. I'm interested in playing at [Venue] in [month/season].
 
 Links:
+
 - Spotify: [link]
 - YouTube: [link]
 - Website: [link]

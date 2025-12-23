@@ -116,6 +116,7 @@ Priority: MEDIUM | Effort: 2-3 days | Impact: Pitch shifting quality
       # 4. Phase coherence restoration
       # 5. ISTFT with overlap-add
   ```
+
 - [ ] Add unit tests for pitch accuracy (±5 cents tolerance)
 - [ ] Benchmark against librosa.effects.pitch_shift()
 
@@ -129,6 +130,7 @@ Priority: MEDIUM | Effort: 2-3 days | Impact: Pitch shifting quality
     GIT_TAG master
   )
   ```
+
 - [ ] Update `src_penta-core/CMakeLists.txt` with link target
 - [ ] Add platform detection (use vDSP on macOS if available)
 
@@ -343,6 +345,7 @@ result = await process_prompt(
     knobs={'chaos': 0.3, 'complexity': 0.7},
     genres=['ballad', 'piano']
 )
+
 # Returns: BridgeResult with MIDI events
 ```
 ```

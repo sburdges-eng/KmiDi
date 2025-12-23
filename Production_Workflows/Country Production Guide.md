@@ -7,6 +7,7 @@ Creating authentic country music — from traditional to modern.
 ## The Country Sound
 
 Key characteristics:
+
 - **Storytelling** — Narrative lyrics
 - **Acoustic foundation** — Real instruments
 - **Vocal focus** — Expressive, emotive
@@ -220,6 +221,7 @@ Outro
 ### Storytelling Structure
 
 Many country songs follow narrative arc:
+
 - Verse 1: Set the scene
 - Verse 2: Develop the story
 - Chorus: The emotional heart/message
@@ -328,6 +330,7 @@ Repeating cycle.
 ### Relative Minor
 
 Using vi chord for emotional depth:
+
 - G - Em (I - vi)
 - Creates melancholy feel
 - Classic country sadness

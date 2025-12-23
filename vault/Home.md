@@ -173,9 +173,9 @@ GROUP BY status
 
 *Quick ideas — move to proper notes later:*
 
-- 
-- 
-- 
+-
+-
+-
 
 ---
 

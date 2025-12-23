@@ -25,6 +25,7 @@ public:
     void addFloat(float value);
     void addString(const std::string& value);
     void addString(const char* value);
+    void addBlob(const std::vector<uint8_t>& value);
 
     size_t getArgumentCount() const noexcept;
     const OSCValue& getArgument(size_t index) const;

@@ -173,6 +173,7 @@ Show Tempo/Key in LCD
 ## Templates to Create
 
 Consider making templates for:
+
 - [ ] Vocal recording session
 - [ ] Full band (drums, bass, 2 guitars, vocals)
 - [ ] Electronic production

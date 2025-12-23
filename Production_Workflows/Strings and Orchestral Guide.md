@@ -7,6 +7,7 @@ Making programmed strings, brass, and woodwinds sound like real players.
 ## Why Orchestral Sounds Fake
 
 The hardest instruments to program because:
+
 - Real players have incredible expression
 - Vibrato, dynamics, bow/breath control
 - Sections play together but not identically
@@ -20,6 +21,7 @@ The hardest instruments to program because:
 **Samples are snapshots.** Real playing is continuous.
 
 You need to fake continuous expression with:
+
 - Automation (constant movement)
 - Layering (multiple articulations)
 - Velocity and timing variation
@@ -33,6 +35,7 @@ You need to fake continuous expression with:
 **This is your volume swell control.**
 
 Every sustained note needs expression automation:
+
 - Notes swell in
 - Notes taper out
 - Nothing starts or ends abruptly
@@ -77,6 +80,7 @@ Don't hit full vibrato immediately.
 ### What Are Articulations?
 
 Different playing techniques:
+
 - **Sustain/Legato:** Long, connected notes
 - **Staccato:** Short, separated notes
 - **Spiccato:** Bouncing bow, very short
@@ -102,6 +106,7 @@ Notes: G4, G4, G4 (play staccato)
 ### Mixing Articulations
 
 Don't use one articulation for entire song:
+
 - Legato for melodic, flowing lines
 - Staccato for rhythmic punctuation
 - Marcato for accents
@@ -153,6 +158,7 @@ Creates more realistic "section" sound.
 ### Divisi
 
 Real string sections divide parts:
+
 - First violins on melody
 - Second violins on harmony
 - Violas on inner voice
@@ -168,6 +174,7 @@ Don't put everything on one track.
 ### Breath and Attack
 
 Brass players need air:
+
 - Notes have a "bloom" — not instant
 - Expression swells into and out of notes
 - Natural limit to sustain length
@@ -189,6 +196,7 @@ Brass players need air:
 ### Horn Section Timing
 
 Not perfectly together:
+
 - Lead player slightly ahead
 - Section follows
 - Spread hits by 10-30ms
@@ -201,6 +209,7 @@ Not perfectly together:
 ### Breath and Phrasing
 
 Woodwind players breathe:
+
 - Leave gaps for breaths
 - Phrases have natural length limits
 - Expression follows air support
@@ -208,6 +217,7 @@ Woodwind players breathe:
 ### Vibrato
 
 Different than strings:
+
 - Often less vibrato
 - Vibrato speed/depth varies by instrument
 - Flute: delicate, variable
@@ -248,6 +258,7 @@ From quietest to loudest:
 ### Orchestration Dynamics
 
 Adding instruments = louder:
+
 - Start with just strings
 - Add woodwinds
 - Add brass
@@ -261,6 +272,7 @@ Adding instruments = louder:
 ### Not Too Perfect
 
 Orchestras aren't machines:
+
 - Quantize to 75-85% max
 - Slightly looser than pop/rock
 - Conductor allows "breathing"
@@ -268,6 +280,7 @@ Orchestras aren't machines:
 ### Section Timing
 
 Different sections have different feel:
+
 - Strings: Most flexible
 - Brass: Often slightly late (heavier sound)
 - Woodwinds: Can be slightly ahead (lighter)
@@ -288,6 +301,7 @@ Different sections have different feel:
 ### Step 1: Sketch First
 
 Get the notes right before humanizing:
+
 - Correct pitches and rhythms
 - Proper voice leading
 - Right articulation keyswitches
@@ -295,6 +309,7 @@ Get the notes right before humanizing:
 ### Step 2: Expression Pass
 
 Go through every track:
+
 - Draw CC11 (expression) curves
 - Every sustained note gets a shape
 - No static lines
@@ -302,6 +317,7 @@ Go through every track:
 ### Step 3: Modulation Pass
 
 Add CC1 (modulation/vibrato):
+
 - Vibrato develops on sustained notes
 - More vibrato = more intensity
 - Varies by instrument
@@ -309,6 +325,7 @@ Add CC1 (modulation/vibrato):
 ### Step 4: Velocity Pass
 
 Adjust velocities:
+
 - Accents on strong beats
 - Phrase dynamics
 - Not all notes the same
@@ -316,6 +333,7 @@ Adjust velocities:
 ### Step 5: Timing Pass
 
 Humanize timing:
+
 - MIDI Transform → Humanize
 - Or apply groove template
 - Manual adjustment for key moments
@@ -323,6 +341,7 @@ Humanize timing:
 ### Step 6: Layering
 
 For sections:
+
 - Duplicate and offset
 - Create section depth
 - Pan for width
@@ -341,12 +360,14 @@ For sections:
 ### MIDI Transform
 
 Edit → MIDI Transform:
+
 - Humanize preset
 - Adjust position, velocity, length
 
 ### Scripter (Preset Scripts)
 
 MIDI FX → Scripter:
+
 - Choose humanize presets
 - No coding needed
 - Apply to any track
@@ -354,6 +375,7 @@ MIDI FX → Scripter:
 ### Articulation Sets
 
 If library supports it:
+
 - Set up articulation sets
 - Switch with key commands
 - Faster workflow

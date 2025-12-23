@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include <sstream>
 
 namespace midikompanion {
 
@@ -563,25 +564,91 @@ bool ScoreEntryPanel::exportMusicXML(const juce::File& outputFile) {
         return false;
     }
 
-    stream << "<score-partwise>\n";
-    for (const auto& note : notes_) {
-        stream << "  <note pitch=\"" << note.pitch << "\" measure=\"" << note.measure
-               << "\" beat=\"" << note.beat << "\" />\n";
+    const auto midiToStep = [](int midi) {
+        static const char* steps[] = {"C","C","D","D","E","F","F","G","G","A","A","B"};
+        static const int alters[]   = { 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0};
+        const int pitch = juce::jlimit(0, 127, midi);
+        const int pc = pitch % 12;
+        const int octave = (pitch / 12) - 1;
+        return std::tuple<std::string,int,int>(steps[pc], alters[pc], octave);
+    };
+
+    const auto durationToDivisions = [](const NotationNote& note) -> int {
+        // 480 PPQ; convert beats to divisions (quarter = 1 beat)
+        const float beats = noteValueToBeats(note.duration) * (note.dotted ? 1.5f : 1.0f) * (note.triplet ? 2.0f/3.0f : 1.0f);
+        return static_cast<int>(std::round(beats * 480.0f));
+    };
+
+    const auto durationToType = [](NoteValue value) -> const char* {
+        switch (value) {
+            case NoteValue::Whole: return "whole";
+            case NoteValue::Half: return "half";
+            case NoteValue::Quarter: return "quarter";
+            case NoteValue::Eighth: return "eighth";
+            case NoteValue::Sixteenth: return "16th";
+            case NoteValue::ThirtySecond: return "32nd";
+            case NoteValue::Dotted: return "quarter"; // fallback; dotted flag handled separately
+            default: return "quarter";
+        }
+    };
+
+    stream << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+    stream << "<score-partwise version=\"3.1\">\n";
+    stream << "  <part id=\"P1\">\n";
+
+    // Group notes by measure for readability
+    const int maxMeasure = getMaxMeasureIndex();
+    for (int measure = 1; measure <= maxMeasure; ++measure) {
+        stream << "    <measure number=\"" << measure << "\">\n";
+        for (const auto& note : notes_) {
+            if (note.measure != measure) continue;
+            const auto [step, alter, octave] = midiToStep(note.pitch);
+            const int divisions = durationToDivisions(note);
+
+            stream << "      <note>\n";
+            stream << "        <pitch><step>" << step << "</step>";
+            if (alter != 0) stream << "<alter>" << alter << "</alter>";
+            stream << "<octave>" << octave << "</octave></pitch>\n";
+            stream << "        <duration>" << divisions << "</duration>\n";
+            stream << "        <voice>1</voice>\n";
+            stream << "        <type>" << durationToType(note.duration) << "</type>\n";
+            if (note.dotted) stream << "        <dot/>\n";
+            stream << "      </note>\n";
+        }
+        // Chord symbols as harmony tags
+        for (const auto& chord : chordSymbols_) {
+            if (chord.measure != measure) continue;
+            stream << "      <harmony><root><root-step>" << chord.symbol << "</root-step></root></harmony>\n";
+        }
+        stream << "    </measure>\n";
     }
+
+    stream << "  </part>\n";
     stream << "</score-partwise>\n";
     stream.flush();
     return true;
 }
 
 bool ScoreEntryPanel::exportPDF(const juce::File& outputFile) {
-    // Placeholder: export a simple text-based representation for now
+    // Lightweight text-based “PDF” summary to avoid heavy dependencies
     juce::FileOutputStream stream(outputFile);
     if (!stream.openedOk()) {
         return false;
     }
-    stream << "Score Export (PDF placeholder)\n";
+
+    stream << "Score Summary\n";
+    stream << "Clef: ";
+    stream << (currentClef_ == Clef::Bass ? "Bass" :
+               currentClef_ == Clef::Alto ? "Alto" :
+               currentClef_ == Clef::Tenor ? "Tenor" : "Treble");
+    stream << "\nTotal Notes: " << static_cast<int>(notes_.size()) << "\n";
+    stream << "Chord Symbols: " << static_cast<int>(chordSymbols_.size()) << "\n\n";
+
     for (const auto& note : notes_) {
-        stream << "Note " << note.pitch << " @ " << note.measure << ":" << note.beat << "\n";
+        stream << "Note " << note.pitch << " dur " << noteValueToBeats(note.duration)
+               << " beat " << note.beat << " bar " << note.measure;
+        if (!note.lyric.empty()) stream << " lyric \"" << note.lyric << "\"";
+        stream << "\n";
     }
     stream.flush();
     return true;
@@ -826,17 +893,28 @@ void ScoreEntryPanel::onQuickEntryExecuted() {
 }
 
 void ScoreEntryPanel::onPlayClicked() {
-    // Placeholder for playback integration
-    juce::Logger::writeToLog("ScoreEntryPanel: play from measure " + juce::String(cursorMeasure_));
+    if (onPlayRequested) {
+        onPlayRequested(toMidiBuffer());
+    } else {
+        juce::Logger::writeToLog("ScoreEntryPanel: play from measure " + juce::String(cursorMeasure_));
+    }
 }
 
 void ScoreEntryPanel::onStopClicked() {
-    juce::Logger::writeToLog("ScoreEntryPanel: stop playback");
+    if (onStopRequested) {
+        onStopRequested();
+    } else {
+        juce::Logger::writeToLog("ScoreEntryPanel: stop playback");
+    }
 }
 
 void ScoreEntryPanel::onMetronomeToggled() {
     bool enabled = metronomeButton_ && metronomeButton_->getToggleState();
-    juce::Logger::writeToLog(juce::String("Metronome ") + (enabled ? "enabled" : "disabled"));
+    if (onMetronomeToggledCallback) {
+        onMetronomeToggledCallback(enabled);
+    } else {
+        juce::Logger::writeToLog(juce::String("Metronome ") + (enabled ? "enabled" : "disabled"));
+    }
 }
 
 int ScoreEntryPanel::getMaxMeasureIndex() const {

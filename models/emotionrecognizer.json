@@ -1,0 +1,25 @@
+{
+  "model_type": "RTNeural",
+  "version": "1.0.0",
+  "name": "EmotionRecognizer",
+  "description": "Audio features to emotion embedding (stub model - uses fallback heuristics)",
+  "input_size": 128,
+  "output_size": 64,
+  "layers": [
+    {
+      "type": "dense",
+      "activation": "tanh",
+      "in_size": 128,
+      "out_size": 64,
+      "weights": [],
+      "bias": []
+    }
+  ],
+  "metadata": {
+    "status": "stub",
+    "note": "Replace with trained model. Fallback heuristics will be used until then.",
+    "training_data": "emotion_dataset_v1",
+    "architecture": "128→512→256→128→64 (full version)"
+  }
+}
+

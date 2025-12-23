@@ -219,7 +219,7 @@ They're useful at different stages.
 - The ratio of good to bad songs takes time
 - Keep writing through the bad ones
 
-**Action:** 
+**Action:**
 - Get outside perspective
 - Put it away and revisit
 - Trust the process
@@ -266,6 +266,7 @@ Expands your range.
 
 **The constraint challenge:**
 Write a song with a specific constraint:
+
 - Only pentatonic melody
 - Only 2 chords
 - Only questions
@@ -289,6 +290,7 @@ New energy, new ideas, new accountability.
 ### Accept the Season
 
 Sometimes blocks last longer.
+
 - Major life changes
 - Grief or stress
 - Health issues
@@ -299,6 +301,7 @@ Sometimes blocks last longer.
 ### Keep Showing Up
 
 Even in dry seasons:
+
 - Sit with your instrument
 - Listen to music
 - Keep a notes file

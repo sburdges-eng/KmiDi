@@ -3,12 +3,12 @@ title: "<% tp.file.title %>"
 created: <% tp.date.now("YYYY-MM-DD") %>
 modified: <% tp.date.now("YYYY-MM-DD") %>
 type: reference
-artist: 
-album: 
-year: 
-genre: 
-bpm: 
-key: 
+artist:
+album:
+year:
+genre:
+bpm:
+key:
 tags:
   - type/reference
 ---
@@ -58,7 +58,7 @@ tags:
 
 **Structure Pattern:** (e.g., ABABCB)
 
-**Total Sections:** 
+**Total Sections:**
 
 ---
 
@@ -132,7 +132,7 @@ tags:
 ### Overall Loudness
 - **Perceived Loudness:** Quiet / Medium / Loud / Crushed
 - **Dynamic Range:** Large / Medium / Small / Flat
-- **LUFS (if measured):** 
+- **LUFS (if measured):**
 
 ### Compression Character
 | Element | Compression Style | Notes |
@@ -168,16 +168,16 @@ tags:
 ## Vocal Production
 
 ### Lead Vocal
-- **Character:** 
-- **Processing:** 
-- **Effects:** 
+- **Character:**
+- **Processing:**
+- **Effects:**
 - **Double-tracked:** Yes / No
 - **Tuning:** Natural / Subtle / Obvious
 
 ### Backing Vocals
-- **Arrangement:** 
-- **Panning:** 
-- **Blend with lead:** 
+- **Arrangement:**
+- **Panning:**
+- **Blend with lead:**
 
 ---
 
@@ -185,60 +185,60 @@ tags:
 
 ### Kick
 - **Character:** Punchy / Subby / Clicky / Natural
-- **Processing notes:** 
+- **Processing notes:**
 
 ### Snare
 - **Character:** Crack / Body / Ringy / Gated
-- **Processing notes:** 
+- **Processing notes:**
 
 ### Cymbals/Hi-Hats
-- **Character:** 
-- **Level relative to drums:** 
+- **Character:**
+- **Level relative to drums:**
 
 ### Room/Overhead
 - **Present:** Yes / No
-- **Character:** 
+- **Character:**
 
 ---
 
 ## Bass Production
 
 - **Type:** Synth / Electric / Acoustic / Sub
-- **Character:** 
-- **Relationship with kick:** 
-- **Processing notes:** 
+- **Character:**
+- **Relationship with kick:**
+- **Processing notes:**
 
 ---
 
 ## What Makes This Track Special
 
 ### Standout Elements
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ### Production Techniques to Emulate
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ### Things I'd Do Differently
-1. 
-2. 
+1.
+2.
 
 ---
 
 ## Key Takeaways
 
 ### For My Production
-- 
-- 
-- 
+-
+-
+-
 
 ### For My Mixing
-- 
-- 
-- 
+-
+-
+-
 
 ---
 

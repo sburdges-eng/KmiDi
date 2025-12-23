@@ -45,6 +45,7 @@ The 216-node emotion thesaurus is organized around three dimensions:
 3. **Intensity**: Subtle (0.0) to Extreme (1.0)
 
 Each emotion maps to musical attributes:
+
 - Tempo modifier
 - Mode (major/minor)
 - Dynamic range

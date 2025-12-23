@@ -3,10 +3,10 @@ title: "<% tp.file.title %>"
 created: <% tp.date.now("YYYY-MM-DD") %>
 modified: <% tp.date.now("YYYY-MM-DD") %>
 type: sample-pack
-developer: 
-price: 
-rating: 
-genre: 
+developer:
+price:
+rating:
+genre:
 tags:
   - type/sample-pack
 ---
@@ -89,10 +89,10 @@ tags:
 ### Sonic Character
 *Describe the overall vibe*
 
-- **Bright / Dark:** 
-- **Clean / Lo-fi:** 
-- **Modern / Vintage:** 
-- **Dry / Processed:** 
+- **Bright / Dark:**
+- **Clean / Lo-fi:**
+- **Modern / Vintage:**
+- **Dry / Processed:**
 
 ---
 
@@ -111,30 +111,30 @@ Example: `120_Cm_DrumLoop_Bounce_01.wav`
 ## Standout Samples
 
 ### Top 5 Favorites
-1. **Filename:** — Why: 
-2. **Filename:** — Why: 
-3. **Filename:** — Why: 
-4. **Filename:** — Why: 
-5. **Filename:** — Why: 
+1. **Filename:** — Why:
+2. **Filename:** — Why:
+3. **Filename:** — Why:
+4. **Filename:** — Why:
+5. **Filename:** — Why:
 
 ### Hidden Gems
 *Samples that surprised me*
 
-- 
-- 
+-
+-
 
 ---
 
 ## Weaknesses
 
 ### What's Missing
-- 
+-
 
 ### What's Not Great
-- 
+-
 
 ### What I'd Change
-- 
+-
 
 ---
 
@@ -148,7 +148,7 @@ Example: `120_Cm_DrumLoop_Bounce_01.wav`
 - [ ] Lo-Fi
 - [ ] Ambient
 - [ ] Film/TV
-- [ ] Other: 
+- [ ] Other:
 
 ---
 
@@ -187,9 +187,9 @@ Example: `120_Cm_DrumLoop_Bounce_01.wav`
 
 **Yes / No / Maybe**
 
-**Best for:** 
+**Best for:**
 
-**Skip if:** 
+**Skip if:**
 
 ---
 

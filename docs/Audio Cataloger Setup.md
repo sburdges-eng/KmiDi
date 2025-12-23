@@ -98,6 +98,7 @@ The catalog is saved to:
 ```
 
 This is a SQLite database. You can:
+
 - Back it up by copying the file
 - View it with any SQLite browser
 - Query it directly with SQL
@@ -143,6 +144,7 @@ python audio_cataloger.py search --key Am --export ~/Documents/Music-Brain-Vault
 ## Future Enhancements
 
 Potential additions:
+
 - [ ] GUI interface
 - [ ] Waveform thumbnails
 - [ ] Similarity search

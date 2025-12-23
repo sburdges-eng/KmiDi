@@ -91,6 +91,7 @@ python groove_extractor.py export 5 --output my_groove.json
 ### Output
 
 Templates are saved to:
+
 - **JSON files:** `~/Music-Brain/groove-library/templates/`
 - **SQLite database:** `~/Music-Brain/groove-library/groove_templates.db`
 

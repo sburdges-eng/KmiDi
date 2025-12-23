@@ -1,5 +1,7 @@
 # Core C++ library
 
+# Readerwriterqueue: header-only library with no CMakeLists.txt
+# Must explicitly create INTERFACE target and ensure SOURCE_DIR is populated
 include(FetchContent)
 if(NOT TARGET readerwriterqueue)
     FetchContent_Declare(
@@ -9,6 +11,9 @@ if(NOT TARGET readerwriterqueue)
         GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(readerwriterqueue)
+    
+    # Explicitly populate SOURCE_DIR for header-only library
+    FetchContent_GetProperties(readerwriterqueue)
 
     if(NOT TARGET readerwriterqueue)
         add_library(readerwriterqueue INTERFACE)
@@ -48,6 +53,9 @@ set(PENTA_CORE_SOURCES
         osc/OSCClient.cpp
         osc/OSCHub.cpp
         osc/RTMessageQueue.cpp
+
+    # Mixer engine
+    mixer/MixerEngine.cpp
 )
 
 set(PENTA_CORE_HEADERS
@@ -74,6 +82,8 @@ set(PENTA_CORE_HEADERS
     ${PROJECT_SOURCE_DIR}/include/penta/osc/OSCMessage.h
     ${PROJECT_SOURCE_DIR}/include/penta/osc/RTMessageQueue.h
     ${PROJECT_SOURCE_DIR}/include/penta/osc/OSCHub.h
+
+    ${PROJECT_SOURCE_DIR}/include/penta/mixer/MixerEngine.h
 )
 
 add_library(penta_core STATIC

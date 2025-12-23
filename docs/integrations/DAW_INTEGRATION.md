@@ -250,6 +250,7 @@ processor.process_intent(intent, output='ambient_progression.mid')
 ### Ableton Templates
 
 Templates in `templates/ableton/`:
+
 - `DAiW_Lofi_Starter.als` - Lo-fi production
 - `DAiW_Indie_Electronic.als` - Indie electronic
 - `DAiW_Ambient_Pad.als` - Ambient/atmospheric
@@ -507,6 +508,7 @@ aconnect -l
 4. Customize for your needs
 
 For DAW-specific questions, see:
+
 - [FAQ](FAQ.md)
 - [Troubleshooting](TROUBLESHOOTING.md)
 - [GitHub Discussions](https://github.com/yourusername/DAiW-Music-Brain/discussions)

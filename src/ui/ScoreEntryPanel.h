@@ -291,6 +291,8 @@ private:
     // UI Components
     //==========================================================================
 
+    void initializeComponents();
+
     // Entry mode selector
     std::unique_ptr<juce::ComboBox> entryModeSelector_;
 
@@ -428,6 +430,13 @@ private:
     void onPlayClicked();
     void onStopClicked();
     void onMetronomeToggled();
+
+    //==========================================================================
+    // Helpers
+    //==========================================================================
+
+    int getMaxMeasureIndex() const;
+    juce::Rectangle<int> getScoreArea() const;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ScoreEntryPanel)
 };

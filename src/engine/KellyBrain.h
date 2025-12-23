@@ -10,6 +10,7 @@
 
 // Include KellyTypes.h for the unified type system
 #include "common/KellyTypes.h"
+#include "midi/MidiGenerator.h"
 // Forward declare IntentPipeline to avoid including Types.h here
 // We'll include IntentPipeline.h only in the .cpp file where we can handle
 // conversions
@@ -123,6 +124,7 @@ private:
   // Use pointer to avoid including IntentPipeline.h in header (which would
   // include Types.h) This allows us to keep KellyTypes.h types in the interface
   std::unique_ptr<IntentPipeline> pipeline_;
+  std::unique_ptr<MidiGenerator> midiGenerator_;
   bool initialized_ = false;
 
   /**

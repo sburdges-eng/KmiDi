@@ -32,6 +32,7 @@ iDAW Penta Core is fully compatible with FL Studio 20.8+ via VST3 format. The pl
 ### macOS / Linux
 
 Same build process. Plugin installed to:
+
 - **macOS:** `~/Library/Audio/Plug-Ins/VST3/Penta Core.vst3`
 - **Linux:** `~/.vst3/Penta Core.vst3`
 

@@ -18,6 +18,7 @@ Three interconnected problems:
 ### What's Actually Happening Physiologically
 
 Voice breaks (the "yodel" effect) involve rapid transitions between:
+
 - **Chest voice (modal register)** — thyroarytenoid muscles dominant, fuller vocal fold vibration
 - **Head voice/falsetto** — cricothyroid muscles dominant, thinner fold contact, higher tension
 
@@ -207,6 +208,7 @@ From the lo-fi and bedroom emo aesthetic:
 ### The Technical Challenge
 
 Voice breaks (chest to head, or vice versa) are essentially:
+
 - A rapid frequency jump
 - Often with a moment of instability between registers
 - Sometimes with breath/air in the transition

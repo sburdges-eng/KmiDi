@@ -18,11 +18,13 @@ public:
         bool enablePerformanceMonitoring;
         bool enableAudioAnalysis;
         size_t updateIntervalMs;
+        double sampleRate;
         
         Config() 
             : enablePerformanceMonitoring(true)
             , enableAudioAnalysis(true)
             , updateIntervalMs(100)
+            , sampleRate(48000.0)
         {}
     };
     

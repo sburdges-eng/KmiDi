@@ -1,0 +1,25 @@
+{
+  "model_type": "RTNeural",
+  "version": "1.0.0",
+  "name": "HarmonyPredictor",
+  "description": "Context to chord predictions (stub model - uses fallback heuristics)",
+  "input_size": 128,
+  "output_size": 64,
+  "layers": [
+    {
+      "type": "dense",
+      "activation": "tanh",
+      "in_size": 128,
+      "out_size": 64,
+      "weights": [],
+      "bias": []
+    }
+  ],
+  "metadata": {
+    "status": "stub",
+    "note": "Replace with trained model. Fallback heuristics will be used until then.",
+    "training_data": "chord_progression_dataset_v1",
+    "architecture": "128→256→128→64 (full version)"
+  }
+}
+

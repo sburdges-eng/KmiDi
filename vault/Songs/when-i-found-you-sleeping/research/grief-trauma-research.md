@@ -10,6 +10,7 @@
 
 ### Kubler-Ross Stage Theory (1969)
 Originally developed for **terminally ill patients**, not the bereaved. The five stages:
+
 - **Denial** - Reality seems impossible, protective numbness
 - **Anger** - "Why me?" frustration at proximate individuals
 - **Bargaining** - Attempting to negotiate (often with God/fate)
@@ -46,6 +47,7 @@ Grief involves **oscillation** between two orientations:
 
 ### Meaning Reconstruction Model (Neimeyer)
 Views grieving as:
+
 - **Meaning-making** process
 - **Reconstructing identity**
 - **Finding ways to incorporate loss into a new narrative**
@@ -63,6 +65,7 @@ Three key aspects:
 Core principle: It is completely normal—and often deeply healing—to maintain a bond with your loved one after death.
 
 Forms this can take:
+
 - Rituals and traditions
 - Internal conversations
 - Carrying values/beliefs forward
@@ -102,6 +105,7 @@ When grief becomes **intense, prolonged, and disabling** - distinct from normal 
 
 ### Distinction from PTSD
 While symptoms overlap, key differences:
+
 - **PTSD:** Intrusive memories, avoidance of reminders, hyperarousal, re-experiencing
 - **PGD:** Yearning, preoccupation with deceased, difficulty with ongoing life
 
@@ -113,12 +117,14 @@ Research shows PTSD can **interrupt natural course of grief**, increasing PGD ri
 
 ### Complicated Grief Therapy (CGT)
 Developed by Katherine Shear. 16-session protocol combining:
+
 - **Attachment theory** foundations
 - **Interpersonal therapy (IPT)** elements
 - **Cognitive-behavioral therapy (CBT)** techniques
 - **Prolonged exposure** methods
 
 Core technique: **Imaginal Revisiting**
+
 - Client visualizes and tells story of learning about death (5 minutes)
 - Records into tape recorder
 - Debriefs with therapist
@@ -126,6 +132,7 @@ Core technique: **Imaginal Revisiting**
 
 ### Cognitive Therapy for PTSD (CT-PTSD)
 Core aim for bereavement trauma:
+
 - Shift focus from loss to what has NOT been lost
 - From loved one being "gone" to how to take them forward meaningfully
 - Achieve sense of continuity with what was lost
@@ -142,11 +149,13 @@ Core aim for bereavement trauma:
 **Core premise:** Trauma is "a highly activated incomplete biological response to a threat, frozen in time."
 
 Key concepts:
+
 - **Fight/flight/freeze** responses that never completed
 - Trauma stored in body, not just mind
 - Bottom-up processing (body -> brain) vs top-down (cognition -> body)
 
 Techniques:
+
 - **Titration** - Approaching trauma gradually, safely
 - **Pendulation** - Oscillating between arousal and calm states
 - **Resourcing** - Building sense of safety before approaching difficult material
@@ -155,6 +164,7 @@ Techniques:
 
 ### The Body Keeps the Score - Bessel van der Kolk
 Key findings:
+
 - Trauma changes the **insula** (self-awareness systems)
 - Traumatized people become insensible to themselves
 - Difficulty sensing pleasure, feeling engaged
@@ -184,6 +194,7 @@ Three states:
 **Research finding:** Writing about emotional experiences produces significant physical and mental health improvements.
 
 Protocol:
+
 - Write 15-20 minutes per day
 - 3-4 consecutive days
 - About deepest thoughts/feelings on traumatic/emotional events
@@ -220,6 +231,7 @@ Protocol:
 **HSPs constitute approximately 15-20% of population.**
 
 Characteristics:
+
 - Rich inner life
 - Deeply moved by arts/music
 - Other people's moods affect them
@@ -230,6 +242,7 @@ Characteristics:
 
 ### HSP and Trauma
 Research findings:
+
 - HSPs more prone to develop PTSD when experiencing trauma
 - More hyper-arousal (chronic anxiety if unchecked)
 - OR more hypo-arousal (depression)
@@ -241,6 +254,7 @@ Research findings:
 
 ### Bowlby's Foundation
 Core concepts:
+
 - **Proximity maintenance** - Desire to be near attachment figures
 - **Safe haven** - Return to attachment figure for comfort when threatened
 - **Secure base** - Attachment figure as base for exploring world
@@ -279,6 +293,7 @@ Core concepts:
 
 ### Definition
 Common elements:
+
 - High self-sacrifice
 - Focus on others' needs
 - Suppression of own emotions
@@ -287,6 +302,7 @@ Common elements:
 
 ### Origins
 Typically develops in **dysfunctional family environments:**
+
 - Substance abuse in family
 - Mental or physical illness in family member
 - Abusive relationships
@@ -330,6 +346,7 @@ Typically develops in **dysfunctional family environments:**
 
 ### The Body Memory of Loss
 From research synthesis:
+
 - Trauma lives in smell, temperature, texture
 - Body remembers what mind may suppress
 - HSPs have stronger body-based emotional responses
@@ -337,6 +354,7 @@ From research synthesis:
 
 ### Finding the Body: A Special Trauma
 When someone **discovers the body** of a loved one:
+
 - Combines grief WITH traumatic witnessing
 - PTSD symptoms layer onto grief
 - Image becomes "stuck" - intrusive
@@ -367,6 +385,7 @@ PTG represents **transformation** - developing beyond previous levels of adaptat
 
 ### PTG and Grief
 Bereavement studies show:
+
 - PTG can occur alongside ongoing grief
 - Distress and growth are **independent** - coexist
 - Finding meaning mediates between loss and growth
@@ -418,6 +437,7 @@ Bereavement studies show:
 
 ### Post-Traumatic Growth Through Art
 PTG domains that songwriting can serve:
+
 - **New possibilities** - Becoming songwriter, using pain for creation
 - **Personal strength** - Surviving expression of unbearable material
 - **Improved relationships** - Connection with listeners who relate

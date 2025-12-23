@@ -7,6 +7,7 @@ Making programmed bass feel like a real player.
 ## Why Bass Sounds Fake
 
 Dead giveaways:
+
 - Every note same length
 - Every note same velocity
 - Perfectly on the grid
@@ -102,6 +103,7 @@ Note:  |====|  |==|  |======|  |=|
 ### Dead Notes (Muted Hits)
 
 Percussive muted notes add groove:
+
 - Very short duration
 - Lower velocity (50-70)
 - Often on 16th subdivisions
@@ -138,6 +140,7 @@ Pitch: ‾‾‾‾‾\___
 ### Hammer-Ons and Pull-Offs
 
 Faster, connected notes:
+
 - Second note slightly softer
 - Minimal gap between notes
 - Can overlap slightly (legato)
@@ -145,6 +148,7 @@ Faster, connected notes:
 ### String Noise
 
 Some bass instruments include:
+
 - Finger slides on strings
 - Fret buzz
 - Pick attack
@@ -231,6 +235,7 @@ Note:  E   E'  E   E'  E   E'  G   A
 ### Same Principles Apply
 
 Even synth bass benefits from:
+
 - Velocity variation
 - Timing looseness
 - Note length variation
@@ -246,6 +251,7 @@ Add life with filter automation:
 ### Pitch Drift
 
 Subtle pitch instability = analog warmth:
+
 - Use synth's built-in drift/detune
 - Or: Slight pitch bend automation
 - Very subtle: ±5-10 cents
@@ -253,6 +259,7 @@ Subtle pitch instability = analog warmth:
 ### Portamento/Glide
 
 Set synth to glide between notes:
+
 - Glide time: 20-80ms for subtle
 - Legato mode for connected notes only
 - Adds expressiveness
@@ -280,6 +287,7 @@ Kick and bass need to work together.
 ### Sidechain (If Needed)
 
 Not humanization, but helps clarity:
+
 - Bass ducks slightly when kick hits
 - Creates pumping effect (optional)
 - Or just EQ to separate

@@ -105,6 +105,7 @@ ollama pull nomic-embed-text
 
 ### Example Queries
 Try asking:
+
 - "What are the different types of reverb?"
 - "Summarize my mixing workflow checklist"
 - "What compression settings should I try for vocals?"
@@ -189,6 +190,7 @@ ollama pull mistral
 ## Hardware Notes
 
 Your M4 Mac is well-suited for local AI:
+
 - Unified memory = efficient model loading
 - Neural Engine = faster inference
 - Recommended: 16GB+ RAM for best experience

@@ -289,6 +289,7 @@ arrangement = arranger.generate_from_intent(
 
 **Deliverable:**
 Complete Kelly song MIDI package with:
+
 - Harmony (chords)
 - Drums (with groove)
 - Bass line
@@ -808,6 +809,7 @@ print(f"Tempo matches Kelly: {tempo_match}")
 ## 🚀 PHASE 3 PREVIEW
 
 After Phase 2 completes, Phase 3 will add:
+
 - **Desktop GUI** (Ableton-style interface)
 - **Visual arrangement editor**
 - **Interactive MIDI preview**

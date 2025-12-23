@@ -33,6 +33,7 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] `daiw reharm` - Reharmonization suggestions
   - [x] `daiw intent new|process|validate|suggest` - Intent subcommands
   - [x] `daiw teach` - Interactive teaching mode
+
 - [x] Move `data/harmony_generator.py` → `music_brain/harmony/harmony_generator.py`
 - [x] Move `data/groove_applicator.py` → `music_brain/groove/groove_applicator.py`
 - [x] Create comprehensive test suite `tests/test_cli.py`
@@ -51,6 +52,7 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] Respond on UDP port 9001
   - [x] Handle `/daiw/generate` requests
   - [x] Return JSON-serializable results
+
 - [x] Create `generate_session()` stable API
 - [x] Test client for brain server (no C++ needed)
 - [x] Validate JSON response format
@@ -73,14 +75,17 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] Extensions: 9th, 11th, 13th chords
   - [x] Suspended: Sus2, Sus4
   - [x] Add6, Add9 variations
+
 - [x] Optimize pattern matching with SIMD
   - [x] AVX2-optimized bit operations
   - [x] Parallel template evaluation
   - [x] Early exit for perfect matches
+
 - [x] Implement temporal smoothing
   - [x] Exponential moving average
   - [x] Confidence decay over time
   - [x] Chord change detection threshold
+
 - [x] Unit tests for all chord types, inversions, ambiguous cases
 
 **Performance Target:** ✅ ACHIEVED < 50μs for all template matching
@@ -91,11 +96,13 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] Modal profiles (7 modes)
   - [x] Correlation calculation
   - [x] Pitch class histogram with decay
+
 - [x] Implement voice leading optimizer
   - [x] Generate voicing candidates
   - [x] Cost function (voice distance, parallel motion, crossing)
   - [x] Branch and bound search
   - [x] Caching for common progressions
+
 - [x] Integration testing with real MIDI
 - [x] Python bindings for HarmonyEngine
 
@@ -117,11 +124,13 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] FFTW3 (Linux), vDSP (macOS), or KissFFT/PocketFFT (header-only)
   - [x] CMake integration
   - [x] RT-safe buffer management
+
 - [x] Implement onset detector
   - [x] Spectral flux calculation
   - [x] Hann window function
   - [x] Peak picking with adaptive threshold
   - [x] Median filtering for noise rejection
+
 - [x] Implement tempo estimator
   - [x] Inter-onset interval calculation
   - [x] Autocorrelation of IOI sequence
@@ -136,10 +145,12 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] Multi-resolution grids (whole to 32nd notes)
   - [x] Triplet support
   - [x] Strength parameter (0-100%)
+
 - [x] Implement swing timing
   - [x] Swing amount calculation
   - [x] 8th note and 16th note swing
   - [x] Non-uniform swing patterns
+
 - [x] Time signature detection
   - [x] Beat strength analysis
   - [x] Common time signatures (4/4, 3/4, 6/8, etc.)
@@ -166,10 +177,12 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] Detect chords from audio
   - [x] Detect progression from file
   - [x] Confidence scoring
+
 - [x] Implement `frequency.py` with FrequencyAnalyzer
   - [x] FFT analysis
   - [x] Pitch detection
   - [x] Harmonic content analysis
+
 - [x] Integrate with existing audio_cataloger patterns
 - [x] Add CLI command: `daiw analyze-audio <file>`
 
@@ -181,21 +194,25 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] `process_intent` - Process intent → music
   - [x] `validate_intent` - Validate intent schema
   - [x] `suggest_rulebreaks` - Suggest emotional rule-breaks
+
 - [x] Expand `tools/harmony.py` (6 tools total)
   - [x] `generate_harmony` - Generate harmony from intent
   - [x] `diagnose_chords` - Diagnose harmonic issues
   - [x] `suggest_reharmonization` - Suggest chord substitutions
   - [x] `find_key` - Detect key from progression
   - [x] `voice_leading` - Optimize voice leading
+
 - [x] Expand `tools/groove.py` (5 tools total)
   - [x] `analyze_pocket` - Analyze timing pocket
   - [x] `humanize_midi` - Add human feel
   - [x] `quantize_smart` - Smart quantization
+
 - [x] Create `tools/audio_analysis.py` (4 tools)
   - [x] `detect_bpm` - Detect tempo from audio
   - [x] `detect_key` - Detect key from audio
   - [x] `analyze_audio_feel` - Analyze groove feel from audio
   - [x] `extract_chords` - Extract chords from audio
+
 - [x] Create `tools/teaching.py` (3 tools)
   - [x] `explain_rulebreak` - Explain rule-breaking technique
   - [x] `get_progression_info` - Get progression details
@@ -211,6 +228,7 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] Noise gate implementation
   - [x] Audio cleanup algorithms
   - [x] Noise profiling system
+
 - [x] **Press Plugin DSP**
   - [x] Compressor/limiter implementation
   - [x] Knee curves (soft/hard)
@@ -223,10 +241,12 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] Multi-band EQ curves
   - [x] Saturation variations
   - [x] Color presets
+
 - [x] **Smudge Plugin DSP**
   - [x] Audio blending algorithms
   - [x] Crossfade implementation
   - [x] Morphing between audio sources
+
 - [x] Add JUCE parameter automation for all plugins
 - [x] Create shader effects for visual identity
 
@@ -239,10 +259,12 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] Platform-specific timers (RDTSC, mach_absolute_time, QPC)
   - [x] Microsecond precision
   - [x] Minimal overhead (< 1μs)
+
 - [x] Implement CPU usage calculation
   - [x] Thread CPU time tracking
   - [x] Percentage calculation relative to buffer duration
   - [x] Peak and average tracking
+
 - [x] Implement audio analysis
   - [x] RMS calculation (SIMD-optimized)
   - [x] Peak hold with decay
@@ -265,6 +287,7 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] RMS calculation (AVX2)
   - [x] FFT preprocessing (AVX2)
   - [x] Autocorrelation (AVX2)
+
 - [x] Add scalar fallbacks for non-SIMD systems
 - [x] Verify performance targets met
 
@@ -287,6 +310,7 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] Timeline view
   - [x] Section blocks (verse/chorus/bridge)
   - [x] Drag-and-drop reordering
+
 - [x] Intent input panel
   - [x] Emotional intent controls
   - [x] Rule-breaking toggles
@@ -301,6 +325,7 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] Internal MIDI playback
   - [x] Waveform visualization
   - [x] Transport controls (play/pause/stop)
+
 - [x] Project save/load
   - [x] Save intent + generated content
   - [x] Project file format (.daiw)
@@ -314,6 +339,7 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] Logic Pro project export
   - [x] Ableton Live Set export
   - [x] Generic MIDI + metadata
+
 - [x] User testing & feedback collection
 
 ---
@@ -326,6 +352,7 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] Audio passthrough (no processing)
   - [x] Placeholder UI elements
   - [x] "Generate" button (test pattern)
+
 - [x] Build as AU and VST3
 - [x] AU validation passes
 - [x] Test in Logic Pro
@@ -341,6 +368,7 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   5. Plugin parses JSON into MidiMessage
   6. Plugin schedules in MidiBuffer
   7. Logic receives MIDI, plays instruments
+
 - [x] End-to-end latency < 500ms
 
 ---
@@ -370,6 +398,7 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [x] Bridge integration test errors
   - [x] Mock implementations for optional API tests
   - [x] C++ unit tests for OSCHub pattern matching
+
 - [x] Memory leak tests with Valgrind/AddressSanitizer
 - [x] RT-safety verification (no allocations in audio thread)
 - [x] 24-hour stress test (no crashes)
@@ -420,6 +449,7 @@ This document provides a comprehensive 18-month implementation plan for the iDAW
   - [ ] ONNX Runtime
   - [ ] TensorFlow Lite
   - [ ] CoreML (macOS/iOS)
+
 - [ ] Design ML model interface for penta-core
 - [ ] Implement chord prediction model
 - [ ] Implement style transfer model for groove

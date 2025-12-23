@@ -194,6 +194,7 @@ python examples_music-brain/kelly_song_logic_export.py
 ```
 
 This generates `kelly_song_automation.json` with:
+
 - EQ settings (rolled-off highs for lo-fi aesthetic)
 - Compression (gentle, for intimacy)
 - Reverb (spacious hall for grief processing)

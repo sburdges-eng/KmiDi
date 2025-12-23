@@ -3,66 +3,50 @@
 namespace penta::osc {
 
 RTMessageQueue::RTMessageQueue(size_t capacity)
-    : buffer_(capacity)
+    : queue_(std::make_unique<moodycamel::ReaderWriterQueue<OSCMessage>>(capacity))
     , capacity_(capacity)
     , writeIndex_(0)
     , readIndex_(0)
+    , buffer_()
 {
-    // Pre-allocate message buffer for lock-free operation
+    // Reserve storage up front to avoid allocations on RT threads
+    buffer_.reserve(capacity_);
 }
 
 RTMessageQueue::~RTMessageQueue() = default;
 
 bool RTMessageQueue::push(const OSCMessage& message) noexcept {
-    size_t currentWrite = writeIndex_.load(std::memory_order_relaxed);
-    size_t nextWrite = (currentWrite + 1) % capacity_;
-    
-    // Check if queue is full
-    if (nextWrite == readIndex_.load(std::memory_order_acquire)) {
-        return false;  // Queue full
+    if (!queue_) {
+        return false;
     }
-    
-    // Copy message to buffer
-    buffer_[currentWrite] = message;
-    
-    // Update write index (release semantics ensures message is written before index update)
-    writeIndex_.store(nextWrite, std::memory_order_release);
-    
-    return true;
+
+    const bool success = queue_->try_enqueue(message);
+    if (success) {
+        writeIndex_.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    return success;
 }
 
 bool RTMessageQueue::pop(OSCMessage& outMessage) noexcept {
-    size_t currentRead = readIndex_.load(std::memory_order_relaxed);
-    
-    // Check if queue is empty
-    if (currentRead == writeIndex_.load(std::memory_order_acquire)) {
-        return false;  // Queue empty
+    if (!queue_) {
+        return false;
     }
-    
-    // Copy message from buffer
-    outMessage = buffer_[currentRead];
-    
-    // Update read index (release semantics)
-    size_t nextRead = (currentRead + 1) % capacity_;
-    readIndex_.store(nextRead, std::memory_order_release);
-    
-    return true;
+
+    const bool success = queue_->try_dequeue(outMessage);
+    if (success) {
+        readIndex_.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    return success;
 }
 
 bool RTMessageQueue::isEmpty() const noexcept {
-    return readIndex_.load(std::memory_order_acquire) == 
-           writeIndex_.load(std::memory_order_acquire);
+    return !queue_ || queue_->size_approx() == 0;
 }
 
 size_t RTMessageQueue::size() const noexcept {
-    size_t write = writeIndex_.load(std::memory_order_acquire);
-    size_t read = readIndex_.load(std::memory_order_acquire);
-    
-    if (write >= read) {
-        return write - read;
-    } else {
-        return capacity_ - read + write;
-    }
+    return queue_ ? queue_->size_approx() : 0;
 }
 
 } // namespace penta::osc

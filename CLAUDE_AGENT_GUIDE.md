@@ -1,9 +1,9 @@
 # CLAUDE AGENT GUIDE - Complete DAiW-Music-Brain Reference
 
 > **Comprehensive guide for AI assistants working with DAiW (Digital Audio intelligent Workstation)**
-> 
+>
 > **Version:** 0.4.0 | **Last Updated:** 2025-01-XX
-> 
+>
 > This document contains everything a Claude agent needs to effectively work with the DAiW-Music-Brain codebase.
 
 ---
@@ -782,6 +782,7 @@ If built app opens and immediately closes:
 ## Vault (Knowledge Base)
 
 The `vault/` directory is an Obsidian-compatible knowledge base containing:
+
 - **Songwriting_Guides/** - Intent schema docs, rule-breaking guides
 - **Theory_Reference/** - Music theory reference materials
 - **Production_Workflows/** - Production technique guides

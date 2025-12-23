@@ -7,6 +7,7 @@ Making synthesizers feel organic and alive instead of cold and static.
 ## Why Synths Sound Fake
 
 The problems:
+
 - Static, unchanging sound
 - Perfect timing
 - No expression variation
@@ -22,6 +23,7 @@ Real instruments change constantly. Synths need to move.
 **Nothing should stay static.**
 
 Every parameter should move, at least subtly:
+
 - Filter cutoff
 - Volume/amplitude
 - Pitch (very subtle)
@@ -35,6 +37,7 @@ Every parameter should move, at least subtly:
 ### Velocity Variation
 
 Synths that respond to velocity feel more human:
+
 - Range: 70-120 (varies by patch)
 - Accented notes louder
 - Passing notes softer
@@ -107,6 +110,7 @@ Static filter = dead synth. Moving filter = alive.
 
 **1. Velocity to Cutoff:**
 Set in synth: Higher velocity = filter opens more
+
 - Accented notes brighter
 - Soft notes darker
 - Automatic expression
@@ -255,6 +259,7 @@ Pads are especially prone to sounding static.
 ### Phrasing
 
 Real players breathe. Add gaps:
+
 - Not every note connected
 - Rests between phrases
 - Let notes end naturally
@@ -262,6 +267,7 @@ Real players breathe. Add gaps:
 ### Articulation
 
 Vary how notes start and end:
+
 - Some notes hard attack
 - Some notes soft attack
 - Some notes ring out
@@ -330,6 +336,7 @@ Arpeggios are the most robotic-sounding synth patterns.
 ### Random Modulation
 
 Many synths have random/sample-and-hold LFO:
+
 - Route to pitch (very subtle)
 - Route to filter (subtle)
 - Route to pan
@@ -338,6 +345,7 @@ Many synths have random/sample-and-hold LFO:
 ### Noise Layer
 
 Adding subtle noise makes synths feel more organic:
+
 - Mix in white/pink noise very quietly
 - Or use synth's noise oscillator
 - Barely audible — just adds texture
@@ -345,6 +353,7 @@ Adding subtle noise makes synths feel more organic:
 ### Sample-Based Layers
 
 Layer a real recording underneath:
+
 - Acoustic piano under synth keys
 - String section under synth pad
 - Barely audible, adds realism
@@ -352,6 +361,7 @@ Layer a real recording underneath:
 ### Analog Modeling
 
 Use synths or plugins with:
+
 - Oscillator drift
 - Component modeling
 - "Analog" modes
@@ -364,6 +374,7 @@ Use synths or plugins with:
 ### MIDI Humanize
 
 Edit → MIDI Transform → Humanize
+
 - Position: ±5-10 ticks
 - Velocity: ±10
 - Length: ±5 ticks

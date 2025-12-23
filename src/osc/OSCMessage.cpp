@@ -45,6 +45,10 @@ void OSCMessage::addString(const char* value) {
     arguments_.emplace_back(std::string(value));
 }
 
+void OSCMessage::addBlob(const std::vector<uint8_t>& value) {
+    arguments_.emplace_back(value);
+}
+
 size_t OSCMessage::getArgumentCount() const noexcept {
     return arguments_.size();
 }

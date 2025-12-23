@@ -231,6 +231,7 @@ python3 -m pygame.examples.midi --input \
 ### DAiW Music Brain
 
 The MVP test includes integration hooks for:
+
 - TherapySession (emotion → music)
 - NoteEvent API
 - render_plan_to_midi()

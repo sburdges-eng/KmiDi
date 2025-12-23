@@ -183,6 +183,7 @@ Examples at 48kHz:
 ### Round-Trip Latency
 
 Total latency includes:
+
 - Input buffer latency
 - Driver/USB overhead
 - Processing time

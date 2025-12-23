@@ -93,7 +93,7 @@ Musical style/genre.
 Musical key of the piece.
 
 **Major Keys:**
-`#key/C` `#key/Db` `#key/D` `#key/Eb` `#key/E` `#key/F` 
+`#key/C` `#key/Db` `#key/D` `#key/Eb` `#key/E` `#key/F`
 `#key/Gb` `#key/G` `#key/Ab` `#key/A` `#key/Bb` `#key/B`
 
 **Minor Keys:**

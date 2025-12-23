@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
 import random
+from pathlib import Path
 
 
 class SuggestionType(Enum):
@@ -68,6 +69,9 @@ class SuggestionEngine:
         self.preference_model = preference_model
         self.context_analyzer = context_analyzer
 
+        # Optional LLaMA ONNX generator (lazy, best-effort)
+        self._llama_generator = self._init_llama_generator()
+
         # Create analyzer if preference model is available
         self.preference_analyzer = None
         if self.preference_model:
@@ -94,6 +98,11 @@ class SuggestionEngine:
             List of suggestions, sorted by confidence
         """
         suggestions = []
+
+        # Optional LLaMA-backed hint (off unless explicitly requested)
+        llama_hint = self._maybe_llama_suggestion(current_state)
+        if llama_hint:
+            suggestions.append(llama_hint)
 
         # Generate different types of suggestions
         suggestions.extend(self._generate_parameter_suggestions(current_state))
@@ -339,6 +348,77 @@ class SuggestionEngine:
                 suggestions.append(suggestion)
 
         return suggestions
+
+    # -------------------------------------------------------------------------
+    # LLaMA ONNX (optional) integration
+    # -------------------------------------------------------------------------
+    def _init_llama_generator(self):
+        """Best-effort load of LLaMA ONNX generator; never raises."""
+        try:
+            from music_brain.integrations.llama_onnx import (
+                build_llama_generator,
+                default_llama_config_path,
+            )
+            # Allow override via env/config in the future; use default for now.
+            return build_llama_generator(default_llama_config_path())
+        except Exception:
+            return None
+
+    def _maybe_llama_suggestion(
+        self,
+        current_state: Dict[str, Any],
+    ) -> Optional[Suggestion]:
+        """
+        Optionally generate a single LLaMA-backed textual hint.
+
+        Activation (opt-in):
+        - current_state["use_llama"] is truthy, OR
+        - current_state["llama_prompt"] provided.
+        """
+        if not self._llama_generator:
+            return None
+
+        use_llama = bool(current_state.get("use_llama"))
+        custom_prompt = current_state.get("llama_prompt")
+        if not (use_llama or custom_prompt):
+            return None
+
+        prompt = custom_prompt or self._build_llama_prompt(current_state)
+        try:
+            text = self._llama_generator.generate(prompt)
+        except Exception:
+            return None
+
+        if not text:
+            return None
+
+        return Suggestion(
+            suggestion_type=SuggestionType.STYLE,
+            title="LLM idea",
+            description=text,
+            action={"llama_text": text},
+            confidence=0.55,
+            explanation="Generated via LLaMA ONNX (optional, user-triggered)",
+            source="llama_onnx",
+        )
+
+    def _build_llama_prompt(self, current_state: Dict[str, Any]) -> str:
+        """Build a compact prompt from current state."""
+        emotion = current_state.get("emotion", "neutral")
+        params = current_state.get("parameters", {})
+        chords = current_state.get("chords", [])
+        style = current_state.get("style", "")
+        rule_breaks = current_state.get("rule_breaks", [])
+
+        return (
+            "You are a music co-pilot. Provide one concise suggestion.\n"
+            f"Emotion: {emotion}\n"
+            f"Style: {style}\n"
+            f"Chords: {chords}\n"
+            f"Parameters: {params}\n"
+            f"RuleBreaks: {rule_breaks}\n"
+            "Return one short idea (<=25 words)."
+        )
 
     def _build_emotion_transition_map(self) -> Dict[str, Dict[str, int]]:
         """Build map of common emotion transitions."""

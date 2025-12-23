@@ -322,6 +322,7 @@ These tools integrate with DAiW's workflow:
 ## Future Enhancements
 
 Potential improvements:
+
 - Parallel processing for batch mode
 - Progress bars for long operations
 - Filtering options (by BPM range, key, etc.)

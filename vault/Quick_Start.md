@@ -58,6 +58,7 @@ Wait for downloads to complete.
 ## Step 5: Test It (5 min)
 
 Ask your AI:
+
 - "What are the different types of reverb?"
 - "Summarize the mixing workflow checklist"
 - "Explain compression ratios"
@@ -73,6 +74,7 @@ See [[AI-System/Audio Cataloger Setup]] for scanning your sample library.
 ## You're Done!
 
 Start documenting:
+
 - Add notes about your songs
 - Document your workflows
 - Catalog your samples

@@ -32,6 +32,7 @@ For more information, visit the website:
 [www.juce.com](https://www.juce.com)
 
 FULL JUCE TERMS:
+
 - [JUCE 7 END-USER LICENSE AGREEMENT](https://www.juce.com/juce-7-licence)
 - [JUCE PRIVACY POLICY](https://www.juce.com/juce-privacy-policy)
 

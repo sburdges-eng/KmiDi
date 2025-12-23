@@ -169,6 +169,7 @@ How to study professional mixes and apply what you learn.
 ### Step 1: Casual Listen
 
 First, just listen through casually:
+
 - What stands out?
 - What's the overall vibe?
 - What grabs you?
@@ -208,6 +209,7 @@ Listen multiple times, focusing on:
 ### Step 3: Take Notes
 
 Write down what you observe:
+
 - "Bass is punchy but not subby"
 - "Cymbals dark, not harsh"
 - "Vocal very upfront, minimal reverb"

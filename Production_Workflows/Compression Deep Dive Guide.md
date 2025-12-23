@@ -76,6 +76,18 @@ Compression reduces the volume of loud sounds, making the overall dynamic range 
 - Makeup gain compensates
 - Match bypassed level for fair comparison
 
+### Knee
+
+**What it does:** Controls how gradually compression kicks in around the threshold.
+
+| Knee | Behavior | Use For |
+|------|----------|---------|
+| Hard (0dB) | Abrupt start at threshold | Aggressive, obvious compression |
+| Soft (1-3dB) | Gradual transition | Natural, transparent compression |
+| Medium (3-6dB) | Smooth curve | Most mixing tasks |
+
+**Key insight:** Soft knee = more musical, less obvious compression.
+
 ---
 
 ## Gain Reduction Amounts
@@ -92,6 +104,7 @@ Compression reduces the volume of loud sounds, making the overall dynamic range 
 ### The Sweet Spot
 
 For most mixing:
+
 - 3-6 dB gain reduction
 - Compression working, but not obvious
 - Sound is controlled, not squashed
@@ -162,6 +175,71 @@ For most mixing:
 3. Total: 4-6 dB (but more transparent)
 
 **Why it works:** Each compressor works less hard = less artifacts.
+
+### Sidechain Compression
+
+**Goal:** Make one element duck when another plays (e.g., bass ducking when kick hits).
+
+**Method:**
+1. Insert compressor on target track (e.g., bass)
+2. Set sidechain input to source track (e.g., kick)
+3. Adjust threshold and ratio to taste
+4. Fast attack (1-5ms) and release (50-150ms)
+
+**Common Uses:**
+- Bass ducking for kick drum
+- Synth pads ducking for vocals
+- Reverb ducking for dry signal
+- Creating rhythmic pumping effects
+
+**Settings:**
+- Ratio: 4:1 to 8:1
+- Attack: Fast (1-5ms)
+- Release: Fast-medium (50-150ms) — match tempo
+- Gain reduction: 3-6 dB on duck
+
+**Tip:** Use sidechain for clarity, not just effects.
+
+### Multiband Compression
+
+**Goal:** Compress different frequency ranges independently.
+
+**Method:**
+1. Split signal into bands (low, mid, high)
+2. Apply different compression to each band
+3. Blend bands back together
+
+**Common Uses:**
+- Control low-end without affecting highs
+- Tame harsh frequencies in vocals
+- Balance frequency balance dynamically
+- De-essing (high-frequency compression)
+
+**Settings by Band:**
+- **Low:** Ratio 4:1, slow attack (30-50ms), medium release
+- **Mid:** Ratio 3:1, medium attack (10-30ms), medium release
+- **High:** Ratio 2:1 to 4:1, fast attack (1-10ms), fast release
+
+**Tip:** Use sparingly — can sound unnatural if overdone.
+
+### De-essing
+
+**Goal:** Reduce harsh "s" and "sh" sounds in vocals.
+
+**Method:**
+1. Use multiband compressor or dedicated de-esser
+2. Target high frequencies (5-10 kHz)
+3. Fast attack, fast release
+4. Listen for sibilance reduction without dulling vocals
+
+**Settings:**
+- Frequency: 5-10 kHz (where sibilance lives)
+- Ratio: 3:1 to 6:1
+- Attack: Very fast (0.1-1ms)
+- Release: Fast (10-50ms)
+- Gain reduction: 3-6 dB on "s" sounds only
+
+**Tip:** Solo the de-esser to hear what it's catching.
 
 ---
 
@@ -283,6 +361,115 @@ For most mixing:
 
 ---
 
+## Compression Order in Signal Chain
+
+**Where to place compression matters.**
+
+### Typical Order (Top to Bottom)
+
+1. **EQ (Pre-compression)** - Remove problem frequencies first
+2. **Compression** - Control dynamics
+3. **EQ (Post-compression)** - Shape tone after compression
+4. **Effects** - Reverb, delay, modulation
+
+### Why Order Matters
+
+- **EQ before compression:** Removing mud before compression = cleaner compression
+- **Compression before reverb:** Compressed signal into reverb = more consistent reverb tail
+- **EQ after compression:** Compression can change frequency balance; post-EQ fixes it
+
+### Exceptions
+
+- **De-esser:** Usually after main compression (catches sibilance that compression brings up)
+- **Parallel compression:** On separate aux, so order doesn't matter
+- **Sidechain:** Compressor position matters less than sidechain routing
+
+**Rule of thumb:** Fix problems first (EQ), then control dynamics (compression), then add character (effects).
+
+---
+
+## Reading Gain Reduction Meters
+
+**Understanding what the meters tell you.**
+
+### What to Watch For
+
+| Meter Reading | Meaning | Action |
+|---------------|---------|--------|
+| 0 dB | No compression | Lower threshold or check routing |
+| 1-3 dB | Light compression | Good for subtle control |
+| 3-6 dB | Moderate compression | Sweet spot for most mixing |
+| 6-10 dB | Heavy compression | Check if it sounds good |
+| 10+ dB | Extreme compression | Usually too much unless intentional |
+| Constant reduction | Always compressing | Raise threshold |
+| No recovery | Release too slow | Speed up release |
+
+### Visual Patterns
+
+- **Peak reduction:** Compressor catching peaks (good)
+- **Constant reduction:** Threshold too low (usually bad)
+- **Pumping:** Release too fast (may be intentional)
+- **No movement:** Compressor not working (check routing/threshold)
+
+**Tip:** Watch meters while listening — meters confirm what your ears hear.
+
+---
+
+## Creative Compression Techniques
+
+**Using compression as an effect, not just control.**
+
+### Pumping Effect
+
+**Goal:** Rhythmic pumping/breathing effect.
+
+**Method:**
+- Fast attack (1-5ms)
+- Fast release (50-150ms) — match tempo
+- High ratio (8:1+)
+- Heavy gain reduction (8-12 dB)
+- Sidechain to kick or snare
+
+**Use for:** EDM, electronic music, creative effects.
+
+### Crushing Compression
+
+**Goal:** Extreme, lo-fi, character-heavy sound.
+
+**Method:**
+- Very fast attack (0.1-1ms)
+- Fast release (10-50ms)
+- High ratio (10:1+)
+- Extreme gain reduction (15-20 dB)
+- Often on parallel aux
+
+**Use for:** Drums, creative effects, lo-fi aesthetics.
+
+### Upward Compression
+
+**Goal:** Bring up quiet parts without affecting loud parts.
+
+**Method:**
+- Use expander/gate in reverse, or specialized upward compressor
+- Raises quiet signals instead of lowering loud ones
+- Preserves transients
+
+**Use for:** Bringing out room tone, ambience, quiet details.
+
+### Compression as Distortion
+
+**Goal:** Use compression artifacts as tone.
+
+**Method:**
+- Extreme settings (fast attack, high ratio)
+- Drive into compression hard
+- Use character compressors (FET, tube)
+- Embrace the distortion
+
+**Use for:** Aggressive sounds, creative tone shaping.
+
+---
+
 ## Common Mistakes
 
 | Mistake | Problem | Fix |
@@ -293,6 +480,94 @@ For most mixing:
 | Release too slow | Compression doesn't recover | Speed up release |
 | Only compressing | Level still uneven | Use volume automation too |
 | Not A/B comparing | Can't tell if it's better | Bypass and compare |
+| Compressing everything | Mix loses dynamics | Use compression selectively |
+| Ignoring makeup gain | Compressed signal too quiet | Add makeup gain to match level |
+| Wrong compressor type | Doesn't fit the source | Match compressor character to source |
+| Sidechain too obvious | Pumping is distracting | Reduce ratio or adjust release |
+
+---
+
+## Troubleshooting Compression Issues
+
+### Problem: Compression Sounds Obvious/Unnatural
+
+**Causes:**
+- Too much gain reduction
+- Attack too fast
+- Release not matching source
+
+**Solutions:**
+- Reduce ratio or raise threshold
+- Slow down attack to preserve transients
+- Match release to source rhythm
+- Try serial compression (lighter stages)
+- Use softer knee
+
+### Problem: No Punch/Impact
+
+**Causes:**
+- Attack too fast (killing transients)
+- Too much compression overall
+- Wrong compressor type
+
+**Solutions:**
+- Slow down attack (30-50ms for drums)
+- Reduce gain reduction
+- Try FET or VCA compressor (faster, punchier)
+- Use parallel compression instead
+
+### Problem: Pumping/Breathing Artifacts
+
+**Causes:**
+- Release too fast
+- Too much gain reduction
+- Release not matching tempo
+
+**Solutions:**
+- Slow down release
+- Reduce gain reduction
+- Match release to song tempo
+- Use auto-release if available
+
+### Problem: Compression Not Working
+
+**Causes:**
+- Threshold too high
+- Wrong routing
+- Bypass engaged
+- Sidechain not configured
+
+**Solutions:**
+- Lower threshold until meter moves
+- Check signal routing
+- Verify compressor is active
+- Check sidechain input if using sidechain
+
+### Problem: Vocals Sound Dull
+
+**Causes:**
+- Attack too fast (killing consonants)
+- Too much compression
+- Wrong compressor type
+
+**Solutions:**
+- Slow attack to 15-30ms
+- Reduce gain reduction
+- Try opto compressor (smoother)
+- Use serial compression
+
+### Problem: Mix Sounds Small/Flat
+
+**Causes:**
+- Too much compression on mix bus
+- Everything over-compressed
+- No dynamics left
+
+**Solutions:**
+- Reduce mix bus compression (1-3 dB max)
+- Re-evaluate individual track compression
+- Use parallel compression for power
+- Leave some dynamics intact
 
 ---
 
@@ -341,6 +616,55 @@ For most mixing:
 
 ---
 
+## Compression by Genre
+
+### Electronic/EDM
+
+**Characteristics:** Heavy compression, pumping effects, sidechain ducking.
+
+- **Kick:** Heavy compression (6:1, slow attack, fast release)
+- **Bass:** Sidechain to kick, heavy compression
+- **Synths:** Moderate compression, often sidechained
+- **Mix Bus:** Moderate compression with pumping
+
+### Hip-Hop
+
+**Characteristics:** Punchy drums, controlled vocals, tight low end.
+
+- **Kick:** Aggressive compression (6:1, slow attack)
+- **Snare:** Heavy compression for snap
+- **Vocals:** Serial compression, de-essing important
+- **808/Bass:** Heavy compression, sidechain to kick
+
+### Rock
+
+**Characteristics:** Dynamic, punchy, natural-sounding compression.
+
+- **Drums:** Moderate compression, preserve transients
+- **Vocals:** Moderate compression (3:1-4:1)
+- **Guitars:** Light compression (distortion already compresses)
+- **Mix Bus:** Light glue compression
+
+### Pop
+
+**Characteristics:** Consistent levels, polished, controlled.
+
+- **Vocals:** Serial compression, de-essing essential
+- **Drums:** Moderate compression, parallel for power
+- **Everything:** More compression than rock, less than EDM
+- **Mix Bus:** Light compression for glue
+
+### Jazz/Acoustic
+
+**Characteristics:** Minimal compression, preserve dynamics.
+
+- **Everything:** Light compression (2:1-3:1)
+- **Vocals:** Gentle compression, preserve natural dynamics
+- **Drums:** Light compression, preserve transients
+- **Mix Bus:** Very light or none
+
+---
+
 ## Quick Reference
 
 ### Starting Points
@@ -354,6 +678,17 @@ For most mixing:
 | Acoustic | 3:1 | 15-30ms | 150-250ms | 3-6dB |
 | Drum Bus | 3:1 | 10-30ms | Auto | 2-4dB |
 | Mix Bus | 2:1 | 20-30ms | Auto | 1-3dB |
+
+### Advanced Techniques Quick Reference
+
+| Technique | Ratio | Attack | Release | GR | Use For |
+|-----------|-------|--------|---------|-----|---------|
+| Parallel | 8:1+ | Fast | Medium | 10+ dB | Power without losing dynamics |
+| Sidechain | 4:1-8:1 | Fast (1-5ms) | Fast (50-150ms) | 3-6 dB | Ducking, clarity |
+| Multiband Low | 4:1 | Slow (30-50ms) | Medium | 3-6 dB | Control low end |
+| Multiband High | 2:1-4:1 | Fast (1-10ms) | Fast | 3-6 dB | De-essing, harshness |
+| Pumping Effect | 8:1+ | Fast (1-5ms) | Fast (50-150ms) | 8-12 dB | Rhythmic effects |
+| Crushing | 10:1+ | Very fast (0.1-1ms) | Fast (10-50ms) | 15-20 dB | Lo-fi, character |
 
 ---
 

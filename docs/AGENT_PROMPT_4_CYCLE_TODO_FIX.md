@@ -9,6 +9,7 @@
 ## Context
 
 You are working on the iDAW (Intelligent Digital Audio Workstation) project. There are **40+ incomplete features** identified across:
+
 - UI Components (13 items)
 - OSC System (4 items)
 - Groove Engine (4 items)

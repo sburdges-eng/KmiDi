@@ -36,26 +36,29 @@ This analysis examines the current state of production guides and tools, identif
 #### `drum_analysis.py`
 - **Imports**: Uses `..utils.ppq` and `..utils.instruments` (suggests it should be in `music_brain/groove/`)
 - **Current Usage**: ❌ Not imported anywhere in codebase
-- **Dependencies**: 
+- **Dependencies**:
   - `music_brain.utils.ppq` (STANDARD_PPQ, ticks_to_ms)
   - `music_brain.utils.instruments` (get_drum_category, is_drum_channel)
+
 - **Integration Points**: Should connect to `groove_engine.py` for humanization
 
 #### `emotion_thesaurus.py`
-- **Current Usage**: 
+- **Current Usage**:
   - ✅ Used in C++ (`src/kelly/core/emotion_thesaurus.py`)
   - ✅ Used in Python (`src/kelly/core/emotion_thesaurus.py`)
   - ⚠️ Root version not integrated with `music_brain`
+
 - **Dependencies**: JSON data files in `emotion_thesaurus/` directory
-- **Integration Points**: 
+- **Integration Points**:
   - `music_brain.emotion_api.MusicBrain` (partial)
   - `src/engine/IntentPipeline.cpp` (C++)
 
 #### `emotion_scale_sampler.py`
 - **Current Usage**: ❌ Standalone script, not imported
-- **Dependencies**: 
+- **Dependencies**:
   - `scales_database.json` (from `music_brain/data/`)
   - Freesound API
+
 - **Integration Points**: Should use `emotion_thesaurus.py` for better emotion matching
 
 ### 1.3 Existing Integration Points

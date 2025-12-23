@@ -7,6 +7,7 @@ Creating immersive, textural soundscapes and ambient music.
 ## The Ambient Sound
 
 Key elements:
+
 - **Texture over rhythm** — Sound design matters most
 - **Space** — Lots of reverb, delay, atmosphere
 - **Evolution** — Sounds that change over time

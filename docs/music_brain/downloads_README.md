@@ -220,11 +220,13 @@ F (I)  - "home, resolution"
 **"Interrogate Before Generate"**
 
 Before today:
+
 - Intent schema defined ✅
 - Philosophy documented ✅
 - But no way to execute it ❌
 
 After today:
+
 - Intent → Harmony → MIDI ✅
 - Rule-breaking with justification ✅
 - Emotional validation ✅
@@ -290,22 +292,26 @@ A: Modify the intent, rerun kelly_song_example.py, get new MIDI instantly.
 ## 🎯 SUCCESS CHECKLIST
 
 Copy to your repo and working:
+
 - [ ] harmony_generator.py in music_brain/harmony/
 - [ ] chord_diagnostics.py in music_brain/structure/
 - [ ] rule_breaks.json in music_brain/data/
 
 CLI commands functional:
+
 - [ ] `daiw diagnose "F-C-Bbm-F"`
 - [ ] `daiw process kelly_intent.json -o test.mid`
 - [ ] `daiw generate --key F --pattern "I-V-vi-IV"`
 
 Kelly song production:
+
 - [ ] MIDI imported into Logic Pro X
 - [ ] Fingerpicking pattern added
 - [ ] Vocal recording with register breaks
 - [ ] Lo-fi production aesthetic maintained
 
 Tests passing:
+
 - [ ] All 22 original tests still pass
 - [ ] New tests for harmony generator
 - [ ] New tests for diagnostics
@@ -319,6 +325,7 @@ You asked for:
 2. Diagnostic command ✅
 
 You got:
+
 - A complete emotional-to-musical translation system
 - Working MIDI generation for your Kelly song
 - Validation that your Bbm choice was right all along

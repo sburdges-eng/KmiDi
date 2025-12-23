@@ -40,6 +40,7 @@ Sprint 3 focuses on ensuring all documentation is complete, accurate, and follow
   - `swift-sdks.md` - Swift development
   - `cpp-programming.md` - C++ programming
   - `rust-daw-backend.md` - Rust backend guide
+
 - **Audio & DAW**:
   - `daw-programs.md` - DAW software overview
   - `audio-interfaces.md` - Audio hardware/software interfaces
@@ -47,12 +48,14 @@ Sprint 3 focuses on ensuring all documentation is complete, accurate, and follow
   - `daw-engine-stability.md` - Engine stability guide
   - `daw-ui-patterns.md` - UI design patterns
   - `daw-track-import-methods.md` - Track import methods
+
 - **AI & Research**:
   - `ai-prompting-guide.md` - AI prompting techniques
   - `music-generation-research.md` - Music generation research
   - `multi-agent-mcp-guide.md` - Multi-agent systems
   - `mcp-protocol-debugging.md` - MCP debugging
   - `instrument-learning-research.md` - Instrument learning tool
+
 - **Advanced Topics**:
   - `psychoacoustic-sound-design.md` - Sound design guide
   - `daiw-music-brain.md` - Project architecture
@@ -75,6 +78,7 @@ Sprint 3 focuses on ensuring all documentation is complete, accurate, and follow
 ### Markdown Linting
 
 Using `markdownlint-cli` to check:
+
 - ✅ Consistent heading hierarchy
 - ✅ Proper list formatting
 - ✅ No trailing spaces
@@ -99,6 +103,7 @@ Using `markdownlint-cli` to check:
 ### Example Script Validation
 
 Run all example scripts to ensure:
+
 - ✅ No import errors
 - ✅ No runtime errors (or graceful failures with clear messages)
 - ✅ Output matches documentation
@@ -161,11 +166,13 @@ sprint3_documentation:
 
 ````markdown
 ```python
+
 # Python code example
 import music_brain
 ```
 
 ```bash
+
 # Shell commands
 pip install -e .[all]
 ```
@@ -235,6 +242,7 @@ pip install -e .[all]
   - **End users**: Focus on what and how
   - **Contributors**: Focus on why and architecture
   - **Maintainers**: Focus on implementation details
+
 - Keep examples simple and focused on one concept
 - Include error handling in examples
 - Add comments explaining non-obvious code

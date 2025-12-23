@@ -389,6 +389,7 @@ cmake --build .
 ## Testing Without Dependencies
 
 Tests can run without external libraries using:
+
 - Generated test signals (sine waves)
 - In-memory MIDI sequences
 - Stub I/O operations

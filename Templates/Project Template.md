@@ -3,10 +3,10 @@ title: "<% tp.file.title %>"
 created: <% tp.date.now("YYYY-MM-DD") %>
 modified: <% tp.date.now("YYYY-MM-DD") %>
 type: project
-category: 
+category:
 status: planning
 priority: medium
-due_date: 
+due_date:
 tags:
   - type/project
   - status/planning
@@ -37,9 +37,9 @@ tags:
 ### Goals
 *What does success look like?*
 
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ### Why Now?
 *What's the motivation/urgency?*
@@ -51,18 +51,18 @@ tags:
 ## Scope
 
 ### In Scope
-- 
-- 
-- 
+-
+-
+-
 
 ### Out of Scope
-- 
-- 
+-
+-
 
 ### Deliverables
-- [ ] 
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
+- [ ]
 
 ---
 
@@ -72,19 +72,19 @@ tags:
 - [ ] Define requirements
 - [ ] Research approach
 - [ ] Gather resources
-- [ ] 
+- [ ]
 
 ### Phase 2: Execution
-- [ ] 
-- [ ] 
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
+- [ ]
+- [ ]
 
 ### Phase 3: Review & Finish
 - [ ] Test/review results
 - [ ] Document learnings
 - [ ] Archive/organize files
-- [ ] 
+- [ ]
 
 ---
 
@@ -108,42 +108,42 @@ tags:
 ## Resources Needed
 
 ### Tools/Software
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
 
 ### Files/Assets
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
 
 ### Knowledge/Skills
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
 
 ### External Help
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
 
 ---
 
 ## Progress Log
 
 ### <% tp.date.now("YYYY-MM-DD") %>
-**Time spent:** 
+**Time spent:**
 **What I did:**
-- 
+-
 
 **Next steps:**
-- 
+-
 
 ---
 
 ### [Date]
-**Time spent:** 
+**Time spent:**
 **What I did:**
-- 
+-
 
 **Next steps:**
-- 
+-
 
 ---
 
@@ -167,12 +167,12 @@ tags:
 ## Reference Materials
 
 ### Documentation
-- 
-- 
+-
+-
 
 ### Tutorials/Guides
-- 
-- 
+-
+-
 
 ### Related Projects
 - [[]]
@@ -194,16 +194,16 @@ tags:
 *Fill this out when project is complete*
 
 ### What Went Well
-- 
-- 
+-
+-
 
 ### What Could Improve
-- 
-- 
+-
+-
 
 ### Key Learnings
-- 
-- 
+-
+-
 
 ### Time Tracking
 | Phase | Estimated | Actual |

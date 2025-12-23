@@ -3,6 +3,7 @@
 ## Overview
 
 This creates a Custom GPT that has all the DAiW research baked in:
+
 - Emotional-to-musical mapping (Russell's circumplex)
 - Rule-breaking masterpieces database
 - Project context and philosophy
@@ -201,7 +202,7 @@ How do I create emotional misdirection in music?
 Upload these files to the GPT:
 
 ### Required:
-1. **emotional_mapping.py** 
+1. **emotional_mapping.py**
    - The full code file with presets
    - Location: `/mnt/user-data/outputs/emotional_mapping.py`
 
@@ -221,10 +222,12 @@ Upload these files to the GPT:
 ## Step 6: Capabilities
 
 Enable:
+
 - ✅ Web Browsing (for looking up songs/examples)
 - ✅ Code Interpreter (for calculations)
 
 Disable:
+
 - ❌ DALL-E (not needed)
 
 ---
@@ -262,6 +265,7 @@ Expected: Ask about which is dominant, suggest compound mapping (anxiety base + 
 ## Step 8: Iterate
 
 After testing, refine:
+
 - Add examples that didn't work well
 - Clarify instructions that confused it
 - Upload more knowledge files as you create them
@@ -292,6 +296,7 @@ Always ask clarifying questions before suggesting parameters. Never assume simpl
 ## Files to Download
 
 All files are in your outputs:
+
 - emotional_mapping.py
 - Integration_Architecture.md
 - AI_Selection_Rules.md

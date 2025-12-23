@@ -17,6 +17,10 @@
 #include "engine/KellyBrain.h"
 #include "ml/MLFeatureExtractor.h"
 #include "ml/MultiModelProcessor.h"
+#include <functional>
+#include <atomic>
+#include <mutex>
+#include <vector>
 #include <array>
 #include <memory>
 
@@ -76,7 +80,7 @@ private:
 class MLIntentPipeline {
 public:
   MLIntentPipeline();
-  ~MLIntentPipeline() = default;
+  ~MLIntentPipeline();
 
   // Initialize with model directory
   bool initialize(const std::string &modelsPath, const std::string &dataPath);
@@ -97,6 +101,10 @@ public:
   // Combine audio emotion with text description
   IntentResult processHybrid(const float *audioData, size_t numSamples,
                              const std::string &textDescription);
+
+  // Async processing of feature JSON payloads; invokes callback on completion.
+  bool processAsync(const std::string &inputJson,
+                    std::function<void(const KellyTypesIntentResult &)> callback);
 
   // === Generate from ML Outputs ===
 
@@ -136,13 +144,21 @@ public:
   void setModelEnabled(Kelly::ML::ModelType type, bool enabled);
 
 private:
+  void spawnAsyncTask(std::function<void()> task);
+  void joinAsyncTasks();
+
   std::unique_ptr<KellyBrain> brain_;
   std::unique_ptr<Kelly::ML::MultiModelProcessor> mlProcessor_;
   std::unique_ptr<MLFeatureExtractor> featureExtractor_;
   std::unique_ptr<EmotionEmbeddingMapper> mapper_;
+  std::unique_ptr<MLAsyncPipeline> asyncPipeline_;
+  std::array<float, 128> lastSubmittedFeatures_{};
 
   bool mlEnabled_ = true;
   bool initialized_ = false;
+  std::atomic<bool> shuttingDown_{false};
+  std::vector<std::thread> asyncThreads_;
+  std::mutex asyncThreadsMutex_;
 
   // Feature extraction settings
   double sampleRate_ = 44100.0;

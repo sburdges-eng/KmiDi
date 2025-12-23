@@ -349,24 +349,28 @@ Both maintain deep interrogation before technical implementation.
 **Phase 2 is complete when:**
 
 Audio Analysis:
+
 - [ ] Reference tracks analyzed
 - [ ] Frequency profiles extracted
 - [ ] Tempo/key detection working
 - [ ] Elliott Smith/Bon Iver profiled
 
 Arrangement Generation:
+
 - [ ] Section templates working
 - [ ] Energy arcs generated
 - [ ] Instrumentation planned
 - [ ] Kelly structure complete
 
 Complete Composition:
+
 - [ ] Multi-track MIDI generated
 - [ ] Bass lines from harmony
 - [ ] Arrangement markers
 - [ ] Production documents
 
 Kelly Song:
+
 - [ ] Complete MIDI package
 - [ ] Production guide written
 - [ ] Ready for recording

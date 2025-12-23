@@ -7,6 +7,7 @@ Creating powerful, energetic rock tracks with punch and attitude.
 ## The Rock Sound
 
 Key elements:
+
 - **Driving drums** — Powerful, present kit
 - **Distorted guitars** — Wall of sound or punchy riffs
 - **Solid bass** — Locking with kick drum

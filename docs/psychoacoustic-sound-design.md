@@ -34,12 +34,14 @@ Mimicking the acoustic structure of a scream (chaos, distortion, unpredictable f
 
 ### 4. Heartbeat Entrainment
 Setting the BPM to approximately:
+
 - **~60 BPM**: Resting heart rate, induces calm
 - **~120 BPM**: Elevated/stress heart rate, induces panic
 - **~180+ BPM**: Extreme exertion, creates unsustainable tension
 
 ### 5. Binaural Beats
 Slight frequency differences between left and right channels to induce specific brainwave states:
+
 - **Delta (0.5-4Hz)**: Deep sleep, unconscious
 - **Theta (4-8Hz)**: Drowsy, meditative
 - **Alpha (8-14Hz)**: Relaxed, calm awareness
@@ -57,6 +59,7 @@ Rhythmic pulses at 40Hz to rattle the listener's chest cavity during "safe" scen
 
 ### 9. Biological Mimicry
 Using instruments that sound like:
+
 - Bones cracking
 - Fluids rushing/blood pumping
 - Flies buzzing
@@ -72,6 +75,7 @@ Boosting 3-4kHz (where the human ear is most sensitive—the frequency range of 
 
 ### 12. Stereo Width Collapse
 Slowly narrowing the stereo image to mono to create feelings of:
+
 - Claustrophobia
 - Entrapment
 - Focus/tunnel vision
@@ -79,6 +83,7 @@ Slowly narrowing the stereo image to mono to create feelings of:
 
 ### 13. Stereo Width Expansion
 Sudden widening to side channels to represent:
+
 - Freedom
 - The sublime
 - Revelation

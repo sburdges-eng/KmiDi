@@ -25,6 +25,7 @@
 ### Directory Structure
 
 The project structure follows best practices:
+
 - `src/` - Source code
 - `docs/` - Documentation
 - `tests/` - Test files

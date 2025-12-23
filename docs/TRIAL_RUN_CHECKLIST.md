@@ -211,6 +211,7 @@ Use this checklist to verify everything works correctly during your trial runs.
 ## 📱 Device Testing (Optional)
 
 If testing on real iPhone:
+
 - [ ] Deploy to physical device
 - [ ] Trust developer certificate
 - [ ] App installs successfully
@@ -249,7 +250,7 @@ If testing on real iPhone:
 Use this space to note any problems:
 
 **Issue 1:**
-- Problem: 
+- Problem:
 - Steps to reproduce:
 - Expected behavior:
 - Actual behavior:
@@ -264,7 +265,7 @@ Use this space to note any problems:
 
 ## 🎉 Trial Run Complete!
 
-If all items are checked, your Dart Strike iOS app is **ready to go**! 
+If all items are checked, your Dart Strike iOS app is **ready to go**!
 
 **Pass Criteria**: ✅ 90%+ of items checked with no critical bugs
 

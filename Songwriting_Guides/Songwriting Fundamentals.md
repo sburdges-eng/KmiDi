@@ -7,6 +7,7 @@ The complete guide to writing songs — from idea to finished composition.
 ## What Makes a Great Song
 
 A great song has:
+
 - **A strong hook** — Something memorable that sticks
 - **Emotional connection** — Makes you feel something
 - **Clear structure** — Takes you on a journey

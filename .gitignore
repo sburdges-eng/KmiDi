@@ -196,6 +196,7 @@ Plugins/
 .DS_Store
 .AppleDouble
 .LSOverride
+._*
 
 # Linux
 .fuse_hidden*

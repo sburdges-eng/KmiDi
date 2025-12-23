@@ -17,7 +17,7 @@ This document describes the performance optimizations made to the iDAW codebase.
 
 **Issue**: File handles were opened but not properly closed, leading to resource leaks.
 
-**Fix**: 
+**Fix**:
 - Added `__enter__` and `__exit__` methods to FileLogger for context manager support
 - Added `__del__` destructor to ensure files are closed on garbage collection
 - Improved exception handling with specific Exception types instead of bare `except:`
@@ -64,7 +64,7 @@ with sqlite3.connect(DB_PATH) as conn:
 - Cache keys include genre and version for precise cache hits
 - Cache invalidation on save operations
 
-**Impact**: 
+**Impact**:
 - Reduces disk I/O by ~90% for repeated template access
 - Faster template loading for workflows that reuse templates
 - Memory overhead: ~few KB per cached template (acceptable trade-off)
@@ -100,7 +100,7 @@ for idx, (prev, curr) in enumerate(zip(selected_voicings[:-1], selected_voicings
 - Combined parallel fifth/octave checks with elif
 - Consolidated large leap checking into single list comprehension
 
-**Impact**: 
+**Impact**:
 - ~30% faster voice leading analysis
 - More readable and maintainable code
 
@@ -154,7 +154,7 @@ for sub_data in sub_emotions.values():
         all_emotions.extend(subsub_name.lower() for subsub_name in sub_sub_emotions.keys())
 ```
 
-**Impact**: 
+**Impact**:
 - ~20% faster extraction
 - More Pythonic code
 
@@ -266,6 +266,7 @@ variation = {**common_fields, "id": scale_id, ...}
 ## Memory Considerations
 
 All optimizations maintain reasonable memory usage:
+
 - Template cache: ~10-50KB per template
 - Metadata cache: ~1-5KB per genre
 - Emotion taxonomy cache: ~200KB one-time cost
@@ -287,6 +288,7 @@ python -m pstats profile.stats
 ## Contributors
 
 Performance improvements implemented in response to code review focusing on:
+
 - Resource management
 - I/O efficiency
 - Algorithmic complexity

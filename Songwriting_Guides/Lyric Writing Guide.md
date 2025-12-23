@@ -55,6 +55,7 @@ Showing creates the emotion.**
 ### Why Metaphor Works
 
 Metaphors connect the abstract to the concrete:
+
 - "Love is a battlefield" (love = war)
 - "Heart of stone" (emotion = physical)
 - "Drowning in your eyes" (emotion = water)
@@ -304,6 +305,7 @@ Pick a concept (love, loss, hope) and compare it to something concrete (ocean, f
 ### Questions to Ask
 
 For each line:
+
 - Does this serve the song?
 - Is this the best word choice?
 - Is this showing or telling?

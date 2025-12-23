@@ -3,7 +3,7 @@ title: "<% tp.file.title %>"
 created: <% tp.date.now("YYYY-MM-DD") %>
 modified: <% tp.date.now("YYYY-MM-DD") %>
 type: learning
-category: 
+category:
 status: learning
 confidence: 1
 tags:
@@ -21,8 +21,8 @@ tags:
 
 
 **Prerequisites:**
-- 
-- 
+-
+-
 
 ---
 
@@ -42,15 +42,15 @@ tags:
 
 ## Key Concepts
 
-### Concept 1: 
+### Concept 1:
 *Explanation in my own words:*
 
 
-### Concept 2: 
+### Concept 2:
 *Explanation in my own words:*
 
 
-### Concept 3: 
+### Concept 3:
 *Explanation in my own words:*
 
 
@@ -62,9 +62,9 @@ tags:
 
 
 ### Step by Step
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ### Visual/Diagram
 ```
@@ -76,37 +76,37 @@ tags:
 ## Practical Application
 
 ### When to Use This
-- 
-- 
+-
+-
 
 ### When NOT to Use This
-- 
-- 
+-
+-
 
 ### Real Examples
-1. 
-2. 
+1.
+2.
 
 ---
 
 ## Hands-On Practice
 
-### Exercise 1: 
-**Goal:** 
+### Exercise 1:
+**Goal:**
 
 **Steps:**
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 **Result:**
 
 
-### Exercise 2: 
-**Goal:** 
+### Exercise 2:
+**Goal:**
 
 **Steps:**
-1. 
+1.
 
 **Result:**
 
@@ -124,9 +124,9 @@ tags:
 
 ## Tips & Tricks
 
-- 💡 
-- 💡 
-- 💡 
+- 💡
+- 💡
+- 💡
 
 ---
 
@@ -156,22 +156,22 @@ tags:
 | | Book | | |
 
 ### Official Documentation
-- 
+-
 
 ### People Who Explain It Well
-- 
+-
 
 ---
 
 ## My Notes
 
 ### Questions I Still Have
-- [ ] 
-- [ ] 
+- [ ]
+- [ ]
 
 ### Things That Clicked
-- 
-- 
+-
+-
 
 ### Analogies That Help
 *"It's like..."*
@@ -208,9 +208,9 @@ tags:
 
 
 ### Key Takeaways
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ---
 

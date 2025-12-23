@@ -1,10 +1,43 @@
 #include "penta/osc/OSCServer.h"
+#include "penta/osc/OSCMessage.h"
+#include <juce_osc/juce_osc.h>
 
 namespace penta::osc {
 
-// Forward declare SocketImpl
-struct OSCServer::SocketImpl {
-    int fd = -1;
+class OSCServer::OSCListener
+    : public juce::OSCReceiver::Listener<juce::OSCReceiver::RealtimeCallback> {
+public:
+    explicit OSCListener(OSCServer* server) : server_(server) {}
+
+    void oscMessageReceived(const juce::OSCMessage& message) override {
+        if (!server_ || !server_->messageQueue_) {
+            return;
+        }
+
+        OSCMessage pentaMsg;
+        pentaMsg.setAddress(message.getAddressPattern().toString().toStdString());
+        pentaMsg.setTimestamp(juce::Time::getMillisecondCounterHiRes());
+
+        for (const auto& arg : message) {
+            if (arg.isFloat32()) {
+                pentaMsg.addFloat(arg.getFloat32());
+            } else if (arg.isInt32()) {
+                pentaMsg.addInt(arg.getInt32());
+            } else if (arg.isString()) {
+                pentaMsg.addString(arg.getString().toStdString());
+            } else if (arg.isBlob()) {
+                const auto& blob = arg.getBlob();
+                const auto* data = static_cast<const uint8_t*>(blob.getData());
+                std::vector<uint8_t> bytes(data, data + blob.getSize());
+                pentaMsg.addBlob(bytes);
+            }
+        }
+
+        server_->messageQueue_->push(pentaMsg);
+    }
+
+private:
+    OSCServer* server_;
 };
 
 OSCServer::OSCServer(const std::string& address, uint16_t port)
@@ -12,28 +45,40 @@ OSCServer::OSCServer(const std::string& address, uint16_t port)
     , port_(port)
     , running_(false)
     , messageQueue_(std::make_unique<RTMessageQueue>(4096))
-    , socket_(std::make_unique<SocketImpl>())
+    , listener_(std::make_unique<OSCListener>(this))
+    , receiver_()
 {
-    // TODO: Week 6 implementation - OSC server with lock-free message reception
+    receiver_.addListener(listener_.get());
 }
 
 OSCServer::~OSCServer() {
     stop();
+    receiver_.removeListener(listener_.get());
 }
 
 bool OSCServer::start() {
-    // Stub implementation
-    running_.store(true, std::memory_order_release);
+    if (running_.load()) {
+        return true;
+    }
+
+    if (!receiver_.connect(static_cast<int>(port_))) {
+        juce::Logger::writeToLog("OSCServer: failed to bind to port " + juce::String(port_));
+        return false;
+    }
+
+    running_.store(true);
+    juce::Logger::writeToLog("OSCServer: started on port " + juce::String(port_));
     return true;
 }
 
 void OSCServer::stop() {
-    // Stub implementation
-    running_.store(false, std::memory_order_release);
-}
+    if (!running_.load()) {
+        return;
+    }
 
-void OSCServer::receiveThread() {
-    // Stub implementation - TODO Week 6
+    receiver_.disconnect();
+    running_.store(false);
+    juce::Logger::writeToLog("OSCServer: stopped");
 }
 
 } // namespace penta::osc

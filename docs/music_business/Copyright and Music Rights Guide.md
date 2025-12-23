@@ -126,6 +126,7 @@ Understanding how music ownership and money works.
 **Publishing = managing composition rights**
 
 A publisher:
+
 - Collects mechanical and performance royalties
 - Pitches for sync opportunities
 - Handles administration

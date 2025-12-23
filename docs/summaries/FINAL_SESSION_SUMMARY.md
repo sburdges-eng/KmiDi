@@ -261,6 +261,7 @@ Like grief invading hope.
 
 ### **2. Feel Is Systematic, Not Random**
 Groove analysis showed:
+
 - Funk: Kick pushes +15ms, snare lays back -8ms
 - Boom-bap: 54% swing, heavy kick/snare
 - Dilla: 62% swing (heavy), uneven accents
@@ -273,8 +274,9 @@ Groove analysis showed:
 
 ### **3. Imperfection Serves Emotion**
 For Kelly song:
+
 - Minimal groove = intimacy
-- Slight humanization = authenticity  
+- Slight humanization = authenticity
 - No perfection = lo-fi aesthetic
 - **Intentional imperfection = emotional truth**
 
@@ -365,7 +367,7 @@ Outstanding:
 1. **Intent-Based Composition**
    - Not "what chords sound good?"
    - But "what emotional truth am I expressing?"
-   
+  
 2. **Systematic Humanization**
    - Not "add random timing"
    - But "apply consistent pocket with purpose"
@@ -421,6 +423,7 @@ Outstanding:
 We proved that **"Interrogate Before Generate"** isn't just philosophy.
 
 It's a working system that translates:
+
 - **Core wound** → **Technical decision**
 - **Grief** → **Bbm in F major**
 - **Intimacy** → **Minimal groove**

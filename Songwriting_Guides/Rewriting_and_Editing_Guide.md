@@ -9,6 +9,7 @@ How to revise, polish, and strengthen your songs.
 **The truth:** First drafts are rarely final drafts.
 
 Great songs are often:
+
 - Written quickly
 - Then rewritten extensively
 
@@ -25,12 +26,14 @@ Great songs are often:
 **Create first, edit later.**
 
 When writing:
+
 - Don't stop to fix
 - Don't judge too early
 - Keep momentum
 - Get it all out
 
 When editing:
+
 - Step back objectively
 - Evaluate what's working
 - Fix what isn't

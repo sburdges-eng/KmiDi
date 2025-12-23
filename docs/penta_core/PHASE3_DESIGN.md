@@ -156,6 +156,7 @@ std::queue<Message> queue;
 ### pybind11 Integration
 
 The Python bridge provides:
+
 - **Zero-Copy Arrays**: NumPy arrays map directly to C++ buffers
 - **Exception Safety**: C++ exceptions converted to Python
 - **Object Lifetime**: Smart pointers manage C++ objects
@@ -204,6 +205,7 @@ PentaCorePlugin (JUCE AudioProcessor)
 ### Parameter System
 
 JUCE `AudioProcessorValueTreeState` provides:
+
 - Thread-safe parameter access
 - DAW automation support
 - Preset saving/loading

@@ -9,6 +9,7 @@ Making your tracks feel good to move to — the science and art of groove.
 Groove is what makes music feel good to move to.
 
 It's not just rhythm — it's:
+
 - **Timing relationships** between instruments
 - **Swing** and rhythmic feel
 - **Where** beats land (early, late, on grid)
@@ -129,6 +130,7 @@ Delaying every other note (the "ands") to create a bouncy, shuffled feel.
 ### Different Swing Per Instrument
 
 Not everything needs the same swing:
+
 - Drums: More swing
 - Bass: Matches drums
 - Synths/Keys: Can be straighter
@@ -181,6 +183,7 @@ Create patterns by varying velocity, not just by adding/removing notes.
 Ghost notes are **very quiet notes** between the main beats.
 
 They create:
+
 - Forward motion
 - Fills without filling
 - Subtle complexity
@@ -315,6 +318,7 @@ When you apply one, your MIDI conforms to that feel.
 Kick: 1   +   2   +   3   +   4   +
       X       X       X       X
 ```
+
 - Kick on every beat
 - Hi-hats driving 8ths or 16ths
 - Snare on 2 and 4
@@ -326,6 +330,7 @@ Kick:  1   +   2   +   3   +   4   +
        X           X   X           
 Snare:         X               X    (15-30ms late)
 ```
+
 - Laid-back feel
 - Snare behind the beat
 - Heavy swing (55-62%)
@@ -337,6 +342,7 @@ Kick:  1   +   2   +   3   +   4   +
        X       X       X       X
 Snare:         X               X
 ```
+
 - Kick and snare tight
 - Hi-hats driving 8ths
 - Slightly ahead feel
@@ -348,6 +354,7 @@ Kick:  1   +   2   +   3   +   4   +
        X   X       X   X   X       
 Snare:         X               X    + ghosts everywhere
 ```
+
 - Syncopated kick
 - Ghost notes constantly
 - Tight but bouncy
@@ -359,6 +366,7 @@ Kick:  1   +   2   +   3   +   4   +
        X               
 Snare:                 X           
 ```
+
 - Snare on 3 (not 2 and 4)
 - Feels slower
 - Creates drama/weight
@@ -370,6 +378,7 @@ Snare:                 X
 ### Groove Templates
 
 Region Inspector → Quantize:
+
 - Apple Loops grooves
 - Drummer grooves
 - Create your own
@@ -377,12 +386,14 @@ Region Inspector → Quantize:
 ### MIDI Transform → Humanize
 
 Position, velocity, length randomization:
+
 - Adds looseness
 - Breaks machine perfection
 
 ### Region Delay
 
 Region Inspector → Delay:
+
 - Shift entire track forward/back in time
 - Positive = late (laid back)
 - Negative = early (pushing)
@@ -390,6 +401,7 @@ Region Inspector → Delay:
 ### Drummer Track
 
 Already has groove:
+
 - Use for realistic drums
 - "Follow" feature matches other tracks
 - Convert to MIDI for editing

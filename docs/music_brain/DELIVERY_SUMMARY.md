@@ -339,6 +339,7 @@ From your rule-breaking masterpieces doc:
 ## 🎵 FINAL THOUGHT
 
 You now have working tools that translate:
+
 - **Emotional truth** → **Musical structure**
 - **Psychological intent** → **Harmonic choices**
 - **Grief** → **Bbm in F major**

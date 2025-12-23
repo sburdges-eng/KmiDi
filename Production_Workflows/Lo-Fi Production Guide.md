@@ -7,6 +7,7 @@ Creating that warm, nostalgic, imperfect lo-fi sound.
 ## What Makes Lo-Fi Sound Lo-Fi
 
 The aesthetic:
+
 - **Warmth** — Rolled off highs, boosted lows
 - **Imperfection** — Vinyl crackle, tape hiss, wow/flutter
 - **Loose feel** — Swung, behind the beat
@@ -209,6 +210,7 @@ Hats:  x   x   x   x   x   x   x   x  (swung)
 ### Wow and Flutter
 
 Pitch instability of old tape:
+
 - Slow, random pitch drift
 - Creates organic movement
 
@@ -226,6 +228,7 @@ Pitch instability of old tape:
 ### Filtering
 
 Roll off the highs:
+
 - Low-pass at 10-15kHz
 - Creates "old recording" feel
 - Don't make it muddy

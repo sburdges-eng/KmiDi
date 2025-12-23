@@ -15,9 +15,13 @@ using KellyTypesIntentResult = IntentResult;
 #include "common/Types.h" // Explicit include for Types.h types
 #include "engine/EmotionThesaurus.h"
 #include "engine/IntentPipeline.h" // Full definition needed
+#include <juce_audio_basics/juce_audio_basics.h>
+#include <juce_data_structures/juce_data_structures.h>
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include <thread>
+#include <utility>
 
 namespace kelly {
 
@@ -56,6 +60,33 @@ KellyTypesEmotionNode convertToUnifiedEmotionNode(const EmotionNode &legacy) {
   unified.musicalAttributes.dissonance = std::max(0.0f, -legacy.valence * 0.5f);
   unified.musicalAttributes.suggestedRuleBreaks.clear();
   return unified;
+}
+
+std::array<float, 128> parseFeatureArray(const std::string &inputJson,
+                                         const std::array<float, 128> &fallback) {
+  std::array<float, 128> features = fallback;
+
+  auto parsed = juce::JSON::parse(inputJson);
+  juce::var featureVar = parsed;
+
+  if (parsed.isObject()) {
+    if (auto *obj = parsed.getDynamicObject()) {
+      featureVar = obj->getProperty("features", parsed);
+    }
+  }
+
+  if (featureVar.isArray()) {
+    auto *arr = featureVar.getArray();
+    const auto count = std::min<size_t>(arr->size(), features.size());
+    for (size_t i = 0; i < count; ++i) {
+      const auto &val = arr->getReference(static_cast<int>(i));
+      if (val.isDouble() || val.isInt() || val.isInt64()) {
+        features[i] = static_cast<float>(static_cast<double>(val));
+      }
+    }
+  }
+
+  return features;
 }
 } // namespace
 
@@ -280,6 +311,12 @@ MLIntentPipeline::MLIntentPipeline() {
   mlProcessor_ = std::make_unique<Kelly::ML::MultiModelProcessor>();
   featureExtractor_ = std::make_unique<MLFeatureExtractor>();
   mapper_ = std::make_unique<EmotionEmbeddingMapper>(&brain_->thesaurus());
+  asyncPipeline_ = std::make_unique<Kelly::ML::AsyncMLPipeline>(*mlProcessor_);
+}
+
+MLIntentPipeline::~MLIntentPipeline() {
+  shuttingDown_.store(true);
+  joinAsyncTasks();
 }
 
 bool MLIntentPipeline::initialize(const std::string &modelsPath,
@@ -296,6 +333,9 @@ bool MLIntentPipeline::initialize(const std::string &modelsPath,
   if (!mlProcessor_->initialize(modelsDir)) {
     // Continue with fallback mode
   }
+  if (asyncPipeline_) {
+    asyncPipeline_->start();
+  }
 #endif
 
   initialized_ = true;
@@ -305,36 +345,20 @@ bool MLIntentPipeline::initialize(const std::string &modelsPath,
 KellyTypesIntentResult MLIntentPipeline::processAudio(const float *audioData,
                                                       size_t numSamples) {
   if (!mlEnabled_ || !initialized_) {
-    // Fallback to text-based processing
     return brain_->fromText("audio input");
   }
 
-  // Extract features using existing MLFeatureExtractor
-  // Note: MLFeatureExtractor expects juce::AudioBuffer, so we need to adapt
-  // For now, create a simple feature extraction
-  std::array<float, 128> features{};
+  juce::AudioBuffer<float> buffer(1, static_cast<int>(numSamples));
+  buffer.copyFrom(0, 0, audioData, static_cast<int>(numSamples));
 
-  // Simple feature extraction (RMS, spectral centroid, etc.)
-  // In a full implementation, this would use MLFeatureExtractor
-  float rms = 0.0f;
-  for (size_t i = 0; i < numSamples && i < 2048; ++i) {
-    rms += audioData[i] * audioData[i];
-  }
-  rms = std::sqrt(rms / numSamples);
+  auto features = featureExtractor_->extractFeatures(buffer);
+  lastSubmittedFeatures_ = features;
 
-  // Fill features array (simplified)
-  for (size_t i = 0; i < 128; ++i) {
-    features[i] = rms * (1.0f + 0.1f * std::sin(static_cast<float>(i)));
-  }
-
-  // Run full ML pipeline
   auto mlResult = mlProcessor_->runFullPipeline(features);
 
-  // Convert embedding to emotion
   KellyTypesEmotionNode emotion =
       mapper_->embeddingToEmotion(mlResult.emotionEmbedding);
 
-  // Create wound from detected emotion
   KellyTypesWound wound;
   wound.description = "Detected from audio";
   wound.urgency = emotion.intensity;
@@ -342,28 +366,50 @@ KellyTypesIntentResult MLIntentPipeline::processAudio(const float *audioData,
   wound.source = "ml_audio";
   wound.primaryEmotion = emotion;
 
-  // Process through intent pipeline
   KellyTypesIntentResult result = brain_->fromWound(wound);
-
-  // Override emotion in result - use sourceWound.primaryEmotion
   result.sourceWound.primaryEmotion = emotion;
-
   return result;
 }
 
 void MLIntentPipeline::submitAudio(const float *audioData, size_t numSamples) {
-  // For async processing, we would use AsyncMLPipeline
-  // For now, this is a placeholder
-  (void)audioData;
-  (void)numSamples;
+  if (!mlEnabled_ || !initialized_ || !asyncPipeline_) {
+    return;
+  }
+
+  juce::AudioBuffer<float> buffer(1, static_cast<int>(numSamples));
+  buffer.copyFrom(0, 0, audioData, static_cast<int>(numSamples));
+
+  auto features = featureExtractor_->extractFeatures(buffer);
+  lastSubmittedFeatures_ = features;
+  asyncPipeline_->submitFeatures(features);
 }
 
 bool MLIntentPipeline::hasResult() const {
-  return false; // Placeholder for async implementation
+  if (asyncPipeline_) {
+    return asyncPipeline_->hasResult();
+  }
+  return false;
 }
 
 KellyTypesIntentResult MLIntentPipeline::getResult() {
-  return KellyTypesIntentResult{}; // Placeholder
+  if (!asyncPipeline_ || !asyncPipeline_->hasResult()) {
+    return KellyTypesIntentResult{};
+  }
+
+  auto mlResult = asyncPipeline_->getResult();
+  KellyTypesEmotionNode emotion =
+      mapper_->embeddingToEmotion(mlResult.emotionEmbedding);
+
+  KellyTypesWound wound;
+  wound.description = "Detected from audio (async)";
+  wound.urgency = emotion.intensity;
+  wound.intensity = emotion.intensity;
+  wound.source = "ml_audio_async";
+  wound.primaryEmotion = emotion;
+
+  KellyTypesIntentResult result = brain_->fromWound(wound);
+  result.sourceWound.primaryEmotion = emotion;
+  return result;
 }
 
 KellyTypesIntentResult
@@ -401,6 +447,92 @@ MLIntentPipeline::processHybrid(const float *audioData, size_t numSamples,
   }
 
   return blended;
+}
+
+bool MLIntentPipeline::processAsync(
+    const std::string &inputJson,
+    std::function<void(const KellyTypesIntentResult &)> callback) {
+  if (!callback) {
+    return false;
+  }
+
+  if (!initialized_) {
+    return false;
+  }
+
+  const auto features = parseFeatureArray(inputJson, lastSubmittedFeatures_);
+  lastSubmittedFeatures_ = features;
+
+  if (asyncPipeline_) {
+    const auto requestId = asyncPipeline_->submitFeatures(features);
+
+    if (requestId != 0) {
+      spawnAsyncTask([this, requestId, cb = std::move(callback)]() {
+        while (!shuttingDown_.load() && asyncPipeline_ &&
+               !asyncPipeline_->hasResult(requestId)) {
+          juce::Thread::sleep(2);
+        }
+
+        if (shuttingDown_.load() || !asyncPipeline_ ||
+            !asyncPipeline_->hasResult(requestId)) {
+          return;
+        }
+
+        auto mlResult = asyncPipeline_->getResult(requestId);
+        if (!mlResult.valid) {
+          return;
+        }
+
+        KellyTypesEmotionNode emotion =
+            mapper_->embeddingToEmotion(mlResult.emotionEmbedding);
+
+        KellyTypesWound wound;
+        wound.description = "Detected from feature payload (async)";
+        wound.urgency = emotion.intensity;
+        wound.intensity = emotion.intensity;
+        wound.source = "ml_feature_async";
+        wound.primaryEmotion = emotion;
+
+        KellyTypesIntentResult result = brain_->fromWound(wound);
+        result.sourceWound.primaryEmotion = emotion;
+
+        cb(result);
+      });
+      return true;
+    }
+    // If the async pipeline is busy, fall back to synchronous processing below.
+  }
+
+  // Fallback: run synchronously on a background thread
+  spawnAsyncTask([this, features, cb = std::move(callback)]() {
+    if (shuttingDown_.load()) {
+      return;
+    }
+
+    KellyTypesIntentResult result;
+    if (mlEnabled_ && mlProcessor_) {
+      auto mlResult = mlProcessor_->runFullPipeline(features);
+      auto emotion = mapper_->embeddingToEmotion(mlResult.emotionEmbedding);
+
+      KellyTypesWound wound;
+      wound.description = "Detected from feature payload (async fallback)";
+      wound.urgency = emotion.intensity;
+      wound.intensity = emotion.intensity;
+      wound.source = "ml_feature_async";
+      wound.primaryEmotion = emotion;
+
+      result = brain_->fromWound(wound);
+      result.sourceWound.primaryEmotion = emotion;
+    } else {
+      result = brain_->fromText("ml_feature_async");
+    }
+
+    if (!shuttingDown_.load()) {
+      cb(result);
+    }
+  });
+
+  return true;
 }
 
 std::vector<MidiNote> MLIntentPipeline::generateMelodyFromProbabilities(
@@ -559,6 +691,23 @@ GeneratedMidi MLIntentPipeline::generateFromAudio(const float *audioData,
 void MLIntentPipeline::setModelEnabled(Kelly::ML::ModelType type,
                                        bool enabled) {
   mlProcessor_->setModelEnabled(type, enabled);
+}
+
+void MLIntentPipeline::spawnAsyncTask(std::function<void()> task) {
+  std::lock_guard<std::mutex> lock(asyncThreadsMutex_);
+  asyncThreads_.emplace_back([this, t = std::move(task)]() {
+    t();
+  });
+}
+
+void MLIntentPipeline::joinAsyncTasks() {
+  std::lock_guard<std::mutex> lock(asyncThreadsMutex_);
+  for (auto &t : asyncThreads_) {
+    if (t.joinable()) {
+      t.join();
+    }
+  }
+  asyncThreads_.clear();
 }
 
 } // namespace kelly

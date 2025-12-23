@@ -9,12 +9,14 @@ Creating emotional impact through dynamics, contrast, and arrangement choices.
 Dynamics = life.
 
 A song with no dynamics:
+
 - Feels flat and tiring
 - Loses emotional impact
 - All parts blur together
 - Nothing feels important
 
 A song with great dynamics:
+
 - Takes you on a journey
 - Feels alive and breathing
 - Moments hit hard
@@ -79,6 +81,7 @@ Each addition = natural crescendo.
 **Remove instruments = quieter, more intimate**
 
 Full arrangement → strip down:
+
 - Drop drums
 - Drop bass
 - Just vocal and one instrument
@@ -87,6 +90,7 @@ Full arrangement → strip down:
 ### The Hybrid Approach
 
 Most songs use both:
+
 - Build through verses
 - Peak at chorus
 - Strip down for bridge
@@ -101,6 +105,7 @@ Most songs use both:
 **The quiet parts make the loud parts loud.**
 
 If everything is loud:
+
 - Nothing feels loud
 - Listener gets fatigued
 - Emotional peaks don't hit
@@ -132,6 +137,7 @@ More contrast = more emotional impact.
 **Purpose:** Draw the listener in, set the tone
 
 Options:
+
 - **Quiet start:** Single instrument, builds curiosity
 - **Loud start:** Immediate impact, then pulls back
 - **Fragment:** Tease of the chorus hook
@@ -234,6 +240,7 @@ Options:
 ### The Drop-Out
 
 Remove drums entirely for impact:
+
 - Before final chorus (then crash back in)
 - Start of verse (rebuild)
 - Bridge (intimate moment)
@@ -251,6 +258,7 @@ Remove drums entirely for impact:
 ### Bass Drop Technique
 
 Remove bass entirely:
+
 - Creates tension
 - Makes re-entry powerful
 - Often used before chorus drop
@@ -333,6 +341,7 @@ Over 4-8 bars:
 ### The Anti-Drop
 
 Sometimes the chorus REMOVES elements instead of adding:
+
 - Drop drums out (or half-time)
 - Create space
 - Let vocals dominate
@@ -355,6 +364,7 @@ Sometimes the chorus REMOVES elements instead of adding:
 ### Master Bus Automation
 
 Subtle but effective:
+
 - Chorus slightly louder (+0.5 to +1 dB)
 - Verse slightly quieter
 - Creates perceived dynamic difference

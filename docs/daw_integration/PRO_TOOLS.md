@@ -54,6 +54,7 @@ cmake --build build --target PentaCorePlugin_AAX --config Release
 ### Plugin Output Location
 
 After building:
+
 - **macOS:** `~/Library/Application Support/Avid/Audio/Plug-Ins/Penta Core.aaxplugin`
 - **Windows:** `C:\Program Files\Common Files\Avid\Audio\Plug-Ins\Penta Core.aaxplugin`
 

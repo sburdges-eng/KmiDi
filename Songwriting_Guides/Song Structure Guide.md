@@ -240,6 +240,7 @@ Section A → Section B → Section C → Section D...
 **No contrast = boring**
 
 Contrast between sections creates:
+
 - Interest and variety
 - Sense of journey
 - Emotional impact

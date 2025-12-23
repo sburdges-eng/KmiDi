@@ -69,6 +69,7 @@ The more specific, the easier to find your audience.
 ### Content Ratio
 
 A rough balance:
+
 - 60% entertainment/value
 - 30% behind-the-scenes/personal
 - 10% "asks" (stream this, buy this)
