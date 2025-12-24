@@ -32,12 +32,12 @@ model:
     - name: genre
       head: linear
       classes: 20
-      loss_weight: 3.0         # Boost genre (was under-weighted)
-      use_class_weights: true  # Auto-compute from label distribution
+      loss_weight: 3.0              # Boost genre (was under-weighted)
+      auto_class_weights: true      # Auto-compute from label distribution
     - name: emotion
       head: linear
       classes: 8
-      loss_weight: 0.5         # Reduce emotion (already near-perfect)
+      loss_weight: 0.5              # Reduce emotion (already near-perfect)
 
 optim:
   name: adamw
