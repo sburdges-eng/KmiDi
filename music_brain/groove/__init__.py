@@ -31,7 +31,11 @@ from music_brain.groove.groove_engine import (
     settings_from_intent,
     settings_from_preset,
 )
-from music_brain.groove.templates import GENRE_TEMPLATES, get_genre_template
+from music_brain.groove.templates import (
+    GENRE_TEMPLATES,
+    get_genre_template,
+    list_genre_templates,
+)
 
 __all__ = [
     # Extraction
@@ -42,6 +46,7 @@ __all__ = [
     "humanize",
     # Genre templates
     "get_genre_template",
+    "list_genre_templates",
     "GENRE_TEMPLATES",
     # Drunken Drummer humanization
     "humanize_drums",

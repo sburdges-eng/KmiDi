@@ -92,6 +92,25 @@ GENRE_TEMPLATES = {
             55, 32, 42, 38,
         ],
     },
+    # Boom-bap aliases map to hiphop characteristics
+    "boom_bap": {
+        "name": "Boom-Bap Pocket",
+        "description": "Classic boom-bap feel (maps to hip-hop groove)",
+        "swing_factor": 0.25,
+        "tempo_range": (85, 100),
+        "timing_deviations": [
+            0, 15, 8, 18,
+            20, 12, 15, 20,
+            5, 18, 10, 22,
+            25, 15, 18, 25,
+        ],
+        "velocity_curve": [
+            120, 35, 45, 30,
+            60, 30, 40, 35,
+            100, 38, 48, 32,
+            55, 32, 42, 38,
+        ],
+    },
     
     "edm": {
         "name": "EDM Quantized",
@@ -171,6 +190,24 @@ GENRE_TEMPLATES = {
 }
 
 
+GENRE_ALIASES = {
+    "boom-bap": "boom_bap",
+    "boom bap": "boom_bap",
+}
+
+
+def list_genre_templates(include_aliases: bool = True):
+    """
+    List available genre templates.
+    Args:
+        include_aliases: include known alias keys (e.g., boom-bap)
+    """
+    genres = set(GENRE_TEMPLATES.keys())
+    if include_aliases:
+        genres.update(GENRE_ALIASES.keys())
+    return sorted(genres)
+
+
 def get_genre_template(genre: str) -> GrooveTemplate:
     """
     Get a pre-defined groove template for a genre.
@@ -182,9 +219,13 @@ def get_genre_template(genre: str) -> GrooveTemplate:
         GrooveTemplate with genre characteristics
     """
     genre_lower = genre.lower().replace("-", "_").replace(" ", "_")
+    # Resolve aliases (keep boom-bap hyphen style)
+    raw_key = genre.lower()
+    if raw_key in GENRE_ALIASES:
+        genre_lower = GENRE_ALIASES[raw_key]
     
     if genre_lower not in GENRE_TEMPLATES:
-        available = ", ".join(GENRE_TEMPLATES.keys())
+        available = ", ".join(sorted(list_genre_templates()))
         raise ValueError(f"Unknown genre: {genre}. Available: {available}")
     
     data = GENRE_TEMPLATES[genre_lower]
@@ -220,3 +261,13 @@ def get_genre_info(genre: str) -> dict:
     if genre_lower not in GENRE_TEMPLATES:
         return None
     return GENRE_TEMPLATES[genre_lower]
+
+
+__all__ = [
+    "GENRE_TEMPLATES",
+    "GENRE_ALIASES",
+    "list_genre_templates",
+    "get_genre_template",
+    "list_genres",
+    "get_genre_info",
+]
