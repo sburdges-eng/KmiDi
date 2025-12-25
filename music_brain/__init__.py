@@ -18,7 +18,12 @@ __version__ = "1.0.0"
 __author__ = "Sean Burdges"
 
 # Groove
-from music_brain.groove import apply_groove, extract_groove, GrooveTemplate
+from music_brain.groove import (
+    apply_groove,
+    extract_groove,
+    GrooveTemplate,
+    list_genre_templates,
+)
 from music_brain.groove.drum_analysis import (
     DrumAnalyzer,
     DrumTechniqueProfile,
@@ -106,6 +111,7 @@ __all__ = [
     "extract_groove",
     "apply_groove",
     "GrooveTemplate",
+    "list_genre_templates",
     # Groove (event-based)
     "apply_groove_events",
     # Groove (analysis/humanization)

@@ -6,6 +6,33 @@ Tests harmony generation, progression analysis, intent processing, and module in
 import pytest
 from pathlib import Path
 import json
+import sys
+import importlib
+import importlib.util
+
+# Prefer this repository's code over any globally-installed copy
+REPO_ROOT = Path(__file__).resolve().parents[2]
+root_str = str(REPO_ROOT)
+if root_str not in sys.path:
+    sys.path.insert(0, root_str)
+sys.path = [p for p in sys.path if "miDiKompanion" not in p]
+# Purge any preloaded music_brain modules from other locations
+for name in list(sys.modules.keys()):
+    if name.startswith("music_brain"):
+        mod_file = getattr(sys.modules[name], "__file__", "") or ""
+        if "kelly-clean" not in mod_file:
+            sys.modules.pop(name, None)
+importlib.invalidate_caches()
+
+# Force-load local music_brain.groove.templates before tests import it
+templates_path = REPO_ROOT / "music_brain" / "groove" / "templates.py"
+spec = importlib.util.spec_from_file_location(
+    "music_brain.groove.templates", templates_path
+)
+templates = importlib.util.module_from_spec(spec)
+assert spec and spec.loader
+spec.loader.exec_module(templates)
+sys.modules["music_brain.groove.templates"] = templates
 
 # Test imports
 from music_brain.session.intent_schema import (

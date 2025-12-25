@@ -69,6 +69,11 @@ class GrooveTemplate:
     
     # Note events (optional, for detailed analysis)
     events: List[NoteEvent] = field(default_factory=list)
+
+    @property
+    def swing(self) -> float:
+        """Alias for swing_factor for convenient access in tests."""
+        return self.swing_factor
     
     def to_dict(self) -> Dict:
         """Serialize to dictionary for JSON export."""

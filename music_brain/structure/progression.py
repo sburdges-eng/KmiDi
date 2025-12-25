@@ -139,10 +139,17 @@ def parse_chord(chord_str: str) -> Optional[ParsedChord]:
     
     # Parse quality and extensions
     quality = 'maj'  # Default
-    extensions = []
+    extensions: List[str] = []
     
-    # Check for minor variations
-    if remainder.startswith(('m', 'min', '-')):
+    # Major variants (handle maj7 before the generic "m" prefix)
+    if remainder.startswith(('maj7', 'M7')):
+        quality = 'maj7'
+        remainder = remainder[4:] if remainder.startswith('maj7') else remainder[2:]
+    elif remainder.startswith('maj'):
+        quality = 'maj'
+        remainder = remainder[3:]
+    # Check for minor variations (after maj to avoid misclassifying maj7)
+    elif remainder.startswith(('m', 'min', '-')):
         quality = 'min'
         remainder = re.sub(r'^(min|m|-)', '', remainder)
     elif remainder.startswith(('dim', '°', 'o')):
@@ -156,10 +163,6 @@ def parse_chord(chord_str: str) -> Optional[ParsedChord]:
         if sus_match:
             quality = f"sus{sus_match.group(1) or '4'}"
             remainder = remainder[len(sus_match.group(0)):]
-    elif remainder.startswith('maj'):
-        quality = 'maj'
-        remainder = remainder[3:]
-    
     # Parse extensions (7, 9, 11, 13, add, etc.)
     ext_match = re.findall(r'(maj7|M7|7|9|11|13|add\d+|b\d+|#\d+)', remainder)
     if ext_match:
@@ -240,30 +243,36 @@ def detect_key_from_progression(chords: List[ParsedChord]) -> Tuple[str, str]:
     return (NOTE_NAMES[likely_root], mode)
 
 
-def diagnose_progression(progression: str) -> Dict:
+def diagnose_progression(progression: str, key: Optional[str] = None) -> Dict:
     """
     Diagnose potential issues in a chord progression.
     
     Args:
         progression: Chord progression string (e.g., "F-C-Am-Dm")
+        key: Optional key hint (e.g., "C major")
     
     Returns:
         Dict with key, mode, issues, suggestions
     """
+    if not progression or not progression.strip():
+        raise ValueError("Chord progression is empty.")
+
     chords = parse_progression_string(progression)
     
     if not chords:
-        return {
-            'key': 'unknown',
-            'mode': 'unknown',
-            'issues': ['Could not parse chord progression'],
-            'suggestions': ['Check chord spelling'],
-            'chords': [],
-        }
+        raise ValueError("Could not parse chord progression")
     
     # Detect key
-    key, mode = detect_key_from_progression(chords)
-    key_num = NOTE_NAMES.index(key)
+    if key:
+        key_parts = key.replace("_", " ").split()
+        key_name = key_parts[0].capitalize()
+        mode = key_parts[1].lower() if len(key_parts) > 1 else "major"
+    else:
+        key_name, mode = detect_key_from_progression(chords)
+    try:
+        key_num = NOTE_NAMES.index(key_name)
+    except ValueError:
+        key_num = NOTE_NAMES.index("C")
     
     issues = []
     suggestions = []
@@ -283,7 +292,7 @@ def diagnose_progression(progression: str) -> Dict:
             elif interval == 10 and mode == 'major':
                 issues.append(f"{chord.original}: bVII (borrowed/mixolydian)")
             else:
-                issues.append(f"{chord.original}: non-diatonic root ({NOTE_NAMES[interval]} in {key} {mode})")
+                issues.append(f"{chord.original}: non-diatonic root ({NOTE_NAMES[interval]} in {key_name} {mode})")
         
         # Check for awkward voice leading (parallel root motion)
         if i > 0:
@@ -296,7 +305,7 @@ def diagnose_progression(progression: str) -> Dict:
     last_chord = chords[-1]
     last_interval = (last_chord.root_num - key_num) % 12
     if last_interval not in [0, 7]:  # Not tonic or dominant
-        suggestions.append(f"Progression ends on {last_chord.original} - consider resolving to {key}")
+        suggestions.append(f"Progression ends on {last_chord.original} - consider resolving to {key_name}")
     
     # Check for missing V-I
     has_dominant = any((c.root_num - key_num) % 12 == 7 for c in chords)
@@ -305,7 +314,7 @@ def diagnose_progression(progression: str) -> Dict:
         suggestions.append("No dominant (V) chord - consider adding for stronger resolution")
     
     return {
-        'key': key,
+        'key': key_name,
         'mode': mode,
         'issues': issues if issues else [],
         'suggestions': suggestions,
