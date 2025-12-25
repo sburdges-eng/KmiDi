@@ -255,12 +255,24 @@ def diagnose_progression(progression: str, key: Optional[str] = None) -> Dict:
         Dict with key, mode, issues, suggestions
     """
     if not progression or not progression.strip():
-        raise ValueError("Chord progression is empty.")
+        return {
+            "key": "unknown",
+            "mode": "unknown",
+            "issues": ["Empty progression"],
+            "suggestions": ["Provide at least one chord"],
+            "chords": [],
+        }
 
     chords = parse_progression_string(progression)
     
     if not chords:
-        raise ValueError("Could not parse chord progression")
+        return {
+            "key": "unknown",
+            "mode": "unknown",
+            "issues": ["Could not parse chord progression"],
+            "suggestions": ["Check chord spelling"],
+            "chords": [],
+        }
     
     # Detect key
     if key:
@@ -293,6 +305,10 @@ def diagnose_progression(progression: str, key: Optional[str] = None) -> Dict:
                 issues.append(f"{chord.original}: bVII (borrowed/mixolydian)")
             else:
                 issues.append(f"{chord.original}: non-diatonic root ({NOTE_NAMES[interval]} in {key_name} {mode})")
+        else:
+            # Handle borrowed qualities (e.g., iv in a major key)
+            if mode == 'major' and interval == 5 and chord.quality.startswith('min'):
+                issues.append(f"{chord.original}: iv (borrowed from parallel minor)")
         
         # Check for awkward voice leading (parallel root motion)
         if i > 0:

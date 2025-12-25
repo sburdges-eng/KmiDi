@@ -14,6 +14,11 @@ from music_brain.groove.extractor import GrooveTemplate
 # Swing: 0.0=straight, 0.5=moderate swing, 0.67=triplet swing
 # Timing deviations: positive=late (laid back), negative=early (pushed)
 
+GENRE_ALIASES = {
+    "boom-bap": "boom_bap",
+    "boom bap": "boom_bap",
+}
+
 GENRE_TEMPLATES = {
     "funk": {
         "name": "Funk Pocket",
@@ -244,12 +249,6 @@ def get_genre_info(genre: str) -> dict:
     if genre_lower not in GENRE_TEMPLATES:
         return None
     return GENRE_TEMPLATES[genre_lower]
-
-
-GENRE_ALIASES = {
-    "boom-bap": "boom_bap",
-    "boom bap": "boom_bap",
-}
 
 
 def list_genre_templates(include_aliases: bool = True):

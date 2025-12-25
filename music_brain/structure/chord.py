@@ -110,7 +110,8 @@ class Chord:
                 self.root_num = 0
         else:
             self.root_num = int(self.root) % 12 if self.root is not None else 0
-            self.root = NOTE_NAMES[self.root_num]
+        # Normalize root representation to note name for consistency in tests
+        self.root = NOTE_NAMES[self.root_num]
     
     @property
     def name(self) -> str:
@@ -139,11 +140,61 @@ class Chord:
         
         chord_name = f"{root_name}{quality_str}{ext_str}"
         
-        if self.bass is not None and self.bass != self.root:
-            bass_name = NOTE_NAMES[self.bass % 12]
-            chord_name += f"/{bass_name}"
+        if self.bass is not None:
+            bass_pc = int(self.bass) % 12
+            if bass_pc != self.root_num:
+                bass_name = NOTE_NAMES[bass_pc]
+                chord_name += f"/{bass_name}"
         
         return chord_name
+    
+    def get_voicing(self, octave: int = 4, voicing_type: str = "close") -> List[int]:
+        """
+        Build a simple chord voicing as MIDI note numbers.
+        
+        Keeps logic lightweight for tests/benchmarks rather than full arranging.
+        """
+        root_pc = self.root_num % 12 if self.root_num is not None else 0
+        base_midi = 12 * (octave + 1) + root_pc  # C4 == 60 when octave=4
+        
+        quality = (self.quality or "").lower()
+        intervals = [0, 4, 7]  # default major triad
+        if 'dim' in quality:
+            intervals = [0, 3, 6]
+        elif 'aug' in quality or quality == '+':
+            intervals = [0, 4, 8]
+        elif quality.startswith('min'):
+            intervals = [0, 3, 7]
+        elif quality.startswith('sus2'):
+            intervals = [0, 2, 7]
+        elif quality.startswith('sus4') or quality.startswith('sus'):
+            intervals = [0, 5, 7]
+        
+        # Seventh quality
+        if 'maj7' in quality:
+            intervals.append(11)
+        elif 'min7' in quality or quality.endswith('m7'):
+            intervals.append(10)
+        elif quality == '7':
+            intervals.append(10)
+        
+        # Basic handling for common extensions
+        for ext in self.extensions:
+            if ext in ('9', 'add9'):
+                intervals.append(14)
+            elif ext == '11':
+                intervals.append(17)
+            elif ext == '13':
+                intervals.append(21)
+        
+        notes = sorted(base_midi + i for i in intervals)
+        
+        if voicing_type == "open" and len(notes) >= 3:
+            # Spread the middle voice up an octave for a simple open voicing
+            notes[1] += 12
+            notes = sorted(notes)
+        
+        return notes
     
     def __str__(self) -> str:
         return self.name
@@ -168,8 +219,15 @@ class Chord:
             except ValueError:
                 bass = None
 
+        root_value = parsed.root
+        if not isinstance(root_value, str):
+            try:
+                root_value = NOTE_NAMES[int(root_value) % 12]
+            except Exception:
+                root_value = str(root_value)
+
         return cls(
-            root=parsed.root,
+            root=root_value,
             quality=parsed.quality,
             bass=bass,
             extensions=parsed.extensions,
@@ -296,16 +354,20 @@ def detect_key(chords: List[Chord]) -> Tuple[str, str]:
     if not chords:
         return ("C", "major")
     
-    # Count chord roots weighted by position
-    root_counts = {}
-    for i, chord in enumerate(chords):
-        weight = 1.5 if i in [0, len(chords) - 1] else 1.0  # First/last chords weighted more
+    def _root_value(chord: Chord) -> int:
         root_val = getattr(chord, "root_num", chord.root)
         if isinstance(root_val, str):
             try:
                 root_val = NOTE_NAMES.index(root_val)
             except ValueError:
                 root_val = 0
+        return int(root_val) % 12
+    
+    # Count chord roots weighted by position
+    root_counts = {}
+    for i, chord in enumerate(chords):
+        weight = 1.5 if i in [0, len(chords) - 1] else 1.0  # First/last chords weighted more
+        root_val = _root_value(chord)
         root_counts[root_val] = root_counts.get(root_val, 0) + weight
     
     # Try each potential key
@@ -317,12 +379,7 @@ def detect_key(chords: List[Chord]) -> Tuple[str, str]:
         # Test major
         major_score = 0
         for chord in chords:
-            root_val = getattr(chord, "root_num", chord.root)
-            if isinstance(root_val, str):
-                try:
-                    root_val = NOTE_NAMES.index(root_val)
-                except ValueError:
-                    root_val = 0
+            root_val = _root_value(chord)
             interval = (root_val - key) % 12
             if interval in MAJOR_SCALE:
                 major_score += 1
@@ -340,7 +397,8 @@ def detect_key(chords: List[Chord]) -> Tuple[str, str]:
         # Test minor
         minor_score = 0
         for chord in chords:
-            interval = (chord.root - key) % 12
+            root_val = _root_value(chord)
+            interval = (root_val - key) % 12
             if interval in MINOR_SCALE:
                 minor_score += 1
                 if interval == 0:

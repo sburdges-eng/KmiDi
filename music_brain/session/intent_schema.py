@@ -447,61 +447,44 @@ def get_rule_breaking_info(rule_key: str) -> Optional[Dict]:
     return RULE_BREAKING_EFFECTS.get(rule_key)
 
 
-def validate_intent(intent: CompleteSongIntent) -> Dict[str, object]:
+def validate_intent(intent: CompleteSongIntent) -> List[str]:
     """
     Validate a song intent for completeness and consistency.
     
-    Returns a structured dict with `valid`, `warnings`, and `errors`.
+    Returns list of issues found (empty = valid).
     """
-    warnings: List[str] = []
-    errors: List[str] = []
+    issues: List[str] = []
     
     # Phase 0 checks
     if not intent.song_root.core_event:
-        errors.append("Phase 0: Missing core_event - what happened?")
+        issues.append("Phase 0: Missing core_event - what happened?")
     if not intent.song_root.core_longing:
-        errors.append("Phase 0: Missing core_longing - what do you want to feel?")
+        issues.append("Phase 0: Missing core_longing - what do you want to feel?")
     
     # Phase 1 checks
     if not intent.song_intent.mood_primary:
-        errors.append("Phase 1: Missing mood_primary - what's the main emotion?")
+        issues.append("Phase 1: Missing mood_primary - what's the main emotion?")
     if intent.song_intent.mood_secondary_tension < 0 or intent.song_intent.mood_secondary_tension > 1:
-        errors.append("Phase 1: mood_secondary_tension should be 0.0-1.0")
+        issues.append("Phase 1: mood_secondary_tension should be 0.0-1.0")
     
     # Phase 2 checks
     if intent.technical_constraints.technical_rule_to_break:
         if not intent.technical_constraints.rule_breaking_justification:
-            warnings.append("Phase 2: Rule to break specified without justification - WHY break this rule?")
+            issues.append("Phase 2: Rule to break specified without justification - WHY break this rule?")
     
     # Consistency checks
     if intent.song_intent.vulnerability_scale == "High":
         if intent.song_intent.mood_secondary_tension < 0.3:
-            warnings.append("Consistency: High vulnerability usually implies some tension (tension is very low)")
+            issues.append("Consistency: High vulnerability usually implies some tension (tension is very low)")
     
+    return issues
+
+
+def list_all_rules() -> Dict[str, List[str]]:
+    """Get all available rule-breaking options by category."""
     return {
-        "valid": len(errors) == 0,
-        "warnings": warnings,
-        "errors": errors,
-        "issues": errors + warnings,
+        "Harmony": [e.value for e in HarmonyRuleBreak],
+        "Rhythm": [e.value for e in RhythmRuleBreak],
+        "Arrangement": [e.value for e in ArrangementRuleBreak],
+        "Production": [e.value for e in ProductionRuleBreak],
     }
-
-
-def list_all_rules() -> List[Dict[str, str]]:
-    """Get all available rule-breaking options as a flat list of dicts."""
-    rules: List[Dict[str, str]] = []
-    categories = [
-        ("Harmony", HarmonyRuleBreak),
-        ("Rhythm", RhythmRuleBreak),
-        ("Arrangement", ArrangementRuleBreak),
-        ("Production", ProductionRuleBreak),
-    ]
-    for category, enum_cls in categories:
-        for rule in enum_cls:
-            rules.append(
-                {
-                    "id": rule.value,
-                    "name": rule.name,
-                    "category": category,
-                }
-            )
-    return rules
