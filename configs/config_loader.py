@@ -47,10 +47,12 @@ def expand_env_vars(value: str) -> str:
     Raises:
         ValueError: If a required variable is not set
     """
-    def replace_match(match: re.Match) -> str:
-        var_name = match.group("name")
-        operator = match.group("op")
-        default = match.group("default")
+    def replace_match(match: re.Match[str]) -> str:
+        from typing import Optional, cast
+
+        var_name = cast(str, match.group("name"))
+        operator = cast(Optional[str], match.group("op"))
+        default = cast(Optional[str], match.group("default"))
 
         env_value = os.environ.get(var_name)
 

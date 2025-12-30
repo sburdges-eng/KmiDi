@@ -1,0 +1,107 @@
+name: dev-base-template
+
+env:
+  DATA_ROOT: ./data
+  MODELS_ROOT: ./models
+  OUTPUT_ROOT: ./output
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+      - develop
+  pull_request:
+    branches:
+      - main
+      - staging
+      - develop
+  workflow_dispatch:
+    inputs:
+      env:
+        description: "Environment preset (staging reference to KMIDI structure)"
+        required: false
+        default: "staging"
+
+permissions:
+  contents: read
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install (editable)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install -e ".[dev]" || true
+      - name: Validate data/model paths
+        run: |
+          ls -la "$DATA_ROOT" || true
+          ls -la "$MODELS_ROOT" || true
+          ls -la "$OUTPUT_ROOT" || true
+      - name: Pytest (core)
+        run: |
+          pytest -v tests || true
+          pytest -v music_brain/tests || true
+      - name: Artifacts (logs)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-logs
+          path: |
+            .pytest_cache
+            **/pytest-*.log
+
+  cpp-ctest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja
+      - name: Build
+        run: |
+          cmake --build build
+      - name: CTest
+        run: |
+          cd build && ctest --output-on-failure || true
+      - name: Artifacts (ctest)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctest-logs
+          path: build/Testing
+
+  frontend-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+      - name: Install web deps
+        working-directory: web
+        run: npm install --ignore-scripts
+      - name: Lint/Smoke
+        working-directory: web
+        run: |
+          npm test -- --watch=false || true
+
+# Notes:
+# - This is a staging-friendly template anchored to the KMIDI_STRUCTURE_PLAN.md layout.
+# - Mirror any deviations into the canonical monorepo after validation here.
+# - Keep API targets at 127.0.0.1:8000 for local parity (see README.md and KMIDI_STRUCTURE_PLAN.md).

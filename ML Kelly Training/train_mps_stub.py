@@ -5,18 +5,31 @@ Reads a YAML config (e.g., configs/laptop_m4_small.yaml), loads a manifest
 of audio + labels, builds a tiny mel classifier, and trains with mixed
 precision + gradient accumulation. Swap the dataset/model with your real
 pipeline as needed.
+
+Usage:
+    export KELLY_AUDIO_DATA_ROOT=/path/to/audio-data    # or pass --data-root
+    # Place train/val manifests in $KELLY_AUDIO_DATA_ROOT/manifests
+    python 'ML Kelly Training/train_mps_stub.py' --config configs/laptop_m4_small.yaml
 """
 
 import argparse
 import json
 import logging
 import os
+import sys
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import torch
-import yaml
+
+# Make project modules importable (configs.storage, configs.config_loader)
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from configs.config_loader import expand_env_vars, load_yaml_with_expansion
+from configs.storage import get_storage_config
 
 # Experiment Logging Setup
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -58,8 +71,48 @@ except Exception:  # pragma: no cover - optional dependency
 
 
 def load_config(path: str) -> Dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+    return load_yaml_with_expansion(path)
+
+
+def resolve_data_root(override: Optional[str] = None) -> Path:
+    """
+    Resolve the audio data root using configs.storage with optional override.
+    """
+    if override:
+        root = Path(expand_env_vars(override)).expanduser()
+        root.mkdir(parents=True, exist_ok=True)
+        return root
+
+    storage_cfg = get_storage_config()
+    # Ensure expected subdirs exist (manifests, processed, etc.)
+    for sub in storage_cfg.subdirs:
+        (storage_cfg.audio_data_root / sub).mkdir(parents=True, exist_ok=True)
+    return storage_cfg.audio_data_root
+
+
+def resolve_manifest(path_str: str, data_root: Path, name: str) -> Path:
+    """
+    Resolve a manifest path with sensible fallbacks and clear errors.
+    """
+    expanded = expand_env_vars(path_str)
+    candidate = Path(expanded)
+
+    search_paths = []
+    if candidate.is_absolute():
+        search_paths.append(candidate)
+    else:
+        search_paths.append(ROOT / candidate)
+        search_paths.append(data_root / "manifests" / candidate.name)
+
+    for p in search_paths:
+        if p.exists():
+            return p
+
+    pretty_paths = "\n  ".join(str(p) for p in search_paths)
+    raise FileNotFoundError(
+        f"Missing {name} manifest. Checked:\n  {pretty_paths}\n"
+        f"Set KELLY_AUDIO_DATA_ROOT or pass --data-root, then place {candidate.name} in the manifests folder."
+    )
 
 
 def get_device(cfg: Dict[str, Any]) -> torch.device:
@@ -176,9 +229,10 @@ def build_model(n_mels: int, num_classes: int, cfg: Dict[str, Any]) -> torch.nn.
     )
 
 
-def train(cfg_path: str = "configs/laptop_m4_small.yaml") -> None:
+def train(cfg_path: str = "configs/laptop_m4_small.yaml", data_root: Optional[str] = None) -> None:
     cfg = load_config(cfg_path)
     device = get_device(cfg)
+    data_root_path = resolve_data_root(data_root)
 
     torch.manual_seed(cfg.get("seed", 42))
     torch.set_float32_matmul_precision("high")
@@ -186,27 +240,32 @@ def train(cfg_path: str = "configs/laptop_m4_small.yaml") -> None:
         torch.backends.mps.allow_tf32 = True
 
     dcfg = cfg["data"]
+    logger.info(f"Data root: {data_root_path}")
     
     # Use StreamingAudioDataset if configured or for very large datasets
     if cfg.get("use_streaming", False):
         from python.penta_core.ml.datasets.streaming import StreamingAudioDataset
+        train_manifest = resolve_manifest(dcfg["train_manifest"], data_root_path, "train")
+        val_manifest = resolve_manifest(dcfg["val_manifest"], data_root_path, "val")
         train_ds = StreamingAudioDataset(
-            dcfg["train_manifest"],
+            str(train_manifest),
             sample_rate=dcfg["sample_rate"],
             segment_seconds=dcfg["segment_seconds"],
             audio_key=dcfg.get("manifest_audio_key", "audio"),
             label_key=dcfg.get("manifest_label_key", "label"),
         )
         val_ds = StreamingAudioDataset(
-            dcfg["val_manifest"],
+            str(val_manifest),
             sample_rate=dcfg["sample_rate"],
             segment_seconds=dcfg["segment_seconds"],
             audio_key=dcfg.get("manifest_audio_key", "audio"),
             label_key=dcfg.get("manifest_label_key", "label"),
         )
     else:
+        train_manifest = resolve_manifest(dcfg["train_manifest"], data_root_path, "train")
+        val_manifest = resolve_manifest(dcfg["val_manifest"], data_root_path, "val")
         train_ds = ManifestAudioDataset(
-            dcfg["train_manifest"],
+            str(train_manifest),
             sample_rate=dcfg["sample_rate"],
             segment_seconds=dcfg["segment_seconds"],
             target_lufs=dcfg["target_lufs"],
@@ -216,7 +275,7 @@ def train(cfg_path: str = "configs/laptop_m4_small.yaml") -> None:
             hop_length=dcfg.get("hop_length", 512),
         )
         val_ds = ManifestAudioDataset(
-            dcfg["val_manifest"],
+            str(val_manifest),
             sample_rate=dcfg["sample_rate"],
             segment_seconds=dcfg["segment_seconds"],
             target_lufs=dcfg["target_lufs"],
@@ -257,7 +316,8 @@ def train(cfg_path: str = "configs/laptop_m4_small.yaml") -> None:
     )
 
     # RESUME LOGIC
-    ckpt_dir = Path("checkpoints") / cfg.get("model_id", "default")
+    ckpt_dir = ROOT / "checkpoints" / cfg.get("model_id", "default")
+    ckpt_dir.mkdir(parents=True, exist_ok=True)
     latest_ckpt = ckpt_dir / "latest.pt"
     start_epoch, total_steps, best_loss = load_checkpoint(model, opt, latest_ckpt)
 
@@ -348,10 +408,15 @@ def parse_args() -> argparse.Namespace:
         default="configs/laptop_m4_small.yaml",
         help="Path to YAML config.",
     )
+    parser.add_argument(
+        "--data-root",
+        type=str,
+        default=None,
+        help="Override data root (defaults to configs.storage resolution).",
+    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
-    train(args.config)
-
+    train(args.config, args.data_root)
