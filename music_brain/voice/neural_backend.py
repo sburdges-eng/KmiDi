@@ -321,16 +321,17 @@ class NeuralBackend:
     ) -> np.ndarray:
         """Simple Griffin-Lim vocoder fallback."""
         # Very basic implementation for fallback
-        # Real implementation would use librosa.griffinlim
         try:
             import librosa
-            return librosa.feature.inverse.mel_to_audio(
+            # Use correct librosa function for mel to audio conversion
+            audio = librosa.feature.inverse.mel_to_stft(
                 mel.squeeze(),
                 sr=self.config.sample_rate,
-                hop_length=self.config.hop_length,
+                n_fft=self.config.win_length,
             )
-        except ImportError:
-            # Return silence if librosa not available
+            return librosa.griffinlim(audio, hop_length=self.config.hop_length, n_iter=n_iter)
+        except (ImportError, AttributeError):
+            # Return silence if librosa not available or function missing
             duration_samples = mel.shape[-1] * self.config.hop_length
             return np.zeros(duration_samples, dtype=np.float32)
 
