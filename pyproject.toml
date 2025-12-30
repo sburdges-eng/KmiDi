@@ -7,7 +7,7 @@ name = "kmidi"
 version = "1.0.0"
 description = "KmiDi: Unified Music Intelligence & Audio Workstation"
 readme = "KMIDI_README.md"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "Kelly Project Team"},
 ]
@@ -40,8 +40,9 @@ all = [
     "kmidi[dev,audio,docs]",
 ]
 
-[tool.setuptools]
-packages = ["music_brain", "penta_core", "mcp_workstation", "mcp_todo"]
+[tool.setuptools.packages.find]
+where = [".", "python"]
+include = ["music_brain*", "mcp_workstation*", "mcp_todo*", "penta_core*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
