@@ -208,6 +208,40 @@ def get_device() -> "torch.device":
     return torch.device("cpu")
 
 
+def enforce_device_constraints(config: TrainConfig, device) -> None:
+    """Clamp config for resource-limited devices (e.g., MPS/CPU smoke)."""
+
+    if device.type in {"mps", "cpu"}:
+        max_epochs = 5 if device.type == "mps" else min(config.epochs, 10)
+        max_batch = 8 if device.type == "mps" else 16
+
+        if config.epochs > max_epochs:
+            logger.info(
+                "Device %s detected; reducing epochs from %d to %d for smoke runs",
+                device.type,
+                config.epochs,
+                max_epochs,
+            )
+            config.epochs = max_epochs
+
+        if config.batch_size > max_batch:
+            logger.info(
+                "Device %s detected; reducing batch_size from %d to %d",
+                device.type,
+                config.batch_size,
+                max_batch,
+            )
+            config.batch_size = max_batch
+
+        # Keep worker settings conservative on constrained devices
+        if config.num_workers != 0:
+            logger.info("Forcing num_workers=0 on %s", device.type)
+            config.num_workers = 0
+        if config.pin_memory:
+            logger.info("Disabling pin_memory on %s", device.type)
+            config.pin_memory = False
+
+
 def get_hardware_info() -> str:
     """Get hardware description."""
     info = platform.processor() or platform.machine()
@@ -555,6 +589,7 @@ def train_model(config: TrainConfig, run: TrainRun) -> Tuple[Any, Dict]:
     import torch
 
     device = get_device()
+    enforce_device_constraints(config, device)
     logger.info(f"Using device: {device}")
 
     # Build model
