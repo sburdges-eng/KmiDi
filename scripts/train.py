@@ -39,9 +39,12 @@ import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    import torch
 
 # Configure logging
 logging.basicConfig(
@@ -58,6 +61,12 @@ DATA_DIR = ROOT / "data"
 CONFIGS_DIR = ROOT / "configs"
 LOGS_DIR = ROOT / "logs" / "training"
 CHECKPOINTS_DIR = ROOT / "checkpoints"
+
+# Device constraint limits for smoke testing on resource-limited devices
+MAX_EPOCHS_MPS_SMOKE = 5      # Maximum epochs for Apple Silicon MPS
+MAX_EPOCHS_CPU_SMOKE = 10     # Maximum epochs for CPU-only training
+MAX_BATCH_MPS = 8             # Maximum batch size for MPS device
+MAX_BATCH_CPU = 16            # Maximum batch size for CPU device
 
 
 # =============================================================================
@@ -208,12 +217,20 @@ def get_device() -> "torch.device":
     return torch.device("cpu")
 
 
-def enforce_device_constraints(config: TrainConfig, device) -> None:
-    """Clamp config for resource-limited devices (e.g., MPS/CPU smoke)."""
+def enforce_device_constraints(config: TrainConfig, device: "torch.device") -> None:
+    """Clamp config for resource-limited devices (e.g., MPS/CPU smoke).
 
+    Args:
+        config: Training configuration to modify in-place
+        device: PyTorch device (mps, cpu, or cuda)
+
+    Note:
+        This function modifies the config object in-place to prevent OOM errors
+        on resource-constrained devices like Apple Silicon MPS or CPU-only systems.
+    """
     if device.type in {"mps", "cpu"}:
-        max_epochs = 5 if device.type == "mps" else min(config.epochs, 10)
-        max_batch = 8 if device.type == "mps" else 16
+        max_epochs = MAX_EPOCHS_MPS_SMOKE if device.type == "mps" else min(config.epochs, MAX_EPOCHS_CPU_SMOKE)
+        max_batch = MAX_BATCH_MPS if device.type == "mps" else MAX_BATCH_CPU
 
         if config.epochs > max_epochs:
             logger.info(

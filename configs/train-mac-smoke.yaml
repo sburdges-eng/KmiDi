@@ -18,4 +18,6 @@ warmup_epochs: 1
 export_onnx: false
 export_coreml: false
 device: mps
+num_workers: 0       # Required for Mac compatibility (no multiprocessing)
+pin_memory: false    # Not beneficial on MPS device
 notes: "Smoke test on M-series; clamps further if device guard triggers"
