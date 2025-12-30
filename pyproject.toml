@@ -41,7 +41,7 @@ all = [
 ]
 
 [tool.setuptools.packages.find]
-where = [".", "python"]
+where = ["."]
 include = ["music_brain*", "mcp_workstation*", "mcp_todo*", "penta_core*"]
 
 [tool.pytest.ini_options]

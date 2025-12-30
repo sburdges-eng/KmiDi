@@ -290,8 +290,8 @@ install(DIRECTORY models/
 )
 
 # Install Python ML module (optional)
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/python/penta_core)
-    install(DIRECTORY python/penta_core
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/penta_core)
+    install(DIRECTORY penta_core
         DESTINATION share/kelly/python
         FILES_MATCHING PATTERN "*.py"
     )
