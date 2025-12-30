@@ -434,7 +434,7 @@ class EmotionConditionedGenerator(GenerativeModel):
         # Generate melody
         try:
             from music_brain.session.ml_melody_generator import MLMelodyGenerator
-            melody_gen = MLMelodyGenerator()
+            melody_gen = MLMelodyGenerator(device=self.config.get_device())
             melody = melody_gen.generate(
                 emotion=params.get("emotion", "peace"),
                 key=key,
@@ -456,13 +456,8 @@ class EmotionConditionedGenerator(GenerativeModel):
         """Generate simple melody as fallback."""
         from .music_utils import note_to_midi, get_scale_notes, is_minor_key, find_note_in_scale
         
-        # Get root note and scale (handle keys like "Dbm", "F#m")
-        if not key:
-            root_char = "C"
-        elif len(key) > 1 and key[1] in "b#":
-            root_char = key[:2]
-        else:
-            root_char = key[0]
+        # Get root note and scale
+        root_char = key[0] if key else "C"
         root = note_to_midi(root_char, octave=4)
         scale_type = "minor" if is_minor_key(key) else "major"
         notes = get_scale_notes(root_char, scale_type, octave=4, num_octaves=1)
