@@ -1,0 +1,20 @@
+name: Copilot-Claude Sync Status
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  sync-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Sync Script
+        run: |
+          chmod +x scripts/copilot-claude-sync.sh
+          ./scripts/copilot-claude-sync.sh
