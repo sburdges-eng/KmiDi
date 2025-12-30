@@ -102,3 +102,29 @@ npm run tauri dev
   - Use stratified subsets for smoke (e.g., 1–5% of data) and stream from HDD/NAS for full runs.
   - Compress cold checkpoints (xz) and move to archival storage; keep live models under `MODELS_ROOT` only as needed.
   - Prefer `train-mac-smoke` config for MPS, reserve large runs for CUDA hosts.
+
+## 12) Data prep checklist (run on SSD paths)
+- Ensure SSD is mounted (e.g., `/Volumes/Extreme SSD`) and env set:
+  - `export DATA_ROOT="/Volumes/Extreme SSD/data"`
+  - `export MODELS_ROOT="/Volumes/Extreme SSD/models"`
+  - `export OUTPUT_ROOT="/Volumes/Extreme SSD/output"`
+- Quick presence check (replace dataset names as needed):
+  ```bash
+  python - <<'PY'
+  from pathlib import Path
+  root = Path("${DATA_ROOT}")
+  required = ["lakh", "maestro", "nsynth"]
+  for name in required:
+      p = root / name
+      print(f"{name}: {'OK' if p.exists() else 'MISSING'}")
+  PY
+  ```
+- Optional validator (if available): `python -m scripts.validate_datasets --root "$DATA_ROOT"`
+- Keep stubs: do not delete existing stub JSONs; write new exports alongside and update registry with run-tagged outputs.
+
+## 13) Git in this env
+- Git commands are allowed here. Typical flow:
+  - `git status`
+  - `git add <files>`
+  - `git commit -m "docs: add SSD data prep and mac smoke guard"`
+  - `git push origin <branch>`
