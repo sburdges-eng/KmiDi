@@ -4,6 +4,7 @@ Session - Song generation, teaching modules, and interactive tools.
 Interactive teaching for music theory and production concepts.
 Interrogation-first songwriting assistance.
 Intent-based generation with rule-breaking support.
+ML-based melody generation with emotion-aware patterns.
 """
 
 from music_brain.session.teaching import RuleBreakingTeacher
@@ -27,6 +28,13 @@ from music_brain.session.intent_schema import (
     validate_intent,
     list_all_rules,
     RULE_BREAKING_EFFECTS,
+)
+from music_brain.session.ml_melody_generator import (
+    MLMelodyGenerator,
+    MelodyConfig,
+    GeneratedMelody,
+    create_melody_generator,
+    generate_melody,
 )
 
 __all__ = [
@@ -55,4 +63,10 @@ __all__ = [
     "validate_intent",
     "list_all_rules",
     "RULE_BREAKING_EFFECTS",
+    # Melody Generation
+    "MLMelodyGenerator",
+    "MelodyConfig",
+    "GeneratedMelody",
+    "create_melody_generator",
+    "generate_melody",
 ]
