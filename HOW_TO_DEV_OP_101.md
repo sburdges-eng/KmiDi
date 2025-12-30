@@ -36,6 +36,13 @@ pip install -e ".[dev]"  # optional lint/test extras
 ./data        # datasets (no PII; use synthetic/redacted)
 ./models      # checkpoints (Tier 1/2); default checkpoints under models/checkpoints
 ./output      # logs, reports, generated assets
+
+External SSD (recommended for large sets):
+- Mount your drive (e.g., /Volumes/Extreme SSD) and export paths before running:
+  - `export DATA_ROOT="/Volumes/Extreme SSD/data"`
+  - `export MODELS_ROOT="/Volumes/Extreme SSD/models"`
+  - `export OUTPUT_ROOT="/Volumes/Extreme SSD/output"`
+- Or place these in `.env` (VS Code picks it up via python.envFile and your shell).
 ```
 
 ## 5) Quick checks
@@ -71,3 +78,27 @@ npm run tauri dev
 ## 9) Sync discipline
 - This repo is staging; mirror approved changes into the canonical monorepo following KMIDI_STRUCTURE_PLAN.md.
 - Keep line length ≤100, format with `black`, lint with `flake8`/`mypy` as needed.
+
+## 10) Base ML models (retain stubs, version clearly)
+- Registry: [models/registry.json](models/registry.json) (backup: ML Kelly Training/backup/models/registry.json).
+- Core IDs (all RTNeural stubs, replace via training outputs):
+  - emotionrecognizer (emotion_embedding, 128→64)
+  - melodytransformer (melody_generation, 64→128)
+  - harmonypredictor (harmony_prediction, 128→64)
+  - dynamicsengine (dynamics_mapping, 32→16)
+  - groovepredictor (groove_prediction, 64→32)
+  - instrumentrecognizer (dual_instrument_recognition, 128→160, dual heads)
+  - emotionnodeclassifier (emotion_node_classification, 128→258, multi-head)
+- Keep stub JSONs intact; write new exports alongside with run-tagged filenames and update registry entries instead of overwriting blindly.
+- For concurrent runs, set distinct `output_dir`/run IDs and point `MODELS_ROOT` to SSD to avoid collisions.
+
+## 11) Training data on SSD (and what if it’s insufficient)
+- Point paths to external SSD for datasets/checkpoints:
+  - `export DATA_ROOT="/Volumes/Extreme SSD/data"`
+  - `export MODELS_ROOT="/Volumes/Extreme SSD/models"`
+  - `export OUTPUT_ROOT="/Volumes/Extreme SSD/output"`
+- If SSD space is tight:
+  - Prune old `output/` artifacts and interim checkpoints; keep `best.pt` and final exports.
+  - Use stratified subsets for smoke (e.g., 1–5% of data) and stream from HDD/NAS for full runs.
+  - Compress cold checkpoints (xz) and move to archival storage; keep live models under `MODELS_ROOT` only as needed.
+  - Prefer `train-mac-smoke` config for MPS, reserve large runs for CUDA hosts.
