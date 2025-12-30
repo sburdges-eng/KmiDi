@@ -43,7 +43,7 @@ Cross-platform format for flexible deployment. Enable with `ENABLE_ONNX_RUNTIME=
 
 ## Training
 
-Models are trained using Python (see `python/penta_core/ml/`):
+Models are trained using Python (see `penta_core/ml/`):
 
 ```bash
 # Train emotion recognizer

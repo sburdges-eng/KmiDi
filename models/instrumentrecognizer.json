@@ -108,8 +108,8 @@
     "created_at": "2025-12-23",
     "author": "Kelly ML Pipeline",
     "config_file": "configs/instrument_recognizer.yaml",
-    "feature_extractor": "python/penta_core/ml/datasets/instrument_features.py",
-    "synthetic_generator": "python/penta_core/ml/datasets/instrument_synthetic.py"
+    "feature_extractor": "penta_core/ml/datasets/instrument_features.py",
+    "synthetic_generator": "penta_core/ml/datasets/instrument_synthetic.py"
   }
 }
 
