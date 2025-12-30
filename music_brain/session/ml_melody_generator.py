@@ -188,13 +188,7 @@ class MLMelodyGenerator:
         self._load_ml_model()
     
     def _load_ml_model(self) -> None:
-        """
-        Attempt to load the ML melody model.
-        
-        Note: This requires trained models from penta_core.ml.
-        If models aren't trained yet, falls back to rule-based generation.
-        Train models using: python -m penta_core.ml.m4_training_orchestrator --all
-        """
+        """Attempt to load the ML melody model."""
         if not self.config.use_ml_model:
             return
         
@@ -210,10 +204,8 @@ class MLMelodyGenerator:
                     self._ml_model = engine
                     self._ml_available = True
         except ImportError:
-            # penta_core.ml modules not available - use rule-based fallback
             pass
         except Exception:
-            # Model loading failed - use rule-based fallback
             pass
     
     def is_ml_available(self) -> bool:
@@ -412,14 +404,9 @@ class MLMelodyGenerator:
             
             probs.append(max(prob, 0.1))
         
-        # Normalize probabilities (with safety check)
+        # Normalize probabilities
         probs = np.array(probs)
-        total = probs.sum()
-        if total > 0:
-            probs = probs / total
-        else:
-            # Fallback to uniform distribution
-            probs = np.ones_like(probs) / len(probs)
+        probs = probs / probs.sum()
         
         return np.random.choice(possible_notes, p=probs)
     

@@ -277,17 +277,7 @@ class M4TrainingOrchestrator:
         batch_size: int,
         learning_rate: float,
     ) -> TrainingResult:
-        """
-        Run actual training using penta_core.ml infrastructure.
-        
-        Note: Requires the following modules to be implemented:
-        - penta_core.ml.training.architectures: Model factory functions
-        - penta_core.ml.training.losses: Loss function registry
-        - penta_core.ml.datasets.synthetic: Synthetic data generators
-        
-        If these modules don't exist, training will fail gracefully
-        with a descriptive error message.
-        """
+        """Run actual training using penta_core.ml infrastructure."""
         try:
             import torch
             from penta_core.ml.training.architectures import create_model
@@ -297,7 +287,7 @@ class M4TrainingOrchestrator:
             return TrainingResult(
                 model_name=model_name,
                 success=False,
-                error_message=f"Missing dependency: {e}. Run 'pip install torch' and ensure penta_core.ml.training modules exist.",
+                error_message=f"Import error: {e}",
             )
         
         model_config = self.config.model_configs.get(model_name, {})
@@ -357,11 +347,9 @@ class M4TrainingOrchestrator:
         best_val_loss = float("inf")
         patience_counter = 0
         best_accuracy = 0.0
-        last_epoch = 0  # Track last completed epoch
         
         # Training loop
         for epoch in range(epochs):
-            last_epoch = epoch  # Update tracker
             model.train()
             train_loss = 0.0
             
@@ -431,7 +419,7 @@ class M4TrainingOrchestrator:
             success=True,
             accuracy=best_accuracy,
             loss=best_val_loss,
-            epochs_completed=last_epoch + 1,
+            epochs_completed=epoch + 1,
             checkpoint_path=str(checkpoint_path),
         )
     
