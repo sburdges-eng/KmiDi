@@ -10,7 +10,7 @@ Supported sources:
 - Local file copying
 
 Usage:
-    from python.penta_core.ml.datasets import AudioDownloader
+    from penta_core.ml.datasets import AudioDownloader
     
     downloader = AudioDownloader()
     

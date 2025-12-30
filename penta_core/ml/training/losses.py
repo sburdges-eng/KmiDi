@@ -10,7 +10,7 @@ Provides specialized loss functions that understand musical properties:
 - Label smoothing for better generalization
 
 Usage:
-    from python.penta_core.ml.training.losses import EmotionContrastiveLoss
+    from penta_core.ml.training.losses import EmotionContrastiveLoss
     
     loss_fn = EmotionContrastiveLoss(temperature=0.07)
     loss = loss_fn(embeddings, labels)

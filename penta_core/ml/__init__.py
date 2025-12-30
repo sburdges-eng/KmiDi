@@ -19,7 +19,7 @@ Supports:
 See docs/MK_TRAINING_GUIDELINES.md for training workflow.
 """
 
-from python.penta_core.ml.model_registry import (
+from penta_core.ml.model_registry import (
     ModelRegistry,
     ModelInfo,
     ModelBackend,
@@ -29,26 +29,26 @@ from python.penta_core.ml.model_registry import (
     list_models,
 )
 
-from python.penta_core.ml.inference import (
+from penta_core.ml.inference import (
     InferenceEngine,
     InferenceResult,
     create_engine,
 )
 
-from python.penta_core.ml.chord_predictor import (
+from penta_core.ml.chord_predictor import (
     ChordPredictor,
     ChordPrediction,
     predict_next_chord,
     predict_progression,
 )
 
-from python.penta_core.ml.style_transfer import (
+from penta_core.ml.style_transfer import (
     GrooveStyleTransfer,
     StyleTransferResult,
     transfer_groove_style,
 )
 
-from python.penta_core.ml.gpu_utils import (
+from penta_core.ml.gpu_utils import (
     get_available_devices,
     select_best_device,
     GPUDevice,
@@ -57,7 +57,7 @@ from python.penta_core.ml.gpu_utils import (
 
 # Training and export utilities (optional imports)
 try:
-    from python.penta_core.ml.audio_dataset import (  # noqa: F401
+    from penta_core.ml.audio_dataset import (  # noqa: F401
         AudioDataset,
         AudioDatasetTorch,
         AudioSample,
@@ -69,7 +69,7 @@ except ImportError:
     _HAS_DATASET = False
 
 try:
-    from python.penta_core.ml.export import (  # noqa: F401
+    from penta_core.ml.export import (  # noqa: F401
         ModelExporter,
         ExportConfig,
         verify_onnx_model,

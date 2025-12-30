@@ -15,7 +15,7 @@ Augmentations:
 - Music-specific: key transposition, tempo scaling
 
 Usage:
-    from python.penta_core.ml.training.augmentation import AudioAugmentor
+    from penta_core.ml.training.augmentation import AudioAugmentor
     
     augmentor = AudioAugmentor()
     augmented = augmentor.augment(waveform, sr=16000)

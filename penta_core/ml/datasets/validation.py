@@ -203,7 +203,7 @@ class DatasetValidator:
         # Load manifest
         manifest_path = dataset_path / "manifest.json"
         if manifest_path.exists():
-            from python.penta_core.ml.datasets.base import load_manifest
+            from penta_core.ml.datasets.base import load_manifest
             manifest = load_manifest(manifest_path)
             
             # Validate samples

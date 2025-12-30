@@ -9,7 +9,7 @@ Provides:
 - Microtonal support (24-TET, just intonation)
 """
 
-from python.penta_core.harmony.jazz_voicings import (
+from penta_core.harmony.jazz_voicings import (
     JazzVoicing,
     VoicingStyle,
     generate_jazz_voicing,
@@ -18,7 +18,7 @@ from python.penta_core.harmony.jazz_voicings import (
     get_rootless_voicing,
 )
 
-from python.penta_core.harmony.neo_riemannian import (
+from penta_core.harmony.neo_riemannian import (
     NeoRiemannianTransform,
     apply_transform,
     get_transform_path,
@@ -27,7 +27,7 @@ from python.penta_core.harmony.neo_riemannian import (
     leading_tone_transform,
 )
 
-from python.penta_core.harmony.counterpoint import (
+from penta_core.harmony.counterpoint import (
     Species,
     CounterpointVoice,
     generate_counterpoint,
@@ -35,7 +35,7 @@ from python.penta_core.harmony.counterpoint import (
     get_species_rules,
 )
 
-from python.penta_core.harmony.tension import (
+from penta_core.harmony.tension import (
     TensionLevel,
     TensionAnalysis,
     analyze_tension,
@@ -43,7 +43,7 @@ from python.penta_core.harmony.tension import (
     suggest_tension_chords,
 )
 
-from python.penta_core.harmony.microtonal import (
+from penta_core.harmony.microtonal import (
     TuningSystem,
     MicrotonalPitch,
     cents_to_ratio,

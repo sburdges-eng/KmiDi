@@ -8,7 +8,7 @@ Provides advanced neural network components:
 - Task-specific models (emotion, melody, harmony, dynamics, groove)
 
 Usage:
-    from python.penta_core.ml.training.architectures import EmotionCNN, MultiTaskModel
+    from penta_core.ml.training.architectures import EmotionCNN, MultiTaskModel
     
     model = EmotionCNN(num_classes=7)
     multi_model = MultiTaskModel(tasks=["emotion", "genre"])

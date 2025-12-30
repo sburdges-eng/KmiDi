@@ -14,7 +14,7 @@ Default directory structure:
     └── manifests/     # Data manifest files
 
 Usage:
-    from python.penta_core.ml.datasets import get_audio_data_root, AudioDownloader
+    from penta_core.ml.datasets import get_audio_data_root, AudioDownloader
 
     # Get the audio data root
     root = get_audio_data_root()

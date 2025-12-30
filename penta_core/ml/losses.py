@@ -11,7 +11,7 @@ Provides specialized loss functions that incorporate music theory knowledge:
 - Groove loss (timing pattern consistency)
 
 Usage:
-    from python.penta_core.ml.losses import (
+    from penta_core.ml.losses import (
         HarmonicLoss, EmotionAwareLoss, TemporalCoherenceLoss
     )
 

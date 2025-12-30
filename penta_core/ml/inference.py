@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 import time
 
-from python.penta_core.ml.model_registry import (
+from penta_core.ml.model_registry import (
     ModelInfo,
     ModelBackend,
     get_model,

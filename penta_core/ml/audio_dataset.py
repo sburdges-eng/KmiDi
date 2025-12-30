@@ -12,7 +12,7 @@ Key Features:
 - Supports 16kHz mono audio (optimized for training)
 
 Usage:
-    from python.penta_core.ml.audio_dataset import AudioDataset, create_dataloaders
+    from penta_core.ml.audio_dataset import AudioDataset, create_dataloaders
     
     dataset = AudioDataset(
         data_dir="data/raw",

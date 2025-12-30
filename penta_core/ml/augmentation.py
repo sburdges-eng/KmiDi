@@ -17,7 +17,7 @@ Reference implementations:
 - MusicAug: Improved music augmentation techniques
 
 Usage:
-    from python.penta_core.ml.augmentation import AudioAugmentor, ChainedAugmentation
+    from penta_core.ml.augmentation import AudioAugmentor, ChainedAugmentation
 
     augmentor = AudioAugmentor()
     augmented_audio = augmentor.augment(audio, sr=16000, augmentations=['pitch_shift', 'time_stretch'])

@@ -8,7 +8,7 @@ Supports:
 - TorchScript: PyTorch mobile/C++
 
 Usage:
-    from python.penta_core.ml.export import ModelExporter
+    from penta_core.ml.export import ModelExporter
     
     exporter = ModelExporter(model, config)
     exporter.export_all(output_dir="models/")

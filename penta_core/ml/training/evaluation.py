@@ -9,7 +9,7 @@ Provides comprehensive evaluation tools:
 - A/B testing framework
 
 Usage:
-    from python.penta_core.ml.training.evaluation import evaluate_model, MusicMetrics
+    from penta_core.ml.training.evaluation import evaluate_model, MusicMetrics
     
     metrics = MusicMetrics()
     results = evaluate_model(model, test_loader, metrics)

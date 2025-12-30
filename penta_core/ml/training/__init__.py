@@ -10,7 +10,7 @@ Modules:
 - evaluation: Metrics and validation algorithms
 
 Usage:
-    from python.penta_core.ml.training import (
+    from penta_core.ml.training import (
         AudioAugmentor,
         MusicAwareLoss,
         EmotionCNN,
