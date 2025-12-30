@@ -67,6 +67,9 @@ def expand_env_vars(value: str) -> str:
             if default is not None:
                 os.environ[var_name] = default
                 return default
+            return ""if default is not None:
+                os.environ[var_name] = default
+                return default
             return ""
         else:
             # No default specified, variable required
