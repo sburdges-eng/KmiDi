@@ -562,6 +562,9 @@ def export_to_onnx(
     input_dim: int = 64,
     architecture_type: str = "mlp",
     opset_version: int = 14,
+    n_mels: int = 64,
+    time_frames: int = 128,
+    seq_length: int = 32,
 ) -> Path:
     """
     Export a PyTorch model to ONNX format.
@@ -574,12 +577,16 @@ def export_to_onnx(
         input_dim: Input dimension for the model
         architecture_type: Model architecture type ("mlp", "cnn", "lstm")
         opset_version: ONNX opset version
+        n_mels: Number of mel bands for CNN input (default: 64)
+        time_frames: Number of time frames for CNN input (default: 128)
+        seq_length: Sequence length for LSTM input (default: 32)
 
     Returns:
         Path to exported ONNX file
 
     Example:
         export_to_onnx(model, "models/emotion.onnx", input_dim=128)
+        export_to_onnx(model, "models/emotion.onnx", architecture_type="cnn", n_mels=64)
     """
     import torch
 
@@ -591,9 +598,9 @@ def export_to_onnx(
 
     # Create dummy input based on architecture
     if architecture_type == "cnn":
-        dummy_input = torch.randn(1, 1, 64, 128)  # (batch, channels, mels, time)
+        dummy_input = torch.randn(1, 1, n_mels, time_frames)  # (batch, channels, mels, time)
     elif architecture_type == "lstm":
-        dummy_input = torch.randn(1, 32, input_dim)  # (batch, seq_len, features)
+        dummy_input = torch.randn(1, seq_length, input_dim)  # (batch, seq_len, features)
     else:
         dummy_input = torch.randn(1, input_dim)  # (batch, features)
 

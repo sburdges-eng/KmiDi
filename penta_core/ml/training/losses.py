@@ -774,11 +774,10 @@ if TORCH_AVAILABLE:
 
         Example:
             loss_fn = get_loss_function("emotion_recognizer")
-            loss_fn = get_loss_function("harmony_predictor", num_chords=64)
+            loss_fn = get_loss_function("emotion_recognizer", num_classes=10)
         """
         # Extract output_dim from kwargs if provided, for dynamic sizing
         num_classes = kwargs.pop("num_classes", None)
-        num_chords = kwargs.pop("num_chords", None)
 
         loss_configs = {
             "emotion_recognizer": {
