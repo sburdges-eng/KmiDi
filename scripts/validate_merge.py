@@ -107,7 +107,7 @@ def main():
         ("music_brain/structure/", "Structure module"),
         ("music_brain/session/", "Session module"),
         ("music_brain/audio/", "Audio module"),
-        ("python/penta_core/__init__.py", "Penta Core init"),
+        ("penta_core/__init__.py", "Penta Core init"),
     ]
     for path, desc in checks:
         checks_total += 1
