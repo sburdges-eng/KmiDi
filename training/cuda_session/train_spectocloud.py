@@ -373,6 +373,7 @@ class SpectocloudDataset(Dataset):
 
             # Feature 17: drum usage ratio
             drum_notes = sum(len(inst.notes) for inst in midi.instruments if inst.is_drum)
+            total_notes = sum(len(inst.notes) for inst in midi.instruments)
             features[17] = drum_notes / total_notes if total_notes else 0.0
 
             # Feature 18-19: note duration stats
@@ -382,6 +383,7 @@ class SpectocloudDataset(Dataset):
                 features[19] = min(1.0, float(np.std(durations) / 5.0))
 
             # Feature 20: pitch range (normalized)
+            pitches = [note.pitch for inst in midi.instruments for note in inst.notes]
             if pitches:
                 features[20] = float((np.max(pitches) - np.min(pitches)) / 127.0)
 
@@ -454,19 +456,13 @@ class SpectocloudDataset(Dataset):
             # Normalize emotion to 64D
             emotion = self._normalize_emotion(emotion)
             
-            # Load or generate target point cloud
-            if 'target_pointcloud_path' in sample and os.path.exists(sample['target_pointcloud_path']):
-                # Load pre-computed point cloud
-                target_positions = np.load(sample['target_pointcloud_path'])
-            else:
-                # Generate on-the-fly (self-supervised mode)
-                valence = emotion[0]
-                arousal = emotion[1] if len(emotion) > 1 else 0.0
-                intensity = emotion[2] if len(emotion) > 2 else 0.5
-                target_positions = self._generate_target_cloud(valence, arousal, intensity)
-            
-            # Generate colors (always on-the-fly since they're simple)
+            # Generate target point cloud (self-supervised mode)
+            # Extract valence from emotion
             valence = emotion[0]
+            arousal = emotion[1] if len(emotion) > 1 else 0.0
+            intensity = emotion[2] if len(emotion) > 2 else 0.5
+            
+            target_positions = self._generate_target_cloud(valence, arousal, intensity)
             target_colors = self._generate_target_colors(valence)
             
             return {

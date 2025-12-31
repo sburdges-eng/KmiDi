@@ -111,39 +111,13 @@ docker run --rm --gpus all nvidia/cuda:12.1.0-base-ubuntu22.04 nvidia-smi
 **Important**: Audio and MIDI files are matched by filename stem (e.g., `track001.wav` matches `track001.mid`).
 
 #### Emotion Inference
+The manifest builder attempts to infer emotion from:
+1. Parent directory name (e.g., `happy/`, `sad/`, `angry/`)
+2. Filename (e.g., `track_happy_001.wav`)
 
-The manifest builder uses music_brain's EmotionThesaurus + production rules to generate emotion labels:
+Supported emotions: `happy`, `sad`, `angry`, `calm`, `excited`, `fearful`, `neutral`, `tender`, `energetic`
 
-**Path-based inference** (automatic):
-1. Checks parent directory name (e.g., `happy/`, `sad/`, `angry/`)
-2. Checks filename for emotion keywords (e.g., `track_grief_001.wav`)
-3. Maps to [valence, arousal, intensity] using Russell's Circumplex Model
-
-**Music-brain integration**:
-- Uses `scripts/emotion_helper.py` to convert emotion words to vectors
-- Supports 14+ base emotions with intensity tiers
-- Valence: -1 (very negative) to +1 (very positive)
-- Arousal: -1 (very low energy) to +1 (very high energy)  
-- Intensity: 0 (subtle) to 1 (overwhelming)
-
-**Supported emotions**:
-- **Happy family**: happy, joy, calm, peaceful, excited, content, tender, energetic
-- **Sad family**: sad, melancholy, grief, despair
-- **Angry family**: angry, rage, fury
-- **Fear family**: fear, anxiety, terror, panic
-- **Others**: surprise, disgust, neutral
-
-**Custom emotion labels**:
-You can provide your own emotion vectors in the manifest:
-```json
-{
-  "audio_path": "/path/to/audio.wav",
-  "midi_path": "/path/to/track.mid",
-  "emotion": [0.7, 0.8, 0.6]  // [valence, arousal, intensity]
-}
-```
-
-This replaces path-based inference with your ground-truth labels.
+If no emotion is detected, defaults to `neutral` [0.0, 0.0, 0.5].
 
 ### 3. Build Manifests
 
@@ -159,21 +133,11 @@ python scripts/build_manifests.py \
     --seed 42
 ```
 
-**With pre-computed point clouds:**
-```bash
-python scripts/build_manifests.py \
-    --audio-root /path/to/audio \
-    --midi-root /path/to/midi \
-    --generate-clouds \
-    --clouds-dir data/clouds
-```
-
 **Output:**
 - `data/manifests/spectocloud_train.jsonl` - Spectocloud training data
 - `data/manifests/spectocloud_val.jsonl` - Spectocloud validation data
 - `data/manifests/midi_train.jsonl` - MIDI Generator training data
 - `data/manifests/midi_val.jsonl` - MIDI Generator validation data
-- `data/clouds/*.npy` - Pre-computed point clouds (if --generate-clouds used)
 
 #### Manifest Format
 
@@ -421,78 +385,11 @@ Do not change this or you'll break compatibility with the tokenizer.
 
 ## Advanced Options
 
-### Pre-computed Point Clouds
-
-Generate target point clouds ahead of time to speed up training:
-
-```bash
-python scripts/build_manifests.py \
-    --audio-root /path/to/audio \
-    --midi-root /path/to/midi \
-    --generate-clouds \
-    --clouds-dir data/clouds
-```
-
-**Benefits:**
-- Faster data loading (no on-the-fly generation)
-- Deterministic point clouds across runs
-- Can provide custom ground-truth visualizations
-
-**Format:** Point clouds are saved as `.npy` files (1200×3 float32 arrays) with hash-based filenames.
-
-The dataset loader automatically uses pre-computed clouds if `target_pointcloud_path` is in the manifest, otherwise generates on-the-fly.
-
 ### Training on Multiple GPUs
-
-Use PyTorch's distributed data parallel (DDP) for multi-GPU training:
-
-**Single-node multi-GPU:**
+Not yet supported by the runner script. For multi-GPU, use manual training with:
 ```bash
-# Inside Docker container or on GPU host
-torchrun --nproc_per_node=4 \
-    training/cuda_session/train_spectocloud.py \
-    --config spectocloud_training_config.yaml
-
-torchrun --nproc_per_node=4 \
-    training/cuda_session/train_midi_generator.py \
-    --config midi_generator_training_config.yaml
+torchrun --nproc_per_node=N train_spectocloud.py
 ```
-
-**Multi-node training (advanced):**
-```bash
-# Node 0 (master)
-torchrun --nproc_per_node=4 \
-    --nnodes=2 \
-    --node_rank=0 \
-    --master_addr=192.168.1.10 \
-    --master_port=29500 \
-    training/cuda_session/train_spectocloud.py
-
-# Node 1
-torchrun --nproc_per_node=4 \
-    --nnodes=2 \
-    --node_rank=1 \
-    --master_addr=192.168.1.10 \
-    --master_port=29500 \
-    training/cuda_session/train_spectocloud.py
-```
-
-**Configuration adjustments for multi-GPU:**
-```yaml
-data:
-  batch_size: 16              # Per-GPU batch size
-  num_workers: 8              # Per-GPU workers
-
-training:
-  grad_accum_steps: 1         # Usually not needed with multi-GPU
-```
-
-**Expected speedup:**
-- 2 GPUs: ~1.8x faster
-- 4 GPUs: ~3.5x faster
-- 8 GPUs: ~6.5x faster
-
-Note: Efficiency decreases with more GPUs due to communication overhead.
 
 ### Resuming from Checkpoint
 Edit config to load checkpoint:

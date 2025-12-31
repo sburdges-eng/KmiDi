@@ -1,74 +1,38 @@
 #!/bin/bash
 # =============================================================================
-# KmiDi SpectoCloud CUDA Training Script v2
+# KmiDi v2 Training Pipeline - CUDA GPU Runner
 # =============================================================================
-# Deployment: Ubuntu 22.04 Deep Learning AMI (NVIDIA GPU Cloud)
-# Target: 4x GPU distributed training with PyTorch DDP
-# Budget: $150 (12-18 hours on RTX 4090/A100, up to 30 hours on spot)
+# One-command script to build, run, and execute v2 training pipeline on GPU.
+#
+# Usage:
+#   ./scripts/train_cuda_v2.sh [options]
+#
+# Options:
+#   --audio-root PATH      Path to audio files (optional)
+#   --midi-root PATH       Path to MIDI files (optional)
+#   --data-mount PATH      Path to mount as /data in container (optional)
+#   --epochs NUM           Number of epochs (default: use config)
+#   --skip-build           Skip Docker image build
+#   --skip-manifests       Skip manifest generation
+#   --skip-spectocloud     Skip Spectocloud training
+#   --skip-midi            Skip MIDI generator training
+#   --skip-export          Skip ONNX export
 # =============================================================================
 
-set -e  # Exit on error
-set -u  # Exit on undefined variable
+set -e
 
-# -----------------------------------------------------------------------------
-# Color Output
-# -----------------------------------------------------------------------------
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
-
-log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# -----------------------------------------------------------------------------
-# Parse Arguments
-# -----------------------------------------------------------------------------
+# Default values
 AUDIO_ROOT=""
 MIDI_ROOT=""
-NUM_GPUS=4
-CONFIG="training/cuda_session/spectocloud_training_config.yaml"
-RESUME=""
-WANDB_KEY=""
-DRY_RUN=false
+DATA_MOUNT=""
+SKIP_BUILD=0
+SKIP_MANIFESTS=0
+SKIP_SPECTOCLOUD=0
+SKIP_MIDI=0
+SKIP_EXPORT=0
+EPOCHS=""
 
-usage() {
-    cat << EOF
-Usage: $0 --audio-root PATH --midi-root PATH [OPTIONS]
-
-Required:
-  --audio-root PATH     Path to audio dataset root
-  --midi-root PATH      Path to MIDI dataset root
-
-Optional:
-  --num-gpus N          Number of GPUs to use (default: 4)
-  --config PATH         Training config file (default: $CONFIG)
-  --resume PATH         Resume from checkpoint
-  --wandb-key KEY       Weights & Biases API key for logging
-  --dry-run             Check setup without training
-  -h, --help            Show this help message
-
-Example:
-  $0 --audio-root /data/audio --midi-root /data/midi --num-gpus 4
-
-EOF
-    exit 1
-}
-
+# Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         --audio-root)
@@ -79,279 +43,155 @@ while [[ $# -gt 0 ]]; do
             MIDI_ROOT="$2"
             shift 2
             ;;
-        --num-gpus)
-            NUM_GPUS="$2"
+        --data-mount)
+            DATA_MOUNT="$2"
             shift 2
             ;;
-        --config)
-            CONFIG="$2"
+        --epochs)
+            EPOCHS="$2"
             shift 2
             ;;
-        --resume)
-            RESUME="$2"
-            shift 2
-            ;;
-        --wandb-key)
-            WANDB_KEY="$2"
-            shift 2
-            ;;
-        --dry-run)
-            DRY_RUN=true
+        --skip-build)
+            SKIP_BUILD=1
             shift
             ;;
-        -h|--help)
-            usage
+        --skip-manifests)
+            SKIP_MANIFESTS=1
+            shift
+            ;;
+        --skip-spectocloud)
+            SKIP_SPECTOCLOUD=1
+            shift
+            ;;
+        --skip-midi)
+            SKIP_MIDI=1
+            shift
+            ;;
+        --skip-export)
+            SKIP_EXPORT=1
+            shift
             ;;
         *)
-            log_error "Unknown option: $1"
-            usage
+            echo "Unknown option: $1"
+            exit 1
             ;;
     esac
-
 done
 
-# Validate required arguments
-if [[ -z "$AUDIO_ROOT" ]] || [[ -z "$MIDI_ROOT" ]]; then
-    log_error "Both --audio-root and --midi-root are required"
-    usage
-fi
+# Get script directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 
-# -----------------------------------------------------------------------------
-# Environment Setup
-# -----------------------------------------------------------------------------
-log_info "KmiDi SpectoCloud Training - Environment Check"
-echo "=================================================="
-
-# Check CUDA
-if ! command -v nvidia-smi &> /dev/null; then
-    log_error "nvidia-smi not found. Is CUDA installed?"
-    exit 1
-fi
-
-log_success "CUDA detected:"
-nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
+echo "=========================================="
+echo "KmiDi v2 Training Pipeline - CUDA GPU"
+echo "=========================================="
 echo ""
 
-# Check Python
-PYTHON_VERSION=$(python3 --version 2>&1)
-log_info "Python: $PYTHON_VERSION"
-
-# Check PyTorch
-if ! python3 -c "import torch" 2>/dev/null; then
-    log_error "PyTorch not installed"
-    exit 1
+# Build Docker image
+if [ $SKIP_BUILD -eq 0 ]; then
+    echo "Building Docker image..."
+    cd "$REPO_ROOT"
+    docker build \
+        -f deployment/docker/Dockerfile.cuda \
+        -t kmidi-cuda-train:v2 \
+        .
+    echo "✓ Docker image built"
+    echo ""
+else
+    echo "Skipping Docker build (--skip-build)"
+    echo ""
 fi
 
-TORCH_VERSION=$(python3 -c "import torch; print(torch.__version__)" )
-CUDA_AVAILABLE=$(python3 -c "import torch; print('Yes' if torch.cuda.is_available() else 'No')" )
-log_info "PyTorch: $TORCH_VERSION (CUDA: $CUDA_AVAILABLE)"
+# Prepare Docker run command
+DOCKER_RUN_CMD="docker run --rm -it \
+    --gpus all \
+    --ipc=host \
+    --shm-size=8g \
+    -v \"$REPO_ROOT:/workspace\" \
+    -w /workspace"
 
-if [[ "$CUDA_AVAILABLE" != "Yes" ]]; then
-    log_error "PyTorch cannot access CUDA. Check installation."
-    exit 1
+# Add data mount if specified
+if [ -n "$DATA_MOUNT" ]; then
+    DOCKER_RUN_CMD="$DOCKER_RUN_CMD -v \"$DATA_MOUNT:/data\""
 fi
 
-GPU_COUNT=$(python3 -c "import torch; print(torch.cuda.device_count())" )
-log_info "Available GPUs: $GPU_COUNT"
+DOCKER_RUN_CMD="$DOCKER_RUN_CMD kmidi-cuda-train:v2"
 
-if [[ "$GPU_COUNT" -lt "$NUM_GPUS" ]]; then
-    log_warn "Requested $NUM_GPUS GPUs but only $GPU_COUNT available. Adjusting..."
-    NUM_GPUS=$GPU_COUNT
-fi
-
-# -----------------------------------------------------------------------------
-# Validate Data Paths
-# -----------------------------------------------------------------------------
-log_info "Validating data paths..."
-
-if [[ ! -d "$AUDIO_ROOT" ]]; then
-    log_error "Audio root not found: $AUDIO_ROOT"
-    exit 1
-fi
-
-if [[ ! -d "$MIDI_ROOT" ]]; then
-    log_error "MIDI root not found: $MIDI_ROOT"
-    exit 1
-fi
-
-AUDIO_COUNT=$(find "$AUDIO_ROOT" -type f \( -name "*.wav" -o -name "*.mp3" -o -name "*.flac" \) | wc -l)
-MIDI_COUNT=$(find "$MIDI_ROOT" -type f -name "*.mid*" | wc -l)
-
-log_info "Audio files found: $AUDIO_COUNT"
-log_info "MIDI files found: $MIDI_COUNT"
-
-if [[ "$AUDIO_COUNT" -eq 0 ]]; then
-    log_error "No audio files found in $AUDIO_ROOT"
-    exit 1
-fi
-
-if [[ "$MIDI_COUNT" -eq 0 ]]; then
-    log_warn "No MIDI files found in $MIDI_ROOT (OK for audio-only training)"
-fi
-
-# -----------------------------------------------------------------------------
-# Validate Config File
-# -----------------------------------------------------------------------------
-log_info "Validating config file: $CONFIG"
-
-if [[ ! -f "$CONFIG" ]]; then
-    log_error "Config file not found: $CONFIG"
-    exit 1
-fi
-
-log_success "Config file found"
-
-# -----------------------------------------------------------------------------
-# Install Dependencies
-# -----------------------------------------------------------------------------
-log_info "Checking Python dependencies..."
-
-REQUIRED_PACKAGES=(
-    "torch"
-    "torchaudio"
-    "transformers"
-    "timm"
-    "einops"
-    "numpy"
-    "scipy"
-    "librosa"
-    "pretty_midi"
-    "tensorboard"
-)
-
-MISSING_PACKAGES=()
-for pkg in "${REQUIRED_PACKAGES[@]}"; do
-    if ! python3 -c "import $pkg" 2>/dev/null; then
-        MISSING_PACKAGES+=("$pkg")
+# Step 1: Build manifests
+if [ $SKIP_MANIFESTS -eq 0 ]; then
+    echo "Step 1: Building dataset manifests..."
+    
+    MANIFEST_CMD="python scripts/build_manifests.py"
+    
+    if [ -n "$AUDIO_ROOT" ]; then
+        MANIFEST_CMD="$MANIFEST_CMD --audio-root \"$AUDIO_ROOT\""
     fi
-    done
-
-if [[ ${#MISSING_PACKAGES[@]} -gt 0 ]]; then
-    log_warn "Missing packages: ${MISSING_PACKAGES[*]}"
-    log_info "Installing missing dependencies..."
-    pip install -q "${MISSING_PACKAGES[@]}"
-    log_success "Dependencies installed"
+    
+    if [ -n "$MIDI_ROOT" ]; then
+        MANIFEST_CMD="$MANIFEST_CMD --midi-root \"$MIDI_ROOT\""
+    fi
+    
+    eval "$DOCKER_RUN_CMD bash -c '$MANIFEST_CMD'"
+    echo "✓ Manifests built"
+    echo ""
 else
-    log_success "All dependencies satisfied"
+    echo "Skipping manifest generation (--skip-manifests)"
+    echo ""
 fi
 
-# Optional: Weights & Biases
-if [[ -n "$WANDB_KEY" ]]; then
-    log_info "Setting up Weights & Biases logging..."
-    pip install -q wandb
-    export WANDB_API_KEY="$WANDB_KEY"
-    log_success "W&B configured"
-fi
-
-# -----------------------------------------------------------------------------
-# Setup Output Directory
-# -----------------------------------------------------------------------------
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-OUTPUT_DIR="./outputs/spectocloud_${TIMESTAMP}"
-mkdir -p "$OUTPUT_DIR"
-log_info "Output directory: $OUTPUT_DIR"
-
-# Save run configuration
-cat > "$OUTPUT_DIR/run_config.txt" << EOF
-KmiDi SpectoCloud Training Run
-================================
-Timestamp: $TIMESTAMP
-Audio Root: $AUDIO_ROOT
-MIDI Root: $MIDI_ROOT
-Config: $CONFIG
-GPUs: $NUM_GPUS
-Resume: ${RESUME:-None}
-
-System Information:
--------------------
-$(nvidia-smi)
-
-Python Environment:
--------------------
-$(pip list | grep -E "(torch|transformers|timm)")
-EOF
-
-log_success "Run configuration saved to $OUTPUT_DIR/run_config.txt"
-
-# -----------------------------------------------------------------------------
-# Dry Run Check
-# -----------------------------------------------------------------------------
-if [[ "$DRY_RUN" == "true" ]]; then
-    log_success "Dry run complete. Setup validated successfully!"
-    log_info "To start training, run without --dry-run flag"
-    exit 0
-fi
-
-# -----------------------------------------------------------------------------
-# Launch Training
-# -----------------------------------------------------------------------------
-log_info "Starting distributed training with $NUM_GPUS GPUs..."
-echo "=================================================="
-echo ""
-
-# Build training command
-TRAINING_SCRIPT="training/cuda_session/train_spectocloud.py"
-
-if [[ ! -f "$TRAINING_SCRIPT" ]]; then
-    log_error "Training script '$TRAINING_SCRIPT' not found. Expected at: $(pwd)/$TRAINING_SCRIPT"
-    log_error "Please ensure the training script exists or update TRAINING_SCRIPT in scripts/train_cuda_v2.sh."
-    exit 1
-fi
-
-TRAIN_CMD="torchrun --nproc_per_node=$NUM_GPUS $TRAINING_SCRIPT"
-TRAIN_CMD="$TRAIN_CMD --config $CONFIG"
-TRAIN_CMD="$TRAIN_CMD --audio-root $AUDIO_ROOT"
-TRAIN_CMD="$TRAIN_CMD --midi-root $MIDI_ROOT"
-TRAIN_CMD="$TRAIN_CMD --output-dir $OUTPUT_DIR"
-
-if [[ -n "$RESUME" ]]; then
-    TRAIN_CMD="$TRAIN_CMD --resume $RESUME"
-fi
-
-# Log command
-log_info "Command: $TRAIN_CMD"
-echo "$TRAIN_CMD" > "$OUTPUT_DIR/train_command.sh"
-chmod +x "$OUTPUT_DIR/train_command.sh"
-
-# Setup logging
-LOG_FILE="$OUTPUT_DIR/training.log"
-log_info "Training log: $LOG_FILE"
-echo ""
-
-# Execute training with tee for both stdout and file logging
-log_success "🚀 Training started at $(date)"
-echo "=================================================="
-echo ""
-
-set +e  # Don't exit on training errors (we want to capture them)
-$TRAIN_CMD 2>&1 | tee "$LOG_FILE"
-TRAIN_EXIT_CODE=${PIPESTATUS[0]}
-set -e
-
-echo ""
-echo "=================================================="
-if [[ $TRAIN_EXIT_CODE -eq 0 ]]; then
-    log_success "✅ Training completed successfully at $(date)"
-    log_info "Results saved to: $OUTPUT_DIR"
-    log_info "Check tensorboard logs: tensorboard --logdir $OUTPUT_DIR"
+# Step 2: Train Spectocloud
+if [ $SKIP_SPECTOCLOUD -eq 0 ]; then
+    echo "Step 2: Training Spectocloud model..."
+    
+    TRAIN_CMD="cd training/cuda_session && python train_spectocloud.py --config spectocloud_training_config.yaml"
+    
+    eval "$DOCKER_RUN_CMD bash -c '$TRAIN_CMD'"
+    echo "✓ Spectocloud training complete"
+    echo ""
 else
-    log_error "❌ Training failed with exit code $TRAIN_EXIT_CODE"
-    log_error "Check logs: $LOG_FILE"
-    exit $TRAIN_EXIT_CODE
+    echo "Skipping Spectocloud training (--skip-spectocloud)"
+    echo ""
 fi
 
-# -----------------------------------------------------------------------------
-# Post-Training Summary
-# -----------------------------------------------------------------------------
-log_info "Training Summary:"
-echo "  - Output: $OUTPUT_DIR"
-echo "  - Config: $CONFIG"
-echo "  - GPUs: $NUM_GPUS"
-echo "  - Log: $LOG_FILE"
-
-if [[ -f "$OUTPUT_DIR/final_metrics.json" ]]; then
-    log_info "Final metrics:"
-    cat "$OUTPUT_DIR/final_metrics.json"
+# Step 3: Train MIDI Generator
+if [ $SKIP_MIDI -eq 0 ]; then
+    echo "Step 3: Training MIDI Generator model..."
+    
+    TRAIN_CMD="cd training/cuda_session && python train_midi_generator.py --config midi_generator_training_config.yaml"
+    
+    eval "$DOCKER_RUN_CMD bash -c '$TRAIN_CMD'"
+    echo "✓ MIDI Generator training complete"
+    echo ""
+else
+    echo "Skipping MIDI Generator training (--skip-midi)"
+    echo ""
 fi
 
-log_success "Done! 🎵"
+# Step 4: Export models
+if [ $SKIP_EXPORT -eq 0 ]; then
+    echo "Step 4: Exporting models to ONNX..."
+    
+    EXPORT_CMD="cd training/cuda_session && python export_models.py --all"
+    
+    eval "$DOCKER_RUN_CMD bash -c '$EXPORT_CMD'"
+    echo "✓ Model export complete"
+    echo ""
+else
+    echo "Skipping model export (--skip-export)"
+    echo ""
+fi
+
+echo "=========================================="
+echo "Training Pipeline Complete!"
+echo "=========================================="
+echo ""
+echo "Output locations:"
+echo "  - Checkpoints: checkpoints/"
+echo "  - Exports: exports/"
+echo "  - Manifests: data/manifests/"
+echo ""
+echo "Next steps:"
+echo "  1. Review training logs and metrics"
+echo "  2. Test ONNX exports with C++ bridge"
+echo "  3. (Optional) Convert to CoreML on Mac"
+echo ""
