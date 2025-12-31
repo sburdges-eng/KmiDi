@@ -14,7 +14,12 @@ Run with:
 import os
 
 from dotenv import load_dotenv
-from fastmcp import FastMCP
+
+try:
+    # Preferred import path
+    from mcp.server.fastmcp import FastMCP
+except ImportError:  # pragma: no cover - fallback for older installs
+    from fastmcp import FastMCP
 
 # Initialize environment variables
 load_dotenv()
