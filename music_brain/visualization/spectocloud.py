@@ -828,6 +828,154 @@ class Spectocloud:
         elif fig:
             self.renderer.plt.close(fig)
     
+    def render_animation(
+        self,
+        output_path: str,
+        fps: int = 20,
+        duration: Optional[float] = None,
+        rotate: bool = True,
+    ):
+        """
+        Render animation/GIF of the visualization.
+        
+        Args:
+            output_path: Path to save GIF (should end with .gif)
+            fps: Frames per second
+            duration: Optional duration in seconds (if None, uses all frames)
+            rotate: Whether to rotate camera during animation
+        """
+        if not self.renderer.has_mpl:
+            print("matplotlib not available for animation")
+            return
+        
+        try:
+            from matplotlib.animation import FuncAnimation, PillowWriter
+        except ImportError:
+            print("matplotlib.animation not available")
+            return
+        
+        if not self.frames:
+            print("No frames to animate. Call process_midi() first.")
+            return
+        
+        # Determine frame range
+        if duration is not None:
+            max_frame_idx = min(len(self.frames), int(duration / self.window_size))
+        else:
+            max_frame_idx = len(self.frames)
+        
+        print(f"Rendering animation with {max_frame_idx} frames...")
+        
+        # Create figure
+        fig = self.renderer.plt.figure(figsize=self.renderer.figsize, dpi=self.renderer.dpi)
+        ax = fig.add_subplot(111, projection='3d')
+        
+        # Set up axes
+        max_time = max(f.time for f in self.frames[:max_frame_idx])
+        ax.set_xlim(0, max_time * 1.1)
+        ax.set_ylim(0, 1.0)
+        ax.set_zlim(0, 1.0)
+        ax.set_xlabel("Time (beats)")
+        ax.set_ylabel("Frequency/Pitch")
+        ax.set_zlabel("Musical Parameter")
+        ax.set_facecolor("white")
+        fig.patch.set_facecolor("white")
+        
+        # Initialize plot elements
+        anchor_positions = np.array([[0, a.position_y, a.position_z] 
+                                     for a in self.anchor_library.anchors])
+        anchor_sc = ax.scatter([], [], [], s=5, alpha=0.6)
+        particle_sc = ax.scatter([], [], [], s=8, alpha=0.5)
+        trail_line, = ax.plot([], [], [], linewidth=1.5, alpha=0.4, color='gray')
+        center_sc = ax.scatter([], [], [], s=40, edgecolors='black', linewidths=0.5)
+        
+        def update(frame_idx):
+            """Update function for animation."""
+            if frame_idx >= len(self.frames):
+                return anchor_sc, particle_sc, trail_line, center_sc
+            
+            frame = self.frames[frame_idx]
+            
+            # Update anchors
+            anchor_colors = np.zeros((len(self.anchor_library.anchors), 4))
+            anchor_sizes = np.zeros(len(self.anchor_library.anchors))
+            for i, anchor in enumerate(self.anchor_library.anchors):
+                alpha = anchor.base_opacity + 0.22 * (anchor.activation ** 2)
+                anchor_colors[i] = (*anchor.color, min(0.3, alpha))
+                anchor_sizes[i] = anchor.base_size + 16 * (anchor.activation ** 3)
+            
+            anchor_sc._offsets3d = (anchor_positions[:, 0], 
+                                     anchor_positions[:, 1],
+                                     anchor_positions[:, 2])
+            anchor_sc._facecolor3d = anchor_colors
+            anchor_sc._edgecolor3d = anchor_colors
+            anchor_sc.set_sizes(anchor_sizes)
+            
+            # Generate particles for current frame
+            particles = self.generate_particles_for_frame(frame_idx)
+            if particles:
+                particle_positions = np.array([p.position for p in particles])
+                particle_colors = np.array([
+                    self.renderer.rgba_for_valence(
+                        frame.valence,
+                        alpha=frame.opacity * (1.0 + frame.arousal)
+                    )
+                    for _ in particles
+                ])
+                particle_sc._offsets3d = (particle_positions[:, 0],
+                                          particle_positions[:, 1],
+                                          particle_positions[:, 2])
+                particle_sc._facecolor3d = particle_colors
+                particle_sc._edgecolor3d = particle_colors
+            
+            # Update trail
+            if frame_idx > 0:
+                trail_frames = self.frames[:frame_idx + 1]
+                trail_x = [f.x for f in trail_frames]
+                trail_y = [f.y for f in trail_frames]
+                trail_z = [f.z for f in trail_frames]
+                trail_line.set_data(trail_x, trail_y)
+                trail_line.set_3d_properties(trail_z)
+            
+            # Update center
+            center_color = self.renderer.rgba_for_valence(frame.valence, alpha=0.7)
+            center_sc._offsets3d = ([frame.x], [frame.y], [frame.z])
+            center_sc._facecolor3d = [center_color]
+            center_sc._edgecolor3d = [center_color]
+            
+            # Update title
+            ax.set_title(
+                f"Spectocloud | t={frame.time:.1f} | "
+                f"v={frame.valence:+.2f} a={frame.arousal:.2f} | "
+                f"charge={self.storm.charge:.1f}",
+                fontsize=10
+            )
+            
+            # Rotate camera if enabled
+            if rotate:
+                t_norm = frame_idx / max(1, max_frame_idx - 1)
+                elev = 22.0 + 10 * np.sin(2 * np.pi * t_norm)
+                azim = 40.0 + 120 * t_norm
+                ax.view_init(elev=elev, azim=azim)
+            
+            return anchor_sc, particle_sc, trail_line, center_sc
+        
+        # Create animation
+        anim = FuncAnimation(
+            fig,
+            update,
+            frames=max_frame_idx,
+            interval=int(1000 / fps),
+            blit=False
+        )
+        
+        # Save as GIF
+        print(f"Saving animation to {output_path}...")
+        anim.save(output_path, writer=PillowWriter(fps=fps))
+        print(f"Animation saved successfully!")
+        
+        self.renderer.plt.close(fig)
+    
     def export_data(self, output_path: str):
         """Export visualization data to JSON."""
         data = {
