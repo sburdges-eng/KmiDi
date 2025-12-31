@@ -19,13 +19,17 @@ def load_midi_from_file(midi_path: str) -> tuple:
     """
     Load MIDI file and convert to events.
     
+    Note: Requires mido package (pip install mido)
+    
     Returns:
         (events, duration) tuple
     """
     try:
         import mido
     except ImportError:
-        print("Error: mido not installed. Install with: pip install mido")
+        print("Error: mido package required for MIDI file loading")
+        print("Install with: pip install mido")
+        print("Note: mido is not included in core dependencies")
         sys.exit(1)
     
     mid = mido.MidiFile(midi_path)
