@@ -395,6 +395,13 @@ Thumbs.db
 # Test outputs
 output.mid
 *.mid.bak
+
+# Training logs and checkpoints
+logs/training/
+checkpoints/
+# Keep registry tracked but ignore generated model weights
+models/*.json
+!models/registry.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

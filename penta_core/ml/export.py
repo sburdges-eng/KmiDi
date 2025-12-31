@@ -555,3 +555,71 @@ def verify_coreml_model(model_path: Union[str, Path]) -> bool:
         logger.error(f"Core ML verification failed: {e}")
         return False
 
+
+def export_to_onnx(
+    model: "torch.nn.Module",
+    output_path: Union[str, Path],
+    input_dim: int = 64,
+    architecture_type: str = "mlp",
+    opset_version: int = 14,
+    n_mels: int = 64,
+    time_frames: int = 128,
+    seq_length: int = 32,
+) -> Path:
+    """
+    Export a PyTorch model to ONNX format.
+
+    Simplified helper function for quick ONNX export.
+
+    Args:
+        model: Trained PyTorch model
+        output_path: Output file path
+        input_dim: Input dimension for the model
+        architecture_type: Model architecture type ("mlp", "cnn", "lstm")
+        opset_version: ONNX opset version
+        n_mels: Number of mel bands for CNN input (default: 64)
+        time_frames: Number of time frames for CNN input (default: 128)
+        seq_length: Sequence length for LSTM input (default: 32)
+
+    Returns:
+        Path to exported ONNX file
+
+    Example:
+        export_to_onnx(model, "models/emotion.onnx", input_dim=128)
+        export_to_onnx(model, "models/emotion.onnx", architecture_type="cnn", n_mels=64)
+    """
+    import torch
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    model.eval()
+    model = model.to("cpu")
+
+    # Create dummy input based on architecture
+    if architecture_type == "cnn":
+        dummy_input = torch.randn(1, 1, n_mels, time_frames)  # (batch, channels, mels, time)
+    elif architecture_type == "lstm":
+        dummy_input = torch.randn(1, seq_length, input_dim)  # (batch, seq_len, features)
+    else:
+        dummy_input = torch.randn(1, input_dim)  # (batch, features)
+
+    # Export
+    torch.onnx.export(
+        model,
+        dummy_input,
+        output_path,
+        export_params=True,
+        opset_version=opset_version,
+        do_constant_folding=True,
+        input_names=["input"],
+        output_names=["output"],
+        dynamic_axes={
+            "input": {0: "batch_size"},
+            "output": {0: "batch_size"},
+        },
+    )
+
+    logger.info(f"Exported ONNX: {output_path}")
+    return output_path
+

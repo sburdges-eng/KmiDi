@@ -750,6 +750,73 @@ if TORCH_AVAILABLE:
         }
 
 
+    # =========================================================================
+    # Loss Function Factory
+    # =========================================================================
+
+    def get_loss_function(model_name: str, **kwargs) -> nn.Module:
+        """
+        Get the appropriate loss function for a given model.
+
+        Args:
+            model_name: Name of the model:
+                - "emotion_recognizer": Cross-entropy with label smoothing
+                - "melody_transformer": Cross-entropy
+                - "harmony_predictor": Cross-entropy (for flexibility with output sizes)
+                - "dynamics_engine": MSE loss
+                - "groove_predictor": Groove consistency loss
+            **kwargs: Additional arguments for the loss function
+                - num_classes: Override number of classes for classification losses
+                - num_chords: Override number of chords for harmony loss
+
+        Returns:
+            PyTorch loss module
+
+        Example:
+            loss_fn = get_loss_function("emotion_recognizer")
+            loss_fn = get_loss_function("emotion_recognizer", num_classes=10)
+        """
+        # Extract output_dim from kwargs if provided, for dynamic sizing
+        num_classes = kwargs.pop("num_classes", None)
+
+        loss_configs = {
+            "emotion_recognizer": {
+                "class": LabelSmoothingLoss,
+                "kwargs": {"smoothing": 0.1, "num_classes": num_classes or 7},
+            },
+            "melody_transformer": {
+                "class": nn.CrossEntropyLoss,
+                "kwargs": {},
+            },
+            "harmony_predictor": {
+                # Use CrossEntropyLoss for flexibility with different output sizes
+                "class": nn.CrossEntropyLoss,
+                "kwargs": {},
+            },
+            "dynamics_engine": {
+                "class": nn.MSELoss,
+                "kwargs": {},
+            },
+            "groove_predictor": {
+                "class": GrooveConsistencyLoss,
+                "kwargs": {"smoothness_weight": 0.1, "style_weight": 0.1},
+            },
+        }
+
+        if model_name not in loss_configs:
+            # Default to CrossEntropyLoss for unknown models
+            logger.warning(
+                f"No specific loss for {model_name}, using CrossEntropyLoss"
+            )
+            return nn.CrossEntropyLoss()
+
+        config = loss_configs[model_name]
+        loss_kwargs = config["kwargs"].copy()
+        loss_kwargs.update(kwargs)
+
+        return config["class"](**loss_kwargs)
+
+
 else:
     # Placeholder classes when PyTorch is not available
     class FocalLoss:

@@ -241,3 +241,29 @@ if _HAS_THESAURUS:
         "get_node_label_tensor",
         "validate_thesaurus_completeness",
     ])
+
+# Import synthetic data utilities
+try:
+    from .synthetic import (
+        SyntheticGenerator,
+        GeneratorConfig,
+        create_synthetic_dataset,
+        generate_emotion_samples,
+        generate_melody_samples,
+        generate_harmony_samples,
+        generate_groove_samples,
+    )
+    _HAS_SYNTHETIC = True
+except ImportError:
+    _HAS_SYNTHETIC = False
+
+if _HAS_SYNTHETIC:
+    __all__.extend([
+        "SyntheticGenerator",
+        "GeneratorConfig",
+        "create_synthetic_dataset",
+        "generate_emotion_samples",
+        "generate_melody_samples",
+        "generate_harmony_samples",
+        "generate_groove_samples",
+    ])
