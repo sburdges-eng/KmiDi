@@ -14,12 +14,12 @@ class TestHarmonyRulesImports:
     """Test that HarmonyRules can be imported."""
 
     def test_import_harmony_rules(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         assert HarmonyRules is not None
 
     def test_import_chord_quality(self):
-        from python.penta_core.teachers.harmony_rules import ChordQuality
+        from penta_core.teachers.harmony_rules import ChordQuality
 
         assert ChordQuality is not None
 
@@ -28,7 +28,7 @@ class TestChordQuality:
     """Test ChordQuality enum."""
 
     def test_chord_qualities_exist(self):
-        from python.penta_core.teachers.harmony_rules import ChordQuality
+        from penta_core.teachers.harmony_rules import ChordQuality
 
         assert ChordQuality.MAJOR.value == "major"
         assert ChordQuality.MINOR.value == "minor"
@@ -43,7 +43,7 @@ class TestHarmonyRulesChordConstruction:
     """Test chord construction rules."""
 
     def test_get_all_rules(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         rules = HarmonyRules.get_all_rules()
         assert "chord_construction" in rules
@@ -53,31 +53,31 @@ class TestHarmonyRulesChordConstruction:
         assert "pop_rock_harmony" in rules
 
     def test_get_chord_intervals_major(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         intervals = HarmonyRules.get_chord_intervals("major")
         assert intervals == [0, 4, 7]
 
     def test_get_chord_intervals_minor(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         intervals = HarmonyRules.get_chord_intervals("minor")
         assert intervals == [0, 3, 7]
 
     def test_get_chord_intervals_diminished(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         intervals = HarmonyRules.get_chord_intervals("diminished")
         assert intervals == [0, 3, 6]
 
     def test_get_chord_intervals_augmented(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         intervals = HarmonyRules.get_chord_intervals("augmented")
         assert intervals == [0, 4, 8]
 
     def test_get_chord_intervals_unknown(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         intervals = HarmonyRules.get_chord_intervals("nonexistent")
         assert intervals is None
@@ -88,14 +88,14 @@ class TestProgressionStrength:
 
     def test_authentic_cadence_very_strong(self):
         """V -> I is the strongest progression (authentic cadence)."""
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         assert HarmonyRules.get_progression_strength("V", "I") == "very_strong"
         assert HarmonyRules.get_progression_strength("V7", "I") == "very_strong"
 
     def test_circle_of_fifths_very_strong(self):
         """Circle of fifths progressions are very strong."""
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         # ii -> V (descending fifth)
         assert HarmonyRules.get_progression_strength("ii", "V") == "very_strong"
@@ -106,27 +106,27 @@ class TestProgressionStrength:
 
     def test_leading_tone_resolution_strong(self):
         """vii -> I is a strong progression."""
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         assert HarmonyRules.get_progression_strength("vii°", "I") == "strong"
         assert HarmonyRules.get_progression_strength("vii", "I") == "strong"
 
     def test_subdominant_to_dominant_strong(self):
         """Subdominant to dominant preparations are strong."""
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         # IV -> V
         assert HarmonyRules.get_progression_strength("IV", "V") == "strong"
 
     def test_plagal_cadence_moderate(self):
         """IV -> I (plagal cadence) is moderate strength."""
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         assert HarmonyRules.get_progression_strength("IV", "I") == "moderate"
 
     def test_descending_thirds_moderate(self):
         """Descending third progressions are moderate."""
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         # I -> vi (down a third)
         assert HarmonyRules.get_progression_strength("I", "vi") == "moderate"
@@ -135,27 +135,27 @@ class TestProgressionStrength:
 
     def test_ascending_thirds_moderate(self):
         """Ascending third progressions are moderate."""
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         # I -> iii (up a third)
         assert HarmonyRules.get_progression_strength("I", "iii") == "moderate"
 
     def test_stepwise_motion_moderate(self):
         """Stepwise motion is moderate."""
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         # I -> ii (up a step)
         assert HarmonyRules.get_progression_strength("I", "ii") == "moderate"
 
     def test_deceptive_cadence_weak(self):
         """V -> vi (deceptive cadence) is weak."""
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         assert HarmonyRules.get_progression_strength("V", "vi") == "weak"
 
     def test_ascending_fifth_weak(self):
         """Ascending fifths (opposite circle) are weak."""
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         # I -> V (up a fifth) - but wait, this might be interpreted as
         # half cadence preparation which could be different
@@ -166,7 +166,7 @@ class TestProgressionStrength:
 
     def test_invalid_numeral_unusual(self):
         """Invalid Roman numerals return unusual."""
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         assert HarmonyRules.get_progression_strength("XYZ", "I") == "unusual"
         assert HarmonyRules.get_progression_strength("I", "ABC") == "unusual"
@@ -174,7 +174,7 @@ class TestProgressionStrength:
 
     def test_same_chord_unusual(self):
         """Same chord to itself should be unusual."""
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         # I -> I is interval 0, which doesn't fit other categories
         result = HarmonyRules.get_progression_strength("I", "I")
@@ -183,7 +183,7 @@ class TestProgressionStrength:
 
     def test_seventh_chord_notation(self):
         """Test various seventh chord notations work."""
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         # V7 -> I should still be very strong
         assert HarmonyRules.get_progression_strength("V7", "I") == "very_strong"
@@ -191,7 +191,7 @@ class TestProgressionStrength:
 
     def test_minor_key_numerals(self):
         """Test minor key Roman numerals."""
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         # i -> IV is a descending fifth (circle of fifths) - very strong
         result = HarmonyRules.get_progression_strength("i", "IV")
@@ -203,7 +203,7 @@ class TestProgressionStrength:
 
     def test_diminished_chord_numerals(self):
         """Test diminished chord notation."""
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         # ii° -> V
         assert HarmonyRules.get_progression_strength("ii°", "V") == "very_strong"
@@ -215,7 +215,7 @@ class TestParseRomanNumeral:
     """Test the _parse_roman_numeral helper method."""
 
     def test_parse_basic_numerals(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         assert HarmonyRules._parse_roman_numeral("I") == 1
         assert HarmonyRules._parse_roman_numeral("ii") == 2
@@ -226,20 +226,20 @@ class TestParseRomanNumeral:
         assert HarmonyRules._parse_roman_numeral("vii") == 7
 
     def test_parse_with_quality_suffixes(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         assert HarmonyRules._parse_roman_numeral("V7") == 5
         assert HarmonyRules._parse_roman_numeral("vii°") == 7
         assert HarmonyRules._parse_roman_numeral("ii°7") == 2
 
     def test_parse_flat_numerals(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         assert HarmonyRules._parse_roman_numeral("♭VII") == 7
         assert HarmonyRules._parse_roman_numeral("♭VI") == 6
 
     def test_parse_invalid_returns_none(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         assert HarmonyRules._parse_roman_numeral("invalid") is None
         assert HarmonyRules._parse_roman_numeral("") is None
@@ -249,7 +249,7 @@ class TestGetInterval:
     """Test the _get_interval helper method."""
 
     def test_ascending_intervals(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         # 1 -> 2 is up a step
         assert HarmonyRules._get_interval(1, 2) == 1
@@ -259,7 +259,7 @@ class TestGetInterval:
         assert HarmonyRules._get_interval(1, 3) == 2
 
     def test_descending_intervals(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         # 5 -> 1 could be down 4 or up 3; implementation normalizes to -3..+4 range
         # so it chooses +3 (up 3 degrees, shorter path around the scale)
@@ -268,7 +268,7 @@ class TestGetInterval:
         assert HarmonyRules._get_interval(2, 1) == -1
 
     def test_interval_wrapping(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         # 1 -> 7 should be -1 (down a step), not +6
         assert HarmonyRules._get_interval(1, 7) == -1
@@ -280,7 +280,7 @@ class TestFunctionalHarmonyRules:
     """Test functional harmony rule data."""
 
     def test_tonic_function_exists(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         rules = HarmonyRules.FUNCTIONAL_HARMONY_RULES
         assert "tonic_function" in rules
@@ -288,7 +288,7 @@ class TestFunctionalHarmonyRules:
         assert "vi" in rules["tonic_function"]["major_key"]
 
     def test_dominant_function_exists(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         rules = HarmonyRules.FUNCTIONAL_HARMONY_RULES
         assert "dominant_function" in rules
@@ -296,7 +296,7 @@ class TestFunctionalHarmonyRules:
         assert "V7" in rules["dominant_function"]["major_key"]
 
     def test_subdominant_function_exists(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         rules = HarmonyRules.FUNCTIONAL_HARMONY_RULES
         assert "subdominant_function" in rules
@@ -308,7 +308,7 @@ class TestJazzHarmonyRules:
     """Test jazz harmony rule data."""
 
     def test_ii_v_i_progression(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         rules = HarmonyRules.JAZZ_HARMONY_RULES
         assert "ii_V_I" in rules
@@ -316,14 +316,14 @@ class TestJazzHarmonyRules:
         assert "minor_key" in rules["ii_V_I"]
 
     def test_tritone_substitution(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         rules = HarmonyRules.JAZZ_HARMONY_RULES
         assert "tritone_substitution" in rules
         assert "theory" in rules["tritone_substitution"]
 
     def test_modal_interchange(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         rules = HarmonyRules.JAZZ_HARMONY_RULES
         assert "modal_interchange" in rules
@@ -334,7 +334,7 @@ class TestPopRockHarmonyRules:
     """Test pop/rock harmony rule data."""
 
     def test_I_V_vi_IV_progression(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         rules = HarmonyRules.POP_ROCK_HARMONY_RULES
         assert "I_V_vi_IV" in rules
@@ -343,7 +343,7 @@ class TestPopRockHarmonyRules:
         assert rules["I_V_vi_IV"]["example_C"] == ["C", "G", "Am", "F"]
 
     def test_power_chords(self):
-        from python.penta_core.teachers.harmony_rules import HarmonyRules
+        from penta_core.teachers.harmony_rules import HarmonyRules
 
         rules = HarmonyRules.POP_ROCK_HARMONY_RULES
         assert "power_chords" in rules

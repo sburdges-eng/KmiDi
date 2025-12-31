@@ -141,7 +141,7 @@ def test_voice_leading_optimization():
 def test_polyrhythm_detection_performance():
     """Test polyrhythm detection with optimized interval calculation."""
     try:
-        from python.penta_core.groove.polyrhythm import detect_polyrhythm
+        from penta_core.groove.polyrhythm import detect_polyrhythm
         
         # Create test events
         events = [
@@ -162,7 +162,7 @@ def test_polyrhythm_detection_performance():
 def test_performance_analysis_speed():
     """Test live performance analysis with optimizations."""
     try:
-        from python.penta_core.groove.performance import analyze_live_performance
+        from penta_core.groove.performance import analyze_live_performance
         
         # Create test events
         events = [
