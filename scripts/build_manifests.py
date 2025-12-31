@@ -72,45 +72,48 @@ def match_audio_midi_pairs(
 
 def extract_emotion_from_path(filepath: Path) -> Optional[List[float]]:
     """
-    Try to extract emotion from directory or filename.
+    Extract emotion from directory or filename using music_brain system.
     
+    Uses EmotionThesaurus + production rules to generate emotion vectors.
     Expected patterns:
     - Directory named: happy/, sad/, angry/, etc.
     - Filename with emotion: track_happy_001.wav
     
-    Returns 3-element list [valence, arousal, intensity] or None.
+    Returns 3-element list [valence, arousal, intensity].
     """
-    # Simple emotion mapping (valence, arousal, intensity)
-    emotion_map = {
-        'happy': [0.8, 0.7, 0.7],
-        'joy': [0.9, 0.8, 0.8],
-        'sad': [-0.7, -0.5, 0.5],
-        'melancholy': [-0.6, -0.4, 0.4],
-        'angry': [-0.8, 0.9, 0.9],
-        'rage': [-0.9, 1.0, 1.0],
-        'calm': [0.3, -0.7, 0.3],
-        'peaceful': [0.5, -0.8, 0.3],
-        'excited': [0.7, 0.9, 0.8],
-        'fearful': [-0.6, 0.8, 0.7],
-        'fear': [-0.7, 0.85, 0.75],
-        'neutral': [0.0, 0.0, 0.5],
-        'tender': [0.6, -0.3, 0.4],
-        'energetic': [0.5, 0.8, 0.8],
-    }
-    
-    # Check parent directory name
-    parent_name = filepath.parent.name.lower()
-    if parent_name in emotion_map:
-        return emotion_map[parent_name]
-    
-    # Check filename
-    filename = filepath.stem.lower()
-    for emotion, values in emotion_map.items():
-        if emotion in filename:
-            return values
-    
-    # Default neutral
-    return [0.0, 0.0, 0.5]
+    try:
+        # Try using the emotion helper with music_brain integration
+        from emotion_helper import get_emotion_vector_from_path
+        return get_emotion_vector_from_path(filepath)
+    except ImportError:
+        # Fallback to simple mapping if emotion_helper not available
+        emotion_map = {
+            'happy': [0.8, 0.7, 0.7],
+            'joy': [0.9, 0.8, 0.8],
+            'sad': [-0.7, -0.5, 0.5],
+            'melancholy': [-0.6, -0.4, 0.4],
+            'angry': [-0.8, 0.9, 0.9],
+            'rage': [-0.9, 1.0, 1.0],
+            'calm': [0.3, -0.7, 0.3],
+            'peaceful': [0.5, -0.8, 0.3],
+            'excited': [0.7, 0.9, 0.8],
+            'fearful': [-0.6, 0.8, 0.7],
+            'fear': [-0.7, 0.85, 0.75],
+            'neutral': [0.0, 0.0, 0.5],
+            'tender': [0.6, -0.3, 0.4],
+            'energetic': [0.5, 0.8, 0.8],
+        }
+        
+        parent_name = filepath.parent.name.lower()
+        if parent_name in emotion_map:
+            return emotion_map[parent_name]
+        
+        filename = filepath.stem.lower()
+        for emotion, values in emotion_map.items():
+            if emotion in filename:
+                return values
+        
+        return [0.0, 0.0, 0.5]
 
 
 def split_train_val(

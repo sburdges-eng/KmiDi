@@ -111,13 +111,39 @@ docker run --rm --gpus all nvidia/cuda:12.1.0-base-ubuntu22.04 nvidia-smi
 **Important**: Audio and MIDI files are matched by filename stem (e.g., `track001.wav` matches `track001.mid`).
 
 #### Emotion Inference
-The manifest builder attempts to infer emotion from:
-1. Parent directory name (e.g., `happy/`, `sad/`, `angry/`)
-2. Filename (e.g., `track_happy_001.wav`)
 
-Supported emotions: `happy`, `sad`, `angry`, `calm`, `excited`, `fearful`, `neutral`, `tender`, `energetic`
+The manifest builder uses music_brain's EmotionThesaurus + production rules to generate emotion labels:
 
-If no emotion is detected, defaults to `neutral` [0.0, 0.0, 0.5].
+**Path-based inference** (automatic):
+1. Checks parent directory name (e.g., `happy/`, `sad/`, `angry/`)
+2. Checks filename for emotion keywords (e.g., `track_grief_001.wav`)
+3. Maps to [valence, arousal, intensity] using Russell's Circumplex Model
+
+**Music-brain integration**:
+- Uses `scripts/emotion_helper.py` to convert emotion words to vectors
+- Supports 14+ base emotions with intensity tiers
+- Valence: -1 (very negative) to +1 (very positive)
+- Arousal: -1 (very low energy) to +1 (very high energy)  
+- Intensity: 0 (subtle) to 1 (overwhelming)
+
+**Supported emotions**:
+- **Happy family**: happy, joy, calm, peaceful, excited, content, tender, energetic
+- **Sad family**: sad, melancholy, grief, despair
+- **Angry family**: angry, rage, fury
+- **Fear family**: fear, anxiety, terror, panic
+- **Others**: surprise, disgust, neutral
+
+**Custom emotion labels**:
+You can provide your own emotion vectors in the manifest:
+```json
+{
+  "audio_path": "/path/to/audio.wav",
+  "midi_path": "/path/to/track.mid",
+  "emotion": [0.7, 0.8, 0.6]  // [valence, arousal, intensity]
+}
+```
+
+This replaces path-based inference with your ground-truth labels.
 
 ### 3. Build Manifests
 
