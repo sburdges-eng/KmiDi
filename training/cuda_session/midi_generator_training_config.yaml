@@ -109,6 +109,8 @@ data:
   max_seq_length: 512           # Truncate/pad sequences
   num_workers: 8
   pin_memory: true
+  cache_features: true          # Cache tokenized sequences
+  cache_dir: "cache/midi_tokens"
 
 # -----------------------------------------------------------------------------
 # Emotion Conditioning
@@ -155,16 +157,24 @@ scheduler:
 # -----------------------------------------------------------------------------
 training:
   epochs: 15
+  min_epochs: 5                 # Minimum epochs before early stopping
   max_steps: 30000
   
   log_every: 100
   eval_every: 1000
-  save_every: 2000
+  save_every: 5                 # Save checkpoint every N epochs
   
   grad_accum_steps: 2
   
   amp: true
   amp_dtype: bfloat16
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 5                 # Stop after N epochs without improvement
+    min_delta: 0.001            # Minimum improvement threshold
+    monitor: "val_loss"
   
   # Teacher forcing schedule
   teacher_forcing:

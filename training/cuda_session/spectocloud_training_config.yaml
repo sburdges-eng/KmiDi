@@ -103,6 +103,7 @@ data:
   n_mels: 128
   hop_length: 512
   cache_features: true          # Pre-compute spectrograms
+  cache_dir: "cache/spectrograms"
   
   # Dataloader
   batch_size: 32                # Increase to 64 on A100
@@ -145,12 +146,13 @@ scheduler:
 # -----------------------------------------------------------------------------
 training:
   epochs: 20
+  min_epochs: 10                # Minimum epochs before early stopping
   max_steps: 50000              # Override epochs if set
   
   # Logging
   log_every: 50
   eval_every: 500
-  save_every: 2000
+  save_every: 5                 # Save checkpoint every N epochs
   
   # Gradient accumulation (effective batch = 32 * 4 = 128)
   grad_accum_steps: 4
@@ -167,8 +169,8 @@ training:
   # Early stopping
   early_stopping:
     enabled: true
-    patience: 5
-    min_delta: 0.001
+    patience: 5                 # Stop after N epochs without improvement
+    min_delta: 0.001            # Minimum improvement threshold
     monitor: "val_loss"
   
   # EMA for stable inference
