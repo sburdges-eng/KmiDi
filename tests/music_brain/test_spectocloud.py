@@ -86,7 +86,7 @@ class TestAnchorLibrary:
         library = AnchorLibrary(density="dense")
         
         # Should have 200-600 anchors
-        assert 150 <= len(library.anchors) <= 250
+        assert 200 <= len(library.anchors) <= 350
     
     def test_anchor_uniqueness(self):
         """Test that anchor IDs are unique."""

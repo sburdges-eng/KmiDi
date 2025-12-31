@@ -296,11 +296,11 @@ class AnchorLibrary:
             n_timbre = 10
             n_texture = 5
         elif self.density == "dense":
-            n_harmony = 60
-            n_rhythm = 40
-            n_dynamics = 40
-            n_timbre = 40
-            n_texture = 20
+            n_harmony = 80
+            n_rhythm = 50
+            n_dynamics = 50
+            n_timbre = 50
+            n_texture = 25
         else:  # normal
             n_harmony = 30
             n_rhythm = 20
@@ -449,7 +449,8 @@ class SpectocloudRenderer:
         except ImportError:
             self.plt = None
             self.has_mpl = False
-            print("matplotlib not available. Install with: pip install matplotlib")
+            print("Rendering disabled: matplotlib not available")
+            print("Install matplotlib for visualization: pip install matplotlib")
         
         self.figsize = figsize
         self.dpi = dpi
