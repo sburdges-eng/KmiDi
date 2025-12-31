@@ -49,6 +49,11 @@ from music_brain.learning.pedagogy import (
     generate_ai_teaching_prompt,
 )
 
+from music_brain.learning.openweight_learning import (
+    OpenWeightLearner,
+    OpenWeightLearningManager,
+)
+
 __all__ = [
     # Curriculum
     "DifficultyLevel",
@@ -81,4 +86,7 @@ __all__ = [
     "AdaptiveTeacher",
     "PedagogyEngine",
     "generate_ai_teaching_prompt",
+    # OpenWeight Learning
+    "OpenWeightLearner",
+    "OpenWeightLearningManager",
 ]

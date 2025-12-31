@@ -40,6 +40,10 @@ from music_brain.learning.rulebreak_learning import (
     RuleBreakLearningManager,
     RuleBreakProfile,
 )
+from music_brain.learning.openweight_learning import (
+    OpenWeightLearner,
+    OpenWeightLearningManager,
+)
 
 
 class MusicLearningManager:
@@ -57,6 +61,7 @@ class MusicLearningManager:
         self.arrangement = ArrangementLearningManager(self._subdir("arrangements"))
         self.expression = ExpressionLearningManager(self._subdir("expression"))
         self.rulebreak = RuleBreakLearningManager(self._subdir("rulebreaks"))
+        self.openweight = OpenWeightLearningManager(storage_dir=self._subdir("openweight"))
 
     def _subdir(self, name: str) -> Optional[Path]:
         if self.storage_root:
@@ -148,3 +153,21 @@ class MusicLearningManager:
 
     def choose_rulebreak(self, emotion: str, profile: Optional[str] = None) -> Optional[str]:
         return self.rulebreak.choose(emotion, profile)
+
+    # OpenWeight Learning
+    def get_adaptive_learner(self, task_name: str) -> Optional[OpenWeightLearner]:
+        """Get or create an adaptive learner for a specific task."""
+        if task_name not in self.openweight.learners:
+            # Create default learner if not exists
+            # Note: In production, dimensions should be configured based on task
+            self.openweight.add_learner(task_name, input_dim=64, output_dim=32)
+        return self.openweight.learners.get(task_name)
+
+    def update_adaptive_weights(self, task_name: str, x: List[float], y: List[float]) -> float:
+        """Update weights for an adaptive task."""
+        import numpy as np
+        return self.openweight.update_learner(
+            task_name, 
+            np.array([x]), 
+            np.array([y])
+        )
