@@ -6,9 +6,9 @@ An MCP server that aggregates the top 5 AI platforms into a single "Swarm" tools
 Uses FastMCP for the server architecture.
 
 Run with:
-    python -m penta_core.server
+    python -m mcp_penta_swarm
     # or
-    penta-core-server
+    mcp-penta-swarm
 """
 
 import os
@@ -190,7 +190,7 @@ async def consult_developer(prompt: str) -> str:
     try:
         client = _get_anthropic_client()
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-3-5-sonnet-20241022",
             max_tokens=4096,
             system=DEVELOPER_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": prompt}],

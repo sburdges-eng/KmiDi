@@ -3,10 +3,10 @@
 Penta-Core MCP Server - Module Entry Point
 
 Run with:
-    python -m penta_core
+    python -m mcp_penta_swarm
 """
 
-from penta_core.server import main
+from mcp_penta_swarm.server import main
 
 if __name__ == "__main__":
     main()
