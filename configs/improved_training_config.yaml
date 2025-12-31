@@ -150,14 +150,21 @@ models:
   # -------------------------------------------------------------------------
   # Melody Transformer - POOR PERFORMANCE (34.5%)
   # -------------------------------------------------------------------------
+  # Melody Transformer - POOR PERFORMANCE (34.5%)
+  # -------------------------------------------------------------------------
   melody_transformer:
     status: "needs_improvement"
     previous_accuracy: 0.345
     
     # Architecture - major upgrade
+    # Note: improved_training_pipeline.py currently uses deeper MLP for quick testing.
+    # For production, implement the transformer or LSTM config below.
     input_dim: 64
     output_dim: 128
-    architecture_type: transformer  # Switch from LSTM
+    hidden_layers: [512, 512, 256]  # Used by current pipeline
+    
+    # Future: Switch to transformer architecture
+    architecture_type: transformer  # Target architecture (not yet implemented)
     
     transformer_config:
       d_model: 256  # Increased from 128

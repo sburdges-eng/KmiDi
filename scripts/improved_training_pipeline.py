@@ -366,8 +366,15 @@ def run_training(config: PipelineConfig, models_to_train: List[str]):
         num_params = sum(p.numel() for p in model.parameters())
         logger.info(f"   Parameters: {num_params:,}")
         
-        # Create synthetic dataset
+        # Create synthetic dataset for pipeline testing
+        # Note: Replace with real dataset for actual training
         class SyntheticDataset(Dataset):
+            """Synthetic dataset for testing the pipeline.
+            
+            This creates learnable patterns by adding correlation between
+            input features and labels. Replace with real audio/MIDI data
+            for production training.
+            """
             def __init__(self, num_samples, input_dim, num_classes):
                 self.num_samples = num_samples
                 self.input_dim = input_dim
@@ -377,8 +384,12 @@ def run_training(config: PipelineConfig, models_to_train: List[str]):
                 return self.num_samples
             
             def __getitem__(self, idx):
+                # Create input with some structure based on index
+                torch.manual_seed(idx)  # Reproducible per sample
                 x = torch.randn(self.input_dim)
-                label_idx = int((x.sum().abs() * self.num_classes).item()) % self.num_classes
+                # Add class-dependent signal for learnability
+                label_idx = idx % self.num_classes
+                x[:self.num_classes] += torch.zeros(self.num_classes).scatter_(0, torch.tensor(label_idx), 1.0)
                 return x, label_idx
         
         # Determine number of classes
@@ -404,7 +415,8 @@ def run_training(config: PipelineConfig, models_to_train: List[str]):
             weight_decay=model_cfg.weight_decay,
         )
         
-        if model_cfg.label_smoothing > 0:
+        # Loss function - use label smoothing if configured
+        if model_cfg.loss_type == "label_smoothing" or model_cfg.label_smoothing > 0:
             criterion = nn.CrossEntropyLoss(label_smoothing=model_cfg.label_smoothing)
         else:
             criterion = nn.CrossEntropyLoss()
@@ -419,6 +431,7 @@ def run_training(config: PipelineConfig, models_to_train: List[str]):
             # Train with gradient accumulation
             model.train()
             optimizer.zero_grad()
+            num_batches = len(train_loader)
             for batch_idx, (inputs, targets) in enumerate(train_loader):
                 inputs, targets = inputs.to(device), targets.to(device)
                 outputs = model(inputs)
@@ -427,8 +440,10 @@ def run_training(config: PipelineConfig, models_to_train: List[str]):
                 loss = loss / model_cfg.gradient_accumulation_steps
                 loss.backward()
                 
-                # Step optimizer after accumulation
-                if (batch_idx + 1) % model_cfg.gradient_accumulation_steps == 0:
+                # Step optimizer after accumulation or at end of epoch
+                is_accumulation_step = (batch_idx + 1) % model_cfg.gradient_accumulation_steps == 0
+                is_last_batch = (batch_idx + 1) == num_batches
+                if is_accumulation_step or is_last_batch:
                     torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                     optimizer.step()
                     optimizer.zero_grad()
