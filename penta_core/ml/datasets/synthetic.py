@@ -952,12 +952,10 @@ try:
                     # Use progression index or random within output_dim
                     progression = sample.get("progression", [])
                     if progression:
-                        # Use deterministic mapping based on chord name
-                        chord = str(progression[0])
-                        # Sum ASCII values for deterministic label
-                        label = sum(ord(c) for c in chord) % self.output_dim
+                        # Use abs hash bounded by output_dim to avoid negative indices
+                        label = abs(hash(str(progression[0]))) % self.output_dim
                     else:
-                        label = np.random.randint(0, self.output_dim)
+                        label = int(np.random.randint(0, self.output_dim))
                     self.targets.append(torch.tensor(label, dtype=torch.long))
                 elif self.model_name == "melody_transformer":
                     # Classification: next note prediction (MIDI note, bounded by output_dim)
@@ -966,7 +964,7 @@ try:
                         # Use the last note pitch, bounded by output_dim
                         label = int(notes[-1].get("pitch", 60)) % self.output_dim
                     else:
-                        label = np.random.randint(0, self.output_dim)
+                        label = int(np.random.randint(0, self.output_dim))
                     self.targets.append(torch.tensor(label, dtype=torch.long))
                 else:
                     # Default: random classification target, properly bounded
@@ -1022,4 +1020,3 @@ except ImportError:
     # PyTorch not available
     def create_synthetic_dataset(*args, **kwargs):
         raise ImportError("PyTorch required for create_synthetic_dataset")
-
