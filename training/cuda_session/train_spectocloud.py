@@ -456,13 +456,19 @@ class SpectocloudDataset(Dataset):
             # Normalize emotion to 64D
             emotion = self._normalize_emotion(emotion)
             
-            # Generate target point cloud (self-supervised mode)
-            # Extract valence from emotion
-            valence = emotion[0]
-            arousal = emotion[1] if len(emotion) > 1 else 0.0
-            intensity = emotion[2] if len(emotion) > 2 else 0.5
+            # Load or generate target point cloud
+            if 'target_pointcloud_path' in sample and os.path.exists(sample['target_pointcloud_path']):
+                # Load pre-computed point cloud
+                target_positions = np.load(sample['target_pointcloud_path'])
+            else:
+                # Generate on-the-fly (self-supervised mode)
+                valence = emotion[0]
+                arousal = emotion[1] if len(emotion) > 1 else 0.0
+                intensity = emotion[2] if len(emotion) > 2 else 0.5
+                target_positions = self._generate_target_cloud(valence, arousal, intensity)
             
-            target_positions = self._generate_target_cloud(valence, arousal, intensity)
+            # Generate colors (always on-the-fly since they're simple)
+            valence = emotion[0]
             target_colors = self._generate_target_colors(valence)
             
             return {

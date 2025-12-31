@@ -20,6 +20,7 @@ import random
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional
 import hashlib
+import numpy as np
 
 
 def get_file_hash(filepath: str) -> str:
@@ -143,14 +144,89 @@ def split_train_val(
     return train_items, val_items
 
 
+def generate_point_cloud(
+    valence: float,
+    arousal: float,
+    intensity: float,
+    num_points: int = 1200,
+    seed: Optional[int] = None
+) -> np.ndarray:
+    """
+    Generate target point cloud based on emotion.
+    
+    Args:
+        valence: Emotion valence (-1 to 1)
+        arousal: Emotion arousal (-1 to 1)
+        intensity: Emotion intensity (0 to 1)
+        num_points: Number of points in cloud
+        seed: Random seed for reproducibility
+        
+    Returns:
+        Point cloud as (num_points, 3) array [x, y, z]
+    """
+    if seed is not None:
+        np.random.seed(seed)
+    
+    # Spread increases with arousal
+    spread = 0.16 + 0.22 * max(0, arousal)
+    
+    # Generate points in conical pattern
+    t = np.random.uniform(0, 1, num_points)  # Time dimension
+    theta = np.random.uniform(0, 2 * np.pi, num_points)
+    r = np.random.exponential(spread, num_points) * (1 + t)
+    
+    x = t
+    y = r * np.cos(theta) + 0.5
+    z = r * np.sin(theta) * intensity + 0.5
+    
+    return np.stack([x, y, z], axis=1).astype(np.float32)
+
+
+def save_point_cloud(
+    cloud: np.ndarray,
+    audio_path: Path,
+    clouds_dir: Path
+) -> Path:
+    """
+    Save point cloud to .npy file.
+    
+    Args:
+        cloud: Point cloud array
+        audio_path: Source audio path (for hash-based naming)
+        clouds_dir: Directory to save clouds
+        
+    Returns:
+        Path to saved cloud file
+    """
+    # Create deterministic filename from audio path
+    cloud_hash = get_file_hash(str(audio_path.absolute()))
+    cloud_path = clouds_dir / f"{cloud_hash}.npy"
+    
+    np.save(cloud_path, cloud)
+    return cloud_path
+
+
 def build_spectocloud_manifests(
     audio_root: Optional[Path],
     midi_root: Optional[Path],
     out_dir: Path,
     val_split: float,
-    seed: int = 42
+    seed: int = 42,
+    generate_clouds: bool = False,
+    clouds_dir: Optional[Path] = None
 ):
-    """Build Spectocloud training manifests."""
+    """
+    Build Spectocloud training manifests.
+    
+    Args:
+        audio_root: Root directory for audio files
+        midi_root: Root directory for MIDI files
+        out_dir: Output directory for manifests
+        val_split: Validation split ratio
+        seed: Random seed for splitting
+        generate_clouds: Whether to pre-generate point clouds
+        clouds_dir: Directory to save generated clouds
+    """
     if not audio_root or not audio_root.exists():
         print(f"Warning: Audio root not found: {audio_root}")
         print("Skipping Spectocloud manifest generation.")
@@ -184,6 +260,13 @@ def build_spectocloud_manifests(
     train_pairs, val_pairs = split_train_val(pairs, val_split, seed)
     print(f"  Train: {len(train_pairs)}, Val: {len(val_pairs)}")
     
+    # Setup clouds directory if generating
+    if generate_clouds:
+        if clouds_dir is None:
+            clouds_dir = out_dir.parent / 'clouds'
+        clouds_dir.mkdir(parents=True, exist_ok=True)
+        print(f"  Generating point clouds to: {clouds_dir}")
+    
     # Write manifests
     train_manifest = out_dir / 'spectocloud_train.jsonl'
     val_manifest = out_dir / 'spectocloud_val.jsonl'
@@ -202,12 +285,23 @@ def build_spectocloud_manifests(
                     'audio_path': str(audio_path.absolute()),
                     'midi_path': str(midi_path.absolute()),
                     'emotion': emotion,
-                    # target_pointcloud_path is optional - will be generated on-the-fly
                 }
+                
+                # Generate and save point cloud if requested
+                if generate_clouds:
+                    valence, arousal, intensity = emotion
+                    cloud = generate_point_cloud(
+                        valence, arousal, intensity,
+                        seed=int(get_file_hash(str(audio_path)), 16) % (2**32)
+                    )
+                    cloud_path = save_point_cloud(cloud, audio_path, clouds_dir)
+                    entry['target_pointcloud_path'] = str(cloud_path.absolute())
                 
                 f.write(json.dumps(entry) + '\n')
         
         print(f"  Wrote: {manifest_path}")
+        if generate_clouds:
+            print(f"    (with {len(pairs_list)} pre-computed point clouds)")
 
 
 def build_midi_manifests(
@@ -293,6 +387,16 @@ def main():
         default=42,
         help='Random seed for deterministic splitting (default: 42)'
     )
+    parser.add_argument(
+        '--generate-clouds',
+        action='store_true',
+        help='Pre-generate and save target point clouds as .npy files'
+    )
+    parser.add_argument(
+        '--clouds-dir',
+        type=str,
+        help='Directory to save generated clouds (default: data/clouds)'
+    )
     
     args = parser.parse_args()
     
@@ -300,6 +404,7 @@ def main():
     audio_root = Path(args.audio_root) if args.audio_root else None
     midi_root = Path(args.midi_root) if args.midi_root else None
     out_dir = Path(args.out_dir)
+    clouds_dir = Path(args.clouds_dir) if args.clouds_dir else None
     
     # Create output directory
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -310,7 +415,11 @@ def main():
     
     # Build Spectocloud manifests (requires both audio and MIDI)
     if audio_root and midi_root:
-        build_spectocloud_manifests(audio_root, midi_root, out_dir, args.val_split, args.seed)
+        build_spectocloud_manifests(
+            audio_root, midi_root, out_dir, args.val_split, args.seed,
+            generate_clouds=args.generate_clouds,
+            clouds_dir=clouds_dir
+        )
     else:
         print("Skipping Spectocloud manifests (requires --audio-root and --midi-root)")
     
