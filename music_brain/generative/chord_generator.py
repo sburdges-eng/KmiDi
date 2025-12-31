@@ -329,9 +329,13 @@ class ChordProgressionGenerator(GenerativeModel):
     
     def _transpose_to_key(self, chords: List[str], target_key: str) -> List[str]:
         """Transpose chord progression to target key."""
+        # Return early if chords is empty
+        if not chords:
+            return chords
+        
         # Simple transposition logic
         # Detect current key (assume first chord)
-        current_root = chords[0][0] if chords else "C"
+        current_root = chords[0][0]
         if len(chords[0]) > 1 and chords[0][1] in "b#":
             current_root = chords[0][:2]
         
