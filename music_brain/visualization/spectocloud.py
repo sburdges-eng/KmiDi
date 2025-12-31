@@ -1750,7 +1750,7 @@ class Spectocloud:
         summary = self.metrics.get_summary()
         summary.update(self.renderer.get_performance_summary())
         return summary
-    
+
     def render_animation(
         self,
         output_path: str,
