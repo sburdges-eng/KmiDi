@@ -1,0 +1,46 @@
+{
+  "title": "Sample Emotional Journey",
+  "duration_seconds": 120.0,
+  "snapshots": [
+    {
+      "timestamp": 0.0,
+      "valence": -0.7,
+      "arousal": 0.4,
+      "intensity": 0.6,
+      "emotion_label": "grief",
+      "metadata": null
+    },
+    {
+      "timestamp": 30.0,
+      "valence": -0.5,
+      "arousal": 0.5,
+      "intensity": 0.7,
+      "emotion_label": "longing",
+      "metadata": null
+    },
+    {
+      "timestamp": 60.0,
+      "valence": 0.0,
+      "arousal": 0.6,
+      "intensity": 0.8,
+      "emotion_label": "catharsis",
+      "metadata": null
+    },
+    {
+      "timestamp": 90.0,
+      "valence": 0.5,
+      "arousal": 0.7,
+      "intensity": 0.9,
+      "emotion_label": "hope",
+      "metadata": null
+    },
+    {
+      "timestamp": 120.0,
+      "valence": 0.7,
+      "arousal": 0.8,
+      "intensity": 0.85,
+      "emotion_label": "euphoria",
+      "metadata": null
+    }
+  ]
+}
