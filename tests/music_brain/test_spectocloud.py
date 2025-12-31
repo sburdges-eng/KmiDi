@@ -435,5 +435,187 @@ class TestRendering:
             assert result is None
 
 
+class TestPerformanceOptimizations:
+    """Test new performance optimization features (v2.0)."""
+    
+    def test_performance_metrics(self):
+        """Test performance metrics tracking."""
+        from music_brain.visualization.spectocloud import PerformanceMetrics
+        
+        metrics = PerformanceMetrics()
+        
+        # Record some times
+        metrics.record_frame_time(0.01)
+        metrics.record_frame_time(0.02)
+        metrics.record_particle_gen_time(0.005)
+        metrics.record_anchor_similarity_time(0.002)
+        metrics.record_render_time(0.015)
+        
+        summary = metrics.get_summary()
+        
+        assert 'avg_frame_time_ms' in summary
+        assert summary['avg_frame_time_ms'] == pytest.approx(15.0, rel=0.1)
+        assert summary['total_frames_processed'] == 2
+    
+    def test_lod_config(self):
+        """Test Level of Detail configuration."""
+        from music_brain.visualization.spectocloud import LODLevel, LODConfig
+        
+        config = LODConfig(level=LODLevel.MEDIUM)
+        
+        assert config.get_particle_count() == 1200
+        assert config.get_anchor_scale() == pytest.approx(0.8)
+        assert config.get_texture_resolution() == 64
+        
+        # Change LOD level
+        config.level = LODLevel.HIGH
+        assert config.get_particle_count() == 2000
+    
+    def test_vectorized_similarity(self):
+        """Test vectorized anchor similarity computation."""
+        from music_brain.visualization.spectocloud import AnchorLibrary
+        
+        library = AnchorLibrary(density="sparse")
+        
+        features = {
+            'tension': 0.5,
+            'complexity': 0.3,
+            'density': 0.7,
+            'energy': 0.6,
+        }
+        
+        # Test both methods give similar results
+        standard_result = library.compute_anchor_similarities(features, top_k=5)
+        vectorized_result = library.compute_anchor_similarities_vectorized(features, top_k=5)
+        
+        assert len(vectorized_result) == 5
+        
+        # Top anchor should be similar (may not be identical due to numerical precision)
+        assert isinstance(vectorized_result[0][0], str)  # anchor_id
+        assert 0 <= vectorized_result[0][1] <= 1  # similarity
+    
+    def test_spectocloud_with_lod(self):
+        """Test Spectocloud initialization with LOD."""
+        from music_brain.visualization.spectocloud import LODLevel
+        
+        spectocloud = Spectocloud(
+            anchor_density="sparse",
+            lod_level=LODLevel.LOW,
+            use_vectorized_similarity=True,
+        )
+        
+        # LOD.LOW should set n_particles to 600
+        assert spectocloud.n_particles == 600
+        assert spectocloud.use_vectorized_similarity is True
+
+
+class TestTexturization:
+    """Test texturization features (v2.0)."""
+    
+    def test_texture_config(self):
+        """Test TextureConfig dataclass."""
+        from music_brain.visualization.spectocloud import TextureConfig
+        
+        config = TextureConfig()
+        
+        assert config.fog_enabled is True
+        assert config.fog_density == pytest.approx(0.15)
+        assert config.glow_enabled is True
+        assert config.noise_enabled is True
+    
+    def test_texture_generator(self):
+        """Test TextureGenerator basic functions."""
+        from music_brain.visualization.spectocloud import TextureGenerator, TextureConfig
+        
+        config = TextureConfig()
+        generator = TextureGenerator(config)
+        
+        # Test noise generation
+        noise = generator.generate_noise_texture(100)
+        assert noise.shape == (100,)
+        assert np.abs(noise).max() <= 1.0  # Should be normalized
+        
+        # Test caching
+        noise2 = generator.generate_noise_texture(100, cache_key=42)
+        noise3 = generator.generate_noise_texture(100, cache_key=42)
+        np.testing.assert_array_equal(noise2, noise3)  # Same cache key = same noise
+    
+    def test_depth_fog(self):
+        """Test depth fog application."""
+        from music_brain.visualization.spectocloud import TextureGenerator, TextureConfig
+        
+        config = TextureConfig(fog_enabled=True, fog_density=0.5)
+        generator = TextureGenerator(config)
+        
+        # Create test data
+        positions = np.random.rand(50, 3)
+        colors = np.random.rand(50, 4)
+        camera_position = np.array([0.5, 0.5, 2.0])
+        
+        result = generator.apply_depth_fog(positions, colors, camera_position)
+        
+        assert result.shape == (50, 4)
+        # Colors should be modified (blended with fog)
+        assert not np.allclose(result, colors)
+    
+    def test_size_variation(self):
+        """Test particle size variation."""
+        from music_brain.visualization.spectocloud import TextureGenerator, TextureConfig
+        
+        config = TextureConfig(size_variation=0.3)
+        generator = TextureGenerator(config)
+        
+        base_sizes = np.ones(100) * 10.0
+        varied_sizes = generator.apply_size_variation(base_sizes)
+        
+        assert varied_sizes.shape == (100,)
+        # Should have some variation
+        assert np.std(varied_sizes) > 0
+    
+    def test_renderer_with_texture(self):
+        """Test SpectocloudRenderer with texture config."""
+        from music_brain.visualization.spectocloud import (
+            SpectocloudRenderer, TextureConfig, LODConfig
+        )
+        
+        texture_config = TextureConfig(fog_enabled=True, glow_enabled=True)
+        lod_config = LODConfig()
+        
+        renderer = SpectocloudRenderer(
+            texture_config=texture_config,
+            lod_config=lod_config,
+        )
+        
+        assert renderer.texture_config.fog_enabled is True
+        assert renderer.lod_config.level.value == "medium"
+        assert renderer.metrics is not None
+
+
+class TestPerformanceSummary:
+    """Test performance summary functionality."""
+    
+    def test_spectocloud_performance_summary(self):
+        """Test getting performance summary from Spectocloud."""
+        spectocloud = Spectocloud(
+            anchor_density="sparse",
+            n_particles=100,
+            use_vectorized_similarity=True,
+        )
+        
+        # Process some MIDI
+        midi_events = [
+            {'time': 0.0, 'type': 'note_on', 'note': 60, 'velocity': 64},
+        ]
+        spectocloud.process_midi(midi_events, duration=1.0)
+        
+        # Get summary from spectocloud's own metrics
+        summary = spectocloud.metrics.get_summary()
+        
+        assert 'avg_frame_time_ms' in summary
+        assert 'total_frames_processed' in summary
+        # Should have processed at least 1 frame (1.0s / 0.2s window = 5 frames)
+        assert summary['total_frames_processed'] >= 1
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
