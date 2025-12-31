@@ -1397,8 +1397,9 @@ class SpectocloudRenderer:
         # Cache result
         if use_cache:
             if len(self._frame_cache) >= self._cache_max_size:
-                # Evict oldest entries
-                oldest_keys = list(self._frame_cache.keys())[:10]
+                # Evict ~20% of oldest entries (proportional to cache size)
+                evict_count = max(1, self._cache_max_size // 5)
+                oldest_keys = list(self._frame_cache.keys())[:evict_count]
                 for k in oldest_keys:
                     del self._frame_cache[k]
             self._frame_cache[cache_key] = fig

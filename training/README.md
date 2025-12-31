@@ -230,9 +230,9 @@ python -m music_brain.inference.dual_runner \
 | MIDI Generator | 5ms/token | ~4ms ✅ |
 | Combined | 16.67ms (60 FPS) | ~15ms ✅ |
 
-### Fine-tuning on M4 (Optional)
+### Fine-tuning on M4 (50-100 Epochs)
 
-The config supports LoRA-based fine-tuning for personal style adaptation:
+The config supports extended LoRA-based fine-tuning for thorough personal style adaptation:
 
 ```yaml
 # In dual_model_config.yaml
@@ -245,9 +245,25 @@ finetune:
     dropout: 0.1
   training:
     batch_size: 2
+    grad_accum_steps: 8          # Effective batch = 16
     learning_rate: 1e-4
-    num_epochs: 3
+    min_epochs: 50               # Minimum epochs
+    max_epochs: 100              # Maximum epochs
+    warmup_epochs: 5
+    lr_schedule: "cosine_with_restarts"
+    num_cycles: 3                # 3 LR restarts
+    early_stopping:
+      enabled: true
+      patience: 15               # Stop if no improvement for 15 epochs
+    save_every_epochs: 10        # Checkpoint every 10 epochs
 ```
+
+**Estimated Training Time on M4:**
+| Dataset Size | Time (50 epochs) | Time (100 epochs) |
+|--------------|------------------|-------------------|
+| 1,000 samples | ~2 hours | ~4 hours |
+| 5,000 samples | ~8 hours | ~16 hours |
+| 10,000 samples | ~16 hours | ~32 hours |
 
 Run fine-tuning:
 ```bash

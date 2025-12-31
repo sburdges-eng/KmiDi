@@ -610,8 +610,8 @@ def main(config_path: str):
         try:
             model = torch.compile(model)
             print("Model compiled")
-        except:
-            pass
+        except (RuntimeError, AttributeError) as e:
+            print(f"torch.compile() skipped: {e}")
     
     # Create datasets
     data_cfg = config.get('data', {})

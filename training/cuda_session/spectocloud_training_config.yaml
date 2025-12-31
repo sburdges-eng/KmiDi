@@ -33,7 +33,10 @@ hardware:
 # -----------------------------------------------------------------------------
 model:
   name: "SpectocloudViT"
-  base_model: "microsoft/swin-tiny-patch4-window7-224"  # Pretrained Swin Transformer
+  # Note: The training script uses a custom CNN+Transformer architecture
+  # inspired by Swin Transformer but optimized for point cloud generation.
+  # This is NOT loading pretrained weights - training from scratch.
+  architecture_inspiration: "swin-tiny"
   task: "point_cloud_generation"
   
   # Input encoding
@@ -50,7 +53,7 @@ model:
   
   # Architecture
   encoder:
-    backbone: "swin-tiny"
+    backbone: "custom_cnn_transformer"  # Custom implementation
     hidden_dim: 256
     num_layers: 6
     num_heads: 8

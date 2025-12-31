@@ -439,7 +439,7 @@ def main(config_path: str):
         try:
             model = torch.compile(model)
             print("Model compiled with torch.compile()")
-        except Exception as e:
+        except (RuntimeError, AttributeError) as e:
             print(f"torch.compile() not available: {e}")
     
     # Create datasets
