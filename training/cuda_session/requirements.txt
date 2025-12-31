@@ -1,0 +1,35 @@
+# Training Session Requirements
+# CUDA GPU Session
+# =================
+
+# Core
+torch>=2.1.0
+torchvision>=0.16.0
+torchaudio>=2.1.0
+
+# Transformers and Vision
+transformers>=4.35.0
+timm>=0.9.0
+
+# Experiment tracking
+wandb>=0.16.0
+tensorboard>=2.15.0
+
+# Core utilities
+numpy>=1.24.0
+pyyaml>=6.0
+einops>=0.7.0
+tqdm>=4.66.0
+
+# Export formats
+onnx>=1.15.0
+onnxruntime>=1.16.0
+
+# CoreML (optional, for Mac export)
+coremltools>=7.0
+
+# Optional: Flash Attention for faster training
+# flash-attn>=2.0.0  # Requires CUDA 11.8+
+
+# Optional: DeepSpeed for multi-GPU
+# deepspeed>=0.12.0

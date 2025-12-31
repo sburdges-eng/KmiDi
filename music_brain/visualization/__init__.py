@@ -20,6 +20,13 @@ from .spectocloud import (
     MusicalParameterExtractor,
     AnchorLibrary,
     SpectocloudRenderer,
+    # Performance and LOD (v2.0)
+    PerformanceMetrics,
+    LODLevel,
+    LODConfig,
+    # Texturization (v2.0)
+    TextureConfig,
+    TextureGenerator,
 )
 
 __all__ = [
@@ -35,4 +42,11 @@ __all__ = [
     "MusicalParameterExtractor",
     "AnchorLibrary",
     "SpectocloudRenderer",
+    # Performance and LOD (v2.0)
+    "PerformanceMetrics",
+    "LODLevel",
+    "LODConfig",
+    # Texturization (v2.0)
+    "TextureConfig",
+    "TextureGenerator",
 ]

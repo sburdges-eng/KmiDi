@@ -1,0 +1,274 @@
+# =============================================================================
+# MIDI Generator LM - CUDA GPU Training Configuration
+# =============================================================================
+# Target: NVIDIA GPU Cloud Session ($50 budget - shared with Spectocloud)
+# Recommended GPU: RTX 4090, A100, or H100 (24GB+ VRAM)
+# Estimated Training Time: 3-5 hours
+# =============================================================================
+
+session:
+  name: "midi-generator-cuda-train"
+  budget_usd: 25                # Split budget with Spectocloud
+  estimated_hours: 4
+  priority: "high"
+
+# -----------------------------------------------------------------------------
+# Hardware Configuration
+# -----------------------------------------------------------------------------
+hardware:
+  device: cuda
+  precision: bf16               # Better for transformers
+  cuda_version: "12.1"
+  cudnn_version: "8.9"
+  gpu_memory_gb: 24
+  num_gpus: 1
+  compile_mode: true
+  flash_attention: true         # Enable Flash Attention 2
+
+# -----------------------------------------------------------------------------
+# Model Architecture: MusicGen-style Transformer
+# -----------------------------------------------------------------------------
+# Purpose: Generate MIDI from emotional intent + musical context
+# Input: Emotion embedding + chord context + style tokens
+# Output: MIDI events (note, velocity, timing, duration)
+# -----------------------------------------------------------------------------
+model:
+  name: "EmotionMIDITransformer"
+  
+  # Base architecture: Small GPT-2 style for efficiency
+  base_config: "gpt2-small"
+  
+  # Custom configuration
+  architecture:
+    type: "decoder_only"
+    vocab_size: 512             # MIDI events + special tokens
+    max_seq_length: 1024        # ~4 bars at 16th note resolution
+    hidden_dim: 384             # Compact for real-time
+    num_layers: 8
+    num_heads: 6
+    ff_multiplier: 4
+    dropout: 0.1
+    
+    # Relative position encoding for music
+    position_encoding: "rotary"
+    rotary_dim: 64
+    
+    # Multi-stream input
+    input_streams:
+      - name: "midi_tokens"
+        vocab_size: 388         # 128 notes + 128 velocities + 128 timing + specials
+      - name: "emotion_context"
+        dim: 64
+      - name: "chord_context"
+        dim: 32
+      - name: "style_tokens"
+        vocab_size: 64          # Genre/feel tokens
+  
+  # Total parameters
+  params_estimate: "~25M"
+  inference_target_ms: 5        # Per-token generation
+
+# -----------------------------------------------------------------------------
+# Training Data Configuration
+# -----------------------------------------------------------------------------
+data:
+  # MIDI datasets (will need to prepare)
+  train_manifest: "data/manifests/midi_train.jsonl"
+  val_manifest: "data/manifests/midi_val.jsonl"
+  
+  # Data sources for manifest generation
+  midi_sources:
+    - path: "data/progressions/"
+      type: "chord_progressions"
+    - path: "data/grooves/"
+      type: "groove_patterns"
+    - external: "lakh_midi_clean"  # Popular MIDI dataset
+      download: true
+  
+  # Tokenization
+  tokenizer:
+    type: "midi_tokenizer"
+    vocab_size: 388
+    
+    # MIDI quantization
+    time_quantization: 16       # 16th notes
+    velocity_bins: 32           # Quantize velocity to 32 levels
+    max_bar_length: 4
+    
+    # Special tokens
+    special_tokens:
+      pad: 0
+      bos: 1
+      eos: 2
+      bar: 3
+      emotion_start: 4
+      emotion_end: 5
+  
+  # Dataloader
+  batch_size: 64
+  max_seq_length: 512           # Truncate/pad sequences
+  num_workers: 8
+  pin_memory: true
+
+# -----------------------------------------------------------------------------
+# Emotion Conditioning
+# -----------------------------------------------------------------------------
+emotion:
+  # Use emotion thesaurus structure
+  source: "data/emotion_thesaurus/"
+  
+  # Conditioning method
+  conditioning:
+    type: "cross_attention"
+    layers: [0, 2, 4, 6]        # Apply at these transformer layers
+    
+    # Emotion embedding
+    embedding_dim: 64
+    num_emotion_tokens: 8       # Context window
+    
+    # Valence-Arousal-Intensity space
+    vai_encoding: true
+    vai_dim: 3
+
+# -----------------------------------------------------------------------------
+# Optimizer Configuration
+# -----------------------------------------------------------------------------
+optim:
+  name: adamw
+  lr: 3e-4
+  weight_decay: 0.1
+  betas: [0.9, 0.95]
+  eps: 1e-8
+  grad_clip: 1.0
+
+# -----------------------------------------------------------------------------
+# Learning Rate Schedule
+# -----------------------------------------------------------------------------
+scheduler:
+  name: cosine_with_warmup
+  warmup_steps: 500
+  min_lr_ratio: 0.1
+  max_steps: 30000
+
+# -----------------------------------------------------------------------------
+# Training Configuration
+# -----------------------------------------------------------------------------
+training:
+  epochs: 15
+  max_steps: 30000
+  
+  log_every: 100
+  eval_every: 1000
+  save_every: 2000
+  
+  grad_accum_steps: 2
+  
+  amp: true
+  amp_dtype: bfloat16
+  
+  # Teacher forcing schedule
+  teacher_forcing:
+    initial_ratio: 1.0
+    final_ratio: 0.8
+    warmup_steps: 5000
+  
+  # Sampling during eval
+  generation:
+    enabled: true
+    num_samples: 5
+    temperature: 0.9
+    top_k: 50
+    top_p: 0.95
+
+# -----------------------------------------------------------------------------
+# Loss Functions
+# -----------------------------------------------------------------------------
+loss:
+  # Primary: Next token prediction
+  main_loss:
+    type: "cross_entropy"
+    label_smoothing: 0.1
+  
+  # Auxiliary: Emotion consistency
+  emotion_consistency:
+    type: "contrastive"
+    weight: 0.1
+    temperature: 0.07
+  
+  # Musical structure loss
+  structure_loss:
+    type: "bar_alignment"
+    weight: 0.05
+
+# -----------------------------------------------------------------------------
+# Data Augmentation
+# -----------------------------------------------------------------------------
+augment:
+  enabled: true
+  
+  midi:
+    transpose_semitones: [-5, 5]  # Random transposition
+    time_stretch: [0.95, 1.05]
+    velocity_scale: [0.9, 1.1]
+    random_drop: 0.05             # Drop notes
+    
+  emotion:
+    noise_scale: 0.1              # Add noise to embeddings
+    interpolation: true           # Blend emotions
+
+# -----------------------------------------------------------------------------
+# Validation Metrics
+# -----------------------------------------------------------------------------
+metrics:
+  - name: "perplexity"
+    lower_is_better: true
+  - name: "note_accuracy"
+    lower_is_better: false
+  - name: "timing_accuracy"
+    lower_is_better: false
+  - name: "emotion_consistency"
+    lower_is_better: false
+  - name: "musical_structure_score"
+    lower_is_better: false
+
+# -----------------------------------------------------------------------------
+# Export Configuration
+# -----------------------------------------------------------------------------
+export:
+  formats:
+    - "pytorch"
+    - "onnx"
+    - "coreml"
+  
+  onnx:
+    opset_version: 17
+    dynamic_axes: true
+  
+  # Quantization for deployment
+  quantization:
+    int8: true
+    int4: false                  # Enable for smaller model
+
+# -----------------------------------------------------------------------------
+# Experiment Tracking
+# -----------------------------------------------------------------------------
+logging:
+  project: "kmidi-midi-generator"
+  experiment: "cuda-v1"
+  
+  wandb:
+    enabled: true
+    project: "midi-generator"
+    tags: ["cuda", "transformer", "midi"]
+  
+  tensorboard:
+    enabled: true
+    log_dir: "runs/midi_generator_cuda"
+  
+  # Sample MIDI outputs during training
+  log_audio: true               # Render MIDI to audio for listening
+
+# -----------------------------------------------------------------------------
+# Reproducibility
+# -----------------------------------------------------------------------------
+seed: 42
