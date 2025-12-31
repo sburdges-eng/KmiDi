@@ -28,6 +28,22 @@ import numpy as np
 from .base import GenerativeModel, GenerativeConfig, GenerationResult
 
 
+# General MIDI drum note mapping
+GM_DRUM_MAP = {
+    "kick": 36,       # Bass Drum 1
+    "snare": 38,      # Acoustic Snare
+    "hihat": 42,      # Closed Hi-Hat
+    "open_hihat": 46, # Open Hi-Hat
+    "crash": 49,      # Crash Cymbal 1
+    "ride": 51,       # Ride Cymbal 1
+    "clap": 39,       # Hand Clap
+    "toms": 45,       # Low Tom
+    "percussion": 56, # Cowbell
+    "timpani": 47,    # Low-Mid Tom (approximation)
+    "brush_kit": 38,  # Acoustic Snare (brush variation controlled by velocity)
+}
+
+
 @dataclass
 class ArrangementConfig(GenerativeConfig):
     """Configuration for arrangement generator."""
@@ -417,10 +433,16 @@ class ArrangementGenerator(GenerativeModel):
         """Generate simple chord progression as fallback."""
         is_minor = "m" in key and "maj" not in key
         
+        # Extract root with accidentals (handle "Dbm", "F#m", etc.)
+        if len(key) > 1 and key[1] in "b#":
+            root = key[:2]
+        else:
+            root = key[0]
+        
         if is_minor:
             base = [key, key.replace("m", "") + "m7", 
-                   self._transpose_note(key[0], 3), 
-                   self._transpose_note(key[0], 7)]
+                   self._transpose_note(root, 3), 
+                   self._transpose_note(root, 7)]
         else:
             base = [key, self._transpose_note(key, 7) + "m",
                    self._transpose_note(key, 5), 
@@ -434,9 +456,15 @@ class ArrangementGenerator(GenerativeModel):
     def _transpose_note(self, note: str, semitones: int) -> str:
         """Transpose a note by semitones."""
         notes = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
+        # Enharmonic equivalents (sharps to flats)
+        enharmonic = {"C#": "Db", "D#": "Eb", "F#": "Gb", "G#": "Ab", "A#": "Bb", "B#": "C", "E#": "F"}
+        
         base = note[0]
         if len(note) > 1 and note[1] in "b#":
             base = note[:2]
+        
+        # Convert sharps to flats for lookup
+        base = enharmonic.get(base, base)
         
         try:
             idx = notes.index(base)
@@ -875,7 +903,22 @@ class Arrangement:
                         delta = 0
                     
                     # Handle different event types
-                    if "pitch" in event:
+                    if "drum" in event:
+                        # Map drum name to General MIDI pitch
+                        drum_name = event["drum"]
+                        pitch = GM_DRUM_MAP.get(drum_name, 38)  # Default to snare
+                        velocity = event.get("velocity", 64)
+                        duration = int(event.get("duration", 0.25) * 480)  # Short duration for drums
+                        
+                        track.append(mido.Message(
+                            'note_on', note=pitch, velocity=velocity, time=delta
+                        ))
+                        track.append(mido.Message(
+                            'note_off', note=pitch, velocity=0, time=duration
+                        ))
+                        current_time = ticks + duration
+                    
+                    elif "pitch" in event:
                         pitch = event["pitch"]
                         velocity = event.get("velocity", 64)
                         duration = int(event.get("duration", 1.0) * 480)
