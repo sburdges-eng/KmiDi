@@ -36,6 +36,7 @@ from .losses import (
     MultiTaskLoss,
     FocalLoss,
     LabelSmoothingLoss,
+    get_loss_function,
 )
 
 # Architectures
@@ -48,6 +49,7 @@ from .architectures import (
     MelodyLSTM,
     HarmonyMLP,
     MultiTaskModel,
+    create_model,
 )
 
 # Evaluation
@@ -80,6 +82,7 @@ __all__ = [
     "MultiTaskLoss",
     "FocalLoss",
     "LabelSmoothingLoss",
+    "get_loss_function",
     # Architectures
     "AttentionBlock",
     "MultiHeadAttention",
@@ -89,6 +92,7 @@ __all__ = [
     "MelodyLSTM",
     "HarmonyMLP",
     "MultiTaskModel",
+    "create_model",
     # Evaluation
     "BaseMetrics",
     "MetricResult",

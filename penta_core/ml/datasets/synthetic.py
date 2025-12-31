@@ -811,3 +811,213 @@ def generate_groove_samples(
     generator = SyntheticGenerator(config)
     return generator.generate_groove_samples(num_samples, output_dir)
 
+
+# =============================================================================
+# PyTorch Dataset Wrappers
+# =============================================================================
+
+
+try:
+    import torch
+    from torch.utils.data import Dataset
+
+    class SyntheticTensorDataset(Dataset):
+        """
+        PyTorch Dataset wrapper for synthetic training data.
+
+        Converts synthetic samples to tensors for training.
+        """
+
+        def __init__(
+            self,
+            model_name: str,
+            num_samples: int = 1000,
+            input_dim: int = 64,
+            output_dim: int = 32,
+            config: Optional[GeneratorConfig] = None,
+        ):
+            """
+            Initialize synthetic dataset.
+
+            Args:
+                model_name: Model type to generate data for
+                num_samples: Number of samples to generate
+                input_dim: Input dimension
+                output_dim: Output dimension (number of classes for classification)
+                config: Generator configuration
+            """
+            self.model_name = model_name
+            self.input_dim = input_dim
+            self.output_dim = output_dim
+            self.generator = SyntheticGenerator(config)
+
+            # Generate samples based on model type
+            if model_name in ["emotion_recognizer", "dynamics_engine"]:
+                self.samples = self.generator.generate_emotion_samples(num_samples)
+            elif model_name in ["melody_transformer"]:
+                self.samples = self.generator.generate_melody_samples(num_samples)
+            elif model_name == "harmony_predictor":
+                self.samples = self.generator.generate_harmony_samples(num_samples)
+            elif model_name == "groove_predictor":
+                self.samples = self.generator.generate_groove_samples(num_samples)
+            else:
+                # Default to emotion samples
+                self.samples = self.generator.generate_emotion_samples(num_samples)
+
+            # Pre-compute tensors for efficiency
+            self._prepare_tensors()
+
+        def _prepare_tensors(self):
+            """Convert samples to tensors."""
+            self.inputs = []
+            self.targets = []
+
+            for sample in self.samples:
+                # Get feature vector
+                if "feature_vector" in sample:
+                    features = sample["feature_vector"]
+                else:
+                    # Generate random features matching input_dim
+                    features = np.random.randn(self.input_dim).tolist()
+
+                # Pad or truncate to input_dim
+                if len(features) < self.input_dim:
+                    features = features + [0.0] * (self.input_dim - len(features))
+                elif len(features) > self.input_dim:
+                    features = features[:self.input_dim]
+
+                # Create appropriate input tensor based on model type
+                if self.model_name == "emotion_recognizer":
+                    # CNN expects 4D input: (channels, height, width)
+                    # Create a synthetic mel spectrogram-like input
+                    mel_height = 64  # n_mels
+                    mel_width = 128  # time frames
+                    # Create random mel spectrogram with some structure
+                    mel_spec = np.random.randn(1, mel_height, mel_width).astype(np.float32)
+                    # Add some bias based on emotion features
+                    if len(features) >= 2:
+                        mel_spec += features[0] * 0.1  # valence bias
+                        mel_spec[:, :mel_height//2, :] += features[1] * 0.1  # arousal in upper freqs
+                    self.inputs.append(torch.from_numpy(mel_spec))
+                elif self.model_name == "melody_transformer":
+                    # MelodyLSTM expects integer indices for embedding: (seq_len,)
+                    # Create sequence of MIDI note indices
+                    seq_len = 32
+                    notes = sample.get("notes", [])
+                    if notes:
+                        # Extract pitch values from notes
+                        pitches = [int(n.get("pitch", 60)) % self.input_dim for n in notes[:seq_len]]
+                        # Pad if needed
+                        while len(pitches) < seq_len:
+                            pitches.append(60 % self.input_dim)  # Pad with middle C
+                    else:
+                        # Generate random note sequence
+                        pitches = np.random.randint(0, self.input_dim, size=seq_len).tolist()
+                    self.inputs.append(torch.tensor(pitches[:seq_len], dtype=torch.long))
+                elif self.model_name == "groove_predictor":
+                    # LSTM expects 2D float input: (seq_len, features) or will be unsqueezed
+                    self.inputs.append(torch.tensor(features, dtype=torch.float32))
+                else:
+                    # MLP: flat input
+                    self.inputs.append(torch.tensor(features, dtype=torch.float32))
+
+                # Get target based on model type
+                if self.model_name == "emotion_recognizer":
+                    # Classification: emotion label
+                    emotion = sample.get("emotion", "neutral")
+                    emotion_map = {
+                        "happy": 0, "sad": 1, "angry": 2, "fear": 3,
+                        "surprise": 4, "disgust": 5, "neutral": 6,
+                        "peaceful": 0, "tense": 2, "melancholic": 1, "energetic": 0,
+                    }
+                    label = emotion_map.get(emotion, 6)
+                    self.targets.append(torch.tensor(label, dtype=torch.long))
+                elif self.model_name == "dynamics_engine":
+                    # Regression: valence/arousal
+                    valence = sample.get("valence", 0.0)
+                    arousal = sample.get("arousal", 0.0)
+                    target = [valence, arousal] + [0.0] * (self.output_dim - 2)
+                    self.targets.append(torch.tensor(target[:self.output_dim], dtype=torch.float32))
+                elif self.model_name == "groove_predictor":
+                    # Regression: groove features
+                    groove_type = sample.get("groove_type", "straight")
+                    groove_map = {"straight": 0, "swing": 1, "shuffle": 2, "laid_back": 3, "rushed": 4}
+                    idx = groove_map.get(groove_type, 0)
+                    target = [0.0] * self.output_dim
+                    if idx < self.output_dim:
+                        target[idx] = 1.0
+                    self.targets.append(torch.tensor(target, dtype=torch.float32))
+                elif self.model_name == "harmony_predictor":
+                    # Classification: chord label (limited to output_dim)
+                    # Use progression index or random within output_dim
+                    progression = sample.get("progression", [])
+                    if progression:
+                        # Use abs hash bounded by output_dim to avoid negative indices
+                        label = abs(hash(str(progression[0]))) % self.output_dim
+                    else:
+                        label = int(np.random.randint(0, self.output_dim))
+                    self.targets.append(torch.tensor(label, dtype=torch.long))
+                elif self.model_name == "melody_transformer":
+                    # Classification: next note prediction (MIDI note, bounded by output_dim)
+                    notes = sample.get("notes", [])
+                    if notes:
+                        # Use the last note pitch, bounded by output_dim
+                        label = int(notes[-1].get("pitch", 60)) % self.output_dim
+                    else:
+                        label = int(np.random.randint(0, self.output_dim))
+                    self.targets.append(torch.tensor(label, dtype=torch.long))
+                else:
+                    # Default: random classification target, properly bounded
+                    self.targets.append(
+                        torch.tensor(np.random.randint(0, self.output_dim), dtype=torch.long)
+                    )
+
+        def __len__(self) -> int:
+            return len(self.inputs)
+
+        def __getitem__(self, idx: int):
+            return self.inputs[idx], self.targets[idx]
+
+
+    def create_synthetic_dataset(
+        model_name: str,
+        num_samples: int = 1000,
+        input_dim: int = 64,
+        output_dim: int = 32,
+        config: Optional[GeneratorConfig] = None,
+    ) -> "SyntheticTensorDataset":
+        """
+        Create a PyTorch-compatible synthetic dataset for training.
+
+        Args:
+            model_name: Name of the model to create data for:
+                - "emotion_recognizer"
+                - "melody_transformer"
+                - "harmony_predictor"
+                - "dynamics_engine"
+                - "groove_predictor"
+            num_samples: Number of samples to generate
+            input_dim: Input dimension
+            output_dim: Output dimension
+            config: Generator configuration
+
+        Returns:
+            SyntheticTensorDataset for use with PyTorch DataLoader
+
+        Example:
+            dataset = create_synthetic_dataset("emotion_recognizer", num_samples=1000)
+            loader = DataLoader(dataset, batch_size=32, shuffle=True)
+        """
+        return SyntheticTensorDataset(
+            model_name=model_name,
+            num_samples=num_samples,
+            input_dim=input_dim,
+            output_dim=output_dim,
+            config=config,
+        )
+
+except ImportError:
+    # PyTorch not available
+    def create_synthetic_dataset(*args, **kwargs):
+        raise ImportError("PyTorch required for create_synthetic_dataset")
+

@@ -672,6 +672,148 @@ if TORCH_AVAILABLE:
             return self.encoder(x)
 
 
+    # =========================================================================
+    # Model Factory Function
+    # =========================================================================
+
+    def create_model(
+        model_name: str,
+        input_dim: int = 64,
+        output_dim: int = 32,
+        **kwargs,
+    ) -> nn.Module:
+        """
+        Create a model by name for the training pipeline.
+
+        Args:
+            model_name: Name of the model to create:
+                - "emotion_recognizer": CNN for emotion classification
+                - "melody_transformer": LSTM for melody generation
+                - "harmony_predictor": MLP for chord prediction
+                - "dynamics_engine": Simple MLP for dynamics mapping
+                - "groove_predictor": LSTM for groove prediction
+            input_dim: Input dimension
+            output_dim: Output dimension
+            **kwargs: Additional model-specific arguments
+
+        Returns:
+            PyTorch nn.Module
+
+        Example:
+            model = create_model("emotion_recognizer", input_dim=128, output_dim=7)
+        """
+        model_configs = {
+            "emotion_recognizer": {
+                "class": EmotionCNN,
+                "kwargs": {
+                    "num_classes": output_dim,
+                    "in_channels": 1,
+                    "base_channels": 32,
+                    "use_attention": True,
+                },
+            },
+            "melody_transformer": {
+                "class": MelodyLSTM,
+                "kwargs": {
+                    "vocab_size": input_dim,
+                    "embedding_dim": 64,
+                    "hidden_dim": 256,
+                    "num_classes": output_dim,
+                },
+            },
+            "harmony_predictor": {
+                "class": HarmonyMLP,
+                "kwargs": {
+                    "input_dim": input_dim,
+                    "hidden_dims": [256, 128, 64],
+                    "num_chords": output_dim,
+                },
+            },
+            "dynamics_engine": {
+                "class": _DynamicsEngine,
+                "kwargs": {
+                    "input_dim": input_dim,
+                    "output_dim": output_dim,
+                },
+            },
+            "groove_predictor": {
+                "class": _GroovePredictor,
+                "kwargs": {
+                    "input_dim": input_dim,
+                    "output_dim": output_dim,
+                },
+            },
+        }
+
+        if model_name not in model_configs:
+            raise ValueError(
+                f"Unknown model: {model_name}. "
+                f"Available: {list(model_configs.keys())}"
+            )
+
+        config = model_configs[model_name]
+        model_kwargs = config["kwargs"].copy()
+        model_kwargs.update(kwargs)
+
+        return config["class"](**model_kwargs)
+
+
+    class _DynamicsEngine(nn.Module):
+        """Simple MLP for dynamics/expression parameter mapping."""
+
+        def __init__(self, input_dim: int = 32, output_dim: int = 16, dropout: float = 0.2):
+            super().__init__()
+            self.net = nn.Sequential(
+                nn.Linear(input_dim, 128),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+                nn.Linear(128, 64),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+                nn.Linear(64, output_dim),
+                nn.Tanh(),  # Output normalized dynamics
+            )
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            return self.net(x)
+
+
+    class _GroovePredictor(nn.Module):
+        """LSTM for groove/timing pattern prediction."""
+
+        def __init__(
+            self,
+            input_dim: int = 64,
+            hidden_dim: int = 128,
+            output_dim: int = 32,
+            num_layers: int = 2,
+            dropout: float = 0.2,
+        ):
+            super().__init__()
+            self.lstm = nn.LSTM(
+                input_size=input_dim,
+                hidden_size=hidden_dim,
+                num_layers=num_layers,
+                batch_first=True,
+                dropout=dropout if num_layers > 1 else 0,
+            )
+            self.fc = nn.Sequential(
+                nn.Linear(hidden_dim, hidden_dim // 2),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+                nn.Linear(hidden_dim // 2, output_dim),
+            )
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            # x: (batch, seq_len, input_dim) or (batch, input_dim)
+            if x.dim() == 2:
+                x = x.unsqueeze(1)  # Add sequence dimension
+            lstm_out, (h_n, c_n) = self.lstm(x)
+            # Use last hidden state
+            out = self.fc(h_n[-1])
+            return out
+
+
 else:
     # Placeholder classes when PyTorch is not available
     class ConvBlock:
