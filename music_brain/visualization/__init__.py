@@ -10,8 +10,29 @@ from .emotion_trajectory import (
     EmotionSnapshot,
 )
 
+from .spectocloud import (
+    Spectocloud,
+    Anchor,
+    AnchorFamily,
+    Frame,
+    EmotionParticle,
+    StormState,
+    MusicalParameterExtractor,
+    AnchorLibrary,
+    SpectocloudRenderer,
+)
+
 __all__ = [
     "EmotionTrajectoryVisualizer",
     "EmotionTrajectory",
     "EmotionSnapshot",
+    "Spectocloud",
+    "Anchor",
+    "AnchorFamily",
+    "Frame",
+    "EmotionParticle",
+    "StormState",
+    "MusicalParameterExtractor",
+    "AnchorLibrary",
+    "SpectocloudRenderer",
 ]
