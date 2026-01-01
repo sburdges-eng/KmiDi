@@ -18,6 +18,7 @@ import argparse
 import yaml
 import json
 import math
+import hashlib
 from pathlib import Path
 from typing import Optional, Dict, List, Any, Tuple
 
@@ -389,14 +390,23 @@ class MIDIDataset(Dataset):
         self.config = config
         self.tokenizer = tokenizer
         self.max_seq_len = config.get('max_seq_length', 512)
+        self.cache_dir = config.get('cache_dir', 'cache/midi_tokens')
+        self.use_cache = config.get('cache_features', False)
+        
+        if self.use_cache:
+            Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
         
         if os.path.exists(manifest_path):
             with open(manifest_path) as f:
                 self.samples = [json.loads(line) for line in f]
+            self.use_real_data = True
+            print(f"Loaded {len(self.samples)} samples from {manifest_path}")
         else:
-            print(f"Manifest not found: {manifest_path}")
-            print("Generating synthetic MIDI data...")
+            print(f"WARNING: Manifest not found: {manifest_path}")
+            print("WARNING: Generating synthetic MIDI data for smoke testing only!")
+            print("WARNING: This is NOT real data training!")
             self.samples = self._generate_synthetic_samples(10000)
+            self.use_real_data = False
     
     def _generate_synthetic_samples(self, num_samples: int) -> List[dict]:
         """Generate synthetic MIDI training samples."""
@@ -448,13 +458,115 @@ class MIDIDataset(Dataset):
         
         return samples
     
+    def _load_and_tokenize_midi(self, midi_path: str) -> List[int]:
+        """Load MIDI file and tokenize to event sequence."""
+        # Check cache first
+        if self.use_cache:
+            cache_key = hashlib.md5(midi_path.encode()).hexdigest()
+            cache_path = os.path.join(self.cache_dir, f"{cache_key}.npy")
+            
+            if os.path.exists(cache_path):
+                return np.load(cache_path).tolist()
+        
+        try:
+            import pretty_midi
+            
+            # Load MIDI
+            midi = pretty_midi.PrettyMIDI(midi_path)
+            
+            # Convert to events
+            events = []
+            
+            # Get time signature changes (estimate bars)
+            if len(midi.time_signature_changes) > 0:
+                ts = midi.time_signature_changes[0]
+                beats_per_bar = ts.numerator
+                beat_duration = 60.0 / 120.0  # Assume 120 BPM if no tempo
+                if len(midi.get_tempo_changes()[1]) > 0:
+                    beat_duration = 60.0 / midi.get_tempo_changes()[1][0]
+                bar_duration = beats_per_bar * beat_duration
+            else:
+                bar_duration = 2.0  # Default 2 seconds per bar
+            
+            # Process all notes from all instruments
+            all_notes = []
+            for instrument in midi.instruments:
+                if not instrument.is_drum:  # Skip drums for now
+                    for note in instrument.notes:
+                        all_notes.append({
+                            'time': note.start,
+                            'pitch': note.pitch,
+                            'velocity': note.velocity,
+                        })
+            
+            # Sort by time
+            all_notes.sort(key=lambda x: x['time'])
+            
+            # Convert to events with bar markers
+            current_bar = 0
+            for note in all_notes:
+                note_bar = int(note['time'] / bar_duration)
+                
+                # Add bar markers
+                while current_bar < note_bar:
+                    events.append({'type': 'bar'})
+                    current_bar += 1
+                
+                # Add note event
+                time_in_bar = (note['time'] % bar_duration) / bar_duration
+                events.append({
+                    'type': 'note_on',
+                    'note': note['pitch'],
+                    'velocity': note['velocity'],
+                    'time_in_bar': time_in_bar,
+                })
+            
+            # Tokenize
+            tokens = self.tokenizer.encode(events)
+            
+            # Cache if enabled
+            if self.use_cache:
+                np.save(cache_path, np.array(tokens))
+            
+            return tokens
+            
+        except Exception as e:
+            print(f"Warning: Failed to load MIDI from {midi_path}: {e}")
+            # Return minimal valid sequence
+            return [self.tokenizer.bos_token, self.tokenizer.eos_token]
+    
+    def _normalize_emotion(self, emotion: List[float]) -> np.ndarray:
+        """Normalize emotion vector to 64 dimensions."""
+        if len(emotion) == 64:
+            return np.array(emotion, dtype=np.float32)
+        elif len(emotion) == 3:
+            # Expand 3D (valence, arousal, intensity) to 64D
+            expanded = np.zeros(64, dtype=np.float32)
+            expanded[:3] = emotion
+            return expanded
+        else:
+            # Unexpected size - pad or truncate
+            result = np.zeros(64, dtype=np.float32)
+            result[:min(len(emotion), 64)] = emotion[:min(len(emotion), 64)]
+            return result
+    
     def __len__(self):
         return len(self.samples)
     
     def __getitem__(self, idx):
         sample = self.samples[idx]
         
-        tokens = sample['tokens']
+        if self.use_real_data:
+            # Load and tokenize MIDI file
+            midi_path = sample['midi_path']
+            tokens = self._load_and_tokenize_midi(midi_path)
+            
+            # Normalize emotion
+            emotion = self._normalize_emotion(sample['emotion'])
+        else:
+            # Synthetic data fallback
+            tokens = sample['tokens']
+            emotion = sample['emotion']
         
         # Pad or truncate
         if len(tokens) > self.max_seq_len:
@@ -468,7 +580,7 @@ class MIDIDataset(Dataset):
         return {
             'input_ids': input_ids,
             'labels': labels,
-            'emotion': torch.tensor(sample['emotion']),
+            'emotion': torch.tensor(emotion),
         }
 
 
@@ -484,6 +596,7 @@ def train_epoch(
     device: torch.device,
     epoch: int,
     config: dict,
+    scaler: Optional[Any] = None,
 ) -> dict:
     """Train for one epoch."""
     model.train()
@@ -492,28 +605,60 @@ def train_epoch(
     total_correct = 0
     total_tokens = 0
     
+    grad_accum_steps = config.get('grad_accum_steps', 1)
+    use_amp = config.get('amp', False)
+    
     for batch_idx, batch in enumerate(dataloader):
         input_ids = batch['input_ids'].to(device)
         labels = batch['labels'].to(device)
         emotion = batch['emotion'].to(device)
         
-        logits = model(input_ids, emotion)
+        # Forward pass with AMP
+        if use_amp and scaler is not None:
+            with torch.cuda.amp.autocast(dtype=torch.float16 if config.get('amp_dtype', 'bfloat16') == 'float16' else torch.bfloat16):
+                logits = model(input_ids, emotion)
+                
+                loss = F.cross_entropy(
+                    logits.view(-1, model.vocab_size),
+                    labels.view(-1),
+                    ignore_index=384,  # Pad token
+                    label_smoothing=0.1,
+                )
+                loss = loss / grad_accum_steps
+        else:
+            logits = model(input_ids, emotion)
+            
+            loss = F.cross_entropy(
+                logits.view(-1, model.vocab_size),
+                labels.view(-1),
+                ignore_index=384,  # Pad token
+                label_smoothing=0.1,
+            )
+            loss = loss / grad_accum_steps
         
-        loss = F.cross_entropy(
-            logits.view(-1, model.vocab_size),
-            labels.view(-1),
-            ignore_index=384,  # Pad token
-            label_smoothing=0.1,
-        )
+        # Backward pass
+        if use_amp and scaler is not None:
+            scaler.scale(loss).backward()
+        else:
+            loss.backward()
         
-        optimizer.zero_grad()
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), config.get('grad_clip', 1.0))
-        optimizer.step()
-        if scheduler:
-            scheduler.step()
+        # Update weights with gradient accumulation
+        if (batch_idx + 1) % grad_accum_steps == 0:
+            if use_amp and scaler is not None:
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), config.get('grad_clip', 1.0))
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), config.get('grad_clip', 1.0))
+                optimizer.step()
+            
+            optimizer.zero_grad()
+            
+            if scheduler:
+                scheduler.step()
         
-        total_loss += loss.item()
+        total_loss += loss.item() * grad_accum_steps
         
         # Accuracy (excluding padding)
         mask = labels != 384
@@ -524,7 +669,7 @@ def train_epoch(
         if batch_idx % config.get('log_every', 100) == 0:
             acc = total_correct / max(1, total_tokens)
             print(f"Epoch {epoch} [{batch_idx}/{len(dataloader)}] "
-                  f"Loss: {loss.item():.4f} Acc: {acc:.4f}")
+                  f"Loss: {loss.item() * grad_accum_steps:.4f} Acc: {acc:.4f}")
     
     n_batches = len(dataloader)
     return {
@@ -664,28 +809,74 @@ def main(config_path: str):
     save_dir = Path('checkpoints/midi_generator')
     save_dir.mkdir(parents=True, exist_ok=True)
     
+    # AMP setup
+    use_amp = train_cfg.get('amp', False)
+    scaler = None
+    if use_amp and device.type == 'cuda':
+        amp_dtype = train_cfg.get('amp_dtype', 'bfloat16')
+        if amp_dtype == 'float16':
+            scaler = torch.cuda.amp.GradScaler()
+            print("Using AMP with float16")
+        else:
+            # bfloat16 doesn't need GradScaler
+            print("Using AMP with bfloat16")
+    
+    # Early stopping setup
+    early_stop_cfg = train_cfg.get('early_stopping', {})
+    early_stop_enabled = early_stop_cfg.get('enabled', False)
+    patience = early_stop_cfg.get('patience', 5)
+    min_delta = early_stop_cfg.get('min_delta', 0.001)
+    min_epochs = train_cfg.get('min_epochs', 5)
+    
     best_val_loss = float('inf')
+    patience_counter = 0
     
     for epoch in range(epochs):
         print(f"\nEpoch {epoch + 1}/{epochs}")
         
         train_metrics = train_epoch(
-            model, train_loader, optimizer, scheduler, device, epoch, train_cfg
+            model, train_loader, optimizer, scheduler, device, epoch, train_cfg, scaler
         )
         val_metrics = evaluate(model, val_loader, device)
         
         print(f"Train Loss: {train_metrics['loss']:.4f} Acc: {train_metrics['accuracy']:.4f}")
         print(f"Val Loss: {val_metrics['val_loss']:.4f} PPL: {val_metrics['perplexity']:.2f}")
         
-        if val_metrics['val_loss'] < best_val_loss:
+        # Save checkpoint
+        is_best = val_metrics['val_loss'] < best_val_loss
+        if is_best:
+            improvement = best_val_loss - val_metrics['val_loss']
             best_val_loss = val_metrics['val_loss']
+            patience_counter = 0
+            
             torch.save({
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
                 'val_loss': best_val_loss,
                 'config': config,
             }, save_dir / 'best.pt')
-            print(f"Saved best model")
+            print(f"Saved best model (improvement: {improvement:.4f})")
+        else:
+            patience_counter += 1
+        
+        # Regular checkpoint (epoch-based)
+        if (epoch + 1) % train_cfg.get('save_every', 5) == 0:
+            torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'config': config,
+            }, save_dir / f'checkpoint_epoch_{epoch+1}.pt')
+        
+        # Early stopping check
+        if early_stop_enabled and epoch >= min_epochs:
+            if patience_counter >= patience:
+                print(f"\nEarly stopping triggered after {epoch + 1} epochs")
+                print(f"No improvement for {patience} epochs")
+                break
+            
+            # Diminishing returns check
+            if is_best and improvement < min_delta:
+                print(f"Warning: Improvement {improvement:.4f} below threshold {min_delta:.4f}")
     
     print("\nTraining Complete!")
     print(f"Best val loss: {best_val_loss:.4f}")

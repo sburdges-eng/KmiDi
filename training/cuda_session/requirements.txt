@@ -28,6 +28,11 @@ onnxruntime>=1.16.0
 # CoreML (optional, for Mac export)
 coremltools>=7.0
 
+# Audio/MIDI processing
+librosa>=0.10.0
+soundfile>=0.12.0
+pretty_midi>=0.2.9
+
 # Optional: Flash Attention for faster training
 # flash-attn>=2.0.0  # Requires CUDA 11.8+
 

@@ -20,6 +20,7 @@ import argparse
 import yaml
 import json
 import time
+import hashlib
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional, Dict, List, Any, Tuple
@@ -185,17 +186,28 @@ class SpectocloudDataset(Dataset):
     
     def __init__(self, manifest_path: str, config: dict):
         self.config = config
+        self.n_mels = config.get('n_mels', 128)
+        self.time_frames = 64
+        self.cache_dir = config.get('cache_dir', 'cache/spectrograms')
+        self.use_cache = config.get('cache_features', False)
+        
+        if self.use_cache:
+            Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
         
         # Load manifest or generate synthetic data
         if os.path.exists(manifest_path):
             with open(manifest_path) as f:
                 self.samples = [json.loads(line) for line in f]
+            self.use_real_data = True
+            print(f"Loaded {len(self.samples)} samples from {manifest_path}")
         else:
-            print(f"Manifest not found: {manifest_path}")
-            print("Generating synthetic training data...")
+            print(f"WARNING: Manifest not found: {manifest_path}")
+            print("WARNING: Generating synthetic training data for smoke testing only!")
+            print("WARNING: This is NOT real data training!")
             self.samples = self._generate_synthetic_samples(
                 config.get('synthetic_config', {}).get('num_train_samples', 10000)
             )
+            self.use_real_data = False
     
     def _generate_synthetic_samples(self, num_samples: int) -> List[dict]:
         """Generate synthetic training samples."""
@@ -261,19 +273,177 @@ class SpectocloudDataset(Dataset):
         
         return np.clip(colors, 0, 1)
     
+    def _load_audio_spectrogram(self, audio_path: str) -> np.ndarray:
+        """Load audio file and compute mel spectrogram."""
+        import librosa
+        
+        # Check cache first
+        if self.use_cache:
+            cache_key = hashlib.md5(audio_path.encode()).hexdigest()
+            cache_path = os.path.join(self.cache_dir, f"{cache_key}.npy")
+            
+            if os.path.exists(cache_path):
+                return np.load(cache_path)
+        
+        # Load audio
+        try:
+            y, sr = librosa.load(audio_path, sr=44100, mono=True)
+        except Exception as e:
+            print(f"Warning: Failed to load {audio_path}: {e}")
+            # Return random spectrogram as fallback
+            return np.random.randn(self.n_mels, self.time_frames).astype(np.float32)
+        
+        # Compute mel spectrogram
+        mel_spec = librosa.feature.melspectrogram(
+            y=y,
+            sr=sr,
+            n_mels=self.n_mels,
+            hop_length=512,
+            n_fft=2048,
+        )
+        
+        # Convert to log scale
+        mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
+        
+        # Normalize to [-1, 1]
+        mel_spec_db = (mel_spec_db - mel_spec_db.mean()) / (mel_spec_db.std() + 1e-8)
+        
+        # Resize to target time frames
+        if mel_spec_db.shape[1] < self.time_frames:
+            # Pad if too short
+            pad_width = self.time_frames - mel_spec_db.shape[1]
+            mel_spec_db = np.pad(mel_spec_db, ((0, 0), (0, pad_width)), mode='constant')
+        elif mel_spec_db.shape[1] > self.time_frames:
+            # Random crop if too long
+            start = np.random.randint(0, mel_spec_db.shape[1] - self.time_frames + 1)
+            mel_spec_db = mel_spec_db[:, start:start + self.time_frames]
+        
+        mel_spec_db = mel_spec_db.astype(np.float32)
+        
+        # Cache if enabled
+        if self.use_cache:
+            np.save(cache_path, mel_spec_db)
+        
+        return mel_spec_db
+    
+    def _extract_midi_features(self, midi_path: str) -> np.ndarray:
+        """
+        Extract simple MIDI features for conditioning.
+        
+        TODO: Implement richer feature extraction using pretty_midi.
+        For now, returns placeholder features.
+        """
+        try:
+            import pretty_midi
+            
+            midi = pretty_midi.PrettyMIDI(midi_path)
+            
+            # Extract simple features
+            features = np.zeros(32, dtype=np.float32)
+            
+            # Feature 0-11: pitch class distribution
+            pitch_classes = np.zeros(12)
+            for instrument in midi.instruments:
+                for note in instrument.notes:
+                    pitch_classes[note.pitch % 12] += 1
+            if pitch_classes.sum() > 0:
+                pitch_classes /= pitch_classes.sum()
+            features[:12] = pitch_classes
+            
+            # Feature 12: average velocity
+            velocities = []
+            for instrument in midi.instruments:
+                velocities.extend([note.velocity for note in instrument.notes])
+            features[12] = np.mean(velocities) / 127.0 if velocities else 0.5
+            
+            # Feature 13: note density (notes per second)
+            if midi.get_end_time() > 0:
+                total_notes = sum(len(inst.notes) for inst in midi.instruments)
+                features[13] = min(1.0, total_notes / (midi.get_end_time() * 10))
+            
+            # Feature 14: tempo (normalized)
+            tempo_changes = midi.get_tempo_changes()
+            if len(tempo_changes[1]) > 0:
+                avg_tempo = np.mean(tempo_changes[1])
+                features[14] = min(1.0, avg_tempo / 200.0)
+            
+            # Remaining features: reserved for future use
+            
+            return features
+            
+        except Exception as e:
+            print(f"Warning: Failed to extract MIDI features from {midi_path}: {e}")
+            # Return default features
+            return np.random.randn(32).astype(np.float32) * 0.1
+    
+    def _normalize_emotion(self, emotion: List[float]) -> np.ndarray:
+        """Normalize emotion vector to 64 dimensions."""
+        if len(emotion) == 64:
+            return np.array(emotion, dtype=np.float32)
+        elif len(emotion) == 3:
+            # Expand 3D (valence, arousal, intensity) to 64D
+            # First 3 are the core VAI, rest are zero-padded
+            expanded = np.zeros(64, dtype=np.float32)
+            expanded[:3] = emotion
+            return expanded
+        else:
+            # Unexpected size - pad or truncate
+            result = np.zeros(64, dtype=np.float32)
+            result[:min(len(emotion), 64)] = emotion[:min(len(emotion), 64)]
+            return result
+    
     def __len__(self):
         return len(self.samples)
     
     def __getitem__(self, idx):
         sample = self.samples[idx]
         
-        return {
-            'spectrogram': torch.tensor(sample['spectrogram']),
-            'emotion': torch.tensor(sample['emotion']),
-            'midi_features': torch.tensor(sample['midi_features']),
-            'target_positions': torch.tensor(sample['target_positions']),
-            'target_colors': torch.tensor(sample['target_colors']),
-        }
+        if self.use_real_data:
+            # Load real data from files
+            audio_path = sample['audio_path']
+            midi_path = sample['midi_path']
+            emotion = sample['emotion']
+            
+            # Load spectrogram
+            spectrogram = self._load_audio_spectrogram(audio_path)
+            
+            # Extract MIDI features
+            midi_features = self._extract_midi_features(midi_path)
+            
+            # Normalize emotion to 64D
+            emotion = self._normalize_emotion(emotion)
+            
+            # Load or generate target point cloud
+            if 'target_pointcloud_path' in sample and os.path.exists(sample['target_pointcloud_path']):
+                # Load pre-computed point cloud
+                target_positions = np.load(sample['target_pointcloud_path'])
+            else:
+                # Generate on-the-fly (self-supervised mode)
+                valence = emotion[0]
+                arousal = emotion[1] if len(emotion) > 1 else 0.0
+                intensity = emotion[2] if len(emotion) > 2 else 0.5
+                target_positions = self._generate_target_cloud(valence, arousal, intensity)
+            
+            # Generate colors (always on-the-fly since they're simple)
+            valence = emotion[0]
+            target_colors = self._generate_target_colors(valence)
+            
+            return {
+                'spectrogram': torch.tensor(spectrogram),
+                'emotion': torch.tensor(emotion),
+                'midi_features': torch.tensor(midi_features),
+                'target_positions': torch.tensor(target_positions),
+                'target_colors': torch.tensor(target_colors),
+            }
+        else:
+            # Synthetic data fallback
+            return {
+                'spectrogram': torch.tensor(sample['spectrogram']),
+                'emotion': torch.tensor(sample['emotion']),
+                'midi_features': torch.tensor(sample['midi_features']),
+                'target_positions': torch.tensor(sample['target_positions']),
+                'target_colors': torch.tensor(sample['target_colors']),
+            }
 
 
 # =============================================================================
@@ -312,6 +482,7 @@ def train_epoch(
     device: torch.device,
     epoch: int,
     config: dict,
+    scaler: Optional[Any] = None,
 ) -> dict:
     """Train for one epoch."""
     model.train()
@@ -319,6 +490,9 @@ def train_epoch(
     total_loss = 0.0
     total_pos_loss = 0.0
     total_color_loss = 0.0
+    
+    grad_accum_steps = config.get('grad_accum_steps', 1)
+    use_amp = config.get('amp', False)
     
     for batch_idx, batch in enumerate(dataloader):
         # Move to device
@@ -328,33 +502,57 @@ def train_epoch(
         target_pos = batch['target_positions'].to(device)
         target_col = batch['target_colors'].to(device)
         
-        # Forward pass
-        outputs = model(spec, emotion, midi)
-        
-        # Compute losses
-        pos_loss = chamfer_distance(outputs['positions'], target_pos)
-        col_loss = color_loss(outputs['colors'], target_col)
-        
-        loss = pos_loss + 0.5 * col_loss
+        # Forward pass with AMP
+        if use_amp and scaler is not None:
+            with torch.cuda.amp.autocast(dtype=torch.float16 if config.get('amp_dtype', 'float16') == 'float16' else torch.bfloat16):
+                outputs = model(spec, emotion, midi)
+                
+                # Compute losses
+                pos_loss = chamfer_distance(outputs['positions'], target_pos)
+                col_loss = color_loss(outputs['colors'], target_col)
+                
+                loss = pos_loss + 0.5 * col_loss
+                loss = loss / grad_accum_steps
+        else:
+            outputs = model(spec, emotion, midi)
+            
+            # Compute losses
+            pos_loss = chamfer_distance(outputs['positions'], target_pos)
+            col_loss = color_loss(outputs['colors'], target_col)
+            
+            loss = pos_loss + 0.5 * col_loss
+            loss = loss / grad_accum_steps
         
         # Backward pass
-        optimizer.zero_grad()
-        loss.backward()
+        if use_amp and scaler is not None:
+            scaler.scale(loss).backward()
+        else:
+            loss.backward()
         
-        # Gradient clipping
-        torch.nn.utils.clip_grad_norm_(model.parameters(), config.get('grad_clip', 1.0))
+        # Update weights with gradient accumulation
+        if (batch_idx + 1) % grad_accum_steps == 0:
+            # Gradient clipping
+            if use_amp and scaler is not None:
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), config.get('grad_clip', 1.0))
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), config.get('grad_clip', 1.0))
+                optimizer.step()
+            
+            optimizer.zero_grad()
+            
+            if scheduler:
+                scheduler.step()
         
-        optimizer.step()
-        if scheduler:
-            scheduler.step()
-        
-        total_loss += loss.item()
+        total_loss += loss.item() * grad_accum_steps
         total_pos_loss += pos_loss.item()
         total_color_loss += col_loss.item()
         
         if batch_idx % config.get('log_every', 50) == 0:
             print(f"Epoch {epoch} [{batch_idx}/{len(dataloader)}] "
-                  f"Loss: {loss.item():.4f} (pos: {pos_loss.item():.4f}, col: {col_loss.item():.4f})")
+                  f"Loss: {loss.item() * grad_accum_steps:.4f} (pos: {pos_loss.item():.4f}, col: {col_loss.item():.4f})")
     
     n_batches = len(dataloader)
     return {
@@ -496,7 +694,27 @@ def main(config_path: str):
     save_dir = Path('checkpoints/spectocloud')
     save_dir.mkdir(parents=True, exist_ok=True)
     
+    # AMP setup
+    use_amp = train_cfg.get('amp', False)
+    scaler = None
+    if use_amp and device.type == 'cuda':
+        amp_dtype = train_cfg.get('amp_dtype', 'float16')
+        if amp_dtype == 'float16':
+            scaler = torch.cuda.amp.GradScaler()
+            print("Using AMP with float16")
+        else:
+            # bfloat16 doesn't need GradScaler
+            print("Using AMP with bfloat16")
+    
+    # Early stopping setup
+    early_stop_cfg = train_cfg.get('early_stopping', {})
+    early_stop_enabled = early_stop_cfg.get('enabled', False)
+    patience = early_stop_cfg.get('patience', 5)
+    min_delta = early_stop_cfg.get('min_delta', 0.001)
+    min_epochs = train_cfg.get('min_epochs', 10)
+    
     best_val_loss = float('inf')
+    patience_counter = 0
     
     for epoch in range(epochs):
         print(f"\n{'='*60}")
@@ -505,7 +723,7 @@ def main(config_path: str):
         
         # Train
         train_metrics = train_epoch(
-            model, train_loader, optimizer, scheduler, device, epoch, train_cfg
+            model, train_loader, optimizer, scheduler, device, epoch, train_cfg, scaler
         )
         print(f"Train - Loss: {train_metrics['loss']:.4f}")
         
@@ -514,8 +732,12 @@ def main(config_path: str):
         print(f"Val - Loss: {val_metrics['val_loss']:.4f}")
         
         # Save checkpoint
-        if val_metrics['val_loss'] < best_val_loss:
+        is_best = val_metrics['val_loss'] < best_val_loss
+        if is_best:
+            improvement = best_val_loss - val_metrics['val_loss']
             best_val_loss = val_metrics['val_loss']
+            patience_counter = 0
+            
             torch.save({
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
@@ -523,9 +745,11 @@ def main(config_path: str):
                 'val_loss': best_val_loss,
                 'config': config,
             }, save_dir / 'best.pt')
-            print(f"Saved best model (val_loss: {best_val_loss:.4f})")
+            print(f"Saved best model (val_loss: {best_val_loss:.4f}, improvement: {improvement:.4f})")
+        else:
+            patience_counter += 1
         
-        # Regular checkpoint
+        # Regular checkpoint (epoch-based)
         if (epoch + 1) % train_cfg.get('save_every', 5) == 0:
             torch.save({
                 'epoch': epoch,
@@ -533,6 +757,17 @@ def main(config_path: str):
                 'optimizer_state_dict': optimizer.state_dict(),
                 'config': config,
             }, save_dir / f'checkpoint_epoch_{epoch+1}.pt')
+        
+        # Early stopping check
+        if early_stop_enabled and epoch >= min_epochs:
+            if patience_counter >= patience:
+                print(f"\nEarly stopping triggered after {epoch + 1} epochs")
+                print(f"No improvement for {patience} epochs")
+                break
+            
+            # Diminishing returns check
+            if is_best and improvement < min_delta:
+                print(f"Warning: Improvement {improvement:.4f} below threshold {min_delta:.4f}")
     
     print("\n" + "=" * 60)
     print("Training Complete!")
