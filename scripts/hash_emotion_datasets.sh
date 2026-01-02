@@ -17,12 +17,23 @@ EMO_DIR="${ROOT}/EMO_Music"
 [[ -d "${DEAM_DIR}" ]] || { echo "Missing ${DEAM_DIR}"; exit 1; }
 [[ -d "${EMO_DIR}" ]] || { echo "Missing ${EMO_DIR}"; exit 1; }
 
-echo "Computing SHA256 for DEAM..."
-find "${DEAM_DIR}" -type f -print0 | sort -z | xargs -0 sha256sum > "${ROOT}/DEAM_SHA256SUMS.txt"
+compute_checksums() {
+  local dir="$1"
+  local outfile="$2"
+  local label="$3"
 
-echo "Computing SHA256 for EMO-Music..."
-find "${EMO_DIR}" -type f -print0 | sort -z | xargs -0 sha256sum > "${ROOT}/EMO_Music_SHA256SUMS.txt"
+  # Check if the directory contains at least one regular file.
+  if ! find "${dir}" -type f -print -quit | grep -q .; then
+    echo "No files found in ${label}; skipping checksum generation."
+    return 0
+  fi
 
+  echo "Computing SHA256 for ${label}..."
+  find "${dir}" -type f -print0 | sort -z | xargs -0 sha256sum > "${outfile}"
+}
+
+compute_checksums "${DEAM_DIR}" "${ROOT}/DEAM_SHA256SUMS.txt" "DEAM"
+compute_checksums "${EMO_DIR}" "${ROOT}/EMO_Music_SHA256SUMS.txt" "EMO-Music"
 echo "Done. Checksums written to:"
 echo "  ${ROOT}/DEAM_SHA256SUMS.txt"
 echo "  ${ROOT}/EMO_Music_SHA256SUMS.txt"

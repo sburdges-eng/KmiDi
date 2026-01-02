@@ -289,7 +289,15 @@ echo "=================================================="
 echo ""
 
 # Build training command
-TRAIN_CMD="torchrun --nproc_per_node=$NUM_GPUS training/cuda_session/train_spectocloud.py"
+TRAINING_SCRIPT="training/cuda_session/train_spectocloud.py"
+
+if [[ ! -f "$TRAINING_SCRIPT" ]]; then
+    log_error "Training script '$TRAINING_SCRIPT' not found. Expected at: $(pwd)/$TRAINING_SCRIPT"
+    log_error "Please ensure the training script exists or update TRAINING_SCRIPT in scripts/train_cuda_v2.sh."
+    exit 1
+fi
+
+TRAIN_CMD="torchrun --nproc_per_node=$NUM_GPUS $TRAINING_SCRIPT"
 TRAIN_CMD="$TRAIN_CMD --config $CONFIG"
 TRAIN_CMD="$TRAIN_CMD --audio-root $AUDIO_ROOT"
 TRAIN_CMD="$TRAIN_CMD --midi-root $MIDI_ROOT"

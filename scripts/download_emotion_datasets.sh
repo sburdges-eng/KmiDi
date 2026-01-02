@@ -33,7 +33,7 @@ download() {
   fi
 
   echo "Downloading ${url} -> ${dest}"
-  curl -L --fail --retry 3 --retry-delay 2 -o "${dest}" "${url}"
+  curl -L --fail --retry 3 --retry-delay 2 -o "${dest}" "${url}" || { echo "Download failed: ${url}"; exit 1; }
 }
 
 verify_sha() {
