@@ -14,7 +14,12 @@ Run with:
 import os
 
 from dotenv import load_dotenv
-from fastmcp import FastMCP
+
+try:
+    # Preferred import path
+    from mcp.server.fastmcp import FastMCP
+except ImportError:  # pragma: no cover - fallback for older installs
+    from fastmcp import FastMCP
 
 # Initialize environment variables
 load_dotenv()
@@ -190,7 +195,7 @@ async def consult_developer(prompt: str) -> str:
     try:
         client = _get_anthropic_client()
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-3-5-sonnet-20241022",
             max_tokens=4096,
             system=DEVELOPER_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": prompt}],
