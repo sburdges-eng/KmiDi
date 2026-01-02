@@ -406,7 +406,7 @@ for _tool in (
     fetch_repo_context,
 ):
     if not hasattr(_tool, "fn"):
-        _tool.fn = _tool  # type: ignore[attr-defined]
+        _tool.fn = getattr(_tool, "__call__", _tool)  # type: ignore[attr-defined]
 
 
 # =============================================================================
