@@ -262,6 +262,29 @@ tail -f outputs/spectocloud_*/training.log
 tmux attach -t training
 ```
 
+## Validation Protocol (Audio-Based Emotion Extraction)
+
+1) **Ground truth & manifest**
+    - Use a labeled dataset (e.g., DEAM/EMO-Music) plus any clinician-labeled clips as a fixed gold test split.
+    - Build a manifest CSV: `id, path_audio, split(train/val/test), emotion_label, valence, arousal, intensity, genre, tempo, annotator`.
+    - Balance classes; stratify by genre/tempo to reduce bias.
+
+2) **Protocol & metrics**
+    - Splits: k-fold on train/val; clinician gold set held out for test.
+    - Metrics: per-class Precision/Recall/F1, macro-F1, confusion matrix; valence/arousal MAE/MSE/CCC; calibration (ECE) on probabilities; agreement vs clinician (Cohen/Fleiss kappa) with inter-rater as ceiling.
+    - Preprocessing: consistent loudness (e.g., LUFS) and documented seed/config.
+
+3) **Run validation**
+    - Generate predictions on val/test; compute metrics, confusion matrix, valence–arousal scatter, calibration plot; slice metrics by genre/tempo/loudness.
+
+4) **Error analysis**
+    - Inspect top confusions (sad↔calm, excited↔happy), listen to misclassified clips, check correlation with tempo/loudness/instrumentation.
+
+5) **Artifacts to save**
+    - `metrics.json`, `confusion_matrix.png`, `calibration.png`, `valence_arousal_scatter.png`, manifest hash, model checkpoint ID, seed, and preprocessing settings.
+
+This keeps validation reproducible and aligned with music-therapy-relevant labels.
+
 ## Quick Reference Commands
 
 ```bash
