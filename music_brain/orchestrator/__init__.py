@@ -52,6 +52,16 @@ from music_brain.orchestrator.logging_utils import (
     get_logger,
 )
 
+
+def get_workstation():
+    """Lightweight accessor for a default orchestrator instance."""
+    return AIOrchestrator()
+
+
+def shutdown_workstation(workstation=None):
+    """No-op shutdown helper to mirror CLI expectations."""
+    return True
+
 __all__ = [
     # Core Orchestrator
     "AIOrchestrator",

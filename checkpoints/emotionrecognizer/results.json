@@ -27,17 +27,17 @@
     "weight_decay": 0.0001
   },
   "results": {
-    "best_val_loss": 1.9490258523396082,
-    "total_time": 2.078333854675293,
+    "best_val_loss": 1.9500478846686227,
+    "total_time": 16.92077112197876,
     "test_results": {
       "accuracy": 0.1,
       "per_class_accuracy": 0.14285714285714285,
       "macro_f1": 0.025974025971617472,
-      "ece": 0.05212990343570709,
-      "mce": 0.05212990343570709,
-      "emotional_distance_error": 0.6341116336913688,
-      "va_accuracy": 0.39
+      "ece": 0.06812795400619506,
+      "mce": 0.06812795400619506,
+      "emotional_distance_error": 0.7083814642136405,
+      "va_accuracy": 0.42
     }
   },
-  "timestamp": "2025-12-23T08:10:59.524055"
+  "timestamp": "2026-01-02T20:46:46.574721"
 }

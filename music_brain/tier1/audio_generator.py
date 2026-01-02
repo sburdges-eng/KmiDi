@@ -63,26 +63,43 @@ class Tier1AudioGenerator:
 
     def synthesize_texture(
         self,
-        midi_notes: np.ndarray,
-        groove_params: Dict,
-        emotion_embedding: np.ndarray,
-        duration_seconds: float = 4.0,
+        midi_notes,
+        groove_params: Optional[Dict] = None,
+        emotion_embedding: Optional[np.ndarray] = None,
+        emotion: Optional[str] = None,
+        duration_seconds: Optional[float] = None,
+        duration_sec: Optional[float] = None,
         instrument: str = "piano"
     ) -> np.ndarray:
         """
         Synthesize audio texture from MIDI notes + groove + emotion.
 
         Args:
-            midi_notes: (seq_len,) MIDI note indices
-            groove_params: Dict with swing, velocity_variance, etc.
-            emotion_embedding: (64,) for timbre control
-            duration_seconds: Total output duration
+        midi_notes: (seq_len,) MIDI note indices
+        groove_params: Dict with swing, velocity_variance, etc.
+        emotion_embedding: (64,) for timbre control (or derived from emotion name)
+        emotion: Optional emotion name for quick embedding generation
+        duration_seconds: Total output duration (alias duration_sec)
             instrument: "piano", "strings", "pad", "bell"
 
         Returns:
             audio: (sample_rate * duration,) float32 waveform
         """
         start_time = time.time()
+
+        # Normalize inputs and defaults
+        groove_params = groove_params or {}
+        if duration_seconds is None:
+            duration_seconds = duration_sec if duration_sec is not None else 4.0
+
+        if emotion_embedding is None:
+            # Simple deterministic embedding from emotion string
+            if emotion is None:
+                emotion = "neutral"
+            rng = np.random.default_rng(abs(hash(emotion)) % (2**32))
+            emotion_embedding = rng.standard_normal(64).astype(np.float32)
+
+        midi_notes = np.array(midi_notes, dtype=int)
 
         num_samples = int(self.sample_rate * duration_seconds)
         audio = np.zeros(num_samples, dtype=np.float32)
@@ -203,7 +220,9 @@ class Tier1AudioGenerator:
 
     def _adsr_envelope(
         self,
-        duration_samples: int,
+        duration_samples: Optional[int] = None,
+        *,
+        signal_length: Optional[int] = None,
         attack_ms: float = 10,
         decay_ms: float = 100,
         sustain_level: float = 0.7,
@@ -220,6 +239,10 @@ class Tier1AudioGenerator:
         Returns:
             envelope: (duration_samples,) amplitude envelope
         """
+        # Allow alternative parameter name for compatibility with older callers
+        if duration_samples is None:
+            duration_samples = signal_length if signal_length is not None else self.sample_rate
+
         # Convert ms to samples
         attack_samples = int(attack_ms * self.sample_rate / 1000)
         decay_samples = int(decay_ms * self.sample_rate / 1000)
@@ -393,3 +416,7 @@ def generate_tier1_audio(
     """
     gen = Tier1AudioGenerator(sample_rate=sample_rate, verbose=False)
     return gen.synthesize_texture(midi_notes, groove, emotion, duration_seconds=4.0)
+
+
+# Backwards-compatible alias for tests and existing callers
+AudioGenerator = Tier1AudioGenerator
