@@ -397,6 +397,18 @@ async def fetch_repo_context(owner: str, repo: str, path: str = "") -> str:
         return f"Error fetching repo context: {str(e)}"
 
 
+# Ensure decorators expose underlying coroutine as .fn for compatibility
+for _tool in (
+    consult_architect,
+    consult_developer,
+    consult_researcher,
+    consult_maverick,
+    fetch_repo_context,
+):
+    if not hasattr(_tool, "fn"):
+        _tool.fn = _tool  # type: ignore[attr-defined]
+
+
 # =============================================================================
 # Server Entry Point
 # =============================================================================
