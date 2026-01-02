@@ -16,10 +16,10 @@ import torch
 import yaml
 from torch.utils.data import DataLoader
 
-from python.penta_core.ml.datasets.streaming import StreamingAudioDataset
-from python.penta_core.ml.training.architectures import MusicFoundationModel, EmotionCNN # Assuming EmotionCNN can be used as backbone
-from python.penta_core.ml.training.augmentation import AudioAugmentor
-from python.penta_core.ml.training.losses import ContrastiveLoss
+from penta_core.ml.datasets.streaming import StreamingAudioDataset
+from penta_core.ml.training.architectures import MusicFoundationModel, EmotionCNN # Assuming EmotionCNN can be used as backbone
+from penta_core.ml.training.augmentation import AudioAugmentor
+from penta_core.ml.training.losses import ContrastiveLoss
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -76,7 +76,7 @@ def pretrain(cfg_path: str):
 
     # 2. Model & Loss
     # For this stub, we'll use a simple 1D backbone for raw waveforms.
-    from python.penta_core.ml.training.architectures import ConvBlock
+    from penta_core.ml.training.architectures import ConvBlock
     # We'll use nn.Sequential but with 1D layers manually for the dry run stub
     backbone = torch.nn.Sequential(
         torch.nn.Conv1d(1, 64, kernel_size=7, stride=2, padding=3),

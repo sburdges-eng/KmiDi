@@ -244,7 +244,7 @@ def train(cfg_path: str = "configs/laptop_m4_small.yaml", data_root: Optional[st
     
     # Use StreamingAudioDataset if configured or for very large datasets
     if cfg.get("use_streaming", False):
-        from python.penta_core.ml.datasets.streaming import StreamingAudioDataset
+        from penta_core.ml.datasets.streaming import StreamingAudioDataset
         train_manifest = resolve_manifest(dcfg["train_manifest"], data_root_path, "train")
         val_manifest = resolve_manifest(dcfg["val_manifest"], data_root_path, "val")
         train_ds = StreamingAudioDataset(

@@ -193,7 +193,7 @@ python scripts/prepare_datasets.py --validate --dataset emotion_dataset_v1
 ## Python API
 
 ```python
-from python.penta_core.ml.datasets import (
+from penta_core.ml.datasets import (
     DatasetConfig,
     create_dataset_structure,
     load_manifest,
@@ -247,4 +247,3 @@ report.print_summary()
 6. Train with `python scripts/train.py`
 
 See [MK_TRAINING_GUIDELINES.md](../docs/MK_TRAINING_GUIDELINES.md) for the full workflow.
-

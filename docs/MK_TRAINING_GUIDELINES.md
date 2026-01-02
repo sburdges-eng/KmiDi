@@ -249,7 +249,7 @@ class AudioDataset:
 
 ```python
 # Pre-extract mel spectrograms for faster training
-from python.penta_core.ml.audio_dataset import AudioDataset
+from penta_core.ml.audio_dataset import AudioDataset
 
 dataset = AudioDataset(
     data_dir="data/raw/emotions",
@@ -317,7 +317,7 @@ python scripts/train.py --model emotion_recognizer --export-onnx --export-coreml
 
 # Export existing model
 python -c "
-from python.penta_core.ml.export import ModelExporter, ExportConfig
+from penta_core.ml.export import ModelExporter, ExportConfig
 import torch
 
 # Load model
@@ -468,7 +468,7 @@ Use the template: `docs/MODEL_CARD_TEMPLATE.md`
 ### Python API
 
 ```python
-from python.penta_core.ml.inference import create_engine_by_name
+from penta_core.ml.inference import create_engine_by_name
 
 # Load and run inference
 engine = create_engine_by_name("emotionrecognizer")
@@ -551,7 +551,7 @@ python scripts/train.py --config configs/<name>.yaml
 python scripts/train.py --model <name> --export-onnx --export-coreml
 
 # Verify
-python -c "from python.penta_core.ml.export import verify_onnx_model; verify_onnx_model('models/<name>.onnx')"
+python -c "from penta_core.ml.export import verify_onnx_model; verify_onnx_model('models/<name>.onnx')"
 ```
 
 ### File Locations

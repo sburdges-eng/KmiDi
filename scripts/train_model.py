@@ -57,7 +57,7 @@ except ImportError:
     TORCHAUDIO_AVAILABLE = False
 
 # Import training utilities
-from python.penta_core.ml.training import (
+from penta_core.ml.training import (
     AudioAugmentor,
     AugmentationConfig,
     EmotionCNN,
