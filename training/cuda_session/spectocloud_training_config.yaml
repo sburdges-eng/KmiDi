@@ -1,15 +1,15 @@
 # =============================================================================
 # Spectocloud Neural Visualization Model - CUDA GPU Training Configuration
 # =============================================================================
-# Target: NVIDIA GPU Cloud Session ($50 budget)
+# Target: NVIDIA GPU Cloud Session ($150 budget)
 # Recommended GPU: RTX 4090, A100, or H100 (24GB+ VRAM)
-# Estimated Training Time: 4-8 hours depending on GPU
+# Estimated Training Time: 12-18 hours depending on GPU
 # =============================================================================
 
 session:
   name: "spectocloud-cuda-train"
-  budget_usd: 50
-  estimated_hours: 6
+  budget_usd: 150
+  estimated_hours: 18
   priority: "high"
 
 # -----------------------------------------------------------------------------
@@ -17,11 +17,11 @@ session:
 # -----------------------------------------------------------------------------
 hardware:
   device: cuda
-  precision: fp16               # Use bf16 on A100/H100 for better accuracy
+  precision: fp16               # fp16 is sufficient; bf16 offers marginal stability benefit on A100+
   cuda_version: "12.1"
   cudnn_version: "8.9"
-  gpu_memory_gb: 24             # Minimum recommended
-  num_gpus: 1                   # Single GPU for $50 budget
+  gpu_memory_gb: 24             # Minimum recommended (A10G/V100/A100)
+  num_gpus: 4                   # 4 GPUs for distributed training (g5.12xlarge)
   compile_mode: true            # torch.compile for 20-40% speedup
 
 # -----------------------------------------------------------------------------
