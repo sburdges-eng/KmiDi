@@ -247,6 +247,8 @@ def generate_dsp_kernel_hpp(config: iOSAudioUnitConfig) -> str:
 
 #import <AudioToolbox/AudioToolbox.h>
 #import <algorithm>
+#import <cmath>
+#import <cstdint>
 #import <vector>
 
 class {config.name}DSPKernel {{
@@ -275,6 +277,12 @@ private:
     float volume_ = 1.0f;
     float pan_ = 0.0f;
     float mix_ = 1.0f;
+
+    // MIDI / expression state
+    uint8_t lastNote_ = 0;
+    uint8_t lastVelocity_ = 0;
+    bool noteActive_ = false;
+    float velocityScale_ = 1.0f;
 
     // Add DSP state here
     std::vector<float> tempBuffer_;
@@ -308,20 +316,44 @@ void {config.name}DSPKernel::setSampleRate(float sampleRate) {{
 void {config.name}DSPKernel::process(float* inBufferL, float* inBufferR,
                                       float* outBufferL, float* outBufferR,
                                       AUAudioFrameCount frameCount) {{
-    // TODO: Implement audio processing
-    // For now, pass through
-    std::copy(inBufferL, inBufferL + frameCount, outBufferL);
-    std::copy(inBufferR, inBufferR + frameCount, outBufferR);
+    const float wet = std::clamp(mix_, 0.0f, 1.0f);
+    const float pan = std::clamp(pan_, -1.0f, 1.0f);
+    const float panLeft = 0.5f * (1.0f - pan);
+    const float panRight = 0.5f * (1.0f + pan);
+    const float gain = std::clamp(volume_, 0.0f, 2.0f) * std::max(velocityScale_, 0.0f);
+
+    for (AUAudioFrameCount i = 0; i < frameCount; ++i) {{
+        const float dryL = inBufferL ? inBufferL[i] : 0.0f;
+        const float dryR = inBufferR ? inBufferR[i] : 0.0f;
+        const float wetL = dryL * gain * panLeft;
+        const float wetR = dryR * gain * panRight;
+
+        outBufferL[i] = (wet * wetL) + ((1.0f - wet) * dryL);
+        outBufferR[i] = (wet * wetR) + ((1.0f - wet) * dryR);
+    }}
 }}
 
 {"void " + config.name + "DSPKernel::handleMIDIEvent(const uint8_t* data, int length) {" if config.midi_input else ""}
-{"    // TODO: Handle MIDI events" if config.midi_input else ""}
+{"    if (data == nullptr || length <= 0) { return; }" if config.midi_input else ""}
 {"    uint8_t status = data[0] & 0xF0;" if config.midi_input else ""}
-{"    uint8_t channel = data[0] & 0x0F;" if config.midi_input else ""}
 {"    if (status == 0x90 && length >= 3) {" if config.midi_input else ""}
-{"        // Note On" if config.midi_input else ""}
-{"        uint8_t note = data[1];" if config.midi_input else ""}
-{"        uint8_t velocity = data[2];" if config.midi_input else ""}
+{"        // Note On (velocity 0 is Note Off)" if config.midi_input else ""}
+{"        lastNote_ = data[1];" if config.midi_input else ""}
+{"        lastVelocity_ = data[2];" if config.midi_input else ""}
+{"        noteActive_ = lastVelocity_ > 0;" if config.midi_input else ""}
+{"        velocityScale_ = noteActive_ ? std::clamp(static_cast<float>(lastVelocity_) / 127.0f, 0.0f, 1.0f) : 0.0f;" if config.midi_input else ""}
+{"    } else if (status == 0x80 && length >= 3) {" if config.midi_input else ""}
+{"        // Note Off" if config.midi_input else ""}
+{"        lastNote_ = data[1];" if config.midi_input else ""}
+{"        lastVelocity_ = 0;" if config.midi_input else ""}
+{"        noteActive_ = false;" if config.midi_input else ""}
+{"        velocityScale_ = 0.0f;" if config.midi_input else ""}
+{"    } else if (status == 0xB0 && length >= 3) {" if config.midi_input else ""}
+{"        // Map modulation wheel (CC1) to a mild gain boost" if config.midi_input else ""}
+{"        if (data[1] == 1) {" if config.midi_input else ""}
+{"            const float mod = std::clamp(static_cast<float>(data[2]) / 127.0f, 0.0f, 1.5f);" if config.midi_input else ""}
+{"            velocityScale_ = std::max(velocityScale_, mod);" if config.midi_input else ""}
+{"        }" if config.midi_input else ""}
 {"    }" if config.midi_input else ""}
 {"}" if config.midi_input else ""}
 

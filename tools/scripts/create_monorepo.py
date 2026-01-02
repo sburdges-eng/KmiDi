@@ -672,8 +672,14 @@ jobs:
       - name: Sign plugin (macOS)
         if: runner.os == 'macOS'
         run: |
-          # TODO: Add codesigning
-          echo "Skipping codesigning for now"
+          if [ -z "${{ secrets.MACOS_SIGN_IDENTITY }}" ]; then
+            echo "MACOS_SIGN_IDENTITY not set; skipping codesigning"
+          else
+            find build -type f \\( -name "*.vst3" -o -name "*.clap" \\) | while read artifact; do
+              echo "Codesigning ${artifact}"
+              codesign --force --timestamp --options runtime --sign "${{ secrets.MACOS_SIGN_IDENTITY }}" "${artifact}"
+            done
+          fi
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

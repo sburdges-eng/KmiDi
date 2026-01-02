@@ -34,6 +34,17 @@ if [ -f .pre-commit-config.yaml ]; then
     pre-commit install || echo "⚠️  Pre-commit install failed"
 fi
 
+# Install pnpm (Node feature provides Node/npm)
+echo "📦 Ensuring pnpm is available..."
+if command -v corepack &> /dev/null; then
+    corepack enable
+    corepack prepare pnpm@8 --activate
+elif command -v npm &> /dev/null; then
+    npm install -g pnpm@8
+else
+    echo "⚠️  Node/npm not found; pnpm not installed"
+fi
+
 # Create common directories if they don't exist
 echo "📁 Creating directory structure..."
 mkdir -p tools/scripts

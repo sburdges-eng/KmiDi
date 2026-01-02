@@ -496,6 +496,27 @@ def create_loss_fn(config: TrainConfig):
         return nn.MSELoss()
 
 
+def _load_npz_dataset(npz_path: Path, config: TrainConfig):
+    """Load an .npz dataset containing 'x' and 'y' arrays."""
+    import torch
+    from torch.utils.data import TensorDataset
+
+    data = np.load(npz_path)
+    if "x" not in data or "y" not in data:
+        raise ValueError(f"{npz_path} must contain 'x' and 'y' arrays")
+
+    x = torch.tensor(data["x"], dtype=torch.float32)
+    if config.loss == "cross_entropy":
+        y = torch.tensor(data["y"], dtype=torch.long)
+    else:
+        y = torch.tensor(data["y"], dtype=torch.float32)
+
+    if len(x) != len(y):
+        raise ValueError(f"Mismatched feature/label lengths in {npz_path}")
+
+    return TensorDataset(x, y)
+
+
 def create_dummy_dataloaders(config: TrainConfig, device) -> Tuple:
     """Create dummy dataloaders for testing."""
     import torch
@@ -545,6 +566,55 @@ def create_dummy_dataloaders(config: TrainConfig, device) -> Tuple:
     )
 
     return train_loader, val_loader, test_loader
+
+
+def create_dataloaders(config: TrainConfig, device) -> Tuple:
+    """Create dataloaders from real data if available, otherwise dummy data."""
+    import torch
+    from torch.utils.data import DataLoader, random_split
+
+    if config.data_path:
+        data_path = Path(config.data_path).expanduser()
+        try:
+            if data_path.is_dir():
+                train_file = data_path / "train.npz"
+                val_file = data_path / "val.npz"
+                test_file = data_path / "test.npz"
+
+                if train_file.exists() and val_file.exists() and test_file.exists():
+                    logger.info(f"Loading dataset from {data_path}")
+                    train_ds = _load_npz_dataset(train_file, config)
+                    val_ds = _load_npz_dataset(val_file, config)
+                    test_ds = _load_npz_dataset(test_file, config)
+                else:
+                    raise FileNotFoundError("Expected train.npz, val.npz, and test.npz")
+            elif data_path.suffix == ".npz":
+                logger.info(f"Loading dataset from {data_path}")
+                full_dataset = _load_npz_dataset(data_path, config)
+                total = len(full_dataset)
+                if total < 3:
+                    raise ValueError("Dataset must contain at least 3 samples for splitting")
+                train_len = max(1, int(total * config.train_split))
+                val_len = max(1, int(total * config.val_split))
+                test_len = max(1, total - train_len - val_len)
+                while train_len + val_len + test_len > total:
+                    test_len = max(1, test_len - 1)
+                generator = torch.Generator().manual_seed(42)
+                train_ds, val_ds, test_ds = random_split(
+                    full_dataset, [train_len, val_len, test_len], generator=generator
+                )
+            else:
+                raise ValueError(f"Unsupported data path: {data_path}")
+
+            return (
+                DataLoader(train_ds, batch_size=config.batch_size, shuffle=True),
+                DataLoader(val_ds, batch_size=config.batch_size),
+                DataLoader(test_ds, batch_size=config.batch_size),
+            )
+        except Exception as exc:
+            logger.warning(f"Data loading failed ({exc}); using dummy data.")
+
+    return create_dummy_dataloaders(config, device)
 
 
 def train_epoch(model, train_loader, optimizer, loss_fn, device, config: TrainConfig) -> float:
@@ -618,8 +688,7 @@ def train_model(config: TrainConfig, run: TrainRun) -> Tuple[Any, Dict]:
     logger.info(f"Model parameters: {n_params:,}")
 
     # Create dataloaders
-    # TODO: Replace with real data loading
-    train_loader, val_loader, test_loader = create_dummy_dataloaders(config, device)
+    train_loader, val_loader, test_loader = create_dataloaders(config, device)
     logger.info(
         f"Data: train={len(train_loader.dataset)}, "
         f"val={len(val_loader.dataset)}, test={len(test_loader.dataset)}"

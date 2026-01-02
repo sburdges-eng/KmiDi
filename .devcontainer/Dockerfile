@@ -55,9 +55,6 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 \
 RUN curl -sSL https://install.python-poetry.org | python3.11 - \
     && ln -s /root/.local/bin/poetry /usr/local/bin/poetry
 
-# Install pnpm for Node.js workspace
-RUN npm install -g pnpm@8
-
 # Install git-filter-repo for history preservation
 RUN pip3 install git-filter-repo
 

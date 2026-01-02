@@ -604,21 +604,12 @@ class stdmap_SynthProvider:
                         "[" + str(index) + "]", obj_data, self.data_type
                     )
                 else:
-                    # FIXME we need to have accessed item 0 before accessing
-                    # any other item!
+                    if self.skip_size is None and current is not None:
+                        # Derive the value offset from the current node instead of forcing access to index 0.
+                        self.get_value_offset(current.Dereference())
                     if self.skip_size is None:
-                        (
-                            logger
-                            >> "You asked for item > 0 before asking for item == 0, I will fetch 0 now then retry"
-                        )
-                        if self.get_child_at_index(0):
-                            return self.get_child_at_index(index)
-                        else:
-                            (
-                                logger
-                                >> "item == 0 could not be found. sorry, nothing can be done here."
-                            )
-                            return None
+                        logger >> "Unable to determine value offset; returning None"
+                        return None
                     return current.CreateChildAtOffset(
                         "[" + str(index) + "]", self.skip_size, self.data_type
                     )

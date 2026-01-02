@@ -328,10 +328,7 @@ class SpectocloudDataset(Dataset):
     
     def _extract_midi_features(self, midi_path: str) -> np.ndarray:
         """
-        Extract simple MIDI features for conditioning.
-        
-        TODO: Implement richer feature extraction using pretty_midi.
-        For now, returns placeholder features.
+        Extract richer MIDI features for conditioning using pretty_midi.
         """
         try:
             import pretty_midi
@@ -366,8 +363,52 @@ class SpectocloudDataset(Dataset):
             if len(tempo_changes[1]) > 0:
                 avg_tempo = np.mean(tempo_changes[1])
                 features[14] = min(1.0, avg_tempo / 200.0)
-            
-            # Remaining features: reserved for future use
+
+            # Feature 15: instrument count (normalized)
+            features[15] = min(1.0, len(midi.instruments) / 8.0)
+
+            # Feature 16: unique program count (excluding drums)
+            programs = {inst.program for inst in midi.instruments if not inst.is_drum}
+            features[16] = min(1.0, len(programs) / 16.0) if programs else 0.0
+
+            # Feature 17: drum usage ratio
+            drum_notes = sum(len(inst.notes) for inst in midi.instruments if inst.is_drum)
+            features[17] = drum_notes / total_notes if total_notes else 0.0
+
+            # Feature 18-19: note duration stats
+            durations = [note.end - note.start for inst in midi.instruments for note in inst.notes]
+            if durations:
+                features[18] = min(1.0, float(np.mean(durations) / 5.0))
+                features[19] = min(1.0, float(np.std(durations) / 5.0))
+
+            # Feature 20: pitch range (normalized)
+            if pitches:
+                features[20] = float((np.max(pitches) - np.min(pitches)) / 127.0)
+
+            # Feature 21: max polyphony (normalized)
+            events = []
+            for inst in midi.instruments:
+                for note in inst.notes:
+                    events.append((note.start, 1))
+                    events.append((note.end, -1))
+            events.sort(key=lambda e: e[0])
+            active = 0
+            max_polyphony = 0
+            for _, delta in events:
+                active += delta
+                max_polyphony = max(max_polyphony, active)
+            features[21] = min(1.0, max_polyphony / 16.0) if max_polyphony else 0.0
+
+            # Feature 22: note density per second (normalized)
+            if midi.get_end_time() > 0:
+                notes_per_second = total_notes / midi.get_end_time()
+                features[22] = min(1.0, notes_per_second / 10.0)
+
+            # Feature 23: rhythmic variance (std of inter-onset intervals)
+            onsets = sorted([note.start for inst in midi.instruments for note in inst.notes])
+            if len(onsets) > 1:
+                intervals = np.diff(onsets)
+                features[23] = min(1.0, float(np.std(intervals)))
             
             return features
             
