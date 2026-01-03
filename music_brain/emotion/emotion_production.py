@@ -11,7 +11,7 @@ rules as integration matures.
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 
-from music_brain.emotion_thesaurus import EmotionMatch
+from music_brain.emotion.emotion_thesaurus import EmotionMatch
 
 
 @dataclass
@@ -112,4 +112,3 @@ class EmotionProductionMapper:
         tier = emotion.intensity_tier or 3
         base = 0.35 + 0.1 * max(1, min(tier, 6))
         return max(0.2, min(1.0, base))
-
