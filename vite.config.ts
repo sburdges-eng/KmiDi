@@ -8,10 +8,10 @@ const host = process.env.TAURI_DEV_HOST;
 // https://vite.dev/config/
 export default defineConfig(async () => ({
   plugins: [react()],
-  
+
   // Use project root - index.html will be moved here
   root: path.resolve(__dirname),
-  
+
   // Public assets are in the root public folder
   publicDir: path.resolve(__dirname, "public"),
 
@@ -26,18 +26,27 @@ export default defineConfig(async () => ({
     host: host || false,
     hmr: host
       ? {
-          protocol: "ws",
-          host,
-          port: 1421,
-        }
+        protocol: "ws",
+        host,
+        port: 1421,
+      }
       : undefined,
     watch: {
       // 3. tell Vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],
     },
   },
-  
+
   build: {
     outDir: path.resolve(__dirname, "dist"),
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom"],
+          markdown: ["react-markdown", "remark-gfm"],
+        },
+      },
+    },
   },
 }));

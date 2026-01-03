@@ -5,7 +5,8 @@ import type { Guide } from "./GuideNav";
 // Eagerly bundle all production workflow markdown files as raw strings.
 // Keys look like: "/Production_Workflows/Filename.md"
 const markdownFiles = import.meta.glob("/Production_Workflows/*.md", {
-  as: "raw",
+  query: "?raw",
+  import: "default",
   eager: true,
 }) as Record<string, string>;
 
