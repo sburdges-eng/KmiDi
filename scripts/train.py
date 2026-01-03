@@ -18,7 +18,7 @@ Features:
 
 Usage:
     python scripts/train.py --model emotion_recognizer --epochs 50
-    python scripts/train.py --config configs/emotion_recognizer.yaml
+    python scripts/train.py --config config/emotion_recognizer.yaml
     python scripts/train.py --list
     python scripts/train.py --model melody_transformer --dry-run
 
@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 ROOT = Path(__file__).resolve().parent.parent
 MODELS_DIR = ROOT / "models"
 DATA_DIR = ROOT / "data"
-CONFIGS_DIR = ROOT / "configs"
+CONFIGS_DIR = ROOT / "config"
 LOGS_DIR = ROOT / "logs" / "training"
 CHECKPOINTS_DIR = ROOT / "checkpoints"
 
@@ -1118,7 +1118,7 @@ def list_models():
     print("\n" + "=" * 70)
     print("Usage:")
     print("  python scripts/train.py --model emotion_recognizer --epochs 50")
-    print("  python scripts/train.py --config configs/emotion_recognizer.yaml")
+    print("  python scripts/train.py --config config/emotion_recognizer.yaml")
     print("=" * 70 + "\n")
 
 
@@ -1196,7 +1196,7 @@ Examples:
   python scripts/train.py --list
   python scripts/train.py --model emotion_recognizer
   python scripts/train.py --model melody_transformer --epochs 200
-  python scripts/train.py --config configs/emotion_recognizer.yaml
+  python scripts/train.py --config config/emotion_recognizer.yaml
   python scripts/train.py --model dynamics_engine --dry-run
         """,
     )

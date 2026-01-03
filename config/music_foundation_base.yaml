@@ -15,7 +15,7 @@ use_streaming: true
 
 # Data Configuration
 # Override with KELLY_AUDIO_DATA_ROOT environment variable
-# See configs/storage_paths.yaml for path configuration
+# See configs/storage.py (Python module) for storage configuration
 data:
   train_manifest: ${KELLY_AUDIO_DATA_ROOT:-/Volumes/Extreme SSD/kelly-audio-data}/manifests/full_unlabeled.jsonl
   sample_rate: 44100

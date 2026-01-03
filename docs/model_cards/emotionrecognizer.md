@@ -158,7 +158,7 @@ Model not yet trained. Evaluation pending.
 | `models/emotionrecognizer.onnx` | ONNX export (pending) |
 | `models/emotionrecognizer.mlmodel` | Core ML export (pending) |
 | `docs/model_cards/emotionrecognizer.md` | This model card |
-| `configs/emotion_recognizer.yaml` | Training configuration |
+| `config/emotion_recognizer.yaml` | Training configuration |
 
 ---
 

@@ -167,7 +167,7 @@ def pretrain(cfg_path: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, default="configs/music_foundation_base.yaml")
+    parser.add_argument("--config", type=str, default="config/music_foundation_base.yaml")
     args = parser.parse_args()
     pretrain(args.config)
 

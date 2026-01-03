@@ -287,7 +287,7 @@ This model validates the entire DAiW emotion thesaurus by testing:
 | `models/emotionnodeclassifier.onnx` | ONNX export (pending) |
 | `models/emotionnodeclassifier.mlmodel` | Core ML export (pending) |
 | `docs/model_cards/emotionnodeclassifier.md` | This model card |
-| `configs/emotion_node_classifier.yaml` | Training configuration |
+| `config/emotion_node_classifier.yaml` | Training configuration |
 | `data/emotion_thesaurus/` | Source thesaurus JSON files |
 
 ---
