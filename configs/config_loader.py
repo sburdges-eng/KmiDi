@@ -11,7 +11,7 @@ Syntax:
 Usage:
     from configs.config_loader import load_config
 
-    config = load_config("configs/emotion_recognizer.yaml")
+    config = load_config("config/emotion_recognizer.yaml")
     print(config["data_path"])  # Expanded path
 """
 
@@ -210,7 +210,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python config_loader.py <config.yaml>")
         print("\nExample:")
-        print("  KELLY_AUDIO_DATA_ROOT=/data python config_loader.py configs/emotion_recognizer.yaml")
+        print("  KELLY_AUDIO_DATA_ROOT=/data python config_loader.py config/emotion_recognizer.yaml")
         sys.exit(1)
 
     config_path = sys.argv[1]
