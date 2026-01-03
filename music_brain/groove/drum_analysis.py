@@ -8,6 +8,7 @@ Implements:
 - Drum technique signatures
 """
 
+import json
 from dataclasses import dataclass, field
 from typing import List, Tuple, Optional
 import math
@@ -34,6 +35,12 @@ class AnalysisConfig:
             drag_threshold_ms=data.get("drag_threshold_ms", 80.0),
             alternation_window_ms=data.get("alternation_window_ms", 200.0),
         )
+
+    @classmethod
+    def from_file(cls, path: str) -> "AnalysisConfig":
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return cls.from_dict(data)
 
 
 @dataclass
