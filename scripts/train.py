@@ -1118,7 +1118,7 @@ def list_models():
     print("\n" + "=" * 70)
     print("Usage:")
     print("  python scripts/train.py --model emotion_recognizer --epochs 50")
-    print("  python scripts/train.py --config configs/emotion_recognizer.yaml")
+    print("  python scripts/train.py --config config/emotion_recognizer.yaml")
     print("=" * 70 + "\n")
 
 

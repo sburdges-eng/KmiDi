@@ -15,7 +15,7 @@ Usage:
 
 Note:
   This script is a full pipeline runner; for lightweight MPS laptop training
-  see scripts/train_mps_stub.py and configs/laptop_m4_small.yaml.
+  see scripts/train_mps_stub.py and config/laptop_m4_small.yaml.
 """
 
 from __future__ import annotations
