@@ -47,14 +47,14 @@ class TestDrumAnalyzer:
         """Test initialization."""
         assert self.analyzer.ppq == 480
         assert self.analyzer.bpm == 120.0
-        assert self.analyzer.flam_ticks == 48  # 30ms at 120 BPM
-        assert self.analyzer.buzz_ticks == 80  # 50ms at 120 BPM
+        assert self.analyzer.flam_ticks == 28  # 30ms at 120 BPM with 480 PPQ
+        assert self.analyzer.buzz_ticks == 48  # 50ms at 120 BPM with 480 PPQ
 
     def test_analyze_empty_notes(self):
         """Test analysis with no notes."""
         profile = self.analyzer.analyze([])
         assert isinstance(profile, DrumTechniqueProfile)
-        assert profile.tightness == 0.5  # Default for small datasets
+        assert profile.tightness == 0.0  # Default for empty datasets
 
     def test_analyze_basic_drum_pattern(self):
         """Test analysis of basic drum pattern."""
@@ -277,7 +277,4 @@ class TestHiHatAlternation:
         assert alt.dominant_hand == "right"
         assert alt.downbeat_avg_velocity == 75.0
         assert alt.upbeat_avg_velocity == 65.0
-        assert alt.velocity_alternation_ratio == 1.15 < /content >
-
-
-<parameter name = "filePath" > /workspaces/KmiDi/tests/music_brain/test_drum_analysis.py
+        assert alt.velocity_alternation_ratio == 1.15

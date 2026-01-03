@@ -36,6 +36,14 @@ from music_brain.groove.templates import (
     get_genre_template,
     list_genre_templates,
 )
+from music_brain.groove.humanizer import (
+    apply_humanization,
+    GrooveHumanizer,
+    GrooveTemplate,
+    HumanizationProfile,
+    TimingHumanizer,
+    VelocityHumanizer,
+)
 
 __all__ = [
     # Extraction
@@ -67,4 +75,9 @@ __all__ = [
     "analyze_drum_technique",
     # Drum humanization
     "DrumHumanizer",
+    "GrooveHumanizer",
+    "HumanizationProfile",
+    "TimingHumanizer",
+    "VelocityHumanizer",
+    "apply_humanization",
 ]

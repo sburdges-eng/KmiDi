@@ -59,6 +59,7 @@ class GrooveTemplate:
     # Timing analysis
     timing_deviations: List[float] = field(default_factory=list)  # Per-beat deviations in ticks
     swing_factor: float = 0.0  # 0.0 = straight, 0.5 = triplet swing
+    intensity: float = 1.0  # How strongly to apply this template (0-1)
     
     # Velocity analysis
     velocity_curve: List[int] = field(default_factory=list)  # Per-beat velocities
@@ -89,6 +90,7 @@ class GrooveTemplate:
             "time_signature": list(self.time_signature),
             "timing_deviations": self.timing_deviations,
             "swing_factor": self.swing_factor,
+            "intensity": self.intensity,
             "velocity_curve": self.velocity_curve,
             "velocity_stats": self.velocity_stats,
             "timing_stats": self.timing_stats,
@@ -105,6 +107,7 @@ class GrooveTemplate:
             time_signature=tuple(data.get("time_signature", [4, 4])),
             timing_deviations=data.get("timing_deviations", []),
             swing_factor=data.get("swing_factor", 0.0),
+            intensity=data.get("intensity", 1.0),
             velocity_curve=data.get("velocity_curve", []),
             velocity_stats=data.get("velocity_stats", {}),
             timing_stats=data.get("timing_stats", {}),
