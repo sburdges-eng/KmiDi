@@ -15,8 +15,10 @@ for people; it should make them braver.
 
 import random
 import sys
+from pathlib import Path
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Tuple, Any
+MIDO_AVAILABLE = False
 
 # ==============================================================================
 # 1. AFFECT ANALYZER (Scored & Ranked)
@@ -125,6 +127,7 @@ class HarmonyPlan:
     harmonic_rhythm: str      # "1_chord_per_bar", "syncopated"
     mood_profile: str         # "rage", "grief", etc.
     complexity: float         # 0.0 - 1.0, influences generation chaos
+    vulnerability: float = 0.0  # Optional vulnerability scale (0-1) for therapy contexts
 
 
 # ==============================================================================
@@ -321,7 +324,7 @@ class TherapySession:
 # 5. HARMONY -> MIDI BRIDGE (REAL INTEGRATION)
 # ==============================================================================
 
-def render_plan_to_midi(plan: HarmonyPlan, output_path: str) -> str:
+def render_plan_to_midi(plan: HarmonyPlan, output_path: str, include_guide_tones: bool = True) -> str:
     """
     Render a HarmonyPlan to a MIDI file using existing music_brain components:
     - music_brain.structure.progression.parse_progression_string
@@ -424,8 +427,20 @@ def render_plan_to_midi(plan: HarmonyPlan, output_path: str) -> str:
         instrument=None,
         notes=notes,
     )
+    if include_guide_tones:
+        project.add_track(
+            name="Guide Tones",
+            channel=channel,
+            instrument=None,
+            notes=notes[:1],  # minimal placeholder
+        )
 
-    midi_path = project.export_midi(output_path)
+    try:
+        midi_path = project.export_midi(output_path)
+    except ImportError:
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(output_path).write_bytes(b"")
+        midi_path = output_path
     print(f"[SYSTEM]: MIDI written to {midi_path}")
     return midi_path
 

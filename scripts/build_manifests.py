@@ -134,8 +134,9 @@ def split_train_val(
         else:
             key = str(item)
         
-        # Use hash to determine split
-        hash_val = int(get_file_hash(key), 16)
+        # Use hash (mixed with seed) to determine split
+        seeded_key = f"{key}-{seed}"
+        hash_val = int(get_file_hash(seeded_key), 16)
         if (hash_val % 10000) / 10000.0 < val_split:
             val_items.append(item)
         else:

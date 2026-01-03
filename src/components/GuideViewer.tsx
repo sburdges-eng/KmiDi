@@ -1,6 +1,4 @@
-// @ts-expect-error types may be missing until deps are installed
 import ReactMarkdown from "react-markdown";
-// @ts-expect-error types may be missing until deps are installed
 import remarkGfm from "remark-gfm";
 import type { Guide } from "./GuideNav";
 
@@ -60,4 +58,3 @@ export function GuideViewer({ guide }: Props) {
 }
 
 export default GuideViewer;
-

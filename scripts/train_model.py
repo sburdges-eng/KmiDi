@@ -97,6 +97,8 @@ class TrainingConfig:
     # Model
     model_type: str = "emotion"
     model_id: str = "emotionrecognizer"
+    budget_limit: float = 100.0
+    ensure_model_copy: bool = False
     
     # Data
     data_path: str = ""
@@ -666,6 +668,13 @@ def main():
         config.device = args.device
     if args.output:
         config.output_dir = args.output
+    if args.device:
+        config.device = args.device
+    
+    # Safety: budget limit
+    if getattr(config, "budget_limit", 100.0) > 100.0:
+        logger.error(f"Budget limit ${config.budget_limit} exceeds safety threshold $100.0")
+        sys.exit(1)
     
     if args.synthetic:
         config.data_path = ""  # Force synthetic data
@@ -709,6 +718,13 @@ def main():
         val_loader=val_loader,
         test_loader=test_loader,
     )
+
+    # Optional: write an initial model copy for safety/backups
+    if getattr(config, "ensure_model_copy", False):
+        copy_path = trainer.output_dir / "initial_state_copy.pt"
+        copy_path.parent.mkdir(parents=True, exist_ok=True)
+        torch.save(model.state_dict(), copy_path)
+        logger.info(f"Saved initial model copy to {copy_path}")
     
     # Train
     results = trainer.train()
@@ -732,4 +748,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

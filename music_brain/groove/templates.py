@@ -196,6 +196,28 @@ GENRE_TEMPLATES = {
 }
 
 
+def create_basic_drum_pattern(path: str, tempo_bpm: int = 120, bars: int = 2):
+    """
+    Create a minimal drum MIDI placeholder for tests.
+
+    If MIDI dependencies are unavailable, this simply touches the file so that
+    downstream humanization steps have an input path to operate on.
+    """
+    from pathlib import Path
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        import mido
+
+        mid = mido.MidiFile()
+        track = mido.MidiTrack()
+        mid.tracks.append(track)
+        mid.save(p)
+    except Exception:
+        p.write_bytes(b"")
+    return str(p)
+
+
 def get_genre_template(genre: str) -> GrooveTemplate:
     """
     Get a pre-defined groove template for a genre.

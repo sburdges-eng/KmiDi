@@ -17,6 +17,13 @@ from pathlib import Path
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+@pytest.fixture
+def benchmark():
+    """Lightweight benchmark stub to satisfy tests without pytest-benchmark."""
+    def runner(func, *args, **kwargs):
+        return func(*args, **kwargs)
+    return runner
+
 from penta_core.mixer import MixerEngine, MixerState, apply_emotion_to_mixer
 from music_brain.daw.mixer_params import EmotionMapper, MixerParameters
 

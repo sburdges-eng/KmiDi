@@ -110,6 +110,9 @@ class Tier1AudioGenerator:
         # Emotion controls timbre
         emotion_scalar = np.tanh(emotion_embedding[0]) if len(emotion_embedding) > 0 else 0.0
 
+        swing = groove_params.get("swing", 0.2)
+        humanization_amount = groove_params.get("humanization", 0.3)
+
         # Synthesis loop
         for i, midi_note in enumerate(midi_notes):
             # MIDI to frequency
@@ -142,9 +145,8 @@ class Tier1AudioGenerator:
             waveform *= envelope
 
             # Apply swing if on off-beat
-            if groove_params.get("swing", 0.2) > 0.1 and i % 2 == 1:
-                swing_amount = groove_params["swing"] * 0.3
-                waveform = self._apply_time_shift(waveform, swing_amount)
+            if swing > 0.1 and i % 2 == 1:
+                waveform = self._apply_time_shift(waveform, swing * 0.3)
 
             # Place in output buffer
             start_idx = i * samples_per_note
@@ -152,8 +154,8 @@ class Tier1AudioGenerator:
             audio[start_idx:end_idx] = waveform[:end_idx - start_idx]
 
         # Apply humanization (slight timing/pitch variation)
-        if groove_params.get("humanization", 0.3) > 0.1:
-            audio = self._apply_humanization(audio, groove_params["humanization"])
+        if humanization_amount > 0.1:
+            audio = self._apply_humanization(audio, humanization_amount)
 
         # Normalize and apply soft clipping
         audio = self._soft_clip(audio)

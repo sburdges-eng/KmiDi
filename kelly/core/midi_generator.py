@@ -12,22 +12,45 @@ try:
     import mido  # type: ignore
 except ImportError:
     class _DummyTrack(list):
-        pass
+        """Lightweight stand-in for mido.MidiTrack that behaves like a list."""
+
+        def __init__(self):
+            super().__init__()
+
+    class _DummyMessage:
+        """Minimal message container mirroring mido.Message/MetaMessage attrs."""
+
+        def __init__(self, message_type: str, time: int = 0, **kwargs):
+            self.type = message_type
+            self.time = time
+            for key, value in kwargs.items():
+                setattr(self, key, value)
+
+        def __getitem__(self, key):
+            return getattr(self, key)
+
+        def __repr__(self) -> str:
+            return f"<Message {self.type} time={self.time}>"
 
     class _DummyMidiFile:
         def __init__(self, ticks_per_beat: int = 480):
             self.ticks_per_beat = ticks_per_beat
-            self.tracks = [_DummyTrack()]
+            self.tracks = []
 
         def save(self, path: str):
             # Write a minimal placeholder; actual MIDI content not required for tests
             Path(path).write_text("dummy midi")
 
     class mido:  # type: ignore
-        Message = dict
-        MetaMessage = dict
+        Message = _DummyMessage
+        MetaMessage = _DummyMessage
         MidiFile = _DummyMidiFile
         MidiTrack = _DummyTrack
+
+        @staticmethod
+        def bpm2tempo(bpm: float) -> int:
+            """Convert BPM to microseconds-per-beat (matches real mido helper)."""
+            return int(60_000_000 / bpm)
 
 
 @dataclass

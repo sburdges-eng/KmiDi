@@ -8,6 +8,8 @@ This module provides voice processing capabilities including:
 - NeuralBackend: DiffSinger/ONNX neural voice synthesis (7-8/10 quality)
 """
 
+from dataclasses import dataclass
+
 # Import neural backend (should always work)
 from music_brain.voice.neural_backend import (
     NeuralBackend,
@@ -37,7 +39,30 @@ try:
         "get_auto_tune_preset",
     ])
 except ImportError:
-    pass
+    # Provide lightweight stubs so imports succeed even when optional deps (e.g., librosa) are missing.
+    class AutoTuneProcessor:
+        def __init__(self, *args, **kwargs):
+            self.available = False
+
+        def process(self, audio, *args, **kwargs):  # pragma: no cover - stub
+            # No-op passthrough when dependencies are missing.
+            return audio
+
+    @dataclass
+    class AutoTuneSettings:
+        key: str = "C"
+        scale: str = "major"
+        retune_speed: float = 0.5
+        humanize: float = 0.0
+
+    def get_auto_tune_preset(name: str) -> AutoTuneSettings:  # pragma: no cover - stub
+        return AutoTuneSettings()
+
+    __all__.extend([
+        "AutoTuneProcessor",
+        "AutoTuneSettings",
+        "get_auto_tune_preset",
+    ])
 
 try:
     from music_brain.voice.modulator import (

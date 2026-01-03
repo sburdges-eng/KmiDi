@@ -160,8 +160,8 @@ def extract_emotion_from_filename(filepath: Path) -> Optional[Tuple[str, str, in
         if emotion_key in filename:
             return emotion_data
     
-    # Default to neutral
-    return ("happy", "", 1)
+    # No explicit emotion hint found
+    return None
 
 
 def get_emotion_vector_from_path(filepath: Path) -> List[float]:

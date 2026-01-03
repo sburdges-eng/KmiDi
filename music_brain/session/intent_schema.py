@@ -317,6 +317,70 @@ class CompleteSongIntent:
     # Meta
     title: str = ""
     created: str = ""
+
+    def __init__(
+        self,
+        core_event: str = "",
+        core_resistance: str = "",
+        core_longing: str = "",
+        core_stakes: str = "",
+        core_transformation: str = "",
+        mood_primary: str = "",
+        mood_secondary_tension: str = "",
+        imagery_texture: str = "",
+        vulnerability_scale: float = 0.0,
+        narrative_arc: str = "",
+        technical_genre: str = "",
+        technical_tempo_range: tuple = (60, 140),
+        technical_key: str = "",
+        technical_mode: str = "",
+        technical_groove_feel: str = "",
+        technical_rule_to_break: str = "",
+        rule_breaking_justification: str = "",
+        output_target: str = "",
+        output_feedback_loop: str = "",
+        title: str = "",
+        created: str = "",
+        **kwargs,
+    ):
+        self.song_root = SongRoot(
+            core_event=core_event,
+            core_resistance=core_resistance,
+            core_longing=core_longing,
+            core_stakes=core_stakes,
+            core_transformation=core_transformation,
+        )
+        try:
+            tension_val = float(mood_secondary_tension)
+        except Exception:
+            tension_val = 0.5
+        try:
+            vuln_val = float(vulnerability_scale)
+        except Exception:
+            vuln_val = 0.5
+
+        self.song_intent = SongIntent(
+            mood_primary=mood_primary,
+            mood_secondary_tension=tension_val,
+            imagery_texture=imagery_texture,
+            vulnerability_scale=vuln_val,
+            narrative_arc=narrative_arc or "",
+        )
+        self.technical_constraints = TechnicalConstraints(
+            technical_genre=technical_genre,
+            technical_tempo_range=technical_tempo_range,
+            technical_key=technical_key,
+            technical_mode=technical_mode,
+            technical_groove_feel=technical_groove_feel,
+            technical_rule_to_break=technical_rule_to_break,
+            rule_breaking_justification=rule_breaking_justification,
+        )
+        self.system_directive = SystemDirective(
+            output_target=output_target,
+            output_feedback_loop=output_feedback_loop,
+        )
+        self.title = title
+        self.created = created
     
     def to_dict(self) -> Dict:
         """Convert to dictionary for serialization."""
