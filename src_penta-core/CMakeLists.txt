@@ -32,6 +32,17 @@ if(NOT TARGET readerwriterqueue)
     endif()
 endif()
 
+# nlohmann/json (header-only)
+if(NOT TARGET nlohmann_json)
+    FetchContent_Declare(
+        nlohmann_json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG v3.11.3
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(nlohmann_json)
+endif()
+
 set(PENTA_CORE_SOURCES
     # Common utilities
     common/RTMemoryPool.cpp
@@ -114,10 +125,15 @@ target_include_directories(penta_core PUBLIC
 
 target_link_libraries(penta_core PUBLIC
     readerwriterqueue
+    nlohmann_json::nlohmann_json
     juce::juce_core
     juce::juce_audio_devices
     juce::juce_dsp
     juce::juce_osc
+)
+
+target_compile_definitions(penta_core PUBLIC
+    JUCE_USE_OGGVORBIS=0
 )
 
 # Enable AVX2 SIMD optimizations if available

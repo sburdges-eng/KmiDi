@@ -1,5 +1,5 @@
 #include "BridgeClient.h"
-#include "../Voice/VoiceProcessor.h"
+#include "VoiceProcessor.h"
 
 //==============================================================================
 // OSC Address Patterns (must match Python cpp_bridge.py)
@@ -7,21 +7,21 @@
 namespace OSCAddresses
 {
     // Incoming (Python → C++)
-    constexpr const char* LOAD_VOICE_MODEL = "/voice/model/load";
-    constexpr const char* SPEAK_TEXT = "/voice/speak";
-    constexpr const char* QUEUE_PHONEME = "/voice/phoneme";
-    constexpr const char* SET_VOWEL = "/voice/vowel";
-    constexpr const char* SET_PITCH = "/voice/pitch";
-    constexpr const char* NOTE_ON = "/voice/note/on";
-    constexpr const char* NOTE_OFF = "/voice/note/off";
-    constexpr const char* SET_FORMANT_SHIFT = "/voice/formant/shift";
-    constexpr const char* SET_BREATHINESS = "/voice/breathiness";
-    constexpr const char* SET_VIBRATO = "/voice/vibrato";
+    constexpr const char *LOAD_VOICE_MODEL = "/voice/model/load";
+    constexpr const char *SPEAK_TEXT = "/voice/speak";
+    constexpr const char *QUEUE_PHONEME = "/voice/phoneme";
+    constexpr const char *SET_VOWEL = "/voice/vowel";
+    constexpr const char *SET_PITCH = "/voice/pitch";
+    constexpr const char *NOTE_ON = "/voice/note/on";
+    constexpr const char *NOTE_OFF = "/voice/note/off";
+    constexpr const char *SET_FORMANT_SHIFT = "/voice/formant/shift";
+    constexpr const char *SET_BREATHINESS = "/voice/breathiness";
+    constexpr const char *SET_VIBRATO = "/voice/vibrato";
 
     // Outgoing (C++ → Python)
-    constexpr const char* STATUS = "/voice/status";
-    constexpr const char* PHONEME_COMPLETE = "/voice/phoneme/complete";
-    constexpr const char* ERROR = "/voice/error";
+    constexpr const char *STATUS = "/voice/status";
+    constexpr const char *PHONEME_COMPLETE = "/voice/phoneme/complete";
+    constexpr const char *ERROR = "/voice/error";
 }
 
 //==============================================================================
@@ -33,7 +33,7 @@ BridgeClient::~BridgeClient()
 }
 
 //==============================================================================
-bool BridgeClient::connect(int receivePort, const juce::String& sendHost, int sendPort)
+bool BridgeClient::connect(int receivePort, const juce::String &sendHost, int sendPort)
 {
     sendHost_ = sendHost;
     sendPort_ = sendPort;
@@ -60,7 +60,7 @@ bool BridgeClient::connect(int receivePort, const juce::String& sendHost, int se
 
     connected_ = true;
     DBG("BridgeClient connected: receiving on port " << receivePort
-        << ", sending to " << sendHost << ":" << sendPort);
+                                                     << ", sending to " << sendHost << ":" << sendPort);
 
     sendStatus("connected");
     return true;
@@ -101,7 +101,7 @@ bool BridgeClient::ping()
 }
 
 //==============================================================================
-void BridgeClient::sendStatus(const juce::String& status)
+void BridgeClient::sendStatus(const juce::String &status)
 {
     if (oscSender_)
     {
@@ -117,7 +117,7 @@ void BridgeClient::sendPhonemeComplete(int phonemeIndex)
     }
 }
 
-void BridgeClient::sendError(const juce::String& error)
+void BridgeClient::sendError(const juce::String &error)
 {
     if (oscSender_)
     {
@@ -126,41 +126,41 @@ void BridgeClient::sendError(const juce::String& error)
 }
 
 //==============================================================================
-bool BridgeClient::requestAutoTune(const juce::File& inputFile, juce::File& outputFile)
+bool BridgeClient::requestAutoTune(const juce::File &inputFile, juce::File &outputFile)
 {
     if (!connected_ || !oscSender_)
         return false;
-    
+
     // Send auto-tune request via OSC
     juce::String inputPath = inputFile.getFullPathName();
     juce::String outputPath = outputFile.getFullPathName();
-    
+
     // Send OSC message: /autotune/process [input_path] [output_path]
     if (oscSender_->send("/autotune/process", inputPath, outputPath))
     {
         // Wait for processing response (with timeout)
         // In a real implementation, this would be async with a callback
-        int timeout = 100;  // 10 seconds
+        int timeout = 100; // 10 seconds
         while (timeout > 0)
         {
             juce::Thread::sleep(100);
             timeout--;
-            
+
             // Check for completion message (would be received via OSC)
             // For now, return success after timeout
         }
-        
+
         return outputFile.existsAsFile();
     }
-    
+
     return false;
 }
 
-juce::String BridgeClient::sendChatMessage(const juce::String& message)
+juce::String BridgeClient::sendChatMessage(const juce::String &message)
 {
     if (!connected_ || !oscSender_)
         return "Error: Not connected to Python bridge";
-    
+
     // Send chat request via OSC
     if (oscSender_->send("/chat/message", message))
     {
@@ -168,16 +168,16 @@ juce::String BridgeClient::sendChatMessage(const juce::String& message)
         // 1. Send message to Python AI service via OSC
         // 2. Wait for response asynchronously
         // 3. Return the AI's response
-        
+
         // For now, provide a helpful message
         return "AI chat integration ready. Message sent to bridge: " + message;
     }
-    
+
     return "Error: Failed to send message";
 }
 
 //==============================================================================
-void BridgeClient::oscMessageReceived(const juce::OSCMessage& message)
+void BridgeClient::oscMessageReceived(const juce::OSCMessage &message)
 {
     juce::String address = message.getAddressPattern().toString();
 
@@ -231,7 +231,7 @@ void BridgeClient::oscMessageReceived(const juce::OSCMessage& message)
 }
 
 //==============================================================================
-void BridgeClient::handleVoiceModelLoad(const juce::OSCMessage& message)
+void BridgeClient::handleVoiceModelLoad(const juce::OSCMessage &message)
 {
     if (!voiceProcessor_)
     {
@@ -258,7 +258,7 @@ void BridgeClient::handleVoiceModelLoad(const juce::OSCMessage& message)
     }
 }
 
-void BridgeClient::handleSpeakText(const juce::OSCMessage& message)
+void BridgeClient::handleSpeakText(const juce::OSCMessage &message)
 {
     if (!voiceProcessor_)
     {
@@ -277,7 +277,7 @@ void BridgeClient::handleSpeakText(const juce::OSCMessage& message)
     sendStatus("speaking");
 }
 
-void BridgeClient::handlePhoneme(const juce::OSCMessage& message)
+void BridgeClient::handlePhoneme(const juce::OSCMessage &message)
 {
     if (!voiceProcessor_)
         return;
@@ -305,11 +305,11 @@ void BridgeClient::handlePhoneme(const juce::OSCMessage& message)
 
     // Queue single phoneme (accumulate in vector)
     // For simplicity, we'll create a single-phoneme vector
-    std::vector<SynthPhoneme> phonemes = { phoneme };
+    std::vector<SynthPhoneme> phonemes = {phoneme};
     voiceProcessor_->queuePhonemes(phonemes);
 }
 
-void BridgeClient::handleVowelSet(const juce::OSCMessage& message)
+void BridgeClient::handleVowelSet(const juce::OSCMessage &message)
 {
     if (!voiceProcessor_)
         return;
@@ -321,7 +321,7 @@ void BridgeClient::handleVowelSet(const juce::OSCMessage& message)
     voiceProcessor_->setVowel(static_cast<VowelType>(vowelIndex));
 }
 
-void BridgeClient::handlePitchSet(const juce::OSCMessage& message)
+void BridgeClient::handlePitchSet(const juce::OSCMessage &message)
 {
     if (!voiceProcessor_)
         return;
@@ -333,7 +333,7 @@ void BridgeClient::handlePitchSet(const juce::OSCMessage& message)
     voiceProcessor_->setPitch(pitch);
 }
 
-void BridgeClient::handleNoteOn(const juce::OSCMessage& message)
+void BridgeClient::handleNoteOn(const juce::OSCMessage &message)
 {
     if (!voiceProcessor_)
         return;
@@ -346,7 +346,7 @@ void BridgeClient::handleNoteOn(const juce::OSCMessage& message)
     voiceProcessor_->noteOn(midiNote, velocity);
 }
 
-void BridgeClient::handleNoteOff(const juce::OSCMessage& message)
+void BridgeClient::handleNoteOff(const juce::OSCMessage &message)
 {
     if (!voiceProcessor_)
         return;
@@ -354,7 +354,7 @@ void BridgeClient::handleNoteOff(const juce::OSCMessage& message)
     voiceProcessor_->noteOff();
 }
 
-void BridgeClient::handleFormantShift(const juce::OSCMessage& message)
+void BridgeClient::handleFormantShift(const juce::OSCMessage &message)
 {
     if (!voiceProcessor_)
         return;
@@ -366,7 +366,7 @@ void BridgeClient::handleFormantShift(const juce::OSCMessage& message)
     voiceProcessor_->formantShift.store(shift);
 }
 
-void BridgeClient::handleBreathiness(const juce::OSCMessage& message)
+void BridgeClient::handleBreathiness(const juce::OSCMessage &message)
 {
     if (!voiceProcessor_)
         return;
@@ -378,7 +378,7 @@ void BridgeClient::handleBreathiness(const juce::OSCMessage& message)
     voiceProcessor_->breathiness.store(amount);
 }
 
-void BridgeClient::handleVibrato(const juce::OSCMessage& message)
+void BridgeClient::handleVibrato(const juce::OSCMessage &message)
 {
     if (!voiceProcessor_)
         return;
