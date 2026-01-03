@@ -14,6 +14,7 @@ from music_brain.structure.comprehensive_engine import (
     HarmonyPlan,
 )
 
+pytestmark = pytest.mark.serial  # ensure these run one-at-a-time with xdist
 
 @pytest.fixture
 def mock_plan():
