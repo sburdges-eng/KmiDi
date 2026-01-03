@@ -9,7 +9,7 @@ the Dynamics and Arrangement Guide.
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
-from music_brain.emotion_thesaurus import EmotionMatch
+from music_brain.emotion.emotion_thesaurus import EmotionMatch
 
 
 @dataclass
