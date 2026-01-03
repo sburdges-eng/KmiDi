@@ -14,7 +14,7 @@ Usage:
     audio_root = get_audio_data_root()
 
     # Load training config with env var expansion
-    config = load_config("configs/emotion_recognizer.yaml")
+    config = load_config("config/emotion_recognizer.yaml")
 """
 
 from .storage import (

@@ -9,7 +9,7 @@ Trains models using the full training pipeline:
 - Comprehensive evaluation
 
 Usage:
-    python scripts/train_model.py --config configs/emotion_recognizer.yaml
+    python scripts/train_model.py --config config/emotion_recognizer.yaml
     python scripts/train_model.py --model emotion --epochs 50 --batch-size 16
     python scripts/train_model.py --list-models
 

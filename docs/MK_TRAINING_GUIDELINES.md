@@ -175,7 +175,7 @@ python scripts/train.py --list
 python scripts/train.py --model emotion_recognizer --epochs 50
 
 # Train with config file
-python scripts/train.py --config configs/emotion_recognizer.yaml
+python scripts/train.py --config config/emotion_recognizer.yaml
 
 # Dry run (show config without training)
 python scripts/train.py --model melody_transformer --dry-run
@@ -196,7 +196,7 @@ python scripts/train.py \
 
 ### Config Files
 
-Training configs are in `configs/`:
+Training configs are in `config/`:
 
 - `emotion_recognizer.yaml`
 - `melody_transformer.yaml`
@@ -207,7 +207,7 @@ Training configs are in `configs/`:
 Example config:
 
 ```yaml
-# configs/emotion_recognizer.yaml
+# config/emotion_recognizer.yaml
 model_id: emotionrecognizer
 task: emotion_embedding
 architecture_type: cnn
@@ -545,7 +545,7 @@ source venv/bin/activate
 # Training
 python scripts/train.py --list
 python scripts/train.py --model <name> --epochs 50
-python scripts/train.py --config configs/<name>.yaml
+python scripts/train.py --config config/<name>.yaml
 
 # Export
 python scripts/train.py --model <name> --export-onnx --export-coreml
@@ -559,7 +559,7 @@ python -c "from penta_core.ml.export import verify_onnx_model; verify_onnx_model
 | Type | Location |
 |------|----------|
 | **Audio Data** | `/Volumes/Extreme SSD/kelly-audio-data/` |
-| Training configs | `configs/*.yaml` |
+| Training configs | `config/*.yaml` |
 | Training script | `scripts/train.py` |
 | Checkpoints | `checkpoints/<model_id>/` |
 | Exported models | `models/` |

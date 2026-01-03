@@ -36,8 +36,8 @@ All **7 models** are currently **STUBS** (no trained weights):
 **Finding**: No Extreme SSD currently mounted or accessible in the environment.
 
 **Config References to External Storage**:
-- `configs/emotion_recognizer.yaml:38` → `/Volumes/Extreme SSD/kelly-audio-data`
-- `configs/harmony_predictor.yaml:33` → `/Volumes/Extreme SSD/kelly-audio-data`
+- `config/emotion_recognizer.yaml:38` → `/Volumes/Extreme SSD/kelly-audio-data`
+- `config/harmony_predictor.yaml:33` → `/Volumes/Extreme SSD/kelly-audio-data`
 
 **⚠️ Issue**: Configs reference external SSD that's not accessible in current dev container.
 
@@ -104,12 +104,12 @@ performance: ...
 api: ...
 ```
 
-#### **B. Training Configs** (`configs/<model>_*.yaml`)
+#### **B. Training Configs** (`config/<model>_*.yaml`)
 **Purpose**: Model-specific training hyperparameters
 **Examples**:
-- `configs/emotion_recognizer.yaml` - Full training config
-- `configs/melody_transformer.yaml` - Full training config
-- `configs/train-mac-smoke.yaml` - Minimal smoke test config
+- `config/emotion_recognizer.yaml` - Full training config
+- `config/melody_transformer.yaml` - Full training config
+- `config/train-mac-smoke.yaml` - Minimal smoke test config
 
 **Content**:
 ```yaml
@@ -130,7 +130,7 @@ config/                    # Build/environment configs
 ├── build-train-nvidia.yaml
 └── build-prod-aws.yaml
 
-configs/                   # Model training configs
+config/                    # Model training configs
 ├── emotion_recognizer.yaml
 ├── melody_transformer.yaml
 ├── train-mac-smoke.yaml
@@ -168,7 +168,7 @@ training:
   gradient_checkpointing: true
 ```
 
-#### `configs/train-mac-smoke.yaml`
+#### `config/train-mac-smoke.yaml`
 ```yaml
 model_id: emotionrecognizer
 batch_size: 4            # Matches build config
@@ -261,18 +261,18 @@ max_batch = MAX_BATCH_MPS if device.type == "mps" else MAX_BATCH_CPU
 You have **14 configs** but only **7 models** in registry. Missing configs for:
 
 ### Should Create:
-1. ✅ `configs/dynamics_engine.yaml` - EXISTS!
-2. ✅ `configs/groove_predictor.yaml` - EXISTS!
-3. ✅ `configs/instrument_recognizer.yaml` - EXISTS!
-4. ✅ `configs/emotion_node_classifier.yaml` - EXISTS!
+1. ✅ `config/dynamics_engine.yaml` - EXISTS!
+2. ✅ `config/groove_predictor.yaml` - EXISTS!
+3. ✅ `config/instrument_recognizer.yaml` - EXISTS!
+4. ✅ `config/emotion_node_classifier.yaml` - EXISTS!
 
 **Finding**: All model configs already exist! Good coverage.
 
 ### Additional Configs Found:
-- `configs/music_foundation_base.yaml` - Foundation model (new?)
-- `configs/macOS_16gb_optimized.yaml` - Hardware optimization
-- `configs/nvidia_cuda_optimized.yaml` - Hardware optimization
-- `configs/laptop_m4_small.yaml` - Hardware optimization
+- `config/music_foundation_base.yaml` - Foundation model (new?)
+- `config/macOS_16gb_optimized.yaml` - Hardware optimization
+- `config/nvidia_cuda_optimized.yaml` - Hardware optimization
+- `config/laptop_m4_small.yaml` - Hardware optimization
 
 ---
 
@@ -427,7 +427,7 @@ performance:
 ---
 
 ### Edit 2: Add Missing Fields to Smoke Config
-**File**: `configs/train-mac-smoke.yaml`
+**File**: `config/train-mac-smoke.yaml`
 
 **Current** (22 lines):
 ```yaml
@@ -501,7 +501,7 @@ def enforce_device_constraints(config: TrainConfig, device: "torch.device") -> N
 python scripts/prepare_chord_dataset.py  # You may need to create this
 
 # 2. Run training with full config
-python scripts/train.py --config configs/harmony_predictor.yaml
+python scripts/train.py --config config/harmony_predictor.yaml
 
 # 3. Validate output
 ls checkpoints/harmony_predictor/
@@ -515,7 +515,7 @@ ls checkpoints/harmony_predictor/
 python scripts/bulk_download_data.py --dataset ravdess --output data/emotion_audio
 
 # 2. Run training
-python scripts/train.py --config configs/emotion_recognizer.yaml
+python scripts/train.py --config config/emotion_recognizer.yaml
 
 # 3. Export for C++
 python scripts/export_to_rtneural.py \
@@ -582,7 +582,7 @@ You're closer to production than it might feel - the infrastructure is excellent
 **Questions for You**:
 1. Do you want me to implement the 3 proposed edits above?
 2. Should I create the `scripts/prepare_chord_dataset.py` helper?
-3. Prefer to keep `config/` and `configs/` separate, or consolidate?
+3. Prefer to keep `config/` and `config/` separate, or consolidate?
 4. Which model should we train FIRST (I recommend HarmonyPredictor)?
 
 Let me know how you'd like to proceed!

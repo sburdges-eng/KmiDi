@@ -1,7 +1,7 @@
 """
 MPS-friendly training stub for a 16 GB M4 MacBook Pro.
 
-Reads a YAML config (e.g., configs/laptop_m4_small.yaml), loads a manifest
+Reads a YAML config (e.g., config/laptop_m4_small.yaml), loads a manifest
 of audio + labels, builds a tiny mel classifier, and trains with mixed
 precision + gradient accumulation. Swap the dataset/model with your real
 pipeline as needed.
@@ -142,7 +142,7 @@ def build_model(n_mels: int, num_classes: int, cfg: Dict[str, Any]) -> torch.nn.
     )
 
 
-def train(cfg_path: str = "configs/laptop_m4_small.yaml") -> None:
+def train(cfg_path: str = "config/laptop_m4_small.yaml") -> None:
     cfg = load_config(cfg_path)
     device = get_device(cfg)
 
@@ -266,7 +266,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--config",
         type=str,
-        default="configs/laptop_m4_small.yaml",
+        default="config/laptop_m4_small.yaml",
         help="Path to YAML config.",
     )
     return parser.parse_args()

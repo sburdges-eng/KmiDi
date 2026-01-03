@@ -248,7 +248,7 @@ Model not yet trained. Evaluation will include:
 |------|-------------|
 | `models/instrumentrecognizer.json` | RTNeural weights (stub) |
 | `models/instrumentrecognizer.onnx` | ONNX export (pending) |
-| `configs/instrument_recognizer.yaml` | Training configuration |
+| `config/instrument_recognizer.yaml` | Training configuration |
 | `python/penta_core/ml/datasets/instrument_features.py` | Feature extraction |
 | `python/penta_core/ml/datasets/instrument_synthetic.py` | Synthetic data generation |
 | `docs/model_cards/instrumentrecognizer.md` | This model card |
