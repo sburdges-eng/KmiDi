@@ -31,7 +31,7 @@ This analysis examined 6 key files to understand their current state, identify i
 
 ⚠️ **Needs Improvement**:
 
-- Code files at root level, not in modules
+- Align docs/imports with packaged locations (e.g., `drum_analysis.py` now in `music_brain/groove/`)
 - No integration between guides and code
 - Analysis tools don't feed into application tools
 - Emotion system disconnected from production guides
@@ -188,7 +188,7 @@ music_brain/
 │   ├── emotion_thesaurus.py      # Moved from root
 │   └── emotion_production.py     # NEW
 ├── groove/
-│   ├── drum_analysis.py          # Moved from scripts/, fix broken imports
+│   ├── drum_analysis.py          # In package; feeds analysis/humanization
 │   ├── drum_humanizer.py         # NEW
 │   └── groove_engine.py          # Existing
 ├── production/

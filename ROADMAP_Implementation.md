@@ -28,13 +28,12 @@ This roadmap provides a phased approach to implementing the integration between 
 **Dependencies**: None
 
 **Actions**:
-1. Move `drum_analysis.py` from `scripts/` to `music_brain/groove/`
-   - [ ] Create backup
-   - [ ] Move file from `scripts/drum_analysis.py`
-   - [ ] **Fix broken relative imports**: Change `from ..utils.ppq` → `from music_brain.utils.ppq`
-   - [ ] Update all imports (`from music_brain.utils.ppq import ...`)
-   - [ ] Update `music_brain/groove/__init__.py`
-   - [ ] Test imports (currently broken from `scripts/` location)
+1. `drum_analysis.py` now in `music_brain/groove/` (complete)
+   - [x] Move file into package path
+   - [x] Switch to absolute imports (`music_brain.utils.*`)
+   - [x] Update `music_brain/groove/__init__.py`
+   - [x] Test imports from package root
+   - [x] Remove duplicate content inside the file
 
 2. Consolidate `emotion_thesaurus.py`
    - [ ] Review all versions (root, emotion_thesaurus/, C++)

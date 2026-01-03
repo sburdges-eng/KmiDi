@@ -14,10 +14,18 @@ TODO:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
-from music_brain.groove.drum_analysis import DrumTechniqueProfile
-from music_brain.groove.groove_engine import GrooveSettings
+from music_brain.groove.drum_analysis import DrumAnalyzer, DrumTechniqueProfile
+from music_brain.groove.groove_engine import GrooveSettings, humanize_drums
+
+
+@dataclass
+class HumanizerConfig:
+    """Config for analysis defaults."""
+
+    ppq: int = 480
+    bpm: float = 120.0
 
 
 @dataclass
@@ -34,9 +42,20 @@ class GuideRuleSet:
 class DrumHumanizer:
     """Placeholder humanizer that will apply Production_Workflows rules."""
 
-    def __init__(self, default_style: str = "standard") -> None:
+    def __init__(
+        self,
+        default_style: str = "standard",
+        config: Optional[HumanizerConfig] = None,
+        analyzer: Optional[DrumAnalyzer] = None,
+    ) -> None:
         self.default_style = default_style
         self.guide_rules: Dict[str, GuideRuleSet] = self._build_default_rules()
+        self.config = config or HumanizerConfig()
+        # Analyzer is lazily cloned per-call when bpm/ppq override is provided.
+        self.analyzer = analyzer or DrumAnalyzer(
+            ppq=self.config.ppq,
+            bpm=self.config.bpm,
+        )
 
     def _build_default_rules(self) -> Dict[str, GuideRuleSet]:
         """Seed a few rule presets until markdown ingestion is wired up."""
@@ -68,6 +87,15 @@ class DrumHumanizer:
                     "Tight kicks/snares; velocity accents drive impact.",
                 ],
             ),
+            "technical": GuideRuleSet(
+                swing=0.02,
+                timing_shift_ms=6.0,
+                ghost_rate=0.15,
+                velocity_variation=0.2,
+                notes=[
+                    "Stick control focus; buzz/drag textures emphasized.",
+                ],
+            ),
             "laid_back": GuideRuleSet(
                 swing=0.54,
                 timing_shift_ms=18.0,
@@ -82,11 +110,12 @@ class DrumHumanizer:
     def create_preset_from_guide(
         self,
         style: Optional[str] = None,
+        technique_profile: Optional[DrumTechniqueProfile] = None,
     ) -> GrooveSettings:
         """
         Create a GrooveSettings object seeded by guide presets.
         """
-        style_key = style or self.default_style
+        style_key = style or self._style_from_profile(technique_profile)
         rules = self.guide_rules.get(style_key, self.guide_rules["standard"])
         settings = GrooveSettings()
 
@@ -103,37 +132,71 @@ class DrumHumanizer:
         midi: Any,
         technique_profile: Optional[DrumTechniqueProfile] = None,
         style: Optional[str] = None,
+        notes: Optional[Sequence[Any]] = None,
+        bpm: Optional[float] = None,
+        ppq: Optional[int] = None,
+        seed: Optional[int] = None,
     ) -> Any:
         """
         Stub for applying guide-informed humanization to a MIDI object.
 
         Currently returns the input unchanged but attaches TODOs in notes.
         """
-        _ = technique_profile  # placeholder until analysis-to-rules is wired
-        _ = style
-        # TODO: call groove_engine.humanize_drums with derived GrooveSettings.
-        return midi
+        profile = technique_profile or self._analyze_notes_if_possible(
+            notes=notes,
+            bpm=bpm,
+            ppq=ppq,
+        )
+        inferred_style = style or self._style_from_profile(profile)
+        settings = self.create_preset_from_guide(
+            style=inferred_style,
+            technique_profile=profile,
+        )
+        derived_ppq = ppq or self.config.ppq
+
+        try:
+            events = list(midi)
+        except TypeError:
+            return midi
+
+        return humanize_drums(
+            events=events,
+            complexity=settings.complexity,
+            vulnerability=settings.vulnerability,
+            ppq=derived_ppq,
+            settings=settings,
+            seed=seed,
+        )
 
     def to_plan(
         self,
         technique_profile: Optional[DrumTechniqueProfile],
         style: Optional[str] = None,
+        notes: Optional[Sequence[Any]] = None,
+        bpm: Optional[float] = None,
+        ppq: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         Return a JSON-serializable plan that other layers can consume.
         """
+        profile = technique_profile or self._analyze_notes_if_possible(
+            notes=notes,
+            bpm=bpm,
+            ppq=ppq,
+        )
+        style_key = style or self._style_from_profile(profile)
         rules = self.guide_rules.get(
-            style or self.default_style,
+            style_key,
             self.guide_rules["standard"],
         )
         return {
-            "style": style or self.default_style,
+            "style": style_key,
             "swing": rules.swing,
             "timing_shift_ms": rules.timing_shift_ms,
             "ghost_rate": rules.ghost_rate,
             "velocity_variation": rules.velocity_variation,
             "techniques": (
-                technique_profile.__dict__ if technique_profile else {}
+                profile.__dict__ if profile else {}
             ),
             "notes": rules.notes
             + [
@@ -141,3 +204,35 @@ class DrumHumanizer:
                 "Cheat Sheet."
             ],
         }
+
+    def analyze_notes(
+        self,
+        notes: Sequence[Any],
+        bpm: Optional[float] = None,
+        ppq: Optional[int] = None,
+    ) -> DrumTechniqueProfile:
+        """Analyze a sequence of note-like objects using DrumAnalyzer."""
+        analyzer = (
+            self.analyzer
+            if bpm is None and ppq is None
+            else DrumAnalyzer(ppq=ppq or self.config.ppq, bpm=bpm or self.config.bpm)
+        )
+        return analyzer.analyze(list(notes), bpm=bpm or analyzer.bpm)
+
+    def _style_from_profile(
+        self, profile: Optional[DrumTechniqueProfile]
+    ) -> str:
+        """Pick a guide preset based on detected technique."""
+        if profile and profile.snare.primary_technique in self.guide_rules:
+            return profile.snare.primary_technique
+        return self.default_style
+
+    def _analyze_notes_if_possible(
+        self,
+        notes: Optional[Sequence[Any]],
+        bpm: Optional[float],
+        ppq: Optional[int],
+    ) -> Optional[DrumTechniqueProfile]:
+        if not notes:
+            return None
+        return self.analyze_notes(notes=notes, bpm=bpm, ppq=ppq)
