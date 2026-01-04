@@ -49,9 +49,20 @@ fi
 echo "🤖 Installing Gemini CLI..."
 if command -v npm &> /dev/null; then
     npm install -g @google/gemini-cli
-    gemini /init 2>/dev/null || echo "⚠️  Gemini init failed (may need API key)"
+    # Configure Gemini if API key is set via GEMINI_API_KEY secret
+    if [ -n "$GEMINI_API_KEY" ]; then
+        echo "Gemini API key found, initializing..."
+        gemini /init 2>/dev/null || true
+    else
+        echo "⚠️  Set GEMINI_API_KEY Codespace secret for Gemini CLI"
+    fi
 else
     echo "⚠️  npm not found; Gemini CLI not installed"
+fi
+
+# Configure OpenAI if API key is set
+if [ -n "$OPENAI_API_KEY" ]; then
+    echo "✅ OpenAI API key configured"
 fi
 
 # Create common directories if they don't exist
