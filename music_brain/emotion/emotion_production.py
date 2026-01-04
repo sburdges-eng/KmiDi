@@ -7,7 +7,7 @@ guide-informed `ProductionPreset` objects directly from an `EmotionMatch`.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, cast
 
 from music_brain.emotion.emotion_thesaurus import EmotionMatch
 
@@ -65,7 +65,11 @@ class EmotionProductionMapper:
             "swing": 0.04,
             "groove": "four_on_the_floor",
             "kit": "tight pop kit",
-            "fx": {"reverb": "bright plate", "delay": "1/8 slap", "saturation": "gentle"},
+            "fx": {
+                "reverb": "bright plate",
+                "delay": "1/8 slap",
+                "saturation": "gentle",
+            },
         },
         "surprise": {
             "drum_style": "edm",
@@ -75,7 +79,11 @@ class EmotionProductionMapper:
             "swing": 0.0,
             "groove": "build_and_drop",
             "kit": "edm festival kit",
-            "fx": {"reverb": "big room", "delay": "1/4 note", "riser": "noise+synth"},
+            "fx": {
+                "reverb": "big room",
+                "delay": "1/4 note",
+                "riser": "noise+synth",
+            },
         },
         "sad": {
             "drum_style": "jazzy",
@@ -85,7 +93,10 @@ class EmotionProductionMapper:
             "swing": 0.1,
             "groove": "laid_back_swing",
             "kit": "warm kit with brushes",
-            "fx": {"reverb": "room/plate 1.8s", "delay": "tape 1/4 dotted"},
+            "fx": {
+                "reverb": "room/plate 1.8s",
+                "delay": "tape 1/4 dotted",
+            },
         },
         "fear": {
             "drum_style": "minimal",
@@ -95,7 +106,11 @@ class EmotionProductionMapper:
             "swing": 0.02,
             "groove": "pulsing_eighths",
             "kit": "tight electronic kit",
-            "fx": {"reverb": "long tails", "delay": "ping-pong 1/8", "filter": "hp+lp moves"},
+            "fx": {
+                "reverb": "long tails",
+                "delay": "ping-pong 1/8",
+                "filter": "hp+lp moves",
+            },
         },
         "angry": {
             "drum_style": "rock",
@@ -105,7 +120,11 @@ class EmotionProductionMapper:
             "swing": 0.0,
             "groove": "driving_backbeat",
             "kit": "aggressive rock kit",
-            "fx": {"reverb": "tight room", "saturation": "heavy", "compression": "2-4dB GR"},
+            "fx": {
+                "reverb": "tight room",
+                "saturation": "heavy",
+                "compression": "2-4dB GR",
+            },
         },
         "disgust": {
             "drum_style": "industrial",
@@ -115,7 +134,10 @@ class EmotionProductionMapper:
             "swing": 0.0,
             "groove": "mechanical",
             "kit": "processed/industrial kit",
-            "fx": {"reverb": "metallic plate", "distortion": "bitcrush+drive"},
+            "fx": {
+                "reverb": "metallic plate",
+                "distortion": "bitcrush+drive",
+            },
         },
     }
 
@@ -223,29 +245,45 @@ class EmotionProductionMapper:
         emotion: EmotionMatch,
         genre: Optional[str] = None,
     ) -> ProductionPreset:
-        """Return a preset with drum style, dynamics, density, feel, and transitions."""
+        """
+        Return a preset with drum style, dynamics, density, feel, and
+        transitions.
+        """
         genre_hint = genre or self.default_genre
         profile = self._resolve_profile(emotion)
         drum_style = self.get_drum_style(emotion, genre_hint)
         dynamics_level = self.get_dynamics_level(emotion)
         arrangement_density = self.get_arrangement_density(emotion)
         swing = self._get_swing(profile, genre_hint)
-        genre_info = self._GENRE_TO_DRUM_STYLE.get(genre_hint.lower()) if genre_hint else None
-        groove = (genre_info[2] if genre_info else None) or profile.get("groove", "backbeat")
+        genre_info = (
+            self._GENRE_TO_DRUM_STYLE.get(genre_hint.lower())
+            if genre_hint
+            else None
+        )
+        groove_val: str = (
+            genre_info[2] if genre_info else None
+        ) or str(profile.get("groove", "backbeat"))
         tempo_range = self.get_tempo_range(emotion)
         section_dynamics = self._build_section_dynamics(dynamics_level)
         section_density = self._build_section_density(arrangement_density)
 
         kit_hint = profile.get("kit", self._NEUTRAL_PROFILE["kit"])
-        fx = self._merge_dicts(self._NEUTRAL_PROFILE["fx"], profile.get("fx", {}))
-        transitions = self._build_transition_notes(drum_style, swing, profile.get("feel", "straight"))
+        fx = self._merge_dicts(
+            self._NEUTRAL_PROFILE["fx"],
+            profile.get("fx", {}),
+        )
+        transitions = self._build_transition_notes(
+            drum_style,
+            swing,
+            str(profile.get("feel", "straight")),
+        )
 
         notes = {
             "base_emotion": emotion.base_emotion,
             "sub_emotion": emotion.sub_emotion,
             "genre_hint": genre_hint or "unspecified",
-            "groove": groove,
-            "kit": kit_hint,
+            "groove": groove_val,
+            "kit": str(kit_hint),
         }
 
         return ProductionPreset(
@@ -254,10 +292,11 @@ class EmotionProductionMapper:
             arrangement_density=arrangement_density,
             intensity_tier=emotion.intensity_tier,
             tempo_range=tempo_range,
-            feel="swing" if swing > 0.05 or profile.get("feel") == "swing" else "straight",
+            feel="swing" if swing > 0.05 or profile.get(
+                "feel") == "swing" else "straight",
             swing=swing,
-            groove_motif=groove,
-            kit_hint=kit_hint,
+            groove_motif=groove_val,
+            kit_hint=str(kit_hint),
             section_dynamics=section_dynamics,
             section_density=section_density,
             fx=fx,
@@ -308,29 +347,40 @@ class EmotionProductionMapper:
         """
         profile = self._resolve_profile(emotion)
         tier = emotion.intensity_tier or 3
-        base_density = profile.get("density", self._NEUTRAL_PROFILE["density"])
+        base_density = float(
+            profile.get("density", self._NEUTRAL_PROFILE["density"])
+        )
         density = base_density + 0.07 * (tier - 3)
         return self._clamp(density, 0.2, 1.0)
 
     def get_tempo_range(self, emotion: EmotionMatch) -> Tuple[int, int]:
         """Return a (min, max) tempo range adjusted by intensity tier."""
         profile = self._resolve_profile(emotion)
-        tempo_range = profile.get("tempo_range", self._NEUTRAL_PROFILE["tempo_range"])
+        tempo_range = cast(
+            Tuple[int, int],
+            profile.get("tempo_range", self._NEUTRAL_PROFILE["tempo_range"]),
+        )
         tier = emotion.intensity_tier or 3
         return self._scale_tempo_range(tempo_range, tier)
 
     # --- Internal helpers -------------------------------------------------
-    def _resolve_profile(self, emotion: EmotionMatch) -> Dict[str, object]:
+    def _resolve_profile(self, emotion: EmotionMatch) -> Dict[str, Any]:
         base_key = (emotion.base_emotion or "").lower()
         sub_key = (emotion.sub_emotion or "").lower()
 
-        profile = self._BASE_PROFILES.get(base_key, self._NEUTRAL_PROFILE).copy()
+        profile: Dict[str, Any] = self._BASE_PROFILES.get(
+            base_key, self._NEUTRAL_PROFILE
+        ).copy()
         overrides = self._SUB_OVERRIDES.get(base_key, {}).get(sub_key)
         if overrides:
             profile.update(overrides)
         return profile
 
-    def _get_swing(self, profile: Dict[str, object], genre: Optional[str]) -> float:
+    def _get_swing(
+        self,
+        profile: Dict[str, Any],
+        genre: Optional[str],
+    ) -> float:
         swing = float(profile.get("swing", 0.0) or 0.0)
         if genre:
             genre_info = self._GENRE_TO_DRUM_STYLE.get(genre.lower())
@@ -340,7 +390,11 @@ class EmotionProductionMapper:
 
     def _build_section_dynamics(self, base_level: str) -> Dict[str, str]:
         levels = ["pp", "p", "mp", "mf", "f", "ff", "fff"]
-        base_idx = levels.index(base_level) if base_level in levels else levels.index("mf")
+        base_idx = (
+            levels.index(base_level)
+            if base_level in levels
+            else levels.index("mf")
+        )
         result = {}
         for section, shift in self._SECTION_DYNAMICS_SHIFT.items():
             idx = self._clamp_index(base_idx + shift, len(levels))
@@ -349,7 +403,11 @@ class EmotionProductionMapper:
 
     def _section_adjusted_dynamic(self, base_level: str, section: str) -> str:
         levels = ["pp", "p", "mp", "mf", "f", "ff", "fff"]
-        base_idx = levels.index(base_level) if base_level in levels else levels.index("mf")
+        base_idx = (
+            levels.index(base_level)
+            if base_level in levels
+            else levels.index("mf")
+        )
         shift = self._SECTION_DYNAMICS_SHIFT.get(section.lower(), 0)
         idx = self._clamp_index(base_idx + shift, len(levels))
         return levels[idx]
@@ -360,7 +418,12 @@ class EmotionProductionMapper:
             result[section] = self._clamp(base_density + delta, 0.1, 1.0)
         return result
 
-    def _build_transition_notes(self, drum_style: str, swing: float, feel: str) -> Dict[str, str]:
+    def _build_transition_notes(
+        self,
+        drum_style: str,
+        swing: float,
+        feel: str,
+    ) -> Dict[str, str]:
         fills = (
             "Brush/tom swell fill that preserves swing pocket"
             if swing > 0.05 or feel == "swing"
@@ -372,7 +435,11 @@ class EmotionProductionMapper:
             "outro": "Strip to rhythm section and let reverb tails breathe",
         }
 
-    def _scale_tempo_range(self, tempo_range: Tuple[int, int], tier: int) -> Tuple[int, int]:
+    def _scale_tempo_range(
+        self,
+        tempo_range: Tuple[int, int],
+        tier: int,
+    ) -> Tuple[int, int]:
         low, high = tempo_range
         shift = (tier - 3) * 3
         return (
@@ -389,7 +456,9 @@ class EmotionProductionMapper:
         return max(0, min(length - 1, idx))
 
     @staticmethod
-    def _merge_dicts(base: Dict[str, str], overrides: Dict[str, str]) -> Dict[str, str]:
+    def _merge_dicts(
+        base: Dict[str, Any], overrides: Dict[str, Any]
+    ) -> Dict[str, Any]:
         merged = dict(base)
         merged.update(overrides)
         return merged
