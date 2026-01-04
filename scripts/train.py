@@ -292,11 +292,19 @@ def get_git_commit() -> str:
 
 
 def compute_file_hash(path: Path) -> str:
-    """Compute SHA256 hash of a file."""
+    """Compute SHA256 hash of a file or directory."""
     sha256 = hashlib.sha256()
-    with open(path, "rb") as f:
-        for chunk in iter(lambda: f.read(8192), b""):
-            sha256.update(chunk)
+    if path.is_dir():
+        # For directories (like .mlpackage), hash all files within
+        for file_path in sorted(path.rglob("*")):
+            if file_path.is_file():
+                with open(file_path, "rb") as f:
+                    for chunk in iter(lambda: f.read(8192), b""):
+                        sha256.update(chunk)
+    else:
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
+                sha256.update(chunk)
     return sha256.hexdigest()
 
 
@@ -344,28 +352,28 @@ def build_cnn_model(config: TrainConfig) -> "torch.nn.Module":
         def __init__(self, config: TrainConfig):
             super().__init__()
 
-            # Convolutional layers
+            # Convolutional layers with global average pooling (MPS compatible)
             self.conv_layers = nn.Sequential(
-                nn.Conv2d(1, 32, kernel_size=3, stride=1, padding=1),
+                nn.Conv2d(1, 32, kernel_size=3, stride=2, padding=1),
                 nn.BatchNorm2d(32),
                 nn.ReLU(),
-                nn.MaxPool2d(2),
-                nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
+                nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1),
                 nn.BatchNorm2d(64),
                 nn.ReLU(),
-                nn.MaxPool2d(2),
-                nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+                nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),
                 nn.BatchNorm2d(128),
                 nn.ReLU(),
-                nn.AdaptiveAvgPool2d((4, 4)),
+                nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1),
+                nn.BatchNorm2d(256),
+                nn.ReLU(),
             )
+
+            # Global average pooling (MPS compatible)
+            self.global_pool = nn.AdaptiveAvgPool2d(1)
 
             # Fully connected layers
             self.fc_layers = nn.Sequential(
                 nn.Flatten(),
-                nn.Linear(128 * 4 * 4, 256),
-                nn.ReLU(),
-                nn.Dropout(config.dropout),
                 nn.Linear(256, 128),
                 nn.ReLU(),
                 nn.Dropout(config.dropout),
@@ -374,6 +382,7 @@ def build_cnn_model(config: TrainConfig) -> "torch.nn.Module":
 
         def forward(self, x):
             x = self.conv_layers(x)
+            x = self.global_pool(x)
             x = self.fc_layers(x)
             return x
 
@@ -568,10 +577,105 @@ def create_dummy_dataloaders(config: TrainConfig, device) -> Tuple:
     return train_loader, val_loader, test_loader
 
 
+def _try_load_real_datasets(config: TrainConfig) -> Optional[Tuple]:
+    """Try to load real datasets using the dataset_loaders module."""
+    try:
+        from dataset_loaders import get_lakh_midi_loader, get_m4singer_loader
+    except ImportError:
+        return None
+
+    # Get data root from environment or default
+    data_root = os.environ.get("KELLY_AUDIO_DATA_ROOT", "/Volumes/sbdrive/audio/datasets")
+
+    # Task to dataset mapping
+    TASK_TO_DATASET = {
+        "melody_generation": ("lakh", "melody"),
+        "harmony_prediction": ("lakh", "harmony"),
+        "groove_prediction": ("lakh", "groove"),
+        "emotion_embedding": ("m4singer", "emotion"),
+        "dynamics_mapping": ("m4singer", "dynamics"),
+    }
+
+    if config.task not in TASK_TO_DATASET:
+        return None
+
+    dataset_type, task_name = TASK_TO_DATASET[config.task]
+
+    try:
+        if dataset_type == "lakh":
+            data_dir = os.path.join(data_root, "lakh_midi")
+            if not os.path.exists(data_dir):
+                return None
+
+            logger.info(f"Loading Lakh MIDI dataset from {data_dir} for {task_name}")
+            train_loader = get_lakh_midi_loader(
+                data_dir=data_dir,
+                task=task_name,
+                batch_size=config.batch_size,
+                split="train",
+                max_files=1000,  # Limit for manageable training
+            )
+            val_loader = get_lakh_midi_loader(
+                data_dir=data_dir,
+                task=task_name,
+                batch_size=config.batch_size,
+                split="val",
+                max_files=1000,
+            )
+            test_loader = get_lakh_midi_loader(
+                data_dir=data_dir,
+                task=task_name,
+                batch_size=config.batch_size,
+                split="test",
+                max_files=1000,
+            )
+            return train_loader, val_loader, test_loader
+
+        elif dataset_type == "m4singer":
+            data_dir = os.path.join(data_root, "m4singer")
+            if not os.path.exists(data_dir):
+                return None
+
+            logger.info(f"Loading M4Singer dataset from {data_dir} for {task_name}")
+            train_loader = get_m4singer_loader(
+                data_dir=data_dir,
+                task=task_name,
+                batch_size=config.batch_size,
+                split="train",
+                max_files=500,  # Audio loading is slower
+            )
+            val_loader = get_m4singer_loader(
+                data_dir=data_dir,
+                task=task_name,
+                batch_size=config.batch_size,
+                split="val",
+                max_files=500,
+            )
+            test_loader = get_m4singer_loader(
+                data_dir=data_dir,
+                task=task_name,
+                batch_size=config.batch_size,
+                split="test",
+                max_files=500,
+            )
+            return train_loader, val_loader, test_loader
+
+    except Exception as e:
+        logger.warning(f"Real dataset loading failed: {e}")
+        return None
+
+    return None
+
+
 def create_dataloaders(config: TrainConfig, device) -> Tuple:
     """Create dataloaders from real data if available, otherwise dummy data."""
     import torch
     from torch.utils.data import DataLoader, random_split
+
+    # First, try to load real datasets from Lakh MIDI or M4Singer
+    real_loaders = _try_load_real_datasets(config)
+    if real_loaders is not None:
+        return real_loaders
 
     if config.data_path:
         data_path = Path(config.data_path).expanduser()
@@ -857,7 +961,7 @@ def export_to_coreml(model, config: TrainConfig, run: TrainRun) -> Optional[Path
     try:
         import coremltools as ct
 
-        coreml_path = MODELS_DIR / f"{config.model_id}.mlmodel"
+        coreml_path = MODELS_DIR / f"{config.model_id}.mlpackage"
 
         # Create dummy input
         if config.architecture_type == "cnn":
@@ -1006,13 +1110,13 @@ def update_registry(config: TrainConfig, run: TrainRun):
     # Update export metadata
     json_path = MODELS_DIR / f"{config.model_id}.json"
     onnx_path = MODELS_DIR / f"{config.model_id}.onnx"
-    coreml_path = MODELS_DIR / f"{config.model_id}.mlmodel"
+    coreml_path = MODELS_DIR / f"{config.model_id}.mlpackage"
 
     entry["exports"] = {
         "sha256": compute_file_hash(json_path) if json_path.exists() else "",
         "onnx_path": f"{config.model_id}.onnx" if onnx_path.exists() else "",
         "onnx_sha256": compute_file_hash(onnx_path) if onnx_path.exists() else "",
-        "coreml_path": f"{config.model_id}.mlmodel" if coreml_path.exists() else "",
+        "coreml_path": f"{config.model_id}.mlpackage" if coreml_path.exists() else "",
         "coreml_sha256": compute_file_hash(coreml_path) if coreml_path.exists() else "",
     }
 
@@ -1052,8 +1156,8 @@ MODEL_REGISTRY = {
     "melody_transformer": TrainConfig(
         model_id="melodytransformer",
         task="melody_generation",
-        input_size=64,
-        output_size=128,
+        input_size=1,  # Single pitch value per timestep (normalized)
+        output_size=88,  # 88 pitch classes (piano range)
         hidden_layers=[256, 256, 256],
         architecture_type="lstm",
         loss="cross_entropy",
@@ -1061,8 +1165,8 @@ MODEL_REGISTRY = {
     "harmony_predictor": TrainConfig(
         model_id="harmonypredictor",
         task="harmony_prediction",
-        input_size=128,
-        output_size=48,  # 48 chord types
+        input_size=11264,  # 128 seq_len * 88 pitch classes (flattened one-hot)
+        output_size=12,  # 12 pitch classes as root chord
         hidden_layers=[256, 128],
         architecture_type="mlp",
         loss="cross_entropy",
@@ -1080,8 +1184,8 @@ MODEL_REGISTRY = {
     "groove_predictor": TrainConfig(
         model_id="groovepredictor",
         task="groove_prediction",
-        input_size=64,
-        output_size=32,
+        input_size=2,  # 2 features per timestep (duration, IOI)
+        output_size=32,  # Predict 32 timing offsets
         hidden_layers=[128, 64],
         architecture_type="lstm",
         loss="mse",
