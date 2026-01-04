@@ -63,7 +63,8 @@ def test_detects_buzz_roll(analyzer: DrumAnalyzer) -> None:
 def test_detects_hihat_alternation(analyzer: DrumAnalyzer) -> None:
     # Alternating velocities on an 8th grid; should register alternation.
     notes = [
-        DummyNote(onset_ticks=i * 240, velocity=80 if i % 2 == 0 else 70, pitch=42)
+        DummyNote(onset_ticks=i * 240, velocity=80 if i %
+                  2 == 0 else 70, pitch=42)
         for i in range(8)
     ]
     profile = analyzer.analyze(notes)
@@ -73,7 +74,8 @@ def test_detects_hihat_alternation(analyzer: DrumAnalyzer) -> None:
 
 def test_counts_ghost_notes(analyzer: DrumAnalyzer) -> None:
     notes = [
-        DummyNote(onset_ticks=i * 120, velocity=30 if i % 2 == 0 else 90, pitch=38)
+        DummyNote(onset_ticks=i * 120, velocity=30 if i %
+                  2 == 0 else 90, pitch=38)
         for i in range(10)
     ]
     profile = analyzer.analyze(notes)
@@ -103,7 +105,8 @@ def test_configurable_thresholds_enable_drag_detection() -> None:
     ]
     profile = analyzer.analyze(notes)
     assert profile.snare.drag_count >= 1
-    assert profile.snare.primary_technique in {"jazzy", "technical", "standard"}
+    assert profile.snare.primary_technique in {
+        "jazzy", "technical", "standard"}
 
 
 def test_apply_guide_rules_calls_groove_engine() -> None:
