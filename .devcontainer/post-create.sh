@@ -45,6 +45,15 @@ else
     echo "⚠️  Node/npm not found; pnpm not installed"
 fi
 
+# Install Gemini CLI for AI assistance
+echo "🤖 Installing Gemini CLI..."
+if command -v npm &> /dev/null; then
+    npm install -g @google/gemini-cli
+    gemini /init 2>/dev/null || echo "⚠️  Gemini init failed (may need API key)"
+else
+    echo "⚠️  npm not found; Gemini CLI not installed"
+fi
+
 # Create common directories if they don't exist
 echo "📁 Creating directory structure..."
 mkdir -p tools/scripts
