@@ -4,6 +4,7 @@ import { EmotionWheel, SelectedEmotion } from "./components/EmotionWheel";
 import GuideNav, { Guide } from "./components/GuideNav";
 import GuideViewer from "./components/GuideViewer";
 import SpectoCloudPanel from "./components/SpectoCloudPanel";
+import LyricPanel from "./components/LyricPanel";
 import "./App.css";
 
 function App() {
@@ -19,7 +20,13 @@ function App() {
   
   // Always call hooks unconditionally
   const musicBrain = useMusicBrain();
-  const { getEmotions, generateMusic, interrogate } = musicBrain;
+  const {
+    getEmotions,
+    generateMusic,
+    interrogate,
+    setUserLyrics,
+    getUserLyrics,
+  } = musicBrain;
   console.log("App: useMusicBrain hook initialized");
   
   // Initialize Tauri API check and Music Brain API status
@@ -197,6 +204,8 @@ function App() {
       ) : (
         <div className="side-b">
           <h2>Side B: Therapeutic Interface</h2>
+
+          <LyricPanel onSave={setUserLyrics} loadLyrics={getUserLyrics} />
           
           <div className="emotion-section">
             <h3>Emotion Wheel (6×6×6)</h3>

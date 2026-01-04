@@ -166,6 +166,94 @@ button {
   margin: 5px 0;
 }
 
+.lyric-panel {
+  margin: 30px 0;
+  padding: 20px;
+  border: 1px solid #d9ddf2;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f8fbff 0%, #ffffff 100%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.04);
+}
+
+.lyric-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.lyric-panel__subtitle {
+  margin: 6px 0 0;
+  color: #4b5563;
+  font-size: 0.95em;
+}
+
+.lyric-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.lyric-textarea {
+  width: 100%;
+  min-height: 180px;
+  border-radius: 8px;
+  border: 1px solid #d9ddf2;
+  padding: 12px;
+  font-family: "Menlo", "Fira Code", monospace;
+  font-size: 0.95em;
+  line-height: 1.4;
+  background: #fdfdff;
+}
+
+.lyric-status {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #eef6ff;
+  color: #0f3a75;
+  font-size: 0.9em;
+}
+
+.lyric-error {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #fff1f2;
+  color: #9f1239;
+  font-size: 0.9em;
+  border: 1px solid #fecdd3;
+}
+
+.lyric-badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.85em;
+  border: 1px solid #d9ddf2;
+  background: #ffffff;
+  color: #1f2937;
+}
+
+.lyric-badge--generated {
+  border-color: #c7d2fe;
+  background: #eef2ff;
+  color: #312e81;
+}
+
+.lyric-badge--user {
+  border-color: #bbf7d0;
+  background: #ecfdf3;
+  color: #0f5132;
+}
+
+.lyric-badge--none {
+  border-color: #e5e7eb;
+  background: #f9fafb;
+  color: #4b5563;
+}
+
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;

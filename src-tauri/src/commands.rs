@@ -49,3 +49,17 @@ pub async fn get_humanizer_config() -> Result<serde_json::Value, String> {
         .await
         .map_err(|e| e.to_string())
 }
+
+#[command]
+pub async fn set_user_lyrics(lyrics: String) -> Result<serde_json::Value, String> {
+    crate::bridge::musicbrain::set_lyrics(lyrics)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[command]
+pub async fn get_user_lyrics() -> Result<serde_json::Value, String> {
+    crate::bridge::musicbrain::get_lyrics()
+        .await
+        .map_err(|e| e.to_string())
+}

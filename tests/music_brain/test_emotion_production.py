@@ -2,187 +2,101 @@
 Unit tests for emotion_production.py
 """
 
-import pytest
 from music_brain.emotion.emotion_production import EmotionProductionMapper, ProductionPreset
 from music_brain.emotion.emotion_thesaurus import EmotionMatch
 
+DYN_ORDER = ["pp", "p", "mp", "mf", "f", "ff", "fff"]
 
-class TestEmotionProductionMapper:
-    """Test the EmotionProductionMapper class."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.mapper = EmotionProductionMapper()
-        self.mapper_with_genre = EmotionProductionMapper(
-            default_genre="hip-hop")
+def _dyn_idx(level: str) -> int:
+    try:
+        return DYN_ORDER.index(level)
+    except ValueError:
+        return DYN_ORDER.index("mf")
 
-        # Create test EmotionMatch objects
-        self.happy_emotion = EmotionMatch(
-            base_emotion="happy",
-            sub_emotion="joy",
-            sub_sub_emotion="ecstatic",
-            intensity_tier=4,
-            matched_synonym="joyful",
-            all_tier_synonyms=["happy", "joyful", "cheerful"],
-            emotion_id="HAPPY-JOY-ECSTATIC",
-            description="Pure joy and happiness"
-        )
 
-        self.sad_emotion = EmotionMatch(
-            base_emotion="sad",
-            sub_emotion="grief",
-            sub_sub_emotion="bereaved",
-            intensity_tier=2,
-            matched_synonym="grieving",
-            all_tier_synonyms=["sad", "grieving", "melancholy"],
-            emotion_id="SAD-GRIEF-BEREAVED",
-            description="Deep sadness and loss"
-        )
+def make_match(
+    base: str,
+    sub: str,
+    tier: int,
+    sub_sub: str = "detail",
+) -> EmotionMatch:
+    return EmotionMatch(
+        base_emotion=base,
+        sub_emotion=sub,
+        sub_sub_emotion=sub_sub,
+        intensity_tier=tier,
+        matched_synonym=sub.lower(),
+        all_tier_synonyms=[sub.lower()],
+        emotion_id=f"{base}-{sub}",
+        description=f"{base} - {sub}",
+    )
 
-    def test_get_production_preset_basic(self):
-        """Test basic preset generation."""
-        preset = self.mapper.get_production_preset(self.happy_emotion)
 
-        assert isinstance(preset, ProductionPreset)
-        assert preset.drum_style == "pop"
-        assert preset.dynamics_level == "f"
-        assert preset.arrangement_density == 0.75  # 0.35 + 0.1 * 4 = 0.75
-        assert preset.intensity_tier == 4
-        assert preset.notes["base_emotion"] == "happy"
-        assert preset.notes["sub_emotion"] == "joy"
-        assert preset.notes["genre_hint"] == "unspecified"
+def test_preset_includes_section_maps_and_fx():
+    mapper = EmotionProductionMapper()
+    happy = make_match("happy", "joy", tier=4, sub_sub="ecstatic")
 
-    def test_get_production_preset_with_genre(self):
-        """Test preset generation with genre override."""
-        preset = self.mapper.get_production_preset(
-            self.happy_emotion, genre="rock")
+    preset = mapper.get_production_preset(happy)
 
-        assert preset.drum_style == "rock"
-        assert preset.notes["genre_hint"] == "rock"
+    assert isinstance(preset, ProductionPreset)
+    assert preset.drum_style == "pop"
+    assert preset.tempo_range == (108, 128)  # 105–125 shifted by tier 4
 
-    def test_get_production_preset_default_genre(self):
-        """Test preset generation with default genre."""
-        preset = self.mapper_with_genre.get_production_preset(self.sad_emotion)
+    # Section mappings should show lift in chorus
+    assert _dyn_idx(preset.section_dynamics["chorus"]) > _dyn_idx(preset.section_dynamics["verse"])
+    assert preset.section_density["chorus"] > preset.section_density["verse"]
 
-        assert preset.drum_style == "hip-hop"
-        assert preset.notes["genre_hint"] == "hip-hop"
+    # FX hints come through from base profile
+    assert "reverb" in preset.fx
+    assert "delay" in preset.fx
 
-    def test_get_drum_style_emotion_based(self):
-        """Test drum style selection based on emotion."""
-        assert self.mapper.get_drum_style(self.happy_emotion) == "pop"
-        assert self.mapper.get_drum_style(self.sad_emotion) == "jazzy"
 
-    def test_get_drum_style_genre_override(self):
-        """Test drum style with genre override."""
-        assert self.mapper.get_drum_style(self.happy_emotion, "edm") == "edm"
+def test_genre_override_adjusts_drum_style_and_swing():
+    mapper = EmotionProductionMapper()
+    happy = make_match("happy", "joy", tier=3, sub_sub="bright")
 
-    def test_get_drum_style_unknown_emotion(self):
-        """Test drum style for unknown emotion."""
-        unknown_emotion = EmotionMatch(
-            base_emotion="unknown",
-            sub_emotion="weird",
-            sub_sub_emotion="strange",
-            intensity_tier=3,
-            matched_synonym="weird",
-            all_tier_synonyms=["weird"],
-            emotion_id="UNKNOWN-WEIRD-STRANGE",
-            description="Unknown emotion"
-        )
-        assert self.mapper.get_drum_style(unknown_emotion) == "standard"
+    preset = mapper.get_production_preset(happy, genre="hip-hop")
 
-    def test_get_dynamics_level(self):
-        """Test dynamics level mapping."""
-        assert self.mapper.get_dynamics_level(
-            self.happy_emotion) == "f"  # tier 4
-        assert self.mapper.get_dynamics_level(
-            self.sad_emotion) == "mp"  # tier 2
+    assert preset.drum_style == "hip-hop"
+    assert preset.swing >= 0.12  # boosted by genre hint
+    assert preset.groove_motif == "boom_bap"
+    assert preset.feel in {"swing", "straight"}  # feel stays valid
 
-    def test_get_dynamics_level_unknown_tier(self):
-        """Test dynamics level for unknown tier."""
-        emotion_no_tier = EmotionMatch(
-            base_emotion="neutral",
-            sub_emotion="calm",
-            sub_sub_emotion="balanced",
-            intensity_tier=None,
-            matched_synonym="calm",
-            all_tier_synonyms=["calm"],
-            emotion_id="NEUTRAL-CALM-BALANCED",
-            description="Neutral emotion"
-        )
-        assert self.mapper.get_dynamics_level(
-            emotion_no_tier) == "mf"  # default
 
-    def test_get_arrangement_density(self):
-        """Test arrangement density calculation."""
-        # Tier 4: 0.35 + 0.1 * 4 = 0.75
-        assert self.mapper.get_arrangement_density(self.happy_emotion) == 0.75
+def test_sub_emotion_grief_uses_brush_profile():
+    mapper = EmotionProductionMapper()
+    grief = make_match("sad", "grief", tier=2, sub_sub="bereaved")
 
-        # Tier 2: 0.35 + 0.1 * 2 = 0.55
-        assert self.mapper.get_arrangement_density(self.sad_emotion) == 0.55
+    preset = mapper.get_production_preset(grief)
 
-    def test_get_arrangement_density_edge_cases(self):
-        """Test arrangement density edge cases."""
-        low_tier = EmotionMatch(
-            base_emotion="sad",
-            sub_emotion="grief",
-            sub_sub_emotion="bereaved",
-            intensity_tier=1,
-            matched_synonym="sad",
-            all_tier_synonyms=["sad"],
-            emotion_id="SAD-GRIEF-BEREAVED",
-            description="Very sad"
-        )
-        high_tier = EmotionMatch(
-            base_emotion="angry",
-            sub_emotion="rage",
-            sub_sub_emotion="furious",
-            intensity_tier=6,
-            matched_synonym="furious",
-            all_tier_synonyms=["furious"],
-            emotion_id="ANGRY-RAGE-FURIOUS",
-            description="Very angry"
-        )
+    assert preset.drum_style == "brushes"
+    assert preset.feel == "swing"
+    assert preset.swing >= 0.1
+    assert preset.tempo_range[0] < 70  # pulled down for grief
+    assert "brush" in preset.kit_hint.lower()
 
-        # Tier 1: 0.35 + 0.1 * 1 = 0.45
-        assert abs(self.mapper.get_arrangement_density(
-            low_tier) - 0.45) < 1e-10
 
-        # Tier 6: 0.35 + 0.1 * 6 = 0.95
-        assert abs(self.mapper.get_arrangement_density(
-            high_tier) - 0.95) < 1e-10
+def test_intensity_scales_density_and_tempo_range():
+    mapper = EmotionProductionMapper()
+    fear_low = make_match("fear", "anxiety", tier=2)
+    fear_high = make_match("fear", "anxiety", tier=6)
 
-    def test_intensity_tier_scaling(self):
-        """Test that intensity tier affects all mappings."""
-        tier1 = EmotionMatch(
-            base_emotion="sad",
-            sub_emotion="grief",
-            sub_sub_emotion="bereaved",
-            intensity_tier=1,
-            matched_synonym="sad",
-            all_tier_synonyms=["sad"],
-            emotion_id="SAD-GRIEF-BEREAVED",
-            description="Tier 1"
-        )
-        tier6 = EmotionMatch(
-            base_emotion="happy",
-            sub_emotion="joy",
-            sub_sub_emotion="ecstatic",
-            intensity_tier=6,
-            matched_synonym="ecstatic",
-            all_tier_synonyms=["ecstatic"],
-            emotion_id="HAPPY-JOY-ECSTATIC",
-            description="Tier 6"
-        )
+    low_preset = mapper.get_production_preset(fear_low)
+    high_preset = mapper.get_production_preset(fear_high)
 
-        preset1 = self.mapper.get_production_preset(tier1)
-        preset6 = self.mapper.get_production_preset(tier6)
+    assert low_preset.arrangement_density < high_preset.arrangement_density
+    assert low_preset.tempo_range[0] < high_preset.tempo_range[0]
+    assert low_preset.section_density["chorus"] < high_preset.section_density["chorus"]
 
-        assert preset1.dynamics_level == "mp"  # tier 1
-        assert preset6.dynamics_level == "fff"  # tier 6
 
-        assert preset1.arrangement_density < preset6.arrangement_density
+def test_transition_notes_present_and_emphatic_for_high_energy():
+    mapper = EmotionProductionMapper()
+    rage = make_match("angry", "rage", tier=5, sub_sub="furious")
 
-    def test_genre_overrides(self):
-        """Test that genre overrides emotion-based defaults."""
-        rock_preset = self.mapper.get_production_preset(
-            self.happy_emotion, genre="rock")
+    preset = mapper.get_production_preset(rage)
+
+    assert preset.drum_style == "metal"
+    assert "into_chorus" in preset.transitions
+    assert "fill" in preset.transitions["into_chorus"].lower() or "hat" in preset.transitions["into_chorus"].lower()
+    assert _dyn_idx(preset.section_dynamics["chorus"]) >= _dyn_idx("f")

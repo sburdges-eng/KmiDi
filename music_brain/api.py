@@ -109,6 +109,9 @@ class DAiWAPI:
         self.voice_synthesizer = VoiceSynthesizer()
         self.audio_analyzer = _DummyAudioAnalyzer()
         self.drum_humanizer = self._build_humanizer()
+        self.user_lyrics: Optional[str] = None
+        self.user_lyrics_source: str = "none"
+        self.last_generated_lyrics: Optional[str] = None
 
     def _build_humanizer(self) -> DrumHumanizer:
         """Create DrumHumanizer, pulling config from config/humanizer.json if present."""
@@ -123,6 +126,107 @@ class DAiWAPI:
     def reload_humanizer(self) -> None:
         """Reload humanizer configuration from disk."""
         self.drum_humanizer = self._build_humanizer()
+
+    # ========== Lyrics Handling ==========
+
+    def set_lyrics(self, lyrics: str, source: str = "user") -> Dict[str, Any]:
+        """
+        Persist user-provided lyrics (or clear when empty) and return a lightweight summary.
+        """
+        cleaned = (lyrics or "").strip()
+        if not cleaned:
+            self.user_lyrics = None
+            self.user_lyrics_source = "none"
+            return {
+                "status": "cleared",
+                "source": self.user_lyrics_source,
+                "lines": 0,
+                "word_count": 0,
+            }
+
+        self.user_lyrics = cleaned
+        self.user_lyrics_source = source or "user"
+        self.last_generated_lyrics = None
+
+        return {
+            "status": "stored",
+            "source": self.user_lyrics_source,
+            "lines": len(cleaned.splitlines()),
+            "word_count": len(cleaned.split()),
+            "preview": cleaned[:140],
+        }
+
+    def get_lyrics(self) -> Dict[str, Any]:
+        """Return the active lyric payload and provenance."""
+        return {
+            "lyrics": self.user_lyrics,
+            "source": self.user_lyrics_source,
+            "generated": self.last_generated_lyrics,
+        }
+
+    def _intent_field(self, intent: Any, name: str, default: str = "") -> str:
+        """Safely pull a field from either a dict-like intent or pydantic model."""
+        if intent is None:
+            return default
+        if isinstance(intent, dict):
+            return str(intent.get(name, default) or default)
+        return str(getattr(intent, name, default) or default)
+
+    def generate_structured_lyrics(self, intent: Any) -> str:
+        """
+        Lightweight, dependency-free fallback lyric generator.
+
+        Produces a simple verse/chorus layout conditioned on the emotional intent fields
+        without pulling heavyweight models into the runtime.
+        """
+        wound = self._intent_field(intent, "core_wound", "unspecified wound")
+        desire = self._intent_field(intent, "core_desire", "longing")
+        emotion = self._intent_field(intent, "emotional_intent", "unspecified emotion")
+
+        verse1 = [
+            f"I carry {wound} in the seams of the day",
+            f"Tracing {emotion} shadows that won't fade away",
+            f"Still I keep moving with {desire} in my hands",
+            "Hoping the light remembers where I stand",
+        ]
+        chorus = [
+            f"Hold me when the night gets loud with {emotion}",
+            f"Sing back the truth, I'm more than {wound}",
+            f"Step into the dawn, let {desire} bloom",
+            "Every note a bridge across the room",
+        ]
+        verse2 = [
+            "I tune my breathing to the softest drum",
+            "Let the melody confess what I've become",
+            "If I am fading, let the chorus know",
+            "I was a spark before the river froze",
+        ]
+
+        generated = "\n".join(
+            ["[Verse 1]"]
+            + verse1
+            + ["", "[Chorus]"]
+            + chorus
+            + ["", "[Verse 2]"]
+            + verse2
+            + ["", "[Chorus]", *chorus]
+        )
+        self.last_generated_lyrics = generated
+        return generated
+
+    def _select_lyric_payload(self, intent: Any) -> Tuple[str, str]:
+        """
+        Decide which text should drive generation:
+        - User lyrics when present (highest priority)
+        - Generated fallback lyrics when no user payload exists
+        - Raw emotional intent as a final fallback
+        """
+        if self.user_lyrics:
+            return self.user_lyrics, self.user_lyrics_source
+        if intent:
+            generated = self.generate_structured_lyrics(intent)
+            return generated, "generated"
+        return "emotional intent", "intent"
     
     # ========== Harmony Generation ==========
     
@@ -657,6 +761,10 @@ if FASTAPI_AVAILABLE:
         session_id: Optional[str] = None
         context: Optional[Dict[str, Any]] = None
 
+    class LyricsRequest(BaseModel):
+        lyrics: str
+        source: Optional[str] = "user"
+
     app = FastAPI(title="Music Brain API", version="0.1.0")
 
     @app.get("/health")
@@ -895,13 +1003,21 @@ if FASTAPI_AVAILABLE:
             if request.intent.technical and request.intent.technical.bpm:
                 # Use bpm as a proxy for motivation scaling (soft heuristic)
                 motivation = max(1, min(10, int(request.intent.technical.bpm / 20)))
+            lyric_text, lyric_source = api._select_lyric_payload(request.intent)
             result = api.therapy_session(
-                text=request.intent.emotional_intent,
+                text=lyric_text or request.intent.emotional_intent,
                 motivation=motivation,
                 chaos_tolerance=chaos,
                 output_midi=None,
             )
-            return {"status": "success", "result": result}
+            return {
+                "status": "success",
+                "result": result,
+                "lyrics": {
+                    "source": lyric_source,
+                    "text": lyric_text,
+                },
+            }
         except Exception as exc:
             logging.exception("generate failed")
             raise HTTPException(status_code=500, detail=str(exc))
@@ -917,6 +1033,28 @@ if FASTAPI_AVAILABLE:
             }
         except Exception as exc:  # pragma: no cover
             logging.exception("interrogate failed")
+            raise HTTPException(status_code=500, detail=str(exc))
+
+    @app.post("/lyrics")
+    async def set_lyrics(payload: LyricsRequest):
+        """
+        Persist user-supplied lyrics and return a summary.
+        """
+        try:
+            return api.set_lyrics(payload.lyrics, source=payload.source or "user")
+        except Exception as exc:  # pragma: no cover
+            logging.exception("Failed to set lyrics")
+            raise HTTPException(status_code=500, detail=str(exc))
+
+    @app.get("/lyrics")
+    async def get_lyrics():
+        """
+        Return the current lyric payload, source, and any cached generated lyrics.
+        """
+        try:
+            return api.get_lyrics()
+        except Exception as exc:  # pragma: no cover
+            logging.exception("Failed to fetch lyrics")
             raise HTTPException(status_code=500, detail=str(exc))
 
 

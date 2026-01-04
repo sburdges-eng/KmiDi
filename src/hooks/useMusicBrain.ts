@@ -62,6 +62,20 @@ export interface SpectocloudRenderResponse {
   frames: number;
 }
 
+export interface LyricsState {
+  lyrics?: string;
+  source?: string;
+  generated?: string;
+}
+
+export interface LyricsUpdateResponse {
+  status: string;
+  source: string;
+  lines: number;
+  word_count: number;
+  preview?: string;
+}
+
 export const useMusicBrain = () => {
   const getEmotions = async () => {
     try {
@@ -140,6 +154,26 @@ export const useMusicBrain = () => {
     return resp.json();
   };
 
+  const setUserLyrics = async (lyrics: string): Promise<LyricsUpdateResponse> => {
+    try {
+      const result = await invoke('set_user_lyrics', { lyrics });
+      return result as LyricsUpdateResponse;
+    } catch (error) {
+      console.error('Failed to set user lyrics:', error);
+      throw error;
+    }
+  };
+
+  const getUserLyrics = async (): Promise<LyricsState> => {
+    try {
+      const result = await invoke('get_user_lyrics');
+      return result as LyricsState;
+    } catch (error) {
+      console.error('Failed to get user lyrics:', error);
+      throw error;
+    }
+  };
+
   return {
     getEmotions,
     generateMusic,
@@ -147,5 +181,7 @@ export const useMusicBrain = () => {
     getHumanizerConfig,
     updateHumanizerConfig,
     renderSpectocloud,
+    setUserLyrics,
+    getUserLyrics,
   };
 };
