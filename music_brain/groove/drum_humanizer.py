@@ -7,7 +7,6 @@ Intended to sit between drum analysis and the existing groove engine:
   Cheat Sheet)
 - Output GrooveSettings or a future humanization plan
 
-TODO:
 - Ingest markdown rules (velocity, timing, ghost notes, swing) as data.
 - Add section-aware presets (verse/chorus/bridge) from Dynamics guide.
 - Connect to groove_engine.humanize_drums for full application.
