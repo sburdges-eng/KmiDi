@@ -93,3 +93,9 @@ Returns a JSON list/dictionary of available emotions.
 
 ## License
 MIT
+## SpectoCloud UI (dev)
+- Added a SpectoCloud render panel in the app (calls `/spectocloud/render`).
+- Presets: preview/standard/high; controls for mode (static/animation), fps, rotate, anchor density, particles, duration.
+- Inputs: JSON MIDI events (textarea or upload a JSON file) or a MIDI file path (backend parses). Shows output path and frames.
+- Humanizer config can be fetched via the panel (uses `/config/humanizer`).
+- Make sure `python -m music_brain.api` is running locally on 127.0.0.1:8000 when using the panel.

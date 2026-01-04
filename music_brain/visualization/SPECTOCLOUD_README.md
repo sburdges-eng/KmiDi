@@ -163,6 +163,25 @@ PYTHONPATH=/home/runner/work/KmiDi/KmiDi:$PYTHONPATH python spectocloud_animatio
 Generates:
 - `/tmp/spectocloud_journey.gif` (animated emotional journey)
 
+## API usage (FastAPI bridge)
+
+When running `python -m music_brain.api`, you can render Spectocloud via HTTP:
+
+- List presets: `GET http://127.0.0.1:8000/spectocloud/presets` (preview/standard/high)
+- Render (events or MIDI file):
+  ```bash
+  curl -X POST http://127.0.0.1:8000/spectocloud/render \\
+    -H 'Content-Type: application/json' \\
+    -d '{
+      "midi_file_path": "song.mid",
+      "mode": "animation",
+      "fps": 15,
+      "anchor_density": "normal",
+      "n_particles": 1200
+    }'
+  ```
+  Response includes `output_path` (defaults to a temp GIF/PNG) and frame count. You can also pass `midi_events` directly plus `duration` if you already have parsed events. Validation will reject empty events, non-positive duration/fps/particle counts, or invalid frame indexes.
+
 ## Visual Interpretation Guide
 
 ### What You See
@@ -338,3 +357,8 @@ spectocloud = Spectocloud(n_particles=800)  # Fewer particles
 ## License
 
 Part of the KmiDi project. See main LICENSE file.
+
+### Notes for API/Frontend integration
+- Endpoint: `POST /spectocloud/render` (payload supports `midi_events` or `midi_file_path`, mode `static|animation`, fps/rotate, anchor density, particle count). Returns `output_path` and frame count. Validation rejects empty events, non-positive duration/fps/particles, or invalid frame indexes.
+- Presets: `GET /spectocloud/presets` -> preview/standard/high.
+- Frontend hook: `renderSpectocloud` in `src/hooks/useMusicBrain.ts` wraps the endpoint and performs basic validation.

@@ -472,3 +472,4 @@ venv.bak/
 # OS
 .DS_Store
 Thumbs.db
+kmidi_audio_data/

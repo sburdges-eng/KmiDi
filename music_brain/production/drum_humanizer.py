@@ -5,7 +5,7 @@ Humanization layer that applies the Drum Programming Guide to MIDI events.
 from typing import Any, Dict, List, Optional
 
 from music_brain.groove.groove_engine import GrooveSettings, humanize_drums
-from music_brain.groove.drum_analysis import DrumAnalyzer, DrumTechniqueProfile
+from music_brain.groove.drum_analysis import AnalysisConfig, DrumAnalyzer, DrumTechniqueProfile
 
 
 class DrumHumanizer:
@@ -17,7 +17,11 @@ class DrumHumanizer:
     `DrumTechniqueProfile` from `DrumAnalyzer`.
     """
 
-    def __init__(self, analyzer: Optional[DrumAnalyzer] = None) -> None:
+    def __init__(
+        self,
+        analyzer: Optional[DrumAnalyzer] = None,
+        config_path: Optional[str] = None,
+    ) -> None:
         self.analyzer = analyzer or DrumAnalyzer()
         self._style_presets: Dict[str, Dict[str, Any]] = {
             "standard": {
@@ -55,6 +59,8 @@ class DrumHumanizer:
                 "velocity_range_override": (40, 110),
             },
         }
+        if config_path:
+            self._load_presets(config_path)
 
     def create_preset_from_guide(self, style: str) -> GrooveSettings:
         """Create a `GrooveSettings` instance from a style keyword."""
@@ -113,3 +119,23 @@ class DrumHumanizer:
     def _clamp(self, value: float) -> float:
         return max(0.0, min(1.0, value))
 
+    def _load_presets(self, path: str) -> None:
+        """Optional: override style presets from JSON."""
+        try:
+            import json
+
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                if "styles" in data and isinstance(data["styles"], dict):
+                    self._style_presets.update(data["styles"])
+                if "analysis" in data:
+                    try:
+                        cfg = AnalysisConfig.from_dict(data["analysis"])
+                        self.analyzer = DrumAnalyzer(config=cfg)
+                    except Exception:
+                        pass
+        except FileNotFoundError:
+            return
+        except Exception:
+            return

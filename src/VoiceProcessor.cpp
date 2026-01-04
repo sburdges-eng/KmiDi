@@ -1,5 +1,5 @@
 #include "VoiceProcessor.h"
-#include "../Bridge/BridgeClient.h"
+#include "BridgeClient.h"
 #include <cmath>
 
 #ifndef M_PI
@@ -130,7 +130,7 @@ void FormantSynthVoice::setSampleRate(double sampleRate)
     updateFormantFilters();
 }
 
-void FormantSynthVoice::setVoiceCharacteristics(const VoiceCharacteristics& chars)
+void FormantSynthVoice::setVoiceCharacteristics(const VoiceCharacteristics &chars)
 {
     voiceChars_ = chars;
     attackRate_ = 1.0f / (chars.attackTime * static_cast<float>(sampleRate_));
@@ -165,7 +165,7 @@ void FormantSynthVoice::noteOn(float velocity)
     noiseLevel_ = voiceChars_.breathiness;
 
     // Reset filters for clean attack
-    for (auto& filter : formantFilters_)
+    for (auto &filter : formantFilters_)
         filter.reset();
 
     glottalSource_.reset();
@@ -204,7 +204,8 @@ float FormantSynthVoice::process()
     {
         bool needsUpdate = false;
 
-        auto interpolate = [&](float& current, float target) {
+        auto interpolate = [&](float &current, float target)
+        {
             if (std::abs(current - target) > 1.0f)
             {
                 current += (target - current) * formantTransitionRate_;
@@ -296,7 +297,7 @@ float FormantSynthVoice::generateNoise()
 // VoiceProcessor Implementation
 //==============================================================================
 
-VoiceProcessor::VoiceProcessor(BridgeClient* client)
+VoiceProcessor::VoiceProcessor(BridgeClient *client)
     : bridgeClient_(client)
 {
 }
@@ -307,7 +308,7 @@ void VoiceProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     blockSize_ = samplesPerBlock;
 
     // Initialize all voices
-    for (auto& voice : voices_)
+    for (auto &voice : voices_)
     {
         voice.setSampleRate(sampleRate);
         voice.setVoiceCharacteristics(voiceChars_);
@@ -321,7 +322,7 @@ void VoiceProcessor::releaseResources()
     samplesIntoCurrentPhoneme_ = 0;
 }
 
-void VoiceProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void VoiceProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages)
 {
     // Handle MIDI messages
     for (const auto metadata : midiMessages)
@@ -339,8 +340,8 @@ void VoiceProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBu
     }
 
     // Process audio
-    auto* leftChannel = buffer.getWritePointer(0);
-    auto* rightChannel = buffer.getNumChannels() > 1 ? buffer.getWritePointer(1) : nullptr;
+    auto *leftChannel = buffer.getWritePointer(0);
+    auto *rightChannel = buffer.getNumChannels() > 1 ? buffer.getWritePointer(1) : nullptr;
 
     for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
     {
@@ -349,7 +350,7 @@ void VoiceProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBu
         // Process TTS phoneme queue if active
         if (currentPhonemeIndex_ < phonemeQueue_.size())
         {
-            const auto& currentPhoneme = phonemeQueue_[currentPhonemeIndex_];
+            const auto &currentPhoneme = phonemeQueue_[currentPhonemeIndex_];
             int phonemeSamples = static_cast<int>(currentPhoneme.duration * sampleRate_);
 
             // Set vowel for first voice (TTS voice)
@@ -381,7 +382,7 @@ void VoiceProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBu
         }
 
         // Sum all active voices
-        for (auto& voice : voices_)
+        for (auto &voice : voices_)
         {
             if (voice.isActive())
             {
@@ -390,7 +391,7 @@ void VoiceProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBu
         }
 
         // Apply global modulation
-        outputSample *= 0.5f;  // Master gain
+        outputSample *= 0.5f; // Master gain
 
         // Soft clipping
         outputSample = std::tanh(outputSample);
@@ -402,18 +403,18 @@ void VoiceProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBu
     }
 }
 
-bool VoiceProcessor::loadVoiceModel(const juce::String& jsonData)
+bool VoiceProcessor::loadVoiceModel(const juce::String &jsonData)
 {
     return parseVoiceModelJson(jsonData);
 }
 
-void VoiceProcessor::speakText(const juce::String& text)
+void VoiceProcessor::speakText(const juce::String &text)
 {
     auto phonemes = textToPhonemes(text);
     queuePhonemes(phonemes);
 }
 
-void VoiceProcessor::queuePhonemes(const std::vector<SynthPhoneme>& phonemes)
+void VoiceProcessor::queuePhonemes(const std::vector<SynthPhoneme> &phonemes)
 {
     phonemeQueue_ = phonemes;
     currentPhonemeIndex_ = 0;
@@ -432,7 +433,7 @@ void VoiceProcessor::setVowel(VowelType vowel)
 
 void VoiceProcessor::setPitch(float pitch)
 {
-    for (auto& voice : voices_)
+    for (auto &voice : voices_)
     {
         if (voice.isActive())
         {
@@ -454,7 +455,7 @@ void VoiceProcessor::noteOn(int midiNote, float velocity)
 void VoiceProcessor::noteOff()
 {
     // Note off all voices (simple implementation)
-    for (auto& voice : voices_)
+    for (auto &voice : voices_)
     {
         if (voice.isActive())
         {
@@ -463,10 +464,10 @@ void VoiceProcessor::noteOff()
     }
 }
 
-void VoiceProcessor::setVoiceCharacteristics(const VoiceCharacteristics& chars)
+void VoiceProcessor::setVoiceCharacteristics(const VoiceCharacteristics &chars)
 {
     voiceChars_ = chars;
-    for (auto& voice : voices_)
+    for (auto &voice : voices_)
     {
         voice.setVoiceCharacteristics(chars);
     }
@@ -489,7 +490,7 @@ float VoiceProcessor::midiToFrequency(int midiNote)
     return 440.0f * std::pow(2.0f, (midiNote - 69) / 12.0f);
 }
 
-std::vector<SynthPhoneme> VoiceProcessor::textToPhonemes(const juce::String& text)
+std::vector<SynthPhoneme> VoiceProcessor::textToPhonemes(const juce::String &text)
 {
     // Simple text-to-phoneme conversion
     // In production, this would use a proper phoneme dictionary or call Python
@@ -498,15 +499,22 @@ std::vector<SynthPhoneme> VoiceProcessor::textToPhonemes(const juce::String& tex
     juce::String normalized = text.toLowerCase().trim();
 
     // Simple vowel mapping
-    auto charToVowel = [](juce::juce_wchar c) -> VowelType {
+    auto charToVowel = [](juce::juce_wchar c) -> VowelType
+    {
         switch (c)
         {
-            case 'a': return VowelType::A;
-            case 'e': return VowelType::E;
-            case 'i': return VowelType::I;
-            case 'o': return VowelType::O;
-            case 'u': return VowelType::U;
-            default: return VowelType::SCHWA;
+        case 'a':
+            return VowelType::A;
+        case 'e':
+            return VowelType::E;
+        case 'i':
+            return VowelType::I;
+        case 'o':
+            return VowelType::O;
+        case 'u':
+            return VowelType::U;
+        default:
+            return VowelType::SCHWA;
         }
     };
 
@@ -532,7 +540,7 @@ std::vector<SynthPhoneme> VoiceProcessor::textToPhonemes(const juce::String& tex
             vowel.vowelType = charToVowel(c);
             vowel.duration = 0.12f;
             vowel.pitch = basePitch;
-            vowel.stress = lastWasVowel ? 0 : 1;  // Primary stress on first vowel
+            vowel.stress = lastWasVowel ? 0 : 1; // Primary stress on first vowel
             vowel.isConsonant = false;
             phonemes.push_back(vowel);
             lastWasVowel = true;
@@ -552,7 +560,7 @@ std::vector<SynthPhoneme> VoiceProcessor::textToPhonemes(const juce::String& tex
     return phonemes;
 }
 
-bool VoiceProcessor::parseVoiceModelJson(const juce::String& json)
+bool VoiceProcessor::parseVoiceModelJson(const juce::String &json)
 {
     // Parse JSON voice model from Python
     // Expected format matches Python VoiceCharacteristics
@@ -561,11 +569,11 @@ bool VoiceProcessor::parseVoiceModelJson(const juce::String& json)
     if (result.isVoid())
         return false;
 
-    auto* obj = result.getDynamicObject();
+    auto *obj = result.getDynamicObject();
     if (!obj)
         return false;
 
-    auto& chars = obj->getProperties();
+    auto &chars = obj->getProperties();
 
     // Parse pitch characteristics
     if (chars.contains("average_pitch"))
@@ -613,7 +621,8 @@ bool VoiceProcessor::parseVoiceModelJson(const juce::String& json)
         auto vowelFormants = chars["vowel_formants"].getDynamicObject();
         if (vowelFormants)
         {
-            auto parseFormants = [this](const juce::String& vowelName, VowelType type, juce::DynamicObject* obj) {
+            auto parseFormants = [this](const juce::String &vowelName, VowelType type, juce::DynamicObject *obj)
+            {
                 if (obj->hasProperty(vowelName))
                 {
                     auto formantArray = obj->getProperty(vowelName);
@@ -622,7 +631,7 @@ bool VoiceProcessor::parseVoiceModelJson(const juce::String& json)
                         auto firstFormant = (*formantArray.getArray())[0].getDynamicObject();
                         if (firstFormant)
                         {
-                            auto& formants = voiceChars_.vowelFormants[static_cast<size_t>(type)];
+                            auto &formants = voiceChars_.vowelFormants[static_cast<size_t>(type)];
                             if (firstFormant->hasProperty("f1"))
                                 formants.f1 = static_cast<float>(firstFormant->getProperty("f1"));
                             if (firstFormant->hasProperty("f2"))

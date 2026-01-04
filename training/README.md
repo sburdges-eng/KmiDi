@@ -102,6 +102,20 @@ python export_models.py  # (Creates ONNX + CoreML exports)
 scp -r ubuntu@<ip>:~/KmiDi/checkpoints ./local_checkpoints/
 ```
 
+### Audio emotion training (optional)
+- To train `emotion_recognizer` on real audio instead of synthetic data, provide a JSONL manifest:
+  ```
+  {"path": "/abs/path/to/audio.wav", "label": "happy"}
+  {"path": "/abs/path/to/other.wav", "label": "sad"}
+  ```
+- Run:
+  ```
+  python training/train_integrated.py --model emotion_recognizer \
+    --audio-manifest data/manifests/emotion_audio.jsonl \
+    --use-augmentation
+  ```
+- Flags: `--sample-rate 16000`, `--n-mels 128`, `--use-augmentation` (time-stretch, pitch-shift, EQ tilt).
+
 ### Training Parameters Summary
 
 #### Spectocloud ViT

@@ -11,24 +11,14 @@
 
 #### Priority: HIGH
 
-**Issue**: Code files are at root level, not in proper module structure.
+**Issue**: Some files were outside modules; key items have been migrated.
 
 **Actions**:
 
-1. **Move `drum_analysis.py` from `scripts/` to `music_brain/groove/`**
-   ```bash
-   mv scripts/drum_analysis.py music_brain/groove/drum_analysis.py
-   ```
-   - **CRITICAL**: Fix broken relative imports - Change `from ..utils.ppq` → `from music_brain.utils.ppq`
-   - Update all imports: `from music_brain.utils.ppq import ...`
-   - Add to `music_brain/groove/__init__.py`:
-     ```python
-     from music_brain.groove.drum_analysis import (
-         DrumAnalyzer,
-         DrumTechniqueProfile,
-         analyze_drum_technique
-     )
-     ```
+1. **`drum_analysis.py` now lives at `music_brain/groove/drum_analysis.py` (done)**
+   - Imports use `music_brain.utils.*`; no broken relative imports remain
+   - Keep `music_brain/groove/__init__.py` exporting `DrumAnalyzer`, `DrumTechniqueProfile`, `analyze_drum_technique`
+   - Clean up any remaining references to the old `scripts/` path
 
 2. **Consolidate `emotion_thesaurus.py`**
    - **Decision needed**: Which version to keep?

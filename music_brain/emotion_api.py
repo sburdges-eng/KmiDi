@@ -158,8 +158,20 @@ class MusicBrain:
         self.emotion_mapper = EmotionMapper()
         self.production_mapper = EmotionProductionMapper()
         self.dynamics_engine = DynamicsEngine()
-        self.drum_humanizer = DrumHumanizer()
+        self.drum_humanizer = self._build_humanizer()
         self._emotion_keywords = self._build_emotion_keywords()
+
+    def _build_humanizer(self) -> DrumHumanizer:
+        """Load DrumHumanizer with optional config from config/humanizer.json."""
+        from pathlib import Path
+
+        config_path = Path("config/humanizer.json")
+        if config_path.exists():
+            try:
+                return DrumHumanizer(config_path=str(config_path))
+            except Exception:
+                return DrumHumanizer()
+        return DrumHumanizer()
 
     def _build_emotion_keywords(self) -> Dict[str, Tuple[float, float, str]]:
         """Build emotion keyword to (valence, arousal, emotion) mapping."""

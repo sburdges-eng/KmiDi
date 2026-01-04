@@ -1,0 +1,67 @@
+{
+  "daw": "Logic Pro",
+  "format_version": "1.0",
+  "parameters": {
+    "channel_eq": {
+      "sub_bass_gain": 0.0,
+      "bass_gain": 1.0,
+      "low_mid_gain": 2.0,
+      "mid_gain": 0.0,
+      "high_mid_gain": -4.0,
+      "presence_gain": -8.0,
+      "air_gain": -11.0
+    },
+    "compressor": {
+      "ratio": 2.5,
+      "threshold": -18.0,
+      "attack": 40.0,
+      "release": 250.0,
+      "knee": 6.0,
+      "makeup": 0.0
+    },
+    "reverb": {
+      "type": "hall",
+      "mix": 45.0,
+      "decay": 4.1,
+      "predelay": 50.0,
+      "size": 70.0,
+      "damping": 70.0
+    },
+    "delay": {
+      "mix": 15.0,
+      "time": 435.0,
+      "feedback": 35.0,
+      "sync": false,
+      "filter": 30.0
+    },
+    "stereo": {
+      "width": 80.0,
+      "pan": 0.0,
+      "mid_side": 100.0
+    },
+    "saturation": {
+      "amount": 20.0,
+      "type": "tape"
+    },
+    "filter": {
+      "type": "lowpass",
+      "cutoff": 10200.0,
+      "resonance": 0.0
+    },
+    "master": {
+      "gain": 0.0,
+      "limiter_threshold": -1.0
+    }
+  },
+  "metadata": {
+    "description": "Deep, spacious, lo-fi grief processing",
+    "tags": [
+      "grief",
+      "lo-fi",
+      "intimate",
+      "dark",
+      "spacious"
+    ],
+    "emotional_justification": "Rolled-off highs create distance from reality, long reverb provides space for the weight of loss, tape saturation adds warmth and imperfection"
+  }
+}

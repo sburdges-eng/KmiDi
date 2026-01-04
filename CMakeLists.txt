@@ -10,6 +10,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(BUILD_DESKTOP "Build desktop GUI application" ON)
 option(BUILD_PLUGINS "Build VST3 and CLAP plugins" ON)
 option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_KELLY_CORE "Build Kelly core library/app/plugins" ON)
+option(BUILD_PENTA_TESTS "Build penta_core test suite" OFF)
 option(ENABLE_TRACY "Enable Tracy profiling" OFF)
 option(ENABLE_RTNEURAL "Enable RTNeural for ML inference" OFF)
 option(ENABLE_ONNX_RUNTIME "Enable ONNX Runtime for ML inference" OFF)
@@ -142,6 +144,7 @@ list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/plugin/")
 # they should be fixed by excluding specific problematic files/directories rather
 # than excluding everything.
 
+if(BUILD_KELLY_CORE)
 add_library(KellyCore STATIC ${KELLY_CORE_SOURCES})
 
 # Ensure ObjC++ file (for biometrics) is treated correctly if present
@@ -193,6 +196,9 @@ target_compile_options(KellyCore PRIVATE
 
 # Kelly GUI Application
 if(BUILD_DESKTOP)
+    if(NOT BUILD_KELLY_CORE)
+        message(FATAL_ERROR "BUILD_DESKTOP requires BUILD_KELLY_CORE=ON")
+    endif()
     add_executable(KellyApp
         src/gui/main.cpp
         src/gui/main_window.cpp
@@ -211,6 +217,9 @@ endif()
 
 # Plugin builds
 if(BUILD_PLUGINS)
+    if(NOT BUILD_KELLY_CORE)
+        message(FATAL_ERROR "BUILD_PLUGINS requires BUILD_KELLY_CORE=ON")
+    endif()
     # VST3/CLAP plugin
     juce_add_plugin(KellyPlugin
         COMPANY_NAME "Kelly"
@@ -234,8 +243,10 @@ if(BUILD_PLUGINS)
     )
 endif()
 
+endif() # BUILD_KELLY_CORE
+
 # Tests
-if(BUILD_TESTS)
+if(BUILD_TESTS AND BUILD_KELLY_CORE)
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/external/Catch2/CMakeLists.txt)
         enable_testing()
         add_subdirectory(external/Catch2 EXCLUDE_FROM_ALL)
@@ -257,6 +268,19 @@ if(BUILD_TESTS)
     endif()
 endif()
 
+if(BUILD_PENTA_TESTS)
+    enable_testing()
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.14.0
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(googletest)
+    add_subdirectory(tests/penta_core)
+endif()
+
 # Tracy profiling
 if(ENABLE_TRACY)
     add_subdirectory(external/tracy EXCLUDE_FROM_ALL)
@@ -265,34 +289,36 @@ if(ENABLE_TRACY)
 endif()
 
 # Installation
-set(KELLY_INSTALL_TARGETS KellyCore)
-if(BUILD_DESKTOP)
-    list(APPEND KELLY_INSTALL_TARGETS KellyApp)
-endif()
+if(BUILD_KELLY_CORE)
+    set(KELLY_INSTALL_TARGETS KellyCore)
+    if(BUILD_DESKTOP)
+        list(APPEND KELLY_INSTALL_TARGETS KellyApp)
+    endif()
 
-install(TARGETS ${KELLY_INSTALL_TARGETS}
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-)
-
-install(DIRECTORY src/
-    DESTINATION include/kelly
-    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
-)
-
-# Install ML models
-install(DIRECTORY models/
-    DESTINATION share/kelly/models
-    FILES_MATCHING 
-    PATTERN "*.json"
-    PATTERN "*.onnx"
-)
-
-# Install Python ML module (optional)
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/python/penta_core)
-    install(DIRECTORY python/penta_core
-        DESTINATION share/kelly/python
-        FILES_MATCHING PATTERN "*.py"
+    install(TARGETS ${KELLY_INSTALL_TARGETS}
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
     )
+
+    install(DIRECTORY src/
+        DESTINATION include/kelly
+        FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+    )
+
+    # Install ML models
+    install(DIRECTORY models/
+        DESTINATION share/kelly/models
+        FILES_MATCHING
+        PATTERN "*.json"
+        PATTERN "*.onnx"
+    )
+
+    # Install Python ML module (optional)
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/python/penta_core)
+        install(DIRECTORY python/penta_core
+            DESTINATION share/kelly/python
+            FILES_MATCHING PATTERN "*.py"
+        )
+    endif()
 endif()
