@@ -20,6 +20,7 @@ This roadmap provides a phased approach to implementing the integration between 
 - **File Organization**: All files moved to proper locations and imports updated
 - **Core Modules**: `emotion_production.py`, `drum_humanizer.py`, `dynamics_engine.py` exist and are implemented
 - **Module Structure**: All required directories and `__init__.py` files created
+- **Drum Analysis Config**: `AnalysisConfig` implemented with coverage in `tests/music_brain/test_drum_analysis.py`
 
 ### In Progress 🚧
 - **Reference Updates**: Update any references to moved EDM guide
@@ -235,7 +236,7 @@ This roadmap provides a phased approach to implementing the integration between 
    - [ ] Add `export_as_preset()` method
    - [ ] Add `compare_to_guide()` method
    - [ ] Add `detect_style_from_profile()` method
-   - [ ] Make thresholds configurable (AnalysisConfig)
+   - [x] Make thresholds configurable (AnalysisConfig)
 
 2. Write unit tests
    - [ ] Test preset export
@@ -253,7 +254,7 @@ This roadmap provides a phased approach to implementing the integration between 
 
 **Actions**:
 1. Create configuration system
-   - [ ] Add `AnalysisConfig` to `drum_analysis.py`
+   - [x] Add `AnalysisConfig` to `drum_analysis.py`
    - [ ] Add config loading to `emotion_production.py`
    - [ ] Create JSON config files (optional)
 
