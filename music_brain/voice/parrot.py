@@ -24,6 +24,7 @@ from music_brain.voice.neural_backend import NeuralBackend, create_neural_backen
 from music_brain.voice.voice_input import VoiceRecorder, VoiceMimic
 from music_brain.voice.instrument_synth import InstrumentSynthesizer, get_instrument_preset
 from music_brain.voice.voice_learning import VoiceLearningManager, LearnedVoiceProfile
+from music_brain.groove.fan_feedback import FanProfile
 
 
 class Parrot:
@@ -91,7 +92,8 @@ class Parrot:
             )
             if not self.neural_backend.is_available():
                 if backend == "neural":
-                    print("Warning: Neural backend requested but not available. Using formant backend.")
+                    print(
+                        "Warning: Neural backend requested but not available. Using formant backend.")
                 self.backend_type = "formant"
 
         # Voice input/mimicking
@@ -104,13 +106,26 @@ class Parrot:
         # Voice learning
         self.learning_manager = VoiceLearningManager(sample_rate=sample_rate)
 
+        # State
+        self.has_the_a = False
+
+    def give_the_a(self):
+        """
+        The fans give the 'A'. This unlocks the Parrot's full potential.
+        """
+        print("PRRT: *SQUAWK* AAAAAAA! *Clears throat*")
+        print("Parrot: Thank you. I am ready to sing.")
+        print("Parrot: *Vibrating intensely* I feel the power of the A!")
+        self.has_the_a = True
+
     def sing(
         self,
         lyrics: str,
         melody: List[int],
         tempo_bpm: float = 120.0,
         expression: Optional[Dict] = None,
-        voice_characteristics: Optional[Dict] = None
+        voice_characteristics: Optional[Dict] = None,
+        fan_profile: Optional[FanProfile] = None
     ) -> np.ndarray:
         """
         Synthesize singing from lyrics and melody.
@@ -121,6 +136,7 @@ class Parrot:
             tempo_bpm: Tempo in BPM
             expression: Optional expression parameters (vibrato, dynamics, etc.)
             voice_characteristics: Optional voice characteristics for mimicking
+            fan_profile: Optional FanProfile to influence performance
 
         Returns:
             Audio signal
@@ -131,12 +147,52 @@ class Parrot:
         )
 
         # Create pitch curve
-        note_durations = [phoneme_sequence.total_duration_ms / 1000.0 / len(melody)] * len(melody)
+        note_durations = [phoneme_sequence.total_duration_ms /
+                          1000.0 / len(melody)] * len(melody)
+
+        # Default expression - CURED LARYNGITIS DEFAULTS
+        vib_rate = 5.5
+        vib_depth = 0.15  # Increased from 0.02 (2 cents) to 0.15 (15 cents)
+        dynamics = None
+
+        if expression:
+            vib_rate = expression.get("vibrato_rate", 5.5)
+            vib_depth = expression.get("vibrato_depth", 0.15)
+            dynamics = expression.get("dynamics")
+
+        # Apply Fan Profile Influence
+        if fan_profile:
+            # Metalhead: More intensity (dynamics), faster vibrato?
+            if fan_profile.velocity_multiplier > 1.1:
+                vib_rate *= 1.2
+                vib_depth *= 1.5
+                # Simulate louder dynamics if not provided
+                if dynamics is None:
+                    dynamics = np.ones(len(melody)) * 1.2
+
+            # Reggae/Chill: Slower vibrato, smoother
+            elif fan_profile.velocity_multiplier < 0.9:
+                vib_rate *= 0.8
+                vib_depth *= 0.8
+
+        # Check for "The A" - if missing, maybe add random squawks or reduce quality?
+        if not self.has_the_a:
+            # For now, just print a warning, or maybe inject a squawk into the lyrics?
+            # (Injecting into lyrics would require re-processing phonemes, let's just warn)
+            print("PRRT: *Squawk* Where is my A? (Performance may be lackluster)")
+            vib_depth *= 0.5  # Still penalize, but base is higher now (0.075)
+        else:
+            # WITH THE A: FULL POTENTIAL
+            vib_depth *= 1.5  # Boost to 0.225+ (Professional level)
+            if dynamics is None:
+                dynamics = np.ones(len(melody)) * 1.1  # Louder/Confident
+
         expression_params = ExpressionParams(
-            vibrato_rate=expression.get("vibrato_rate", 5.0) if expression else 5.0,
-            vibrato_depth=expression.get("vibrato_depth", 0.02) if expression else 0.02,
-            portamento_time=expression.get("portamento_time", 0.05) if expression else 0.05,
-            dynamics=expression.get("dynamics") if expression else None
+            vibrato_rate=vib_rate,
+            vibrato_depth=vib_depth,
+            portamento_time=expression.get(
+                "portamento_time", 0.05) if expression else 0.05,
+            dynamics=dynamics
         )
 
         pitch_curve = self.pitch_controller.create_pitch_curve(
@@ -146,23 +202,27 @@ class Parrot:
         # Choose backend
         use_neural = (
             self.backend_type == "neural" or
-            (self.backend_type == "auto" and self.neural_backend and self.neural_backend.is_available())
+            (self.backend_type ==
+             "auto" and self.neural_backend and self.neural_backend.is_available())
         )
 
         if use_neural:
             # Try neural backend
-            audio = self.neural_backend.synthesize(phoneme_sequence, pitch_curve, expression)
+            audio = self.neural_backend.synthesize(
+                phoneme_sequence, pitch_curve, expression)
             if audio is None:
                 # Fallback to formant
                 use_neural = False
 
         if not use_neural:
             # Use formant backend
-            audio = self.formant_synth.synthesize(phoneme_sequence, pitch_curve, expression)
+            audio = self.formant_synth.synthesize(
+                phoneme_sequence, pitch_curve, expression)
 
         # Apply voice characteristics if provided (mimicking)
         if voice_characteristics:
-            audio = self.voice_mimic.apply_voice_characteristics(audio, voice_characteristics)
+            audio = self.voice_mimic.apply_voice_characteristics(
+                audio, voice_characteristics)
 
         return audio
 

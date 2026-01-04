@@ -41,8 +41,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Audio data root on external SSD
-AUDIO_DATA_ROOT = Path("/Users/seanburdges/BASIC STRUCTURE FOR miDiKompanion")
+# Audio data root on external SSD (override via env AUDIO_DATA_ROOT or --root)
+def _detect_default_root() -> Path:
+    """Pick the best available mount point for large datasets."""
+    candidates = [
+        Path(os.environ.get("AUDIO_DATA_ROOT")) if os.environ.get("AUDIO_DATA_ROOT") else None,
+        Path("/Volumes/sbdrive/kmidi_audio_data"),
+        Path("/Volumes/Extreme SSD/kmidi_audio_data"),
+        Path("/Users/seanburdges/BASIC STRUCTURE FOR miDiKompanion"),
+    ]
+    for path in candidates:
+        if path and path.parent.exists():
+            return path
+    # Fallback to workspace
+    return Path.cwd() / "kmidi_audio_data"
+
+
+DEFAULT_AUDIO_ROOT = _detect_default_root()
+AUDIO_DATA_ROOT = DEFAULT_AUDIO_ROOT.expanduser()
 
 
 # =============================================================================
@@ -917,6 +933,7 @@ def list_datasets():
 
 
 def main():
+    global AUDIO_DATA_ROOT
     parser = argparse.ArgumentParser(
         description="Prepare datasets for Kelly ML training",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -929,6 +946,7 @@ Examples:
         """,
     )
     
+    parser.add_argument("--root", type=str, help=f"Override data root (default: {AUDIO_DATA_ROOT})")
     parser.add_argument("--list", action="store_true", help="List available datasets")
     parser.add_argument("--dataset", type=str, help="Dataset name (or 'all')")
     parser.add_argument("--download", action="store_true", help="Download dataset")
@@ -940,6 +958,10 @@ Examples:
     
     args = parser.parse_args()
     
+    # Allow overriding root after parsing
+    if args.root:
+        AUDIO_DATA_ROOT = Path(args.root).expanduser()
+
     # Check SSD is mounted
     if not AUDIO_DATA_ROOT.parent.exists():
         logger.error(f"External SSD not mounted: {AUDIO_DATA_ROOT.parent}")

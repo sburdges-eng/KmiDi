@@ -92,6 +92,11 @@ except Exception:
     AugmentationConfig = None
     build_augmentation_pipeline = None
 
+try:
+    from training.harmony_dataset import HarmonyDataset
+except Exception:
+    HarmonyDataset = None
+
 # Paths
 ROOT = Path(__file__).parent.parent
 CHECKPOINTS_DIR = ROOT / "checkpoints"
@@ -895,6 +900,9 @@ def train_single_model(
     sample_rate: int = 16000,
     n_mels: int = 128,
     use_augmentation: bool = False,
+    harmony_manifest: Optional[str] = None,
+    harmony_context_dim: int = 128,
+    harmony_target_dim: int = 64,
 ):
     """Train a single model."""
 
@@ -920,6 +928,21 @@ def train_single_model(
         logger.info(
             f"Using audio manifest dataset with {len(dataset)} items "
             f"(labels={label_count}, sr={sample_rate}, n_mels={n_mels}, augmentation={use_augmentation})"
+        )
+    elif model_name == "harmony_predictor" and harmony_manifest:
+        if HarmonyDataset is None:
+            raise ImportError("HarmonyDataset unavailable; ensure training/harmony_dataset.py is importable")
+        dataset = HarmonyDataset(
+            harmony_manifest,
+            expected_context=harmony_context_dim,
+            expected_target=harmony_target_dim,
+        )
+        # Adjust model dims if manifest differs
+        model_kwargs["input_size"] = harmony_context_dim
+        model_kwargs["output_size"] = harmony_target_dim
+        logger.info(
+            f"Using harmony manifest dataset with {len(dataset)} items "
+            f"(ctx={harmony_context_dim}, target={harmony_target_dim})"
         )
     elif config.get("is_seq2seq"):
         dataset = MelodyDataset(num_samples)
@@ -973,6 +996,12 @@ def main():
                         help="Mel bins for audio features")
     parser.add_argument("--use-augmentation", action="store_true",
                         help="Enable audio augmentation pipeline")
+    parser.add_argument("--harmony-manifest", type=str,
+                        help="JSONL manifest for harmony predictor (context/target vectors)")
+    parser.add_argument("--harmony-context-dim", type=int, default=128,
+                        help="Expected context vector length for harmony manifest")
+    parser.add_argument("--harmony-target-dim", type=int, default=64,
+                        help="Expected target vector length for harmony manifest")
     args = parser.parse_args()
 
     if args.tune:
@@ -1006,6 +1035,9 @@ def main():
             sample_rate=args.sample_rate,
             n_mels=args.n_mels,
             use_augmentation=args.use_augmentation,
+            harmony_manifest=args.harmony_manifest,
+            harmony_context_dim=args.harmony_context_dim,
+            harmony_target_dim=args.harmony_target_dim,
         )
     elif args.all:
         for model_name in MODEL_CONFIGS:
@@ -1019,6 +1051,9 @@ def main():
                     sample_rate=args.sample_rate,
                     n_mels=args.n_mels,
                     use_augmentation=args.use_augmentation,
+                    harmony_manifest=args.harmony_manifest,
+                    harmony_context_dim=args.harmony_context_dim,
+                    harmony_target_dim=args.harmony_target_dim,
                 )
             except Exception as e:
                 logger.error(f"Failed to train {model_name}: {e}")
