@@ -42,21 +42,27 @@ from datetime import datetime
 from pathlib import Path
 
 # Model assignments for parallel training
+# Mac (Worker C): Light/quantized/PEFT tasks - direct dataset access
+# Codespaces (A, B): Heavier training runs - SSH mount to Mac datasets
 WORKER_ASSIGNMENTS = {
     "A": {
         "name": "crispy-funicular",
-        "models": ["emotion_recognizer", "dynamics_engine"],
-        "description": "Codespace - Audio models (WAV data)",
+        "models": ["melody_transformer", "emotion_recognizer"],
+        "description": "Codespace - Heavy transformer training",
+        "data_root_env": "KELLY_AUDIO_DATA_ROOT",
     },
     "B": {
         "name": "cautious-couscous",
-        "models": ["groove_predictor"],
-        "description": "Codespace - Rhythm models (lighter load)",
+        "models": ["harmony_predictor", "dynamics_engine"],
+        "description": "Codespace - Heavy predictor training",
+        "data_root_env": "KELLY_AUDIO_DATA_ROOT",
     },
     "C": {
         "name": "cursor-local",
-        "models": ["melody_transformer", "harmony_predictor"],
-        "description": "Cursor/Local - Transformers (MPS accelerated)",
+        "models": ["groove_predictor"],
+        "description": "Mac/Cursor - Light quantized task (MPS)",
+        "data_root_env": "KELLY_AUDIO_DATA_ROOT",
+        "data_root_default": "/Volumes/sbdrive/audio/datasets",
     },
 }
 
@@ -123,12 +129,23 @@ def detect_worker() -> str:
     return choice if choice in ["A", "B", "C"] else "C"
 
 
-def get_data_dir() -> Path:
-    """Get the data directory path."""
-    # Check environment variable first
+def get_data_dir(worker_id: str = None) -> Path:
+    """Get the data directory path based on KELLY_AUDIO_DATA_ROOT."""
+    # Check KELLY_AUDIO_DATA_ROOT first (explicit per-machine config)
+    data_dir = os.environ.get("KELLY_AUDIO_DATA_ROOT")
+    if data_dir and Path(data_dir).exists():
+        return Path(data_dir)
+
+    # Check legacy KMIDI_DATA_DIR
     data_dir = os.environ.get("KMIDI_DATA_DIR")
     if data_dir and Path(data_dir).exists():
         return Path(data_dir)
+
+    # Worker-specific defaults
+    if worker_id and worker_id in WORKER_ASSIGNMENTS:
+        default = WORKER_ASSIGNMENTS[worker_id].get("data_root_default")
+        if default and Path(default).exists():
+            return Path(default)
 
     # Check common mount points
     for path in ["/data/datasets", "/Volumes/sbdrive/audio/datasets"]:
@@ -136,8 +153,9 @@ def get_data_dir() -> Path:
             return Path(path)
 
     print("ERROR: Dataset directory not found")
-    print("Ensure datasets are mounted at /data/datasets")
-    print("Or set KMIDI_DATA_DIR environment variable")
+    print("Set KELLY_AUDIO_DATA_ROOT environment variable:")
+    print("  Mac:       export KELLY_AUDIO_DATA_ROOT=/Volumes/sbdrive/audio/datasets")
+    print("  Codespace: export KELLY_AUDIO_DATA_ROOT=/data/datasets")
     sys.exit(1)
 
 
@@ -299,7 +317,7 @@ def show_plan():
 
 def main():
     parser = argparse.ArgumentParser(description="Parallel training coordinator")
-    parser.add_argument("--worker", choices=["A", "B"], help="Worker ID")
+    parser.add_argument("--worker", choices=["A", "B", "C"], help="Worker ID")
     parser.add_argument("--auto", action="store_true", help="Auto-detect worker")
     parser.add_argument("--plan", action="store_true", help="Show training plan")
     args = parser.parse_args()

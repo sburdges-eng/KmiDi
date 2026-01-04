@@ -19,6 +19,9 @@
       "installZsh": true,
       "installOhMyZsh": true,
       "upgradePackages": true
+    },
+    "ghcr.io/devcontainers/features/sshd:1": {
+      "version": "latest"
     }
   },
 
