@@ -86,3 +86,26 @@ echo "  - Build C++: cmake -B build && cmake --build build"
 echo "  - Run tests: pytest tests/python"
 echo ""
 echo "Happy coding! 🎹"
+
+# Set up dataset access (SSH to Mac or B2 cloud)
+echo ""
+echo "☁️  Checking dataset access..."
+if [ -n "$MAC_SSH_HOST" ] && [ -n "$MAC_SSH_USER" ]; then
+    echo "SSH credentials found. Mounting datasets from local Mac..."
+    bash .devcontainer/setup-ssh-mount.sh || echo "⚠️  SSH mount failed - is tunnel running?"
+elif [ -n "$B2_ACCOUNT_ID" ] && [ -n "$B2_APPLICATION_KEY" ]; then
+    echo "B2 credentials found. Setting up cloud storage..."
+    bash .devcontainer/setup-cloud-storage.sh || echo "⚠️  Cloud storage setup failed"
+else
+    echo "ℹ️  No dataset access configured. Options:"
+    echo ""
+    echo "   Option 1: SSH to Local Mac (recommended)"
+    echo "   - MAC_SSH_HOST: your Mac IP or 'localhost' with tunnel"
+    echo "   - MAC_SSH_USER: your Mac username"
+    echo "   - MAC_SSH_KEY: base64-encoded SSH private key (optional)"
+    echo ""
+    echo "   Option 2: Backblaze B2 Cloud Storage"
+    echo "   - B2_ACCOUNT_ID"
+    echo "   - B2_APPLICATION_KEY"
+    echo "   - B2_BUCKET_NAME (optional)"
+fi
