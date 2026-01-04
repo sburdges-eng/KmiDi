@@ -10,8 +10,11 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Any
 import random
 
-from music_brain.emotion.emotion_production import EmotionProductionMapper, ProductionPreset
-from music_brain.emotion_thesaurus import EmotionMatch, EmotionThesaurus
+from music_brain.emotion.emotion_production import (
+    EmotionProductionMapper,
+    ProductionPreset,
+)
+from music_brain.emotion.emotion_thesaurus import EmotionMatch, EmotionThesaurus
 
 
 @dataclass

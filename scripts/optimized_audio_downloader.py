@@ -19,6 +19,9 @@ Examples:
     python3 scripts/optimized_audio_downloader.py \
         --urls-file urls.txt --output-subdir foley_raw --no-extract
 
+    # Force root storage to an external drive (e.g., /Volumes/sbdrive/audio)
+    python3 scripts/optimized_audio_downloader.py --root /Volumes/sbdrive/audio --urls-file urls.txt
+
     # Freesound pack (requires FREESOUND_API_KEY)
     python3 scripts/optimized_audio_downloader.py --freesound-pack 12345 --output-subdir freesound_emotion
 
@@ -124,6 +127,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "--root",
+        type=Path,
+        help="Override storage root (downloads/raw/cache under this path)",
+    )
+    parser.add_argument(
         "--output-subdir", type=str, help="Optional subdirectory under output_dir"
     )
     parser.add_argument("--download-dir", type=Path, help="Override download dir")
@@ -151,8 +159,23 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Optional[List[str]] = None) -> int:
     args = build_parser().parse_args(argv)
 
-    # Establish storage config (prefers external config if present).
-    dirs = ensure_audio_directories()
+    # Establish storage config (prefers explicit --root, otherwise penta_core defaults).
+    if args.root:
+        root = args.root.expanduser().resolve()
+        (root / "downloads").mkdir(parents=True, exist_ok=True)
+        (root / "raw").mkdir(parents=True, exist_ok=True)
+        (root / "cache").mkdir(parents=True, exist_ok=True)
+        (root / "manifests").mkdir(parents=True, exist_ok=True)
+        dirs = {
+            "root": root,
+            "downloads": root / "downloads",
+            "raw": root / "raw",
+            "cache": root / "cache",
+            "manifests": root / "manifests",
+        }
+    else:
+        dirs = ensure_audio_directories()
+
     download_dir = args.download_dir or dirs["downloads"]
     output_dir = args.output_dir or dirs["raw"]
 
