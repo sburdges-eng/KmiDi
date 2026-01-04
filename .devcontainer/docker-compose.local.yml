@@ -1,0 +1,38 @@
+# Docker Compose override for local development with external SSD
+# Usage: docker-compose -f docker-compose.yml -f .devcontainer/docker-compose.local.yml up
+#
+# This binds the external SSD into the container for direct dataset access.
+# Requires the SSD to be mounted at /Volumes/sbdrive or /Volumes/Extreme SSD
+
+version: '3.8'
+
+services:
+  dev:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      # Project source
+      - ..:/workspace:cached
+
+      # External SSD mounts - comment out whichever doesn't exist
+      - /Volumes/sbdrive:/Volumes/sbdrive:cached
+      - "/Volumes/Extreme SSD:/Volumes/Extreme SSD:cached"
+
+      # Dataset directories (if using different paths)
+      # - /path/to/your/datasets:/data/datasets:cached
+
+    environment:
+      - PYTHONPATH=/workspace/src:/workspace
+      - HF_HOME=/Volumes/sbdrive/audio/datasets/hf_cache
+      - HF_DATASETS_CACHE=/Volumes/sbdrive/audio/datasets/hf_cache
+      - KMIDI_DATA_DIR=/Volumes/sbdrive/audio/datasets
+
+    # For GPU training (uncomment if using NVIDIA GPU)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]

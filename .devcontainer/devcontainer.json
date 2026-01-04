@@ -64,12 +64,17 @@
   "remoteUser": "vscode",
 
   "mounts": [
-    "source=${localWorkspaceFolder}/.git,target=/workspace/.git,type=bind,consistency=cached"
+    "source=${localWorkspaceFolder}/.git,target=/workspace/.git,type=bind,consistency=cached",
+    "source=/Volumes/sbdrive,target=/Volumes/sbdrive,type=bind,consistency=cached",
+    "source=/Volumes/Extreme SSD,target=/Volumes/Extreme SSD,type=bind,consistency=cached"
   ],
 
   "containerEnv": {
     "PYTHONPATH": "/workspace/src:${PYTHONPATH}",
     "CMAKE_PREFIX_PATH": "/usr/local/qt6",
-    "PKG_CONFIG_PATH": "/usr/local/lib/pkgconfig"
+    "PKG_CONFIG_PATH": "/usr/local/lib/pkgconfig",
+    "HF_HOME": "/Volumes/sbdrive/audio/datasets/hf_cache",
+    "HF_DATASETS_CACHE": "/Volumes/sbdrive/audio/datasets/hf_cache",
+    "KMIDI_DATA_DIR": "/Volumes/sbdrive/audio/datasets"
   }
 }
