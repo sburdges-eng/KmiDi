@@ -2,10 +2,28 @@
 
 ## Overview
 
-This directory contains complete training configurations for two GPU cloud sessions:
+This directory contains complete training configurations for two primary paths:
 
-1. **CUDA GPU Session ($50)** - Train Spectocloud + MIDI Generator models
-2. **M4 Mac Metal Session ($50)** - Run both models in close concurrence
+1. **Online GPU Training (Project Vision)** - Train Spectocloud + MIDI Generator models on cloud GPUs.
+2. **M4 Mac Metal Session** - Run both models locally with strict 16GB RAM optimization.
+
+An **MLX-only experimental workflow** is also provided to run the full lifecycle on Apple Silicon without CUDA.
+
+---
+
+## 🌐 Online Training Options (Primary Vision)
+
+Use online training for the heavy lifting, then deploy to the M4 for inference and fine-tuning.
+
+**Recommended approach**:
+- Train full models on cloud GPUs (faster + cheaper per epoch).
+- Export ONNX/CoreML, then run inference + light LoRA fine-tunes on M4.
+
+**Provider shortlist**:
+- **Lambda Labs** (RTX 4090): best price/perf for mid-size runs.
+- **Vast.ai** (RTX 4090): lowest cost if you can manage spot instances.
+- **RunPod** (A100): fastest if budget allows.
+- **AWS g5.xlarge** (A10G): reliable for enterprise workflows.
 
 ---
 
@@ -19,8 +37,11 @@ training/
 │   ├── train_spectocloud.py               # Spectocloud training script
 │   └── train_midi_generator.py            # MIDI Generator training script
 │
-└── metal_m4_session/                # Apple M4 inference + fine-tuning
-    └── dual_model_config.yaml       # Dual model orchestration config
+├── metal_m4_session/                # Apple M4 inference + fine-tuning
+│   └── dual_model_config.yaml       # Dual model orchestration config
+└── mlx_session/                     # MLX-only experimental workflow
+    ├── mlx_workflow.yaml            # Full MLX pipeline config
+    └── README.md                    # MLX-only runbook
 ```
 
 ---
@@ -236,6 +257,18 @@ python -m music_brain.inference.dual_runner \
     --config training/metal_m4_session/dual_model_config.yaml
 ```
 
+### M4 16GB Optimization Profile
+
+Use these defaults when memory is constrained:
+
+```yaml
+batch_size: 2
+grad_accum_steps: 8   # Effective batch = 16
+precision: fp16
+sequence_length: 512
+gradient_checkpointing: true
+```
+
 ### Performance Targets
 
 | Model | Target Latency | Expected on M4 |
@@ -284,6 +317,16 @@ Run fine-tuning:
 python -m music_brain.finetune.lora_trainer \
     --config training/metal_m4_session/dual_model_config.yaml \
     --data data/personal/
+```
+
+---
+
+## 🍏 Session 3: MLX-Only Workflow (Experimental)
+
+Use MLX to run **the entire project workflow** without CUDA or PyTorch. This is an experiment and should not replace online GPU training.
+
+```bash
+cat training/mlx_session/README.md
 ```
 
 ---
