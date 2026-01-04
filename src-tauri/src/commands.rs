@@ -42,3 +42,10 @@ pub async fn get_emotions() -> Result<serde_json::Value, String> {
         .await
         .map_err(|e| e.to_string())
 }
+
+#[command]
+pub async fn get_humanizer_config() -> Result<serde_json::Value, String> {
+    crate::bridge::musicbrain::get_humanizer_config()
+        .await
+        .map_err(|e| e.to_string())
+}

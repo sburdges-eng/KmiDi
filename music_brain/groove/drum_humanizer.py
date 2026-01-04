@@ -13,10 +13,12 @@ TODO:
 - Connect to groove_engine.humanize_drums for full application.
 """
 
+import json
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
-from music_brain.groove.drum_analysis import DrumAnalyzer, DrumTechniqueProfile
+from music_brain.groove.drum_analysis import AnalysisConfig, DrumAnalyzer, DrumTechniqueProfile
 from music_brain.groove.groove_engine import GrooveSettings, humanize_drums
 
 
@@ -47,14 +49,19 @@ class DrumHumanizer:
         default_style: str = "standard",
         config: Optional[HumanizerConfig] = None,
         analyzer: Optional[DrumAnalyzer] = None,
+        config_path: Optional[Path] = None,
     ) -> None:
         self.default_style = default_style
         self.guide_rules: Dict[str, GuideRuleSet] = self._build_default_rules()
-        self.config = config or HumanizerConfig()
+        loaded_cfg, loaded_analysis, style_override = self._load_config(config_path)
+        self.config = config or loaded_cfg
+        if style_override:
+            self.default_style = style_override
         # Analyzer is lazily cloned per-call when bpm/ppq override is provided.
         self.analyzer = analyzer or DrumAnalyzer(
             ppq=self.config.ppq,
             bpm=self.config.bpm,
+            config=loaded_analysis,
         )
 
     def _build_default_rules(self) -> Dict[str, GuideRuleSet]:
@@ -218,6 +225,22 @@ class DrumHumanizer:
             else DrumAnalyzer(ppq=ppq or self.config.ppq, bpm=bpm or self.config.bpm)
         )
         return analyzer.analyze(list(notes), bpm=bpm or analyzer.bpm)
+
+    def _load_config(self, config_path: Optional[Path]) -> Tuple[HumanizerConfig, Optional[AnalysisConfig], Optional[str]]:
+        """Load HumanizerConfig and AnalysisConfig overrides from JSON if provided."""
+        if not config_path:
+            return HumanizerConfig(), None, None
+        try:
+            data = json.loads(Path(config_path).read_text())
+            analysis_cfg = AnalysisConfig.from_dict(data["analysis"]) if "analysis" in data else None
+            config = HumanizerConfig(**{k: v for k, v in data.items() if k in {"ppq", "bpm"}})
+            style = data.get("default_style")
+            return config, analysis_cfg, style
+        except FileNotFoundError:
+            return HumanizerConfig(), None, None
+        except Exception:
+            # On malformed config, fall back to defaults.
+            return HumanizerConfig(), None, None
 
     def _style_from_profile(
         self, profile: Optional[DrumTechniqueProfile]

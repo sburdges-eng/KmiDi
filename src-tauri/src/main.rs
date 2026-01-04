@@ -4,7 +4,7 @@
 mod commands;
 mod bridge;
 
-use commands::{generate_music, interrogate, get_emotions};
+use commands::{generate_music, interrogate, get_emotions, get_humanizer_config};
 
 fn main() {
     tauri::Builder::default()
@@ -12,6 +12,7 @@ fn main() {
             generate_music,
             interrogate,
             get_emotions,
+            get_humanizer_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

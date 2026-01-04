@@ -13,7 +13,7 @@ pub async fn generate(request: GenerateRequest) -> Result<Value, Box<dyn std::er
         .await?
         .json::<Value>()
         .await?;
-    
+
     Ok(res)
 }
 
@@ -26,7 +26,7 @@ pub async fn interrogate(request: InterrogateRequest) -> Result<Value, Box<dyn s
         .await?
         .json::<Value>()
         .await?;
-    
+
     Ok(res)
 }
 
@@ -38,6 +38,18 @@ pub async fn get_emotions() -> Result<Value, Box<dyn std::error::Error>> {
         .await?
         .json::<Value>()
         .await?;
-    
+
+    Ok(res)
+}
+
+pub async fn get_humanizer_config() -> Result<Value, Box<dyn std::error::Error>> {
+    let client = reqwest::Client::new();
+    let res = client
+        .get(format!("{}/config/humanizer", MUSIC_BRAIN_API))
+        .send()
+        .await?
+        .json::<Value>()
+        .await?;
+
     Ok(res)
 }

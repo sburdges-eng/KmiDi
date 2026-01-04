@@ -23,6 +23,22 @@ export interface InterrogateRequest {
   context?: any;
 }
 
+export interface HumanizerConfig {
+  default_style: string;
+  ppq: number;
+  bpm: number;
+  analysis: {
+    flam_threshold_ms: number;
+    buzz_threshold_ms: number;
+    drag_threshold_ms: number;
+    alternation_window_ms: number;
+  };
+}
+
+export interface UpdateHumanizerConfigInput extends Partial<HumanizerConfig> {
+  analysis?: Partial<HumanizerConfig["analysis"]>;
+}
+
 export const useMusicBrain = () => {
   const getEmotions = async () => {
     try {
@@ -54,10 +70,35 @@ export const useMusicBrain = () => {
     }
   };
 
+  const getHumanizerConfig = async (): Promise<HumanizerConfig> => {
+    try {
+      const result = await invoke('get_humanizer_config');
+      return result as HumanizerConfig;
+    } catch (error) {
+      console.error('Failed to load humanizer config:', error);
+      throw error;
+    }
+  };
+
+  const updateHumanizerConfig = async (
+    payload: UpdateHumanizerConfigInput,
+  ): Promise<HumanizerConfig> => {
+    const resp = await fetch('http://127.0.0.1:8000/config/humanizer', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!resp.ok) {
+      throw new Error(`Failed to update config (${resp.status})`);
+    }
+    return resp.json();
+  };
+
   return {
     getEmotions,
     generateMusic,
     interrogate,
+    getHumanizerConfig,
+    updateHumanizerConfig,
   };
 };
-

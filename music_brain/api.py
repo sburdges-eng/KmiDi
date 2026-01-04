@@ -8,6 +8,7 @@ or other interfaces.
 from typing import Dict, List, Optional, Any, Tuple
 import sys
 import logging
+import json
 
 try:
     from fastapi import FastAPI, HTTPException
@@ -77,6 +78,7 @@ from music_brain.voice import (
     SynthConfig,
     get_voice_profile,
 )
+from music_brain.groove.drum_humanizer import DrumHumanizer
 
 
 class _DummyAudioAnalyzer:
@@ -106,6 +108,21 @@ class DAiWAPI:
         self.voice_modulator = VoiceModulator()
         self.voice_synthesizer = VoiceSynthesizer()
         self.audio_analyzer = _DummyAudioAnalyzer()
+        self.drum_humanizer = self._build_humanizer()
+
+    def _build_humanizer(self) -> DrumHumanizer:
+        """Create DrumHumanizer, pulling config from config/humanizer.json if present."""
+        cfg_path = Path("config/humanizer.json")
+        if cfg_path.exists():
+            try:
+                return DrumHumanizer(config_path=str(cfg_path))
+            except Exception:
+                logging.exception("Failed to load humanizer config; using defaults.")
+        return DrumHumanizer()
+
+    def reload_humanizer(self) -> None:
+        """Reload humanizer configuration from disk."""
+        self.drum_humanizer = self._build_humanizer()
     
     # ========== Harmony Generation ==========
     
@@ -653,6 +670,60 @@ if FASTAPI_AVAILABLE:
         except Exception as exc:  # pragma: no cover
             logging.exception("Failed to list emotions")
             raise HTTPException(status_code=500, detail=str(exc))
+
+    def _normalize_humanizer_config(data: Dict[str, Any]) -> Dict[str, Any]:
+        default_analysis = {
+            "flam_threshold_ms": 30.0,
+            "buzz_threshold_ms": 50.0,
+            "drag_threshold_ms": 80.0,
+            "alternation_window_ms": 200.0,
+        }
+        default_config = {
+            "default_style": "standard",
+            "ppq": 480,
+            "bpm": 120.0,
+            "analysis": default_analysis,
+        }
+        merged = {**default_config, **(data or {})}
+        merged["analysis"] = {**default_analysis, **merged.get("analysis", {})}
+        return merged
+
+    def _load_json_config(path: Path, fallback: Dict[str, Any]) -> Dict[str, Any]:
+        if path.exists():
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                logging.exception("Failed to load %s", path)
+        return fallback
+
+    @app.get("/config/humanizer")
+    async def humanizer_config():
+        """
+        Return current humanizer/analysis config.
+        - Loads `config/humanizer.json` if present; otherwise defaults.
+        - Also exposes analysis thresholds (flam/buzz/drag/alternation).
+        """
+        cfg = _load_json_config(
+            Path("config/humanizer.json"),
+            _normalize_humanizer_config({}),
+        )
+        return _normalize_humanizer_config(cfg)
+
+    @app.put("/config/humanizer")
+    async def update_humanizer_config(payload: Dict[str, Any]):
+        """
+        Persist humanizer/analysis configuration.
+        - Accepts fields: default_style, ppq, bpm, analysis.{flam_threshold_ms,buzz_threshold_ms,drag_threshold_ms,alternation_window_ms}
+        - Writes to config/humanizer.json and returns the normalized config.
+        """
+        cfg_dir = Path("config")
+        cfg_dir.mkdir(parents=True, exist_ok=True)
+        normalized = _normalize_humanizer_config(payload)
+        cfg_path = cfg_dir / "humanizer.json"
+        with open(cfg_path, "w", encoding="utf-8") as f:
+            json.dump(normalized, f, indent=2)
+        return normalized
 
     @app.post("/generate")
     async def generate_music(request: GenerateRequest):
