@@ -5,12 +5,12 @@
  êÄR
 var_21
 *
-êÄ¢ﬁ¢3
-#com.github.apple.coremltools.sourcetorch==2.2.2¢:
-+com.github.apple.coremltools.source_dialectTorchScript¢:
+êÄ¢ﬁ¢:
 ,com.github.apple.coremltools.conversion_date
-2026-01-04¢+
-$com.github.apple.coremltools.version9.0≤ıà
+2026-01-04¢:
++com.github.apple.coremltools.source_dialectTorchScript¢+
+$com.github.apple.coremltools.version9.0¢3
+#com.github.apple.coremltools.sourcetorch==2.2.2≤ıà
 mainˇ
 
 input
@@ -52,13 +52,13 @@ $com.github.apple.coremltools.version9.0≤ıà
 linear
 bias
 
-var_0_bias_to_fp16
-x	
-
-input"
+var_0_bias_to_fp16"
 weight
 
-var_0_weight_to_fp16)
+var_0_weight_to_fp16
+x	
+
+input)
 linear_0_cast_fp16
 
 
@@ -116,13 +116,13 @@ $com.github.apple.coremltools.version9.0≤ıà
 linear
 bias
 
-var_3_bias_to_fp16
-x
-
-input_5_cast_fp16"
+var_3_bias_to_fp16"
 weight
 
-var_3_weight_to_fp16(
+var_3_weight_to_fp16
+x
+
+input_5_cast_fp16(
 linear_1_cast_fp16
 
 
@@ -180,13 +180,13 @@ $com.github.apple.coremltools.version9.0≤ıà
 linear
 bias
 
-var_6_bias_to_fp16
-x
-
-input_11_cast_fp16"
+var_6_bias_to_fp16"
 weight
 
-var_6_weight_to_fp16
+var_6_weight_to_fp16
+x
+
+input_11_cast_fp16
 var_21
 
 

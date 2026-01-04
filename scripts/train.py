@@ -63,10 +63,12 @@ LOGS_DIR = ROOT / "logs" / "training"
 CHECKPOINTS_DIR = ROOT / "checkpoints"
 
 # Device constraint limits for smoke testing on resource-limited devices
-MAX_EPOCHS_MPS_SMOKE = 5      # Maximum epochs for Apple Silicon MPS
-MAX_EPOCHS_CPU_SMOKE = 10     # Maximum epochs for CPU-only training
+# Set KELLY_EXTENDED_TRAINING=1 to bypass epoch limits
+MAX_EPOCHS_MPS_SMOKE = 5      # Maximum epochs for Apple Silicon MPS (smoke test)
+MAX_EPOCHS_CPU_SMOKE = 10     # Maximum epochs for CPU-only training (smoke test)
 MAX_BATCH_MPS = 8             # Maximum batch size for MPS device
 MAX_BATCH_CPU = 16            # Maximum batch size for CPU device
+EXTENDED_TRAINING = os.environ.get("KELLY_EXTENDED_TRAINING", "0") == "1"
 
 
 # =============================================================================
@@ -227,19 +229,24 @@ def enforce_device_constraints(config: TrainConfig, device: "torch.device") -> N
     Note:
         This function modifies the config object in-place to prevent OOM errors
         on resource-constrained devices like Apple Silicon MPS or CPU-only systems.
+        Set KELLY_EXTENDED_TRAINING=1 to bypass epoch limits for extended training.
     """
     if device.type in {"mps", "cpu"}:
-        max_epochs = MAX_EPOCHS_MPS_SMOKE if device.type == "mps" else min(config.epochs, MAX_EPOCHS_CPU_SMOKE)
         max_batch = MAX_BATCH_MPS if device.type == "mps" else MAX_BATCH_CPU
 
-        if config.epochs > max_epochs:
-            logger.info(
-                "Device %s detected; reducing epochs from %d to %d for smoke runs",
-                device.type,
-                config.epochs,
-                max_epochs,
-            )
-            config.epochs = max_epochs
+        # Only limit epochs if not in extended training mode
+        if not EXTENDED_TRAINING:
+            max_epochs = MAX_EPOCHS_MPS_SMOKE if device.type == "mps" else min(config.epochs, MAX_EPOCHS_CPU_SMOKE)
+            if config.epochs > max_epochs:
+                logger.info(
+                    "Device %s detected; reducing epochs from %d to %d for smoke runs",
+                    device.type,
+                    config.epochs,
+                    max_epochs,
+                )
+                config.epochs = max_epochs
+        else:
+            logger.info("Extended training mode enabled - no epoch limit")
 
         if config.batch_size > max_batch:
             logger.info(
