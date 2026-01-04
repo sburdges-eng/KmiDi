@@ -42,7 +42,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Audio data root on external SSD
-AUDIO_DATA_ROOT = Path("/Volumes/Extreme SSD/kelly-audio-data")
+AUDIO_DATA_ROOT = Path("/Users/seanburdges/BASIC STRUCTURE FOR miDiKompanion")
 
 
 # =============================================================================

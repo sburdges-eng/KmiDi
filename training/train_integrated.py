@@ -5,6 +5,13 @@ Integrated Kelly Model Training Script
 Trains all Kelly models with performance-first configuration.
 Based on previous training results for optimal hyperparameters.
 
+Data notes (for audio emotion training):
+- CREMA-D: ~6–8 GB (≈7.4k WAVs)
+- RAVDESS: ~2–3 GB (≈1.4k files)
+- Combined CREMA-D + RAVDESS: ≈8–11 GB total
+- DEAM / EmoMusic (music mood): ~1–2 GB audio each, annotations are tiny
+Use training/build_emotion_manifest.py to build manifests, and cache_audio_manifest.py to stage files.
+
 Output Structure:
     checkpoints/
     ├── emotion_recognizer/best_model.pt
@@ -33,6 +40,18 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 
 import numpy as np
+try:
+    from ray import tune
+    from ray.tune import with_parameters, Trainable
+    import ray
+except ImportError:  # optional
+    tune = None
+    with_parameters = None
+    Trainable = object  # harmless base
+    ray = None
+from torch.nn.parallel import DistributedDataParallel as DDP
+import torch.distributed as dist
+import subprocess
 
 # PyTorch imports
 try:
@@ -58,6 +77,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+try:
+    import librosa
+except ImportError:
+    librosa = None
+    logger.warning("librosa not installed; audio datasets unavailable")
+
+try:
+    from training.data_augmentation import (
+        AugmentationConfig,
+        build_augmentation_pipeline,
+    )
+except Exception:
+    AugmentationConfig = None
+    build_augmentation_pipeline = None
+
 # Paths
 ROOT = Path(__file__).parent.parent
 CHECKPOINTS_DIR = ROOT / "checkpoints"
@@ -80,10 +114,10 @@ class TrainingResult:
     best_val_loss: float
     checkpoint_path: str
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
-    
+
     def summary_line(self) -> str:
         """Format like: emotion_recognizer  89.50%  36/100 (early stopped)  12.2 min"""
         status = f"(early stopped)" if self.early_stopped else ""
@@ -93,12 +127,12 @@ class TrainingResult:
 
 class ResultsManager:
     """Manages training results across all models."""
-    
+
     def __init__(self, results_path: Path = RESULTS_FILE):
         self.results_path = results_path
         self.results: Dict[str, TrainingResult] = {}
         self._load_existing()
-    
+
     def _load_existing(self):
         """Load existing results if available."""
         if self.results_path.exists():
@@ -110,54 +144,55 @@ class ResultsManager:
                 logger.info(f"Loaded {len(self.results)} existing results")
             except (json.JSONDecodeError, KeyError) as e:
                 logger.warning(f"Could not load existing results: {e}")
-    
+
     def add_result(self, result: TrainingResult):
         """Add or update a training result."""
         self.results[result.model_name] = result
         self._save()
-    
+
     def _save(self):
         """Save results to JSON."""
         self.results_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         data = {
             "last_updated": datetime.now().isoformat(),
             "total_models": len(self.results),
             "models": {name: r.to_dict() for name, r in self.results.items()},
             "summary": self._generate_summary(),
         }
-        
+
         with open(self.results_path, "w") as f:
             json.dump(data, f, indent=2)
-        
+
         logger.info(f"Results saved to {self.results_path}")
-    
+
     def _generate_summary(self) -> Dict[str, Any]:
         """Generate summary statistics."""
         if not self.results:
             return {}
-        
+
         accuracies = [r.accuracy for r in self.results.values()]
         times = [r.training_time_seconds for r in self.results.values()]
-        
+
         return {
             "avg_accuracy": sum(accuracies) / len(accuracies),
             "best_accuracy": max(accuracies),
             "total_training_time_seconds": sum(times),
             "models_early_stopped": sum(1 for r in self.results.values() if r.early_stopped),
         }
-    
+
     def print_summary(self):
         """Print formatted summary table."""
         print("\n" + "=" * 70)
         print("Training Results Summary")
         print("=" * 70)
-        print(f"{'Model':<20} {'Accuracy':>8} {'Epochs':>12} {'Status':>15} {'Time':>10}")
+        print(
+            f"{'Model':<20} {'Accuracy':>8} {'Epochs':>12} {'Status':>15} {'Time':>10}")
         print("-" * 70)
-        
+
         for result in sorted(self.results.values(), key=lambda r: r.accuracy, reverse=True):
             print(result.summary_line())
-        
+
         print("=" * 70)
         print(f"Results saved to: {self.results_path}")
 
@@ -168,10 +203,10 @@ class ResultsManager:
 
 class EmotionRecognizerCNN(nn.Module):
     """CNN with attention for emotion recognition. Target: 92%+"""
-    
+
     def __init__(self, input_size=128, hidden_layers=[512, 256, 128], output_size=64, dropout=0.15):
         super().__init__()
-        
+
         # CNN feature extractor
         self.conv = nn.Sequential(
             nn.Conv1d(1, 64, 7, stride=2, padding=3),
@@ -185,10 +220,11 @@ class EmotionRecognizerCNN(nn.Module):
             nn.GELU(),
             nn.AdaptiveAvgPool1d(8),
         )
-        
+
         # Attention
-        self.attention = nn.MultiheadAttention(256, 4, dropout=dropout, batch_first=True)
-        
+        self.attention = nn.MultiheadAttention(
+            256, 4, dropout=dropout, batch_first=True)
+
         # MLP head
         self.mlp = nn.Sequential(
             nn.Linear(256 * 8, hidden_layers[0]),
@@ -201,7 +237,7 @@ class EmotionRecognizerCNN(nn.Module):
             nn.GELU(),
             nn.Linear(hidden_layers[2], output_size),
         )
-    
+
     def forward(self, x):
         # x: (batch, input_size)
         x = x.unsqueeze(1)  # (batch, 1, input_size)
@@ -214,37 +250,40 @@ class EmotionRecognizerCNN(nn.Module):
 
 class DynamicsEngineMLP(nn.Module):
     """Residual MLP for dynamics. Target: 85%+"""
-    
+
     def __init__(self, input_size=32, hidden_layers=[128, 128, 64], output_size=16, dropout=0.1):
         super().__init__()
-        
+
         self.input_proj = nn.Linear(input_size, hidden_layers[0])
-        
+
         self.blocks = nn.ModuleList([
             nn.Sequential(
-                nn.Linear(hidden_layers[i], hidden_layers[i+1] if i+1 < len(hidden_layers) else hidden_layers[i]),
-                nn.BatchNorm1d(hidden_layers[i+1] if i+1 < len(hidden_layers) else hidden_layers[i]),
+                nn.Linear(hidden_layers[i], hidden_layers[i+1]
+                          if i+1 < len(hidden_layers) else hidden_layers[i]),
+                nn.BatchNorm1d(
+                    hidden_layers[i+1] if i+1 < len(hidden_layers) else hidden_layers[i]),
                 nn.GELU(),
                 nn.Dropout(dropout),
             )
             for i in range(len(hidden_layers) - 1)
         ])
-        
+
         self.output = nn.Linear(hidden_layers[-1], output_size)
-    
+
     def forward(self, x):
         x = self.input_proj(x)
         for block in self.blocks:
-            x = x + block(x) if x.shape[-1] == block[0].out_features else block(x)
+            x = x + \
+                block(x) if x.shape[-1] == block[0].out_features else block(x)
         return torch.sigmoid(self.output(x))
 
 
 class GroovePredictorMLP(nn.Module):
     """Simple MLP for groove. Already at 100%."""
-    
+
     def __init__(self, input_size=64, hidden_layers=[128, 96, 64], output_size=32, dropout=0.2):
         super().__init__()
-        
+
         layers = []
         in_dim = input_size
         for out_dim in hidden_layers:
@@ -254,22 +293,22 @@ class GroovePredictorMLP(nn.Module):
                 nn.Dropout(dropout),
             ])
             in_dim = out_dim
-        
+
         layers.append(nn.Linear(in_dim, output_size))
         self.net = nn.Sequential(*layers)
-    
+
     def forward(self, x):
         return self.net(x)
 
 
 class HarmonyPredictorTransformer(nn.Module):
     """Small transformer for harmony. Target: 75%+"""
-    
+
     def __init__(self, input_size=128, hidden_dim=256, num_layers=4, num_heads=4, output_size=64, dropout=0.1):
         super().__init__()
-        
+
         self.input_proj = nn.Linear(input_size, hidden_dim)
-        
+
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=hidden_dim,
             nhead=num_heads,
@@ -278,10 +317,11 @@ class HarmonyPredictorTransformer(nn.Module):
             activation='gelu',
             batch_first=True,
         )
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
-        
+        self.transformer = nn.TransformerEncoder(
+            encoder_layer, num_layers=num_layers)
+
         self.output = nn.Linear(hidden_dim, output_size)
-    
+
     def forward(self, x):
         x = self.input_proj(x)
         if x.dim() == 2:
@@ -293,15 +333,15 @@ class HarmonyPredictorTransformer(nn.Module):
 
 class MelodyTransformer(nn.Module):
     """Decoder transformer for melody generation. Target: 60%+"""
-    
-    def __init__(self, vocab_size=512, input_size=64, hidden_dim=384, num_layers=8, 
+
+    def __init__(self, vocab_size=512, input_size=64, hidden_dim=384, num_layers=8,
                  num_heads=6, output_size=128, dropout=0.1, max_seq_len=1024):
         super().__init__()
-        
+
         self.token_emb = nn.Embedding(vocab_size, hidden_dim)
         self.pos_emb = nn.Embedding(max_seq_len, hidden_dim)
         self.emotion_proj = nn.Linear(input_size, hidden_dim)
-        
+
         decoder_layer = nn.TransformerDecoderLayer(
             d_model=hidden_dim,
             nhead=num_heads,
@@ -310,21 +350,24 @@ class MelodyTransformer(nn.Module):
             activation='gelu',
             batch_first=True,
         )
-        self.transformer = nn.TransformerDecoder(decoder_layer, num_layers=num_layers)
-        
+        self.transformer = nn.TransformerDecoder(
+            decoder_layer, num_layers=num_layers)
+
         self.output = nn.Linear(hidden_dim, output_size)
-    
+
     def forward(self, tokens, emotion):
         B, T = tokens.shape
-        
-        positions = torch.arange(T, device=tokens.device).unsqueeze(0).expand(B, T)
+
+        positions = torch.arange(
+            T, device=tokens.device).unsqueeze(0).expand(B, T)
         x = self.token_emb(tokens) + self.pos_emb(positions)
-        
+
         emotion_context = self.emotion_proj(emotion).unsqueeze(1)
-        
+
         # Causal mask
-        causal_mask = torch.triu(torch.ones(T, T, device=x.device), diagonal=1).bool()
-        
+        causal_mask = torch.triu(torch.ones(
+            T, T, device=x.device), diagonal=1).bool()
+
         x = self.transformer(x, emotion_context, tgt_mask=causal_mask)
         return self.output(x)
 
@@ -335,43 +378,116 @@ class MelodyTransformer(nn.Module):
 
 class SyntheticDataset(Dataset):
     """Synthetic dataset for model training."""
-    
+
     def __init__(self, num_samples: int, input_size: int, num_classes: int, task: str = "classification"):
         self.num_samples = num_samples
         self.input_size = input_size
         self.num_classes = num_classes
         self.task = task
-        
+
         # Pre-generate for consistency
         np.random.seed(42)
         self.data = np.random.randn(num_samples, input_size).astype(np.float32)
         self.labels = np.random.randint(0, num_classes, num_samples)
-    
+
     def __len__(self):
         return self.num_samples
-    
+
     def __getitem__(self, idx):
         x = torch.tensor(self.data[idx])
         y = self.labels[idx]
         return x, y
 
 
+class AudioEmotionDataset(Dataset):
+    """
+    Audio dataset for emotion recognition using simple log-mel features.
+
+    Manifest format (jsonl):
+    {"path": "/abs/audio.wav", "label": "happy"}
+    """
+
+    def __init__(
+        self,
+        manifest_path: str,
+        sample_rate: int = 16000,
+        n_mels: int = 128,
+        use_augmentation: bool = False,
+    ):
+        if librosa is None:
+            raise ImportError("librosa is required for AudioEmotionDataset")
+
+        self.sample_rate = sample_rate
+        self.n_mels = n_mels
+        self.entries = self._load_manifest(manifest_path)
+        self.label_to_idx = {
+            label: i for i, label in enumerate(sorted({e["label"] for e in self.entries}))
+        }
+        self.use_augmentation = use_augmentation and build_augmentation_pipeline is not None
+        self.augment = (
+            build_augmentation_pipeline(
+                AugmentationConfig()) if self.use_augmentation else None
+        )
+
+    def _load_manifest(self, manifest_path: str):
+        entries = []
+        path = Path(manifest_path)
+        if not path.exists():
+            raise FileNotFoundError(f"Manifest not found: {manifest_path}")
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                    if "path" in obj and "label" in obj:
+                        entries.append(
+                            {"path": obj["path"], "label": obj["label"]})
+                except json.JSONDecodeError:
+                    continue
+        if not entries:
+            raise ValueError(
+                f"No valid entries found in manifest: {manifest_path}")
+        return entries
+
+    def __len__(self):
+        return len(self.entries)
+
+    def __getitem__(self, idx):
+        entry = self.entries[idx]
+        wav, sr = librosa.load(entry["path"], sr=self.sample_rate, mono=True)
+        if self.augment:
+            wav = self.augment(wav, sr=self.sample_rate)
+
+        mel = librosa.feature.melspectrogram(
+            y=wav, sr=self.sample_rate, n_mels=self.n_mels)
+        log_mel = librosa.power_to_db(mel, ref=np.max)
+        # Pool across time to fixed n_mels vector (EmotionRecognizer expects length=128)
+        feat = log_mel.mean(axis=1).astype(np.float32)
+
+        x = torch.tensor(feat).unsqueeze(0)  # (1, n_mels)
+        y = torch.tensor(self.label_to_idx[entry["label"]], dtype=torch.long)
+        return x, y
+
+
 class MelodyDataset(Dataset):
     """Dataset for melody transformer."""
-    
+
     def __init__(self, num_samples: int, seq_len: int = 64, vocab_size: int = 512, emotion_dim: int = 64):
         self.num_samples = num_samples
         self.seq_len = seq_len
         self.vocab_size = vocab_size
         self.emotion_dim = emotion_dim
-        
+
         np.random.seed(42)
         self.tokens = np.random.randint(0, vocab_size, (num_samples, seq_len))
-        self.emotions = np.random.randn(num_samples, emotion_dim).astype(np.float32)
-    
+        self.emotions = np.random.randn(
+            num_samples, emotion_dim).astype(np.float32)
+
     def __len__(self):
         return self.num_samples
-    
+
     def __getitem__(self, idx):
         tokens = torch.tensor(self.tokens[idx], dtype=torch.long)
         emotion = torch.tensor(self.emotions[idx])
@@ -389,9 +505,10 @@ def train_model(
     config: Dict[str, Any],
     device: torch.device,
     checkpoint_dir: Path,
+    distributed: bool = False,
 ) -> TrainingResult:
-    """Train a single model with early stopping."""
-    
+    """Train a single model with early stopping and optional distributed training."""
+
     model_name = config.get("name", "unknown")
     epochs = config.get("epochs", 100)
     lr = config.get("lr", 1e-4)
@@ -399,57 +516,77 @@ def train_model(
     patience = config.get("patience", 20)
     min_epochs = config.get("min_epochs", 10)
     grad_clip = config.get("grad_clip", 1.0)
-    
+
     logger.info(f"\nTraining {model_name}")
     logger.info(f"  Epochs: {epochs}, LR: {lr}, Patience: {patience}")
-    
+
+    if distributed:
+        model = DDP(model, device_ids=[
+                    device.index], output_device=device.index)
+        logger.info("Distributed training enabled with DDP")
+
     model.to(device)
-    
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
+
+    optimizer = torch.optim.AdamW(
+        model.parameters(), lr=lr, weight_decay=weight_decay)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=epochs)
     criterion = nn.CrossEntropyLoss()
-    
+
     best_val_loss = float('inf')
     best_accuracy = 0.0
     epochs_no_improve = 0
     start_time = time.time()
-    
+
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
     best_model_path = checkpoint_dir / "best_model.pt"
-    
+
+    if device.type == "cuda":
+        # Enable CUDA-specific optimizations
+        torch.backends.cudnn.benchmark = True  # Optimize for performance
+        # Allow non-deterministic algorithms for speed
+        torch.backends.cudnn.deterministic = False
+        logger.info(
+            "CUDA optimizations enabled: cuDNN benchmark and non-deterministic algorithms")
+
+    # Wrap model with torch.compile if available
+    if hasattr(torch, "compile"):
+        model = torch.compile(model)
+        logger.info("Model compiled with torch.compile for CUDA")
+
+    # Enable mixed precision training if supported
+    scaler = None
+    if device.type == "cuda" and torch.cuda.is_available():
+        from torch.cuda.amp import GradScaler
+        scaler = GradScaler()
+        logger.info("Using mixed precision (AMP) for CUDA training")
+
     for epoch in range(epochs):
         # Train
         model.train()
         train_loss = 0.0
         for batch in train_loader:
-            if len(batch) == 2:
-                inputs, targets = batch
-                inputs, targets = inputs.to(device), targets.to(device)
-                outputs = model(inputs)
-            else:  # Melody transformer
-                tokens, emotion, targets = batch
-                tokens, emotion, targets = tokens.to(device), emotion.to(device), targets.to(device)
-                outputs = model(tokens, emotion)
-                outputs = outputs.view(-1, outputs.size(-1))
-                targets = targets.view(-1)
-            
-            loss = criterion(outputs, targets)
-            
             optimizer.zero_grad()
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
-            optimizer.step()
-            
+            if scaler:
+                with torch.cuda.amp.autocast():
+                    loss = compute_loss(batch, model, device, criterion)
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                loss = compute_loss(batch, model, device, criterion)
+                loss.backward()
+                optimizer.step()
             train_loss += loss.item()
-        
+
         train_loss /= len(train_loader)
-        
+
         # Validate
         model.eval()
         val_loss = 0.0
         correct = 0
         total = 0
-        
+
         with torch.no_grad():
             for batch in val_loader:
                 if len(batch) == 2:
@@ -458,27 +595,29 @@ def train_model(
                     outputs = model(inputs)
                 else:
                     tokens, emotion, targets = batch
-                    tokens, emotion, targets = tokens.to(device), emotion.to(device), targets.to(device)
+                    tokens, emotion, targets = tokens.to(
+                        device), emotion.to(device), targets.to(device)
                     outputs = model(tokens, emotion)
                     outputs = outputs.view(-1, outputs.size(-1))
                     targets = targets.view(-1)
-                
+
                 loss = criterion(outputs, targets)
                 val_loss += loss.item()
-                
+
                 preds = outputs.argmax(dim=-1)
                 correct += (preds == targets).sum().item()
                 total += targets.numel()
-        
+
         val_loss /= len(val_loader)
         accuracy = correct / total
-        
+
         scheduler.step()
-        
+
         # Logging
         if epoch % 10 == 0 or epoch == epochs - 1:
-            logger.info(f"  Epoch {epoch+1}/{epochs}: loss={val_loss:.4f}, acc={accuracy:.4f}")
-        
+            logger.info(
+                f"  Epoch {epoch+1}/{epochs}: loss={val_loss:.4f}, acc={accuracy:.4f}")
+
         # Save best model
         if val_loss < best_val_loss:
             best_val_loss = val_loss
@@ -487,14 +626,14 @@ def train_model(
             torch.save(model.state_dict(), best_model_path)
         else:
             epochs_no_improve += 1
-        
+
         # Early stopping
         if epochs_no_improve >= patience and epoch >= min_epochs:
             logger.info(f"  Early stopping at epoch {epoch+1}")
             break
-    
+
     training_time = time.time() - start_time
-    
+
     result = TrainingResult(
         model_name=model_name,
         accuracy=best_accuracy,
@@ -505,15 +644,193 @@ def train_model(
         best_val_loss=best_val_loss,
         checkpoint_path=str(best_model_path),
     )
-    
+
     logger.info(f"  Completed: {result.summary_line()}")
-    
+
     return result
 
 
 # =============================================================================
+# Hyperparameter Tuning with Ray Tune
+# =============================================================================
+class TrainModelTune(Trainable):
+    def setup(self, config):
+        import torch
+        from torch.utils.data import DataLoader, random_split
+        from pathlib import Path
+
+        # Define model configurations locally to avoid global scope issues
+        self.model_configs = {
+            "emotion_recognizer": {
+                "name": "emotion_recognizer",
+                "class": EmotionRecognizerCNN,
+                "kwargs": {"input_size": 128, "output_size": 64},
+                "dataset_kwargs": {"input_size": 128, "num_classes": 64},
+                "epochs": 100,
+                "lr": 3e-4,
+                "patience": 20,
+                "min_epochs": 40,
+            },
+            "dynamics_engine": {
+                "name": "dynamics_engine",
+                "class": DynamicsEngineMLP,
+                "kwargs": {"input_size": 32, "output_size": 16},
+                "dataset_kwargs": {"input_size": 32, "num_classes": 16},
+                "epochs": 100,
+                "lr": 5e-4,
+                "patience": 25,
+                "min_epochs": 60,
+            },
+            "groove_predictor": {
+                "name": "groove_predictor",
+                "class": GroovePredictorMLP,
+                "kwargs": {"input_size": 64, "output_size": 32},
+                "dataset_kwargs": {"input_size": 64, "num_classes": 32},
+                "epochs": 60,
+                "lr": 3e-4,
+                "patience": 15,
+                "min_epochs": 30,
+            },
+            "harmony_predictor": {
+                "name": "harmony_predictor",
+                "class": HarmonyPredictorTransformer,
+                "kwargs": {"input_size": 128, "output_size": 64},
+                "dataset_kwargs": {"input_size": 128, "num_classes": 64},
+                "epochs": 150,
+                "lr": 1e-4,
+                "patience": 40,
+                "min_epochs": 80,
+            },
+            "melody_transformer": {
+                "name": "melody_transformer",
+                "class": MelodyTransformer,
+                "kwargs": {"vocab_size": 512, "input_size": 64, "output_size": 128},
+                "is_seq2seq": True,
+                "epochs": 200,
+                "lr": 1e-4,
+                "patience": 50,
+                "min_epochs": 100,
+            },
+        }
+
+        self.model_name = config["model_name"]
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
+        self.model_config = self.model_configs[self.model_name]
+        self.model = self.model_config["class"](
+            **self.model_config.get("kwargs", {}))
+
+        dataset = SyntheticDataset(2000, **self.model_config["dataset_kwargs"])
+        n_train = int(0.8 * len(dataset))
+        n_val = len(dataset) - n_train
+        train_set, val_set = random_split(dataset, [n_train, n_val])
+        self.train_loader = DataLoader(
+            train_set, batch_size=config["batch_size"], shuffle=True)
+        self.val_loader = DataLoader(val_set, batch_size=config["batch_size"])
+
+        self.checkpoint_dir = Path("checkpoints") / self.model_name
+        self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+    def step(self):
+        # Perform one training step
+        train_model(
+            self.model,
+            self.train_loader,
+            self.val_loader,
+            self.model_config,
+            self.device,
+            self.checkpoint_dir,
+        )
+        return {"done": True}  # Placeholder for metrics
+
+
+if ray:
+    @ray.remote
+    class TrainActor:
+        def __init__(self, model_configs, synthetic_dataset):
+            self.model_configs = model_configs
+            self.synthetic_dataset = synthetic_dataset
+
+        def train(self, config):
+            import torch
+            from torch.utils.data import DataLoader, random_split
+            from pathlib import Path
+
+            model_name = config["model_name"]
+            device = torch.device(
+                "cuda" if torch.cuda.is_available() else "cpu")
+
+            # Dynamically create the model and dataset
+            model_config = self.model_configs[model_name]
+            model = model_config["class"](**model_config.get("kwargs", {}))
+
+            dataset = self.synthetic_dataset(
+                2000, **model_config["dataset_kwargs"])
+            n_train = int(0.8 * len(dataset))
+            n_val = len(dataset) - n_train
+            train_set, val_set = random_split(dataset, [n_train, n_val])
+            train_loader = DataLoader(
+                train_set, batch_size=config["batch_size"], shuffle=True)
+            val_loader = DataLoader(val_set, batch_size=config["batch_size"])
+
+            checkpoint_dir = Path("checkpoints") / model_name
+            checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+            # Train the model
+            train_model(
+                model,
+                train_loader,
+                val_loader,
+                model_config,
+                device,
+                checkpoint_dir,
+            )
+else:
+    class TrainActor:
+        pass
+
+
+def train_subprocess(config):
+    """Run training in a separate subprocess."""
+    import json
+    config_path = "temp_config.json"
+
+    # Save the configuration to a temporary JSON file
+    with open(config_path, "w") as f:
+        json.dump(config, f)
+
+    # Call the training script as a subprocess
+    subprocess.run([
+        "/workspaces/KmiDi/.venv/bin/python",
+        "/workspaces/KmiDi/training/train_integrated.py",
+        "--config",
+        config_path,
+    ])
+
+
+def tune_hyperparameters():
+    if tune is None:
+        raise ImportError("ray[tune] is required for tuning; install ray")
+    search_space = {
+        "model_name": tune.choice(list(MODEL_CONFIGS.keys())),
+        "batch_size": tune.choice([16, 32, 64]),
+        "lr": tune.loguniform(1e-5, 1e-3),
+        "weight_decay": tune.loguniform(1e-6, 1e-2),
+    }
+
+    analysis = tune.run(
+        lambda config: train_subprocess(config),
+        config=search_space,
+        resources_per_trial={"cpu": 2, "gpu": 1},
+        num_samples=10,
+    )
+
+    print("Best hyperparameters found:", analysis.best_config)
+
+# =============================================================================
 # Model Factory
 # =============================================================================
+
 
 MODEL_CONFIGS = {
     "emotion_recognizer": {
@@ -569,40 +886,67 @@ MODEL_CONFIGS = {
 }
 
 
-def train_single_model(model_name: str, device: torch.device, results_manager: ResultsManager, num_samples: int = 2000):
+def train_single_model(
+    model_name: str,
+    device: torch.device,
+    results_manager: ResultsManager,
+    num_samples: int = 2000,
+    audio_manifest: Optional[str] = None,
+    sample_rate: int = 16000,
+    n_mels: int = 128,
+    use_augmentation: bool = False,
+):
     """Train a single model."""
-    
+
     if model_name not in MODEL_CONFIGS:
-        raise ValueError(f"Unknown model: {model_name}. Available: {list(MODEL_CONFIGS.keys())}")
-    
+        raise ValueError(
+            f"Unknown model: {model_name}. Available: {list(MODEL_CONFIGS.keys())}")
+
     config = MODEL_CONFIGS[model_name]
-    
-    # Create model
-    model = config["class"](**config.get("kwargs", {}))
-    n_params = sum(p.numel() for p in model.parameters())
-    logger.info(f"Model {model_name}: {n_params:,} parameters")
-    
+
+    model_kwargs = dict(config.get("kwargs", {}))
+
     # Create dataset
-    if config.get("is_seq2seq"):
+    label_count = None
+    if model_name == "emotion_recognizer" and audio_manifest:
+        dataset = AudioEmotionDataset(
+            manifest_path=audio_manifest,
+            sample_rate=sample_rate,
+            n_mels=n_mels,
+            use_augmentation=use_augmentation,
+        )
+        label_count = len(dataset.label_to_idx)
+        model_kwargs["output_size"] = label_count
+        logger.info(
+            f"Using audio manifest dataset with {len(dataset)} items "
+            f"(labels={label_count}, sr={sample_rate}, n_mels={n_mels}, augmentation={use_augmentation})"
+        )
+    elif config.get("is_seq2seq"):
         dataset = MelodyDataset(num_samples)
     else:
         dataset = SyntheticDataset(num_samples, **config["dataset_kwargs"])
-    
+
+    # Create model (emotion model adapts output_size to labels)
+    model = config["class"](**model_kwargs)
+    n_params = sum(p.numel() for p in model.parameters())
+    logger.info(f"Model {model_name}: {n_params:,} parameters")
+
     # Split
     n_train = int(0.8 * len(dataset))
     n_val = len(dataset) - n_train
     train_set, val_set = random_split(dataset, [n_train, n_val])
-    
+
     train_loader = DataLoader(train_set, batch_size=32, shuffle=True)
     val_loader = DataLoader(val_set, batch_size=32)
-    
+
     # Train
     checkpoint_dir = CHECKPOINTS_DIR / model_name
-    result = train_model(model, train_loader, val_loader, config, device, checkpoint_dir)
-    
+    result = train_model(model, train_loader, val_loader,
+                         config, device, checkpoint_dir)
+
     # Save result
     results_manager.add_result(result)
-    
+
     return result
 
 
@@ -615,10 +959,26 @@ def main():
     parser.add_argument("--config", type=str, help="Path to config YAML")
     parser.add_argument("--model", type=str, help="Single model to train")
     parser.add_argument("--all", action="store_true", help="Train all models")
-    parser.add_argument("--device", type=str, default="auto", help="Device (auto/cpu/cuda/mps)")
-    parser.add_argument("--samples", type=int, default=2000, help="Number of training samples")
+    parser.add_argument("--device", type=str, default="auto",
+                        help="Device (auto/cpu/cuda/mps)")
+    parser.add_argument("--samples", type=int, default=2000,
+                        help="Number of training samples")
+    parser.add_argument("--tune", action="store_true",
+                        help="Run hyperparameter tuning")
+    parser.add_argument("--audio-manifest", type=str,
+                        help="JSONL manifest for audio emotion dataset (emotion_recognizer only)")
+    parser.add_argument("--sample-rate", type=int, default=16000,
+                        help="Sample rate for audio loading")
+    parser.add_argument("--n-mels", type=int, default=128,
+                        help="Mel bins for audio features")
+    parser.add_argument("--use-augmentation", action="store_true",
+                        help="Enable audio augmentation pipeline")
     args = parser.parse_args()
-    
+
+    if args.tune:
+        tune_hyperparameters()
+        return
+
     # Device
     if args.device == "auto":
         if torch.cuda.is_available():
@@ -629,28 +989,61 @@ def main():
             device = torch.device("cpu")
     else:
         device = torch.device(args.device)
-    
+
     logger.info(f"Using device: {device}")
-    
+
     # Results manager
     results_manager = ResultsManager()
-    
+
     # Train
     if args.model:
-        train_single_model(args.model, device, results_manager, args.samples)
+        train_single_model(
+            args.model,
+            device,
+            results_manager,
+            args.samples,
+            audio_manifest=args.audio_manifest,
+            sample_rate=args.sample_rate,
+            n_mels=args.n_mels,
+            use_augmentation=args.use_augmentation,
+        )
     elif args.all:
         for model_name in MODEL_CONFIGS:
             try:
-                train_single_model(model_name, device, results_manager, args.samples)
+                train_single_model(
+                    model_name,
+                    device,
+                    results_manager,
+                    args.samples,
+                    audio_manifest=args.audio_manifest,
+                    sample_rate=args.sample_rate,
+                    n_mels=args.n_mels,
+                    use_augmentation=args.use_augmentation,
+                )
             except Exception as e:
                 logger.error(f"Failed to train {model_name}: {e}")
     else:
         parser.print_help()
         print("\nAvailable models:", list(MODEL_CONFIGS.keys()))
         return
-    
+
     # Print summary
     results_manager.print_summary()
+
+
+def compute_loss(batch, model, device, criterion):
+    if len(batch) == 2:
+        inputs, targets = batch
+        inputs, targets = inputs.to(device), targets.to(device)
+        outputs = model(inputs)
+    else:
+        tokens, emotion, targets = batch
+        tokens, emotion, targets = tokens.to(
+            device), emotion.to(device), targets.to(device)
+        outputs = model(tokens, emotion)
+        outputs = outputs.view(-1, outputs.size(-1))
+        targets = targets.view(-1)
+    return criterion(outputs, targets)
 
 
 if __name__ == "__main__":

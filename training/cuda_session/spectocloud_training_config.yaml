@@ -17,7 +17,7 @@ session:
 # -----------------------------------------------------------------------------
 hardware:
   device: cuda
-  precision: fp16               # fp16 is sufficient; bf16 offers marginal stability benefit on A100+
+  precision: bf16               # bf16 offers better stability on Ampere+ GPUs
   cuda_version: "12.1"
   cudnn_version: "8.9"
   gpu_memory_gb: 24             # Minimum recommended (A10G/V100/A100)
@@ -106,10 +106,11 @@ data:
   cache_dir: "cache/spectrograms"
   
   # Dataloader
-  batch_size: 32                # Increase to 64 on A100
-  num_workers: 8
+  batch_size: 64                # Optimized for A100/4090
+  num_workers: 16
   pin_memory: true
   prefetch_factor: 4
+  persistent_workers: true
   drop_last: true
 
 # -----------------------------------------------------------------------------
@@ -159,7 +160,7 @@ training:
   
   # Mixed precision
   amp: true
-  amp_dtype: float16            # Use bfloat16 on A100/H100
+  amp_dtype: bfloat16           # Use bfloat16 on A100/H100
   
   # Checkpointing
   save_best: true

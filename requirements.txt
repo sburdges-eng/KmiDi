@@ -58,6 +58,8 @@ wandb>=0.15.0  # Optional: cloud logging
 pandas>=2.0.0
 h5py>=3.8.0
 pyarrow>=12.0.0
+mido>=1.3.0
+openl3>=0.4.0  # Optional: audio embeddings
 
 # -----------------------------------------------------------------------------
 # Configuration & Serialization

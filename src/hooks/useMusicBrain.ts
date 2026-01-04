@@ -39,6 +39,29 @@ export interface UpdateHumanizerConfigInput extends Partial<HumanizerConfig> {
   analysis?: Partial<HumanizerConfig["analysis"]>;
 }
 
+export type SpectocloudMode = "static" | "animation";
+
+export interface SpectocloudRenderRequest {
+  midi_events?: Array<Record<string, any>>;
+  midi_file_path?: string;
+  duration?: number;
+  emotion_trajectory?: Array<Record<string, any>>;
+  mode?: SpectocloudMode;
+  frame_idx?: number;
+  output_path?: string;
+  fps?: number;
+  rotate?: boolean;
+  anchor_density?: string;
+  n_particles?: number;
+}
+
+export interface SpectocloudRenderResponse {
+  status: string;
+  mode: SpectocloudMode;
+  output_path: string;
+  frames: number;
+}
+
 export const useMusicBrain = () => {
   const getEmotions = async () => {
     try {
@@ -94,11 +117,35 @@ export const useMusicBrain = () => {
     return resp.json();
   };
 
+  const renderSpectocloud = async (
+    payload: SpectocloudRenderRequest,
+  ): Promise<SpectocloudRenderResponse> => {
+    if ((!payload.midi_events || payload.midi_events.length === 0) && !payload.midi_file_path) {
+      throw new Error("provide midi_events or midi_file_path");
+    }
+    if (payload.midi_events && payload.midi_events.length === 0) {
+      throw new Error("midi_events cannot be empty");
+    }
+    if (payload.duration !== undefined && payload.duration <= 0) {
+      throw new Error("duration must be greater than 0 when provided");
+    }
+    const resp = await fetch('http://127.0.0.1:8000/spectocloud/render', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!resp.ok) {
+      throw new Error(`Spectocloud render failed (${resp.status})`);
+    }
+    return resp.json();
+  };
+
   return {
     getEmotions,
     generateMusic,
     interrogate,
     getHumanizerConfig,
     updateHumanizerConfig,
+    renderSpectocloud,
   };
 };

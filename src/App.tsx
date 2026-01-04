@@ -3,6 +3,7 @@ import { useMusicBrain } from "./hooks/useMusicBrain";
 import { EmotionWheel, SelectedEmotion } from "./components/EmotionWheel";
 import GuideNav, { Guide } from "./components/GuideNav";
 import GuideViewer from "./components/GuideViewer";
+import SpectoCloudPanel from "./components/SpectoCloudPanel";
 import "./App.css";
 
 function App() {
@@ -245,6 +246,8 @@ function App() {
           <GuideViewer guide={selectedGuide} />
         </div>
       </div>
+
+      <SpectoCloudPanel />
     </div>
   );
 }

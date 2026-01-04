@@ -15,13 +15,14 @@ data:
   n_mels: 128
   hop_length: 512
   segment_seconds: 8
-  num_workers: 4               # Multi-process loading
+  num_workers: 16              # Multi-process loading
   cache_mels: true
 
 dataloader:
-  batch_size: 64               # Higher batch size for CUDA
+  batch_size: 128              # Higher batch size for CUDA
   shuffle: true
   pin_memory: true             # Speed up CPU-to-GPU transfer
+  persistent_workers: true
   drop_last: true
 
 model:

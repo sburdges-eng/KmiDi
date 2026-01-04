@@ -688,6 +688,42 @@ if FASTAPI_AVAILABLE:
         merged["analysis"] = {**default_analysis, **merged.get("analysis", {})}
         return merged
 
+    def _parse_midi_file(path: Path) -> Tuple[List[Dict[str, Any]], float]:
+        """Parse a MIDI file into event dicts; requires optional mido dependency."""
+        try:
+            import mido  # type: ignore
+        except ImportError as exc:
+            raise HTTPException(
+                status_code=400,
+                detail="mido is required to parse MIDI files; install with pip install mido",
+            ) from exc
+
+        if not path.exists():
+            raise HTTPException(status_code=400, detail=f"MIDI file not found: {path}")
+        try:
+            mid = mido.MidiFile(str(path))
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"Failed to read MIDI: {exc}") from exc
+
+        tempo = 500000  # default 120 BPM
+        events: List[Dict[str, Any]] = []
+        current_time = 0.0
+        for msg in mid:
+            current_time += mido.tick2second(msg.time, mid.ticks_per_beat, tempo)
+            if msg.type == "set_tempo":
+                tempo = msg.tempo
+            if msg.type in {"note_on", "note_off"}:
+                events.append(
+                    {
+                        "time": current_time,
+                        "type": msg.type,
+                        "note": getattr(msg, "note", None),
+                        "velocity": getattr(msg, "velocity", 0),
+                        "channel": getattr(msg, "channel", 0),
+                    }
+                )
+        return events, current_time
+
     def _load_json_config(path: Path, fallback: Dict[str, Any]) -> Dict[str, Any]:
         if path.exists():
             try:
@@ -710,6 +746,17 @@ if FASTAPI_AVAILABLE:
         )
         return _normalize_humanizer_config(cfg)
 
+    SPECTO_PRESETS: Dict[str, Dict[str, Any]] = {
+        "preview": {"anchor_density": "sparse", "n_particles": 600, "fps": 8},
+        "standard": {"anchor_density": "normal", "n_particles": 1200, "fps": 15},
+        "high": {"anchor_density": "dense", "n_particles": 1800, "fps": 24},
+    }
+
+    @app.get("/spectocloud/presets")
+    async def spectocloud_presets():
+        """List Spectocloud rendering presets (anchor density, particle count, fps)."""
+        return SPECTO_PRESETS
+
     @app.put("/config/humanizer")
     async def update_humanizer_config(payload: Dict[str, Any]):
         """
@@ -723,7 +770,121 @@ if FASTAPI_AVAILABLE:
         cfg_path = cfg_dir / "humanizer.json"
         with open(cfg_path, "w", encoding="utf-8") as f:
             json.dump(normalized, f, indent=2)
+        try:
+            api.reload_humanizer()
+        except Exception:
+            logging.exception("Failed to reload humanizer after config update")
         return normalized
+
+    @app.post("/config/humanizer/reload")
+    async def reload_humanizer():
+        """Force reload of the in-memory humanizer/analyzer from config/humanizer.json."""
+        try:
+            api.reload_humanizer()
+            return {"status": "ok"}
+        except Exception as exc:
+            logging.exception("Failed to reload humanizer")
+            raise HTTPException(status_code=500, detail=str(exc))
+
+    class SpectocloudRenderRequest(BaseModel):
+        midi_events: Optional[List[Dict[str, Any]]] = None
+        midi_file_path: Optional[str] = None
+        duration: Optional[float] = None
+        emotion_trajectory: Optional[List[Dict[str, Any]]] = None
+        mode: str = "static"  # "static" or "animation"
+        frame_idx: int = 0
+        output_path: Optional[str] = None
+        fps: int = 15
+        rotate: bool = True
+        anchor_density: str = "normal"
+        n_particles: int = 1200
+
+    @app.post("/spectocloud/render")
+    async def render_spectocloud(payload: SpectocloudRenderRequest):
+        """
+        Render Spectocloud output (static frame or animation).
+        - For static: mode="static", frame_idx sets which frame to render.
+        - For animation: mode="animation", fps/rotate control output.
+        """
+        try:
+            from music_brain.visualization.spectocloud import Spectocloud  # Lazy import
+        except Exception as exc:  # pragma: no cover
+            logging.exception("Failed to import Spectocloud")
+            raise HTTPException(status_code=500, detail=f"Spectocloud import failed: {exc}")
+
+        try:
+            events: Optional[List[Dict[str, Any]]] = payload.midi_events
+            duration = payload.duration
+
+            if payload.midi_file_path:
+                parsed_events, parsed_duration = _parse_midi_file(Path(payload.midi_file_path))
+                events = parsed_events
+                duration = duration or parsed_duration
+
+            if not events:
+                raise HTTPException(status_code=400, detail="midi_events cannot be empty (or provide midi_file_path)")
+            if duration is None or duration <= 0:
+                # try to infer from events time
+                max_time = max((e.get("time", 0) or 0) for e in events)
+                if max_time > 0:
+                    duration = max_time
+                else:
+                    raise HTTPException(status_code=400, detail="duration must be > 0")
+            if payload.n_particles <= 0:
+                raise HTTPException(status_code=400, detail="n_particles must be > 0")
+            if payload.fps <= 0:
+                raise HTTPException(status_code=400, detail="fps must be > 0")
+
+            specto = Spectocloud(
+                anchor_density=payload.anchor_density,
+                n_particles=payload.n_particles,
+            )
+            specto.process_midi(
+                midi_events=events,
+                duration=duration,
+                emotion_trajectory=payload.emotion_trajectory,
+            )
+            if not specto.frames:
+                raise HTTPException(status_code=400, detail="No frames generated; check duration/window_size")
+            mode = payload.mode.lower()
+            if mode not in {"static", "animation"}:
+                raise HTTPException(status_code=400, detail="mode must be 'static' or 'animation'")
+
+            if mode == "static":
+                if payload.frame_idx < 0:
+                    raise HTTPException(status_code=400, detail="frame_idx must be >= 0")
+                out_path = payload.output_path or str(Path(tempfile.gettempdir()) / "spectocloud_frame.png")
+                specto.render_static_frame(
+                    frame_idx=min(payload.frame_idx, max(0, len(specto.frames) - 1)),
+                    output_path=out_path,
+                    show=False,
+                    use_textured=False,
+                )
+                return {
+                    "status": "success",
+                    "mode": "static",
+                    "output_path": out_path,
+                    "frames": len(specto.frames),
+                }
+
+            out_path = payload.output_path or str(Path(tempfile.gettempdir()) / "spectocloud_anim.gif")
+            specto.render_animation(
+                output_path=out_path,
+                fps=payload.fps,
+                duration=None,
+                rotate=payload.rotate,
+            )
+            return {
+                "status": "success",
+                "mode": "animation",
+                "output_path": out_path,
+                "frames": len(specto.frames),
+            }
+        except HTTPException:
+            raise
+        except Exception as exc:  # pragma: no cover
+            logging.exception("spectocloud render failed")
+            raise HTTPException(status_code=500, detail=str(exc))
 
     @app.post("/generate")
     async def generate_music(request: GenerateRequest):

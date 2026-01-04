@@ -105,10 +105,11 @@ data:
       emotion_end: 5
   
   # Dataloader
-  batch_size: 64
+  batch_size: 128               # Increased for small model on high-end GPU
   max_seq_length: 512           # Truncate/pad sequences
-  num_workers: 8
+  num_workers: 16
   pin_memory: true
+  persistent_workers: true
   cache_features: true          # Cache tokenized sequences
   cache_dir: "cache/midi_tokens"
 

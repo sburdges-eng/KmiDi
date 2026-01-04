@@ -16,10 +16,15 @@ set(TEST_SOURCES
 
 add_executable(penta_tests ${TEST_SOURCES})
 
+# JUCE's juce_core uses libcurl on Linux for networking utilities; when JUCE
+# modules are compiled into the test binary we must link curl explicitly.
+find_package(CURL REQUIRED)
+
 target_link_libraries(penta_tests PRIVATE
     penta_core
     gtest
     gtest_main
+    CURL::libcurl
 )
 
 # Enable SIMD optimizations for performance tests
