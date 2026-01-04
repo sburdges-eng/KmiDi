@@ -1,14 +1,14 @@
 """
 Kelly - The Caregiver and Listener.
 
-Kelly provides inspiration through validation of feelings. She helps the user
-overcome writer's block by translating emotions into musical concepts.
-She guides the "Emotion Optional Creation Workflow".
+Translates emotional language into musical inspiration and gentle guidance.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any
 import random
+from typing import Any, Dict, List, Optional
 
 from music_brain.emotion.emotion_production import (
     EmotionProductionMapper,
@@ -43,9 +43,7 @@ class Kelly:
         ]
 
     def listen(self, user_input: str) -> KellyResponse:
-        """
-        Listens to the user's emotional input and provides validation and musical direction.
-        """
+        """Listens to the user's emotional input and provides validation + direction."""
         # 1. Identify Emotion (Simple keyword matching for now, could be advanced NLP)
         # Using the thesaurus to find the best match
         emotion_match = self._detect_emotion(user_input)
@@ -66,9 +64,7 @@ class Kelly:
         )
 
     def _detect_emotion(self, text: str) -> EmotionMatch:
-        """
-        Detects emotion from text.
-        """
+        """Detect an emotion from free text using the thesaurus then fallbacks."""
         text_lower = text.lower()
 
         # 1. Try to find a match using the thesaurus
@@ -81,69 +77,82 @@ class Kelly:
 
         # 2. Fallback to simple keyword matching with manual construction
         if any(w in text_lower for w in ["sad", "grief", "loss", "cry", "blue"]):
-            return EmotionMatch(
-                base_emotion="SAD",
-                sub_emotion="Sadness",
-                sub_sub_emotion="Grief",
-                intensity_tier=5,
-                matched_synonym="grief",
-                all_tier_synonyms=["grief", "heartbreak"],
-                emotion_id="SAD.GRIEF",
-                description="Deep sorrow"
+            return self._make_match(
+                base="sad",
+                sub="grief",
+                sub_sub="grief",
+                tier=5,
+                synonym="grief",
+                desc="Deep sorrow",
             )
-        elif any(w in text_lower for w in ["happy", "joy", "excited", "great"]):
-            return EmotionMatch(
-                base_emotion="HAPPY",
-                sub_emotion="Joy",
-                sub_sub_emotion="Excitement",
-                intensity_tier=5,
-                matched_synonym="excited",
-                all_tier_synonyms=["excited", "elated"],
-                emotion_id="HAPPY.EXCITE",
-                description="High energy happiness"
+        if any(w in text_lower for w in ["happy", "joy", "excited", "great"]):
+            return self._make_match(
+                base="happy",
+                sub="joy",
+                sub_sub="excitement",
+                tier=5,
+                synonym="excited",
+                desc="High energy happiness",
             )
-        elif any(w in text_lower for w in ["angry", "mad", "furious", "hate"]):
-            return EmotionMatch(
-                base_emotion="ANGRY",
-                sub_emotion="Anger",
-                sub_sub_emotion="Rage",
-                intensity_tier=6,
-                matched_synonym="furious",
-                all_tier_synonyms=["furious", "enraged"],
-                emotion_id="ANGRY.RAGE",
-                description="Intense anger"
+        if any(w in text_lower for w in ["angry", "mad", "furious", "hate"]):
+            return self._make_match(
+                base="angry",
+                sub="anger",
+                sub_sub="rage",
+                tier=6,
+                synonym="furious",
+                desc="Intense anger",
             )
-        elif any(w in text_lower for w in ["fear", "scared", "anxious", "nervous"]):
-            return EmotionMatch(
-                base_emotion="FEAR",
-                sub_emotion="Fear",
-                sub_sub_emotion="Anxiety",
-                intensity_tier=4,
-                matched_synonym="anxious",
-                all_tier_synonyms=["anxious", "worried"],
-                emotion_id="FEAR.ANXIETY",
-                description="Unease and worry"
+        if any(w in text_lower for w in ["fear", "scared", "anxious", "nervous"]):
+            return self._make_match(
+                base="fear",
+                sub="fear",
+                sub_sub="anxiety",
+                tier=4,
+                synonym="anxious",
+                desc="Unease and worry",
             )
 
-        # Default
-        return EmotionMatch(
-            base_emotion="NEUTRAL",
-            sub_emotion="Calm",
-            sub_sub_emotion="Neutral",
-            intensity_tier=1,
-            matched_synonym="neutral",
-            all_tier_synonyms=["neutral", "calm"],
-            emotion_id="NEUTRAL",
-            description="No strong emotion detected"
+        # Default neutral
+        return self._make_match(
+            base="neutral",
+            sub="calm",
+            sub_sub="neutral",
+            tier=1,
+            synonym="neutral",
+            desc="No strong emotion detected",
         )
 
-    def _generate_guidance(self, emotion: EmotionMatch, preset: ProductionPreset) -> str:
-        """
-        Generates a gentle, guiding message about how to express this emotion musically.
-        """
+    def _generate_guidance(
+        self,
+        emotion: EmotionMatch,
+        preset: ProductionPreset,
+    ) -> str:
+        """Generate a gentle, guiding message for musical expression."""
         return (
-            f"To capture this {emotion.base_emotion.lower()}, we might want to start with a {preset.drum_style} rhythm. "
-            f"Let's keep the dynamics around {preset.dynamics_level}. "
-            f"I suggest an arrangement density of {int(preset.arrangement_density * 100)}%. "
+            f"To capture this {emotion.base_emotion.lower()}, we might start "
+            f"with a {preset.drum_style} rhythm. Keep dynamics around "
+            f"{preset.dynamics_level} and arrangement density near "
+            f"{int(preset.arrangement_density * 100)}%. "
             "Does that resonate with what you're feeling?"
+        )
+
+    @staticmethod
+    def _make_match(
+        base: str,
+        sub: str,
+        sub_sub: str,
+        tier: int,
+        synonym: str,
+        desc: str,
+    ) -> EmotionMatch:
+        return EmotionMatch(
+            base_emotion=base,
+            sub_emotion=sub,
+            sub_sub_emotion=sub_sub,
+            intensity_tier=tier,
+            matched_synonym=synonym,
+            all_tier_synonyms=[synonym, sub],
+            emotion_id=f"{base.upper()}.{sub.upper()}",
+            description=desc,
         )
