@@ -60,6 +60,25 @@ STRUCTURE_TEMPLATES = {
         {"section": "chorus", "bars": 8},
         {"section": "outro", "bars": 4},
     ],
+    "pop_with_solo": [
+        {"section": "intro", "bars": 4},
+        {"section": "verse", "bars": 8},
+        {"section": "chorus", "bars": 8},
+        {"section": "verse", "bars": 8},
+        {"section": "chorus", "bars": 8},
+        {"section": "solo", "bars": 8},
+        {"section": "bridge", "bars": 8},
+        {"section": "chorus", "bars": 8},
+        {"section": "outro", "bars": 4},
+    ],
+    "pop_minimal": [
+        {"section": "intro", "bars": 4},
+        {"section": "verse", "bars": 8},
+        {"section": "chorus", "bars": 8},
+        {"section": "verse", "bars": 8},
+        {"section": "chorus", "bars": 8},
+        {"section": "outro", "bars": 4},
+    ],
     "ballad": [
         {"section": "intro", "bars": 8},
         {"section": "verse", "bars": 16},
@@ -70,6 +89,39 @@ STRUCTURE_TEMPLATES = {
         {"section": "chorus", "bars": 8},
         {"section": "outro", "bars": 8},
     ],
+    "ballad_with_solo": [
+        {"section": "intro", "bars": 8},
+        {"section": "verse", "bars": 16},
+        {"section": "chorus", "bars": 8},
+        {"section": "verse", "bars": 16},
+        {"section": "chorus", "bars": 8},
+        {"section": "solo", "bars": 16},
+        {"section": "bridge", "bars": 8},
+        {"section": "chorus", "bars": 8},
+        {"section": "outro", "bars": 8},
+    ],
+    "rock": [
+        {"section": "intro", "bars": 4},
+        {"section": "verse", "bars": 8},
+        {"section": "chorus", "bars": 8},
+        {"section": "verse", "bars": 8},
+        {"section": "chorus", "bars": 8},
+        {"section": "solo", "bars": 16},
+        {"section": "chorus", "bars": 8},
+        {"section": "outro", "bars": 8},
+    ],
+    "rock_extended": [
+        {"section": "intro", "bars": 8},
+        {"section": "verse", "bars": 8},
+        {"section": "chorus", "bars": 8},
+        {"section": "verse", "bars": 8},
+        {"section": "chorus", "bars": 8},
+        {"section": "bridge", "bars": 8},
+        {"section": "solo", "bars": 16},
+        {"section": "chorus", "bars": 8},
+        {"section": "chorus", "bars": 8},
+        {"section": "outro", "bars": 8},
+    ],
     "edm": [
         {"section": "intro", "bars": 8},
         {"section": "buildup", "bars": 8},
@@ -77,6 +129,17 @@ STRUCTURE_TEMPLATES = {
         {"section": "breakdown", "bars": 8},
         {"section": "buildup", "bars": 8},
         {"section": "drop", "bars": 16},
+        {"section": "outro", "bars": 8},
+    ],
+    "edm_extended": [
+        {"section": "intro", "bars": 8},
+        {"section": "buildup", "bars": 8},
+        {"section": "drop", "bars": 16},
+        {"section": "breakdown", "bars": 8},
+        {"section": "bridge", "bars": 8},
+        {"section": "buildup", "bars": 8},
+        {"section": "drop", "bars": 16},
+        {"section": "breakdown", "bars": 8},
         {"section": "outro", "bars": 8},
     ],
     "ambient": [
@@ -93,6 +156,36 @@ STRUCTURE_TEMPLATES = {
         {"section": "solo", "bars": 32},
         {"section": "head", "bars": 32},
         {"section": "outro", "bars": 8},
+    ],
+    "jazz_with_bridge": [
+        {"section": "intro", "bars": 4},
+        {"section": "head", "bars": 32},
+        {"section": "solo", "bars": 32},
+        {"section": "bridge", "bars": 16},
+        {"section": "solo", "bars": 32},
+        {"section": "head", "bars": 32},
+        {"section": "outro", "bars": 8},
+    ],
+    "blues": [
+        {"section": "intro", "bars": 4},
+        {"section": "verse", "bars": 12},
+        {"section": "verse", "bars": 12},
+        {"section": "solo", "bars": 12},
+        {"section": "verse", "bars": 12},
+        {"section": "solo", "bars": 12},
+        {"section": "outro", "bars": 4},
+    ],
+    "prog_rock": [
+        {"section": "intro", "bars": 8},
+        {"section": "verse", "bars": 8},
+        {"section": "chorus", "bars": 8},
+        {"section": "bridge", "bars": 12},
+        {"section": "solo", "bars": 16},
+        {"section": "verse", "bars": 8},
+        {"section": "bridge", "bars": 12},
+        {"section": "solo", "bars": 24},
+        {"section": "chorus", "bars": 8},
+        {"section": "outro", "bars": 12},
     ],
 }
 
@@ -167,6 +260,18 @@ SECTION_CHARACTERISTICS = {
         "instruments": ["varied"],
         "dynamic": "contrasting",
     },
+    "solo": {
+        "energy": 0.85,
+        "complexity": 0.9,
+        "instruments": ["solo_lead", "rhythm"],
+        "dynamic": "expressive",
+    },
+    "head": {
+        "energy": 0.7,
+        "complexity": 0.7,
+        "instruments": ["full"],
+        "dynamic": "melodic",
+    },
     "breakdown": {
         "energy": 0.3,
         "complexity": 0.4,
@@ -184,6 +289,24 @@ SECTION_CHARACTERISTICS = {
         "complexity": 0.8,
         "instruments": ["full"],
         "dynamic": "maximum",
+    },
+    "development": {
+        "energy": 0.5,
+        "complexity": 0.6,
+        "instruments": ["layered"],
+        "dynamic": "evolving",
+    },
+    "climax": {
+        "energy": 0.9,
+        "complexity": 0.8,
+        "instruments": ["full"],
+        "dynamic": "peak",
+    },
+    "resolution": {
+        "energy": 0.4,
+        "complexity": 0.5,
+        "instruments": ["fading"],
+        "dynamic": "resolving",
     },
     "outro": {
         "energy": 0.3,
@@ -267,11 +390,15 @@ class ArrangementGenerator(GenerativeModel):
         key: str = "C",
         tempo: Optional[int] = None,
         structure: Optional[List[Dict]] = None,
+        include_solo: bool = False,
+        include_bridge: bool = True,
+        solo_bars: int = 16,
+        bridge_bars: int = 8,
         **kwargs,
     ) -> "Arrangement":
         """
         Generate a complete arrangement.
-        
+
         Args:
             emotion: Emotional character
             genre: Musical genre/style
@@ -279,20 +406,30 @@ class ArrangementGenerator(GenerativeModel):
             key: Key signature
             tempo: Tempo in BPM
             structure: Custom structure (list of section dicts)
+            include_solo: Whether to include a solo section
+            include_bridge: Whether to include a bridge section
+            solo_bars: Number of bars for solo section (default 16)
+            bridge_bars: Number of bars for bridge section (default 8)
             **kwargs: Additional parameters
-            
+
         Returns:
             Arrangement object with all tracks and structure
         """
         if not self._is_loaded:
             self.load()
-        
+
         duration = duration or self.config.default_duration
         tempo = tempo or self.config.default_tempo
-        
+
         # Get or create structure
         if structure is None:
-            structure = self._generate_structure(genre, duration, tempo)
+            structure = self._generate_structure(
+                genre, duration, tempo,
+                include_solo=include_solo,
+                include_bridge=include_bridge,
+                solo_bars=solo_bars,
+                bridge_bars=bridge_bars,
+            )
         
         # Generate chords for entire song
         chord_progression = self._generate_song_chords(
@@ -339,26 +476,80 @@ class ArrangementGenerator(GenerativeModel):
         genre: str,
         duration: float,
         tempo: int,
+        include_solo: bool = False,
+        include_bridge: bool = True,
+        solo_bars: int = 16,
+        bridge_bars: int = 8,
     ) -> List[Dict]:
-        """Generate song structure based on genre and duration."""
-        # Get template
-        template = STRUCTURE_TEMPLATES.get(genre, STRUCTURE_TEMPLATES["pop"])
-        
+        """Generate song structure based on genre and duration.
+
+        Args:
+            genre: Musical genre/style
+            duration: Target duration in seconds
+            tempo: Tempo in BPM
+            include_solo: Whether to include a solo section
+            include_bridge: Whether to include a bridge section
+            solo_bars: Number of bars for solo section
+            bridge_bars: Number of bars for bridge section
+        """
+        # Check for genre variants with solo/bridge
+        template_key = genre
+        if include_solo and f"{genre}_with_solo" in STRUCTURE_TEMPLATES:
+            template_key = f"{genre}_with_solo"
+        elif include_solo and genre == "rock":
+            template_key = "rock"  # Rock template already has solo
+
+        template = STRUCTURE_TEMPLATES.get(template_key, STRUCTURE_TEMPLATES["pop"])
+
+        # Dynamically modify template based on options
+        template = list(template)  # Make a copy
+
+        # Add solo section if requested and not already present
+        if include_solo:
+            has_solo = any(s["section"] == "solo" for s in template)
+            if not has_solo:
+                # Insert solo after second chorus
+                chorus_count = 0
+                insert_idx = len(template) - 1  # Default: before outro
+                for i, s in enumerate(template):
+                    if s["section"] == "chorus":
+                        chorus_count += 1
+                        if chorus_count == 2:
+                            insert_idx = i + 1
+                            break
+                template.insert(insert_idx, {"section": "solo", "bars": solo_bars})
+
+        # Add bridge section if requested and not already present
+        if include_bridge:
+            has_bridge = any(s["section"] == "bridge" for s in template)
+            if not has_bridge:
+                # Insert bridge before final chorus
+                last_chorus_idx = None
+                for i, s in enumerate(template):
+                    if s["section"] == "chorus":
+                        last_chorus_idx = i
+                if last_chorus_idx is not None:
+                    template.insert(last_chorus_idx, {"section": "bridge", "bars": bridge_bars})
+
+        # Remove bridge if explicitly not wanted
+        if not include_bridge:
+            template = [s for s in template if s["section"] != "bridge"]
+
         # Calculate total bars in template
         template_bars = sum(s["bars"] for s in template)
-        
+
         # Calculate target bars based on duration
         beats_per_bar = self.config.time_signature[0]
         seconds_per_beat = 60.0 / tempo
         seconds_per_bar = beats_per_bar * seconds_per_beat
         target_bars = int(duration / seconds_per_bar)
-        
+
         # Scale structure to fit duration
-        scale_factor = target_bars / template_bars
-        
+        scale_factor = target_bars / template_bars if template_bars > 0 else 1.0
+
         structure = []
         current_bar = 0
-        
+
         for section in template:
             scaled_bars = max(
                 self.config.min_section_bars,
