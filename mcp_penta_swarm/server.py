@@ -25,7 +25,7 @@ except ImportError:  # pragma: no cover - fallback for older installs
 # Initialize environment variables
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv()
-load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR / ".env", override=False)
 
 # Create the FastMCP server instance
 mcp = FastMCP(
