@@ -55,6 +55,37 @@ from music_brain.production.dynamics_engine import DynamicsEngine
 from music_brain.production.drum_humanizer import DrumHumanizer
 from music_brain.groove.groove_engine import GrooveSettings, settings_from_intent
 
+# New multimodal emotion components
+from music_brain.emotion.text_emotion_parser import TextEmotionParser, ParsedEmotion
+from music_brain.emotion.multimodal_emotion import (
+    MultimodalEmotionModel,
+    prepare_text_features,
+    MultimodalEmotionOutput,
+)
+
+# Optional advanced components (lazy loaded)
+HAS_SPECTOCLOUD = False
+HAS_SUGGESTIONS = False
+HAS_ARRANGEMENT = False
+
+try:
+    from music_brain.visualization.spectocloud import Spectocloud
+    HAS_SPECTOCLOUD = True
+except ImportError:
+    pass
+
+try:
+    from music_brain.intelligence.suggestion_engine import SuggestionEngine
+    HAS_SUGGESTIONS = True
+except ImportError:
+    pass
+
+try:
+    from music_brain.generative.arrangement import ArrangementGenerator
+    HAS_ARRANGEMENT = True
+except ImportError:
+    pass
+
 
 # Intent examples for reference
 INTENT_EXAMPLES = {
@@ -154,12 +185,52 @@ class MusicBrain:
     making it easier to integrate with desktop apps, web services, or CLI tools.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, use_neural: bool = True) -> None:
         self.emotion_mapper = EmotionMapper()
         self.production_mapper = EmotionProductionMapper()
         self.dynamics_engine = DynamicsEngine()
         self.drum_humanizer = self._build_humanizer()
         self._emotion_keywords = self._build_emotion_keywords()
+
+        # Initialize neural emotion components
+        self.use_neural = use_neural
+        self.text_parser: Optional[TextEmotionParser] = None
+        self.multimodal_model: Optional[MultimodalEmotionModel] = None
+        self._device = "cpu"
+
+        if use_neural:
+            self._init_neural_components()
+
+    def _init_neural_components(self) -> None:
+        """Initialize neural emotion recognition components."""
+        import torch
+        from pathlib import Path
+
+        # Detect device
+        if torch.backends.mps.is_available():
+            self._device = "mps"
+        elif torch.cuda.is_available():
+            self._device = "cuda"
+        else:
+            self._device = "cpu"
+
+        # Initialize text parser (always available)
+        try:
+            self.text_parser = TextEmotionParser()
+        except Exception:
+            self.text_parser = None
+
+        # Load multimodal model if checkpoint exists
+        checkpoint_path = Path("checkpoints/multimodal_emotion/multimodal_emotion.pt")
+        if checkpoint_path.exists():
+            try:
+                self.multimodal_model = MultimodalEmotionModel(n_mels=64, embed_dim=256)
+                ckpt = torch.load(checkpoint_path, map_location=self._device, weights_only=True)
+                self.multimodal_model.load_state_dict(ckpt["model_state_dict"])
+                self.multimodal_model = self.multimodal_model.to(self._device)
+                self.multimodal_model.eval()
+            except Exception:
+                self.multimodal_model = None
 
     def _build_humanizer(self) -> DrumHumanizer:
         """Load DrumHumanizer with optional config from config/humanizer.json."""
@@ -321,31 +392,57 @@ class MusicBrain:
         """
         Generate music from emotional text description.
 
+        Uses neural emotion recognition when available, falls back to keyword matching.
+
         Args:
             emotional_text: Natural language emotional description
 
         Returns:
             GeneratedMusic with all parameters
         """
-        # Parse text for emotion keywords
-        text_lower = emotional_text.lower()
+        import torch
 
         valence = 0.0
         arousal = 0.5
         primary_emotion = "neutral"
+        modifiers: List[str] = []
 
-        # Find matching emotion
-        for keyword, (v, a, emotion) in self._emotion_keywords.items():
-            if keyword in text_lower:
-                valence, arousal = v, a
-                primary_emotion = emotion
-                break
+        # Try neural approach first
+        if self.use_neural and self.text_parser and self.multimodal_model:
+            try:
+                parsed = self.text_parser.parse(emotional_text)
+                text_feat = prepare_text_features(parsed).unsqueeze(0).to(self._device)
+
+                with torch.no_grad():
+                    outputs = self.multimodal_model(text_features=text_feat)
+
+                BASE_EMOTIONS = ["HAPPY", "SAD", "ANGRY", "FEAR", "SURPRISE", "DISGUST"]
+                pred_idx = outputs["base_emotion"].argmax(dim=-1).item()
+
+                valence = outputs["valence"][0].item()
+                arousal = outputs["arousal"][0].item()
+                primary_emotion = self._neural_emotion_to_preset(BASE_EMOTIONS[pred_idx])
+                modifiers = parsed.modifiers
+
+            except Exception:
+                # Fall back to keyword matching
+                pass
+
+        # Keyword fallback if neural didn't work
+        if primary_emotion == "neutral":
+            text_lower = emotional_text.lower()
+            for keyword, (v, a, emotion) in self._emotion_keywords.items():
+                if keyword in text_lower:
+                    valence, arousal = v, a
+                    primary_emotion = emotion
+                    break
 
         # Create emotional state
         emotional_state = EmotionalState(
             valence=Valence(max(-2, min(2, int(valence * 2)))),
             arousal=Arousal(max(-2, min(2, int((arousal - 0.5) * 4)))),
-            primary_emotion=primary_emotion
+            primary_emotion=primary_emotion,
+            has_intrusions="ptsd_intrusion" in modifiers,
         )
 
         # Get musical parameters
@@ -357,15 +454,23 @@ class MusicBrain:
             musical_params
         )
 
+        # Determine intensity from arousal
+        if arousal > 0.7:
+            intensity = "high"
+        elif arousal < 0.4:
+            intensity = "low"
+        else:
+            intensity = "Medium"
+
         production_preset = self.production_mapper.get_production_preset(
             primary_emotion,
-            intensity="Medium",
+            intensity=intensity,
         )
 
         groove_settings = settings_from_intent(
-            "Medium",
+            intensity.capitalize() if intensity != "Medium" else "Medium",
             "Organic/Breathing",
-            mood_tension=0.5,
+            mood_tension=0.5 + (1 - valence) * 0.25,  # More tension for negative valence
         )
 
         return GeneratedMusic(
@@ -375,6 +480,18 @@ class MusicBrain:
             production_preset=production_preset,
             groove_settings=groove_settings,
         )
+
+    def _neural_emotion_to_preset(self, neural_emotion: str) -> str:
+        """Map neural model emotion to production preset name."""
+        mapping = {
+            "HAPPY": "hope",
+            "SAD": "grief",
+            "ANGRY": "anger",
+            "FEAR": "anxiety",
+            "SURPRISE": "hope",
+            "DISGUST": "tension",
+        }
+        return mapping.get(neural_emotion, "neutral")
 
     def export_to_logic(
         self,
@@ -475,6 +592,167 @@ class MusicBrain:
             List of rule-breaking suggestions
         """
         return suggest_rule_break(emotion)
+
+    # ========== ADVANCED FEATURES ==========
+
+    def get_suggestions(self, context: Dict[str, Any]) -> List[Dict]:
+        """
+        Get AI-powered suggestions based on current context.
+
+        Args:
+            context: Dict with current musical/emotional state
+
+        Returns:
+            List of suggestion dicts with action, reason, priority
+        """
+        if HAS_SUGGESTIONS:
+            engine = SuggestionEngine()
+            suggestions = engine.generate_suggestions(context)
+            return [
+                {
+                    "type": s.suggestion_type.value,
+                    "title": s.title,
+                    "description": s.description,
+                    "action": s.action,
+                    "confidence": s.confidence,
+                    "explanation": s.explanation,
+                }
+                for s in suggestions
+            ]
+        return []
+
+    def generate_arrangement(
+        self,
+        music: "GeneratedMusic",
+        structure: List[str],
+    ) -> Dict[str, Any]:
+        """
+        Generate full arrangement from music parameters.
+
+        Args:
+            music: Generated music with emotion/params
+            structure: List of section names
+
+        Returns:
+            Arrangement dict with per-section instrument patterns
+        """
+        if HAS_ARRANGEMENT:
+            generator = ArrangementGenerator()
+            return generator.generate(
+                emotion=music.emotional_state.primary_emotion,
+                tempo=music.musical_params.tempo_suggested,
+                structure=structure,
+            )
+        return {"error": "Arrangement generator not available"}
+
+    def visualize_emotion_trajectory(
+        self,
+        emotions: List[Dict[str, float]],
+        output_path: Optional[str] = None,
+    ) -> Any:
+        """
+        Create a Spectocloud visualization of emotion trajectory.
+
+        Args:
+            emotions: List of dicts with valence, arousal, intensity over time
+            output_path: Optional path to save visualization
+
+        Returns:
+            Visualization data or image path
+        """
+        if HAS_SPECTOCLOUD:
+            viz = Spectocloud()
+            # Convert emotion trajectory to MIDI-like events for visualization
+            midi_events = []
+            for i, emo in enumerate(emotions):
+                midi_events.append({
+                    "type": "note_on",
+                    "time": i * 0.5,  # 0.5s per emotion point
+                    "note": int(60 + emo.get("valence", 0) * 12),
+                    "velocity": int(64 + emo.get("arousal", 0.5) * 50),
+                })
+            viz.process_midi(midi_events, len(emotions) * 0.5, emotion_trajectory=emotions)
+            if output_path:
+                viz.render_static_frame(len(viz.frames) // 2, output_path=output_path, show=False)
+                return {"path": output_path, "frames": len(viz.frames)}
+            return {"frames": len(viz.frames), "data": viz.export_data if hasattr(viz, "export_data") else None}
+        return {"error": "Spectocloud not available"}
+
+    def get_dynamics_profile(
+        self,
+        sections: List[str],
+        section_bars: Optional[List[int]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Get guide-based dynamics profile for song structure.
+
+        Args:
+            sections: List of section names (intro, verse, chorus, etc.)
+            section_bars: Optional bars per section
+
+        Returns:
+            Complete dynamics profile with automation curve
+        """
+        from music_brain.production.dynamics_engine import SongStructure
+
+        structure = SongStructure(sections=sections, section_bars=section_bars)
+        profile = self.dynamics_engine.get_arrangement_profile(structure)
+
+        return {
+            "sections": {
+                name: {
+                    "level": dyn.level,
+                    "db": dyn.target_db,
+                    "density": dyn.density,
+                    "drums": dyn.drums,
+                    "bass": dyn.bass,
+                    "guitar": dyn.guitar,
+                    "notes": dyn.notes,
+                }
+                for name, dyn in profile.sections.items()
+            },
+            "automation": profile.automation.points,
+            "peak_section": profile.peak_section,
+            "quietest_section": profile.quietest_section,
+            "contrast_ratio": profile.contrast_ratio,
+            "suggestions": self.dynamics_engine.suggest_contrast_improvements(profile),
+        }
+
+    def humanize_drums(
+        self,
+        events: List[Dict[str, Any]],
+        style: str = "standard",
+        ppq: int = 480,
+    ) -> List[Dict[str, Any]]:
+        """
+        Apply guide-based humanization to drum events.
+
+        Args:
+            events: MIDI-like event dicts
+            style: Style preset (hip-hop, rock, jazzy, edm, lofi, etc.)
+            ppq: Pulses per quarter note
+
+        Returns:
+            Humanized event list
+        """
+        return self.drum_humanizer.apply_guide_rules(events, style=style, ppq=ppq)
+
+    def list_humanizer_styles(self) -> List[str]:
+        """Get available drum humanizer style presets."""
+        return list(self.drum_humanizer._style_presets.keys())
+
+    def get_capabilities(self) -> Dict[str, bool]:
+        """Get available API capabilities."""
+        return {
+            "neural_emotion": self.use_neural and self.multimodal_model is not None,
+            "text_parser": self.text_parser is not None,
+            "spectocloud": HAS_SPECTOCLOUD,
+            "suggestions": HAS_SUGGESTIONS,
+            "arrangement": HAS_ARRANGEMENT,
+            "dynamics_engine": True,
+            "drum_humanizer": True,
+            "device": self._device,
+        }
 
     # ========== FLUENT API ==========
 
