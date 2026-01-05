@@ -26,7 +26,7 @@ load_dotenv()
 
 # Create the FastMCP server instance
 mcp = FastMCP(
-    name="penta-core",
+    name="Penta-Core",
     instructions=(
         "Penta-Core: A swarm of 5 specialized AI agents for comprehensive "
         "development assistance.\n\n"
