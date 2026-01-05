@@ -28,8 +28,7 @@ load_dotenv()
 mcp = FastMCP(
     name="Penta-Core",
     instructions=(
-        "Penta-Core: A swarm of 5 specialized AI agents for comprehensive "
-        "development assistance.\n\n"
+        "Penta-Core: Five specialized AI agents for comprehensive development assistance.\n\n"
         "Available specialists:\n"
         "- consult_architect: Systems architecture and design patterns (OpenAI GPT-4o)\n"
         "- consult_developer: Clean code, safety, and refactoring (Claude 3.5 Sonnet)\n"
