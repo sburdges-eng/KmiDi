@@ -12,6 +12,7 @@ Run with:
 """
 
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -22,7 +23,8 @@ except ImportError:  # pragma: no cover - fallback for older installs
     from fastmcp import FastMCP
 
 # Initialize environment variables
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env", override=False)
 
 # Create the FastMCP server instance
 mcp = FastMCP(
