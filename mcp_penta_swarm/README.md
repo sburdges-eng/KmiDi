@@ -1,6 +1,6 @@
-# Penta-Core MCP Server
+# Penta-Core Server
 
-A Model Context Protocol (MCP) server that aggregates the top 5 AI platforms into a single unified toolset for IDE integration (Cursor/VS Code).
+An integration service that aggregates the top 5 AI platforms into a single unified toolset for IDE integration (Cursor/VS Code).
 
 ## Overview
 

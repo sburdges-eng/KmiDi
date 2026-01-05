@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Penta-Core MCP Server
+Penta-Core Server
 
-An MCP server that aggregates the top 5 AI platforms into a single "Swarm" toolset.
+An integration service that aggregates the top 5 AI platforms into a single unified toolset.
 Uses FastMCP for the server architecture.
 
 Run with:
