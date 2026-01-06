@@ -33,12 +33,12 @@ class ChordCache:
     
     def put(self, notes: List[Tuple[int, int]], result: dict):
         """Store chord result in cache."""
-        if len(self.cache) >= self.max_size:
+        if len(self.cache) >= self.max_size and len(self.access_times) > 0:
             # Remove oldest entry
             oldest = min(self.access_times.items(), key=lambda x: x[1])
-            del self.cache[oldest[0]]
-            del self.access_times[oldest[0]]
-        
+            self.cache.pop(oldest[0], None)
+            self.access_times.pop(oldest[0], None)
+
         key = self._notes_to_key(notes)
         self.cache[key] = result
         self.access_times[key] = datetime.now()

@@ -77,7 +77,7 @@ def compute_confusion(truth: Dict[str, Example], preds: List[Dict[str, object]])
         conf[true_label][pred_label] += 1
 
         probs = p.get("probs")
-        if isinstance(probs, dict):
+        if isinstance(probs, dict) and len(probs) > 0:
             prob_pred = max(probs.items(), key=lambda kv: kv[1])
             prob_records.append((float(prob_pred[1]), prob_pred[0] == true_label))
 

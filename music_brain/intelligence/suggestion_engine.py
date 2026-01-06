@@ -333,7 +333,7 @@ class SuggestionEngine:
             suggestions.append(suggestion)
 
         # Suggest style preferences if user has strong preferences
-        if style_prefs:
+        if style_prefs and len(style_prefs) > 0:
             top_style = max(style_prefs.items(), key=lambda x: x[1])
             if top_style[1] > 0.5:  # Strong preference
                 suggestion = Suggestion(
