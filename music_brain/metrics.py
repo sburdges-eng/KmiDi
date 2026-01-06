@@ -23,10 +23,10 @@ class TimeMetrics:
     def __enter__(self):
         caller = inspect.stack()[1]
         self.function = str(caller)
-        self.enter_time = time.clock()
+        self.enter_time = time.perf_counter()
 
     def __exit__(self, a, b, c):
-        self.exit_time = time.clock()
+        self.exit_time = time.perf_counter()
         print(
             "It took "
             + str(self.exit_time - self.enter_time)
