@@ -4,7 +4,7 @@ Sequencer-grade macOS CoreMIDI backlog (standalone render clock + free-run DAW/h
 - [ ] Define master timebase for macOS standalone vs DAW modes
   - [ ] Capture current transport/timebase assumptions
   - [ ] Specify clock authority rules per mode
-  - [ ] Outline project↔host/sample conversion API
+  - [ ] Outline project to/from host/sample conversion API
   - [ ] Review with audio/MIDI runtime owners
 - [ ] Timestamped CoreMIDI scheduler with lookahead
   - [ ] Design ordering/rounding policy for clustered events
