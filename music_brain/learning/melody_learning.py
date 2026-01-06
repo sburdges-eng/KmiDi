@@ -226,7 +226,12 @@ class MelodyLearner:
         # Simple sampling: start from most common note, apply common interval patterns
         notes = []
         if note_freqs:
-            most_common_note = int(Counter(note_freqs).most_common(1)[0][0])
+            counter = Counter(note_freqs)
+            most_common = counter.most_common(1)
+            if most_common:
+                most_common_note = int(most_common[0][0])
+            else:
+                most_common_note = 60  # Default to C4
         else:
             # Default to C4
             most_common_note = 60

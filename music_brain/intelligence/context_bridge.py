@@ -7,19 +7,22 @@ context-aware parameter adjustments.
 
 from typing import Dict, List, Any, Optional
 import json
+import threading
 
 from music_brain.intelligence.context_analyzer import ContextAnalyzer, MusicalContext
 
 
-# Global instance (singleton pattern)
+# Global instance (singleton pattern) with thread safety
 _context_analyzer: Optional[ContextAnalyzer] = None
+_context_lock = threading.Lock()
 
 
 def initialize_context_system():
     """Initialize the context analysis system."""
     global _context_analyzer
-    if _context_analyzer is None:
-        _context_analyzer = ContextAnalyzer()
+    with _context_lock:
+        if _context_analyzer is None:
+            _context_analyzer = ContextAnalyzer()
 
 
 def analyze_context(state_json: str) -> str:
@@ -51,9 +54,11 @@ def analyze_context(state_json: str) -> str:
     """
     global _context_analyzer
 
-    # Initialize if not already done
+    # Initialize if not already done (with double-check locking)
     if _context_analyzer is None:
-        initialize_context_system()
+        with _context_lock:
+            if _context_analyzer is None:
+                initialize_context_system()
 
     try:
         # Parse state

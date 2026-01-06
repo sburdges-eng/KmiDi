@@ -65,7 +65,7 @@ class MacOptimizationLayer:
             try:
                 import platform
                 chip_type = self._detect_m_chip()
-            except:
+            except Exception:
                 chip_type = "unknown"
         else:
             device = "cpu"
@@ -75,7 +75,7 @@ class MacOptimizationLayer:
         try:
             import psutil
             total_memory = psutil.virtual_memory().total / (1024**3)
-        except:
+        except (ImportError, Exception):
             total_memory = 16.0  # Assume 16GB for M-series
 
         return MacHardwareInfo(
@@ -102,7 +102,7 @@ class MacOptimizationLayer:
             else:
                 return "m1"
 
-        except:
+        except Exception:
             return "unknown"
 
     def _format_hardware_info(self) -> str:
