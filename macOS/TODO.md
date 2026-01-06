@@ -1,3 +1,43 @@
 # TODOs
-Refer to root TODO_* files and /Users/seanburdges/Desktop/final kel for authoritative tasks.
-List module-specific tasks here.
+Sequencer-grade macOS CoreMIDI backlog (standalone render clock + free-run DAW/headless):
+
+- [ ] Define master timebase for macOS standalone vs DAW modes
+  - [ ] Capture current transport/timebase assumptions
+  - [ ] Specify clock authority rules per mode
+  - [ ] Outline project↔host/sample conversion API
+  - [ ] Review with audio/MIDI runtime owners
+- [ ] Timestamped CoreMIDI scheduler with lookahead
+  - [ ] Design ordering/rounding policy for clustered events
+  - [ ] Implement lookahead scheduling using host time
+  - [ ] Add panic/stuck-note safety path
+  - [ ] Bench jitter under load
+- [ ] Project↔host/sample transport mapper
+  - [ ] Define data model for tempo map and rate changes
+  - [ ] Implement mapping helpers with tests
+  - [ ] Handle locate/loop and chase state
+  - [ ] Validate rounding/determinism rules
+- [ ] Playback audio/MIDI latency compensation
+  - [ ] Measure default device output latency
+  - [ ] Offset scheduled MIDI timestamps appropriately
+  - [ ] Verify alignment in render callback path
+  - [ ] Add regression test with synthetic timing probe
+- [ ] User-calibrated DAW mode offsets & monitoring policy
+  - [ ] Design calibration flow and storage format
+  - [ ] Apply offsets in transport mapper/scheduler
+  - [ ] Define monitoring mix policy per mode
+  - [ ] Document user workflow
+- [ ] Tempo-map-aware live recording with state chase
+  - [ ] Capture incoming timestamps in project time
+  - [ ] Honor tempo changes/loops during capture
+  - [ ] Implement controller/program chase on locate
+  - [ ] Add tests for looped punch in/out
+- [ ] Endpoint stability, hotplug, and panic handling
+  - [ ] Define endpoint identity and reconnection rules
+  - [ ] Handle hotplug without dropping scheduled events
+  - [ ] Implement panic on device loss/stop
+  - [ ] Add stress tests for rapid hotplug
+- [ ] Jitter instrumentation and loopback calibration harness
+  - [ ] Add loopback test mode capturing sent vs received times
+  - [ ] Log jitter stats with configurable sample size
+  - [ ] Report recommended default offsets
+  - [ ] Document usage for QA
