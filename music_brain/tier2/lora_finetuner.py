@@ -453,7 +453,7 @@ class MIDIEmotionDataset(Dataset):
                 score = converter.parse(midi_path)
                 notes = [int(n.pitch.midi) for n in score.flatten().notes
                         if hasattr(n, 'pitch')]
-            except:
+            except Exception:
                 notes = []
 
         except ImportError:
