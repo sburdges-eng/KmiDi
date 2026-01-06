@@ -312,7 +312,9 @@ def detect_chord_from_notes(notes: List[int]) -> Optional[Chord]:
         # Try to match against chord templates
         for quality, template in CHORD_QUALITIES.items():
             template_intervals = tuple(sorted(template))
-            
+            if not template_intervals:
+                continue  # Skip empty templates (defensive)
+
             # Check if intervals match (allowing for octave duplications)
             matches = sum(1 for i in intervals if i in template_intervals)
             coverage = matches / len(template_intervals)

@@ -419,6 +419,11 @@ class MIDIEmotionDataset(Dataset):
     """
 
     def __init__(self, midi_paths: List[str], emotion_paths: List[str], device: str = "cpu"):
+        if len(midi_paths) != len(emotion_paths):
+            raise ValueError(
+                f"midi_paths and emotion_paths must have same length, "
+                f"got {len(midi_paths)} and {len(emotion_paths)}"
+            )
         self.midi_paths = midi_paths
         self.emotion_paths = emotion_paths
         self.device = device

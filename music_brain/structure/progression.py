@@ -228,8 +228,10 @@ def detect_key_from_progression(chords: List[ParsedChord]) -> Tuple[str, str]:
             weight = 1.5
         
         root_weights[chord.root_num] = root_weights.get(chord.root_num, 0) + weight
-    
-    # Find most weighted root
+
+    # Find most weighted root (fallback to C if no weights)
+    if not root_weights:
+        return ('C', 'major')
     likely_root = max(root_weights, key=root_weights.get)
     
     # Determine mode based on chord qualities at tonic
