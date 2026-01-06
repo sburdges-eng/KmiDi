@@ -186,7 +186,8 @@ class EmotionThesaurus:
         # Exact match
         if word in self._synonym_index:
             for entry in self._synonym_index[word]:
-                tier_num = int(entry["tier"].split("_")[0])
+                tier_parts = entry["tier"].split("_")
+                tier_num = int(tier_parts[0]) if tier_parts else 1
                 matches.append(EmotionMatch(
                     base_emotion=entry["base"],
                     sub_emotion=entry["sub"],
@@ -197,13 +198,14 @@ class EmotionThesaurus:
                     emotion_id=entry["id"],
                     description=entry["description"]
                 ))
-        
+
         # Fuzzy matching
         if fuzzy and not matches:
             for key in self._synonym_index:
                 if word in key or key in word:
                     for entry in self._synonym_index[key]:
-                        tier_num = int(entry["tier"].split("_")[0])
+                        tier_parts = entry["tier"].split("_")
+                        tier_num = int(tier_parts[0]) if tier_parts else 1
                         matches.append(EmotionMatch(
                             base_emotion=entry["base"],
                             sub_emotion=entry["sub"],

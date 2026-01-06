@@ -250,12 +250,12 @@ class PhaseManager:
                 break
 
     @trace(DebugCategory.PHASE)
-    def get_current_phase(self) -> Phase:
+    def get_current_phase(self) -> Optional[Phase]:
         """Get the current active phase."""
         for phase in self.phases:
             if phase.id == self.current_phase_id:
                 return phase
-        return self.phases[0]
+        return self.phases[0] if self.phases else None
 
     @trace(DebugCategory.PHASE)
     def get_phase(self, phase_id: int) -> Optional[Phase]:
