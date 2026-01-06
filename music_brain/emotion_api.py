@@ -834,7 +834,8 @@ class FluentChain:
         """Map emotion to musical parameters."""
         if not self.emotional_state:
             self.map_to_emotion()
-        assert self.emotional_state is not None
+        if self.emotional_state is None:
+            raise RuntimeError("emotional_state not initialized after map_to_emotion()")
         self.musical_params = get_parameters_for_state(self.emotional_state)
         return self
 
@@ -842,8 +843,8 @@ class FluentChain:
         """Map to mixer parameters."""
         if not self.musical_params:
             self.map_to_music()
-        assert self.emotional_state is not None
-        assert self.musical_params is not None
+        if self.emotional_state is None or self.musical_params is None:
+            raise RuntimeError("emotional_state or musical_params not initialized after map_to_music()")
         self.mixer_params = self.brain.emotion_mapper.map_emotion_to_mixer(
             self.emotional_state,
             self.musical_params
@@ -854,7 +855,8 @@ class FluentChain:
         """Override tempo."""
         if not self.musical_params:
             self.map_to_music()
-        assert self.musical_params is not None
+        if self.musical_params is None:
+            raise RuntimeError("musical_params not initialized after map_to_music()")
         self.musical_params.tempo_suggested = tempo
         return self
 
@@ -862,7 +864,8 @@ class FluentChain:
         """Override dissonance level (0.0-1.0)."""
         if not self.musical_params:
             self.map_to_music()
-        assert self.musical_params is not None
+        if self.musical_params is None:
+            raise RuntimeError("musical_params not initialized after map_to_music()")
         self.musical_params.dissonance = max(0.0, min(1.0, dissonance))
         return self
 
@@ -870,7 +873,8 @@ class FluentChain:
         """Override timing feel (ahead, on, behind)."""
         if not self.musical_params:
             self.map_to_music()
-        assert self.musical_params is not None
+        if self.musical_params is None:
+            raise RuntimeError("musical_params not initialized after map_to_music()")
         feel_map = {
             "ahead": TimingFeel.AHEAD,
             "on": TimingFeel.ON,
@@ -884,7 +888,8 @@ class FluentChain:
         """Export to Logic Pro and return paths."""
         if not self.mixer_params:
             self.map_to_mixer()
-        assert self.mixer_params is not None
+        if self.mixer_params is None:
+            raise RuntimeError("mixer_params not initialized after map_to_mixer()")
 
         automation_path = export_to_logic_automation(
             self.mixer_params,
@@ -902,7 +907,8 @@ class FluentChain:
         """Export full settings to JSON."""
         if not self.mixer_params:
             self.map_to_mixer()
-        assert self.mixer_params is not None
+        if self.mixer_params is None:
+            raise RuntimeError("mixer_params not initialized after map_to_mixer()")
 
         export_mixer_settings(self.mixer_params, output_path, format="json")
         self._paths["json"] = output_path

@@ -58,7 +58,7 @@ def run_baseline(dataset: UnifiedEmotionDataset) -> List[Dict[str, Any]]:
     # Fall back to dataset name if no explicit label; this keeps output sane for placeholder manifests
     fallback_labels = [tl if tl else item.get("dataset", "unknown") for tl, item in zip(true_labels, dataset.items)]
     probs = majority_baseline([l for l in fallback_labels if l])
-    if not probs:
+    if not probs or len(probs) == 0:
         probs = {"unknown": 1.0}
     pred_label = max(probs.items(), key=lambda kv: kv[1])[0]
     return [
@@ -88,7 +88,7 @@ def run_torch_inference(dataset: UnifiedEmotionDataset, checkpoint: Path, class_
                 raise RuntimeError(f"Model logits dim {logits.shape[-1]} does not match number of class names {len(labels)}")
             probs_tensor = torch.softmax(logits, dim=-1)[0]
             probs = {label: float(probs_tensor[label_to_idx[label]].item()) for label in labels}
-            pred_label = max(probs.items(), key=lambda kv: kv[1])[0]
+            pred_label = max(probs.items(), key=lambda kv: kv[1])[0] if probs else "unknown"
             preds.append({
                 "id": batch["id"],
                 "pred_label": pred_label,

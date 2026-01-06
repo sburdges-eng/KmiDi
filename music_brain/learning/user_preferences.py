@@ -366,7 +366,7 @@ class UserPreferenceModel:
                 bin_key = round(val * 10) / 10  # Round to 0.1
                 bins[bin_key] += 1
 
-            if bins:
+            if bins and len(bins) > 0:
                 most_common_bin = max(bins.items(), key=lambda x: x[1])[0]
                 stats[param_name]["most_used_range"] = (most_common_bin, most_common_bin + 0.1)
 

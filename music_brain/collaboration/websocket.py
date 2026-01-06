@@ -99,10 +99,11 @@ class CollaborationServer:
         self.host = host
         self.port = port
 
-        # Connection tracking
+        # Connection tracking (with async lock for thread safety)
         self._connections: Dict[str, Any] = {}  # connection_id -> websocket
         self._user_connections: Dict[str, str] = {}  # user_id -> connection_id
         self._session_connections: Dict[str, Set[str]] = {}  # session_id -> set of connection_ids
+        self._connections_lock = asyncio.Lock()
 
         # Message handlers
         self._handlers: Dict[MessageType, Callable] = {}
@@ -146,7 +147,8 @@ class CollaborationServer:
     async def _handle_connection(self, websocket, path) -> None:
         """Handle a new WebSocket connection."""
         connection_id = str(uuid.uuid4())
-        self._connections[connection_id] = websocket
+        async with self._connections_lock:
+            self._connections[connection_id] = websocket
 
         try:
             async for message_str in websocket:
@@ -163,7 +165,8 @@ class CollaborationServer:
         finally:
             # Cleanup on disconnect
             await self._handle_disconnect(connection_id)
-            del self._connections[connection_id]
+            async with self._connections_lock:
+                self._connections.pop(connection_id, None)
 
     async def _process_message(
         self,
@@ -173,14 +176,15 @@ class CollaborationServer:
     ) -> None:
         """Process an incoming message."""
         # Track user connection
-        if message.sender_id:
-            self._user_connections[message.sender_id] = connection_id
+        async with self._connections_lock:
+            if message.sender_id:
+                self._user_connections[message.sender_id] = connection_id
 
-        # Track session connection
-        if message.session_id:
-            if message.session_id not in self._session_connections:
-                self._session_connections[message.session_id] = set()
-            self._session_connections[message.session_id].add(connection_id)
+            # Track session connection
+            if message.session_id:
+                if message.session_id not in self._session_connections:
+                    self._session_connections[message.session_id] = set()
+                self._session_connections[message.session_id].add(connection_id)
 
         # Call registered handler
         if message.type in self._handlers:
@@ -204,24 +208,30 @@ class CollaborationServer:
         """Handle connection disconnect."""
         # Find and remove user
         user_id = None
-        for uid, cid in list(self._user_connections.items()):
-            if cid == connection_id:
-                user_id = uid
-                del self._user_connections[uid]
-                break
+        sessions_to_notify = []
 
-        # Remove from sessions
-        for session_id, connections in self._session_connections.items():
-            connections.discard(connection_id)
+        async with self._connections_lock:
+            for uid, cid in list(self._user_connections.items()):
+                if cid == connection_id:
+                    user_id = uid
+                    del self._user_connections[uid]
+                    break
 
-            # Broadcast disconnect to session
-            if user_id:
-                msg = Message(
-                    type=MessageType.DISCONNECT,
-                    payload={"user_id": user_id},
-                    session_id=session_id,
-                )
-                await self._broadcast_to_session(session_id, msg)
+            # Remove from sessions
+            for session_id, connections in self._session_connections.items():
+                if connection_id in connections:
+                    connections.discard(connection_id)
+                    if user_id:
+                        sessions_to_notify.append(session_id)
+
+        # Broadcast disconnect to sessions (outside lock to avoid deadlock)
+        for session_id in sessions_to_notify:
+            msg = Message(
+                type=MessageType.DISCONNECT,
+                payload={"user_id": user_id},
+                session_id=session_id,
+            )
+            await self._broadcast_to_session(session_id, msg)
 
     async def _broadcast_to_session(
         self,
@@ -230,29 +240,40 @@ class CollaborationServer:
         exclude_connection: Optional[str] = None,
     ) -> None:
         """Broadcast a message to all session participants."""
-        if session_id not in self._session_connections:
-            return
+        # Get snapshot of connections while holding lock
+        async with self._connections_lock:
+            if session_id not in self._session_connections:
+                return
+            # Create a copy to iterate outside the lock
+            conn_ids = list(self._session_connections[session_id])
+            connections_snapshot = {
+                cid: self._connections.get(cid)
+                for cid in conn_ids
+                if cid != exclude_connection and cid in self._connections
+            }
 
-        for conn_id in self._session_connections[session_id]:
-            if conn_id == exclude_connection:
-                continue
-
-            if conn_id in self._connections:
+        # Send messages outside the lock
+        for conn_id, websocket in connections_snapshot.items():
+            if websocket:
                 try:
-                    await self._connections[conn_id].send(message.to_json())
+                    await websocket.send(message.to_json())
                 except Exception:
                     pass  # Connection may have closed
 
     async def send_to_user(self, user_id: str, message: Message) -> bool:
         """Send a message to a specific user."""
-        if user_id in self._user_connections:
+        async with self._connections_lock:
+            if user_id not in self._user_connections:
+                return False
             conn_id = self._user_connections[user_id]
-            if conn_id in self._connections:
-                try:
-                    await self._connections[conn_id].send(message.to_json())
-                    return True
-                except Exception:
-                    pass
+            websocket = self._connections.get(conn_id)
+
+        if websocket:
+            try:
+                await websocket.send(message.to_json())
+                return True
+            except Exception:
+                pass
         return False
 
 

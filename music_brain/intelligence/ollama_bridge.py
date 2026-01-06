@@ -113,11 +113,14 @@ class OllamaBridge:
                 },
                 timeout=self.config.timeout_seconds,
             )
-            
+
             if response.status_code == 200:
-                return response.json().get("message", {}).get("content", "")
+                try:
+                    return response.json().get("message", {}).get("content", "")
+                except (ValueError, KeyError):
+                    return None
             return None
-        except Exception:
+        except (requests.RequestException, OSError):
             return None
     
     def generate_lyrics(
@@ -196,11 +199,17 @@ Return ONLY valid JSON with these fields:
         try:
             # Handle case where model wraps in markdown
             if "```json" in result:
-                result = result.split("```json")[1].split("```")[0]
+                parts = result.split("```json")
+                if len(parts) > 1:
+                    inner_parts = parts[1].split("```")
+                    if inner_parts:
+                        result = inner_parts[0]
             elif "```" in result:
-                result = result.split("```")[1].split("```")[0]
+                parts = result.split("```")
+                if len(parts) > 1:
+                    result = parts[1]
             return json.loads(result.strip())
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, IndexError):
             return None
     
     def suggest_chord_progression(
@@ -242,11 +251,13 @@ Include borrowed chords or modal interchange if appropriate for the emotion."""
         try:
             # Handle markdown wrapping
             if "```" in result:
-                result = result.split("```")[1].split("```")[0]
-                if result.startswith("json"):
-                    result = result[4:]
+                parts = result.split("```")
+                if len(parts) > 1:
+                    result = parts[1]
+                    if result.startswith("json"):
+                        result = result[4:]
             return json.loads(result.strip())
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, IndexError):
             return None
     
     def explain_rule_break(

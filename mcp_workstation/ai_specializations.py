@@ -457,7 +457,10 @@ def suggest_task_assignment(
                 break
         else:
             # Fallback to best regardless of load
-            assignments[task_name] = rankings[0][0]
+            if rankings:
+                assignments[task_name] = rankings[0][0]
+            else:
+                assignments[task_name] = AIAgent.CLAUDE  # Default fallback
 
     return assignments
 
@@ -469,6 +472,15 @@ def get_collaboration_strategy(task_type: TaskType) -> Dict[str, Any]:
     Suggests how multiple AIs can work together on a task.
     """
     rankings = get_best_agents_for_task(task_type, top_n=4)
+
+    # Handle empty rankings with safe defaults
+    if not rankings:
+        return {
+            "task_type": task_type.value,
+            "primary_agent": AIAgent.CLAUDE.value,
+            "primary_strength": 0.5,
+            "roles": {"primary": AIAgent.CLAUDE.value},
+        }
 
     strategy = {
         "task_type": task_type.value,
@@ -508,9 +520,11 @@ def get_collaboration_strategy(task_type: TaskType) -> Dict[str, Any]:
         }
     else:
         # Default strategy
+        primary = rankings[0][0].value if rankings else AIAgent.CLAUDE.value
+        secondary = rankings[1][0].value if len(rankings) > 1 else primary
         strategy["roles"] = {
-            "primary": rankings[0][0].value,
-            "secondary": rankings[1][0].value if len(rankings) > 1 else rankings[0][0].value,
+            "primary": primary,
+            "secondary": secondary,
             "reviewer": AIAgent.CLAUDE.value,
         }
 

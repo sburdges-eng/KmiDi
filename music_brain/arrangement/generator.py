@@ -111,12 +111,18 @@ class GeneratedArrangement:
         # Instrumentation notes
         notes.append("\n## Instrumentation:")
         for inst in self.instruments:
-            entry_name = self.template.sections[inst.entry_section].section_type.value
-            exit_info = (
-                f"exits at {self.template.sections[inst.exit_section].section_type.value}"
-                if inst.exit_section is not None
-                else "plays to end"
-            )
+            # Bounds check for entry_section
+            if 0 <= inst.entry_section < len(self.template.sections):
+                entry_name = self.template.sections[inst.entry_section].section_type.value
+            else:
+                entry_name = "unknown"
+            # Bounds check for exit_section
+            if inst.exit_section is not None and 0 <= inst.exit_section < len(self.template.sections):
+                exit_info = f"exits at {self.template.sections[inst.exit_section].section_type.value}"
+            elif inst.exit_section is not None:
+                exit_info = "exits at unknown"
+            else:
+                exit_info = "plays to end"
             notes.append(f"- {inst.name}: enters at {entry_name}, {exit_info}")
         
         return notes
@@ -199,16 +205,24 @@ class ArrangementGenerator:
         instruments = []
         
         # Core instruments (always present or nearly always)
+        # Safe check for empty sections list
+        has_intro = (
+            len(template.sections) > 0 and
+            template.sections[0].section_type == SectionType.INTRO
+        )
+        drums_entry = 1 if has_intro and len(template.sections) > 1 else 0
+        bass_entry = 1 if has_intro and len(template.sections) > 1 else 0
+
         instruments.append(InstrumentTrack(
             name="drums",
             midi_channel=9,  # Standard drum channel
-            entry_section=0 if template.sections[0].section_type != SectionType.INTRO else 1,
+            entry_section=drums_entry,
         ))
-        
+
         instruments.append(InstrumentTrack(
             name="bass",
             midi_channel=1,
-            entry_section=0 if template.sections[0].section_type != SectionType.INTRO else 1,
+            entry_section=bass_entry,
         ))
         
         # Harmonic instruments - enter based on energy

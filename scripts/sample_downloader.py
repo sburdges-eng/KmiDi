@@ -157,7 +157,7 @@ class SampleDownloader:
                     if path.is_file():
                         try:
                             gdrive_size += path.stat().st_size
-                        except:
+                        except (OSError, PermissionError):
                             pass
 
             # Calculate local staging size
@@ -166,7 +166,7 @@ class SampleDownloader:
                 if path.is_file():
                     try:
                         local_size += path.stat().st_size
-                    except:
+                    except (OSError, PermissionError):
                         pass
 
             total_size = gdrive_size + local_size

@@ -243,31 +243,38 @@ class LocalVoiceSynth:
             if self._platform == "macos":
                 import subprocess
                 # macOS say supports voice selection
-                cmd = ["say", "-r", str(rate)]
-                subprocess.Popen(
-                    cmd + [text],
+                # Use run() with timeout instead of fire-and-forget Popen to avoid resource leaks
+                cmd = ["say", "-r", str(int(rate)), text]
+                subprocess.run(
+                    cmd,
                     stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
+                    stderr=subprocess.DEVNULL,
+                    timeout=30  # Prevent hanging
                 )
                 return True
             elif self._platform == "linux":
                 import subprocess
-                subprocess.Popen(
-                    ["espeak", "-s", str(rate), "-p", str(pitch), text],
+                # Use run() with timeout instead of fire-and-forget Popen
+                subprocess.run(
+                    ["espeak", "-s", str(int(rate)), "-p", str(int(pitch)), text],
                     stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
+                    stderr=subprocess.DEVNULL,
+                    timeout=30
                 )
                 return True
             elif self._platform == "windows":
                 import subprocess
+                import re
                 # Use PowerShell with System.Speech for TTS
                 # Rate: -10 (slowest) to 10 (fastest), default 0
                 # Map rate (words per minute, ~175 default) to -10 to 10 scale
                 ps_rate = int((rate - 175) / 25)  # Roughly maps 100-250 wpm to -3 to 3
                 ps_rate = max(-10, min(10, ps_rate))
 
-                # Escape text for PowerShell (single quotes, escape existing quotes)
-                escaped_text = text.replace("'", "''")
+                # Sanitize text: remove dangerous characters for PowerShell to prevent injection
+                sanitized_text = re.sub(r"[^\w\s.,!?'\"-]", "", text)
+                # Escape remaining single quotes for PowerShell string
+                escaped_text = sanitized_text.replace("'", "''")
 
                 # PowerShell command using System.Speech.Synthesis
                 ps_command = (
@@ -277,16 +284,21 @@ class LocalVoiceSynth:
                     f"$synth.Speak('{escaped_text}')"
                 )
 
-                subprocess.Popen(
+                # Use run() with timeout instead of fire-and-forget Popen
+                subprocess.run(
                     ["powershell", "-Command", ps_command],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
+                    timeout=30,
                     creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
                 )
                 return True
             else:
                 print(f"TTS not implemented for {self._platform}")
                 return False
+        except subprocess.TimeoutExpired:
+            print("TTS timeout - speech took too long")
+            return False
         except Exception as e:
             print(f"TTS error: {e}")
             return False

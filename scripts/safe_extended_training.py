@@ -185,30 +185,50 @@ def run_training(model: str, epochs: int, batch_size: int = 8):
 
     # Monitor during training
     last_health_check = time.time()
+    terminated_early = False
 
-    for line in process.stdout:
-        print(line, end="")
+    try:
+        for line in process.stdout:
+            print(line, end="")
 
-        # Health check every 30 seconds
-        if time.time() - last_health_check > 30:
-            health = check_system_health()
-            last_health_check = time.time()
+            # Health check every 30 seconds
+            if time.time() - last_health_check > 30:
+                health = check_system_health()
+                last_health_check = time.time()
 
-            if health["pause"]:
-                print(f"\n⚠️  {health['message']}")
-                process.terminate()
-                wait_for_cooldown()
-                # Restart with smaller batch, but clamp to minimum of 1
-                new_batch_size = max(1, batch_size // 2)
-                if new_batch_size == batch_size:
-                    print("❌ Cannot reduce batch_size further (already at minimum)")
-                    return False
-                print(f"🔄 Restarting with batch_size={new_batch_size}")
-                return run_training(model, epochs, new_batch_size)
-            elif health["throttle"]:
-                print(f"\n⚡ {health['message']}")
+                if health["pause"]:
+                    print(f"\n⚠️  {health['message']}")
+                    terminated_early = True
+                    process.terminate()
+                    try:
+                        process.wait(timeout=10)  # Wait for graceful termination
+                    except subprocess.TimeoutExpired:
+                        process.kill()  # Force kill if needed
+                        process.wait()
+                    break
+                elif health["throttle"]:
+                    print(f"\n⚡ {health['message']}")
+    finally:
+        # Ensure stdout is closed to prevent resource leak
+        if process.stdout:
+            process.stdout.close()
+        # Ensure process is properly waited on to avoid zombie processes
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
 
-    process.wait()
+    if terminated_early:
+        wait_for_cooldown()
+        # Restart with smaller batch, but clamp to minimum of 1
+        new_batch_size = max(1, batch_size // 2)
+        if new_batch_size == batch_size:
+            print("❌ Cannot reduce batch_size further (already at minimum)")
+            return False
+        print(f"🔄 Restarting with batch_size={new_batch_size}")
+        return run_training(model, epochs, new_batch_size)
+
     duration = time.time() - start_time
 
     success = process.returncode == 0

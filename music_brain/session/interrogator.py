@@ -281,7 +281,7 @@ class SongInterrogator:
                         if word.isdigit():
                             self.context.vulnerability_level = int(word)
                             break
-                except:
+                except (ValueError, AttributeError):
                     pass
         
         elif phase == SongPhase.STORY:
