@@ -134,7 +134,7 @@ def analyze_datasets_with_ai() -> List[DatasetAnalysis]:
                         capture_output=True, text=True
                     )
                     size = result.stdout.split()[0] if result.returncode == 0 else "unknown"
-                except:
+                except (subprocess.SubprocessError, OSError, IndexError):
                     size = "unknown"
 
                 # Sample file types
@@ -195,7 +195,11 @@ Respond in JSON format with this structure:
         response_format={"type": "json_object"}
     )
 
-    result = json.loads(response.choices[0].message.content)
+    try:
+        result = json.loads(response.choices[0].message.content)
+    except (json.JSONDecodeError, IndexError, AttributeError) as e:
+        print(f"Error parsing AI response: {e}")
+        return []
 
     analyses = []
     for item in result.get("analyses", []):
@@ -307,7 +311,11 @@ Respond in JSON:
         response_format={"type": "json_object"}
     )
 
-    result = json.loads(response.choices[0].message.content)
+    try:
+        result = json.loads(response.choices[0].message.content)
+    except (json.JSONDecodeError, IndexError, AttributeError) as e:
+        print(f"Error parsing AI response: {e}")
+        return []
 
     print(f"\n{'='*40}")
     print("OVERALL STRATEGY")
@@ -470,7 +478,11 @@ Respond in JSON:
         response_format={"type": "json_object"}
     )
 
-    result = json.loads(response.choices[0].message.content)
+    try:
+        result = json.loads(response.choices[0].message.content)
+    except (json.JSONDecodeError, IndexError, AttributeError) as e:
+        print(f"Error parsing AI response: {e}")
+        return
 
     print(f"\n{'='*40}")
     print("OVERALL ASSESSMENT")

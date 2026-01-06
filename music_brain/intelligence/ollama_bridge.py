@@ -113,11 +113,14 @@ class OllamaBridge:
                 },
                 timeout=self.config.timeout_seconds,
             )
-            
+
             if response.status_code == 200:
-                return response.json().get("message", {}).get("content", "")
+                try:
+                    return response.json().get("message", {}).get("content", "")
+                except (ValueError, KeyError):
+                    return None
             return None
-        except Exception:
+        except (requests.RequestException, OSError):
             return None
     
     def generate_lyrics(

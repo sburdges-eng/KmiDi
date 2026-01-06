@@ -52,7 +52,7 @@ def find_sound_libraries() -> Dict[str, Dict[str, Any]]:
             try:
                 logic_count += len(list(path.rglob("*.caf"))[:100])
                 logic_count += len(list(path.rglob("*.aif"))[:100])
-            except:
+            except (OSError, PermissionError):
                 pass
     
     libraries["logic_pro"] = {
@@ -80,7 +80,7 @@ def find_sound_libraries() -> Dict[str, Dict[str, Any]]:
         if p.exists():
             try:
                 vital_count += len(list(p.rglob("*.vital"))[:100])
-            except:
+            except (OSError, PermissionError):
                 pass
     
     libraries["vital"] = {
@@ -100,7 +100,7 @@ def find_sound_libraries() -> Dict[str, Dict[str, Any]]:
     if melda_presets.exists():
         try:
             melda_count = len(list(melda_presets.rglob("*.mpreset"))[:100])
-        except:
+        except (OSError, PermissionError):
             pass
     
     libraries["melda"] = {
@@ -122,7 +122,7 @@ def find_sound_libraries() -> Dict[str, Dict[str, Any]]:
             try:
                 for ext in ["*.wav", "*.aif", "*.mp3"]:
                     user_count += len(list(base.rglob(ext))[:50])
-            except:
+            except (OSError, PermissionError):
                 pass
     
     libraries["user_samples"] = {
