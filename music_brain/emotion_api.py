@@ -624,24 +624,51 @@ class MusicBrain:
     def generate_arrangement(
         self,
         music: "GeneratedMusic",
-        structure: List[str],
+        structure: Optional[List[Any]] = None,
     ) -> Dict[str, Any]:
         """
         Generate full arrangement from music parameters.
 
         Args:
             music: Generated music with emotion/params
-            structure: List of section names
+            structure: Optional list of section names (strings) or section dicts
+                       ({"section": name, "bars": count}). If strings are provided,
+                       default bar counts are assigned. If None, uses genre default.
 
         Returns:
             Arrangement dict with per-section instrument patterns
         """
         if HAS_ARRANGEMENT:
             generator = ArrangementGenerator()
+
+            # Convert string list to section dicts if needed
+            structure_dicts = None
+            if structure is not None:
+                structure_dicts = []
+                # Default bar counts by section type
+                default_bars = {
+                    "intro": 4, "verse": 8, "chorus": 8, "bridge": 8,
+                    "solo": 16, "outro": 4, "pre-chorus": 4, "breakdown": 8,
+                    "buildup": 8, "drop": 16, "head": 32, "development": 16,
+                    "climax": 8, "resolution": 8,
+                }
+                for item in structure:
+                    if isinstance(item, str):
+                        # Convert string to dict with default bars
+                        section_name = item.lower()
+                        bars = default_bars.get(section_name, 8)
+                        structure_dicts.append({"section": section_name, "bars": bars})
+                    elif isinstance(item, dict) and "section" in item:
+                        # Already a proper dict
+                        structure_dicts.append(item)
+                    else:
+                        # Unknown format, skip
+                        continue
+
             return generator.generate(
                 emotion=music.emotional_state.primary_emotion,
                 tempo=music.musical_params.tempo_suggested,
-                structure=structure,
+                structure=structure_dicts,
             )
         return {"error": "Arrangement generator not available"}
 
