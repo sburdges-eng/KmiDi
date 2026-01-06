@@ -198,9 +198,13 @@ def run_training(model: str, epochs: int, batch_size: int = 8):
                 print(f"\n⚠️  {health['message']}")
                 process.terminate()
                 wait_for_cooldown()
-                # Restart with smaller batch
-                print(f"🔄 Restarting with batch_size={batch_size // 2}")
-                return run_training(model, epochs, batch_size // 2)
+                # Restart with smaller batch, but clamp to minimum of 1
+                new_batch_size = max(1, batch_size // 2)
+                if new_batch_size == batch_size:
+                    print("❌ Cannot reduce batch_size further (already at minimum)")
+                    return False
+                print(f"🔄 Restarting with batch_size={new_batch_size}")
+                return run_training(model, epochs, new_batch_size)
             elif health["throttle"]:
                 print(f"\n⚡ {health['message']}")
 

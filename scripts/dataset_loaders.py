@@ -152,15 +152,32 @@ class LakhMIDIDataset(Dataset):
 
             # Get all notes from all instruments
             notes = []
+            # For groove prediction, include drum tracks (they define timing/groove)
+            # For melody/harmony tasks, skip drums
+            include_drums = self.task == "groove_prediction"
+
             for instrument in midi.instruments:
-                if not instrument.is_drum:  # Skip drums for melody/harmony
-                    for note in instrument.notes:
-                        notes.append({
-                            'pitch': note.pitch,
-                            'velocity': note.velocity,
-                            'start': note.start,
-                            'duration': note.end - note.start
-                        })
+                if instrument.is_drum and not include_drums:
+                    continue  # Skip drums for melody/harmony tasks
+                for note in instrument.notes:
+                    notes.append({
+                        'pitch': note.pitch,
+                        'velocity': note.velocity,
+                        'start': note.start,
+                        'duration': note.end - note.start
+                    })
+
+            # Fallback: if no pitched notes, try drums anyway for any task
+            if not notes:
+                for instrument in midi.instruments:
+                    if instrument.is_drum:
+                        for note in instrument.notes:
+                            notes.append({
+                                'pitch': note.pitch,
+                                'velocity': note.velocity,
+                                'start': note.start,
+                                'duration': note.end - note.start
+                            })
 
             if not notes:
                 return None

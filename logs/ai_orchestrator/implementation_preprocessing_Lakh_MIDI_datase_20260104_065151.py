@@ -71,38 +71,44 @@ class MIDIProcessor:
     def preprocess_data(self):
         """
         Preprocesses all MIDI files and returns padded sequences for model training.
-        
+
         Returns:
-            tuple: Tuple containing padded sequences for pitches, velocities, and durations.
+            tuple: Tuple containing padded sequences for pitches, velocities, durations, and start_times.
         """
         all_pitches = []
         all_velocities = []
         all_durations = []
+        all_start_times = []
 
         for file_path in self.midi_files:
             midi_data = self.load_midi(file_path)
             features = self.extract_features(midi_data)
-            
+
             all_pitches.append(features['pitches'])
             all_velocities.append(features['velocities'])
             all_durations.append(features['durations'])
+            all_start_times.append(features['start_times'])
 
         # Pad sequences to a fixed length
         max_length = 200  # Based on research findings
-        padded_pitches = pad_sequences(all_pitches, maxlen=max_length, padding='post')
-        padded_velocities = pad_sequences(all_velocities, maxlen=max_length, padding='post')
-        padded_durations = pad_sequences(all_durations, maxlen=max_length, padding='post')
+        padded_pitches = pad_sequences(all_pitches, maxlen=max_length, padding='post', dtype='int32')
+        padded_velocities = pad_sequences(all_velocities, maxlen=max_length, padding='post', dtype='int32')
+        # Durations and start_times are floats (in seconds), preserve precision
+        padded_durations = pad_sequences(all_durations, maxlen=max_length, padding='post', dtype='float32')
+        padded_start_times = pad_sequences(all_start_times, maxlen=max_length, padding='post', dtype='float32')
 
-        return padded_pitches, padded_velocities, padded_durations
+        return padded_pitches, padded_velocities, padded_durations, padded_start_times
 
 # Example usage
 if __name__ == "__main__":
     midi_files = ['path/to/midi1.mid', 'path/to/midi2.mid']  # Replace with actual paths
     processor = MIDIProcessor(midi_files)
-    pitches, velocities, durations = processor.preprocess_data()
+    pitches, velocities, durations, start_times = processor.preprocess_data()
 
     # Example of creating a TensorFlow dataset
-    dataset = tf.data.Dataset.from_tensor_slices((pitches, velocities, durations))
-    dataset = dataset.batch(32).shuffle(buffer_size=1000)
+    # Shuffle before batching to randomize individual samples, not batches
+    # Include start_times for rhythm/timing learning
+    dataset = tf.data.Dataset.from_tensor_slices((pitches, velocities, durations, start_times))
+    dataset = dataset.shuffle(buffer_size=1000).batch(32)
 
     # Now, this dataset can be used to train models like melody_transformer or groove_predictor
