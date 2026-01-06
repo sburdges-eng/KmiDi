@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Penta-Core MCP Server
+Penta-Core Server
 
-An MCP server that aggregates the top 5 AI platforms into a single "Swarm" toolset.
+An integration service that aggregates the top 5 AI platforms into a single unified toolset.
 Uses FastMCP for the server architecture.
 
 Run with:
@@ -12,6 +12,7 @@ Run with:
 """
 
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -22,14 +23,14 @@ except ImportError:  # pragma: no cover - fallback for older installs
     from fastmcp import FastMCP
 
 # Initialize environment variables
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env", override=False)
 
 # Create the FastMCP server instance
 mcp = FastMCP(
-    name="penta-core",
+    name="Penta-Core",
     instructions=(
-        "Penta-Core: A swarm of 5 specialized AI agents for comprehensive "
-        "development assistance.\n\n"
+        "Penta-Core: Five specialized AI agents for comprehensive development assistance.\n\n"
         "Available specialists:\n"
         "- consult_architect: Systems architecture and design patterns (OpenAI GPT-4o)\n"
         "- consult_developer: Clean code, safety, and refactoring (Claude 3.5 Sonnet)\n"
