@@ -1,4 +1,6 @@
 #include "penta/groove/OnsetDetector.h"
+#include "penta/common/SIMDKernels.h"
+#include <juce_dsp/juce_dsp.h>
 #include <algorithm>
 #include <cmath>
 #include <numeric>
@@ -9,9 +11,15 @@ namespace penta::groove
     OnsetDetector::OnsetDetector(const Config &config)
         : config_(config), onsetDetected_(false), onsetStrength_(0.0f), onsetPosition_(0), lastOnsetPosition_(0), sampleCounter_(0)
     {
+        // Initialize JUCE FFT (requires power-of-2 size)
+        int fftOrder = static_cast<int>(std::log2(config_.fftSize));
+        fft_ = std::make_unique<juce::dsp::FFT>(fftOrder);
+        
         // Pre-allocate buffers
-        fftBuffer_.resize(config_.fftSize);
-        spectrum_.resize(config_.fftSize / 2 + 1);
+        // JUCE FFT uses interleaved complex format: [real0, imag0, real1, imag1, ...]
+        fftBuffer_.resize(config_.fftSize * 2);  // Real + imag for each sample
+        windowedBuffer_.resize(config_.fftSize);  // Pre-allocated buffer for windowed input (RT-safe)
+        spectrum_.resize(config_.fftSize / 2 + 1);  // Magnitude spectrum
         prevSpectrum_.resize(config_.fftSize / 2 + 1);
         fluxHistory_.resize(100);
 
@@ -56,61 +64,69 @@ namespace penta::groove
 
     void OnsetDetector::computeSpectralFlux(const float *buffer, size_t frames) noexcept
     {
-        // Simple energy-based onset detection (spectral flux approximation)
-        // This is a simplified version that doesn't require FFT library
-        // For production, would use actual FFT (e.g., FFTW, pffft, or Accelerate framework)
-
-        // Calculate energy in frequency bands using filterbank approach
-        const size_t numBands = spectrum_.size();
-        const size_t numBandsUsed = std::min(numBands, frames);
-        std::fill(spectrum_.begin(), spectrum_.end(), 0.0f);
-
-        // Divide audio into frequency bands and compute energy
-        // This is a simplified filterbank that approximates spectral content
-        for (size_t band = 0; band < numBandsUsed; ++band)
+        // FFT-based spectral flux detection using juce::dsp::FFT
+        
+        const size_t fftSize = config_.fftSize;
+        const size_t numBins = spectrum_.size();
+        
+        // Zero-pad or truncate input to FFT size (RT-safe: using pre-allocated buffer)
+        std::fill(windowedBuffer_.begin(), windowedBuffer_.end(), 0.0f);
+        std::fill(fftBuffer_.begin(), fftBuffer_.end(), 0.0f);
+        
+        size_t copySize = std::min(frames, fftSize);
+        
+        // Copy input to pre-allocated windowed buffer
+        for (size_t i = 0; i < copySize; ++i)
         {
-            float bandEnergy = 0.0f;
-            size_t samplesPerBand = std::max(size_t(1), frames / numBandsUsed);
-            size_t start = band * samplesPerBand;
-            size_t end = std::min(start + samplesPerBand, frames);
-
-            for (size_t j = start; j < end; ++j)
-            {
-                // Apply the analysis window across the whole hop so we don't
-                // accidentally apply window_[0] to every sample when samplesPerBand==1.
-                // (When the spectrum band count matches the frame count, each band is
-                // effectively a single sample; we still want the window to vary with j.)
-                size_t windowIdx = (j * window_.size()) / frames;
-                windowIdx = std::min(windowIdx, window_.size() - 1);
-
-                float sample = buffer[j] * window_[windowIdx];
-                bandEnergy += sample * sample;
-            }
-
-            spectrum_[band] = std::sqrt(bandEnergy / samplesPerBand);
+            windowedBuffer_[i] = buffer[i];
         }
-
-        // Compute spectral flux: sum of positive differences between frames
-        float flux = 0.0f;
-        for (size_t i = 0; i < numBandsUsed; ++i)
+        
+        // Apply window using SIMD-optimized kernel (in-place)
+        SIMDKernels::applyWindow(windowedBuffer_.data(), window_.data(), fftSize);
+        
+        // Copy windowed buffer to FFT buffer (interleaved complex format)
+        for (size_t i = 0; i < fftSize; ++i)
         {
-            float diff = spectrum_[i] - prevSpectrum_[i];
-            if (diff > 0.0f)
-            {
-                flux += diff;
-            }
+            fftBuffer_[i * 2] = windowedBuffer_[i];      // Real part
+            fftBuffer_[i * 2 + 1] = 0.0f;               // Imaginary part (zero for real input)
         }
-
-        // Normalize flux
-        if (numBandsUsed > 0)
+        
+        // Perform FFT (real-to-complex)
+        fft_->performRealOnlyForwardTransform(fftBuffer_.data(), false);
+        
+        // Extract magnitude spectrum from FFT output
+        // JUCE FFT output format: [DC, real1, imag1, real2, imag2, ..., Nyquist]
+        
+        // DC component (bin 0)
+        spectrum_[0] = std::abs(fftBuffer_[0]);
+        
+        // Positive frequencies (bins 1 to Nyquist-1)
+        for (size_t i = 1; i < numBins - 1; ++i)
         {
-            flux /= static_cast<float>(numBandsUsed);
+            float real = fftBuffer_[i * 2];
+            float imag = fftBuffer_[i * 2 + 1];
+            spectrum_[i] = std::sqrt(real * real + imag * imag);
         }
-
+        
+        // Nyquist frequency (last bin)
+        if (numBins > 0)
+        {
+            spectrum_[numBins - 1] = std::abs(fftBuffer_[1]);
+        }
+        
+        // Compute spectral flux using SIMD-optimized kernel
+        float flux = SIMDKernels::spectralFlux(spectrum_.data(), prevSpectrum_.data(), numBins);
+        
+        // Normalize flux by number of bins
+        if (numBins > 0)
+        {
+            flux /= static_cast<float>(numBins);
+        }
+        
         // Update flux history (rolling buffer)
         std::rotate(fluxHistory_.begin(), fluxHistory_.begin() + 1, fluxHistory_.end());
         fluxHistory_.back() = flux;
-
+        
         // Store current spectrum for next frame
         prevSpectrum_ = spectrum_;
     }

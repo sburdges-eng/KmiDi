@@ -1,7 +1,9 @@
 #pragma once
 
 #include "penta/common/RTTypes.h"
+#include <juce_dsp/juce_dsp.h>
 #include <vector>
+#include <memory>
 
 namespace penta::groove
 {
@@ -56,8 +58,10 @@ namespace penta::groove
 
         Config config_;
 
+        std::unique_ptr<juce::dsp::FFT> fft_;
         std::vector<float> window_;
-        std::vector<float> fftBuffer_;
+        std::vector<float> windowedBuffer_;  // Pre-allocated buffer for windowed input (RT-safe)
+        std::vector<float> fftBuffer_;  // Interleaved complex format for JUCE FFT
         std::vector<float> spectrum_;
         std::vector<float> prevSpectrum_;
         std::vector<float> fluxHistory_;

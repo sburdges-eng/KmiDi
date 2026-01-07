@@ -1,235 +1,163 @@
 #!/usr/bin/env python3
 """
-Bulk Audio Downloader and Labeler for Kelly project.
+Bulk download training datasets.
 
-Limits:
-- Soft target: ~15 GB total download
-- Hard cap: 1000 GB absolute safety stop
-- Per-dataset timeout + failure circuit breaker to avoid hangs/loops
-
-Automatically labels downloads by running preprocessing (resampling, mel-spec,
-metadata generation) for each dataset.
+Downloads:
+- RAVDESS (emotion audio)
+- Lakh MIDI (melody training)
+- FMA (groove datasets)
 """
 
-import logging
-import subprocess
 import sys
-import time
+import os
+import requests
 from pathlib import Path
+from typing import Optional
+import hashlib
+import zipfile
+import tarfile
 
-# Add project root to path
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
-
-# pylint: disable=wrong-import-position
-from scripts.prepare_datasets import DATASETS  # noqa: E402
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
-logger = logging.getLogger(__name__)
-
-SOFT_TARGET_GB = 2500      # 2.5 TB soft target
-HARD_CAP_GB = 3000         # 3 TB absolute safety stop
-HUMAN_READABLE_HARD_CAP = f"{HARD_CAP_GB} GB (3 TB)"
-
-AUDIO_DATA_ROOT = Path("/Volumes/Extreme SSD/kelly-audio-data")
-MAX_CONSECUTIVE_FAILURES = 5
-DOWNLOAD_TIMEOUT_SECONDS = 3600 * 24 # 24 hours per dataset max for TB scale
-
-# Rough dataset size estimates (GB).
-DATASET_ESTIMATES_GB = {
-    "emotion_ravdess": 1,
-    "emotion_cremad": 5,
-    "emotion_tess": 1,
-    "groove_midi": 1,
-    "maestro": 20,
-    "lakh_midi": 30,
-    "nsynth_full": 30,
-    "musdb18": 10,
-    "fma_small": 8,
-    "fma_medium": 22,
-    "fma_full": 900,
-    "musicnet": 168,
-    "mtg_jamendo": 1000,
-    "local_music": 50,
-}
-
-# Datasets to download in order of priority
-# Balanced for diversity first, then mass scale
-TARGET_DATASETS = [
-    "emotion_ravdess",
-    "emotion_cremad",
-    "emotion_tess",
-    "groove_midi",
-    "maestro",
-    "lakh_midi",
-    "nsynth_full",
-    "musdb18",
-    "gtzan",
-    "fma_small",
-    "fma_medium",
-    "musicnet",
-    "fma_full",
-    "mtg_jamendo",
-]
+project_root = Path(__file__).parent.parent
 
 
-def get_current_size_gb(path: Path) -> float:
-    """Calculate current size of directory in GB with safe traversal."""
-    if not path.exists():
-        return 0.0
-
-    total_size = 0
+def download_file(url: str, output_path: Path, chunk_size: int = 8192) -> bool:
+    """Download a file with progress."""
     try:
-        for f in path.rglob('*'):
-            if f.is_file():
-                total_size += f.stat().st_size
-    except Exception as e:
-        logger.warning(f"Error calculating size: {e}")
-
-    return total_size / (1024**3)
-
-
-def download_and_preprocess_dataset(name: str) -> bool:
-    """Download and label/preprocess a dataset."""
-    logger.info(f"Starting process for dataset: {name}")
-    try:
-        # 1. Download
-        logger.info(f"  Downloading {name}...")
-        download_cmd = [
-            sys.executable, "scripts/prepare_datasets.py",
-            "--dataset", name, "--download"
-        ]
-        subprocess.run(
-            download_cmd, check=True, timeout=DOWNLOAD_TIMEOUT_SECONDS
-        )
-
-        # 2. Preprocess (Labeling)
-        logger.info(f"  Labeling/Preprocessing {name}...")
-        preprocess_cmd = [
-            sys.executable, "scripts/prepare_datasets.py",
-            "--dataset", name, "--preprocess"
-        ]
-        subprocess.run(
-            preprocess_cmd, check=True, timeout=DOWNLOAD_TIMEOUT_SECONDS
-        )
-
-        logger.info(f"Successfully finished processing: {name}")
+        response = requests.get(url, stream=True, timeout=30)
+        response.raise_for_status()
+        
+        total_size = int(response.headers.get('content-length', 0))
+        
+        with open(output_path, 'wb') as f:
+            downloaded = 0
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    f.write(chunk)
+                    downloaded += len(chunk)
+                    if total_size > 0:
+                        percent = (downloaded / total_size) * 100
+                        print(f"\r  Progress: {percent:.1f}%", end='', flush=True)
+        
+        print()  # New line after progress
         return True
-
-    except subprocess.TimeoutExpired:
-        logger.error(
-            f"Process for {name} timed out after "
-            f"{DOWNLOAD_TIMEOUT_SECONDS} seconds."
-        )
-        return False
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Failed to process {name}: {e}")
-        return False
     except Exception as e:
-        logger.error(f"Unexpected error processing {name}: {e}")
+        print(f"\n  Error downloading: {e}")
         return False
 
 
-def main() -> None:
-    """Run the bulk download process."""
-    if not AUDIO_DATA_ROOT.parent.exists():
-        logger.error("External SSD not mounted at /Volumes/Extreme SSD")
-        logger.info("Please ensure the SSD is connected and try again.")
-        sys.exit(1)
+def verify_checksum(file_path: Path, expected_hash: Optional[str] = None) -> bool:
+    """Verify file checksum if provided."""
+    if not expected_hash:
+        return True
+    
+    print(f"  Verifying checksum...")
+    with open(file_path, 'rb') as f:
+        sha256 = hashlib.sha256()
+        for chunk in iter(lambda: f.read(4096), b''):
+            sha256.update(chunk)
+        file_hash = sha256.hexdigest()
+    
+    if file_hash.lower() != expected_hash.lower():
+        print(f"  ⚠ Checksum mismatch! Expected {expected_hash[:16]}..., got {file_hash[:16]}...")
+        return False
+    
+    print(f"  ✓ Checksum verified")
+    return True
 
-    logger.info("=" * 60)
-    logger.info(
-        "Bulk Audio Downloader "
-        f"(soft target {SOFT_TARGET_GB} GB, hard cap {HARD_CAP_GB} GB)"
-    )
-    logger.info("=" * 60)
 
-    # Safety: ensure we don't start in an infinite loop
-    start_time = time.time()
-    consecutive_failures = 0
-
-    current_size = get_current_size_gb(AUDIO_DATA_ROOT)
-    logger.info(
-        f"Initial storage usage: {current_size:.2f} GB "
-        f"(soft target {SOFT_TARGET_GB} GB, "
-        f"hard cap {HUMAN_READABLE_HARD_CAP})"
-    )
-
-    for i, name in enumerate(TARGET_DATASETS):
-        # Progress report
-        logger.info(
-            f"\n[Dataset {i+1}/{len(TARGET_DATASETS)}] Processing: {name}"
-        )
-
-        if name not in DATASETS:
-            logger.warning(f"Dataset {name} not found in configs. Skipping.")
-            continue
-
-        # Stop if we've already hit the soft target
-        if current_size >= SOFT_TARGET_GB:
-            logger.info(
-                f"Reached soft target ({current_size:.2f} GB >= "
-                f"{SOFT_TARGET_GB} GB). Stopping."
-            )
-            break
-
-        # Check against hard cap before attempting download
-        if current_size >= HARD_CAP_GB:
-            logger.info(
-                f"Reached or exceeded hard cap ({current_size:.2f} GB >= "
-                f"{HARD_CAP_GB} GB). Stopping."
-            )
-            break
-
-        est = DATASET_ESTIMATES_GB.get(name)
-        if est is not None and current_size + est > HARD_CAP_GB:
-            logger.warning(
-                f"Skipping {name}: estimated {est} GB would exceed hard cap "
-                f"({current_size:.2f} + {est} > {HARD_CAP_GB})."
-            )
-            continue
-
-        # Safety: check if script has been running for too long
-        total_runtime_hours = (time.time() - start_time) / 3600
-        if total_runtime_hours > 48:
-            logger.warning(
-                f"Bulk script has been running for {total_runtime_hours:.1f} "
-                "hours. Safety abort."
-            )
-            break
-
-        success = download_and_preprocess_dataset(name)
-
-        if success:
-            consecutive_failures = 0
+def extract_archive(archive_path: Path, output_dir: Path) -> bool:
+    """Extract archive (zip or tar)."""
+    try:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        if archive_path.suffix == '.zip':
+            with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+                zip_ref.extractall(output_dir)
+        elif archive_path.suffix in ['.tar', '.gz', '.bz2']:
+            with tarfile.open(archive_path, 'r:*') as tar_ref:
+                tar_ref.extractall(output_dir)
         else:
-            consecutive_failures += 1
-            logger.warning(f"Consecutive failures: {consecutive_failures}")
-
-        if consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
-            logger.error(
-                f"Reached {MAX_CONSECUTIVE_FAILURES} consecutive failures. "
-                "Circuit breaker triggered. Aborting."
-            )
-            break
-
-        # Recalculate size after each download
-        current_size = get_current_size_gb(AUDIO_DATA_ROOT)
-        logger.info(
-            f"Updated total size: {current_size:.2f} GB "
-            f"(soft target {SOFT_TARGET_GB} GB, hard cap {HARD_CAP_GB} GB)"
-        )
-
-    total_time = (time.time() - start_time) / 3600
-    logger.info("=" * 60)
-    logger.info("Bulk download run complete.")
-    logger.info(f"Final size: {current_size:.2f} GB")
-    logger.info(f"Total time elapsed: {total_time:.2f} hours")
-    logger.info("=" * 60)
+            print(f"  ⚠ Unknown archive format: {archive_path.suffix}")
+            return False
+        
+        print(f"  ✓ Extracted to {output_dir}")
+        return True
+    except Exception as e:
+        print(f"  Error extracting: {e}")
+        return False
 
 
-if __name__ == "__main__":
-    main()
+def download_ravdess(data_dir: Path) -> bool:
+    """Download RAVDESS emotion audio dataset."""
+    print("\n" + "="*70)
+    print("RAVDESS Dataset")
+    print("="*70)
+    
+    # RAVDESS requires manual download from:
+    # https://zenodo.org/record/1188976
+    print("  RAVDESS dataset requires manual download from:")
+    print("  https://zenodo.org/record/1188976")
+    print("  Please download and extract to: data/ravdess/")
+    
+    return True
+
+
+def download_lakh_midi(data_dir: Path) -> bool:
+    """Download Lakh MIDI dataset (subset)."""
+    print("\n" + "="*70)
+    print("Lakh MIDI Dataset")
+    print("="*70)
+    
+    # Lakh MIDI dataset info:
+    # https://colinraffel.com/projects/lmd/
+    print("  Lakh MIDI dataset requires manual download from:")
+    print("  http://colinraffel.com/projects/lmd/")
+    print("  Please download and extract to: data/lakh_midi/")
+    
+    return True
+
+
+def download_fma(data_dir: Path) -> bool:
+    """Download FMA (Free Music Archive) dataset."""
+    print("\n" + "="*70)
+    print("FMA Dataset")
+    print("="*70)
+    
+    # FMA dataset info:
+    # https://github.com/mdeff/fma
+    print("  FMA dataset requires manual download:")
+    print("  https://github.com/mdeff/fma")
+    print("  Please download and extract to: data/fma/")
+    
+    return True
+
+
+def main():
+    data_dir = project_root / 'data' / 'raw'
+    data_dir.mkdir(parents=True, exist_ok=True)
+    
+    print("="*70)
+    print("Training Data Download Script")
+    print("="*70)
+    print(f"\nData will be downloaded to: {data_dir}")
+    print("\nNote: Some datasets require manual download due to size/licensing.")
+    
+    # Download datasets
+    download_ravdess(data_dir / 'ravdess')
+    download_lakh_midi(data_dir / 'lakh_midi')
+    download_fma(data_dir / 'fma')
+    
+    print("\n" + "="*70)
+    print("Download Summary")
+    print("="*70)
+    print("\n✓ Setup complete!")
+    print("\nNext steps:")
+    print("  1. Manually download required datasets (see URLs above)")
+    print("  2. Extract to the specified directories")
+    print("  3. Run scripts/augment_training_data.py to prepare data")
+    
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

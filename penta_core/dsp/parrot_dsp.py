@@ -14,6 +14,7 @@ from typing import List, Dict, Optional, Tuple, Callable
 from enum import Enum
 import math
 import random
+import numpy as np
 
 
 class PlaybackMode(Enum):
@@ -208,6 +209,24 @@ class PitchShifter:
             return self._simple_shift(samples, semitones)
         elif self.algorithm == PitchAlgorithm.GRANULAR:
             return self._granular_shift(samples, semitones)
+        elif self.algorithm == PitchAlgorithm.PHASE_VOCODER:
+            return phase_vocoder_pitch_shift(
+                samples,
+                semitones,
+                frame_size=2048,
+                hop_size=512,
+                sample_rate=self.sample_rate,
+                preserve_formants=False,
+            )
+        elif self.algorithm == PitchAlgorithm.FORMANT:
+            return phase_vocoder_pitch_shift(
+                samples,
+                semitones,
+                frame_size=2048,
+                hop_size=512,
+                sample_rate=self.sample_rate,
+                preserve_formants=True,
+            )
         else:
             return self._granular_shift(samples, semitones)
 
@@ -480,6 +499,7 @@ def time_stretch(
     factor: float,
     grain_size_ms: float = 50.0,
     sample_rate: float = 44100.0,
+    use_phase_vocoder: bool = False,
 ) -> List[float]:
     """
     Time stretch audio without changing pitch.
@@ -487,12 +507,20 @@ def time_stretch(
     Args:
         samples: Input samples
         factor: Stretch factor (2.0 = twice as long)
-        grain_size_ms: Grain size
+        grain_size_ms: Grain size (for granular method)
         sample_rate: Sample rate
+        use_phase_vocoder: If True, use phase vocoder (better quality, slower)
 
     Returns:
         Time-stretched samples
     """
+    if use_phase_vocoder:
+        # Use phase vocoder for better quality
+        frame_size = 2048
+        hop_size = 512
+        return phase_vocoder_time_stretch(samples, factor, frame_size, hop_size, sample_rate)
+    
+    # Original granular method
     grain_samples = int(grain_size_ms * sample_rate / 1000.0)
     overlap = 0.5
     hop_in = int(grain_samples * (1 - overlap))
