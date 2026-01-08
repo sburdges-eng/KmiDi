@@ -393,5 +393,158 @@
         "source": "data/emotion_thesaurus/"
       }
     }
-  ]
+  ],
+  "bestmodel": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 18656,
+    "checkpoint_epoch": 10,
+    "file_size_mb": 0.22,
+    "validated": true
+  },
+  "checkpointepoch0001": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 403264,
+    "checkpoint_epoch": 1,
+    "file_size_mb": 4.63,
+    "validated": true
+  },
+  "checkpointepoch0002": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 403264,
+    "checkpoint_epoch": 2,
+    "file_size_mb": 4.63,
+    "validated": true
+  },
+  "checkpointepoch0003": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 18656,
+    "checkpoint_epoch": 3,
+    "file_size_mb": 0.22,
+    "validated": true
+  },
+  "checkpointepoch0004": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 18656,
+    "checkpoint_epoch": 4,
+    "file_size_mb": 0.22,
+    "validated": true
+  },
+  "checkpointepoch0005": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 18656,
+    "checkpoint_epoch": 5,
+    "file_size_mb": 0.22,
+    "validated": true
+  },
+  "checkpointepoch0006": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 18656,
+    "checkpoint_epoch": 6,
+    "file_size_mb": 0.22,
+    "validated": true
+  },
+  "checkpointepoch0007": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 18656,
+    "checkpoint_epoch": 7,
+    "file_size_mb": 0.22,
+    "validated": true
+  },
+  "checkpointepoch0008": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 18656,
+    "checkpoint_epoch": 8,
+    "file_size_mb": 0.22,
+    "validated": true
+  },
+  "checkpointepoch0009": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 18656,
+    "checkpoint_epoch": 9,
+    "file_size_mb": 0.22,
+    "validated": true
+  },
+  "checkpointepoch0010": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 18656,
+    "checkpoint_epoch": 10,
+    "file_size_mb": 0.22,
+    "validated": true
+  },
+  "dynamicsengine": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 13520,
+    "checkpoint_epoch": 1,
+    "file_size_mb": 0.16,
+    "validated": true
+  },
+  "emotionrecognizer": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 403264,
+    "checkpoint_epoch": 1,
+    "file_size_mb": 4.63,
+    "validated": true
+  },
+  "groovepredictor": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 18656,
+    "checkpoint_epoch": 10,
+    "file_size_mb": 0.22,
+    "validated": true
+  },
+  "harmonypredictor": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 74176,
+    "checkpoint_epoch": 3,
+    "file_size_mb": 0.86,
+    "validated": true
+  },
+  "latestcheckpoint": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 403264,
+    "checkpoint_epoch": 2,
+    "file_size_mb": 4.63,
+    "validated": true
+  },
+  "melodytransformer": {
+    "status": "integrated",
+    "source": "RECOVERY_OPS",
+    "architecture": "unknown",
+    "num_parameters": 641664,
+    "checkpoint_epoch": 10,
+    "file_size_mb": 7.36,
+    "validated": true
+  }
 }

@@ -26,21 +26,10 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # These settings MUST be configured before any targets are created to apply effectively.
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum macOS version")
-    # Ensure availability macros are available before system headers
-    # Use numeric value (101200 = 10.12 * 10000) since macro constants aren't available at CMake time
-    # MAX_ALLOWED defaults to SDK version if not set, so we only set MIN_REQUIRED
-    # Note: CMAKE_OSX_DEPLOYMENT_TARGET also sets this automatically, but we set it explicitly
-    # to ensure it's available before JUCE headers are processed
-    #
-    # For SDK 26.2+, we define simple (non-function) availability macros to empty.
-    # Function-style macros (__API_AVAILABLE, etc.) are defined in juce_StandardHeader.h
-    # because CMake can't pass function-style preprocessor definitions on the command line.
+    # Set minimum required version for availability macros
+    # The SDK's Availability.h handles all availability attributes correctly
     add_compile_definitions(
         MAC_OS_X_VERSION_MIN_REQUIRED=101200
-        __CLOCK_AVAILABILITY=
-        __WATCHOS_PROHIBITED=
-        __TVOS_PROHIBITED=
-        __IOS_PROHIBITED=
     )
 endif()
 find_package(Qt6 COMPONENTS Core Widgets REQUIRED)

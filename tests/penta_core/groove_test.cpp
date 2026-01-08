@@ -368,7 +368,7 @@ TEST_F(GrooveEngineTest, OnsetHistoryIsBounded)
 class GroovePerformanceBenchmark : public ::testing::Test
 {
 protected:
-    OnsetDetector detector;
+    std::unique_ptr<OnsetDetector> detector;
     std::array<float, 512> testSignal;
 
     void SetUp() override
@@ -379,7 +379,7 @@ protected:
         cfg.hopSize = 512;
         cfg.threshold = 0.01f;
         cfg.minTimeBetweenOnsets = 0.0f;
-        detector = OnsetDetector(cfg);
+        detector = std::make_unique<OnsetDetector>(cfg);
 
         // Generate test signal with onset
         testSignal.fill(0.0f);
@@ -399,7 +399,7 @@ TEST_F(GroovePerformanceBenchmark, DISABLED_OnsetDetectionUnder150Microseconds)
 
     for (int i = 0; i < iterations; ++i)
     {
-        detector.process(testSignal.data(), 512);
+        detector->process(testSignal.data(), 512);
     }
 
     auto end = std::chrono::high_resolution_clock::now();

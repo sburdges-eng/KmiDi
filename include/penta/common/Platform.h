@@ -3,51 +3,22 @@
 /**
  * Platform compatibility layer for Penta-Core
  * Handles macOS SDK compatibility issues and cross-platform definitions
+ *
+ * IMPORTANT: This file MUST be included before any other system headers!
  */
 
-// macOS SDK 26.2+ compatibility fix
-// Must be included before any system headers to avoid __CLOCK_AVAILABILITY issues
-#if (defined(__APPLE__) || defined(__APPLE_CPP__) || defined(__APPLE_CC__))
- #ifndef TARGET_OS_MAC
-  #include <TargetConditionals.h>
- #endif
+// ============================================================================
+// macOS SDK availability macro handling
+// Include system Availability.h FIRST to properly define all availability macros
+// before any other system headers are included
+// ============================================================================
+#if defined(__APPLE__) || defined(__APPLE_CPP__) || defined(__APPLE_CC__)
 
- // Define SDK compatibility macros before system headers
- #ifndef __CLOCK_AVAILABILITY
-  #define __CLOCK_AVAILABILITY
- #endif
- #ifndef __API_AVAILABLE
-  #define __API_AVAILABLE(...)
- #endif
- #ifndef __API_DEPRECATED
-  #define __API_DEPRECATED(...)
- #endif
- #ifndef __API_UNAVAILABLE
-  #define __API_UNAVAILABLE(...)
- #endif
- #ifndef __OSX_AVAILABLE
-  #define __OSX_AVAILABLE(...)
- #endif
- #ifndef __OSX_AVAILABLE_STARTING
-  #define __OSX_AVAILABLE_STARTING(...)
- #endif
- #ifndef __WATCHOS_PROHIBITED
-  #define __WATCHOS_PROHIBITED
- #endif
- #ifndef __TVOS_PROHIBITED
-  #define __TVOS_PROHIBITED
- #endif
- #ifndef __IOS_AVAILABLE
-  #define __IOS_AVAILABLE(...)
- #endif
- #ifndef __TVOS_AVAILABLE
-  #define __TVOS_AVAILABLE(...)
- #endif
- #ifndef __WATCHOS_AVAILABLE
-  #define __WATCHOS_AVAILABLE(...)
- #endif
-#endif
+#include <Availability.h>
+#include <AvailabilityMacros.h>
+#include <TargetConditionals.h>
 
-// Standard includes that are safe after the above definitions
-#include <cstdint>
+#endif // __APPLE__
+
+// Standard includes - safe after the above definitions
 #include <cstddef>
