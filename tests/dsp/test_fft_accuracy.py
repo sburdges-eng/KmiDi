@@ -89,10 +89,24 @@ class TestFFTAccuracy:
         energy_time = np.sum(signal ** 2)
         
         # Energy in frequency domain (Parseval's theorem for rfft)
+        # For rfft, we need to account for the one-sided spectrum:
+        # - DC and Nyquist are real (if present)
+        # - Other bins are complex but appear once in rfft
         spectrum = np.fft.rfft(signal)
-        energy_freq = np.sum(np.abs(spectrum) ** 2) / len(signal)
+        n = len(signal)
         
-        # Should match (Parseval's theorem) - allow larger tolerance for numerical precision
+        # Parseval's theorem for rfft: sum(|x[n]|^2) = (1/N) * (|X[0]|^2 + 2*sum(|X[k]|^2 for k=1..N/2-1) + |X[N/2]|^2)
+        # Simplified: sum(|X[k]|^2) * 2 / N, but DC and Nyquist count once
+        # Actually, numpy rfft normalization: energy = (2/N) * sum(|X[k]|^2) for k>=1, plus |X[0]|^2/N
+        # More precisely: energy_freq = (|X[0]|^2 + 2*sum(|X[1:-1]|^2) + |X[-1]|^2) / N
+        if n % 2 == 0:
+            # Even N: Nyquist exists
+            energy_freq = (np.abs(spectrum[0])**2 + 2*np.sum(np.abs(spectrum[1:-1])**2) + np.abs(spectrum[-1])**2) / n
+        else:
+            # Odd N: No Nyquist
+            energy_freq = (np.abs(spectrum[0])**2 + 2*np.sum(np.abs(spectrum[1:])**2)) / n
+        
+        # Should match (Parseval's theorem) - allow tolerance for numerical precision
         error = abs(energy_time - energy_freq) / max(energy_time, 1e-10)
         assert error < 0.1, \
             f"Energy not preserved: time={energy_time}, freq={energy_freq}, error={error}"

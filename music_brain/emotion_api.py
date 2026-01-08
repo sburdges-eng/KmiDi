@@ -53,6 +53,11 @@ from music_brain.production.emotion_production import (
 )
 from music_brain.production.dynamics_engine import DynamicsEngine
 from music_brain.production.drum_humanizer import DrumHumanizer
+from music_brain.cultural.cross_cultural_music import (
+    CrossCulturalMusicMapper,
+    MusicSystem,
+    CulturalScale,
+)
 from music_brain.groove.groove_engine import GrooveSettings, settings_from_intent
 
 # New multimodal emotion components
@@ -190,6 +195,7 @@ class MusicBrain:
         self.production_mapper = EmotionProductionMapper()
         self.dynamics_engine = DynamicsEngine()
         self.drum_humanizer = self._build_humanizer()
+        self.cultural_mapper = CrossCulturalMusicMapper()
         self._emotion_keywords = self._build_emotion_keywords()
 
         # Initialize neural emotion components
@@ -768,6 +774,38 @@ class MusicBrain:
         """Get available drum humanizer style presets."""
         return list(self.drum_humanizer._style_presets.keys())
 
+    def get_cultural_scale_suggestions(
+        self,
+        emotion: str,
+        intensity: float = 0.5,
+        preferred_system: Optional[str] = None
+    ) -> Dict[str, Optional[CulturalScale]]:
+        """
+        Get cultural scale suggestions for an emotion.
+        
+        Args:
+            emotion: Emotion name (e.g., "sad", "happy", "calm")
+            intensity: Emotion intensity (0.0-1.0)
+            preferred_system: Optional preferred system ("raga", "maqam", "pentatonic")
+            
+        Returns:
+            Dictionary mapping system names to CulturalScale objects
+        """
+        if preferred_system:
+            system_map = {
+                "raga": MusicSystem.RAGA,
+                "maqam": MusicSystem.MAQAM,
+                "pentatonic": MusicSystem.PENTATONIC,
+            }
+            system = system_map.get(preferred_system.lower())
+            if system:
+                scale = self.cultural_mapper.get_cultural_scale_for_emotion(
+                    emotion, system, intensity
+                )
+                return {preferred_system.lower(): scale}
+        
+        return self.cultural_mapper.get_all_systems_for_emotion(emotion, intensity)
+
     def get_capabilities(self) -> Dict[str, bool]:
         """Get available API capabilities."""
         return {
@@ -777,6 +815,7 @@ class MusicBrain:
             "suggestions": HAS_SUGGESTIONS,
             "arrangement": HAS_ARRANGEMENT,
             "dynamics_engine": True,
+            "cross_cultural_music": True,
             "drum_humanizer": True,
             "device": self._device,
         }

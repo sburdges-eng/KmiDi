@@ -3,6 +3,10 @@ from pathlib import Path
 
 import pytest
 
+# Set matplotlib backend to non-interactive for testing
+import matplotlib
+matplotlib.use('Agg')
+
 api_module = pytest.importorskip("music_brain.api")
 TestClient = pytest.importorskip("fastapi.testclient").TestClient
 

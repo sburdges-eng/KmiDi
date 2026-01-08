@@ -32,11 +32,15 @@ except ImportError:
 
 # Import music_brain API
 try:
-    from music_brain.api import api as music_api
-    from music_brain.api import EMOTIONAL_PRESETS
+    from music_brain.emotion_api import MusicBrain
+    from music_brain.data.emotional_mapping import EMOTIONAL_PRESETS
+    from music_brain.structure.comprehensive_engine import TherapySession
     MUSIC_BRAIN_AVAILABLE = True
 except ImportError:
     MUSIC_BRAIN_AVAILABLE = False
+    MusicBrain = None
+    TherapySession = None
+    EMOTIONAL_PRESETS = {}
 
 # Configure logging
 logging.basicConfig(
@@ -163,13 +167,9 @@ async def generate_music(request: Request, generate_request: GenerateRequest):
             # Use bpm as proxy for motivation
             motivation = max(1, min(10, int(intent.technical.bpm / 20)))
         
-        # Generate music
-        result = music_api.therapy_session(
-            text=intent.emotional_intent,
-            motivation=motivation,
-            chaos_tolerance=chaos,
-            output_midi=None,
-        )
+        # Generate music using MusicBrain API
+        brain = MusicBrain(use_neural=False)
+        result = brain.generate_from_text(intent.emotional_intent)
         
         return {
             "status": "success",

@@ -11,6 +11,13 @@ import importlib
 import sys
 from pathlib import Path
 
+# Set matplotlib to non-interactive backend for testing (prevents GUI errors)
+try:
+    import matplotlib
+    matplotlib.use('Agg')  # Use non-interactive backend
+except ImportError:
+    pass  # matplotlib not available
+
 # Ensure this repository's root is first on sys.path
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:

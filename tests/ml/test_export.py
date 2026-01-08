@@ -168,7 +168,7 @@ class TestRTNeuralExport:
 class TestONNXExport:
     """Test ONNX export (if available)."""
     
-    @pytest.mark.skipif(not torch.onnx.is_available(), reason="ONNX export not available")
+    @pytest.mark.skipif(not hasattr(torch.onnx, 'export'), reason="ONNX export not available")
     def test_onnx_export_succeeds(self, loaded_model, tmp_path):
         """Test that ONNX export completes (may fail for some models)."""
         model, config, metadata = loaded_model
@@ -189,7 +189,7 @@ class TestONNXExport:
             # ONNX export may fail for complex models - mark as skip rather than fail
             pytest.skip(f"ONNX export failed (expected for some models): {e}")
     
-    @pytest.mark.skipif(not torch.onnx.is_available(), reason="ONNX export not available")
+    @pytest.mark.skipif(not hasattr(torch.onnx, 'export'), reason="ONNX export not available")
     def test_onnx_file_valid(self, loaded_model, tmp_path):
         """Test that exported ONNX file is valid."""
         try:

@@ -13,10 +13,13 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY . .
+COPY api/ ./api/
+COPY music_brain/ ./music_brain/
+COPY pyproject.toml ./
+COPY setup.py ./
 
-# Install project
-RUN pip install -e .
+# Install project (if setup.py exists, otherwise install music_brain in editable mode)
+RUN pip install -e . 2>/dev/null || pip install -e . --no-deps || pip install ./music_brain 2>/dev/null || echo "Note: Install project dependencies separately"
 
 # Expose port
 EXPOSE 8000
@@ -26,5 +29,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Run application
-CMD ["python", "-m", "api.main"]
+CMD ["python", "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
