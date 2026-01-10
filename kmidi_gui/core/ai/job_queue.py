@@ -11,7 +11,6 @@ import logging
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from dataclasses import asdict
 
 from ..models import AIJob, JobStatus
 
@@ -36,32 +35,31 @@ class JobQueue:
     
     def _init_db(self):
         """Initialize database schema."""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS ai_jobs (
-                id TEXT PRIMARY KEY,
-                type TEXT NOT NULL,
-                input_hash TEXT NOT NULL,
-                status TEXT NOT NULL,
-                result_path TEXT,
-                error TEXT,
-                created_at TEXT NOT NULL,
-                updated_at TEXT
-            )
-        """)
-        
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_input_hash ON ai_jobs(input_hash)
-        """)
-        
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_status ON ai_jobs(status)
-        """)
-        
-        conn.commit()
-        conn.close()
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS ai_jobs (
+                    id TEXT PRIMARY KEY,
+                    type TEXT NOT NULL,
+                    input_hash TEXT NOT NULL,
+                    status TEXT NOT NULL,
+                    result_path TEXT,
+                    error TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT
+                )
+            """)
+            
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_input_hash ON ai_jobs(input_hash)
+            """)
+            
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_status ON ai_jobs(status)
+            """)
+            
+            conn.commit()
         logger.info(f"Job queue initialized: {self.db_path}")
     
     def cache_key(self, job_type: str, inputs: Dict[str, Any]) -> str:
@@ -75,7 +73,7 @@ class JobQueue:
             SHA256 hash string
         """
         # Sort inputs for consistent hashing
-        sorted_inputs = json.dumps(inputs, sort_keys=True)
+        sorted_inputs = json.dumps(inputs, sort_keys=True, default=str)
         data = f"{job_type}:{sorted_inputs}"
         return hashlib.sha256(data.encode()).hexdigest()
     
@@ -88,39 +86,39 @@ class JobQueue:
         Returns:
             True if enqueued, False if duplicate (cached)
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        # Check if result already exists (cache hit)
-        cursor.execute("""
-            SELECT id, result_path FROM ai_jobs
-            WHERE input_hash = ? AND status = ?
-        """, (job.input_hash, JobStatus.DONE.value))
-        
-        existing = cursor.fetchone()
-        if existing:
-            logger.info(f"Cache hit for job {job.id}")
-            conn.close()
-            return False
-        
-        # Insert new job
-        cursor.execute("""
-            INSERT OR REPLACE INTO ai_jobs
-            (id, type, input_hash, status, result_path, error, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            job.id,
-            job.type,
-            job.input_hash,
-            job.status.value,
-            job.result_path,
-            job.error,
-            job.created_at.isoformat(),
-            datetime.now().isoformat()
-        ))
-        
-        conn.commit()
-        conn.close()
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            # Check if result already exists (cache hit)
+            cursor.execute("""
+                SELECT id, result_path FROM ai_jobs
+                WHERE input_hash = ? AND status = ?
+            """, (job.input_hash, JobStatus.DONE.value))
+            
+            existing = cursor.fetchone()
+            if existing:
+                result_path = existing[1]
+                if result_path and Path(result_path).exists():
+                    logger.info(f"Cache hit for job {job.id}")
+                    return False
+            
+            # Insert new job
+            cursor.execute("""
+                INSERT OR REPLACE INTO ai_jobs
+                (id, type, input_hash, status, result_path, error, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                job.id,
+                job.type,
+                job.input_hash,
+                job.status.value,
+                job.result_path,
+                job.error,
+                job.created_at.isoformat(),
+                datetime.now().isoformat()
+            ))
+            
+            conn.commit()
         logger.info(f"Job enqueued: {job.id}")
         return True
     
@@ -133,27 +131,26 @@ class JobQueue:
         Returns:
             AIJob or None if not found
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            SELECT id, type, input_hash, status, result_path, error, created_at
-            FROM ai_jobs WHERE id = ?
-        """, (job_id,))
-        
-        row = cursor.fetchone()
-        conn.close()
-        
-        if row:
-            return AIJob(
-                id=row[0],
-                type=row[1],
-                input_hash=row[2],
-                status=JobStatus(row[3]),
-                result_path=row[4],
-                error=row[5],
-                created_at=datetime.fromisoformat(row[6])
-            )
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT id, type, input_hash, status, result_path, error, created_at
+                FROM ai_jobs WHERE id = ?
+            """, (job_id,))
+            
+            row = cursor.fetchone()
+            
+            if row:
+                return AIJob(
+                    id=row[0],
+                    type=row[1],
+                    input_hash=row[2],
+                    status=JobStatus(row[3]),
+                    result_path=row[4],
+                    error=row[5],
+                    created_at=datetime.fromisoformat(row[6])
+                )
         return None
     
     def update_job(self, job: AIJob):
@@ -162,23 +159,22 @@ class JobQueue:
         Args:
             job: Updated job
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            UPDATE ai_jobs
-            SET status = ?, result_path = ?, error = ?, updated_at = ?
-            WHERE id = ?
-        """, (
-            job.status.value,
-            job.result_path,
-            job.error,
-            datetime.now().isoformat(),
-            job.id
-        ))
-        
-        conn.commit()
-        conn.close()
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                UPDATE ai_jobs
+                SET status = ?, result_path = ?, error = ?, updated_at = ?
+                WHERE id = ?
+            """, (
+                job.status.value,
+                job.result_path,
+                job.error,
+                datetime.now().isoformat(),
+                job.id
+            ))
+            
+            conn.commit()
         logger.info(f"Job updated: {job.id} -> {job.status.value}")
     
     def get_pending_jobs(self) -> List[AIJob]:
@@ -187,31 +183,30 @@ class JobQueue:
         Returns:
             List of pending AIJob objects
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            SELECT id, type, input_hash, status, result_path, error, created_at
-            FROM ai_jobs
-            WHERE status = ?
-            ORDER BY created_at ASC
-        """, (JobStatus.PENDING.value,))
-        
-        rows = cursor.fetchall()
-        conn.close()
-        
-        return [
-            AIJob(
-                id=row[0],
-                type=row[1],
-                input_hash=row[2],
-                status=JobStatus(row[3]),
-                result_path=row[4],
-                error=row[5],
-                created_at=datetime.fromisoformat(row[6])
-            )
-            for row in rows
-        ]
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT id, type, input_hash, status, result_path, error, created_at
+                FROM ai_jobs
+                WHERE status = ?
+                ORDER BY created_at ASC
+            """, (JobStatus.PENDING.value,))
+            
+            rows = cursor.fetchall()
+            
+            return [
+                AIJob(
+                    id=row[0],
+                    type=row[1],
+                    input_hash=row[2],
+                    status=JobStatus(row[3]),
+                    result_path=row[4],
+                    error=row[5],
+                    created_at=datetime.fromisoformat(row[6])
+                )
+                for row in rows
+            ]
     
     def get_cached_result(self, input_hash: str) -> Optional[Dict[str, Any]]:
         """Get cached result for input hash.
@@ -222,21 +217,22 @@ class JobQueue:
         Returns:
             Cached result dictionary or None
         """
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            SELECT result_path FROM ai_jobs
-            WHERE input_hash = ? AND status = ?
-        """, (input_hash, JobStatus.DONE.value))
-        
-        row = cursor.fetchone()
-        conn.close()
-        
-        if row and row[0]:
-            result_path = Path(row[0])
-            if result_path.exists():
-                with open(result_path, "r") as f:
-                    return json.load(f)
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT result_path FROM ai_jobs
+                WHERE input_hash = ? AND status = ?
+            """, (input_hash, JobStatus.DONE.value))
+            
+            row = cursor.fetchone()
+            
+            if row and row[0]:
+                result_path = Path(row[0])
+                if result_path.exists():
+                    try:
+                        with open(result_path, "r", encoding="utf-8") as f:
+                            return json.load(f)
+                    except (OSError, json.JSONDecodeError):
+                        logger.exception("Failed to load cached result: %s", result_path)
         return None
-

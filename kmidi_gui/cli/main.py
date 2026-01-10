@@ -8,8 +8,9 @@ import argparse
 import logging
 from pathlib import Path
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add project root to path for imports
+# File is at kmidi_gui/cli/main.py, so we need to go up 2 levels to project root
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from kmidi_gui.core.engine import get_engine
 from kmidi_gui.core.models import EmotionIntent, GenerationResult
