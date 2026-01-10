@@ -1,0 +1,35 @@
+{
+  "title": "When I Found You Sleeping",
+  "created": "2024-12-03",
+  "song_root": {
+    "core_event": "Finding someone I loved after they chose to leave - the moment time stopped",
+    "core_resistance": "Fear of letting time move forward, letting the moment end, accepting they're gone",
+    "core_longing": "To stay in that Sunday morning forever, to feel the weight of love before the loss",
+    "core_stakes": "Personal",
+    "core_transformation": "From stuck in the loop to accepting the freeze, landing in 2024 with scars"
+  },
+  "song_intent": {
+    "mood_primary": "Grief",
+    "mood_secondary_tension": 0.8,
+    "imagery_texture": "Warm morning light frozen in time, sheets that remember, clocks that stopped",
+    "vulnerability_scale": "High",
+    "narrative_arc": "Repetitive Despair"
+  },
+  "technical_constraints": {
+    "technical_genre": "Lo-fi bedroom emo / Confessional acoustic",
+    "technical_tempo_range": [
+      80,
+      120
+    ],
+    "technical_key": "F",
+    "technical_mode": "major",
+    "technical_groove_feel": "Organic/Breathing",
+    "technical_rule_to_break": "HARMONY_ModalInterchange",
+    "rule_breaking_justification": "The progression moves from expected Dm (vi) to Bb (IV) in the chorus - this breaks the verse loop and creates emotional weight. The major IV chord in this context feels bittersweet, making hope feel earned rather than easy."
+  },
+  "system_directive": {
+    "output_target": "Full arrangement",
+    "output_feedback_loop": "Harmony"
+  },
+  "notes": "Verses use F-C-Am-Dm (the stuck, the cycle). Chorus uses F-C-Am-Bb (the drop, the reveal). Arpeggiated fingerpicking, ~120 BPM (or 82 BPM MIDI). Lo-fi aesthetic with imperfections valued."
+}

@@ -1,0 +1,38 @@
+name: daiw-music-brain
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # Python version
+  - python>=3.9,<3.14
+  
+  # Core dependencies
+  - pip
+  - numpy>=1.21.0
+  
+  # MIDI processing
+  - mido>=1.2.10
+  
+  # Audio processing (optional)
+  - librosa>=0.9.0
+  - soundfile>=0.10.0
+  
+  # Music theory (optional)
+  - music21>=7.0.0
+  
+  # UI (optional)
+  - streamlit>=1.28.0
+  
+  # Development tools
+  - pytest>=7.0.0
+  - black>=22.0.0
+  - flake8>=4.0.0
+  - mypy>=0.900
+  
+  # System libraries
+  - portaudio
+  - libsndfile
+  
+  # Install package via pip in editable mode
+  - pip:
+    - -e .

@@ -1,0 +1,96 @@
+{
+  "template_name": "iDAW Starter Template",
+  "fl_studio_version": "21.0+",
+  "description": "Pre-configured FL Studio template for iDAW Penta Core plugin",
+  "created": "2025-12",
+  "channels": [
+    {
+      "name": "Penta Core",
+      "type": "vst3",
+      "plugin": "Penta Core.vst3",
+      "color": "#4A90D9",
+      "mixer_track": 1,
+      "settings": {
+        "harmony_mode": "auto",
+        "groove_enabled": true,
+        "diagnostics_enabled": false,
+        "buffer_size": 512
+      }
+    },
+    {
+      "name": "Piano",
+      "type": "midi_out",
+      "destination": "Penta Core",
+      "color": "#E8B54A",
+      "mixer_track": 2
+    },
+    {
+      "name": "Generated Harmony",
+      "type": "midi_in",
+      "source": "Penta Core",
+      "color": "#5EBA7D",
+      "mixer_track": 3
+    }
+  ],
+  "mixer_tracks": [
+    {
+      "id": 1,
+      "name": "Penta Core",
+      "color": "#4A90D9",
+      "plugins": ["Penta Core"]
+    },
+    {
+      "id": 2,
+      "name": "Input MIDI",
+      "color": "#E8B54A",
+      "sends_to": 1
+    },
+    {
+      "id": 3,
+      "name": "Output",
+      "color": "#5EBA7D",
+      "receives_from": 1
+    }
+  ],
+  "automation_clips": [
+    {
+      "name": "Harmony Mode",
+      "target": "Penta Core",
+      "parameter": "harmony_mode",
+      "cc": 1
+    },
+    {
+      "name": "Groove Intensity",
+      "target": "Penta Core",
+      "parameter": "groove_intensity",
+      "cc": 11
+    },
+    {
+      "name": "Swing Amount",
+      "target": "Penta Core",
+      "parameter": "swing_amount",
+      "cc": 74
+    }
+  ],
+  "setup_instructions": [
+    "1. Open FL Studio and create new project",
+    "2. Add Penta Core VST3 to Channel Rack",
+    "3. Create MIDI channel routed to Penta Core",
+    "4. Set up Mixer routing as shown in 'mixer_tracks'",
+    "5. Add automation clips for common parameters",
+    "6. Save as template for future use"
+  ],
+  "recommended_settings": {
+    "fl_studio": {
+      "buffer_length": 512,
+      "sample_rate": 48000,
+      "multi_threaded_generator": true,
+      "multi_threaded_mixer": true
+    },
+    "penta_core": {
+      "low_latency_mode": false,
+      "simd_enabled": true,
+      "osc_port": 9000
+    }
+  }
+}

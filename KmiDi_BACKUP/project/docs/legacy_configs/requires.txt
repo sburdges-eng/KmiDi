@@ -1,0 +1,11 @@
+mido
+
+[audio]
+librosa
+numpy
+soundfile
+
+[full]
+librosa
+numpy
+soundfile

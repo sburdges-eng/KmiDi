@@ -1,0 +1,253 @@
+/* KmiDi Audio Tool Dark Theme
+ * Professional DAW-style appearance
+ * No gradients, no gloss, no toy colors
+ */
+
+/* ---- GLOBAL ---- */
+* {
+    font-family: Inter, "Segoe UI", sans-serif;
+    font-size: 11px;
+}
+
+QWidget {
+    background-color: #1e1e1e;
+    color: #d0d0d0;
+}
+
+/* ---- BUTTONS ---- */
+QPushButton {
+    background-color: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    padding: 4px 10px;
+    min-height: 20px;
+}
+
+QPushButton:hover {
+    background-color: #333333;
+}
+
+QPushButton:pressed {
+    background-color: #242424;
+}
+
+QPushButton:disabled {
+    color: #777777;
+    background-color: #202020;
+}
+
+/* ---- SLIDERS (AUDIO FRIENDLY) ---- */
+QSlider::groove:horizontal {
+    height: 4px;
+    background: #2a2a2a;
+    border-radius: 2px;
+}
+
+QSlider::handle:horizontal {
+    width: 12px;
+    margin: -4px 0;
+    background: #5a8fcf;
+    border-radius: 6px;
+}
+
+QSlider::handle:horizontal:hover {
+    background: #6aa0e0;
+}
+
+QSlider::groove:vertical {
+    width: 4px;
+    background: #2a2a2a;
+    border-radius: 2px;
+}
+
+QSlider::handle:vertical {
+    height: 12px;
+    margin: 0 -4px;
+    background: #5a8fcf;
+    border-radius: 6px;
+}
+
+QSlider::handle:vertical:hover {
+    background: #6aa0e0;
+}
+
+/* ---- LISTS / TABLES ---- */
+QListView, QTreeView, QTableView {
+    background-color: #181818;
+    alternate-background-color: #202020;
+    border: 1px solid #2a2a2a;
+    selection-background-color: #3a6ea5;
+    selection-color: #ffffff;
+}
+
+QHeaderView::section {
+    background-color: #2a2a2a;
+    border: none;
+    padding: 4px;
+    color: #d0d0d0;
+}
+
+/* ---- TEXT INPUTS ---- */
+QLineEdit, QTextEdit, QPlainTextEdit {
+    background-color: #181818;
+    border: 1px solid #2a2a2a;
+    border-radius: 4px;
+    padding: 4px;
+    color: #d0d0d0;
+    selection-background-color: #3a6ea5;
+    selection-color: #ffffff;
+}
+
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
+    border: 1px solid #3a6ea5;
+}
+
+/* ---- DOCKS ---- */
+QDockWidget {
+    titlebar-close-icon: none;
+    titlebar-normal-icon: none;
+}
+
+QDockWidget::title {
+    background-color: #242424;
+    padding: 4px;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+/* ---- MENUS ---- */
+QMenuBar {
+    background-color: #1e1e1e;
+    color: #d0d0d0;
+}
+
+QMenuBar::item:selected {
+    background: #333333;
+}
+
+QMenu {
+    background-color: #242424;
+    border: 1px solid #333333;
+    color: #d0d0d0;
+}
+
+QMenu::item:selected {
+    background-color: #3a6ea5;
+    color: #ffffff;
+}
+
+/* ---- STATUS BAR ---- */
+QStatusBar {
+    background-color: #181818;
+    border-top: 1px solid #2a2a2a;
+    color: #d0d0d0;
+}
+
+/* ---- SCROLLBARS (QUIET) ---- */
+QScrollBar:vertical {
+    width: 10px;
+    background: #1e1e1e;
+    border: none;
+}
+
+QScrollBar::handle:vertical {
+    background: #3a3a3a;
+    border-radius: 5px;
+    min-height: 20px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #4a4a4a;
+}
+
+QScrollBar:horizontal {
+    height: 10px;
+    background: #1e1e1e;
+    border: none;
+}
+
+QScrollBar::handle:horizontal {
+    background: #3a3a3a;
+    border-radius: 5px;
+    min-width: 20px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #4a4a4a;
+}
+
+/* ---- PARAMETER PANELS ---- */
+QWidget#ParamPanel {
+    background-color: #202020;
+    border: 1px solid #2a2a2a;
+    border-radius: 6px;
+}
+
+QLabel#ParamTitle {
+    font-weight: 600;
+    color: #cfcfcf;
+    padding: 4px 6px;
+}
+
+QLabel#ParamLabel {
+    color: #a8a8a8;
+}
+
+QLabel#ParamValue {
+    color: #d0d0d0;
+    font-family: "JetBrains Mono", monospace;
+}
+
+/* ---- TOOLBAR ---- */
+QToolBar {
+    background: #1e1e1e;
+    spacing: 4px;
+    border-bottom: 1px solid #2a2a2a;
+    padding: 4px;
+}
+
+QToolBar::separator {
+    background: #2a2a2a;
+    width: 1px;
+    margin: 4px;
+}
+
+/* ---- PROGRESS BAR ---- */
+QProgressBar {
+    border: 1px solid #2a2a2a;
+    border-radius: 4px;
+    background-color: #181818;
+    text-align: center;
+    color: #d0d0d0;
+}
+
+QProgressBar::chunk {
+    background-color: #3a6ea5;
+    border-radius: 3px;
+}
+
+/* ---- CONFIDENCE INDICATOR ---- */
+QLabel#ConfidenceHigh {
+    color: #7fc97f;
+}
+
+QLabel#ConfidenceMedium {
+    color: #e6b450;
+}
+
+QLabel#ConfidenceLow {
+    color: #e06c75;
+}
+
+/* ---- STATUS COLORS ---- */
+QLabel[status="ok"] {
+    color: #7fc97f;
+}
+
+QLabel[status="warn"] {
+    color: #e6b450;
+}
+
+QLabel[status="error"] {
+    color: #e06c75;
+}
+

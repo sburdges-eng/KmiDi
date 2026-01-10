@@ -1,0 +1,1026 @@
+================================================================================
+KMIDI MUSIC BRAIN - COMPREHENSIVE SYSTEM DOCUMENTATION
+================================================================================
+Version: 2.0 (2026-01-05)
+Project: KmiDi-remote/music_brain
+
+This document provides complete documentation of all implemented features,
+modules, functions, and capabilities of the Music Brain system.
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+1. OVERVIEW & PHILOSOPHY
+2. CORE API (MusicBrain)
+3. EMOTION SYSTEM
+   3.1 Emotion Thesaurus (6x6x6 = 216 emotions + 97 blends)
+   3.2 Text Emotion Parser
+   3.3 Multimodal Emotion Model
+4. GENERATIVE MODULES
+   4.1 Arrangement Generator
+   4.2 Melody VAE
+   4.3 Chord Generator
+   4.4 Audio Diffusion
+5. PRODUCTION SYSTEM
+   5.1 Dynamics Engine
+   5.2 Drum Humanizer (11 genre presets)
+   5.3 Emotion Production Mapper
+6. GROOVE ENGINE
+   6.1 Humanizer (Timing/Velocity)
+   6.2 Bass Humanizer
+   6.3 Guitar Humanizer
+7. DAW INTEGRATIONS
+8. INTELLIGENCE LAYER
+   8.1 Suggestion Engine
+   8.2 Context Analyzer
+   8.3 ONNX LLM Bridge
+9. VISUALIZATION
+   9.1 Spectocloud
+   9.2 Emotion Trajectory
+10. LEARNING & ADAPTATION
+11. VOICE & SYNTHESIS
+12. COLLABORATION FEATURES
+13. MODEL CHECKPOINTS
+14. MAC M4 OPTIMIZATION
+15. API REFERENCE
+16. CONFIGURATION FILES
+
+================================================================================
+1. OVERVIEW & PHILOSOPHY
+================================================================================
+
+Music Brain is an emotion-to-music generation system built on the principle:
+"Interrogate Before Generate" - emotional intent drives all technical choices.
+
+Key Design Principles:
+- Emotion-first: Musical parameters derive from emotional state
+- Guide-driven: Production decisions based on professional guides
+- Device-optimized: Full Apple M4 MPS (Metal) GPU acceleration
+- Modular: Each component can be used independently
+- Neural + Rule-based: Hybrid approach for robustness
+
+System Capabilities (8 Active):
+1. neural_emotion    - Multimodal emotion recognition (audio+text)
+2. text_parser       - Natural language emotion parsing
+3. spectocloud       - Real-time audio visualization
+4. suggestions       - AI-powered creative suggestions
+5. arrangement       - Full song structure generation
+6. dynamics_engine   - Guide-based dynamics automation
+7. drum_humanizer    - Genre-specific humanization (11 styles)
+8. device: mps       - Apple M4 GPU acceleration
+
+================================================================================
+2. CORE API (MusicBrain)
+================================================================================
+
+File: music_brain/emotion_api.py (1007 lines)
+
+Main class providing clean interface for all emotion-to-music operations.
+
+CLASS: MusicBrain
+-----------------
+Constructor:
+    MusicBrain(use_neural: bool = True)
+    - use_neural: Enable neural emotion recognition (requires checkpoints)
+
+Key Methods:
+
+    generate_from_text(emotional_text: str) -> GeneratedMusic
+        Generate complete music from natural language description.
+        Uses neural recognition when available, falls back to keywords.
+
+        Example:
+            brain = MusicBrain()
+            music = brain.generate_from_text("grief and loss processing")
+            print(music.summary())
+
+    generate_from_intent(intent: CompleteSongIntent) -> GeneratedMusic
+        Generate from structured intent object (full control).
+
+        Example:
+            intent = brain.create_intent(
+                title="Healing Journey",
+                core_event="Processing loss",
+                mood_primary="grief",
+                technical_key="F",
+                tempo_range=(78, 86)
+            )
+            music = brain.generate_from_intent(intent)
+
+    create_intent(...) -> CompleteSongIntent
+        Helper to create intent objects with all fields.
+
+    export_to_logic(music, output_base) -> Dict[str, str]
+        Export mixer automation to Logic Pro format.
+
+    get_dynamics_profile(sections, section_bars) -> Dict[str, Any]
+        Get guide-based dynamics profile for song structure.
+
+    humanize_drums(events, style, ppq) -> List[Dict]
+        Apply genre-specific humanization to drum MIDI events.
+        Styles: standard, hip-hop, rock, jazzy, edm, lofi, acoustic,
+                metal, funk, reggae, rnb
+
+    get_suggestions(context: Dict) -> List[Dict]
+        Get AI-powered creative suggestions.
+
+    generate_arrangement(music, structure) -> Dict
+        Generate full song arrangement.
+
+    visualize_emotion_trajectory(emotions, output_path) -> Any
+        Create Spectocloud visualization.
+
+    list_humanizer_styles() -> List[str]
+        Returns: ['standard', 'hip-hop', 'rock', 'jazzy', 'edm', 'lofi',
+                  'acoustic', 'metal', 'funk', 'reggae', 'rnb']
+
+    get_capabilities() -> Dict[str, bool]
+        Check available features and device info.
+
+    suggest_rules(emotion: str) -> List[Dict]
+        Get rule-breaking suggestions for emotional effect.
+
+
+FLUENT API (FluentChain)
+------------------------
+Alternative chainable API style:
+
+    result = (brain.process("anxiety and tension")
+                   .map_to_emotion()
+                   .map_to_music()
+                   .with_tempo(110)
+                   .with_dissonance(0.7)
+                   .with_timing("behind")
+                   .map_to_mixer()
+                   .export_logic("output.json"))
+
+
+DATACLASS: GeneratedMusic
+-------------------------
+Complete generation result containing:
+- emotional_state: EmotionalState
+- musical_params: MusicalParameters (tempo, dissonance, timing, density)
+- mixer_params: MixerParameters (reverb, compression, saturation, EQ)
+- production_preset: ProductionPreset
+- groove_settings: GrooveSettings
+- intent: CompleteSongIntent (if from intent)
+- midi_path, automation_path: Output file paths
+
+Methods:
+- to_dict() -> Dict - Full serialization
+- summary() -> str  - Human-readable summary
+
+
+================================================================================
+3. EMOTION SYSTEM
+================================================================================
+
+3.1 EMOTION THESAURUS (6x6x6 System)
+------------------------------------
+File: music_brain/emotion/emotion_thesaurus.py
+
+216 base emotions organized in 3D space + 97 emotion blends.
+
+Structure:
+- 6 Valence levels: -2 (Very Negative) to +2 (Very Positive)
+- 6 Arousal levels: -2 (Very Low) to +2 (Very High)
+- 6 Dominance levels: -2 (Submissive) to +2 (Dominant)
+
+Key Functions:
+    get_emotion(valence, arousal, dominance) -> EmotionEntry
+    get_related_emotions(emotion_name) -> List[EmotionEntry]
+    get_emotion_by_name(name) -> EmotionEntry
+    get_emotions_in_range(v_range, a_range, d_range) -> List[EmotionEntry]
+    get_all_blends() -> List[EmotionBlend]
+
+EmotionEntry fields:
+- name: str (e.g., "serenity", "euphoria", "despair")
+- valence, arousal, dominance: int (-2 to +2)
+- musical_params: Dict with tempo_range, key_preference, etc.
+- description: str
+
+EmotionBlend fields:
+- name: str (e.g., "bittersweet", "nostalgic longing")
+- components: List[str] (base emotions that compose it)
+- weights: List[float]
+- musical_params: Combined parameters
+
+
+3.2 TEXT EMOTION PARSER
+-----------------------
+File: music_brain/emotion/text_emotion_parser.py
+
+Parses natural language into structured emotion data.
+
+CLASS: TextEmotionParser
+Methods:
+    parse(text: str) -> ParsedEmotion
+        Extract emotion information from text.
+
+        Returns ParsedEmotion with:
+        - primary_emotion: str
+        - intensity: float (0-1)
+        - valence: float (-1 to 1)
+        - arousal: float (0 to 1)
+        - modifiers: List[str] (e.g., "ptsd_intrusion", "gradual")
+        - confidence: float
+
+Features:
+- Keyword matching for 30+ emotion words
+- Intensity modifiers ("very", "slightly", "extremely")
+- Negation handling ("not happy" -> negative)
+- Compound emotion detection ("bittersweet")
+- PTSD/trauma markers detection
+
+
+3.3 MULTIMODAL EMOTION MODEL
+----------------------------
+File: music_brain/emotion/multimodal_emotion.py
+
+Neural network for audio + text emotion fusion.
+
+CLASS: MultimodalEmotionModel
+- Architecture: Dual-stream with cross-attention fusion
+- Audio encoder: CNN over mel spectrograms (n_mels=64)
+- Text encoder: Embedding + Transformer
+- Fusion: Cross-attention between modalities
+- Outputs: 6 base emotions, valence (0-1), arousal (0-1)
+
+Checkpoint: checkpoints/multimodal_emotion/multimodal_emotion.pt
+
+Training:
+- Multi-task loss: emotion classification + regression
+- Contrastive learning for audio-text alignment
+- Trained on emotion-labeled audio + text pairs
+
+
+================================================================================
+4. GENERATIVE MODULES
+================================================================================
+
+4.1 ARRANGEMENT GENERATOR
+-------------------------
+File: music_brain/generative/arrangement.py
+
+Full song arrangement with 14 structure templates.
+
+CLASS: ArrangementGenerator
+    generate(
+        emotion: str = "peace",
+        genre: str = "pop",
+        duration: float = None,
+        key: str = "C",
+        tempo: int = None,
+        structure: List[Dict] = None,
+        include_solo: bool = False,      # NEW: Optional solo section
+        include_bridge: bool = True,     # NEW: Optional bridge section
+        solo_bars: int = 16,             # Solo duration in bars
+        bridge_bars: int = 8,            # Bridge duration in bars
+    ) -> Arrangement
+
+STRUCTURE TEMPLATES (14 total):
+1.  pop              - Standard pop (I-V-C-V-C-B-C-O)
+2.  pop_with_solo    - Pop with instrumental solo
+3.  pop_minimal      - No bridge version
+4.  ballad           - Longer verses, emotional arc
+5.  ballad_with_solo - Ballad with solo section
+6.  rock             - Rock structure with solo
+7.  rock_extended    - Double chorus ending
+8.  edm              - Build-drop-breakdown format
+9.  edm_extended     - EDM with bridge
+10. ambient          - Long-form development
+11. jazz             - Head-solos-head (32-bar form)
+12. jazz_with_bridge - Jazz with bridge
+13. blues            - 12-bar blues structure
+14. prog_rock        - Extended complex form
+
+SECTION CHARACTERISTICS:
+- intro:       energy=0.3, density=0.2, instruments_subset
+- verse:       energy=0.5, density=0.5, vocal_focused
+- chorus:      energy=0.8, density=0.8, full_band
+- bridge:      energy=0.6, density=0.5, contrast_section
+- solo:        energy=0.7, density=0.6, lead_instrument_focused
+- outro:       energy=0.3, density=0.3, fade_out
+- drop:        energy=1.0, density=1.0, maximum_impact
+- buildup:     energy_ramp, density_increasing
+- breakdown:   energy=0.4, density=0.3, stripped_back
+- head:        energy=0.6, density=0.6, theme_statement
+- development: energy_gradual, density_building
+- climax:      energy=0.9, density=0.9, peak_moment
+- resolution:  energy=0.4, density=0.4, settling
+
+INSTRUMENT PALETTES by genre:
+- pop: drums, bass, piano, guitar, synth_lead, strings
+- rock: drums, bass, electric_guitar, organ, lead_guitar
+- edm: electronic_drums, synth_bass, synth_lead, pads
+- jazz: drums, upright_bass, piano, sax, trumpet
+- ambient: pads, textures, piano, synth, bells
+
+
+4.2 MELODY VAE
+--------------
+File: music_brain/generative/melody_vae.py
+
+Variational autoencoder for melody generation.
+
+CLASS: MelodyVAE
+- Latent dimension: 128
+- Encoder: Bi-directional GRU
+- Decoder: GRU with attention
+- Conditioning: Emotion vector, chord sequence
+
+Methods:
+    encode(melody) -> (mu, logvar)
+    decode(z, condition) -> melody
+    sample(condition, temperature) -> melody
+    interpolate(melody1, melody2, steps) -> List[melody]
+
+Checkpoint: checkpoints/melody_vae/melody_vae.pt
+
+
+4.3 CHORD GENERATOR
+-------------------
+File: music_brain/generative/chord_generator.py
+
+Emotion-conditioned chord progression generator.
+
+CLASS: ChordGenerator
+Methods:
+    generate_progression(
+        emotion: str,
+        bars: int = 8,
+        key: str = "C",
+        mode: str = "major",
+    ) -> List[Chord]
+
+Features:
+- Emotion-aware voicings (tension levels)
+- Cadence planning
+- Voice leading optimization
+- Modal interchange suggestions
+
+
+4.4 AUDIO DIFFUSION
+-------------------
+File: music_brain/generative/audio_diffusion.py
+
+Latent diffusion model for audio generation.
+
+CLASS: AudioDiffusion
+- Architecture: UNet with cross-attention
+- Latent space: Mel-spectrogram embeddings
+- Conditioning: Text, MIDI, emotion vectors
+
+Methods:
+    generate(prompt, duration, guidance_scale) -> audio
+    inpaint(audio, mask, prompt) -> audio
+    variation(audio, strength) -> audio
+
+Checkpoint: checkpoints/audio_diffusion/audio_diffusion.pt
+
+
+================================================================================
+5. PRODUCTION SYSTEM
+================================================================================
+
+5.1 DYNAMICS ENGINE
+-------------------
+File: music_brain/production/dynamics_engine.py
+
+Professional guide-based dynamics automation.
+
+CLASS: DynamicsEngine
+Methods:
+    get_arrangement_profile(structure: SongStructure) -> DynamicsProfile
+        Returns complete dynamics curve for all sections.
+
+    suggest_contrast_improvements(profile) -> List[str]
+        Suggest dynamic range improvements.
+
+DYNAMICS LEVELS:
+- pp  (pianissimo):  -20 dB, density 0.1
+- p   (piano):       -14 dB, density 0.3
+- mp  (mezzo-piano): -8 dB,  density 0.5
+- mf  (mezzo-forte): -4 dB,  density 0.7
+- f   (forte):       -2 dB,  density 0.85
+- ff  (fortissimo):  0 dB,   density 1.0
+
+Per-section profiles include:
+- target_db: Target volume in dB
+- density: Note/event density (0-1)
+- drums: Drum intensity descriptor
+- bass: Bass activity level
+- guitar: Guitar layer presence
+- notes: Performance notes
+
+
+5.2 DRUM HUMANIZER
+------------------
+File: music_brain/production/drum_humanizer.py (276 lines)
+
+Guide-informed humanization with 11 genre presets.
+
+CLASS: DrumHumanizer
+    __init__(analyzer=None, config_path=None)
+
+    create_preset_from_guide(style: str) -> GrooveSettings
+        Create settings from style name.
+
+    apply_guide_rules(
+        events: List[Dict],
+        style: str = "standard",
+        technique_profile: DrumTechniqueProfile = None,
+        ppq: int = 480,
+        seed: int = None,
+    ) -> List[Dict]
+        Apply full humanization to MIDI events.
+
+STYLE PRESETS (11):
+------------------
+1. standard:
+   - complexity: 0.5, vulnerability: 0.5
+   - ghost_notes: enabled, probability 0.15
+   - timing: hihat loose (1.5x), kick tight (0.5x)
+
+2. hip-hop:
+   - complexity: 0.35, vulnerability: 0.65
+   - ghost_notes: enabled, probability 0.18
+   - timing: hihat very loose (1.8x) - lazy feel
+   - swing: 0.15, velocity pattern for upbeat accent
+
+3. rock:
+   - complexity: 0.45, vulnerability: 0.45
+   - ghost_notes: enabled, probability 0.12
+   - timing: snare tight (0.8x), kick very tight (0.4x)
+   - velocity: 90-120, downbeat accent pattern
+   - crash_on_one: true
+
+4. jazzy:
+   - complexity: 0.6, vulnerability: 0.65
+   - ghost_notes: heavy, probability 0.25
+   - timing: very loose all around (1.5-2.0x)
+   - swing: 0.25, ride_instead_of_hihat, brush_probability
+
+5. edm:
+   - complexity: 0.2, vulnerability: 0.25
+   - ghost_notes: disabled
+   - timing: machine-tight (0.2-0.5x)
+   - velocity: 100-127, sidechain_kick enabled
+
+6. lofi:
+   - complexity: 0.3, vulnerability: 0.75
+   - ghost_notes: heavy, probability 0.28
+   - timing: very loose (1.2-2.2x) - dreamy
+   - swing: 0.2, tape_saturation, vinyl_noise
+
+7. acoustic:
+   - complexity: 0.55, vulnerability: 0.6
+   - ghost_notes: enabled, probability 0.2
+   - timing: natural looseness
+   - room_mics, bleed enabled
+
+8. metal:
+   - complexity: 0.7, vulnerability: 0.35
+   - ghost_notes: subtle, probability 0.1
+   - timing: very tight (0.3-0.8x)
+   - velocity: 95-127
+   - double_kick_enabled, blast_beat_enabled
+
+9. funk:
+   - complexity: 0.65, vulnerability: 0.55
+   - ghost_notes: heavy, probability 0.3
+   - swing: 0.1, syncopation: 0.4
+   - dynamic velocity patterns
+
+10. reggae:
+    - complexity: 0.4, vulnerability: 0.6
+    - one_drop pattern (kick on 2&4, not 1)
+    - rim_click enabled
+
+11. rnb:
+    - complexity: 0.4, vulnerability: 0.6
+    - ghost_notes: enabled, probability 0.2
+    - swing: 0.12, finger_snaps enabled
+
+
+5.3 EMOTION PRODUCTION MAPPER
+-----------------------------
+File: music_brain/production/emotion_production.py
+
+Maps emotions to production techniques.
+
+CLASS: EmotionProductionMapper
+Methods:
+    get_production_preset(emotion, genre, intensity) -> ProductionPreset
+
+ProductionPreset includes:
+- compression settings
+- EQ curves
+- reverb parameters
+- saturation type/amount
+- spatial positioning
+- effect chains
+
+
+================================================================================
+6. GROOVE ENGINE
+================================================================================
+
+File: music_brain/groove/groove_engine.py
+
+Core humanization and timing engine.
+
+CLASS: GrooveSettings
+Fields:
+- complexity: float (0-1)
+- vulnerability: float (0-1)
+- timing_sigma_override: Optional[float]
+- dropout_prob_override: Optional[float]
+- velocity_range_override: Optional[Tuple[int, int]]
+- kick_timing_mult: float
+- snare_timing_mult: float
+- hihat_timing_mult: float
+- enable_ghost_notes: bool
+- ghost_note_probability: float
+- ghost_note_velocity_mult: float
+
+Methods:
+    to_dict() -> Dict
+
+FUNCTIONS:
+    humanize_drums(events, complexity, vulnerability, ppq, settings, seed)
+        Apply timing and velocity humanization.
+
+    settings_from_intent(vulnerability, groove_feel, mood_tension)
+        Create settings from song intent.
+
+
+6.2 BASS HUMANIZER
+------------------
+File: music_brain/groove/bass_humanizer.py
+
+Bass-specific timing and expression.
+
+Features:
+- Anticipation/drag timing by style
+- Dynamic palm mute detection
+- Slide/hammer-on velocity curves
+- Root note emphasis
+- Groove lock with kick drum
+
+
+6.3 GUITAR HUMANIZER
+--------------------
+File: music_brain/groove/guitar_humanizer.py
+
+Guitar expression and articulation.
+
+Features:
+- Strum timing variation
+- Pick dynamics
+- Chord voicing humanization
+- Muted note handling
+- Palm mute detection
+
+
+================================================================================
+7. DAW INTEGRATIONS
+================================================================================
+
+Directory: music_brain/daw/
+
+Supported DAWs:
+- Logic Pro (primary)
+- Pro Tools
+- Reaper
+- FL Studio
+
+7.1 LOGIC PRO
+File: music_brain/daw/logic_pro.py, logic.py
+
+Features:
+- Mixer automation export (JSON format)
+- Region markers
+- Key command integration
+- Project tempo/time signature
+
+7.2 MIXER PARAMETERS
+File: music_brain/daw/mixer_params.py
+
+CLASS: MixerParameters
+Fields:
+- description: str
+- reverb_mix, reverb_decay, reverb_predelay
+- compression_ratio, compression_attack, compression_release
+- saturation, saturation_type
+- eq_low_shelf, eq_mid_freq, eq_mid_gain, eq_high_shelf
+- stereo_width
+- channel_strips: Dict[str, ChannelStrip]
+
+CLASS: EmotionMapper
+Methods:
+    map_emotion_to_mixer(emotional_state, musical_params) -> MixerParameters
+    list_presets() -> List[str]
+
+FUNCTIONS:
+    export_to_logic_automation(params, path) -> str
+    export_mixer_settings(params, path, format) -> None
+
+
+================================================================================
+8. INTELLIGENCE LAYER
+================================================================================
+
+8.1 SUGGESTION ENGINE
+---------------------
+File: music_brain/intelligence/suggestion_engine.py
+
+AI-powered creative suggestions.
+
+CLASS: SuggestionEngine
+Methods:
+    generate_suggestions(context: Dict) -> List[Suggestion]
+
+Suggestion types:
+- CHORD_CHANGE: Harmonic suggestions
+- MELODY_VARIATION: Melodic development ideas
+- ARRANGEMENT: Structural suggestions
+- PRODUCTION: Mix/production tips
+- RULE_BREAK: Creative rule-breaking ideas
+
+Suggestion fields:
+- suggestion_type: SuggestionType
+- title: str
+- description: str
+- action: Dict (actionable parameters)
+- confidence: float
+- explanation: str
+
+
+8.2 CONTEXT ANALYZER
+--------------------
+File: music_brain/intelligence/context_analyzer.py
+
+Analyzes current musical context for suggestions.
+
+Features:
+- Harmonic analysis
+- Energy arc detection
+- Repetition detection
+- Structural position awareness
+
+
+8.3 ONNX LLM BRIDGE
+-------------------
+File: music_brain/intelligence/onnx_llm.py, onnx_llm_server.py
+
+Local LLM inference via ONNX.
+
+Features:
+- Llama-3.2-1B-ONNX support
+- M4 GPU acceleration
+- Creative prompt completion
+- Lyric generation assistance
+
+
+================================================================================
+9. VISUALIZATION
+================================================================================
+
+9.1 SPECTOCLOUD
+---------------
+File: music_brain/visualization/spectocloud.py
+
+Real-time spectral visualization.
+
+CLASS: Spectocloud
+Methods:
+    process_midi(events, duration, emotion_trajectory) -> None
+    render_static_frame(frame_idx, output_path, show) -> None
+    export_data() -> Dict
+
+Features:
+- MIDI-to-spectrogram visualization
+- Emotion color mapping
+- Cloud-like particle effects
+- Animation export
+
+
+9.2 EMOTION TRAJECTORY
+----------------------
+File: music_brain/visualization/emotion_trajectory.py
+
+Emotional arc visualization.
+
+Features:
+- Valence-arousal 2D plot
+- Timeline view
+- Section markers
+- Color-coded emotions
+
+
+================================================================================
+10. LEARNING & ADAPTATION
+================================================================================
+
+Directory: music_brain/learning/
+
+10.1 USER PREFERENCES
+File: music_brain/learning/user_preferences.py
+
+Learns and stores user preferences.
+
+10.2 GROOVE LEARNING
+File: music_brain/learning/groove_learning.py
+
+Learns timing preferences from user edits.
+
+10.3 MELODY LEARNING
+File: music_brain/learning/melody_learning.py
+
+Adapts to user's melodic style.
+
+10.4 HARMONY LEARNING
+File: music_brain/learning/harmony_learning.py
+
+Learns chord voicing preferences.
+
+10.5 ARRANGEMENT LEARNING
+File: music_brain/learning/arrangement_learning.py
+
+Learns structural preferences.
+
+10.6 CURRICULUM
+File: music_brain/learning/curriculum.py
+
+Progressive learning system for users.
+
+
+================================================================================
+11. VOICE & SYNTHESIS
+================================================================================
+
+Directory: music_brain/voice/
+
+11.1 SINGING VOICE SYNTHESIS
+Files: singing_voice.py, singing_synthesizer.py
+
+Neural singing voice synthesis.
+
+11.2 AUTO-TUNE
+File: music_brain/voice/auto_tune.py
+
+Pitch correction with style presets.
+
+11.3 PHONEME PROCESSOR
+File: music_brain/voice/phoneme_processor.py
+
+Text-to-phoneme conversion for singing.
+
+11.4 INSTRUMENT SYNTH
+File: music_brain/voice/instrument_synth.py
+
+Virtual instrument synthesis.
+
+
+================================================================================
+12. COLLABORATION FEATURES
+================================================================================
+
+Directory: music_brain/collaboration/
+
+12.1 SESSION MANAGEMENT
+File: music_brain/collaboration/session.py
+
+Multi-user session handling.
+
+12.2 VERSION CONTROL
+File: music_brain/collaboration/version_control.py
+
+Project versioning and branching.
+
+12.3 COMMENTS
+File: music_brain/collaboration/comments.py
+
+Time-coded comments on sessions.
+
+12.4 WEBSOCKET
+File: music_brain/collaboration/websocket.py
+
+Real-time collaboration protocol.
+
+
+================================================================================
+13. MODEL CHECKPOINTS
+================================================================================
+
+Directory: checkpoints/
+
+Required checkpoints (7 total):
+1. checkpoints/multimodal_emotion/multimodal_emotion.pt
+   - Multimodal emotion recognition model
+   - Size: ~50MB
+
+2. checkpoints/melody_vae/melody_vae.pt
+   - Melody VAE generative model
+   - Size: ~30MB
+
+3. checkpoints/chord_generator/chord_generator.pt
+   - Chord progression model
+   - Size: ~20MB
+
+4. checkpoints/audio_diffusion/audio_diffusion.pt
+   - Audio diffusion model
+   - Size: ~200MB
+
+5. checkpoints/drum_transformer/drum_transformer.pt
+   - Drum pattern generator
+   - Size: ~40MB
+
+6. checkpoints/emotion_classifier/emotion_classifier.pt
+   - Audio emotion classifier
+   - Size: ~25MB
+
+7. checkpoints/singing_voice/singing_voice.pt
+   - Singing voice synthesis
+   - Size: ~100MB
+
+
+================================================================================
+14. MAC M4 OPTIMIZATION
+================================================================================
+
+File: music_brain/mac_optimization.py
+
+Apple Silicon optimizations:
+- MPS (Metal Performance Shaders) device selection
+- Automatic CPU fallback
+- Memory-efficient batch processing
+- Metal-optimized tensor operations
+
+Device detection:
+    if torch.backends.mps.is_available():
+        device = "mps"
+    elif torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+Performance tips:
+- Use float32 for MPS (float16 has limited support)
+- Batch sizes: 8-16 optimal for M4
+- Enable memory growth for large models
+
+
+================================================================================
+15. API REFERENCE
+================================================================================
+
+QUICK START:
+------------
+    from music_brain.emotion_api import MusicBrain, quick_generate
+
+    # One-liner
+    music = quick_generate("peaceful meditation")
+    print(music.summary())
+
+    # Full control
+    brain = MusicBrain()
+    music = brain.generate_from_text("energetic and hopeful")
+    brain.export_to_logic(music, "output")
+
+    # Check capabilities
+    caps = brain.get_capabilities()
+    print(f"Neural: {caps['neural_emotion']}, Device: {caps['device']}")
+
+
+ARRANGEMENT WITH SOLO/BRIDGE:
+----------------------------
+    from music_brain.generative.arrangement import ArrangementGenerator
+
+    gen = ArrangementGenerator()
+
+    # With solo
+    arr = gen.generate(
+        emotion="hope",
+        genre="rock",
+        include_solo=True,
+        solo_bars=16,
+    )
+
+    # Without bridge
+    arr = gen.generate(
+        emotion="grief",
+        genre="pop",
+        include_bridge=False,
+    )
+
+    # Both options
+    arr = gen.generate(
+        emotion="tension",
+        genre="prog_rock",
+        include_solo=True,
+        include_bridge=True,
+        solo_bars=24,
+        bridge_bars=12,
+    )
+
+
+DRUM HUMANIZATION:
+------------------
+    brain = MusicBrain()
+
+    # List available styles
+    styles = brain.list_humanizer_styles()
+    # ['standard', 'hip-hop', 'rock', 'jazzy', 'edm', 'lofi',
+    #  'acoustic', 'metal', 'funk', 'reggae', 'rnb']
+
+    # Apply style
+    events = [{"type": "note_on", "note": 36, "velocity": 100, "tick": 0}, ...]
+    humanized = brain.humanize_drums(events, style="hip-hop")
+
+
+DYNAMICS PROFILE:
+-----------------
+    brain = MusicBrain()
+
+    profile = brain.get_dynamics_profile(
+        sections=["intro", "verse", "chorus", "verse", "chorus", "bridge", "outro"],
+        section_bars=[4, 8, 8, 8, 8, 8, 4]
+    )
+
+    print(f"Peak section: {profile['peak_section']}")
+    print(f"Contrast ratio: {profile['contrast_ratio']:.1f} dB")
+
+
+EMOTION THESAURUS:
+------------------
+    from music_brain.emotion.emotion_thesaurus import (
+        get_emotion,
+        get_emotion_by_name,
+        get_all_blends,
+    )
+
+    # Get emotion at coordinates
+    emotion = get_emotion(valence=-1, arousal=1, dominance=0)
+    print(f"{emotion.name}: {emotion.description}")
+
+    # Get by name
+    grief = get_emotion_by_name("grief")
+    print(grief.musical_params)
+
+    # Get all blends (97 total)
+    blends = get_all_blends()
+
+
+================================================================================
+16. CONFIGURATION FILES
+================================================================================
+
+config/humanizer.json
+---------------------
+Custom drum humanizer presets. Format:
+{
+    "styles": {
+        "custom_style": {
+            "complexity": 0.5,
+            "vulnerability": 0.5,
+            ...
+        }
+    },
+    "analysis": {
+        "ghost_detection_threshold": 0.3,
+        ...
+    }
+}
+
+.gitignore (excluded from repo)
+-------------------------------
+- Model checkpoints (*.pt, *.pth, *.onnx)
+- Virtual environments (.venv/, venv/)
+- Generated audio (*.wav, *.mp3, *.mid)
+- Build artifacts (build/, dist/)
+- IDE settings (.vscode/, .idea/)
+- Logs (logs/)
+
+
+================================================================================
+STATISTICS
+================================================================================
+
+Total Python files: 205
+Total lines of code: ~50,000
+Model checkpoints: 7
+Emotion presets: 216 base + 97 blends = 313
+Drum humanizer styles: 11
+Structure templates: 14
+DAW integrations: 4
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================
+
+Generated: 2026-01-05
+Music Brain System v2.0
+KmiDi-remote Project
