@@ -14,11 +14,26 @@ Usage:
 from .midi_generator import Tier1MIDIGenerator
 from .audio_generator import Tier1AudioGenerator
 from .voice_generator import Tier1VoiceGenerator
+from .midi_pipeline import MidiGenerationPipeline, create_midi_pipeline
+from .voice_pipeline import (
+    VoiceGenerationPipeline,
+    VoiceIdentity,
+    VocalNote,
+    VocalExpression,
+    create_voice_pipeline,
+)
 
 __all__ = [
     "Tier1MIDIGenerator",
     "Tier1AudioGenerator",
     "Tier1VoiceGenerator",
+    "MidiGenerationPipeline",
+    "create_midi_pipeline",
+    "VoiceGenerationPipeline",
+    "VoiceIdentity",
+    "VocalNote",
+    "VocalExpression",
+    "create_voice_pipeline",
 ]
 
 __version__ = "1.0.0"

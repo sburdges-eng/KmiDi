@@ -30,6 +30,11 @@ from .ollama_bridge import (
     generate_lyrics,
     parse_intent,
 )
+from .brain_controller import (
+    BrainController,
+    BrainConfig,
+    create_brain_controller,
+)
 
 __all__ = [
     "SuggestionEngine",
@@ -45,4 +50,7 @@ __all__ = [
     "create_ollama_bridge",
     "generate_lyrics",
     "parse_intent",
+    "BrainController",
+    "BrainConfig",
+    "create_brain_controller",
 ]
