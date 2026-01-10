@@ -26,8 +26,7 @@ namespace penta::groove
             Config()
                 : sampleRate(kDefaultSampleRate), fftSize(2048), hopSize(512),
                   // Threshold is used as an offset above the recent mean flux.
-                  // The simplified filterbank-based flux used in this repo is normalized,
-                  // so practical values are in the ~0.0-0.05 range.
+                  // FFT-based spectral flux is normalized, so practical values are in the ~0.0-0.05 range.
                   threshold(0.01f), minTimeBetweenOnsets(0.05f)
             {
             }

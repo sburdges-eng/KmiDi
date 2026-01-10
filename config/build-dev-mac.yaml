@@ -40,4 +40,5 @@ api:
 notes:
   - "Optimized for Apple Silicon (M-series) using torch mps backend"
   - "Use scripts/train.py only for smoke; prefer train-nvidia build for real training"
-  - "For external SSD, set DATA_ROOT/MODELS_ROOT/OUTPUT_ROOT (e.g., /Volumes/Extreme SSD/data) via shell or .env"
+  - "Data location: /Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data (moved from external SSD)"
+  - "Set DATA_ROOT/MODELS_ROOT/OUTPUT_ROOT via shell or .env if using different locations"

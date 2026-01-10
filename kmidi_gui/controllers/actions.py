@@ -8,11 +8,14 @@ This layer:
 """
 
 import logging
-from typing import Optional
+import json
+from pathlib import Path
+from typing import Optional, Dict, Any
 from PySide6.QtCore import QObject, Signal, QThread
 
-from kmidi_gui.core.engine import get_engine
+from kmidi_gui.core.engine import get_engine, set_engine, MusicEngine
 from kmidi_gui.core.models import EmotionIntent, GenerationResult
+from kmidi_gui.gui.preferences_dialog import PreferencesDialog
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +56,9 @@ class ActionController(QObject):
     generation_started = Signal()
     generation_finished = Signal(bool)  # success
     error_occurred = Signal(str)
+    log_message = Signal(str, str)  # message, level
+    project_loaded = Signal(dict)  # project data
+    project_saved = Signal(str)  # file path
     
     def __init__(self, main_window):
         """Initialize controller.
@@ -64,24 +70,47 @@ class ActionController(QObject):
         self.main_window = main_window
         self.engine = get_engine()
         self.current_worker: Optional[GenerationWorker] = None
+        self.preferences: Dict[str, Any] = {
+            "api_url": "http://127.0.0.1:8000",
+            "theme": "Audio Dark",
+            "log_level": "INFO",
+        }
         
         # Connect GUI signals to controller methods
         main_window.generate_requested.connect(self.handle_generate)
         main_window.preview_requested.connect(self.handle_preview)
         main_window.export_requested.connect(self.handle_export)
+        main_window.new_project_requested.connect(self.handle_new_project)
+        main_window.open_project_requested.connect(self.handle_open_project)
+        main_window.save_project_requested.connect(self.handle_save_project)
+        main_window.preferences_requested.connect(self.handle_preferences)
+        main_window.ai_analysis_requested.connect(self.handle_ai_analysis)
+        main_window.batch_process_requested.connect(self.handle_batch_process)
+        
+        # Connect controller signals to GUI
+        self.log_message.connect(self._on_log_message)
+        
+        # Initial status check
+        self._check_api_status()
     
-    def handle_generate(self, emotion_text: str):
+    def handle_generate(self, emotion_text: str, emotion_params: dict, technical_params: dict):
         """Handle generate request from GUI.
         
         Args:
             emotion_text: User's emotional intent text
+            emotion_params: Emotion parameters (valence, arousal, intensity)
+            technical_params: Technical parameters (key, bpm, genre)
         """
         logger.info(f"Generate requested: {emotion_text[:50]}...")
+        self.log_message.emit("Starting music generation...", "INFO")
         
-        # Create intent from text (simplified - would parse more in real implementation)
+        # Create intent from text and parameters
         intent = EmotionIntent(
             core_event=emotion_text,
             mood_primary="grief" if "grief" in emotion_text.lower() else None,
+            technical_key=technical_params.get("key"),
+            technical_bpm=technical_params.get("bpm"),
+            technical_genre=technical_params.get("genre"),
         )
         
         # Start background worker
@@ -209,4 +238,146 @@ class ActionController(QObject):
         self.error_occurred.emit(f"Error: {error_msg}")
         self.status_changed.emit("Error occurred")
         self.generation_finished.emit(False)
+        self.log_message.emit(f"Generation failed: {error_msg}", "ERROR")
+    
+    def handle_new_project(self):
+        """Handle new project request."""
+        self.log_message.emit("New project created", "INFO")
+        self.status_changed.emit("Ready")
+    
+    def handle_open_project(self, file_path: str):
+        """Handle open project request.
+        
+        Args:
+            file_path: Path to project file
+        """
+        try:
+            with open(file_path, 'r') as f:
+                project_data = json.load(f)
+            
+            # Load project data into UI
+            if "emotion_text" in project_data:
+                self.main_window.emotion_input.setPlainText(project_data["emotion_text"])
+            
+            if "emotion_params" in project_data:
+                params = project_data["emotion_params"]
+                self.main_window.emotion_params.valence_slider.setValue(int(params.get("valence", 0) * 100))
+                self.main_window.emotion_params.arousal_slider.setValue(int(params.get("arousal", 0.5) * 100))
+                self.main_window.emotion_params.intensity_slider.setValue(int(params.get("intensity", 0.5) * 100))
+            
+            if "technical_params" in project_data:
+                params = project_data["technical_params"]
+                if params.get("key"):
+                    index = self.main_window.technical_params.key_combo.findText(params["key"])
+                    if index >= 0:
+                        self.main_window.technical_params.key_combo.setCurrentIndex(index)
+                if params.get("bpm"):
+                    self.main_window.technical_params.bpm_spinbox.setValue(params["bpm"])
+                if params.get("genre"):
+                    index = self.main_window.technical_params.genre_combo.findText(params["genre"])
+                    if index >= 0:
+                        self.main_window.technical_params.genre_combo.setCurrentIndex(index)
+            
+            self.main_window.set_project_path(Path(file_path))
+            self.log_message.emit(f"Project loaded: {Path(file_path).name}", "INFO")
+            self.status_changed.emit("Project loaded")
+        except Exception as e:
+            logger.error(f"Failed to open project: {e}")
+            self.error_occurred.emit(f"Failed to open project: {str(e)}")
+            self.log_message.emit(f"Failed to open project: {str(e)}", "ERROR")
+    
+    def handle_save_project(self, file_path: str):
+        """Handle save project request.
+        
+        Args:
+            file_path: Path to save project file
+        """
+        try:
+            # Collect project data
+            project_data = {
+                "version": "1.0.0",
+                "emotion_text": self.main_window.emotion_input.toPlainText(),
+                "emotion_params": self.main_window.emotion_params.get_values(),
+                "technical_params": self.main_window.technical_params.get_values(),
+                "results": self.main_window.results_display.toPlainText() if hasattr(self, 'last_result') else "",
+            }
+            
+            # Save to file
+            with open(file_path, 'w') as f:
+                json.dump(project_data, f, indent=2)
+            
+            self.main_window.set_project_path(Path(file_path))
+            self.log_message.emit(f"Project saved: {Path(file_path).name}", "INFO")
+            self.status_changed.emit("Project saved")
+        except Exception as e:
+            logger.error(f"Failed to save project: {e}")
+            self.error_occurred.emit(f"Failed to save project: {str(e)}")
+            self.log_message.emit(f"Failed to save project: {str(e)}", "ERROR")
+    
+    def handle_preferences(self):
+        """Handle preferences request."""
+        dialog = PreferencesDialog(self.main_window, self.preferences)
+        dialog.preferences_saved.connect(self._on_preferences_saved)
+        dialog.exec()
+    
+    def _on_preferences_saved(self, prefs: dict):
+        """Handle preferences saved.
+        
+        Args:
+            prefs: New preferences dictionary
+        """
+        self.preferences = prefs
+        
+        # Update engine API URL if changed
+        if prefs.get("api_url") != self.engine.api_url:
+            self.engine = MusicEngine(music_brain_api_url=prefs["api_url"])
+            set_engine(self.engine)
+            self.log_message.emit(f"API URL updated: {prefs['api_url']}", "INFO")
+        
+        # Update logging level
+        import logging
+        log_level = getattr(logging, prefs.get("log_level", "INFO"), logging.INFO)
+        logging.getLogger().setLevel(log_level)
+        
+        self.log_message.emit("Preferences saved", "INFO")
+        self._check_api_status()
+    
+    def handle_ai_analysis(self):
+        """Handle AI analysis request."""
+        self.log_message.emit("AI analysis requested (not yet implemented)", "INFO")
+        # TODO: Implement AI analysis
+        self.status_changed.emit("AI analysis: Coming soon")
+    
+    def handle_batch_process(self):
+        """Handle batch process request."""
+        self.log_message.emit("Batch process requested (not yet implemented)", "INFO")
+        # TODO: Implement batch processing
+        self.status_changed.emit("Batch process: Coming soon")
+    
+    def _check_api_status(self):
+        """Check API connection status."""
+        try:
+            import requests
+            api_url = self.preferences.get("api_url", "http://127.0.0.1:8000")
+            response = requests.get(f"{api_url}/health", timeout=2)
+            if response.status_code == 200:
+                self.main_window.set_api_status("Online", True)
+                self.log_message.emit("API connection: Online", "INFO")
+            else:
+                self.main_window.set_api_status("Offline", False)
+                self.log_message.emit("API connection: Offline", "WARNING")
+        except Exception as e:
+            self.main_window.set_api_status("Offline", False)
+            self.log_message.emit(f"API connection: {str(e)}", "WARNING")
+    
+    def _on_log_message(self, message: str, level: str):
+        """Handle log message from controller.
+        
+        Args:
+            message: Log message
+            level: Log level (INFO, WARNING, ERROR, DEBUG)
+        """
+        logs_dock = self.main_window.get_logs_dock()
+        if logs_dock:
+            logs_dock.add_log(message, level)
 

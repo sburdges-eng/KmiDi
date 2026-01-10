@@ -40,7 +40,8 @@ def get_openai_client():
 # Project paths
 ROOT = Path(__file__).resolve().parent.parent
 MODELS_DIR = ROOT / "models"
-DATA_DIR = Path(os.environ.get("KELLY_AUDIO_DATA_ROOT", "/Volumes/sbdrive/audio/datasets"))
+# Updated: Files moved from external SSD to local storage (2025-01-09)
+DATA_DIR = Path(os.environ.get("KELLY_AUDIO_DATA_ROOT", "/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data"))
 LOGS_DIR = ROOT / "logs" / "ai_orchestrator"
 
 # Model registry for Kelly's 5-model architecture

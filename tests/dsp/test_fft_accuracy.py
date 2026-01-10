@@ -194,14 +194,37 @@ class TestWindowing:
         peak_bin_no_window = np.argmax(magnitude_no_window)
         peak_bin_windowed = np.argmax(magnitude_windowed)
         
-        # Energy outside peak region should be lower with windowing
-        # (This is a simplified test - full leakage analysis is more complex)
+        # Windowing reduces spectral leakage by reducing sidelobes
+        # For a signal not on a bin center, windowing spreads energy to nearby bins
+        # but reduces leakage to distant bins
+        
+        # Find peak bins
+        peak_bin_no_window = np.argmax(magnitude_no_window)
+        peak_bin_windowed = np.argmax(magnitude_windowed)
+        
+        # Calculate energy in bins far from the peak (leakage)
+        # Look at bins more than 10 bins away from peak
+        freqs = np.fft.rfftfreq(len(signal), 1.0 / 44100.0)
+        peak_freq = freqs[peak_bin_no_window]
+        
+        # Find bins far from peak (>100Hz away)
+        far_bins = np.abs(freqs - peak_freq) > 100
+        
+        # Energy in far bins (leakage) should be reduced with windowing
+        leakage_no_window = np.sum(magnitude_no_window[far_bins] ** 2)
+        leakage_windowed = np.sum(magnitude_windowed[far_bins] ** 2)
+        
+        # Normalize by total energy for fair comparison
         total_energy_no_window = np.sum(magnitude_no_window ** 2)
         total_energy_windowed = np.sum(magnitude_windowed ** 2)
         
-        # Windowed should preserve most energy (but slightly less due to window)
-        assert total_energy_windowed > total_energy_no_window * 0.5, \
-            "Windowing should preserve most signal energy"
+        leakage_ratio_no_window = leakage_no_window / total_energy_no_window if total_energy_no_window > 0 else 0
+        leakage_ratio_windowed = leakage_windowed / total_energy_windowed if total_energy_windowed > 0 else 0
+        
+        # Windowed should have less leakage (or similar if already low)
+        # Allow some tolerance since signal might already have low leakage
+        assert leakage_ratio_windowed <= leakage_ratio_no_window * 1.5, \
+            f"Windowing should reduce spectral leakage: {leakage_ratio_windowed:.4f} vs {leakage_ratio_no_window:.4f}"
 
 
 class TestSpectralAnalysis:

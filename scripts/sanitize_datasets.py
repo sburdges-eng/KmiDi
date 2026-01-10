@@ -10,7 +10,9 @@ Scans dataset directories for:
 5. 0-byte or truncated files
 
 Usage:
-    python scripts/sanitize_datasets.py --path "/Volumes/Extreme SSD/kelly-audio-data/raw" --quarantine
+    python scripts/sanitize_datasets.py --path "/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data/raw" --quarantine
+    # Or use environment variable: python scripts/sanitize_datasets.py --path "${KELLY_AUDIO_DATA_ROOT}/raw" --quarantine
+    # Updated: Files moved from external SSD to local storage (2025-01-09)
 """
 
 import os

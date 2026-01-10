@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# LOCAL TRAINING SCRIPT - Run on Mac with /Volumes/sbdrive
+# LOCAL TRAINING SCRIPT - Updated: Files moved from external SSD (2025-01-09)
 # =============================================================================
 # Usage:
 #   ./scripts/local_train.sh                    # Train all models
@@ -10,9 +10,11 @@
 
 set -e
 
-VOL="/Volumes/sbdrive"
-VENV="$VOL/venv"
-DATA="$VOL/audio/datasets"
+# Updated: Files moved from external SSD to local storage
+# Use environment variable or default to new location
+DATA="${KELLY_AUDIO_DATA_ROOT:-/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data}"
+# Legacy SSD location (if remounted): VOL="/Volumes/sbdrive"; DATA="$VOL/audio/datasets"
+VENV="${VIRTUAL_ENV:-$(dirname "$(which python3)")/../venv}"
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 RED='\033[0;31m'
@@ -22,10 +24,17 @@ NC='\033[0m'
 
 check_prereqs() {
     echo -e "${YELLOW}Checking prerequisites...${NC}"
-    [ ! -d "$VOL" ] && echo -e "${RED}ERROR: $VOL not mounted${NC}" && exit 1
-    [ ! -d "$VENV" ] && echo -e "${RED}ERROR: venv not found at $VENV${NC}" && exit 1
-    [ ! -d "$DATA" ] && echo -e "${RED}ERROR: datasets not found at $DATA${NC}" && exit 1
-    echo -e "${GREEN}All prerequisites met${NC}"
+    # Updated: Files moved from external SSD to local storage (2025-01-09)
+    if [ ! -d "$DATA" ]; then
+        echo -e "${YELLOW}WARNING: Data directory not found at $DATA${NC}"
+        echo -e "${YELLOW}Creating data directory...${NC}"
+        mkdir -p "$DATA/raw" "$DATA/processed" "$DATA/downloads" "$DATA/cache"
+    fi
+    if [ ! -d "$VENV" ] && [ -z "$VIRTUAL_ENV" ]; then
+        echo -e "${YELLOW}WARNING: Virtual environment not found. Using system Python.${NC}"
+        VENV=""
+    fi
+    echo -e "${GREEN}Prerequisites checked${NC}"
 }
 
 show_data_status() {
@@ -36,11 +45,19 @@ show_data_status() {
 }
 
 activate_env() {
-    echo -e "${YELLOW}Activating virtual environment...${NC}"
-    source "$VENV/bin/activate"
+    echo -e "${YELLOW}Setting up environment...${NC}"
+    if [ -n "$VENV" ] && [ -d "$VENV" ]; then
+        source "$VENV/bin/activate"
+        echo -e "${GREEN}Virtual environment activated${NC}"
+    elif [ -n "$VIRTUAL_ENV" ]; then
+        echo -e "${GREEN}Using existing virtual environment: $VIRTUAL_ENV${NC}"
+    else
+        echo -e "${YELLOW}No virtual environment - using system Python${NC}"
+    fi
     export PYTHONPATH="$REPO_DIR:$PYTHONPATH"
     export HF_HOME="$DATA/hf_cache"
     export HF_DATASETS_CACHE="$DATA/hf_cache"
+    export KELLY_AUDIO_DATA_ROOT="$DATA"
     echo -e "${GREEN}Environment ready${NC}"
 }
 

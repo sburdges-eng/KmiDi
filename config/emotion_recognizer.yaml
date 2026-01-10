@@ -35,7 +35,7 @@ cnn_config:
 # Audio data stored on external SSD for performance
 # Override with KELLY_AUDIO_DATA_ROOT environment variable
 # See configs/storage.py (Python module) for storage configuration
-data_path: ${KELLY_AUDIO_DATA_ROOT:-/Volumes/Extreme SSD/kelly-audio-data}/raw/emotions
+data_path: ${KELLY_AUDIO_DATA_ROOT:-/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data}/raw/emotions
 data_version: v1
 sample_rate: 16000
 n_mels: 64

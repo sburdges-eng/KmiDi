@@ -592,7 +592,8 @@ def _try_load_real_datasets(config: TrainConfig) -> Optional[Tuple]:
         return None
 
     # Get data root from environment or default
-    data_root = os.environ.get("KELLY_AUDIO_DATA_ROOT", "/Volumes/sbdrive/audio/datasets")
+    # Updated: Files moved from external SSD to local storage (2025-01-09)
+    data_root = os.environ.get("KELLY_AUDIO_DATA_ROOT", "/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data")
 
     # Task to dataset mapping
     TASK_TO_DATASET = {

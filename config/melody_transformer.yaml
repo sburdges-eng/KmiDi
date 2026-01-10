@@ -40,7 +40,7 @@ lstm_config:
 # Data Configuration
 # Audio/MIDI data stored on external SSD for performance
 # Override with KELLY_AUDIO_DATA_ROOT environment variable
-data_path: ${KELLY_AUDIO_DATA_ROOT:-/Volumes/Extreme SSD/kelly-audio-data}/raw/melodies
+data_path: ${KELLY_AUDIO_DATA_ROOT:-/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data}/raw/melodies
 data_version: v1
 sequence_length: 32  # Notes per sequence
 note_representation: midi  # midi, piano_roll, or pitch_class

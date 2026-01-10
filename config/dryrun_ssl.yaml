@@ -12,7 +12,7 @@ use_streaming: true
 
 # Override with KELLY_AUDIO_DATA_ROOT environment variable
 data:
-  train_manifest: ${KELLY_AUDIO_DATA_ROOT:-/Volumes/Extreme SSD/kelly-audio-data}/raw/emotions/cremad/manifest.jsonl
+  train_manifest: ${KELLY_AUDIO_DATA_ROOT:-/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data}/raw/emotions/cremad/manifest.jsonl
   sample_rate: 16000 # CREMA-D native SR
   segment_seconds: 2.0
   manifest_audio_key: audio

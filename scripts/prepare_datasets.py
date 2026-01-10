@@ -8,7 +8,8 @@ Downloads, preprocesses, and prepares real audio datasets for training:
 - Chord progression datasets
 - Groove/timing datasets
 
-All data is stored on: /Volumes/Extreme SSD/kelly-audio-data/
+All data is stored on: /Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data/
+(Updated: Files moved from external SSD to local storage - 2025-01-09)
 
 Usage:
     python scripts/prepare_datasets.py --dataset emotion --download
@@ -41,17 +42,25 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Audio data root on external SSD (override via env AUDIO_DATA_ROOT or --root)
+# Audio data root (override via env KELLY_AUDIO_DATA_ROOT, AUDIO_DATA_ROOT, or --root)
 def _detect_default_root() -> Path:
-    """Pick the best available mount point for large datasets."""
+    """Pick the best available location for large datasets."""
+    # Updated: Files moved from external SSD to local storage (2025-01-09)
     candidates = [
+        # Environment variables (highest priority)
+        Path(os.environ.get("KELLY_AUDIO_DATA_ROOT")) if os.environ.get("KELLY_AUDIO_DATA_ROOT") else None,
         Path(os.environ.get("AUDIO_DATA_ROOT")) if os.environ.get("AUDIO_DATA_ROOT") else None,
+        # New location (files moved from SSD)
+        Path("/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data"),
+        # Legacy SSD locations (kept for backward compatibility if remounted)
         Path("/Volumes/sbdrive/kmidi_audio_data"),
         Path("/Volumes/Extreme SSD/kmidi_audio_data"),
+        Path("/Volumes/Extreme SSD/kelly-audio-data"),
+        # Legacy local locations
         Path("/Users/seanburdges/BASIC STRUCTURE FOR miDiKompanion"),
     ]
     for path in candidates:
-        if path and path.parent.exists():
+        if path and path.exists():
             return path
     # Fallback to workspace
     return Path.cwd() / "kmidi_audio_data"

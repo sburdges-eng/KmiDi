@@ -612,25 +612,333 @@ def detect_pitch(
     if max_lag <= min_lag:
         return None
 
-    # Autocorrelation
-    best_correlation = -1.0
-    best_lag = 0
+    # Normalized autocorrelation for pitch detection
+    # Remove DC component
+    signal_mean = sum(samples) / len(samples)
+    samples_centered = [s - signal_mean for s in samples]
+    
+    # Calculate signal variance for normalization
+    signal_variance = sum(s * s for s in samples_centered) / len(samples_centered)
+    
+    if signal_variance < 1e-10:  # Silence or DC
+        return None
+    
+    # Autocorrelation: find the minimum lag with strong correlation (fundamental)
+    # Use normalized autocorrelation - peaks at lags corresponding to period
+    correlations = []
 
     for lag in range(min_lag, max_lag):
+        # Calculate autocorrelation at this lag
         correlation = 0.0
-        for i in range(len(samples) - lag):
-            correlation += samples[i] * samples[i + lag]
-
-        correlation /= (len(samples) - lag)
-
-        if correlation > best_correlation:
-            best_correlation = correlation
+        for i in range(len(samples_centered) - lag):
+            correlation += samples_centered[i] * samples_centered[i + lag]
+        
+        # Normalize: autocorrelation at lag 0 would be signal_variance
+        # For normalized autocorrelation: divide by autocorrelation at lag 0
+        # But we use a simpler normalization: divide by (length - lag) * variance
+        # Actually, for pitch detection, we want the normalized autocorrelation coefficient
+        correlation_norm = correlation / ((len(samples_centered) - lag) * signal_variance)
+        
+        correlations.append((lag, correlation_norm))
+    
+    # Find peaks: look for local maxima
+    peaks = []
+    for i in range(1, len(correlations) - 1):
+        lag_prev, corr_prev = correlations[i - 1]
+        lag_curr, corr_curr = correlations[i]
+        lag_next, corr_next = correlations[i + 1]
+        
+        # Local maximum
+        if corr_curr > corr_prev and corr_curr > corr_next and corr_curr > 0.1:
+            peaks.append((lag_curr, corr_curr))
+    
+    if not peaks:
+        return None
+    
+    # Find the fundamental: the minimum lag with strong correlation
+    # Sort peaks by lag (ascending) to find the first strong peak
+    peaks.sort(key=lambda x: x[0])  # Sort by lag (ascending)
+    
+    # Find maximum correlation to set threshold
+    max_correlation = max(corr for _, corr in peaks)
+    threshold = max(0.2, max_correlation * 0.4)  # At least 20% or 40% of max
+    
+    best_lag = None
+    best_correlation = 0.0
+    
+    # Find minimum lag above threshold (fundamental period)
+    for lag, corr in peaks:
+        if corr >= threshold:
             best_lag = lag
+            best_correlation = corr
+            break  # Take the first (smallest lag) peak above threshold
+    
+    # Fallback: use the first peak (minimum lag)
+    if best_lag is None and peaks:
+        best_lag, best_correlation = peaks[0]
 
-    if best_lag <= 0:
+    if best_lag is None or best_lag <= 0 or best_correlation < 0.1:
         return None
 
     return sample_rate / best_lag
+
+
+def phase_vocoder_pitch_shift(
+    samples: List[float],
+    semitones: float,
+    frame_size: int = 2048,
+    hop_size: int = 512,
+    sample_rate: float = 44100.0,
+    preserve_formants: bool = False,
+) -> List[float]:
+    """
+    Pitch shift using phase vocoder (FFT-based).
+    
+    Args:
+        samples: Input samples
+        semitones: Pitch shift in semitones (positive = higher)
+        frame_size: FFT frame size (must be power of 2)
+        hop_size: Analysis hop size (samples)
+        sample_rate: Sample rate
+        preserve_formants: If True, preserve formants (for vocal processing)
+    
+    Returns:
+        Pitch-shifted samples (same length as input)
+    """
+    if not samples:
+        return []
+    
+    # Calculate pitch ratio
+    pitch_ratio = 2 ** (semitones / 12.0)
+    
+    # For pitch shifting, we want to change pitch but keep duration
+    # So we adjust the synthesis hop size: hop_out = hop_in * pitch_ratio
+    # But to maintain output length, we need to handle this carefully
+    
+    # Actually, for pitch shifting without changing duration:
+    # - We analyze with hop_in
+    # - We synthesize with hop_out = hop_in * pitch_ratio
+    # - But we need to adjust the output length to match input
+    # - This means we may need to resample the result
+    
+    # Simplified approach: use phase vocoder with adjusted phase progression
+    # Then resample to maintain original length
+    
+    hop_out = int(hop_size * pitch_ratio)
+    
+    # Use phase vocoder to shift pitch (this will change duration)
+    shifted = _phase_vocoder_process(
+        samples,
+        frame_size=frame_size,
+        hop_in=hop_size,
+        hop_out=hop_out,
+        sample_rate=sample_rate,
+        phase_shift_ratio=pitch_ratio,
+    )
+    
+    # Resample back to original length if needed
+    if len(shifted) != len(samples):
+        # Resample to match input length
+        # Calculate ratio: we want to go from len(shifted) to len(samples)
+        # So we use sample rates proportional to lengths
+        target_length = len(samples)
+        source_length = len(shifted)
+        if source_length > 0:
+            # Use interpolation to resample
+            result = []
+            for i in range(target_length):
+                source_pos = i * (source_length / target_length)
+                index_a = int(source_pos)
+                index_b = min(index_a + 1, source_length - 1)
+                frac = source_pos - index_a
+                
+                if index_a < source_length and index_b < source_length:
+                    sample = shifted[index_a] * (1 - frac) + shifted[index_b] * frac
+                    result.append(sample)
+                elif index_a < source_length:
+                    result.append(shifted[index_a])
+                else:
+                    result.append(0.0)
+            shifted = result
+        else:
+            shifted = [0.0] * target_length
+    
+    return shifted
+
+
+def phase_vocoder_time_stretch(
+    samples: List[float],
+    factor: float,
+    frame_size: int = 2048,
+    hop_size: int = 512,
+    sample_rate: float = 44100.0,
+) -> List[float]:
+    """
+    Time stretch using phase vocoder (preserves pitch).
+    
+    Args:
+        samples: Input samples
+        factor: Stretch factor (2.0 = twice as long, 0.5 = half length)
+        frame_size: FFT frame size (must be power of 2)
+        hop_size: Analysis hop size (samples)
+        sample_rate: Sample rate
+    
+    Returns:
+        Time-stretched samples
+    """
+    if not samples:
+        return []
+    
+    if factor <= 0.0:
+        return []
+    
+    # For time stretching, we adjust hop size but keep phase progression unchanged
+    # For factor 2.0 (2x longer), we need hop_out = hop_in / 2 (output advances slower)
+    # For factor 0.5 (0.5x longer = shorter), we need hop_out = hop_in * 2 (output advances faster)
+    hop_in = hop_size
+    hop_out = int(hop_size / factor)  # Corrected: divide, not multiply
+    
+    # Use phase vocoder with no phase modification (phase_shift_ratio = 1.0)
+    stretched = _phase_vocoder_process(
+        samples,
+        frame_size=frame_size,
+        hop_in=hop_in,
+        hop_out=hop_out,
+        sample_rate=sample_rate,
+        phase_shift_ratio=1.0,  # No pitch change
+    )
+    
+    return stretched
+
+
+def _phase_vocoder_process(
+    samples: List[float],
+    frame_size: int,
+    hop_in: int,
+    hop_out: int,
+    sample_rate: float,
+    phase_shift_ratio: float = 1.0,
+) -> List[float]:
+    """
+    Core phase vocoder processing.
+    
+    Args:
+        samples: Input samples
+        frame_size: FFT frame size
+        hop_in: Analysis hop size
+        hop_out: Synthesis hop size
+        sample_rate: Sample rate
+        phase_shift_ratio: Phase shift ratio (1.0 = no pitch change, >1.0 = higher pitch)
+    
+    Returns:
+        Processed samples
+    """
+    if not samples:
+        return []
+    
+    # Ensure frame_size is power of 2
+    if frame_size & (frame_size - 1) != 0:
+        # Round up to next power of 2
+        frame_size = 1 << (frame_size - 1).bit_length()
+    
+    # Create window (Hann window for good frequency resolution)
+    window = np.hanning(frame_size).astype(np.float32)
+    
+    # Calculate number of bins (DC + positive frequencies + Nyquist)
+    num_bins = frame_size // 2 + 1
+    
+    # Pre-allocate output buffer (estimate size)
+    # For time stretching, output length is approximately: (num_frames - 1) * hop_out + frame_size
+    # Estimate number of frames: (len(samples) - frame_size) / hop_in + 1
+    num_frames_est = max(1, int((len(samples) - frame_size) / hop_in) + 1)
+    estimated_length = (num_frames_est - 1) * hop_out + frame_size
+    # Add extra buffer to handle edge cases
+    output = np.zeros(estimated_length + frame_size * 2, dtype=np.float32)
+    normalization = np.zeros(estimated_length + frame_size * 2, dtype=np.float32)
+    
+    # Phase tracking: store previous phase for phase unwrapping
+    prev_phase = np.zeros(num_bins, dtype=np.float32)
+    prev_phase_cumulative = np.zeros(num_bins, dtype=np.float32)
+    
+    # Analysis position
+    input_pos = 0
+    output_pos = 0
+    
+    # Expected phase increment per bin (for phase unwrapping)
+    expected_phase_increment = 2.0 * np.pi * hop_in / frame_size
+    
+    frame_count = 0
+    
+    while input_pos + frame_size <= len(samples):
+        # Extract frame
+        frame = np.array(samples[input_pos:input_pos + frame_size], dtype=np.float32)
+        
+        # Apply window
+        frame_windowed = frame * window
+        
+        # FFT
+        spectrum = np.fft.rfft(frame_windowed)
+        
+        # Get magnitude and phase
+        magnitude = np.abs(spectrum)
+        phase = np.angle(spectrum)
+        
+        # Phase unwrapping and modification
+        if frame_count > 0:
+            # Calculate phase difference
+            phase_diff = phase - prev_phase
+            
+            # Unwrap phase (handle 2π discontinuities)
+            phase_diff = phase_diff - 2.0 * np.pi * np.round(phase_diff / (2.0 * np.pi))
+            
+            # Add expected phase increment (based on hop size)
+            for bin_idx in range(num_bins):
+                expected_inc = expected_phase_increment * bin_idx
+                phase_diff[bin_idx] += expected_inc
+            
+            # Update cumulative phase
+            prev_phase_cumulative += phase_diff * phase_shift_ratio
+            
+        else:
+            # First frame: initialize cumulative phase
+            prev_phase_cumulative = phase.copy()
+        
+        # Reconstruct spectrum with modified phase
+        modified_spectrum = magnitude * np.exp(1j * prev_phase_cumulative)
+        
+        # IFFT
+        output_frame = np.fft.irfft(modified_spectrum, n=frame_size)
+        
+        # Apply synthesis window
+        output_frame_windowed = output_frame * window
+        
+        # Overlap-add to output buffer
+        if output_pos + frame_size <= len(output):
+            output[output_pos:output_pos + frame_size] += output_frame_windowed
+            normalization[output_pos:output_pos + frame_size] += window ** 2
+        
+        # Update positions
+        input_pos += hop_in
+        output_pos += hop_out
+        
+        # Store phase for next iteration
+        prev_phase = phase.copy()
+        frame_count += 1
+    
+    # Normalize output (divide by window sum squared to compensate for overlap-add)
+    output_length = output_pos
+    if output_length > len(output):
+        output_length = len(output)
+    
+    output = output[:output_length]
+    normalization = normalization[:output_length]
+    
+    # Avoid division by zero
+    normalization[normalization < 1e-10] = 1.0
+    
+    output = output / normalization
+    
+    return output.tolist()
 
 
 def resample(

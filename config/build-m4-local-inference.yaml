@@ -33,12 +33,14 @@ hardware:
 # =============================================================================
 # SSD Storage Paths (3TB External SSD)
 # =============================================================================
-# Mount point assumed: /Volumes/Extreme SSD or similar
+# Data location: Files moved from external SSD to local storage
+# New location: /Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data
 # Adjust DATA_ROOT, MODELS_ROOT, OUTPUT_ROOT via environment or .env
 
 paths:
   # Root directories (customize via environment variables)
-  ssd_mount: ${SSD_MOUNT:-/Volumes/Extreme SSD}
+  # Updated: Default to new local storage location (files moved from SSD)
+  ssd_mount: ${SSD_MOUNT:-/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA}
   data_root: ${DATA_ROOT:-${SSD_MOUNT}/kelly-audio-data}
   models_root: ${MODELS_ROOT:-${SSD_MOUNT}/kelly-project/models}
   output_root: ${OUTPUT_ROOT:-${SSD_MOUNT}/kelly-project/output}
@@ -392,11 +394,12 @@ ssd_management:
 # =============================================================================
 # Create .env file with these settings:
 #
-# SSD_MOUNT=/Volumes/Extreme SSD
-# DATA_ROOT=/Volumes/Extreme SSD/kelly-audio-data
-# MODELS_ROOT=/Volumes/Extreme SSD/kelly-project/models
-# OUTPUT_ROOT=/Volumes/Extreme SSD/kelly-project/output
-# CHECKPOINTS_ROOT=/Volumes/Extreme SSD/kelly-project/checkpoints
+# DATA_LOCATION=/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA
+# DATA_ROOT=/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data
+# MODELS_ROOT=/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/models
+# OUTPUT_ROOT=/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/output
+# CHECKPOINTS_ROOT=/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/checkpoints
+# NOTE: Files moved from external SSD. Update these paths if using different locations.
 # OLLAMA_MODEL=llama3.2:8b
 # OLLAMA_HOST=http://localhost:11434
 # PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0

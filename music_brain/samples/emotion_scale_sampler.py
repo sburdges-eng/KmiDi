@@ -19,16 +19,59 @@ import urllib.parse
 SCRIPT_DIR = Path(__file__).resolve().parent
 PACKAGE_ROOT = SCRIPT_DIR.parent
 PROJECT_ROOT = PACKAGE_ROOT.parent
-SCALES_DB_PATH = PACKAGE_ROOT / "data" / "scales_database.json"
-GDRIVE_ROOT = Path.home() / "sburdges@gmail.com - Google Drive" / "My Drive"
-GDRIVE_SAMPLES = GDRIVE_ROOT / "iDAW_Samples" / "Emotion_Scale_Library"
 
-# Local staging (temporary) - keep outside the package directory
-LOCAL_STAGING = PROJECT_ROOT / "emotion_scale_staging"
+# Scales database - use data directory in package or fallback to project root
+# Support custom path via environment variable
+SCALES_DB_ENV = os.getenv("SCALES_DB_PATH")
+if SCALES_DB_ENV:
+    SCALES_DB_CANDIDATES = [Path(os.path.expanduser(SCALES_DB_ENV))]
+else:
+    SCALES_DB_CANDIDATES = [
+        PACKAGE_ROOT / "data" / "scales_database.json",
+        PROJECT_ROOT / "data" / "scales_database.json",
+        Path("data/scales_database.json"),
+    ]
+SCALES_DB_PATH = next((p for p in SCALES_DB_CANDIDATES if p.exists()), SCALES_DB_CANDIDATES[0])
 
-# Config and logs stored at project root so they persist across installs
-CONFIG_FILE = PROJECT_ROOT / "freesound_config.json"
-DOWNLOAD_LOG = PROJECT_ROOT / "emotion_scale_downloads.json"
+# Google Drive path - configurable via environment variable
+# Default to user's home directory if GDRIVE_ROOT not set
+GDRIVE_ROOT_STR = os.getenv("GDRIVE_ROOT") or os.getenv("GOOGLE_DRIVE_ROOT")
+if GDRIVE_ROOT_STR:
+    GDRIVE_ROOT = Path(os.path.expanduser(GDRIVE_ROOT_STR))
+else:
+    # Fallback: try common Google Drive locations
+    home = Path.home()
+    gdrive_candidates = [
+        home / "sburdges@gmail.com - Google Drive" / "My Drive",
+        home / "Google Drive",
+        home / "Library" / "CloudStorage" / "GoogleDrive-MyDrive",
+    ]
+    GDRIVE_ROOT = next((p for p in gdrive_candidates if p.exists()), None)
+
+# Only set GDRIVE_SAMPLES if GDRIVE_ROOT is available
+if GDRIVE_ROOT and GDRIVE_ROOT.exists():
+    GDRIVE_SAMPLES = GDRIVE_ROOT / "iDAW_Samples" / "Emotion_Scale_Library"
+else:
+    GDRIVE_SAMPLES = None
+
+# Local staging - configurable via environment variable, fallback to user config dir
+LOCAL_STAGING_STR = os.getenv("EMOTION_SCALE_STAGING_DIR")
+if LOCAL_STAGING_STR:
+    LOCAL_STAGING = Path(os.path.expanduser(LOCAL_STAGING_STR))
+else:
+    # Use standard config directory pattern
+    config_base = Path.home() / ".idaw"
+    LOCAL_STAGING = config_base / "emotion_scale_staging"
+
+# Config and logs - use standard config directory
+CONFIG_DIR = Path(os.getenv("IDAW_CONFIG_DIR", str(Path.home() / ".idaw" / "config")))
+CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+CONFIG_FILE = CONFIG_DIR / "freesound_config.json"
+
+# Download log - store in config directory
+DOWNLOAD_LOG_DIR = Path(os.getenv("IDAW_DATA_DIR", str(Path.home() / ".idaw" / "data")))
+DOWNLOAD_LOG_DIR.mkdir(parents=True, exist_ok=True)
+DOWNLOAD_LOG = DOWNLOAD_LOG_DIR / "emotion_scale_downloads.json"
 
 # Size limits
 MAX_SIZE_PER_COMBO_MB = 25
@@ -132,16 +175,26 @@ class EmotionScaleSampler:
 
         # Create directories
         LOCAL_STAGING.mkdir(parents=True, exist_ok=True)
-        GDRIVE_SAMPLES.mkdir(parents=True, exist_ok=True)
+        if GDRIVE_SAMPLES:
+            GDRIVE_SAMPLES.mkdir(parents=True, exist_ok=True)
 
     def load_scales_db(self):
         """Load scales database"""
-        if not SCALES_DB_PATH.exists():
-            print(f"Error: Scales database not found at {SCALES_DB_PATH}")
-            return None
-
-        with open(SCALES_DB_PATH, 'r') as f:
-            return json.load(f)
+        # Try to find scales database in multiple locations
+        for candidate_path in SCALES_DB_CANDIDATES:
+            if candidate_path.exists():
+                try:
+                    with open(candidate_path, 'r') as f:
+                        return json.load(f)
+                except (json.JSONDecodeError, IOError) as e:
+                    print(f"Warning: Could not load scales DB from {candidate_path}: {e}")
+                    continue
+        
+        print(f"Error: Scales database not found. Tried:")
+        for path in SCALES_DB_CANDIDATES:
+            print(f"  - {path}")
+        print(f"\nSet SCALES_DB_PATH environment variable to specify custom location.")
+        return None
 
     def extract_emotions(self):
         """Extract all unique emotions from scales database"""
@@ -315,11 +368,29 @@ class EmotionScaleSampler:
 
     def sync_to_gdrive(self):
         """Sync local staging to Google Drive"""
+        if not GDRIVE_SAMPLES:
+            print(f"\n{'='*70}")
+            print("Google Drive sync disabled - GDRIVE_ROOT not found")
+            print(f"{'='*70}")
+            print("\nTo enable Google Drive sync:")
+            print("  1. Set GDRIVE_ROOT environment variable to your Google Drive path")
+            print("     Example: export GDRIVE_ROOT='~/Google Drive'")
+            print("  2. Or set GOOGLE_DRIVE_ROOT environment variable")
+            print("\nCommon Google Drive locations:")
+            print("  - ~/Google Drive")
+            print("  - ~/sburdges@gmail.com - Google Drive/My Drive")
+            print("  - ~/Library/CloudStorage/GoogleDrive-MyDrive")
+            return
+
         print(f"\n{'='*70}")
         print("Syncing to Google Drive...")
         print(f"{'='*70}")
 
         import shutil
+
+        if not LOCAL_STAGING.exists():
+            print(f"  ⚠ Local staging directory not found: {LOCAL_STAGING}")
+            return
 
         total_synced = 0
         for emotion_dir in LOCAL_STAGING.iterdir():
@@ -339,9 +410,12 @@ class EmotionScaleSampler:
                     target_file = target_dir / file.name
 
                     if not target_file.exists():
-                        shutil.copy2(file, target_file)
-                        total_synced += 1
-                        print(f"  ✓ Synced: {emotion_dir.name}/{scale_dir.name}/{file.name}")
+                        try:
+                            shutil.copy2(file, target_file)
+                            total_synced += 1
+                            print(f"  ✓ Synced: {emotion_dir.name}/{scale_dir.name}/{file.name}")
+                        except Exception as e:
+                            print(f"  ✗ Failed to sync {file.name}: {e}")
 
         print(f"\n✓ Synced {total_synced} files to Google Drive")
         print(f"Location: {GDRIVE_SAMPLES}")

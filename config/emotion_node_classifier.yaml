@@ -167,7 +167,7 @@ thesaurus:
 # DATA CONFIGURATION
 # Override with KELLY_AUDIO_DATA_ROOT environment variable
 # =============================================================================
-data_path: ${KELLY_AUDIO_DATA_ROOT:-/Volumes/Extreme SSD/kelly-audio-data}/raw/emotion_thesaurus
+data_path: ${KELLY_AUDIO_DATA_ROOT:-/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data}/raw/emotion_thesaurus
 data_version: v1
 sample_rate: 44100
 n_mels: 64

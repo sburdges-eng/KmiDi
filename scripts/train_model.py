@@ -81,7 +81,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Paths
-AUDIO_DATA_ROOT = Path("/Volumes/Extreme SSD/kelly-audio-data")
+# Updated: Files moved from external SSD to local storage (2025-01-09)
+# Use environment variable or auto-detect from configs.storage
+import os
+from configs.storage import get_audio_data_root
+AUDIO_DATA_ROOT = Path(os.getenv("KELLY_AUDIO_DATA_ROOT", str(get_audio_data_root())))
 MODELS_DIR = ROOT / "models"
 CHECKPOINTS_DIR = ROOT / "checkpoints"
 LOGS_DIR = ROOT / "logs" / "training"

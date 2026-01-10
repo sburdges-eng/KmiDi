@@ -51,12 +51,17 @@ def main():
     controller.generation_finished.connect(lambda success: window.set_generating(False))
     controller.error_occurred.connect(lambda msg: window.set_status(f"Error: {msg}"))
     
+    # Connect AI dock signals
+    window.get_ai_dock().preview_requested.connect(controller.handle_preview)
+    window.get_ai_dock().apply_requested.connect(lambda: logger.info("Apply requested"))
+    window.get_ai_dock().ignore_requested.connect(lambda: logger.info("Ignore requested"))
+    
     # Show window
     window.show()
     
     # Set initial status
     window.set_api_status("Checking...", online=None)
-    # TODO: Check API status in background
+    # API status will be checked by controller
     
     logger.info("KmiDi application started")
     

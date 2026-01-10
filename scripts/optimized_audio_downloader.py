@@ -19,8 +19,9 @@ Examples:
     python3 scripts/optimized_audio_downloader.py \
         --urls-file urls.txt --output-subdir foley_raw --no-extract
 
-    # Force root storage to an external drive (e.g., /Volumes/sbdrive/audio)
-    python3 scripts/optimized_audio_downloader.py --root /Volumes/sbdrive/audio --urls-file urls.txt
+    # Force root storage to a specific location (e.g., local storage or external drive)
+    python3 scripts/optimized_audio_downloader.py --root /Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data/downloads --urls-file urls.txt
+    # Updated: Files moved from external SSD to local storage (2025-01-09)
 
     # Freesound pack (requires FREESOUND_API_KEY)
     python3 scripts/optimized_audio_downloader.py --freesound-pack 12345 --output-subdir freesound_emotion

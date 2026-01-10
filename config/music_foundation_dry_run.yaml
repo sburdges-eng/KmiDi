@@ -14,7 +14,7 @@ use_streaming: true
 # Data Configuration
 # Override with KELLY_AUDIO_DATA_ROOT environment variable
 data:
-  train_manifest: ${KELLY_AUDIO_DATA_ROOT:-/Volumes/Extreme SSD/kelly-audio-data}/manifests/dry_run.jsonl
+  train_manifest: ${KELLY_AUDIO_DATA_ROOT:-/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data}/manifests/dry_run.jsonl
   sample_rate: 44100
   segment_seconds: 2.0
   manifest_audio_key: audio

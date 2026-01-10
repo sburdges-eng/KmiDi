@@ -10,9 +10,13 @@ Environment Variables:
 
 Priority:
     1. KELLY_AUDIO_DATA_ROOT (explicit, takes precedence)
-    2. KELLY_SSD_PATH/kelly-audio-data
-    3. Platform default SSD paths (auto-detected)
+    2. KELLY_SSD_PATH/kelly-audio-data (or KELLY_SSD_PATH if it contains kelly-audio-data directly)
+    3. Platform default paths (auto-detected: local storage first, then legacy SSD mounts)
     4. Safe fallback: ~/.kelly/audio-data (always writable)
+
+Note: Files have been moved from external SSD to:
+  /Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data/
+Set KELLY_AUDIO_DATA_ROOT explicitly for best results.
 
 Usage:
     from configs.storage import get_storage_config, reset_storage_config
@@ -33,9 +37,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
 
-# Platform-specific default SSD mount points to auto-detect
+# Platform-specific default data locations to auto-detect
+# Updated: Files moved from external SSD to local storage
+# Priority: Local storage first, then external SSD (if mounted)
 _PLATFORM_SSD_PATHS = {
     "Darwin": [
+        # Local storage (new location - files moved from SSD)
+        str(Path.home() / "RECOVERY_OPS" / "AUDIO_MIDI_DATA"),
+        # Legacy SSD locations (kept for backward compatibility if remounted)
         "/Volumes/Extreme SSD",
         "/Volumes/External SSD",
         "/Volumes/Audio Data",
@@ -160,16 +169,28 @@ class StorageConfig:
                     self.configured_ssd_path = ssd_path
                     return
 
-        # 3. Auto-detect platform SSD paths
+        # 3. Auto-detect platform data paths
+        # Updated: Check for direct kelly-audio-data path first, then parent directories
         system = platform.system()
-        for ssd_path_str in _PLATFORM_SSD_PATHS.get(system, []):
-            ssd_path = Path(ssd_path_str)
-            if ssd_path.exists() and ssd_path.is_dir():
-                audio_root = ssd_path / "kelly-audio-data"
-                if _is_path_writable(audio_root):
+        for data_path_str in _PLATFORM_SSD_PATHS.get(system, []):
+            data_path = Path(data_path_str)
+            if not data_path.exists() or not data_path.is_dir():
+                continue
+            
+            # Check if this is already the kelly-audio-data directory
+            if data_path.name == "kelly-audio-data":
+                if _is_path_writable(data_path):
+                    self.audio_data_root = data_path
+                    self.source = "auto_detected"
+                    self.configured_ssd_path = data_path.parent
+                    return
+            else:
+                # Check if kelly-audio-data exists inside this directory
+                audio_root = data_path / "kelly-audio-data"
+                if audio_root.exists() and _is_path_writable(audio_root):
                     self.audio_data_root = audio_root
-                    self.source = "auto_ssd"
-                    self.configured_ssd_path = ssd_path
+                    self.source = "auto_detected"
+                    self.configured_ssd_path = data_path
                     return
 
         # 4. Safe fallback (always writable)
@@ -210,7 +231,7 @@ class StorageConfig:
     @property
     def is_auto_detected(self) -> bool:
         """True if path was auto-detected from platform defaults."""
-        return self.source == "auto_ssd"
+        return self.source in ("auto_ssd", "auto_detected")
 
     @property
     def is_fallback(self) -> bool:
@@ -224,8 +245,8 @@ class StorageConfig:
             return f"Configured ({self.audio_data_root})"
         elif self.source == "ssd_env":
             return f"SSD via env ({self.configured_ssd_path})"
-        elif self.source == "auto_ssd":
-            return f"Auto-detected SSD ({self.configured_ssd_path})"
+        elif self.source in ("auto_ssd", "auto_detected"):
+            return f"Auto-detected ({self.configured_ssd_path})"
         else:
             return f"Fallback ({self.audio_data_root})"
 

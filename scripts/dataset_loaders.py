@@ -11,10 +11,11 @@ Usage:
     from dataset_loaders import get_lakh_midi_loader, get_m4singer_loader
 
     train_loader = get_lakh_midi_loader(
-        data_dir="/Volumes/sbdrive/audio/datasets/lakh_midi",
+        data_dir="/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data/raw/chord_progressions/lakh_midi",
         task="melody",
         batch_size=32
     )
+    # Updated: Files moved from external SSD to local storage (2025-01-09)
 """
 
 import os
@@ -553,7 +554,8 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data-dir", default="/Volumes/sbdrive/audio/datasets")
+    # Updated: Files moved from external SSD to local storage (2025-01-09)
+    parser.add_argument("--data-dir", default="/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data")
     parser.add_argument("--dataset", choices=["lakh", "m4singer"], default="lakh")
     parser.add_argument("--task", default="melody")
     parser.add_argument("--max-files", type=int, default=100)

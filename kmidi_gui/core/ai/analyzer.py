@@ -40,8 +40,6 @@ class AIAnalyzer:
         self.logger.info(f"Analyzing similarity for {len(files)} files")
         
         if len(files) < 2:
-        
-        if len(files) < 2:
             return AIProposal(
                 cluster_id="single",
                 classification="unique",

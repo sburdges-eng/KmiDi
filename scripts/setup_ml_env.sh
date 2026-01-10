@@ -182,26 +182,31 @@ EOF
 echo ""
 echo -e "${YELLOW}→ Creating directory structure...${NC}"
 
-# Audio data goes to external SSD for space/performance
-AUDIO_DATA_ROOT="/Volumes/Extreme SSD"
-if [ -d "$AUDIO_DATA_ROOT" ]; then
-    echo -e "${GREEN}✓ External SSD detected: $AUDIO_DATA_ROOT${NC}"
-    mkdir -p "$AUDIO_DATA_ROOT/kelly-audio-data/raw"
-    mkdir -p "$AUDIO_DATA_ROOT/kelly-audio-data/processed"
-    mkdir -p "$AUDIO_DATA_ROOT/kelly-audio-data/downloads"
-    mkdir -p "$AUDIO_DATA_ROOT/kelly-audio-data/cache"
+# Audio data location - Updated: Files moved from external SSD to local storage (2025-01-09)
+# Priority: Environment variable > New location > Legacy SSD (if remounted)
+AUDIO_DATA_ROOT="${KELLY_AUDIO_DATA_ROOT:-/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data}"
+
+# Check if directory exists or parent exists (for creation)
+if [ -d "$AUDIO_DATA_ROOT" ] || [ -d "$(dirname "$AUDIO_DATA_ROOT")" ]; then
+    echo -e "${GREEN}✓ Data directory: $AUDIO_DATA_ROOT${NC}"
+    # AUDIO_DATA_ROOT is already the kelly-audio-data directory, so create subdirs directly
+    mkdir -p "$AUDIO_DATA_ROOT/raw"
+    mkdir -p "$AUDIO_DATA_ROOT/processed"
+    mkdir -p "$AUDIO_DATA_ROOT/downloads"
+    mkdir -p "$AUDIO_DATA_ROOT/cache"
     
-    # Create symlink in project if not exists
-    if [ ! -L "$PROJECT_ROOT/data/audio" ]; then
-        ln -sf "$AUDIO_DATA_ROOT/kelly-audio-data" "$PROJECT_ROOT/data/audio"
-        echo -e "${GREEN}✓ Symlinked data/audio → $AUDIO_DATA_ROOT/kelly-audio-data${NC}"
+    # Create symlink in project if not exists (optional)
+    if [ ! -L "$PROJECT_ROOT/data/audio" ] && [ ! -d "$PROJECT_ROOT/data/audio" ]; then
+        ln -sf "$AUDIO_DATA_ROOT" "$PROJECT_ROOT/data/audio"
+        echo -e "${GREEN}✓ Symlinked data/audio → $AUDIO_DATA_ROOT${NC}"
     fi
 else
-    echo -e "${YELLOW}⚠ External SSD not found at $AUDIO_DATA_ROOT${NC}"
+    echo -e "${YELLOW}⚠ Data directory not found at $AUDIO_DATA_ROOT${NC}"
     echo -e "  Audio data will be stored locally in data/audio"
     mkdir -p "$PROJECT_ROOT/data/audio/raw"
     mkdir -p "$PROJECT_ROOT/data/audio/processed"
     mkdir -p "$PROJECT_ROOT/data/audio/downloads"
+    mkdir -p "$PROJECT_ROOT/data/audio/cache"
 fi
 
 mkdir -p "$PROJECT_ROOT/data/raw"
