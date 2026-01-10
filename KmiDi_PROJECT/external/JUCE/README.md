@@ -61,7 +61,6 @@ of the target you wish to build.
 - __Windows__: Windows 8.1 and Visual Studio 2017
 - __Linux__: g++ 7.0 or Clang 6.0 (for a full list of dependencies, see
 [here](/docs/Linux%20Dependencies.md)).
-
 - __Android__: Android Studio on Windows, macOS or Linux
 
 #### Deployment Targets
@@ -85,7 +84,6 @@ Other modules are covered by a
 [GPL](https://www.gnu.org/licenses/gpl-3.0.en.html)/Commercial license.
 
 There are multiple commercial licensing tiers for JUCE, with different terms for each:
-
 - JUCE Personal (developers or startup businesses with revenue under 50K USD) - free
 - JUCE Indie (small businesses with revenue under 500K USD) - $40/month or $800 perpetual
 - JUCE Pro (no revenue limit) - $130/month or $2600 perpetual
@@ -94,7 +92,6 @@ There are multiple commercial licensing tiers for JUCE, with different terms for
 For full terms see [LICENSE.md](LICENSE.md).
 
 The JUCE framework contains the following dependencies:
-
 - [Oboe](modules/juce_audio_devices/native/oboe/) ([Apache 2.0](modules/juce_audio_devices/native/oboe/LICENSE))
 - [FLAC](modules/juce_audio_formats/codecs/flac/) ([BSD](modules/juce_audio_formats/codecs/flac/Flac%20Licence.txt))
 - [Ogg Vorbis](modules/juce_audio_formats/codecs/oggvorbis/) ([BSD](modules/juce_audio_formats/codecs/oggvorbis/Ogg%20Vorbis%20Licence.txt))
@@ -113,13 +110,10 @@ The JUCE examples are licensed under the terms of the
 [ISC license](http://www.isc.org/downloads/software-support-policy/isc-license/).
 
 Dependencies in the examples:
-
 - [reaper-sdk](examples/Plugins/extern/) ([zlib](examples/Plugins/extern/LICENSE.md))
 
 Dependencies in the bundled applications:
-
 - [Projucer icons](extras/Projucer/Source/Utility/UI/jucer_Icons.cpp) ([MIT](extras/Projucer/Source/Utility/UI/jucer_Icons.cpp))
 
 Dependencies in the build system:
-
 - [Android Gradle](examples/DemoRunner/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt) ([Apache 2.0](examples/DemoRunner/Builds/Android/gradle/wrapper/LICENSE-for-gradlewrapper.txt))

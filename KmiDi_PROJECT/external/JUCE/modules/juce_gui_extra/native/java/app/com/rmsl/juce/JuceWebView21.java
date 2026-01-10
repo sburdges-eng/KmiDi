@@ -27,9 +27,7 @@ package com.rmsl.juce;
 
 import android.graphics.Bitmap;
 import android.net.http.SslError;
-import android.os.Build;
 import android.os.Message;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -77,11 +75,8 @@ public class JuceWebView21
                 webViewPageLoadStarted (host, view, url);
         }
 
-        @SuppressWarnings("deprecation")
         public WebResourceResponse shouldInterceptRequest (WebView view, String url)
         {
-            // Deprecated in API 21, but kept for backward compatibility
-            // Maintain same blocking semantics regardless of API level
             synchronized (hostLock)
             {
                 if (host != 0)
@@ -93,31 +88,7 @@ public class JuceWebView21
                 }
             }
 
-            // Block request by returning empty response (same behavior as before)
             return new WebResourceResponse ("text/html", null, null);
-        }
-
-        @Override
-        public WebResourceResponse shouldInterceptRequest (WebView view, WebResourceRequest request)
-        {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
-            {
-                synchronized (hostLock)
-                {
-                    if (host != 0 && request != null && request.getUrl() != null)
-                    {
-                        String url = request.getUrl().toString();
-                        boolean shouldLoad = webViewPageLoadStarted (host, view, url);
-
-                        if (shouldLoad)
-                            return null;
-                    }
-                }
-
-                return new WebResourceResponse ("text/html", null, null);
-            }
-
-            return null;
         }
 
         private native boolean webViewPageLoadStarted (long host, WebView view, String url);

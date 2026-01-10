@@ -82,28 +82,10 @@ public class JuceMidiSupport
 
     static BluetoothAdapter getDefaultBluetoothAdapter (Context ctx)
     {
-        if (ctx == null)
-            return null;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S_V2)
+            return BluetoothAdapter.getDefaultAdapter();
 
-        try
-        {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S_V2)
-            {
-                BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-                return adapter;
-            }
-
-            BluetoothManager manager = (BluetoothManager) ctx.getSystemService (BLUETOOTH_SERVICE);
-            if (manager == null)
-                return null;
-
-            return manager.getAdapter();
-        }
-        catch (Exception e)
-        {
-            Log.d ("JUCE", "Error getting Bluetooth adapter: " + e.getMessage());
-            return null;
-        }
+        return ((BluetoothManager) ctx.getSystemService (BLUETOOTH_SERVICE)).getAdapter();
     }
 
     //==============================================================================
@@ -121,27 +103,8 @@ public class JuceMidiSupport
 
         public String getHumanReadableStringForBluetoothAddress (String address)
         {
-            if (address == null || address.isEmpty())
-                return "";
-
-            BluetoothAdapter adapter = getDefaultBluetoothAdapter (appContext);
-            if (adapter == null)
-                return "";
-
-            try
-            {
-                BluetoothDevice btDevice = adapter.getRemoteDevice (address);
-                if (btDevice == null)
-                    return "";
-
-                String name = btDevice.getName();
-                return (name != null) ? name : "";
-            }
-            catch (IllegalArgumentException e)
-            {
-                Log.d ("JUCE", "Invalid Bluetooth address: " + address);
-                return "";
-            }
+            BluetoothDevice btDevice = getDefaultBluetoothAdapter (appContext).getRemoteDevice (address);
+            return btDevice.getName ();
         }
 
         public int getBluetoothDeviceStatus (String address)
@@ -151,12 +114,6 @@ public class JuceMidiSupport
 
         public void startStopScan (boolean shouldStart)
         {
-            if (appContext == null)
-            {
-                Log.d ("JUCE", "BluetoothMidiManager error: app context is null");
-                return;
-            }
-
             BluetoothAdapter bluetoothAdapter = getDefaultBluetoothAdapter (appContext);
 
             if (bluetoothAdapter == null)
@@ -194,44 +151,15 @@ public class JuceMidiSupport
 
         public boolean pairBluetoothMidiDevice (String address)
         {
-            if (address == null || address.isEmpty())
-            {
-                Log.d ("JUCE", "pairBluetoothMidiDevice: invalid address");
-                return false;
-            }
-
-            BluetoothAdapter adapter = getDefaultBluetoothAdapter (appContext);
-            if (adapter == null)
-            {
-                Log.d ("JUCE", "pairBluetoothMidiDevice: could not get Bluetooth adapter");
-                return false;
-            }
-
-            BluetoothDevice btDevice;
-            try
-            {
-                btDevice = adapter.getRemoteDevice (address);
-            }
-            catch (IllegalArgumentException e)
-            {
-                Log.d ("JUCE", "pairBluetoothMidiDevice: failed to create Bluetooth device from address: " + e.getMessage());
-                return false;
-            }
+            BluetoothDevice btDevice = getDefaultBluetoothAdapter (appContext).getRemoteDevice (address);
 
             if (btDevice == null)
             {
-                Log.d ("JUCE", "pairBluetoothMidiDevice: failed to create Bluetooth device from address");
+                Log.d ("JUCE", "failed to create buletooth device from address");
                 return false;
             }
 
-            MidiDeviceManager manager = getAndroidMidiDeviceManager (appContext);
-            if (manager == null)
-            {
-                Log.d ("JUCE", "pairBluetoothMidiDevice: could not get MIDI device manager");
-                return false;
-            }
-
-            return manager.pairBluetoothDevice (btDevice);
+            return getAndroidMidiDeviceManager (appContext).pairBluetoothDevice (btDevice);
         }
 
         public void unpairBluetoothMidiDevice (String address)
@@ -1142,9 +1070,6 @@ public class JuceMidiSupport
 
     public static MidiDeviceManager getAndroidMidiDeviceManager (Context context)
     {
-        if (context == null)
-            return null;
-
         if (context.getSystemService (MIDI_SERVICE) == null)
             return null;
 
@@ -1159,9 +1084,6 @@ public class JuceMidiSupport
 
     public static BluetoothMidiManager getAndroidBluetoothManager (Context context)
     {
-        if (context == null)
-            return null;
-
         BluetoothAdapter adapter = getDefaultBluetoothAdapter (context);
 
         if (adapter == null)

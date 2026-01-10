@@ -5,7 +5,6 @@
 ## Change
 
 The signatures of some member functions of ci::Device have been changed:
-
 - sendPropertyGetInquiry
 - sendPropertySetInquiry
 
@@ -13,7 +12,6 @@ The signature of ci::PropertyHost::sendSubscriptionUpdate has also changed.
 
 The following member functions of ci::Device have been replaced with new
 alternatives:
-
 - sendPropertySubscriptionStart
 - sendPropertySubscriptionEnd
 - getOngoingSubscriptionsForMuid
@@ -1888,10 +1886,8 @@ apps behave as expected for users.
 ## Change
 
 The Convolution class interface was changed:
-
 - `loadImpulseResponse` member functions now take `enum class` parameters
   instead of `bool`.
-
 - `copyAndLoadImpulseResponseFromBlock` and
   `copyAndLoadImpulseResponseFromBuffer` were replaced by a new
   `loadImpulseResponse` overload.
