@@ -31,6 +31,9 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Prefer system audio codecs; disable JUCE's bundled Ogg/Vorbis to avoid missing sources
 set(JUCE_USE_OGGVORBIS FALSE CACHE BOOL "Disable JUCE Ogg/Vorbis codec" FORCE)
+add_compile_definitions(JUCE_USE_OGGVORBIS=0)
+# Disable VST2 replacement to avoid requiring VST2 SDK headers
+add_compile_definitions(JUCE_VST3_CAN_REPLACE_VST2=0)
 
 # Homebrew Ogg/Vorbis paths for JUCE audio_formats (macOS)
 if(APPLE AND EXISTS "/opt/homebrew/include" AND EXISTS "/opt/homebrew/lib")
@@ -49,12 +52,22 @@ if(APPLE)
     # The SDK's Availability.h handles all availability attributes correctly
     add_compile_definitions(
         MAC_OS_X_VERSION_MIN_REQUIRED=101200
+        MAC_OS_VERSION_15_0=150000
     )
 endif()
 find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
 
 # JUCE setup
 add_subdirectory(external/JUCE EXCLUDE_FROM_ALL)
+
+# Ensure juceaide helper is available (needed for plugin targets)
+if(NOT TARGET juce::juceaide)
+    set(JUCE_JUCEAIDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/JUCE/extras/Build/juceaide")
+    if(EXISTS "${JUCE_JUCEAIDE_PATH}")
+        add_executable(juce::juceaide IMPORTED GLOBAL)
+        set_target_properties(juce::juceaide PROPERTIES IMPORTED_LOCATION "${JUCE_JUCEAIDE_PATH}")
+    endif()
+endif()
 
 # Readerwriterqueue (lock-free queue) for RT-safe OSC
 # Note: This is a header-only library with no CMakeLists.txt, so we must
@@ -148,9 +161,10 @@ list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/gui/main.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/plugin/")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/engine/test_kelly\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/")  # Python bindings built separately
-# Exclude Python bridge when bindings are disabled
-if(NOT BUILD_PYTHON_BINDINGS)
+# Exclude Python bridge and binding sources from the core lib when bindings are built separately
+if(BUILD_PYTHON_BINDINGS)
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/bridge/kelly_bridge\\.cpp$")
+    list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/bindings\\.cpp$")
 endif()
 # NOTE: Previous line 31 had "list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/")"
 # which would exclude ALL source files (since all paths contain "/src/"), making
