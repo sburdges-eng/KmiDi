@@ -1,0 +1,32 @@
+# M4 Mac Metal Session Requirements
+# Apple Silicon Optimized
+# =======================
+
+# Core (CPU wheels for Mac)
+torch>=2.1.0
+torchvision>=0.16.0
+torchaudio>=2.1.0
+
+# Transformers
+transformers>=4.35.0
+
+# CoreML
+coremltools>=7.0
+
+# Core utilities
+numpy>=1.24.0
+pyyaml>=6.0
+tqdm>=4.66.0
+
+# ONNX (for fallback)
+onnx>=1.15.0
+onnxruntime>=1.16.0
+
+# LoRA fine-tuning
+peft>=0.7.0
+
+# Performance monitoring
+psutil>=5.9.0
+
+# Optional: MLX (Apple's ML framework)
+# mlx>=0.0.10

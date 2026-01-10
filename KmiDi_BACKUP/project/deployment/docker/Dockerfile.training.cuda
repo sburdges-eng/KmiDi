@@ -1,0 +1,88 @@
+# DAiW ML Training Pipeline - Docker Build with CUDA Support
+# ===========================================================
+# Use this Dockerfile if you have NVIDIA GPU with CUDA support
+# Build with: docker build -f Dockerfile.training.cuda -t daiw-ml-training:cuda .
+
+# Stage 1: Builder
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04 as builder
+
+# Set working directory
+WORKDIR /build
+
+# Install Python and build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.11 \
+    python3.11-dev \
+    python3-pip \
+    build-essential \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create symlink for python
+RUN ln -s /usr/bin/python3.11 /usr/bin/python
+
+# Copy training requirements
+COPY ["final kel/training_pipe/requirements.txt", "./requirements.txt"]
+
+# Install Python dependencies with CUDA support
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Stage 2: Runtime
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+
+# Set labels
+LABEL maintainer="Sean Burdges <seanblariat@gmail.com>"
+LABEL description="DAiW ML Training Pipeline - Train 5 neural network models with CUDA"
+LABEL version="1.0.0"
+
+# Install Python and runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.11 \
+    python3-pip \
+    libasound2 \
+    libsndfile1 \
+    libportaudio2 \
+    portaudio19-dev \
+    ffmpeg \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create symlink for python
+RUN ln -s /usr/bin/python3.11 /usr/bin/python
+
+# Create non-root user
+RUN useradd -m -u 1000 -s /bin/bash daiw
+
+# Set working directory
+WORKDIR /app/training
+
+# Copy installed packages from builder
+COPY --from=builder /usr/local/lib/python3.11/dist-packages /usr/local/lib/python3.11/dist-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy entrypoint script
+COPY ["final kel/training_pipe/docker_entrypoint.sh", "/usr/local/bin/docker_entrypoint.sh"]
+RUN chmod +x /usr/local/bin/docker_entrypoint.sh
+
+# Switch to non-root user
+USER daiw
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV TRAINING_DEVICE=cuda
+ENV TRAINING_OUTPUT_DIR=/app/models
+ENV CUDA_VISIBLE_DEVICES=0
+
+# Health check
+HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import torch; assert torch.cuda.is_available(); print('OK')" || exit 1
+
+# Default entrypoint
+ENTRYPOINT ["/usr/local/bin/docker_entrypoint.sh"]
+
+# Default command
+CMD ["train", "all"]

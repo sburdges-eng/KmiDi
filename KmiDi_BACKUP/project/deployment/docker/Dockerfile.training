@@ -1,0 +1,77 @@
+# DAiW ML Training Pipeline - Docker Build
+# =========================================
+# Optimized for training 5 neural network models
+
+# Stage 1: Builder
+FROM python:3.11-slim as builder
+
+# Set working directory
+WORKDIR /build
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy training requirements
+COPY ["final kel/training_pipe/requirements.txt", "./requirements.txt"]
+
+# Install Python dependencies
+# Note: For CUDA support, use: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+# For CPU/MPS: pip install torch torchvision torchaudio
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir torch torchvision torchaudio && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Stage 2: Runtime
+FROM python:3.11-slim
+
+# Set labels
+LABEL maintainer="Sean Burdges <seanblariat@gmail.com>"
+LABEL description="DAiW ML Training Pipeline - Train 5 neural network models"
+LABEL version="1.0.0"
+
+# Install runtime dependencies for audio processing
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libasound2 \
+    libsndfile1 \
+    libportaudio2 \
+    portaudio19-dev \
+    ffmpeg \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -m -u 1000 -s /bin/bash daiw
+
+# Set working directory
+WORKDIR /app/training
+
+# Copy installed packages from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy entrypoint script (will be mounted, but have a default)
+COPY ["final kel/training_pipe/docker_entrypoint.sh", "/usr/local/bin/docker_entrypoint.sh"]
+RUN chmod +x /usr/local/bin/docker_entrypoint.sh
+
+# Switch to non-root user
+USER daiw
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV TRAINING_DEVICE=cpu
+ENV TRAINING_OUTPUT_DIR=/app/models
+
+# Health check for long-running training jobs
+HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
+    CMD python -c "import torch; print('OK')" || exit 1
+
+# Default entrypoint
+ENTRYPOINT ["/usr/local/bin/docker_entrypoint.sh"]
+
+# Default command
+CMD ["train", "all"]

@@ -1,0 +1,23 @@
+# Minimal smoke config for Mac (MPS)
+# Keeps epochs/batch tiny; real training should use train-nvidia config.
+
+model_id: emotionrecognizer
+architecture_type: cnn
+loss: cross_entropy
+input_size: 128
+output_size: 7
+n_mels: 64
+n_fft: 1024
+hop_length: 256
+batch_size: 4
+epochs: 3
+learning_rate: 0.001
+optimizer: adam
+scheduler: cosine
+warmup_epochs: 1
+export_onnx: false
+export_coreml: false
+device: mps
+num_workers: 0       # Required for Mac compatibility (no multiprocessing)
+pin_memory: false    # Not beneficial on MPS device
+notes: "Smoke test on M-series; clamps further if device guard triggers"

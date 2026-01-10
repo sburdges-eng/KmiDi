@@ -1,0 +1,377 @@
+{
+  "$schema": "./registry.schema.json",
+  "registry_version": "1.1",
+  "generated_at": "2025-12-23T00:00:00Z",
+  "description": "Kelly ML model registry. See docs/MK_TRAINING_GUIDELINES.md for training workflow.",
+  "models": [
+    {
+      "id": "emotionrecognizer",
+      "file": "emotionrecognizer.json",
+      "format": "rtneural-json",
+      "model_type": "RTNeural",
+      "task": "emotion_embedding",
+      "input_size": 128,
+      "output_size": 64,
+      "status": "stub",
+      "note": "Replace with trained model. Fallback heuristics otherwise.",
+      "arch_hint": "128→512→256→128→64",
+      "params_estimate": "~500K",
+      "inference_target_ms": 5,
+      "training": {
+        "dataset_id": "emotion_dataset_v1",
+        "dataset_version": "",
+        "dataset_license": "",
+        "epochs": 0,
+        "batch_size": 0,
+        "learning_rate": 0,
+        "optimizer": "",
+        "loss": "",
+        "train_loss": 0,
+        "val_loss": 0,
+        "test_loss": 0,
+        "run_id": "",
+        "git_commit": "",
+        "training_date": "",
+        "hardware": "",
+        "duration_seconds": 0
+      },
+      "exports": {
+        "sha256": "",
+        "onnx_path": "",
+        "onnx_sha256": "",
+        "coreml_path": "",
+        "coreml_sha256": ""
+      },
+      "integration": {
+        "python_api": false,
+        "cpp_mlinterface": false,
+        "tauri_ui": false,
+        "fallback_available": true
+      },
+      "model_card": "docs/model_cards/emotionrecognizer.md",
+      "license": ""
+    },
+    {
+      "id": "melodytransformer",
+      "file": "melodytransformer.json",
+      "format": "rtneural-json",
+      "model_type": "RTNeural",
+      "task": "melody_generation",
+      "input_size": 64,
+      "output_size": 128,
+      "status": "stub",
+      "note": "Replace with trained model. Fallback heuristics otherwise.",
+      "arch_hint": "64→256→256→256→128",
+      "params_estimate": "~400K",
+      "inference_target_ms": 5,
+      "training": {
+        "dataset_id": "midi_melody_dataset_v1",
+        "dataset_version": "",
+        "dataset_license": "",
+        "epochs": 0,
+        "batch_size": 0,
+        "learning_rate": 0,
+        "optimizer": "",
+        "loss": "",
+        "train_loss": 0,
+        "val_loss": 0,
+        "test_loss": 0,
+        "run_id": "",
+        "git_commit": "",
+        "training_date": "",
+        "hardware": "",
+        "duration_seconds": 0
+      },
+      "exports": {
+        "sha256": "",
+        "onnx_path": "",
+        "onnx_sha256": "",
+        "coreml_path": "",
+        "coreml_sha256": ""
+      },
+      "integration": {
+        "python_api": false,
+        "cpp_mlinterface": false,
+        "tauri_ui": false,
+        "fallback_available": true
+      },
+      "model_card": "docs/model_cards/melodytransformer.md",
+      "license": ""
+    },
+    {
+      "id": "harmonypredictor",
+      "file": "harmonypredictor.json",
+      "format": "rtneural-json",
+      "model_type": "RTNeural",
+      "task": "harmony_prediction",
+      "input_size": 128,
+      "output_size": 64,
+      "status": "stub",
+      "note": "Replace with trained model. Fallback heuristics otherwise.",
+      "arch_hint": "128→256→128→64",
+      "params_estimate": "~100K",
+      "inference_target_ms": 3,
+      "training": {
+        "dataset_id": "chord_progression_dataset_v1",
+        "dataset_version": "",
+        "dataset_license": "",
+        "epochs": 0,
+        "batch_size": 0,
+        "learning_rate": 0,
+        "optimizer": "",
+        "loss": "",
+        "train_loss": 0,
+        "val_loss": 0,
+        "test_loss": 0,
+        "run_id": "",
+        "git_commit": "",
+        "training_date": "",
+        "hardware": "",
+        "duration_seconds": 0
+      },
+      "exports": {
+        "sha256": "",
+        "onnx_path": "",
+        "onnx_sha256": "",
+        "coreml_path": "",
+        "coreml_sha256": ""
+      },
+      "integration": {
+        "python_api": false,
+        "cpp_mlinterface": false,
+        "tauri_ui": false,
+        "fallback_available": true
+      },
+      "model_card": "docs/model_cards/harmonypredictor.md",
+      "license": ""
+    },
+    {
+      "id": "dynamicsengine",
+      "file": "dynamicsengine.json",
+      "format": "rtneural-json",
+      "model_type": "RTNeural",
+      "task": "dynamics_mapping",
+      "input_size": 32,
+      "output_size": 16,
+      "status": "stub",
+      "note": "Replace with trained model. Fallback heuristics otherwise.",
+      "arch_hint": "32→128→64→16",
+      "params_estimate": "~20K",
+      "inference_target_ms": 1,
+      "training": {
+        "dataset_id": "expression_dataset_v1",
+        "dataset_version": "",
+        "dataset_license": "",
+        "epochs": 0,
+        "batch_size": 0,
+        "learning_rate": 0,
+        "optimizer": "",
+        "loss": "",
+        "train_loss": 0,
+        "val_loss": 0,
+        "test_loss": 0,
+        "run_id": "",
+        "git_commit": "",
+        "training_date": "",
+        "hardware": "",
+        "duration_seconds": 0
+      },
+      "exports": {
+        "sha256": "",
+        "onnx_path": "",
+        "onnx_sha256": "",
+        "coreml_path": "",
+        "coreml_sha256": ""
+      },
+      "integration": {
+        "python_api": false,
+        "cpp_mlinterface": false,
+        "tauri_ui": false,
+        "fallback_available": true
+      },
+      "model_card": "docs/model_cards/dynamicsengine.md",
+      "license": ""
+    },
+    {
+      "id": "groovepredictor",
+      "file": "groovepredictor.json",
+      "format": "rtneural-json",
+      "model_type": "RTNeural",
+      "task": "groove_prediction",
+      "input_size": 64,
+      "output_size": 32,
+      "status": "stub",
+      "note": "Replace with trained model. Fallback heuristics otherwise.",
+      "arch_hint": "64→128→64→32",
+      "params_estimate": "~25K",
+      "inference_target_ms": 2,
+      "training": {
+        "dataset_id": "groove_dataset_v1",
+        "dataset_version": "",
+        "dataset_license": "",
+        "epochs": 0,
+        "batch_size": 0,
+        "learning_rate": 0,
+        "optimizer": "",
+        "loss": "",
+        "train_loss": 0,
+        "val_loss": 0,
+        "test_loss": 0,
+        "run_id": "",
+        "git_commit": "",
+        "training_date": "",
+        "hardware": "",
+        "duration_seconds": 0
+      },
+      "exports": {
+        "sha256": "",
+        "onnx_path": "",
+        "onnx_sha256": "",
+        "coreml_path": "",
+        "coreml_sha256": ""
+      },
+      "integration": {
+        "python_api": false,
+        "cpp_mlinterface": false,
+        "tauri_ui": false,
+        "fallback_available": true
+      },
+      "model_card": "docs/model_cards/groovepredictor.md",
+      "license": ""
+    },
+    {
+      "id": "instrumentrecognizer",
+      "file": "instrumentrecognizer.json",
+      "format": "rtneural-json",
+      "model_type": "RTNeural",
+      "task": "dual_instrument_recognition",
+      "input_size": 128,
+      "output_size": 160,
+      "status": "stub",
+      "note": "Dual-head model: Technical (instrument+technique) + Emotional (expression+sentiment). Replace with trained model.",
+      "arch_hint": "CNN:64→128→256→512 → TechHead:256→128→80 + EmoHead:256→128→80",
+      "params_estimate": "~2M",
+      "inference_target_ms": 10,
+      "training": {
+        "dataset_id": "instrument_dataset_v1",
+        "dataset_version": "",
+        "dataset_license": "",
+        "epochs": 0,
+        "batch_size": 0,
+        "learning_rate": 0,
+        "optimizer": "",
+        "loss": "multi_task",
+        "train_loss": 0,
+        "val_loss": 0,
+        "test_loss": 0,
+        "run_id": "",
+        "git_commit": "",
+        "training_date": "",
+        "hardware": "",
+        "duration_seconds": 0
+      },
+      "exports": {
+        "sha256": "",
+        "onnx_path": "",
+        "onnx_sha256": "",
+        "coreml_path": "",
+        "coreml_sha256": ""
+      },
+      "integration": {
+        "python_api": false,
+        "cpp_mlinterface": false,
+        "tauri_ui": false,
+        "fallback_available": true
+      },
+      "model_card": "docs/model_cards/instrumentrecognizer.md",
+      "license": "",
+      "heads": {
+        "technical": {
+          "outputs": ["instrument_family", "instrument_specific", "technique", "articulation", "register"],
+          "dim": 80
+        },
+        "emotional": {
+          "outputs": ["expression_style", "energy_level", "musical_role", "sentiment_valence", "sentiment_arousal"],
+          "dim": 80
+        }
+      }
+    },
+    {
+      "id": "emotionnodeclassifier",
+      "file": "emotionnodeclassifier.json",
+      "format": "rtneural-json",
+      "model_type": "RTNeural",
+      "task": "emotion_node_classification",
+      "input_size": 128,
+      "output_size": 258,
+      "status": "stub",
+      "note": "6×6×6 thesaurus validation model. Classifies all 216 emotion nodes across 24 keys.",
+      "arch_hint": "CNN:64→128→256→512 → Multi-head: 216+6+36+6+24",
+      "params_estimate": "~3M",
+      "inference_target_ms": 15,
+      "training": {
+        "dataset_id": "emotion_thesaurus_dataset_v1",
+        "dataset_version": "",
+        "dataset_license": "",
+        "epochs": 0,
+        "batch_size": 0,
+        "learning_rate": 0,
+        "optimizer": "",
+        "loss": "hierarchical_cross_entropy",
+        "train_loss": 0,
+        "val_loss": 0,
+        "test_loss": 0,
+        "run_id": "",
+        "git_commit": "",
+        "training_date": "",
+        "hardware": "",
+        "duration_seconds": 0
+      },
+      "exports": {
+        "sha256": "",
+        "onnx_path": "",
+        "onnx_sha256": "",
+        "coreml_path": "",
+        "coreml_sha256": ""
+      },
+      "integration": {
+        "python_api": false,
+        "cpp_mlinterface": false,
+        "tauri_ui": false,
+        "fallback_available": true
+      },
+      "model_card": "docs/model_cards/emotionnodeclassifier.md",
+      "license": "",
+      "heads": {
+        "emotion_node": {
+          "output_size": 216,
+          "description": "Full 6×6×6 node classification"
+        },
+        "base_emotion": {
+          "output_size": 6,
+          "labels": ["HAPPY", "SAD", "ANGRY", "FEAR", "SURPRISE", "DISGUST"]
+        },
+        "sub_emotion": {
+          "output_size": 36,
+          "description": "Medium granularity (6 per base)"
+        },
+        "intensity_tier": {
+          "output_size": 6,
+          "labels": ["subtle", "mild", "moderate", "strong", "intense", "overwhelming"]
+        },
+        "key_detection": {
+          "output_size": 24,
+          "description": "12 major + 12 minor keys"
+        }
+      },
+      "thesaurus": {
+        "structure": "6×6×6",
+        "total_nodes": 216,
+        "intensity_tiers": 6,
+        "keys": 24,
+        "source": "data/emotion_thesaurus/"
+      }
+    }
+  ]
+}
+

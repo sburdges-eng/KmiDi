@@ -1,0 +1,6 @@
+{
+  "flam_threshold_ms": 30.0,
+  "buzz_threshold_ms": 50.0,
+  "drag_threshold_ms": 80.0,
+  "alternation_window_ms": 200.0
+}

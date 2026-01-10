@@ -1,0 +1,287 @@
+# =============================================================================
+# Improved Local Training Configuration
+# =============================================================================
+# Based on analysis of previous training run (50-100 epochs):
+#   - emotion_recognizer: 89.50% ✅ (early stopped at 36/100)
+#   - dynamics_engine: 73.50% (completed 50/50)
+#   - groove_predictor: 100.00% ✅ (completed 50/50)
+#   - harmony_predictor: 54.00% ❌ (early stopped at 26/60)
+#   - melody_transformer: 34.50% ❌ (early stopped at 47/80)
+#
+# Improvements applied:
+#   - Lower learning rates for underperforming models
+#   - Increased patience and epochs for complex models
+#   - Added learning rate warmup
+#   - Adjusted batch sizes based on model complexity
+#   - Added gradient clipping and regularization
+# =============================================================================
+
+# Global settings
+device: auto  # mps, cuda, or cpu
+seed: 42
+output_dir: checkpoints
+onnx_output_dir: models/onnx
+
+# Default training parameters
+defaults:
+  optimizer: adamw
+  weight_decay: 0.01
+  gradient_clip: 1.0
+  early_stopping_patience: 20  # Increased from 15
+  min_delta: 0.0001
+  scheduler: cosine_warmup
+  warmup_epochs: 10
+
+# =============================================================================
+# Model-Specific Configurations
+# =============================================================================
+
+models:
+  # -------------------------------------------------------------------------
+  # Emotion Recognizer - Already performing well (89.50%)
+  # -------------------------------------------------------------------------
+  emotion_recognizer:
+    status: "good"
+    previous_accuracy: 0.895
+    
+    # Architecture
+    input_dim: 128
+    output_dim: 64
+    hidden_layers: [512, 256, 128]
+    dropout: 0.3
+    
+    # Training - maintain current settings
+    epochs: 100
+    batch_size: 16
+    learning_rate: 0.001
+    early_stopping_patience: 15  # Original was good
+    
+    # Notes
+    notes: "Performing well - no major changes needed"
+  
+  # -------------------------------------------------------------------------
+  # Dynamics Engine - Moderate performance (73.50%)
+  # -------------------------------------------------------------------------
+  dynamics_engine:
+    status: "moderate"
+    previous_accuracy: 0.735
+    
+    # Architecture - add more capacity
+    input_dim: 32
+    output_dim: 16
+    hidden_layers: [128, 64, 32]  # Increased from [64, 32]
+    dropout: 0.2
+    
+    # Training - slight adjustments
+    epochs: 80  # Increased from 50
+    batch_size: 64  # Reduced from 128 for better gradient estimates
+    learning_rate: 0.0008  # Slightly lower
+    early_stopping_patience: 20
+    
+    # Improvements
+    improvements:
+      - "Increased hidden layer capacity"
+      - "Lower learning rate for stability"
+      - "More epochs with longer patience"
+    
+    notes: "Model may need more training data variety"
+  
+  # -------------------------------------------------------------------------
+  # Groove Predictor - Excellent (100%)
+  # -------------------------------------------------------------------------
+  groove_predictor:
+    status: "excellent"
+    previous_accuracy: 1.0
+    
+    # Architecture
+    input_dim: 64
+    output_dim: 32
+    hidden_layers: [128, 64]
+    dropout: 0.1
+    
+    # Training - maintain current settings
+    epochs: 50
+    batch_size: 128
+    learning_rate: 0.001
+    early_stopping_patience: 15
+    
+    notes: "Perfect accuracy - consider if overfitting to synthetic data"
+  
+  # -------------------------------------------------------------------------
+  # Harmony Predictor - LOW PERFORMANCE (54%)
+  # -------------------------------------------------------------------------
+  harmony_predictor:
+    status: "needs_improvement"
+    previous_accuracy: 0.54
+    
+    # Architecture - significant increase
+    input_dim: 128
+    output_dim: 64
+    hidden_layers: [512, 256, 128]  # Increased from [256, 128]
+    dropout: 0.3  # Increased regularization
+    use_residual: true  # Add residual connections
+    use_layer_norm: true  # Add layer normalization
+    
+    # Training - major changes
+    epochs: 150  # Increased from 60
+    batch_size: 32  # Reduced from 64 for better gradients
+    learning_rate: 0.0005  # Halved
+    warmup_epochs: 15  # Longer warmup
+    early_stopping_patience: 30  # Much longer patience
+    
+    # Loss function improvements
+    loss_type: "label_smoothing"
+    label_smoothing: 0.1
+    
+    # Data augmentation
+    augmentation:
+      transpose_key: true
+      chord_substitution: 0.15  # Increased from 0.1
+    
+    improvements:
+      - "Deeper architecture with residual connections"
+      - "Lower learning rate with longer warmup"
+      - "Label smoothing for better generalization"
+      - "Longer training with more patience"
+      - "Increased regularization (dropout 0.3)"
+    
+    notes: "Harmony is complex - needs more capacity and regularization"
+  
+  # -------------------------------------------------------------------------
+  # Melody Transformer - POOR PERFORMANCE (34.5%)
+  # -------------------------------------------------------------------------
+  # Melody Transformer - POOR PERFORMANCE (34.5%)
+  # -------------------------------------------------------------------------
+  melody_transformer:
+    status: "needs_improvement"
+    previous_accuracy: 0.345
+    
+    # Architecture - major upgrade
+    # Note: improved_training_pipeline.py currently uses deeper MLP for quick testing.
+    # For production, implement the transformer or LSTM config below.
+    input_dim: 64
+    output_dim: 128
+    hidden_layers: [512, 512, 256]  # Used by current pipeline
+    
+    # Future: Switch to transformer architecture
+    architecture_type: transformer  # Target architecture (not yet implemented)
+    
+    transformer_config:
+      d_model: 256  # Increased from 128
+      nhead: 8  # Increased from 4
+      num_encoder_layers: 4  # Increased from 2
+      num_decoder_layers: 4
+      dim_feedforward: 512  # Increased from 256
+      max_seq_length: 128  # Increased from 64
+      dropout: 0.2
+      
+    # Alternative LSTM config (if transformer too slow)
+    lstm_config:
+      hidden_size: 512  # Increased from 256
+      num_layers: 3  # Increased from 2
+      bidirectional: true  # Enable bidirectional
+      attention: true
+    
+    # Training - significant changes
+    epochs: 200  # Increased from 80
+    batch_size: 16  # Reduced from 32 for memory
+    learning_rate: 0.0003  # Much lower
+    warmup_epochs: 20  # Longer warmup for transformers
+    early_stopping_patience: 40  # Very long patience
+    gradient_accumulation_steps: 4  # Effective batch = 64
+    
+    # Loss function
+    loss_type: "cross_entropy"  # Standard for sequence prediction
+    
+    # Regularization
+    weight_decay: 0.05  # Increased
+    dropout: 0.2
+    
+    # Data augmentation
+    augmentation:
+      transpose: [-6, 6]
+      tempo_scale: [0.8, 1.2]
+      velocity_jitter: 0.15
+      note_dropout: 0.05  # Randomly drop notes
+    
+    # Generation settings
+    generation:
+      temperature: 0.9
+      top_k: 20  # Increased from 10
+      top_p: 0.95  # Increased from 0.9
+      nucleus_sampling: true
+    
+    improvements:
+      - "Switch to Transformer architecture (or deeper LSTM)"
+      - "Much lower learning rate (0.0003)"
+      - "Gradient accumulation for larger effective batch"
+      - "Longer training (200 epochs) with very long patience"
+      - "Bidirectional LSTM option"
+      - "Note dropout augmentation"
+    
+    notes: "Melody is the most complex task - requires significant architecture upgrade"
+
+# =============================================================================
+# Training Schedule
+# =============================================================================
+# Recommended training order based on dependencies and complexity
+
+training_schedule:
+  # Phase 1: Quick wins (models that already work well)
+  phase_1:
+    models: [emotion_recognizer, groove_predictor]
+    description: "Verify existing good models"
+    estimated_time: "15-20 minutes"
+  
+  # Phase 2: Moderate improvements
+  phase_2:
+    models: [dynamics_engine]
+    description: "Improve dynamics with longer training"
+    estimated_time: "5-10 minutes"
+  
+  # Phase 3: Major improvements (longer training)
+  phase_3:
+    models: [harmony_predictor]
+    description: "Significant harmony improvement"
+    estimated_time: "30-60 minutes"
+  
+  # Phase 4: Complex model (longest training)
+  phase_4:
+    models: [melody_transformer]
+    description: "Major melody architecture upgrade"
+    estimated_time: "1-2 hours"
+
+# =============================================================================
+# Expected Improvements
+# =============================================================================
+
+expected_results:
+  emotion_recognizer:
+    current: 0.895
+    target: 0.90  # Maintain or slight improvement
+  
+  dynamics_engine:
+    current: 0.735
+    target: 0.80  # +6.5%
+  
+  groove_predictor:
+    current: 1.0
+    target: 1.0  # Maintain
+  
+  harmony_predictor:
+    current: 0.54
+    target: 0.75  # +21% (ambitious but achievable)
+  
+  melody_transformer:
+    current: 0.345
+    target: 0.60  # +25.5% (major improvement expected)
+
+# =============================================================================
+# Post-Training Actions
+# =============================================================================
+
+post_training:
+  - "Export all models to ONNX"
+  - "Run inference benchmarks"
+  - "Update model registry with new accuracy"
+  - "Copy to SSD for M4 deployment"

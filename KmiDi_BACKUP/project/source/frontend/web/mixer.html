@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iDAW Mixer Console</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #eee;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #00d4ff, #ff00e5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 1.1em;
+        }
+
+        .mixer-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .master-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .master-section h2 {
+            margin-bottom: 20px;
+            color: #00d4ff;
+        }
+
+        .master-controls {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+            font-size: 0.9em;
+        }
+
+        .channel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .channel-strip {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .channel-strip:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 212, 255, 0.5);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.2);
+        }
+
+        .channel-strip.muted {
+            opacity: 0.5;
+        }
+
+        .channel-strip.soloed {
+            border-color: #ff00e5;
+            box-shadow: 0 0 20px rgba(255, 0, 229, 0.3);
+        }
+
+        .channel-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .fader-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .fader {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 150px;
+            background: transparent;
+            writing-mode: bt-lr;
+            -webkit-appearance: slider-vertical;
+            margin: 10px 0;
+        }
+
+        .fader::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 212, 255, 0.5);
+        }
+
+        .fader::-webkit-slider-thumb:hover {
+            background: linear-gradient(135deg, #00ffff, #00d4ff);
+        }
+
+        .fader::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
+            cursor: pointer;
+            border: none;
+        }
+
+        .knob-container {
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .knob {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+        }
+
+        .knob::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff00e5, #cc0099);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(255, 0, 229, 0.5);
+        }
+
+        .knob::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff00e5, #cc0099);
+            cursor: pointer;
+            border: none;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #ccc;
+            font-size: 0.9em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn.active {
+            background: linear-gradient(135deg, #ff00e5, #cc0099);
+            border-color: #ff00e5;
+            color: #fff;
+        }
+
+        .meter {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+
+        .meter-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #ffbb00, #ff0044);
+            transition: width 0.1s ease;
+            border-radius: 4px;
+        }
+
+        .value-display {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .emotion-presets {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .emotion-presets h2 {
+            margin-bottom: 20px;
+            color: #ff00e5;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .preset-btn {
+            padding: 15px;
+            background: linear-gradient(135deg, rgba(255, 0, 229, 0.1), rgba(0, 212, 255, 0.1));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .preset-btn:hover {
+            transform: scale(1.05);
+            border-color: #ff00e5;
+            box-shadow: 0 4px 16px rgba(255, 0, 229, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎛️ iDAW Mixer Console</h1>
+        <p>Real-time mixer control panel | "Interrogate Before Generate"</p>
+    </div>
+
+    <div class="mixer-container">
+        <!-- Master Section -->
+        <div class="master-section">
+            <h2>🎛️ Master Bus</h2>
+            <div class="master-controls">
+                <div class="control-group">
+                    <label for="master-gain">Master Gain</label>
+                    <input type="range" id="master-gain" class="knob" min="-12" max="12" step="0.1" value="0">
+                    <div class="value-display" id="master-gain-value">0.0 dB</div>
+                </div>
+                <div class="control-group">
+                    <label for="limiter-threshold">Limiter Threshold</label>
+                    <input type="range" id="limiter-threshold" class="knob" min="-12" max="0" step="0.1" value="-1">
+                    <div class="value-display" id="limiter-threshold-value">-1.0 dB</div>
+                </div>
+                <div class="control-group">
+                    <label>Master Peak</label>
+                    <div class="meter">
+                        <div class="meter-fill" id="master-peak-meter" style="width: 0%"></div>
+                    </div>
+                    <div class="value-display" id="master-peak-value">0.000</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Channel Strips -->
+        <div class="channel-grid" id="channel-grid"></div>
+
+        <!-- Emotion Presets -->
+        <div class="emotion-presets">
+            <h2>🎭 Emotion Presets</h2>
+            <div class="preset-grid">
+                <button class="preset-btn" onclick="applyPreset('grief')">😢 Grief</button>
+                <button class="preset-btn" onclick="applyPreset('anxiety')">😰 Anxiety</button>
+                <button class="preset-btn" onclick="applyPreset('anger')">😠 Anger</button>
+                <button class="preset-btn" onclick="applyPreset('nostalgia')">🌅 Nostalgia</button>
+                <button class="preset-btn" onclick="applyPreset('hope')">✨ Hope</button>
+                <button class="preset-btn" onclick="applyPreset('calm')">🧘 Calm</button>
+                <button class="preset-btn" onclick="applyPreset('tension')">⚡ Tension</button>
+                <button class="preset-btn" onclick="applyPreset('catharsis')">🌊 Catharsis</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mixer state
+        const mixer = {
+            numChannels: 8,
+            channelNames: ["Drums", "Bass", "Guitar L", "Guitar R", "Vocals", "Keys", "Pad", "FX"],
+            channels: [],
+            masterGain: 0.0,
+            limiterThreshold: -1.0
+        };
+
+        // Initialize channels
+        function initChannels() {
+            for (let i = 0; i < mixer.numChannels; i++) {
+                mixer.channels.push({
+                    gain: 0.0,
+                    pan: 0.0,
+                    muted: false,
+                    soloed: false,
+                    peak: 0.0,
+                    rms: 0.0
+                });
+            }
+        }
+
+        // Create channel strip HTML
+        function createChannelStrip(index) {
+            const channel = mixer.channels[index];
+            const name = mixer.channelNames[index];
+
+            const strip = document.createElement('div');
+            strip.className = 'channel-strip';
+            strip.id = `channel-${index}`;
+
+            strip.innerHTML = `
+                <div class="channel-name">${name}</div>
+
+                <div class="fader-container">
+                    <input type="range" class="fader" id="gain-${index}"
+                           min="-60" max="12" step="0.1" value="0"
+                           orient="vertical">
+                    <div class="value-display" id="gain-value-${index}">0.0 dB</div>
+                </div>
+
+                <div class="knob-container">
+                    <label>Pan</label>
+                    <input type="range" class="knob" id="pan-${index}"
+                           min="-1" max="1" step="0.01" value="0">
+                    <div class="value-display" id="pan-value-${index}">C</div>
+                </div>
+
+                <div class="button-row">
+                    <button class="btn" id="mute-${index}" onclick="toggleMute(${index})">M</button>
+                    <button class="btn" id="solo-${index}" onclick="toggleSolo(${index})">S</button>
+                </div>
+
+                <div class="meter">
+                    <div class="meter-fill" id="peak-${index}" style="width: 0%"></div>
+                </div>
+                <div class="value-display" id="peak-value-${index}">0.000</div>
+            `;
+
+            return strip;
+        }
+
+        // Render all channels
+        function renderChannels() {
+            const grid = document.getElementById('channel-grid');
+            grid.innerHTML = '';
+
+            for (let i = 0; i < mixer.numChannels; i++) {
+                const strip = createChannelStrip(i);
+                grid.appendChild(strip);
+
+                // Add event listeners
+                document.getElementById(`gain-${i}`).addEventListener('input', (e) => {
+                    updateChannelGain(i, parseFloat(e.target.value));
+                });
+
+                document.getElementById(`pan-${i}`).addEventListener('input', (e) => {
+                    updateChannelPan(i, parseFloat(e.target.value));
+                });
+            }
+        }
+
+        // Update channel gain
+        function updateChannelGain(index, value) {
+            mixer.channels[index].gain = value;
+            document.getElementById(`gain-value-${index}`).textContent = `${value.toFixed(1)} dB`;
+
+            // Simulate peak meter
+            const peak = Math.random() * 0.8;
+            updatePeakMeter(index, peak);
+        }
+
+        // Update channel pan
+        function updateChannelPan(index, value) {
+            mixer.channels[index].pan = value;
+            const panText = value < -0.1 ? `L${Math.abs(value * 100).toFixed(0)}` :
+                           value > 0.1 ? `R${(value * 100).toFixed(0)}` : 'C';
+            document.getElementById(`pan-value-${index}`).textContent = panText;
+        }
+
+        // Toggle mute
+        function toggleMute(index) {
+            mixer.channels[index].muted = !mixer.channels[index].muted;
+            const btn = document.getElementById(`mute-${index}`);
+            const strip = document.getElementById(`channel-${index}`);
+
+            if (mixer.channels[index].muted) {
+                btn.classList.add('active');
+                strip.classList.add('muted');
+            } else {
+                btn.classList.remove('active');
+                strip.classList.remove('muted');
+            }
+        }
+
+        // Toggle solo
+        function toggleSolo(index) {
+            mixer.channels[index].soloed = !mixer.channels[index].soloed;
+            const btn = document.getElementById(`solo-${index}`);
+            const strip = document.getElementById(`channel-${index}`);
+
+            if (mixer.channels[index].soloed) {
+                btn.classList.add('active');
+                strip.classList.add('soloed');
+            } else {
+                btn.classList.remove('active');
+                strip.classList.remove('soloed');
+            }
+        }
+
+        // Update peak meter
+        function updatePeakMeter(index, value) {
+            mixer.channels[index].peak = value;
+            const meter = document.getElementById(`peak-${index}`);
+            const valueDisplay = document.getElementById(`peak-value-${index}`);
+
+            meter.style.width = `${value * 100}%`;
+            valueDisplay.textContent = value.toFixed(3);
+        }
+
+        // Apply emotion preset
+        function applyPreset(emotion) {
+            console.log(`Applying emotion preset: ${emotion}`);
+
+            // Preset mappings (simplified)
+            const presets = {
+                grief: { gain: -6, pan: 0, description: "Dark, spacious, intimate" },
+                anxiety: { gain: -3, pan: 0, description: "Tight, anxious, hyper-present" },
+                anger: { gain: 2, pan: 0, description: "Aggressive, saturated" },
+                nostalgia: { gain: -4, pan: 0, description: "Warm, dreamy" },
+                hope: { gain: 0, pan: 0, description: "Bright, open, lifting" },
+                calm: { gain: -2, pan: 0, description: "Smooth, warm, gentle" },
+                tension: { gain: -1, pan: 0.1, description: "Building, unsettled" },
+                catharsis: { gain: 1, pan: 0, description: "Full, releasing" }
+            };
+
+            const preset = presets[emotion];
+            if (preset) {
+                // Apply to all channels
+                for (let i = 0; i < mixer.numChannels; i++) {
+                    document.getElementById(`gain-${i}`).value = preset.gain;
+                    document.getElementById(`pan-${i}`).value = preset.pan;
+                    updateChannelGain(i, preset.gain);
+                    updateChannelPan(i, preset.pan);
+                }
+
+                alert(`Applied ${emotion} preset: ${preset.description}`);
+            }
+        }
+
+        // Master controls
+        document.getElementById('master-gain').addEventListener('input', (e) => {
+            mixer.masterGain = parseFloat(e.target.value);
+            document.getElementById('master-gain-value').textContent = `${mixer.masterGain.toFixed(1)} dB`;
+        });
+
+        document.getElementById('limiter-threshold').addEventListener('input', (e) => {
+            mixer.limiterThreshold = parseFloat(e.target.value);
+            document.getElementById('limiter-threshold-value').textContent = `${mixer.limiterThreshold.toFixed(1)} dB`;
+        });
+
+        // Simulate master peak meter
+        setInterval(() => {
+            const peak = Math.random() * 0.7;
+            document.getElementById('master-peak-meter').style.width = `${peak * 100}%`;
+            document.getElementById('master-peak-value').textContent = peak.toFixed(3);
+        }, 100);
+
+        // Initialize
+        initChannels();
+        renderChannels();
+    </script>
+</body>
+</html>

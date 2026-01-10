@@ -1,0 +1,55 @@
+# Valgrind Suppressions for iDAW/Penta-Core
+# These suppress known false positives and external library issues
+
+# GTest internal allocations
+{
+   gtest_internal
+   Memcheck:Leak
+   ...
+   fun:*testing*internal*
+}
+
+# Standard library false positives
+{
+   libstdc++_leak
+   Memcheck:Leak
+   match-leak-kinds: possible
+   ...
+   obj:*/libstdc++*
+}
+
+# Uninitialized value in standard library
+{
+   libstdc++_cond
+   Memcheck:Cond
+   ...
+   obj:*/libstdc++*
+}
+
+# pthread false positives
+{
+   pthread_create_leak
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:allocate_dtv
+   fun:_dl_allocate_tls
+   fun:pthread_create*
+}
+
+# OSC library networking
+{
+   oscpack_socket
+   Memcheck:Param
+   socketcall.sendto(msg)
+   ...
+   fun:*osc*
+}
+
+# Atomic operations false positives
+{
+   atomic_operations
+   Memcheck:Race
+   ...
+   fun:*atomic*
+}

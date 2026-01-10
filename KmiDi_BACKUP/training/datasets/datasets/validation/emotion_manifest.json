@@ -1,0 +1,18 @@
+[
+  {
+    "id": "deam_example",
+    "dataset": "DEAM",
+    "audio_path": "datasets/DEAM/audio/example.wav",
+    "valence": 0.5,
+    "arousal": 0.5,
+    "split": "train"
+  },
+  {
+    "id": "emo_music_example",
+    "dataset": "EMO_Music",
+    "audio_path": "datasets/EMO_Music/audio/example.wav",
+    "valence": 0.6,
+    "arousal": 0.4,
+    "split": "val"
+  }
+]
