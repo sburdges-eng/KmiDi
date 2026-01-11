@@ -1,0 +1,1284 @@
+{
+  "models_found": 127,
+  "models_valid": 123,
+  "models_copied": 17,
+  "models_skipped": 4,
+  "errors": [
+    "Failed to load checkpoint: invalid load key, '\\x00'.",
+    "Failed to load checkpoint: invalid load key, '\\x00'.",
+    "Failed to load checkpoint: invalid load key, '\\x00'.",
+    "Failed to load checkpoint: invalid load key, '\\x00'."
+  ],
+  "details": [
+    {
+      "model_name": ".best",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/KmiDi/filer fuckery/kelly-project/brain-python/checkpoints/emotionnodeclassifier/._best.pt",
+      "file_size_mb": 0.00390625,
+      "is_valid": false,
+      "error_message": "Failed to load checkpoint: invalid load key, '\\x00'.",
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": ".best",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/KmiDi/filer fuckery/kelly-project/brain-python/checkpoints/emotionrecognizer/._best.pt",
+      "file_size_mb": 0.00390625,
+      "is_valid": false,
+      "error_message": "Failed to load checkpoint: invalid load key, '\\x00'.",
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": ".best",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/KmiDi/filer fuckery/kelly-project/brain-python/checkpoints/groovepredictor/._best.pt",
+      "file_size_mb": 0.00390625,
+      "is_valid": false,
+      "error_message": "Failed to load checkpoint: invalid load key, '\\x00'.",
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": ".best",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/KmiDi/filer fuckery/kelly-project/brain-python/checkpoints/melodytransformer/._best.pt",
+      "file_size_mb": 0.00390625,
+      "is_valid": false,
+      "error_message": "Failed to load checkpoint: invalid load key, '\\x00'.",
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "bestmodel",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/best_model.pt",
+      "file_size_mb": 0.22142505645751953,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "bestmodel",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/best_model.pt",
+      "file_size_mb": 0.22142505645751953,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "bestmodel",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/best_model.pt",
+      "file_size_mb": 0.22142505645751953,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "bestmodel",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/best_model.pt",
+      "file_size_mb": 0.22142505645751953,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "checkpointepoch0001",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0001.pt",
+      "file_size_mb": 0.2216176986694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "checkpointepoch0001",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0001.pt",
+      "file_size_mb": 0.2216176986694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "checkpointepoch0001",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0001.pt",
+      "file_size_mb": 0.2216176986694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "checkpointepoch0001",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/checkpoint_epoch_0001.pt",
+      "file_size_mb": 0.2216176986694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "checkpointepoch0001",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/training_pipe/test_output/checkpoints/emotion_recognizer/checkpoint_epoch_0001.pt",
+      "file_size_mb": 4.627364158630371,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "checkpointepoch0001",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/cursor_worktrees/GIT_DESK_COMBO/dst/checkpoint_epoch_0001.pt",
+      "file_size_mb": 4.627364158630371,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "checkpointepoch0001",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/cursor_worktrees/GIT_DESK_COMBO/nip/checkpoint_epoch_0001.pt",
+      "file_size_mb": 4.627364158630371,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "checkpointepoch0001",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/cursor_worktrees/miDiKompanion/emz/checkpoint_epoch_0001.pt",
+      "file_size_mb": 4.627364158630371,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "checkpointepoch0001",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/cursor_worktrees/miDiKompanion/kkw/checkpoint_epoch_0001.pt",
+      "file_size_mb": 4.627364158630371,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "checkpointepoch0002",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0002.pt",
+      "file_size_mb": 0.2216176986694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 2
+    },
+    {
+      "model_name": "checkpointepoch0002",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0002.pt",
+      "file_size_mb": 0.2216176986694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 2
+    },
+    {
+      "model_name": "checkpointepoch0002",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0002.pt",
+      "file_size_mb": 0.2216176986694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 2
+    },
+    {
+      "model_name": "checkpointepoch0002",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/checkpoint_epoch_0002.pt",
+      "file_size_mb": 0.2216176986694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 2
+    },
+    {
+      "model_name": "checkpointepoch0002",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/training_pipe/test_output/checkpoints/emotion_recognizer/checkpoint_epoch_0002.pt",
+      "file_size_mb": 4.627425193786621,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 2
+    },
+    {
+      "model_name": "checkpointepoch0002",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/cursor_worktrees/GIT_DESK_COMBO/dst/checkpoint_epoch_0002.pt",
+      "file_size_mb": 4.627425193786621,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 2
+    },
+    {
+      "model_name": "checkpointepoch0002",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/cursor_worktrees/GIT_DESK_COMBO/nip/checkpoint_epoch_0002.pt",
+      "file_size_mb": 4.627425193786621,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 2
+    },
+    {
+      "model_name": "checkpointepoch0002",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/cursor_worktrees/miDiKompanion/emz/checkpoint_epoch_0002.pt",
+      "file_size_mb": 4.627425193786621,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 2
+    },
+    {
+      "model_name": "checkpointepoch0002",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/cursor_worktrees/miDiKompanion/kkw/checkpoint_epoch_0002.pt",
+      "file_size_mb": 4.627425193786621,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 2
+    },
+    {
+      "model_name": "checkpointepoch0003",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0003.pt",
+      "file_size_mb": 0.2216176986694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 3
+    },
+    {
+      "model_name": "checkpointepoch0003",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0003.pt",
+      "file_size_mb": 0.2216176986694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 3
+    },
+    {
+      "model_name": "checkpointepoch0003",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0003.pt",
+      "file_size_mb": 0.2216176986694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 3
+    },
+    {
+      "model_name": "checkpointepoch0003",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/checkpoint_epoch_0003.pt",
+      "file_size_mb": 0.2216176986694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 3
+    },
+    {
+      "model_name": "checkpointepoch0004",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0004.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 4
+    },
+    {
+      "model_name": "checkpointepoch0004",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0004.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 4
+    },
+    {
+      "model_name": "checkpointepoch0004",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0004.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 4
+    },
+    {
+      "model_name": "checkpointepoch0004",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/checkpoint_epoch_0004.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 4
+    },
+    {
+      "model_name": "checkpointepoch0005",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0005.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 5
+    },
+    {
+      "model_name": "checkpointepoch0005",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0005.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 5
+    },
+    {
+      "model_name": "checkpointepoch0005",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0005.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 5
+    },
+    {
+      "model_name": "checkpointepoch0005",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/checkpoint_epoch_0005.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 5
+    },
+    {
+      "model_name": "checkpointepoch0006",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0006.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 6
+    },
+    {
+      "model_name": "checkpointepoch0006",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0006.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 6
+    },
+    {
+      "model_name": "checkpointepoch0006",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0006.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 6
+    },
+    {
+      "model_name": "checkpointepoch0006",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/checkpoint_epoch_0006.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 6
+    },
+    {
+      "model_name": "checkpointepoch0007",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0007.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 7
+    },
+    {
+      "model_name": "checkpointepoch0007",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0007.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 7
+    },
+    {
+      "model_name": "checkpointepoch0007",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0007.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 7
+    },
+    {
+      "model_name": "checkpointepoch0007",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/checkpoint_epoch_0007.pt",
+      "file_size_mb": 0.2216787338256836,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 7
+    },
+    {
+      "model_name": "checkpointepoch0008",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0008.pt",
+      "file_size_mb": 0.2217397689819336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 8
+    },
+    {
+      "model_name": "checkpointepoch0008",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0008.pt",
+      "file_size_mb": 0.2217397689819336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 8
+    },
+    {
+      "model_name": "checkpointepoch0008",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0008.pt",
+      "file_size_mb": 0.2217397689819336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 8
+    },
+    {
+      "model_name": "checkpointepoch0008",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/checkpoint_epoch_0008.pt",
+      "file_size_mb": 0.2217397689819336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 8
+    },
+    {
+      "model_name": "checkpointepoch0009",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0009.pt",
+      "file_size_mb": 0.2217397689819336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 9
+    },
+    {
+      "model_name": "checkpointepoch0009",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0009.pt",
+      "file_size_mb": 0.2217397689819336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 9
+    },
+    {
+      "model_name": "checkpointepoch0009",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0009.pt",
+      "file_size_mb": 0.2217397689819336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 9
+    },
+    {
+      "model_name": "checkpointepoch0009",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/checkpoint_epoch_0009.pt",
+      "file_size_mb": 0.2217397689819336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 9
+    },
+    {
+      "model_name": "checkpointepoch0010",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0010.pt",
+      "file_size_mb": 0.2217397689819336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "checkpointepoch0010",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0010.pt",
+      "file_size_mb": 0.2217397689819336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "checkpointepoch0010",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/checkpoint_epoch_0010.pt",
+      "file_size_mb": 0.2217397689819336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "checkpointepoch0010",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/checkpoint_epoch_0010.pt",
+      "file_size_mb": 0.2217397689819336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "dynamicsengine",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/dynamicsengine_best.pt",
+      "file_size_mb": 0.16278362274169922,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 13520,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "dynamicsengine",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/dynamicsengine_latest.pt",
+      "file_size_mb": 0.1630239486694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 13520,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "dynamicsengine",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/onnx/dynamicsengine.pt",
+      "file_size_mb": 0.06230735778808594,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "dynamicsengine",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/dynamicsengine_best.pt",
+      "file_size_mb": 0.16278362274169922,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 13520,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "dynamicsengine",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/dynamicsengine_latest.pt",
+      "file_size_mb": 0.1630239486694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 13520,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "dynamicsengine",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/onnx/dynamicsengine.pt",
+      "file_size_mb": 0.06230735778808594,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "dynamicsengine",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/dynamicsengine_best.pt",
+      "file_size_mb": 0.16278362274169922,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 13520,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "dynamicsengine",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/dynamicsengine_latest.pt",
+      "file_size_mb": 0.1630239486694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 13520,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "dynamicsengine",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/onnx/dynamicsengine.pt",
+      "file_size_mb": 0.06230735778808594,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "dynamicsengine",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/dynamicsengine_best.pt",
+      "file_size_mb": 0.16278362274169922,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 13520,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "dynamicsengine",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/dynamicsengine_latest.pt",
+      "file_size_mb": 0.1630239486694336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 13520,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "dynamicsengine",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/onnx/dynamicsengine.pt",
+      "file_size_mb": 0.06230735778808594,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "emotionrecognizer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/emotionrecognizer_best.pt",
+      "file_size_mb": 4.627591133117676,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "emotionrecognizer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/emotionrecognizer_latest.pt",
+      "file_size_mb": 4.627984046936035,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "emotionrecognizer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/onnx/emotionrecognizer.pt",
+      "file_size_mb": 1.5508623123168945,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "emotionrecognizer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/emotionrecognizer_best.pt",
+      "file_size_mb": 4.627591133117676,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "emotionrecognizer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/emotionrecognizer_latest.pt",
+      "file_size_mb": 4.627984046936035,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "emotionrecognizer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/onnx/emotionrecognizer.pt",
+      "file_size_mb": 1.5508623123168945,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "emotionrecognizer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/emotionrecognizer_best.pt",
+      "file_size_mb": 4.627591133117676,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "emotionrecognizer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/emotionrecognizer_latest.pt",
+      "file_size_mb": 4.627984046936035,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "emotionrecognizer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/onnx/emotionrecognizer.pt",
+      "file_size_mb": 1.5508623123168945,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "emotionrecognizer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/emotionrecognizer_best.pt",
+      "file_size_mb": 4.627591133117676,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 1
+    },
+    {
+      "model_name": "emotionrecognizer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/emotionrecognizer_latest.pt",
+      "file_size_mb": 4.627984046936035,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "emotionrecognizer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/onnx/emotionrecognizer.pt",
+      "file_size_mb": 1.5508623123168945,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "groovepredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/groovepredictor_best.pt",
+      "file_size_mb": 0.2217111587524414,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "groovepredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/groovepredictor_latest.pt",
+      "file_size_mb": 0.22182941436767578,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "groovepredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/onnx/groovepredictor.pt",
+      "file_size_mb": 0.08051395416259766,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "groovepredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/groovepredictor_best.pt",
+      "file_size_mb": 0.2217111587524414,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "groovepredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/groovepredictor_latest.pt",
+      "file_size_mb": 0.22182941436767578,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "groovepredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/onnx/groovepredictor.pt",
+      "file_size_mb": 0.08051395416259766,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "groovepredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/groovepredictor_best.pt",
+      "file_size_mb": 0.2217111587524414,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "groovepredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/groovepredictor_latest.pt",
+      "file_size_mb": 0.22182941436767578,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "groovepredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/onnx/groovepredictor.pt",
+      "file_size_mb": 0.08051395416259766,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "groovepredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/groovepredictor_best.pt",
+      "file_size_mb": 0.2217111587524414,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "groovepredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/groovepredictor_latest.pt",
+      "file_size_mb": 0.22182941436767578,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "groovepredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/onnx/groovepredictor.pt",
+      "file_size_mb": 0.08051395416259766,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "harmonypredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/harmonypredictor_best.pt",
+      "file_size_mb": 0.8569936752319336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 74176,
+      "checkpoint_epoch": 3
+    },
+    {
+      "model_name": "harmonypredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/harmonypredictor_latest.pt",
+      "file_size_mb": 0.857295036315918,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 74176,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "harmonypredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/onnx/harmonypredictor.pt",
+      "file_size_mb": 0.292755126953125,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "harmonypredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/harmonypredictor_best.pt",
+      "file_size_mb": 0.8569936752319336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 74176,
+      "checkpoint_epoch": 3
+    },
+    {
+      "model_name": "harmonypredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/harmonypredictor_latest.pt",
+      "file_size_mb": 0.857295036315918,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 74176,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "harmonypredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/onnx/harmonypredictor.pt",
+      "file_size_mb": 0.292755126953125,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "harmonypredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/harmonypredictor_best.pt",
+      "file_size_mb": 0.8569936752319336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 74176,
+      "checkpoint_epoch": 3
+    },
+    {
+      "model_name": "harmonypredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/harmonypredictor_latest.pt",
+      "file_size_mb": 0.857295036315918,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 74176,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "harmonypredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/onnx/harmonypredictor.pt",
+      "file_size_mb": 0.292755126953125,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "harmonypredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/harmonypredictor_best.pt",
+      "file_size_mb": 0.8569936752319336,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 74176,
+      "checkpoint_epoch": 3
+    },
+    {
+      "model_name": "harmonypredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/harmonypredictor_latest.pt",
+      "file_size_mb": 0.857295036315918,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 74176,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "harmonypredictor",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/onnx/harmonypredictor.pt",
+      "file_size_mb": 0.292755126953125,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "latestcheckpoint",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/latest_checkpoint.pt",
+      "file_size_mb": 0.22162532806396484,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "latestcheckpoint",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/latest_checkpoint.pt",
+      "file_size_mb": 0.22162532806396484,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "latestcheckpoint",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/latest_checkpoint.pt",
+      "file_size_mb": 0.22162532806396484,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "latestcheckpoint",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/latest_checkpoint.pt",
+      "file_size_mb": 0.22162532806396484,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 18656,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "latestcheckpoint",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/training_pipe/test_output/checkpoints/emotion_recognizer/latest_checkpoint.pt",
+      "file_size_mb": 4.627249717712402,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 2
+    },
+    {
+      "model_name": "latestcheckpoint",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/cursor_worktrees/GIT_DESK_COMBO/dst/latest_checkpoint.pt",
+      "file_size_mb": 4.627249717712402,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 2
+    },
+    {
+      "model_name": "latestcheckpoint",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/cursor_worktrees/GIT_DESK_COMBO/nip/latest_checkpoint.pt",
+      "file_size_mb": 4.627249717712402,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 2
+    },
+    {
+      "model_name": "latestcheckpoint",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/cursor_worktrees/miDiKompanion/emz/latest_checkpoint.pt",
+      "file_size_mb": 4.627249717712402,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 2
+    },
+    {
+      "model_name": "latestcheckpoint",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/cursor_worktrees/miDiKompanion/kkw/latest_checkpoint.pt",
+      "file_size_mb": 4.627249717712402,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 403264,
+      "checkpoint_epoch": 2
+    },
+    {
+      "model_name": "melodytransformer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/melodytransformer_best.pt",
+      "file_size_mb": 7.356045722961426,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 641664,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "melodytransformer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/melodytransformer_latest.pt",
+      "file_size_mb": 7.356133460998535,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 641664,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "melodytransformer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/onnx/melodytransformer.pt",
+      "file_size_mb": 2.4606027603149414,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "melodytransformer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/melodytransformer_best.pt",
+      "file_size_mb": 7.356045722961426,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 641664,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "melodytransformer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/melodytransformer_latest.pt",
+      "file_size_mb": 7.356133460998535,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 641664,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "melodytransformer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/KmiDi v./kelly-project/miDiKompanion/ml_training/models/trained/onnx/melodytransformer.pt",
+      "file_size_mb": 2.4606027603149414,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "melodytransformer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/melodytransformer_best.pt",
+      "file_size_mb": 7.356045722961426,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 641664,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "melodytransformer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/checkpoints/melodytransformer_latest.pt",
+      "file_size_mb": 7.356133460998535,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 641664,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "melodytransformer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/SSD_Transfer/kelly-project/miDiKompanion/ml_training/models/trained/onnx/melodytransformer.pt",
+      "file_size_mb": 2.4606027603149414,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    },
+    {
+      "model_name": "melodytransformer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/melodytransformer_best.pt",
+      "file_size_mb": 7.356045722961426,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 641664,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "melodytransformer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/checkpoints/melodytransformer_latest.pt",
+      "file_size_mb": 7.356133460998535,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": "unknown",
+      "num_parameters": 641664,
+      "checkpoint_epoch": 10
+    },
+    {
+      "model_name": "melodytransformer",
+      "file_path": "/Users/seanburdges/RECOVERY_OPS/ML_TRAINED_MODELS/Desktop/final kel/ml_training/trained_models/onnx/melodytransformer.pt",
+      "file_size_mb": 2.4606027603149414,
+      "is_valid": true,
+      "error_message": null,
+      "architecture": null,
+      "num_parameters": null,
+      "checkpoint_epoch": null
+    }
+  ]
+}

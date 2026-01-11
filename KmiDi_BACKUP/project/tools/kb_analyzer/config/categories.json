@@ -1,0 +1,38 @@
+{
+  "production": {
+    "keywords": ["mixing", "mastering", "recording", "audio", "sound", "mix", "compressor", "eq", "reverb", "delay", "compression"],
+    "patterns": ["mix", "master", "record", "audio", "sound"]
+  },
+  "theory": {
+    "keywords": ["chord", "scale", "harmony", "melody", "rhythm", "progression", "key", "mode", "interval", "tonic"],
+    "patterns": ["chord", "scale", "harmony", "melody", "progression"]
+  },
+  "ml_ai": {
+    "keywords": ["neural", "model", "training", "inference", "pytorch", "tensorflow", "ml", "ai", "transformer", "lstm", "embedding"],
+    "patterns": ["model", "train", "neural", "ml", "ai"]
+  },
+  "audio_processing": {
+    "keywords": ["dsp", "fft", "filter", "synthesis", "effect", "processor", "audio", "signal", "waveform"],
+    "patterns": ["dsp", "fft", "filter", "synthesis"]
+  },
+  "daw_integration": {
+    "keywords": ["logic", "ableton", "reaper", "daw", "plugin", "vst", "au", "clap", "pro tools"],
+    "patterns": ["logic", "ableton", "reaper", "daw"]
+  },
+  "instruments": {
+    "keywords": ["guitar", "piano", "drum", "synth", "bass", "violin", "instrument"],
+    "patterns": ["guitar", "piano", "drum", "synth"]
+  },
+  "composition": {
+    "keywords": ["songwriting", "arrangement", "structure", "song", "composition", "verse", "chorus"],
+    "patterns": ["song", "arrange", "compose"]
+  },
+  "emotion": {
+    "keywords": ["emotion", "feeling", "valence", "arousal", "therapeutic", "mood"],
+    "patterns": ["emotion", "feeling", "valence"]
+  },
+  "tools": {
+    "keywords": ["script", "utility", "tool", "helper", "automation"],
+    "patterns": ["tool", "script", "util"]
+  }
+}

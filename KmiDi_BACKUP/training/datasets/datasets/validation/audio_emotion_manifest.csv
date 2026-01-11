@@ -1,0 +1,8 @@
+file_path,emotion_label,intensity,genre,tempo_bpm,split,annotator_type,notes
+datasets/DEAM/audio/29.wav,sad,0.72,rock,78,train,clinician,"DEAM track 29; therapy mood tag = low energy"
+datasets/DEAM/audio/123.wav,calm,0.41,classical,64,train,clinician,"DEAM track 123; stable dynamics"
+datasets/DEAM/audio/211.wav,happy,0.63,pop,112,train,clinician,"DEAM track 211; bright timbre"
+datasets/EMO_Music/audio/emo_045.wav,angry,0.68,metal,142,train,clinician,"EMO-Music fold example; check clipping"
+datasets/EMO_Music/audio/emo_102.wav,sad,0.55,jazz,86,train,clinician,"Brush kit; possible calm confusion"
+datasets/DEAM/audio/301.wav,calm,0.33,ambient,60,val_gold,therapist,"Therapist-rated holdout for gold check"
+datasets/EMO_Music/audio/emo_188.wav,happy,0.74,edm,126,val_gold,therapist,"Therapist-rated holdout for gold check"

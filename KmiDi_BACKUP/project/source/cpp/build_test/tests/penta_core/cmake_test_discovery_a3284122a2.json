@@ -1,0 +1,716 @@
+{
+  "tests": 106,
+  "name": "AllTests",
+  "testsuites": [
+    {
+      "name": "ChordAnalyzerTest",
+      "tests": 5,
+      "testsuite": [
+        {
+          "name": "RecognizesCMajorTriad",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/harmony_test.cpp",
+          "line": 24
+        },
+        {
+          "name": "RecognizesDominantSeventh",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/harmony_test.cpp",
+          "line": 38
+        },
+        {
+          "name": "EmptyInputReturnsZeroConfidence",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/harmony_test.cpp",
+          "line": 52
+        },
+        {
+          "name": "SIMDMatchesScalar",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/harmony_test.cpp",
+          "line": 61
+        },
+        {
+          "name": "AnalyzesPitchClassSet",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/harmony_test.cpp",
+          "line": 193
+        }
+      ]
+    },
+    {
+      "name": "PerformanceBenchmark",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "DISABLED_ChordAnalysisUnder50Microseconds",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/harmony_test.cpp",
+          "line": 86
+        },
+        {
+          "name": "DISABLED_SIMDFasterThanScalar",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/harmony_test.cpp",
+          "line": 108
+        }
+      ]
+    },
+    {
+      "name": "HarmonyEngineTest",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "DetectsCMajorChord",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/harmony_test.cpp",
+          "line": 160
+        },
+        {
+          "name": "DetectsDMinorChord",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/harmony_test.cpp",
+          "line": 177
+        }
+      ]
+    },
+    {
+      "name": "ScaleDetectorTest",
+      "tests": 1,
+      "testsuite": [
+        {
+          "name": "DetectsCMajorScale",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/harmony_test.cpp",
+          "line": 208
+        }
+      ]
+    },
+    {
+      "name": "OnsetDetectorTest",
+      "tests": 4,
+      "testsuite": [
+        {
+          "name": "DetectsSimpleClick",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 33
+        },
+        {
+          "name": "IgnoresConstantSignal",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 46
+        },
+        {
+          "name": "DetectsSineWaveOnset",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 58
+        },
+        {
+          "name": "RespondsToSensitivityChanges",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 79
+        }
+      ]
+    },
+    {
+      "name": "TempoEstimatorTest",
+      "tests": 4,
+      "testsuite": [
+        {
+          "name": "Estimates120BPM",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 118
+        },
+        {
+          "name": "Estimates90BPM",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 134
+        },
+        {
+          "name": "ReturnsZeroWithNoOnsets",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 149
+        },
+        {
+          "name": "SmoothsTempoChanges",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 155
+        }
+      ]
+    },
+    {
+      "name": "RhythmQuantizerTest",
+      "tests": 5,
+      "testsuite": [
+        {
+          "name": "QuantizesToNearestSixteenth",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 206
+        },
+        {
+          "name": "QuantizesToNearestEighth",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 226
+        },
+        {
+          "name": "HandlesDownbeat",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 245
+        },
+        {
+          "name": "HandlesSwing",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 254
+        },
+        {
+          "name": "SupportsTriplets",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 274
+        }
+      ]
+    },
+    {
+      "name": "GrooveEngineTest",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "ProcessesAudioBlock",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 322
+        },
+        {
+          "name": "OnsetHistoryIsBounded",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 338
+        }
+      ]
+    },
+    {
+      "name": "GroovePerformanceBenchmark",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "DISABLED_OnsetDetectionUnder150Microseconds",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 394
+        },
+        {
+          "name": "DISABLED_TempoEstimationUnder200Microseconds",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/groove_test.cpp",
+          "line": 415
+        }
+      ]
+    },
+    {
+      "name": "RTMessageQueueTest",
+      "tests": 4,
+      "testsuite": [
+        {
+          "name": "PushAndPop",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/osc_test.cpp",
+          "line": 22
+        },
+        {
+          "name": "FIFOOrder",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/osc_test.cpp",
+          "line": 37
+        },
+        {
+          "name": "EmptyQueueReturnsFalse",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/osc_test.cpp",
+          "line": 59
+        },
+        {
+          "name": "ClearWorks",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/osc_test.cpp",
+          "line": 65
+        }
+      ]
+    },
+    {
+      "name": "OSCServerTest",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "StartsAndStops",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/osc_test.cpp",
+          "line": 101
+        },
+        {
+          "name": "ReceivesMessage",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/osc_test.cpp",
+          "line": 108
+        }
+      ]
+    },
+    {
+      "name": "OSCClientTest",
+      "tests": 1,
+      "testsuite": [
+        {
+          "name": "SendsMessage",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/osc_test.cpp",
+          "line": 158
+        }
+      ]
+    },
+    {
+      "name": "OSCHubTest",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "StartsAndStops",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/osc_test.cpp",
+          "line": 200
+        },
+        {
+          "name": "BidirectionalCommunication",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/osc_test.cpp",
+          "line": 207
+        }
+      ]
+    },
+    {
+      "name": "OSCPerformanceBenchmark",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "DISABLED_SendLatency",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/osc_test.cpp",
+          "line": 290
+        },
+        {
+          "name": "DISABLED_MessageQueueThroughput",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/osc_test.cpp",
+          "line": 316
+        }
+      ]
+    },
+    {
+      "name": "RTMemoryPoolTest",
+      "tests": 3,
+      "testsuite": [
+        {
+          "name": "AllocateAndDeallocate",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/rt_memory_test.cpp",
+          "line": 8
+        },
+        {
+          "name": "ExhaustsPool",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/rt_memory_test.cpp",
+          "line": 19
+        },
+        {
+          "name": "ThreadSafety",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/rt_memory_test.cpp",
+          "line": 41
+        }
+      ]
+    },
+    {
+      "name": "RTPoolPtrTest",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "RAII",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/rt_memory_test.cpp",
+          "line": 74
+        },
+        {
+          "name": "Move",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/rt_memory_test.cpp",
+          "line": 86
+        }
+      ]
+    },
+    {
+      "name": "PerformanceTest",
+      "tests": 16,
+      "testsuite": [
+        {
+          "name": "RMSCalculation_Performance",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 66
+        },
+        {
+          "name": "SumOfSquares_Performance",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 78
+        },
+        {
+          "name": "SpectralFlux_Performance",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 90
+        },
+        {
+          "name": "ApplyWindow_Performance",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 107
+        },
+        {
+          "name": "DotProduct_Performance",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 121
+        },
+        {
+          "name": "Autocorrelation_Performance",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 135
+        },
+        {
+          "name": "HarmonyEngine_ChordAnalysis_Performance",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 154
+        },
+        {
+          "name": "DISABLED_HarmonyEngine_ChordAnalysisSIMD_Performance",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 169
+        },
+        {
+          "name": "GrooveEngine_OnsetDetection_Performance",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 188
+        },
+        {
+          "name": "GrooveEngine_TempoEstimation_Performance",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 204
+        },
+        {
+          "name": "DISABLED_LatencyVerification_HarmonyUnder100us",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 228
+        },
+        {
+          "name": "LatencyVerification_GrooveUnder200us",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 253
+        },
+        {
+          "name": "RTSafety_NoAllocationsDuringProcess",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 284
+        },
+        {
+          "name": "SIMD_RMS_Correctness",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 312
+        },
+        {
+          "name": "SIMD_SpectralFlux_Correctness",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 323
+        },
+        {
+          "name": "SIMD_DotProduct_Correctness",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/performance_test.cpp",
+          "line": 335
+        }
+      ]
+    },
+    {
+      "name": "PerformanceMonitorTest",
+      "tests": 7,
+      "testsuite": [
+        {
+          "name": "InitializesToZero",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 30
+        },
+        {
+          "name": "MeasuresLatency",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 35
+        },
+        {
+          "name": "TracksPeakLatency",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 49
+        },
+        {
+          "name": "RecordsXruns",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 64
+        },
+        {
+          "name": "CalculatesCpuUsage",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 75
+        },
+        {
+          "name": "ResetClearsStats",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 90
+        },
+        {
+          "name": "MultipleMeasurementsAccumulate",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 104
+        }
+      ]
+    },
+    {
+      "name": "AudioAnalyzerTest",
+      "tests": 9,
+      "testsuite": [
+        {
+          "name": "InitializesToZero",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 154
+        },
+        {
+          "name": "AnalyzesSilence",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 160
+        },
+        {
+          "name": "AnalyzesSineWave",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 170
+        },
+        {
+          "name": "DetectsClipping",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 185
+        },
+        {
+          "name": "CalculatesDynamicRange",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 194
+        },
+        {
+          "name": "HandlesStereoInput",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 209
+        },
+        {
+          "name": "ResetClearsState",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 224
+        },
+        {
+          "name": "ConfigurableClippingThreshold",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 236
+        },
+        {
+          "name": "PeakDecay",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 247
+        }
+      ]
+    },
+    {
+      "name": "DiagnosticsEngineTest",
+      "tests": 9,
+      "testsuite": [
+        {
+          "name": "CreatesWithDefaultConfig",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 283
+        },
+        {
+          "name": "MeasuresPerformance",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 291
+        },
+        {
+          "name": "AnalyzesAudio",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 303
+        },
+        {
+          "name": "DetectsClipping",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 317
+        },
+        {
+          "name": "GeneratesPerformanceReport",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 330
+        },
+        {
+          "name": "GeneratesAudioReport",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 345
+        },
+        {
+          "name": "ResetClearsAllStats",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 354
+        },
+        {
+          "name": "UpdatesConfig",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 374
+        },
+        {
+          "name": "MoveConstruction",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 390
+        }
+      ]
+    },
+    {
+      "name": "RTSafetyTest",
+      "tests": 3,
+      "testsuite": [
+        {
+          "name": "PerformanceMonitorNoExceptions",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 409
+        },
+        {
+          "name": "AudioAnalyzerNoExceptions",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 418
+        },
+        {
+          "name": "DiagnosticsEngineNoExceptions",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 430
+        }
+      ]
+    },
+    {
+      "name": "EdgeCaseTest",
+      "tests": 5,
+      "testsuite": [
+        {
+          "name": "EmptyBuffer",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 448
+        },
+        {
+          "name": "SingleSample",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 456
+        },
+        {
+          "name": "VeryLargeBuffer",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 463
+        },
+        {
+          "name": "NegativeValues",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 471
+        },
+        {
+          "name": "ManyChannels",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 480
+        }
+      ]
+    },
+    {
+      "name": "DiagnosticsBenchmark",
+      "tests": 3,
+      "testsuite": [
+        {
+          "name": "AudioAnalysisUnder100Microseconds",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 505
+        },
+        {
+          "name": "MeasurementOverheadMinimal",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 525
+        },
+        {
+          "name": "StereoAnalysisPerformance",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/diagnostics_test.cpp",
+          "line": 545
+        }
+      ]
+    },
+    {
+      "name": "HarmonyEnginePluginTest",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "RTSafeProcessing",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/plugin_test_harness.cpp",
+          "line": 304
+        },
+        {
+          "name": "IntegrationWithMockDevice",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/plugin_test_harness.cpp",
+          "line": 323
+        }
+      ]
+    },
+    {
+      "name": "GrooveEnginePluginTest",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "RTSafeOnsetDetection",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/plugin_test_harness.cpp",
+          "line": 374
+        },
+        {
+          "name": "TempoEstimationAccuracy",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/plugin_test_harness.cpp",
+          "line": 392
+        }
+      ]
+    },
+    {
+      "name": "DiagnosticsEnginePluginTest",
+      "tests": 1,
+      "testsuite": [
+        {
+          "name": "MonitorsRealTimePerformance",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/plugin_test_harness.cpp",
+          "line": 441
+        }
+      ]
+    },
+    {
+      "name": "OSCPluginTest",
+      "tests": 1,
+      "testsuite": [
+        {
+          "name": "RTSafeMessageSending",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/plugin_test_harness.cpp",
+          "line": 496
+        }
+      ]
+    },
+    {
+      "name": "RTMemoryPoolPluginTest",
+      "tests": 1,
+      "testsuite": [
+        {
+          "name": "RTSafeAllocation",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/plugin_test_harness.cpp",
+          "line": 525
+        }
+      ]
+    },
+    {
+      "name": "FullPluginIntegrationTest",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "CompleteProcessingChain",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/plugin_test_harness.cpp",
+          "line": 573
+        },
+        {
+          "name": "StressTestWithMockDevice",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/plugin_test_harness.cpp",
+          "line": 611
+        }
+      ]
+    },
+    {
+      "name": "PluginPerformanceBenchmark",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "HarmonyEngineLatency",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/plugin_test_harness.cpp",
+          "line": 683
+        },
+        {
+          "name": "GrooveEngineLatency",
+          "file": "\/Users\/seanburdges\/KmiDi-1\/tests\/penta_core\/plugin_test_harness.cpp",
+          "line": 710
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "react": {
+    "extensions": [".tsx", ".jsx"],
+    "patterns": ["React\\.Component", "function\\s+\\w+\\(.*\\)\\s*\\{", "const\\s+\\w+\\s*=\\s*\\(.*\\)\\s*=>"],
+    "keywords": ["useState", "useEffect", "props", "component", "React", "JSX"]
+  },
+  "swiftui": {
+    "extensions": [".swift"],
+    "patterns": ["@ViewBuilder", "SwiftUI\\.View", "struct\\s+\\w+.*View"],
+    "keywords": ["View", "Button", "Text", "VStack", "HStack", "SwiftUI"]
+  },
+  "juce_ui": {
+    "extensions": [".cpp", ".h"],
+    "patterns": ["juce::Component", "juce::Slider", "juce::Button", "juce::Label"],
+    "keywords": ["Component", "Slider", "Button", "Label", "JUCE"]
+  },
+  "web": {
+    "extensions": [".html", ".css", ".js"],
+    "patterns": ["<div", "<button", "class=", "id="],
+    "keywords": ["html", "css", "javascript", "DOM"]
+  }
+}

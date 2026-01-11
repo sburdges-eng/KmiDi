@@ -1,0 +1,44 @@
+build: dev-mac
+device: mps
+python: 3.11
+inference_only: true
+enable_compile: true
+quantize: false
+logging_level: DEBUG
+demo_mode: true
+
+paths:
+  data_root: ${DATA_ROOT:-data}
+  models_root: ${MODELS_ROOT:-models}
+  output_root: ${OUTPUT_ROOT:-output}
+  checkpoints: ${MODELS_ROOT:-models}/checkpoints
+
+performance:
+  target_latency_ms: 150
+  profile_enabled: true
+  memory_monitor: true
+  max_batch_size: 16
+
+cache:
+  enable: true
+  location: ${HOME}/.idaw_cache
+  max_size_gb: 2
+
+training:
+  enabled: false  # dev-mac is inference/demo only; flip to true if you accept slow local training
+  batch_size: 4
+  fp16: true
+  gradient_checkpointing: true
+  max_grad_norm: 1.0
+
+api:
+  host: 127.0.0.1
+  port: 8000
+  workers: 2
+  request_timeout: 60
+
+notes:
+  - "Optimized for Apple Silicon (M-series) using torch mps backend"
+  - "Use scripts/train.py only for smoke; prefer train-nvidia build for real training"
+  - "Data location: /Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data (moved from external SSD)"
+  - "Set DATA_ROOT/MODELS_ROOT/OUTPUT_ROOT via shell or .env if using different locations"

@@ -1,0 +1,40 @@
+MPK MINI 3 KNOB ASSIGNMENTS - PRO ENGINEER SETUP
+===============================================
+
+KNOB MAPPING (Default CC Messages):
+
+Knob 1 (CC 70): TRACK VOLUME      - Master level control
+Knob 2 (CC 71): PAN               - Stereo positioning
+Knob 3 (CC 72): FILTER CUTOFF     - Synth/EQ sweep
+Knob 4 (CC 73): FILTER RESONANCE  - Tone shaping
+Knob 5 (CC 74): ATTACK            - Envelope control
+Knob 6 (CC 75): RELEASE           - Envelope tail
+Knob 7 (CC 76): REVERB SEND       - Space/ambience
+Knob 8 (CC 77): DELAY SEND        - Echo/timing FX
+
+LOGIC PRO SETUP - Controller Assignments:
+1. Logic Pro > Control Surfaces > Controller Assignments
+2. Click Learn Mode
+3. Move knob on MPK mini 3
+4. Click parameter in Logic to control
+5. Repeat for all 8 knobs
+
+VOCALS:
+  Knob 1: Volume | Knob 2: Pan | Knob 3: Pitch Speed
+  Knob 4: Comp Threshold | Knob 5: Attack | Knob 6: Release
+  Knob 7: Reverb | Knob 8: Delay
+
+GUITAR:
+  Knob 1: Volume | Knob 2: Pan | Knob 3: Amp Gain
+  Knob 4: Treble | Knob 5: Mid | Knob 6: Bass
+  Knob 7: Reverb | Knob 8: Amp Master
+
+DRUMS:
+  Knob 1: Kit Vol | Knob 2: Kick | Knob 3: Snare
+  Knob 4: Hi-Hat | Knob 5: Room | Knob 6: Complexity
+  Knob 7: Reverb | Knob 8: Compression
+
+SYNTHS:
+  Knob 1: Volume | Knob 2: Pan | Knob 3: Cutoff
+  Knob 4: Resonance | Knob 5: Attack | Knob 6: Release
+  Knob 7: LFO Rate | Knob 8: Mod Amount

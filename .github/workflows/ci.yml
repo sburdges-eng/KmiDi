@@ -7,13 +7,207 @@ on:
     branches: [ main ]
 
 jobs:
-  quality:
+  python_tests:
+    name: Python Tests
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-    - run: pip install black flake8 mypy
-    - run: black --check music_brain/ tests/ || true
-    - run: flake8 music_brain/ tests/ --max-line-length=100 || true
+    - name: Install dependencies
+      run: |
+        pip install -e KmiDi_PROJECT/.[dev,audio]
+        pip install pytest pytest-cov coverage
+    - name: Run Python tests
+      run: |
+        pytest KmiDi_PROJECT/tests/ml/ KmiDi_PROJECT/tests/dsp/ -v --cov=penta_core.ml --cov=penta_core.dsp --cov=music_brain --cov-report=xml --cov-report=term-missing
+    - name: Upload coverage
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: false
+
+  cpp_build:
+    name: C++ Build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build build-essential
+    - name: Configure CMake
+      run: |
+        mkdir build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -G Ninja \
+          -DBUILD_PENTA_TESTS=ON \
+          -DBUILD_PYTHON_BINDINGS=OFF \
+          -DBUILD_KELLY_CORE=OFF
+    - name: Build C++ library
+      run: |
+        cd build
+        ninja penta_core
+    - name: Build tests
+      run: |
+        cd build
+        ninja penta_tests
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: cpp-build
+        path: build/
+        retention-days: 1
+
+  cpp_tests:
+    name: C++ Tests
+    runs-on: ubuntu-latest
+    needs: cpp_build
+    steps:
+    - uses: actions/checkout@v4
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: cpp-build
+        path: build/
+    - name: Restore execute permissions
+      run: |
+        chmod +x build/penta_tests || true
+        find build -name "*.so" -exec chmod +x {} \; || true
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure --verbose
+
+  valgrind_memory:
+    name: Valgrind Memory Testing
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build build-essential valgrind
+    - name: Configure CMake (Debug)
+      run: |
+        mkdir build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Debug -G Ninja \
+          -DBUILD_PENTA_TESTS=ON \
+          -DBUILD_PYTHON_BINDINGS=OFF \
+          -DBUILD_KELLY_CORE=OFF
+    - name: Build tests
+      run: |
+        cd build
+        ninja penta_tests
+    - name: Run Valgrind
+      run: |
+        cd build
+        if [ -f ../tests/valgrind.supp ]; then
+          valgrind --leak-check=full --error-exitcode=1 --track-origins=yes \
+            --suppressions=../tests/valgrind.supp \
+            --show-leak-kinds=definite \
+            ./penta_tests
+        else
+          valgrind --leak-check=full --error-exitcode=1 --track-origins=yes \
+            --show-leak-kinds=definite \
+            ./penta_tests
+        fi
+
+  performance_regression:
+    name: Performance Regression Tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build build-essential
+    - name: Configure CMake (Release)
+      run: |
+        mkdir build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -G Ninja \
+          -DBUILD_PENTA_TESTS=ON \
+          -DBUILD_PYTHON_BINDINGS=OFF \
+          -DBUILD_KELLY_CORE=OFF
+    - name: Build tests
+      run: |
+        cd build
+        ninja penta_tests
+    - name: Run performance benchmarks
+      run: |
+        cd build
+        ./penta_tests --gtest_filter="*Performance*"
+        # Note: Performance targets:
+        # - Harmony latency < 100μs @ 48kHz/512 samples
+        # - Groove latency < 200μs @ 48kHz/512 samples
+
+  code_coverage:
+    name: Code Coverage Reporting
+    runs-on: ubuntu-latest
+    needs: [python_tests, cpp_tests]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install C++ coverage tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build build-essential lcov
+    - name: Configure CMake (Coverage)
+      run: |
+        mkdir build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Debug -G Ninja \
+          -DCMAKE_CXX_FLAGS="--coverage" \
+          -DBUILD_PENTA_TESTS=ON \
+          -DBUILD_PYTHON_BINDINGS=OFF \
+          -DBUILD_KELLY_CORE=OFF
+    - name: Generate C++ coverage
+      run: |
+        cd build
+        ninja penta_tests
+        ./penta_tests
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' '/opt/*' '*/external/*' '*/tests/*' --output-file coverage.info
+        lcov --list coverage.info
+    - name: Upload C++ coverage
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./build/coverage.info
+        fail_ci_if_error: false
+
+  juce_plugin_validation:
+    name: JUCE Plugin Validation (macOS)
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        brew install cmake ninja
+    - name: Build JUCE plugins
+      run: |
+        mkdir build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -G Ninja
+        ninja iDAW_Core || true  # May not be fully configured
+    - name: Validate plugins with auval
+      run: |
+        # Validate Audio Unit plugins (if built)
+        # auval -v aufx KmDi Pncl || true  # Pencil
+        # auval -v aufx KmDi Ersr || true  # Eraser
+        # auval -v aufx KmDi Prss || true  # Press
+        echo "JUCE plugin validation placeholder - requires full plugin build"
+
+  quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Install linting tools
+      run: |
+        pip install black flake8 mypy
+    - name: Run black formatting check
+      run: black --check --line-length=100 music_brain/ tests/ || true
+    - name: Run flake8 linting
+      run: flake8 music_brain/ tests/ --max-line-length=100 --extend-ignore=E203,W503 || true
+    - name: Run mypy type checking
+      run: mypy music_brain/ --ignore-missing-imports || true
