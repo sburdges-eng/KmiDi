@@ -17,7 +17,7 @@ jobs:
         python-version: '3.11'
     - name: Install dependencies
       run: |
-        pip install -e .[dev,audio]
+        pip install -e KmiDi_PROJECT/.[dev,audio]
         pip install pytest pytest-cov coverage
     - name: Run Python tests
       run: |
