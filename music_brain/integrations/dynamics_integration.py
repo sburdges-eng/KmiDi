@@ -306,7 +306,15 @@ class DynamicsIntegration:
         if bar is not None:
             self.current_bar = bar
 
-        # Find matching section
+        # Find matching section (respect bar position when provided)
+        if bar is not None:
+            for section in self.sections:
+                if (
+                    section.section_type == stype
+                    and section.start_bar <= bar < section.end_bar
+                ):
+                    return section.dynamics
+
         for section in self.sections:
             if section.section_type == stype:
                 return section.dynamics
