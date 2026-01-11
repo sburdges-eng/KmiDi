@@ -35,7 +35,7 @@ export interface HumanizerConfig {
   };
 }
 
-export interface UpdateHumanizerConfigInput extends Partial<HumanizerConfig> {
+export interface UpdateHumanizerConfigInput extends Partial<Omit<HumanizerConfig, "analysis">> {
   analysis?: Partial<HumanizerConfig["analysis"]>;
 }
 

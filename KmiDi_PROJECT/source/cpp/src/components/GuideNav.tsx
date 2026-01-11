@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import guides from "../../Production_Workflows/manifest.json";
+import guides from "../manifest.json";
 
 export type Guide = {
   title: string;
@@ -18,7 +18,7 @@ export function GuideNav({ onSelect }: Props) {
 
   const allTopics = useMemo(() => {
     const topics = new Set<string>();
-    guides.forEach((guide) => guide.topics.forEach((t) => topics.add(t)));
+    guides.forEach((guide: Guide) => guide.topics.forEach((t: string) => topics.add(t)));
     return Array.from(topics).sort((a, b) => a.localeCompare(b));
   }, []);
 

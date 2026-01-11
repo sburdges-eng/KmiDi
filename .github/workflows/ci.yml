@@ -21,7 +21,7 @@ jobs:
         pip install pytest pytest-cov coverage
     - name: Run Python tests
       run: |
-        pytest tests/ml/ tests/dsp/ -v --cov=penta_core.ml --cov=penta_core.dsp --cov=music_brain --cov-report=xml --cov-report=term-missing
+        pytest KmiDi_PROJECT/tests/ml/ KmiDi_PROJECT/tests/dsp/ -v --cov=penta_core.ml --cov=penta_core.dsp --cov=music_brain --cov-report=xml --cov-report=term-missing
     - name: Upload coverage
       uses: codecov/codecov-action@v3
       with:
@@ -70,6 +70,10 @@ jobs:
       with:
         name: cpp-build
         path: build/
+    - name: Restore execute permissions
+      run: |
+        chmod +x build/penta_tests || true
+        find build -name "*.so" -exec chmod +x {} \; || true
     - name: Run tests
       run: |
         cd build
@@ -98,10 +102,16 @@ jobs:
     - name: Run Valgrind
       run: |
         cd build
-        valgrind --leak-check=full --error-exitcode=1 --track-origins=yes \
-          --suppressions=../tests/valgrind.supp \
-          --show-leak-kinds=definite \
-          ./penta_tests
+        if [ -f ../tests/valgrind.supp ]; then
+          valgrind --leak-check=full --error-exitcode=1 --track-origins=yes \
+            --suppressions=../tests/valgrind.supp \
+            --show-leak-kinds=definite \
+            ./penta_tests
+        else
+          valgrind --leak-check=full --error-exitcode=1 --track-origins=yes \
+            --show-leak-kinds=definite \
+            ./penta_tests
+        fi
 
   performance_regression:
     name: Performance Regression Tests
@@ -140,7 +150,7 @@ jobs:
     - name: Install C++ coverage tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y lcov
+        sudo apt-get install -y cmake ninja-build build-essential lcov
     - name: Configure CMake (Coverage)
       run: |
         mkdir build && cd build
