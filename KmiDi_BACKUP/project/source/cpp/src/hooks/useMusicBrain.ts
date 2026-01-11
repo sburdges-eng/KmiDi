@@ -35,9 +35,9 @@ export interface HumanizerConfig {
   };
 }
 
-export interface UpdateHumanizerConfigInput extends Partial<HumanizerConfig> {
+export type UpdateHumanizerConfigInput = Partial<Omit<HumanizerConfig, "analysis">> & {
   analysis?: Partial<HumanizerConfig["analysis"]>;
-}
+};
 
 export type SpectocloudMode = "static" | "animation";
 
