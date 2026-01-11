@@ -12,13 +12,13 @@ template<typename T>
 class ReaderWriterQueue {
 public:
     explicit ReaderWriterQueue(size_t capacity = 15) {}
-    
+
     bool try_enqueue(const T& item) {
         std::lock_guard<std::mutex> lock(mutex_);
         queue_.push(item);
         return true;
     }
-    
+
     bool try_dequeue(T& item) {
         std::lock_guard<std::mutex> lock(mutex_);
         if (queue_.empty()) return false;
@@ -26,10 +26,15 @@ public:
         queue_.pop();
         return true;
     }
-    
+
+    size_t size_approx() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return queue_.size();
+    }
+
 private:
     std::queue<T> queue_;
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
 };
 
 } // namespace moodycamel

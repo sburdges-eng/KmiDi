@@ -9,10 +9,14 @@ if(APPLE)
     # The main CMakeLists.txt sets MAC_OS_X_VERSION_MIN_REQUIRED which helps
 endif()
 
-# Readerwriterqueue: header-only library with no CMakeLists.txt
+# Readerwriterqueue: header-only library
 # Must explicitly create INTERFACE target and ensure SOURCE_DIR is populated
 include(FetchContent)
-if(NOT TARGET readerwriterqueue)
+
+# Always get properties in case it was already fetched by parent CMakeLists
+FetchContent_GetProperties(readerwriterqueue)
+
+if(NOT readerwriterqueue_POPULATED)
     FetchContent_Declare(
         readerwriterqueue
         GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue.git
@@ -20,16 +24,15 @@ if(NOT TARGET readerwriterqueue)
         GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(readerwriterqueue)
-    
-    # Explicitly populate SOURCE_DIR for header-only library
     FetchContent_GetProperties(readerwriterqueue)
+endif()
 
-    if(NOT TARGET readerwriterqueue)
-        add_library(readerwriterqueue INTERFACE)
-        target_include_directories(readerwriterqueue INTERFACE
-            ${readerwriterqueue_SOURCE_DIR}
-        )
-    endif()
+# Ensure target exists with proper include directories
+if(NOT TARGET readerwriterqueue)
+    add_library(readerwriterqueue INTERFACE)
+    target_include_directories(readerwriterqueue INTERFACE
+        ${readerwriterqueue_SOURCE_DIR}
+    )
 endif()
 
 # nlohmann/json (header-only)
@@ -47,32 +50,31 @@ set(PENTA_CORE_SOURCES
     # Common utilities
     common/RTMemoryPool.cpp
     common/RTLogger.cpp
-    
+
     # Harmony engine
     harmony/ChordAnalyzer.cpp
     harmony/ChordAnalyzerSIMD.cpp
     harmony/ScaleDetector.cpp
     harmony/VoiceLeading.cpp
     harmony/HarmonyEngine.cpp
-    
+
     # Groove analysis
     groove/OnsetDetector.cpp
     groove/TempoEstimator.cpp
     groove/RhythmQuantizer.cpp
     groove/GrooveEngine.cpp
-    
+
     # Diagnostics
     diagnostics/PerformanceMonitor.cpp
     diagnostics/AudioAnalyzer.cpp
     diagnostics/DiagnosticsEngine.cpp
-    
+
     # OSC communication
     osc/OSCServer.cpp
     osc/OSCClient.cpp
-        osc/OSCMessage.cpp
-        osc/OSCClient.cpp
-        osc/OSCHub.cpp
-        osc/RTMessageQueue.cpp
+    osc/OSCMessage.cpp
+    osc/RTMessageQueue.cpp
+    osc/OSCHub.cpp
 
     # ML interface
     ml/MLInterface.cpp
@@ -85,21 +87,21 @@ set(PENTA_CORE_HEADERS
     ${PROJECT_SOURCE_DIR}/include/penta/common/RTMemoryPool.h
     ${PROJECT_SOURCE_DIR}/include/penta/common/RTLogger.h
     ${PROJECT_SOURCE_DIR}/include/penta/common/RTTypes.h
-    
+
     ${PROJECT_SOURCE_DIR}/include/penta/harmony/ChordAnalyzer.h
     ${PROJECT_SOURCE_DIR}/include/penta/harmony/ScaleDetector.h
     ${PROJECT_SOURCE_DIR}/include/penta/harmony/VoiceLeading.h
     ${PROJECT_SOURCE_DIR}/include/penta/harmony/HarmonyEngine.h
-    
+
     ${PROJECT_SOURCE_DIR}/include/penta/groove/OnsetDetector.h
     ${PROJECT_SOURCE_DIR}/include/penta/groove/TempoEstimator.h
     ${PROJECT_SOURCE_DIR}/include/penta/groove/RhythmQuantizer.h
     ${PROJECT_SOURCE_DIR}/include/penta/groove/GrooveEngine.h
-    
+
     ${PROJECT_SOURCE_DIR}/include/penta/diagnostics/PerformanceMonitor.h
     ${PROJECT_SOURCE_DIR}/include/penta/diagnostics/AudioAnalyzer.h
     ${PROJECT_SOURCE_DIR}/include/penta/diagnostics/DiagnosticsEngine.h
-    
+
     ${PROJECT_SOURCE_DIR}/include/penta/osc/OSCServer.h
     ${PROJECT_SOURCE_DIR}/include/penta/osc/OSCClient.h
     ${PROJECT_SOURCE_DIR}/include/penta/osc/OSCMessage.h
@@ -121,7 +123,9 @@ set_target_properties(penta_core PROPERTIES
 
 target_include_directories(penta_core PUBLIC
     ${PROJECT_SOURCE_DIR}/include
+    ${readerwriterqueue_SOURCE_DIR}
 )
+message(STATUS "readerwriterqueue_SOURCE_DIR: ${readerwriterqueue_SOURCE_DIR}")
 
 target_link_libraries(penta_core PUBLIC
     readerwriterqueue

@@ -19,7 +19,7 @@ endif()
 # Options
 option(BUILD_DESKTOP "Build desktop GUI application" ON)
 option(BUILD_PLUGINS "Build VST3 and CLAP plugins" ON)
-option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_TESTS "Build tests" ON)
 option(BUILD_KELLY_CORE "Build Kelly core library/app/plugins" ON)
 option(BUILD_PENTA_TESTS "Build penta_core test suite" OFF)
 option(ENABLE_TRACY "Enable Tracy profiling" OFF)
@@ -154,6 +154,7 @@ endif()
 file(GLOB_RECURSE KELLY_CORE_SOURCES CONFIGURE_DEPENDS
     ${CPP_ROOT}/src/*.cpp
     ${CPP_ROOT}/src/*.mm
+    ${CPP_ROOT}/src/midi/MidiIO.cpp
 )
 
 # Exclude app entry point and plugin sources from the core lib
@@ -184,6 +185,7 @@ set_source_files_properties(
 target_include_directories(KellyCore PUBLIC
     ${CPP_ROOT}/src
     ${CPP_ROOT}/include
+    ${readerwriterqueue_SOURCE_DIR}
 )
 
 target_link_libraries(KellyCore PUBLIC
@@ -275,25 +277,30 @@ endif() # BUILD_KELLY_CORE
 
 # Tests
 if(BUILD_TESTS AND BUILD_KELLY_CORE)
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/external/Catch2/CMakeLists.txt)
-        enable_testing()
-        add_subdirectory(external/Catch2 EXCLUDE_FROM_ALL)
-        add_executable(KellyTests
-            tests/cpp/test_emotion_engine.cpp
-            tests/cpp/test_midi_pipeline.cpp
-            tests/cpp/test_chord_diagnostics.cpp
-            tests/cpp/test_ml_pipeline.cpp
-        )
-        target_link_libraries(KellyTests PRIVATE
-            KellyCore
-            Catch2::Catch2WithMain
-        )
-        include(CTest)
-        include(Catch2)
-        catch_discover_tests(KellyTests)
-    else()
-        message(WARNING "Catch2 not found; skipping tests. Set BUILD_TESTS=OFF or add external/Catch2.")
-    endif()
+    enable_testing()
+    # Fetch Catch2 if it doesn't exist locally
+    include(FetchContent)
+    FetchContent_Declare(
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v3.4.0 # Use a specific tag for stability
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(Catch2)
+    include(${catch2_SOURCE_DIR}/extras/Catch.cmake)
+
+    add_executable(KellyTests
+        tests/cpp/test_emotion_engine.cpp
+        tests/cpp/test_midi_pipeline.cpp
+        tests/cpp/test_chord_diagnostics.cpp
+        tests/cpp/test_ml_pipeline.cpp
+    )
+    target_link_libraries(KellyTests PRIVATE
+        KellyCore
+        Catch2::Catch2WithMain
+    )
+    include(CTest)
+    catch_discover_tests(KellyTests)
 endif()
 
 if(BUILD_PENTA_TESTS)

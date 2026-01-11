@@ -1,16 +1,15 @@
 #include "penta/osc/RTMessageQueue.h"
+#include "readerwriterqueue.h"
 
-namespace penta::osc {
+namespace penta {
+namespace osc {
 
 RTMessageQueue::RTMessageQueue(size_t capacity)
     : queue_(std::make_unique<moodycamel::ReaderWriterQueue<OSCMessage>>(capacity))
     , capacity_(capacity)
     , writeIndex_(0)
     , readIndex_(0)
-    , buffer_()
 {
-    // Reserve storage up front to avoid allocations on RT threads
-    buffer_.reserve(capacity_);
 }
 
 RTMessageQueue::~RTMessageQueue() = default;
@@ -49,4 +48,17 @@ size_t RTMessageQueue::size() const noexcept {
     return queue_ ? queue_->size_approx() : 0;
 }
 
-} // namespace penta::osc
+void RTMessageQueue::clear() {
+    if (!queue_) {
+        return;
+    }
+    OSCMessage dummy;
+    while (queue_->try_dequeue(dummy)) {
+        // Discard messages
+    }
+    writeIndex_.store(0, std::memory_order_relaxed);
+    readIndex_.store(0, std::memory_order_relaxed);
+}
+
+} // namespace osc
+} // namespace penta
