@@ -20,6 +20,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 import traceback
+import time
+import os
 
 from music_brain.intelligence.brain_controller import (
     BrainController,
@@ -43,6 +45,9 @@ class OrchestrationConfig:
     mistral_gguf_path: Path
     mistral_ctx: int = 4096
     mistral_seed: Optional[int] = None
+    llama_threads: Optional[int] = None
+    mistral_gpu_layers: Optional[int] = None
+    keep_brain_loaded: bool = False
 
     # Generation toggles
     enable_images: bool = True
@@ -54,6 +59,8 @@ class OrchestrationConfig:
 
     # Determinism
     midi_seed: int = 17
+    midi_length: int = 16
+    midi_device: str = "auto"  # allow "mps" on Apple Silicon
 
 
 @dataclass
@@ -70,7 +77,10 @@ class LocalMultiModelOrchestrator:
     def __init__(self, config: OrchestrationConfig):
         self.config = config
         self._brain = self._create_brain()
-        self._midi = MidiGenerationPipeline(seed=self.config.midi_seed)
+        self._brain_loaded = False
+        self._midi = MidiGenerationPipeline(
+            seed=self.config.midi_seed, device=self.config.midi_device
+        )
         self._image_job = (
             ImageGenerationJob(ImageGenerationConfig(output_dir=self.config.output_root / "images"))
             if config.enable_images
@@ -100,7 +110,7 @@ class LocalMultiModelOrchestrator:
     def execute_with_intent(self, intent: CompleteSongIntent) -> OrchestrationResult:
         result = OrchestrationResult(intent=intent)
         try:
-            midi_result = self._midi.generate(intent)
+            midi_result = self._midi.generate(intent, length=self.config.midi_length)
             result.midi = midi_result
 
             # Optional branches
@@ -151,29 +161,37 @@ class LocalMultiModelOrchestrator:
     # Internal helpers
     # ------------------------------------------------------------------ #
     def _create_brain(self) -> BrainController:
+        default_threads = max(1, os.cpu_count() or 1)
+        default_gpu_layers = 35  # tuned for 7B; override via config
         brain_cfg = BrainConfig(
             model_path=self.config.mistral_gguf_path,
             n_ctx=self.config.mistral_ctx,
             seed=self.config.mistral_seed,
+            n_threads=self.config.llama_threads or default_threads,
+            n_gpu_layers=(
+                self.config.mistral_gpu_layers
+                if self.config.mistral_gpu_layers is not None
+                else default_gpu_layers
+            ),
         )
         return BrainController(brain_cfg)
 
     def _run_brain(self, user_intent: str) -> CompleteSongIntent:
-        self._brain.load()
+        self._ensure_brain_loaded()
         try:
             intent = self._brain.parse_intent(user_intent)
         finally:
-            self._brain.unload()
+            self._maybe_unload_brain()
         return intent
 
     def _safe_expand_prompts(self, intent: CompleteSongIntent) -> Dict[str, str]:
         try:
-            self._brain.load()
+            self._ensure_brain_loaded()
             return self._brain.expand_prompts(intent)
         except Exception:
             return {}
         finally:
-            self._brain.unload()
+            self._maybe_unload_brain()
 
     @staticmethod
     def _parse_json_like(text: str) -> Dict[str, Any]:
@@ -183,6 +201,37 @@ class LocalMultiModelOrchestrator:
             return json.loads(text)
         except Exception:
             return {}
+
+    # ------------------------------------------------------------------ #
+    # Brain lifecycle helpers
+    # ------------------------------------------------------------------ #
+    def _ensure_brain_loaded(self):
+        if not self._brain_loaded:
+            self._brain.load()
+            self._brain_loaded = True
+
+    def _maybe_unload_brain(self):
+        if not self.config.keep_brain_loaded and self._brain_loaded:
+            self._brain.unload()
+            self._brain_loaded = False
+
+    # ------------------------------------------------------------------ #
+    # Output helpers
+    # ------------------------------------------------------------------ #
+    def export_midi(
+        self,
+        midi_result: MidiGenerationResult,
+        *,
+        output_dir: Optional[Path] = None,
+        filename: Optional[str] = None,
+    ) -> Path:
+        """
+        Export a MidiGenerationResult to disk. Keeps everything local/deterministic.
+        """
+        target_dir = output_dir or (self.config.output_root / "midi")
+        target_dir.mkdir(parents=True, exist_ok=True)
+        safe_name = filename or f"kmidi_{int(time.time())}.mid"
+        return self._midi.export_midi(midi_result, target_dir / safe_name)
 
 
 # Convenience factory

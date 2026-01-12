@@ -1,456 +1,105 @@
-# KmiDi GUI Manual
+# KmiDi Desktop Application GUI Manual
 
-> Complete guide to all KmiDi graphical interfaces
+This manual provides a comprehensive guide to the KmiDi desktop application's Graphical User Interface (GUI). KmiDi is an emotion-driven music generation tool, and its GUI is designed to facilitate intuitive interaction with its core functionalities.
 
-**Version**: 1.0.0
-
----
+**Note on Screenshots**: Due to the limitations of the current documentation environment, actual screenshots are not included in this manual. Placeholder descriptions are provided for expected UI elements.
 
 ## Table of Contents
-
-1. [Overview](#overview)
-2. [Streamlit Web App](#streamlit-web-app)
-3. [Tauri Desktop App](#tauri-desktop-app)
-4. [Qt Desktop App](#qt-desktop-app)
-5. [Common Features](#common-features)
-6. [Keyboard Shortcuts](#keyboard-shortcuts)
-7. [Troubleshooting](#troubleshooting)
-
----
-
-## Overview
-
-KmiDi provides three GUI options:
-
-| Interface | Platform | Best For |
-|-----------|----------|----------|
-| **Streamlit** | Web Browser | Quick demos, cloud deployment, sharing |
-| **Tauri** | macOS, Windows, Linux | Full desktop app, production use |
-| **Qt** | macOS, Windows, Linux | Power users, DAW integration |
+1.  [Application Layout](#1-application-layout)
+2.  [Main Features](#2-main-features)
+    *   [2.1 Emotion Input & Generation](#21-emotion-input--generation)
+    *   [2.2 Music Playback & Export](#22-music-playback--export)
+    *   [2.3 Interrogation Mode](#23-interrogation-mode)
+    *   [2.4 Side A/Side B Toggle](#24-side-aside-b-toggle)
+3.  [Workflows](#3-workflows)
+    *   [3.1 Generating a New Song from Emotion](#31-generating-a-new-song-from-emotion)
+    *   [3.2 Refining an Emotional Intent](#32-refining-an-emotional-intent)
+4.  [Troubleshooting UI Issues](#4-troubleshooting-ui-issues)
 
 ---
 
-## Streamlit Web App
+## 1. Application Layout
 
-The Streamlit app provides a beautiful, accessible web interface for emotion-driven music generation.
+The KmiDi desktop application features a clean, modern interface. The main window is divided into several logical sections:
 
-### Starting the App
+*   **Header**: Contains the application title ("iDAW - Kelly Project") and global controls.
+*   **Main Content Area**: The primary interactive space, dynamically changing based on the selected mode (e.g., Emotion Input, Interrogation).
+*   **Side Panels (Conceptual)**: While not fully implemented in this version, the design anticipates left/right side panels for more advanced controls or information.
 
-```bash
-# From project root
-streamlit run streamlit_app.py
-
-# Or with specific port
-streamlit run streamlit_app.py --server.port 8501
-```
-
-**Default URL**: http://localhost:8501
-
-### Interface Layout
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  🎵 KmiDi - Emotion-Driven Music Generation                     │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌─────────────┐  ┌───────────────────────────────────────────┐│
-│  │  Sidebar    │  │                                           ││
-│  │             │  │        Main Content Area                  ││
-│  │ • Mode      │  │                                           ││
-│  │ • Settings  │  │   Emotion Input                           ││
-│  │ • History   │  │   ┌─────────────────────────────────┐    ││
-│  │             │  │   │ Describe your emotional intent │    ││
-│  │             │  │   └─────────────────────────────────┘    ││
-│  │             │  │                                           ││
-│  │             │  │   [Generate] [Clear]                      ││
-│  │             │  │                                           ││
-│  │             │  │   Results Display                         ││
-│  │             │  │   • Detected Affect                       ││
-│  │             │  │   • Generated Chords                      ││
-│  │             │  │   • Musical Parameters                    ││
-│  │             │  │                                           ││
-│  └─────────────┘  └───────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Features
-
-#### Emotion Input
-
-1. **Free-Form Text**: Enter any emotional description
-   - "grief hidden as love"
-   - "anxious anticipation"
-   - "peaceful morning"
-
-2. **Emotional Presets**: Quick selection buttons for common emotions
-
-3. **Advanced Settings** (in sidebar):
-   - Motivation Scale (1-10)
-   - Chaos Tolerance (0-100%)
-   - Output Format (MIDI/Audio)
-
-#### Generation Results
-
-After clicking **Generate**, you'll see:
-
-- **Detected Affect**: Primary and secondary emotions with confidence
-- **Musical Plan**:
-  - Key and Mode
-  - Tempo (BPM)
-  - Chord Progression
-  - Structure (bars)
-- **Download Button**: Export generated MIDI
-
-#### Session History
-
-The sidebar shows previous generations, allowing you to:
-- View past results
-- Regenerate with modifications
-- Compare different approaches
-
-### API Mode
-
-Enable API mode to connect to a running KmiDi API server:
-
-```bash
-# Set environment variable before running
-export KMIDI_USE_API=true
-export KMIDI_API_URL=http://localhost:8000
-
-streamlit run streamlit_app.py
-```
-
-### Cloud Deployment
-
-Deploy to Streamlit Cloud:
-
-1. Push code to GitHub
-2. Connect to [share.streamlit.io](https://share.streamlit.io)
-3. Deploy `streamlit_app.py`
+*(Placeholder: Diagram/Screenshot of main application window layout)*
 
 ---
 
-## Tauri Desktop App
+## 2. Main Features
 
-The Tauri app provides a native desktop experience with full system integration.
+### 2.1 Emotion Input & Generation
 
-### Installation
+This is the core interface for transforming emotional intent into music.
 
-#### Pre-built Releases
+*   **Emotional Input Textbox**: A prominent input field where users can type their emotional state or intent (e.g., "I feel anxious but hopeful").
+*   **"Load Emotions" Button**: (Expected) Triggers the loading of a list of predefined emotional presets or a thesaurus.
+*   **"Generate Music" Button**: Initiates the music generation process based on the entered emotional intent. This communicates with the Music Brain API.
 
-Download from the releases page:
-- **macOS**: `KmiDi_0.1.0_aarch64.dmg` or `KmiDi_0.1.0_x64.dmg`
-- **Windows**: `KmiDi_0.1.0_x64.msi`
-- **Linux**: `KmiDi_0.1.0_amd64.AppImage`
+*(Placeholder: Screenshot of Emotion Input & Generation section)*
 
-#### Build from Source
+### 2.2 Music Playback & Export
 
-```bash
-# Prerequisites
-# Install Rust: https://rustup.rs
-# Install Node.js: https://nodejs.org
+After generation, users can preview and export their music.
 
-# Build
-cd source/frontend
-npm install
-npm run tauri build
+*   **Playback Controls**: (Expected) Buttons for Play, Pause, Stop, and possibly a timeline scrubber.
+*   **Export Options**: (Expected) Buttons or menu items to export the generated music in various formats (e.g., MIDI, WAV).
 
-# Output location
-ls src-tauri/target/release/bundle/
-```
+*(Placeholder: Screenshot of Music Playback & Export controls)*
 
-### Interface Layout
+### 2.3 Interrogation Mode
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│ KmiDi                                    ─ □ ×  │
-├──────────────────────────────────────────────────────────────────┤
-│ File  Edit  View  Tools  Help                                    │
-├──────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │                    Emotion Input                           │ │
-│  │  ┌──────────────────────────────────────────────────────┐ │ │
-│  │  │ What are you feeling?                                │ │ │
-│  │  │                                                      │ │ │
-│  │  │                                                      │ │ │
-│  │  └──────────────────────────────────────────────────────┘ │ │
-│  │                                                            │ │
-│  │  ┌──────────┐  ┌───────────┐  ┌───────────┐               │ │
-│  │  │ Generate │  │  Preview  │  │  Export   │               │ │
-│  │  └──────────┘  └───────────┘  └───────────┘               │ │
-│  └────────────────────────────────────────────────────────────┘ │
-│                                                                  │
-│  ┌─────────────────────────┐  ┌────────────────────────────────┐│
-│  │   Technical Parameters  │  │         Results                ││
-│  │                         │  │                                ││
-│  │   Key:    [C      ▼]   │  │   Chord Progression:           ││
-│  │   Mode:   [Major  ▼]   │  │   Cm - Ab - Fm - Cm            ││
-│  │   BPM:    [72     ▼]   │  │                                ││
-│  │   Genre:  [Acoustic▼]  │  │   Mode: Aeolian                ││
-│  │                         │  │   Tempo: 70 BPM                ││
-│  └─────────────────────────┘  │   Length: 32 bars              ││
-│                               └────────────────────────────────┘│
-├──────────────────────────────────────────────────────────────────┤
-│ Status: Ready                                    API: Connected  │
-└──────────────────────────────────────────────────────────────────┘
-```
+This mode allows for a conversational refinement of the emotional intent.
 
-### Features
+*   **Interrogation Textbox**: An input field for users to ask follow-up questions or provide more details about their desired music (e.g., "Make it feel more grounded").
+*   **"Start Interrogation" Button**: Switches the UI to the interrogation interface.
+*   **AI Response Area**: Displays the AI's replies and suggestions for refining the intent.
 
-#### Menu Bar
+*(Placeholder: Screenshot of Interrogation Mode interface)*
 
-**File**
-- New Project (⌘/Ctrl+N)
-- Open Project (⌘/Ctrl+O)
-- Save Project (⌘/Ctrl+S)
-- Export MIDI (⌘/Ctrl+E)
-- Export Audio
-- Exit
+### 2.4 Side A/Side B Toggle
 
-**Edit**
-- Undo (⌘/Ctrl+Z)
-- Redo (⌘/Ctrl+Shift+Z)
-- Preferences
+A conceptual toggle for switching between different operational modes or perspectives of the DAW.
 
-**View**
-- Show/Hide Sidebar
-- Theme (Light/Dark)
-- Full Screen
+*   **"⏭ Side B" Button**: Toggles to the "Side B" view, often associated with AI generation and dynamic processes.
+*   **"Side A: Professional DAW" Section**: A conceptual area for traditional DAW features like Mixer, Timeline, Transport control (currently noted as "coming soon").
 
-**Tools**
-- Run Benchmark
-- Clear Cache
-- Check for Updates
-
-**Help**
-- Documentation
-- Keyboard Shortcuts
-- About
-
-#### Workflow
-
-1. **Enter Emotion**: Type your emotional intent
-2. **Adjust Parameters** (optional): Key, mode, BPM, genre
-3. **Generate**: Click Generate or press ⌘/Ctrl+G
-4. **Preview**: Listen to generated music
-5. **Export**: Save as MIDI or audio
-
-#### System Integration
-
-- **Notifications**: Desktop notifications for long operations
-- **File Associations**: Open `.mid` files directly
-- **Keyboard Shortcuts**: Full keyboard navigation
-- **Auto-updates**: Check for updates automatically
-
-### Configuration
-
-Edit `src-tauri/tauri.conf.json` for:
-- Window size and position
-- API endpoint configuration
-- Theme preferences
+*(Placeholder: Screenshot of Side A/Side B toggle and related sections)*
 
 ---
 
-## Qt Desktop App
+## 3. Workflows
 
-The Qt app provides a professional-grade interface for power users.
+### 3.1 Generating a New Song from Emotion
 
-### Starting the App
+1.  **Launch the KMiDi app**.
+2.  **Enter your emotional intent** into the "Emotional Input Textbox" (e.g., "I feel serene and hopeful").
+3.  Click the **"Generate Music" button**.
+4.  The application will communicate with the Music Brain API to generate music based on your input.
+5.  *(Expected)* Once generated, the music will be available for **playback and export**.
 
-```bash
-# Install dependencies
-pip install PySide6>=6.5.0
+*(Placeholder: Flowchart/Sequence Diagram: User Input → API Call → Music Generation → Playback/Export)*
 
-# Run
-python kmidi_gui/main.py
-```
+### 3.2 Refining an Emotional Intent
 
-### Interface Layout
+1.  Follow steps 1-3 from "Generating a New Song from Emotion".
+2.  Click the **"Start Interrogation" button** to enter the conversational refinement mode.
+3.  Type your follow-up message into the "Interrogation Textbox" (e.g., "Make the rhythm more driving").
+4.  The AI will respond with suggestions or clarifications.
+5.  Repeat steps 3-4 until the desired musical direction is achieved, then click "Generate Music" again.
 
-Similar to Tauri but with:
-- Native Qt look and feel
-- More advanced customization
-- Plugin system support (planned)
-
-### Features
-
-#### AI Assistant Dock (Coming Soon)
-
-- Interactive help
-- Music theory guidance
-- Composition suggestions
-
-#### Log Viewer Dock
-
-- Real-time operation logs
-- Debug information
-- Performance metrics
-
-### Customization
-
-#### Themes
-
-Edit `kmidi_gui/themes/` to customize:
-- Colors
-- Fonts
-- Spacing
-- Icons
-
-#### Layouts
-
-Save and restore custom layouts via View menu.
+*(Placeholder: Flowchart/Sequence Diagram: Generate Music → Interrogate → Refine → Re-generate)*
 
 ---
 
-## Common Features
+## 4. Troubleshooting UI Issues
 
-### Emotion-to-Music Generation
+*   **"Music Brain API is offline" / No music generation**: Ensure the FastAPI Music Generation API is running (typically on `http://127.0.0.1:8000`). Refer to the [Deployment Guide](KMiDi_PROJECT/docs/deployment/DEPLOYMENT_GUIDE.md) for instructions on starting the API.
+*   **UI elements not responding**: Restart the KMiDi desktop application. If the issue persists, ensure the Tauri backend is running correctly. Check the terminal where you launched the Tauri app for any error messages.
+*   **Application crashes**: Report the issue with detailed steps to reproduce. Check system logs for crash reports.
 
-All interfaces support the core workflow:
-
-1. **Input Emotion**: Natural language description
-2. **Analysis**: AI detects affect and intensity
-3. **Planning**: Musical parameters are generated
-4. **Output**: MIDI/Audio file creation
-
-### Emotional Presets
-
-Quick-select common emotions:
-
-| Preset | Description |
-|--------|-------------|
-| Calm | Peaceful, relaxed |
-| Grief | Sad, mourning |
-| Joy | Happy, celebratory |
-| Anger | Intense, aggressive |
-| Nostalgia | Wistful, remembering |
-| Hope | Optimistic, forward |
-| Fear | Anxious, tense |
-| Love | Tender, warm |
-
-### Technical Parameters
-
-| Parameter | Range | Description |
-|-----------|-------|-------------|
-| Key | C, C#, D, ... B | Musical key |
-| Mode | Major, Minor, Dorian, ... | Modal quality |
-| BPM | 40-200 | Tempo |
-| Genre | Various | Style template |
-
----
-
-## Keyboard Shortcuts
-
-### Universal Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| ⌘/Ctrl + N | New Project |
-| ⌘/Ctrl + O | Open Project |
-| ⌘/Ctrl + S | Save Project |
-| ⌘/Ctrl + G | Generate |
-| ⌘/Ctrl + P | Preview |
-| ⌘/Ctrl + E | Export |
-| ⌘/Ctrl + Z | Undo |
-| ⌘/Ctrl + Shift + Z | Redo |
-| F1 | Help |
-| Esc | Close Dialog |
-
-### Streamlit Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| R | Rerun app |
-| C | Clear cache |
-
----
-
-## Troubleshooting
-
-### Streamlit Won't Start
-
-```bash
-# Check Streamlit installed
-pip show streamlit
-
-# Install if missing
-pip install streamlit>=1.52.0
-
-# Try with verbose logging
-streamlit run streamlit_app.py --logger.level debug
-```
-
-### Tauri App Won't Build
-
-```bash
-# Check Rust installation
-rustc --version
-
-# Check Node.js
-node --version
-
-# Clear build cache
-cd src-tauri
-cargo clean
-npm run tauri build
-```
-
-### Qt App Crashes
-
-```bash
-# Check PySide6
-pip show PySide6
-
-# Reinstall
-pip install --force-reinstall PySide6>=6.5.0
-
-# Run with debugging
-python kmidi_gui/main.py --debug
-```
-
-### API Connection Issues
-
-All GUIs can connect to the API server. If connection fails:
-
-```bash
-# Verify API is running
-curl http://localhost:8000/health
-
-# Start API server
-python -m uvicorn api.main:app --port 8000
-
-# Check firewall/network
-nc -zv localhost 8000
-```
-
-### Generation Takes Too Long
-
-- Reduce complexity settings
-- Use shorter bar counts
-- Check CPU usage
-- Consider using API mode for heavy processing
-
----
-
-## Best Practices
-
-1. **Start Simple**: Begin with basic emotions like "calm" or "sad"
-2. **Experiment**: Try different parameter combinations
-3. **Save Often**: Don't lose your work
-4. **Use Presets**: Leverage emotional presets for quick results
-5. **Preview First**: Listen before exporting
-6. **Iterate**: Refine based on results
-
----
-
-## See Also
-
-- [API Reference](../api/API_REFERENCE.md)
-- [CLI Guide](../cli/CLI_GUIDE.md)
-- [Quick Start Guide](../QUICKSTART_GUIDE.md)
-- [Deployment Guide](../deployment/DEPLOYMENT_GUIDE.md)
-
----
-
-*Last Updated: 2026-01-11*
+For more general deployment and API troubleshooting, refer to the [Deployment Guide](KMiDi_PROJECT/docs/deployment/DEPLOYMENT_GUIDE.md) and [API Reference](KMiDi_PROJECT/docs/api/API_REFERENCE.md).

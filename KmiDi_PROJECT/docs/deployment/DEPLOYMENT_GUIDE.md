@@ -1,670 +1,176 @@
-# KmiDi Deployment Guide
+# Deployment Guide for KmiDi Project
 
-> Comprehensive guide for deploying KmiDi in production environments
+This guide provides comprehensive instructions for deploying the KmiDi Music Generation API and its associated services. It covers prerequisites, step-by-step deployment for various platforms, troubleshooting, and rollback procedures.
 
 ## Table of Contents
-
-1. [Overview](#overview)
-2. [Prerequisites](#prerequisites)
-3. [Quick Start](#quick-start)
-4. [Deployment Options](#deployment-options)
-5. [Configuration](#configuration)
-6. [Platform-Specific Instructions](#platform-specific-instructions)
-7. [Docker Deployment](#docker-deployment)
-8. [Health Monitoring](#health-monitoring)
-9. [Troubleshooting](#troubleshooting)
-10. [Rollback Procedures](#rollback-procedures)
-11. [Security Considerations](#security-considerations)
+1.  [Prerequisites](#1-prerequisites)
+2.  [Deployment Steps](#2-deployment-steps)
+    *   [2.1 macOS Deployment](#21-macos-deployment)
+    *   [2.2 Linux Deployment](#22-linux-deployment)
+    *   [2.3 Windows Deployment](#23-windows-deployment)
+3.  [Verification](#3-verification)
+4.  [Troubleshooting](#4-troubleshooting)
+5.  [Rollback Procedures](#5-rollback-procedures)
 
 ---
 
-## Overview
+## 1. Prerequisites
 
-KmiDi is an emotion-driven music generation system with the following deployable components:
+Before deploying KmiDi, ensure you have the following installed on your target system:
 
-| Component | Port | Description |
-|-----------|------|-------------|
-| **FastAPI** | 8000 | REST API for music generation |
-| **Streamlit** | 8501 | Web-based demo UI |
-| **LLM ONNX** | 8008 | Optional language model service |
-
-### Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Load Balancer / Reverse Proxy            │
-│                        (nginx/traefik/cloudflare)            │
-└─────────────────────┬───────────────────┬───────────────────┘
-                      │                   │
-         ┌────────────▼────────┐ ┌────────▼────────┐
-         │   FastAPI Service   │ │ Streamlit UI    │
-         │      (port 8000)    │ │   (port 8501)   │
-         └────────────┬────────┘ └─────────────────┘
-                      │
-         ┌────────────▼────────┐
-         │    Music Brain      │
-         │   (Python Package)  │
-         └────────────┬────────┘
-                      │
-         ┌────────────▼────────┐
-         │   ML Models / Data  │
-         │    (Mounted Volumes)│
-         └─────────────────────┘
-```
+*   **Python 3.9+**: Required for the FastAPI backend and Python-based modules.
+    *   Verify with: `python3 --version`
+*   **pip**: Python package installer.
+    *   Verify with: `pip3 --version`
+*   **Node.js 18+ and npm**: Required for building the Tauri desktop frontend.
+    *   Verify with: `node --version`, `npm --version`
+*   **Rust Toolchain with Cargo**: Required for building the Tauri desktop frontend.
+    *   Verify with: `rustc --version`, `cargo --version`
+    *   On macOS, ensure Xcode Command Line Tools are installed: `xcode-select --install`
+*   **libsndfile1** (Linux only): A runtime dependency for audio processing.
+    *   Install on Debian/Ubuntu: `sudo apt install libsndfile1`
+    *   Install on Fedora/RHEL: `sudo dnf install libsndfile`
+*   **curl**: For testing API endpoints.
+*   **Git**: For cloning the repository.
 
 ---
 
-## Prerequisites
+## 2. Deployment Steps
 
-### System Requirements
-
-| Resource | Minimum | Recommended |
-|----------|---------|-------------|
-| CPU | 2 cores | 4+ cores |
-| RAM | 4 GB | 8+ GB |
-| Storage | 10 GB | 50+ GB |
-| Python | 3.9 | 3.11 |
-
-### Software Requirements
-
-- **Docker** 20.10+ and Docker Compose v2
-- **Python** 3.9+ (for local development)
-- **Git** (for source deployment)
-
-### Optional
-
-- **NVIDIA GPU** with CUDA 11.8+ (for accelerated ML inference)
-- **Apple Silicon** with MPS support (automatic on macOS)
-
----
-
-## Quick Start
-
-### Using Deployment Scripts (Recommended)
+These instructions assume you have cloned the KmiDi repository to your target machine.
 
 ```bash
-# macOS
-./deployment/scripts/deploy-macos.sh
-
-# Linux
-./deployment/scripts/deploy-linux.sh
-
-# Windows (PowerShell)
-.\deployment\scripts\deploy-windows.ps1
+# Navigate to the project root directory
+cd /path/to/KmiDi-1/KMiDi_PROJECT
 ```
 
-### Manual Docker Deployment
+### 2.1 macOS Deployment
+
+Use the `deploy-macos.sh` script to automate installation and setup.
 
 ```bash
-# 1. Clone and setup
-cd KmiDi_PROJECT
-cp env.example .env
-# Edit .env with your settings
-
-# 2. Build and run
-docker build -t kmidi-api:prod -f deployment/docker/Dockerfile.prod .
-docker run -d \
-  --name kmidi-api \
-  -p 8000:8000 \
-  --env-file .env \
-  --restart unless-stopped \
-  kmidi-api:prod
-
-# 3. Verify
-curl http://localhost:8000/health
+cd deployment/scripts
+chmod +x deploy-macos.sh
+./deploy-macos.sh
 ```
 
----
+**What the script does:**
+*   Installs Python and Rust via Homebrew if not present.
+*   Installs Python dependencies from `requirements-production.txt`.
+*   Copies the API and `music_brain` code to `/usr/local/kmidi`.
+*   Builds the Tauri desktop application and copies it to `/usr/local/kmidi/KMiDi.app`.
+*   Creates a `start_api.sh` script for the FastAPI service.
 
-## Deployment Options
+#### 2.1.1 macOS (Apple Silicon) low-resource launch with Metal/MPS/MLX
 
-### Option 1: Docker (Production)
+For 16 GB machines or thermally constrained setups, use the baked-in resource-friendly defaults:
 
-Best for: Production environments, cloud deployment
+1. In `deployment/scripts/deploy-macos.sh`, set `INSTALL_MLX="true"` if you want Apple MLX (Metal-accelerated) installed. Otherwise the script will just install the standard requirements.
+2. Run the deploy script as above; it generates `/usr/local/kmidi/start_api.sh` with conservative thread limits and MPS VRAM throttling.
+3. Start the API with the low-resource settings:
+   ```bash
+   /usr/local/kmidi/start_api.sh
+   ```
+   The script sets:
+   - `OMP_NUM_THREADS=4`, `OPENBLAS_NUM_THREADS=4`, `MKL_NUM_THREADS=1`, `VECLIB_MAXIMUM_THREADS=4`, `NUMEXPR_MAX_THREADS=4` to prevent CPU over-fan-out.
+   - `PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.8` to keep Metal (MPS) VRAM below 80% and avoid macOS swap.
+   - `uvicorn --workers 1 --limit-concurrency 4` to reduce API load.
+4. Keep other heavy apps closed during generation to avoid swap. If you still see swap/heat, lower `OMP_NUM_THREADS` to `2` before launching.
+
+### 2.2 Linux Deployment
+
+Use the `deploy-linux.sh` script to automate installation and setup.
 
 ```bash
-# Build production image
-docker build -t kmidi-api:prod -f deployment/docker/Dockerfile.prod .
-
-# Run with volumes
-docker run -d \
-  --name kmidi-api \
-  -p 8000:8000 \
-  -v /path/to/data:/data:ro \
-  -v /path/to/models:/models:ro \
-  -v /path/to/output:/output:rw \
-  --env-file .env \
-  --restart unless-stopped \
-  kmidi-api:prod
+cd deployment/scripts
+chmod +x deploy-linux.sh
+sudo ./deploy-linux.sh
 ```
 
-### Option 2: Docker Compose (Full Stack)
+**What the script does:**
+*   Checks for Python, pip, Rust, and `libsndfile1`.
+*   Installs Python dependencies from `requirements-production.txt`.
+*   Copies the API and `music_brain` code to `/opt/kmidi`.
+*   Builds the Tauri desktop application and copies the executable to `/opt/kmidi/kmidi`.
+*   Sets up a `systemd` service for the FastAPI application, enabling it to start on boot.
 
-Best for: Running multiple services together
+### 2.3 Windows Deployment
 
-```bash
-cd deployment/docker
-docker compose up -d
-
-# View logs
-docker compose logs -f
-
-# Stop all
-docker compose down
-```
-
-### Option 3: Local Development
-
-Best for: Development and testing
-
-```bash
-# Install dependencies
-pip install -r requirements-production.txt
-pip install -e .
-
-# Run API server
-python -m uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
-
-# Or run Streamlit
-streamlit run streamlit_app.py
-```
-
-### Option 4: Cloud Platforms
-
-#### AWS ECS
-
-```yaml
-# task-definition.json
-{
-  "family": "kmidi-api",
-  "containerDefinitions": [
-    {
-      "name": "api",
-      "image": "your-registry/kmidi-api:prod",
-      "portMappings": [{"containerPort": 8000}],
-      "environment": [
-        {"name": "LOG_LEVEL", "value": "INFO"}
-      ],
-      "healthCheck": {
-        "command": ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"],
-        "interval": 30,
-        "timeout": 10,
-        "retries": 3
-      }
-    }
-  ]
-}
-```
-
-#### Google Cloud Run
-
-```bash
-gcloud run deploy kmidi-api \
-  --image gcr.io/your-project/kmidi-api:prod \
-  --port 8000 \
-  --memory 2Gi \
-  --cpu 2 \
-  --allow-unauthenticated
-```
-
-#### Kubernetes
-
-```yaml
-# deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: kmidi-api
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: kmidi-api
-  template:
-    metadata:
-      labels:
-        app: kmidi-api
-    spec:
-      containers:
-      - name: api
-        image: your-registry/kmidi-api:prod
-        ports:
-        - containerPort: 8000
-        env:
-        - name: LOG_LEVEL
-          value: "INFO"
-        livenessProbe:
-          httpGet:
-            path: /live
-            port: 8000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8000
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
-            memory: "2Gi"
-            cpu: "2"
-```
-
----
-
-## Configuration
-
-### Environment Variables
-
-Copy `env.example` to `.env` and configure:
-
-```bash
-cp env.example .env
-```
-
-#### Essential Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ENVIRONMENT` | production | Environment name |
-| `LOG_LEVEL` | INFO | Logging level |
-| `API_HOST` | 0.0.0.0 | API bind address |
-| `API_PORT` | 8000 | API port |
-| `API_WORKERS` | 4 | Number of worker processes |
-| `CORS_ORIGINS` | * | Allowed CORS origins |
-| `KELLY_AUDIO_DATA_ROOT` | /data | Audio data directory |
-
-#### ML/Training Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `KELLY_DEVICE` | auto | ML device (auto/cpu/cuda/mps) |
-| `TRAINING_DEVICE` | auto | Training device |
-| `TRAINING_BATCH_SIZE` | 64 | Batch size for training |
-
-#### Monitoring Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ENABLE_METRICS` | true | Enable /metrics endpoint |
-
-### Volume Mounts
-
-| Path | Purpose | Mode |
-|------|---------|------|
-| `/data` | Audio data files | read-only |
-| `/models` | ML model files | read-only |
-| `/output` | Generated outputs | read-write |
-| `/logs` | Application logs | read-write |
-
----
-
-## Platform-Specific Instructions
-
-### macOS
-
-```bash
-# Prerequisites
-brew install --cask docker
-
-# Deploy
-./deployment/scripts/deploy-macos.sh
-
-# Check status
-./deployment/scripts/deploy-macos.sh --status
-```
-
-**Apple Silicon Notes:**
-- MPS acceleration is automatic
-- Set `KELLY_DEVICE=mps` for explicit MPS usage
-- Docker Desktop must have Rosetta enabled for some images
-
-### Linux
-
-```bash
-# Prerequisites (Ubuntu/Debian)
-curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker $USER
-
-# Deploy
-./deployment/scripts/deploy-linux.sh
-
-# With GPU support
-./deployment/scripts/deploy-linux.sh --gpu
-```
-
-**NVIDIA GPU Notes:**
-- Install NVIDIA Container Toolkit
-- Verify with: `docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi`
-
-### Windows
+Use the `deploy-windows.ps1` PowerShell script to automate installation and setup.
 
 ```powershell
-# Prerequisites
-# Install Docker Desktop from https://docs.docker.com/desktop/install/windows-install/
-# Enable WSL2 backend
-
-# Deploy (PowerShell as Administrator)
-.\deployment\scripts\deploy-windows.ps1
-
-# Check status
-.\deployment\scripts\deploy-windows.ps1 -Status
+# Open PowerShell as Administrator
+cd path\to\KmiDi-1\KMiDi_PROJECT\deployment\scripts
+.\deploy-windows.ps1
 ```
+
+**What the script does:**
+*   Checks for Python, pip, and Rust.
+*   Installs Python dependencies from `requirements-production.txt`.
+*   Copies the API and `music_brain` code to `C:\Program Files\KmiDi`.
+*   Builds the Tauri desktop application (`KMiDi.exe`) and copies it to `C:\Program Files\KmiDi\KMiDi.exe`.
+*   Creates a `start_api.bat` script for the FastAPI service.
 
 ---
 
-## Docker Deployment
+## 3. Verification
 
-### Building Images
+After deployment, perform the following steps to verify the installation:
 
-```bash
-# Production API
-docker build -t kmidi-api:prod -f deployment/docker/Dockerfile.prod .
+1.  **Start the FastAPI Service**: If not already started by a service manager (Linux), run the appropriate script:
+    *   **macOS/Windows**: `[INSTALL_DIR]/start_api.sh` (macOS) or `[INSTALL_DIR]\start_api.bat` (Windows)
+    *   **Linux**: `sudo systemctl status kmidi-api` (should be running)
 
-# Development (with hot reload)
-docker build -t kmidi-api:dev -f deployment/docker/Dockerfile.dev .
+2.  **Test API Health Endpoint**: Once the API is running, open a new terminal and run:
+    ```bash
+    curl http://127.0.0.1:8000/health
+    ```
+    Expected output should indicate `"status": "healthy"` and list service versions.
 
-# Check image size (target: <500MB)
-docker images kmidi-api:prod --format "{{.Size}}"
-```
+3.  **Launch Desktop Application**: Run the KMiDi desktop application:
+    *   **macOS**: Double-click `[INSTALL_DIR]/KMiDi.app` in Finder, or run `open [INSTALL_DIR]/KMiDi.app`
+    *   **Linux**: Run `[INSTALL_DIR]/kmidi`
+    *   **Windows**: Double-click `[INSTALL_DIR]\KMiDi.exe`
 
-### Multi-Architecture Builds
-
-```bash
-# Build for multiple platforms
-docker buildx build \
-  --platform linux/amd64,linux/arm64 \
-  -t your-registry/kmidi-api:prod \
-  -f deployment/docker/Dockerfile.prod \
-  --push .
-```
-
-### Docker Compose Services
-
-```bash
-cd deployment/docker
-
-# Start all services
-docker compose up -d
-
-# Start specific service
-docker compose up -d daiw-cli
-
-# View logs
-docker compose logs -f api
-
-# Stop all
-docker compose down
-
-# Clean up everything
-docker compose down -v --remove-orphans
-```
+4.  **Verify Frontend Functionality**: Interact with the desktop application to ensure music generation, emotion listing, and interrogation features work as expected.
 
 ---
 
-## Health Monitoring
+## 4. Troubleshooting
 
-### Endpoints
-
-| Endpoint | Purpose | Expected Response |
-|----------|---------|-------------------|
-| `GET /health` | Full health check | `{"status": "healthy", ...}` |
-| `GET /live` | Liveness probe | `{"status": "alive"}` |
-| `GET /ready` | Readiness probe | `{"status": "ready"}` |
-| `GET /metrics` | Prometheus metrics | Text format metrics |
-
-### Health Check Response
-
-```json
-{
-  "status": "healthy",
-  "version": "1.0.0",
-  "timestamp": 1704931200.0,
-  "services": {
-    "music_brain": true,
-    "api": true
-  },
-  "system": {
-    "cpu_percent": 25.5,
-    "memory_percent": 45.2,
-    "memory_available_mb": 4096.0
-  }
-}
-```
-
-### Prometheus Integration
-
-```yaml
-# prometheus.yml
-scrape_configs:
-  - job_name: 'kmidi-api'
-    static_configs:
-      - targets: ['localhost:8000']
-    metrics_path: '/metrics'
-    scrape_interval: 15s
-```
-
-### Alerting Rules
-
-```yaml
-# alerts.yml
-groups:
-  - name: kmidi
-    rules:
-      - alert: KmiDiAPIDown
-        expr: up{job="kmidi-api"} == 0
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "KmiDi API is down"
-
-      - alert: KmiDiHighErrorRate
-        expr: kmidi_api_error_rate > 0.05
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "KmiDi API error rate > 5%"
-```
+*   **"API Offline" in Frontend / `curl` connection refused**: Ensure the FastAPI service is running and accessible on `http://127.0.0.1:8000` (or configured `API_HOST:API_PORT`). Check firewall rules if applicable.
+    *   On Linux, check `sudo systemctl status kmidi-api` and `sudo journalctl -u kmidi-api.service` for logs.
+*   **Python Module Not Found Errors**: Ensure Python dependencies are correctly installed. Re-run `pip install -r requirements-production.txt`.
+*   **Rust/Tauri Build Failures**: Ensure the Rust toolchain is correctly installed (`rustup update`, `xcode-select --install` on macOS). Check specific compiler errors for details.
+*   **Permissions Errors**: On Linux, ensure the KMiDi installation directory has correct permissions (`sudo chown -R $USER:$USER [INSTALL_DIR]`).
+*   **Security Vulnerabilities**: If `pip-audit` or `safety check` report vulnerabilities, update the problematic packages in `requirements-production.txt` and re-install dependencies.
 
 ---
 
-## Troubleshooting
+## 5. Rollback Procedures
 
-### Common Issues
+To revert a deployment, follow these steps:
 
-#### Container Won't Start
+1.  **Stop Services**: Stop any running KMiDi services:
+    *   **Linux**: `sudo systemctl stop kmidi-api`
+    *   **macOS/Windows**: Terminate the `start_api.sh/.bat` process and close the desktop app.
 
-```bash
-# Check logs
-docker logs kmidi-api
+2.  **Remove Installation Directory**: Delete the KMiDi installation directory:
+    *   **macOS/Linux**: `sudo rm -rf [INSTALL_DIR]`
+    *   **Windows**: `Remove-Item -Recurse -Force "$InstallDir"`
 
-# Common causes:
-# - Port already in use: lsof -i :8000
-# - Missing .env file
-# - Invalid environment variables
-```
+3.  **Remove System Services** (Linux only):
+    *   `sudo systemctl disable kmidi-api`
+    *   `sudo rm /etc/systemd/system/kmidi-api.service`
+    *   `sudo systemctl daemon-reload`
 
-#### Health Check Failing
+4.  **Clean Build Artifacts** (if necessary, in project root):
+    ```bash
+    cd /path/to/KmiDi-1/KMiDi_PROJECT
+    rm -rf build CMakeCache.txt CMakeFiles
+    cd source/frontend/src-tauri
+    npm run tauri clean
+    cargo clean
+    ```
 
-```bash
-# Test health endpoint
-curl -v http://localhost:8000/health
-
-# Check if music_brain is loading
-docker exec kmidi-api python -c "import music_brain; print('OK')"
-
-# Common causes:
-# - Missing dependencies
-# - Model files not mounted
-# - Insufficient memory
-```
-
-#### Performance Issues
-
-```bash
-# Check resource usage
-docker stats kmidi-api
-
-# Increase workers (in .env)
-API_WORKERS=8
-
-# Check for memory leaks
-docker exec kmidi-api python -c "import psutil; print(psutil.virtual_memory())"
-```
-
-#### GPU Not Detected
-
-```bash
-# Linux: Verify NVIDIA runtime
-docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
-
-# Check device in container
-docker exec kmidi-api python -c "import torch; print(torch.cuda.is_available())"
-```
-
-### Debug Mode
-
-```bash
-# Run with debug logging
-docker run -it --rm \
-  -e LOG_LEVEL=DEBUG \
-  -e DEBUG=true \
-  -p 8000:8000 \
-  kmidi-api:prod
-
-# Interactive shell
-docker run -it --rm kmidi-api:prod /bin/bash
-```
-
----
-
-## Rollback Procedures
-
-### Docker
-
-```bash
-# List available images
-docker images kmidi-api
-
-# Stop current
-docker stop kmidi-api
-docker rm kmidi-api
-
-# Run previous version
-docker run -d \
-  --name kmidi-api \
-  -p 8000:8000 \
-  --env-file .env \
-  kmidi-api:previous-tag
-
-# Verify
-curl http://localhost:8000/health
-```
-
-### Docker Compose
-
-```bash
-# Roll back to previous version
-cd deployment/docker
-git checkout HEAD~1 docker-compose.yml Dockerfile.prod
-docker compose up -d --build
-
-# Or use specific image tag
-docker compose pull  # if using registry
-docker compose up -d
-```
-
-### Kubernetes
-
-```bash
-# View rollout history
-kubectl rollout history deployment/kmidi-api
-
-# Rollback to previous
-kubectl rollout undo deployment/kmidi-api
-
-# Rollback to specific revision
-kubectl rollout undo deployment/kmidi-api --to-revision=2
-```
-
----
-
-## Security Considerations
-
-### Production Checklist
-
-- [ ] Set `ENVIRONMENT=production`
-- [ ] Set `DEBUG=false`
-- [ ] Configure specific `CORS_ORIGINS` (not `*`)
-- [ ] Use HTTPS via reverse proxy
-- [ ] Set up rate limiting
-- [ ] Generate secure `SECRET_KEY`
-- [ ] Run as non-root user (default in Dockerfile)
-- [ ] Use read-only volumes where possible
-- [ ] Enable monitoring and alerting
-- [ ] Regular security updates
-
-### Reverse Proxy (nginx)
-
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name api.kmidi.app;
-
-    ssl_certificate /etc/ssl/certs/kmidi.crt;
-    ssl_certificate_key /etc/ssl/private/kmidi.key;
-
-    location / {
-        proxy_pass http://localhost:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        # Timeouts
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
-    }
-
-    # Health check endpoint (no rate limit)
-    location /health {
-        proxy_pass http://localhost:8000/health;
-    }
-}
-```
-
-### Network Security
-
-```bash
-# Create isolated network
-docker network create --driver bridge kmidi-network
-
-# Run with network isolation
-docker run -d \
-  --name kmidi-api \
-  --network kmidi-network \
-  -p 8000:8000 \
-  kmidi-api:prod
-```
-
----
-
-## Support
-
-For issues and questions:
-
-1. Check this guide's troubleshooting section
-2. Review container logs: `docker logs kmidi-api`
-3. Check GitHub Issues
-4. Contact the development team
-
----
-
-*Last Updated: 2026-01-11*
+This will remove all deployed files and services, effectively reverting the system to its state before deployment.

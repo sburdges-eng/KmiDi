@@ -1,0 +1,39 @@
+# Local orchestration config for 16 GB Apple Silicon (Metal + llama.cpp)
+# This file is read by scripts/run_local_orchestrator.py via --config.
+
+# Required: path to Mistral 7B GGUF (Q4_K_M or Q5_K_M)
+mistral_gguf_path: "/Users/you/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
+
+# LLM runtime
+mistral_ctx: 3072
+mistral_seed: 17
+llama_threads: 4
+mistral_gpu_layers: 35
+keep_brain_loaded: false
+
+# Tier-1 MIDI settings
+midi_seed: 17
+midi_length: 16
+midi_device: "mps"
+
+# Toggles (keep disabled unless you have local generators ready)
+enable_images: false
+enable_audio_texture: false
+enable_voice: false
+
+# Output root for all artifacts
+output_root: "~/Music/iDAW_Output"
+
+# Optional export override (otherwise defaults to output_root/midi/)
+# export_midi: "~/Music/iDAW_Output/midi/session.mid"
+
+# Suggested resource caps (set as env vars when launching)
+threads:
+  OMP_NUM_THREADS: 4
+  OPENBLAS_NUM_THREADS: 4
+  MKL_NUM_THREADS: 1
+  VECLIB_MAXIMUM_THREADS: 4
+  NUMEXPR_MAX_THREADS: 4
+
+metal:
+  PYTORCH_MPS_HIGH_WATERMARK_RATIO: 0.8
