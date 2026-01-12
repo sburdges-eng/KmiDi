@@ -10,7 +10,7 @@ Plus comprehensive rule-breaking enums for intentional creative choices.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 from enum import Enum
 import json
 from pathlib import Path
@@ -362,9 +362,17 @@ class CompleteSongIntent:
     # System
     system_directive: SystemDirective = field(default_factory=SystemDirective)
 
+    # Reasoning Engine Outputs
+    midi_plan: Optional[Dict[str, Any]] = None
+    image_prompt: Optional[str] = None
+    image_style_constraints: Optional[str] = None
+    audio_texture_prompt: Optional[str] = None
+    explanation: Optional[str] = None
+    rule_breaking_logic: Optional[str] = None
+
     # Meta
     title: str = ""
-    created: str = ""
+    created: str = "" 
 
     def __init__(
         self,
@@ -389,6 +397,15 @@ class CompleteSongIntent:
         output_feedback_loop: str = "",
         title: str = "",
         created: str = "",
+        midi_plan: Optional[Dict[str, Any]] = None,
+        image_prompt: Optional[str] = None,
+        image_style_constraints: Optional[str] = None,
+        audio_texture_prompt: Optional[str] = None,
+        explanation: Optional[str] = None,
+        rule_breaking_logic: Optional[str] = None,
+        generated_image_data: Optional[Dict[str, Any]] = None
+    generated_audio_data: Optional[Dict[str, Any]] = None # New field for audio results,
+        generated_audio_data: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         self.song_root = SongRoot(
@@ -429,6 +446,14 @@ class CompleteSongIntent:
         )
         self.title = title
         self.created = created
+        self.midi_plan = midi_plan
+        self.image_prompt = image_prompt
+        self.image_style_constraints = image_style_constraints
+        self.audio_texture_prompt = audio_texture_prompt
+        self.explanation = explanation
+        self.rule_breaking_logic = rule_breaking_logic
+        self.generated_image_data = generated_image_data
+        self.generated_audio_data = generated_audio_data # Assign new field
 
     def to_dict(self) -> Dict:
         """Convert to dictionary for serialization."""
@@ -462,6 +487,14 @@ class CompleteSongIntent:
                 "output_target": self.system_directive.output_target,
                 "output_feedback_loop": self.system_directive.output_feedback_loop,
             },
+            "midi_plan": self.midi_plan,
+            "image_prompt": self.image_prompt,
+            "image_style_constraints": self.image_style_constraints,
+            "audio_texture_prompt": self.audio_texture_prompt,
+            "explanation": self.explanation,
+            "rule_breaking_logic": self.rule_breaking_logic,
+            "generated_image_data": self.generated_image_data,
+            "generated_audio_data": self.generated_audio_data, # Include in dict
         }
 
     @classmethod
@@ -510,6 +543,15 @@ class CompleteSongIntent:
                 output_target=sd.get("output_target", ""),
                 output_feedback_loop=sd.get("output_feedback_loop", ""),
             )
+        
+        intent.midi_plan = data.get("midi_plan", None)
+        intent.image_prompt = data.get("image_prompt", None)
+        intent.image_style_constraints = data.get("image_style_constraints", None)
+        intent.audio_texture_prompt = data.get("audio_texture_prompt", None)
+        intent.explanation = data.get("explanation", None)
+        intent.rule_breaking_logic = data.get("rule_breaking_logic", None)
+        intent.generated_image_data = data.get("generated_image_data", None)
+        intent.generated_audio_data = data.get("generated_audio_data", None) # Read new field
 
         return intent
 

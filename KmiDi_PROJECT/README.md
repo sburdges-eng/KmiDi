@@ -91,6 +91,57 @@ Returns a JSON list/dictionary of available emotions.
 - Use `curl http://127.0.0.1:8000/emotions` to verify availability.
 - Tauri CLI needs Rust + system toolchain; on macOS install Xcode command line tools (`xcode-select --install`).
 
+## Local Metal AI Orchestrator
+
+This section describes how to set up and run the local AI orchestration layer that integrates Mistral 7B (GGUF), KmiDi Tier-1 MIDI generation, Stable Diffusion 1.5 (MPS), and optional audio diffusion.
+
+### Prerequisites
+
+-   **Python 3.9+** with `pip` (virtualenv recommended)
+-   **`llama-cpp-python` with Metal support**:
+    ```bash
+    CMAKE_ARGS="-DLLAMA_METAL=on" pip install llama-cpp-python
+    ```
+-   (Optional for Image Generation) **`diffusers` and `torch` with MPS support**:
+    ```bash
+    pip install diffusers transformers torch
+    ```
+-   (Optional for Audio Generation) **`audiocraft`**:
+    ```bash
+    pip install audiocraft
+    ```
+-   **Mistral 7B GGUF model**: Download a `Q4_K_M` or `Q5_K_M` quantized Mistral 7B model (e.g., `mistral-7b-instruct-v0.2.Q5_K_M.gguf`) and place it in a known location (e.g., `./models/mistral-7b-q5_k_m.gguf`).
+-   **Stable Diffusion 1.5 model**: The system will attempt to download `runwayml/stable-diffusion-v1-5` if not present.
+
+### Usage
+
+The orchestrator is run via a command-line interface.
+
+```bash
+python3 KmiDi_PROJECT/source/python/mcp_workstation/orchestrator.py \
+    --llm_model_path "./models/mistral-7b-q5_k_m.gguf" \
+    --prompt "Generate a joyful synthwave track with a neon cityscape image and an ethereal pad audio texture." \
+    --output_dir "./orchestrator_outputs" \
+    --enable_audio_gen
+```
+
+**Arguments:**
+
+-   `--llm_model_path`: **(Required)** Path to the Mistral 7B GGUF model file.
+-   `--prompt`: **(Required)** Natural language user intent.
+-   `--no_image_gen`: **(Optional)** Add this flag to disable image generation.
+-   `--enable_audio_gen`: **(Optional)** Add this flag to enable optional audio texture generation.
+-   `--output_dir`: **(Optional)** Directory for all generated outputs. Defaults to `./orchestrator_outputs`.
+
+**Example Output Structure:**
+
+Upon successful execution, the `--output_dir` will contain:
+
+-   `midi_outputs/`: Generated MIDI files (e.g., `kmidi_generated_*.mid`)
+-   `stable_diffusion_v1_5/`: Downloaded Stable Diffusion model files.
+-   `audio_textures/`: Generated audio texture files (if enabled).
+-   `final_intent.json`: A JSON file containing the complete `CompleteSongIntent` object with all generated prompts and results.
+
 ## License
 MIT
 ## SpectoCloud UI (dev)
