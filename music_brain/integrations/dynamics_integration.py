@@ -303,10 +303,14 @@ class DynamicsIntegration:
         except ValueError:
             stype = SectionType.UNKNOWN
 
+        # If bar is provided, use position-based lookup
         if bar is not None:
-            self.current_bar = bar
+            self.set_position(bar, 0.0)
+            current = self.get_current_section()
+            if current and current.section_type == stype:
+                return current.dynamics
 
-        # Find matching section
+        # Find matching section by type (when bar is None)
         for section in self.sections:
             if section.section_type == stype:
                 return section.dynamics
