@@ -206,8 +206,8 @@ jobs:
       run: |
         pip install black flake8 mypy
     - name: Run black formatting check
-      run: black --check --line-length=100 music_brain/ tests/ || true
+      run: black --check --line-length=100 music_brain/ KmiDi_PROJECT/tests/ || true
     - name: Run flake8 linting
-      run: flake8 music_brain/ tests/ --max-line-length=100 --extend-ignore=E203,W503 || true
+      run: flake8 music_brain/ KmiDi_PROJECT/tests/ --max-line-length=100 --extend-ignore=E203,W503 || true
     - name: Run mypy type checking
       run: mypy music_brain/ --ignore-missing-imports || true
