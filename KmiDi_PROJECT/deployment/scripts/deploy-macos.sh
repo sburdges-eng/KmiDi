@@ -1,338 +1,132 @@
 #!/bin/bash
-# ============================================================================
-# KmiDi macOS Deployment Script
-# ============================================================================
-# Usage: ./deploy-macos.sh [options]
-#
-# Options:
-#   --dev       Deploy in development mode (with hot reload)
-#   --prod      Deploy in production mode (default)
-#   --api-only  Deploy only the FastAPI service
-#   --full      Deploy all services (API + Streamlit + LLM)
-#   --stop      Stop all running containers
-#   --clean     Stop and remove all containers, volumes
-#   --logs      Show container logs
-#   --status    Show deployment status
-#   --help      Show this help message
-#
-# Prerequisites:
-#   - Docker Desktop for Mac installed and running
-#   - Python 3.9+ (for local development)
-#   - At least 8GB RAM available for Docker
-#
-# ============================================================================
 
-set -e
+# deploy-macos.sh - Deployment script for macOS
+# =============================================
+# This script automates the deployment of the KmiDi Music Generation API
+# and its dependencies on a macOS system.
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# --- Configuration ---
+# Set these variables according to your environment
+INSTALL_DIR="/usr/local/kmidi"
+PYTHON_VERSION="3.12"
+API_PORT="8000"
+API_HOST="127.0.0.1"
+# Set to "true" to also install Apple MLX for Metal-accelerated inference
+INSTALL_MLX="false"
 
-# Script directory
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
-DOCKER_DIR="$PROJECT_ROOT/deployment/docker"
+# --- Prerequisites ---
+echo "Checking prerequisites..."
 
-# Default settings
-MODE="prod"
-SERVICES="api"
-ACTION="deploy"
+# Check for Homebrew
+if ! command -v brew &> /dev/null
+then
+    echo "Homebrew not found. Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    echo "Please run this script again after Homebrew installation completes."
+    exit 1
+fi
 
-# Functions
-print_banner() {
-    echo -e "${BLUE}"
-    echo "╔══════════════════════════════════════════════════════════════╗"
-    echo "║              KmiDi - macOS Deployment Script                ║"
-    echo "║                    Music Intelligence API                   ║"
-    echo "╚══════════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
-}
+# Check for Python
+if ! command -v python${PYTHON_VERSION} &> /dev/null
+then
+    echo "Python ${PYTHON_VERSION} not found. Installing Python..."
+    brew install python@${PYTHON_VERSION}
+    # Ensure python symlink points to the correct version if needed
+    # brew link python@${PYTHON_VERSION}
+fi
 
-print_step() {
-    echo -e "${GREEN}▶ $1${NC}"
-}
+# Check for Rust (for Tauri)
+if ! command -v cargo &> /dev/null
+then
+    echo "Rust toolchain not found. Installing rustup..."
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    echo "Please restart your terminal or source your .bashrc/.zshrc and run this script again."
+    exit 1
+fi
 
-print_warning() {
-    echo -e "${YELLOW}⚠ $1${NC}"
-}
+# --- Installation ---
+echo "Installing KmiDi dependencies..."
 
-print_error() {
-    echo -e "${RED}✖ $1${NC}"
-}
+# Navigate to project root
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+cd "$PROJECT_ROOT" || { echo "Failed to navigate to project root."; exit 1; }
 
-print_success() {
-    echo -e "${GREEN}✔ $1${NC}"
-}
+# Install Python dependencies
+pip${PYTHON_VERSION} install -r KMiDi_PROJECT/requirements-production.txt || { echo "Failed to install Python dependencies."; exit 1; }
 
-check_prerequisites() {
-    print_step "Checking prerequisites..."
+# Optional: Apple MLX (Metal-accelerated) for lightweight local inference
+if [ "${INSTALL_MLX}" = "true" ]; then
+    pip${PYTHON_VERSION} install mlx mlx-lm || { echo "Failed to install MLX packages."; exit 1; }
+fi
 
-    # Check Docker
-    if ! command -v docker &> /dev/null; then
-        print_error "Docker is not installed. Please install Docker Desktop for Mac."
-        echo "  Download: https://docs.docker.com/desktop/install/mac-install/"
-        exit 1
-    fi
+# Create installation directory
+mkdir -p "$INSTALL_DIR/api"
+mkdir -p "$INSTALL_DIR/music_brain"
+mkdir -p "$INSTALL_DIR/data"
+mkdir -p "$INSTALL_DIR/models"
 
-    # Check Docker daemon
-    if ! docker info &> /dev/null; then
-        print_error "Docker daemon is not running. Please start Docker Desktop."
-        exit 1
-    fi
+# Copy API and music_brain code
+cp -R KMiDi_PROJECT/api/* "$INSTALL_DIR/api/"
+cp -R KMiDi_PROJECT/music_brain/* "$INSTALL_DIR/music_brain/"
+cp KMiDi_PROJECT/pyproject.toml "$INSTALL_DIR/"
 
-    # Check Docker Compose
-    if ! docker compose version &> /dev/null; then
-        print_error "Docker Compose is not available. Please update Docker Desktop."
-        exit 1
-    fi
+# Optional: Copy data and models if they exist locally
+if [ -d "KMiDi_PROJECT/data" ]; then
+    cp -R KMiDi_PROJECT/data/* "$INSTALL_DIR/data/"
+fi
+if [ -d "KMiDi_PROJECT/models" ]; then
+    cp -R KMiDi_PROJECT/models/* "$INSTALL_DIR/models/"
+fi
 
-    # Check available memory
-    DOCKER_MEM=$(docker info --format '{{.MemTotal}}' 2>/dev/null || echo "0")
-    DOCKER_MEM_GB=$((DOCKER_MEM / 1073741824))
-    if [ "$DOCKER_MEM_GB" -lt 4 ]; then
-        print_warning "Docker has less than 4GB RAM allocated. Consider increasing in Docker Desktop preferences."
-    fi
+# Build Tauri application (desktop frontend)
+# This assumes `npm install` has been run in `KMiDi_PROJECT/source/frontend/src-tauri`
+# and that `cargo` is in PATH
+echo "Building Tauri desktop application..."
+cd KMiDi_PROJECT/source/frontend/src-tauri || { echo "Failed to navigate to Tauri frontend."; exit 1; }
+npm install # Ensure npm dependencies are installed for Tauri build
+cargo tauri build --release || { echo "Failed to build Tauri app."; exit 1; }
 
-    print_success "Prerequisites check passed"
-}
+# Copy the built Tauri app to installation directory
+TAURI_APP_PATH="$(find "$PROJECT_ROOT/KMiDi_PROJECT/source/frontend/src-tauri/target/release/bundle/" -name "KMiDi.app" -type d | head -n 1)"
+if [ -d "$TAURI_APP_PATH" ]; then
+    echo "Copying Tauri app from $TAURI_APP_PATH to $INSTALL_DIR/KMiDi.app"
+    cp -R "$TAURI_APP_PATH" "$INSTALL_DIR/"
+else
+    echo "Warning: Tauri desktop application not found at expected path. Skipping copy."
+fi
 
-setup_environment() {
-    print_step "Setting up environment..."
+# --- Service Setup ---
+echo "Setting up API service (manual start for now)..."
 
-    cd "$PROJECT_ROOT"
+# Create a basic service script to start the API (resource-friendly defaults)
+cat << EOF > "$INSTALL_DIR/start_api.sh"
+#!/bin/bash
+cd "$INSTALL_DIR/api"
+export PYTHONPATH="$INSTALL_DIR"
 
-    # Create .env if it doesn't exist
-    if [ ! -f ".env" ]; then
-        if [ -f "env.example" ]; then
-            cp env.example .env
-            print_warning "Created .env from env.example. Please review and update settings."
-        else
-            print_error "No env.example found. Cannot create .env file."
-            exit 1
-        fi
-    fi
+# Limit CPU thread fan-out to keep temps and RAM in check on Apple Silicon
+export OMP_NUM_THREADS=\${OMP_NUM_THREADS:-4}
+export OPENBLAS_NUM_THREADS=\${OPENBLAS_NUM_THREADS:-4}
+export MKL_NUM_THREADS=\${MKL_NUM_THREADS:-1}
+export VECLIB_MAXIMUM_THREADS=\${VECLIB_MAXIMUM_THREADS:-4}
+export NUMEXPR_MAX_THREADS=\${NUMEXPR_MAX_THREADS:-4}
 
-    # Create necessary directories
-    mkdir -p output models logs data
+# Keep Metal (MPS) VRAM usage under control to avoid macOS swap pressure
+export PYTORCH_MPS_HIGH_WATERMARK_RATIO=\${PYTORCH_MPS_HIGH_WATERMARK_RATIO:-0.8}
 
-    # Set macOS-specific defaults if not set
-    if ! grep -q "KELLY_AUDIO_DATA_ROOT" .env 2>/dev/null; then
-        echo "KELLY_AUDIO_DATA_ROOT=$HOME/kmidi-data" >> .env
-    fi
+# Run uvicorn in single-worker, low-concurrency mode to reduce load
+exec python${PYTHON_VERSION} -m uvicorn main:app --host $API_HOST --port $API_PORT --workers 1 --limit-concurrency 4
+EOF
+chmod +x "$INSTALL_DIR/start_api.sh"
 
-    print_success "Environment configured"
-}
+echo "To start the API, run: $INSTALL_DIR/start_api.sh"
+echo "To launch the desktop app, run: $INSTALL_DIR/KMiDi.app/Contents/MacOS/KMiDi"
 
-build_images() {
-    print_step "Building Docker images..."
+# --- Verification ---
+echo "Verification steps:"
+echo "1. Start the API using: $INSTALL_DIR/start_api.sh"
+echo "2. Once API is running, test health endpoint: curl http://$API_HOST:$API_PORT/health"
+echo "3. Launch the KmiDi desktop app and verify functionality."
 
-    cd "$DOCKER_DIR"
-
-    if [ "$MODE" = "dev" ]; then
-        docker compose build --no-cache daiw-dev
-    else
-        docker compose -f docker-compose.yml build
-    fi
-
-    print_success "Docker images built"
-}
-
-deploy_services() {
-    print_step "Deploying services..."
-
-    cd "$DOCKER_DIR"
-
-    case "$SERVICES" in
-        "api")
-            if [ "$MODE" = "dev" ]; then
-                docker compose up -d daiw-dev
-            else
-                # Use production Dockerfile
-                docker build -t kmidi-api:prod -f Dockerfile.prod "$PROJECT_ROOT"
-                docker run -d \
-                    --name kmidi-api \
-                    -p 8000:8000 \
-                    -v "$PROJECT_ROOT/data:/data:ro" \
-                    -v "$PROJECT_ROOT/models:/models:ro" \
-                    -v "$PROJECT_ROOT/output:/output:rw" \
-                    --env-file "$PROJECT_ROOT/.env" \
-                    --restart unless-stopped \
-                    kmidi-api:prod
-            fi
-            ;;
-        "full")
-            docker compose up -d
-            ;;
-    esac
-
-    print_success "Services deployed"
-}
-
-show_status() {
-    print_step "Deployment Status"
-    echo ""
-
-    # Show running containers
-    echo -e "${BLUE}Running Containers:${NC}"
-    docker ps --filter "name=kmidi" --filter "name=daiw" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-    echo ""
-
-    # Health check
-    echo -e "${BLUE}Health Checks:${NC}"
-
-    # Check API
-    if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
-        API_STATUS=$(curl -s http://localhost:8000/health | grep -o '"status":"[^"]*"' | head -1)
-        print_success "API: $API_STATUS"
-    else
-        print_warning "API: Not responding on port 8000"
-    fi
-
-    # Check Streamlit
-    if curl -sf http://localhost:8501/_stcore/health > /dev/null 2>&1; then
-        print_success "Streamlit: Running on port 8501"
-    else
-        print_warning "Streamlit: Not responding on port 8501"
-    fi
-
-    echo ""
-    echo -e "${BLUE}Endpoints:${NC}"
-    echo "  API:        http://localhost:8000"
-    echo "  API Docs:   http://localhost:8000/docs"
-    echo "  Metrics:    http://localhost:8000/metrics"
-    echo "  Streamlit:  http://localhost:8501"
-}
-
-stop_services() {
-    print_step "Stopping services..."
-
-    docker stop kmidi-api 2>/dev/null || true
-    docker rm kmidi-api 2>/dev/null || true
-
-    cd "$DOCKER_DIR"
-    docker compose down 2>/dev/null || true
-
-    print_success "Services stopped"
-}
-
-clean_all() {
-    print_step "Cleaning up all containers and volumes..."
-
-    stop_services
-
-    cd "$DOCKER_DIR"
-    docker compose down -v --remove-orphans 2>/dev/null || true
-
-    # Remove images
-    docker rmi kmidi-api:prod 2>/dev/null || true
-    docker rmi daiw-music-brain:latest 2>/dev/null || true
-    docker rmi daiw-music-brain:dev 2>/dev/null || true
-
-    print_success "Cleanup complete"
-}
-
-show_logs() {
-    cd "$DOCKER_DIR"
-    docker compose logs -f
-}
-
-show_help() {
-    echo "Usage: $0 [options]"
-    echo ""
-    echo "Options:"
-    echo "  --dev       Deploy in development mode (with hot reload)"
-    echo "  --prod      Deploy in production mode (default)"
-    echo "  --api-only  Deploy only the FastAPI service"
-    echo "  --full      Deploy all services"
-    echo "  --stop      Stop all running containers"
-    echo "  --clean     Stop and remove all containers, volumes"
-    echo "  --logs      Show container logs"
-    echo "  --status    Show deployment status"
-    echo "  --help      Show this help message"
-    echo ""
-    echo "Examples:"
-    echo "  $0                    # Deploy API in production mode"
-    echo "  $0 --dev              # Deploy in development mode"
-    echo "  $0 --full             # Deploy all services"
-    echo "  $0 --status           # Check deployment status"
-    echo "  $0 --stop             # Stop all services"
-}
-
-# Parse arguments
-while [[ $# -gt 0 ]]; do
-    case $1 in
-        --dev)
-            MODE="dev"
-            shift
-            ;;
-        --prod)
-            MODE="prod"
-            shift
-            ;;
-        --api-only)
-            SERVICES="api"
-            shift
-            ;;
-        --full)
-            SERVICES="full"
-            shift
-            ;;
-        --stop)
-            ACTION="stop"
-            shift
-            ;;
-        --clean)
-            ACTION="clean"
-            shift
-            ;;
-        --logs)
-            ACTION="logs"
-            shift
-            ;;
-        --status)
-            ACTION="status"
-            shift
-            ;;
-        --help|-h)
-            show_help
-            exit 0
-            ;;
-        *)
-            print_error "Unknown option: $1"
-            show_help
-            exit 1
-            ;;
-    esac
-done
-
-# Main execution
-print_banner
-
-case "$ACTION" in
-    "deploy")
-        check_prerequisites
-        setup_environment
-        build_images
-        deploy_services
-        echo ""
-        show_status
-        ;;
-    "stop")
-        stop_services
-        ;;
-    "clean")
-        clean_all
-        ;;
-    "logs")
-        show_logs
-        ;;
-    "status")
-        show_status
-        ;;
-esac
-
-echo ""
-print_success "Done!"
+echo "KmiDi deployment script finished for macOS."

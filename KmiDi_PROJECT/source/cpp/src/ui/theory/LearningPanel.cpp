@@ -9,16 +9,12 @@
 
 namespace kelly {
 
-// Forward declaration for MusicTheoryBrain::MidiMessage if it's different from juce::MidiMessage
-// In Types.h, midikompanion::theory::MidiMessage is defined.
-// We need to convert it to juce::MidiMessage for playback.
-
 LearningPanel::LearningPanel(midikompanion::theory::MusicTheoryBrain* brain)
     : brain_(brain),
       conceptTitle_("", ""),
-      explanationDisplay_("Explanation"), // Corrected constructor
+      explanationDisplay_("Explanation"),
       styleSelector_("Style Selector"),
-      styleLabel_{"", "Explanation Style"},
+      styleLabel_("", "Explanation Style"),
       playExampleButton_("Play Example"),
       nextExerciseButton_("Next Exercise")
 {
@@ -54,7 +50,6 @@ void LearningPanel::setupComponents()
     nextExerciseButton_.onClick = [this] { loadNextExercise(); };
     addAndMakeVisible(nextExerciseButton_);
 
-    // Attempt to initialize MIDI output
     ensureMidiOutputReady();
 }
 
@@ -88,7 +83,6 @@ void LearningPanel::displayConcept(const std::string& conceptName)
     currentConcept_ = conceptName;
     conceptTitle_.setText(conceptName, juce::dontSendNotification);
     loadExplanation(conceptName);
-    // loadNextExercise(); // Load first exercise when concept displayed - defer this until requested
     updateExplanationDisplay();
 }
 
@@ -107,26 +101,22 @@ void LearningPanel::setMusicTheoryBrain(midikompanion::theory::MusicTheoryBrain*
 void LearningPanel::setExplanationStyle(midikompanion::theory::ExplanationType style)
 {
     currentStyle_ = style;
-    loadExplanation(currentConcept_); // Reload explanation with new style
+    loadExplanation(currentConcept_);
     updateExplanationDisplay();
 }
 
 void LearningPanel::loadExplanation(const std::string& conceptName)
 {
     if (brain_) {
-        // MusicTheoryBrain::getConceptExplanation requires ExplanationDepth
-        auto explanation = brain_->getConceptExplanation(conceptName, currentStyle_, midikompanion::theory::ExplanationDepth::Intermediate);
-        if (explanation.has_value()) {
-            explanationDisplay_.setText(explanation.value(), juce::dontSendNotification);
-        } else {
-            explanationDisplay_.setText("Explanation not found for " + conceptName, juce::dontSendNotification);
-        }
+        midikompanion::theory::UserProfile profile{};
+        profile.preferredExplanationStyle = currentStyle_;
+        auto explanation = brain_->askQuestion("Explain " + conceptName, profile);
+        explanationDisplay_.setText(explanation, juce::dontSendNotification);
     }
 }
 
 void LearningPanel::updateExplanationDisplay()
 {
-    // This method is called after style changes or concept loads to refresh the text
     loadExplanation(currentConcept_);
 }
 
@@ -147,43 +137,52 @@ void LearningPanel::playCurrentConceptExample()
         return;
     }
 
-    // Create a dummy UserProfile for getConceptExample
-    midikompanion::theory::UserProfile dummyProfile;
-
-    auto midiExample = brain_->getConceptExample(currentConcept_, dummyProfile);
-    if (midiExample) {
-        // Convert the vector of MIDI messages to a juce::MidiBuffer
-        juce::MidiBuffer buffer;
-        for (const auto& midiMsg : midiExample.value()) {
-            // Assume midiMsg is midikompanion::theory::MidiMessage, defined in Types.h
-            juce::MidiMessage juceNoteOn = juce::MidiMessage::noteOn(1, midiMsg.pitch, (uint8)midiMsg.velocity);
-            buffer.addEvent(juceNoteOn, static_cast<int>(midiMsg.startTime * 480)); // 480 ticks per beat
-            juce::MidiMessage juceNoteOff = juce::MidiMessage::noteOff(1, midiMsg.pitch, (uint8)0);
-            buffer.addEvent(juceNoteOff, static_cast<int>((midiMsg.startTime + midiMsg.duration) * 480));
-        }
-
-        // Play the MIDI buffer (simplified, in a real app this would be a MIDI player thread)
-        for (const auto& msg : buffer) {
-            midiOutput_->sendMessageNow(msg.getMessage());
-            std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Small delay for playback
-        }
-
-        isPlayingExample_ = true;
-        playExampleButton_.setButtonText("Stop Example");
+    std::vector<int> notesToPlay;
+    if (!activeExampleNotes_.empty()) {
+        notesToPlay = activeExampleNotes_;
+    } else if (!currentExercise_.notes.empty()) {
+        notesToPlay = currentExercise_.notes;
     } else {
-        juce::Logger::writeToLog("LearningPanel: No MIDI example available for concept: " + currentConcept_);
+        notesToPlay = buildExampleNotes();
     }
+
+    if (notesToPlay.empty()) {
+        juce::Logger::writeToLog("LearningPanel: No notes available to play for concept: " + currentConcept_);
+        return;
+    }
+
+    isPlayingExample_ = true;
+    playExampleButton_.setButtonText("Stop Example");
+
+    std::vector<float> onsets = currentExercise_.onsets;
+    if (onsets.size() < notesToPlay.size()) {
+        onsets.resize(notesToPlay.size(), onsets.empty() ? 0.0f : onsets.back() + 0.5f);
+    }
+
+    float lastOnset = 0.0f;
+    for (size_t i = 0; i < notesToPlay.size() && isPlayingExample_; ++i) {
+        float waitMs = std::max(0.0f, (onsets[i] - lastOnset) * 1000.0f);
+        if (waitMs > 0.0f)
+            std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(waitMs)));
+
+        int note = notesToPlay[i];
+        midiOutput_->sendMessageNow(juce::MidiMessage::noteOn(1, note, (juce::uint8)100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        midiOutput_->sendMessageNow(juce::MidiMessage::noteOff(1, note));
+        lastOnset = onsets[i];
+    }
+
+    isPlayingExample_ = false;
+    playExampleButton_.setButtonText("Play Example");
 }
 
 void LearningPanel::stopExamplePlayback()
 {
     if (midiOutput_) {
-        // Send all notes off (simplified)
         for (int channel = 0; channel < 16; ++channel) {
             midiOutput_->sendMessageNow(juce::MidiMessage::allNotesOff(channel + 1));
             midiOutput_->sendMessageNow(juce::MidiMessage::allSoundOff(channel + 1));
         }
-        // midiOutput_.reset(); // Do not reset, keep device open for subsequent plays
     }
     isPlayingExample_ = false;
     playExampleButton_.setButtonText("Play Example");
@@ -198,31 +197,39 @@ void LearningPanel::loadNextExercise()
         return;
     }
 
-    // Create a dummy UserProfile for getNextExercise
-    midikompanion::theory::UserProfile dummyProfile;
+    midikompanion::theory::UserProfile profile{};
+    profile.preferredExplanationStyle = currentStyle_;
 
-    auto exerciseOpt = brain_->getNextExercise(currentConcept_, dummyProfile);
-    if (exerciseOpt.has_value()) {
-        currentExercise_ = exerciseOpt.value();
+    auto session = brain_->generatePracticeSession(profile, 5);
+    auto it = std::find_if(session.exercises.begin(), session.exercises.end(),
+                           [this](const midikompanion::theory::Exercise& ex) {
+                               return ex.conceptName == currentConcept_;
+                           });
+
+    if (it != session.exercises.end()) {
+        currentExercise_ = *it;
+    } else if (!session.exercises.empty()) {
+        currentExercise_ = session.exercises.front();
+    }
+
+    if (!session.exercises.empty()) {
         displayExercise(currentExercise_);
         hasExercise_ = true;
         nextExerciseButton_.setEnabled(true);
     } else {
         hasExercise_ = false;
         nextExerciseButton_.setEnabled(false);
-        explanationDisplay_.setText("No more exercises available for " + currentConcept_, juce::dontSendNotification);
+        explanationDisplay_.setText("No exercises available for " + currentConcept_, juce::dontSendNotification);
     }
 }
 
 void LearningPanel::displayExercise(const midikompanion::theory::Exercise& exercise)
 {
     juce::String text;
-    // Corrected member access for Exercise (based on Types.h)
     text << "\n-- Exercise: " << exercise.conceptName << " --\n\n";
-    text << "Description: " << exercise.instruction << "\n\n"; // Renamed from description to instruction
+    text << "Description: " << exercise.instruction << "\n\n";
     text << "Focus Area: " << exercise.focusArea << "\n";
 
-    // Handle MIDI example if available in exercise (e.g., from notes/onsets)
     if (!exercise.notes.empty()) {
         text << "\n(Interactive MIDI example available for this exercise)";
         activeExampleNotes_ = exercise.notes;
@@ -235,7 +242,7 @@ void LearningPanel::displayExercise(const midikompanion::theory::Exercise& exerc
 
 bool LearningPanel::ensureMidiOutputReady()
 {
-    if (midiOutput_ && midiOutput_->isOpen()) {
+    if (midiOutput_) {
         return true;
     }
 
@@ -244,7 +251,7 @@ bool LearningPanel::ensureMidiOutputReady()
         juce::Logger::writeToLog("LearningPanel: No MIDI output devices found.");
         return false;
     }
-    // Attempt to open the default device (first one)
+
     midiOutput_ = juce::MidiOutput::openDevice(devices[0].identifier);
     if (!midiOutput_) {
         juce::Logger::writeToLog("LearningPanel: Failed to open default MIDI output device.");
@@ -255,9 +262,7 @@ bool LearningPanel::ensureMidiOutputReady()
 
 std::vector<int> LearningPanel::buildExampleNotes() const
 {
-    // This is a placeholder for building notes for a virtual keyboard or display.
-    // In a real scenario, this would involve parsing the current concept's MIDI example.
-    return {60, 62, 64, 65, 67, 69, 71, 72}; // C Major Scale as a dummy example
+    return {60, 62, 64, 65, 67, 69, 71, 72};
 }
 
 } // namespace kelly

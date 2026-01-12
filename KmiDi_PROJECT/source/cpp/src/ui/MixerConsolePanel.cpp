@@ -289,7 +289,7 @@ MixerConsolePanel::MixerConsolePanel()
     addChannel("Synth Lead", "Lead Synth");
 }
 
-MixerConsolePanel::~MixerConsolePanel() = default;
+// Destructor uses header default
 
 void MixerConsolePanel::paint(juce::Graphics& g) {
     g.fillAll(juce::Colour(0xff3a3a3a)); // Dark background for mixer
@@ -397,7 +397,7 @@ void MixerConsolePanel::savePreset(const std::string& name) {
         ChannelStrip* channel = channels_[i].get();
         if (channel) {
             newPreset.channels.push_back({
-                channel->getName().toStdString(), // .toStdString() is valid for juce::String
+                channel->getName(), // .toStdString() is valid for juce::String
                 channelInstruments_[i],
                 channel->getGain(),
                 channel->getPan(),

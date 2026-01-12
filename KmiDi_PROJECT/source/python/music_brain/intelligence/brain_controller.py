@@ -103,22 +103,22 @@ class BrainController:
     # ------------------------------------------------------------------ #
     # Core API
     # ------------------------------------------------------------------ #
-    def parse_intent(self, user_text: str) -> CompleteSongIntent:
+    async def parse_intent(self, user_text: str) -> CompleteSongIntent:
         """
         Parse free-form user input into a structured CompleteSongIntent.
         """
         prompt = self._build_intent_prompt(user_text)
-        response = self._run_chat(prompt, temperature=self.config.temperature)
+        response = await self._run_chat(prompt, temperature=self.config.temperature)
         data = self._extract_json(response) or {}
         intent = CompleteSongIntent.from_dict(data) if data else CompleteSongIntent()
         return intent
 
-    def expand_prompts(self, intent: CompleteSongIntent) -> Dict[str, str]:
+    async def expand_prompts(self, intent: CompleteSongIntent) -> Dict[str, str]:
         """
         Expand prompts for downstream generators (image, audio texture, MIDI hints).
         """
         prompt = self._build_expansion_prompt(intent)
-        response = self._run_chat(prompt, temperature=0.4)
+        response = await self._run_chat(prompt, temperature=0.4)
         data = self._extract_json(response) or {}
         return {
             "image_prompt": data.get("image_prompt", ""),
@@ -127,14 +127,14 @@ class BrainController:
             "midi_hints": json.dumps(data.get("midi_hints", {})),
         }
 
-    def explain_decision(self, intent: CompleteSongIntent, decision: str) -> str:
+    async def explain_decision(self, intent: CompleteSongIntent, decision: str) -> str:
         """
         Provide an explicit explanation for a decision (e.g., chord choice).
         """
         prompt = self._build_explain_prompt(intent, decision)
-        return self._run_chat(prompt, temperature=0.5)
+        return await self._run_chat(prompt, temperature=0.5)
 
-    def suggest_rule_breaks(self, intent: CompleteSongIntent) -> List[Dict[str, str]]:
+    async def suggest_rule_breaks(self, intent: CompleteSongIntent) -> List[Dict[str, str]]:
         """
         Suggest explicit rule-breaking options grounded in the target emotion.
         """
@@ -143,7 +143,7 @@ class BrainController:
         # Attach reasoning using the LLM (but do not mutate rules implicitly)
         if suggestions:
             explain_prompt = self._build_rule_break_prompt(emotion, suggestions)
-            explanation = self._run_chat(explain_prompt, temperature=0.5)
+            explanation = await self._run_chat(explain_prompt, temperature=0.5)
             return [
                 {**s, "llm_explanation": explanation}
                 for s in suggestions
@@ -153,7 +153,7 @@ class BrainController:
     # ------------------------------------------------------------------ #
     # Internal helpers
     # ------------------------------------------------------------------ #
-    def _run_chat(self, prompt: str, temperature: float) -> str:
+    async def _run_chat(self, prompt: str, temperature: float) -> str:
         if not self._llm:
             raise RuntimeError("BrainController not loaded. Call load() before use.")
 

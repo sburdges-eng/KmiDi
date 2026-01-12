@@ -445,6 +445,7 @@ private:
     void createOrchestralPreset();
     void createElectronicPreset();
     void createJazzComboPreset();
+    void createSongwriterPreset();
 
     //==========================================================================
     // Layout Helpers
