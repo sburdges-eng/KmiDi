@@ -1,0 +1,383 @@
+# KmiDi Custom GPT Configuration Schema
+# Upload this file to your Custom GPT's "Knowledge" section
+
+metadata:
+  name: "KmiDi Music Brain Assistant"
+  version: "1.0.0"
+  framework: "DAiW (Dialectical Art-integrated Workstation)"
+  description: "Emotion-driven music composition using 6×6×6 emotion taxonomy"
+
+taxonomy:
+  structure:
+    levels: 3
+    base_emotions: 6
+    sub_emotions_per_base: 6
+    subsub_emotions_per_sub: 6
+    total_emotion_nodes: 216
+    intensity_tiers: 6
+    total_intensity_aware_states: 1296
+
+  base_emotions:
+    - id: "I"
+      name: "HAPPY"
+      valence: "positive"
+      arousal_range: [0.3, 0.9]
+
+    - id: "II"
+      name: "SAD"
+      valence: "negative"
+      arousal_range: [0.1, 0.5]
+
+    - id: "III"
+      name: "ANGRY"
+      valence: "negative"
+      arousal_range: [0.6, 1.0]
+
+    - id: "IV"
+      name: "FEAR"
+      valence: "negative"
+      arousal_range: [0.5, 0.9]
+
+    - id: "V"
+      name: "SURPRISE"
+      valence: "mixed"
+      arousal_range: [0.4, 1.0]
+
+    - id: "VI"
+      name: "DISGUST"
+      valence: "negative"
+      arousal_range: [0.3, 0.7]
+
+  intensity_tiers:
+    - level: 0
+      label: "subtle"
+      arousal_multiplier: 0.1
+      description: "Barely perceptible, background feeling"
+
+    - level: 1
+      label: "mild"
+      arousal_multiplier: 0.3
+      description: "Noticeable but easily managed"
+
+    - level: 2
+      label: "moderate"
+      arousal_multiplier: 0.5
+      description: "Clearly felt, influences behavior"
+
+    - level: 3
+      label: "strong"
+      arousal_multiplier: 0.7
+      description: "Powerful, hard to ignore"
+
+    - level: 4
+      label: "intense"
+      arousal_multiplier: 0.9
+      description: "Overwhelming, dominates experience"
+
+    - level: 5
+      label: "overwhelming"
+      arousal_multiplier: 1.0
+      description: "All-consuming, transcendent"
+
+musical_mappings:
+  valence_to_mode:
+    positive:
+      - "ionian"
+      - "lydian"
+      - "mixolydian"
+    negative:
+      - "aeolian"
+      - "phrygian"
+      - "locrian"
+      - "dorian"
+    mixed:
+      - "dorian"
+      - "mixolydian"
+
+  arousal_to_tempo:
+    low:
+      min: 40
+      max: 70
+      labels: ["Lento", "Adagio"]
+    medium:
+      min: 70
+      max: 120
+      labels: ["Andante", "Moderato"]
+    high:
+      min: 120
+      max: 200
+      labels: ["Allegro", "Presto"]
+
+  intensity_to_dynamics:
+    subtle: "pp-p"
+    mild: "p-mp"
+    moderate: "mp-mf"
+    strong: "mf-f"
+    intense: "f-ff"
+    overwhelming: "ff-fff"
+
+  dominance_to_texture:
+    low: "sparse"
+    medium: "moderate"
+    high: "dense"
+
+keys:
+  major:
+    - "C_major"
+    - "Db_major"
+    - "D_major"
+    - "Eb_major"
+    - "E_major"
+    - "F_major"
+    - "Gb_major"
+    - "G_major"
+    - "Ab_major"
+    - "A_major"
+    - "Bb_major"
+    - "B_major"
+
+  minor:
+    - "C_minor"
+    - "Db_minor"
+    - "D_minor"
+    - "Eb_minor"
+    - "E_minor"
+    - "F_minor"
+    - "Gb_minor"
+    - "G_minor"
+    - "Ab_minor"
+    - "A_minor"
+    - "Bb_minor"
+    - "B_minor"
+
+rule_breaking:
+  categories:
+    HARMONY:
+      - name: "AvoidTonicResolution"
+        description: "End on non-tonic chord to create yearning/unresolved feeling"
+        effect: "Emotional tension, longing, uncertainty"
+
+      - name: "ParallelFifths"
+        description: "Use parallel perfect fifths (typically forbidden)"
+        effect: "Ancient, hollow, ethereal quality"
+
+      - name: "UnresolvedDissonance"
+        description: "Leave dissonant intervals unresolved"
+        effect: "Discomfort, tension, unease"
+
+    RHYTHM:
+      - name: "ConstantDisplacement"
+        description: "Shift metric emphasis consistently off-beat"
+        effect: "Anxiety, restlessness, instability"
+
+      - name: "PolyrythmicClash"
+        description: "Layer incompatible time signatures"
+        effect: "Chaos, internal conflict, complexity"
+
+    ARRANGEMENT:
+      - name: "BuriedVocals"
+        description: "Mix vocals lower than instruments"
+        effect: "Dissociation, feeling unheard, isolation"
+
+      - name: "InvertedMix"
+        description: "Put loud elements quiet and vice versa"
+        effect: "Disorientation, altered perception"
+
+    PRODUCTION:
+      - name: "PitchImperfection"
+        description: "Deliberately include slight pitch variations"
+        effect: "Raw emotion, human vulnerability, honesty"
+
+      - name: "LoFiArtifacts"
+        description: "Add tape hiss, vinyl crackle, bit reduction"
+        effect: "Nostalgia, memory, impermanence"
+
+    MELODY:
+      - name: "RepetitivePhrase"
+        description: "Obsessively repeat single melodic phrase"
+        effect: "Obsession, rumination, stuck thoughts"
+
+      - name: "AmelodyChaos"
+        description: "Remove recognizable melody entirely"
+        effect: "Formlessness, void, dissolution"
+
+response_format:
+  emotion_analysis:
+    required:
+      - primary_emotion
+      - emotion_id
+      - base_emotion
+      - intensity_tier
+      - vad
+
+    vad:
+      valence:
+        min: -1.0
+        max: 1.0
+      arousal:
+        min: 0.0
+        max: 1.0
+      dominance:
+        min: 0.0
+        max: 1.0
+
+  musical_specification:
+    required:
+      - key
+      - mode
+      - tempo_bpm
+      - time_signature
+      - dynamics
+      - texture
+
+  chord_progression:
+    sections:
+      - intro
+      - verse
+      - chorus
+      - bridge
+      - outro
+
+  arrangement:
+    format: "Free-form text description per section"
+
+  instrumentation:
+    categories:
+      - primary
+      - secondary
+      - percussion
+
+  production:
+    elements:
+      - reverb
+      - eq
+      - compression
+      - effects
+
+  rule_to_break:
+    required:
+      - category
+      - rule
+      - implementation
+      - emotional_purpose
+
+  audio_description:
+    format: "2-3 sentence natural language description suitable for audio search or AI generation"
+
+three_phase_intent_schema:
+  phase_0_core_wound:
+    fields:
+      - name: "core_event"
+        type: "string"
+        question: "What happened? What is the emotional origin?"
+
+      - name: "core_resistance"
+        type: "string"
+        question: "What are you resisting feeling or accepting?"
+
+      - name: "core_longing"
+        type: "string"
+        question: "What do you deeply desire or need?"
+
+  phase_1_emotional_intent:
+    fields:
+      - name: "mood_primary"
+        type: "emotion_node"
+        question: "What is the primary emotion (from 216 nodes)?"
+
+      - name: "vulnerability_scale"
+        type: "integer"
+        min: 1
+        max: 10
+        question: "How vulnerable/exposed do you want to be? (1=guarded, 10=completely raw)"
+
+      - name: "narrative_arc"
+        type: "enum"
+        values: ["descent", "stasis", "ascent", "cyclical"]
+        question: "What is the emotional journey?"
+
+  phase_2_technical_constraints:
+    fields:
+      - name: "technical_genre"
+        type: "string"
+        question: "Any genre preferences?"
+
+      - name: "technical_key"
+        type: "key"
+        question: "Preferred key?"
+
+      - name: "technical_rule_to_break"
+        type: "rule_breaking"
+        question: "Which music theory rule should be broken for emotional impact?"
+
+conversation_principles:
+  - principle: "Interrogate Before Generate"
+    description: "Always clarify emotional intent before creating music"
+
+  - principle: "Why Before How"
+    description: "Understand emotional purpose (Phase 0) before technical implementation (Phase 2)"
+
+  - principle: "Rule-Breaking with Purpose"
+    description: "Only break music theory rules when it serves the emotional narrative"
+
+  - principle: "Key-Invariance"
+    description: "Same emotion should feel the same regardless of key"
+
+  - principle: "Therapeutic Alignment"
+    description: "Music should support emotion regulation, not just express emotion"
+
+example_response:
+  user_input: "I want to express grief but with hope"
+
+  output:
+    emotion_analysis:
+      primary_emotion: "SAD.GRIEF.yearning"
+      emotion_id: "IIac"
+      base_emotion: "SAD"
+      sub_emotion: "GRIEF"
+      subsub_emotion: "yearning"
+      intensity_tier: 4
+      intensity_label: "strong"
+      vad:
+        valence: -0.7
+        arousal: 0.4
+        dominance: 0.3
+
+    musical_specification:
+      key: "A_minor"
+      mode: "aeolian"
+      tempo_bpm: 68
+      time_signature: "4/4"
+      dynamics: "mf-to-f"
+      texture: "moderate"
+
+    chord_progression:
+      verse: ["Am", "Fmaj7", "C", "G"]
+      chorus: ["Am", "F", "C", "Gsus4", "G"]
+      bridge: ["Dm", "Am", "F", "E7"]
+
+    arrangement:
+      intro: "8 bars, solo piano, Am-Fmaj7"
+      verse: "16 bars, add strings"
+      chorus: "8 bars, full arrangement"
+      bridge: "8 bars, tension with E7"
+      outro: "8 bars, fade to Cmaj (hope)"
+
+    instrumentation:
+      primary: ["piano", "cello", "acoustic guitar"]
+      secondary: ["string pad", "ambient texture"]
+      percussion: "minimal or none"
+
+    production:
+      reverb: "Large hall, 3.5s decay, 40% mix"
+      eq: "Warm (boost 2-4kHz), cut below 80Hz"
+      compression: "Gentle 2:1, slow attack"
+      effects: ["tape saturation", "subtle chorus on piano"]
+
+    rule_to_break:
+      category: "HARMONY"
+      rule: "AvoidTonicResolution"
+      implementation: "End on Cmaj instead of Am to symbolize hope emerging from grief"
+      emotional_purpose: "Unresolved ending creates yearning and suggests possibility"
+
+    audio_description: "Melancholic piano melody in A minor with sparse cello accompaniment, building slowly with string pads. Gentle tempo at 68 BPM creates space for reflection. The progression avoids final resolution to tonic, instead ending on C major to suggest hope breaking through sorrow. Production uses warm reverb and tape saturation for nostalgic quality."

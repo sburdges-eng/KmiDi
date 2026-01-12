@@ -1,0 +1,106 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+.gitmodules
+
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.settings/
+.project
+.pydevproject
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+tests/
+test_*.py
+*_test.py
+
+# Documentation (keep README)
+docs/
+*.md
+!README.md
+!KMIDI_README.md
+
+# Development files
+scripts/
+.env
+.env.local
+*.log
+*.tmp
+*.bak
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Large data files (mount as volumes instead)
+data/audio/
+data/models/
+models/
+*.pth
+*.ckpt
+*.h5
+*.pb
+*.onnx
+*.tflite
+
+# Training data
+training/
+datasets/
+
+# Output files
+output/
+*.mid
+*.wav
+*.mp3
+*.ogg
+
+# C++ build artifacts
+build/
+cmake-build-*/
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+
+# JUCE and external libraries (if large)
+external/JUCE/docs/
+external/JUCE/examples/
+
+# Temporary files
+*.swp
+*.swo
+*~

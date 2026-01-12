@@ -1,0 +1,96 @@
+{
+  "template_name": "iDAW Starter Template",
+  "pro_tools_version": "2023+",
+  "description": "Pre-configured Pro Tools session for iDAW Penta Core plugin",
+  "created": "2025-12",
+  "session_settings": {
+    "sample_rate": 48000,
+    "bit_depth": 24,
+    "buffer_size": 512,
+    "session_format": "Pro Tools 2024"
+  },
+  "tracks": [
+    {
+      "name": "MIDI Input",
+      "type": "midi",
+      "color": "blue",
+      "inserts": [
+        {
+          "slot": "A",
+          "plugin": "Penta Core",
+          "format": "AAX",
+          "settings": {
+            "harmony_mode": "auto",
+            "groove_enabled": true,
+            "analyze_enabled": true
+          }
+        }
+      ],
+      "output": "Virtual Instrument Bus"
+    },
+    {
+      "name": "Instrument",
+      "type": "aux",
+      "color": "green",
+      "input": "Virtual Instrument Bus",
+      "output": "Main Out"
+    },
+    {
+      "name": "Click",
+      "type": "aux",
+      "color": "yellow",
+      "output": "Main Out"
+    }
+  ],
+  "io_setup": {
+    "buses": [
+      {
+        "name": "Virtual Instrument Bus",
+        "type": "stereo",
+        "purpose": "Route MIDI to instruments"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "Main Out",
+        "type": "stereo",
+        "path": "Built-in Output 1-2"
+      }
+    ]
+  },
+  "automation": {
+    "enabled_parameters": [
+      "Penta Core/Harmony Mode",
+      "Penta Core/Groove Intensity",
+      "Penta Core/Swing Amount",
+      "Penta Core/Intent Temperature"
+    ],
+    "default_mode": "read"
+  },
+  "setup_instructions": [
+    "1. Open Pro Tools and create new session",
+    "2. Import this template via File > Import > Session Data",
+    "3. Ensure Penta Core AAX is installed",
+    "4. Configure I/O Setup to match your interface",
+    "5. Enable Development Mode if plugin is unsigned",
+    "6. Save as session template for future use"
+  ],
+  "recommended_settings": {
+    "pro_tools": {
+      "playback_engine": {
+        "buffer_size": 512,
+        "host_processors": "max",
+        "processing_load": "normal"
+      },
+      "operation": {
+        "delay_compensation": true,
+        "dynamic_plugin_processing": true
+      }
+    },
+    "penta_core": {
+      "low_latency_mode": false,
+      "simd_enabled": true,
+      "internal_buffer": 256
+    }
+  }
+}

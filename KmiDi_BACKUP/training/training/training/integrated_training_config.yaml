@@ -1,0 +1,491 @@
+# =============================================================================
+# Integrated Kelly Model Training - Performance-First Configuration
+# =============================================================================
+# Based on previous training results:
+#   - emotion_recognizer: 89.50% @ 36 epochs (early stopped from 100)
+#   - dynamics_engine: 73.50% @ 50 epochs
+#   - groove_predictor: 100.00% @ 50 epochs  
+#   - harmony_predictor: 54.00% @ 26 epochs (early stopped from 60)
+#   - melody_transformer: 34.50% @ 47 epochs (early stopped from 80)
+#
+# Philosophy: Performance over ease. No settling.
+# =============================================================================
+
+session:
+  name: "kelly-integrated-training"
+  budget_usd: 50
+  priority: "performance"
+
+# -----------------------------------------------------------------------------
+# Hardware Configuration
+# -----------------------------------------------------------------------------
+hardware:
+  # Primary: CUDA for training, MPS for validation/inference
+  cuda:
+    device: cuda
+    precision: bf16              # Better for transformers
+    compile_mode: true
+    flash_attention: true
+    cudnn_benchmark: true
+    deterministic: false         # Speed over reproducibility
+  
+  mps:
+    device: mps
+    precision: fp16
+    compile_mode: true
+    pin_memory: false
+
+# -----------------------------------------------------------------------------
+# Data Configuration (Optimized)
+# -----------------------------------------------------------------------------
+data:
+  sample_rate: 44100
+  target_lufs: -14
+  n_mels: 128
+  hop_length: 512
+  segment_seconds: 8
+  
+  # Aggressive caching for performance
+  cache_mels: true
+  cache_dir: ".cache/mels"
+  precompute_all: true           # Pre-compute all spectrograms
+  
+  # Dataloader - tuned from previous runs
+  dataloader:
+    batch_size: 8                # Sweet spot for M4
+    num_workers: 4               # Increase from 2 based on stability
+    prefetch_factor: 4
+    persistent_workers: true
+    drop_last: true
+
+# -----------------------------------------------------------------------------
+# Model Configurations - Based on Previous Results
+# -----------------------------------------------------------------------------
+models:
+
+  # ============================================
+  # EMOTION RECOGNIZER - 89.5% achieved
+  # Architecture: 128→512→256→128→64
+  # Previous: 36 epochs, 12.2 min
+  # ============================================
+  emotion_recognizer:
+    id: "emotionrecognizer"
+    architecture:
+      type: "cnn_attention"
+      input_size: 128
+      hidden_layers: [512, 256, 128]
+      output_size: 64
+      dropout: 0.15              # Slightly higher for regularization
+      use_attention: true
+      attention_heads: 4
+      residual: true
+    
+    training:
+      epochs: 100
+      early_stopping_patience: 20   # Was 36 epochs, give more room
+      min_epochs: 40                # Ensure minimum training
+      
+      # Optimizer - proven settings
+      optimizer:
+        name: adamw
+        lr: 3e-4                    # Same as laptop_m4_small
+        weight_decay: 0.01
+        betas: [0.9, 0.98]
+      
+      # Scheduler - cosine with warm restarts for better convergence
+      scheduler:
+        name: cosine_warmup_restarts
+        warmup_steps: 500
+        t_0: 20                     # First restart at 20 epochs
+        t_mult: 2                   # Double period each restart
+        eta_min: 1e-6
+      
+      # Loss
+      loss:
+        type: focal                 # Better for class imbalance
+        gamma: 2.0
+        label_smoothing: 0.1
+      
+      # Gradient
+      grad_clip: 1.0
+      grad_accum_steps: 4           # Effective batch = 32
+    
+    target_accuracy: 0.92           # Push beyond 89.5%
+    inference_target_ms: 5
+
+  # ============================================
+  # DYNAMICS ENGINE - 73.5% achieved
+  # Architecture: 32→128→64→16
+  # Previous: 50 epochs, 0.8s (very fast)
+  # ============================================
+  dynamics_engine:
+    id: "dynamicsengine"
+    architecture:
+      type: "mlp_residual"
+      input_size: 32
+      hidden_layers: [128, 128, 64]   # Deeper for better capacity
+      output_size: 16
+      dropout: 0.1
+      activation: "gelu"
+      batch_norm: true
+    
+    training:
+      epochs: 100                     # Increase from 50
+      early_stopping_patience: 25
+      min_epochs: 60
+      
+      optimizer:
+        name: adamw
+        lr: 5e-4                      # Higher LR for small model
+        weight_decay: 0.005
+      
+      scheduler:
+        name: cosine
+        warmup_steps: 200
+        eta_min: 1e-5
+      
+      loss:
+        type: mse_huber              # Combine MSE + Huber for robustness
+        huber_delta: 0.5
+      
+      grad_clip: 1.0
+      grad_accum_steps: 2
+    
+    target_accuracy: 0.85            # Push to 85%
+    inference_target_ms: 1
+
+  # ============================================
+  # GROOVE PREDICTOR - 100% achieved (!)
+  # Architecture: 64→128→64→32
+  # Previous: 50 epochs, 2.0s
+  # Keep similar but add regularization to prevent overfitting
+  # ============================================
+  groove_predictor:
+    id: "groovepredictor"
+    architecture:
+      type: "mlp_dropout"
+      input_size: 64
+      hidden_layers: [128, 96, 64]
+      output_size: 32
+      dropout: 0.2                   # Higher dropout to prevent overfit
+      activation: "gelu"
+    
+    training:
+      epochs: 60                      # Reduce from 100 since already perfect
+      early_stopping_patience: 15
+      min_epochs: 30
+      
+      optimizer:
+        name: adamw
+        lr: 3e-4
+        weight_decay: 0.02           # Higher for regularization
+      
+      scheduler:
+        name: cosine
+        warmup_steps: 100
+      
+      loss:
+        type: cross_entropy
+        label_smoothing: 0.15        # Higher smoothing
+      
+      grad_clip: 0.5
+    
+    target_accuracy: 1.0             # Maintain 100%
+    inference_target_ms: 2
+
+  # ============================================
+  # HARMONY PREDICTOR - 54% (needs work)
+  # Architecture: 128→256→128→64
+  # Previous: 26 epochs early stopped
+  # This needs significant architecture changes
+  # ============================================
+  harmony_predictor:
+    id: "harmonypredictor"
+    architecture:
+      type: "transformer_small"       # Switch to transformer
+      input_size: 128
+      hidden_dim: 256
+      num_layers: 4
+      num_heads: 4
+      ff_multiplier: 4
+      output_size: 64
+      dropout: 0.1
+      
+      # Context-aware for chord progressions
+      context_window: 8              # Look at 8 previous chords
+      positional_encoding: "rotary"
+    
+    training:
+      epochs: 150                     # Much longer training
+      early_stopping_patience: 40     # More patience for complex task
+      min_epochs: 80
+      
+      optimizer:
+        name: adamw
+        lr: 1e-4                      # Lower LR for stability
+        weight_decay: 0.05
+        betas: [0.9, 0.98]
+      
+      scheduler:
+        name: cosine_warmup_restarts
+        warmup_steps: 1000
+        t_0: 30
+        t_mult: 2
+        eta_min: 1e-7
+      
+      loss:
+        type: hierarchical_ce        # Hierarchical for chord relationships
+        chord_family_weight: 0.3
+        chord_quality_weight: 0.3
+        root_note_weight: 0.4
+      
+      # Curriculum learning - start with easier examples
+      curriculum:
+        enabled: true
+        warmup_epochs: 20
+        difficulty_metric: "progression_complexity"
+      
+      grad_clip: 1.0
+      grad_accum_steps: 8
+    
+    target_accuracy: 0.75            # Aim for 75%+ (was 54%)
+    inference_target_ms: 3
+
+  # ============================================
+  # MELODY TRANSFORMER - 34.5% (needs major work)
+  # Architecture: 64→256→256→256→128
+  # Previous: 47 epochs, 70.5s per epoch
+  # This is the hardest task - needs transformer architecture
+  # ============================================
+  melody_transformer:
+    id: "melodytransformer"
+    architecture:
+      type: "decoder_transformer"
+      vocab_size: 512                # Expanded vocabulary
+      input_size: 64
+      hidden_dim: 384
+      num_layers: 8
+      num_heads: 6
+      ff_multiplier: 4
+      output_size: 128
+      dropout: 0.1
+      
+      # Music-specific
+      max_seq_length: 1024
+      positional_encoding: "rotary"
+      use_relative_attention: true
+      
+      # Conditioning
+      emotion_conditioning: true
+      emotion_dim: 64
+      cross_attention_layers: [0, 2, 4, 6]
+    
+    training:
+      epochs: 200                    # Very long training for seq2seq
+      early_stopping_patience: 50
+      min_epochs: 100
+      
+      optimizer:
+        name: adamw
+        lr: 1e-4
+        weight_decay: 0.1
+        betas: [0.9, 0.95]
+      
+      scheduler:
+        name: cosine_warmup_restarts
+        warmup_steps: 2000
+        t_0: 40
+        t_mult: 2
+        eta_min: 1e-7
+      
+      loss:
+        type: music_aware            # Custom music-aware loss
+        note_ce_weight: 0.4
+        timing_mse_weight: 0.3
+        velocity_mse_weight: 0.2
+        structure_weight: 0.1
+      
+      # Teacher forcing schedule
+      teacher_forcing:
+        initial: 1.0
+        final: 0.7
+        decay_epochs: 100
+      
+      # Sampling during training
+      sample_every: 10
+      num_samples: 5
+      
+      grad_clip: 1.0
+      grad_accum_steps: 16           # Large accumulation for stability
+    
+    target_accuracy: 0.60            # Realistic: 60%+ (was 34.5%)
+    inference_target_ms: 5
+
+  # ============================================
+  # SPECTOCLOUD VIT - New model
+  # ============================================
+  spectocloud_vit:
+    id: "spectocloudvit"
+    architecture:
+      type: "vision_transformer"
+      input_channels: 1
+      n_mels: 128
+      time_frames: 64
+      hidden_dim: 256
+      num_layers: 6
+      num_heads: 8
+      output_points: 1200
+      output_dim: 10
+      dropout: 0.1
+    
+    training:
+      epochs: 100
+      early_stopping_patience: 25
+      min_epochs: 50
+      
+      optimizer:
+        name: adamw
+        lr: 1e-4
+        weight_decay: 0.05
+      
+      scheduler:
+        name: cosine_warmup
+        warmup_steps: 1000
+      
+      loss:
+        type: chamfer_color
+        position_weight: 1.0
+        color_weight: 0.5
+        property_weight: 0.3
+      
+      grad_clip: 1.0
+      grad_accum_steps: 4
+    
+    target_fps: 60
+    inference_target_ms: 16
+
+# -----------------------------------------------------------------------------
+# Augmentation (Optimized from laptop_m4_small)
+# -----------------------------------------------------------------------------
+augmentation:
+  enabled: true
+  
+  audio:
+    time_stretch: [0.85, 1.15]       # Wider than [0.9, 1.1]
+    pitch_shift_semitones: [-3, 3]   # Wider than [-2, 2]
+    eq_tilt_db: [-3, 3]
+    noise_snr_db: [20, 45]
+    
+    # Additional augmentations
+    spec_augment:
+      time_mask: 10
+      freq_mask: 15
+      n_time_masks: 2
+      n_freq_masks: 2
+    
+    mixup:
+      enabled: true
+      alpha: 0.2
+    
+    random_erasing:
+      enabled: true
+      p: 0.25
+      scale: [0.02, 0.1]
+
+# -----------------------------------------------------------------------------
+# Training Schedule
+# -----------------------------------------------------------------------------
+training_order:
+  # Train in order of complexity/stability
+  phase_1:
+    models: [groove_predictor, dynamics_engine]
+    description: "Quick wins - fast training, high accuracy"
+    estimated_time: "5 minutes"
+  
+  phase_2:
+    models: [emotion_recognizer]
+    description: "Core model - good accuracy, moderate time"
+    estimated_time: "15 minutes"
+  
+  phase_3:
+    models: [harmony_predictor, spectocloud_vit]
+    description: "Complex tasks - need architecture changes"
+    estimated_time: "45 minutes"
+  
+  phase_4:
+    models: [melody_transformer]
+    description: "Hardest task - long training required"
+    estimated_time: "2-4 hours"
+
+# -----------------------------------------------------------------------------
+# Validation & Export
+# -----------------------------------------------------------------------------
+validation:
+  # Run validation every N epochs
+  eval_every: 5
+  
+  # Metrics to track
+  metrics:
+    - accuracy
+    - f1_macro
+    - loss
+    - inference_time_ms
+  
+  # Best model selection
+  monitor: "val_loss"
+  mode: "min"
+
+export:
+  formats:
+    - pytorch
+    - onnx
+    - coreml
+    - rtneural               # For C++ integration
+  
+  quantization:
+    int8: true
+    dynamic: true
+  
+  # Output structure:
+  # checkpoints/
+  #   ├── emotion_recognizer/
+  #   │   └── best_model.pt
+  #   ├── dynamics_engine/
+  #   │   └── best_model.pt
+  #   ├── groove_predictor/
+  #   │   └── best_model.pt
+  #   ├── harmony_predictor/
+  #   │   └── best_model.pt
+  #   ├── melody_transformer/
+  #   │   └── best_model.pt
+  #   ├── spectocloud_vit/
+  #   │   └── best_model.pt
+  #   └── training_results.json
+  
+  checkpoint_dir: "checkpoints"
+  best_model_name: "best_model.pt"
+  results_file: "checkpoints/training_results.json"
+
+# -----------------------------------------------------------------------------
+# Logging
+# -----------------------------------------------------------------------------
+logging:
+  level: info
+  
+  wandb:
+    enabled: true
+    project: "kelly-integrated"
+    tags: ["integrated", "performance"]
+  
+  tensorboard:
+    enabled: true
+    log_dir: "runs/integrated"
+  
+  # Log training curves
+  plot_curves: true
+  save_curves_every: 10
+
+# -----------------------------------------------------------------------------
+# Reproducibility
+# -----------------------------------------------------------------------------
+seed: 42

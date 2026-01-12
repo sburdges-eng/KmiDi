@@ -1,0 +1,126 @@
+{
+  "timestamp": "2026-01-11T05:43:03.288643",
+  "platform": "darwin",
+  "python_version": "3.14.2 (v3.14.2:df793163d58, Dec  5 2025, 12:18:06) [Clang 16.0.0 (clang-1600.0.26.6)]",
+  "results": {
+    "affect_analyzer": {
+      "component": "affect_analyzer",
+      "mean_latency_us": 6.815595290390775,
+      "median_latency_us": 7.483398076146841,
+      "p95_latency_us": 14.391797594726086,
+      "p99_latency_us": 35.325001226738095,
+      "min_latency_us": 3.0499999411404133,
+      "max_latency_us": 47.18319978564978,
+      "target_us": 100.0,
+      "iterations": 1000,
+      "passed": true,
+      "error": null
+    },
+    "chord_parsing": {
+      "component": "chord_parsing",
+      "mean_latency_us": 8.563575989683159,
+      "median_latency_us": 4.875000740867108,
+      "p95_latency_us": 18.802005797624588,
+      "p99_latency_us": 38.46874460577965,
+      "min_latency_us": 4.499997885432094,
+      "max_latency_us": 200.3227564273402,
+      "target_us": 50.0,
+      "iterations": 1000,
+      "passed": true,
+      "error": null
+    },
+    "groove_engine": {
+      "component": "groove_engine",
+      "mean_latency_us": 201.02578870137222,
+      "median_latency_us": 142.2085042577237,
+      "p95_latency_us": 503.7499940954149,
+      "p99_latency_us": 1110.2909920737147,
+      "min_latency_us": 76.0830007493496,
+      "max_latency_us": 5322.00001180172,
+      "target_us": 200.0,
+      "iterations": 1000,
+      "passed": false,
+      "error": null
+    },
+    "therapy_session": {
+      "component": "therapy_session",
+      "mean_latency_us": 6.807801895774901,
+      "median_latency_us": 4.62500611320138,
+      "p95_latency_us": 11.833006283268332,
+      "p99_latency_us": 61.04199565015733,
+      "min_latency_us": 4.292000085115433,
+      "max_latency_us": 113.95799810998142,
+      "target_us": 5000.0,
+      "iterations": 500,
+      "passed": true,
+      "error": null
+    },
+    "ml_models": {
+      "EmotionRecognizer": {
+        "component": "EmotionRecognizer",
+        "mean_latency_us": 18.772098410408944,
+        "median_latency_us": 1.7919810488820076,
+        "p95_latency_us": 5.500012775883079,
+        "p99_latency_us": 782.957999035716,
+        "min_latency_us": 1.5829864423722029,
+        "max_latency_us": 782.957999035716,
+        "target_us": 5000.0,
+        "iterations": 100,
+        "passed": true,
+        "error": null
+      },
+      "HarmonyPredictor": {
+        "component": "HarmonyPredictor",
+        "mean_latency_us": 1.1824394459836185,
+        "median_latency_us": 0.9580107871443033,
+        "p95_latency_us": 1.04197533801198,
+        "p99_latency_us": 21.709012798964977,
+        "min_latency_us": 0.9159848559647799,
+        "max_latency_us": 21.709012798964977,
+        "target_us": 5000.0,
+        "iterations": 100,
+        "passed": true,
+        "error": null
+      },
+      "MelodyTransformer": {
+        "component": "MelodyTransformer",
+        "mean_latency_us": 1.2145887012593448,
+        "median_latency_us": 1.00000761449337,
+        "p95_latency_us": 1.0420044418424368,
+        "p99_latency_us": 20.750012481585145,
+        "min_latency_us": 0.9170034900307655,
+        "max_latency_us": 20.750012481585145,
+        "target_us": 5000.0,
+        "iterations": 100,
+        "passed": true,
+        "error": null
+      },
+      "GroovePredictor": {
+        "component": "GroovePredictor",
+        "mean_latency_us": 1.2020699796266854,
+        "median_latency_us": 1.00000761449337,
+        "p95_latency_us": 1.0830117389559746,
+        "p99_latency_us": 19.99997766688466,
+        "min_latency_us": 0.9579816833138466,
+        "max_latency_us": 19.99997766688466,
+        "target_us": 5000.0,
+        "iterations": 100,
+        "passed": true,
+        "error": null
+      },
+      "DynamicsEngine": {
+        "component": "DynamicsEngine",
+        "mean_latency_us": 2.0887705613859,
+        "median_latency_us": 1.8124992493540049,
+        "p95_latency_us": 2.2500171326100826,
+        "p99_latency_us": 25.540997739881277,
+        "min_latency_us": 1.5410187188535929,
+        "max_latency_us": 25.540997739881277,
+        "target_us": 5000.0,
+        "iterations": 100,
+        "passed": true,
+        "error": null
+      }
+    }
+  }
+}

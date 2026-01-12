@@ -1,0 +1,157 @@
+{
+  "template_name": "iDAW Starter Template",
+  "ableton_version": "11.0+",
+  "description": "Pre-configured Ableton Live Set for iDAW Penta Core plugin",
+  "created": "2025-12",
+  "project_settings": {
+    "sample_rate": 48000,
+    "buffer_size": 512,
+    "warp_mode": "complex_pro"
+  },
+  "tracks": [
+    {
+      "name": "Penta Core",
+      "type": "midi",
+      "color": 14,
+      "arm": true,
+      "devices": [
+        {
+          "type": "vst3",
+          "name": "Penta Core",
+          "settings": {
+            "harmony_mode": "auto",
+            "groove_enabled": true,
+            "analyze_enabled": true
+          }
+        }
+      ],
+      "output": "Sends Only"
+    },
+    {
+      "name": "Keys",
+      "type": "midi",
+      "color": 26,
+      "devices": [
+        {
+          "type": "instrument_rack",
+          "name": "Grand Piano",
+          "chains": [
+            {"name": "Piano", "instrument": "Grand Piano"}
+          ]
+        }
+      ],
+      "midi_from": "Penta Core",
+      "output": "Master"
+    },
+    {
+      "name": "Bass",
+      "type": "midi",
+      "color": 60,
+      "devices": [
+        {
+          "type": "wavetable",
+          "preset": "Deep Sub Bass"
+        }
+      ],
+      "output": "Master"
+    },
+    {
+      "name": "Drums",
+      "type": "midi",
+      "color": 69,
+      "devices": [
+        {
+          "type": "drum_rack",
+          "kit": "909 Core Kit"
+        }
+      ],
+      "output": "Master"
+    }
+  ],
+  "return_tracks": [
+    {
+      "name": "Reverb",
+      "color": 1,
+      "devices": [
+        {"type": "reverb", "preset": "Large Hall"}
+      ]
+    },
+    {
+      "name": "Delay",
+      "color": 3,
+      "devices": [
+        {"type": "ping_pong_delay", "preset": "Dotted Eighth"}
+      ]
+    }
+  ],
+  "master": {
+    "devices": [
+      {"type": "eq_eight", "preset": "Mastering"},
+      {"type": "glue_compressor", "preset": "Master Bus"},
+      {"type": "limiter", "preset": "Maximizer"}
+    ]
+  },
+  "scenes": [
+    {"name": "Intro", "tempo": 120, "color": 14},
+    {"name": "Verse", "tempo": 120, "color": 26},
+    {"name": "Chorus", "tempo": 120, "color": 60},
+    {"name": "Bridge", "tempo": 115, "color": 69},
+    {"name": "Outro", "tempo": 120, "color": 14}
+  ],
+  "groove_pool": [
+    {"name": "iDAW Funk 16ths", "timing": 65, "random": 10},
+    {"name": "iDAW Jazz Swing", "timing": 72, "random": 15},
+    {"name": "iDAW Pocket", "timing": 55, "random": 5}
+  ],
+  "control_surface": {
+    "type": "push_2",
+    "mappings": [
+      {"pad": "User Mode", "action": "Penta Core Controls"},
+      {"encoder_1": "Penta Core/Harmony Mode"},
+      {"encoder_2": "Penta Core/Groove Intensity"},
+      {"encoder_3": "Penta Core/Swing Amount"}
+    ]
+  },
+  "max_for_live": {
+    "devices": [
+      {
+        "name": "iDAW Bridge",
+        "location": "templates/ableton_live/devices/iDAW_Bridge.amxd",
+        "description": "OSC bridge to Penta Core brain server"
+      },
+      {
+        "name": "iDAW Chord Display",
+        "location": "templates/ableton_live/devices/iDAW_Chord_Display.amxd",
+        "description": "Real-time chord analysis display"
+      }
+    ]
+  },
+  "setup_instructions": [
+    "1. Install Penta Core VST3 plugin",
+    "2. Open Ableton Live",
+    "3. Drag template .als file into Live or File > Open",
+    "4. Verify Penta Core loads on Track 1",
+    "5. Set MIDI input to your controller",
+    "6. Optional: Load Max for Live devices for extended features"
+  ],
+  "recommended_settings": {
+    "ableton": {
+      "audio": {
+        "buffer_size": 512,
+        "sample_rate": 48000
+      },
+      "cpu": {
+        "multicore_usage": true,
+        "high_quality_engine": true
+      },
+      "midi": {
+        "takeover_mode": "pickup"
+      }
+    },
+    "penta_core": {
+      "low_latency_mode": false,
+      "simd_enabled": true,
+      "osc_port": 9000
+    }
+  }
+}

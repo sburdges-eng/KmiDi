@@ -1,0 +1,195 @@
+desc:iDAW Penta Core MIDI Analyzer
+//tags: MIDI analysis chord detection
+//author: iDAW
+
+slider1:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Detected Root
+slider2:0<0,4,1{Major,Minor,Dim,Aug,Sus}>Detected Quality
+slider3:0<0,100,1>Confidence %
+slider4:0<0,11,1{C,C#,D,D#,E,F,F#,G,G#,A,A#,B}>Key Root
+slider5:0<0,1,1{Major,Minor}>Key Mode
+slider6:0<0,100,1>Swing %
+slider7:50<0,100,1>Groove Intensity
+
+@init
+// Pitch class histogram
+pcs_count = 12;
+memset(pcs, 0, pcs_count);
+
+// Note tracking
+note_count = 0;
+last_analysis = 0;
+
+// Chord templates (12 pitch classes each)
+// Major: 0, 4, 7
+chord_major = 0x091; // 0b000010010001
+// Minor: 0, 3, 7
+chord_minor = 0x089; // 0b000010001001
+// Dim: 0, 3, 6
+chord_dim = 0x049;   // 0b000001001001
+// Aug: 0, 4, 8
+chord_aug = 0x111;   // 0b000100010001
+
+// Root names
+root_names = 0;
+root_names[0] = "C";
+root_names[1] = "C#";
+root_names[2] = "D";
+root_names[3] = "D#";
+root_names[4] = "E";
+root_names[5] = "F";
+root_names[6] = "F#";
+root_names[7] = "G";
+root_names[8] = "G#";
+root_names[9] = "A";
+root_names[10] = "A#";
+root_names[11] = "B";
+
+@slider
+// Update from external control
+
+@block
+// Process MIDI events
+while (midirecv(offset, msg1, msg2, msg3)) (
+    status = msg1 & 0xF0;
+
+    // Note On
+    status == 0x90 && msg3 > 0 ? (
+        pitch_class = msg2 % 12;
+        pcs[pitch_class] += 1;
+        note_count += 1;
+    );
+
+    // Note Off or Note On with velocity 0
+    (status == 0x80 || (status == 0x90 && msg3 == 0)) ? (
+        pitch_class = msg2 % 12;
+        pcs[pitch_class] = max(0, pcs[pitch_class] - 1);
+    );
+
+    // Pass through all MIDI
+    midisend(offset, msg1, msg2, msg3);
+);
+
+// Analyze chord every 100ms
+time_precise() - last_analysis > 0.1 ? (
+    last_analysis = time_precise();
+
+    // Build pitch class set
+    pcs_bits = 0;
+    i = 0;
+    loop(12,
+        pcs[i] > 0 ? pcs_bits |= (1 << i);
+        i += 1;
+    );
+
+    // Find best matching chord
+    best_match = 0;
+    best_quality = 0;
+    best_score = 0;
+
+    // Try each root
+    root = 0;
+    loop(12,
+        // Rotate template to current root
+        test_major = ((chord_major << root) | (chord_major >> (12 - root))) & 0xFFF;
+        test_minor = ((chord_minor << root) | (chord_minor >> (12 - root))) & 0xFFF;
+        test_dim = ((chord_dim << root) | (chord_dim >> (12 - root))) & 0xFFF;
+        test_aug = ((chord_aug << root) | (chord_aug >> (12 - root))) & 0xFFF;
+
+        // Count matching bits
+        score_major = 0; t = pcs_bits & test_major;
+        while(t) (score_major += t & 1; t >>= 1;);
+
+        score_minor = 0; t = pcs_bits & test_minor;
+        while(t) (score_minor += t & 1; t >>= 1;);
+
+        score_dim = 0; t = pcs_bits & test_dim;
+        while(t) (score_dim += t & 1; t >>= 1;);
+
+        score_aug = 0; t = pcs_bits & test_aug;
+        while(t) (score_aug += t & 1; t >>= 1;);
+
+        // Update best match
+        score_major > best_score ? (best_match = root; best_quality = 0; best_score = score_major;);
+        score_minor > best_score ? (best_match = root; best_quality = 1; best_score = score_minor;);
+        score_dim > best_score ? (best_match = root; best_quality = 2; best_score = score_dim;);
+        score_aug > best_score ? (best_match = root; best_quality = 3; best_score = score_aug;);
+
+        root += 1;
+    );
+
+    // Update sliders
+    slider1 = best_match;
+    slider2 = best_quality;
+    slider3 = min(100, best_score * 33);
+);
+
+@gfx 400 200
+// Draw chord display
+gfx_clear = 0x1a1a1a;
+
+// Title
+gfx_setfont(1, "Arial", 14);
+gfx_set(0.8, 0.8, 0.8);
+gfx_x = 10; gfx_y = 10;
+gfx_drawstr("iDAW Penta Core");
+
+// Chord name
+gfx_setfont(1, "Arial", 48);
+gfx_set(0.3, 0.7, 1.0);
+gfx_x = 20; gfx_y = 50;
+
+// Get root name
+chord_str = "";
+slider1 == 0 ? chord_str = "C";
+slider1 == 1 ? chord_str = "C#";
+slider1 == 2 ? chord_str = "D";
+slider1 == 3 ? chord_str = "D#";
+slider1 == 4 ? chord_str = "E";
+slider1 == 5 ? chord_str = "F";
+slider1 == 6 ? chord_str = "F#";
+slider1 == 7 ? chord_str = "G";
+slider1 == 8 ? chord_str = "G#";
+slider1 == 9 ? chord_str = "A";
+slider1 == 10 ? chord_str = "A#";
+slider1 == 11 ? chord_str = "B";
+
+gfx_drawstr(chord_str);
+
+// Quality suffix
+gfx_setfont(1, "Arial", 24);
+gfx_x = gfx_x + 10;
+slider2 == 0 ? gfx_drawstr("maj");
+slider2 == 1 ? gfx_drawstr("min");
+slider2 == 2 ? gfx_drawstr("dim");
+slider2 == 3 ? gfx_drawstr("aug");
+slider2 == 4 ? gfx_drawstr("sus");
+
+// Confidence bar
+gfx_set(0.2, 0.2, 0.2);
+gfx_rect(20, 130, 360, 20);
+gfx_set(0.3, 0.7, 0.3);
+gfx_rect(20, 130, slider3 * 3.6, 20);
+
+// Key display
+gfx_setfont(1, "Arial", 14);
+gfx_set(0.6, 0.6, 0.6);
+gfx_x = 20; gfx_y = 160;
+gfx_drawstr("Key: ");
+slider4 == 0 ? gfx_drawstr("C");
+slider4 == 1 ? gfx_drawstr("C#");
+slider4 == 2 ? gfx_drawstr("D");
+slider4 == 3 ? gfx_drawstr("D#");
+slider4 == 4 ? gfx_drawstr("E");
+slider4 == 5 ? gfx_drawstr("F");
+slider4 == 6 ? gfx_drawstr("F#");
+slider4 == 7 ? gfx_drawstr("G");
+slider4 == 8 ? gfx_drawstr("G#");
+slider4 == 9 ? gfx_drawstr("A");
+slider4 == 10 ? gfx_drawstr("A#");
+slider4 == 11 ? gfx_drawstr("B");
+slider5 == 0 ? gfx_drawstr(" Major") : gfx_drawstr(" Minor");
+
+// Note count
+gfx_x = 300; gfx_y = 160;
+gfx_drawstr("Notes: ");
+gfx_drawnumber(note_count, 0);

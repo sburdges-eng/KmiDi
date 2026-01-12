@@ -1,0 +1,64 @@
+# DAiW Knowledge Base Analyzer - Docker Build
+# ===========================================
+# Analyzes repository and creates structured knowledge base
+
+# Base image
+FROM python:3.11-slim
+
+# Set labels
+LABEL maintainer="Sean Burdges <seanblariat@gmail.com>"
+LABEL description="DAiW Knowledge Base Analyzer - Repository analysis and categorization"
+LABEL version="1.0.0"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app/analyzer
+
+# Install Python dependencies for knowledge base analysis
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+    spacy>=3.7.0 \
+    nltk>=3.8.0 \
+    markdown>=3.5.0 \
+    frontmatter>=2.0.0 \
+    networkx>=3.2.0 \
+    tree-sitter>=0.20.0 \
+    pyyaml>=6.0.0 \
+    python-frontmatter>=1.0.0 \
+    tqdm>=4.65.0
+
+# Download spaCy language model
+RUN python -m spacy download en_core_web_sm || true
+
+# Download NLTK data
+RUN python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords'); nltk.download('wordnet')" || true
+
+# Create non-root user
+RUN useradd -m -u 1000 -s /bin/bash daiw
+
+# Copy analyzer scripts (will be mounted, but have defaults)
+COPY tools/kb_analyzer/ /app/analyzer/
+
+# Set permissions
+RUN chown -R daiw:daiw /app/analyzer
+
+# Switch to non-root user
+USER daiw
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV KB_OUTPUT_DIR=/app/output
+ENV KB_ANALYSIS_MODE=full
+ENV KB_OUTPUT_FORMAT=both
+ENV KB_PIPELINE_FILTER=all
+ENV KB_INCLUDE_UI_UX=true
+
+# Default command
+CMD ["python", "analyze_repository.py"]

@@ -1,0 +1,111 @@
+# iDAW Penta Core OSC Control Surface for Reaper
+# Version: 1.0.0
+#
+# This file defines the OSC message mappings between Reaper and iDAW Penta Core.
+# Copy to: [Reaper Resource Path]/OSC/
+#
+# Usage:
+#   1. Start iDAW brain server: python -m penta_core.brain_server
+#   2. Add OSC control surface in Reaper Preferences
+#   3. Select this configuration file
+
+# Device configuration
+DEVICE_TRACK_COUNT 8
+DEVICE_SEND_COUNT 4
+DEVICE_RECEIVE_COUNT 4
+DEVICE_FX_COUNT 8
+DEVICE_FX_PARAM_COUNT 16
+DEVICE_FX_INST_PARAM_COUNT 16
+DEVICE_MARKER_COUNT 8
+DEVICE_REGION_COUNT 8
+
+# ============================================================================
+# TRANSPORT
+# ============================================================================
+TRANSPORT_PLAY n/reaper/transport/play
+TRANSPORT_STOP n/reaper/transport/stop
+TRANSPORT_RECORD n/reaper/transport/record
+TRANSPORT_REPEAT n/reaper/transport/repeat
+
+TEMPO n/reaper/transport/bpm
+TIME n/reaper/transport/time
+TIME_BEATS n/reaper/transport/beats
+BEAT n/reaper/transport/beat
+
+# ============================================================================
+# TRACKS
+# ============================================================================
+TRACK_VOLUME n/reaper/track/@/volume
+TRACK_PAN n/reaper/track/@/pan
+TRACK_MUTE b/reaper/track/@/mute
+TRACK_SOLO b/reaper/track/@/solo
+TRACK_REC_ARM b/reaper/track/@/recarm
+TRACK_SELECT b/reaper/track/@/select
+TRACK_NAME s/reaper/track/@/name
+
+# ============================================================================
+# FX
+# ============================================================================
+FX_PARAM_VALUE n/reaper/track/@/fx/@/param/@/value
+FX_NAME s/reaper/track/@/fx/@/name
+FX_BYPASS b/reaper/track/@/fx/@/bypass
+
+# ============================================================================
+# MIDI (to iDAW Penta Core)
+# ============================================================================
+# Note messages - sent when MIDI events occur
+MIDI_NOTE_ON n/penta/midi/noteon @/@
+MIDI_NOTE_OFF n/penta/midi/noteoff @/@
+MIDI_CC n/penta/midi/cc @/@
+MIDI_PITCH n/penta/midi/pitch
+MIDI_PROGRAM n/penta/midi/program
+
+# ============================================================================
+# PENTA CORE COMMANDS
+# ============================================================================
+# Custom actions for iDAW integration
+# These are triggered by ReaScript or custom actions
+
+ACTION s/penta/action
+ACTION i40001 s/penta/analyze/start
+ACTION i40002 s/penta/analyze/stop
+ACTION i40003 s/penta/generate
+ACTION i40004 s/penta/humanize
+
+# ============================================================================
+# PENTA CORE FEEDBACK (from brain server)
+# ============================================================================
+# Chord detection feedback
+REAPER_CMD s/penta/chord/@
+REAPER_CMD s/penta/key/@
+REAPER_CMD s/penta/scale/@
+REAPER_CMD s/penta/groove/@
+
+# Generated MIDI feedback
+REAPER_CMD b/penta/midi/out
+
+# Status messages
+REAPER_CMD s/penta/status
+REAPER_CMD f/penta/cpu
+REAPER_CMD f/penta/latency
+
+# ============================================================================
+# MARKERS & REGIONS (for arrangement)
+# ============================================================================
+MARKER_NAME s/reaper/marker/@/name
+REGION_NAME s/reaper/region/@/name
+REGION_START n/reaper/region/@/start
+REGION_END n/reaper/region/@/end
+
+# ============================================================================
+# CUSTOM FEEDBACK PATTERNS
+# ============================================================================
+# Define patterns for chord overlay display
+PATTERN CHORD_DISPLAY /penta/chord/display s s f
+# args: chord_name, chord_quality, confidence
+
+PATTERN KEY_DISPLAY /penta/key/display s s
+# args: key_root, key_mode
+
+PATTERN GROOVE_DISPLAY /penta/groove/display f f f
+# args: swing_amount, pocket_depth, tempo_stability
