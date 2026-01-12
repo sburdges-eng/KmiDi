@@ -1,0 +1,129 @@
+{
+  "template_name": "iDAW Starter Template",
+  "logic_pro_version": "10.8+",
+  "description": "Pre-configured Logic Pro X template for iDAW Penta Core plugin",
+  "created": "2025-12",
+  "project_settings": {
+    "sample_rate": 48000,
+    "bit_depth": 24,
+    "buffer_size": 512,
+    "processing_threads": "automatic"
+  },
+  "tracks": [
+    {
+      "name": "Penta Core",
+      "type": "software_instrument",
+      "color": "blue",
+      "plugins": [
+        {
+          "slot": "midi_fx_1",
+          "name": "Penta Core",
+          "format": "AU",
+          "settings": {
+            "harmony_mode": "auto",
+            "groove_enabled": true,
+            "osc_enabled": true
+          }
+        }
+      ],
+      "output": "Stereo Out"
+    },
+    {
+      "name": "MIDI Input",
+      "type": "external_midi",
+      "color": "green",
+      "destination": "Penta Core",
+      "input": "All MIDI Inputs"
+    },
+    {
+      "name": "Piano",
+      "type": "software_instrument",
+      "color": "yellow",
+      "plugins": [
+        {
+          "slot": "instrument",
+          "name": "Steinway Grand Piano",
+          "preset": "Studio Grand"
+        }
+      ],
+      "input_from": "Penta Core",
+      "output": "Stereo Out"
+    },
+    {
+      "name": "Strings",
+      "type": "software_instrument",
+      "color": "purple",
+      "plugins": [
+        {
+          "slot": "instrument",
+          "name": "Studio Strings",
+          "preset": "Ensemble"
+        }
+      ],
+      "output": "Stereo Out"
+    }
+  ],
+  "channel_strips": [
+    {
+      "name": "Main Output",
+      "type": "master",
+      "plugins": [
+        {"name": "Linear Phase EQ", "preset": "Mastering"},
+        {"name": "Adaptive Limiter", "preset": "Final Mix"}
+      ]
+    }
+  ],
+  "smart_controls": {
+    "enabled": true,
+    "mappings": [
+      {"control": "Knob 1", "target": "Penta Core/Harmony Mode"},
+      {"control": "Knob 2", "target": "Penta Core/Groove Intensity"},
+      {"control": "Knob 3", "target": "Penta Core/Swing Amount"},
+      {"control": "Knob 4", "target": "Penta Core/Intent Temperature"}
+    ]
+  },
+  "environment": {
+    "midi_routing": {
+      "external_midi": "Penta Core",
+      "penta_core_out": ["Piano", "Strings"]
+    }
+  },
+  "screensets": [
+    {
+      "id": 1,
+      "name": "Compose",
+      "windows": ["Tracks", "Piano Roll", "Smart Controls"]
+    },
+    {
+      "id": 2,
+      "name": "Mix",
+      "windows": ["Mixer", "Channel EQ"]
+    }
+  ],
+  "setup_instructions": [
+    "1. Install Penta Core AU plugin",
+    "2. Open Logic Pro X",
+    "3. File > New from Template > My Templates > iDAW Starter",
+    "4. Or import this configuration via File > Project Settings",
+    "5. Verify Penta Core appears in MIDI FX slot",
+    "6. Configure External MIDI input device"
+  ],
+  "recommended_settings": {
+    "logic_pro": {
+      "audio": {
+        "buffer_size": 512,
+        "processing_threads": 8,
+        "multithreading": "playback_and_live_tracks"
+      },
+      "midi": {
+        "input_filter": "none",
+        "clock_send": true
+      }
+    },
+    "penta_core": {
+      "low_latency_mode": false,
+      "simd_enabled": true,
+      "osc_port": 9000
+    }
+  }
+}

@@ -1,0 +1,413 @@
+# =============================================================================
+# M4 Mac Pro/Max Local Inference Configuration
+# Post-CUDA Training | 3TB SSD Deployment
+# =============================================================================
+# Purpose: Maximum performance local model inference on Apple Silicon M4
+# After training on NVIDIA CUDA, deploy trained models to M4 Mac with SSD
+# Target: MacBook Pro/Mac Studio with M4 Pro/Max chip
+# =============================================================================
+
+build: m4-local-inference
+device: mps
+python: 3.11
+inference_only: true
+enable_compile: true  # torch.compile for 5-10% speedup on MPS
+quantize: false  # MPS doesn't support quantization natively; use CoreML for INT8
+
+# =============================================================================
+# Hardware Specifications (M4 Pro/Max Reference)
+# =============================================================================
+hardware:
+  chip: "Apple M4 Pro/Max"
+  cpu_cores: 14  # 10 performance + 4 efficiency (M4 Pro)
+  gpu_cores: 20  # 20 GPU cores (M4 Pro) or 40 (M4 Max)
+  neural_engine_cores: 16
+  unified_memory_gb: 48  # Recommended: 48GB+ for production
+  storage:
+    type: "External SSD"
+    capacity_tb: 3
+    interface: "Thunderbolt 4"
+    read_speed_mbps: 2800
+    write_speed_mbps: 2300
+
+# =============================================================================
+# SSD Storage Paths (3TB External SSD)
+# =============================================================================
+# Data location: Files moved from external SSD to local storage
+# New location: /Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data
+# Adjust DATA_ROOT, MODELS_ROOT, OUTPUT_ROOT via environment or .env
+
+paths:
+  # Root directories (customize via environment variables)
+  # Updated: Default to new local storage location (files moved from SSD)
+  ssd_mount: ${SSD_MOUNT:-/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA}
+  data_root: ${DATA_ROOT:-${SSD_MOUNT}/kelly-audio-data}
+  models_root: ${MODELS_ROOT:-${SSD_MOUNT}/kelly-project/models}
+  output_root: ${OUTPUT_ROOT:-${SSD_MOUNT}/kelly-project/output}
+  checkpoints_root: ${CHECKPOINTS_ROOT:-${SSD_MOUNT}/kelly-project/checkpoints}
+  
+  # Trained model paths (post-CUDA training)
+  trained_models:
+    emotion_recognizer: ${MODELS_ROOT}/trained/emotionrecognizer_best.pt
+    melody_transformer: ${MODELS_ROOT}/trained/melodytransformer_best.pt
+    harmony_predictor: ${MODELS_ROOT}/trained/harmonypredictor_best.pt
+    dynamics_engine: ${MODELS_ROOT}/trained/dynamicsengine_best.pt
+    groove_predictor: ${MODELS_ROOT}/trained/groovepredictor_best.pt
+    instrument_recognizer: ${MODELS_ROOT}/trained/instrumentrecognizer_best.pt
+    emotion_node_classifier: ${MODELS_ROOT}/trained/emotionnodeclassifier_best.pt
+  
+  # Exported formats (ONNX for portability, CoreML for Apple optimization)
+  exports:
+    onnx_dir: ${MODELS_ROOT}/onnx
+    coreml_dir: ${MODELS_ROOT}/coreml
+    rtneural_dir: ${MODELS_ROOT}/rtneural
+
+# =============================================================================
+# Local LLM Configuration (Ollama)
+# =============================================================================
+# Recommended models for 48GB unified memory M4 Pro/Max
+# All run entirely local - no API keys needed
+
+local_llm:
+  provider: ollama
+  host: http://localhost:11434
+  timeout_seconds: 120
+  
+  # Primary model for lyrics, intent parsing, creative suggestions
+  primary_model:
+    name: "llama3.2:70b"  # Largest that fits in 48GB (Q4 quantized)
+    context_length: 131072
+    vram_usage_gb: 42
+    strengths:
+      - "Creative writing"
+      - "Intent parsing"
+      - "Music theory reasoning"
+    fallback: "llama3.2:8b"
+  
+  # Code/technical model for music analysis
+  code_model:
+    name: "codellama:34b"
+    context_length: 16384
+    vram_usage_gb: 20
+    strengths:
+      - "Music notation parsing"
+      - "MIDI analysis"
+      - "Chord progression logic"
+    fallback: "codellama:7b"
+  
+  # Fast inference model for real-time interactions
+  fast_model:
+    name: "phi3:14b"
+    context_length: 4096
+    vram_usage_gb: 8
+    strengths:
+      - "Quick responses"
+      - "Intent classification"
+      - "Simple suggestions"
+  
+  # Embedding model for semantic search
+  embedding_model:
+    name: "nomic-embed-text"
+    dimensions: 768
+    vram_usage_gb: 1
+
+# =============================================================================
+# Model Combinations by Use Case
+# =============================================================================
+# Different workflows use different model combinations
+# Choose based on available VRAM and latency requirements
+
+model_profiles:
+  # Maximum quality - all models loaded
+  maximum_quality:
+    description: "All models loaded for highest quality generation"
+    memory_required_gb: 48
+    models:
+      llm: "llama3.2:70b"
+      ml_emotion: emotionrecognizer
+      ml_melody: melodytransformer
+      ml_harmony: harmonypredictor
+      ml_groove: groovepredictor
+      ml_dynamics: dynamicsengine
+    latency_target_ms: 500
+    recommended_for:
+      - "Final production"
+      - "Detailed analysis"
+      - "Complex compositions"
+  
+  # Balanced - good quality with faster response
+  balanced:
+    description: "Balance between quality and speed"
+    memory_required_gb: 24
+    models:
+      llm: "llama3.2:8b"
+      ml_emotion: emotionrecognizer
+      ml_melody: melodytransformer
+      ml_harmony: harmonypredictor
+      ml_groove: groovepredictor
+    latency_target_ms: 200
+    recommended_for:
+      - "Interactive sessions"
+      - "Real-time feedback"
+      - "Iterative composition"
+  
+  # Fast - minimal models for rapid iteration
+  fast:
+    description: "Minimal models for fastest response"
+    memory_required_gb: 12
+    models:
+      llm: "phi3:14b"
+      ml_emotion: emotionrecognizer
+      ml_groove: groovepredictor
+    latency_target_ms: 50
+    recommended_for:
+      - "Quick sketching"
+      - "Live performance"
+      - "Real-time MIDI"
+
+# =============================================================================
+# Optimal Local Model Stack (Recommended)
+# =============================================================================
+# This is the recommended combination for M4 Pro/Max with 48GB RAM
+
+recommended_stack:
+  description: "Optimal local model combination for 3TB SSD deployment"
+  
+  # Layer 1: Local LLMs via Ollama
+  llm_layer:
+    primary: "llama3.2:8b"      # 5GB - fast, capable creative writing
+    creative: "mistral:7b"      # 4GB - excellent for lyrics/poetry
+    code: "codellama:7b"        # 4GB - music notation and analysis
+    embedding: "nomic-embed-text"  # 1GB - semantic search
+    total_vram_gb: 14
+  
+  # Layer 2: Trained ML Models (from CUDA training)
+  ml_layer:
+    # Core emotion pipeline (required)
+    emotion_recognizer:
+      format: pytorch
+      params: 403264
+      input: "128-dim mel-spectrogram"
+      output: "64-dim emotion embedding"
+      inference_ms: 5
+    
+    melody_transformer:
+      format: pytorch
+      params: 641664
+      input: "64-dim emotion + context"
+      output: "128-dim note probabilities"
+      inference_ms: 10
+    
+    harmony_predictor:
+      format: pytorch
+      params: 74176
+      input: "128-dim context"
+      output: "64-dim chord probabilities"
+      inference_ms: 3
+    
+    groove_predictor:
+      format: pytorch
+      params: 18656
+      input: "64-dim emotion"
+      output: "32-dim timing parameters"
+      inference_ms: 2
+    
+    dynamics_engine:
+      format: pytorch
+      params: 13520
+      input: "32-dim context"
+      output: "16-dim expression"
+      inference_ms: 1
+    
+    # Optional advanced models
+    instrument_recognizer:
+      format: pytorch
+      params: 2000000
+      input: "128-dim audio features"
+      output: "160-dim dual-head (tech+emo)"
+      inference_ms: 10
+      optional: true
+    
+    emotion_node_classifier:
+      format: pytorch
+      params: 3000000
+      input: "128-dim features"
+      output: "258-dim (6×6×6 + key)"
+      inference_ms: 15
+      optional: true
+    
+    total_params: 3151280
+    total_vram_gb: 0.5  # Tiny compared to LLMs
+  
+  # Layer 3: Audio Processing
+  audio_layer:
+    voice_synthesis:
+      engine: "coqui-tts"  # or "pyttsx3" for fallback
+      model: "tts_models/en/ljspeech/tacotron2-DDC"
+      vram_usage_gb: 1
+    
+    audio_analysis:
+      engine: "torchaudio"
+      backend: "mps"
+      features:
+        - mel_spectrogram
+        - mfcc
+        - pitch_tracking
+        - onset_detection
+  
+  # Total resource summary
+  total_resources:
+    vram_usage_gb: 15.5
+    ram_headroom_gb: 32.5
+    storage_required_gb: 100  # Models + data + cache
+    recommended_ssd_free_gb: 500
+
+# =============================================================================
+# Performance Settings
+# =============================================================================
+performance:
+  target_latency_ms: 100       # Interactive response target
+  max_latency_ms: 500          # Maximum acceptable latency
+  batch_size: 16               # Inference batch size
+  enable_mps_profiling: true   # Metal profiling for optimization
+  memory_monitor: true         # Track unified memory usage
+  cache_models: true           # Keep models in memory between calls
+  prefetch_models: true        # Load models at startup
+
+# =============================================================================
+# Cache Configuration
+# =============================================================================
+cache:
+  enable: true
+  location: ${HOME}/.idaw_cache
+  max_size_gb: 10
+  
+  # Model cache (keep loaded models ready)
+  model_cache:
+    enable: true
+    ttl_seconds: 3600  # Keep models loaded for 1 hour
+  
+  # Generation cache (avoid regenerating same prompts)
+  generation_cache:
+    enable: true
+    max_entries: 1000
+    ttl_seconds: 86400  # 24 hours
+  
+  # Embedding cache (for semantic search)
+  embedding_cache:
+    enable: true
+    persist_to_disk: true
+    location: ${HOME}/.idaw_cache/embeddings
+
+# =============================================================================
+# API Configuration (local only)
+# =============================================================================
+api:
+  host: 127.0.0.1
+  port: 8000
+  workers: 4
+  request_timeout: 60
+  
+  # WebSocket for real-time features
+  websocket:
+    enable: true
+    port: 8001
+    max_connections: 10
+
+# =============================================================================
+# SSD Data Management
+# =============================================================================
+ssd_management:
+  # Datasets stored on SSD
+  datasets:
+    midi:
+      lakh_midi:
+        path: ${DATA_ROOT}/raw/chord_progressions/lakh
+        size_gb: 5
+      maestro:
+        path: ${DATA_ROOT}/raw/melodies/maestro
+        size_gb: 120
+    
+    audio:
+      nsynth:
+        path: ${DATA_ROOT}/raw/nsynth
+        size_gb: 50
+      fma:
+        path: ${DATA_ROOT}/raw/fma
+        size_gb: 900
+  
+  # Space allocation guide for 3TB SSD
+  allocation:
+    datasets: 1500       # GB - Audio/MIDI datasets
+    trained_models: 50   # GB - PyTorch checkpoints
+    exported_models: 20  # GB - ONNX/CoreML exports
+    cache: 100           # GB - Inference cache
+    output: 200          # GB - Generated content
+    free_space: 1130     # GB - Buffer for new data
+
+# =============================================================================
+# Ollama Setup Commands (Reference)
+# =============================================================================
+# Run these commands to set up local LLMs on your M4 Mac:
+#
+# 1. Install Ollama:
+#    brew install ollama
+#
+# 2. Start Ollama service:
+#    ollama serve
+#
+# 3. Pull recommended models:
+#    ollama pull llama3.2:8b
+#    ollama pull mistral:7b
+#    ollama pull codellama:7b
+#    ollama pull nomic-embed-text
+#    ollama pull phi3:14b
+#
+# 4. (Optional) For maximum quality with 48GB+ RAM:
+#    ollama pull llama3.2:70b
+#
+# 5. Verify models:
+#    ollama list
+
+# =============================================================================
+# Post-CUDA Training Deployment Steps
+# =============================================================================
+# After training on NVIDIA GPU, follow these steps:
+#
+# 1. Export models from CUDA machine:
+#    python scripts/export_models.py --format pytorch,onnx,coreml
+#
+# 2. Copy to SSD:
+#    rsync -avz --progress trained_models/ /Volumes/Extreme\ SSD/kelly-project/models/trained/
+#
+# 3. Verify on M4:
+#    python -m music_brain.verify_models --config config/build-m4-local-inference.yaml
+#
+# 4. Test inference:
+#    python -m music_brain.tier1.midi_generator --test --device mps
+#
+# 5. Benchmark:
+#    python scripts/benchmark_inference.py --device mps --models all
+
+# =============================================================================
+# Environment Variables (Example .env file)
+# =============================================================================
+# Create .env file with these settings:
+#
+# DATA_LOCATION=/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA
+# DATA_ROOT=/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data
+# MODELS_ROOT=/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/models
+# OUTPUT_ROOT=/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/output
+# CHECKPOINTS_ROOT=/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/checkpoints
+# NOTE: Files moved from external SSD. Update these paths if using different locations.
+# OLLAMA_MODEL=llama3.2:8b
+# OLLAMA_HOST=http://localhost:11434
+# PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0
+
+notes:
+  - "Optimized for Apple Silicon M4 Pro/Max using MPS backend"
+  - "All LLMs run locally via Ollama - no internet required for inference"
+  - "Trained models are deployed from CUDA training machine via SSD"
+  - "Configure SSD paths via environment variables or .env file"
+  - "For 48GB+ unified memory, consider using llama3.2:70b for maximum quality"
+  - "Use CoreML exports for maximum Apple Silicon optimization"

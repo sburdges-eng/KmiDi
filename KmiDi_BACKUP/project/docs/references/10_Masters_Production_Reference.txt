@@ -1,0 +1,27 @@
+10 MASTERS OF INTIMATE PRODUCTION
+Reference Guide for "When I Found You"
+=============================================================
+
+1. RICK RUBIN - No reverb, vocal in your face, strip to essentials
+2. JUSTIN VERNON - SM57, keep breaths/gasps, dark tone = intimacy
+3. TONY BERG - Fingerpicked acoustic, minimal, vulnerability first
+4. DANIEL LANOIS - Treatments, movement, atmospheric irregularities
+5. NIGEL GODRICH - Real spaces, natural reverb, bare grit
+6. BLAKE MILLS - Saturation during tracking, dynamics matter
+7. TCHAD BLAKE - Compression as ambience, SansAmp, lo-fi warmth
+8. SYLVIA MASSY - Keep imperfections, mistakes are magic
+9. JOE HENRY - Record live/fast, windows open, sonic naturalism
+10. T BONE BURNETT - Analog, mono, presence over fidelity
+
+REVISED VOCAL CHAIN:
+1. Noise Gate (preserve breaths)
+2. 1176 Compressor (4:1, slow attack)
+3. Tape Saturation (subtle)
+4. EQ: HP 80Hz, presence 2-4kHz
+5. NO REVERB or max 5%
+
+REVISED GUITAR CHAIN:
+1. High-pass 100Hz
+2. Tape/Tube Saturation
+3. Gentle compression
+4. Slapback delay 50ms, 10% mix (instead of reverb)

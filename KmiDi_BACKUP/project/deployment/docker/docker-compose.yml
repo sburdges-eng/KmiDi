@@ -1,0 +1,154 @@
+version: '3.8'
+
+services:
+  # DAiW CLI service
+  daiw-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: daiw-music-brain:latest
+    container_name: daiw-cli
+    volumes:
+      - ./examples_music-brain:/app/examples:ro
+      - ./data:/app/data:ro
+      - ./output:/app/output:rw
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ["daiw", "--help"]
+    networks:
+      - daiw-network
+
+  # DAiW Desktop UI service
+  daiw-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: daiw-music-brain:latest
+    container_name: daiw-ui
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./examples_music-brain:/app/examples:ro
+      - ./data:/app/data:ro
+      - ./output:/app/output:rw
+    environment:
+      - PYTHONUNBUFFERED=1
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+    command: ["streamlit", "run", "app.py", "--server.headless=true"]
+    networks:
+      - daiw-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Development service with hot-reload
+  daiw-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: daiw-music-brain:dev
+    container_name: daiw-dev
+    volumes:
+      - .:/app:rw
+      - pip-cache:/root/.cache/pip
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    command: ["bash"]
+    stdin_open: true
+    tty: true
+    networks:
+      - daiw-network
+
+  # ML Training Pipeline service
+  daiw-ml-training:
+    build:
+      context: .
+      dockerfile: Dockerfile.training
+    image: daiw-ml-training:latest
+    container_name: daiw-ml-training
+    volumes:
+      - ./final kel/training_pipe:/app/training:ro
+      - ./final kel/datasets:/app/datasets:ro
+      - ./final kel/models:/app/models:rw
+      - ./final kel/ml_training/models:/app/ml_training/models:rw
+      - ./final kel/training_pipe/configs:/app/training/configs:ro
+      - pip-cache:/root/.cache/pip
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - TRAINING_DEVICE=${TRAINING_DEVICE:-cpu}
+      - TRAINING_EPOCHS=${TRAINING_EPOCHS:-50}
+      - TRAINING_BATCH_SIZE=${TRAINING_BATCH_SIZE:-64}
+      - TRAINING_OUTPUT_DIR=/app/models
+    networks:
+      - daiw-network
+    # GPU support (uncomment if NVIDIA GPU available)
+    # Requires: nvidia-docker2 and nvidia-container-runtime
+    # Install: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    # For Apple Silicon MPS, no special configuration needed - PyTorch handles it automatically
+
+  # Knowledge Base Analyzer service
+  daiw-kb-analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile.kb-analyzer
+    image: daiw-kb-analyzer:latest
+    container_name: daiw-kb-analyzer
+    volumes:
+      - .:/app/repo:ro
+      - ./output/knowledge_base:/app/output:rw
+      - ./tools/kb_analyzer:/app/analyzer:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - KB_OUTPUT_DIR=/app/output
+      - KB_CATEGORIES_FILE=/app/analyzer/config/categories.json
+      - KB_ANALYSIS_MODE=${KB_ANALYSIS_MODE:-full}
+      - KB_OUTPUT_FORMAT=${KB_OUTPUT_FORMAT:-both}
+      - KB_PIPELINE_FILTER=${KB_PIPELINE_FILTER:-all}
+      - KB_INCLUDE_UI_UX=${KB_INCLUDE_UI_UX:-true}
+    networks:
+      - daiw-network
+    # Run on-demand or as a one-time job
+    # Use: docker-compose run --rm daiw-kb-analyzer
+
+  # ONNX LLM service (Llama-style models via onnxruntime-genai)
+  daiw-llm-onnx:
+    build:
+      context: .
+      dockerfile: Dockerfile.llm
+    image: daiw-llm-onnx:latest
+    container_name: daiw-llm-onnx
+    ports:
+      - "8008:8008"
+    volumes:
+      - ./models/llm:/models:ro
+    environment:
+      - LLM_ONNX_MODEL_PATH=${LLM_ONNX_MODEL_PATH:-/models/llama3-onnx}
+      - LLM_ONNX_MAX_LENGTH=${LLM_ONNX_MAX_LENGTH:-512}
+      - LLM_ONNX_TEMPERATURE=${LLM_ONNX_TEMPERATURE:-0.7}
+      - LLM_ONNX_TOP_P=${LLM_ONNX_TOP_P:-0.9}
+    networks:
+      - daiw-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8008/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  daiw-network:
+    driver: bridge
+
+volumes:
+  pip-cache:

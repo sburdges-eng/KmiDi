@@ -1,0 +1,39 @@
+#
+# DAiW ONNX LLM Service
+# Minimal image to serve LLaMA-style ONNX models via FastAPI + onnxruntime-genai.
+#
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# System deps (few to keep image small)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python deps
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir \
+    fastapi \
+    "uvicorn[standard]" \
+    numpy \
+    onnxruntime-genai==0.4.0
+
+# Copy minimal source needed for the service
+COPY music_brain/ ./music_brain/
+
+# Runtime defaults
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV LLM_ONNX_MODEL_PATH=/models/llama3-onnx
+ENV LLM_ONNX_MAX_LENGTH=512
+ENV LLM_ONNX_TEMPERATURE=0.7
+ENV LLM_ONNX_TOP_P=0.9
+
+EXPOSE 8008
+
+CMD ["uvicorn", "music_brain.intelligence.onnx_llm_server:app", "--host", "0.0.0.0", "--port", "8008"]
+

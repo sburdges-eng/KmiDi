@@ -1,0 +1,94 @@
+WHEN I FOUND YOU - Logic Pro Template Setup
+=============================================
+
+TRACK 1: VOCAL (Input 1 - Whispered/Interior)
+----------------------------------------------
+Style: Malick whisper. Like prayer, not performance.
+Input: AudioBox Input 1 (close mic, 6 inches)
+
+Plugins:
+  1. Noise Gate (threshold low, gentle)
+  2. Channel EQ
+     - High-pass: 100Hz
+     - Gentle presence boost: 2-4kHz
+     - Air: subtle 12kHz shelf
+  3. Compressor
+     - Ratio: 2:1 (gentle)
+     - Attack: 30ms (preserve transients)
+     - Release: 150ms
+     - Threshold: catch only peaks
+  4. DeEsser (subtle, 5-7kHz)
+  5. Space Designer Reverb
+     - Small room, long decay
+     - Mix: 15-20%
+     - Pre-delay: 30ms
+
+TRACK 2: GUITAR (Input 2 - Fingerpicking)
+----------------------------------------------
+Style: Tarkovsky long takes. Unhurried. Ritual.
+Input: AudioBox Input 2
+
+Plugins:
+  1. Channel EQ
+     - High-pass: 80Hz
+     - Slight cut at 200Hz (reduce mud)
+     - Presence: gentle 3kHz boost
+  2. Compressor
+     - Ratio: 3:1
+     - Attack: 15ms
+     - Very gentle, just evening out
+  3. Tape Delay
+     - Mix: 10%
+     - Feedback: 15%
+     - Creates space without clutter
+  4. ChromaVerb
+     - Hall, medium
+     - Mix: 20%
+
+ARRANGEMENT MARKERS (for 3:30 song):
+----------------------------------------------
+Bar 1:    VERSE 1 - "I showed up at your door"
+          (Barely there. Almost spoken.)
+Bar 17:   VERSE 2 - "I reached for you"
+          (Building slightly. Pause on "Shea butter")
+Bar 33:   CHORUS - "I couldn't breathe"
+          (Only section with fullness - but restrained)
+Bar 49:   VERSE 3 - "We stayed like that"
+          (Pull way back. Nearly whispered.)
+Bar 65:   BRIDGE - "Your silence carved a hole"
+          (Sustained. Let words hang.)
+Bar 73:   FINAL - "You weren't resting"
+          (Stripped to almost nothing. The truth.)
+Bar 81:   OUTRO
+          (Guitar alone. Fade.)
+
+TEMPO: 65-72 BPM (unhurried, breathing room)
+KEY: Suggest Am or Em (intimate, not bright)
+TIME: 4/4
+
+DYNAMICS AUTOMATION:
+----------------------------------------------
+- Verse 1: Vocal -6dB, Guitar -3dB
+- Verse 2: Vocal -4dB, Guitar -2dB
+- Chorus: Vocal 0dB, Guitar 0dB
+- Verse 3: Vocal -8dB, Guitar -4dB
+- Bridge: Vocal -3dB, Guitar -6dB
+- Final: Vocal -10dB, Guitar fades to silence
+
+NOTES:
+----------------------------------------------
+"Shea butter. Still warm in your hair."
+  - Full stop after "Shea butter"
+  - Let it sit for one beat
+  - The body remembers
+
+"I hit the floor. I hit the floor."
+  - Same inflection both times
+  - Grief loops. Didion's repetition.
+
+Final three lines:
+  - Flat as possible
+  - No elaboration
+  - Just the truth, finally said
+
+For Kelly.

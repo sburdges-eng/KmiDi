@@ -1,0 +1,13 @@
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+slowapi>=0.1.9
+pydantic>=2.0.0
+python-multipart>=0.6.0
+requests>=2.31.0
+
+# Core dependencies for music_brain
+numpy>=1.24.0
+scipy>=1.10.0
+mido>=1.2.10
+pyyaml>=6.0
+librosa>=0.10.0

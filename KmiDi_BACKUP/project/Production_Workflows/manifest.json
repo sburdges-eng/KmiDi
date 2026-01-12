@@ -1,0 +1,207 @@
+[
+  {
+    "title": "Ambient Atmospheric Production Guide",
+    "slug": "ambient-atmospheric-production-guide",
+    "path": "Production_Workflows/Ambient Atmospheric Production Guide.md",
+    "topics": ["genre", "ambient", "atmospheric", "production"]
+  },
+  {
+    "title": "Bass Programming Guide",
+    "slug": "bass-programming-guide",
+    "path": "Production_Workflows/Bass Programming Guide.md",
+    "topics": ["instrument", "bass", "programming", "humanization"]
+  },
+  {
+    "title": "Compression Deep Dive Guide",
+    "slug": "compression-deep-dive-guide",
+    "path": "Production_Workflows/Compression Deep Dive Guide.md",
+    "topics": ["processing", "compression", "mixing"]
+  },
+  {
+    "title": "Country Production Guide",
+    "slug": "country-production-guide",
+    "path": "Production_Workflows/Country Production Guide.md",
+    "topics": ["genre", "country", "production"]
+  },
+  {
+    "title": "Drum Programming Guide",
+    "slug": "drum-programming-guide",
+    "path": "Production_Workflows/Drum Programming Guide.md",
+    "topics": ["instrument", "drums", "programming", "humanization"]
+  },
+  {
+    "title": "Dynamics and Arrangement Guide",
+    "slug": "dynamics-and-arrangement-guide",
+    "path": "Production_Workflows/Dynamics and Arrangement Guide.md",
+    "topics": ["arrangement", "dynamics", "songcraft"]
+  },
+  {
+    "title": "Electronic EDM Production Guide",
+    "slug": "electronic-edm-production-guide",
+    "path": "Production_Workflows/Electronic EDM Production Guide.md",
+    "topics": ["genre", "edm", "electronic", "production"]
+  },
+  {
+    "title": "EQ Deep Dive Guide",
+    "slug": "eq-deep-dive-guide",
+    "path": "Production_Workflows/EQ Deep Dive Guide.md",
+    "topics": ["processing", "eq", "mixing"]
+  },
+  {
+    "title": "Folk and Acoustic Production Guide",
+    "slug": "folk-and-acoustic-production-guide",
+    "path": "Production_Workflows/Folk and Acoustic Production Guide.md",
+    "topics": ["genre", "folk", "acoustic", "production"]
+  },
+  {
+    "title": "Groove and Rhythm Guide",
+    "slug": "groove-and-rhythm-guide",
+    "path": "Production_Workflows/Groove and Rhythm Guide.md",
+    "topics": ["rhythm", "groove", "feel", "humanization"]
+  },
+  {
+    "title": "Guitar Programming Guide",
+    "slug": "guitar-programming-guide",
+    "path": "Production_Workflows/Guitar Programming Guide.md",
+    "topics": ["instrument", "guitar", "programming", "humanization"]
+  },
+  {
+    "title": "Guitar Recording Workflow",
+    "slug": "guitar-recording-workflow",
+    "path": "Production_Workflows/Guitar Recording Workflow.md",
+    "topics": ["instrument", "guitar", "recording", "workflow"]
+  },
+  {
+    "title": "Hip-Hop Production Guide",
+    "slug": "hip-hop-production-guide",
+    "path": "Production_Workflows/Hip-Hop Production Guide.md",
+    "topics": ["genre", "hip-hop", "production"]
+  },
+  {
+    "title": "Humanization Cheat Sheet",
+    "slug": "humanization-cheat-sheet",
+    "path": "Production_Workflows/Humanization Cheat Sheet.md",
+    "topics": ["humanization", "reference", "checklist"]
+  },
+  {
+    "title": "Humanizing Your Music",
+    "slug": "humanizing-your-music",
+    "path": "Production_Workflows/Humanizing Your Music.md",
+    "topics": ["humanization", "workflow"]
+  },
+  {
+    "title": "Indie Alternative Production Guide",
+    "slug": "indie-alternative-production-guide",
+    "path": "Production_Workflows/Indie Alternative Production Guide.md",
+    "topics": ["genre", "indie", "alternative", "production"]
+  },
+  {
+    "title": "Jazz Production Guide",
+    "slug": "jazz-production-guide",
+    "path": "Production_Workflows/Jazz Production Guide.md",
+    "topics": ["genre", "jazz", "production"]
+  },
+  {
+    "title": "Live Performance Guide",
+    "slug": "live-performance-guide",
+    "path": "Production_Workflows/Live Performance Guide.md",
+    "topics": ["performance", "live", "touring"]
+  },
+  {
+    "title": "Lo-Fi Production Guide",
+    "slug": "lo-fi-production-guide",
+    "path": "Production_Workflows/Lo-Fi Production Guide.md",
+    "topics": ["genre", "lo-fi", "production"]
+  },
+  {
+    "title": "Mastering Checklist",
+    "slug": "mastering-checklist",
+    "path": "Production_Workflows/Mastering Checklist.md",
+    "topics": ["processing", "mastering", "checklist"]
+  },
+  {
+    "title": "Metal Production Guide",
+    "slug": "metal-production-guide",
+    "path": "Production_Workflows/Metal Production Guide.md",
+    "topics": ["genre", "metal", "production"]
+  },
+  {
+    "title": "Mixing Workflow Checklist",
+    "slug": "mixing-workflow-checklist",
+    "path": "Production_Workflows/Mixing Workflow Checklist.md",
+    "topics": ["mixing", "workflow", "checklist"]
+  },
+  {
+    "title": "Piano and Keys Humanization Guide",
+    "slug": "piano-and-keys-humanization-guide",
+    "path": "Production_Workflows/Piano and Keys Humanization Guide.md",
+    "topics": ["instrument", "piano", "keys", "humanization"]
+  },
+  {
+    "title": "Pop Production Guide",
+    "slug": "pop-production-guide",
+    "path": "Production_Workflows/Pop Production Guide.md",
+    "topics": ["genre", "pop", "production"]
+  },
+  {
+    "title": "R&B and Soul Production Guide",
+    "slug": "rnb-and-soul-production-guide",
+    "path": "Production_Workflows/R&B and Soul Production Guide.md",
+    "topics": ["genre", "rnb", "soul", "production"]
+  },
+  {
+    "title": "Reference Track Analysis Guide",
+    "slug": "reference-track-analysis-guide",
+    "path": "Production_Workflows/Reference Track Analysis Guide.md",
+    "topics": ["reference", "analysis", "workflow"]
+  },
+  {
+    "title": "Reverb and Delay Guide",
+    "slug": "reverb-and-delay-guide",
+    "path": "Production_Workflows/Reverb and Delay Guide.md",
+    "topics": ["processing", "reverb", "delay", "effects"]
+  },
+  {
+    "title": "Rock Production Guide",
+    "slug": "rock-production-guide",
+    "path": "Production_Workflows/Rock Production Guide.md",
+    "topics": ["genre", "rock", "production"]
+  },
+  {
+    "title": "Sampling Guide",
+    "slug": "sampling-guide",
+    "path": "Production_Workflows/Sampling Guide.md",
+    "topics": ["sampling", "production", "sound-design"]
+  },
+  {
+    "title": "Sound Design From Scratch",
+    "slug": "sound-design-from-scratch",
+    "path": "Production_Workflows/Sound Design From Scratch.md",
+    "topics": ["sound-design", "synthesis", "effects"]
+  },
+  {
+    "title": "Strings and Orchestral Guide",
+    "slug": "strings-and-orchestral-guide",
+    "path": "Production_Workflows/Strings and Orchestral Guide.md",
+    "topics": ["instrument", "strings", "orchestral", "arrangement"]
+  },
+  {
+    "title": "Synth Humanization Guide",
+    "slug": "synth-humanization-guide",
+    "path": "Production_Workflows/Synth Humanization Guide.md",
+    "topics": ["instrument", "synth", "humanization"]
+  },
+  {
+    "title": "Vocal Production Guide",
+    "slug": "vocal-production-guide",
+    "path": "Production_Workflows/Vocal Production Guide.md",
+    "topics": ["vocals", "production", "mixing"]
+  },
+  {
+    "title": "Vocal Recording Workflow",
+    "slug": "vocal-recording-workflow",
+    "path": "Production_Workflows/Vocal Recording Workflow.md",
+    "topics": ["vocals", "recording", "workflow"]
+  }
+]
+

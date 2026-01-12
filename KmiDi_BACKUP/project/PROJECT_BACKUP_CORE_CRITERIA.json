@@ -1,0 +1,789 @@
+{
+  "backup_metadata": {
+    "created": "2025-01-09",
+    "project_version": "1.0.0",
+    "backup_format": "JSON",
+    "companion_file": "PROJECT_BACKUP_CORE_CRITERIA.md",
+    "purpose": "Structured data backup of project core criteria",
+    "excludes": [
+      "audio files",
+      "training datasets",
+      "model binaries",
+      "generated outputs"
+    ]
+  },
+  "project_metadata": {
+    "name": "kmidi",
+    "version": "1.0.0",
+    "description": "KmiDi: Unified Music Intelligence & Audio Workstation",
+    "license": "MIT",
+    "authors": [
+      {
+        "name": "Kelly Project Team"
+      }
+    ],
+    "requires_python": ">=3.9",
+    "python_versions_tested": ["3.9", "3.10", "3.11", "3.12", "3.13"],
+    "philosophy": "Interrogate Before Generate - The tool shouldn't finish art for people. It should make them braver.",
+    "quote": "The audience doesn't hear 'borrowed from Dorian.' They hear 'that part made me cry.'"
+  },
+  "tech_stack": {
+    "python": {
+      "version": "3.9+",
+      "tested_versions": ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    },
+    "cpp": {
+      "standard": "C++20",
+      "required": true
+    },
+    "cmake": {
+      "version": "3.27+",
+      "required": true
+    },
+    "juce": {
+      "version": "8.0.10",
+      "location": "external/JUCE"
+    },
+    "qt": {
+      "version": "6.x",
+      "purpose": "GUI framework"
+    },
+    "node": {
+      "version": "18+",
+      "purpose": "React/Tauri frontend"
+    },
+    "rust": {
+      "version": "Latest stable",
+      "purpose": "Tauri desktop bridge"
+    }
+  },
+  "dependencies": {
+    "core": [
+      "numpy>=1.21",
+      "torch>=2.0",
+      "librosa>=0.10",
+      "pyyaml>=6.0",
+      "scipy>=1.8"
+    ],
+    "optional_dev": [
+      "pytest>=7.0",
+      "pytest-cov>=4.0",
+      "black>=23.0",
+      "flake8>=6.0",
+      "mypy>=1.0",
+      "fastmcp>=2.0.0",
+      "python-dotenv>=1.0.0",
+      "openai>=1.0.0",
+      "anthropic>=0.30.0",
+      "google-generativeai>=0.5.0",
+      "httpx>=0.25.0"
+    ],
+    "optional_audio": [
+      "soundfile>=0.12",
+      "pydub>=0.25"
+    ],
+    "production": [
+      "fastapi>=0.125.0",
+      "uvicorn[standard]>=0.30.0",
+      "slowapi>=0.1.9",
+      "pydantic>=2.0.0",
+      "python-multipart>=0.0.6",
+      "mido>=1.2.10",
+      "pretty_midi>=0.2.10",
+      "requests>=2.31.0",
+      "httpx>=0.25.0",
+      "pandas>=1.4.0",
+      "certifi>=2024.0.0",
+      "cryptography>=41.0.0"
+    ]
+  },
+  "api_endpoints": {
+    "base_url": "http://127.0.0.1:8000",
+    "health_status": {
+      "GET /health": {
+        "purpose": "Health check with service status",
+        "rate_limit": null,
+        "response_model": "HealthResponse"
+      },
+      "GET /ready": {
+        "purpose": "Readiness probe (Kubernetes)",
+        "status_codes": {
+          "200": "ready",
+          "503": "not ready"
+        }
+      },
+      "GET /live": {
+        "purpose": "Liveness probe (Kubernetes)",
+        "always_200": true
+      },
+      "GET /metrics": {
+        "purpose": "Prometheus-compatible metrics",
+        "environment_required": "ENABLE_METRICS=true"
+      }
+    },
+    "music_generation": {
+      "GET /emotions": {
+        "purpose": "List available emotional presets",
+        "rate_limit": "100/minute",
+        "response": {
+          "emotions": "array of strings",
+          "count": "integer"
+        }
+      },
+      "POST /generate": {
+        "purpose": "Generate music from emotional intent",
+        "rate_limit": "10/minute",
+        "request_body": {
+          "intent": {
+            "emotional_intent": "string (required)",
+            "core_wound": "string (optional)",
+            "core_desire": "string (optional)",
+            "technical": {
+              "key": "string (optional)",
+              "bpm": "integer (optional)",
+              "progression": "array of strings (optional)",
+              "genre": "string (optional)"
+            }
+          },
+          "output_format": "midi | audio"
+        },
+        "response": {
+          "status": "success",
+          "result": "object",
+          "request_id": "string",
+          "generation_time_seconds": "float"
+        }
+      },
+      "POST /interrogate": {
+        "purpose": "Conversational intent refinement",
+        "rate_limit": "30/minute",
+        "request_body": {
+          "message": "string (required)",
+          "session_id": "string (optional)",
+          "context": "object (optional)"
+        },
+        "response": {
+          "status": "success",
+          "reply": "string",
+          "session_id": "string",
+          "suggestions": "array of strings",
+          "request_id": "string"
+        }
+      }
+    }
+  },
+  "intent_schema": {
+    "phase_0_core_wound_desire": {
+      "core_event": "string - What happened?",
+      "core_resistance": "string - What holds you back from saying it?",
+      "core_longing": "string - What do you want to feel?",
+      "core_stakes": "string - What's at risk?",
+      "core_transformation": "string - How should you feel when done?"
+    },
+    "phase_1_emotional_intent": {
+      "mood_primary": "string - Dominant emotion",
+      "mood_secondary_tension": "float (0.0-1.0) - Internal conflict",
+      "vulnerability_scale": "Low | Medium | High",
+      "narrative_arc": [
+        "Climb-to-Climax",
+        "Slow Reveal",
+        "Repetitive Despair",
+        "Other narrative arcs"
+      ]
+    },
+    "phase_2_technical_constraints": {
+      "technical_genre": "string - Genre selection",
+      "technical_key": "string - Musical key (e.g., C, Am)",
+      "technical_mode": "string - Mode (major, minor, dorian, etc.)",
+      "technical_rule_to_break": "string - Intentional rule violation enum",
+      "rule_breaking_justification": "string - WHY break this rule (required)"
+    }
+  },
+  "emotion_thesaurus": {
+    "schema_version": "1.0.0",
+    "name": "DAiW Emotion Thesaurus",
+    "description": "Comprehensive 6×6×6 emotion taxonomy with intensity tiers",
+    "structure": {
+      "level_1_base_emotions": 6,
+      "level_2_sub_emotions": 36,
+      "level_3_sub_sub_emotions": 216,
+      "intensity_tiers": 1296,
+      "synonyms_per_tier": "3-5 words/phrases"
+    },
+    "total_nodes": 216,
+    "total_intensity_tiers": 1296,
+    "blend_zones": 50,
+    "base_emotions": [
+      {
+        "id": "I",
+        "name": "HAPPY",
+        "file": "happy.json",
+        "valence": "positive",
+        "sub_emotion_count": 6
+      },
+      {
+        "id": "II",
+        "name": "SAD",
+        "file": "sad.json",
+        "valence": "negative",
+        "sub_emotion_count": 6
+      },
+      {
+        "id": "III",
+        "name": "ANGRY",
+        "file": "angry.json",
+        "valence": "negative",
+        "sub_emotion_count": 6
+      },
+      {
+        "id": "IV",
+        "name": "FEAR",
+        "file": "fear.json",
+        "valence": "negative",
+        "sub_emotion_count": 6
+      },
+      {
+        "id": "V",
+        "name": "SURPRISE",
+        "file": "surprise.json",
+        "valence": "mixed",
+        "sub_emotion_count": 6
+      },
+      {
+        "id": "VI",
+        "name": "DISGUST",
+        "file": "disgust.json",
+        "valence": "negative",
+        "sub_emotion_count": 6
+      }
+    ],
+    "intensity_tiers": {
+      "1_subtle": {
+        "label": "Subtle",
+        "description": "Barely perceptible, background feeling",
+        "arousal_modifier": 0.1,
+        "typical_duration": "fleeting"
+      },
+      "2_mild": {
+        "label": "Mild",
+        "description": "Noticeable but easily managed",
+        "arousal_modifier": 0.3,
+        "typical_duration": "minutes"
+      },
+      "3_moderate": {
+        "label": "Moderate",
+        "description": "Clearly felt, influences behavior",
+        "arousal_modifier": 0.5,
+        "typical_duration": "extended"
+      },
+      "4_strong": {
+        "label": "Strong",
+        "description": "Powerful, hard to ignore",
+        "arousal_modifier": 0.7,
+        "typical_duration": "sustained"
+      },
+      "5_intense": {
+        "label": "Intense",
+        "description": "Overwhelming, dominates experience",
+        "arousal_modifier": 0.9,
+        "typical_duration": "acute episodes"
+      },
+      "6_overwhelming": {
+        "label": "Overwhelming",
+        "description": "All-consuming, transcendent",
+        "arousal_modifier": 1.0,
+        "typical_duration": "peak moments"
+      }
+    },
+    "musical_mapping": {
+      "valence_to_mode": {
+        "positive": ["major modes", "lydian"],
+        "negative": ["minor modes", "phrygian", "locrian"],
+        "mixed": ["modal mixture", "borrowed chords"]
+      },
+      "arousal_to_tempo": {
+        "low": "40-70 BPM",
+        "medium": "70-120 BPM",
+        "high": "120-180+ BPM"
+      },
+      "intensity_to_dynamics": {
+        "subtle": "pp-p",
+        "mild": "p-mp",
+        "moderate": "mp-mf",
+        "strong": "mf-f",
+        "intense": "f-ff",
+        "overwhelming": "ff-fff with dynamic contrast"
+      }
+    },
+    "theoretical_foundations": {
+      "primary_models": [
+        "Ekman Basic Emotions",
+        "Plutchik Emotion Wheel",
+        "Russell Circumplex Model"
+      ],
+      "music_specific": [
+        "GEMS (Geneva Emotional Music Scale)",
+        "Juslin BRECVEMA Model"
+      ],
+      "therapeutic": [
+        "Affect Regulation Theory",
+        "Polyvagal Theory",
+        "DBT Emotion Regulation"
+      ]
+    }
+  },
+  "rule_breaking_categories": {
+    "harmony": {
+      "HARMONY_AvoidTonicResolution": {
+        "effect": "Unresolved yearning",
+        "use_for": ["Grief", "longing"]
+      },
+      "HARMONY_ConstantTritones": {
+        "effect": "Dissonance and tension",
+        "use_for": ["Anger", "conflict"]
+      },
+      "HARMONY_ModalMixture": {
+        "effect": "Emotional complexity",
+        "use_for": ["Mixed emotions", "nuanced feelings"]
+      }
+    },
+    "rhythm": {
+      "RHYTHM_ConstantDisplacement": {
+        "effect": "Anxiety, restlessness",
+        "use_for": ["Anxiety", "uncertainty"]
+      },
+      "RHYTHM_Polyrhythmic": {
+        "effect": "Complexity and conflict",
+        "use_for": ["Inner conflict", "tension"]
+      },
+      "RHYTHM_AsymmetricMeters": {
+        "effect": "Unpredictability",
+        "use_for": ["Chaos", "disorientation"]
+      }
+    },
+    "arrangement": {
+      "ARRANGEMENT_BuriedVocals": {
+        "effect": "Dissociation",
+        "use_for": ["Emotional distance", "dissociation"]
+      },
+      "ARRANGEMENT_ContrastingTextures": {
+        "effect": "Emotional shifts",
+        "use_for": ["Emotional transitions", "complexity"]
+      },
+      "ARRANGEMENT_UnbalancedMix": {
+        "effect": "Intentional imbalance",
+        "use_for": ["Discomfort", "unease"]
+      }
+    },
+    "production": {
+      "PRODUCTION_PitchImperfection": {
+        "effect": "Emotional honesty",
+        "use_for": ["Authenticity", "rawness"]
+      },
+      "PRODUCTION_DynamicCompression": {
+        "effect": "Controlled chaos",
+        "use_for": ["Intensity", "controlled energy"]
+      },
+      "PRODUCTION_SpectralDistortion": {
+        "effect": "Intensity and rawness",
+        "use_for": ["Aggression", "intensity"]
+      }
+    }
+  },
+  "chord_progression_families": {
+    "common_progressions": [
+      {
+        "name": "Pop Progression",
+        "chords": ["I", "V", "vi", "IV"],
+        "variants": ["vi-IV-I-V"]
+      },
+      {
+        "name": "50s Progression",
+        "chords": ["I", "vi", "IV", "V"]
+      },
+      {
+        "name": "Jazz Progression",
+        "chords": ["ii", "V", "I"]
+      },
+      {
+        "name": "Mixolydian Progression",
+        "chords": ["I", "bVII", "IV"]
+      }
+    ],
+    "data_files": [
+      "data/chord_progression_families.json",
+      "data/chord_progressions_db.json",
+      "data/common_progressions.json"
+    ]
+  },
+  "directory_structure": {
+    "core_modules": {
+      "music_brain": {
+        "description": "Python Music Intelligence Toolkit",
+        "submodules": [
+          "tier1",
+          "tier2",
+          "session",
+          "structure",
+          "groove",
+          "harmony",
+          "melody",
+          "audio"
+        ]
+      },
+      "penta_core": {
+        "description": "C++ Real-time Engines",
+        "headers": "include/penta/",
+        "implementation": "src_penta-core/",
+        "python_bindings": "python/penta_core/"
+      },
+      "iDAW_Core": {
+        "description": "JUCE Plugin Suite",
+        "plugins_directory": "iDAW_Core/plugins/"
+      },
+      "mcp_workstation": {
+        "description": "MCP Multi-AI Workstation",
+        "key_files": [
+          "orchestrator.py",
+          "models.py",
+          "proposals.py",
+          "phases.py",
+          "server.py"
+        ]
+      },
+      "mcp_todo": {
+        "description": "MCP TODO Server",
+        "key_files": [
+          "cli.py",
+          "http_server.py",
+          "server.py"
+        ]
+      },
+      "mcp_penta_swarm": {
+        "description": "MCP Swarm Server",
+        "key_file": "server.py"
+      }
+    },
+    "data_directories": {
+      "emotions": "data/emotions/",
+      "progressions": "data/progressions/",
+      "scales": "data/scales/",
+      "grooves": "data/grooves/",
+      "rules": "data/rules/",
+      "music_theory": "data/music_theory/"
+    },
+    "documentation_directories": {
+      "docs": "docs/",
+      "production_workflows": "Production_Workflows/",
+      "songwriting_guides": "Songwriting_Guides/",
+      "theory_reference": "Theory_Reference/",
+      "vault": "vault/",
+      "templates": "Templates/"
+    },
+    "excluded_directories": [
+      "output/",
+      "checkpoints/",
+      "datasets/",
+      "training/"
+    ]
+  },
+  "build_configuration": {
+    "cmake_minimum_version": "3.27",
+    "cpp_standard": "C++20",
+    "build_options": {
+      "BUILD_DESKTOP": {
+        "default": true,
+        "description": "Build desktop GUI application"
+      },
+      "BUILD_PLUGINS": {
+        "default": true,
+        "description": "Build VST3 and CLAP plugins"
+      },
+      "BUILD_TESTS": {
+        "default": false,
+        "description": "Build tests"
+      },
+      "BUILD_KELLY_CORE": {
+        "default": true,
+        "description": "Build Kelly core library/app/plugins"
+      },
+      "BUILD_PENTA_TESTS": {
+        "default": false,
+        "description": "Build penta_core test suite"
+      },
+      "ENABLE_TRACY": {
+        "default": false,
+        "description": "Enable Tracy profiling"
+      },
+      "ENABLE_RTNEURAL": {
+        "default": false,
+        "description": "Enable RTNeural for ML inference"
+      },
+      "ENABLE_ONNX_RUNTIME": {
+        "default": false,
+        "description": "Enable ONNX Runtime for ML inference"
+      },
+      "BUILD_PYTHON_BINDINGS": {
+        "default": true,
+        "description": "Build Python bindings for penta-core"
+      }
+    },
+    "dependencies": {
+      "qt6": {
+        "components": ["Core", "Widgets"],
+        "required": true
+      },
+      "juce": {
+        "location": "external/JUCE",
+        "required": true
+      },
+      "readerwriterqueue": {
+        "git_repository": "https://github.com/cameron314/readerwriterqueue.git",
+        "git_tag": "v1.0.6",
+        "purpose": "Lock-free queue for RT-safe OSC"
+      },
+      "pybind11": {
+        "optional": true,
+        "purpose": "Python bindings"
+      }
+    }
+  },
+  "performance_targets": {
+    "harmony_engine": {
+      "latency": "< 100μs",
+      "conditions": "@ 48kHz/512 samples"
+    },
+    "groove_engine": {
+      "latency": "< 200μs",
+      "conditions": "@ 48kHz/512 samples"
+    },
+    "overall_system": {
+      "latency": "< 200ms",
+      "description": "Total latency target"
+    },
+    "memory": {
+      "leaks": "None (Valgrind clean)",
+      "audio_thread_allocation": "None"
+    }
+  },
+  "ci_cd_workflows": {
+    "ci_yml": {
+      "name": "Main CI Pipeline",
+      "jobs": [
+        "python_tests",
+        "cpp_build",
+        "cpp_tests",
+        "valgrind_memory",
+        "performance_regression",
+        "code_coverage",
+        "juce_plugin_validation",
+        "quality"
+      ]
+    },
+    "sprint_suite_yml": {
+      "name": "Comprehensive Sprint-Based Testing",
+      "sprints": [
+        {
+          "id": 1,
+          "name": "Core Testing & Quality"
+        },
+        {
+          "id": 2,
+          "name": "C++ Build & Integration"
+        },
+        {
+          "id": 3,
+          "name": "Documentation Checks"
+        },
+        {
+          "id": 5,
+          "name": "Platform Matrix"
+        },
+        {
+          "id": 6,
+          "name": "Advanced Theory and AI"
+        },
+        {
+          "id": 7,
+          "name": "Mobile/Web (Streamlit)"
+        },
+        {
+          "id": 8,
+          "name": "Enterprise Tests"
+        }
+      ]
+    },
+    "platform_support_yml": {
+      "name": "Cross-Platform Testing",
+      "python_versions": ["3.9", "3.10", "3.11", "3.12", "3.13"],
+      "platforms": ["Linux", "macOS", "Windows"]
+    },
+    "release_yml": {
+      "name": "Release Builds",
+      "builds": [
+        "Desktop Apps (macOS, Linux, Windows)",
+        "Python Distribution",
+        "C++ Libraries"
+      ]
+    }
+  },
+  "code_style": {
+    "python": {
+      "formatter": "black",
+      "line_length": 100,
+      "type_checker": "mypy",
+      "linter": "flake8",
+      "target_versions": ["py39", "py310", "py311"],
+      "type_hints_required": true
+    },
+    "cpp": {
+      "standard": "C++20",
+      "naming": {
+        "classes": "PascalCase",
+        "methods": "camelCase",
+        "variables": "snake_case",
+        "constants": "kConstantName"
+      },
+      "compiler_flags": {
+        "msvc": "/W4",
+        "gcc_clang": "-Wall -Wextra -Wpedantic"
+      },
+      "rt_safety": {
+        "processAudio_noexcept": true,
+        "no_allocations_in_audio_callbacks": true,
+        "lock_free_communication": true,
+        "default_sample_rate": 44100.0
+      }
+    }
+  },
+  "architecture_decisions": {
+    "dual_engine_design": {
+      "side_a_cpp": {
+        "purpose": "Real-time audio processing",
+        "characteristics": ["deterministic", "lock-free", "pre-allocated memory (4GB)"],
+        "memory_model": "std::pmr::monotonic_buffer_resource"
+      },
+      "side_b_python": {
+        "purpose": "AI generation and dynamic logic",
+        "characteristics": ["may block", "dynamic allocation allowed"],
+        "memory_model": "std::pmr::synchronized_pool_resource"
+      },
+      "communication": "Lock-free ring buffer (Side B → Side A)"
+    },
+    "intent_driven_composition": {
+      "principle": "Emotional intent drives technical choices",
+      "phases": {
+        "phase_0": "MUST precede Phase 2",
+        "phase_2": "Requires Phase 0 completion"
+      },
+      "rule_breaking": "Requires explicit justification"
+    },
+    "multi_ai_collaboration": {
+      "system": "MCP Workstation",
+      "features": ["proposal system", "voting mechanism", "task assignment by AI strengths"],
+      "ai_specializations": {
+        "claude": ["code architecture", "real-time safety", "complex debugging"],
+        "chatgpt": ["theory analysis", "explanations", "documentation"],
+        "gemini": ["cross-language patterns", "multi-modal analysis"],
+        "github_copilot": ["code completion", "boilerplate generation"]
+      }
+    },
+    "rt_safety": {
+      "audio_thread_rules": [
+        "Never waits on UI/AI",
+        "Lock-free communication",
+        "Pre-allocated memory pools",
+        "No allocations in audio callbacks",
+        "All processAudio() methods marked noexcept"
+      ]
+    },
+    "mcp_protocol": {
+      "standard": "Model Context Protocol",
+      "servers": [
+        "mcp_workstation (multi-AI orchestration)",
+        "mcp_todo (cross-AI task management)",
+        "mcp_penta_swarm (multi-AI aggregation)",
+        "daiw_mcp (DAiW-specific)"
+      ]
+    }
+  },
+  "file_manifest": {
+    "configuration_files": [
+      "pyproject.toml",
+      "requirements.txt",
+      "requirements-production.txt",
+      "CMakeLists.txt",
+      "env.example",
+      "config/build-dev-mac.yaml",
+      "config/build-train-nvidia.yaml",
+      "config/build-prod-aws.yaml"
+    ],
+    "documentation_files": [
+      "PROJECT_MAIN.md",
+      "PROJECT_QUICK_START.md",
+      "PROJECT_BACKUP_CORE_CRITERIA.md",
+      "PROJECT_BACKUP_CORE_CRITERIA.json",
+      "CLAUDE.md",
+      "KMIDI_README.md",
+      "README.md",
+      "SETUP_GUIDE.md",
+      "QUICK_START.md"
+    ],
+    "api_files": [
+      "api/main.py",
+      "api/requirements.txt",
+      "api/Dockerfile"
+    ],
+    "data_schema_files": [
+      "data/metadata.json",
+      "data/genre_pocket_maps.json",
+      "data/chord_progression_families.json",
+      "data/chord_progressions_db.json",
+      "music_brain/data/rule_breaking_database.json"
+    ],
+    "test_files": [
+      "tests/python/",
+      "tests/music_brain/",
+      "tests/penta_core/"
+    ],
+    "excluded_from_backup": [
+      "audio files (.wav, .mp3, .flac, etc.)",
+      "training datasets (MAESTRO, CREMA-D, RAVDESS, TESS)",
+      "generated outputs (output/, checkpoints/)",
+      "model binaries (.bin, .mlmodel, .pth, .ckpt, .onnx)",
+      "large data files in datasets/, training/ directories"
+    ]
+  },
+  "mcp_servers": {
+    "mcp_workstation": {
+      "commands": [
+        "python -m mcp_workstation status",
+        "python -m mcp_workstation register <agent>",
+        "python -m mcp_workstation propose <agent> <title> <desc> <category>",
+        "python -m mcp_workstation vote <agent> <prop_id> <vote>",
+        "python -m mcp_workstation phases",
+        "python -m mcp_workstation cpp",
+        "python -m mcp_workstation ai",
+        "python -m mcp_workstation server"
+      ]
+    },
+    "mcp_todo": {
+      "commands": [
+        "python -m mcp_todo.cli add <task> --priority <level> --tags <tags>",
+        "python -m mcp_todo.cli list --status <status>",
+        "python -m mcp_todo.cli complete <id>",
+        "python -m mcp_todo.cli summary"
+      ],
+      "storage": "~/.mcp_todo/todos.json"
+    },
+    "mcp_penta_swarm": {
+      "tools": [
+        "consult_architect (OpenAI GPT-4o)",
+        "consult_developer (Anthropic Claude 3.5 Sonnet)",
+        "consult_researcher (Google Gemini 1.5 Pro)",
+        "consult_maverick (xAI Grok Beta)",
+        "fetch_repo_context (GitHub API)"
+      ]
+    }
+  }
+}

@@ -17,11 +17,115 @@ from pathlib import Path
 
 
 # =================================================================
+# VALIDATION CONSTANTS: Enum Values from YAML Schema
+# =================================================================
+
+# Mood/Emotion Primaries (17 options from YAML schema)
+VALID_MOOD_PRIMARY_OPTIONS = [
+    "Grief",
+    "Joy",
+    "Nervousness",
+    "Defiance",
+    "Liberation",
+    "Longing",
+    "Rage",
+    "Acceptance",
+    "Nostalgia",
+    "Dissociation",
+    "Triumphant Hope",
+    "Bittersweet",
+    "Melancholy",
+    "Euphoria",
+    "Desperation",
+    "Serenity",
+    "Confusion",
+    "Determination",
+]
+
+# Imagery Textures (15 options from YAML schema)
+VALID_IMAGERY_TEXTURE_OPTIONS = [
+    "Sharp Edges",
+    "Muffled",
+    "Open/Vast",
+    "Claustrophobic",
+    "Hazy/Dreamy",
+    "Crystalline",
+    "Muddy/Thick",
+    "Sparse/Empty",
+    "Chaotic",
+    "Flowing/Liquid",
+    "Fractured",
+    "Warm/Enveloping",
+    "Cold/Distant",
+    "Blinding Light",
+    "Deep Shadow",
+]
+
+# Vulnerability Scale
+VALID_VULNERABILITY_SCALE_OPTIONS = ["Low", "Medium", "High"]
+
+# Narrative Arc Options (8 options from YAML schema)
+VALID_NARRATIVE_ARC_OPTIONS = [
+    "Climb-to-Climax",
+    "Slow Reveal",
+    "Repetitive Despair",
+    "Static Reflection",
+    "Sudden Shift",
+    "Descent",
+    "Rise and Fall",
+    "Spiral",
+]
+
+# Core Stakes Options (6 options from YAML schema)
+VALID_CORE_STAKES_OPTIONS = [
+    "Personal",
+    "Relational",
+    "Existential",
+    "Survival",
+    "Creative",
+    "Moral",
+]
+
+# Genre Options (15 options from YAML schema)
+VALID_GENRE_OPTIONS = [
+    "Cinematic Neo-Soul",
+    "Lo-Fi Bedroom",
+    "Industrial Pop",
+    "Synthwave",
+    "Confessional Acoustic",
+    "Art Rock",
+    "Indie Folk",
+    "Post-Punk",
+    "Chamber Pop",
+    "Electronic",
+    "Hip-Hop",
+    "R&B",
+    "Alternative",
+    "Shoegaze",
+    "Dream Pop",
+]
+
+# Groove Feel Options (8 options from YAML schema)
+VALID_GROOVE_FEEL_OPTIONS = [
+    "Straight/Driving",
+    "Laid Back",
+    "Swung",
+    "Syncopated",
+    "Rubato/Free",
+    "Mechanical",
+    "Organic/Breathing",
+    "Push-Pull",
+]
+
+
+# =================================================================
 # ENUMS: Rule Breaking Categories
 # =================================================================
 
+
 class HarmonyRuleBreak(Enum):
     """Harmony rules to intentionally break."""
+
     AVOID_TONIC_RESOLUTION = "HARMONY_AvoidTonicResolution"
     PARALLEL_MOTION = "HARMONY_ParallelMotion"
     MODAL_INTERCHANGE = "HARMONY_ModalInterchange"
@@ -32,6 +136,7 @@ class HarmonyRuleBreak(Enum):
 
 class RhythmRuleBreak(Enum):
     """Rhythm rules to intentionally break."""
+
     CONSTANT_DISPLACEMENT = "RHYTHM_ConstantDisplacement"
     TEMPO_FLUCTUATION = "RHYTHM_TempoFluctuation"
     METRIC_MODULATION = "RHYTHM_MetricModulation"
@@ -41,6 +146,7 @@ class RhythmRuleBreak(Enum):
 
 class ArrangementRuleBreak(Enum):
     """Arrangement rules to intentionally break."""
+
     UNBALANCED_DYNAMICS = "ARRANGEMENT_UnbalancedDynamics"
     STRUCTURAL_MISMATCH = "ARRANGEMENT_StructuralMismatch"
     BURIED_VOCALS = "ARRANGEMENT_BuriedVocals"
@@ -50,6 +156,7 @@ class ArrangementRuleBreak(Enum):
 
 class ProductionRuleBreak(Enum):
     """Production rules to intentionally break."""
+
     EXCESSIVE_MUD = "PRODUCTION_ExcessiveMud"
     PITCH_IMPERFECTION = "PRODUCTION_PitchImperfection"
     ROOM_NOISE = "PRODUCTION_RoomNoise"
@@ -59,13 +166,15 @@ class ProductionRuleBreak(Enum):
 
 class VulnerabilityScale(Enum):
     """Vulnerability level for emotional exposure."""
-    LOW = "Low"       # Guarded, protective
-    MEDIUM = "Medium" # Honest but controlled
-    HIGH = "High"     # Raw, exposed
+
+    LOW = "Low"  # Guarded, protective
+    MEDIUM = "Medium"  # Honest but controlled
+    HIGH = "High"  # Raw, exposed
 
 
 class NarrativeArc(Enum):
     """Structural emotional arc."""
+
     CLIMB_TO_CLIMAX = "Climb-to-Climax"
     SLOW_REVEAL = "Slow Reveal"
     REPETITIVE_DESPAIR = "Repetitive Despair"
@@ -78,16 +187,18 @@ class NarrativeArc(Enum):
 
 class CoreStakes(Enum):
     """What's at stake in the song."""
-    PERSONAL = "Personal"         # Individual identity
-    RELATIONAL = "Relational"     # Connections
-    EXISTENTIAL = "Existential"   # Meaning/purpose
-    SURVIVAL = "Survival"         # Life/safety
-    CREATIVE = "Creative"         # Expression
-    MORAL = "Moral"               # Right/wrong
+
+    PERSONAL = "Personal"  # Individual identity
+    RELATIONAL = "Relational"  # Connections
+    EXISTENTIAL = "Existential"  # Meaning/purpose
+    SURVIVAL = "Survival"  # Life/safety
+    CREATIVE = "Creative"  # Expression
+    MORAL = "Moral"  # Right/wrong
 
 
 class GrooveFeel(Enum):
     """Rhythmic feel."""
+
     STRAIGHT_DRIVING = "Straight/Driving"
     LAID_BACK = "Laid Back"
     SWUNG = "Swung"
@@ -140,7 +251,6 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Grief, longing, or open questions",
         "example_emotions": ["grief", "longing", "uncertainty"],
     },
-    
     # Rhythm
     "RHYTHM_ConstantDisplacement": {
         "description": "Shift pattern one 16th note late/early",
@@ -172,7 +282,6 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Creating impact through absence",
         "example_emotions": ["shock", "emphasis", "breath"],
     },
-    
     # Arrangement
     "ARRANGEMENT_UnbalancedDynamics": {
         "description": "Keep element too loud/quiet for standard",
@@ -204,7 +313,6 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Aftermath is the point",
         "example_emotions": ["aftermath", "reflection"],
     },
-    
     # Production
     "PRODUCTION_ExcessiveMud": {
         "description": "Leave 200-400Hz buildup",
@@ -243,17 +351,19 @@ RULE_BREAKING_EFFECTS = {
 # DATA CLASSES: Song Intent Structure
 # =================================================================
 
+
 @dataclass
 class SongRoot:
     """
     Phase 0: The Core Wound/Desire
-    
+
     Deep interrogation to find what the song NEEDS to express.
     """
-    core_event: str = ""           # The inciting moment/realization
-    core_resistance: str = ""      # What's holding you back
-    core_longing: str = ""         # What you ultimately want to feel
-    core_stakes: str = ""          # What's at risk
+
+    core_event: str = ""  # The inciting moment/realization
+    core_resistance: str = ""  # What's holding you back
+    core_longing: str = ""  # What you ultimately want to feel
+    core_stakes: str = ""  # What's at risk
     core_transformation: str = ""  # How you want to feel when done
 
 
@@ -261,23 +371,25 @@ class SongRoot:
 class SongIntent:
     """
     Phase 1: Emotional & Intent
-    
+
     Validated by Phase 0, guides all technical decisions.
     """
-    mood_primary: str = ""                  # Primary emotion
-    mood_secondary_tension: float = 0.5     # Tension level 0.0-1.0
-    imagery_texture: str = ""               # Visual/tactile quality
-    vulnerability_scale: str = "Medium"     # Low/Medium/High
-    narrative_arc: str = ""                 # Structural emotion
+
+    mood_primary: str = ""  # Primary emotion
+    mood_secondary_tension: float = 0.5  # Tension level 0.0-1.0
+    imagery_texture: str = ""  # Visual/tactile quality
+    vulnerability_scale: str = "Medium"  # Low/Medium/High
+    narrative_arc: str = ""  # Structural emotion
 
 
 @dataclass
 class TechnicalConstraints:
     """
     Phase 2: Technical Constraints
-    
+
     Implementation of intent into concrete musical decisions.
     """
+
     technical_genre: str = ""
     technical_tempo_range: Tuple[int, int] = (80, 120)
     technical_key: str = ""
@@ -290,30 +402,32 @@ class TechnicalConstraints:
 @dataclass
 class SystemDirective:
     """What DAiW should generate."""
-    output_target: str = ""           # What to generate
-    output_feedback_loop: str = ""    # Which modules to iterate
+
+    output_target: str = ""  # What to generate
+    output_feedback_loop: str = ""  # Which modules to iterate
 
 
 @dataclass
 class CompleteSongIntent:
     """
     Complete song intent combining all phases.
-    
+
     This is the full specification for a song that DAiW
     uses to generate meaningful, emotionally-aligned output.
     """
+
     # Phase 0
     song_root: SongRoot = field(default_factory=SongRoot)
-    
+
     # Phase 1
     song_intent: SongIntent = field(default_factory=SongIntent)
-    
+
     # Phase 2
     technical_constraints: TechnicalConstraints = field(default_factory=TechnicalConstraints)
-    
+
     # System
     system_directive: SystemDirective = field(default_factory=SystemDirective)
-    
+
     # Meta
     title: str = ""
     created: str = ""
@@ -381,7 +495,7 @@ class CompleteSongIntent:
         )
         self.title = title
         self.created = created
-    
+
     def to_dict(self) -> Dict:
         """Convert to dictionary for serialization."""
         return {
@@ -415,14 +529,14 @@ class CompleteSongIntent:
                 "output_feedback_loop": self.system_directive.output_feedback_loop,
             },
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "CompleteSongIntent":
         """Create from dictionary."""
         intent = cls()
         intent.title = data.get("title", "")
         intent.created = data.get("created", "")
-        
+
         if "song_root" in data:
             root = data["song_root"]
             intent.song_root = SongRoot(
@@ -432,7 +546,7 @@ class CompleteSongIntent:
                 core_stakes=root.get("core_stakes", ""),
                 core_transformation=root.get("core_transformation", ""),
             )
-        
+
         if "song_intent" in data:
             si = data["song_intent"]
             intent.song_intent = SongIntent(
@@ -442,7 +556,7 @@ class CompleteSongIntent:
                 vulnerability_scale=si.get("vulnerability_scale", "Medium"),
                 narrative_arc=si.get("narrative_arc", ""),
             )
-        
+
         if "technical_constraints" in data:
             tc = data["technical_constraints"]
             tempo = tc.get("technical_tempo_range", [80, 120])
@@ -455,25 +569,25 @@ class CompleteSongIntent:
                 technical_rule_to_break=tc.get("technical_rule_to_break", ""),
                 rule_breaking_justification=tc.get("rule_breaking_justification", ""),
             )
-        
+
         if "system_directive" in data:
             sd = data["system_directive"]
             intent.system_directive = SystemDirective(
                 output_target=sd.get("output_target", ""),
                 output_feedback_loop=sd.get("output_feedback_loop", ""),
             )
-        
+
         return intent
-    
+
     def save(self, path: str):
         """Save to JSON file."""
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
-    
+
     @classmethod
     def load(cls, path: str) -> "CompleteSongIntent":
         """Load from JSON file."""
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             return cls.from_dict(json.load(f))
 
 
@@ -481,28 +595,31 @@ class CompleteSongIntent:
 # HELPER FUNCTIONS
 # =================================================================
 
+
 def suggest_rule_break(emotion: str) -> List[Dict]:
     """
     Suggest appropriate rules to break based on target emotion.
-    
+
     Args:
         emotion: Target emotion (grief, defiance, etc.)
-    
+
     Returns:
         List of rule-breaking suggestions with justifications
     """
     emotion_lower = emotion.lower()
     suggestions = []
-    
+
     for rule_key, rule_data in RULE_BREAKING_EFFECTS.items():
         if any(e in emotion_lower for e in rule_data.get("example_emotions", [])):
-            suggestions.append({
-                "rule": rule_key,
-                "description": rule_data["description"],
-                "effect": rule_data["effect"],
-                "use_when": rule_data["use_when"],
-            })
-    
+            suggestions.append(
+                {
+                    "rule": rule_key,
+                    "description": rule_data["description"],
+                    "effect": rule_data["effect"],
+                    "use_when": rule_data["use_when"],
+                }
+            )
+
     return suggestions
 
 
@@ -514,33 +631,98 @@ def get_rule_breaking_info(rule_key: str) -> Optional[Dict]:
 def validate_intent(intent: CompleteSongIntent) -> List[str]:
     """
     Validate a song intent for completeness and consistency.
-    
+
     Returns list of issues found (empty = valid).
     """
     issues: List[str] = []
-    
+
     # Phase 0 checks
     if not intent.song_root.core_event:
         issues.append("Phase 0: Missing core_event - what happened?")
     if not intent.song_root.core_longing:
         issues.append("Phase 0: Missing core_longing - what do you want to feel?")
-    
+
+    # Validate core_stakes enum
+    if (
+        intent.song_root.core_stakes
+        and intent.song_root.core_stakes not in VALID_CORE_STAKES_OPTIONS
+    ):
+        issues.append(
+            f"Phase 0: Invalid core_stakes '{intent.song_root.core_stakes}'. Must be one of: {', '.join(VALID_CORE_STAKES_OPTIONS)}"
+        )
+
     # Phase 1 checks
     if not intent.song_intent.mood_primary:
         issues.append("Phase 1: Missing mood_primary - what's the main emotion?")
-    if intent.song_intent.mood_secondary_tension < 0 or intent.song_intent.mood_secondary_tension > 1:
+    elif intent.song_intent.mood_primary not in VALID_MOOD_PRIMARY_OPTIONS:
+        issues.append(
+            f"Phase 1: Invalid mood_primary '{intent.song_intent.mood_primary}'. Must be one of: {', '.join(VALID_MOOD_PRIMARY_OPTIONS)}"
+        )
+
+    if (
+        intent.song_intent.mood_secondary_tension < 0
+        or intent.song_intent.mood_secondary_tension > 1
+    ):
         issues.append("Phase 1: mood_secondary_tension should be 0.0-1.0")
-    
+
+    # Validate imagery_texture enum
+    if (
+        intent.song_intent.imagery_texture
+        and intent.song_intent.imagery_texture not in VALID_IMAGERY_TEXTURE_OPTIONS
+    ):
+        issues.append(
+            f"Phase 1: Invalid imagery_texture '{intent.song_intent.imagery_texture}'. Must be one of: {', '.join(VALID_IMAGERY_TEXTURE_OPTIONS)}"
+        )
+
+    # Validate vulnerability_scale enum
+    if isinstance(intent.song_intent.vulnerability_scale, str):
+        if intent.song_intent.vulnerability_scale not in VALID_VULNERABILITY_SCALE_OPTIONS:
+            issues.append(
+                f"Phase 1: Invalid vulnerability_scale '{intent.song_intent.vulnerability_scale}'. Must be one of: {', '.join(VALID_VULNERABILITY_SCALE_OPTIONS)}"
+            )
+
+    # Validate narrative_arc enum
+    if (
+        intent.song_intent.narrative_arc
+        and intent.song_intent.narrative_arc not in VALID_NARRATIVE_ARC_OPTIONS
+    ):
+        issues.append(
+            f"Phase 1: Invalid narrative_arc '{intent.song_intent.narrative_arc}'. Must be one of: {', '.join(VALID_NARRATIVE_ARC_OPTIONS)}"
+        )
+
     # Phase 2 checks
     if intent.technical_constraints.technical_rule_to_break:
         if not intent.technical_constraints.rule_breaking_justification:
-            issues.append("Phase 2: Rule to break specified without justification - WHY break this rule?")
-    
+            issues.append(
+                "Phase 2: Rule to break specified without justification - WHY break this rule?"
+            )
+
+    # Validate genre enum
+    if (
+        intent.technical_constraints.technical_genre
+        and intent.technical_constraints.technical_genre not in VALID_GENRE_OPTIONS
+    ):
+        issues.append(
+            f"Phase 2: Invalid technical_genre '{intent.technical_constraints.technical_genre}'. Must be one of: {', '.join(VALID_GENRE_OPTIONS)}"
+        )
+
+    # Validate groove_feel enum
+    if (
+        intent.technical_constraints.technical_groove_feel
+        and intent.technical_constraints.technical_groove_feel not in VALID_GROOVE_FEEL_OPTIONS
+    ):
+        issues.append(
+            f"Phase 2: Invalid technical_groove_feel '{intent.technical_constraints.technical_groove_feel}'. Must be one of: {', '.join(VALID_GROOVE_FEEL_OPTIONS)}"
+        )
+
     # Consistency checks
-    if intent.song_intent.vulnerability_scale == "High":
+    vuln_scale = intent.song_intent.vulnerability_scale
+    if isinstance(vuln_scale, str) and vuln_scale == "High":
         if intent.song_intent.mood_secondary_tension < 0.3:
-            issues.append("Consistency: High vulnerability usually implies some tension (tension is very low)")
-    
+            issues.append(
+                "Consistency: High vulnerability usually implies some tension (tension is very low)"
+            )
+
     return issues
 
 
