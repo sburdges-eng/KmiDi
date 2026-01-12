@@ -69,6 +69,13 @@ mcp-penta-swarm = "mcp_penta_swarm.server:main"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v --tb=short"
+asyncio_mode = "auto"
+markers = [
+    "asyncio: mark test as async",
+    "serial: mark test to run in serial (not parallel)",
+    "benchmark: mark test as a benchmark",
+    "slow: mark test as slow-running",
+]
 
 [tool.black]
 line-length = 100

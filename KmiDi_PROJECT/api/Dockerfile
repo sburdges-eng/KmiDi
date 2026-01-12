@@ -5,7 +5,7 @@
 # Stage 1: Builder - Install dependencies and build packages
 FROM python:3.11-slim as builder
 
-WORKDIR /build
+WORKDIR /app
 
 # Install build dependencies (only what's needed for compiling)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -14,20 +14,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first (for better caching)
-# Try production requirements first, fallback to API requirements
-COPY requirements-production.txt* /build/ 2>/dev/null || true
-COPY api/requirements.txt /build/api-requirements.txt
+# Copy production requirements
+COPY KMiDi_PROJECT/requirements-production.txt /app/requirements-production.txt
 
-# Install Python dependencies (use production requirements if available, else API requirements)
+# Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    if [ -f /build/requirements-production.txt ]; then \
-        echo "Using production requirements"; \
-        pip install --no-cache-dir -r /build/requirements-production.txt; \
-    else \
-        echo "Using API requirements"; \
-        pip install --no-cache-dir -r /build/api-requirements.txt; \
-    fi
+    pip install --no-cache-dir -r /app/requirements-production.txt;
 
 # Stage 2: Runtime - Minimal production image
 FROM python:3.11-slim
@@ -56,10 +48,10 @@ COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application code (as non-root user)
-COPY --chown=kmidi:kmidi api/ ./api/
-COPY --chown=kmidi:kmidi music_brain/ ./music_brain/
-COPY --chown=kmidi:kmidi pyproject.toml ./
-COPY --chown=kmidi:kmidi data/ ./data/ 2>/dev/null || true
+COPY --chown=kmidi:kmidi KMiDi_PROJECT/api/ ./api/
+COPY --chown=kmidi:kmidi KMiDi_PROJECT/music_brain/ ./music_brain/
+COPY --chown=kmidi:kmidi KMiDi_PROJECT/pyproject.toml ./
+COPY --chown=kmidi:kmidi KMiDi_PROJECT/data/ ./data/ 2>/dev/null || true
 
 # Switch to non-root user
 USER kmidi

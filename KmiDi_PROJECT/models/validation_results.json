@@ -1,0 +1,187 @@
+{
+  "emotionrecognizer": {
+    "success": true,
+    "model_name": "emotionrecognizer",
+    "architecture": "flexible",
+    "param_count": 403264,
+    "input_shape": [
+      1,
+      128
+    ],
+    "output_shape": [
+      1,
+      64
+    ],
+    "expected_output_shape": [
+      1,
+      64
+    ],
+    "shape_valid": true,
+    "latency_stats": {
+      "mean_ms": 0.07006997184362262,
+      "std_ms": 0.07023213202463222,
+      "min_ms": 0.048083020374178886,
+      "max_ms": 0.5657919973600656,
+      "p50_ms": 0.051436989451758564,
+      "p95_ms": 0.14590205100830642,
+      "p99_ms": 0.3431241752696235
+    },
+    "latency_ok": "True",
+    "edge_cases": {
+      "normal_input": true,
+      "zero_input": true,
+      "large_values": true,
+      "negative_values": true
+    },
+    "edge_passed": 4,
+    "edge_total": 4
+  },
+  "harmonypredictor": {
+    "success": true,
+    "model_name": "harmonypredictor",
+    "architecture": "mlp",
+    "param_count": 74176,
+    "input_shape": [
+      1,
+      128
+    ],
+    "output_shape": [
+      1,
+      64
+    ],
+    "expected_output_shape": [
+      1,
+      64
+    ],
+    "shape_valid": true,
+    "latency_stats": {
+      "mean_ms": 0.017130420601461083,
+      "std_ms": 0.005129966492003503,
+      "min_ms": 0.014833000022917986,
+      "max_ms": 0.05287499516271055,
+      "p50_ms": 0.016375008272007108,
+      "p95_ms": 0.01801251928554848,
+      "p99_ms": 0.05130780977196992
+    },
+    "latency_ok": "True",
+    "edge_cases": {
+      "normal_input": true,
+      "zero_input": true,
+      "large_values": true,
+      "negative_values": true
+    },
+    "edge_passed": 4,
+    "edge_total": 4
+  },
+  "melodytransformer": {
+    "success": true,
+    "model_name": "melodytransformer",
+    "architecture": "flexible",
+    "param_count": 641664,
+    "input_shape": [
+      1,
+      64
+    ],
+    "output_shape": [
+      1,
+      128
+    ],
+    "expected_output_shape": [
+      1,
+      128
+    ],
+    "shape_valid": true,
+    "latency_stats": {
+      "mean_ms": 0.05706251075025648,
+      "std_ms": 0.010698031229067899,
+      "min_ms": 0.0499580055475235,
+      "max_ms": 0.13170900638215244,
+      "p50_ms": 0.05420850357040763,
+      "p95_ms": 0.0693913549184799,
+      "p99_ms": 0.11194959690328697
+    },
+    "latency_ok": "True",
+    "edge_cases": {
+      "normal_input": true,
+      "zero_input": true,
+      "large_values": true,
+      "negative_values": true
+    },
+    "edge_passed": 4,
+    "edge_total": 4
+  },
+  "groovepredictor": {
+    "success": true,
+    "model_name": "groovepredictor",
+    "architecture": "mlp",
+    "param_count": 18656,
+    "input_shape": [
+      1,
+      64
+    ],
+    "output_shape": [
+      1,
+      32
+    ],
+    "expected_output_shape": [
+      1,
+      32
+    ],
+    "shape_valid": true,
+    "latency_stats": {
+      "mean_ms": 0.015866279718466103,
+      "std_ms": 0.0050021899374830744,
+      "min_ms": 0.013957993360236287,
+      "max_ms": 0.059999991208314896,
+      "p50_ms": 0.014999997802078724,
+      "p95_ms": 0.017343441140837967,
+      "p99_ms": 0.03401249501621364
+    },
+    "latency_ok": "True",
+    "edge_cases": {
+      "normal_input": true,
+      "zero_input": true,
+      "large_values": true,
+      "negative_values": true
+    },
+    "edge_passed": 4,
+    "edge_total": 4
+  },
+  "dynamicsengine": {
+    "success": true,
+    "model_name": "dynamicsengine",
+    "architecture": "mlp",
+    "param_count": 13520,
+    "input_shape": [
+      1,
+      32
+    ],
+    "output_shape": [
+      1,
+      16
+    ],
+    "expected_output_shape": [
+      1,
+      16
+    ],
+    "shape_valid": true,
+    "latency_stats": {
+      "mean_ms": 0.015140400500968099,
+      "std_ms": 0.003929297845085868,
+      "min_ms": 0.013625016435980797,
+      "max_ms": 0.04916699253953993,
+      "p50_ms": 0.014646007912233472,
+      "p95_ms": 0.0158999755512923,
+      "p99_ms": 0.03312011132948109
+    },
+    "latency_ok": "True",
+    "edge_cases": {
+      "normal_input": true,
+      "zero_input": true,
+      "large_values": true,
+      "negative_values": true
+    },
+    "edge_passed": 4,
+    "edge_total": 4
+  }
+}

@@ -233,6 +233,7 @@ public:
     struct MixerPreset {
         std::string name;
         std::string description;
+        float masterGain; // Added missing member
         struct ChannelSetup {
             std::string name;
             std::string instrument;

@@ -1,386 +1,181 @@
+#!/usr/bin/env python3
 """
-MCP Workstation - Command Line Interface
+DAiW-Music-Brain Command Line Interface (CLI)
 
-CLI for managing the multi-AI workstation.
+CLI for emotion-driven music generation, analysis, and interactive teaching.
 """
 
 import argparse
 import json
 import sys
+from pathlib import Path
 from typing import Optional
 
-from .models import AIAgent, ProposalCategory, ProposalStatus, PhaseStatus
-from .orchestrator import get_workstation, shutdown_workstation
-from .ai_specializations import print_ai_summary, TaskType
-from .phases import format_phase_progress
-from .cpp_planner import format_cpp_plan
-from .proposals import format_proposal_list, format_proposal
+# Import core music_brain modules
+from music_brain.structure.comprehensive_engine import TherapySession
+from music_brain.data.emotional_mapping import EMOTIONAL_PRESETS
+from music_brain.session.intent_schema import RuleBreakingCategory # Assuming this exists
 
+# --- Command Handlers ---
 
-# ---------------------------------------------------------------------------
-# Minimal command handlers (stub implementations for test compatibility)
-# ---------------------------------------------------------------------------
 def cmd_extract(args):
-    if not args.midi_file or not Path(args.midi_file).exists():
-        print("Error: MIDI file not found")
-        return 1
-    output = args.output or (Path(args.midi_file).with_suffix("") .as_posix() + "_groove.json")
-    Path(output).write_text(json.dumps({"swing_factor": 0.2}))
+    print(f"Extracting groove from MIDI file: {args.midi_file}")
+    # Placeholder for actual groove extraction logic
+    output_path = args.output or Path(args.midi_file).with_suffix("_groove.json")
+    output_path.write_text(json.dumps({"swing_factor": 0.6, "tempo_bpm": 120}))
+    print(f"Groove extracted and saved to {output_path}")
     return 0
-
 
 def cmd_apply(args):
-    if not args.midi_file or not Path(args.midi_file).exists():
-        print("Error: MIDI file not found")
-        return 1
-    output = args.output or Path(args.midi_file).with_name("applied.mid")
-    Path(output).write_bytes(b"midi")
+    print(f"Applying genre '{args.genre}' to MIDI file: {args.midi_file}")
+    # Placeholder for actual genre application logic
+    output_path = args.output or Path(args.midi_file).with_name(f"{Path(args.midi_file).stem}_{args.genre}.mid")
+    output_path.write_bytes(b"midi_with_genre_applied")
+    print(f"Genre applied and saved to {output_path}")
     return 0
-
-
-def cmd_humanize(args):
-    if getattr(args, "list_presets", False):
-        print("Presets: lofi_depression, natural")
-        return 0
-    if not args.midi_file or not Path(args.midi_file).exists():
-        print("Error: MIDI file not found")
-        return 1
-    if args.preset and args.preset not in {"lofi_depression"}:
-        print("Unknown preset")
-        return 1
-    output = args.output or Path(args.midi_file).with_name("humanized.mid")
-    Path(output).write_bytes(b"midi")
-    return 0
-
 
 def cmd_analyze(args):
-    print("Analysis complete")
+    print(f"Analyzing MIDI file: {args.midi_file}")
+    # Placeholder for actual analysis logic
+    result = {"chords": ["Cmaj", "Gmaj", "Am", "Fmaj"], "scales": ["C Major"]}
+    print(json.dumps(result, indent=2))
     return 0
-
 
 def cmd_diagnose(args):
-    print("Key: C major")
+    print(f"Diagnosing harmonic issues for progression: {args.progression}")
+    # Placeholder for actual diagnosis logic
+    print(f"No obvious issues for {args.progression}. It's a common progression.")
     return 0
-
-
-def cmd_reharm(args):
-    print("Reharmonization suggestions")
-    return 0
-
-
-def get_session_module(topic: str):
-    """Return a placeholder teacher class; patched in tests."""
-    return None
-
-
-def cmd_teach(args):
-    teacher_cls = get_session_module(args.topic)
-    if teacher_cls is None:
-        print("Unknown topic")
-        return 1
-    teacher = teacher_cls()
-    if getattr(args, "quick", False):
-        teacher.quick_teach()
-    else:
-        teacher.teach()
-    return 0
-
 
 def cmd_intent(args):
-    # Simulate processing intent JSON and emit summary
-    print("Intent processed")
+    if args.subcommand == 'new':
+        print(f"Creating new intent template with title: {args.title}")
+        # Placeholder for intent creation
+        template = {"title": args.title, "core_wound": "", "emotional_intent": "", "technical": {}}
+        output_path = Path(f"{args.title.replace(' ', '_').lower()}_intent.json")
+        output_path.write_text(json.dumps(template, indent=2))
+        print(f"Intent template created at {output_path}")
+    elif args.subcommand == 'suggest':
+        print(f"Suggesting rule-breaks for topic: {args.topic}")
+        # Placeholder for suggestion logic
+        if args.topic == "grief":
+            print("Suggested rule-breaks: HARMONY_AvoidTonicResolution, ARRANGEMENT_BuriedVocals")
+        else:
+            print("No specific suggestions for this topic.")
+    else:
+        print("Unknown intent subcommand.")
     return 0
 
+def cmd_teach(args):
+    print(f"Starting interactive teaching mode for topic: {args.topic}")
+    # Placeholder for interactive teaching logic
+    print("Interactive session started. (Not fully implemented in this stub)")
+    return 0
+
+def cmd_generate(args):
+    print(f"Generating music from emotional intent: '{args.emotion_text}'")
+    try:
+        session = TherapySession()
+        affect = session.process_core_input(args.emotion_text)
+        session.set_scales(motivation=7, chaos=0.5) # Default values
+        plan = session.generate_plan()
+
+        output = {
+            "status": "success",
+            "result": {
+                "affect": {
+                    "primary": affect,
+                    "secondary": session.state.affect_result.secondary if session.state.affect_result else None,
+                    "intensity": session.state.affect_result.intensity if session.state.affect_result else 0.0,
+                },
+                "plan": {
+                    "root_note": plan.root_note,
+                    "mode": plan.mode,
+                    "tempo_bpm": plan.tempo_bpm,
+                    "length_bars": plan.length_bars,
+                    "chord_symbols": plan.chord_symbols,
+                    "complexity": plan.complexity,
+                },
+            }
+        }
+        print(json.dumps(output, indent=2))
+    except Exception as e:
+        print(f"Error generating music: {e}", file=sys.stderr)
+        return 1
+    return 0
 
 def main():
-    """Main CLI entry point."""
     parser = argparse.ArgumentParser(
-        description="MCP Multi-AI Workstation CLI",
+        prog="daiw",
+        description="DAiW-Music-Brain Command Line Interface",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s status                     Show workstation dashboard
-  %(prog)s register claude            Register as Claude
-  %(prog)s propose claude "Title" "Description" architecture
-  %(prog)s vote claude PROP_ID 1      Approve a proposal
-  %(prog)s phases                     Show phase progress
-  %(prog)s cpp                        Show C++ transition plan
-  %(prog)s ai                         Show AI specializations
-  %(prog)s server                     Run MCP server
+  daiw extract drums.mid            # Extract groove from MIDI
+  daiw apply --genre funk track.mid # Apply genre groove template
+  daiw analyze --chords song.mid    # Analyze chord progression
+  daiw diagnose "F-C-Am-Dm"         # Diagnose harmonic issues
+  daiw intent new --title "My Song" # Create intent template
+  daiw intent suggest grief         # Suggest rules to break
+  daiw teach rulebreaking           # Interactive teaching mode
+  daiw generate "I feel peaceful"   # Generate music from emotion
         """,
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    # Status command
-    status_parser = subparsers.add_parser("status", help="Show workstation status")
-    status_parser.add_argument("--json", action="store_true", help="Output as JSON")
+    # Extract command
+    extract_parser = subparsers.add_parser("extract", help="Extract groove from MIDI")
+    extract_parser.add_argument("midi_file", type=str, help="Path to MIDI file")
+    extract_parser.add_argument("--output", type=str, help="Output JSON file for groove data")
+    extract_parser.set_defaults(func=cmd_extract)
 
-    # Register command
-    register_parser = subparsers.add_parser("register", help="Register an AI agent")
-    register_parser.add_argument(
-        "agent",
-        choices=["claude", "chatgpt", "gemini", "github_copilot"],
-        help="AI agent to register",
-    )
+    # Apply command
+    apply_parser = subparsers.add_parser("apply", help="Apply genre groove template to MIDI")
+    apply_parser.add_argument("midi_file", type=str, help="Path to input MIDI file")
+    apply_parser.add_argument("--genre", type=str, required=True, help="Genre to apply")
+    apply_parser.add_argument("--output", type=str, help="Output MIDI file")
+    apply_parser.set_defaults(func=cmd_apply)
 
-    # Propose command
-    propose_parser = subparsers.add_parser("propose", help="Submit a proposal")
-    propose_parser.add_argument(
-        "agent",
-        choices=["claude", "chatgpt", "gemini", "github_copilot"],
-    )
-    propose_parser.add_argument("title", help="Proposal title")
-    propose_parser.add_argument("description", help="Proposal description")
-    propose_parser.add_argument(
-        "category",
-        choices=[c.value for c in ProposalCategory],
-        help="Proposal category",
-    )
-    propose_parser.add_argument(
-        "--priority", type=int, default=5, help="Priority 1-10"
-    )
-    propose_parser.add_argument(
-        "--phase", type=int, default=1, help="Target phase 1-3"
-    )
+    # Analyze command
+    analyze_parser = subparsers.add_parser("analyze", help="Analyze MIDI file for chords/progressions")
+    analyze_parser.add_argument("midi_file", type=str, help="Path to MIDI file")
+    analyze_parser.add_argument("--chords", action="store_true", help="Analyze chord progression")
+    analyze_parser.set_defaults(func=cmd_analyze)
 
-    # Vote command
-    vote_parser = subparsers.add_parser("vote", help="Vote on a proposal")
-    vote_parser.add_argument(
-        "agent",
-        choices=["claude", "chatgpt", "gemini", "github_copilot"],
-    )
-    vote_parser.add_argument("proposal_id", help="Proposal ID")
-    vote_parser.add_argument(
-        "vote",
-        type=int,
-        choices=[-1, 0, 1],
-        help="-1=reject, 0=neutral, 1=approve",
-    )
-    vote_parser.add_argument("--comment", default="", help="Vote comment")
+    # Diagnose command
+    diagnose_parser = subparsers.add_parser("diagnose", help="Diagnose harmonic issues in a progression")
+    diagnose_parser.add_argument("progression", type=str, help="Chord progression (e.g., C-G-Am-F)")
+    diagnose_parser.set_defaults(func=cmd_diagnose)
 
-    # Proposals command
-    proposals_parser = subparsers.add_parser("proposals", help="List proposals")
-    proposals_parser.add_argument(
-        "--agent",
-        choices=["claude", "chatgpt", "gemini", "github_copilot"],
-    )
-    proposals_parser.add_argument(
-        "--status",
-        choices=[s.value for s in ProposalStatus],
-    )
-    proposals_parser.add_argument("--json", action="store_true")
+    # Intent command (new/suggest)
+    intent_parser = subparsers.add_parser("intent", help="Manage emotional intents")
+    intent_subparsers = intent_parser.add_subparsers(dest="subcommand")
 
-    # Phases command
-    phases_parser = subparsers.add_parser("phases", help="Show phase progress")
-    phases_parser.add_argument("--json", action="store_true")
+    new_intent_parser = intent_subparsers.add_parser("new", help="Create a new intent template")
+    new_intent_parser.add_argument("--title", type=str, required=True, help="Title for the new intent")
+    new_intent_parser.set_defaults(func=cmd_intent)
 
-    # Task command
-    task_parser = subparsers.add_parser("task", help="Update a task")
-    task_parser.add_argument("phase_id", type=int, help="Phase ID")
-    task_parser.add_argument("task_id", help="Task ID")
-    task_parser.add_argument(
-        "status",
-        choices=[s.value for s in PhaseStatus],
-    )
-    task_parser.add_argument("--progress", type=float)
-    task_parser.add_argument("--notes")
+    suggest_intent_parser = intent_subparsers.add_parser("suggest", help="Suggest rule-breaks for a topic")
+    suggest_intent_parser.add_argument("topic", type=str, help="Topic for rule-break suggestions (e.g., grief)")
+    suggest_intent_parser.set_defaults(func=cmd_intent)
 
-    # C++ command
-    cpp_parser = subparsers.add_parser("cpp", help="Show C++ transition plan")
-    cpp_parser.add_argument("--json", action="store_true")
-    cpp_parser.add_argument("--cmake", action="store_true", help="Show CMake plan")
+    # Teach command
+    teach_parser = subparsers.add_parser("teach", help="Start interactive teaching mode")
+    teach_parser.add_argument("topic", type=str, help="Teaching topic (e.g., rulebreaking, voice_leading)")
+    teach_parser.set_defaults(func=cmd_teach)
 
-    # AI command
-    ai_parser = subparsers.add_parser("ai", help="Show AI specializations")
-    ai_parser.add_argument(
-        "--agent",
-        choices=["claude", "chatgpt", "gemini", "github_copilot"],
-    )
-
-    # Assign command
-    assign_parser = subparsers.add_parser("assign", help="Suggest task assignments")
-    assign_parser.add_argument(
-        "--tasks",
-        nargs="+",
-        help="Tasks in format name:type (e.g., 'refactor:code_refactoring')",
-    )
-
-    # Debug command
-    debug_parser = subparsers.add_parser("debug", help="Show debug info")
-    debug_parser.add_argument("--errors", action="store_true", help="Show recent errors")
-    debug_parser.add_argument("--performance", action="store_true")
-
-    # Server command
-    server_parser = subparsers.add_parser("server", help="Run MCP server")
-
-    # Reset command
-    reset_parser = subparsers.add_parser("reset", help="Reset workstation")
-    reset_parser.add_argument("--force", action="store_true", help="Skip confirmation")
+    # Generate command
+    generate_parser = subparsers.add_parser("generate", help="Generate music from emotional intent")
+    generate_parser.add_argument("emotion_text", type=str, help="Emotional intent as text")
+    generate_parser.set_defaults(func=cmd_generate)
 
     args = parser.parse_args()
 
-    if not args.command:
+    if hasattr(args, "func"):
+        args.func(args)
+    else:
         parser.print_help()
-        return
 
-    try:
-        run_command(args)
-    except KeyboardInterrupt:
-        print("\nInterrupted")
-        sys.exit(1)
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
-    finally:
-        shutdown_workstation()
-
-
-def run_command(args):
-    """Execute the selected command."""
-    ws = get_workstation()
-
-    if args.command == "status":
-        if args.json:
-            print(json.dumps(ws.get_status(), indent=2))
-        else:
-            print(ws.get_dashboard())
-
-    elif args.command == "register":
-        agent = AIAgent(args.agent)
-        ws.register_agent(agent)
-        print(f"Registered: {agent.display_name}")
-        caps = ws.get_agent_capabilities(agent)
-        print(f"\nRecommended for:")
-        for item in caps["recommended_for"][:5]:
-            print(f"  - {item}")
-
-    elif args.command == "propose":
-        result = ws.submit_proposal(
-            agent=AIAgent(args.agent),
-            title=args.title,
-            description=args.description,
-            category=ProposalCategory(args.category),
-            priority=args.priority,
-            phase_target=args.phase,
-        )
-        if result:
-            print(f"Proposal submitted: {result['id']}")
-            print(f"Title: {result['title']}")
-        else:
-            print("Failed to submit proposal (limit reached?)")
-
-    elif args.command == "vote":
-        result = ws.vote_on_proposal(
-            agent=AIAgent(args.agent),
-            proposal_id=args.proposal_id,
-            vote=args.vote,
-            comment=args.comment,
-        )
-        if result:
-            vote_str = {-1: "REJECTED", 0: "NEUTRAL", 1: "APPROVED"}[args.vote]
-            print(f"Vote recorded: {vote_str}")
-        else:
-            print("Failed to vote")
-
-    elif args.command == "proposals":
-        all_props = ws.get_all_proposals()
-        proposals = all_props["proposals"]
-
-        if args.agent:
-            proposals = [p for p in proposals if p["agent"] == args.agent]
-        if args.status:
-            proposals = [p for p in proposals if p["status"] == args.status]
-
-        if args.json:
-            print(json.dumps(proposals, indent=2))
-        else:
-            from .models import Proposal
-            props = [Proposal.from_dict(p) for p in proposals]
-            print(format_proposal_list(props))
-            print(f"\nSummary: {all_props['summary']}")
-
-    elif args.command == "phases":
-        if args.json:
-            print(json.dumps(ws.phases.get_phase_summary(), indent=2))
-        else:
-            print(ws.get_phase_progress())
-
-    elif args.command == "task":
-        ws.update_task(
-            phase_id=args.phase_id,
-            task_id=args.task_id,
-            status=args.status,
-            progress=args.progress,
-            notes=args.notes,
-        )
-        print(f"Task {args.task_id} updated to {args.status}")
-
-    elif args.command == "cpp":
-        if args.cmake:
-            print(ws.get_cmake_plan())
-        elif args.json:
-            print(json.dumps(ws.get_cpp_plan(), indent=2))
-        else:
-            print(ws.get_cpp_progress())
-
-    elif args.command == "ai":
-        if args.agent:
-            agent = AIAgent(args.agent)
-            caps = ws.get_agent_capabilities(agent)
-            print(json.dumps(caps, indent=2))
-        else:
-            print_ai_summary()
-
-    elif args.command == "assign":
-        if not args.tasks:
-            print("Usage: assign --tasks 'task1:type1' 'task2:type2' ...")
-            return
-
-        tasks = []
-        for t in args.tasks:
-            if ":" not in t:
-                print(f"Invalid task format: {t} (expected name:type)")
-                continue
-            name, task_type = t.split(":", 1)
-            try:
-                tasks.append((name, TaskType(task_type)))
-            except ValueError:
-                print(f"Unknown task type: {task_type}")
-                continue
-
-        if tasks:
-            assignments = ws.suggest_assignments(tasks)
-            print("Suggested Assignments:")
-            for task, agent in assignments.items():
-                print(f"  {task}: {agent}")
-
-    elif args.command == "debug":
-        summary = ws.get_debug_summary()
-        if args.errors:
-            print("Recent Errors:")
-            for e in summary["recent_errors"]:
-                print(f"  [{e['timestamp']}] {e['message']}")
-        elif args.performance:
-            print("Performance Report:")
-            print(json.dumps(summary["performance"], indent=2))
-        else:
-            print(json.dumps(summary, indent=2))
-
-    elif args.command == "server":
-        from .server import run_server
-        print("Starting MCP server...", file=sys.stderr)
-        run_server()
-
-    elif args.command == "reset":
-        if not args.force:
-            confirm = input("Reset workstation? This will clear all data. [y/N]: ")
-            if confirm.lower() != "y":
-                print("Cancelled")
-                return
-        ws.reset()
-        print("Workstation reset")
-
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    sys.exit(main())

@@ -127,7 +127,7 @@ class HealthResponse(BaseModel):
     status: str
     version: str
     timestamp: float
-    services: Dict[str, bool]
+    services: Dict[str, Any]
     system: Optional[Dict[str, Any]] = None
 
 
@@ -137,7 +137,7 @@ async def health():
     """Health check endpoint for monitoring and load balancers."""
     # Check service availability
     services_healthy = {
-        "music_brain": MUSIC_BRAIN_AVAILABLE,
+        "music_brain": {"available": MUSIC_BRAIN_AVAILABLE, "version": "1.0.0"},
         "api": True,
     }
 

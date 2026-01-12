@@ -1,6 +1,10 @@
 # KmiDi Production Docker Image - Optimized Multi-stage Build
 # ============================================================
-# Production-ready image for Music Brain API and Streamlit demo
+# Production-ready image for Music Brain API
+# Target: <500MB image size
+#
+# Build: docker build -t kmidi-api:prod -f Dockerfile.prod .
+# Run:   docker run -p 8000:8000 --env-file .env kmidi-api:prod
 
 # Stage 1: Builder - Compile dependencies and build packages
 FROM python:3.11-slim as builder
@@ -12,25 +16,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
     g++ \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy dependency files (for better Docker layer caching)
+# Copy dependency files first (for better Docker layer caching)
 COPY requirements-production.txt /build/
-COPY pyproject.toml /build/
-COPY setup.py /build/ 2>/dev/null || true
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements-production.txt
+# Create virtual environment and install dependencies
+# Using venv reduces final image size by excluding build-only packages
+RUN python -m venv /opt/venv && \
+    /opt/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    /opt/venv/bin/pip install --no-cache-dir -r requirements-production.txt
 
 # Stage 2: Runtime - Minimal production image
 FROM python:3.11-slim
 
 # Metadata labels
 LABEL maintainer="KmiDi Team"
-LABEL description="KmiDi Music Generation System - Production"
+LABEL description="KmiDi Music Generation API - Production"
 LABEL version="1.0.0"
+LABEL org.opencontainers.image.source="https://github.com/kmidi/KmiDi"
 
 # Install only runtime system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -38,45 +42,49 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libasound2 \
     curl \
     && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
-# Create non-root user
+# Create non-root user for security
 RUN useradd -m -u 1000 -s /bin/bash kmidi && \
-    mkdir -p /app /data /models /output && \
-    chown -R kmidi:kmidi /app /data /models /output
+    mkdir -p /app /data /models /output /logs && \
+    chown -R kmidi:kmidi /app /data /models /output /logs
 
 WORKDIR /app
 
-# Copy installed Python packages from builder (runtime only)
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
 
 # Copy application code (as non-root user)
-COPY --chown=kmidi:kmidi music_brain/ ./music_brain/
+COPY --chown=kmidi:kmidi source/python/music_brain/ ./music_brain/
+COPY --chown=kmidi:kmidi api/ ./api/
 COPY --chown=kmidi:kmidi pyproject.toml ./
-COPY --chown=kmidi:kmidi README.md ./
 COPY --chown=kmidi:kmidi data/ ./data/ 2>/dev/null || true
-
-# Copy API and Streamlit apps (optional - uncomment if needed)
-# COPY --chown=kmidi:kmidi api/ ./api/
-# COPY --chown=kmidi:kmidi streamlit_app.py ./
 
 # Switch to non-root user
 USER kmidi
 
 # Environment variables
-ENV PYTHONUNBUFFERED=1 \
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app \
     KELLY_AUDIO_DATA_ROOT=/data \
-    LOG_LEVEL=INFO
+    LOG_LEVEL=INFO \
+    API_HOST=0.0.0.0 \
+    API_PORT=8000 \
+    API_WORKERS=4
 
-# Expose ports (API: 8000, Streamlit: 8501)
-EXPOSE 8000 8501
+# Expose API port
+EXPOSE 8000
 
-# Health check
+# Health check using curl (more reliable than python import)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import music_brain; print('OK')" || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
-# Default command (override in docker-compose or run command)
-CMD ["python", "-c", "import music_brain; print('KmiDi Music Brain loaded successfully')"]
+# Run FastAPI application with uvicorn
+CMD ["python", "-m", "uvicorn", "api.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--workers", "4", \
+     "--log-level", "info"]

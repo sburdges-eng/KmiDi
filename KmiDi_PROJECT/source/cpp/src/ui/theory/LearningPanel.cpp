@@ -1,292 +1,263 @@
-#include "LearningPanel.h"
-#include <juce_audio_devices/juce_audio_devices.h>
+#include "ui/theory/LearningPanel.h"
+#include <juce_graphics/juce_graphics.h>
+#include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_audio_basics/juce_audio_basics.h> // For MidiMessage, MidiBuffer
+#include <juce_audio_devices/juce_audio_devices.h> // For MidiOutput
+#include <algorithm>
+#include <chrono>
+#include <thread>
 
 namespace kelly {
 
+// Forward declaration for MusicTheoryBrain::MidiMessage if it's different from juce::MidiMessage
+// In Types.h, midikompanion::theory::MidiMessage is defined.
+// We need to convert it to juce::MidiMessage for playback.
+
 LearningPanel::LearningPanel(midikompanion::theory::MusicTheoryBrain* brain)
-    : brain_(brain)
+    : brain_(brain),
+      conceptTitle_("", ""),
+      explanationDisplay_("Explanation"), // Corrected constructor
+      styleSelector_("Style Selector"),
+      styleLabel_{"", "Explanation Style"},
+      playExampleButton_("Play Example"),
+      nextExerciseButton_("Next Exercise")
 {
     setupComponents();
 }
 
-void LearningPanel::paint(juce::Graphics& g) {
-    g.fillAll(juce::Colour(0xff2a2a2a));
-}
-
-void LearningPanel::resized() {
-    auto bounds = getLocalBounds();
-    const int margin = 10;
-    const int titleHeight = 30;
-    const int controlHeight = 30;
-    const int buttonWidth = 120;
-
-    // Title at top
-    conceptTitle_.setBounds(margin, margin, bounds.getWidth() - 2 * margin, titleHeight);
-
-    // Style selector
-    int controlTop = margin + titleHeight + margin;
-    styleLabel_.setBounds(margin, controlTop, 150, controlHeight);
-    styleSelector_.setBounds(margin + 150, controlTop, 200, controlHeight);
-
-    // Buttons
-    playExampleButton_.setBounds(bounds.getWidth() - buttonWidth - margin, controlTop,
-                                 buttonWidth, controlHeight);
-    nextExerciseButton_.setBounds(bounds.getWidth() - 2 * buttonWidth - 2 * margin, controlTop,
-                                 buttonWidth, controlHeight);
-
-    // Explanation display
-    int displayTop = controlTop + controlHeight + margin;
-    explanationDisplay_.setBounds(margin, displayTop,
-                                  bounds.getWidth() - 2 * margin,
-                                  bounds.getHeight() - displayTop - margin);
-}
-
-void LearningPanel::setupComponents() {
-    // Title
-    conceptTitle_.setFont(juce::Font(20.0f, juce::Font::bold));
-    conceptTitle_.setColour(juce::Label::textColourId, juce::Colours::white);
-    conceptTitle_.setText("Select a concept to learn", juce::dontSendNotification);
+void LearningPanel::setupComponents()
+{
     addAndMakeVisible(conceptTitle_);
+    conceptTitle_.setFont(juce::Font(24.0f, juce::Font::bold));
+    conceptTitle_.setJustificationType(juce::Justification::centred);
 
-    // Style selector
-    styleSelector_.addItem("Intuitive", 1);
-    styleSelector_.addItem("Mathematical", 2);
-    styleSelector_.addItem("Historical", 3);
-    styleSelector_.addItem("Acoustic", 4);
-    styleSelector_.setSelectedId(1);
-    styleSelector_.onChange = [this] {
-        int selected = styleSelector_.getSelectedId();
-        if (selected == 1) currentStyle_ = midikompanion::theory::ExplanationType::Intuitive;
-        else if (selected == 2) currentStyle_ = midikompanion::theory::ExplanationType::Mathematical;
-        else if (selected == 3) currentStyle_ = midikompanion::theory::ExplanationType::Historical;
-        else if (selected == 4) currentStyle_ = midikompanion::theory::ExplanationType::Acoustic;
-        updateExplanationDisplay();
-    };
-    addAndMakeVisible(styleSelector_);
+    addAndMakeVisible(explanationDisplay_);
+    explanationDisplay_.setMultiLine(true, true);
+    explanationDisplay_.setReturnKeyStartsNewLine(false);
+    explanationDisplay_.setReadOnly(true);
+    explanationDisplay_.setScrollbarsShown(true);
+    explanationDisplay_.setCaretVisible(false);
+
     addAndMakeVisible(styleLabel_);
-
-    // Buttons
-    playExampleButton_.onClick = [this] {
-        if (isPlayingExample_) {
-            stopExamplePlayback();
-        } else {
-            playCurrentConceptExample();
-        }
+    addAndMakeVisible(styleSelector_);
+    styleSelector_.addItem("Intuitive", (int)midikompanion::theory::ExplanationType::Intuitive + 1);
+    styleSelector_.addItem("Mathematical", (int)midikompanion::theory::ExplanationType::Mathematical + 1);
+    styleSelector_.addItem("Historical", (int)midikompanion::theory::ExplanationType::Historical + 1);
+    styleSelector_.setSelectedId((int)currentStyle_ + 1);
+    styleSelector_.onChange = [this] {
+        setExplanationStyle((midikompanion::theory::ExplanationType)(styleSelector_.getSelectedId() - 1));
     };
+
+    playExampleButton_.onClick = [this] { playCurrentConceptExample(); };
     addAndMakeVisible(playExampleButton_);
 
     nextExerciseButton_.onClick = [this] { loadNextExercise(); };
     addAndMakeVisible(nextExerciseButton_);
 
-    // Explanation display
-    explanationDisplay_.setMultiLine(true);
-    explanationDisplay_.setReadOnly(true);
-    explanationDisplay_.setFont(juce::Font(14.0f));
-    explanationDisplay_.setText("Select a concept from the Concepts tab to begin learning.");
-    addAndMakeVisible(explanationDisplay_);
+    // Attempt to initialize MIDI output
+    ensureMidiOutputReady();
 }
 
-void LearningPanel::displayConcept(const std::string& conceptName) {
+void LearningPanel::paint(juce::Graphics& g)
+{
+    g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
+}
+
+void LearningPanel::resized()
+{
+    juce::Rectangle<int> bounds = getLocalBounds().reduced(10);
+    int y = bounds.getY();
+    int height = 30;
+
+    conceptTitle_.setBounds(bounds.getX(), y, bounds.getWidth(), height);
+    y += height + 10;
+
+    styleLabel_.setBounds(bounds.getX(), y, 100, height);
+    styleSelector_.setBounds(bounds.getX() + 105, y, 150, height);
+    y += height + 10;
+
+    playExampleButton_.setBounds(bounds.getX(), y, 120, height);
+    nextExerciseButton_.setBounds(playExampleButton_.getRight() + 10, y, 120, height);
+    y += height + 10;
+
+    explanationDisplay_.setBounds(bounds.getX(), y, bounds.getWidth(), bounds.getHeight() - y);
+}
+
+void LearningPanel::displayConcept(const std::string& conceptName)
+{
     currentConcept_ = conceptName;
-    conceptTitle_.setText(juce::String(conceptName), juce::dontSendNotification);
+    conceptTitle_.setText(conceptName, juce::dontSendNotification);
     loadExplanation(conceptName);
-}
-
-void LearningPanel::displayExplanation(const std::string& text, midikompanion::theory::ExplanationType style) {
-    juce::String displayText;
-    displayText += "Style: " + juce::String(style == midikompanion::theory::ExplanationType::Intuitive ? "Intuitive" :
-                                            style == midikompanion::theory::ExplanationType::Mathematical ? "Mathematical" :
-                                            style == midikompanion::theory::ExplanationType::Historical ? "Historical" :
-                                            style == midikompanion::theory::ExplanationType::Acoustic ? "Acoustic" : "Practical") + "\n\n";
-    displayText += juce::String(text);
-    explanationDisplay_.setText(displayText);
-}
-
-void LearningPanel::setMusicTheoryBrain(midikompanion::theory::MusicTheoryBrain* brain) {
-    brain_ = brain;
-    if (!currentConcept_.empty()) {
-        loadExplanation(currentConcept_);
-    }
-}
-
-void LearningPanel::setExplanationStyle(midikompanion::theory::ExplanationType style) {
-    currentStyle_ = style;
+    // loadNextExercise(); // Load first exercise when concept displayed - defer this until requested
     updateExplanationDisplay();
 }
 
-void LearningPanel::loadExplanation(const std::string& conceptName) {
-    if (!brain_) {
-        explanationDisplay_.setText("Error: MusicTheoryBrain not initialized.");
-        return;
-    }
-
-    // Get explanation from KnowledgeGraph
-    const auto& knowledge = brain_->getKnowledge();
-    auto conceptNode = knowledge.getConcept(conceptName);
-
-    if (!conceptNode.has_value()) {
-        explanationDisplay_.setText("Concept not found: " + juce::String(conceptName));
-        return;
-    }
-
-    // Find explanation with current style (explanations is a map)
-    std::string explanationText = "No explanation available for this style.";
-
-    // Access explanations as map
-    auto it = conceptNode->explanations.find(currentStyle_);
-    if (it != conceptNode->explanations.end()) {
-        explanationText = it->second;
-    } else {
-        // If no match, use first available explanation
-        if (!conceptNode->explanations.empty()) {
-            explanationText = conceptNode->explanations.begin()->second;
-        }
-    }
-
-    juce::String displayText;
-    displayText += "Concept: " + juce::String(conceptName) + "\n\n";
-    displayText += juce::String(explanationText);
-
-    if (!conceptNode->examples.empty()) {
-        displayText += "\n\nExamples:\n";
-        for (const auto& example : conceptNode->examples) {
-            displayText += "  - " + juce::String(example.description) + "\n";
-        }
-    }
-
-    explanationDisplay_.setText(displayText);
+void LearningPanel::displayExplanation(const std::string& text, midikompanion::theory::ExplanationType style)
+{
+    currentStyle_ = style;
+    styleSelector_.setSelectedId((int)currentStyle_ + 1);
+    explanationDisplay_.setText(text, juce::dontSendNotification);
 }
 
-void LearningPanel::updateExplanationDisplay() {
-    if (!currentConcept_.empty()) {
-        loadExplanation(currentConcept_);
+void LearningPanel::setMusicTheoryBrain(midikompanion::theory::MusicTheoryBrain* brain)
+{
+    brain_ = brain;
+}
+
+void LearningPanel::setExplanationStyle(midikompanion::theory::ExplanationType style)
+{
+    currentStyle_ = style;
+    loadExplanation(currentConcept_); // Reload explanation with new style
+    updateExplanationDisplay();
+}
+
+void LearningPanel::loadExplanation(const std::string& conceptName)
+{
+    if (brain_) {
+        // MusicTheoryBrain::getConceptExplanation requires ExplanationDepth
+        auto explanation = brain_->getConceptExplanation(conceptName, currentStyle_, midikompanion::theory::ExplanationDepth::Intermediate);
+        if (explanation.has_value()) {
+            explanationDisplay_.setText(explanation.value(), juce::dontSendNotification);
+        } else {
+            explanationDisplay_.setText("Explanation not found for " + conceptName, juce::dontSendNotification);
+        }
     }
 }
 
-void LearningPanel::playCurrentConceptExample() {
+void LearningPanel::updateExplanationDisplay()
+{
+    // This method is called after style changes or concept loads to refresh the text
+    loadExplanation(currentConcept_);
+}
+
+void LearningPanel::playCurrentConceptExample()
+{
     if (isPlayingExample_) {
         stopExamplePlayback();
         return;
     }
 
-    if (!brain_) {
-        explanationDisplay_.setText("Error: MusicTheoryBrain not initialized.");
+    if (!brain_ || currentConcept_.empty()) {
+        juce::Logger::writeToLog("LearningPanel: Cannot play example, brain or concept not set.");
         return;
     }
-
-    if (currentConcept_.empty()) {
-        explanationDisplay_.setText("Select a concept first, then try again.");
-        return;
-    }
-
-    // Fetch concept examples (if available) for context
-    auto examples = brain_->getKnowledge().getMusicalExamples(currentConcept_, 1);
-    juce::String exampleDescription;
-    if (!examples.empty()) {
-        exampleDescription = "Example: " + juce::String(examples.front().song) +
-                             " @ " + juce::String(examples.front().timestamp, 2) + "s\n" +
-                             juce::String(examples.front().description);
-    }
-
-    activeExampleNotes_.clear();
-    activeExampleNotes_ = buildExampleNotes();
 
     if (!ensureMidiOutputReady()) {
-        explanationDisplay_.setText(
-            "No MIDI output device is available for playback.\n"
-            "Connect a virtual MIDI port or instrument and try again.");
+        juce::Logger::writeToLog("LearningPanel: MIDI output not ready.");
         return;
     }
 
-    for (int note : activeExampleNotes_) {
-        midiOutput_->sendMessageNow(juce::MidiMessage::noteOn(1, note, (juce::uint8)100));
+    // Create a dummy UserProfile for getConceptExample
+    midikompanion::theory::UserProfile dummyProfile;
+
+    auto midiExample = brain_->getConceptExample(currentConcept_, dummyProfile);
+    if (midiExample) {
+        // Convert the vector of MIDI messages to a juce::MidiBuffer
+        juce::MidiBuffer buffer;
+        for (const auto& midiMsg : midiExample.value()) {
+            // Assume midiMsg is midikompanion::theory::MidiMessage, defined in Types.h
+            juce::MidiMessage juceNoteOn = juce::MidiMessage::noteOn(1, midiMsg.pitch, (uint8)midiMsg.velocity);
+            buffer.addEvent(juceNoteOn, static_cast<int>(midiMsg.startTime * 480)); // 480 ticks per beat
+            juce::MidiMessage juceNoteOff = juce::MidiMessage::noteOff(1, midiMsg.pitch, (uint8)0);
+            buffer.addEvent(juceNoteOff, static_cast<int>((midiMsg.startTime + midiMsg.duration) * 480));
+        }
+
+        // Play the MIDI buffer (simplified, in a real app this would be a MIDI player thread)
+        for (const auto& msg : buffer) {
+            midiOutput_->sendMessageNow(msg.getMessage());
+            std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Small delay for playback
+        }
+
+        isPlayingExample_ = true;
+        playExampleButton_.setButtonText("Stop Example");
+    } else {
+        juce::Logger::writeToLog("LearningPanel: No MIDI example available for concept: " + currentConcept_);
     }
-
-    isPlayingExample_ = true;
-    playExampleButton_.setButtonText("Stop Example");
-
-    if (exampleDescription.isNotEmpty()) {
-        explanationDisplay_.setText(exampleDescription);
-    }
-
-    juce::Timer::callAfterDelay(700, [this]() { stopExamplePlayback(); });
 }
 
-void LearningPanel::stopExamplePlayback() {
+void LearningPanel::stopExamplePlayback()
+{
     if (midiOutput_) {
-        for (int note : activeExampleNotes_) {
-            midiOutput_->sendMessageNow(juce::MidiMessage::noteOff(1, note));
+        // Send all notes off (simplified)
+        for (int channel = 0; channel < 16; ++channel) {
+            midiOutput_->sendMessageNow(juce::MidiMessage::allNotesOff(channel + 1));
+            midiOutput_->sendMessageNow(juce::MidiMessage::allSoundOff(channel + 1));
         }
+        // midiOutput_.reset(); // Do not reset, keep device open for subsequent plays
     }
-
     isPlayingExample_ = false;
-    activeExampleNotes_.clear();
     playExampleButton_.setButtonText("Play Example");
 }
 
-void LearningPanel::loadNextExercise() {
-    if (!brain_) {
-        explanationDisplay_.setText("Error: MusicTheoryBrain not initialized.");
+void LearningPanel::loadNextExercise()
+{
+    if (!brain_ || currentConcept_.empty()) {
+        hasExercise_ = false;
+        nextExerciseButton_.setEnabled(false);
+        explanationDisplay_.setText("No exercises available.", juce::dontSendNotification);
         return;
     }
 
-    if (currentConcept_.empty()) {
-        explanationDisplay_.setText("Select a concept from Concepts tab first.");
-        return;
+    // Create a dummy UserProfile for getNextExercise
+    midikompanion::theory::UserProfile dummyProfile;
+
+    auto exerciseOpt = brain_->getNextExercise(currentConcept_, dummyProfile);
+    if (exerciseOpt.has_value()) {
+        currentExercise_ = exerciseOpt.value();
+        displayExercise(currentExercise_);
+        hasExercise_ = true;
+        nextExerciseButton_.setEnabled(true);
+    } else {
+        hasExercise_ = false;
+        nextExerciseButton_.setEnabled(false);
+        explanationDisplay_.setText("No more exercises available for " + currentConcept_, juce::dontSendNotification);
     }
-
-    // For now, use intermediate level by default
-    auto exercise = brain_->getKnowledge().generateExercise(
-        currentConcept_, midikompanion::theory::DifficultyLevel::Intermediate);
-
-    displayExercise(exercise);
-    exerciseMidiFile_ = juce::File(); // Clear any stale file path
 }
 
-void LearningPanel::displayExercise(const midikompanion::theory::Exercise& exercise) {
+void LearningPanel::displayExercise(const midikompanion::theory::Exercise& exercise)
+{
     juce::String text;
-    text << "Exercise: " << juce::String(exercise.conceptName) << "\n";
-    text << "Instruction: " << juce::String(exercise.instruction) << "\n";
+    // Corrected member access for Exercise (based on Types.h)
+    text << "\n-- Exercise: " << exercise.conceptName << " --\n\n";
+    text << "Description: " << exercise.instruction << "\n\n"; // Renamed from description to instruction
+    text << "Focus Area: " << exercise.focusArea << "\n";
 
-    if (!exercise.focusArea.empty()) {
-        text << "Focus: " << juce::String(exercise.focusArea) << "\n";
-    }
-    if (!exercise.readingStrategy.empty()) {
-        text << "Strategy: " << juce::String(exercise.readingStrategy) << "\n";
-    }
-    if (!exercise.hints.empty()) {
-        text << "\nHints:\n";
-        for (const auto& hint : exercise.hints) {
-            text << " - " << juce::String(hint) << "\n";
-        }
+    // Handle MIDI example if available in exercise (e.g., from notes/onsets)
+    if (!exercise.notes.empty()) {
+        text << "\n(Interactive MIDI example available for this exercise)";
+        activeExampleNotes_ = exercise.notes;
+    } else {
+        activeExampleNotes_.clear();
     }
 
-    explanationDisplay_.setText(text);
-    currentExercise_ = exercise;
-    hasExercise_ = true;
+    explanationDisplay_.setText(text, juce::dontSendNotification);
 }
 
-bool LearningPanel::ensureMidiOutputReady() {
-    if (midiOutput_) {
+bool LearningPanel::ensureMidiOutputReady()
+{
+    if (midiOutput_ && midiOutput_->isOpen()) {
         return true;
     }
 
     auto devices = juce::MidiOutput::getAvailableDevices();
     if (devices.isEmpty()) {
+        juce::Logger::writeToLog("LearningPanel: No MIDI output devices found.");
         return false;
     }
-
+    // Attempt to open the default device (first one)
     midiOutput_ = juce::MidiOutput::openDevice(devices[0].identifier);
-    return static_cast<bool>(midiOutput_);
+    if (!midiOutput_) {
+        juce::Logger::writeToLog("LearningPanel: Failed to open default MIDI output device.");
+        return false;
+    }
+    return true;
 }
 
-std::vector<int> LearningPanel::buildExampleNotes() const {
-    if (!currentExercise_.notes.empty() && currentExercise_.conceptName == currentConcept_) {
-        return currentExercise_.notes;
-    }
-
-    // Default C major triad if no exercise notes are available
-    return {60, 64, 67};
+std::vector<int> LearningPanel::buildExampleNotes() const
+{
+    // This is a placeholder for building notes for a virtual keyboard or display.
+    // In a real scenario, this would involve parsing the current concept's MIDI example.
+    return {60, 62, 64, 65, 67, 69, 71, 72}; // C Major Scale as a dummy example
 }
 
 } // namespace kelly

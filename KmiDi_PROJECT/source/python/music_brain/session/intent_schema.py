@@ -559,6 +559,42 @@ def get_rule_breaking_info(rule_key: str) -> Optional[Dict]:
     return RULE_BREAKING_EFFECTS.get(rule_key)
 
 
+# Affect mapping for musical parameters based on mood
+AFFECT_MAPPINGS: Dict[str, Dict] = {
+    "Grief": {"modes": ["aeolian", "phrygian", "dorian"], "tempo_range": (50, 80), "key_preference": "minor"},
+    "Joy": {"modes": ["ionian", "lydian", "mixolydian"], "tempo_range": (100, 140), "key_preference": "major"},
+    "Nervousness": {"modes": ["locrian", "phrygian"], "tempo_range": (90, 130), "key_preference": "minor"},
+    "Defiance": {"modes": ["mixolydian", "dorian"], "tempo_range": (110, 150), "key_preference": "major"},
+    "Liberation": {"modes": ["lydian", "ionian"], "tempo_range": (100, 130), "key_preference": "major"},
+    "Longing": {"modes": ["dorian", "aeolian"], "tempo_range": (60, 90), "key_preference": "minor"},
+    "Rage": {"modes": ["phrygian", "locrian"], "tempo_range": (130, 180), "key_preference": "minor"},
+    "Acceptance": {"modes": ["ionian", "mixolydian"], "tempo_range": (70, 100), "key_preference": "major"},
+    "Nostalgia": {"modes": ["dorian", "mixolydian"], "tempo_range": (70, 100), "key_preference": "major"},
+    "Dissociation": {"modes": ["locrian", "phrygian"], "tempo_range": (60, 90), "key_preference": "minor"},
+    "Triumphant Hope": {"modes": ["lydian", "ionian"], "tempo_range": (100, 130), "key_preference": "major"},
+    "Bittersweet": {"modes": ["dorian", "mixolydian"], "tempo_range": (70, 100), "key_preference": "minor"},
+    "Melancholy": {"modes": ["aeolian", "dorian"], "tempo_range": (50, 80), "key_preference": "minor"},
+    "Euphoria": {"modes": ["lydian", "ionian"], "tempo_range": (120, 150), "key_preference": "major"},
+    "Desperation": {"modes": ["phrygian", "aeolian"], "tempo_range": (90, 130), "key_preference": "minor"},
+    "Serenity": {"modes": ["ionian", "lydian"], "tempo_range": (60, 90), "key_preference": "major"},
+    "Confusion": {"modes": ["locrian", "phrygian"], "tempo_range": (80, 120), "key_preference": "minor"},
+    "Determination": {"modes": ["dorian", "mixolydian"], "tempo_range": (100, 130), "key_preference": "major"},
+}
+
+
+def get_affect_mapping(mood_primary: str) -> Optional[Dict]:
+    """
+    Get musical parameters (modes, tempo, key) based on mood.
+
+    Args:
+        mood_primary: The primary mood from VALID_MOOD_PRIMARY_OPTIONS
+
+    Returns:
+        Dict with 'modes', 'tempo_range', 'key_preference' or None if not found
+    """
+    return AFFECT_MAPPINGS.get(mood_primary)
+
+
 def validate_intent(intent: CompleteSongIntent) -> List[str]:
     """
     Validate a song intent for completeness and consistency.

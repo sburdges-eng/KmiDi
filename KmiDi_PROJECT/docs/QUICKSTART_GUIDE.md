@@ -1,200 +1,334 @@
 # KmiDi Quick Start Guide
 
-**Get started in 10 minutes**
+> Get up and running with KmiDi in under 10 minutes
 
-## For Therapists & Musicians
+---
 
-### Step 1: Installation (2 minutes)
+## 🚀 5-Minute Quick Start
+
+### Option 1: Web App (Easiest)
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd KmiDi-1
+# Install and run
+pip install streamlit
+cd KmiDi_PROJECT
+streamlit run streamlit_app.py
+```
 
-# Install dependencies
+Open http://localhost:8501 and start creating!
+
+### Option 2: API + CLI
+
+```bash
+# Terminal 1: Start API
+cd KmiDi_PROJECT
+pip install -e .
+python -m uvicorn api.main:app --port 8000
+
+# Terminal 2: Use CLI
+daiw generate --key C --mode minor --pattern "I-V-vi-IV" -o song.mid
+```
+
+### Option 3: Desktop App (Tauri)
+
+```bash
+# Download pre-built app from releases, or build:
+cd KmiDi_PROJECT/source/frontend
+npm install
+npm run tauri dev
+```
+
+---
+
+## 📋 Prerequisites
+
+| Requirement | Version | Check Command |
+|-------------|---------|---------------|
+| Python | 3.9+ | `python --version` |
+| pip | Latest | `pip --version` |
+| Node.js (for Tauri) | 18+ | `node --version` |
+| Rust (for Tauri) | Latest | `rustc --version` |
+
+---
+
+## 🔧 Installation
+
+### Core Package
+
+```bash
+# Clone repository
+git clone https://github.com/your-org/KmiDi.git
+cd KmiDi/KmiDi_PROJECT
+
+# Install Python package
+pip install -e .
+
+# Verify installation
+daiw --version
+python -c "import music_brain; print('OK')"
+```
+
+### Optional Dependencies
+
+```bash
+# Audio processing
+pip install librosa soundfile
+
+# Full production setup
 pip install -r requirements-production.txt
 
-# Install the package
+# GUI dependencies
+pip install PySide6  # Qt GUI
+pip install streamlit  # Web app
+```
+
+---
+
+## 🎵 Your First Generation
+
+### Method 1: Command Line
+
+```bash
+# Generate from emotion
+daiw intent suggest grief
+daiw generate --key F --mode minor --tempo 70 -o grief_song.mid
+
+# Analyze existing MIDI
+daiw analyze --chords song.mid
+daiw diagnose "C-G-Am-F"
+```
+
+### Method 2: Python API
+
+```python
+from music_brain.structure.comprehensive_engine import TherapySession
+
+# Create session
+session = TherapySession()
+
+# Process emotional intent
+session.process_core_input("grief hidden as love")
+session.set_scales(motivation=7, chaos=0.5)
+
+# Generate plan
+plan = session.generate_plan()
+print(f"Key: {plan.root_note} {plan.mode}")
+print(f"Tempo: {plan.tempo_bpm} BPM")
+print(f"Chords: {' - '.join(plan.chord_symbols)}")
+```
+
+### Method 3: REST API
+
+```bash
+# Start API server
+python -m uvicorn api.main:app --port 8000
+
+# Generate music (in another terminal)
+curl -X POST http://localhost:8000/generate \
+  -H "Content-Type: application/json" \
+  -d '{"intent": {"emotional_intent": "calm and peaceful"}}'
+```
+
+### Method 4: Web Interface
+
+```bash
+streamlit run streamlit_app.py
+```
+
+1. Open http://localhost:8501
+2. Type: "grief hidden as love"
+3. Click **Generate**
+4. Download the MIDI file
+
+---
+
+## 🎯 Common Workflows
+
+### Workflow 1: Emotion to MIDI
+
+```bash
+# 1. Get suggestions for your emotion
+daiw intent suggest grief
+
+# 2. Create intent file
+daiw intent new --title "Loss" -o loss.json
+
+# 3. Edit loss.json with your emotions
+
+# 4. Generate
+daiw generate --intent-file loss.json -o output.mid
+```
+
+### Workflow 2: Humanize Existing MIDI
+
+```bash
+# Add human feel
+daiw humanize drums.mid --preset lofi_depression -o humanized.mid
+
+# Or apply genre groove
+daiw apply --genre dilla drums.mid -o dilla_drums.mid
+```
+
+### Workflow 3: Analyze and Improve
+
+```bash
+# Diagnose progression
+daiw diagnose "F-C-Am-Dm"
+
+# Get jazz reharmonization
+daiw reharm "F-C-Am-Dm" --style jazz
+
+# Generate improved version
+daiw generate --key F --pattern "Fmaj7-C7-Am7-Dm7" -o improved.mid
+```
+
+---
+
+## 📊 Understanding the Output
+
+When you generate music, KmiDi produces:
+
+```
+Detected Affect: grief (intensity: 0.67)
+Secondary Affect: tenderness
+
+Musical Plan:
+  Root: C
+  Mode: aeolian (natural minor)
+  Tempo: 70 BPM
+  Length: 32 bars
+  Progression: Cm - Ab - Fm - Cm
+  Complexity: 0.5
+```
+
+### What the Parameters Mean
+
+| Parameter | Description |
+|-----------|-------------|
+| **Mode** | Musical scale (aeolian = sad, lydian = dreamy, etc.) |
+| **Tempo** | Speed in beats per minute |
+| **Length** | Song structure in bars |
+| **Complexity** | How "chaotic" the timing/dynamics are (0-1) |
+
+---
+
+## 🎨 Emotional Modes
+
+KmiDi maps emotions to musical modes:
+
+| Emotion | Mode | Character |
+|---------|------|-----------|
+| Grief | Aeolian | Sad, heavy |
+| Rage | Phrygian | Dark, aggressive |
+| Awe | Lydian | Ethereal, floating |
+| Nostalgia | Dorian | Wistful, bittersweet |
+| Defiance | Mixolydian | Rock, rebellious |
+| Fear | Phrygian | Tense, unsettling |
+| Tenderness | Ionian | Gentle, warm |
+| Confusion | Locrian | Unstable, searching |
+
+---
+
+## 🐛 Quick Troubleshooting
+
+### "Command not found: daiw"
+
+```bash
+pip install -e .
+# Or use: python -m music_brain.cli
+```
+
+### "Import error: music_brain"
+
+```bash
+cd KmiDi_PROJECT
 pip install -e .
 ```
 
-### Step 2: Basic Usage (3 minutes)
-
-#### Generate Music from Emotion
+### "API not responding"
 
 ```bash
-# Using the CLI
-daiw generate --key F --mode major --pattern "I-V-vi-IV" --tempo 72 -o my_song.mid
-
-# Or use the API
-curl -X POST http://localhost:8000/generate \
-  -H "Content-Type: application/json" \
-  -d '{"intent": {"emotional_intent": "grief hidden as love"}}'
-```
-
-#### Analyze Existing Music
-
-```bash
-# Analyze a MIDI file
-daiw analyze song.mid
-
-# Diagnose a chord progression
-daiw diagnose "F-C-Am-Dm"
-
-# Analyze audio file
-daiw analyze-audio song.wav --bpm
-```
-
-### Step 3: Intent-Based Creation (5 minutes)
-
-```bash
-# Create an intent template
-daiw intent new --title "My Emotional Song" --output my_intent.json
-
-# Edit my_intent.json with your emotional intent:
-# - Core wound/desire
-# - Emotional intent
-# - Technical preferences
-
-# Get rule-breaking suggestions
-daiw intent suggest grief
-
-# Process the intent
-daiw intent process my_intent.json
-```
-
-## For Developers
-
-### Step 1: Setup (2 minutes)
-
-```bash
-# Clone and install
-git clone <repository-url>
-cd KmiDi-1
-pip install -e ".[dev]"
-```
-
-### Step 2: Run API Server (1 minute)
-
-```bash
-# Start the API
-cd api
-python -m uvicorn api.main:app --reload
-
-# Or use Docker
-docker-compose up -d
-```
-
-### Step 3: Test (2 minutes)
-
-```bash
-# Health check
+# Check if API is running
 curl http://localhost:8000/health
 
-# List emotions
+# Start API
+python -m uvicorn api.main:app --port 8000
+```
+
+### "Streamlit error"
+
+```bash
+pip install streamlit>=1.52.0
+streamlit run streamlit_app.py --server.port 8502  # Try different port
+```
+
+---
+
+## 📚 Next Steps
+
+### Learn More
+
+- [API Reference](api/API_REFERENCE.md) - Full API documentation
+- [CLI Guide](cli/CLI_GUIDE.md) - Complete CLI reference
+- [GUI Manual](gui/GUI_MANUAL.md) - All interfaces
+- [Deployment Guide](deployment/DEPLOYMENT_GUIDE.md) - Production setup
+
+### Try These Commands
+
+```bash
+# List available emotions
 curl http://localhost:8000/emotions
 
-# Generate music
-curl -X POST http://localhost:8000/generate \
-  -H "Content-Type: application/json" \
-  -d '{"intent": {"emotional_intent": "calm"}}'
+# Get teaching on rule-breaking
+daiw teach rulebreaking
+
+# Analyze audio
+daiw analyze-audio song.wav --all
+
+# List humanization presets
+daiw humanize --list-presets
 ```
 
-### Step 4: Use in Your Code (5 minutes)
-
-```python
-from music_brain.emotion_api import MusicBrain
-
-# Initialize
-brain = MusicBrain()
-
-# Generate from text
-result = brain.generate_from_text("I'm feeling sad and melancholic")
-
-# Access results
-print(f"Tempo: {result.musical_params.tempo_suggested}")
-print(f"Key: {result.musical_params.key_suggested}")
-```
-
-## Common Use Cases
-
-### Use Case 1: Music Therapy Session
+### Example Projects
 
 ```bash
-# Client describes emotion
-emotion = "grief hidden as love"
+# 1. Lo-fi grief piece
+daiw generate --key Eb --mode aeolian --tempo 65 -o lofi_grief.mid
+daiw humanize lofi_grief.mid --preset lofi_depression -o final.mid
 
-# Generate music
-daiw generate --intent-file intent.json -o therapy_session.mid
+# 2. Defiant punk progression
+daiw generate --key A --mode mixolydian --tempo 145 -o punk.mid
+daiw humanize punk.mid --preset defiant_punk -o final_punk.mid
 
-# Apply humanization for emotional authenticity
-daiw humanize therapy_session.mid --preset lofi_depression -o final.mid
+# 3. Dreamy ambient
+daiw generate --key F --mode lydian --tempo 80 -o ambient.mid
 ```
 
-### Use Case 2: Songwriting Assistant
+---
 
-```bash
-# Analyze reference track
-daiw analyze-audio reference.wav
+## 🤝 Philosophy
 
-# Extract groove
-daiw extract reference.mid -o reference_groove.json
+> "The audience doesn't hear 'borrowed from Dorian.' They hear 'that part made me cry.'"
 
-# Create new progression
-daiw generate --key F --mode major --pattern "I-V-vi-IV" -o new_song.mid
+KmiDi follows the principle: **"Interrogate Before Generate"**
 
-# Apply reference groove
-daiw apply --genre funk new_song.mid -o final.mid
-```
+The tool doesn't finish art for you—it helps you be braver in expressing your emotions through music.
 
-### Use Case 3: Music Analysis
+---
 
-```bash
-# Full analysis
-daiw analyze song.mid
-
-# Specific analysis
-daiw analyze-audio song.wav --bpm --key --chords
-
-# Compare tracks
-daiw compare-audio original.wav remix.wav
-```
-
-## Next Steps
-
-- **CLI Usage**: See [CLI Usage Guide](CLI_USAGE_GUIDE.md)
-- **API Reference**: See [API Documentation](API_DOCUMENTATION.md)
-- **Configuration**: See [Environment Configuration](ENVIRONMENT_CONFIGURATION.md)
-- **Deployment**: See [Deployment Guide](DEPLOYMENT_GUIDE.md)
-
-## Getting Help
+## 🆘 Getting Help
 
 ```bash
 # CLI help
 daiw --help
-daiw <command> --help
+daiw generate --help
 
-# API docs
-# Visit http://localhost:8000/docs
+# API documentation
+open http://localhost:8000/docs
+
+# Streamlit app has built-in help
 ```
 
-## Troubleshooting
+---
 
-**Command not found?**
-```bash
-pip install -e .
-```
-
-**Import errors?**
-```bash
-pip install -r requirements-production.txt
-```
-
-**API not starting?**
-```bash
-# Check port
-lsof -i :8000
-
-# Check logs
-tail -f logs/api.log
-```
+*Happy creating! 🎵*

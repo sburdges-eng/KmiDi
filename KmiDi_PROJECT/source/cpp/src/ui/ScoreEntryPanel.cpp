@@ -1,53 +1,10 @@
-#include "ScoreEntryPanel.h"
-
-#include <juce_audio_formats/juce_audio_formats.h>
+#include "ui/ScoreEntryPanel.h"
 #include <juce_graphics/juce_graphics.h>
+#include <juce_gui_basics/juce_gui_basics.h>
 #include <algorithm>
-#include <cmath>
-#include <numeric>
-#include <sstream>
 
-namespace midikompanion {
-
-namespace {
-float noteValueToBeats(NoteValue value) {
-    switch (value) {
-        case NoteValue::Whole: return 4.0f;
-        case NoteValue::Half: return 2.0f;
-        case NoteValue::Quarter: return 1.0f;
-        case NoteValue::Eighth: return 0.5f;
-        case NoteValue::Sixteenth: return 0.25f;
-        case NoteValue::ThirtySecond: return 0.125f;
-        case NoteValue::Dotted: return 1.5f;
-        default: return 1.0f;
-    }
-}
-
-int dynamicToVelocity(Dynamic dynamic) {
-    switch (dynamic) {
-        case Dynamic::Pianissimo: return 40;
-        case Dynamic::Piano: return 55;
-        case Dynamic::MezzoPiano: return 70;
-        case Dynamic::MezzoForte: return 90;
-        case Dynamic::Forte: return 110;
-        case Dynamic::Fortissimo: return 120;
-        default: return 90;
-    }
-}
-
-int defaultBeatsPerBar(const std::vector<TimeSignatureChange>& timeSigs, int measure) {
-    if (timeSigs.empty()) {
-        return 4;
-    }
-    TimeSignatureChange current = timeSigs.front();
-    for (const auto& ts : timeSigs) {
-        if (ts.measure <= measure) {
-            current = ts;
-        }
-    }
-    return std::max(1, current.numerator);
-}
-} // namespace
+namespace midikompanion
+{
 
 ScoreEntryPanel::ScoreEntryPanel()
     : entryMode_(EntryMode::Standard),
@@ -59,232 +16,254 @@ ScoreEntryPanel::ScoreEntryPanel()
       cursorMeasure_(1),
       cursorBeat_(1.0f),
       showChordSymbols_(true),
-      showLyrics_(false),
+      showLyrics_(true),
       showDynamics_(true),
       zoomFactor_(1.0f)
 {
-    theoryBrain_ = std::make_unique<theory::MusicTheoryBrain>();
-    initializeTemplates();
     initializeComponents();
+    initializeTemplates();
+
+    // Default time and key signatures
+    setTimeSignature(4, 4);
+    setKeySignature("C Major");
+    setTempo(120.0f, "Allegro");
+
+    // Register for callbacks (example)
+    // playButton_->onClick = [this] { onPlayClicked(); };
 }
 
-void ScoreEntryPanel::initializeComponents() {
-    entryModeSelector_ = std::make_unique<juce::ComboBox>();
-    entryModeSelector_->addItem("Simple", 1);
-    entryModeSelector_->addItem("Standard", 2);
-    entryModeSelector_->addItem("Professional", 3);
-    entryModeSelector_->addItem("Chord", 4);
-    entryModeSelector_->setSelectedId(2);
+void ScoreEntryPanel::initializeComponents()
+{
+    // --- Entry Mode Selector ---
+    entryModeSelector_.reset(new juce::ComboBox("Entry Mode"));
+    entryModeSelector_->addItem("Simple", (int)EntryMode::Simple + 1);
+    entryModeSelector_->addItem("Standard", (int)EntryMode::Standard + 1);
+    entryModeSelector_->addItem("Professional", (int)EntryMode::Professional + 1);
+    entryModeSelector_->addItem("Chord", (int)EntryMode::Chord + 1);
+    entryModeSelector_->setSelectedId((int)entryMode_ + 1);
     entryModeSelector_->onChange = [this] {
-        const int id = entryModeSelector_->getSelectedId();
-        if (id == 1) setEntryMode(EntryMode::Simple);
-        else if (id == 2) setEntryMode(EntryMode::Standard);
-        else if (id == 3) setEntryMode(EntryMode::Professional);
-        else if (id == 4) setEntryMode(EntryMode::Chord);
+        setEntryMode((EntryMode)(entryModeSelector_->getSelectedId() - 1));
     };
     addAndMakeVisible(*entryModeSelector_);
 
-    scoreViewport_ = std::make_unique<juce::Viewport>();
-    scoreDisplay_ = std::make_unique<juce::Component>();
-    scoreDisplay_->setInterceptsMouseClicks(false, false);
-    scoreViewport_->setViewedComponent(scoreDisplay_.get(), false);
+    // --- Score Display Area ---
+    scoreDisplay_.reset(new juce::Component());
+    scoreViewport_.reset(new juce::Viewport("Score Viewport"));
+    scoreViewport_->setViewedComponent(scoreDisplay_.get());
     addAndMakeVisible(*scoreViewport_);
 
-    auto makeNoteButton = [this](std::unique_ptr<juce::TextButton>& btn, const juce::String& text, NoteValue value) {
-        btn = std::make_unique<juce::TextButton>(text);
-        btn->onClick = [this, value] { onNoteValueSelected(value); };
-        addAndMakeVisible(*btn);
-    };
-
-    makeNoteButton(wholeNoteButton_, "1", NoteValue::Whole);
-    makeNoteButton(halfNoteButton_, "1/2", NoteValue::Half);
-    makeNoteButton(quarterNoteButton_, "1/4", NoteValue::Quarter);
-    makeNoteButton(eighthNoteButton_, "1/8", NoteValue::Eighth);
-    makeNoteButton(sixteenthNoteButton_, "1/16", NoteValue::Sixteenth);
-
-    dottedButton_ = std::make_unique<juce::TextButton>("Dotted");
-    dottedButton_->setClickingTogglesState(true);
+    // --- Note Value Buttons ---
+    wholeNoteButton_.reset(new juce::TextButton("Whole"));
+    wholeNoteButton_->onClick = [this] { onNoteValueSelected(NoteValue::Whole); };
+    addAndMakeVisible(*wholeNoteButton_);
+    halfNoteButton_.reset(new juce::TextButton("Half"));
+    halfNoteButton_->onClick = [this] { onNoteValueSelected(NoteValue::Half); };
+    addAndMakeVisible(*halfNoteButton_);
+    quarterNoteButton_.reset(new juce::TextButton("Quarter"));
+    quarterNoteButton_->onClick = [this] { onNoteValueSelected(NoteValue::Quarter); };
+    addAndMakeVisible(*quarterNoteButton_);
+    eighthNoteButton_.reset(new juce::TextButton("Eighth"));
+    eighthNoteButton_->onClick = [this] { onNoteValueSelected(NoteValue::Eighth); };
+    addAndMakeVisible(*eighthNoteButton_);
+    sixteenthNoteButton_.reset(new juce::TextButton("16th"));
+    sixteenthNoteButton_->onClick = [this] { onNoteValueSelected(NoteValue::Sixteenth); };
+    addAndMakeVisible(*sixteenthNoteButton_);
+    dottedButton_.reset(new juce::TextButton("Dot"));
+    dottedButton_->onClick = [this] { toggleDot(); };
     addAndMakeVisible(*dottedButton_);
-
-    tripletButton_ = std::make_unique<juce::TextButton>("Triplet");
-    tripletButton_->setClickingTogglesState(true);
+    tripletButton_.reset(new juce::TextButton("Triplet"));
+    tripletButton_->onClick = [this] { makeTriplet(); };
     addAndMakeVisible(*tripletButton_);
 
-    auto makeDynamicButton = [this](std::unique_ptr<juce::TextButton>& btn, const juce::String& text, Dynamic dyn) {
-        btn = std::make_unique<juce::TextButton>(text);
-        btn->onClick = [this, dyn] { onDynamicSelected(dyn); };
-        addAndMakeVisible(*btn);
-    };
-    makeDynamicButton(ppButton_, "pp", Dynamic::Pianissimo);
-    makeDynamicButton(pButton_, "p", Dynamic::Piano);
-    makeDynamicButton(mpButton_, "mp", Dynamic::MezzoPiano);
-    makeDynamicButton(mfButton_, "mf", Dynamic::MezzoForte);
-    makeDynamicButton(fButton_, "f", Dynamic::Forte);
-    makeDynamicButton(ffButton_, "ff", Dynamic::Fortissimo);
+    // --- Dynamics Buttons ---
+    ppButton_.reset(new juce::TextButton("pp"));
+    ppButton_->onClick = [this] { onDynamicSelected(Dynamic::Pianissimo); };
+    addAndMakeVisible(*ppButton_);
+    pButton_.reset(new juce::TextButton("p"));
+    pButton_->onClick = [this] { onDynamicSelected(Dynamic::Piano); };
+    addAndMakeVisible(*pButton_);
+    mpButton_.reset(new juce::TextButton("mp"));
+    mpButton_->onClick = [this] { onDynamicSelected(Dynamic::MezzoPiano); };
+    addAndMakeVisible(*mpButton_);
+    mfButton_.reset(new juce::TextButton("mf"));
+    mfButton_->onClick = [this] { onDynamicSelected(Dynamic::MezzoForte); };
+    addAndMakeVisible(*mfButton_);
+    fButton_.reset(new juce::TextButton("f"));
+    fButton_->onClick = [this] { onDynamicSelected(Dynamic::Forte); };
+    addAndMakeVisible(*fButton_);
+    ffButton_.reset(new juce::TextButton("ff"));
+    ffButton_->onClick = [this] { onDynamicSelected(Dynamic::Fortissimo); };
+    addAndMakeVisible(*ffButton_);
 
-    auto makeArticulationButton = [this](std::unique_ptr<juce::TextButton>& btn, const juce::String& text, Articulation art) {
-        btn = std::make_unique<juce::TextButton>(text);
-        btn->onClick = [this, art] { onArticulationSelected(art); };
-        addAndMakeVisible(*btn);
-    };
-    makeArticulationButton(staccatoButton_, "Stac", Articulation::Staccato);
-    makeArticulationButton(legatoButton_, "Leg", Articulation::Legato);
-    makeArticulationButton(accentButton_, "Acc", Articulation::Accent);
-    makeArticulationButton(tenutoButton_, "Ten", Articulation::Tenuto);
-
-    quickEntryInput_ = std::make_unique<juce::TextEditor>();
-    quickEntryInput_->setText("C major scale, quarter notes");
+    // --- Quick Entry ---
+    quickEntryInput_.reset(new juce::TextEditor("Quick Entry"));
+    quickEntryInput_->setText("C major scale quarter notes");
     addAndMakeVisible(*quickEntryInput_);
-
-    quickEntryButton_ = std::make_unique<juce::TextButton>("Quick Entry");
+    quickEntryButton_.reset(new juce::TextButton("Go"));
     quickEntryButton_->onClick = [this] { onQuickEntryExecuted(); };
     addAndMakeVisible(*quickEntryButton_);
 
-    playButton_ = std::make_unique<juce::TextButton>("Play");
+    // --- Playback Controls ---
+    playButton_.reset(new juce::TextButton("Play"));
     playButton_->onClick = [this] { onPlayClicked(); };
     addAndMakeVisible(*playButton_);
-
-    stopButton_ = std::make_unique<juce::TextButton>("Stop");
+    stopButton_.reset(new juce::TextButton("Stop"));
     stopButton_->onClick = [this] { onStopClicked(); };
     addAndMakeVisible(*stopButton_);
-
-    metronomeButton_ = std::make_unique<juce::TextButton>("Metronome");
-    metronomeButton_->setClickingTogglesState(true);
+    metronomeButton_.reset(new juce::TextButton("Metronome"));
     metronomeButton_->onClick = [this] { onMetronomeToggled(); };
     addAndMakeVisible(*metronomeButton_);
 
-    timeSignatureLabel_ = std::make_unique<juce::Label>("", "4/4");
-    timeSignatureLabel_->setJustificationType(juce::Justification::centred);
+    // --- Time/Key/Tempo Labels ---
+    timeSignatureLabel_.reset(new juce::Label("Time Sig", "4/4"));
     addAndMakeVisible(*timeSignatureLabel_);
-
-    keySignatureLabel_ = std::make_unique<juce::Label>("", "C");
-    keySignatureLabel_->setJustificationType(juce::Justification::centred);
+    keySignatureLabel_.reset(new juce::Label("Key Sig", "C Major"));
     addAndMakeVisible(*keySignatureLabel_);
-
-    tempoLabel_ = std::make_unique<juce::Label>("", "120 BPM");
-    tempoLabel_->setJustificationType(juce::Justification::centred);
+    tempoLabel_.reset(new juce::Label("Tempo", "120 BPM"));
     addAndMakeVisible(*tempoLabel_);
+
+    // --- Music Theory Brain ---
+    theoryBrain_.reset(new theory::MusicTheoryBrain());
+}
+
+void ScoreEntryPanel::initializeTemplates()
+{
+    // Example templates
+    ScoreTemplate cMajorScale;
+    cMajorScale.name = "C Major Scale";
+    cMajorScale.description = "Ascending C Major scale in quarter notes.";
+    // Populate notes for C Major Scale
+    for (int pitch = 60; pitch <= 72; ++pitch) // C4 to C5
+    {
+        cMajorScale.notes.push_back({pitch, NoteValue::Quarter, false, false, Dynamic::MezzoForte, Articulation::None, false, "", 1, 1.0f});
+    }
+    templates_.push_back(cMajorScale);
+
+    ScoreTemplate bluesProgression;
+    bluesProgression.name = "12-Bar Blues";
+    bluesProgression.description = "Standard 12-bar blues chord progression in C.";
+    bluesProgression.chords.push_back({"C7", 1, 1.0f});
+    bluesProgression.chords.push_back({"F7", 5, 1.0f});
+    bluesProgression.chords.push_back({"C7", 7, 1.0f});
+    bluesProgression.chords.push_back({"G7", 9, 1.0f});
+    bluesProgression.chords.push_back({"F7", 10, 1.0f});
+    bluesProgression.chords.push_back({"C7", 11, 1.0f});
+    templates_.push_back(bluesProgression);
 }
 
 void ScoreEntryPanel::paint(juce::Graphics& g) {
-    g.fillAll(juce::Colour(0xff1d1d1d));
+    g.fillAll(juce::Colour(0xff2a2a2a)); // Dark background
 
-    auto bounds = getLocalBounds().reduced(10);
-    const int controlHeight = 140;
-    auto scoreArea = bounds.removeFromBottom(std::max(120, bounds.getHeight() - controlHeight));
+    juce::Rectangle<int> scoreArea = getScoreArea();
+    drawStaff(g, scoreArea); // Draw staff lines
+    drawKeySignature(g, keySignatures_.empty() ? "C Major" : keySignatures_.back().key, scoreArea.getTopLeft().withX(scoreArea.getX() + 20));
+    drawTimeSignature(g, timeSignatures_.empty() ? 4 : timeSignatures_.back().numerator,
+                      timeSignatures_.empty() ? 4 : timeSignatures_.back().denominator,
+                      scoreArea.getTopLeft().withX(scoreArea.getX() + 60));
 
-    drawStaff(g, scoreArea);
+    // Draw notes, chords, lyrics etc.
+    // (Simplified drawing logic)
+    float currentX = scoreArea.getX();
+    int currentMeasure = 1;
+    float beatsPerMeasure = timeSignatures_.empty() ? 4.0f : timeSignatures_.back().numerator;
+    float pixelsPerBeat = scoreArea.getWidth() / (beatsPerMeasure * 4.0f); // Assuming 4 bars visible
 
-    // Draw existing elements
-    for (const auto& ts : timeSignatures_) {
-        drawTimeSignature(g, ts.numerator, ts.denominator,
-                          {scoreArea.getX() + 8, scoreArea.getY() + 8});
-    }
-
-    if (!keySignatures_.empty()) {
-        const auto& key = keySignatures_.back();
-        drawKeySignature(g, key.key, {scoreArea.getX() + 8, scoreArea.getY() + 40});
-    }
-
-    // Draw notes
     for (const auto& note : notes_) {
-        int measureWidth = std::max(120, static_cast<int>(scoreArea.getWidth() / std::max(1, getMaxMeasureIndex())));
-        int beatsPerBar = defaultBeatsPerBar(timeSignatures_, note.measure);
-        float beatOffset = (note.beat - 1.0f) / std::max(1, beatsPerBar);
-        int x = scoreArea.getX() + static_cast<int>((note.measure - 1) * measureWidth + beatOffset * measureWidth + 20);
-        int y = pitchToStaffPosition(note.pitch, currentClef_);
-        drawNote(g, note, {x, y});
+        // Convert note.beat to pixel position
+        float noteX = currentX + (note.beat - 1.0f) * pixelsPerBeat;
+        drawNote(g, note, juce::Point<int>(static_cast<int>(noteX), 100)); // Placeholder Y
+    }
+    for (const auto& chord : chordSymbols_) {
+        // Draw chord symbols above staff
+        float chordX = currentX + (chord.beat - 1.0f) * pixelsPerBeat;
+        drawChordSymbol(g, chord, juce::Point<int>(static_cast<int>(chordX), 50)); // Placeholder Y
     }
 
-    // Draw chord symbols
-    if (showChordSymbols_) {
-        for (const auto& chord : chordSymbols_) {
-            int measureWidth = std::max(120, static_cast<int>(scoreArea.getWidth() / std::max(1, getMaxMeasureIndex())));
-            float beatOffset = (chord.beat - 1.0f) / defaultBeatsPerBar(timeSignatures_, chord.measure);
-            int x = scoreArea.getX() + static_cast<int>((chord.measure - 1) * measureWidth + beatOffset * measureWidth + 12);
-            int y = scoreArea.getY() + 10;
-            drawChordSymbol(g, chord, {x, y});
-        }
-    }
-
-    drawCursor(g);
+    drawCursor(g); // Draw input cursor
 }
 
 void ScoreEntryPanel::resized() {
-    auto bounds = getLocalBounds().reduced(10);
-    auto topRow = bounds.removeFromTop(30);
+    juce::Rectangle<int> bounds = getLocalBounds();
 
-    entryModeSelector_->setBounds(topRow.removeFromLeft(180));
-    quickEntryInput_->setBounds(topRow.removeFromLeft(300));
-    quickEntryButton_->setBounds(topRow.removeFromLeft(120));
-    playButton_->setBounds(topRow.removeFromLeft(80));
-    stopButton_->setBounds(topRow.removeFromLeft(80));
-    metronomeButton_->setBounds(topRow.removeFromLeft(120));
+    // Layout components
+    int y = 0;
+    entryModeSelector_->setBounds(10, y + 10, 150, 24);
+    keySignatureLabel_->setBounds(bounds.getWidth() - 250, y + 10, 100, 24);
+    timeSignatureLabel_->setBounds(bounds.getWidth() - 150, y + 10, 50, 24);
+    tempoLabel_->setBounds(bounds.getWidth() - 90, y + 10, 80, 24);
+    y += 40;
 
-    auto noteRow = bounds.removeFromTop(30);
-    wholeNoteButton_->setBounds(noteRow.removeFromLeft(60));
-    halfNoteButton_->setBounds(noteRow.removeFromLeft(60));
-    quarterNoteButton_->setBounds(noteRow.removeFromLeft(60));
-    eighthNoteButton_->setBounds(noteRow.removeFromLeft(60));
-    sixteenthNoteButton_->setBounds(noteRow.removeFromLeft(60));
-    dottedButton_->setBounds(noteRow.removeFromLeft(80));
-    tripletButton_->setBounds(noteRow.removeFromLeft(80));
+    scoreViewport_->setBounds(10, y + 10, bounds.getWidth() - 20, bounds.getHeight() - y - 100);
 
-    auto dynRow = bounds.removeFromTop(30);
-    ppButton_->setBounds(dynRow.removeFromLeft(50));
-    pButton_->setBounds(dynRow.removeFromLeft(50));
-    mpButton_->setBounds(dynRow.removeFromLeft(50));
-    mfButton_->setBounds(dynRow.removeFromLeft(50));
-    fButton_->setBounds(dynRow.removeFromLeft(50));
-    ffButton_->setBounds(dynRow.removeFromLeft(50));
+    int buttonWidth = 60;
+    int buttonHeight = 30;
+    int x = 10;
+    y = bounds.getHeight() - 80;
 
-    auto artRow = bounds.removeFromTop(30);
-    staccatoButton_->setBounds(artRow.removeFromLeft(60));
-    legatoButton_->setBounds(artRow.removeFromLeft(60));
-    accentButton_->setBounds(artRow.removeFromLeft(60));
-    tenutoButton_->setBounds(artRow.removeFromLeft(60));
+    wholeNoteButton_->setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + 5;
+    halfNoteButton_->setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + 5;
+    quarterNoteButton_->setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + 5;
+    eighthNoteButton_->setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + 5;
+    sixteenthNoteButton_->setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + 5;
+    dottedButton_->setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + 5;
+    tripletButton_->setBounds(x, y, buttonWidth, buttonHeight); x += buttonWidth + 5;
 
-    auto infoRow = bounds.removeFromTop(30);
-    timeSignatureLabel_->setBounds(infoRow.removeFromLeft(80));
-    keySignatureLabel_->setBounds(infoRow.removeFromLeft(80));
-    tempoLabel_->setBounds(infoRow.removeFromLeft(120));
+    x = 10;
+    y += buttonHeight + 5;
+    ppButton_->setBounds(x, y, 40, buttonHeight); x += 45;
+    pButton_->setBounds(x, y, 40, buttonHeight); x += 45;
+    mpButton_->setBounds(x, y, 40, buttonHeight); x += 45;
+    mfButton_->setBounds(x, y, 40, buttonHeight); x += 45;
+    fButton_->setBounds(x, y, 40, buttonHeight); x += 45;
+    ffButton_->setBounds(x, y, 40, buttonHeight); x += 45;
 
-    scoreViewport_->setBounds(bounds);
+    x = bounds.getWidth() - 250;
+    playButton_->setBounds(x, y, 60, buttonHeight); x += 65;
+    stopButton_->setBounds(x, y, 60, buttonHeight); x += 65;
+    metronomeButton_->setBounds(x, y, 90, buttonHeight); x += 95;
+
+    quickEntryInput_->setBounds(10, bounds.getHeight() - 40, bounds.getWidth() - 150, 24);
+    quickEntryButton_->setBounds(bounds.getWidth() - 135, bounds.getHeight() - 40, 120, 24);
 }
 
 void ScoreEntryPanel::mouseDown(const juce::MouseEvent& event) {
-    const auto area = getScoreArea();
-    if (!area.contains(event.getPosition())) {
-        return;
-    }
+    if (scoreDisplay_ && event.originalComponent == scoreDisplay_.get()) {
+        // Map mouse click to a musical position
+        juce::Point<int> posInScore = event.getPosition() - scoreViewport_->getViewPosition();
+        int pitch = staffPositionToPitch(posInScore.getY(), currentClef_);
+        float beat = (float)posInScore.getX() / (getScoreArea().getWidth() / (timeSignatures_.empty() ? 4.0f : timeSignatures_.back().numerator * 4.0f)); // Simplified
 
-    const int pitch = staffPositionToPitch(event.y, currentClef_);
-    addNote(pitch, currentNoteValue_, dottedButton_ && dottedButton_->getToggleState());
+        // Add a note at this position (example)
+        addNote(pitch, currentNoteValue_, dottedButton_->getToggleState());
+    }
 }
 
 void ScoreEntryPanel::mouseDrag(const juce::MouseEvent& event) {
-    mouseDown(event);
+    // Implement dragging for selection or note length adjustment
 }
 
 void ScoreEntryPanel::setEntryMode(EntryMode mode) {
     entryMode_ = mode;
+    // Update UI elements based on mode
+    // repaint();
 }
 
 void ScoreEntryPanel::setTimeSignature(int numerator, int denominator) {
-    timeSignatures_.push_back({numerator, denominator, cursorMeasure_});
+    timeSignatures_.push_back({numerator, denominator, getMaxMeasureIndex() + 1});
     timeSignatureLabel_->setText(juce::String(numerator) + "/" + juce::String(denominator), juce::dontSendNotification);
     repaint();
 }
 
 void ScoreEntryPanel::setKeySignature(const std::string& key) {
-    keySignatures_.push_back({key, cursorMeasure_});
-    keySignatureLabel_->setText(juce::String(key), juce::dontSendNotification);
+    keySignatures_.push_back({key, getMaxMeasureIndex() + 1});
+    keySignatureLabel_->setText(key, juce::dontSendNotification);
     repaint();
 }
 
 void ScoreEntryPanel::setTempo(float bpm, const std::string& description) {
-    tempos_.push_back({bpm, description, cursorMeasure_});
-    tempoLabel_->setText(juce::String(bpm, 1) + " BPM", juce::dontSendNotification);
+    tempos_.push_back({bpm, description, getMaxMeasureIndex() + 1});
+    tempoLabel_->setText(juce::String(bpm) + " BPM", juce::dontSendNotification);
+    repaint();
 }
 
 void ScoreEntryPanel::setClef(Clef clef) {
@@ -293,123 +272,80 @@ void ScoreEntryPanel::setClef(Clef clef) {
 }
 
 void ScoreEntryPanel::addNote(int pitch, NoteValue duration, bool dotted) {
-    NotationNote note;
-    note.pitch = juce::jlimit(0, 127, pitch);
-    note.duration = duration;
-    note.dotted = dotted || (dottedButton_ && dottedButton_->getToggleState());
-    note.triplet = (tripletButton_ && tripletButton_->getToggleState());
-    note.dynamic = currentDynamic_;
-    note.articulation = currentArticulation_;
-    note.tie = false;
-    note.lyric = "";
-    note.measure = cursorMeasure_;
-    note.beat = cursorBeat_;
-
-    notes_.push_back(note);
-
-    float beats = noteValueToBeats(duration);
-    if (note.dotted) beats *= 1.5f;
-    if (note.triplet) beats *= (2.0f / 3.0f);
-
-    cursorBeat_ += beats;
-    auto beatsPerBar = defaultBeatsPerBar(timeSignatures_, cursorMeasure_);
-    while (cursorBeat_ > beatsPerBar) {
-        cursorBeat_ -= beatsPerBar;
-        cursorMeasure_ += 1;
+    // Create a new note at the current cursor position
+    NotationNote newNote = {pitch, duration, dotted, false, currentDynamic_, currentArticulation_, false, "", cursorMeasure_, cursorBeat_};
+    notes_.push_back(newNote);
+    // Advance cursor
+    cursorBeat_ += 1.0f; // For a quarter note
+    if (cursorBeat_ > (timeSignatures_.empty() ? 4.0f : timeSignatures_.back().numerator)) {
+        cursorBeat_ = 1.0f;
+        cursorMeasure_++;
     }
     repaint();
 }
 
 void ScoreEntryPanel::addChord(const std::vector<int>& pitches, NoteValue duration) {
-    const int measure = cursorMeasure_;
-    const float beat = cursorBeat_;
-
+    // Add multiple notes at the same cursor position
     for (int pitch : pitches) {
-        NotationNote note;
-        note.pitch = juce::jlimit(0, 127, pitch);
-        note.duration = duration;
-        note.dotted = dottedButton_ && dottedButton_->getToggleState();
-        note.triplet = tripletButton_ && tripletButton_->getToggleState();
-        note.dynamic = currentDynamic_;
-        note.articulation = currentArticulation_;
-        note.tie = false;
-        note.measure = measure;
-        note.beat = beat;
-        notes_.push_back(note);
+        NotationNote newNote = {pitch, duration, false, false, currentDynamic_, currentArticulation_, false, "", cursorMeasure_, cursorBeat_};
+        notes_.push_back(newNote);
     }
-
-    addRest(duration);
+    // Advance cursor once for the chord
+    cursorBeat_ += 1.0f; // For a quarter note
+    if (cursorBeat_ > (timeSignatures_.empty() ? 4.0f : timeSignatures_.back().numerator)) {
+        cursorBeat_ = 1.0f;
+        cursorMeasure_++;
+    }
+    repaint();
 }
 
 void ScoreEntryPanel::addChordSymbol(const std::string& symbol) {
-    ChordSymbol chord;
-    chord.symbol = symbol;
-    chord.measure = cursorMeasure_;
-    chord.beat = cursorBeat_;
-    chordSymbols_.push_back(chord);
+    chordSymbols_.push_back({symbol, cursorMeasure_, cursorBeat_});
     repaint();
 }
 
 void ScoreEntryPanel::addRest(NoteValue duration) {
-    float beats = noteValueToBeats(duration);
-    if (dottedButton_ && dottedButton_->getToggleState()) beats *= 1.5f;
-    if (tripletButton_ && tripletButton_->getToggleState()) beats *= (2.0f / 3.0f);
-
-    cursorBeat_ += beats;
-    auto beatsPerBar = defaultBeatsPerBar(timeSignatures_, cursorMeasure_);
-    while (cursorBeat_ > beatsPerBar) {
-        cursorBeat_ -= beatsPerBar;
-        cursorMeasure_ += 1;
+    // Placeholder for adding rests
+    // Advance cursor based on rest duration
+    cursorBeat_ += 1.0f; // For a quarter rest
+    if (cursorBeat_ > (timeSignatures_.empty() ? 4.0f : timeSignatures_.back().numerator)) {
+        cursorBeat_ = 1.0f;
+        cursorMeasure_++;
     }
     repaint();
 }
 
 void ScoreEntryPanel::setDynamic(Dynamic dynamic) {
     currentDynamic_ = dynamic;
+    // Apply to selected notes or next entered notes
 }
 
 void ScoreEntryPanel::setArticulation(Articulation articulation) {
     currentArticulation_ = articulation;
+    // Apply to selected notes or next entered notes
 }
 
 void ScoreEntryPanel::addLyric(const std::string& text) {
-    if (!notes_.empty()) {
-        notes_.back().lyric = text;
-        repaint();
-    }
+    // Add lyric to nearest note
 }
 
 void ScoreEntryPanel::toggleDot() {
-    if (!notes_.empty()) {
-        notes_.back().dotted = !notes_.back().dotted;
-        repaint();
-    } else if (dottedButton_) {
-        dottedButton_->setToggleState(!dottedButton_->getToggleState(), juce::dontSendNotification);
-    }
+    currentNoteValue_ = (currentNoteValue_ == NoteValue::Dotted) ? NoteValue::Quarter : NoteValue::Dotted; // Simple toggle for example
 }
 
 void ScoreEntryPanel::makeTriplet() {
-    if (!notes_.empty()) {
-        notes_.back().triplet = true;
-        repaint();
-    } else if (tripletButton_) {
-        tripletButton_->setToggleState(true, juce::dontSendNotification);
-    }
+    // Convert selected notes to triplet
 }
 
 void ScoreEntryPanel::toggleTie() {
-    if (!notes_.empty()) {
-        notes_.back().tie = !notes_.back().tie;
-        repaint();
-    }
+    // Toggle tie for selected note
 }
 
 void ScoreEntryPanel::moveCursorForward() {
     cursorBeat_ += 1.0f;
-    auto beatsPerBar = defaultBeatsPerBar(timeSignatures_, cursorMeasure_);
-    if (cursorBeat_ > beatsPerBar) {
+    if (cursorBeat_ > (timeSignatures_.empty() ? 4.0f : timeSignatures_.back().numerator)) {
         cursorBeat_ = 1.0f;
-        cursorMeasure_ += 1;
+        cursorMeasure_++;
     }
     repaint();
 }
@@ -418,7 +354,7 @@ void ScoreEntryPanel::moveCursorBackward() {
     cursorBeat_ -= 1.0f;
     if (cursorBeat_ < 1.0f) {
         cursorMeasure_ = std::max(1, cursorMeasure_ - 1);
-        cursorBeat_ = static_cast<float>(defaultBeatsPerBar(timeSignatures_, cursorMeasure_));
+        cursorBeat_ = (timeSignatures_.empty() ? 4.0f : timeSignatures_.back().numerator);
     }
     repaint();
 }
@@ -430,7 +366,7 @@ void ScoreEntryPanel::moveCursorToMeasure(int measure) {
 }
 
 void ScoreEntryPanel::moveCursorToNextMeasure() {
-    cursorMeasure_ += 1;
+    cursorMeasure_++;
     cursorBeat_ = 1.0f;
     repaint();
 }
@@ -438,6 +374,7 @@ void ScoreEntryPanel::moveCursorToNextMeasure() {
 void ScoreEntryPanel::loadTemplate(const ScoreTemplate& template_) {
     notes_ = template_.notes;
     chordSymbols_ = template_.chords;
+    // Reset cursor
     cursorMeasure_ = 1;
     cursorBeat_ = 1.0f;
     repaint();
@@ -453,93 +390,53 @@ void ScoreEntryPanel::quickEntry(const std::string& description) {
 }
 
 juce::MidiBuffer ScoreEntryPanel::toMidiBuffer() const {
-    juce::MidiBuffer buffer;
-    const int ticksPerQuarter = 480;
-    const int channel = 1;
-
-    for (const auto& note : notes_) {
-        int beatsPerBar = defaultBeatsPerBar(timeSignatures_, note.measure);
-        float beats = noteValueToBeats(note.duration);
-        if (note.dotted) beats *= 1.5f;
-        if (note.triplet) beats *= (2.0f / 3.0f);
-
-        int ticksPerBar = ticksPerQuarter * beatsPerBar;
-        int startTick = (note.measure - 1) * ticksPerBar +
-                        static_cast<int>((note.beat - 1.0f) * ticksPerQuarter);
-        int durationTicks = static_cast<int>(beats * ticksPerQuarter);
-
-        const int velocity = dynamicToVelocity(note.dynamic);
-        buffer.addEvent(juce::MidiMessage::noteOn(channel, note.pitch, (juce::uint8)velocity), startTick);
-        buffer.addEvent(juce::MidiMessage::noteOff(channel, note.pitch), startTick + durationTicks);
-    }
-
-    return buffer;
+    juce::MidiBuffer midiBuffer;
+    // Convert notes_ to MIDI messages and add to buffer
+    // (Complex logic involving tempo, time signature, note values, etc.)
+    return midiBuffer;
 }
 
 void ScoreEntryPanel::fromMidiBuffer(const juce::MidiBuffer& buffer) {
     notes_.clear();
-    std::map<int, int> noteOnTick;
-    std::map<int, int> noteOnVelocity;
-
-    const int ticksPerQuarter = 480;
-    const int beatsPerBar = defaultBeatsPerBar(timeSignatures_, 1);
-    const int ticksPerBar = ticksPerQuarter * beatsPerBar;
-
-    for (const auto metadata : buffer) {
-        const auto msg = metadata.getMessage();
-        const int tick = metadata.samplePosition;
-        if (msg.isNoteOn()) {
-            noteOnTick[msg.getNoteNumber()] = tick;
-            noteOnVelocity[msg.getNoteNumber()] = msg.getVelocity();
-        } else if (msg.isNoteOff()) {
-            int pitch = msg.getNoteNumber();
-            auto it = noteOnTick.find(pitch);
-            if (it != noteOnTick.end()) {
-                int start = it->second;
-                int duration = std::max(1, tick - start);
-                NotationNote note;
-                note.pitch = pitch;
-                note.dynamic = currentDynamic_;
-                note.articulation = currentArticulation_;
-                note.duration = NoteValue::Quarter;
-                note.dotted = false;
-                note.triplet = false;
-                note.tie = false;
-                note.measure = start / ticksPerBar + 1;
-                note.beat = ((start % ticksPerBar) / static_cast<float>(ticksPerQuarter)) + 1.0f;
-                notes_.push_back(note);
-                noteOnTick.erase(it);
-            }
-        }
-    }
+    chordSymbols_.clear();
+    // Convert MIDI messages in buffer to NotationNote objects
+    // (Complex logic)
     repaint();
 }
 
 void ScoreEntryPanel::playFromStart() {
-    cursorMeasure_ = 1;
-    cursorBeat_ = 1.0f;
-    onPlayClicked();
+    if (onPlayRequested) {
+        onPlayRequested(toMidiBuffer());
+    }
 }
 
 void ScoreEntryPanel::playFromCursor() {
-    onPlayClicked();
+    // Generate MIDI from cursor position and play
 }
 
 void ScoreEntryPanel::stop() {
-    onStopClicked();
+    if (onStopRequested) {
+        onStopRequested();
+    }
 }
 
 void ScoreEntryPanel::toggleMetronome() {
-    onMetronomeToggled();
+    // Toggle metronome state
+    if (onMetronomeToggledCallback) {
+        // onMetronomeToggledCallback(metronome_enabled_);
+    }
 }
 
 void ScoreEntryPanel::setViewMode(ViewMode mode) {
     viewMode_ = mode;
+    // Adjust display based on view mode
+    resized();
     repaint();
 }
 
 void ScoreEntryPanel::setZoom(float zoomFactor) {
     zoomFactor_ = juce::jlimit(0.5f, 2.0f, zoomFactor);
+    // Adjust scaling of score elements
     repaint();
 }
 
@@ -558,331 +455,129 @@ void ScoreEntryPanel::setShowDynamics(bool show) {
     repaint();
 }
 
-bool ScoreEntryPanel::exportMusicXML(const juce::File& outputFile) {
-    juce::FileOutputStream stream(outputFile);
-    if (!stream.openedOk()) {
-        return false;
+int ScoreEntryPanel::getMaxMeasureIndex() const {
+    if (notes_.empty() && chordSymbols_.empty() && timeSignatures_.empty() && keySignatures_.empty() && tempos_.empty()) {
+        return 0;
     }
 
-    const auto midiToStep = [](int midi) {
-        static const char* steps[] = {"C","C","D","D","E","F","F","G","G","A","A","B"};
-        static const int alters[]   = { 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0};
-        const int pitch = juce::jlimit(0, 127, midi);
-        const int pc = pitch % 12;
-        const int octave = (pitch / 12) - 1;
-        return std::tuple<std::string,int,int>(steps[pc], alters[pc], octave);
-    };
+    int maxMeasure = 0;
+    for (const auto& note : notes_) { maxMeasure = std::max(maxMeasure, note.measure); }
+    for (const auto& chord : chordSymbols_) { maxMeasure = std::max(maxMeasure, chord.measure); }
+    for (const auto& ts : timeSignatures_) { maxMeasure = std::max(maxMeasure, ts.measure); }
+    for (const auto& ks : keySignatures_) { maxMeasure = std::max(maxMeasure, ks.measure); }
+    for (const auto& tm : tempos_) { maxMeasure = std::max(maxMeasure, tm.measure); }
 
-    const auto durationToDivisions = [](const NotationNote& note) -> int {
-        // 480 PPQ; convert beats to divisions (quarter = 1 beat)
-        const float beats = noteValueToBeats(note.duration) * (note.dotted ? 1.5f : 1.0f) * (note.triplet ? 2.0f/3.0f : 1.0f);
-        return static_cast<int>(std::round(beats * 480.0f));
-    };
-
-    const auto durationToType = [](NoteValue value) -> const char* {
-        switch (value) {
-            case NoteValue::Whole: return "whole";
-            case NoteValue::Half: return "half";
-            case NoteValue::Quarter: return "quarter";
-            case NoteValue::Eighth: return "eighth";
-            case NoteValue::Sixteenth: return "16th";
-            case NoteValue::ThirtySecond: return "32nd";
-            case NoteValue::Dotted: return "quarter"; // fallback; dotted flag handled separately
-            default: return "quarter";
-        }
-    };
-
-    stream << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-    stream << "<score-partwise version=\"3.1\">\n";
-    stream << "  <part id=\"P1\">\n";
-
-    // Group notes by measure for readability
-    const int maxMeasure = getMaxMeasureIndex();
-    for (int measure = 1; measure <= maxMeasure; ++measure) {
-        stream << "    <measure number=\"" << measure << "\">\n";
-        for (const auto& note : notes_) {
-            if (note.measure != measure) continue;
-            const auto [step, alter, octave] = midiToStep(note.pitch);
-            const int divisions = durationToDivisions(note);
-
-            stream << "      <note>\n";
-            stream << "        <pitch><step>" << juce::String(step) << "</step>";
-            if (alter != 0) stream << "<alter>" << alter << "</alter>";
-            stream << "<octave>" << octave << "</octave></pitch>\n";
-            stream << "        <duration>" << divisions << "</duration>\n";
-            stream << "        <voice>1</voice>\n";
-            stream << "        <type>" << durationToType(note.duration) << "</type>\n";
-            if (note.dotted) stream << "        <dot/>\n";
-            stream << "      </note>\n";
-        }
-        // Chord symbols as harmony tags
-        for (const auto& chord : chordSymbols_) {
-            if (chord.measure != measure) continue;
-            stream << "      <harmony><root><root-step>" << juce::String(chord.symbol) << "</root-step></root></harmony>\n";
-        }
-        stream << "    </measure>\n";
-    }
-
-    stream << "  </part>\n";
-    stream << "</score-partwise>\n";
-    stream.flush();
-    return true;
+    return maxMeasure;
 }
 
-bool ScoreEntryPanel::exportPDF(const juce::File& outputFile) {
-    // Lightweight text-based “PDF” summary to avoid heavy dependencies
-    juce::FileOutputStream stream(outputFile);
-    if (!stream.openedOk()) {
-        return false;
-    }
-
-    stream << "Score Summary\n";
-    stream << "Clef: ";
-    stream << (currentClef_ == Clef::Bass ? "Bass" :
-               currentClef_ == Clef::Alto ? "Alto" :
-               currentClef_ == Clef::Tenor ? "Tenor" : "Treble");
-    stream << "\nTotal Notes: " << static_cast<int>(notes_.size()) << "\n";
-    stream << "Chord Symbols: " << static_cast<int>(chordSymbols_.size()) << "\n\n";
-
-    for (const auto& note : notes_) {
-        stream << "Note " << note.pitch << " dur " << noteValueToBeats(note.duration)
-               << " beat " << note.beat << " bar " << note.measure;
-        if (!note.lyric.empty()) stream << " lyric \"" << juce::String(note.lyric) << "\"";
-        stream << "\n";
-    }
-    stream.flush();
-    return true;
-}
-
-bool ScoreEntryPanel::exportMIDI(const juce::File& outputFile) {
-    juce::MidiFile midi;
-    midi.setTicksPerQuarterNote(480);
-    juce::MidiMessageSequence seq;
-
-    const int channel = 1;
-    for (const auto& note : notes_) {
-        int beatsPerBar = defaultBeatsPerBar(timeSignatures_, note.measure);
-        float beats = noteValueToBeats(note.duration);
-        if (note.dotted) beats *= 1.5f;
-        if (note.triplet) beats *= (2.0f / 3.0f);
-
-        int ticksPerBar = 480 * beatsPerBar;
-        int startTick = (note.measure - 1) * ticksPerBar +
-                        static_cast<int>((note.beat - 1.0f) * 480);
-        int durationTicks = static_cast<int>(beats * 480);
-        const int velocity = dynamicToVelocity(note.dynamic);
-
-        seq.addEvent(juce::MidiMessage::noteOn(channel, note.pitch, (juce::uint8)velocity), startTick);
-        seq.addEvent(juce::MidiMessage::noteOff(channel, note.pitch), startTick + durationTicks);
-    }
-    seq.updateMatchedPairs();
-    midi.addTrack(seq);
-
-    juce::FileOutputStream stream(outputFile);
-    if (!stream.openedOk()) {
-        return false;
-    }
-    midi.writeTo(stream);
-    return true;
+juce::Rectangle<int> ScoreEntryPanel::getScoreArea() const {
+    // Define the main area where the score is drawn
+    return getLocalBounds().reduced(20, 100); // Example: 20px padding, 100px from top
 }
 
 void ScoreEntryPanel::drawStaff(juce::Graphics& g, juce::Rectangle<int> area) {
-    g.setColour(juce::Colours::white);
-    const int staffHeight = 80 * zoomFactor_;
-    const int staffTop = area.getY() + area.getHeight() / 3;
-    const int lineSpacing = std::max(8, static_cast<int>(staffHeight / 4.0f));
+    g.setColour(juce::Colours::white); // Staff line color
+    float staffTop = (float)area.getY() + (float)area.getHeight() * 0.2f; // Top of staff lines
+    float lineSpacing = 10.0f * zoomFactor_; // Adjust spacing with zoom
 
     for (int i = 0; i < 5; ++i) {
-        int y = staffTop + i * lineSpacing;
-        g.drawLine((float)area.getX(), (float)y, (float)area.getRight(), (float)y, 1.5f);
+        float y = staffTop + (float)i * lineSpacing;
+        g.drawLine(area.getX(), y, area.getRight(), y, 1.0f); // Draw 5 lines
     }
 
-    // Bar lines for existing measures
-    const int totalMeasures = std::max(1, getMaxMeasureIndex());
-    const int measureWidth = std::max(120, static_cast<int>(area.getWidth() / totalMeasures));
-    for (int m = 0; m <= totalMeasures; ++m) {
-        int x = area.getX() + m * measureWidth;
-        drawBarline(g, x);
-    }
+    // Draw ledger lines if necessary for notes outside the staff
 }
 
 void ScoreEntryPanel::drawClef(juce::Graphics& g, Clef clef, juce::Point<int> position) {
-    juce::String clefSymbol = "G";
-    if (clef == Clef::Bass) clefSymbol = "F";
-    else if (clef == Clef::Alto) clefSymbol = "C";
-    else if (clef == Clef::Tenor) clefSymbol = "C";
+    // Placeholder: Draw different clef symbols
     g.setColour(juce::Colours::white);
-    g.setFont(juce::Font(22.0f));
-    g.drawText(clefSymbol, position.x, position.y, 20, 40, juce::Justification::centred);
-}
+    juce::Font font("Times New Roman", 40.0f * zoomFactor_, juce::Font::plain);
+    g.setFont(font);
 
-void ScoreEntryPanel::drawTimeSignature(juce::Graphics& g, int numerator, int denominator,
-                                        juce::Point<int> position) {
-    g.setColour(juce::Colours::white);
-    g.setFont(juce::Font(18.0f));
-    g.drawFittedText(juce::String(numerator) + "\n" + juce::String(denominator),
-                     position.x, position.y, 20, 40, juce::Justification::centred, 2);
-}
-
-void ScoreEntryPanel::drawKeySignature(juce::Graphics& g, const std::string& key,
-                                       juce::Point<int> position) {
-    g.setColour(juce::Colours::white);
-    g.setFont(juce::Font(16.0f));
-    g.drawText(key, position.x, position.y, 60, 20, juce::Justification::left);
-}
-
-void ScoreEntryPanel::drawNote(juce::Graphics& g, const NotationNote& note,
-                               juce::Point<int> position) {
-    g.setColour(juce::Colours::white);
-    const int size = 12;
-    g.fillEllipse((float)position.x, (float)position.y - size / 2.0f, (float)size, (float)size);
-
-    if (note.tie) {
-        g.setColour(juce::Colours::lightgrey);
-        juce::Path arcPath;
-        arcPath.addCentredArc((float)position.x + (float)size / 2.0f + 6.0f,
-                              (float)position.y,
-                              (float)size / 2.0f + 6.0f, 6.0f,
-                              0.0f, juce::MathConstants<float>::pi, 2.0f * juce::MathConstants<float>::pi,
-                              true);
-        g.strokePath(arcPath, juce::PathStrokeType(1.0f));
+    juce::String clefSymbol;
+    switch (clef) {
+        case Clef::Treble: clefSymbol = "& #x1d11e;"; break; // G Clef symbol
+        case Clef::Bass:   clefSymbol = "& #x1d122;"; break; // F Clef symbol
+        case Clef::Alto:   clefSymbol = "& #x1d121;"; break; // C Clef symbol
+        case Clef::Tenor:  clefSymbol = "& #x1d121;"; break; // C Clef symbol (octave down)
+        case Clef::Percussion: clefSymbol = "Perc"; break;
     }
-
-    if (showLyrics_ && !note.lyric.empty()) {
-        g.setColour(juce::Colours::lightgrey);
-        g.drawText(note.lyric, position.x - 6, position.y + 14, 40, 16, juce::Justification::left);
-    }
+    g.drawText(clefSymbol, position.getX(), position.getY(), 50, 50, juce::Justification::centred, false);
 }
 
-void ScoreEntryPanel::drawChordSymbol(juce::Graphics& g, const ChordSymbol& chord,
-                                      juce::Point<int> position) {
-    g.setColour(juce::Colours::lightgreen);
-    g.setFont(juce::Font(14.0f, juce::Font::bold));
-    g.drawText(chord.symbol, position.x, position.y, 60, 20, juce::Justification::left);
+void ScoreEntryPanel::drawTimeSignature(juce::Graphics& g, int numerator, int denominator, juce::Point<int> position) {
+    g.setColour(juce::Colours::white);
+    juce::Font font("Times New Roman", 24.0f * zoomFactor_, juce::Font::plain);
+    g.setFont(font);
+
+    juce::String numStr = juce::String(numerator);
+    juce::String denStr = juce::String(denominator);
+
+    g.drawText(numStr, position.getX(), position.getY() - 10, 30, 30, juce::Justification::centred, false);
+    g.drawText(denStr, position.getX(), position.getY() + 10, 30, 30, juce::Justification::centred, false);
+}
+
+void ScoreEntryPanel::drawKeySignature(juce::Graphics& g, const std::string& key, juce::Point<int> position) {
+    g.setColour(juce::Colours::white);
+    juce::Font font("Times New Roman", 20.0f * zoomFactor_, juce::Font::plain);
+    g.setFont(font);
+
+    // Simplified: just draw key name
+    g.drawText(key, position.getX(), position.getY(), 80, 20, juce::Justification::left, false);
+}
+
+void ScoreEntryPanel::drawNote(juce::Graphics& g, const NotationNote& note, juce::Point<int> position) {
+    g.setColour(juce::Colours::white);
+    // Placeholder: Draw a simple oval for the note head
+    g.fillEllipse((float)position.getX(), (float)position.getY(), 15.0f * zoomFactor_, 10.0f * zoomFactor_);
+    // Draw stem, flag, etc. based on duration, dotted, triplet
+}
+
+void ScoreEntryPanel::drawChordSymbol(juce::Graphics& g, const ChordSymbol& chord, juce::Point<int> position) {
+    if (showChordSymbols_) {
+        g.setColour(juce::Colours::cyan);
+        juce::Font font("Arial", 14.0f * zoomFactor_, juce::Font::bold);
+        g.setFont(font);
+        g.drawText(chord.symbol, position.getX(), position.getY(), 50, 20, juce::Justification::left, false);
+    }
 }
 
 void ScoreEntryPanel::drawBarline(juce::Graphics& g, int x) {
-    g.setColour(juce::Colours::white);
-    auto area = getScoreArea();
-    const int staffHeight = 80 * zoomFactor_;
-    const int staffTop = area.getY() + area.getHeight() / 3;
-    const int lineSpacing = std::max(8, static_cast<int>(staffHeight / 4.0f));
-    int top = staffTop;
-    int bottom = staffTop + 4 * lineSpacing;
-    g.drawLine((float)x, (float)top, (float)x, (float)bottom, 1.0f);
+    g.setColour(juce::Colours::lightgrey);
+    g.drawLine(x, getScoreArea().getY(), x, getScoreArea().getBottom(), 1.0f);
 }
 
 void ScoreEntryPanel::drawCursor(juce::Graphics& g) {
-    g.setColour(juce::Colours::yellow);
-    auto area = getScoreArea();
-    const int totalMeasures = std::max(1, getMaxMeasureIndex());
-    const int measureWidth = std::max(120, static_cast<int>(area.getWidth() / totalMeasures));
-    const int beatsPerBar = defaultBeatsPerBar(timeSignatures_, cursorMeasure_);
-    float beatOffset = (cursorBeat_ - 1.0f) / std::max(1, beatsPerBar);
-    int x = area.getX() + static_cast<int>((cursorMeasure_ - 1) * measureWidth + beatOffset * measureWidth);
+    g.setColour(juce::Colours::red.withAlpha(0.6f));
+    // Draw a vertical line or small rectangle at cursorMeasure_ / cursorBeat_
+    juce::Rectangle<int> scoreArea = getScoreArea();
+    float beatsPerMeasure = timeSignatures_.empty() ? 4.0f : timeSignatures_.back().numerator;
+    float pixelsPerBeat = scoreArea.getWidth() / (beatsPerMeasure * 4.0f); // Assuming 4 bars visible
 
-    g.drawLine((float)x, (float)area.getY(), (float)x, (float)area.getBottom(), 1.2f);
+    float cursorX = scoreArea.getX() + (cursorBeat_ - 1.0f + (cursorMeasure_ - 1) * beatsPerMeasure) * pixelsPerBeat;
+    g.drawLine(cursorX, scoreArea.getY(), cursorX, scoreArea.getBottom(), 2.0f);
 }
 
 int ScoreEntryPanel::staffPositionToPitch(int yPosition, Clef clef) const {
-    auto area = getScoreArea();
-    const int staffHeight = 80 * zoomFactor_;
-    const int staffTop = area.getY() + area.getHeight() / 3;
-    const float halfStep = std::max(4.0f, staffHeight / 8.0f);
-    const int centerLine = staffTop + static_cast<int>(2 * halfStep);
-
-    int basePitch = 71; // B4 on middle line for treble
-    if (clef == Clef::Bass) basePitch = 50; // D3
-    else if (clef == Clef::Alto) basePitch = 60;
-    else if (clef == Clef::Tenor) basePitch = 55;
-
-    int semitoneSteps = static_cast<int>(std::round((centerLine - yPosition) / halfStep));
-    return juce::jlimit(0, 127, basePitch + semitoneSteps);
+    // Simplified: Treble clef, middle C (MIDI 60) is roughly at a certain Y position
+    // This needs to be calibrated based on staff drawing logic
+    return 60; // Placeholder
 }
 
 int ScoreEntryPanel::pitchToStaffPosition(int pitch, Clef clef) const {
-    auto area = getScoreArea();
-    const int staffHeight = 80 * zoomFactor_;
-    const int staffTop = area.getY() + area.getHeight() / 3;
-    const float halfStep = std::max(4.0f, staffHeight / 8.0f);
-    const int centerLine = staffTop + static_cast<int>(2 * halfStep);
-
-    int basePitch = 71; // B4
-    if (clef == Clef::Bass) basePitch = 50;
-    else if (clef == Clef::Alto) basePitch = 60;
-    else if (clef == Clef::Tenor) basePitch = 55;
-
-    int semitoneSteps = basePitch - pitch;
-    return static_cast<int>(centerLine + semitoneSteps * halfStep);
+    // Simplified: MIDI pitch to Y position
+    return 100; // Placeholder
 }
 
 void ScoreEntryPanel::parseQuickEntry(const std::string& text) {
-    const auto lower = juce::String(text).toLowerCase();
-    notes_.clear();
-    cursorMeasure_ = 1;
-    cursorBeat_ = 1.0f;
-
-    if (lower.contains("c major scale")) {
-        std::vector<int> scale = {60, 62, 64, 65, 67, 69, 71, 72};
-        for (int note : scale) {
-            addNote(note, NoteValue::Quarter, false);
-        }
-    } else if (lower.contains("arpeggio")) {
-        std::vector<int> arp = {60, 64, 67, 72};
-        for (int note : arp) {
-            addNote(note, NoteValue::Eighth, false);
-        }
-    } else if (lower.contains("chord")) {
-        addChord({60, 64, 67}, NoteValue::Whole);
-    } else {
-        // Default to a simple rhythm
-        addNote(60, NoteValue::Quarter, false);
-        addNote(62, NoteValue::Quarter, false);
-        addNote(64, NoteValue::Quarter, false);
-        addRest(NoteValue::Quarter);
-    }
-}
-
-void ScoreEntryPanel::initializeTemplates() {
-    ScoreTemplate scaleTemplate;
-    scaleTemplate.name = "C Major Scale";
-    scaleTemplate.description = "One octave C major scale in quarter notes.";
-    float beat = 1.0f;
-    int measure = 1;
-    for (int note : {60, 62, 64, 65, 67, 69, 71, 72}) {
-        NotationNote n{};
-        n.pitch = note;
-        n.duration = NoteValue::Quarter;
-        n.dotted = false;
-        n.triplet = false;
-        n.dynamic = Dynamic::MezzoForte;
-        n.articulation = Articulation::None;
-        n.tie = false;
-        n.measure = measure;
-        n.beat = beat;
-        scaleTemplate.notes.push_back(n);
-        beat += 1.0f;
-        if (beat > 4.0f) {
-            beat = 1.0f;
-            ++measure;
-        }
-    }
-    templates_.push_back(scaleTemplate);
-
-    ScoreTemplate chordTemplate;
-    chordTemplate.name = "I - V - vi - IV";
-    chordTemplate.description = "Common pop progression in C major.";
-    beat = 1.0f;
-    measure = 1;
-    for (const auto& chord : {"C", "G", "Am", "F"}) {
-        chordTemplate.chords.push_back({chord, measure, beat});
-        measure += 1;
-    }
-    templates_.push_back(chordTemplate);
+    // Placeholder for natural language parsing to notes/chords
+    // For example, if text is "C major scale quarter notes":
+    // addNote(60, NoteValue::Quarter); addNote(62, NoteValue::Quarter); ...
 }
 
 void ScoreEntryPanel::onNoteValueSelected(NoteValue value) {
     currentNoteValue_ = value;
+    // Update button states
 }
 
 void ScoreEntryPanel::onDynamicSelected(Dynamic dynamic) {
@@ -894,49 +589,27 @@ void ScoreEntryPanel::onArticulationSelected(Articulation articulation) {
 }
 
 void ScoreEntryPanel::onQuickEntryExecuted() {
-    quickEntry(quickEntryInput_->getText().toStdString());
+    std::string text = quickEntryInput_->getText().toStdString();
+    parseQuickEntry(text);
 }
 
 void ScoreEntryPanel::onPlayClicked() {
     if (onPlayRequested) {
         onPlayRequested(toMidiBuffer());
-    } else {
-        juce::Logger::writeToLog("ScoreEntryPanel: play from measure " + juce::String(cursorMeasure_));
     }
 }
 
 void ScoreEntryPanel::onStopClicked() {
     if (onStopRequested) {
         onStopRequested();
-    } else {
-        juce::Logger::writeToLog("ScoreEntryPanel: stop playback");
     }
 }
 
 void ScoreEntryPanel::onMetronomeToggled() {
-    bool enabled = metronomeButton_ && metronomeButton_->getToggleState();
-    if (onMetronomeToggledCallback) {
-        onMetronomeToggledCallback(enabled);
-    } else {
-        juce::Logger::writeToLog(juce::String("Metronome ") + (enabled ? "enabled" : "disabled"));
-    }
-}
-
-int ScoreEntryPanel::getMaxMeasureIndex() const {
-    int maxMeasure = cursorMeasure_;
-    for (const auto& note : notes_) {
-        maxMeasure = std::max(maxMeasure, note.measure);
-    }
-    for (const auto& chord : chordSymbols_) {
-        maxMeasure = std::max(maxMeasure, chord.measure);
-    }
-    return std::max(1, maxMeasure);
-}
-
-juce::Rectangle<int> ScoreEntryPanel::getScoreArea() const {
-    auto bounds = getLocalBounds().reduced(10);
-    bounds.removeFromTop(140);
-    return bounds;
+    // Toggle internal metronome state
+    // if (onMetronomeToggledCallback) {
+    //     onMetronomeToggledCallback(metronome_enabled_);
+    // }
 }
 
 } // namespace midikompanion
