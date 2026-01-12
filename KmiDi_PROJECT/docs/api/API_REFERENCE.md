@@ -1,553 +1,279 @@
-# KmiDi API Reference
+# KmiDi Music Generation API Reference
 
-> Complete API documentation for the KmiDi Music Generation REST API
-
-**Version**: 1.0.0
-**Base URL**: `http://localhost:8000`
-**OpenAPI Spec**: `http://localhost:8000/openapi.json`
-
-## Quick Links
-
-- **Interactive Docs**: [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI)
-- **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
-- **Health Check**: [http://localhost:8000/health](http://localhost:8000/health)
-
----
+This document provides a comprehensive reference for the KmiDi Music Generation API, built with FastAPI. The API allows for emotion-driven music generation, emotional intent interrogation, and health monitoring.
 
 ## Table of Contents
-
-1. [Getting Started](#getting-started)
-2. [Authentication](#authentication)
-3. [Health & Monitoring](#health--monitoring)
-4. [Emotions API](#emotions-api)
-5. [Generation API](#generation-api)
-6. [Interrogation API](#interrogation-api)
-7. [Error Handling](#error-handling)
-8. [Rate Limiting](#rate-limiting)
-9. [SDKs & Examples](#sdks--examples)
-
----
-
-## Getting Started
-
-### Starting the API Server
-
-```bash
-# Development mode
-cd KmiDi_PROJECT
-python -m uvicorn api.main:app --reload
-
-# Production mode
-python -m uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 4
-
-# Using Docker
-docker run -d -p 8000:8000 kmidi-api:prod
-```
-
-### First Request
-
-```bash
-# Verify the API is running
-curl http://localhost:8000/health
-
-# Response
-{
-  "status": "healthy",
-  "version": "1.0.0",
-  "timestamp": 1704729600.0,
-  "services": {"music_brain": true, "api": true}
-}
-```
+1.  [API Endpoints](#1-api-endpoints)
+    *   [1.1 GET /health](#11-get-health)
+    *   [1.2 GET /ready](#12-get-ready)
+    *   [1.3 GET /live](#13-get-live)
+    *   [1.4 GET /metrics](#14-get-metrics)
+    *   [1.5 GET /emotions](#15-get-emotions)
+    *   [1.6 POST /generate](#16-post-generate)
+    *   [1.7 POST /interrogate](#17-post-interrogate)
+2.  [Request/Response Models](#2-requestresponse-models)
+    *   [2.1 EmotionalIntent](#21-emotionalintent)
+    *   [2.2 TechnicalIntent](#22-technicalintent)
+    *   [2.3 GenerateRequest](#23-generaterequest)
+    *   [2.4 InterrogateRequest](#24-interrogaterequest)
+    *   [2.5 HealthResponse](#25-healthresponse)
+3.  [Error Handling](#3-error-handling)
+4.  [OpenAPI Documentation (Swagger UI)](#4-openapi-documentation-swagger-ui)
 
 ---
 
-## Authentication
+## 1. API Endpoints
 
-Currently, the API does not require authentication for public endpoints.
+### 1.1 GET /health
 
-### Planned Authentication (Future)
+**Description**: Health check endpoint for monitoring and load balancers.
 
-```bash
-# API Key authentication
-curl -H "X-API-Key: your_api_key" http://localhost:8000/generate
-```
+**Response Model**: `HealthResponse`
 
----
-
-## Health & Monitoring
-
-### GET /health
-
-Full health check with service status and system metrics.
-
-**Rate Limit**: None
-
-**Response Schema**:
-
-```typescript
-interface HealthResponse {
-  status: "healthy" | "degraded" | "unhealthy";
-  version: string;
-  timestamp: number;
-  services: {
-    music_brain: boolean;
-    api: boolean;
-  };
-  system?: {
-    cpu_percent: number;
-    memory_percent: number;
-    memory_available_mb: number;
-  };
-}
-```
-
-**Example**:
-
-```bash
-curl http://localhost:8000/health
-```
-
-**Response**:
-
+**Example Response (200 OK)**:
 ```json
 {
   "status": "healthy",
   "version": "1.0.0",
-  "timestamp": 1704729600.123,
+  "timestamp": 1768136765.215679,
   "services": {
-    "music_brain": true,
+    "music_brain": {"available": true, "version": "1.0.0"},
     "api": true
   },
   "system": {
     "cpu_percent": 15.5,
-    "memory_percent": 45.2,
+    "memory_percent": 60.2,
     "memory_available_mb": 4096.0
   }
 }
 ```
 
----
+### 1.2 GET /ready
 
-### GET /ready
+**Description**: Readiness probe - checks if the service is ready to accept traffic.
 
-Kubernetes-compatible readiness probe.
+**Response Model**: `{"status": "ready", "timestamp": float}`
 
-**Use Case**: Load balancer health checks, Kubernetes readiness gates.
-
-**Response**:
-
+**Example Response (200 OK)**:
 ```json
 {
   "status": "ready",
-  "timestamp": 1704729600.0
+  "timestamp": 1768136765.215679
 }
 ```
 
-**Status Codes**:
-- `200` - Service ready to accept traffic
-- `503` - Service not ready (Music Brain unavailable)
+### 1.3 GET /live
 
----
+**Description**: Liveness probe - checks if the service is alive. Used by Kubernetes/Docker health checks to determine if the service process is still running. Should always return 200 if the process is alive.
 
-### GET /live
+**Response Model**: `{"status": "alive", "timestamp": float, "uptime_seconds": float}`
 
-Kubernetes-compatible liveness probe.
-
-**Use Case**: Detect hung processes, Kubernetes liveness checks.
-
-**Response**:
-
+**Example Response (200 OK)**:
 ```json
 {
   "status": "alive",
-  "timestamp": 1704729600.0,
+  "timestamp": 1768136765.215679,
   "uptime_seconds": 3600.5
 }
 ```
 
-**Status Codes**:
-- `200` - Process is alive
+### 1.4 GET /metrics
 
----
+**Description**: Prometheus-compatible metrics endpoint. Returns application and system metrics in Prometheus text format. Requires `ENABLE_METRICS` environment variable to be `true`.
 
-### GET /metrics
-
-Prometheus-compatible metrics endpoint.
-
-**Configuration**: Set `ENABLE_METRICS=true` (default: true)
-
-**Response Format**: Prometheus text exposition format
-
+**Example Response (200 OK)**:
 ```
 kmidi_api_requests_total 1234
-kmidi_api_errors_total 12
-kmidi_api_request_duration_seconds_sum 45.6
-kmidi_api_request_duration_seconds_avg 0.037
-kmidi_api_error_rate 0.0097
-kmidi_api_uptime_seconds 3600.0
+kmidi_api_errors_total 10
+kmidi_api_request_duration_seconds_sum 5.67
+kmidi_api_request_duration_seconds_avg 0.0045
+kmidi_api_error_rate 0.008
+kmidi_api_uptime_seconds 3600
 kmidi_api_requests_per_second 0.34
+kmidi_api_endpoint_counts{endpoint="GET /health"} 500
+kmidi_api_endpoint_counts{endpoint="POST /generate"} 200
+kmidi_api_error_counts{error="5xx"} 10
+kmidi_api_system_cpu_percent 12.3
+kmidi_api_system_memory_percent 75.1
+kmidi_api_system_memory_available_bytes 1073741824
 ```
 
----
+### 1.5 GET /emotions
 
-## Emotions API
+**Description**: Lists all available emotional presets that the KmiDi system can process.
 
-### GET /emotions
+**Response Model**: `{"emotions": list[str], "count": int}`
 
-List all available emotional presets.
-
-**Rate Limit**: 100 requests/minute
-
-**Response Schema**:
-
-```typescript
-interface EmotionsResponse {
-  emotions: string[];
-  count: number;
-}
-```
-
-**Example**:
-
+**Example Request (curl)**:
 ```bash
-curl http://localhost:8000/emotions
+curl http://127.0.0.1:8000/emotions
 ```
 
-**Response**:
-
+**Example Response (200 OK)**:
 ```json
 {
   "emotions": [
+    "anger",
+    "anxiety",
     "calm",
     "grief",
-    "joy",
-    "anger",
     "nostalgia",
-    "hope"
+    "tension_building"
   ],
   "count": 6
 }
 ```
 
----
+### 1.6 POST /generate
 
-## Generation API
+**Description**: Generates music based on a provided emotional intent.
 
-### POST /generate
+**Request Model**: `GenerateRequest`
 
-Generate music from emotional intent.
-
-**Rate Limit**: 10 requests/minute
-
-**Request Schema**:
-
-```typescript
-interface GenerateRequest {
-  intent: {
-    core_wound?: string;      // Optional: underlying emotional source
-    core_desire?: string;     // Optional: what the music should achieve
-    emotional_intent: string; // Required: primary emotional expression
-    technical?: {
-      key?: string;           // e.g., "C", "F#", "Bb"
-      bpm?: number;           // 40-200
-      progression?: string[]; // e.g., ["F", "C", "Am", "Dm"]
-      genre?: string;         // e.g., "acoustic", "electronic"
-    };
-  };
-  output_format?: "midi" | "audio";  // Default: "midi"
-}
-```
-
-**Response Schema**:
-
-```typescript
-interface GenerateResponse {
-  status: "success" | "error";
-  result: {
-    affect: {
-      primary: string;      // Detected primary emotion
-      secondary?: string;   // Secondary emotion (if detected)
-      intensity: number;    // 0.0 - 1.0
-    };
-    plan: {
-      root_note: string;    // e.g., "C"
-      mode: string;         // e.g., "aeolian", "dorian"
-      tempo_bpm: number;
-      length_bars: number;
-      chord_symbols: string[];
-      complexity: number;   // 0.0 - 1.0
-    };
-  };
-  output_format: string;
-  request_id: string;
-  generation_time_seconds: number;
-}
-```
-
-**Example**:
-
+**Example Request (curl)**:
 ```bash
-curl -X POST http://localhost:8000/generate \
+curl -X POST http://127.0.0.1:8000/generate \
   -H "Content-Type: application/json" \
   -d '{
     "intent": {
-      "emotional_intent": "grief hidden as love",
+      "emotional_intent": "I feel peaceful and calm, like a quiet morning",
       "technical": {
-        "key": "F",
-        "bpm": 72
+        "key": "C",
+        "bpm": 90,
+        "progression": ["I", "V", "vi", "IV"],
+        "genre": "indie"
       }
-    }
+    },
+    "output_format": "midi"
   }'
 ```
 
-**Response**:
-
+**Example Response (200 OK)**:
 ```json
 {
   "status": "success",
   "result": {
     "affect": {
-      "primary": "grief",
-      "secondary": "tenderness",
-      "intensity": 0.67
+      "primary": "peaceful",
+      "secondary": "serene",
+      "intensity": 0.8
     },
     "plan": {
       "root_note": "C",
-      "mode": "aeolian",
-      "tempo_bpm": 70,
-      "length_bars": 32,
-      "chord_symbols": ["Cm", "Ab", "Fm", "Cm"],
+      "mode": "major",
+      "tempo_bpm": 90,
+      "length_bars": 16,
+      "chord_symbols": ["C", "G", "Am", "F"],
       "complexity": 0.5
     }
   },
   "output_format": "midi",
-  "request_id": "a1b2c3d4",
-  "generation_time_seconds": 0.023
+  "request_id": "abc12345",
+  "generation_time_seconds": 0.45
 }
 ```
 
----
+### 1.7 POST /interrogate
 
-## Interrogation API
+**Description**: Provides a conversational interface for refining emotional intent. It can maintain session context across multiple messages.
 
-### POST /interrogate
+**Request Model**: `InterrogateRequest`
 
-Conversational interface for refining musical intent.
-
-**Rate Limit**: 30 requests/minute
-
-**Request Schema**:
-
-```typescript
-interface InterrogateRequest {
-  message: string;           // User's message
-  session_id?: string;       // Optional: maintain conversation context
-  context?: {
-    [key: string]: any;      // Additional context
-  };
-}
-```
-
-**Response Schema**:
-
-```typescript
-interface InterrogateResponse {
-  status: "success";
-  reply: string;             // AI response
-  session_id: string;        // Session ID for follow-up
-  suggestions: string[];     // Suggested next steps
-  request_id: string;
-}
-```
-
-**Example**:
-
+**Example Request (curl)**:
 ```bash
-curl -X POST http://localhost:8000/interrogate \
+curl -X POST http://127.0.0.1:8000/interrogate \
   -H "Content-Type: application/json" \
   -d '{
-    "message": "I want to express grief through music"
+    "message": "Make it feel more grounded",
+    "session_id": "optional-session-id",
+    "context": {}
   }'
 ```
 
-**Response**:
-
+**Example Response (200 OK)**:
 ```json
 {
   "status": "success",
-  "reply": "Noted: I want to express grief through music. Consider clarifying the desired mood or groove.",
-  "session_id": "550e8400-e29b-41d4-a716-446655440000",
+  "reply": "Noted: Make it feel more grounded. Consider clarifying the desired mood or groove.",
+  "session_id": "optional-session-id",
   "suggestions": [
-    "Try: 'I want to express grief through a slow, minor key progression'"
+    "Consider specifying: emotion, tempo, key, or genre"
   ],
-  "request_id": "e5f6g7h8"
+  "request_id": "f460aec0"
 }
 ```
 
 ---
 
-## Error Handling
+## 2. Request/Response Models
 
-All errors follow a consistent format:
-
-```typescript
-interface ErrorResponse {
-  detail: string;
-  status_code: number;
-  request_id: string;
-  type?: string;
-}
-```
-
-### Error Codes
-
-| Code | Description | Example |
-|------|-------------|---------|
-| `400` | Bad Request | Invalid JSON, missing required fields |
-| `404` | Not Found | Endpoint doesn't exist |
-| `429` | Too Many Requests | Rate limit exceeded |
-| `500` | Internal Server Error | Server-side error |
-| `503` | Service Unavailable | Music Brain not loaded |
-
-**Example Error**:
-
-```json
-{
-  "detail": "Rate limit exceeded: 10 per minute",
-  "status_code": 429,
-  "request_id": "abc123"
-}
-```
-
----
-
-## Rate Limiting
-
-| Endpoint | Limit |
-|----------|-------|
-| `/emotions` | 100/minute |
-| `/generate` | 10/minute |
-| `/interrogate` | 30/minute |
-| `/health`, `/ready`, `/live` | Unlimited |
-
-Rate limits are per IP address. Headers returned:
-
-```
-X-RateLimit-Limit: 10
-X-RateLimit-Remaining: 7
-X-RateLimit-Reset: 1704730260
-```
-
----
-
-## SDKs & Examples
-
-### Python
+### 2.1 EmotionalIntent
 
 ```python
-import requests
-
-class KmiDiClient:
-    def __init__(self, base_url="http://localhost:8000"):
-        self.base_url = base_url
-
-    def health(self):
-        return requests.get(f"{self.base_url}/health").json()
-
-    def emotions(self):
-        return requests.get(f"{self.base_url}/emotions").json()
-
-    def generate(self, emotional_intent, **kwargs):
-        payload = {
-            "intent": {
-                "emotional_intent": emotional_intent,
-                **kwargs
-            }
-        }
-        return requests.post(f"{self.base_url}/generate", json=payload).json()
-
-    def interrogate(self, message, session_id=None):
-        payload = {"message": message}
-        if session_id:
-            payload["session_id"] = session_id
-        return requests.post(f"{self.base_url}/interrogate", json=payload).json()
-
-# Usage
-client = KmiDiClient()
-result = client.generate("hopeful after loss")
-print(f"Generated: {result['result']['plan']['chord_symbols']}")
+class EmotionalIntent(BaseModel):
+    core_wound: Optional[str] = None
+    core_desire: Optional[str] = None
+    emotional_intent: str
+    technical: Optional[TechnicalIntent] = None
 ```
 
-### JavaScript/TypeScript
+### 2.2 TechnicalIntent
 
-```typescript
-class KmiDiClient {
-  constructor(private baseUrl = 'http://localhost:8000') {}
-
-  async health() {
-    return fetch(`${this.baseUrl}/health`).then(r => r.json());
-  }
-
-  async generate(emotionalIntent: string, options?: object) {
-    return fetch(`${this.baseUrl}/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        intent: { emotional_intent: emotionalIntent, ...options }
-      })
-    }).then(r => r.json());
-  }
-}
-
-// Usage
-const client = new KmiDiClient();
-const result = await client.generate('calm and peaceful');
+```python
+class TechnicalIntent(BaseModel):
+    key: Optional[str] = None
+    bpm: Optional[int] = None
+    progression: Optional[list[str]] = None
+    genre: Optional[str] = None
 ```
 
-### cURL
+### 2.3 GenerateRequest
 
-```bash
-# Health check
-curl http://localhost:8000/health
+```python
+class GenerateRequest(BaseModel):
+    intent: EmotionalIntent
+    output_format: Optional[str] = "midi"
+```
 
-# List emotions
-curl http://localhost:8000/emotions
+### 2.4 InterrogateRequest
 
-# Generate music
-curl -X POST http://localhost:8000/generate \
-  -H "Content-Type: application/json" \
-  -d '{"intent": {"emotional_intent": "grief"}}'
+```python
+class InterrogateRequest(BaseModel):
+    message: str
+    session_id: Optional[str] = None
+    context: Optional[Dict[str, Any]] = None
+```
 
-# Interrogate
-curl -X POST http://localhost:8000/interrogate \
-  -H "Content-Type: application/json" \
-  -d '{"message": "I want something peaceful"}'
+### 2.5 HealthResponse
+
+```python
+class HealthResponse(BaseModel):
+    status: str
+    version: str
+    timestamp: float
+    services: Dict[str, Any]
+    system: Optional[Dict[str, Any]] = None
 ```
 
 ---
 
-## OpenAPI Specification
+## 3. Error Handling
 
-The full OpenAPI 3.0 specification is available at:
+API endpoints are designed with comprehensive error handling:
 
-- **JSON**: `http://localhost:8000/openapi.json`
-- **Interactive**: `http://localhost:8000/docs`
+*   **HTTP Exceptions**: Handled by `@app.exception_handler(HTTPException)`, returning a JSON response with `detail`, `status_code`, and `request_id`.
+*   **Global Exceptions**: Unhandled exceptions are caught by `@app.exception_handler(Exception)`, providing a generic "Internal server error" message with error type and `request_id`.
+*   **Rate Limiting**: Implemented with `slowapi` to prevent abuse, returning `429 Too Many Requests` when limits are exceeded.
 
-You can use this spec to:
-- Generate client SDKs (using OpenAPI Generator)
-- Import into Postman/Insomnia
-- Create API documentation
-- Set up API testing
+All error responses include a `request_id` for tracing and debugging purposes.
 
 ---
 
-## See Also
+## 4. OpenAPI Documentation (Swagger UI)
 
-- [Deployment Guide](../deployment/DEPLOYMENT_GUIDE.md)
-- [CLI Usage Guide](../cli/CLI_GUIDE.md)
-- [GUI Manual](../gui/GUI_MANUAL.md)
-- [Quick Start](../QUICKSTART_GUIDE.md)
+Interactive API documentation is automatically generated by FastAPI and available at the following URLs when the API server is running:
 
----
+*   **Swagger UI**: `http://127.0.0.1:8000/docs`
+*   **ReDoc UI**: `http://127.0.0.1:8000/redoc`
 
-*Last Updated: 2026-01-11*
+These interfaces allow you to explore all available endpoints, their request/response schemas, and even test them directly from your browser.

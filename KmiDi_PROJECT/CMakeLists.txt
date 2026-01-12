@@ -155,6 +155,8 @@ file(GLOB_RECURSE KELLY_CORE_SOURCES CONFIGURE_DEPENDS
     ${CPP_ROOT}/src/*.cpp
     ${CPP_ROOT}/src/*.mm
     ${CPP_ROOT}/src/midi/MidiIO.cpp
+    ${CPP_ROOT}/src/ui/ScoreEntryPanel.cpp
+    ${CPP_ROOT}/src/ui/MixerConsolePanel.cpp
 )
 
 # Exclude app entry point and plugin sources from the core lib
@@ -294,6 +296,8 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
         tests/cpp/test_midi_pipeline.cpp
         tests/cpp/test_chord_diagnostics.cpp
         tests/cpp/test_ml_pipeline.cpp
+        benchmarks/harmony_latency.cpp
+        benchmarks/groove_latency.cpp
     )
     target_link_libraries(KellyTests PRIVATE
         KellyCore
