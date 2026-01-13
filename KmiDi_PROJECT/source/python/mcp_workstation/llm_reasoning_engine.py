@@ -1,10 +1,13 @@
-from llama_cpp import Llama
-import json
 from dataclasses import dataclass, asdict
-from typing import Optional, List, Dict, Any
+import json
+import textwrap
+from typing import Any, Dict, List, Optional
 
+from llama_cpp import Llama
+
+from .audio_generation_engine import AudioGenerationEngine  # Import the new audio engine
 from .image_generation_engine import ImageGenerationEngine
-from .audio_generation_engine import AudioGenerationEngine # Import the new audio engine
+
 
 @dataclass
 class StructuredIntent:
@@ -24,24 +27,42 @@ class StructuredIntent:
     explanation: Optional[str] = None
     rule_breaking_logic: Optional[str] = None
     generated_image_data: Optional[Dict[str, Any]] = None
-    generated_audio_data: Optional[Dict[str, Any]] = None # New field for audio results
+    generated_audio_data: Optional[Dict[str, Any]] = None  # New field for audio results
+
 
 class LLMReasoningEngine:
-    def __init__(self, model_path: str, n_ctx: int = 4096, n_gpu_layers: int = -1, n_threads: int = 4, image_engine: Optional[ImageGenerationEngine] = None, audio_engine: Optional[AudioGenerationEngine] = None):
-        self.llm = Llama(model_path=model_path, n_ctx=n_ctx, n_gpu_layers=n_gpu_layers, n_threads=n_threads)
+    def __init__(
+        self,
+        model_path: str,
+        n_ctx: int = 4096,
+        n_gpu_layers: int = -1,
+        n_threads: int = 4,
+        image_engine: Optional[ImageGenerationEngine] = None,
+        audio_engine: Optional[AudioGenerationEngine] = None,
+    ):
+        self.llm = Llama(
+            model_path=model_path,
+            n_ctx=n_ctx,
+            n_gpu_layers=n_gpu_layers,
+            n_threads=n_threads,
+        )
         self.image_engine = image_engine or ImageGenerationEngine()
-        self.audio_engine = audio_engine or AudioGenerationEngine() # Initialize AudioGenerationEngine
+        self.audio_engine = (
+            audio_engine or AudioGenerationEngine()
+        )  # Initialize AudioGenerationEngine
 
     def parse_user_intent(self, natural_language_input: str) -> StructuredIntent:
-        prompt = f"""
-        Parse the following natural language input into a structured intent object.
-        Provide a JSON output that matches the StructuredIntent dataclass.
-        If a field is not inferable, omit it.
+        prompt = textwrap.dedent(
+            f"""
+            Parse the following natural language input into a structured intent object.
+            Provide a JSON output that matches the StructuredIntent dataclass.
+            If a field is not inferable, omit it.
 
-        Natural Language Input: """{natural_language_input}"""
+            Natural Language Input: {natural_language_input}
 
-        Structured Intent (JSON):
-        """
+            Structured Intent (JSON):
+            """
+        )
         output = self.llm.create_completion(prompt, max_tokens=500, temperature=0.7, stop=["```"])
         try:
             json_output = output["choices"][0]["text"].strip()
@@ -78,7 +99,9 @@ class LLMReasoningEngine:
         Image Prompt: <prompt>
         Style Constraints: <style_constraints>
         """
-        output = self.llm.create_completion(prompt, max_tokens=500, temperature=0.7, stop=["Image Prompt:", "Style Constraints:"])
+        output = self.llm.create_completion(
+            prompt, max_tokens=500, temperature=0.7, stop=["Image Prompt:", "Style Constraints:"]
+        )
 
         response_text = output["choices"][0]["text"].strip()
         image_prompt_start = response_text.find("Image Prompt:")
@@ -89,12 +112,16 @@ class LLMReasoningEngine:
 
         if image_prompt_start != -1:
             if style_constraints_start != -1:
-                image_prompt = response_text[image_prompt_start + len("Image Prompt:"):style_constraints_start].strip()
+                image_prompt = response_text[
+                    image_prompt_start + len("Image Prompt:") : style_constraints_start
+                ].strip()
             else:
-                image_prompt = response_text[image_prompt_start + len("Image Prompt:"):].strip()
+                image_prompt = response_text[image_prompt_start + len("Image Prompt:") :].strip()
 
         if style_constraints_start != -1:
-            style_constraints = response_text[style_constraints_start + len("Style Constraints:"):].strip()
+            style_constraints = response_text[
+                style_constraints_start + len("Style Constraints:") :
+            ].strip()
 
         structured_intent.image_prompt = image_prompt
         structured_intent.image_style_constraints = style_constraints
@@ -105,15 +132,20 @@ class LLMReasoningEngine:
             print(f"Calling image engine with prompt: {structured_intent.image_prompt}")
             image_result = self.image_engine.generate_image(
                 prompt=structured_intent.image_prompt,
-                style_constraints=structured_intent.image_style_constraints or ""
+                style_constraints=structured_intent.image_style_constraints or "",
             )
             structured_intent.generated_image_data = image_result
         else:
             print("No image prompt found in structured intent. Skipping image generation.")
-            structured_intent.generated_image_data = {"status": "skipped", "details": "No image prompt."}
+            structured_intent.generated_image_data = {
+                "status": "skipped",
+                "details": "No image prompt.",
+            }
         return structured_intent
 
-    def generate_audio_texture_prompt(self, structured_intent: StructuredIntent) -> StructuredIntent:
+    def generate_audio_texture_prompt(
+        self, structured_intent: StructuredIntent
+    ) -> StructuredIntent:
         prompt = f"""
         Given the structured intent, generate an audio texture prompt for a diffusion model.
 
@@ -121,7 +153,9 @@ class LLMReasoningEngine:
 
         Audio Texture Prompt:
         """
-        output = self.llm.create_completion(prompt, max_tokens=300, temperature=0.7, stop=["Audio Texture Prompt:"])
+        output = self.llm.create_completion(
+            prompt, max_tokens=300, temperature=0.7, stop=["Audio Texture Prompt:"]
+        )
         structured_intent.audio_texture_prompt = output["choices"][0]["text"].strip()
         return structured_intent
 
@@ -139,22 +173,34 @@ class LLMReasoningEngine:
                     self.audio_engine.release_lock()
             else:
                 print("Could not acquire lock for audio generation. Skipping.")
-                structured_intent.generated_audio_data = {"status": "skipped", "details": "Could not acquire audio generation lock."}
+                structured_intent.generated_audio_data = {
+                    "status": "skipped",
+                    "details": "Could not acquire audio generation lock.",
+                }
         else:
             print("No audio texture prompt found in structured intent. Skipping audio generation.")
-            structured_intent.generated_audio_data = {"status": "skipped", "details": "No audio texture prompt."}
+            structured_intent.generated_audio_data = {
+                "status": "skipped",
+                "details": "No audio texture prompt.",
+            }
         return structured_intent
 
-    def generate_explanation(self, original_intent: str, generated_output: Any, output_type: str) -> str:
-        prompt = f"""
-        Explain the reasoning behind the generated {output_type} based on the original user intent.
+    def generate_explanation(
+        self, original_intent: str, generated_output: Any, output_type: str
+    ) -> str:
+        prompt = textwrap.dedent(
+            f"""
+            Explain the reasoning behind the generated {output_type} based on the original user intent.
 
-        Original Intent: """{original_intent}"""
-        Generated {output_type}: """{json.dumps(generated_output, indent=2)}"""
+            Original Intent: {original_intent}
+            Generated {output_type}: {json.dumps(generated_output, indent=2)}
 
-        Explanation:
-        """
-        output = self.llm.create_completion(prompt, max_tokens=500, temperature=0.7, stop=["Explanation:"])
+            Explanation:
+            """
+        )
+        output = self.llm.create_completion(
+            prompt, max_tokens=500, temperature=0.7, stop=["Explanation:"]
+        )
         return output["choices"][0]["text"].strip()
 
     def get_rule_breaking_logic(self, structured_intent: StructuredIntent) -> str:

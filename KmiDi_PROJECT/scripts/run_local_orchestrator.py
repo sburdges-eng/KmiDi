@@ -66,9 +66,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--intent", help="Inline intent text.")
     parser.add_argument("--intent-file", help="Path to a text file containing intent.")
     parser.add_argument("--mistral-ctx", type=int, default=3072)
-    parser.add_argument("--llama-threads", type=int, help="Override thread count for llama.cpp")
-    parser.add_argument("--n-gpu-layers", type=int, help="Override n_gpu_layers for llama.cpp")
-    parser.add_argument("--keep-loaded", action="store_true", help="Keep LLM loaded between calls")
+    parser.add_argument(
+        "--llama-threads",
+        type=int,
+        help="Override thread count for llama.cpp",
+    )
+    parser.add_argument(
+        "--n-gpu-layers",
+        type=int,
+        help="Override n_gpu_layers for llama.cpp",
+    )
+    parser.add_argument(
+        "--keep-loaded",
+        action="store_true",
+        help="Keep LLM loaded between calls",
+    )
     parser.add_argument("--seed", type=int, default=17)
     parser.add_argument("--midi-length", type=int, default=16)
     parser.add_argument(
