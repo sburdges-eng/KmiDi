@@ -42,7 +42,11 @@ class AudioGenerationEngine:
                 raise
 
     def generate_audio_texture(
-        self, prompt: str, duration: int = 10, temperature: float = 1.0
+        self,
+        prompt: str,
+        duration: int = 10,
+        temperature: float = 1.0,
+        assume_locked: bool = False,
     ) -> Dict[str, Any]:
         """Generates an audio texture based on the prompt."""
         if not AUDIOCRAFT_AVAILABLE or self.model is None:
@@ -60,23 +64,11 @@ class AudioGenerationEngine:
                 ),
             }
 
-        # Acquire lock to ensure mutual exclusion
-        with self.lock:
+        def _generate() -> Dict[str, Any]:
             print(f"Generating audio texture with prompt: {prompt}")
             try:
-                # Simulate audio generation time
-                time.sleep(duration / 5)  # Faster simulation
-
-                # For actual generation:
-                # wav = self.model.generate([prompt], progress=True, return_tokens=True)
-                # output_path = self.output_dir / f"audio_texture_{hash(prompt)}.wav"
-                # audio_write(output_path, wav[0].cpu(), self.model.sample_rate, strategy="loudness")
-                # with open(output_path, "rb") as f:
-                #     audio_data_base64 = base64.b64encode(f.read()).decode("utf-8")
-
-                # Placeholder for base64 audio data
+                time.sleep(duration / 5)  # Simulate generation
                 audio_data_base64 = f"<base64_encoded_audio_data_for_{prompt.replace(' ', '_')}>"
-
                 return {
                     "status": "completed",
                     "prompt": prompt,
@@ -92,8 +84,16 @@ class AudioGenerationEngine:
                     "details": f"Audio generation failed: {e}",
                 }
 
+        if assume_locked:
+            return _generate()
+
+        with self.lock:
+            return _generate()
+
     def acquire_lock(self, timeout: Optional[float] = None) -> bool:
         """Acquires the lock for audio generation. Returns True if successful, False otherwise."""
+        if timeout is None:
+            return self.lock.acquire()
         return self.lock.acquire(timeout=timeout)
 
     def release_lock(self):
