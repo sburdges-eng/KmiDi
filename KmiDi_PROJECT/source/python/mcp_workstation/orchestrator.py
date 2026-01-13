@@ -52,9 +52,14 @@ class Orchestrator:
         return False
 
     def _release_resource(self, resource_name: str):
-        if self.resource_locks[resource_name].locked():
+        try:
             self.resource_locks[resource_name].release()
             logging.info(f"Lock released for {resource_name}.")
+        except RuntimeError:
+            logging.warning(
+                "Tried to release lock for %s but it was not held by this thread.",
+                resource_name,
+            )
 
     def execute_workflow(
         self, user_intent_text: str, enable_image_gen: bool = True, enable_audio_gen: bool = False
