@@ -403,9 +403,6 @@ class CompleteSongIntent:
         audio_texture_prompt: Optional[str] = None,
         explanation: Optional[str] = None,
         rule_breaking_logic: Optional[str] = None,
-        generated_image_data: Optional[Dict[str, Any]] = None
-    generated_audio_data: Optional[Dict[str, Any]] = None # New field for audio results,
-        generated_audio_data: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         self.song_root = SongRoot(
@@ -452,8 +449,6 @@ class CompleteSongIntent:
         self.audio_texture_prompt = audio_texture_prompt
         self.explanation = explanation
         self.rule_breaking_logic = rule_breaking_logic
-        self.generated_image_data = generated_image_data
-        self.generated_audio_data = generated_audio_data # Assign new field
 
     def to_dict(self) -> Dict:
         """Convert to dictionary for serialization."""
@@ -493,8 +488,6 @@ class CompleteSongIntent:
             "audio_texture_prompt": self.audio_texture_prompt,
             "explanation": self.explanation,
             "rule_breaking_logic": self.rule_breaking_logic,
-            "generated_image_data": self.generated_image_data,
-            "generated_audio_data": self.generated_audio_data, # Include in dict
         }
 
     @classmethod
@@ -550,8 +543,6 @@ class CompleteSongIntent:
         intent.audio_texture_prompt = data.get("audio_texture_prompt", None)
         intent.explanation = data.get("explanation", None)
         intent.rule_breaking_logic = data.get("rule_breaking_logic", None)
-        intent.generated_image_data = data.get("generated_image_data", None)
-        intent.generated_audio_data = data.get("generated_audio_data", None) # Read new field
 
         return intent
 
