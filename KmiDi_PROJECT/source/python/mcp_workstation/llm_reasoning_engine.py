@@ -90,39 +90,31 @@ class LLMReasoningEngine:
             return {"error": f"Could not expand MIDI plan. {e}"}
 
     def generate_image_prompts(self, structured_intent: StructuredIntent) -> StructuredIntent:
-        prompt = f"""
-        Given the structured intent, generate an image prompt and style constraints for Stable Diffusion 1.5.
+        prompt = textwrap.dedent(
+            f"""
+            Given the structured intent, return a JSON object with two fields:
+            - image_prompt: a concise prompt for Stable Diffusion 1.5
+            - style_constraints: short style notes (may be empty)
 
-        Structured Intent: {asdict(structured_intent)}
+            Structured Intent: {asdict(structured_intent)}
 
-        Output format:
-        Image Prompt: <prompt>
-        Style Constraints: <style_constraints>
-        """
-        output = self.llm.create_completion(prompt, max_tokens=500, temperature=0.7)
+            JSON:
+            """
+        )
 
+        output = self.llm.create_completion(prompt, max_tokens=400, temperature=0.7)
         response_text = output["choices"][0]["text"].strip()
-        image_prompt_start = response_text.find("Image Prompt:")
-        style_constraints_start = response_text.find("Style Constraints:")
 
-        image_prompt = ""
-        style_constraints = ""
+        try:
+            parsed = json.loads(response_text)
+            structured_intent.image_prompt = (parsed.get("image_prompt") or "").strip()
+            structured_intent.image_style_constraints = (
+                parsed.get("style_constraints") or ""
+            ).strip()
+        except (json.JSONDecodeError, AttributeError):
+            structured_intent.image_prompt = ""
+            structured_intent.image_style_constraints = ""
 
-        if image_prompt_start != -1:
-            if style_constraints_start != -1:
-                image_prompt = response_text[
-                    image_prompt_start + len("Image Prompt:") : style_constraints_start
-                ].strip()
-            else:
-                image_prompt = response_text[image_prompt_start + len("Image Prompt:") :].strip()
-
-        if style_constraints_start != -1:
-            style_constraints = response_text[
-                style_constraints_start + len("Style Constraints:") :
-            ].strip()
-
-        structured_intent.image_prompt = image_prompt
-        structured_intent.image_style_constraints = style_constraints
         return structured_intent
 
     def generate_image_from_intent(self, structured_intent: StructuredIntent) -> StructuredIntent:
@@ -144,15 +136,25 @@ class LLMReasoningEngine:
     def generate_audio_texture_prompt(
         self, structured_intent: StructuredIntent
     ) -> StructuredIntent:
-        prompt = f"""
-        Given the structured intent, generate an audio texture prompt for a diffusion model.
+        prompt = textwrap.dedent(
+            f"""
+            Given the structured intent, return a JSON object with one field:
+            - audio_texture_prompt: a concise prompt for an audio diffusion model
 
-        Structured Intent: {asdict(structured_intent)}
+            Structured Intent: {asdict(structured_intent)}
 
-        Audio Texture Prompt:
-        """
+            JSON:
+            """
+        )
         output = self.llm.create_completion(prompt, max_tokens=300, temperature=0.7)
-        structured_intent.audio_texture_prompt = output["choices"][0]["text"].strip()
+        response_text = output["choices"][0]["text"].strip()
+        try:
+            parsed = json.loads(response_text)
+            structured_intent.audio_texture_prompt = (
+                parsed.get("audio_texture_prompt") or ""
+            ).strip()
+        except (json.JSONDecodeError, AttributeError):
+            structured_intent.audio_texture_prompt = ""
         return structured_intent
 
     def generate_audio_from_intent(self, structured_intent: StructuredIntent) -> StructuredIntent:

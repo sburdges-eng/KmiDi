@@ -98,8 +98,11 @@ class AudioGenerationEngine:
 
     def release_lock(self):
         """Releases the lock for audio generation."""
-        if self.lock.locked():
+        try:
             self.lock.release()
+        except RuntimeError:
+            # Either not acquired or owned by another thread
+            print("Warning: attempted to release an unheld audio generation lock.")
 
 
 # Example usage (for testing)
