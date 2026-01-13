@@ -161,12 +161,9 @@ class MIDIGenerationPipeline:
         )
         emotion_match = EmotionMatch(
             base_emotion=intent.song_intent.mood_primary or "neutral",
-            score=1.0,
             intensity_tier=5,
         )
-        arrangement_profile = self.dynamics_engine.get_arrangement_profile(
-            song_structure, emotion_match
-        )
+        _ = self.dynamics_engine.get_arrangement_profile(song_structure, emotion_match)
 
         # 5. Render to MIDI file
         output_file_name = (
@@ -192,18 +189,16 @@ class MIDIGenerationPipeline:
         # Add melody track (simple implementation for now, just note_on/off)
         melody_track = mido.MidiTrack()
         final_mid.tracks.append(melody_track)
-        current_tick = 0
-        last_tick = 0
+        last_event_tick = 0  # absolute tick of the last event appended
         for note_pitch in melody_notes:
-            delta_time = current_tick - last_tick
+            note_on_tick = last_event_tick  # start immediately after the prior note_off
+            delta_on = note_on_tick - last_event_tick  # zero except first iteration
             melody_track.append(
-                mido.Message("note_on", note=note_pitch, velocity=90, time=delta_time)
+                mido.Message("note_on", note=note_pitch, velocity=90, time=delta_on)
             )
-            melody_track.append(
-                mido.Message("note_off", note=note_pitch, velocity=0, time=PPQ)
-            )  # Quarter note duration
-            last_tick = current_tick + PPQ
-            current_tick += PPQ
+            # Quarter note duration; delta is relative to note_on
+            melody_track.append(mido.Message("note_off", note=note_pitch, velocity=0, time=PPQ))
+            last_event_tick = note_on_tick + PPQ  # advance absolute position
 
         # Add humanized drum track
         drum_track = mido.MidiTrack()

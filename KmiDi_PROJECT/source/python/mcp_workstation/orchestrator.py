@@ -151,6 +151,20 @@ class Orchestrator:
         return complete_intent
 
 
+# Maintain legacy API surface expected by package __init__
+Workstation = Orchestrator
+
+
+def get_workstation(*args, **kwargs) -> Workstation:
+    """Thin wrapper for backward compatibility with existing imports."""
+    return Workstation(*args, **kwargs)
+
+
+def shutdown_workstation() -> None:
+    """Placeholder to mirror previous API; orchestrator has no persistent state."""
+    return None
+
+
 def main():
     parser = argparse.ArgumentParser(description="KmiDi Local Metal AI Orchestrator CLI")
     parser.add_argument(

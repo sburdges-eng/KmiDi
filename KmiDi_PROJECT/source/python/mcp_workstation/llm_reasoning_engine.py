@@ -1,9 +1,19 @@
 from dataclasses import dataclass, asdict
 import json
 import textwrap
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
-from llama_cpp import Llama
+try:
+    from llama_cpp import Llama
+except ImportError:  # pragma: no cover - optional dependency for tests
+    Llama = None
+
+    class _MissingLlama:
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                "llama_cpp is required for LLMReasoningEngine. "
+                "Install via `pip install llama-cpp-python` (Metal enabled on macOS)."
+            )
 
 from .audio_generation_engine import AudioGenerationEngine  # Import the new audio engine
 from .image_generation_engine import ImageGenerationEngine
@@ -40,6 +50,10 @@ class LLMReasoningEngine:
         image_engine: Optional[ImageGenerationEngine] = None,
         audio_engine: Optional[AudioGenerationEngine] = None,
     ):
+        if Llama is None:
+            raise ImportError(
+                "llama_cpp is not installed; install llama-cpp-python to use LLMReasoningEngine."
+            )
         self.llm = Llama(
             model_path=model_path,
             n_ctx=n_ctx,
@@ -68,7 +82,7 @@ class LLMReasoningEngine:
             json_output = output["choices"][0]["text"].strip()
             intent_dict = json.loads(json_output)
             return StructuredIntent(**intent_dict)
-        except (json.JSONDecodeError, KeyError) as e:
+        except (json.JSONDecodeError, KeyError, IndexError) as e:
             print(f"Error parsing LLM output: {e}")
             return StructuredIntent(explanation=f"Error: Could not parse intent. {e}")
 
@@ -85,11 +99,15 @@ class LLMReasoningEngine:
         try:
             json_output = output["choices"][0]["text"].strip()
             return json.loads(json_output)
-        except (json.JSONDecodeError, KeyError) as e:
+        except (json.JSONDecodeError, KeyError, IndexError) as e:
             print(f"Error expanding MIDI prompt: {e}")
             return {"error": f"Could not expand MIDI plan. {e}"}
 
     def generate_image_prompts(self, structured_intent: StructuredIntent) -> StructuredIntent:
+        # Preserve any prompts already inferred during parsing to avoid wiping them on fallback.
+        current_prompt = structured_intent.image_prompt or ""
+        current_style = structured_intent.image_style_constraints or ""
+
         prompt = textwrap.dedent(
             f"""
             Given the structured intent, return a JSON object with two fields:
@@ -103,17 +121,30 @@ class LLMReasoningEngine:
         )
 
         output = self.llm.create_completion(prompt, max_tokens=400, temperature=0.7)
-        response_text = output["choices"][0]["text"].strip()
+        try:
+            response_text = output["choices"][0]["text"].strip()
+        except (KeyError, IndexError, TypeError) as e:
+            print(f"Error reading image prompt choices: {e}")
+            structured_intent.image_prompt = current_prompt
+            structured_intent.image_style_constraints = current_style
+            return structured_intent
 
         try:
             parsed = json.loads(response_text)
-            structured_intent.image_prompt = (parsed.get("image_prompt") or "").strip()
+            structured_intent.image_prompt = (parsed.get("image_prompt") or current_prompt).strip()
             structured_intent.image_style_constraints = (
-                parsed.get("style_constraints") or ""
+                parsed.get("style_constraints") or current_style
             ).strip()
         except (json.JSONDecodeError, AttributeError):
-            structured_intent.image_prompt = ""
-            structured_intent.image_style_constraints = ""
+            # Attempt a simple fallback parse from plain text responses
+            lines = [line.strip() for line in response_text.splitlines() if line.strip()]
+            for line in lines:
+                if line.lower().startswith("image prompt:"):
+                    current_prompt = line.split(":", 1)[1].strip() or current_prompt
+                if line.lower().startswith("style constraints:"):
+                    current_style = line.split(":", 1)[1].strip() or current_style
+            structured_intent.image_prompt = current_prompt
+            structured_intent.image_style_constraints = current_style
 
         return structured_intent
 
@@ -136,6 +167,7 @@ class LLMReasoningEngine:
     def generate_audio_texture_prompt(
         self, structured_intent: StructuredIntent
     ) -> StructuredIntent:
+        current_prompt = structured_intent.audio_texture_prompt or ""
         prompt = textwrap.dedent(
             f"""
             Given the structured intent, return a JSON object with one field:
@@ -147,34 +179,35 @@ class LLMReasoningEngine:
             """
         )
         output = self.llm.create_completion(prompt, max_tokens=300, temperature=0.7)
-        response_text = output["choices"][0]["text"].strip()
+        try:
+            response_text = output["choices"][0]["text"].strip()
+        except (KeyError, IndexError, TypeError) as e:
+            print(f"Error reading audio prompt choices: {e}")
+            structured_intent.audio_texture_prompt = current_prompt
+            return structured_intent
         try:
             parsed = json.loads(response_text)
             structured_intent.audio_texture_prompt = (
-                parsed.get("audio_texture_prompt") or ""
+                parsed.get("audio_texture_prompt") or current_prompt
             ).strip()
         except (json.JSONDecodeError, AttributeError):
-            structured_intent.audio_texture_prompt = ""
+            # Fallback: handle simple "Audio Texture Prompt: ..." responses
+            lines = [line.strip() for line in response_text.splitlines() if line.strip()]
+            for line in lines:
+                if line.lower().startswith("audio texture prompt:"):
+                    current_prompt = line.split(":", 1)[1].strip() or current_prompt
+            structured_intent.audio_texture_prompt = current_prompt
         return structured_intent
 
     def generate_audio_from_intent(self, structured_intent: StructuredIntent) -> StructuredIntent:
         if structured_intent.audio_texture_prompt:
             print(f"Calling audio engine with prompt: {structured_intent.audio_texture_prompt}")
-            # Attempt to acquire lock for audio generation. Timeout is optional.
-            if self.audio_engine.acquire_lock(timeout=300):
-                try:
-                    audio_result = self.audio_engine.generate_audio_texture(
-                        prompt=structured_intent.audio_texture_prompt
-                    )
-                    structured_intent.generated_audio_data = audio_result
-                finally:
-                    self.audio_engine.release_lock()
-            else:
-                print("Could not acquire lock for audio generation. Skipping.")
-                structured_intent.generated_audio_data = {
-                    "status": "skipped",
-                    "details": "Could not acquire audio generation lock.",
-                }
+            # Rely on AudioGenerationEngine's internal lock to avoid double-lock deadlocks.
+            audio_result = self.audio_engine.generate_audio_texture(
+                prompt=structured_intent.audio_texture_prompt,
+                assume_locked=False,
+            )
+            structured_intent.generated_audio_data = audio_result
         else:
             print("No audio texture prompt found in structured intent. Skipping audio generation.")
             structured_intent.generated_audio_data = {
