@@ -99,9 +99,7 @@ class LLMReasoningEngine:
         Image Prompt: <prompt>
         Style Constraints: <style_constraints>
         """
-        output = self.llm.create_completion(
-            prompt, max_tokens=500, temperature=0.7, stop=["Image Prompt:", "Style Constraints:"]
-        )
+        output = self.llm.create_completion(prompt, max_tokens=500, temperature=0.7)
 
         response_text = output["choices"][0]["text"].strip()
         image_prompt_start = response_text.find("Image Prompt:")
@@ -153,9 +151,7 @@ class LLMReasoningEngine:
 
         Audio Texture Prompt:
         """
-        output = self.llm.create_completion(
-            prompt, max_tokens=300, temperature=0.7, stop=["Audio Texture Prompt:"]
-        )
+        output = self.llm.create_completion(prompt, max_tokens=300, temperature=0.7)
         structured_intent.audio_texture_prompt = output["choices"][0]["text"].strip()
         return structured_intent
 
