@@ -26,7 +26,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -48,6 +48,13 @@ def _load_yaml_config(path: Path) -> Dict[str, Any]:
 
     with path.open("r", encoding="utf-8") as handle:
         return yaml.safe_load(handle) or {}
+
+
+def _maybe_int(val: Any) -> Optional[int]:
+    try:
+        return int(val)
+    except (TypeError, ValueError):
+        return None
 
 
 def parse_args() -> argparse.Namespace:
@@ -113,12 +120,25 @@ def main() -> None:
     if not gguf_path:
         raise SystemExit("Missing --gguf-path (or mistral_gguf_path in --config).")
 
+    cfg_mistral_ctx = _maybe_int(cfg_data.get("mistral_ctx", args.mistral_ctx))
+    cfg_mistral_ctx = cfg_mistral_ctx if cfg_mistral_ctx is not None else int(args.mistral_ctx)
+
+    cfg_mistral_seed = _maybe_int(cfg_data.get("mistral_seed", args.seed))
+    cfg_llama_threads = _maybe_int(cfg_data.get("llama_threads", args.llama_threads))
+    cfg_mistral_gpu_layers = _maybe_int(cfg_data.get("mistral_gpu_layers", args.n_gpu_layers))
+
+    cfg_midi_seed = _maybe_int(cfg_data.get("midi_seed", args.seed))
+    cfg_midi_seed = cfg_midi_seed if cfg_midi_seed is not None else args.seed
+
+    cfg_midi_length = _maybe_int(cfg_data.get("midi_length", args.midi_length))
+    cfg_midi_length = cfg_midi_length if cfg_midi_length is not None else args.midi_length
+
     cfg = OrchestrationConfig(
         mistral_gguf_path=Path(gguf_path).expanduser(),
-        mistral_ctx=int(cfg_data.get("mistral_ctx", args.mistral_ctx)),
-        mistral_seed=cfg_data.get("mistral_seed", args.seed),
-        llama_threads=cfg_data.get("llama_threads", args.llama_threads),
-        mistral_gpu_layers=cfg_data.get("n_gpu_layers", args.n_gpu_layers),
+        mistral_ctx=cfg_mistral_ctx,
+        mistral_seed=cfg_mistral_seed,
+        llama_threads=cfg_llama_threads,
+        mistral_gpu_layers=cfg_mistral_gpu_layers,
         keep_brain_loaded=bool(cfg_data.get("keep_brain_loaded", args.keep_loaded)),
         enable_images=bool(cfg_data.get("enable_images", args.enable_images)),
         enable_audio_texture=bool(
@@ -126,8 +146,8 @@ def main() -> None:
         ),
         enable_voice=bool(cfg_data.get("enable_voice", args.enable_voice)),
         output_root=Path(cfg_data.get("output_root", args.output_root)).expanduser(),
-        midi_seed=int(cfg_data.get("midi_seed", args.seed)),
-        midi_length=int(cfg_data.get("midi_length", args.midi_length)),
+        midi_seed=cfg_midi_seed,
+        midi_length=cfg_midi_length,
         midi_device=str(cfg_data.get("midi_device", args.midi_device)),
     )
 

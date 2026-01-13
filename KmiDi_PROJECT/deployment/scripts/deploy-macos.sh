@@ -52,8 +52,8 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 cd "$PROJECT_ROOT" || { echo "Failed to navigate to project root."; exit 1; }
 
-# Install Python dependencies
-pip${PYTHON_VERSION} install -r KMiDi_PROJECT/requirements-production.txt || { echo "Failed to install Python dependencies."; exit 1; }
+# Install Python dependencies (project root already set)
+pip${PYTHON_VERSION} install -r requirements-production.txt || { echo "Failed to install Python dependencies."; exit 1; }
 
 # Optional: Apple MLX (Metal-accelerated) for lightweight local inference
 if [ "${INSTALL_MLX}" = "true" ]; then
@@ -66,29 +66,29 @@ mkdir -p "$INSTALL_DIR/music_brain"
 mkdir -p "$INSTALL_DIR/data"
 mkdir -p "$INSTALL_DIR/models"
 
-# Copy API and music_brain code
-cp -R KMiDi_PROJECT/api/* "$INSTALL_DIR/api/"
-cp -R KMiDi_PROJECT/music_brain/* "$INSTALL_DIR/music_brain/"
-cp KMiDi_PROJECT/pyproject.toml "$INSTALL_DIR/"
+# Copy API and music_brain code (main sources live under source/python)
+cp -R api/* "$INSTALL_DIR/api/"
+cp -R source/python/music_brain/* "$INSTALL_DIR/music_brain/"
+cp pyproject.toml "$INSTALL_DIR/"
 
 # Optional: Copy data and models if they exist locally
-if [ -d "KMiDi_PROJECT/data" ]; then
-    cp -R KMiDi_PROJECT/data/* "$INSTALL_DIR/data/"
+if [ -d "data" ]; then
+    cp -R data/* "$INSTALL_DIR/data/"
 fi
-if [ -d "KMiDi_PROJECT/models" ]; then
-    cp -R KMiDi_PROJECT/models/* "$INSTALL_DIR/models/"
+if [ -d "models" ]; then
+    cp -R models/* "$INSTALL_DIR/models/"
 fi
 
 # Build Tauri application (desktop frontend)
-# This assumes `npm install` has been run in `KMiDi_PROJECT/source/frontend/src-tauri`
+# This assumes `npm install` has been run in `source/frontend/src-tauri`
 # and that `cargo` is in PATH
 echo "Building Tauri desktop application..."
-cd KMiDi_PROJECT/source/frontend/src-tauri || { echo "Failed to navigate to Tauri frontend."; exit 1; }
+cd source/frontend/src-tauri || { echo "Failed to navigate to Tauri frontend."; exit 1; }
 npm install # Ensure npm dependencies are installed for Tauri build
 cargo tauri build --release || { echo "Failed to build Tauri app."; exit 1; }
 
 # Copy the built Tauri app to installation directory
-TAURI_APP_PATH="$(find "$PROJECT_ROOT/KMiDi_PROJECT/source/frontend/src-tauri/target/release/bundle/" -name "KMiDi.app" -type d | head -n 1)"
+TAURI_APP_PATH="$(find "$PROJECT_ROOT/source/frontend/src-tauri/target/release/bundle/" -name "KMiDi.app" -type d | head -n 1)"
 if [ -d "$TAURI_APP_PATH" ]; then
     echo "Copying Tauri app from $TAURI_APP_PATH to $INSTALL_DIR/KMiDi.app"
     cp -R "$TAURI_APP_PATH" "$INSTALL_DIR/"
