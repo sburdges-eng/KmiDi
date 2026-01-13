@@ -87,7 +87,11 @@ class Orchestrator:
         # This is a simplification; a more robust mapping would be needed.
         complete_intent = CompleteSongIntent(
             core_event=structured_intent.core_event,
+            core_resistance=structured_intent.core_resistance,
+            core_longing=structured_intent.core_longing,
             mood_primary=structured_intent.mood_primary,
+            vulnerability_scale=structured_intent.vulnerability_scale,
+            narrative_arc=structured_intent.narrative_arc,
             technical_genre=structured_intent.technical_genre,
             technical_key=structured_intent.technical_key,
             technical_rule_to_break=structured_intent.technical_rule_to_break,

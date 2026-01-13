@@ -193,11 +193,16 @@ class MIDIGenerationPipeline:
         melody_track = mido.MidiTrack()
         final_mid.tracks.append(melody_track)
         current_tick = 0
+        last_tick = 0
         for note_pitch in melody_notes:
-            melody_track.append(mido.Message("note_on", note=note_pitch, velocity=90, time=0))
+            delta_time = current_tick - last_tick
+            melody_track.append(
+                mido.Message("note_on", note=note_pitch, velocity=90, time=delta_time)
+            )
             melody_track.append(
                 mido.Message("note_off", note=note_pitch, velocity=0, time=PPQ)
             )  # Quarter note duration
+            last_tick = current_tick + PPQ
             current_tick += PPQ
 
         # Add humanized drum track
