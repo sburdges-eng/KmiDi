@@ -451,7 +451,7 @@ class CompleteSongIntent:
         mood_primary: str = "",
         mood_secondary_tension: str = "",
         imagery_texture: str = "",
-        vulnerability_scale: float = 0.0,
+        vulnerability_scale: str = "Medium",
         narrative_arc: str = "",
         technical_genre: str = "",
         technical_tempo_range: tuple = (60, 140),
@@ -485,16 +485,17 @@ class CompleteSongIntent:
             tension_val = float(mood_secondary_tension)
         except Exception:
             tension_val = 0.5
-        try:
-            vuln_val = float(vulnerability_scale)
-        except Exception:
-            vuln_val = 0.5
+
+        # Normalize vulnerability_scale to valid string value
+        vuln_str = str(vulnerability_scale).strip().title() if vulnerability_scale else "Medium"
+        if vuln_str not in VALID_VULNERABILITY_SCALE_OPTIONS:
+            vuln_str = "Medium"
 
         self.song_intent = SongIntent(
             mood_primary=mood_primary,
             mood_secondary_tension=tension_val,
             imagery_texture=imagery_texture,
-            vulnerability_scale=vuln_val,
+            vulnerability_scale=vuln_str,
             narrative_arc=narrative_arc or "",
         )
         self.technical_constraints = TechnicalConstraints(

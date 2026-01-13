@@ -47,8 +47,17 @@ class AudioGenerationEngine:
         duration: int = 10,
         temperature: float = 1.0,
         assume_locked: bool = False,
+        lock_timeout: Optional[float] = 300.0,
     ) -> Dict[str, Any]:
-        """Generates an audio texture based on the prompt."""
+        """Generates an audio texture based on the prompt.
+
+        Args:
+            prompt: Text description for audio generation.
+            duration: Target duration in seconds.
+            temperature: Generation temperature.
+            assume_locked: If True, skip lock acquisition (caller holds lock).
+            lock_timeout: Timeout in seconds for lock acquisition. None = block forever.
+        """
         if not AUDIOCRAFT_AVAILABLE or self.model is None:
             print(
                 "Audio generation engine not fully initialized or audiocraft not "
@@ -87,8 +96,20 @@ class AudioGenerationEngine:
         if assume_locked:
             return _generate()
 
-        with self.lock:
+        # Use timeout-based lock acquisition to avoid indefinite blocking
+        acquired = self.lock.acquire(timeout=lock_timeout) if lock_timeout else self.lock.acquire()
+        if not acquired:
+            print(f"Audio generation lock timeout after {lock_timeout}s")
+            return {
+                "status": "timeout",
+                "prompt": prompt,
+                "audio_data_base64": "<timeout_audio_data>",
+                "details": f"Could not acquire audio lock within {lock_timeout}s timeout.",
+            }
+        try:
             return _generate()
+        finally:
+            self.lock.release()
 
     def acquire_lock(self, timeout: Optional[float] = None) -> bool:
         """Acquires the lock for audio generation. Returns True if successful, False otherwise."""

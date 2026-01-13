@@ -202,10 +202,11 @@ class LLMReasoningEngine:
     def generate_audio_from_intent(self, structured_intent: StructuredIntent) -> StructuredIntent:
         if structured_intent.audio_texture_prompt:
             print(f"Calling audio engine with prompt: {structured_intent.audio_texture_prompt}")
-            # Rely on AudioGenerationEngine's internal lock to avoid double-lock deadlocks.
+            # Use timeout-based lock acquisition to prevent indefinite blocking.
             audio_result = self.audio_engine.generate_audio_texture(
                 prompt=structured_intent.audio_texture_prompt,
                 assume_locked=False,
+                lock_timeout=300.0,  # 5 minute timeout to prevent workflow hangs
             )
             structured_intent.generated_audio_data = audio_result
         else:
