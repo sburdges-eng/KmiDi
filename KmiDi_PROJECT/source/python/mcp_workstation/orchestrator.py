@@ -30,6 +30,7 @@ class Orchestrator:
 
         self.resource_locks = {
             "llm": threading.Lock(),
+            "midi_gen": threading.Lock(),
             "image_gen": threading.Lock(),
             "audio_gen": threading.Lock(),
         }
@@ -85,14 +86,14 @@ class Orchestrator:
         # Phase 2: MIDI Generation
         # MIDI generation is fast and deterministic, so it might not need a separate lock if it doesn't contend with LLM.
         # However, for safety and consistency in a multi-resource environment, it's good to include it.
-        if not self._acquire_resource("image_gen"):
-            raise RuntimeError("Could not acquire MIDI resource.") # Using image_gen lock as a placeholder for a general generator lock
+        if not self._acquire_resource("midi_gen"):
+            raise RuntimeError("Could not acquire MIDI resource.")
         try:
             midi_result = self.midi_pipeline.generate_midi(complete_intent, output_dir=str(self.output_dir / "midi_outputs"))
             complete_intent.midi_plan = midi_result
             logging.info("MIDI generation complete.")
         finally:
-            self._release_resource("image_gen")
+            self._release_resource("midi_gen")
 
         # Phase 3: Image Generation (Optional)
         if enable_image_gen and structured_intent.image_prompt:
@@ -146,9 +147,12 @@ def main():
         )
         print("\n--- Workflow Results ---")
         print(f"User Intent: {args.prompt}")
-        print(f"Generated MIDI Plan Status: {final_intent.midi_plan.get('status', 'N/A')}")
-        print(f"Generated Image Status: {final_intent.generated_image_data.get('status', 'N/A')}")
-        print(f"Generated Audio Status: {final_intent.generated_audio_data.get('status', 'N/A')}")
+            midi_status = final_intent.midi_plan.get('status', 'N/A') if isinstance(final_intent.midi_plan, dict) else 'N/A'
+            image_status = final_intent.generated_image_data.get('status', 'disabled') if isinstance(final_intent.generated_image_data, dict) else 'disabled'
+            audio_status = final_intent.generated_audio_data.get('status', 'disabled') if isinstance(final_intent.generated_audio_data, dict) else 'disabled'
+            print(f"Generated MIDI Plan Status: {midi_status}")
+            print(f"Generated Image Status: {image_status}")
+            print(f"Generated Audio Status: {audio_status}")
         print(f"Explanation: {final_intent.explanation}")
 
         # Optionally save the full intent object to JSON for inspection
