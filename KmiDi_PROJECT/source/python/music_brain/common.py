@@ -118,6 +118,8 @@ __all__ = [
     "parse_intent_json",
 ]
 
+PPQ = 480 # Pulses per quarter note - standard MIDI resolution
+
 
 
 
