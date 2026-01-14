@@ -116,9 +116,10 @@ __all__ = [
     "midi_file_context",
     "make_midi_payload",
     "parse_intent_json",
+    "PPQ",
 ]
 
-PPQ = 480 # Pulses per quarter note - standard MIDI resolution
+PPQ = 480  # Pulses per quarter note - standard MIDI resolution
 
 
 

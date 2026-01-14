@@ -6,11 +6,17 @@ from unittest.mock import MagicMock, patch
 
 # Assuming the project root is accessible
 import sys
-sys.path.append(str(Path(__file__).parents[3])) # Adjust path to access KmiDi_PROJECT
+from pathlib import Path
 
-from KmiDi_PROJECT.source.python.mcp_workstation.orchestrator import Orchestrator
-from KmiDi_PROJECT.source.python.mcp_workstation.llm_reasoning_engine import StructuredIntent
-from KmiDi_PROJECT.source.python.music_brain.session.intent_schema import CompleteSongIntent
+# Add source/python to path for proper imports
+project_root = Path(__file__).parents[3]
+source_python = project_root / "KmiDi_PROJECT" / "source" / "python"
+if str(source_python) not in sys.path:
+    sys.path.insert(0, str(source_python))
+
+from mcp_workstation.orchestrator import Orchestrator
+from mcp_workstation.llm_reasoning_engine import StructuredIntent
+from music_brain.session.intent_schema import CompleteSongIntent
 
 class TestOrchestratorIntegration(unittest.TestCase):
 
@@ -53,10 +59,22 @@ class TestOrchestratorIntegration(unittest.TestCase):
         }
 
         # Patch the dependencies within Orchestrator and LLMReasoningEngine
-        patcher_llm_constructor = patch('KmiDi_PROJECT.source.python.mcp_workstation.llm_reasoning_engine.Llama', return_value=self.mock_llm_instance)
-        patcher_image_engine = patch('KmiDi_PROJECT.source.python.mcp_workstation.orchestrator.ImageGenerationEngine', return_value=self.mock_image_engine_instance)
-        patcher_audio_engine = patch('KmiDi_PROJECT.source.python.mcp_workstation.orchestrator.AudioGenerationEngine', return_value=self.mock_audio_engine_instance)
-        patcher_midi_pipeline = patch('KmiDi_PROJECT.source.python.mcp_workstation.orchestrator.MIDIGenerationPipeline', return_value=self.mock_midi_pipeline_instance)
+        patcher_llm_constructor = patch(
+            'mcp_workstation.llm_reasoning_engine.Llama',
+            return_value=self.mock_llm_instance
+        )
+        patcher_image_engine = patch(
+            'mcp_workstation.orchestrator.ImageGenerationEngine',
+            return_value=self.mock_image_engine_instance
+        )
+        patcher_audio_engine = patch(
+            'mcp_workstation.orchestrator.AudioGenerationEngine',
+            return_value=self.mock_audio_engine_instance
+        )
+        patcher_midi_pipeline = patch(
+            'mcp_workstation.orchestrator.MIDIGenerationPipeline',
+            return_value=self.mock_midi_pipeline_instance
+        )
 
         self.mock_llm_llama = patcher_llm_constructor.start()
         self.mock_image_engine = patcher_image_engine.start()

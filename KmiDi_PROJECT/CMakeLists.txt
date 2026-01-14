@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.27)
-project(Kelly VERSION 0.1.0 LANGUAGES CXX)
+project(KmiDi VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -20,7 +20,7 @@ endif()
 option(BUILD_DESKTOP "Build desktop GUI application" ON)
 option(BUILD_PLUGINS "Build VST3 and CLAP plugins" ON)
 option(BUILD_TESTS "Build tests" ON)
-option(BUILD_KELLY_CORE "Build Kelly core library/app/plugins" ON)
+option(BUILD_KMIDI_CORE "Build KmiDi core library/app/plugins" ON)
 option(BUILD_PENTA_TESTS "Build penta_core test suite" OFF)
 option(ENABLE_TRACY "Enable Tracy profiling" OFF)
 option(ENABLE_RTNEURAL "Enable RTNeural for ML inference" OFF)
@@ -164,6 +164,13 @@ list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/gui/main.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/plugin/")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/engine/test_kelly\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/")  # Python bindings built separately
+# Exclude RTNeural-dependent files when RTNeural is not enabled
+# These files require RTNeural headers to be available
+if(NOT ENABLE_RTNEURAL)
+    list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/KellyML/ExampleUsage\\.cpp$")
+    list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/KellyML/KellyMLModel\\.cpp$")
+    list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/KellyML/KellyMLPipeline\\.cpp$")
+endif()
 # Exclude Python bridge and binding sources from the core lib when bindings are built separately
 if(BUILD_PYTHON_BINDINGS)
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/bridge/kelly_bridge\\.cpp$")
@@ -175,7 +182,7 @@ endif()
 # they should be fixed by excluding specific problematic files/directories rather
 # than excluding everything.
 
-if(BUILD_KELLY_CORE)
+if(BUILD_KMIDI_CORE)
 add_library(KellyCore STATIC ${KELLY_CORE_SOURCES})
 
 # Ensure ObjC++ file (for biometrics) is treated correctly if present
@@ -228,8 +235,8 @@ target_compile_options(KellyCore PRIVATE
 
 # Kelly GUI Application
 if(BUILD_DESKTOP)
-    if(NOT BUILD_KELLY_CORE)
-        message(FATAL_ERROR "BUILD_DESKTOP requires BUILD_KELLY_CORE=ON")
+    if(NOT BUILD_KMIDI_CORE)
+        message(FATAL_ERROR "BUILD_DESKTOP requires BUILD_KMIDI_CORE=ON")
     endif()
     add_executable(KellyApp
         ${CPP_ROOT}/src/gui/main.cpp
@@ -249,16 +256,16 @@ endif()
 
 # Plugin builds
 if(BUILD_PLUGINS)
-    if(NOT BUILD_KELLY_CORE)
-        message(FATAL_ERROR "BUILD_PLUGINS requires BUILD_KELLY_CORE=ON")
+    if(NOT BUILD_KMIDI_CORE)
+        message(FATAL_ERROR "BUILD_PLUGINS requires BUILD_KMIDI_CORE=ON")
     endif()
     # VST3/CLAP plugin
     juce_add_plugin(KellyPlugin
-        COMPANY_NAME "Kelly"
+        COMPANY_NAME "KmiDi"
         PLUGIN_MANUFACTURER_CODE Klly
         PLUGIN_CODE Klp1
         FORMATS VST3 CLAP
-        PRODUCT_NAME "Kelly Emotion Processor"
+        PRODUCT_NAME "KmiDi Emotion Processor"
         VST3_CATEGORIES Fx Synth
         CLAP_ID com.kelly.emotion-processor
     )
@@ -275,10 +282,10 @@ if(BUILD_PLUGINS)
     )
 endif()
 
-endif() # BUILD_KELLY_CORE
+endif() # BUILD_KMIDI_CORE
 
 # Tests
-if(BUILD_TESTS AND BUILD_KELLY_CORE)
+if(BUILD_TESTS AND BUILD_KMIDI_CORE)
     enable_testing()
     # Fetch Catch2 if it doesn't exist locally
     include(FetchContent)
@@ -328,7 +335,7 @@ if(ENABLE_TRACY)
 endif()
 
 # Installation
-if(BUILD_KELLY_CORE)
+if(BUILD_KMIDI_CORE)
     set(KELLY_INSTALL_TARGETS KellyCore)
     if(BUILD_DESKTOP)
         list(APPEND KELLY_INSTALL_TARGETS KellyApp)

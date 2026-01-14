@@ -3,13 +3,13 @@ requires = ["setuptools>=65", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kmidi"
+name = "KmiDi"
 version = "1.0.0"
 description = "KmiDi: Unified Music Intelligence & Audio Workstation"
-readme = "KMIDI_README.md"
+readme = "KmiDi_README.md"
 license = "MIT"
 authors = [
-    {name = "Kelly Project Team"},
+    {name = "KmiDi Project Team"},
 ]
 requires-python = ">=3.9"
 dependencies = [
@@ -52,7 +52,7 @@ mcp = [
     "httpx>=0.25.0",
 ]
 all = [
-    "kmidi[dev,audio,docs,mcp]",
+    "KmiDi[dev,audio,docs,mcp]",
 ]
 
 [tool.setuptools]

@@ -1,5 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict
+import base64
+import io
 
 # Placeholder for diffusers library import
 try:
@@ -105,9 +107,6 @@ class ImageGenerationEngine:
             ).images[0]
 
             # Save to a temporary file and encode as base64
-            import io
-            import base64
-
             buffered = io.BytesIO()
             image.save(buffered, format="PNG")
             img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")

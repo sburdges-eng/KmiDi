@@ -63,6 +63,7 @@ Wound convertLegacyToKellyTypesWound(const Wound &legacy) {
 #include "common/MusicConstants.h"
 #include "common/PathResolver.h"
 #include "plugin/PluginEditor.h"
+#include "plugin/MasterEQProcessor.h"
 #include "project/ProjectManager.h"
 
 using namespace kelly::MusicConstants;
@@ -159,6 +160,106 @@ PluginProcessor::createParameterLayout() {
   params.push_back(std::make_unique<juce::AudioParameterBool>(
       juce::ParameterID{PARAM_BYPASS, PARAM_VERSION}, "Bypass", false));
 
+  // Master EQ Parameters
+  params.push_back(std::make_unique<juce::AudioParameterBool>(
+      juce::ParameterID{PARAM_EQ_BYPASS, PARAM_VERSION}, "EQ Bypass", false));
+  params.push_back(std::make_unique<juce::AudioParameterBool>(
+      juce::ParameterID{PARAM_AI_EQ_ENABLED, PARAM_VERSION}, "AI EQ Enabled", false));
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_AI_EQ_INTENSITY, PARAM_VERSION}, "AI EQ Intensity",
+      juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.5f,
+      juce::AudioParameterFloatAttributes().withLabel("AI Intensity")));
+  params.push_back(std::make_unique<juce::AudioParameterBool>(
+      juce::ParameterID{PARAM_AI_EQ_LOCK_USER_BANDS, PARAM_VERSION}, "Lock User Bands", false));
+
+  // EQ Band 0: Low Cut (frequency only, Q fixed at 0.707)
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_0_FREQ, PARAM_VERSION}, "Low Cut Freq",
+      juce::NormalisableRange<float>(20.0f, 1000.0f, 1.0f, 0.3f), 80.0f, // Log scale
+      juce::AudioParameterFloatAttributes().withLabel("Hz")));
+  params.push_back(std::make_unique<juce::AudioParameterBool>(
+      juce::ParameterID{PARAM_EQ_BAND_0_ENABLED, PARAM_VERSION}, "Low Cut Enabled", true));
+
+  // EQ Band 1: Low Shelf
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_1_FREQ, PARAM_VERSION}, "Low Shelf Freq",
+      juce::NormalisableRange<float>(20.0f, 500.0f, 1.0f, 0.3f), 100.0f, // Log scale
+      juce::AudioParameterFloatAttributes().withLabel("Hz")));
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_1_GAIN, PARAM_VERSION}, "Low Shelf Gain",
+      juce::NormalisableRange<float>(-24.0f, 24.0f, 0.1f), 0.0f,
+      juce::AudioParameterFloatAttributes().withLabel("dB")));
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_1_Q, PARAM_VERSION}, "Low Shelf Q",
+      juce::NormalisableRange<float>(0.1f, 10.0f, 0.01f), 0.707f,
+      juce::AudioParameterFloatAttributes().withLabel("Q")));
+  params.push_back(std::make_unique<juce::AudioParameterBool>(
+      juce::ParameterID{PARAM_EQ_BAND_1_ENABLED, PARAM_VERSION}, "Low Shelf Enabled", true));
+
+  // EQ Band 2: Parametric
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_2_FREQ, PARAM_VERSION}, "Param 1 Freq",
+      juce::NormalisableRange<float>(100.0f, 2000.0f, 1.0f, 0.3f), 500.0f, // Log scale
+      juce::AudioParameterFloatAttributes().withLabel("Hz")));
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_2_GAIN, PARAM_VERSION}, "Param 1 Gain",
+      juce::NormalisableRange<float>(-24.0f, 24.0f, 0.1f), 0.0f,
+      juce::AudioParameterFloatAttributes().withLabel("dB")));
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_2_Q, PARAM_VERSION}, "Param 1 Q",
+      juce::NormalisableRange<float>(0.1f, 10.0f, 0.01f), 1.0f,
+      juce::AudioParameterFloatAttributes().withLabel("Q")));
+  params.push_back(std::make_unique<juce::AudioParameterBool>(
+      juce::ParameterID{PARAM_EQ_BAND_2_ENABLED, PARAM_VERSION}, "Param 1 Enabled", true));
+
+  // EQ Band 3: Parametric
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_3_FREQ, PARAM_VERSION}, "Param 2 Freq",
+      juce::NormalisableRange<float>(500.0f, 5000.0f, 1.0f, 0.3f), 2000.0f, // Log scale
+      juce::AudioParameterFloatAttributes().withLabel("Hz")));
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_3_GAIN, PARAM_VERSION}, "Param 2 Gain",
+      juce::NormalisableRange<float>(-24.0f, 24.0f, 0.1f), 0.0f,
+      juce::AudioParameterFloatAttributes().withLabel("dB")));
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_3_Q, PARAM_VERSION}, "Param 2 Q",
+      juce::NormalisableRange<float>(0.1f, 10.0f, 0.01f), 1.0f,
+      juce::AudioParameterFloatAttributes().withLabel("Q")));
+  params.push_back(std::make_unique<juce::AudioParameterBool>(
+      juce::ParameterID{PARAM_EQ_BAND_3_ENABLED, PARAM_VERSION}, "Param 2 Enabled", true));
+
+  // EQ Band 4: Parametric
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_4_FREQ, PARAM_VERSION}, "Param 3 Freq",
+      juce::NormalisableRange<float>(2000.0f, 10000.0f, 1.0f, 0.3f), 5000.0f, // Log scale
+      juce::AudioParameterFloatAttributes().withLabel("Hz")));
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_4_GAIN, PARAM_VERSION}, "Param 3 Gain",
+      juce::NormalisableRange<float>(-24.0f, 24.0f, 0.1f), 0.0f,
+      juce::AudioParameterFloatAttributes().withLabel("dB")));
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_4_Q, PARAM_VERSION}, "Param 3 Q",
+      juce::NormalisableRange<float>(0.1f, 10.0f, 0.01f), 1.0f,
+      juce::AudioParameterFloatAttributes().withLabel("Q")));
+  params.push_back(std::make_unique<juce::AudioParameterBool>(
+      juce::ParameterID{PARAM_EQ_BAND_4_ENABLED, PARAM_VERSION}, "Param 3 Enabled", true));
+
+  // EQ Band 5: High Shelf/Cut
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_5_FREQ, PARAM_VERSION}, "High Shelf Freq",
+      juce::NormalisableRange<float>(2000.0f, 20000.0f, 1.0f, 0.3f), 10000.0f, // Log scale
+      juce::AudioParameterFloatAttributes().withLabel("Hz")));
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_5_GAIN, PARAM_VERSION}, "High Shelf Gain",
+      juce::NormalisableRange<float>(-24.0f, 24.0f, 0.1f), 0.0f,
+      juce::AudioParameterFloatAttributes().withLabel("dB")));
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_EQ_BAND_5_Q, PARAM_VERSION}, "High Shelf Q",
+      juce::NormalisableRange<float>(0.1f, 10.0f, 0.01f), 0.707f,
+      juce::AudioParameterFloatAttributes().withLabel("Q")));
+  params.push_back(std::make_unique<juce::AudioParameterBool>(
+      juce::ParameterID{PARAM_EQ_BAND_5_ENABLED, PARAM_VERSION}, "High Shelf Enabled", true));
+
   return {params.begin(), params.end()};
 }
 
@@ -167,6 +268,11 @@ void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
   currentBlockSize_ = samplesPerBlock;
   playheadPosition_ = 0.0;
   sampleCounter_ = 0;
+
+  // Initialize Master EQ processor
+  int numChannels = getTotalNumOutputChannels();
+  masterEQProcessor_.prepareToPlay(sampleRate, samplesPerBlock, numChannels);
+  masterEQProcessor_.updateParameters(apvts_);
 
   // Calculate lookahead in samples for ML inference
   lookaheadSamples_ =
@@ -281,6 +387,19 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
   }
 
   sampleCounter_ += numSamples;
+
+  // Master EQ processing (post-ML, pre-output)
+  // Update EQ parameters from APVTS (non-blocking, atomic reads)
+  masterEQProcessor_.updateParameters(apvts_);
+
+  // Apply EQ processing (currently stubbed - passes through audio)
+  // TODO: When biquad filters are implemented, apply actual EQ here
+  auto *eqBypassParam = apvts_.getRawParameterValue(PARAM_EQ_BYPASS);
+  if (!eqBypassParam || *eqBypassParam <= 0.5f) {
+    // EQ not bypassed - process audio through EQ
+    masterEQProcessor_.processBlock(buffer);
+  }
+  // If EQ is bypassed, audio passes through unchanged
 
   // Check bypass - use atomic-safe parameter read
   auto *bypassParam = apvts_.getRawParameterValue(PARAM_BYPASS);
@@ -484,7 +603,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 }
 
 juce::AudioProcessorEditor *PluginProcessor::createEditor() {
-  return new PluginEditor(*this);
+  return new kelly::PluginEditor(*this);
 }
 
 void PluginProcessor::getStateInformation(juce::MemoryBlock &destData) {
@@ -922,6 +1041,12 @@ void PluginProcessor::parameterChanged(const juce::String &parameterID,
   // safe to read from audio thread
 
   juce::ignoreUnused(newValue);
+
+  // Update EQ processor if EQ parameter changed
+  if (parameterID.startsWith("eq_")) {
+    masterEQProcessor_.updateParameters(apvts_);
+    return; // EQ parameters don't trigger MIDI regeneration
+  }
 
   // Manual regeneration approach: Track parameter changes but don't
   // auto-regenerate User requested manual regeneration only (no

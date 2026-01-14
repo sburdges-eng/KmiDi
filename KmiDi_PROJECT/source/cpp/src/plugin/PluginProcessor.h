@@ -44,6 +44,7 @@
 #include "ml/MultiModelProcessor.h"
 #include "ml/PluginLatencyManager.h"
 #include "plugin/PluginState.h"
+#include "plugin/MasterEQProcessor.h"
 // Forward declare KellyBrain and MLIntentPipeline to avoid type conflicts
 // (KellyBrain.h includes KellyTypes.h, while PluginProcessor uses Types.h)
 // Include these headers only in PluginProcessor.cpp where conversions are
@@ -109,6 +110,36 @@ public:
   static constexpr const char *PARAM_DYNAMICS = "dynamics";
   static constexpr const char *PARAM_BARS = "bars";
   static constexpr const char *PARAM_BYPASS = "bypass";
+
+  // Master EQ Parameter IDs
+  static constexpr const char *PARAM_EQ_BYPASS = "eq_bypass";
+  static constexpr const char *PARAM_AI_EQ_ENABLED = "ai_eq_enabled";
+  static constexpr const char *PARAM_AI_EQ_INTENSITY = "ai_eq_intensity";
+  static constexpr const char *PARAM_AI_EQ_LOCK_USER_BANDS = "ai_eq_lock_user_bands";
+
+  // Per-band EQ parameters (6 bands: 0=LowCut, 1=LowShelf, 2-4=Parametric, 5=HighShelf/Cut)
+  static constexpr const char *PARAM_EQ_BAND_0_FREQ = "eq_band_0_freq";
+  static constexpr const char *PARAM_EQ_BAND_0_ENABLED = "eq_band_0_enabled";
+  static constexpr const char *PARAM_EQ_BAND_1_FREQ = "eq_band_1_freq";
+  static constexpr const char *PARAM_EQ_BAND_1_GAIN = "eq_band_1_gain";
+  static constexpr const char *PARAM_EQ_BAND_1_Q = "eq_band_1_q";
+  static constexpr const char *PARAM_EQ_BAND_1_ENABLED = "eq_band_1_enabled";
+  static constexpr const char *PARAM_EQ_BAND_2_FREQ = "eq_band_2_freq";
+  static constexpr const char *PARAM_EQ_BAND_2_GAIN = "eq_band_2_gain";
+  static constexpr const char *PARAM_EQ_BAND_2_Q = "eq_band_2_q";
+  static constexpr const char *PARAM_EQ_BAND_2_ENABLED = "eq_band_2_enabled";
+  static constexpr const char *PARAM_EQ_BAND_3_FREQ = "eq_band_3_freq";
+  static constexpr const char *PARAM_EQ_BAND_3_GAIN = "eq_band_3_gain";
+  static constexpr const char *PARAM_EQ_BAND_3_Q = "eq_band_3_q";
+  static constexpr const char *PARAM_EQ_BAND_3_ENABLED = "eq_band_3_enabled";
+  static constexpr const char *PARAM_EQ_BAND_4_FREQ = "eq_band_4_freq";
+  static constexpr const char *PARAM_EQ_BAND_4_GAIN = "eq_band_4_gain";
+  static constexpr const char *PARAM_EQ_BAND_4_Q = "eq_band_4_q";
+  static constexpr const char *PARAM_EQ_BAND_4_ENABLED = "eq_band_4_enabled";
+  static constexpr const char *PARAM_EQ_BAND_5_FREQ = "eq_band_5_freq";
+  static constexpr const char *PARAM_EQ_BAND_5_GAIN = "eq_band_5_gain";
+  static constexpr const char *PARAM_EQ_BAND_5_Q = "eq_band_5_q";
+  static constexpr const char *PARAM_EQ_BAND_5_ENABLED = "eq_band_5_enabled";
 
   // Access APVTS
   juce::AudioProcessorValueTreeState &getAPVTS() { return apvts_; }
@@ -234,6 +265,10 @@ public:
   kelly::MLIntentPipeline &getMLBridge();
   const kelly::MLIntentPipeline &getMLBridge() const;
 
+  // Master EQ access
+  MasterEQProcessor &getMasterEQProcessor() { return masterEQProcessor_; }
+  const MasterEQProcessor &getMasterEQProcessor() const { return masterEQProcessor_; }
+
   // AudioProcessorValueTreeState::Listener
   void parameterChanged(const juce::String &parameterID,
                         float newValue) override;
@@ -333,6 +368,9 @@ private:
   Kelly::ML::MultiModelProcessor multiModelProcessor_;
   std::unique_ptr<Kelly::ML::AsyncMLPipeline> asyncMLPipeline_;
   std::atomic<bool> mlInferenceEnabled_{false};
+
+  // Master EQ processor
+  MasterEQProcessor masterEQProcessor_;
 
   // Lookahead buffer for ML inference
   static constexpr int ML_LOOKAHEAD_MS = 20;

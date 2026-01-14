@@ -69,30 +69,44 @@ class MIDIGenerationPipeline:
 
         # Generate initial HarmonyPlan
         harmony_plan = self.therapy_session.generate_plan()
-        harmony_plan.tempo_bpm = (
-            random.randint(*intent.technical_constraints.technical_tempo_range)
-            if intent.technical_constraints.technical_tempo_range
-            else harmony_plan.tempo_bpm
-        )
+        # Safely handle technical_tempo_range (may be None or invalid)
+        tempo_range = intent.technical_constraints.technical_tempo_range
+        if tempo_range and isinstance(tempo_range, (tuple, list)) and len(tempo_range) == 2:
+            try:
+                tempo_min, tempo_max = int(tempo_range[0]), int(tempo_range[1])
+                if tempo_min < tempo_max:
+                    harmony_plan.tempo_bpm = random.randint(tempo_min, tempo_max)
+            except (ValueError, TypeError):
+                # Invalid range, keep default from harmony_plan
+                pass
         harmony_plan.root_note = (
             intent.technical_constraints.technical_key or harmony_plan.root_note
         )
-        # harmony_plan.mode will be set by TherapySession based on mood, or we can override if a specific 'technical_mode' exists in intent
+        # Override mode if technical_mode is specified in intent
+        if intent.technical_constraints.technical_mode:
+            harmony_plan.mode = intent.technical_constraints.technical_mode
         # harmony_plan.chord_symbols could be expanded by the LLM later
 
         # 2. Melody Generation (using AdaptiveMelodyGenerator)
         # Requires an emotion and optional length/profile. Using primary mood.
+        melody_length = max(1, harmony_plan.length_bars * 4)  # Ensure at least 1 note
         melody_notes = self.melody_generator.generate(
             emotion=intent.song_intent.mood_primary or "neutral",
-            length=harmony_plan.length_bars * 4,  # Example: 4 notes per bar
+            length=melody_length,  # Example: 4 notes per bar
             # profile_name=... # Could be derived from intent
         )
+        # Safety check: ensure melody_notes is not empty
+        if not melody_notes:
+            # Fallback: generate a simple scale
+            base_note = 60
+            scale = [0, 2, 4, 5, 7, 9, 11, 12]
+            melody_notes = [base_note + scale[i % len(scale)] for i in range(melody_length)]
 
         # 3. Drum Humanization (via DrumHumanizer)
         # Need some initial drum events to humanize. For a deterministic path, we'd generate a basic drum pattern first.
         # For now, let's assume a simple, repeating kick-snare pattern.
         drum_events: List[Dict[str, Any]] = []
-        bars = harmony_plan.length_bars
+        bars = max(1, harmony_plan.length_bars)  # Ensure at least 1 bar
         for bar in range(bars):
             # Kick on 1 and 3
             drum_events.append(
@@ -140,9 +154,19 @@ class MIDIGenerationPipeline:
                 )
 
         # Apply humanization based on groove feel and mood tension
+        # Safely handle mood_secondary_tension (may not exist or be invalid)
+        vulnerability = 0.5  # Default
+        if hasattr(intent.song_intent, "mood_secondary_tension"):
+            try:
+                vulnerability = float(intent.song_intent.mood_secondary_tension)
+                # Clamp to valid range [0.0, 1.0]
+                vulnerability = max(0.0, min(1.0, vulnerability))
+            except (ValueError, TypeError):
+                # Invalid value, use default
+                pass
         groove_settings = GrooveSettings(
             complexity=chaos_tolerance,  # Directly use chaos tolerance for complexity
-            vulnerability=intent.song_intent.mood_secondary_tension,
+            vulnerability=vulnerability,
         )
         humanized_drum_events = humanize_drums(
             events=drum_events,
@@ -167,17 +191,24 @@ class MIDIGenerationPipeline:
 
         # 5. Render to MIDI file
         output_file_name = (
-            f"kmidi_generated_{intent.title.replace(' ', '_')}.mid"
+            f"KmiDi_generated_{intent.title.replace(' ', '_')}.mid"
             if intent.title
-            else "kmidi_generated.mid"
+            else "KmiDi_generated.mid"
         )
         output_path = Path(output_dir) / output_file_name
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         # render_plan_to_midi is designed for HarmonyPlan, so we'll use it for harmony
         # and then manually add other tracks.
-        harmony_midi_path = render_plan_to_midi(harmony_plan, str(output_path))
-        harmony_mid = mido.MidiFile(harmony_midi_path)
+        try:
+            harmony_midi_path = render_plan_to_midi(harmony_plan, str(output_path))
+            harmony_mid = mido.MidiFile(harmony_midi_path)
+        except Exception as e:
+            return {
+                "status": "failed",
+                "file_path": str(output_path),
+                "details": f"Failed to render harmony plan to MIDI: {e}",
+            }
 
         # Create a new MIDI file to combine everything
         final_mid = mido.MidiFile(ticks_per_beat=PPQ)
@@ -191,13 +222,21 @@ class MIDIGenerationPipeline:
         final_mid.tracks.append(melody_track)
         last_event_tick = 0  # absolute tick of the last event appended
         for note_pitch in melody_notes:
+            # Safety check: ensure valid MIDI note value
+            if not isinstance(note_pitch, (int, float)):
+                continue
+            note_pitch = int(note_pitch)
+            note_pitch = max(0, min(127, note_pitch))  # Clamp to valid MIDI range
+
             note_on_tick = last_event_tick  # start immediately after the prior note_off
             delta_on = note_on_tick - last_event_tick  # zero except first iteration
             melody_track.append(
                 mido.Message("note_on", note=note_pitch, velocity=90, time=delta_on)
             )
             # Quarter note duration; delta is relative to note_on
-            melody_track.append(mido.Message("note_off", note=note_pitch, velocity=0, time=PPQ))
+            melody_track.append(
+                mido.Message("note_off", note=note_pitch, velocity=0, time=PPQ)
+            )
             last_event_tick = note_on_tick + PPQ  # advance absolute position
 
         # Add humanized drum track
@@ -205,12 +244,23 @@ class MIDIGenerationPipeline:
         final_mid.tracks.append(drum_track)
         current_tick = 0
         for event in humanized_drum_events:
-            delta_time = event["start_tick"] - current_tick
+            # Safety check: ensure event has required fields
+            if not isinstance(event, dict):
+                continue
+            start_tick = event.get("start_tick", 0)
+            pitch = event.get("pitch", 36)  # Default to kick drum
+            velocity = event.get("velocity", 80)  # Default velocity
+
+            # Ensure valid MIDI values
+            pitch = max(0, min(127, int(pitch)))
+            velocity = max(1, min(127, int(velocity)))
+
+            delta_time = max(0, start_tick - current_tick)
             drum_track.append(
                 mido.Message(
                     "note_on",
-                    note=event["pitch"],
-                    velocity=event["velocity"],
+                    note=pitch,
+                    velocity=velocity,
                     time=delta_time,
                     channel=9,
                 )
@@ -219,30 +269,44 @@ class MIDIGenerationPipeline:
             drum_track.append(
                 mido.Message(
                     "note_off",
-                    note=event["pitch"],
+                    note=pitch,
                     velocity=0,
                     time=PPQ // 4,
                     channel=9,
                 )
             )
-            current_tick = (
-                event["start_tick"] + PPQ // 4
-            )  # Advance current_tick by note_on time + duration
+            current_tick = start_tick + PPQ // 4
 
         # Save the combined MIDI file
-        save_midi(final_mid, str(output_path))
+        try:
+            save_midi(final_mid, str(output_path))
+        except Exception as e:
+            return {
+                "status": "failed",
+                "file_path": str(output_path),
+                "details": f"Failed to save MIDI file: {e}",
+            }
 
         # Read the file and base64 encode for the response
-        with open(output_path, "rb") as f:
-            midi_base64_data = base64.b64encode(f.read()).decode("utf-8")
+        try:
+            with open(output_path, "rb") as f:
+                midi_base64_data = base64.b64encode(f.read()).decode("utf-8")
+        except Exception as e:
+            return {
+                "status": "failed",
+                "file_path": str(output_path),
+                "details": f"Failed to read and encode MIDI file: {e}",
+            }
 
         # Return structured MIDI plan
+        # Safely construct key string (root_note and mode are strings)
+        key_str = f"{harmony_plan.root_note} {harmony_plan.mode}".strip()
         midi_plan = {
             "status": "completed",
             "file_path": str(output_path),
             "tempo": harmony_plan.tempo_bpm,
-            "key": harmony_plan.root_note + " " + harmony_plan.mode,
-            "mood": intent.song_intent.mood_primary,
+            "key": key_str,
+            "mood": intent.song_intent.mood_primary or "",
             "duration_bars": harmony_plan.length_bars,
             "midi_data_base64": midi_base64_data,
             "details": "MIDI generated successfully by KmiDi Tier-1 pipeline.",

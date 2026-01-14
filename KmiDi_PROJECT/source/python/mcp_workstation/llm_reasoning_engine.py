@@ -24,12 +24,19 @@ class StructuredIntent:
     core_event: Optional[str] = None
     core_resistance: Optional[str] = None
     core_longing: Optional[str] = None
+    core_stakes: Optional[str] = None
+    core_transformation: Optional[str] = None
     mood_primary: Optional[str] = None
+    mood_secondary_tension: Optional[str] = None
+    imagery_texture: Optional[str] = None
     vulnerability_scale: Optional[str] = None
     narrative_arc: Optional[str] = None
     technical_genre: Optional[str] = None
     technical_key: Optional[str] = None
+    technical_mode: Optional[str] = None
+    technical_groove_feel: Optional[str] = None
     technical_rule_to_break: Optional[str] = None
+    rule_breaking_justification: Optional[str] = None
     midi_plan: Optional[Dict[str, Any]] = None
     image_prompt: Optional[str] = None
     image_style_constraints: Optional[str] = None
@@ -77,12 +84,23 @@ class LLMReasoningEngine:
             Structured Intent (JSON):
             """
         )
-        output = self.llm.create_completion(prompt, max_tokens=500, temperature=0.7, stop=["```"])
         try:
+            output = self.llm.create_completion(
+                prompt, max_tokens=500, temperature=0.7, stop=["```"]
+            )
+            if not output or "choices" not in output:
+                raise ValueError("LLM returned empty or invalid response")
+            if not output["choices"] or "text" not in output["choices"][0]:
+                raise ValueError("LLM response missing text field")
             json_output = output["choices"][0]["text"].strip()
+            # Try to extract JSON if wrapped in code blocks
+            if "```json" in json_output:
+                json_output = json_output.split("```json")[1].split("```")[0].strip()
+            elif "```" in json_output:
+                json_output = json_output.split("```")[1].split("```")[0].strip()
             intent_dict = json.loads(json_output)
             return StructuredIntent(**intent_dict)
-        except (json.JSONDecodeError, KeyError, IndexError) as e:
+        except (json.JSONDecodeError, KeyError, IndexError, ValueError) as e:
             print(f"Error parsing LLM output: {e}")
             return StructuredIntent(explanation=f"Error: Could not parse intent. {e}")
 
@@ -95,11 +113,22 @@ class LLMReasoningEngine:
 
         Detailed MIDI Plan (JSON):
         """
-        output = self.llm.create_completion(prompt, max_tokens=1000, temperature=0.7, stop=["```"])
         try:
+            output = self.llm.create_completion(
+                prompt, max_tokens=1000, temperature=0.7, stop=["```"]
+            )
+            if not output or "choices" not in output:
+                raise ValueError("LLM returned empty or invalid response")
+            if not output["choices"] or "text" not in output["choices"][0]:
+                raise ValueError("LLM response missing text field")
             json_output = output["choices"][0]["text"].strip()
+            # Try to extract JSON if wrapped in code blocks
+            if "```json" in json_output:
+                json_output = json_output.split("```json")[1].split("```")[0].strip()
+            elif "```" in json_output:
+                json_output = json_output.split("```")[1].split("```")[0].strip()
             return json.loads(json_output)
-        except (json.JSONDecodeError, KeyError, IndexError) as e:
+        except (json.JSONDecodeError, KeyError, IndexError, ValueError) as e:
             print(f"Error expanding MIDI prompt: {e}")
             return {"error": f"Could not expand MIDI plan. {e}"}
 
@@ -120,10 +149,16 @@ class LLMReasoningEngine:
             """
         )
 
-        output = self.llm.create_completion(prompt, max_tokens=400, temperature=0.7)
         try:
+            output = self.llm.create_completion(
+                prompt, max_tokens=400, temperature=0.7
+            )
+            if not output or "choices" not in output:
+                raise ValueError("LLM returned empty or invalid response")
+            if not output["choices"] or "text" not in output["choices"][0]:
+                raise ValueError("LLM response missing text field")
             response_text = output["choices"][0]["text"].strip()
-        except (KeyError, IndexError, TypeError) as e:
+        except (KeyError, IndexError, TypeError, ValueError) as e:
             print(f"Error reading image prompt choices: {e}")
             structured_intent.image_prompt = current_prompt
             structured_intent.image_style_constraints = current_style
@@ -178,10 +213,16 @@ class LLMReasoningEngine:
             JSON:
             """
         )
-        output = self.llm.create_completion(prompt, max_tokens=300, temperature=0.7)
         try:
+            output = self.llm.create_completion(
+                prompt, max_tokens=300, temperature=0.7
+            )
+            if not output or "choices" not in output:
+                raise ValueError("LLM returned empty or invalid response")
+            if not output["choices"] or "text" not in output["choices"][0]:
+                raise ValueError("LLM response missing text field")
             response_text = output["choices"][0]["text"].strip()
-        except (KeyError, IndexError, TypeError) as e:
+        except (KeyError, IndexError, TypeError, ValueError) as e:
             print(f"Error reading audio prompt choices: {e}")
             structured_intent.audio_texture_prompt = current_prompt
             return structured_intent

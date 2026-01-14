@@ -7,6 +7,8 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace kelly {
+// Forward declaration for MasterEQComponent (defined in ui/MasterEQComponent.h)
+class MasterEQComponent;
 
 /**
  * PluginEditor - UI Entry Point
@@ -80,6 +82,9 @@ private:
 
   // Main unified workstation interface - manages all UI components
   std::unique_ptr<EmotionWorkstation> workstation_;
+
+  // Master EQ component
+  std::unique_ptr<MasterEQComponent> masterEQComponent_;
 
   // Track last pending MIDI state to detect changes
   bool lastPendingMidiState_ = false;

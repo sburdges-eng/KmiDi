@@ -1,18 +1,56 @@
-# Kelly - Therapeutic iDAW (Desktop)
+# KmiDi - Unified Music Intelligence & Audio Workstation
 
-Kelly is a therapeutic desktop app that turns emotional intent into music. The current stack pairs a React + Tauri shell (UI + desktop bridge) with a Python “Music Brain” API that serves generation and interrogation endpoints.
+KmiDi is a unified music intelligence platform that turns emotional intent into music. The current stack pairs a React + Tauri shell (UI + desktop bridge) with a Python "Music Brain" API that serves generation and interrogation endpoints.
 
 ## What’s working
 - React + Tauri UI renders and routes buttons (Load Emotions, Generate Music, Start Interrogation, Side A/B toggle) to Tauri commands.
 - Tauri Rust commands forward to the Music Brain API at `http://127.0.0.1:8000`.
 - Error boundary and API status indicator surface connectivity issues.
 
-## Architecture (high level)
-- **Frontend:** React (Vite) bundled by Tauri. Lives in `src/` with hooks such as `useMusicBrain`.
-- **Desktop bridge:** Tauri 2 Rust commands (`get_emotions`, `generate_music`, `interrogate`) forward HTTP calls to the Music Brain API.
-- **Music Brain API (Python):** Expected to run locally on `127.0.0.1:8000`, exposing `/emotions`, `/generate`, and `/interrogate`.
+## Architecture
 
-Flow:
+KmiDi is a macOS-first music intelligence platform with a multi-language architecture:
+
+- **Python (Authoring/Training):** Music Brain API, ML training pipelines, intent processing
+- **C++ (Engine/ML):** Real-time audio processing, ML inference pipeline, DSP engines
+- **JUCE (Audio/Plugin):** Audio plugin framework (AU/VST3), real-time audio processing
+- **AppKit/SwiftUI (UI):** Native macOS standalone application
+- **React + Tauri (Desktop Bridge):** Cross-platform UI shell with Rust backend
+
+### Component Separation
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  macOS Standalone App (AppKit/SwiftUI)                  │
+│  - Timeline, Emotion Inspector, Project Management      │
+└─────────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────┐
+│  JUCE Plugin (AU/VST3)                                  │
+│  - Real-time audio processing                          │
+│  - Emotion-based parameter control                     │
+└─────────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────┐
+│  C++ ML Pipeline (RTNeural/ONNX)                       │
+│  - Emotion recognition                                  │
+│  - MIDI generation                                      │
+│  - Real-time inference                                  │
+└─────────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────┐
+│  Python Music Brain API                                 │
+│  - Intent processing                                    │
+│  - Training orchestration                               │
+│  - Model management                                     │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Development Flow
+
 ```
 React UI → Tauri command → HTTP → Music Brain API → JSON response → UI
 ```
@@ -137,7 +175,7 @@ python3 KmiDi_PROJECT/source/python/mcp_workstation/orchestrator.py \
 
 Upon successful execution, the `--output_dir` will contain:
 
--   `midi_outputs/`: Generated MIDI files (e.g., `kmidi_generated_*.mid`)
+-   `midi_outputs/`: Generated MIDI files (e.g., `KmiDi_generated_*.mid`)
 -   `stable_diffusion_v1_5/`: Downloaded Stable Diffusion model files.
 -   `audio_textures/`: Generated audio texture files (if enabled).
 -   `final_intent.json`: A JSON file containing the complete `CompleteSongIntent` object with all generated prompts and results.

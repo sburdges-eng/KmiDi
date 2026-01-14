@@ -56,20 +56,21 @@ class AudioGenerationEngine:
             duration: Target duration in seconds.
             temperature: Generation temperature.
             assume_locked: If True, skip lock acquisition (caller holds lock).
-            lock_timeout: Timeout in seconds for lock acquisition. None = block forever.
+            lock_timeout: Timeout in seconds for lock acquisition.
+                None = block forever, 0 = non-blocking.
         """
         if not AUDIOCRAFT_AVAILABLE or self.model is None:
             print(
-                "Audio generation engine not fully initialized or audiocraft not "
-                "available. Returning placeholder."
+                "Audio generation engine not fully initialized or "
+                "audiocraft not available. Returning placeholder."
             )
             return {
                 "status": "stubbed",
                 "prompt": prompt,
                 "audio_data_base64": "<placeholder_audio_data>",
                 "details": (
-                    "Audiocraft library not installed or model failed to load. "
-                    "Returning placeholder audio."
+                    "Audiocraft library not installed or model "
+                    "failed to load. Returning placeholder audio."
                 ),
             }
 
@@ -77,7 +78,8 @@ class AudioGenerationEngine:
             print(f"Generating audio texture with prompt: {prompt}")
             try:
                 time.sleep(duration / 5)  # Simulate generation
-                audio_data_base64 = f"<base64_encoded_audio_data_for_{prompt.replace(' ', '_')}>"
+                prompt_safe = prompt.replace(" ", "_")
+                audio_data_base64 = f"<base64_encoded_audio_data_for_{prompt_safe}>"
                 return {
                     "status": "completed",
                     "prompt": prompt,
@@ -97,14 +99,28 @@ class AudioGenerationEngine:
             return _generate()
 
         # Use timeout-based lock acquisition to avoid indefinite blocking
-        acquired = self.lock.acquire(timeout=lock_timeout) if lock_timeout else self.lock.acquire()
+        # Note: lock_timeout=0 means non-blocking (immediate return)
+        #       lock_timeout=None means block forever
+        #       lock_timeout>0 means wait up to that many seconds
+        if lock_timeout is not None:
+            # Pass timeout=0 for non-blocking, or positive value for timed wait
+            acquired = self.lock.acquire(timeout=lock_timeout)
+        else:
+            # No timeout specified - block until lock is acquired
+            acquired = self.lock.acquire()
         if not acquired:
-            print(f"Audio generation lock timeout after {lock_timeout}s")
+            timeout_msg = (
+                f"Could not acquire audio lock within {lock_timeout}s timeout."
+                if lock_timeout is not None
+                else "Could not acquire audio lock."
+            )
+            timeout_display = lock_timeout if lock_timeout is not None else "N/A"
+            print(f"Audio generation lock timeout after {timeout_display}s")
             return {
                 "status": "timeout",
                 "prompt": prompt,
                 "audio_data_base64": "<timeout_audio_data>",
-                "details": f"Could not acquire audio lock within {lock_timeout}s timeout.",
+                "details": timeout_msg,
             }
         try:
             return _generate()
@@ -112,7 +128,10 @@ class AudioGenerationEngine:
             self.lock.release()
 
     def acquire_lock(self, timeout: Optional[float] = None) -> bool:
-        """Acquires the lock for audio generation. Returns True if successful, False otherwise."""
+        """Acquires the lock for audio generation.
+
+        Returns True if successful, False otherwise.
+        """
         if timeout is None:
             return self.lock.acquire()
         return self.lock.acquire(timeout=timeout)
@@ -123,7 +142,7 @@ class AudioGenerationEngine:
             self.lock.release()
         except RuntimeError:
             # Either not acquired or owned by another thread
-            print("Warning: attempted to release an unheld audio generation lock.")
+            print("Warning: attempted to release an unheld " "audio generation lock.")
 
 
 # Example usage (for testing)

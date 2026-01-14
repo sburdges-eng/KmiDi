@@ -84,24 +84,35 @@ class Orchestrator:
             self._release_resource("llm")
 
         # Convert StructuredIntent to CompleteSongIntent for MIDI pipeline compatibility
-        # This is a simplification; a more robust mapping would be needed.
+        # Map all required fields with appropriate defaults
         complete_intent = CompleteSongIntent(
-            core_event=structured_intent.core_event,
-            core_resistance=structured_intent.core_resistance,
-            core_longing=structured_intent.core_longing,
-            mood_primary=structured_intent.mood_primary,
-            vulnerability_scale=structured_intent.vulnerability_scale,
-            narrative_arc=structured_intent.narrative_arc,
-            technical_genre=structured_intent.technical_genre,
-            technical_key=structured_intent.technical_key,
-            technical_rule_to_break=structured_intent.technical_rule_to_break,
+            core_event=structured_intent.core_event or "",
+            core_resistance=structured_intent.core_resistance or "",
+            core_longing=structured_intent.core_longing or "",
+            core_stakes=structured_intent.core_stakes or "",
+            core_transformation=structured_intent.core_transformation or "",
+            mood_primary=structured_intent.mood_primary or "",
+            mood_secondary_tension=structured_intent.mood_secondary_tension or "0.5",
+            imagery_texture=structured_intent.imagery_texture or "",
+            vulnerability_scale=structured_intent.vulnerability_scale or "Medium",
+            narrative_arc=structured_intent.narrative_arc or "",
+            technical_genre=structured_intent.technical_genre or "",
+            technical_tempo_range=(80, 120),  # Default tempo range
+            technical_key=structured_intent.technical_key or "",
+            technical_mode=structured_intent.technical_mode or "",
+            technical_groove_feel=structured_intent.technical_groove_feel or "",
+            technical_rule_to_break=structured_intent.technical_rule_to_break or "",
+            rule_breaking_justification=structured_intent.rule_breaking_justification or "",
+            output_target="",  # Not in StructuredIntent, use default
+            output_feedback_loop="",  # Not in StructuredIntent, use default
+            title="",  # Not in StructuredIntent, use default
+            created="",  # Not in StructuredIntent, use default
             midi_plan=structured_intent.midi_plan,
             image_prompt=structured_intent.image_prompt,
             image_style_constraints=structured_intent.image_style_constraints,
             audio_texture_prompt=structured_intent.audio_texture_prompt,
             explanation=structured_intent.explanation,
             rule_breaking_logic=structured_intent.rule_breaking_logic,
-            # Additional fields need to be mapped if used by MIDI pipeline
         )
 
         # Phase 2: MIDI Generation
@@ -113,8 +124,22 @@ class Orchestrator:
             midi_result = self.midi_pipeline.generate_midi(
                 complete_intent, output_dir=str(self.output_dir / "midi_outputs")
             )
-            complete_intent.midi_plan = midi_result
-            logging.info("MIDI generation complete.")
+            if midi_result and midi_result.get("status") == "completed":
+                complete_intent.midi_plan = midi_result
+                logging.info("MIDI generation complete.")
+            else:
+                error_msg = midi_result.get("details", "Unknown error") if midi_result else "No result returned"
+                logging.error(f"MIDI generation failed: {error_msg}")
+                complete_intent.midi_plan = {
+                    "status": "failed",
+                    "details": error_msg,
+                }
+        except Exception as e:
+            logging.error(f"MIDI generation exception: {e}", exc_info=True)
+            complete_intent.midi_plan = {
+                "status": "error",
+                "details": f"MIDI generation exception: {str(e)}",
+            }
         finally:
             self._release_resource("midi_gen")
 
@@ -123,13 +148,35 @@ class Orchestrator:
             # The LLMEngine already holds a reference to image_engine, so its internal lock is used.
             # Orchestrator handles top-level resource scheduling.
             if not self._acquire_resource("image_gen"):
-                raise RuntimeError("Could not acquire Image Generation resource.")
-            try:
-                structured_intent = self.llm_engine.generate_image_from_intent(structured_intent)
-                complete_intent.generated_image_data = structured_intent.generated_image_data
-                logging.info("Image generation complete.")
-            finally:
-                self._release_resource("image_gen")
+                logging.warning("Could not acquire Image Generation resource.")
+                complete_intent.generated_image_data = {
+                    "status": "skipped",
+                    "details": "Could not acquire image generation resource.",
+                }
+            else:
+                try:
+                    structured_intent = self.llm_engine.generate_image_from_intent(
+                        structured_intent
+                    )
+                    complete_intent.generated_image_data = (
+                        structured_intent.generated_image_data
+                    )
+                    if complete_intent.generated_image_data:
+                        status = complete_intent.generated_image_data.get("status", "unknown")
+                        if status == "completed":
+                            logging.info("Image generation complete.")
+                        else:
+                            logging.warning(
+                                f"Image generation status: {status}"
+                            )
+                except Exception as e:
+                    logging.error(f"Image generation exception: {e}", exc_info=True)
+                    complete_intent.generated_image_data = {
+                        "status": "error",
+                        "details": f"Image generation exception: {str(e)}",
+                    }
+                finally:
+                    self._release_resource("image_gen")
 
         # Phase 4: Audio Generation (Optional)
         if enable_audio_gen and structured_intent.audio_texture_prompt:
@@ -138,13 +185,35 @@ class Orchestrator:
             # This requires mutual exclusion, which is handled by the AudioGenerationEngine's internal lock.
             # The orchestrator's resource_lock["audio_gen"] ensures only one audio job runs at a time.
             if not self._acquire_resource("audio_gen"):
-                raise RuntimeError("Could not acquire Audio Generation resource.")
-            try:
-                structured_intent = self.llm_engine.generate_audio_from_intent(structured_intent)
-                complete_intent.generated_audio_data = structured_intent.generated_audio_data
-                logging.info("Audio generation complete.")
-            finally:
-                self._release_resource("audio_gen")
+                logging.warning("Could not acquire Audio Generation resource.")
+                complete_intent.generated_audio_data = {
+                    "status": "skipped",
+                    "details": "Could not acquire audio generation resource.",
+                }
+            else:
+                try:
+                    structured_intent = self.llm_engine.generate_audio_from_intent(
+                        structured_intent
+                    )
+                    complete_intent.generated_audio_data = (
+                        structured_intent.generated_audio_data
+                    )
+                    if complete_intent.generated_audio_data:
+                        status = complete_intent.generated_audio_data.get("status", "unknown")
+                        if status == "completed":
+                            logging.info("Audio generation complete.")
+                        else:
+                            logging.warning(
+                                f"Audio generation status: {status}"
+                            )
+                except Exception as e:
+                    logging.error(f"Audio generation exception: {e}", exc_info=True)
+                    complete_intent.generated_audio_data = {
+                        "status": "error",
+                        "details": f"Audio generation exception: {str(e)}",
+                    }
+                finally:
+                    self._release_resource("audio_gen")
 
         end_time = time.time()
         logging.info(f"Workflow completed in {end_time - start_time:.2f} seconds.")
