@@ -56,3 +56,26 @@
 9) DDP device index assumes CUDA and will fail on CPU/MPS devices.
 - `KmiDi_TRAINING/training/training/train_integrated.py:528-533` uses `device.index` for `device_ids` and `output_device`.
 - Impact: on CPU or MPS, `device.index` is `None`, which causes DDP initialization errors.
+
+10) Spectocloud ONNX export likely fails because the model returns a dict.
+- `KmiDi_TRAINING/training/training/cuda_session/train_spectocloud.py:96-131` returns a dict from `PointCloudDecoder`.
+- `KmiDi_TRAINING/training/training/cuda_session/export_models.py:48-63` calls `torch.onnx.export` with named outputs but the model forward returns a dict, which ONNX export does not accept as-is.
+- Impact: export script will error or produce invalid ONNX output unless the model output is converted to a tuple/tensors.
+
+### Medium
+11) MIDI generator config special tokens and vocab sizes do not match the tokenizer or loss masking.
+- `KmiDi_TRAINING/training/training/cuda_session/midi_generator_training_config.yaml:42-105` defines `vocab_size: 512` and special tokens `pad: 0`, `bos: 1`, `eos: 2`, `bar: 3`.
+- `KmiDi_TRAINING/training/training/cuda_session/train_midi_generator.py:45-57` hardcodes `pad_token=384`, `bos_token=385`, `eos_token=386`, `bar_token=387`.
+- `KmiDi_TRAINING/training/training/cuda_session/train_midi_generator.py:621-666` masks padding via `ignore_index=384`.
+- Impact: if training data follows the YAML token IDs, padding will be treated as real tokens and loss/accuracy will be wrong.
+
+12) Spectocloud config advertises multi-GPU training, but the script is single-GPU only.
+- `KmiDi_TRAINING/training/training/cuda_session/spectocloud_training_config.yaml:18-25` sets `num_gpus: 4`.
+- `KmiDi_TRAINING/training/training/cuda_session/train_spectocloud.py:658-672` always selects a single device and does not initialize DDP.
+- Impact: expected multi-GPU speedups will not be realized; large batch settings in the config may OOM on a single GPU.
+
+
+### Build Notes (Non-blocking)
+- JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
+- Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
+- `KellyPlugin_VST3` logs missing runtime data directories and falls back to embedded defaults.
