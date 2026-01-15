@@ -210,6 +210,15 @@
 - `python/penta_core/ml/async_inference.py:132-170` awaits `self._queue.put(...)` and catches `asyncio.QueueFull`, but `Queue.put` blocks instead of raising.
 - Impact: callers can hang indefinitely when the queue is full; the intended backpressure error path is dead code.
 
+46) TimelinePanel is declared but has no implementation.
+- `KmiDi_PROJECT/source/cpp/src/ui/MixerConsolePanel.h:477-520` declares `TimelinePanel` methods, but there is no corresponding `TimelinePanel` implementation in the codebase.
+- Impact: any translation unit that instantiates or links `TimelinePanel` will fail at link time.
+
+47) Monitoring alert logic never detects unhealthy checks.
+- `python/penta_core/ml/monitoring.py:234-252` looks for `check_data.get("current_status")`.
+- `python/penta_core/ml/health.py:379-394` populates `checks` with `HealthCheckResult.to_dict()` entries that use the key `status`, not `current_status`.
+- Impact: per-check unhealthy alerts never trigger even when checks fail.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
