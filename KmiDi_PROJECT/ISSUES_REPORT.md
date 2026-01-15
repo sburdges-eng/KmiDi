@@ -228,6 +228,16 @@
 - `KmiDi_PROJECT/source/cpp/src/ui/SuggestionOverlay.cpp:80-120` creates `confidenceBar` components but never sets a colour or paint routine.
 - Impact: confidence bars are invisible, so confidence UI is missing even though labels render.
 
+50) AI generation dialog returns immediately without waiting for user input.
+- `KmiDi_PROJECT/source/cpp/src/ui/AIGenerationDialog.cpp:149-177` uses `launchAsync()` plus `enterModalState()` and then returns the cached request immediately.
+- `KmiDi_PROJECT/source/cpp/src/ui/AIGenerationDialog.cpp:153-176` reads `dialogPtr` after ownership is transferred; the dialog content can be destroyed when the window closes, so the pointer can be stale.
+- Impact: callers receive default requests before the user interacts, or risk a use-after-free if the dialog is destroyed.
+
+51) Workstation track visualization code is never invoked.
+- `KmiDi_PROJECT/source/cpp/src/ui/WorkstationPanel.cpp:161-186` only paints the header and track count.
+- `KmiDi_PROJECT/source/cpp/src/ui/WorkstationPanel.cpp:233-320` defines `paintTrack`/`paintTrackContent`, but they are never called and `trackList_` is a plain `juce::Component` with no custom paint.
+- Impact: track note visuals never render; only the control widgets appear.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
