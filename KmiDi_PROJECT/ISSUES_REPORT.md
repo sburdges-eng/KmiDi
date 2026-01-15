@@ -141,6 +141,16 @@
 - `python/penta_core/ml/training_orchestrator.py:1152-1173` only logs export paths and never creates `export_dir` or saves a model.
 - Impact: runs report successful exports even though no files are produced.
 
+74) WAV reader mis-parses the fmt chunk and shifts all header fields.
+- `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp:75-112` reads `header.fmtSize` from the stream even though the fmt chunk size was already read into `chunkSize`.
+- This shifts the read offset so `audioFormat`, `numChannels`, and `sampleRate` are decoded from the wrong bytes.
+- Impact: standard WAV files can be rejected or decoded with invalid metadata.
+
+75) Project JSON loading discards track details and replaces them with placeholders.
+- `KmiDi_PROJECT/source/cpp/src/project/ProjectFile.cpp:171-233` only counts `{}` blocks and creates default `Track` entries.
+- Track properties (`type`, `midiEvents`, `audioFile`, volume/pan, etc.) are ignored on load.
+- Impact: reloading a saved project loses all track-specific data.
+
 ### Low
 25) Tauri HTTP bridge has no timeouts for local API requests.
 - `KmiDi_PROJECT/source/frontend/src-tauri/src/bridge/musicbrain.rs:7-75` uses `reqwest::Client::new()` and `.send().await?` without a timeout.
@@ -166,6 +176,11 @@
 30) Platform/tooling roadmaps reference a local workstation path.
 - `KmiDi_PROJECT/source/frontend/iOS/ROADMAP.md:2`, `KmiDi_PROJECT/source/frontend/iOS/TODO.md:2`, `KmiDi_PROJECT/source/frontend/mobile/ROADMAP.md:2`, `KmiDi_PROJECT/source/frontend/mobile/TODO.md:2`, `KmiDi_PROJECT/tools/ROADMAP.md:2`, and `KmiDi_PROJECT/tools/TODO.md:2` reference `/Users/seanburdges/Desktop/final kel`.
 - Impact: documentation is not portable and can mislead contributors who do not have that path.
+
+76) Project JSON writing does not escape string values.
+- `KmiDi_PROJECT/source/cpp/src/project/ProjectFile.cpp:52-120` writes metadata and track names directly into JSON strings.
+- Names or authors containing quotes, backslashes, or newlines will produce invalid JSON.
+- Impact: project files can become unreadable with common user input.
 
 36) Adaptive batch sizing is computed but never applied.
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
