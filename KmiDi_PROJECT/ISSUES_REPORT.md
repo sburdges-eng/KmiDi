@@ -202,6 +202,25 @@
 - The project tempo is never consulted when rendering MIDI.
 - Impact: exported stems are off-tempo relative to the project, even when MIDI is otherwise correct.
 
+81) OSCBridge request tracking is not thread-safe.
+- `KmiDi_PROJECT/source/cpp/src/bridge/OSCBridge.cpp:40-188` mutates `pendingRequests_` and `nextMessageId_` from request methods.
+- `KmiDi_PROJECT/source/cpp/src/bridge/OSCBridge.cpp:219-340` reads and erases `pendingRequests_` from the OSC receiver callback thread.
+- Impact: concurrent access can race and corrupt the map, leading to crashes or dropped callbacks.
+
+82) CacheManager setters update shared state without locking.
+- `KmiDi_PROJECT/source/cpp/src/bridge/CacheManager.h:69-79` `setTTL` and `setMaxSize` mutate `ttlMs_`/`maxSize_` without acquiring `mutex_`.
+- Other methods assume those fields are stable under the lock.
+- Impact: concurrent calls can cause data races and undefined behavior.
+
+83) MIDI file builder drops rhythm and drum groove tracks.
+- `KmiDi_PROJECT/source/cpp/src/midi/MidiBuilder.cpp:20-110` only writes chords, melody, bass, counter-melody, pad, strings, and fills.
+- `GeneratedMidi` also includes `rhythm` and `drumGroove`, but they are never serialized in `buildMidiFile` or `buildMidiBuffer`.
+- Impact: exported MIDI from this builder silently omits percussion/rhythm layers.
+
+84) MIDI file builder divides by zero when tempo is unset.
+- `KmiDi_PROJECT/source/cpp/src/midi/MidiBuilder.cpp:33-41` computes `microsecondsPerBeat` from `midi.bpm` without guarding for `0.0f`.
+- Impact: if `GeneratedMidi.bpm` is zero (or uninitialized), tempo meta events and timing become invalid.
+
 36) Adaptive batch sizing is computed but never applied.
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
 - Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
