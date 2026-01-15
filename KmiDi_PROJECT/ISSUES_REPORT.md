@@ -238,6 +238,16 @@
 - `KmiDi_PROJECT/source/cpp/src/ui/WorkstationPanel.cpp:233-320` defines `paintTrack`/`paintTrackContent`, but they are never called and `trackList_` is a plain `juce::Component` with no custom paint.
 - Impact: track note visuals never render; only the control widgets appear.
 
+52) Side panel input controls are never initialized or added to the UI.
+- `KmiDi_PROJECT/source/cpp/src/ui/SidePanel.cpp:8-24` only sets up the label; `input_` and `intensity_` are never configured or added via `addAndMakeVisible`.
+- `KmiDi_PROJECT/source/cpp/src/ui/SidePanel.h:34-47` exposes `getInputEditor()`/`getIntensitySlider()` and returns state from these controls.
+- Impact: the side panel shows only a label and returns default/empty values, so Side A/B inputs never reach callers.
+
+53) AI service initialization short-circuits and never initializes components.
+- `python/penta_core/ml/ai_service.py:328-356` sets `_initialized = True` during construction.
+- `python/penta_core/ml/ai_service.py:358-360` exits early in `initialize()` when `_initialized` is already true.
+- Impact: `AIService.initialize()` returns success without initializing the model/inference/training services.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
