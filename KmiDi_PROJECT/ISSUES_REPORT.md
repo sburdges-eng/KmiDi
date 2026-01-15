@@ -338,6 +338,11 @@
 - The exception handler does not catch `TypeError`, so extra keys from the LLM response raise and abort parsing.
 - Impact: minor prompt drift or model updates can break intent parsing entirely.
 
+73) Orchestrator saves final intent without MIDI/image/audio results.
+- `KmiDi_PROJECT/source/python/mcp_workstation/orchestrator.py:153-276` attaches `midi_plan`, `generated_image_data`, and `generated_audio_data` to `CompleteSongIntent`.
+- `music_brain/session/intent_schema.py:454-538` `to_dict()` ignores these fields, so `save()` drops them.
+- Impact: `final_intent.json` omits the generated outputs, making post-run inspection misleading.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
