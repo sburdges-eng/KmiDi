@@ -333,6 +333,11 @@
 - There is no MCP TODO server implementation referenced elsewhere in the repo.
 - Impact: roadmap/status reporting is misleading and can cause validation to miss missing functionality.
 
+72) LLM intent parsing crashes on unexpected fields.
+- `KmiDi_PROJECT/source/python/mcp_workstation/llm_reasoning_engine.py:101-103` calls `StructuredIntent(**intent_dict)` without filtering keys.
+- The exception handler does not catch `TypeError`, so extra keys from the LLM response raise and abort parsing.
+- Impact: minor prompt drift or model updates can break intent parsing entirely.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
