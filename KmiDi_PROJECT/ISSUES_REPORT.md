@@ -99,29 +99,41 @@
 - `KmiDi_PROJECT/source/cpp/src/CMakeLists.txt:23-30` lists `osc/OSCClient.cpp` twice.
 - Impact: can lead to duplicate object compilation and linker errors or redundant build steps.
 
+20) Onset detection is stubbed and never computes spectral flux.
+- `KmiDi_PROJECT/source/cpp/src/groove/OnsetDetector.cpp:18-57` leaves processing methods as no-ops and always clears detection state.
+- Impact: any features depending on onset detection will be non-functional.
+
+21) Harmony history APIs are placeholders that return only current state.
+- `KmiDi_PROJECT/source/cpp/src/harmony/HarmonyEngine.cpp:86-104` returns `{currentChord_}` and `{currentScale_}` with TODOs for history tracking.
+- Impact: consumers expecting history will see only the latest snapshot.
+
+22) Master EQ processing is a pass-through stub.
+- `KmiDi_PROJECT/source/cpp/src/plugin/MasterEQProcessor.cpp:33-78` does not apply any filtering and leaves TODOs for biquad processing.
+- Impact: EQ controls appear to work but do not affect audio output.
+
 ### Low
-20) Tauri HTTP bridge has no timeouts for local API requests.
+23) Tauri HTTP bridge has no timeouts for local API requests.
 - `KmiDi_PROJECT/source/frontend/src-tauri/src/bridge/musicbrain.rs:7-75` uses `reqwest::Client::new()` and `.send().await?` without a timeout.
 - Impact: UI commands can hang indefinitely if the local service is down or unresponsive.
 
-21) Dataset downloader uses network requests without timeouts.
+24) Dataset downloader uses network requests without timeouts.
 - `KmiDi_TRAINING/training/ML Kelly Training/backup/python/penta_core/ml/datasets/audio_downloader.py:120-233` calls `requests.get(...)` without a timeout.
 - Impact: dataset downloads can hang indefinitely on network stalls.
 
-22) Registry manifest validation is silently skipped when `jsonschema` is missing.
+25) Registry manifest validation is silently skipped when `jsonschema` is missing.
 - `KmiDi_TRAINING/training/ML Kelly Training/backup/python/penta_core/ml/model_registry.py:19-27` sets `jsonschema = None` on import failure and validation is skipped without warning.
 - Impact: invalid registry manifests can be accepted without any signal.
 
-23) Review artifacts claim critical issues are fixed, but current backup scripts still include hardcoded paths and dummy data.
+26) Review artifacts claim critical issues are fixed, but current backup scripts still include hardcoded paths and dummy data.
 - `KmiDi_TRAINING/outputs/output/review/COMPREHENSIVE_PROJECT_REVIEW.md:1-90` and `KmiDi_TRAINING/outputs/output/review/FINAL_STATUS_REMAINING_ISSUES.md:1-90` state hardcoded paths are removed and only stylistic issues remain.
 - Current backup scripts still use `/Volumes/Extreme SSD/kelly-audio-data` and dummy datasets.
 - Impact: review reports are stale and can mislead validation/QA.
 
-24) Frontend hook bypasses Tauri invoke and hardcodes local API URLs without timeouts.
+27) Frontend hook bypasses Tauri invoke and hardcodes local API URLs without timeouts.
 - `KmiDi_PROJECT/source/cpp/src/hooks/useMusicBrain.ts:94-170` uses `fetch('http://127.0.0.1:8000/...')` directly for config and render calls.
 - Impact: frontend calls fail when the local API is not running and can hang without a timeout; also ignores any Tauri-side base URL configuration.
 
-25) Platform/tooling roadmaps reference a local workstation path.
+28) Platform/tooling roadmaps reference a local workstation path.
 - `KmiDi_PROJECT/source/frontend/iOS/ROADMAP.md:2`, `KmiDi_PROJECT/source/frontend/iOS/TODO.md:2`, `KmiDi_PROJECT/source/frontend/mobile/ROADMAP.md:2`, `KmiDi_PROJECT/source/frontend/mobile/TODO.md:2`, `KmiDi_PROJECT/tools/ROADMAP.md:2`, and `KmiDi_PROJECT/tools/TODO.md:2` reference `/Users/seanburdges/Desktop/final kel`.
 - Impact: documentation is not portable and can mislead contributors who do not have that path.
 
