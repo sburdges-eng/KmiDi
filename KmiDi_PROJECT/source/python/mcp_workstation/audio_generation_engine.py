@@ -102,6 +102,8 @@ class AudioGenerationEngine:
         # Note: lock_timeout=0 means non-blocking (immediate return)
         #       lock_timeout=None means block forever
         #       lock_timeout>0 means wait up to that many seconds
+        # CRITICAL: Must use "is not None" not "if lock_timeout" to correctly
+        # distinguish between None (block forever) and 0 (non-blocking attempt)
         if lock_timeout is not None:
             # Pass timeout=0 for non-blocking, or positive value for timed wait
             acquired = self.lock.acquire(timeout=lock_timeout)
