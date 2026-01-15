@@ -300,6 +300,19 @@
 - When `HAS_HEALTH` is false, `HealthStatus` is not imported and this method raises `NameError`.
 - Impact: calling `check_health()` without the health module installed crashes instead of returning a safe status.
 
+65) TrainingInferenceBridge subscriptions are ineffective because no training events are published.
+- `python/penta_core/ml/training_inference_bridge.py:55-78` subscribes to `training.completed` and `training.failed`.
+- `python/penta_core/ml/training_orchestrator.py` never publishes these events.
+- Impact: auto-registration and auto-deploy flows never trigger after training.
+
+66) ScoreEntryPanel pitch mapping is hardcoded.
+- `KmiDi_PROJECT/source/cpp/src/ui/ScoreEntryPanel.cpp:548-560` returns constant values from `staffPositionToPitch` and `pitchToStaffPosition`.
+- Impact: note placement and hit testing are incorrect; score input cannot map screen positions to pitches.
+
+67) ScoreEntryPanel quick entry parsing is unimplemented.
+- `KmiDi_PROJECT/source/cpp/src/ui/ScoreEntryPanel.cpp:566-571` leaves `parseQuickEntry` empty.
+- Impact: the quick entry input does nothing despite the UI exposure.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
