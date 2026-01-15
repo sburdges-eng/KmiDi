@@ -95,6 +95,10 @@
 - Downstream groove/tempo features use these values as seconds.
 - Impact: timing-derived features (duration, onset_times, groove metrics) are incorrect for files with non-default tempo or ticks-per-beat.
 
+19) CMake source list includes duplicate OSC source entries.
+- `KmiDi_PROJECT/source/cpp/src/CMakeLists.txt:23-30` lists `osc/OSCClient.cpp` twice.
+- Impact: can lead to duplicate object compilation and linker errors or redundant build steps.
+
 ### Low
 19) Tauri HTTP bridge has no timeouts for local API requests.
 - `KmiDi_PROJECT/source/frontend/src-tauri/src/bridge/musicbrain.rs:7-75` uses `reqwest::Client::new()` and `.send().await?` without a timeout.
@@ -112,6 +116,10 @@
 - `KmiDi_TRAINING/outputs/output/review/COMPREHENSIVE_PROJECT_REVIEW.md:1-90` and `KmiDi_TRAINING/outputs/output/review/FINAL_STATUS_REMAINING_ISSUES.md:1-90` state hardcoded paths are removed and only stylistic issues remain.
 - Current backup scripts still use `/Volumes/Extreme SSD/kelly-audio-data` and dummy datasets.
 - Impact: review reports are stale and can mislead validation/QA.
+
+23) Frontend hook bypasses Tauri invoke and hardcodes local API URLs without timeouts.
+- `KmiDi_PROJECT/source/cpp/src/hooks/useMusicBrain.ts:94-170` uses `fetch('http://127.0.0.1:8000/...')` directly for config and render calls.
+- Impact: frontend calls fail when the local API is not running and can hang without a timeout; also ignores any Tauri-side base URL configuration.
 
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
