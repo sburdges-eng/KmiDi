@@ -74,6 +74,17 @@
 - `KmiDi_TRAINING/training/training/cuda_session/train_spectocloud.py:658-672` always selects a single device and does not initialize DDP.
 - Impact: expected multi-GPU speedups will not be realized; large batch settings in the config may OOM on a single GPU.
 
+13) Legacy training script uses dummy data instead of real datasets.
+- `KmiDi_TRAINING/training/ML Kelly Training/backup/scripts/train.py:568-571` explicitly calls `create_dummy_dataloaders` with a TODO to replace.
+- Impact: training results and exported models are not based on real data.
+
+14) Backup training pipeline silently substitutes random noise when audio is missing or torchaudio is unavailable.
+- `KmiDi_TRAINING/training/ML Kelly Training/backup/scripts/train_model.py:230-264` falls back to random mel spectrograms without warning when audio cannot be loaded.
+- Impact: models can appear to train but learn from synthetic noise, masking data/IO failures.
+
+15) Dataset preparation scripts hardcode a machine-specific external SSD path.
+- `KmiDi_TRAINING/training/ML Kelly Training/backup/scripts/prepare_datasets.py:44-45` and `KmiDi_TRAINING/training/ML Kelly Training/backup/scripts/train_model.py:83-85` use `/Volumes/Extreme SSD/kelly-audio-data`.
+- Impact: out-of-the-box dataset prep and training fail on machines without the same mount point.
 
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
