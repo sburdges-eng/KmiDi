@@ -286,6 +286,20 @@
 - `python/penta_core/ml/training_inference_bridge.py:126-188` tracks multiple versions and searches the registry list for a matching `model_name` and `version`.
 - Impact: once a new version is registered, older versions are no longer discoverable, so rollback or explicit version deployment fails.
 
+62) Cassette view ignores tape position state.
+- `KmiDi_PROJECT/source/cpp/src/ui/CassetteView.cpp:104-132` draws tape reels with only `animationPhase_`.
+- `KmiDi_PROJECT/source/cpp/src/ui/CassetteView.cpp:160-169` stores `tapePosition_` but never uses it in rendering.
+- Impact: UI cannot reflect tape progress/position, even when state is updated.
+
+63) Vocal control panel never labels the voice type selector.
+- `KmiDi_PROJECT/source/cpp/src/ui/VocalControlPanel.cpp:41-77` lays out `voiceTypeLabel_` but never sets its text.
+- Impact: the voice type selector appears without a label, reducing UI clarity and accessibility.
+
+64) IntegrationManager health check can crash when health support is unavailable.
+- `python/penta_core/ml/integration_manager.py:186-215` uses `HealthStatus` unconditionally in `check_health()`.
+- When `HAS_HEALTH` is false, `HealthStatus` is not imported and this method raises `NameError`.
+- Impact: calling `check_health()` without the health module installed crashes instead of returning a safe status.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
