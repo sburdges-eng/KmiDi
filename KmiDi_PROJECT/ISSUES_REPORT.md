@@ -171,6 +171,21 @@
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
 - Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
 
+37) Mixer MIDI routing never stores per-channel MIDI buffers.
+- `KmiDi_PROJECT/source/cpp/src/ui/MixerConsolePanel.cpp:556-567` only routes MIDI if `channelIndex < channelMidi_.size()`.
+- `KmiDi_PROJECT/source/cpp/src/ui/MixerConsolePanel.cpp:309-329` adds channels but never inserts entries into `channelMidi_`.
+- Impact: `routeMIDIToChannel` drops MIDI for normal channel indices, so `getMixedOutput()` remains empty.
+
+38) Removing channels leaves stale MIDI/automation data and index mismatches.
+- `KmiDi_PROJECT/source/cpp/src/ui/MixerConsolePanel.cpp:321-329` erases channel UI and instruments only.
+- `KmiDi_PROJECT/source/cpp/src/ui/MixerConsolePanel.h:267-270` keeps `channelMidi_` and `automation_` keyed by channel index.
+- Impact: deleting a channel leaves old MIDI/automation entries and shifts indices, so future routing/snapshots can reference the wrong data.
+
+39) Groove benchmark asserts on onset output but detector is a stub.
+- `KmiDi_PROJECT/benchmarks/groove_latency.cpp:26-44` requires `analysis.currentTempo > 0` and `analysis.onsetPositions.size() > 0`.
+- `KmiDi_PROJECT/source/cpp/src/groove/OnsetDetector.cpp:18-57` is a no-op implementation.
+- Impact: `groove_latency` benchmark will fail consistently, blocking benchmark runs/CI.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
