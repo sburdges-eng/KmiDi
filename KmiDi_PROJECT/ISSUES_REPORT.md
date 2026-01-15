@@ -313,6 +313,21 @@
 - `KmiDi_PROJECT/source/cpp/src/ui/ScoreEntryPanel.cpp:566-571` leaves `parseQuickEntry` empty.
 - Impact: the quick entry input does nothing despite the UI exposure.
 
+68) Async inference shutdown can hang with queued requests.
+- `python/penta_core/ml/async_inference.py:131-140` sets `_running = False` and then awaits `queue.join()`.
+- Worker loops exit when `_running` is false and will not drain remaining queue items, so `join()` can block forever.
+- Impact: stopping the async inference engine can deadlock when the queue is non-empty.
+
+69) Async inference latency stats are never updated.
+- `python/penta_core/ml/async_inference.py:110-112` initializes `average_latency_ms`.
+- No code updates this value after processing requests.
+- Impact: monitoring metrics report 0.0ms average latency even under load.
+
+70) Model pool can exceed memory limits when a single model is too large.
+- `python/penta_core/ml/model_pool.py:172-179` evicts models if `current_memory + memory_estimate` exceeds the cap but does not re-check or abort.
+- When `memory_estimate` exceeds `max_memory_mb`, eviction cannot reduce below the limit and the model is still loaded.
+- Impact: memory cap is not enforced for large models, risking OOM.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
