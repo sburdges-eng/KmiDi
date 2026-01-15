@@ -221,6 +221,23 @@
 - `KmiDi_PROJECT/source/cpp/src/midi/MidiBuilder.cpp:33-41` computes `microsecondsPerBeat` from `midi.bpm` without guarding for `0.0f`.
 - Impact: if `GeneratedMidi.bpm` is zero (or uninitialized), tempo meta events and timing become invalid.
 
+85) MIDI quantization can divide by zero.
+- `KmiDi_PROJECT/source/cpp/include/daiw/midi/MidiSequence.h:104-118` computes `((timestamp + gridSize / 2) / gridSize)` without checking `gridSize`.
+- Impact: calling `quantize(0)` or passing an invalid grid size crashes or yields undefined timing.
+
+86) MIDI note pairing drops overlapping notes on the same channel/pitch.
+- `KmiDi_PROJECT/source/cpp/src/midi/MidiSequence.cpp:15-60` stores active notes in a map keyed by `channel*128 + note`.
+- A second note-on for the same key overwrites the first, so stacked notes lose their original start and duration.
+- Impact: sequences with repeated/overlapping notes (common in MIDI) collapse into incorrect note events.
+
+87) Humanizer can generate negative timestamps.
+- `KmiDi_PROJECT/source/cpp/src/midi/humanizer.cpp:52-75` applies random timing offsets without clamping `startTick` to `>= 0`.
+- Impact: downbeats near tick 0 can move into negative time and produce invalid MIDI timing.
+
+88) MIDI buffer builder can divide by zero when BPM is invalid.
+- `KmiDi_PROJECT/source/cpp/src/midi/MidiBuilder.cpp:85-90` computes `samplesPerBeat = (sampleRate * 60.0) / bpm` without guarding against `bpm <= 0`.
+- Impact: passing a zero/negative BPM will crash or generate invalid timing.
+
 36) Adaptive batch sizing is computed but never applied.
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
 - Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
