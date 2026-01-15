@@ -248,6 +248,15 @@
 - `python/penta_core/ml/ai_service.py:358-360` exits early in `initialize()` when `_initialized` is already true.
 - Impact: `AIService.initialize()` returns success without initializing the model/inference/training services.
 
+54) Score entry playback never produces MIDI data.
+- `KmiDi_PROJECT/source/cpp/src/ui/ScoreEntryPanel.cpp:392-405` returns an empty `juce::MidiBuffer` and leaves conversion as a comment.
+- `KmiDi_PROJECT/source/cpp/src/ui/ScoreEntryPanel.cpp:407-438` `playFromStart()` calls `toMidiBuffer()` and `playFromCursor()` is empty.
+- Impact: playback/export from the score entry panel does nothing even when notes exist.
+
+55) Score entry view uses HTML entity strings for clef glyphs.
+- `KmiDi_PROJECT/source/cpp/src/ui/ScoreEntryPanel.cpp:455-468` sets `clefSymbol` to strings like `"& #x1d11e;"` (with a space).
+- Impact: JUCE draws the literal text instead of the intended clef glyph, so clefs render incorrectly.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
