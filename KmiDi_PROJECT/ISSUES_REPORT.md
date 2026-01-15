@@ -194,6 +194,22 @@
 - `KmiDi_PROJECT/source/cpp/src/ui/MasterEQComponent.cpp:223-241` shows an alert instead of mapping the suggested curve to parameters.
 - Impact: “Apply Suggested Curve” appears to work but does not change EQ settings.
 
+42) MIDI editor humanize action is unimplemented.
+- `KmiDi_PROJECT/source/cpp/src/ui/MidiEditor.cpp:360-373` leaves `humanizeSelected` as a placeholder with no edits applied.
+- Impact: humanize controls do nothing, so users cannot add timing/velocity variation.
+
+43) Suggestion overlay is rendered with placeholders rather than real suggestion data.
+- `KmiDi_PROJECT/source/cpp/src/ui/InteractiveCustomizationPanel.cpp:96-146` uses hardcoded drawing paths and a `if (false)` placeholder instead of suggestion data.
+- Impact: enabling suggestions shows dummy markers rather than actual recommendation output.
+
+44) Health status report runs checks twice per call.
+- `python/penta_core/ml/health.py:357-394` calls `run_all_checks()` and then `get_overall_status()`, which runs all checks again.
+- Impact: health checks execute twice per request, doubling overhead and side effects.
+
+45) Async inference queue full handling never triggers.
+- `python/penta_core/ml/async_inference.py:132-170` awaits `self._queue.put(...)` and catches `asyncio.QueueFull`, but `Queue.put` blocks instead of raising.
+- Impact: callers can hang indefinitely when the queue is full; the intended backpressure error path is dead code.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
