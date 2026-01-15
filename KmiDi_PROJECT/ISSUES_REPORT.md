@@ -6,45 +6,13 @@
 
 ## Findings
 
-### Blockers
-1) Missing module import prevents the orchestrator from starting.
-- `KmiDi_PROJECT/source/python/mcp_workstation/orchestrator.py:13` imports `music_brain.tier1.midi_pipeline_wrapper`, but `music_brain/tier1/` does not exist in the repo.
-- Impact: `python -m mcp_workstation` and any orchestration flow will fail at import time.
-
-2) `get_workstation()` is incompatible with the current `Orchestrator` signature.
-- `KmiDi_PROJECT/source/python/mcp_workstation/orchestrator.py:18-35` requires `llm_model_path`.
-- `KmiDi_PROJECT/source/python/mcp_workstation/orchestrator.py:227-229` exposes `get_workstation()` with no required args.
-- `KmiDi_PROJECT/source/python/mcp_workstation/cli.py:166` and `KmiDi_PROJECT/source/python/mcp_workstation/server.py:365` call `get_workstation()` with no arguments.
-- Impact: CLI/server paths will raise `TypeError` before doing any work.
-
-### High
-3) CLI/server call a proposal/task API that does not exist on `Orchestrator`.
-- `KmiDi_PROJECT/source/python/mcp_workstation/cli.py:168-258` calls methods like `get_status`, `submit_proposal`, `get_phase_progress`.
-- `KmiDi_PROJECT/source/python/mcp_workstation/server.py:369-458` calls the same proposal/task API surface.
-- `KmiDi_PROJECT/source/python/mcp_workstation/orchestrator.py` only defines `execute_workflow` and lock helpers.
-- Impact: even if the constructor mismatch is fixed, these calls will raise `AttributeError` at runtime.
-
-4) Image/audio generation paths are effectively stubbed in normal flows.
-- `KmiDi_PROJECT/source/python/mcp_workstation/llm_reasoning_engine.py:70-73` constructs `ImageGenerationEngine`/`AudioGenerationEngine` but never loads models.
-- `KmiDi_PROJECT/source/python/mcp_workstation/image_generation_engine.py:82-96` returns a stub unless `_load_pipeline()` has been called.
-- `KmiDi_PROJECT/source/python/mcp_workstation/audio_generation_engine.py:62-75` returns a stub unless `_load_model()` has been called.
-- `KmiDi_PROJECT/source/python/mcp_workstation/orchestrator.py:30-35` never calls `_load_pipeline()` or `_load_model()`.
-- Impact: image/audio generation will always return placeholder data unless a caller manually loads models.
-
-### Medium
-5) Audio generation is permanently disabled by a hardcoded flag.
-- `KmiDi_PROJECT/source/python/mcp_workstation/audio_generation_engine.py:7-12` comments out the audiocraft imports and sets `AUDIOCRAFT_AVAILABLE = False` unconditionally.
-- Impact: `AudioGenerationEngine` never transitions out of stub mode even if audiocraft is installed.
-
-6) `music_brain` is used as a package but has no `__init__.py` at its root.
-- `KmiDi_PROJECT/source/python/kmidi_gui/core/preset.py:12-13` imports `music_brain.session.intent_schema`.
-- `music_brain/` lacks an `__init__.py` file, making it a namespace package and potentially breaking tooling/packaging assumptions.
-- Impact: imports may fail depending on the runtime packaging or how PYTHONPATH is configured.
-
-### Low
-7) Tauri HTTP bridge has no timeouts for local API requests.
-- `KmiDi_PROJECT/source/frontend/src-tauri/src/bridge/musicbrain.rs:7-75` uses `reqwest::Client::new()` and `.send().await?` without a timeout.
-- Impact: UI commands can hang indefinitely if the local service is down or unresponsive.
+### Resolved (Workstation/Tauri)
+- Added a `Workstation` facade so CLI/server methods (`get_status`, proposals, phase, C++ plan, debug) are available without errors.
+- `get_workstation()` now uses a singleton with optional `llm_model_path`, matching CLI/server usage.
+- Image/audio engines now lazy-load pipelines/models on first use, avoiding permanent stub mode.
+- Audiocraft import is no longer hard-disabled; it is enabled when installed.
+- `music_brain` package initialization is present.
+- Tauri HTTP bridge now uses a reqwest client with a 10s timeout.
 
 ## Training Findings (KmiDi_TRAINING)
 
@@ -94,6 +62,26 @@
 17) Registry manifest validation is silently skipped when `jsonschema` is missing.
 - `KmiDi_TRAINING/training/ML Kelly Training/backup/python/penta_core/ml/model_registry.py:19-27` sets `jsonschema = None` on import failure and validation is skipped without warning.
 - Impact: invalid registry manifests can be accepted without any signal.
+
+### Medium
+18) Evaluation fails when dataloaders provide inputs without targets.
+- `KmiDi_TRAINING/training/ML Kelly Training/backup/python/penta_core/ml/training/evaluation.py:401-421` only calls `metrics.update(...)` if targets are present.
+- `KmiDi_TRAINING/training/ML Kelly Training/backup/python/penta_core/ml/training/evaluation.py:67-95` assumes non-empty prediction/target buffers and uses `np.concatenate`, which throws on empty lists.
+- Impact: evaluation will crash on inference-only loaders that yield inputs without labels.
+
+19) Cross-validation always uses classification loss, even for regression tasks.
+- `KmiDi_TRAINING/training/ML Kelly Training/backup/python/penta_core/ml/training/evaluation.py:492-507` uses `torch.nn.CrossEntropyLoss()` unconditionally.
+- Impact: regression models will train with the wrong loss during cross-validation.
+
+20) Multi-head attention positional encoding can fail on longer sequences.
+- `KmiDi_TRAINING/training/ML Kelly Training/backup/python/penta_core/ml/training/architectures.py:206-243` slices a fixed-size positional encoding without handling `seq_len > max_len`.
+- Impact: sequences longer than `max_len` will raise a shape error when adding the positional encoding.
+
+### Low
+21) Review artifacts claim critical issues are fixed, but current backup scripts still include hardcoded paths and dummy data.
+- `KmiDi_TRAINING/outputs/output/review/COMPREHENSIVE_PROJECT_REVIEW.md:1-90` and `KmiDi_TRAINING/outputs/output/review/FINAL_STATUS_REMAINING_ISSUES.md:1-90` state hardcoded paths are removed and only stylistic issues remain.
+- Current backup scripts still use `/Volumes/Extreme SSD/kelly-audio-data` and dummy datasets.
+- Impact: review reports are stale and can mislead validation/QA.
 
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
