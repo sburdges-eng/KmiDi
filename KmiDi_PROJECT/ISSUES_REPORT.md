@@ -46,3 +46,13 @@
 - `KmiDi_PROJECT/source/frontend/src-tauri/src/bridge/musicbrain.rs:7-75` uses `reqwest::Client::new()` and `.send().await?` without a timeout.
 - Impact: UI commands can hang indefinitely if the local service is down or unresponsive.
 
+## Training Findings (KmiDi_TRAINING)
+
+### High
+8) Distributed training is not initialized but DDP is enabled.
+- `KmiDi_TRAINING/training/training/train_integrated.py:528-531` wraps the model in `DistributedDataParallel`, but there is no `dist.init_process_group(...)` anywhere in the file.
+- Impact: enabling `distributed=True` will raise at runtime because the default process group is not initialized.
+
+9) DDP device index assumes CUDA and will fail on CPU/MPS devices.
+- `KmiDi_TRAINING/training/training/train_integrated.py:528-533` uses `device.index` for `device_ids` and `output_device`.
+- Impact: on CPU or MPS, `device.index` is `None`, which causes DDP initialization errors.
