@@ -182,6 +182,26 @@
 - Names or authors containing quotes, backslashes, or newlines will produce invalid JSON.
 - Impact: project files can become unreadable with common user input.
 
+77) Spectral analyzer ignores requested frame size and can write past the magnitude buffer.
+- `KmiDi_PROJECT/source/cpp/src/audio/SpectralAnalyzer.cpp:64-105` builds a `magnitude` vector sized `frameSize / 2 + 1`.
+- `KmiDi_PROJECT/source/cpp/src/audio/SpectralAnalyzer.cpp:149-194` `computeFFT()` uses `fftSize_` for bin count, writing `fftSize_ / 2 + 1` elements even when `frameSize != fftSize_`.
+- Impact: STFT calls can corrupt memory or produce garbage spectra unless `frameSize == fftSize_`.
+
+78) FFT size is not validated as a power of two.
+- `KmiDi_PROJECT/source/cpp/src/audio/SpectralAnalyzer.cpp:9-17` constructs `juce::dsp::FFT` with `std::log2(fftSize)` but never checks that `fftSize` is a power of two.
+- `juce::dsp::FFT` expects an integer order; non-power-of-two sizes round down and mismatch buffer sizes.
+- Impact: non-power-of-two inputs can yield incorrect transforms or undefined behavior.
+
+79) OSC JSON request strings are built without escaping user text.
+- `KmiDi_PROJECT/source/cpp/src/bridge/OSCBridge.cpp:71-103` formats JSON using `R"({"text":"%s", ...})"` with raw `text`.
+- If `text` contains quotes, backslashes, or newlines, the JSON becomes invalid or truncated.
+- Impact: OSC requests fail for common user inputs and can break downstream parsing.
+
+80) MIDI stem rendering hardcodes tempo to 120 BPM.
+- `KmiDi_PROJECT/source/cpp/src/export/StemExporter.cpp:132-195` uses `bpm = 120.0` for tick-to-seconds conversion and duration estimation.
+- The project tempo is never consulted when rendering MIDI.
+- Impact: exported stems are off-tempo relative to the project, even when MIDI is otherwise correct.
+
 36) Adaptive batch sizing is computed but never applied.
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
 - Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
