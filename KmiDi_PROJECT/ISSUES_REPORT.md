@@ -44,6 +44,20 @@
 - `KmiDi_TRAINING/training/training/cuda_session/export_models.py:48-63` calls `torch.onnx.export` with named outputs but the model forward returns a dict, which ONNX export does not accept as-is.
 - Impact: export script will error or produce invalid ONNX output unless the model output is converted to a tuple/tensors.
 
+31) Core inference module is missing, breaking enhanced and async inference paths.
+- `python/penta_core/ml/inference_enhanced.py:19-33` imports `penta_core.ml.inference`, but there is no `python/penta_core/ml/inference.py` in the repo, so `HAS_BASE_INFERENCE` is always false.
+- `python/penta_core/ml/async_inference.py:27` imports `InferenceResult` from `penta_core.ml.inference` without a try/except; the module import raises immediately.
+- Impact: enhanced inference cannot load any model, and async inference fails to import at all.
+
+32) Training transformer models reference `torch` without importing it.
+- `python/penta_core/ml/training_orchestrator.py:422-434` and `python/penta_core/ml/training_orchestrator.py:475-487` use `torch.arange(...)` but only import `torch.nn` in those helper methods.
+- Impact: creating harmony or melody models will throw `NameError` at runtime when the forward pass runs.
+
+33) Training uses classification loss for regression targets.
+- `python/penta_core/ml/training_orchestrator.py:324-340` sets `CrossEntropyLoss` globally for all tasks.
+- `python/penta_core/ml/training_orchestrator.py:563-612` generates float targets for groove/dynamics tasks.
+- Impact: training will error or optimize the wrong objective for regression models.
+
 ### Medium
 8) Audio generation is permanently disabled by a hardcoded flag.
 - `KmiDi_PROJECT/source/python/mcp_workstation/audio_generation_engine.py:7-12` comments out the audiocraft imports and sets `AUDIOCRAFT_AVAILABLE = False` unconditionally.
@@ -119,6 +133,14 @@
 - `KmiDi_PROJECT/source/cpp/src/plugin/MasterEQProcessor.cpp:33-78` does not apply any filtering and leaves TODOs for biquad processing.
 - Impact: EQ controls appear to work but do not affect audio output.
 
+34) Training orchestrator always trains on dummy data.
+- `python/penta_core/ml/training_orchestrator.py:606-607` calls `_create_dummy_dataloader` for both train/val splits.
+- Impact: training metrics are not based on real datasets and cannot produce usable models.
+
+35) Training export step logs success but does not write artifacts.
+- `python/penta_core/ml/training_orchestrator.py:1152-1173` only logs export paths and never creates `export_dir` or saves a model.
+- Impact: runs report successful exports even though no files are produced.
+
 ### Low
 25) Tauri HTTP bridge has no timeouts for local API requests.
 - `KmiDi_PROJECT/source/frontend/src-tauri/src/bridge/musicbrain.rs:7-75` uses `reqwest::Client::new()` and `.send().await?` without a timeout.
@@ -144,6 +166,10 @@
 30) Platform/tooling roadmaps reference a local workstation path.
 - `KmiDi_PROJECT/source/frontend/iOS/ROADMAP.md:2`, `KmiDi_PROJECT/source/frontend/iOS/TODO.md:2`, `KmiDi_PROJECT/source/frontend/mobile/ROADMAP.md:2`, `KmiDi_PROJECT/source/frontend/mobile/TODO.md:2`, `KmiDi_PROJECT/tools/ROADMAP.md:2`, and `KmiDi_PROJECT/tools/TODO.md:2` reference `/Users/seanburdges/Desktop/final kel`.
 - Impact: documentation is not portable and can mislead contributors who do not have that path.
+
+36) Adaptive batch sizing is computed but never applied.
+- `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
+- Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
 
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
