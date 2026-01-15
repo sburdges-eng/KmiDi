@@ -186,6 +186,14 @@
 - `KmiDi_PROJECT/source/cpp/src/groove/OnsetDetector.cpp:18-57` is a no-op implementation.
 - Impact: `groove_latency` benchmark will fail consistently, blocking benchmark runs/CI.
 
+40) Master EQ UI draws a placeholder response curve rather than the real filter response.
+- `KmiDi_PROJECT/source/cpp/src/ui/MasterEQComponent.cpp:271-320` uses a simplified approximation and TODOs instead of the actual biquad response.
+- Impact: the EQ visualization does not match audio processing, so users see misleading curves.
+
+41) Applying AI EQ suggestions is a no-op.
+- `KmiDi_PROJECT/source/cpp/src/ui/MasterEQComponent.cpp:223-241` shows an alert instead of mapping the suggested curve to parameters.
+- Impact: “Apply Suggested Curve” appears to work but does not change EQ settings.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
