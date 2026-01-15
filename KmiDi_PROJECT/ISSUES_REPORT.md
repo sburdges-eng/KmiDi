@@ -86,6 +86,15 @@
 - `KmiDi_TRAINING/training/ML Kelly Training/backup/scripts/prepare_datasets.py:44-45` and `KmiDi_TRAINING/training/ML Kelly Training/backup/scripts/train_model.py:83-85` use `/Volumes/Extreme SSD/kelly-audio-data`.
 - Impact: out-of-the-box dataset prep and training fail on machines without the same mount point.
 
+### Low
+16) Dataset downloader uses network requests without timeouts.
+- `KmiDi_TRAINING/training/ML Kelly Training/backup/python/penta_core/ml/datasets/audio_downloader.py:120-233` calls `requests.get(...)` without a timeout.
+- Impact: dataset downloads can hang indefinitely on network stalls.
+
+17) Registry manifest validation is silently skipped when `jsonschema` is missing.
+- `KmiDi_TRAINING/training/ML Kelly Training/backup/python/penta_core/ml/model_registry.py:19-27` sets `jsonschema = None` on import failure and validation is skipped without warning.
+- Impact: invalid registry manifests can be accepted without any signal.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
