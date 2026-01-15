@@ -328,6 +328,11 @@
 - When `memory_estimate` exceeds `max_memory_mb`, eviction cannot reduce below the limit and the model is still loaded.
 - Impact: memory cap is not enforced for large models, risking OOM.
 
+71) Phase status claims MCP TODO server is complete despite missing implementation.
+- `KmiDi_PROJECT/source/python/mcp_workstation/phases.py:27-79` lists “MCP TODO server” as a Phase 1 milestone and marks `p1_mcp` as `COMPLETED`.
+- There is no MCP TODO server implementation referenced elsewhere in the repo.
+- Impact: roadmap/status reporting is misleading and can cause validation to miss missing functionality.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
