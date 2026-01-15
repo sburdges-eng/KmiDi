@@ -276,6 +276,16 @@
 - No method uses these settings or starts a reconnection loop.
 - Impact: integrations never auto-reconnect despite the configuration flags.
 
+60) TooltipComponent never sets its display text.
+- `KmiDi_PROJECT/source/cpp/src/ui/TooltipComponent.cpp:8-20` `showTooltip()` only calls `target->setHelpText` and does not update `tooltipText_`.
+- `KmiDi_PROJECT/source/cpp/src/ui/TooltipComponent.cpp:30-43` paints `tooltipText_`, which remains empty.
+- Impact: the custom tooltip component renders blank even when invoked.
+
+61) TrainingInferenceBridge cannot deploy older versions because the registry overwrites by name.
+- `python/penta_core/ml/model_registry.py:96-140` stores models in `_models` by name, overwriting prior versions.
+- `python/penta_core/ml/training_inference_bridge.py:126-188` tracks multiple versions and searches the registry list for a matching `model_name` and `version`.
+- Impact: once a new version is registered, older versions are no longer discoverable, so rollback or explicit version deployment fails.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
