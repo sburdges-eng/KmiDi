@@ -257,6 +257,25 @@
 - `KmiDi_PROJECT/source/cpp/src/ui/ScoreEntryPanel.cpp:455-468` sets `clefSymbol` to strings like `"& #x1d11e;"` (with a space).
 - Impact: JUCE draws the literal text instead of the intended clef glyph, so clefs render incorrectly.
 
+56) Lyric line highlighting can mark the wrong section.
+- `KmiDi_PROJECT/source/cpp/src/ui/LyricDisplay.cpp:36-86` resets `lineIndex` to 0 for every section but compares it to a single `currentLineIndex`.
+- `KmiDi_PROJECT/source/cpp/src/ui/LyricDisplay.cpp:122-157` `getCurrentLineIndex()` returns an index local to one section.
+- Impact: when `currentLineIndex` is 0 (or any small value), the same line number in every section can be highlighted simultaneously.
+
+57) Syllable highlighting is never computed.
+- `KmiDi_PROJECT/source/cpp/src/ui/LyricDisplay.cpp:160-177` `getCurrentSyllableIndex()` always returns -1.
+- Impact: syllable highlighting never activates even when `highlightSyllables_` is true.
+
+58) Piano roll preview ignores most tracks.
+- `KmiDi_PROJECT/source/cpp/src/ui/PianoRollPreview.cpp:19-60` derives time/pitch ranges only from `midi.melody` and `midi.bass`.
+- `KmiDi_PROJECT/source/cpp/src/ui/PianoRollPreview.cpp:98-141` only draws melody and bass notes.
+- Impact: counter-melody, pad, strings, fills, and chord tracks never appear in the preview.
+
+59) IntegrationManager reconnection settings are unused.
+- `python/penta_core/ml/integration_manager.py:62-76` defines `_reconnect_enabled`, `_reconnect_interval`, and `_max_reconnect_attempts`.
+- No method uses these settings or starts a reconnection loop.
+- Impact: integrations never auto-reconnect despite the configuration flags.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
