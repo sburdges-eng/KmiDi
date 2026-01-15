@@ -219,6 +219,15 @@
 - `python/penta_core/ml/health.py:379-394` populates `checks` with `HealthCheckResult.to_dict()` entries that use the key `status`, not `current_status`.
 - Impact: per-check unhealthy alerts never trigger even when checks fail.
 
+48) Suggestion overlay button callbacks can target the wrong card after a dismissal.
+- `KmiDi_PROJECT/source/cpp/src/ui/SuggestionOverlay.cpp:55-123` captures `cardIndex` at creation time.
+- `KmiDi_PROJECT/source/cpp/src/ui/SuggestionOverlay.cpp:170-190` erases `cards_` entries, shifting indices without updating callbacks.
+- Impact: after any card is dismissed, Apply/Dismiss/Expand actions can act on the wrong suggestion or do nothing.
+
+49) Suggestion overlay confidence bars never render any fill.
+- `KmiDi_PROJECT/source/cpp/src/ui/SuggestionOverlay.cpp:80-120` creates `confidenceBar` components but never sets a colour or paint routine.
+- Impact: confidence bars are invisible, so confidence UI is missing even though labels render.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
