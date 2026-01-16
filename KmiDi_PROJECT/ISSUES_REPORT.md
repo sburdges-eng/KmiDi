@@ -923,3 +923,33 @@
 - `KmiDi_PROJECT/source/cpp/src/audio/SpectralAnalyzer.cpp:82-111` allocates `magnitude(frameSize / 2 + 1)` for each frame.
 - `computeFFT()` uses `fftSize_` to determine `numBins` and writes `fftSize_ / 2 + 1` values, which overruns the `magnitude` buffer if `frameSize` differs from `fftSize_`.
 - Impact: `computeSTFT()` can corrupt memory or crash when called with frame sizes other than the analyzer’s FFT size.
+
+# Project Issue Audit Report
+
+## Summary (generated last, after full scan)
+- Total files scanned:
+- Total issues found:
+- High severity:
+- Medium severity:
+- Low severity:
+- Warnings only:
+
+## High Severity
+
+## Medium Severity
+- File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
+- Line(s): 53-112
+- Description: WAV `fmt ` chunk parsing reads a second `fmtSize` field from the payload, shifting all subsequent fields by 4 bytes.
+- Why it matters: The audio format fields (`audioFormat`, `numChannels`, `sampleRate`, etc.) are misread, which can cause incorrect buffer sizing and corrupted audio reads.
+- Suggested fix: Use the already-read `chunkSize` as the `fmt` size and read the payload fields in the correct order without an extra `fmtSize` read.
+
+## Low Severity
+- File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
+- Line(s): 70-112
+- Description: RIFF chunk parsing skips `chunkSize` bytes without accounting for the required padding byte for odd-sized chunks.
+- Why it matters: For files with odd-sized chunks, the next chunk header is read at the wrong offset, leading to parse failures.
+- Suggested fix: After skipping a chunk, add an extra byte when `chunkSize` is odd to maintain word alignment.
+
+## Informational / Warnings
+
+## Cross-Cutting / Systemic Issues
