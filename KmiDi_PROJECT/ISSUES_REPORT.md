@@ -854,3 +854,23 @@
 - `python/penta_core/ml/integration_manager.py:24-33` only defines `HealthStatus` if the health module imports.
 - `check_health()` always references `HealthStatus` (`python/penta_core/ml/integration_manager.py:201-221`) without guarding `HAS_HEALTH`.
 - Impact: if the health module is missing, calling `check_health()` raises `NameError` instead of returning a status.
+
+141) `penta_core.ml` package import can fail because core modules are missing.
+- `python/penta_core/ml/__init__.py:37-83` imports `.inference`, `.chord_predictor`, `.style_transfer`, and `.gpu_utils` without try/except.
+- Those modules are not present under `python/penta_core/ml`, so importing `penta_core.ml` raises `ModuleNotFoundError`.
+- Impact: the package cannot be imported at all, blocking downstream usage.
+
+142) Training orchestrator installs signal handlers unconditionally.
+- `python/penta_core/ml/training_orchestrator.py:676-679` calls `signal.signal()` inside `TrainingOrchestrator.__init__()`.
+- In non‑main threads (GUI/worker contexts), `signal.signal()` raises `ValueError`.
+- Impact: constructing `TrainingOrchestrator` can crash in threaded or embedded environments.
+
+143) Melody training uses dummy data incompatible with the melody model.
+- `python/penta_core/ml/training_orchestrator.py:561-595` falls back to generic dummy data for `MELODY_GENERATION`, producing float tensors shaped `(num_samples, 128)`.
+- `MelodyTransformer` expects integer token sequences and uses an embedding layer (`python/penta_core/ml/training_orchestrator.py:447-471`), so the dummy data will error.
+- Impact: melody training crashes immediately when using the built‑in dummy dataset.
+
+144) Registered trained models point to files that are never saved.
+- `python/penta_core/ml/training_orchestrator.py:1112-1133` registers a `.pt` file in the registry.
+- `_export_model()` only logs paths and never writes weights, and training never saves model checkpoints to `.pt`.
+- Impact: registry entries reference non‑existent model files, so downstream loading fails.
