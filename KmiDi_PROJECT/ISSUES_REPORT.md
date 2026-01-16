@@ -799,3 +799,8 @@
 - `KmiDi_PROJECT/source/python/penta_core/ml/gpu_utils.py:70-88` sets `memory_free_mb = memory_total - torch.cuda.memory_reserved(i)`.
 - `memory_reserved` is the current process reservation, not global free VRAM, so the reported value is incorrect (often near total on fresh processes).
 - Impact: device selection and diagnostics can pick GPUs based on misleading free-memory figures.
+
+130) Chord progression detection can divide by zero with small window sizes.
+- `KmiDi_PROJECT/source/python/music_brain/audio/chord_detection.py:252-259` computes `frames_per_window = int(self.window_size * sr / self.hop_length)` and then uses it as a divisor.
+- If `window_size` is smaller than `hop_length / sr`, `frames_per_window` becomes 0 and `chroma.shape[1] // frames_per_window` raises `ZeroDivisionError`.
+- Impact: chord detection crashes for short window configurations.
