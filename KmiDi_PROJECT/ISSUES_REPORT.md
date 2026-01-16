@@ -588,6 +588,11 @@
 - Even with audiocraft installed, `_generate()` never invokes `self.model` or `audio_write`.
 - Impact: audio generation reports “completed” but produces no real audio output.
 
+88) Image pipeline forces fp16 even on CPU fallback.
+- `KmiDi_PROJECT/source/python/mcp_workstation/image_generation_engine.py:55-74` always passes `torch_dtype=torch.float16` to `StableDiffusionPipeline.from_pretrained`.
+- When MPS is unavailable and the pipeline runs on CPU, fp16 weights are typically unsupported and can raise runtime errors.
+- Impact: image generation can fail on CPU-only systems even if diffusers is installed.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
