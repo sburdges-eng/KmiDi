@@ -256,6 +256,15 @@
 - `KmiDi_PROJECT/source/python/mcp_todo/storage.py:9-52` imports and relies on `fcntl` for file locking.
 - Impact: the MCP TODO server crashes at import time on Windows, preventing cross-platform use.
 
+93) Undo/redo actions are no-ops in the GUI history system.
+- `KmiDi_PROJECT/source/python/kmidi_gui/core/history.py:57-170` action `apply()`/`undo()` methods only log and never mutate state.
+- `KmiDi_PROJECT/source/python/kmidi_gui/core/history.py:223-287` `undo()`/`redo()` report success even though nothing changes.
+- Impact: users see “undo/redo” succeed without any changes being applied.
+
+94) GUI MIDI export can silently write empty files.
+- `KmiDi_PROJECT/source/python/kmidi_gui/core/export.py:50-77` falls back to creating an empty file when `midi_data` lacks a source path.
+- Impact: exports appear to succeed but produce unusable MIDI files.
+
 36) Adaptive batch sizing is computed but never applied.
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
 - Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
