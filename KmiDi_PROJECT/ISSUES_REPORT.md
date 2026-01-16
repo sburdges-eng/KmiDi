@@ -593,6 +593,11 @@
 - When MPS is unavailable and the pipeline runs on CPU, fp16 weights are typically unsupported and can raise runtime errors.
 - Impact: image generation can fail on CPU-only systems even if diffusers is installed.
 
+89) Async hub never emits `hub.stopped` because the event bus is shut down first.
+- `KmiDi_PROJECT/source/python/music_brain/agents/async_hub.py:334-339` calls `self.events.shutdown()` and then emits `"hub.stopped"`.
+- `KmiDi_PROJECT/source/python/music_brain/agents/events.py:293-308` drops events when `_running` is false, so the final event is ignored.
+- Impact: listeners never receive the shutdown notification and may leak resources or hang waiting.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
