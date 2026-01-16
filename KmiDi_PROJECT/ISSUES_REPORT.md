@@ -740,3 +740,8 @@
 - `KmiDi_PROJECT/source/python/music_brain/session/intent_bridge.py:128-142` reads `RULE_BREAKING_EFFECTS[rule_break].get("justification")`.
 - The rule database only defines `description`, `effect`, and `use_when`, so `justification` is never present.
 - Impact: `get_suggested_rule_breaks()` returns blank justifications for every suggestion.
+
+118) Flat bass notes in slash chords are dropped during parsing.
+- `KmiDi_PROJECT/source/python/music_brain/structure/progression.py:120-129` leaves `bass` unnormalized when parsing slash chords.
+- `KmiDi_PROJECT/source/python/music_brain/structure/chord.py:214-223` then looks up `parsed.bass` in `NOTE_NAMES` (sharp-only list), so flats like `Bb` fail and bass is set to None.
+- Impact: slash chords with flat bass (e.g., `F/Bb`) lose their bass note and render incorrectly.
