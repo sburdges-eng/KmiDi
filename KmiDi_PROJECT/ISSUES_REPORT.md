@@ -340,6 +340,11 @@
 - `KmiDi_PROJECT/source/python/music_brain/session/intent_schema.py` defines `description/effect/use_when/example_emotions` but no `justification` key.
 - Impact: suggested rule-breaks include empty justification text even when data exists.
 
+111) Emotion-conditioned generator never loads the emotion encoder.
+- `KmiDi_PROJECT/source/python/music_brain/generative/emotion_conditioned.py:140-162` imports `load_model` from `penta_core.ml.inference`, but that function does not exist.
+- The import fails and is swallowed, leaving `_emotion_encoder` unset.
+- Impact: emotion embeddings are never computed, so generation ignores any learned emotion encoder.
+
 36) Adaptive batch sizing is computed but never applied.
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
 - Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
