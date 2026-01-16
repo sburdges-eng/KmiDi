@@ -874,3 +874,18 @@
 - `python/penta_core/ml/training_orchestrator.py:1112-1133` registers a `.pt` file in the registry.
 - `_export_model()` only logs paths and never writes weights, and training never saves model checkpoints to `.pt`.
 - Impact: registry entries reference non‑existent model files, so downstream loading fails.
+
+145) ONNX inference loadModel has a duplicate variable declaration that will not compile.
+- `KmiDi_PROJECT/source/cpp/src/ml/ONNXInference.cpp:97-121` declares `Session* session` and then declares it again in the same scope.
+- C++ forbids redeclaring the same variable in the same scope, so this is a compile-time error.
+- Impact: ONNX runtime build fails when `ENABLE_ONNX_RUNTIME` is enabled.
+
+146) ONNX inference assumes all models take a flat `[1, inputSize]` tensor.
+- `KmiDi_PROJECT/source/cpp/src/ml/ONNXInference.cpp:198-214` hardcodes `inputShape = {1, inputSize_}` regardless of the model’s actual input dimensions.
+- Models with multi-dimensional inputs (e.g., `[1, 80, 64]` or `[1, 1024]`) are flattened and passed with the wrong shape.
+- Impact: inference fails or returns invalid outputs for non‑flat ONNX models.
+
+147) Biquad filter ignores the `a0` coefficient when coefficients are set directly.
+- `KmiDi_PROJECT/source/cpp/src/dsp/filters.cpp:45-63` stores `a0_` in `setCoefficients()` but `process()` assumes `a0_ == 1` and never divides by it.
+- If callers pass unnormalized biquad coefficients, the filter output is incorrect.
+- Impact: filters configured via `setCoefficients()` can produce wrong frequency responses.
