@@ -627,3 +627,9 @@
 - `SongIntent.vulnerability_scale` is intended to be an enum-like string ("Low"/"Medium"/"High"), and `validate_intent()` only validates when the field is a string.
 - `CompleteSongIntent.from_dict()` passes strings like "Medium", but the `float()` conversion fails and defaults to 0.5, so the string value is lost.
 - Impact: vulnerability scale is silently coerced to a numeric value, bypassing validation and breaking downstream enum-based logic.
+
+95) IntentProcessor drops provided intent data when building CompleteSongIntent.
+- `KmiDi_PROJECT/source/python/music_brain/orchestrator/processors/intent.py:287-318` calls `CompleteSongIntent(...)` with `song_root=SongRoot(...)`, `song_intent=SongIntent(...)`, and `technical_constraints=TechnicalConstraints(...)`.
+- `music_brain/session/intent_schema.py:422-481` defines a custom `CompleteSongIntent.__init__` that does not accept those keyword arguments; it only accepts flattened fields and ignores `**kwargs`.
+- As a result, the constructed `CompleteSongIntent` uses default empty values, so `validate_intent()` and downstream logic operate on blank intent data.
+- Impact: validation results and affect mapping suggestions are computed against defaults instead of the user-provided intent.
