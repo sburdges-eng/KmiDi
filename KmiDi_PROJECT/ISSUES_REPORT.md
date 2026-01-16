@@ -282,6 +282,23 @@
 - `KmiDi_PROJECT/source/python/music_brain/tier1/voice_pipeline.py:43-116` writes an empty output file and returns metadata only.
 - Impact: vocal generation appears to succeed but produces silent files.
 
+99) Guide voice synthesis divides by zero when tempo is invalid.
+- `KmiDi_PROJECT/source/python/music_brain/voice/synthesizer.py:126-132` computes `beat_duration = 60.0 / tempo_bpm` without guarding `tempo_bpm <= 0`.
+- Impact: invalid tempo values crash synthesis or produce invalid timing.
+
+100) Guide voice synthesis crashes when melody is empty.
+- `KmiDi_PROJECT/source/python/music_brain/voice/synthesizer.py:146-171` assumes `melody_midi` has at least one note and indexes `melody_midi[-1]`.
+- Impact: empty melody inputs raise `IndexError` rather than returning a safe fallback.
+
+101) Neural backend never uses DiffSinger even when available.
+- `KmiDi_PROJECT/source/python/music_brain/voice/neural_backend.py:94-129` checks for DiffSinger but `_try_diffsinger()` always returns `False`.
+- Impact: high-quality DiffSinger path is effectively disabled; the backend falls back to ONNX or no synthesis.
+
+102) `music_brain.metrics` requires `lldb` and appears unrelated to runtime metrics.
+- `KmiDi_PROJECT/source/python/music_brain/metrics.py:1-122` imports `lldb` and defines LLDB formatter helpers.
+- The module is not referenced elsewhere, but importing it in non-LLDB environments raises `ImportError`.
+- Impact: accidental imports crash in typical runtime environments; file seems out of place for production use.
+
 36) Adaptive batch sizing is computed but never applied.
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
 - Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
