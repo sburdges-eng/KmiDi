@@ -760,3 +760,8 @@
 - `KmiDi_PROJECT/source/python/music_brain/audio/chord_detection.py:329-333` counts minor chords using `if 'min' in c.quality or 'm' in c.chord_name`.
 - Chord names like `Cmaj7` include "m", so they are counted as minor.
 - Impact: key mode is biased toward minor and can be incorrect for major-heavy progressions.
+
+122) Audio feel analysis crashes on silent inputs when computing dynamic range.
+- `KmiDi_PROJECT/source/python/music_brain/audio/feel.py:96-99` calls `np.min(rms_db[rms_db > -60])` without guarding for an empty slice.
+- For silent/near-silent audio, the filtered array is empty and raises `ValueError`.
+- Impact: `analyze_feel()` fails on quiet audio files instead of returning a valid analysis.
