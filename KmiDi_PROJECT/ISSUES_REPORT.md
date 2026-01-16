@@ -648,3 +648,8 @@
 - `KmiDi_PROJECT/source/cpp/src/engine/AdaptiveGenerator.cpp:34-55` calls `adaptIntent()` when adaptive mode and preference tracking are enabled, but `adaptIntent()` just returns the input unchanged.
 - `getPreferredAdjustments()` always returns an empty map and there is no PreferenceTracker query.
 - Impact: adaptive generation paths silently behave the same as non-adaptive paths, so learned preferences are never reflected.
+
+99) MusicTheoryBridge lesson plan fallback is disabled, always returns error without Python.
+- `KmiDi_PROJECT/source/cpp/src/bridge/MusicTheoryBridge.cpp:303-339` comments out the C++ fallback path with a `FIXME` and returns `{"error":"Lesson plan not available"}`.
+- When the Python bridge is unavailable (`PYTHON_AVAILABLE` false or `createLessonPlanFunc_` null), there is no functional fallback.
+- Impact: `createLessonPlan()` always fails on native-only builds, blocking lesson plan generation.
