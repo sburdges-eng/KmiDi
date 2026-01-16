@@ -598,6 +598,11 @@
 - `KmiDi_PROJECT/source/python/music_brain/agents/events.py:293-308` drops events when `_running` is false, so the final event is ignored.
 - Impact: listeners never receive the shutdown notification and may leak resources or hang waiting.
 
+90) EventBus `wait` parameter is ignored, making emit_sync blocking.
+- `KmiDi_PROJECT/source/python/music_brain/agents/events.py:271-308` accepts `wait` but `emit_event()` ignores it and always awaits handlers.
+- `emit_sync()` claims to be non-blocking but ends up waiting for all handlers when it calls `emit(..., wait=False)`.
+- Impact: synchronous callers can block unexpectedly on slow handlers, defeating the non-blocking API contract.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
