@@ -745,3 +745,8 @@
 - `KmiDi_PROJECT/source/python/music_brain/structure/progression.py:120-129` leaves `bass` unnormalized when parsing slash chords.
 - `KmiDi_PROJECT/source/python/music_brain/structure/chord.py:214-223` then looks up `parsed.bass` in `NOTE_NAMES` (sharp-only list), so flats like `Bb` fail and bass is set to None.
 - Impact: slash chords with flat bass (e.g., `F/Bb`) lose their bass note and render incorrectly.
+
+119) Audio waveform analysis crashes on silent inputs when computing dynamic range.
+- `KmiDi_PROJECT/source/python/music_brain/audio/analyzer.py:233-236` filters RMS dB values with `rms_db > -60` and calls `np.min(...)` without checking for an empty array.
+- For silent or near-silent audio, the filtered array is empty and `np.min` raises `ValueError`.
+- Impact: `analyze_waveform()` fails on quiet/silent clips instead of returning a valid analysis.
