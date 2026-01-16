@@ -952,6 +952,11 @@
 - Description: `LockFreeQueue` advertises lock-free behavior but `tail_` is non-atomic and updated without synchronization.
 - Why it matters: Multi-threaded producer/consumer use can race on `tail_`, causing use-after-free or lost nodes.
 - Suggested fix: Make `tail_` atomic and use a known lock-free queue algorithm (e.g., Michael-Scott) or guard with a mutex.
+- File: `KmiDi_PROJECT/source/cpp/src/core/memory.cpp`
+- Line(s): 52-63
+- Description: `MemoryPool::deallocate()` writes to `freeList_[count]` without checking for double frees or overflow beyond `numBlocks_`.
+- Why it matters: A double free can push `count` beyond the list bounds, corrupting memory and crashing.
+- Suggested fix: Validate `freeCount_ < numBlocks_` and track allocation state (e.g., bitmap) or guard against double-free.
 - File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
 - Line(s): 53-112
 - Description: WAV `fmt ` chunk parsing reads a second `fmtSize` field from the payload, shifting all subsequent fields by 4 bytes.
@@ -959,11 +964,6 @@
 - Suggested fix: Use the already-read `chunkSize` as the `fmt` size and read the payload fields in the correct order without an extra `fmtSize` read.
 
 ## Low Severity
-- File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
-- Line(s): 202-228
-- Description: `detectFormat()` checks `"aiff"`/`"flac"` without the leading dot, so `.aiff` or `.flac` extensions are not matched.
-- Why it matters: Format detection may incorrectly return `Unknown` for common file extensions.
-- Suggested fix: Normalize extensions with a leading dot or compare against `".aiff"`/`".flac"`.
 - File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
 - Line(s): 70-112
 - Description: RIFF chunk parsing skips `chunkSize` bytes without accounting for the required padding byte for odd-sized chunks.
@@ -976,5 +976,10 @@
 - Description: `getChordHistory()` and `getScaleHistory()` are TODO stubs that ignore `maxCount`.
 - Why it matters: Callers may assume history tracking exists; returning only the current item can mislead analytics and UI history views.
 - Suggested fix: Implement history buffers or document that history is not available.
+- File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
+- Line(s): 202-228
+- Description: Prior issue about `.aiff`/`.flac` detection appears to be a false positive because `ext` uses the last 4 characters (e.g., ".aiff" → "aiff").
+- Why it matters: Keeping an unverified issue can mislead triage and inflate counts.
+- Suggested fix: Mark this as “suspected false positive” or verify against actual filenames before acting.
 
 ## Cross-Cutting / Systemic Issues
