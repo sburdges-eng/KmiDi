@@ -329,6 +329,17 @@
 - `KmiDi_PROJECT/source/python/music_brain/session/intent_schema.py` does not define `MelodyRuleBreak`.
 - Impact: importing the intent bridge raises `ImportError`, breaking C++ ↔ Python intent processing.
 
+109) Intent bridge converts the wrong result schema and returns defaults.
+- `KmiDi_PROJECT/source/python/music_brain/session/intent_bridge.py:47-78` calls `IntentProcessor.process_intent()` and passes its output to `_convert_to_cpp_format`.
+- `KmiDi_PROJECT/source/python/music_brain/session/intent_processor.py:708-724` returns a dict with `harmony/groove/arrangement/production/intent_summary`, not top-level `key`, `mode`, `tempo`, or `chords`.
+- `_convert_to_cpp_format` therefore falls back to defaults (`C`, `major`, `120`, empty chords).
+- Impact: C++ side receives generic defaults regardless of intent content, so generation is disconnected from input.
+
+110) Rule-break suggestions return empty justifications.
+- `KmiDi_PROJECT/source/python/music_brain/session/intent_bridge.py:119-137` looks up `RULE_BREAKING_EFFECTS[rule_break]["justification"]`.
+- `KmiDi_PROJECT/source/python/music_brain/session/intent_schema.py` defines `description/effect/use_when/example_emotions` but no `justification` key.
+- Impact: suggested rule-breaks include empty justification text even when data exists.
+
 36) Adaptive batch sizing is computed but never applied.
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
 - Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
