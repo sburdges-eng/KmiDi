@@ -549,6 +549,10 @@
 - `KmiDi_TRAINING/training/training/train_integrated.py:832-840` calls a fixed venv/python path and script location under `/workspaces/KmiDi/...`.
 - Impact: training fails outside that specific environment layout (local machines, CI, or different repo roots).
 
+80) Monitoring summary ignores requested time range.
+- `python/penta_core/ml/monitoring.py:158-188` accepts `time_range_minutes` but always returns full-history `metric.get_stats()` without filtering by timestamp.
+- Impact: monitoring dashboards cannot request time-windowed stats; results are misleading for “last N minutes” views.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
