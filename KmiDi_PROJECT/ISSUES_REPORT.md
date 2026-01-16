@@ -982,6 +982,16 @@
 - Description: `initializeThesaurus()` is empty and `getNode()` always returns `nullptr`, leaving the core emotion thesaurus uninitialized.
 - Why it matters: Any caller relying on this thesaurus will always fail to resolve emotions and may dereference null pointers.
 - Suggested fix: Populate the thesaurus or clearly deprecate/remove this stub in favor of the engine-level thesaurus.
+- File: `KmiDi_PROJECT/source/cpp/src/engine/ParameterMorphEngine.cpp`
+- Line(s): 15-31
+- Description: `morphParameter()` and `morphParameters()` lock `morphMutex_` and then call `getCurrentValue()`, which tries to lock the same mutex again.
+- Why it matters: This is a self-deadlock with a non-recursive mutex, freezing parameter morphing (and potentially the UI thread) whenever `state.active` is true.
+- Suggested fix: Read the current value without calling the locking getter while holding the mutex, or refactor to use a non-locking helper.
+- File: `KmiDi_PROJECT/source/cpp/src/engine/KellyBrain.cpp`
+- Line(s): 81-88
+- Description: `convertFromLegacyIntentResult()` calculates `unified.tempo` from `unified.tempoBpm` before assigning `tempoBpm`.
+- Why it matters: `unified.tempoBpm` is uninitialized at that point, so `tempo` becomes garbage and can mis-scale downstream tempo logic.
+- Suggested fix: Assign `unified.tempoBpm` first, then compute `unified.tempo` from it.
 
 ## Low Severity
 - File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
@@ -989,6 +999,16 @@
 - Description: RIFF chunk parsing skips `chunkSize` bytes without accounting for the required padding byte for odd-sized chunks.
 - Why it matters: For files with odd-sized chunks, the next chunk header is read at the wrong offset, leading to parse failures.
 - Suggested fix: After skipping a chunk, add an extra byte when `chunkSize` is odd to maintain word alignment.
+- File: `KmiDi_PROJECT/source/cpp/src/engine/ParameterMorphEngine.cpp`
+- Line(s): 55-56, 104-105
+- Description: `durationMs` is used as a divisor without guarding against zero.
+- Why it matters: A zero-duration morph yields division by zero, producing NaNs/inf values that can propagate through parameters.
+- Suggested fix: Clamp `durationMs` to at least 1 or short‑circuit zero durations to apply the target value immediately.
+- File: `KmiDi_PROJECT/source/cpp/src/engine/NetworkDynamics.cpp`
+- Line(s): 106-119
+- Description: `calculateAverageVAD()` already returns averages, but `simulateDiffusion()` divides the neighborhood average by `neighbors.size()` a second time.
+- Why it matters: The self‑regulation term is scaled too low, reducing its influence and skewing diffusion behavior.
+- Suggested fix: Remove the extra division or return sums from `calculateAverageVAD()` and average only once.
 - File: `KmiDi_PROJECT/source/cpp/src/engine/EmotionThesaurusLoader.cpp`
 - Line(s): 262-268
 - Description: The fallback path for sub-sub-emotions treats any non-`joy`/`happiness` category as negative, so `"happy"` or other positive variants are mapped to negative valence.
