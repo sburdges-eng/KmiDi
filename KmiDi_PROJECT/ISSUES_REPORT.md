@@ -957,6 +957,11 @@
 - Description: `MemoryPool::deallocate()` writes to `freeList_[count]` without checking for double frees or overflow beyond `numBlocks_`.
 - Why it matters: A double free can push `count` beyond the list bounds, corrupting memory and crashing.
 - Suggested fix: Validate `freeCount_ < numBlocks_` and track allocation state (e.g., bitmap) or guard against double-free.
+- File: `KmiDi_PROJECT/source/cpp/src/ml/InferenceThreadManager.h`
+- Line(s): 47-78
+- Description: Inference requests/results are dropped silently when ring buffers are full (`push()` returns false but callers ignore it).
+- Why it matters: Dropped inference requests or results can desynchronize audio and ML pipelines, causing missing or stale emotion vectors.
+- Suggested fix: Track drop counts and/or apply backpressure (or overwrite oldest) with explicit logging.
 - File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
 - Line(s): 53-112
 - Description: WAV `fmt ` chunk parsing reads a second `fmtSize` field from the payload, shifting all subsequent fields by 4 bytes.
