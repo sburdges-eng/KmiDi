@@ -914,3 +914,7 @@
 - `KmiDi_PROJECT/source/cpp/src/engine/IntentProcessor.h:646-683` copies `*emotion` only if `processWound()` returns non‑null, otherwise `result.emotion` is left uninitialized.
 - `emotionToRuleBreaks()` and parameter mapping immediately read fields like `valence` and `category`, which are undefined in this case.
 - Impact: undefined behavior in rule‑break generation and musical parameter selection.
+
+153) Curriculum generation crashes when `targetConcepts` is empty.
+- `KmiDi_PROJECT/source/cpp/src/music_theory/knowledge/KnowledgeGraph.cpp:314-333` builds `step.rationale` using `targetConcepts[0]` without checking if the list is empty.
+- Impact: calling `generateCurriculum()` with no targets raises out‑of‑range access.
