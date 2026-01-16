@@ -319,6 +319,11 @@
 - `KmiDi_PROJECT/source/python/music_brain/generative/audio_diffusion.py:242-268` returns zeroed audio when `_pipeline`/`_model` is missing.
 - Impact: generation appears successful while producing silent audio with no error signal.
 
+107) Callback removal can raise exceptions when the callback is missing.
+- `KmiDi_PROJECT/source/python/music_brain/agents/unified_hub.py:1094-1098` calls `list.remove` without guarding for missing callbacks.
+- `KmiDi_PROJECT/source/python/music_brain/agents/ableton_bridge.py:177-181` does the same in `AbletonOSCBridge.off`.
+- Impact: attempting to remove a callback twice (or after errors) raises `ValueError` and can break cleanup flows.
+
 36) Adaptive batch sizing is computed but never applied.
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
 - Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
