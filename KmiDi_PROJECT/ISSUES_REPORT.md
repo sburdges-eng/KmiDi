@@ -889,3 +889,13 @@
 - `KmiDi_PROJECT/source/cpp/src/dsp/filters.cpp:45-63` stores `a0_` in `setCoefficients()` but `process()` assumes `a0_ == 1` and never divides by it.
 - If callers pass unnormalized biquad coefficients, the filter output is incorrect.
 - Impact: filters configured via `setCoefficients()` can produce wrong frequency responses.
+
+148) MIDI file export can divide by zero when BPM is unset.
+- `KmiDi_PROJECT/source/cpp/src/midi/MidiBuilder.cpp:33-46` computes `microsecondsPerBeat = MIDI_MICROSECONDS_PER_MINUTE / static_cast<int>(midi.bpm)`.
+- When `midi.bpm` is 0 (but `tempoBpm` is set), this divides by zero instead of falling back to `tempoBpm`.
+- Impact: MIDI export can crash or produce invalid tempo metadata for unset bpm values.
+
+149) GeneratedMidi arrangement pointer can become stale after subsequent calls.
+- `KmiDi_PROJECT/source/cpp/src/midi/MidiGenerator.cpp:39-78` stores a pointer to a `static thread_local ArrangementOutput`.
+- Each new call overwrites this shared storage, so older `GeneratedMidi::arrangement` pointers may suddenly reference unrelated arrangement data.
+- Impact: downstream use of `GeneratedMidi.arrangement` can read incorrect section metadata after later generations.
