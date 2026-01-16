@@ -506,10 +506,10 @@
 - When `memory_estimate` exceeds `max_memory_mb`, eviction cannot reduce below the limit and the model is still loaded.
 - Impact: memory cap is not enforced for large models, risking OOM.
 
-71) Phase status claims MCP TODO server is complete despite missing implementation.
+71) Phase status references MCP TODO server; implementation exists.
 - `KmiDi_PROJECT/source/python/mcp_workstation/phases.py:27-79` lists “MCP TODO server” as a Phase 1 milestone and marks `p1_mcp` as `COMPLETED`.
-- There is no MCP TODO server implementation referenced elsewhere in the repo.
-- Impact: roadmap/status reporting is misleading and can cause validation to miss missing functionality.
+- The MCP TODO server is implemented under `KmiDi_PROJECT/source/python/mcp_todo` (CLI, MCP server, HTTP server).
+- Impact: the earlier “missing implementation” note was incorrect; keep the status if completion is based on code availability.
 
 72) LLM intent parsing crashes on unexpected fields.
 - `KmiDi_PROJECT/source/python/mcp_workstation/llm_reasoning_engine.py:101-103` calls `StructuredIntent(**intent_dict)` without filtering keys.
@@ -525,6 +525,29 @@
 - `python/penta_core/ml/inference_batching.py:232-251` builds each batched input by stacking only non-None arrays, dropping requests that omit a key.
 - This yields per-key batch sizes that no longer match the original request count and can misalign inputs across keys or trigger shape errors in the backend.
 - Impact: batched inference can mix inputs from different requests or fail unpredictably when optional inputs are omitted.
+
+75) AI service never initializes its components due to premature `_initialized` flag.
+- `python/penta_core/ml/ai_service.py:285-317` sets `_initialized = True` inside `__init__`, then `initialize()` exits early when `_initialized` is true.
+- `get_ai_service()` relies on `initialize()` to wire model registry/health/resources, so none of the services are actually initialized.
+- Impact: inference/training/health service dependencies silently remain uninitialized; status APIs report ready while internals are not set up.
+
+76) Async inference singleton crashes on import due to missing threading import.
+- `python/penta_core/ml/async_inference.py:489` declares `_async_engine_lock = threading.Lock()` but `threading` is never imported.
+- Impact: importing the module raises `NameError` before any inference can be used.
+
+77) Plugin discovery registers non-importable module paths.
+- `python/penta_core/ml/plugin_system.py:121-158` discovers plugins from arbitrary files but stores `module_path` as the file stem.
+- `_load_plugin_class` later calls `importlib.import_module(module_path)` which fails unless that module is on `sys.path`, so reloading/discovery results are not reusable.
+- Impact: plugins discovered from directories cannot be loaded later, breaking plugin persistence.
+
+78) Training orchestration fallback leaves a no-op TrainActor when Ray is unavailable.
+- `KmiDi_TRAINING/training/training/train_integrated.py:808-815` defines an empty `TrainActor` when `ray` is missing.
+- Any code that expects `TrainActor.train()` will crash at runtime with `AttributeError`.
+- Impact: distributed training paths fail silently in environments without Ray.
+
+79) Training subprocess uses hard-coded /workspaces paths.
+- `KmiDi_TRAINING/training/training/train_integrated.py:832-840` calls a fixed venv/python path and script location under `/workspaces/KmiDi/...`.
+- Impact: training fails outside that specific environment layout (local machines, CI, or different repo roots).
 
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
