@@ -720,3 +720,8 @@
 - `KmiDi_PROJECT/source/cpp/src/groove/OnsetDetector.cpp:13-56` leaves `process()` empty and always sets `onsetDetected_ = false`.
 - `computeSpectralFlux()` and `detectPeaks()` are unimplemented.
 - Impact: any groove/tempo features relying on onsets will never trigger or update.
+
+114) `suggest_progression()` fails for flat keys.
+- `KmiDi_PROJECT/source/python/music_brain/session/generator.py:377-385` only resolves `key_num` if the key is in `NOTE_NAMES` (sharp-only list) and falls back to 0 otherwise.
+- Flat keys like `Bb`, `Eb`, `Db` map to C, producing incorrect chord outputs.
+- Impact: progression suggestions are wrong for any flat key inputs.
