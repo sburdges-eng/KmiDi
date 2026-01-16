@@ -770,3 +770,8 @@
 - `KmiDi_PROJECT/source/cpp/src/biometric/BiometricInput.cpp:290-320` sets `fitbitInitialized_ = false` and returns false in `initializeFitbit()`.
 - `startStreaming()` only enables Fitbit when `fitbitInitialized_` is true, so the Fitbit path is permanently disabled.
 - Impact: Fitbit integration is non-functional even with a valid access token.
+
+124) Section detection ignores time signature denominator when computing bars.
+- `KmiDi_PROJECT/source/python/music_brain/structure/sections.py:232-233` sets `ticks_per_bar = ppq * time_sig[0]`.
+- For signatures like 6/8 or 3/8, the denominator changes beat length; bar length should scale by `4/denominator`.
+- Impact: bar boundaries and section lengths are incorrect for non‑4/4 MIDI files.
