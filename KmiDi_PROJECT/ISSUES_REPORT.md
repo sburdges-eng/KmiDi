@@ -677,3 +677,17 @@
 - `KmiDi_TRAINING/training/training/cuda_session/export_models.py:50-58` creates `dummy_spectrogram` with fixed shape `(1, 128, 64)`.
 - If the config uses a different `n_mels` or time-frame length, the exported graph input shape doesn’t match the trained model.
 - Impact: ONNX export can fail or produce a model with incorrect input dimensions.
+
+105) Ray Tune integration never reports metrics, so tuning results are invalid.
+- `KmiDi_TRAINING/training/training/train_integrated.py:842-861` runs `tune.run(lambda config: train_subprocess(config), ...)`.
+- `train_subprocess()` just launches a subprocess and never calls `tune.report`, so trials emit no metrics and Tune cannot select a best config.
+- Impact: hyperparameter tuning either errors or yields meaningless results.
+
+106) TrainableTuner.step() returns only `{"done": True}` without metrics.
+- `KmiDi_TRAINING/training/training/train_integrated.py:760-772` defines a Ray Tune `Trainable` but `step()` returns no loss/accuracy metrics.
+- Impact: Ray Tune has nothing to optimize; best-config selection is undefined.
+
+107) Hyperparameter tuning subprocess uses hard-coded /workspaces paths.
+- `KmiDi_TRAINING/training/training/train_integrated.py:813-824` calls `/workspaces/KmiDi/.venv/bin/python` and `/workspaces/KmiDi/training/train_integrated.py`.
+- These paths are environment-specific and will fail outside that workspace layout.
+- Impact: tuning fails on local machines or CI runners with different paths.
