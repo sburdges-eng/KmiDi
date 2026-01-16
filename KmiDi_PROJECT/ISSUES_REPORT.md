@@ -710,3 +710,8 @@
 111) Intent bridge imports non-existent MelodyRuleBreak enum.
 - `KmiDi_PROJECT/source/python/music_brain/session/intent_bridge.py:12-19` imports `MelodyRuleBreak`, which is not defined in `music_brain.session.intent_schema`.
 - Impact: importing `intent_bridge` raises `ImportError`, preventing the Python bridge from loading.
+
+112) MCP intent template builder drops placeholder fields due to CompleteSongIntent constructor mismatch.
+- `KmiDi_PROJECT/source/python/music_brain/session/intent.py:18-55` builds a `CompleteSongIntent` using `song_root=SongRoot(...)`, `song_intent=SongIntent(...)`, and `technical_constraints=TechnicalConstraints(...)`.
+- `music_brain/session/intent_schema.py:422-481` ignores those keyword arguments, so the returned template omits the placeholder values.
+- Impact: `daiw.intent.create_template` yields an empty/default intent instead of the intended guidance fields.
