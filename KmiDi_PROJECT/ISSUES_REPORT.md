@@ -790,3 +790,7 @@
 - `KmiDi_PROJECT/source/python/music_brain/orchestrator/bridge_api.py:547-555` searches for patterns like `" C major"` and `" Cm "` without normalizing the pattern for lowercase input.
 - `text_prompt.lower()` is used only in one branch, but the search string still contains uppercase `k`, so inputs like "c minor" or "f major" are missed.
 - Impact: key detection silently falls back to C for lowercase prompts.
+
+128) Orchestrator cancellation is a no-op.
+- `KmiDi_PROJECT/source/python/music_brain/orchestrator/orchestrator.py:552-573` logs a cancellation request but never cancels or signals the running task.
+- Impact: callers believe executions are cancelled, but processing continues and resources are not freed.
