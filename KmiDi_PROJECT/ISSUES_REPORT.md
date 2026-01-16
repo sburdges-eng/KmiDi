@@ -583,6 +583,11 @@
 - `_load_pipeline` then calls `StableDiffusionPipeline.from_pretrained(self.model_dir)` which expects a real model directory, so it will fail or load invalid data.
 - Impact: image generation always falls back to stubbed output even when diffusers is installed.
 
+87) Audio generation engine never uses MusicGen output.
+- `KmiDi_PROJECT/source/python/mcp_workstation/audio_generation_engine.py:94-120` returns simulated base64 strings after `time.sleep()` instead of calling the loaded `MusicGen` model.
+- Even with audiocraft installed, `_generate()` never invokes `self.model` or `audio_write`.
+- Impact: audio generation reports “completed” but produces no real audio output.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
