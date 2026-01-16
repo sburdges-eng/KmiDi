@@ -904,3 +904,13 @@
 - `KmiDi_PROJECT/source/cpp/src/engine/EmotionThesaurus.cpp:149-170` has two identical “defaultNode” blocks after the first `return`, making the latter block unreachable.
 - This indicates dead code and makes it unclear which default should apply.
 - Impact: confusion for maintainers and risk of diverging fixes in the unreachable block.
+
+151) IntentProcessor keyword lookup references emotion names that are not in its thesaurus.
+- `KmiDi_PROJECT/source/cpp/src/engine/IntentProcessor.h:550-640` maps keywords to names like `"grief"`, `"anger"`, `"sadness"`, `"bittersweet"`, and `"overwhelm"`.
+- The local `EmotionThesaurus::initializeNodes()` only adds names like `"Joy"`, `"Happiness"`, `"Serenity"` (and no `"grief"`, `"anger"`, `"sadness"`, etc.), so `findByName()` returns null for most mappings.
+- Impact: `processWound()` often returns null, causing downstream intent processing to operate on missing emotion data.
+
+152) IntentProcessor can return uninitialized emotion data.
+- `KmiDi_PROJECT/source/cpp/src/engine/IntentProcessor.h:646-683` copies `*emotion` only if `processWound()` returns non‑null, otherwise `result.emotion` is left uninitialized.
+- `emotionToRuleBreaks()` and parameter mapping immediately read fields like `valence` and `category`, which are undefined in this case.
+- Impact: undefined behavior in rule‑break generation and musical parameter selection.
