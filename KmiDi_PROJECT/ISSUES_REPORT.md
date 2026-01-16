@@ -844,3 +844,13 @@
 - `python/penta_core/ml/monitoring.py:150-175` computes `cutoff_time` but never filters metric samples by timestamp.
 - The summary always reflects all historical data, regardless of the requested `time_range_minutes`.
 - Impact: dashboards and alerts can misrepresent recent system health.
+
+139) AIService initialization is permanently skipped.
+- `python/penta_core/ml/ai_service.py:226-254` sets `self._initialized = True` inside `__init__`.
+- `initialize()` immediately returns `True` when `_initialized` is already true, so components never call their `initialize()` methods.
+- Impact: model discovery, inference, and training services stay in `INITIALIZING` state despite `get_ai_service()` reporting success.
+
+140) Integration health checks can crash when HealthStatus is unavailable.
+- `python/penta_core/ml/integration_manager.py:24-33` only defines `HealthStatus` if the health module imports.
+- `check_health()` always references `HealthStatus` (`python/penta_core/ml/integration_manager.py:201-221`) without guarding `HAS_HEALTH`.
+- Impact: if the health module is missing, calling `check_health()` raises `NameError` instead of returning a status.
