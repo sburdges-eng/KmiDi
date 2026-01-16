@@ -10,11 +10,14 @@ from pathlib import Path
 from enum import Enum
 import json
 import os
+import logging
 
 try:
     import jsonschema
 except ImportError:
     jsonschema = None
+
+logger = logging.getLogger(__name__)
 
 
 class ModelBackend(Enum):
@@ -293,6 +296,8 @@ class ModelRegistry:
         with open(manifest_path, "r", encoding="utf-8") as f:
             manifest = json.load(f)
 
+        if validate and jsonschema is None:
+            logger.warning("jsonschema not installed; skipping registry manifest validation")
         if validate and jsonschema is not None:
             schema_file = (
                 Path(schema_path)

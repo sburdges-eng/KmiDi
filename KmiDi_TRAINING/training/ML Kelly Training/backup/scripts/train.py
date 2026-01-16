@@ -120,6 +120,9 @@ class TrainConfig:
     log_interval: int = 10
     save_interval: int = 5
 
+    # Testing guard
+    allow_dummy_data: bool = False
+
     # Metadata
     author: str = ""
     notes: str = ""
@@ -447,6 +450,7 @@ def create_loss_fn(config: TrainConfig):
 
 def create_dummy_dataloaders(config: TrainConfig, device) -> Tuple:
     """Create dummy dataloaders for testing."""
+    logger.warning("Using dummy data loaders. Enable allow_dummy_data only for testing.")
     import torch
     from torch.utils.data import DataLoader, TensorDataset
 
@@ -566,7 +570,10 @@ def train_model(config: TrainConfig, run: TrainRun) -> Tuple[Any, Dict]:
     logger.info(f"Model parameters: {n_params:,}")
 
     # Create dataloaders
-    # TODO: Replace with real data loading
+    if not config.allow_dummy_data:
+        raise RuntimeError(
+            "Dummy dataloaders are for testing only. Set allow_dummy_data=True to proceed."
+        )
     train_loader, val_loader, test_loader = create_dummy_dataloaders(config, device)
     logger.info(
         f"Data: train={len(train_loader.dataset)}, "

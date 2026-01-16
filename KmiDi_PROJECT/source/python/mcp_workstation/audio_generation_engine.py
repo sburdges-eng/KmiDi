@@ -3,14 +3,19 @@ from typing import Any, Dict, Optional
 import threading
 import time
 
-# Placeholder for audio diffusion library (e.g., audiocraft's MusicGen)
+# Optional audiocraft import (e.g., MusicGen)
 try:
-    # from audiocraft.models import MusicGen
-    # from audiocraft.data.audio import audio_write
-    AUDIOCRAFT_AVAILABLE = False  # Set to True if you install audiocraft
+    from audiocraft.models import MusicGen  # type: ignore[import-not-found]
+    from audiocraft.data.audio import (  # type: ignore[import-not-found]
+        audio_write,
+    )
+
+    AUDIOCRAFT_AVAILABLE = True
 except ImportError:
     AUDIOCRAFT_AVAILABLE = False
-    print("Warning: 'audiocraft' not found. Audio generation will be stubbed.")
+    MusicGen = None
+    audio_write = None
+    print("Warning: 'audiocraft' not found. " "Audio generation will be stubbed.")
 
 
 class AudioGenerationEngine:
@@ -34,8 +39,8 @@ class AudioGenerationEngine:
         if self.model is None:
             print(f"Loading audio diffusion model: {self.model_id}...")
             try:
-                # self.model = MusicGen.get_pretrained(self.model_id)
-                print("Audio diffusion model loaded (simulated).")
+                self.model = MusicGen.get_pretrained(self.model_id)
+                print("Audio diffusion model loaded.")
             except Exception as e:
                 print(f"Error loading audio diffusion model: {e}")
                 self.model = None
@@ -59,6 +64,13 @@ class AudioGenerationEngine:
             lock_timeout: Timeout in seconds for lock acquisition.
                 None = block forever, 0 = non-blocking.
         """
+        if AUDIOCRAFT_AVAILABLE and self.model is None:
+            try:
+                self._load_model()
+            except Exception as e:
+                print("Audio model load failed; falling back to stub: " f"{e}")
+                self.model = None
+
         if not AUDIOCRAFT_AVAILABLE or self.model is None:
             print(
                 "Audio generation engine not fully initialized or "

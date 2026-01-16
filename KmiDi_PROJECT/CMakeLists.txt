@@ -170,6 +170,7 @@ if(NOT ENABLE_RTNEURAL)
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/KellyML/ExampleUsage\\.cpp$")
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/KellyML/KellyMLModel\\.cpp$")
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/KellyML/KellyMLPipeline\\.cpp$")
+    list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/KellyML/SnapshotWriter\\.cpp$")
 endif()
 # Exclude Python bridge and binding sources from the core lib when bindings are built separately
 if(BUILD_PYTHON_BINDINGS)
@@ -274,6 +275,7 @@ if(BUILD_PLUGINS)
         ${CPP_ROOT}/src/plugin/PluginProcessor.cpp
         ${CPP_ROOT}/src/plugin/PluginEditor.cpp
         ${CPP_ROOT}/src/plugin/PluginState.cpp
+        ${CPP_ROOT}/src/plugin/MasterEQProcessor.cpp
     )
 
     target_link_libraries(KellyPlugin PRIVATE
