@@ -725,3 +725,8 @@
 - `KmiDi_PROJECT/source/python/music_brain/session/generator.py:377-385` only resolves `key_num` if the key is in `NOTE_NAMES` (sharp-only list) and falls back to 0 otherwise.
 - Flat keys like `Bb`, `Eb`, `Db` map to C, producing incorrect chord outputs.
 - Impact: progression suggestions are wrong for any flat key inputs.
+
+115) diagnose_progression() ignores flat key hints and defaults to C.
+- `KmiDi_PROJECT/source/python/music_brain/structure/progression.py:279-289` parses `key_name` from the user hint and does `NOTE_NAMES.index(key_name)`.
+- `NOTE_NAMES` contains sharps only, so hints like `Bb major` or `Eb minor` raise `ValueError` and fall back to C.
+- Impact: analysis and suggestions are wrong for flat key inputs even when the user provides the correct key.
