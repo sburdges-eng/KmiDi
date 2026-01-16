@@ -653,3 +653,17 @@
 - `KmiDi_PROJECT/source/cpp/src/bridge/MusicTheoryBridge.cpp:303-339` comments out the C++ fallback path with a `FIXME` and returns `{"error":"Lesson plan not available"}`.
 - When the Python bridge is unavailable (`PYTHON_AVAILABLE` false or `createLessonPlanFunc_` null), there is no functional fallback.
 - Impact: `createLessonPlan()` always fails on native-only builds, blocking lesson plan generation.
+
+100) MIDI transformer defines rotary embeddings but never applies them.
+- `KmiDi_TRAINING/training/training/cuda_session/train_midi_generator.py:170-233` instantiates `RotaryEmbedding`, but `EmotionMIDITransformer.forward()` never applies it to attention queries/keys.
+- Impact: training runs without positional encoding despite intended rotary setup, degrading sequence modeling and making the rotary module unused.
+
+101) Self-attention uses both `attn_mask` and `is_causal=True`, which can error on newer PyTorch.
+- `KmiDi_TRAINING/training/training/cuda_session/train_midi_generator.py:227-235` builds a causal `attn_mask` and passes it to `nn.MultiheadAttention` while also setting `is_causal=True`.
+- In recent PyTorch versions, `attn_mask` and `is_causal` are mutually exclusive and can raise a runtime error.
+- Impact: training can crash at runtime depending on the PyTorch version.
+
+102) Autoregressive generate() breaks for batch size > 1.
+- `KmiDi_TRAINING/training/training/cuda_session/train_midi_generator.py:333-340` uses `next_token.item()` to check EOS, which only works for a single-element tensor.
+- For batch generation, this raises `ValueError` or only checks the first sample, preventing multi-sample generation.
+- Impact: batched inference fails or terminates incorrectly.
