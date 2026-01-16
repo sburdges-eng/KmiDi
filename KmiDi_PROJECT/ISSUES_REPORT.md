@@ -755,3 +755,8 @@
 - `KmiDi_PROJECT/source/cpp/src/core/intent_processor.cpp:7-19` searches for "loss", "grief", "anger", etc. without normalizing the input.
 - Inputs like "Grief" or "Loss" in different casing won’t match and fall through to the default emotion.
 - Impact: emotion classification is inconsistent and misses obvious keywords depending on user capitalization.
+
+121) Chord key-mode estimation misclassifies major chords as minor.
+- `KmiDi_PROJECT/source/python/music_brain/audio/chord_detection.py:329-333` counts minor chords using `if 'min' in c.quality or 'm' in c.chord_name`.
+- Chord names like `Cmaj7` include "m", so they are counted as minor.
+- Impact: key mode is biased toward minor and can be incorrect for major-heavy progressions.
