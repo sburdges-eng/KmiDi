@@ -750,3 +750,8 @@
 - `KmiDi_PROJECT/source/python/music_brain/audio/analyzer.py:233-236` filters RMS dB values with `rms_db > -60` and calls `np.min(...)` without checking for an empty array.
 - For silent or near-silent audio, the filtered array is empty and `np.min` raises `ValueError`.
 - Impact: `analyze_waveform()` fails on quiet/silent clips instead of returning a valid analysis.
+
+120) IntentProcessor keyword matching is case-sensitive.
+- `KmiDi_PROJECT/source/cpp/src/core/intent_processor.cpp:7-19` searches for "loss", "grief", "anger", etc. without normalizing the input.
+- Inputs like "Grief" or "Loss" in different casing won’t match and fall through to the default emotion.
+- Impact: emotion classification is inconsistent and misses obvious keywords depending on user capitalization.
