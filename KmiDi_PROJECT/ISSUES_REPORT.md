@@ -691,3 +691,8 @@
 - `KmiDi_TRAINING/training/training/train_integrated.py:813-824` calls `/workspaces/KmiDi/.venv/bin/python` and `/workspaces/KmiDi/training/train_integrated.py`.
 - These paths are environment-specific and will fail outside that workspace layout.
 - Impact: tuning fails on local machines or CI runners with different paths.
+
+108) Audio cache script hardcodes default output to a specific external volume.
+- `KmiDi_TRAINING/training/training/cache_audio_manifest.py:72-79` defaults `--out-dir` to `/Volumes/sbdrive/kmidi_audio_cache`.
+- This path is machine-specific and fails on systems without that volume mounted.
+- Impact: the script fails or writes to a non-existent path unless the user overrides the default.
