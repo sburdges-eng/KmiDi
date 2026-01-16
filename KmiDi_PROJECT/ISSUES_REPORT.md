@@ -1002,6 +1002,16 @@
 - Description: `notePosition` divides by `noteDuration` (`durationSamples`) without checking for zero.
 - Why it matters: Notes with zero duration (or BPM set to zero) yield division by zero, producing NaNs that can propagate through expression and DSP.
 - Suggested fix: Guard against `durationSamples <= 0` and skip synthesis or force `noteDuration` to at least 1 sample.
+- File: `KmiDi_PROJECT/source/cpp/src/groove/TempoEstimator.cpp`
+- Line(s): 22-26, 78-83
+- Description: `historySize` can be set to 0, but `addOnset()` uses it as a modulo divisor for the circular buffer index.
+- Why it matters: A zero history size triggers division by zero and out‑of‑bounds access in the tempo estimator.
+- Suggested fix: Clamp `historySize` to at least 1 when validating config values.
+- File: `KmiDi_PROJECT/source/cpp/src/groove/GrooveEngine.cpp`
+- Line(s): 99-102, 127-129, 139-148
+- Description: `reset()` zeroes `analysis_`, leaving `timeSignatureNum` at 0, but `quantizeToGrid()` and `applySwing()` compute `samplesPerBar` using that value and divide by it.
+- Why it matters: After reset, quantization/swing can divide by zero and crash if called before a time signature is re‑detected.
+- Suggested fix: Reinitialize `analysis_.timeSignatureNum/Den` to defaults in `reset()` or guard against zero before dividing.
 
 ## Low Severity
 - File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
@@ -1029,6 +1039,11 @@
 - Description: `beatsToSamples()` divides by `bpm_` without guarding against zero or negative BPM.
 - Why it matters: A zero BPM yields division by zero and invalid sample counts used throughout synthesis.
 - Suggested fix: Clamp BPM to a positive minimum before conversion or return 0 when BPM is invalid.
+- File: `KmiDi_PROJECT/source/cpp/src/groove/GrooveEngine.cpp`
+- Line(s): 134-137
+- Description: `quantizationStrength` in `GrooveEngine::Config` is never forwarded to the `RhythmQuantizer`, leaving the strength at its default regardless of config.
+- Why it matters: User‑configured quantization strength is ignored, leading to unexpected quantization behavior.
+- Suggested fix: Update the quantizer config inside `updateConfig()` (and/or constructor) with `quantizationStrength`.
 - File: `KmiDi_PROJECT/source/cpp/src/engine/EmotionThesaurusLoader.cpp`
 - Line(s): 262-268
 - Description: The fallback path for sub-sub-emotions treats any non-`joy`/`happiness` category as negative, so `"happy"` or other positive variants are mapped to negative valence.
@@ -1056,5 +1071,15 @@
 - Description: Preference-based adaptation is left as TODOs and currently returns pass-through values.
 - Why it matters: Callers may expect adaptive behavior but get no personalization.
 - Suggested fix: Implement preference retrieval or document that adaptive behavior is currently a no-op.
+- File: `KmiDi_PROJECT/source/cpp/src/groove/OnsetDetector.cpp`
+- Line(s): 19-33, 49-56
+- Description: Onset detection is a stub with TODOs; `process()` never marks onsets.
+- Why it matters: Groove analysis never detects onsets, so tempo estimation and time‑signature detection are effectively disabled.
+- Suggested fix: Implement spectral flux and peak picking or mark this module as unimplemented in public APIs.
+- File: `KmiDi_PROJECT/source/cpp/src/groove/RhythmQuantizer.cpp`
+- Line(s): 9-13
+- Description: Constructor contains a TODO comment indicating planned implementation work.
+- Why it matters: Signals incomplete feature scope and may mislead users about quantizer maturity.
+- Suggested fix: Remove the TODO after implementation or track it in an issue tracker.
 
 ## Cross-Cutting / Systemic Issues
