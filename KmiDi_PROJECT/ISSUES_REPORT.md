@@ -612,6 +612,11 @@
 - `stop()` closes the server but never cancels the pending Future, so `start()` never returns and the background thread stays alive.
 - Impact: repeated start/stop leaks threads and prevents clean shutdown.
 
+93) Melody ML generator assumes registry models are loaded but never loads them.
+- `KmiDi_PROJECT/source/python/music_brain/session/ml_melody_generator.py:193-216` calls `get_model("melodytransformer")` without first loading the registry manifest.
+- `penta_core.ml` only exposes `load_registry_manifest` but `_load_ml_model` never calls it, so `get_model` returns None unless something else pre-populates the registry.
+- Impact: ML melody generation always falls back to rule-based output in normal runs.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
