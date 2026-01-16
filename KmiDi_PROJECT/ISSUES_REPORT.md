@@ -324,6 +324,11 @@
 - `KmiDi_PROJECT/source/python/music_brain/agents/ableton_bridge.py:177-181` does the same in `AbletonOSCBridge.off`.
 - Impact: attempting to remove a callback twice (or after errors) raises `ValueError` and can break cleanup flows.
 
+108) Intent bridge imports a missing rule-break enum.
+- `KmiDi_PROJECT/source/python/music_brain/session/intent_bridge.py:14-21` imports `MelodyRuleBreak`.
+- `KmiDi_PROJECT/source/python/music_brain/session/intent_schema.py` does not define `MelodyRuleBreak`.
+- Impact: importing the intent bridge raises `ImportError`, breaking C++ ↔ Python intent processing.
+
 36) Adaptive batch sizing is computed but never applied.
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
 - Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
