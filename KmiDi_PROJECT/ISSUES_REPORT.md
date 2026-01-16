@@ -967,6 +967,21 @@
 - Description: WAV `fmt ` chunk parsing reads a second `fmtSize` field from the payload, shifting all subsequent fields by 4 bytes.
 - Why it matters: The audio format fields (`audioFormat`, `numChannels`, `sampleRate`, etc.) are misread, which can cause incorrect buffer sizing and corrupted audio reads.
 - Suggested fix: Use the already-read `chunkSize` as the `fmt` size and read the payload fields in the correct order without an extra `fmtSize` read.
+- File: `KmiDi_PROJECT/source/cpp/src/engine/QuantumVADSystem.cpp`
+- Line(s): 82-100
+- Description: `calculateInterference()` and `createEmotionalEntanglement()` call `vadSystem_.processEmotionId()` and immediately use `.vad` without checking `success`.
+- Why it matters: Invalid emotion IDs or missing thesaurus data can return an unsuccessful result, leaving VAD values at defaults and producing misleading interference/entanglement outputs.
+- Suggested fix: Check `success` for both calls and return a neutral result or error when inputs are invalid.
+- File: `KmiDi_PROJECT/source/cpp/src/music_theory/MusicTheoryBrain.cpp`
+- Line(s): 421-423
+- Description: `explainEmotionalEffect()` indexes `tensionCurve[50]` without ensuring the curve has at least 51 entries.
+- Why it matters: Short tension curves cause out-of-bounds access and crashes during explanation generation.
+- Suggested fix: Guard on `tensionCurve.size()` or compute an average from available elements.
+- File: `KmiDi_PROJECT/source/cpp/src/core/emotion_thesaurus.cpp`
+- Line(s): 9-16
+- Description: `initializeThesaurus()` is empty and `getNode()` always returns `nullptr`, leaving the core emotion thesaurus uninitialized.
+- Why it matters: Any caller relying on this thesaurus will always fail to resolve emotions and may dereference null pointers.
+- Suggested fix: Populate the thesaurus or clearly deprecate/remove this stub in favor of the engine-level thesaurus.
 
 ## Low Severity
 - File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
@@ -974,6 +989,16 @@
 - Description: RIFF chunk parsing skips `chunkSize` bytes without accounting for the required padding byte for odd-sized chunks.
 - Why it matters: For files with odd-sized chunks, the next chunk header is read at the wrong offset, leading to parse failures.
 - Suggested fix: After skipping a chunk, add an extra byte when `chunkSize` is odd to maintain word alignment.
+- File: `KmiDi_PROJECT/source/cpp/src/engine/EmotionThesaurusLoader.cpp`
+- Line(s): 262-268
+- Description: The fallback path for sub-sub-emotions treats any non-`joy`/`happiness` category as negative, so `"happy"` or other positive variants are mapped to negative valence.
+- Why it matters: Misclassified valence skews VAD values and downstream music mapping for emotions loaded from JSON variants.
+- Suggested fix: Normalize category names (e.g., include `"happy"`) before deciding on valence polarity.
+- File: `KmiDi_PROJECT/source/cpp/src/engine/EmotionToMusicMapper.cpp`
+- Line(s): 168-172
+- Description: `quantumStateToVoice()` builds a new `QuantumEmotionalField` with default basis values rather than using the basis map that produced `qState`.
+- Why it matters: Voice mapping can be inconsistent when a caller customizes the emotion basis (defaults are silently applied).
+- Suggested fix: Pass the active basis map into `quantumStateToVoice()` or store a field reference so conversion uses the same basis.
 
 ## Informational / Warnings
 - File: `KmiDi_PROJECT/source/cpp/src/harmony/HarmonyEngine.cpp`
@@ -986,5 +1011,10 @@
 - Description: Prior issue about `.aiff`/`.flac` detection appears to be a false positive because `ext` uses the last 4 characters (e.g., ".aiff" → "aiff").
 - Why it matters: Keeping an unverified issue can mislead triage and inflate counts.
 - Suggested fix: Mark this as “suspected false positive” or verify against actual filenames before acting.
+- File: `KmiDi_PROJECT/source/cpp/src/engine/AdaptiveGenerator.cpp`
+- Line(s): 36-45
+- Description: Preference-based adaptation is left as TODOs and currently returns pass-through values.
+- Why it matters: Callers may expect adaptive behavior but get no personalization.
+- Suggested fix: Implement preference retrieval or document that adaptive behavior is currently a no-op.
 
 ## Cross-Cutting / Systemic Issues
