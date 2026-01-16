@@ -735,3 +735,8 @@
 - `KmiDi_PROJECT/source/python/music_brain/session/intent_bridge.py:152-171` maps `result.get("key")`, `result.get("tempo")`, etc.
 - `music_brain/session/intent_processor.process_intent()` returns a dict with `harmony`, `groove`, `arrangement`, `production`, and `intent_summary` keys, not flat `key/tempo` fields.
 - Impact: even if the intent bridge calls the correct processor, it still emits default/fallback values instead of real musical parameters.
+
+117) Suggested rule-break justifications are always empty.
+- `KmiDi_PROJECT/source/python/music_brain/session/intent_bridge.py:128-142` reads `RULE_BREAKING_EFFECTS[rule_break].get("justification")`.
+- The rule database only defines `description`, `effect`, and `use_when`, so `justification` is never present.
+- Impact: `get_suggested_rule_breaks()` returns blank justifications for every suggestion.
