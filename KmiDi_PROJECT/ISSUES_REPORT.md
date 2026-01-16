@@ -247,6 +247,15 @@
 - `KmiDi_PROJECT/source/cpp/src/voice/VoiceSynthesizer.cpp:640-643` allows any BPM value to be set.
 - Impact: invalid BPM values produce divide-by-zero or invalid timing during synthesis.
 
+91) Drum humanization returns unsorted events after timing jitter.
+- `KmiDi_PROJECT/source/python/music_brain/groove/groove_engine.py:224-340` applies per-event timing jitter but never sorts the result by `start_tick`.
+- `KmiDi_PROJECT/source/python/music_brain/tier1/midi_pipeline_wrapper.py:238-285` assumes events are in chronological order and converts to MIDI delta times.
+- Impact: later events can appear before earlier ones, causing collapsed timing when delta times are clamped to zero.
+
+92) MCP TODO storage uses `fcntl`, which is unavailable on Windows.
+- `KmiDi_PROJECT/source/python/mcp_todo/storage.py:9-52` imports and relies on `fcntl` for file locking.
+- Impact: the MCP TODO server crashes at import time on Windows, preventing cross-platform use.
+
 36) Adaptive batch sizing is computed but never applied.
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
 - Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
