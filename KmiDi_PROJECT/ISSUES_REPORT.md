@@ -521,6 +521,11 @@
 - `music_brain/session/intent_schema.py:454-538` `to_dict()` ignores these fields, so `save()` drops them.
 - Impact: `final_intent.json` omits the generated outputs, making post-run inspection misleading.
 
+74) Batched inference can produce misaligned inputs when requests have missing keys.
+- `python/penta_core/ml/inference_batching.py:232-251` builds each batched input by stacking only non-None arrays, dropping requests that omit a key.
+- This yields per-key batch sizes that no longer match the original request count and can misalign inputs across keys or trigger shape errors in the backend.
+- Impact: batched inference can mix inputs from different requests or fail unpredictably when optional inputs are omitted.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
