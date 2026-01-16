@@ -992,6 +992,11 @@
 - Description: `convertFromLegacyIntentResult()` calculates `unified.tempo` from `unified.tempoBpm` before assigning `tempoBpm`.
 - Why it matters: `unified.tempoBpm` is uninitialized at that point, so `tempo` becomes garbage and can mis-scale downstream tempo logic.
 - Suggested fix: Assign `unified.tempoBpm` first, then compute `unified.tempo` from it.
+- File: `KmiDi_PROJECT/source/cpp/src/music_theory/rhythm/RhythmEngine.cpp`
+- Line(s): 46-54
+- Description: `analyzeTimeSignature()` divides by `beatDuration` derived from `calculateMean(ioi)` without guarding against empty IOI or zero duration.
+- Why it matters: Single-onset inputs (or duplicated timestamps) yield `avgIOI == 0`, causing division by zero and undefined behavior.
+- Suggested fix: If `ioi` is empty or `avgIOI <= 0`, return a default time signature before dividing.
 
 ## Low Severity
 - File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
@@ -1009,6 +1014,11 @@
 - Description: `calculateAverageVAD()` already returns averages, but `simulateDiffusion()` divides the neighborhood average by `neighbors.size()` a second time.
 - Why it matters: The self‑regulation term is scaled too low, reducing its influence and skewing diffusion behavior.
 - Suggested fix: Remove the extra division or return sums from `calculateAverageVAD()` and average only once.
+- File: `KmiDi_PROJECT/source/cpp/src/music_theory/rhythm/RhythmEngine.cpp`
+- Line(s): 1127-1135
+- Description: `snapToGrid()` and `createGrid()` divide by `(subdivision / 4.0f)` without guarding against `subdivision == 0`.
+- Why it matters: A zero subdivision will trigger division by zero in rhythm quantization utilities.
+- Suggested fix: Validate `subdivision > 0` or return the input unchanged when subdivision is invalid.
 - File: `KmiDi_PROJECT/source/cpp/src/engine/EmotionThesaurusLoader.cpp`
 - Line(s): 262-268
 - Description: The fallback path for sub-sub-emotions treats any non-`joy`/`happiness` category as negative, so `"happy"` or other positive variants are mapped to negative valence.
