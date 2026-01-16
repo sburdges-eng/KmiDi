@@ -633,3 +633,8 @@
 - `music_brain/session/intent_schema.py:422-481` defines a custom `CompleteSongIntent.__init__` that does not accept those keyword arguments; it only accepts flattened fields and ignores `**kwargs`.
 - As a result, the constructed `CompleteSongIntent` uses default empty values, so `validate_intent()` and downstream logic operate on blank intent data.
 - Impact: validation results and affect mapping suggestions are computed against defaults instead of the user-provided intent.
+
+96) Emotion API `create_intent()` builds CompleteSongIntent with ignored keyword args.
+- `KmiDi_PROJECT/source/python/music_brain/emotion_api.py:559-591` passes `song_root=SongRoot(...)`, `song_intent=SongIntent(...)`, `technical_constraints=TechnicalConstraints(...)`, and `system_directive=SystemDirective(...)` into `CompleteSongIntent(...)`.
+- `music_brain/session/intent_schema.py:422-481` defines a custom initializer that does not accept those parameters and ignores `**kwargs`, so the constructed intent falls back to empty defaults.
+- Impact: `create_intent()` returns intents missing the caller-provided fields, leading to empty/invalid intent data in downstream generation.
