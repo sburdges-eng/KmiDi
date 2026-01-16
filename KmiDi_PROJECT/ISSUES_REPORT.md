@@ -819,3 +819,28 @@
 - `python/penta_core/ml/model_registry.py:336-352` maps `"torchscript"` to `ModelBackend.PYTORCH`.
 - `ModelBackend.TORCHSCRIPT` is never returned, so TorchScript files are indistinguishable from standard PyTorch entries.
 - Impact: backend-specific handling for TorchScript can never be selected via the registry.
+
+134) Async inference module raises NameError on import.
+- `python/penta_core/ml/async_inference.py:336-339` references `threading.Lock()` but `threading` is never imported in this module.
+- This triggers `NameError: name 'threading' is not defined` when the module is imported.
+- Impact: async inference singleton cannot be initialized; importing the module fails.
+
+135) Adaptive batch sizing is computed but never applied.
+- `python/penta_core/ml/inference_batching.py:59-76` stores `_current_batch_size` and updates it in `_update_stats()`.
+- `process_batch()` always uses `self.config.max_batch_size` and never uses `_current_batch_size`.
+- Impact: adaptive batching has no effect; batch size never changes based on latency.
+
+136) Batch queue waiting blocks producers because the lock is held while sleeping.
+- `python/penta_core/ml/inference_batching.py:118-132` calls `time.sleep(0.001)` inside `with self._lock:`.
+- While sleeping, `add_request()` cannot acquire the lock to enqueue new work, so the batch cannot reach the minimum size.
+- Impact: batching can stall or underfill when the queue is empty, and throughput suffers.
+
+137) Resource manager only tracks GPU quota for the first detected device.
+- `python/penta_core/ml/resource_manager.py:88-123` initializes `ResourceType.GPU_MEMORY` only once and ignores subsequent devices.
+- Multi‑GPU systems share a single quota based on the first device, and per‑device limits are not represented.
+- Impact: GPU allocation tracking is incorrect on multi‑GPU hosts and can under/over‑allocate.
+
+138) Metrics summary ignores requested time range.
+- `python/penta_core/ml/monitoring.py:150-175` computes `cutoff_time` but never filters metric samples by timestamp.
+- The summary always reflects all historical data, regardless of the requested `time_range_minutes`.
+- Impact: dashboards and alerts can misrepresent recent system health.
