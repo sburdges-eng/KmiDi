@@ -553,6 +553,11 @@
 - `python/penta_core/ml/monitoring.py:158-188` accepts `time_range_minutes` but always returns full-history `metric.get_stats()` without filtering by timestamp.
 - Impact: monitoring dashboards cannot request time-windowed stats; results are misleading for “last N minutes” views.
 
+81) Spectocloud training never supervises the model’s `properties` output.
+- `KmiDi_TRAINING/training/training/cuda_session/train_spectocloud.py:176-212` predicts `positions`, `colors`, and `properties`, but the dataset only returns positions/colors.
+- Training loss in `train_epoch`/`evaluate` (`KmiDi_TRAINING/training/training/cuda_session/train_spectocloud.py:520-666`) ignores `properties` entirely.
+- Impact: `properties` learns arbitrary values, making downstream visuals (size/glow/depth) unreliable.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
