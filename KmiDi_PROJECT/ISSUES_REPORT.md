@@ -899,3 +899,8 @@
 - `KmiDi_PROJECT/source/cpp/src/midi/MidiGenerator.cpp:39-78` stores a pointer to a `static thread_local ArrangementOutput`.
 - Each new call overwrites this shared storage, so older `GeneratedMidi::arrangement` pointers may suddenly reference unrelated arrangement data.
 - Impact: downstream use of `GeneratedMidi.arrangement` can read incorrect section metadata after later generations.
+
+150) EmotionThesaurus returns duplicate default nodes and has unreachable code.
+- `KmiDi_PROJECT/source/cpp/src/engine/EmotionThesaurus.cpp:149-170` has two identical “defaultNode” blocks after the first `return`, making the latter block unreachable.
+- This indicates dead code and makes it unclear which default should apply.
+- Impact: confusion for maintainers and risk of diverging fixes in the unreachable block.
