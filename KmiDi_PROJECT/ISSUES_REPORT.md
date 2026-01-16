@@ -1012,6 +1012,11 @@
 - Description: `reset()` zeroes `analysis_`, leaving `timeSignatureNum` at 0, but `quantizeToGrid()` and `applySwing()` compute `samplesPerBar` using that value and divide by it.
 - Why it matters: After reset, quantization/swing can divide by zero and crash if called before a time signature is re‑detected.
 - Suggested fix: Reinitialize `analysis_.timeSignatureNum/Den` to defaults in `reset()` or guard against zero before dividing.
+- File: `KmiDi_PROJECT/source/cpp/src/midi/MidiSequence.cpp`
+- Line(s): 18-35
+- Description: `toNoteEvents()` assumes messages are time-ordered; if a NoteOff precedes its NoteOn, `durationTicks` underflows.
+- Why it matters: Unsorted or out-of-order MIDI streams can produce huge durations and corrupted note timing.
+- Suggested fix: Ensure messages are sorted before pairing or clamp negative/invalid durations to zero.
 
 ## Low Severity
 - File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
@@ -1054,6 +1059,11 @@
 - Description: `applySwing()` divides/modulos by `ppq` without guarding against zero.
 - Why it matters: A zero PPQ causes division by zero and invalid tick calculations for swing timing.
 - Suggested fix: Validate `ppq > 0` before applying swing or return the original tick when invalid.
+- File: `KmiDi_PROJECT/source/cpp/include/daiw/midi/MidiSequence.h`
+- Line(s): 108-113
+- Description: `quantize()` divides by `gridSize` without checking for zero.
+- Why it matters: A zero grid size triggers division by zero and invalid timestamps.
+- Suggested fix: Guard `gridSize > 0` before quantizing or return without changes when invalid.
 - File: `KmiDi_PROJECT/source/cpp/src/groove/GrooveEngine.cpp`
 - Line(s): 134-137
 - Description: `quantizationStrength` in `GrooveEngine::Config` is never forwarded to the `RhythmQuantizer`, leaving the strength at its default regardless of config.
