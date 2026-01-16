@@ -794,3 +794,8 @@
 128) Orchestrator cancellation is a no-op.
 - `KmiDi_PROJECT/source/python/music_brain/orchestrator/orchestrator.py:552-573` logs a cancellation request but never cancels or signals the running task.
 - Impact: callers believe executions are cancelled, but processing continues and resources are not freed.
+
+129) CUDA device “free memory” is misreported.
+- `KmiDi_PROJECT/source/python/penta_core/ml/gpu_utils.py:70-88` sets `memory_free_mb = memory_total - torch.cuda.memory_reserved(i)`.
+- `memory_reserved` is the current process reservation, not global free VRAM, so the reported value is incorrect (often near total on fresh processes).
+- Impact: device selection and diagnostics can pick GPUs based on misleading free-memory figures.
