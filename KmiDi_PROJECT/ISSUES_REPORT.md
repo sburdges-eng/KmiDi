@@ -265,6 +265,23 @@
 - `KmiDi_PROJECT/source/python/kmidi_gui/core/export.py:50-77` falls back to creating an empty file when `midi_data` lacks a source path.
 - Impact: exports appear to succeed but produce unusable MIDI files.
 
+95) Penta-core integration is a non-functional stub.
+- `KmiDi_PROJECT/source/python/music_brain/integrations/penta_core.py:60-220` marks all core methods as placeholders and never connects or sends data.
+- `connect()` always leaves `_connected = False`, and every send method raises `ConnectionError`.
+- Impact: any penta-core integration path is dead code; calls will fail even with a valid endpoint.
+
+96) AI specialization summary is a stub and does not reflect actual capabilities.
+- `KmiDi_PROJECT/source/python/music_brain/ai_specializations.py:1-24` defines a minimal enum and prints hardcoded task names.
+- Impact: CLI status output can mislead users into thinking specialized tooling exists when it does not.
+
+97) Audio texture generator writes empty files.
+- `KmiDi_PROJECT/source/python/music_brain/generators/audio_texture.py:23-40` writes a zero-byte WAV as a placeholder.
+- Impact: generated textures are unusable while the pipeline reports success.
+
+98) Voice rendering pipeline emits empty audio files.
+- `KmiDi_PROJECT/source/python/music_brain/tier1/voice_pipeline.py:43-116` writes an empty output file and returns metadata only.
+- Impact: vocal generation appears to succeed but produces silent files.
+
 36) Adaptive batch sizing is computed but never applied.
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
 - Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
