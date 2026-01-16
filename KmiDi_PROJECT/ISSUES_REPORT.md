@@ -730,3 +730,8 @@
 - `KmiDi_PROJECT/source/python/music_brain/structure/progression.py:279-289` parses `key_name` from the user hint and does `NOTE_NAMES.index(key_name)`.
 - `NOTE_NAMES` contains sharps only, so hints like `Bb major` or `Eb minor` raise `ValueError` and fall back to C.
 - Impact: analysis and suggestions are wrong for flat key inputs even when the user provides the correct key.
+
+116) Intent bridge format conversion expects keys that `process_intent()` never returns.
+- `KmiDi_PROJECT/source/python/music_brain/session/intent_bridge.py:152-171` maps `result.get("key")`, `result.get("tempo")`, etc.
+- `music_brain/session/intent_processor.process_intent()` returns a dict with `harmony`, `groove`, `arrangement`, `production`, and `intent_summary` keys, not flat `key/tempo` fields.
+- Impact: even if the intent bridge calls the correct processor, it still emits default/fallback values instead of real musical parameters.
