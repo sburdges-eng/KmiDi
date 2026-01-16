@@ -937,6 +937,11 @@
 ## High Severity
 
 ## Medium Severity
+- File: `KmiDi_PROJECT/source/cpp/src/ml/MLFeatureExtractor.cpp`
+- Line(s): 12-34
+- Description: Harmonic feature extraction hardcodes `sampleRate = 44100.0` instead of using the actual audio sample rate.
+- Why it matters: Feature values (F0, centroid, rolloff, bandwidth) are scaled incorrectly for non‑44.1kHz audio, which can mislead ML models.
+- Suggested fix: Thread the real sample rate into `extractHarmonicFeatures()` and pass it to `AudioAnalyzer::analyze()`.
 - File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
 - Line(s): 53-112
 - Description: WAV `fmt ` chunk parsing reads a second `fmtSize` field from the payload, shifting all subsequent fields by 4 bytes.
@@ -951,5 +956,10 @@
 - Suggested fix: After skipping a chunk, add an extra byte when `chunkSize` is odd to maintain word alignment.
 
 ## Informational / Warnings
+- File: `KmiDi_PROJECT/source/cpp/src/harmony/HarmonyEngine.cpp`
+- Line(s): 89-103
+- Description: `getChordHistory()` and `getScaleHistory()` are TODO stubs that ignore `maxCount`.
+- Why it matters: Callers may assume history tracking exists; returning only the current item can mislead analytics and UI history views.
+- Suggested fix: Implement history buffers or document that history is not available.
 
 ## Cross-Cutting / Systemic Issues
