@@ -804,3 +804,18 @@
 - `KmiDi_PROJECT/source/python/music_brain/audio/chord_detection.py:252-259` computes `frames_per_window = int(self.window_size * sr / self.hop_length)` and then uses it as a divisor.
 - If `window_size` is smaller than `hop_length / sr`, `frames_per_window` becomes 0 and `chroma.shape[1] // frames_per_window` raises `ZeroDivisionError`.
 - Impact: chord detection crashes for short window configurations.
+
+131) Model pool pre-warm functionality is unreachable because a boolean field shadows the method.
+- `python/penta_core/ml/model_pool.py:58-76` sets `self.pre_warm = pre_warm` in `__init__`.
+- The class also defines a `pre_warm()` method at `python/penta_core/ml/model_pool.py:202-211`, so instances resolve `self.pre_warm` to the boolean and the method is not callable.
+- Impact: calling `pool.pre_warm(...)` raises `TypeError: 'bool' object is not callable`, so pre-warming cannot be triggered.
+
+132) Test input generation ignores single-dimension input shapes.
+- `python/penta_core/ml/training_inference_bridge.py:362-371` builds a shape using `shape = [1] + list(model_info.input_shape[1:])`.
+- When `input_shape` is a single dimension (e.g., `[128]` from the registry manifest), this produces `[1]` instead of `[1, 128]`.
+- Impact: validation inference uses the wrong input shape and can fail for models expecting a feature dimension.
+
+133) TorchScript models are registered as PyTorch and lose backend specificity.
+- `python/penta_core/ml/model_registry.py:336-352` maps `"torchscript"` to `ModelBackend.PYTORCH`.
+- `ModelBackend.TORCHSCRIPT` is never returned, so TorchScript files are indistinguishable from standard PyTorch entries.
+- Impact: backend-specific handling for TorchScript can never be selected via the registry.
