@@ -775,3 +775,8 @@
 - `KmiDi_PROJECT/source/python/music_brain/structure/sections.py:232-233` sets `ticks_per_bar = ppq * time_sig[0]`.
 - For signatures like 6/8 or 3/8, the denominator changes beat length; bar length should scale by `4/denominator`.
 - Impact: bar boundaries and section lengths are incorrect for non‑4/4 MIDI files.
+
+125) Drum analyzer crashes on unknown drum pitches.
+- `KmiDi_PROJECT/source/python/music_brain/groove/drum_analysis.py:112-115` builds `hihat_notes` with `get_drum_category(n.pitch).startswith('hihat')`.
+- `get_drum_category()` can return None for unmapped pitches, so `.startswith()` raises `AttributeError`.
+- Impact: analysis fails when MIDI uses drum notes outside the known map.
