@@ -603,6 +603,10 @@
 - `emit_sync()` claims to be non-blocking but ends up waiting for all handlers when it calls `emit(..., wait=False)`.
 - Impact: synchronous callers can block unexpectedly on slow handlers, defeating the non-blocking API contract.
 
+91) WebSocket auth token is accepted but never enforced.
+- `KmiDi_PROJECT/source/python/music_brain/agents/websocket_api.py:132-152` stores `auth_token`, but no request path checks or header validation use it.
+- Impact: all WebSocket commands are unauthenticated even when a token is configured.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
