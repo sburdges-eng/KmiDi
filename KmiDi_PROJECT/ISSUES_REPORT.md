@@ -785,3 +785,8 @@
 - `KmiDi_PROJECT/source/python/music_brain/utils/midi_io.py:72-103` records only the last `set_tempo` value and computes `duration_seconds` using a single `seconds_per_tick`.
 - For files with multiple tempo changes, the reported duration is incorrect.
 - Impact: MIDI metadata (duration_seconds) is wrong for tempo‑mapped files.
+
+127) Bridge API key detection fails on lowercase key names.
+- `KmiDi_PROJECT/source/python/music_brain/orchestrator/bridge_api.py:547-555` searches for patterns like `" C major"` and `" Cm "` without normalizing the pattern for lowercase input.
+- `text_prompt.lower()` is used only in one branch, but the search string still contains uppercase `k`, so inputs like "c minor" or "f major" are missed.
+- Impact: key detection silently falls back to C for lowercase prompts.
