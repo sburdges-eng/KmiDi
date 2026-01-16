@@ -715,3 +715,8 @@
 - `KmiDi_PROJECT/source/python/music_brain/session/intent.py:18-55` builds a `CompleteSongIntent` using `song_root=SongRoot(...)`, `song_intent=SongIntent(...)`, and `technical_constraints=TechnicalConstraints(...)`.
 - `music_brain/session/intent_schema.py:422-481` ignores those keyword arguments, so the returned template omits the placeholder values.
 - Impact: `daiw.intent.create_template` yields an empty/default intent instead of the intended guidance fields.
+
+113) OnsetDetector is a stub that never detects onsets.
+- `KmiDi_PROJECT/source/cpp/src/groove/OnsetDetector.cpp:13-56` leaves `process()` empty and always sets `onsetDetected_ = false`.
+- `computeSpectralFlux()` and `detectPeaks()` are unimplemented.
+- Impact: any groove/tempo features relying on onsets will never trigger or update.
