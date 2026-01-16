@@ -238,6 +238,15 @@
 - `KmiDi_PROJECT/source/cpp/src/midi/MidiBuilder.cpp:85-90` computes `samplesPerBeat = (sampleRate * 60.0) / bpm` without guarding against `bpm <= 0`.
 - Impact: passing a zero/negative BPM will crash or generate invalid timing.
 
+89) F0 extractor interpolation can divide by zero.
+- `KmiDi_PROJECT/source/cpp/src/audio/F0Extractor.cpp:198-214` computes `offset = (y2 - y0) / (2 * (2*y1 - y0 - y2))` without checking for a zero denominator.
+- Impact: flat CMNDF regions can yield NaN/inf offsets, destabilizing pitch detection.
+
+90) Voice synthesizer does not validate BPM before time conversion.
+- `KmiDi_PROJECT/source/cpp/src/voice/VoiceSynthesizer.cpp:477-481` converts beats to samples using `60.0 / bpm_` without guarding for `bpm_ <= 0`.
+- `KmiDi_PROJECT/source/cpp/src/voice/VoiceSynthesizer.cpp:640-643` allows any BPM value to be set.
+- Impact: invalid BPM values produce divide-by-zero or invalid timing during synthesis.
+
 36) Adaptive batch sizing is computed but never applied.
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
 - Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
