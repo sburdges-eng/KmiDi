@@ -643,3 +643,8 @@
 - `KmiDi_PROJECT/source/python/music_brain/cli.py:17` imports `RuleBreakingCategory` from `music_brain.session.intent_schema` with a comment “Assuming this exists”.
 - The intent schema only defines `HarmonyRuleBreak`, `RhythmRuleBreak`, `ArrangementRuleBreak`, and `ProductionRuleBreak`, so the import raises `ImportError` on CLI startup.
 - Impact: the CLI fails to run before any command handling, even for unrelated subcommands.
+
+98) AdaptiveGenerator never applies preferences even when enabled.
+- `KmiDi_PROJECT/source/cpp/src/engine/AdaptiveGenerator.cpp:34-55` calls `adaptIntent()` when adaptive mode and preference tracking are enabled, but `adaptIntent()` just returns the input unchanged.
+- `getPreferredAdjustments()` always returns an empty map and there is no PreferenceTracker query.
+- Impact: adaptive generation paths silently behave the same as non-adaptive paths, so learned preferences are never reflected.
