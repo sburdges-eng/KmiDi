@@ -701,3 +701,12 @@
 - `KmiDi_PROJECT/source/python/music_brain/session/intent_processor.py:56-64` normalizes notes by `note.replace('b', '#').upper()`, so `Bb` becomes `B#`.
 - The flat-to-sharp fallback map expects `BB`, so flats like `Bb`, `Eb`, `Ab` never match and default to index 0.
 - Impact: progressions generated with flat keys resolve to the wrong root notes.
+
+110) Intent bridge instantiates IntentProcessor without required intent argument and calls missing method.
+- `KmiDi_PROJECT/source/python/music_brain/session/intent_bridge.py:20-49` initializes `IntentProcessor()` with no arguments, but `IntentProcessor.__init__` requires a `CompleteSongIntent`.
+- `process_intent()` then calls `_intent_processor.process_intent(intent)`, yet `IntentProcessor` exposes `generate_all()` and no `process_intent` method.
+- Impact: C++ bridge calls raise `TypeError`/`AttributeError`, so intent processing fails before returning any result.
+
+111) Intent bridge imports non-existent MelodyRuleBreak enum.
+- `KmiDi_PROJECT/source/python/music_brain/session/intent_bridge.py:12-19` imports `MelodyRuleBreak`, which is not defined in `music_brain.session.intent_schema`.
+- Impact: importing `intent_bridge` raises `ImportError`, preventing the Python bridge from loading.
