@@ -558,6 +558,11 @@
 - Training loss in `train_epoch`/`evaluate` (`KmiDi_TRAINING/training/training/cuda_session/train_spectocloud.py:520-666`) ignores `properties` entirely.
 - Impact: `properties` learns arbitrary values, making downstream visuals (size/glow/depth) unreliable.
 
+82) Model registry overwrites previous versions, breaking rollback and multi-version deploys.
+- `python/penta_core/ml/training_inference_bridge.py:139-186` registers trained models with `name=model_name`.
+- `python/penta_core/ml/model_registry.py:108-142` uses `name` as the dict key, so each new version replaces the prior entry.
+- Impact: previous versions are lost in the registry; deploy/rollback cannot locate older versions even if `version` fields exist.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
