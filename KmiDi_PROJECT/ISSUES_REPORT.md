@@ -997,6 +997,11 @@
 - Description: `analyzeTimeSignature()` divides by `beatDuration` derived from `calculateMean(ioi)` without guarding against empty IOI or zero duration.
 - Why it matters: Single-onset inputs (or duplicated timestamps) yield `avgIOI == 0`, causing division by zero and undefined behavior.
 - Suggested fix: If `ioi` is empty or `avgIOI <= 0`, return a default time signature before dividing.
+- File: `KmiDi_PROJECT/source/cpp/src/voice/VoiceSynthesizer.cpp`
+- Line(s): 264-272
+- Description: `notePosition` divides by `noteDuration` (`durationSamples`) without checking for zero.
+- Why it matters: Notes with zero duration (or BPM set to zero) yield division by zero, producing NaNs that can propagate through expression and DSP.
+- Suggested fix: Guard against `durationSamples <= 0` and skip synthesis or force `noteDuration` to at least 1 sample.
 
 ## Low Severity
 - File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
@@ -1019,6 +1024,11 @@
 - Description: `snapToGrid()` and `createGrid()` divide by `(subdivision / 4.0f)` without guarding against `subdivision == 0`.
 - Why it matters: A zero subdivision will trigger division by zero in rhythm quantization utilities.
 - Suggested fix: Validate `subdivision > 0` or return the input unchanged when subdivision is invalid.
+- File: `KmiDi_PROJECT/source/cpp/src/voice/VoiceSynthesizer.cpp`
+- Line(s): 477-479
+- Description: `beatsToSamples()` divides by `bpm_` without guarding against zero or negative BPM.
+- Why it matters: A zero BPM yields division by zero and invalid sample counts used throughout synthesis.
+- Suggested fix: Clamp BPM to a positive minimum before conversion or return 0 when BPM is invalid.
 - File: `KmiDi_PROJECT/source/cpp/src/engine/EmotionThesaurusLoader.cpp`
 - Line(s): 262-268
 - Description: The fallback path for sub-sub-emotions treats any non-`joy`/`happiness` category as negative, so `"happy"` or other positive variants are mapped to negative valence.
