@@ -638,3 +638,8 @@
 - `KmiDi_PROJECT/source/python/music_brain/emotion_api.py:559-591` passes `song_root=SongRoot(...)`, `song_intent=SongIntent(...)`, `technical_constraints=TechnicalConstraints(...)`, and `system_directive=SystemDirective(...)` into `CompleteSongIntent(...)`.
 - `music_brain/session/intent_schema.py:422-481` defines a custom initializer that does not accept those parameters and ignores `**kwargs`, so the constructed intent falls back to empty defaults.
 - Impact: `create_intent()` returns intents missing the caller-provided fields, leading to empty/invalid intent data in downstream generation.
+
+97) CLI import references missing RuleBreakingCategory enum.
+- `KmiDi_PROJECT/source/python/music_brain/cli.py:17` imports `RuleBreakingCategory` from `music_brain.session.intent_schema` with a comment “Assuming this exists”.
+- The intent schema only defines `HarmonyRuleBreak`, `RhythmRuleBreak`, `ArrangementRuleBreak`, and `ProductionRuleBreak`, so the import raises `ImportError` on CLI startup.
+- Impact: the CLI fails to run before any command handling, even for unrelated subcommands.
