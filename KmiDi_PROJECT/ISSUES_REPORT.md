@@ -568,6 +568,11 @@
 - Allocations are not tied to a device, so multi-GPU systems can over-allocate or misreport usage.
 - Impact: resource enforcement is inaccurate on multi-GPU hosts, leading to OOMs or misleading monitoring.
 
+84) Melody training crashes due to target shape mismatch in dummy data path.
+- `python/penta_core/ml/training_orchestrator.py:568-586` creates `ModelTask.MELODY_GENERATION` dummy targets as shape `(num_samples,)`.
+- `python/penta_core/ml/training_orchestrator.py:488-518` melody model outputs `(batch, seq, vocab)`, so `CrossEntropyLoss` in `train()` (`python/penta_core/ml/training_orchestrator.py:632-676`) receives incompatible shapes.
+- Impact: `queue_standard_models()` or any melody training run using the built-in trainer fails with a runtime shape error.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
