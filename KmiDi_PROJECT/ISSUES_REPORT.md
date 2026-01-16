@@ -1039,6 +1039,16 @@
 - Description: `beatsToSamples()` divides by `bpm_` without guarding against zero or negative BPM.
 - Why it matters: A zero BPM yields division by zero and invalid sample counts used throughout synthesis.
 - Suggested fix: Clamp BPM to a positive minimum before conversion or return 0 when BPM is invalid.
+- File: `KmiDi_PROJECT/source/cpp/src/midi/MidiBuilder.cpp`
+- Line(s): 121, 347-349
+- Description: `buildMidiBuffer()` and `beatsToSamples()` divide by `bpm` without guarding against zero.
+- Why it matters: A zero BPM produces division by zero and invalid sample offsets in generated MIDI buffers.
+- Suggested fix: Validate `bpm > 0` and either clamp to a minimum or skip conversion when invalid.
+- File: `KmiDi_PROJECT/source/cpp/src/midi/midi_engine.cpp`
+- Line(s): 76-83
+- Description: `msToTicks()` and `ticksToMs()` divide by `ppq_ * tempo_.bpm` without guarding against zero.
+- Why it matters: Uninitialized or zero BPM/PPQ yields division by zero and invalid timing conversions.
+- Suggested fix: Clamp BPM/PPQ to valid non-zero values or return 0 for invalid conversions.
 - File: `KmiDi_PROJECT/source/cpp/src/groove/GrooveEngine.cpp`
 - Line(s): 134-137
 - Description: `quantizationStrength` in `GrooveEngine::Config` is never forwarded to the `RhythmQuantizer`, leaving the strength at its default regardless of config.
