@@ -309,6 +309,11 @@
 - `KmiDi_PROJECT/source/python/music_brain/orchestrator/orchestrator.py:579-583` `__aexit__` is `pass`, leaving running executions intact.
 - Impact: calling cancel/cleanup does not stop work, leading to leaked tasks and misleading status.
 
+105) WebSocket server cannot be stopped cleanly.
+- `KmiDi_PROJECT/source/python/music_brain/agents/websocket_api.py:214-226` `start()` blocks forever on `await asyncio.Future()` with no cancellation hook.
+- `KmiDi_PROJECT/source/python/music_brain/agents/websocket_api.py:242-268` `stop()` closes sockets but does not unblock `start()`, so background threads remain alive.
+- Impact: stop/shutdown leaves the server coroutine hanging and leaks the background thread.
+
 36) Adaptive batch sizing is computed but never applied.
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
 - Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
