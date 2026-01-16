@@ -765,3 +765,8 @@
 - `KmiDi_PROJECT/source/python/music_brain/audio/feel.py:96-99` calls `np.min(rms_db[rms_db > -60])` without guarding for an empty slice.
 - For silent/near-silent audio, the filtered array is empty and raises `ValueError`.
 - Impact: `analyze_feel()` fails on quiet audio files instead of returning a valid analysis.
+
+123) Fitbit streaming can never start because initialization is a stub.
+- `KmiDi_PROJECT/source/cpp/src/biometric/BiometricInput.cpp:290-320` sets `fitbitInitialized_ = false` and returns false in `initializeFitbit()`.
+- `startStreaming()` only enables Fitbit when `fitbitInitialized_` is true, so the Fitbit path is permanently disabled.
+- Impact: Fitbit integration is non-functional even with a valid access token.
