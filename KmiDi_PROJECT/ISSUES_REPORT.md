@@ -780,3 +780,8 @@
 - `KmiDi_PROJECT/source/python/music_brain/groove/drum_analysis.py:112-115` builds `hihat_notes` with `get_drum_category(n.pitch).startswith('hihat')`.
 - `get_drum_category()` can return None for unmapped pitches, so `.startswith()` raises `AttributeError`.
 - Impact: analysis fails when MIDI uses drum notes outside the known map.
+
+126) MIDI duration calculation ignores tempo changes.
+- `KmiDi_PROJECT/source/python/music_brain/utils/midi_io.py:72-103` records only the last `set_tempo` value and computes `duration_seconds` using a single `seconds_per_tick`.
+- For files with multiple tempo changes, the reported duration is incorrect.
+- Impact: MIDI metadata (duration_seconds) is wrong for tempo‑mapped files.
