@@ -299,6 +299,16 @@
 - The module is not referenced elsewhere, but importing it in non-LLDB environments raises `ImportError`.
 - Impact: accidental imports crash in typical runtime environments; file seems out of place for production use.
 
+103) Orchestrator context class is missing `@dataclass`, so construction fails.
+- `KmiDi_PROJECT/source/python/music_brain/orchestrator/interfaces.py:246-318` defines `ExecutionContext` with `field(...)` but does not decorate it as a dataclass.
+- `KmiDi_PROJECT/source/python/music_brain/orchestrator/orchestrator.py:118-137` instantiates `ExecutionContext(...)` with constructor args.
+- Impact: orchestrator execution raises `TypeError` because `ExecutionContext` has no generated `__init__`.
+
+104) Orchestrator cancellation and shutdown are no-ops.
+- `KmiDi_PROJECT/source/python/music_brain/orchestrator/orchestrator.py:540-571` `cancel_execution()` only logs and returns True without cancelling the running task.
+- `KmiDi_PROJECT/source/python/music_brain/orchestrator/orchestrator.py:579-583` `__aexit__` is `pass`, leaving running executions intact.
+- Impact: calling cancel/cleanup does not stop work, leading to leaked tasks and misleading status.
+
 36) Adaptive batch sizing is computed but never applied.
 - `python/penta_core/ml/inference_batching.py:311-329` adjusts `_current_batch_size`, but `process_batch` only uses `config.max_batch_size` and never references `_current_batch_size`.
 - Impact: the adaptive batch size logic has no effect on throughput/latency tradeoffs.
