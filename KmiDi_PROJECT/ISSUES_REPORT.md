@@ -578,6 +578,11 @@
 - Importing `music_brain.voice.synth` fails on systems without LLDB (non-debug environments), and the class cannot actually build child values.
 - Impact: voice synth tooling crashes at import time outside LLDB and the provider is non-functional.
 
+86) Image generation engine never downloads real model weights.
+- `KmiDi_PROJECT/source/python/mcp_workstation/image_generation_engine.py:23-71` “downloads” by creating a dummy marker file in `model_dir`.
+- `_load_pipeline` then calls `StableDiffusionPipeline.from_pretrained(self.model_dir)` which expects a real model directory, so it will fail or load invalid data.
+- Impact: image generation always falls back to stubbed output even when diffusers is installed.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
