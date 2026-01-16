@@ -563,6 +563,11 @@
 - `python/penta_core/ml/model_registry.py:108-142` uses `name` as the dict key, so each new version replaces the prior entry.
 - Impact: previous versions are lost in the registry; deploy/rollback cannot locate older versions even if `version` fields exist.
 
+83) GPU resource quotas only track the first detected GPU and ignore per-device limits.
+- `python/penta_core/ml/resource_manager.py:92-128` sets a single `ResourceType.GPU_MEMORY` quota when the first GPU is seen and skips subsequent devices.
+- Allocations are not tied to a device, so multi-GPU systems can over-allocate or misreport usage.
+- Impact: resource enforcement is inaccurate on multi-GPU hosts, leading to OOMs or misleading monitoring.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
