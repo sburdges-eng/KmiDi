@@ -918,3 +918,8 @@
 153) Curriculum generation crashes when `targetConcepts` is empty.
 - `KmiDi_PROJECT/source/cpp/src/music_theory/knowledge/KnowledgeGraph.cpp:314-333` builds `step.rationale` using `targetConcepts[0]` without checking if the list is empty.
 - Impact: calling `generateCurriculum()` with no targets raises out‑of‑range access.
+
+154) STFT computation writes past the magnitude buffer when frameSize != fftSize.
+- `KmiDi_PROJECT/source/cpp/src/audio/SpectralAnalyzer.cpp:82-111` allocates `magnitude(frameSize / 2 + 1)` for each frame.
+- `computeFFT()` uses `fftSize_` to determine `numBins` and writes `fftSize_ / 2 + 1` values, which overruns the `magnitude` buffer if `frameSize` differs from `fftSize_`.
+- Impact: `computeSTFT()` can corrupt memory or crash when called with frame sizes other than the analyzer’s FFT size.
