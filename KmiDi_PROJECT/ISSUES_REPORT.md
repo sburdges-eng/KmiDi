@@ -607,6 +607,11 @@
 - `KmiDi_PROJECT/source/python/music_brain/agents/websocket_api.py:132-152` stores `auth_token`, but no request path checks or header validation use it.
 - Impact: all WebSocket commands are unauthenticated even when a token is configured.
 
+92) WebSocket server thread never exits after stop().
+- `KmiDi_PROJECT/source/python/music_brain/agents/websocket_api.py:208-218` runs `await asyncio.Future()` forever inside `start()`.
+- `stop()` closes the server but never cancels the pending Future, so `start()` never returns and the background thread stays alive.
+- Impact: repeated start/stop leaks threads and prevents clean shutdown.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
