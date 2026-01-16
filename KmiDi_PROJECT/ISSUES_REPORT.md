@@ -621,3 +621,9 @@
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
 - `KellyPlugin_VST3` logs missing runtime data directories and falls back to embedded defaults.
+
+94) CompleteSongIntent coerces `vulnerability_scale` to float, breaking enum validation.
+- `music_brain/session/intent_schema.py:442-481` defines `vulnerability_scale` as a float and converts it with `float(...)` before assigning to `SongIntent.vulnerability_scale`.
+- `SongIntent.vulnerability_scale` is intended to be an enum-like string ("Low"/"Medium"/"High"), and `validate_intent()` only validates when the field is a string.
+- `CompleteSongIntent.from_dict()` passes strings like "Medium", but the `float()` conversion fails and defaults to 0.5, so the string value is lost.
+- Impact: vulnerability scale is silently coerced to a numeric value, bypassing validation and breaking downstream enum-based logic.
