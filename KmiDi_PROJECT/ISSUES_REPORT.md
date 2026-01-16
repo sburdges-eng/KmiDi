@@ -696,3 +696,8 @@
 - `KmiDi_TRAINING/training/training/cache_audio_manifest.py:72-79` defaults `--out-dir` to `/Volumes/sbdrive/kmidi_audio_cache`.
 - This path is machine-specific and fails on systems without that volume mounted.
 - Impact: the script fails or writes to a non-existent path unless the user overrides the default.
+
+109) Flat note names are mis-parsed in `_get_note_index`, causing wrong pitch classes.
+- `KmiDi_PROJECT/source/python/music_brain/session/intent_processor.py:56-64` normalizes notes by `note.replace('b', '#').upper()`, so `Bb` becomes `B#`.
+- The flat-to-sharp fallback map expects `BB`, so flats like `Bb`, `Eb`, `Ab` never match and default to index 0.
+- Impact: progressions generated with flat keys resolve to the wrong root notes.
