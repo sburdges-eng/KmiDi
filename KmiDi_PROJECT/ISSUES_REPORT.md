@@ -942,6 +942,16 @@
 - Description: Harmonic feature extraction hardcodes `sampleRate = 44100.0` instead of using the actual audio sample rate.
 - Why it matters: Feature values (F0, centroid, rolloff, bandwidth) are scaled incorrectly for non‑44.1kHz audio, which can mislead ML models.
 - Suggested fix: Thread the real sample rate into `extractHarmonicFeatures()` and pass it to `AudioAnalyzer::analyze()`.
+- File: `KmiDi_PROJECT/source/cpp/src/core/memory.cpp`
+- Line(s): 27-78
+- Description: `MemoryPool::allocate()` and `deallocate()` modify `freeList_` without synchronization while `freeCount_` is atomic.
+- Why it matters: Concurrent access can corrupt the free list or double-issue blocks, leading to memory corruption or crashes.
+- Suggested fix: Protect `freeList_` with a lock or make the pool single-producer/single-consumer and document it; otherwise use a lock-free free list.
+- File: `KmiDi_PROJECT/source/cpp/src/core/memory.cpp`
+- Line(s): 92-150
+- Description: `LockFreeQueue` advertises lock-free behavior but `tail_` is non-atomic and updated without synchronization.
+- Why it matters: Multi-threaded producer/consumer use can race on `tail_`, causing use-after-free or lost nodes.
+- Suggested fix: Make `tail_` atomic and use a known lock-free queue algorithm (e.g., Michael-Scott) or guard with a mutex.
 - File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
 - Line(s): 53-112
 - Description: WAV `fmt ` chunk parsing reads a second `fmtSize` field from the payload, shifting all subsequent fields by 4 bytes.
@@ -949,6 +959,11 @@
 - Suggested fix: Use the already-read `chunkSize` as the `fmt` size and read the payload fields in the correct order without an extra `fmtSize` read.
 
 ## Low Severity
+- File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
+- Line(s): 202-228
+- Description: `detectFormat()` checks `"aiff"`/`"flac"` without the leading dot, so `.aiff` or `.flac` extensions are not matched.
+- Why it matters: Format detection may incorrectly return `Unknown` for common file extensions.
+- Suggested fix: Normalize extensions with a leading dot or compare against `".aiff"`/`".flac"`.
 - File: `KmiDi_PROJECT/source/cpp/src/audio/AudioFile.cpp`
 - Line(s): 70-112
 - Description: RIFF chunk parsing skips `chunkSize` bytes without accounting for the required padding byte for odd-sized chunks.
