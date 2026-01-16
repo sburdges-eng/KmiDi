@@ -667,3 +667,13 @@
 - `KmiDi_TRAINING/training/training/cuda_session/train_midi_generator.py:333-340` uses `next_token.item()` to check EOS, which only works for a single-element tensor.
 - For batch generation, this raises `ValueError` or only checks the first sample, preventing multi-sample generation.
 - Impact: batched inference fails or terminates incorrectly.
+
+103) MIDI generator ONNX export uses hard-coded token range that can exceed vocab size.
+- `KmiDi_TRAINING/training/training/cuda_session/export_models.py:86-92` builds `dummy_input_ids` with `torch.randint(0, 388, ...)` regardless of the model’s configured `vocab_size`.
+- If the checkpoint was trained with a smaller vocab, the dummy IDs exceed embedding bounds and ONNX export fails.
+- Impact: export crashes for non-default vocab sizes.
+
+104) Spectocloud ONNX export ignores configured mel/bin dimensions.
+- `KmiDi_TRAINING/training/training/cuda_session/export_models.py:50-58` creates `dummy_spectrogram` with fixed shape `(1, 128, 64)`.
+- If the config uses a different `n_mels` or time-frame length, the exported graph input shape doesn’t match the trained model.
+- Impact: ONNX export can fail or produce a model with incorrect input dimensions.
