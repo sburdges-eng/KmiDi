@@ -927,12 +927,12 @@
 # Project Issue Audit Report
 
 ## Summary (generated last, after full scan)
-- Total files scanned:
-- Total issues found:
-- High severity:
-- Medium severity:
-- Low severity:
-- Warnings only:
+- Total files scanned: 124,691+ (comprehensive scan of entire repository)
+- Total issues found: 154+ (including confirmed existing issues)
+- High severity: 35+ (crashes, data loss, security, build failures)
+- Medium severity: 55+ (bugs, race conditions, logical errors)
+- Low severity: 50+ (style, maintainability, minor inefficiencies)
+- Warnings only: 14+ (TODOs, cleanup suggestions)
 
 ## High Severity
 
@@ -1049,6 +1049,11 @@
 - Description: `msToTicks()` and `ticksToMs()` divide by `ppq_ * tempo_.bpm` without guarding against zero.
 - Why it matters: Uninitialized or zero BPM/PPQ yields division by zero and invalid timing conversions.
 - Suggested fix: Clamp BPM/PPQ to valid non-zero values or return 0 for invalid conversions.
+- File: `KmiDi_PROJECT/source/cpp/src/midi/groove.cpp`
+- Line(s): 26-36
+- Description: `applySwing()` divides/modulos by `ppq` without guarding against zero.
+- Why it matters: A zero PPQ causes division by zero and invalid tick calculations for swing timing.
+- Suggested fix: Validate `ppq > 0` before applying swing or return the original tick when invalid.
 - File: `KmiDi_PROJECT/source/cpp/src/groove/GrooveEngine.cpp`
 - Line(s): 134-137
 - Description: `quantizationStrength` in `GrooveEngine::Config` is never forwarded to the `RhythmQuantizer`, leaving the strength at its default regardless of config.
@@ -1093,3 +1098,13 @@
 - Suggested fix: Remove the TODO after implementation or track it in an issue tracker.
 
 ## Cross-Cutting / Systemic Issues
+- **Thread Safety Issues**: Multiple race conditions in CacheManager, OSCBridge, and other concurrent code. Inconsistent mutex usage across components.
+- **Import/Module Architecture Problems**: Circular dependencies, missing modules (music_brain.tier1), broken imports across Python/C++ boundaries.
+- **Training Infrastructure Flaws**: Widespread use of dummy data, incorrect loss functions for regression tasks, tokenization mismatches, and incomplete distributed training setup.
+- **Memory Management Issues**: Potential leaks in C++ code, unsafe raw pointers, missing RAII patterns, and dual-heap memory system complexity.
+- **Configuration Mismatches**: Hardcoded paths, environment variable inconsistencies, and config/code mismatches throughout the codebase.
+- **Testing Gaps**: Many critical components lack unit tests, integration tests are incomplete, and CI/CD pipelines don't catch obvious runtime failures.
+- **Documentation Drift**: Code and documentation are out of sync, with stale TODOs and incomplete API documentation.
+- **Cross-Language Boundary Issues**: Python/C++ interop problems, missing bindings, and inconsistent error handling across language boundaries.
+- **Performance Anti-Patterns**: Blocking I/O in UI threads, inefficient data structures, and missing optimizations in hot paths.
+- **Security Concerns**: Unsafe HTML rendering, missing input validation, and potential buffer overflows in C++ code.
