@@ -573,6 +573,11 @@
 - `python/penta_core/ml/training_orchestrator.py:488-518` melody model outputs `(batch, seq, vocab)`, so `CrossEntropyLoss` in `train()` (`python/penta_core/ml/training_orchestrator.py:632-676`) receives incompatible shapes.
 - Impact: `queue_standard_models()` or any melody training run using the built-in trainer fails with a runtime shape error.
 
+85) Voice synth helper hard-depends on LLDB and ships stub methods.
+- `KmiDi_PROJECT/source/python/music_brain/voice/synth.py:1-45` imports `lldb` unconditionally and leaves `make_children()`/`update()` as `pass`.
+- Importing `music_brain.voice.synth` fails on systems without LLDB (non-debug environments), and the class cannot actually build child values.
+- Impact: voice synth tooling crashes at import time outside LLDB and the provider is non-functional.
+
 ### Build Notes (Non-blocking)
 - JUCE macOS 15 deprecation warnings during `KellyTests` build (CoreVideo/CoreText).
 - Missing `WrapVulkanHeaders` and `pybind11` are reported by CMake; builds still succeed without them.
