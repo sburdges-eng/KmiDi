@@ -37,7 +37,7 @@
     <string>KmiDi.icns</string>
 
     <key>CFBundleIconName</key>
-    <string>AppIcon</string>
+    <string>KmiDi</string>
 
     <!-- Platform Requirements -->
     <key>LSMinimumSystemVersion</key>
