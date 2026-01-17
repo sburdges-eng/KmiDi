@@ -103,6 +103,25 @@ CHECKPOINTS_DIR = ROOT / "checkpoints"
 RESULTS_FILE = CHECKPOINTS_DIR / "training_results.json"
 
 
+def _init_distributed_if_needed(requested: bool, device: torch.device) -> Tuple[bool, torch.device]:
+    if not requested:
+        return False, device
+    if not dist.is_available():
+        logger.warning("torch.distributed not available; disabling DDP")
+        return False, device
+    if device.type != "cuda":
+        logger.warning("DDP requested but device is not CUDA; disabling DDP")
+        return False, device
+    local_rank = int(os.environ.get("LOCAL_RANK", "0"))
+    if device.index is None or device.index != local_rank:
+        device = torch.device("cuda", local_rank)
+    torch.cuda.set_device(device)
+    if not dist.is_initialized():
+        dist.init_process_group(backend="nccl")
+        logger.info("Initialized torch.distributed process group")
+    return True, device
+
+
 # =============================================================================
 # Results Tracking
 # =============================================================================
@@ -526,9 +545,16 @@ def train_model(
     logger.info(f"  Epochs: {epochs}, LR: {lr}, Patience: {patience}")
 
     if distributed:
-        model = DDP(model, device_ids=[
-                    device.index], output_device=device.index)
-        logger.info("Distributed training enabled with DDP")
+        if dist.is_available() and dist.is_initialized():
+            if device.type == "cuda":
+                device_index = device.index if device.index is not None else 0
+                model = DDP(model, device_ids=[device_index], output_device=device_index)
+            else:
+                model = DDP(model)
+            logger.info("Distributed training enabled with DDP")
+        else:
+            logger.warning("DDP requested but process group not initialized; running single process")
+            distributed = False
 
     model.to(device)
 
@@ -903,6 +929,7 @@ def train_single_model(
     harmony_manifest: Optional[str] = None,
     harmony_context_dim: int = 128,
     harmony_target_dim: int = 64,
+    distributed: bool = False,
 ):
     """Train a single model."""
 
@@ -964,8 +991,15 @@ def train_single_model(
 
     # Train
     checkpoint_dir = CHECKPOINTS_DIR / model_name
-    result = train_model(model, train_loader, val_loader,
-                         config, device, checkpoint_dir)
+    result = train_model(
+        model,
+        train_loader,
+        val_loader,
+        config,
+        device,
+        checkpoint_dir,
+        distributed=distributed,
+    )
 
     # Save result
     results_manager.add_result(result)
@@ -1002,6 +1036,8 @@ def main():
                         help="Expected context vector length for harmony manifest")
     parser.add_argument("--harmony-target-dim", type=int, default=64,
                         help="Expected target vector length for harmony manifest")
+    parser.add_argument("--distributed", action="store_true",
+                        help="Enable DDP when running under torchrun")
     args = parser.parse_args()
 
     if args.tune:
@@ -1019,7 +1055,13 @@ def main():
     else:
         device = torch.device(args.device)
 
+    distributed_env = int(os.environ.get("WORLD_SIZE", "1")) > 1
+    distributed_requested = args.distributed or distributed_env
+    distributed, device = _init_distributed_if_needed(distributed_requested, device)
+
     logger.info(f"Using device: {device}")
+    if distributed:
+        logger.info("DDP enabled")
 
     # Results manager
     results_manager = ResultsManager()
@@ -1038,6 +1080,7 @@ def main():
             harmony_manifest=args.harmony_manifest,
             harmony_context_dim=args.harmony_context_dim,
             harmony_target_dim=args.harmony_target_dim,
+            distributed=distributed,
         )
     elif args.all:
         for model_name in MODEL_CONFIGS:
@@ -1054,6 +1097,7 @@ def main():
                     harmony_manifest=args.harmony_manifest,
                     harmony_context_dim=args.harmony_context_dim,
                     harmony_target_dim=args.harmony_target_dim,
+                    distributed=distributed,
                 )
             except Exception as e:
                 logger.error(f"Failed to train {model_name}: {e}")
@@ -1064,6 +1108,9 @@ def main():
 
     # Print summary
     results_manager.print_summary()
+
+    if dist.is_available() and dist.is_initialized():
+        dist.destroy_process_group()
 
 
 def compute_loss(batch, model, device, criterion):

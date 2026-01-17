@@ -7,6 +7,9 @@
 #include "penta/groove/RhythmQuantizer.h"
 #include "penta/common/RTTypes.h"
 
+#include <cmath>
+#include <numeric>
+
 // A mock audio buffer for testing
 static std::vector<float> createSineWave(double frequency, double sampleRate, double duration, float amplitude = 0.5f) {
     std::vector<float> buffer(static_cast<size_t>(sampleRate * duration));
@@ -18,15 +21,17 @@ static std::vector<float> createSineWave(double frequency, double sampleRate, do
 
 TEST_CASE("GrooveEngine latency benchmark", "[groove][performance][benchmark]") {
     penta::groove::GrooveEngine::Config config;
-    config.sampleRate = kDefaultSampleRate; // From penta/common/RTTypes.h
+    config.sampleRate = penta::kDefaultSampleRate;
     config.hopSize = 512;
     penta::groove::GrooveEngine grooveEngine(config);
 
     // Create a dummy audio buffer
     std::vector<float> audioBuffer = createSineWave(120.0, config.sampleRate, 1.0); // 1 second of sine wave
 
-    BENCHMARK("GrooveEngine processAudio") {
-        return grooveEngine.processAudio(audioBuffer.data(), audioBuffer.size());
+    BENCHMARK_ADVANCED("GrooveEngine processAudio")(Catch::Benchmark::Chronometer meter) {
+        meter.measure([&] {
+            grooveEngine.processAudio(audioBuffer.data(), audioBuffer.size());
+        });
     };
 
     // Ensure the engine is actually processing
@@ -44,20 +49,21 @@ TEST_CASE("OnsetDetector latency benchmark", "[groove][performance][benchmark]")
     std::vector<float> buffer(512); // Process one audio block
     std::iota(buffer.begin(), buffer.end(), 0.0f); // Fill with dummy data
 
-    BENCHMARK("OnsetDetector process") {
-        return detector.process(buffer.data(), buffer.size());
+    BENCHMARK_ADVANCED("OnsetDetector process")(Catch::Benchmark::Chronometer meter) {
+        meter.measure([&] {
+            detector.process(buffer.data(), buffer.size());
+        });
     };
 }
 
 TEST_CASE("TempoEstimator latency benchmark", "[groove][performance][benchmark]") {
     penta::groove::TempoEstimator estimator;
-    // Add some dummy onsets
-    for (int i = 0; i < 100; ++i) {
-        estimator.addOnset(static_cast<uint64_t>(i * 22050)); // ~2 onsets per second
-    }
+    uint64_t onsetPosition = 0;
 
     BENCHMARK("TempoEstimator estimate") {
-        return estimator.estimateTempo();
+        onsetPosition += 22050; // ~2 onsets per second @ 44.1kHz
+        estimator.addOnset(onsetPosition);
+        return estimator.getCurrentTempo();
     };
 }
 

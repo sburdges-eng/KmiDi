@@ -66,12 +66,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--intent", help="Inline intent text.")
     parser.add_argument("--intent-file", help="Path to a text file containing intent.")
     parser.add_argument("--mistral-ctx", type=int, default=3072)
-    parser.add_argument("--llama-threads", type=int, help="Override thread count for llama.cpp")
-    parser.add_argument("--n-gpu-layers", type=int, help="Override n_gpu_layers for llama.cpp")
-    parser.add_argument("--keep-loaded", action="store_true", help="Keep LLM loaded between calls")
+    parser.add_argument(
+        "--llama-threads",
+        type=int,
+        help="Override thread count for llama.cpp",
+    )
+    parser.add_argument(
+        "--n-gpu-layers",
+        type=int,
+        help="Override n_gpu_layers for llama.cpp",
+    )
+    parser.add_argument(
+        "--keep-loaded",
+        action="store_true",
+        help="Keep LLM loaded between calls",
+    )
     parser.add_argument("--seed", type=int, default=17)
     parser.add_argument("--midi-length", type=int, default=16)
-    parser.add_argument("--midi-device", default="mps", help='Tier-1 device: "mps", "cpu", or "auto"')
+    parser.add_argument(
+        "--midi-device", default="mps", help='Tier-1 device: "mps", "cpu", or "auto"'
+    )
     parser.add_argument(
         "--export-midi",
         help="Path to write MIDI. Defaults to output_root/midi/ if omitted.",
@@ -112,11 +126,7 @@ def main() -> None:
     if not intent_text:
         raise SystemExit("Provide --intent or --intent-file")
 
-    gguf_path = (
-        args.gguf_path
-        or cfg_data.get("mistral_gguf_path")
-        or cfg_data.get("gguf_path")
-    )
+    gguf_path = args.gguf_path or cfg_data.get("mistral_gguf_path") or cfg_data.get("gguf_path")
     if not gguf_path:
         raise SystemExit("Missing --gguf-path (or mistral_gguf_path in --config).")
 
@@ -141,9 +151,7 @@ def main() -> None:
         mistral_gpu_layers=cfg_mistral_gpu_layers,
         keep_brain_loaded=bool(cfg_data.get("keep_brain_loaded", args.keep_loaded)),
         enable_images=bool(cfg_data.get("enable_images", args.enable_images)),
-        enable_audio_texture=bool(
-            cfg_data.get("enable_audio_texture", args.enable_audio_texture)
-        ),
+        enable_audio_texture=bool(cfg_data.get("enable_audio_texture", args.enable_audio_texture)),
         enable_voice=bool(cfg_data.get("enable_voice", args.enable_voice)),
         output_root=Path(cfg_data.get("output_root", args.output_root)).expanduser(),
         midi_seed=cfg_midi_seed,

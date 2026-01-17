@@ -34,36 +34,36 @@ hardware:
 # -----------------------------------------------------------------------------
 model:
   name: "EmotionMIDITransformer"
-  
+
   # Base architecture: Small GPT-2 style for efficiency
   base_config: "gpt2-small"
-  
+
   # Custom configuration
   architecture:
     type: "decoder_only"
-    vocab_size: 512             # MIDI events + special tokens
+    vocab_size: 392             # MIDI events + special tokens
     max_seq_length: 1024        # ~4 bars at 16th note resolution
     hidden_dim: 384             # Compact for real-time
     num_layers: 8
     num_heads: 6
     ff_multiplier: 4
     dropout: 0.1
-    
+
     # Relative position encoding for music
     position_encoding: "rotary"
     rotary_dim: 64
-    
+
     # Multi-stream input
     input_streams:
       - name: "midi_tokens"
-        vocab_size: 388         # 128 notes + 128 velocities + 128 timing + specials
+        vocab_size: 392         # 128 notes + 32 velocities + 128 timing + specials
       - name: "emotion_context"
         dim: 64
       - name: "chord_context"
         dim: 32
       - name: "style_tokens"
         vocab_size: 64          # Genre/feel tokens
-  
+
   # Total parameters
   params_estimate: "~25M"
   inference_target_ms: 5        # Per-token generation
@@ -75,7 +75,7 @@ data:
   # MIDI datasets (will need to prepare)
   train_manifest: "data/manifests/midi_train.jsonl"
   val_manifest: "data/manifests/midi_val.jsonl"
-  
+
   # Data sources for manifest generation
   midi_sources:
     - path: "data/progressions/"
@@ -84,26 +84,24 @@ data:
       type: "groove_patterns"
     - external: "lakh_midi_clean"  # Popular MIDI dataset
       download: true
-  
+
   # Tokenization
   tokenizer:
     type: "midi_tokenizer"
-    vocab_size: 388
-    
+    vocab_size: 392
+
     # MIDI quantization
     time_quantization: 16       # 16th notes
     velocity_bins: 32           # Quantize velocity to 32 levels
     max_bar_length: 4
-    
+
     # Special tokens
     special_tokens:
-      pad: 0
-      bos: 1
-      eos: 2
-      bar: 3
-      emotion_start: 4
-      emotion_end: 5
-  
+      pad: 388
+      bos: 389
+      eos: 390
+      bar: 391
+
   # Dataloader
   batch_size: 128               # Increased for small model on high-end GPU
   max_seq_length: 512           # Truncate/pad sequences
@@ -119,16 +117,16 @@ data:
 emotion:
   # Use emotion thesaurus structure
   source: "data/emotion_thesaurus/"
-  
+
   # Conditioning method
   conditioning:
     type: "cross_attention"
     layers: [0, 2, 4, 6]        # Apply at these transformer layers
-    
+
     # Emotion embedding
     embedding_dim: 64
     num_emotion_tokens: 8       # Context window
-    
+
     # Valence-Arousal-Intensity space
     vai_encoding: true
     vai_dim: 3
@@ -160,29 +158,29 @@ training:
   epochs: 15
   min_epochs: 5                 # Minimum epochs before early stopping
   max_steps: 30000
-  
+
   log_every: 100
   eval_every: 1000
   save_every: 5                 # Save checkpoint every N epochs
-  
+
   grad_accum_steps: 2
-  
+
   amp: true
   amp_dtype: bfloat16
-  
+
   # Early stopping
   early_stopping:
     enabled: true
     patience: 5                 # Stop after N epochs without improvement
     min_delta: 0.001            # Minimum improvement threshold
     monitor: "val_loss"
-  
+
   # Teacher forcing schedule
   teacher_forcing:
     initial_ratio: 1.0
     final_ratio: 0.8
     warmup_steps: 5000
-  
+
   # Sampling during eval
   generation:
     enabled: true
@@ -199,13 +197,13 @@ loss:
   main_loss:
     type: "cross_entropy"
     label_smoothing: 0.1
-  
+
   # Auxiliary: Emotion consistency
   emotion_consistency:
     type: "contrastive"
     weight: 0.1
     temperature: 0.07
-  
+
   # Musical structure loss
   structure_loss:
     type: "bar_alignment"
@@ -216,13 +214,13 @@ loss:
 # -----------------------------------------------------------------------------
 augment:
   enabled: true
-  
+
   midi:
     transpose_semitones: [-5, 5]  # Random transposition
     time_stretch: [0.95, 1.05]
     velocity_scale: [0.9, 1.1]
     random_drop: 0.05             # Drop notes
-    
+
   emotion:
     noise_scale: 0.1              # Add noise to embeddings
     interpolation: true           # Blend emotions
@@ -250,11 +248,11 @@ export:
     - "pytorch"
     - "onnx"
     - "coreml"
-  
+
   onnx:
     opset_version: 17
     dynamic_axes: true
-  
+
   # Quantization for deployment
   quantization:
     int8: true
@@ -266,16 +264,16 @@ export:
 logging:
   project: "kmidi-midi-generator"
   experiment: "cuda-v1"
-  
+
   wandb:
     enabled: true
     project: "midi-generator"
     tags: ["cuda", "transformer", "midi"]
-  
+
   tensorboard:
     enabled: true
     log_dir: "runs/midi_generator_cuda"
-  
+
   # Sample MIDI outputs during training
   log_audio: true               # Render MIDI to audio for listening
 

@@ -1,249 +1,391 @@
-"""
-MCP Workstation - Orchestrator
-
-Central coordinator for multi-AI collaboration on the iDAW project.
-"""
-
-import json
+import argparse
+import logging
 import threading
+import time
 from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, Optional, List, Tuple
 
-from .models import (
-    AIAgent, Proposal, ProposalStatus, ProposalCategory,
-    Phase, PhaseStatus, WorkstationState,
-)
-from .proposals import ProposalManager, format_proposal_list
+from .audio_generation_engine import AudioGenerationEngine
+from .image_generation_engine import ImageGenerationEngine
+from .llm_reasoning_engine import LLMReasoningEngine
+from .proposals import ProposalManager
 from .phases import PhaseManager, format_phase_progress, get_next_actions
 from .cpp_planner import CppTransitionPlanner, format_cpp_plan
-from .debug import (
-    get_debug, DebugCategory, DebugProtocol, trace,
-    log_info, log_error, log_warning,
-)
 from .ai_specializations import (
-    get_capabilities, get_best_agent_for_task,
-    suggest_task_assignment, TaskType, AI_CAPABILITIES,
+    get_capabilities,
+    suggest_task_assignment,
+    TaskType,
+)
+from .debug import get_debug, DebugCategory
+from .models import AIAgent, PhaseStatus
+from music_brain.session.intent_schema import CompleteSongIntent
+from music_brain.tier1.midi_pipeline_wrapper import MIDIGenerationPipeline
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s] [%(levelname)s] %(message)s",
 )
 
 
-# =============================================================================
-# Workstation Configuration
-# =============================================================================
+class Orchestrator:
+    def __init__(
+        self,
+        llm_model_path: str,
+        output_dir: str = "./orchestrator_outputs",
+    ):
+        self.output_dir = Path(output_dir)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
 
-DEFAULT_STORAGE_PATH = Path.home() / ".mcp_workstation"
-STATE_FILE = "workstation_state.json"
-DEBUG_LOG = "workstation_debug.log"
+        self.image_engine = ImageGenerationEngine(
+            model_dir=str(self.output_dir / "stable_diffusion_v1_5")
+        )
+        self.audio_engine = AudioGenerationEngine(
+            output_dir=str(self.output_dir / "audio_textures")
+        )
 
+        self.llm_engine = LLMReasoningEngine(
+            model_path=llm_model_path,
+            image_engine=self.image_engine,  # Pass image engine to LLM
+            audio_engine=self.audio_engine,  # Pass audio engine to LLM
+        )
+        self.midi_pipeline = MIDIGenerationPipeline()
 
-# =============================================================================
-# Main Workstation Class
-# =============================================================================
+        self.resource_locks = {
+            "llm": threading.Lock(),
+            "midi_gen": threading.Lock(),
+            "image_gen": threading.Lock(),
+            "audio_gen": threading.Lock(),
+        }
+
+        logging.info("Orchestrator initialized.")
+
+    def _acquire_resource(
+        self,
+        resource_name: str,
+        timeout: float = 300,
+    ) -> bool:
+        logging.info(f"Attempting to acquire lock for {resource_name}...")
+        if self.resource_locks[resource_name].acquire(timeout=timeout):
+            logging.info(f"Lock acquired for {resource_name}.")
+            return True
+        logging.warning(
+            "Failed to acquire lock for %s within %s seconds.",
+            resource_name,
+            timeout,
+        )
+        return False
+
+    def _release_resource(self, resource_name: str):
+        try:
+            self.resource_locks[resource_name].release()
+            logging.info("Lock released for %s.", resource_name)
+        except RuntimeError:
+            logging.warning(
+                "Tried to release lock for %s but it was not held by this " "thread.",
+                resource_name,
+            )
+
+    def execute_workflow(
+        self,
+        user_intent_text: str,
+        enable_image_gen: bool = True,
+        enable_audio_gen: bool = False,
+    ) -> CompleteSongIntent:
+        logging.info(
+            "Starting workflow for intent: '%s'",
+            user_intent_text,
+        )
+        start_time = time.time()
+
+        # Phase 1: LLM Reasoning (Intent Parsing, Prompt Expansion)
+        if not self._acquire_resource("llm"):
+            raise RuntimeError("Could not acquire LLM resource.")
+        try:
+            structured_intent = self.llm_engine.parse_user_intent(
+                user_intent_text,
+            )
+            structured_intent = self.llm_engine.generate_image_prompts(
+                structured_intent,
+            )
+            if enable_audio_gen:
+                structured_intent = self.llm_engine.generate_audio_texture_prompt(
+                    structured_intent,
+                )
+            logging.info("LLM reasoning complete.")
+        finally:
+            self._release_resource("llm")
+
+        # Convert StructuredIntent to CompleteSongIntent for MIDI pipeline
+        # compatibility. Map all required fields with defaults.
+        complete_intent = CompleteSongIntent(
+            core_event=structured_intent.core_event or "",
+            core_resistance=structured_intent.core_resistance or "",
+            core_longing=structured_intent.core_longing or "",
+            core_stakes=structured_intent.core_stakes or "",
+            core_transformation=structured_intent.core_transformation or "",
+            mood_primary=structured_intent.mood_primary or "",
+            mood_secondary_tension=(structured_intent.mood_secondary_tension or "0.5"),
+            imagery_texture=structured_intent.imagery_texture or "",
+            vulnerability_scale=(structured_intent.vulnerability_scale or "Medium"),
+            narrative_arc=structured_intent.narrative_arc or "",
+            technical_genre=structured_intent.technical_genre or "",
+            technical_tempo_range=(80, 120),  # Default tempo range
+            technical_key=structured_intent.technical_key or "",
+            technical_mode=structured_intent.technical_mode or "",
+            technical_groove_feel=(structured_intent.technical_groove_feel or ""),
+            technical_rule_to_break=(structured_intent.technical_rule_to_break or ""),
+            rule_breaking_justification=(structured_intent.rule_breaking_justification or ""),
+            output_target="",  # Not in StructuredIntent, use default
+            output_feedback_loop="",  # Not in StructuredIntent, use default
+            title="",  # Not in StructuredIntent, use default
+            created="",  # Not in StructuredIntent, use default
+            midi_plan=structured_intent.midi_plan,
+            image_prompt=structured_intent.image_prompt,
+            image_style_constraints=structured_intent.image_style_constraints,
+            audio_texture_prompt=structured_intent.audio_texture_prompt,
+            explanation=structured_intent.explanation,
+            rule_breaking_logic=structured_intent.rule_breaking_logic,
+        )
+
+        # Phase 2: MIDI Generation
+        # MIDI generation is fast and deterministic, so it might not need a
+        # separate lock if it doesn't contend with LLM. For safety and
+        # consistency in a multi-resource environment, include it.
+        if not self._acquire_resource("midi_gen"):
+            raise RuntimeError("Could not acquire MIDI resource.")
+        try:
+            midi_result = self.midi_pipeline.generate_midi(
+                complete_intent,
+                output_dir=str(self.output_dir / "midi_outputs"),
+            )
+            if midi_result and midi_result.get("status") == "completed":
+                complete_intent.midi_plan = midi_result
+                logging.info("MIDI generation complete.")
+            else:
+                error_msg = (
+                    midi_result.get("details", "Unknown error")
+                    if midi_result
+                    else "No result returned"
+                )
+                logging.error("MIDI generation failed: %s", error_msg)
+                complete_intent.midi_plan = {
+                    "status": "failed",
+                    "details": error_msg,
+                }
+        except Exception as e:
+            logging.error(
+                "MIDI generation exception: %s",
+                e,
+                exc_info=True,
+            )
+            complete_intent.midi_plan = {
+                "status": "error",
+                "details": f"MIDI generation exception: {e}",
+            }
+        finally:
+            self._release_resource("midi_gen")
+
+        # Phase 3: Image Generation (Optional)
+        if enable_image_gen and structured_intent.image_prompt:
+            # The LLMEngine already holds a reference to image_engine, so its
+            # internal lock is used. Orchestrator handles top-level resource
+            # scheduling.
+            if not self._acquire_resource("image_gen"):
+                logging.warning("Could not acquire Image Generation resource.")
+                complete_intent.generated_image_data = {
+                    "status": "skipped",
+                    "details": "Could not acquire image generation resource.",
+                }
+            else:
+                try:
+                    structured_intent = self.llm_engine.generate_image_from_intent(
+                        structured_intent,
+                    )
+                    complete_intent.generated_image_data = structured_intent.generated_image_data
+                    if complete_intent.generated_image_data:
+                        status = complete_intent.generated_image_data.get(
+                            "status",
+                            "unknown",
+                        )
+                        if status == "completed":
+                            logging.info("Image generation complete.")
+                        else:
+                            logging.warning(
+                                "Image generation status: %s",
+                                status,
+                            )
+                except Exception as e:
+                    logging.error(
+                        "Image generation exception: %s",
+                        e,
+                        exc_info=True,
+                    )
+                    complete_intent.generated_image_data = {
+                        "status": "error",
+                        "details": f"Image generation exception: {e}",
+                    }
+                finally:
+                    self._release_resource("image_gen")
+
+        # Phase 4: Audio Generation (Optional)
+        if enable_audio_gen and structured_intent.audio_texture_prompt:
+            # The LLMEngine already holds a reference to audio_engine, so its
+            # internal lock is used. Orchestrator handles top-level resource
+            # scheduling. The orchestrator's resource_lock["audio_gen"]
+            # ensures only one audio job runs at a time.
+            if not self._acquire_resource("audio_gen"):
+                logging.warning("Could not acquire Audio Generation resource.")
+                complete_intent.generated_audio_data = {
+                    "status": "skipped",
+                    "details": "Could not acquire audio generation resource.",
+                }
+            else:
+                try:
+                    structured_intent = self.llm_engine.generate_audio_from_intent(
+                        structured_intent,
+                    )
+                    complete_intent.generated_audio_data = structured_intent.generated_audio_data
+                    if complete_intent.generated_audio_data:
+                        status = complete_intent.generated_audio_data.get(
+                            "status",
+                            "unknown",
+                        )
+                        if status == "completed":
+                            logging.info("Audio generation complete.")
+                        else:
+                            logging.warning(
+                                "Audio generation status: %s",
+                                status,
+                            )
+                except Exception as e:
+                    logging.error(
+                        "Audio generation exception: %s",
+                        e,
+                        exc_info=True,
+                    )
+                    complete_intent.generated_audio_data = {
+                        "status": "error",
+                        "details": f"Audio generation exception: {e}",
+                    }
+                finally:
+                    self._release_resource("audio_gen")
+
+        end_time = time.time()
+        logging.info(
+            "Workflow completed in %.2f seconds.",
+            end_time - start_time,
+        )
+        return complete_intent
+
 
 class Workstation:
-    """
-    Central orchestrator for multi-AI collaboration.
-
-    Coordinates Claude, ChatGPT, Gemini, and GitHub Copilot to:
-    1. Submit and vote on improvement proposals
-    2. Track iDAW project phases
-    3. Plan C++ transition
-    4. Assign tasks based on AI strengths
-    """
-
-    _instance = None
-    _lock = threading.Lock()
-
-    def __new__(cls, *args, **kwargs):
-        with cls._lock:
-            if cls._instance is None:
-                cls._instance = super().__new__(cls)
-                cls._instance._initialized = False
-            return cls._instance
+    """Multi-AI workstation facade for CLI and MCP server usage."""
 
     def __init__(
         self,
-        storage_path: Optional[Path] = None,
-        auto_load: bool = True,
+        llm_model_path: Optional[str] = None,
+        output_dir: str = "./orchestrator_outputs",
     ):
-        if self._initialized:
-            return
-
-        self._initialized = True
-        self.storage_path = Path(storage_path) if storage_path else DEFAULT_STORAGE_PATH
-        self.storage_path.mkdir(parents=True, exist_ok=True)
-
-        # Initialize debug protocol
         self._debug = get_debug()
-        self._debug.set_log_file(str(self.storage_path / DEBUG_LOG))
-
-        # Initialize managers
         self.proposals = ProposalManager()
         self.phases = PhaseManager()
         self.cpp_planner = CppTransitionPlanner()
+        self.active_agents: List[AIAgent] = []
+        self.orchestrator: Optional[Orchestrator] = None
 
-        # Active agents
-        self.active_agents: Dict[AIAgent, datetime] = {}
-
-        # Session info
-        self.session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.created_at = datetime.now().isoformat()
-
-        # Load existing state if available
-        if auto_load:
-            self._load_state()
-
-        log_info(
-            DebugCategory.ORCHESTRATION,
-            f"Workstation initialized (session: {self.session_id})",
-        )
-
-    # =========================================================================
-    # Agent Management
-    # =========================================================================
-
-    @trace(DebugCategory.ORCHESTRATION)
-    def register_agent(self, agent: AIAgent) -> bool:
-        """Register an AI agent as active."""
-        self.active_agents[agent] = datetime.now()
-        log_info(
-            DebugCategory.AI_COMMUNICATION,
-            f"Agent registered: {agent.display_name}",
-            agent=agent.value,
-        )
-        self._save_state()
-        return True
-
-    @trace(DebugCategory.ORCHESTRATION)
-    def unregister_agent(self, agent: AIAgent):
-        """Unregister an AI agent."""
-        if agent in self.active_agents:
-            del self.active_agents[agent]
-            log_info(
-                DebugCategory.AI_COMMUNICATION,
-                f"Agent unregistered: {agent.display_name}",
-                agent=agent.value,
+        if llm_model_path:
+            self.orchestrator = Orchestrator(
+                llm_model_path=llm_model_path,
+                output_dir=output_dir,
             )
-            self._save_state()
 
-    def get_active_agents(self) -> List[AIAgent]:
-        """Get list of active agents."""
-        return list(self.active_agents.keys())
+    def register_agent(self, agent: AIAgent) -> None:
+        if agent not in self.active_agents:
+            self.active_agents.append(agent)
+        self._debug.info(
+            DebugCategory.AI_COMMUNICATION,
+            f"Registered agent {agent.value}",
+        )
 
-    def get_agent_capabilities(self, agent: AIAgent) -> Dict:
-        """Get capabilities summary for an agent."""
+    def get_agent_capabilities(self, agent: AIAgent) -> Dict[str, Any]:
         caps = get_capabilities(agent)
         return {
-            "name": caps.display_name,
+            "agent": agent.value,
+            "display_name": caps.display_name,
             "description": caps.description,
+            "strengths": {t.value: s for t, s in caps.strengths.items()},
+            "proposal_categories": [c.value for c in caps.proposal_categories],
             "best_languages": caps.best_languages,
             "special_abilities": caps.special_abilities,
-            "recommended_for": caps.recommended_for,
             "limitations": caps.limitations,
-            "proposal_categories": [c.value for c in caps.proposal_categories],
+            "recommended_for": caps.recommended_for,
         }
 
-    # =========================================================================
-    # Proposal Operations
-    # =========================================================================
+    def submit_proposal(self, **kwargs) -> Optional[Dict[str, Any]]:
+        proposal = self.proposals.submit_proposal(**kwargs)
+        return proposal.to_dict() if proposal else None
 
-    @trace(DebugCategory.PROPOSAL)
-    def submit_proposal(
-        self,
-        agent: AIAgent,
-        title: str,
-        description: str,
-        category: ProposalCategory,
-        priority: int = 5,
-        estimated_effort: str = "medium",
-        phase_target: int = 1,
-        implementation_notes: str = "",
-    ) -> Optional[Dict]:
-        """
-        Submit an improvement proposal from an AI agent.
+    def vote_on_proposal(self, **kwargs) -> bool:
+        return self.proposals.vote_on_proposal(**kwargs)
 
-        Each agent can submit up to 3 proposals.
-        """
-        # Ensure agent is registered
-        if agent not in self.active_agents:
-            self.register_agent(agent)
-
-        proposal = self.proposals.submit_proposal(
-            agent=agent,
-            title=title,
-            description=description,
-            category=category,
-            priority=priority,
-            estimated_effort=estimated_effort,
-            phase_target=phase_target,
-            implementation_notes=implementation_notes,
-        )
-
-        if proposal:
-            self._save_state()
-            return proposal.to_dict()
-        return None
-
-    @trace(DebugCategory.PROPOSAL)
-    def vote_on_proposal(
-        self,
-        agent: AIAgent,
-        proposal_id: str,
-        vote: int,
-        comment: str = "",
-    ) -> bool:
-        """
-        Cast a vote on a proposal.
-
-        vote: -1 (reject), 0 (neutral), 1 (approve)
-        """
-        result = self.proposals.vote_on_proposal(agent, proposal_id, vote, comment)
-        if result:
-            self._save_state()
-        return result
-
-    def get_proposals_for_agent(self, agent: AIAgent) -> Dict:
-        """Get proposals relevant to an agent."""
-        return {
-            "submitted": [p.to_dict() for p in self.proposals.get_proposals_by_agent(agent)],
-            "pending_votes": [p.to_dict() for p in self.proposals.get_pending_votes(agent)],
-            "slots_remaining": self.proposals.get_agent_proposal_slots()[agent],
-        }
-
-    def get_all_proposals(self) -> Dict:
-        """Get all proposals with summary."""
+    def get_all_proposals(self) -> Dict[str, Any]:
         return {
             "proposals": [p.to_dict() for p in self.proposals.get_all_proposals()],
             "summary": self.proposals.get_proposal_summary(),
-            "implementation_queue": [
-                p.to_dict() for p in self.proposals.get_implementation_queue()
-            ],
         }
 
-    # =========================================================================
-    # Phase Operations
-    # =========================================================================
-
-    @trace(DebugCategory.PHASE)
-    def get_current_phase(self) -> Dict:
-        """Get current phase information."""
-        phase = self.phases.get_current_phase()
+    def get_proposals_for_agent(self, agent: AIAgent) -> Dict[str, Any]:
+        pending = self.proposals.get_pending_votes(agent)
+        slots = self.proposals.get_agent_proposal_slots()
         return {
-            "phase": phase.to_dict(),
-            "summary": self.phases.get_phase_summary(phase.id),
+            "pending_votes": [p.to_dict() for p in pending],
+            "slots_remaining": slots.get(agent, 0),
+        }
+
+    def get_status(self) -> Dict[str, Any]:
+        return {
+            "active_agents": [a.value for a in self.active_agents],
+            "proposal_summary": self.proposals.get_proposal_summary(),
+            "phase_summary": self.phases.get_phase_summary(),
+            "cpp_summary": self.cpp_planner.get_progress_summary(),
             "next_actions": get_next_actions(self.phases),
         }
 
-    @trace(DebugCategory.PHASE)
+    def get_dashboard(self) -> str:
+        sections = [
+            format_phase_progress(self.phases),
+            "",
+            format_cpp_plan(self.cpp_planner),
+        ]
+        summary = self.proposals.get_proposal_summary()
+        sections.append(
+            "\n".join(
+                [
+                    "",
+                    "PROPOSALS SUMMARY",
+                    f"Total: {summary['total']}",
+                    f"By Status: {summary['by_status']}",
+                    f"By Agent: {summary['by_agent']}",
+                ]
+            )
+        )
+        return "\n".join(sections)
+
+    def get_phase_progress(self) -> str:
+        return format_phase_progress(self.phases)
+
+    def get_current_phase(self) -> Dict[str, Any]:
+        phase = self.phases.get_current_phase()
+        return phase.to_dict() if phase else {}
+
     def update_task(
         self,
         phase_id: int,
         task_id: str,
         status: str,
-        progress: float = None,
-        notes: str = None,
-    ):
-        """Update a task's status."""
+        progress: Optional[float] = None,
+        notes: Optional[str] = None,
+    ) -> None:
         self.phases.update_task_status(
             phase_id=phase_id,
             task_id=task_id,
@@ -251,305 +393,202 @@ class Workstation:
             progress=progress,
             notes=notes,
         )
-        self._save_state()
 
-    @trace(DebugCategory.PHASE)
     def assign_task_to_agent(
         self,
         phase_id: int,
         task_id: str,
         agent: AIAgent,
-    ):
-        """Assign a task to an AI agent."""
-        self.phases.assign_task(phase_id, task_id, agent)
-        self._save_state()
-
-    @trace(DebugCategory.PHASE)
-    def advance_phase(self) -> bool:
-        """Advance to next phase if current is complete."""
-        result = self.phases.advance_phase()
-        if result:
-            self._save_state()
-        return result
-
-    def get_phase_progress(self) -> str:
-        """Get formatted phase progress."""
-        return format_phase_progress(self.phases)
-
-    # =========================================================================
-    # C++ Transition Operations
-    # =========================================================================
-
-    @trace(DebugCategory.PHASE)
-    def get_cpp_plan(self) -> Dict:
-        """Get C++ transition plan."""
-        return {
-            "summary": self.cpp_planner.get_progress_summary(),
-            "modules": [m.to_dict() for m in self.cpp_planner.modules.values()],
-            "ready_modules": [m.id for m in self.cpp_planner.get_ready_modules()],
-            "dependency_order": self.cpp_planner.get_dependency_order(),
-        }
-
-    @trace(DebugCategory.PHASE)
-    def start_cpp_module(self, module_id: str, agent: Optional[AIAgent] = None):
-        """Start work on a C++ module."""
-        self.cpp_planner.start_module(module_id, agent)
-        self._save_state()
-
-    @trace(DebugCategory.PHASE)
-    def update_cpp_module(self, module_id: str, progress: float, status: str = None):
-        """Update C++ module progress."""
-        self.cpp_planner.update_module_progress(
-            module_id,
-            progress,
-            PhaseStatus(status) if status else None,
+    ) -> None:
+        self.phases.assign_task(
+            phase_id=phase_id,
+            task_id=task_id,
+            agent=agent,
         )
-        self._save_state()
+
+    def get_cpp_plan(self) -> Dict[str, Any]:
+        return self.cpp_planner.to_dict()
 
     def get_cpp_progress(self) -> str:
-        """Get formatted C++ transition progress."""
         return format_cpp_plan(self.cpp_planner)
 
+    def start_cpp_module(
+        self,
+        module_id: str,
+        agent: Optional[AIAgent] = None,
+    ) -> None:
+        self.cpp_planner.start_module(module_id, agent)
+
+    def update_cpp_module(
+        self,
+        module_id: str,
+        progress: float,
+        status: Optional[str] = None,
+    ) -> None:
+        parsed_status = PhaseStatus(status) if status else None
+        self.cpp_planner.update_module_progress(
+            module_id=module_id,
+            progress=progress,
+            status=parsed_status,
+        )
+
     def get_cmake_plan(self) -> str:
-        """Get CMake build plan."""
         return self.cpp_planner.get_build_plan()
 
-    # =========================================================================
-    # Task Assignment
-    # =========================================================================
-
-    @trace(DebugCategory.ORCHESTRATION)
-    def suggest_assignments(self, tasks: List[tuple]) -> Dict[str, str]:
-        """
-        Suggest optimal AI assignments for a list of tasks.
-
-        tasks: List of (task_name, task_type) tuples
-        Returns: Dict of {task_name: agent_value}
-        """
+    def suggest_assignments(
+        self,
+        tasks: List[Tuple[str, TaskType]],
+    ) -> Dict[str, str]:
         assignments = suggest_task_assignment(tasks)
         return {name: agent.value for name, agent in assignments.items()}
 
-    def get_agent_workload(self) -> Dict[str, Dict]:
-        """Get current workload for each agent."""
-        workload = {agent.value: {"tasks": [], "proposals": 0} for agent in AIAgent}
-
-        # Count proposals
-        for proposal in self.proposals.get_all_proposals():
-            if proposal.status == ProposalStatus.APPROVED:
-                workload[proposal.agent.value]["proposals"] += 1
-
-        # Count assigned tasks
+    def get_agent_workload(self) -> Dict[str, int]:
+        workload = {agent.value: 0 for agent in AIAgent}
         for phase in self.phases.phases:
             for task in phase.tasks:
-                if task.assigned_to and task.status == PhaseStatus.IN_PROGRESS:
-                    workload[task.assigned_to.value]["tasks"].append(task.name)
-
-        # Count C++ tasks
-        for task in self.cpp_planner.tasks.values():
-            if task.assigned_to and task.status == PhaseStatus.IN_PROGRESS:
-                workload[task.assigned_to.value]["tasks"].append(task.name)
-
+                if task.assigned_to:
+                    workload[task.assigned_to.value] += 1
+        for cpp_task in self.cpp_planner.tasks.values():
+            if cpp_task.assigned_to:
+                workload[cpp_task.assigned_to.value] += 1
         return workload
 
-    # =========================================================================
-    # Debug & Monitoring
-    # =========================================================================
-
-    def get_debug_summary(self) -> Dict:
-        """Get debug and monitoring summary."""
+    def get_debug_summary(self) -> Dict[str, Any]:
+        errors = self._debug.get_errors(limit=25)
         return {
-            "recent_errors": [e.to_dict() for e in self._debug.get_errors(10)],
+            "recent_errors": [
+                {
+                    "timestamp": e.timestamp,
+                    "message": e.message,
+                    "category": e.category.value,
+                }
+                for e in errors
+            ],
             "performance": self._debug.get_performance_report(),
-            "agent_activity": {
-                agent.value: [e.to_dict() for e in self._debug.get_ai_activity(agent.value, 5)]
-                for agent in self.active_agents
-            },
+            "event_count": len(self._debug.events),
         }
 
-    def export_debug_session(self, path: str):
-        """Export debug session for analysis."""
-        self._debug.export_session(path)
-
-    # =========================================================================
-    # Status & Summary
-    # =========================================================================
-
-    def get_status(self) -> Dict:
-        """Get complete workstation status."""
-        return {
-            "session_id": self.session_id,
-            "created_at": self.created_at,
-            "active_agents": [a.value for a in self.active_agents],
-            "proposals": self.proposals.get_proposal_summary(),
-            "phases": self.phases.get_phase_summary(),
-            "cpp_transition": self.cpp_planner.get_progress_summary(),
-            "workload": self.get_agent_workload(),
-        }
-
-    def get_dashboard(self) -> str:
-        """Get formatted dashboard view."""
-        lines = [
-            "=" * 70,
-            "MCP WORKSTATION - Multi-AI Collaboration Dashboard",
-            "=" * 70,
-            "",
-            f"Session: {self.session_id}",
-            f"Active Agents: {', '.join(a.display_name for a in self.active_agents)}",
-            "",
-        ]
-
-        # Proposals summary
-        prop_summary = self.proposals.get_proposal_summary()
-        lines.extend([
-            "PROPOSALS:",
-            f"  Total: {prop_summary['total']} | "
-            f"Approved: {prop_summary['by_status'].get('approved', 0)} | "
-            f"Pending: {prop_summary['by_status'].get('submitted', 0)}",
-            "",
-        ])
-
-        # Phase summary
-        phase_summary = self.phases.get_phase_summary()
-        lines.extend([
-            f"PROJECT PHASE: {phase_summary['current_phase']}",
-            f"  Overall Progress: {phase_summary['overall_progress']:.0%}",
-            "",
-        ])
-
-        for p in phase_summary['phases']:
-            status_icon = "◐" if p["status"] == "in_progress" else ("●" if p["status"] == "completed" else "○")
-            lines.append(f"  {status_icon} Phase {p['phase_id']}: {p['name']} ({p['progress']:.0%})")
-
-        lines.append("")
-
-        # C++ transition
-        cpp_summary = self.cpp_planner.get_progress_summary()
-        lines.extend([
-            "C++ TRANSITION:",
-            f"  Progress: {cpp_summary['overall_progress']:.0%}",
-            f"  Modules: {cpp_summary['modules_completed']}/{cpp_summary['total_modules']}",
-            f"  Ready to start: {', '.join(cpp_summary['ready_to_start'][:3])}...",
-            "",
-        ])
-
-        # Next actions
-        next_actions = get_next_actions(self.phases)
-        if next_actions:
-            lines.extend([
-                "NEXT ACTIONS:",
-                *[f"  • {action}" for action in next_actions[:5]],
-            ])
-
-        return "\n".join(lines)
-
-    # =========================================================================
-    # Persistence
-    # =========================================================================
-
-    def _save_state(self):
-        """Save workstation state to disk."""
-        state = {
-            "session_id": self.session_id,
-            "created_at": self.created_at,
-            "active_agents": [a.value for a in self.active_agents],
-            "proposals": self.proposals.to_dict(),
-            "phases": self.phases.to_dict(),
-            "cpp_planner": self.cpp_planner.to_dict(),
-            "updated_at": datetime.now().isoformat(),
-        }
-
-        state_file = self.storage_path / STATE_FILE
-        with open(state_file, 'w') as f:
-            json.dump(state, f, indent=2)
-
-        log_info(
-            DebugCategory.STORAGE,
-            f"State saved to {state_file}",
-        )
-
-    def _load_state(self):
-        """Load workstation state from disk."""
-        state_file = self.storage_path / STATE_FILE
-
-        if not state_file.exists():
-            log_info(
-                DebugCategory.STORAGE,
-                "No existing state found, starting fresh",
-            )
-            return
-
-        try:
-            with open(state_file, 'r') as f:
-                state = json.load(f)
-
-            # Restore active agents
-            self.active_agents = {
-                AIAgent(a): datetime.now()
-                for a in state.get("active_agents", [])
-            }
-
-            # Restore managers
-            if "proposals" in state:
-                self.proposals = ProposalManager.from_dict(state["proposals"])
-
-            if "phases" in state:
-                self.phases = PhaseManager.from_dict(state["phases"])
-
-            if "cpp_planner" in state:
-                self.cpp_planner = CppTransitionPlanner.from_dict(state["cpp_planner"])
-
-            self.session_id = state.get("session_id", self.session_id)
-            self.created_at = state.get("created_at", self.created_at)
-
-            log_info(
-                DebugCategory.STORAGE,
-                f"State loaded from {state_file}",
-            )
-
-        except Exception as e:
-            log_error(
-                DebugCategory.STORAGE,
-                f"Failed to load state: {e}",
-            )
-
-    def reset(self):
-        """Reset workstation to initial state."""
+    def reset(self) -> None:
         self.proposals = ProposalManager()
         self.phases = PhaseManager()
         self.cpp_planner = CppTransitionPlanner()
-        self.active_agents = {}
-        self.session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.created_at = datetime.now().isoformat()
-        self._save_state()
+        self.active_agents = []
+        self._debug.clear()
 
-        log_info(
-            DebugCategory.ORCHESTRATION,
-            "Workstation reset",
+
+_workstation_instance: Optional[Workstation] = None
+_workstation_init_args: Optional[tuple] = None
+_workstation_init_kwargs: Optional[dict] = None
+
+
+def get_workstation(*args, **kwargs) -> Workstation:
+    """Singleton accessor for workstation state."""
+    global _workstation_instance
+    global _workstation_init_args
+    global _workstation_init_kwargs
+    if _workstation_instance is None:
+        _workstation_instance = Workstation(*args, **kwargs)
+        _workstation_init_args = args
+        _workstation_init_kwargs = dict(kwargs)
+        return _workstation_instance
+    if args or kwargs:
+        if args != (_workstation_init_args or ()) or dict(kwargs) != (
+            _workstation_init_kwargs or {}
+        ):
+            _workstation_instance = Workstation(*args, **kwargs)
+            _workstation_init_args = args
+            _workstation_init_kwargs = dict(kwargs)
+    return _workstation_instance
+
+
+def shutdown_workstation() -> None:
+    """Placeholder to mirror previous API."""
+    global _workstation_instance
+    global _workstation_init_args
+    global _workstation_init_kwargs
+    _workstation_instance = None
+    _workstation_init_args = None
+    _workstation_init_kwargs = None
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="KmiDi Local Metal AI Orchestrator CLI",
+    )
+    parser.add_argument(
+        "--llm_model_path",
+        type=str,
+        required=True,
+        help="Path to the Mistral 7B GGUF model file.",
+    )
+    parser.add_argument(
+        "--prompt",
+        type=str,
+        required=True,
+        help="Natural language user intent.",
+    )
+    parser.add_argument(
+        "--no_image_gen",
+        action="store_true",
+        help="Disable image generation.",
+    )
+    parser.add_argument(
+        "--enable_audio_gen",
+        action="store_true",
+        help="Enable optional audio texture generation.",
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default="./orchestrator_outputs",
+        help="Directory for all generated outputs.",
+    )
+
+    args = parser.parse_args()
+
+    orchestrator = Orchestrator(
+        llm_model_path=args.llm_model_path,
+        output_dir=args.output_dir,
+    )
+
+    try:
+        final_intent = orchestrator.execute_workflow(
+            user_intent_text=args.prompt,
+            enable_image_gen=not args.no_image_gen,
+            enable_audio_gen=args.enable_audio_gen,
         )
-
-
-# =============================================================================
-# Global Functions
-# =============================================================================
-
-_workstation: Optional[Workstation] = None
-
-
-def get_workstation() -> Workstation:
-    """Get the global workstation instance."""
-    global _workstation
-    if _workstation is None:
-        _workstation = Workstation()
-    return _workstation
-
-
-def shutdown_workstation():
-    """Shutdown the workstation."""
-    global _workstation
-    if _workstation:
-        _workstation._save_state()
-        _workstation = None
-        log_info(
-            DebugCategory.ORCHESTRATION,
-            "Workstation shutdown",
+        print("\n--- Workflow Results ---")
+        print(f"User Intent: {args.prompt}")
+        midi_status = (
+            final_intent.midi_plan.get("status", "N/A")
+            if isinstance(final_intent.midi_plan, dict)
+            else "N/A"
         )
+        image_status = (
+            final_intent.generated_image_data.get("status", "disabled")
+            if isinstance(final_intent.generated_image_data, dict)
+            else "disabled"
+        )
+        audio_status = (
+            final_intent.generated_audio_data.get("status", "disabled")
+            if isinstance(final_intent.generated_audio_data, dict)
+            else "disabled"
+        )
+        print(f"Generated MIDI Plan Status: {midi_status}")
+        print(f"Generated Image Status: {image_status}")
+        print(f"Generated Audio Status: {audio_status}")
+        print(f"Explanation: {final_intent.explanation}")
+
+        # Optionally save the full intent object to JSON for inspection
+        intent_output_path = Path(args.output_dir) / "final_intent.json"
+        final_intent.save(str(intent_output_path))
+        print(f"Full intent saved to: {intent_output_path}")
+
+    except RuntimeError as e:
+        logging.error(f"Workflow failed: {e}")
+    except Exception as e:
+        logging.error(f"An unexpected error occurred: {e}", exc_info=True)
+
+
+if __name__ == "__main__":
+    main()

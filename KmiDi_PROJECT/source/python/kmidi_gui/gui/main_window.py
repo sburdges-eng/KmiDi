@@ -26,6 +26,7 @@ from PySide6.QtCore import Qt, Signal
 from kmidi_gui.themes.palette import apply_audio_palette, AudioColors
 from kmidi_gui.gui.docks import AIAssistantDock, LogsDock
 from kmidi_gui.gui.parameter_panel import EmotionParameterPanel, TechnicalParameterPanel
+from kmidi_gui.gui.control_surface_panel import ControlSurfacePanel
 
 
 class MainWindow(QMainWindow):
@@ -48,6 +49,9 @@ class MainWindow(QMainWindow):
     preferences_requested = Signal()
     ai_analysis_requested = Signal()
     batch_process_requested = Signal()
+    presets_requested = Signal()
+    undo_requested = Signal(str)  # component name
+    redo_requested = Signal(str)  # component name
 
     def __init__(self):
         super().__init__()
@@ -83,8 +87,10 @@ class MainWindow(QMainWindow):
 
         # Edit menu
         edit_menu = menubar.addMenu("Edit")
-        edit_menu.addAction("Undo", self._on_undo)
-        edit_menu.addAction("Redo", self._on_redo)
+        self.undo_action = edit_menu.addAction("Undo", self._on_undo)
+        self.undo_action.setShortcut("Ctrl+Z")
+        self.redo_action = edit_menu.addAction("Redo", self._on_redo)
+        self.redo_action.setShortcut("Ctrl+Shift+Z")
         edit_menu.addSeparator()
         edit_menu.addAction("Preferences", self._on_preferences)
 
@@ -92,11 +98,16 @@ class MainWindow(QMainWindow):
         view_menu = menubar.addMenu("View")
         view_menu.addAction("Show AI Assistant", self._on_toggle_ai_dock)
         view_menu.addAction("Show Logs", self._on_toggle_logs_dock)
+        view_menu.addAction("Show Control Surface", self._on_toggle_control_surface)
 
         # Tools menu
         tools_menu = menubar.addMenu("Tools")
         tools_menu.addAction("AI Analysis", self._on_ai_analysis)
         tools_menu.addAction("Batch Process", self._on_batch_process)
+
+        # Presets menu
+        presets_menu = menubar.addMenu("Presets")
+        presets_menu.addAction("Manage Presets", self._on_manage_presets)
 
         # Help menu
         help_menu = menubar.addMenu("Help")
@@ -142,6 +153,17 @@ class MainWindow(QMainWindow):
         self.logs_dock = LogsDock(self)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.logs_dock)
         self.logs_dock.setVisible(False)  # Hidden by default
+
+        # Control Surface dock
+        from PySide6.QtWidgets import QDockWidget
+        self.control_surface_dock = QDockWidget("Control Surface", self)
+        self.control_surface_panel = ControlSurfacePanel(
+            project_path=self.current_project_path,
+            parent=self.control_surface_dock
+        )
+        self.control_surface_dock.setWidget(self.control_surface_panel)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.control_surface_dock)
+        self.control_surface_dock.setVisible(False)  # Hidden by default
 
     def _setup_central_widget(self):
         """Setup central widget with splitter for parameters and content."""
@@ -302,11 +324,13 @@ class MainWindow(QMainWindow):
 
     def _on_undo(self):
         """Handle undo menu action."""
-        pass  # Will be connected to controller
+        from kmidi_gui.core.history import HistoryComponent
+        self.undo_requested.emit(HistoryComponent.INTENT.value)
 
     def _on_redo(self):
         """Handle redo menu action."""
-        pass  # Will be connected to controller
+        from kmidi_gui.core.history import HistoryComponent
+        self.redo_requested.emit(HistoryComponent.INTENT.value)
 
     def _on_preferences(self):
         """Handle preferences menu action."""
@@ -320,6 +344,10 @@ class MainWindow(QMainWindow):
         """Handle toggle logs dock menu action."""
         self.logs_dock.setVisible(not self.logs_dock.isVisible())
 
+    def _on_toggle_control_surface(self):
+        """Handle toggle control surface dock menu action."""
+        self.control_surface_dock.setVisible(not self.control_surface_dock.isVisible())
+
     def _on_ai_analysis(self):
         """Handle AI analysis menu action."""
         self.ai_analysis_requested.emit()
@@ -327,6 +355,10 @@ class MainWindow(QMainWindow):
     def _on_batch_process(self):
         """Handle batch process menu action."""
         self.batch_process_requested.emit()
+
+    def _on_manage_presets(self):
+        """Handle manage presets menu action."""
+        self.presets_requested.emit()
 
     def _on_about(self):
         """Handle about menu action."""

@@ -1,5 +1,5 @@
 """
-Synthetic Data Generation for Kelly ML Training.
+Synthetic Data Generation for KmiDi ML Training.
 
 Generates training data from music theory rules:
 - Emotion samples: Chord progressions with emotional mappings
@@ -198,16 +198,16 @@ GROOVE_PATTERNS = {
 @dataclass
 class GeneratorConfig:
     """Configuration for synthetic data generation."""
-    
+
     # Target counts
     samples_per_category: int = 1000
-    
+
     # Variation
     keys: List[str] = field(default_factory=lambda: PITCH_NAMES.copy())
     tempo_range: Tuple[int, int] = (60, 180)
     bar_lengths: List[int] = field(default_factory=lambda: [4, 8, 16])
     time_signatures: List[str] = field(default_factory=lambda: ['4/4', '3/4', '6/8'])
-    
+
     # Randomization
     random_seed: Optional[int] = None
     add_variations: bool = True
@@ -222,29 +222,29 @@ class GeneratorConfig:
 class SyntheticGenerator:
     """
     Generates synthetic training data from music theory rules.
-    
+
     Creates:
     - Emotion samples: MIDI + labels for EmotionRecognizer
     - Melody samples: Note sequences for MelodyTransformer
     - Harmony samples: Chord progressions for HarmonyPredictor
     - Groove samples: Timing patterns for GroovePredictor
-    
+
     Usage:
         generator = SyntheticGenerator()
-        
+
         # Generate emotion dataset
         samples = generator.generate_emotion_samples(1000)
-        
+
         # Generate groove dataset
         samples = generator.generate_groove_samples(1000)
     """
-    
+
     def __init__(self, config: Optional[GeneratorConfig] = None):
         self.config = config or GeneratorConfig()
         if self.config.random_seed is not None:
             random.seed(self.config.random_seed)
             np.random.seed(self.config.random_seed)
-    
+
     def generate_emotion_samples(
         self,
         num_samples: int,
@@ -253,7 +253,7 @@ class SyntheticGenerator:
     ) -> List[Dict[str, Any]]:
         """
         Generate emotion-labeled samples.
-        
+
         Each sample contains:
         - MIDI data (note events)
         - Emotion labels (valence, arousal, category)
@@ -261,23 +261,23 @@ class SyntheticGenerator:
         """
         emotions = emotions or list(EMOTION_FEATURES.keys())
         samples_per_emotion = num_samples // len(emotions)
-        
+
         samples = []
-        
+
         for emotion in emotions:
             features = EMOTION_FEATURES[emotion]
-            
+
             for i in range(samples_per_emotion):
                 sample = self._generate_emotion_sample(emotion, features, i)
                 samples.append(sample)
-                
+
                 # Save MIDI if output dir provided
                 if output_dir:
                     self._save_sample_midi(sample, output_dir / emotion)
-        
+
         logger.info(f"Generated {len(samples)} emotion samples")
         return samples
-    
+
     def _generate_emotion_sample(
         self,
         emotion: str,
@@ -288,27 +288,27 @@ class SyntheticGenerator:
         # Choose random key
         root = random.choice(self.config.keys)
         root_midi = PITCH_NAMES.index(root) + 60  # Middle C range
-        
+
         # Get scale
         mode = features['mode']
         scale = SCALES['major'] if mode == 'major' else SCALES['natural_minor']
-        
+
         # Get tempo
         tempo_min, tempo_max = features['tempo_range']
         tempo = random.randint(tempo_min, tempo_max)
-        
+
         # Get velocity
         vel_min, vel_max = features['velocity_range']
-        
+
         # Choose progression
         progression_name = emotion if emotion in PROGRESSIONS else 'happy'
         progression = random.choice(PROGRESSIONS[progression_name])
-        
+
         # Generate notes
         notes = self._generate_notes_from_progression(
             progression, root_midi, scale, tempo, vel_min, vel_max
         )
-        
+
         # Create sample
         sample = {
             'id': f"synth_{emotion}_{index:05d}",
@@ -324,9 +324,9 @@ class SyntheticGenerator:
             'is_synthetic': True,
             'feature_vector': self._generate_emotion_feature_vector(features),
         }
-        
+
         return sample
-    
+
     def _generate_notes_from_progression(
         self,
         progression: List[str],
@@ -339,21 +339,21 @@ class SyntheticGenerator:
         """Generate note events from a chord progression."""
         notes = []
         beat_duration = 60.0 / tempo
-        
+
         current_time = 0.0
         bars = random.choice(self.config.bar_lengths)
-        
+
         for bar in range(bars):
             chord_idx = bar % len(progression)
             chord_symbol = progression[chord_idx]
-            
+
             # Parse chord (simplified)
             chord_root = self._parse_chord_root(chord_symbol, scale)
             chord_type = 'min' if 'i' in chord_symbol.lower() and chord_symbol[0].islower() else 'maj'
-            
+
             # Get chord notes
             chord_pattern = CHORDS[chord_type]
-            
+
             # Generate bass note
             bass_pitch = root_midi + chord_root - 12
             notes.append({
@@ -363,15 +363,15 @@ class SyntheticGenerator:
                 'duration': beat_duration * 4,
                 'channel': 0,
             })
-            
+
             # Generate chord notes
             for i in range(4):
                 onset = current_time + i * beat_duration
-                
+
                 for interval in chord_pattern:
                     pitch = root_midi + chord_root + interval
                     velocity = random.randint(vel_min, vel_max)
-                    
+
                     notes.append({
                         'pitch': pitch,
                         'velocity': velocity,
@@ -379,7 +379,7 @@ class SyntheticGenerator:
                         'duration': beat_duration * 0.9,
                         'channel': 1,
                     })
-            
+
             # Add melody note
             melody_pitch = root_midi + chord_root + random.choice([0, 4, 7, 12])
             notes.append({
@@ -389,11 +389,11 @@ class SyntheticGenerator:
                 'duration': beat_duration * random.choice([1, 2, 4]),
                 'channel': 2,
             })
-            
+
             current_time += beat_duration * 4
-        
+
         return notes
-    
+
     def _parse_chord_root(self, chord_symbol: str, scale: List[int]) -> int:
         """Parse chord symbol to get root interval."""
         # Simplified Roman numeral parsing
@@ -427,38 +427,38 @@ class SyntheticGenerator:
                 return scale[scale_degree]
 
         return 0
-    
+
     def _generate_emotion_feature_vector(self, features: Dict[str, Any]) -> List[float]:
         """Generate a feature vector for emotion classification."""
         vec = []
-        
+
         # Valence/arousal (2)
         vec.append(features['valence'])
         vec.append(features['arousal'])
-        
+
         # Mode (2)
         vec.append(1.0 if features['mode'] == 'major' else 0.0)
         vec.append(1.0 if features['mode'] == 'minor' else 0.0)
-        
+
         # Tempo (normalized, 1)
         tempo_mid = (features['tempo_range'][0] + features['tempo_range'][1]) / 2
         vec.append(tempo_mid / 180)
-        
+
         # Velocity (normalized, 1)
         vel_mid = (features['velocity_range'][0] + features['velocity_range'][1]) / 2
         vec.append(vel_mid / 127)
-        
+
         # Articulation (one-hot, 4)
         articulations = ['staccato', 'legato', 'marcato', 'normal']
         for art in articulations:
             vec.append(1.0 if features.get('articulation') == art else 0.0)
-        
+
         # Pad to 128
         while len(vec) < 128:
             vec.append(random.gauss(0, 0.1))
-        
+
         return vec[:128]
-    
+
     def generate_melody_samples(
         self,
         num_samples: int,
@@ -466,16 +466,16 @@ class SyntheticGenerator:
     ) -> List[Dict[str, Any]]:
         """Generate melody samples for MelodyTransformer."""
         samples = []
-        
+
         for i in range(num_samples):
             # Random parameters
             root = random.choice(self.config.keys)
             scale_type = random.choice(list(SCALES.keys()))
             tempo = random.randint(*self.config.tempo_range)
-            
+
             # Generate melody
             melody = self._generate_melody(root, scale_type, tempo)
-            
+
             sample = {
                 'id': f"synth_melody_{i:05d}",
                 'key': root,
@@ -487,10 +487,10 @@ class SyntheticGenerator:
                 'is_synthetic': True,
             }
             samples.append(sample)
-        
+
         logger.info(f"Generated {len(samples)} melody samples")
         return samples
-    
+
     def _generate_melody(
         self,
         root: str,
@@ -500,41 +500,41 @@ class SyntheticGenerator:
         """Generate a melodic sequence."""
         root_midi = PITCH_NAMES.index(root) + 60
         scale = SCALES[scale_type]
-        
+
         notes = []
         beat_duration = 60.0 / tempo
         current_time = 0.0
-        
+
         num_notes = random.randint(16, 64)
         current_pitch_idx = random.randint(0, len(scale) - 1)
-        
+
         for _ in range(num_notes):
             # Melodic movement (mostly stepwise)
             step = random.choice([-2, -1, -1, 0, 1, 1, 2])
             current_pitch_idx = max(0, min(len(scale) - 1, current_pitch_idx + step))
-            
+
             pitch = root_midi + scale[current_pitch_idx]
-            
+
             # Random octave shift
             if random.random() < 0.1:
                 pitch += random.choice([-12, 12])
-            
+
             pitch = max(48, min(84, pitch))  # Keep in reasonable range
-            
+
             duration = beat_duration * random.choice([0.25, 0.5, 0.5, 1, 1, 2])
             velocity = random.randint(60, 100)
-            
+
             notes.append({
                 'pitch': pitch,
                 'velocity': velocity,
                 'onset': current_time,
                 'duration': duration,
             })
-            
+
             current_time += duration
-        
+
         return notes
-    
+
     def generate_harmony_samples(
         self,
         num_samples: int,
@@ -542,14 +542,14 @@ class SyntheticGenerator:
     ) -> List[Dict[str, Any]]:
         """Generate harmony samples for HarmonyPredictor."""
         samples = []
-        
+
         emotions = list(PROGRESSIONS.keys())
-        
+
         for i in range(num_samples):
             emotion = random.choice(emotions)
             progression = random.choice(PROGRESSIONS[emotion])
             root = random.choice(self.config.keys)
-            
+
             sample = {
                 'id': f"synth_harmony_{i:05d}",
                 'key': root,
@@ -559,20 +559,20 @@ class SyntheticGenerator:
                 'is_synthetic': True,
             }
             samples.append(sample)
-        
+
         logger.info(f"Generated {len(samples)} harmony samples")
         return samples
-    
+
     def _progression_to_chords(self, progression: List[str], root: str) -> List[str]:
         """Convert Roman numerals to chord names."""
         root_idx = PITCH_NAMES.index(root)
         major_intervals = [0, 2, 4, 5, 7, 9, 11]
-        
+
         chords = []
         for numeral in progression:
             # Parse numeral
             is_minor = numeral[0].islower()
-            
+
             numeral_map = {'I': 0, 'II': 1, 'III': 2, 'IV': 3, 'V': 4, 'VI': 5, 'VII': 6}
             base = ''
             for c in numeral.upper():
@@ -580,16 +580,16 @@ class SyntheticGenerator:
                     base += c
                 else:
                     break
-            
+
             degree = numeral_map.get(base, 0)
             chord_root_idx = (root_idx + major_intervals[degree]) % 12
             chord_root = PITCH_NAMES[chord_root_idx]
-            
+
             suffix = 'm' if is_minor else 'maj'
             chords.append(f"{chord_root}{suffix}")
-        
+
         return chords
-    
+
     def generate_groove_samples(
         self,
         num_samples: int,
@@ -597,19 +597,19 @@ class SyntheticGenerator:
     ) -> List[Dict[str, Any]]:
         """Generate groove samples for GroovePredictor."""
         samples = []
-        
+
         groove_types = list(GROOVE_PATTERNS.keys())
         samples_per_type = num_samples // len(groove_types)
-        
+
         for groove_type in groove_types:
             pattern = GROOVE_PATTERNS[groove_type]
-            
+
             for i in range(samples_per_type):
                 tempo = random.randint(80, 160)
-                
+
                 # Generate timing data
                 timing_data = self._generate_groove_timing(pattern, tempo)
-                
+
                 sample = {
                     'id': f"synth_groove_{groove_type}_{i:05d}",
                     'groove_type': groove_type,
@@ -622,10 +622,10 @@ class SyntheticGenerator:
                     'feature_vector': self._generate_groove_feature_vector(pattern, tempo),
                 }
                 samples.append(sample)
-        
+
         logger.info(f"Generated {len(samples)} groove samples")
         return samples
-    
+
     def _generate_groove_timing(
         self,
         pattern: Dict[str, Any],
@@ -633,33 +633,33 @@ class SyntheticGenerator:
     ) -> Dict[str, Any]:
         """Generate groove timing data."""
         num_beats = random.randint(16, 64)
-        
+
         offsets = []
         velocities = []
         syncopation_count = 0
-        
+
         for beat in range(num_beats):
             # Base offset from pattern (with variation)
             base_offset = pattern['offsets'][beat % len(pattern['offsets'])]
             offset = base_offset + random.gauss(0, 3)
             offsets.append(offset)
-            
+
             # Velocity from pattern
             base_accent = pattern['accents'][beat % len(pattern['accents'])]
             velocity = int(base_accent * 100 + random.gauss(0, 10))
             velocity = max(40, min(127, velocity))
             velocities.append(velocity)
-            
+
             # Check syncopation
             if beat % 4 in [1, 3] and velocity > 80:
                 syncopation_count += 1
-        
+
         return {
             'offsets': offsets,
             'velocities': velocities,
             'syncopation': syncopation_count / num_beats,
         }
-    
+
     def _generate_groove_feature_vector(
         self,
         pattern: Dict[str, Any],
@@ -667,92 +667,92 @@ class SyntheticGenerator:
     ) -> List[float]:
         """Generate feature vector for groove classification."""
         vec = []
-        
+
         # Swing ratio (1)
         vec.append(pattern['swing_ratio'])
-        
+
         # Tempo (normalized, 1)
         vec.append(tempo / 200)
-        
+
         # Pattern offsets (4)
         vec.extend([o / 50 for o in pattern['offsets'][:4]])
-        
+
         # Pattern accents (4)
         vec.extend(pattern['accents'][:4])
-        
+
         # Groove type one-hot (5)
         for groove in ['straight', 'swing', 'shuffle', 'laid_back', 'rushed']:
             vec.append(1.0 if groove in str(pattern) else 0.0)
-        
+
         # Pad to 64
         while len(vec) < 64:
             vec.append(random.gauss(0, 0.1))
-        
+
         return vec[:64]
-    
+
     def _compute_pitch_histogram(self, notes: List[Dict]) -> List[float]:
         """Compute pitch class histogram."""
         histogram = [0] * 12
         for note in notes:
             pc = note['pitch'] % 12
             histogram[pc] += 1
-        
+
         total = sum(histogram)
         if total > 0:
             histogram = [h / total for h in histogram]
-        
+
         return histogram
-    
+
     def _compute_interval_histogram(self, notes: List[Dict]) -> List[float]:
         """Compute interval histogram."""
         if len(notes) < 2:
             return [0] * 25
-        
+
         histogram = [0] * 25  # -12 to +12
         pitches = [n['pitch'] for n in notes]
-        
+
         for i in range(1, len(pitches)):
             interval = pitches[i] - pitches[i-1]
             interval = max(-12, min(12, interval))
             histogram[interval + 12] += 1
-        
+
         total = sum(histogram)
         if total > 0:
             histogram = [h / total for h in histogram]
-        
+
         return histogram
-    
+
     def _save_sample_midi(self, sample: Dict[str, Any], output_dir: Path):
         """Save sample as MIDI file."""
         try:
             import mido
         except ImportError:
             return
-        
+
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         mid = mido.MidiFile()
         track = mido.MidiTrack()
         mid.tracks.append(track)
-        
+
         # Set tempo
         tempo = sample.get('tempo_bpm', 120)
         track.append(mido.MetaMessage('set_tempo', tempo=mido.bpm2tempo(tempo)))
-        
+
         # Sort notes by onset
         notes = sorted(sample.get('notes', []), key=lambda n: n['onset'])
-        
+
         # Convert to MIDI messages
         ticks_per_beat = 480
         last_time = 0
-        
+
         for note in notes:
             onset_ticks = int(note['onset'] * tempo / 60 * ticks_per_beat)
             duration_ticks = int(note['duration'] * tempo / 60 * ticks_per_beat)
-            
+
             delta = onset_ticks - last_time
-            track.append(mido.Message('note_on', 
-                note=note['pitch'], 
+            track.append(mido.Message('note_on',
+                note=note['pitch'],
                 velocity=note['velocity'],
                 time=max(0, delta)
             ))
@@ -762,7 +762,7 @@ class SyntheticGenerator:
                 time=duration_ticks
             ))
             last_time = onset_ticks + duration_ticks
-        
+
         output_path = output_dir / f"{sample['id']}.mid"
         mid.save(str(output_path))
 
