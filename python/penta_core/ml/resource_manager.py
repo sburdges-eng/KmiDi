@@ -102,6 +102,8 @@ class ResourceManager:
         self._quotas: Dict[ResourceType, ResourceQuota] = {}
         self._usage: Dict[ResourceType, float] = defaultdict(float)
         self._device_info: Dict[str, GPUDevice] = {}
+        self._device_quotas: Dict[str, ResourceQuota] = {}
+        self._gpu_usage_by_device: Dict[str, float] = defaultdict(float)
 
         # Initialize default quotas
         self._initialize_default_quotas()
@@ -141,15 +143,16 @@ class ResourceManager:
                     max_memory = device.memory_total_mb * 0.9
                     reserved = device.memory_total_mb * 0.1
 
-                    quota_key = f"{ResourceType.GPU_MEMORY.value}:{device_key}"
-                    # Store per-device quotas in metadata
+                    device_quota = ResourceQuota(
+                        resource_type=ResourceType.GPU_MEMORY,
+                        max_usage=max_memory,
+                        reserved=reserved,
+                    )
+                    self._device_quotas[device_key] = device_quota
+
                     if ResourceType.GPU_MEMORY not in self._quotas:
                         # Initialize with first device
-                        self._quotas[ResourceType.GPU_MEMORY] = ResourceQuota(
-                            resource_type=ResourceType.GPU_MEMORY,
-                            max_usage=max_memory,
-                            reserved=reserved,
-                        )
+                        self._quotas[ResourceType.GPU_MEMORY] = device_quota
 
         logger.info(f"Detected {len(self._device_info)} devices")
 
@@ -195,6 +198,20 @@ class ResourceManager:
             # Check if allocation would exceed quota
             current_usage = self._usage[resource_type]
             available = quota.get_available()
+            device_key = None
+
+            if resource_type == ResourceType.GPU_MEMORY and metadata:
+                device_key = metadata.get("device_key")
+                if not device_key:
+                    device_type = metadata.get("device_type")
+                    device_index = metadata.get("device_index")
+                    if device_type is not None and device_index is not None:
+                        device_key = f"{device_type}:{device_index}"
+
+                if device_key and device_key in self._device_quotas:
+                    quota = self._device_quotas[device_key]
+                    current_usage = self._gpu_usage_by_device[device_key]
+                    available = quota.get_available()
 
             if current_usage + amount > available:
                 logger.warning(
@@ -218,12 +235,16 @@ class ResourceManager:
                 owner=owner,
                 metadata=metadata or {},
             )
+            if device_key:
+                allocation.metadata.setdefault("device_key", device_key)
 
             self._allocations[allocation_id] = allocation
             self._usage[resource_type] += amount
+            if device_key:
+                self._gpu_usage_by_device[device_key] += amount
 
             # Check warning threshold
-            usage_ratio = self._usage[resource_type] / quota.max_usage
+            usage_ratio = (current_usage + amount) / quota.max_usage if quota.max_usage else 0.0
             if usage_ratio >= quota.warning_threshold:
                 logger.warning(
                     f"Resource usage high for {resource_type.value}: "
@@ -255,6 +276,13 @@ class ResourceManager:
 
             self._usage[allocation.resource_type] -= allocation.amount
             self._usage[allocation.resource_type] = max(0.0, self._usage[allocation.resource_type])
+            if allocation.resource_type == ResourceType.GPU_MEMORY:
+                device_key = allocation.metadata.get("device_key")
+                if device_key:
+                    self._gpu_usage_by_device[device_key] -= allocation.amount
+                    self._gpu_usage_by_device[device_key] = max(
+                        0.0, self._gpu_usage_by_device[device_key]
+                    )
 
             logger.debug(
                 f"Deallocated {allocation.amount} {allocation.resource_type.value} "
@@ -342,6 +370,15 @@ class ResourceManager:
                         "memory_free_mb": dev.memory_free_mb,
                     }
                     for key, dev in self._device_info.items()
+                },
+                "gpu_usage_by_device": dict(self._gpu_usage_by_device),
+                "gpu_quotas_by_device": {
+                    key: {
+                        "max_usage": quota.max_usage,
+                        "reserved": quota.reserved,
+                        "available": quota.get_available(),
+                    }
+                    for key, quota in self._device_quotas.items()
                 },
             }
             return status

@@ -314,11 +314,14 @@ class AIService:
             with cls._lock:
                 if cls._instance is None:
                     cls._instance = super().__new__(cls)
+                    cls._instance._constructed = False
                     cls._instance._initialized = False
         return cls._instance
 
     def __init__(self):
-        if self._initialized:
+        # Use _constructed flag to prevent re-running __init__ on singleton access
+        # _initialized flag is for tracking whether initialize() was called
+        if hasattr(self, '_constructed') and self._constructed:
             return
 
         self._model_service = ModelService()
@@ -333,9 +336,9 @@ class AIService:
             self._training_service,
         ]
 
-        # Mark as initialized to prevent re-initialization on singleton access
-        # Note: Full initialization (calling initialize()) still needs to be done separately
-        self._initialized = True
+        # Mark as constructed (but not yet fully initialized)
+        self._constructed = True
+        self._initialized = False
 
     def initialize(self) -> bool:
         """Initialize all services."""

@@ -179,6 +179,54 @@ class Metric:
             "p99": self.get_percentile(99, labels),
         }
 
+    def get_stats_since(
+        self,
+        cutoff_time: float,
+        labels: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
+        """Get statistics for values recorded since cutoff_time."""
+        if labels:
+            label_key = tuple(sorted(labels.items()))
+            values = self._values_by_labels.get(label_key, deque())
+        else:
+            values = self._values
+
+        filtered = [v.value for v in values if v.timestamp >= cutoff_time]
+        if not filtered:
+            return {
+                "count": 0,
+                "sum": 0.0,
+                "average": None,
+                "min": None,
+                "max": None,
+            }
+
+        filtered.sort()
+        count = len(filtered)
+        total = sum(filtered)
+        avg = total / count
+
+        def percentile(p: float) -> float:
+            if count == 1:
+                return filtered[0]
+            position = (p / 100.0) * (count - 1)
+            index = int(position)
+            if index < count - 1:
+                fraction = position - index
+                return filtered[index] + fraction * (filtered[index + 1] - filtered[index])
+            return filtered[index]
+
+        return {
+            "count": count,
+            "sum": total,
+            "average": avg,
+            "min": filtered[0],
+            "max": filtered[-1],
+            "p50": percentile(50),
+            "p95": percentile(95),
+            "p99": percentile(99),
+        }
+
 
 class MetricsCollector:
     """

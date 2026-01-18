@@ -424,6 +424,10 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
   double ppqPosition = position->getPpqPosition().orFallback(0.0);
   bool isPlaying = position->getIsPlaying();
 
+  if (bpm <= 0.0f) {
+    bpm = static_cast<float>(MusicConstants::TEMPO_DEFAULT);
+  }
+
   // Track playback state for real-time regeneration
   isHostPlaying_.store(isPlaying);
 

@@ -106,7 +106,7 @@ class ModelValidator:
                 # If that fails, try with weights_only=False (needed for TorchScript and older formats)
                 # This is safe since we're loading from RECOVERY_OPS (trusted source)
                 checkpoint = torch.load(model_path, map_location='cpu', weights_only=False)
-            
+
             info = {
                 'validated': True,
                 'checkpoint_keys': list(checkpoint.keys()) if isinstance(checkpoint, dict) else None,
@@ -152,7 +152,7 @@ class ModelScanner:
     def find_model_files(self) -> List[ModelInfo]:
         """Scan for model checkpoint files."""
         model_files = []
-        
+
         # Common patterns for model files
         patterns = [
             '**/*_best.pt',
@@ -175,7 +175,7 @@ class ModelScanner:
 
         # Primary search location
         ml_models_dir = self.recovery_ops_path / "ML_TRAINED_MODELS"
-        
+
         if ml_models_dir.exists():
             print(f"Scanning {ml_models_dir}...")
             search_paths = [ml_models_dir]
@@ -196,9 +196,9 @@ class ModelScanner:
 
                     # Extract model name from filename
                     model_name = self._extract_model_name(file_path)
-                    
+
                     file_size_mb = file_path.stat().st_size / (1024 * 1024)
-                    
+
                     model_info = ModelInfo(
                         model_name=model_name,
                         file_path=file_path,
@@ -211,12 +211,12 @@ class ModelScanner:
     def _extract_model_name(self, file_path: Path) -> str:
         """Extract model name from file path."""
         filename = file_path.name.lower()
-        
+
         # Try to match known model names
         for model_name in self.validator.supported_models.keys():
             if model_name in filename:
                 return model_name
-        
+
         # Extract from parent directories or filename
         if 'emotion' in filename:
             return 'emotionrecognizer'
@@ -232,29 +232,29 @@ class ModelScanner:
             return 'instrumentrecognizer'
         elif 'node' in filename and 'emotion' in filename:
             return 'emotionnodeclassifier'
-        
+
         # Default: use filename without extension
         return file_path.stem.lower().replace('_', '').replace('-', '')
 
     def validate_models(self, models: List[ModelInfo]) -> List[ModelInfo]:
         """Validate all discovered models."""
         validated_models = []
-        
+
         for model in models:
             print(f"  Validating {model.file_path.name}...")
             is_valid, error, info = self.validator.validate_model(
                 model.file_path, model.model_name
             )
-            
+
             model.is_valid = is_valid
             model.error_message = error
             if info:
                 model.architecture = info.get('architecture')
                 model.num_parameters = info.get('num_parameters')
                 model.checkpoint_epoch = info.get('epoch')
-            
+
             validated_models.append(model)
-            
+
             status = "✓" if is_valid else "✗"
             print(f"    {status} {model.model_name}: {error or 'Valid'}")
 
@@ -270,7 +270,7 @@ class ModelIntegrator:
             self.models_dir = Path(models_dir)
         else:
             self.models_dir = self.project_root / "models" / "checkpoints"
-        
+
         self.models_dir.mkdir(parents=True, exist_ok=True)
 
     def integrate_model(self, model: ModelInfo, dry_run: bool = False) -> Tuple[bool, Optional[str]]:
@@ -294,11 +294,11 @@ class ModelIntegrator:
         if target_path.exists():
             existing_size = target_path.stat().st_size
             new_size = model.file_path.stat().st_size
-            
+
             # If sizes match, skip (might be same file)
             if existing_size == new_size:
                 return False, f"Target already exists with same size ({existing_size} bytes)"
-            
+
             # If new is larger or different, we might want to overwrite
             # For now, create a versioned name
             base_name = target_path.stem
@@ -319,7 +319,7 @@ class ModelIntegrator:
     def generate_model_registry(self, integrated_models: List[ModelInfo]) -> None:
         """Generate/update model registry JSON file."""
         registry_path = self.project_root / "models" / "registry.json"
-        
+
         # Load existing registry if it exists
         registry = {}
         if registry_path.exists():
@@ -356,7 +356,10 @@ def main():
     parser.add_argument(
         '--recovery-ops',
         type=str,
-        default='/Users/seanburdges/RECOVERY_OPS',
+        default=os.environ.get(
+            "KMI_DI_RECOVERY_OPS",
+            os.environ.get("RECOVERY_OPS", str(Path.home() / "RECOVERY_OPS")),
+        ),
         help='Path to RECOVERY_OPS directory'
     )
     parser.add_argument(

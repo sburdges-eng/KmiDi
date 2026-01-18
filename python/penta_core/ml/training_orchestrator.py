@@ -23,6 +23,13 @@ Usage:
 
 from __future__ import annotations
 
+# Import torch for torch.arange usage
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+
 import asyncio
 import json
 import logging
@@ -92,6 +99,8 @@ class TrainingConfig:
     val_split: float = 0.1
     test_split: float = 0.1
     num_workers: int = 4
+    data_dir: Optional[str] = None
+    allow_dummy_data: bool = False
 
     # Checkpointing
     save_every_n_epochs: int = 5
@@ -370,7 +379,28 @@ class PyTorchTrainer(BaseTrainer):
             self.model = self._create_generic_model()
 
         self.model = self.model.to(self.device)
-        self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
+<<<<<<< Current (Your changes)
+        
+        # Set appropriate loss function based on task type
+        if task in [ModelTask.GROOVE_PREDICTION, ModelTask.DYNAMICS_MAPPING]:
+            # Regression tasks - use MSE loss
+            self.criterion = nn.MSELoss()
+        elif task in [ModelTask.HARMONY_PREDICTION, ModelTask.EMOTION_CLASSIFICATION, ModelTask.MELODY_GENERATION]:
+            # Classification tasks - use CrossEntropy loss
+        self.criterion = nn.MSELoss()
+        else:
+            # Default to CrossEntropy for unknown tasks
+        self.criterion = nn.MSELoss()
+=======
+
+        # Select appropriate loss function based on task type
+        # Regression tasks (groove, dynamics) use MSELoss
+        # Classification tasks (emotion, harmony, etc.) use CrossEntropyLoss
+        if task in (ModelTask.GROOVE_PREDICTION, ModelTask.DYNAMICS_MAPPING):
+            self.criterion = nn.MSELoss()
+        else:
+            self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
+>>>>>>> Incoming (Background Agent changes)
 
         # Setup optimizer
         self.optimizer = torch.optim.AdamW(
@@ -434,6 +464,7 @@ class PyTorchTrainer(BaseTrainer):
 
     def _create_harmony_model(self):
         """Create harmony prediction transformer model."""
+        import torch
         import torch.nn as nn
 
         class HarmonyPredictor(nn.Module):
@@ -487,6 +518,7 @@ class PyTorchTrainer(BaseTrainer):
 
     def _create_melody_model(self):
         """Create melody generation transformer model."""
+        import torch
         import torch.nn as nn
 
         class MelodyTransformer(nn.Module):
@@ -560,6 +592,89 @@ class PyTorchTrainer(BaseTrainer):
 
         return GenericMLP()
 
+    def _resolve_data_dir(self) -> Optional[Path]:
+        """Resolve data directory for the current model/task."""
+        data_dir = self.config.data_dir or os.environ.get("KMI_DI_TRAINING_DATA_DIR")
+        if not data_dir:
+            return None
+        base_dir = Path(data_dir)
+        model_dir = base_dir / self.config.model_name
+        return model_dir if model_dir.exists() else base_dir
+
+    def _extract_xy(self, payload: Any) -> Tuple[Any, Any]:
+        """Extract input/target tensors from loaded payloads."""
+        if isinstance(payload, dict):
+            for x_key, y_key in (("inputs", "targets"), ("X", "y")):
+                if x_key in payload and y_key in payload:
+                    return payload[x_key], payload[y_key]
+        if isinstance(payload, (list, tuple)) and len(payload) == 2:
+            return payload[0], payload[1]
+        raise ValueError("Unsupported dataset payload format; expected dict or (X, y) tuple.")
+
+    def _coerce_tensors(self, X: Any, y: Any) -> Tuple[Any, Any]:
+        """Coerce tensors to task-appropriate dtypes."""
+        import torch
+
+        if not torch.is_tensor(X):
+            X = torch.as_tensor(X)
+        if not torch.is_tensor(y):
+            y = torch.as_tensor(y)
+
+        classification_tasks = {
+            ModelTask.HARMONY_PREDICTION,
+            ModelTask.CHORD_PREDICTION,
+            ModelTask.EMOTION_CLASSIFICATION,
+            ModelTask.MELODY_GENERATION,
+        }
+        if self.config.model_task in classification_tasks:
+            y = y.long()
+        else:
+            y = y.float()
+
+        if self.config.model_task in {
+            ModelTask.HARMONY_PREDICTION,
+            ModelTask.CHORD_PREDICTION,
+            ModelTask.MELODY_GENERATION,
+        }:
+            X = X.long()
+        else:
+            X = X.float()
+
+        return X, y
+
+    def _create_dataloader(self, split: str = "train"):
+        """Create a dataloader from on-disk datasets."""
+        import numpy as np
+        import torch
+        from torch.utils.data import DataLoader, TensorDataset
+
+        data_dir = self._resolve_data_dir()
+        if not data_dir:
+            raise FileNotFoundError(
+                "No training data directory configured. "
+                "Set TrainingConfig.data_dir or KMI_DI_TRAINING_DATA_DIR."
+            )
+
+        pt_path = data_dir / f"{split}.pt"
+        npz_path = data_dir / f"{split}.npz"
+        if pt_path.exists():
+            payload = torch.load(pt_path)
+            X, y = self._extract_xy(payload)
+        elif npz_path.exists():
+            payload = np.load(npz_path)
+            X, y = self._extract_xy(payload)
+        else:
+            raise FileNotFoundError(f"No dataset found for split '{split}' in {data_dir}.")
+
+        X, y = self._coerce_tensors(X, y)
+        dataset = TensorDataset(X, y)
+        return DataLoader(
+            dataset,
+            batch_size=self.config.batch_size,
+            shuffle=(split == "train"),
+            num_workers=self.config.num_workers,
+        )
+
     def _create_dummy_dataloader(self, split: str = "train"):
         """Create dummy dataloader for demonstration."""
         import torch
@@ -604,8 +719,21 @@ class PyTorchTrainer(BaseTrainer):
         self._setup_model()
         self._notify_callbacks("on_train_begin", self.config, job)
 
-        train_loader = self._create_dummy_dataloader("train")
-        val_loader = self._create_dummy_dataloader("val")
+        try:
+            train_loader = self._create_dataloader("train")
+            val_loader = self._create_dataloader("val")
+        except Exception as exc:
+            if self.config.allow_dummy_data:
+                logger.warning(
+                    "Falling back to dummy dataloaders: %s",
+                    exc,
+                )
+                train_loader = self._create_dummy_dataloader("train")
+                val_loader = self._create_dummy_dataloader("val")
+            else:
+                raise RuntimeError(
+                    "Training data not available; set data_dir or allow_dummy_data."
+                ) from exc
 
         metrics = {
             "loss": float("inf"),
@@ -754,7 +882,17 @@ class HarmonyTrainer(PyTorchTrainer):
 
         self.model = self._create_harmony_model()
         self.model = self.model.to(self.device)
-        self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
+        
+        # Set appropriate loss function based on task type
+        if task in [ModelTask.GROOVE_PREDICTION, ModelTask.DYNAMICS_MAPPING]:
+            # Regression tasks - use MSE loss
+            self.criterion = nn.MSELoss()
+        elif task in [ModelTask.HARMONY_PREDICTION, ModelTask.EMOTION_CLASSIFICATION, ModelTask.MELODY_GENERATION]:
+            # Classification tasks - use CrossEntropy loss
+            self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
+        else:
+            # Default to CrossEntropy for unknown tasks
+            self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
 
         self.optimizer = torch.optim.AdamW(
             self.model.parameters(),
@@ -782,7 +920,17 @@ class EmotionTrainer(PyTorchTrainer):
 
         self.model = self._create_emotion_model()
         self.model = self.model.to(self.device)
-        self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
+        
+        # Set appropriate loss function based on task type
+        if task in [ModelTask.GROOVE_PREDICTION, ModelTask.DYNAMICS_MAPPING]:
+            # Regression tasks - use MSE loss
+            self.criterion = nn.MSELoss()
+        elif task in [ModelTask.HARMONY_PREDICTION, ModelTask.EMOTION_CLASSIFICATION, ModelTask.MELODY_GENERATION]:
+            # Classification tasks - use CrossEntropy loss
+            self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
+        else:
+            # Default to CrossEntropy for unknown tasks
+            self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
 
         self.optimizer = torch.optim.AdamW(
             self.model.parameters(),
@@ -810,7 +958,17 @@ class MelodyTrainer(PyTorchTrainer):
 
         self.model = self._create_melody_model()
         self.model = self.model.to(self.device)
-        self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
+        
+        # Set appropriate loss function based on task type
+        if task in [ModelTask.GROOVE_PREDICTION, ModelTask.DYNAMICS_MAPPING]:
+            # Regression tasks - use MSE loss
+            self.criterion = nn.MSELoss()
+        elif task in [ModelTask.HARMONY_PREDICTION, ModelTask.EMOTION_CLASSIFICATION, ModelTask.MELODY_GENERATION]:
+            # Classification tasks - use CrossEntropy loss
+            self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
+        else:
+            # Default to CrossEntropy for unknown tasks
+            self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
 
         self.optimizer = torch.optim.AdamW(
             self.model.parameters(),
@@ -1093,7 +1251,7 @@ class TrainingOrchestrator:
 
             # Export model
             if config.export_formats:
-                self._export_model(config, job, metrics)
+                self._export_model(config, job, metrics, trainer)
 
             # Register model
             self._register_trained_model(config, job, metrics)
@@ -1147,22 +1305,61 @@ class TrainingOrchestrator:
         self,
         config: TrainingConfig,
         job: TrainingJob,
-        metrics: Dict[str, float]
+        metrics: Dict[str, float],
+        trainer: BaseTrainer,
     ):
         """Export trained model to specified formats."""
         export_dir = Path(self.config.models_dir) / config.model_name
+        export_dir.mkdir(parents=True, exist_ok=True)
+
+        if not HAS_TORCH or not hasattr(trainer, "model") or trainer.model is None:
+            logger.warning("No PyTorch model available to export for %s", config.model_name)
+            return
+
+        import torch
+
+        model = trainer.model
+        model.eval()
+
+        # Save PyTorch model for inference loading
+        pt_path = export_dir / f"{config.model_name}.pt"
+        try:
+            torch.save(model, pt_path)
+            logger.info("Saved PyTorch model: %s", pt_path)
+        except Exception as exc:
+            logger.warning("Failed to save PyTorch model: %s", exc)
+
+        def _build_dummy_input() -> torch.Tensor:
+            if config.model_task == ModelTask.GROOVE_PREDICTION:
+                return torch.randn(1, 32, 16, device=self.device)
+            if config.model_task in {ModelTask.HARMONY_PREDICTION, ModelTask.CHORD_PREDICTION}:
+                return torch.randint(0, 128, (1, 16), device=self.device)
+            if config.model_task == ModelTask.EMOTION_CLASSIFICATION:
+                return torch.randn(1, 128, device=self.device)
+            if config.model_task == ModelTask.MELODY_GENERATION:
+                return torch.randint(0, 512, (1, 128), device=self.device)
+            if config.model_task == ModelTask.DYNAMICS_MAPPING:
+                return torch.randn(1, 8, device=self.device)
+            return torch.randn(1, 128, device=self.device)
 
         for fmt in config.export_formats:
             try:
                 if fmt == "onnx":
+                    dummy_input = _build_dummy_input()
                     export_path = export_dir / f"{config.model_name}.onnx"
+                    torch.onnx.export(
+                        model,
+                        dummy_input,
+                        export_path,
+                        input_names=["input"],
+                        output_names=["output"],
+                        opset_version=17,
+                    )
                     logger.info(f"Exported ONNX model: {export_path}")
                 elif fmt == "coreml":
-                    export_path = export_dir / f"{config.model_name}.mlmodel"
-                    logger.info(f"Exported CoreML model: {export_path}")
+                    logger.warning("CoreML export not implemented for %s", config.model_name)
                 elif fmt == "rtneural":
-                    export_path = export_dir / f"{config.model_name}_rtneural.json"
-                    logger.info(f"Exported RTNeural model: {export_path}")
+                    logger.warning("RTNeural export not implemented for %s", config.model_name)
             except Exception as e:
                 logger.warning(f"Export failed for {fmt}: {e}")
 

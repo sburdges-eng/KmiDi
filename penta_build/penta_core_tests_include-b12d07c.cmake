@@ -1,0 +1,5 @@
+if(EXISTS "/Users/seanburdges/.cursor/worktrees/KmiDi-1/yiz/penta_build/penta_core_tests_tests-b12d07c.cmake")
+  include("/Users/seanburdges/.cursor/worktrees/KmiDi-1/yiz/penta_build/penta_core_tests_tests-b12d07c.cmake")
+else()
+  add_test(penta_core_tests_NOT_BUILT-b12d07c penta_core_tests_NOT_BUILT-b12d07c)
+endif()

@@ -169,8 +169,13 @@ def run_training(model: str, epochs: int, batch_size: int = 8):
     ]
 
     env = os.environ.copy()
-    # Updated: Files moved from external SSD to local storage (2025-01-09)
-    env["KELLY_AUDIO_DATA_ROOT"] = os.getenv("KELLY_AUDIO_DATA_ROOT", "/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data")
+    data_root = (
+        os.getenv("KMI_DI_AUDIO_DATA_ROOT")
+        or os.getenv("KELLY_AUDIO_DATA_ROOT")
+        or str(Path(__file__).resolve().parent.parent / "data" / "audio")
+    )
+    env["KMI_DI_AUDIO_DATA_ROOT"] = data_root
+    env["KELLY_AUDIO_DATA_ROOT"] = data_root
     env["KELLY_EXTENDED_TRAINING"] = "1"  # Bypass epoch limits
 
     # Run training

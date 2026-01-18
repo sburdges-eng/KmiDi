@@ -226,24 +226,15 @@ class TrainingInferenceBridge:
 
         # Get model
         if version:
-            # Find specific version
-            model_info = None
-            for model in self._registry.list():
-                if model.name == model_name and model.version == version:
-                    model_info = model
-                    break
+            model_info = self._registry.get(model_name, version=version)
         else:
-            # Get latest version
             model_info = self._registry.get(model_name)
             if not model_info and model_name in self._model_versions:
                 # Get latest version from tracked versions
                 versions = self._model_versions[model_name]
                 if versions:
                     latest_version = versions[-1]
-                    for model in self._registry.list():
-                        if model.name == model_name and model.version == latest_version:
-                            model_info = model
-                            break
+                    model_info = self._registry.get(model_name, version=latest_version)
 
         if not model_info:
             logger.error(f"Model not found: {model_name} (version: {version})")

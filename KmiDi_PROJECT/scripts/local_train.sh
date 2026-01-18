@@ -10,10 +10,14 @@
 
 set -e
 
-# Updated: Files moved from external SSD to local storage
-# Use environment variable or default to new location
-DATA="${KELLY_AUDIO_DATA_ROOT:-/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data}"
-# Legacy SSD location (if remounted): VOL="/Volumes/sbdrive"; DATA="$VOL/audio/datasets"
+# Data root (configurable)
+if [ -n "$KMI_DI_AUDIO_DATA_ROOT" ]; then
+    DATA="$KMI_DI_AUDIO_DATA_ROOT"
+elif [ -n "$KELLY_AUDIO_DATA_ROOT" ]; then
+    DATA="$KELLY_AUDIO_DATA_ROOT"
+else
+    DATA="$(cd "$(dirname "$0")/.." && pwd)/data/audio"
+fi
 VENV="${VIRTUAL_ENV:-$(dirname "$(which python3)")/../venv}"
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 

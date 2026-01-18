@@ -34,61 +34,85 @@ from .model_registry import (
     create_training_job,
 )
 
-from .inference import (
-    InferenceEngine,
-    InferenceResult,
-    create_engine,
-)
+try:
+    from .inference import (
+        InferenceEngine,
+        InferenceResult,
+        create_engine,
+    )
+    HAS_INFERENCE = True
+except ImportError:
+    HAS_INFERENCE = False
 
-from .chord_predictor import (
-    ChordPredictor,
-    ChordPrediction,
-    predict_next_chord,
-    predict_progression,
-)
+try:
+    from .chord_predictor import (
+        ChordPredictor,
+        ChordPrediction,
+        predict_next_chord,
+        predict_progression,
+    )
+    HAS_CHORD_PREDICTOR = True
+except ImportError:
+    HAS_CHORD_PREDICTOR = False
 
-from .style_transfer import (
-    GrooveStyleTransfer,
-    StyleTransferResult,
-    transfer_groove_style,
-)
+try:
+    from .style_transfer import (
+        GrooveStyleTransfer,
+        StyleTransferResult,
+        transfer_groove_style,
+    )
+    HAS_STYLE_TRANSFER = True
+except ImportError:
+    HAS_STYLE_TRANSFER = False
 
-from .gpu_utils import (
-    get_available_devices,
-    select_best_device,
-    GPUDevice,
-    DeviceType,
-)
+try:
+    from .gpu_utils import (
+        get_available_devices,
+        select_best_device,
+        GPUDevice,
+        DeviceType,
+    )
+    HAS_GPU_UTILS = True
+except ImportError:
+    HAS_GPU_UTILS = False
 
-from .dynamics_training import (
-    SectionType,
-    DynamicLevel,
-    SectionContext,
-    TempoPoint,
-    TempoMap,
-    GroundTruthLabel,
-    LUFSMeter,
-    PositionTokenizer,
-    calculate_dynamics_targets_from_emotion,
-)
+try:
+    from .dynamics_training import (
+        SectionType,
+        DynamicLevel,
+        SectionContext,
+        TempoPoint,
+        TempoMap,
+        GroundTruthLabel,
+        LUFSMeter,
+        PositionTokenizer,
+        calculate_dynamics_targets_from_emotion,
+    )
+    HAS_DYNAMICS_TRAINING = True
+except ImportError:
+    HAS_DYNAMICS_TRAINING = False
 
-from .training_orchestrator import (
-    TrainingConfig,
-    OrchestratorConfig,
-    TrainingCallback,
-    ProgressCallback,
-    CheckpointCallback,
-    BaseTrainer,
-    DummyTrainer,
-    PyTorchTrainer,
-    GrooveTrainer,
-    HarmonyTrainer,
-    EmotionTrainer,
-    MelodyTrainer,
-    TrainingOrchestrator,
-    train_all_models,
-    train_model,
-)
+try:
+    from .training_orchestrator import (
+        TrainingConfig,
+        OrchestratorConfig,
+        TrainingCallback,
+        ProgressCallback,
+        CheckpointCallback,
+        BaseTrainer,
+        DummyTrainer,
+        PyTorchTrainer,
+        GrooveTrainer,
+        HarmonyTrainer,
+        EmotionTrainer,
+        MelodyTrainer,
+        TrainingOrchestrator,
+        train_all_models,
+        train_model,
+    )
+    HAS_TRAINING_ORCHESTRATOR = True
+except ImportError:
+    HAS_TRAINING_ORCHESTRATOR = False
 
 # New modular AI system components
 try:
@@ -297,46 +321,6 @@ __all__ = [
     "InferenceEngine",
     "InferenceResult",
     "create_engine",
-    # Chord Prediction
-    "ChordPredictor",
-    "ChordPrediction",
-    "predict_next_chord",
-    "predict_progression",
-    # Style Transfer
-    "GrooveStyleTransfer",
-    "StyleTransferResult",
-    "transfer_groove_style",
-    # GPU
-    "get_available_devices",
-    "select_best_device",
-    "GPUDevice",
-    "DeviceType",
-    # Dynamics Training
-    "SectionType",
-    "DynamicLevel",
-    "SectionContext",
-    "TempoPoint",
-    "TempoMap",
-    "GroundTruthLabel",
-    "LUFSMeter",
-    "PositionTokenizer",
-    "calculate_dynamics_targets_from_emotion",
-    # Training Orchestrator
-    "TrainingConfig",
-    "OrchestratorConfig",
-    "TrainingCallback",
-    "ProgressCallback",
-    "CheckpointCallback",
-    "BaseTrainer",
-    "DummyTrainer",
-    "PyTorchTrainer",
-    "GrooveTrainer",
-    "HarmonyTrainer",
-    "EmotionTrainer",
-    "MelodyTrainer",
-    "TrainingOrchestrator",
-    "train_all_models",
-    "train_model",
     # Resource Management
     "ResourceManager",
     "ResourceType",
@@ -427,3 +411,58 @@ __all__ = [
     "RolloutStrategy",
     "get_versioning",
 ]
+
+if HAS_CHORD_PREDICTOR:
+    __all__.extend([
+        "ChordPredictor",
+        "ChordPrediction",
+        "predict_next_chord",
+        "predict_progression",
+    ])
+
+if HAS_STYLE_TRANSFER:
+    __all__.extend([
+        "GrooveStyleTransfer",
+        "StyleTransferResult",
+        "transfer_groove_style",
+    ])
+
+if HAS_GPU_UTILS:
+    __all__.extend([
+        "get_available_devices",
+        "select_best_device",
+        "GPUDevice",
+        "DeviceType",
+    ])
+
+if HAS_DYNAMICS_TRAINING:
+    __all__.extend([
+        "SectionType",
+        "DynamicLevel",
+        "SectionContext",
+        "TempoPoint",
+        "TempoMap",
+        "GroundTruthLabel",
+        "LUFSMeter",
+        "PositionTokenizer",
+        "calculate_dynamics_targets_from_emotion",
+    ])
+
+if HAS_TRAINING_ORCHESTRATOR:
+    __all__.extend([
+        "TrainingConfig",
+        "OrchestratorConfig",
+        "TrainingCallback",
+        "ProgressCallback",
+        "CheckpointCallback",
+        "BaseTrainer",
+        "DummyTrainer",
+        "PyTorchTrainer",
+        "GrooveTrainer",
+        "HarmonyTrainer",
+        "EmotionTrainer",
+        "MelodyTrainer",
+        "TrainingOrchestrator",
+        "train_all_models",
+        "train_model",
+    ])

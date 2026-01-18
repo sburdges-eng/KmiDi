@@ -193,8 +193,7 @@ class MonitoringAPI:
         cutoff_time = time.time() - (time_range_minutes * 60)
 
         for name, metric in all_metrics.items():
-            # Filter by time range (simplified - in practice, filter by timestamp)
-            stats = metric.get_stats()
+            stats = metric.get_stats_since(cutoff_time)
             summary[name] = stats
 
         return {

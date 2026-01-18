@@ -82,7 +82,7 @@ if command -v python3 &> /dev/null; then
     PYTHON_VERSION=$(python3 --version 2>&1 | cut -d' ' -f2)
     PYTHON_MAJOR=$(echo "$PYTHON_VERSION" | cut -d'.' -f1)
     PYTHON_MINOR=$(echo "$PYTHON_VERSION" | cut -d'.' -f2)
-    
+
     if [ "$PYTHON_MAJOR" -ge 3 ] && [ "$PYTHON_MINOR" -ge 10 ]; then
         echo -e "${GREEN}✓ Python $PYTHON_VERSION found${NC}"
     else
@@ -182,9 +182,15 @@ EOF
 echo ""
 echo -e "${YELLOW}→ Creating directory structure...${NC}"
 
-# Audio data location - Updated: Files moved from external SSD to local storage (2025-01-09)
-# Priority: Environment variable > New location > Legacy SSD (if remounted)
-AUDIO_DATA_ROOT="${KELLY_AUDIO_DATA_ROOT:-/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data}"
+# Audio data location
+# Priority: KMI_DI_AUDIO_DATA_ROOT > KELLY_AUDIO_DATA_ROOT > local data/audio
+if [ -n "$KMI_DI_AUDIO_DATA_ROOT" ]; then
+    AUDIO_DATA_ROOT="$KMI_DI_AUDIO_DATA_ROOT"
+elif [ -n "$KELLY_AUDIO_DATA_ROOT" ]; then
+    AUDIO_DATA_ROOT="$KELLY_AUDIO_DATA_ROOT"
+else
+    AUDIO_DATA_ROOT="$PROJECT_ROOT/data/audio"
+fi
 
 # Check if directory exists or parent exists (for creation)
 if [ -d "$AUDIO_DATA_ROOT" ] || [ -d "$(dirname "$AUDIO_DATA_ROOT")" ]; then
@@ -194,7 +200,7 @@ if [ -d "$AUDIO_DATA_ROOT" ] || [ -d "$(dirname "$AUDIO_DATA_ROOT")" ]; then
     mkdir -p "$AUDIO_DATA_ROOT/processed"
     mkdir -p "$AUDIO_DATA_ROOT/downloads"
     mkdir -p "$AUDIO_DATA_ROOT/cache"
-    
+
     # Create symlink in project if not exists (optional)
     if [ ! -L "$PROJECT_ROOT/data/audio" ] && [ ! -d "$PROJECT_ROOT/data/audio" ]; then
         ln -sf "$AUDIO_DATA_ROOT" "$PROJECT_ROOT/data/audio"

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import threading
 import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple, Callable
@@ -129,6 +130,26 @@ class AsyncInferenceEngine:
             return
 
         self._running = False
+
+        # Drain pending requests to avoid hanging joins
+        while not self._queue.empty():
+            try:
+                request = self._queue.get_nowait()
+            except asyncio.QueueEmpty:
+                break
+            response = InferenceResponse(
+                request_id=request.request_id,
+                error=RuntimeError("Async inference engine stopped"),
+            )
+            future = self._pending_futures.pop(request.request_id, None)
+            if future and not future.done():
+                future.set_result(response)
+            if request.callback:
+                try:
+                    request.callback(None)
+                except Exception as e:
+                    logger.error(f"Callback error: {e}")
+            self._queue.task_done()
 
         # Wait for queue to drain
         await self._queue.join()

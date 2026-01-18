@@ -136,7 +136,7 @@ class ModelRegistry:
         if self._initialized:
             return
 
-        self._models: Dict[str, ModelInfo] = {}
+        self._models: Dict[tuple, ModelInfo] = {}
         self._model_dirs: List[Path] = []
         self._cache: Dict[str, Any] = {}
         self._initialized = True
@@ -162,20 +162,44 @@ class ModelRegistry:
         if model_dir.exists() and model_dir not in self._model_dirs:
             self._model_dirs.append(model_dir)
 
+    @staticmethod
+    def _version_key(version: str) -> tuple:
+        parts = []
+        for part in (version or "0").split("."):
+            try:
+                parts.append(int(part))
+            except ValueError:
+                parts.append(part)
+        return tuple(parts)
+
     def register(self, model: ModelInfo) -> None:
         """Register a model."""
-        self._models[model.name] = model
+        key = (model.name, model.version)
+        self._models[key] = model
 
-    def unregister(self, name: str) -> bool:
-        """Unregister a model."""
-        if name in self._models:
-            del self._models[name]
-            return True
-        return False
+    def unregister(self, name: str, version: Optional[str] = None) -> bool:
+        """Unregister a model by name or name+version."""
+        if version is not None:
+            key = (name, version)
+            if key in self._models:
+                del self._models[key]
+                return True
+            return False
 
-    def get(self, name: str) -> Optional[ModelInfo]:
-        """Get model info by name."""
-        return self._models.get(name)
+        to_delete = [key for key in self._models if key[0] == name]
+        for key in to_delete:
+            del self._models[key]
+        return bool(to_delete)
+
+    def get(self, name: str, version: Optional[str] = None) -> Optional[ModelInfo]:
+        """Get model info by name and optional version."""
+        if version is not None:
+            return self._models.get((name, version))
+
+        candidates = [model for (model_name, _), model in self._models.items() if model_name == name]
+        if not candidates:
+            return None
+        return max(candidates, key=lambda model: self._version_key(model.version))
 
     def list(self, task: Optional[ModelTask] = None) -> List[ModelInfo]:
         """List all registered models, optionally filtered by task."""
@@ -393,9 +417,9 @@ def register_model(model: ModelInfo) -> None:
     get_registry().register(model)
 
 
-def get_model(name: str) -> Optional[ModelInfo]:
+def get_model(name: str, version: Optional[str] = None) -> Optional[ModelInfo]:
     """Get a model from the global registry."""
-    return get_registry().get(name)
+    return get_registry().get(name, version=version)
 
 
 def list_models(task: Optional[ModelTask] = None) -> List[ModelInfo]:

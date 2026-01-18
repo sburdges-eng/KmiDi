@@ -42,7 +42,7 @@ else:
 class MIDITokenizer:
     """Tokenize MIDI events for transformer training."""
 
-    def __init__(self, vocab_size: int = 388, special_tokens: Optional[Dict[str, int]] = None):
+    def __init__(self, vocab_size: int = 392, special_tokens: Optional[Dict[str, int]] = None):
         self.vocab_size = vocab_size
 
         # Token ranges
@@ -259,7 +259,7 @@ class EmotionMIDITransformer(nn.Module):
 
     def __init__(
         self,
-        vocab_size: int = 388,
+        vocab_size: int = 392,
         max_seq_len: int = 1024,
         hidden_dim: int = 384,
         num_layers: int = 8,
@@ -611,7 +611,7 @@ def train_epoch(
     epoch: int,
     config: dict,
     scaler: Optional[Any] = None,
-    pad_token: int = 384,
+    pad_token: int = 388,
 ) -> dict:
     """Train for one epoch."""
     model.train()
@@ -697,7 +697,7 @@ def evaluate(
     model: nn.Module,
     dataloader: DataLoader,
     device: torch.device,
-    pad_token: int = 384,
+    pad_token: int = 388,
 ) -> dict:
     """Evaluate model."""
     model.eval()
@@ -752,7 +752,10 @@ def main(config_path: str):
     data_cfg = config.get('data', {})
     tokenizer_cfg = data_cfg.get('tokenizer', {})
     special_tokens = tokenizer_cfg.get('special_tokens', {})
-    tokenizer_vocab = tokenizer_cfg.get('vocab_size', config.get('model', {}).get('architecture', {}).get('vocab_size', 388))
+    tokenizer_vocab = tokenizer_cfg.get(
+        'vocab_size',
+        config.get('model', {}).get('architecture', {}).get('vocab_size', 392),
+    )
     tokenizer = MIDITokenizer(vocab_size=tokenizer_vocab, special_tokens=special_tokens)
 
     # Create model
