@@ -1,5 +1,7 @@
 #include "midi/MidiGenerator.h"
 #include "common/MusicConstants.h"
+#include "common/IntentIRAdapter.h"
+#include "common/IntentIRExtractor.h"
 #include "engine/EmotionMusicMapper.h"
 #include "engines/ArrangementEngine.h"
 #include <algorithm>
@@ -1069,6 +1071,18 @@ MidiGenerator::LayerFlags MidiGenerator::determineLayers(
   }
 
   return flags;
+}
+
+// NEW: IntentFrame-based generate method
+GeneratedMidi MidiGenerator::generate(const IntentFrame& frame, int bars,
+                                      float complexity, float humanize,
+                                      float feel, float dynamics) {
+  // Convert IntentFrame to IntentResult for now (until all engines are migrated)
+  IntentResult intent = convertIntentIRToIntentResult(frame);
+  
+  // Use existing generate method with converted IntentResult
+  // This maintains backward compatibility while allowing IntentFrame usage
+  return generate(intent, bars, complexity, humanize, feel, dynamics);
 }
 
 } // namespace kelly

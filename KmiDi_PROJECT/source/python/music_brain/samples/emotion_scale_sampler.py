@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #!/usr/bin/env python3
 """
 Emotion-Scale Sample Fetcher
@@ -565,3 +567,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 /**
  * @file memory.cpp
  * @brief Implementation of memory management utilities
@@ -123,3 +125,4 @@ template class LockFreeQueue<float>;
 template class LockFreeQueue<NoteEvent>;
 
 }  // namespace daiw
+>>>>>>> Incoming (Background Agent changes)

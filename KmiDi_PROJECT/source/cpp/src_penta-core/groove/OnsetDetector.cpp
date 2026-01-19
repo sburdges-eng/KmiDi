@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "penta/groove/OnsetDetector.h"
 #include "penta/common/SIMDKernels.h"
 #include <juce_dsp/juce_dsp.h>
@@ -198,3 +200,4 @@ namespace penta::groove
     }
 
 } // namespace penta::groove
+>>>>>>> Incoming (Background Agent changes)

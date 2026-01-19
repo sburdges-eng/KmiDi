@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "AdaptiveGenerator.h"
 #include <algorithm>
 #include <cmath>
@@ -77,3 +79,4 @@ std::map<std::string, float> AdaptiveGenerator::getPreferredAdjustments() const 
 }
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

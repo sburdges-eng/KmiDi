@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "penta/groove/OnsetDetector.h"
 #include <algorithm>
 #include <cmath>
@@ -169,3 +171,4 @@ void OnsetDetector::detectPeaks() noexcept {
 }
 
 } // namespace penta::groove
+>>>>>>> Incoming (Background Agent changes)

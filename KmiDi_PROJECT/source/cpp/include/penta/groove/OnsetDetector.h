@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 
 #include "penta/common/RTTypes.h"
@@ -76,3 +78,4 @@ namespace penta::groove
     };
 
 } // namespace penta::groove
+>>>>>>> Incoming (Background Agent changes)

@@ -2,52 +2,44 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- Application Identification -->
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+
     <key>CFBundleIdentifier</key>
-    <string>com.kmidi.app</string>
+    <string>@MACOSX_BUNDLE_GUI_IDENTIFIER@</string>
 
     <key>CFBundleName</key>
-    <string>KmiDi</string>
+    <string>@MACOSX_BUNDLE_BUNDLE_NAME@</string>
 
     <key>CFBundleDisplayName</key>
-    <string>KmiDi - Unified Music Intelligence & Audio Workstation</string>
-
-    <key>CFBundleExecutable</key>
     <string>KmiDi</string>
 
-    <!-- Version Information -->
+    <key>CFBundleExecutable</key>
+    <string>@MACOSX_BUNDLE_EXECUTABLE_NAME@</string>
+
     <key>CFBundleVersion</key>
-    <string>1.0.0</string>
+    <string>@MACOSX_BUNDLE_BUNDLE_VERSION@</string>
 
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>@MACOSX_BUNDLE_SHORT_VERSION_STRING@</string>
 
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
 
-    <!-- Bundle Type -->
     <key>CFBundlePackageType</key>
     <string>APPL</string>
 
-    <key>CFBundleSignature</key>
-    <string>KmiDi</string>
-
-    <!-- Icons -->
     <key>CFBundleIconFile</key>
     <string>KmiDi.icns</string>
 
-    <key>CFBundleIconName</key>
-    <string>KmiDi</string>
-
-    <!-- Platform Requirements -->
     <key>LSMinimumSystemVersion</key>
-    <string>10.15</string>
-
-    <key>NSHighResolutionCapable</key>
-    <true/>
+    <string>@CMAKE_OSX_DEPLOYMENT_TARGET@</string>
 
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.music</string>
+
+    <key>NSHighResolutionCapable</key>
+    <true/>
 
     <!-- Document Types (MIDI, Audio) -->
     <key>CFBundleDocumentTypes</key>
@@ -121,40 +113,7 @@
     <key>NSAppleEventsUsageDescription</key>
     <string>KmiDi uses automation to control DAW workflows.</string>
 
-    <!-- Entitlements -->
-    <key>com.apple.security.audio-input</key>
-    <true/>
-
-    <key>com.apple.security.device.audio-input</key>
-    <true/>
-
-    <!-- Human Interface -->
-    <key>NSPrincipalClass</key>
-    <string>NSApplication</string>
-
-    <key>NSMainNibFile</key>
-    <string>MainMenu</string>
-
-    <!-- Copyright -->
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright © 2025 Sean Burdges. All rights reserved.</string>
-
-    <!-- Hardened Runtime -->
-    <key>com.apple.security.app-sandbox</key>
-    <false/>
-
-    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
-    <true/>
-
-    <key>com.apple.security.cs.disable-library-validation</key>
-    <true/>
-
-    <!-- Python Embedding -->
-    <key>NSSupportsAutomaticGraphicsSwitching</key>
-    <true/>
-
-    <!-- GPU/OpenGL for Side B Shaders -->
-    <key>NSRequiresAquaSystemAppearance</key>
-    <false/>
+    <string>@MACOSX_BUNDLE_COPYRIGHT@</string>
 </dict>
 </plist>

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "plugin/MasterEQProcessor.h"
 #include "plugin/PluginProcessor.h"
 
@@ -280,3 +282,4 @@ float MasterEQProcessor::calculateSmoothingCoeff(double timeConstantSeconds,
 }
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

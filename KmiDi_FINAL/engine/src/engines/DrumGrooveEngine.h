@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../common/Types.h"
+#include "../common/IntentIRExtractor.h"
+#include "../shared/include/kmidi/IntentIR.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -75,6 +77,17 @@ public:
     );
 
     GrooveOutput generate(const GrooveConfig& config);
+
+    /**
+     * Generate drum groove from IntentFrame (IR v1).
+     * Extracts rhythmic_density, groove_strength, and tempo_bias from IR.
+     */
+    GrooveOutput generateFromIntentFrame(
+        const IntentFrame& frame,
+        const std::string& genre = "",
+        int bars = 4,
+        int tempoBpm = 120
+    );
 
     void setHumanization(float amount) { humanization_ = amount; }
     void setSwing(float amount) { swingOverride_ = amount; }

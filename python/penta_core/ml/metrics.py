@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Metrics Collection - Comprehensive metrics collection system.
 
@@ -433,3 +435,4 @@ def get_metrics_collector() -> MetricsCollector:
             if _metrics_collector is None:
                 _metrics_collector = MetricsCollector()
     return _metrics_collector
+>>>>>>> Incoming (Background Agent changes)

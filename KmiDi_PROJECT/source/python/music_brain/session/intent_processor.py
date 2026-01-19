@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Intent Processor - Executes song intent to generate musical elements.
 
@@ -741,3 +743,4 @@ def process_intent(intent: CompleteSongIntent) -> Dict:
     """
     processor = IntentProcessor(intent)
     return processor.generate_all()
+>>>>>>> Incoming (Background Agent changes)

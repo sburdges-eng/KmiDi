@@ -1,5 +1,6 @@
 #include "PadEngine.h"
 #include "../common/MusicConstants.h"
+#include "../common/IntentIRExtractor.h"
 #include <random>
 #include <algorithm>
 #include <cmath>
@@ -398,6 +399,63 @@ std::vector<int> PadEngine::applyVelocityCurve(int baseVelocity, PadMovement mov
     }
 
     return velocities;
+}
+
+PadOutput PadEngine::generateFromIntentFrame(
+    const IntentFrame& frame,
+    const std::vector<std::string>& chordProgression,
+    const std::string& key,
+    int bars,
+    int tempoBpm
+) {
+    // Extract texture and dynamics parameters from IntentFrame
+    DynamicsParams dynamics = DynamicsParams::fromIntentFrame(frame);
+    HarmonyParams harmony = HarmonyParams::fromIntentFrame(frame);
+    EmotionParams emotion = EmotionParams::fromIntentFrame(frame);
+    
+    // Map texture_density to pad texture
+    PadTexture texture;
+    if (dynamics.texture_density > 0.7f) {
+        texture = PadTexture::Thick;
+    } else if (dynamics.texture_density < 0.3f) {
+        texture = PadTexture::Airy;
+    } else if (harmony.harmonic_tension > 0.7f) {
+        texture = PadTexture::Gritty;
+    } else {
+        texture = PadTexture::Warm;
+    }
+    
+    // Map harmonic_motion to pad movement
+    PadMovement movement;
+    if (harmony.harmonic_motion > 0.7f) {
+        movement = PadMovement::Swelling;
+    } else if (harmony.harmonic_motion < 0.3f) {
+        movement = PadMovement::Static;
+    } else {
+        movement = PadMovement::Breathing;
+    }
+    
+    // Create config from IR parameters
+    PadConfig config;
+    config.chordProgression = chordProgression;
+    config.key = key;
+    config.bars = bars;
+    config.tempoBpm = tempoBpm;
+    config.textureOverride = texture;
+    config.movementOverride = movement;
+    
+    // Use emotion name if available, otherwise derive from VAD
+    if (emotion.valence > 0.3f && emotion.arousal > 0.6f) {
+        config.emotion = "joy";
+    } else if (emotion.valence < -0.3f && emotion.arousal < 0.4f) {
+        config.emotion = "grief";
+    } else if (emotion.valence < -0.3f && emotion.arousal > 0.6f) {
+        config.emotion = "anger";
+    } else {
+        config.emotion = "neutral";
+    }
+    
+    return generate(config);
 }
 
 } // namespace kelly

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 VoiceGenerationPipeline
 -----------------------
@@ -133,3 +135,4 @@ class VoiceGenerationPipeline:
 def create_voice_pipeline(sample_rate: int = 44100) -> VoiceGenerationPipeline:
     return VoiceGenerationPipeline(sample_rate=sample_rate)
 
+>>>>>>> Incoming (Background Agent changes)

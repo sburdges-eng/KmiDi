@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Synthetic Data Generation for KmiDi ML Training.
 
@@ -1022,3 +1024,4 @@ except ImportError:
     # PyTorch not available
     def create_synthetic_dataset(*args, **kwargs):
         raise ImportError("PyTorch required for create_synthetic_dataset")
+>>>>>>> Incoming (Background Agent changes)

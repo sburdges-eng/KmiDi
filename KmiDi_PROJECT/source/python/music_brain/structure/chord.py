@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Chord Analysis - Detect and analyze chords from MIDI.
 
@@ -591,3 +593,4 @@ def analyze_chords(midi_path: str, quantize_beats: float = 0.5) -> ChordProgress
         source_file=str(midi_path),
         tempo_bpm=tempo_bpm,
     )
+>>>>>>> Incoming (Background Agent changes)

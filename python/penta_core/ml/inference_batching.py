@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Inference Batching - Automatic batching support for inference.
 
@@ -423,3 +425,4 @@ class BatchedInferenceEngine:
     def get_stats(self) -> Dict[str, Any]:
         """Get batching statistics."""
         return self.processor.get_stats()
+>>>>>>> Incoming (Background Agent changes)

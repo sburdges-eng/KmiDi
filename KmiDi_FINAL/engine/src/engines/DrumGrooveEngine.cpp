@@ -1,5 +1,6 @@
 #include "DrumGrooveEngine.h"
 #include "../common/MusicConstants.h"
+#include "../common/IntentIRExtractor.h"
 #include <random>
 #include <algorithm>
 #include <cmath>
@@ -214,6 +215,62 @@ GrooveOutput DrumGrooveEngine::generate(const GrooveConfig& config) {
     }
 
     output.totalTicks = config.bars * ticksPerBar;
+    return output;
+}
+
+GrooveOutput DrumGrooveEngine::generateFromIntentFrame(
+    const IntentFrame& frame,
+    const std::string& genre,
+    int bars,
+    int tempoBpm
+) {
+    // Extract rhythm-specific parameters from IntentFrame
+    RhythmParams rhythm = RhythmParams::fromIntentFrame(frame);
+    EmotionParams emotion = EmotionParams::fromIntentFrame(frame);
+    
+    // Map rhythmic_density to groove style
+    GrooveStyle style;
+    if (rhythm.rhythmic_density > 0.7f) {
+        style = GrooveStyle::FourOnFloor;
+    } else if (rhythm.rhythmic_density < 0.3f) {
+        style = GrooveStyle::Halftime;
+    } else if (rhythm.groove_strength > 0.7f) {
+        style = GrooveStyle::Syncopated;
+    } else {
+        style = GrooveStyle::Straight;
+    }
+    
+    // Map groove_strength to humanization
+    float humanization = rhythm.groove_strength * 0.2f;  // Max 20%
+    
+    // Map tempo_bias to swing (negative bias = more swing for slower feel)
+    float swing = (rhythm.tempo_bias < 0) ? -rhythm.tempo_bias * 0.3f : 0.0f;
+    
+    // Create config from IR parameters
+    GrooveConfig config;
+    config.genre = genre;
+    config.bars = bars;
+    config.tempoBpm = tempoBpm;
+    config.styleOverride = style;
+    config.humanization = humanization;
+    
+    // Use emotion name if available, otherwise derive from VAD
+    if (emotion.valence > 0.3f && emotion.arousal > 0.6f) {
+        config.emotion = "joy";
+    } else if (emotion.valence < -0.3f && emotion.arousal < 0.4f) {
+        config.emotion = "grief";
+    } else if (emotion.valence < -0.3f && emotion.arousal > 0.6f) {
+        config.emotion = "anger";
+    } else {
+        config.emotion = "neutral";
+    }
+    
+    // Set swing override
+    setSwing(swing);
+    
+    GrooveOutput output = generate(config);
+    output.swingAmount = swing;
+    
     return output;
 }
 

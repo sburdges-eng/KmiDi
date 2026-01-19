@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 
 #include "penta/common/Platform.h"
@@ -87,3 +89,4 @@ namespace penta::harmony
     };
 
 } // namespace penta::harmony
+>>>>>>> Incoming (Background Agent changes)

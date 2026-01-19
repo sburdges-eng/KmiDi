@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #!/usr/bin/env python3
 """
 Ableton Bridge - OSC/MIDI Communication with DAW
@@ -798,3 +800,4 @@ if __name__ == "__main__":
             print("  1. python-osc is installed: pip install python-osc")
             print("  2. mido is installed: pip install mido python-rtmidi")
             print("  3. Ableton Live is running with OSC enabled")
+>>>>>>> Incoming (Background Agent changes)

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "common/Types.h"
+#include "common/IntentIRAdapter.h"
+#include "shared/include/kmidi/IntentIR.h"
 #include "engine/IntentPipeline.h"
 #include "midi/ChordGenerator.h"
 #include "midi/GrooveEngine.h"
@@ -59,6 +61,27 @@ public:
      */
     GeneratedMidi generate(
         const IntentResult& intent,
+        int bars = 8,
+        float complexity = 0.5f,
+        float humanize = 0.4f,
+        float feel = 0.0f,
+        float dynamics = 0.75f
+    );
+
+    /**
+     * Generate complete MIDI arrangement from IntentFrame (IR v1).
+     * This is the new IR v1 entry point that uses IntentFrame directly.
+     *
+     * @param frame Validated IntentFrame (must be validated before calling)
+     * @param bars Number of bars to generate (default 8, can be 4-32)
+     * @param complexity 0.0 (simple) to 1.0 (complex) - affects chord extensions, melody density
+     * @param humanize 0.0 (quantized) to 1.0 (loose) - affects timing and velocity
+     * @param feel -1.0 (pull) to 1.0 (push) - affects timing feel
+     * @param dynamics 0.0 to 1.0 - affects velocity range
+     * @return Complete MIDI with all layers (chords, melody, bass, pads, strings, etc.)
+     */
+    GeneratedMidi generate(
+        const IntentFrame& frame,
         int bars = 8,
         float complexity = 0.5f,
         float humanize = 0.4f,

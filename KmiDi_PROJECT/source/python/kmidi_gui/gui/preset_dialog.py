@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """Preset dialog UI component.
 
 Simple list view with load/save buttons. No modals - uses dock or sidebar.
@@ -209,3 +211,4 @@ class PresetDialog(QWidget):
             teaching_mode=teaching_mode,
             trust_settings=trust_settings,
         )
+>>>>>>> Incoming (Background Agent changes)

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../common/Types.h"
+#include "../common/IntentIRExtractor.h"
+#include "../shared/include/kmidi/IntentIR.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -122,6 +124,18 @@ public:
     );
     
     PadOutput generate(const PadConfig& config);
+    
+    /**
+     * Generate pad from IntentFrame (IR v1).
+     * Extracts texture_density, harmonic_tension, and dynamic_range from IR.
+     */
+    PadOutput generateFromIntentFrame(
+        const IntentFrame& frame,
+        const std::vector<std::string>& chordProgression,
+        const std::string& key = "C",
+        int bars = 4,
+        int tempoBpm = 120
+    );
 
 private:
     std::map<std::string, PadEmotionProfile> profiles_;

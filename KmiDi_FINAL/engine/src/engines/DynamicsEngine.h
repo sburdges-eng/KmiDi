@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../common/Types.h"
+#include "../common/IntentIRExtractor.h"
+#include "../shared/include/kmidi/IntentIR.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -129,6 +131,16 @@ public:
         const std::vector<MidiNote>& notes,
         const std::string& emotion,
         float strength
+    );
+    
+    /**
+     * Apply dynamics from IntentFrame (IR v1).
+     * Extracts dynamic_range and texture_density from IR.
+     */
+    DynamicsOutput applyFromIntentFrame(
+        const IntentFrame& frame,
+        const std::vector<MidiNote>& notes,
+        float expressiveness = 0.5f
     );
 
 private:

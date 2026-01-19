@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "midi/MidiExporter.h"
 #include "midi/MidiBuilder.h"  // Include MidiBuilder implementation
 #include "common/MusicConstants.h"
@@ -457,3 +459,4 @@ void MidiExporter::addVocalNotes(juce::MidiMessageSequence& sequence,
 }
 
 } // namespace midikompanion
+>>>>>>> Incoming (Background Agent changes)

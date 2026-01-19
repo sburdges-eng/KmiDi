@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """Control surface panel UI.
 
 Device list, mapping table, and learn mode interface.
@@ -233,3 +235,4 @@ class ControlSurfacePanel(QWidget):
         self.project_path = project_path
         self.control_manager.load_mappings(project_path)
         self._refresh_mappings()
+>>>>>>> Incoming (Background Agent changes)

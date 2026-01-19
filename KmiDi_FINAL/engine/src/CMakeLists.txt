@@ -91,3 +91,48 @@ endif()
 if(UNIX)
     target_link_libraries(penta_core PUBLIC pthread)
 endif()
+
+# Intent IR Rust crate
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../intent_ir intent_ir_build)
+
+# Intent IR Adapter (C++ wrapper)
+set(INTENT_IR_ADAPTER_SOURCES
+    common/IntentIRAdapter.cpp
+    ${PROJECT_SOURCE_DIR}/../shared/src/kmidi/IntentIR_impl.cpp
+    ${PROJECT_SOURCE_DIR}/../shared/src/kmidi/IntentIR_JSON.cpp
+)
+
+set(INTENT_IR_ADAPTER_HEADERS
+    common/IntentIRAdapter.h
+    common/IntentIRExtractor.h
+)
+
+add_library(intent_ir_adapter STATIC
+    ${INTENT_IR_ADAPTER_SOURCES}
+    ${INTENT_IR_ADAPTER_HEADERS}
+)
+
+target_include_directories(intent_ir_adapter PUBLIC
+    ${PROJECT_SOURCE_DIR}/../shared/include
+    ${PROJECT_SOURCE_DIR}/include
+    ${CMAKE_BINARY_DIR}/include  # For generated FFI header
+)
+
+target_link_libraries(intent_ir_adapter PUBLIC
+    ${INTENT_IR_RUST_LIB}
+)
+
+# Link cJSON for JSON serialization (if available)
+find_library(CJSON_LIB cjson)
+if(CJSON_LIB)
+    target_link_libraries(intent_ir_adapter PUBLIC ${CJSON_LIB})
+    target_compile_definitions(intent_ir_adapter PRIVATE HAVE_CJSON)
+endif()
+
+add_dependencies(intent_ir_adapter intent_ir_rust_lib)
+
+# Export for parent CMakeLists
+set(INTENT_IR_ADAPTER_LIB intent_ir_adapter PARENT_SCOPE)
+
+# Export intent_ir_adapter for use in main CMakeLists
+set(INTENT_IR_ADAPTER_LIB intent_ir_adapter PARENT_SCOPE)

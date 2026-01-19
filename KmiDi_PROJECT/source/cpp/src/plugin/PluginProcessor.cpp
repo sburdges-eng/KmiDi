@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "plugin/PluginProcessor.h"
 // PluginProcessor.h includes Types.h (via IntentPipeline.h)
 // Before including KellyBrain.h (which includes KellyTypes.h), create aliases
@@ -1276,3 +1278,4 @@ bool PluginProcessor::loadProject(const juce::File &file) {
 juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter() {
   return new kelly::PluginProcessor();
 }
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 /**
  * @file AudioFile.cpp
  * @brief Audio file implementation
@@ -403,3 +405,4 @@ AudioFormat AudioFile::detectFormat(const std::string& filepath) {
 
 } // namespace audio
 } // namespace daiw
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Progression Analysis - Diagnose and reharmonize chord progressions.
 
@@ -515,3 +517,4 @@ def generate_reharmonizations(
             })
 
     return suggestions[:count]
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 /**
  * @file MidiSequence.h
  * @brief MIDI sequence container with timing and manipulation
@@ -245,3 +247,4 @@ private:
 
 } // namespace midi
 } // namespace daiw
+>>>>>>> Incoming (Background Agent changes)

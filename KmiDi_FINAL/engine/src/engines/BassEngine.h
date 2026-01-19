@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../common/Types.h"
+#include "../common/IntentIRExtractor.h"
+#include "../shared/include/kmidi/IntentIR.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -111,6 +113,18 @@ public:
         const std::string& key,
         int bars,
         int tempoBpm
+    );
+    
+    /**
+     * Generate bass from IntentFrame (IR v1).
+     * Extracts rhythmic_density, groove_strength, and harmonic parameters from IR.
+     */
+    BassOutput generateFromIntentFrame(
+        const IntentFrame& frame,
+        const std::vector<std::string>& chordProgression,
+        const std::string& key = "C",
+        int bars = 4,
+        int tempoBpm = 120
     );
 
 private:

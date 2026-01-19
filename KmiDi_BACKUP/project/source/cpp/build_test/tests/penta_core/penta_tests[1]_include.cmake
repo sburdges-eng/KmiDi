@@ -1,5 +1,0 @@
-if(EXISTS "/Users/seanburdges/KmiDi-1/build_test/tests/penta_core/penta_tests[1]_tests.cmake")
-  include("/Users/seanburdges/KmiDi-1/build_test/tests/penta_core/penta_tests[1]_tests.cmake")
-else()
-  add_test(penta_tests_NOT_BUILT penta_tests_NOT_BUILT)
-endif()

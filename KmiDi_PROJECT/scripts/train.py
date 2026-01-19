@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #!/usr/bin/env python3
 """
 Kelly ML Training Script (Mac-Optimized)
@@ -1401,3 +1403,4 @@ Examples:
 
 if __name__ == "__main__":
     main()
+>>>>>>> Incoming (Background Agent changes)

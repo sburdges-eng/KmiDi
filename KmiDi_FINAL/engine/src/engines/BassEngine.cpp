@@ -1,5 +1,6 @@
 #include "BassEngine.h"
 #include "../common/MusicConstants.h"
+#include "../common/IntentIRExtractor.h"
 #include "../midi/InstrumentSelector.h"
 #include <algorithm>
 #include <cmath>
@@ -544,6 +545,52 @@ BassEngine::generateForSection(const std::string &emotion,
   }
 
   return generate(config);
+}
+
+BassOutput BassEngine::generateFromIntentFrame(
+    const IntentFrame& frame,
+    const std::vector<std::string>& chordProgression,
+    const std::string& key,
+    int bars,
+    int tempoBpm
+) {
+    // Extract rhythm and harmony parameters from IntentFrame
+    RhythmParams rhythm = RhythmParams::fromIntentFrame(frame);
+    HarmonyParams harmony = HarmonyParams::fromIntentFrame(frame);
+    EmotionParams emotion = EmotionParams::fromIntentFrame(frame);
+    
+    // Map rhythmic_density to bass pattern
+    BassPattern pattern;
+    if (rhythm.rhythmic_density > 0.7f) {
+        pattern = BassPattern::Driving;
+    } else if (rhythm.rhythmic_density < 0.3f) {
+        pattern = BassPattern::Breathing;
+    } else if (rhythm.groove_strength > 0.7f) {
+        pattern = BassPattern::Syncopated;
+    } else {
+        pattern = BassPattern::RootFifth;
+    }
+    
+    // Create config from IR parameters
+    BassConfig config;
+    config.chordProgression = chordProgression;
+    config.key = key;
+    config.bars = bars;
+    config.tempoBpm = tempoBpm;
+    config.patternOverride = pattern;
+    
+    // Use emotion name if available, otherwise derive from VAD
+    if (emotion.valence > 0.3f && emotion.arousal > 0.6f) {
+        config.emotion = "joy";
+    } else if (emotion.valence < -0.3f && emotion.arousal < 0.4f) {
+        config.emotion = "grief";
+    } else if (emotion.valence < -0.3f && emotion.arousal > 0.6f) {
+        config.emotion = "anger";
+    } else {
+        config.emotion = "neutral";
+    }
+    
+    return generate(config);
 }
 
 } // namespace kelly

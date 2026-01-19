@@ -8,16 +8,17 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # KmiDi_FINAL consolidated structure paths
 set(ENGINE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/engine)
+set(CPP_ROOT ${ENGINE_ROOT})
 set(PY_PENTA_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/python/penta_core)
 set(PLUGINS_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/plugins)
 set(SHARED_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/shared)
 set(ML_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/ml)
-set(BUILD_CONFIG_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/build)
+set(BUILD_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/build)
 
 # Options
 option(BUILD_DESKTOP "Build desktop GUI application" ON)
 option(BUILD_PLUGINS "Build VST3 and CLAP plugins" ON)
-option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_TESTS "Build tests" ON)
 option(BUILD_KMIDI_CORE "Build KmiDi core library/app/plugins" ON)
 option(BUILD_PENTA_TESTS "Build penta_core test suite" OFF)
 option(ENABLE_TRACY "Enable Tracy profiling" OFF)
@@ -25,20 +26,21 @@ option(ENABLE_RTNEURAL "Enable RTNeural for ML inference" OFF)
 option(ENABLE_ONNX_RUNTIME "Enable ONNX Runtime for ML inference" OFF)
 
 # CMake modules path
-list(APPEND CMAKE_MODULE_PATH ${BUILD_CONFIG_ROOT}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${BUILD_ROOT}/cmake)
 
-# Prefer system audio codecs; disable JUCE's bundled Ogg/Vorbis
+# Prefer system audio codecs; disable JUCE's bundled Ogg/Vorbis to avoid missing sources
 set(JUCE_USE_OGGVORBIS FALSE CACHE BOOL "Disable JUCE Ogg/Vorbis codec" FORCE)
 add_compile_definitions(JUCE_USE_OGGVORBIS=0)
+# Disable VST2 replacement to avoid requiring VST2 SDK headers
 add_compile_definitions(JUCE_VST3_CAN_REPLACE_VST2=0)
 
-# Homebrew paths (macOS)
+# Homebrew Ogg/Vorbis paths for JUCE audio_formats (macOS)
 if(APPLE AND EXISTS "/opt/homebrew/include" AND EXISTS "/opt/homebrew/lib")
     include_directories("/opt/homebrew/include")
     link_directories("/opt/homebrew/lib")
 endif()
 
-# macOS SDK compatibility
+# macOS SDK 26.2+ compatibility fix for __CLOCK_AVAILABILITY
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum macOS version")
     add_compile_definitions(
@@ -46,22 +48,21 @@ if(APPLE)
         MAC_OS_VERSION_15_0=150000
     )
 endif()
-
 find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
 
 # JUCE setup - use consolidated build/external/JUCE
 add_subdirectory(build/external/JUCE EXCLUDE_FROM_ALL)
 
-# Ensure juceaide helper is available
+# Ensure juceaide helper is available (needed for plugin targets)
 if(NOT TARGET juce::juceaide)
-    set(JUCE_JUCEAIDE_PATH "${BUILD_CONFIG_ROOT}/external/JUCE/extras/Build/juceaide")
+    set(JUCE_JUCEAIDE_PATH "${BUILD_ROOT}/external/JUCE/extras/Build/juceaide")
     if(EXISTS "${JUCE_JUCEAIDE_PATH}")
         add_executable(juce::juceaide IMPORTED GLOBAL)
         set_target_properties(juce::juceaide PROPERTIES IMPORTED_LOCATION "${JUCE_JUCEAIDE_PATH}")
     endif()
 endif()
 
-# Readerwriterqueue (lock-free queue)
+# Readerwriterqueue (lock-free queue) for RT-safe OSC
 include(FetchContent)
 FetchContent_Declare(
     readerwriterqueue
@@ -70,11 +71,14 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(readerwriterqueue)
+
 FetchContent_GetProperties(readerwriterqueue)
 
 if(NOT TARGET readerwriterqueue)
     add_library(readerwriterqueue INTERFACE)
-    target_include_directories(readerwriterqueue INTERFACE ${readerwriterqueue_SOURCE_DIR})
+    target_include_directories(readerwriterqueue INTERFACE
+        ${readerwriterqueue_SOURCE_DIR}
+    )
 endif()
 
 # ============================================================================
@@ -94,17 +98,22 @@ if(BUILD_PYTHON_BINDINGS)
         add_subdirectory(engine/bindings)
     else()
         message(STATUS "pybind11 not found. Python bindings will not be built.")
+        message(STATUS "  Install via: pip install pybind11")
     endif()
 endif()
 
 # ============================================================================
 # ML Dependencies (Optional)
 # ============================================================================
+
 if(ENABLE_RTNEURAL)
     find_package(RTNeural QUIET)
-    if(NOT RTNeural_FOUND)
+    if(RTNeural_FOUND)
+        message(STATUS "RTNeural enabled: ${RTNeural_INCLUDE_DIRS}")
+    else()
         message(STATUS "RTNeural not found locally, fetching from GitHub...")
-        FetchContent_Declare(rtneural
+        FetchContent_Declare(
+            rtneural
             GIT_REPOSITORY https://github.com/jatinchowdhury18/RTNeural.git
             GIT_TAG main
             GIT_SHALLOW TRUE
@@ -120,7 +129,8 @@ if(ENABLE_ONNX_RUNTIME)
     if(ONNXRuntime_FOUND)
         message(STATUS "ONNX Runtime enabled: ${ONNXRuntime_LIBRARIES}")
     else()
-        message(STATUS "ONNX Runtime not found.")
+        message(STATUS "ONNX Runtime not found. ONNX models will not be available.")
+        message(STATUS "  Install ONNX Runtime or set ONNXRuntime_ROOT")
     endif()
 endif()
 
@@ -130,6 +140,9 @@ endif()
 file(GLOB_RECURSE KELLY_CORE_SOURCES CONFIGURE_DEPENDS
     ${ENGINE_ROOT}/src/*.cpp
     ${ENGINE_ROOT}/src/*.mm
+    ${ENGINE_ROOT}/src/midi/MidiIO.cpp
+    ${ENGINE_ROOT}/src/ui/ScoreEntryPanel.cpp
+    ${ENGINE_ROOT}/src/ui/MixerConsolePanel.cpp
 )
 
 # Exclude app entry point and plugin sources from the core lib
@@ -137,20 +150,59 @@ list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/gui/main.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/plugin/")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/engine/test_kelly\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/")
-
 if(NOT ENABLE_RTNEURAL)
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/KellyML/ExampleUsage\\.cpp$")
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/KellyML/KellyMLModel\\.cpp$")
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/KellyML/KellyMLPipeline\\.cpp$")
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/KellyML/SnapshotWriter\\.cpp$")
 endif()
-
 if(BUILD_PYTHON_BINDINGS)
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/bridge/kelly_bridge\\.cpp$")
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/bindings\\.cpp$")
 endif()
 
 if(BUILD_KMIDI_CORE)
+# Intent IR Rust crate (must build before adapter)
+add_subdirectory(${ENGINE_ROOT}/intent_ir intent_ir_build)
+
+# Intent IR C++ adapter (built separately, linked to KellyCore)
+# The adapter sources are in engine/src/common/ but we build it here
+# to avoid circular dependencies
+set(INTENT_IR_ADAPTER_SOURCES
+    ${ENGINE_ROOT}/src/common/IntentIRAdapter.cpp
+    ${SHARED_ROOT}/src/kmidi/IntentIR_impl.cpp
+    ${SHARED_ROOT}/src/kmidi/IntentIR_JSON.cpp
+)
+
+set(INTENT_IR_ADAPTER_HEADERS
+    ${ENGINE_ROOT}/src/common/IntentIRAdapter.h
+    ${ENGINE_ROOT}/src/common/IntentIRExtractor.h
+)
+
+add_library(intent_ir_adapter STATIC
+    ${INTENT_IR_ADAPTER_SOURCES}
+    ${INTENT_IR_ADAPTER_HEADERS}
+)
+
+target_include_directories(intent_ir_adapter PUBLIC
+    ${ENGINE_ROOT}/src
+    ${ENGINE_ROOT}/include
+    ${SHARED_ROOT}/include
+    ${CMAKE_BINARY_DIR}/include  # For generated FFI header
+)
+
+target_link_libraries(intent_ir_adapter PUBLIC
+    ${INTENT_IR_RUST_LIB}
+)
+
+# Link cJSON if available
+find_library(CJSON_LIB cjson)
+if(CJSON_LIB)
+    target_link_libraries(intent_ir_adapter PUBLIC ${CJSON_LIB})
+    target_compile_definitions(intent_ir_adapter PRIVATE HAVE_CJSON)
+endif()
+
+add_dependencies(intent_ir_adapter intent_ir_rust_lib)
 
 add_library(KellyCore STATIC ${KELLY_CORE_SOURCES})
 
@@ -164,6 +216,7 @@ target_include_directories(KellyCore PUBLIC
     ${ENGINE_ROOT}/include
     ${SHARED_ROOT}/include
     ${readerwriterqueue_SOURCE_DIR}
+    ${CMAKE_BINARY_DIR}/include  # For generated IntentIR FFI header
 )
 
 target_link_libraries(KellyCore PUBLIC
@@ -181,17 +234,20 @@ target_link_libraries(KellyCore PUBLIC
     juce::juce_dsp
     juce::juce_osc
     readerwriterqueue
+    intent_ir_adapter  # Intent IR adapter with Rust validator
 )
 
 if(ENABLE_RTNEURAL AND RTNeural_FOUND)
     target_include_directories(KellyCore PUBLIC ${RTNeural_INCLUDE_DIRS})
     target_compile_definitions(KellyCore PUBLIC ENABLE_RTNEURAL)
+    message(STATUS "KellyCore: RTNeural inference enabled")
 endif()
 
 if(ENABLE_ONNX_RUNTIME AND ONNXRuntime_FOUND)
     target_include_directories(KellyCore PUBLIC ${ONNXRuntime_INCLUDE_DIRS})
     target_link_libraries(KellyCore PUBLIC ${ONNXRuntime_LIBRARIES})
     target_compile_definitions(KellyCore PUBLIC ENABLE_ONNX_RUNTIME)
+    message(STATUS "KellyCore: ONNX Runtime inference enabled")
 endif()
 
 target_compile_options(KellyCore PRIVATE
@@ -201,42 +257,39 @@ target_compile_options(KellyCore PRIVATE
 
 # Kelly GUI Application
 if(BUILD_DESKTOP)
+    if(NOT BUILD_KMIDI_CORE)
+        message(FATAL_ERROR "BUILD_DESKTOP requires BUILD_KMIDI_CORE=ON")
+    endif()
     add_executable(KellyApp
         ${ENGINE_ROOT}/src/gui/main.cpp
         ${ENGINE_ROOT}/src/gui/main_window.cpp
     )
-    set_target_properties(KellyApp PROPERTIES AUTOMOC ON)
-    target_link_libraries(KellyApp PRIVATE KellyCore Qt6::Core Qt6::Widgets)
-    if(APPLE)
-        set(KMIDI_APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/app/KmiDi.icns")
-        set_source_files_properties(${KMIDI_APP_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-        target_sources(KellyApp PRIVATE ${KMIDI_APP_ICON})
-        set_target_properties(KellyApp PROPERTIES
-            MACOSX_BUNDLE TRUE
-            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/apps/macOS/Info.plist"
-            MACOSX_BUNDLE_ICON_FILE "KmiDi.icns"
-        )
-    endif()
+
+    set_target_properties(KellyApp PROPERTIES
+        AUTOMOC ON
+    )
+
+    target_link_libraries(KellyApp PRIVATE
+        KellyCore
+        Qt6::Core
+        Qt6::Widgets
+    )
 endif()
 
 # Plugin builds
 if(BUILD_PLUGINS)
+    if(NOT BUILD_KMIDI_CORE)
+        message(FATAL_ERROR "BUILD_PLUGINS requires BUILD_KMIDI_CORE=ON")
+    endif()
+    # VST3/CLAP plugin
     juce_add_plugin(KellyPlugin
         COMPANY_NAME "KmiDi"
         PLUGIN_MANUFACTURER_CODE Klly
         PLUGIN_CODE Klp1
-        FORMATS VST3 AU CLAP Standalone
+        FORMATS VST3 CLAP
         PRODUCT_NAME "KmiDi Emotion Processor"
         VST3_CATEGORIES Fx Synth
-        NEEDS_MIDI_INPUT TRUE
-        NEEDS_MIDI_OUTPUT TRUE
-        IS_MIDI_EFFECT TRUE
-        VST_NUM_MIDI_INS 1
-        VST_NUM_MIDI_OUTS 1
-        AU_MAIN_TYPE kAudioUnitType_MIDIProcessor
         CLAP_ID com.kelly.emotion-processor
-        ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/plugin/KmiDi_plugin_256.png"
-        ICON_SMALL "${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/plugin/KmiDi_plugin_32.png"
     )
 
     target_sources(KellyPlugin PRIVATE
@@ -249,12 +302,48 @@ if(BUILD_PLUGINS)
     target_link_libraries(KellyPlugin PRIVATE
         KellyCore
         juce::juce_audio_plugin_client
-        juce::juce_audio_utils
-        juce::juce_audio_devices
     )
 endif()
 
 endif() # BUILD_KMIDI_CORE
+
+# Tests
+if(BUILD_TESTS AND BUILD_KMIDI_CORE)
+    enable_testing()
+    include(FetchContent)
+    FetchContent_Declare(
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v3.4.0
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(Catch2)
+    include(${catch2_SOURCE_DIR}/extras/Catch.cmake)
+
+    # Note: Test files would need to be copied to KmiDi_FINAL/tests/
+    # For now, tests are disabled in consolidated build
+    # add_executable(KellyTests ...)
+endif()
+
+if(BUILD_PENTA_TESTS)
+    enable_testing()
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.14.0
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(googletest)
+    # add_subdirectory(tests/penta_core)
+endif()
+
+# Tracy profiling
+if(ENABLE_TRACY)
+    add_subdirectory(${BUILD_ROOT}/external/tracy EXCLUDE_FROM_ALL)
+    target_link_libraries(KellyCore PUBLIC TracyClient)
+    target_compile_definitions(KellyCore PUBLIC TRACY_ENABLE)
+endif()
 
 # Installation
 if(BUILD_KMIDI_CORE)
@@ -267,7 +356,6 @@ if(BUILD_KMIDI_CORE)
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
-        BUNDLE DESTINATION bin
     )
 
     install(DIRECTORY ${ENGINE_ROOT}/src/
@@ -275,6 +363,7 @@ if(BUILD_KMIDI_CORE)
         FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
     )
 
+    # Install ML models
     install(DIRECTORY ${ML_ROOT}/models/
         DESTINATION share/kelly/models
         FILES_MATCHING
@@ -283,6 +372,7 @@ if(BUILD_KMIDI_CORE)
         PATTERN "*.mlpackage"
     )
 
+    # Install Python ML module (optional)
     if(EXISTS ${PY_PENTA_CORE_DIR})
         install(DIRECTORY ${PY_PENTA_CORE_DIR}
             DESTINATION share/kelly/python

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 /*
  * RhythmEngine.cpp - Time, Meter, Groove, and Rhythm Analysis Implementation
  * ===========================================================================
@@ -1304,3 +1306,4 @@ std::string RhythmEngine::classifyPocketStyle(float avgShift, float stdDev) cons
 }
 
 } // namespace midikompanion::theory
+>>>>>>> Incoming (Background Agent changes)

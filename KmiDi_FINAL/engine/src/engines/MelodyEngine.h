@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../common/Types.h"
+#include "../common/IntentIRExtractor.h"
+#include "../shared/include/kmidi/IntentIR.h"
 #include <string>
 #include <vector>
 #include <optional>
@@ -99,7 +101,7 @@ struct MelodyEmotionProfile {
 class MelodyEngine {
 public:
     MelodyEngine();
-    
+
     MelodyOutput generate(
         const std::string& emotion,
         const std::string& key = "C",
@@ -107,9 +109,9 @@ public:
         int bars = 4,
         int tempoBpm = 120
     );
-    
+
     MelodyOutput generate(const MelodyConfig& config);
-    
+
     /**
      * Generate melody aligned with chord progression
      * @param emotion Emotion name
@@ -127,7 +129,7 @@ public:
         int tempoBpm = 120,
         float chordTonePreference = 0.7f
     );
-    
+
     MelodyOutput generateForSection(
         const std::string& emotion,
         const std::string& sectionType,
@@ -136,14 +138,25 @@ public:
         int tempoBpm
     );
 
+    /**
+     * Generate melody from IntentFrame (IR v1).
+     * Extracts melodic_activity, contour_variance, and mode_preference from IR.
+     */
+    MelodyOutput generateFromIntentFrame(
+        const IntentFrame& frame,
+        const std::string& key = "C",
+        int bars = 4,
+        int tempoBpm = 120
+    );
+
 private:
     std::map<std::string, MelodyEmotionProfile> profiles_;
-    
+
     void initializeProfiles();
     std::vector<int> getScalePitches(const std::string& key, const std::string& mode, int octave);
     std::vector<int> generateContour(ContourType contour, int numNotes, int startPitch, int range, std::mt19937& rng);
     int snapToScale(int pitch, const std::vector<int>& scale) const;
-    
+
     // Chord-aware melody generation
     int getChordAtTick(int tick, int totalTicks, const std::vector<Chord>& chords) const;
     std::vector<int> getChordTones(const Chord& chord) const;

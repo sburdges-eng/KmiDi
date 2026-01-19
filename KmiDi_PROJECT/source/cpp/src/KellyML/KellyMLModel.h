@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 
 #include <string>
@@ -52,3 +54,4 @@ private:
 };
 
 } // namespace kelly::ml
+>>>>>>> Incoming (Background Agent changes)

@@ -14,6 +14,7 @@ using KellyTypesRuleBreakType = RuleBreakType;
 // Now include IntentPipeline.h - this brings in Types.h which redefines the
 // types. Must include before using IntentPipeline as complete type.
 #include "common/Types.h" // Explicit include - this redefines Wound, EmotionNode, etc.
+#include "common/IntentIRAdapter.h"  // IntentFrame support
 #include "engine/IntentPipeline.h" // Full definition needed for std::unique_ptr<IntentPipeline>
 #include <algorithm>
 #include <cctype>
@@ -343,6 +344,70 @@ EmotionThesaurus &KellyBrain::thesaurus() { return pipeline_->thesaurus(); }
 
 const EmotionThesaurus &KellyBrain::thesaurus() const {
   return pipeline_->thesaurus();
+}
+
+// NEW: IntentFrame-based methods
+IntentFrame KellyBrain::fromWoundToIntentFrame(const Wound &wound) {
+  // Convert KellyTypes::Wound to Types::Wound
+  Wound legacyWound = convertToLegacyWound(wound);
+  
+  // Use IntentPipeline's new IntentFrame method
+  return pipeline_->processToIntentFrame(legacyWound, 0);  // sessionId = 0 for now
+}
+
+IntentFrame KellyBrain::fromJourneyToIntentFrame(const SideA &current, const SideB &desired) {
+  // Convert KellyTypes::SideA/SideB to Types::SideA/SideB
+  SideA legacyCurrent;
+  legacyCurrent.description = current.description;
+  legacyCurrent.intensity = current.intensity;
+  legacyCurrent.emotionId = current.emotionId;
+  
+  SideB legacyDesired;
+  legacyDesired.description = desired.description;
+  legacyDesired.intensity = desired.intensity;
+  legacyDesired.emotionId = desired.emotionId;
+  
+  // Use IntentPipeline's new IntentFrame method
+  return pipeline_->processJourneyToIntentFrame(legacyCurrent, legacyDesired, 0);
+}
+
+IntentFrame KellyBrain::fromTextToIntentFrame(const std::string &description) {
+  // descriptionToWound returns KellyTypes::Wound, which is what fromWoundToIntentFrame expects
+  KellyTypesWound wound = descriptionToWound(description);
+  return fromWoundToIntentFrame(wound);
+}
+
+IntentFrame KellyBrain::fromEmotionToIntentFrame(const std::string &emotionName, float intensity) {
+  // Look up emotion in thesaurus
+  auto emotionOpt = pipeline_->thesaurus().findByName(emotionName);
+  if (emotionOpt) {
+    KellyTypesWound wound;
+    wound.description = "Feeling " + emotionName;
+    wound.intensity = intensity;
+    wound.primaryEmotion.id = emotionOpt->id;
+    wound.primaryEmotion.name = emotionOpt->name;
+    wound.primaryEmotion.categoryEnum = emotionOpt->categoryEnum;
+    wound.primaryEmotion.category = categoryEnumToString(emotionOpt->categoryEnum);
+    wound.primaryEmotion.valence = emotionOpt->valence;
+    wound.primaryEmotion.arousal = emotionOpt->arousal;
+    wound.primaryEmotion.dominance = emotionOpt->dominance;
+    wound.primaryEmotion.intensity = emotionOpt->intensity;
+    return fromWoundToIntentFrame(wound);
+  }
+  
+  // Return default frame if emotion not found
+  IntentFrame frame;
+  frame.meta.ir_version = INTENT_IR_VERSION;
+  return frame;
+}
+
+GeneratedMidi KellyBrain::generateMidiFromIntentFrame(const IntentFrame &frame, int bars) {
+  // Make a copy for validation (prepareIntentFrame modifies the frame)
+  IntentFrame validatedFrame = frame;
+  prepareIntentFrame(validatedFrame);  // Validate + clamp
+  
+  // Use MidiGenerator's new IntentFrame method
+  return midiGenerator_->generate(validatedFrame, bars, 0.5f, 0.4f, 0.0f, 0.75f);
 }
 
 } // namespace kelly

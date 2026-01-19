@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """Main window for KmiDi Qt application.
 
 This is the root GUI component. It contains only UI elements
@@ -424,3 +426,4 @@ class MainWindow(QMainWindow):
             self.setWindowTitle(f"KmiDi - {path.name}")
         else:
             self.setWindowTitle("KmiDi - Intelligent Digital Audio Workstation")
+>>>>>>> Incoming (Background Agent changes)

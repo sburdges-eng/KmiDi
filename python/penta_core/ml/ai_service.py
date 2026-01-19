@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Unified AI Service - Single entry point for all AI operations.
 
@@ -482,3 +484,4 @@ def get_ai_service() -> AIService:
     if not service._initialized:
         service.initialize()
     return service
+>>>>>>> Incoming (Background Agent changes)

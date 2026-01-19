@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 /*
  * SuggestionOverlay.h - Intelligent Suggestion Display Component
@@ -85,3 +87,4 @@ private:
 };
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

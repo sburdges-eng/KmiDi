@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "ui/MixerConsolePanel.h"
 #include <juce_graphics/juce_graphics.h>
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -739,3 +741,4 @@ void MixerConsolePanel::onViewModeChanged() {
 }
 
 } // namespace midikompanion
+>>>>>>> Incoming (Background Agent changes)

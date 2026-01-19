@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "audio/SpectralAnalyzer.h"
 #include <juce_dsp/juce_dsp.h>
 #include <algorithm>
@@ -349,3 +351,4 @@ float SpectralAnalyzer::calculateFlatness(const std::vector<float>& magnitude) {
 
 } // namespace audio
 } // namespace midikompanion
+>>>>>>> Incoming (Background Agent changes)

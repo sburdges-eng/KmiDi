@@ -22,6 +22,8 @@
 #include "MidiKompanionBrain.h"  // High-level API
 using midikompanion::MidiKompanionBrain;
 #include "common/KellyTypes.h"  // IntentResult, GeneratedMidi, Wound
+#include "common/IntentIRAdapter.h"  // IntentFrame support
+#include "shared/include/kmidi/IntentIR.h"
 #include "learning/PreferenceTracker.h"  // User preference learning
 #include <memory>
 #include <map>
@@ -49,6 +51,14 @@ public:
      * Generate MIDI from wound with adaptation
      */
     GeneratedMidi generateMidiFromWound(const Wound& wound, int bars = 8);
+
+    /**
+     * Generate MIDI from IntentFrame with adaptation (IR v1)
+     * @param frame Validated IntentFrame
+     * @param bars Number of bars to generate
+     * @return Generated MIDI with adaptive adjustments
+     */
+    GeneratedMidi generateMidiFromIntentFrame(const IntentFrame& frame, int bars = 8);
 
     /**
      * Enable/disable adaptive learning

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 
 #include <cstdint>
@@ -187,3 +189,4 @@ struct ProcessContext {
 };
 
 } // namespace daiw
+>>>>>>> Incoming (Background Agent changes)

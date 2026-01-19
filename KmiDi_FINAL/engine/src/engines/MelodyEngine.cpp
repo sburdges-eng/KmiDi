@@ -1,5 +1,6 @@
 #include "MelodyEngine.h"
 #include "../common/MusicConstants.h"
+#include "../common/IntentIRExtractor.h"
 #include "../midi/InstrumentSelector.h"
 #include <algorithm>
 #include <cmath>
@@ -539,6 +540,69 @@ MelodyOutput MelodyEngine::generateForSection(const std::string &emotion,
   }
 
   return generate(config);
+}
+
+MelodyOutput MelodyEngine::generateFromIntentFrame(
+    const IntentFrame& frame,
+    const std::string& key,
+    int bars,
+    int tempoBpm
+) {
+    // Extract melody-specific parameters from IntentFrame
+    MelodyParams params = MelodyParams::fromIntentFrame(frame);
+    EmotionParams emotion = EmotionParams::fromIntentFrame(frame);
+    
+    // Map mode_preference to mode string
+    std::string mode;
+    if (params.mode_preference > 0) {
+        mode = "major";
+    } else if (params.mode_preference < 0) {
+        mode = "minor";
+    } else {
+        mode = "major";  // Default
+    }
+    
+    // Map melodic_activity to contour type
+    ContourType contour;
+    if (params.melodic_activity > 0.7f) {
+        contour = (emotion.valence > 0) ? ContourType::Ascending : ContourType::Jagged;
+    } else if (params.melodic_activity < 0.3f) {
+        contour = (emotion.valence < 0) ? ContourType::Descending : ContourType::Static;
+    } else {
+        contour = ContourType::Arch;
+    }
+    
+    // Map contour_variance to density
+    RhythmDensity density;
+    if (params.contour_variance > 0.7f) {
+        density = RhythmDensity::Dense;
+    } else if (params.contour_variance < 0.3f) {
+        density = RhythmDensity::Sparse;
+    } else {
+        density = RhythmDensity::Moderate;
+    }
+    
+    // Create config from IR parameters
+    MelodyConfig config;
+    config.key = key;
+    config.mode = mode;
+    config.bars = bars;
+    config.tempoBpm = tempoBpm;
+    config.contourOverride = contour;
+    config.densityOverride = density;
+    
+    // Use emotion name if available, otherwise derive from VAD
+    if (emotion.valence > 0.3f && emotion.arousal > 0.6f) {
+        config.emotion = "joy";
+    } else if (emotion.valence < -0.3f && emotion.arousal < 0.4f) {
+        config.emotion = "grief";
+    } else if (emotion.valence < -0.3f && emotion.arousal > 0.6f) {
+        config.emotion = "anger";
+    } else {
+        config.emotion = "neutral";
+    }
+    
+    return generate(config);
 }
 
 int MelodyEngine::getChordAtTick(int tick, int totalTicks,

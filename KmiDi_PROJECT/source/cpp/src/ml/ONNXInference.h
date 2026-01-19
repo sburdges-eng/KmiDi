@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 /*
  * ONNXInference.h - ONNX Runtime Wrapper for Real-Time Inference
@@ -176,3 +178,4 @@ private:
 
 } // namespace ml
 } // namespace midikompanion
+>>>>>>> Incoming (Background Agent changes)

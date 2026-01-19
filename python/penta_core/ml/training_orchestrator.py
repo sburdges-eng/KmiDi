@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Training Orchestrator - Multi-Model Training Coordination
 
@@ -1490,3 +1492,4 @@ def train_model(
     orchestrator.queue_model(model_name, epochs=epochs, **kwargs)
     results = orchestrator.run_all()
     return results.get(model_name, {})
+>>>>>>> Incoming (Background Agent changes)

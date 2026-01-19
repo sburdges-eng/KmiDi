@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #!/bin/bash
 # =============================================================================
 # LOCAL TRAINING SCRIPT - Updated: Files moved from external SSD (2025-01-09)
@@ -107,3 +109,4 @@ main() {
 }
 
 main "$@"
+>>>>>>> Incoming (Background Agent changes)

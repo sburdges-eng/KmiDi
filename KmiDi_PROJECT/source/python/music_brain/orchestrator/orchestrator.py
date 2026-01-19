@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 AI Orchestrator - Central coordination for DAiW Music Brain AI pipelines.
 
@@ -585,3 +587,4 @@ class AIOrchestrator:
             f"AIOrchestrator(running={len(self._running_executions)}, "
             f"history={len(self._execution_history)})"
         )
+>>>>>>> Incoming (Background Agent changes)

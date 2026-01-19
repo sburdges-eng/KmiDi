@@ -10,6 +10,8 @@
 
 // Include KellyTypes.h for the unified type system
 #include "common/KellyTypes.h"
+#include "common/IntentIRAdapter.h"  // IntentFrame support
+#include "shared/include/kmidi/IntentIR.h"
 #include "midi/MidiGenerator.h"
 // Forward declare IntentPipeline to avoid including Types.h here
 // We'll include IntentPipeline.h only in the .cpp file where we can handle
@@ -83,6 +85,35 @@ public:
    * Combines fromWound() and generateMidi() in one call.
    */
   GeneratedMidi generateMidiFromWound(const Wound &wound, int bars = 8);
+
+  // ========================================================================
+  // NEW: IntentFrame-based methods (IR v1)
+  // ========================================================================
+
+  /**
+   * Process a wound and generate IntentFrame (IR v1)
+   */
+  IntentFrame fromWoundToIntentFrame(const Wound &wound);
+
+  /**
+   * Process a journey and generate IntentFrame (IR v1)
+   */
+  IntentFrame fromJourneyToIntentFrame(const SideA &current, const SideB &desired);
+
+  /**
+   * Process text description and generate IntentFrame (IR v1)
+   */
+  IntentFrame fromTextToIntentFrame(const std::string &description);
+
+  /**
+   * Process emotion name and generate IntentFrame (IR v1)
+   */
+  IntentFrame fromEmotionToIntentFrame(const std::string &emotionName, float intensity = 0.7f);
+
+  /**
+   * Generate MIDI from IntentFrame (IR v1)
+   */
+  GeneratedMidi generateMidiFromIntentFrame(const IntentFrame &frame, int bars = 8);
 
   /**
    * Get direct access to underlying IntentPipeline

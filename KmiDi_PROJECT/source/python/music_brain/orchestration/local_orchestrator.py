@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 LocalMultiModelOrchestrator
 ---------------------------
@@ -259,3 +261,4 @@ def create_local_orchestrator(
     )
     return LocalMultiModelOrchestrator(cfg)
 
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """External control surface support for MIDI CC/Note mapping.
 
 Supports MIDI CC and Note messages mapped to application parameters.
@@ -390,3 +392,4 @@ class ControlSurfaceManager:
                 f"Loaded {len(self.mappings)} control mappings from {mappings_file}")
         except Exception as e:
             logger.error(f"Failed to load control mappings: {e}")
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 from pathlib import Path
 from typing import Any, Dict, Optional
 import threading
@@ -221,3 +223,4 @@ if __name__ == "__main__":
         print("Lock acquired again.")
         engine.release_lock()
         print("Lock released again.")
+>>>>>>> Incoming (Background Agent changes)

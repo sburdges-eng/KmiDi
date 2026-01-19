@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "PreferenceTracker.h"
 #include <chrono>
 #include <iomanip>
@@ -198,3 +200,4 @@ std::string PreferenceTracker::getCurrentTimestamp() const {
 }
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

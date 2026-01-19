@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "KellyMLPipeline.h"
 
 #include <algorithm>
@@ -166,3 +168,4 @@ void KellyMLPipeline::fallbackGroove(const float* embedding, std::size_t length,
 }
 
 } // namespace kelly::ml
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 /**
  * @file ProjectFile.cpp
  * @brief Project file implementation with JSON serialization
@@ -179,3 +181,4 @@ bool ProjectFile::fromJSON(const std::string& json) {
 
 } // namespace project
 } // namespace daiw
+>>>>>>> Incoming (Background Agent changes)

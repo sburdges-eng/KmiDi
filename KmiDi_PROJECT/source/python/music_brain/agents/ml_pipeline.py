@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 ML Pipeline - Bridge between Python emotion system and C++ MLInterface.
 
@@ -715,3 +717,4 @@ class MLPipeline:
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.stop()
 
+>>>>>>> Incoming (Background Agent changes)

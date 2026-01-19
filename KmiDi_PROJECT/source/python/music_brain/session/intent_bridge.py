@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Intent Bridge - Python interface for C++ intent processing.
 
@@ -287,3 +289,4 @@ def _get_default_cpp_result() -> Dict[str, Any]:
         "baseVelocity": 0.6,
         "dynamicRange": 0.4,
     }
+>>>>>>> Incoming (Background Agent changes)

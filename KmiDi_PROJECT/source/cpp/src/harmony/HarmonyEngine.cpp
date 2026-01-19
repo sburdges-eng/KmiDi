@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "penta/harmony/HarmonyEngine.h"
 
 namespace penta::harmony {
@@ -149,3 +151,4 @@ std::vector<Scale> HarmonyEngine::getScaleHistory(size_t maxCount) const {
 }
 
 } // namespace penta::harmony
+>>>>>>> Incoming (Background Agent changes)

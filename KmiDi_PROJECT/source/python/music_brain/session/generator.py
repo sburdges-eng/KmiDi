@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Song Generator - Generate song structures, progressions, and arrangements.
 
@@ -497,3 +499,4 @@ class SongGenerator:
             "chords": chords,
             "bars": bars,
         }
+>>>>>>> Incoming (Background Agent changes)

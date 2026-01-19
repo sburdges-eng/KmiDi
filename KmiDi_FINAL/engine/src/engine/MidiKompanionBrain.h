@@ -19,6 +19,9 @@
 
 // Include KellyTypes.h for the unified type system
 #include "common/KellyTypes.h"
+// Include IntentIR for IntentFrame support
+#include "common/IntentIRAdapter.h"
+#include "shared/include/kmidi/IntentIR.h"
 // Forward declare IntentPipeline to avoid including Types.h here
 // We'll include IntentPipeline.h only in the .cpp file where we can handle conversions
 #include <memory>
@@ -101,6 +104,48 @@ public:
      * Combines fromWound() and generateMidi() in one call.
      */
     GeneratedMidi generateMidiFromWound(const Wound& wound, int bars = 8);
+
+    // ========================================================================
+    // NEW: IntentFrame-based methods (IR v1)
+    // ========================================================================
+
+    /**
+     * Process a wound and generate IntentFrame (IR v1)
+     * @param wound The emotional wound to process
+     * @return IntentFrame with validated intent data
+     */
+    IntentFrame fromWoundToIntentFrame(const Wound& wound);
+
+    /**
+     * Process a journey and generate IntentFrame (IR v1)
+     * @param current Current emotional state (Side A)
+     * @param desired Desired emotional state (Side B)
+     * @return IntentFrame representing the journey
+     */
+    IntentFrame fromJourneyToIntentFrame(const SideA& current, const SideB& desired);
+
+    /**
+     * Process text description and generate IntentFrame (IR v1)
+     * @param description Text description of emotion/intent
+     * @return IntentFrame with processed intent
+     */
+    IntentFrame fromTextToIntentFrame(const std::string& description);
+
+    /**
+     * Process emotion name and generate IntentFrame (IR v1)
+     * @param emotionName Name of emotion (e.g., "grief", "joy")
+     * @param intensity Emotion intensity (0.0 to 1.0)
+     * @return IntentFrame with emotion mapped to musical parameters
+     */
+    IntentFrame fromEmotionToIntentFrame(const std::string& emotionName, float intensity = 0.7f);
+
+    /**
+     * Generate MIDI from IntentFrame (IR v1)
+     * @param frame Validated IntentFrame
+     * @param bars Number of bars to generate
+     * @return Generated MIDI arrangement
+     */
+    GeneratedMidi generateMidiFromIntentFrame(const IntentFrame& frame, int bars = 8);
 
     /**
      * Get direct access to underlying IntentPipeline

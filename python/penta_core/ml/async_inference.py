@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Async Inference Engine - Async/await support for non-blocking inference.
 
@@ -518,3 +520,4 @@ def get_async_inference_engine() -> AsyncInferenceEngine:
             if _async_engine is None:
                 _async_engine = AsyncInferenceEngine()
     return _async_engine
+>>>>>>> Incoming (Background Agent changes)

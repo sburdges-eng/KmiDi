@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Model Registry - Unified model discovery and management.
 
@@ -683,3 +685,4 @@ def create_training_job(
 ) -> TrainingJob:
     """Create a new training job."""
     return get_job_manager().create_job(model_name, model_task, **kwargs)
+>>>>>>> Incoming (Background Agent changes)

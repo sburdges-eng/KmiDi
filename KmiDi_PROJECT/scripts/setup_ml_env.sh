@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #!/bin/bash
 # =============================================================================
 # Kelly ML Environment Setup Script
@@ -265,3 +267,4 @@ else
 fi
 echo ""
 
+>>>>>>> Incoming (Background Agent changes)

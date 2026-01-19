@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 import argparse
 import logging
 import os
@@ -640,3 +642,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+>>>>>>> Incoming (Background Agent changes)

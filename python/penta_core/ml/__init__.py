@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 ML Model Integration - Machine Learning inference for iDAW.
 
@@ -466,3 +468,4 @@ if HAS_TRAINING_ORCHESTRATOR:
         "train_all_models",
         "train_model",
     ])
+>>>>>>> Incoming (Background Agent changes)

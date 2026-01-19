@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "KmiDi"
 version = "1.0.0"
 description = "KmiDi: Unified Music Intelligence & Audio Workstation"
-readme = "KmiDi_README.md"
+readme = "../docs/README.md"
 license = "MIT"
 authors = [
     {name = "KmiDi Project Team"},
@@ -72,18 +72,19 @@ all = [
     "sphinx-rtd-theme>=1.0",
 ]
 
+# KmiDi_FINAL consolidated structure - packages are at python/ root
 [tool.setuptools]
-package-dir = {"" = "source/python"}
+package-dir = {"" = "."}
 
 [tool.setuptools.packages.find]
-where = ["source/python"]
-include = ["music_brain*", "mcp_workstation*", "mcp_todo*", "mcp_penta_swarm*", "penta_core*"]
+where = ["."]
+include = ["music_brain*", "mcp_workstation*", "mcp_todo*", "mcp_penta_swarm*", "penta_core*", "daiw_mcp*", "kmidi_gui*", "kelly*"]
 
 [project.scripts]
 mcp-penta-swarm = "mcp_penta_swarm.server:main"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["../tests"]
 python_files = ["test_*.py"]
 addopts = "-v --tb=short"
 asyncio_mode = "auto"

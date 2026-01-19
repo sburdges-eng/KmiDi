@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #!/usr/bin/env python3
 """
 Safe Extended Training with Resource Monitoring
@@ -309,3 +311,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+>>>>>>> Incoming (Background Agent changes)

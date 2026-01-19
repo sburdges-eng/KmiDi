@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #!/usr/bin/env python3
 """
 DAW Protocol - Abstract Interface for Multi-DAW Support.
@@ -695,3 +697,4 @@ __all__ = [
     "get_daw_bridge",
 ]
 
+>>>>>>> Incoming (Background Agent changes)
