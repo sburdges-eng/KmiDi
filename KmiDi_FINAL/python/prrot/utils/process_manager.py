@@ -13,6 +13,8 @@ import logging
 from pathlib import Path
 from typing import Optional
 import signal
+import tempfile
+import platform
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +22,9 @@ logger = logging.getLogger(__name__)
 class ProcessManager:
     """Manages worker process lifecycle for 16GB constraint compliance"""
 
-    LOCK_FILE = Path("/tmp/prrot_worker.lock")
+    # Cross-platform lock file location
+    _LOCK_FILE = Path(tempfile.gettempdir()) / "prrot_worker.lock"
+    LOCK_FILE = _LOCK_FILE
     MAX_PROCESS_AGE_SECONDS = 3600  # 1 hour - kill stale processes
 
     def __init__(self):
@@ -90,14 +94,25 @@ class ProcessManager:
 
     def register_exit_handlers(self) -> None:
         """Register signal handlers for cleanup"""
+        # Only register POSIX signals (SIGINT, SIGTERM) on Unix-like systems
+        # Windows uses different signal handling (CTRL_C_EVENT, etc.)
 
         def signal_handler(signum, frame):
             logger.info(f"Received signal {signum}, cleaning up...")
             self.cleanup_on_exit()
             sys.exit(0)
 
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
+        if platform.system() != "Windows":
+            signal.signal(signal.SIGINT, signal_handler)
+            signal.signal(signal.SIGTERM, signal_handler)
+        else:
+            # Windows: Use SetConsoleCtrlHandler equivalent via signal handlers
+            # SIGINT still works on Windows for Ctrl+C
+            try:
+                signal.signal(signal.SIGINT, signal_handler)
+            except (AttributeError, ValueError):
+                # Some Windows builds may not support all signals
+                pass
 
     def check_system_memory(self) -> tuple[bool, str]:
         """

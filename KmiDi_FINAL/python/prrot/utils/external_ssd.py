@@ -6,6 +6,7 @@ and reusing cached data.
 """
 
 import os
+import platform
 from pathlib import Path
 from typing import Optional, List
 from functools import lru_cache
@@ -26,8 +27,16 @@ class ExternalSSDManager:
             if base_path:
                 base_path = Path(base_path)
             else:
-                # Default path for macOS
-                base_path = Path("/Volumes/ExternalSSD/prrot")
+                # Default path - platform-specific
+                system = platform.system()
+                if system == "Darwin":  # macOS
+                    base_path = Path("/Volumes/ExternalSSD/prrot")
+                elif system == "Linux":
+                    base_path = Path("/mnt/external_ssd/prrot")
+                elif system == "Windows":
+                    base_path = Path("E:/prrot")  # Common Windows external drive letter
+                else:
+                    base_path = Path.home() / "prrot_data"  # Fallback
 
         self.base_path = Path(base_path)
         self._ensure_directories()

@@ -118,6 +118,15 @@ The PRROT components are integrated into the CMake build system:
 - RT-safe compile definitions
 - Pre-allocated buffer patterns
 
+## Cross-Platform Support ✅
+
+PRROT/PARROT is cross-platform compatible:
+- ✅ **macOS** (Apple Silicon and Intel)
+- ✅ **Linux** (x86_64 and ARM64)
+- ✅ **Windows** (x86_64)
+
+See `docs/PRROT_CROSS_PLATFORM.md` for platform-specific details.
+
 ## 16GB Mac Safety ✅
 
 ### Safety Mechanisms

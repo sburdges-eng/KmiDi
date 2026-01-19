@@ -8,10 +8,12 @@
 ### Prerequisites
 
 - CMake 3.27+
-- C++20 compiler (Clang/GCC)
+- C++20 compiler (Clang/GCC/MSVC)
 - Python 3.8+ (for Tier B components)
-- psutil (for memory monitoring)
-- numpy (for Python components)
+- psutil (for memory monitoring) - cross-platform
+- numpy (for Python components) - cross-platform
+
+**Platform Support**: macOS, Linux, Windows
 
 ### Build Tier C (C++ Core)
 
@@ -19,7 +21,13 @@
 cd KmiDi_FINAL
 mkdir -p build && cd build
 cmake .. -DBUILD_KMIDI_CORE=ON
-cmake --build . -j$(sysctl -n hw.ncpu)
+
+# Cross-platform parallel build
+# macOS/Linux:
+cmake --build . -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+
+# Windows (Visual Studio):
+# cmake --build . --config Release -j
 ```
 
 The `prrot_core` static library will be built and linked to `KellyCore`.
