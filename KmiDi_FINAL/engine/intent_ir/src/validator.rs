@@ -80,6 +80,9 @@ pub fn validate_intent_frame(frame: &IntentFrame) -> ValidationResult {
     }
 
     // Validate MusicalIntent
+    // Note: InvalidDensity is used as a generic error for all musical intent range violations
+    // (except tempo_bias and mode_preference which have specific errors)
+    // This keeps the error enum small while still catching validation failures
     if frame.music.tempo_bias < -1.0 || frame.music.tempo_bias > 1.0 {
         return Err(ValidationError::InvalidTempoBias);
     }

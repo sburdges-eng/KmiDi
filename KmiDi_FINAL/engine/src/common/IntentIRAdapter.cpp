@@ -1,4 +1,6 @@
 #include "IntentIRAdapter.h"
+#include "kmidi/IntentIR.h"  // IntentIR types (needed before FFI header)
+#include "intent_ir_ffi.h"  // Rust FFI functions (includes IntentIR.h)
 #include <algorithm>
 #include <cmath>
 
@@ -196,38 +198,15 @@ bool isIntentIRVersionSupported(uint16_t version) {
 }
 
 void prepareIntentFrame(IntentFrame& frame) {
-    // Clamp all values to valid ranges
-    // This should call the Rust validator, but for now we do basic clamping
+    // Use Rust validator for clamping (single source of truth, optimized)
+    // This ensures consistency with Rust validation logic
+    clamp_intent_frame_ffi(&frame);
 
-    // EmotionState
-    frame.emotion.valence = std::clamp(frame.emotion.valence, -1.0f, 1.0f);
-    frame.emotion.arousal = std::clamp(frame.emotion.arousal, 0.0f, 1.0f);
-    frame.emotion.dominance = std::clamp(frame.emotion.dominance, 0.0f, 1.0f);
-    frame.emotion.intensity = std::clamp(frame.emotion.intensity, 0.0f, 1.0f);
-    frame.emotion.confidence = std::clamp(frame.emotion.confidence, 0.0f, 1.0f);
-
-    // MusicalIntent
-    frame.music.tempo_bias = std::clamp(frame.music.tempo_bias, -1.0f, 1.0f);
-    frame.music.rhythmic_density = std::clamp(frame.music.rhythmic_density, 0.0f, 1.0f);
-    frame.music.groove_strength = std::clamp(frame.music.groove_strength, 0.0f, 1.0f);
-    frame.music.harmonic_tension = std::clamp(frame.music.harmonic_tension, 0.0f, 1.0f);
-    frame.music.harmonic_motion = std::clamp(frame.music.harmonic_motion, 0.0f, 1.0f);
-    frame.music.mode_preference = std::clamp(frame.music.mode_preference, static_cast<int8_t>(-1), static_cast<int8_t>(1));
-    frame.music.melodic_activity = std::clamp(frame.music.melodic_activity, 0.0f, 1.0f);
-    frame.music.contour_variance = std::clamp(frame.music.contour_variance, 0.0f, 1.0f);
-    frame.music.dynamic_range = std::clamp(frame.music.dynamic_range, 0.0f, 1.0f);
-    frame.music.texture_density = std::clamp(frame.music.texture_density, 0.0f, 1.0f);
-
-    // TimeScope
-    frame.time.fade_in_beats = std::max(0.0f, frame.time.fade_in_beats);
-    frame.time.fade_out_beats = std::max(0.0f, frame.time.fade_out_beats);
-
-    // IntentConstraints
-    frame.constraints.max_cpu_cost = std::max(0.0f, frame.constraints.max_cpu_cost);
-    frame.constraints.max_event_rate = std::max(0.0f, frame.constraints.max_event_rate);
-
-    // IntentProvenance
-    frame.provenance.user_override_weight = std::clamp(frame.provenance.user_override_weight, 0.0f, 1.0f);
+    // Optionally validate after clamping (for debugging)
+    // int validation_result = validate_intent_frame_ffi(&frame);
+    // if (validation_result != 0) {
+    //     // Log validation error if needed
+    // }
 }
 
 } // namespace kelly

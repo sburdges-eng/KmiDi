@@ -8,15 +8,18 @@
  *
  * RT-safe spectral analysis using FFT with pre-allocated buffers.
  * Analyzes spectral shape independently of pitch.
+ * Uses JUCE's optimized FFT for real-time performance.
  */
 
 #include <array>
 #include <cstdint>
+#include <memory>
 
 namespace prrot {
 
-constexpr size_t kFFTSize = 2048;
-constexpr size_t kMaxSpectralBins = kFFTSize / 2;
+// FFT size constants - using inline constexpr (C++17) to allow multiple definitions
+inline constexpr size_t kFFTSize = 2048;
+inline constexpr size_t kMaxSpectralBins = kFFTSize / 2;
 
 /**
  * SpectralAnalyzer - RT-safe spectral analysis
@@ -24,7 +27,7 @@ constexpr size_t kMaxSpectralBins = kFFTSize / 2;
 class SpectralAnalyzer {
 public:
     SpectralAnalyzer();
-    ~SpectralAnalyzer() = default;
+    ~SpectralAnalyzer();  // Must be defined in .cpp for PIMPL
 
     // Compute magnitude spectrum
     void computeMagnitudeSpectrum(
@@ -77,7 +80,13 @@ private:
     mutable std::array<float, kFFTSize> fft_imag_;
     mutable std::array<float, kMaxSpectralBins> magnitude_buffer_;
 
-    // Simple FFT implementation (placeholder - would use optimized FFT in production)
+    // JUCE FFT instance (optimized, RT-safe)
+    // Using PIMPL pattern to avoid exposing JUCE headers in public API
+    // Forward declaration - full definition in .cpp
+    struct FFTImpl;
+    std::unique_ptr<FFTImpl> fft_;
+
+    // Compute FFT using JUCE's optimized implementation
     void computeFFT(const float* input, float* real, float* imag, size_t size) const noexcept;
 };
 

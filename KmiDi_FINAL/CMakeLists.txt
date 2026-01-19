@@ -149,6 +149,8 @@ if(BUILD_KMIDI_CORE)
         ${ENGINE_ROOT}/src/prrot/BreathDetector.cpp
         ${ENGINE_ROOT}/src/prrot/VarianceModeler.cpp
         ${ENGINE_ROOT}/src/prrot/MidiShaper.cpp
+        ${ENGINE_ROOT}/src/prrot/PitchTracker.cpp
+        ${ENGINE_ROOT}/src/prrot/AudioValidator.cpp
         ${ENGINE_ROOT}/src/prrot/PRROTEngine.cpp
     )
 
@@ -162,6 +164,8 @@ if(BUILD_KMIDI_CORE)
         ${ENGINE_ROOT}/src/prrot/BreathDetector.h
         ${ENGINE_ROOT}/src/prrot/VarianceModeler.h
         ${ENGINE_ROOT}/src/prrot/MidiShaper.h
+        ${ENGINE_ROOT}/src/prrot/PitchTracker.h
+        ${ENGINE_ROOT}/src/prrot/AudioValidator.h
         ${ENGINE_ROOT}/src/prrot/PRROTEngine.h
     )
 
@@ -184,6 +188,7 @@ if(BUILD_KMIDI_CORE)
 
     target_link_libraries(prrot_core PUBLIC
         penta_core  # For RT-safe patterns (RTLogger, RTMemoryPool)
+        juce::juce_dsp  # For optimized FFT in SpectralAnalyzer
     )
 
     # Compile definitions for PRROT/PARROT
@@ -255,8 +260,20 @@ target_include_directories(intent_ir_adapter PUBLIC
 )
 
 target_link_libraries(intent_ir_adapter PUBLIC
-    ${INTENT_IR_RUST_LIB}
+    ${INTENT_IR_RUST_LIB}  # Rust static library (IMPORTED)
 )
+
+# Ensure Rust library directory is in linker search path
+# This propagates to all targets that link to intent_ir_adapter
+# Note: For IMPORTED libraries, CMake should handle paths automatically,
+# but we add the directory explicitly to ensure it's found
+if(TARGET ${INTENT_IR_RUST_LIB})
+    get_target_property(RUST_LIB_LOCATION ${INTENT_IR_RUST_LIB} IMPORTED_LOCATION)
+    if(RUST_LIB_LOCATION)
+        get_filename_component(RUST_LIB_DIR ${RUST_LIB_LOCATION} DIRECTORY)
+        target_link_directories(intent_ir_adapter PUBLIC ${RUST_LIB_DIR})
+    endif()
+endif()
 
 # Link cJSON if available
 find_library(CJSON_LIB cjson)
@@ -283,7 +300,7 @@ target_include_directories(KellyCore PUBLIC
 )
 
 target_link_libraries(KellyCore PUBLIC
-    intent_ir_adapter
+    intent_ir_adapter  # Intent IR adapter with Rust validator (includes intent_ir_rust)
     penta_core
     prrot_core  # PRROT/PARROT voice-instrument compiler
     Qt6::Core
@@ -300,8 +317,6 @@ target_link_libraries(KellyCore PUBLIC
     juce::juce_dsp
     juce::juce_osc
     readerwriterqueue
-    intent_ir_adapter  # Intent IR adapter with Rust validator
-    prrot_core  # PRROT/PARROT voice-instrument compiler
 )
 
 if(ENABLE_RTNEURAL AND RTNeural_FOUND)
@@ -337,10 +352,13 @@ if(BUILD_DESKTOP)
     )
 
     target_link_libraries(KellyApp PRIVATE
-        KellyCore
+        KellyCore  # Includes intent_ir_adapter and intent_ir_rust transitively
         Qt6::Core
         Qt6::Widgets
     )
+
+    # Ensure Rust library is linked (transitive dependency through KellyCore)
+    add_dependencies(KellyApp intent_ir_rust_lib)
 endif()
 
 # Plugin builds
@@ -367,9 +385,12 @@ if(BUILD_PLUGINS)
     )
 
     target_link_libraries(KellyPlugin PRIVATE
-        KellyCore
+        KellyCore  # Includes intent_ir_adapter and intent_ir_rust transitively
         juce::juce_audio_plugin_client
     )
+
+    # Ensure Rust library is linked (transitive dependency through KellyCore)
+    add_dependencies(KellyPlugin intent_ir_rust_lib)
 endif()
 
 endif() # BUILD_KMIDI_CORE
@@ -403,6 +424,69 @@ if(BUILD_PENTA_TESTS)
     )
     FetchContent_MakeAvailable(googletest)
     # add_subdirectory(tests/penta_core)
+endif()
+
+# Intent IR Integration Tests (using Google Test)
+if(BUILD_TESTS AND BUILD_KMIDI_CORE)
+    # Fetch Google Test if not already available
+    if(NOT TARGET gtest AND NOT TARGET GTest::gtest)
+        include(FetchContent)
+        FetchContent_Declare(
+            googletest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG v1.14.0
+            GIT_SHALLOW TRUE
+        )
+        FetchContent_MakeAvailable(googletest)
+    endif()
+
+    # Intent IR C++ Integration Test
+    add_executable(intent_ir_integration_test
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/intent_ir_cpp_integration_test.cpp
+    )
+
+    target_include_directories(intent_ir_integration_test PRIVATE
+        ${ENGINE_ROOT}/src
+        ${ENGINE_ROOT}/include
+        ${SHARED_ROOT}/include
+        ${CMAKE_BINARY_DIR}/include
+    )
+
+    target_link_libraries(intent_ir_integration_test PRIVATE
+        KellyCore
+        GTest::gtest
+        GTest::gtest_main
+        GTest::gmock
+    )
+
+    # Ensure Rust library is built before tests
+    add_dependencies(intent_ir_integration_test intent_ir_rust_lib)
+
+    add_test(NAME IntentIRIntegrationTest COMMAND intent_ir_integration_test)
+
+    # Intent IR C++ Unit Test
+    add_executable(intent_ir_unit_test
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/intent_ir_cpp_test.cpp
+    )
+
+    target_include_directories(intent_ir_unit_test PRIVATE
+        ${ENGINE_ROOT}/src
+        ${ENGINE_ROOT}/include
+        ${SHARED_ROOT}/include
+        ${CMAKE_BINARY_DIR}/include
+    )
+
+    target_link_libraries(intent_ir_unit_test PRIVATE
+        KellyCore
+        GTest::gtest
+        GTest::gtest_main
+        GTest::gmock
+    )
+
+    # Ensure Rust library is built before tests
+    add_dependencies(intent_ir_unit_test intent_ir_rust_lib)
+
+    add_test(NAME IntentIRUnitTest COMMAND intent_ir_unit_test)
 endif()
 
 # Tracy profiling

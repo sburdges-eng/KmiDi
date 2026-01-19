@@ -1,15 +1,30 @@
 #include "prrot/SpectralAnalyzer.h"
+#include <juce_dsp/juce_dsp.h>  // JUCE FFT (juce::dsp::FFT)
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <vector>
+#include <memory>
 
 namespace prrot {
+
+// PIMPL wrapper for JUCE FFT to avoid exposing JUCE in header
+struct SpectralAnalyzer::FFTImpl {
+    juce::dsp::FFT fft;  // JUCE FFT is not a template, just FFT
+
+    FFTImpl() : fft(11) {}  // 2^11 = 2048, order = log2(size)
+};
 
 SpectralAnalyzer::SpectralAnalyzer() {
     fft_real_.fill(0.0f);
     fft_imag_.fill(0.0f);
     magnitude_buffer_.fill(0.0f);
+
+    // Initialize JUCE FFT via PIMPL
+    fft_ = std::make_unique<FFTImpl>();
 }
+
+SpectralAnalyzer::~SpectralAnalyzer() = default;  // Destructor needed for PIMPL
 
 void SpectralAnalyzer::computeMagnitudeSpectrum(
     const float* audio_samples,
@@ -167,13 +182,40 @@ float SpectralAnalyzer::computeSpectralFlux(
 }
 
 void SpectralAnalyzer::computeFFT(const float* input, float* real, float* imag, size_t size) const noexcept {
-    // Simplified FFT placeholder
-    // In production, would use optimized FFT (KissFFT, FFTW with pre-allocated buffers)
-    // For now, just copy input to real part and zero imag part
-    if (real != input) {
-        std::copy(input, input + size, real);
+    if (!input || !real || !imag || size == 0 || size > kFFTSize || !fft_) {
+        return;
     }
-    std::fill(imag, imag + size, 0.0f);
+
+    // Copy input to real buffer (zero-pad if needed)
+    std::memset(real, 0, kFFTSize * sizeof(float));
+    std::copy(input, input + size, real);
+    std::memset(imag, 0, kFFTSize * sizeof(float));
+
+    // JUCE FFT uses interleaved complex format for real-only input
+    // Allocate buffer: size must be 2 * getSize() for real-only forward transform
+    // First half contains input, second half will contain output
+    std::vector<float> fft_data(kFFTSize * 2, 0.0f);
+
+    // Copy real input to first half of buffer
+    std::copy(real, real + kFFTSize, fft_data.data());
+
+    // Perform in-place forward FFT on real data
+    // This is optimized for real-only input (no imaginary part)
+    fft_->fft.performRealOnlyForwardTransform(fft_data.data(), false);  // false = calculate all frequencies
+
+    // Extract real and imaginary parts from interleaved format
+    // For real input, output is symmetric - we only need first half + DC + Nyquist
+    size_t output_size = kFFTSize / 2 + 1;
+    for (size_t i = 0; i < output_size; ++i) {
+        real[i] = fft_data[i * 2];      // real part
+        imag[i] = fft_data[i * 2 + 1];  // imaginary part
+    }
+
+    // Zero out remaining bins (mirror of lower half for real input)
+    if (output_size < kFFTSize) {
+        std::memset(real + output_size, 0, (kFFTSize - output_size) * sizeof(float));
+        std::memset(imag + output_size, 0, (kFFTSize - output_size) * sizeof(float));
+    }
 }
 
 } // namespace prrot

@@ -1,0 +1,42 @@
+# Model-related dependencies for KmiDi
+# Install with: pip install -r requirements_models.txt
+
+# Core ML libraries
+torch>=2.0.0
+numpy>=1.24.0
+
+# Model registry and training
+# (penta_core is part of the project)
+
+# For timbre extractor - Wav2Vec2 option
+transformers>=4.30.0
+torchaudio>=2.0.0
+
+# For timbre extractor - Whisper option (alternative)
+# openai-whisper>=20230314
+
+# For phoneme aligner - llama-cpp-python option
+# llama-cpp-python>=0.1.0
+
+# For phoneme aligner - MFA option (alternative)
+# Requires conda: conda install -c conda-forge montreal-forced-alignment
+
+# Audio processing
+librosa>=0.10.0
+
+# Model export formats
+# onnx>=1.14.0  # For ONNX export
+# coremltools>=7.0  # For CoreML export (macOS)
+
+# Optional: For LLaMA ONNX
+# onnxruntime>=1.15.0
+
+# Development/testing
+pytest>=7.0.0
+
+# Note: Some dependencies are optional and depend on which models/integrations you use
+# - Wav2Vec2: transformers, torchaudio
+# - Whisper: openai-whisper
+# - Phoneme Aligner: llama-cpp-python OR montreal-forced-alignment
+# - ONNX models: onnxruntime
+# - CoreML models: coremltools (macOS only)

@@ -248,9 +248,20 @@ GeneratedMidi KellyBrain::generateMidi(const KellyTypesIntentResult &intent,
   intentForGenerator.tempo =
       static_cast<float>(intent.tempoBpm) / 120.0f; // Normalize around 120 BPM
 
-  const float complexity = 0.5f; // TODO: derive from intent when available
+  // Derive complexity from intent parameters
+  // Complexity combines: melodic range, leap probability, rule breaks, harmonic complexity
+  float melodic_complexity = (intent.melodicRange + intent.leapProbability) / 2.0f;
+  float rule_break_complexity = std::min(static_cast<float>(intent.ruleBreaks.size()) / 5.0f, 1.0f);
+  float harmonic_complexity = intent.allowChromaticism ? 0.7f : 0.3f;
+  const float complexity = (melodic_complexity * 0.4f + rule_break_complexity * 0.3f + harmonic_complexity * 0.3f);
+
   const float humanize = intent.humanization;
-  const float feel = 0.0f; // Placeholder mapping; can derive from syncopation
+
+  // Derive feel from syncopation and swing
+  // Feel represents the "groove" or rhythmic character
+  // Combines syncopation (off-beat emphasis) and swing (triplet feel)
+  const float feel = std::clamp((intent.syncopationLevel * 0.6f + intent.swingAmount * 0.4f), 0.0f, 1.0f);
+
   const float dynamics = intent.dynamicRange;
 
   GeneratedMidi result = midiGenerator_->generate(
