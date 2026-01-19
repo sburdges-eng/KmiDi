@@ -1,4 +1,6 @@
-import { invoke } from '@tauri-apps/api/core';
+// Music Brain API client - connects directly to Python backend at http://127.0.0.1:8000
+
+const API_BASE = 'http://127.0.0.1:8000';
 
 export interface EmotionalIntent {
   core_wound?: string;
@@ -35,7 +37,7 @@ export interface HumanizerConfig {
   };
 }
 
-export interface UpdateHumanizerConfigInput extends Partial<HumanizerConfig> {
+export interface UpdateHumanizerConfigInput extends Omit<Partial<HumanizerConfig>, 'analysis'> {
   analysis?: Partial<HumanizerConfig["analysis"]>;
 }
 
@@ -76,10 +78,31 @@ export interface LyricsUpdateResponse {
   preview?: string;
 }
 
+export interface AudioClassifyResult {
+  emotion: string;
+  confidence: number;
+  valence: number;
+  arousal: number;
+  top_predictions: Array<{ emotion: string; confidence: number }>;
+  model_type: string;
+}
+
+async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const resp = await fetch(`${API_BASE}${endpoint}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
+  });
+  if (!resp.ok) {
+    const errorText = await resp.text();
+    throw new Error(`API error (${resp.status}): ${errorText}`);
+  }
+  return resp.json();
+}
+
 export const useMusicBrain = () => {
-  const getEmotions = async () => {
+  const getEmotions = async (): Promise<string[]> => {
     try {
-      const result = await invoke('get_emotions');
+      const result = await apiCall<string[]>('/emotions');
       return result;
     } catch (error) {
       console.error('Failed to get emotions:', error);
@@ -89,7 +112,10 @@ export const useMusicBrain = () => {
 
   const generateMusic = async (request: GenerateRequest) => {
     try {
-      const result = await invoke('generate_music', { request });
+      const result = await apiCall('/generate', {
+        method: 'POST',
+        body: JSON.stringify(request),
+      });
       return result;
     } catch (error) {
       console.error('Failed to generate music:', error);
@@ -99,7 +125,10 @@ export const useMusicBrain = () => {
 
   const interrogate = async (request: InterrogateRequest) => {
     try {
-      const result = await invoke('interrogate', { request });
+      const result = await apiCall('/interrogate', {
+        method: 'POST',
+        body: JSON.stringify(request),
+      });
       return result;
     } catch (error) {
       console.error('Failed to interrogate:', error);
@@ -109,8 +138,8 @@ export const useMusicBrain = () => {
 
   const getHumanizerConfig = async (): Promise<HumanizerConfig> => {
     try {
-      const result = await invoke('get_humanizer_config');
-      return result as HumanizerConfig;
+      const result = await apiCall<HumanizerConfig>('/config/humanizer');
+      return result;
     } catch (error) {
       console.error('Failed to load humanizer config:', error);
       throw error;
@@ -120,15 +149,11 @@ export const useMusicBrain = () => {
   const updateHumanizerConfig = async (
     payload: UpdateHumanizerConfigInput,
   ): Promise<HumanizerConfig> => {
-    const resp = await fetch('http://127.0.0.1:8000/config/humanizer', {
+    const result = await apiCall<HumanizerConfig>('/config/humanizer', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    if (!resp.ok) {
-      throw new Error(`Failed to update config (${resp.status})`);
-    }
-    return resp.json();
+    return result;
   };
 
   const renderSpectocloud = async (
@@ -143,21 +168,20 @@ export const useMusicBrain = () => {
     if (payload.duration !== undefined && payload.duration <= 0) {
       throw new Error("duration must be greater than 0 when provided");
     }
-    const resp = await fetch('http://127.0.0.1:8000/spectocloud/render', {
+    const result = await apiCall<SpectocloudRenderResponse>('/spectocloud/render', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    if (!resp.ok) {
-      throw new Error(`Spectocloud render failed (${resp.status})`);
-    }
-    return resp.json();
+    return result;
   };
 
   const setUserLyrics = async (lyrics: string): Promise<LyricsUpdateResponse> => {
     try {
-      const result = await invoke('set_user_lyrics', { lyrics });
-      return result as LyricsUpdateResponse;
+      const result = await apiCall<LyricsUpdateResponse>('/lyrics', {
+        method: 'POST',
+        body: JSON.stringify({ lyrics, source: 'user' }),
+      });
+      return result;
     } catch (error) {
       console.error('Failed to set user lyrics:', error);
       throw error;
@@ -166,10 +190,47 @@ export const useMusicBrain = () => {
 
   const getUserLyrics = async (): Promise<LyricsState> => {
     try {
-      const result = await invoke('get_user_lyrics');
-      return result as LyricsState;
+      const result = await apiCall<LyricsState>('/lyrics');
+      return result;
     } catch (error) {
       console.error('Failed to get user lyrics:', error);
+      throw error;
+    }
+  };
+
+  // Audio emotion classification
+  const classifyAudio = async (audioPath: string, modelType: string = 'emotion_7'): Promise<AudioClassifyResult> => {
+    try {
+      const result = await apiCall<{ status: string; result: AudioClassifyResult }>('/audio/classify', {
+        method: 'POST',
+        body: JSON.stringify({ audio_path: audioPath, model_type: modelType }),
+      });
+      return result.result;
+    } catch (error) {
+      console.error('Failed to classify audio:', error);
+      throw error;
+    }
+  };
+
+  const getAudioValenceArousal = async (audioPath: string): Promise<{ valence: number; arousal: number; emotion: string; confidence: number }> => {
+    try {
+      const result = await apiCall<any>('/audio/valence-arousal', {
+        method: 'POST',
+        body: JSON.stringify({ audio_path: audioPath }),
+      });
+      return result;
+    } catch (error) {
+      console.error('Failed to get audio valence-arousal:', error);
+      throw error;
+    }
+  };
+
+  const getAudioModels = async (): Promise<{ models: Array<{ name: string; path: string }>; supported_types: string[] }> => {
+    try {
+      const result = await apiCall<any>('/audio/models');
+      return result;
+    } catch (error) {
+      console.error('Failed to get audio models:', error);
       throw error;
     }
   };
@@ -183,5 +244,8 @@ export const useMusicBrain = () => {
     renderSpectocloud,
     setUserLyrics,
     getUserLyrics,
+    classifyAudio,
+    getAudioValenceArousal,
+    getAudioModels,
   };
 };
