@@ -1,4 +1,6 @@
 #include "prrot/PRROTEngine.h"
+#include "prrot/VoiceProfile.h"
+#include "prrot/PhonemeControlData.h"
 #include <algorithm>
 #include <cmath>
 

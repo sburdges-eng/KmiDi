@@ -12,9 +12,21 @@ speaker-specific articulation analysis, timbre embeddings, and prosody analysis.
 """
 
 __version__ = "0.1.0"
+# Import main classes for convenience
+from .worker import PRROTWorker
+from .job_schema import (
+    VoiceProfileExtractionJob,
+    ControlDataGenerationJob,
+    ArticulationAnalysisJob,
+    JobType,
+    JobStatus,
+)
+
 __all__ = [
     "PRROTWorker",
     "VoiceProfileExtractionJob",
     "ControlDataGenerationJob",
     "ArticulationAnalysisJob",
+    "JobType",
+    "JobStatus",
 ]

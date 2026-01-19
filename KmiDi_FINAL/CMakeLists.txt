@@ -176,6 +176,12 @@ if(BUILD_KMIDI_CORE)
         ${ENGINE_ROOT}/src_penta-core/common  # For RTMemoryPool
     )
 
+    # Install public headers
+    install(FILES
+        ${ENGINE_ROOT}/include/prrot/PRROTEngine.h
+        DESTINATION include/prrot
+    )
+
     target_link_libraries(prrot_core PUBLIC
         penta_core  # For RT-safe patterns (RTLogger, RTMemoryPool)
     )
