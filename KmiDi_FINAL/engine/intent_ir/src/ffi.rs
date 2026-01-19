@@ -5,7 +5,6 @@ use crate::validator::{clamp_intent_frame, validate_intent_frame, ValidationErro
 use crate::builder::IntentFrameBuilder;
 use alloc::boxed::Box;
 use core::ffi::c_int;
-use core::ptr;
 
 /// Validation error codes (C-compatible)
 #[repr(C)]
@@ -116,9 +115,8 @@ pub extern "C" fn IntentFrameBuilder_set_emotion(
 
     unsafe {
         let handle_ref = &mut *handle;
-        let builder = core::ptr::read(&handle_ref.builder);
-        let mut temp_builder = *builder;
-        let new_builder = temp_builder.with_emotion(valence, arousal, dominance, discrete_id, intensity, confidence);
+        let builder = core::ptr::replace(&mut handle_ref.builder, Box::new(IntentFrameBuilder::new()));
+        let new_builder = (*builder).with_emotion(valence, arousal, dominance, discrete_id, intensity, confidence);
         handle_ref.builder = Box::new(new_builder);
     }
 }
@@ -144,9 +142,8 @@ pub extern "C" fn IntentFrameBuilder_set_musical_intent(
 
     unsafe {
         let handle_ref = &mut *handle;
-        let builder = core::ptr::read(&handle_ref.builder);
-        let mut temp_builder = *builder;
-        let new_builder = temp_builder.with_musical_intent(
+        let builder = core::ptr::replace(&mut handle_ref.builder, Box::new(IntentFrameBuilder::new()));
+        let new_builder = (*builder).with_musical_intent(
             tempo_bias, rhythmic_density, groove_strength,
             harmonic_tension, harmonic_motion, mode_preference,
             melodic_activity, contour_variance, dynamic_range, texture_density,
@@ -170,9 +167,8 @@ pub extern "C" fn IntentFrameBuilder_set_time_scope(
 
     unsafe {
         let handle_ref = &mut *handle;
-        let builder = core::ptr::read(&handle_ref.builder);
-        let mut temp_builder = *builder;
-        let new_builder = temp_builder.with_time_scope(start_bar, end_bar, fade_in_beats, fade_out_beats);
+        let builder = core::ptr::replace(&mut handle_ref.builder, Box::new(IntentFrameBuilder::new()));
+        let new_builder = (*builder).with_time_scope(start_bar, end_bar, fade_in_beats, fade_out_beats);
         handle_ref.builder = Box::new(new_builder);
     }
 }
@@ -192,9 +188,8 @@ pub extern "C" fn IntentFrameBuilder_set_constraints(
 
     unsafe {
         let handle_ref = &mut *handle;
-        let builder = core::ptr::read(&handle_ref.builder);
-        let mut temp_builder = *builder;
-        let new_builder = temp_builder.with_constraints(allowed_engines_mask, forbidden_engines_mask, max_cpu_cost, max_event_rate);
+        let builder = core::ptr::replace(&mut handle_ref.builder, Box::new(IntentFrameBuilder::new()));
+        let new_builder = (*builder).with_constraints(allowed_engines_mask, forbidden_engines_mask, max_cpu_cost, max_event_rate);
         handle_ref.builder = Box::new(new_builder);
     }
 }
@@ -212,9 +207,8 @@ pub extern "C" fn IntentFrameBuilder_set_provenance(
 
     unsafe {
         let handle_ref = &mut *handle;
-        let builder = core::ptr::read(&handle_ref.builder);
-        let mut temp_builder = *builder;
-        let new_builder = temp_builder.with_provenance(source, user_override_weight);
+        let builder = core::ptr::replace(&mut handle_ref.builder, Box::new(IntentFrameBuilder::new()));
+        let new_builder = (*builder).with_provenance(source, user_override_weight);
         handle_ref.builder = Box::new(new_builder);
     }
 }
@@ -222,6 +216,7 @@ pub extern "C" fn IntentFrameBuilder_set_provenance(
 /// Build the IntentFrame from builder
 /// Returns 0 on success, error code on failure
 /// On success, frame_out is populated
+/// Note: Builder is consumed on call (success or failure)
 #[no_mangle]
 pub extern "C" fn IntentFrameBuilder_build(
     handle: *mut IntentFrameBuilderHandle,
@@ -233,22 +228,21 @@ pub extern "C" fn IntentFrameBuilder_build(
 
     unsafe {
         let handle_ref = &mut *handle;
-        // Take ownership of builder
-        let builder = core::ptr::read(&handle_ref.builder);
+        // Take ownership of builder (replace with new empty one)
+        let builder = core::ptr::replace(&mut handle_ref.builder, Box::new(IntentFrameBuilder::new()));
 
-        // Validate first
-        let mut temp_builder = *builder;
-        match temp_builder.build() {
+        // Build frame (clamps values) - consumes builder
+        let frame = (*builder).build_unchecked();
+        
+        // Validate the frame
+        match validate_intent_frame(&frame) {
             Ok(()) => {
-                // Build and copy the frame
-                *frame_out = temp_builder.into_frame();
-                // Recreate the handle (builder was consumed)
-                handle_ref.builder = Box::new(IntentFrameBuilder::new());
+                *frame_out = frame;
                 ValidationErrorCode::Success as c_int
             }
             Err(err) => {
-                // Put builder back
-                handle_ref.builder = builder;
+                // Builder was consumed, can't restore it
+                // Caller will need to recreate if needed
                 error_to_code(err) as c_int
             }
         }
