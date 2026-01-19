@@ -7,7 +7,38 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    
+    "build:cpp": "cd build/debug && make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)",
+    "build:cpp-release": "cd build/release && make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)",
+    "build:ffi": "cd build/debug && make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) KellyFFI",
+    "build:plugins": "cd build/release && make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) KellyPlugin",
+    "build:all": "./scripts/build-all.sh",
+    "build:all-debug": "BUILD_TYPE=Debug BUILD_TESTS=ON ./scripts/build-all.sh",
+    "build:all-release": "BUILD_TYPE=Release BUILD_TESTS=OFF ./scripts/build-all.sh",
+    
+    "dev:react": "vite",
+    "dev:tauri": "tauri dev",
+    "dev:cpp": "./scripts/dev-cpp.sh",
+    "dev:python": "./scripts/dev-python.sh", 
+    "dev:all": "concurrently \"npm run dev:react\" \"npm run dev:cpp\" \"npm run dev:python\"",
+    
+    "test:cpp": "cd build/debug && ctest",
+    "test:rust": "cd src-tauri && cargo test",
+    "test:integration": "./scripts/test-integration.sh",
+    "test:performance": "./scripts/test-performance.sh",
+    "test:all": "npm run test:cpp && npm run test:rust && npm run test:integration && npm run test:performance",
+    
+    "setup": "./scripts/dev-setup.sh",
+    "clean": "rm -rf build dist src-tauri/target node_modules/.cache",
+    "clean:all": "rm -rf build dist src-tauri/target node_modules",
+    
+    "lint": "npm run lint:rust && npm run lint:ts",
+    "lint:rust": "cd src-tauri && cargo clippy -- -D warnings",
+    "lint:ts": "tsc --noEmit",
+    "format": "npm run format:rust && npm run format:ts",
+    "format:rust": "cd src-tauri && cargo fmt",
+    "format:ts": "prettier --write 'src/**/*.{ts,tsx}'"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
@@ -27,6 +58,9 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.17",
     "typescript": "~5.8.3",
-    "vite": "^7.0.4"
+    "vite": "^7.0.4",
+    "concurrently": "^8.2.2",
+    "prettier": "^3.2.4",
+    "vitest": "^1.2.0"
   }
 }

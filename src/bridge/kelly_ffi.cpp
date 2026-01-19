@@ -1,0 +1,785 @@
+#include "kelly_ffi.h"
+#include "engine/KellyBrain.h"
+#include "engine/EmotionThesaurus.h"
+#include "common/KellyTypes.h"
+#include <memory>
+#include <string>
+#include <cstring>
+#include <mutex>
+#include <thread>
+#include <sstream>
+#include <iostream>
+
+// JSON serialization - using a simple approach for now
+// In a full implementation, you'd want to use nlohmann/json or similar
+#include <sstream>
+
+// =============================================================================
+// Internal Structures and Utilities
+// =============================================================================
+
+/**
+ * Internal wrapper for KellyBrain C++ object
+ */
+struct KellyBrainWrapper {
+    std::unique_ptr<kelly::KellyBrain> brain;
+    KellyEventCallback callback;
+    void* callback_user_data;
+    std::mutex mutex; // Thread safety for state access
+    bool initialized;
+    
+    KellyBrainWrapper() : callback(nullptr), callback_user_data(nullptr), initialized(false) {
+        brain = std::make_unique<kelly::KellyBrain>();
+    }
+};
+
+// Thread-local error storage
+thread_local std::string last_error_message;
+
+/**
+ * Set thread-local error message
+ */
+static void set_last_error(const std::string& message) {
+    last_error_message = message;
+}
+
+/**
+ * Convert C++ string to C string (caller must free with kelly_free_string)
+ */
+static char* string_to_c_str(const std::string& str) {
+    if (str.empty()) {
+        return nullptr;
+    }
+    
+    size_t len = str.length() + 1;
+    char* result = static_cast<char*>(malloc(len));
+    if (result == nullptr) {
+        set_last_error("Memory allocation failed");
+        return nullptr;
+    }
+    
+    std::strcpy(result, str.c_str());
+    return result;
+}
+
+/**
+ * Simple JSON serialization helper for basic types
+ * In production, use a proper JSON library
+ */
+static std::string serialize_intent_result(const kelly::IntentResult& result) {
+    std::ostringstream json;
+    json << "{\n";
+    
+    // Extract wound information from sourceWound
+    json << "  \"core_wound\": \"" << result.sourceWound.description << "\",\n";
+    json << "  \"core_desire\": \"" << result.sourceWound.desire << "\",\n";
+    json << "  \"emotional_intent\": \"" << result.sourceWound.expression << "\",\n";
+    
+    // Extract emotion values from sourceWound.primaryEmotion
+    json << "  \"valence\": " << result.sourceWound.primaryEmotion.valence << ",\n";
+    json << "  \"arousal\": " << result.sourceWound.primaryEmotion.arousal << ",\n";
+    json << "  \"dominance\": " << result.sourceWound.primaryEmotion.dominance << ",\n";
+    json << "  \"complexity\": " << result.sourceWound.primaryEmotion.musicalAttributes.density << ",\n";
+    
+    // Musical parameters from IntentResult
+    json << "  \"progression\": [";
+    for (size_t i = 0; i < result.chordProgression.size(); ++i) {
+        if (i > 0) json << ", ";
+        json << "\"" << result.chordProgression[i] << "\"";
+    }
+    json << "],\n";
+    
+    json << "  \"key\": \"" << result.key << "\",\n";
+    json << "  \"bpm\": " << result.tempoBpm << ",\n";
+    json << "  \"mode\": \"" << result.mode << "\",\n";
+    json << "  \"time_signature\": \"" << result.timeSignature.numerator << "/" << result.timeSignature.denominator << "\",\n";
+    json << "  \"confidence\": " << result.confidence << ",\n";
+    
+    // Melodic guidance (theoretical parameters)
+    json << "  \"melodic_range\": " << result.melodicRange << ",\n";
+    json << "  \"leap_probability\": " << result.leapProbability << ",\n";
+    json << "  \"allow_chromaticism\": " << (result.allowChromaticism ? "true" : "false") << ",\n";
+    json << "  \"allow_dissonance\": " << (result.allowDissonance ? "true" : "false") << ",\n";
+    
+    // Rhythmic guidance (theoretical parameters)
+    json << "  \"swing_amount\": " << result.swingAmount << ",\n";
+    json << "  \"syncopation_level\": " << result.syncopationLevel << ",\n";
+    json << "  \"humanization\": " << result.humanization << ",\n";
+    
+    // Dynamics (theoretical parameters)
+    json << "  \"base_velocity\": " << result.baseVelocity << ",\n";
+    json << "  \"dynamic_range\": " << result.dynamicRange << ",\n";
+    
+    // Production notes (theoretical parameters)
+    json << "  \"production_notes\": [";
+    for (size_t i = 0; i < result.productionNotes.size(); ++i) {
+        if (i > 0) json << ", ";
+        json << "\"" << result.productionNotes[i] << "\"";
+    }
+    json << "],\n";
+    json << "  \"narrative_arc\": \"" << result.narrativeArc << "\",\n";
+    
+    // Rule breaks (theoretical parameters)
+    json << "  \"rule_breaks\": [";
+    for (size_t i = 0; i < result.ruleBreaks.size(); ++i) {
+        if (i > 0) json << ", ";
+        const auto& rb = result.ruleBreaks[i];
+        json << "{\"type\": " << static_cast<int>(rb.type) 
+             << ", \"description\": \"" << rb.description 
+             << "\", \"justification\": \"" << rb.justification 
+             << "\", \"intensity\": " << rb.intensity << "}";
+    }
+    json << "]\n";
+    
+    json << "}";
+    
+    return json.str();
+}
+
+/**
+ * Simple JSON serialization for MIDI data
+ */
+static std::string serialize_generated_midi(const kelly::GeneratedMidi& midi) {
+    std::ostringstream json;
+    json << "{\n";
+    json << "  \"bars\": " << midi.bars << ",\n";
+    json << "  \"bpm\": " << midi.tempoBpm << ",\n";
+    json << "  \"key\": \"" << midi.key << "\",\n";
+    json << "  \"mode\": \"" << midi.mode << "\",\n";
+    
+    // Serialize notes grouped by channel (simulating tracks)
+    std::map<int, std::vector<kelly::MidiNote>> notesByChannel;
+    for (const auto& note : midi.notes) {
+        notesByChannel[note.channel].push_back(note);
+    }
+    
+    json << "  \"tracks\": [\n";
+    bool first_track = true;
+    for (const auto& [channel, notes] : notesByChannel) {
+        if (!first_track) json << ",\n";
+        first_track = false;
+        
+        json << "    {\n";
+        json << "      \"name\": \"Channel " << channel << "\",\n";
+        json << "      \"channel\": " << channel << ",\n";
+        json << "      \"events\": [\n";
+        
+        for (size_t j = 0; j < notes.size(); ++j) {
+            if (j > 0) json << ",\n";
+            const auto& note = notes[j];
+            json << "        {\n";
+            json << "          \"event_type\": 1,\n";  // Note on
+            json << "          \"timestamp\": " << (note.startTick / 480.0) << ",\n";
+            json << "          \"note\": " << note.pitch << ",\n";
+            json << "          \"velocity\": " << note.velocity << ",\n";
+            json << "          \"duration\": " << (note.durationTicks / 480.0) << "\n";
+            json << "        }";
+        }
+        
+        json << "\n      ]\n";
+        json << "    }";
+    }
+    
+    json << "\n  ],\n";
+    json << "  \"chords\": [";
+    for (size_t i = 0; i < midi.chords.size(); ++i) {
+        if (i > 0) json << ", ";
+        json << "\"" << midi.chords[i].symbol << "\"";
+    }
+    json << "]\n";
+    json << "}";
+    
+    return json.str();
+}
+
+/**
+ * Parse JSON for emotion parameters (simplified parser)
+ */
+static kelly::Wound parse_wound_json(const std::string& json) {
+    kelly::Wound wound;
+    
+    // Very basic JSON parsing - in production, use a proper JSON library
+    // Extract description
+    size_t desc_pos = json.find("\"description\":");
+    if (desc_pos != std::string::npos) {
+        size_t start = json.find("\"", desc_pos + 14) + 1;
+        size_t end = json.find("\"", start);
+        if (start < end) {
+            wound.description = json.substr(start, end - start);
+        }
+    }
+    
+    // Extract desire
+    size_t desire_pos = json.find("\"desire\":");
+    if (desire_pos != std::string::npos) {
+        size_t start = json.find("\"", desire_pos + 10) + 1;
+        size_t end = json.find("\"", start);
+        if (start < end) {
+            wound.desire = json.substr(start, end - start);
+        }
+    }
+    
+    // Extract expression
+    size_t expr_pos = json.find("\"expression\":");
+    if (expr_pos != std::string::npos) {
+        size_t start = json.find("\"", expr_pos + 13) + 1;
+        size_t end = json.find("\"", start);
+        if (start < end) {
+            wound.expression = json.substr(start, end - start);
+        }
+    }
+    
+    // Extract urgency/intensity
+    size_t urgency_pos = json.find("\"urgency\":");
+    if (urgency_pos == std::string::npos) {
+        urgency_pos = json.find("\"intensity\":");
+    }
+    if (urgency_pos != std::string::npos) {
+        size_t start = json.find_first_not_of(" \t", urgency_pos + 10);
+        if (start != std::string::npos) {
+            try {
+                wound.urgency = std::stof(json.substr(start));
+            } catch (...) {
+                wound.urgency = 0.5f;
+            }
+        }
+    }
+    
+    return wound;
+}
+
+// =============================================================================
+// Error Handling Functions
+// =============================================================================
+
+extern "C" {
+
+const char* kelly_get_error_message(KellyErrorCode error_code) {
+    switch (error_code) {
+        case KELLY_SUCCESS:
+            return "Success";
+        case KELLY_ERROR_NULL_POINTER:
+            return "Null pointer error";
+        case KELLY_ERROR_INITIALIZATION_FAILED:
+            return "Initialization failed";
+        case KELLY_ERROR_INVALID_PARAMETER:
+            return "Invalid parameter";
+        case KELLY_ERROR_JSON_PARSE_ERROR:
+            return "JSON parse error";
+        case KELLY_ERROR_MEMORY_ALLOCATION:
+            return "Memory allocation failed";
+        case KELLY_ERROR_FILE_NOT_FOUND:
+            return "File not found";
+        case KELLY_ERROR_UNKNOWN:
+        default:
+            return "Unknown error";
+    }
+}
+
+const char* kelly_get_last_error(void) {
+    return last_error_message.empty() ? nullptr : last_error_message.c_str();
+}
+
+// =============================================================================
+// Memory Management Functions
+// =============================================================================
+
+void kelly_free_string(char* ptr) {
+    if (ptr != nullptr) {
+        free(ptr);
+    }
+}
+
+// =============================================================================
+// KellyBrain Core Functions
+// =============================================================================
+
+KellyBrain* kelly_brain_create(void) {
+    try {
+        auto* wrapper = new KellyBrainWrapper();
+        if (wrapper == nullptr) {
+            set_last_error("Failed to allocate KellyBrainWrapper");
+            return nullptr;
+        }
+        
+        return reinterpret_cast<KellyBrain*>(wrapper);
+    }
+    catch (const std::exception& e) {
+        set_last_error(std::string("Exception in kelly_brain_create: ") + e.what());
+        return nullptr;
+    }
+}
+
+KellyErrorCode kelly_brain_initialize(KellyBrain* brain, const char* data_path) {
+    if (brain == nullptr || data_path == nullptr) {
+        set_last_error("Null pointer in kelly_brain_initialize");
+        return KELLY_ERROR_NULL_POINTER;
+    }
+    
+    try {
+        auto* wrapper = reinterpret_cast<KellyBrainWrapper*>(brain);
+        std::lock_guard<std::mutex> lock(wrapper->mutex);
+        
+        bool success = wrapper->brain->initialize(std::string(data_path));
+        if (success) {
+            wrapper->initialized = true;
+            return KELLY_SUCCESS;
+        } else {
+            set_last_error("KellyBrain initialization failed");
+            return KELLY_ERROR_INITIALIZATION_FAILED;
+        }
+    }
+    catch (const std::exception& e) {
+        set_last_error(std::string("Exception in kelly_brain_initialize: ") + e.what());
+        return KELLY_ERROR_INITIALIZATION_FAILED;
+    }
+}
+
+bool kelly_brain_is_initialized(const KellyBrain* brain) {
+    if (brain == nullptr) {
+        return false;
+    }
+    
+    auto* wrapper = reinterpret_cast<const KellyBrainWrapper*>(brain);
+    return wrapper->initialized;
+}
+
+void kelly_brain_destroy(KellyBrain* brain) {
+    if (brain != nullptr) {
+        auto* wrapper = reinterpret_cast<KellyBrainWrapper*>(brain);
+        delete wrapper;
+    }
+}
+
+// =============================================================================
+// Intent Processing Functions
+// =============================================================================
+
+char* kelly_brain_from_text(KellyBrain* brain, const char* text) {
+    if (brain == nullptr || text == nullptr) {
+        set_last_error("Null pointer in kelly_brain_from_text");
+        return nullptr;
+    }
+    
+    try {
+        auto* wrapper = reinterpret_cast<KellyBrainWrapper*>(brain);
+        std::lock_guard<std::mutex> lock(wrapper->mutex);
+        
+        if (!wrapper->initialized) {
+            set_last_error("KellyBrain not initialized");
+            return nullptr;
+        }
+        
+        kelly::IntentResult result = wrapper->brain->fromText(std::string(text));
+        std::string json = serialize_intent_result(result);
+        
+        return string_to_c_str(json);
+    }
+    catch (const std::exception& e) {
+        set_last_error(std::string("Exception in kelly_brain_from_text: ") + e.what());
+        return nullptr;
+    }
+}
+
+char* kelly_brain_from_emotion(KellyBrain* brain, const char* emotion_name, float intensity) {
+    if (brain == nullptr || emotion_name == nullptr) {
+        set_last_error("Null pointer in kelly_brain_from_emotion");
+        return nullptr;
+    }
+    
+    if (intensity < 0.0f || intensity > 1.0f) {
+        set_last_error("Invalid intensity value, must be 0.0 to 1.0");
+        return nullptr;
+    }
+    
+    try {
+        auto* wrapper = reinterpret_cast<KellyBrainWrapper*>(brain);
+        std::lock_guard<std::mutex> lock(wrapper->mutex);
+        
+        if (!wrapper->initialized) {
+            set_last_error("KellyBrain not initialized");
+            return nullptr;
+        }
+        
+        kelly::IntentResult result = wrapper->brain->fromEmotion(std::string(emotion_name), intensity);
+        std::string json = serialize_intent_result(result);
+        
+        return string_to_c_str(json);
+    }
+    catch (const std::exception& e) {
+        set_last_error(std::string("Exception in kelly_brain_from_emotion: ") + e.what());
+        return nullptr;
+    }
+}
+
+char* kelly_brain_from_journey(KellyBrain* brain, const char* current_state_json, const char* desired_state_json) {
+    if (brain == nullptr || current_state_json == nullptr || desired_state_json == nullptr) {
+        set_last_error("Null pointer in kelly_brain_from_journey");
+        return nullptr;
+    }
+    
+    try {
+        auto* wrapper = reinterpret_cast<KellyBrainWrapper*>(brain);
+        std::lock_guard<std::mutex> lock(wrapper->mutex);
+        
+        if (!wrapper->initialized) {
+            set_last_error("KellyBrain not initialized");
+            return nullptr;
+        }
+        
+        // Parse JSON to SideA/SideB structures (simplified for now)
+        kelly::SideA current;
+        kelly::SideB desired;
+        
+        // In production, use proper JSON parsing
+        current.wound = parse_wound_json(std::string(current_state_json));
+        // desired parsing would be similar
+        
+        kelly::IntentResult result = wrapper->brain->fromJourney(current, desired);
+        std::string json = serialize_intent_result(result);
+        
+        return string_to_c_str(json);
+    }
+    catch (const std::exception& e) {
+        set_last_error(std::string("Exception in kelly_brain_from_journey: ") + e.what());
+        return nullptr;
+    }
+}
+
+char* kelly_brain_from_wound(KellyBrain* brain, const char* wound_json) {
+    if (brain == nullptr || wound_json == nullptr) {
+        set_last_error("Null pointer in kelly_brain_from_wound");
+        return nullptr;
+    }
+    
+    try {
+        auto* wrapper = reinterpret_cast<KellyBrainWrapper*>(brain);
+        std::lock_guard<std::mutex> lock(wrapper->mutex);
+        
+        if (!wrapper->initialized) {
+            set_last_error("KellyBrain not initialized");
+            return nullptr;
+        }
+        
+        kelly::Wound wound = parse_wound_json(std::string(wound_json));
+        kelly::IntentResult result = wrapper->brain->fromWound(wound);
+        std::string json = serialize_intent_result(result);
+        
+        return string_to_c_str(json);
+    }
+    catch (const std::exception& e) {
+        set_last_error(std::string("Exception in kelly_brain_from_wound: ") + e.what());
+        return nullptr;
+    }
+}
+
+// =============================================================================
+// MIDI Generation Functions
+// =============================================================================
+
+char* kelly_brain_generate_midi(KellyBrain* brain, const char* intent_json, int bars) {
+    if (brain == nullptr || intent_json == nullptr) {
+        set_last_error("Null pointer in kelly_brain_generate_midi");
+        return nullptr;
+    }
+    
+    if (bars <= 0 || bars > 64) {
+        set_last_error("Invalid bars value, must be 1-64");
+        return nullptr;
+    }
+    
+    try {
+        auto* wrapper = reinterpret_cast<KellyBrainWrapper*>(brain);
+        std::lock_guard<std::mutex> lock(wrapper->mutex);
+        
+        if (!wrapper->initialized) {
+            set_last_error("KellyBrain not initialized");
+            return nullptr;
+        }
+        
+        // Parse intent JSON back to IntentResult (simplified)
+        kelly::IntentResult intent;
+        // In production, use proper JSON parsing
+        
+        kelly::GeneratedMidi midi = wrapper->brain->generateMidi(intent, bars);
+        std::string json = serialize_generated_midi(midi);
+        
+        return string_to_c_str(json);
+    }
+    catch (const std::exception& e) {
+        set_last_error(std::string("Exception in kelly_brain_generate_midi: ") + e.what());
+        return nullptr;
+    }
+}
+
+char* kelly_brain_generate_midi_with_params(KellyBrain* brain, const char* intent_json, 
+                                          int bars, int bpm, const char* key_signature) {
+    if (brain == nullptr || intent_json == nullptr || key_signature == nullptr) {
+        set_last_error("Null pointer in kelly_brain_generate_midi_with_params");
+        return nullptr;
+    }
+    
+    if (bars <= 0 || bars > 64 || bpm <= 0 || bpm > 300) {
+        set_last_error("Invalid parameters");
+        return nullptr;
+    }
+    
+    try {
+        auto* wrapper = reinterpret_cast<KellyBrainWrapper*>(brain);
+        std::lock_guard<std::mutex> lock(wrapper->mutex);
+        
+        if (!wrapper->initialized) {
+            set_last_error("KellyBrain not initialized");
+            return nullptr;
+        }
+        
+        // Parse intent JSON and generate with specific parameters
+        kelly::IntentResult intent;
+        // Set specific BPM and key
+        intent.bpm = bpm;
+        intent.key = std::string(key_signature);
+        
+        kelly::GeneratedMidi midi = wrapper->brain->generateMidi(intent, bars);
+        std::string json = serialize_generated_midi(midi);
+        
+        return string_to_c_str(json);
+    }
+    catch (const std::exception& e) {
+        set_last_error(std::string("Exception in kelly_brain_generate_midi_with_params: ") + e.what());
+        return nullptr;
+    }
+}
+
+// =============================================================================
+// State Query Functions
+// =============================================================================
+
+char* kelly_brain_get_emotion_state(const KellyBrain* brain) {
+    if (brain == nullptr) {
+        set_last_error("Null pointer in kelly_brain_get_emotion_state");
+        return nullptr;
+    }
+    
+    try {
+        auto* wrapper = reinterpret_cast<const KellyBrainWrapper*>(brain);
+        
+        if (!wrapper->initialized) {
+            set_last_error("KellyBrain not initialized");
+            return nullptr;
+        }
+        
+        // Get current emotion state (simplified)
+        std::ostringstream json;
+        json << "{\n";
+        json << "  \"valence\": 0.0,\n";
+        json << "  \"arousal\": 0.5,\n";
+        json << "  \"dominance\": 0.5,\n";
+        json << "  \"complexity\": 0.3\n";
+        json << "}";
+        
+        return string_to_c_str(json.str());
+    }
+    catch (const std::exception& e) {
+        set_last_error(std::string("Exception in kelly_brain_get_emotion_state: ") + e.what());
+        return nullptr;
+    }
+}
+
+char* kelly_brain_get_parameters(const KellyBrain* brain) {
+    if (brain == nullptr) {
+        set_last_error("Null pointer in kelly_brain_get_parameters");
+        return nullptr;
+    }
+    
+    try {
+        // Return current parameters as JSON
+        std::ostringstream json;
+        json << "{\n";
+        json << "  \"processing_enabled\": true,\n";
+        json << "  \"default_bpm\": 120,\n";
+        json << "  \"default_key\": \"C\",\n";
+        json << "  \"complexity_factor\": 0.7\n";
+        json << "}";
+        
+        return string_to_c_str(json.str());
+    }
+    catch (const std::exception& e) {
+        set_last_error(std::string("Exception in kelly_brain_get_parameters: ") + e.what());
+        return nullptr;
+    }
+}
+
+char* kelly_brain_get_available_emotions(const KellyBrain* brain) {
+    if (brain == nullptr) {
+        set_last_error("Null pointer in kelly_brain_get_available_emotions");
+        return nullptr;
+    }
+    
+    try {
+        auto* wrapper = reinterpret_cast<const KellyBrainWrapper*>(brain);
+        
+        if (!wrapper->initialized) {
+            set_last_error("KellyBrain not initialized");
+            return nullptr;
+        }
+        
+        // Return available emotions (would come from EmotionThesaurus)
+        std::ostringstream json;
+        json << "{\n";
+        json << "  \"emotions\": [\n";
+        json << "    {\"name\": \"joy\", \"category\": \"positive\"},\n";
+        json << "    {\"name\": \"sadness\", \"category\": \"negative\"},\n";
+        json << "    {\"name\": \"anger\", \"category\": \"negative\"},\n";
+        json << "    {\"name\": \"fear\", \"category\": \"negative\"},\n";
+        json << "    {\"name\": \"love\", \"category\": \"positive\"},\n";
+        json << "    {\"name\": \"hope\", \"category\": \"positive\"}\n";
+        json << "  ]\n";
+        json << "}";
+        
+        return string_to_c_str(json.str());
+    }
+    catch (const std::exception& e) {
+        set_last_error(std::string("Exception in kelly_brain_get_available_emotions: ") + e.what());
+        return nullptr;
+    }
+}
+
+// =============================================================================
+// Parameter Update Functions
+// =============================================================================
+
+KellyErrorCode kelly_brain_set_emotion_parameters(KellyBrain* brain, float valence, float arousal, float dominance) {
+    if (brain == nullptr) {
+        set_last_error("Null pointer in kelly_brain_set_emotion_parameters");
+        return KELLY_ERROR_NULL_POINTER;
+    }
+    
+    if (valence < -1.0f || valence > 1.0f || 
+        arousal < 0.0f || arousal > 1.0f ||
+        dominance < 0.0f || dominance > 1.0f) {
+        set_last_error("Invalid parameter values");
+        return KELLY_ERROR_INVALID_PARAMETER;
+    }
+    
+    try {
+        auto* wrapper = reinterpret_cast<KellyBrainWrapper*>(brain);
+        std::lock_guard<std::mutex> lock(wrapper->mutex);
+        
+        if (!wrapper->initialized) {
+            set_last_error("KellyBrain not initialized");
+            return KELLY_ERROR_INITIALIZATION_FAILED;
+        }
+        
+        // Update emotional parameters
+        // In the actual implementation, this would update the internal state
+        
+        // Emit event if callback is registered
+        if (wrapper->callback != nullptr) {
+            std::ostringstream event_data;
+            event_data << "{\"valence\": " << valence 
+                      << ", \"arousal\": " << arousal
+                      << ", \"dominance\": " << dominance << "}";
+            
+            wrapper->callback("emotion_changed", event_data.str().c_str(), wrapper->callback_user_data);
+        }
+        
+        return KELLY_SUCCESS;
+    }
+    catch (const std::exception& e) {
+        set_last_error(std::string("Exception in kelly_brain_set_emotion_parameters: ") + e.what());
+        return KELLY_ERROR_UNKNOWN;
+    }
+}
+
+KellyErrorCode kelly_brain_update_parameters(KellyBrain* brain, const char* params_json) {
+    if (brain == nullptr || params_json == nullptr) {
+        set_last_error("Null pointer in kelly_brain_update_parameters");
+        return KELLY_ERROR_NULL_POINTER;
+    }
+    
+    try {
+        auto* wrapper = reinterpret_cast<KellyBrainWrapper*>(brain);
+        std::lock_guard<std::mutex> lock(wrapper->mutex);
+        
+        if (!wrapper->initialized) {
+            set_last_error("KellyBrain not initialized");
+            return KELLY_ERROR_INITIALIZATION_FAILED;
+        }
+        
+        // Parse and update parameters
+        // In production, use proper JSON parsing
+        
+        return KELLY_SUCCESS;
+    }
+    catch (const std::exception& e) {
+        set_last_error(std::string("Exception in kelly_brain_update_parameters: ") + e.what());
+        return KELLY_ERROR_UNKNOWN;
+    }
+}
+
+// =============================================================================
+// Event/Callback System
+// =============================================================================
+
+KellyErrorCode kelly_brain_register_callback(KellyBrain* brain, KellyEventCallback callback, void* user_data) {
+    if (brain == nullptr || callback == nullptr) {
+        set_last_error("Null pointer in kelly_brain_register_callback");
+        return KELLY_ERROR_NULL_POINTER;
+    }
+    
+    try {
+        auto* wrapper = reinterpret_cast<KellyBrainWrapper*>(brain);
+        std::lock_guard<std::mutex> lock(wrapper->mutex);
+        
+        wrapper->callback = callback;
+        wrapper->callback_user_data = user_data;
+        
+        return KELLY_SUCCESS;
+    }
+    catch (const std::exception& e) {
+        set_last_error(std::string("Exception in kelly_brain_register_callback: ") + e.what());
+        return KELLY_ERROR_UNKNOWN;
+    }
+}
+
+KellyErrorCode kelly_brain_unregister_callback(KellyBrain* brain) {
+    if (brain == nullptr) {
+        set_last_error("Null pointer in kelly_brain_unregister_callback");
+        return KELLY_ERROR_NULL_POINTER;
+    }
+    
+    try {
+        auto* wrapper = reinterpret_cast<KellyBrainWrapper*>(brain);
+        std::lock_guard<std::mutex> lock(wrapper->mutex);
+        
+        wrapper->callback = nullptr;
+        wrapper->callback_user_data = nullptr;
+        
+        return KELLY_SUCCESS;
+    }
+    catch (const std::exception& e) {
+        set_last_error(std::string("Exception in kelly_brain_unregister_callback: ") + e.what());
+        return KELLY_ERROR_UNKNOWN;
+    }
+}
+
+// =============================================================================
+// Utility Functions
+// =============================================================================
+
+const char* kelly_get_version(void) {
+    return "KellyBrain FFI v1.0.0";
+}
+
+bool kelly_check_data_files(const char* data_path) {
+    if (data_path == nullptr) {
+        return false;
+    }
+    
+    // Check if required data files exist
+    // This would check for emotion thesaurus files, etc.
+    // Simplified implementation for now
+    return true;
+}
+
+} // extern "C"

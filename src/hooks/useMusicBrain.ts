@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { useKellyBrain, IntentResult, GeneratedMidi } from './useKellyBrain';
 
 export interface EmotionalIntent {
   core_wound?: string;
@@ -77,8 +78,17 @@ export interface LyricsUpdateResponse {
 }
 
 export const useMusicBrain = () => {
+  const kellyBrain = useKellyBrain();
+
   const getEmotions = async () => {
     try {
+      // Try KellyBrain first if initialized
+      if (kellyBrain.isInitialized) {
+        const emotions = await kellyBrain.getAvailableEmotions();
+        if (emotions) return emotions;
+      }
+      
+      // Fallback to original API
       const result = await invoke('get_emotions');
       return result;
     } catch (error) {
@@ -89,6 +99,24 @@ export const useMusicBrain = () => {
 
   const generateMusic = async (request: GenerateRequest) => {
     try {
+      // Try KellyBrain first if initialized
+      if (kellyBrain.isInitialized) {
+        const intent = await kellyBrain.fromText(request.intent.emotional_intent);
+        if (intent) {
+          const midi = await kellyBrain.generateMidi(intent, 8);
+          if (midi) {
+            // Convert to expected format
+            return {
+              success: true,
+              intent,
+              midi,
+              source: 'kelly_brain_cpp'
+            };
+          }
+        }
+      }
+      
+      // Fallback to original API
       const result = await invoke('generate_music', { request });
       return result;
     } catch (error) {
@@ -183,5 +211,17 @@ export const useMusicBrain = () => {
     renderSpectocloud,
     setUserLyrics,
     getUserLyrics,
+    
+    // KellyBrain integration
+    kellyBrain,
+    
+    // Direct KellyBrain methods for advanced usage
+    initializeKellyBrain: kellyBrain.initialize,
+    isKellyBrainInitialized: kellyBrain.isInitialized,
+    generateFromText: kellyBrain.fromText,
+    generateFromEmotion: kellyBrain.fromEmotion,
+    generateMidiDirect: kellyBrain.generateMidi,
+    setEmotionParameters: kellyBrain.setEmotionParameters,
+    getEmotionState: kellyBrain.getEmotionState,
   };
 };

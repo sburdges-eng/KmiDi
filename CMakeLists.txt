@@ -245,6 +245,92 @@ endif()
 
 endif() # BUILD_KELLY_CORE
 
+# ============================================================================
+# Kelly FFI Library (for Tauri integration)
+# ============================================================================
+option(BUILD_KELLY_FFI "Build Kelly FFI library for external language bindings" ON)
+
+if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE)
+    add_library(KellyFFI SHARED
+        src/bridge/kelly_ffi.cpp
+    )
+    
+    target_include_directories(KellyFFI PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    
+    target_link_libraries(KellyFFI PUBLIC
+        KellyCore
+        Qt6::Core
+        Qt6::Widgets
+        juce::juce_audio_basics
+        juce::juce_core
+    )
+    
+    # Set FFI-specific properties
+    set_target_properties(KellyFFI PROPERTIES
+        CXX_VISIBILITY_PRESET hidden
+        VISIBILITY_INLINES_HIDDEN TRUE
+        VERSION 1.0.0
+        SOVERSION 1
+    )
+    
+    # Export C symbols for FFI
+    target_compile_definitions(KellyFFI PRIVATE
+        KELLY_FFI_BUILDING_DLL
+    )
+    
+    # Platform-specific settings
+    if(APPLE)
+        set_target_properties(KellyFFI PROPERTIES
+            MACOSX_RPATH TRUE
+            INSTALL_NAME_DIR "@rpath"
+        )
+    endif()
+    
+    # Copy FFI library to Tauri resources directory after build
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src-tauri)
+        add_custom_command(TARGET KellyFFI POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory
+                ${CMAKE_CURRENT_SOURCE_DIR}/src-tauri/resources
+            COMMAND ${CMAKE_COMMAND} -E copy
+                $<TARGET_FILE:KellyFFI>
+                ${CMAKE_CURRENT_SOURCE_DIR}/src-tauri/resources/
+            COMMENT "Copying KellyFFI library to Tauri resources"
+        )
+    endif()
+    
+    # Install FFI library
+    install(TARGETS KellyFFI
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+    )
+    
+    # Install FFI header
+    install(FILES src/bridge/kelly_ffi.h
+        DESTINATION include/kelly
+    )
+    
+    # Performance benchmark for FFI integration
+    add_executable(KellyFFIBenchmark
+        tests/performance/benchmark_integration.cpp
+    )
+    
+    target_link_libraries(KellyFFIBenchmark PRIVATE
+        KellyFFI
+    )
+    
+    target_include_directories(KellyFFIBenchmark PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+    
+    message(STATUS "Kelly FFI library will be built")
+else()
+    message(STATUS "Kelly FFI library disabled (requires BUILD_KELLY_CORE=ON)")
+endif()
+
 # Tests
 if(BUILD_TESTS AND BUILD_KELLY_CORE)
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/external/Catch2/CMakeLists.txt)
