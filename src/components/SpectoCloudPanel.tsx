@@ -93,7 +93,7 @@ export function SpectoCloudPanel() {
   };
 
   return (
-    <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 16, marginTop: 16, background: "#fafafa" }}>
+    <div className="border border-border-light rounded-lg p-4 mt-4 bg-bg-secondary">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <h3>SpectoCloud Render</h3>
@@ -103,7 +103,7 @@ export function SpectoCloudPanel() {
       </div>
 
       {humanizerConfig && (
-        <div style={{ background: "#f5f5f5", padding: 8, borderRadius: 6, marginTop: 8, fontSize: "0.9em" }}>
+        <div className="bg-bg-tertiary p-2 rounded mt-2 text-sm text-text-secondary">
           <strong>Humanizer</strong>: style {humanizerConfig.default_style}, ppq {humanizerConfig.ppq}, bpm {humanizerConfig.bpm}
         </div>
       )}
@@ -116,7 +116,11 @@ export function SpectoCloudPanel() {
               <button
                 key={p}
                 onClick={() => applyPreset(p)}
-                style={{ padding: "6px 10px", background: preset === p ? "#444" : "#eee", color: preset === p ? "#fff" : "#000" }}
+                className={`px-3 py-1 rounded min-h-touch transition-colors ${
+                  preset === p 
+                    ? 'bg-accent-primary text-white' 
+                    : 'bg-bg-tertiary text-text-primary hover:bg-bg-secondary'
+                }`}
               >
                 {p}
               </button>
@@ -173,7 +177,7 @@ export function SpectoCloudPanel() {
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
           <label style={{ margin: 0 }}>Upload JSON events:</label>
           <input type="file" accept=".json" onChange={handleUpload} />
-          {uploadName && <span style={{ fontSize: "0.9em", color: "#555" }}>{uploadName}</span>}
+          {uploadName && <span className="text-sm text-text-secondary">{uploadName}</span>}
         </div>
         <div style={{ marginTop: 6 }}>or provide MIDI file path:</div>
         <input
@@ -186,7 +190,7 @@ export function SpectoCloudPanel() {
       </div>
 
       {error && (
-        <div style={{ marginTop: 10, padding: 8, background: "#fee", border: "1px solid #f88" }}>
+        <div className="mt-3 p-2 bg-accent-error/10 border border-accent-error rounded">
           {error}
         </div>
       )}
@@ -196,7 +200,7 @@ export function SpectoCloudPanel() {
       </button>
 
       {output && (
-        <div style={{ marginTop: 12, padding: 8, background: "#f0f7ff", border: "1px solid #c3e0ff" }}>
+        <div className="mt-3 p-2 bg-accent-primary/10 border border-accent-primary rounded">
           <div><strong>Output</strong></div>
           <div>Mode: {output.mode}</div>
           <div>Frames: {output.frames}</div>

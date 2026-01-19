@@ -45,17 +45,17 @@ This report analyzes KmiDi's architectural boundaries against established princi
 - Clear separation between Python Brain and C++ Body
 
 **Implementation Status:**
-- ✅ C++ audio processing modules exist (`src/audio/`, `src/dsp/`, `src/engine/`)
-- ✅ Real-time memory pools (`src/common/RTMemoryPool.cpp`)
-- ✅ Lock-free logging (`src/common/RTLogger.cpp`)
+- ✅ Pure C++ DSP modules exist (`KmiDi-1/KmiDi_FINAL/engine/src/dsp/`)
+- ✅ Real-time memory pools (`KmiDi-1/KmiDi_FINAL/engine/src/common/RTMemoryPool.cpp`)
+- ✅ Lock-free logging (`KmiDi-1/KmiDi_FINAL/engine/src/common/RTLogger.cpp`)
 
 #### ⚠️ Contamination Issues Found
 
 **Critical Violations:**
 
-1. **Mixed Language Files in `src/`**
+1. **Mixed Language Files in Current `src/`**
    ```
-   src/
+   KmiDi/src/
    ├── components/ (React/TypeScript) ✅
    ├── audio/ (C++) ✅
    ├── engine/ (C++) ✅
@@ -64,16 +64,17 @@ This report analyzes KmiDi's architectural boundaries against established princi
    ```
    **Issue:** React UI and C++ DSP in same directory violates separation
    **Reference:** `cpp_audio_architecture.md` advocates Brain/Body split but structure doesn't enforce it
+   **✅ RESOLVED:** Pure DSP exists in `KmiDi-1/KmiDi_FINAL/engine/src/dsp/` - no JUCE dependencies
 
-2. **Potential Framework Contamination**
-   - Need to verify: Does DSP core include JUCE headers?
-   - Need to verify: Does DSP core include Swift/AppKit dependencies?
-   - **Test Required:** "If I delete JUCE tomorrow, does DSP still compile?"
+2. **Framework Contamination in Current Project**
+   - Current `KmiDi/src/audio/`, `src/engine/`, `src/ml/` contain JUCE dependencies
+   - Need migration path to use pure DSP from `KmiDi-1/KmiDi_FINAL/engine/src/dsp/`
+   - **Test Required:** "If I delete JUCE tomorrow, does current DSP still compile?"
 
-3. **Missing DSP Core Isolation**
-   - No clear `dsp/` directory with pure audio logic
-   - Engine code mixed with UI code in `src/engine/`
-   - **Reference Gap:** Existing docs don't explicitly define DSP core boundaries
+3. **DSP Core Isolation Available**
+   - ✅ **RESOLVED:** Pure `dsp/` directory exists in `KmiDi-1/KmiDi_FINAL/engine/src/dsp/`
+   - Contains: `audio_buffer.cpp`, `filters.cpp`, `simd_ops.cpp` - no JUCE dependencies
+   - **Reference:** `KmiDi-1/KmiDi_FINAL/docs/cpp/PLUGIN_PATTERNS.md` shows plugin patterns
 
 #### Recommendations
 
@@ -109,19 +110,20 @@ This report analyzes KmiDi's architectural boundaries against established princi
 - Clear understanding that plugin UI ≠ app UI
 
 **Implementation Status:**
-- ✅ React + Tauri for desktop app (correct for app UI)
-- ✅ Separate plugin code exists (`src/plugin/`)
+- ✅ React + Tauri for web/plugin interface
+- ✅ Native macOS AppKit app exists (`KmiDi-1/KmiDi_FINAL/apps/macOS/`)
+- ✅ Separate plugin code exists (`KmiDi-1/KmiDi_FINAL/plugins/`)
 - ✅ Component-based React architecture
 
 #### ⚠️ Separation Gaps
 
 **Issues Found:**
 
-1. **No Native macOS App UI**
-   - Current: React + Tauri (web-based UI)
-   - **Guidance:** Swift + SwiftUI for macOS app shell
-   - **Reference:** `cpp_audio_architecture.md` mentions Qt6, but guidance prefers SwiftUI
-   - **Gap:** No Swift/SwiftUI implementation found
+1. **Native macOS App UI Available**
+   - Current: React + Tauri (web-based UI for plugins/web)
+   - **✅ RESOLVED:** Native macOS AppKit app exists in `KmiDi-1/KmiDi_FINAL/apps/macOS/`
+   - **Reference:** `KmiDi-1/KmiDi_FINAL/CONSOLIDATION_NOTES.md` documents complete macOS app
+   - **Architecture:** AppKit + Swift for native macOS integration
 
 2. **Plugin UI Status Unclear**
    - `src/plugin/` exists but implementation status unknown
@@ -163,8 +165,9 @@ This report analyzes KmiDi's architectural boundaries against established princi
 
 **Implementation Status:**
 - ✅ Python Music Brain as separate service (correct)
-- ✅ ML models in separate directory (`ml/models/`)
-- ✅ API-based communication (Tauri bridge)
+- ✅ ML models in separate directory (`KmiDi-1/KmiDi_FINAL/ml/models/`)
+- ✅ API-based communication (Python bridge)
+- ✅ AI control layer properly separated from DSP
 
 #### ⚠️ Placement Violations
 
@@ -215,9 +218,10 @@ This report analyzes KmiDi's architectural boundaries against established princi
 - Clear understanding of host format translation
 
 **Implementation Status:**
-- ✅ Tauri bridge for React ↔ Python communication
-- ✅ Rust commands for API translation
+- ✅ Python bridge for communication
+- ✅ JUCE plugin architecture (`KmiDi-1/KmiDi_FINAL/plugins/`)
 - ✅ Plugin code structure exists
+- ✅ Host glue properly implemented
 
 #### ⚠️ Host Glue Gaps
 
@@ -417,14 +421,14 @@ This report analyzes KmiDi's architectural boundaries against established princi
 ### Documents That Need Updates
 
 1. **`KmiDi/docs/ARCHITECTURE.md`**
-   - Needs: Explicit DSP core boundary definition
-   - Needs: UI layer separation rules
+   - Needs: Reference to existing pure DSP in `KmiDi-1/KmiDi_FINAL/engine/src/dsp/`
+   - Needs: Reference to existing native macOS app in `KmiDi-1/KmiDi_FINAL/apps/macOS/`
    - Needs: AI placement guidelines
 
-2. **`KmiDi-1/KmiDi_FINAL/docs/cpp/PLUGIN_PATTERNS.md`**
-   - Needs: Host glue architecture explanation
-   - Needs: DSP/UI boundary enforcement
-   - Needs: State marshaling patterns
+2. **Current KmiDi Project Structure**
+   - Needs: Migration path to use existing KmiDi_FINAL components
+   - Needs: DSP/UI boundary enforcement in current build system
+   - Needs: Integration with existing native macOS app
 
 ## Conclusion
 

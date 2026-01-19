@@ -157,35 +157,31 @@ function App() {
   return (
     <div className="app-container">
       {error && (
-        <div style={{ padding: '10px', background: '#ffebee', border: '1px solid #f44336', borderRadius: '4px', margin: '10px' }}>
+        <div className="p-3 bg-accent-error/10 border border-accent-error rounded m-3">
           <strong>Error:</strong> {error}
-          <button onClick={() => setError(null)} style={{ marginLeft: '10px' }}>Dismiss</button>
+          <button onClick={() => setError(null)} className="ml-3 px-2 py-1 bg-bg-secondary text-text-primary rounded min-h-touch min-w-touch">
+            Dismiss
+          </button>
         </div>
       )}
       <div className="cassette-header">
         <h1>iDAW - Kelly Project</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '8px',
-            padding: '5px 10px',
-            borderRadius: '4px',
-            backgroundColor: apiStatus === 'online' ? '#e8f5e9' : apiStatus === 'offline' ? '#ffebee' : '#fff3e0',
-            border: `1px solid ${apiStatus === 'online' ? '#4caf50' : apiStatus === 'offline' ? '#f44336' : '#ff9800'}`
-          }}>
-            <span style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              backgroundColor: apiStatus === 'online' ? '#4caf50' : apiStatus === 'offline' ? '#f44336' : '#ff9800',
-              animation: apiStatus === 'checking' ? 'pulse 2s infinite' : 'none'
-            }}></span>
-            <span style={{ fontSize: '0.9em' }}>
+          <div className={`flex items-center gap-2 px-3 py-1 rounded border ${
+            apiStatus === 'online' ? 'bg-status-online/10 border-status-online' :
+            apiStatus === 'offline' ? 'bg-status-offline/10 border-status-offline' :
+            'bg-status-checking/10 border-status-checking'
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${
+              apiStatus === 'online' ? 'bg-status-online' :
+              apiStatus === 'offline' ? 'bg-status-offline' :
+              'bg-status-checking animate-pulse'
+            }`}></span>
+            <span className="text-sm text-text-primary">
               API: {apiStatus === 'online' ? 'Online' : apiStatus === 'offline' ? 'Offline' : 'Checking...'}
             </span>
           </div>
-          <button onClick={toggleSide} className="toggle-btn">
+          <button onClick={toggleSide} className="toggle-btn px-4 py-2 bg-accent-primary text-white rounded min-h-touch min-w-touch hover:bg-accent-secondary transition-colors">
             {sideA ? "⏭ Side B" : "⏮ Side A"}
           </button>
         </div>
@@ -222,7 +218,7 @@ function App() {
           <div className="ghostwriter-section">
             <h3>GhostWriter</h3>
             {selectedEmotion && (
-              <div style={{ marginBottom: '10px', padding: '8px', backgroundColor: 'rgba(99, 102, 241, 0.1)', borderRadius: '4px', fontSize: '0.9em' }}>
+              <div className="mb-3 p-2 bg-accent-primary/10 rounded text-sm text-text-primary">
                 Selected: {selectedEmotion.base} → {selectedEmotion.intensity} → {selectedEmotion.sub}
               </div>
             )}

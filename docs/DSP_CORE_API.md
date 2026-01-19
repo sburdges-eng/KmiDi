@@ -1,7 +1,8 @@
 # DSP Core API Documentation
 
-**Date:** January 18, 2026  
-**Purpose:** Define the pure DSP core interface with strict boundary rules  
+**Date:** January 18, 2026
+**Purpose:** Reference existing pure DSP core interface from KmiDi_FINAL
+**Source:** KmiDi-1/KmiDi_FINAL/engine/src/dsp/
 **Reference:** Architectural Boundary Compliance Report
 
 ## Overview
@@ -45,22 +46,16 @@ If the answer is **NO**, the file does not belong in the DSP core.
 #include <unistd.h>           // System calls
 ```
 
-## Directory Structure
+## Directory Structure (KmiDi_FINAL)
 
 ```
-dsp/
-├── Engine.h              // Main DSP engine interface
-├── Engine.cpp            // Implementation
-├── Voice.h               // Voice/oscillator management
-├── Voice.cpp
-├── Modulation.h           // Modulation sources (LFO, envelope)
-├── Modulation.cpp
-├── Filters.h              // Filter implementations
-├── Filters.cpp
-├── Parameters.h           // Parameter definitions (plain data)
-├── State.h                // State structure (plain data)
-└── ProcessBlock.cpp       // Audio processing entry point
+KmiDi-1/KmiDi_FINAL/engine/src/dsp/
+├── audio_buffer.cpp     // Audio buffer implementation
+├── filters.cpp          // Filter implementations
+└── simd_ops.cpp         // SIMD operations
 ```
+
+**Note:** The existing DSP core consists of utility classes rather than a full engine. These provide the foundation for DSP processing without framework dependencies.
 
 ## API Contract
 
