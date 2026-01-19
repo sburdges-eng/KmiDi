@@ -16,8 +16,34 @@ option(ENABLE_TRACY "Enable Tracy profiling" OFF)
 option(ENABLE_RTNEURAL "Enable RTNeural for ML inference" OFF)
 option(ENABLE_ONNX_RUNTIME "Enable ONNX Runtime for ML inference" OFF)
 
+# KmiDi_FINAL integration options
+option(USE_KMI_DI_FINAL "Use existing KmiDi_FINAL components" OFF)
+option(BUILD_NATIVE_MACOS_APP "Build native macOS app from KmiDi_FINAL" OFF)
+
+# KmiDi_FINAL paths
+set(KMI_DI_FINAL_ROOT "${CMAKE_SOURCE_DIR}/../KmiDi-1/KmiDi_FINAL"
+    CACHE PATH "Path to KmiDi_FINAL directory")
+
 # CMake modules path
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+# KmiDi_FINAL validation and integration
+if(USE_KMI_DI_FINAL OR BUILD_NATIVE_MACOS_APP)
+    if(NOT EXISTS ${KMI_DI_FINAL_ROOT})
+        message(WARNING "KmiDi_FINAL not found at ${KMI_DI_FINAL_ROOT}. Integration features will be disabled.")
+        set(KMI_DI_FINAL_AVAILABLE OFF)
+    else()
+        message(STATUS "KmiDi_FINAL found at: ${KMI_DI_FINAL_ROOT}")
+        set(KMI_DI_FINAL_AVAILABLE ON)
+    endif()
+endif()
+
+# Pure DSP core from KmiDi_FINAL (if available)
+if(USE_KMI_DI_FINAL AND KMI_DI_FINAL_AVAILABLE AND EXISTS ${KMI_DI_FINAL_ROOT}/engine/src/dsp)
+    message(STATUS "Including pure DSP core from KmiDi_FINAL")
+    add_subdirectory(${KMI_DI_FINAL_ROOT}/engine/src/dsp kmidi_dsp_core)
+    set(KMI_DI_HAS_PURE_DSP ON)
+endif()
 
 # macOS SDK 26.2+ compatibility fix for __CLOCK_AVAILABILITY
 # The SDK header _time.h uses __CLOCK_AVAILABILITY in enum definitions, which requires
@@ -46,7 +72,13 @@ endif()
 find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
 
 # JUCE setup
-add_subdirectory(external/JUCE EXCLUDE_FROM_ALL)
+if(USE_KMI_DI_FINAL AND KMI_DI_FINAL_AVAILABLE AND EXISTS ${KMI_DI_FINAL_ROOT}/build/external/JUCE)
+    message(STATUS "Using JUCE from KmiDi_FINAL")
+    add_subdirectory(${KMI_DI_FINAL_ROOT}/build/external/JUCE JUCE)
+else()
+    message(STATUS "Using local JUCE")
+    add_subdirectory(external/JUCE EXCLUDE_FROM_ALL)
+endif()
 
 # Readerwriterqueue (lock-free queue) for RT-safe OSC
 # Note: This is a header-only library with no CMakeLists.txt, so we must
@@ -246,6 +278,26 @@ endif()
 endif() # BUILD_KELLY_CORE
 
 # ============================================================================
+# Native macOS App from KmiDi_FINAL
+# ============================================================================
+if(BUILD_NATIVE_MACOS_APP AND KMI_DI_FINAL_AVAILABLE AND EXISTS ${KMI_DI_FINAL_ROOT}/apps/macOS)
+    message(STATUS "Adding native macOS app build target from KmiDi_FINAL")
+
+    # Custom target for native app build
+    add_custom_target(native_macos_app
+        COMMAND ${KMI_DI_FINAL_ROOT}/apps/macOS/build_macos_app.sh
+        WORKING_DIRECTORY ${KMI_DI_FINAL_ROOT}/apps/macOS
+        COMMENT "Building native macOS app from KmiDi_FINAL"
+        VERBATIM
+    )
+
+    # Make it depend on DSP core if available
+    if(KMI_DI_HAS_PURE_DSP)
+        add_dependencies(native_macos_app kmidi_dsp_core)
+    endif()
+endif()
+
+# ============================================================================
 # Kelly FFI Library (for Tauri integration)
 # ============================================================================
 option(BUILD_KELLY_FFI "Build Kelly FFI library for external language bindings" ON)
@@ -352,6 +404,20 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
     else()
         message(WARNING "Catch2 not found; skipping tests. Set BUILD_TESTS=OFF or add external/Catch2.")
     endif()
+endif()
+
+# DSP core testing (if using KmiDi_FINAL)
+if(KMI_DI_HAS_PURE_DSP)
+    message(STATUS "Adding DSP core test target")
+
+    add_executable(dsp_core_test
+        ${KMI_DI_FINAL_ROOT}/engine/src/dsp/test/test_dsp_core.cpp
+    )
+    target_link_libraries(dsp_core_test PRIVATE kmidi_dsp_core)
+    target_include_directories(dsp_core_test PRIVATE ${KMI_DI_FINAL_ROOT}/engine/include)
+
+    # Add test
+    add_test(NAME DSP_Core_Test COMMAND dsp_core_test)
 endif()
 
 if(BUILD_PENTA_TESTS)
