@@ -2,7 +2,7 @@
 
 #include "../common/Types.h"
 #include "../common/IntentIRExtractor.h"
-#include "../shared/include/kmidi/IntentIR.h"
+#include "kmidi/IntentIR.h"
 #include <string>
 #include <vector>
 #include <optional>

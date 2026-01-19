@@ -350,7 +350,7 @@ const EmotionThesaurus &KellyBrain::thesaurus() const {
 IntentFrame KellyBrain::fromWoundToIntentFrame(const Wound &wound) {
   // Convert KellyTypes::Wound to Types::Wound
   Wound legacyWound = convertToLegacyWound(wound);
-  
+
   // Use IntentPipeline's new IntentFrame method
   return pipeline_->processToIntentFrame(legacyWound, 0);  // sessionId = 0 for now
 }
@@ -361,12 +361,12 @@ IntentFrame KellyBrain::fromJourneyToIntentFrame(const SideA &current, const Sid
   legacyCurrent.description = current.description;
   legacyCurrent.intensity = current.intensity;
   legacyCurrent.emotionId = current.emotionId;
-  
+
   SideB legacyDesired;
   legacyDesired.description = desired.description;
   legacyDesired.intensity = desired.intensity;
   legacyDesired.emotionId = desired.emotionId;
-  
+
   // Use IntentPipeline's new IntentFrame method
   return pipeline_->processJourneyToIntentFrame(legacyCurrent, legacyDesired, 0);
 }
@@ -394,7 +394,7 @@ IntentFrame KellyBrain::fromEmotionToIntentFrame(const std::string &emotionName,
     wound.primaryEmotion.intensity = emotionOpt->intensity;
     return fromWoundToIntentFrame(wound);
   }
-  
+
   // Return default frame if emotion not found
   IntentFrame frame;
   frame.meta.ir_version = INTENT_IR_VERSION;
@@ -405,7 +405,7 @@ GeneratedMidi KellyBrain::generateMidiFromIntentFrame(const IntentFrame &frame, 
   // Make a copy for validation (prepareIntentFrame modifies the frame)
   IntentFrame validatedFrame = frame;
   prepareIntentFrame(validatedFrame);  // Validate + clamp
-  
+
   // Use MidiGenerator's new IntentFrame method
   return midiGenerator_->generate(validatedFrame, bars, 0.5f, 0.4f, 0.0f, 0.75f);
 }

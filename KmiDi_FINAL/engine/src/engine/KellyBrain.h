@@ -11,7 +11,7 @@
 // Include KellyTypes.h for the unified type system
 #include "common/KellyTypes.h"
 #include "common/IntentIRAdapter.h"  // IntentFrame support
-#include "shared/include/kmidi/IntentIR.h"
+#include "kmidi/IntentIR.h"
 #include "midi/MidiGenerator.h"
 // Forward declare IntentPipeline to avoid including Types.h here
 // We'll include IntentPipeline.h only in the .cpp file where we can handle

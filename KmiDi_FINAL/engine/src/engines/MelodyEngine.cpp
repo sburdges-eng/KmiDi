@@ -551,7 +551,7 @@ MelodyOutput MelodyEngine::generateFromIntentFrame(
     // Extract melody-specific parameters from IntentFrame
     MelodyParams params = MelodyParams::fromIntentFrame(frame);
     EmotionParams emotion = EmotionParams::fromIntentFrame(frame);
-    
+
     // Map mode_preference to mode string
     std::string mode;
     if (params.mode_preference > 0) {
@@ -561,7 +561,7 @@ MelodyOutput MelodyEngine::generateFromIntentFrame(
     } else {
         mode = "major";  // Default
     }
-    
+
     // Map melodic_activity to contour type
     ContourType contour;
     if (params.melodic_activity > 0.7f) {
@@ -571,7 +571,7 @@ MelodyOutput MelodyEngine::generateFromIntentFrame(
     } else {
         contour = ContourType::Arch;
     }
-    
+
     // Map contour_variance to density
     RhythmDensity density;
     if (params.contour_variance > 0.7f) {
@@ -581,7 +581,7 @@ MelodyOutput MelodyEngine::generateFromIntentFrame(
     } else {
         density = RhythmDensity::Moderate;
     }
-    
+
     // Create config from IR parameters
     MelodyConfig config;
     config.key = key;
@@ -590,7 +590,7 @@ MelodyOutput MelodyEngine::generateFromIntentFrame(
     config.tempoBpm = tempoBpm;
     config.contourOverride = contour;
     config.densityOverride = density;
-    
+
     // Use emotion name if available, otherwise derive from VAD
     if (emotion.valence > 0.3f && emotion.arousal > 0.6f) {
         config.emotion = "joy";
@@ -601,7 +601,7 @@ MelodyOutput MelodyEngine::generateFromIntentFrame(
     } else {
         config.emotion = "neutral";
     }
-    
+
     return generate(config);
 }
 

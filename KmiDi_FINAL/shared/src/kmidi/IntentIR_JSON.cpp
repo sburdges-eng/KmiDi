@@ -1,10 +1,12 @@
 #include "kmidi/IntentIR_JSON.h"
 #include "kmidi/IntentIR.h"
-#include <cJSON.h>
 #include <cstring>
 #include <cstdlib>
 
 extern "C" {
+
+#ifdef HAVE_CJSON
+#include <cJSON.h>
 
 char* intent_frame_to_json(const IntentFrame* frame) {
     if (!frame) {
@@ -337,5 +339,32 @@ bool intent_frame_from_cjson(const struct cJSON* json, IntentFrame* frame) {
 
     return true;
 }
+
+#else
+// cJSON not available - stub implementations
+
+char* intent_frame_to_json(const IntentFrame* frame) {
+    (void)frame;  // Unused
+    return nullptr;
+}
+
+bool intent_frame_from_json(const char* json_str, IntentFrame* frame) {
+    (void)json_str;  // Unused
+    (void)frame;     // Unused
+    return false;
+}
+
+struct cJSON* intent_frame_to_cjson(const IntentFrame* frame) {
+    (void)frame;  // Unused
+    return nullptr;
+}
+
+bool intent_frame_from_cjson(const struct cJSON* json, IntentFrame* frame) {
+    (void)json;   // Unused
+    (void)frame;  // Unused
+    return false;
+}
+
+#endif  // HAVE_CJSON
 
 } // extern "C"

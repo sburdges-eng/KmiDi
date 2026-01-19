@@ -13,7 +13,7 @@
    ```bash
    # macOS
    brew install cjson
-   
+
    # Or build from source: https://github.com/DaveGamble/cJSON
    ```
 

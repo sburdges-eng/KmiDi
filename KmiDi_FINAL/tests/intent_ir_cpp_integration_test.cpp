@@ -1,6 +1,6 @@
 /**
  * Intent IR v1 C++ Integration Test
- * 
+ *
  * Tests the full integration: KellyBrain → IntentFrame → MidiGenerator → MIDI
  */
 
@@ -26,11 +26,11 @@ protected:
 
 TEST_F(IntentIRIntegrationTest, KellyBrainFromTextToIntentFrame) {
     IntentFrame frame = brain_->fromTextToIntentFrame("I feel lost and alone");
-    
+
     EXPECT_EQ(frame.meta.ir_version, INTENT_IR_VERSION);
     EXPECT_LE(frame.emotion.valence, 0.0f);  // Negative for "lost"
     EXPECT_GT(frame.meta.intent_id, 0);
-    
+
     // Validate frame
     IntentFrame validated = frame;
     prepareIntentFrame(validated);
@@ -39,7 +39,7 @@ TEST_F(IntentIRIntegrationTest, KellyBrainFromTextToIntentFrame) {
 
 TEST_F(IntentIRIntegrationTest, KellyBrainFromEmotionToIntentFrame) {
     IntentFrame frame = brain_->fromEmotionToIntentFrame("grief", 0.8f);
-    
+
     EXPECT_EQ(frame.meta.ir_version, INTENT_IR_VERSION);
     EXPECT_LT(frame.emotion.valence, 0.0f);  // Grief is negative valence
     EXPECT_GT(frame.emotion.arousal, 0.0f);
@@ -48,9 +48,9 @@ TEST_F(IntentIRIntegrationTest, KellyBrainFromEmotionToIntentFrame) {
 TEST_F(IntentIRIntegrationTest, KellyBrainGenerateMidiFromIntentFrame) {
     IntentFrame frame = brain_->fromTextToIntentFrame("I feel joyful");
     prepareIntentFrame(frame);
-    
+
     GeneratedMidi midi = brain_->generateMidiFromIntentFrame(frame, 4);
-    
+
     EXPECT_GT(midi.bpm, 0.0f);
     EXPECT_GT(midi.lengthInBeats, 0.0);
     // Should have some generated content
@@ -59,12 +59,12 @@ TEST_F(IntentIRIntegrationTest, KellyBrainGenerateMidiFromIntentFrame) {
 
 TEST_F(IntentIRIntegrationTest, MidiGeneratorWithIntentFrame) {
     MidiGenerator generator;
-    
+
     IntentFrame frame = brain_->fromTextToIntentFrame("I feel energetic");
     prepareIntentFrame(frame);
-    
+
     GeneratedMidi midi = generator.generate(frame, 8, 0.5f, 0.4f, 0.0f, 0.75f);
-    
+
     EXPECT_GT(midi.bpm, 0.0f);
     EXPECT_EQ(midi.bars, 8);
     EXPECT_GT(midi.lengthInBeats, 0.0);
@@ -74,12 +74,12 @@ TEST_F(IntentIRIntegrationTest, IntentFrameRoundTripConversion) {
     // Create IntentFrame from text
     IntentFrame frame1 = brain_->fromTextToIntentFrame("I feel peaceful");
     prepareIntentFrame(frame1);
-    
+
     // Convert to IntentResult
     IntentResult result = convertIntentIRToIntentResult(frame1);
     EXPECT_GT(result.tempoBpm, 0);
     EXPECT_FALSE(result.emotion.name.empty());
-    
+
     // Convert back to IntentFrame
     IntentFrame frame2 = convertIntentResultToIntentIR(result);
     EXPECT_EQ(frame2.meta.ir_version, INTENT_IR_VERSION);
@@ -89,11 +89,11 @@ TEST_F(IntentIRIntegrationTest, IntentFrameRoundTripConversion) {
 
 TEST_F(IntentIRIntegrationTest, IntentFrameValidation) {
     IntentFrame frame = brain_->fromTextToIntentFrame("test");
-    
+
     // Should be valid after preparation
     prepareIntentFrame(frame);
     EXPECT_TRUE(intent_frame_validate(&frame));
-    
+
     // Invalid version should fail
     frame.meta.ir_version = 999;
     EXPECT_FALSE(intent_frame_validate(&frame));
@@ -101,11 +101,11 @@ TEST_F(IntentIRIntegrationTest, IntentFrameValidation) {
 
 TEST_F(IntentIRIntegrationTest, IntentFrameClamping) {
     IntentFrame frame = brain_->fromTextToIntentFrame("test");
-    
+
     // Set out-of-range values
     frame.emotion.valence = 5.0f;
     frame.music.tempo_bias = -10.0f;
-    
+
     // Clamp should fix them
     intent_frame_clamp(&frame);
     EXPECT_LE(frame.emotion.valence, 1.0f);
@@ -118,9 +118,9 @@ TEST_F(IntentIRIntegrationTest, FullPipelineIntentFrame) {
     // Full pipeline: Text → IntentFrame → MIDI
     IntentFrame frame = brain_->fromTextToIntentFrame("I feel creative and inspired");
     prepareIntentFrame(frame);
-    
+
     GeneratedMidi midi = brain_->generateMidiFromIntentFrame(frame, 8);
-    
+
     EXPECT_GT(midi.bpm, 0.0f);
     EXPECT_GT(midi.lengthInBeats, 0.0);
     EXPECT_FALSE(midi.chords.empty());
@@ -129,19 +129,19 @@ TEST_F(IntentIRIntegrationTest, FullPipelineIntentFrame) {
 TEST_F(IntentIRIntegrationTest, IntentFrameJSONSerialization) {
     IntentFrame frame = brain_->fromTextToIntentFrame("I feel happy");
     prepareIntentFrame(frame);
-    
+
     // Serialize to JSON
     char* json = intent_frame_to_json(&frame);
     ASSERT_NE(json, nullptr);
     EXPECT_NE(strlen(json), 0);
-    
+
     // Deserialize from JSON
     IntentFrame frame2;
     bool success = intent_frame_from_json(json, &frame2);
     EXPECT_TRUE(success);
     EXPECT_EQ(frame2.meta.ir_version, INTENT_IR_VERSION);
     EXPECT_FLOAT_EQ(frame2.emotion.valence, frame.emotion.valence);
-    
+
     free(json);
 }
 
@@ -149,14 +149,14 @@ TEST_F(IntentIRIntegrationTest, IntentFrameJourney) {
     SideA current;
     current.description = "I feel sad";
     current.intensity = 0.7f;
-    
+
     SideB desired;
     desired.description = "I want to feel hopeful";
     desired.intensity = 0.8f;
-    
+
     IntentFrame frame = brain_->fromJourneyToIntentFrame(current, desired);
     prepareIntentFrame(frame);
-    
+
     EXPECT_EQ(frame.meta.ir_version, INTENT_IR_VERSION);
     // Journey should show transition from negative to positive
     EXPECT_GT(frame.emotion.valence, -1.0f);  // Not completely negative

@@ -2,7 +2,7 @@
 
 #include "../common/Types.h"
 #include "../common/IntentIRExtractor.h"
-#include "../shared/include/kmidi/IntentIR.h"
+#include "kmidi/IntentIR.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -99,15 +99,15 @@ struct DynamicsEmotionProfile {
 class DynamicsEngine {
 public:
     DynamicsEngine();
-    
+
     DynamicsOutput apply(
         const std::vector<MidiNote>& notes,
         const std::string& emotion = "neutral",
         float expressiveness = 0.5f
     );
-    
+
     DynamicsOutput apply(const DynamicsConfig& config);
-    
+
     // Generate dynamics curve
     DynamicCurve generateCurve(
         int totalTicks,
@@ -115,24 +115,24 @@ public:
         DynamicMarking startMarking,
         DynamicMarking endMarking
     );
-    
+
     // Apply curve to notes
     std::vector<MidiNote> applyCurve(
         const std::vector<MidiNote>& notes,
         const DynamicCurve& curve
     );
-    
+
     // Utility
     int markingToVelocity(DynamicMarking marking);
     DynamicMarking velocityToMarking(int velocity);
-    
+
     // Accent application
     std::vector<MidiNote> applyAccents(
         const std::vector<MidiNote>& notes,
         const std::string& emotion,
         float strength
     );
-    
+
     /**
      * Apply dynamics from IntentFrame (IR v1).
      * Extracts dynamic_range and texture_density from IR.
@@ -146,10 +146,10 @@ public:
 private:
     std::map<std::string, DynamicsEmotionProfile> profiles_;
     std::map<std::string, std::vector<int>> sectionAccentPatterns_;
-    
+
     void initializeProfiles();
     void initializeSectionPatterns();
-    
+
     int interpolateVelocity(const DynamicCurve& curve, int tick);
 };
 

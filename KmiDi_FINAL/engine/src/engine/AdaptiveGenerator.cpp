@@ -80,16 +80,16 @@ std::map<std::string, float> AdaptiveGenerator::getPreferredAdjustments() const 
 GeneratedMidi AdaptiveGenerator::generateMidiFromIntentFrame(const IntentFrame& frame, int bars) {
     // Convert IntentFrame to IntentResult for adaptation
     IntentResult adaptedIntent = convertIntentIRToIntentResult(frame);
-    
+
     // Apply adaptive adjustments if enabled
     if (adaptiveEnabled_.load() && preferenceTracker_.isEnabled()) {
         adaptedIntent = adaptIntent(adaptedIntent);
     }
-    
+
     // Convert back to IntentFrame for generation
     IntentFrame adaptedFrame = convertIntentResultToIntentIR(adaptedIntent);
     prepareIntentFrame(adaptedFrame);  // Validate + clamp
-    
+
     // Use brain's IntentFrame method (once implemented)
     // For now, use IntentResult path
     return brain_.generateMidi(adaptedIntent, bars);

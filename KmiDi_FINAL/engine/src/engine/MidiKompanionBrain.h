@@ -21,7 +21,7 @@
 #include "common/KellyTypes.h"
 // Include IntentIR for IntentFrame support
 #include "common/IntentIRAdapter.h"
-#include "shared/include/kmidi/IntentIR.h"
+#include "kmidi/IntentIR.h"
 // Forward declare IntentPipeline to avoid including Types.h here
 // We'll include IntentPipeline.h only in the .cpp file where we can handle conversions
 #include <memory>

@@ -5,7 +5,7 @@ edition = "2021"
 
 [lib]
 name = "intent_ir"
-crate-type = ["staticlib", "cdylib"]
+crate-type = ["staticlib"]
 
 [profile.release]
 panic = "abort"

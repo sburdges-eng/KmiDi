@@ -7,7 +7,7 @@
  * without needing to know the full structure.
  */
 
-#include "../shared/include/kmidi/IntentIR.h"
+#include "kmidi/IntentIR.h"
 
 namespace kelly {
 

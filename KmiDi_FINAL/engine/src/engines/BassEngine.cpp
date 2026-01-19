@@ -558,7 +558,7 @@ BassOutput BassEngine::generateFromIntentFrame(
     RhythmParams rhythm = RhythmParams::fromIntentFrame(frame);
     HarmonyParams harmony = HarmonyParams::fromIntentFrame(frame);
     EmotionParams emotion = EmotionParams::fromIntentFrame(frame);
-    
+
     // Map rhythmic_density to bass pattern
     BassPattern pattern;
     if (rhythm.rhythmic_density > 0.7f) {
@@ -570,7 +570,7 @@ BassOutput BassEngine::generateFromIntentFrame(
     } else {
         pattern = BassPattern::RootFifth;
     }
-    
+
     // Create config from IR parameters
     BassConfig config;
     config.chordProgression = chordProgression;
@@ -578,7 +578,7 @@ BassOutput BassEngine::generateFromIntentFrame(
     config.bars = bars;
     config.tempoBpm = tempoBpm;
     config.patternOverride = pattern;
-    
+
     // Use emotion name if available, otherwise derive from VAD
     if (emotion.valence > 0.3f && emotion.arousal > 0.6f) {
         config.emotion = "joy";
@@ -589,7 +589,7 @@ BassOutput BassEngine::generateFromIntentFrame(
     } else {
         config.emotion = "neutral";
     }
-    
+
     return generate(config);
 }
 

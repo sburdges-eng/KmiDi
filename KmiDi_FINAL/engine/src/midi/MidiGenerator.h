@@ -2,7 +2,7 @@
 
 #include "common/Types.h"
 #include "common/IntentIRAdapter.h"
-#include "shared/include/kmidi/IntentIR.h"
+#include "kmidi/IntentIR.h"
 #include "engine/IntentPipeline.h"
 #include "midi/ChordGenerator.h"
 #include "midi/GrooveEngine.h"

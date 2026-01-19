@@ -6,21 +6,30 @@
 
 extern crate alloc;
 
-// Global allocator for no_std
-use alloc::alloc::GlobalAlloc;
-use alloc::alloc::Layout;
+// Global allocator for no_std - use system allocator via libc
+use alloc::alloc::{GlobalAlloc, Layout};
 
-struct DummyAllocator;
+struct SystemAllocator;
 
-unsafe impl GlobalAlloc for DummyAllocator {
-    unsafe fn alloc(&self, _layout: Layout) -> *mut u8 {
-        core::ptr::null_mut()
+unsafe impl GlobalAlloc for SystemAllocator {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        // Use libc malloc for actual allocation
+        extern "C" {
+            fn malloc(size: usize) -> *mut u8;
+        }
+        malloc(layout.size())
     }
-    unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {}
+
+    unsafe fn dealloc(&self, ptr: *mut u8, _layout: Layout) {
+        extern "C" {
+            fn free(ptr: *mut u8);
+        }
+        free(ptr);
+    }
 }
 
 #[global_allocator]
-static ALLOCATOR: DummyAllocator = DummyAllocator;
+static ALLOCATOR: SystemAllocator = SystemAllocator;
 
 // Panic handler for no_std (abort on panic)
 #[panic_handler]

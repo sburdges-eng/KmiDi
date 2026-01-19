@@ -2,7 +2,7 @@
 
 #include "../common/Types.h"
 #include "../common/IntentIRExtractor.h"
-#include "../shared/include/kmidi/IntentIR.h"
+#include "kmidi/IntentIR.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -95,7 +95,7 @@ struct BassEmotionProfile {
 class BassEngine {
 public:
     BassEngine();
-    
+
     BassOutput generate(
         const std::string& emotion,
         const std::vector<std::string>& chordProgression,
@@ -103,9 +103,9 @@ public:
         int bars = 4,
         int tempoBpm = 120
     );
-    
+
     BassOutput generate(const BassConfig& config);
-    
+
     BassOutput generateForSection(
         const std::string& emotion,
         const std::vector<std::string>& chordProgression,
@@ -114,7 +114,7 @@ public:
         int bars,
         int tempoBpm
     );
-    
+
     /**
      * Generate bass from IntentFrame (IR v1).
      * Extracts rhythmic_density, groove_strength, and harmonic parameters from IR.
@@ -129,19 +129,19 @@ public:
 
 private:
     std::map<std::string, BassEmotionProfile> profiles_;
-    
+
     void initializeProfiles();
-    
+
     struct ChordTones {
         int root;
         int third;
         int fifth;
         int seventh;
     };
-    
+
     ChordTones parseChord(const std::string& chord, int octave);
     int getRegisterOctave(BassRegister reg);
-    
+
     std::vector<BassNote> generateRootOnly(const ChordTones& tones, int barTicks, const BassEmotionProfile& profile, std::mt19937& rng);
     std::vector<BassNote> generateRootFifth(const ChordTones& tones, int barTicks, const BassEmotionProfile& profile, std::mt19937& rng);
     std::vector<BassNote> generateWalking(const ChordTones& tones, int barTicks, const BassEmotionProfile& profile, std::mt19937& rng);

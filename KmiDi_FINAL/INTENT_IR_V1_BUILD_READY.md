@@ -159,14 +159,14 @@ ctest -R intent_ir
 
 ## Summary
 
-✅ **All components verified**  
-✅ **Build system configured**  
-✅ **Ready for compilation**  
+✅ **All components verified**
+✅ **Build system configured**
+✅ **Ready for compilation**
 ⏳ **Requires network access for dependencies**
 
 The Intent IR v1 system is **complete and ready for build**!
 
 ---
 
-**Status**: ✅ **BUILD READY**  
+**Status**: ✅ **BUILD READY**
 **Date**: 2025-01-18

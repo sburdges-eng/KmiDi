@@ -58,9 +58,9 @@ The Intent IR v1 system has been fully implemented, integrated, tested, and docu
 
 ## 📖 Quick Reference
 
-**Get Started**: `docs/INTENT_IR_V1_QUICK_START.md`  
-**Full Usage**: `docs/INTENT_IR_V1_USAGE.md`  
-**Examples**: `examples/intent_ir_usage_example.cpp`  
+**Get Started**: `docs/INTENT_IR_V1_QUICK_START.md`
+**Full Usage**: `docs/INTENT_IR_V1_USAGE.md`
+**Examples**: `examples/intent_ir_usage_example.cpp`
 **Testing**: `docs/INTENT_IR_V1_TESTING_GUIDE.md`
 
 ## 🚀 Next Actions

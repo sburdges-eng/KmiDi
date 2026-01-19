@@ -20,22 +20,22 @@ This example shows how to add `IntentFrame` support to an existing class while m
 class MidiKompanionBrain {
 public:
     // ... existing methods ...
-    
+
     // NEW: IntentFrame-based methods
     IntentFrame fromWoundToIntentFrame(const Wound& wound);
     IntentFrame fromTextToIntentFrame(const std::string& description);
     IntentFrame fromEmotionToIntentFrame(const std::string& emotionName, float intensity = 0.7f);
     IntentFrame fromJourneyToIntentFrame(const SideA& current, const SideB& desired);
-    
+
     GeneratedMidi generateMidiFromIntentFrame(const IntentFrame& frame, int bars = 8);
-    
+
     // EXISTING: Keep for backward compatibility
     IntentResult fromWound(const Wound& wound);
     IntentResult fromText(const std::string& description);
     IntentResult fromEmotion(const std::string& emotionName, float intensity = 0.7f);
     IntentResult fromJourney(const SideA& current, const SideB& desired);
     GeneratedMidi generateMidi(const IntentResult& intent, int bars = 8);
-    
+
 private:
     std::unique_ptr<IntentPipeline> pipeline_;
     // ... existing members ...
@@ -62,7 +62,7 @@ IntentFrame MidiKompanionBrain::fromWoundToIntentFrame(const Wound& wound) {
         frame.meta.ir_version = INTENT_IR_VERSION;
         return frame;
     }
-    
+
     // Use new IntentPipeline method
     return pipeline_->processToIntentFrame(wound, getCurrentSessionId());
 }
@@ -87,14 +87,14 @@ IntentFrame MidiKompanionBrain::fromJourneyToIntentFrame(const SideA& current, c
         frame.meta.ir_version = INTENT_IR_VERSION;
         return frame;
     }
-    
+
     return pipeline_->processJourneyToIntentFrame(current, desired, getCurrentSessionId());
 }
 
 GeneratedMidi MidiKompanionBrain::generateMidiFromIntentFrame(const IntentFrame& frame, int bars) {
     // Validate and clamp frame before use
     prepareIntentFrame(frame);
-    
+
     // Use MidiGenerator with IntentFrame
     // (Assuming MidiGenerator has been updated)
     MidiGenerator generator;
@@ -175,10 +175,10 @@ GeneratedMidi midi = brain.generateMidiFromIntentFrame(frame, 8);
 class MidiGenerator {
 public:
     // NEW: IntentFrame-based method
-    GeneratedMidi generate(const IntentFrame& frame, int bars, 
-                          float complexity, float humanize, 
+    GeneratedMidi generate(const IntentFrame& frame, int bars,
+                          float complexity, float humanize,
                           float feel, float dynamics);
-    
+
     // EXISTING: Keep for backward compatibility
     GeneratedMidi generate(const IntentResult& intent, int bars,
                           float complexity, float humanize,
@@ -200,18 +200,18 @@ GeneratedMidi MidiGenerator::generate(const IntentFrame& frame, int bars,
                                       float complexity, float humanize,
                                       float feel, float dynamics) {
     GeneratedMidi result;
-    
+
     // Extract parameters from IntentFrame
     EmotionParams emotion = EmotionParams::fromIntentFrame(frame);
     HarmonyParams harmony = HarmonyParams::fromIntentFrame(frame);
     RhythmParams rhythm = RhythmParams::fromIntentFrame(frame);
     DynamicsParams dynamicsParams = DynamicsParams::fromIntentFrame(frame);
-    
+
     // Map IntentFrame biases to concrete parameters
     std::string mode = (harmony.mode_preference > 0) ? "major" : "minor";
     int tempoBpm = tempoBiasToBPM(frame.music.tempo_bias);
     std::string key = "C";  // Default
-    
+
     // Use EmotionMusicMapper for emotion-based parameters
     auto musicalParams = EmotionMusicMapper::mapEmotion(
         emotion.valence, emotion.arousal, emotion.dominance
@@ -220,10 +220,10 @@ GeneratedMidi MidiGenerator::generate(const IntentFrame& frame, int bars,
     if (!musicalParams.detailedMode.empty()) {
         mode = musicalParams.detailedMode;
     }
-    
+
     result.bpm = static_cast<float>(tempoBpm);
     result.lengthInBeats = bars * BEATS_PER_BAR;
-    
+
     // Generate arrangement if needed
     std::optional<ArrangementOutput> arrangementOpt;
     if (bars >= 8) {
@@ -233,14 +233,14 @@ GeneratedMidi MidiGenerator::generate(const IntentFrame& frame, int bars,
         ArrangementOutput arrangement = generateArrangement(tempIntent, bars);
         arrangementOpt = arrangement;
     }
-    
+
     // Determine layers
     LayerFlags layers = determineLayersFromIntentFrame(frame, complexity, bars);
-    
+
     // Generate harmonic foundation
     result.chords = generateChordsFromIntentFrame(frame, bars);
     std::vector<std::string> chordStrings = chordsToStrings(result.chords);
-    
+
     // Generate melodic layers using IntentFrame
     if (layers.melody) {
         MelodyEngine melodyEngine;
@@ -249,7 +249,7 @@ GeneratedMidi MidiGenerator::generate(const IntentFrame& frame, int bars,
         );
         result.melody = melodyOutputToMidiNotes(melodyOutput);
     }
-    
+
     if (layers.bass) {
         BassEngine bassEngine;
         BassOutput bassOutput = bassEngine.generateFromIntentFrame(
@@ -257,9 +257,9 @@ GeneratedMidi MidiGenerator::generate(const IntentFrame& frame, int bars,
         );
         result.bass = bassOutputToMidiNotes(bassOutput);
     }
-    
+
     // ... continue with other layers ...
-    
+
     return result;
 }
 
@@ -317,16 +317,16 @@ IntentFrame frame = fromTextToIntentFrame("I feel lost");
 TEST(MidiKompanionBrain, IntentFrameSupport) {
     MidiKompanionBrain brain;
     brain.initialize("./data");
-    
+
     // Test new IntentFrame method
     IntentFrame frame = brain.fromTextToIntentFrame("I feel lost");
     EXPECT_EQ(frame.meta.ir_version, INTENT_IR_VERSION);
     EXPECT_LT(frame.emotion.valence, 0.0f);  // Negative for "lost"
-    
+
     // Test backward compatibility
     IntentResult result = brain.fromText("I feel lost");
     EXPECT_FALSE(result.emotion.empty());
-    
+
     // Test conversion
     IntentFrame frame2 = convertIntentResultToIntentIR(result);
     EXPECT_EQ(frame2.meta.ir_version, INTENT_IR_VERSION);

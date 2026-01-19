@@ -23,7 +23,7 @@
 using midikompanion::MidiKompanionBrain;
 #include "common/KellyTypes.h"  // IntentResult, GeneratedMidi, Wound
 #include "common/IntentIRAdapter.h"  // IntentFrame support
-#include "shared/include/kmidi/IntentIR.h"
+#include "kmidi/IntentIR.h"
 #include "learning/PreferenceTracker.h"  // User preference learning
 #include <memory>
 #include <map>

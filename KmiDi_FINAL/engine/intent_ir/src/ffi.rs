@@ -93,7 +93,7 @@ pub extern "C" fn create_intent_frame_builder() -> *mut IntentFrameBuilderHandle
 pub extern "C" fn IntentFrameBuilder_free(handle: *mut IntentFrameBuilderHandle) {
     if !handle.is_null() {
         unsafe {
-            Box::from_raw(handle);
+            let _ = Box::from_raw(handle);
         }
     }
 }
@@ -233,7 +233,7 @@ pub extern "C" fn IntentFrameBuilder_build(
 
         // Build frame (clamps values) - consumes builder
         let frame = (*builder).build_unchecked();
-        
+
         // Validate the frame
         match validate_intent_frame(&frame) {
             Ok(()) => {

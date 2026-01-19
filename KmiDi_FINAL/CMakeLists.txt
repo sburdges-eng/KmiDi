@@ -135,6 +135,62 @@ if(ENABLE_ONNX_RUNTIME)
 endif()
 
 # ============================================================================
+# PRROT/PARROT Voice-Instrument Compiler (Tier C: Embedded Core)
+# ============================================================================
+if(BUILD_KMIDI_CORE)
+    # PRROT/PARROT sources (Tier C: RT-safe embedded core)
+    set(PRROT_SOURCES
+        ${ENGINE_ROOT}/src/prrot/VoiceProfile.cpp
+        ${ENGINE_ROOT}/src/prrot/PhonemeControlData.cpp
+        ${ENGINE_ROOT}/src/prrot/PhonemeSegmenter.cpp
+        ${ENGINE_ROOT}/src/prrot/ArticulationAnalyzer.cpp
+        ${ENGINE_ROOT}/src/prrot/EnvelopeGenerator.cpp
+        ${ENGINE_ROOT}/src/prrot/SpectralAnalyzer.cpp
+        ${ENGINE_ROOT}/src/prrot/BreathDetector.cpp
+        ${ENGINE_ROOT}/src/prrot/VarianceModeler.cpp
+        ${ENGINE_ROOT}/src/prrot/MidiShaper.cpp
+        ${ENGINE_ROOT}/src/prrot/PRROTEngine.cpp
+    )
+
+    set(PRROT_HEADERS
+        ${ENGINE_ROOT}/src/prrot/VoiceProfile.h
+        ${ENGINE_ROOT}/src/prrot/PhonemeControlData.h
+        ${ENGINE_ROOT}/src/prrot/PhonemeSegmenter.h
+        ${ENGINE_ROOT}/src/prrot/ArticulationAnalyzer.h
+        ${ENGINE_ROOT}/src/prrot/EnvelopeGenerator.h
+        ${ENGINE_ROOT}/src/prrot/SpectralAnalyzer.h
+        ${ENGINE_ROOT}/src/prrot/BreathDetector.h
+        ${ENGINE_ROOT}/src/prrot/VarianceModeler.h
+        ${ENGINE_ROOT}/src/prrot/MidiShaper.h
+        ${ENGINE_ROOT}/src/prrot/PRROTEngine.h
+    )
+
+    add_library(prrot_core STATIC
+        ${PRROT_SOURCES}
+        ${PRROT_HEADERS}
+    )
+
+    target_include_directories(prrot_core PUBLIC
+        ${ENGINE_ROOT}/src
+        ${ENGINE_ROOT}/include
+        ${ENGINE_ROOT}/src_penta-core/common  # For RTMemoryPool
+    )
+
+    target_link_libraries(prrot_core PUBLIC
+        penta_core  # For RT-safe patterns (RTLogger, RTMemoryPool)
+    )
+
+    # Compile definitions for PRROT/PARROT
+    target_compile_definitions(prrot_core PRIVATE
+        PRROT_VERSION=1
+    )
+
+    # PRROT/PARROT is RT-safe - ensure no audio callback violations
+    # All components use pre-allocated buffers, no dynamic allocation in audio callbacks
+    message(STATUS "PRROT/PARROT Tier C core library configured (RT-safe)")
+endif()
+
+# ============================================================================
 # Main Kelly library (shared core)
 # ============================================================================
 file(GLOB_RECURSE KELLY_CORE_SOURCES CONFIGURE_DEPENDS
@@ -150,6 +206,7 @@ list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/gui/main.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/plugin/")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/engine/test_kelly\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/prrot/")  # PRROT/PARROT built separately
 if(NOT ENABLE_RTNEURAL)
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/KellyML/ExampleUsage\\.cpp$")
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/KellyML/KellyMLModel\\.cpp$")
@@ -220,6 +277,9 @@ target_include_directories(KellyCore PUBLIC
 )
 
 target_link_libraries(KellyCore PUBLIC
+    intent_ir_adapter
+    penta_core
+    prrot_core  # PRROT/PARROT voice-instrument compiler
     Qt6::Core
     Qt6::Widgets
     juce::juce_audio_basics
@@ -235,6 +295,7 @@ target_link_libraries(KellyCore PUBLIC
     juce::juce_osc
     readerwriterqueue
     intent_ir_adapter  # Intent IR adapter with Rust validator
+    prrot_core  # PRROT/PARROT voice-instrument compiler
 )
 
 if(ENABLE_RTNEURAL AND RTNeural_FOUND)

@@ -123,7 +123,7 @@
 ### 🔄 Ready for Testing
 1. **Configure CMake**: `cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON`
 2. **Build project**: `cmake --build build -j$(nproc)`
-3. **Run tests**: 
+3. **Run tests**:
    - Python: `python tests/intent_ir_integration_test.py`
    - C++: `cd build && ctest -R intent_ir`
 4. **Test examples**: Build and run `examples/intent_ir_usage_example.cpp`
@@ -132,7 +132,7 @@
 ## Success Metrics
 
 ✅ All core components implemented
-✅ Build system integrated  
+✅ Build system integrated
 ✅ 5 engines migrated (36% of total)
 ✅ Tests created
 ✅ Documentation complete

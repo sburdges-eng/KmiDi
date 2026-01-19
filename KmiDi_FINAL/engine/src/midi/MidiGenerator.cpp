@@ -1079,7 +1079,7 @@ GeneratedMidi MidiGenerator::generate(const IntentFrame& frame, int bars,
                                       float feel, float dynamics) {
   // Convert IntentFrame to IntentResult for now (until all engines are migrated)
   IntentResult intent = convertIntentIRToIntentResult(frame);
-  
+
   // Use existing generate method with converted IntentResult
   // This maintains backward compatibility while allowing IntentFrame usage
   return generate(intent, bars, complexity, humanize, feel, dynamics);

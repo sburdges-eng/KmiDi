@@ -7,7 +7,7 @@
  * Engines can gradually migrate to consume IntentFrame directly.
  */
 
-#include "../shared/include/kmidi/IntentIR.h"
+#include "kmidi/IntentIR.h"
 #include "KellyTypes.h"
 #include <optional>
 

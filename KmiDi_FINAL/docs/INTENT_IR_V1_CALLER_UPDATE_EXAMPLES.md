@@ -61,11 +61,11 @@ GeneratedMidi midi = generator.generate(frame, 8, 0.5f, 0.4f, 0.0f, 0.75f);
 ```cpp
 class MyProcessor {
     IntentResult currentIntent_;
-    
+
     void updateIntent(const std::string& text) {
         currentIntent_ = brain_.fromText(text);
     }
-    
+
     void generate() {
         GeneratedMidi midi = brain_.generateMidi(currentIntent_, 8);
     }
@@ -76,12 +76,12 @@ class MyProcessor {
 ```cpp
 class MyProcessor {
     IntentFrame currentFrame_;
-    
+
     void updateIntent(const std::string& text) {
         currentFrame_ = brain_.fromTextToIntentFrame(text);
         prepareIntentFrame(currentFrame_);  // Validate once
     }
-    
+
     void generate() {
         // Safe: frame is already validated
         GeneratedMidi midi = brain_.generateMidiFromIntentFrame(currentFrame_, 8);
@@ -164,7 +164,7 @@ auto bass = bassEngine.generateFromIntentFrame(frame, ...);
 // In PluginProcessor.cpp
 void PluginProcessor::processBlock(...) {
     // ... existing code ...
-    
+
     // Old pattern (if used)
     if (needNewIntent_) {
         IntentResult result = kellyBrain_->fromText(userInput_);
@@ -180,7 +180,7 @@ void PluginProcessor::processBlock(...) {
 class PluginProcessor {
     IntentFrame validatedFrame_;  // Store validated frame
     std::atomic<bool> frameReady_{false};
-    
+
     // ... existing members ...
 };
 

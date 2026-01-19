@@ -2,7 +2,7 @@
 
 #include "../common/Types.h"
 #include "../common/IntentIRExtractor.h"
-#include "../shared/include/kmidi/IntentIR.h"
+#include "kmidi/IntentIR.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -114,7 +114,7 @@ struct PadEmotionProfile {
 class PadEngine {
 public:
     PadEngine();
-    
+
     PadOutput generate(
         const std::string& emotion,
         const std::vector<std::string>& chordProgression,
@@ -122,9 +122,9 @@ public:
         int bars = 4,
         int tempoBpm = 120
     );
-    
+
     PadOutput generate(const PadConfig& config);
-    
+
     /**
      * Generate pad from IntentFrame (IR v1).
      * Extracts texture_density, harmonic_tension, and dynamic_range from IR.
@@ -139,7 +139,7 @@ public:
 
 private:
     std::map<std::string, PadEmotionProfile> profiles_;
-    
+
     void initializeProfiles();
     std::vector<int> parseChord(const std::string& chord, const std::string& key);
     std::vector<int> applyVoicing(const std::vector<int>& pitches, PadVoicing voicing, int basePitch);

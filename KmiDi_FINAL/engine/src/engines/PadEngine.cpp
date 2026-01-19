@@ -412,7 +412,7 @@ PadOutput PadEngine::generateFromIntentFrame(
     DynamicsParams dynamics = DynamicsParams::fromIntentFrame(frame);
     HarmonyParams harmony = HarmonyParams::fromIntentFrame(frame);
     EmotionParams emotion = EmotionParams::fromIntentFrame(frame);
-    
+
     // Map texture_density to pad texture
     PadTexture texture;
     if (dynamics.texture_density > 0.7f) {
@@ -424,7 +424,7 @@ PadOutput PadEngine::generateFromIntentFrame(
     } else {
         texture = PadTexture::Warm;
     }
-    
+
     // Map harmonic_motion to pad movement
     PadMovement movement;
     if (harmony.harmonic_motion > 0.7f) {
@@ -434,7 +434,7 @@ PadOutput PadEngine::generateFromIntentFrame(
     } else {
         movement = PadMovement::Breathing;
     }
-    
+
     // Create config from IR parameters
     PadConfig config;
     config.chordProgression = chordProgression;
@@ -443,7 +443,7 @@ PadOutput PadEngine::generateFromIntentFrame(
     config.tempoBpm = tempoBpm;
     config.textureOverride = texture;
     config.movementOverride = movement;
-    
+
     // Use emotion name if available, otherwise derive from VAD
     if (emotion.valence > 0.3f && emotion.arousal > 0.6f) {
         config.emotion = "joy";
@@ -454,7 +454,7 @@ PadOutput PadEngine::generateFromIntentFrame(
     } else {
         config.emotion = "neutral";
     }
-    
+
     return generate(config);
 }
 

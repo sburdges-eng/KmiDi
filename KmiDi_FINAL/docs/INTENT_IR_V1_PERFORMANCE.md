@@ -81,7 +81,7 @@ auto bass = bassEngine.generateFromIntentFrame(frame, ...);
 void onUserInput() {
     IntentFrame frame = createFromUserInput();
     prepareIntentFrame(frame);  // UI thread - safe to call Rust
-    
+
     // Store validated frame
     validatedFrame_ = frame;
 }

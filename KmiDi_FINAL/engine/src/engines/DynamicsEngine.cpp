@@ -381,10 +381,10 @@ DynamicsOutput DynamicsEngine::applyFromIntentFrame(
     // Extract dynamics parameters from IntentFrame
     DynamicsParams dynamics = DynamicsParams::fromIntentFrame(frame);
     EmotionParams emotion = EmotionParams::fromIntentFrame(frame);
-    
+
     // Map dynamic_range to expressiveness
     float effective_expressiveness = std::max(expressiveness, dynamics.dynamic_range);
-    
+
     // Map texture_density to dynamic shape
     DynamicShape shape;
     if (dynamics.texture_density > 0.7f) {
@@ -394,13 +394,13 @@ DynamicsOutput DynamicsEngine::applyFromIntentFrame(
     } else {
         shape = DynamicShape::Swell;     // Moderate = swells
     }
-    
+
     // Create config from IR parameters
     DynamicsConfig config;
     config.notes = notes;
     config.expressiveness = effective_expressiveness;
     config.shapeOverride = shape;
-    
+
     // Use emotion name if available, otherwise derive from VAD
     if (emotion.valence > 0.3f && emotion.arousal > 0.6f) {
         config.emotion = "joy";
@@ -411,7 +411,7 @@ DynamicsOutput DynamicsEngine::applyFromIntentFrame(
     } else {
         config.emotion = "neutral";
     }
-    
+
     return apply(config);
 }
 

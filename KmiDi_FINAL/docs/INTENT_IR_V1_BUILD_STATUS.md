@@ -1,6 +1,6 @@
 # Intent IR v1 - Build Status Report
 
-**Date**: 2025-01-18  
+**Date**: 2025-01-18
 **Status**: ✅ **Ready for Build** (requires network access)
 
 ## Pre-Build Verification Results
@@ -33,12 +33,12 @@ The Intent IR is properly integrated into the main `CMakeLists.txt`:
 if(BUILD_KMIDI_CORE)
     # Intent IR Rust crate (must build before adapter)
     add_subdirectory(${ENGINE_ROOT}/intent_ir intent_ir_build)
-    
+
     # Intent IR C++ adapter
     add_library(intent_ir_adapter STATIC ...)
     target_link_libraries(intent_ir_adapter PUBLIC ${INTENT_IR_RUST_LIB})
     add_dependencies(intent_ir_adapter intent_ir_rust_lib)
-    
+
     # KellyCore links to adapter
     target_link_libraries(KellyCore PUBLIC intent_ir_adapter)
 endif()
@@ -163,7 +163,7 @@ The build cannot complete in the sandbox environment due to:
    ```bash
    # Python tests
    python tests/intent_ir_integration_test.py
-   
+
    # C++ tests (if built)
    cd build
    ctest -R intent_ir
@@ -180,13 +180,13 @@ The build cannot complete in the sandbox environment due to:
 
 ## Summary
 
-✅ **All Intent IR v1 components are present and correctly configured**  
-✅ **Build system integration is complete**  
+✅ **All Intent IR v1 components are present and correctly configured**
+✅ **Build system integration is complete**
 ⏳ **Ready for build** (requires network access for dependencies)
 
 The build should succeed once run outside the sandbox with network access enabled.
 
 ---
 
-**For detailed build instructions**: See `docs/INTENT_IR_V1_BUILD_GUIDE.md`  
+**For detailed build instructions**: See `docs/INTENT_IR_V1_BUILD_GUIDE.md`
 **For troubleshooting**: See `docs/INTENT_IR_V1_BUILD_VERIFICATION.md`

@@ -227,7 +227,7 @@ GrooveOutput DrumGrooveEngine::generateFromIntentFrame(
     // Extract rhythm-specific parameters from IntentFrame
     RhythmParams rhythm = RhythmParams::fromIntentFrame(frame);
     EmotionParams emotion = EmotionParams::fromIntentFrame(frame);
-    
+
     // Map rhythmic_density to groove style
     GrooveStyle style;
     if (rhythm.rhythmic_density > 0.7f) {
@@ -239,13 +239,13 @@ GrooveOutput DrumGrooveEngine::generateFromIntentFrame(
     } else {
         style = GrooveStyle::Straight;
     }
-    
+
     // Map groove_strength to humanization
     float humanization = rhythm.groove_strength * 0.2f;  // Max 20%
-    
+
     // Map tempo_bias to swing (negative bias = more swing for slower feel)
     float swing = (rhythm.tempo_bias < 0) ? -rhythm.tempo_bias * 0.3f : 0.0f;
-    
+
     // Create config from IR parameters
     GrooveConfig config;
     config.genre = genre;
@@ -253,7 +253,7 @@ GrooveOutput DrumGrooveEngine::generateFromIntentFrame(
     config.tempoBpm = tempoBpm;
     config.styleOverride = style;
     config.humanization = humanization;
-    
+
     // Use emotion name if available, otherwise derive from VAD
     if (emotion.valence > 0.3f && emotion.arousal > 0.6f) {
         config.emotion = "joy";
@@ -264,13 +264,13 @@ GrooveOutput DrumGrooveEngine::generateFromIntentFrame(
     } else {
         config.emotion = "neutral";
     }
-    
+
     // Set swing override
     setSwing(swing);
-    
+
     GrooveOutput output = generate(config);
     output.swingAmount = swing;
-    
+
     return output;
 }
 

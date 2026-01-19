@@ -7,14 +7,14 @@ The `PluginProcessor::generateMidi()` method currently uses `IntentResult`:
 ```cpp
 void PluginProcessor::generateMidi() {
     // ... parameter extraction ...
-    
+
     // Current code (around line 737-768)
     if (hasJourney) {
         IntentResult kellyIntent = kellyBrain_->fromJourney(sideA, sideB);
     } else {
         IntentResult kellyIntent = kellyBrain_->fromWound(kellyWound);
     }
-    
+
     GeneratedMidi midi = kellyBrain_->generateMidi(kellyIntent, bars);
     // ... use midi ...
 }
@@ -28,7 +28,7 @@ Here's how to update it to use IntentFrame:
 // In PluginProcessor.h - Add member variable
 class PluginProcessor {
     // ... existing members ...
-    
+
     // NEW: Store validated IntentFrame for audio thread
     IntentFrame validatedFrame_;
     std::atomic<bool> frameReady_{false};
@@ -40,31 +40,31 @@ void PluginProcessor::generateMidi() {
     if (isGenerating_.exchange(true)) {
         return;
     }
-    
+
     // ... existing parameter extraction ...
-    
+
     // NEW: Create IntentFrame instead of IntentResult
     IntentFrame frame;
-    
+
     if (hasJourney) {
         frame = kellyBrain_->fromJourneyToIntentFrame(sideA, sideB);
     } else {
         frame = kellyBrain_->fromWoundToIntentFrame(kellyWound);
     }
-    
+
     // Validate and clamp (UI thread - safe)
     prepareIntentFrame(frame);
-    
+
     // Store validated frame
     {
         std::lock_guard<std::mutex> lock(frameMutex_);
         validatedFrame_ = frame;
         frameReady_.store(true);
     }
-    
+
     // Generate MIDI from IntentFrame
     GeneratedMidi midi = kellyBrain_->generateMidiFromIntentFrame(frame, bars);
-    
+
     // ... rest of method ...
 }
 ```
@@ -84,7 +84,7 @@ class PluginProcessor {
 // In processBlock() - Audio thread
 void PluginProcessor::processBlock(..., juce::MidiBuffer& midiMessages) {
     // ... existing code ...
-    
+
     // Check if new frame is ready
     if (frameReady_.load()) {
         // Get const reference (safe for audio thread)
@@ -94,11 +94,11 @@ void PluginProcessor::processBlock(..., juce::MidiBuffer& midiMessages) {
             frame = validatedFrame_;  // Copy (fast, ~80 bytes)
             frameReady_.store(false);
         }
-        
+
         // Safe: frame is const, no allocation
         float tempoBias = frame.music.tempo_bias;
         float valence = frame.emotion.valence;
-        
+
         // Use frame parameters for real-time adjustments
         // ...
     }
@@ -112,7 +112,7 @@ If you want to keep both paths working during migration:
 ```cpp
 void PluginProcessor::generateMidi() {
     // ... parameter extraction ...
-    
+
     // Option 1: Use IntentFrame (new way)
     if (useIntentFrame_) {  // Feature flag
         IntentFrame frame;

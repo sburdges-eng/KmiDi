@@ -69,7 +69,7 @@ IntentResult convertIntentIRToIntentResult(const IntentFrame& frame) {
     result.emotion.arousal = frame.emotion.arousal;
     result.emotion.dominance = frame.emotion.dominance;
     result.emotion.intensity = frame.emotion.intensity;
-    result.emotion.confidence = frame.emotion.confidence;
+    result.emotion.mlConfidence = frame.emotion.confidence;
     // discrete_id not directly mappable
 
     // Musical parameters from IR biases

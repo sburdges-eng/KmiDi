@@ -2,7 +2,7 @@
 
 #include "common/Types.h"
 #include "common/IntentIRAdapter.h"
-#include "../shared/include/kmidi/IntentIR.h"
+#include "kmidi/IntentIR.h"
 #include "engine/EmotionThesaurus.h"
 #include "engine/WoundProcessor.h"
 #include "engine/RuleBreakEngine.h"
