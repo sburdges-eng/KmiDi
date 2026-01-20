@@ -1,4 +1,6 @@
 #include "prrot/BreathDetector.h"
+#include "prrot/InputValidation.h"
+#include "penta/common/RTLogger.h"
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -17,12 +19,30 @@ BreathDetector::BreathMarker BreathDetector::detectBreath(
 ) const noexcept {
     BreathMarker marker;
 
-    if (!audio_samples || num_samples == 0 || sample_rate_hz <= 0.0f) {
+    // Validate inputs
+    auto validation = validateAudioInput(audio_samples, num_samples, sample_rate_hz);
+    if (validation.hasErrors()) {
+        penta::getLogger().logRT(penta::LogLevel::Error,
+            ("BreathDetector::detectBreath: Input validation failed: " +
+             validation.errorMessage()).c_str());
         return marker;
     }
 
+    // Clamp to max buffer size with bounds checking
+    if (num_samples > kMaxBreathAnalysisWindow) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            ("BreathDetector::detectBreath: Clamping samples from " +
+             std::to_string(num_samples) + " to " +
+             std::to_string(kMaxBreathAnalysisWindow)).c_str());
+    }
     size_t samples_to_analyze = std::min(num_samples, kMaxBreathAnalysisWindow);
-    std::copy(audio_samples, audio_samples + samples_to_analyze, analysis_buffer_.begin());
+
+    // Safe copy with bounds checking
+    size_t copy_size = std::min(samples_to_analyze, kMaxBreathAnalysisWindow);
+    std::copy(audio_samples, audio_samples + copy_size, analysis_buffer_.begin());
+    if (copy_size < kMaxBreathAnalysisWindow) {
+        std::fill(analysis_buffer_.begin() + copy_size, analysis_buffer_.end(), 0.0f);
+    }
 
     // Breath detection: look for high-frequency, low-energy content
     float total_energy = computeEnergy(analysis_buffer_.data(), samples_to_analyze);
@@ -60,10 +80,25 @@ BreathDetector::BreathMarker BreathDetector::detectBreath(
 
     if (max_breath_ratio > breath_threshold) {
         marker.sample_index = breath_window * window_size;
+        // Validate sample index
+        if (marker.sample_index >= samples_to_analyze) {
+            marker.sample_index = samples_to_analyze - 1;
+        }
         marker.time_ms = (static_cast<float>(marker.sample_index) / sample_rate_hz) * 1000.0f;
-        marker.intensity = std::min(max_breath_ratio, 1.0f);
+        marker.intensity = std::clamp(max_breath_ratio, 0.0f, 1.0f);
         marker.duration_ms = 200.0f; // Typical breath duration
-        marker.confidence = max_breath_ratio;
+        // Calculate confidence based on HF ratio and energy
+        marker.confidence = std::clamp(
+            max_breath_ratio * 0.7f + (1.0f - std::min(total_energy * 10.0f, 1.0f)) * 0.3f,
+            0.0f, 1.0f
+        );
+    } else {
+        // No breath detected, but log if we had candidates
+        if (max_breath_ratio > 0.0f) {
+            penta::getLogger().logRT(penta::LogLevel::Debug,
+                ("BreathDetector::detectBreath: Breath candidate found but below threshold: " +
+                 std::to_string(max_breath_ratio) + " < " + std::to_string(breath_threshold)).c_str());
+        }
     }
 
     return marker;

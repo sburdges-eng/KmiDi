@@ -705,14 +705,79 @@ void ScoreEntryPanel::drawCursor(juce::Graphics& g) {
 }
 
 int ScoreEntryPanel::staffPositionToPitch(int yPosition, Clef clef) const {
-    // Simplified: Treble clef, middle C (MIDI 60) is roughly at a certain Y position
-    // This needs to be calibrated based on staff drawing logic
-    return 60; // Placeholder
+    // Get staff area and calculate staff metrics
+    juce::Rectangle<int> scoreArea = getScoreArea();
+    float staffTop = static_cast<float>(scoreArea.getY()) + static_cast<float>(scoreArea.getHeight()) * 0.2f;
+    float lineSpacing = 10.0f * zoomFactor_;
+
+    // Calculate position relative to staff top (in semitones)
+    // Each line/space is a semitone, going down increases pitch
+    float positionFromTop = (static_cast<float>(yPosition) - staffTop) / (lineSpacing / 2.0f);
+
+    // Base MIDI note for each clef (the note on the middle line of the staff)
+    int baseNote = 60; // Default to middle C
+    switch (clef) {
+        case Clef::Treble:
+            baseNote = 71; // B4 (second line from bottom in treble clef)
+            break;
+        case Clef::Bass:
+            baseNote = 43; // G2 (second line from bottom in bass clef)
+            break;
+        case Clef::Alto:
+            baseNote = 60; // C4 (middle line in alto clef)
+            break;
+        case Clef::Tenor:
+            baseNote = 55; // G3 (middle line in tenor clef)
+            break;
+        case Clef::Percussion:
+            baseNote = 60; // Default for percussion
+            break;
+    }
+
+    // Convert position to semitones (negative because Y increases downward)
+    int semitones = static_cast<int>(std::round(-positionFromTop));
+
+    // Calculate MIDI note
+    int midiNote = baseNote + semitones;
+
+    // Clamp to valid MIDI range
+    return std::clamp(midiNote, 0, 127);
 }
 
 int ScoreEntryPanel::pitchToStaffPosition(int pitch, Clef clef) const {
-    // Simplified: MIDI pitch to Y position
-    return 100; // Placeholder
+    // Get staff area and calculate staff metrics
+    juce::Rectangle<int> scoreArea = getScoreArea();
+    float staffTop = static_cast<float>(scoreArea.getY()) + static_cast<float>(scoreArea.getHeight()) * 0.2f;
+    float lineSpacing = 10.0f * zoomFactor_;
+
+    // Base MIDI note for each clef
+    int baseNote = 60; // Default to middle C
+    switch (clef) {
+        case Clef::Treble:
+            baseNote = 71; // B4
+            break;
+        case Clef::Bass:
+            baseNote = 43; // G2
+            break;
+        case Clef::Alto:
+            baseNote = 60; // C4
+            break;
+        case Clef::Tenor:
+            baseNote = 55; // G3
+            break;
+        case Clef::Percussion:
+            baseNote = 60;
+            break;
+    }
+
+    // Calculate semitones from base note
+    int semitones = pitch - baseNote;
+
+    // Convert to Y position (negative because Y increases downward)
+    float positionFromTop = -static_cast<float>(semitones) * (lineSpacing / 2.0f);
+    int yPosition = static_cast<int>(staffTop + positionFromTop);
+
+    return yPosition;
 }
 
 void ScoreEntryPanel::parseQuickEntry(const std::string& text) {

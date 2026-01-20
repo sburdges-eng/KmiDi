@@ -184,11 +184,13 @@ bool ONNXInference::loadModel(const std::string& modelPath) {
 std::vector<float> ONNXInference::infer(const std::vector<float>& input) {
     if (!isLoaded_) {
         setError("Model not loaded");
-        return {};
+        return {};  // Return empty vector - error already logged via setError
     }
 
     if (!validateInputSize(input.size())) {
-        return {};
+        setError("Input size validation failed: expected " + std::to_string(inputSize_) +
+                 ", got " + std::to_string(input.size()));
+        return {};  // Return empty vector - error logged
     }
 
     std::vector<float> output(outputSize_);
@@ -197,7 +199,8 @@ std::vector<float> ONNXInference::infer(const std::vector<float>& input) {
         return output;
     }
 
-    return {};
+    // Error already set by infer() method
+    return {};  // Return empty vector on inference failure
 }
 
 bool ONNXInference::infer(const float* input, float* output) {

@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import logging
 import random
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
@@ -98,7 +99,7 @@ class AugmentationConfig:
 # =============================================================================
 
 
-class BaseAugmentation:
+class BaseAugmentation(ABC):
     """Base class for audio augmentations."""
 
     def __init__(self, probability: float = 1.0):
@@ -126,9 +127,10 @@ class BaseAugmentation:
             return self.apply(audio, sample_rate, **kwargs)
         return audio
 
+    @abstractmethod
     def apply(self, audio: np.ndarray, sample_rate: int, **kwargs) -> np.ndarray:
-        """Apply the actual augmentation (to be implemented by subclasses)."""
-        raise NotImplementedError
+        """Apply the actual augmentation. Must be implemented by subclasses."""
+        pass
 
 
 # =============================================================================

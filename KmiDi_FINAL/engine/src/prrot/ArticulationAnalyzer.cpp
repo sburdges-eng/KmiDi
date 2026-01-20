@@ -1,4 +1,6 @@
 #include "prrot/ArticulationAnalyzer.h"
+#include "prrot/InputValidation.h"
+#include "penta/common/RTLogger.h"
 #include <algorithm>
 #include <cmath>
 
@@ -28,7 +30,12 @@ ArticulationAnalyzer::OnsetInfo ArticulationAnalyzer::detectOnset(
 ) const noexcept {
     OnsetInfo info;
 
-    if (!audio_samples || num_samples == 0 || sample_rate_hz <= 0.0f) {
+    // Validate inputs
+    auto validation = validateAudioInput(audio_samples, num_samples, sample_rate_hz);
+    if (validation.hasErrors()) {
+        penta::getLogger().logRT(penta::LogLevel::Error,
+            ("ArticulationAnalyzer::detectOnset: Input validation failed: " +
+             validation.errorMessage()).c_str());
         return info;
     }
 
@@ -67,11 +74,29 @@ ArticulationAnalyzer::OnsetInfo ArticulationAnalyzer::detectOnset(
         }
     }
 
-    // Convert back to sample index
+    // Convert back to sample index with validation
     info.sample_index = peak_index * window_size;
+    if (info.sample_index >= samples_to_analyze) {
+        info.sample_index = samples_to_analyze - 1;
+    }
     info.time_ms = (static_cast<float>(info.sample_index) / sample_rate_hz) * 1000.0f;
-    info.sharpness = std::min(max_derivative * 10.0f, 1.0f); // Normalize
-    info.confidence = (max_derivative > 0.01f) ? 0.8f : 0.0f;
+    info.sharpness = std::clamp(max_derivative * 10.0f, 0.0f, 1.0f); // Normalize
+
+    // Calculate confidence based on derivative strength and energy change
+    float confidence = 0.0f;
+    if (max_derivative > 0.01f) {
+        // Base confidence from derivative strength
+        confidence = std::clamp(max_derivative * 20.0f, 0.0f, 1.0f);
+
+        // Boost confidence if energy change is significant
+        if (peak_index > 0 && peak_index < num_windows) {
+            float energy_change = energy_buffer_[peak_index] - energy_buffer_[peak_index - 1];
+            if (energy_change > 0.05f) {
+                confidence = std::min(confidence * 1.2f, 1.0f);
+            }
+        }
+    }
+    info.confidence = confidence;
 
     return info;
 }
@@ -83,7 +108,12 @@ ArticulationAnalyzer::OffsetInfo ArticulationAnalyzer::detectOffset(
 ) const noexcept {
     OffsetInfo info;
 
-    if (!audio_samples || num_samples == 0 || sample_rate_hz <= 0.0f) {
+    // Validate inputs
+    auto validation = validateAudioInput(audio_samples, num_samples, sample_rate_hz);
+    if (validation.hasErrors()) {
+        penta::getLogger().logRT(penta::LogLevel::Error,
+            ("ArticulationAnalyzer::detectOffset: Input validation failed: " +
+             validation.errorMessage()).c_str());
         return info;
     }
 
@@ -117,19 +147,38 @@ ArticulationAnalyzer::OffsetInfo ArticulationAnalyzer::detectOffset(
         }
     }
 
+    // Validate offset window
+    if (offset_window >= num_windows) {
+        offset_window = num_windows - 1;
+    }
     info.sample_index = offset_window * window_size;
+    if (info.sample_index >= samples_to_analyze) {
+        info.sample_index = samples_to_analyze - 1;
+    }
     info.time_ms = (static_cast<float>(info.sample_index) / sample_rate_hz) * 1000.0f;
 
     // Compute smoothness (how gradual the offset is)
     if (offset_window > 0 && offset_window < num_windows) {
         float decay_rate = (energy_buffer_[offset_window - 1] - energy_buffer_[offset_window]) /
                           (energy_buffer_[offset_window - 1] + 1e-6f);
-        info.smoothness = std::max(0.0f, 1.0f - decay_rate * 10.0f);
+        info.smoothness = std::clamp(1.0f - decay_rate * 10.0f, 0.0f, 1.0f);
     } else {
         info.smoothness = 0.5f;
     }
 
-    info.confidence = 0.8f;
+    // Calculate confidence based on energy threshold detection quality
+    float confidence = 0.0f;
+    if (offset_window < num_windows) {
+        // Confidence based on how clear the threshold crossing is
+        float energy_at_offset = energy_buffer_[offset_window];
+        float peak_energy = findPeak(energy_buffer_.data(), num_windows);
+        if (peak_energy > 0.0f) {
+            float energy_ratio = energy_at_offset / peak_energy;
+            // Good confidence if energy dropped significantly
+            confidence = std::clamp((1.0f - energy_ratio) * 1.5f, 0.0f, 1.0f);
+        }
+    }
+    info.confidence = confidence;
 
     return info;
 }
@@ -142,7 +191,12 @@ ArticulationAnalyzer::ArticulationShape ArticulationAnalyzer::analyzeArticulatio
 ) const noexcept {
     ArticulationShape shape;
 
-    if (!audio_samples || num_samples == 0) {
+    // Validate inputs
+    auto validation = validateAudioInput(audio_samples, num_samples, sample_rate_hz);
+    if (validation.hasErrors()) {
+        penta::getLogger().logRT(penta::LogLevel::Error,
+            ("ArticulationAnalyzer::analyzeArticulationShape: Input validation failed: " +
+             validation.errorMessage()).c_str());
         return shape;
     }
 

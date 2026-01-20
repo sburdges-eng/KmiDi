@@ -18,6 +18,7 @@ Usage:
 from __future__ import annotations
 
 import logging
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -49,7 +50,7 @@ class MetricResult:
     metadata: Optional[Dict[str, Any]] = None
 
 
-class BaseMetrics:
+class BaseMetrics(ABC):
     """Base class for metric computation."""
 
     def __init__(self):
@@ -73,9 +74,10 @@ class BaseMetrics:
         if probabilities is not None:
             self._probabilities.append(probabilities)
 
+    @abstractmethod
     def compute(self) -> Dict[str, MetricResult]:
-        """Compute all metrics. Override in subclasses."""
-        raise NotImplementedError
+        """Compute all metrics. Must be implemented by subclasses."""
+        pass
 
 
 class MusicMetrics(BaseMetrics):

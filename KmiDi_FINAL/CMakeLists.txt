@@ -151,6 +151,7 @@ if(BUILD_KMIDI_CORE)
         ${ENGINE_ROOT}/src/prrot/MidiShaper.cpp
         ${ENGINE_ROOT}/src/prrot/PitchTracker.cpp
         ${ENGINE_ROOT}/src/prrot/AudioValidator.cpp
+        ${ENGINE_ROOT}/src/prrot/InputValidation.cpp
         ${ENGINE_ROOT}/src/prrot/PRROTEngine.cpp
     )
 
@@ -166,6 +167,8 @@ if(BUILD_KMIDI_CORE)
         ${ENGINE_ROOT}/src/prrot/MidiShaper.h
         ${ENGINE_ROOT}/src/prrot/PitchTracker.h
         ${ENGINE_ROOT}/src/prrot/AudioValidator.h
+        ${ENGINE_ROOT}/src/prrot/InputValidation.h
+        ${ENGINE_ROOT}/src/prrot/ProcessingError.h
         ${ENGINE_ROOT}/src/prrot/PRROTEngine.h
     )
 
@@ -178,6 +181,7 @@ if(BUILD_KMIDI_CORE)
         ${ENGINE_ROOT}/src
         ${ENGINE_ROOT}/include
         ${ENGINE_ROOT}/src_penta-core/common  # For RTMemoryPool
+        ${ENGINE_ROOT}/src/common  # For Result.h
     )
 
     # Install public headers

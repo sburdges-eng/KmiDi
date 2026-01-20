@@ -1,4 +1,6 @@
 #include "prrot/SpectralAnalyzer.h"
+#include "prrot/InputValidation.h"
+#include "penta/common/RTLogger.h"
 #include <juce_dsp/juce_dsp.h>  // JUCE FFT (juce::dsp::FFT)
 #include <algorithm>
 #include <cmath>
@@ -32,7 +34,28 @@ void SpectralAnalyzer::computeMagnitudeSpectrum(
     float* magnitude_output,
     size_t num_bins
 ) const noexcept {
-    if (!audio_samples || !magnitude_output || num_samples == 0 || num_bins == 0) {
+    // Validate inputs
+    if (!audio_samples) {
+        penta::getLogger().logRT(penta::LogLevel::Error,
+            "SpectralAnalyzer::computeMagnitudeSpectrum: audio_samples is null");
+        return;
+    }
+
+    if (!magnitude_output) {
+        penta::getLogger().logRT(penta::LogLevel::Error,
+            "SpectralAnalyzer::computeMagnitudeSpectrum: magnitude_output is null");
+        return;
+    }
+
+    if (num_samples == 0) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            "SpectralAnalyzer::computeMagnitudeSpectrum: num_samples is zero");
+        return;
+    }
+
+    if (num_bins == 0) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            "SpectralAnalyzer::computeMagnitudeSpectrum: num_bins is zero");
         return;
     }
 
@@ -62,48 +85,135 @@ SpectralAnalyzer::FormantFrequencies SpectralAnalyzer::extractFormants(
 ) const noexcept {
     FormantFrequencies formants;
 
-    if (!audio_samples || num_samples == 0 || sample_rate_hz <= 0.0f) {
+    // Validate inputs
+    auto validation = validateAudioInput(audio_samples, num_samples, sample_rate_hz);
+    if (validation.hasErrors()) {
+        penta::getLogger().logRT(penta::LogLevel::Error,
+            ("SpectralAnalyzer::extractFormants: Input validation failed: " +
+             validation.errorMessage()).c_str());
         return formants;
     }
 
     // Compute magnitude spectrum
     computeMagnitudeSpectrum(audio_samples, num_samples, magnitude_buffer_.data(), kMaxSpectralBins);
 
-    // Find peaks in magnitude spectrum (simplified formant detection)
-    // In production, would use more sophisticated methods (LPC, cepstral analysis, etc.)
+    // Enhanced formant detection with frequency-specific ranges and parabolic interpolation
     float bin_frequency = sample_rate_hz / (2.0f * kMaxSpectralBins);
 
-    // Find first three peaks (formants)
-    std::vector<std::pair<float, size_t>> peaks; // (magnitude, bin_index)
+    // Formant frequency ranges (typical for human voice)
+    constexpr float F1_MIN = 200.0f;   // Hz
+    constexpr float F1_MAX = 1200.0f;
+    constexpr float F2_MIN = 600.0f;
+    constexpr float F2_MAX = 3000.0f;
+    constexpr float F3_MIN = 1500.0f;
+    constexpr float F3_MAX = 4000.0f;
 
-    for (size_t i = 1; i < kMaxSpectralBins - 1; ++i) {
-        if (magnitude_buffer_[i] > magnitude_buffer_[i - 1] &&
-            magnitude_buffer_[i] > magnitude_buffer_[i + 1] &&
-            magnitude_buffer_[i] > 0.1f) { // Threshold
-            peaks.push_back({magnitude_buffer_[i], i});
+    // Convert to bin indices
+    size_t f1_min_bin = static_cast<size_t>(F1_MIN / bin_frequency);
+    size_t f1_max_bin = static_cast<size_t>(std::min(F1_MAX / bin_frequency, static_cast<float>(kMaxSpectralBins - 1)));
+    size_t f2_min_bin = static_cast<size_t>(F2_MIN / bin_frequency);
+    size_t f2_max_bin = static_cast<size_t>(std::min(F2_MAX / bin_frequency, static_cast<float>(kMaxSpectralBins - 1)));
+    size_t f3_min_bin = static_cast<size_t>(F3_MIN / bin_frequency);
+    size_t f3_max_bin = static_cast<size_t>(std::min(F3_MAX / bin_frequency, static_cast<float>(kMaxSpectralBins - 1)));
+
+    // Helper lambda for parabolic interpolation to get sub-bin accuracy
+    auto parabolicInterpolation = [&magnitude_buffer_](size_t peak_bin) -> float {
+        if (peak_bin == 0 || peak_bin >= kMaxSpectralBins - 1) {
+            return static_cast<float>(peak_bin);
         }
+
+        float y1 = magnitude_buffer_[peak_bin - 1];
+        float y2 = magnitude_buffer_[peak_bin];
+        float y3 = magnitude_buffer_[peak_bin + 1];
+
+        // Parabolic interpolation: find peak location
+        float denom = 2.0f * (y1 - 2.0f * y2 + y3);
+        if (std::abs(denom) < 1e-6f) {
+            return static_cast<float>(peak_bin);
+        }
+
+        float offset = (y1 - y3) / denom;
+        return static_cast<float>(peak_bin) + offset;
+    };
+
+    // Helper lambda to find peak in a range with parabolic interpolation
+    auto findPeakInRange = [&](size_t min_bin, size_t max_bin) -> std::pair<float, float> {
+        float max_magnitude = 0.0f;
+        size_t peak_bin = min_bin;
+
+        // Find local maximum
+        for (size_t i = min_bin + 1; i < max_bin && i < kMaxSpectralBins - 1; ++i) {
+            // Check if it's a local peak
+            if (magnitude_buffer_[i] > magnitude_buffer_[i - 1] &&
+                magnitude_buffer_[i] > magnitude_buffer_[i + 1] &&
+                magnitude_buffer_[i] > max_magnitude) {
+                max_magnitude = magnitude_buffer_[i];
+                peak_bin = i;
+            }
+        }
+
+        if (max_magnitude > 0.01f) {  // Minimum threshold
+            float interpolated_bin = parabolicInterpolation(peak_bin);
+            float frequency = interpolated_bin * bin_frequency;
+            return {frequency, max_magnitude};
+        }
+
+        return {0.0f, 0.0f};
+    };
+
+    // Find formants in their respective frequency ranges
+    auto f1_result = findPeakInRange(f1_min_bin, f1_max_bin);
+    if (f1_result.first > 0.0f) {
+        formants.f1_hz = std::clamp(f1_result.first, F1_MIN, F1_MAX);
     }
 
-    // Sort by magnitude and take top 3
-    std::sort(peaks.begin(), peaks.end(),
-              [](const std::pair<float, size_t>& a, const std::pair<float, size_t>& b) {
-                  return a.first > b.first;
-              });
-
-    if (peaks.size() > 0) {
-        formants.f1_hz = peaks[0].second * bin_frequency;
-    }
-    if (peaks.size() > 1) {
-        formants.f2_hz = peaks[1].second * bin_frequency;
-    }
-    if (peaks.size() > 2) {
-        formants.f3_hz = peaks[2].second * bin_frequency;
+    auto f2_result = findPeakInRange(f2_min_bin, f2_max_bin);
+    if (f2_result.first > 0.0f) {
+        formants.f2_hz = std::clamp(f2_result.first, F2_MIN, F2_MAX);
     }
 
-    // Estimate bandwidths (simplified)
-    formants.bandwidth_f1 = formants.f1_hz * 0.1f;
-    formants.bandwidth_f2 = formants.f2_hz * 0.1f;
-    formants.bandwidth_f3 = formants.f3_hz * 0.1f;
+    auto f3_result = findPeakInRange(f3_min_bin, f3_max_bin);
+    if (f3_result.first > 0.0f) {
+        formants.f3_hz = std::clamp(f3_result.first, F3_MIN, F3_MAX);
+    }
+
+    // Improved bandwidth estimation using 3dB down points
+    auto estimateBandwidth = [&](float formant_freq, size_t formant_bin) -> float {
+        if (formant_freq <= 0.0f || formant_bin >= kMaxSpectralBins) {
+            return 0.0f;
+        }
+
+        float peak_magnitude = magnitude_buffer_[formant_bin];
+        float threshold = peak_magnitude * 0.707f;  // 3dB down (sqrt(2)/2)
+
+        // Find left and right 3dB points
+        size_t left_bin = formant_bin;
+        while (left_bin > 0 && magnitude_buffer_[left_bin] > threshold) {
+            --left_bin;
+        }
+
+        size_t right_bin = formant_bin;
+        while (right_bin < kMaxSpectralBins - 1 && magnitude_buffer_[right_bin] > threshold) {
+            ++right_bin;
+        }
+
+        float bandwidth_hz = (static_cast<float>(right_bin - left_bin)) * bin_frequency;
+        return std::clamp(bandwidth_hz, 10.0f, 500.0f);
+    };
+
+    // Estimate bandwidths
+    if (formants.f1_hz > 0.0f) {
+        size_t f1_bin = static_cast<size_t>(formants.f1_hz / bin_frequency);
+        formants.bandwidth_f1 = estimateBandwidth(formants.f1_hz, f1_bin);
+    }
+    if (formants.f2_hz > 0.0f) {
+        size_t f2_bin = static_cast<size_t>(formants.f2_hz / bin_frequency);
+        formants.bandwidth_f2 = estimateBandwidth(formants.f2_hz, f2_bin);
+    }
+    if (formants.f3_hz > 0.0f) {
+        size_t f3_bin = static_cast<size_t>(formants.f3_hz / bin_frequency);
+        formants.bandwidth_f3 = estimateBandwidth(formants.f3_hz, f3_bin);
+    }
 
     return formants;
 }
@@ -117,7 +227,11 @@ float SpectralAnalyzer::computeSpectralCentroid(
         return 0.0f;
     }
 
-    float bin_frequency = sample_rate_hz / (2.0f * num_bins);
+    constexpr float kEpsilon = 1e-6f;
+    if (num_bins == 0 || sample_rate_hz < kEpsilon) {
+        return 0.0f;
+    }
+    float bin_frequency = sample_rate_hz / (2.0f * static_cast<float>(num_bins));
     float weighted_sum = 0.0f;
     float magnitude_sum = 0.0f;
 
@@ -143,9 +257,18 @@ float SpectralAnalyzer::computeSpectralRolloff(
         return 0.0f;
     }
 
+    constexpr float kEpsilon = 1e-6f;
+    if (num_bins == 0) {
+        return 0.0f;
+    }
+
     float total_energy = 0.0f;
     for (size_t i = 0; i < num_bins; ++i) {
         total_energy += magnitude_spectrum[i] * magnitude_spectrum[i];
+    }
+
+    if (total_energy < kEpsilon) {
+        return 0.0f;
     }
 
     float threshold = total_energy * percentile;

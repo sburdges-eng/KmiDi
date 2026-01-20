@@ -1,4 +1,5 @@
 #include "prrot/MidiShaper.h"
+#include "penta/common/RTLogger.h"
 #include <algorithm>
 #include <cmath>
 #include <climits>
@@ -16,7 +17,29 @@ std::vector<MidiNote> MidiShaper::shapeMidiNotes(
 ) const noexcept {
     std::vector<MidiNote> midi_notes;
 
-    if (phoneme_sequence.empty() || pitch_targets.empty()) {
+    // Validate inputs
+    if (phoneme_sequence.empty()) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            "MidiShaper::shapeMidiNotes: Empty phoneme sequence");
+        return midi_notes;
+    }
+
+    if (pitch_targets.empty()) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            "MidiShaper::shapeMidiNotes: Empty pitch targets");
+        return midi_notes;
+    }
+
+    if (tempo_bpm <= 0.0f || tempo_bpm > 300.0f) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            ("MidiShaper::shapeMidiNotes: Invalid tempo: " +
+             std::to_string(tempo_bpm) + ", clamping").c_str());
+        tempo_bpm = std::clamp(tempo_bpm, 1.0f, 300.0f);
+    }
+
+    if (!voice_profile.isValid()) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            "MidiShaper::shapeMidiNotes: Invalid voice profile");
         return midi_notes;
     }
 
@@ -41,14 +64,50 @@ std::vector<MidiNote> MidiShaper::shapeMidiNotes(
             const PitchTarget& target = *overlapping_targets[0];
 
             MidiNote note;
-            note.note_number = target.midi_note;
+            // Validate and clamp MIDI note
+            note.note_number = std::clamp(target.midi_note, 0, 127);
+            if (target.midi_note != note.note_number) {
+                penta::getLogger().logRT(penta::LogLevel::Warning,
+                    ("MidiShaper::shapeMidiNotes: MIDI note out of range: " +
+                     std::to_string(target.midi_note) + ", clamping").c_str());
+            }
+
             note.velocity = computeVelocity(phoneme_timing.phoneme, phoneme_timing.stress_level, voice_profile);
-            note.start_time_ms = phoneme_timing.start_time_ms;
-            note.duration_ms = phoneme_timing.duration_ms;
+
+            // Validate timing
+            if (phoneme_timing.start_time_ms < 0.0f) {
+                penta::getLogger().logRT(penta::LogLevel::Warning,
+                    ("MidiShaper::shapeMidiNotes: Negative start time: " +
+                     std::to_string(phoneme_timing.start_time_ms)).c_str());
+            }
+            note.start_time_ms = std::max(phoneme_timing.start_time_ms, 0.0f);
+
+            if (phoneme_timing.duration_ms <= 0.0f) {
+                penta::getLogger().logRT(penta::LogLevel::Warning,
+                    ("MidiShaper::shapeMidiNotes: Invalid duration: " +
+                     std::to_string(phoneme_timing.duration_ms)).c_str());
+                note.duration_ms = 100.0f; // Default duration
+            } else {
+                note.duration_ms = phoneme_timing.duration_ms;
+            }
 
             // Adjust duration based on phoneme characteristics
             float duration_mult = getPhonemeDurationMultiplier(phoneme_timing.phoneme, voice_profile);
+            if (duration_mult <= 0.0f || duration_mult > 10.0f) {
+                penta::getLogger().logRT(penta::LogLevel::Warning,
+                    ("MidiShaper::shapeMidiNotes: Invalid duration multiplier: " +
+                     std::to_string(duration_mult) + ", using 1.0").c_str());
+                duration_mult = 1.0f;
+            }
             note.duration_ms *= duration_mult;
+
+            // Validate final duration
+            if (note.duration_ms <= 0.0f || note.duration_ms > 60000.0f) {
+                penta::getLogger().logRT(penta::LogLevel::Warning,
+                    ("MidiShaper::shapeMidiNotes: Duration out of range: " +
+                     std::to_string(note.duration_ms) + ", clamping").c_str());
+                note.duration_ms = std::clamp(note.duration_ms, 10.0f, 60000.0f);
+            }
 
             // Set articulation parameters based on phoneme type
             if (isConsonant(phoneme_timing.phoneme)) {

@@ -1,6 +1,11 @@
 #include "prrot/PRROTEngine.h"
 #include "prrot/VoiceProfile.h"
 #include "prrot/PhonemeControlData.h"
+#include "prrot/PitchTracker.h"
+#include "prrot/AudioValidator.h"
+#include "prrot/InputValidation.h"
+#include "prrot/ProcessingError.h"
+#include "penta/common/RTLogger.h"
 #include <algorithm>
 #include <cmath>
 
@@ -15,6 +20,8 @@ PRROTEngine::PRROTEngine() {
     breath_detector_ = std::make_unique<BreathDetector>();
     variance_modeler_ = std::make_unique<VarianceModeler>();
     midi_shaper_ = std::make_unique<MidiShaper>();
+    pitch_tracker_ = std::make_unique<PitchTracker>();
+    audio_validator_ = std::make_unique<AudioValidator>();
 }
 
 PRROTEngine::~PRROTEngine() = default;
@@ -48,26 +55,101 @@ PhonemeControlData PRROTEngine::processAudioSegment(
     control_data.tempo_bpm = tempo_bpm;
     control_data.sample_rate_hz = sample_rate_hz;
 
-    if (!audio_samples || num_samples == 0 || sample_rate_hz <= 0.0f) {
+    // Comprehensive input validation
+    auto input_validation = validateAudioInput(audio_samples, num_samples, sample_rate_hz);
+    if (input_validation.hasErrors()) {
+        penta::getLogger().logRT(penta::LogLevel::Error,
+            ("PRROTEngine::processAudioSegment: Input validation failed: " +
+             input_validation.errorMessage()).c_str());
         return control_data;
     }
 
-    // Analyze phonemes
+    // Log warnings if any
+    if (input_validation.hasWarnings()) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            ("PRROTEngine::processAudioSegment: " +
+             input_validation.warningMessage()).c_str());
+    }
+
+    // Validate audio quality
+    auto validation = audio_validator_->validate(audio_samples, num_samples, sample_rate_hz);
+    if (!validation.is_valid) {
+        penta::getLogger().logRT(penta::LogLevel::Error,
+            ("PRROTEngine::processAudioSegment: Audio validation failed: " +
+             validation.error_message).c_str());
+        return control_data;
+    }
+
+    // Log quality warnings
+    if (validation.quality_score() < 0.5f) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            ("PRROTEngine::processAudioSegment: Low audio quality (score: " +
+             std::to_string(validation.quality_score()) + ")").c_str());
+    }
+
+    // Analyze phonemes with error recovery
     auto phoneme_sequence = analyzePhonemes(audio_samples, num_samples, sample_rate_hz);
     control_data.phoneme_sequence = phoneme_sequence;
+
+    // Log if phoneme analysis failed
+    if (phoneme_sequence.empty()) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            "PRROTEngine::processAudioSegment: No phonemes detected");
+    }
 
     // Detect breath markers
     control_data.breath_markers = detectBreathMarkers(audio_samples, num_samples, sample_rate_hz);
 
-    // Generate pitch targets from phoneme sequence (simplified)
-    // In production, would use more sophisticated pitch tracking
-    for (const auto& phoneme : phoneme_sequence) {
-        PitchTarget target;
-        target.time_ms = phoneme.start_time_ms;
-        target.midi_note = 60; // Default middle C
-        target.cents_offset = 0.0f;
-        target.confidence = 0.7f;
-        control_data.pitch_targets.push_back(target);
+    // Track pitch using real pitch tracker (replaces placeholder)
+    if (!phoneme_sequence.empty()) {
+        // Track pitch for each phoneme segment
+        for (const auto& phoneme : phoneme_sequence) {
+            size_t start_sample = static_cast<size_t>((phoneme.start_time_ms / 1000.0f) * sample_rate_hz);
+            size_t duration_samples = static_cast<size_t>((phoneme.duration_ms / 1000.0f) * sample_rate_hz);
+            size_t end_sample = std::min(start_sample + duration_samples, num_samples);
+
+            if (start_sample < num_samples && duration_samples > 0) {
+                auto pitch_result = pitch_tracker_->trackPitch(
+                    audio_samples + start_sample,
+                    end_sample - start_sample,
+                    sample_rate_hz
+                );
+
+                if (pitch_result.is_valid && pitch_result.confidence > 0.3f) {
+                    PitchTarget target;
+                    target.time_ms = phoneme.start_time_ms;
+                    target.midi_note = pitch_result.midi_note;
+                    target.cents_offset = pitch_result.cents_offset;
+                    target.confidence = pitch_result.confidence;
+                    control_data.pitch_targets.push_back(target);
+                } else {
+                    // Fallback: Use phoneme-based pitch estimation
+                    if (pitch_result.is_valid && pitch_result.confidence <= 0.3f) {
+                        penta::getLogger().logRT(penta::LogLevel::Debug,
+                            ("PRROTEngine: Low pitch confidence (" +
+                             std::to_string(pitch_result.confidence) +
+                             "), using fallback").c_str());
+                    }
+                    PitchTarget target;
+                    target.time_ms = phoneme.start_time_ms;
+                    target.midi_note = estimatePitchFromPhoneme(phoneme.phoneme);
+                    target.cents_offset = 0.0f;
+                    target.confidence = 0.5f; // Lower confidence for fallback
+                    control_data.pitch_targets.push_back(target);
+                }
+            }
+        }
+    } else {
+        // If no phonemes detected, try pitch tracking on entire segment
+        auto pitch_result = pitch_tracker_->trackPitch(audio_samples, num_samples, sample_rate_hz);
+        if (pitch_result.is_valid) {
+            PitchTarget target;
+            target.time_ms = 0.0f;
+            target.midi_note = pitch_result.midi_note;
+            target.cents_offset = pitch_result.cents_offset;
+            target.confidence = pitch_result.confidence;
+            control_data.pitch_targets.push_back(target);
+        }
     }
 
     // Generate MIDI notes
@@ -127,7 +209,12 @@ std::vector<PhonemeTiming> PRROTEngine::analyzePhonemes(
 ) noexcept {
     std::vector<PhonemeTiming> phoneme_timings;
 
-    if (!audio_samples || num_samples == 0) {
+    // Validate inputs
+    auto validation = validateAudioInput(audio_samples, num_samples, sample_rate_hz);
+    if (validation.hasErrors()) {
+        penta::getLogger().logRT(penta::LogLevel::Error,
+            ("PRROTEngine::analyzePhonemes: Input validation failed: " +
+             validation.errorMessage()).c_str());
         return phoneme_timings;
     }
 
@@ -135,7 +222,16 @@ std::vector<PhonemeTiming> PRROTEngine::analyzePhonemes(
     auto segment_result = phoneme_segmenter_->segment(audio_samples, num_samples, sample_rate_hz);
 
     if (!segment_result.valid) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            "PRROTEngine::analyzePhonemes: Segmentation failed");
         return phoneme_timings;
+    }
+
+    // Log low confidence segmentation
+    if (segment_result.confidence < 0.5f) {
+        penta::getLogger().logRT(penta::LogLevel::Debug,
+            ("PRROTEngine::analyzePhonemes: Low segmentation confidence (" +
+             std::to_string(segment_result.confidence) + ")").c_str());
     }
 
     // Convert segments to phoneme timings
@@ -179,7 +275,12 @@ std::vector<BreathMarker> PRROTEngine::detectBreathMarkers(
 ) noexcept {
     std::vector<BreathMarker> markers;
 
-    if (!audio_samples || num_samples == 0) {
+    // Validate inputs
+    auto validation = validateAudioInput(audio_samples, num_samples, sample_rate_hz);
+    if (validation.hasErrors()) {
+        penta::getLogger().logRT(penta::LogLevel::Error,
+            ("PRROTEngine::detectBreathMarkers: Input validation failed: " +
+             validation.errorMessage()).c_str());
         return markers;
     }
 
@@ -198,7 +299,12 @@ std::vector<BreathMarker> PRROTEngine::detectBreathMarkers(
         if (marker.confidence > 0.5f) {
             // Adjust time to account for segment offset
             marker.time_ms += (static_cast<float>(offset) / sample_rate_hz) * 1000.0f;
-            markers.push_back(marker);
+            // Convert BreathDetector::BreathMarker to PhonemeControlData::BreathMarker
+            BreathMarker bm;
+            bm.time_ms = marker.time_ms;
+            bm.intensity = marker.intensity;
+            bm.duration_ms = marker.duration_ms;
+            markers.push_back(bm);
         }
     }
 
@@ -224,12 +330,12 @@ void PRROTEngine::generateArticulationEnvelopes(
         // Note: Would need audio samples for full analysis
         // For now, use defaults based on phoneme type
 
-        if (isVowel(phoneme_timing.phoneme)) {
+        if (prrot::isVowel(phoneme_timing.phoneme)) {
             envelope.attack_time_ms = 20.0f;
             envelope.sustain_level = 1.0f;
             envelope.release_time_ms = 50.0f;
             envelope.vowel_sustain_mult = voice_profile_.vowel_sustain.sustain_multiplier;
-        } else if (isConsonant(phoneme_timing.phoneme)) {
+        } else if (prrot::isConsonant(phoneme_timing.phoneme)) {
             auto consonant_profile = voice_profile_.getConsonantProfile(phoneme_timing.phoneme);
             envelope.attack_time_ms = consonant_profile.attack_time_ms;
             envelope.release_time_ms = consonant_profile.release_time_ms;
@@ -279,6 +385,23 @@ void PRROTEngine::generateAutomationEnvelopes(
     }
 
     control_data.automation_envelopes.push_back(expression);
+}
+
+int PRROTEngine::estimatePitchFromPhoneme(PhonemeType phoneme) const noexcept {
+    // Fallback pitch estimation based on phoneme type
+    // Vowels typically have lower pitch, consonants higher
+    // This is a simplified heuristic - real pitch tracking is preferred
+
+    if (prrot::isVowel(phoneme)) {
+        // Vowels: typically in lower-mid range (MIDI 60-72, C4-C5)
+        return 66; // A4# (typical vowel pitch)
+    } else if (prrot::isConsonant(phoneme)) {
+        // Consonants: can vary, use middle C as default
+        return 60; // C4
+    }
+
+    // Unknown: default to middle C
+    return 60;
 }
 
 } // namespace prrot

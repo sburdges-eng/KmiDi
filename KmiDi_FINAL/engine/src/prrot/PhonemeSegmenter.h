@@ -21,6 +21,7 @@
 #include "prrot/VoiceProfile.h"
 // #include "penta/common/RTMemoryPool.h"  // TODO: Add when RTMemoryPool is available
 #include <array>
+#include <memory>
 #include <vector>
 #include <cstdint>
 
@@ -34,7 +35,8 @@ namespace prrot {
 // Maximum number of phonemes that can be segmented in a single pass
 constexpr size_t kMaxPhonemesPerSegment = 256;
 constexpr size_t kMaxSegmentBufferSize = 8192; // Samples
-constexpr size_t kFFTSize = 2048;
+// FFT size - using local constant to avoid conflicts with SpectralAnalyzer::kFFTSize
+static constexpr size_t kPhonemeFFTSize = 2048;
 
 /**
  * PhonemeSegmenter - RT-safe phoneme segmentation engine
@@ -45,7 +47,7 @@ constexpr size_t kFFTSize = 2048;
 class PhonemeSegmenter {
 public:
     PhonemeSegmenter();
-    ~PhonemeSegmenter() = default;
+    ~PhonemeSegmenter();  // Must be defined in .cpp for PIMPL
 
     // Initialize with memory pool (must be called before use)
     // Note: memory_pool can be nullptr for now (will use stack-allocated buffers)
@@ -94,17 +96,19 @@ private:
     // Memory pool for RT-safe allocation
     penta::RTMemoryPool* memory_pool_ = nullptr;
 
-    // Pre-allocated FFT buffers
-    struct FFTPair {
-        float* real = nullptr;
-        float* imag = nullptr;
-    };
-    std::array<FFTPair, 2> fft_buffers_; // Double buffering
+    // JUCE FFT instance (optimized, RT-safe)
+    // Using PIMPL pattern to avoid exposing JUCE headers in public API
+    struct FFTImpl;
+    std::unique_ptr<FFTImpl> fft_;
 
     // Pre-allocated analysis buffers
     std::array<float, kMaxSegmentBufferSize> analysis_buffer_;
-    std::array<float, kFFTSize> magnitude_spectrum_;
-    std::array<float, kFFTSize / 2> power_spectrum_;
+    std::array<float, kPhonemeFFTSize> magnitude_spectrum_;
+    std::array<float, kPhonemeFFTSize / 2> power_spectrum_;
+
+    // Pre-allocated FFT working buffers
+    mutable std::array<float, kPhonemeFFTSize> fft_real_;
+    mutable std::array<float, kPhonemeFFTSize> fft_imag_;
 
     // Energy-based onset detection
     float detectEnergyOnset(const float* samples, size_t num_samples) const noexcept;
@@ -130,6 +134,26 @@ private:
     // Simple FFT (using pre-allocated buffers)
     void computeFFT(const float* input, float* real, float* imag, size_t size) noexcept;
     void computeMagnitudeSpectrum(const float* real, const float* imag, float* magnitude, size_t size) noexcept;
+
+    // Adaptive threshold calculation
+    float computeAdaptiveEnergyThreshold(
+        const float* samples,
+        size_t num_samples
+    ) const noexcept;
+
+    // Confidence calculation
+    float calculateSegmentationConfidence(
+        const SegmentResult& result,
+        const std::vector<float>& energies,
+        size_t num_samples,
+        float sample_rate_hz
+    ) const noexcept;
+
+    // Validation
+    bool validateSegmentation(
+        const SegmentResult& result,
+        float sample_rate_hz
+    ) const noexcept;
 };
 
 } // namespace prrot

@@ -9,10 +9,15 @@ include_version = true
 autogen_warning = "/* Warning: this file is auto-generated. Do not edit manually. */"
 pragma_once = true
 no_includes = false
-includes = ["IntentIR.h"]
+includes = ["kmidi/IntentIR.h"]
+
+[parse]
+parse_deps = true
+include = ["intent_ir"]
 
 [export]
-include = ["IntentFrame", "validate_intent_frame", "clamp_intent_frame", "create_intent_frame_builder", "IntentFrameBuilder", "IntentFrameBuilder_free", "IntentFrameBuilder_set_emotion", "IntentFrameBuilder_set_musical_intent", "IntentFrameBuilder_set_time_scope", "IntentFrameBuilder_set_constraints", "IntentFrameBuilder_set_provenance", "IntentFrameBuilder_build"]
+include = ["validate_intent_frame", "clamp_intent_frame", "create_intent_frame_builder", "IntentFrameBuilder", "IntentFrameBuilder_free", "IntentFrameBuilder_set_emotion", "IntentFrameBuilder_set_musical_intent", "IntentFrameBuilder_set_time_scope", "IntentFrameBuilder_set_constraints", "IntentFrameBuilder_set_provenance", "IntentFrameBuilder_build"]
+exclude = ["IntentFrame", "IntentSource"]  # Use types from IntentIR.h, don't redefine
 
 [export.rename]
 "IntentFrameBuilder" = "IntentFrameBuilder"

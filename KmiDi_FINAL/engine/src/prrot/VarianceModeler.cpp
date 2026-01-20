@@ -1,4 +1,5 @@
 #include "prrot/VarianceModeler.h"
+#include "penta/common/RTLogger.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -28,11 +29,29 @@ VarianceModeler::ProminenceCurve VarianceModeler::generateProminenceCurve(
     size_t num_points
 ) const noexcept {
     ProminenceCurve curve;
-    curve.num_points = std::min(num_points, curve.values.size());
 
-    if (phoneme_sequence.empty() || curve.num_points == 0) {
+    // Validate inputs
+    if (phoneme_sequence.empty()) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            "VarianceModeler::generateProminenceCurve: Empty phoneme sequence");
         return curve;
     }
+
+    if (num_points == 0) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            "VarianceModeler::generateProminenceCurve: num_points is zero");
+        return curve;
+    }
+
+    // Validate prominence params
+    if (prominence_params.variance_range_min < 0.0f ||
+        prominence_params.variance_range_max < prominence_params.variance_range_min) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            "VarianceModeler::generateProminenceCurve: Invalid prominence parameters");
+        return curve;
+    }
+
+    curve.num_points = std::min(num_points, curve.values.size());
 
     // Generate prominence values based on phoneme types and stress patterns
     // Vowels typically have higher prominence than consonants

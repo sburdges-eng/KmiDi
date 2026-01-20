@@ -1,16 +1,46 @@
 #include "IntentIRAdapter.h"
 #include "kmidi/IntentIR.h"  // IntentIR types (needed before FFI header)
 #include "intent_ir_ffi.h"  // Rust FFI functions (includes IntentIR.h)
+#include "penta/common/RTLogger.h"
 #include <algorithm>
 #include <cmath>
+#include <limits>
+#include <vector>
 
 namespace kelly {
 
 // Helper: Map tempo_bias (-1.0 to +1.0) to BPM
 // Assumes center (0.0) = 120 BPM, range is ±60 BPM
 static int tempoBiasToBPM(float tempo_bias) {
+    // Validate input
+    if (std::isnan(tempo_bias) || std::isinf(tempo_bias)) {
+        penta::getLogger().logRT(penta::LogLevel::Error,
+            ("IntentIRAdapter::tempoBiasToBPM: Invalid tempo_bias (NaN/Inf): " +
+             std::to_string(tempo_bias)).c_str());
+        return 120; // Default to 120 BPM
+    }
+
     float normalized = std::clamp(tempo_bias, -1.0f, 1.0f);
-    return static_cast<int>(120.0f + (normalized * 60.0f));
+    float bpm_float = 120.0f + (normalized * 60.0f);
+
+    // Check for overflow
+    if (bpm_float < static_cast<float>(std::numeric_limits<int>::min()) ||
+        bpm_float > static_cast<float>(std::numeric_limits<int>::max())) {
+        penta::getLogger().logRT(penta::LogLevel::Error,
+            "IntentIRAdapter::tempoBiasToBPM: BPM calculation would overflow");
+        return 120; // Default
+    }
+
+    int bpm = static_cast<int>(std::round(bpm_float));
+
+    // Validate result
+    if (bpm < 1 || bpm > 300) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            ("IntentIRAdapter::tempoBiasToBPM: BPM out of typical range: " +
+             std::to_string(bpm)).c_str());
+    }
+
+    return bpm;
 }
 
 // Helper: Map mode_preference to mode string
@@ -61,18 +91,35 @@ static float rangeToDynamicRange(float dynamic_range) {
 }
 
 IntentResult convertIntentIRToIntentResult(const IntentFrame& frame) {
+    // Validate frame before conversion
+    if (frame.meta.ir_version != INTENT_IR_VERSION) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            ("IntentIRAdapter::convertIntentIRToIntentResult: IR version mismatch: " +
+             std::to_string(frame.meta.ir_version) + " (expected " +
+             std::to_string(INTENT_IR_VERSION) + ")").c_str());
+    }
+
     IntentResult result;
 
     // Meta - not directly mappable to IntentResult
     // IntentResult doesn't have version tracking
 
-    // Emotion - map to EmotionNode
-    result.emotion.valence = frame.emotion.valence;
-    result.emotion.arousal = frame.emotion.arousal;
-    result.emotion.dominance = frame.emotion.dominance;
-    result.emotion.intensity = frame.emotion.intensity;
-    result.emotion.mlConfidence = frame.emotion.confidence;
+    // Emotion - map to EmotionNode with validation
+    result.emotion.valence = std::clamp(frame.emotion.valence, -1.0f, 1.0f);
+    result.emotion.arousal = std::clamp(frame.emotion.arousal, 0.0f, 1.0f);
+    result.emotion.dominance = std::clamp(frame.emotion.dominance, 0.0f, 1.0f);
+    result.emotion.intensity = std::clamp(frame.emotion.intensity, 0.0f, 1.0f);
+    result.emotion.mlConfidence = std::clamp(frame.emotion.confidence, 0.0f, 1.0f);
     // discrete_id not directly mappable
+
+    // Log if values were clamped
+    if (frame.emotion.valence != result.emotion.valence ||
+        frame.emotion.arousal != result.emotion.arousal ||
+        frame.emotion.dominance != result.emotion.dominance ||
+        frame.emotion.intensity != result.emotion.intensity) {
+        penta::getLogger().logRT(penta::LogLevel::Debug,
+            "IntentIRAdapter::convertIntentIRToIntentResult: Emotion values clamped");
+    }
 
     // Musical parameters from IR biases
     result.tempoBpm = tempoBiasToBPM(frame.music.tempo_bias);
@@ -198,15 +245,64 @@ bool isIntentIRVersionSupported(uint16_t version) {
 }
 
 void prepareIntentFrame(IntentFrame& frame) {
+    // Pre-validation checks
+    std::vector<std::string> warnings;
+    std::vector<std::string> errors;
+
+    // Check IR version
+    if (frame.meta.ir_version != INTENT_IR_VERSION) {
+        warnings.push_back("IR version mismatch: " + std::to_string(frame.meta.ir_version) +
+                          " (expected " + std::to_string(INTENT_IR_VERSION) + ")");
+    }
+
+    // Validate emotion values before Rust call
+    if (frame.emotion.valence < -1.0f || frame.emotion.valence > 1.0f) {
+        warnings.push_back("Emotion valence out of range: " + std::to_string(frame.emotion.valence) +
+                          ", will be clamped");
+    }
+
+    if (frame.emotion.arousal < 0.0f || frame.emotion.arousal > 1.0f) {
+        warnings.push_back("Emotion arousal out of range: " + std::to_string(frame.emotion.arousal) +
+                          ", will be clamped");
+    }
+
+    if (frame.emotion.dominance < 0.0f || frame.emotion.dominance > 1.0f) {
+        warnings.push_back("Emotion dominance out of range: " + std::to_string(frame.emotion.dominance) +
+                          ", will be clamped");
+    }
+
+    if (frame.emotion.intensity < 0.0f || frame.emotion.intensity > 1.0f) {
+        warnings.push_back("Emotion intensity out of range: " + std::to_string(frame.emotion.intensity) +
+                          ", will be clamped");
+    }
+
+    // Validate music parameters
+    if (frame.music.tempo_bias < -1.0f || frame.music.tempo_bias > 1.0f) {
+        warnings.push_back("Tempo bias out of range: " + std::to_string(frame.music.tempo_bias) +
+                          ", will be clamped");
+    }
+
+    // Log warnings
+    for (const auto& warning : warnings) {
+        penta::getLogger().logRT(penta::LogLevel::Warning,
+            ("IntentIRAdapter::prepareIntentFrame: " + warning).c_str());
+    }
+
     // Use Rust validator for clamping (single source of truth, optimized)
     // This ensures consistency with Rust validation logic
     clamp_intent_frame_ffi(&frame);
 
-    // Optionally validate after clamping (for debugging)
-    // int validation_result = validate_intent_frame_ffi(&frame);
-    // if (validation_result != 0) {
-    //     // Log validation error if needed
-    // }
+    // Post-validation checks
+    if (frame.emotion.valence < -1.0f || frame.emotion.valence > 1.0f) {
+        errors.push_back("Emotion valence still out of range after clamping: " +
+                        std::to_string(frame.emotion.valence));
+    }
+
+    // Log errors
+    for (const auto& error : errors) {
+        penta::getLogger().logRT(penta::LogLevel::Error,
+            ("IntentIRAdapter::prepareIntentFrame: " + error).c_str());
+    }
 }
 
 } // namespace kelly

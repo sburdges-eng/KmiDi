@@ -24,6 +24,8 @@
 #include "prrot/BreathDetector.h"
 #include "prrot/VarianceModeler.h"
 #include "prrot/MidiShaper.h"
+#include "prrot/PitchTracker.h"
+#include "prrot/AudioValidator.h"
 #include <memory>
 #include <vector>
 
@@ -96,6 +98,8 @@ private:
     std::unique_ptr<BreathDetector> breath_detector_;
     std::unique_ptr<VarianceModeler> variance_modeler_;
     std::unique_ptr<MidiShaper> midi_shaper_;
+    std::unique_ptr<PitchTracker> pitch_tracker_;
+    std::unique_ptr<AudioValidator> audio_validator_;
 
     // Internal helpers
     void generateArticulationEnvelopes(
@@ -107,6 +111,11 @@ private:
         PhonemeControlData& control_data,
         const std::vector<PhonemeTiming>& phoneme_sequence
     ) noexcept;
+
+    /**
+     * Estimate pitch from phoneme type (fallback method)
+     */
+    int estimatePitchFromPhoneme(PhonemeType phoneme) const noexcept;
 };
 
 } // namespace prrot

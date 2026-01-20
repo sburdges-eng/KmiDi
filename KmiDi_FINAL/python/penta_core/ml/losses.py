@@ -26,6 +26,7 @@ Usage:
 from __future__ import annotations
 
 import logging
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -79,7 +80,7 @@ VOICE_LEADING_PENALTY = {
 # =============================================================================
 
 
-class MusicTheoryLoss:
+class MusicTheoryLoss(ABC):
     """Base class for music theory-aware losses."""
 
     def __init__(self, weight: float = 1.0, reduction: str = "mean"):
@@ -93,9 +94,10 @@ class MusicTheoryLoss:
         self.weight = weight
         self.reduction = reduction
 
+    @abstractmethod
     def __call__(self, *args, **kwargs):
-        """Compute loss (to be implemented by subclasses)."""
-        raise NotImplementedError
+        """Compute loss. Must be implemented by subclasses."""
+        pass
 
     def _reduce(self, losses: np.ndarray) -> Union[float, np.ndarray]:
         """Apply reduction to losses."""

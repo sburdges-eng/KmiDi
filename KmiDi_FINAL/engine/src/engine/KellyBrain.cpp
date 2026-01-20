@@ -16,8 +16,11 @@ using KellyTypesRuleBreakType = RuleBreakType;
 #include "common/Types.h" // Explicit include - this redefines Wound, EmotionNode, etc.
 #include "common/IntentIRAdapter.h"  // IntentFrame support
 #include "engine/IntentPipeline.h" // Full definition needed for std::unique_ptr<IntentPipeline>
+#include "penta/common/RTLogger.h"
 #include <algorithm>
 #include <cctype>
+#include <cmath>
+#include <limits>
 
 namespace kelly {
 
@@ -131,11 +134,32 @@ convertFromLegacyIntentResult(const IntentResult &legacy) {
   unified.key = "C";
   unified.timeSignature = {4, 4};
   unified.chordProgression.clear();
-  unified.melodicRange = 0.6f;
-  unified.leapProbability = 0.3f;
-  unified.baseVelocity = 0.6f;
+  unified.melodicRange = std::clamp(legacy.melodicRange, 0.0f, 1.0f);
+  unified.leapProbability = std::clamp(legacy.leapProbability, 0.0f, 1.0f);
+  unified.baseVelocity = std::clamp(legacy.baseVelocity, 0.0f, 1.0f);
   unified.productionNotes.clear();
-  unified.confidence = 0.8f;
+  unified.confidence = std::clamp(legacy.confidence, 0.0f, 1.0f);
+
+  // Validate tempo
+  if (unified.tempoBpm < 1 || unified.tempoBpm > 300) {
+    penta::getLogger().logRT(penta::LogLevel::Warning,
+        ("KellyBrain::convertFromLegacyIntentResult: Tempo out of range: " +
+         std::to_string(unified.tempoBpm) + ", clamping").c_str());
+    unified.tempoBpm = std::clamp(unified.tempoBpm, 1, 300);
+  }
+
+  // Validate emotion values
+  if (unified.sourceWound.primaryEmotion.valence < -1.0f ||
+      unified.sourceWound.primaryEmotion.valence > 1.0f) {
+    unified.sourceWound.primaryEmotion.valence =
+        std::clamp(unified.sourceWound.primaryEmotion.valence, -1.0f, 1.0f);
+  }
+
+  if (unified.sourceWound.primaryEmotion.arousal < 0.0f ||
+      unified.sourceWound.primaryEmotion.arousal > 1.0f) {
+    unified.sourceWound.primaryEmotion.arousal =
+        std::clamp(unified.sourceWound.primaryEmotion.arousal, 0.0f, 1.0f);
+  }
 
   return unified;
 }
@@ -155,6 +179,30 @@ bool KellyBrain::initialize(const std::string &dataPath) {
 }
 
 KellyTypesIntentResult KellyBrain::fromWound(const KellyTypesWound &wound) {
+  // Validate wound input
+  if (wound.description.empty()) {
+    penta::getLogger().logRT(penta::LogLevel::Warning,
+        "KellyBrain::fromWound: Empty wound description");
+  }
+
+  if (wound.intensity < 0.0f || wound.intensity > 1.0f) {
+    penta::getLogger().logRT(penta::LogLevel::Warning,
+        ("KellyBrain::fromWound: Intensity out of range: " +
+         std::to_string(wound.intensity) + ", clamping").c_str());
+  }
+
+  if (wound.urgency < 0.0f || wound.urgency > 1.0f) {
+    penta::getLogger().logRT(penta::LogLevel::Warning,
+        ("KellyBrain::fromWound: Urgency out of range: " +
+         std::to_string(wound.urgency) + ", clamping").c_str());
+  }
+
+  // Validate emotion if present
+  if (wound.primaryEmotion.id < 0) {
+    penta::getLogger().logRT(penta::LogLevel::Warning,
+        "KellyBrain::fromWound: Invalid emotion ID");
+  }
+
   // Wound parameter is KellyTypes::Wound (from header via alias)
   // Convert to Types::Wound for IntentPipeline
   Wound legacyWound = convertToLegacyWound(wound); // Wound here is Types::Wound
@@ -164,22 +212,45 @@ KellyTypesIntentResult KellyBrain::fromWound(const KellyTypesWound &wound) {
       pipeline_->process(legacyWound); // IntentResult is Types::IntentResult
 
   // Convert result back to unified types (KellyTypes::IntentResult)
-  return convertFromLegacyIntentResult(legacyResult);
+  auto result = convertFromLegacyIntentResult(legacyResult);
+
+  // Validate result
+  if (result.tempoBpm < 1 || result.tempoBpm > 300) {
+    penta::getLogger().logRT(penta::LogLevel::Warning,
+        ("KellyBrain::fromWound: Tempo out of range: " +
+         std::to_string(result.tempoBpm) + ", clamping").c_str());
+    result.tempoBpm = std::clamp(result.tempoBpm, 1, 300);
+  }
+
+  return result;
 }
 
 KellyTypesIntentResult KellyBrain::fromJourney(const SideA &current,
                                                const SideB &desired) {
+  // Validate inputs
+  if (current.intensity < 0.0f || current.intensity > 1.0f) {
+    penta::getLogger().logRT(penta::LogLevel::Warning,
+        ("KellyBrain::fromJourney: Current intensity out of range: " +
+         std::to_string(current.intensity) + ", clamping").c_str());
+  }
+
+  if (desired.intensity < 0.0f || desired.intensity > 1.0f) {
+    penta::getLogger().logRT(penta::LogLevel::Warning,
+        ("KellyBrain::fromJourney: Desired intensity out of range: " +
+         std::to_string(desired.intensity) + ", clamping").c_str());
+  }
+
   // SideA/SideB parameters are KellyTypes versions (from header)
   // Types.h has SideA and SideB with same structure, so we can use them
   // directly Both have: description, intensity, emotionId
   SideA legacyCurrent; // Types::SideA
   legacyCurrent.description = current.description;
-  legacyCurrent.intensity = current.intensity;
+  legacyCurrent.intensity = std::clamp(current.intensity, 0.0f, 1.0f);
   legacyCurrent.emotionId = current.emotionId;
 
   SideB legacyDesired; // Types::SideB
   legacyDesired.description = desired.description;
-  legacyDesired.intensity = desired.intensity;
+  legacyDesired.intensity = std::clamp(desired.intensity, 0.0f, 1.0f);
   legacyDesired.emotionId = desired.emotionId;
 
   // Call IntentPipeline
@@ -187,7 +258,14 @@ KellyTypesIntentResult KellyBrain::fromJourney(const SideA &current,
       legacyCurrent, legacyDesired); // Types::IntentResult
 
   // Convert result back to unified types
-  return convertFromLegacyIntentResult(legacyResult);
+  auto result = convertFromLegacyIntentResult(legacyResult);
+
+  // Validate result
+  if (result.tempoBpm < 1 || result.tempoBpm > 300) {
+    result.tempoBpm = std::clamp(result.tempoBpm, 1, 300);
+  }
+
+  return result;
 }
 
 KellyTypesIntentResult KellyBrain::fromText(const std::string &description) {
@@ -198,6 +276,21 @@ KellyTypesIntentResult KellyBrain::fromText(const std::string &description) {
 
 KellyTypesIntentResult KellyBrain::fromEmotion(const std::string &emotionName,
                                                float intensity) {
+  // Validate inputs
+  if (emotionName.empty()) {
+    penta::getLogger().logRT(penta::LogLevel::Error,
+        "KellyBrain::fromEmotion: Empty emotion name");
+    // Return default result
+    return fromText("Feeling unknown");
+  }
+
+  if (intensity < 0.0f || intensity > 1.0f) {
+    penta::getLogger().logRT(penta::LogLevel::Warning,
+        ("KellyBrain::fromEmotion: Intensity out of range: " +
+         std::to_string(intensity) + ", clamping").c_str());
+    intensity = std::clamp(intensity, 0.0f, 1.0f);
+  }
+
   // Look up emotion in thesaurus (returns Types.h EmotionNode)
   auto emotionOpt = pipeline_->thesaurus().findByName(emotionName);
   if (emotionOpt) {
@@ -230,15 +323,31 @@ KellyTypesIntentResult KellyBrain::fromEmotion(const std::string &emotionName,
 
 GeneratedMidi KellyBrain::generateMidi(const KellyTypesIntentResult &intent,
                                        int bars) {
+  // Validate inputs
+  if (bars < 1 || bars > 1000) {
+    penta::getLogger().logRT(penta::LogLevel::Warning,
+        ("KellyBrain::generateMidi: Bars out of range: " +
+         std::to_string(bars) + ", clamping").c_str());
+    bars = std::clamp(bars, 1, 1000);
+  }
+
+  if (intent.tempoBpm < 1 || intent.tempoBpm > 300) {
+    penta::getLogger().logRT(penta::LogLevel::Warning,
+        ("KellyBrain::generateMidi: Tempo out of range: " +
+         std::to_string(intent.tempoBpm) + ", clamping").c_str());
+  }
+
   // Fallback if generator is not available
   if (!midiGenerator_) {
+    penta::getLogger().logRT(penta::LogLevel::Error,
+        "KellyBrain::generateMidi: MidiGenerator not available, returning fallback");
     GeneratedMidi fallback;
-    fallback.tempoBpm = intent.tempoBpm;
+    fallback.tempoBpm = std::clamp(intent.tempoBpm, 1, 300);
     fallback.bars = bars;
     fallback.key = intent.key;
     fallback.mode = intent.mode;
     fallback.lengthInBeats = static_cast<double>(bars) * 4.0;
-    fallback.bpm = static_cast<float>(intent.tempoBpm);
+    fallback.bpm = static_cast<float>(fallback.tempoBpm);
     return fallback;
   }
 
