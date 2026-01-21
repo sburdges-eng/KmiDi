@@ -1,0 +1,20 @@
+587G	/Users/seanburdges
+359G	/Users/seanburdges/Library
+105G	/Users/seanburdges/RECOVERY_OPS
+ 28G	/Users/seanburdges/audio
+ 27G	/Users/seanburdges/.cursor
+ 24G	/Users/seanburdges/Desktop
+ 13G	/Users/seanburdges/KmiDi-1
+4.1G	/Users/seanburdges/KmiDi
+3.9G	/Users/seanburdges/.cargo
+3.0G	/Users/seanburdges/_sorted
+2.8G	/Users/seanburdges/Pictures
+2.7G	/Users/seanburdges/venv
+2.0G	/Users/seanburdges/My Mac
+1.8G	/Users/seanburdges/Downloads
+1.7G	/Users/seanburdges/.npm
+1.5G	/Users/seanburdges/ml-training-suite
+1.5G	/Users/seanburdges/lariat-bible
+1.3G	/Users/seanburdges/.gradle
+1.1G	/Users/seanburdges/.vscode
+660M	/Users/seanburdges/.venv

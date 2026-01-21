@@ -728,6 +728,68 @@ class DAiWAPI:
     def get_humanization_preset_info(self, preset_name: str) -> Dict[str, Any]:
         """Get information about a humanization preset."""
         return get_preset(preset_name)
+    
+    def _convert_request_to_complete_intent(self, request: Any) -> CompleteSongIntent:
+        """
+        Convert UI request payload to CompleteSongIntent.
+        
+        Maps the simplified UI parameters to the full CompleteSongIntent schema.
+        """
+        import time
+        
+        tech = request.intent.technical or {}
+        emotional = request.intent.emotional_intent or ""
+        
+        # Extract emotion/mood from emotional_intent string
+        mood_primary = emotional
+        if "(" in emotional:
+            mood_primary = emotional.split("(")[0].strip()
+        
+        # Map common emotions to mood_primary
+        emotion_map = {
+            "grief": "grief",
+            "sadness": "grief",
+            "joy": "tenderness",
+            "happiness": "tenderness",
+            "anger": "rage",
+            "rage": "rage",
+            "fear": "fear",
+            "love": "tenderness",
+            "nostalgia": "nostalgia",
+            "awe": "awe",
+        }
+        for key, value in emotion_map.items():
+            if key.lower() in emotional.lower():
+                mood_primary = value
+                break
+        
+        # Extract key and mode from technical.key (format: "F major" or "C minor")
+        technical_key = "C"
+        technical_mode = "major"
+        if tech.get("key"):
+            key_parts = tech["key"].split()
+            technical_key = key_parts[0] if key_parts else "C"
+            if len(key_parts) > 1:
+                technical_mode = key_parts[1].lower()
+        
+        # Calculate tempo range from BPM
+        bpm = tech.get("bpm") or 82
+        tempo_range = (max(60, bpm - 20), min(140, bpm + 20))
+        
+        # Create CompleteSongIntent
+        intent = CompleteSongIntent(
+            core_event=request.intent.core_wound or emotional,
+            core_longing=request.intent.core_desire or "",
+            mood_primary=mood_primary,
+            technical_genre=tech.get("genre") or "",
+            technical_tempo_range=tempo_range,
+            technical_key=technical_key,
+            technical_mode=technical_mode,
+            vulnerability_scale=0.5,
+            created=time.strftime("%Y-%m-%d %H:%M:%S"),
+        )
+        
+        return intent
 
 
 # Convenience instance
@@ -745,6 +807,10 @@ if FASTAPI_AVAILABLE:
         bpm: Optional[int] = None
         progression: Optional[List[str]] = None
         genre: Optional[str] = None
+        duration: Optional[float] = None  # Duration in minutes
+        structure: Optional[List[Dict[str, Any]]] = None  # Song sections with repetitions
+        instruments: Optional[List[Dict[str, Any]]] = None  # Instruments with techniques
+        techniques: Optional[List[str]] = None  # Production techniques
 
     class EmotionalIntent(BaseModel):
         core_wound: Optional[str] = None
@@ -766,6 +832,25 @@ if FASTAPI_AVAILABLE:
         source: Optional[str] = "user"
 
     app = FastAPI(title="Music Brain API", version="0.1.0")
+
+    @app.get("/")
+    async def root():
+        """Root endpoint with API information."""
+        return {
+            "name": "Music Brain API",
+            "version": "0.1.0",
+            "status": "running",
+            "endpoints": {
+                "health": "/health",
+                "generate": "/generate (POST)",
+                "emotions": "/emotions",
+                "lyrics": "/lyrics (GET/POST)",
+                "interrogate": "/interrogate (POST)",
+                "docs": "/docs",
+                "openapi": "/openapi.json"
+            },
+            "documentation": "Visit /docs for interactive API documentation"
+        }
 
     @app.get("/health")
     async def health():
@@ -897,6 +982,7 @@ if FASTAPI_AVAILABLE:
     class SpectocloudRenderRequest(BaseModel):
         midi_events: Optional[List[Dict[str, Any]]] = None
         midi_file_path: Optional[str] = None
+        audio_file_path: Optional[str] = None  # MP3 or WAV file path
         duration: Optional[float] = None
         emotion_trajectory: Optional[List[Dict[str, Any]]] = None
         mode: str = "static"  # "static" or "animation"
@@ -924,13 +1010,26 @@ if FASTAPI_AVAILABLE:
             events: Optional[List[Dict[str, Any]]] = payload.midi_events
             duration = payload.duration
 
+            # Handle audio file input (convert to MIDI events if needed)
+            if payload.audio_file_path:
+                audio_path = Path(payload.audio_file_path)
+                if not audio_path.exists():
+                    raise HTTPException(status_code=400, detail=f"Audio file not found: {payload.audio_file_path}")
+                # For now, if audio file provided, we'd need to extract MIDI from it
+                # This is a placeholder - actual implementation would analyze audio and extract MIDI
+                # For now, raise an error suggesting MIDI file instead
+                raise HTTPException(
+                    status_code=400, 
+                    detail="Audio file analysis not yet implemented. Please provide midi_file_path or midi_events instead."
+                )
+
             if payload.midi_file_path:
                 parsed_events, parsed_duration = _parse_midi_file(Path(payload.midi_file_path))
                 events = parsed_events
                 duration = duration or parsed_duration
 
             if not events:
-                raise HTTPException(status_code=400, detail="midi_events cannot be empty (or provide midi_file_path)")
+                raise HTTPException(status_code=400, detail="provide audio_file_path, midi_file_path, or midi_events")
             if duration is None or duration <= 0:
                 # try to infer from events time
                 max_time = max((e.get("time", 0) or 0) for e in events)
@@ -994,23 +1093,223 @@ if FASTAPI_AVAILABLE:
             logging.exception("spectocloud render failed")
             raise HTTPException(status_code=500, detail=str(exc))
 
+    
     @app.post("/generate")
     async def generate_music(request: GenerateRequest):
         try:
-            # Map the simple intent into the therapy session pipeline
+            # Try to use full intent pipeline if we have advanced parameters
+            tech = request.intent.technical
+            use_full_pipeline = (
+                tech and (
+                    tech.duration is not None or
+                    tech.structure is not None or
+                    tech.instruments is not None or
+                    tech.techniques is not None
+                )
+            )
+            
+            if use_full_pipeline:
+                # Use full CompleteSongIntent pipeline
+                logging.info("Using full intent pipeline with CompleteSongIntent")
+                
+                # Convert request to CompleteSongIntent
+                def _convert_to_intent(req: GenerateRequest) -> CompleteSongIntent:
+                    """Helper to convert request to CompleteSongIntent."""
+                    import time
+                    tech = req.intent.technical
+                    emotional = req.intent.emotional_intent or ""
+                    
+                    mood_primary = emotional
+                    if "(" in emotional:
+                        mood_primary = emotional.split("(")[0].strip()
+                    
+                    emotion_map = {
+                        "grief": "grief", "sadness": "grief",
+                        "joy": "tenderness", "happiness": "tenderness",
+                        "anger": "rage", "rage": "rage",
+                        "fear": "fear", "love": "tenderness",
+                        "nostalgia": "nostalgia", "awe": "awe",
+                    }
+                    for key, value in emotion_map.items():
+                        if key.lower() in emotional.lower():
+                            mood_primary = value
+                            break
+                    
+                    technical_key = "C"
+                    technical_mode = "major"
+                    if tech and tech.key:
+                        key_parts = tech.key.split()
+                        technical_key = key_parts[0] if key_parts else "C"
+                        if len(key_parts) > 1:
+                            technical_mode = key_parts[1].lower()
+                    
+                    bpm = tech.bpm if tech and tech.bpm is not None else 82
+                    tempo_range = (max(60, bpm - 20), min(140, bpm + 20))
+                    
+                    return CompleteSongIntent(
+                        core_event=req.intent.core_wound or emotional,
+                        core_longing=req.intent.core_desire or "",
+                        mood_primary=mood_primary,
+                        technical_genre=tech.genre if tech and tech.genre else "",
+                        technical_tempo_range=tempo_range,
+                        technical_key=technical_key,
+                        technical_mode=technical_mode,
+                        vulnerability_scale=0.5,
+                        created=time.strftime("%Y-%m-%d %H:%M:%S"),
+                    )
+                
+                complete_intent = _convert_to_intent(request)
+                
+                # Process full intent
+                result = api.process_song_intent(complete_intent, output_json=None)
+                
+                # Generate output file if format requested
+                output_midi = None
+                output_audio = None
+                if request.output_format:
+                    import tempfile
+                    import time
+                    if request.output_format in ['mid', 'midi']:
+                        output_midi = str(Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.mid")
+                    elif request.output_format in ['wav', 'mp3']:
+                        output_audio = str(Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.{request.output_format}")
+                        output_midi = str(Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.mid")
+                
+                # Generate MIDI from harmony result
+                if output_midi and result.get("harmony"):
+                    try:
+                        # Extract harmony info
+                        harmony = result["harmony"]
+                        groove = result.get("groove", {})
+                        tech = request.intent.technical
+                        
+                        # Access Pydantic model attributes directly
+                        duration_minutes = tech.duration if tech and tech.duration is not None else 3.0
+                        bpm = tech.bpm if tech and tech.bpm is not None else (groove.get("tempo_bpm") if isinstance(groove, dict) else 82)
+                        length_bars = int((duration_minutes * bpm) / 4)
+                        length_bars = max(16, min(128, length_bars))
+                        
+                        # Extract key and mode
+                        key_str = tech.key if tech and tech.key else "C major"
+                        key_parts = key_str.split() if key_str else ["C"]
+                        root_note = key_parts[0] if key_parts else "C"
+                        mode = key_parts[1] if len(key_parts) > 1 else "major"
+                        
+                        # Extract structure and instruments from request
+                        structure = tech.structure if tech else None
+                        instruments = tech.instruments if tech else None
+                        
+                        # If structure is provided, calculate total bars from structure
+                        # Otherwise use calculated length_bars
+                        if structure:
+                            total_structure_bars = sum(
+                                section.get("bars", 4) * section.get("repetitions", 1)
+                                for section in structure
+                            )
+                            # Use structure bars if it's reasonable, otherwise keep calculated
+                            if total_structure_bars > 0:
+                                length_bars = total_structure_bars
+                        
+                        # Create HarmonyPlan from result
+                        plan = HarmonyPlan(
+                            root_note=root_note,
+                            mode=mode,
+                            tempo_bpm=bpm,
+                            time_signature="4/4",
+                            length_bars=length_bars,
+                            chord_symbols=harmony.get("chords", ["C", "Am", "F", "G"]),
+                            harmonic_rhythm="1_chord_per_bar",
+                            mood_profile=result.get("intent_summary", {}).get("mood", "neutral"),
+                            complexity=0.5,
+                            structure=structure,
+                            instruments=instruments
+                        )
+                        
+                        # Render MIDI
+                        midi_path = render_plan_to_midi(plan, output_midi)
+                        result["midi_path"] = midi_path
+                    except Exception as midi_exc:
+                        logging.exception("Failed to generate MIDI from full intent, falling back")
+                        # Fall through to simple generation
+                        use_full_pipeline = False
+                
+                lyric_text, lyric_source = api._select_lyric_payload(request.intent)
+                
+                # Build response with structure and instruments info
+                response = {
+                    "status": "success",
+                    "result": result,
+                    "lyrics": {
+                        "source": lyric_source,
+                        "text": lyric_text,
+                    },
+                }
+                
+                # Add structure and instruments information if provided
+                tech = request.intent.technical
+                structure = tech.structure if tech else None
+                instruments = tech.instruments if tech else None
+                
+                if structure:
+                    response["structure"] = {
+                        "sections": structure,
+                        "total_bars": sum(
+                            s.get("bars", 4) * s.get("repetitions", 1) if isinstance(s, dict) else 4
+                            for s in structure
+                        ),
+                    }
+                
+                if instruments:
+                    response["instruments"] = {
+                        "tracks": [
+                            {
+                                "name": inst.get("name", "instrument") if isinstance(inst, dict) else "instrument",
+                                "type": inst.get("type", "chord") if isinstance(inst, dict) else "chord",
+                                "channel": inst.get("channel") if isinstance(inst, dict) else None,
+                            }
+                            for inst in instruments
+                        ],
+                    }
+                
+                # Add file paths to response
+                if output_midi and result.get("midi_path"):
+                    response["midi_path"] = result["midi_path"]
+                    if output_audio:
+                        response["audio_path"] = result["midi_path"].replace(".mid", f".{request.output_format}")
+                        response["output_path"] = response["audio_path"]
+                    else:
+                        response["output_path"] = result["midi_path"]
+                
+                return response
+            
+            # Fallback to simple therapy_session for backward compatibility
+            logging.info("Using simple therapy_session pipeline")
             chaos = 0.5
             motivation = 7
             if request.intent.technical and request.intent.technical.bpm:
-                # Use bpm as a proxy for motivation scaling (soft heuristic)
                 motivation = max(1, min(10, int(request.intent.technical.bpm / 20)))
             lyric_text, lyric_source = api._select_lyric_payload(request.intent)
+            
+            # Generate output file if format requested
+            output_midi = None
+            output_audio = None
+            if request.output_format:
+                import tempfile
+                import time
+                if request.output_format in ['mid', 'midi']:
+                    output_midi = str(Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.mid")
+                elif request.output_format in ['wav', 'mp3']:
+                    output_audio = str(Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.{request.output_format}")
+                    output_midi = str(Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.mid")
+            
             result = api.therapy_session(
                 text=lyric_text or request.intent.emotional_intent,
                 motivation=motivation,
                 chaos_tolerance=chaos,
-                output_midi=None,
+                output_midi=output_midi,
             )
-            return {
+            
+            response = {
                 "status": "success",
                 "result": result,
                 "lyrics": {
@@ -1018,6 +1317,17 @@ if FASTAPI_AVAILABLE:
                     "text": lyric_text,
                 },
             }
+            
+            # Add file paths to response
+            if output_midi and result.get("midi_path"):
+                response["midi_path"] = result["midi_path"]
+                if output_audio:
+                    response["audio_path"] = result["midi_path"].replace(".mid", f".{request.output_format}")
+                    response["output_path"] = response["audio_path"]
+                else:
+                    response["output_path"] = result["midi_path"]
+            
+            return response
         except Exception as exc:
             logging.exception("generate failed")
             raise HTTPException(status_code=500, detail=str(exc))

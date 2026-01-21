@@ -24,6 +24,7 @@
 #include "engine/EmotionThesaurus.h"
 #include "biometric/BiometricInput.h"
 #include "common/Types.h"
+#include "core/intent_ir/IntentFrame.h"
 #include <vector>
 #include <optional>
 #include <chrono>
@@ -159,6 +160,17 @@ public:
     ProcessingResult processEmotionName(
         const std::string& emotionName,
         float intensityModifier = 1.0f,
+        bool generateOSC = false
+    );
+    
+    /**
+     * Process IntentFrame emotion state (Intent IR v1)
+     * @param frame IntentFrame containing emotion state
+     * @param generateOSC Whether to generate OSC output
+     * @return Complete processing result
+     */
+    ProcessingResult processIntentFrame(
+        const intent_ir::IntentFrame& frame,
         bool generateOSC = false
     );
     

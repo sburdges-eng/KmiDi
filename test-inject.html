@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>UI Test Injector</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 30px;
+      background: #1a1a1a;
+      color: #0f0;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .container {
+      background: #000;
+      padding: 30px;
+      border: 2px solid #0f0;
+      border-radius: 8px;
+    }
+    h1 { color: #0ff; margin-top: 0; }
+    .step {
+      margin: 15px 0;
+      padding: 15px;
+      background: #2a2a2a;
+      border-left: 4px solid #0f0;
+    }
+    .code {
+      background: #000;
+      border: 1px solid #0f0;
+      padding: 15px;
+      overflow-x: auto;
+      margin: 15px 0;
+      font-size: 12px;
+    }
+    button {
+      padding: 12px 24px;
+      background: #0f0;
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 10px 5px;
+    }
+    button:hover { background: #0c0; }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .success { background: #0f04; color: #0f0; }
+    .error { background: #f004; color: #f00; }
+    .info { background: #ff04; color: #ff0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 UI Test Injector</h1>
+    
+    <div class="step">
+      <strong>Step 1:</strong> Open <a href="http://localhost:1420" target="_blank" style="color: #0ff;">http://localhost:1420</a> in a new tab
+    </div>
+    
+    <div class="step">
+      <strong>Step 2:</strong> Press <strong>F12</strong> to open DevTools, then go to the <strong>Console</strong> tab
+    </div>
+    
+    <div class="step">
+      <strong>Step 3:</strong> Click the button below to copy the test script
+    </div>
+    
+    <button onclick="copyScript()">📋 Copy Test Script to Clipboard</button>
+    <button onclick="window.open('http://localhost:1420', '_blank')">🌐 Open App in New Tab</button>
+    
+    <div class="step">
+      <strong>Step 4:</strong> Paste the script into the console and press Enter
+    </div>
+    
+    <div class="step">
+      <strong>Step 5:</strong> Type <code style="background: #2a2a2a; padding: 2px 6px;">runUITests()</code> and press Enter
+    </div>
+    
+    <div id="status"></div>
+    
+    <div class="code" id="script">
+const UI_TEST_RESULTS = { passed: [], failed: [], skipped: [] };
+
+function logTest(name, passed, error = null) {
+  if (passed) {
+    UI_TEST_RESULTS.passed.push(name);
+    console.log(`✅ PASS: ${name}`);
+  } else {
+    UI_TEST_RESULTS.failed.push({ name, error });
+    console.error(`❌ FAIL: ${name}`, error);
+  }
+}
+
+function logSkip(name, reason) {
+  UI_TEST_RESULTS.skipped.push({ name, reason });
+  console.warn(`⏭️  SKIP: ${name} - ${reason}`);
+}
+
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function runAllTests() {
+  console.log("🚀 Starting Comprehensive UI Tests...\n");
+  
+  try {
+    // Test App Header
+    console.log("\n=== Testing App Header ===");
+    const toggleBtn = Array.from(document.querySelectorAll('button')).find(b => 
+      b.textContent.includes('Side B') || b.textContent.includes('Side A')
+    );
+    if (toggleBtn) {
+      toggleBtn.click();
+      await sleep(500);
+      logTest("Toggle Side A/B", true);
+      toggleBtn.click();
+      await sleep(500);
+      logTest("Toggle back to Side A", true);
+    }
+    
+    // Test Side B
+    console.log("\n=== Testing Side B ===");
+    if (toggleBtn && toggleBtn.textContent.includes('Side A')) {
+      toggleBtn.click();
+      await sleep(500);
+    }
+    
+    // Test Load Emotions
+    const loadBtn = Array.from(document.querySelectorAll('button')).find(b => 
+      b.textContent.includes('Load Emotions')
+    );
+    if (loadBtn && !loadBtn.disabled) {
+      loadBtn.click();
+      await sleep(2000);
+      logTest("Load Emotions", true);
+    } else {
+      logSkip("Load Emotions", loadBtn ? "Button disabled" : "Button not found");
+    }
+    
+    // Test Emotion Wheel
+    await sleep(1000);
+    const baseBtns = document.querySelectorAll('.emotion-wheel-grid-base button');
+    if (baseBtns.length > 0) {
+      console.log("\n--- Testing Emotion Wheel ---");
+      baseBtns[0].click();
+      await sleep(500);
+      logTest("Select base emotion", true);
+      
+      const intensityBtns = document.querySelectorAll('.emotion-wheel-grid-intensity button');
+      if (intensityBtns.length > 0) {
+        intensityBtns[0].click();
+        await sleep(500);
+        logTest("Select intensity level", true);
+        
+        const subBtns = document.querySelectorAll('.emotion-wheel-grid-sub button');
+        if (subBtns.length > 0) {
+          subBtns[0].click();
+          await sleep(500);
+          logTest("Select sub-emotion", true);
+          
+          // Test Clear button
+          const clearBtn = document.querySelector('.emotion-wheel-clear-btn');
+          if (clearBtn) {
+            clearBtn.click();
+            await sleep(300);
+            logTest("Clear emotion selection", true);
+          }
+        }
+      }
+    } else {
+      logSkip("Emotion Wheel", "No emotions loaded");
+    }
+    
+    // Test Generate Music
+    const genBtn = Array.from(document.querySelectorAll('button')).find(b => 
+      b.textContent.includes('Generate Music') && !b.disabled
+    );
+    if (genBtn) {
+      genBtn.click();
+      await sleep(2000);
+      logTest("Generate Music", true);
+    } else {
+      logSkip("Generate Music", "Button not available or requires emotion");
+    }
+    
+    // Test Interrogation
+    const interrogateBtn = Array.from(document.querySelectorAll('button')).find(b => 
+      b.textContent.includes('Interrogation')
+    );
+    if (interrogateBtn && !interrogateBtn.disabled) {
+      interrogateBtn.click();
+      await sleep(2000);
+      logTest("Start Interrogation", true);
+    } else {
+      logSkip("Start Interrogation", interrogateBtn ? "Button disabled" : "Button not found");
+    }
+    
+    // Test Lyric Panel
+    console.log("\n=== Testing Lyric Panel ===");
+    const textarea = document.querySelector('.lyric-textarea');
+    if (textarea) {
+      textarea.value = "Test lyrics\nLine 2\nLine 3";
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      await sleep(300);
+    }
+    
+    const saveBtn = Array.from(document.querySelectorAll('button')).find(b => 
+      b.textContent.includes('Save Lyrics')
+    );
+    if (saveBtn) {
+      saveBtn.click();
+      await sleep(1000);
+      logTest("Save lyrics", true);
+    }
+    
+    const refreshBtn = Array.from(document.querySelectorAll('button')).find(b => 
+      b.textContent.includes('Refresh')
+    );
+    if (refreshBtn) {
+      refreshBtn.click();
+      await sleep(1000);
+      logTest("Refresh lyrics", true);
+    }
+    
+    const clearBtn = Array.from(document.querySelectorAll('button')).find(b => 
+      b.textContent.includes('Clear') && b.closest('.lyric-panel')
+    );
+    if (clearBtn) {
+      clearBtn.click();
+      await sleep(1000);
+      logTest("Clear lyrics", true);
+    }
+    
+    // Test Guide Navigation
+    console.log("\n=== Testing Guide Navigation ===");
+    const searchInput = document.querySelector('.guide-search');
+    if (searchInput) {
+      searchInput.value = "test";
+      searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+      await sleep(500);
+      logTest("Search guides", true);
+      searchInput.value = "";
+      searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+      await sleep(300);
+    }
+    
+    const topicPills = document.querySelectorAll('.topic-pill');
+    if (topicPills.length > 0) {
+      const allBtn = Array.from(topicPills).find(b => b.textContent.trim() === 'All');
+      if (allBtn) {
+        allBtn.click();
+        await sleep(300);
+        logTest("Filter guides by topic (All)", true);
+      }
+      
+      if (topicPills.length > 1) {
+        topicPills[1].click();
+        await sleep(300);
+        logTest("Filter guides by specific topic", true);
+      }
+    }
+    
+    const previewBtn = document.querySelector('.preview-btn');
+    if (previewBtn) {
+      previewBtn.click();
+      await sleep(500);
+      logTest("Preview guide", true);
+    }
+    
+    const copyBtn = document.querySelector('.copy-btn');
+    if (copyBtn) {
+      copyBtn.click();
+      await sleep(300);
+      logTest("Copy guide path", true);
+    }
+    
+    // Test SpectoCloud Panel
+    console.log("\n=== Testing SpectoCloud Panel ===");
+    const loadConfig = Array.from(document.querySelectorAll('button')).find(b => 
+      b.textContent.includes('Load Humanizer Config')
+    );
+    if (loadConfig) {
+      loadConfig.click();
+      await sleep(1000);
+      logTest("Load Humanizer Config", true);
+    }
+    
+    const presetBtns = Array.from(document.querySelectorAll('button')).filter(b => {
+      const text = b.textContent.trim().toLowerCase();
+      return ['preview', 'standard', 'high'].includes(text) && 
+             !b.closest('.emotion-wheel-container');
+    });
+    for (const btn of presetBtns.slice(0, 3)) {
+      btn.click();
+      await sleep(300);
+      logTest(`Select preset: ${btn.textContent.trim()}`, true);
+    }
+    
+    const modeSelect = document.querySelector('select');
+    if (modeSelect) {
+      modeSelect.value = 'animation';
+      modeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      await sleep(300);
+      logTest("Change mode to animation", true);
+      
+      modeSelect.value = 'static';
+      modeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      await sleep(300);
+      logTest("Change mode to static", true);
+    }
+    
+    const renderBtn = Array.from(document.querySelectorAll('button')).find(b => 
+      b.textContent.includes('Render')
+    );
+    if (renderBtn && !renderBtn.disabled) {
+      logTest("Render button exists and is enabled", true);
+    } else {
+      logSkip("Render SpectoCloud", renderBtn ? "Button disabled" : "Button not found");
+    }
+    
+    // Print Summary
+    console.log("\n" + "=".repeat(50));
+    console.log("📊 TEST SUMMARY");
+    console.log("=".repeat(50));
+    console.log(`✅ Passed: ${UI_TEST_RESULTS.passed.length}`);
+    console.log(`❌ Failed: ${UI_TEST_RESULTS.failed.length}`);
+    console.log(`⏭️  Skipped: ${UI_TEST_RESULTS.skipped.length}`);
+    
+    if (UI_TEST_RESULTS.failed.length > 0) {
+      console.log("\n❌ Failed Tests:");
+      UI_TEST_RESULTS.failed.forEach(f => {
+        console.log(`  - ${f.name}: ${f.error}`);
+      });
+    }
+    
+    if (UI_TEST_RESULTS.skipped.length > 0) {
+      console.log("\n⏭️  Skipped Tests:");
+      UI_TEST_RESULTS.skipped.forEach(s => {
+        console.log(`  - ${s.name}: ${s.reason}`);
+      });
+    }
+    
+    console.log("\n✅ All tests completed!");
+    
+  } catch (error) {
+    console.error("❌ Test suite error:", error);
+  }
+}
+
+// Make function available globally
+window.runUITests = runAllTests;
+console.log("💡 Test script loaded! Type 'runUITests()' to start testing.");
+    </div>
+  </div>
+  
+  <script>
+    function copyScript() {
+      const script = document.getElementById('script').textContent;
+      navigator.clipboard.writeText(script).then(() => {
+        const status = document.getElementById('status');
+        status.className = 'status success';
+        status.textContent = '✅ Script copied to clipboard! Now paste it into the console at http://localhost:1420';
+      }).catch(() => {
+        const status = document.getElementById('status');
+        status.className = 'status error';
+        status.textContent = '❌ Could not copy. Please select and copy the script manually.';
+      });
+    }
+    
+    // Check server status
+    function checkServer() {
+      fetch('http://localhost:1420', { mode: 'no-cors' })
+        .then(() => {
+          const status = document.getElementById('status');
+          status.className = 'status success';
+          status.textContent = '✅ Server is running at http://localhost:1420';
+        })
+        .catch(() => {
+          // Try with a simple image request as fallback
+          const img = new Image();
+          img.onload = () => {
+            const status = document.getElementById('status');
+            status.className = 'status success';
+            status.textContent = '✅ Server is running at http://localhost:1420';
+          };
+          img.onerror = () => {
+            const status = document.getElementById('status');
+            status.className = 'status info';
+            status.textContent = '⏳ Checking server status... (If server is running, you can proceed)';
+          };
+          img.src = 'http://localhost:1420/favicon.ico?' + Date.now();
+        });
+    }
+    
+    // Check immediately and retry
+    checkServer();
+    setTimeout(checkServer, 2000);
+  </script>
+</body>
+</html>

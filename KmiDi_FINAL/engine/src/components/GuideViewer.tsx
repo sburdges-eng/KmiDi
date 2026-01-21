@@ -23,8 +23,29 @@ export function GuideViewer({ guide }: Props) {
     );
   }
 
-  const key = guide.path.startsWith("/") ? guide.path : `/${guide.path}`;
-  const content = markdownFiles[key];
+  // Normalize path for lookup: try multiple formats to handle different path styles
+  // Manifest paths are like "Production_Workflows/Filename.md"
+  // Glob keys are like "/Production_Workflows/Filename.md"
+  let content: string | undefined;
+  
+  // Try with leading slash first (expected format from glob)
+  const keyWithSlash = guide.path.startsWith("/") ? guide.path : `/${guide.path}`;
+  content = markdownFiles[keyWithSlash];
+  
+  // If not found, try without leading slash
+  if (!content) {
+    const keyWithoutSlash = guide.path.startsWith("/") ? guide.path.substring(1) : guide.path;
+    content = markdownFiles[keyWithoutSlash];
+  }
+  
+  // If still not found, try to extract just the filename and match by filename
+  if (!content) {
+    const filename = guide.path.split("/").pop() || guide.path;
+    const matchingKey = Object.keys(markdownFiles).find(key => key.endsWith(filename));
+    if (matchingKey) {
+      content = markdownFiles[matchingKey];
+    }
+  }
 
   if (!content) {
     return (
@@ -32,6 +53,10 @@ export function GuideViewer({ guide }: Props) {
         Preview unavailable: markdown not bundled. Make sure
         <code>{` ${guide.path} `}</code>
         is within <code>Production_Workflows/</code>.
+        <br />
+        <small style={{ fontSize: "0.8em", color: "#999", marginTop: "8px", display: "block" }}>
+          Available keys: {Object.keys(markdownFiles).slice(0, 3).join(", ")}...
+        </small>
       </div>
     );
   }

@@ -1,4 +1,6 @@
 #include "engine/VADSystem.h"
+#include "core/intent_ir/IntentFrame.h"
+#include "core/intent_ir/IntentFrameAdapter.h"
 #include <algorithm>
 #include <ctime>
 #include <numeric>
