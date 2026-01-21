@@ -89,9 +89,45 @@ export const useMusicBrain = () => {
         if (emotions) return emotions;
       }
       
-      // Fallback to original API
-      const result = await invoke('get_emotions');
-      return result;
+      // Try REST API first (works in both browser and Tauri mode)
+      try {
+        console.log('Attempting REST API call to http://127.0.0.1:8000/emotions');
+        const resp = await fetch('http://127.0.0.1:8000/emotions', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        
+        if (!resp.ok) {
+          const errorText = await resp.text();
+          throw new Error(`API returned ${resp.status}: ${resp.statusText}. ${errorText}`);
+        }
+        
+        const result = await resp.json();
+        console.log('REST API emotions response:', result);
+        return result;
+      } catch (fetchError: any) {
+        console.warn('REST API call failed, trying Tauri invoke:', fetchError);
+        
+        // Fallback to Tauri invoke (only works in Tauri app)
+        if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+          try {
+            const result = await invoke('get_emotions');
+            return result;
+          } catch (tauriError: any) {
+            // If both fail, throw helpful error
+            if (fetchError.message?.includes('fetch') || fetchError.message?.includes('Failed to fetch') || fetchError.message?.includes('ECONNREFUSED')) {
+              throw new Error('Music Brain API is not running. Start it with: python -m music_brain.api\n\nMake sure the API is running at http://127.0.0.1:8000');
+            }
+            throw fetchError;
+          }
+        } else {
+          // In browser mode, throw helpful error
+          if (fetchError.message?.includes('fetch') || fetchError.message?.includes('Failed to fetch') || fetchError.message?.includes('ECONNREFUSED')) {
+            throw new Error('Music Brain API is not running. Start it with: python -m music_brain.api\n\nMake sure the API is running at http://127.0.0.1:8000');
+          }
+          throw fetchError;
+        }
+      }
     } catch (error) {
       console.error('Failed to get emotions:', error);
       throw error;

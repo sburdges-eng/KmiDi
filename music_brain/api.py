@@ -12,6 +12,8 @@ import json
 
 try:
     from fastapi import FastAPI, HTTPException
+    from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.responses import FileResponse
     from pydantic import BaseModel
     import uvicorn
     FASTAPI_AVAILABLE = True
@@ -833,6 +835,20 @@ if FASTAPI_AVAILABLE:
 
     app = FastAPI(title="Music Brain API", version="0.1.0")
 
+    # Add CORS middleware to allow requests from frontend
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:1420",  # Vite dev server
+            "http://127.0.0.1:1420",  # Vite dev server (alternative)
+            "tauri://localhost",      # Tauri app
+            "http://localhost:5173",  # Alternative Vite port
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
     @app.get("/")
     async def root():
         """Root endpoint with API information."""
@@ -855,6 +871,60 @@ if FASTAPI_AVAILABLE:
     @app.get("/health")
     async def health():
         return {"status": "ok", "version": "0.1.0"}
+
+    @app.get("/audio/{file_path:path}")
+    async def serve_audio(file_path: str):
+        """Serve audio files via HTTP. file_path should be URL-encoded."""
+        import urllib.parse
+        decoded_path = urllib.parse.unquote(file_path)
+        audio_file = Path(decoded_path)
+        
+        logging.info(f"Serving audio file: {decoded_path}")
+        logging.info(f"File exists: {audio_file.exists()}, is_file: {audio_file.is_file() if audio_file.exists() else 'N/A'}")
+        
+        if not audio_file.exists():
+            logging.error(f"Audio file not found: {decoded_path}")
+            # Try to find alternative paths (maybe MIDI file exists but audio doesn't)
+            if decoded_path.endswith(('.wav', '.mp3', '.ogg')):
+                midi_path = decoded_path.rsplit('.', 1)[0] + '.mid'
+                if Path(midi_path).exists():
+                    logging.warning(f"Audio file not found, but MIDI exists: {midi_path}. Audio conversion may be needed.")
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Audio file not found: {decoded_path}. The file may not have been generated yet or may have been cleaned up."
+            )
+        
+        if not audio_file.is_file():
+            logging.error(f"Path is not a file: {decoded_path}")
+            raise HTTPException(status_code=400, detail=f"Path is not a file: {decoded_path}")
+        
+        # Determine media type based on file extension
+        media_type = "application/octet-stream"  # Default fallback
+        ext = audio_file.suffix.lower()
+        if ext == ".wav":
+            media_type = "audio/wav"  # or "audio/x-wav" for some browsers
+        elif ext == ".mp3":
+            media_type = "audio/mpeg"
+        elif ext == ".ogg" or ext == ".oga":
+            media_type = "audio/ogg"
+        elif ext == ".m4a":
+            media_type = "audio/mp4"
+        elif ext == ".flac":
+            media_type = "audio/flac"
+        elif ext == ".aac":
+            media_type = "audio/aac"
+        
+        logging.info(f"Serving {decoded_path} as {media_type}")
+        
+        return FileResponse(
+            path=str(audio_file),
+            media_type=media_type,
+            filename=audio_file.name,
+            headers={
+                "Accept-Ranges": "bytes",
+                "Content-Length": str(audio_file.stat().st_size)
+            }
+        )
 
     @app.get("/emotions")
     async def list_emotions():
@@ -1274,9 +1344,21 @@ if FASTAPI_AVAILABLE:
                 # Add file paths to response
                 if output_midi and result.get("midi_path"):
                     response["midi_path"] = result["midi_path"]
+                    midi_file = Path(result["midi_path"])
+                    
                     if output_audio:
-                        response["audio_path"] = result["midi_path"].replace(".mid", f".{request.output_format}")
-                        response["output_path"] = response["audio_path"]
+                        # Construct audio path
+                        audio_path = str(midi_file.with_suffix(f".{request.output_format}"))
+                        response["audio_path"] = audio_path
+                        response["output_path"] = audio_path
+                        
+                        # Check if audio file actually exists
+                        audio_file = Path(audio_path)
+                        if not audio_file.exists():
+                            logging.warning(f"Audio file path returned but file doesn't exist: {audio_path}")
+                            logging.info(f"MIDI file exists: {midi_file.exists()}")
+                            # Note: The audio file may need to be generated from MIDI
+                            # For now, we return the path but the client should handle the case where it doesn't exist
                     else:
                         response["output_path"] = result["midi_path"]
                 
