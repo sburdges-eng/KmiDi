@@ -64,13 +64,14 @@ const SOURCE_NAMES: Record<number, IntentSource> = {
   5: 'AUTOMATION',
 };
 
+// Source color mappings using semantic token RGB values
 const SOURCE_COLORS: Record<IntentSource, string> = {
-  UI_DIRECT: '#4CAF50',      // Green - user direct input
-  UI_EDIT: '#2196F3',        // Blue - user editing
-  ML_TEXT: '#FF9800',        // Orange - ML text analysis
-  ML_AUDIO: '#F44336',       // Red - ML audio analysis
-  PRESET: '#9C27B0',         // Purple - preset
-  AUTOMATION: '#607D8B',     // Blue-grey - automation
+  UI_DIRECT: 'rgb(52, 199, 89)',        // accent-success - user direct input
+  UI_EDIT: 'rgb(0, 122, 255)',         // accent-primary - user editing
+  ML_TEXT: 'rgb(255, 149, 0)',         // accent-warning - ML text analysis
+  ML_AUDIO: 'rgb(255, 59, 48)',         // accent-error - ML audio analysis
+  PRESET: 'rgb(156, 39, 176)',         // accent-purple - preset
+  AUTOMATION: 'rgb(96, 125, 139)',     // accent-bluegrey - automation
 };
 
 interface IntentIRInspectorProps {
@@ -106,7 +107,7 @@ export const IntentIRInspector: React.FC<IntentIRInspectorProps> = ({ frame, onF
   }
 
   const sourceName = SOURCE_NAMES[currentFrame.provenance.source] || 'UNKNOWN';
-  const sourceColor = SOURCE_COLORS[sourceName] || '#000000';
+  const sourceColor = SOURCE_COLORS[sourceName] || 'rgb(52, 52, 56)'; // bg-tertiary fallback
 
   return (
     <div className="intent-ir-inspector">

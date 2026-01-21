@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import '../App.css';
 
 /**
  * IntentInjector - UI toggle for static IntentFrame injection
@@ -30,26 +31,24 @@ export const IntentInjector: React.FC = () => {
   };
 
   return (
-    <div style={{
-      padding: '8px',
-      border: '1px solid #3e3e3e',
-      borderRadius: '4px',
-      backgroundColor: isActive ? '#2a4a2a' : '#2a2a2a',
-    }}>
-      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+    <div className="p-2 border border-border-light rounded bg-bg-secondary">
+      <label className="flex items-center gap-2 cursor-pointer">
         <input
           type="checkbox"
           checked={isActive}
           onChange={handleToggle}
           disabled={isLoading}
-          style={{ cursor: 'pointer' }}
+          className="cursor-pointer"
+          aria-label={isActive ? 'Disable static IR injection' : 'Enable static IR injection'}
+          aria-describedby="intent-injector-description"
+          aria-busy={isLoading}
         />
-        <span style={{ fontSize: '12px', color: isActive ? '#4CAF50' : '#888' }}>
+        <span className={`text-xs ${isActive ? 'text-accent-success' : 'text-text-tertiary'}`}>
           {isActive ? 'Static IR Injection Active' : 'Enable Static IR Injection'}
         </span>
       </label>
       {isActive && (
-        <div style={{ marginTop: '8px', fontSize: '11px', color: '#888' }}>
+        <div id="intent-injector-description" className="mt-2 text-xs text-text-tertiary" role="status">
           ML and user input are bypassed. Test frame is active.
         </div>
       )}

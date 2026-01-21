@@ -49,17 +49,18 @@ const genres: Genre[] = [
   { id: "ambient", name: "Ambient", icon: "🌌", description: "Atmospheric and textural" },
 ];
 
+// Emotion colors using semantic tokens (muted per spec)
 const quickEmotions: QuickEmotion[] = [
-  { id: "happy", name: "Happy", icon: "😊", color: "#fbbf24" },
-  { id: "sad", name: "Sad", icon: "😢", color: "#60a5fa" },
-  { id: "angry", name: "Angry", icon: "😠", color: "#f87171" },
-  { id: "peaceful", name: "Peaceful", icon: "😌", color: "#34d399" },
-  { id: "energetic", name: "Energetic", icon: "⚡", color: "#fbbf24" },
-  { id: "melancholic", name: "Melancholic", icon: "🌙", color: "#818cf8" },
-  { id: "romantic", name: "Romantic", icon: "💕", color: "#f472b6" },
-  { id: "nostalgic", name: "Nostalgic", icon: "📷", color: "#a78bfa" },
-  { id: "hopeful", name: "Hopeful", icon: "🌅", color: "#fb923c" },
-  { id: "mysterious", name: "Mysterious", icon: "🔮", color: "#7c3aed" },
+  { id: "happy", name: "Happy", icon: "😊", color: "rgb(255, 149, 0)" },      // accent-warning
+  { id: "sad", name: "Sad", icon: "😢", color: "rgb(88, 166, 255)" },          // accent-secondary
+  { id: "angry", name: "Angry", icon: "😠", color: "rgb(255, 59, 48)" },     // accent-error
+  { id: "peaceful", name: "Peaceful", icon: "😌", color: "rgb(52, 199, 89)" }, // accent-success
+  { id: "energetic", name: "Energetic", icon: "⚡", color: "rgb(255, 149, 0)" }, // accent-warning
+  { id: "melancholic", name: "Melancholic", icon: "🌙", color: "rgb(96, 125, 139)" }, // accent-bluegrey
+  { id: "romantic", name: "Romantic", icon: "💕", color: "rgb(156, 39, 176)" }, // accent-purple
+  { id: "nostalgic", name: "Nostalgic", icon: "📷", color: "rgb(156, 39, 176)" }, // accent-purple
+  { id: "hopeful", name: "Hopeful", icon: "🌅", color: "rgb(255, 149, 0)" },   // accent-warning
+  { id: "mysterious", name: "Mysterious", icon: "🔮", color: "rgb(156, 39, 176)" }, // accent-purple
 ];
 
 type Props = {

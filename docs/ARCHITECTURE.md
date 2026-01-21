@@ -4,6 +4,11 @@
 **Updated:** 2026-01-18  
 **Purpose:** Complete architecture reference for KmiDi's integrated technology stack
 
+**Related Materials:**
+- See `Downloads/kelly_system_analysis.md` for detailed system analysis and architectural decisions
+- See `docs/AI_CONTROL_LAYER.md` for AI/ML architecture boundaries
+- See `docs/HOST_GLUE_ARCHITECTURE.md` for host integration patterns
+
 ## Overview
 
 KmiDi is a sophisticated digital audio workstation that integrates 5 major technologies to create a seamless emotion-driven music production environment:

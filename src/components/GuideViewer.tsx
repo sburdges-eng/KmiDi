@@ -54,7 +54,7 @@ export function GuideViewer({ guide }: Props) {
         <code>{` ${guide.path} `}</code>
         is within <code>Production_Workflows/</code>.
         <br />
-        <small style={{ fontSize: "0.8em", color: "#999", marginTop: "8px", display: "block" }}>
+        <small className="text-xs text-text-tertiary mt-2 block">
           Available keys: {Object.keys(markdownFiles).slice(0, 3).join(", ")}...
         </small>
       </div>

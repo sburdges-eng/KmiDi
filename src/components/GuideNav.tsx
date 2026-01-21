@@ -112,15 +112,7 @@ export function GuideNav({ onSelect }: Props) {
                     type="button"
                     className="guide-link"
                     onClick={() => onSelect(guide)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#396cd8",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      padding: 0,
-                      textDecoration: "none",
-                    }}
+                    className="text-accent-primary font-semibold cursor-pointer p-0 no-underline bg-transparent border-0"
                   >
                     Open
                   </button>
@@ -129,10 +121,7 @@ export function GuideNav({ onSelect }: Props) {
                   type="button"
                   className="copy-btn"
                   onClick={() => handleCopyPath(guide.path)}
-                  style={{
-                    backgroundColor: copiedPath === guide.path ? "#10b981" : undefined,
-                    color: copiedPath === guide.path ? "#fff" : undefined,
-                  }}
+                  className={copiedPath === guide.path ? "bg-accent-success text-white" : ""}
                 >
                   {copiedPath === guide.path ? "Copied!" : "Copy path"}
                 </button>

@@ -261,11 +261,15 @@ function App() {
   };
 
   return (
-    <div className="app-container">
+      <div className="app-container" role="main" aria-label="KmiDi Digital Audio Workstation">
       {error && (
         <div className="p-3 bg-accent-error/10 border border-accent-error rounded m-3">
           <strong>Error:</strong> {error}
-          <button onClick={() => setError(null)} className="ml-3 px-2 py-1 bg-bg-secondary text-text-primary rounded min-h-touch min-w-touch">
+          <button 
+            onClick={() => setError(null)} 
+            className="ml-3 px-2 py-1 bg-bg-secondary text-text-primary rounded min-h-touch min-w-touch"
+            aria-label="Dismiss error message"
+          >
             Dismiss
           </button>
         </div>
@@ -273,21 +277,34 @@ function App() {
       <div className="cassette-header">
         <h1>iDAW - Kelly Project</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <div className={`flex items-center gap-2 px-3 py-1 rounded border ${
-            apiStatus === 'online' ? 'bg-status-online/10 border-status-online' :
-            apiStatus === 'offline' ? 'bg-status-offline/10 border-status-offline' :
-            'bg-status-checking/10 border-status-checking'
-          }`}>
-            <span className={`w-2 h-2 rounded-full ${
-              apiStatus === 'online' ? 'bg-status-online' :
-              apiStatus === 'offline' ? 'bg-status-offline' :
-              'bg-status-checking animate-pulse'
-            }`}></span>
+          <div 
+            className={`flex items-center gap-2 px-3 py-1 rounded border ${
+              apiStatus === 'online' ? 'bg-status-online/10 border-status-online' :
+              apiStatus === 'offline' ? 'bg-status-offline/10 border-status-offline' :
+              'bg-status-checking/10 border-status-checking'
+            }`}
+            role="status"
+            aria-live="polite"
+            aria-label={`API status: ${apiStatus === 'online' ? 'Online' : apiStatus === 'offline' ? 'Offline' : 'Checking'}`}
+          >
+            <span 
+              className={`w-2 h-2 rounded-full ${
+                apiStatus === 'online' ? 'bg-status-online' :
+                apiStatus === 'offline' ? 'bg-status-offline' :
+                'bg-status-checking animate-pulse'
+              }`}
+              aria-hidden="true"
+            ></span>
             <span className="text-sm text-text-primary">
               API: {apiStatus === 'online' ? 'Online' : apiStatus === 'offline' ? 'Offline' : 'Checking...'}
             </span>
           </div>
-          <button onClick={toggleSide} className="toggle-btn px-4 py-2 bg-accent-primary text-white rounded min-h-touch min-w-touch hover:bg-accent-secondary transition-colors">
+          <button 
+            onClick={toggleSide} 
+            className="toggle-btn px-4 py-2 bg-accent-primary text-white rounded min-h-touch min-w-touch hover:bg-accent-secondary transition-colors"
+            aria-label={sideA ? "Switch to Side B: Therapeutic Interface" : "Switch to Side A: Professional DAW"}
+            aria-pressed={!sideA}
+          >
             {sideA ? "⏭ Side B" : "⏮ Side A"}
           </button>
         </div>
@@ -340,6 +357,8 @@ function App() {
                 onClick={handleGetEmotions} 
                 disabled={loading}
                 className="primary-action-btn"
+                aria-label="Load emotion wheel database"
+                aria-busy={loading}
               >
                 {loading ? "Loading Emotion Database..." : "Load Emotion Wheel"}
               </button>
@@ -380,6 +399,8 @@ function App() {
                 onClick={handleGenerateMusic} 
                 disabled={loading}
                 className="primary-action-btn"
+                aria-label="Generate musical arrangement based on selected emotion"
+                aria-busy={loading}
               >
                 {loading 
                   ? "Composing..." 
@@ -411,6 +432,8 @@ function App() {
                 onClick={handleInterrogate} 
                 disabled={loading}
                 className="primary-action-btn"
+                aria-label="Start conversation with AI about musical intent"
+                aria-busy={loading}
               >
                 {loading ? "Processing..." : "Start Conversation"}
               </button>
@@ -463,6 +486,8 @@ function App() {
             onClick={handleGenerateMusic} 
             disabled={loading}
             className="generate-main-btn"
+            aria-label="Generate music with current customizations"
+            aria-busy={loading}
           >
             {loading ? "Generating Your Music..." : "🎵 Generate Music"}
           </button>

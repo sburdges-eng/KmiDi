@@ -8,6 +8,12 @@
 
 This document analyzes coverage of specification requirements from `KmiDi-1/docs/specs/` in the current KmiDi project documentation and implementation.
 
+**Related Materials:**
+- See `Downloads/kelly_system_analysis.md` for system analysis and architectural context
+- See `Downloads/kelly_week1_build.md` for build requirements and setup procedures
+- See `Downloads/3_d_song_lifeline_visualization_spec.md` for visualization specifications
+- See `Downloads/INTEGRATION.md` for integration patterns (already referenced)
+
 ## Specification Files Reference
 
 ### Primary Specifications (KmiDi-1/docs/specs/)

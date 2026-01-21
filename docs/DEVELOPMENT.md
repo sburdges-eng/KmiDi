@@ -4,6 +4,11 @@
 **Updated:** 2026-01-18  
 **Target Audience:** Developers working on KmiDi
 
+**Related Materials:**
+- See `Downloads/kelly_week1_build.md` for initial build requirements and setup procedures
+- See `docs/ARCHITECTURE.md` for system architecture overview
+- See `docs/STRUCTURE_CROSS_EXAMINATION/03_CODE_ARCHITECTURE_REPORT.md` for code architecture analysis
+
 ## Quick Start
 
 ### Prerequisites

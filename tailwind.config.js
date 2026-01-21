@@ -23,6 +23,8 @@ export default {
         'accent-success': 'rgb(52, 199, 89)',
         'accent-warning': 'rgb(255, 149, 0)',
         'accent-error': 'rgb(255, 59, 48)',
+        'accent-purple': 'rgb(156, 39, 176)',
+        'accent-bluegrey': 'rgb(96, 125, 139)',
         
         // Border tokens
         'border-light': 'rgb(64, 64, 68)',

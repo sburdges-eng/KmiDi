@@ -8,6 +8,10 @@
 
 This report analyzes UI/UX implementation against specification requirements from `KmiDi-1/docs/specs/01-04_*.md` and modern standards (React 19.1.0, Tauri 2.x, Tailwind 4.x, TypeScript 5.8, WCAG AA).
 
+**Related Materials:**
+- See `Downloads/3_d_song_lifeline_visualization_spec.md` for detailed visualization and timeline UI specifications
+- See `docs/specs/04_CORE_MUSICAL_UI.md` for core musical UI requirements (if exists)
+
 ## Spec 01: Foundation System UI Compliance
 
 ### Windowing Compliance
