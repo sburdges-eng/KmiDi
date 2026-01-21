@@ -252,6 +252,12 @@ if(BUILD_PLUGINS)
     if(NOT BUILD_KELLY_CORE)
         message(FATAL_ERROR "BUILD_PLUGINS requires BUILD_KELLY_CORE=ON")
     endif()
+    set(KMIDI_PLUGIN_ICON_BIG KmiDi_plugin_256.png)
+    set(KMIDI_PLUGIN_ICON_SMALL KmiDi_plugin_64.png)
+    set(KMIDI_ICON_ROOT ${CMAKE_SOURCE_DIR}/KmiDi_FINAL/assets/icons/plugin)
+    if(NOT (EXISTS ${KMIDI_ICON_ROOT}/${KMIDI_PLUGIN_ICON_BIG} AND EXISTS ${KMIDI_ICON_ROOT}/${KMIDI_PLUGIN_ICON_SMALL}))
+        message(FATAL_ERROR "KmiDi plugin icons not found at ${KMIDI_ICON_ROOT}; ensure KmiDi_FINAL assets are present.")
+    endif()
     # VST3/CLAP plugin
     juce_add_plugin(KellyPlugin
         COMPANY_NAME "Kelly"
@@ -261,6 +267,8 @@ if(BUILD_PLUGINS)
         PRODUCT_NAME "Kelly Emotion Processor"
         VST3_CATEGORIES Fx Synth
         CLAP_ID com.kelly.emotion-processor
+        ICON_BIG ${KMIDI_ICON_ROOT}/${KMIDI_PLUGIN_ICON_BIG}
+        ICON_SMALL ${KMIDI_ICON_ROOT}/${KMIDI_PLUGIN_ICON_SMALL}
     )
 
     target_sources(KellyPlugin PRIVATE
