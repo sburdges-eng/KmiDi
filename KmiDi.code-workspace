@@ -1,0 +1,67 @@
+{
+  "folders": [
+    {
+      "name": "KmiDi",
+      "path": "."
+    },
+    {
+      "name": "Documentation",
+      "path": "./docs"
+    },
+    {
+      "name": "Source Code",
+      "path": "./src"
+    },
+    {
+      "name": "Tests",
+      "path": "./tests"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/.git": true,
+      "**/.DS_Store": true,
+      "**/node_modules": true,
+      "**/build": false,
+      "**/dist": false,
+      "**/target": false,
+      "**/.cache": true,
+      "**/__pycache__": true,
+      "**/*.pyc": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/build": true,
+      "**/dist": true,
+      "**/target": true,
+      "**/.cache": true,
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/.git": true
+    },
+    "files.watcherExclude": {
+      "**/node_modules/**": true,
+      "**/build/**": true,
+      "**/dist/**": true,
+      "**/target/**": true,
+      "**/.cache/**": true,
+      "**/__pycache__/**": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "rust-lang.rust-analyzer",
+      "ms-vscode.cpptools",
+      "ms-vscode.cmake-tools",
+      "bradlc.vscode-tailwindcss",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "eamodio.gitlens",
+      "gruntfuggly.todo-tree",
+      "yzhang.markdown-all-in-one",
+      "tauri-apps.tauri-vscode"
+    ]
+  }
+}
