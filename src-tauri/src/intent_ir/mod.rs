@@ -6,8 +6,12 @@
 pub mod validator;
 pub mod serde;
 pub mod ffi;
+pub mod manager;
 
-use serde::{Deserialize, Serialize};
+#[cfg(feature = "ffi")]
+pub mod ffi_exports;
+
+use ::serde::{Deserialize, Serialize};
 
 /// Intent IR version (increments on breaking changes)
 pub const INTENT_IR_VERSION: u16 = 1;

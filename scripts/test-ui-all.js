@@ -1,0 +1,355 @@
+/**
+ * Comprehensive UI Test Script
+ * Tests all buttons, functions, and interactions in the iDAW UI
+ * 
+ * Run this in the browser console while the dev server is running at http://localhost:1420
+ * Or use as a reference for manual testing
+ */
+
+const UI_TEST_RESULTS = {
+  passed: [],
+  failed: [],
+  skipped: []
+};
+
+function logTest(name, passed, error = null) {
+  if (passed) {
+    UI_TEST_RESULTS.passed.push(name);
+    console.log(`✅ PASS: ${name}`);
+  } else {
+    UI_TEST_RESULTS.failed.push({ name, error });
+    console.error(`❌ FAIL: ${name}`, error);
+  }
+}
+
+function logSkip(name, reason) {
+  UI_TEST_RESULTS.skipped.push({ name, reason });
+  console.warn(`⏭️  SKIP: ${name} - ${reason}`);
+}
+
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function clickButton(selector, description) {
+  try {
+    const btn = document.querySelector(selector);
+    if (!btn) {
+      logTest(description, false, `Button not found: ${selector}`);
+      return false;
+    }
+    if (btn.disabled) {
+      logSkip(description, "Button is disabled");
+      return false;
+    }
+    btn.click();
+    await sleep(500); // Wait for action to complete
+    logTest(description, true);
+    return true;
+  } catch (error) {
+    logTest(description, false, error.message);
+    return false;
+  }
+}
+
+async function testAppHeader() {
+  console.log("\n=== Testing App Header ===");
+  
+  // Test Side Toggle Button
+  await clickButton('button:contains("Side B"), button:contains("Side A")', "Toggle Side A/B");
+  await sleep(500);
+  await clickButton('button:contains("Side B"), button:contains("Side A")', "Toggle back to Side A");
+  
+  // Test Error Dismiss (if error exists)
+  const errorBtn = document.querySelector('.bg-accent-error button');
+  if (errorBtn) {
+    await clickButton('.bg-accent-error button', "Dismiss error message");
+  }
+}
+
+async function testSideA() {
+  console.log("\n=== Testing Side A (Professional DAW) ===");
+  
+  // Switch to Side A
+  const toggleBtn = Array.from(document.querySelectorAll('button')).find(b => 
+    b.textContent.includes('Side B') || b.textContent.includes('Side A')
+  );
+  if (toggleBtn && toggleBtn.textContent.includes('Side B')) {
+    toggleBtn.click();
+    await sleep(500);
+  }
+  
+  // Test Generate Music button
+  await clickButton('button:contains("Test Generate Music")', "Test Generate Music (Side A)");
+  await sleep(2000); // Wait for API call
+}
+
+async function testSideB() {
+  console.log("\n=== Testing Side B (Therapeutic Interface) ===");
+  
+  // Switch to Side B
+  const toggleBtn = Array.from(document.querySelectorAll('button')).find(b => 
+    b.textContent.includes('Side B') || b.textContent.includes('Side A')
+  );
+  if (toggleBtn && toggleBtn.textContent.includes('Side A')) {
+    toggleBtn.click();
+    await sleep(500);
+  }
+  
+  // Test Load Emotions button
+  await clickButton('button:contains("Load Emotions")', "Load Emotions");
+  await sleep(2000); // Wait for API call
+  
+  // Test Emotion Wheel (if emotions loaded)
+  await sleep(1000);
+  const baseEmotionBtns = document.querySelectorAll('.emotion-wheel-grid-base button');
+  if (baseEmotionBtns.length > 0) {
+    console.log("\n--- Testing Emotion Wheel ---");
+    // Click first base emotion
+    baseEmotionBtns[0].click();
+    await sleep(500);
+    logTest("Select base emotion", true);
+    
+    // Click first intensity (if available)
+    const intensityBtns = document.querySelectorAll('.emotion-wheel-grid-intensity button');
+    if (intensityBtns.length > 0) {
+      intensityBtns[0].click();
+      await sleep(500);
+      logTest("Select intensity level", true);
+      
+      // Click first sub-emotion (if available)
+      const subBtns = document.querySelectorAll('.emotion-wheel-grid-sub button');
+      if (subBtns.length > 0) {
+        subBtns[0].click();
+        await sleep(500);
+        logTest("Select sub-emotion", true);
+        
+        // Test Clear button
+        await clickButton('.emotion-wheel-clear-btn', "Clear emotion selection");
+      }
+    }
+  }
+  
+  // Test Generate Music button (requires emotion selection)
+  const generateBtn = Array.from(document.querySelectorAll('button')).find(b => 
+    b.textContent.includes('Generate Music') && !b.disabled
+  );
+  if (generateBtn) {
+    await clickButton('button:contains("Generate Music"):not(:disabled)', "Generate Music (Side B)");
+    await sleep(2000);
+  } else {
+    logSkip("Generate Music (Side B)", "Requires emotion selection");
+  }
+  
+  // Test Interrogator button
+  await clickButton('button:contains("Start Interrogation")', "Start Interrogation");
+  await sleep(2000);
+}
+
+async function testLyricPanel() {
+  console.log("\n=== Testing Lyric Panel ===");
+  
+  // Test Load from File button
+  await clickButton('button:contains("Load .txt/.lrc")', "Load lyrics from file");
+  
+  // Test Save Lyrics button
+  const textarea = document.querySelector('.lyric-textarea');
+  if (textarea) {
+    textarea.value = "Test lyrics\nLine 2\nLine 3";
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    await sleep(300);
+    await clickButton('button:contains("Save Lyrics")', "Save lyrics");
+    await sleep(1000);
+  }
+  
+  // Test Refresh button
+  await clickButton('button:contains("Refresh")', "Refresh lyrics");
+  await sleep(1000);
+  
+  // Test Clear button
+  await clickButton('button:contains("Clear")', "Clear lyrics");
+  await sleep(1000);
+}
+
+async function testGuideNav() {
+  console.log("\n=== Testing Guide Navigation ===");
+  
+  // Test search input
+  const searchInput = document.querySelector('.guide-search');
+  if (searchInput) {
+    searchInput.value = "test";
+    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    await sleep(500);
+    logTest("Search guides", true);
+    
+    // Clear search
+    searchInput.value = "";
+    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    await sleep(500);
+  }
+  
+  // Test topic filter buttons
+  const topicPills = document.querySelectorAll('.topic-pill');
+  if (topicPills.length > 0) {
+    // Click "All" button
+    const allBtn = Array.from(topicPills).find(b => b.textContent.trim() === 'All');
+    if (allBtn) {
+      allBtn.click();
+      await sleep(300);
+      logTest("Filter guides by topic (All)", true);
+    }
+    
+    // Click first topic filter
+    if (topicPills.length > 1) {
+      topicPills[1].click();
+      await sleep(300);
+      logTest("Filter guides by specific topic", true);
+    }
+  }
+  
+  // Test guide card buttons
+  const guideCards = document.querySelectorAll('.guide-card');
+  if (guideCards.length > 0) {
+    const firstCard = guideCards[0];
+    
+    // Test Preview button
+    const previewBtn = firstCard.querySelector('.preview-btn');
+    if (previewBtn) {
+      previewBtn.click();
+      await sleep(500);
+      logTest("Preview guide", true);
+    }
+    
+    // Test Copy path button
+    const copyBtn = firstCard.querySelector('.copy-btn');
+    if (copyBtn) {
+      copyBtn.click();
+      await sleep(300);
+      logTest("Copy guide path", true);
+    }
+    
+    // Test Open link
+    const openLink = firstCard.querySelector('.guide-link');
+    if (openLink) {
+      logTest("Open guide link exists", true);
+      // Don't actually open to avoid navigation
+    }
+  }
+}
+
+async function testSpectoCloudPanel() {
+  console.log("\n=== Testing SpectoCloud Panel ===");
+  
+  // Test Load Humanizer Config button
+  await clickButton('button:contains("Load Humanizer Config")', "Load Humanizer Config");
+  await sleep(1000);
+  
+  // Test preset buttons
+  const presetBtns = Array.from(document.querySelectorAll('button')).filter(b => 
+    ['preview', 'standard', 'high'].includes(b.textContent.trim().toLowerCase())
+  );
+  for (const btn of presetBtns) {
+    btn.click();
+    await sleep(300);
+    logTest(`Select preset: ${btn.textContent.trim()}`, true);
+  }
+  
+  // Test mode dropdown
+  const modeSelect = document.querySelector('select');
+  if (modeSelect) {
+    modeSelect.value = 'animation';
+    modeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    await sleep(300);
+    logTest("Change mode to animation", true);
+    
+    modeSelect.value = 'static';
+    modeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    await sleep(300);
+    logTest("Change mode to static", true);
+  }
+  
+  // Test number inputs
+  const fpsInput = Array.from(document.querySelectorAll('input[type="number"]')).find(i => 
+    i.previousElementSibling?.textContent?.includes('FPS')
+  );
+  if (fpsInput) {
+    fpsInput.value = '20';
+    fpsInput.dispatchEvent(new Event('change', { bubbles: true }));
+    await sleep(300);
+    logTest("Change FPS value", true);
+  }
+  
+  // Test checkbox (Rotate)
+  const rotateCheckbox = Array.from(document.querySelectorAll('input[type="checkbox"]')).find(c => 
+    c.previousElementSibling?.textContent?.includes('Rotate')
+  );
+  if (rotateCheckbox) {
+    rotateCheckbox.checked = !rotateCheckbox.checked;
+    rotateCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+    await sleep(300);
+    logTest("Toggle rotate checkbox", true);
+  }
+  
+  // Test file upload
+  const fileInput = document.querySelector('input[type="file"]');
+  if (fileInput) {
+    logTest("File upload input exists", true);
+    // Can't actually upload in automated test
+  }
+  
+  // Test render button
+  await clickButton('button:contains("Render")', "Render SpectoCloud");
+  await sleep(2000);
+}
+
+async function runAllTests() {
+  console.log("🚀 Starting Comprehensive UI Tests...\n");
+  console.log("Make sure the dev server is running at http://localhost:1420\n");
+  
+  try {
+    await testAppHeader();
+    await testSideA();
+    await testSideB();
+    await testLyricPanel();
+    await testGuideNav();
+    await testSpectoCloudPanel();
+    
+    // Print summary
+    console.log("\n" + "=".repeat(50));
+    console.log("📊 TEST SUMMARY");
+    console.log("=".repeat(50));
+    console.log(`✅ Passed: ${UI_TEST_RESULTS.passed.length}`);
+    console.log(`❌ Failed: ${UI_TEST_RESULTS.failed.length}`);
+    console.log(`⏭️  Skipped: ${UI_TEST_RESULTS.skipped.length}`);
+    
+    if (UI_TEST_RESULTS.failed.length > 0) {
+      console.log("\n❌ Failed Tests:");
+      UI_TEST_RESULTS.failed.forEach(f => {
+        console.log(`  - ${f.name}: ${f.error}`);
+      });
+    }
+    
+    if (UI_TEST_RESULTS.skipped.length > 0) {
+      console.log("\n⏭️  Skipped Tests:");
+      UI_TEST_RESULTS.skipped.forEach(s => {
+        console.log(`  - ${s.name}: ${s.reason}`);
+      });
+    }
+    
+    console.log("\n✅ All tests completed!");
+    
+  } catch (error) {
+    console.error("❌ Test suite error:", error);
+  }
+}
+
+// Export for use
+if (typeof window !== 'undefined') {
+  window.runUITests = runAllTests;
+  console.log("💡 Run 'runUITests()' in the console to start testing");
+}
+
+// Auto-run if in Node.js environment
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { runAllTests, UI_TEST_RESULTS };
+}

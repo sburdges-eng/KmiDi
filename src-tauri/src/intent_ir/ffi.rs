@@ -1,16 +1,14 @@
 //! Intent IR FFI - C-compatible structs and conversion functions
 
 use super::*;
-use std::ffi::{CStr, CString};
-use std::os::raw::{c_char, c_int, c_float};
-use std::ptr;
+use std::os::raw::c_float;
 
 /// C-compatible IntentMeta
 #[repr(C)]
 pub struct CIntentMeta {
-    pub ir_version: c_uint16,
-    pub intent_id: c_uint64,
-    pub session_id: c_uint64,
+    pub ir_version: u16,
+    pub intent_id: u64,
+    pub session_id: u64,
 }
 
 /// C-compatible EmotionState
@@ -19,7 +17,7 @@ pub struct CEmotionState {
     pub valence: c_float,
     pub arousal: c_float,
     pub dominance: c_float,
-    pub discrete_id: c_int16,
+    pub discrete_id: i16,
     pub intensity: c_float,
     pub confidence: c_float,
 }
@@ -32,7 +30,7 @@ pub struct CMusicalIntent {
     pub groove_strength: c_float,
     pub harmonic_tension: c_float,
     pub harmonic_motion: c_float,
-    pub mode_preference: c_int8,
+    pub mode_preference: i8,
     pub melodic_activity: c_float,
     pub contour_variance: c_float,
     pub dynamic_range: c_float,
@@ -42,8 +40,8 @@ pub struct CMusicalIntent {
 /// C-compatible TimeScope
 #[repr(C)]
 pub struct CTimeScope {
-    pub start_bar: c_int32,
-    pub end_bar: c_int32,
+    pub start_bar: i32,
+    pub end_bar: i32,
     pub fade_in_beats: c_float,
     pub fade_out_beats: c_float,
 }
@@ -51,8 +49,8 @@ pub struct CTimeScope {
 /// C-compatible IntentConstraints
 #[repr(C)]
 pub struct CIntentConstraints {
-    pub allowed_engines_mask: c_uint32,
-    pub forbidden_engines_mask: c_uint32,
+    pub allowed_engines_mask: u32,
+    pub forbidden_engines_mask: u32,
     pub max_cpu_cost: c_float,
     pub max_event_rate: c_float,
 }

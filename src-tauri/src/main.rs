@@ -5,6 +5,7 @@ mod commands;
 mod bridge;
 mod state;
 mod events;
+mod intent_ir;
 
 use commands::{
     // C++ KellyBrain commands

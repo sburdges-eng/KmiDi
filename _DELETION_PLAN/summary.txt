@@ -1,0 +1,10 @@
+=== DELETION PLAN SUMMARY ===
+
+Likely trash files:
+    4556
+
+Large non-source files listed:
+       0
+
+Duplicate file hashes:
+       0
