@@ -5,9 +5,7 @@
 #include "penta/common/RTLogger.h"
 #include <algorithm>
 #include <cmath>
-#include <cstring>
 #include <vector>
-#include <limits>
 #include <array>
 
 namespace prrot {
@@ -232,7 +230,7 @@ float PitchTracker::fftPitch(
         }
     }
 
-    if (max_magnitude > 0.01f) {  // Minimum threshold
+    if (max_magnitude > 0.01f && peak_bin > 0 && peak_bin < 1023) {  // Minimum threshold and bounds check
         // Parabolic interpolation for sub-bin accuracy
         float y1 = magnitude_spectrum[peak_bin - 1];
         float y2 = magnitude_spectrum[peak_bin];
@@ -248,6 +246,12 @@ float PitchTracker::fftPitch(
         float frequency = interpolated_bin * bin_frequency;
 
         // Validate and clamp
+        if (frequency >= kMinPitchHz && frequency <= kMaxPitchHz) {
+            return frequency;
+        }
+    } else if (max_magnitude > 0.01f) {
+        // Peak found but can't do interpolation (at boundary), use direct bin frequency
+        float frequency = static_cast<float>(peak_bin) * bin_frequency;
         if (frequency >= kMinPitchHz && frequency <= kMaxPitchHz) {
             return frequency;
         }
@@ -438,9 +442,16 @@ void PitchTracker::applyWindow(
     }
 
     // Hann window: w(n) = 0.5 * (1 - cos(2πn / (N-1)))
+    // Handle edge case: num_samples == 1
+    if (num_samples == 1) {
+        output[0] = input[0];
+        return;
+    }
+
+    constexpr float PI = 3.14159265358979323846f;
+    float denominator = static_cast<float>(num_samples - 1);
     for (size_t i = 0; i < num_samples; ++i) {
-        constexpr float PI = 3.14159265358979323846f;
-        float window_value = 0.5f * (1.0f - std::cos(2.0f * PI * static_cast<float>(i) / static_cast<float>(num_samples - 1)));
+        float window_value = 0.5f * (1.0f - std::cos(2.0f * PI * static_cast<float>(i) / denominator));
         output[i] = input[i] * window_value;
     }
 }
