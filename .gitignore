@@ -473,3 +473,11 @@ venv.bak/
 .DS_Store
 Thumbs.db
 kmidi_audio_data/
+
+# Prevent nested git repositories (except legitimate submodules)
+# Archive and quarantine directories should not contain git repos
+ARCHIVE/**/.git
+CANONICAL/**/.git
+_QUARANTINE*/**/.git
+kelly-project/.git
+desktop_app/data/uploaded/**/.git
