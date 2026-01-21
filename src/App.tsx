@@ -6,6 +6,7 @@ import MusicCustomizer from "./components/MusicCustomizer";
 import SongStructureEditor, { SongSection } from "./components/SongStructureEditor";
 import SpectoCloudPanel from "./components/SpectoCloudPanel";
 import LyricPanel from "./components/LyricPanel";
+import AudioPlayer from "./components/AudioPlayer";
 import "./App.css";
 
 function App() {
@@ -498,6 +499,25 @@ function App() {
           await handleGenerateMusic();
         }}
       />
+
+      <div className="section-header" style={{ 
+        border: '3px solid yellow', 
+        padding: '20px', 
+        margin: '20px 0',
+        background: 'rgba(255, 255, 0, 0.1)'
+      }}>
+        <div className="section-header-inline">
+          <h2>🎵 Audio Playback</h2>
+          <span className="section-badge">Player</span>
+        </div>
+        <p className="section-description">
+          Play your generated music here. The player will appear automatically after music generation.
+        </p>
+        <p style={{ color: 'yellow', fontWeight: 'bold', marginTop: '10px' }}>
+          DEBUG: lastGeneratedAudioPath = {lastGeneratedAudioPath || 'null'}
+        </p>
+      </div>
+      <AudioPlayer audioPath={lastGeneratedAudioPath} title="Your Generated Music" />
 
       <SpectoCloudPanel lastGeneratedAudioPath={lastGeneratedAudioPath} />
     </div>
