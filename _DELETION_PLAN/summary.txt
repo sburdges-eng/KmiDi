@@ -1,10 +1,18 @@
-=== DELETION PLAN SUMMARY ===
+Deletion Plan Summary
+====================
+Generated from audit: _AUDIT_REPORT_20260121_070532
+Generated at: Wed Jan 21 07:13:40 MST 2026
 
-Likely trash files:
-    4556
+File counts:
+  - Likely trash candidates: 5016
+  - Large non-source files (top 500): 500
+  - Duplicate file candidates: 0
+0
 
-Large non-source files listed:
-       0
+Plan files:
+  - 01_likely_trash_candidates.txt
+  - 02_large_non_source_files.txt
+  - 03_duplicate_files.txt
 
-Duplicate file hashes:
-       0
+NOTE: This is a read-only analysis. No files have been deleted.
+Review the plan files and use quarantine_move.sh to safely move files.
