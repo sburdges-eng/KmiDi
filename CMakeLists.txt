@@ -72,11 +72,15 @@ endif()
 find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
 
 # JUCE setup
+# Skip building juceaide to avoid macOS 15.0 compatibility issues
+# We only need juce_dsp for penta_core, not the full JUCE build tools
 if(USE_KMI_DI_FINAL AND KMI_DI_FINAL_AVAILABLE AND EXISTS ${KMI_DI_FINAL_ROOT}/build/external/JUCE)
     message(STATUS "Using JUCE from KmiDi_FINAL")
     add_subdirectory(${KMI_DI_FINAL_ROOT}/build/external/JUCE JUCE)
 else()
     message(STATUS "Using local JUCE")
+    # Set flag to skip juceaide build (macOS 15.0 compatibility)
+    set(JUCE_DISABLE_JUCEAIDE_BUILD ON CACHE BOOL "Skip juceaide build")
     add_subdirectory(external/JUCE EXCLUDE_FROM_ALL)
 endif()
 

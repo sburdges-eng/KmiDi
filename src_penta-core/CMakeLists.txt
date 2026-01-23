@@ -79,11 +79,22 @@ target_include_directories(penta_core PUBLIC
 )
 
 # Link libraries
-target_link_libraries(penta_core PUBLIC
-    readerwriterqueue
-    nlohmann_json::nlohmann_json
-    juce::juce_dsp
-)
+# Note: juce::juce_dsp is optional - we'll make it conditional
+find_package(PkgConfig QUIET)
+if(TARGET juce::juce_dsp)
+    target_link_libraries(penta_core PUBLIC
+        readerwriterqueue
+        nlohmann_json::nlohmann_json
+        juce::juce_dsp
+    )
+else()
+    # Build without JUCE if not available
+    message(WARNING "JUCE not available, building penta_core without juce_dsp")
+    target_link_libraries(penta_core PUBLIC
+        readerwriterqueue
+        nlohmann_json::nlohmann_json
+    )
+endif()
 
 # Platform-specific settings
 if(APPLE)

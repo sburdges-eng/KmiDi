@@ -13,6 +13,7 @@ pybind11_add_module(penta_core_native
 
 target_link_libraries(penta_core_native PRIVATE
     penta_core
+    juce::juce_osc
 )
 
 # Set output directory for Python module
