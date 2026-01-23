@@ -25,6 +25,20 @@ import sys
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from pathlib import Path
+
+# Load environment variables from project root
+import sys
+project_root = Path(__file__).resolve().parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+try:
+    from python.kmidi_env import load_kmidi_env
+    load_kmidi_env(features=['ml', 'training'], verbose=False)
+except ImportError:
+    # Fallback to simple dotenv
+    from dotenv import load_dotenv
+    load_dotenv(project_root / '.env')
+    load_dotenv(project_root / '.env.local', override=True)
 from typing import Any, Dict, List, Optional
 
 # Lazy imports for faster startup

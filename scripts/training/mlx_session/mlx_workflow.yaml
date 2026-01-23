@@ -1,0 +1,60 @@
+workflow:
+  name: mlx_m4_full_pipeline
+  purpose: "MLX-only experiment for full KmiDi workflow"
+  device_profile: m4_16gb
+
+hardware:
+  device: "Apple M4"
+  memory_gb: 16
+  backend: "mlx"
+  precision: "fp16"
+  max_parallel_jobs: 1
+
+paths:
+  data_root: "data"
+  manifests:
+    spectocloud: "data/manifests/spectocloud.jsonl"
+    midi: "data/manifests/midi.jsonl"
+  checkpoints_root: "checkpoints/mlx"
+  exports_root: "models/mlx"
+
+models:
+  spectocloud:
+    architecture: "swin_tiny_mlx"
+    input:
+      n_mels: 128
+      frames: 64
+    output:
+      point_count: 1200
+    training:
+      batch_size: 4
+      grad_accum_steps: 4
+      learning_rate: 0.0001
+      max_epochs: 20
+      warmup_steps: 1000
+      gradient_checkpointing: true
+  midi_generator:
+    architecture: "transformer_decoder_mlx"
+    vocab_size: 388
+    sequence_length: 512
+    training:
+      batch_size: 6
+      grad_accum_steps: 4
+      learning_rate: 0.0003
+      max_epochs: 15
+      warmup_steps: 500
+      gradient_checkpointing: true
+
+inference:
+  spectocloud:
+    target_latency_ms: 16
+  midi_generator:
+    target_latency_ms_per_token: 5
+
+export:
+  format: ["mlx", "coreml"]
+  quantization: "int8"
+
+notes:
+  - "Keep MLX as experimental path; online training remains primary production vision."
+  - "Use grad_accum_steps to stay within 16GB memory."

@@ -43,6 +43,9 @@ use events::{
 };
 
 fn main() {
+    // Load environment variables from .env files
+    dotenv::dotenv().ok();
+
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             // C++ KellyBrain commands

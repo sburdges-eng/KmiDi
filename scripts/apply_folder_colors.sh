@@ -48,3 +48,10 @@ apply_label "PROJECT_DIRECTORY_MAP.md" "Directory Map"
 apply_label "MIGRATION_COMPLETE_SUMMARY.md" "Summary"
 
 log "Complete! Check Finder to see yellow/gold labels."
+
+# Apply labels to all new directories
+for dir in audio biometric music_theory ui ml midi harmony groove diagnostics osc common components engine engines export learning project prrot python voice kelly; do
+    [ -d "src/$dir" ] && apply_label "src/$dir" "src/$dir/ ($dir)"
+done
+
+log "All directory labels applied!"

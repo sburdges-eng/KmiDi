@@ -8,19 +8,22 @@ ensure KmiDi_PROJECT/source/python is in your PYTHONPATH.
 
 __version__ = "0.2.0"
 
-# Re-export commonly used items
-from .session.intent_schema import (
-    CompleteSongIntent,
-    SongIntent,
-    SongRoot,
-    TechnicalConstraints,
-    SystemDirective,
-)
-
-__all__ = [
-    "CompleteSongIntent",
-    "SongIntent",
-    "SongRoot",
-    "TechnicalConstraints",
-    "SystemDirective",
-]
+# Re-export commonly used items from kelly_companion.session
+try:
+    from .kelly_companion.session.intent_schema import (
+        CompleteSongIntent,
+        SongIntent,
+        SongRoot,
+        TechnicalConstraints,
+        SystemDirective,
+    )
+    __all__ = [
+        "CompleteSongIntent",
+        "SongIntent",
+        "SongRoot",
+        "TechnicalConstraints",
+        "SystemDirective",
+    ]
+except ImportError:
+    # If kelly_companion not available, provide empty exports
+    __all__ = []

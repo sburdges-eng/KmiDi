@@ -22,7 +22,23 @@ except ImportError:  # pragma: no cover - fallback for older installs
     from fastmcp import FastMCP
 
 # Initialize environment variables
-load_dotenv()
+# Load from project root using KmiDi env loader
+from pathlib import Path
+import sys
+
+# Add project root to path if not already there
+project_root = Path(__file__).resolve().parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+try:
+    from python.kmidi_env import load_kmidi_env
+    load_kmidi_env(verbose=False)
+except ImportError:
+    # Fallback to simple dotenv if kmidi_env not available
+    from dotenv import load_dotenv
+    load_dotenv(project_root / ".env")
+    load_dotenv(project_root / ".env.local", override=True)
 
 # Create the FastMCP server instance
 mcp = FastMCP(
