@@ -43,24 +43,25 @@ Usage:
     modified_text, params = manager.apply_profile("Hello world", "my_voice")
 """
 
-import os
-import json
-import re
-import random
-from dataclasses import dataclass, field, asdict
-from datetime import datetime
-from pathlib import Path
-from typing import Optional, Dict, List, Any, Tuple
-from enum import Enum
 import copy
-
+import json
+import os
+import random
+import re
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 # =============================================================================
 # Enums and Constants
 # =============================================================================
 
+
 class Gender(str, Enum):
     """Voice gender for pitch defaults."""
+
     MALE = "male"
     FEMALE = "female"
     NEUTRAL = "neutral"
@@ -69,6 +70,7 @@ class Gender(str, Enum):
 
 class AccentRegion(str, Enum):
     """Supported accent regions."""
+
     # American
     AMERICAN_GENERAL = "american_general"
     AMERICAN_SOUTHERN = "southern_us"
@@ -103,6 +105,7 @@ class AccentRegion(str, Enum):
 
 class SpeechPattern(str, Enum):
     """Speech patterns and impediments."""
+
     NONE = "none"
 
     # Fluency
@@ -112,16 +115,16 @@ class SpeechPattern(str, Enum):
     CLUTTERING = "cluttering"
 
     # Articulation
-    FRONTAL_LISP = "frontal_lisp"      # S/Z → TH
-    LATERAL_LISP = "lateral_lisp"       # Slushy S
-    RHOTACISM = "rhotacism"             # R → W
-    LAMBDACISM = "lambdacism"           # L difficulty
+    FRONTAL_LISP = "frontal_lisp"  # S/Z → TH
+    LATERAL_LISP = "lateral_lisp"  # Slushy S
+    RHOTACISM = "rhotacism"  # R → W
+    LAMBDACISM = "lambdacism"  # L difficulty
 
     # Voice
     HOARSE = "hoarse"
     BREATHY = "breathy"
     NASAL = "nasal"
-    DENASALIZED = "denasalized"         # Blocked nose sound
+    DENASALIZED = "denasalized"  # Blocked nose sound
 
     # Rate
     FAST_SPEECH = "fast_speech"
@@ -129,7 +132,7 @@ class SpeechPattern(str, Enum):
 
     # Other
     MONOTONE = "monotone"
-    SING_SONG = "sing_song"             # Exaggerated prosody
+    SING_SONG = "sing_song"  # Exaggerated prosody
 
 
 # Default pitch ranges by gender (Hz)
@@ -151,86 +154,78 @@ PITCH_DEFAULTS = {
 ACCENT_PHONEME_MAPS = {
     AccentRegion.AMERICAN_SOUTHERN: {
         # Vowel shifts
-        "I": "ah-ee",      # "ride" → "rahd"
-        "ow": "ah",        # "about" → "abaht"
-        "ing": "in'",      # "walking" → "walkin'"
+        "I": "ah-ee",  # "ride" → "rahd"
+        "ow": "ah",  # "about" → "abaht"
+        "ing": "in'",  # "walking" → "walkin'"
         # Consonants
-        "r": "r",          # Strong R (rhotic)
+        "r": "r",  # Strong R (rhotic)
     },
-
     AccentRegion.BRITISH_RP: {
         # Non-rhotic (drop R before consonants/end)
-        "r_end": "",       # "car" → "cah"
-        "r_cons": "",      # "card" → "cahd"
+        "r_end": "",  # "car" → "cah"
+        "r_cons": "",  # "card" → "cahd"
         # Vowels
-        "a_bath": "ah",    # "bath" → "bahth"
-        "o_lot": "o",      # Rounded O
+        "a_bath": "ah",  # "bath" → "bahth"
+        "o_lot": "o",  # Rounded O
     },
-
     AccentRegion.BRITISH_COCKNEY: {
         # TH-fronting
-        "th_voice": "v",   # "brother" → "bruvver"
-        "th_unvoice": "f", # "think" → "fink"
+        "th_voice": "v",  # "brother" → "bruvver"
+        "th_unvoice": "f",  # "think" → "fink"
         # H-dropping
-        "h_init": "",      # "hello" → "'ello"
+        "h_init": "",  # "hello" → "'ello"
         # Glottal stop
-        "t_mid": "ʔ",      # "bottle" → "bo'le"
+        "t_mid": "ʔ",  # "bottle" → "bo'le"
         # Diphthongs
-        "ay": "ai",        # "face" → "faice"
-        "ow": "ah",        # "mouth" → "mahf"
+        "ay": "ai",  # "face" → "faice"
+        "ow": "ah",  # "mouth" → "mahf"
     },
-
     AccentRegion.BRITISH_SCOTTISH: {
         # Rhotic
-        "r": "r",          # Trilled or tapped R
+        "r": "r",  # Trilled or tapped R
         # Vowels
-        "oo": "u",         # "good" → shorter
-        "ou": "oo",        # "house" → "hoose"
+        "oo": "u",  # "good" → shorter
+        "ou": "oo",  # "house" → "hoose"
     },
-
     AccentRegion.BRITISH_IRISH: {
         # TH sounds
-        "th_voice": "d",   # "the" → "de"
-        "th_unvoice": "t", # "think" → "tink"
+        "th_voice": "d",  # "the" → "de"
+        "th_unvoice": "t",  # "think" → "tink"
         # Soft T
         "t": "t̪",
     },
-
     AccentRegion.AUSTRALIAN: {
         # Vowel shifts
-        "ay": "ai",        # "day" → "die" sound
-        "ee": "i",         # Shorter
-        "i": "oi",         # "fish" → "foish"
+        "ay": "ai",  # "day" → "die" sound
+        "ee": "i",  # Shorter
+        "i": "oi",  # "fish" → "foish"
     },
-
     AccentRegion.INDIAN: {
         # Retroflex consonants
         "t": "ʈ",
         "d": "ɖ",
         # V/W merge
-        "v": "w",          # "very" → "wery"
-        "w": "v",          # "what" → "vhat"
+        "v": "w",  # "very" → "wery"
+        "w": "v",  # "what" → "vhat"
         # Aspirated stops
         "p": "pʰ",
         "k": "kʰ",
     },
-
     AccentRegion.SPANISH_ACCENT: {
         # Vowel purity
-        "short_i": "ee",   # "sit" → "seet"
-        "short_u": "oo",   # "put" → "poot"
+        "short_i": "ee",  # "sit" → "seet"
+        "short_u": "oo",  # "put" → "poot"
         # Consonants
-        "v": "b",          # "very" → "bery"
-        "j": "y",          # "job" → "yob"
-        "h": "",           # Often silent
+        "v": "b",  # "very" → "bery"
+        "j": "y",  # "job" → "yob"
+        "h": "",  # Often silent
     },
-
     AccentRegion.FRENCH_ACCENT: {
         # TH → Z/S
-        "th_voice": "z",   # "the" → "ze"
-        "th_unvoice": "s", # "think" → "sink"
+        "th_voice": "z",  # "the" → "ze"
+        "th_unvoice": "s",  # "think" → "sink"
         # H silent
-        "h_init": "",      # "hello" → "ello"
+        "h_init": "",  # "hello" → "ello"
         # R uvular
         "r": "ʁ",
     },
@@ -245,7 +240,6 @@ ACCENT_WORD_MAPS = {
         "fixing to": "fixin' to",
         "might could": "might could",
     },
-
     AccentRegion.BRITISH_COCKNEY: {
         "hello": "'ello",
         "isn't it": "innit",
@@ -255,7 +249,6 @@ ACCENT_WORD_MAPS = {
         "brother": "bruvver",
         "mother": "muvver",
     },
-
     AccentRegion.AUSTRALIAN: {
         "afternoon": "arvo",
         "breakfast": "brekkie",
@@ -268,6 +261,7 @@ ACCENT_WORD_MAPS = {
 # =============================================================================
 # Speech Pattern Modifications
 # =============================================================================
+
 
 class SpeechPatternProcessor:
     """Processes text for speech patterns and impediments."""
@@ -336,20 +330,20 @@ class SpeechPatternProcessor:
         """
         if lisp_type == "frontal":
             # S → TH (unvoiced)
-            text = re.sub(r'\bs', 'th', text)
-            text = re.sub(r's\b', 'th', text)
-            text = re.sub(r'ss', 'th', text)
-            text = re.sub(r'S', 'Th', text)
+            text = re.sub(r"\bs", "th", text)
+            text = re.sub(r"s\b", "th", text)
+            text = re.sub(r"ss", "th", text)
+            text = re.sub(r"S", "Th", text)
 
             # Z → TH (voiced, written as "th" but voiced)
-            text = re.sub(r'\bz', 'th', text)
-            text = re.sub(r'z\b', 'th', text)
-            text = re.sub(r'Z', 'Th', text)
+            text = re.sub(r"\bz", "th", text)
+            text = re.sub(r"z\b", "th", text)
+            text = re.sub(r"Z", "Th", text)
 
         elif lisp_type == "lateral":
             # Mark S sounds as slushy (for TTS interpretation)
-            text = re.sub(r's', 'ṣ', text)
-            text = re.sub(r'S', 'Ṣ', text)
+            text = re.sub(r"s", "ṣ", text)
+            text = re.sub(r"S", "Ṣ", text)
 
         return text
 
@@ -362,11 +356,11 @@ class SpeechPatternProcessor:
         "rabbit" → "wabbit", "red" → "wed"
         """
         # R at start of words or syllables
-        text = re.sub(r'\br', 'w', text)
-        text = re.sub(r'\bR', 'W', text)
+        text = re.sub(r"\br", "w", text)
+        text = re.sub(r"\bR", "W", text)
 
         # R after consonants
-        text = re.sub(r'([bcdfghjklmnpqstvxz])r', r'\1w', text)
+        text = re.sub(r"([bcdfghjklmnpqstvxz])r", r"\1w", text)
 
         return text
 
@@ -387,7 +381,7 @@ class SpeechPatternProcessor:
             if len(word) > 6 and random.random() < 0.3:
                 # Telescope long words
                 mid = len(word) // 2
-                word = word[:mid-1] + word[mid+1:]
+                word = word[: mid - 1] + word[mid + 1 :]
 
             result.append(word)
 
@@ -430,6 +424,7 @@ class SpeechPatternProcessor:
 # Voice Profile
 # =============================================================================
 
+
 @dataclass
 class VoiceProfile:
     """
@@ -437,6 +432,7 @@ class VoiceProfile:
 
     All settings are local and customizable.
     """
+
     # Identity
     name: str
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -444,30 +440,30 @@ class VoiceProfile:
 
     # Pitch characteristics (Hz)
     gender: Gender = Gender.NEUTRAL
-    base_pitch: float = 170.0          # Default pitch
-    pitch_range: float = 50.0          # Variation range
-    pitch_contour: str = "natural"     # natural, monotone, sing_song, questioning
+    base_pitch: float = 170.0  # Default pitch
+    pitch_range: float = 50.0  # Variation range
+    pitch_contour: str = "natural"  # natural, monotone, sing_song, questioning
 
     # Timing
-    speech_rate: float = 1.0           # 1.0 = normal, 0.5 = slow, 2.0 = fast
-    pause_frequency: float = 1.0       # Pause insertion frequency
+    speech_rate: float = 1.0  # 1.0 = normal, 0.5 = slow, 2.0 = fast
+    pause_frequency: float = 1.0  # Pause insertion frequency
 
     # Accent
     accent: AccentRegion = AccentRegion.AMERICAN_GENERAL
-    accent_strength: float = 1.0       # 0.0 = none, 1.0 = full
+    accent_strength: float = 1.0  # 0.0 = none, 1.0 = full
 
     # Speech patterns
     speech_patterns: List[SpeechPattern] = field(default_factory=list)
 
     # Voice quality
-    breathiness: float = 0.0           # 0.0 - 1.0
-    hoarseness: float = 0.0            # 0.0 - 1.0
-    nasality: float = 0.0              # 0.0 - 1.0
-    creakiness: float = 0.0            # Vocal fry, 0.0 - 1.0
+    breathiness: float = 0.0  # 0.0 - 1.0
+    hoarseness: float = 0.0  # 0.0 - 1.0
+    nasality: float = 0.0  # 0.0 - 1.0
+    creakiness: float = 0.0  # Vocal fry, 0.0 - 1.0
 
     # Formants (for formant synthesis)
-    formant_shift: float = 0.0         # -1.0 to 1.0
-    formant_scale: float = 1.0         # 0.8 - 1.2
+    formant_shift: float = 0.0  # -1.0 to 1.0
+    formant_scale: float = 1.0  # 0.8 - 1.2
 
     # Learned preferences (updated by learning system)
     learned_words: Dict[str, str] = field(default_factory=dict)  # Custom pronunciations
@@ -498,8 +494,7 @@ class VoiceProfile:
 
         if "speech_patterns" in data:
             data["speech_patterns"] = [
-                SpeechPattern(p) if isinstance(p, str) else p
-                for p in data["speech_patterns"]
+                SpeechPattern(p) if isinstance(p, str) else p for p in data["speech_patterns"]
             ]
 
         return cls(**data)
@@ -509,6 +504,7 @@ class VoiceProfile:
 # Voice Profile Manager
 # =============================================================================
 
+
 class VoiceProfileManager:
     """
     Manages voice profiles with learning capabilities.
@@ -517,9 +513,7 @@ class VoiceProfileManager:
     """
 
     def __init__(self, storage_dir: Optional[str] = None):
-        self.storage_dir = Path(
-            storage_dir or os.path.expanduser("~/.daiw/voice_profiles")
-        )
+        self.storage_dir = Path(storage_dir or os.path.expanduser("~/.daiw/voice_profiles"))
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
         self._profiles: Dict[str, VoiceProfile] = {}
@@ -533,7 +527,7 @@ class VoiceProfileManager:
         """Load all profiles from storage."""
         for filepath in self.storage_dir.glob("*.json"):
             try:
-                with open(filepath, 'r') as f:
+                with open(filepath) as f:
                     data = json.load(f)
                     profile = VoiceProfile.from_dict(data)
                     self._profiles[profile.name] = profile
@@ -543,7 +537,7 @@ class VoiceProfileManager:
     def _save_profile(self, profile: VoiceProfile):
         """Save a profile to storage."""
         filepath = self.storage_dir / f"{profile.name}.json"
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(profile.to_dict(), f, indent=2)
 
     # =========================================================================
@@ -557,7 +551,7 @@ class VoiceProfileManager:
         base_pitch: Optional[float] = None,
         accent: AccentRegion = AccentRegion.AMERICAN_GENERAL,
         speech_patterns: Optional[List[SpeechPattern]] = None,
-        **kwargs
+        **kwargs,
     ) -> VoiceProfile:
         """
         Create a new voice profile.
@@ -583,7 +577,7 @@ class VoiceProfileManager:
             base_pitch=base_pitch,
             accent=accent,
             speech_patterns=speech_patterns or [],
-            **kwargs
+            **kwargs,
         )
 
         self._profiles[name] = profile
@@ -628,9 +622,7 @@ class VoiceProfileManager:
     # =========================================================================
 
     def apply_profile(
-        self,
-        text: str,
-        profile_name: Optional[str] = None
+        self, text: str, profile_name: Optional[str] = None
     ) -> Tuple[str, Dict[str, Any]]:
         """
         Apply a voice profile to text.
@@ -652,26 +644,18 @@ class VoiceProfileManager:
         for word, replacement in profile.learned_words.items():
             # Word boundary matching
             modified_text = re.sub(
-                rf'\b{re.escape(word)}\b',
-                replacement,
-                modified_text,
-                flags=re.IGNORECASE
+                rf"\b{re.escape(word)}\b", replacement, modified_text, flags=re.IGNORECASE
             )
 
         # Apply accent
         if profile.accent_strength > 0:
             modified_text = self._apply_accent(
-                modified_text,
-                profile.accent,
-                profile.accent_strength
+                modified_text, profile.accent, profile.accent_strength
             )
 
         # Apply speech patterns
         for pattern in profile.speech_patterns:
-            modified_text = self._pattern_processor.apply_pattern(
-                modified_text,
-                pattern
-            )
+            modified_text = self._pattern_processor.apply_pattern(modified_text, pattern)
 
         # Build voice parameters for TTS
         params = {
@@ -686,23 +670,13 @@ class VoiceProfileManager:
 
         return modified_text, params
 
-    def _apply_accent(
-        self,
-        text: str,
-        accent: AccentRegion,
-        strength: float
-    ) -> str:
+    def _apply_accent(self, text: str, accent: AccentRegion, strength: float) -> str:
         """Apply accent modifications to text."""
         # Word-level replacements
         word_map = ACCENT_WORD_MAPS.get(accent, {})
         for standard, accented in word_map.items():
             if random.random() < strength:
-                text = re.sub(
-                    rf'\b{re.escape(standard)}\b',
-                    accented,
-                    text,
-                    flags=re.IGNORECASE
-                )
+                text = re.sub(rf"\b{re.escape(standard)}\b", accented, text, flags=re.IGNORECASE)
 
         return text
 
@@ -710,12 +684,7 @@ class VoiceProfileManager:
     # Learning System
     # =========================================================================
 
-    def learn_pronunciation(
-        self,
-        profile_name: str,
-        word: str,
-        pronunciation: str
-    ):
+    def learn_pronunciation(self, profile_name: str, word: str, pronunciation: str):
         """
         Learn a custom pronunciation for a word.
 
@@ -730,12 +699,7 @@ class VoiceProfileManager:
             profile.updated_at = datetime.now().isoformat()
             self._save_profile(profile)
 
-    def learn_phrase(
-        self,
-        profile_name: str,
-        phrase: str,
-        replacement: str
-    ):
+    def learn_phrase(self, profile_name: str, phrase: str, replacement: str):
         """
         Learn a custom phrase replacement.
 
@@ -780,7 +744,6 @@ class VoiceProfileManager:
                 "gender": Gender.CHILD,
                 "accent": AccentRegion.AMERICAN_GENERAL,
             },
-
             # Accent presets
             {
                 "name": "british_gentleman",
@@ -808,7 +771,6 @@ class VoiceProfileManager:
                 "accent": AccentRegion.BRITISH_IRISH,
                 "pitch_contour": "sing_song",
             },
-
             # Character voices
             {
                 "name": "robot",
@@ -897,7 +859,7 @@ if __name__ == "__main__":
         gender=Gender.MALE,
         accent=AccentRegion.AMERICAN_SOUTHERN,
         speech_patterns=[SpeechPattern.MILD_STUTTER],
-        speech_rate=0.9
+        speech_rate=0.9,
     )
     print(f"\nCreated profile: {profile.name}")
 
@@ -911,5 +873,5 @@ if __name__ == "__main__":
     # Test learning
     manager.learn_pronunciation("test_voice", "hello", "howdy")
     modified2, _ = manager.apply_profile(test_text, "test_voice")
-    print(f"\nAfter learning 'hello' → 'howdy':")
+    print("\nAfter learning 'hello' → 'howdy':")
     print(f"Modified: {modified2}")

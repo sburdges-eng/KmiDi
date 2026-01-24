@@ -4,11 +4,11 @@ Integration Example: All-Knowing Interactive Musical Customization System
 This example demonstrates how all components work together.
 """
 
-from music_brain.learning import UserPreferenceModel, PreferenceAnalyzer, PreferenceTracker
-from music_brain.interactive import MultiParameterMorpher
-from music_brain.intelligence import SuggestionEngine, ContextAnalyzer
 from music_brain.adaptive import AdaptiveGenerator, FeedbackProcessor
-from music_brain.editing import NaturalLanguageProcessor, FeedbackInterpreter, MidiEditor
+from music_brain.editing import FeedbackInterpreter, NaturalLanguageProcessor
+from music_brain.intelligence import ContextAnalyzer, SuggestionEngine
+from music_brain.interactive import MultiParameterMorpher
+from music_brain.learning import PreferenceTracker, UserPreferenceModel
 
 
 def main():
@@ -53,7 +53,9 @@ def main():
 
     state = morpher.update(0.5)
     print(f"✓ Parameter morphing active: {morpher.has_active_morphs()}")
-    print(f"✓ Current state: valence={state.get('valence'):.2f}, arousal={state.get('arousal'):.2f}")
+    print(
+        f"✓ Current state: valence={state.get('valence'):.2f}, arousal={state.get('arousal'):.2f}"
+    )
 
     # ====================================================================
     # Phase 3: Intelligent Suggestions
@@ -72,7 +74,7 @@ def main():
             "intensity": 0.6,
             "tempo": 120,
         },
-        "rule_breaks": []
+        "rule_breaks": [],
     }
 
     context = context_analyzer.analyze(current_state)
@@ -94,19 +96,17 @@ def main():
 
     # Record feedback
     feedback_processor.process_explicit_feedback(
-        parameters={"valence": -0.5, "arousal": 0.4},
-        emotion="grief",
-        thumbs_up=True
+        parameters={"valence": -0.5, "arousal": 0.4}, emotion="grief", thumbs_up=True
     )
 
     feedback_processor.process_implicit_feedback(
         original_parameters={"valence": -0.5, "arousal": 0.4},
         modified_parameters={"valence": -0.7, "arousal": 0.4},
-        emotion="grief"
+        emotion="grief",
     )
 
     stats = adaptive_generator.get_statistics()
-    print(f"✓ Adaptive generator statistics:")
+    print("✓ Adaptive generator statistics:")
     print(f"  - Total generations: {stats['total_generations']}")
     print(f"  - Acceptance rate: {stats['acceptance_rate']:.1%}")
     print(f"  - Parameter biases learned: {len(stats['parameter_biases'])}")
@@ -127,7 +127,7 @@ def main():
 
     for feedback in feedback_examples:
         result = interpreter.interpret_feedback(feedback, current_state)
-        print(f"\n✓ Feedback: \"{feedback}\"")
+        print(f'\n✓ Feedback: "{feedback}"')
         print(f"  Intent: {result.intent.value}")
         print(f"  Target: {result.target_element or 'general'}")
         print(f"  Changes: {result.parameter_changes}")

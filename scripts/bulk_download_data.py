@@ -30,13 +30,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-SOFT_TARGET_GB = 2500      # 2.5 TB soft target
-HARD_CAP_GB = 3000         # 3 TB absolute safety stop
+SOFT_TARGET_GB = 2500  # 2.5 TB soft target
+HARD_CAP_GB = 3000  # 3 TB absolute safety stop
 HUMAN_READABLE_HARD_CAP = f"{HARD_CAP_GB} GB (3 TB)"
 
 AUDIO_DATA_ROOT = Path("/Volumes/Extreme SSD/kelly-audio-data")
 MAX_CONSECUTIVE_FAILURES = 5
-DOWNLOAD_TIMEOUT_SECONDS = 3600 * 24 # 24 hours per dataset max for TB scale
+DOWNLOAD_TIMEOUT_SECONDS = 3600 * 24  # 24 hours per dataset max for TB scale
 
 # Rough dataset size estimates (GB).
 DATASET_ESTIMATES_GB = {
@@ -83,7 +83,7 @@ def get_current_size_gb(path: Path) -> float:
 
     total_size = 0
     try:
-        for f in path.rglob('*'):
+        for f in path.rglob("*"):
             if f.is_file():
                 total_size += f.stat().st_size
     except Exception as e:
@@ -99,31 +99,30 @@ def download_and_preprocess_dataset(name: str) -> bool:
         # 1. Download
         logger.info(f"  Downloading {name}...")
         download_cmd = [
-            sys.executable, "scripts/prepare_datasets.py",
-            "--dataset", name, "--download"
+            sys.executable,
+            "scripts/prepare_datasets.py",
+            "--dataset",
+            name,
+            "--download",
         ]
-        subprocess.run(
-            download_cmd, check=True, timeout=DOWNLOAD_TIMEOUT_SECONDS
-        )
+        subprocess.run(download_cmd, check=True, timeout=DOWNLOAD_TIMEOUT_SECONDS)
 
         # 2. Preprocess (Labeling)
         logger.info(f"  Labeling/Preprocessing {name}...")
         preprocess_cmd = [
-            sys.executable, "scripts/prepare_datasets.py",
-            "--dataset", name, "--preprocess"
+            sys.executable,
+            "scripts/prepare_datasets.py",
+            "--dataset",
+            name,
+            "--preprocess",
         ]
-        subprocess.run(
-            preprocess_cmd, check=True, timeout=DOWNLOAD_TIMEOUT_SECONDS
-        )
+        subprocess.run(preprocess_cmd, check=True, timeout=DOWNLOAD_TIMEOUT_SECONDS)
 
         logger.info(f"Successfully finished processing: {name}")
         return True
 
     except subprocess.TimeoutExpired:
-        logger.error(
-            f"Process for {name} timed out after "
-            f"{DOWNLOAD_TIMEOUT_SECONDS} seconds."
-        )
+        logger.error(f"Process for {name} timed out after {DOWNLOAD_TIMEOUT_SECONDS} seconds.")
         return False
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to process {name}: {e}")
@@ -142,8 +141,7 @@ def main() -> None:
 
     logger.info("=" * 60)
     logger.info(
-        "Bulk Audio Downloader "
-        f"(soft target {SOFT_TARGET_GB} GB, hard cap {HARD_CAP_GB} GB)"
+        f"Bulk Audio Downloader (soft target {SOFT_TARGET_GB} GB, hard cap {HARD_CAP_GB} GB)"
     )
     logger.info("=" * 60)
 
@@ -160,9 +158,7 @@ def main() -> None:
 
     for i, name in enumerate(TARGET_DATASETS):
         # Progress report
-        logger.info(
-            f"\n[Dataset {i+1}/{len(TARGET_DATASETS)}] Processing: {name}"
-        )
+        logger.info(f"\n[Dataset {i + 1}/{len(TARGET_DATASETS)}] Processing: {name}")
 
         if name not in DATASETS:
             logger.warning(f"Dataset {name} not found in configs. Skipping.")
@@ -171,8 +167,7 @@ def main() -> None:
         # Stop if we've already hit the soft target
         if current_size >= SOFT_TARGET_GB:
             logger.info(
-                f"Reached soft target ({current_size:.2f} GB >= "
-                f"{SOFT_TARGET_GB} GB). Stopping."
+                f"Reached soft target ({current_size:.2f} GB >= {SOFT_TARGET_GB} GB). Stopping."
             )
             break
 
@@ -196,8 +191,7 @@ def main() -> None:
         total_runtime_hours = (time.time() - start_time) / 3600
         if total_runtime_hours > 48:
             logger.warning(
-                f"Bulk script has been running for {total_runtime_hours:.1f} "
-                "hours. Safety abort."
+                f"Bulk script has been running for {total_runtime_hours:.1f} hours. Safety abort."
             )
             break
 

@@ -5,10 +5,10 @@ Provides functions to receive state updates from C++ engines and provide
 current state queries.
 """
 
-from typing import Dict, List, Any, Optional
 import json
 from collections import defaultdict
 from datetime import datetime
+from typing import Any, Dict
 
 # Global state storage
 _engine_states: Dict[str, Dict[str, Any]] = defaultdict(dict)
@@ -42,7 +42,7 @@ def emit_state_update(engine_type: str, state_json: str):
         # Update global current state
         _update_current_state(engine_type, state)
 
-    except Exception as e:
+    except Exception:
         # Silently fail - state updates are not critical
         pass
 
@@ -77,7 +77,7 @@ def get_current_state() -> str:
 
         return json.dumps(aggregated)
 
-    except Exception as e:
+    except Exception:
         return json.dumps({})
 
 
@@ -95,7 +95,7 @@ def get_engine_state(engine_type: str) -> str:
         state = _engine_states.get(engine_type, {})
         return json.dumps(state)
 
-    except Exception as e:
+    except Exception:
         return json.dumps({})
 
 

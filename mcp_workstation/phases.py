@@ -7,13 +7,11 @@ Manages the 3 phases of the iDAW project:
 3. Advanced Features (C++ DAW plugin)
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 from datetime import datetime
+from typing import Dict, List, Optional
 
-from .models import Phase, PhaseTask, PhaseStatus, AIAgent
-from .debug import get_debug, DebugCategory, trace
-
+from .debug import DebugCategory, get_debug, trace
+from .models import AIAgent, Phase, PhaseStatus, PhaseTask
 
 # =============================================================================
 # iDAW Project Phases Definition
@@ -231,6 +229,7 @@ IDAW_PHASES = [
 # Phase Manager
 # =============================================================================
 
+
 class PhaseManager:
     """
     Manages iDAW project phases.
@@ -277,10 +276,7 @@ class PhaseManager:
         """Update a task's status."""
         phase = self.get_phase(phase_id)
         if not phase:
-            self._debug.warning(
-                DebugCategory.PHASE,
-                f"Phase {phase_id} not found"
-            )
+            self._debug.warning(DebugCategory.PHASE, f"Phase {phase_id} not found")
             return
 
         for task in phase.tasks:
@@ -298,7 +294,7 @@ class PhaseManager:
                 self._debug.info(
                     DebugCategory.TASK,
                     f"Updated task {task_id} to {status.value}",
-                    data={"phase": phase_id, "task": task_id, "status": status.value}
+                    data={"phase": phase_id, "task": task_id, "status": status.value},
                 )
 
                 # Update phase progress
@@ -338,7 +334,7 @@ class PhaseManager:
         if current.progress < 1.0:
             self._debug.warning(
                 DebugCategory.PHASE,
-                f"Cannot advance: Phase {current.id} is {current.progress:.0%} complete"
+                f"Cannot advance: Phase {current.id} is {current.progress:.0%} complete",
             )
             return False
 
@@ -347,10 +343,7 @@ class PhaseManager:
         next_phase = self.get_phase(next_phase_id)
 
         if not next_phase:
-            self._debug.info(
-                DebugCategory.PHASE,
-                "All phases completed!"
-            )
+            self._debug.info(DebugCategory.PHASE, "All phases completed!")
             return False
 
         # Mark current as verified, next as in progress
@@ -360,8 +353,7 @@ class PhaseManager:
         self.current_phase_id = next_phase_id
 
         self._debug.info(
-            DebugCategory.PHASE,
-            f"Advanced to Phase {next_phase_id}: {next_phase.name}"
+            DebugCategory.PHASE, f"Advanced to Phase {next_phase_id}: {next_phase.name}"
         )
         return True
 
@@ -402,18 +394,20 @@ class PhaseManager:
             in_progress = sum(1 for t in phase.tasks if t.status == PhaseStatus.IN_PROGRESS)
             blocked = sum(1 for t in phase.tasks if t.status == PhaseStatus.BLOCKED)
 
-            summaries.append({
-                "phase_id": phase.id,
-                "name": phase.name,
-                "status": phase.status.value,
-                "progress": phase.progress,
-                "tasks_total": len(phase.tasks),
-                "tasks_completed": completed,
-                "tasks_in_progress": in_progress,
-                "tasks_blocked": blocked,
-                "milestones": phase.milestones,
-                "deliverables": phase.deliverables,
-            })
+            summaries.append(
+                {
+                    "phase_id": phase.id,
+                    "name": phase.name,
+                    "status": phase.status.value,
+                    "progress": phase.progress,
+                    "tasks_total": len(phase.tasks),
+                    "tasks_completed": completed,
+                    "tasks_in_progress": in_progress,
+                    "tasks_blocked": blocked,
+                    "milestones": phase.milestones,
+                    "deliverables": phase.deliverables,
+                }
+            )
 
         return {
             "current_phase": self.current_phase_id,
@@ -440,6 +434,7 @@ class PhaseManager:
 # =============================================================================
 # Phase Progress Visualization
 # =============================================================================
+
 
 def format_phase_progress(manager: PhaseManager) -> str:
     """Format phase progress for display."""

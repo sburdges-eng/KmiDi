@@ -49,13 +49,13 @@ def _load_quadrant_map(
     Defaults are aligned with high/low valence/arousal heuristics.
     """
     default_map = {
-        "Q1": (0.8, 0.8, 0.9),    # HVHA
-        "Q2": (0.8, -0.8, 0.6),   # HVLA (calm/relaxed)
+        "Q1": (0.8, 0.8, 0.9),  # HVHA
+        "Q2": (0.8, -0.8, 0.6),  # HVLA (calm/relaxed)
         "Q3": (-0.8, -0.8, 0.7),  # LVLA (sad/depressed)
         "Q4": (-0.8, 0.8, 0.95),  # LVHA (angry/tense)
     }
     if custom_map_json and custom_map_json.exists():
-        with open(custom_map_json, "r") as f:
+        with open(custom_map_json) as f:
             raw = json.load(f)
         parsed = {}
         for k, v in raw.items():
@@ -79,7 +79,9 @@ def process_emobank(emobank_csv: Path, output_csv: Path) -> None:
     aro_col = "A" if "A" in df.columns else "arousal"
 
     if text_col not in df or val_col not in df or aro_col not in df:
-        raise ValueError(f"Expected columns text/V/A (or sentence/valence/arousal) in {emobank_csv}")
+        raise ValueError(
+            f"Expected columns text/V/A (or sentence/valence/arousal) in {emobank_csv}"
+        )
 
     out_df = pd.DataFrame()
     out_df["text"] = df[text_col].astype(str)
@@ -110,7 +112,9 @@ def process_emopia(
     quad_col = "quadrant" if "quadrant" in df.columns else "emo_class"
 
     if file_col not in df or quad_col not in df:
-        raise ValueError(f"Expected columns clip_id/file_id and quadrant/emo_class in {annotations_csv}")
+        raise ValueError(
+            f"Expected columns clip_id/file_id and quadrant/emo_class in {annotations_csv}"
+        )
 
     records = []
     for _, row in df.iterrows():
@@ -141,15 +145,23 @@ def process_emopia(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Preprocess EmoBank/EMOPIA into normalized VAI CSVs.")
+    parser = argparse.ArgumentParser(
+        description="Preprocess EmoBank/EMOPIA into normalized VAI CSVs."
+    )
 
-    parser.add_argument("--emobank-csv", type=Path, help="Path to EmoBank CSV (affectivetext_en.csv).")
+    parser.add_argument(
+        "--emobank-csv", type=Path, help="Path to EmoBank CSV (affectivetext_en.csv)."
+    )
     parser.add_argument("--emobank-out", type=Path, help="Output CSV for normalized EmoBank.")
 
     parser.add_argument("--emopia-annotations", type=Path, help="Path to EMOPIA annotations CSV.")
-    parser.add_argument("--emopia-midi-dir", type=Path, help="Directory containing EMOPIA MIDI files.")
+    parser.add_argument(
+        "--emopia-midi-dir", type=Path, help="Directory containing EMOPIA MIDI files."
+    )
     parser.add_argument("--emopia-out", type=Path, help="Output CSV for EMOPIA VAI labels.")
-    parser.add_argument("--quadrant-map", type=Path, help="Optional JSON file overriding quadrant→VAI mapping.")
+    parser.add_argument(
+        "--quadrant-map", type=Path, help="Optional JSON file overriding quadrant→VAI mapping."
+    )
 
     args = parser.parse_args()
 

@@ -1,6 +1,5 @@
-import sys
-import os.path
 import inspect
+import os.path
 
 
 class NopLogger:
@@ -59,14 +58,14 @@ class FileLogger:
         if self.file is not None:
             self.file.close()
             self.file = None
-    
+
     def __enter__(self):
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
         return False
-    
+
     def __del__(self):
         """Ensure file is closed when object is garbage collected"""
         self.close()
@@ -125,9 +124,7 @@ class Logger:
             if caller is not None and len(caller) > 3:
                 self.write("Logging from function " + str(caller))
             else:
-                self.write(
-                    "Caller info not available - Required caller logging not possible"
-                )
+                self.write("Caller info not available - Required caller logging not possible")
         finally:
             del caller  # needed per Python docs to avoid keeping objects alive longer than we care
 

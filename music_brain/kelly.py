@@ -6,9 +6,8 @@ Translates emotional language into musical inspiration and gentle guidance.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import random
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
 
 from music_brain.emotion.emotion_production import (
     EmotionProductionMapper,
@@ -20,6 +19,7 @@ from music_brain.emotion.emotion_thesaurus import EmotionMatch, EmotionThesaurus
 @dataclass
 class KellyResponse:
     """Kelly's response to the user."""
+
     validation_message: str
     musical_inspiration: ProductionPreset
     guidance: str
@@ -39,7 +39,7 @@ class Kelly:
             "It's completely valid to feel that way.",
             "Thank you for sharing that with me. Let's channel it.",
             "I can feel the weight of that emotion.",
-            "That's a powerful place to start a song from."
+            "That's a powerful place to start a song from.",
         ]
 
     def listen(self, user_input: str) -> KellyResponse:
@@ -49,7 +49,9 @@ class Kelly:
         emotion_match = self._detect_emotion(user_input)
 
         # 2. Validate
-        validation = f"{random.choice(self.validations)} You're feeling {emotion_match.matched_synonym}."
+        validation = (
+            f"{random.choice(self.validations)} You're feeling {emotion_match.matched_synonym}."
+        )
 
         # 3. Translate to Music
         preset = self.mapper.get_production_preset(emotion_match)
@@ -58,9 +60,7 @@ class Kelly:
         guidance = self._generate_guidance(emotion_match, preset)
 
         return KellyResponse(
-            validation_message=validation,
-            musical_inspiration=preset,
-            guidance=guidance
+            validation_message=validation, musical_inspiration=preset, guidance=guidance
         )
 
     def _detect_emotion(self, text: str) -> EmotionMatch:

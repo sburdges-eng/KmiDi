@@ -28,68 +28,58 @@ Usage:
 """
 
 import asyncio
-import os
-import json
-import time
-import threading
-import queue
 import atexit
-from dataclasses import dataclass, field, asdict
+import json
+import os
+import threading
+import time
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Dict, List, Any, Callable, Tuple, Union
-from enum import Enum
-
-from .reactive import (
-    ReactiveState,
-    StateAggregator,
-    BatchContext,
-    observe,
-)
-from .websocket_api import (
-    HubWebSocketServer,
-    create_websocket_server,
-    HAS_WEBSOCKETS,
-)
+from typing import Any, Callable, Dict, List, Optional
 
 from .ableton_bridge import (
     AbletonBridge,
-    AbletonOSCBridge,
     AbletonMIDIBridge,
-    OSCConfig,
     MIDIConfig,
-    TransportState,
+    OSCConfig,
     VoiceCC,
-    VOWEL_FORMANTS,
 )
 from .crewai_music_agents import (
-    MusicCrew,
-    MusicAgent,
+    LLMBackend,
     LocalLLM,
     LocalLLMConfig,
+    MusicCrew,
     OnnxLLM,
     OnnxLLMConfig,
-    ToolManager,
-    AGENT_ROLES,
-    LLMBackend,
+)
+from .reactive import (
+    BatchContext,
+    ReactiveState,
+    StateAggregator,
 )
 from .voice_profiles import (
-    VoiceProfileManager,
-    VoiceProfile,
-    Gender,
     AccentRegion,
+    Gender,
     SpeechPattern,
+    VoiceProfile,
     get_voice_manager,
 )
-
+from .websocket_api import (
+    HAS_WEBSOCKETS,
+    HubWebSocketServer,
+    create_websocket_server,
+)
 
 # =============================================================================
 # Configuration
 # =============================================================================
 
+
 @dataclass
 class HubConfig:
     """Configuration for the UnifiedHub."""
+
     # Paths
     session_dir: str = "~/.daiw/sessions"
     config_dir: str = "~/.daiw/config"
@@ -103,7 +93,7 @@ class HubConfig:
     # LLM
     llm_model: str = "llama3"
     llm_url: str = "http://localhost:11434"
-    llm_backend: str = "ollama"          # "ollama" or "onnx_http"
+    llm_backend: str = "ollama"  # "ollama" or "onnx_http"
     llm_onnx_url: str = "http://localhost:8008"
 
     # Voice
@@ -118,6 +108,7 @@ class HubConfig:
 @dataclass
 class SessionConfig:
     """Session-specific configuration."""
+
     name: str = "untitled"
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -132,6 +123,7 @@ class SessionConfig:
 @dataclass
 class VoiceState:
     """Current state of voice synthesis."""
+
     vowel: str = "A"
     formant_shift: float = 0.0
     breathiness: float = 0.0
@@ -145,6 +137,7 @@ class VoiceState:
 @dataclass
 class DAWState:
     """Current state of DAW connection."""
+
     connected: bool = False
     playing: bool = False
     recording: bool = False
@@ -155,6 +148,7 @@ class DAWState:
 # =============================================================================
 # Voice Synthesizer (Local)
 # =============================================================================
+
 
 class LocalVoiceSynth:
     """
@@ -181,6 +175,7 @@ class LocalVoiceSynth:
 
     def _detect_platform(self) -> str:
         import platform
+
         system = platform.system()
         if system == "Darwin":
             return "macos"
@@ -196,7 +191,7 @@ class LocalVoiceSynth:
         vowel: Optional[str] = None,
         rate: Optional[int] = None,
         pitch: Optional[int] = None,
-        profile: Optional[str] = None
+        profile: Optional[str] = None,
     ) -> bool:
         """
         Speak text using local TTS with voice profile support.
@@ -242,24 +237,23 @@ class LocalVoiceSynth:
         try:
             if self._platform == "macos":
                 import subprocess
+
                 # macOS say supports voice selection
                 cmd = ["say", "-r", str(rate)]
-                subprocess.Popen(
-                    cmd + [text],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
-                )
+                subprocess.Popen(cmd + [text], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 return True
             elif self._platform == "linux":
                 import subprocess
+
                 subprocess.Popen(
                     ["espeak", "-s", str(rate), "-p", str(pitch), text],
                     stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
+                    stderr=subprocess.DEVNULL,
                 )
                 return True
             elif self._platform == "windows":
                 import subprocess
+
                 # Use PowerShell with System.Speech for TTS
                 # Rate: -10 (slowest) to 10 (fastest), default 0
                 # Map rate (words per minute, ~175 default) to -10 to 10 scale
@@ -281,7 +275,9 @@ class LocalVoiceSynth:
                     ["powershell", "-Command", ps_command],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
-                    creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
+                    creationflags=subprocess.CREATE_NO_WINDOW
+                    if hasattr(subprocess, "CREATE_NO_WINDOW")
+                    else 0,
                 )
                 return True
             else:
@@ -308,7 +304,7 @@ class LocalVoiceSynth:
         base_pitch: Optional[float] = None,
         accent: str = "american_general",
         speech_patterns: Optional[List[str]] = None,
-        **kwargs
+        **kwargs,
     ) -> VoiceProfile:
         """
         Create a new voice profile.
@@ -325,10 +321,7 @@ class LocalVoiceSynth:
         """
         gender_enum = Gender(gender) if isinstance(gender, str) else gender
         accent_enum = AccentRegion(accent) if isinstance(accent, str) else accent
-        patterns = [
-            SpeechPattern(p) if isinstance(p, str) else p
-            for p in (speech_patterns or [])
-        ]
+        patterns = [SpeechPattern(p) if isinstance(p, str) else p for p in (speech_patterns or [])]
 
         return self._profile_manager.create_profile(
             name=name,
@@ -336,22 +329,18 @@ class LocalVoiceSynth:
             base_pitch=base_pitch,
             accent=accent_enum,
             speech_patterns=patterns,
-            **kwargs
+            **kwargs,
         )
 
     def learn_pronunciation(self, word: str, pronunciation: str):
         """Learn a custom pronunciation for the active profile."""
         if self._active_profile:
-            self._profile_manager.learn_pronunciation(
-                self._active_profile, word, pronunciation
-            )
+            self._profile_manager.learn_pronunciation(self._active_profile, word, pronunciation)
 
     def learn_phrase(self, phrase: str, replacement: str):
         """Learn a phrase replacement for the active profile."""
         if self._active_profile:
-            self._profile_manager.learn_phrase(
-                self._active_profile, phrase, replacement
-            )
+            self._profile_manager.learn_phrase(self._active_profile, phrase, replacement)
 
     def list_profiles(self) -> List[str]:
         """List available voice profiles."""
@@ -419,6 +408,7 @@ class LocalVoiceSynth:
 # =============================================================================
 # Unified Hub
 # =============================================================================
+
 
 class UnifiedHub:
     """
@@ -497,27 +487,27 @@ class UnifiedHub:
         self._running = True
 
         # Initialize LLM (Ollama by default, ONNX HTTP optional)
-        backend = LLMBackend.ONNX_HTTP if self.config.llm_backend.lower() in ["onnx", "onnx_http"] else LLMBackend.OLLAMA
+        backend = (
+            LLMBackend.ONNX_HTTP
+            if self.config.llm_backend.lower() in ["onnx", "onnx_http"]
+            else LLMBackend.OLLAMA
+        )
 
         if backend == LLMBackend.ONNX_HTTP:
             self._llm = OnnxLLM(OnnxLLMConfig(base_url=self.config.llm_onnx_url))
         else:
-            self._llm = LocalLLM(LocalLLMConfig(
-                model=self.config.llm_model,
-                base_url=self.config.llm_url
-            ))
+            self._llm = LocalLLM(
+                LocalLLMConfig(model=self.config.llm_model, base_url=self.config.llm_url)
+            )
 
         # Initialize bridge
         self._bridge = AbletonBridge(
             osc_config=OSCConfig(
                 host=self.config.osc_host,
                 send_port=self.config.osc_send_port,
-                receive_port=self.config.osc_receive_port
+                receive_port=self.config.osc_receive_port,
             ),
-            midi_config=MIDIConfig(
-                output_port=self.config.midi_port,
-                virtual=True
-            )
+            midi_config=MIDIConfig(output_port=self.config.midi_port, virtual=True),
         )
 
         # Initialize voice
@@ -530,10 +520,9 @@ class UnifiedHub:
                 onnx_config=OnnxLLMConfig(base_url=self.config.llm_onnx_url),
             )
         else:
-            self._crew = MusicCrew(LocalLLMConfig(
-                model=self.config.llm_model,
-                base_url=self.config.llm_url
-            ))
+            self._crew = MusicCrew(
+                LocalLLMConfig(model=self.config.llm_model, base_url=self.config.llm_url)
+            )
         self._crew.setup(self._bridge)
 
         return self
@@ -832,11 +821,13 @@ class UnifiedHub:
             self._voice_state.velocity = velocity
             self._voice_state.active = True
             # Reactive updates
-            self._voice_state_reactive.update({
-                "pitch": pitch,
-                "velocity": velocity,
-                "active": True,
-            })
+            self._voice_state_reactive.update(
+                {
+                    "pitch": pitch,
+                    "velocity": velocity,
+                    "active": True,
+                }
+            )
 
     def note_off(self, pitch: Optional[int] = None, channel: Optional[int] = None):
         """Stop a voice note."""
@@ -870,17 +861,19 @@ class UnifiedHub:
             self._voice_state.vibrato_rate = rate
             self._voice_state.vibrato_depth = depth
             # Reactive updates
-            self._voice_state_reactive.update({
-                "vibrato_rate": rate,
-                "vibrato_depth": depth,
-            })
+            self._voice_state_reactive.update(
+                {
+                    "vibrato_rate": rate,
+                    "vibrato_depth": depth,
+                }
+            )
 
     def sing_vowel_sequence(
         self,
         vowels: List[str],
         pitch: int = 60,
         duration_ms: int = 300,
-        channel: Optional[int] = None
+        channel: Optional[int] = None,
     ):
         """Sing a sequence of vowels on a single pitch."""
         ch = channel if channel is not None else self.config.default_voice_channel
@@ -939,14 +932,12 @@ class UnifiedHub:
         if self._crew:
             # Lyricist analysis
             results["syllables"] = self._crew.ask(
-                "lyricist",
-                f"Analyze syllable stress and vowel sounds:\n{lyrics}"
+                "lyricist", f"Analyze syllable stress and vowel sounds:\n{lyrics}"
             )
 
             # Voice Director guidance
             results["vocal_guidance"] = self._crew.ask(
-                "voice_director",
-                f"Provide vowel modification and break point guidance:\n{lyrics}"
+                "voice_director", f"Provide vowel modification and break point guidance:\n{lyrics}"
             )
 
         return results
@@ -966,7 +957,7 @@ class UnifiedHub:
             return self._crew.ask(
                 "composer",
                 f"Suggest a chord progression in {key} for the emotion: {emotion}\n"
-                f"Include modal interchange if appropriate and explain the emotional effect."
+                f"Include modal interchange if appropriate and explain the emotional effect.",
             )
         return "AI agents not initialized"
 
@@ -1011,7 +1002,7 @@ class UnifiedHub:
         filename = f"{self._session.name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         filepath = os.path.join(self.config.session_dir, filename)
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(data, f, indent=2)
 
         self._trigger_callback("session_saved", filepath)
@@ -1025,7 +1016,7 @@ class UnifiedHub:
             True if loaded successfully
         """
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath) as f:
                 data = json.load(f)
 
             # Restore session
@@ -1039,10 +1030,7 @@ class UnifiedHub:
             if self._voice:
                 self.set_vowel(self._voice_state.vowel)
                 self.set_breathiness(self._voice_state.breathiness)
-                self.set_vibrato(
-                    self._voice_state.vibrato_rate,
-                    self._voice_state.vibrato_depth
-                )
+                self.set_vibrato(self._voice_state.vibrato_rate, self._voice_state.vibrato_depth)
 
             # Apply DAW state
             if self._bridge and self._daw_state.connected:
@@ -1165,23 +1153,24 @@ def shutdown_all():
 # MCP Tools (for AI access)
 # =============================================================================
 
+
 def get_hub_mcp_tools() -> List[Dict[str, Any]]:
     """Return MCP tool definitions for the hub."""
     return [
         {
             "name": "hub_connect_daw",
             "description": "Connect to Ableton Live",
-            "inputSchema": {"type": "object", "properties": {}}
+            "inputSchema": {"type": "object", "properties": {}},
         },
         {
             "name": "hub_play",
             "description": "Start DAW playback",
-            "inputSchema": {"type": "object", "properties": {}}
+            "inputSchema": {"type": "object", "properties": {}},
         },
         {
             "name": "hub_stop",
             "description": "Stop DAW playback",
-            "inputSchema": {"type": "object", "properties": {}}
+            "inputSchema": {"type": "object", "properties": {}},
         },
         {
             "name": "hub_speak",
@@ -1190,10 +1179,10 @@ def get_hub_mcp_tools() -> List[Dict[str, Any]]:
                 "type": "object",
                 "properties": {
                     "text": {"type": "string", "description": "Text to speak"},
-                    "vowel": {"type": "string", "description": "Vowel hint (A/E/I/O/U)"}
+                    "vowel": {"type": "string", "description": "Vowel hint (A/E/I/O/U)"},
                 },
-                "required": ["text"]
-            }
+                "required": ["text"],
+            },
         },
         {
             "name": "hub_ask_agent",
@@ -1203,25 +1192,29 @@ def get_hub_mcp_tools() -> List[Dict[str, Any]]:
                 "properties": {
                     "role": {
                         "type": "string",
-                        "enum": ["voice_director", "composer", "mix_engineer",
-                                 "daw_controller", "producer", "lyricist"],
-                        "description": "Agent role to ask"
+                        "enum": [
+                            "voice_director",
+                            "composer",
+                            "mix_engineer",
+                            "daw_controller",
+                            "producer",
+                            "lyricist",
+                        ],
+                        "description": "Agent role to ask",
                     },
-                    "task": {"type": "string", "description": "Task or question"}
+                    "task": {"type": "string", "description": "Task or question"},
                 },
-                "required": ["role", "task"]
-            }
+                "required": ["role", "task"],
+            },
         },
         {
             "name": "hub_analyze_lyrics",
             "description": "Analyze lyrics for vocal production",
             "inputSchema": {
                 "type": "object",
-                "properties": {
-                    "lyrics": {"type": "string", "description": "Lyrics to analyze"}
-                },
-                "required": ["lyrics"]
-            }
+                "properties": {"lyrics": {"type": "string", "description": "Lyrics to analyze"}},
+                "required": ["lyrics"],
+            },
         },
         {
             "name": "hub_suggest_progression",
@@ -1230,10 +1223,10 @@ def get_hub_mcp_tools() -> List[Dict[str, Any]]:
                 "type": "object",
                 "properties": {
                     "emotion": {"type": "string", "description": "Target emotion"},
-                    "key": {"type": "string", "description": "Musical key (default: C)"}
+                    "key": {"type": "string", "description": "Musical key (default: C)"},
                 },
-                "required": ["emotion"]
-            }
+                "required": ["emotion"],
+            },
         },
     ]
 
@@ -1279,10 +1272,7 @@ if __name__ == "__main__":
         # Test AI if available
         if hub.llm_available:
             print("\nTesting AI agent...")
-            response = hub.ask_agent(
-                "composer",
-                "Suggest a 4-chord progression for grief"
-            )
+            response = hub.ask_agent("composer", "Suggest a 4-chord progression for grief")
             print(f"Composer says:\n{response}")
 
         # Save session

@@ -8,34 +8,33 @@ Philosophy: "Interrogate Before Generate" - Each mixer setting is justified
 by emotional intent, not arbitrary technical choices.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, Optional, List, Any
-from enum import Enum
 import json
-from pathlib import Path
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 # Import from existing modules
 from music_brain.data.emotional_mapping import (
+    Arousal,
     EmotionalState,
     MusicalParameters,
-    Valence,
-    Arousal,
     TimingFeel,
-    EMOTIONAL_PRESETS,
-    get_parameters_for_state,
+    Valence,
 )
 
 
 class SaturationType(Enum):
     """Saturation/distortion character types."""
-    TAPE = "tape"           # Warm, soft compression
-    TUBE = "tube"           # Harmonic richness, even harmonics
+
+    TAPE = "tape"  # Warm, soft compression
+    TUBE = "tube"  # Harmonic richness, even harmonics
     TRANSISTOR = "transistor"  # Aggressive, odd harmonics
-    DIGITAL = "digital"     # Hard, harsh clipping
+    DIGITAL = "digital"  # Hard, harsh clipping
 
 
 class FilterType(Enum):
     """Filter types for tone shaping."""
+
     LOWPASS = "lowpass"
     HIGHPASS = "highpass"
     BANDPASS = "bandpass"
@@ -44,12 +43,13 @@ class FilterType(Enum):
 
 class ReverbType(Enum):
     """Reverb character types."""
-    ROOM = "room"           # Small, intimate
-    HALL = "hall"           # Large, classical
-    PLATE = "plate"         # Bright, vintage
-    CHAMBER = "chamber"     # Warm, diffuse
-    SPRING = "spring"       # Lo-fi, vintage
-    SHIMMER = "shimmer"     # Ethereal, modulated
+
+    ROOM = "room"  # Small, intimate
+    HALL = "hall"  # Large, classical
+    PLATE = "plate"  # Bright, vintage
+    CHAMBER = "chamber"  # Warm, diffuse
+    SPRING = "spring"  # Lo-fi, vintage
+    SHIMMER = "shimmer"  # Ethereal, modulated
 
 
 @dataclass
@@ -60,57 +60,57 @@ class MixerParameters:
     """
 
     # EQ (per frequency band) - dB adjustments (-12 to +12)
-    eq_sub_bass: float = 0.0      # 20-60 Hz
-    eq_bass: float = 0.0          # 60-250 Hz
-    eq_low_mid: float = 0.0       # 250-500 Hz
-    eq_mid: float = 0.0           # 500-2000 Hz
-    eq_high_mid: float = 0.0      # 2-6 kHz
-    eq_presence: float = 0.0      # 6-12 kHz
-    eq_air: float = 0.0           # 12-20 kHz
+    eq_sub_bass: float = 0.0  # 20-60 Hz
+    eq_bass: float = 0.0  # 60-250 Hz
+    eq_low_mid: float = 0.0  # 250-500 Hz
+    eq_mid: float = 0.0  # 500-2000 Hz
+    eq_high_mid: float = 0.0  # 2-6 kHz
+    eq_presence: float = 0.0  # 6-12 kHz
+    eq_air: float = 0.0  # 12-20 kHz
 
     # Dynamics (Compressor)
-    compression_ratio: float = 1.0        # 1:1 to 20:1
+    compression_ratio: float = 1.0  # 1:1 to 20:1
     compression_threshold: float = -20.0  # dB
-    compression_attack: float = 10.0      # ms
-    compression_release: float = 100.0    # ms
-    compression_knee: float = 0.0         # dB (0=hard, 10=soft)
-    compression_makeup: float = 0.0       # dB auto-makeup gain
+    compression_attack: float = 10.0  # ms
+    compression_release: float = 100.0  # ms
+    compression_knee: float = 0.0  # dB (0=hard, 10=soft)
+    compression_makeup: float = 0.0  # dB auto-makeup gain
 
     # Space (Reverb)
-    reverb_type: str = "hall"     # room, hall, plate, chamber, spring, shimmer
-    reverb_mix: float = 0.0       # 0.0-1.0 (dry to wet)
-    reverb_decay: float = 2.0     # seconds
+    reverb_type: str = "hall"  # room, hall, plate, chamber, spring, shimmer
+    reverb_mix: float = 0.0  # 0.0-1.0 (dry to wet)
+    reverb_decay: float = 2.0  # seconds
     reverb_predelay: float = 20.0  # ms
-    reverb_size: float = 0.5      # 0.0-1.0 (small to large)
-    reverb_damping: float = 0.5   # 0.0-1.0 (bright to dark)
+    reverb_size: float = 0.5  # 0.0-1.0 (small to large)
+    reverb_damping: float = 0.5  # 0.0-1.0 (bright to dark)
 
     # Delay
-    delay_mix: float = 0.0        # 0.0-1.0
-    delay_time: float = 500.0     # ms
-    delay_feedback: float = 0.3   # 0.0-1.0
-    delay_sync: bool = False      # Sync to tempo
-    delay_filter: float = 0.5     # 0.0-1.0 (lo-pass filter on delay)
+    delay_mix: float = 0.0  # 0.0-1.0
+    delay_time: float = 500.0  # ms
+    delay_feedback: float = 0.3  # 0.0-1.0
+    delay_sync: bool = False  # Sync to tempo
+    delay_filter: float = 0.5  # 0.0-1.0 (lo-pass filter on delay)
 
     # Stereo
-    stereo_width: float = 1.0     # 0.0 (mono) to 2.0 (super wide)
-    pan_position: float = 0.0     # -1.0 (left) to +1.0 (right)
-    mid_side_ratio: float = 1.0   # 0.0 (all mid) to 2.0 (all side)
+    stereo_width: float = 1.0  # 0.0 (mono) to 2.0 (super wide)
+    pan_position: float = 0.0  # -1.0 (left) to +1.0 (right)
+    mid_side_ratio: float = 1.0  # 0.0 (all mid) to 2.0 (all side)
 
     # Saturation/Distortion
-    saturation: float = 0.0       # 0.0-1.0
+    saturation: float = 0.0  # 0.0-1.0
     saturation_type: str = "tape"  # tape, tube, transistor, digital
 
     # Filter
-    filter_type: str = "lowpass"     # lowpass, highpass, bandpass, notch
+    filter_type: str = "lowpass"  # lowpass, highpass, bandpass, notch
     filter_cutoff: float = 20000.0  # Hz
-    filter_resonance: float = 0.0   # 0.0-1.0
+    filter_resonance: float = 0.0  # 0.0-1.0
 
     # Master
-    master_gain: float = 0.0      # dB adjustment
+    master_gain: float = 0.0  # dB adjustment
     limiter_threshold: float = -1.0  # dB
 
     # Metadata
-    description: str = ""         # Why these settings?
+    description: str = ""  # Why these settings?
     tags: List[str] = field(default_factory=list)
     emotional_justification: str = ""  # Emotional reasoning
 
@@ -180,7 +180,6 @@ class MixerParameters:
 # =============================================================================
 
 MIXER_PRESETS: Dict[str, MixerParameters] = {
-
     "grief": MixerParameters(
         # Dark, spacious, intimate - lo-fi bedroom aesthetic
         eq_high_mid=-4.0,
@@ -210,10 +209,9 @@ MIXER_PRESETS: Dict[str, MixerParameters] = {
         description="Deep, spacious, lo-fi grief processing",
         tags=["grief", "lo-fi", "intimate", "dark", "spacious"],
         emotional_justification="Rolled-off highs create distance from reality, "
-                               "long reverb provides space for the weight of loss, "
-                               "tape saturation adds warmth and imperfection"
+        "long reverb provides space for the weight of loss, "
+        "tape saturation adds warmth and imperfection",
     ),
-
     "anxiety": MixerParameters(
         # Tight, compressed, hyper-present
         eq_presence=+3.0,
@@ -239,10 +237,9 @@ MIXER_PRESETS: Dict[str, MixerParameters] = {
         description="Tight, anxious, hyper-present",
         tags=["anxiety", "tight", "compressed", "nervous", "present"],
         emotional_justification="Fast compression attack mimics racing heart, "
-                               "narrow stereo field creates claustrophobia, "
-                               "enhanced presence frequencies heighten alertness"
+        "narrow stereo field creates claustrophobia, "
+        "enhanced presence frequencies heighten alertness",
     ),
-
     "anger": MixerParameters(
         # Saturated, forward, aggressive
         eq_bass=+4.0,
@@ -265,10 +262,9 @@ MIXER_PRESETS: Dict[str, MixerParameters] = {
         description="Aggressive, saturated, in-your-face",
         tags=["anger", "aggressive", "saturated", "loud", "forward"],
         emotional_justification="Heavy saturation represents burning intensity, "
-                               "boosted bass provides physical weight, "
-                               "minimal reverb keeps the attack immediate and present"
+        "boosted bass provides physical weight, "
+        "minimal reverb keeps the attack immediate and present",
     ),
-
     "nostalgia": MixerParameters(
         # Warm, slightly degraded, dreamy
         eq_air=-6.0,
@@ -292,10 +288,9 @@ MIXER_PRESETS: Dict[str, MixerParameters] = {
         description="Warm, dreamy, slightly degraded nostalgia",
         tags=["nostalgia", "warm", "dreamy", "vintage", "memory"],
         emotional_justification="Lo-fi degradation represents the imperfection of memory, "
-                               "plate reverb evokes vintage recordings, "
-                               "modulated delay creates dreamlike quality"
+        "plate reverb evokes vintage recordings, "
+        "modulated delay creates dreamlike quality",
     ),
-
     "hope": MixerParameters(
         # Bright, open, lifting
         eq_presence=+2.0,
@@ -318,10 +313,9 @@ MIXER_PRESETS: Dict[str, MixerParameters] = {
         description="Bright, open, uplifting",
         tags=["hope", "bright", "open", "lifting", "optimistic"],
         emotional_justification="Enhanced air frequencies create sense of space and possibility, "
-                               "wide stereo field suggests openness, "
-                               "gentle tube saturation adds warmth without harshness"
+        "wide stereo field suggests openness, "
+        "gentle tube saturation adds warmth without harshness",
     ),
-
     "calm": MixerParameters(
         # Smooth, warm, gentle
         eq_presence=-2.0,
@@ -345,10 +339,9 @@ MIXER_PRESETS: Dict[str, MixerParameters] = {
         description="Smooth, warm, peaceful",
         tags=["calm", "peaceful", "warm", "gentle", "serene"],
         emotional_justification="Soft compression knee creates gentle dynamics, "
-                               "rolled-off highs reduce harshness, "
-                               "chamber reverb provides enveloping warmth"
+        "rolled-off highs reduce harshness, "
+        "chamber reverb provides enveloping warmth",
     ),
-
     "tension": MixerParameters(
         # Building, unsettled, edge
         eq_high_mid=+3.0,
@@ -373,10 +366,9 @@ MIXER_PRESETS: Dict[str, MixerParameters] = {
         description="Tense, building, on edge",
         tags=["tension", "building", "unsettled", "suspense"],
         emotional_justification="Boosted sub bass creates physical unease, "
-                               "enhanced presence frequencies create alertness, "
-                               "narrow stereo field suggests confinement"
+        "enhanced presence frequencies create alertness, "
+        "narrow stereo field suggests confinement",
     ),
-
     "catharsis": MixerParameters(
         # Full, releasing, overwhelming
         eq_bass=+3.0,
@@ -401,10 +393,9 @@ MIXER_PRESETS: Dict[str, MixerParameters] = {
         description="Full, releasing, overwhelming catharsis",
         tags=["catharsis", "release", "full", "overwhelming", "climax"],
         emotional_justification="Maximum stereo width suggests breaking free, "
-                               "long reverb represents the release washing over, "
-                               "full frequency boost creates sense of totality"
+        "long reverb represents the release washing over, "
+        "full frequency boost creates sense of totality",
     ),
-
     "dissociation": MixerParameters(
         # Distant, hazy, disconnected
         eq_mid=-3.0,
@@ -430,10 +421,9 @@ MIXER_PRESETS: Dict[str, MixerParameters] = {
         description="Distant, hazy, disconnected",
         tags=["dissociation", "distant", "hazy", "detached", "floating"],
         emotional_justification="Heavy reverb and delay create distance from reality, "
-                               "scooped mids represent hollowness, "
-                               "shimmer reverb adds otherworldly quality"
+        "scooped mids represent hollowness, "
+        "shimmer reverb adds otherworldly quality",
     ),
-
     "intimacy": MixerParameters(
         # Close, dry, personal
         eq_presence=+2.0,
@@ -454,8 +444,8 @@ MIXER_PRESETS: Dict[str, MixerParameters] = {
         description="Close, dry, intimate and personal",
         tags=["intimacy", "close", "dry", "personal", "vulnerable"],
         emotional_justification="Minimal reverb creates sense of physical closeness, "
-                               "narrow stereo width suggests whispered confession, "
-                               "gentle tape saturation adds warmth without distance"
+        "narrow stereo width suggests whispered confession, "
+        "gentle tape saturation adds warmth without distance",
     ),
 }
 
@@ -463,6 +453,7 @@ MIXER_PRESETS: Dict[str, MixerParameters] = {
 # =============================================================================
 # EMOTION MAPPER CLASS
 # =============================================================================
+
 
 class EmotionMapper:
     """
@@ -474,9 +465,7 @@ class EmotionMapper:
         self.presets = MIXER_PRESETS
 
     def map_emotion_to_mixer(
-        self,
-        emotional_state: EmotionalState,
-        musical_params: Optional[MusicalParameters] = None
+        self, emotional_state: EmotionalState, musical_params: Optional[MusicalParameters] = None
     ) -> MixerParameters:
         """
         Main mapping function: emotional state -> mixer parameters.
@@ -577,11 +566,7 @@ class EmotionMapper:
             emotional_justification=preset.emotional_justification,
         )
 
-    def _apply_valence(
-        self,
-        mixer: MixerParameters,
-        valence: float
-    ) -> MixerParameters:
+    def _apply_valence(self, mixer: MixerParameters, valence: float) -> MixerParameters:
         """Adjust mixer based on valence (negative = dark, positive = bright)."""
         # Convert Valence enum if needed
         if isinstance(valence, Valence):
@@ -592,7 +577,7 @@ class EmotionMapper:
         if v < 0:  # Negative = darker, roll off highs
             mixer.eq_presence += -4 * abs(v)
             mixer.eq_air += -6 * abs(v)
-            mixer.filter_cutoff *= (1 - abs(v) * 0.3)
+            mixer.filter_cutoff *= 1 - abs(v) * 0.3
             mixer.reverb_damping = min(1.0, mixer.reverb_damping + abs(v) * 0.2)
         else:  # Positive = brighter
             mixer.eq_presence += 3 * v
@@ -601,11 +586,7 @@ class EmotionMapper:
 
         return mixer
 
-    def _apply_arousal(
-        self,
-        mixer: MixerParameters,
-        arousal: float
-    ) -> MixerParameters:
+    def _apply_arousal(self, mixer: MixerParameters, arousal: float) -> MixerParameters:
         """Adjust mixer based on arousal (low = spacious, high = tight)."""
         # Convert Arousal enum if needed
         if isinstance(arousal, Arousal):
@@ -629,9 +610,7 @@ class EmotionMapper:
         return mixer
 
     def _apply_musical_context(
-        self,
-        mixer: MixerParameters,
-        musical_params: MusicalParameters
+        self, mixer: MixerParameters, musical_params: MusicalParameters
     ) -> MixerParameters:
         """Adjust mixer based on musical parameters."""
         # More dissonance = more saturation, edge
@@ -668,10 +647,8 @@ class EmotionMapper:
 # EXPORT FUNCTIONS
 # =============================================================================
 
-def export_to_logic_automation(
-    mixer_params: MixerParameters,
-    output_path: str
-) -> str:
+
+def export_to_logic_automation(mixer_params: MixerParameters, output_path: str) -> str:
     """
     Export mixer parameters as Logic Pro automation data.
 
@@ -747,16 +724,14 @@ def export_to_logic_automation(
         },
     }
 
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(automation_data, f, indent=2)
 
     return output_path
 
 
 def export_mixer_settings(
-    mixer_params: MixerParameters,
-    output_path: str,
-    format: str = "json"
+    mixer_params: MixerParameters, output_path: str, format: str = "json"
 ) -> str:
     """
     Export mixer parameters in various formats.
@@ -772,11 +747,11 @@ def export_mixer_settings(
     if format == "logic":
         return export_to_logic_automation(mixer_params, output_path)
     elif format == "json":
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(mixer_params.to_dict(), f, indent=2)
         return output_path
     elif format == "text":
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write(describe_mixer_params(mixer_params))
         return output_path
     else:
@@ -858,14 +833,12 @@ if __name__ == "__main__":
 
     # Test grief mapping
     grief_state = EmotionalState(
-        valence=Valence.VERY_NEGATIVE,
-        arousal=Arousal.LOW,
-        primary_emotion="grief"
+        valence=Valence.VERY_NEGATIVE, arousal=Arousal.LOW, primary_emotion="grief"
     )
 
     mixer = mapper.map_emotion_to_mixer(grief_state)
 
-    print(f"\nGRIEF Mixer Settings:")
+    print("\nGRIEF Mixer Settings:")
     print(f"  EQ: Presence {mixer.eq_presence:+.1f}dB, Air {mixer.eq_air:+.1f}dB")
     print(f"  Compression: {mixer.compression_ratio:.1f}:1 @ {mixer.compression_threshold:.1f}dB")
     print(f"  Reverb: {mixer.reverb_mix:.1%} mix, {mixer.reverb_decay:.1f}s decay")
@@ -875,16 +848,16 @@ if __name__ == "__main__":
 
     # Test anxiety mapping
     anxiety_state = EmotionalState(
-        valence=Valence.NEGATIVE,
-        arousal=Arousal.HIGH,
-        primary_emotion="anxiety"
+        valence=Valence.NEGATIVE, arousal=Arousal.HIGH, primary_emotion="anxiety"
     )
 
     mixer_anxiety = mapper.map_emotion_to_mixer(anxiety_state)
 
-    print(f"\nANXIETY Mixer Settings:")
+    print("\nANXIETY Mixer Settings:")
     print(f"  EQ: Presence {mixer_anxiety.eq_presence:+.1f}dB")
-    print(f"  Compression: {mixer_anxiety.compression_ratio:.1f}:1 @ {mixer_anxiety.compression_threshold:.1f}dB")
+    print(
+        f"  Compression: {mixer_anxiety.compression_ratio:.1f}:1 @ {mixer_anxiety.compression_threshold:.1f}dB"
+    )
     print(f"  Reverb: {mixer_anxiety.reverb_mix:.1%} mix")
     print(f"  Stereo Width: {mixer_anxiety.stereo_width:.0%}")
     print(f"\n  Description: {mixer_anxiety.description}")

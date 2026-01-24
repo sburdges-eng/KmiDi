@@ -9,19 +9,19 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Tuple
-from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 # Import from sibling modules
 try:
-    from .emotion_thesaurus import EmotionThesaurus, EmotionMatch, BlendMatch
+    from .emotion_thesaurus import BlendMatch, EmotionMatch, EmotionThesaurus
 except ImportError:
-    from emotion_thesaurus import EmotionThesaurus, EmotionMatch, BlendMatch
+    from emotion_thesaurus import EmotionThesaurus
 
 
 @dataclass
 class ParsedEmotion:
     """Result of parsing natural language into emotion components."""
+
     valence: float  # -1 to 1
     arousal: float  # 0 to 1
     base_emotion: str  # HAPPY, SAD, ANGRY, FEAR, SURPRISE, DISGUST
@@ -41,7 +41,9 @@ class ParsedEmotion:
             "valence": self.valence,
             "arousal": self.arousal,
             "primary_emotion": self.base_emotion.lower() if self.base_emotion else "neutral",
-            "secondary_emotions": [c.lower() for c in self.blend_components] if self.blend_components else [],
+            "secondary_emotions": [c.lower() for c in self.blend_components]
+            if self.blend_components
+            else [],
             "has_intrusions": "ptsd_intrusion" in self.modifiers,
         }
 
@@ -68,46 +70,84 @@ class TextEmotionParser:
     INTENSITY_AROUSAL_MOD = {
         1: -0.2,  # subtle
         2: -0.1,  # mild
-        3: 0.0,   # moderate
-        4: 0.1,   # strong
-        5: 0.2,   # intense
-        6: 0.3,   # overwhelming
+        3: 0.0,  # moderate
+        4: 0.1,  # strong
+        5: 0.2,  # intense
+        6: 0.3,  # overwhelming
     }
 
     # Therapeutic modifiers from emotional_mapping.py
     MODIFIER_PATTERNS = {
         "ptsd_intrusion": [
-            r"\bflashback\b", r"\btrigger", r"\bintrusi", r"\btrauma",
-            r"\breliving\b", r"\bhaunted\b", r"\bvivid\s+memor",
+            r"\bflashback\b",
+            r"\btrigger",
+            r"\bintrusi",
+            r"\btrauma",
+            r"\breliving\b",
+            r"\bhaunted\b",
+            r"\bvivid\s+memor",
         ],
         "dissociation": [
-            r"\bdisconnect", r"\bnumb\b", r"\bdetach", r"\bunreal",
-            r"\bfloating\b", r"\boutside\s+(my|the)\s+body", r"\bfoggy\b",
+            r"\bdisconnect",
+            r"\bnumb\b",
+            r"\bdetach",
+            r"\bunreal",
+            r"\bfloating\b",
+            r"\boutside\s+(my|the)\s+body",
+            r"\bfoggy\b",
         ],
         "misdirection": [
-            r"\bhiding\b", r"\bmask", r"\bpretend", r"\bfake\b",
-            r"\bcover\s+up", r"\bdeflect",
+            r"\bhiding\b",
+            r"\bmask",
+            r"\bpretend",
+            r"\bfake\b",
+            r"\bcover\s+up",
+            r"\bdeflect",
         ],
         "suppressed": [
-            r"\bsuppress", r"\bbottl", r"\bhold\s+(it\s+)?in\b", r"\bbury\b",
-            r"\bswallow", r"\bstuff\s+(down|it)\b",
+            r"\bsuppress",
+            r"\bbottl",
+            r"\bhold\s+(it\s+)?in\b",
+            r"\bbury\b",
+            r"\bswallow",
+            r"\bstuff\s+(down|it)\b",
         ],
         "cathartic_release": [
-            r"\breleas", r"\blet\s+(it\s+)?go\b", r"\bbreakthrough\b",
-            r"\bcathar", r"\bpurg", r"\bvent\b",
+            r"\breleas",
+            r"\blet\s+(it\s+)?go\b",
+            r"\bbreakthrough\b",
+            r"\bcathar",
+            r"\bpurg",
+            r"\bvent\b",
         ],
     }
 
     # Intensity amplifiers and diminishers
     AMPLIFIERS = [
-        "very", "extremely", "incredibly", "deeply", "intensely",
-        "overwhelmingly", "profoundly", "desperately", "absolutely",
-        "completely", "utterly", "totally",
+        "very",
+        "extremely",
+        "incredibly",
+        "deeply",
+        "intensely",
+        "overwhelmingly",
+        "profoundly",
+        "desperately",
+        "absolutely",
+        "completely",
+        "utterly",
+        "totally",
     ]
 
     DIMINISHERS = [
-        "slightly", "somewhat", "a bit", "a little", "mildly",
-        "kind of", "sort of", "fairly", "rather",
+        "slightly",
+        "somewhat",
+        "a bit",
+        "a little",
+        "mildly",
+        "kind of",
+        "sort of",
+        "fairly",
+        "rather",
     ]
 
     def __init__(self, data_dir: Optional[str] = None):
@@ -150,7 +190,10 @@ class TextEmotionParser:
                         for syn in synonyms:
                             key = syn.lower().strip()
                             # Keep highest intensity match
-                            if key not in self._synonym_to_emotion or tier > self._synonym_to_emotion[key][3]:
+                            if (
+                                key not in self._synonym_to_emotion
+                                or tier > self._synonym_to_emotion[key][3]
+                            ):
                                 self._synonym_to_emotion[key] = (base_upper, sub, subsub, tier)
 
         # Add common emotion words that may not be in thesaurus
@@ -170,7 +213,6 @@ class TextEmotionParser:
             "excitement": ("HAPPY", "EXCITEMENT", "excited", 4),
             "thrilled": ("HAPPY", "EXCITEMENT", "thrilled", 5),
             "ecstatic": ("HAPPY", "JOY", "ecstatic", 6),
-
             # Sad family
             "melancholy": ("SAD", "GRIEF", "melancholic", 3),
             "melancholic": ("SAD", "GRIEF", "melancholic", 3),
@@ -182,7 +224,6 @@ class TextEmotionParser:
             "longing": ("SAD", "GRIEF", "longing", 3),
             "wistful": ("SAD", "GRIEF", "wistful", 2),
             "bittersweet": ("SAD", "GRIEF", "bittersweet", 3),
-
             # Angry family
             "rage": ("ANGRY", "RAGE", "enraged", 6),
             "fury": ("ANGRY", "RAGE", "furious", 5),
@@ -191,7 +232,6 @@ class TextEmotionParser:
             "annoyed": ("ANGRY", "ANNOYANCE", "annoyed", 2),
             "frustrated": ("ANGRY", "FRUSTRATION", "frustrated", 3),
             "resentful": ("ANGRY", "RESENTMENT", "resentful", 4),
-
             # Fear family
             "terror": ("FEAR", "TERROR", "terrified", 6),
             "terrified": ("FEAR", "TERROR", "terrified", 6),
@@ -200,13 +240,11 @@ class TextEmotionParser:
             "nervous": ("FEAR", "ANXIETY", "nervous", 2),
             "worried": ("FEAR", "ANXIETY", "worried", 3),
             "uneasy": ("FEAR", "ANXIETY", "uneasy", 2),
-
             # Surprise family
             "amazed": ("SURPRISE", "AMAZEMENT", "amazed", 4),
             "astonished": ("SURPRISE", "AMAZEMENT", "astonished", 5),
             "shocked": ("SURPRISE", "SHOCK", "shocked", 5),
             "stunned": ("SURPRISE", "SHOCK", "stunned", 5),
-
             # Disgust family
             "revolted": ("DISGUST", "REVULSION", "revolted", 5),
             "repulsed": ("DISGUST", "REVULSION", "repulsed", 4),
@@ -247,7 +285,7 @@ class TextEmotionParser:
             ParsedEmotion with extracted emotion components.
         """
         text_lower = text.lower().strip()
-        words = re.findall(r'\b[\w-]+\b', text_lower)
+        words = re.findall(r"\b[\w-]+\b", text_lower)
 
         # Detect modifiers
         modifiers = self._detect_modifiers(text_lower)
@@ -262,7 +300,7 @@ class TextEmotionParser:
         # Try multi-word phrases first (up to 3 words)
         for n in [3, 2, 1]:
             for i in range(len(words) - n + 1):
-                phrase = " ".join(words[i:i+n])
+                phrase = " ".join(words[i : i + n])
                 if phrase in self._synonym_to_emotion:
                     matches.append(self._synonym_to_emotion[phrase])
                     matched_words.append(phrase)
@@ -309,7 +347,11 @@ class TextEmotionParser:
             if blend_matches:
                 best_blend = blend_matches[0]
                 blend_components = best_blend.components
-                blend_ratio = best_blend.ratio if best_blend.ratio else [1.0 / len(blend_components)] * len(blend_components)
+                blend_ratio = (
+                    best_blend.ratio
+                    if best_blend.ratio
+                    else [1.0 / len(blend_components)] * len(blend_components)
+                )
 
             return ParsedEmotion(
                 valence=valence,
@@ -330,7 +372,11 @@ class TextEmotionParser:
             # Only blend match, no direct emotion
             best_blend = blend_matches[0]
             blend_components = best_blend.components
-            blend_ratio = best_blend.ratio if best_blend.ratio else [1.0 / len(blend_components)] * len(blend_components)
+            blend_ratio = (
+                best_blend.ratio
+                if best_blend.ratio
+                else [1.0 / len(blend_components)] * len(blend_components)
+            )
 
             # Infer valence/arousal from blend components
             valence = 0.0

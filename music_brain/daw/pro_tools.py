@@ -13,13 +13,13 @@ Pro Tools Specifics:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Any
-from pathlib import Path
 from enum import Enum
-import json
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import mido
+
     MIDO_AVAILABLE = True
 except ImportError:
     MIDO_AVAILABLE = False
@@ -28,9 +28,11 @@ except ImportError:
 # Pro Tools PPQ constant
 PRO_TOOLS_PPQ = 960
 
+
 # Pro Tools track types
 class PTTrackType(Enum):
     """Pro Tools track types."""
+
     AUDIO = "audio"
     MIDI = "midi"
     INSTRUMENT = "instrument"
@@ -67,6 +69,7 @@ class PTTrack:
     Pro Tools tracks have extensive routing options
     and support for high-resolution timing.
     """
+
     name: str
     track_type: PTTrackType = PTTrackType.MIDI
     channel: int = 1
@@ -98,12 +101,14 @@ class PTTrack:
         duration_ticks: int = 960,
     ) -> None:
         """Add a MIDI note to the track."""
-        self.notes.append({
-            "pitch": pitch,
-            "velocity": velocity,
-            "start_tick": start_tick,
-            "duration_ticks": duration_ticks,
-        })
+        self.notes.append(
+            {
+                "pitch": pitch,
+                "velocity": velocity,
+                "start_tick": start_tick,
+                "duration_ticks": duration_ticks,
+            }
+        )
 
     def add_clip(
         self,
@@ -113,12 +118,14 @@ class PTTrack:
         offset: int = 0,
     ) -> None:
         """Add a clip reference to the track."""
-        self.clips.append({
-            "name": name,
-            "start_tick": start_tick,
-            "end_tick": end_tick,
-            "offset": offset,
-        })
+        self.clips.append(
+            {
+                "name": name,
+                "start_tick": start_tick,
+                "end_tick": end_tick,
+                "offset": offset,
+            }
+        )
 
 
 @dataclass
@@ -129,6 +136,7 @@ class PTSession:
     Not a full Pro Tools session parser - provides structure
     for organizing tracks for MIDI export to Pro Tools.
     """
+
     name: str = "Untitled Session"
     tempo_bpm: float = 120.0
     ppq: int = PRO_TOOLS_PPQ
@@ -197,26 +205,24 @@ class PTSession:
 
         # Initial tempo
         tempo_us = int(60_000_000 / self.tempo_bpm)
-        meta_track.append(mido.MetaMessage('set_tempo', tempo=tempo_us, time=0))
+        meta_track.append(mido.MetaMessage("set_tempo", tempo=tempo_us, time=0))
 
         # Initial time signature
-        meta_track.append(mido.MetaMessage(
-            'time_signature',
-            numerator=self.time_signature[0],
-            denominator=self.time_signature[1],
-            time=0
-        ))
+        meta_track.append(
+            mido.MetaMessage(
+                "time_signature",
+                numerator=self.time_signature[0],
+                denominator=self.time_signature[1],
+                time=0,
+            )
+        )
 
         # Add tempo changes
         current_tick = 0
         for tick, bpm in self.tempo_map:
             delta = tick - current_tick
             tempo_us = int(60_000_000 / bpm)
-            meta_track.append(mido.MetaMessage(
-                'set_tempo',
-                tempo=tempo_us,
-                time=delta
-            ))
+            meta_track.append(mido.MetaMessage("set_tempo", tempo=tempo_us, time=delta))
             current_tick = tick
 
         # Export MIDI tracks
@@ -229,27 +235,27 @@ class PTSession:
                 mid.tracks.append(midi_track)
 
                 # Track name
-                midi_track.append(mido.MetaMessage(
-                    'track_name',
-                    name=track.name,
-                    time=0
-                ))
+                midi_track.append(mido.MetaMessage("track_name", name=track.name, time=0))
 
                 # Build note events
                 events = []
                 for note in track.notes:
-                    events.append((
-                        note["start_tick"],
-                        "note_on",
-                        note["pitch"],
-                        note["velocity"],
-                    ))
-                    events.append((
-                        note["start_tick"] + note["duration_ticks"],
-                        "note_off",
-                        note["pitch"],
-                        0,
-                    ))
+                    events.append(
+                        (
+                            note["start_tick"],
+                            "note_on",
+                            note["pitch"],
+                            note["velocity"],
+                        )
+                    )
+                    events.append(
+                        (
+                            note["start_tick"] + note["duration_ticks"],
+                            "note_off",
+                            note["pitch"],
+                            0,
+                        )
+                    )
 
                 events.sort(key=lambda e: e[0])
 
@@ -260,24 +266,28 @@ class PTSession:
                     current_tick = tick
 
                     if msg_type == "note_on":
-                        midi_track.append(mido.Message(
-                            'note_on',
-                            note=pitch,
-                            velocity=vel,
-                            channel=track.channel - 1,
-                            time=delta
-                        ))
+                        midi_track.append(
+                            mido.Message(
+                                "note_on",
+                                note=pitch,
+                                velocity=vel,
+                                channel=track.channel - 1,
+                                time=delta,
+                            )
+                        )
                     else:
-                        midi_track.append(mido.Message(
-                            'note_off',
-                            note=pitch,
-                            velocity=0,
-                            channel=track.channel - 1,
-                            time=delta
-                        ))
+                        midi_track.append(
+                            mido.Message(
+                                "note_off",
+                                note=pitch,
+                                velocity=0,
+                                channel=track.channel - 1,
+                                time=delta,
+                            )
+                        )
 
                 # End of track
-                midi_track.append(mido.MetaMessage('end_of_track', time=0))
+                midi_track.append(mido.MetaMessage("end_of_track", time=0))
 
         output_path = Path(output_path)
         mid.save(str(output_path))
@@ -327,7 +337,7 @@ def export_to_pro_tools(
         for msg in track:
             new_msg = msg.copy()
 
-            if hasattr(msg, 'time'):
+            if hasattr(msg, "time"):
                 new_msg = msg.copy(time=int(msg.time * ppq_ratio))
 
             new_track.append(new_msg)
@@ -357,9 +367,9 @@ def import_from_pro_tools(midi_path: str) -> PTSession:
     time_sig = (4, 4)
     for track in mid.tracks:
         for msg in track:
-            if msg.type == 'set_tempo':
+            if msg.type == "set_tempo":
                 tempo_bpm = 60_000_000 / msg.tempo
-            elif msg.type == 'time_signature':
+            elif msg.type == "time_signature":
                 time_sig = (msg.numerator, msg.denominator)
 
     session = PTSession(
@@ -371,7 +381,7 @@ def import_from_pro_tools(midi_path: str) -> PTSession:
 
     # Convert each track
     for i, track in enumerate(mid.tracks):
-        track_name = f"Track {i+1}"
+        track_name = f"Track {i + 1}"
         notes = []
         current_tick = 0
         active_notes = {}
@@ -380,22 +390,24 @@ def import_from_pro_tools(midi_path: str) -> PTSession:
         for msg in track:
             current_tick += msg.time
 
-            if msg.type == 'track_name':
+            if msg.type == "track_name":
                 track_name = msg.name
-            elif msg.type == 'note_on' and msg.velocity > 0:
+            elif msg.type == "note_on" and msg.velocity > 0:
                 key = (msg.channel, msg.note)
                 active_notes[key] = (current_tick, msg.velocity)
                 channel = msg.channel
-            elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+            elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
                 key = (msg.channel, msg.note)
                 if key in active_notes:
                     start_tick, velocity = active_notes.pop(key)
-                    notes.append({
-                        "pitch": msg.note,
-                        "velocity": velocity,
-                        "start_tick": start_tick,
-                        "duration_ticks": current_tick - start_tick,
-                    })
+                    notes.append(
+                        {
+                            "pitch": msg.note,
+                            "velocity": velocity,
+                            "start_tick": start_tick,
+                            "duration_ticks": current_tick - start_tick,
+                        }
+                    )
 
         if notes:
             pt_track = PTTrack(
@@ -487,6 +499,7 @@ def create_pt_template(
 @dataclass
 class AAXPluginConfig:
     """Configuration for AAX plugin compatibility."""
+
     plugin_name: str
     manufacturer: str = "iDAW"
     version: str = "1.0.0"
@@ -564,7 +577,8 @@ def create_aax_manifest(config: AAXPluginConfig) -> Dict[str, Any]:
         "name": config.plugin_name,
         "manufacturer": config.manufacturer,
         "version": config.version,
-        "plugin_id": config.plugin_id or f"com.{config.manufacturer.lower()}.{config.plugin_name.lower().replace(' ', '')}",
+        "plugin_id": config.plugin_id
+        or f"com.{config.manufacturer.lower()}.{config.plugin_name.lower().replace(' ', '')}",
         "category": "Effect",
         "audio_configs": [],
         "features": {

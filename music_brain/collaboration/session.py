@@ -4,16 +4,16 @@ Session Management - Collaborative session handling.
 Manages multi-user sessions for real-time music collaboration.
 """
 
+import uuid
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any, Callable
 from datetime import datetime
 from enum import Enum
-import uuid
-import json
+from typing import Any, Callable, Dict, List, Optional
 
 
 class SessionRole(Enum):
     """Participant roles in a collaborative session."""
+
     OWNER = "owner"
     EDITOR = "editor"
     VIEWER = "viewer"
@@ -21,6 +21,7 @@ class SessionRole(Enum):
 
 class SessionState(Enum):
     """Session lifecycle states."""
+
     CREATING = "creating"
     ACTIVE = "active"
     PAUSED = "paused"
@@ -30,6 +31,7 @@ class SessionState(Enum):
 @dataclass
 class SessionParticipant:
     """A participant in a collaborative session."""
+
     user_id: str
     username: str
     role: SessionRole = SessionRole.VIEWER
@@ -82,6 +84,7 @@ class CollaborativeSession:
     Supports multiple participants working on the same project
     with real-time synchronization.
     """
+
     session_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     name: str = "Untitled Session"
     created_at: datetime = field(default_factory=datetime.utcnow)
@@ -121,9 +124,16 @@ class CollaborativeSession:
 
         # Assign unique color
         colors = [
-            "#4a90d9", "#e74c3c", "#2ecc71", "#f1c40f",
-            "#9b59b6", "#1abc9c", "#e67e22", "#34495e",
-            "#16a085", "#c0392b",
+            "#4a90d9",
+            "#e74c3c",
+            "#2ecc71",
+            "#f1c40f",
+            "#9b59b6",
+            "#1abc9c",
+            "#e67e22",
+            "#34495e",
+            "#16a085",
+            "#c0392b",
         ]
         used_colors = {p.color for p in self.participants.values()}
         color = next((c for c in colors if c not in used_colors), colors[0])
@@ -218,9 +228,7 @@ class CollaborativeSession:
             "state": self.state.value,
             "project_id": self.project_id,
             "intent_id": self.intent_id,
-            "participants": {
-                uid: p.to_dict() for uid, p in self.participants.items()
-            },
+            "participants": {uid: p.to_dict() for uid, p in self.participants.items()},
             "owner_id": self.owner_id,
             "max_participants": self.max_participants,
             "shared_state": self.shared_state,

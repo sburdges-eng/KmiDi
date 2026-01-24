@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from music_brain.voice.neural_backend import (
     NeuralBackend,
     VoiceSynthesisConfig,
-    create_neural_backend,
     check_neural_availability,
+    create_neural_backend,
 )
 
 # Try to import other components (may fail if dependencies missing)
@@ -33,11 +33,14 @@ try:
         AutoTuneSettings,
         get_auto_tune_preset,
     )
-    __all__.extend([
-        "AutoTuneProcessor",
-        "AutoTuneSettings",
-        "get_auto_tune_preset",
-    ])
+
+    __all__.extend(
+        [
+            "AutoTuneProcessor",
+            "AutoTuneSettings",
+            "get_auto_tune_preset",
+        ]
+    )
 except ImportError:
     # Provide lightweight stubs so imports succeed even when optional deps (e.g., librosa) are missing.
     class AutoTuneProcessor:
@@ -58,36 +61,44 @@ except ImportError:
     def get_auto_tune_preset(name: str) -> AutoTuneSettings:  # pragma: no cover - stub
         return AutoTuneSettings()
 
-    __all__.extend([
-        "AutoTuneProcessor",
-        "AutoTuneSettings",
-        "get_auto_tune_preset",
-    ])
+    __all__.extend(
+        [
+            "AutoTuneProcessor",
+            "AutoTuneSettings",
+            "get_auto_tune_preset",
+        ]
+    )
 
 try:
     from music_brain.voice.modulator import (
-        VoiceModulator,
         ModulationSettings,
+        VoiceModulator,
         get_modulation_preset,
     )
-    __all__.extend([
-        "VoiceModulator",
-        "ModulationSettings",
-        "get_modulation_preset",
-    ])
+
+    __all__.extend(
+        [
+            "VoiceModulator",
+            "ModulationSettings",
+            "get_modulation_preset",
+        ]
+    )
 except ImportError:
     pass
 
 try:
     from music_brain.voice.synthesizer import (
-        VoiceSynthesizer,
         SynthConfig,
+        VoiceSynthesizer,
         get_voice_profile,
     )
-    __all__.extend([
-        "VoiceSynthesizer",
-        "SynthConfig",
-        "get_voice_profile",
-    ])
+
+    __all__.extend(
+        [
+            "VoiceSynthesizer",
+            "SynthConfig",
+            "get_voice_profile",
+        ]
+    )
 except ImportError:
     pass

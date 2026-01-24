@@ -8,17 +8,14 @@ This module integrates with SuggestionEngine to provide context-aware
 suggestions for individual engines.
 """
 
-from typing import Dict, List, Any, Optional
 import json
+from typing import Any, Dict, List, Optional
 
+from music_brain.intelligence.context_analyzer import ContextAnalyzer
 from music_brain.intelligence.suggestion_engine import (
     SuggestionEngine,
-    Suggestion,
-    SuggestionType,
 )
-from music_brain.intelligence.context_analyzer import ContextAnalyzer
 from music_brain.learning.user_preferences import UserPreferenceModel
-
 
 # Global instances (singleton pattern)
 _preference_model: Optional[UserPreferenceModel] = None
@@ -38,15 +35,11 @@ def initialize_engine_system(user_id: str = "default"):
     _preference_model = UserPreferenceModel(user_id=user_id)
     _context_analyzer = ContextAnalyzer()
     _suggestion_engine = SuggestionEngine(
-        preference_model=_preference_model,
-        context_analyzer=_context_analyzer
+        preference_model=_preference_model, context_analyzer=_context_analyzer
     )
 
 
-def get_engine_suggestions(
-    engine_type: str,
-    current_state_json: str
-) -> str:
+def get_engine_suggestions(engine_type: str, current_state_json: str) -> str:
     """
     Get suggestions for a specific engine type.
 
@@ -91,23 +84,16 @@ def get_engine_suggestions(
             context = _context_analyzer.analyze(current_state)
 
         # Generate engine-specific suggestions
-        suggestions = _generate_engine_specific_suggestions(
-            engine_type,
-            current_state,
-            context
-        )
+        suggestions = _generate_engine_specific_suggestions(engine_type, current_state, context)
 
         return json.dumps(suggestions)
 
-    except Exception as e:
+    except Exception:
         # Return default suggestions on error
         return json.dumps(_get_default_suggestions(engine_type))
 
 
-def get_batch_engine_suggestions(
-    engine_types: List[str],
-    current_state_json: str
-) -> str:
+def get_batch_engine_suggestions(engine_types: List[str], current_state_json: str) -> str:
     """
     Get suggestions for multiple engines at once.
 
@@ -131,21 +117,17 @@ def get_batch_engine_suggestions(
             suggestions = _generate_engine_specific_suggestions(
                 engine_type,
                 current_state,
-                None  # Context will be analyzed per engine if needed
+                None,  # Context will be analyzed per engine if needed
             )
             batch_suggestions[engine_type] = suggestions
 
         return json.dumps(batch_suggestions)
 
-    except Exception as e:
+    except Exception:
         return json.dumps({})
 
 
-def record_suggestion_applied(
-    engine_type: str,
-    suggestion_json: str,
-    result_json: str = "{}"
-):
+def record_suggestion_applied(engine_type: str, suggestion_json: str, result_json: str = "{}"):
     """
     Record that engine suggestions were applied.
 
@@ -166,18 +148,14 @@ def record_suggestion_applied(
         # Record in preference model for learning
         # This helps improve future suggestions
         _preference_model.record_engine_suggestion_applied(
-            engine_type=engine_type,
-            suggestion=suggestion,
-            result=result
+            engine_type=engine_type, suggestion=suggestion, result=result
         )
-    except Exception as e:
+    except Exception:
         pass  # Silently fail - tracking is not critical
 
 
 def _generate_engine_specific_suggestions(
-    engine_type: str,
-    current_state: Dict[str, Any],
-    context: Optional[Any]
+    engine_type: str, current_state: Dict[str, Any], context: Optional[Any]
 ) -> Dict[str, Any]:
     """
     Generate engine-specific suggestions based on state and context.
@@ -219,9 +197,7 @@ def _generate_engine_specific_suggestions(
 
 
 def _get_melody_suggestions(
-    emotion: str,
-    parameters: Dict[str, float],
-    context: Optional[Any]
+    emotion: str, parameters: Dict[str, float], context: Optional[Any]
 ) -> Dict[str, Any]:
     """Get melody-specific suggestions."""
     suggestions = {}
@@ -275,10 +251,7 @@ def _get_melody_suggestions(
 
 
 def _get_bass_suggestions(
-    emotion: str,
-    parameters: Dict[str, float],
-    chords: List[str],
-    context: Optional[Any]
+    emotion: str, parameters: Dict[str, float], chords: List[str], context: Optional[Any]
 ) -> Dict[str, Any]:
     """Get bass-specific suggestions."""
     suggestions = {}
@@ -304,9 +277,7 @@ def _get_bass_suggestions(
 
 
 def _get_drum_suggestions(
-    emotion: str,
-    parameters: Dict[str, float],
-    context: Optional[Any]
+    emotion: str, parameters: Dict[str, float], context: Optional[Any]
 ) -> Dict[str, Any]:
     """Get drum/rhythm-specific suggestions."""
     suggestions = {}
@@ -334,9 +305,7 @@ def _get_drum_suggestions(
 
 
 def _get_pad_suggestions(
-    emotion: str,
-    parameters: Dict[str, float],
-    context: Optional[Any]
+    emotion: str, parameters: Dict[str, float], context: Optional[Any]
 ) -> Dict[str, Any]:
     """Get pad-specific suggestions."""
     suggestions = {}
@@ -359,9 +328,7 @@ def _get_pad_suggestions(
 
 
 def _get_string_suggestions(
-    emotion: str,
-    parameters: Dict[str, float],
-    context: Optional[Any]
+    emotion: str, parameters: Dict[str, float], context: Optional[Any]
 ) -> Dict[str, Any]:
     """Get string-specific suggestions."""
     suggestions = {}
@@ -381,9 +348,7 @@ def _get_string_suggestions(
 
 
 def _get_generic_suggestions(
-    emotion: str,
-    parameters: Dict[str, float],
-    context: Optional[Any]
+    emotion: str, parameters: Dict[str, float], context: Optional[Any]
 ) -> Dict[str, Any]:
     """Get generic suggestions for unknown engine types."""
     return {

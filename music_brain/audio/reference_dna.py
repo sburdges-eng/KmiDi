@@ -10,11 +10,12 @@ intent always takes precedence.
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Dict, Optional
 
 try:
     import librosa
     import numpy as np
+
     LIBROSA_AVAILABLE = True
 except ImportError:
     librosa = None
@@ -26,15 +27,17 @@ except ImportError:
 # DATA CLASSES
 # =================================================================
 
+
 @dataclass
 class ReferenceProfile:
     """DNA profile extracted from a reference track."""
+
     tempo_bpm: float
     key_root: Optional[str]
     key_mode: Optional[str]  # major, minor
     brightness: float  # 0-1 normalized spectral centroid
-    energy: float      # 0-1 normalized RMS energy
-    warmth: float      # 0-1 low-frequency content
+    energy: float  # 0-1 normalized RMS energy
+    warmth: float  # 0-1 low-frequency content
 
     def __repr__(self) -> str:
         key = f"{self.key_root} {self.key_mode}" if self.key_root else "unknown"
@@ -48,7 +51,7 @@ class ReferenceProfile:
 # KEY DETECTION
 # =================================================================
 
-NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 # Krumhansl-Kessler key profiles
 MAJOR_PROFILE = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88]
@@ -117,6 +120,7 @@ def _estimate_key(y, sr) -> tuple:
 # MAIN ANALYSIS
 # =================================================================
 
+
 def analyze_reference(path: Path) -> Optional[ReferenceProfile]:
     """
     Analyze a reference audio file and extract its DNA profile.
@@ -143,7 +147,7 @@ def analyze_reference(path: Path) -> Optional[ReferenceProfile]:
         # Tempo estimation
         tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
         # Handle numpy array vs scalar
-        if hasattr(tempo, '__len__'):
+        if hasattr(tempo, "__len__"):
             tempo = float(tempo[0]) if len(tempo) > 0 else 120.0
         else:
             tempo = float(tempo)

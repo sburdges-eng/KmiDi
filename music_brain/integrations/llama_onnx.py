@@ -36,7 +36,7 @@ def load_llama_config(config_path: Path) -> Optional[LlamaOnnxConfig]:
     """Load LLaMA ONNX config from JSON."""
     if not config_path.exists():
         return None
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         data = json.load(f)
     return LlamaOnnxConfig(
         model_name=data.get("model_name", "llama_onnx"),
@@ -162,4 +162,3 @@ def build_llama_generator(config_path: Optional[Path] = None) -> Optional[LlamaO
         return LlamaOnnxGenerator(cfg)
     except Exception:
         return None
-

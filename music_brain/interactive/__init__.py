@@ -4,20 +4,19 @@ Interactive module for music brain.
 Provides real-time parameter adjustment and gesture controls.
 """
 
+from .gesture_controls import (
+    EmotionWheelGestureHandler,
+    Gesture,
+    GestureMapper,
+    GestureType,
+    create_emotion_wheel_drag_handler,
+)
 from .realtime_adjustment import (
-    ParameterMorphEngine,
+    InterpolationType,
     MultiParameterMorpher,
+    ParameterMorphEngine,
     ParameterSet,
     ParameterState,
-    InterpolationType,
-)
-
-from .gesture_controls import (
-    GestureMapper,
-    Gesture,
-    GestureType,
-    EmotionWheelGestureHandler,
-    create_emotion_wheel_drag_handler,
 )
 
 __all__ = [

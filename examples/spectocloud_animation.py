@@ -6,78 +6,85 @@ showing the conical lifeline traveling through musical space over time.
 """
 
 import numpy as np
+
 from music_brain.visualization import Spectocloud
 
 
 def generate_chord_progression_midi(duration=8.0, bpm=100):
     """
     Generate MIDI events for a chord progression with emotional arc.
-    
+
     Creates: i - VI - III - VII (minor progression with tension)
     """
     events = []
     beat_duration = 60.0 / bpm
-    
+
     # Chord progression in Am
     chords = [
-        {'root': 57, 'type': 'minor'},   # Am (i)
-        {'root': 65, 'type': 'major'},   # F  (VI)
-        {'root': 60, 'type': 'major'},   # C  (III)
-        {'root': 67, 'type': 'major'},   # G  (VII)
+        {"root": 57, "type": "minor"},  # Am (i)
+        {"root": 65, "type": "major"},  # F  (VI)
+        {"root": 60, "type": "major"},  # C  (III)
+        {"root": 67, "type": "major"},  # G  (VII)
     ]
-    
+
     chord_patterns = {
-        'minor': [0, 3, 7],              # Minor triad
-        'major': [0, 4, 7],              # Major triad
+        "minor": [0, 3, 7],  # Minor triad
+        "major": [0, 4, 7],  # Major triad
     }
-    
+
     time = 0.0
     beat = 0
-    
+
     while time < duration:
         # Current chord (2 beats per chord)
         chord_idx = (beat // 2) % len(chords)
         chord = chords[chord_idx]
-        root = chord['root']
-        pattern = chord_patterns[chord['type']]
-        
+        root = chord["root"]
+        pattern = chord_patterns[chord["type"]]
+
         # Add chord notes
         for offset in pattern:
             # Velocity varies with position in progression
             base_vel = 50 + int(30 * (time / duration))
             velocity = base_vel + int(10 * np.sin(2 * np.pi * time / (duration / 2)))
-            
-            events.append({
-                'time': time,
-                'type': 'note_on',
-                'note': root + offset,
-                'velocity': velocity,
-            })
-        
+
+            events.append(
+                {
+                    "time": time,
+                    "type": "note_on",
+                    "note": root + offset,
+                    "velocity": velocity,
+                }
+            )
+
         # Add melody notes (varied rhythm)
         if beat % 2 == 0:
             # Melody rises with emotional arc
             melody_offset = int(12 + 7 * (time / duration))
             melody_note = root + melody_offset
-            
-            events.append({
-                'time': time + beat_duration * 0.25,
-                'type': 'note_on',
-                'note': melody_note,
-                'velocity': 70 + int(20 * (time / duration)),
-            })
-        
+
+            events.append(
+                {
+                    "time": time + beat_duration * 0.25,
+                    "type": "note_on",
+                    "note": melody_note,
+                    "velocity": 70 + int(20 * (time / duration)),
+                }
+            )
+
         # Add bass note
-        events.append({
-            'time': time,
-            'type': 'note_on',
-            'note': root - 12,
-            'velocity': 60,
-        })
-        
+        events.append(
+            {
+                "time": time,
+                "type": "note_on",
+                "note": root - 12,
+                "velocity": 60,
+            }
+        )
+
         time += beat_duration
         beat += 1
-    
+
     return events
 
 
@@ -87,10 +94,10 @@ def generate_emotional_journey(duration=8.0, window_size=0.2):
     """
     n_windows = int(duration / window_size)
     trajectory = []
-    
+
     for i in range(n_windows):
         t_norm = i / max(1, n_windows - 1)
-        
+
         # Emotional journey stages
         if t_norm < 0.25:
             # Stage 1: Grief (low valence, low arousal)
@@ -115,17 +122,19 @@ def generate_emotional_journey(duration=8.0, window_size=0.2):
             valence = 0.6 + 0.3 * stage
             arousal = 0.7 + 0.2 * stage
             intensity = 0.9 + 0.1 * stage
-        
+
         # Add micro-variations
         valence += 0.1 * np.sin(2 * np.pi * 3.0 * t_norm)
         arousal += 0.08 * np.sin(2 * np.pi * 5.0 * t_norm)
-        
-        trajectory.append({
-            'valence': np.clip(valence, -1.0, 1.0),
-            'arousal': np.clip(arousal, 0.0, 1.0),
-            'intensity': np.clip(intensity, 0.0, 1.0),
-        })
-    
+
+        trajectory.append(
+            {
+                "valence": np.clip(valence, -1.0, 1.0),
+                "arousal": np.clip(arousal, 0.0, 1.0),
+                "intensity": np.clip(intensity, 0.0, 1.0),
+            }
+        )
+
     return trajectory
 
 
@@ -134,25 +143,25 @@ def main():
     print("=" * 70)
     print("Spectocloud Animation Example")
     print("=" * 70)
-    
+
     # Configuration
     duration = 8.0
     bpm = 100
-    
-    print(f"\nGenerating musical data:")
+
+    print("\nGenerating musical data:")
     print(f"  Duration: {duration}s @ {bpm} BPM")
-    print(f"  Progression: Am - F - C - G (emotional journey)")
-    
+    print("  Progression: Am - F - C - G (emotional journey)")
+
     # Generate MIDI
     print("  - Creating MIDI events...")
     midi_events = generate_chord_progression_midi(duration=duration, bpm=bpm)
     print(f"    Generated {len(midi_events)} MIDI events")
-    
+
     # Generate emotion trajectory
     print("  - Creating emotional journey (grief → euphoria)...")
     emotion_trajectory = generate_emotional_journey(duration=duration)
     print(f"    Generated {len(emotion_trajectory)} emotion windows")
-    
+
     # Create Spectocloud
     print("\nInitializing Spectocloud...")
     spectocloud = Spectocloud(
@@ -162,7 +171,7 @@ def main():
     )
     print(f"  - {len(spectocloud.anchor_library.anchors)} anchors")
     print(f"  - {spectocloud.n_particles} particles per frame")
-    
+
     # Process MIDI
     print("\nProcessing MIDI with emotion trajectory...")
     spectocloud.process_midi(
@@ -171,7 +180,7 @@ def main():
         emotion_trajectory=emotion_trajectory,
     )
     print(f"  - Generated {len(spectocloud.frames)} frames")
-    
+
     # Print emotional journey stats
     print("\nEmotional journey:")
     for stage, desc in [
@@ -183,35 +192,38 @@ def main():
     ]:
         if stage < len(spectocloud.frames):
             frame = spectocloud.frames[stage]
-            print(f"  {desc:20s}: v={frame.valence:+.2f}, a={frame.arousal:.2f}, "
-                  f"spread={frame.spread:.2f}")
-    
+            print(
+                f"  {desc:20s}: v={frame.valence:+.2f}, a={frame.arousal:.2f}, "
+                f"spread={frame.spread:.2f}"
+            )
+
     # Render animation
     print("\n" + "=" * 70)
     print("Rendering animation...")
     print("=" * 70)
     print("\nThis may take a minute...")
-    
+
     output_path = "/tmp/spectocloud_journey.gif"
-    
+
     spectocloud.render_animation(
         output_path=output_path,
-        fps=15,              # 15 FPS for reasonable file size
-        duration=None,       # Use all frames
-        rotate=True,         # Rotate camera view
+        fps=15,  # 15 FPS for reasonable file size
+        duration=None,  # Use all frames
+        rotate=True,  # Rotate camera view
     )
-    
+
     print("\n" + "=" * 70)
     print("Animation complete!")
     print("=" * 70)
     print(f"\nOutput: {output_path}")
-    
+
     # File size check
     import os
+
     if os.path.exists(output_path):
         size_mb = os.path.getsize(output_path) / (1024 * 1024)
         print(f"File size: {size_mb:.2f} MB")
-    
+
     print("\nVisualization features demonstrated:")
     print("  ✓ Conical lifeline traveling along time axis")
     print("  ✓ Color transition (blue → neutral → red) with valence")

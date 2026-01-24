@@ -14,17 +14,17 @@ Usage:
             return ProcessorResult(success=True, data=result)
 """
 
-from typing import Any, Dict, Optional
 from abc import abstractmethod
+from typing import Any, Dict, Optional
 
 from music_brain.orchestrator.interfaces import (
-    ProcessorInterface,
-    ProcessorConfig,
-    ProcessorResult,
     ExecutionContext,
+    ProcessorConfig,
+    ProcessorInterface,
+    ProcessorResult,
     ProcessorStatus,
 )
-from music_brain.orchestrator.logging_utils import get_logger, OrchestratorLogger
+from music_brain.orchestrator.logging_utils import OrchestratorLogger, get_logger
 
 
 class BaseProcessor(ProcessorInterface):
@@ -170,9 +170,8 @@ class BaseProcessor(ProcessorInterface):
             "name": self.name,
             "processed_count": self._processed_count,
             "error_count": self._error_count,
-            "success_rate": (
-                self._processed_count - self._error_count
-            ) / max(self._processed_count, 1),
+            "success_rate": (self._processed_count - self._error_count)
+            / max(self._processed_count, 1),
             "status": self._status.value,
         }
 

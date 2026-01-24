@@ -5,14 +5,15 @@ Python utilities for MIDI editing operations.
 Part of Phase 5 of the "All-Knowing Interactive Musical Customization System".
 """
 
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, field
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class EditOperation(Enum):
     """Types of edit operations."""
+
     ADD_NOTE = "add_note"
     DELETE_NOTE = "delete_note"
     MOVE_NOTE = "move_note"
@@ -30,6 +31,7 @@ class EditOperation(Enum):
 @dataclass
 class MidiEditCommand:
     """Represents a single MIDI edit operation (for undo/redo)."""
+
     operation: EditOperation
     target_notes: List[int]  # Indices of notes affected
     old_state: Dict[str, Any]  # Old state before edit
@@ -68,7 +70,7 @@ class MidiEditor:
         duration: int,
         velocity: int = 100,
         channel: int = 0,
-        part: str = "melody"  # Which part to add to
+        part: str = "melody",  # Which part to add to
     ) -> bool:
         """
         Add a note to the MIDI data.
@@ -104,11 +106,7 @@ class MidiEditor:
         return False
 
     def move_note(
-        self,
-        part: str,
-        note_index: int,
-        new_start_tick: int,
-        new_pitch: Optional[int] = None
+        self, part: str, note_index: int, new_start_tick: int, new_pitch: Optional[int] = None
     ) -> bool:
         """Move a note (change position and/or pitch)."""
         note_list = self._get_note_list(part)
@@ -120,12 +118,7 @@ class MidiEditor:
             return True
         return False
 
-    def resize_note(
-        self,
-        part: str,
-        note_index: int,
-        new_duration: int
-    ) -> bool:
+    def resize_note(self, part: str, note_index: int, new_duration: int) -> bool:
         """Change note duration."""
         note_list = self._get_note_list(part)
         if note_list and 0 <= note_index < len(note_list):
@@ -134,12 +127,7 @@ class MidiEditor:
             return True
         return False
 
-    def change_velocity(
-        self,
-        part: str,
-        note_index: int,
-        new_velocity: int
-    ) -> bool:
+    def change_velocity(self, part: str, note_index: int, new_velocity: int) -> bool:
         """Change note velocity."""
         note_list = self._get_note_list(part)
         if note_list and 0 <= note_index < len(note_list):
@@ -152,7 +140,7 @@ class MidiEditor:
         self,
         part: str,
         quantize_value: int,  # Ticks to quantize to
-        selected_indices: Optional[List[int]] = None
+        selected_indices: Optional[List[int]] = None,
     ) -> int:
         """
         Quantize notes to grid.
@@ -189,7 +177,7 @@ class MidiEditor:
         part: str,
         timing_variance: float = 5.0,  # +/- ticks
         velocity_variance: float = 5.0,  # +/- velocity
-        selected_indices: Optional[List[int]] = None
+        selected_indices: Optional[List[int]] = None,
     ) -> int:
         """
         Add human-like variations to notes.
@@ -224,10 +212,7 @@ class MidiEditor:
         return humanized_count
 
     def transpose_notes(
-        self,
-        part: str,
-        semitones: int,
-        selected_indices: Optional[List[int]] = None
+        self, part: str, semitones: int, selected_indices: Optional[List[int]] = None
     ) -> int:
         """
         Transpose notes by semitones.
@@ -253,11 +238,7 @@ class MidiEditor:
 
         return transposed_count
 
-    def copy_notes(
-        self,
-        part: str,
-        note_indices: List[int]
-    ) -> int:
+    def copy_notes(self, part: str, note_indices: List[int]) -> int:
         """
         Copy notes to clipboard.
 
@@ -277,12 +258,7 @@ class MidiEditor:
 
         return len(self.clipboard)
 
-    def paste_notes(
-        self,
-        part: str,
-        start_tick: int,
-        offset_pitch: int = 0
-    ) -> int:
+    def paste_notes(self, part: str, start_tick: int, offset_pitch: int = 0) -> int:
         """
         Paste notes from clipboard.
 
@@ -302,7 +278,9 @@ class MidiEditor:
             return 0
 
         # Find earliest note in clipboard to calculate offset
-        earliest_tick = min(note.get("startTick", 0) for note in self.clipboard) if self.clipboard else 0
+        earliest_tick = (
+            min(note.get("startTick", 0) for note in self.clipboard) if self.clipboard else 0
+        )
 
         pasted_count = 0
         for note in self.clipboard:
@@ -317,11 +295,7 @@ class MidiEditor:
 
         return pasted_count
 
-    def cut_notes(
-        self,
-        part: str,
-        note_indices: List[int]
-    ) -> int:
+    def cut_notes(self, part: str, note_indices: List[int]) -> int:
         """
         Cut notes (copy and delete).
 
@@ -344,7 +318,8 @@ class MidiEditor:
             return None
 
         part_map = {
-            "melody": getattr(self.midi_data, "melody", None) or getattr(self.midi_data, "notes", None),
+            "melody": getattr(self.midi_data, "melody", None)
+            or getattr(self.midi_data, "notes", None),
             "bass": getattr(self.midi_data, "bass", None),
             "drums": getattr(self.midi_data, "drumGroove", None),
             "pad": getattr(self.midi_data, "pad", None),
@@ -375,6 +350,7 @@ class MidiEditor:
 
 def main():
     """Example usage."""
+
     # Mock MIDI data structure
     class MockMidi:
         def __init__(self):

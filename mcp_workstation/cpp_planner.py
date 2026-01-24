@@ -7,39 +7,41 @@ Plans and tracks the transition from Python to C++ for the professional DAW.
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional
-from datetime import datetime
 
-from .models import PhaseStatus, AIAgent
-from .debug import get_debug, DebugCategory, trace
 from .ai_specializations import TaskType, get_best_agent_for_task
+from .debug import DebugCategory, get_debug, trace
+from .models import AIAgent, PhaseStatus
 
 
 class CppPriority(str, Enum):
     """Priority levels for C++ porting."""
-    CRITICAL = "critical"      # Real-time DSP, must be C++
-    HIGH = "high"              # Performance-sensitive
-    MEDIUM = "medium"          # Nice to have in C++
-    LOW = "low"                # Can stay Python
-    OPTIONAL = "optional"      # Port only if needed
+
+    CRITICAL = "critical"  # Real-time DSP, must be C++
+    HIGH = "high"  # Performance-sensitive
+    MEDIUM = "medium"  # Nice to have in C++
+    LOW = "low"  # Can stay Python
+    OPTIONAL = "optional"  # Port only if needed
 
 
 class PortingStrategy(str, Enum):
     """Strategies for porting Python to C++."""
-    REWRITE = "rewrite"                # Full rewrite in C++
-    PYBIND11 = "pybind11"              # Keep Python API, C++ core
-    CYTHON = "cython"                  # Cython for critical paths
-    HYBRID = "hybrid"                  # Mix of approaches
-    KEEP_PYTHON = "keep_python"        # Don't port
+
+    REWRITE = "rewrite"  # Full rewrite in C++
+    PYBIND11 = "pybind11"  # Keep Python API, C++ core
+    CYTHON = "cython"  # Cython for critical paths
+    HYBRID = "hybrid"  # Mix of approaches
+    KEEP_PYTHON = "keep_python"  # Don't port
 
 
 @dataclass
 class CppModule:
     """A C++ module to be created."""
+
     id: str
     name: str
     description: str
-    python_source: str              # Original Python module path
-    cpp_target: str                 # Target C++ file path
+    python_source: str  # Original Python module path
+    cpp_target: str  # Target C++ file path
     priority: CppPriority = CppPriority.MEDIUM
     strategy: PortingStrategy = PortingStrategy.PYBIND11
     status: PhaseStatus = PhaseStatus.NOT_STARTED
@@ -50,10 +52,10 @@ class CppModule:
     cpp_dependencies: List[str] = field(default_factory=list)  # C++ libs
 
     # Technical details
-    estimated_loc: int = 0          # Estimated lines of C++ code
-    requires_simd: bool = False     # Needs SIMD optimization
-    requires_gpu: bool = False      # Needs GPU/CUDA
-    real_time_safe: bool = False    # Must be real-time safe
+    estimated_loc: int = 0  # Estimated lines of C++ code
+    requires_simd: bool = False  # Needs SIMD optimization
+    requires_gpu: bool = False  # Needs GPU/CUDA
+    real_time_safe: bool = False  # Must be real-time safe
 
     # Assignment
     assigned_to: Optional[AIAgent] = None
@@ -106,6 +108,7 @@ class CppModule:
 @dataclass
 class CppTask:
     """A specific task within C++ development."""
+
     id: str
     module_id: str
     name: str
@@ -275,6 +278,7 @@ IDAW_CPP_MODULES = [
 # C++ Transition Planner
 # =============================================================================
 
+
 class CppTransitionPlanner:
     """
     Plans and tracks the Python to C++ transition for DAiW.
@@ -413,10 +417,7 @@ class CppTransitionPlanner:
     def get_progress_summary(self) -> Dict:
         """Get overall C++ transition progress."""
         total_loc = sum(m.estimated_loc for m in self.modules.values())
-        completed_loc = sum(
-            m.estimated_loc * m.progress
-            for m in self.modules.values()
-        )
+        completed_loc = sum(m.estimated_loc * m.progress for m in self.modules.values())
 
         by_priority = {}
         for mod in self.modules.values():
@@ -430,12 +431,10 @@ class CppTransitionPlanner:
         return {
             "total_modules": len(self.modules),
             "modules_completed": sum(
-                1 for m in self.modules.values()
-                if m.status == PhaseStatus.COMPLETED
+                1 for m in self.modules.values() if m.status == PhaseStatus.COMPLETED
             ),
             "modules_in_progress": sum(
-                1 for m in self.modules.values()
-                if m.status == PhaseStatus.IN_PROGRESS
+                1 for m in self.modules.values() if m.status == PhaseStatus.IN_PROGRESS
             ),
             "estimated_total_loc": total_loc,
             "estimated_completed_loc": int(completed_loc),
@@ -500,13 +499,15 @@ class CppTransitionPlanner:
             if not mod or mod.strategy == PortingStrategy.KEEP_PYTHON:
                 continue
 
-            lines.extend([
-                "",
-                f"# {mod.name}",
-                f"add_library({mod.id}",
-                f"    {mod.cpp_target}/*.cpp",
-                ")",
-            ])
+            lines.extend(
+                [
+                    "",
+                    f"# {mod.name}",
+                    f"add_library({mod.id}",
+                    f"    {mod.cpp_target}/*.cpp",
+                    ")",
+                ]
+            )
 
             if mod.depends_on:
                 deps_str = " ".join(mod.depends_on)
@@ -536,6 +537,7 @@ class CppTransitionPlanner:
 # Display Functions
 # =============================================================================
 
+
 def format_cpp_plan(planner: CppTransitionPlanner) -> str:
     """Format the C++ transition plan for display."""
     lines = [
@@ -546,13 +548,15 @@ def format_cpp_plan(planner: CppTransitionPlanner) -> str:
     ]
 
     summary = planner.get_progress_summary()
-    lines.extend([
-        f"Overall Progress: {summary['overall_progress']:.0%}",
-        f"Modules: {summary['modules_completed']}/{summary['total_modules']} completed",
-        f"Estimated Code: {summary['estimated_completed_loc']:,}/{summary['estimated_total_loc']:,} LOC",
-        "",
-        "MODULES:",
-    ])
+    lines.extend(
+        [
+            f"Overall Progress: {summary['overall_progress']:.0%}",
+            f"Modules: {summary['modules_completed']}/{summary['total_modules']} completed",
+            f"Estimated Code: {summary['estimated_completed_loc']:,}/{summary['estimated_total_loc']:,} LOC",
+            "",
+            "MODULES:",
+        ]
+    )
 
     priority_order = ["critical", "high", "medium", "low", "optional"]
 
@@ -583,10 +587,12 @@ def format_cpp_plan(planner: CppTransitionPlanner) -> str:
                 lines.append(f"    Depends: {', '.join(mod.depends_on)}")
 
     if summary["ready_to_start"]:
-        lines.extend([
-            "",
-            "READY TO START:",
-            *[f"  • {mid}" for mid in summary["ready_to_start"]],
-        ])
+        lines.extend(
+            [
+                "",
+                "READY TO START:",
+                *[f"  • {mid}" for mid in summary["ready_to_start"]],
+            ]
+        )
 
     return "\n".join(lines)

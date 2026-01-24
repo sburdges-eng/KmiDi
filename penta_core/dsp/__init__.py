@@ -7,26 +7,25 @@ Provides:
 - Common DSP building blocks
 """
 
-from penta_core.dsp.trace_dsp import (
-    EnvelopeFollower,
-    EnvelopeMode,
-    PatternAutomation,
-    AutomationCurve,
-    create_envelope_follower,
-    follow_envelope,
-    apply_pattern_automation,
-    generate_lfo_pattern,
-)
-
 from penta_core.dsp.parrot_dsp import (
-    SamplePlayback,
-    PitchShifter,
     GrainCloud,
+    PitchShifter,
     PlaybackMode,
+    SamplePlayback,
+    create_grain_cloud,
     create_pitch_shifter,
     shift_pitch,
     time_stretch,
-    create_grain_cloud,
+)
+from penta_core.dsp.trace_dsp import (
+    AutomationCurve,
+    EnvelopeFollower,
+    EnvelopeMode,
+    PatternAutomation,
+    apply_pattern_automation,
+    create_envelope_follower,
+    follow_envelope,
+    generate_lfo_pattern,
 )
 
 __all__ = [

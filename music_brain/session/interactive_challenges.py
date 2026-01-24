@@ -5,18 +5,19 @@ Challenge-based tutorials that teach rule-breaking through hands-on exercises.
 Part of the "New Features" implementation for Kelly MIDI Companion.
 """
 
-from typing import List, Dict, Optional, Tuple
+import json
+import random
 from dataclasses import dataclass, field
 from enum import Enum
-import json
 from pathlib import Path
-import random
+from typing import Dict, List, Optional, Tuple
 
-from .teaching import RuleBreakingTeacher, LESSONS
+from .teaching import RuleBreakingTeacher
 
 
 class ChallengeDifficulty(Enum):
     """Challenge difficulty levels."""
+
     BEGINNER = "beginner"
     INTERMEDIATE = "intermediate"
     ADVANCED = "advanced"
@@ -25,6 +26,7 @@ class ChallengeDifficulty(Enum):
 
 class ChallengeStatus(Enum):
     """Challenge completion status."""
+
     NOT_STARTED = "not_started"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -34,6 +36,7 @@ class ChallengeStatus(Enum):
 @dataclass
 class Challenge:
     """A single rule-breaking challenge."""
+
     id: str
     title: str
     description: str
@@ -66,6 +69,7 @@ class Challenge:
 @dataclass
 class ChallengeProgress:
     """Progress tracking for a challenge."""
+
     challenge_id: str
     status: ChallengeStatus = ChallengeStatus.NOT_STARTED
     attempts: int = 0
@@ -101,18 +105,17 @@ CHALLENGES = [
         constraints=[
             "Start with a major key progression (e.g., F - Bb - C - F)",
             "Replace at least one chord with a borrowed chord",
-            "The result should feel emotionally darker or more complex"
+            "The result should feel emotionally darker or more complex",
         ],
         hints=[
             "Try replacing the IV chord with iv (minor 4)",
             "The bVI chord creates an 'epic' feeling",
-            "bVII gives a mixolydian, rock-like quality"
+            "bVII gives a mixolydian, rock-like quality",
         ],
         example_solution="F - Bb - Bbm - F (iv substitution) or F - Bb - Db - F (bVI substitution)",
         points=10,
-        time_limit_minutes=15
+        time_limit_minutes=15,
     ),
-
     Challenge(
         id="challenge_002",
         title="Avoid Tonic Resolution",
@@ -123,18 +126,17 @@ CHALLENGES = [
         constraints=[
             "Use 8 chords total",
             "Cannot end on the I chord",
-            "Progression should still feel musical, not random"
+            "Progression should still feel musical, not random",
         ],
         hints=[
             "End on a borrowed chord like bVI or bVII",
             "Use modal interchange to find alternative endings",
-            "Consider ending on a relative minor (vi)"
+            "Consider ending on a relative minor (vi)",
         ],
         example_solution="F - C - Dm - Bb - Am - Dm - G - C (ends on V, creating anticipation)",
         points=20,
-        time_limit_minutes=20
+        time_limit_minutes=20,
     ),
-
     Challenge(
         id="challenge_003",
         title="Laid Back Groove",
@@ -145,17 +147,16 @@ CHALLENGES = [
         constraints=[
             "Start with a quantized pattern",
             "Snare should be noticeably behind the beat",
-            "Maintain overall groove integrity"
+            "Maintain overall groove integrity",
         ],
         hints=[
             "Move the snare back by 10-20ms (not more, or it sounds sloppy)",
             "You can move hi-hats slightly forward to compensate",
-            "Listen to hip-hop and neo-soul for reference"
+            "Listen to hip-hop and neo-soul for reference",
         ],
         example_solution="Quantized snare on beat 2 → Move to 2.02 beats (20ms late at 120 BPM)",
         points=15,
     ),
-
     Challenge(
         id="challenge_004",
         title="Buried Vocals for Intimacy",
@@ -166,17 +167,16 @@ CHALLENGES = [
         constraints=[
             "Vocals should be audible but not prominent",
             "Use reverb/delay to create space",
-            "The result should feel intentional, not like a mistake"
+            "The result should feel intentional, not like a mistake",
         ],
         hints=[
             "Lower vocals 3-6dB below 'normal' level",
             "Add reverb to create distance",
-            "Use high-pass filtering to make room for other elements"
+            "Use high-pass filtering to make room for other elements",
         ],
         example_solution="Vocals at -12dB, reverb send at 30%, high-pass at 200Hz",
         points=25,
     ),
-
     Challenge(
         id="challenge_005",
         title="Pitch Imperfection as Emotion",
@@ -187,17 +187,16 @@ CHALLENGES = [
         constraints=[
             "Must be intentional, not just lazy",
             "The imperfection should serve the emotion",
-            "Document why you're keeping the imperfection"
+            "Document why you're keeping the imperfection",
         ],
         hints=[
             "Look for moments of vulnerability in the performance",
             "Slight pitch drift can add human feeling",
-            "Sometimes the 'crack' in the voice IS the emotion"
+            "Sometimes the 'crack' in the voice IS the emotion",
         ],
         example_solution="Keep slight flat note on emotional phrase like 'I miss you' - adds weight to the sadness",
         points=30,
     ),
-
     Challenge(
         id="challenge_006",
         title="Syncopated Melody Over Straight Beat",
@@ -208,17 +207,16 @@ CHALLENGES = [
         constraints=[
             "Melody should emphasize beats 1.5, 2.5, 3.5, 4.5",
             "Drums stay perfectly on grid",
-            "Create rhythmic tension through syncopation"
+            "Create rhythmic tension through syncopation",
         ],
         hints=[
             "Start phrases on the 'and' of beats",
             "Use longer notes that cross bar lines",
-            "Listen to funk and jazz for syncopation examples"
+            "Listen to funk and jazz for syncopation examples",
         ],
         example_solution="Melody starts on 'and of 1', emphasizes 'and of 2' and 'and of 4', while kick stays on 1 and 3",
         points=20,
     ),
-
     Challenge(
         id="challenge_007",
         title="Genre Blending with Rule Breaks",
@@ -229,12 +227,12 @@ CHALLENGES = [
         constraints=[
             "Must clearly reference two different genres",
             "Rule-breaking should bridge the genres",
-            "Result should feel cohesive, not random"
+            "Result should feel cohesive, not random",
         ],
         hints=[
             "Jazz = extended chords (7ths, 9ths), Rock = power chords",
             "Try jazz voicings with rock distortion",
-            "Use modal interchange to bridge harmonic languages"
+            "Use modal interchange to bridge harmonic languages",
         ],
         example_solution="Cmaj7 - Fmaj7 - Am - G (jazz) with distorted guitar (rock) = jazz-rock fusion",
         points=35,
@@ -264,7 +262,7 @@ class ChallengeSystem:
         """Load progress from file."""
         if Path(self.progress_file).exists():
             try:
-                with open(self.progress_file, 'r') as f:
+                with open(self.progress_file) as f:
                     data = json.load(f)
                     for challenge_id, progress_data in data.items():
                         self.progress[challenge_id] = ChallengeProgress(
@@ -283,17 +281,16 @@ class ChallengeSystem:
     def save_progress(self):
         """Save progress to file."""
         data = {
-            challenge_id: progress.to_dict()
-            for challenge_id, progress in self.progress.items()
+            challenge_id: progress.to_dict() for challenge_id, progress in self.progress.items()
         }
-        with open(self.progress_file, 'w') as f:
+        with open(self.progress_file, "w") as f:
             json.dump(data, f, indent=2)
 
     def list_challenges(
         self,
         difficulty: Optional[ChallengeDifficulty] = None,
         category: Optional[str] = None,
-        status: Optional[ChallengeStatus] = None
+        status: Optional[ChallengeStatus] = None,
     ) -> List[Challenge]:
         """List challenges with optional filters."""
         challenges = list(self.challenges.values())
@@ -304,8 +301,7 @@ class ChallengeSystem:
             challenges = [ch for ch in challenges if ch.category == category]
         if status:
             challenge_ids = {
-                ch_id for ch_id, prog in self.progress.items()
-                if prog.status == status
+                ch_id for ch_id, prog in self.progress.items() if prog.status == status
             }
             challenges = [ch for ch in challenges if ch.id in challenge_ids]
 
@@ -356,7 +352,7 @@ class ChallengeSystem:
         challenge_id: str,
         solution: str,
         feedback: Optional[str] = None,
-        auto_validate: bool = False
+        auto_validate: bool = False,
     ) -> Tuple[bool, str]:
         """
         Submit a solution for a challenge.
@@ -386,11 +382,16 @@ class ChallengeSystem:
             is_valid = self._validate_solution(challenge, solution)
         else:
             is_valid = True  # Accept all solutions for now (user self-validates)
-            feedback = feedback or "Solution submitted. Review your work against the objective and constraints."
+            feedback = (
+                feedback
+                or "Solution submitted. Review your work against the objective and constraints."
+            )
 
         if is_valid:
             progress.status = ChallengeStatus.COMPLETED
-            progress.feedback = feedback or "Challenge completed! Great work breaking the rules intentionally."
+            progress.feedback = (
+                feedback or "Challenge completed! Great work breaking the rules intentionally."
+            )
             # Note: In a real implementation, you'd set completed_at timestamp
         else:
             progress.feedback = feedback or "Solution doesn't meet all constraints. Try again!"
@@ -419,8 +420,12 @@ class ChallengeSystem:
         """Get overall challenge statistics."""
         total = len(self.challenges)
         completed = sum(1 for p in self.progress.values() if p.status == ChallengeStatus.COMPLETED)
-        in_progress = sum(1 for p in self.progress.values() if p.status == ChallengeStatus.IN_PROGRESS)
-        total_points = sum(p.points for p in self.progress.values() if p.status == ChallengeStatus.COMPLETED)
+        in_progress = sum(
+            1 for p in self.progress.values() if p.status == ChallengeStatus.IN_PROGRESS
+        )
+        total_points = sum(
+            p.points for p in self.progress.values() if p.status == ChallengeStatus.COMPLETED
+        )
 
         return {
             "total_challenges": total,
@@ -435,8 +440,10 @@ class ChallengeSystem:
         """Get a recommended challenge based on progress."""
         # Find challenges not yet completed
         not_completed = [
-            ch for ch in self.challenges.values()
-            if self.progress.get(ch.id, ChallengeProgress(challenge_id=ch.id)).status != ChallengeStatus.COMPLETED
+            ch
+            for ch in self.challenges.values()
+            if self.progress.get(ch.id, ChallengeProgress(challenge_id=ch.id)).status
+            != ChallengeStatus.COMPLETED
         ]
 
         if not not_completed:
@@ -490,9 +497,11 @@ class ChallengeSystem:
         hint_count = 0
         while True:
             try:
-                action = input("\n[W]ork on it | [H]int | [S]ubmit solution | [E]xit: ").strip().lower()
+                action = (
+                    input("\n[W]ork on it | [H]int | [S]ubmit solution | [E]xit: ").strip().lower()
+                )
 
-                if action == 'h':
+                if action == "h":
                     if hint_count < len(challenge.hints):
                         hint = self.get_hint(challenge_id, hint_count)
                         print(f"\n💡 Hint {hint_count + 1}: {hint}")
@@ -500,20 +509,22 @@ class ChallengeSystem:
                     else:
                         print("\nNo more hints available.")
 
-                elif action == 's':
+                elif action == "s":
                     solution = input("\nEnter your solution: ").strip()
                     if solution:
                         is_valid, feedback = self.submit_solution(challenge_id, solution)
                         print(f"\n{'✅' if is_valid else '❌'} {feedback}")
                         if is_valid:
-                            print(f"\n🎉 Challenge completed! You earned {challenge.points} points.")
+                            print(
+                                f"\n🎉 Challenge completed! You earned {challenge.points} points."
+                            )
                         break
 
-                elif action == 'e':
+                elif action == "e":
                     print("\nChallenge saved. Come back to complete it later!")
                     break
 
-                elif action == 'w':
+                elif action == "w":
                     print("\nWork on the challenge. Return when ready to submit!")
                     continue
 
@@ -524,7 +535,9 @@ class ChallengeSystem:
     def _select_challenge_interactive(self) -> Optional[str]:
         """Interactive challenge selection."""
         stats = self.get_statistics()
-        print(f"\nProgress: {stats['completed']}/{stats['total_challenges']} completed ({stats['completion_rate']:.1f}%)")
+        print(
+            f"\nProgress: {stats['completed']}/{stats['total_challenges']} completed ({stats['completion_rate']:.1f}%)"
+        )
         print(f"Total Points: {stats['total_points']}")
 
         print("\nAvailable challenges:")
@@ -533,7 +546,7 @@ class ChallengeSystem:
         try:
             choice = input("\nSelect option: ").strip().lower()
 
-            if choice == 'r':
+            if choice == "r":
                 rec = self.get_recommended_challenge()
                 if rec:
                     return rec.id
@@ -541,10 +554,12 @@ class ChallengeSystem:
                     print("All challenges completed!")
                     return None
 
-            elif choice == 'l':
+            elif choice == "l":
                 challenges = self.list_challenges()
                 for i, ch in enumerate(challenges, 1):
-                    status = self.progress.get(ch.id, ChallengeProgress(challenge_id=ch.id)).status.value
+                    status = self.progress.get(
+                        ch.id, ChallengeProgress(challenge_id=ch.id)
+                    ).status.value
                     print(f"  {i}. [{status[0].upper()}] {ch.title} ({ch.difficulty.value})")
                 try:
                     num = int(input("\nSelect challenge number: ").strip())
@@ -553,7 +568,7 @@ class ChallengeSystem:
                 except (ValueError, IndexError):
                     pass
 
-            elif choice == 'b':
+            elif choice == "b":
                 print("  [1] Beginner | [2] Intermediate | [3] Advanced | [4] Expert")
                 try:
                     diff_choice = int(input("Select difficulty: ").strip())
@@ -574,7 +589,7 @@ class ChallengeSystem:
                 except (ValueError, IndexError):
                     pass
 
-            elif choice == 'c':
+            elif choice == "c":
                 categories = set(ch.category for ch in self.challenges.values())
                 print("Categories:", ", ".join(categories))
                 category = input("Enter category: ").strip().lower()
@@ -586,7 +601,7 @@ class ChallengeSystem:
                     if 1 <= num <= len(challenges):
                         return challenges[num - 1].id
 
-            elif choice == 'e':
+            elif choice == "e":
                 return None
 
         except (EOFError, KeyboardInterrupt):
@@ -608,4 +623,5 @@ def main():
 
 if __name__ == "__main__":
     import sys
+
     main()

@@ -136,9 +136,7 @@ class EmotionProductionMapper:
             preset.arrangement_density = self._apply_intensity(
                 preset.arrangement_density, intensity
             )
-            preset.dynamics_level = self._scale_dynamics(
-                preset.dynamics_level, intensity
-            )
+            preset.dynamics_level = self._scale_dynamics(preset.dynamics_level, intensity)
 
         if genre:
             preset.notes = [f"Genre-biased preset for {genre}."] + preset.notes
@@ -182,41 +180,23 @@ class EmotionProductionMapper:
             return "neutral"
 
         text = emotion.lower()
-        if any(
-            word in text
-            for word in ["calm", "peace", "relax", "gentle", "soft"]
-        ):
+        if any(word in text for word in ["calm", "peace", "relax", "gentle", "soft"]):
             return "calm"
         if any(word in text for word in ["happy", "uplift", "hope", "bright"]):
             return "uplifting"
-        if any(
-            word in text
-            for word in ["angry", "rage", "aggressive", "drive"]
-        ):
+        if any(word in text for word in ["angry", "rage", "aggressive", "drive"]):
             return "aggressive"
-        if any(
-            word in text
-            for word in ["dark", "brood", "moody", "tension"]
-        ):
+        if any(word in text for word in ["dark", "brood", "moody", "tension"]):
             return "dark"
-        if any(
-            word in text
-            for word in ["nostalgia", "nostalgic", "memory", "retro"]
-        ):
+        if any(word in text for word in ["nostalgia", "nostalgic", "memory", "retro"]):
             return "nostalgic"
         return "neutral"
 
     def _apply_intensity(self, density: float, intensity: str) -> float:
         intensity_text = intensity.lower()
-        if any(
-            word in intensity_text
-            for word in ["high", "big", "strong", "up"]
-        ):
+        if any(word in intensity_text for word in ["high", "big", "strong", "up"]):
             return self._clamp(density + 0.15)
-        if any(
-            word in intensity_text
-            for word in ["low", "quiet", "intimate", "down"]
-        ):
+        if any(word in intensity_text for word in ["low", "quiet", "intimate", "down"]):
             return self._clamp(density - 0.15)
         return self._clamp(density)
 

@@ -5,10 +5,11 @@ Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 See https://llvm.org/LICENSE.txt for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
-import lldb
-import time
-import datetime
+
 import inspect
+import time
+
+import lldb
 
 
 class TimeMetrics:
@@ -73,14 +74,7 @@ class MetricsPrinter_Compact:
     def __str__(self):
         string = ""
         for key, value in self.metrics.metrics.items():
-            string = (
-                string
-                + "metric "
-                + str(key)
-                + " was hit "
-                + str(value.count)
-                + " times\n"
-            )
+            string = string + "metric " + str(key) + " was hit " + str(value.count) + " times\n"
         return string
 
 
@@ -102,9 +96,7 @@ class Metrics:
             return MetricsPrinter_Compact(self)
         if name == "verbose":
             return MetricsPrinter_Verbose(self)
-        raise AttributeError(
-            "%r object has no attribute %r" % (type(self).__name__, name)
-        )
+        raise AttributeError("%r object has no attribute %r" % (type(self).__name__, name))
 
     def __str__(self):
         return str(self.verbose)

@@ -10,7 +10,7 @@ emotional intent and musical context. Can be conditioned on:
 
 Usage:
     from music_brain.generative import ChordProgressionGenerator
-    
+
     gen = ChordProgressionGenerator(device="mps")
     chords = gen.generate(
         emotion="grief",
@@ -20,35 +20,99 @@ Usage:
     )
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Union
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Dict, List, Optional
+
 import numpy as np
-import json
 
-from .base import GenerativeModel, GenerativeConfig, GenerationResult
-
+from .base import GenerativeConfig, GenerativeModel
 
 # Chord vocabulary
 CHORD_VOCAB = [
     # Major chords
-    "C", "D", "E", "F", "G", "A", "B",
-    "Db", "Eb", "Gb", "Ab", "Bb",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "A",
+    "B",
+    "Db",
+    "Eb",
+    "Gb",
+    "Ab",
+    "Bb",
     # Minor chords
-    "Cm", "Dm", "Em", "Fm", "Gm", "Am", "Bm",
-    "Dbm", "Ebm", "Gbm", "Abm", "Bbm",
+    "Cm",
+    "Dm",
+    "Em",
+    "Fm",
+    "Gm",
+    "Am",
+    "Bm",
+    "Dbm",
+    "Ebm",
+    "Gbm",
+    "Abm",
+    "Bbm",
     # 7th chords
-    "C7", "D7", "E7", "F7", "G7", "A7", "B7",
-    "Cmaj7", "Dmaj7", "Emaj7", "Fmaj7", "Gmaj7", "Amaj7", "Bmaj7",
-    "Cm7", "Dm7", "Em7", "Fm7", "Gm7", "Am7", "Bm7",
+    "C7",
+    "D7",
+    "E7",
+    "F7",
+    "G7",
+    "A7",
+    "B7",
+    "Cmaj7",
+    "Dmaj7",
+    "Emaj7",
+    "Fmaj7",
+    "Gmaj7",
+    "Amaj7",
+    "Bmaj7",
+    "Cm7",
+    "Dm7",
+    "Em7",
+    "Fm7",
+    "Gm7",
+    "Am7",
+    "Bm7",
     # Diminished/Augmented
-    "Cdim", "Ddim", "Edim", "Fdim", "Gdim", "Adim", "Bdim",
-    "Caug", "Daug", "Eaug", "Faug", "Gaug", "Aaug", "Baug",
+    "Cdim",
+    "Ddim",
+    "Edim",
+    "Fdim",
+    "Gdim",
+    "Adim",
+    "Bdim",
+    "Caug",
+    "Daug",
+    "Eaug",
+    "Faug",
+    "Gaug",
+    "Aaug",
+    "Baug",
     # Suspended
-    "Csus2", "Dsus2", "Esus2", "Fsus2", "Gsus2", "Asus2", "Bsus2",
-    "Csus4", "Dsus4", "Esus4", "Fsus4", "Gsus4", "Asus4", "Bsus4",
+    "Csus2",
+    "Dsus2",
+    "Esus2",
+    "Fsus2",
+    "Gsus2",
+    "Asus2",
+    "Bsus2",
+    "Csus4",
+    "Dsus4",
+    "Esus4",
+    "Fsus4",
+    "Gsus4",
+    "Asus4",
+    "Bsus4",
     # Special tokens
-    "<PAD>", "<START>", "<END>", "<REST>",
+    "<PAD>",
+    "<START>",
+    "<END>",
+    "<REST>",
 ]
 
 CHORD_TO_ID = {chord: i for i, chord in enumerate(CHORD_VOCAB)}
@@ -99,7 +163,7 @@ EMOTION_PROGRESSIONS = {
 @dataclass
 class ChordGeneratorConfig(GenerativeConfig):
     """Configuration for chord progression generator."""
-    
+
     # Model architecture
     vocab_size: int = len(CHORD_VOCAB)
     embedding_dim: int = 128
@@ -108,7 +172,7 @@ class ChordGeneratorConfig(GenerativeConfig):
     hidden_dim: int = 256
     dropout: float = 0.1
     max_sequence_length: int = 64
-    
+
     # Generation
     default_length: int = 8
     use_rule_based_fallback: bool = True
@@ -117,14 +181,14 @@ class ChordGeneratorConfig(GenerativeConfig):
 class ChordProgressionGenerator(GenerativeModel):
     """
     Generate chord progressions using a transformer model.
-    
+
     Supports:
     - Emotion-conditioned generation
     - Genre/style conditioning
     - Key constraints
     - Seed chord continuation
     - Rule-based fallback when no model available
-    
+
     Example:
         gen = ChordProgressionGenerator(device="mps")
         chords = gen.generate(
@@ -134,7 +198,7 @@ class ChordProgressionGenerator(GenerativeModel):
             seed_chords=["Am", "F"]
         )
     """
-    
+
     def __init__(
         self,
         device: str = "auto",
@@ -144,14 +208,14 @@ class ChordProgressionGenerator(GenerativeModel):
         if config is None:
             config = ChordGeneratorConfig(device=device)
         super().__init__(config)
-        
+
         self.config: ChordGeneratorConfig = config
         self._tokenizer = ChordTokenizer()
-    
+
     def load(self, path: Optional[str] = None) -> None:
         """
         Load trained chord progression model.
-        
+
         Args:
             path: Path to model checkpoint
         """
@@ -166,21 +230,22 @@ class ChordProgressionGenerator(GenerativeModel):
                 if p.exists():
                     path = str(p)
                     break
-        
+
         if path and Path(path).exists():
             self._load_model(path)
             self._is_loaded = True
         else:
             # Use rule-based fallback
             self._is_loaded = True  # Mark as "loaded" with fallback
-    
+
     def _load_model(self, path: str) -> None:
         """Load PyTorch or ONNX model."""
         try:
             import torch
-            
+
             if path.endswith(".onnx"):
                 import onnxruntime as ort
+
                 self._model = ort.InferenceSession(path)
             else:
                 self._model = torch.load(path, map_location=self.config.get_device())
@@ -188,7 +253,7 @@ class ChordProgressionGenerator(GenerativeModel):
                     self._model.eval()
         except Exception as e:
             print(f"Warning: Could not load model: {e}. Using rule-based fallback.")
-    
+
     def generate(
         self,
         emotion: Optional[str] = None,
@@ -201,7 +266,7 @@ class ChordProgressionGenerator(GenerativeModel):
     ) -> List[str]:
         """
         Generate a chord progression.
-        
+
         Args:
             emotion: Emotional character (joy, grief, anger, etc.)
             key: Key constraint (C, Am, etc.)
@@ -210,13 +275,13 @@ class ChordProgressionGenerator(GenerativeModel):
             genre: Genre/style modifier
             temperature: Sampling temperature
             **kwargs: Additional parameters
-            
+
         Returns:
             List of chord symbols
         """
         if not self._is_loaded:
             self.load()
-        
+
         # Use neural model if available
         if self._model is not None and not self.config.use_rule_based_fallback:
             return self._generate_neural(
@@ -226,7 +291,7 @@ class ChordProgressionGenerator(GenerativeModel):
                 seed_chords=seed_chords,
                 temperature=temperature,
             )
-        
+
         # Rule-based generation
         return self._generate_rule_based(
             emotion=emotion,
@@ -235,7 +300,7 @@ class ChordProgressionGenerator(GenerativeModel):
             seed_chords=seed_chords,
             genre=genre,
         )
-    
+
     def _generate_neural(
         self,
         emotion: Optional[str],
@@ -246,52 +311,49 @@ class ChordProgressionGenerator(GenerativeModel):
     ) -> List[str]:
         """Generate using the neural network model."""
         import torch
-        
+
         # Tokenize seed
         if seed_chords:
             tokens = [self._tokenizer.encode(c) for c in seed_chords]
         else:
             tokens = [CHORD_TO_ID["<START>"]]
-        
+
         # Get emotion embedding if available
         emotion_id = self._get_emotion_id(emotion) if emotion else 0
-        
+
         # Auto-regressive generation
         with torch.no_grad():
             for _ in range(length - len(tokens) + 1):
                 input_tensor = torch.tensor([tokens], device=self.config.get_device())
-                
+
                 if hasattr(self._model, "forward"):
                     # PyTorch model
                     logits = self._model(input_tensor, emotion_id=emotion_id)
                 else:
                     # ONNX model
-                    outputs = self._model.run(
-                        None, 
-                        {"input_ids": input_tensor.numpy()}
-                    )
+                    outputs = self._model.run(None, {"input_ids": input_tensor.numpy()})
                     logits = torch.tensor(outputs[0])
-                
+
                 # Sample next token
                 logits = logits[0, -1, :] / temperature
                 probs = torch.softmax(logits, dim=-1)
                 next_token = torch.multinomial(probs, 1).item()
-                
+
                 if next_token == CHORD_TO_ID["<END>"]:
                     break
-                    
+
                 tokens.append(next_token)
-        
+
         # Decode tokens
         chords = [self._tokenizer.decode(t) for t in tokens]
         chords = [c for c in chords if c not in ["<START>", "<END>", "<PAD>", "<REST>"]]
-        
+
         # Transpose to key if specified
         if key:
             chords = self._transpose_to_key(chords, key)
-        
+
         return chords[:length]
-    
+
     def _generate_rule_based(
         self,
         emotion: Optional[str],
@@ -303,30 +365,27 @@ class ChordProgressionGenerator(GenerativeModel):
         """Generate using rule-based approach."""
         # Get base progression from emotion
         emotion = emotion or "peace"
-        base_progressions = EMOTION_PROGRESSIONS.get(
-            emotion.lower(), 
-            EMOTION_PROGRESSIONS["peace"]
-        )
-        
+        base_progressions = EMOTION_PROGRESSIONS.get(emotion.lower(), EMOTION_PROGRESSIONS["peace"])
+
         # Select a random base progression
         base_idx = int(np.random.choice(np.arange(len(base_progressions))))
         progression = list(base_progressions[base_idx])
-        
+
         # If seed chords provided, try to incorporate them
         if seed_chords:
-            progression = list(seed_chords) + progression[len(seed_chords):]
-        
+            progression = list(seed_chords) + progression[len(seed_chords) :]
+
         # Extend or truncate to desired length
         while len(progression) < length:
             progression.extend(base_progressions[np.random.randint(len(base_progressions))])
         progression = progression[:length]
-        
+
         # Transpose to key if specified
         if key:
             progression = self._transpose_to_key(progression, key)
-        
+
         return progression
-    
+
     def _transpose_to_key(self, chords: List[str], target_key: str) -> List[str]:
         """Transpose chord progression to target key."""
         # Simple transposition logic
@@ -334,12 +393,12 @@ class ChordProgressionGenerator(GenerativeModel):
         current_root = chords[0][0] if chords else "C"
         if len(chords[0]) > 1 and chords[0][1] in "b#":
             current_root = chords[0][:2]
-        
+
         # Get target root
         target_root = target_key[0]
         if len(target_key) > 1 and target_key[1] in "b#":
             target_root = target_key[:2]
-        
+
         # Calculate semitone difference
         notes = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
         try:
@@ -348,17 +407,17 @@ class ChordProgressionGenerator(GenerativeModel):
             semitones = (target_idx - current_idx) % 12
         except ValueError:
             return chords  # Can't transpose, return as-is
-        
+
         if semitones == 0:
             return chords
-        
+
         # Transpose each chord
         transposed = []
         for chord in chords:
             transposed.append(self._transpose_chord(chord, semitones, notes))
-        
+
         return transposed
-    
+
     def _transpose_chord(self, chord: str, semitones: int, notes: List[str]) -> str:
         """Transpose a single chord by semitones."""
         # Extract root
@@ -368,11 +427,11 @@ class ChordProgressionGenerator(GenerativeModel):
         else:
             root = chord[0]
             suffix = chord[1:]
-        
+
         # Handle enharmonic equivalents
         enharmonic = {"C#": "Db", "D#": "Eb", "F#": "Gb", "G#": "Ab", "A#": "Bb"}
         root = enharmonic.get(root, root)
-        
+
         try:
             idx = notes.index(root)
             new_idx = (idx + semitones) % 12
@@ -380,7 +439,7 @@ class ChordProgressionGenerator(GenerativeModel):
             return new_root + suffix
         except ValueError:
             return chord
-    
+
     def _get_emotion_id(self, emotion: str) -> int:
         """Map emotion to ID for conditioning."""
         emotions = ["joy", "grief", "anger", "peace", "fear", "love", "hope", "nostalgia"]
@@ -388,34 +447,34 @@ class ChordProgressionGenerator(GenerativeModel):
             return emotions.index(emotion.lower())
         except ValueError:
             return 0
-    
+
     def analyze_progression(self, chords: List[str]) -> Dict:
         """
         Analyze a chord progression.
-        
+
         Args:
             chords: List of chord symbols
-            
+
         Returns:
             Analysis dictionary with key, mode, tension, etc.
         """
         if not chords:
             return {"error": "Empty progression"}
-        
+
         # Simple analysis
         has_minor = any("m" in c and "maj" not in c for c in chords)
         has_7th = any("7" in c for c in chords)
         has_dim = any("dim" in c for c in chords)
         has_aug = any("aug" in c for c in chords)
-        
+
         # Estimate key from first chord
         first_chord = chords[0]
         root = first_chord[0]
         if len(first_chord) > 1 and first_chord[1] in "b#":
             root = first_chord[:2]
-        
+
         is_minor = "m" in first_chord and "maj" not in first_chord
-        
+
         return {
             "estimated_key": f"{root}{'m' if is_minor else ''}",
             "mode": "minor" if is_minor else "major",
@@ -430,23 +489,23 @@ class ChordProgressionGenerator(GenerativeModel):
 
 class ChordTokenizer:
     """Simple tokenizer for chord symbols."""
-    
+
     def __init__(self, vocab: Dict[str, int] = None):
         self.vocab = vocab or CHORD_TO_ID
         self.reverse_vocab = {v: k for k, v in self.vocab.items()}
-    
+
     def encode(self, chord: str) -> int:
         """Encode chord to token ID."""
         return self.vocab.get(chord, self.vocab.get("<PAD>", 0))
-    
+
     def decode(self, token_id: int) -> str:
         """Decode token ID to chord."""
         return self.reverse_vocab.get(token_id, "<PAD>")
-    
+
     def encode_sequence(self, chords: List[str]) -> List[int]:
         """Encode sequence of chords."""
         return [self.encode(c) for c in chords]
-    
+
     def decode_sequence(self, token_ids: List[int]) -> List[str]:
         """Decode sequence of token IDs."""
         return [self.decode(t) for t in token_ids]

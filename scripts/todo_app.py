@@ -5,10 +5,11 @@ Todo App - Streamlit UI for task management.
 A web-based interface for the mcp_todo task management system.
 Run with: streamlit run todo_app.py
 """
+
 import streamlit as st
 
-from mcp_todo.storage import TodoStorage
 from mcp_todo.models import TodoPriority, TodoStatus
+from mcp_todo.storage import TodoStorage
 
 
 def get_status_icon(status: TodoStatus) -> str:
@@ -133,10 +134,12 @@ def main() -> None:
     priority_order = {"urgent": 0, "high": 1, "medium": 2, "low": 3}
     status_order = {"in_progress": 0, "pending": 1, "blocked": 2, "completed": 3, "cancelled": 4}
 
-    todos.sort(key=lambda t: (
-        status_order.get(t.status.value, 5),
-        priority_order.get(t.priority.value, 4),
-    ))
+    todos.sort(
+        key=lambda t: (
+            status_order.get(t.status.value, 5),
+            priority_order.get(t.priority.value, 4),
+        )
+    )
 
     if not todos:
         st.info("No tasks found. Add one using the sidebar!")
@@ -183,13 +186,17 @@ def main() -> None:
 
                     with btn_col3:
                         if todo.status == TodoStatus.COMPLETED:
-                            if st.button("Reopen", key=f"reopen_{todo.id}", use_container_width=True):
+                            if st.button(
+                                "Reopen", key=f"reopen_{todo.id}", use_container_width=True
+                            ):
                                 storage.update(todo.id, status="pending", ai_source="streamlit_ui")
                                 st.rerun()
 
                 with col3:
                     # Delete button
-                    if st.button("Delete", key=f"del_{todo.id}", type="secondary", use_container_width=True):
+                    if st.button(
+                        "Delete", key=f"del_{todo.id}", type="secondary", use_container_width=True
+                    ):
                         storage.delete(todo.id)
                         st.rerun()
 

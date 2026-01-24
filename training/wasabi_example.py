@@ -4,7 +4,6 @@ WASABI Dataset Integration Example
 This example shows how to use the WASABI dataset for emotion-conditioned music generation.
 """
 
-from pathlib import Path
 from torch.utils.data import DataLoader
 
 from training.wasabi_dataset import WasabiDataset
@@ -35,11 +34,11 @@ for batch in dataloader:
     lyrics = batch["lyrics"]  # List of lyrics strings
     titles = batch["title"]  # List of song titles
     artists = batch["artist"]  # List of artists
-    
+
     # Use emotion_embeddings and chord_embeddings for training
     # emotion_embeddings can condition music generation models
     # chord_embeddings provide harmonic context
-    
+
     print(f"Batch emotion embeddings shape: {emotion_embeddings.shape}")
     print(f"Batch chord embeddings shape: {chord_embeddings.shape}")
     print(f"Sample song: '{titles[0]}' by {artists[0]}")
@@ -47,7 +46,7 @@ for batch in dataloader:
 
 # Access full sample information
 sample_info = dataset.get_sample_info(0)
-print(f"\nSample info:")
+print("\nSample info:")
 print(f"  Title: {sample_info.title}")
 print(f"  Artist: {sample_info.artist}")
 print(f"  Year: {sample_info.year}")

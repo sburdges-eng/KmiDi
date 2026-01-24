@@ -4,21 +4,19 @@ Editing module for music brain.
 Provides MIDI and sheet music editing capabilities.
 """
 
-from .midi_editor import (
-    MidiEditor,
-    EditOperation,
-    MidiEditCommand,
-)
-
-from .natural_language_processor import (
-    NaturalLanguageProcessor,
-    InterpretedFeedback,
-    FeedbackType,
-    Intent,
-)
-
 from .feedback_interpreter import (
     FeedbackInterpreter,
+)
+from .midi_editor import (
+    EditOperation,
+    MidiEditCommand,
+    MidiEditor,
+)
+from .natural_language_processor import (
+    FeedbackType,
+    Intent,
+    InterpretedFeedback,
+    NaturalLanguageProcessor,
 )
 
 __all__ = [

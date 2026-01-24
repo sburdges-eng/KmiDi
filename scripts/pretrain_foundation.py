@@ -10,14 +10,16 @@ import argparse
 import logging
 import time
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 import torch
 import yaml
 from torch.utils.data import DataLoader
 
 from penta_core.ml.datasets.streaming import StreamingAudioDataset
-from penta_core.ml.training.architectures import MusicFoundationModel, EmotionCNN # Assuming EmotionCNN can be used as backbone
+from penta_core.ml.training.architectures import (
+    MusicFoundationModel,
+)  # Assuming EmotionCNN can be used as backbone
 from penta_core.ml.training.augmentation import AudioAugmentor
 from penta_core.ml.training.losses import ContrastiveLoss
 
@@ -25,17 +27,22 @@ from penta_core.ml.training.losses import ContrastiveLoss
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("pretrainer")
 
+
 def load_config(path: str) -> Dict[str, Any]:
-    with open(path, "r") as f:
+    with open(path) as f:
         return yaml.safe_load(f)
+
 
 def get_device(cfg: Dict[str, Any]) -> torch.device:
     pref = cfg.get("device", "auto")
     if pref == "auto":
-        if torch.backends.mps.is_available(): return torch.device("mps")
-        if torch.cuda.is_available(): return torch.device("cuda")
+        if torch.backends.mps.is_available():
+            return torch.device("mps")
+        if torch.cuda.is_available():
+            return torch.device("cuda")
         return torch.device("cpu")
     return torch.device(pref)
+
 
 def save_checkpoint(model, optimizer, epoch, steps, loss, cfg, path: Path):
     ckpt = {
@@ -44,11 +51,12 @@ def save_checkpoint(model, optimizer, epoch, steps, loss, cfg, path: Path):
         "model_state_dict": model.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
         "loss": loss,
-        "config": cfg
+        "config": cfg,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     torch.save(ckpt, path)
     logger.info(f"Checkpoint saved: {path}")
+
 
 def pretrain(cfg_path: str):
     cfg = load_config(cfg_path)
@@ -57,7 +65,7 @@ def pretrain(cfg_path: str):
 
     # 1. Dataset & Loader (Streaming)
     dcfg = cfg["data"]
-    # We use StreamingAudioDataset without a fixed transform, 
+    # We use StreamingAudioDataset without a fixed transform,
     # we'll do the augmentations in the loop for SSL.
     dataset = StreamingAudioDataset(
         manifest_path=dcfg["train_manifest"],
@@ -65,18 +73,18 @@ def pretrain(cfg_path: str):
         segment_seconds=dcfg["segment_seconds"],
         audio_key=dcfg["manifest_audio_key"],
     )
-    
+
     loader = DataLoader(
         dataset,
         batch_size=cfg["training"]["batch_size"],
         shuffle=True,
         num_workers=dcfg.get("num_workers", 4),
-        pin_memory=(device.type == "cuda")
+        pin_memory=(device.type == "cuda"),
     )
 
     # 2. Model & Loss
     # For this stub, we'll use a simple 1D backbone for raw waveforms.
-    from penta_core.ml.training.architectures import ConvBlock
+
     # We'll use nn.Sequential but with 1D layers manually for the dry run stub
     backbone = torch.nn.Sequential(
         torch.nn.Conv1d(1, 64, kernel_size=7, stride=2, padding=3),
@@ -88,20 +96,20 @@ def pretrain(cfg_path: str):
         torch.nn.ReLU(),
         torch.nn.AdaptiveAvgPool1d(1),
         torch.nn.Flatten(),
-        torch.nn.Linear(128, cfg["model"]["embedding_dim"])
+        torch.nn.Linear(128, cfg["model"]["embedding_dim"]),
     )
-    
+
     model = MusicFoundationModel(
         backbone=backbone,
         embedding_dim=cfg["model"]["embedding_dim"],
-        projection_dim=cfg["model"]["projection_dim"]
+        projection_dim=cfg["model"]["projection_dim"],
     ).to(device)
 
     criterion = ContrastiveLoss(temperature=cfg["ssl"]["temperature"])
     optimizer = torch.optim.AdamW(
-        model.parameters(), 
+        model.parameters(),
         lr=float(cfg["optim"]["lr"]),
-        weight_decay=float(cfg["optim"]["weight_decay"])
+        weight_decay=float(cfg["optim"]["weight_decay"]),
     )
 
     # 3. Augmentor for SSL positive pairs
@@ -111,7 +119,7 @@ def pretrain(cfg_path: str):
     steps = 0
     start_time = time.time()
     spending_limit = cfg.get("spending_limit_usd", 100.0)
-    cost_per_step = 0.001 # Simulated cost
+    cost_per_step = 0.001  # Simulated cost
 
     model.train()
     logger.info("Entering pre-training loop...")
@@ -122,28 +130,36 @@ def pretrain(cfg_path: str):
             current_cost = steps * cost_per_step
             if current_cost > spending_limit:
                 logger.warning(f"Spending limit ${spending_limit} reached. Stopping.")
-                save_checkpoint(model, optimizer, epoch, steps, loss.item(), cfg, Path("checkpoints/foundation_latest.pt"))
+                save_checkpoint(
+                    model,
+                    optimizer,
+                    epoch,
+                    steps,
+                    loss.item(),
+                    cfg,
+                    Path("checkpoints/foundation_latest.pt"),
+                )
                 return
 
             # Create positive pairs (two different augmentations of the same audio)
             # audio: [B, 1, T]
             x_i = audio.clone()
             x_j = audio.clone()
-            
+
             # Apply random augmentations to each branch
             # (In a real implementation, this would be vectorized on GPU)
             # For this script, we'll assume the augmentor can handle tensors or we'll loop
-            # x_i = augmentor.augment_batch(x_i) 
-            
+            # x_i = augmentor.augment_batch(x_i)
+
             x_i, x_j = x_i.to(device), x_j.to(device)
 
             optimizer.zero_grad()
-            
+
             # Forward pass
             # audio is [B, 1, T]
             z_i = model(x_i)
             z_j = model(x_j)
-            
+
             loss = criterion(z_i, z_j)
             loss.backward()
             optimizer.step()
@@ -152,10 +168,20 @@ def pretrain(cfg_path: str):
 
             if steps % cfg["training"]["log_every"] == 0:
                 elapsed = time.time() - start_time
-                logger.info(f"Epoch {epoch} | Step {steps} | Loss {loss.item():.4f} | Cost ${current_cost:.2f} | Time {elapsed:.1f}s")
+                logger.info(
+                    f"Epoch {epoch} | Step {steps} | Loss {loss.item():.4f} | Cost ${current_cost:.2f} | Time {elapsed:.1f}s"
+                )
 
             if steps % cfg["training"]["ckpt_every"] == 0:
-                save_checkpoint(model, optimizer, epoch, steps, loss.item(), cfg, Path(f"checkpoints/foundation_step_{steps}.pt"))
+                save_checkpoint(
+                    model,
+                    optimizer,
+                    epoch,
+                    steps,
+                    loss.item(),
+                    cfg,
+                    Path(f"checkpoints/foundation_step_{steps}.pt"),
+                )
 
             if steps >= cfg["training"]["max_steps"]:
                 break
@@ -163,11 +189,13 @@ def pretrain(cfg_path: str):
             break
 
     logger.info("Pre-training complete.")
-    save_checkpoint(model, optimizer, epoch, steps, loss.item(), cfg, Path("checkpoints/foundation_final.pt"))
+    save_checkpoint(
+        model, optimizer, epoch, steps, loss.item(), cfg, Path("checkpoints/foundation_final.pt")
+    )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, default="config/music_foundation_base.yaml")
     args = parser.parse_args()
     pretrain(args.config)
-

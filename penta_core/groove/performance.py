@@ -9,14 +9,15 @@ Provides:
 - Comparison with reference performances
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
-from enum import Enum
 import math
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 
 class PerformanceRating(Enum):
     """Performance quality ratings."""
+
     EXCELLENT = "excellent"
     GOOD = "good"
     FAIR = "fair"
@@ -28,6 +29,7 @@ class TimingProfile:
     """
     Detailed timing analysis of a performance.
     """
+
     # Overall metrics
     mean_deviation_ms: float = 0.0
     std_deviation_ms: float = 0.0
@@ -38,8 +40,8 @@ class TimingProfile:
     behind_percentage: float = 50.0  # % of notes behind beat
 
     # Consistency over time
-    timing_stability: float = 1.0   # 0.0-1.0, lower = more drift
-    rushing_tendency: float = 0.0   # Tendency to speed up (-1 to 1)
+    timing_stability: float = 1.0  # 0.0-1.0, lower = more drift
+    rushing_tendency: float = 0.0  # Tendency to speed up (-1 to 1)
 
     # Per-beat analysis
     beat_deviations: List[float] = field(default_factory=list)
@@ -68,6 +70,7 @@ class PerformanceAnalysis:
     """
     Complete analysis of a live performance.
     """
+
     timing: TimingProfile
     tempo_bpm: float = 120.0
     tempo_stability: float = 1.0  # 0.0-1.0
@@ -83,21 +86,19 @@ class PerformanceAnalysis:
 
     # Expression markers
     accents: List[Tuple[float, float]] = field(default_factory=list)  # (time, intensity)
-    crescendos: List[Tuple[float, float, float]] = field(default_factory=list)  # (start, end, intensity)
+    crescendos: List[Tuple[float, float, float]] = field(
+        default_factory=list
+    )  # (start, end, intensity)
     decrescendos: List[Tuple[float, float, float]] = field(default_factory=list)
 
     # Overall
     expressiveness_score: float = 0.5  # 0.0-1.0
-    consistency_score: float = 0.5     # 0.0-1.0
-    musicality_score: float = 0.5      # 0.0-1.0
+    consistency_score: float = 0.5  # 0.0-1.0
+    musicality_score: float = 0.5  # 0.0-1.0
 
     def get_overall_rating(self) -> PerformanceRating:
         """Calculate overall performance rating."""
-        avg_score = (
-            self.expressiveness_score +
-            self.consistency_score +
-            self.musicality_score
-        ) / 3
+        avg_score = (self.expressiveness_score + self.consistency_score + self.musicality_score) / 3
 
         if avg_score >= 0.85:
             return PerformanceRating.EXCELLENT
@@ -172,9 +173,7 @@ def analyze_live_performance(
     # Analyze dynamics
     velocities = [e.get("velocity", 100) for e in sorted_events]
     velocity_mean = sum(velocities) / len(velocities)
-    velocity_std = math.sqrt(
-        sum((v - velocity_mean) ** 2 for v in velocities) / len(velocities)
-    )
+    velocity_std = math.sqrt(sum((v - velocity_mean) ** 2 for v in velocities) / len(velocities))
     dynamic_range = max(velocities) - min(velocities)
 
     # Detect expression markers
@@ -189,9 +188,7 @@ def analyze_live_performance(
         velocity_std, dynamic_range, accents, crescendos, decrescendos
     )
     consistency = _calculate_consistency(timing_profile, velocity_std)
-    musicality = _calculate_musicality(
-        expressiveness, consistency, timing_profile
-    )
+    musicality = _calculate_musicality(expressiveness, consistency, timing_profile)
 
     # Detect tempo stability
     tempo_stability = _analyze_tempo_stability(sorted_events, reference_tempo)
@@ -278,8 +275,8 @@ def _analyze_timing(
     std_deviation = math.sqrt(variance)
 
     # Calculate timing stability (less drift = more stable)
-    first_half_mean = sum(deviations[:total//2]) / max(1, total//2)
-    second_half_mean = sum(deviations[total//2:]) / max(1, total - total//2)
+    first_half_mean = sum(deviations[: total // 2]) / max(1, total // 2)
+    second_half_mean = sum(deviations[total // 2 :]) / max(1, total - total // 2)
     drift = abs(second_half_mean - first_half_mean)
     stability = max(0.0, 1.0 - drift / 50.0)
 
@@ -343,7 +340,7 @@ def _detect_dynamics_changes(
 
     i = 0
     while i < len(velocities) - window_size:
-        window = velocities[i:i + window_size]
+        window = velocities[i : i + window_size]
         trend = window[-1] - window[0]
 
         if trend > 20:  # Crescendo
@@ -402,7 +399,7 @@ def _calculate_expressiveness(
     # Dynamic changes contribute
     change_score = min(1.0, (len(crescendos) + len(decrescendos)) / 5.0)
 
-    return (dynamic_score * 0.4 + accent_score * 0.3 + change_score * 0.3)
+    return dynamic_score * 0.4 + accent_score * 0.3 + change_score * 0.3
 
 
 def _calculate_consistency(
@@ -431,8 +428,7 @@ def _calculate_musicality(
     # Timing stability matters
     stability_score = timing.timing_stability
 
-    return (expressiveness * 0.3 + consistency * 0.3 +
-            balance_score * 0.2 + stability_score * 0.2)
+    return expressiveness * 0.3 + consistency * 0.3 + balance_score * 0.2 + stability_score * 0.2
 
 
 def detect_tempo_variations(
@@ -457,7 +453,7 @@ def detect_tempo_variations(
 
     # Calculate local tempo at each point
     for i, _ in enumerate(times[:-window_beats]):
-        window_times = times[i:i + window_beats + 1]
+        window_times = times[i : i + window_beats + 1]
         # More efficient: use zip to create pairs
         intervals = [t2 - t1 for t1, t2 in zip(window_times[:-1], window_times[1:])]
 

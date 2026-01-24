@@ -5,11 +5,12 @@ DAiW Native Desktop Launcher
 pywebview wrapper that makes the Streamlit app feel like a real desktop application.
 Handles server lifecycle and provides a native window without browser chrome.
 """
+
 import os
-import sys
-import time
 import socket
 import subprocess
+import sys
+import time
 import urllib.request
 from contextlib import closing
 
@@ -79,6 +80,7 @@ def start_webview(url: str) -> None:
         print("pywebview not installed. Install with: pip install pywebview")
         print(f"Falling back to browser. Open: {url}")
         import webbrowser
+
         webbrowser.open(url)
         input("Press Enter to stop the server...")
         return

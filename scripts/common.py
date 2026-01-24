@@ -9,8 +9,9 @@ import base64
 import json
 import os
 import tempfile
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Dict, Generator, Optional, Tuple, TypeVar
+from typing import Any, Dict, Optional, TypeVar
 
 from music_brain.api import DAiWAPI
 from music_brain.session.intent_schema import CompleteSongIntent
@@ -94,4 +95,3 @@ __all__ = [
     "make_midi_payload",
     "parse_intent_json",
 ]
-

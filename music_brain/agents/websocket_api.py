@@ -100,7 +100,7 @@ class WSMessage:
     raw: Optional[str] = None
 
     @classmethod
-    def parse(cls, data: str) -> "WSMessage":
+    def parse(cls, data: str) -> WSMessage:
         """Parse JSON message into WSMessage."""
         try:
             obj = json.loads(data)
@@ -112,7 +112,7 @@ class WSMessage:
                 channels=obj.get("channels", []),
                 raw=data,
             )
-        except (json.JSONDecodeError, ValueError) as e:
+        except (json.JSONDecodeError, ValueError):
             return cls(type=MessageType.ERROR, raw=data)
 
 
@@ -133,15 +133,13 @@ class HubWebSocketServer:
 
     def __init__(
         self,
-        hub: "UnifiedHub",
+        hub: UnifiedHub,
         host: str = "0.0.0.0",
         port: int = 8765,
         auth_token: Optional[str] = None,
     ):
         if not HAS_WEBSOCKETS:
-            raise ImportError(
-                "websockets library required. Install with: pip install websockets"
-            )
+            raise ImportError("websockets library required. Install with: pip install websockets")
 
         self.hub = hub
         self.host = host
@@ -294,9 +292,7 @@ class HubWebSocketServer:
         """Schedule a state broadcast on the event loop."""
         if self._loop and self._running:
             self._loop.call_soon_threadsafe(
-                lambda: asyncio.create_task(
-                    self._broadcast_state(channel, key, value)
-                )
+                lambda: asyncio.create_task(self._broadcast_state(channel, key, value))
             )
 
     # =========================================================================
@@ -655,7 +651,7 @@ class HubWebSocketServer:
 
 
 def create_websocket_server(
-    hub: "UnifiedHub",
+    hub: UnifiedHub,
     port: int = 8765,
     auth_token: Optional[str] = None,
 ) -> HubWebSocketServer:
@@ -675,4 +671,3 @@ __all__ = [
     "create_websocket_server",
     "HAS_WEBSOCKETS",
 ]
-

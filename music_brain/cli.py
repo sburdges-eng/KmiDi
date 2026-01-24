@@ -7,14 +7,11 @@ CLI for managing the multi-AI workstation.
 import argparse
 import json
 import sys
-from typing import Optional
 
-from .models import AIAgent, ProposalCategory, ProposalStatus, PhaseStatus
+from .ai_specializations import TaskType, print_ai_summary
+from .models import AIAgent, PhaseStatus, ProposalCategory, ProposalStatus
 from .orchestrator import get_workstation, shutdown_workstation
-from .ai_specializations import print_ai_summary, TaskType
-from .phases import format_phase_progress
-from .cpp_planner import format_cpp_plan
-from .proposals import format_proposal_list, format_proposal
+from .proposals import format_proposal_list
 
 
 # ---------------------------------------------------------------------------
@@ -24,7 +21,7 @@ def cmd_extract(args):
     if not args.midi_file or not Path(args.midi_file).exists():
         print("Error: MIDI file not found")
         return 1
-    output = args.output or (Path(args.midi_file).with_suffix("") .as_posix() + "_groove.json")
+    output = args.output or (Path(args.midi_file).with_suffix("").as_posix() + "_groove.json")
     Path(output).write_text(json.dumps({"swing_factor": 0.2}))
     return 0
 
@@ -137,12 +134,8 @@ Examples:
         choices=[c.value for c in ProposalCategory],
         help="Proposal category",
     )
-    propose_parser.add_argument(
-        "--priority", type=int, default=5, help="Priority 1-10"
-    )
-    propose_parser.add_argument(
-        "--phase", type=int, default=1, help="Target phase 1-3"
-    )
+    propose_parser.add_argument("--priority", type=int, default=5, help="Priority 1-10")
+    propose_parser.add_argument("--phase", type=int, default=1, help="Target phase 1-3")
 
     # Vote command
     vote_parser = subparsers.add_parser("vote", help="Vote on a proposal")
@@ -251,7 +244,7 @@ def run_command(args):
         ws.register_agent(agent)
         print(f"Registered: {agent.display_name}")
         caps = ws.get_agent_capabilities(agent)
-        print(f"\nRecommended for:")
+        print("\nRecommended for:")
         for item in caps["recommended_for"][:5]:
             print(f"  - {item}")
 
@@ -296,6 +289,7 @@ def run_command(args):
             print(json.dumps(proposals, indent=2))
         else:
             from .models import Proposal
+
             props = [Proposal.from_dict(p) for p in proposals]
             print(format_proposal_list(props))
             print(f"\nSummary: {all_props['summary']}")
@@ -369,6 +363,7 @@ def run_command(args):
 
     elif args.command == "server":
         from .server import run_server
+
         print("Starting MCP server...", file=sys.stderr)
         run_server()
 

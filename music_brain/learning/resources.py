@@ -10,35 +10,37 @@ Provides:
 Philosophy: "Stand on the shoulders of giants - learn from the best educators."
 """
 
-from enum import Enum, auto
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any, Callable
-from datetime import datetime, timedelta
-from pathlib import Path
-import json
 import hashlib
-import time
+import json
 import re
-from urllib.parse import urlparse, urljoin
+import time
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum, auto
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 
 class ResourceType(Enum):
     """Types of learning resources."""
-    ARTICLE = auto()           # Text-based tutorial/lesson
-    VIDEO = auto()             # Video tutorial
-    INTERACTIVE = auto()       # Interactive exercise
-    SHEET_MUSIC = auto()       # Notation/tabs
-    AUDIO = auto()             # Audio example/backing track
-    EXERCISE = auto()          # Practice exercise
-    COURSE = auto()            # Multi-part course
-    LESSON_PLAN = auto()       # Structured lesson
-    REFERENCE = auto()         # Reference material (scales, chords, etc.)
-    TOOL = auto()              # Online tool (metronome, tuner, etc.)
+
+    ARTICLE = auto()  # Text-based tutorial/lesson
+    VIDEO = auto()  # Video tutorial
+    INTERACTIVE = auto()  # Interactive exercise
+    SHEET_MUSIC = auto()  # Notation/tabs
+    AUDIO = auto()  # Audio example/backing track
+    EXERCISE = auto()  # Practice exercise
+    COURSE = auto()  # Multi-part course
+    LESSON_PLAN = auto()  # Structured lesson
+    REFERENCE = auto()  # Reference material (scales, chords, etc.)
+    TOOL = auto()  # Online tool (metronome, tuner, etc.)
 
 
 @dataclass
 class LearningResource:
     """A fetched learning resource."""
+
     id: str
     url: str
     title: str
@@ -47,13 +49,13 @@ class LearningResource:
 
     # Content
     description: str = ""
-    content_text: str = ""          # Main text content
-    content_html: str = ""          # Raw HTML (for parsing)
-    content_markdown: str = ""      # Converted to markdown
+    content_text: str = ""  # Main text content
+    content_html: str = ""  # Raw HTML (for parsing)
+    content_markdown: str = ""  # Converted to markdown
 
     # Classification
     instrument: str = ""
-    difficulty_estimate: int = 5    # 1-10 scale
+    difficulty_estimate: int = 5  # 1-10 scale
     skill_categories: List[str] = field(default_factory=list)
     tags: List[str] = field(default_factory=list)
 
@@ -102,7 +104,7 @@ class LearningResource:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'LearningResource':
+    def from_dict(cls, data: Dict[str, Any]) -> "LearningResource":
         return cls(
             id=data["id"],
             url=data["url"],
@@ -165,7 +167,6 @@ KNOWN_SOURCES = {
         "quality_score": 7,
         "description": "Tabs and chords for thousands of songs",
     },
-
     # Piano Resources
     "pianote": {
         "name": "Pianote",
@@ -194,7 +195,6 @@ KNOWN_SOURCES = {
         "quality_score": 9,
         "description": "Interactive music theory lessons",
     },
-
     # Drums Resources
     "drumeo": {
         "name": "Drumeo",
@@ -214,7 +214,6 @@ KNOWN_SOURCES = {
         "quality_score": 7,
         "description": "Free drum tutorials and exercises",
     },
-
     # Bass Resources
     "studybass": {
         "name": "StudyBass",
@@ -234,7 +233,6 @@ KNOWN_SOURCES = {
         "quality_score": 9,
         "description": "Professional bass education",
     },
-
     # Voice/Singing Resources
     "singwise": {
         "name": "SingWise",
@@ -245,7 +243,6 @@ KNOWN_SOURCES = {
         "quality_score": 8,
         "description": "Vocal technique and singing lessons",
     },
-
     # Multi-Instrument / General
     "musicradar": {
         "name": "MusicRadar",
@@ -274,7 +271,6 @@ KNOWN_SOURCES = {
         "quality_score": 8,
         "description": "Gamified music learning",
     },
-
     # Theory and Ear Training
     "teoria": {
         "name": "Teoria",
@@ -303,7 +299,6 @@ KNOWN_SOURCES = {
         "quality_score": 9,
         "description": "Interactive theory and ear training",
     },
-
     # Orchestral/Classical
     "imslp": {
         "name": "IMSLP",
@@ -323,7 +318,6 @@ KNOWN_SOURCES = {
         "quality_score": 7,
         "description": "Free sheet music and lessons",
     },
-
     # Production/DAW
     "soundonsound": {
         "name": "Sound On Sound",
@@ -360,15 +354,15 @@ class ResourceCache:
         """Load the cache index."""
         if self.index_file.exists():
             try:
-                with open(self.index_file, 'r') as f:
+                with open(self.index_file) as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 return {}
         return {}
 
     def _save_index(self) -> None:
         """Save the cache index."""
-        with open(self.index_file, 'w') as f:
+        with open(self.index_file, "w") as f:
             json.dump(self._index, f, indent=2)
 
     def _get_cache_key(self, url: str) -> str:
@@ -400,9 +394,9 @@ class ResourceCache:
             return None
 
         try:
-            with open(cache_file, 'r') as f:
+            with open(cache_file) as f:
                 return LearningResource.from_dict(json.load(f))
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             return None
 
     def put(self, resource: LearningResource) -> None:
@@ -410,7 +404,7 @@ class ResourceCache:
         cache_key = self._get_cache_key(resource.url)
         cache_file = self.cache_dir / f"{cache_key}.json"
 
-        with open(cache_file, 'w') as f:
+        with open(cache_file, "w") as f:
             json.dump(resource.to_dict(), f, indent=2)
 
         self._index[cache_key] = {
@@ -496,10 +490,12 @@ class ResourceFetcher:
         instrument_lower = instrument.lower()
         for source_id, source in KNOWN_SOURCES.items():
             if instrument_lower in [i.lower() for i in source["instruments"]]:
-                results.append({
-                    "id": source_id,
-                    **source,
-                })
+                results.append(
+                    {
+                        "id": source_id,
+                        **source,
+                    }
+                )
         return sorted(results, key=lambda x: x.get("quality_score", 0), reverse=True)
 
     def get_sources_by_difficulty(
@@ -512,10 +508,12 @@ class ResourceFetcher:
         for source_id, source in KNOWN_SOURCES.items():
             source_min, source_max = source.get("difficulty_range", (1, 10))
             if source_min <= max_difficulty and source_max >= min_difficulty:
-                results.append({
-                    "id": source_id,
-                    **source,
-                })
+                results.append(
+                    {
+                        "id": source_id,
+                        **source,
+                    }
+                )
         return results
 
     def build_search_query(
@@ -622,7 +620,7 @@ Focus on extracting actionable learning content. Skip navigation, ads, and irrel
         The AI should have returned JSON matching our expected format.
         """
         # Try to extract JSON from the response
-        json_match = re.search(r'\{[\s\S]*\}', response)
+        json_match = re.search(r"\{[\s\S]*\}", response)
         if json_match:
             try:
                 data = json.loads(json_match.group())
@@ -632,7 +630,9 @@ Focus on extracting actionable learning content. Skip navigation, ads, and irrel
             data = {}
 
         # Generate a unique ID
-        resource_id = hashlib.sha256(f"{url}:{datetime.now().isoformat()}".encode()).hexdigest()[:12]
+        resource_id = hashlib.sha256(f"{url}:{datetime.now().isoformat()}".encode()).hexdigest()[
+            :12
+        ]
 
         # Map resource type
         type_str = data.get("resource_type", "ARTICLE").upper()
@@ -714,7 +714,6 @@ Focus on extracting actionable learning content. Skip navigation, ads, and irrel
         from music_brain.learning.curriculum import (
             CurriculumBuilder,
             DifficultyLevel,
-            SkillCategory,
         )
 
         # Group resources by difficulty
@@ -812,8 +811,11 @@ def generate_learning_plan(
     for level in range(current_level, target_level + 1):
         sources = fetcher.get_sources_for_instrument(instrument)
         level_sources = [
-            s for s in sources
-            if s.get("difficulty_range", (1, 10))[0] <= level <= s.get("difficulty_range", (1, 10))[1]
+            s
+            for s in sources
+            if s.get("difficulty_range", (1, 10))[0]
+            <= level
+            <= s.get("difficulty_range", (1, 10))[1]
         ]
 
         phase = {

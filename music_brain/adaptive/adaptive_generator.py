@@ -5,14 +5,15 @@ Wraps IntentPipeline to adapt generation based on user feedback and preferences.
 Part of Phase 4 of the "All-Knowing Interactive Musical Customization System".
 """
 
-from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass
 class GenerationAttempt:
     """Record of a generation attempt."""
+
     parameters: Dict[str, float]
     emotion: Optional[str] = None
     accepted: bool = False
@@ -51,11 +52,7 @@ class AdaptiveGenerator:
         """Set the intent pipeline to wrap."""
         self.intent_pipeline = intent_pipeline
 
-    def generate_with_adaptation(
-        self,
-        wound,
-        use_learned_preferences: bool = True
-    ):
+    def generate_with_adaptation(self, wound, use_learned_preferences: bool = True):
         """
         Generate music with adaptive parameters based on learned preferences.
 
@@ -122,7 +119,7 @@ class AdaptiveGenerator:
     def _extract_emotion_from_wound(self, wound) -> Optional[str]:
         """Extract emotion name from wound (helper method)."""
         # Try to extract emotion from wound description or attributes
-        if hasattr(wound, 'description'):
+        if hasattr(wound, "description"):
             description = str(wound.description).lower()
             # Simple keyword matching (in production, use emotion thesaurus)
             emotion_keywords = {
@@ -142,14 +139,14 @@ class AdaptiveGenerator:
         parameters: Dict[str, float],
         emotion: Optional[str] = None,
         accepted: bool = True,
-        modifications: Optional[Dict[str, Any]] = None
+        modifications: Optional[Dict[str, Any]] = None,
     ):
         """Record feedback on a generation attempt."""
         attempt = GenerationAttempt(
             parameters=parameters.copy(),
             emotion=emotion,
             accepted=accepted,
-            modifications=modifications or {}
+            modifications=modifications or {},
         )
         self.generation_history.append(attempt)
 
@@ -158,7 +155,7 @@ class AdaptiveGenerator:
                 parameters=parameters,
                 emotion=emotion,
                 accepted=accepted,
-                modifications_made=modifications
+                modifications_made=modifications,
             )
 
         # Learn from feedback
@@ -166,9 +163,7 @@ class AdaptiveGenerator:
             self._learn_from_modifications(parameters, modifications)
 
     def _learn_from_modifications(
-        self,
-        original_parameters: Dict[str, float],
-        modifications: Dict[str, Any]
+        self, original_parameters: Dict[str, float], modifications: Dict[str, Any]
     ):
         """
         Learn parameter adjustments from user modifications.
@@ -180,7 +175,11 @@ class AdaptiveGenerator:
         # Track parameter changes
         for param_name, new_value in modifications.get("parameters", {}).items():
             old_value = original_parameters.get(param_name)
-            if old_value is not None and isinstance(new_value, (int, float)) and isinstance(old_value, (int, float)):
+            if (
+                old_value is not None
+                and isinstance(new_value, (int, float))
+                and isinstance(old_value, (int, float))
+            ):
                 # Calculate adjustment needed
                 adjustment = new_value - old_value
 
@@ -195,7 +194,7 @@ class AdaptiveGenerator:
 
     def learn_from_parameter_changes(
         self,
-        parameter_changes: Dict[str, Tuple[float, float]]  # param_name -> (old, new)
+        parameter_changes: Dict[str, Tuple[float, float]],  # param_name -> (old, new)
     ):
         """
         Learn from parameter adjustments user made after generation.
@@ -215,11 +214,7 @@ class AdaptiveGenerator:
                 self.parameter_biases[param_name] * 0.9 + adjustment * 0.1
             )
 
-    def personalize_emotion_mapping(
-        self,
-        emotion: str,
-        adjustments: Dict[str, float]
-    ):
+    def personalize_emotion_mapping(self, emotion: str, adjustments: Dict[str, float]):
         """
         Store personalized adjustments for a specific emotion.
 
@@ -268,23 +263,18 @@ class FeedbackProcessor:
         self.generator = adaptive_generator
 
     def process_explicit_feedback(
-        self,
-        parameters: Dict[str, float],
-        emotion: Optional[str],
-        thumbs_up: bool
+        self, parameters: Dict[str, float], emotion: Optional[str], thumbs_up: bool
     ):
         """Process explicit thumbs up/down feedback."""
         self.generator.record_generation_feedback(
-            parameters=parameters,
-            emotion=emotion,
-            accepted=thumbs_up
+            parameters=parameters, emotion=emotion, accepted=thumbs_up
         )
 
     def process_implicit_feedback(
         self,
         original_parameters: Dict[str, float],
         modified_parameters: Dict[str, float],
-        emotion: Optional[str] = None
+        emotion: Optional[str] = None,
     ):
         """Process implicit feedback (parameter adjustments after generation)."""
         # Calculate changes
@@ -302,12 +292,11 @@ class FeedbackProcessor:
                 parameters=modified_parameters,
                 emotion=emotion,
                 accepted=True,
-                modifications=changes
+                modifications=changes,
             )
 
     def detect_pattern_based_feedback(
-        self,
-        generation_history: List[GenerationAttempt]
+        self, generation_history: List[GenerationAttempt]
     ) -> Dict[str, Any]:
         """
         Detect patterns in feedback to infer preferences.
@@ -353,7 +342,7 @@ def main():
         parameters={"valence": 0.5, "arousal": 0.6},
         emotion="grief",
         accepted=True,
-        modifications={"parameters": {"valence": 0.7}}  # User increased valence
+        modifications={"parameters": {"valence": 0.7}},  # User increased valence
     )
 
     generator.learn_from_parameter_changes({"valence": (0.5, 0.7)})

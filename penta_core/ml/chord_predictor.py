@@ -7,36 +7,89 @@ Provides neural network-based chord prediction using:
 - Markov chain fallback
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
-import numpy as np
 from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple
 
+import numpy as np
+
+from penta_core.ml.inference import InferenceEngine, create_engine
 from penta_core.ml.model_registry import (
-    ModelInfo,
     ModelBackend,
+    ModelInfo,
     ModelTask,
     get_model,
     register_model,
 )
-from penta_core.ml.inference import create_engine, InferenceEngine
-
 
 # Chord vocabulary
 CHORD_VOCAB = [
     # Major chords
-    "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B",
+    "C",
+    "Db",
+    "D",
+    "Eb",
+    "E",
+    "F",
+    "Gb",
+    "G",
+    "Ab",
+    "A",
+    "Bb",
+    "B",
     # Minor chords
-    "Cm", "Dbm", "Dm", "Ebm", "Em", "Fm", "Gbm", "Gm", "Abm", "Am", "Bbm", "Bm",
+    "Cm",
+    "Dbm",
+    "Dm",
+    "Ebm",
+    "Em",
+    "Fm",
+    "Gbm",
+    "Gm",
+    "Abm",
+    "Am",
+    "Bbm",
+    "Bm",
     # Seventh chords
-    "Cmaj7", "Dm7", "Em7", "Fmaj7", "G7", "Am7", "Bm7b5",
-    "Dbmaj7", "Ebm7", "Fm7", "Gbmaj7", "Ab7", "Bbm7", "Cm7b5",
+    "Cmaj7",
+    "Dm7",
+    "Em7",
+    "Fmaj7",
+    "G7",
+    "Am7",
+    "Bm7b5",
+    "Dbmaj7",
+    "Ebm7",
+    "Fm7",
+    "Gbmaj7",
+    "Ab7",
+    "Bbm7",
+    "Cm7b5",
     # Diminished
-    "Cdim", "Ddim", "Edim", "Fdim", "Gdim", "Adim", "Bdim",
+    "Cdim",
+    "Ddim",
+    "Edim",
+    "Fdim",
+    "Gdim",
+    "Adim",
+    "Bdim",
     # Augmented
-    "Caug", "Daug", "Eaug", "Faug", "Gaug", "Aaug", "Baug",
+    "Caug",
+    "Daug",
+    "Eaug",
+    "Faug",
+    "Gaug",
+    "Aaug",
+    "Baug",
     # Sus chords
-    "Csus2", "Csus4", "Dsus2", "Dsus4", "Esus4", "Gsus4", "Asus2", "Asus4",
+    "Csus2",
+    "Csus4",
+    "Dsus2",
+    "Dsus4",
+    "Esus4",
+    "Gsus4",
+    "Asus2",
+    "Asus4",
     # Other
     "N.C.",  # No chord
 ]
@@ -48,6 +101,7 @@ IDX_TO_CHORD = {i: chord for i, chord in enumerate(CHORD_VOCAB)}
 @dataclass
 class ChordPrediction:
     """A chord prediction with confidence."""
+
     chord: str
     confidence: float
     alternatives: List[Tuple[str, float]] = field(default_factory=list)
@@ -186,7 +240,7 @@ class ChordPredictor:
     ) -> ChordPrediction:
         """Predict using neural network."""
         # Encode context
-        indices = [CHORD_TO_IDX.get(c, 0) for c in context[-self._sequence_length:]]
+        indices = [CHORD_TO_IDX.get(c, 0) for c in context[-self._sequence_length :]]
 
         # Pad if necessary
         while len(indices) < self._sequence_length:
@@ -258,10 +312,7 @@ class ChordPredictor:
         top_chord = sorted_trans[0][0]
         top_prob = sorted_trans[0][1]
 
-        alternatives = [
-            (chord, prob)
-            for chord, prob in sorted_trans[1:num_predictions]
-        ]
+        alternatives = [(chord, prob) for chord, prob in sorted_trans[1:num_predictions]]
 
         return ChordPrediction(
             chord=top_chord,
@@ -332,10 +383,12 @@ class ChordPredictor:
 
         predictions = []
         for chord in best_pattern:
-            predictions.append(ChordPrediction(
-                chord=chord,
-                confidence=0.8,
-            ))
+            predictions.append(
+                ChordPrediction(
+                    chord=chord,
+                    confidence=0.8,
+                )
+            )
 
         return predictions
 
@@ -348,9 +401,9 @@ class ChordPredictor:
         root_counts = defaultdict(int)
         for chord in context:
             root = chord[0]
-            if len(chord) > 1 and chord[1] == 'b':
+            if len(chord) > 1 and chord[1] == "b":
                 root = chord[:2]
-            elif len(chord) > 1 and chord[1] == '#':
+            elif len(chord) > 1 and chord[1] == "#":
                 root = chord[:2]
             root_counts[root] += 1
 

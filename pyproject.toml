@@ -99,7 +99,6 @@ select = [
 ignore = [
   "E203", # whitespace before ':' (conflicts with black)
   "E501", # line too long (handled by formatter)
-  "W503", # line break before binary operator (conflicts with black)
 ]
 
 [tool.ruff.lint.isort]

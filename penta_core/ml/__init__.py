@@ -64,6 +64,7 @@ try:
         create_dataloaders,
         create_metadata_template,
     )
+
     _HAS_DATASET = True
 except ImportError:
     _HAS_DATASET = False
@@ -75,6 +76,7 @@ try:
         verify_onnx_model,
         verify_coreml_model,
     )
+
     _HAS_EXPORT = True
 except ImportError:
     _HAS_EXPORT = False
@@ -110,19 +112,23 @@ __all__ = [
 
 # Add dataset exports if available
 if _HAS_DATASET:
-    __all__.extend([
-        "AudioDataset",
-        "AudioDatasetTorch",
-        "AudioSample",
-        "create_dataloaders",
-        "create_metadata_template",
-    ])
+    __all__.extend(
+        [
+            "AudioDataset",
+            "AudioDatasetTorch",
+            "AudioSample",
+            "create_dataloaders",
+            "create_metadata_template",
+        ]
+    )
 
 # Add export utilities if available
 if _HAS_EXPORT:
-    __all__.extend([
-        "ModelExporter",
-        "ExportConfig",
-        "verify_onnx_model",
-        "verify_coreml_model",
-    ])
+    __all__.extend(
+        [
+            "ModelExporter",
+            "ExportConfig",
+            "verify_onnx_model",
+            "verify_coreml_model",
+        ]
+    )

@@ -20,15 +20,17 @@ import argparse
 import json
 import os
 import sys
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
+
 
 # Lazy imports for faster startup
 def get_openai_client():
     """Get OpenAI client with API key from environment."""
     from openai import OpenAI
+
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
         print("ERROR: OPENAI_API_KEY not set")
@@ -86,6 +88,7 @@ MODEL_REGISTRY = {
 @dataclass
 class TrainingPlan:
     """AI-generated training plan."""
+
     model_name: str
     suggested_epochs: int
     suggested_batch_size: int
@@ -101,6 +104,7 @@ class TrainingPlan:
 @dataclass
 class DatasetAnalysis:
     """AI analysis of dataset characteristics."""
+
     dataset_name: str
     total_samples: int
     analysis: str
@@ -113,25 +117,25 @@ def analyze_datasets_with_ai() -> List[DatasetAnalysis]:
     """Use OpenAI to analyze available datasets and provide insights."""
     client = get_openai_client()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("AI Dataset Analysis")
-    print("="*60)
+    print("=" * 60)
 
     # Gather dataset info
     datasets_info = {}
 
     if DATA_DIR.exists():
         for dataset_path in DATA_DIR.iterdir():
-            if dataset_path.is_dir() and not dataset_path.name.startswith('.'):
+            if dataset_path.is_dir() and not dataset_path.name.startswith("."):
                 # Count files
                 file_count = sum(1 for _ in dataset_path.rglob("*") if _.is_file())
 
                 # Get size
                 try:
                     import subprocess
+
                     result = subprocess.run(
-                        ["du", "-sh", str(dataset_path)],
-                        capture_output=True, text=True
+                        ["du", "-sh", str(dataset_path)], capture_output=True, text=True
                     )
                     size = result.stdout.split()[0] if result.returncode == 0 else "unknown"
                 except:
@@ -148,7 +152,7 @@ def analyze_datasets_with_ai() -> List[DatasetAnalysis]:
                     "path": str(dataset_path),
                     "file_count": file_count,
                     "size": size,
-                    "file_types": dict(sorted(extensions.items(), key=lambda x: -x[1])[:10])
+                    "file_types": dict(sorted(extensions.items(), key=lambda x: -x[1])[:10]),
                 }
 
     if not datasets_info:
@@ -188,11 +192,14 @@ Respond in JSON format with this structure:
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "You are an expert ML engineer specializing in music/audio AI. Provide practical, actionable analysis."},
-            {"role": "user", "content": prompt}
+            {
+                "role": "system",
+                "content": "You are an expert ML engineer specializing in music/audio AI. Provide practical, actionable analysis.",
+            },
+            {"role": "user", "content": prompt},
         ],
         temperature=0.3,
-        response_format={"type": "json_object"}
+        response_format={"type": "json_object"},
     )
 
     result = json.loads(response.choices[0].message.content)
@@ -205,18 +212,18 @@ Respond in JSON format with this structure:
             analysis=item.get("analysis", ""),
             quality_issues=item.get("quality_issues", []),
             preprocessing_recommendations=item.get("preprocessing", []),
-            augmentation_opportunities=item.get("augmentation", [])
+            augmentation_opportunities=item.get("augmentation", []),
         )
         analyses.append(analysis)
 
-        print(f"\n{'='*40}")
+        print(f"\n{'=' * 40}")
         print(f"Dataset: {analysis.dataset_name}")
         print(f"Samples: {analysis.total_samples:,}")
         print(f"\nAnalysis: {analysis.analysis}")
-        print(f"\nQuality Issues:")
+        print("\nQuality Issues:")
         for issue in analysis.quality_issues:
             print(f"  - {issue}")
-        print(f"\nPreprocessing Recommendations:")
+        print("\nPreprocessing Recommendations:")
         for rec in analysis.preprocessing_recommendations:
             print(f"  - {rec}")
 
@@ -227,9 +234,9 @@ def plan_training_with_ai(model_name: Optional[str] = None) -> List[TrainingPlan
     """Use OpenAI to create optimized training plans."""
     client = get_openai_client()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("AI Training Planner")
-    print("="*60)
+    print("=" * 60)
 
     # Get current model states
     models_to_plan = [model_name] if model_name else list(MODEL_REGISTRY.keys())
@@ -243,18 +250,19 @@ def plan_training_with_ai(model_name: Optional[str] = None) -> List[TrainingPlan
                 model_states[name] = {
                     "trained": data.get("trained", False),
                     "layers": len(data.get("layers", [])),
-                    "run_id": data.get("run_id", "unknown")
+                    "run_id": data.get("run_id", "unknown"),
                 }
         else:
             model_states[name] = {"trained": False}
 
     # Check available compute
     import platform
+
     compute_info = {
         "platform": platform.system(),
         "processor": platform.processor(),
         "has_mps": platform.system() == "Darwin",  # Apple Silicon
-        "in_codespace": os.environ.get("CODESPACES") == "true"
+        "in_codespace": os.environ.get("CODESPACES") == "true",
     }
 
     prompt = f"""Create optimized training plans for these music AI models:
@@ -300,18 +308,21 @@ Respond in JSON:
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "You are an expert ML engineer. Create practical, optimized training plans."},
-            {"role": "user", "content": prompt}
+            {
+                "role": "system",
+                "content": "You are an expert ML engineer. Create practical, optimized training plans.",
+            },
+            {"role": "user", "content": prompt},
         ],
         temperature=0.3,
-        response_format={"type": "json_object"}
+        response_format={"type": "json_object"},
     )
 
     result = json.loads(response.choices[0].message.content)
 
-    print(f"\n{'='*40}")
+    print(f"\n{'=' * 40}")
     print("OVERALL STRATEGY")
-    print("="*40)
+    print("=" * 40)
     print(result.get("overall_strategy", ""))
     print(f"\nCompute Recommendations: {result.get('compute_recommendations', '')}")
 
@@ -327,14 +338,16 @@ Respond in JSON:
             estimated_time=item.get("estimated_time", "unknown"),
             preprocessing_steps=item.get("preprocessing_steps", []),
             augmentation_suggestions=item.get("augmentation_suggestions", []),
-            evaluation_metrics=item.get("evaluation_metrics", [])
+            evaluation_metrics=item.get("evaluation_metrics", []),
         )
         plans.append(plan)
 
-        print(f"\n{'='*40}")
+        print(f"\n{'=' * 40}")
         print(f"Model: {plan.model_name} (Priority: {plan.priority})")
-        print(f"{'='*40}")
-        print(f"Epochs: {plan.suggested_epochs}, Batch: {plan.suggested_batch_size}, LR: {plan.suggested_lr}")
+        print(f"{'=' * 40}")
+        print(
+            f"Epochs: {plan.suggested_epochs}, Batch: {plan.suggested_batch_size}, LR: {plan.suggested_lr}"
+        )
         print(f"Estimated time: {plan.estimated_time}")
         print(f"\nReasoning: {plan.reasoning}")
         print(f"\nPreprocessing: {', '.join(plan.preprocessing_steps)}")
@@ -344,13 +357,17 @@ Respond in JSON:
     # Save plans
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
     plans_file = LOGS_DIR / f"training_plan_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    with open(plans_file, 'w') as f:
-        json.dump({
-            "timestamp": datetime.now().isoformat(),
-            "plans": [asdict(p) for p in plans],
-            "overall_strategy": result.get("overall_strategy", ""),
-            "compute_recommendations": result.get("compute_recommendations", "")
-        }, f, indent=2)
+    with open(plans_file, "w") as f:
+        json.dump(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "plans": [asdict(p) for p in plans],
+                "overall_strategy": result.get("overall_strategy", ""),
+                "compute_recommendations": result.get("compute_recommendations", ""),
+            },
+            f,
+            indent=2,
+        )
     print(f"\nPlan saved to: {plans_file}")
 
     return plans
@@ -360,9 +377,9 @@ def train_with_ai_guidance(model_name: str, use_plan: bool = True):
     """Train a model with AI-guided hyperparameters and monitoring."""
     client = get_openai_client()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(f"AI-Guided Training: {model_name}")
-    print("="*60)
+    print("=" * 60)
 
     # Get AI training plan
     if use_plan:
@@ -377,7 +394,7 @@ def train_with_ai_guidance(model_name: str, use_plan: bool = True):
     else:
         epochs, batch_size, lr = 50, 16, 0.001
 
-    print(f"\nStarting training with AI-suggested parameters:")
+    print("\nStarting training with AI-suggested parameters:")
     print(f"  Epochs: {epochs}")
     print(f"  Batch Size: {batch_size}")
     print(f"  Learning Rate: {lr}")
@@ -386,20 +403,25 @@ def train_with_ai_guidance(model_name: str, use_plan: bool = True):
     import subprocess
 
     cmd = [
-        sys.executable, "scripts/train.py",
-        "--model", model_name,
-        "--epochs", str(epochs),
-        "--batch-size", str(batch_size),
-        "--lr", str(lr),
+        sys.executable,
+        "scripts/train.py",
+        "--model",
+        model_name,
+        "--epochs",
+        str(epochs),
+        "--batch-size",
+        str(batch_size),
+        "--lr",
+        str(lr),
     ]
 
     print(f"\nExecuting: {' '.join(cmd)}")
-    print("="*60)
+    print("=" * 60)
 
     result = subprocess.run(cmd, cwd=ROOT, capture_output=False)
 
     if result.returncode == 0:
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Training completed! Requesting AI evaluation...")
         evaluate_with_ai(model_name)
     else:
@@ -412,9 +434,9 @@ def evaluate_with_ai(model_name: Optional[str] = None):
     """Use OpenAI to evaluate training results and suggest improvements."""
     client = get_openai_client()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("AI Training Evaluation")
-    print("="*60)
+    print("=" * 60)
 
     # Gather training logs
     training_logs = {}
@@ -463,31 +485,34 @@ Respond in JSON:
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "You are an expert ML engineer. Provide actionable feedback on training results."},
-            {"role": "user", "content": prompt}
+            {
+                "role": "system",
+                "content": "You are an expert ML engineer. Provide actionable feedback on training results.",
+            },
+            {"role": "user", "content": prompt},
         ],
         temperature=0.3,
-        response_format={"type": "json_object"}
+        response_format={"type": "json_object"},
     )
 
     result = json.loads(response.choices[0].message.content)
 
-    print(f"\n{'='*40}")
+    print(f"\n{'=' * 40}")
     print("OVERALL ASSESSMENT")
-    print("="*40)
+    print("=" * 40)
     print(result.get("overall_assessment", ""))
 
-    print(f"\n{'='*40}")
+    print(f"\n{'=' * 40}")
     print("PRIORITY IMPROVEMENTS")
-    print("="*40)
+    print("=" * 40)
     for imp in result.get("priority_improvements", []):
         print(f"  - {imp}")
 
     for eval_item in result.get("evaluations", []):
-        print(f"\n{'='*40}")
+        print(f"\n{'=' * 40}")
         print(f"Run: {eval_item.get('run_name', 'unknown')}")
         print(f"Assessment: {eval_item.get('assessment', 'unknown')}")
-        print(f"{'='*40}")
+        print(f"{'=' * 40}")
 
         print("Observations:")
         for obs in eval_item.get("observations", []):
@@ -500,7 +525,7 @@ Respond in JSON:
     # Save evaluation
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
     eval_file = LOGS_DIR / f"evaluation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    with open(eval_file, 'w') as f:
+    with open(eval_file, "w") as f:
         json.dump(result, f, indent=2)
     print(f"\nEvaluation saved to: {eval_file}")
 
@@ -509,14 +534,16 @@ def interactive_training_session():
     """Run an interactive AI-guided training session."""
     client = get_openai_client()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Interactive AI Training Session")
-    print("="*60)
+    print("=" * 60)
     print("\nI'll help you train Kelly's music AI models.")
     print("Type 'quit' to exit.\n")
 
     conversation = [
-        {"role": "system", "content": """You are an expert ML engineer helping train music AI models.
+        {
+            "role": "system",
+            "content": """You are an expert ML engineer helping train music AI models.
 
 Available models:
 - emotion_recognizer: CNN for audio emotion classification
@@ -532,7 +559,8 @@ Available commands you can suggest:
 - evaluate: Evaluate training results
 - status: Check model status
 
-Be concise and practical. Focus on actionable ML advice."""}
+Be concise and practical. Focus on actionable ML advice.""",
+        }
     ]
 
     while True:
@@ -541,7 +569,7 @@ Be concise and practical. Focus on actionable ML advice."""}
         except (EOFError, KeyboardInterrupt):
             break
 
-        if user_input.lower() in ['quit', 'exit', 'q']:
+        if user_input.lower() in ["quit", "exit", "q"]:
             print("\nGoodbye!")
             break
 
@@ -549,25 +577,25 @@ Be concise and practical. Focus on actionable ML advice."""}
             continue
 
         # Check for direct commands
-        if user_input.lower() == 'analyze':
+        if user_input.lower() == "analyze":
             analyze_datasets_with_ai()
             continue
-        elif user_input.lower().startswith('plan'):
+        elif user_input.lower().startswith("plan"):
             parts = user_input.split()
             model = parts[1] if len(parts) > 1 else None
             plan_training_with_ai(model)
             continue
-        elif user_input.lower().startswith('train'):
+        elif user_input.lower().startswith("train"):
             parts = user_input.split()
             if len(parts) > 1:
                 train_with_ai_guidance(parts[1])
             else:
                 print("Specify model: train emotion_recognizer")
             continue
-        elif user_input.lower() == 'evaluate':
+        elif user_input.lower() == "evaluate":
             evaluate_with_ai()
             continue
-        elif user_input.lower() == 'status':
+        elif user_input.lower() == "status":
             for name in MODEL_REGISTRY:
                 model_file = MODELS_DIR / f"{name.replace('_', '')}.json"
                 status = "trained" if model_file.exists() else "not trained"
@@ -578,10 +606,7 @@ Be concise and practical. Focus on actionable ML advice."""}
         conversation.append({"role": "user", "content": user_input})
 
         response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=conversation,
-            temperature=0.7,
-            max_tokens=500
+            model="gpt-4o", messages=conversation, temperature=0.7, max_tokens=500
         )
 
         assistant_message = response.choices[0].message.content
@@ -594,9 +619,9 @@ def deep_research(topic: str):
     """Use OpenAI to conduct deep research on a music AI topic."""
     client = get_openai_client()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(f"Deep Research: {topic}")
-    print("="*60)
+    print("=" * 60)
 
     prompt = f"""Conduct deep research on the following topic related to music AI and ML training:
 
@@ -620,11 +645,14 @@ Format with clear sections and bullet points."""
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "You are a world-class ML researcher specializing in music AI, audio processing, and MIDI analysis. Provide deep, technical, and actionable research."},
-            {"role": "user", "content": prompt}
+            {
+                "role": "system",
+                "content": "You are a world-class ML researcher specializing in music AI, audio processing, and MIDI analysis. Provide deep, technical, and actionable research.",
+            },
+            {"role": "user", "content": prompt},
         ],
         temperature=0.2,
-        max_tokens=4000
+        max_tokens=4000,
     )
 
     research = response.choices[0].message.content
@@ -633,8 +661,10 @@ Format with clear sections and bullet points."""
     # Save research
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
     safe_topic = topic.replace(" ", "_").replace("/", "-")[:50]
-    research_file = LOGS_DIR / f"research_{safe_topic}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-    with open(research_file, 'w') as f:
+    research_file = (
+        LOGS_DIR / f"research_{safe_topic}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+    )
+    with open(research_file, "w") as f:
         f.write(f"# Deep Research: {topic}\n\n")
         f.write(f"*Generated: {datetime.now().isoformat()}*\n\n")
         f.write(research)
@@ -647,9 +677,9 @@ def research_and_implement(topic: str, auto_implement: bool = False):
     """Research a topic and optionally implement recommendations."""
     client = get_openai_client()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print(f"Research & Implement: {topic}")
-    print("="*60)
+    print("=" * 60)
 
     # First, do the research
     research = deep_research(topic)
@@ -658,9 +688,9 @@ def research_and_implement(topic: str, auto_implement: bool = False):
         return research
 
     # Ask AI to generate implementation code
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Generating Implementation Code")
-    print("="*60)
+    print("=" * 60)
 
     impl_prompt = f"""Based on this research:
 
@@ -686,25 +716,34 @@ Focus on practical, immediately usable code."""
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "You are an expert Python developer. Write clean, well-documented, production-ready code."},
-            {"role": "user", "content": impl_prompt}
+            {
+                "role": "system",
+                "content": "You are an expert Python developer. Write clean, well-documented, production-ready code.",
+            },
+            {"role": "user", "content": impl_prompt},
         ],
         temperature=0.2,
-        max_tokens=3000
+        max_tokens=3000,
     )
 
     implementation = response.choices[0].message.content
     print(implementation)
 
     # Save implementation
-    impl_file = LOGS_DIR / f"implementation_{topic.replace(' ', '_')[:30]}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.py"
-    with open(impl_file, 'w') as f:
-        f.write(f'"""\nGenerated Implementation: {topic}\nBased on deep research conducted {datetime.now().isoformat()}\n"""\n\n')
+    impl_file = (
+        LOGS_DIR
+        / f"implementation_{topic.replace(' ', '_')[:30]}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.py"
+    )
+    with open(impl_file, "w") as f:
+        f.write(
+            f'"""\nGenerated Implementation: {topic}\nBased on deep research conducted {datetime.now().isoformat()}\n"""\n\n'
+        )
         # Extract code blocks
         import re
-        code_blocks = re.findall(r'```python\n(.*?)```', implementation, re.DOTALL)
+
+        code_blocks = re.findall(r"```python\n(.*?)```", implementation, re.DOTALL)
         if code_blocks:
-            f.write('\n\n'.join(code_blocks))
+            f.write("\n\n".join(code_blocks))
         else:
             f.write(implementation)
     print(f"\nImplementation saved to: {impl_file}")
@@ -726,25 +765,27 @@ Examples:
   python scripts/ai_training_orchestrator.py --interactive
   python scripts/ai_training_orchestrator.py --research "MIDI melody generation with transformers"
   python scripts/ai_training_orchestrator.py --research "audio emotion recognition" --implement
-        """
+        """,
     )
 
-    parser.add_argument("--analyze-datasets", action="store_true",
-                       help="Analyze datasets with AI")
-    parser.add_argument("--plan-training", action="store_true",
-                       help="Create AI-optimized training plans")
-    parser.add_argument("--train-with-guidance", action="store_true",
-                       help="Train with AI-suggested hyperparameters")
-    parser.add_argument("--evaluate-results", action="store_true",
-                       help="Evaluate training results with AI")
-    parser.add_argument("--interactive", action="store_true",
-                       help="Start interactive training session")
-    parser.add_argument("--model", type=str,
-                       help="Specific model to focus on")
-    parser.add_argument("--research", type=str,
-                       help="Deep research on a topic")
-    parser.add_argument("--implement", action="store_true",
-                       help="Generate implementation code from research")
+    parser.add_argument("--analyze-datasets", action="store_true", help="Analyze datasets with AI")
+    parser.add_argument(
+        "--plan-training", action="store_true", help="Create AI-optimized training plans"
+    )
+    parser.add_argument(
+        "--train-with-guidance", action="store_true", help="Train with AI-suggested hyperparameters"
+    )
+    parser.add_argument(
+        "--evaluate-results", action="store_true", help="Evaluate training results with AI"
+    )
+    parser.add_argument(
+        "--interactive", action="store_true", help="Start interactive training session"
+    )
+    parser.add_argument("--model", type=str, help="Specific model to focus on")
+    parser.add_argument("--research", type=str, help="Deep research on a topic")
+    parser.add_argument(
+        "--implement", action="store_true", help="Generate implementation code from research"
+    )
 
     args = parser.parse_args()
 

@@ -20,40 +20,40 @@ Usage:
         bridge.send_note(60, 100, 500)
 """
 
-import threading
-import queue
-import time
-import json
 import atexit
-from dataclasses import dataclass, field
-from typing import Optional, Callable, Dict, List, Any, Tuple
+import queue
+import threading
+import time
+from dataclasses import dataclass
 from enum import Enum
-
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # =============================================================================
 # Voice Control CC Mappings (for formant synthesis)
 # =============================================================================
 
+
 class VoiceCC(Enum):
     """MIDI CC mappings for voice synthesis control."""
-    VOWEL = 20        # 0-127 maps to A-E-I-O-U
+
+    VOWEL = 20  # 0-127 maps to A-E-I-O-U
     FORMANT_SHIFT = 21  # Formant frequency shift
-    BREATHINESS = 22    # Breath noise amount
-    VIBRATO_RATE = 23   # Vibrato speed
+    BREATHINESS = 22  # Breath noise amount
+    VIBRATO_RATE = 23  # Vibrato speed
     VIBRATO_DEPTH = 24  # Vibrato amount
-    PITCH_BEND = 25     # Fine pitch control
-    JITTER = 26         # Pitch randomness
-    SHIMMER = 27        # Amplitude randomness
-    NASALITY = 28       # Nasal resonance
+    PITCH_BEND = 25  # Fine pitch control
+    JITTER = 26  # Pitch randomness
+    SHIMMER = 27  # Amplitude randomness
+    NASALITY = 28  # Nasal resonance
 
 
 # Vowel positions (F1, F2 frequencies in Hz)
 VOWEL_FORMANTS = {
-    'A': (800, 1200),   # open front
-    'E': (400, 2200),   # mid front
-    'I': (300, 2800),   # close front
-    'O': (500, 900),    # mid back
-    'U': (350, 700),    # close back
+    "A": (800, 1200),  # open front
+    "E": (400, 2200),  # mid front
+    "I": (300, 2800),  # close front
+    "O": (500, 900),  # mid back
+    "U": (350, 700),  # close back
 }
 
 
@@ -61,26 +61,30 @@ VOWEL_FORMANTS = {
 # Data Classes
 # =============================================================================
 
+
 @dataclass
 class OSCConfig:
     """OSC connection configuration."""
+
     host: str = "127.0.0.1"
-    send_port: int = 9000      # Send to Ableton
-    receive_port: int = 9001   # Receive from Ableton
+    send_port: int = 9000  # Send to Ableton
+    receive_port: int = 9001  # Receive from Ableton
     timeout: float = 2.0
 
 
 @dataclass
 class MIDIConfig:
     """MIDI connection configuration."""
+
     output_port: str = "DAiW Voice"
     input_port: str = "DAiW Input"
-    virtual: bool = True       # Create virtual ports
+    virtual: bool = True  # Create virtual ports
 
 
 @dataclass
 class TransportState:
     """Current DAW transport state."""
+
     playing: bool = False
     recording: bool = False
     tempo: float = 120.0
@@ -92,18 +96,20 @@ class TransportState:
 @dataclass
 class TrackInfo:
     """Information about a DAW track."""
+
     index: int
     name: str
     armed: bool = False
     muted: bool = False
     soloed: bool = False
     volume: float = 0.0  # dB
-    pan: float = 0.0     # -1 to 1
+    pan: float = 0.0  # -1 to 1
 
 
 # =============================================================================
 # OSC Bridge
 # =============================================================================
+
 
 class AbletonOSCBridge:
     """
@@ -130,28 +136,21 @@ class AbletonOSCBridge:
     def connect(self) -> bool:
         """Connect to Ableton via OSC."""
         try:
-            from pythonosc import udp_client, dispatcher, osc_server
+            from pythonosc import dispatcher, osc_server, udp_client
 
             # Create client (send to Ableton)
-            self._client = udp_client.SimpleUDPClient(
-                self.config.host,
-                self.config.send_port
-            )
+            self._client = udp_client.SimpleUDPClient(self.config.host, self.config.send_port)
 
             # Create server (receive from Ableton)
             self._dispatcher = dispatcher.Dispatcher()
             self._setup_handlers()
 
             self._server = osc_server.ThreadingOSCUDPServer(
-                (self.config.host, self.config.receive_port),
-                self._dispatcher
+                (self.config.host, self.config.receive_port), self._dispatcher
             )
 
             # Start server thread
-            self._server_thread = threading.Thread(
-                target=self._server.serve_forever,
-                daemon=True
-            )
+            self._server_thread = threading.Thread(target=self._server.serve_forever, daemon=True)
             self._server_thread.start()
             self._running = True
 
@@ -368,6 +367,7 @@ class AbletonOSCBridge:
 # MIDI Bridge
 # =============================================================================
 
+
 class AbletonMIDIBridge:
     """
     MIDI communication bridge to Ableton Live.
@@ -394,10 +394,7 @@ class AbletonMIDIBridge:
 
             # Create output port
             if self.config.virtual:
-                self._output = mido.open_output(
-                    self.config.output_port,
-                    virtual=True
-                )
+                self._output = mido.open_output(self.config.output_port, virtual=True)
             else:
                 # Find existing port
                 ports = mido.get_output_names()
@@ -422,7 +419,8 @@ class AbletonMIDIBridge:
         """Send note on message."""
         if self._output:
             import mido
-            msg = mido.Message('note_on', note=note, velocity=velocity, channel=channel)
+
+            msg = mido.Message("note_on", note=note, velocity=velocity, channel=channel)
             self._output.send(msg)
             self._active_notes[(channel, note)] = velocity
 
@@ -430,7 +428,8 @@ class AbletonMIDIBridge:
         """Send note off message."""
         if self._output:
             import mido
-            msg = mido.Message('note_off', note=note, velocity=0, channel=channel)
+
+            msg = mido.Message("note_off", note=note, velocity=0, channel=channel)
             self._output.send(msg)
             self._active_notes.pop((channel, note), None)
 
@@ -444,8 +443,9 @@ class AbletonMIDIBridge:
 
         threading.Thread(target=note_off_later, daemon=True).start()
 
-    def send_chord(self, notes: List[int], velocity: int = 100,
-                   duration_ms: int = 500, channel: int = 0):
+    def send_chord(
+        self, notes: List[int], velocity: int = 100, duration_ms: int = 500, channel: int = 0
+    ):
         """Send multiple notes as a chord."""
         for note in notes:
             self.send_note_on(note, velocity, channel)
@@ -461,20 +461,22 @@ class AbletonMIDIBridge:
         """Send control change message."""
         if self._output:
             import mido
-            msg = mido.Message('control_change', control=cc, value=value, channel=channel)
+
+            msg = mido.Message("control_change", control=cc, value=value, channel=channel)
             self._output.send(msg)
 
     def send_pitch_bend(self, value: int, channel: int = 0):
         """Send pitch bend (-8192 to 8191)."""
         if self._output:
             import mido
-            msg = mido.Message('pitchwheel', pitch=value, channel=channel)
+
+            msg = mido.Message("pitchwheel", pitch=value, channel=channel)
             self._output.send(msg)
 
     # Voice Control Methods
     def set_vowel(self, vowel: str, channel: int = 0):
         """Set vowel for voice synthesis (A, E, I, O, U)."""
-        vowel_map = {'A': 0, 'E': 32, 'I': 64, 'O': 96, 'U': 127}
+        vowel_map = {"A": 0, "E": 32, "I": 64, "O": 96, "U": 127}
         value = vowel_map.get(vowel.upper(), 64)
         self.send_cc(VoiceCC.VOWEL.value, value, channel)
 
@@ -497,10 +499,11 @@ class AbletonMIDIBridge:
         """Send all notes off message."""
         if self._output:
             import mido
+
             channels = [channel] if channel is not None else range(16)
             for ch in channels:
                 # CC 123 = All Notes Off
-                msg = mido.Message('control_change', control=123, value=0, channel=ch)
+                msg = mido.Message("control_change", control=123, value=0, channel=ch)
                 self._output.send(msg)
         self._active_notes.clear()
 
@@ -555,6 +558,7 @@ class AbletonMIDIBridge:
 # Combined Bridge
 # =============================================================================
 
+
 class AbletonBridge:
     """
     Combined OSC + MIDI bridge to Ableton Live.
@@ -570,9 +574,7 @@ class AbletonBridge:
     """
 
     def __init__(
-        self,
-        osc_config: Optional[OSCConfig] = None,
-        midi_config: Optional[MIDIConfig] = None
+        self, osc_config: Optional[OSCConfig] = None, midi_config: Optional[MIDIConfig] = None
     ):
         self.osc = AbletonOSCBridge(osc_config)
         self.midi = AbletonMIDIBridge(midi_config)
@@ -604,8 +606,9 @@ class AbletonBridge:
     def send_note(self, note: int, velocity: int, duration_ms: int, channel: int = 0):
         self.midi.send_note(note, velocity, duration_ms, channel)
 
-    def send_chord(self, notes: List[int], velocity: int = 100,
-                   duration_ms: int = 500, channel: int = 0):
+    def send_chord(
+        self, notes: List[int], velocity: int = 100, duration_ms: int = 500, channel: int = 0
+    ):
         self.midi.send_chord(notes, velocity, duration_ms, channel)
 
     def send_cc(self, cc: int, value: int, channel: int = 0):
@@ -652,34 +655,33 @@ class AbletonBridge:
 # MCP Tool Definitions (for AI access)
 # =============================================================================
 
+
 def get_mcp_tools() -> List[Dict[str, Any]]:
     """Return MCP tool definitions for the Ableton bridge."""
     return [
         {
             "name": "ableton_play",
             "description": "Start Ableton Live playback",
-            "inputSchema": {"type": "object", "properties": {}}
+            "inputSchema": {"type": "object", "properties": {}},
         },
         {
             "name": "ableton_stop",
             "description": "Stop Ableton Live playback",
-            "inputSchema": {"type": "object", "properties": {}}
+            "inputSchema": {"type": "object", "properties": {}},
         },
         {
             "name": "ableton_record",
             "description": "Start Ableton Live recording",
-            "inputSchema": {"type": "object", "properties": {}}
+            "inputSchema": {"type": "object", "properties": {}},
         },
         {
             "name": "ableton_tempo",
             "description": "Set Ableton Live tempo",
             "inputSchema": {
                 "type": "object",
-                "properties": {
-                    "bpm": {"type": "number", "description": "Tempo in BPM"}
-                },
-                "required": ["bpm"]
-            }
+                "properties": {"bpm": {"type": "number", "description": "Tempo in BPM"}},
+                "required": ["bpm"],
+            },
         },
         {
             "name": "ableton_send_note",
@@ -689,10 +691,10 @@ def get_mcp_tools() -> List[Dict[str, Any]]:
                 "properties": {
                     "note": {"type": "integer", "description": "MIDI note number (0-127)"},
                     "velocity": {"type": "integer", "description": "Velocity (0-127)"},
-                    "duration_ms": {"type": "integer", "description": "Duration in milliseconds"}
+                    "duration_ms": {"type": "integer", "description": "Duration in milliseconds"},
                 },
-                "required": ["note", "velocity", "duration_ms"]
-            }
+                "required": ["note", "velocity", "duration_ms"],
+            },
         },
         {
             "name": "ableton_send_chord",
@@ -703,13 +705,13 @@ def get_mcp_tools() -> List[Dict[str, Any]]:
                     "notes": {
                         "type": "array",
                         "items": {"type": "integer"},
-                        "description": "List of MIDI note numbers"
+                        "description": "List of MIDI note numbers",
                     },
                     "velocity": {"type": "integer", "description": "Velocity (0-127)"},
-                    "duration_ms": {"type": "integer", "description": "Duration in milliseconds"}
+                    "duration_ms": {"type": "integer", "description": "Duration in milliseconds"},
                 },
-                "required": ["notes"]
-            }
+                "required": ["notes"],
+            },
         },
         {
             "name": "voice_set_vowel",
@@ -720,11 +722,11 @@ def get_mcp_tools() -> List[Dict[str, Any]]:
                     "vowel": {
                         "type": "string",
                         "enum": ["A", "E", "I", "O", "U"],
-                        "description": "Vowel sound"
+                        "description": "Vowel sound",
                     }
                 },
-                "required": ["vowel"]
-            }
+                "required": ["vowel"],
+            },
         },
         {
             "name": "voice_set_breathiness",
@@ -736,11 +738,11 @@ def get_mcp_tools() -> List[Dict[str, Any]]:
                         "type": "number",
                         "minimum": 0,
                         "maximum": 1,
-                        "description": "Breathiness amount (0-1)"
+                        "description": "Breathiness amount (0-1)",
                     }
                 },
-                "required": ["amount"]
-            }
+                "required": ["amount"],
+            },
         },
     ]
 

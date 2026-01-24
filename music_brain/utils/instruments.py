@@ -83,7 +83,6 @@ GM_INSTRUMENTS = {
     5: "Electric Piano 2",
     6: "Harpsichord",
     7: "Clavinet",
-    
     # Chromatic Percussion (8-15)
     8: "Celesta",
     9: "Glockenspiel",
@@ -93,7 +92,6 @@ GM_INSTRUMENTS = {
     13: "Xylophone",
     14: "Tubular Bells",
     15: "Dulcimer",
-    
     # Organ (16-23)
     16: "Drawbar Organ",
     17: "Percussive Organ",
@@ -103,7 +101,6 @@ GM_INSTRUMENTS = {
     21: "Accordion",
     22: "Harmonica",
     23: "Tango Accordion",
-    
     # Guitar (24-31)
     24: "Acoustic Guitar (nylon)",
     25: "Acoustic Guitar (steel)",
@@ -113,7 +110,6 @@ GM_INSTRUMENTS = {
     29: "Overdriven Guitar",
     30: "Distortion Guitar",
     31: "Guitar Harmonics",
-    
     # Bass (32-39)
     32: "Acoustic Bass",
     33: "Electric Bass (finger)",
@@ -123,7 +119,6 @@ GM_INSTRUMENTS = {
     37: "Slap Bass 2",
     38: "Synth Bass 1",
     39: "Synth Bass 2",
-    
     # Strings (40-47)
     40: "Violin",
     41: "Viola",
@@ -133,7 +128,6 @@ GM_INSTRUMENTS = {
     45: "Pizzicato Strings",
     46: "Orchestral Harp",
     47: "Timpani",
-    
     # Ensemble (48-55)
     48: "String Ensemble 1",
     49: "String Ensemble 2",
@@ -143,7 +137,6 @@ GM_INSTRUMENTS = {
     53: "Voice Oohs",
     54: "Synth Voice",
     55: "Orchestra Hit",
-    
     # Brass (56-63)
     56: "Trumpet",
     57: "Trombone",
@@ -153,7 +146,6 @@ GM_INSTRUMENTS = {
     61: "Brass Section",
     62: "Synth Brass 1",
     63: "Synth Brass 2",
-    
     # Reed (64-71)
     64: "Soprano Sax",
     65: "Alto Sax",
@@ -163,7 +155,6 @@ GM_INSTRUMENTS = {
     69: "English Horn",
     70: "Bassoon",
     71: "Clarinet",
-    
     # Pipe (72-79)
     72: "Piccolo",
     73: "Flute",
@@ -173,7 +164,6 @@ GM_INSTRUMENTS = {
     77: "Shakuhachi",
     78: "Whistle",
     79: "Ocarina",
-    
     # Synth Lead (80-87)
     80: "Lead 1 (square)",
     81: "Lead 2 (sawtooth)",
@@ -183,7 +173,6 @@ GM_INSTRUMENTS = {
     85: "Lead 6 (voice)",
     86: "Lead 7 (fifths)",
     87: "Lead 8 (bass + lead)",
-    
     # Synth Pad (88-95)
     88: "Pad 1 (new age)",
     89: "Pad 2 (warm)",
@@ -193,7 +182,6 @@ GM_INSTRUMENTS = {
     93: "Pad 6 (metallic)",
     94: "Pad 7 (halo)",
     95: "Pad 8 (sweep)",
-    
     # Synth Effects (96-103)
     96: "FX 1 (rain)",
     97: "FX 2 (soundtrack)",
@@ -203,7 +191,6 @@ GM_INSTRUMENTS = {
     101: "FX 6 (goblins)",
     102: "FX 7 (echoes)",
     103: "FX 8 (sci-fi)",
-    
     # Ethnic (104-111)
     104: "Sitar",
     105: "Banjo",
@@ -213,7 +200,6 @@ GM_INSTRUMENTS = {
     109: "Bagpipe",
     110: "Fiddle",
     111: "Shanai",
-    
     # Percussive (112-119)
     112: "Tinkle Bell",
     113: "Agogo",
@@ -223,7 +209,6 @@ GM_INSTRUMENTS = {
     117: "Melodic Tom",
     118: "Synth Drum",
     119: "Reverse Cymbal",
-    
     # Sound Effects (120-127)
     120: "Guitar Fret Noise",
     121: "Breath Noise",
@@ -289,7 +274,7 @@ def is_drum_channel(channel: int) -> bool:
 
 def midi_note_to_name(note: int, include_octave: bool = True) -> str:
     """Convert MIDI note number to note name (e.g., 60 -> 'C4')."""
-    note_names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+    note_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     name = note_names[note % 12]
     if include_octave:
         octave = (note // 12) - 1
@@ -300,22 +285,23 @@ def midi_note_to_name(note: int, include_octave: bool = True) -> str:
 def note_name_to_midi(name: str) -> int:
     """Convert note name to MIDI note number (e.g., 'C4' -> 60)."""
     import re
-    match = re.match(r'([A-Ga-g][#b]?)(-?\d+)', name)
+
+    match = re.match(r"([A-Ga-g][#b]?)(-?\d+)", name)
     if not match:
         raise ValueError(f"Invalid note name: {name}")
-    
+
     note_name = match.group(1).upper()
     octave = int(match.group(2))
-    
-    note_names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-    flat_map = {'DB': 'C#', 'EB': 'D#', 'FB': 'E', 'GB': 'F#', 'AB': 'G#', 'BB': 'A#', 'CB': 'B'}
-    
+
+    note_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    flat_map = {"DB": "C#", "EB": "D#", "FB": "E", "GB": "F#", "AB": "G#", "BB": "A#", "CB": "B"}
+
     if note_name in flat_map:
         note_name = flat_map[note_name]
-    
+
     try:
         note_num = note_names.index(note_name)
     except ValueError:
         raise ValueError(f"Invalid note name: {name}")
-    
+
     return (octave + 1) * 12 + note_num

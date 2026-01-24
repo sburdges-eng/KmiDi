@@ -9,6 +9,20 @@ Provides:
 - User presence and awareness
 """
 
+from music_brain.collaboration.comments import (
+    Annotation,
+    Comment,
+    CommentThread,
+    add_comment,
+    resolve_thread,
+)
+from music_brain.collaboration.editing import (
+    CollaborativeDocument,
+    Operation,
+    OperationType,
+    apply_operation,
+    transform_operations,
+)
 from music_brain.collaboration.session import (
     CollaborativeSession,
     SessionParticipant,
@@ -17,37 +31,19 @@ from music_brain.collaboration.session import (
     join_session,
     leave_session,
 )
-
-from music_brain.collaboration.websocket import (
-    CollaborationServer,
-    CollaborationClient,
-    Message,
-    MessageType,
-)
-
 from music_brain.collaboration.version_control import (
-    IntentVersionControl,
-    IntentVersion,
     IntentDiff,
+    IntentVersion,
+    IntentVersionControl,
     create_version,
     get_history,
     restore_version,
 )
-
-from music_brain.collaboration.editing import (
-    Operation,
-    OperationType,
-    CollaborativeDocument,
-    apply_operation,
-    transform_operations,
-)
-
-from music_brain.collaboration.comments import (
-    Comment,
-    Annotation,
-    CommentThread,
-    add_comment,
-    resolve_thread,
+from music_brain.collaboration.websocket import (
+    CollaborationClient,
+    CollaborationServer,
+    Message,
+    MessageType,
 )
 
 __all__ = [

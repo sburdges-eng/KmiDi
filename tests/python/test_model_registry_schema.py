@@ -64,4 +64,3 @@ def test_optional_golden_vectors() -> None:
             assert golden["input_size"] > 0
         if "sample_rate" in golden:
             assert golden["sample_rate"] > 0
-

@@ -5,11 +5,10 @@ Scans user directories and identifies project-like structures, large files, and 
 """
 
 import json
-import os
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict
 
 # System directories to exclude
 EXCLUDE_DIRS = {
@@ -185,7 +184,7 @@ def scan_directory(root: Path, max_depth: int = 10, current_depth: int = 0) -> D
 
         return {}
 
-    except (OSError, PermissionError) as e:
+    except (OSError, PermissionError):
         return {}
 
 

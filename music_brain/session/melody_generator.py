@@ -3,6 +3,7 @@ Adaptive Melody Generator - Uses learned patterns (example-based) with ML fallba
 """
 
 from typing import List, Optional
+
 from music_brain.learning.melody_learning import (
     MelodyExample,
     MelodyLearningManager,

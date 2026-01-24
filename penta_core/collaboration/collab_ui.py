@@ -11,17 +11,19 @@ import logging
 import threading
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable, Optional
 from queue import Queue
+from typing import Any, Callable, Optional
 
 try:
     import streamlit as st
+
     HAS_STREAMLIT = True
 except ImportError:
     HAS_STREAMLIT = False
 
 try:
     import websockets
+
     HAS_WEBSOCKETS = True
 except ImportError:
     HAS_WEBSOCKETS = False
@@ -32,6 +34,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CollaboratorInfo:
     """Information about a collaborator."""
+
     client_id: str
     name: str
     color: str
@@ -87,18 +90,12 @@ class CollaborationClient:
         self._thread.start()
 
         # Schedule connection
-        asyncio.run_coroutine_threadsafe(
-            self._connect(session_id, name, color),
-            self._loop
-        )
+        asyncio.run_coroutine_threadsafe(self._connect(session_id, name, color), self._loop)
 
     def disconnect(self):
         """Disconnect from the session."""
         if self._loop and self.connected:
-            asyncio.run_coroutine_threadsafe(
-                self._disconnect(),
-                self._loop
-            )
+            asyncio.run_coroutine_threadsafe(self._disconnect(), self._loop)
 
     def _run_loop(self):
         """Run the async event loop."""
@@ -112,20 +109,22 @@ class CollaborationClient:
             self.connected = True
 
             # Send join message
-            await self._send({
-                "v": "1.0",
-                "type": "session.join",
-                "id": self._gen_id(),
-                "session": session_id,
-                "sender": "",
-                "ts": self._timestamp(),
-                "payload": {
-                    "sessionId": session_id,
-                    "clientName": name,
-                    "clientColor": color,
-                    "capabilities": ["midi", "intent", "arrangement"],
-                },
-            })
+            await self._send(
+                {
+                    "v": "1.0",
+                    "type": "session.join",
+                    "id": self._gen_id(),
+                    "session": session_id,
+                    "sender": "",
+                    "ts": self._timestamp(),
+                    "payload": {
+                        "sessionId": session_id,
+                        "clientName": name,
+                        "clientColor": color,
+                        "capabilities": ["midi", "intent", "arrangement"],
+                    },
+                }
+            )
 
             # Start receiving messages
             asyncio.create_task(self._receive_loop())
@@ -137,15 +136,17 @@ class CollaborationClient:
     async def _disconnect(self):
         """Async disconnect handler."""
         if self.websocket:
-            await self._send({
-                "v": "1.0",
-                "type": "session.leave",
-                "id": self._gen_id(),
-                "session": self.session_id,
-                "sender": self.client_id or "",
-                "ts": self._timestamp(),
-                "payload": {"reason": "user"},
-            })
+            await self._send(
+                {
+                    "v": "1.0",
+                    "type": "session.leave",
+                    "id": self._gen_id(),
+                    "session": self.session_id,
+                    "sender": self.client_id or "",
+                    "ts": self._timestamp(),
+                    "payload": {"reason": "user"},
+                }
+            )
             await self.websocket.close()
         self.connected = False
 
@@ -234,52 +235,58 @@ class CollaborationClient:
         """
         if self._loop and self.connected:
             asyncio.run_coroutine_threadsafe(
-                self._send({
-                    "v": "1.0",
-                    "type": "intent.update",
-                    "id": self._gen_id(),
-                    "session": self.session_id,
-                    "sender": self.client_id,
-                    "ts": self._timestamp(),
-                    "payload": {
-                        "path": path,
-                        "value": value,
-                        "vclock": {},
-                    },
-                }),
-                self._loop
+                self._send(
+                    {
+                        "v": "1.0",
+                        "type": "intent.update",
+                        "id": self._gen_id(),
+                        "session": self.session_id,
+                        "sender": self.client_id,
+                        "ts": self._timestamp(),
+                        "payload": {
+                            "path": path,
+                            "value": value,
+                            "vclock": {},
+                        },
+                    }
+                ),
+                self._loop,
             )
 
     def send_cursor_update(self, position: dict):
         """Send cursor position update."""
         if self._loop and self.connected:
             asyncio.run_coroutine_threadsafe(
-                self._send({
-                    "v": "1.0",
-                    "type": "presence.cursor",
-                    "id": self._gen_id(),
-                    "session": self.session_id,
-                    "sender": self.client_id,
-                    "ts": self._timestamp(),
-                    "payload": position,
-                }),
-                self._loop
+                self._send(
+                    {
+                        "v": "1.0",
+                        "type": "presence.cursor",
+                        "id": self._gen_id(),
+                        "session": self.session_id,
+                        "sender": self.client_id,
+                        "ts": self._timestamp(),
+                        "payload": position,
+                    }
+                ),
+                self._loop,
             )
 
     def send_chat(self, text: str):
         """Send a chat message."""
         if self._loop and self.connected:
             asyncio.run_coroutine_threadsafe(
-                self._send({
-                    "v": "1.0",
-                    "type": "chat.message",
-                    "id": self._gen_id(),
-                    "session": self.session_id,
-                    "sender": self.client_id,
-                    "ts": self._timestamp(),
-                    "payload": {"text": text},
-                }),
-                self._loop
+                self._send(
+                    {
+                        "v": "1.0",
+                        "type": "chat.message",
+                        "id": self._gen_id(),
+                        "session": self.session_id,
+                        "sender": self.client_id,
+                        "ts": self._timestamp(),
+                        "payload": {"text": text},
+                    }
+                ),
+                self._loop,
             )
 
     def on(self, event: str, handler: Callable):
@@ -291,6 +298,7 @@ class CollaborationClient:
     def _gen_id(self) -> str:
         """Generate a message ID."""
         import uuid
+
         return str(uuid.uuid4())[:12]
 
     def _timestamp(self) -> int:
@@ -315,7 +323,8 @@ def render_collaboration_ui():
     )
 
     # Custom CSS for collaboration features
-    st.markdown("""
+    st.markdown(
+        """
     <style>
     .collaborator-badge {
         display: inline-block;
@@ -353,7 +362,9 @@ def render_collaboration_ui():
         border-radius: 4px;
     }
     </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     # Initialize session state
     if "collab_client" not in st.session_state:
@@ -366,8 +377,17 @@ def render_collaboration_ui():
         st.session_state.user_name = f"User-{hash(id(st)) % 1000}"
     if "user_color" not in st.session_state:
         import random
-        colors = ["#E91E63", "#9C27B0", "#673AB7", "#3F51B5",
-                  "#2196F3", "#00BCD4", "#009688", "#4CAF50"]
+
+        colors = [
+            "#E91E63",
+            "#9C27B0",
+            "#673AB7",
+            "#3F51B5",
+            "#2196F3",
+            "#00BCD4",
+            "#009688",
+            "#4CAF50",
+        ]
         st.session_state.user_color = random.choice(colors)
 
     # Header
@@ -379,9 +399,7 @@ def render_collaboration_ui():
 
         if not st.session_state.connected:
             session_id = st.text_input(
-                "Session ID",
-                value="demo",
-                help="Enter a session ID to join or create"
+                "Session ID", value="demo", help="Enter a session ID to join or create"
             )
 
             col1, col2 = st.columns(2)
@@ -391,9 +409,7 @@ def render_collaboration_ui():
                 user_color = st.color_picker("Color", value=st.session_state.user_color)
 
             server_url = st.text_input(
-                "Server URL",
-                value="ws://localhost:8765",
-                help="WebSocket server address"
+                "Server URL", value="ws://localhost:8765", help="WebSocket server address"
             )
 
             if st.button("Join Session", type="primary", use_container_width=True):
@@ -424,7 +440,7 @@ def render_collaboration_ui():
             for p in client.participants.values():
                 badge_html = f"""
                 <span class="collaborator-badge" style="background-color: {p.color}">
-                    {p.name} {'(you)' if p.client_id == client.client_id else ''}
+                    {p.name} {"(you)" if p.client_id == client.client_id else ""}
                 </span>
                 """
                 st.markdown(badge_html, unsafe_allow_html=True)
@@ -442,12 +458,9 @@ def render_collaboration_ui():
         intent = client.state.get("intent", {})
 
         # Tabs for different sections
-        tab1, tab2, tab3, tab4 = st.tabs([
-            "🎯 Core Intent",
-            "💭 Emotional",
-            "🎛️ Technical",
-            "💬 Chat"
-        ])
+        tab1, tab2, tab3, tab4 = st.tabs(
+            ["🎯 Core Intent", "💭 Emotional", "🎛️ Technical", "💬 Chat"]
+        )
 
         with tab1:
             st.header("Core Intent (Phase 0)")
@@ -460,7 +473,7 @@ def render_collaboration_ui():
                 "Core Event",
                 value=core.get("event", ""),
                 help="What specific moment or experience triggered this song?",
-                key="core_event"
+                key="core_event",
             )
             if event != core.get("event", ""):
                 client.send_intent_update("core.event", event)
@@ -472,7 +485,7 @@ def render_collaboration_ui():
                     "Core Resistance",
                     value=core.get("resistance", ""),
                     help="What are you afraid to say or feel?",
-                    key="core_resistance"
+                    key="core_resistance",
                 )
                 if resistance != core.get("resistance", ""):
                     client.send_intent_update("core.resistance", resistance)
@@ -482,7 +495,7 @@ def render_collaboration_ui():
                     "Core Longing",
                     value=core.get("longing", ""),
                     help="What do you wish could be true?",
-                    key="core_longing"
+                    key="core_longing",
                 )
                 if longing != core.get("longing", ""):
                     client.send_intent_update("core.longing", longing)
@@ -497,15 +510,24 @@ def render_collaboration_ui():
 
             with col1:
                 moods = [
-                    "Joy", "Sadness", "Anger", "Fear", "Love",
-                    "Nostalgia", "Hope", "Despair", "Serenity", "Tension"
+                    "Joy",
+                    "Sadness",
+                    "Anger",
+                    "Fear",
+                    "Love",
+                    "Nostalgia",
+                    "Hope",
+                    "Despair",
+                    "Serenity",
+                    "Tension",
                 ]
                 mood_primary = st.selectbox(
                     "Primary Mood",
                     options=moods,
                     index=moods.index(emotional.get("moodPrimary", "Joy"))
-                    if emotional.get("moodPrimary") in moods else 0,
-                    key="mood_primary"
+                    if emotional.get("moodPrimary") in moods
+                    else 0,
+                    key="mood_primary",
                 )
                 if mood_primary != emotional.get("moodPrimary"):
                     client.send_intent_update("emotional.moodPrimary", mood_primary)
@@ -516,7 +538,7 @@ def render_collaboration_ui():
                     max_value=10,
                     value=emotional.get("vulnerabilityScale", 5),
                     help="How emotionally exposed is this song?",
-                    key="vulnerability"
+                    key="vulnerability",
                 )
                 if vulnerability != emotional.get("vulnerabilityScale"):
                     client.send_intent_update("emotional.vulnerabilityScale", vulnerability)
@@ -526,7 +548,7 @@ def render_collaboration_ui():
                     "Secondary Moods",
                     options=moods,
                     default=emotional.get("moodSecondary", []),
-                    key="mood_secondary"
+                    key="mood_secondary",
                 )
                 if mood_secondary != emotional.get("moodSecondary", []):
                     client.send_intent_update("emotional.moodSecondary", mood_secondary)
@@ -536,8 +558,9 @@ def render_collaboration_ui():
                     "Narrative Arc",
                     options=arcs,
                     index=arcs.index(emotional.get("narrativeArc", "Standard").title())
-                    if emotional.get("narrativeArc", "").title() in arcs else 0,
-                    key="narrative_arc"
+                    if emotional.get("narrativeArc", "").title() in arcs
+                    else 0,
+                    key="narrative_arc",
                 )
                 if narrative_arc.lower() != emotional.get("narrativeArc"):
                     client.send_intent_update("emotional.narrativeArc", narrative_arc.lower())
@@ -552,15 +575,24 @@ def render_collaboration_ui():
 
             with col1:
                 genres = [
-                    "Pop", "Rock", "Hip-Hop", "R&B", "Jazz",
-                    "Electronic", "Classical", "Folk", "Country", "Metal"
+                    "Pop",
+                    "Rock",
+                    "Hip-Hop",
+                    "R&B",
+                    "Jazz",
+                    "Electronic",
+                    "Classical",
+                    "Folk",
+                    "Country",
+                    "Metal",
                 ]
                 genre = st.selectbox(
                     "Genre",
                     options=genres,
                     index=genres.index(technical.get("genre", "Pop"))
-                    if technical.get("genre") in genres else 0,
-                    key="genre"
+                    if technical.get("genre") in genres
+                    else 0,
+                    key="genre",
                 )
                 if genre != technical.get("genre"):
                     client.send_intent_update("technical.genre", genre)
@@ -575,8 +607,9 @@ def render_collaboration_ui():
                     "Key",
                     options=key_modes,
                     index=key_modes.index(technical.get("key", "C Major"))
-                    if technical.get("key") in key_modes else 0,
-                    key="key"
+                    if technical.get("key") in key_modes
+                    else 0,
+                    key="key",
                 )
                 if key_selection != technical.get("key"):
                     client.send_intent_update("technical.key", key_selection)
@@ -587,7 +620,7 @@ def render_collaboration_ui():
                     min_value=40,
                     max_value=240,
                     value=technical.get("tempo", 120),
-                    key="tempo"
+                    key="tempo",
                 )
                 if tempo != technical.get("tempo"):
                     client.send_intent_update("technical.tempo", tempo)
@@ -600,8 +633,9 @@ def render_collaboration_ui():
                     "Time Signature",
                     options=time_signatures,
                     index=time_signatures.index(technical.get("timeSignature", "4/4"))
-                    if technical.get("timeSignature") in time_signatures else 0,
-                    key="time_sig"
+                    if technical.get("timeSignature") in time_signatures
+                    else 0,
+                    key="time_sig",
                 )
                 if time_sig != technical.get("timeSignature"):
                     client.send_intent_update("technical.timeSignature", time_sig)
@@ -620,7 +654,7 @@ def render_collaboration_ui():
                     options=rules,
                     default=technical.get("rulesToBreak", []),
                     help="Intentional rule violations for emotional effect",
-                    key="rules_to_break"
+                    key="rules_to_break",
                 )
                 if rules_to_break != technical.get("rulesToBreak", []):
                     client.send_intent_update("technical.rulesToBreak", rules_to_break)
@@ -635,11 +669,13 @@ def render_collaboration_ui():
                 while not client.message_queue.empty():
                     msg = client.message_queue.get()
                     if msg.get("type") == "chat.message":
-                        st.session_state.chat_messages.append({
-                            "sender": msg.get("sender"),
-                            "text": msg.get("payload", {}).get("text", ""),
-                            "ts": msg.get("ts"),
-                        })
+                        st.session_state.chat_messages.append(
+                            {
+                                "sender": msg.get("sender"),
+                                "text": msg.get("payload", {}).get("text", ""),
+                                "ts": msg.get("ts"),
+                            }
+                        )
 
                 # Display messages
                 for msg in st.session_state.chat_messages[-20:]:
@@ -650,23 +686,21 @@ def render_collaboration_ui():
                     css_class = "chat-message own" if is_own else "chat-message"
                     st.markdown(
                         f'<div class="{css_class}"><b>{sender_name}:</b> {msg["text"]}</div>',
-                        unsafe_allow_html=True
+                        unsafe_allow_html=True,
                     )
 
             # Chat input
-            chat_input = st.text_input(
-                "Message",
-                key="chat_input",
-                placeholder="Type a message..."
-            )
+            chat_input = st.text_input("Message", key="chat_input", placeholder="Type a message...")
             if st.button("Send", key="send_chat"):
                 if chat_input:
                     client.send_chat(chat_input)
-                    st.session_state.chat_messages.append({
-                        "sender": client.client_id,
-                        "text": chat_input,
-                        "ts": client._timestamp(),
-                    })
+                    st.session_state.chat_messages.append(
+                        {
+                            "sender": client.client_id,
+                            "text": chat_input,
+                            "ts": client._timestamp(),
+                        }
+                    )
                     st.rerun()
 
     else:

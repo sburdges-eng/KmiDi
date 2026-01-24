@@ -1,15 +1,11 @@
 """Tests for intent processor."""
-import pytest
-from kelly.core.intent_processor import IntentProcessor, Wound, IntentPhase
+
+from kelly.core.intent_processor import IntentProcessor, Wound
 
 
 def test_wound_creation():
     """Test creating a wound object."""
-    wound = Wound(
-        description="feeling of loss",
-        intensity=0.8,
-        source="user_input"
-    )
+    wound = Wound(description="feeling of loss", intensity=0.8, source="user_input")
     assert wound.description == "feeling of loss"
     assert wound.intensity == 0.8
 
@@ -37,7 +33,7 @@ def test_process_intent_complete():
     processor = IntentProcessor()
     wound = Wound(description="feeling anxious", intensity=0.7, source="user")
     result = processor.process_intent(wound)
-    
+
     assert "wound" in result
     assert "emotion" in result
     assert "rule_breaks" in result
@@ -49,8 +45,8 @@ def test_wound_history():
     processor = IntentProcessor()
     wound1 = Wound(description="loss", intensity=0.8, source="user")
     wound2 = Wound(description="anger", intensity=0.6, source="user")
-    
+
     processor.process_wound(wound1)
     processor.process_wound(wound2)
-    
+
     assert len(processor.wound_history) == 2

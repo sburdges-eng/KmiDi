@@ -2,7 +2,7 @@
 Proposal formatting helpers for CLI output.
 """
 
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 
 def format_proposal(proposal: Dict[str, Any]) -> str:

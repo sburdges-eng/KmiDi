@@ -28,28 +28,28 @@ Usage:
     result = await orchestrator.execute(pipeline, input_data)
 """
 
+from music_brain.orchestrator.interfaces import (
+    ProcessorConfig,
+    ProcessorInterface,
+    ProcessorResult,
+)
+from music_brain.orchestrator.logging_utils import (
+    LogFormatter,
+    LogLevel,
+    OrchestratorLogger,
+    get_logger,
+)
 from music_brain.orchestrator.orchestrator import (
     AIOrchestrator,
-    OrchestratorConfig,
     ExecutionContext,
     ExecutionResult,
+    OrchestratorConfig,
 )
 from music_brain.orchestrator.pipeline import (
     Pipeline,
     PipelineStage,
-    StageResult,
     PipelineStatus,
-)
-from music_brain.orchestrator.interfaces import (
-    ProcessorInterface,
-    ProcessorConfig,
-    ProcessorResult,
-)
-from music_brain.orchestrator.logging_utils import (
-    OrchestratorLogger,
-    LogLevel,
-    LogFormatter,
-    get_logger,
+    StageResult,
 )
 
 
@@ -61,6 +61,7 @@ def get_workstation():
 def shutdown_workstation(workstation=None):
     """No-op shutdown helper to mirror CLI expectations."""
     return True
+
 
 __all__ = [
     # Core Orchestrator

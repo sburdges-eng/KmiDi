@@ -6,14 +6,15 @@ and translates them into concrete production settings. He guides the
 "Music Intent Side".
 """
 
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Any
 import re
+from dataclasses import dataclass
+from typing import List, Optional
 
 
 @dataclass
 class DeeTrackSpec:
     """Technical specification for a track produced by Dee."""
+
     time_signature: str
     tempo: Optional[int]
     instruments: List[str]
@@ -28,10 +29,16 @@ class Dee:
     """
 
     def __init__(self):
-        self.known_instruments = ["viola", "synth bass",
-                                  "drums", "guitar", "piano", "flute", "tuba"]
-        self.known_effects = ["delay", "phaser",
-                              "reverb", "distortion", "compression"]
+        self.known_instruments = [
+            "viola",
+            "synth bass",
+            "drums",
+            "guitar",
+            "piano",
+            "flute",
+            "tuba",
+        ]
+        self.known_effects = ["delay", "phaser", "reverb", "distortion", "compression"]
 
     def produce(self, technical_description: str) -> DeeTrackSpec:
         """
@@ -79,7 +86,7 @@ class Dee:
             instruments=instruments,
             intro_progression=intro_prog,
             effects=effects,
-            structure_notes=f"Generated from: {technical_description[:50]}..."
+            structure_notes=f"Generated from: {technical_description[:50]}...",
         )
 
     def consult(self, spec: DeeTrackSpec) -> str:
@@ -95,13 +102,11 @@ class Dee:
             response.append(f"Laying down tracks for: {inst_list}.")
 
         if spec.intro_progression:
-            response.append(
-                f"For the intro, I'm thinking: '{spec.intro_progression}'.")
+            response.append(f"For the intro, I'm thinking: '{spec.intro_progression}'.")
 
         if spec.effects:
             fx_list = ", ".join(spec.effects)
             response.append(f"Dialing in the {fx_list}.")
 
-        response.append(
-            "I'll have this printed to stems before you finish your coffee.")
+        response.append("I'll have this printed to stems before you finish your coffee.")
         return " ".join(response)

@@ -5,11 +5,12 @@ Takes MIDI notes extracted from voice and synthesizes them as
 different instruments (piano, guitar, strings, etc.).
 """
 
-import numpy as np
-from typing import List, Optional, Dict
 from dataclasses import dataclass
-from scipy import signal
+from typing import Dict, List, Optional
+
+import numpy as np
 import soundfile as sf
+from scipy import signal
 
 from music_brain.voice.pitch_controller import PitchController
 
@@ -17,6 +18,7 @@ from music_brain.voice.pitch_controller import PitchController
 @dataclass
 class InstrumentConfig:
     """Configuration for instrument synthesis."""
+
     sample_rate: int = 44100
     attack_time: float = 0.01
     decay_time: float = 0.1
@@ -33,7 +35,7 @@ class InstrumentConfig:
             "sustain_level": self.sustain_level,
             "release_time": self.release_time,
             "brightness": self.brightness,
-            "harmonics": self.harmonics
+            "harmonics": self.harmonics,
         }
 
 
@@ -45,7 +47,7 @@ INSTRUMENT_PRESETS = {
         sustain_level=0.3,
         release_time=0.3,
         brightness=0.6,
-        harmonics=8
+        harmonics=8,
     ),
     "guitar": InstrumentConfig(
         attack_time=0.02,
@@ -53,7 +55,7 @@ INSTRUMENT_PRESETS = {
         sustain_level=0.5,
         release_time=0.4,
         brightness=0.7,
-        harmonics=6
+        harmonics=6,
     ),
     "strings": InstrumentConfig(
         attack_time=0.1,
@@ -61,7 +63,7 @@ INSTRUMENT_PRESETS = {
         sustain_level=0.8,
         release_time=0.3,
         brightness=0.5,
-        harmonics=10
+        harmonics=10,
     ),
     "flute": InstrumentConfig(
         attack_time=0.05,
@@ -69,7 +71,7 @@ INSTRUMENT_PRESETS = {
         sustain_level=0.9,
         release_time=0.2,
         brightness=0.8,
-        harmonics=4
+        harmonics=4,
     ),
     "trumpet": InstrumentConfig(
         attack_time=0.02,
@@ -77,7 +79,7 @@ INSTRUMENT_PRESETS = {
         sustain_level=0.7,
         release_time=0.2,
         brightness=0.9,
-        harmonics=8
+        harmonics=8,
     ),
     "violin": InstrumentConfig(
         attack_time=0.08,
@@ -85,7 +87,7 @@ INSTRUMENT_PRESETS = {
         sustain_level=0.85,
         release_time=0.3,
         brightness=0.6,
-        harmonics=12
+        harmonics=12,
     ),
 }
 
@@ -115,7 +117,7 @@ class InstrumentSynthesizer:
         self,
         midi_notes: List[int],
         note_durations: List[float],
-        velocities: Optional[List[float]] = None
+        velocities: Optional[List[float]] = None,
     ) -> np.ndarray:
         """
         Synthesize MIDI notes as the configured instrument.
@@ -147,7 +149,7 @@ class InstrumentSynthesizer:
 
             # Add to output
             end_sample = min(current_sample + note_samples, total_samples)
-            audio[current_sample:end_sample] += note_audio[:end_sample - current_sample]
+            audio[current_sample:end_sample] += note_audio[: end_sample - current_sample]
 
             current_sample += note_samples
 
@@ -158,10 +160,7 @@ class InstrumentSynthesizer:
         return audio
 
     def _synthesize_note(
-        self,
-        frequency: float,
-        num_samples: int,
-        velocity: float = 0.8
+        self, frequency: float, num_samples: int, velocity: float = 0.8
     ) -> np.ndarray:
         """
         Synthesize a single note.
@@ -202,7 +201,7 @@ class InstrumentSynthesizer:
         if self.config.brightness > 0.5:
             # High-pass filter for brightness
             cutoff = 2000 + (self.config.brightness - 0.5) * 4000
-            b, a = signal.butter(2, cutoff, btype='high', fs=self.sample_rate)
+            b, a = signal.butter(2, cutoff, btype="high", fs=self.sample_rate)
             waveform = signal.filtfilt(b, a, waveform)
 
         return waveform
@@ -235,9 +234,7 @@ class InstrumentSynthesizer:
 
         # Release
         if release_samples > 0 and sustain_end < num_samples:
-            envelope[sustain_end:] = np.linspace(
-                self.config.sustain_level, 0, release_samples
-            )
+            envelope[sustain_end:] = np.linspace(self.config.sustain_level, 0, release_samples)
 
         return envelope
 

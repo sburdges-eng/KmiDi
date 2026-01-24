@@ -8,12 +8,13 @@ Provides templates for:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional
 from enum import Enum
+from typing import Dict, List, Optional
 
 
 class SectionType(Enum):
     """Standard song section types."""
+
     INTRO = "intro"
     VERSE = "verse"
     PRECHORUS = "pre-chorus"
@@ -29,26 +30,27 @@ class SectionType(Enum):
 @dataclass
 class SectionTemplate:
     """Template defining characteristics of a song section."""
+
     section_type: SectionType
     length_bars: int = 8
-    
+
     # Energy and intensity
     energy_level: float = 0.5  # 0.0 (calm) to 1.0 (intense)
     dynamic_range: float = 0.3  # How much dynamics vary
-    
+
     # Instrumentation
     instruments: List[str] = field(default_factory=list)
     vocal_type: Optional[str] = None  # "lead", "harmony", "double", None
-    
+
     # Musical characteristics
     note_density: float = 0.5  # Notes per beat
     rhythmic_complexity: float = 0.5  # Simple to complex
     harmonic_movement: str = "static"  # "static", "moving", "modulating"
-    
+
     # Production
     mix_focus: str = "balanced"  # "low", "mid", "high", "balanced"
     reverb_amount: float = 0.3  # Wet/dry mix
-    
+
     def to_dict(self) -> Dict:
         """Convert to dictionary."""
         return {
@@ -69,18 +71,19 @@ class SectionTemplate:
 @dataclass
 class ArrangementTemplate:
     """Complete arrangement template with section sequence."""
+
     name: str
     genre: str
     sections: List[SectionTemplate]
     total_bars: int = 0
     tempo_bpm: float = 120.0
     time_signature: tuple = (4, 4)
-    
+
     def __post_init__(self):
         """Calculate total bars if not specified."""
         if self.total_bars == 0:
             self.total_bars = sum(s.length_bars for s in self.sections)
-    
+
     def to_dict(self) -> Dict:
         """Convert to dictionary."""
         return {
@@ -96,6 +99,7 @@ class ArrangementTemplate:
 # =================================================================
 # STANDARD SECTION DEFINITIONS
 # =================================================================
+
 
 def create_intro(length_bars: int = 4) -> SectionTemplate:
     """Create standard intro section."""
@@ -261,6 +265,7 @@ def create_outro(length_bars: int = 4) -> SectionTemplate:
 # GENRE-SPECIFIC TEMPLATES
 # =================================================================
 
+
 def get_pop_structure() -> ArrangementTemplate:
     """Standard pop song structure."""
     return ArrangementTemplate(
@@ -382,24 +387,22 @@ GENRE_TEMPLATES = {
 def get_genre_template(genre: str) -> ArrangementTemplate:
     """
     Get arrangement template for a genre.
-    
+
     Args:
         genre: Genre name (pop, rock, edm, lofi, indie, etc.)
-    
+
     Returns:
         ArrangementTemplate for the genre
-    
+
     Raises:
         ValueError: If genre not found
     """
     genre_lower = genre.lower()
-    
+
     if genre_lower not in GENRE_TEMPLATES:
         available = ", ".join(GENRE_TEMPLATES.keys())
-        raise ValueError(
-            f"Genre '{genre}' not found. Available: {available}"
-        )
-    
+        raise ValueError(f"Genre '{genre}' not found. Available: {available}")
+
     return GENRE_TEMPLATES[genre_lower]()
 
 

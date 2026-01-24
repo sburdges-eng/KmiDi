@@ -43,7 +43,3 @@ def attach_direct_methods(server: Server) -> None:
     # Override instance attributes (safe for test usage)
     server.list_tools = list_tools_direct  # type: ignore[attr-defined,assignment]
     server.call_tool = call_tool_direct  # type: ignore[attr-defined,assignment]
-
-
-
-

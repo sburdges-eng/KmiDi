@@ -4,17 +4,14 @@ Suggestion Bridge - Python interface for C++ to call SuggestionEngine.
 Provides a simple function that C++ can call to get suggestions.
 """
 
-from typing import Dict, List, Any, Optional
 import json
+from typing import Optional
 
+from music_brain.intelligence.context_analyzer import ContextAnalyzer
 from music_brain.intelligence.suggestion_engine import (
     SuggestionEngine,
-    Suggestion,
-    SuggestionType,
 )
 from music_brain.learning.user_preferences import UserPreferenceModel
-from music_brain.intelligence.context_analyzer import ContextAnalyzer
-
 
 # Global instances (singleton pattern)
 _preference_model: Optional[UserPreferenceModel] = None
@@ -34,15 +31,11 @@ def initialize_suggestion_system(user_id: str = "default"):
     _preference_model = UserPreferenceModel(user_id=user_id)
     _context_analyzer = ContextAnalyzer()
     _suggestion_engine = SuggestionEngine(
-        preference_model=_preference_model,
-        context_analyzer=_context_analyzer
+        preference_model=_preference_model, context_analyzer=_context_analyzer
     )
 
 
-def get_suggestions(
-    current_state_json: str,
-    max_suggestions: int = 5
-) -> str:
+def get_suggestions(current_state_json: str, max_suggestions: int = 5) -> str:
     """
     Get suggestions based on current musical state.
 
@@ -85,35 +78,32 @@ def get_suggestions(
 
         # Generate suggestions
         suggestions = _suggestion_engine.generate_suggestions(
-            current_state,
-            max_suggestions=max_suggestions
+            current_state, max_suggestions=max_suggestions
         )
 
         # Convert suggestions to JSON-serializable format
         suggestions_dict = []
         for suggestion in suggestions:
-            suggestions_dict.append({
-                "suggestion_type": suggestion.suggestion_type.value,
-                "title": suggestion.title,
-                "description": suggestion.description,
-                "action": suggestion.action,
-                "confidence": suggestion.confidence,
-                "explanation": suggestion.explanation,
-                "source": suggestion.source,
-            })
+            suggestions_dict.append(
+                {
+                    "suggestion_type": suggestion.suggestion_type.value,
+                    "title": suggestion.title,
+                    "description": suggestion.description,
+                    "action": suggestion.action,
+                    "confidence": suggestion.confidence,
+                    "explanation": suggestion.explanation,
+                    "source": suggestion.source,
+                }
+            )
 
         return json.dumps(suggestions_dict)
 
-    except Exception as e:
+    except Exception:
         # Return empty list on error
         return json.dumps([])
 
 
-def record_suggestion_shown(
-    suggestion_id: str,
-    suggestion_type: str,
-    context_json: str = "{}"
-):
+def record_suggestion_shown(suggestion_id: str, suggestion_type: str, context_json: str = "{}"):
     """
     Record that a suggestion was shown to the user.
 
@@ -130,11 +120,9 @@ def record_suggestion_shown(
     try:
         context = json.loads(context_json) if context_json else {}
         _preference_model.record_suggestion_shown(
-            suggestion_id=suggestion_id,
-            suggestion_type=suggestion_type,
-            context=context
+            suggestion_id=suggestion_id, suggestion_type=suggestion_type, context=context
         )
-    except Exception as e:
+    except Exception:
         pass  # Silently fail - tracking is not critical
 
 
@@ -152,7 +140,7 @@ def record_suggestion_accepted(suggestion_id: str):
 
     try:
         _preference_model.record_suggestion_accepted(suggestion_id)
-    except Exception as e:
+    except Exception:
         pass  # Silently fail - tracking is not critical
 
 
@@ -170,5 +158,5 @@ def record_suggestion_dismissed(suggestion_id: str):
 
     try:
         _preference_model.record_suggestion_dismissed(suggestion_id)
-    except Exception as e:
+    except Exception:
         pass  # Silently fail - tracking is not critical

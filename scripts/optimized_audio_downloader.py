@@ -35,15 +35,16 @@ import argparse
 import concurrent.futures
 import json
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import List, Optional
 
 try:
     from penta_core.ml.datasets import (
         AudioDownloader,
         ensure_audio_directories,
     )
-except ImportError as exc:  # pragma: no cover - dependency guard for standalone use
+except ImportError:  # pragma: no cover - dependency guard for standalone use
     sys.stderr.write(
         "penta_core not installed or not on PYTHONPATH. "
         "Ensure project dependencies are installed before running this script.\n"
@@ -71,9 +72,7 @@ def download_urls(
         return results
 
     def _job(u: str):
-        target_dir = (
-            downloader.output_dir / output_subdir if output_subdir else None
-        )
+        target_dir = downloader.output_dir / output_subdir if output_subdir else None
         res = downloader.download_url(
             u,
             extract=extract,
@@ -97,9 +96,7 @@ def download_urls(
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Optimized audio downloader")
     src = parser.add_argument_group("sources")
-    src.add_argument(
-        "--urls", nargs="+", help="One or more direct URLs to download"
-    )
+    src.add_argument("--urls", nargs="+", help="One or more direct URLs to download")
     src.add_argument(
         "--urls-file",
         type=Path,
@@ -116,9 +113,7 @@ def build_parser() -> argparse.ArgumentParser:
         type=str,
         help="Hugging Face dataset name (e.g., speech_commands)",
     )
-    src.add_argument(
-        "--subset", type=str, help="Hugging Face subset/config name"
-    )
+    src.add_argument("--subset", type=str, help="Hugging Face subset/config name")
     src.add_argument(
         "--split",
         type=str,
@@ -131,9 +126,7 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Override storage root (downloads/raw/cache under this path)",
     )
-    parser.add_argument(
-        "--output-subdir", type=str, help="Optional subdirectory under output_dir"
-    )
+    parser.add_argument("--output-subdir", type=str, help="Optional subdirectory under output_dir")
     parser.add_argument("--download-dir", type=Path, help="Override download dir")
     parser.add_argument("--output-dir", type=Path, help="Override output dir")
     parser.add_argument(
@@ -246,7 +239,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         }
 
     if not work_performed:
-        print("No work performed. Provide --urls/--urls-file, --freesound-pack, or --hf.", file=sys.stderr)
+        print(
+            "No work performed. Provide --urls/--urls-file, --freesound-pack, or --hf.",
+            file=sys.stderr,
+        )
         return 1
 
     print(json.dumps(summary, indent=2))

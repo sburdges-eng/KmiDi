@@ -17,17 +17,16 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
-import torch
-from datasets import load_dataset
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
     Trainer,
     TrainingArguments,
 )
+
+from datasets import load_dataset
 
 
 def normalize_example(ex: dict) -> dict:

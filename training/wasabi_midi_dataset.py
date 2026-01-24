@@ -9,7 +9,6 @@ EmotionMIDITransformer. Output format matches MIDIDataset.
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -19,9 +18,22 @@ from torch.utils.data import Dataset
 
 # Emotion vocab for mapping lyrics_emotion dict -> 64-dim vector
 EMOTION_VOCAB = [
-    "happy", "sad", "angry", "fear", "surprise", "disgust",
-    "joy", "sorrow", "love", "hate", "excitement", "calm",
-    "anxiety", "peace", "energy", "melancholy",
+    "happy",
+    "sad",
+    "angry",
+    "fear",
+    "surprise",
+    "disgust",
+    "joy",
+    "sorrow",
+    "love",
+    "hate",
+    "excitement",
+    "calm",
+    "anxiety",
+    "peace",
+    "energy",
+    "melancholy",
 ]
 
 
@@ -101,7 +113,9 @@ class WasabiMIDIDataset(Dataset):
         # Emotion-derived params
         happy = emotions.get("happy", 0) + emotions.get("joy", 0)
         sad = emotions.get("sad", 0) + emotions.get("sorrow", 0)
-        arousal = emotions.get("excitement", 0) + emotions.get("energy", 0) - emotions.get("calm", 0)
+        arousal = (
+            emotions.get("excitement", 0) + emotions.get("energy", 0) - emotions.get("calm", 0)
+        )
         arousal = max(0, min(1, 0.5 + arousal * 0.5))
         valence = (happy - sad) * 0.5 + 0.5
         valence = max(0, min(1, valence))
@@ -125,12 +139,14 @@ class WasabiMIDIDataset(Dataset):
                 vel = max(1, min(127, vel))
                 t = i / max(1, n_notes_per_bar) + np.random.uniform(-0.03, 0.03)
                 t = max(0, min(1, t))
-                events.append({
-                    "type": "note_on",
-                    "note": note,
-                    "velocity": vel,
-                    "time_in_bar": t,
-                })
+                events.append(
+                    {
+                        "type": "note_on",
+                        "note": note,
+                        "velocity": vel,
+                        "time_in_bar": t,
+                    }
+                )
 
         return self.tokenizer.encode(events)
 

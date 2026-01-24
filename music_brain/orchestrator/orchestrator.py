@@ -28,25 +28,21 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Dict, List, Optional
 
-from music_brain.orchestrator.logging_utils import (
-    OrchestratorLogger,
-    LogLevel,
-    get_logger,
-)
 from music_brain.orchestrator.interfaces import (
-    ProcessorInterface,
-    ProcessorResult,
-    ProcessorStatus,
-    ExecutionContext,
     CallbackInterface,
     DefaultCallback,
+    ExecutionContext,
+    ProcessorResult,
+)
+from music_brain.orchestrator.logging_utils import (
+    LogLevel,
+    get_logger,
 )
 from music_brain.orchestrator.pipeline import (
     Pipeline,
     PipelineStage,
-    PipelineStatus,
     StageResult,
 )
 
@@ -65,6 +61,7 @@ class OrchestratorConfig:
         debug_mode: Enable debug output
         parallel_stages: Allow parallel stage execution (experimental)
     """
+
     default_timeout: float = 30.0
     max_retries: int = 1
     enable_logging: bool = True
@@ -103,6 +100,7 @@ class ExecutionResult:
         duration_ms: Total execution time in milliseconds
         context: Final execution context
     """
+
     execution_id: str
     pipeline_id: str
     success: bool
@@ -127,8 +125,7 @@ class ExecutionResult:
             "success": self.success,
             "final_output": self.final_output,
             "stage_results": {
-                name: result.to_dict()
-                for name, result in self.stage_results.items()
+                name: result.to_dict() for name, result in self.stage_results.items()
             },
             "error": self.error,
             "started_at": self.started_at,
@@ -300,9 +297,7 @@ class AIOrchestrator:
                 success = False
                 error_message = f"Stage '{stage.name}' failed: {stage_result.error}"
                 self._logger.pipeline_failed(pipeline.id, Exception(error_message))
-                await self._notify_pipeline_error(
-                    pipeline.id, context, Exception(error_message)
-                )
+                await self._notify_pipeline_error(pipeline.id, context, Exception(error_message))
                 break
 
         # Calculate duration
@@ -387,7 +382,9 @@ class AIOrchestrator:
                 if attempt > 0:
                     self._logger.info(
                         "Retrying stage: %s (attempt %d/%d)",
-                        stage.name, attempt + 1, retries + 1,
+                        stage.name,
+                        attempt + 1,
+                        retries + 1,
                     )
 
                 # Pre-process
@@ -400,9 +397,7 @@ class AIOrchestrator:
                 )
 
                 # Post-process
-                processor_result = await stage.processor.post_process(
-                    processor_result, context
-                )
+                processor_result = await stage.processor.post_process(processor_result, context)
 
                 # Transform output if needed
                 if stage.transform_output:
@@ -449,7 +444,9 @@ class AIOrchestrator:
         # All retries failed
         duration_ms = (time.perf_counter() - start_time) * 1000
         self._logger.stage_failed(stage.name, Exception(last_error or "Unknown error"))
-        await self._notify_stage_error(stage.name, context, Exception(last_error or "Unknown error"))
+        await self._notify_stage_error(
+            stage.name, context, Exception(last_error or "Unknown error")
+        )
 
         return StageResult(
             stage_name=stage.name,

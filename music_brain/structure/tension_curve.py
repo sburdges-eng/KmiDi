@@ -7,9 +7,8 @@ This makes the track "breathe" with verse/chorus/bridge energy arcs.
 Philosophy: Music should have emotional shape, not just static intensity.
 """
 
-from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
-
+from typing import Any, Dict, List
 
 # =================================================================
 # PRESET TENSION CURVES
@@ -19,25 +18,18 @@ from dataclasses import dataclass
 TENSION_CURVES = {
     # Verse-Chorus: Low, Low, High, High, Low, High, High, Outro
     "verse_chorus": [0.6, 0.6, 1.0, 1.0, 0.6, 1.0, 1.0, 0.8],
-
     # Slow Build: Gradual increase to climax
     "slow_build": [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.2],
-
     # Intro-Heavy: Big start, settle, return
     "front_loaded": [1.2, 1.0, 0.6, 0.6, 0.8, 0.8, 1.0, 1.0],
-
     # Wave: Ebb and flow
     "wave": [0.6, 0.9, 0.6, 1.0, 0.5, 1.1, 0.6, 0.8],
-
     # Catharsis: Build to massive release
     "catharsis": [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.3, 1.0],
-
     # Static: Hypnotic, minimal variation
     "static": [0.8, 0.8, 0.8, 0.85, 0.8, 0.85, 0.8, 0.8],
-
     # Descent: Falling energy (sadness, resignation)
     "descent": [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3],
-
     # Spiral: Escalating chaos
     "spiral": [0.5, 0.7, 0.6, 0.9, 0.7, 1.1, 0.9, 1.3],
 }
@@ -46,6 +38,7 @@ TENSION_CURVES = {
 @dataclass
 class TensionProfile:
     """Describes how tension changes over the song."""
+
     name: str
     multipliers: List[float]
     affects_velocity: bool = True
@@ -81,6 +74,7 @@ def list_tension_curves() -> List[str]:
 # =================================================================
 # TENSION APPLICATION
 # =================================================================
+
 
 def apply_tension_curve(
     events: List[Dict[str, Any]],

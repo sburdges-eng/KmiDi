@@ -170,12 +170,12 @@ def check_dataset_available(dataset_name: str, data_dir: Path) -> bool:
 
 def train_model(model_name: str, config: dict, data_dir: Path) -> dict:
     """Train a single model and return results."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Training: {model_name}")
     print(f"Dataset: {config['dataset']}")
     print(f"Epochs: {config['epochs']}, Batch Size: {config['batch_size']}")
     print(f"Estimated Time: {config['estimated_time']}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     start_time = datetime.now()
 
@@ -189,11 +189,16 @@ def train_model(model_name: str, config: dict, data_dir: Path) -> dict:
 
     # Build training command
     cmd = [
-        sys.executable, "scripts/train.py",
-        "--model", model_name,
-        "--data", str(data_dir),
-        "--epochs", str(config["epochs"]),
-        "--batch-size", str(config["batch_size"]),
+        sys.executable,
+        "scripts/train.py",
+        "--model",
+        model_name,
+        "--data",
+        str(data_dir),
+        "--epochs",
+        str(config["epochs"]),
+        "--batch-size",
+        str(config["batch_size"]),
         "--export-onnx",
     ]
 
@@ -245,10 +250,10 @@ def run_worker(worker_id: str):
     assignment = WORKER_ASSIGNMENTS[worker_id]
     models = assignment["models"]
 
-    print(f"╔{'═'*58}╗")
+    print(f"╔{'═' * 58}╗")
     print(f"║  Worker {worker_id}: {assignment['name']:<47}║")
     print(f"║  {assignment['description']:<56}║")
-    print(f"╚{'═'*58}╝")
+    print(f"╚{'═' * 58}╝")
     print()
     print(f"Assigned models: {', '.join(models)}")
     print()
@@ -258,10 +263,7 @@ def run_worker(worker_id: str):
     print()
 
     # Sort models by priority
-    sorted_models = sorted(
-        models,
-        key=lambda m: TRAINING_CONFIG[m]["priority"]
-    )
+    sorted_models = sorted(models, key=lambda m: TRAINING_CONFIG[m]["priority"])
 
     results = []
     for model_name in sorted_models:
@@ -275,9 +277,9 @@ def run_worker(worker_id: str):
             json.dump(results, f, indent=2)
 
     # Print summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TRAINING SUMMARY")
-    print("="*60)
+    print("=" * 60)
     for r in results:
         status_icon = "✓" if r["status"] == "success" else "✗"
         duration = r.get("duration_seconds", 0)
@@ -297,10 +299,10 @@ def show_plan():
     print("╠══════════════════════════════════════════════════════════╣")
 
     for worker_id, assignment in WORKER_ASSIGNMENTS.items():
-        print(f"║                                                            ║")
+        print("║                                                            ║")
         print(f"║  Worker {worker_id}: {assignment['name']:<47}║")
         print(f"║  {assignment['description']:<56}║")
-        print(f"║                                                            ║")
+        print("║                                                            ║")
 
         for model in assignment["models"]:
             config = TRAINING_CONFIG[model]

@@ -2,11 +2,12 @@
 Arrangement Learning - Learn arrangement structures from examples.
 """
 
+import json
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
-from collections import Counter, defaultdict
-import json
+
 import numpy as np
 
 DEFAULT_STORAGE = Path.home() / ".parrot" / "music_learning" / "arrangements"
@@ -17,6 +18,7 @@ PROFILES_DIR = DEFAULT_STORAGE / "profiles"
 @dataclass
 class ArrangementExample:
     """Arrangement example capturing sections and instrumentation."""
+
     sections: List[str]  # e.g., ["verse", "chorus", "verse", "bridge", "chorus"]
     energy_curve: List[float] = field(default_factory=list)
     instruments: List[str] = field(default_factory=list)
@@ -87,7 +89,7 @@ class ArrangementStore:
         path = self.examples_dir / f"{example_id}.json"
         if not path.exists():
             return None
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
         return ArrangementExample.from_dict(data)
 
@@ -104,7 +106,7 @@ class ArrangementStore:
         path = self.profiles_dir / f"{name}.json"
         if not path.exists():
             return None
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
         return ArrangementProfile.from_dict(data)
 
@@ -116,7 +118,9 @@ class ArrangementLearner:
     def __init__(self):
         pass
 
-    def learn_profile(self, examples: List[ArrangementExample], name: str = "default") -> ArrangementProfile:
+    def learn_profile(
+        self, examples: List[ArrangementExample], name: str = "default"
+    ) -> ArrangementProfile:
         if not examples:
             raise ValueError("No arrangement examples provided")
 
@@ -137,7 +141,9 @@ class ArrangementLearner:
 
             for ex in group:
                 section_counter.update(ex.sections)
-                transitions = [(ex.sections[i], ex.sections[i + 1]) for i in range(len(ex.sections) - 1)]
+                transitions = [
+                    (ex.sections[i], ex.sections[i + 1]) for i in range(len(ex.sections) - 1)
+                ]
                 transition_counter.update(transitions)
                 instrument_counter.update(ex.instruments)
                 lengths.append(len(ex.sections))
@@ -171,16 +177,28 @@ class ArrangementLearner:
         emotion: str,
         profile: ArrangementProfile,
         length: Optional[int] = None,
-        genre: str = "general"
+        genre: str = "general",
     ) -> Dict:
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get(
+            "neutral"
+        )
         if not patterns:
             patterns = profile.global_patterns
 
-        section_counts = patterns.get("section_counts") or profile.global_patterns.get("section_counts") or {}
-        transition_counts = patterns.get("transition_counts") or profile.global_patterns.get("transition_counts") or {}
-        instrument_counts = patterns.get("instrument_counts") or profile.global_patterns.get("instrument_counts") or {}
+        section_counts = (
+            patterns.get("section_counts") or profile.global_patterns.get("section_counts") or {}
+        )
+        transition_counts = (
+            patterns.get("transition_counts")
+            or profile.global_patterns.get("transition_counts")
+            or {}
+        )
+        instrument_counts = (
+            patterns.get("instrument_counts")
+            or profile.global_patterns.get("instrument_counts")
+            or {}
+        )
 
         length = length or int(patterns.get("avg_length", 5))
 
@@ -229,7 +247,9 @@ class ArrangementLearningManager:
     def add_example(self, example: ArrangementExample, name: Optional[str] = None) -> str:
         return self.store.add_example(example, name)
 
-    def learn_profile(self, name: str, example_ids: Optional[List[str]] = None) -> ArrangementProfile:
+    def learn_profile(
+        self, name: str, example_ids: Optional[List[str]] = None
+    ) -> ArrangementProfile:
         if example_ids is None:
             example_ids = self.store.list_examples()
         examples = []
@@ -251,7 +271,7 @@ class ArrangementLearningManager:
         emotion: str,
         profile_name: Optional[str] = None,
         length: Optional[int] = None,
-        genre: str = "general"
+        genre: str = "general",
     ) -> Dict:
         profile: Optional[ArrangementProfile] = None
         if profile_name:

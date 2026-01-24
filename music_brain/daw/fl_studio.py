@@ -12,13 +12,13 @@ FL Studio Specifics:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Any
-from pathlib import Path
 from enum import Enum
-import json
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import mido
+
     MIDO_AVAILABLE = True
 except ImportError:
     MIDO_AVAILABLE = False
@@ -30,17 +30,18 @@ FL_STUDIO_PPQ_HD = 384
 
 # FL Studio color palette (RGBA)
 FL_COLORS = {
-    "drums": (255, 128, 0, 255),     # Orange
-    "bass": (128, 0, 255, 255),       # Purple
-    "lead": (255, 0, 128, 255),       # Pink
-    "pad": (0, 128, 255, 255),        # Blue
-    "fx": (0, 255, 128, 255),         # Cyan
-    "vocal": (255, 255, 0, 255),      # Yellow
+    "drums": (255, 128, 0, 255),  # Orange
+    "bass": (128, 0, 255, 255),  # Purple
+    "lead": (255, 0, 128, 255),  # Pink
+    "pad": (0, 128, 255, 255),  # Blue
+    "fx": (0, 255, 128, 255),  # Cyan
+    "vocal": (255, 255, 0, 255),  # Yellow
 }
 
 
 class FLPatternType(Enum):
     """FL Studio pattern types."""
+
     DRUMS = "drums"
     MELODY = "melody"
     BASS = "bass"
@@ -56,6 +57,7 @@ class FLPattern:
     FL Studio organizes music by patterns in the Channel Rack,
     which are then arranged in the Playlist.
     """
+
     name: str
     pattern_type: FLPatternType = FLPatternType.MELODY
     color: Tuple[int, int, int, int] = (128, 128, 128, 255)
@@ -90,35 +92,41 @@ class FLPattern:
             mod_x: Mod X parameter (0.0 to 1.0)
             mod_y: Mod Y parameter (0.0 to 1.0)
         """
-        self.notes.append({
-            "pitch": pitch,
-            "velocity": velocity,
-            "start_tick": start_tick,
-            "duration_ticks": duration_ticks,
-            "pan": pan,
-            "fine_pitch": fine_pitch,
-            "mod_x": mod_x,
-            "mod_y": mod_y,
-        })
+        self.notes.append(
+            {
+                "pitch": pitch,
+                "velocity": velocity,
+                "start_tick": start_tick,
+                "duration_ticks": duration_ticks,
+                "pan": pan,
+                "fine_pitch": fine_pitch,
+                "mod_x": mod_x,
+                "mod_y": mod_y,
+            }
+        )
 
     def to_midi_track(self, ppq: int = FL_STUDIO_PPQ) -> List[Dict]:
         """Convert pattern notes to MIDI events."""
         events = []
         for note in self.notes:
             # Note on
-            events.append({
-                "type": "note_on",
-                "tick": note["start_tick"],
-                "pitch": note["pitch"],
-                "velocity": note["velocity"],
-            })
+            events.append(
+                {
+                    "type": "note_on",
+                    "tick": note["start_tick"],
+                    "pitch": note["pitch"],
+                    "velocity": note["velocity"],
+                }
+            )
             # Note off
-            events.append({
-                "type": "note_off",
-                "tick": note["start_tick"] + note["duration_ticks"],
-                "pitch": note["pitch"],
-                "velocity": 0,
-            })
+            events.append(
+                {
+                    "type": "note_off",
+                    "tick": note["start_tick"] + note["duration_ticks"],
+                    "pitch": note["pitch"],
+                    "velocity": 0,
+                }
+            )
 
         # Sort by tick time
         events.sort(key=lambda e: e["tick"])
@@ -133,6 +141,7 @@ class FLProject:
     Not a full FL Studio project parser - provides structure
     for organizing patterns for MIDI export to FL Studio.
     """
+
     name: str = "Untitled"
     tempo_bpm: float = 120.0
     ppq: int = FL_STUDIO_PPQ
@@ -197,15 +206,17 @@ class FLProject:
 
         # Set tempo
         tempo_us = int(60_000_000 / self.tempo_bpm)
-        meta_track.append(mido.MetaMessage('set_tempo', tempo=tempo_us, time=0))
+        meta_track.append(mido.MetaMessage("set_tempo", tempo=tempo_us, time=0))
 
         # Set time signature
-        meta_track.append(mido.MetaMessage(
-            'time_signature',
-            numerator=self.time_signature[0],
-            denominator=self.time_signature[1],
-            time=0
-        ))
+        meta_track.append(
+            mido.MetaMessage(
+                "time_signature",
+                numerator=self.time_signature[0],
+                denominator=self.time_signature[1],
+                time=0,
+            )
+        )
 
         # Export each pattern as a track
         for i, pattern in enumerate(self.patterns):
@@ -213,11 +224,7 @@ class FLProject:
             mid.tracks.append(track)
 
             # Track name
-            track.append(mido.MetaMessage(
-                'track_name',
-                name=pattern.name,
-                time=0
-            ))
+            track.append(mido.MetaMessage("track_name", name=pattern.name, time=0))
 
             # Convert pattern to events
             events = pattern.to_midi_track(self.ppq)
@@ -229,24 +236,24 @@ class FLProject:
                 current_tick = event["tick"]
 
                 if event["type"] == "note_on":
-                    track.append(mido.Message(
-                        'note_on',
-                        note=event["pitch"],
-                        velocity=event["velocity"],
-                        channel=i % 16,
-                        time=delta
-                    ))
+                    track.append(
+                        mido.Message(
+                            "note_on",
+                            note=event["pitch"],
+                            velocity=event["velocity"],
+                            channel=i % 16,
+                            time=delta,
+                        )
+                    )
                 else:
-                    track.append(mido.Message(
-                        'note_off',
-                        note=event["pitch"],
-                        velocity=0,
-                        channel=i % 16,
-                        time=delta
-                    ))
+                    track.append(
+                        mido.Message(
+                            "note_off", note=event["pitch"], velocity=0, channel=i % 16, time=delta
+                        )
+                    )
 
             # End of track
-            track.append(mido.MetaMessage('end_of_track', time=0))
+            track.append(mido.MetaMessage("end_of_track", time=0))
 
         output_path = Path(output_path)
         mid.save(str(output_path))
@@ -300,7 +307,7 @@ def export_to_fl_studio(
         for msg in track:
             new_msg = msg.copy()
 
-            if hasattr(msg, 'time'):
+            if hasattr(msg, "time"):
                 new_msg = msg.copy(time=int(msg.time * ppq_ratio))
 
             new_track.append(new_msg)
@@ -329,7 +336,7 @@ def import_from_fl_studio(midi_path: str) -> FLProject:
     tempo_bpm = 120.0
     for track in mid.tracks:
         for msg in track:
-            if msg.type == 'set_tempo':
+            if msg.type == "set_tempo":
                 tempo_bpm = 60_000_000 / msg.tempo
                 break
 
@@ -341,7 +348,7 @@ def import_from_fl_studio(midi_path: str) -> FLProject:
 
     # Convert each track to a pattern
     for i, track in enumerate(mid.tracks):
-        track_name = f"Pattern {i+1}"
+        track_name = f"Pattern {i + 1}"
         notes = []
         current_tick = 0
         active_notes = {}
@@ -349,25 +356,27 @@ def import_from_fl_studio(midi_path: str) -> FLProject:
         for msg in track:
             current_tick += msg.time
 
-            if msg.type == 'track_name':
+            if msg.type == "track_name":
                 track_name = msg.name
-            elif msg.type == 'note_on' and msg.velocity > 0:
+            elif msg.type == "note_on" and msg.velocity > 0:
                 key = (msg.channel, msg.note)
                 active_notes[key] = (current_tick, msg.velocity)
-            elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+            elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
                 key = (msg.channel, msg.note)
                 if key in active_notes:
                     start_tick, velocity = active_notes.pop(key)
-                    notes.append({
-                        "pitch": msg.note,
-                        "velocity": velocity,
-                        "start_tick": start_tick,
-                        "duration_ticks": current_tick - start_tick,
-                        "pan": 0.0,
-                        "fine_pitch": 0.0,
-                        "mod_x": 0.5,
-                        "mod_y": 0.5,
-                    })
+                    notes.append(
+                        {
+                            "pitch": msg.note,
+                            "velocity": velocity,
+                            "start_tick": start_tick,
+                            "duration_ticks": current_tick - start_tick,
+                            "pan": 0.0,
+                            "fine_pitch": 0.0,
+                            "mod_x": 0.5,
+                            "mod_y": 0.5,
+                        }
+                    )
 
         if notes:
             # Calculate pattern length
@@ -456,6 +465,7 @@ def create_fl_template(
 @dataclass
 class FLVSTConfig:
     """Configuration for FL Studio VST3 plugin compatibility."""
+
     plugin_name: str
     manufacturer: str = "iDAW"
     version: str = "1.0.0"

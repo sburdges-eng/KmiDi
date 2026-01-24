@@ -7,7 +7,7 @@ enums and data structures the CLI expects without pulling in heavier deps.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional
+from typing import List
 
 
 class ProposalCategory(Enum):

@@ -5,14 +5,13 @@ JSON file-based storage for cross-AI task persistence.
 Supports multiple projects and concurrent access patterns.
 """
 
-import json
-import os
 import fcntl
-from pathlib import Path
-from typing import List, Optional, Dict, Any
+import json
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from .models import Todo, TodoStatus, TodoPriority, TodoList
+from .models import Todo, TodoPriority, TodoStatus
 
 
 class TodoStorage:
@@ -58,7 +57,7 @@ class TodoStorage:
         if not file_path.exists():
             return {"lists": {"default": {"name": "default", "todos": []}}}
 
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             try:
                 fcntl.flock(f.fileno(), fcntl.LOCK_SH)
                 data = json.load(f)
@@ -74,7 +73,7 @@ class TodoStorage:
         # Create backup if file exists
         if file_path.exists():
             backup_path = file_path.with_suffix(".json.bak")
-            with open(file_path, "r") as src:
+            with open(file_path) as src:
                 with open(backup_path, "w") as dst:
                     dst.write(src.read())
 
@@ -152,7 +151,7 @@ class TodoStorage:
         todo_id: str,
         project: Optional[str] = None,
         ai_source: Optional[str] = None,
-        **updates
+        **updates,
     ) -> Optional[Todo]:
         """
         Update a TODO.
@@ -216,11 +215,15 @@ class TodoStorage:
             return True
         return False
 
-    def complete(self, todo_id: str, project: Optional[str] = None, ai_source: Optional[str] = None) -> Optional[Todo]:
+    def complete(
+        self, todo_id: str, project: Optional[str] = None, ai_source: Optional[str] = None
+    ) -> Optional[Todo]:
         """Mark a TODO as completed."""
         return self.update(todo_id, project=project, status="completed", ai_source=ai_source)
 
-    def start(self, todo_id: str, project: Optional[str] = None, ai_source: Optional[str] = None) -> Optional[Todo]:
+    def start(
+        self, todo_id: str, project: Optional[str] = None, ai_source: Optional[str] = None
+    ) -> Optional[Todo]:
         """Mark a TODO as in progress."""
         return self.update(todo_id, project=project, status="in_progress", ai_source=ai_source)
 
@@ -276,10 +279,7 @@ class TodoStorage:
         """Search TODOs by title or description."""
         todos = self.list_all(project=project)
         query = query.lower()
-        return [
-            t for t in todos
-            if query in t.title.lower() or query in t.description.lower()
-        ]
+        return [t for t in todos if query in t.title.lower() or query in t.description.lower()]
 
     def get_by_tags(self, tags: List[str], project: Optional[str] = None) -> List[Todo]:
         """Get all TODOs with any of the specified tags."""
@@ -324,19 +324,14 @@ class TodoStorage:
         title: str,
         project: Optional[str] = None,
         ai_source: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> Optional[Todo]:
         """Add a subtask to an existing TODO."""
         parent = self.get(parent_id, project)
         if not parent:
             return None
 
-        subtask = self.add(
-            title=title,
-            project=project,
-            ai_source=ai_source,
-            **kwargs
-        )
+        subtask = self.add(title=title, project=project, ai_source=ai_source, **kwargs)
         subtask.parent_id = parent_id
 
         # Update the subtask with parent reference
@@ -391,7 +386,9 @@ class TodoStorage:
                 lines.append(f"\n{status_headers[status]}\n")
                 for todo in by_status[status]:
                     checkbox = "x" if status == "completed" else " "
-                    pri_marker = "!" * ["low", "medium", "high", "urgent"].index(todo.priority.value)
+                    pri_marker = "!" * ["low", "medium", "high", "urgent"].index(
+                        todo.priority.value
+                    )
                     lines.append(f"- [{checkbox}] {pri_marker} {todo.title} `{todo.id}`")
                     if todo.description:
                         lines.append(f"  - {todo.description}")

@@ -4,13 +4,14 @@ Tension Analysis - Harmonic tension and release analysis.
 Analyzes and plans tension curves for emotional impact.
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
+from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, List, Tuple
 
 
 class TensionLevel(Enum):
     """Levels of harmonic tension."""
+
     VERY_LOW = 1
     LOW = 2
     MODERATE = 3
@@ -51,16 +52,16 @@ CHORD_TENSIONS = {
 
 # Interval tension (for vertical analysis)
 INTERVAL_TENSIONS = {
-    0: 0.0,   # Unison
-    1: 4.0,   # m2
-    2: 3.0,   # M2
-    3: 1.0,   # m3
-    4: 1.0,   # M3
-    5: 2.0,   # P4
-    6: 4.5,   # Tritone
-    7: 0.5,   # P5
-    8: 1.5,   # m6
-    9: 1.5,   # M6
+    0: 0.0,  # Unison
+    1: 4.0,  # m2
+    2: 3.0,  # M2
+    3: 1.0,  # m3
+    4: 1.0,  # M3
+    5: 2.0,  # P4
+    6: 4.5,  # Tritone
+    7: 0.5,  # P5
+    8: 1.5,  # m6
+    9: 1.5,  # M6
     10: 2.5,  # m7
     11: 2.0,  # M7
 }
@@ -69,6 +70,7 @@ INTERVAL_TENSIONS = {
 @dataclass
 class TensionAnalysis:
     """Result of tension analysis."""
+
     chord_tensions: List[float]
     average_tension: float
     tension_curve: List[float]  # Normalized 0-1
@@ -125,9 +127,7 @@ def analyze_tension(
         # Voice leading tension (if previous chord exists)
         if include_voice_leading and i > 0:
             prev_root, prev_quality = chords[i - 1]
-            vl_tension = _calculate_voice_leading_tension(
-                prev_root, prev_quality, root, quality
-            )
+            vl_tension = _calculate_voice_leading_tension(prev_root, prev_quality, root, quality)
             base_tension += vl_tension * 0.3
 
         tensions.append(base_tension)
@@ -176,13 +176,13 @@ def _calculate_voice_leading_tension(
 
     # Certain movements are more "expected"
     expected_movements = {
-        5: 0.0,   # Down a fifth (very expected)
-        7: 0.0,   # Up a fifth
-        2: 0.5,   # Whole step
-        1: 1.0,   # Half step (chromatic)
-        3: 0.5,   # Minor third
-        4: 0.5,   # Major third
-        6: 2.0,   # Tritone (unexpected)
+        5: 0.0,  # Down a fifth (very expected)
+        7: 0.0,  # Up a fifth
+        2: 0.5,  # Whole step
+        1: 1.0,  # Half step (chromatic)
+        3: 0.5,  # Minor third
+        4: 0.5,  # Major third
+        6: 2.0,  # Tritone (unexpected)
     }
 
     return expected_movements.get(interval, 1.0)

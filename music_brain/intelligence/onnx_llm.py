@@ -6,11 +6,11 @@ Designed for deployment in the dedicated LLM service container but also works
 in-process when dependencies are available.
 """
 
+import os
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
-import os
-import time
 
 
 @dataclass
@@ -146,4 +146,3 @@ class OnnxGenAILLM:
             temperature=temperature,
             top_p=top_p,
         )
-

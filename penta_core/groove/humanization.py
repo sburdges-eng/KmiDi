@@ -9,22 +9,23 @@ Provides:
 - Custom preset creation
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Callable
-from enum import Enum
-import random
 import math
+import random
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Dict, List, Optional
 
 
 class HumanizationStyle(Enum):
     """Predefined humanization styles."""
-    TIGHT = "tight"          # Minimal variation, studio precision
-    LOOSE = "loose"          # Relaxed, laid-back feel
-    DRUNK = "drunk"          # Heavy timing variation (J Dilla style)
+
+    TIGHT = "tight"  # Minimal variation, studio precision
+    LOOSE = "loose"  # Relaxed, laid-back feel
+    DRUNK = "drunk"  # Heavy timing variation (J Dilla style)
     MECHANICAL = "mechanical"  # Very tight, almost robotic
-    LIVE = "live"            # Natural live performance variation
-    SHUFFLE = "shuffle"      # Shuffle/triplet feel
-    SWING = "swing"          # Jazz swing feel
+    LIVE = "live"  # Natural live performance variation
+    SHUFFLE = "shuffle"  # Shuffle/triplet feel
+    SWING = "swing"  # Jazz swing feel
 
 
 @dataclass
@@ -32,31 +33,32 @@ class HumanizationPreset:
     """
     Configuration for humanization parameters.
     """
+
     name: str
 
     # Timing parameters (in milliseconds)
-    timing_random_ms: float = 5.0       # Random timing variation
-    timing_drift_ms: float = 0.0        # Gradual timing drift
-    timing_ahead_bias: float = 0.0      # -1 to 1 (behind to ahead)
+    timing_random_ms: float = 5.0  # Random timing variation
+    timing_drift_ms: float = 0.0  # Gradual timing drift
+    timing_ahead_bias: float = 0.0  # -1 to 1 (behind to ahead)
 
     # Velocity parameters (0.0-1.0 scale)
-    velocity_random: float = 0.05       # Random velocity variation
-    velocity_curve: float = 0.0         # Accent curve (-1 to 1)
-    velocity_dynamic_range: float = 1.0 # Dynamic range compression/expansion
+    velocity_random: float = 0.05  # Random velocity variation
+    velocity_curve: float = 0.0  # Accent curve (-1 to 1)
+    velocity_dynamic_range: float = 1.0  # Dynamic range compression/expansion
 
     # Swing/shuffle
-    swing_amount: float = 0.0           # Swing ratio (0.0-1.0)
-    swing_grid: int = 8                 # Grid for swing (8 = 8th notes)
+    swing_amount: float = 0.0  # Swing ratio (0.0-1.0)
+    swing_grid: int = 8  # Grid for swing (8 = 8th notes)
 
     # Note-specific adjustments
     accent_beats: List[int] = field(default_factory=list)  # Beats to accent
-    ghost_notes: bool = False           # Add ghost notes
-    ghost_velocity: float = 0.3         # Velocity of ghost notes
+    ghost_notes: bool = False  # Add ghost notes
+    ghost_velocity: float = 0.3  # Velocity of ghost notes
 
     # Advanced
-    humanize_duration: bool = True      # Vary note durations
-    duration_random: float = 0.1        # Duration variation (0.0-1.0)
-    correlation: float = 0.3            # Correlation between consecutive notes
+    humanize_duration: bool = True  # Vary note durations
+    duration_random: float = 0.1  # Duration variation (0.0-1.0)
+    correlation: float = 0.3  # Correlation between consecutive notes
 
     def to_dict(self) -> Dict:
         """Convert to dictionary."""
@@ -142,10 +144,9 @@ def humanize_midi(
 
         # Random timing variation with correlation
         if preset.correlation > 0 and i > 0:
-            timing_offset = (
-                prev_timing_offset * preset.correlation +
-                random.gauss(0, preset.timing_random_ms) * (1 - preset.correlation)
-            )
+            timing_offset = prev_timing_offset * preset.correlation + random.gauss(
+                0, preset.timing_random_ms
+            ) * (1 - preset.correlation)
         else:
             timing_offset = random.gauss(0, preset.timing_random_ms)
 
@@ -249,13 +250,15 @@ def _generate_ghost_notes(
         if random.random() < 0.2:
             ghost_time = event["time"] - grid_step
             if ghost_time > 0:
-                ghost_events.append({
-                    "time": ghost_time + random.gauss(0, 0.005),
-                    "note": event.get("note", 60),
-                    "velocity": int(event.get("velocity", 100) * preset.ghost_velocity),
-                    "duration": grid_step * 0.5,
-                    "is_ghost": True,
-                })
+                ghost_events.append(
+                    {
+                        "time": ghost_time + random.gauss(0, 0.005),
+                        "note": event.get("note", 60),
+                        "velocity": int(event.get("velocity", 100) * preset.ghost_velocity),
+                        "duration": grid_step * 0.5,
+                        "is_ghost": True,
+                    }
+                )
 
     return ghost_events
 
@@ -530,11 +533,25 @@ def list_available_presets() -> Dict[str, List[str]]:
     return {
         "styles": [s.value for s in HumanizationStyle],
         "artists": [
-            "john_bonham", "questlove", "steve_gadd", "j_dilla",
-            "bernard_purdie", "clyde_stubblefield", "travis_barker", "chad_smith"
+            "john_bonham",
+            "questlove",
+            "steve_gadd",
+            "j_dilla",
+            "bernard_purdie",
+            "clyde_stubblefield",
+            "travis_barker",
+            "chad_smith",
         ],
         "genres": [
-            "rock", "jazz", "funk", "hip_hop", "edm", "metal",
-            "r_and_b", "country", "latin", "reggae"
+            "rock",
+            "jazz",
+            "funk",
+            "hip_hop",
+            "edm",
+            "metal",
+            "r_and_b",
+            "country",
+            "latin",
+            "reggae",
         ],
     }

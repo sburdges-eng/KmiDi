@@ -5,22 +5,23 @@ Stores voice samples, extracts features, and builds voice profiles
 for voice cloning and mimicking.
 """
 
-import numpy as np
-from typing import List, Dict, Optional, Tuple
-from pathlib import Path
 import json
-import pickle
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
+
+import numpy as np
 import soundfile as sf
 
-from music_brain.voice.voice_input import VoiceMimic
 from music_brain.voice.pitch_controller import PitchController
+from music_brain.voice.voice_input import VoiceMimic
 
 
 @dataclass
 class VoiceSample:
     """Represents a single voice sample."""
+
     audio: np.ndarray
     sample_rate: int
     text: Optional[str] = None  # Optional transcript
@@ -37,6 +38,7 @@ class VoiceSample:
 @dataclass
 class LearnedVoiceProfile:
     """Voice profile learned from samples."""
+
     name: str
     characteristics: Dict
     sample_count: int
@@ -51,7 +53,7 @@ class LearnedVoiceProfile:
             "sample_count": self.sample_count,
             "total_duration": self.total_duration,
             "created": self.created,
-            "updated": self.updated
+            "updated": self.updated,
         }
 
     @classmethod
@@ -89,7 +91,7 @@ class VoiceSampleStore:
         sample_rate: int,
         sample_id: str,
         text: Optional[str] = None,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict] = None,
     ) -> Path:
         """
         Save a voice sample.
@@ -116,7 +118,7 @@ class VoiceSampleStore:
             "duration": len(audio) / sample_rate,
             "text": text,
             "metadata": metadata or {},
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         with open(metadata_path, "w") as f:
@@ -145,19 +147,14 @@ class VoiceSampleStore:
 
             metadata = {}
             if metadata_path.exists():
-                with open(metadata_path, "r") as f:
+                with open(metadata_path) as f:
                     metadata_dict = json.load(f)
                     metadata = metadata_dict.get("metadata", {})
                     text = metadata_dict.get("text")
             else:
                 text = None
 
-            return VoiceSample(
-                audio=audio,
-                sample_rate=sample_rate,
-                text=text,
-                metadata=metadata
-            )
+            return VoiceSample(audio=audio, sample_rate=sample_rate, text=text, metadata=metadata)
         except Exception as e:
             print(f"Error loading sample {sample_id}: {e}")
             return None
@@ -218,13 +215,14 @@ class VoiceLearner:
         features = {
             **characteristics,
             "duration": len(audio) / self.sample_rate,
-            "rms_energy": float(np.sqrt(np.mean(audio ** 2))),
+            "rms_energy": float(np.sqrt(np.mean(audio**2))),
             "zero_crossing_rate": float(np.mean(np.abs(np.diff(np.sign(audio))))) / 2.0,
         }
 
         # Spectral features
         try:
             import librosa
+
             # Spectral centroid (brightness)
             spectral_centroids = librosa.feature.spectral_centroid(y=audio, sr=self.sample_rate)[0]
             features["spectral_centroid_mean"] = float(np.mean(spectral_centroids))
@@ -249,7 +247,9 @@ class VoiceLearner:
             freqs = np.fft.rfftfreq(len(audio), 1 / self.sample_rate)
 
             if np.sum(magnitude) > 0:
-                features["spectral_centroid_mean"] = float(np.sum(freqs * magnitude) / np.sum(magnitude))
+                features["spectral_centroid_mean"] = float(
+                    np.sum(freqs * magnitude) / np.sum(magnitude)
+                )
             else:
                 features["spectral_centroid_mean"] = 2000.0
 
@@ -262,9 +262,7 @@ class VoiceLearner:
         return features
 
     def learn_from_samples(
-        self,
-        samples: List[VoiceSample],
-        profile_name: str
+        self, samples: List[VoiceSample], profile_name: str
     ) -> LearnedVoiceProfile:
         """
         Learn voice profile from multiple samples.
@@ -311,15 +309,13 @@ class VoiceLearner:
             sample_count=len(samples),
             total_duration=total_duration,
             created=datetime.now().isoformat(),
-            updated=datetime.now().isoformat()
+            updated=datetime.now().isoformat(),
         )
 
         return profile
 
     def update_profile(
-        self,
-        existing_profile: LearnedVoiceProfile,
-        new_samples: List[VoiceSample]
+        self, existing_profile: LearnedVoiceProfile, new_samples: List[VoiceSample]
     ) -> LearnedVoiceProfile:
         """
         Update existing profile with new samples.
@@ -383,7 +379,7 @@ class VoiceLearner:
             sample_count=existing_profile.sample_count + len(new_samples),
             total_duration=existing_profile.total_duration + new_duration,
             created=existing_profile.created,
-            updated=datetime.now().isoformat()
+            updated=datetime.now().isoformat(),
         )
 
 
@@ -409,7 +405,7 @@ class VoiceLearningManager:
         audio: np.ndarray,
         sample_id: Optional[str] = None,
         text: Optional[str] = None,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict] = None,
     ) -> str:
         """
         Add a voice sample for learning.
@@ -430,9 +426,7 @@ class VoiceLearningManager:
         return sample_id
 
     def learn_profile(
-        self,
-        profile_name: str,
-        sample_ids: Optional[List[str]] = None
+        self, profile_name: str, sample_ids: Optional[List[str]] = None
     ) -> LearnedVoiceProfile:
         """
         Learn a voice profile from samples.
@@ -478,7 +472,7 @@ class VoiceLearningManager:
         if not profile_path.exists():
             return None
 
-        with open(profile_path, "r") as f:
+        with open(profile_path) as f:
             data = json.load(f)
             return LearnedVoiceProfile.from_dict(data)
 
@@ -490,9 +484,7 @@ class VoiceLearningManager:
         return sorted(profiles)
 
     def update_profile_from_samples(
-        self,
-        profile_name: str,
-        new_sample_ids: List[str]
+        self, profile_name: str, new_sample_ids: List[str]
     ) -> LearnedVoiceProfile:
         """
         Update existing profile with new samples.

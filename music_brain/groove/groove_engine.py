@@ -18,9 +18,8 @@ compared to the basic random humanization in applicator.py.
 """
 
 import random
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass, field
-
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 # ==============================================================================
 # TUNABLE CONSTANTS (TWIDDLE THESE WHILE LISTENING)
@@ -47,26 +46,26 @@ MAX_DROPOUT_PROB = 0.2  # 20% at complexity=1.0
 
 # Drum MIDI note numbers for special handling
 DRUM_NOTES = {
-    "kick": [35, 36],           # Acoustic/Electric Bass Drum
-    "snare": [38, 40],          # Acoustic/Electric Snare
-    "hihat_closed": [42],       # Closed Hi-Hat
-    "hihat_open": [46],         # Open Hi-Hat
-    "hihat_pedal": [44],        # Pedal Hi-Hat
-    "tom_high": [48, 50],       # High/Hi-Mid Tom
-    "tom_mid": [45, 47],        # Low/Low-Mid Tom
-    "tom_low": [41, 43],        # Floor Tom
-    "crash": [49, 57],          # Crash Cymbals
-    "ride": [51, 59],           # Ride Cymbal
-    "ride_bell": [53],          # Ride Bell
+    "kick": [35, 36],  # Acoustic/Electric Bass Drum
+    "snare": [38, 40],  # Acoustic/Electric Snare
+    "hihat_closed": [42],  # Closed Hi-Hat
+    "hihat_open": [46],  # Open Hi-Hat
+    "hihat_pedal": [44],  # Pedal Hi-Hat
+    "tom_high": [48, 50],  # High/Hi-Mid Tom
+    "tom_mid": [45, 47],  # Low/Low-Mid Tom
+    "tom_low": [41, 43],  # Floor Tom
+    "crash": [49, 57],  # Crash Cymbals
+    "ride": [51, 59],  # Ride Cymbal
+    "ride_bell": [53],  # Ride Bell
 }
 
 # Protection levels: some drum elements shouldn't drop out as easily
 PROTECTION_LEVELS = {
-    "kick": 0.8,      # Kicks rarely drop (reduce dropout by 80%)
-    "snare": 0.7,     # Snares are important
+    "kick": 0.8,  # Kicks rarely drop (reduce dropout by 80%)
+    "snare": 0.7,  # Snares are important
     "hihat_closed": 0.2,  # Hi-hats can drop more freely
     "hihat_open": 0.5,
-    "crash": 0.9,     # Crashes are intentional
+    "crash": 0.9,  # Crashes are intentional
     "ride": 0.3,
 }
 
@@ -74,6 +73,7 @@ PROTECTION_LEVELS = {
 # ==============================================================================
 # DATA CLASSES
 # ==============================================================================
+
 
 @dataclass
 class GrooveSettings:
@@ -83,8 +83,9 @@ class GrooveSettings:
     These can be loaded from presets or set dynamically based on
     emotional intent from the SongIntent system.
     """
-    complexity: float = 0.5       # 0.0-1.0: timing looseness, dropout probability
-    vulnerability: float = 0.5    # 0.0-1.0: dynamic range, softness
+
+    complexity: float = 0.5  # 0.0-1.0: timing looseness, dropout probability
+    vulnerability: float = 0.5  # 0.0-1.0: dynamic range, softness
 
     # Optional overrides
     timing_sigma_override: Optional[float] = None
@@ -92,9 +93,9 @@ class GrooveSettings:
     velocity_range_override: Optional[tuple] = None
 
     # Per-drum adjustments (multipliers)
-    kick_timing_mult: float = 0.5     # Kicks are usually tighter
-    snare_timing_mult: float = 0.7    # Snares slightly tighter
-    hihat_timing_mult: float = 1.2    # Hi-hats can be looser
+    kick_timing_mult: float = 0.5  # Kicks are usually tighter
+    snare_timing_mult: float = 0.7  # Snares slightly tighter
+    hihat_timing_mult: float = 1.2  # Hi-hats can be looser
 
     # Ghost note settings
     enable_ghost_notes: bool = True
@@ -138,6 +139,7 @@ class GrooveSettings:
 # ==============================================================================
 # HELPER FUNCTIONS
 # ==============================================================================
+
 
 def _get_drum_category(pitch: int) -> Optional[str]:
     """
@@ -211,6 +213,7 @@ def _vulnerability_to_velocity_params(vulnerability: float, base_velocity: int) 
 # ==============================================================================
 # CORE GROOVE FUNCTION
 # ==============================================================================
+
 
 def apply_groove(
     events: List[Dict[str, Any]],
@@ -325,9 +328,7 @@ def apply_groove(
         # ----------------------------------------------------------------------
         # 3. VULNERABILITY: Velocity shaping
         # ----------------------------------------------------------------------
-        target_vel, vel_sigma = _vulnerability_to_velocity_params(
-            vulnerability, base_velocity
-        )
+        target_vel, vel_sigma = _vulnerability_to_velocity_params(vulnerability, base_velocity)
 
         # Apply velocity range override if specified
         vel_min = VELOCITY_MIN
@@ -348,18 +349,15 @@ def apply_groove(
         # ----------------------------------------------------------------------
         # 4. Optional: Ghost notes
         # ----------------------------------------------------------------------
-        if (settings.enable_ghost_notes and
-            vulnerability > 0.6 and
-            random.random() < settings.ghost_note_probability):
-
+        if (
+            settings.enable_ghost_notes
+            and vulnerability > 0.6
+            and random.random() < settings.ghost_note_probability
+        ):
             ghost = new_note.copy()
-            ghost["velocity"] = max(
-                vel_min,
-                int(new_vel * settings.ghost_note_velocity_mult)
-            )
+            ghost["velocity"] = max(vel_min, int(new_vel * settings.ghost_note_velocity_mult))
             ghost["start_tick"] = max(
-                0,
-                new_tick + random.randint(-int(10 * ppq_scale), int(10 * ppq_scale))
+                0, new_tick + random.randint(-int(10 * ppq_scale), int(10 * ppq_scale))
             )
             ghost["is_ghost"] = True
             processed_events.append(ghost)
@@ -394,6 +392,7 @@ def humanize_drums(
 # MIDI FILE PROCESSING
 # ==============================================================================
 
+
 def humanize_midi_file(
     input_path: str,
     output_path: Optional[str] = None,
@@ -425,8 +424,11 @@ def humanize_midi_file(
         if output_path is None:
             return str(input_path)
         from pathlib import Path
+
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        Path(output_path).write_bytes(Path(input_path).read_bytes() if Path(input_path).exists() else b"")
+        Path(output_path).write_bytes(
+            Path(input_path).read_bytes() if Path(input_path).exists() else b""
+        )
         return str(output_path)
 
     from pathlib import Path
@@ -451,15 +453,17 @@ def humanize_midi_file(
         for i, msg in enumerate(track):
             current_tick += msg.time
 
-            if msg.type == 'note_on' and msg.velocity > 0:
+            if msg.type == "note_on" and msg.velocity > 0:
                 # Check if this is on the drum channel
-                if hasattr(msg, 'channel') and msg.channel == drum_channel:
-                    events.append({
-                        "start_tick": current_tick,
-                        "velocity": msg.velocity,
-                        "pitch": msg.note,
-                        "original_index": i,
-                    })
+                if hasattr(msg, "channel") and msg.channel == drum_channel:
+                    events.append(
+                        {
+                            "start_tick": current_tick,
+                            "velocity": msg.velocity,
+                            "pitch": msg.note,
+                            "original_index": i,
+                        }
+                    )
                     event_indices.append(i)
 
         # Apply humanization to drum events
@@ -497,22 +501,22 @@ def humanize_midi_file(
                 ghost = pending_ghost_notes.pop(0)
                 ghost_delta = ghost["start_tick"] - current_tick
                 ghost_msg = mido.Message(
-                    'note_on',
+                    "note_on",
                     note=ghost["pitch"],
                     velocity=ghost["velocity"],
                     channel=drum_channel,
-                    time=max(0, ghost_delta)
+                    time=max(0, ghost_delta),
                 )
                 new_track.append(ghost_msg)
                 current_tick = ghost["start_tick"]
 
                 # Add note_off for ghost
                 ghost_off = mido.Message(
-                    'note_off',
+                    "note_off",
                     note=ghost["pitch"],
                     velocity=0,
                     channel=drum_channel,
-                    time=mid.ticks_per_beat // 8  # Short duration
+                    time=mid.ticks_per_beat // 8,  # Short duration
                 )
                 new_track.append(ghost_off)
                 current_tick += mid.ticks_per_beat // 8
@@ -548,6 +552,7 @@ def humanize_midi_file(
 # ==============================================================================
 # PRESET INTEGRATION
 # ==============================================================================
+
 
 def settings_from_intent(
     vulnerability_scale: str,
@@ -619,6 +624,7 @@ def settings_from_intent(
 # CONVENIENCE FUNCTIONS
 # ==============================================================================
 
+
 def quick_humanize(
     events: List[Dict[str, Any]],
     style: str = "natural",
@@ -636,10 +642,10 @@ def quick_humanize(
         Humanized events
     """
     style_presets = {
-        "tight": (0.1, 0.2),      # Tight, confident
-        "natural": (0.4, 0.5),    # Natural human feel
-        "loose": (0.6, 0.6),      # Relaxed, laid back
-        "drunk": (0.9, 0.8),      # Very loose, vulnerable
+        "tight": (0.1, 0.2),  # Tight, confident
+        "natural": (0.4, 0.5),  # Natural human feel
+        "loose": (0.6, 0.6),  # Relaxed, laid back
+        "drunk": (0.9, 0.8),  # Very loose, vulnerable
     }
 
     complexity, vulnerability = style_presets.get(style, (0.4, 0.5))
@@ -655,6 +661,7 @@ def quick_humanize(
 # ==============================================================================
 # PRESET LOADING
 # ==============================================================================
+
 
 def load_presets(path: Optional[str] = None) -> Dict[str, Any]:
     """
@@ -674,7 +681,7 @@ def load_presets(path: Optional[str] = None) -> Dict[str, Any]:
         package_dir = Path(__file__).parent.parent
         path = package_dir / "data" / "humanize_presets.json"
 
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -728,9 +735,7 @@ def settings_from_preset(preset_name: str, path: Optional[str] = None) -> Groove
     preset = get_preset(preset_name, path)
     if preset is None:
         available = list_presets(path)
-        raise ValueError(
-            f"Preset '{preset_name}' not found. Available: {', '.join(available)}"
-        )
+        raise ValueError(f"Preset '{preset_name}' not found. Available: {', '.join(available)}")
 
     groove_data = preset.get("groove_settings", {})
     return GrooveSettings.from_dict(groove_data)

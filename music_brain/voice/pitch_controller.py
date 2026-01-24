@@ -5,14 +5,16 @@ Converts MIDI notes to frequency curves with portamento, vibrato,
 pitch bends, and other expressive controls.
 """
 
-import numpy as np
-from typing import List, Optional, Tuple, Dict
 from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
 
 
 @dataclass
 class PitchCurve:
     """Represents a pitch curve over time."""
+
     frequencies: np.ndarray  # Frequency in Hz at each sample
     sample_rate: int
     duration_seconds: float
@@ -21,13 +23,14 @@ class PitchCurve:
         return {
             "frequencies": self.frequencies.tolist(),
             "sample_rate": self.sample_rate,
-            "duration_seconds": self.duration_seconds
+            "duration_seconds": self.duration_seconds,
         }
 
 
 @dataclass
 class ExpressionParams:
     """Expression parameters for pitch control."""
+
     vibrato_rate: float = 5.0  # Hz
     vibrato_depth: float = 0.02  # Semitones
     portamento_time: float = 0.05  # Seconds
@@ -40,7 +43,7 @@ class ExpressionParams:
             "vibrato_depth": self.vibrato_depth,
             "portamento_time": self.portamento_time,
             "pitch_bend_range": self.pitch_bend_range,
-            "dynamics": self.dynamics
+            "dynamics": self.dynamics,
         }
 
 
@@ -86,7 +89,7 @@ class PitchController:
         self,
         midi_notes: List[int],
         note_durations: List[float],
-        expression: Optional[ExpressionParams] = None
+        expression: Optional[ExpressionParams] = None,
     ) -> PitchCurve:
         """
         Create pitch curve from MIDI notes with expression.
@@ -149,15 +152,11 @@ class PitchController:
             current_sample += note_samples
 
         return PitchCurve(
-            frequencies=frequencies,
-            sample_rate=self.sample_rate,
-            duration_seconds=total_duration
+            frequencies=frequencies, sample_rate=self.sample_rate, duration_seconds=total_duration
         )
 
     def add_pitch_bend(
-        self,
-        pitch_curve: PitchCurve,
-        bend_points: List[Tuple[float, float]]
+        self, pitch_curve: PitchCurve, bend_points: List[Tuple[float, float]]
     ) -> PitchCurve:
         """
         Add pitch bends to a pitch curve.
@@ -175,18 +174,16 @@ class PitchController:
             sample_idx = int(time_sec * self.sample_rate)
             if 0 <= sample_idx < len(frequencies):
                 # Apply bend (multiplicative in frequency space)
-                frequencies[sample_idx:] *= (2 ** (bend_semitones / 12.0))
+                frequencies[sample_idx:] *= 2 ** (bend_semitones / 12.0)
 
         return PitchCurve(
             frequencies=frequencies,
             sample_rate=pitch_curve.sample_rate,
-            duration_seconds=pitch_curve.duration_seconds
+            duration_seconds=pitch_curve.duration_seconds,
         )
 
     def extract_pitch_from_audio(
-        self,
-        audio: np.ndarray,
-        sample_rate: int
+        self, audio: np.ndarray, sample_rate: int
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Extract pitch (F0) from audio signal.
@@ -202,11 +199,10 @@ class PitchController:
         """
         try:
             import librosa
+
             # Use librosa's pitch detection
             f0, voiced_flag, voiced_probs = librosa.pyin(
-                audio,
-                fmin=librosa.note_to_hz('C2'),
-                fmax=librosa.note_to_hz('C7')
+                audio, fmin=librosa.note_to_hz("C2"), fmax=librosa.note_to_hz("C7")
             )
             times = librosa.frames_to_time(np.arange(len(f0)), sr=sample_rate)
             return f0, times
@@ -215,9 +211,7 @@ class PitchController:
             return self._simple_pitch_detection(audio, sample_rate)
 
     def _simple_pitch_detection(
-        self,
-        audio: np.ndarray,
-        sample_rate: int
+        self, audio: np.ndarray, sample_rate: int
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Simple autocorrelation-based pitch detection (fallback).
@@ -230,11 +224,11 @@ class PitchController:
         times = []
 
         for i in range(0, len(audio) - frame_size, hop_size):
-            frame = audio[i:i + frame_size]
+            frame = audio[i : i + frame_size]
 
             # Autocorrelation
-            autocorr = np.correlate(frame, frame, mode='full')
-            autocorr = autocorr[len(autocorr) // 2:]
+            autocorr = np.correlate(frame, frame, mode="full")
+            autocorr = autocorr[len(autocorr) // 2 :]
 
             # Find first peak after zero lag
             min_period = int(sample_rate / 2000)  # Max 2000 Hz
@@ -262,10 +256,7 @@ class PitchController:
         return np.array(frequencies), np.array(times)
 
     def audio_to_midi_notes(
-        self,
-        audio: np.ndarray,
-        sample_rate: int,
-        note_duration: float = 0.25
+        self, audio: np.ndarray, sample_rate: int, note_duration: float = 0.25
     ) -> List[int]:
         """
         Extract MIDI notes from audio (sung notes).
@@ -287,7 +278,7 @@ class PitchController:
 
         for i in range(0, len(frequencies), samples_per_note):
             # Get frequency for this time window
-            window_freqs = frequencies[i:i + samples_per_note]
+            window_freqs = frequencies[i : i + samples_per_note]
             window_freqs = window_freqs[window_freqs > 0]  # Remove unvoiced
 
             if len(window_freqs) > 0:

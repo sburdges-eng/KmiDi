@@ -5,13 +5,14 @@ Provides context-aware analysis of musical state for better suggestions.
 Part of Phase 3 of the "All-Knowing Interactive Musical Customization System".
 """
 
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
 class MusicalContext:
     """Musical context information."""
+
     emotion_category: Optional[str] = None
     parameter_ranges: Dict[str, str] = None  # "low", "medium", "high"
     complexity_level: str = "moderate"
@@ -166,9 +167,13 @@ class ContextAnalyzer:
 
         # Emotion category hints
         if context.emotion_category == "negative_low_energy":
-            hints.append("Low energy emotions often benefit from slower tempos and darker harmonies")
+            hints.append(
+                "Low energy emotions often benefit from slower tempos and darker harmonies"
+            )
         elif context.emotion_category == "negative_high_energy":
-            hints.append("High energy negative emotions work well with aggressive rhythms and distortion")
+            hints.append(
+                "High energy negative emotions work well with aggressive rhythms and distortion"
+            )
 
         # Parameter range hints
         low_params = [p for p, r in context.parameter_ranges.items() if r == "low"]
@@ -192,7 +197,7 @@ def main():
             "humanize": 0.5,
             "feel": 0.0,
         },
-        "chords": ["Am", "Dm", "F", "C"]
+        "chords": ["Am", "Dm", "F", "C"],
     }
 
     context = analyzer.analyze(state)

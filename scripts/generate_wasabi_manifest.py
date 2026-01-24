@@ -72,22 +72,26 @@ def load_song_intents() -> List[Dict[str, Any]]:
         exp = v.get("expected_output", {})
         mood = (si.get("mood_primary") or "").lower()
         progression = exp.get("progression", "")
-        chords = [s.strip() for s in progression.replace("-", " ").split() if s.strip() and s[0].isalpha()]
+        chords = [
+            s.strip() for s in progression.replace("-", " ").split() if s.strip() and s[0].isalpha()
+        ]
         if not chords:
             continue
-        out.append({
-            "title": v.get("title", k),
-            "mood": mood,
-            "chords": chords,
-            "tempo": tc.get("technical_tempo_range", [100, 120])[0],
-            "key": tc.get("technical_key", "C major"),
-        })
+        out.append(
+            {
+                "title": v.get("title", k),
+                "mood": mood,
+                "chords": chords,
+                "tempo": tc.get("technical_tempo_range", [100, 120])[0],
+                "key": tc.get("technical_key", "C major"),
+            }
+        )
     return out
 
 
 def emotion_to_lyrics_emotion(emotion: str, intensity: float = 0.7) -> dict[str, float]:
     """Build lyrics_emotion dict for one primary emotion."""
-    d = {e: 0.0 for e in BASE_EMOTIONS}
+    d = dict.fromkeys(BASE_EMOTIONS, 0.0)
     d[emotion] = intensity
     # Add slight secondary
     others = [e for e in BASE_EMOTIONS if e != emotion]

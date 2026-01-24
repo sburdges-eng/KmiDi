@@ -11,77 +11,79 @@ Provides:
 Philosophy: "The best teacher adapts to the student, not the other way around."
 """
 
-from enum import Enum, auto
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any, Callable
-from datetime import datetime
 import random
+from dataclasses import dataclass, field
+from enum import Enum, auto
+from typing import Any, Dict, List, Optional
 
 
 class TeachingStyle(Enum):
     """Pedagogical approaches for music instruction."""
+
     # Traditional methods
-    CLASSICAL = auto()          # Structured, notation-based, progressive
-    SUZUKI = auto()             # Ear-first, parent involvement, repertoire-based
-    KODALY = auto()             # Voice-based, solfege, rhythm syllables
+    CLASSICAL = auto()  # Structured, notation-based, progressive
+    SUZUKI = auto()  # Ear-first, parent involvement, repertoire-based
+    KODALY = auto()  # Voice-based, solfege, rhythm syllables
 
     # Modern approaches
-    CONTEMPORARY = auto()       # Popular music, chord charts, play-along
-    PROJECT_BASED = auto()      # Learn by creating songs/projects
-    GAMIFIED = auto()           # Points, levels, achievements
+    CONTEMPORARY = auto()  # Popular music, chord charts, play-along
+    PROJECT_BASED = auto()  # Learn by creating songs/projects
+    GAMIFIED = auto()  # Points, levels, achievements
 
     # Adaptive methods
-    SOCRATIC = auto()           # Question-based, discovery learning
-    SCAFFOLDED = auto()         # Building blocks, gradual complexity
-    MASTERY = auto()            # Perfect each skill before advancing
+    SOCRATIC = auto()  # Question-based, discovery learning
+    SCAFFOLDED = auto()  # Building blocks, gradual complexity
+    MASTERY = auto()  # Perfect each skill before advancing
 
     # Specialized
-    JAZZ_METHOD = auto()        # Improvisation-focused, aural tradition
-    ORFF = auto()               # Movement, ensemble, percussion
-    DALCROZE = auto()           # Eurhythmics, body movement, expression
+    JAZZ_METHOD = auto()  # Improvisation-focused, aural tradition
+    ORFF = auto()  # Movement, ensemble, percussion
+    DALCROZE = auto()  # Eurhythmics, body movement, expression
 
 
 class LearningPreference(Enum):
     """How a student prefers to learn."""
-    VISUAL = auto()             # Diagrams, videos, sheet music
-    AUDITORY = auto()           # Listening, ear training, recordings
-    KINESTHETIC = auto()        # Hands-on, playing, movement
-    READING = auto()            # Text explanations, theory
-    SOCIAL = auto()             # Group learning, ensembles
-    SOLITARY = auto()           # Self-paced, individual practice
+
+    VISUAL = auto()  # Diagrams, videos, sheet music
+    AUDITORY = auto()  # Listening, ear training, recordings
+    KINESTHETIC = auto()  # Hands-on, playing, movement
+    READING = auto()  # Text explanations, theory
+    SOCIAL = auto()  # Group learning, ensembles
+    SOLITARY = auto()  # Self-paced, individual practice
 
 
 @dataclass
 class StudentProfile:
     """Profile of a music student for adaptive teaching."""
+
     id: str
     name: str
 
     # Learning characteristics
     age: int = 25
-    experience_level: int = 1                   # 1-10
+    experience_level: int = 1  # 1-10
     learning_preferences: List[LearningPreference] = field(default_factory=list)
     preferred_styles: List[TeachingStyle] = field(default_factory=list)
 
     # Goals and motivation
-    primary_goal: str = "personal_enjoyment"    # personal_enjoyment, performance, composition, etc.
+    primary_goal: str = "personal_enjoyment"  # personal_enjoyment, performance, composition, etc.
     musical_interests: List[str] = field(default_factory=list)
-    time_available_weekly_minutes: int = 300    # 5 hours default
+    time_available_weekly_minutes: int = 300  # 5 hours default
 
     # Strengths and challenges
     strengths: List[str] = field(default_factory=list)
     challenges: List[str] = field(default_factory=list)
-    learning_speed: str = "average"             # slow, average, fast
+    learning_speed: str = "average"  # slow, average, fast
 
     # Practice habits
-    practice_consistency: float = 0.7           # 0-1, how consistently they practice
+    practice_consistency: float = 0.7  # 0-1, how consistently they practice
     attention_span_minutes: int = 30
     prefers_structure: bool = True
 
     # Emotional factors
     performance_anxiety: bool = False
-    perfectionism_level: str = "moderate"       # low, moderate, high
-    frustration_tolerance: str = "moderate"     # low, moderate, high
+    perfectionism_level: str = "moderate"  # low, moderate, high
+    frustration_tolerance: str = "moderate"  # low, moderate, high
 
     # Progress tracking
     lessons_completed: int = 0
@@ -186,38 +188,46 @@ class AdaptiveTeacher:
 
         # Warm-up (10-15% of lesson)
         warmup_time = max(3, int(duration_minutes * 0.12))
-        segments.append({
-            "type": "warmup",
-            "duration_minutes": warmup_time,
-            "description": self._generate_warmup(topic, level),
-        })
+        segments.append(
+            {
+                "type": "warmup",
+                "duration_minutes": warmup_time,
+                "description": self._generate_warmup(topic, level),
+            }
+        )
         remaining_time -= warmup_time
 
         # Main instruction segments (break if longer than attention span)
         segment_length = min(attention // 2, 15)
         while remaining_time > segment_length + 5:  # Leave room for closing
-            segments.append({
-                "type": "instruction",
-                "duration_minutes": segment_length,
-                "description": f"Focused practice on {topic}",
-            })
+            segments.append(
+                {
+                    "type": "instruction",
+                    "duration_minutes": segment_length,
+                    "description": f"Focused practice on {topic}",
+                }
+            )
             remaining_time -= segment_length
 
             # Add variety/break if needed
             if remaining_time > 10:
-                segments.append({
-                    "type": "application",
-                    "duration_minutes": 5,
-                    "description": "Apply concept in musical context",
-                })
+                segments.append(
+                    {
+                        "type": "application",
+                        "duration_minutes": 5,
+                        "description": "Apply concept in musical context",
+                    }
+                )
                 remaining_time -= 5
 
         # Closing/review
-        segments.append({
-            "type": "review",
-            "duration_minutes": remaining_time,
-            "description": "Review key points and set practice goals",
-        })
+        segments.append(
+            {
+                "type": "review",
+                "duration_minutes": remaining_time,
+                "description": "Review key points and set practice goals",
+            }
+        )
 
         return {
             "topic": topic,
@@ -253,9 +263,9 @@ class AdaptiveTeacher:
 
         return {
             "daily_duration_minutes": session_length,
-            "sessions_per_week": min(6, int(
-                self.student.time_available_weekly_minutes / session_length
-            )),
+            "sessions_per_week": min(
+                6, int(self.student.time_available_weekly_minutes / session_length)
+            ),
             "focus_areas": [
                 {
                     "topic": topic,
@@ -297,10 +307,12 @@ class AdaptiveTeacher:
             tips.append("Master small sections before moving on")
 
         # Default tips
-        tips.extend([
-            "Use a metronome for rhythm work",
-            "Practice problem spots, not just the easy parts",
-        ])
+        tips.extend(
+            [
+                "Use a metronome for rhythm work",
+                "Practice problem spots, not just the easy parts",
+            ]
+        )
 
         return tips[:5]  # Limit to 5 tips
 
@@ -387,8 +399,7 @@ class AdaptiveTeacher:
             )
         elif self.student.frustration_tolerance == "low" and success_level < 0.5:
             feedback["encouragement"] = (
-                "Every expert was once a beginner. "
-                "This struggle is part of the learning process."
+                "Every expert was once a beginner. This struggle is part of the learning process."
             )
         else:
             encouragements = [
@@ -402,7 +413,7 @@ class AdaptiveTeacher:
         # Constructive feedback
         if success_level < 0.9:
             feedback["constructive"] = [
-                f"Focus on the specific areas where you felt uncertain",
+                "Focus on the specific areas where you felt uncertain",
                 "Try practicing at a slower tempo",
                 "Break the skill into smaller components",
             ]
@@ -466,12 +477,14 @@ class PedagogyEngine:
         ]
 
         if student:
-            context_parts.extend([
-                f"Student Age: {student.age}",
-                f"Experience Level: {student.experience_level}/10",
-                f"Learning Style: {', '.join(p.name for p in student.learning_preferences) or 'Not specified'}",
-                f"Primary Goal: {student.primary_goal}",
-            ])
+            context_parts.extend(
+                [
+                    f"Student Age: {student.age}",
+                    f"Experience Level: {student.experience_level}/10",
+                    f"Learning Style: {', '.join(p.name for p in student.learning_preferences) or 'Not specified'}",
+                    f"Primary Goal: {student.primary_goal}",
+                ]
+            )
             if student.challenges:
                 context_parts.append(f"Known Challenges: {', '.join(student.challenges)}")
             if student.strengths:
@@ -658,7 +671,6 @@ INSTRUCTIONS:
 6. End with how this connects to their musical goals
 
 Keep the explanation engaging and practical. Focus on understanding, not just information.""",
-
     "demonstrate": """Describe how to demonstrate {topic} for {instrument}.
 
 CONTEXT:
@@ -672,7 +684,6 @@ PROVIDE:
 5. Follow-up activities for the student to try
 
 Make the demonstration clear and memorable.""",
-
     "troubleshoot": """Help troubleshoot common problems with {topic} on {instrument}.
 
 CONTEXT:
@@ -687,7 +698,6 @@ ADDRESS:
 6. How to prevent the problems in the future
 
 Be specific and practical.""",
-
     "motivate": """Generate motivational content for a student learning {topic} on {instrument}.
 
 CONTEXT:
@@ -701,7 +711,6 @@ INCLUDE:
 5. Practical next steps that feel achievable
 
 Be genuine and avoid empty praise.""",
-
     "assess": """Create an assessment for {topic} on {instrument} at difficulty level {difficulty}/10.
 
 CONTEXT:
@@ -716,7 +725,6 @@ DESIGN AN ASSESSMENT THAT:
 6. Feels encouraging, not stressful
 
 Include both what to test and how to evaluate it.""",
-
     "practice_plan": """Create a practice plan for {topic} on {instrument}.
 
 CONTEXT:
@@ -731,7 +739,6 @@ THE PLAN SHOULD INCLUDE:
 6. How to keep practice interesting
 
 Be specific and realistic.""",
-
     "song_suggestion": """Suggest songs for practicing {topic} on {instrument} at difficulty level {difficulty}/10.
 
 CONTEXT:

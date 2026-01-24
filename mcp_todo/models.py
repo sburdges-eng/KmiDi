@@ -4,15 +4,16 @@ TODO Data Models
 Defines the core data structures for task management.
 """
 
-from dataclasses import dataclass, field, asdict
+import uuid
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional, List, Dict, Any
-import uuid
+from typing import Any, Dict, List, Optional
 
 
 class TodoPriority(str, Enum):
     """Priority levels for tasks."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -21,6 +22,7 @@ class TodoPriority(str, Enum):
 
 class TodoStatus(str, Enum):
     """Status states for tasks."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -35,6 +37,7 @@ class Todo:
 
     Designed to be compatible across AI assistants with rich context.
     """
+
     title: str
     description: str = ""
     status: TodoStatus = TodoStatus.PENDING
@@ -126,6 +129,7 @@ class Todo:
 @dataclass
 class TodoList:
     """A collection of todos, optionally grouped by project."""
+
     name: str = "default"
     todos: List[Todo] = field(default_factory=list)
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())

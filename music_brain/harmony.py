@@ -4,7 +4,6 @@ Harmony-related MCP tools.
 
 from __future__ import annotations
 
-import os
 import tempfile
 from typing import Any, Dict, Optional
 
@@ -13,6 +12,7 @@ from data.harmony_generator import (
     HarmonyResult,
     generate_midi_from_harmony,
 )
+
 from .common import (
     api,
     make_midi_payload,
@@ -93,7 +93,9 @@ async def generate_harmony_tool(
             )
             payload = result
             if include_midi and "midi_path" in result:
-                payload["midi"] = make_midi_payload(result["midi_path"], filename="intent_harmony.mid")
+                payload["midi"] = make_midi_payload(
+                    result["midi_path"], filename="intent_harmony.mid"
+                )
     else:
         with tempfile.TemporaryDirectory(prefix="daiw_mcp_") as tmpdir:
             midi_path = f"{tmpdir}/basic.mid"
@@ -107,7 +109,9 @@ async def generate_harmony_tool(
             )
             payload = result
             if include_midi and "midi_path" in result:
-                payload["midi"] = make_midi_payload(result["midi_path"], filename="basic_progression.mid")
+                payload["midi"] = make_midi_payload(
+                    result["midi_path"], filename="basic_progression.mid"
+                )
 
     return payload
 
@@ -180,4 +184,3 @@ __all__ = [
     "generate_midi_from_harmony",
     "register_tools",
 ]
-

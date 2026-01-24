@@ -5,25 +5,24 @@ Provides tools for visualizing musical and emotional data.
 """
 
 from .emotion_trajectory import (
-    EmotionTrajectoryVisualizer,
-    EmotionTrajectory,
     EmotionSnapshot,
+    EmotionTrajectory,
+    EmotionTrajectoryVisualizer,
 )
-
 from .spectocloud import (
-    Spectocloud,
     Anchor,
     AnchorFamily,
-    Frame,
-    EmotionParticle,
-    StormState,
-    MusicalParameterExtractor,
     AnchorLibrary,
-    SpectocloudRenderer,
+    EmotionParticle,
+    Frame,
+    LODConfig,
+    LODLevel,
+    MusicalParameterExtractor,
     # Performance and LOD (v2.0)
     PerformanceMetrics,
-    LODLevel,
-    LODConfig,
+    Spectocloud,
+    SpectocloudRenderer,
+    StormState,
     # Texturization (v2.0)
     TextureConfig,
     TextureGenerator,

@@ -9,12 +9,12 @@ Run with:
     python -m mcp_todo.http_server --port 8080
 """
 
-import json
 import argparse
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs
-from typing import Any, Dict, Optional
+import json
 import os
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from typing import Any, Dict, Optional
+from urllib.parse import parse_qs, urlparse
 
 from .storage import TodoStorage
 
@@ -76,11 +76,7 @@ class TodoHTTPHandler(BaseHTTPRequestHandler):
 
         if path == "/openapi.json" or path == "/openapi.yaml":
             # Serve OpenAPI spec
-            spec_path = os.path.join(
-                os.path.dirname(__file__),
-                "configs",
-                "openapi_spec.yaml"
-            )
+            spec_path = os.path.join(os.path.dirname(__file__), "configs", "openapi_spec.yaml")
             if os.path.exists(spec_path):
                 with open(spec_path) as f:
                     content = f.read()
@@ -95,9 +91,7 @@ class TodoHTTPHandler(BaseHTTPRequestHandler):
         elif path == "/.well-known/ai-plugin.json":
             # Serve ChatGPT plugin manifest
             manifest_path = os.path.join(
-                os.path.dirname(__file__),
-                "configs",
-                "openai_plugin_manifest.json"
+                os.path.dirname(__file__), "configs", "openai_plugin_manifest.json"
             )
             if os.path.exists(manifest_path):
                 with open(manifest_path) as f:
@@ -112,23 +106,25 @@ class TodoHTTPHandler(BaseHTTPRequestHandler):
                 project=params.get("project"),
                 status=params.get("status"),
                 priority=params.get("priority"),
-                include_completed=params.get("include_completed", "true") == "true"
+                include_completed=params.get("include_completed", "true") == "true",
             )
-            self._send_json({
-                "success": True,
-                "count": len(todos),
-                "todos": [
-                    {
-                        "id": t.id,
-                        "title": t.title,
-                        "status": t.status.value,
-                        "priority": t.priority.value,
-                        "tags": t.tags,
-                        "project": t.project,
-                    }
-                    for t in todos
-                ]
-            })
+            self._send_json(
+                {
+                    "success": True,
+                    "count": len(todos),
+                    "todos": [
+                        {
+                            "id": t.id,
+                            "title": t.title,
+                            "status": t.status.value,
+                            "priority": t.priority.value,
+                            "tags": t.tags,
+                            "project": t.project,
+                        }
+                        for t in todos
+                    ],
+                }
+            )
 
         elif path.startswith("/todos/") and path.count("/") == 2:
             # Get single TODO
@@ -138,31 +134,20 @@ class TodoHTTPHandler(BaseHTTPRequestHandler):
                 # Search endpoint
                 query_str = params.get("q", "")
                 todos = self.storage.search(query_str)
-                self._send_json({
-                    "success": True,
-                    "count": len(todos),
-                    "todos": [t.to_dict() for t in todos]
-                })
+                self._send_json(
+                    {"success": True, "count": len(todos), "todos": [t.to_dict() for t in todos]}
+                )
             elif todo_id == "summary":
                 # Summary endpoint
                 summary = self.storage.get_summary(project=params.get("project"))
-                self._send_json({
-                    "success": True,
-                    "summary": summary
-                })
+                self._send_json({"success": True, "summary": summary})
             else:
                 # Get specific TODO
                 todo = self.storage.get(todo_id)
                 if todo:
-                    self._send_json({
-                        "success": True,
-                        "todo": todo.to_dict()
-                    })
+                    self._send_json({"success": True, "todo": todo.to_dict()})
                 else:
-                    self._send_json({
-                        "success": False,
-                        "error": f"TODO not found: {todo_id}"
-                    }, 404)
+                    self._send_json({"success": False, "error": f"TODO not found: {todo_id}"}, 404)
 
         else:
             self._send_json({"error": "Not found"}, 404)
@@ -177,10 +162,7 @@ class TodoHTTPHandler(BaseHTTPRequestHandler):
         if path == "/todos":
             # Create TODO
             if "title" not in body:
-                self._send_json({
-                    "success": False,
-                    "error": "title is required"
-                }, 400)
+                self._send_json({"success": False, "error": "title is required"}, 400)
                 return
 
             todo = self.storage.add(
@@ -193,43 +175,32 @@ class TodoHTTPHandler(BaseHTTPRequestHandler):
                 context=body.get("context", ""),
                 ai_source=ai_source,
             )
-            self._send_json({
-                "success": True,
-                "message": f"Created TODO: {todo.title}",
-                "todo": todo.to_dict()
-            }, 201)
+            self._send_json(
+                {"success": True, "message": f"Created TODO: {todo.title}", "todo": todo.to_dict()},
+                201,
+            )
 
         elif path.endswith("/complete"):
             # Complete TODO
             todo_id = path.split("/")[2]
             todo = self.storage.complete(todo_id, ai_source=ai_source)
             if todo:
-                self._send_json({
-                    "success": True,
-                    "message": f"Completed: {todo.title}",
-                    "todo": todo.to_dict()
-                })
+                self._send_json(
+                    {"success": True, "message": f"Completed: {todo.title}", "todo": todo.to_dict()}
+                )
             else:
-                self._send_json({
-                    "success": False,
-                    "error": f"TODO not found: {todo_id}"
-                }, 404)
+                self._send_json({"success": False, "error": f"TODO not found: {todo_id}"}, 404)
 
         elif path.endswith("/start"):
             # Start TODO
             todo_id = path.split("/")[2]
             todo = self.storage.start(todo_id, ai_source=ai_source)
             if todo:
-                self._send_json({
-                    "success": True,
-                    "message": f"Started: {todo.title}",
-                    "todo": todo.to_dict()
-                })
+                self._send_json(
+                    {"success": True, "message": f"Started: {todo.title}", "todo": todo.to_dict()}
+                )
             else:
-                self._send_json({
-                    "success": False,
-                    "error": f"TODO not found: {todo_id}"
-                }, 404)
+                self._send_json({"success": False, "error": f"TODO not found: {todo_id}"}, 404)
 
         elif path.endswith("/note"):
             # Add note
@@ -239,16 +210,9 @@ class TodoHTTPHandler(BaseHTTPRequestHandler):
             if todo:
                 todo.add_note(note, ai_source=ai_source)
                 self.storage.update(todo_id, notes=todo.notes)
-                self._send_json({
-                    "success": True,
-                    "message": "Note added",
-                    "todo": todo.to_dict()
-                })
+                self._send_json({"success": True, "message": "Note added", "todo": todo.to_dict()})
             else:
-                self._send_json({
-                    "success": False,
-                    "error": f"TODO not found: {todo_id}"
-                }, 404)
+                self._send_json({"success": False, "error": f"TODO not found: {todo_id}"}, 404)
 
         else:
             self._send_json({"error": "Not found"}, 404)
@@ -264,16 +228,11 @@ class TodoHTTPHandler(BaseHTTPRequestHandler):
             todo_id = path.split("/")[2]
             todo = self.storage.update(todo_id, ai_source=ai_source, **body)
             if todo:
-                self._send_json({
-                    "success": True,
-                    "message": f"Updated: {todo.title}",
-                    "todo": todo.to_dict()
-                })
+                self._send_json(
+                    {"success": True, "message": f"Updated: {todo.title}", "todo": todo.to_dict()}
+                )
             else:
-                self._send_json({
-                    "success": False,
-                    "error": f"TODO not found: {todo_id}"
-                }, 404)
+                self._send_json({"success": False, "error": f"TODO not found: {todo_id}"}, 404)
         else:
             self._send_json({"error": "Not found"}, 404)
 
@@ -286,15 +245,9 @@ class TodoHTTPHandler(BaseHTTPRequestHandler):
             todo_id = path.split("/")[2]
             success = self.storage.delete(todo_id)
             if success:
-                self._send_json({
-                    "success": True,
-                    "message": f"Deleted: {todo_id}"
-                })
+                self._send_json({"success": True, "message": f"Deleted: {todo_id}"})
             else:
-                self._send_json({
-                    "success": False,
-                    "error": f"TODO not found: {todo_id}"
-                }, 404)
+                self._send_json({"success": False, "error": f"TODO not found: {todo_id}"}, 404)
         else:
             self._send_json({"error": "Not found"}, 404)
 
@@ -323,15 +276,9 @@ def run_server(port: int = 8080, storage_dir: Optional[str] = None):
 def main():
     parser = argparse.ArgumentParser(description="MCP TODO HTTP Server")
     parser.add_argument(
-        "--port", "-p",
-        type=int,
-        default=8080,
-        help="Port to run the server on (default: 8080)"
+        "--port", "-p", type=int, default=8080, help="Port to run the server on (default: 8080)"
     )
-    parser.add_argument(
-        "--storage-dir",
-        help="Directory for TODO storage"
-    )
+    parser.add_argument("--storage-dir", help="Directory for TODO storage")
     args = parser.parse_args()
 
     run_server(port=args.port, storage_dir=args.storage_dir)

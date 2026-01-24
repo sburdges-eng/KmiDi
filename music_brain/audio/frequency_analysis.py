@@ -13,12 +13,13 @@ Analyzes audio in standard frequency bands to provide mixing/production guidance
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Optional
 from pathlib import Path
+from typing import Dict, List
 
 try:
     import librosa
     import numpy as np
+
     LIBROSA_AVAILABLE = True
 except ImportError:
     LIBROSA_AVAILABLE = False
@@ -40,6 +41,7 @@ FREQUENCY_BANDS = {
 @dataclass
 class FrequencyProfile:
     """8-band frequency analysis result."""
+
     # Energy per band (normalized 0.0-1.0)
     sub_bass: float = 0.0
     bass: float = 0.0
@@ -49,12 +51,12 @@ class FrequencyProfile:
     presence: float = 0.0
     brilliance: float = 0.0
     air: float = 0.0
-    
+
     # Overall characteristics
     brightness: float = 0.0  # High freq vs low freq ratio
-    warmth: float = 0.0      # Low freq energy
-    clarity: float = 0.0     # Mid-range definition
-    
+    warmth: float = 0.0  # Low freq energy
+    clarity: float = 0.0  # Mid-range definition
+
     def to_dict(self) -> Dict:
         """Convert to dictionary."""
         return {
@@ -74,67 +76,67 @@ class FrequencyProfile:
                 "clarity": self.clarity,
             },
         }
-    
+
     def get_production_notes(self) -> List[str]:
         """Generate production mixing notes based on frequency profile."""
         notes = []
-        
+
         # Sub-bass
         if self.sub_bass > 0.7:
             notes.append("Heavy sub-bass - consider high-pass filtering non-bass elements")
         elif self.sub_bass < 0.2:
             notes.append("Light sub-bass - could add weight with bass boost below 60Hz")
-        
+
         # Bass
         if self.bass > 0.8:
             notes.append("Bass-heavy mix - may need reduction in 60-250Hz range")
         elif self.bass < 0.3:
             notes.append("Thin low-end - boost bass in 100-200Hz range")
-        
+
         # Low-mids
         if self.low_mids > 0.7:
             notes.append("Muddy low-mids - cut 250-500Hz to clean up mix")
-        
+
         # Mids
         if self.mids > 0.8:
             notes.append("Mid-range dominant - typical of aggressive rock/metal")
         elif self.mids < 0.3:
             notes.append("Scooped mids - boost 500-2kHz for more presence")
-        
+
         # Upper-mids
         if self.upper_mids > 0.7:
             notes.append("Strong upper-mids - adds attack and definition")
-        
+
         # Presence
         if self.presence > 0.8:
             notes.append("Very present mix - may be fatiguing, consider slight cut")
         elif self.presence < 0.2:
             notes.append("Lacking presence - boost 4-6kHz for clarity")
-        
+
         # Brilliance
         if self.brilliance > 0.7:
             notes.append("Bright mix - adds sparkle and shimmer")
         elif self.brilliance < 0.2:
             notes.append("Dark mix - boost 6-12kHz for air")
-        
+
         # Air
         if self.air > 0.6:
             notes.append("Airy high-end - adds openness and space")
-        
+
         # Overall characteristics
         if self.brightness > 0.7:
             notes.append("Overall: Bright, modern production style")
         elif self.brightness < 0.3:
             notes.append("Overall: Warm, vintage production style")
-        
+
         if self.warmth > 0.7:
             notes.append("Overall: Warm, full low-end")
-        
+
         if self.clarity > 0.7:
             notes.append("Overall: Clear, well-defined midrange")
         elif self.clarity < 0.3:
             notes.append("Overall: Needs midrange definition")
-        
+
         return notes
 
 
@@ -145,60 +147,57 @@ def analyze_frequency_bands(
 ) -> FrequencyProfile:
     """
     Analyze audio file and extract 8-band frequency profile.
-    
+
     Args:
         audio_path: Path to audio file
         n_fft: FFT window size (higher = better freq resolution)
         hop_length: Hop length in samples
-    
+
     Returns:
         FrequencyProfile with normalized band energies
     """
     if not LIBROSA_AVAILABLE:
         raise ImportError(
-            "librosa required for frequency analysis. "
-            "Install with: pip install librosa"
+            "librosa required for frequency analysis. Install with: pip install librosa"
         )
-    
+
     audio_path = Path(audio_path)
     if not audio_path.exists():
         raise FileNotFoundError(f"Audio file not found: {audio_path}")
-    
+
     # Load audio
     y, sr = librosa.load(str(audio_path), sr=None)
-    
+
     # Compute STFT
     D = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
     magnitude = np.abs(D)
-    
+
     # Compute power spectrogram
-    power_spec = magnitude ** 2
-    
+    power_spec = magnitude**2
+
     # Get frequency bins
     freqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
-    
+
     # Calculate energy per band
     band_energies = {}
     for band_name, (low_freq, high_freq) in FREQUENCY_BANDS.items():
         # Find frequency bins in this band
         band_mask = (freqs >= low_freq) & (freqs < high_freq)
-        
+
         # Sum power in this band across all time frames
         if np.any(band_mask):
             band_power = np.mean(power_spec[band_mask, :])
             band_energies[band_name] = float(band_power)
         else:
             band_energies[band_name] = 0.0
-    
+
     # Normalize energies (0-1 scale)
     max_energy = max(band_energies.values()) if band_energies else 1.0
     if max_energy > 0:
-        normalized_energies = {
-            k: v / max_energy for k, v in band_energies.items()
-        }
+        normalized_energies = {k: v / max_energy for k, v in band_energies.items()}
     else:
-        normalized_energies = {k: 0.0 for k in band_energies}
-    
+        normalized_energies = dict.fromkeys(band_energies, 0.0)
+
     # Calculate overall characteristics
     # Brightness: ratio of high freqs to low freqs
     high_energy = (
@@ -212,21 +211,21 @@ def analyze_frequency_bands(
         + normalized_energies["low_mids"]
     ) / 3
     brightness = high_energy / (high_energy + low_energy + 0.01)
-    
+
     # Warmth: low frequency content
     warmth = (
         normalized_energies["sub_bass"] * 0.4
         + normalized_energies["bass"] * 0.4
         + normalized_energies["low_mids"] * 0.2
     )
-    
+
     # Clarity: midrange definition
     clarity = (
         normalized_energies["mids"] * 0.5
         + normalized_energies["upper_mids"] * 0.3
         + normalized_energies["presence"] * 0.2
     )
-    
+
     return FrequencyProfile(
         sub_bass=normalized_energies["sub_bass"],
         bass=normalized_energies["bass"],
@@ -248,33 +247,41 @@ def compare_frequency_profiles(
 ) -> Dict[str, float]:
     """
     Compare two frequency profiles.
-    
+
     Returns similarity scores for each band and overall similarity.
     """
     similarities = {}
-    
+
     # Compare each band
-    for band in ["sub_bass", "bass", "low_mids", "mids", 
-                 "upper_mids", "presence", "brilliance", "air"]:
+    for band in [
+        "sub_bass",
+        "bass",
+        "low_mids",
+        "mids",
+        "upper_mids",
+        "presence",
+        "brilliance",
+        "air",
+    ]:
         val1 = getattr(profile1, band)
         val2 = getattr(profile2, band)
         # Similarity as inverse of absolute difference
         similarity = 1.0 - abs(val1 - val2)
         similarities[band] = similarity
-    
+
     # Compare characteristics
     for char in ["brightness", "warmth", "clarity"]:
         val1 = getattr(profile1, char)
         val2 = getattr(profile2, char)
         similarity = 1.0 - abs(val1 - val2)
         similarities[f"{char}_similarity"] = similarity
-    
+
     # Overall similarity (weighted average)
     band_avg = sum(similarities[b] for b in similarities if "_similarity" not in b) / 8
     char_avg = sum(similarities[c] for c in similarities if "_similarity" in c) / 3
-    
-    similarities["overall"] = (band_avg * 0.7 + char_avg * 0.3)
-    
+
+    similarities["overall"] = band_avg * 0.7 + char_avg * 0.3
+
     return similarities
 
 
@@ -284,11 +291,11 @@ def suggest_eq_adjustments(
 ) -> List[str]:
     """
     Suggest EQ adjustments to make source sound more like target.
-    
+
     Returns list of EQ suggestions in production-friendly language.
     """
     suggestions = []
-    
+
     # Define frequency ranges for each band
     band_freq_centers = {
         "sub_bass": "40 Hz",
@@ -300,15 +307,15 @@ def suggest_eq_adjustments(
         "brilliance": "9 kHz",
         "air": "16 kHz",
     }
-    
+
     # Compare each band
     threshold = 0.15  # Only suggest changes >15% difference
-    
+
     for band, freq in band_freq_centers.items():
         source_val = getattr(source, band)
         target_val = getattr(target, band)
         diff = target_val - source_val
-        
+
         if abs(diff) > threshold:
             if diff > 0:
                 db_change = f"+{int(diff * 6)} dB"
@@ -316,8 +323,8 @@ def suggest_eq_adjustments(
             else:
                 db_change = f"{int(diff * 6)} dB"
                 suggestions.append(f"Cut {freq} ({band.replace('_', ' ')}): {db_change}")
-    
+
     if not suggestions:
         suggestions.append("Frequency profiles are very similar - no major EQ needed")
-    
+
     return suggestions

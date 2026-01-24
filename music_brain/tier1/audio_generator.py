@@ -14,12 +14,12 @@ Approaches:
 For Mac: Optimized for MPS, low memory footprint.
 """
 
-import numpy as np
-import torch
-from scipy import signal
-from typing import Dict, Optional, Tuple
-import time
 import logging
+import time
+from typing import Dict, Optional
+
+import numpy as np
+from scipy import signal
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class Tier1AudioGenerator:
         device: str = "mps",
         synthesis_mode: str = "additive",
         sample_rate: int = 22050,
-        verbose: bool = True
+        verbose: bool = True,
     ):
         """
         Initialize Tier 1 audio generator.
@@ -69,7 +69,7 @@ class Tier1AudioGenerator:
         emotion: Optional[str] = None,
         duration_seconds: Optional[float] = None,
         duration_sec: Optional[float] = None,
-        instrument: str = "piano"
+        instrument: str = "piano",
     ) -> np.ndarray:
         """
         Synthesize audio texture from MIDI notes + groove + emotion.
@@ -120,27 +120,16 @@ class Tier1AudioGenerator:
 
             # Apply groove-based velocity
             velocity_var = groove_params.get("velocity_variance", 0.5)
-            velocity = np.clip(
-                0.7 + np.random.randn() * 0.2 * velocity_var,
-                0.3, 1.0
-            )
+            velocity = np.clip(0.7 + np.random.randn() * 0.2 * velocity_var, 0.3, 1.0)
 
             # Generate note waveform
             waveform = self._synthesize_note(
-                freq,
-                samples_per_note,
-                emotion_scalar,
-                instrument,
-                velocity
+                freq, samples_per_note, emotion_scalar, instrument, velocity
             )
 
             # Apply ADSR envelope
             envelope = self._adsr_envelope(
-                samples_per_note,
-                attack_ms=10,
-                decay_ms=100,
-                sustain_level=0.7,
-                release_ms=200
+                samples_per_note, attack_ms=10, decay_ms=100, sustain_level=0.7, release_ms=200
             )
             waveform *= envelope
 
@@ -151,7 +140,7 @@ class Tier1AudioGenerator:
             # Place in output buffer
             start_idx = i * samples_per_note
             end_idx = min(start_idx + samples_per_note, num_samples)
-            audio[start_idx:end_idx] = waveform[:end_idx - start_idx]
+            audio[start_idx:end_idx] = waveform[: end_idx - start_idx]
 
         # Apply humanization (slight timing/pitch variation)
         if humanization_amount > 0.1:
@@ -171,7 +160,7 @@ class Tier1AudioGenerator:
         duration_samples: int,
         emotion_factor: float = 0.0,
         instrument: str = "piano",
-        velocity: float = 0.7
+        velocity: float = 0.7,
     ) -> np.ndarray:
         """
         Synthesize single note with emotion-controlled timbre.
@@ -228,7 +217,7 @@ class Tier1AudioGenerator:
         attack_ms: float = 10,
         decay_ms: float = 100,
         sustain_level: float = 0.7,
-        release_ms: float = 200
+        release_ms: float = 200,
     ) -> np.ndarray:
         """
         Generate ADSR (Attack, Decay, Sustain, Release) envelope.
@@ -263,9 +252,7 @@ class Tier1AudioGenerator:
         decay_start = attack_samples
         decay_end = min(decay_start + decay_samples, duration_samples)
         if decay_end > decay_start:
-            envelope[decay_start:decay_end] = np.linspace(
-                1, sustain_level, decay_end - decay_start
-            )
+            envelope[decay_start:decay_end] = np.linspace(1, sustain_level, decay_end - decay_start)
 
         # Release: sustain_level → 0
         release_start = max(duration_samples - release_samples, 0)
@@ -276,11 +263,7 @@ class Tier1AudioGenerator:
 
         return envelope
 
-    def _apply_time_shift(
-        self,
-        waveform: np.ndarray,
-        shift_factor: float
-    ) -> np.ndarray:
+    def _apply_time_shift(self, waveform: np.ndarray, shift_factor: float) -> np.ndarray:
         """
         Apply subtle timing shift (for swing/humanization).
 
@@ -307,9 +290,7 @@ class Tier1AudioGenerator:
         return shifted
 
     def _apply_humanization(
-        self,
-        audio: np.ndarray,
-        humanization_amount: float = 0.3
+        self, audio: np.ndarray, humanization_amount: float = 0.3
     ) -> np.ndarray:
         """
         Apply subtle humanization: timing jitter + pitch modulation.
@@ -337,11 +318,7 @@ class Tier1AudioGenerator:
 
         return humanized
 
-    def _soft_clip(
-        self,
-        audio: np.ndarray,
-        threshold: float = 0.9
-    ) -> np.ndarray:
+    def _soft_clip(self, audio: np.ndarray, threshold: float = 0.9) -> np.ndarray:
         """
         Soft-clip to prevent clipping while preserving dynamics.
 
@@ -362,11 +339,7 @@ class Tier1AudioGenerator:
 
         return audio
 
-    def apply_reverb(
-        self,
-        audio: np.ndarray,
-        room_size: str = "small"
-    ) -> np.ndarray:
+    def apply_reverb(self, audio: np.ndarray, room_size: str = "small") -> np.ndarray:
         """
         Apply convolution-based reverb (optional effect).
 
@@ -379,9 +352,9 @@ class Tier1AudioGenerator:
         """
         # Simple reverb impulse response
         room_ir_length = {
-            "small": int(0.5 * self.sample_rate),     # 0.5 sec
-            "medium": int(1.5 * self.sample_rate),    # 1.5 sec
-            "large": int(3.0 * self.sample_rate),     # 3.0 sec
+            "small": int(0.5 * self.sample_rate),  # 0.5 sec
+            "medium": int(1.5 * self.sample_rate),  # 1.5 sec
+            "large": int(3.0 * self.sample_rate),  # 3.0 sec
         }
 
         ir_len = room_ir_length.get(room_size, room_ir_length["small"])
@@ -392,7 +365,7 @@ class Tier1AudioGenerator:
         ir = ir / np.max(np.abs(ir))
 
         # Apply convolution
-        reverb_audio = signal.fftconvolve(audio, ir, mode='same')
+        reverb_audio = signal.fftconvolve(audio, ir, mode="same")
 
         # Normalize
         reverb_audio = reverb_audio / (np.max(np.abs(reverb_audio)) + 1e-6)
@@ -405,7 +378,7 @@ def generate_tier1_audio(
     midi_notes: np.ndarray,
     groove_params: Dict,
     emotion_embedding: np.ndarray,
-    sample_rate: int = 22050
+    sample_rate: int = 22050,
 ) -> np.ndarray:
     """
     Quick wrapper: Generate audio in one line.

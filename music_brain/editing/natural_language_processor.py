@@ -5,15 +5,15 @@ Interprets user descriptions and maps them to musical parameters.
 Part of Phase 6 of the "All-Knowing Interactive Musical Customization System".
 """
 
-from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, field
-from enum import Enum
 import re
-from collections import defaultdict
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class FeedbackType(Enum):
     """Types of user feedback."""
+
     NEGATIVE = "negative"  # "less X", "not enough Y", "too much Z"
     POSITIVE = "positive"  # "more X", "add Y", "needs Z"
     EMOTIONAL = "emotional"  # "more melancholic", "less aggressive"
@@ -23,6 +23,7 @@ class FeedbackType(Enum):
 
 class Intent(Enum):
     """User intent extracted from feedback."""
+
     INCREASE = "increase"
     DECREASE = "decrease"
     ADD = "add"
@@ -34,6 +35,7 @@ class Intent(Enum):
 @dataclass
 class InterpretedFeedback:
     """Result of natural language interpretation."""
+
     intent: Intent
     target_element: Optional[str]  # "bass", "drums", "melody", "harmony", etc.
     direction: str  # "more", "less", "add", "remove"
@@ -65,7 +67,9 @@ class NaturalLanguageProcessor:
         self.emotional_terms = self._build_emotional_term_map()
         self.part_keywords = self._build_part_keywords()
 
-    def interpret(self, feedback_text: str, current_state: Optional[Dict[str, Any]] = None) -> InterpretedFeedback:
+    def interpret(
+        self, feedback_text: str, current_state: Optional[Dict[str, Any]] = None
+    ) -> InterpretedFeedback:
         """
         Interpret user feedback and generate parameter changes.
 
@@ -105,21 +109,29 @@ class NaturalLanguageProcessor:
             descriptor=descriptor,
             confidence=confidence,
             parameter_changes=parameter_changes,
-            explanation=explanation
+            explanation=explanation,
         )
 
     def _preprocess(self, text: str) -> str:
         """Preprocess text: remove punctuation, handle slang."""
         # Remove punctuation but keep spaces
-        text = re.sub(r'[^\w\s]', ' ', text)
+        text = re.sub(r"[^\w\s]", " ", text)
         # Normalize whitespace
-        text = ' '.join(text.split())
+        text = " ".join(text.split())
         return text
 
     def _extract_intent(self, text: str) -> Intent:
         """Extract user intent from text."""
         increase_keywords = ["more", "add", "increase", "boost", "enhance", "needs", "wants"]
-        decrease_keywords = ["less", "reduce", "decrease", "lower", "remove", "don't want", "doesn't need"]
+        decrease_keywords = [
+            "less",
+            "reduce",
+            "decrease",
+            "lower",
+            "remove",
+            "don't want",
+            "doesn't need",
+        ]
         remove_keywords = ["remove", "delete", "get rid of", "eliminate"]
         keep_keywords = ["keep", "maintain", "preserve"]
 
@@ -192,7 +204,7 @@ class NaturalLanguageProcessor:
         descriptor: str,
         direction: str,
         target_element: Optional[str],
-        current_state: Optional[Dict[str, Any]]
+        current_state: Optional[Dict[str, Any]],
     ) -> Tuple[Dict[str, float], float]:
         """
         Map descriptor and direction to parameter changes.
@@ -270,11 +282,7 @@ class NaturalLanguageProcessor:
         return base
 
     def _generate_explanation(
-        self,
-        intent: Intent,
-        descriptor: str,
-        direction: str,
-        target_element: Optional[str]
+        self, intent: Intent, descriptor: str, direction: str, target_element: Optional[str]
     ) -> str:
         """Generate explanation for the interpretation."""
         parts = []
@@ -306,7 +314,7 @@ class NaturalLanguageProcessor:
         """
         self.user_vocabulary[term.lower()] = {
             "parameters": parameter_mapping,
-            "confidence": confidence
+            "confidence": confidence,
         }
 
     def _build_musical_term_map(self) -> Dict[str, Dict[str, Any]]:
@@ -314,32 +322,26 @@ class NaturalLanguageProcessor:
         return {
             "chug": {
                 "parameters": {"intensity": 0.2, "dynamics": 0.15, "humanize": -0.1},
-                "confidence": 0.8
+                "confidence": 0.8,
             },
             "slap": {
                 "parameters": {"dynamics": 0.2, "humanize": 0.1, "intensity": 0.15},
-                "confidence": 0.85
+                "confidence": 0.85,
             },
             "groove": {
                 "parameters": {"humanize": 0.15, "feel": 0.1, "dynamics": 0.1},
-                "confidence": 0.8
+                "confidence": 0.8,
             },
             "punchy": {
                 "parameters": {"dynamics": 0.2, "intensity": 0.15, "humanize": -0.05},
-                "confidence": 0.75
+                "confidence": 0.75,
             },
             "smooth": {
                 "parameters": {"humanize": 0.1, "dynamics": -0.1, "intensity": -0.05},
-                "confidence": 0.75
+                "confidence": 0.75,
             },
-            "tight": {
-                "parameters": {"humanize": -0.15, "intensity": 0.1},
-                "confidence": 0.8
-            },
-            "loose": {
-                "parameters": {"humanize": 0.2, "feel": -0.1},
-                "confidence": 0.75
-            },
+            "tight": {"parameters": {"humanize": -0.15, "intensity": 0.1}, "confidence": 0.8},
+            "loose": {"parameters": {"humanize": 0.2, "feel": -0.1}, "confidence": 0.75},
         }
 
     def _build_emotional_term_map(self) -> Dict[str, Dict[str, Any]]:
@@ -347,27 +349,18 @@ class NaturalLanguageProcessor:
         return {
             "melancholic": {
                 "parameters": {"valence": -0.2, "intensity": -0.1, "dynamics": -0.1},
-                "confidence": 0.8
+                "confidence": 0.8,
             },
             "aggressive": {
                 "parameters": {"arousal": 0.2, "intensity": 0.2, "dynamics": 0.15},
-                "confidence": 0.8
+                "confidence": 0.8,
             },
-            "dark": {
-                "parameters": {"valence": -0.15, "intensity": 0.1},
-                "confidence": 0.75
-            },
-            "bright": {
-                "parameters": {"valence": 0.15, "intensity": 0.1},
-                "confidence": 0.75
-            },
-            "soft": {
-                "parameters": {"dynamics": -0.2, "intensity": -0.1},
-                "confidence": 0.8
-            },
+            "dark": {"parameters": {"valence": -0.15, "intensity": 0.1}, "confidence": 0.75},
+            "bright": {"parameters": {"valence": 0.15, "intensity": 0.1}, "confidence": 0.75},
+            "soft": {"parameters": {"dynamics": -0.2, "intensity": -0.1}, "confidence": 0.8},
             "intense": {
                 "parameters": {"intensity": 0.2, "dynamics": 0.15, "arousal": 0.1},
-                "confidence": 0.8
+                "confidence": 0.8,
             },
         }
 
@@ -396,9 +389,7 @@ class FeedbackInterpreter:
         self.feedback_history: List[Tuple[str, InterpretedFeedback]] = []
 
     def interpret_feedback(
-        self,
-        feedback_text: str,
-        current_state: Dict[str, Any]
+        self, feedback_text: str, current_state: Dict[str, Any]
     ) -> InterpretedFeedback:
         """
         Interpret feedback and generate parameter change proposal.
@@ -414,11 +405,7 @@ class FeedbackInterpreter:
         self.feedback_history.append((feedback_text, result))
         return result
 
-    def refine_interpretation(
-        self,
-        original_feedback: str,
-        correction: str
-    ) -> InterpretedFeedback:
+    def refine_interpretation(self, original_feedback: str, correction: str) -> InterpretedFeedback:
         """
         Refine interpretation based on user correction.
 
@@ -462,7 +449,7 @@ def main():
             "intensity": 0.6,
             "dynamics": 0.5,
         },
-        "emotion": "grief"
+        "emotion": "grief",
     }
 
     print("Natural Language Feedback Interpretation:")
@@ -470,7 +457,7 @@ def main():
 
     for feedback in feedback_examples:
         result = processor.interpret(feedback, current_state)
-        print(f"\nFeedback: \"{feedback}\"")
+        print(f'\nFeedback: "{feedback}"')
         print(f"Intent: {result.intent.value}")
         print(f"Target: {result.target_element or 'general'}")
         print(f"Direction: {result.direction}")

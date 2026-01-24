@@ -2,23 +2,24 @@
 Rhythm and meter rules for timing, phrasing, and metric organization.
 """
 
-from typing import List, Dict, Set
+from typing import List
+
 from .base import Rule
+from .context import CONTEXT_GROUPS, MusicalContext
 from .severity import RuleSeverity
-from .context import MusicalContext, CONTEXT_GROUPS
 
 
 class RhythmRules:
     """
     Rules governing rhythm, meter, and temporal organization.
-    
+
     Categories:
         - Metric hierarchy (downbeat emphasis, hypermeter)
         - Syncopation (suspension preparation/resolution)
         - Phrase structure (4/8/16 bar periods)
         - Polyrhythm (3:2, 4:3 ratios)
     """
-    
+
     @staticmethod
     def get_all_rules() -> List[Rule]:
         """Get all rhythm and meter rules."""
@@ -37,7 +38,6 @@ class RhythmRules:
                 ],
                 category="metric_hierarchy",
             ),
-            
             Rule(
                 name="avoid_metric_ambiguity",
                 description="Avoid patterns that obscure the meter (unless intentional polymeter)",
@@ -51,7 +51,6 @@ class RhythmRules:
                 ],
                 category="metric_hierarchy",
             ),
-            
             # Syncopation
             Rule(
                 name="prepare_suspensions",
@@ -65,7 +64,6 @@ class RhythmRules:
                 ],
                 category="syncopation",
             ),
-            
             Rule(
                 name="resolve_suspensions_downward",
                 description="Suspensions resolve by stepwise descent (4-3, 9-8, 7-6)",
@@ -78,7 +76,6 @@ class RhythmRules:
                 ],
                 category="syncopation",
             ),
-            
             # Phrase Structure
             Rule(
                 name="balanced_phrase_lengths",
@@ -93,7 +90,6 @@ class RhythmRules:
                 ],
                 category="phrase_structure",
             ),
-            
             Rule(
                 name="antecedent_consequent",
                 description="Antecedent phrase ends with half cadence, consequent with authentic cadence",
@@ -106,7 +102,6 @@ class RhythmRules:
                 ],
                 category="phrase_structure",
             ),
-            
             # Polyrhythm
             Rule(
                 name="simple_polyrhythm_ratios",
@@ -120,7 +115,6 @@ class RhythmRules:
                 ],
                 category="polyrhythm",
             ),
-            
             # Tempo and Rubato
             Rule(
                 name="gradual_tempo_changes",
@@ -135,17 +129,17 @@ class RhythmRules:
                 category="tempo",
             ),
         ]
-    
+
     @staticmethod
     def get_rules_by_category(category: str) -> List[Rule]:
         """Get all rules in a specific category."""
         return [r for r in RhythmRules.get_all_rules() if r.category == category]
-    
+
     @staticmethod
     def get_rules_by_context(context: MusicalContext) -> List[Rule]:
         """Get all rules applicable to a musical context."""
         return [r for r in RhythmRules.get_all_rules() if r.applies_to_context(context)]
-    
+
     @staticmethod
     def get_rules_by_severity(severity: RuleSeverity) -> List[Rule]:
         """Get all rules at a specific severity level."""

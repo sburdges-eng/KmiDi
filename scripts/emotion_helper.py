@@ -25,54 +25,52 @@ This enables:
 4. Future: Audio-based emotion extraction
 """
 
-from typing import List, Tuple, Optional
-from pathlib import Path
 import sys
+from pathlib import Path
+from typing import List, Optional, Tuple
 
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def emotion_match_to_vector(
-    base_emotion: str,
-    sub_emotion: str = "",
-    intensity_tier: int = 3
+    base_emotion: str, sub_emotion: str = "", intensity_tier: int = 3
 ) -> List[float]:
     """
     Convert emotion thesaurus match to [valence, arousal, intensity] vector.
-    
+
     Based on Russell's Circumplex Model and music_brain's emotional_mapping.
-    
+
     Args:
         base_emotion: One of happy, sad, angry, fear, surprise, disgust
         sub_emotion: Sub-category (optional)
         intensity_tier: 1-6 intensity tier from thesaurus
-        
+
     Returns:
         [valence, arousal, intensity] where each is in range [-1, 1] or [0, 1]
     """
     # Normalize intensity from tier (1-6) to [0, 1]
     intensity = (intensity_tier - 1) / 5.0  # Maps 1→0.0, 6→1.0
-    
+
     # Base emotion mappings using Russell's Circumplex Model
     # (valence, arousal) - then we'll scale by intensity
     emotion_map = {
-        "happy": (0.8, 0.6),      # High valence, moderate-high arousal
-        "joy": (0.9, 0.7),         # Very high valence, high arousal
-        "sad": (-0.7, -0.4),       # Low valence, low arousal
-        "grief": (-0.8, -0.5),     # Very low valence, low arousal
-        "angry": (-0.7, 0.8),      # Low valence, high arousal
-        "rage": (-0.9, 0.95),      # Very low valence, very high arousal
-        "fear": (-0.6, 0.7),       # Low valence, high arousal
-        "anxiety": (-0.5, 0.6),    # Moderate-low valence, moderate-high arousal
-        "surprise": (0.2, 0.8),    # Slightly positive, high arousal
-        "disgust": (-0.6, 0.3),    # Low valence, moderate arousal
-        "calm": (0.4, -0.7),       # Moderate valence, low arousal
-        "peaceful": (0.5, -0.8),   # Moderate-high valence, very low arousal
-        "excited": (0.7, 0.9),     # High valence, very high arousal
-        "content": (0.6, -0.3),    # Moderate-high valence, low arousal
+        "happy": (0.8, 0.6),  # High valence, moderate-high arousal
+        "joy": (0.9, 0.7),  # Very high valence, high arousal
+        "sad": (-0.7, -0.4),  # Low valence, low arousal
+        "grief": (-0.8, -0.5),  # Very low valence, low arousal
+        "angry": (-0.7, 0.8),  # Low valence, high arousal
+        "rage": (-0.9, 0.95),  # Very low valence, very high arousal
+        "fear": (-0.6, 0.7),  # Low valence, high arousal
+        "anxiety": (-0.5, 0.6),  # Moderate-low valence, moderate-high arousal
+        "surprise": (0.2, 0.8),  # Slightly positive, high arousal
+        "disgust": (-0.6, 0.3),  # Low valence, moderate arousal
+        "calm": (0.4, -0.7),  # Moderate valence, low arousal
+        "peaceful": (0.5, -0.8),  # Moderate-high valence, very low arousal
+        "excited": (0.7, 0.9),  # High valence, very high arousal
+        "content": (0.6, -0.3),  # Moderate-high valence, low arousal
     }
-    
+
     # Try to find mapping for base emotion
     base_key = base_emotion.lower()
     if base_key in emotion_map:
@@ -80,7 +78,7 @@ def emotion_match_to_vector(
     else:
         # Default neutral
         valence, arousal = (0.0, 0.0)
-    
+
     # Sub-emotion adjustments (examples - can be expanded)
     sub_adjustments = {
         "grief": {"valence": -0.1, "arousal": -0.1},
@@ -93,16 +91,16 @@ def emotion_match_to_vector(
         "bliss": {"valence": 0.1, "arousal": 0.1},
         "ecstasy": {"valence": 0.15, "arousal": 0.2},
     }
-    
+
     if sub_emotion and sub_emotion.lower() in sub_adjustments:
         adj = sub_adjustments[sub_emotion.lower()]
         valence += adj.get("valence", 0.0)
         arousal += adj.get("arousal", 0.0)
-    
+
     # Clamp to valid ranges
     valence = max(-1.0, min(1.0, valence))
     arousal = max(-1.0, min(1.0, arousal))
-    
+
     # Intensity is already normalized to [0, 1]
     return [valence, arousal, intensity]
 
@@ -110,16 +108,16 @@ def emotion_match_to_vector(
 def extract_emotion_from_filename(filepath: Path) -> Optional[Tuple[str, str, int]]:
     """
     Extract emotion from file path or filename.
-    
+
     Returns:
         (base_emotion, sub_emotion, intensity_tier) or None if not found
     """
     # Check parent directory name
     parent_name = filepath.parent.name.lower()
-    
+
     # Check filename
     filename = filepath.stem.lower()
-    
+
     # Emotion patterns to look for
     emotions = {
         "happy": ("happy", "", 3),
@@ -150,16 +148,16 @@ def extract_emotion_from_filename(filepath: Path) -> Optional[Tuple[str, str, in
         "tender": ("happy", "tender", 3),
         "energetic": ("happy", "energetic", 4),
     }
-    
+
     # Check directory name first
     if parent_name in emotions:
         return emotions[parent_name]
-    
+
     # Check filename for emotion keywords
     for emotion_key, emotion_data in emotions.items():
         if emotion_key in filename:
             return emotion_data
-    
+
     # No explicit emotion hint found
     return None
 
@@ -167,12 +165,12 @@ def extract_emotion_from_filename(filepath: Path) -> Optional[Tuple[str, str, in
 def get_emotion_vector_from_path(filepath: Path) -> List[float]:
     """
     Get emotion vector from file path.
-    
+
     Convenience function that combines extraction and conversion.
-    
+
     Args:
         filepath: Path to audio or MIDI file
-        
+
     Returns:
         [valence, arousal, intensity] emotion vector
     """
@@ -188,30 +186,28 @@ def get_emotion_vector_from_path(filepath: Path) -> List[float]:
 def use_emotion_thesaurus(word: str) -> Optional[List[float]]:
     """
     Use music_brain's EmotionThesaurus to get emotion vector from a word.
-    
+
     Args:
         word: Emotion word/phrase to look up
-        
+
     Returns:
         [valence, arousal, intensity] or None if not found
     """
     try:
         from music_brain.emotion_thesaurus import EmotionThesaurus
-        
+
         thesaurus = EmotionThesaurus()
         matches = thesaurus.find_by_synonym(word)
-        
+
         if matches:
             # Use first match
             match = matches[0]
             return emotion_match_to_vector(
-                match.base_emotion,
-                match.sub_emotion,
-                match.intensity_tier
+                match.base_emotion, match.sub_emotion, match.intensity_tier
             )
     except Exception as e:
         print(f"Warning: Could not use EmotionThesaurus: {e}")
-    
+
     return None
 
 
@@ -224,14 +220,14 @@ if __name__ == "__main__":
         ("fear", "anxiety", 4),
         ("calm", "", 2),
     ]
-    
+
     print("Emotion to Vector Mapping:")
     print("-" * 60)
     for base, sub, tier in test_emotions:
         vec = emotion_match_to_vector(base, sub, tier)
         sub_str = f" > {sub}" if sub else ""
         print(f"{base}{sub_str} (tier {tier}): {vec}")
-    
+
     # Test thesaurus lookup
     print("\nThesaurus Lookup Examples:")
     print("-" * 60)

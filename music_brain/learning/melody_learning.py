@@ -6,11 +6,12 @@ learning, and adaptive melody generation that can be combined with existing
 ML models (e.g., MelodyTransformer) as a fallback.
 """
 
+import json
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-from collections import Counter, defaultdict
-import json
+from typing import Dict, List, Optional
+
 import numpy as np
 
 DEFAULT_STORAGE = Path.home() / ".parrot" / "music_learning" / "melodies"
@@ -21,6 +22,7 @@ PROFILES_DIR = DEFAULT_STORAGE / "profiles"
 @dataclass
 class MelodyExample:
     """Single melody example with context and feedback."""
+
     melody: List[int]  # MIDI notes
     emotion: str = "neutral"
     valence: float = 0.0
@@ -52,6 +54,7 @@ class MelodyExample:
 @dataclass
 class MelodyProfile:
     """Learned melody profile containing pattern statistics."""
+
     name: str
     emotion_patterns: Dict[str, Dict]  # emotion -> stats
     global_patterns: Dict
@@ -97,7 +100,7 @@ class MelodyStore:
         path = self.examples_dir / f"{example_id}.json"
         if not path.exists():
             return None
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
         return MelodyExample.from_dict(data)
 
@@ -114,7 +117,7 @@ class MelodyStore:
         path = self.profiles_dir / f"{name}.json"
         if not path.exists():
             return None
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
         return MelodyProfile.from_dict(data)
 
@@ -208,11 +211,13 @@ class MelodyLearner:
         profile: MelodyProfile,
         length: Optional[int] = None,
         key: str = "C",
-        mode: str = "major"
+        mode: str = "major",
     ) -> List[int]:
         """Generate a melody using learned patterns (basic statistical sampling)."""
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get(
+            "neutral"
+        )
         if not patterns:
             patterns = profile.global_patterns
 
@@ -290,7 +295,7 @@ class MelodyLearningManager:
         profile_name: Optional[str] = None,
         length: Optional[int] = None,
         key: str = "C",
-        mode: str = "major"
+        mode: str = "major",
     ) -> List[int]:
         profile: Optional[MelodyProfile] = None
         if profile_name:

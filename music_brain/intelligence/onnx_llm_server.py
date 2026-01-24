@@ -5,6 +5,7 @@ Designed to run inside the `daiw-llm-onnx` Docker service.
 """
 
 from typing import List, Optional
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
@@ -77,4 +78,3 @@ def generate(request: PromptRequest) -> dict:
         temperature=request.temperature,
         top_p=request.top_p,
     )
-

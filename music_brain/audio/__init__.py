@@ -15,35 +15,35 @@ Features:
 - Audio refinery (sample processing)
 """
 
-from music_brain.audio.feel import analyze_feel, AudioFeatures
-from music_brain.audio.reference_dna import (
-    analyze_reference,
-    apply_reference_to_plan,
-    ReferenceProfile,
+from music_brain.audio.analyzer import (
+    AudioAnalysis,
+    AudioAnalyzer,
+    analyze_audio,
 )
 from music_brain.audio.chord_detection import (
-    ChordDetector,
     ChordDetection,
+    ChordDetector,
     ChordProgressionDetection,
 )
+from music_brain.audio.feel import AudioFeatures, analyze_feel
 from music_brain.audio.frequency_analysis import (
+    FrequencyProfile,
     analyze_frequency_bands,
     compare_frequency_profiles,
     suggest_eq_adjustments,
-    FrequencyProfile,
 )
-from music_brain.audio.analyzer import (
-    AudioAnalyzer,
-    AudioAnalysis,
-    analyze_audio,
+from music_brain.audio.reference_dna import (
+    ReferenceProfile,
+    analyze_reference,
+    apply_reference_to_plan,
 )
 from music_brain.audio.refinery import (
-    process_file,
-    refine_folder,
-    run_refinery,
     pipe_clean,
     pipe_industrial,
     pipe_tape_rot,
+    process_file,
+    refine_folder,
+    run_refinery,
 )
 
 __all__ = [

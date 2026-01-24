@@ -31,13 +31,12 @@ Usage:
 import argparse
 import json
 import logging
-import os
 import sys
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -52,7 +51,6 @@ except ImportError:  # optional
     ray = None
 import subprocess
 
-import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 # PyTorch imports
@@ -133,13 +131,13 @@ class TrainingResult:
 
     def summary_line(self) -> str:
         """Format like: emotion_recognizer  89.50%  36/100 (early stopped)  12.2 min"""
-        status = f"(early stopped)" if self.early_stopped else ""
+        status = "(early stopped)" if self.early_stopped else ""
         time_str = (
             f"{self.training_time_seconds / 60:.1f} min"
             if self.training_time_seconds > 60
             else f"{self.training_time_seconds:.1f}s"
         )
-        return f"{self.model_name:20s} {self.accuracy*100:6.2f}%  {self.epochs_trained}/{self.epochs_total} {status:15s} {time_str}"
+        return f"{self.model_name:20s} {self.accuracy * 100:6.2f}%  {self.epochs_trained}/{self.epochs_total} {status:15s} {time_str}"
 
 
 class ResultsManager:
@@ -773,7 +771,7 @@ def train_model(
 
         # Logging
         if epoch % 10 == 0 or epoch == epochs - 1:
-            logger.info(f"  Epoch {epoch+1}/{epochs}: loss={val_loss:.4f}, acc={accuracy:.4f}")
+            logger.info(f"  Epoch {epoch + 1}/{epochs}: loss={val_loss:.4f}, acc={accuracy:.4f}")
 
         # Save best model
         if val_loss < best_val_loss:
@@ -786,7 +784,7 @@ def train_model(
 
         # Early stopping
         if epochs_no_improve >= patience and epoch >= min_epochs:
-            logger.info(f"  Early stopping at epoch {epoch+1}")
+            logger.info(f"  Early stopping at epoch {epoch + 1}")
             break
 
     training_time = time.time() - start_time
