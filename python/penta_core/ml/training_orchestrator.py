@@ -384,10 +384,10 @@ class PyTorchTrainer(BaseTrainer):
             self.criterion = nn.MSELoss()
         elif task in [ModelTask.HARMONY_PREDICTION, ModelTask.EMOTION_CLASSIFICATION, ModelTask.MELODY_GENERATION]:
             # Classification tasks - use CrossEntropy loss
-        self.criterion = nn.MSELoss()
+            self.criterion = nn.CrossEntropyLoss()
         else:
             # Default to CrossEntropy for unknown tasks
-        self.criterion = nn.MSELoss()
+            self.criterion = nn.CrossEntropyLoss()
 
         # Setup optimizer
         self.optimizer = torch.optim.AdamW(
