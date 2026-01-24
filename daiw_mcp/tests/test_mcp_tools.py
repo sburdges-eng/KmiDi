@@ -16,7 +16,6 @@ import pytest
 
 try:
     from mcp.server import Server
-    from mcp.types import TextContent, Tool
 
     MCP_AVAILABLE = True
 except ImportError:
@@ -336,7 +335,7 @@ async def test_tool_routing():
         pytest.skip("MCP not available")
 
     # Test routing to harmony module
-    with patch("daiw_mcp.tools.harmony.register_tools") as mock_register:
+    with patch("daiw_mcp.tools.harmony.register_tools"):
         # This would require more complex mocking
         pass  # Placeholder for routing test
 

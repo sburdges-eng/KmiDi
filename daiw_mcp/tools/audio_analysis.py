@@ -12,7 +12,7 @@ Provides 6 tools:
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 try:
     from mcp.server import Server
@@ -26,8 +26,6 @@ except ImportError:
 try:
     from music_brain.audio import (
         AudioAnalyzer,
-        AudioFeatures,
-        ChordDetector,
         TheoryAnalyzer,
         analyze_feel,
         detect_chords_from_audio,
@@ -52,7 +50,7 @@ def register_tools(server: Server) -> None:
         return
 
     @server.list_tools()
-    async def list_tools() -> List[Tool]:
+    async def list_tools() -> list[Tool]:
         """List available audio analysis tools."""
         return [
             Tool(

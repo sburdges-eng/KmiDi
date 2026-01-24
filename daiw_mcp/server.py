@@ -7,7 +7,7 @@ Unified server that registers all 24+ MCP tools for music production.
 import asyncio
 import json
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 try:
     from mcp.server import Server
@@ -27,7 +27,7 @@ from daiw_mcp.tools.intent import register_tools as register_intent
 from daiw_mcp.tools.teaching import register_tools as register_teaching
 
 # Store tool handlers from each module
-_module_servers: Dict[str, Server] = {}
+_module_servers: dict[str, Server] = {}
 
 
 def create_server() -> Optional[Server]:
@@ -65,7 +65,7 @@ def create_server() -> Optional[Server]:
 
     # Aggregate all tools
     @unified_server.list_tools()
-    async def list_tools() -> List[Tool]:
+    async def list_tools() -> list[Tool]:
         """List all available tools from all modules."""
         all_tools = []
         for server in _module_servers.values():
@@ -75,10 +75,10 @@ def create_server() -> Optional[Server]:
 
     # Route tool calls to appropriate module
     @unified_server.call_tool()
-    async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
+    async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         """Route tool calls to the appropriate module handler."""
         # Try each module server
-        for module_name, server in _module_servers.items():
+        for _module_name, server in _module_servers.items():
             tools = await server.list_tools()
             tool_names = [t.name for t in tools]
             if name in tool_names:

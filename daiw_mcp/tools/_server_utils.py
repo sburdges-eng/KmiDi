@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 import mcp.types as mcp_types
 from mcp.server import Server
@@ -17,7 +17,7 @@ def attach_direct_methods(server: Server) -> None:
     constructing request objects.
     """
 
-    async def list_tools_direct() -> List[mcp_types.Tool]:
+    async def list_tools_direct() -> list[mcp_types.Tool]:
         handler = server.request_handlers.get(mcp_types.ListToolsRequest)
         if handler is None:
             return []
@@ -26,7 +26,7 @@ def attach_direct_methods(server: Server) -> None:
         root = getattr(response, "root", None)
         return list(getattr(root, "tools", []) or [])
 
-    async def call_tool_direct(name: str, arguments: Dict[str, Any]) -> List[mcp_types.TextContent]:
+    async def call_tool_direct(name: str, arguments: dict[str, Any]) -> list[mcp_types.TextContent]:
         handler = server.request_handlers.get(mcp_types.CallToolRequest)
         if handler is None:
             return []
