@@ -481,3 +481,25 @@ CANONICAL/**/.git
 _QUARANTINE*/**/.git
 kelly-project/.git
 desktop_app/data/uploaded/**/.git
+
+# =============================================================================
+# Environment Files
+# =============================================================================
+# Ignore actual environment files (secrets)
+.env
+.env.local
+.env.production.local
+.env.*.local
+
+# Ignore feature-specific env files (except examples)
+env/.env.tauri
+env/.env.ml
+env/.env.training
+env/.env.mcp
+env/.env.build
+
+# Keep example files
+!.env.example
+!.env.development
+!.env.production
+!env/.env.*.example

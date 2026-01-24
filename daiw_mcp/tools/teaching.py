@@ -8,7 +8,7 @@ Provides 3 tools:
 """
 
 import json
-from typing import Any, Dict, List
+from typing import Any
 
 try:
     from mcp.server import Server
@@ -30,7 +30,7 @@ def register_tools(server: Server) -> None:
         return
 
     @server.list_tools()
-    async def list_tools() -> List[Tool]:
+    async def list_tools() -> list[Tool]:
         """List available teaching tools."""
         return [
             Tool(
@@ -78,7 +78,7 @@ def register_tools(server: Server) -> None:
         ]
 
     @server.call_tool()
-    async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
+    async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         """Handle tool calls."""
         try:
             if name == "explain_rulebreak":
@@ -149,11 +149,11 @@ def register_tools(server: Server) -> None:
                     "musical_parameters": {
                         "suggested_key": base_mapping["key"],
                         "suggested_tempo": base_mapping["tempo"],
-                        "rule_break_suggestions": [
-                            {"rule": s["rule"], "effect": s["effect"]} for s in suggestions
-                        ]
-                        if suggestions
-                        else base_mapping["rule_breaks"],
+                        "rule_break_suggestions": (
+                            [{"rule": s["rule"], "effect": s["effect"]} for s in suggestions]
+                            if suggestions
+                            else base_mapping["rule_breaks"]
+                        ),
                     },
                     "note": "These are suggestions. Emotional intent should drive technical choices.",
                 }

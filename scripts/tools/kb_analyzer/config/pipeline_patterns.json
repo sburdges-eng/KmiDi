@@ -1,0 +1,17 @@
+{
+  "plugin": {
+    "file_patterns": ["PluginProcessor", "PluginEditor", "AudioProcessor", "\\.vst3", "\\.component", "\\.clap", "juce::AudioProcessor"],
+    "path_patterns": ["plugin", "vst", "au", "juce", "plugins"],
+    "keywords": ["juce::AudioProcessor", "VST3", "AU", "CLAP", "plugin", "AudioProcessor"]
+  },
+  "daw": {
+    "file_patterns": ["SessionManager", "ProjectFile", "DAWEngine", "Session", "Project"],
+    "path_patterns": ["daw", "session", "project", "arrangement", "timeline"],
+    "keywords": ["session", "project", "daw", "arrangement", "timeline", "track"]
+  },
+  "standalone": {
+    "file_patterns": ["main\\.swift", "AppDelegate", "Tauri", "Electron", "App\\.tsx", "App\\.jsx", "main\\.rs"],
+    "path_patterns": ["tauri", "electron", "src-tauri", "macOS", "iOS", "mobile", "desktop"],
+    "keywords": ["tauri", "electron", "desktop", "mobile", "app", "application"]
+  }
+}

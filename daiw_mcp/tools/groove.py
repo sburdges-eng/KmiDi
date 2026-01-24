@@ -11,7 +11,7 @@ Provides 5 tools:
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 try:
     from mcp.server import Server
@@ -31,7 +31,7 @@ def register_tools(server: Server) -> None:
         return
 
     @server.list_tools()
-    async def list_tools() -> List[Tool]:
+    async def list_tools() -> list[Tool]:
         """List available groove tools."""
         return [
             Tool(
@@ -133,7 +133,7 @@ def register_tools(server: Server) -> None:
         ]
 
     @server.call_tool()
-    async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
+    async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         """Handle tool calls."""
         try:
             if name == "extract_groove":
@@ -192,12 +192,16 @@ def register_tools(server: Server) -> None:
                 result = {
                     "midi_file": midi_file,
                     "pocket_analysis": {
-                        "feel": "ahead"
-                        if groove.timing_stats.get("mean_deviation_ms", 0) > 0
-                        else "behind",
-                        "tightness": "tight"
-                        if groove.timing_stats.get("std_deviation_ms", 0) < 10
-                        else "loose",
+                        "feel": (
+                            "ahead"
+                            if groove.timing_stats.get("mean_deviation_ms", 0) > 0
+                            else "behind"
+                        ),
+                        "tightness": (
+                            "tight"
+                            if groove.timing_stats.get("std_deviation_ms", 0) < 10
+                            else "loose"
+                        ),
                         "swing": "swung" if groove.swing_factor > 0.1 else "straight",
                     },
                     "timing_deviation_ms": groove.timing_stats.get("mean_deviation_ms", 0),

@@ -12,7 +12,7 @@ Provides 6 tools:
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 try:
     from mcp.server import Server
@@ -24,7 +24,8 @@ except ImportError:
 
 # Import DAiW modules
 from music_brain.harmony import HarmonyGenerator, generate_midi_from_harmony
-from music_brain.structure.progression import diagnose_progression, generate_reharmonizations
+from music_brain.structure.progression import (diagnose_progression,
+                                               generate_reharmonizations)
 
 
 def register_tools(server: Server) -> None:
@@ -33,7 +34,7 @@ def register_tools(server: Server) -> None:
         return
 
     @server.list_tools()
-    async def list_tools() -> List[Tool]:
+    async def list_tools() -> list[Tool]:
         """List available harmony tools."""
         return [
             Tool(
@@ -160,7 +161,7 @@ def register_tools(server: Server) -> None:
         ]
 
     @server.call_tool()
-    async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
+    async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         """Handle tool calls."""
         try:
             if name == "analyze_progression":
@@ -192,7 +193,8 @@ def register_tools(server: Server) -> None:
                             )
                         ]
 
-                    from music_brain.session.intent_schema import CompleteSongIntent
+                    from music_brain.session.intent_schema import \
+                        CompleteSongIntent
 
                     intent = CompleteSongIntent.load(str(intent_path))
                     harmony = generator.generate_from_intent(intent)
@@ -209,12 +211,13 @@ def register_tools(server: Server) -> None:
 
                     if emotion:
                         # Apply emotional rule-breaking
-                        from music_brain.session.intent_schema import suggest_rule_break
+                        from music_brain.session.intent_schema import \
+                            suggest_rule_break
 
                         suggestions = suggest_rule_break(emotion)
                         if suggestions:
                             # Apply first suggestion
-                            rule_break = suggestions[0]["rule"]
+                            _rule_break = suggestions[0]["rule"]
                             # This would need more implementation
 
                 result = {
@@ -308,8 +311,8 @@ def register_tools(server: Server) -> None:
 
 
 def _optimize_voice_leading(
-    chords: List[str], key: str
-) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    chords: list[str], key: str
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Optimize voice leading for a chord progression.
 
@@ -346,7 +349,7 @@ def _optimize_voice_leading(
         for octave_shift in [-1, 0, 1]:
             for inversion, _ in enumerate(base_notes):
                 voicing = []
-                for i, note in enumerate(base_notes):
+                for i, _note in enumerate(base_notes):
                     idx = (i + inversion) % len(base_notes)
                     voicing.append(base_notes[idx] + (octave_shift * 12))
                 options.append(sorted(voicing))
@@ -357,7 +360,7 @@ def _optimize_voice_leading(
     selected_voicings = []
     previous_voicing = None
 
-    for i, options in enumerate(voicing_options):
+    for _i, options in enumerate(voicing_options):
         if previous_voicing is None:
             # First chord: use root position
             selected_voicings.append(options[0])
@@ -473,6 +476,51 @@ def _optimize_voice_leading(
             "score": round(score, 2),
             "issues": issues if issues else ["No major issues detected"],
             "improvements": improvements if improvements else ["Voice leading is smooth"],
+            "parallel_motion": parallel_motion if parallel_motion else [],
+        },
+    )
+            "parallel_motion": parallel_motion if parallel_motion else [],
+        },
+    )
+            "parallel_motion": parallel_motion if parallel_motion else [],
+        },
+    )
+            "parallel_motion": parallel_motion if parallel_motion else [],
+        },
+    )
+            "parallel_motion": parallel_motion if parallel_motion else [],
+        },
+    )
+            "parallel_motion": parallel_motion if parallel_motion else [],
+        },
+    )
+            "parallel_motion": parallel_motion if parallel_motion else [],
+        },
+    )
+            "parallel_motion": parallel_motion if parallel_motion else [],
+        },
+    )
+            "parallel_motion": parallel_motion if parallel_motion else [],
+        },
+    )
+            "parallel_motion": parallel_motion if parallel_motion else [],
+        },
+    )
+            "parallel_motion": parallel_motion if parallel_motion else [],
+        },
+    )
+            "parallel_motion": parallel_motion if parallel_motion else [],
+        },
+    )
+            "parallel_motion": parallel_motion if parallel_motion else [],
+        },
+    )
+            "parallel_motion": parallel_motion if parallel_motion else [],
+        },
+    )
+            "parallel_motion": parallel_motion if parallel_motion else [],
+        },
+    )
             "parallel_motion": parallel_motion if parallel_motion else [],
         },
     )

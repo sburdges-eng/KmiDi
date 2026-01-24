@@ -130,7 +130,7 @@ def register_tools(server: Server) -> None:
         ]
 
     @server.call_tool()
-    async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
+    async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         """Handle tool calls."""
         try:
             audio_file = arguments.get("audio_file", "")
@@ -249,9 +249,11 @@ def register_tools(server: Server) -> None:
                         result = {
                             "audio_file": audio_file,
                             "tempo_bpm": features.tempo_bpm,
-                            "energy_curve": features.energy_curve[:10]
-                            if len(features.energy_curve) > 10
-                            else features.energy_curve,
+                            "energy_curve": (
+                                features.energy_curve[:10]
+                                if len(features.energy_curve) > 10
+                                else features.energy_curve
+                            ),
                             "dynamic_range_db": features.dynamic_range_db,
                             "rms_mean": features.rms_mean,
                         }
@@ -315,9 +317,9 @@ def register_tools(server: Server) -> None:
 
                         result = {
                             "audio_file": audio_file,
-                            "primary_scale": analysis.primary_scale.full_name
-                            if analysis.primary_scale
-                            else None,
+                            "primary_scale": (
+                                analysis.primary_scale.full_name if analysis.primary_scale else None
+                            ),
                             "mode": analysis.mode,
                             "detected_scales": scales,
                         }
@@ -345,9 +347,9 @@ def register_tools(server: Server) -> None:
                             "key_center": analysis.key_center,
                             "mode": analysis.mode,
                             "harmonic_complexity": analysis.harmonic_complexity,
-                            "primary_scale": analysis.primary_scale.to_dict()
-                            if analysis.primary_scale
-                            else None,
+                            "primary_scale": (
+                                analysis.primary_scale.to_dict() if analysis.primary_scale else None
+                            ),
                             "detected_scales": [s.to_dict() for s in analysis.detected_scales[:3]],
                         }
                     except Exception as e:

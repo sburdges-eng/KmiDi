@@ -1,0 +1,287 @@
+# =============================================================================
+# Apple M4 Mac Metal Session - Dual Model Inference & Fine-tuning
+# =============================================================================
+# Target: M4 Mac (14-core GPU, 16-48GB unified memory)
+# Purpose: Run Spectocloud + MIDI Generator in close concurrence
+# Budget: $50 (likely local hardware - time investment)
+# =============================================================================
+
+session:
+  name: "m4-metal-dual-inference"
+  budget_usd: 50
+  estimated_hours: 8
+  hardware: "Apple M4 Mac"
+  mode: "inference_and_finetune"
+
+# -----------------------------------------------------------------------------
+# Hardware Configuration - Apple M4
+# -----------------------------------------------------------------------------
+hardware:
+  device: mps                   # Metal Performance Shaders
+  precision: fp16               # M4 excels at fp16
+  
+  # M4 Specifications (14-core GPU variant)
+  gpu_cores: 14
+  unified_memory_gb: 24         # Adjust based on your Mac (16/24/48GB)
+  ane_enabled: true             # Apple Neural Engine
+  
+  # Metal optimizations
+  metal:
+    compile_mode: true
+    use_mps_graph: true         # MPSGraph for optimization
+    enable_fast_math: true
+    buffer_pool_size_mb: 4096   # Pre-allocate for consistency
+  
+  # CoreML integration
+  coreml:
+    compute_units: "ALL"        # CPU + GPU + ANE
+    enable_mlprogram: true
+
+# -----------------------------------------------------------------------------
+# Model Loading: Spectocloud
+# -----------------------------------------------------------------------------
+spectocloud_model:
+  name: "SpectocloudViT"
+  source: "models/spectocloud/best.coreml"  # From CUDA training
+  
+  # Fallback if CoreML not available
+  fallback_source: "models/spectocloud/best.onnx"
+  
+  # Inference configuration
+  inference:
+    batch_size: 1               # Real-time single inference
+    num_points: 1200            # LOD.MEDIUM
+    target_fps: 60
+    
+    # Caching
+    enable_cache: true
+    cache_size_mb: 256
+  
+  # M4 optimizations
+  optimization:
+    use_ane: true               # Leverage Neural Engine
+    fp16_inference: true
+    metal_compile: true
+
+# -----------------------------------------------------------------------------
+# Model Loading: MIDI Generator
+# -----------------------------------------------------------------------------
+midi_generator_model:
+  name: "EmotionMIDITransformer"
+  source: "models/midi_generator/best.coreml"
+  fallback_source: "models/midi_generator/best.onnx"
+  
+  # Inference configuration
+  inference:
+    max_generation_length: 256  # Tokens per generation
+    target_latency_ms: 20       # Per-token target
+    
+    # Generation parameters
+    temperature: 0.85
+    top_k: 40
+    top_p: 0.92
+    repetition_penalty: 1.1
+    
+    # Streaming generation
+    streaming: true
+    chunk_size: 16              # Generate 16 tokens at a time
+  
+  # M4 optimizations
+  optimization:
+    use_ane: true
+    fp16_inference: true
+    kv_cache_enabled: true      # Key-value cache for transformers
+
+# -----------------------------------------------------------------------------
+# Dual Model Orchestration
+# -----------------------------------------------------------------------------
+orchestration:
+  # Scheduling strategy for concurrent execution
+  strategy: "pipelined"         # Options: sequential, parallel, pipelined
+  
+  # Pipeline configuration
+  pipeline:
+    # MIDI generates ahead, Spectocloud visualizes in sync
+    midi_lookahead_bars: 2      # Generate 2 bars ahead
+    sync_on_bar_boundaries: true
+    
+    # Memory management
+    max_memory_percent: 80      # Leave headroom
+    auto_offload: true          # Offload unused model parts
+  
+  # Latency budget allocation
+  latency_budget_ms:
+    total: 16.67                # 60 FPS frame time
+    midi_generation: 5
+    spectocloud_inference: 8
+    rendering: 3
+    overhead: 0.67
+  
+  # Queue management
+  queues:
+    midi_events:
+      max_size: 128
+      type: "ring_buffer"
+    visualization_frames:
+      max_size: 4
+      type: "double_buffer"
+
+# -----------------------------------------------------------------------------
+# Fine-tuning Configuration (Optional)
+# -----------------------------------------------------------------------------
+finetune:
+  enabled: true
+  
+  # Which model to fine-tune
+  target: "both"                # Options: spectocloud, midi_generator, both
+  
+  # Fine-tuning strategy
+  strategy: "lora"              # LoRA for efficient M4 training
+  
+  lora_config:
+    r: 16                       # Rank
+    alpha: 32                   # Scaling
+    dropout: 0.1
+    target_modules: ["q_proj", "v_proj", "out_proj"]
+  
+  # M4-friendly training settings (50-100 epochs for thorough fine-tuning)
+  training:
+    batch_size: 2               # Small batch for memory
+    grad_accum_steps: 8         # Effective batch = 16
+    learning_rate: 1e-4
+    min_epochs: 50              # Minimum epochs
+    max_epochs: 100             # Maximum epochs (early stopping may end sooner)
+    warmup_epochs: 5            # Warmup period
+    warmup_steps: 500           # Steps-based warmup
+    
+    # Learning rate schedule for long training
+    lr_schedule: "cosine_with_restarts"
+    lr_min_ratio: 0.01          # Minimum LR = 1e-6
+    num_cycles: 3               # Restart 3 times over training
+    
+    # Memory optimization
+    gradient_checkpointing: true
+    
+    # MPS-specific
+    use_mps_optimizer: true
+    
+    # Checkpointing for long runs
+    save_every_epochs: 10       # Save checkpoint every 10 epochs
+    save_best: true             # Always save best model
+    
+    # Early stopping
+    early_stopping:
+      enabled: true
+      patience: 15              # Stop if no improvement for 15 epochs
+      min_delta: 0.001          # Minimum improvement threshold
+      monitor: "val_loss"
+    
+    # Logging
+    log_every_steps: 50
+    eval_every_epochs: 5
+
+# -----------------------------------------------------------------------------
+# Data for Fine-tuning
+# -----------------------------------------------------------------------------
+data:
+  # Personal style adaptation
+  personal_midi:
+    path: "data/personal/"
+    description: "Your own MIDI files for style adaptation"
+  
+  # Emotion calibration data
+  emotion_calibration:
+    path: "data/emotion_calibration/"
+    description: "Labeled emotion-music pairs"
+  
+  # Spectocloud visual preferences
+  visual_preferences:
+    path: "data/visual_prefs/"
+    description: "Preferred visualization styles"
+
+# -----------------------------------------------------------------------------
+# Performance Monitoring
+# -----------------------------------------------------------------------------
+monitoring:
+  enabled: true
+  
+  metrics:
+    - fps
+    - frame_time_ms
+    - gpu_utilization
+    - memory_usage_gb
+    - ane_utilization
+    - token_generation_rate
+  
+  # Profiling
+  profiling:
+    enabled: false              # Enable for debugging
+    instruments_trace: false
+    metal_capture: false
+  
+  # Alerts
+  alerts:
+    fps_threshold: 55           # Alert if below 55 FPS
+    memory_threshold_percent: 90
+
+# -----------------------------------------------------------------------------
+# UI Integration
+# -----------------------------------------------------------------------------
+ui:
+  # Tauri app integration
+  tauri:
+    enabled: true
+    ipc_method: "serde_json"
+    
+    # Commands exposed to UI
+    commands:
+      - generate_midi
+      - update_emotion
+      - render_spectocloud
+      - get_performance_stats
+  
+  # Real-time visualization
+  visualization:
+    renderer: "metal"           # Native Metal rendering
+    canvas_size: [1920, 1080]
+    vsync: true
+    
+    # Spectocloud display
+    spectocloud:
+      camera_orbit: true
+      auto_rotate_speed: 0.5
+      lod_level: "medium"
+
+# -----------------------------------------------------------------------------
+# Export & Deployment
+# -----------------------------------------------------------------------------
+export:
+  # Final optimized models
+  output_dir: "models/m4_optimized/"
+  
+  formats:
+    - coreml_mlpackage          # Primary for M4
+    - onnx                       # Backup
+  
+  coreml:
+    convert_precision: "float16"
+    minimum_deployment_target: "macOS14"
+    compute_units: "ALL"
+
+# -----------------------------------------------------------------------------
+# Reproducibility
+# -----------------------------------------------------------------------------
+seed: 42
+
+# -----------------------------------------------------------------------------
+# Logging
+# -----------------------------------------------------------------------------
+logging:
+  level: "info"
+  file: "logs/m4_session.log"
+  
+  # Performance logs
+  performance_log:
+    enabled: true
+    file: "logs/performance.csv"
+    interval_seconds: 1

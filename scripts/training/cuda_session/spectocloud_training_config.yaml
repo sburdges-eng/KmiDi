@@ -1,0 +1,311 @@
+# =============================================================================
+# Spectocloud Neural Visualization Model - CUDA GPU Training Configuration
+# =============================================================================
+# Target: NVIDIA GPU Cloud Session ($150 budget)
+# Recommended GPU: RTX 4090, A100, or H100 (24GB+ VRAM)
+# Estimated Training Time: 12-18 hours depending on GPU
+# =============================================================================
+
+session:
+  name: "spectocloud-cuda-train"
+  budget_usd: 150
+  estimated_hours: 18
+  priority: "high"
+
+# -----------------------------------------------------------------------------
+# Hardware Configuration
+# -----------------------------------------------------------------------------
+hardware:
+  device: cuda
+  precision: bf16               # bf16 offers better stability on Ampere+ GPUs
+  cuda_version: "12.1"
+  cudnn_version: "8.9"
+  gpu_memory_gb: 24             # Minimum recommended (A10G/V100/A100)
+  num_gpus: 4                   # 4 GPUs for distributed training (g5.12xlarge)
+  compile_mode: true            # torch.compile for 20-40% speedup
+
+# -----------------------------------------------------------------------------
+# Model Architecture: Spectocloud Vision Transformer
+# -----------------------------------------------------------------------------
+# Purpose: Real-time 3D visualization of musical-emotional space
+# Input: Audio spectrogram + MIDI features + Emotion embeddings
+# Output: 3D point cloud positions, colors, and particle properties
+# -----------------------------------------------------------------------------
+model:
+  name: "SpectocloudViT"
+  # Note: The training script uses a custom CNN+Transformer architecture
+  # inspired by Swin Transformer but optimized for point cloud generation.
+  # This is NOT loading pretrained weights - training from scratch.
+  architecture_inspiration: "swin-tiny"
+  task: "point_cloud_generation"
+  
+  # Input encoding
+  input:
+    spectrogram:
+      n_mels: 128
+      hop_length: 512
+      sample_rate: 44100
+      time_frames: 64           # ~1.5 seconds of audio
+    midi_features:
+      dim: 32                   # pitch, velocity, timing stats
+    emotion_embedding:
+      dim: 64                   # valence, arousal, intensity + context
+  
+  # Architecture
+  encoder:
+    backbone: "custom_cnn_transformer"  # Custom implementation
+    hidden_dim: 256
+    num_layers: 6
+    num_heads: 8
+    patch_size: 4
+    window_size: 7
+    dropout: 0.1
+  
+  # Point cloud decoder
+  decoder:
+    type: "mlp"
+    hidden_dims: [512, 256, 128]
+    output_points: 1200         # Matches LOD.MEDIUM
+    output_dim: 10              # xyz(3) + rgba(4) + size(1) + glow(1) + depth(1)
+    activation: "gelu"
+  
+  # Total estimated parameters
+  params_estimate: "~12M"
+  inference_target_ms: 16       # 60 FPS target
+
+# -----------------------------------------------------------------------------
+# Training Data Configuration
+# -----------------------------------------------------------------------------
+data:
+  # Primary dataset: Spectocloud visualization pairs
+  train_manifest: "data/manifests/spectocloud_train.jsonl"
+  val_manifest: "data/manifests/spectocloud_val.jsonl"
+  test_manifest: "data/manifests/spectocloud_test.jsonl"
+  
+  # Data generation (if manifests don't exist)
+  generate_synthetic: true
+  synthetic_config:
+    num_train_samples: 50000
+    num_val_samples: 5000
+    num_test_samples: 2000
+    
+    # Generate from existing emotion thesaurus
+    emotion_source: "data/emotion_thesaurus/"
+    groove_source: "data/grooves/"
+    progression_source: "data/progressions/"
+  
+  # Audio settings
+  sample_rate: 44100
+  segment_seconds: 1.5          # Match time_frames
+  target_lufs: -14
+  
+  # Feature extraction
+  n_mels: 128
+  hop_length: 512
+  cache_features: true          # Pre-compute spectrograms
+  cache_dir: "cache/spectrograms"
+  
+  # Dataloader
+  batch_size: 64                # Optimized for A100/4090
+  num_workers: 16
+  pin_memory: true
+  prefetch_factor: 4
+  persistent_workers: true
+  drop_last: true
+
+# -----------------------------------------------------------------------------
+# Optimizer Configuration
+# -----------------------------------------------------------------------------
+optim:
+  name: adamw
+  lr: 1e-4
+  weight_decay: 0.05
+  betas: [0.9, 0.95]
+  eps: 1e-8
+  grad_clip: 1.0
+  
+  # Layer-wise learning rate decay (for pretrained backbone)
+  layer_decay: 0.75
+
+# -----------------------------------------------------------------------------
+# Learning Rate Schedule
+# -----------------------------------------------------------------------------
+scheduler:
+  name: cosine_with_warmup
+  warmup_steps: 1000
+  warmup_ratio: 0.05
+  min_lr_ratio: 0.01
+  
+  # For $50 budget (~6 hours on 4090)
+  max_steps: 50000
+  
+  # Restart strategy for longer training
+  num_cycles: 1
+
+# -----------------------------------------------------------------------------
+# Training Configuration
+# -----------------------------------------------------------------------------
+training:
+  epochs: 20
+  min_epochs: 10                # Minimum epochs before early stopping
+  max_steps: 50000              # Override epochs if set
+  
+  # Logging
+  log_every: 50
+  eval_every: 500
+  save_every: 5                 # Save checkpoint every N epochs
+  
+  # Gradient accumulation (effective batch = 32 * 4 = 128)
+  grad_accum_steps: 4
+  
+  # Mixed precision
+  amp: true
+  amp_dtype: bfloat16           # Use bfloat16 on A100/H100
+  
+  # Checkpointing
+  save_best: true
+  save_last: true
+  save_top_k: 3
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 5                 # Stop after N epochs without improvement
+    min_delta: 0.001            # Minimum improvement threshold
+    monitor: "val_loss"
+  
+  # EMA for stable inference
+  ema:
+    enabled: true
+    decay: 0.9999
+    update_every: 10
+
+# -----------------------------------------------------------------------------
+# Loss Functions
+# -----------------------------------------------------------------------------
+loss:
+  # Multi-objective loss
+  position_loss:
+    type: "chamfer_distance"    # Point cloud distance
+    weight: 1.0
+  
+  color_loss:
+    type: "mse"
+    weight: 0.5
+  
+  property_loss:
+    type: "smooth_l1"           # size, glow, depth
+    weight: 0.3
+  
+  # Regularization
+  consistency_loss:
+    type: "temporal_smoothness"
+    weight: 0.1
+  
+  perceptual_loss:
+    type: "lpips"               # Optional: visual similarity
+    weight: 0.0                 # Disable for point clouds
+
+# -----------------------------------------------------------------------------
+# Data Augmentation
+# -----------------------------------------------------------------------------
+augment:
+  enabled: true
+  
+  # Audio augmentations
+  audio:
+    time_stretch: [0.9, 1.1]
+    pitch_shift_semitones: [-3, 3]
+    add_noise_snr_db: [20, 40]
+    time_mask_max_frames: 10
+    freq_mask_max_bins: 15
+  
+  # Point cloud augmentations
+  pointcloud:
+    random_rotate: true         # Rotate view
+    random_scale: [0.9, 1.1]
+    random_jitter: 0.02
+    random_dropout: 0.1         # Drop some points
+
+# -----------------------------------------------------------------------------
+# Validation Metrics
+# -----------------------------------------------------------------------------
+metrics:
+  - name: "chamfer_distance"
+    lower_is_better: true
+  - name: "color_mse"
+    lower_is_better: true
+  - name: "temporal_consistency"
+    lower_is_better: true
+  - name: "inference_time_ms"
+    lower_is_better: true
+  - name: "fps"
+    lower_is_better: false
+
+# -----------------------------------------------------------------------------
+# Export Configuration
+# -----------------------------------------------------------------------------
+export:
+  formats:
+    - "pytorch"                 # .pt checkpoint
+    - "onnx"                    # For cross-platform inference
+    - "coreml"                  # For Apple Silicon
+    - "tensorrt"                # For NVIDIA deployment
+  
+  onnx:
+    opset_version: 17
+    dynamic_axes: true
+    simplify: true
+  
+  coreml:
+    compute_units: "ALL"        # CPU + GPU + ANE
+    minimum_deployment_target: "iOS17"
+  
+  tensorrt:
+    fp16: true
+    workspace_gb: 4
+
+# -----------------------------------------------------------------------------
+# Experiment Tracking
+# -----------------------------------------------------------------------------
+logging:
+  project: "kmidi-spectocloud"
+  experiment: "cuda-v1"
+  
+  # WandB integration
+  wandb:
+    enabled: true
+    project: "spectocloud"
+    entity: null                # Your WandB username
+    tags: ["cuda", "vision", "spectocloud"]
+  
+  # TensorBoard
+  tensorboard:
+    enabled: true
+    log_dir: "runs/spectocloud_cuda"
+  
+  # Log artifacts
+  log_model: true
+  log_gradients: false          # Disable for speed
+  log_images: true              # Sample visualizations
+
+# -----------------------------------------------------------------------------
+# Reproducibility
+# -----------------------------------------------------------------------------
+seed: 42
+deterministic: false            # Set true for exact reproducibility (slower)
+
+# -----------------------------------------------------------------------------
+# Post-Training Validation
+# -----------------------------------------------------------------------------
+validation:
+  # Visual quality checks
+  render_test_samples: 20
+  export_comparison_gifs: true
+  
+  # Performance benchmarks
+  benchmark_inference: true
+  target_fps: 60
+  
+  # Integration tests
+  test_with_midi_generator: true

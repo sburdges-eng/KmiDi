@@ -10,7 +10,7 @@ Provides 4 tools:
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 try:
     from mcp.server import Server
@@ -39,7 +39,7 @@ def register_tools(server: Server) -> None:
         return
 
     @server.list_tools()
-    async def list_tools() -> List[Tool]:
+    async def list_tools() -> list[Tool]:
         """List available intent tools."""
         return [
             Tool(
@@ -125,7 +125,7 @@ def register_tools(server: Server) -> None:
         ]
 
     @server.call_tool()
-    async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
+    async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         """Handle tool calls."""
         try:
             if name == "create_intent":
