@@ -305,6 +305,8 @@ class EmotionThesaurus:
             "fear.json": EmotionCategory.FEAR,
             "surprise.json": EmotionCategory.SURPRISE,
             "disgust.json": EmotionCategory.DISGUST,
+            "trust.json": EmotionCategory.TRUST,
+            "anticipation.json": EmotionCategory.ANTICIPATION,
         }
         
         for filename, category in json_files.items():
@@ -445,24 +447,54 @@ class EmotionThesaurus:
         )
     
     def _build_relationships(self) -> None:
-        """Build relationship graph between nodes."""
+        """Build relationship graph between nodes with enhanced algorithms."""
         nodes_list = list(self.nodes.values())
         
         for node in nodes_list:
-            # Find related (nearby in emotional space)
-            nearby = self.get_nearby_emotions(node.id, threshold=0.4, limit=5)
-            node.related_ids = [n.id for n in nearby]
+            # Find related (nearby in emotional space) - enhanced with category awareness
+            nearby = self.get_nearby_emotions(node.id, threshold=0.4, limit=8)
+            # Prioritize same category but allow cross-category relationships
+            same_category = [n.id for n in nearby if n.category == node.category]
+            cross_category = [n.id for n in nearby if n.category != node.category]
+            node.related_ids = same_category[:5] + cross_category[:3]
             
-            # Find opposites (far in valence, similar arousal)
+            # Find opposites (far in valence, similar arousal) - enhanced algorithm
             opposites = []
             for other in nodes_list:
                 if other.id == node.id:
                     continue
-                valence_diff = abs(node.valence - (-other.valence))
-                arousal_diff = abs(node.arousal - other.arousal)
-                if valence_diff < 0.3 and arousal_diff < 0.3:
-                    opposites.append(other.id)
-            node.opposite_ids = opposites[:3]
+                # Calculate valence opposition (should be opposite sign)
+                valence_opposition = abs(node.valence + other.valence)  # Should be close to 0 if opposite
+                arousal_similarity = 1.0 - abs(node.arousal - other.arousal)
+                # Prefer same category opposites (e.g., joy vs sadness)
+                category_bonus = 0.2 if other.category != node.category else 0.0
+                
+                score = valence_opposition * 0.5 + arousal_similarity * 0.3 + category_bonus
+                if valence_opposition < 0.5 and arousal_similarity > 0.4:
+                    opposites.append((score, other.id))
+            
+            opposites.sort(key=lambda x: x[0])
+            node.opposite_ids = [oid for _, oid in opposites[:5]]
+            
+            # Build transition relationships (emotions that naturally flow into this one)
+            transitions = []
+            for other in nodes_list:
+                if other.id == node.id:
+                    continue
+                # Transitions: similar category, increasing intensity or changing valence
+                if other.category == node.category:
+                    # Intensity progression
+                    if other.intensity < node.intensity and abs(other.valence - node.valence) < 0.3:
+                        transitions.append(other.id)
+                    # Valence shift within same category
+                    elif abs(other.arousal - node.arousal) < 0.2 and abs(other.valence - node.valence) < 0.5:
+                        transitions.append(other.id)
+            
+            # Store transitions (limit to prevent memory bloat)
+            if not hasattr(node, 'transition_ids'):
+                node.transition_ids = transitions[:5]
+            else:
+                node.transition_ids = transitions[:5]
     
     # =========================================================================
     # PUBLIC API
@@ -572,8 +604,133 @@ class EmotionThesaurus:
             if best_node:
                 path.append(best_node)
         
+    def find_transition_path(
+        self,
+        from_id: int,
+        to_id: int,
+        steps: int = 3,
+        use_transitions: bool = True,
+    ) -> List[EmotionNode]:
+        """
+        Find a smooth emotional transition path with enhanced algorithm.
+        
+        Args:
+            from_id: Starting emotion node ID
+            to_id: Target emotion node ID
+            steps: Number of intermediate steps (default: 3)
+            use_transitions: Use pre-computed transition relationships (default: True)
+            
+        Returns:
+            List of EmotionNode objects representing the transition path
+            
+        Useful for Side A → Side B transitions and emotional journeys.
+        """
+        start = self.nodes.get(from_id)
+        end = self.nodes.get(to_id)
+        if not start or not end:
+            return []
+        
+        path = [start]
+        
+        # If using transition relationships, try to follow them
+        if use_transitions and hasattr(start, 'transition_ids') and start.transition_ids:
+            current = start
+            for _ in range(steps):
+                # Find best transition that moves toward target
+                best_transition = None
+                best_score = float('inf')
+                
+                for trans_id in current.transition_ids:
+                    trans_node = self.nodes.get(trans_id)
+                    if not trans_node or trans_node in path:
+                        continue
+                    
+                    # Score: distance to target + distance from current
+                    to_target = trans_node.distance_to(end)
+                    from_current = current.distance_to(trans_node)
+                    score = to_target + from_current * 0.5
+                    
+                    if score < best_score:
+                        best_score = score
+                        best_transition = trans_node
+                
+                if best_transition:
+                    path.append(best_transition)
+                    current = best_transition
+                else:
+                    break
+        
+        # If path is incomplete, use linear interpolation
+        if len(path) < steps + 1:
+            # Linear interpolation in emotional space
+            remaining_steps = steps - (len(path) - 1)
+            if remaining_steps > 0:
+                last_node = path[-1]
+                
+                for i in range(1, remaining_steps + 1):
+                    t = i / (remaining_steps + 1)
+                    
+                    # Interpolate valence, arousal, intensity
+                    interp_valence = last_node.valence + (end.valence - last_node.valence) * t
+                    interp_arousal = last_node.arousal + (end.arousal - last_node.arousal) * t
+                    interp_intensity = last_node.intensity + (end.intensity - last_node.intensity) * t
+                    
+                    # Find nearest actual emotion node
+                    nearest = self._find_nearest_node(interp_valence, interp_arousal, interp_intensity, exclude=[n.id for n in path])
+                    if nearest:
+                        path.append(nearest)
+                    else:
+                        # Create synthetic node if no match found
+                        synthetic = EmotionNode(
+                            id=-len(path),  # Negative ID for synthetic nodes
+                            name=f"transition_{i}",
+                            category=last_node.category,  # Use starting category
+                            sub_emotion="transition",
+                            sub_sub_emotion="interpolated",
+                            intensity_tier=f"{int(interp_intensity * 5)}_interpolated",
+                            valence=interp_valence,
+                            arousal=interp_arousal,
+                            intensity=interp_intensity,
+                            words=[],
+                            description=f"Transitional emotion between {last_node.name} and {end.name}",
+                            musical=self._generate_musical_attributes(
+                                last_node.category, interp_intensity, interp_valence, interp_arousal
+                            ),
+                        )
+                        path.append(synthetic)
+        
         path.append(end)
         return path
+    
+    def _find_nearest_node(
+        self,
+        valence: float,
+        arousal: float,
+        intensity: float,
+        exclude: List[int] = None,
+    ) -> Optional[EmotionNode]:
+        """Find the nearest emotion node to given coordinates."""
+        if exclude is None:
+            exclude = []
+        
+        best_node = None
+        best_dist = float('inf')
+        
+        temp_node = EmotionNode(
+            id=-999, name="temp", category=EmotionCategory.JOY,
+            sub_emotion="", sub_sub_emotion="", intensity_tier="",
+            valence=valence, arousal=arousal, intensity=intensity
+        )
+        
+        for node in self.nodes.values():
+            if node.id in exclude:
+                continue
+            dist = temp_node.distance_to(node)
+            if dist < best_dist:
+                best_dist = dist
+                best_node = node
+        
+        return best_node if best_dist < 0.5 else None
     
     def get_musical_params(self, word: str) -> Optional[MusicalAttributes]:
         """Convenience: word → musical parameters directly."""
