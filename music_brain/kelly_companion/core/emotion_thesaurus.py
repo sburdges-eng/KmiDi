@@ -637,50 +637,6 @@ class EmotionThesaurus:
         from_id: int,
         to_id: int,
         steps: int = 3,
-    ) -> List[EmotionNode]:
-        """
-        Find a smooth emotional transition path.
-        
-        Useful for Side A → Side B transitions.
-        """
-        start = self.nodes.get(from_id)
-        end = self.nodes.get(to_id)
-        if not start or not end:
-            return []
-        
-        path = [start]
-        
-        # Linear interpolation in emotional space
-        for i in range(1, steps):
-            t = i / steps
-            target_valence = start.valence + (end.valence - start.valence) * t
-            target_arousal = start.arousal + (end.arousal - start.arousal) * t
-            target_intensity = start.intensity + (end.intensity - start.intensity) * t
-            
-            # Find closest node to interpolated point
-            best_node = None
-            best_dist = float('inf')
-            
-            for node in self.nodes.values():
-                if node.id in [n.id for n in path]:
-                    continue
-                dist = (
-                    (node.valence - target_valence) ** 2 +
-                    (node.arousal - target_arousal) ** 2 +
-                    (node.intensity - target_intensity) ** 2
-                ) ** 0.5
-                if dist < best_dist:
-                    best_dist = dist
-                    best_node = node
-            
-            if best_node:
-                path.append(best_node)
-        
-    def find_transition_path(
-        self,
-        from_id: int,
-        to_id: int,
-        steps: int = 3,
         use_transitions: bool = True,
     ) -> List[EmotionNode]:
         """
