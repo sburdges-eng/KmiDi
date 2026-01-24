@@ -38,27 +38,45 @@ from .inference import (
     InferenceEngine,
     InferenceResult,
     create_engine,
+    create_engine_by_name,
 )
 
-from .chord_predictor import (
-    ChordPredictor,
-    ChordPrediction,
-    predict_next_chord,
-    predict_progression,
-)
+try:
+    from .chord_predictor import (
+        ChordPredictor,
+        ChordPrediction,
+        predict_next_chord,
+        predict_progression,
+    )
+except ImportError:
+    ChordPredictor = None
+    ChordPrediction = None
+    predict_next_chord = None
+    predict_progression = None
 
-from .style_transfer import (
-    GrooveStyleTransfer,
-    StyleTransferResult,
-    transfer_groove_style,
-)
+try:
+    from .style_transfer import (
+        GrooveStyleTransfer,
+        StyleTransferResult,
+        transfer_groove_style,
+    )
+except ImportError:
+    GrooveStyleTransfer = None
+    StyleTransferResult = None
+    transfer_groove_style = None
 
-from .gpu_utils import (
-    get_available_devices,
-    select_best_device,
-    GPUDevice,
-    DeviceType,
-)
+try:
+    from .gpu_utils import (
+        get_available_devices,
+        select_best_device,
+        GPUDevice,
+        DeviceType,
+    )
+except ImportError:
+    get_available_devices = None
+    select_best_device = None
+    GPUDevice = None
+    DeviceType = None
 
 from .dynamics_training import (
     SectionType,
