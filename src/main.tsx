@@ -9,7 +9,9 @@ console.log("main.tsx: Starting React app initialization");
 const rootElement = document.getElementById("root");
 
 if (!rootElement) {
-  throw new Error("Root element not found. Make sure index.html has a div with id='root'");
+  throw new Error(
+    "Root element not found. Make sure index.html has a div with id='root'",
+  );
 }
 
 console.log("main.tsx: Root element found, creating React root");
@@ -17,7 +19,7 @@ console.log("main.tsx: Root element found, creating React root");
 try {
   const root = ReactDOM.createRoot(rootElement);
   console.log("main.tsx: React root created, rendering App");
-  
+
   root.render(
     <React.StrictMode>
       <ErrorBoundary>
@@ -25,7 +27,7 @@ try {
       </ErrorBoundary>
     </React.StrictMode>,
   );
-  
+
   console.log("main.tsx: App rendered successfully");
 } catch (error) {
   console.error("main.tsx: Fatal error during render:", error);

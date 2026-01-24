@@ -19,7 +19,8 @@ const quickStartTemplates: QuickStartTemplate[] = [
   {
     id: "lo-fi-chill",
     name: "Lo-Fi Chill",
-    description: "Relaxed, nostalgic vibes perfect for studying or background music",
+    description:
+      "Relaxed, nostalgic vibes perfect for studying or background music",
     genre: "lo-fi",
     emotion: "calm",
     icon: "🌙",
@@ -27,8 +28,8 @@ const quickStartTemplates: QuickStartTemplate[] = [
       key: "C major",
       bpm: 80,
       progression: ["C", "Am", "F", "G"],
-      style: "lo-fi bedroom"
-    }
+      style: "lo-fi bedroom",
+    },
   },
   {
     id: "upbeat-pop",
@@ -41,8 +42,8 @@ const quickStartTemplates: QuickStartTemplate[] = [
       key: "G major",
       bpm: 120,
       progression: ["G", "D", "Em", "C"],
-      style: "commercial pop"
-    }
+      style: "commercial pop",
+    },
   },
   {
     id: "emotional-ballad",
@@ -55,8 +56,8 @@ const quickStartTemplates: QuickStartTemplate[] = [
       key: "D minor",
       bpm: 70,
       progression: ["Dm", "Bb", "F", "C"],
-      style: "emotional ballad"
-    }
+      style: "emotional ballad",
+    },
   },
   {
     id: "electronic-dance",
@@ -69,8 +70,8 @@ const quickStartTemplates: QuickStartTemplate[] = [
       key: "A minor",
       bpm: 128,
       progression: ["Am", "F", "C", "G"],
-      style: "electronic dance"
-    }
+      style: "electronic dance",
+    },
   },
   {
     id: "acoustic-folk",
@@ -83,8 +84,8 @@ const quickStartTemplates: QuickStartTemplate[] = [
       key: "G major",
       bpm: 90,
       progression: ["G", "C", "D", "Em"],
-      style: "acoustic folk"
-    }
+      style: "acoustic folk",
+    },
   },
   {
     id: "cinematic-epic",
@@ -97,9 +98,9 @@ const quickStartTemplates: QuickStartTemplate[] = [
       key: "E minor",
       bpm: 100,
       progression: ["Em", "C", "G", "D"],
-      style: "cinematic orchestral"
-    }
-  }
+      style: "cinematic orchestral",
+    },
+  },
 ];
 
 type Props = {
@@ -107,8 +108,12 @@ type Props = {
   onGenerateWithTemplate?: (template: QuickStartTemplate) => void;
 };
 
-export function QuickStartPanel({ onTemplateSelect, onGenerateWithTemplate }: Props) {
-  const [selectedTemplate, setSelectedTemplate] = useState<QuickStartTemplate | null>(null);
+export function QuickStartPanel({
+  onTemplateSelect,
+  onGenerateWithTemplate,
+}: Props) {
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<QuickStartTemplate | null>(null);
 
   const handleTemplateClick = (template: QuickStartTemplate) => {
     setSelectedTemplate(template);
@@ -136,8 +141,9 @@ export function QuickStartPanel({ onTemplateSelect, onGenerateWithTemplate }: Pr
           <span className="section-badge">Templates</span>
         </div>
         <p className="section-description">
-          Choose a ready-made template to get started quickly. Each template includes 
-          pre-configured settings optimized for different genres and moods.
+          Choose a ready-made template to get started quickly. Each template
+          includes pre-configured settings optimized for different genres and
+          moods.
         </p>
       </div>
 
@@ -145,7 +151,7 @@ export function QuickStartPanel({ onTemplateSelect, onGenerateWithTemplate }: Pr
         {quickStartTemplates.map((template) => (
           <div
             key={template.id}
-            className={`template-card ${selectedTemplate?.id === template.id ? 'template-card-selected' : ''}`}
+            className={`template-card ${selectedTemplate?.id === template.id ? "template-card-selected" : ""}`}
             onClick={() => handleTemplateClick(template)}
           >
             <div className="template-icon">{template.icon}</div>
@@ -173,7 +179,9 @@ export function QuickStartPanel({ onTemplateSelect, onGenerateWithTemplate }: Pr
           <div className="template-preview-header">
             <div>
               <h3>Selected Template: {selectedTemplate.name}</h3>
-              <p className="template-preview-description">{selectedTemplate.description}</p>
+              <p className="template-preview-description">
+                {selectedTemplate.description}
+              </p>
             </div>
             <button
               onClick={() => setSelectedTemplate(null)}
@@ -185,29 +193,34 @@ export function QuickStartPanel({ onTemplateSelect, onGenerateWithTemplate }: Pr
           <div className="template-config-display">
             <div className="config-item">
               <span className="config-label">Key:</span>
-              <span className="config-value">{selectedTemplate.config.key}</span>
+              <span className="config-value">
+                {selectedTemplate.config.key}
+              </span>
             </div>
             <div className="config-item">
               <span className="config-label">BPM:</span>
-              <span className="config-value">{selectedTemplate.config.bpm}</span>
+              <span className="config-value">
+                {selectedTemplate.config.bpm}
+              </span>
             </div>
             <div className="config-item">
               <span className="config-label">Progression:</span>
-              <span className="config-value">{selectedTemplate.config.progression?.join(" - ")}</span>
+              <span className="config-value">
+                {selectedTemplate.config.progression?.join(" - ")}
+              </span>
             </div>
             <div className="config-item">
               <span className="config-label">Style:</span>
-              <span className="config-value">{selectedTemplate.config.style}</span>
+              <span className="config-value">
+                {selectedTemplate.config.style}
+              </span>
             </div>
           </div>
-          <button
-            onClick={handleUseTemplate}
-            className="primary-action-btn"
-          >
+          <button onClick={handleUseTemplate} className="primary-action-btn">
             Create Music with This Template
           </button>
           <p className="action-hint">
-            This will automatically generate music using the template settings. 
+            This will automatically generate music using the template settings.
             You can always adjust the emotion or lyrics to personalize it.
           </p>
         </div>
@@ -218,7 +231,9 @@ export function QuickStartPanel({ onTemplateSelect, onGenerateWithTemplate }: Pr
           <div className="action-icon">🎵</div>
           <div className="action-content">
             <h4>Start from Emotion</h4>
-            <p>Use the Emotion Wheel above to create music based on how you feel</p>
+            <p>
+              Use the Emotion Wheel above to create music based on how you feel
+            </p>
           </div>
         </div>
         <div className="quickstart-action-card">
@@ -232,7 +247,10 @@ export function QuickStartPanel({ onTemplateSelect, onGenerateWithTemplate }: Pr
           <div className="action-icon">💬</div>
           <div className="action-content">
             <h4>Start from Conversation</h4>
-            <p>Describe what you want and let the Interrogator help refine your idea</p>
+            <p>
+              Describe what you want and let the Interrogator help refine your
+              idea
+            </p>
           </div>
         </div>
       </div>

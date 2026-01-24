@@ -15,6 +15,8 @@ Requirements:
 import os
 import sys
 import argparse
+import inspect
+from contextlib import nullcontext
 import yaml
 import json
 import math
@@ -24,15 +26,21 @@ from typing import Optional, Dict, List, Any, Tuple
 
 import numpy as np
 import torch
+
+# Project root for WASABI manifest paths
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_PROJECT_ROOT = _SCRIPT_DIR.parent.parent
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
-# Check CUDA
+# Check accelerator availability
 if torch.cuda.is_available():
     print(f"CUDA: {torch.cuda.get_device_name(0)}")
+elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+    print("MPS: available")
 else:
-    print("Warning: CUDA not available")
+    print("Warning: no GPU backend available (CUDA/MPS)")
 
 
 # =============================================================================
@@ -607,15 +615,36 @@ def train_epoch(
     
     grad_accum_steps = config.get('grad_accum_steps', 1)
     use_amp = config.get('amp', False)
+    amp_dtype = config.get('amp_dtype', 'bfloat16')
+    if device.type == 'mps' and amp_dtype != 'float16':
+        amp_dtype = 'float16'
+    amp_torch_dtype = torch.float16 if amp_dtype == 'float16' else torch.bfloat16
+    mps_autocast_ok = False
+    if use_amp and device.type == 'mps':
+        try:
+            torch.autocast('mps', dtype=amp_torch_dtype)
+            mps_autocast_ok = True
+        except (AttributeError, TypeError) as e:
+            print(f"Warning: AMP on MPS not supported: {e}")
+            use_amp = False
+
+    def autocast_context():
+        if not use_amp:
+            return nullcontext()
+        if device.type == 'cuda':
+            return torch.cuda.amp.autocast(dtype=amp_torch_dtype)
+        if device.type == 'mps' and mps_autocast_ok:
+            return torch.autocast('mps', dtype=amp_torch_dtype)
+        return nullcontext()
     
     for batch_idx, batch in enumerate(dataloader):
         input_ids = batch['input_ids'].to(device)
         labels = batch['labels'].to(device)
         emotion = batch['emotion'].to(device)
         
-        # Forward pass with AMP
-        if use_amp and scaler is not None:
-            with torch.cuda.amp.autocast(dtype=torch.float16 if config.get('amp_dtype', 'bfloat16') == 'float16' else torch.bfloat16):
+        # Forward pass (optional AMP)
+        if use_amp:
+            with autocast_context():
                 logits = model(input_ids, emotion)
                 
                 loss = F.cross_entropy(
@@ -719,18 +748,69 @@ def evaluate(
     }
 
 
-def main(config_path: str):
+def main(config_path: str, args: Optional[argparse.Namespace] = None):
     """Main training function."""
-    
-    with open(config_path) as f:
+    if args is None:
+        args = argparse.Namespace(config=config_path, dataset='midi')
+
+    config_file = Path(config_path)
+    if not config_file.is_absolute():
+        config_file = _SCRIPT_DIR / config_path
+    with open(config_file) as f:
         config = yaml.safe_load(f)
     
     print("=" * 60)
     print("MIDI Generator Transformer Training")
     print("=" * 60)
-    
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    hw_cfg = config.get('hardware', {})
+    requested_device = (hw_cfg.get('device') or 'auto').lower()
+    mps_available = hasattr(torch.backends, "mps") and torch.backends.mps.is_available()
+
+    def auto_device() -> torch.device:
+        if torch.cuda.is_available():
+            return torch.device('cuda')
+        if mps_available:
+            return torch.device('mps')
+        return torch.device('cpu')
+
+    if requested_device in ('auto', ''):
+        device = auto_device()
+    elif requested_device == 'cuda':
+        if torch.cuda.is_available():
+            device = torch.device('cuda')
+        else:
+            print("Warning: CUDA requested but not available; falling back to auto")
+            device = auto_device()
+    elif requested_device == 'mps':
+        if mps_available:
+            device = torch.device('mps')
+        else:
+            print("Warning: MPS requested but not available; falling back to auto")
+            device = auto_device()
+    elif requested_device == 'cpu':
+        device = torch.device('cpu')
+    else:
+        print(f"Warning: unknown device '{requested_device}'; falling back to auto")
+        device = auto_device()
     print(f"Device: {device}")
+
+    if device.type == 'cuda':
+        if hw_cfg.get('allow_tf32', True):
+            torch.backends.cuda.matmul.allow_tf32 = True
+            torch.backends.cudnn.allow_tf32 = True
+        if hw_cfg.get('cudnn_benchmark', True):
+            torch.backends.cudnn.benchmark = True
+        matmul_precision = hw_cfg.get('matmul_precision')
+        if matmul_precision:
+            try:
+                torch.set_float32_matmul_precision(matmul_precision)
+            except (AttributeError, ValueError) as e:
+                print(f"Warning: matmul_precision={matmul_precision} not supported: {e}")
+        if hw_cfg.get('flash_attention', False) and hasattr(torch.backends.cuda, 'enable_flash_sdp'):
+            torch.backends.cuda.enable_flash_sdp(True)
+            torch.backends.cuda.enable_mem_efficient_sdp(True)
+            torch.backends.cuda.enable_math_sdp(True)
     
     # Create tokenizer
     tokenizer = MIDITokenizer()
@@ -760,40 +840,95 @@ def main(config_path: str):
     
     # Create datasets
     data_cfg = config.get('data', {})
-    train_dataset = MIDIDataset(
-        data_cfg.get('train_manifest', 'data/manifests/midi_train.jsonl'),
-        data_cfg,
-        tokenizer,
-    )
-    val_dataset = MIDIDataset(
-        data_cfg.get('val_manifest', 'data/manifests/midi_val.jsonl'),
-        data_cfg,
-        tokenizer,
-    )
-    
+    use_wasabi = getattr(args, 'dataset', None) == 'wasabi'
+
+    if use_wasabi:
+        try:
+            from training.wasabi_midi_dataset import WasabiMIDIDataset
+        except ImportError:
+            sys.path.insert(0, str(_PROJECT_ROOT))
+            from training.wasabi_midi_dataset import WasabiMIDIDataset
+
+        wasabi_dir = _PROJECT_ROOT / 'data' / 'wasabi' / 'processed'
+        train_manifest = wasabi_dir / 'train.jsonl'
+        val_manifest = wasabi_dir / 'val.jsonl'
+        if not train_manifest.exists() or not val_manifest.exists():
+            print("WASABI manifests not found. Run: python scripts/generate_wasabi_manifest.py")
+            sys.exit(1)
+        train_dataset = WasabiMIDIDataset(str(train_manifest), data_cfg, tokenizer)
+        val_dataset = WasabiMIDIDataset(str(val_manifest), data_cfg, tokenizer)
+        print("Using WASABI dataset (emotion + chord-driven synthetic MIDI)")
+    else:
+        train_dataset = MIDIDataset(
+            data_cfg.get('train_manifest', 'data/manifests/midi_train.jsonl'),
+            data_cfg,
+            tokenizer,
+        )
+        val_dataset = MIDIDataset(
+            data_cfg.get('val_manifest', 'data/manifests/midi_val.jsonl'),
+            data_cfg,
+            tokenizer,
+        )
+
     print(f"Train samples: {len(train_dataset)}")
     print(f"Val samples: {len(val_dataset)}")
     
     # Dataloaders
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=data_cfg.get('batch_size', 64),
-        shuffle=True,
-        num_workers=data_cfg.get('num_workers', 4),
-        pin_memory=True,
-    )
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=data_cfg.get('batch_size', 64),
-        shuffle=False,
-    )
+    if getattr(args, 'num_workers', None) is not None:
+        nw = args.num_workers
+    else:
+        nw = 0 if device.type != 'cuda' else data_cfg.get('num_workers', 4)
+    bs = data_cfg.get('batch_size', 64)
+    if device.type != 'cuda' and bs > 32:
+        bs = 16
+        print(f"CPU mode: using batch_size={bs} (config batch_size reduced for speed)")
+
+    pin_memory = bool(data_cfg.get('pin_memory', device.type == 'cuda')) if device.type == 'cuda' else False
+    persistent_workers = bool(data_cfg.get('persistent_workers', device.type == 'cuda'))
+    prefetch_factor = data_cfg.get('prefetch_factor', 2)
+    drop_last = bool(data_cfg.get('drop_last', device.type == 'cuda'))
+
+    train_loader_kwargs = {
+        'dataset': train_dataset,
+        'batch_size': bs,
+        'shuffle': True,
+        'num_workers': nw,
+        'pin_memory': pin_memory,
+        'drop_last': drop_last,
+    }
+    val_loader_kwargs = {
+        'dataset': val_dataset,
+        'batch_size': bs,
+        'shuffle': False,
+        'num_workers': nw,
+        'pin_memory': pin_memory,
+    }
+    if nw > 0:
+        train_loader_kwargs['persistent_workers'] = persistent_workers
+        val_loader_kwargs['persistent_workers'] = persistent_workers
+        if prefetch_factor is not None:
+            train_loader_kwargs['prefetch_factor'] = prefetch_factor
+            val_loader_kwargs['prefetch_factor'] = prefetch_factor
+
+    dl_sig = inspect.signature(DataLoader.__init__)
+    train_loader_kwargs = {k: v for k, v in train_loader_kwargs.items() if k in dl_sig.parameters}
+    val_loader_kwargs = {k: v for k, v in val_loader_kwargs.items() if k in dl_sig.parameters}
+
+    train_loader = DataLoader(**train_loader_kwargs)
+    val_loader = DataLoader(**val_loader_kwargs)
     
     # Optimizer
     optim_cfg = config.get('optim', {})
+    lr = optim_cfg.get('lr', 3e-4)
+    wd = optim_cfg.get('weight_decay', 0.1)
+    if not isinstance(lr, (int, float)):
+        lr = float(lr)
+    if not isinstance(wd, (int, float)):
+        wd = float(wd)
     optimizer = torch.optim.AdamW(
         model.parameters(),
-        lr=optim_cfg.get('lr', 3e-4),
-        weight_decay=optim_cfg.get('weight_decay', 0.1),
+        lr=lr,
+        weight_decay=wd,
     )
     
     # Scheduler
@@ -806,6 +941,9 @@ def main(config_path: str):
     # Training loop
     train_cfg = config.get('training', {})
     epochs = train_cfg.get('epochs', 15)
+    if getattr(args, 'epochs', None) is not None:
+        epochs = args.epochs
+        print(f"Overriding epochs to {epochs}")
     save_dir = Path('checkpoints/midi_generator')
     save_dir.mkdir(parents=True, exist_ok=True)
     
@@ -885,5 +1023,11 @@ def main(config_path: str):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, default='midi_generator_training_config.yaml')
+    parser.add_argument('--dataset', type=str, choices=['midi', 'wasabi'], default='midi',
+                        help='Use "wasabi" to train on WASABI manifest (data/wasabi/processed)')
+    parser.add_argument('--num-workers', type=int, default=None,
+                        help='DataLoader workers (default: 0 on CPU, from config on CUDA)')
+    parser.add_argument('--epochs', type=int, default=None,
+                        help='Max epochs (overrides config)')
     args = parser.parse_args()
-    main(args.config)
+    main(args.config, args)

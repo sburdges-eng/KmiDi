@@ -1,8 +1,8 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { IntentIRInspector } from '../../src/components/IntentIRInspector';
+import React from "react";
+import { render, screen } from "@testing-library/react";
+import { IntentIRInspector } from "../../src/components/IntentIRInspector";
 
-describe('IntentIRInspector', () => {
+describe("IntentIRInspector", () => {
   const testFrame = {
     meta: {
       ir_version: 1,
@@ -36,7 +36,7 @@ describe('IntentIRInspector', () => {
       fade_out_beats: 0.0,
     },
     constraints: {
-      allowed_engines_mask: 0xFFFFFFFF,
+      allowed_engines_mask: 0xffffffff,
       forbidden_engines_mask: 0,
       max_cpu_cost: 1.0,
       max_event_rate: Infinity,
@@ -47,28 +47,30 @@ describe('IntentIRInspector', () => {
     },
   };
 
-  it('displays IntentFrame correctly', () => {
+  it("displays IntentFrame correctly", () => {
     render(<IntentIRInspector frame={testFrame} />);
-    expect(screen.getByText('Intent IR Inspector')).toBeInTheDocument();
-    expect(screen.getByText('UI_DIRECT')).toBeInTheDocument();
+    expect(screen.getByText("Intent IR Inspector")).toBeInTheDocument();
+    expect(screen.getByText("UI_DIRECT")).toBeInTheDocument();
   });
 
-  it('shows provenance coloring', () => {
+  it("shows provenance coloring", () => {
     render(<IntentIRInspector frame={testFrame} />);
-    const badge = screen.getByText('UI_DIRECT');
-    expect(badge).toHaveStyle({ backgroundColor: '#4CAF50' });
+    const badge = screen.getByText("UI_DIRECT");
+    expect(badge).toHaveStyle({ backgroundColor: "#4CAF50" });
   });
 
-  it('handles empty frame', () => {
+  it("handles empty frame", () => {
     render(<IntentIRInspector />);
-    expect(screen.getByText('No IntentFrame available')).toBeInTheDocument();
+    expect(screen.getByText("No IntentFrame available")).toBeInTheDocument();
   });
 
-  it('expands and collapses sections', () => {
+  it("expands and collapses sections", () => {
     render(<IntentIRInspector frame={testFrame} />);
-    const emotionHeader = screen.getByText('Emotion').closest('.intent-ir-section-header');
+    const emotionHeader = screen
+      .getByText("Emotion")
+      .closest(".intent-ir-section-header");
     expect(emotionHeader).toBeInTheDocument();
-    
+
     // Click to expand
     emotionHeader?.click();
     expect(screen.getByText(/valence:/)).toBeInTheDocument();

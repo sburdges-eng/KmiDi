@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { getLogger } from '../debug/IntentLogger';
+import { useState, useEffect, useRef, useCallback } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { getLogger } from "../debug/IntentLogger";
 
 /**
  * useIntentIR - React hook for subscribing to IntentFrame snapshots
- * 
+ *
  * Rules:
  * - Never derive emotion in hooks
  * - No memoization of IR data
@@ -62,16 +62,19 @@ export function useIntentIR() {
   const logger = getLogger();
 
   // Freeze UI state on audio ticks (snapshot-based updates)
-  const updateFrame = useCallback((newFrame: IntentFrame) => {
-    // Log at UI boundary
-    logger.logUIBoundary(newFrame);
-    
-    // Update ref immediately (for synchronous access)
-    frameRef.current = newFrame;
-    
-    // Update state (triggers re-render)
-    setFrame(newFrame);
-  }, [logger]);
+  const updateFrame = useCallback(
+    (newFrame: IntentFrame) => {
+      // Log at UI boundary
+      logger.logUIBoundary(newFrame);
+
+      // Update ref immediately (for synchronous access)
+      frameRef.current = newFrame;
+
+      // Update state (triggers re-render)
+      setFrame(newFrame);
+    },
+    [logger],
+  );
 
   // Subscribe to IntentFrame updates
   useEffect(() => {
@@ -80,15 +83,15 @@ export function useIntentIR() {
 
     const fetchFrame = async () => {
       try {
-        const snapshot = await invoke<IntentFrame>('get_intent_ir_snapshot');
+        const snapshot = await invoke<IntentFrame>("get_intent_ir_snapshot");
         if (isMounted) {
           updateFrame(snapshot);
           setError(null);
         }
       } catch (err) {
         if (isMounted) {
-          setError(err instanceof Error ? err.message : 'Unknown error');
-          logger.logError('ui_boundary', null, String(err));
+          setError(err instanceof Error ? err.message : "Unknown error");
+          logger.logError("ui_boundary", null, String(err));
         }
       }
     };
@@ -113,68 +116,74 @@ export function useIntentIR() {
   }, []);
 
   // Update emotion (emits IR update)
-  const updateEmotion = useCallback(async (
-    valence: number,
-    arousal: number,
-    dominance: number,
-    discreteId?: number,
-    intensity: number = 1.0,
-    confidence: number = 1.0,
-  ) => {
-    setIsLoading(true);
-    try {
-      await invoke('update_intent_ir_emotion', {
-        valence,
-        arousal,
-        dominance,
-        discreteId: discreteId ?? -1,
-        intensity,
-        confidence,
-      });
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      logger.logError('ui_update_emotion', frameRef.current, String(err));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [logger]);
+  const updateEmotion = useCallback(
+    async (
+      valence: number,
+      arousal: number,
+      dominance: number,
+      discreteId?: number,
+      intensity: number = 1.0,
+      confidence: number = 1.0,
+    ) => {
+      setIsLoading(true);
+      try {
+        await invoke("update_intent_ir_emotion", {
+          valence,
+          arousal,
+          dominance,
+          discreteId: discreteId ?? -1,
+          intensity,
+          confidence,
+        });
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+        logger.logError("ui_update_emotion", frameRef.current, String(err));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [logger],
+  );
 
   // Update music (emits IR update)
-  const updateMusic = useCallback(async (
-    tempoBias: number,
-    rhythmicDensity: number,
-    grooveStrength: number,
-    harmonicTension: number,
-    harmonicMotion: number,
-    modePreference: number,
-    melodicActivity: number,
-    contourVariance: number,
-    dynamicRange: number,
-    textureDensity: number,
-  ) => {
-    setIsLoading(true);
-    try {
-      await invoke('update_intent_ir_music', {
-        tempoBias,
-        rhythmicDensity,
-        grooveStrength,
-        harmonicTension,
-        harmonicMotion,
-        modePreference,
-        melodicActivity,
-        contourVariance,
-        dynamicRange,
-        textureDensity,
-      });
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      logger.logError('ui_update_music', frameRef.current, String(err));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [logger]);
+  const updateMusic = useCallback(
+    async (
+      tempoBias: number,
+      rhythmicDensity: number,
+      grooveStrength: number,
+      harmonicTension: number,
+      harmonicMotion: number,
+      modePreference: number,
+      melodicActivity: number,
+      contourVariance: number,
+      dynamicRange: number,
+      textureDensity: number,
+    ) => {
+      setIsLoading(true);
+      try {
+        await invoke("update_intent_ir_music", {
+          tempoBias,
+          rhythmicDensity,
+          grooveStrength,
+          harmonicTension,
+          harmonicMotion,
+          modePreference,
+          melodicActivity,
+          contourVariance,
+          dynamicRange,
+          textureDensity,
+        });
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+        logger.logError("ui_update_music", frameRef.current, String(err));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [logger],
+  );
 
   return {
     frame,

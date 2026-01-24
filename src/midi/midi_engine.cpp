@@ -4,8 +4,8 @@
  */
 
 #include "daiw/types.hpp"
-#include <vector>
 #include <algorithm>
+#include <vector>
 
 namespace daiw {
 namespace midi {
@@ -14,25 +14,25 @@ namespace midi {
  * @brief MIDI event types
  */
 enum class EventType {
-    NoteOn,
-    NoteOff,
-    ControlChange,
-    ProgramChange,
-    PitchBend,
-    Clock,
-    Start,
-    Stop
+  NoteOn,
+  NoteOff,
+  ControlChange,
+  ProgramChange,
+  PitchBend,
+  Clock,
+  Start,
+  Stop
 };
 
 /**
  * @brief MIDI event structure
  */
 struct MidiEvent {
-    EventType type;
-    TickCount tick;
-    MidiChannel channel;
-    uint8_t data1;
-    uint8_t data2;
+  EventType type;
+  TickCount tick;
+  MidiChannel channel;
+  uint8_t data1;
+  uint8_t data2;
 };
 
 /**
@@ -40,24 +40,21 @@ struct MidiEvent {
  */
 class MidiTrack {
 public:
-    void addEvent(const MidiEvent& event) {
-        events_.push_back(event);
-    }
+  void addEvent(const MidiEvent &event) { events_.push_back(event); }
 
-    void sortByTime() {
-        std::sort(events_.begin(), events_.end(),
-                  [](const MidiEvent& a, const MidiEvent& b) {
-                      return a.tick < b.tick;
-                  });
-    }
+  void sortByTime() {
+    std::sort(
+        events_.begin(), events_.end(),
+        [](const MidiEvent &a, const MidiEvent &b) { return a.tick < b.tick; });
+  }
 
-    const std::vector<MidiEvent>& getEvents() const { return events_; }
-    std::vector<MidiEvent>& getEvents() { return events_; }
+  const std::vector<MidiEvent> &getEvents() const { return events_; }
+  std::vector<MidiEvent> &getEvents() { return events_; }
 
-    void clear() { events_.clear(); }
+  void clear() { events_.clear(); }
 
 private:
-    std::vector<MidiEvent> events_;
+  std::vector<MidiEvent> events_;
 };
 
 /**
@@ -65,28 +62,28 @@ private:
  */
 class MidiEngine {
 public:
-    MidiEngine() = default;
+  MidiEngine() = default;
 
-    void setTempo(float bpm) { tempo_.bpm = bpm; }
-    float getTempo() const { return tempo_.bpm; }
+  void setTempo(float bpm) { tempo_.bpm = bpm; }
+  float getTempo() const { return tempo_.bpm; }
 
-    void setPPQ(int ppq) { ppq_ = ppq; }
-    int getPPQ() const { return ppq_; }
+  void setPPQ(int ppq) { ppq_ = ppq; }
+  int getPPQ() const { return ppq_; }
 
-    TickCount msToTicks(float ms) const {
-        float ticksPerMs = ppq_ * tempo_.bpm / 60000.0f;
-        return static_cast<TickCount>(ms * ticksPerMs);
-    }
+  TickCount msToTicks(float ms) const {
+    float ticksPerMs = ppq_ * tempo_.bpm / 60000.0f;
+    return static_cast<TickCount>(ms * ticksPerMs);
+  }
 
-    float ticksToMs(TickCount ticks) const {
-        float ticksPerMs = ppq_ * tempo_.bpm / 60000.0f;
-        return static_cast<float>(ticks) / ticksPerMs;
-    }
+  float ticksToMs(TickCount ticks) const {
+    float ticksPerMs = ppq_ * tempo_.bpm / 60000.0f;
+    return static_cast<float>(ticks) / ticksPerMs;
+  }
 
 private:
-    Tempo tempo_;
-    int ppq_ = DEFAULT_PPQ;
+  Tempo tempo_;
+  int ppq_ = DEFAULT_PPQ;
 };
 
-}  // namespace midi
-}  // namespace daiw
+} // namespace midi
+} // namespace daiw

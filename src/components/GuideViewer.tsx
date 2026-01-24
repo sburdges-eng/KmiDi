@@ -27,21 +27,27 @@ export function GuideViewer({ guide }: Props) {
   // Manifest paths are like "Production_Workflows/Filename.md"
   // Glob keys are like "/Production_Workflows/Filename.md"
   let content: string | undefined;
-  
+
   // Try with leading slash first (expected format from glob)
-  const keyWithSlash = guide.path.startsWith("/") ? guide.path : `/${guide.path}`;
+  const keyWithSlash = guide.path.startsWith("/")
+    ? guide.path
+    : `/${guide.path}`;
   content = markdownFiles[keyWithSlash];
-  
+
   // If not found, try without leading slash
   if (!content) {
-    const keyWithoutSlash = guide.path.startsWith("/") ? guide.path.substring(1) : guide.path;
+    const keyWithoutSlash = guide.path.startsWith("/")
+      ? guide.path.substring(1)
+      : guide.path;
     content = markdownFiles[keyWithoutSlash];
   }
-  
+
   // If still not found, try to extract just the filename and match by filename
   if (!content) {
     const filename = guide.path.split("/").pop() || guide.path;
-    const matchingKey = Object.keys(markdownFiles).find(key => key.endsWith(filename));
+    const matchingKey = Object.keys(markdownFiles).find((key) =>
+      key.endsWith(filename),
+    );
     if (matchingKey) {
       content = markdownFiles[matchingKey];
     }

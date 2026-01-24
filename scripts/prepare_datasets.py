@@ -182,6 +182,26 @@ DATASETS = {
         sample_rate=22050,
         max_duration=30.0,
     ),
+    "wasabi": DatasetConfig(
+        name="WASABI",
+        task="all",
+        description="WASABI Song Corpus: 2M songs with lyrics, emotions, audio features, and cultural metadata",
+        sources=[
+            {
+                "type": "github",
+                "repo": "micbuffa/WasabiDataset",
+                "path": "data",
+            },
+            {
+                "type": "url",
+                "url": "https://wasabi.i3s.unice.fr/api/",
+                "note": "REST API endpoint (requires API access)",
+            },
+        ],
+        output_dir="wasabi",
+        sample_rate=44100,
+        max_duration=300.0,  # Full songs
+    ),
     "fma_small": DatasetConfig(
         name="Free Music Archive (Small)",
         task="all",
@@ -376,6 +396,55 @@ def download_from_huggingface(dataset_name: str, output_dir: Path, split: str = 
         return False
 
 
+def download_from_github(repo: str, output_dir: Path, path: Optional[str] = None) -> bool:
+    """Download dataset from GitHub repository."""
+    try:
+        import requests
+        import zipfile
+        from io import BytesIO
+    except ImportError:
+        logger.error("requests required: pip install requests")
+        return False
+    
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # GitHub API: download repository as zip
+    api_url = f"https://api.github.com/repos/{repo}/zipball/main"
+    
+    logger.info(f"Downloading from GitHub: {repo}")
+    
+    try:
+        response = requests.get(api_url, stream=True)
+        response.raise_for_status()
+        
+        # Extract zip to temp location first
+        with zipfile.ZipFile(BytesIO(response.content)) as zf:
+            # Find the root directory in the zip
+            root_dir = None
+            for name in zf.namelist():
+                if "/" in name:
+                    root_dir = name.split("/")[0]
+                    break
+            
+            if path:
+                # Extract specific path
+                for name in zf.namelist():
+                    if name.startswith(f"{root_dir}/{path}"):
+                        zf.extract(name, output_dir)
+            else:
+                # Extract all
+                zf.extractall(output_dir)
+        
+        logger.info(f"Downloaded to: {output_dir}")
+        return True
+    except Exception as e:
+        logger.error(f"GitHub download failed: {e}")
+        logger.info("Note: WASABI dataset may require manual download from:")
+        logger.info("  https://github.com/micbuffa/WasabiDataset")
+        logger.info("  or access via REST API: https://wasabi.i3s.unice.fr/api/")
+        return False
+
+
 def extract_archive(archive_path: Path, output_dir: Path) -> bool:
     """Extract zip/tar archive."""
     import tarfile
@@ -425,6 +494,12 @@ def download_dataset(config: DatasetConfig) -> bool:
                 
         elif source_type == "huggingface":
             if not download_from_huggingface(source["dataset"], raw_dir):
+                success = False
+        
+        elif source_type == "github":
+            repo = source.get("repo")
+            path = source.get("path")
+            if not download_from_github(repo, raw_dir, path):
                 success = False
                 
         elif source_type == "local":
@@ -716,6 +791,118 @@ def preprocess_midi_dataset(
     return success_count, fail_count
 
 
+def preprocess_wasabi_dataset(
+    input_dir: Path,
+    output_dir: Path,
+    config: DatasetConfig,
+) -> Tuple[int, int]:
+    """Preprocess WASABI dataset - convert to JSONL format for training."""
+    from tqdm import tqdm
+    
+    processed_dir = output_dir / "processed"
+    processed_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Output manifest files
+    train_manifest = processed_dir / "train.jsonl"
+    val_manifest = processed_dir / "val.jsonl"
+    test_manifest = processed_dir / "test.jsonl"
+    
+    success_count = 0
+    fail_count = 0
+    
+    # Find all JSON files (WASABI data files)
+    json_files = list(input_dir.rglob("*.json")) + list(input_dir.rglob("*.jsonl"))
+    
+    logger.info(f"Found {len(json_files)} JSON files")
+    
+    # Collect all samples
+    all_samples = []
+    
+    for json_path in tqdm(json_files, desc="Loading WASABI data"):
+        try:
+            with open(json_path) as f:
+                if json_path.suffix == ".jsonl":
+                    # JSONL: one object per line
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            all_samples.append(json.loads(line))
+                else:
+                    # JSON: array or object
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        all_samples.extend(data)
+                    elif isinstance(data, dict):
+                        if "samples" in data:
+                            all_samples.extend(data["samples"])
+                        else:
+                            all_samples.append(data)
+        except Exception as e:
+            logger.debug(f"Failed to load {json_path}: {e}")
+            fail_count += 1
+    
+    logger.info(f"Loaded {len(all_samples)} samples from WASABI")
+    
+    # Filter samples (require lyrics for emotion-conditioned training)
+    filtered_samples = []
+    for sample in all_samples:
+        # Require lyrics
+        if not sample.get("lyrics") and not sample.get("lyrics_text"):
+            fail_count += 1
+            continue
+        
+        # Normalize structure
+        normalized = {
+            "id": sample.get("id") or sample.get("song_id") or sample.get("track_id", ""),
+            "title": sample.get("title") or sample.get("name", ""),
+            "artist": sample.get("artist") or sample.get("artist_name"),
+            "album": sample.get("album") or sample.get("album_name"),
+            "lyrics": sample.get("lyrics") or sample.get("lyrics_text"),
+            "lyrics_emotion": sample.get("lyrics_emotion") or sample.get("emotion", {}),
+            "lyrics_topics": sample.get("lyrics_topics") or sample.get("topics", []),
+            "lyrics_structure": sample.get("lyrics_structure") or sample.get("structure"),
+            "chords": sample.get("chords") or sample.get("audio_features", {}).get("chords", []),
+            "tempo": sample.get("tempo") or sample.get("audio_features", {}).get("tempo"),
+            "key": sample.get("key") or sample.get("audio_features", {}).get("key"),
+            "mode": sample.get("mode") or sample.get("audio_features", {}).get("mode"),
+            "year": sample.get("year") or sample.get("release_year"),
+            "genre": sample.get("genre") or sample.get("genres", []),
+            "explicitness": sample.get("explicitness") or sample.get("explicit"),
+        }
+        
+        filtered_samples.append(normalized)
+        success_count += 1
+    
+    # Split into train/val/test (80/10/10)
+    np.random.seed(42)
+    np.random.shuffle(filtered_samples)
+    
+    n_total = len(filtered_samples)
+    n_train = int(n_total * 0.8)
+    n_val = int(n_total * 0.1)
+    
+    train_samples = filtered_samples[:n_train]
+    val_samples = filtered_samples[n_train:n_train + n_val]
+    test_samples = filtered_samples[n_train + n_val:]
+    
+    # Write manifests
+    for manifest_path, samples in [
+        (train_manifest, train_samples),
+        (val_manifest, val_samples),
+        (test_manifest, test_samples),
+    ]:
+        with open(manifest_path, "w") as f:
+            for sample in samples:
+                f.write(json.dumps(sample, ensure_ascii=False) + "\n")
+    
+    logger.info(
+        f"WASABI preprocessing complete: "
+        f"train={len(train_samples)}, val={len(val_samples)}, test={len(test_samples)}"
+    )
+    
+    return success_count, fail_count
+
+
 def preprocess_instrument_dataset(
     input_dir: Path,
     output_dir: Path,
@@ -846,7 +1033,9 @@ def preprocess_dataset(dataset_name: str) -> bool:
     
     logger.info(f"Preprocessing: {config.name}")
     
-    if config.task == "emotion":
+    if config.name == "WASABI":
+        success, fail = preprocess_wasabi_dataset(input_dir, output_dir, config)
+    elif config.task == "emotion":
         success, fail = preprocess_emotion_dataset(input_dir, output_dir, config)
     elif config.task == "instrument":
         success, fail = preprocess_instrument_dataset(input_dir, output_dir, config)

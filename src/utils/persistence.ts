@@ -1,12 +1,12 @@
 /**
  * Persistence utilities using Tauri store API
- * 
+ *
  * Provides functions to save and restore application state including:
  * - Panel visibility states
  * - Panel sizes/positions
  * - Window preferences
  * - Side A/B preference
- * 
+ *
  * Per Spec 02: Layout & Navigation - Persistence requirements
  */
 
@@ -31,10 +31,13 @@ async function getStore(): Promise<Store> {
   if (!storeInstance) {
     try {
       // Try to use Tauri store plugin if available
-      const { Store } = await import('@tauri-apps/plugin-store');
-      storeInstance = new Store('.settings.dat') as Store;
+      const { Store } = await import("@tauri-apps/plugin-store");
+      storeInstance = new Store(".settings.dat") as Store;
     } catch (error) {
-      console.warn('Tauri store plugin not available, using localStorage fallback:', error);
+      console.warn(
+        "Tauri store plugin not available, using localStorage fallback:",
+        error,
+      );
       // Return a localStorage-based store
       storeInstance = createLocalStorageStore();
     }
@@ -46,8 +49,8 @@ async function getStore(): Promise<Store> {
  * Create a localStorage-based fallback store
  */
 function createLocalStorageStore(): Store {
-  const prefix = 'kmidi-';
-  
+  const prefix = "kmidi-";
+
   return {
     async get<T>(key: string): Promise<T | null> {
       try {
@@ -61,7 +64,7 @@ function createLocalStorageStore(): Store {
       try {
         localStorage.setItem(prefix + key, JSON.stringify(value));
       } catch (error) {
-        console.warn('Failed to save to localStorage:', error);
+        console.warn("Failed to save to localStorage:", error);
       }
     },
     async has(key: string): Promise<boolean> {
@@ -77,13 +80,15 @@ function createLocalStorageStore(): Store {
     },
     async clear(): Promise<void> {
       // Only clear our prefixed keys
-      const keys = Object.keys(localStorage).filter(k => k.startsWith(prefix));
-      keys.forEach(k => localStorage.removeItem(k));
+      const keys = Object.keys(localStorage).filter((k) =>
+        k.startsWith(prefix),
+      );
+      keys.forEach((k) => localStorage.removeItem(k));
     },
     async keys(): Promise<string[]> {
       return Object.keys(localStorage)
-        .filter(k => k.startsWith(prefix))
-        .map(k => k.substring(prefix.length));
+        .filter((k) => k.startsWith(prefix))
+        .map((k) => k.substring(prefix.length));
     },
     async save(): Promise<void> {
       // localStorage is automatically saved
@@ -126,10 +131,10 @@ export interface WindowPreferences {
 export async function savePanelState(state: PanelState): Promise<void> {
   try {
     const store = await getStore();
-    await store.set('panel-state', state);
+    await store.set("panel-state", state);
     await store.save();
   } catch (error) {
-    console.error('Failed to save panel state:', error);
+    console.error("Failed to save panel state:", error);
   }
 }
 
@@ -139,10 +144,10 @@ export async function savePanelState(state: PanelState): Promise<void> {
 export async function loadPanelState(): Promise<PanelState | null> {
   try {
     const store = await getStore();
-    const state = await store.get<PanelState>('panel-state');
+    const state = await store.get<PanelState>("panel-state");
     return state;
   } catch (error) {
-    console.error('Failed to load panel state:', error);
+    console.error("Failed to load panel state:", error);
     return null;
   }
 }
@@ -150,13 +155,15 @@ export async function loadPanelState(): Promise<PanelState | null> {
 /**
  * Save window preferences
  */
-export async function saveWindowPreferences(prefs: WindowPreferences): Promise<void> {
+export async function saveWindowPreferences(
+  prefs: WindowPreferences,
+): Promise<void> {
   try {
     const store = await getStore();
-    await store.set('window-preferences', prefs);
+    await store.set("window-preferences", prefs);
     await store.save();
   } catch (error) {
-    console.error('Failed to save window preferences:', error);
+    console.error("Failed to save window preferences:", error);
   }
 }
 
@@ -166,10 +173,10 @@ export async function saveWindowPreferences(prefs: WindowPreferences): Promise<v
 export async function loadWindowPreferences(): Promise<WindowPreferences | null> {
   try {
     const store = await getStore();
-    const prefs = await store.get<WindowPreferences>('window-preferences');
+    const prefs = await store.get<WindowPreferences>("window-preferences");
     return prefs;
   } catch (error) {
-    console.error('Failed to load window preferences:', error);
+    console.error("Failed to load window preferences:", error);
     return null;
   }
 }
@@ -180,10 +187,10 @@ export async function loadWindowPreferences(): Promise<WindowPreferences | null>
 export async function saveSidePreference(sideA: boolean): Promise<void> {
   try {
     const store = await getStore();
-    await store.set('side-preference', sideA);
+    await store.set("side-preference", sideA);
     await store.save();
   } catch (error) {
-    console.error('Failed to save side preference:', error);
+    console.error("Failed to save side preference:", error);
   }
 }
 
@@ -193,10 +200,10 @@ export async function saveSidePreference(sideA: boolean): Promise<void> {
 export async function loadSidePreference(): Promise<boolean | null> {
   try {
     const store = await getStore();
-    const sideA = await store.get<boolean>('side-preference');
+    const sideA = await store.get<boolean>("side-preference");
     return sideA;
   } catch (error) {
-    console.error('Failed to load side preference:', error);
+    console.error("Failed to load side preference:", error);
     return null;
   }
 }

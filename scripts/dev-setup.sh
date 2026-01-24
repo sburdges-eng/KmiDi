@@ -10,7 +10,7 @@
 # - Sets up IDE configuration files
 # =============================================================================
 
-set -e  # Exit on any error
+set -e # Exit on any error
 
 # Colors for output
 RED='\033[0;31m'
@@ -27,11 +27,11 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 # Platform detection
 PLATFORM="unknown"
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    PLATFORM="macos"
+  PLATFORM="macos"
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    PLATFORM="linux"
+  PLATFORM="linux"
 elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
-    PLATFORM="windows"
+  PLATFORM="windows"
 fi
 
 echo -e "${CYAN}"
@@ -55,42 +55,42 @@ echo -e "${NC}"
 # =============================================================================
 
 log_step() {
-    echo -e "${YELLOW}[$(date '+%H:%M:%S')] $1${NC}"
+  echo -e "${YELLOW}[$(date '+%H:%M:%S')] $1${NC}"
 }
 
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+  echo -e "${GREEN}✅ $1${NC}"
 }
 
 log_error() {
-    echo -e "${RED}❌ $1${NC}"
+  echo -e "${RED}❌ $1${NC}"
 }
 
 log_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
+  echo -e "${BLUE}ℹ️  $1${NC}"
 }
 
 check_and_install_command() {
-    local cmd="$1"
-    local install_instructions="$2"
-    
-    if command -v "$cmd" >/dev/null 2>&1; then
-        local version=$(${cmd} --version 2>/dev/null | head -n1 || echo "unknown version")
-        log_success "$cmd is installed ($version)"
-        return 0
+  local cmd="$1"
+  local install_instructions="$2"
+
+  if command -v "$cmd" > /dev/null 2>&1; then
+    local version=$(${cmd} --version 2> /dev/null | head -n1 || echo "unknown version")
+    log_success "$cmd is installed ($version)"
+    return 0
+  else
+    log_info "$cmd not found. Installing..."
+    eval "$install_instructions"
+
+    if command -v "$cmd" > /dev/null 2>&1; then
+      log_success "$cmd installed successfully"
+      return 0
     else
-        log_info "$cmd not found. Installing..."
-        eval "$install_instructions"
-        
-        if command -v "$cmd" >/dev/null 2>&1; then
-            log_success "$cmd installed successfully"
-            return 0
-        else
-            log_error "Failed to install $cmd"
-            echo "Manual installation required: $install_instructions"
-            return 1
-        fi
+      log_error "Failed to install $cmd"
+      echo "Manual installation required: $install_instructions"
+      return 1
     fi
+  fi
 }
 
 # =============================================================================
@@ -100,71 +100,71 @@ check_and_install_command() {
 log_step "Installing system dependencies..."
 
 if [[ "$PLATFORM" == "macos" ]]; then
-    # Check for Homebrew
-    if ! command -v brew >/dev/null 2>&1; then
-        log_info "Installing Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    fi
-    
-    # Install dependencies via Homebrew
-    check_and_install_command "cmake" "brew install cmake"
-    check_and_install_command "ninja" "brew install ninja"
-    check_and_install_command "node" "brew install node"
-    check_and_install_command "python3" "brew install python"
-    check_and_install_command "rustc" "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && source ~/.cargo/env"
-    
-    # Check for Xcode Command Line Tools
-    if ! xcode-select -p >/dev/null 2>&1; then
-        log_info "Installing Xcode Command Line Tools..."
-        xcode-select --install
-        echo "Please complete Xcode Command Line Tools installation and run this script again"
-        exit 1
-    fi
-    
-    log_success "Xcode Command Line Tools available"
+  # Check for Homebrew
+  if ! command -v brew > /dev/null 2>&1; then
+    log_info "Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  fi
+
+  # Install dependencies via Homebrew
+  check_and_install_command "cmake" "brew install cmake"
+  check_and_install_command "ninja" "brew install ninja"
+  check_and_install_command "node" "brew install node"
+  check_and_install_command "python3" "brew install python"
+  check_and_install_command "rustc" "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && source ~/.cargo/env"
+
+  # Check for Xcode Command Line Tools
+  if ! xcode-select -p > /dev/null 2>&1; then
+    log_info "Installing Xcode Command Line Tools..."
+    xcode-select --install
+    echo "Please complete Xcode Command Line Tools installation and run this script again"
+    exit 1
+  fi
+
+  log_success "Xcode Command Line Tools available"
 
 elif [[ "$PLATFORM" == "linux" ]]; then
-    # Detect package manager
-    if command -v apt-get >/dev/null 2>&1; then
-        PKG_MANAGER="apt-get"
-        PKG_UPDATE="sudo apt-get update"
-        PKG_INSTALL="sudo apt-get install -y"
-    elif command -v dnf >/dev/null 2>&1; then
-        PKG_MANAGER="dnf"
-        PKG_UPDATE="sudo dnf check-update"
-        PKG_INSTALL="sudo dnf install -y"
-    elif command -v pacman >/dev/null 2>&1; then
-        PKG_MANAGER="pacman"
-        PKG_UPDATE="sudo pacman -Sy"
-        PKG_INSTALL="sudo pacman -S --noconfirm"
-    else
-        log_error "Unsupported Linux distribution (no recognized package manager)"
-        exit 1
-    fi
-    
-    log_info "Using package manager: $PKG_MANAGER"
-    $PKG_UPDATE
-    
-    # Install dependencies
-    check_and_install_command "cmake" "$PKG_INSTALL cmake"
-    check_and_install_command "ninja" "$PKG_INSTALL ninja-build"
-    check_and_install_command "node" "$PKG_INSTALL nodejs npm"
-    check_and_install_command "python3" "$PKG_INSTALL python3 python3-pip"
-    check_and_install_command "rustc" "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && source ~/.cargo/env"
-    
-    # Install build tools
-    if [[ "$PKG_MANAGER" == "apt-get" ]]; then
-        $PKG_INSTALL build-essential libasound2-dev libjack-jackd2-dev
-    elif [[ "$PKG_MANAGER" == "dnf" ]]; then
-        $PKG_INSTALL gcc gcc-c++ alsa-lib-devel jack-audio-connection-kit-devel
-    elif [[ "$PKG_MANAGER" == "pacman" ]]; then
-        $PKG_INSTALL base-devel alsa-lib jack2
-    fi
+  # Detect package manager
+  if command -v apt-get > /dev/null 2>&1; then
+    PKG_MANAGER="apt-get"
+    PKG_UPDATE="sudo apt-get update"
+    PKG_INSTALL="sudo apt-get install -y"
+  elif command -v dnf > /dev/null 2>&1; then
+    PKG_MANAGER="dnf"
+    PKG_UPDATE="sudo dnf check-update"
+    PKG_INSTALL="sudo dnf install -y"
+  elif command -v pacman > /dev/null 2>&1; then
+    PKG_MANAGER="pacman"
+    PKG_UPDATE="sudo pacman -Sy"
+    PKG_INSTALL="sudo pacman -S --noconfirm"
+  else
+    log_error "Unsupported Linux distribution (no recognized package manager)"
+    exit 1
+  fi
+
+  log_info "Using package manager: $PKG_MANAGER"
+  $PKG_UPDATE
+
+  # Install dependencies
+  check_and_install_command "cmake" "$PKG_INSTALL cmake"
+  check_and_install_command "ninja" "$PKG_INSTALL ninja-build"
+  check_and_install_command "node" "$PKG_INSTALL nodejs npm"
+  check_and_install_command "python3" "$PKG_INSTALL python3 python3-pip"
+  check_and_install_command "rustc" "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && source ~/.cargo/env"
+
+  # Install build tools
+  if [[ "$PKG_MANAGER" == "apt-get" ]]; then
+    $PKG_INSTALL build-essential libasound2-dev libjack-jackd2-dev
+  elif [[ "$PKG_MANAGER" == "dnf" ]]; then
+    $PKG_INSTALL gcc gcc-c++ alsa-lib-devel jack-audio-connection-kit-devel
+  elif [[ "$PKG_MANAGER" == "pacman" ]]; then
+    $PKG_INSTALL base-devel alsa-lib jack2
+  fi
 
 else
-    log_error "Unsupported platform: $PLATFORM"
-    echo "Please manually install: CMake, Node.js, Rust, Python 3, and C++ compiler"
-    exit 1
+  log_error "Unsupported platform: $PLATFORM"
+  echo "Please manually install: CMake, Node.js, Rust, Python 3, and C++ compiler"
+  exit 1
 fi
 
 log_success "System dependencies installed"
@@ -176,21 +176,21 @@ log_success "System dependencies installed"
 log_step "Installing Rust development tools..."
 
 # Ensure Rust is in PATH
-source ~/.cargo/env 2>/dev/null || true
+source ~/.cargo/env 2> /dev/null || true
 
 # Install required Rust components
 rustup component add rustfmt clippy
 
 # Install Tauri CLI
 if ! cargo install --list | grep -q "tauri-cli"; then
-    log_info "Installing Tauri CLI..."
-    cargo install tauri-cli
+  log_info "Installing Tauri CLI..."
+  cargo install tauri-cli
 fi
 
 # Install cargo-watch for development
 if ! cargo install --list | grep -q "cargo-watch"; then
-    log_info "Installing cargo-watch..."
-    cargo install cargo-watch
+  log_info "Installing cargo-watch..."
+  cargo install cargo-watch
 fi
 
 log_success "Rust development tools installed"
@@ -224,16 +224,16 @@ cd "$PROJECT_ROOT"
 
 # Create virtual environment if requirements.txt exists
 if [ -f "requirements.txt" ]; then
-    if [ ! -d "venv" ]; then
-        python3 -m venv venv
-    fi
-    
-    source venv/bin/activate
-    pip install --upgrade pip
-    pip install -r requirements.txt
-    log_success "Python dependencies installed in virtual environment"
+  if [ ! -d "venv" ]; then
+    python3 -m venv venv
+  fi
+
+  source venv/bin/activate
+  pip install --upgrade pip
+  pip install -r requirements.txt
+  log_success "Python dependencies installed in virtual environment"
 else
-    log_info "No requirements.txt found - skipping Python dependencies"
+  log_info "No requirements.txt found - skipping Python dependencies"
 fi
 
 # Install pybind11 for C++ bindings
@@ -255,21 +255,21 @@ mkdir -p dist
 # Create initial CMake configuration
 cd build/debug
 cmake ../../ \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -DBUILD_KELLY_CORE=ON \
-    -DBUILD_KELLY_FFI=ON \
-    -DBUILD_PLUGINS=ON \
-    -DBUILD_TESTS=ON \
-    -DENABLE_TRACY=OFF
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DBUILD_KELLY_CORE=ON \
+  -DBUILD_KELLY_FFI=ON \
+  -DBUILD_PLUGINS=ON \
+  -DBUILD_TESTS=ON \
+  -DENABLE_TRACY=OFF
 
 cd ../release
 cmake ../../ \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DBUILD_KELLY_CORE=ON \
-    -DBUILD_KELLY_FFI=ON \
-    -DBUILD_PLUGINS=ON \
-    -DBUILD_TESTS=OFF \
-    -DENABLE_TRACY=OFF
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_KELLY_CORE=ON \
+  -DBUILD_KELLY_FFI=ON \
+  -DBUILD_PLUGINS=ON \
+  -DBUILD_TESTS=OFF \
+  -DENABLE_TRACY=OFF
 
 cd "$PROJECT_ROOT"
 
@@ -508,16 +508,16 @@ cd "$PROJECT_ROOT"
 cd build/debug
 log_info "Testing C++ build..."
 if make -j2 KellyCore; then
-    log_success "C++ core builds successfully"
+  log_success "C++ core builds successfully"
 else
-    log_error "C++ build failed"
+  log_error "C++ build failed"
 fi
 
 # Test FFI library build
 if make -j2 KellyFFI; then
-    log_success "FFI library builds successfully"
+  log_success "FFI library builds successfully"
 else
-    log_error "FFI library build failed"
+  log_error "FFI library build failed"
 fi
 
 cd "$PROJECT_ROOT"
@@ -525,18 +525,18 @@ cd "$PROJECT_ROOT"
 # Test Node.js build
 log_info "Testing React build..."
 if npm run build; then
-    log_success "React build succeeds"
+  log_success "React build succeeds"
 else
-    log_error "React build failed"
+  log_error "React build failed"
 fi
 
 # Test basic Tauri configuration
 log_info "Testing Tauri configuration..."
 cd src-tauri
 if cargo check; then
-    log_success "Tauri configuration is valid"
+  log_success "Tauri configuration is valid"
 else
-    log_error "Tauri configuration issues found"
+  log_error "Tauri configuration issues found"
 fi
 
 cd "$PROJECT_ROOT"
@@ -568,7 +568,7 @@ cat > DEV_ENVIRONMENT.md << EOF
 - Python: $(python3 --version)
 
 ### Rust Tools
-- Tauri CLI: $(cargo tauri --version 2>/dev/null || echo "not installed")
+- Tauri CLI: $(cargo tauri --version 2> /dev/null || echo "not installed")
 - cargo-watch: $(cargo install --list | grep cargo-watch || echo "not installed")
 
 ### IDE Configuration

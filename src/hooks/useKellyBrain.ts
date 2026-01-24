@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { listen, UnlistenFn } from '@tauri-apps/api/event';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { listen, UnlistenFn } from "@tauri-apps/api/event";
 
 // =============================================================================
 // Types (matching Rust types)
@@ -79,14 +79,18 @@ export const useKellyBrain = () => {
     try {
       setLoading(true);
       setError(null);
-      const success = await invoke<boolean>('kelly_brain_initialize', { dataPath });
-      
+      const success = await invoke<boolean>("kelly_brain_initialize", {
+        dataPath,
+      });
+
       if (success) {
         // Get initial state
-        const currentState = await invoke<KellyBrainState>('get_kelly_brain_state');
+        const currentState = await invoke<KellyBrainState>(
+          "get_kelly_brain_state",
+        );
         setState(currentState);
       }
-      
+
       return success;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
@@ -100,8 +104,8 @@ export const useKellyBrain = () => {
   // Check if initialized
   const checkInitialized = useCallback(async () => {
     try {
-      const initialized = await invoke<boolean>('kelly_brain_is_initialized');
-      setState(prev => ({ ...prev, initialized }));
+      const initialized = await invoke<boolean>("kelly_brain_is_initialized");
+      setState((prev) => ({ ...prev, initialized }));
       return initialized;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
@@ -111,140 +115,199 @@ export const useKellyBrain = () => {
   }, []);
 
   // Generate intent from text
-  const fromText = useCallback(async (text: string): Promise<IntentResult | null> => {
-    try {
-      setLoading(true);
-      setError(null);
-      setState(prev => ({ ...prev, processing: true }));
-      
-      const intent = await invoke<IntentResult>('kelly_brain_from_text', { text });
-      setState(prev => ({ ...prev, current_intent: intent, processing: false }));
-      
-      return intent;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      setError(errorMsg);
-      setState(prev => ({ ...prev, processing: false }));
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fromText = useCallback(
+    async (text: string): Promise<IntentResult | null> => {
+      try {
+        setLoading(true);
+        setError(null);
+        setState((prev) => ({ ...prev, processing: true }));
+
+        const intent = await invoke<IntentResult>("kelly_brain_from_text", {
+          text,
+        });
+        setState((prev) => ({
+          ...prev,
+          current_intent: intent,
+          processing: false,
+        }));
+
+        return intent;
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        setError(errorMsg);
+        setState((prev) => ({ ...prev, processing: false }));
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   // Generate intent from emotion
-  const fromEmotion = useCallback(async (emotionName: string, intensity: number): Promise<IntentResult | null> => {
-    try {
-      setLoading(true);
-      setError(null);
-      setState(prev => ({ ...prev, processing: true }));
-      
-      const intent = await invoke<IntentResult>('kelly_brain_from_emotion', { emotionName, intensity });
-      setState(prev => ({ ...prev, current_intent: intent, processing: false }));
-      
-      return intent;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      setError(errorMsg);
-      setState(prev => ({ ...prev, processing: false }));
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fromEmotion = useCallback(
+    async (
+      emotionName: string,
+      intensity: number,
+    ): Promise<IntentResult | null> => {
+      try {
+        setLoading(true);
+        setError(null);
+        setState((prev) => ({ ...prev, processing: true }));
+
+        const intent = await invoke<IntentResult>("kelly_brain_from_emotion", {
+          emotionName,
+          intensity,
+        });
+        setState((prev) => ({
+          ...prev,
+          current_intent: intent,
+          processing: false,
+        }));
+
+        return intent;
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        setError(errorMsg);
+        setState((prev) => ({ ...prev, processing: false }));
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   // Generate MIDI from intent
-  const generateMidi = useCallback(async (intent: IntentResult, bars: number = 8): Promise<GeneratedMidi | null> => {
-    try {
-      setLoading(true);
-      setError(null);
-      setState(prev => ({ ...prev, processing: true }));
-      
-      const midi = await invoke<GeneratedMidi>('kelly_brain_generate_midi', { intent, bars });
-      setState(prev => ({ ...prev, current_midi: midi, processing: false }));
-      
-      return midi;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      setError(errorMsg);
-      setState(prev => ({ ...prev, processing: false }));
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const generateMidi = useCallback(
+    async (
+      intent: IntentResult,
+      bars: number = 8,
+    ): Promise<GeneratedMidi | null> => {
+      try {
+        setLoading(true);
+        setError(null);
+        setState((prev) => ({ ...prev, processing: true }));
+
+        const midi = await invoke<GeneratedMidi>("kelly_brain_generate_midi", {
+          intent,
+          bars,
+        });
+        setState((prev) => ({
+          ...prev,
+          current_midi: midi,
+          processing: false,
+        }));
+
+        return midi;
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        setError(errorMsg);
+        setState((prev) => ({ ...prev, processing: false }));
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   // Generate MIDI with parameters
-  const generateMidiWithParams = useCallback(async (
-    intent: IntentResult,
-    bars: number,
-    bpm: number,
-    keySignature: string
-  ): Promise<GeneratedMidi | null> => {
-    try {
-      setLoading(true);
-      setError(null);
-      setState(prev => ({ ...prev, processing: true }));
-      
-      const midi = await invoke<GeneratedMidi>('kelly_brain_generate_midi_with_params', {
-        intent,
-        bars,
-        bpm,
-        keySignature,
-      });
-      setState(prev => ({ ...prev, current_midi: midi, processing: false }));
-      
-      return midi;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      setError(errorMsg);
-      setState(prev => ({ ...prev, processing: false }));
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const generateMidiWithParams = useCallback(
+    async (
+      intent: IntentResult,
+      bars: number,
+      bpm: number,
+      keySignature: string,
+    ): Promise<GeneratedMidi | null> => {
+      try {
+        setLoading(true);
+        setError(null);
+        setState((prev) => ({ ...prev, processing: true }));
+
+        const midi = await invoke<GeneratedMidi>(
+          "kelly_brain_generate_midi_with_params",
+          {
+            intent,
+            bars,
+            bpm,
+            keySignature,
+          },
+        );
+        setState((prev) => ({
+          ...prev,
+          current_midi: midi,
+          processing: false,
+        }));
+
+        return midi;
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        setError(errorMsg);
+        setState((prev) => ({ ...prev, processing: false }));
+        return null;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   // Set emotion parameters
-  const setEmotionParameters = useCallback(async (valence: number, arousal: number, dominance: number) => {
-    try {
-      setError(null);
-      const success = await invoke<boolean>('kelly_brain_set_emotion_parameters', {
-        valence,
-        arousal,
-        dominance,
-      });
-      
-      if (success) {
-        // Update local state immediately for responsiveness
-        const newEmotionState: EmotionState = { valence, arousal, dominance, complexity: state.emotion_state?.complexity || 0.5 };
-        setState(prev => ({ ...prev, emotion_state: newEmotionState }));
+  const setEmotionParameters = useCallback(
+    async (valence: number, arousal: number, dominance: number) => {
+      try {
+        setError(null);
+        const success = await invoke<boolean>(
+          "kelly_brain_set_emotion_parameters",
+          {
+            valence,
+            arousal,
+            dominance,
+          },
+        );
+
+        if (success) {
+          // Update local state immediately for responsiveness
+          const newEmotionState: EmotionState = {
+            valence,
+            arousal,
+            dominance,
+            complexity: state.emotion_state?.complexity || 0.5,
+          };
+          setState((prev) => ({ ...prev, emotion_state: newEmotionState }));
+        }
+
+        return success;
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        setError(errorMsg);
+        return false;
       }
-      
-      return success;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      setError(errorMsg);
-      return false;
-    }
-  }, [state.emotion_state]);
+    },
+    [state.emotion_state],
+  );
 
   // Get current emotion state
-  const getEmotionState = useCallback(async (): Promise<EmotionState | null> => {
-    try {
-      const emotionState = await invoke<EmotionState>('kelly_brain_get_emotion_state');
-      setState(prev => ({ ...prev, emotion_state: emotionState }));
-      return emotionState;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      setError(errorMsg);
-      return null;
-    }
-  }, []);
+  const getEmotionState =
+    useCallback(async (): Promise<EmotionState | null> => {
+      try {
+        const emotionState = await invoke<EmotionState>(
+          "kelly_brain_get_emotion_state",
+        );
+        setState((prev) => ({ ...prev, emotion_state: emotionState }));
+        return emotionState;
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        setError(errorMsg);
+        return null;
+      }
+    }, []);
 
   // Get available emotions
   const getAvailableEmotions = useCallback(async () => {
     try {
-      const emotions = await invoke<any>('kelly_brain_get_available_emotions');
+      const emotions = await invoke<any>("kelly_brain_get_available_emotions");
       return emotions;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
@@ -256,7 +319,7 @@ export const useKellyBrain = () => {
   // Get version
   const getVersion = useCallback(async (): Promise<string | null> => {
     try {
-      const version = await invoke<string>('kelly_brain_get_version');
+      const version = await invoke<string>("kelly_brain_get_version");
       return version;
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
@@ -268,7 +331,9 @@ export const useKellyBrain = () => {
   // Refresh state from backend
   const refreshState = useCallback(async () => {
     try {
-      const currentState = await invoke<KellyBrainState>('get_kelly_brain_state');
+      const currentState = await invoke<KellyBrainState>(
+        "get_kelly_brain_state",
+      );
       setState(currentState);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
@@ -281,7 +346,7 @@ export const useKellyBrain = () => {
     state,
     error,
     loading,
-    
+
     // Actions
     initialize,
     checkInitialized,
@@ -294,7 +359,7 @@ export const useKellyBrain = () => {
     getAvailableEmotions,
     getVersion,
     refreshState,
-    
+
     // Computed values
     isInitialized: state.initialized,
     isProcessing: state.processing || loading,
@@ -318,30 +383,36 @@ export const useKellyBrainEvents = () => {
 
     try {
       // Add event listener on backend
-      await invoke('add_event_listener', { listenerId: 'react-hook-' + Date.now() });
+      await invoke("add_event_listener", {
+        listenerId: "react-hook-" + Date.now(),
+      });
 
       // Listen to various event types
       const eventTypes = [
-        'kelly-brain-initialized',
-        'kelly-emotion-update',
-        'kelly-intent-generated',
-        'kelly-midi-generated',
-        'kelly-processing-started',
-        'kelly-processing-completed',
-        'kelly-error',
-        'kelly-connection-status',
-        'kelly-parameter-changed',
+        "kelly-brain-initialized",
+        "kelly-emotion-update",
+        "kelly-intent-generated",
+        "kelly-midi-generated",
+        "kelly-processing-started",
+        "kelly-processing-completed",
+        "kelly-error",
+        "kelly-connection-status",
+        "kelly-parameter-changed",
       ];
 
       const unlisteners: UnlistenFn[] = [];
 
       for (const eventType of eventTypes) {
         const unlisten = await listen(eventType, (event) => {
-          setEvents(prev => [...prev.slice(-99), { // Keep last 100 events
-            type: eventType,
-            data: event.payload,
-            timestamp: new Date().toISOString(),
-          }]);
+          setEvents((prev) => [
+            ...prev.slice(-99),
+            {
+              // Keep last 100 events
+              type: eventType,
+              data: event.payload,
+              timestamp: new Date().toISOString(),
+            },
+          ]);
         });
         unlisteners.push(unlisten);
       }
@@ -349,7 +420,7 @@ export const useKellyBrainEvents = () => {
       unlistenersRef.current = unlisteners;
       setIsListening(true);
     } catch (err) {
-      console.error('Failed to start listening to KellyBrain events:', err);
+      console.error("Failed to start listening to KellyBrain events:", err);
     }
   }, [isListening]);
 
@@ -364,11 +435,11 @@ export const useKellyBrainEvents = () => {
       unlistenersRef.current = [];
 
       // Remove event listener on backend
-      await invoke('remove_event_listener', { listenerId: 'react-hook' });
-      
+      await invoke("remove_event_listener", { listenerId: "react-hook" });
+
       setIsListening(false);
     } catch (err) {
-      console.error('Failed to stop listening to KellyBrain events:', err);
+      console.error("Failed to stop listening to KellyBrain events:", err);
     }
   }, [isListening]);
 
@@ -409,13 +480,16 @@ export const useSimpleKellyBrain = () => {
     isProcessing,
   } = useKellyBrain();
 
-  const generateMusicFromText = useCallback(async (text: string, bars: number = 8) => {
-    const intent = await fromText(text);
-    if (intent) {
-      return await generateMidi(intent, bars);
-    }
-    return null;
-  }, [fromText, generateMidi]);
+  const generateMusicFromText = useCallback(
+    async (text: string, bars: number = 8) => {
+      const intent = await fromText(text);
+      if (intent) {
+        return await generateMidi(intent, bars);
+      }
+      return null;
+    },
+    [fromText, generateMidi],
+  );
 
   return {
     // Simplified state
@@ -425,7 +499,7 @@ export const useSimpleKellyBrain = () => {
     loading,
     emotionState: state.emotion_state,
     currentMidi: state.current_midi,
-    
+
     // Simplified actions
     initialize,
     generateMusicFromText,
@@ -437,7 +511,7 @@ export const useSimpleKellyBrain = () => {
 // Auto-initialization hook
 // =============================================================================
 
-export const useKellyBrainAutoInit = (dataPath: string = './data') => {
+export const useKellyBrainAutoInit = (dataPath: string = "./data") => {
   const { initialize, isInitialized, error } = useKellyBrain();
   const [initAttempted, setInitAttempted] = useState(false);
 

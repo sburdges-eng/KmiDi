@@ -6,14 +6,17 @@ type Props = {
   loadLyrics: () => Promise<LyricsState>;
 };
 
-const isTauri = () => typeof window !== "undefined" && Boolean((window as any).__TAURI__);
+const isTauri = () =>
+  typeof window !== "undefined" && Boolean((window as any).__TAURI__);
 
 // Lazy load Tauri APIs only when needed (browser mode compatible)
 const getTauriDialog = async () => {
   if (!isTauri()) return null;
   try {
     // Use dynamic import with error handling for browser mode
-    const dialogModule = await import("@tauri-apps/api/dialog" as any).catch(() => null);
+    const dialogModule = await import("@tauri-apps/api/dialog" as any).catch(
+      () => null,
+    );
     return dialogModule?.open || null;
   } catch {
     return null;
@@ -24,7 +27,9 @@ const getTauriFs = async () => {
   if (!isTauri()) return null;
   try {
     // Use dynamic import with error handling for browser mode
-    const fsModule = await import("@tauri-apps/api/fs" as any).catch(() => null);
+    const fsModule = await import("@tauri-apps/api/fs" as any).catch(
+      () => null,
+    );
     return fsModule?.readTextFile || null;
   } catch {
     return null;
@@ -84,12 +89,12 @@ const LyricPanel = ({ onSave, loadLyrics }: Props) => {
     try {
       const open = await getTauriDialog();
       const readTextFile = await getTauriFs();
-      
+
       if (!open || !readTextFile) {
         setError("Tauri APIs not available");
         return;
       }
-      
+
       const selected = await open({
         title: "Load lyrics",
         multiple: false,
@@ -121,9 +126,10 @@ const LyricPanel = ({ onSave, loadLyrics }: Props) => {
             <span className="section-badge">User Priority</span>
           </div>
           <p className="section-description">
-            Your lyrics guide the musical generation. The system analyzes your words for emotional content, 
-            stress patterns, and prosody to create music that matches your text. If no lyrics are provided, 
-            the system will generate draft lyrics based on your selected emotion.
+            Your lyrics guide the musical generation. The system analyzes your
+            words for emotional content, stress patterns, and prosody to create
+            music that matches your text. If no lyrics are provided, the system
+            will generate draft lyrics based on your selected emotion.
           </p>
         </div>
         <span className={`lyric-badge lyric-badge--${source || "none"}`}>
@@ -135,28 +141,28 @@ const LyricPanel = ({ onSave, loadLyrics }: Props) => {
       {error && <div className="lyric-error">{error}</div>}
 
       <div className="lyric-actions">
-        <button 
+        <button
           onClick={handleLoadFromFile}
           className="lyric-action-btn"
           title="Load lyrics from a text or LRC file"
         >
           📄 Load from File
         </button>
-        <button 
+        <button
           onClick={() => persistLyrics(lyrics)}
           className="lyric-action-btn primary"
           title="Save your lyrics to the backend"
         >
           💾 Save Lyrics
         </button>
-        <button 
+        <button
           onClick={refresh}
           className="lyric-action-btn"
           title="Reload lyrics from the backend"
         >
           🔄 Refresh
         </button>
-        <button 
+        <button
           onClick={handleClear}
           className="lyric-action-btn"
           title="Clear all lyrics"

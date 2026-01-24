@@ -26,16 +26,16 @@ LOCAL_DATA="/Volumes/sbdrive/audio/datasets"
 TUNNEL_PORT=2222
 
 if [ -z "$CODESPACE_HOST" ]; then
-    echo "Usage: $0 <codespace-ssh-command>"
-    echo ""
-    echo "Get your Codespace SSH command from:"
-    echo "  1. Open Codespace in browser"
-    echo "  2. Click ... menu → 'Open in VS Code Desktop'"
-    echo "  3. Or use: gh codespace ssh"
-    echo ""
-    echo "Example:"
-    echo "  $0 'gh codespace ssh -c <codespace-name>'"
-    exit 1
+  echo "Usage: $0 <codespace-ssh-command>"
+  echo ""
+  echo "Get your Codespace SSH command from:"
+  echo "  1. Open Codespace in browser"
+  echo "  2. Click ... menu → 'Open in VS Code Desktop'"
+  echo "  3. Or use: gh codespace ssh"
+  echo ""
+  echo "Example:"
+  echo "  $0 'gh codespace ssh -c <codespace-name>'"
+  exit 1
 fi
 
 echo "=============================================="
@@ -45,9 +45,9 @@ echo ""
 
 # Check if SSH server is running on Mac
 if ! pgrep -x "sshd" > /dev/null; then
-    echo "Enabling Remote Login (SSH) on Mac..."
-    echo "You may need to enter your password:"
-    sudo systemsetup -setremotelogin on
+  echo "Enabling Remote Login (SSH) on Mac..."
+  echo "You may need to enter your password:"
+  sudo systemsetup -setremotelogin on
 fi
 
 # Get local Mac username and hostname

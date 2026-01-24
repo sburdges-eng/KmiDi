@@ -5,9 +5,12 @@ interface AudioPlayerProps {
   title?: string;
 }
 
-export function AudioPlayer({ audioPath, title = "Generated Music" }: AudioPlayerProps) {
-  console.log('🎵 AudioPlayer component rendering!', { audioPath, title });
-  
+export function AudioPlayer({
+  audioPath,
+  title = "Generated Music",
+}: AudioPlayerProps) {
+  console.log("🎵 AudioPlayer component rendering!", { audioPath, title });
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -18,21 +21,26 @@ export function AudioPlayer({ audioPath, title = "Generated Music" }: AudioPlaye
   // Convert file path to HTTP URL
   const getAudioUrl = (path: string | null): string | null => {
     if (!path) return null;
-    
+
     // If it's already a URL, return it
     if (path.startsWith("http://") || path.startsWith("https://")) {
       return path;
     }
-    
+
     // Convert file path to API endpoint
     // Handle both absolute and relative paths
     let normalizedPath = path;
-    
+
     // If it's a relative path, it might need to be absolute
     // The API expects the full path to the file
     const encodedPath = encodeURIComponent(normalizedPath);
     const url = `http://127.0.0.1:8000/audio/${encodedPath}`;
-    console.log('Audio URL constructed:', { originalPath: path, normalizedPath, encodedPath, url });
+    console.log("Audio URL constructed:", {
+      originalPath: path,
+      normalizedPath,
+      encodedPath,
+      url,
+    });
     return url;
   };
 
@@ -46,13 +54,13 @@ export function AudioPlayer({ audioPath, title = "Generated Music" }: AudioPlaye
     const updateDuration = () => setDuration(audio.duration);
     const handleEnded = () => setIsPlaying(false);
     const handleError = (e: any) => {
-      console.error('Audio playback error:', e);
+      console.error("Audio playback error:", e);
       const audio = audioRef.current;
       if (audio) {
         const errorCode = audio.error?.code;
-        const errorMessage = audio.error?.message || 'Unknown error';
+        const errorMessage = audio.error?.message || "Unknown error";
         let userMessage = `Failed to load audio: ${errorMessage}`;
-        
+
         if (errorCode === 4) {
           userMessage = `Format error: The audio file format may not be supported. File: ${audioPath}`;
         } else if (errorCode === 2) {
@@ -60,20 +68,20 @@ export function AudioPlayer({ audioPath, title = "Generated Music" }: AudioPlaye
         } else if (errorCode === 3) {
           userMessage = `Decode error: The audio file may be corrupted or in an unsupported format.`;
         }
-        
-        console.error('Audio error details:', {
+
+        console.error("Audio error details:", {
           code: errorCode,
           message: errorMessage,
           src: audio.src,
           networkState: audio.networkState,
-          readyState: audio.readyState
+          readyState: audio.readyState,
         });
-        
+
         setError(userMessage);
       }
     };
     const handleLoadStart = () => {
-      console.log('Audio loading started');
+      console.log("Audio loading started");
       setError(null);
     };
 
@@ -131,33 +139,40 @@ export function AudioPlayer({ audioPath, title = "Generated Music" }: AudioPlaye
 
   // Debug logging
   useEffect(() => {
-    console.log('AudioPlayer rendered:', { audioPath, audioUrl });
+    console.log("AudioPlayer rendered:", { audioPath, audioUrl });
   }, [audioPath, audioUrl]);
 
   // Always render the container, show placeholder if no audio
   if (!audioPath || !audioUrl) {
     return (
-      <div className="audio-player-container" style={{ 
-        border: '2px solid rgb(99, 102, 241)', 
-        background: 'rgba(99, 102, 241, 0.1)',
-        minHeight: '120px'
-      }}>
+      <div
+        className="audio-player-container"
+        style={{
+          border: "2px solid rgb(99, 102, 241)",
+          background: "rgba(99, 102, 241, 0.1)",
+          minHeight: "120px",
+        }}
+      >
         <div className="audio-player-header">
-          <h3 style={{ color: 'rgb(224, 224, 228)' }}>{title}</h3>
+          <h3 style={{ color: "rgb(224, 224, 228)" }}>{title}</h3>
         </div>
-        <div className="audio-player-placeholder" style={{ 
-          padding: '30px',
-          textAlign: 'center',
-          color: 'rgba(224, 224, 228, 0.8)'
-        }}>
-          <p style={{ fontSize: '1.1em', marginBottom: '10px' }}>
+        <div
+          className="audio-player-placeholder"
+          style={{
+            padding: "30px",
+            textAlign: "center",
+            color: "rgba(224, 224, 228, 0.8)",
+          }}
+        >
+          <p style={{ fontSize: "1.1em", marginBottom: "10px" }}>
             🎵 No audio available yet
           </p>
-          <p style={{ fontSize: '0.9em' }}>
-            Generate music using the "Generate Music" button above to play it here.
+          <p style={{ fontSize: "0.9em" }}>
+            Generate music using the "Generate Music" button above to play it
+            here.
           </p>
-          <p style={{ fontSize: '0.75em', marginTop: '10px', opacity: 0.6 }}>
-            Debug: audioPath = {audioPath ? `"${audioPath}"` : 'null'}
+          <p style={{ fontSize: "0.75em", marginTop: "10px", opacity: 0.6 }}>
+            Debug: audioPath = {audioPath ? `"${audioPath}"` : "null"}
           </p>
         </div>
       </div>
@@ -165,29 +180,34 @@ export function AudioPlayer({ audioPath, title = "Generated Music" }: AudioPlaye
   }
 
   return (
-    <div className="audio-player-container" style={{ 
-      border: '2px solid rgb(34, 197, 94)', 
-      background: 'rgba(34, 197, 94, 0.1)'
-    }}>
+    <div
+      className="audio-player-container"
+      style={{
+        border: "2px solid rgb(34, 197, 94)",
+        background: "rgba(34, 197, 94, 0.1)",
+      }}
+    >
       <div className="audio-player-header">
-        <h3 style={{ color: 'rgb(224, 224, 228)' }}>{title}</h3>
+        <h3 style={{ color: "rgb(224, 224, 228)" }}>{title}</h3>
         {audioPath && (
           <span className="audio-file-name">{audioPath.split("/").pop()}</span>
         )}
       </div>
-      
+
       <audio ref={audioRef} src={audioUrl} preload="metadata" />
 
       {error && (
-        <div style={{ 
-          padding: '10px', 
-          background: 'rgba(239, 68, 68, 0.1)', 
-          border: '1px solid rgba(239, 68, 68, 0.3)', 
-          borderRadius: '6px',
-          marginBottom: '12px',
-          color: 'rgb(248, 113, 113)',
-          fontSize: '0.9em'
-        }}>
+        <div
+          style={{
+            padding: "10px",
+            background: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid rgba(239, 68, 68, 0.3)",
+            borderRadius: "6px",
+            marginBottom: "12px",
+            color: "rgb(248, 113, 113)",
+            fontSize: "0.9em",
+          }}
+        >
           {error}
         </div>
       )}

@@ -7,9 +7,9 @@ DATE=$(date +%Y-%m-%d_%H-%M-%S)
 LOG_FILE=".agents/logs/${AGENT_NAME}_${DATE}.md"
 
 if [ -z "$AGENT_NAME" ] || [ -z "$SUMMARY" ]; then
-    echo "Usage: ./agent_handoff.sh <agent_name> <summary>"
-    echo "Example: ./agent_handoff.sh frontend \"Completed Emotion Wheel component\""
-    exit 1
+  echo "Usage: ./agent_handoff.sh <agent_name> <summary>"
+  echo "Example: ./agent_handoff.sh frontend \"Completed Emotion Wheel component\""
+  exit 1
 fi
 
 cat > "$LOG_FILE" << HANDOFF

@@ -29,14 +29,35 @@ usage() {
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --manifest) MANIFEST="$2"; shift 2 ;;
-    --csv) CSV="$2"; shift 2 ;;
-    --out-dir) OUT_DIR="$2"; shift 2 ;;
-    --pred-split) PRED_SPLIT="$2"; shift 2 ;;
-    --eval-split) EVAL_SPLIT="$2"; shift 2 ;;
-    --checkpoint) CHECKPOINT="$2"; shift 2 ;;
-    -h|--help) usage ;;
-    *) echo "Unknown arg: $1"; usage ;;
+    --manifest)
+      MANIFEST="$2"
+      shift 2
+      ;;
+    --csv)
+      CSV="$2"
+      shift 2
+      ;;
+    --out-dir)
+      OUT_DIR="$2"
+      shift 2
+      ;;
+    --pred-split)
+      PRED_SPLIT="$2"
+      shift 2
+      ;;
+    --eval-split)
+      EVAL_SPLIT="$2"
+      shift 2
+      ;;
+    --checkpoint)
+      CHECKPOINT="$2"
+      shift 2
+      ;;
+    -h | --help) usage ;;
+    *)
+      echo "Unknown arg: $1"
+      usage
+      ;;
   esac
 done
 

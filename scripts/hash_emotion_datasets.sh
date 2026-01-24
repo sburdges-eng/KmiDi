@@ -14,8 +14,14 @@ ROOT="datasets"
 DEAM_DIR="${ROOT}/DEAM"
 EMO_DIR="${ROOT}/EMO_Music"
 
-[[ -d "${DEAM_DIR}" ]] || { echo "Missing ${DEAM_DIR}"; exit 1; }
-[[ -d "${EMO_DIR}" ]] || { echo "Missing ${EMO_DIR}"; exit 1; }
+[[ -d "${DEAM_DIR}" ]] || {
+  echo "Missing ${DEAM_DIR}"
+  exit 1
+}
+[[ -d "${EMO_DIR}" ]] || {
+  echo "Missing ${EMO_DIR}"
+  exit 1
+}
 
 compute_checksums() {
   local dir="$1"

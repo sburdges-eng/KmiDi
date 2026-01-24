@@ -18,12 +18,54 @@ export type Instrument = {
 };
 
 const defaultSections: SongSection[] = [
-  { id: "intro", name: "Intro", icon: "🎬", enabled: true, repetitions: 1, order: 1 },
-  { id: "verse", name: "Verse", icon: "📝", enabled: true, repetitions: 2, order: 2 },
-  { id: "chorus", name: "Chorus", icon: "🎵", enabled: true, repetitions: 2, order: 3 },
-  { id: "bridge", name: "Bridge", icon: "🌉", enabled: false, repetitions: 1, order: 4 },
-  { id: "solo", name: "Solo", icon: "🎸", enabled: false, repetitions: 1, order: 5 },
-  { id: "outro", name: "Outro", icon: "🎯", enabled: true, repetitions: 1, order: 6 },
+  {
+    id: "intro",
+    name: "Intro",
+    icon: "🎬",
+    enabled: true,
+    repetitions: 1,
+    order: 1,
+  },
+  {
+    id: "verse",
+    name: "Verse",
+    icon: "📝",
+    enabled: true,
+    repetitions: 2,
+    order: 2,
+  },
+  {
+    id: "chorus",
+    name: "Chorus",
+    icon: "🎵",
+    enabled: true,
+    repetitions: 2,
+    order: 3,
+  },
+  {
+    id: "bridge",
+    name: "Bridge",
+    icon: "🌉",
+    enabled: false,
+    repetitions: 1,
+    order: 4,
+  },
+  {
+    id: "solo",
+    name: "Solo",
+    icon: "🎸",
+    enabled: false,
+    repetitions: 1,
+    order: 5,
+  },
+  {
+    id: "outro",
+    name: "Outro",
+    icon: "🎯",
+    enabled: true,
+    repetitions: 1,
+    order: 6,
+  },
 ];
 
 const instruments: Instrument[] = [
@@ -44,8 +86,8 @@ const instruments: Instrument[] = [
       "Snare Rolls",
       "Double Bass",
       "Toms",
-      "Cymbal Chokes"
-    ]
+      "Cymbal Chokes",
+    ],
   },
   {
     id: "bass",
@@ -64,8 +106,8 @@ const instruments: Instrument[] = [
       "Pop",
       "Thumb",
       "Double Stops",
-      "Octave Jumps"
-    ]
+      "Octave Jumps",
+    ],
   },
   {
     id: "guitar",
@@ -87,8 +129,8 @@ const instruments: Instrument[] = [
       "Fingerpicking",
       "Chords",
       "Power Chords",
-      "Barre Chords"
-    ]
+      "Barre Chords",
+    ],
   },
   {
     id: "piano",
@@ -108,8 +150,8 @@ const instruments: Instrument[] = [
       "Broken Chords",
       "Block Chords",
       "Bass Notes",
-      "Melody in Right Hand"
-    ]
+      "Melody in Right Hand",
+    ],
   },
   {
     id: "strings",
@@ -132,8 +174,8 @@ const instruments: Instrument[] = [
       "Violin",
       "Viola",
       "Cello",
-      "Double Bass"
-    ]
+      "Double Bass",
+    ],
   },
   {
     id: "synth",
@@ -152,8 +194,8 @@ const instruments: Instrument[] = [
       "LFO",
       "Envelope",
       "Sequencer",
-      "Chords"
-    ]
+      "Chords",
+    ],
   },
   {
     id: "vocals",
@@ -177,8 +219,8 @@ const instruments: Instrument[] = [
       "Runs",
       "Vibrato",
       "Growl",
-      "Fry"
-    ]
+      "Fry",
+    ],
   },
 ];
 
@@ -193,7 +235,10 @@ type Props = {
   onSongLengthChange: (length: number) => void;
   onSectionsChange: (sections: SongSection[]) => void;
   onInstrumentsChange: (instruments: string[]) => void;
-  onInstrumentTechniquesChange: (instrumentId: string, techniques: string[]) => void;
+  onInstrumentTechniquesChange: (
+    instrumentId: string,
+    techniques: string[],
+  ) => void;
 };
 
 export function SongStructureEditor({
@@ -209,7 +254,7 @@ export function SongStructureEditor({
   const [activeInstrument, setActiveInstrument] = useState<string | null>(null);
 
   const handleSectionToggle = (sectionId: string) => {
-    const updated = selectedSections.map(section => {
+    const updated = selectedSections.map((section) => {
       if (section.id === sectionId) {
         return { ...section, enabled: !section.enabled };
       }
@@ -219,7 +264,7 @@ export function SongStructureEditor({
   };
 
   const handleRepetitionChange = (sectionId: string, delta: number) => {
-    const updated = selectedSections.map(section => {
+    const updated = selectedSections.map((section) => {
       if (section.id === sectionId) {
         const currentReps = section.repetitions || 1;
         const newReps = Math.max(0, currentReps + delta);
@@ -240,7 +285,9 @@ export function SongStructureEditor({
 
   const handleInstrumentToggle = (instrumentId: string) => {
     if (selectedInstruments.includes(instrumentId)) {
-      onInstrumentsChange(selectedInstruments.filter(id => id !== instrumentId));
+      onInstrumentsChange(
+        selectedInstruments.filter((id) => id !== instrumentId),
+      );
       setActiveInstrument(null);
     } else {
       onInstrumentsChange([...selectedInstruments, instrumentId]);
@@ -251,7 +298,10 @@ export function SongStructureEditor({
   const handleTechniqueToggle = (instrumentId: string, technique: string) => {
     const current = instrumentTechniques[instrumentId] || [];
     if (current.includes(technique)) {
-      onInstrumentTechniquesChange(instrumentId, current.filter(t => t !== technique));
+      onInstrumentTechniquesChange(
+        instrumentId,
+        current.filter((t) => t !== technique),
+      );
     } else {
       onInstrumentTechniquesChange(instrumentId, [...current, technique]);
     }
@@ -269,10 +319,12 @@ export function SongStructureEditor({
     };
 
     let total = 0;
-    selectedSections.filter(s => s.enabled && (s.repetitions || 0) > 0).forEach(section => {
-      const baseLength = baseLengths[section.id] || 8;
-      total += baseLength * (section.repetitions || 1);
-    });
+    selectedSections
+      .filter((s) => s.enabled && (s.repetitions || 0) > 0)
+      .forEach((section) => {
+        const baseLength = baseLengths[section.id] || 8;
+        total += baseLength * (section.repetitions || 1);
+      });
 
     return Math.min(total, MAX_SONG_LENGTH_SECONDS);
   };
@@ -285,15 +337,17 @@ export function SongStructureEditor({
           <span className="section-badge">Advanced</span>
         </div>
         <p className="section-description">
-          Control the length, sections, and instruments in your song. Select instruments 
-          and choose specific techniques for each.
+          Control the length, sections, and instruments in your song. Select
+          instruments and choose specific techniques for each.
         </p>
       </div>
 
       <div className="song-length-section">
         <div className="song-length-control">
           <label className="length-label">
-            Song Length: <strong>{songLength} seconds</strong> ({Math.round(songLength / 60)}:{String(songLength % 60).padStart(2, '0')})
+            Song Length: <strong>{songLength} seconds</strong> (
+            {Math.round(songLength / 60)}:
+            {String(songLength % 60).padStart(2, "0")})
           </label>
           <div className="length-slider-container">
             <input
@@ -333,7 +387,8 @@ export function SongStructureEditor({
             </div>
           </div>
           <p className="length-hint">
-            Maximum: {MAX_SONG_LENGTH_SECONDS / 60} minutes (for optimal tokenization)
+            Maximum: {MAX_SONG_LENGTH_SECONDS / 60} minutes (for optimal
+            tokenization)
           </p>
         </div>
       </div>
@@ -341,7 +396,9 @@ export function SongStructureEditor({
       <div className="sections-section">
         <div className="customizer-header">
           <h3>Song Sections</h3>
-          <p className="customizer-hint">Enable sections and set how many times they repeat</p>
+          <p className="customizer-hint">
+            Enable sections and set how many times they repeat
+          </p>
         </div>
         <div className="sections-grid">
           {selectedSections
@@ -349,12 +406,12 @@ export function SongStructureEditor({
             .map((section) => (
               <div
                 key={section.id}
-                className={`section-card ${section.enabled ? 'section-card-enabled' : ''}`}
+                className={`section-card ${section.enabled ? "section-card-enabled" : ""}`}
               >
                 <div className="section-card-header">
                   <button
                     onClick={() => handleSectionToggle(section.id)}
-                    className={`section-toggle ${section.enabled ? 'section-toggle-enabled' : ''}`}
+                    className={`section-toggle ${section.enabled ? "section-toggle-enabled" : ""}`}
                   >
                     <span className="section-icon">{section.icon}</span>
                     <span className="section-name">{section.name}</span>
@@ -371,7 +428,9 @@ export function SongStructureEditor({
                       >
                         −
                       </button>
-                      <span className="repetition-count">{section.repetitions || (section.enabled ? 1 : 0)}</span>
+                      <span className="repetition-count">
+                        {section.repetitions || (section.enabled ? 1 : 0)}
+                      </span>
                       <button
                         onClick={() => handleRepetitionChange(section.id, 1)}
                         className="repetition-btn"
@@ -392,7 +451,9 @@ export function SongStructureEditor({
       <div className="instruments-section">
         <div className="customizer-header">
           <h3>Instruments</h3>
-          <p className="customizer-hint">Select instruments and choose techniques for each</p>
+          <p className="customizer-hint">
+            Select instruments and choose techniques for each
+          </p>
         </div>
         <div className="instruments-grid">
           {instruments.map((instrument) => {
@@ -413,13 +474,11 @@ export function SongStructureEditor({
                       setActiveInstrument(instrument.id);
                     }
                   }}
-                  className={`instrument-btn ${isSelected ? 'instrument-btn-selected' : ''} ${isActive ? 'instrument-btn-active' : ''}`}
+                  className={`instrument-btn ${isSelected ? "instrument-btn-selected" : ""} ${isActive ? "instrument-btn-active" : ""}`}
                 >
                   <span className="instrument-icon">{instrument.icon}</span>
                   <span className="instrument-name">{instrument.name}</span>
-                  {isSelected && (
-                    <span className="instrument-check">✓</span>
-                  )}
+                  {isSelected && <span className="instrument-check">✓</span>}
                 </button>
                 {isActive && isSelected && (
                   <div className="techniques-panel">
@@ -430,11 +489,15 @@ export function SongStructureEditor({
                       {instrument.techniques.map((technique) => (
                         <button
                           key={technique}
-                          onClick={() => handleTechniqueToggle(instrument.id, technique)}
-                          className={`technique-item-btn ${techniques.includes(technique) ? 'technique-item-btn-selected' : ''}`}
+                          onClick={() =>
+                            handleTechniqueToggle(instrument.id, technique)
+                          }
+                          className={`technique-item-btn ${techniques.includes(technique) ? "technique-item-btn-selected" : ""}`}
                         >
                           {technique}
-                          {techniques.includes(technique) && <span className="technique-check">✓</span>}
+                          {techniques.includes(technique) && (
+                            <span className="technique-check">✓</span>
+                          )}
                         </button>
                       ))}
                     </div>
@@ -448,10 +511,12 @@ export function SongStructureEditor({
 
       {selectedInstruments.length > 0 && (
         <div className="instrument-summary">
-          <div className="summary-header">Selected Instruments & Techniques:</div>
+          <div className="summary-header">
+            Selected Instruments & Techniques:
+          </div>
           <div className="instrument-summary-list">
-            {selectedInstruments.map(instrumentId => {
-              const instrument = instruments.find(i => i.id === instrumentId);
+            {selectedInstruments.map((instrumentId) => {
+              const instrument = instruments.find((i) => i.id === instrumentId);
               const techniques = instrumentTechniques[instrumentId] || [];
               if (!instrument) return null;
 
@@ -462,8 +527,10 @@ export function SongStructureEditor({
                   </span>
                   {techniques.length > 0 && (
                     <div className="summary-techniques">
-                      {techniques.map(tech => (
-                        <span key={tech} className="summary-technique-tag">{tech}</span>
+                      {techniques.map((tech) => (
+                        <span key={tech} className="summary-technique-tag">
+                          {tech}
+                        </span>
                       ))}
                     </div>
                   )}

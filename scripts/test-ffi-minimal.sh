@@ -20,23 +20,23 @@ cd "${BUILD_DIR}"
 # Try to compile minimal FFI test
 echo "Compiling minimal FFI test..."
 g++ -std=c++20 \
-    -I"${PROJECT_ROOT}/src" \
-    -I"${PROJECT_ROOT}/include" \
-    -DKELLY_FFI_AVAILABLE=0 \
-    "${PROJECT_ROOT}/tests/cpp/test_ffi_minimal.cpp" \
-    -o test_ffi_minimal \
-    2>&1 | head -20
+  -I"${PROJECT_ROOT}/src" \
+  -I"${PROJECT_ROOT}/include" \
+  -DKELLY_FFI_AVAILABLE=0 \
+  "${PROJECT_ROOT}/tests/cpp/test_ffi_minimal.cpp" \
+  -o test_ffi_minimal \
+  2>&1 | head -20
 
 if [ $? -eq 0 ]; then
-    echo "  ✓ Compilation successful"
-    echo ""
-    echo "Running test..."
-    ./test_ffi_minimal
-    echo ""
-    echo "=========================================="
-    echo "Minimal FFI test complete!"
-    echo "=========================================="
+  echo "  ✓ Compilation successful"
+  echo ""
+  echo "Running test..."
+  ./test_ffi_minimal
+  echo ""
+  echo "=========================================="
+  echo "Minimal FFI test complete!"
+  echo "=========================================="
 else
-    echo "  ⚠ Compilation failed (expected if full build not available)"
-    echo "  This is a minimal test - full FFI requires KellyCore"
+  echo "  ⚠ Compilation failed (expected if full build not available)"
+  echo "  This is a minimal test - full FFI requires KellyCore"
 fi

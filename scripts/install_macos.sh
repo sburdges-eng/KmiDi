@@ -16,14 +16,14 @@ echo ""
 
 # Check for Python
 if ! command -v python3 &> /dev/null; then
-    echo "❌ Python 3 is required but not installed."
-    echo ""
-    echo "Install Python from:"
-    echo "  https://www.python.org/downloads/"
-    echo ""
-    echo "Or via Homebrew:"
-    echo "  brew install python3"
-    exit 1
+  echo "❌ Python 3 is required but not installed."
+  echo ""
+  echo "Install Python from:"
+  echo "  https://www.python.org/downloads/"
+  echo ""
+  echo "Or via Homebrew:"
+  echo "  brew install python3"
+  exit 1
 fi
 
 echo "✓ Python 3 found: $(python3 --version)"
@@ -35,8 +35,8 @@ pip3 install --upgrade pip
 pip3 install streamlit music21 mido numpy pydub scipy
 
 if [ $? -ne 0 ]; then
-    echo "❌ Failed to install dependencies"
-    exit 1
+  echo "❌ Failed to install dependencies"
+  exit 1
 fi
 
 echo "✓ Dependencies installed"
@@ -53,8 +53,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cp "$SCRIPT_DIR/idaw_ableton_ui.py" "$APP_DIR/"
 cp "$SCRIPT_DIR/idaw_complete_pipeline.py" "$APP_DIR/"
 cp "$SCRIPT_DIR/idaw_launcher.py" "$APP_DIR/"
-cp "$SCRIPT_DIR/vernacular.py" "$APP_DIR/" 2>/dev/null
-cp "$SCRIPT_DIR/vernacular_database.json" "$APP_DIR/" 2>/dev/null
+cp "$SCRIPT_DIR/vernacular.py" "$APP_DIR/" 2> /dev/null
+cp "$SCRIPT_DIR/vernacular_database.json" "$APP_DIR/" 2> /dev/null
 
 echo "✓ Files installed"
 
@@ -123,7 +123,7 @@ echo "✓ iDAW.app created"
 # Create desktop shortcut
 echo ""
 echo "Creating desktop shortcut..."
-ln -sf "$APP_BUNDLE" "$HOME/Desktop/iDAW.app" 2>/dev/null
+ln -sf "$APP_BUNDLE" "$HOME/Desktop/iDAW.app" 2> /dev/null
 
 echo ""
 echo "========================================"

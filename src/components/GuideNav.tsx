@@ -121,7 +121,11 @@ export function GuideNav({ onSelect }: Props) {
                   type="button"
                   className="copy-btn"
                   onClick={() => handleCopyPath(guide.path)}
-                  className={copiedPath === guide.path ? "bg-accent-success text-white" : ""}
+                  className={
+                    copiedPath === guide.path
+                      ? "bg-accent-success text-white"
+                      : ""
+                  }
                 >
                   {copiedPath === guide.path ? "Copied!" : "Copy path"}
                 </button>
@@ -154,4 +158,3 @@ export function GuideNav({ onSelect }: Props) {
 }
 
 export default GuideNav;
-

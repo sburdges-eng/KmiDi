@@ -1,6 +1,6 @@
 /**
  * InspectorPanel - Left panel for displaying selected item details (read-only)
- * 
+ *
  * Per Spec 02: Layout & Navigation
  * - Left panel, read-only
  * - Displays selected item details
@@ -8,11 +8,11 @@
  * - Implements persistence (save/restore state)
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
 export interface InspectorItem {
   id: string;
-  type: 'track' | 'clip' | 'plugin' | 'parameter' | 'region';
+  type: "track" | "clip" | "plugin" | "parameter" | "region";
   name: string;
   properties: Record<string, any>;
   metadata?: Record<string, any>;
@@ -26,7 +26,7 @@ interface InspectorPanelProps {
 
 /**
  * InspectorPanel component
- * 
+ *
  * Displays detailed information about the currently selected item in a read-only format.
  * Follows Spec 02 requirements for the three-panel layout.
  */
@@ -40,13 +40,13 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   // Load persisted state on mount
   useEffect(() => {
     // TODO: Load from Tauri store
-    const savedState = localStorage.getItem('inspector-panel-state');
+    const savedState = localStorage.getItem("inspector-panel-state");
     if (savedState) {
       try {
         const state = JSON.parse(savedState);
         setIsExpanded(state.expanded || {});
       } catch (e) {
-        console.warn('Failed to load inspector panel state:', e);
+        console.warn("Failed to load inspector panel state:", e);
       }
     }
   }, []);
@@ -57,12 +57,12 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
       expanded: isExpanded,
       visible: isVisible,
     };
-    localStorage.setItem('inspector-panel-state', JSON.stringify(state));
+    localStorage.setItem("inspector-panel-state", JSON.stringify(state));
     // TODO: Save to Tauri store
   }, [isExpanded, isVisible]);
 
   const toggleSection = (section: string) => {
-    setIsExpanded(prev => ({
+    setIsExpanded((prev) => ({
       ...prev,
       [section]: !prev[section],
     }));
@@ -74,12 +74,14 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
 
   if (!selectedItem) {
     return (
-      <div 
+      <div
         className="inspector-panel bg-bg-secondary border-r border-border-light p-4 h-full overflow-y-auto"
         role="complementary"
         aria-label="Inspector panel"
       >
-        <h2 className="text-lg font-semibold text-text-primary mb-4">Inspector</h2>
+        <h2 className="text-lg font-semibold text-text-primary mb-4">
+          Inspector
+        </h2>
         <div className="text-text-tertiary text-sm">
           No item selected. Select an item to view its details.
         </div>
@@ -88,7 +90,7 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
   }
 
   return (
-    <div 
+    <div
       className="inspector-panel bg-bg-secondary border-r border-border-light p-4 h-full overflow-y-auto"
       role="complementary"
       aria-label={`Inspector panel: ${selectedItem.name}`}
@@ -114,30 +116,43 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
               {selectedItem.type}
             </span>
           </div>
-          <h3 className="text-base font-semibold text-text-primary">{selectedItem.name}</h3>
+          <h3 className="text-base font-semibold text-text-primary">
+            {selectedItem.name}
+          </h3>
           {selectedItem.id && (
-            <div className="text-xs text-text-tertiary mt-1">ID: {selectedItem.id}</div>
+            <div className="text-xs text-text-tertiary mt-1">
+              ID: {selectedItem.id}
+            </div>
           )}
         </div>
 
         {/* Properties Section */}
         <div className="inspector-section bg-bg-tertiary border border-border-light rounded">
           <button
-            onClick={() => toggleSection('properties')}
+            onClick={() => toggleSection("properties")}
             className="w-full flex items-center justify-between p-3 text-left hover:bg-bg-secondary transition-colors"
-            aria-expanded={isExpanded['properties'] || false}
+            aria-expanded={isExpanded["properties"] || false}
             aria-controls="inspector-properties"
           >
             <span className="font-semibold text-text-primary">Properties</span>
-            <span className="text-text-tertiary">{isExpanded['properties'] ? '−' : '+'}</span>
+            <span className="text-text-tertiary">
+              {isExpanded["properties"] ? "−" : "+"}
+            </span>
           </button>
-          {isExpanded['properties'] && (
-            <div id="inspector-properties" className="p-3 border-t border-border-light space-y-2">
+          {isExpanded["properties"] && (
+            <div
+              id="inspector-properties"
+              className="p-3 border-t border-border-light space-y-2"
+            >
               {Object.entries(selectedItem.properties).map(([key, value]) => (
                 <div key={key} className="flex justify-between items-start">
-                  <span className="text-sm text-text-secondary font-medium">{key}:</span>
+                  <span className="text-sm text-text-secondary font-medium">
+                    {key}:
+                  </span>
                   <span className="text-sm text-text-primary text-right ml-4">
-                    {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
+                    {typeof value === "object"
+                      ? JSON.stringify(value, null, 2)
+                      : String(value)}
                   </span>
                 </div>
               ))}
@@ -146,31 +161,43 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({
         </div>
 
         {/* Metadata Section */}
-        {selectedItem.metadata && Object.keys(selectedItem.metadata).length > 0 && (
-          <div className="inspector-section bg-bg-tertiary border border-border-light rounded">
-            <button
-              onClick={() => toggleSection('metadata')}
-              className="w-full flex items-center justify-between p-3 text-left hover:bg-bg-secondary transition-colors"
-              aria-expanded={isExpanded['metadata'] || false}
-              aria-controls="inspector-metadata"
-            >
-              <span className="font-semibold text-text-primary">Metadata</span>
-              <span className="text-text-tertiary">{isExpanded['metadata'] ? '−' : '+'}</span>
-            </button>
-            {isExpanded['metadata'] && (
-              <div id="inspector-metadata" className="p-3 border-t border-border-light space-y-2">
-                {Object.entries(selectedItem.metadata).map(([key, value]) => (
-                  <div key={key} className="flex justify-between items-start">
-                    <span className="text-sm text-text-secondary font-medium">{key}:</span>
-                    <span className="text-sm text-text-primary text-right ml-4">
-                      {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        {selectedItem.metadata &&
+          Object.keys(selectedItem.metadata).length > 0 && (
+            <div className="inspector-section bg-bg-tertiary border border-border-light rounded">
+              <button
+                onClick={() => toggleSection("metadata")}
+                className="w-full flex items-center justify-between p-3 text-left hover:bg-bg-secondary transition-colors"
+                aria-expanded={isExpanded["metadata"] || false}
+                aria-controls="inspector-metadata"
+              >
+                <span className="font-semibold text-text-primary">
+                  Metadata
+                </span>
+                <span className="text-text-tertiary">
+                  {isExpanded["metadata"] ? "−" : "+"}
+                </span>
+              </button>
+              {isExpanded["metadata"] && (
+                <div
+                  id="inspector-metadata"
+                  className="p-3 border-t border-border-light space-y-2"
+                >
+                  {Object.entries(selectedItem.metadata).map(([key, value]) => (
+                    <div key={key} className="flex justify-between items-start">
+                      <span className="text-sm text-text-secondary font-medium">
+                        {key}:
+                      </span>
+                      <span className="text-sm text-text-primary text-right ml-4">
+                        {typeof value === "object"
+                          ? JSON.stringify(value, null, 2)
+                          : String(value)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
       </div>
     </div>
   );

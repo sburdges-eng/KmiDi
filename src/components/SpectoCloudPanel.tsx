@@ -1,5 +1,9 @@
 import React, { useState } from "react";
-import { useMusicBrain, SpectocloudRenderRequest, SpectocloudRenderResponse } from "../hooks/useMusicBrain";
+import {
+  useMusicBrain,
+  SpectocloudRenderRequest,
+  SpectocloudRenderResponse,
+} from "../hooks/useMusicBrain";
 
 const presets: Record<string, Partial<SpectocloudRenderRequest>> = {
   preview: { anchor_density: "sparse", n_particles: 600, fps: 8 },
@@ -53,7 +57,9 @@ export function SpectoCloudPanel({ lastGeneratedAudioPath }: Props) {
       if (lastGeneratedAudioPath) {
         payload.audio_file_path = lastGeneratedAudioPath;
       } else {
-        throw new Error("No audio file available. Please generate music first using the Generate Music button above.");
+        throw new Error(
+          "No audio file available. Please generate music first using the Generate Music button above.",
+        );
       }
 
       const resp = await renderSpectocloud(payload);
@@ -65,7 +71,6 @@ export function SpectoCloudPanel({ lastGeneratedAudioPath }: Props) {
     }
   };
 
-
   return (
     <div className="spectocloud-panel">
       <div className="spectocloud-header">
@@ -75,8 +80,9 @@ export function SpectoCloudPanel({ lastGeneratedAudioPath }: Props) {
             <span className="section-badge">Particle Cloud</span>
           </div>
           <p className="section-description">
-            Turn your music into beautiful visual art. See your melodies and rhythms 
-            as flowing particle clouds - perfect for sharing or use as album artwork.
+            Turn your music into beautiful visual art. See your melodies and
+            rhythms as flowing particle clouds - perfect for sharing or use as
+            album artwork.
           </p>
         </div>
       </div>
@@ -89,9 +95,13 @@ export function SpectoCloudPanel({ lastGeneratedAudioPath }: Props) {
               <button
                 key={p}
                 onClick={() => applyPreset(p)}
-                className={`preset-btn-simple ${preset === p ? 'preset-btn-simple-active' : ''}`}
+                className={`preset-btn-simple ${preset === p ? "preset-btn-simple-active" : ""}`}
               >
-                {p === 'preview' ? 'Fast' : p === 'standard' ? 'Balanced' : 'High Quality'}
+                {p === "preview"
+                  ? "Fast"
+                  : p === "standard"
+                    ? "Balanced"
+                    : "High Quality"}
               </button>
             ))}
           </div>
@@ -101,13 +111,13 @@ export function SpectoCloudPanel({ lastGeneratedAudioPath }: Props) {
           <div className="mode-buttons-simple">
             <button
               onClick={() => setMode("static")}
-              className={`mode-btn ${mode === "static" ? 'mode-btn-active' : ''}`}
+              className={`mode-btn ${mode === "static" ? "mode-btn-active" : ""}`}
             >
               📷 Image
             </button>
             <button
               onClick={() => setMode("animation")}
-              className={`mode-btn ${mode === "animation" ? 'mode-btn-active' : ''}`}
+              className={`mode-btn ${mode === "animation" ? "mode-btn-active" : ""}`}
             >
               🎬 Animation
             </button>
@@ -117,8 +127,9 @@ export function SpectoCloudPanel({ lastGeneratedAudioPath }: Props) {
 
       <div className="spectocloud-simple-section">
         <p className="simple-description">
-          Visualize your generated music automatically. After you generate music using the button above, 
-          come back here to turn it into a beautiful particle cloud visualization.
+          Visualize your generated music automatically. After you generate music
+          using the button above, come back here to turn it into a beautiful
+          particle cloud visualization.
         </p>
         {lastGeneratedAudioPath ? (
           <div className="auto-detection-notice success">
@@ -128,7 +139,10 @@ export function SpectoCloudPanel({ lastGeneratedAudioPath }: Props) {
         ) : (
           <div className="auto-detection-notice warning">
             <span className="notice-icon">ℹ️</span>
-            <span>Generate music first using the "Generate Music" button above, then return here to visualize it</span>
+            <span>
+              Generate music first using the "Generate Music" button above, then
+              return here to visualize it
+            </span>
           </div>
         )}
       </div>
@@ -140,19 +154,19 @@ export function SpectoCloudPanel({ lastGeneratedAudioPath }: Props) {
       )}
 
       <div className="render-action-section">
-        <button 
-          onClick={render} 
-          disabled={loading} 
+        <button
+          onClick={render}
+          disabled={loading}
           className="primary-action-btn"
         >
-          {loading 
-            ? "Creating Visualization..." 
-            : mode === "static" 
-              ? "Create Image" 
+          {loading
+            ? "Creating Visualization..."
+            : mode === "static"
+              ? "Create Image"
               : "Create Animation"}
         </button>
         <p className="action-hint">
-          {mode === "static" 
+          {mode === "static"
             ? "Generate a beautiful still image of your music."
             : "Create an animated video of your music flowing over time."}
         </p>
@@ -162,9 +176,12 @@ export function SpectoCloudPanel({ lastGeneratedAudioPath }: Props) {
         <div className="output-display-card">
           <div className="output-display-label">✨ Visualization Complete!</div>
           <div className="output-display-details">
-            <div>Your {output.mode === "static" ? "image" : "animation"} is ready!</div>
+            <div>
+              Your {output.mode === "static" ? "image" : "animation"} is ready!
+            </div>
             <div className="output-location">
-              Saved to: <span className="output-path-simple">{output.output_path}</span>
+              Saved to:{" "}
+              <span className="output-path-simple">{output.output_path}</span>
             </div>
           </div>
         </div>

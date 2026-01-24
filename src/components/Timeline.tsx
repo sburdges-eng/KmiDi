@@ -1,6 +1,6 @@
 /**
  * Timeline - Center panel, primary interface for musical timeline
- * 
+ *
  * Per Spec 04: Core Musical UI
  * - Center panel, primary interface
  * - Grid rules and zoom behavior
@@ -8,7 +8,7 @@
  * - Follows Spec 04 requirements
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 export interface TimelineTrack {
   id: string;
@@ -45,7 +45,7 @@ interface TimelineProps {
 
 /**
  * Timeline component
- * 
+ *
  * Primary musical interface for arranging and editing timeline-based content.
  * Follows Spec 04 requirements for core musical UI.
  */
@@ -76,26 +76,32 @@ export const Timeline: React.FC<TimelineProps> = ({
   const pixelsPerBar = pixelsPerBeat * beatsPerBar;
   const pixelsPerGrid = pixelsPerBeat / (gridSubdivision / 4); // 16th note grid
 
-  const handleZoom = useCallback((delta: number) => {
-    const newZoom = Math.max(10, Math.min(500, zoomLevel + delta));
-    setZoomLevel(newZoom);
-    if (onZoomChange) {
-      onZoomChange(newZoom);
-    }
-  }, [zoomLevel, onZoomChange]);
+  const handleZoom = useCallback(
+    (delta: number) => {
+      const newZoom = Math.max(10, Math.min(500, zoomLevel + delta));
+      setZoomLevel(newZoom);
+      if (onZoomChange) {
+        onZoomChange(newZoom);
+      }
+    },
+    [zoomLevel, onZoomChange],
+  );
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-      // Zoom with Ctrl/Cmd + wheel
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? -5 : 5;
-      handleZoom(delta);
-    } else {
-      // Scroll horizontally
-      e.preventDefault();
-      setScrollPosition(prev => Math.max(0, prev - e.deltaX));
-    }
-  }, [handleZoom]);
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        // Zoom with Ctrl/Cmd + wheel
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -5 : 5;
+        handleZoom(delta);
+      } else {
+        // Scroll horizontally
+        e.preventDefault();
+        setScrollPosition((prev) => Math.max(0, prev - e.deltaX));
+      }
+    },
+    [handleZoom],
+  );
 
   const snapToGrid = (position: number): number => {
     return Math.round(position / pixelsPerGrid) * pixelsPerGrid;
@@ -123,25 +129,29 @@ export const Timeline: React.FC<TimelineProps> = ({
     setSelectedClipId(clip.id);
   };
 
-  const handleClipDrag = useCallback((e: MouseEvent, clip: TimelineClip) => {
-    if (!isDragging.current || !onClipMove) return;
+  const handleClipDrag = useCallback(
+    (e: MouseEvent, clip: TimelineClip) => {
+      if (!isDragging.current || !onClipMove) return;
 
-    const deltaX = e.clientX - dragStartX.current;
-    const deltaBeats = pixelsToBeats(deltaX);
-    const newStartTime = Math.max(0, clip.startTime + deltaBeats);
-    const snappedTime = Math.round(newStartTime * gridSubdivision) / gridSubdivision;
-    
-    onClipMove(clip.id, snappedTime);
-    dragStartX.current = e.clientX;
-  }, [onClipMove, pixelsToBeats, gridSubdivision]);
+      const deltaX = e.clientX - dragStartX.current;
+      const deltaBeats = pixelsToBeats(deltaX);
+      const newStartTime = Math.max(0, clip.startTime + deltaBeats);
+      const snappedTime =
+        Math.round(newStartTime * gridSubdivision) / gridSubdivision;
+
+      onClipMove(clip.id, snappedTime);
+      dragStartX.current = e.clientX;
+    },
+    [onClipMove, pixelsToBeats, gridSubdivision],
+  );
 
   useEffect(() => {
     if (!isDragging.current) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       const selectedClip = tracks
-        .flatMap(t => t.clips)
-        .find(c => c.id === selectedClipId);
+        .flatMap((t) => t.clips)
+        .find((c) => c.id === selectedClipId);
       if (selectedClip) {
         handleClipDrag(e, selectedClip);
       }
@@ -151,12 +161,12 @@ export const Timeline: React.FC<TimelineProps> = ({
       isDragging.current = false;
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [selectedClipId, tracks, handleClipDrag]);
 
@@ -167,7 +177,8 @@ export const Timeline: React.FC<TimelineProps> = ({
 
     for (let bar = 0; bar < bars; bar++) {
       const x = beatsToPixels(bar * beatsPerBar) - scrollPosition;
-      if (x < -100 || x > (timelineRef.current?.clientWidth || 0) + 100) continue;
+      if (x < -100 || x > (timelineRef.current?.clientWidth || 0) + 100)
+        continue;
 
       // Bar line (thicker)
       lines.push(
@@ -180,7 +191,7 @@ export const Timeline: React.FC<TimelineProps> = ({
           stroke="currentColor"
           strokeWidth={1}
           className="text-border-medium"
-        />
+        />,
       );
 
       // Beat lines within bar
@@ -197,7 +208,7 @@ export const Timeline: React.FC<TimelineProps> = ({
             strokeWidth={0.5}
             strokeDasharray="2,2"
             className="text-border-light opacity-50"
-          />
+          />,
         );
       }
     }
@@ -209,7 +220,7 @@ export const Timeline: React.FC<TimelineProps> = ({
   const timelineWidth = Math.max(2000, beatsToPixels(32 * beatsPerBar));
 
   return (
-    <div 
+    <div
       className="timeline bg-bg-primary flex-1 overflow-hidden flex flex-col"
       role="main"
       aria-label="Timeline"
@@ -245,7 +256,10 @@ export const Timeline: React.FC<TimelineProps> = ({
       </div>
 
       {/* Timeline Content */}
-      <div className="timeline-content flex-1 overflow-auto relative" ref={timelineRef}>
+      <div
+        className="timeline-content flex-1 overflow-auto relative"
+        ref={timelineRef}
+      >
         <svg
           width={timelineWidth}
           height={totalHeight}
@@ -283,13 +297,15 @@ export const Timeline: React.FC<TimelineProps> = ({
             y2="100%"
             stroke="rgb(255, 59, 48)"
             strokeWidth={2}
-            className={isPlaying ? 'animate-pulse' : ''}
+            className={isPlaying ? "animate-pulse" : ""}
           />
 
           {/* Tracks and Clips */}
           {tracks.map((track, trackIndex) => {
-            let trackY = tracks.slice(0, trackIndex).reduce((sum, t) => sum + t.height, 0);
-            
+            let trackY = tracks
+              .slice(0, trackIndex)
+              .reduce((sum, t) => sum + t.height, 0);
+
             return (
               <g key={track.id}>
                 {/* Track background */}
@@ -298,10 +314,14 @@ export const Timeline: React.FC<TimelineProps> = ({
                   y={trackY}
                   width={timelineWidth}
                   height={track.height}
-                  fill={trackIndex % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.02)'}
+                  fill={
+                    trackIndex % 2 === 0
+                      ? "transparent"
+                      : "rgba(255, 255, 255, 0.02)"
+                  }
                   className="track-background"
                 />
-                
+
                 {/* Clips */}
                 {track.clips.map((clip) => {
                   const clipX = beatsToPixels(clip.startTime) - scrollPosition;
@@ -315,8 +335,10 @@ export const Timeline: React.FC<TimelineProps> = ({
                         y={trackY + 4}
                         width={clipWidth}
                         height={track.height - 8}
-                        fill={clip.color || 'rgb(0, 122, 255)'}
-                        stroke={isSelected ? 'rgb(255, 255, 255)' : 'transparent'}
+                        fill={clip.color || "rgb(0, 122, 255)"}
+                        stroke={
+                          isSelected ? "rgb(255, 255, 255)" : "transparent"
+                        }
                         strokeWidth={2}
                         rx={2}
                         className="cursor-move"
@@ -344,8 +366,10 @@ export const Timeline: React.FC<TimelineProps> = ({
         {/* Track Labels */}
         <div className="track-labels absolute left-0 top-0 w-32 bg-bg-secondary border-r border-border-light">
           {tracks.map((track, trackIndex) => {
-            let trackY = tracks.slice(0, trackIndex).reduce((sum, t) => sum + t.height, 0);
-            
+            let trackY = tracks
+              .slice(0, trackIndex)
+              .reduce((sum, t) => sum + t.height, 0);
+
             return (
               <div
                 key={track.id}
