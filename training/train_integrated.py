@@ -34,31 +34,34 @@ import logging
 import os
 import sys
 import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+
 try:
-    from ray import tune
-    from ray.tune import with_parameters, Trainable
     import ray
+    from ray import tune
+    from ray.tune import Trainable, with_parameters
 except ImportError:  # optional
     tune = None
     with_parameters = None
     Trainable = object  # harmless base
     ray = None
-from torch.nn.parallel import DistributedDataParallel as DDP
-import torch.distributed as dist
 import subprocess
+
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 # PyTorch imports
 try:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    from torch.utils.data import Dataset, DataLoader, random_split
+    from torch.utils.data import DataLoader, Dataset, random_split
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -67,6 +70,7 @@ except ImportError:
 
 try:
     import yaml
+
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
@@ -84,10 +88,7 @@ except ImportError:
     logger.warning("librosa not installed; audio datasets unavailable")
 
 try:
-    from training.data_augmentation import (
-        AugmentationConfig,
-        build_augmentation_pipeline,
-    )
+    from training.data_augmentation import AugmentationConfig, build_augmentation_pipeline
 except Exception:
     AugmentationConfig = None
     build_augmentation_pipeline = None
@@ -96,6 +97,11 @@ try:
     from training.harmony_dataset import HarmonyDataset
 except Exception:
     HarmonyDataset = None
+
+try:
+    from training.wasabi_dataset import WasabiDataset
+except Exception:
+    WasabiDataset = None
 
 # Paths
 ROOT = Path(__file__).parent.parent
@@ -107,9 +113,11 @@ RESULTS_FILE = CHECKPOINTS_DIR / "training_results.json"
 # Results Tracking
 # =============================================================================
 
+
 @dataclass
 class TrainingResult:
     """Result from training a single model."""
+
     model_name: str
     accuracy: float
     epochs_trained: int
@@ -126,7 +134,11 @@ class TrainingResult:
     def summary_line(self) -> str:
         """Format like: emotion_recognizer  89.50%  36/100 (early stopped)  12.2 min"""
         status = f"(early stopped)" if self.early_stopped else ""
-        time_str = f"{self.training_time_seconds / 60:.1f} min" if self.training_time_seconds > 60 else f"{self.training_time_seconds:.1f}s"
+        time_str = (
+            f"{self.training_time_seconds / 60:.1f} min"
+            if self.training_time_seconds > 60
+            else f"{self.training_time_seconds:.1f}s"
+        )
         return f"{self.model_name:20s} {self.accuracy*100:6.2f}%  {self.epochs_trained}/{self.epochs_total} {status:15s} {time_str}"
 
 
@@ -191,8 +203,7 @@ class ResultsManager:
         print("\n" + "=" * 70)
         print("Training Results Summary")
         print("=" * 70)
-        print(
-            f"{'Model':<20} {'Accuracy':>8} {'Epochs':>12} {'Status':>15} {'Time':>10}")
+        print(f"{'Model':<20} {'Accuracy':>8} {'Epochs':>12} {'Status':>15} {'Time':>10}")
         print("-" * 70)
 
         for result in sorted(self.results.values(), key=lambda r: r.accuracy, reverse=True):
@@ -205,6 +216,7 @@ class ResultsManager:
 # =============================================================================
 # Model Architectures
 # =============================================================================
+
 
 class EmotionRecognizerCNN(nn.Module):
     """CNN with attention for emotion recognition. Target: 92%+"""
@@ -227,8 +239,7 @@ class EmotionRecognizerCNN(nn.Module):
         )
 
         # Attention
-        self.attention = nn.MultiheadAttention(
-            256, 4, dropout=dropout, batch_first=True)
+        self.attention = nn.MultiheadAttention(256, 4, dropout=dropout, batch_first=True)
 
         # MLP head
         self.mlp = nn.Sequential(
@@ -246,10 +257,10 @@ class EmotionRecognizerCNN(nn.Module):
     def forward(self, x):
         # x: (batch, input_size)
         x = x.unsqueeze(1)  # (batch, 1, input_size)
-        x = self.conv(x)     # (batch, 256, 8)
+        x = self.conv(x)  # (batch, 256, 8)
         x = x.transpose(1, 2)  # (batch, 8, 256)
         x, _ = self.attention(x, x, x)
-        x = x.flatten(1)     # (batch, 256*8)
+        x = x.flatten(1)  # (batch, 256*8)
         return self.mlp(x)
 
 
@@ -261,25 +272,29 @@ class DynamicsEngineMLP(nn.Module):
 
         self.input_proj = nn.Linear(input_size, hidden_layers[0])
 
-        self.blocks = nn.ModuleList([
-            nn.Sequential(
-                nn.Linear(hidden_layers[i], hidden_layers[i+1]
-                          if i+1 < len(hidden_layers) else hidden_layers[i]),
-                nn.BatchNorm1d(
-                    hidden_layers[i+1] if i+1 < len(hidden_layers) else hidden_layers[i]),
-                nn.GELU(),
-                nn.Dropout(dropout),
-            )
-            for i in range(len(hidden_layers) - 1)
-        ])
+        self.blocks = nn.ModuleList(
+            [
+                nn.Sequential(
+                    nn.Linear(
+                        hidden_layers[i],
+                        hidden_layers[i + 1] if i + 1 < len(hidden_layers) else hidden_layers[i],
+                    ),
+                    nn.BatchNorm1d(
+                        hidden_layers[i + 1] if i + 1 < len(hidden_layers) else hidden_layers[i]
+                    ),
+                    nn.GELU(),
+                    nn.Dropout(dropout),
+                )
+                for i in range(len(hidden_layers) - 1)
+            ]
+        )
 
         self.output = nn.Linear(hidden_layers[-1], output_size)
 
     def forward(self, x):
         x = self.input_proj(x)
         for block in self.blocks:
-            x = x + \
-                block(x) if x.shape[-1] == block[0].out_features else block(x)
+            x = x + block(x) if x.shape[-1] == block[0].out_features else block(x)
         return torch.sigmoid(self.output(x))
 
 
@@ -292,11 +307,13 @@ class GroovePredictorMLP(nn.Module):
         layers = []
         in_dim = input_size
         for out_dim in hidden_layers:
-            layers.extend([
-                nn.Linear(in_dim, out_dim),
-                nn.GELU(),
-                nn.Dropout(dropout),
-            ])
+            layers.extend(
+                [
+                    nn.Linear(in_dim, out_dim),
+                    nn.GELU(),
+                    nn.Dropout(dropout),
+                ]
+            )
             in_dim = out_dim
 
         layers.append(nn.Linear(in_dim, output_size))
@@ -309,7 +326,9 @@ class GroovePredictorMLP(nn.Module):
 class HarmonyPredictorTransformer(nn.Module):
     """Small transformer for harmony. Target: 75%+"""
 
-    def __init__(self, input_size=128, hidden_dim=256, num_layers=4, num_heads=4, output_size=64, dropout=0.1):
+    def __init__(
+        self, input_size=128, hidden_dim=256, num_layers=4, num_heads=4, output_size=64, dropout=0.1
+    ):
         super().__init__()
 
         self.input_proj = nn.Linear(input_size, hidden_dim)
@@ -319,11 +338,10 @@ class HarmonyPredictorTransformer(nn.Module):
             nhead=num_heads,
             dim_feedforward=hidden_dim * 4,
             dropout=dropout,
-            activation='gelu',
+            activation="gelu",
             batch_first=True,
         )
-        self.transformer = nn.TransformerEncoder(
-            encoder_layer, num_layers=num_layers)
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
         self.output = nn.Linear(hidden_dim, output_size)
 
@@ -339,8 +357,17 @@ class HarmonyPredictorTransformer(nn.Module):
 class MelodyTransformer(nn.Module):
     """Decoder transformer for melody generation. Target: 60%+"""
 
-    def __init__(self, vocab_size=512, input_size=64, hidden_dim=384, num_layers=8,
-                 num_heads=6, output_size=128, dropout=0.1, max_seq_len=1024):
+    def __init__(
+        self,
+        vocab_size=512,
+        input_size=64,
+        hidden_dim=384,
+        num_layers=8,
+        num_heads=6,
+        output_size=128,
+        dropout=0.1,
+        max_seq_len=1024,
+    ):
         super().__init__()
 
         self.token_emb = nn.Embedding(vocab_size, hidden_dim)
@@ -352,26 +379,23 @@ class MelodyTransformer(nn.Module):
             nhead=num_heads,
             dim_feedforward=hidden_dim * 4,
             dropout=dropout,
-            activation='gelu',
+            activation="gelu",
             batch_first=True,
         )
-        self.transformer = nn.TransformerDecoder(
-            decoder_layer, num_layers=num_layers)
+        self.transformer = nn.TransformerDecoder(decoder_layer, num_layers=num_layers)
 
         self.output = nn.Linear(hidden_dim, output_size)
 
     def forward(self, tokens, emotion):
         B, T = tokens.shape
 
-        positions = torch.arange(
-            T, device=tokens.device).unsqueeze(0).expand(B, T)
+        positions = torch.arange(T, device=tokens.device).unsqueeze(0).expand(B, T)
         x = self.token_emb(tokens) + self.pos_emb(positions)
 
         emotion_context = self.emotion_proj(emotion).unsqueeze(1)
 
         # Causal mask
-        causal_mask = torch.triu(torch.ones(
-            T, T, device=x.device), diagonal=1).bool()
+        causal_mask = torch.triu(torch.ones(T, T, device=x.device), diagonal=1).bool()
 
         x = self.transformer(x, emotion_context, tgt_mask=causal_mask)
         return self.output(x)
@@ -381,10 +405,13 @@ class MelodyTransformer(nn.Module):
 # Datasets
 # =============================================================================
 
+
 class SyntheticDataset(Dataset):
     """Synthetic dataset for model training."""
 
-    def __init__(self, num_samples: int, input_size: int, num_classes: int, task: str = "classification"):
+    def __init__(
+        self, num_samples: int, input_size: int, num_classes: int, task: str = "classification"
+    ):
         self.num_samples = num_samples
         self.input_size = input_size
         self.num_classes = num_classes
@@ -430,8 +457,7 @@ class AudioEmotionDataset(Dataset):
         }
         self.use_augmentation = use_augmentation and build_augmentation_pipeline is not None
         self.augment = (
-            build_augmentation_pipeline(
-                AugmentationConfig()) if self.use_augmentation else None
+            build_augmentation_pipeline(AugmentationConfig()) if self.use_augmentation else None
         )
 
     def _load_manifest(self, manifest_path: str):
@@ -447,13 +473,11 @@ class AudioEmotionDataset(Dataset):
                 try:
                     obj = json.loads(line)
                     if "path" in obj and "label" in obj:
-                        entries.append(
-                            {"path": obj["path"], "label": obj["label"]})
+                        entries.append({"path": obj["path"], "label": obj["label"]})
                 except json.JSONDecodeError:
                     continue
         if not entries:
-            raise ValueError(
-                f"No valid entries found in manifest: {manifest_path}")
+            raise ValueError(f"No valid entries found in manifest: {manifest_path}")
         return entries
 
     def __len__(self):
@@ -465,8 +489,7 @@ class AudioEmotionDataset(Dataset):
         if self.augment:
             wav = self.augment(wav, sr=self.sample_rate)
 
-        mel = librosa.feature.melspectrogram(
-            y=wav, sr=self.sample_rate, n_mels=self.n_mels)
+        mel = librosa.feature.melspectrogram(y=wav, sr=self.sample_rate, n_mels=self.n_mels)
         log_mel = librosa.power_to_db(mel, ref=np.max)
         # Pool across time to fixed n_mels vector (EmotionRecognizer expects length=128)
         feat = log_mel.mean(axis=1).astype(np.float32)
@@ -476,10 +499,140 @@ class AudioEmotionDataset(Dataset):
         return x, y
 
 
+class WasabiEmotionDataset(Dataset):
+    """
+    Wrapper around WasabiDataset to convert emotion embeddings to classification labels.
+
+    Uses WASABI emotion embeddings and converts them to classification targets
+    by finding the dominant emotion.
+    """
+
+    def __init__(
+        self,
+        wasabi_dataset: "WasabiDataset",
+        emotion_labels: Optional[List[str]] = None,
+    ):
+        self.wasabi_dataset = wasabi_dataset
+        # Standard emotion vocabulary
+        self.emotion_labels = emotion_labels or [
+            "happy",
+            "sad",
+            "angry",
+            "fear",
+            "surprise",
+            "disgust",
+            "joy",
+            "sorrow",
+            "love",
+            "hate",
+            "excitement",
+            "calm",
+            "anxiety",
+            "peace",
+            "energy",
+            "melancholy",
+        ]
+        self.label_to_idx = {label: i for i, label in enumerate(self.emotion_labels)}
+
+    def __len__(self):
+        return len(self.wasabi_dataset)
+
+    def __getitem__(self, idx):
+        sample = self.wasabi_dataset[idx]
+        emotion_emb = sample["emotion_embedding"]  # (emotion_dim,)
+
+        # Convert embedding to classification label by finding dominant emotion
+        # The embedding already has emotion scores, find max
+        emotion_idx = torch.argmax(emotion_emb).item()
+
+        # Use emotion embedding as input features (flatten to 128-dim for model)
+        # Pad or truncate to match expected input size
+        if emotion_emb.shape[0] < 128:
+            # Pad with zeros
+            feat = torch.cat([emotion_emb, torch.zeros(128 - emotion_emb.shape[0])])
+        elif emotion_emb.shape[0] > 128:
+            # Truncate
+            feat = emotion_emb[:128]
+        else:
+            feat = emotion_emb
+
+        # Expand to match expected input format (1, 128)
+        x = feat.unsqueeze(0)
+        y = torch.tensor(emotion_idx % len(self.label_to_idx), dtype=torch.long)
+
+        return x, y
+
+
+class WasabiEmotionDataset(Dataset):
+    """
+    Wrapper around WasabiDataset to convert emotion embeddings to classification labels.
+
+    Uses WASABI emotion embeddings and converts them to classification targets
+    by finding the dominant emotion.
+    """
+
+    def __init__(
+        self,
+        wasabi_dataset: "WasabiDataset",
+        emotion_labels: Optional[List[str]] = None,
+    ):
+        self.wasabi_dataset = wasabi_dataset
+        # Standard emotion vocabulary
+        self.emotion_labels = emotion_labels or [
+            "happy",
+            "sad",
+            "angry",
+            "fear",
+            "surprise",
+            "disgust",
+            "joy",
+            "sorrow",
+            "love",
+            "hate",
+            "excitement",
+            "calm",
+            "anxiety",
+            "peace",
+            "energy",
+            "melancholy",
+        ]
+        self.label_to_idx = {label: i for i, label in enumerate(self.emotion_labels)}
+
+    def __len__(self):
+        return len(self.wasabi_dataset)
+
+    def __getitem__(self, idx):
+        sample = self.wasabi_dataset[idx]
+        emotion_emb = sample["emotion_embedding"]  # (emotion_dim,)
+
+        # Convert embedding to classification label by finding dominant emotion
+        # The embedding already has emotion scores, find max
+        emotion_idx = torch.argmax(emotion_emb).item()
+
+        # Use emotion embedding as input features (flatten to 128-dim for model)
+        # Pad or truncate to match expected input size
+        if emotion_emb.shape[0] < 128:
+            # Pad with zeros
+            feat = torch.cat([emotion_emb, torch.zeros(128 - emotion_emb.shape[0])])
+        elif emotion_emb.shape[0] > 128:
+            # Truncate
+            feat = emotion_emb[:128]
+        else:
+            feat = emotion_emb
+
+        # Expand to match expected input format (1, 128)
+        x = feat.unsqueeze(0)
+        y = torch.tensor(emotion_idx % len(self.label_to_idx), dtype=torch.long)
+
+        return x, y
+
+
 class MelodyDataset(Dataset):
     """Dataset for melody transformer."""
 
-    def __init__(self, num_samples: int, seq_len: int = 64, vocab_size: int = 512, emotion_dim: int = 64):
+    def __init__(
+        self, num_samples: int, seq_len: int = 64, vocab_size: int = 512, emotion_dim: int = 64
+    ):
         self.num_samples = num_samples
         self.seq_len = seq_len
         self.vocab_size = vocab_size
@@ -487,8 +640,7 @@ class MelodyDataset(Dataset):
 
         np.random.seed(42)
         self.tokens = np.random.randint(0, vocab_size, (num_samples, seq_len))
-        self.emotions = np.random.randn(
-            num_samples, emotion_dim).astype(np.float32)
+        self.emotions = np.random.randn(num_samples, emotion_dim).astype(np.float32)
 
     def __len__(self):
         return self.num_samples
@@ -502,6 +654,7 @@ class MelodyDataset(Dataset):
 # =============================================================================
 # Training Loop
 # =============================================================================
+
 
 def train_model(
     model: nn.Module,
@@ -526,19 +679,16 @@ def train_model(
     logger.info(f"  Epochs: {epochs}, LR: {lr}, Patience: {patience}")
 
     if distributed:
-        model = DDP(model, device_ids=[
-                    device.index], output_device=device.index)
+        model = DDP(model, device_ids=[device.index], output_device=device.index)
         logger.info("Distributed training enabled with DDP")
 
     model.to(device)
 
-    optimizer = torch.optim.AdamW(
-        model.parameters(), lr=lr, weight_decay=weight_decay)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=epochs)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
     criterion = nn.CrossEntropyLoss()
 
-    best_val_loss = float('inf')
+    best_val_loss = float("inf")
     best_accuracy = 0.0
     epochs_no_improve = 0
     start_time = time.time()
@@ -551,8 +701,7 @@ def train_model(
         torch.backends.cudnn.benchmark = True  # Optimize for performance
         # Allow non-deterministic algorithms for speed
         torch.backends.cudnn.deterministic = False
-        logger.info(
-            "CUDA optimizations enabled: cuDNN benchmark and non-deterministic algorithms")
+        logger.info("CUDA optimizations enabled: cuDNN benchmark and non-deterministic algorithms")
 
     # Wrap model with torch.compile if available
     if hasattr(torch, "compile"):
@@ -563,6 +712,7 @@ def train_model(
     scaler = None
     if device.type == "cuda" and torch.cuda.is_available():
         from torch.cuda.amp import GradScaler
+
         scaler = GradScaler()
         logger.info("Using mixed precision (AMP) for CUDA training")
 
@@ -600,8 +750,11 @@ def train_model(
                     outputs = model(inputs)
                 else:
                     tokens, emotion, targets = batch
-                    tokens, emotion, targets = tokens.to(
-                        device), emotion.to(device), targets.to(device)
+                    tokens, emotion, targets = (
+                        tokens.to(device),
+                        emotion.to(device),
+                        targets.to(device),
+                    )
                     outputs = model(tokens, emotion)
                     outputs = outputs.view(-1, outputs.size(-1))
                     targets = targets.view(-1)
@@ -620,8 +773,7 @@ def train_model(
 
         # Logging
         if epoch % 10 == 0 or epoch == epochs - 1:
-            logger.info(
-                f"  Epoch {epoch+1}/{epochs}: loss={val_loss:.4f}, acc={accuracy:.4f}")
+            logger.info(f"  Epoch {epoch+1}/{epochs}: loss={val_loss:.4f}, acc={accuracy:.4f}")
 
         # Save best model
         if val_loss < best_val_loss:
@@ -660,9 +812,10 @@ def train_model(
 # =============================================================================
 class TrainModelTune(Trainable):
     def setup(self, config):
+        from pathlib import Path
+
         import torch
         from torch.utils.data import DataLoader, random_split
-        from pathlib import Path
 
         # Define model configurations locally to avoid global scope issues
         self.model_configs = {
@@ -719,18 +872,15 @@ class TrainModelTune(Trainable):
         }
 
         self.model_name = config["model_name"]
-        self.device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model_config = self.model_configs[self.model_name]
-        self.model = self.model_config["class"](
-            **self.model_config.get("kwargs", {}))
+        self.model = self.model_config["class"](**self.model_config.get("kwargs", {}))
 
         dataset = SyntheticDataset(2000, **self.model_config["dataset_kwargs"])
         n_train = int(0.8 * len(dataset))
         n_val = len(dataset) - n_train
         train_set, val_set = random_split(dataset, [n_train, n_val])
-        self.train_loader = DataLoader(
-            train_set, batch_size=config["batch_size"], shuffle=True)
+        self.train_loader = DataLoader(train_set, batch_size=config["batch_size"], shuffle=True)
         self.val_loader = DataLoader(val_set, batch_size=config["batch_size"])
 
         self.checkpoint_dir = Path("checkpoints") / self.model_name
@@ -750,6 +900,7 @@ class TrainModelTune(Trainable):
 
 
 if ray:
+
     @ray.remote
     class TrainActor:
         def __init__(self, model_configs, synthetic_dataset):
@@ -757,25 +908,23 @@ if ray:
             self.synthetic_dataset = synthetic_dataset
 
         def train(self, config):
-            import torch
-            from torch.utils.data import DataLoader, random_split
             from pathlib import Path
 
+            import torch
+            from torch.utils.data import DataLoader, random_split
+
             model_name = config["model_name"]
-            device = torch.device(
-                "cuda" if torch.cuda.is_available() else "cpu")
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
             # Dynamically create the model and dataset
             model_config = self.model_configs[model_name]
             model = model_config["class"](**model_config.get("kwargs", {}))
 
-            dataset = self.synthetic_dataset(
-                2000, **model_config["dataset_kwargs"])
+            dataset = self.synthetic_dataset(2000, **model_config["dataset_kwargs"])
             n_train = int(0.8 * len(dataset))
             n_val = len(dataset) - n_train
             train_set, val_set = random_split(dataset, [n_train, n_val])
-            train_loader = DataLoader(
-                train_set, batch_size=config["batch_size"], shuffle=True)
+            train_loader = DataLoader(train_set, batch_size=config["batch_size"], shuffle=True)
             val_loader = DataLoader(val_set, batch_size=config["batch_size"])
 
             checkpoint_dir = Path("checkpoints") / model_name
@@ -790,7 +939,9 @@ if ray:
                 device,
                 checkpoint_dir,
             )
+
 else:
+
     class TrainActor:
         pass
 
@@ -798,6 +949,7 @@ else:
 def train_subprocess(config):
     """Run training in a separate subprocess."""
     import json
+
     config_path = "temp_config.json"
 
     # Save the configuration to a temporary JSON file
@@ -805,12 +957,14 @@ def train_subprocess(config):
         json.dump(config, f)
 
     # Call the training script as a subprocess
-    subprocess.run([
-        "/workspaces/KmiDi/.venv/bin/python",
-        "/workspaces/KmiDi/training/train_integrated.py",
-        "--config",
-        config_path,
-    ])
+    subprocess.run(
+        [
+            "/workspaces/KmiDi/.venv/bin/python",
+            "/workspaces/KmiDi/training/train_integrated.py",
+            "--config",
+            config_path,
+        ]
+    )
 
 
 def tune_hyperparameters():
@@ -831,6 +985,7 @@ def tune_hyperparameters():
     )
 
     print("Best hyperparameters found:", analysis.best_config)
+
 
 # =============================================================================
 # Model Factory
@@ -903,12 +1058,13 @@ def train_single_model(
     harmony_manifest: Optional[str] = None,
     harmony_context_dim: int = 128,
     harmony_target_dim: int = 64,
+    wasabi_manifest: Optional[str] = None,
+    wasabi_emotion_filter: Optional[List[str]] = None,
 ):
     """Train a single model."""
 
     if model_name not in MODEL_CONFIGS:
-        raise ValueError(
-            f"Unknown model: {model_name}. Available: {list(MODEL_CONFIGS.keys())}")
+        raise ValueError(f"Unknown model: {model_name}. Available: {list(MODEL_CONFIGS.keys())}")
 
     config = MODEL_CONFIGS[model_name]
 
@@ -916,22 +1072,43 @@ def train_single_model(
 
     # Create dataset
     label_count = None
-    if model_name == "emotion_recognizer" and audio_manifest:
-        dataset = AudioEmotionDataset(
-            manifest_path=audio_manifest,
-            sample_rate=sample_rate,
-            n_mels=n_mels,
-            use_augmentation=use_augmentation,
-        )
-        label_count = len(dataset.label_to_idx)
-        model_kwargs["output_size"] = label_count
-        logger.info(
-            f"Using audio manifest dataset with {len(dataset)} items "
-            f"(labels={label_count}, sr={sample_rate}, n_mels={n_mels}, augmentation={use_augmentation})"
-        )
+    if model_name == "emotion_recognizer":
+        if wasabi_manifest and WasabiDataset is not None:
+            # Use WASABI dataset for emotion recognition
+            wasabi_ds = WasabiDataset(
+                manifest_path=wasabi_manifest,
+                emotion_filter=wasabi_emotion_filter,
+                require_lyrics=True,
+            )
+            # Wrap to convert embeddings to classification format
+            dataset = WasabiEmotionDataset(wasabi_ds)
+            label_count = len(dataset.label_to_idx)
+            model_kwargs["output_size"] = label_count
+            logger.info(
+                f"Using WASABI dataset with {len(dataset)} items "
+                f"(emotion_filter={wasabi_emotion_filter}, labels={label_count})"
+            )
+        elif audio_manifest:
+            dataset = AudioEmotionDataset(
+                manifest_path=audio_manifest,
+                sample_rate=sample_rate,
+                n_mels=n_mels,
+                use_augmentation=use_augmentation,
+            )
+            label_count = len(dataset.label_to_idx)
+            model_kwargs["output_size"] = label_count
+            logger.info(
+                f"Using audio manifest dataset with {len(dataset)} items "
+                f"(labels={label_count}, sr={sample_rate}, n_mels={n_mels}, augmentation={use_augmentation})"
+            )
+        else:
+            # Fallback to synthetic
+            dataset = SyntheticDataset(num_samples, **config["dataset_kwargs"])
     elif model_name == "harmony_predictor" and harmony_manifest:
         if HarmonyDataset is None:
-            raise ImportError("HarmonyDataset unavailable; ensure training/harmony_dataset.py is importable")
+            raise ImportError(
+                "HarmonyDataset unavailable; ensure training/harmony_dataset.py is importable"
+            )
         dataset = HarmonyDataset(
             harmony_manifest,
             expected_context=harmony_context_dim,
@@ -964,8 +1141,7 @@ def train_single_model(
 
     # Train
     checkpoint_dir = CHECKPOINTS_DIR / model_name
-    result = train_model(model, train_loader, val_loader,
-                         config, device, checkpoint_dir)
+    result = train_model(model, train_loader, val_loader, config, device, checkpoint_dir)
 
     # Save result
     results_manager.add_result(result)
@@ -977,31 +1153,53 @@ def train_single_model(
 # Main
 # =============================================================================
 
+
 def main():
     parser = argparse.ArgumentParser(description="Train Kelly models")
     parser.add_argument("--config", type=str, help="Path to config YAML")
     parser.add_argument("--model", type=str, help="Single model to train")
     parser.add_argument("--all", action="store_true", help="Train all models")
-    parser.add_argument("--device", type=str, default="auto",
-                        help="Device (auto/cpu/cuda/mps)")
-    parser.add_argument("--samples", type=int, default=2000,
-                        help="Number of training samples")
-    parser.add_argument("--tune", action="store_true",
-                        help="Run hyperparameter tuning")
-    parser.add_argument("--audio-manifest", type=str,
-                        help="JSONL manifest for audio emotion dataset (emotion_recognizer only)")
-    parser.add_argument("--sample-rate", type=int, default=16000,
-                        help="Sample rate for audio loading")
-    parser.add_argument("--n-mels", type=int, default=128,
-                        help="Mel bins for audio features")
-    parser.add_argument("--use-augmentation", action="store_true",
-                        help="Enable audio augmentation pipeline")
-    parser.add_argument("--harmony-manifest", type=str,
-                        help="JSONL manifest for harmony predictor (context/target vectors)")
-    parser.add_argument("--harmony-context-dim", type=int, default=128,
-                        help="Expected context vector length for harmony manifest")
-    parser.add_argument("--harmony-target-dim", type=int, default=64,
-                        help="Expected target vector length for harmony manifest")
+    parser.add_argument("--device", type=str, default="auto", help="Device (auto/cpu/cuda/mps)")
+    parser.add_argument("--samples", type=int, default=2000, help="Number of training samples")
+    parser.add_argument("--tune", action="store_true", help="Run hyperparameter tuning")
+    parser.add_argument(
+        "--audio-manifest",
+        type=str,
+        help="JSONL manifest for audio emotion dataset (emotion_recognizer only)",
+    )
+    parser.add_argument(
+        "--sample-rate", type=int, default=16000, help="Sample rate for audio loading"
+    )
+    parser.add_argument("--n-mels", type=int, default=128, help="Mel bins for audio features")
+    parser.add_argument(
+        "--use-augmentation", action="store_true", help="Enable audio augmentation pipeline"
+    )
+    parser.add_argument(
+        "--harmony-manifest",
+        type=str,
+        help="JSONL manifest for harmony predictor (context/target vectors)",
+    )
+    parser.add_argument(
+        "--harmony-context-dim",
+        type=int,
+        default=128,
+        help="Expected context vector length for harmony manifest",
+    )
+    parser.add_argument(
+        "--harmony-target-dim",
+        type=int,
+        default=64,
+        help="Expected target vector length for harmony manifest",
+    )
+    parser.add_argument(
+        "--wasabi-manifest", type=str, help="WASABI manifest path for emotion-conditioned training"
+    )
+    parser.add_argument(
+        "--wasabi-emotion-filter",
+        type=str,
+        nargs="+",
+        help="Emotion filter for WASABI dataset (e.g., happy sad angry)",
+    )
     args = parser.parse_args()
 
     if args.tune:
@@ -1038,6 +1236,8 @@ def main():
             harmony_manifest=args.harmony_manifest,
             harmony_context_dim=args.harmony_context_dim,
             harmony_target_dim=args.harmony_target_dim,
+            wasabi_manifest=args.wasabi_manifest,
+            wasabi_emotion_filter=args.wasabi_emotion_filter,
         )
     elif args.all:
         for model_name in MODEL_CONFIGS:
@@ -1054,6 +1254,8 @@ def main():
                     harmony_manifest=args.harmony_manifest,
                     harmony_context_dim=args.harmony_context_dim,
                     harmony_target_dim=args.harmony_target_dim,
+                    wasabi_manifest=args.wasabi_manifest,
+                    wasabi_emotion_filter=args.wasabi_emotion_filter,
                 )
             except Exception as e:
                 logger.error(f"Failed to train {model_name}: {e}")
@@ -1073,13 +1275,42 @@ def compute_loss(batch, model, device, criterion):
         outputs = model(inputs)
     else:
         tokens, emotion, targets = batch
-        tokens, emotion, targets = tokens.to(
-            device), emotion.to(device), targets.to(device)
+        tokens, emotion, targets = tokens.to(device), emotion.to(device), targets.to(device)
         outputs = model(tokens, emotion)
         outputs = outputs.view(-1, outputs.size(-1))
         targets = targets.view(-1)
     return criterion(outputs, targets)
 
 
+if __name__ == "__main__":
+    main()
+
+
+if __name__ == "__main__":
+    main()
+if __name__ == "__main__":
+    main()
+if __name__ == "__main__":
+    main()
+if __name__ == "__main__":
+    main()
+if __name__ == "__main__":
+    main()
+if __name__ == "__main__":
+    main()
+if __name__ == "__main__":
+    main()
+if __name__ == "__main__":
+    main()
+if __name__ == "__main__":
+    main()
+if __name__ == "__main__":
+    main()
+if __name__ == "__main__":
+    main()
+if __name__ == "__main__":
+    main()
+if __name__ == "__main__":
+    main()
 if __name__ == "__main__":
     main()
