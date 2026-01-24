@@ -253,6 +253,7 @@ class EmotionNode:
     # Graph connections
     related_ids: List[int] = field(default_factory=list)
     opposite_ids: List[int] = field(default_factory=list)
+    transition_ids: List[int] = field(default_factory=list)  # Emotions that naturally transition to this one
     
     def distance_to(self, other: 'EmotionNode') -> float:
         """Calculate emotional distance to another node."""
@@ -261,6 +262,19 @@ class EmotionNode:
             (self.arousal - other.arousal) ** 2 +
             (self.intensity - other.intensity) ** 2
         ) ** 0.5
+    
+    def get_intensity_level(self) -> str:
+        """Get human-readable intensity level."""
+        if self.intensity <= 0.2:
+            return "subtle"
+        elif self.intensity <= 0.4:
+            return "mild"
+        elif self.intensity <= 0.6:
+            return "moderate"
+        elif self.intensity <= 0.8:
+            return "intense"
+        else:
+            return "overwhelming"
 
 
 # =============================================================================
