@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 /**
  * @file MidiSequence.h
  * @brief MIDI sequence container with timing and manipulation
@@ -106,6 +108,9 @@ public:
      * @param gridSize Grid size in ticks (e.g., ppq/4 for 16th notes)
      */
     void quantize(TickCount gridSize) {
+        if (gridSize == 0) {
+            return;
+        }
         for (auto& msg : messages_) {
             if (msg.isNoteOn() || msg.isNoteOff()) {
                 TickCount timestamp = msg.getTimestamp();
@@ -242,3 +247,4 @@ private:
 
 } // namespace midi
 } // namespace daiw
+>>>>>>> Incoming (Background Agent changes)

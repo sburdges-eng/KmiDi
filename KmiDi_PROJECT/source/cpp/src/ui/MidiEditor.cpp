@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "MidiEditor.h"
 #include "../ui/KellyLookAndFeel.h"
 #include <algorithm>
@@ -342,6 +344,9 @@ void MidiEditor::redo() {
 void MidiEditor::quantizeSelected(double gridSize) {
   if (selectedNotes_.empty() || !editableMidi_)
     return;
+  if (gridSize <= 0.0) {
+    return;
+  }
 
   auto multiCmd = std::make_unique<MultiEditCommand>("Quantize Notes");
 
@@ -610,6 +615,9 @@ double MidiEditor::snapBeat(double beat) const {
     break;
   }
 
+  if (gridSize <= 0.0) {
+    return beat;
+  }
   return std::round(beat / gridSize) * gridSize;
 }
 
@@ -715,3 +723,4 @@ MidiEditor::getNotesInBox(const juce::Rectangle<int> &box) const {
 }
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

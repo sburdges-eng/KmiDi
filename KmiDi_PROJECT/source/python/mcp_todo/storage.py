@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 TODO Storage Backend
 
@@ -7,10 +9,24 @@ Supports multiple projects and concurrent access patterns.
 
 import json
 import os
-import fcntl
+import sys
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+
+# Cross-platform file locking
+if sys.platform == 'win32':
+    import msvcrt
+    def _lock_file(f):
+        msvcrt.locking(f.fileno(), msvcrt.LK_LOCK, 1)
+    def _unlock_file(f):
+        msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+else:
+    import fcntl
+    def _lock_file(f):
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+    def _unlock_file(f):
+        fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
 from .models import Todo, TodoStatus, TodoPriority, TodoList
 
@@ -60,10 +76,10 @@ class TodoStorage:
 
         with open(file_path, "r") as f:
             try:
-                fcntl.flock(f.fileno(), fcntl.LOCK_SH)
+                _lock_file(f)  # Cross-platform shared lock
                 data = json.load(f)
             finally:
-                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+                _unlock_file(f)
 
         return data
 
@@ -81,10 +97,10 @@ class TodoStorage:
         # Write with lock
         with open(file_path, "w") as f:
             try:
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+                _lock_file(f)  # Cross-platform exclusive lock
                 json.dump(data, f, indent=2)
             finally:
-                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+                _unlock_file(f)
 
     # CRUD Operations
 
@@ -399,3 +415,4 @@ class TodoStorage:
                         lines.append(f"  - Tags: {', '.join(todo.tags)}")
 
         return "\n".join(lines)
+>>>>>>> Incoming (Background Agent changes)

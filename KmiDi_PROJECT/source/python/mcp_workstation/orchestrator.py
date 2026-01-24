@@ -1,5 +1,8 @@
+<<<<<<< Current (Your changes)
+=======
 import argparse
 import logging
+import os
 import threading
 import time
 from pathlib import Path
@@ -21,6 +24,33 @@ from .models import AIAgent, PhaseStatus
 from music_brain.session.intent_schema import CompleteSongIntent
 from music_brain.tier1.midi_pipeline_wrapper import MIDIGenerationPipeline
 
+# Load environment variables from project root
+from pathlib import Path
+import sys
+
+# Add project root to path if not already there
+project_root = Path(__file__).resolve().parent.parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+try:
+    from python.kmidi_env import load_kmidi_env
+    # Determine features based on file location
+    features = []
+    file_str = str(Path(__file__))
+    if 'training' in file_str or 'train' in file_str:
+        features.extend(['ml', 'training'])
+    if 'mcp' in file_str or 'penta' in file_str:
+        features.extend(['mcp'])
+    if not features:
+        features = ['ml']  # Default to ML features
+    
+    load_kmidi_env(features=features, verbose=False)
+except ImportError:
+    # Fallback to simple dotenv if kmidi_env not available
+    from dotenv import load_dotenv
+    load_dotenv(project_root / ".env")
+    load_dotenv(project_root / ".env.local", override=True)
 logging.basicConfig(
     level=logging.INFO,
     format="[%(asctime)s] [%(levelname)s] %(message)s",
@@ -30,11 +60,15 @@ logging.basicConfig(
 class Orchestrator:
     def __init__(
         self,
-        llm_model_path: str,
+        llm_model_path: Optional[str] = None,
         output_dir: str = "./orchestrator_outputs",
     ):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.llm_model_path = llm_model_path or os.environ.get(
+            "KMI_DI_LLM_MODEL_PATH",
+            os.environ.get("LLM_MODEL_PATH"),
+        )
 
         self.image_engine = ImageGenerationEngine(
             model_dir=str(self.output_dir / "stable_diffusion_v1_5")
@@ -42,12 +76,28 @@ class Orchestrator:
         self.audio_engine = AudioGenerationEngine(
             output_dir=str(self.output_dir / "audio_textures")
         )
+        # Preload generation engines so workflows don't return stubbed results.
+        try:
+            self.image_engine._load_pipeline()
+        except Exception as exc:
+            logging.warning("Image pipeline preload failed: %s", exc)
+        try:
+            self.audio_engine._load_model()
+        except Exception as exc:
+            logging.warning("Audio model preload failed: %s", exc)
 
-        self.llm_engine = LLMReasoningEngine(
-            model_path=llm_model_path,
-            image_engine=self.image_engine,  # Pass image engine to LLM
-            audio_engine=self.audio_engine,  # Pass audio engine to LLM
-        )
+        self.llm_engine: Optional[LLMReasoningEngine] = None
+        if self.llm_model_path:
+            self.llm_engine = LLMReasoningEngine(
+                model_path=self.llm_model_path,
+                image_engine=self.image_engine,  # Pass image engine to LLM
+                audio_engine=self.audio_engine,  # Pass audio engine to LLM
+            )
+        else:
+            logging.warning(
+                "LLM model path not provided; set KMI_DI_LLM_MODEL_PATH or "
+                "LLM_MODEL_PATH to enable LLM reasoning."
+            )
         self.midi_pipeline = MIDIGenerationPipeline()
 
         self.resource_locks = {
@@ -58,6 +108,24 @@ class Orchestrator:
         }
 
         logging.info("Orchestrator initialized.")
+
+    def _ensure_llm_engine(self) -> LLMReasoningEngine:
+        if self.llm_engine is None:
+            self.llm_model_path = self.llm_model_path or os.environ.get(
+                "KMI_DI_LLM_MODEL_PATH",
+                os.environ.get("LLM_MODEL_PATH"),
+            )
+            if not self.llm_model_path:
+                raise RuntimeError(
+                    "LLM model path not configured. Provide llm_model_path "
+                    "or set KMI_DI_LLM_MODEL_PATH/LLM_MODEL_PATH."
+                )
+            self.llm_engine = LLMReasoningEngine(
+                model_path=self.llm_model_path,
+                image_engine=self.image_engine,
+                audio_engine=self.audio_engine,
+            )
+        return self.llm_engine
 
     def _acquire_resource(
         self,
@@ -101,14 +169,15 @@ class Orchestrator:
         if not self._acquire_resource("llm"):
             raise RuntimeError("Could not acquire LLM resource.")
         try:
-            structured_intent = self.llm_engine.parse_user_intent(
+            llm_engine = self._ensure_llm_engine()
+            structured_intent = llm_engine.parse_user_intent(
                 user_intent_text,
             )
-            structured_intent = self.llm_engine.generate_image_prompts(
+            structured_intent = llm_engine.generate_image_prompts(
                 structured_intent,
             )
             if enable_audio_gen:
-                structured_intent = self.llm_engine.generate_audio_texture_prompt(
+                structured_intent = llm_engine.generate_audio_texture_prompt(
                     structured_intent,
                 )
             logging.info("LLM reasoning complete.")
@@ -198,7 +267,8 @@ class Orchestrator:
                 }
             else:
                 try:
-                    structured_intent = self.llm_engine.generate_image_from_intent(
+                    llm_engine = self._ensure_llm_engine()
+                    structured_intent = llm_engine.generate_image_from_intent(
                         structured_intent,
                     )
                     complete_intent.generated_image_data = structured_intent.generated_image_data
@@ -241,7 +311,8 @@ class Orchestrator:
                 }
             else:
                 try:
-                    structured_intent = self.llm_engine.generate_audio_from_intent(
+                    llm_engine = self._ensure_llm_engine()
+                    structured_intent = llm_engine.generate_audio_from_intent(
                         structured_intent,
                     )
                     complete_intent.generated_audio_data = structured_intent.generated_audio_data
@@ -292,6 +363,12 @@ class Workstation:
         self.cpp_planner = CppTransitionPlanner()
         self.active_agents: List[AIAgent] = []
         self.orchestrator: Optional[Orchestrator] = None
+
+        if llm_model_path is None:
+            llm_model_path = os.environ.get(
+                "KMI_DI_LLM_MODEL_PATH",
+                os.environ.get("LLM_MODEL_PATH"),
+            )
 
         if llm_model_path:
             self.orchestrator = Orchestrator(
@@ -592,3 +669,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+>>>>>>> Incoming (Background Agent changes)

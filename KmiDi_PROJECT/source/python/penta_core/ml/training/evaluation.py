@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Evaluation and Validation Algorithms for KmiDi ML.
 
@@ -17,11 +19,10 @@ Usage:
 
 from __future__ import annotations
 
-import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -886,3 +887,4 @@ class ModelValidator:
 
         return results
 
+>>>>>>> Incoming (Background Agent changes)

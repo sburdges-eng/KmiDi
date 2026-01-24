@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Inference Engine - Unified ML inference across backends.
 
@@ -473,3 +475,62 @@ def create_engine_by_name(name: str) -> Optional[InferenceEngine]:
     if model_info:
         return create_engine(model_info)
     return None
+
+
+
+def load_model(model_path: str, backend: str = "auto") -> Optional[InferenceEngine]:
+    """
+    Load a model from a file path and return an inference engine.
+    
+    Args:
+        model_path: Path to the model file
+        backend: Backend to use ("auto", "onnx", "torch", "coreml", "tflite")
+        
+    Returns:
+        Inference engine if successful, None otherwise
+    """
+    from pathlib import Path
+    
+    path = Path(model_path)
+    if not path.exists():
+        return None
+    
+    # Auto-detect backend from file extension
+    if backend == "auto":
+        ext = path.suffix.lower()
+        if ext == ".onnx":
+            backend = "onnx"
+        elif ext in (".pt", ".pth"):
+            backend = "torch"
+        elif ext in (".mlmodel", ".mlpackage"):
+            backend = "coreml"
+        elif ext == ".tflite":
+            backend = "tflite"
+        else:
+            return None
+    
+    backend_map = {
+        "onnx": ModelBackend.ONNX,
+        "torch": ModelBackend.PYTORCH,
+        "torchscript": ModelBackend.TORCHSCRIPT,
+        "coreml": ModelBackend.COREML,
+        "tflite": ModelBackend.TENSORFLOW_LITE,
+    }
+    
+    model_backend = backend_map.get(backend)
+    if not model_backend:
+        return None
+    
+    # Create a minimal ModelInfo for loading
+    model_info = ModelInfo(
+        name=path.stem,
+        path=str(path),
+        backend=model_backend,
+        task=None,  # Will be inferred if needed
+    )
+    
+    try:
+        return create_engine(model_info)
+    except Exception:
+        return None
+>>>>>>> Incoming (Background Agent changes)

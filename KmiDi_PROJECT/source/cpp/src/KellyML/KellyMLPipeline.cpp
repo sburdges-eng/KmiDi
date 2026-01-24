@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "KellyMLPipeline.h"
 
 #include <algorithm>
@@ -128,8 +130,7 @@ void KellyMLPipeline::fallbackMelody(const float* embedding, std::size_t length,
 void KellyMLPipeline::fallbackHarmony(const float* context128, std::size_t length, std::array<float, 64>& out) const noexcept {
     zero(out);
     if (!context128 || length < 12) {
-        // Circle of fifths center around C.
-        const int circle[12] = {0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5};
+        // Circle of fifths center around C (fallback values).
         for (int i = 0; i < 12 && i < 64; ++i) {
             out[i] = 1.0f - (0.05f * i);
         }
@@ -167,3 +168,4 @@ void KellyMLPipeline::fallbackGroove(const float* embedding, std::size_t length,
 }
 
 } // namespace kelly::ml
+>>>>>>> Incoming (Background Agent changes)

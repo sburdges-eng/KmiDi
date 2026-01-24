@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 LocalMultiModelOrchestrator
 ---------------------------
@@ -138,12 +140,22 @@ class LocalMultiModelOrchestrator:
                     result.errors.append("Audio texture generation failed")
 
             if self._voice:
-                # Placeholder: voice rendering requires notes & identity
                 try:
                     identity = VoiceIdentity(name="default")
+                    if result.midi is not None and getattr(result.midi, "melody", None) is not None:
+                        melody = list(result.midi.melody)
+                    else:
+                        melody = [60, 62, 64, 65]
+
                     notes = [
-                        VocalNote(pitch=60, start_beat=0.0, duration_beats=1.0, lyric="la", expression={"intensity": 0.6}),
-                        VocalNote(pitch=62, start_beat=1.0, duration_beats=1.0, lyric="la", expression={"intensity": 0.6}),
+                        VocalNote(
+                            pitch=int(pitch),
+                            start_beat=float(index),
+                            duration_beats=1.0,
+                            lyric="la",
+                            expression={"intensity": 0.6},
+                        )
+                        for index, pitch in enumerate(melody)
                     ]
                     expr = VocalExpression(intensity_curve=[0.6, 0.6], phrasing_offsets=[0.0, 0.0])
                     voice_out = self._voice.generate(identity=identity, notes=notes, expression=expr)
@@ -249,3 +261,4 @@ def create_local_orchestrator(
     )
     return LocalMultiModelOrchestrator(cfg)
 
+>>>>>>> Incoming (Background Agent changes)

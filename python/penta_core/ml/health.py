@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Health Check System - Monitor system health and model availability.
 
@@ -344,9 +346,12 @@ class HealthMonitor:
             self._check_history[name].append(result)
         return results
 
-    def get_overall_status(self) -> HealthStatus:
+    def get_overall_status(
+        self,
+        results: Optional[Dict[str, HealthCheckResult]] = None,
+    ) -> HealthStatus:
         """Get overall health status from all checks."""
-        results = self.run_all_checks()
+        results = results or self.run_all_checks()
 
         if not results:
             return HealthStatus.UNKNOWN
@@ -366,7 +371,7 @@ class HealthMonitor:
     def get_status_report(self) -> Dict[str, Any]:
         """Get comprehensive status report."""
         results = self.run_all_checks()
-        overall_status = self.get_overall_status()
+        overall_status = self.get_overall_status(results)
 
         # Calculate statistics
         check_stats = {}
@@ -409,3 +414,4 @@ def get_health_monitor() -> HealthMonitor:
             if _health_monitor is None:
                 _health_monitor = HealthMonitor()
     return _health_monitor
+>>>>>>> Incoming (Background Agent changes)

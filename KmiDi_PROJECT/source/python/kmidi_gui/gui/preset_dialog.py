@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """Preset dialog UI component.
 
 Simple list view with load/save buttons. No modals - uses dock or sidebar.
@@ -82,13 +84,14 @@ class PresetDialog(QWidget):
 
         for preset in presets:
             item = QListWidgetItem(preset.name or f"Preset {preset.id[:8]}")
-            item.setData(Qt.UserRole, preset.id)
-            item.setToolTip(f"Created: {preset.timestamp.strftime('%Y-%m-%d %H:%M')}")
+            item.setData(Qt.ItemDataRole.UserRole, preset.id)
+            item.setToolTip(
+                f"Created: {preset.timestamp.strftime('%Y-%m-%d %H:%M')}")
             self.preset_list.addItem(item)
 
     def _on_item_double_clicked(self, item: QListWidgetItem):
         """Handle double-click on preset item."""
-        self._load_preset_by_id(item.data(Qt.UserRole))
+        self._load_preset_by_id(item.data(Qt.ItemDataRole.UserRole))
 
     def _on_save_clicked(self):
         """Handle save button click."""
@@ -117,18 +120,21 @@ class PresetDialog(QWidget):
             self.preset_manager.save_preset(preset, self.project_path)
             self._refresh_list()
             self.preset_saved.emit(preset)
-            QMessageBox.information(self, "Preset Saved", f"Preset '{name}' saved successfully.")
+            QMessageBox.information(self, "Preset Saved",
+                                     f"Preset '{name}' saved successfully.")
         except Exception as e:
-            QMessageBox.critical(self, "Save Failed", f"Failed to save preset: {e}")
+            QMessageBox.critical(self, "Save Failed",
+                                  f"Failed to save preset: {e}")
 
     def _on_load_clicked(self):
         """Handle load button click."""
         current_item = self.preset_list.currentItem()
         if not current_item:
-            QMessageBox.warning(self, "No Selection", "Please select a preset to load.")
+            QMessageBox.warning(self, "No Selection",
+                                "Please select a preset to load.")
             return
 
-        preset_id = current_item.data(Qt.UserRole)
+        preset_id = current_item.data(Qt.ItemDataRole.UserRole)
         self._load_preset_by_id(preset_id)
 
     def _load_preset_by_id(self, preset_id: str):
@@ -136,7 +142,7 @@ class PresetDialog(QWidget):
         preset = self.preset_manager.load_preset(preset_id, self.project_path)
 
         if not preset:
-            QMessageBox.critical(self, "Load Failed", f"Failed to load preset.")
+            QMessageBox.critical(self, "Load Failed", "Failed to load preset.")
             return
 
         self.current_preset = preset
@@ -150,7 +156,7 @@ class PresetDialog(QWidget):
             QMessageBox.warning(self, "No Selection", "Please select a preset to delete.")
             return
 
-        preset_id = current_item.data(Qt.UserRole)
+        preset_id = current_item.data(Qt.ItemDataRole.UserRole)
         preset_name = current_item.text()
 
         reply = QMessageBox.question(
@@ -205,3 +211,4 @@ class PresetDialog(QWidget):
             teaching_mode=teaching_mode,
             trust_settings=trust_settings,
         )
+>>>>>>> Incoming (Background Agent changes)

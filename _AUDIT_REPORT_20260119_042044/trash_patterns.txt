@@ -1,0 +1,15 @@
+__pycache__
+.cache
+.pytest_cache
+build
+dist
+out
+logs
+tmp
+.checkpoints
+.ckpt
+.pt
+.pth
+.bin
+.npz
+.npy

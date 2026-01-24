@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 /*
  * ONNXInference.h - ONNX Runtime Wrapper for Real-Time Inference
@@ -160,6 +162,8 @@ private:
 
     size_t inputSize_ = 0;
     size_t outputSize_ = 0;
+    std::vector<int64_t> inputShape_;
+    std::vector<int64_t> outputShape_;
     bool isLoaded_ = false;
     juce::String modelPath_;
     juce::String lastError_;
@@ -174,3 +178,4 @@ private:
 
 } // namespace ml
 } // namespace midikompanion
+>>>>>>> Incoming (Background Agent changes)

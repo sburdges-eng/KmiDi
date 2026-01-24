@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #!/usr/bin/env python3
 """
 Safe Extended Training with Resource Monitoring
@@ -23,6 +25,33 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+# Load environment variables from project root
+from pathlib import Path
+import sys
+
+# Add project root to path if not already there
+project_root = Path(__file__).resolve().parent.parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+try:
+    from python.kmidi_env import load_kmidi_env
+    # Determine features based on file location
+    features = []
+    file_str = str(Path(__file__))
+    if 'training' in file_str or 'train' in file_str:
+        features.extend(['ml', 'training'])
+    if 'mcp' in file_str or 'penta' in file_str:
+        features.extend(['mcp'])
+    if not features:
+        features = ['ml']  # Default to ML features
+    
+    load_kmidi_env(features=features, verbose=False)
+except ImportError:
+    # Fallback to simple dotenv if kmidi_env not available
+    from dotenv import load_dotenv
+    load_dotenv(project_root / ".env")
+    load_dotenv(project_root / ".env.local", override=True)
 # Thermal thresholds (Celsius)
 THERMAL_WARNING = 85  # Start throttling
 THERMAL_CRITICAL = 95  # Pause training
@@ -169,8 +198,13 @@ def run_training(model: str, epochs: int, batch_size: int = 8):
     ]
 
     env = os.environ.copy()
-    # Updated: Files moved from external SSD to local storage (2025-01-09)
-    env["KELLY_AUDIO_DATA_ROOT"] = os.getenv("KELLY_AUDIO_DATA_ROOT", "/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data")
+    data_root = (
+        os.getenv("KMI_DI_AUDIO_DATA_ROOT")
+        or os.getenv("KELLY_AUDIO_DATA_ROOT")
+        or str(Path(__file__).resolve().parent.parent / "data" / "audio")
+    )
+    env["KMI_DI_AUDIO_DATA_ROOT"] = data_root
+    env["KELLY_AUDIO_DATA_ROOT"] = data_root
     env["KELLY_EXTENDED_TRAINING"] = "1"  # Bypass epoch limits
 
     # Run training
@@ -304,3 +338,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 AI Orchestrator - Central coordination for DAiW Music Brain AI pipelines.
 
@@ -200,6 +202,8 @@ class AIOrchestrator:
         """Remove a callback."""
         if callback in self._callbacks:
             self._callbacks.remove(callback)
+        else:
+            self._logger.warning("Attempted to remove unknown callback: %s", callback)
 
     async def execute(
         self,
@@ -583,3 +587,4 @@ class AIOrchestrator:
             f"AIOrchestrator(running={len(self._running_executions)}, "
             f"history={len(self._execution_history)})"
         )
+>>>>>>> Incoming (Background Agent changes)

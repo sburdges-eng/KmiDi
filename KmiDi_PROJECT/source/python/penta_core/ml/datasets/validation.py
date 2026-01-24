@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Dataset Validation for KmiDi ML Training.
 
@@ -15,7 +17,7 @@ import logging
 from collections import Counter
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -123,18 +125,18 @@ class ValidationReport:
         print(f"Total Samples: {self.total_samples}")
         print(f"Total Duration: {self.total_duration_hours:.2f} hours")
 
-        print(f"\nScores:")
+        print("\nScores:")
         print(f"  Balance:   {self.balance_score:.2%}")
         print(f"  Diversity: {self.diversity_score:.2%}")
         print(f"  Quality:   {self.quality_score:.2%}")
 
-        print(f"\nSplits:")
+        print("\nSplits:")
         print(f"  Train: {self.train_count}")
         print(f"  Val:   {self.val_count}")
         print(f"  Test:  {self.test_count}")
 
         if self.category_counts:
-            print(f"\nCategory Distribution:")
+            print("\nCategory Distribution:")
             for cat, count in sorted(self.category_counts.items()):
                 bar = "█" * min(50, int(count / max(self.category_counts.values()) * 50))
                 print(f"  {cat:15} {count:5} {bar}")
@@ -142,13 +144,14 @@ class ValidationReport:
         if self.issues:
             print(f"\nIssues ({len(self.issues)}):")
             for issue in self.issues[:10]:
-                icon = {"error": "❌", "warning": "⚠️", "info": "ℹ️"}.get(issue.severity, "•")
+                icon = {"error": "❌", "warning": "⚠️", "info": "ℹ️"}.get(
+                    issue.severity, "•")
                 print(f"  {icon} [{issue.category}] {issue.message}")
             if len(self.issues) > 10:
                 print(f"  ... and {len(self.issues) - 10} more")
 
         if self.recommendations:
-            print(f"\nRecommendations:")
+            print("\nRecommendations:")
             for rec in self.recommendations:
                 print(f"  💡 {rec}")
 
@@ -229,7 +232,6 @@ class DatasetValidator:
     def _check_structure(self, dataset_path: Path, report: ValidationReport):
         """Check dataset directory structure."""
         required_dirs = ['raw', 'annotations']
-        optional_dirs = ['processed', 'splits']
 
         for dir_name in required_dirs:
             if not (dataset_path / dir_name).exists():
@@ -332,7 +334,8 @@ class DatasetValidator:
                 report.add_issue(
                     "warning",
                     "balance",
-                    f"Category '{cat}' has only {count} samples (min: {self.min_samples_per_category})",
+                    (f"Category '{cat}' has only {count} samples "
+                     f"(min: {self.min_samples_per_category})"),
                 )
 
     def _check_diversity(self, manifest, report: ValidationReport):
@@ -354,7 +357,8 @@ class DatasetValidator:
 
                 if ann.tempo_bpm > 0:
                     # Bin tempos
-                    tempo_bin = f"{int(ann.tempo_bpm // 20) * 20}-{int(ann.tempo_bpm // 20) * 20 + 20}"
+                    tempo_bin = (f"{int(ann.tempo_bpm // 20) * 20}-"
+                                 f"{int(ann.tempo_bpm // 20) * 20 + 20}")
                     tempos[tempo_bin] += 1
 
                 if ann.groove_type:
@@ -478,7 +482,8 @@ class DatasetValidator:
     def _validate_from_files(self, dataset_path: Path, report: ValidationReport):
         """Validate dataset from files when no manifest exists."""
         # Count files
-        midi_files = list(dataset_path.glob("**/*.mid")) + list(dataset_path.glob("**/*.midi"))
+        midi_files = (list(dataset_path.glob("**/*.mid")) +
+                       list(dataset_path.glob("**/*.midi")))
         audio_files = list(dataset_path.glob("**/*.wav")) + list(dataset_path.glob("**/*.mp3"))
 
         report.total_samples = len(midi_files) + len(audio_files)
@@ -594,3 +599,4 @@ def print_dataset_stats(dataset_path: Path):
     report = validate_dataset(dataset_path)
     report.print_summary()
 
+>>>>>>> Incoming (Background Agent changes)

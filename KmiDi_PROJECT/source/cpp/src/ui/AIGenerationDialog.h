@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -6,7 +8,7 @@ namespace kelly {
 
 /**
  * AI Generation Dialog
- * 
+ *
  * Allows user to request AI-generated MIDI tracks with:
  * - Variable number of tracks
  * - Input from A-side (theory), B-side (emotion), or both
@@ -23,47 +25,49 @@ public:
         bool blendSides = true;    // Blend A and B side inputs
         juce::String apiKey;       // LLM API key for AI generation
     };
-    
+
     AIGenerationDialog();
     ~AIGenerationDialog() override = default;
-    
-    static AIGenerationRequest showDialog(juce::Component* parent);
-    
+
+    static void showDialog(juce::Component* parent, std::function<void(AIGenerationRequest)> callback);
+
     AIGenerationRequest getRequest() const;
-    
+
     void paint(juce::Graphics& g) override;
     void resized() override;
-    
+
 private:
     juce::Slider numTracksSlider_;
     juce::Label numTracksLabel_;
-    
+
     juce::ToggleButton useSideAToggle_;
     juce::Label useSideALabel_;
     juce::ToggleButton useSideBToggle_;
     juce::Label useSideBLabel_;
     juce::ToggleButton blendSidesToggle_;
     juce::Label blendSidesLabel_;
-    
+
     juce::Slider variabilitySlider_;
     juce::Label variabilityLabel_;
-    
+
     juce::Slider barsPerTrackSlider_;
     juce::Label barsPerTrackLabel_;
-    
+
     juce::TextEditor apiKeyEditor_;
     juce::Label apiKeyLabel_;
     juce::ToggleButton saveApiKeyToggle_;
     juce::Label saveApiKeyLabel_;
-    
+
     juce::TextButton generateButton_;
     juce::TextButton cancelButton_;
-    
+
     bool wasCancelled_ = true;
     int modalResult_ = 0;
     mutable AIGenerationRequest cachedRequest_;
-    
+    std::function<void(AIGenerationRequest)> completionCallback_;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AIGenerationDialog)
 };
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

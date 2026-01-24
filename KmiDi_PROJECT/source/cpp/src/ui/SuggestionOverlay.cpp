@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "SuggestionOverlay.h"
 #include <algorithm>
 
@@ -89,22 +91,22 @@ void SuggestionOverlay::rebuildCards() {
         card->applyButton = std::make_unique<juce::TextButton>("Apply");
         card->applyButton->setColour(juce::TextButton::buttonColourId, juce::Colour(0xFF4CAF50));
         card->applyButton->setColour(juce::TextButton::textColourOffId, juce::Colours::white);
-        int cardIndex = static_cast<int>(cards_.size());
-        card->applyButton->onClick = [this, cardIndex] { applyButtonClicked(cardIndex); };
+        const std::string suggestionId = suggestion.id;
+        card->applyButton->onClick = [this, suggestionId] { applyButtonClicked(suggestionId); };
         addAndMakeVisible(card->applyButton.get());
 
         // Dismiss button
         card->dismissButton = std::make_unique<juce::TextButton>("×");
         card->dismissButton->setColour(juce::TextButton::buttonColourId, juce::Colour(0xFF666666));
         card->dismissButton->setColour(juce::TextButton::textColourOffId, juce::Colours::white);
-        card->dismissButton->onClick = [this, cardIndex] { dismissButtonClicked(cardIndex); };
+        card->dismissButton->onClick = [this, suggestionId] { dismissButtonClicked(suggestionId); };
         addAndMakeVisible(card->dismissButton.get());
 
         // Expand button (for explanation)
         card->expandButton = std::make_unique<juce::TextButton>("...");
         card->expandButton->setColour(juce::TextButton::buttonColourId, juce::Colour(0xFF555555));
         card->expandButton->setColour(juce::TextButton::textColourOffId, juce::Colour(0xFFCCCCCC));
-        card->expandButton->onClick = [this, cardIndex] { expandButtonClicked(cardIndex); };
+        card->expandButton->onClick = [this, suggestionId] { expandButtonClicked(suggestionId); };
         addAndMakeVisible(card->expandButton.get());
 
         // Explanation label (initially hidden)
@@ -181,29 +183,39 @@ std::string SuggestionOverlay::getConfidenceText(float confidence) const {
     }
 }
 
-void SuggestionOverlay::applyButtonClicked(int cardIndex) {
-    if (cardIndex >= 0 && cardIndex < static_cast<int>(cards_.size()) && cards_[cardIndex]) {
+int SuggestionOverlay::findCardIndex(const std::string& suggestionId) const {
+    for (size_t i = 0; i < cards_.size(); ++i) {
+        if (cards_[i] && cards_[i]->suggestion.id == suggestionId) {
+            return static_cast<int>(i);
+        }
+    }
+    return -1;
+}
+
+void SuggestionOverlay::applyButtonClicked(const std::string& suggestionId) {
+    const int cardIndex = findCardIndex(suggestionId);
+    if (cardIndex >= 0 && cards_[cardIndex]) {
         if (onSuggestionApplied) {
             onSuggestionApplied(cards_[cardIndex]->suggestion);
         }
     }
 }
 
-void SuggestionOverlay::dismissButtonClicked(int cardIndex) {
-    if (cardIndex >= 0 && cardIndex < static_cast<int>(cards_.size()) && cards_[cardIndex]) {
-        const std::string suggestionId = cards_[cardIndex]->suggestion.id;
+void SuggestionOverlay::dismissButtonClicked(const std::string& suggestionId) {
+    const int cardIndex = findCardIndex(suggestionId);
+    if (cardIndex >= 0 && cards_[cardIndex]) {
         if (onSuggestionDismissed) {
             onSuggestionDismissed(suggestionId);
         }
-        // Remove card
         cards_.erase(cards_.begin() + cardIndex);
         layoutCards();
         repaint();
     }
 }
 
-void SuggestionOverlay::expandButtonClicked(int cardIndex) {
-    if (cardIndex >= 0 && cardIndex < static_cast<int>(cards_.size()) && cards_[cardIndex]) {
+void SuggestionOverlay::expandButtonClicked(const std::string& suggestionId) {
+    const int cardIndex = findCardIndex(suggestionId);
+    if (cardIndex >= 0 && cards_[cardIndex]) {
         cards_[cardIndex]->expanded = !cards_[cardIndex]->expanded;
         cards_[cardIndex]->explanationLabel->setVisible(cards_[cardIndex]->expanded);
         layoutCards();
@@ -212,3 +224,4 @@ void SuggestionOverlay::expandButtonClicked(int cardIndex) {
 }
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "ml/ONNXInference.h"
 #include <juce_core/juce_core.h>
 #include <cstring>
@@ -112,14 +114,14 @@ bool ONNXInference::loadModel(const std::string& modelPath) {
             return false;
         }
 
-        Session* session = static_cast<Session*>(sessionPtr_);
-
+        // session already declared above, reuse it
         // Get input shape
         AllocatorWithDefaultOptions allocator;
         auto inputName = session->GetInputNameAllocated(0, allocator);
         auto inputTypeInfo = session->GetInputTypeInfo(0);
         auto inputTensorInfo = inputTypeInfo.GetTensorTypeAndShapeInfo();
         auto inputShape = inputTensorInfo.GetShape();
+        inputShape_ = inputShape;
 
         // Calculate input size (handle dynamic dimensions)
         inputSize_ = 1;
@@ -139,6 +141,7 @@ bool ONNXInference::loadModel(const std::string& modelPath) {
         auto outputTypeInfo = session->GetOutputTypeInfo(0);
         auto outputTensorInfo = outputTypeInfo.GetTensorTypeAndShapeInfo();
         auto outputShape = outputTensorInfo.GetShape();
+        outputShape_ = outputShape;
 
         // Calculate output size
         outputSize_ = 1;
@@ -172,6 +175,8 @@ bool ONNXInference::loadModel(const std::string& modelPath) {
     setError("ONNX Runtime not enabled. Set ENABLE_ONNX_RUNTIME=ON in CMake.");
     inputSize_ = 128;  // Default stub sizes
     outputSize_ = 64;
+    inputShape_ = {1, static_cast<int64_t>(inputSize_)};
+    outputShape_ = {1, static_cast<int64_t>(outputSize_)};
     modelPath_ = juce::String(modelPath);
     isLoaded_ = false;  // Mark as not loaded in stub mode
     return false;
@@ -224,7 +229,31 @@ bool ONNXInference::infer(const float* input, float* output) {
         auto outputName = session->GetOutputNameAllocated(0, allocator);
 
         // Create input tensor
-        std::vector<int64_t> inputShape = {1, static_cast<int64_t>(inputSize_)};
+        std::vector<int64_t> inputShape = inputShape_;
+        if (inputShape.empty()) {
+            inputShape = {1, static_cast<int64_t>(inputSize_)};
+        }
+        size_t knownProduct = 1;
+        int dynamicCount = 0;
+        for (auto dim : inputShape) {
+            if (dim > 0) {
+                knownProduct *= static_cast<size_t>(dim);
+            } else {
+                ++dynamicCount;
+            }
+        }
+        if (dynamicCount > 0) {
+            size_t remaining = inputSize_;
+            if (knownProduct > 0) {
+                remaining = inputSize_ / knownProduct;
+            }
+            for (auto& dim : inputShape) {
+                if (dim <= 0) {
+                    dim = static_cast<int64_t>(remaining > 0 ? remaining : 1);
+                    remaining = 1;
+                }
+            }
+        }
         Value inputTensor = Value::CreateTensor<float>(
             *memoryInfo,
             const_cast<float*>(input),  // ONNX Runtime doesn't modify, but API requires non-const
@@ -294,3 +323,4 @@ bool ONNXInference::validateOutputSize(size_t size) {
 
 } // namespace ml
 } // namespace midikompanion
+>>>>>>> Incoming (Background Agent changes)

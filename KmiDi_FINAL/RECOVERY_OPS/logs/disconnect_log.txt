@@ -1,0 +1,11 @@
+=== disconnect Sat Jan 17 03:48:19 MST 2026 ===
+mv /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/KmiDi_BACKUP -> /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/KmiDi_BACKUP_DISCONNECTED
+mv /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/KmiDi_PROJECT -> /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/KmiDi_PROJECT_DISCONNECTED
+mv /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/KmiDi_TRAINING -> /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/KmiDi_TRAINING_DISCONNECTED
+mv /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/assets -> /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/assets_DISCONNECTED
+mv /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/data -> /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/data_DISCONNECTED
+mv /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/docs -> /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/docs_DISCONNECTED
+mv /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/music_brain -> /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/music_brain_DISCONNECTED
+mv /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/python -> /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/python_DISCONNECTED
+mv /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/penta_build -> /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/penta_build_DISCONNECTED
+mv /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/scripts -> /Users/seanburdges/.cursor/worktrees/KmiDi-1/gba/scripts_DISCONNECTED

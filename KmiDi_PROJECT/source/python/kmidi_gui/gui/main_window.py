@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """Main window for KmiDi Qt application.
 
 This is the root GUI component. It contains only UI elements
@@ -201,7 +203,8 @@ class MainWindow(QMainWindow):
         # Emotion input text area
         self.emotion_input = QTextEdit()
         self.emotion_input.setPlaceholderText(
-            "Describe what you're feeling...\n" "Example: 'I'm feeling grief hidden as love'"
+            "Describe what you're feeling...\n"
+            "Example: 'I'm feeling grief hidden as love'"
         )
         self.emotion_input.setMinimumHeight(120)
         right_layout.addWidget(self.emotion_input)
@@ -213,7 +216,8 @@ class MainWindow(QMainWindow):
 
         self.results_display = QTextEdit()
         self.results_display.setReadOnly(True)
-        self.results_display.setPlaceholderText("Generated music will appear here...")
+        self.results_display.setPlaceholderText(
+            "Generated music will appear here...")
         right_layout.addWidget(self.results_display)
 
         # Splitter for resizable panels
@@ -261,7 +265,8 @@ class MainWindow(QMainWindow):
         """Handle generate button click."""
         text = self.emotion_input.toPlainText().strip()
         if not text:
-            QMessageBox.warning(self, "No Input", "Please enter your emotional intent.")
+            QMessageBox.warning(self, "No Input",
+                                "Please enter your emotional intent.")
             return
 
         # Get parameter values
@@ -421,3 +426,4 @@ class MainWindow(QMainWindow):
             self.setWindowTitle(f"KmiDi - {path.name}")
         else:
             self.setWindowTitle("KmiDi - Intelligent Digital Audio Workstation")
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "PreferenceTracker.h"
 #include <chrono>
 #include <iomanip>
@@ -152,6 +154,36 @@ void PreferenceTracker::clearPreferences() {
     triggerSave();
 }
 
+std::map<std::string, float> PreferenceTracker::getAverageParameterAdjustments() const {
+    std::lock_guard<std::mutex> lock(dataMutex_);
+
+    std::map<std::string, float> sums;
+    std::map<std::string, int> counts;
+
+    for (const auto& adj : parameterAdjustments_) {
+        sums[adj.parameterName] += (adj.newValue - adj.oldValue);
+        counts[adj.parameterName] += 1;
+    }
+
+    for (const auto& event : midiGenerations_) {
+        for (const auto& mod : event.modifications) {
+            sums[mod.parameterName] += (mod.newValue - mod.oldValue);
+            counts[mod.parameterName] += 1;
+        }
+    }
+
+    std::map<std::string, float> averages;
+    for (const auto& entry : sums) {
+        const auto countIt = counts.find(entry.first);
+        if (countIt == counts.end() || countIt->second == 0) {
+            continue;
+        }
+        averages[entry.first] = entry.second / static_cast<float>(countIt->second);
+    }
+
+    return averages;
+}
+
 void PreferenceTracker::triggerSave() {
     // Call async save callback if set (for Python bridge)
     if (saveCallback_) {
@@ -168,3 +200,4 @@ std::string PreferenceTracker::getCurrentTimestamp() const {
 }
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

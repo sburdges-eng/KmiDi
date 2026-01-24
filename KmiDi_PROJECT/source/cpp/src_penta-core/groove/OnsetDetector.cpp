@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "penta/groove/OnsetDetector.h"
 #include "penta/common/SIMDKernels.h"
 #include <juce_dsp/juce_dsp.h>
@@ -5,16 +7,37 @@
 #include <cmath>
 #include <numeric>
 
+namespace {
+size_t nextPowerOfTwo(size_t value) {
+    if (value < 2) {
+        return 2;
+    }
+    size_t power = 1;
+    while (power < value) {
+        power <<= 1;
+    }
+    return power;
+}
+
+bool isPowerOfTwo(size_t value) {
+    return value != 0 && (value & (value - 1)) == 0;
+}
+}  // namespace
+
 namespace penta::groove
 {
 
     OnsetDetector::OnsetDetector(const Config &config)
         : config_(config), onsetDetected_(false), onsetStrength_(0.0f), onsetPosition_(0), lastOnsetPosition_(0), sampleCounter_(0)
     {
+        if (config_.fftSize > 0 && !isPowerOfTwo(config_.fftSize)) {
+            config_.fftSize = nextPowerOfTwo(config_.fftSize);
+        }
+
         // Initialize JUCE FFT (requires power-of-2 size)
         int fftOrder = static_cast<int>(std::log2(config_.fftSize));
         fft_ = std::make_unique<juce::dsp::FFT>(fftOrder);
-        
+
         // Pre-allocate buffers
         // JUCE FFT uses interleaved complex format: [real0, imag0, real1, imag1, ...]
         fftBuffer_.resize(config_.fftSize * 2);  // Real + imag for each sample
@@ -65,41 +88,41 @@ namespace penta::groove
     void OnsetDetector::computeSpectralFlux(const float *buffer, size_t frames) noexcept
     {
         // FFT-based spectral flux detection using juce::dsp::FFT
-        
+
         const size_t fftSize = config_.fftSize;
         const size_t numBins = spectrum_.size();
-        
+
         // Zero-pad or truncate input to FFT size (RT-safe: using pre-allocated buffer)
         std::fill(windowedBuffer_.begin(), windowedBuffer_.end(), 0.0f);
         std::fill(fftBuffer_.begin(), fftBuffer_.end(), 0.0f);
-        
+
         size_t copySize = std::min(frames, fftSize);
-        
+
         // Copy input to pre-allocated windowed buffer
         for (size_t i = 0; i < copySize; ++i)
         {
             windowedBuffer_[i] = buffer[i];
         }
-        
+
         // Apply window using SIMD-optimized kernel (in-place)
         SIMDKernels::applyWindow(windowedBuffer_.data(), window_.data(), fftSize);
-        
+
         // Copy windowed buffer to FFT buffer (interleaved complex format)
         for (size_t i = 0; i < fftSize; ++i)
         {
             fftBuffer_[i * 2] = windowedBuffer_[i];      // Real part
             fftBuffer_[i * 2 + 1] = 0.0f;               // Imaginary part (zero for real input)
         }
-        
+
         // Perform FFT (real-to-complex)
         fft_->performRealOnlyForwardTransform(fftBuffer_.data(), false);
-        
+
         // Extract magnitude spectrum from FFT output
         // JUCE FFT output format: [DC, real1, imag1, real2, imag2, ..., Nyquist]
-        
+
         // DC component (bin 0)
         spectrum_[0] = std::abs(fftBuffer_[0]);
-        
+
         // Positive frequencies (bins 1 to Nyquist-1)
         for (size_t i = 1; i < numBins - 1; ++i)
         {
@@ -107,26 +130,26 @@ namespace penta::groove
             float imag = fftBuffer_[i * 2 + 1];
             spectrum_[i] = std::sqrt(real * real + imag * imag);
         }
-        
+
         // Nyquist frequency (last bin)
         if (numBins > 0)
         {
             spectrum_[numBins - 1] = std::abs(fftBuffer_[1]);
         }
-        
+
         // Compute spectral flux using SIMD-optimized kernel
         float flux = SIMDKernels::spectralFlux(spectrum_.data(), prevSpectrum_.data(), numBins);
-        
+
         // Normalize flux by number of bins
         if (numBins > 0)
         {
             flux /= static_cast<float>(numBins);
         }
-        
+
         // Update flux history (rolling buffer)
         std::rotate(fluxHistory_.begin(), fluxHistory_.begin() + 1, fluxHistory_.end());
         fluxHistory_.back() = flux;
-        
+
         // Store current spectrum for next frame
         prevSpectrum_ = spectrum_;
     }
@@ -177,3 +200,4 @@ namespace penta::groove
     }
 
 } // namespace penta::groove
+>>>>>>> Incoming (Background Agent changes)

@@ -1,9 +1,12 @@
+<<<<<<< Current (Your changes)
+=======
 /**
  * @file groove.cpp
  * @brief Groove extraction and application
  */
 
 #include "daiw/types.hpp"
+#include <algorithm>
 #include <vector>
 #include <cmath>
 #include <random>
@@ -99,3 +102,4 @@ GrooveTemplate extractGroove(const std::vector<NoteEvent>& notes, int ppq) {
 
 }  // namespace groove
 }  // namespace daiw
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "midi/MidiExporter.h"
 #include "midi/MidiBuilder.h"  // Include MidiBuilder implementation
 #include "common/MusicConstants.h"
@@ -374,6 +376,9 @@ void MidiExporter::addTempoAndTimeSignature(juce::MidiMessageSequence& sequence,
 
     // Tempo: microseconds per quarter note
     // Formula: 60,000,000 microseconds / BPM = microseconds per beat
+    if (tempoBpm <= 0.0f) {
+        tempoBpm = 120.0f;
+    }
     int microsecondsPerBeat = 60000000 / static_cast<int>(tempoBpm);
     sequence.addEvent(juce::MidiMessage::tempoMetaEvent(microsecondsPerBeat));
 }
@@ -454,3 +459,4 @@ void MidiExporter::addVocalNotes(juce::MidiMessageSequence& sequence,
 }
 
 } // namespace midikompanion
+>>>>>>> Incoming (Background Agent changes)

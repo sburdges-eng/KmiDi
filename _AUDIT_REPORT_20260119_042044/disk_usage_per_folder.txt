@@ -1,0 +1,102 @@
+  0B	./.cache
+  0B	./.pytest_cache
+  0B	./TXT
+  0B	./ZIPS
+  0B	./audio-engine-cpp-include
+  0B	./build_scripts
+  0B	./examples_music-brain
+  0B	./kelly-audio-data
+  0B	./kelly-music-brain-backup
+  0B	./kelly-music-brain-clean
+  0B	./kelly-unified-core
+  0B	./throw_away
+  0B	./trained_models
+  0B	./training pipe
+  0B	./web_interface
+4.0K	./.claude
+4.0K	./.cursor
+4.0K	./__pycache__
+4.0K	./checkpoints
+8.0K	./.venv
+8.0K	./ARCHIVE
+8.0K	./CONSOLIDATED_CODE
+8.0K	./LARIAT 2026
+8.0K	./Stashed_Changes
+8.0K	./build_bridge
+8.0K	./build_fileio
+8.0K	./build_plugin
+8.0K	./build_plugin_only
+8.0K	./core
+8.0K	./iOS
+8.0K	./lost-and-found
+8.0K	./midikompanion-claude-upload
+8.0K	./ml_framework
+8.0K	./ml_training
+8.0K	./modules
+8.0K	./public
+8.0K	./reference
+8.0K	./super-spork
+8.0K	./venv
+ 12K	./cmake
+ 12K	./desktop_app
+ 12K	./iDAWi
+ 12K	./python
+ 16K	./node_modules
+ 20K	./CANONICAL
+ 20K	./kelly-project
+ 24K	./datasets
+ 28K	./.devcontainer
+ 28K	./configs
+ 32K	./macOS
+ 36K	./training_pipe
+ 40K	./mcp_penta_swarm
+ 44K	./bindings
+ 48K	./web
+ 52K	./.agents
+ 56K	./assets
+ 60K	./deployment
+ 60K	./logs
+ 76K	./kelly
+ 80K	./mobile
+104K	./examples
+108K	./Theory_Reference
+116K	./config
+124K	./daiw_mcp
+128K	./.github
+148K	./benchmarks
+160K	./iDAW-Android
+176K	./mcp_todo
+176K	./mcp_workstation
+192K	./src_penta-core
+196K	./Templates
+224K	./tools
+236K	./iDAW_Core
+240K	./training
+252K	./Songwriting_Guides
+304K	./Production_Workflows
+308K	./legacy
+316K	./include
+348K	./vault
+356K	./cpp_music_brain
+624K	./build_test
+632K	./build
+748K	./ML Kelly Training
+1.1M	./penta_core
+1.2M	./tests
+1.4M	./scripts
+3.1M	./docs
+3.6M	./src
+4.1M	./_AUDIT_REPORT_20260119_042044
+4.8M	./music_brain
+5.1M	./data
+6.9M	./output
+ 37M	./miDiKompanion-clean
+ 38M	./external
+ 59M	./models
+ 91M	./KmiDi
+151M	./.mypy_cache
+160M	./.tools
+844M	./src-tauri
+1.1G	./filer fuckery
+1.4G	./.git
+3.9G	.

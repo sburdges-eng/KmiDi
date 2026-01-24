@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 /**
  * DAiW MIDI Processing Module
  *
@@ -151,11 +153,11 @@ public:
 
     /// Generate note-off events for all active notes
     template<typename OutputIt>
-    OutputIt all_notes_off(Tick timestamp, OutputIt out) const {
+    OutputIt all_notes_off(Tick timestamp, OutputIt out) {
         for (MidiChannel ch = 0; ch < MAX_MIDI_CHANNELS; ++ch) {
             for (MidiNote note = 0; note < MAX_POLYPHONY; ++note) {
                 if (active_notes_[ch][note] > 0) {
-                    *out++ = note_off(timestamp, ch, note);
+                    *out++ = midi::note_off(timestamp, ch, note);
                 }
             }
         }
@@ -284,9 +286,7 @@ using MidiCallback = std::function<void(const MidiEvent&)>;
 class Processor {
 public:
     Processor()
-        : input_queue_(MIDI_QUEUE_SIZE)
-        , output_queue_(MIDI_QUEUE_SIZE)
-        , transpose_(0)
+        : transpose_(0)
         , velocity_scale_(1.0f)
         , channel_filter_(0xFFFF)  // All channels enabled
     {}
@@ -298,8 +298,10 @@ public:
 
     /// Process pending events (call from audio thread)
     void process(Tick current_tick) {
-        MidiEvent event;
-        while (input_queue_.pop(event)) {
+        while (true) {
+            auto ev = input_queue_.pop();
+            if (!ev) break;
+            MidiEvent event = *ev;
             // Apply channel filter
             if (!is_channel_enabled(event.channel())) {
                 continue;
@@ -322,7 +324,10 @@ public:
 
     /// Pop processed event from output queue (thread-safe, RT-safe)
     bool pop_event(MidiEvent& event) {
-        return output_queue_.pop(event);
+        auto ev = output_queue_.pop();
+        if (!ev) return false;
+        event = *ev;
+        return true;
     }
 
     /// Set transpose amount in semitones
@@ -384,8 +389,8 @@ private:
         return result;
     }
 
-    SPSCQueue<MidiEvent> input_queue_;
-    SPSCQueue<MidiEvent> output_queue_;
+    SPSCQueue<MidiEvent, MIDI_QUEUE_SIZE> input_queue_;
+    SPSCQueue<MidiEvent, MIDI_QUEUE_SIZE> output_queue_;
     NoteTracker tracker_;
     int transpose_;
     float velocity_scale_;
@@ -708,3 +713,4 @@ private:
 
 } // namespace midi
 } // namespace daiw
+>>>>>>> Incoming (Background Agent changes)

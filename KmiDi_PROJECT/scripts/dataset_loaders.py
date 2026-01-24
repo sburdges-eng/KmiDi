@@ -1,6 +1,8 @@
+<<<<<<< Current (Your changes)
+=======
 #!/usr/bin/env python3
 """
-Dataset Loaders for Kelly Music Brain
+Dataset Loaders for KmiDi Music Brain
 ======================================
 
 Provides PyTorch DataLoaders for:
@@ -11,11 +13,10 @@ Usage:
     from dataset_loaders import get_lakh_midi_loader, get_m4singer_loader
 
     train_loader = get_lakh_midi_loader(
-        data_dir="/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data/raw/chord_progressions/lakh_midi",
+        data_dir=os.path.join(default_data_root(), "raw/chord_progressions/lakh_midi"),
         task="melody",
         batch_size=32
     )
-    # Updated: Files moved from external SSD to local storage (2025-01-09)
 """
 
 import os
@@ -24,6 +25,40 @@ import random
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+# Default dataset root
+# Load environment variables from project root
+from pathlib import Path
+import sys
+
+# Add project root to path if not already there
+project_root = Path(__file__).resolve().parent.parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+try:
+    from python.kmidi_env import load_kmidi_env
+    # Determine features based on file location
+    features = []
+    file_str = str(Path(__file__))
+    if 'training' in file_str or 'train' in file_str:
+        features.extend(['ml', 'training'])
+    if 'mcp' in file_str or 'penta' in file_str:
+        features.extend(['mcp'])
+    if not features:
+        features = ['ml']  # Default to ML features
+    
+    load_kmidi_env(features=features, verbose=False)
+except ImportError:
+    # Fallback to simple dotenv if kmidi_env not available
+    from dotenv import load_dotenv
+    load_dotenv(project_root / ".env")
+    load_dotenv(project_root / ".env.local", override=True)
+def default_data_root() -> str:
+    return (
+        os.environ.get("KMI_DI_AUDIO_DATA_ROOT")
+        or os.environ.get("KELLY_AUDIO_DATA_ROOT")
+        or str(Path(__file__).resolve().parent.parent / "data" / "audio")
+    )
 
 import numpy as np
 import torch
@@ -555,7 +590,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     # Updated: Files moved from external SSD to local storage (2025-01-09)
-    parser.add_argument("--data-dir", default="/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data")
+    parser.add_argument("--data-dir", default=default_data_root())
     parser.add_argument("--dataset", choices=["lakh", "m4singer"], default="lakh")
     parser.add_argument("--task", default="melody")
     parser.add_argument("--max-files", type=int, default=100)
@@ -580,3 +615,4 @@ if __name__ == "__main__":
         if batch_idx >= 2:
             break
     print("Done!")
+>>>>>>> Incoming (Background Agent changes)

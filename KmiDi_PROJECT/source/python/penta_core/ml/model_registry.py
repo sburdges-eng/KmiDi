@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Model Registry - Unified model discovery and management.
 
@@ -5,7 +7,7 @@ Provides a centralized registry for ML models across different backends.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
 from enum import Enum
 import json
@@ -132,7 +134,8 @@ class ModelRegistry:
         if self._initialized:
             return
 
-        self._models: Dict[str, ModelInfo] = {}
+        self._models: Dict[Tuple[str, str], ModelInfo] = {}
+        self._latest_by_name: Dict[str, ModelInfo] = {}
         self._model_dirs: List[Path] = []
         self._cache: Dict[str, Any] = {}
         self._initialized = True
@@ -160,18 +163,36 @@ class ModelRegistry:
 
     def register(self, model: ModelInfo) -> None:
         """Register a model."""
-        self._models[model.name] = model
+        key = (model.name, model.version)
+        self._models[key] = model
+        self._latest_by_name[model.name] = model
 
-    def unregister(self, name: str) -> bool:
+    def unregister(self, name: str, version: Optional[str] = None) -> bool:
         """Unregister a model."""
-        if name in self._models:
-            del self._models[name]
-            return True
-        return False
+        removed = False
+        if version is not None:
+            key = (name, version)
+            if key in self._models:
+                del self._models[key]
+                removed = True
+        else:
+            keys_to_remove = [key for key in self._models if key[0] == name]
+            for key in keys_to_remove:
+                del self._models[key]
+                removed = True
+        if removed:
+            latest = self._select_latest(name)
+            if latest:
+                self._latest_by_name[name] = latest
+            else:
+                self._latest_by_name.pop(name, None)
+        return removed
 
-    def get(self, name: str) -> Optional[ModelInfo]:
-        """Get model info by name."""
-        return self._models.get(name)
+    def get(self, name: str, version: Optional[str] = None) -> Optional[ModelInfo]:
+        """Get model info by name (and version when provided)."""
+        if version is not None:
+            return self._models.get((name, version))
+        return self._latest_by_name.get(name)
 
     def list(self, task: Optional[ModelTask] = None) -> List[ModelInfo]:
         """List all registered models, optionally filtered by task."""
@@ -216,7 +237,7 @@ class ModelRegistry:
             ]:
                 for model_path in model_dir.glob(f"**/*{ext}"):
                     name = model_path.stem
-                    if name not in self._models:
+                    if self.get(name) is None:
                         # Infer task from directory name or file name
                         task = self._infer_task(model_path)
                         model = ModelInfo(
@@ -378,6 +399,22 @@ class ModelRegistry:
             tags=[entry.get("status", "")] if entry.get("status") else [],
         )
 
+    def _select_latest(self, name: str) -> Optional[ModelInfo]:
+        """Select the latest registered version for a model name."""
+        candidates = [model for (model_name, _), model in self._models.items() if model_name == name]
+        if not candidates:
+            return None
+        # Prefer highest semver if possible; otherwise fall back to newest registration order.
+        def parse_version(version: str) -> Tuple[int, ...]:
+            parts = []
+            for token in (version or "").split("."):
+                if token.isdigit():
+                    parts.append(int(token))
+                else:
+                    parts.append(0)
+            return tuple(parts)
+        return max(candidates, key=lambda model: parse_version(model.version))
+
 
 # Singleton access functions
 def get_registry() -> ModelRegistry:
@@ -390,9 +427,9 @@ def register_model(model: ModelInfo) -> None:
     get_registry().register(model)
 
 
-def get_model(name: str) -> Optional[ModelInfo]:
+def get_model(name: str, version: Optional[str] = None) -> Optional[ModelInfo]:
     """Get a model from the global registry."""
-    return get_registry().get(name)
+    return get_registry().get(name, version=version)
 
 
 def list_models(task: Optional[ModelTask] = None) -> List[ModelInfo]:
@@ -412,3 +449,4 @@ def load_registry_manifest(
         Number of models registered.
     """
     return get_registry().load_registry_manifest(path, validate=validate, schema_path=schema_path)
+>>>>>>> Incoming (Background Agent changes)

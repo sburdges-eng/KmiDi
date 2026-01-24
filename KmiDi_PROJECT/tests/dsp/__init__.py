@@ -1,2 +1,0 @@
-"""DSP module tests."""
-

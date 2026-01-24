@@ -1,4 +1,14 @@
+<<<<<<< Current (Your changes)
+=======
+cmake_minimum_required(VERSION 3.22)
+project(penta_core VERSION 1.0.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # Core C++ library
+cmake_minimum_required(VERSION 3.20)
+project(KmiDiPentaCore LANGUAGES CXX)
 
 # macOS SDK compatibility fix - Define function-style availability macros
 # These must be defined before any system headers are included
@@ -24,10 +34,11 @@ if(NOT readerwriterqueue_POPULATED)
         GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(readerwriterqueue)
-    FetchContent_GetProperties(readerwriterqueue)
 endif()
 
-# Ensure target exists with proper include directories
+# Explicitly populate SOURCE_DIR for header-only library without CMakeLists.txt
+FetchContent_GetProperties(readerwriterqueue)
+
 if(NOT TARGET readerwriterqueue)
     add_library(readerwriterqueue INTERFACE)
     target_include_directories(readerwriterqueue INTERFACE
@@ -35,122 +46,105 @@ if(NOT TARGET readerwriterqueue)
     )
 endif()
 
-# nlohmann/json (header-only)
-if(NOT TARGET nlohmann_json)
-    FetchContent_Declare(
-        nlohmann_json
-        GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG v3.11.3
-        GIT_SHALLOW TRUE
-    )
-    FetchContent_MakeAvailable(nlohmann_json)
-endif()
+# nlohmann/json for JSON parsing
+FetchContent_Declare(
+    nlohmann_json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG v3.11.3
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(nlohmann_json)
 
-set(PENTA_CORE_SOURCES
-    # Common utilities
-    common/RTMemoryPool.cpp
-    common/RTLogger.cpp
+# ============================================================================
+# Penta-Core Library
+# ============================================================================
 
-    # Harmony engine
-    harmony/ChordAnalyzer.cpp
-    harmony/ChordAnalyzerSIMD.cpp
-    harmony/ScaleDetector.cpp
-    harmony/VoiceLeading.cpp
-    harmony/HarmonyEngine.cpp
-
-    # Groove analysis
-    groove/OnsetDetector.cpp
-    groove/TempoEstimator.cpp
-    groove/RhythmQuantizer.cpp
-    groove/GrooveEngine.cpp
-
-    # Diagnostics
-    diagnostics/PerformanceMonitor.cpp
-    diagnostics/AudioAnalyzer.cpp
-    diagnostics/DiagnosticsEngine.cpp
-
-    # OSC communication
-    osc/OSCServer.cpp
-    osc/OSCClient.cpp
-    osc/OSCMessage.cpp
-    osc/RTMessageQueue.cpp
-    osc/OSCHub.cpp
-
-    # ML interface
-    ml/MLInterface.cpp
-
-    # Mixer engine
-    mixer/MixerEngine.cpp
+# Collect all source files
+file(GLOB_RECURSE PENTA_CORE_SOURCES CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/common/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/diagnostics/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/groove/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/harmony/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mixer/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ml/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/osc/*.cpp
 )
 
-set(PENTA_CORE_HEADERS
-    ${PROJECT_SOURCE_DIR}/include/penta/common/RTMemoryPool.h
-    ${PROJECT_SOURCE_DIR}/include/penta/common/RTLogger.h
-    ${PROJECT_SOURCE_DIR}/include/penta/common/RTTypes.h
+# Create the library
+add_library(penta_core STATIC ${PENTA_CORE_SOURCES})
 
-    ${PROJECT_SOURCE_DIR}/include/penta/harmony/ChordAnalyzer.h
-    ${PROJECT_SOURCE_DIR}/include/penta/harmony/ScaleDetector.h
-    ${PROJECT_SOURCE_DIR}/include/penta/harmony/VoiceLeading.h
-    ${PROJECT_SOURCE_DIR}/include/penta/harmony/HarmonyEngine.h
-
-    ${PROJECT_SOURCE_DIR}/include/penta/groove/OnsetDetector.h
-    ${PROJECT_SOURCE_DIR}/include/penta/groove/TempoEstimator.h
-    ${PROJECT_SOURCE_DIR}/include/penta/groove/RhythmQuantizer.h
-    ${PROJECT_SOURCE_DIR}/include/penta/groove/GrooveEngine.h
-
-    ${PROJECT_SOURCE_DIR}/include/penta/diagnostics/PerformanceMonitor.h
-    ${PROJECT_SOURCE_DIR}/include/penta/diagnostics/AudioAnalyzer.h
-    ${PROJECT_SOURCE_DIR}/include/penta/diagnostics/DiagnosticsEngine.h
-
-    ${PROJECT_SOURCE_DIR}/include/penta/osc/OSCServer.h
-    ${PROJECT_SOURCE_DIR}/include/penta/osc/OSCClient.h
-    ${PROJECT_SOURCE_DIR}/include/penta/osc/OSCMessage.h
-    ${PROJECT_SOURCE_DIR}/include/penta/osc/RTMessageQueue.h
-    ${PROJECT_SOURCE_DIR}/include/penta/osc/OSCHub.h
-
-    ${PROJECT_SOURCE_DIR}/include/penta/mixer/MixerEngine.h
-    ${PROJECT_SOURCE_DIR}/include/penta/ml/MLInterface.h
-)
-
-add_library(penta_core STATIC
-    ${PENTA_CORE_SOURCES}
-    ${PENTA_CORE_HEADERS}
-)
-
-set_target_properties(penta_core PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
-)
-
+# Include directories
 target_include_directories(penta_core PUBLIC
-    ${PROJECT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}
     ${readerwriterqueue_SOURCE_DIR}
 )
-message(STATUS "readerwriterqueue_SOURCE_DIR: ${readerwriterqueue_SOURCE_DIR}")
 
+# Link libraries
 target_link_libraries(penta_core PUBLIC
     readerwriterqueue
     nlohmann_json::nlohmann_json
-    juce::juce_core
-    juce::juce_audio_devices
     juce::juce_dsp
-    juce::juce_osc
 )
 
-target_compile_definitions(penta_core PUBLIC
-    JUCE_USE_OGGVORBIS=0
+# Platform-specific settings
+if(APPLE)
+    target_compile_definitions(penta_core PUBLIC
+        MAC_OS_X_VERSION_MIN_REQUIRED=101200
+        MAC_OS_VERSION_15_0=150000
+    )
+endif()
+
+# Compiler warnings
+target_compile_options(penta_core PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/W4>
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
 )
 
-# Enable AVX2 SIMD optimizations if available
+# Check for AVX2 support
 include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag("-mavx2" COMPILER_SUPPORTS_AVX2)
+CHECK_CXX_COMPILER_FLAG("-mavx2 -mfma" COMPILER_SUPPORTS_AVX2)
+
 if(COMPILER_SUPPORTS_AVX2)
-    target_compile_options(penta_core PRIVATE -mavx2 -mpopcnt)
-    message(STATUS "AVX2 SIMD optimizations enabled")
+    message(STATUS "AVX2 available, enabling SIMD optimizations")
+    target_compile_definitions(penta_core PUBLIC ENABLE_AVX2)
+    target_compile_options(penta_core PRIVATE -mavx2 -mfma)
 else()
     message(STATUS "AVX2 not available, using scalar fallback")
 endif()
 
-# Platform-specific threading
-if(UNIX)
-    target_link_libraries(penta_core PUBLIC pthread)
+# ============================================================================
+# Tests (Optional)
+# ============================================================================
+option(BUILD_PENTA_TESTS "Build penta-core tests" ON)
+
+if(BUILD_PENTA_TESTS)
+    enable_testing()
+
+    # Fetch GoogleTest
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.14.0
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(googletest)
+
+    # Create test executable
+    file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tests/penta_core/*.cpp
+    )
+
+    add_executable(penta_tests ${TEST_SOURCES})
+
+    target_link_libraries(penta_tests PRIVATE
+        penta_core
+        gtest
+        gtest_main
+    )
+
+    include(GoogleTest)
+    gtest_discover_tests(penta_tests)
 endif()
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 
 #include "penta/common/RTTypes.h"
@@ -70,6 +72,10 @@ namespace penta::groove
         uint64_t onsetPosition_;
         uint64_t lastOnsetPosition_;
         uint64_t sampleCounter_;
+        size_t fluxHistoryIndex_ = 0;
+        size_t fluxHistoryCount_ = 0;
+        float lastFlux_ = 0.0f;
     };
 
 } // namespace penta::groove
+>>>>>>> Incoming (Background Agent changes)

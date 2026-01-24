@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """Export dialog for MIDI, Intent Schema, and ML annotations.
 
 Uses native macOS save dialog. Non-blocking with progress indicator.
@@ -9,7 +11,7 @@ from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
     QCheckBox, QProgressBar, QMessageBox, QFileDialog
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 
 from kmidi_gui.core.export import ExportManager
 from music_brain.session.intent_schema import CompleteSongIntent
@@ -114,7 +116,8 @@ class ExportDialog(QDialog):
             self.intent_checkbox.isChecked(),
             self.annotations_checkbox.isChecked()
         ]):
-            QMessageBox.warning(self, "No Format Selected", "Please select at least one export format.")
+            QMessageBox.warning(self, "No Format Selected",
+                                "Please select at least one export format.")
             return
 
         # Get base directory from save dialog
@@ -159,7 +162,8 @@ class ExportDialog(QDialog):
             exports_started += 1
 
         if exports_started == 0:
-            QMessageBox.warning(self, "No Data", "No data available for selected formats.")
+            QMessageBox.warning(self, "No Data",
+                                "No data available for selected formats.")
             self.progress_bar.setVisible(False)
             self.status_label.setVisible(False)
             self.export_btn.setEnabled(True)
@@ -213,3 +217,4 @@ class ExportDialog(QDialog):
                 )
                 QMessageBox.warning(self, "Export Partially Failed", final_message)
                 self.export_complete.emit(False, final_message)
+>>>>>>> Incoming (Background Agent changes)

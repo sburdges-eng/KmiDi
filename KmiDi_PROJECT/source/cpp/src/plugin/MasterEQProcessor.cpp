@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "plugin/MasterEQProcessor.h"
 #include "plugin/PluginProcessor.h"
 
@@ -12,6 +14,10 @@ MasterEQProcessor::MasterEQProcessor() {
     band.enabled = true;
   }
   bypassSmoothing_.reset(0.0f);
+
+  for (auto &enabled : bandEnabled_) {
+    enabled = true;
+  }
 }
 
 void MasterEQProcessor::prepareToPlay(double sampleRate, int samplesPerBlock,
@@ -39,33 +45,102 @@ void MasterEQProcessor::prepareToPlay(double sampleRate, int samplesPerBlock,
   bypassSmoothing_.reset(sampleRate, 0.005f); // 5ms
   bypassSmoothing_.setCurrentAndTargetValue(0.0f);
 
-  // TODO: Initialize filter state when biquad filters are implemented
+  // Initialize filters and buffers
+  bandFilters_.clear();
+  bandFilters_.resize(static_cast<size_t>(numChannels));
+  for (auto &channelFilters : bandFilters_) {
+    for (auto &filter : channelFilters) {
+      filter.reset();
+    }
+  }
+
+  dryBuffer_.setSize(numChannels, samplesPerBlock, false, false, true);
+
+  // Prime coefficients to defaults
+  for (size_t i = 0; i < bandCoefficients_.size(); ++i) {
+    bandCoefficients_[i] = juce::dsp::IIR::Coefficients<float>::makePeakFilter(
+        sampleRate, 1000.0f, 1.0f, 1.0f);
+    for (auto &channelFilters : bandFilters_) {
+      channelFilters[i].coefficients = bandCoefficients_[i];
+    }
+  }
 }
 
 void MasterEQProcessor::releaseResources() {
-  // TODO: Clean up filter state when biquad filters are implemented
+  bandFilters_.clear();
+  dryBuffer_.setSize(0, 0, false, false, true);
 }
 
 void MasterEQProcessor::processBlock(juce::AudioBuffer<float> &buffer) {
   const int numSamples = buffer.getNumSamples();
   const int numChannels = buffer.getNumChannels();
 
-  // Update smoothed values for this block
-  // Note: For per-sample smoothing, call getNextValue() inside the sample loop
-  // For block-based smoothing, we can skip smoothing in the stub
-  // When real filters are implemented, we'll use per-sample smoothing
+  if (numSamples == 0 || numChannels == 0) {
+    return;
+  }
 
-  // Check bypass state (read atomic parameter)
-  // In stub, just pass through audio unchanged
-  // TODO: When filters are implemented, apply EQ processing here
+  float bypassMix = bypassSmoothing_.getNextValue();
+  const bool shouldBypass = (bypassMix >= 0.999f) && !bypassSmoothing_.isSmoothing();
+  if (shouldBypass) {
+    return;
+  }
 
-  // Stub: Currently just pass audio through
-  // Real implementation will:
-  // 1. Read smoothed parameter values per sample or per block
-  // 2. Apply biquad filters for each enabled band
-  // 3. Apply bypass crossfade if bypass is enabled
+  if (bypassMix > 0.0f || bypassSmoothing_.isSmoothing()) {
+    dryBuffer_.makeCopyOf(buffer, true);
+  }
 
-  juce::ignoreUnused(numSamples, numChannels);
+  for (size_t bandIdx = 0; bandIdx < bandSmoothing_.size(); ++bandIdx) {
+    if (!bandSmoothing_[bandIdx].enabled) {
+      continue;
+    }
+
+    const float freq = bandSmoothing_[bandIdx].freq.getNextValue();
+    const float gainDb = bandSmoothing_[bandIdx].gain.getNextValue();
+    const float q = bandSmoothing_[bandIdx].q.getNextValue();
+    const float gain = juce::Decibels::decibelsToGain(gainDb);
+
+    switch (bandIdx) {
+      case 0:
+        bandCoefficients_[bandIdx] = juce::dsp::IIR::Coefficients<float>::makeHighPass(
+            currentSampleRate_, freq);
+        break;
+      case 1:
+        bandCoefficients_[bandIdx] = juce::dsp::IIR::Coefficients<float>::makeLowShelf(
+            currentSampleRate_, freq, q, gain);
+        break;
+      case 2:
+      case 3:
+      case 4:
+        bandCoefficients_[bandIdx] = juce::dsp::IIR::Coefficients<float>::makePeakFilter(
+            currentSampleRate_, freq, q, gain);
+        break;
+      case 5:
+      default:
+        bandCoefficients_[bandIdx] = juce::dsp::IIR::Coefficients<float>::makeHighShelf(
+            currentSampleRate_, freq, q, gain);
+        break;
+    }
+
+    for (int ch = 0; ch < numChannels; ++ch) {
+      bandFilters_[static_cast<size_t>(ch)][bandIdx].coefficients =
+          bandCoefficients_[bandIdx];
+    }
+
+    for (int ch = 0; ch < numChannels; ++ch) {
+      auto *channelData = buffer.getWritePointer(ch);
+      bandFilters_[static_cast<size_t>(ch)][bandIdx].processSamples(channelData, numSamples);
+    }
+  }
+
+  if (bypassMix > 0.0f || bypassSmoothing_.isSmoothing()) {
+    for (int ch = 0; ch < numChannels; ++ch) {
+      auto *wet = buffer.getWritePointer(ch);
+      auto *dry = dryBuffer_.getReadPointer(ch);
+      for (int i = 0; i < numSamples; ++i) {
+        wet[i] = wet[i] * (1.0f - bypassMix) + dry[i] * bypassMix;
+      }
+    }
+  }
 }
 
 void MasterEQProcessor::updateParameters(juce::AudioProcessorValueTreeState &apvts) {
@@ -207,3 +282,4 @@ float MasterEQProcessor::calculateSmoothingCoeff(double timeConstantSeconds,
 }
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

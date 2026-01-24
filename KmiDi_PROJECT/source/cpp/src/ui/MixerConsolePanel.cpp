@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "ui/MixerConsolePanel.h"
 #include <juce_graphics/juce_graphics.h>
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -696,17 +698,6 @@ void MixerConsolePanel::createJazzComboPreset() {
     presets_.push_back(preset);
 }
 
-void MixerConsolePanel::createSongwriterPreset() {
-    MixerPreset preset;
-    preset.name = "Songwriter";
-    preset.description = "Songwriter setup: Vocals, Acoustic Guitar, Piano";
-    preset.masterGain = 0.0f;
-    preset.channels.push_back({"Vocals", "Lead Vocal", 0.0f, 0.0f, {}});
-    preset.channels.push_back({"Guitar", "Acoustic Guitar", 0.0f, 0.0f, {}});
-    preset.channels.push_back({"Piano", "Grand Piano", 0.0f, 0.0f, {}});
-    presets_.push_back(preset);
-}
-
 void MixerConsolePanel::layoutMixerView() {
     // Already handled in resized for now
 }
@@ -750,3 +741,4 @@ void MixerConsolePanel::onViewModeChanged() {
 }
 
 } // namespace midikompanion
+>>>>>>> Incoming (Background Agent changes)

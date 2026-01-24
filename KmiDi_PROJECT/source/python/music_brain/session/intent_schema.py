@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Song Intent Schema - Structured deep interrogation for songwriting.
 
@@ -122,6 +124,16 @@ VALID_GROOVE_FEEL_OPTIONS = [
 # =================================================================
 
 
+class RuleBreakingCategory(Enum):
+    """Top-level rule breaking categories."""
+
+    HARMONY = "harmony"
+    RHYTHM = "rhythm"
+    ARRANGEMENT = "arrangement"
+    PRODUCTION = "production"
+    MELODY = "melody"
+
+
 class HarmonyRuleBreak(Enum):
     """Harmony rules to intentionally break."""
 
@@ -161,6 +173,14 @@ class ProductionRuleBreak(Enum):
     ROOM_NOISE = "PRODUCTION_RoomNoise"
     DISTORTION = "PRODUCTION_Distortion"
     MONO_COLLAPSE = "PRODUCTION_MonoCollapse"
+
+
+class MelodyRuleBreak(Enum):
+    """Melody rules to intentionally break."""
+
+    AVOID_RESOLUTION = "MELODY_AvoidResolution"
+    ANTI_CLIMAX = "MELODY_AntiClimax"
+    EXCESSIVE_REPETITION = "MELODY_ExcessiveRepetition"
 
 
 class VulnerabilityScale(Enum):
@@ -343,6 +363,25 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Internal monologue, pressure",
         "example_emotions": ["pressure", "focus", "isolation"],
     },
+    # Melody
+    "MELODY_AvoidResolution": {
+        "description": "Avoid resolving to tonic on key phrases",
+        "effect": "Yearning, suspended emotional tension",
+        "use_when": "Longing, unresolved questions",
+        "example_emotions": ["longing", "uncertainty"],
+    },
+    "MELODY_AntiClimax": {
+        "description": "Divert expected melodic peak",
+        "effect": "Subversion, reflective restraint",
+        "use_when": "Hope that never fully arrives",
+        "example_emotions": ["hope", "bittersweet"],
+    },
+    "MELODY_ExcessiveRepetition": {
+        "description": "Repeat a motif more than expected",
+        "effect": "Obsession, fixation, trance",
+        "use_when": "Ruminating emotional states",
+        "example_emotions": ["obsession", "anxiety"],
+    },
 }
 
 
@@ -443,6 +482,10 @@ class CompleteSongIntent:
 
     def __init__(
         self,
+        song_root: Optional[SongRoot] = None,
+        song_intent: Optional[SongIntent] = None,
+        technical_constraints: Optional[TechnicalConstraints] = None,
+        system_directive: Optional[SystemDirective] = None,
         core_event: str = "",
         core_resistance: str = "",
         core_longing: str = "",
@@ -474,7 +517,7 @@ class CompleteSongIntent:
         generated_audio_data: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
-        self.song_root = SongRoot(
+        self.song_root = song_root or SongRoot(
             core_event=core_event,
             core_resistance=core_resistance,
             core_longing=core_longing,
@@ -491,14 +534,14 @@ class CompleteSongIntent:
         if vuln_str not in VALID_VULNERABILITY_SCALE_OPTIONS:
             vuln_str = "Medium"
 
-        self.song_intent = SongIntent(
+        self.song_intent = song_intent or SongIntent(
             mood_primary=mood_primary,
             mood_secondary_tension=tension_val,
             imagery_texture=imagery_texture,
             vulnerability_scale=vuln_str,
             narrative_arc=narrative_arc or "",
         )
-        self.technical_constraints = TechnicalConstraints(
+        self.technical_constraints = technical_constraints or TechnicalConstraints(
             technical_genre=technical_genre,
             technical_tempo_range=technical_tempo_range,
             technical_key=technical_key,
@@ -507,7 +550,7 @@ class CompleteSongIntent:
             technical_rule_to_break=technical_rule_to_break,
             rule_breaking_justification=rule_breaking_justification,
         )
-        self.system_directive = SystemDirective(
+        self.system_directive = system_directive or SystemDirective(
             output_target=output_target,
             output_feedback_loop=output_feedback_loop,
         )
@@ -877,3 +920,4 @@ def list_all_rules() -> Dict[str, List[str]]:
         "Arrangement": [e.value for e in ArrangementRuleBreak],
         "Production": [e.value for e in ProductionRuleBreak],
     }
+>>>>>>> Incoming (Background Agent changes)

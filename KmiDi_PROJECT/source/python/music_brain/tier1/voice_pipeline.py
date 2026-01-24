@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 VoiceGenerationPipeline
 -----------------------
@@ -13,6 +15,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Any, Dict
 import numpy as np
+import soundfile as sf
+
+from music_brain.voice.singing_voice import SingingVoice
 
 
 @dataclass
@@ -60,6 +65,7 @@ class VoicePerformer:
 
     def __init__(self, sample_rate: int = 44100):
         self.sample_rate = sample_rate
+        self._voice = SingingVoice(backend="auto", sample_rate=sample_rate)
 
     def render(
         self,
@@ -69,13 +75,22 @@ class VoicePerformer:
         output_path: Path,
     ) -> VoiceRenderResult:
         """
-        Placeholder rendering: in production this would call the C++ VoiceSynthesizer
-        or a Python binding. Here we only emit metadata and an empty file stub to
-        keep the pipeline deterministic and side-effect free.
+        Render vocals using the SingingVoice backend.
         """
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        # Create an empty placeholder file to indicate rendering was invoked
-        output_path.write_bytes(b"")  # No audio synthesis performed here
+        sorted_notes = sorted(notes, key=lambda n: (n.start_beat, n.pitch))
+        melody = [note.pitch for note in sorted_notes]
+        lyrics = " ".join([note.lyric or "la" for note in sorted_notes]) or "la"
+
+        # Use the average duration to estimate tempo alignment
+        tempo_bpm = 120.0
+        audio = self._voice.sing(
+            lyrics=lyrics,
+            melody=melody,
+            tempo_bpm=tempo_bpm,
+            expression=expression.__dict__,
+        )
+        sf.write(str(output_path), audio, self.sample_rate)
         metadata = {
             "identity": identity.name,
             "embedding": str(identity.embedding_path) if identity.embedding_path else None,
@@ -120,3 +135,4 @@ class VoiceGenerationPipeline:
 def create_voice_pipeline(sample_rate: int = 44100) -> VoiceGenerationPipeline:
     return VoiceGenerationPipeline(sample_rate=sample_rate)
 
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -78,6 +80,10 @@ private:
   double currentSampleRate_ = 44100.0;
   int currentNumChannels_ = 2;
 
+  std::array<juce::dsp::IIR::Coefficients<float>::Ptr, 6> bandCoefficients_;
+  std::vector<std::array<juce::dsp::IIR::Filter<float>, 6>> bandFilters_;
+  juce::AudioBuffer<float> dryBuffer_;
+
   // Current parameter targets (atomic-safe reads)
   bool eqBypass_ = false;
   std::array<bool, 6> bandEnabled_;
@@ -90,3 +96,4 @@ private:
 };
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

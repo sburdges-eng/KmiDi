@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """Control surface panel UI.
 
 Device list, mapping table, and learn mode interface.
@@ -7,7 +9,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
     QTableWidget, QTableWidgetItem, QComboBox, QMessageBox
 )
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from pathlib import Path
 from typing import Optional
 
@@ -189,7 +191,10 @@ class ControlSurfacePanel(QWidget):
         if self.project_path:
             self.control_manager.save_mappings(self.project_path)
 
-        QMessageBox.information(self, "Mapping Learned", f"Mapped {mapping.parameter} to {mapping.midi_type.upper()} {mapping.cc_number or mapping.note_number}")
+        QMessageBox.information(self, "Mapping Learned",
+                                f"Mapped {mapping.parameter} to "
+                                f"{mapping.midi_type.upper()} "
+                                f"{mapping.cc_number or mapping.note_number}")
 
     def _on_remove_clicked(self):
         """Handle remove mapping button click."""
@@ -230,3 +235,4 @@ class ControlSurfacePanel(QWidget):
         self.project_path = project_path
         self.control_manager.load_mappings(project_path)
         self._refresh_mappings()
+>>>>>>> Incoming (Background Agent changes)

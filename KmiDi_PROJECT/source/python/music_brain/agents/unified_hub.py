@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #!/usr/bin/env python3
 """
 Unified Hub - Central Orchestration for DAiW Music Brain
@@ -1085,7 +1087,11 @@ class UnifiedHub:
     def off(self, event: str, callback: Optional[Callable] = None):
         """Remove callback(s)."""
         if callback:
-            self._callbacks.get(event, []).remove(callback)
+            callbacks = self._callbacks.get(event, [])
+            if callback in callbacks:
+                callbacks.remove(callback)
+            else:
+                print(f"Callback not found for event '{event}'")
         else:
             self._callbacks.pop(event, None)
 
@@ -1303,3 +1309,4 @@ if __name__ == "__main__":
         print(f"Saved to: {path}")
 
     print("\nHub stopped cleanly.")
+>>>>>>> Incoming (Background Agent changes)

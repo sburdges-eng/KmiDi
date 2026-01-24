@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """Export pipeline for MIDI, Intent Schema, and ML annotations.
 
 Export is asynchronous and non-blocking. Uses QThread for background operations.
@@ -6,7 +8,7 @@ Export is asynchronous and non-blocking. Uses QThread for background operations.
 import json
 import logging
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 from PySide6.QtCore import QThread, Signal, QObject
 
 from music_brain.session.intent_schema import CompleteSongIntent
@@ -70,7 +72,8 @@ class MIDIExporter:
 
         # Placeholder: create empty file
         path.write_bytes(b"")
-        logger.warning(f"MIDI export not fully implemented, created placeholder: {path}")
+        logger.warning(
+            f"MIDI export not fully implemented, created placeholder: {path}")
 
 
 class IntentExporter:
@@ -200,3 +203,4 @@ class ExportManager(QObject):
             message: Progress message
         """
         self.export_progress.emit(message)
+>>>>>>> Incoming (Background Agent changes)

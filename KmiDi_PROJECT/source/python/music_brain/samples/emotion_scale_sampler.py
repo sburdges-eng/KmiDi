@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #!/usr/bin/env python3
 """
 Emotion-Scale Sample Fetcher
@@ -15,6 +17,33 @@ from datetime import datetime
 from collections import defaultdict
 import urllib.parse
 
+# Load environment variables from project root
+from pathlib import Path
+import sys
+
+# Add project root to path if not already there
+project_root = Path(__file__).resolve().parent.parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+try:
+    from python.kmidi_env import load_kmidi_env
+    # Determine features based on file location
+    features = []
+    file_str = str(Path(__file__))
+    if 'training' in file_str or 'train' in file_str:
+        features.extend(['ml', 'training'])
+    if 'mcp' in file_str or 'penta' in file_str:
+        features.extend(['mcp'])
+    if not features:
+        features = ['ml']  # Default to ML features
+    
+    load_kmidi_env(features=features, verbose=False)
+except ImportError:
+    # Fallback to simple dotenv if kmidi_env not available
+    from dotenv import load_dotenv
+    load_dotenv(project_root / ".env")
+    load_dotenv(project_root / ".env.local", override=True)
 # Paths
 SCRIPT_DIR = Path(__file__).resolve().parent
 PACKAGE_ROOT = SCRIPT_DIR.parent
@@ -79,6 +108,7 @@ MAX_SIZE_PER_COMBO_BYTES = MAX_SIZE_PER_COMBO_MB * 1024 * 1024
 
 class FreesoundFetcher:
     """Fetch samples from Freesound.org API"""
+    REQUEST_TIMEOUT_SECONDS = 30
 
     def __init__(self, api_key=None):
         self.api_key = api_key or self.load_api_key()
@@ -126,7 +156,11 @@ class FreesoundFetcher:
             params.update(filter_params)
 
         try:
-            response = self.session.get(f"{self.base_url}/search/text/", params=params)
+            response = self.session.get(
+                f"{self.base_url}/search/text/",
+                params=params,
+                timeout=self.REQUEST_TIMEOUT_SECONDS,
+            )
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
@@ -140,7 +174,10 @@ class FreesoundFetcher:
 
         try:
             # Get sound details
-            response = self.session.get(f"{self.base_url}/sounds/{sound_id}/")
+            response = self.session.get(
+                f"{self.base_url}/sounds/{sound_id}/",
+                timeout=self.REQUEST_TIMEOUT_SECONDS,
+            )
             response.raise_for_status()
             sound_data = response.json()
 
@@ -148,7 +185,11 @@ class FreesoundFetcher:
             preview_url = sound_data['previews']['preview-hq-mp3']  # High quality preview
 
             # Download file
-            download_response = requests.get(preview_url, stream=True)
+            download_response = requests.get(
+                preview_url,
+                stream=True,
+                timeout=self.REQUEST_TIMEOUT_SECONDS,
+            )
             download_response.raise_for_status()
 
             # Save to file
@@ -189,7 +230,7 @@ class EmotionScaleSampler:
                 except (json.JSONDecodeError, IOError) as e:
                     print(f"Warning: Could not load scales DB from {candidate_path}: {e}")
                     continue
-        
+
         print(f"Error: Scales database not found. Tried:")
         for path in SCALES_DB_CANDIDATES:
             print(f"  - {path}")
@@ -553,3 +594,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+>>>>>>> Incoming (Background Agent changes)

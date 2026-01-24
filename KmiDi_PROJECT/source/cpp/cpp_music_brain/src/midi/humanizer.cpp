@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 /**
  * @file humanizer.cpp
  * @brief Drum and MIDI humanization engine
@@ -7,6 +9,7 @@
 #include <vector>
 #include <random>
 #include <cmath>
+#include <string>
 
 namespace daiw {
 namespace humanizer {
@@ -107,3 +110,4 @@ std::vector<NoteEvent> humanize(
 
 }  // namespace humanizer
 }  // namespace daiw
+>>>>>>> Incoming (Background Agent changes)

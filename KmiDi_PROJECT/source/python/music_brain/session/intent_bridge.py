@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Intent Bridge - Python interface for C++ intent processing.
 
@@ -15,7 +17,6 @@ from music_brain.session.intent_schema import (
     RhythmRuleBreak,
     ArrangementRuleBreak,
     ProductionRuleBreak,
-    MelodyRuleBreak,
 )
 
 
@@ -84,7 +85,7 @@ def process_intent(intent_json: str) -> str:
         result = _intent_processor.process_intent(intent)
 
         # Convert to C++ format
-        cpp_result = _convert_to_cpp_format(result)
+        cpp_result = _convert_processor_result_to_cpp_format(result)
 
         return json.dumps(cpp_result)
 
@@ -224,20 +225,48 @@ def _convert_to_cpp_format(result: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Dictionary in C++ IntentResult format
     """
+    from dataclasses import asdict, is_dataclass
+
+    def _to_dict(value: Any) -> Dict[str, Any]:
+        if is_dataclass(value):
+            return asdict(value)
+        if isinstance(value, dict):
+            return value
+        return {}
+
+    harmony = _to_dict(result.get("harmony"))
+    groove = _to_dict(result.get("groove"))
+    arrangement = _to_dict(result.get("arrangement"))
+    production = _to_dict(result.get("production"))
+
+    rule_breaks = []
+    for item in (harmony, groove, arrangement, production):
+        rule = item.get("rule_broken")
+        if rule:
+            rule_breaks.append(rule)
+
+    velocities = groove.get("velocity_curve") or []
+    if velocities:
+        base_velocity = sum(velocities) / (len(velocities) * 127)
+        dynamic_range = (max(velocities) - min(velocities)) / 127
+    else:
+        base_velocity = 0.6
+        dynamic_range = 0.4
+
     cpp_result = {
-        "key": result.get("key", "C"),
-        "mode": result.get("mode", "major"),
-        "tempoBpm": result.get("tempo", 120),
-        "chordProgression": result.get("chords", []),
-        "ruleBreaks": result.get("rule_breaks", []),
+        "key": harmony.get("key", "C"),
+        "mode": harmony.get("mode", "major"),
+        "tempoBpm": groove.get("tempo_bpm", 120),
+        "chordProgression": harmony.get("chords", []),
+        "ruleBreaks": rule_breaks,
         "melodicRange": result.get("melodic_range", 0.6),
         "leapProbability": result.get("leap_probability", 0.3),
         "allowChromaticism": result.get("allow_chromaticism", False),
-        "swingAmount": result.get("swing_amount", 0.0),
+        "swingAmount": groove.get("swing_factor", 0.0),
         "syncopationLevel": result.get("syncopation_level", 0.3),
         "humanization": result.get("humanization", 0.15),
-        "baseVelocity": result.get("base_velocity", 0.6),
-        "dynamicRange": result.get("dynamic_range", 0.4),
+        "baseVelocity": base_velocity,
+        "dynamicRange": dynamic_range,
     }
 
     return cpp_result
@@ -260,3 +289,4 @@ def _get_default_cpp_result() -> Dict[str, Any]:
         "baseVelocity": 0.6,
         "dynamicRange": 0.4,
     }
+>>>>>>> Incoming (Background Agent changes)

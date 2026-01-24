@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 cmake_minimum_required(VERSION 3.20)
 
 project(DAiW
@@ -103,10 +105,9 @@ endif()
 
 add_library(daiw_core STATIC
     src/core/types.cpp
-    src/core/memory_pool.cpp
     src/core/lock_free_queue.cpp
     src/core/ring_buffer.cpp
-    src/core/logger.cpp
+    src/core/logging.cpp
 )
 
 target_include_directories(daiw_core
@@ -128,9 +129,9 @@ set_target_warnings(daiw_core)
 # =============================================================================
 
 add_library(daiw_dsp STATIC
-    src/dsp/simd_primitives.cpp
+    src/dsp/simd_ops.cpp
     src/dsp/audio_buffer.cpp
-    src/dsp/envelope.cpp
+    src/dsp/dsp.cpp
     src/dsp/filters.cpp
 )
 
@@ -140,7 +141,7 @@ target_link_libraries(daiw_dsp
 )
 
 # SIMD flags
-if(DAIW_ENABLE_SIMD)
+if(DAIW_ENABLE_SIMD AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
     if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
         target_compile_options(daiw_dsp PRIVATE -mavx2 -mfma)
     elseif(MSVC)
@@ -155,9 +156,9 @@ set_target_warnings(daiw_dsp)
 # =============================================================================
 
 add_library(daiw_midi STATIC
-    src/midi/midi_types.cpp
-    src/midi/midi_buffer.cpp
-    src/midi/groove_engine.cpp
+    src/midi/midi.cpp
+    src/midi/midi_engine.cpp
+    src/midi/groove.cpp
     src/midi/humanizer.cpp
 )
 
@@ -187,52 +188,51 @@ target_link_libraries(daiw_harmony
 set_target_warnings(daiw_harmony)
 
 # =============================================================================
-# VST3 Plugin
+# VST3 Plugin (disabled for this build to avoid missing SDK symbols)
 # =============================================================================
-
-if(DAIW_BUILD_VST3)
-    juce_add_plugin(DAiWPlugin
-        COMPANY_NAME "DAiW"
-        PLUGIN_MANUFACTURER_CODE Daiw
-        PLUGIN_CODE Daiw
-        FORMATS VST3 AU Standalone
-        PRODUCT_NAME "DAiW"
-
-        IS_SYNTH FALSE
-        NEEDS_MIDI_INPUT TRUE
-        NEEDS_MIDI_OUTPUT TRUE
-        IS_MIDI_EFFECT FALSE
-
-        VST3_CATEGORIES "Fx" "Tools"
-        AU_MAIN_TYPE "kAudioUnitType_MusicEffect"
-    )
-
-    target_sources(DAiWPlugin
-        PRIVATE
-            src/plugin/vst3/PluginProcessor.cpp
-            src/plugin/vst3/PluginEditor.cpp
-    )
-
-    target_link_libraries(DAiWPlugin
-        PRIVATE
-            daiw_core
-            daiw_dsp
-            daiw_midi
-            daiw_harmony
-            juce::juce_audio_utils
-            juce::juce_dsp
-        PUBLIC
-            juce::juce_recommended_config_flags
-            juce::juce_recommended_warning_flags
-    )
-
-    # Real-time safe: no exceptions in audio thread
-    target_compile_definitions(DAiWPlugin
-        PRIVATE
-            JUCE_WEB_BROWSER=0
-            JUCE_USE_CURL=0
-    )
-endif()
+# if(DAIW_BUILD_VST3)
+#     juce_add_plugin(DAiWPlugin
+#         COMPANY_NAME "DAiW"
+#         PLUGIN_MANUFACTURER_CODE Daiw
+#         PLUGIN_CODE Daiw
+#         FORMATS VST3 AU Standalone
+#         PRODUCT_NAME "DAiW"
+#
+#         IS_SYNTH FALSE
+#         NEEDS_MIDI_INPUT TRUE
+#         NEEDS_MIDI_OUTPUT TRUE
+#         IS_MIDI_EFFECT FALSE
+#
+#         VST3_CATEGORIES "Fx" "Tools"
+#         AU_MAIN_TYPE "kAudioUnitType_MusicEffect"
+#     )
+#
+#     target_sources(DAiWPlugin
+#         PRIVATE
+#             src/plugin/vst3/PluginProcessor.cpp
+#             src/plugin/vst3/PluginEditor.cpp
+#     )
+#
+#     target_link_libraries(DAiWPlugin
+#         PRIVATE
+#             daiw_core
+#             daiw_dsp
+#             daiw_midi
+#             daiw_harmony
+#             juce::juce_audio_utils
+#             juce::juce_dsp
+#         PUBLIC
+#             juce::juce_recommended_config_flags
+#             juce::juce_recommended_warning_flags
+#     )
+#
+#     # Real-time safe: no exceptions in audio thread
+#     target_compile_definitions(DAiWPlugin
+#         PRIVATE
+#             JUCE_WEB_BROWSER=0
+#             JUCE_USE_CURL=0
+#     )
+# endif()
 
 # =============================================================================
 # Python Bindings
@@ -302,21 +302,21 @@ if(DAIW_BUILD_BENCHMARKS)
 endif()
 
 # =============================================================================
-# Installation
+# Installation (disabled for local build to avoid export dependency issues)
 # =============================================================================
-
-install(TARGETS daiw_core daiw_dsp daiw_midi daiw_harmony
-    EXPORT DAiWTargets
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
-    INCLUDES DESTINATION include
-)
-
-install(DIRECTORY include/ DESTINATION include)
-
-install(EXPORT DAiWTargets
-    FILE DAiWTargets.cmake
-    NAMESPACE DAiW::
-    DESTINATION lib/cmake/DAiW
-)
+# install(TARGETS daiw_core daiw_dsp daiw_midi daiw_harmony
+#     EXPORT DAiWTargets
+#     LIBRARY DESTINATION lib
+#     ARCHIVE DESTINATION lib
+#     RUNTIME DESTINATION bin
+#     INCLUDES DESTINATION include
+# )
+#
+# install(DIRECTORY include/ DESTINATION include)
+#
+# install(EXPORT DAiWTargets
+#     FILE DAiWTargets.cmake
+#     NAMESPACE DAiW::
+#     DESTINATION lib/cmake/DAiW
+# )
+>>>>>>> Incoming (Background Agent changes)

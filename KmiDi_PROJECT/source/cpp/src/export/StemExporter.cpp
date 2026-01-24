@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 /**
  * @file StemExporter.cpp
  * @brief Stem exporter implementation
@@ -18,13 +20,13 @@ std::vector<StemExportResult> StemExporter::exportAllStems(
     const project::ProjectFile& project,
     const std::string& outputDirectory,
     const ExportOptions& options) {
-    
+
     const auto& tracks = project.getTracks();
     std::vector<size_t> allIndices(tracks.size());
     for (size_t i = 0; i < tracks.size(); ++i) {
         allIndices[i] = i;
     }
-    
+
     return exportSelectedStems(project, allIndices, outputDirectory, options);
 }
 
@@ -33,16 +35,16 @@ std::vector<StemExportResult> StemExporter::exportSelectedStems(
     const std::vector<size_t>& trackIndices,
     const std::string& outputDirectory,
     const ExportOptions& options) {
-    
+
     std::vector<StemExportResult> results;
     const auto& tracks = project.getTracks();
-    
+
     // Create output directory if it doesn't exist
     fs::create_directories(outputDirectory);
-    
+
     for (size_t i = 0; i < trackIndices.size(); ++i) {
         size_t trackIdx = trackIndices[i];
-        
+
         if (trackIdx >= tracks.size()) {
             StemExportResult result;
             result.success = false;
@@ -50,23 +52,23 @@ std::vector<StemExportResult> StemExporter::exportSelectedStems(
             results.push_back(result);
             continue;
         }
-        
+
         const auto& track = tracks[trackIdx];
-        
+
         // Progress callback
         if (progressCallback_) {
             progressCallback_(i, trackIndices.size(), track.name);
         }
-        
+
         // Generate filename
         std::string filepath = generateStemFilename(
             track.name, trackIdx, outputDirectory, options.format, options.filenameSuffix);
-        
+
         // Export track
         auto result = exportTrack(track, filepath, options);
         results.push_back(result);
     }
-    
+
     return results;
 }
 
@@ -74,14 +76,14 @@ StemExportResult StemExporter::exportTrack(
     const project::Track& track,
     const std::string& filepath,
     const ExportOptions& options) {
-    
+
     StemExportResult result;
     result.trackName = track.name;
     result.filepath = filepath;
-    
+
     try {
         audio::AudioFile audioFile;
-        
+
         if (track.type == project::TrackType::Audio) {
             // Load audio file
             if (!track.audioFilePath.empty()) {
@@ -98,7 +100,7 @@ StemExportResult StemExporter::exportTrack(
         } else if (track.type == project::TrackType::MIDI) {
             // Render MIDI to audio (stub)
             audioFile = renderMidiTrack(track, 10.0, options.sampleRate);
-            
+
             if (audioFile.getData().empty()) {
                 result.success = false;
                 result.errorMessage = "MIDI rendering not implemented (stub only)";
@@ -109,34 +111,34 @@ StemExportResult StemExporter::exportTrack(
             result.errorMessage = "Unsupported track type";
             return result;
         }
-        
+
         // Apply track volume/pan (basic mixing)
         auto& data = audioFile.getData();
         for (auto& sample : data) {
             sample *= track.volume;
         }
-        
+
         // Normalize if requested
         if (options.normalizeStems) {
             normalizeAudio(audioFile);
         }
-        
+
         // Write file
         if (!audioFile.write(filepath, options.format, options.sampleFormat)) {
             result.success = false;
             result.errorMessage = "Failed to write audio file";
             return result;
         }
-        
+
         result.success = true;
         result.numSamples = audioFile.getInfo().numSamples;
         result.durationSeconds = audioFile.getInfo().durationSeconds;
-        
+
     } catch (const std::exception& e) {
         result.success = false;
         result.errorMessage = std::string("Exception: ") + e.what();
     }
-    
+
     return result;
 }
 
@@ -144,17 +146,17 @@ audio::AudioFile StemExporter::renderMidiTrack(
     const project::Track& track,
     double durationSeconds,
     SampleRate sampleRate) {
-    
+
     // Basic MIDI rendering implementation using simple synthesizer
     // For production: integrate a full synth/sampler engine (JUCE, SFizz, etc.)
-    
+
     if (track.midiSequence.empty()) {
         // Return empty audio file if no MIDI events
         audio::AudioFile emptyFile;
         emptyFile.setData({}, 1, sampleRate);
         return emptyFile;
     }
-    
+
     // Calculate duration from MIDI sequence if not provided
     if (durationSeconds <= 0.0) {
         // Estimate duration from last MIDI event
@@ -162,13 +164,17 @@ audio::AudioFile StemExporter::renderMidiTrack(
         const int ppq = track.midiSequence.getPPQ();
         const double bpm = 120.0;  // Default tempo
         TickCount lastTick = track.midiSequence.getDuration();
-        durationSeconds = (lastTick / static_cast<double>(ppq)) * (60.0 / bpm);
+        if (ppq <= 0) {
+            durationSeconds = 1.0;
+        } else {
+            durationSeconds = (lastTick / static_cast<double>(ppq)) * (60.0 / bpm);
+        }
         durationSeconds = std::max(durationSeconds, 1.0);  // Minimum 1 second
     }
-    
+
     const size_t numSamples = static_cast<size_t>(durationSeconds * sampleRate);
     std::vector<daiw::Sample> audioData(numSamples, 0.0f);
-    
+
     // Simple synthesizer: generate sine waves for each active note
     struct ActiveNote {
         MidiNote note;
@@ -176,21 +182,26 @@ audio::AudioFile StemExporter::renderMidiTrack(
         float velocity;
         bool isActive;
     };
-    
+
     std::vector<ActiveNote> activeNotes;
     const auto& messages = track.midiSequence.getMessages();
-    
+
     // Convert MIDI ticks to sample positions
     const int ppq = track.midiSequence.getPPQ();
     const double bpm = 120.0;  // Default tempo - in production, get from project
+    if (ppq <= 0 || bpm <= 0.0) {
+        audio::AudioFile emptyFile;
+        emptyFile.setData({}, 1, sampleRate);
+        return emptyFile;
+    }
     const double ticksPerSecond = (ppq * bpm) / 60.0;
-    
+
     for (const auto& msg : messages) {
         double timeInSeconds = msg.getTimestamp() / ticksPerSecond;
         size_t samplePos = static_cast<size_t>(timeInSeconds * sampleRate);
-        
+
         if (samplePos >= numSamples) continue;
-        
+
         if (msg.isNoteOn() && msg.getVelocity() > 0) {
             // Note on
             ActiveNote note;
@@ -209,21 +220,21 @@ audio::AudioFile StemExporter::renderMidiTrack(
             }
         }
     }
-    
+
     // Generate audio for active notes
     for (size_t sample = 0; sample < numSamples; ++sample) {
         float time = static_cast<float>(sample) / static_cast<float>(sampleRate);
         float sampleValue = 0.0f;
-        
+
         for (auto& note : activeNotes) {
             if (!note.isActive) continue;
-            
+
             float noteDuration = time - note.startTime;
             if (noteDuration < 0.0f) continue;
-            
+
             // Calculate frequency from MIDI note number
             float frequency = 440.0f * std::pow(2.0f, (static_cast<float>(note.note) - 69.0f) / 12.0f);
-            
+
             // Generate sine wave with envelope (simple ADSR-like)
             float amplitude = note.velocity;
             if (noteDuration < 0.01f) {
@@ -234,16 +245,16 @@ audio::AudioFile StemExporter::renderMidiTrack(
                 float releaseTime = durationSeconds - noteDuration;
                 amplitude *= std::max(0.0f, releaseTime / 0.1f);
             }
-            
+
             // Generate sine wave
             constexpr float PI = 3.14159265358979323846f;
             float phase = 2.0f * PI * frequency * time;
             sampleValue += amplitude * std::sin(phase) * 0.2f;  // Scale down to prevent clipping
         }
-        
+
         audioData[sample] = sampleValue;
     }
-    
+
     // Create audio file
     audio::AudioFile audioFile;
     audioFile.setData(audioData, 1, sampleRate);  // Mono output
@@ -252,17 +263,17 @@ audio::AudioFile StemExporter::renderMidiTrack(
 
 void StemExporter::normalizeAudio(audio::AudioFile& audio, float targetLevel) {
     auto& data = audio.getData();
-    
+
     if (data.empty()) {
         return;
     }
-    
+
     // Find peak
     float peak = 0.0f;
     for (const auto& sample : data) {
         peak = std::max(peak, std::abs(sample));
     }
-    
+
     if (peak > 0.0f) {
         float gain = targetLevel / peak;
         for (auto& sample : data) {
@@ -277,18 +288,18 @@ std::string StemExporter::generateStemFilename(
     const std::string& outputDirectory,
     audio::AudioFormat format,
     const std::string& suffix) {
-    
+
     std::string sanitized = sanitizeFilename(trackName);
     if (sanitized.empty()) {
         sanitized = "Track_" + std::to_string(trackIndex);
     }
-    
+
     std::string filename = sanitized;
     if (!suffix.empty()) {
         filename += "_" + suffix;
     }
     filename += getFileExtension(format);
-    
+
     fs::path fullPath = fs::path(outputDirectory) / filename;
     return fullPath.string();
 }
@@ -316,3 +327,4 @@ std::string StemExporter::getFileExtension(audio::AudioFormat format) {
 
 } // namespace export_ns
 } // namespace daiw
+>>>>>>> Incoming (Background Agent changes)

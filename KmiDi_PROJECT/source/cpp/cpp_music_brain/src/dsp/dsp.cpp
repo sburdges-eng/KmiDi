@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 /**
  * DAiW DSP Module Implementation
  *
@@ -93,7 +95,7 @@ public:
         release_coef_ = std::exp(-1.0f / (sample_rate_ * ms * 0.001f));
     }
 
-    float process(float input) DAIW_RT_SAFE {
+    float process(float input) {
         float abs_input = std::abs(input);
 
         if (abs_input > envelope_) {
@@ -133,7 +135,7 @@ public:
         a0_ = 1.0f - b1_;
     }
 
-    float process(float input) DAIW_RT_SAFE {
+    float process(float input) {
         z1_ = input * a0_ + z1_ * b1_;
         return z1_;
     }
@@ -253,7 +255,7 @@ public:
         a0_ = 1.0f;
     }
 
-    float process(float input) DAIW_RT_SAFE {
+    float process(float input) {
         float output = b0_ * input + b1_ * x1_ + b2_ * x2_ - a1_ * y1_ - a2_ * y2_;
         x2_ = x1_;
         x1_ = input;
@@ -288,12 +290,12 @@ public:
         , max_delay_(max_delay_samples)
     {}
 
-    void write(float sample) DAIW_RT_SAFE {
+    void write(float sample) {
         buffer_[write_pos_] = sample;
         write_pos_ = (write_pos_ + 1) % max_delay_;
     }
 
-    float read(float delay_samples) const DAIW_RT_SAFE {
+    float read(float delay_samples) const {
         float read_pos = static_cast<float>(write_pos_) - delay_samples;
         while (read_pos < 0.0f) read_pos += max_delay_;
 
@@ -316,3 +318,4 @@ private:
 
 } // namespace dsp
 } // namespace daiw
+>>>>>>> Incoming (Background Agent changes)

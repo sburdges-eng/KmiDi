@@ -1,9 +1,12 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 
 #include <cstdint>
 #include <cstddef>
 #include <array>
 #include <span>
+#include <string>
 
 namespace daiw {
 
@@ -18,6 +21,54 @@ using MidiChannel = uint8_t;
 using MidiNote = uint8_t;
 using MidiVelocity = uint8_t;
 using Tick = int64_t;  // MIDI ticks (PPQ-based)
+using TickCount = Tick;
+
+/// Pulses per quarter note (PPQ) default
+constexpr int DEFAULT_PPQ = 480;
+
+/// Tempo container
+struct Tempo {
+    float bpm {120.0f};
+
+    double samplesPerBeat(double sampleRate) const noexcept {
+        return (sampleRate * 60.0) / static_cast<double>(bpm > 0 ? bpm : 120.0f);
+    }
+
+    double msPerBeat() const noexcept {
+        return 60000.0 / static_cast<double>(bpm > 0 ? bpm : 120.0f);
+    }
+};
+
+struct TimeSignature {
+    int numerator {4};
+    int denominator {4};
+
+    int beatsPerBar() const noexcept { return numerator; }
+    Tick ticksPerBar(int ppq = DEFAULT_PPQ) const noexcept {
+        return static_cast<Tick>(ppq) * numerator * 4 / (denominator > 0 ? denominator : 4);
+    }
+};
+
+struct NoteEvent {
+    MidiNote pitch {0};
+    MidiVelocity velocity {0};
+    Tick startTick {0};
+    Tick durationTicks {0};
+    MidiChannel channel {0};
+
+    Tick endTick() const noexcept { return startTick + durationTicks; }
+};
+
+struct GrooveSettings {
+    float swing {0.0f};
+    float pushPull {0.0f};
+    float humanization {0.0f};
+    float velocityVar {0.0f};
+};
+
+struct Version {
+    static const char* string() noexcept { return "0.0.0"; }
+};
 
 // =============================================================================
 // Audio Types
@@ -138,3 +189,4 @@ struct ProcessContext {
 };
 
 } // namespace daiw
+>>>>>>> Incoming (Background Agent changes)

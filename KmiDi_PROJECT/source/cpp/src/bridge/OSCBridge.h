@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 
 /**
@@ -25,6 +27,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <mutex>
 
 namespace kelly {
 namespace bridge {
@@ -192,6 +195,7 @@ private:
         OSCStringResponseHandler stringCallback;
         juce::Time timestamp;
     };
+    std::mutex pendingMutex_;
     std::map<int, PendingRequest> pendingRequests_;
     int nextMessageId_ = 1;
     static constexpr int REQUEST_TIMEOUT_MS = 5000;
@@ -203,7 +207,10 @@ private:
     /**
      * Generate unique message ID
      */
-    int generateMessageId() { return nextMessageId_++; }
+    int generateMessageId() {
+        std::lock_guard<std::mutex> lock(pendingMutex_);
+        return nextMessageId_++;
+    }
 
     /**
      * OSCReceiver::Listener callbacks
@@ -224,3 +231,4 @@ private:
 
 } // namespace bridge
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

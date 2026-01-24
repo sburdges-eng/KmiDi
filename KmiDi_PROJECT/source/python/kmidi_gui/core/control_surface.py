@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """External control surface support for MIDI CC/Note mapping.
 
 Supports MIDI CC and Note messages mapped to application parameters.
@@ -6,7 +8,7 @@ Includes learn mode for easy mapping setup.
 
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional, List, Dict, Callable
 from pathlib import Path
 from enum import Enum
@@ -63,7 +65,8 @@ class ControlMapping:
             device_id=data.get("device_id", ""),
         )
 
-    def matches(self, midi_type: str, channel: int, cc_or_note: int, device_id: str = "") -> bool:
+    def matches(self, midi_type: str, channel: int, cc_or_note: int,
+                 device_id: str = "") -> bool:
         """Check if MIDI message matches this mapping.
 
         Args:
@@ -111,11 +114,12 @@ class ControlSurfaceManager:
     def _init_midi(self):
         """Initialize MIDI input (if rtmidi is available)."""
         try:
-            import rtmidi
+            import rtmidi  # type: ignore[import]
             self.midi_input = rtmidi.MidiIn()
             logger.info("MIDI input initialized")
         except ImportError:
-            logger.warning("python-rtmidi not available, control surface disabled")
+            logger.warning(
+                "python-rtmidi not available, control surface disabled")
             self.midi_input = None
 
     def discover_devices(self) -> List[Dict[str, str]]:
@@ -206,7 +210,9 @@ class ControlSurfaceManager:
         # Remove existing mapping for same parameter if any
         self.mappings = [m for m in self.mappings if m.parameter != mapping.parameter]
         self.mappings.append(mapping)
-        logger.info(f"Added mapping: {mapping.parameter} <- {mapping.midi_type} {mapping.cc_number or mapping.note_number}")
+        logger.info(
+            f"Added mapping: {mapping.parameter} <- "
+            f"{mapping.midi_type} {mapping.cc_number or mapping.note_number}")
 
     def remove_mapping(self, parameter: str) -> bool:
         """Remove parameter mapping.
@@ -380,7 +386,10 @@ class ControlSurfaceManager:
             with open(mappings_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
-            self.mappings = [ControlMapping.from_dict(m) for m in data.get("mappings", [])]
-            logger.info(f"Loaded {len(self.mappings)} control mappings from {mappings_file}")
+            self.mappings = [
+                ControlMapping.from_dict(m) for m in data.get("mappings", [])]
+            logger.info(
+                f"Loaded {len(self.mappings)} control mappings from {mappings_file}")
         except Exception as e:
             logger.error(f"Failed to load control mappings: {e}")
+>>>>>>> Incoming (Background Agent changes)

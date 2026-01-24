@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 /**
  * @file memory.hpp
  * @brief Real-time safe memory management for DAiW
@@ -14,6 +16,7 @@
 #include <memory>
 #include <new>
 #include <vector>
+#include <mutex>
 
 namespace daiw {
 
@@ -76,6 +79,7 @@ private:
     size_t blockSize_;
     size_t numBlocks_;
     std::atomic<size_t> freeCount_;
+    mutable std::mutex mutex_;
 };
 
 // =============================================================================
@@ -209,6 +213,8 @@ public:
 private:
     std::atomic<QueueNode<T>*> head_;
     QueueNode<T>* tail_;
+    mutable std::mutex mutex_;
 };
 
 }  // namespace daiw
+>>>>>>> Incoming (Background Agent changes)

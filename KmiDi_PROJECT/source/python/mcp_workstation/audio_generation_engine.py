@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 from pathlib import Path
 from typing import Any, Dict, Optional
 import threading
@@ -89,14 +91,37 @@ class AudioGenerationEngine:
         def _generate() -> Dict[str, Any]:
             print(f"Generating audio texture with prompt: {prompt}")
             try:
-                time.sleep(duration / 5)  # Simulate generation
-                prompt_safe = prompt.replace(" ", "_")
-                audio_data_base64 = f"<base64_encoded_audio_data_for_{prompt_safe}>"
+                import base64
+                import io
+
+                # Generate audio using MusicGen model
+                self.model.set_generation_params(duration=duration)
+                wav = self.model.generate([prompt])  # Returns tensor [batch, channels, samples]
+
+                # Convert to audio file and encode as base64
+                prompt_safe = prompt.replace(" ", "_")[:50]
+                output_path = self.output_dir / f"audio_{prompt_safe}.wav"
+
+                # Use audiocraft's audio_write to save the file
+                audio_write(
+                    str(output_path.with_suffix('')),  # audio_write adds extension
+                    wav[0].cpu(),  # First sample in batch
+                    self.model.sample_rate,
+                    strategy="loudness",
+                )
+
+                # Read the saved file and encode to base64
+                with open(str(output_path), "rb") as f:
+                    audio_bytes = f.read()
+                audio_data_base64 = base64.b64encode(audio_bytes).decode("utf-8")
+
                 return {
                     "status": "completed",
                     "prompt": prompt,
                     "audio_data_base64": audio_data_base64,
-                    "details": ("Audio texture generated successfully (simulated)."),
+                    "output_path": str(output_path),
+                    "sample_rate": self.model.sample_rate,
+                    "details": "Audio texture generated successfully.",
                 }
             except Exception as e:
                 print(f"Error during audio generation: {e}")
@@ -198,3 +223,4 @@ if __name__ == "__main__":
         print("Lock acquired again.")
         engine.release_lock()
         print("Lock released again.")
+>>>>>>> Incoming (Background Agent changes)

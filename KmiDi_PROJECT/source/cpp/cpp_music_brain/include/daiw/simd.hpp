@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 
 /**
@@ -15,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <cmath>
 
 // SIMD detection
 #if defined(__AVX512F__)
@@ -408,3 +411,4 @@ inline void apply_pan(float* left, float* right, size_t n, float pan) {
 }
 
 } // namespace daiw::simd
+>>>>>>> Incoming (Background Agent changes)

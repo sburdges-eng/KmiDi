@@ -1,15 +1,33 @@
+<<<<<<< Current (Your changes)
+=======
 #include "audio/SpectralAnalyzer.h"
 #include <juce_dsp/juce_dsp.h>
 #include <algorithm>
 #include <numeric>
 #include <cmath>
 
+namespace {
+int normalizeFftSize(int fftSize) {
+    if (fftSize < 2) {
+        return 2;
+    }
+    if ((fftSize & (fftSize - 1)) == 0) {
+        return fftSize;
+    }
+    int normalized = 1;
+    while (normalized < fftSize) {
+        normalized <<= 1;
+    }
+    return normalized;
+}
+}  // namespace
+
 namespace midikompanion {
 namespace audio {
 
 SpectralAnalyzer::SpectralAnalyzer(int fftSize)
-    : fftSize_(fftSize)
-    , fft_(std::make_unique<juce::dsp::FFT>(static_cast<int>(std::log2(fftSize))))
+    : fftSize_(normalizeFftSize(fftSize))
+    , fft_(std::make_unique<juce::dsp::FFT>(static_cast<int>(std::log2(fftSize_))))
 {
     // Initialize buffers
     fftBuffer_.resize(fftSize_ * 2);  // Complex FFT output
@@ -89,18 +107,20 @@ std::vector<std::vector<float>> SpectralAnalyzer::computeSTFT(const juce::AudioB
 
     const float* channelData = audio.getReadPointer(0);
     int numSamples = audio.getNumSamples();
+    int safeFrameSize = std::min(frameSize, fftSize_);
+    int safeHopSize = std::max(1, hopSize);
 
     // Process in overlapping frames
-    for (int start = 0; start + frameSize <= numSamples; start += hopSize) {
+    for (int start = 0; start + safeFrameSize <= numSamples; start += safeHopSize) {
         // Copy frame to buffer
         std::fill(fftBuffer_.begin(), fftBuffer_.end(), 0.0f);
-        std::copy(channelData + start, channelData + start + frameSize, fftBuffer_.begin());
+        std::copy(channelData + start, channelData + start + safeFrameSize, fftBuffer_.begin());
 
         // Apply window
-        applyWindow(fftBuffer_.data(), frameSize);
+        applyWindow(fftBuffer_.data(), safeFrameSize);
 
         // Compute FFT
-        std::vector<float> magnitude(frameSize / 2 + 1);
+        std::vector<float> magnitude(fftSize_ / 2 + 1);
         computeFFT(fftBuffer_.data(), magnitude);
 
         stft.push_back(magnitude);
@@ -180,6 +200,13 @@ float SpectralAnalyzer::calculateHNR(const juce::AudioBuffer<float>& audio, doub
 void SpectralAnalyzer::computeFFT(const float* frame, std::vector<float>& magnitude, std::vector<float>* phase) {
     // Copy real input to FFT buffer
     // JUCE FFT expects interleaved complex format [real, imag, real, imag, ...]
+    const int numBins = fftSize_ / 2 + 1;
+    if (magnitude.size() < static_cast<size_t>(numBins)) {
+        magnitude.resize(static_cast<size_t>(numBins), 0.0f);
+    }
+    if (phase && phase->size() < static_cast<size_t>(numBins)) {
+        phase->resize(static_cast<size_t>(numBins), 0.0f);
+    }
     for (int i = 0; i < fftSize_; ++i) {
         fftBuffer_[i * 2] = frame[i];      // Real part
         fftBuffer_[i * 2 + 1] = 0.0f;      // Imaginary part (zero for real input)
@@ -190,8 +217,6 @@ void SpectralAnalyzer::computeFFT(const float* frame, std::vector<float>& magnit
 
     // Extract magnitude and phase from FFT output
     // FFT output is in format: [DC, real1, imag1, real2, imag2, ..., Nyquist]
-    int numBins = fftSize_ / 2 + 1;
-
     // DC component (bin 0)
     magnitude[0] = std::abs(fftBuffer_[0]);
     if (phase) {
@@ -326,3 +351,4 @@ float SpectralAnalyzer::calculateFlatness(const std::vector<float>& magnitude) {
 
 } // namespace audio
 } // namespace midikompanion
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 /**
  * @file ProjectFile.cpp
  * @brief Project file implementation with JSON serialization
@@ -10,6 +12,7 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <juce_core/juce_core.h>
 
 namespace daiw {
 namespace project {
@@ -42,200 +45,140 @@ bool ProjectFile::save(const std::string& filepath) const {
 }
 
 std::string ProjectFile::toJSON() const {
-    // Simple JSON formatting without external library
-    // For production: use nlohmann::json or similar
-    
-    std::ostringstream json;
-    json << std::fixed << std::setprecision(2);
-    
-    json << "{\n";
-    
-    // Metadata
-    json << "  \"metadata\": {\n";
-    json << "    \"name\": \"" << metadata_.name << "\",\n";
-    json << "    \"author\": \"" << metadata_.author << "\",\n";
-    json << "    \"created\": \"" << metadata_.createdDate << "\",\n";
-    json << "    \"modified\": \"" << metadata_.modifiedDate << "\",\n";
-    json << "    \"version\": \"" << metadata_.versionMajor << "." << metadata_.versionMinor << "\"\n";
-    json << "  },\n";
-    
-    // Project settings
-    json << "  \"settings\": {\n";
-    json << "    \"tempo\": " << tempo_.bpm << ",\n";
-    json << "    \"timeSignature\": \"" << static_cast<int>(timeSignature_.numerator) 
-         << "/" << static_cast<int>(timeSignature_.denominator) << "\",\n";
-    json << "    \"sampleRate\": " << sampleRate_ << "\n";
-    json << "  },\n";
-    
-    // Mixer
-    json << "  \"mixer\": {\n";
-    json << "    \"masterVolume\": " << mixer_.masterVolume << ",\n";
-    json << "    \"masterMuted\": " << (mixer_.masterMuted ? "true" : "false") << "\n";
-    json << "  },\n";
-    
-    // Tracks
-    json << "  \"tracks\": [\n";
-    for (size_t i = 0; i < tracks_.size(); ++i) {
-        const auto& track = tracks_[i];
-        json << "    {\n";
-        json << "      \"name\": \"" << track.name << "\",\n";
-        json << "      \"type\": \"" << (track.type == TrackType::MIDI ? "midi" : 
-                                        track.type == TrackType::Audio ? "audio" : "aux") << "\",\n";
-        json << "      \"index\": " << track.index << ",\n";
-        json << "      \"muted\": " << (track.muted ? "true" : "false") << ",\n";
-        json << "      \"soloed\": " << (track.soloed ? "true" : "false") << ",\n";
-        json << "      \"volume\": " << track.volume << ",\n";
-        json << "      \"pan\": " << track.pan;
-        
+    juce::DynamicObject::Ptr root = new juce::DynamicObject();
+
+    juce::DynamicObject::Ptr metadata = new juce::DynamicObject();
+    metadata->setProperty("name", juce::String(metadata_.name));
+    metadata->setProperty("author", juce::String(metadata_.author));
+    metadata->setProperty("created", juce::String(metadata_.createdDate));
+    metadata->setProperty("modified", juce::String(metadata_.modifiedDate));
+    metadata->setProperty(
+        "version",
+        juce::String(metadata_.versionMajor) + "." + juce::String(metadata_.versionMinor)
+    );
+    root->setProperty("metadata", juce::var(metadata));
+
+    juce::DynamicObject::Ptr settings = new juce::DynamicObject();
+    settings->setProperty("tempo", tempo_.bpm);
+    settings->setProperty(
+        "timeSignature",
+        juce::String(static_cast<int>(timeSignature_.numerator)) + "/" +
+            juce::String(static_cast<int>(timeSignature_.denominator))
+    );
+    settings->setProperty("sampleRate", static_cast<int>(sampleRate_));
+    root->setProperty("settings", juce::var(settings));
+
+    juce::DynamicObject::Ptr mixer = new juce::DynamicObject();
+    mixer->setProperty("masterVolume", mixer_.masterVolume);
+    mixer->setProperty("masterMuted", mixer_.masterMuted);
+    root->setProperty("mixer", juce::var(mixer));
+
+    juce::Array<juce::var> tracks;
+    for (const auto& track : tracks_) {
+        juce::DynamicObject::Ptr trackObj = new juce::DynamicObject();
+        trackObj->setProperty("name", juce::String(track.name));
+        trackObj->setProperty(
+            "type",
+            track.type == TrackType::MIDI ? "midi" :
+                track.type == TrackType::Audio ? "audio" : "aux"
+        );
+        trackObj->setProperty("index", track.index);
+        trackObj->setProperty("muted", track.muted);
+        trackObj->setProperty("soloed", track.soloed);
+        trackObj->setProperty("volume", track.volume);
+        trackObj->setProperty("pan", track.pan);
+
         if (track.type == TrackType::MIDI) {
-            json << ",\n      \"midiEvents\": " << track.midiSequence.size();
+            trackObj->setProperty("midiEvents", static_cast<int>(track.midiSequence.size()));
         } else if (track.type == TrackType::Audio) {
-            json << ",\n      \"audioFile\": \"" << track.audioFilePath << "\"";
+            trackObj->setProperty("audioFile", juce::String(track.audioFilePath));
         }
-        
-        json << "\n    }";
-        if (i < tracks_.size() - 1) {
-            json << ",";
-        }
-        json << "\n";
+
+        tracks.add(juce::var(trackObj));
     }
-    json << "  ]\n";
-    
-    json << "}\n";
-    
-    return json.str();
+    root->setProperty("tracks", tracks);
+
+    juce::var rootVar(root);
+    return juce::JSON::toString(rootVar, true).toStdString();
 }
 
 bool ProjectFile::fromJSON(const std::string& json) {
-    // Basic JSON parsing implementation
-    // For production: use nlohmann::json or similar for robustness
-    
     if (json.empty()) {
         return false;
     }
-    
-    // Simple string extraction helper
-    auto extractString = [](const std::string& str, const std::string& key) -> std::string {
-        size_t pos = str.find("\"" + key + "\"");
-        if (pos == std::string::npos) return "";
-        pos = str.find(":", pos);
-        if (pos == std::string::npos) return "";
-        pos = str.find("\"", pos);
-        if (pos == std::string::npos) return "";
-        size_t start = pos + 1;
-        size_t end = str.find("\"", start);
-        if (end == std::string::npos) return "";
-        return str.substr(start, end - start);
-    };
-    
-    auto extractNumber = [](const std::string& str, const std::string& key) -> float {
-        size_t pos = str.find("\"" + key + "\"");
-        if (pos == std::string::npos) return 0.0f;
-        pos = str.find(":", pos);
-        if (pos == std::string::npos) return 0.0f;
-        pos = str.find_first_not_of(" \t", pos + 1);
-        if (pos == std::string::npos) return 0.0f;
-        size_t end = pos;
-        while (end < str.length() && (std::isdigit(str[end]) || str[end] == '.' || str[end] == '-' || str[end] == 'e' || str[end] == 'E' || str[end] == '+' || str[end] == '-')) {
-            end++;
-        }
-        try {
-            return std::stof(str.substr(pos, end - pos));
-        } catch (...) {
-            return 0.0f;
-        }
-    };
-    
-    auto extractBool = [](const std::string& str, const std::string& key) -> bool {
-        size_t pos = str.find("\"" + key + "\"");
-        if (pos == std::string::npos) return false;
-        pos = str.find(":", pos);
-        if (pos == std::string::npos) return false;
-        pos = str.find_first_not_of(" \t", pos + 1);
-        if (pos == std::string::npos) return false;
-        std::string value = str.substr(pos, 4);
-        return value == "true";
-    };
-    
-    // Parse metadata
-    metadata_.name = extractString(json, "name");
-    metadata_.author = extractString(json, "author");
-    metadata_.createdDate = extractString(json, "created");
-    metadata_.modifiedDate = extractString(json, "modified");
-    
-    // Parse settings
-    tempo_.bpm = extractNumber(json, "tempo");
-    
-    // Parse time signature (format: "4/4")
-    size_t tsPos = json.find("\"timeSignature\"");
-    if (tsPos != std::string::npos) {
-        tsPos = json.find("\"", tsPos + 15);
-        if (tsPos != std::string::npos) {
-            size_t tsStart = tsPos + 1;
-            size_t tsEnd = json.find("\"", tsStart);
-            if (tsEnd != std::string::npos) {
-                std::string tsStr = json.substr(tsStart, tsEnd - tsStart);
-                size_t slashPos = tsStr.find('/');
-                if (slashPos != std::string::npos) {
-                    try {
-                        timeSignature_.numerator = static_cast<uint8_t>(std::stoi(tsStr.substr(0, slashPos)));
-                        timeSignature_.denominator = static_cast<uint8_t>(std::stoi(tsStr.substr(slashPos + 1)));
-                    } catch (...) {
-                        // Keep defaults
-                    }
-                }
+
+    juce::var rootVar = juce::JSON::parse(juce::String(json));
+    if (rootVar.isVoid() || !rootVar.isObject()) {
+        return false;
+    }
+
+    auto* rootObj = rootVar.getDynamicObject();
+    auto metadataVar = rootObj->getProperty("metadata");
+    if (auto* metadata = metadataVar.getDynamicObject()) {
+        metadata_.name = metadata->getProperty("name").toString().toStdString();
+        metadata_.author = metadata->getProperty("author").toString().toStdString();
+        metadata_.createdDate = metadata->getProperty("created").toString().toStdString();
+        metadata_.modifiedDate = metadata->getProperty("modified").toString().toStdString();
+    }
+
+    auto settingsVar = rootObj->getProperty("settings");
+    if (auto* settings = settingsVar.getDynamicObject()) {
+        tempo_.bpm = static_cast<float>(settings->getProperty("tempo"));
+        auto timeSig = settings->getProperty("timeSignature").toString().toStdString();
+        auto slashPos = timeSig.find('/');
+        if (slashPos != std::string::npos) {
+            try {
+                timeSignature_.numerator =
+                    static_cast<uint8_t>(std::stoi(timeSig.substr(0, slashPos)));
+                timeSignature_.denominator =
+                    static_cast<uint8_t>(std::stoi(timeSig.substr(slashPos + 1)));
+            } catch (...) {
+                // Keep defaults
             }
+        }
+        sampleRate_ = static_cast<SampleRate>(static_cast<int>(settings->getProperty("sampleRate")));
+    }
+
+    auto mixerVar = rootObj->getProperty("mixer");
+    if (auto* mixer = mixerVar.getDynamicObject()) {
+        mixer_.masterVolume = static_cast<float>(mixer->getProperty("masterVolume"));
+        mixer_.masterMuted = static_cast<bool>(mixer->getProperty("masterMuted"));
+    }
+
+    tracks_.clear();
+    auto tracksVar = rootObj->getProperty("tracks");
+    if (tracksVar.isArray()) {
+        const auto* trackArray = tracksVar.getArray();
+        for (const auto& trackVar : *trackArray) {
+            if (!trackVar.isObject()) {
+                continue;
+            }
+            Track track;
+            auto* trackObj = trackVar.getDynamicObject();
+            track.name = trackObj->getProperty("name").toString().toStdString();
+            auto typeStr = trackObj->getProperty("type").toString();
+            if (typeStr == "audio") {
+                track.type = TrackType::Audio;
+            } else if (typeStr == "aux") {
+                track.type = TrackType::Aux;
+            } else {
+                track.type = TrackType::MIDI;
+            }
+            track.index = static_cast<int>(trackObj->getProperty("index"));
+            track.muted = static_cast<bool>(trackObj->getProperty("muted"));
+            track.soloed = static_cast<bool>(trackObj->getProperty("soloed"));
+            track.volume = static_cast<float>(trackObj->getProperty("volume"));
+            track.pan = static_cast<float>(trackObj->getProperty("pan"));
+            track.audioFilePath =
+                trackObj->getProperty("audioFile").toString().toStdString();
+
+            tracks_.push_back(track);
         }
     }
-    
-    sampleRate_ = static_cast<SampleRate>(extractNumber(json, "sampleRate"));
-    
-    // Parse mixer
-    mixer_.masterVolume = extractNumber(json, "masterVolume");
-    mixer_.masterMuted = extractBool(json, "masterMuted");
-    
-    // Parse tracks (simplified - just count them for now)
-    // Full implementation would parse each track's properties
-    size_t tracksStart = json.find("\"tracks\"");
-    if (tracksStart != std::string::npos) {
-        tracksStart = json.find("[", tracksStart);
-        if (tracksStart != std::string::npos) {
-            // Count track objects
-            size_t pos = tracksStart + 1;
-            int braceDepth = 0;
-            int trackCount = 0;
-            bool inString = false;
-            
-            while (pos < json.length()) {
-                char c = json[pos];
-                if (c == '"' && (pos == 0 || json[pos-1] != '\\')) {
-                    inString = !inString;
-                } else if (!inString) {
-                    if (c == '{') {
-                        if (braceDepth == 0) trackCount++;
-                        braceDepth++;
-                    } else if (c == '}') {
-                        braceDepth--;
-                        if (braceDepth < 0) break;
-                    } else if (c == ']' && braceDepth == 0) {
-                        break;
-                    }
-                }
-                pos++;
-            }
-            
-            // Create placeholder tracks if needed
-            while (static_cast<int>(tracks_.size()) < trackCount) {
-                Track track;
-                track.name = "Track " + std::to_string(tracks_.size() + 1);
-                track.index = static_cast<int>(tracks_.size());
-                tracks_.push_back(track);
-            }
-        }
-    }
-    
+
     return true;
 }
 
 } // namespace project
 } // namespace daiw
+>>>>>>> Incoming (Background Agent changes)

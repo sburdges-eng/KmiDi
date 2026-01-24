@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 AudioAnalyzer - Unified audio analysis interface.
 
@@ -237,7 +239,14 @@ class AudioAnalyzer:
         # RMS energy
         rms = librosa.feature.rms(y=samples, hop_length=self.hop_length)[0]
         rms_db = librosa.amplitude_to_db(rms)
-        dynamic_range = float(np.max(rms_db) - np.min(rms_db[rms_db > -60]))
+        if rms_db.size == 0:
+            dynamic_range = 0.0
+        else:
+            non_silent = rms_db[rms_db > -60]
+            if non_silent.size == 0:
+                dynamic_range = 0.0
+            else:
+                dynamic_range = float(np.max(rms_db) - np.min(non_silent))
 
         # Spectral features
         spectral_centroid = librosa.feature.spectral_centroid(
@@ -385,3 +394,4 @@ def analyze_audio(
         include_chords=include_chords,
         include_frequency_bands=include_frequency_bands,
     )
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 /**
  * Piano Roll Preview Implementation
  */
@@ -15,35 +17,48 @@ PianoRollPreview::PianoRollPreview() {
 
 void PianoRollPreview::setMidiData(const GeneratedMidi& midi) {
     midiData_ = midi;
-    
+
     // Auto-calculate time range
     double maxTime = 0.0;
-    for (const auto& track : {midi.melody, midi.bass}) {
-        for (const auto& note : track) {
+    const std::vector<const std::vector<MidiNote>*> tracks = {
+        &midi.melody,
+        &midi.bass,
+        &midi.counterMelody,
+        &midi.pad,
+        &midi.strings,
+        &midi.fills,
+        &midi.rhythm,
+        &midi.drumGroove,
+        &midi.transitions,
+        &midi.notes,
+    };
+
+    for (const auto* track : tracks) {
+        for (const auto& note : *track) {
             double endTime = note.startBeat + note.duration;
             maxTime = std::max(maxTime, endTime);
         }
     }
-    
+
     if (maxTime > 0.0) {
         timeEnd_ = maxTime;
     }
-    
+
     // Auto-calculate pitch range
     int minPitch = 127;
     int maxPitch = 0;
-    for (const auto& track : {midi.melody, midi.bass}) {
-        for (const auto& note : track) {
+    for (const auto* track : tracks) {
+        for (const auto& note : *track) {
             minPitch = std::min(minPitch, note.pitch);
             maxPitch = std::max(maxPitch, note.pitch);
         }
     }
-    
+
     if (minPitch < maxPitch) {
         pitchMin_ = std::max(0, minPitch - 5);
         pitchMax_ = std::min(127, maxPitch + 5);
     }
-    
+
     repaint();
 }
 
@@ -71,24 +86,24 @@ void PianoRollPreview::setPitchRange(int minPitch, int maxPitch) {
 
 void PianoRollPreview::paint(juce::Graphics& g) {
     auto bounds = getLocalBounds();
-    
+
     // Background
     g.setColour(KellyLookAndFeel::surfaceColor);
     g.fillRect(bounds);
-    
+
     // Draw grid
     drawGrid(g, bounds);
-    
+
     // Draw notes
     drawNotes(g, bounds);
-    
+
     // Draw playhead
     drawPlayhead(g, bounds);
 }
 
 void PianoRollPreview::drawGrid(juce::Graphics& g, const juce::Rectangle<int>& bounds) {
     g.setColour(KellyLookAndFeel::textSecondary.withAlpha(0.2f));
-    
+
     // Vertical lines (beats)
     double timeRange = timeEnd_ - timeStart_;
     int numBeats = static_cast<int>(std::ceil(timeRange));
@@ -97,7 +112,7 @@ void PianoRollPreview::drawGrid(juce::Graphics& g, const juce::Rectangle<int>& b
         float x = static_cast<float>(timeToX(beat, bounds.getWidth()));
         g.drawVerticalLine(static_cast<int>(x), bounds.getY(), bounds.getBottom());
     }
-    
+
     // Horizontal lines (octaves)
     int pitchRange = pitchMax_ - pitchMin_;
     int numOctaves = pitchRange / 12;
@@ -115,46 +130,65 @@ void PianoRollPreview::drawNotes(juce::Graphics& g, const juce::Rectangle<int>& 
         double duration;
         juce::Colour colour;
     };
-    
+
     std::vector<NoteDisplay> notes;
-    
+
     // Collect all notes
     juce::Colour trackColours[] = {
         juce::Colour(0xFF6366F1),  // Melody - Indigo
         juce::Colour(0xFFF472B6),  // Bass - Pink
         juce::Colour(0xFF22D3EE),  // Harmony - Cyan
         juce::Colour(0xFF10B981),  // Texture - Green
+        juce::Colour(0xFFF59E0B),  // Strings - Amber
+        juce::Colour(0xFF8B5CF6),  // Fills - Violet
+        juce::Colour(0xFFEF4444),  // Rhythm - Red
+        juce::Colour(0xFF14B8A6),  // Drums - Teal
+        juce::Colour(0xFF94A3B8),  // Transitions - Slate
+        juce::Colour(0xFF3B82F6),  // Notes - Blue
     };
-    
+
     int trackIndex = 0;
-    for (const auto& track : {midiData_.melody, midiData_.bass}) {
-        for (const auto& note : track) {
+    const std::vector<const std::vector<MidiNote>*> tracks = {
+        &midiData_.melody,
+        &midiData_.bass,
+        &midiData_.counterMelody,
+        &midiData_.pad,
+        &midiData_.strings,
+        &midiData_.fills,
+        &midiData_.rhythm,
+        &midiData_.drumGroove,
+        &midiData_.transitions,
+        &midiData_.notes,
+    };
+
+    for (const auto* track : tracks) {
+        for (const auto& note : *track) {
             if (note.startBeat >= timeStart_ && note.startBeat <= timeEnd_) {
                 notes.push_back({
                     note.pitch,
                     note.startBeat,
                     note.duration,
-                    trackColours[trackIndex].withAlpha(0.7f)
+                    trackColours[trackIndex % std::size(trackColours)].withAlpha(0.7f)
                 });
             }
         }
         trackIndex++;
     }
-    
+
     // Draw notes
     double timeRange = timeEnd_ - timeStart_;
     int pitchRange = pitchMax_ - pitchMin_;
     float noteHeight = bounds.getHeight() / static_cast<float>(pitchRange);
-    
+
     for (const auto& note : notes) {
         float x = static_cast<float>(timeToX(note.start, bounds.getWidth()));
         float width = static_cast<float>(note.duration / timeRange * bounds.getWidth() * zoom_);
         float y = static_cast<float>(pitchToY(note.pitch, bounds.getHeight()));
-        
+
         // Draw note rectangle
         g.setColour(note.colour);
         g.fillRect(x, y - noteHeight, width, noteHeight);
-        
+
         // Draw note border
         g.setColour(note.colour.brighter(0.3f));
         g.drawRect(x, y - noteHeight, width, noteHeight, 1.0f);
@@ -163,12 +197,12 @@ void PianoRollPreview::drawNotes(juce::Graphics& g, const juce::Rectangle<int>& 
 
 void PianoRollPreview::drawPlayhead(juce::Graphics& g, const juce::Rectangle<int>& bounds) {
     if (playheadPosition_ <= 0.0f) return;
-    
+
     float x = bounds.getX() + playheadPosition_ * bounds.getWidth();
-    
+
     g.setColour(KellyLookAndFeel::accentColor);
     g.drawLine(x, bounds.getY(), x, bounds.getBottom(), 2.0f);
-    
+
     // Playhead indicator
     g.fillEllipse(x - 4, bounds.getY() - 4, 8, 8);
     g.fillEllipse(x - 4, bounds.getBottom() - 4, 8, 8);
@@ -177,7 +211,7 @@ void PianoRollPreview::drawPlayhead(juce::Graphics& g, const juce::Rectangle<int
 int PianoRollPreview::pitchToY(int pitch, int height) const {
     int pitchRange = pitchMax_ - pitchMin_;
     if (pitchRange == 0) return height / 2;
-    
+
     float normalized = static_cast<float>(pitch - pitchMin_) / static_cast<float>(pitchRange);
     return height - static_cast<int>(normalized * height);
 }
@@ -185,7 +219,7 @@ int PianoRollPreview::pitchToY(int pitch, int height) const {
 double PianoRollPreview::timeToX(double time, int width) const {
     double timeRange = timeEnd_ - timeStart_;
     if (timeRange <= 0.0) return 0.0;
-    
+
     double normalized = (time - timeStart_) / timeRange;
     return normalized * width;
 }
@@ -195,3 +229,4 @@ void PianoRollPreview::resized() {
 }
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

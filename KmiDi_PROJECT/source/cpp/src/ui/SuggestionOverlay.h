@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 /*
  * SuggestionOverlay.h - Intelligent Suggestion Display Component
@@ -78,9 +80,11 @@ private:
     void layoutCards();
     juce::Colour getConfidenceColor(float confidence) const;
     std::string getConfidenceText(float confidence) const;
-    void applyButtonClicked(int cardIndex);
-    void dismissButtonClicked(int cardIndex);
-    void expandButtonClicked(int cardIndex);
+    void applyButtonClicked(const std::string& suggestionId);
+    void dismissButtonClicked(const std::string& suggestionId);
+    void expandButtonClicked(const std::string& suggestionId);
+    int findCardIndex(const std::string& suggestionId) const;
 };
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

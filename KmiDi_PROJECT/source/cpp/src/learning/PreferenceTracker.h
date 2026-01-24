@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 /*
  * PreferenceTracker.h - User Preference Learning System
@@ -100,13 +102,18 @@ public:
     void clearPreferences();
 
     /**
+     * Get average parameter adjustment deltas (new - old) by parameter name.
+     */
+    std::map<std::string, float> getAverageParameterAdjustments() const;
+
+    /**
      * Set callback for when preferences should be saved (async)
      */
     void setSaveCallback(std::function<void()> callback) { saveCallback_ = callback; }
 
 private:
     std::atomic<bool> enabled_{true};
-    std::mutex dataMutex_;
+    mutable std::mutex dataMutex_;
 
     // In-memory storage (can be bridged to Python for persistence)
     struct ParameterAdjustment {
@@ -148,3 +155,4 @@ private:
 };
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

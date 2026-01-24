@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "ui/EQBandControls.h"
 #include "plugin/PluginProcessor.h"
 
@@ -95,11 +97,11 @@ void EQBandControls::resized() {
   bandNameLabel_.setBounds(bounds.removeFromTop(labelHeight));
   bounds.removeFromTop(spacing);
 
-  // Enable button at bottom
-  const int buttonHeight = 25;
+  // Enable button at bottom (label 15px + button 20px = 35px total)
+  const int buttonHeight = 35;
   auto buttonArea = bounds.removeFromBottom(buttonHeight);
   enableLabel_.setBounds(buttonArea.removeFromTop(15));
-  enableButton_->setBounds(buttonArea.removeFromTop(20));
+  enableButton_->setBounds(buttonArea);
   bounds.removeFromBottom(spacing);
 
   // Sliders in remaining space (equal width)
@@ -211,3 +213,4 @@ juce::String EQBandControls::getBandName() const {
 }
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

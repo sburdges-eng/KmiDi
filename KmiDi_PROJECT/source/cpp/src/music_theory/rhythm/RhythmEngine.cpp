@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 /*
  * RhythmEngine.cpp - Time, Meter, Groove, and Rhythm Analysis Implementation
  * ===========================================================================
@@ -636,7 +638,8 @@ RhythmicPattern RhythmEngine::humanizePattern(
 
     for (size_t i = 0; i < humanized.onsetTimes.size(); ++i) {
         float variation = timingDis(gen) + pocketBias;
-        humanized.onsetTimes[i] += variation / 1000.0f; // Convert ms to seconds
+        humanized.onsetTimes[i] =
+            std::max(0.0f, humanized.onsetTimes[i] + variation / 1000.0f); // Convert ms to seconds
     }
 
     // Add velocity variations (if we had velocity data)
@@ -1125,13 +1128,25 @@ void RhythmEngine::initializeClavePatterns() {
 }
 
 float RhythmEngine::snapToGrid(float time, int subdivision) const {
+    if (subdivision <= 0) {
+        return time;
+    }
     float gridSize = 1.0f / (subdivision / 4.0f); // Assuming quarter note = 1.0
+    if (gridSize <= 0.0f) {
+        return time;
+    }
     return std::round(time / gridSize) * gridSize;
 }
 
 std::vector<float> RhythmEngine::createGrid(float duration, int subdivision) const {
     std::vector<float> grid;
+    if (subdivision <= 0) {
+        return grid;
+    }
     float gridSize = 1.0f / (subdivision / 4.0f);
+    if (gridSize <= 0.0f) {
+        return grid;
+    }
 
     for (float t = 0.0f; t <= duration; t += gridSize) {
         grid.push_back(t);
@@ -1291,3 +1306,4 @@ std::string RhythmEngine::classifyPocketStyle(float avgShift, float stdDev) cons
 }
 
 } // namespace midikompanion::theory
+>>>>>>> Incoming (Background Agent changes)

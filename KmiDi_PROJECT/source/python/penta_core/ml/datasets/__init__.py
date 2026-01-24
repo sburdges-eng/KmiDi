@@ -1,9 +1,12 @@
+<<<<<<< Current (Your changes)
+=======
 """
-Kelly ML Datasets - Audio data management and downloading.
+KmiDi ML Datasets - Audio data management and downloading.
 
 Audio data storage is configured via environment variables:
-    KELLY_AUDIO_DATA_ROOT: Full path to audio data directory
-    KELLY_SSD_PATH: Path to external SSD mount point
+    KMI_DI_AUDIO_DATA_ROOT: Full path to audio data directory
+    KMI_DI_SSD_PATH: Path to external SSD mount point
+    (Backwards compatible: KELLY_AUDIO_DATA_ROOT, KELLY_SSD_PATH)
 
 Default directory structure:
     <audio_data_root>/
@@ -58,6 +61,33 @@ except ImportError:
 if not _HAS_STORAGE_CONFIG:
     import platform
 
+# Load environment variables from project root
+from pathlib import Path
+import sys
+
+# Add project root to path if not already there
+project_root = Path(__file__).resolve().parent.parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+try:
+    from python.kmidi_env import load_kmidi_env
+    # Determine features based on file location
+    features = []
+    file_str = str(Path(__file__))
+    if 'training' in file_str or 'train' in file_str:
+        features.extend(['ml', 'training'])
+    if 'mcp' in file_str or 'penta' in file_str:
+        features.extend(['mcp'])
+    if not features:
+        features = ['ml']  # Default to ML features
+    
+    load_kmidi_env(features=features, verbose=False)
+except ImportError:
+    # Fallback to simple dotenv if kmidi_env not available
+    from dotenv import load_dotenv
+    load_dotenv(project_root / ".env")
+    load_dotenv(project_root / ".env.local", override=True)
     # Default paths based on platform
     _DEFAULT_SSD_PATHS = {
         "Darwin": "/Volumes/Extreme SSD",
@@ -68,14 +98,20 @@ if not _HAS_STORAGE_CONFIG:
     def _find_audio_root() -> Path:
         """Find audio data root from environment or defaults."""
         # Check environment variable first
-        env_root = os.environ.get("KELLY_AUDIO_DATA_ROOT")
+        env_root = (
+            os.environ.get("KMI_DI_AUDIO_DATA_ROOT")
+            or os.environ.get("KELLY_AUDIO_DATA_ROOT")
+        )
         if env_root:
             return Path(env_root)
 
         # Check SSD path environment variable
-        env_ssd = os.environ.get("KELLY_SSD_PATH")
+        env_ssd = (
+            os.environ.get("KMI_DI_SSD_PATH")
+            or os.environ.get("KELLY_SSD_PATH")
+        )
         if env_ssd:
-            return Path(env_ssd) / "kelly-audio-data"
+            return Path(env_ssd) / "kmidi-audio-data"
 
         # Try platform default
         system = platform.system()
@@ -267,3 +303,4 @@ if _HAS_SYNTHETIC:
         "generate_harmony_samples",
         "generate_groove_samples",
     ])
+>>>>>>> Incoming (Background Agent changes)

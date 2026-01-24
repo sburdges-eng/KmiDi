@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "plugin/PluginProcessor.h"
 // PluginProcessor.h includes Types.h (via IntentPipeline.h)
 // Before including KellyBrain.h (which includes KellyTypes.h), create aliases
@@ -423,6 +425,10 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
       static_cast<double>(MusicConstants::TEMPO_DEFAULT)));
   double ppqPosition = position->getPpqPosition().orFallback(0.0);
   bool isPlaying = position->getIsPlaying();
+
+  if (bpm <= 0.0f) {
+    bpm = static_cast<float>(MusicConstants::TEMPO_DEFAULT);
+  }
 
   // Track playback state for real-time regeneration
   isHostPlaying_.store(isPlaying);
@@ -1272,3 +1278,4 @@ bool PluginProcessor::loadProject(const juce::File &file) {
 juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter() {
   return new kelly::PluginProcessor();
 }
+>>>>>>> Incoming (Background Agent changes)

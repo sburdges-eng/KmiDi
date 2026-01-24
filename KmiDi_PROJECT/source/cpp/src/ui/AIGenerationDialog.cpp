@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "AIGenerationDialog.h"
 #include "KellyLookAndFeel.h"
 
@@ -113,13 +115,18 @@ AIGenerationDialog::AIGenerationDialog() {
     generateButton_.setTooltip("Generate AI MIDI tracks based on current settings");
     generateButton_.onClick = [this] {
         wasCancelled_ = false;
-        modalResult_ = 1;
-        cachedRequest_ = getRequest();  // Cache the request before closing
+        cachedRequest_ = getRequest();  // Cache the request
+
+        // Call the callback with the request
+        if (completionCallback_) {
+            completionCallback_(cachedRequest_);
+        }
+
         // Find and close DialogWindow parent
         juce::Component* comp = this;
         while (comp != nullptr) {
             if (auto* dw = dynamic_cast<juce::DialogWindow*>(comp)) {
-                dw->exitModalState(1);
+                dw->setVisible(false);
                 break;
             }
             comp = comp->getParentComponent();
@@ -132,12 +139,17 @@ AIGenerationDialog::AIGenerationDialog() {
     cancelButton_.setTooltip("Cancel AI generation");
     cancelButton_.onClick = [this] {
         wasCancelled_ = true;
-        modalResult_ = 0;
+
+        // Call the callback with empty request
+        if (completionCallback_) {
+            completionCallback_(AIGenerationRequest{});
+        }
+
         // Find and close DialogWindow parent
         juce::Component* comp = this;
         while (comp != nullptr) {
             if (auto* dw = dynamic_cast<juce::DialogWindow*>(comp)) {
-                dw->exitModalState(0);
+                dw->setVisible(false);
                 break;
             }
             comp = comp->getParentComponent();
@@ -146,12 +158,14 @@ AIGenerationDialog::AIGenerationDialog() {
     addAndMakeVisible(cancelButton_);
 }
 
-AIGenerationDialog::AIGenerationRequest AIGenerationDialog::showDialog(juce::Component* parent) {
-    (void)parent;  // Suppress unused parameter warning
-    juce::DialogWindow::LaunchOptions options;
+void AIGenerationDialog::showDialog(juce::Component* parent, std::function<void(AIGenerationRequest)> callback) {
     auto dialog = std::make_unique<AIGenerationDialog>();
     auto* dialogPtr = dialog.get();
 
+    // Store the callback
+    dialogPtr->completionCallback_ = std::move(callback);
+
+    juce::DialogWindow::LaunchOptions options;
     options.content.setOwned(dialog.release());
     options.content->setSize(450, 420);
     options.dialogTitle = "AI MIDI Generation";
@@ -159,22 +173,9 @@ AIGenerationDialog::AIGenerationRequest AIGenerationDialog::showDialog(juce::Com
     options.escapeKeyTriggersCloseButton = true;
     options.useNativeTitleBar = false;
     options.resizable = false;
+    options.componentToCentreAround = parent;
 
-    auto* dw = options.launchAsync();
-    if (dw == nullptr) {
-        return AIGenerationRequest{};
-    }
-
-    // Use modal state - the dialog will call exitModalState when buttons are clicked
-    dw->enterModalState(true, nullptr, true);
-
-    // After modal state exits, get the result from cached request
-    // The dialog caches the request when Generate is clicked
-    if (dialogPtr && !dialogPtr->wasCancelled_) {
-        return dialogPtr->cachedRequest_;
-    }
-
-    return AIGenerationRequest{};
+    options.launchAsync();
 }
 
 AIGenerationDialog::AIGenerationRequest AIGenerationDialog::getRequest() const {
@@ -283,3 +284,4 @@ void AIGenerationDialog::resized() {
 }
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

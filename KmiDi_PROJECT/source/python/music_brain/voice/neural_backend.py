@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Neural Backend - DiffSinger/ONNX Voice Integration for Production Quality
 
@@ -48,21 +50,21 @@ ONNX_VOCODER_PATH = DEFAULT_MODEL_DIR / "hifigan.onnx"
 @dataclass
 class VoiceSynthesisConfig:
     """Configuration for neural voice synthesis."""
-    
+
     sample_rate: int = 44100
     hop_length: int = 256
     win_length: int = 1024
     n_mel_channels: int = 80
-    
+
     # Synthesis parameters
     temperature: float = 1.0
     duration_scale: float = 1.0
     pitch_scale: float = 1.0
-    
+
     # Performance
     use_fp16: bool = False
     max_batch_size: int = 1
-    
+
     @classmethod
     def for_m4(cls) -> "VoiceSynthesisConfig":
         """Optimized config for M4 Silicon."""
@@ -76,15 +78,15 @@ class VoiceSynthesisConfig:
 class NeuralBackend:
     """
     Neural network backend for singing synthesis.
-    
+
     Supports multiple backends with automatic fallback:
     1. DiffSinger (highest quality, requires full installation)
     2. ONNX Runtime (portable, works with pre-exported models)
     3. Formant (fallback, always available but lower quality)
-    
+
     Usage:
         backend = NeuralBackend()
-        
+
         # Check availability
         if backend.is_available():
             audio = backend.synthesize(phonemes, pitch, expression)
@@ -109,13 +111,13 @@ class NeuralBackend:
         self.config = config or VoiceSynthesisConfig()
         self.model_path = model_path or str(DIFFSINGER_CHECKPOINT)
         self.device = self._get_device(device)
-        
+
         # Model state
         self.model = None
         self.vocoder = None
         self.available = False
         self.backend_type = "none"
-        
+
         # Attempt to load best available backend
         self._initialize_backend()
 
@@ -130,7 +132,7 @@ class NeuralBackend:
                     return "mps"
             return "cpu"
         return device
-    
+
     def _initialize_backend(self) -> None:
         """Initialize the best available backend."""
         # Try DiffSinger first (highest quality)
@@ -138,78 +140,94 @@ class NeuralBackend:
             self.backend_type = "diffsinger"
             self.available = True
             return
-        
+
         # Try ONNX Runtime (portable)
         if self._try_onnx():
             self.backend_type = "onnx"
             self.available = True
             return
-        
+
         # No backend available
         self.backend_type = "none"
         self.available = False
-    
+
     def _try_diffsinger(self) -> bool:
         """Attempt to load DiffSinger backend."""
         if not DIFFSINGER_AVAILABLE:
             return False
-        
+
         if not Path(self.model_path).exists():
             return False
-        
+
         try:
-            # DiffSinger loading would go here
-            # This is a scaffold - actual implementation requires DiffSinger repo
-            print(f"DiffSinger model found at {self.model_path}")
-            return False  # Return False until fully implemented
+            # Prefer ONNX exports if available (portable DiffSinger backend)
+            if ONNX_AVAILABLE:
+                onnx_model_path = Path(self.model_path).with_suffix(".onnx")
+                if not onnx_model_path.exists():
+                    onnx_model_path = DEFAULT_MODEL_DIR / "diffsinger.onnx"
+                if onnx_model_path.exists():
+                    providers = self._get_onnx_providers()
+                    self.model = ort.InferenceSession(
+                        str(onnx_model_path),
+                        providers=providers,
+                    )
+                    if ONNX_VOCODER_PATH.exists():
+                        self.vocoder = ort.InferenceSession(
+                            str(ONNX_VOCODER_PATH),
+                            providers=providers,
+                        )
+                    return True
+
+            print(f"DiffSinger model found at {self.model_path}, but no compatible backend loaded.")
+            return False
         except Exception as e:
             print(f"DiffSinger load failed: {e}")
             return False
-    
+
     def _try_onnx(self) -> bool:
         """Attempt to load ONNX backend."""
         if not ONNX_AVAILABLE:
             return False
-        
+
         # Check for ONNX model files
         onnx_model_path = Path(self.model_path).with_suffix(".onnx")
         if not onnx_model_path.exists():
             onnx_model_path = DEFAULT_MODEL_DIR / "diffsinger.onnx"
-        
+
         if not onnx_model_path.exists():
             return False
-        
+
         try:
             # Select execution providers based on device
             providers = self._get_onnx_providers()
-            
+
             # Load acoustic model
             self.model = ort.InferenceSession(
                 str(onnx_model_path),
                 providers=providers,
             )
-            
+
             # Try to load vocoder
             if ONNX_VOCODER_PATH.exists():
                 self.vocoder = ort.InferenceSession(
                     str(ONNX_VOCODER_PATH),
                     providers=providers,
                 )
-            
+
             return True
         except Exception as e:
             print(f"ONNX load failed: {e}")
             return False
-    
+
     def _get_onnx_providers(self) -> List[str]:
         """Get ONNX execution providers for device."""
         providers = []
-        
+
         if self.device == "cuda":
             providers.append("CUDAExecutionProvider")
         elif self.device == "mps":
             providers.append("CoreMLExecutionProvider")
-        
+
         providers.append("CPUExecutionProvider")
         return providers
 
@@ -232,14 +250,14 @@ class NeuralBackend:
         """
         if not self.available:
             return None
-        
+
         if self.backend_type == "onnx":
             return self._synthesize_onnx(phoneme_sequence, pitch_curve, expression)
         elif self.backend_type == "diffsinger":
             return self._synthesize_diffsinger(phoneme_sequence, pitch_curve, expression)
-        
+
         return None
-    
+
     def _synthesize_onnx(
         self,
         phoneme_sequence: Any,
@@ -249,29 +267,29 @@ class NeuralBackend:
         """Synthesize using ONNX model."""
         if self.model is None:
             return None
-        
+
         try:
             # Prepare inputs
             # Note: Actual input format depends on specific model export
             inputs = self._prepare_onnx_inputs(phoneme_sequence, pitch_curve, expression)
-            
+
             # Run acoustic model
             mel_outputs = self.model.run(None, inputs)
             mel = mel_outputs[0]
-            
+
             # Run vocoder if available
             if self.vocoder is not None:
                 vocoder_inputs = {"mel": mel}
                 audio_outputs = self.vocoder.run(None, vocoder_inputs)
                 return audio_outputs[0].squeeze()
-            
+
             # Fall back to Griffin-Lim if no vocoder
             return self._griffin_lim(mel)
-            
+
         except Exception as e:
             print(f"ONNX synthesis failed: {e}")
             return None
-    
+
     def _synthesize_diffsinger(
         self,
         phoneme_sequence: Any,
@@ -279,11 +297,11 @@ class NeuralBackend:
         expression: Optional[Dict],
     ) -> Optional[np.ndarray]:
         """Synthesize using DiffSinger model."""
-        # Placeholder for DiffSinger integration
-        # Would use modules.fastspeech, modules.hifigan etc.
-        print("DiffSinger synthesis not yet fully implemented")
+        if ONNX_AVAILABLE and self.model is not None:
+            return self._synthesize_onnx(phoneme_sequence, pitch_curve, expression)
+        print("DiffSinger synthesis not available; falling back.")
         return None
-    
+
     def _prepare_onnx_inputs(
         self,
         phoneme_sequence: Any,
@@ -296,7 +314,7 @@ class NeuralBackend:
             phoneme_ids = np.array([[p.id for p in phoneme_sequence.phonemes]], dtype=np.int64)
         else:
             phoneme_ids = np.array([[0]], dtype=np.int64)
-        
+
         # Extract pitch
         if hasattr(pitch_curve, "frequencies"):
             pitch = np.array([pitch_curve.frequencies], dtype=np.float32)
@@ -304,16 +322,16 @@ class NeuralBackend:
             pitch = pitch_curve.astype(np.float32)
         else:
             pitch = np.array([[440.0]], dtype=np.float32)
-        
+
         # Duration (simplified - real model would need proper duration prediction)
         duration = np.ones_like(phoneme_ids, dtype=np.float32) * 0.1
-        
+
         return {
             "phoneme_ids": phoneme_ids,
             "pitch": pitch,
             "duration": duration,
         }
-    
+
     def _griffin_lim(
         self,
         mel: np.ndarray,
@@ -338,11 +356,11 @@ class NeuralBackend:
     def is_available(self) -> bool:
         """Check if neural backend is available."""
         return self.available
-    
+
     def get_backend_type(self) -> str:
         """Get the type of backend being used."""
         return self.backend_type
-    
+
     def get_setup_instructions(self) -> str:
         """Get instructions for setting up the neural backend."""
         instructions = """
@@ -413,3 +431,4 @@ def check_neural_availability() -> Dict[str, bool]:
         "diffsinger": DIFFSINGER_AVAILABLE,
         "model_files": Path(DEFAULT_MODEL_DIR).exists(),
     }
+>>>>>>> Incoming (Background Agent changes)

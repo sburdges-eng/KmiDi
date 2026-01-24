@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """Session history and undo/redo system.
 
 Supports non-destructive experimentation with per-component undo/redo stacks.
@@ -11,6 +13,14 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+
+def _apply_state(target: Optional[Dict], new_state: Dict) -> bool:
+    if target is None:
+        return False
+    target.clear()
+    target.update(new_state)
+    return True
 
 
 class HistoryComponent(str, Enum):
@@ -57,6 +67,7 @@ class ApplyMLSuggestionAction(HistoryAction):
 
     suggestion_data: Dict = field(default_factory=dict)
     previous_state: Dict = field(default_factory=dict)
+    target_state: Optional[Dict] = None
 
     def __post_init__(self):
         self.action_type = "apply_ml_suggestion"
@@ -65,13 +76,23 @@ class ApplyMLSuggestionAction(HistoryAction):
 
     def apply(self) -> None:
         """Apply ML suggestion."""
-        # TODO: Implement actual application
-        logger.info(f"Applying ML suggestion: {self.description}")
+        if not self.previous_state and self.target_state is not None:
+            self.previous_state = dict(self.target_state)
+        applied = _apply_state(self.target_state, self.suggestion_data)
+        logger.info(
+            "Applying ML suggestion: %s (applied=%s)",
+            self.description,
+            applied,
+        )
 
     def undo(self) -> None:
         """Revert ML suggestion."""
-        # TODO: Implement actual reversion
-        logger.info(f"Undoing ML suggestion: {self.description}")
+        applied = _apply_state(self.target_state, self.previous_state)
+        logger.info(
+            "Undoing ML suggestion: %s (applied=%s)",
+            self.description,
+            applied,
+        )
 
 
 @dataclass
@@ -80,6 +101,7 @@ class ChangeIntentAction(HistoryAction):
 
     new_intent: Dict = field(default_factory=dict)
     previous_intent: Dict = field(default_factory=dict)
+    target_intent: Optional[Dict] = None
 
     def __post_init__(self):
         self.action_type = "change_intent"
@@ -88,13 +110,23 @@ class ChangeIntentAction(HistoryAction):
 
     def apply(self) -> None:
         """Apply intent change."""
-        # TODO: Implement actual application
-        logger.info(f"Applying intent change: {self.description}")
+        if not self.previous_intent and self.target_intent is not None:
+            self.previous_intent = dict(self.target_intent)
+        applied = _apply_state(self.target_intent, self.new_intent)
+        logger.info(
+            "Applying intent change: %s (applied=%s)",
+            self.description,
+            applied,
+        )
 
     def undo(self) -> None:
         """Revert intent change."""
-        # TODO: Implement actual reversion
-        logger.info(f"Undoing intent change: {self.description}")
+        applied = _apply_state(self.target_intent, self.previous_intent)
+        logger.info(
+            "Undoing intent change: %s (applied=%s)",
+            self.description,
+            applied,
+        )
 
 
 @dataclass
@@ -103,6 +135,7 @@ class ChangeTrustSettingsAction(HistoryAction):
 
     new_settings: Dict[str, float] = field(default_factory=dict)
     previous_settings: Dict[str, float] = field(default_factory=dict)
+    target_settings: Optional[Dict[str, float]] = None
 
     def __post_init__(self):
         self.action_type = "change_trust"
@@ -111,13 +144,23 @@ class ChangeTrustSettingsAction(HistoryAction):
 
     def apply(self) -> None:
         """Apply trust settings change."""
-        # TODO: Implement actual application
-        logger.info(f"Applying trust settings change: {self.description}")
+        if not self.previous_settings and self.target_settings is not None:
+            self.previous_settings = dict(self.target_settings)
+        applied = _apply_state(self.target_settings, self.new_settings)
+        logger.info(
+            "Applying trust settings change: %s (applied=%s)",
+            self.description,
+            applied,
+        )
 
     def undo(self) -> None:
         """Revert trust settings change."""
-        # TODO: Implement actual reversion
-        logger.info(f"Undoing trust settings change: {self.description}")
+        applied = _apply_state(self.target_settings, self.previous_settings)
+        logger.info(
+            "Undoing trust settings change: %s (applied=%s)",
+            self.description,
+            applied,
+        )
 
 
 @dataclass
@@ -126,6 +169,7 @@ class CommitMIDIAction(HistoryAction):
 
     midi_data: Dict = field(default_factory=dict)
     previous_midi: Optional[Dict] = None
+    target_midi: Optional[Dict] = None
 
     def __post_init__(self):
         self.action_type = "commit_midi"
@@ -134,13 +178,23 @@ class CommitMIDIAction(HistoryAction):
 
     def apply(self) -> None:
         """Apply MIDI commit."""
-        # TODO: Implement actual application
-        logger.info(f"Applying MIDI commit: {self.description}")
+        if self.previous_midi is None and self.target_midi is not None:
+            self.previous_midi = dict(self.target_midi)
+        applied = _apply_state(self.target_midi, self.midi_data)
+        logger.info(
+            "Applying MIDI commit: %s (applied=%s)",
+            self.description,
+            applied,
+        )
 
     def undo(self) -> None:
         """Revert MIDI commit."""
-        # TODO: Implement actual reversion
-        logger.info(f"Undoing MIDI commit: {self.description}")
+        applied = _apply_state(self.target_midi, self.previous_midi or {})
+        logger.info(
+            "Undoing MIDI commit: %s (applied=%s)",
+            self.description,
+            applied,
+        )
 
 
 @dataclass
@@ -149,6 +203,7 @@ class ApplyPresetAction(HistoryAction):
 
     preset_id: str = ""
     previous_state: Dict = field(default_factory=dict)
+    target_state: Optional[Dict] = None
 
     def __post_init__(self):
         self.action_type = "apply_preset"
@@ -157,13 +212,23 @@ class ApplyPresetAction(HistoryAction):
 
     def apply(self) -> None:
         """Apply preset."""
-        # TODO: Implement actual application
-        logger.info(f"Applying preset: {self.description}")
+        if not self.previous_state and self.target_state is not None:
+            self.previous_state = dict(self.target_state)
+        applied = _apply_state(self.target_state, {"preset_id": self.preset_id})
+        logger.info(
+            "Applying preset: %s (applied=%s)",
+            self.description,
+            applied,
+        )
 
     def undo(self) -> None:
         """Revert preset application."""
-        # TODO: Implement actual reversion
-        logger.info(f"Undoing preset application: {self.description}")
+        applied = _apply_state(self.target_state, self.previous_state)
+        logger.info(
+            "Undoing preset application: %s (applied=%s)",
+            self.description,
+            applied,
+        )
 
 
 class HistoryManager:
@@ -368,3 +433,4 @@ class HistoryManager:
             self._transaction_groups[component].clear()
 
         logger.debug(f"Ended transaction group for {component}")
+>>>>>>> Incoming (Background Agent changes)

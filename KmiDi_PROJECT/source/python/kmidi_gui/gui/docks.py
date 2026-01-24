@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """Dock widgets for KmiDi GUI.
 
 Dock widgets for:
@@ -7,7 +9,7 @@ Dock widgets for:
 
 from PySide6.QtWidgets import (
     QDockWidget, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QTextEdit, QPushButton, QScrollArea, QFrame
+    QLabel, QTextEdit, QPushButton
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QFontDatabase
@@ -45,7 +47,8 @@ class AIAssistantDock(QDockWidget):
         self.summary_text = QTextEdit()
         self.summary_text.setReadOnly(True)
         self.summary_text.setMaximumHeight(150)
-        self.summary_text.setPlaceholderText("AI analysis results will appear here...")
+        self.summary_text.setPlaceholderText(
+            "AI analysis results will appear here...")
         layout.addWidget(self.summary_text)
 
         # Confidence indicator
@@ -171,3 +174,4 @@ class LogsDock(QDockWidget):
     def clear(self):
         """Clear all logs."""
         self.log_text.clear()
+>>>>>>> Incoming (Background Agent changes)

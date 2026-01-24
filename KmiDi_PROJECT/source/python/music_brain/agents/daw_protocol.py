@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #!/usr/bin/env python3
 """
 DAW Protocol - Abstract Interface for Multi-DAW Support.
@@ -497,6 +499,8 @@ class BaseDAWBridge(abc.ABC):
         if callback:
             if event in self._callbacks and callback in self._callbacks[event]:
                 self._callbacks[event].remove(callback)
+            else:
+                print(f"[{self.daw_type.value}] Callback not found for {event}")
         else:
             self._callbacks.pop(event, None)
 
@@ -693,3 +697,4 @@ __all__ = [
     "get_daw_bridge",
 ]
 
+>>>>>>> Incoming (Background Agent changes)

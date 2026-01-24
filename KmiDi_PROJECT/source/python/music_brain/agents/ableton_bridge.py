@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #!/usr/bin/env python3
 """
 Ableton Bridge - OSC/MIDI Communication with DAW
@@ -235,7 +237,11 @@ class AbletonOSCBridge:
     def off(self, event: str, callback: Optional[Callable] = None):
         """Remove callback(s) for an event."""
         if callback:
-            self._callbacks.get(event, []).remove(callback)
+            callbacks = self._callbacks.get(event, [])
+            if callback in callbacks:
+                callbacks.remove(callback)
+            else:
+                print(f"Callback not found for event '{event}'")
         else:
             self._callbacks.pop(event, None)
 
@@ -794,3 +800,4 @@ if __name__ == "__main__":
             print("  1. python-osc is installed: pip install python-osc")
             print("  2. mido is installed: pip install mido python-rtmidi")
             print("  3. Ableton Live is running with OSC enabled")
+>>>>>>> Incoming (Background Agent changes)

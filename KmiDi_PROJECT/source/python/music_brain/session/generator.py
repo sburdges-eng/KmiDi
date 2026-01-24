@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Song Generator - Generate song structures, progressions, and arrangements.
 
@@ -10,6 +12,8 @@ Generates:
 import random
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass, field
+
+from music_brain.structure.progression import normalize_note_name
 
 
 # Progression templates by mood
@@ -123,6 +127,13 @@ NUMERAL_TO_SEMITONE = {
 NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
 
+def _note_name_to_index(note: str) -> int:
+    normalized = normalize_note_name(note)
+    if normalized and normalized in NOTE_NAMES:
+        return NOTE_NAMES.index(normalized)
+    return 0
+
+
 @dataclass
 class GeneratedSection:
     """A generated song section."""
@@ -142,22 +153,22 @@ class GeneratedSong:
     mode: str = "major"
     tempo_bpm: float = 120.0
     time_signature: Tuple[int, int] = (4, 4)
-    
+
     sections: List[GeneratedSection] = field(default_factory=list)
     genre: str = ""
     mood: str = ""
-    
+
     # Metadata
     total_bars: int = 0
     duration_estimate_seconds: float = 0.0
-    
+
     def get_all_chords(self) -> List[str]:
         """Get flat list of all chords in order."""
         chords = []
         for section in self.sections:
             chords.extend(section.chords)
         return chords
-    
+
     def to_dict(self) -> Dict:
         """Serialize to dictionary."""
         return {
@@ -182,7 +193,7 @@ class GeneratedSong:
                 for s in self.sections
             ],
         }
-    
+
     def __str__(self) -> str:
         lines = [
             f"=== {self.title} ===",
@@ -190,32 +201,32 @@ class GeneratedSong:
             f"Duration: ~{self.duration_estimate_seconds:.0f}s ({self.total_bars} bars)",
             "",
         ]
-        
+
         for section in self.sections:
             lines.append(f"[{section.name.upper()}] ({section.bars} bars, energy: {section.energy:.1f})")
             lines.append(f"  {' | '.join(section.chords)}")
             if section.notes:
                 lines.append(f"  → {section.notes}")
             lines.append("")
-        
+
         return "\n".join(lines)
 
 
 class SongGenerator:
     """
     Generate song structures, progressions, and arrangements.
-    
+
     Usage:
         gen = SongGenerator()
         song = gen.generate(key="F", mood="bittersweet", genre="lo_fi_bedroom")
         print(song)
     """
-    
+
     def __init__(self):
         self.progression_templates = PROGRESSION_TEMPLATES
         self.genre_templates = GENRE_TEMPLATES
         self.structure_templates = STRUCTURE_TEMPLATES
-    
+
     def generate(
         self,
         key: str = "C",
@@ -227,7 +238,7 @@ class SongGenerator:
     ) -> GeneratedSong:
         """
         Generate a complete song structure.
-        
+
         Args:
             key: Musical key (C, F#, Bb, etc.)
             mode: major or minor
@@ -235,7 +246,7 @@ class SongGenerator:
             genre: Genre template (lo_fi_bedroom, emo_confessional, etc.)
             structure: Structure template name or None for random
             tempo: BPM or None for genre-appropriate default
-        
+
         Returns:
             GeneratedSong with complete structure
         """
@@ -246,42 +257,38 @@ class SongGenerator:
                 tempo = random.uniform(tempo_range[0], tempo_range[1])
             else:
                 tempo = random.uniform(90, 130)
-        
+
         # Choose structure
         if structure is None:
             structure = random.choice(list(self.structure_templates.keys()))
-        
+
         structure_sections = self.structure_templates.get(structure, self.structure_templates["standard"])
-        
+
         # Get base progression for mood
         base_progression = self._get_progression_for_mood(mood)
-        
+
         # Generate sections
         sections = []
-        key_num = NOTE_NAMES.index(key.replace('b', '').replace('#', ''))
-        if 'b' in key:
-            key_num = (key_num - 1) % 12
-        elif '#' in key:
-            key_num = (key_num + 1) % 12
-        
+        key_num = _note_name_to_index(key)
+
         section_counts = {}
         for section_name in structure_sections:
             section_counts[section_name] = section_counts.get(section_name, 0) + 1
             count = section_counts[section_name]
-            
+
             # Get progression for this section type
             progression = self._get_section_progression(section_name, base_progression, mood)
-            
+
             # Convert to actual chords
             chords = self._numerals_to_chords(progression, key_num, mode)
-            
+
             # Determine section characteristics
             bars = self._get_section_bars(section_name)
             energy = self._get_section_energy(section_name)
             notes = self._get_section_notes(section_name, genre)
-            
+
             display_name = section_name if count == 1 else f"{section_name} {count}"
-            
+
             sections.append(GeneratedSection(
                 name=display_name,
                 bars=bars,
@@ -290,12 +297,12 @@ class SongGenerator:
                 energy=energy,
                 notes=notes,
             ))
-        
+
         # Calculate totals
         total_bars = sum(s.bars for s in sections)
         beats_per_bar = 4  # Assuming 4/4
         duration_seconds = (total_bars * beats_per_bar * 60) / tempo
-        
+
         return GeneratedSong(
             title=self._generate_title(mood, genre),
             key=key,
@@ -307,7 +314,7 @@ class SongGenerator:
             total_bars=total_bars,
             duration_estimate_seconds=duration_seconds,
         )
-    
+
     def _get_progression_for_mood(self, mood: Optional[str]) -> List[str]:
         """Get a progression template for the given mood."""
         if mood and mood in self.progression_templates:
@@ -315,10 +322,10 @@ class SongGenerator:
             if isinstance(templates[0], list):
                 return random.choice(templates)
             return templates
-        
+
         # Default progression
         return ["I", "V", "vi", "IV"]
-    
+
     def _get_section_progression(
         self,
         section_name: str,
@@ -326,37 +333,37 @@ class SongGenerator:
         mood: Optional[str],
     ) -> List[str]:
         """Get progression for a specific section type."""
-        
+
         if section_name == "intro":
             # Simpler version, often just I or I-IV
             return base_progression[:2] if len(base_progression) >= 2 else ["I"]
-        
+
         elif section_name == "verse":
             return base_progression
-        
+
         elif section_name == "prechorus":
             # Build tension
             return ["IV", "V", "vi", "V"]
-        
+
         elif section_name == "chorus":
             # Higher energy version or slight variation
             if mood == "grief_reveal" and len(base_progression) > 1:
                 # Use the gut-punch progression
                 return self.progression_templates["grief_reveal"][1]
             return base_progression
-        
+
         elif section_name == "bridge":
             # Contrast - different progression
             if mood in ["melancholy", "grief_reveal"]:
                 return ["bVI", "bVII", "I", "I"]
             return ["vi", "IV", "I", "V"]
-        
+
         elif section_name == "outro":
             # Wind down, often repeating I or IV-I
             return ["IV", "I", "IV", "I"]
-        
+
         return base_progression
-    
+
     def _numerals_to_chords(
         self,
         progression: List[str],
@@ -365,15 +372,15 @@ class SongGenerator:
     ) -> List[str]:
         """Convert Roman numerals to actual chord names."""
         chords = []
-        
+
         for numeral in progression:
             # Get semitone offset
             clean_numeral = numeral.replace("7", "").replace("maj", "").replace("dim", "")
             offset = NUMERAL_TO_SEMITONE.get(clean_numeral, 0)
-            
+
             root_num = (key_num + offset) % 12
             root_name = NOTE_NAMES[root_num]
-            
+
             # Determine quality
             if numeral.islower() or numeral.startswith("b") and numeral[1:].islower():
                 quality = "m"
@@ -381,18 +388,18 @@ class SongGenerator:
                 quality = "dim"
             else:
                 quality = ""
-            
+
             # Add extensions
             if "7" in numeral:
                 if "maj7" in numeral:
                     quality += "maj7"
                 else:
                     quality += "7"
-            
+
             chords.append(f"{root_name}{quality}")
-        
+
         return chords
-    
+
     def _get_section_bars(self, section_name: str) -> int:
         """Get typical bar count for section type."""
         defaults = {
@@ -404,7 +411,7 @@ class SongGenerator:
             "outro": 4,
         }
         return defaults.get(section_name, 8)
-    
+
     def _get_section_energy(self, section_name: str) -> float:
         """Get typical energy level for section type."""
         defaults = {
@@ -416,7 +423,7 @@ class SongGenerator:
             "outro": 0.4,
         }
         return defaults.get(section_name, 0.5)
-    
+
     def _get_section_notes(self, section_name: str, genre: Optional[str]) -> str:
         """Get production/performance notes for section."""
         genre_notes = {
@@ -435,12 +442,12 @@ class SongGenerator:
                 "outro": "Catharsis or devastation, your choice",
             },
         }
-        
+
         if genre and genre in genre_notes:
             return genre_notes[genre].get(section_name, "")
-        
+
         return ""
-    
+
     def _generate_title(self, mood: Optional[str], genre: Optional[str]) -> str:
         """Generate a placeholder title."""
         titles = {
@@ -449,12 +456,12 @@ class SongGenerator:
             "melancholy": ["Empty Rooms", "Winter Light", "Fading"],
             "hopeful": ["New Dawn", "Rising", "Open Sky"],
         }
-        
+
         if mood and mood in titles:
             return random.choice(titles[mood])
-        
+
         return "Untitled"
-    
+
     def suggest_progression(
         self,
         mood: str,
@@ -464,26 +471,26 @@ class SongGenerator:
     ) -> Dict:
         """
         Suggest a chord progression for a given mood.
-        
+
         Args:
             mood: Target mood
             key: Musical key
             mode: major or minor
             bars: Number of bars
-        
+
         Returns:
             Dict with progression info
         """
         progression = self._get_progression_for_mood(mood)
-        
+
         # Adjust length
         while len(progression) < bars:
             progression = progression + progression
         progression = progression[:bars]
-        
-        key_num = NOTE_NAMES.index(key) if key in NOTE_NAMES else 0
+
+        key_num = _note_name_to_index(key)
         chords = self._numerals_to_chords(progression, key_num, mode)
-        
+
         return {
             "mood": mood,
             "key": key,
@@ -492,3 +499,4 @@ class SongGenerator:
             "chords": chords,
             "bars": bars,
         }
+>>>>>>> Incoming (Background Agent changes)

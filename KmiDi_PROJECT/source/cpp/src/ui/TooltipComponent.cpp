@@ -1,7 +1,22 @@
+<<<<<<< Current (Your changes)
+=======
 #include "TooltipComponent.h"
 #include "KellyLookAndFeel.h"
 
 namespace kelly {
+
+namespace {
+TooltipComponent& getSharedTooltip() {
+    static TooltipComponent tooltip;
+    static bool initialized = false;
+    if (!initialized) {
+        tooltip.addToDesktop(juce::ComponentPeer::windowIsTemporary);
+        tooltip.setVisible(false);
+        initialized = true;
+    }
+    return tooltip;
+}
+} // namespace
 
 TooltipComponent::TooltipComponent() {
     setOpaque(false);
@@ -10,14 +25,41 @@ TooltipComponent::TooltipComponent() {
 }
 
 void TooltipComponent::showTooltip(juce::Component* target, const juce::String& text, int timeoutMs) {
-    // JUCE's built-in tooltip system handles this
-    if (target) {
-        target->setHelpText(text);
+    if (text.isEmpty()) {
+        return;
+    }
+
+    auto& tooltip = getSharedTooltip();
+    tooltip.tooltipText_ = text;
+
+    const juce::Font font(11.0f);
+    const int textWidth = font.getStringWidth(text);
+    const int padding = 12;
+    const int width = textWidth + padding * 2;
+    const int height = static_cast<int>(font.getHeight()) + padding;
+
+    juce::Rectangle<int> targetBounds;
+    if (target != nullptr) {
+        targetBounds = target->getScreenBounds();
+    } else {
+        targetBounds = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay()->totalArea;
+    }
+
+    const int x = targetBounds.getX() + (targetBounds.getWidth() - width) / 2;
+    const int y = targetBounds.getY() - height - 6;
+    tooltip.setBounds(x, y, width, height);
+    tooltip.setVisible(true);
+    tooltip.repaint();
+
+    if (timeoutMs > 0) {
+        juce::Timer::callAfterDelay(timeoutMs, [] { TooltipComponent::hideTooltip(); });
     }
 }
 
 void TooltipComponent::hideTooltip() {
-    // Handled by JUCE's tooltip system
+    auto& tooltip = getSharedTooltip();
+    tooltip.tooltipText_.clear();
+    tooltip.setVisible(false);
 }
 
 void TooltipComponent::paint(juce::Graphics& g) {
@@ -42,3 +84,4 @@ void TooltipComponent::resized() {
 }
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

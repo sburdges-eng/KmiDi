@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """Action controllers - bridge GUI events to core logic.
 
 This layer:
@@ -136,12 +138,12 @@ class ActionController(QObject):
 
         # Check if we have a recent generation result
         if not hasattr(self, 'last_result') or not self.last_result:
-            self.error_occurred.emit("No music generated yet. Generate music first.")
+            self.error_occurred.emit(
+                "No music generated yet. Generate music first.")
             return
 
         try:
             from pathlib import Path
-            import subprocess
             import platform
 
             # Get MIDI file path
@@ -150,17 +152,21 @@ class ActionController(QObject):
                 # Try to use system default MIDI player
                 if platform.system() == "Darwin":  # macOS
                     # Use afplay or open with default app
-                    self.status_changed.emit("Preview: Playing with default MIDI player")
+                    self.status_changed.emit(
+                        "Preview: Playing with default MIDI player")
                     # Could launch external player here
                 elif platform.system() == "Linux":
-                    self.status_changed.emit("Preview: Use timidity or fluidsynth")
+                    self.status_changed.emit(
+                        "Preview: Use timidity or fluidsynth")
                 else:  # Windows
                     self.status_changed.emit("Preview: Use Windows Media Player")
 
-                self.status_changed.emit("Preview: MIDI file not available for playback")
+                self.status_changed.emit(
+                    "Preview: MIDI file not available for playback")
             else:
                 # Preview available
-                self.status_changed.emit(f"Preview ready: {Path(midi_path).name}")
+                self.status_changed.emit(
+                    f"Preview ready: {Path(midi_path).name}")
         except Exception as e:
             logger.error(f"Preview failed: {e}")
             self.error_occurred.emit(f"Preview error: {str(e)}")
@@ -173,7 +179,8 @@ class ActionController(QObject):
 
         # Check if we have a recent generation result
         if not hasattr(self, 'last_result') or not self.last_result:
-            self.error_occurred.emit("No music generated yet. Generate music first.")
+            self.error_occurred.emit(
+                "No music generated yet. Generate music first.")
             return
 
         # Create export dialog
@@ -224,7 +231,7 @@ class ActionController(QObject):
 
         if result.success:
             # Format results for display
-            results_text = f"Generation successful!\n\n"
+            results_text = "Generation successful!\n\n"
             if result.chords:
                 results_text += f"Chords: {' - '.join(result.chords)}\n"
             if result.key:
@@ -272,29 +279,37 @@ class ActionController(QObject):
 
             # Load project data into UI
             if "emotion_text" in project_data:
-                self.main_window.emotion_input.setPlainText(project_data["emotion_text"])
+                self.main_window.emotion_input.setPlainText(
+                    project_data["emotion_text"])
 
             if "emotion_params" in project_data:
                 params = project_data["emotion_params"]
-                self.main_window.emotion_params.valence_slider.setValue(int(params.get("valence", 0) * 100))
-                self.main_window.emotion_params.arousal_slider.setValue(int(params.get("arousal", 0.5) * 100))
-                self.main_window.emotion_params.intensity_slider.setValue(int(params.get("intensity", 0.5) * 100))
+                self.main_window.emotion_params.valence_slider.setValue(
+                    int(params.get("valence", 0) * 100))
+                self.main_window.emotion_params.arousal_slider.setValue(
+                    int(params.get("arousal", 0.5) * 100))
+                self.main_window.emotion_params.intensity_slider.setValue(
+                    int(params.get("intensity", 0.5) * 100))
 
             if "technical_params" in project_data:
                 params = project_data["technical_params"]
                 if params.get("key"):
-                    index = self.main_window.technical_params.key_combo.findText(params["key"])
+                    index = self.main_window.technical_params.key_combo.findText(
+                        params["key"])
                     if index >= 0:
                         self.main_window.technical_params.key_combo.setCurrentIndex(index)
                 if params.get("bpm"):
-                    self.main_window.technical_params.bpm_spinbox.setValue(params["bpm"])
+                    self.main_window.technical_params.bpm_spinbox.setValue(
+                        params["bpm"])
                 if params.get("genre"):
-                    index = self.main_window.technical_params.genre_combo.findText(params["genre"])
+                    index = self.main_window.technical_params.genre_combo.findText(
+                        params["genre"])
                     if index >= 0:
                         self.main_window.technical_params.genre_combo.setCurrentIndex(index)
 
             self.main_window.set_project_path(Path(file_path))
-            self.log_message.emit(f"Project loaded: {Path(file_path).name}", "INFO")
+            self.log_message.emit(
+                f"Project loaded: {Path(file_path).name}", "INFO")
             self.status_changed.emit("Project loaded")
         except Exception as e:
             logger.error(f"Failed to open project: {e}")
@@ -314,7 +329,8 @@ class ActionController(QObject):
                 "emotion_text": self.main_window.emotion_input.toPlainText(),
                 "emotion_params": self.main_window.emotion_params.get_values(),
                 "technical_params": self.main_window.technical_params.get_values(),
-                "results": self.main_window.results_display.toPlainText() if hasattr(self, 'last_result') else "",
+                "results": (self.main_window.results_display.toPlainText()
+                            if hasattr(self, 'last_result') else ""),
             }
 
             # Save to file
@@ -322,7 +338,8 @@ class ActionController(QObject):
                 json.dump(project_data, f, indent=2)
 
             self.main_window.set_project_path(Path(file_path))
-            self.log_message.emit(f"Project saved: {Path(file_path).name}", "INFO")
+            self.log_message.emit(
+                f"Project saved: {Path(file_path).name}", "INFO")
             self.status_changed.emit("Project saved")
         except Exception as e:
             logger.error(f"Failed to save project: {e}")
@@ -359,13 +376,15 @@ class ActionController(QObject):
 
     def handle_ai_analysis(self):
         """Handle AI analysis request."""
-        self.log_message.emit("AI analysis requested (not yet implemented)", "INFO")
+        self.log_message.emit(
+            "AI analysis requested (not yet implemented)", "INFO")
         # TODO: Implement AI analysis
         self.status_changed.emit("AI analysis: Coming soon")
 
     def handle_batch_process(self):
         """Handle batch process request."""
-        self.log_message.emit("Batch process requested (not yet implemented)", "INFO")
+        self.log_message.emit(
+            "Batch process requested (not yet implemented)", "INFO")
         # TODO: Implement batch processing
         self.status_changed.emit("Batch process: Coming soon")
 
@@ -447,9 +466,15 @@ class ActionController(QObject):
 
     def _update_history_menu_states(self):
         """Update undo/redo menu item enabled states."""
-        # TODO: Update menu items based on history state
-        # For now, this is a placeholder
-        pass
+        if (not hasattr(self.main_window, "undo_action") or
+                not hasattr(self.main_window, "redo_action")):
+            return
+
+        component = HistoryComponent.INTENT.value
+        can_undo = self.history_manager.can_undo(component)
+        can_redo = self.history_manager.can_redo(component)
+        self.main_window.undo_action.setEnabled(can_undo)
+        self.main_window.redo_action.setEnabled(can_redo)
 
     def _check_api_status(self):
         """Check API connection status."""
@@ -478,3 +503,4 @@ class ActionController(QObject):
         if logs_dock:
             logs_dock.add_log(message, level)
 
+>>>>>>> Incoming (Background Agent changes)

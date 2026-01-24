@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Progression Analysis - Diagnose and reharmonize chord progressions.
 
@@ -15,10 +17,41 @@ from dataclasses import dataclass
 
 # Note mappings
 NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-FLAT_TO_SHARP = {
-    'Db': 'C#', 'Eb': 'D#', 'Fb': 'E', 'Gb': 'F#', 
-    'Ab': 'G#', 'Bb': 'A#', 'Cb': 'B'
+NOTE_TO_SEMITONE = {
+    'C': 0,
+    'D': 2,
+    'E': 4,
+    'F': 5,
+    'G': 7,
+    'A': 9,
+    'B': 11,
 }
+
+
+def normalize_note_name(note: str) -> Optional[str]:
+    """Normalize note names to sharp-based representation."""
+    if not note:
+        return None
+    match = re.match(r'^([A-Ga-g])([#b]{0,2})?', note.strip())
+    if not match:
+        return None
+    root = match.group(1).upper()
+    accidental = match.group(2) or ""
+    semitone = NOTE_TO_SEMITONE[root]
+    for symbol in accidental:
+        semitone += 1 if symbol == "#" else -1
+    return NOTE_NAMES[semitone % 12]
+
+
+def note_name_to_index(note: str) -> Optional[int]:
+    """Convert a note name to a chromatic index (0-11)."""
+    normalized = normalize_note_name(note)
+    if not normalized:
+        return None
+    try:
+        return NOTE_NAMES.index(normalized)
+    except ValueError:
+        return None
 
 # Scale degrees for common modes
 MODES = {
@@ -105,42 +138,44 @@ class ParsedChord:
 def parse_chord(chord_str: str) -> Optional[ParsedChord]:
     """
     Parse a chord string into components.
-    
+
     Examples: "Am7", "F#dim", "Cmaj7", "G/B", "Dm9"
     """
     chord_str = chord_str.strip()
     if not chord_str:
         return None
-    
+
     # Handle slash chords
     bass = None
     if '/' in chord_str:
         parts = chord_str.split('/')
         chord_str = parts[0]
         bass = parts[1] if len(parts) > 1 else None
-    
+
     # Extract root
     root_match = re.match(r'^([A-Ga-g][#b]?)', chord_str)
     if not root_match:
         return None
-    
-    root = root_match.group(1).capitalize()
-    remainder = chord_str[len(root_match.group(1)):]
-    
-    # Normalize flats to sharps
-    if root in FLAT_TO_SHARP:
-        root = FLAT_TO_SHARP[root]
-    
+
+    root_raw = root_match.group(1)
+    root = normalize_note_name(root_raw)
+    if not root:
+        return None
+    remainder = chord_str[len(root_raw):]
+
+    if bass:
+        bass = normalize_note_name(bass)
+
     # Get root number
     try:
         root_num = NOTE_NAMES.index(root)
     except ValueError:
         return None
-    
+
     # Parse quality and extensions
     quality = 'maj'  # Default
     extensions: List[str] = []
-    
+
     # Major variants (handle maj7 before the generic "m" prefix)
     if remainder.startswith(('maj7', 'M7')):
         quality = 'maj7'
@@ -176,9 +211,9 @@ def parse_chord(chord_str: str) -> Optional[ParsedChord]:
                 quality = 'min7'
             elif quality == 'dim':
                 quality = 'dim7'
-        
+
         extensions = [e for e in ext_match if e not in ('7', 'maj7', 'M7')]
-    
+
     return ParsedChord(
         root=root,
         root_num=root_num,
@@ -192,12 +227,12 @@ def parse_chord(chord_str: str) -> Optional[ParsedChord]:
 def parse_progression_string(progression: str) -> List[ParsedChord]:
     """
     Parse a progression string like "F-C-Am-Dm" or "F C Am Dm".
-    
+
     Returns list of ParsedChord objects.
     """
     # Split by common delimiters
     chords = re.split(r'[-–—\s|,]+', progression)
-    
+
     parsed = []
     for chord_str in chords:
         chord_str = chord_str.strip()
@@ -205,19 +240,19 @@ def parse_progression_string(progression: str) -> List[ParsedChord]:
             parsed_chord = parse_chord(chord_str)
             if parsed_chord:
                 parsed.append(parsed_chord)
-    
+
     return parsed
 
 
 def detect_key_from_progression(chords: List[ParsedChord]) -> Tuple[str, str]:
     """
     Detect key from parsed chord progression.
-    
+
     Returns (key, mode) tuple.
     """
     if not chords:
         return ('C', 'major')
-    
+
     # Weight first and last chords more heavily
     root_weights = {}
     for i, chord in enumerate(chords):
@@ -226,14 +261,14 @@ def detect_key_from_progression(chords: List[ParsedChord]) -> Tuple[str, str]:
             weight = 2.0  # First chord most likely tonic
         elif i == len(chords) - 1:
             weight = 1.5
-        
+
         root_weights[chord.root_num] = root_weights.get(chord.root_num, 0) + weight
 
     # Find most weighted root (fallback to C if no weights)
     if not root_weights:
         return ('C', 'major')
     likely_root = max(root_weights, key=root_weights.get)
-    
+
     # Determine mode based on chord qualities at tonic
     mode = 'major'
     for chord in chords:
@@ -241,18 +276,18 @@ def detect_key_from_progression(chords: List[ParsedChord]) -> Tuple[str, str]:
             if chord.quality in ['min', 'min7', 'min9']:
                 mode = 'minor'
                 break
-    
+
     return (NOTE_NAMES[likely_root], mode)
 
 
 def diagnose_progression(progression: str, key: Optional[str] = None) -> Dict:
     """
     Diagnose potential issues in a chord progression.
-    
+
     Args:
         progression: Chord progression string (e.g., "F-C-Am-Dm")
         key: Optional key hint (e.g., "C major")
-    
+
     Returns:
         Dict with key, mode, issues, suggestions
     """
@@ -266,7 +301,7 @@ def diagnose_progression(progression: str, key: Optional[str] = None) -> Dict:
         }
 
     chords = parse_progression_string(progression)
-    
+
     if not chords:
         return {
             "key": "unknown",
@@ -275,34 +310,33 @@ def diagnose_progression(progression: str, key: Optional[str] = None) -> Dict:
             "suggestions": ["Check chord spelling"],
             "chords": [],
         }
-    
+
     # Detect key
     if key:
         key_parts = key.replace("_", " ").split()
-        key_name = key_parts[0].capitalize()
+        key_name = key_parts[0]
         mode = key_parts[1].lower() if len(key_parts) > 1 else "major"
     else:
         key_name, mode = detect_key_from_progression(chords)
-    try:
-        key_num = NOTE_NAMES.index(key_name)
-    except ValueError:
+    key_num = note_name_to_index(key_name)
+    if key_num is None:
         key_num = NOTE_NAMES.index("C")
-    
+
     issues = []
     suggestions = []
-    
+
     # Analyze each chord
     scale = MODES.get(mode, MODES['major'])
-    
+
     for i, chord in enumerate(chords):
         interval = (chord.root_num - key_num) % 12
-        
+
         # Check if chord root is diatonic
         if interval not in scale:
             if interval == 3 and mode == 'major':
                 issues.append(f"{chord.original}: bIII (borrowed from parallel minor)")
             elif interval == 8 and mode == 'major':
-                issues.append(f"{chord.original}: bVI (borrowed from parallel minor)")  
+                issues.append(f"{chord.original}: bVI (borrowed from parallel minor)")
             elif interval == 10 and mode == 'major':
                 issues.append(f"{chord.original}: bVII (borrowed/mixolydian)")
             else:
@@ -311,26 +345,26 @@ def diagnose_progression(progression: str, key: Optional[str] = None) -> Dict:
             # Handle borrowed qualities (e.g., iv in a major key)
             if mode == 'major' and interval == 5 and chord.quality.startswith('min'):
                 issues.append(f"{chord.original}: iv (borrowed from parallel minor)")
-        
+
         # Check for awkward voice leading (parallel root motion)
         if i > 0:
             prev_chord = chords[i - 1]
             root_motion = (chord.root_num - prev_chord.root_num) % 12
             if root_motion == 6:  # Tritone motion
                 suggestions.append(f"Tritone motion between {prev_chord.original} and {chord.original} - can feel unstable")
-    
+
     # Check for resolution
     last_chord = chords[-1]
     last_interval = (last_chord.root_num - key_num) % 12
     if last_interval not in [0, 7]:  # Not tonic or dominant
         suggestions.append(f"Progression ends on {last_chord.original} - consider resolving to {key_name}")
-    
+
     # Check for missing V-I
     has_dominant = any((c.root_num - key_num) % 12 == 7 for c in chords)
     has_tonic = any((c.root_num - key_num) % 12 == 0 for c in chords)
     if not has_dominant and has_tonic:
         suggestions.append("No dominant (V) chord - consider adding for stronger resolution")
-    
+
     return {
         'key': key_name,
         'mode': mode,
@@ -347,31 +381,33 @@ def generate_reharmonizations(
 ) -> List[Dict]:
     """
     Generate reharmonization suggestions for a progression.
-    
+
     Args:
         progression: Original progression string
         style: Reharmonization style (jazz, pop, rnb, classical, experimental)
         count: Number of suggestions to generate
-    
+
     Returns:
         List of reharmonization suggestions with chords, technique, and mood
     """
     chords = parse_progression_string(progression)
-    
+
     if not chords:
         return []
-    
+
     key, mode = detect_key_from_progression(chords)
-    key_num = NOTE_NAMES.index(key)
-    
+    key_num = note_name_to_index(key)
+    if key_num is None:
+        key_num = NOTE_NAMES.index("C")
+
     suggestions = []
     techniques = REHARM_TECHNIQUES.get(style, REHARM_TECHNIQUES['jazz'])
-    
+
     # Generate suggestions based on style
     for i, technique in enumerate(techniques[:count]):
         new_chords = []
         mood = "enhanced"
-        
+
         if technique == 'tritone_substitution':
             # Replace dominant chords with tritone subs
             for chord in chords:
@@ -383,7 +419,7 @@ def generate_reharmonizations(
                 else:
                     new_chords.append(chord.original)
             mood = "chromatic, sophisticated"
-        
+
         elif technique == 'chromatic_approach':
             # Add chromatic approach chords
             new_chords = []
@@ -394,7 +430,7 @@ def generate_reharmonizations(
                     new_chords.append(f"{NOTE_NAMES[approach_root]}7")
                 new_chords.append(chord.original)
             mood = "tense, sophisticated"
-        
+
         elif technique == 'borrowed_from_parallel':
             # Borrow chords from parallel mode
             for chord in chords:
@@ -408,7 +444,7 @@ def generate_reharmonizations(
                 else:
                     new_chords.append(chord.original)
             mood = "bittersweet, nostalgic"
-        
+
         elif technique == 'secondary_dominants':
             # Add secondary dominants
             for j, chord in enumerate(chords):
@@ -420,13 +456,13 @@ def generate_reharmonizations(
                         new_chords.append(f"{NOTE_NAMES[sec_dom_root]}7")
                 new_chords.append(chord.original)
             mood = "driving, forward-moving"
-        
+
         elif technique == 'pedal_point':
             # Add pedal bass
             for chord in chords:
                 new_chords.append(f"{chord.original}/{key}")
             mood = "grounded, hypnotic"
-        
+
         elif technique == 'sus_chords':
             # Replace some chords with sus variants
             for chord in chords:
@@ -437,7 +473,7 @@ def generate_reharmonizations(
                 else:
                     new_chords.append(chord.original)
             mood = "open, unresolved"
-        
+
         elif technique == 'extended_dominants':
             # Add extensions to dominant chords
             for chord in chords:
@@ -449,7 +485,7 @@ def generate_reharmonizations(
                 else:
                     new_chords.append(chord.original)
             mood = "lush, sophisticated"
-        
+
         elif technique == 'parallel_motion':
             # Move all chords in parallel
             shift = 5  # Perfect 4th
@@ -457,13 +493,13 @@ def generate_reharmonizations(
                 new_root = (chord.root_num + shift) % 12
                 new_chords.append(f"{NOTE_NAMES[new_root]}{chord.quality}")
             mood = "ethereal, impressionistic"
-        
+
         elif technique == 'quartal_voicings':
             # Convert to quartal harmonies
             for chord in chords:
                 new_chords.append(f"{chord.root}sus4(add9)")
             mood = "modern, open"
-        
+
         else:
             # Default - return original with extensions
             for chord in chords:
@@ -472,12 +508,13 @@ def generate_reharmonizations(
                 else:
                     new_chords.append(chord.original)
             mood = "richer"
-        
+
         if new_chords:
             suggestions.append({
                 'chords': new_chords,
                 'technique': technique.replace('_', ' ').title(),
                 'mood': mood,
             })
-    
+
     return suggestions[:count]
+>>>>>>> Incoming (Background Agent changes)

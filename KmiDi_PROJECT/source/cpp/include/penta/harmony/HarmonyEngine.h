@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 
 #include "penta/common/Platform.h"
@@ -62,6 +64,7 @@ namespace penta::harmony
         std::vector<Scale> getScaleHistory(size_t maxCount = 100) const;
 
     private:
+        static constexpr size_t kHistoryCapacity = 256;
         void updateChordAnalysis() noexcept;
         void updateScaleDetection() noexcept;
 
@@ -76,9 +79,14 @@ namespace penta::harmony
 
         std::vector<Chord> chordHistory_;
         std::vector<Scale> scaleHistory_;
+        size_t chordHistoryWriteIndex_ = 0;
+        size_t chordHistoryCount_ = 0;
+        size_t scaleHistoryWriteIndex_ = 0;
+        size_t scaleHistoryCount_ = 0;
 
         std::array<uint8_t, 128> activeNotes_; // Note velocity (0 = off)
         std::array<bool, 12> pitchClassSet_;   // Current pitch classes
     };
 
 } // namespace penta::harmony
+>>>>>>> Incoming (Background Agent changes)

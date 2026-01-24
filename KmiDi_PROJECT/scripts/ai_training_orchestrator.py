@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #!/usr/bin/env python3
 """
 AI-Powered Training Orchestrator
@@ -23,6 +25,20 @@ import sys
 from dataclasses import dataclass, asdict
 from datetime import datetime
 from pathlib import Path
+
+# Load environment variables from project root
+import sys
+project_root = Path(__file__).resolve().parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+try:
+    from python.kmidi_env import load_kmidi_env
+    load_kmidi_env(features=['ml', 'training'], verbose=False)
+except ImportError:
+    # Fallback to simple dotenv
+    from dotenv import load_dotenv
+    load_dotenv(project_root / '.env')
+    load_dotenv(project_root / '.env.local', override=True)
 from typing import Any, Dict, List, Optional
 
 # Lazy imports for faster startup
@@ -40,8 +56,11 @@ def get_openai_client():
 # Project paths
 ROOT = Path(__file__).resolve().parent.parent
 MODELS_DIR = ROOT / "models"
-# Updated: Files moved from external SSD to local storage (2025-01-09)
-DATA_DIR = Path(os.environ.get("KELLY_AUDIO_DATA_ROOT", "/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data"))
+DATA_DIR = Path(
+    os.environ.get("KMI_DI_AUDIO_DATA_ROOT")
+    or os.environ.get("KELLY_AUDIO_DATA_ROOT")
+    or (ROOT / "data" / "audio")
+)
 LOGS_DIR = ROOT / "logs" / "ai_orchestrator"
 
 # Model registry for Kelly's 5-model architecture
@@ -785,3 +804,4 @@ Examples:
 
 if __name__ == "__main__":
     main()
+>>>>>>> Incoming (Background Agent changes)

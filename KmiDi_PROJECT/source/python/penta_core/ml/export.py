@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Model Export Utilities - Convert trained models to deployment formats.
 
@@ -25,6 +27,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+
+# Optional torch import for model export
+try:
+    import torch
+    HAS_TORCH = True
+except ImportError:
+    torch = None
+    HAS_TORCH = False
 
 logger = logging.getLogger(__name__)
 
@@ -69,13 +79,15 @@ class ModelExporter:
             model: Trained PyTorch model
             config: Export configuration
         """
+        if not HAS_TORCH:
+            raise ImportError("PyTorch required for model export")
+
         self.model = model
         self.config = config
         self._exported_files: List[Path] = []
 
     def _get_dummy_input(self) -> "torch.Tensor":
         """Create dummy input tensor for tracing."""
-        import torch
 
         if self.config.architecture_type == "cnn":
             # Spectrogram input: (batch, channels, mels, time)
@@ -145,7 +157,8 @@ class ModelExporter:
                 optimized_model.save_model_to_file(output_path)
                 logger.info(f"Applied ONNX optimizations")
             except ImportError:
-                logger.debug("onnxruntime.transformers not available, skipping optimization")
+                logger.debug(
+                    "onnxruntime.transformers not available, skipping optimization")
 
         logger.info(f"Exported ONNX: {output_path}")
         self._exported_files.append(output_path)
@@ -175,7 +188,8 @@ class ModelExporter:
         try:
             import coremltools as ct
         except ImportError:
-            logger.error("coremltools not installed. Install with: pip install coremltools")
+            logger.error(
+                "coremltools not installed. Install with: pip install coremltools")
             return None
 
         output_path = Path(output_path)
@@ -231,7 +245,8 @@ class ModelExporter:
 
         # Add metadata
         mlmodel.author = "KmiDi ML Pipeline"
-        mlmodel.short_description = f"{self.config.model_id} - {self.config.architecture_type}"
+        mlmodel.short_description = (
+            f"{self.config.model_id} - {self.config.architecture_type}")
         mlmodel.version = "1.0"
 
         mlmodel.save(output_path)
@@ -451,7 +466,8 @@ class ModelExporter:
         for fmt in formats:
             try:
                 if fmt == "onnx":
-                    path = self.export_onnx(output_dir / f"{self.config.model_id}.onnx")
+                    path = self.export_onnx(
+                        output_dir / f"{self.config.model_id}.onnx")
                     results["onnx"] = path
                 elif fmt == "coreml":
                     path = self.export_coreml(output_dir / f"{self.config.model_id}.mlmodel")
@@ -622,3 +638,4 @@ def export_to_onnx(
 
     logger.info(f"Exported ONNX: {output_path}")
     return output_path
+>>>>>>> Incoming (Background Agent changes)

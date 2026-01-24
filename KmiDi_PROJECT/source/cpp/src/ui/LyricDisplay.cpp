@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #include "LyricDisplay.h"
 #include "../voice/LyriSync.h"
 #include <cmath>
@@ -30,6 +32,7 @@ void LyricDisplay::paint(juce::Graphics& g) {
     int yOffset = 10;
     int lineHeight = static_cast<int>(fontSize_ * 2.5f);
     int lineSpacing = 10;
+    int globalLineIndex = 0;
 
     for (const auto& section : lyrics_.sections) {
         // Section header
@@ -63,15 +66,14 @@ void LyricDisplay::paint(juce::Graphics& g) {
         yOffset += 25;
 
         // Paint lines in section
-        int lineIndex = 0;
         for (const auto& line : section.lines) {
             juce::Rectangle<int> lineBounds(10, yOffset, getWidth() - 20, lineHeight);
-            bool isHighlighted = (lineIndex == currentLineIndex);
+            bool isHighlighted = (globalLineIndex == currentLineIndex);
 
-            paintLine(g, line, lineIndex, lineBounds, isHighlighted);
+            paintLine(g, line, globalLineIndex, lineBounds, isHighlighted);
 
             yOffset += lineHeight + lineSpacing;
-            lineIndex++;
+            globalLineIndex++;
         }
 
         // Section spacing
@@ -180,19 +182,8 @@ int LyricDisplay::getCurrentLineIndex() const {
         }
     }
 
-    // Map sync item index to line index
-    // (This is simplified - in a full implementation, we'd track which item belongs to which line)
-    if (currentItemIndex >= 0) {
-        int lineCount = 0;
-        for (const auto& section : lyrics_.sections) {
-            if (currentItemIndex < lineCount + static_cast<int>(section.lines.size())) {
-                return currentItemIndex - lineCount;
-            }
-            lineCount += static_cast<int>(section.lines.size());
-        }
-    }
-
-    return -1;
+    // Sync items are stored in global line order
+    return currentItemIndex;
 }
 
 int LyricDisplay::getCurrentSyllableIndex(const LyricLine& line) const {
@@ -210,3 +201,4 @@ int LyricDisplay::getCurrentSyllableIndex(const LyricLine& line) const {
 }
 
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

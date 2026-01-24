@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Training-Inference Bridge - Seamless transition from training to inference.
 
@@ -226,24 +228,15 @@ class TrainingInferenceBridge:
 
         # Get model
         if version:
-            # Find specific version
-            model_info = None
-            for model in self._registry.list():
-                if model.name == model_name and model.version == version:
-                    model_info = model
-                    break
+            model_info = self._registry.get(model_name, version=version)
         else:
-            # Get latest version
             model_info = self._registry.get(model_name)
             if not model_info and model_name in self._model_versions:
                 # Get latest version from tracked versions
                 versions = self._model_versions[model_name]
                 if versions:
                     latest_version = versions[-1]
-                    for model in self._registry.list():
-                        if model.name == model_name and model.version == latest_version:
-                            model_info = model
-                            break
+                    model_info = self._registry.get(model_name, version=latest_version)
 
         if not model_info:
             logger.error(f"Model not found: {model_name} (version: {version})")
@@ -511,3 +504,4 @@ def get_training_bridge() -> TrainingInferenceBridge:
             if _training_bridge is None:
                 _training_bridge = TrainingInferenceBridge()
     return _training_bridge
+>>>>>>> Incoming (Background Agent changes)

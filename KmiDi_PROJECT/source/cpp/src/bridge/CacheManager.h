@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #pragma once
 
 /**
@@ -83,12 +85,18 @@ public:
     /**
      * Set TTL for new entries
      */
-    void setTTL(int ttlMs) { ttlMs_ = ttlMs; }
+    void setTTL(int ttlMs) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        ttlMs_ = ttlMs;
+    }
 
     /**
      * Set maximum cache size
      */
-    void setMaxSize(size_t maxSize) { maxSize_ = maxSize; }
+    void setMaxSize(size_t maxSize) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        maxSize_ = maxSize;
+    }
 
 private:
     std::map<std::string, CacheEntry> cache_;
@@ -101,3 +109,4 @@ private:
 
 } // namespace bridge
 } // namespace kelly
+>>>>>>> Incoming (Background Agent changes)

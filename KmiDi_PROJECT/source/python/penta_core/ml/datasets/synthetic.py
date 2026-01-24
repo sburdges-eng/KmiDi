@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Synthetic Data Generation for KmiDi ML Training.
 
@@ -10,7 +12,6 @@ Generates training data from music theory rules:
 
 from __future__ import annotations
 
-import json
 import logging
 import random
 from dataclasses import dataclass, field
@@ -81,7 +82,7 @@ PROGRESSIONS = {
     'peaceful': [
         ['I', 'iii', 'vi', 'IV'],     # Gentle progression
         ['I', 'V/vi', 'vi', 'IV'],    # Borrowed chord
-        ['Imaj7', 'IVmaj7', 'I', 'V'],# Jazz voicings
+        ['Imaj7', 'IVmaj7', 'I', 'V'],  # Jazz voicings
         ['I', 'vi', 'ii', 'V'],       # Standard turnaround
     ],
     'energetic': [
@@ -752,15 +753,15 @@ class SyntheticGenerator:
 
             delta = onset_ticks - last_time
             track.append(mido.Message('note_on',
-                note=note['pitch'],
-                velocity=note['velocity'],
-                time=max(0, delta)
-            ))
+                                      note=note['pitch'],
+                                      velocity=note['velocity'],
+                                      time=max(0, delta)
+                                     ))
             track.append(mido.Message('note_off',
-                note=note['pitch'],
-                velocity=0,
-                time=duration_ticks
-            ))
+                                      note=note['pitch'],
+                                      velocity=0,
+                                      time=duration_ticks
+                                     ))
             last_time = onset_ticks + duration_ticks
 
         output_path = output_dir / f"{sample['id']}.mid"
@@ -941,7 +942,8 @@ try:
                 elif self.model_name == "groove_predictor":
                     # Regression: groove features
                     groove_type = sample.get("groove_type", "straight")
-                    groove_map = {"straight": 0, "swing": 1, "shuffle": 2, "laid_back": 3, "rushed": 4}
+                    groove_map = {"straight": 0, "swing": 1, "shuffle": 2,
+                                  "laid_back": 3, "rushed": 4}
                     idx = groove_map.get(groove_type, 0)
                     target = [0.0] * self.output_dim
                     if idx < self.output_dim:
@@ -1022,3 +1024,4 @@ except ImportError:
     # PyTorch not available
     def create_synthetic_dataset(*args, **kwargs):
         raise ImportError("PyTorch required for create_synthetic_dataset")
+>>>>>>> Incoming (Background Agent changes)

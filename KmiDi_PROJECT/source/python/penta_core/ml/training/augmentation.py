@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Advanced Audio Data Augmentation for KmiDi ML Training.
 
@@ -26,9 +28,17 @@ from __future__ import annotations
 import logging
 import random
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+
+# Optional torch import for GPU acceleration
+try:
+    import torch
+    HAS_TORCH = True
+except ImportError:
+    torch = None
+    HAS_TORCH = False
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +53,8 @@ class AugmentationConfig:
 
     # Noise
     noise_snr_range: Tuple[float, float] = (10, 30)  # dB
-    noise_types: List[str] = field(default_factory=lambda: ["white", "pink", "brown"])
+    noise_types: List[str] = field(
+        default_factory=lambda: ["white", "pink", "brown"])
 
     # Dynamics
     gain_range: Tuple[float, float] = (-6, 6)  # dB
@@ -96,6 +107,10 @@ class AudioAugmentor:
         Efficiently augments a batch of audio tensors on the GPU/MPS device.
         Designed for self-supervised pre-training.
         """
+        if not HAS_TORCH:
+            logger.warning("Torch not available, returning original batch")
+            return audio_batch
+
         # audio_batch: [B, C, T]
         # In a real implementation, we would use TorchAudio transforms for speed.
         # This is a stub for the logic.
@@ -778,3 +793,4 @@ def create_augmentation_pipeline(
 
     return AugmentationPipeline(presets.get(preset, presets["default"]))
 
+>>>>>>> Incoming (Background Agent changes)

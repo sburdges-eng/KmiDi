@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 #!/usr/bin/env python3
 """
 Export trained models to ONNX and CoreML formats.
@@ -95,7 +97,7 @@ def export_midi_generator_to_onnx(checkpoint_path: str, output_path: str):
 
     arch = config.get('model', {}).get('architecture', {})
     model = EmotionMIDITransformer(
-        vocab_size=arch.get('vocab_size', 388),
+        vocab_size=arch.get('vocab_size', 392),
         max_seq_len=arch.get('max_seq_length', 1024),
         hidden_dim=arch.get('hidden_dim', 384),
         num_layers=arch.get('num_layers', 8),
@@ -108,7 +110,7 @@ def export_midi_generator_to_onnx(checkpoint_path: str, output_path: str):
     # Create dummy inputs
     batch_size = 1
     seq_len = 256
-    dummy_input_ids = torch.randint(0, 388, (batch_size, seq_len))
+    dummy_input_ids = torch.randint(0, arch.get('vocab_size', 392), (batch_size, seq_len))
     dummy_emotion = torch.randn(batch_size, 64)
 
     print(f"Exporting to ONNX: {output_path}")
@@ -132,7 +134,7 @@ def export_midi_generator_to_onnx(checkpoint_path: str, output_path: str):
 def export_to_coreml(onnx_path: str, output_path: str, model_type: str = 'spectocloud'):
     """Convert ONNX to CoreML."""
     try:
-        import coremltools as ct
+        import coremltools as ct  # type: ignore[import]
     except ImportError:
         print("CoreML tools not available. Install with: pip install coremltools")
         return
@@ -197,3 +199,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+>>>>>>> Incoming (Background Agent changes)

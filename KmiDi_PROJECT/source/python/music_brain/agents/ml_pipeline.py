@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 ML Pipeline - Bridge between Python emotion system and C++ MLInterface.
 
@@ -661,7 +663,11 @@ class MLPipeline:
     def off(self, event: str, callback: Optional[Callable] = None) -> None:
         """Remove callback(s)."""
         if callback:
-            self._callbacks.get(event, []).remove(callback)
+            callbacks = self._callbacks.get(event, [])
+            if callback in callbacks:
+                callbacks.remove(callback)
+            else:
+                logger.warning("Callback not found for event '%s'", event)
         else:
             self._callbacks.pop(event, None)
 
@@ -711,3 +717,4 @@ class MLPipeline:
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.stop()
 
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Monitoring API - REST endpoints for metrics, status, and historical data.
 
@@ -193,8 +195,7 @@ class MonitoringAPI:
         cutoff_time = time.time() - (time_range_minutes * 60)
 
         for name, metric in all_metrics.items():
-            # Filter by time range (simplified - in practice, filter by timestamp)
-            stats = metric.get_stats()
+            stats = metric.get_stats_since(cutoff_time)
             summary[name] = stats
 
         return {
@@ -323,3 +324,4 @@ def get_monitoring_api() -> MonitoringAPI:
             if _monitoring_api is None:
                 _monitoring_api = MonitoringAPI()
     return _monitoring_api
+>>>>>>> Incoming (Background Agent changes)

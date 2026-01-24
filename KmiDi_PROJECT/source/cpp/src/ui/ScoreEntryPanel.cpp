@@ -1,7 +1,11 @@
+<<<<<<< Current (Your changes)
+=======
 #include "ui/ScoreEntryPanel.h"
 #include <juce_graphics/juce_graphics.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <algorithm>
+#include <cmath>
+#include <map>
 
 namespace midikompanion
 {
@@ -391,16 +395,158 @@ void ScoreEntryPanel::quickEntry(const std::string& description) {
 
 juce::MidiBuffer ScoreEntryPanel::toMidiBuffer() const {
     juce::MidiBuffer midiBuffer;
-    // Convert notes_ to MIDI messages and add to buffer
-    // (Complex logic involving tempo, time signature, note values, etc.)
+    if (notes_.empty()) {
+        return midiBuffer;
+    }
+
+    constexpr int kPPQ = 480;
+
+    auto getTimeSignatureForMeasure = [this](int measure) {
+        TimeSignatureChange ts{4, 4, 1};
+        for (const auto& entry : timeSignatures_) {
+            if (entry.measure <= measure) {
+                ts = entry;
+            } else {
+                break;
+            }
+        }
+        return ts;
+    };
+
+    auto noteValueToBeats = [](NoteValue value) {
+        switch (value) {
+            case NoteValue::Whole: return 4.0f;
+            case NoteValue::Half: return 2.0f;
+            case NoteValue::Quarter: return 1.0f;
+            case NoteValue::Eighth: return 0.5f;
+            case NoteValue::Sixteenth: return 0.25f;
+            case NoteValue::ThirtySecond: return 0.125f;
+            case NoteValue::Dotted: return 1.5f;
+            default: return 1.0f;
+        }
+    };
+
+    auto dynamicToVelocity = [](Dynamic dynamic) {
+        switch (dynamic) {
+            case Dynamic::Pianissimo: return 30;
+            case Dynamic::Piano: return 45;
+            case Dynamic::MezzoPiano: return 60;
+            case Dynamic::MezzoForte: return 80;
+            case Dynamic::Forte: return 100;
+            case Dynamic::Fortissimo: return 115;
+            default: return 80;
+        }
+    };
+
+    for (const auto& note : notes_) {
+        const auto ts = getTimeSignatureForMeasure(note.measure);
+        const float beatsPerMeasure = static_cast<float>(ts.numerator);
+
+        float durationBeats = noteValueToBeats(note.duration);
+        if (note.dotted) {
+            durationBeats *= 1.5f;
+        }
+        if (note.triplet) {
+            durationBeats *= (2.0f / 3.0f);
+        }
+
+        float articulationScale = 1.0f;
+        if (!note.tie) {
+            switch (note.articulation) {
+                case Articulation::Staccato:
+                    articulationScale = 0.5f;
+                    break;
+                case Articulation::Accent:
+                    articulationScale = 0.85f;
+                    break;
+                case Articulation::Marcato:
+                    articulationScale = 0.8f;
+                    break;
+                case Articulation::Tenuto:
+                    articulationScale = 1.0f;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        const float startBeat = ((note.measure - 1) * beatsPerMeasure) + (note.beat - 1.0f);
+        const int startTick = static_cast<int>(std::round(startBeat * kPPQ));
+        const int endTick = startTick + static_cast<int>(
+            std::round(durationBeats * articulationScale * kPPQ));
+
+        int velocity = dynamicToVelocity(note.dynamic);
+        if (note.articulation == Articulation::Accent) {
+            velocity = std::min(127, velocity + 10);
+        } else if (note.articulation == Articulation::Marcato) {
+            velocity = std::min(127, velocity + 20);
+        }
+
+        midiBuffer.addEvent(juce::MidiMessage::noteOn(1, note.pitch, (juce::uint8)velocity),
+                            startTick);
+        midiBuffer.addEvent(juce::MidiMessage::noteOff(1, note.pitch),
+                            std::max(startTick + 1, endTick));
+    }
+
     return midiBuffer;
 }
 
 void ScoreEntryPanel::fromMidiBuffer(const juce::MidiBuffer& buffer) {
     notes_.clear();
     chordSymbols_.clear();
-    // Convert MIDI messages in buffer to NotationNote objects
-    // (Complex logic)
+    if (buffer.isEmpty()) {
+        repaint();
+        return;
+    }
+
+    constexpr int kPPQ = 480;
+    const int beatsPerMeasure = timeSignatures_.empty() ? 4 : timeSignatures_.back().numerator;
+
+    auto beatsToNoteValue = [](float beats) {
+        if (beats >= 3.5f) return NoteValue::Whole;
+        if (beats >= 1.75f) return NoteValue::Half;
+        if (beats >= 0.875f) return NoteValue::Quarter;
+        if (beats >= 0.4375f) return NoteValue::Eighth;
+        if (beats >= 0.21875f) return NoteValue::Sixteenth;
+        return NoteValue::ThirtySecond;
+    };
+
+    std::map<int, int> activeNotes;
+
+    for (const auto metadata : buffer) {
+        const auto& message = metadata.getMessage();
+        if (message.isNoteOn()) {
+            activeNotes[message.getNoteNumber()] = metadata.samplePosition;
+        } else if (message.isNoteOff()) {
+            const int pitch = message.getNoteNumber();
+            auto it = activeNotes.find(pitch);
+            if (it == activeNotes.end()) {
+                continue;
+            }
+            const int startTick = it->second;
+            const int endTick = metadata.samplePosition;
+            activeNotes.erase(it);
+
+            const float startBeat = static_cast<float>(startTick) / kPPQ;
+            const float durationBeats = static_cast<float>(endTick - startTick) / kPPQ;
+
+            const int measure = static_cast<int>(startBeat / beatsPerMeasure) + 1;
+            const float beat = std::fmod(startBeat, static_cast<float>(beatsPerMeasure)) + 1.0f;
+
+            NotationNote note;
+            note.pitch = pitch;
+            note.duration = beatsToNoteValue(durationBeats);
+            note.dotted = false;
+            note.triplet = false;
+            note.dynamic = Dynamic::None;
+            note.articulation = Articulation::None;
+            note.tie = false;
+            note.lyric.clear();
+            note.measure = measure;
+            note.beat = beat;
+            notes_.push_back(note);
+        }
+    }
     repaint();
 }
 
@@ -489,17 +635,19 @@ void ScoreEntryPanel::drawStaff(juce::Graphics& g, juce::Rectangle<int> area) {
 }
 
 void ScoreEntryPanel::drawClef(juce::Graphics& g, Clef clef, juce::Point<int> position) {
-    // Placeholder: Draw different clef symbols
     g.setColour(juce::Colours::white);
-    juce::Font font("Times New Roman", 40.0f * zoomFactor_, juce::Font::plain);
+    juce::Font font("Bravura", 40.0f * zoomFactor_, juce::Font::plain);
+    if (!font.getTypefaceName().containsIgnoreCase("Bravura")) {
+        font = juce::Font("Times New Roman", 40.0f * zoomFactor_, juce::Font::plain);
+    }
     g.setFont(font);
 
     juce::String clefSymbol;
     switch (clef) {
-        case Clef::Treble: clefSymbol = "& #x1d11e;"; break; // G Clef symbol
-        case Clef::Bass:   clefSymbol = "& #x1d122;"; break; // F Clef symbol
-        case Clef::Alto:   clefSymbol = "& #x1d121;"; break; // C Clef symbol
-        case Clef::Tenor:  clefSymbol = "& #x1d121;"; break; // C Clef symbol (octave down)
+        case Clef::Treble: clefSymbol = juce::String::fromUTF8(reinterpret_cast<const char*>(u8"𝄞")); break;
+        case Clef::Bass:   clefSymbol = juce::String::fromUTF8(reinterpret_cast<const char*>(u8"𝄢")); break;
+        case Clef::Alto:   clefSymbol = juce::String::fromUTF8(reinterpret_cast<const char*>(u8"𝄡")); break;
+        case Clef::Tenor:  clefSymbol = juce::String::fromUTF8(reinterpret_cast<const char*>(u8"𝄡")); break;
         case Clef::Percussion: clefSymbol = "Perc"; break;
     }
     g.drawText(clefSymbol, position.getX(), position.getY(), 50, 50, juce::Justification::centred, false);
@@ -613,3 +761,4 @@ void ScoreEntryPanel::onMetronomeToggled() {
 }
 
 } // namespace midikompanion
+>>>>>>> Incoming (Background Agent changes)

@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 """
 Inference Batching - Automatic batching support for inference.
 
@@ -134,9 +136,14 @@ class BatchProcessor:
 
         # Collect requests
         batch: List[BatchedRequest] = []
+        target_batch_size = (
+            self._current_batch_size if self.config.adaptive else self.config.max_batch_size
+        )
+        target_batch_size = max(self.config.min_batch_size, target_batch_size)
+
         with self._lock:
-            # Get requests up to max batch size or timeout
-            while len(batch) < self.config.max_batch_size:
+            # Get requests up to target batch size or timeout
+            while len(batch) < target_batch_size:
                 if not self._queue:
                     break
 
@@ -418,3 +425,4 @@ class BatchedInferenceEngine:
     def get_stats(self) -> Dict[str, Any]:
         """Get batching statistics."""
         return self.processor.get_stats()
+>>>>>>> Incoming (Background Agent changes)

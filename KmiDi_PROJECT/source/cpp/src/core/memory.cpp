@@ -1,3 +1,5 @@
+<<<<<<< Current (Your changes)
+=======
 /**
  * @file memory.cpp
  * @brief Implementation of memory management utilities
@@ -32,28 +34,24 @@ MemoryPool::MemoryPool(size_t blockSize, size_t numBlocks)
 MemoryPool::~MemoryPool() = default;
 
 void* MemoryPool::allocate() noexcept {
-    size_t expected = freeCount_.load(std::memory_order_acquire);
-
-    while (expected > 0) {
-        if (freeCount_.compare_exchange_weak(expected, expected - 1,
-                                              std::memory_order_acq_rel)) {
-            // Successfully decremented, pop from list
-            void* ptr = freeList_[expected - 1];
-            return ptr;
-        }
+    std::lock_guard<std::mutex> lock(mutex_);
+    size_t available = freeCount_.load(std::memory_order_acquire);
+    if (available == 0) {
+        return nullptr;
     }
-
-    return nullptr;  // Pool exhausted
+    void* ptr = freeList_[available - 1];
+    freeCount_.store(available - 1, std::memory_order_release);
+    return ptr;
 }
 
 void MemoryPool::deallocate(void* ptr) noexcept {
     if (!ptr || !contains(ptr)) {
         return;
     }
-
+    std::lock_guard<std::mutex> lock(mutex_);
     size_t count = freeCount_.load(std::memory_order_acquire);
     freeList_[count] = ptr;
-    freeCount_.fetch_add(1, std::memory_order_release);
+    freeCount_.store(count + 1, std::memory_order_release);
 }
 
 bool MemoryPool::contains(void* ptr) const noexcept {
@@ -91,6 +89,7 @@ LockFreeQueue<T>::~LockFreeQueue() {
 
 template<typename T>
 void LockFreeQueue<T>::push(const T& item) {
+    std::lock_guard<std::mutex> lock(mutex_);
     auto* node = new QueueNode<T>(item);
 
     // Atomically swap the head
@@ -100,6 +99,7 @@ void LockFreeQueue<T>::push(const T& item) {
 
 template<typename T>
 bool LockFreeQueue<T>::pop(T& item) {
+    std::lock_guard<std::mutex> lock(mutex_);
     QueueNode<T>* next = tail_->next.load(std::memory_order_acquire);
 
     if (next == nullptr) {
@@ -115,6 +115,7 @@ bool LockFreeQueue<T>::pop(T& item) {
 
 template<typename T>
 bool LockFreeQueue<T>::empty() const noexcept {
+    std::lock_guard<std::mutex> lock(mutex_);
     return tail_->next.load(std::memory_order_acquire) == nullptr;
 }
 
@@ -124,3 +125,4 @@ template class LockFreeQueue<float>;
 template class LockFreeQueue<NoteEvent>;
 
 }  // namespace daiw
+>>>>>>> Incoming (Background Agent changes)
