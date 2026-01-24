@@ -538,6 +538,64 @@ class EmotionThesaurus:
         ids = self.category_index.get(category, [])
         return [self.nodes[i] for i in ids]
     
+    def get_intensity_mapping(self, intensity: float) -> Dict[str, Any]:
+        """
+        Get musical parameter adjustments based on intensity level.
+        
+        Args:
+            intensity: Intensity value (0.0 to 1.0)
+            
+        Returns:
+            Dictionary of intensity-based adjustments to musical parameters
+        """
+        # Map intensity to tier
+        if intensity <= 0.2:
+            tier = "1_subtle"
+        elif intensity <= 0.4:
+            tier = "2_mild"
+        elif intensity <= 0.6:
+            tier = "3_moderate"
+        elif intensity <= 0.8:
+            tier = "4_intense"
+        else:
+            tier = "5_overwhelming"
+        
+        return {
+            "intensity_tier": tier,
+            "tempo_multiplier": 0.8 + intensity * 0.4,  # 0.8x to 1.2x
+            "velocity_multiplier": 0.7 + intensity * 0.6,  # 0.7x to 1.3x
+            "dissonance_multiplier": intensity * 1.5,  # More intensity = more dissonance
+            "dynamic_range": (0.3 + intensity * 0.7),  # Wider range with intensity
+            "articulation_sharpness": intensity,  # Sharper attacks with intensity
+            "reverb_reduction": intensity * 0.3,  # Less reverb with intensity (more direct)
+            "rule_break_probability": max(0, (intensity - 0.5) * 2),  # Only break rules at high intensity
+        }
+    
+    def get_emotions_by_intensity(
+        self,
+        category: Optional[EmotionCategory] = None,
+        min_intensity: float = 0.0,
+        max_intensity: float = 1.0,
+    ) -> List[EmotionNode]:
+        """
+        Get emotions filtered by intensity range.
+        
+        Args:
+            category: Optional category filter
+            min_intensity: Minimum intensity (0.0 to 1.0)
+            max_intensity: Maximum intensity (0.0 to 1.0)
+            
+        Returns:
+            List of EmotionNode objects within the intensity range
+        """
+        results = []
+        for node in self.nodes.values():
+            if category and node.category != category:
+                continue
+            if min_intensity <= node.intensity <= max_intensity:
+                results.append(node)
+        return sorted(results, key=lambda n: n.intensity)
+    
     def get_nearby_emotions(
         self,
         node_id: int,
