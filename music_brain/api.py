@@ -81,6 +81,7 @@ from music_brain.voice import (
     get_voice_profile,
 )
 from music_brain.groove.drum_humanizer import DrumHumanizer
+from music_brain.audio.renderer import render_midi_to_audio
 
 
 class _DummyAudioAnalyzer:
@@ -1352,13 +1353,26 @@ if FASTAPI_AVAILABLE:
                         response["audio_path"] = audio_path
                         response["output_path"] = audio_path
                         
-                        # Check if audio file actually exists
+                        # Check if audio file actually exists, if not render it
                         audio_file = Path(audio_path)
-                        if not audio_file.exists():
+                        if not audio_file.exists() and midi_file.exists():
+                            try:
+                                logging.info(f"Rendering MIDI to audio: {midi_file} -> {audio_path}")
+                                rendered_path = render_midi_to_audio(
+                                    str(midi_file),
+                                    audio_path,
+                                    format=request.output_format
+                                )
+                                response["audio_path"] = rendered_path
+                                response["output_path"] = rendered_path
+                                logging.info(f"Successfully rendered audio: {rendered_path}")
+                            except Exception as render_exc:
+                                logging.exception(f"Failed to render MIDI to audio: {render_exc}")
+                                # Continue without audio, but log the error
+                                response["audio_render_error"] = str(render_exc)
+                        elif not audio_file.exists():
                             logging.warning(f"Audio file path returned but file doesn't exist: {audio_path}")
                             logging.info(f"MIDI file exists: {midi_file.exists()}")
-                            # Note: The audio file may need to be generated from MIDI
-                            # For now, we return the path but the client should handle the case where it doesn't exist
                     else:
                         response["output_path"] = result["midi_path"]
                 
@@ -1403,9 +1417,30 @@ if FASTAPI_AVAILABLE:
             # Add file paths to response
             if output_midi and result.get("midi_path"):
                 response["midi_path"] = result["midi_path"]
+                midi_file = Path(result["midi_path"])
+                
                 if output_audio:
-                    response["audio_path"] = result["midi_path"].replace(".mid", f".{request.output_format}")
-                    response["output_path"] = response["audio_path"]
+                    # Construct audio path
+                    audio_path = str(midi_file.with_suffix(f".{request.output_format}"))
+                    response["audio_path"] = audio_path
+                    response["output_path"] = audio_path
+                    
+                    # Render MIDI to audio if needed
+                    audio_file = Path(audio_path)
+                    if not audio_file.exists() and midi_file.exists():
+                        try:
+                            logging.info(f"Rendering MIDI to audio (fallback): {midi_file} -> {audio_path}")
+                            rendered_path = render_midi_to_audio(
+                                str(midi_file),
+                                audio_path,
+                                format=request.output_format
+                            )
+                            response["audio_path"] = rendered_path
+                            response["output_path"] = rendered_path
+                            logging.info(f"Successfully rendered audio: {rendered_path}")
+                        except Exception as render_exc:
+                            logging.exception(f"Failed to render MIDI to audio: {render_exc}")
+                            response["audio_render_error"] = str(render_exc)
                 else:
                     response["output_path"] = result["midi_path"]
             

@@ -1,0 +1,322 @@
+# Master File Inventory
+
+**Generated**: 2026-01-24T02:11:45.956205
+
+## Summary
+
+- **Total Files**: 16,000
+- **Code Files**: 10,000
+- **Documentation Files**: 5,000
+- **Model Files**: 1,000
+- **Total Size**: 1.02 GB
+
+## File Inventory
+
+(See discovery_database.json for complete structured data)
+
+### Code Files (10000)
+
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/ML Kelly Training/train_mps_stub.py`
+  - Value: Critical (Score: 16)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/music_brain/api.py`
+  - Value: Critical (Score: 16)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/scripts/train_model.py`
+  - Value: Critical (Score: 16)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/scripts/idaw_complete_pipeline.py`
+  - Value: Critical (Score: 16)
+- `/Users/seanburdges/MISC CODE/effects.py`
+  - Value: Critical (Score: 15)
+- `/Users/seanburdges/MISC CODE/parrot.py`
+  - Value: Critical (Score: 15)
+- `/Users/seanburdges/MISC CODE/neural_voice.py`
+  - Value: Critical (Score: 15)
+- `/Users/seanburdges/MISC CODE/guitar_fx.py`
+  - Value: Critical (Score: 15)
+- `/Users/seanburdges/MISC CODE/synthesis.py`
+  - Value: Critical (Score: 15)
+- `/Users/seanburdges/Downloads/unified_hub.py`
+  - Value: Critical (Score: 15)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/include/VoiceProcessor.h`
+  - Value: Critical (Score: 15)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/scripts/train_mps_stub.py`
+  - Value: Critical (Score: 15)
+- `/Users/seanburdges/Downloads/plugin_editor.h`
+  - Value: Critical (Score: 14)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/src/ui/MusicTheoryPanel.cpp`
+  - Value: Critical (Score: 14)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/src/plugin/PluginProcessor.h`
+  - Value: Critical (Score: 14)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/src/plugin/PluginProcessor.cpp`
+  - Value: Critical (Score: 14)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/src/ml/MLBridge.cpp`
+  - Value: Critical (Score: 14)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/src/engine/EmotionThesaurusLoader.cpp`
+  - Value: Critical (Score: 14)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/external/JUCE/modules/juce_audio_plugin_client/juce_audio_plugin_client_LV2.cpp`
+  - Value: Critical (Score: 14)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/tests/test_mixer.py`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/mobile/android_aap.py`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/music_brain/emotion_api.py`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/music_brain/orchestral.py`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/music_brain/ALL_KNOWING_INTEGRATION_EXAMPLE.py`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/scripts/server_penta-core.py`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/scripts/server.py`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/scripts/brain_server.py`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/scripts/train_tier2_lora.py`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/scripts/agent.py`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/scripts/pretrain_foundation.py`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/src/ui/MixerConsolePanel.h`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/src/ui/ScoreEntryPanel.h`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/src/ui/MusicTheoryPanel.h`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/src/audio/SpectralAnalyzer.h`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/src/ml/DDSPProcessor.h`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/src/ml/MLFeatureExtractor.h`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/src/ml/PluginLatencyManager.h`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/src/ml/MLBridge.h`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/src/kelly/core/intent_processor.py`
+  - Value: Critical (Score: 13)
+- `/Users/seanburdges/RECOVERY_OPS/test_bridge_integration.py`
+  - Value: Critical (Score: 12)
+- `/Users/seanburdges/MISC CODE/analyzer.py`
+  - Value: Critical (Score: 12)
+- `/Users/seanburdges/MISC CODE/api.py`
+  - Value: Critical (Score: 12)
+- `/Users/seanburdges/MISC CODE/chord_detection.py`
+  - Value: Critical (Score: 12)
+- `/Users/seanburdges/Downloads/MLBridge.h`
+  - Value: Critical (Score: 12)
+- `/Users/seanburdges/Downloads/files (1)/kelly_melody_engine.py`
+  - Value: Critical (Score: 12)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/mcp_workstation/phases.py`
+  - Value: Critical (Score: 12)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/mobile/ios_audio_unit.py`
+  - Value: Critical (Score: 12)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/scripts/train.py`
+  - Value: Critical (Score: 12)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/src/engine/KellyBrain.cpp`
+  - Value: Critical (Score: 12)
+- `/Users/seanburdges/MISC CODE/synthesizer.py`
+  - Value: Critical (Score: 11)
+### Documentation Files (5000)
+
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/COMPLETE_DAW_DOCUMENTATION_WITH_AUDIO.md`
+  - Value: Critical (Score: 10)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/IMPLEMENTATION_PLANS_Critical_High_Priority.md`
+  - Value: Critical (Score: 10)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/comprehensive-system-requirements.md`
+  - Value: Critical (Score: 9)
+- `/Users/seanburdges/KmiDi-1/INTEGRATION_COMPLETE.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/KmiDi-1/ARCHITECTURAL_BOUNDARY_COMPLIANCE_REPORT.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/KmiDi-1/PROJECT_FEATURES_DEBATE.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/KmiDi/CLAUDE_AGENT_GUIDE.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/KmiDi/INTEGRATION_COMPLETE.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/KmiDi/ARCHITECTURAL_BOUNDARY_COMPLIANCE_REPORT.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/KmiDi/PROJECT_FEATURES_DEBATE.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/KmiDi/BUILD_VARIANTS.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/KmiDi/CLAUDE.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Documents/cursor_unspecified_query.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Documents/cursor_docker_compose_container_creatio.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Documents/cursor_generic_multi_ai_cursor_prompt.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/kelly_action_plan.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/CLAUDE_AGENT_GUIDE.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/BUILD_VARIANTS.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/CLAUDE.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/daw-track-import-methods.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/ANALYSIS_PROJECT_STRUCTURE_AND_DOCUMENTATION.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/ANALYSIS_BUILD_SYSTEM.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/KELLY_PROJECT_CONSOLIDATION.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/ANALYSIS_CODE_STRUCTURE.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/AGENT_PROMPT_4_CYCLE_TODO_FIX.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/ROADMAP.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/REFINED_PRIORITY_PLANS.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/daw-ui-patterns.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/mcp-protocol-debugging.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/mcp_todo/README.md`
+  - Value: Critical (Score: 8)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/ROADMAP_18_MONTHS.md`
+  - Value: Critical (Score: 7)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/blockers.md`
+  - Value: Critical (Score: 7)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/README_penta-core.md`
+  - Value: Critical (Score: 7)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/psychoacoustic-sound-design.md`
+  - Value: Critical (Score: 7)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/COMPREHENSIVE_TODO.md`
+  - Value: Critical (Score: 7)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/DEPENDENCY_SETUP_GUIDE.md`
+  - Value: Critical (Score: 7)
+- `/Users/seanburdges/Downloads/KmiDi-1.0.0/docs/ANALYSIS_RECOMMENDATIONS_REPORT.md`
+  - Value: Critical (Score: 7)
+- `/Users/seanburdges/KmiDi-1/CORRECTED_STRUCTURE_ANALYSIS.md`
+  - Value: Critical (Score: 6)
+- `/Users/seanburdges/KmiDi-1/CROSS_EXAMINATION_FINAL_DELIVERABLE.md`
+  - Value: Critical (Score: 6)
+- `/Users/seanburdges/KmiDi-1/KmiDi_FINAL_INTEGRATION_GUIDE.md`
+  - Value: Critical (Score: 6)
+- `/Users/seanburdges/KmiDi-1/THREE_CRITICAL_IMPROVEMENTS.md`
+  - Value: Critical (Score: 6)
+- `/Users/seanburdges/KmiDi-1/FEATURE_TESTING_REPORT.md`
+  - Value: Critical (Score: 6)
+- `/Users/seanburdges/KmiDi-1/INTEGRATION_IMPLEMENTATION_PLAN.md`
+  - Value: Critical (Score: 6)
+- `/Users/seanburdges/KmiDi-1/COMPLETE_PLAN.md`
+  - Value: Critical (Score: 6)
+- `/Users/seanburdges/KmiDi-1/STRUCTURE_CROSS_EXAMINATION_REPORT.md`
+  - Value: Critical (Score: 6)
+- `/Users/seanburdges/KmiDi/OPTIMAL_WORKFLOW_SUMMARY.md`
+  - Value: Critical (Score: 6)
+- `/Users/seanburdges/KmiDi/KMIDI_CONSOLIDATION_SUMMARY.md`
+  - Value: Critical (Score: 6)
+- `/Users/seanburdges/KmiDi/SPECTOCLOUD_IMPLEMENTATION.md`
+  - Value: Critical (Score: 6)
+- `/Users/seanburdges/KmiDi/RECOMMENDATIONS_Improvements.md`
+  - Value: Critical (Score: 6)
+- `/Users/seanburdges/KmiDi/ROADMAP_Implementation.md`
+  - Value: Critical (Score: 6)
+### Model Files (1000)
+
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/harmonypredictor.onnx`
+  - Value: Critical (Score: 6)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/melodytransformer.onnx`
+  - Value: High (Score: 4)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/emotionrecognizer.onnx`
+  - Value: High (Score: 4)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/groovepredictor.onnx`
+  - Value: High (Score: 4)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/dynamicsengine.onnx`
+  - Value: High (Score: 4)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/onnx/spectocloud_vit.onnx`
+  - Value: High (Score: 4)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/harmonypredictor/best.pt`
+  - Value: High (Score: 4)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/spectocloud_vit/best_model.pt`
+  - Value: High (Score: 4)
+- `/Users/seanburdges/_sorted/ML_Datasets/My Mac/Desktop/KmiDi-remote/models/harmonypredictor.onnx`
+  - Value: High (Score: 4)
+- `/Users/seanburdges/_sorted/ML_Datasets/My Mac/Desktop/KmiDi-remote/models/onnx/spectocloud_vit.onnx`
+  - Value: High (Score: 4)
+- `/Users/seanburdges/_sorted/ML_Datasets/My Mac/Desktop/KmiDi-remote/checkpoints/harmonypredictor/best.pt`
+  - Value: High (Score: 4)
+- `/Users/seanburdges/_sorted/ML_Datasets/My Mac/Desktop/KmiDi-remote/checkpoints/spectocloud_vit/best_model.pt`
+  - Value: High (Score: 4)
+- `/Users/seanburdges/KmiDi-1/models/checkpoints/emotionnodeclassifier/best.pt`
+  - Value: High (Score: 4)
+- `/Users/seanburdges/KmiDi-1/python/penta_core/ml/checkpoints/emotionnodeclassifier/best.pt`
+  - Value: High (Score: 4)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/onnx/melody_transformer.onnx`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/onnx/harmony_predictor.onnx`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/onnx/emotion_recognizer.onnx`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/onnx/dynamics_engine.onnx`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/groovepredictor.mlpackage/Data/com.apple.CoreML/model.mlmodel`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/harmonypredictor.mlpackage/Data/com.apple.CoreML/model.mlmodel`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/dynamicsengine.mlpackage/Data/com.apple.CoreML/model.mlmodel`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/melodytransformer.mlpackage/Data/com.apple.CoreML/model.mlmodel`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/coreml/harmony_predictor.mlpackage/Data/com.apple.CoreML/model.mlmodel`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/coreml/spectocloud_vit.mlpackage/Data/com.apple.CoreML/model.mlmodel`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/coreml/dynamics_engine.mlpackage/Data/com.apple.CoreML/model.mlmodel`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/coreml/emotion_recognizer.mlpackage/Data/com.apple.CoreML/model.mlmodel`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/emotionrecognizer.mlpackage/Data/com.apple.CoreML/model.mlmodel`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/melody_transformer/best_model.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/melody_transformer/melody_transformer.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/harmonypredictor/epoch_10.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/harmonypredictor/epoch_5.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/harmonypredictor/epoch_15.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/emotion_recognizer/valence_arousal_model.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/emotion_recognizer/complete_emotion_model.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/emotion_recognizer/best_model.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/dynamicsengine/best.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/melodytransformer/best.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/multimodal_emotion/multimodal_emotion.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/harmony_predictor/best_model.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/harmony_predictor/harmony_transformer.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/emotionrecognizer/best.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/groove_predictor/best_model.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/dynamics_engine/best_model.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/My Mac/Desktop/KmiDi-remote/checkpoints/groovepredictor/best.pt`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/_sorted/Data/My Mac/Desktop/KmiDi-remote/models/groovepredictor.mlpackage/Data/com.apple.CoreML/model.mlmodel`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/_sorted/Data/My Mac/Desktop/KmiDi-remote/models/harmonypredictor.mlpackage/Data/com.apple.CoreML/model.mlmodel`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/_sorted/Data/My Mac/Desktop/KmiDi-remote/models/dynamicsengine.mlpackage/Data/com.apple.CoreML/model.mlmodel`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/_sorted/Data/My Mac/Desktop/KmiDi-remote/models/melodytransformer.mlpackage/Data/com.apple.CoreML/model.mlmodel`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/_sorted/Data/My Mac/Desktop/KmiDi-remote/models/coreml/harmony_predictor.mlpackage/Data/com.apple.CoreML/model.mlmodel`
+  - Value: Medium (Score: 2)
+- `/Users/seanburdges/_sorted/Data/My Mac/Desktop/KmiDi-remote/models/coreml/spectocloud_vit.mlpackage/Data/com.apple.CoreML/model.mlmodel`
+  - Value: Medium (Score: 2)
