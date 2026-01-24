@@ -13,12 +13,13 @@ emotional justification from the intent schema.
 
 import random
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from music_brain.session.intent_schema import (
     RULE_BREAKING_EFFECTS,
     CompleteSongIntent,
 )
+from music_brain.session.production_guides import production_guides
 
 # =================================================================
 # CHORD/KEY MAPPINGS
@@ -567,8 +568,25 @@ def generate_arrangement_extreme_dynamics() -> GeneratedArrangement:
 # =================================================================
 
 
+def _merge_notes(base: List[str], extra: List[str], limit: int = 8) -> List[str]:
+    combined = []
+    seen = set()
+    for note in base + extra:
+        normalized = note.strip().lower()
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        combined.append(note)
+        if len(combined) >= limit:
+            break
+    return combined
+
+
 def generate_production_guidelines(
-    rule_to_break: str, vulnerability: str, imagery: str
+    rule_to_break: str,
+    vulnerability: str,
+    imagery: str,
+    instruments: Optional[List[Dict]] = None,
 ) -> GeneratedProduction:
     """Generate production guidelines based on intent."""
 
@@ -643,6 +661,20 @@ def generate_production_guidelines(
         eq_notes.append("Emphasize presence frequencies (2-5kHz)")
         dynamics_notes.append("Fast attack compression")
 
+    # Merge in production guides (Bass, Guitar, EQ)
+    if production_guides.guides:
+        eq_notes = _merge_notes(eq_notes, production_guides.get_eq_notes(instruments))
+        dynamics_notes = _merge_notes(
+            dynamics_notes,
+            production_guides.get_dynamics_notes(instruments)
+            + production_guides.get_instrument_notes(instruments),
+        )
+        space_notes = _merge_notes(space_notes, production_guides.get_space_notes(instruments))
+        if not vocal_treatment:
+            guide_vocal = production_guides.get_vocal_treatment()
+            if guide_vocal:
+                vocal_treatment = guide_vocal
+
     return GeneratedProduction(
         eq_notes=eq_notes,
         dynamics_notes=dynamics_notes,
@@ -684,6 +716,7 @@ class IntentProcessor:
         self.narrative_arc = self.intent.song_intent.narrative_arc
         self.vulnerability = self.intent.song_intent.vulnerability_scale
         self.imagery = self.intent.song_intent.imagery_texture
+        self.instruments = self.intent.technical_constraints.technical_instruments or []
 
     def generate_harmony(self) -> GeneratedProgression:
         """Generate chord progression based on harmony rule to break."""
@@ -734,7 +767,12 @@ class IntentProcessor:
 
     def generate_production(self) -> GeneratedProduction:
         """Generate production guidelines."""
-        return generate_production_guidelines(self.rule_to_break, self.vulnerability, self.imagery)
+        return generate_production_guidelines(
+            self.rule_to_break,
+            self.vulnerability,
+            self.imagery,
+            instruments=self.instruments,
+        )
 
     def generate_all(self) -> Dict:
         """Generate all elements and return as dict."""
@@ -749,6 +787,9 @@ class IntentProcessor:
                 "narrative": self.narrative_arc,
                 "rule_broken": self.rule_to_break,
                 "justification": self.intent.technical_constraints.rule_breaking_justification,
+                "duration": self.intent.technical_constraints.technical_duration,
+                "structure": self.intent.technical_constraints.technical_structure,
+                "instruments": self.intent.technical_constraints.technical_instruments,
             },
         }
 

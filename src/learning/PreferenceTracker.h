@@ -104,6 +104,12 @@ public:
      */
     void setSaveCallback(std::function<void()> callback) { saveCallback_ = callback; }
 
+    /**
+     * Get preferred adjustments for parameters based on historical modifications.
+     * Returns a map of parameter names to their average adjustment (new - old).
+     */
+    std::map<std::string, float> getPreferredAdjustments() const;
+
 private:
     std::atomic<bool> enabled_{true};
     std::mutex dataMutex_;

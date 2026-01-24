@@ -23,7 +23,7 @@
 #include <RTNeural/RTNeural.h>
 #endif
 
-namespace Kelly {
+namespace kelly {
 namespace ML {
 
 // ============================================================================
@@ -76,12 +76,13 @@ public:
     explicit ModelWrapper(ModelType type);
     ~ModelWrapper() = default;
 
-    bool loadWeights(const juce::File& file);
+    bool loadWeights(const juce::File& file, bool allowFallback);
     std::vector<float> forward(const float* input, size_t inputSize);
 
     bool isLoaded() const { return loaded_; }
     void setEnabled(bool e) { enabled_ = e; }
     bool isEnabled() const { return enabled_; }
+    void setFallbackEnabled(bool enabled) { fallbackEnabled_ = enabled; }
     const ModelSpec& spec() const { return spec_; }
 
 private:
@@ -92,6 +93,8 @@ private:
     std::vector<float> output_;
     bool loaded_ = false;
     bool enabled_ = true;
+    bool fallbackEnabled_ = false;
+    bool fallbackActive_ = false;
 
 #ifdef ENABLE_RTNEURAL
     std::unique_ptr<RTNeural::Model<float>> rtModel_;
@@ -171,4 +174,4 @@ private:
 };
 
 } // namespace ML
-} // namespace Kelly
+} // namespace kelly

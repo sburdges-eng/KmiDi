@@ -1,8 +1,9 @@
 #include "MultiModelProcessor.h"
+#include "ml/ModelRegistry.h"
 #include <cmath>
 #include <fstream>
 
-namespace Kelly {
+namespace kelly {
 namespace ML {
 
 // ============================================================================
@@ -14,11 +15,14 @@ ModelWrapper::ModelWrapper(ModelType type)
     output_.resize(spec_.outputSize, 0.0f);
 }
 
-bool ModelWrapper::loadWeights(const juce::File& file) {
+bool ModelWrapper::loadWeights(const juce::File& file, bool allowFallback) {
+    fallbackEnabled_ = allowFallback;
+    fallbackActive_ = false;
+
     if (!file.existsAsFile()) {
         juce::Logger::writeToLog(juce::String("Model not found: ") + spec_.name +
-                                 " (will use fallback heuristics)");
-        loaded_ = true;  // Mark as loaded to enable fallback mode
+                                 " (skipping model load)");
+        loaded_ = false;
         return false;
     }
 
@@ -31,7 +35,7 @@ bool ModelWrapper::loadWeights(const juce::File& file) {
         if (!jsonStream.is_open()) {
             juce::Logger::writeToLog(juce::String("Failed to open model file: ") +
                                      file.getFullPathName());
-            loaded_ = true;  // Use fallback
+            loaded_ = false;
             return false;
         }
 
@@ -42,7 +46,11 @@ bool ModelWrapper::loadWeights(const juce::File& file) {
             juce::Logger::writeToLog(juce::String("Failed to parse RTNeural model JSON: ") +
                                      file.getFullPathName());
             jsonStream.close();
-            loaded_ = true;  // Use fallback
+            loaded_ = false;
+            fallbackActive_ = fallbackEnabled_;
+            if (fallbackActive_) {
+                loaded_ = true;
+            }
             return false;
         }
 
@@ -61,18 +69,25 @@ bool ModelWrapper::loadWeights(const juce::File& file) {
     catch (const std::exception& e) {
         juce::Logger::writeToLog(juce::String("Exception loading model ") + spec_.name +
                                  ": " + juce::String(e.what()));
-        loaded_ = true;  // Use fallback
+        fallbackActive_ = fallbackEnabled_;
+        loaded_ = fallbackActive_;
         return false;
     }
     catch (...) {
         juce::Logger::writeToLog(juce::String("Unknown exception loading model: ") + spec_.name);
-        loaded_ = true;  // Use fallback
+        fallbackActive_ = fallbackEnabled_;
+        loaded_ = fallbackActive_;
         return false;
     }
 #else
-    loaded_ = true;
-    juce::Logger::writeToLog(juce::String("Loaded model (fallback mode): ") + spec_.name);
-    return true;
+    fallbackActive_ = fallbackEnabled_;
+    loaded_ = fallbackActive_;
+    if (fallbackActive_) {
+        juce::Logger::writeToLog(juce::String("Loaded model (fallback mode): ") + spec_.name);
+        return true;
+    }
+    juce::Logger::writeToLog(juce::String("RTNeural disabled; skipping model: ") + spec_.name);
+    return false;
 #endif
 }
 
@@ -101,22 +116,26 @@ std::vector<float> ModelWrapper::forward(const float* input, size_t inputSize) {
                 size_t copySize = std::min(spec_.outputSize, output_.size());
                 std::memcpy(output_.data(), modelOutput, copySize * sizeof(float));
             } else {
-                // Fallback if getOutputs() not available
-                computeFallback(input);
+                if (fallbackActive_) {
+                    computeFallback(input);
+                }
             }
             return output_;
         }
         catch (const std::exception& e) {
             juce::Logger::writeToLog(juce::String("Exception during inference: ") +
                                      juce::String(e.what()));
-            computeFallback(input);
+            if (fallbackActive_) {
+                computeFallback(input);
+            }
             return output_;
         }
     }
 #endif
 
-    // Fallback heuristic
-    computeFallback(input);
+    if (fallbackActive_) {
+        computeFallback(input);
+    }
     return output_;
 }
 
@@ -181,18 +200,41 @@ MultiModelProcessor::MultiModelProcessor() {
 bool MultiModelProcessor::initialize(const juce::File& modelsDir) {
     std::lock_guard<std::mutex> lock(mutex_);
 
+    auto& registry = ModelRegistry::getInstance();
+    if (modelsDir.isDirectory()) {
+        registry.setModelsDirectory(modelsDir);
+    }
+
     if (!modelsDir.isDirectory()) {
         juce::Logger::writeToLog("Models directory not found: " + modelsDir.getFullPathName());
-        juce::Logger::writeToLog("Will use fallback heuristics for all models");
+        juce::Logger::writeToLog("Models will be marked missing and disabled");
     }
 
     bool anyLoaded = false;
+    const bool allowFallbackOnError = registry.allowFallbackOnError();
+    const bool allowFallbackOnMissing = registry.allowFallbackOnMissing();
 
     for (size_t i = 0; i < models_.size(); ++i) {
-        juce::String filename = juce::String(MODEL_SPECS[i].name).toLowerCase() + ".json";
-        juce::File modelFile = modelsDir.getChildFile(filename);
+        const juce::String modelName = juce::String(MODEL_SPECS[i].name).toLowerCase();
+        auto status = registry.resolveModel(modelName, ".json");
 
-        if (models_[i]->loadWeights(modelFile)) {
+        if (status.status == ModelLoadStatus::Missing) {
+            models_[i]->setEnabled(false);
+            status.message = "Model missing; disabled to avoid heuristic fallback";
+            status.fallbackActive = allowFallbackOnMissing;
+            registry.updateStatus(status);
+            continue;
+        }
+
+        const bool loaded = models_[i]->loadWeights(status.path, allowFallbackOnError);
+        status.status = loaded ? ModelLoadStatus::Loaded : ModelLoadStatus::Failed;
+        status.fallbackActive = !loaded && allowFallbackOnError;
+        if (!loaded && status.message.isEmpty()) {
+            status.message = "Model load failed";
+        }
+        registry.updateStatus(status);
+
+        if (loaded) {
             anyLoaded = true;
         }
     }
@@ -381,4 +423,4 @@ void AsyncMLPipeline::run() {
 }
 
 } // namespace ML
-} // namespace Kelly
+} // namespace kelly

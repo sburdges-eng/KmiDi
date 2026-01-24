@@ -6,6 +6,7 @@ functionality, making it easier to integrate with desktop apps, web services,
 or other interfaces.
 """
 
+import asyncio
 import json
 import logging
 import sys
@@ -13,9 +14,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import uvicorn
-    from fastapi import FastAPI, HTTPException
+    from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.responses import FileResponse
+    from fastapi.responses import FileResponse, JSONResponse
     from pydantic import BaseModel
 
     FASTAPI_AVAILABLE = True
@@ -74,19 +75,7 @@ from music_brain.voice import (
     get_modulation_preset,
     get_voice_profile,
 )
-
-
-class _DummyAudioAnalyzer:
-    """Fallback audio analyzer stub for environments without full deps."""
-
-    def detect_bpm(self, samples, sample_rate):
-        return 120.0, {}
-
-    def detect_key(self, samples, sample_rate):
-        return "C", "major"
-
-    def analyze_audio(self, samples, sample_rate):
-        return {"bpm": 120.0, "key": "C", "mode": "major"}
+from music_brain.api_progress import ProgressTracker
 
 
 class DAiWAPI:
@@ -102,7 +91,7 @@ class DAiWAPI:
         self.auto_tune_processor = AutoTuneProcessor()
         self.voice_modulator = VoiceModulator()
         self.voice_synthesizer = VoiceSynthesizer()
-        self.audio_analyzer = _DummyAudioAnalyzer()
+        self.audio_analyzer = AudioAnalyzer()
         self.drum_humanizer = self._build_humanizer()
         self.user_lyrics: Optional[str] = None
         self.user_lyrics_source: str = "none"
@@ -744,22 +733,39 @@ class DAiWAPI:
         # Extract key and mode from technical.key (format: "F major" or "C minor")
         technical_key = "C"
         technical_mode = "major"
-        if tech.get("key"):
+        if isinstance(tech, dict) and tech.get("key"):
             key_parts = tech["key"].split()
+            technical_key = key_parts[0] if key_parts else "C"
+            if len(key_parts) > 1:
+                technical_mode = key_parts[1].lower()
+        elif hasattr(tech, "key") and tech.key:
+            key_parts = tech.key.split()
             technical_key = key_parts[0] if key_parts else "C"
             if len(key_parts) > 1:
                 technical_mode = key_parts[1].lower()
 
         # Calculate tempo range from BPM
-        bpm = tech.get("bpm") or 82
+        bpm = 82
+        if isinstance(tech, dict):
+            bpm = tech.get("bpm") or 82
+        elif hasattr(tech, "bpm"):
+            bpm = tech.bpm or 82
+            
         tempo_range = (max(60, bpm - 20), min(140, bpm + 20))
+
+        # Handle structure and instruments if provided
+        structure = []
+        if isinstance(tech, dict):
+            structure = tech.get("structure") or []
+        elif hasattr(tech, "structure"):
+            structure = tech.structure or []
 
         # Create CompleteSongIntent
         intent = CompleteSongIntent(
             core_event=request.intent.core_wound or emotional,
             core_longing=request.intent.core_desire or "",
             mood_primary=mood_primary,
-            technical_genre=tech.get("genre") or "",
+            technical_genre=(tech.get("genre") if isinstance(tech, dict) else getattr(tech, "genre", "")) or "",
             technical_tempo_range=tempo_range,
             technical_key=technical_key,
             technical_mode=technical_mode,
@@ -772,6 +778,7 @@ class DAiWAPI:
 
 # Convenience instance
 api = DAiWAPI()
+progress_tracker = ProgressTracker()
 
 __all__ = ["DAiWAPI", "api"]
 
@@ -825,6 +832,15 @@ if FASTAPI_AVAILABLE:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.websocket("/ws/progress/{task_id}")
+    async def progress_ws(websocket: WebSocket, task_id: str):
+        await progress_tracker.connect(task_id, websocket)
+        try:
+            while True:
+                await websocket.receive_text()
+        except WebSocketDisconnect:
+            await progress_tracker.disconnect(task_id, websocket)
 
     @app.get("/")
     async def root():
@@ -1042,13 +1058,7 @@ if FASTAPI_AVAILABLE:
         anchor_density: str = "normal"
         n_particles: int = 1200
 
-    @app.post("/spectocloud/render")
-    async def render_spectocloud(payload: SpectocloudRenderRequest):
-        """
-        Render Spectocloud output (static frame or animation).
-        - For static: mode="static", frame_idx sets which frame to render.
-        - For animation: mode="animation", fps/rotate control output.
-        """
+    def _render_spectocloud_sync(payload: SpectocloudRenderRequest) -> Dict[str, Any]:
         try:
             from music_brain.visualization.spectocloud import Spectocloud  # Lazy import
         except Exception as exc:  # pragma: no cover
@@ -1064,15 +1074,25 @@ if FASTAPI_AVAILABLE:
                 audio_path = Path(payload.audio_file_path)
                 if not audio_path.exists():
                     raise HTTPException(
-                        status_code=400, detail=f"Audio file not found: {payload.audio_file_path}"
+                        status_code=404, detail=f"Audio file not found: {payload.audio_file_path}"
                     )
-                # For now, if audio file provided, we'd need to extract MIDI from it
-                # This is a placeholder - actual implementation would analyze audio and extract MIDI
-                # For now, raise an error suggesting MIDI file instead
-                raise HTTPException(
-                    status_code=400,
-                    detail="Audio file analysis not yet implemented. Please provide midi_file_path or midi_events instead.",
-                )
+                
+                # Analyze audio to extract characteristics for Spectocloud
+                logging.info(f"Analyzing audio for Spectocloud: {audio_path}")
+                analysis = api.analyze_audio_file(str(audio_path))
+                
+                # If no MIDI events provided, try to use detected tempo and beats
+                if not events and "tempo" in analysis:
+                    bpm = analysis["tempo"].get("bpm", 120.0)
+                    duration = analysis["file_info"].get("duration_seconds", 0.0)
+                    
+                    # Create dummy events based on beats for visualization if MIDI is missing
+                    beat_positions = analysis["tempo"].get("beat_positions", [])
+                    events = [
+                        {"time": t, "type": "note_on", "note": 60, "velocity": 100}
+                        for t in beat_positions
+                    ]
+                    duration = duration or (max(beat_positions) if beat_positions else 0.0)
 
             if payload.midi_file_path:
                 parsed_events, parsed_duration = _parse_midi_file(Path(payload.midi_file_path))
@@ -1153,8 +1173,42 @@ if FASTAPI_AVAILABLE:
             logging.exception("spectocloud render failed")
             raise HTTPException(status_code=500, detail=str(exc))
 
-    @app.post("/generate")
-    async def generate_music(request: GenerateRequest):
+    async def _run_spectocloud_task(task_id: str, payload: SpectocloudRenderRequest) -> None:
+        try:
+            await progress_tracker.update(
+                task_id,
+                status="running",
+                stage="rendering_spectocloud",
+                progress=10.0,
+            )
+            result = await asyncio.to_thread(_render_spectocloud_sync, payload)
+            await progress_tracker.update(
+                task_id,
+                status="completed",
+                stage="completed",
+                progress=100.0,
+                result=result,
+            )
+            await progress_tracker.publish(task_id, {"type": "task_complete", "task_id": task_id})
+        except Exception as exc:
+            await progress_tracker.update(
+                task_id,
+                status="failed",
+                stage="error",
+                progress=100.0,
+                error=str(exc),
+            )
+            await progress_tracker.publish(
+                task_id, {"type": "task_error", "task_id": task_id, "error": str(exc)}
+            )
+
+    @app.post("/spectocloud/render")
+    async def render_spectocloud(payload: SpectocloudRenderRequest):
+        task_id = await progress_tracker.create_task()
+        asyncio.create_task(_run_spectocloud_task(task_id, payload))
+        return JSONResponse(status_code=202, content={"status": "accepted", "task_id": task_id})
+
+    def _generate_sync(request: GenerateRequest) -> Dict[str, Any]:
         try:
             # Try to use full intent pipeline if we have advanced parameters
             tech = request.intent.technical
@@ -1170,58 +1224,7 @@ if FASTAPI_AVAILABLE:
                 logging.info("Using full intent pipeline with CompleteSongIntent")
 
                 # Convert request to CompleteSongIntent
-                def _convert_to_intent(req: GenerateRequest) -> CompleteSongIntent:
-                    """Helper to convert request to CompleteSongIntent."""
-                    import time
-
-                    tech = req.intent.technical
-                    emotional = req.intent.emotional_intent or ""
-
-                    mood_primary = emotional
-                    if "(" in emotional:
-                        mood_primary = emotional.split("(")[0].strip()
-
-                    emotion_map = {
-                        "grief": "grief",
-                        "sadness": "grief",
-                        "joy": "tenderness",
-                        "happiness": "tenderness",
-                        "anger": "rage",
-                        "rage": "rage",
-                        "fear": "fear",
-                        "love": "tenderness",
-                        "nostalgia": "nostalgia",
-                        "awe": "awe",
-                    }
-                    for key, value in emotion_map.items():
-                        if key.lower() in emotional.lower():
-                            mood_primary = value
-                            break
-
-                    technical_key = "C"
-                    technical_mode = "major"
-                    if tech and tech.key:
-                        key_parts = tech.key.split()
-                        technical_key = key_parts[0] if key_parts else "C"
-                        if len(key_parts) > 1:
-                            technical_mode = key_parts[1].lower()
-
-                    bpm = tech.bpm if tech and tech.bpm is not None else 82
-                    tempo_range = (max(60, bpm - 20), min(140, bpm + 20))
-
-                    return CompleteSongIntent(
-                        core_event=req.intent.core_wound or emotional,
-                        core_longing=req.intent.core_desire or "",
-                        mood_primary=mood_primary,
-                        technical_genre=tech.genre if tech and tech.genre else "",
-                        technical_tempo_range=tempo_range,
-                        technical_key=technical_key,
-                        technical_mode=technical_mode,
-                        vulnerability_scale=0.5,
-                        created=time.strftime("%Y-%m-%d %H:%M:%S"),
-                    )
-
-                complete_intent = _convert_to_intent(request)
+                complete_intent = api._convert_request_to_complete_intent(request)
 
                 # Process full intent
                 result = api.process_song_intent(complete_intent, output_json=None)
@@ -1288,6 +1291,7 @@ if FASTAPI_AVAILABLE:
                                 length_bars = total_structure_bars
 
                         # Create HarmonyPlan from result
+                        intent_summary = result.get("intent_summary", {})
                         plan = HarmonyPlan(
                             root_note=root_note,
                             mode=mode,
@@ -1296,10 +1300,10 @@ if FASTAPI_AVAILABLE:
                             length_bars=length_bars,
                             chord_symbols=harmony.get("chords", ["C", "Am", "F", "G"]),
                             harmonic_rhythm="1_chord_per_bar",
-                            mood_profile=result.get("intent_summary", {}).get("mood", "neutral"),
+                            mood_profile=intent_summary.get("mood", "neutral"),
                             complexity=0.5,
-                            structure=structure,
-                            instruments=instruments,
+                            structure=intent_summary.get("structure") or structure,
+                            instruments=intent_summary.get("instruments") or instruments,
                         )
 
                         # Render MIDI
@@ -1468,6 +1472,65 @@ if FASTAPI_AVAILABLE:
         except Exception as exc:
             logging.exception("generate failed")
             raise HTTPException(status_code=500, detail=str(exc))
+
+    async def _run_generate_task(task_id: str, request: GenerateRequest) -> None:
+        try:
+            await progress_tracker.update(
+                task_id,
+                status="running",
+                stage="generating",
+                progress=10.0,
+            )
+            response = await asyncio.to_thread(_generate_sync, request)
+            await progress_tracker.update(
+                task_id,
+                status="completed",
+                stage="completed",
+                progress=100.0,
+                result=response,
+            )
+            await progress_tracker.publish(task_id, {"type": "task_complete", "task_id": task_id})
+        except Exception as exc:
+            await progress_tracker.update(
+                task_id,
+                status="failed",
+                stage="error",
+                progress=100.0,
+                error=str(exc),
+            )
+            await progress_tracker.publish(
+                task_id, {"type": "task_error", "task_id": task_id, "error": str(exc)}
+            )
+
+    @app.post("/generate")
+    async def generate_music(request: GenerateRequest):
+        task_id = await progress_tracker.create_task()
+        asyncio.create_task(_run_generate_task(task_id, request))
+        return JSONResponse(status_code=202, content={"status": "accepted", "task_id": task_id})
+
+    @app.get("/generate/status/{task_id}")
+    async def generate_status(task_id: str):
+        task = progress_tracker.get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        return task.to_dict()
+
+    @app.get("/generate/result/{task_id}")
+    async def generate_result(task_id: str):
+        task = progress_tracker.get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        if task.status != "completed":
+            return JSONResponse(status_code=202, content=task.to_dict())
+        return task.result or {}
+
+    @app.delete("/generate/result/{task_id}")
+    async def delete_generate_result(task_id: str):
+        task = progress_tracker.get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        progress_tracker.delete_task(task_id)
+        return {"status": "deleted", "task_id": task_id}
 
     @app.post("/interrogate")
     async def interrogate(request: InterrogateRequest):

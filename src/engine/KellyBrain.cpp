@@ -1,348 +1,556 @@
-#include "engine/KellyBrain.h"
-// KellyBrain.h includes KellyTypes.h, so Wound, EmotionNode, etc. are
-// KellyTypes versions Now we create aliases for the KellyTypes versions before
-// Types.h redefines them
-namespace kelly {
-// Alias KellyTypes versions before Types.h redefines them
-using KellyTypesWound = Wound;
-using KellyTypesEmotionNode = EmotionNode;
-using KellyTypesIntentResult = IntentResult;
-using KellyTypesRuleBreak = RuleBreak;
-using KellyTypesRuleBreakType = RuleBreakType;
-} // namespace kelly
-
-// Now include IntentPipeline.h - this brings in Types.h which redefines the
-// types. Must include before using IntentPipeline as complete type.
-#include "common/Types.h" // Explicit include - this redefines Wound, EmotionNode, etc.
-#include "engine/IntentPipeline.h" // Full definition needed for std::unique_ptr<IntentPipeline>
+#include "KellyBrain.h"
+#include <fstream>
+#include <sstream>
 #include <algorithm>
-#include <cctype>
+#include <cmath>
+#include <random>
+#include <JuceHeader.h>
 
 namespace kelly {
 
-// Helper function to convert EmotionCategory enum to string
-static std::string categoryEnumToString(EmotionCategory cat) {
-  const char *catNames[] = {"Joy",      "Sadness", "Anger", "Fear",
-                            "Surprise", "Disgust", "Trust", "Anticipation"};
-  int catIdx = static_cast<int>(cat);
-  if (catIdx >= 0 && catIdx < 8) {
-    return std::string(catNames[catIdx]);
-  }
-  return "Joy";
+// =============================================================================
+// EmotionThesaurus Implementation
+// =============================================================================
+
+EmotionThesaurus::EmotionThesaurus() {
+    initializeDefault();
 }
 
-// Conversion helpers between KellyTypes.h and Types.h structures
-// These work by manually copying fields between compatible structures
-namespace {
-// Convert KellyTypes::Wound to Types::Wound
-Wound convertToLegacyWound(const KellyTypesWound &unified) {
-  Wound legacy; // This is Types::Wound now
-  legacy.description = unified.description;
-  legacy.intensity = unified.intensity; // Use compatibility field
-  legacy.source = unified.source;       // Use compatibility field
-  return legacy;
-}
-
-// Convert Types::IntentResult to KellyTypes::IntentResult
-KellyTypesIntentResult
-convertFromLegacyIntentResult(const IntentResult &legacy) {
-  KellyTypesIntentResult unified; // This is KellyTypes::IntentResult
-
-  // Map wound to sourceWound
-  unified.sourceWound.description = legacy.sourceWound.description;
-  unified.sourceWound.intensity = legacy.sourceWound.intensity;
-  unified.sourceWound.urgency =
-      legacy.sourceWound.intensity; // urgency = intensity
-  unified.sourceWound.source = legacy.sourceWound.source;
-  unified.sourceWound.desire = legacy.sourceWound.source;
-
-  // Map emotion to sourceWound.primaryEmotion and also set emotion
-  // compatibility field
-  unified.sourceWound.primaryEmotion.id = legacy.emotion.id;
-  unified.sourceWound.primaryEmotion.name = legacy.emotion.name;
-  unified.sourceWound.primaryEmotion.categoryEnum = legacy.emotion.categoryEnum;
-  unified.sourceWound.primaryEmotion.category =
-      categoryEnumToString(legacy.emotion.categoryEnum);
-  unified.sourceWound.primaryEmotion.valence = legacy.emotion.valence;
-  unified.sourceWound.primaryEmotion.arousal = legacy.emotion.arousal;
-  unified.sourceWound.primaryEmotion.dominance = legacy.emotion.dominance;
-  unified.sourceWound.primaryEmotion.intensity = legacy.emotion.intensity;
-
-  // Also set emotion compatibility field (should match primaryEmotion)
-  unified.emotion.id = legacy.emotion.id;
-  unified.emotion.name = legacy.emotion.name;
-  unified.emotion.categoryEnum = legacy.emotion.categoryEnum;
-  unified.emotion.category = categoryEnumToString(legacy.emotion.categoryEnum);
-  unified.emotion.valence = legacy.emotion.valence;
-  unified.emotion.arousal = legacy.emotion.arousal;
-  unified.emotion.dominance = legacy.emotion.dominance;
-  unified.emotion.intensity = legacy.emotion.intensity;
-
-  // Set tempo from tempoBpm (convert BPM to modifier)
-  unified.tempo = static_cast<float>(unified.tempoBpm) / 120.0f;
-
-  // Map musical parameters
-  unified.mode = legacy.mode;
-  unified.tempoBpm =
-      static_cast<int>(120 * legacy.tempo); // tempo is a multiplier
-  unified.syncopationLevel = legacy.syncopationLevel;
-  unified.humanization = legacy.humanization;
-  unified.dynamicRange = legacy.dynamicRange;
-  unified.allowChromaticism = legacy.allowDissonance;
-
-  // Convert rule breaks
-  unified.ruleBreaks.clear();
-  for (const auto &rb : legacy.ruleBreaks) {
-    KellyTypesRuleBreak unifiedRb; // KellyTypes::RuleBreak
-    // Map RuleBreakType enum values
-    // legacy.ruleBreaks uses Types.h RuleBreakType (Harmony, Rhythm, etc.)
-    // unified uses KellyTypes.h RuleBreakType (ModalMixture, CrossRhythm, etc.)
-    // At this point, RuleBreakType refers to Types.h version (included last)
-    // So we use integer values to map to KellyTypes version
-    switch (rb.type) {
-    case RuleBreakType::ModalMixture: // Types.h version
-      unifiedRb.type = static_cast<KellyTypesRuleBreakType>(1); // ModalMixture
-      break;
-    case RuleBreakType::CrossRhythm:
-      unifiedRb.type = static_cast<KellyTypesRuleBreakType>(4); // CrossRhythm
-      break;
-    case RuleBreakType::DynamicContrast:
-      unifiedRb.type =
-          static_cast<KellyTypesRuleBreakType>(6); // DynamicContrast
-      break;
-    case RuleBreakType::RegisterShift:
-      unifiedRb.type = static_cast<KellyTypesRuleBreakType>(5); // RegisterShift
-      break;
-    case RuleBreakType::HarmonicAmbiguity:
-      unifiedRb.type =
-          static_cast<KellyTypesRuleBreakType>(7); // HarmonicAmbiguity
-      break;
-    default:
-      unifiedRb.type = static_cast<KellyTypesRuleBreakType>(0); // None
+void EmotionThesaurus::initializeDefault() {
+    // Initialize 6 base emotions with sub-emotions
+    // Full 216-node system: 6 base × 6 sub × 6 sub-sub
+    
+    struct BaseEmotion {
+        EmotionCategory category;
+        std::string name;
+        float valence;
+        float arousal;
+        std::vector<std::string> subEmotions;
+    };
+    
+    std::vector<BaseEmotion> bases = {
+        {EmotionCategory::Joy, "joy", 0.8f, 0.6f, 
+         {"happiness", "contentment", "elation", "pride", "optimism", "relief"}},
+        {EmotionCategory::Sadness, "sadness", -0.7f, 0.3f,
+         {"grief", "melancholy", "despair", "loneliness", "disappointment", "regret"}},
+        {EmotionCategory::Anger, "anger", -0.5f, 0.8f,
+         {"rage", "frustration", "irritation", "resentment", "defiance", "bitterness"}},
+        {EmotionCategory::Fear, "fear", -0.6f, 0.7f,
+         {"anxiety", "terror", "dread", "worry", "nervousness", "panic"}},
+        {EmotionCategory::Surprise, "surprise", 0.1f, 0.8f,
+         {"astonishment", "amazement", "shock", "wonder", "confusion", "disbelief"}},
+        {EmotionCategory::Disgust, "disgust", -0.6f, 0.4f,
+         {"revulsion", "contempt", "loathing", "aversion", "disapproval", "distaste"}}
+    };
+    
+    int id = 0;
+    for (size_t layer = 0; layer < bases.size(); ++layer) {
+        const auto& base = bases[layer];
+        
+        for (size_t sub = 0; sub < base.subEmotions.size(); ++sub) {
+            // Create sub-emotion node
+            EmotionNode node;
+            node.id = id++;
+            node.name = base.subEmotions[sub];
+            node.category = base.name;
+            node.categoryEnum = base.category;
+            node.layerIndex = static_cast<int>(layer);
+            node.subIndex = static_cast<int>(sub);
+            node.subSubIndex = 0;
+            
+            // Vary valence/arousal slightly from base
+            float subVariance = (static_cast<float>(sub) - 2.5f) / 10.0f;
+            node.valence = std::clamp(base.valence + subVariance, -1.0f, 1.0f);
+            node.arousal = std::clamp(base.arousal + subVariance * 0.5f, 0.0f, 1.0f);
+            node.dominance = 0.5f + subVariance;
+            node.intensity = 0.5f + std::abs(subVariance);
+            
+            // Set musical attributes based on emotion
+            node.musicalAttributes.tempoModifier = 0.8f + node.arousal * 0.4f;
+            node.musicalAttributes.mode = (node.valence < 0) ? "minor" : "major";
+            node.musicalAttributes.dynamics = 0.3f + node.arousal * 0.5f;
+            node.musicalAttributes.articulation = 0.5f - node.arousal * 0.3f;
+            node.musicalAttributes.dissonance = std::max(0.0f, -node.valence * 0.5f);
+            
+            // Suggest rule breaks
+            if (node.name == "grief" || node.name == "melancholy") {
+                node.musicalAttributes.suggestedRuleBreaks.push_back(RuleBreakType::ModalMixture);
+            }
+            if (node.name == "defiance" || node.name == "rage") {
+                node.musicalAttributes.suggestedRuleBreaks.push_back(RuleBreakType::ParallelMotion);
+            }
+            if (node.name == "anxiety" || node.name == "dread") {
+                node.musicalAttributes.suggestedRuleBreaks.push_back(RuleBreakType::UnresolvedTension);
+            }
+            
+            nodes_[node.id] = node;
+            nameIndex_[node.name] = node.id;
+        }
     }
-    unifiedRb.description = rb.description;
-    unifiedRb.justification = rb.justification;
-    unifiedRb.intensity = rb.intensity;
-    unified.ruleBreaks.push_back(unifiedRb);
-  }
-
-  // Set defaults for unified-only fields
-  unified.key = "C";
-  unified.timeSignature = {4, 4};
-  unified.chordProgression.clear();
-  unified.melodicRange = 0.6f;
-  unified.leapProbability = 0.3f;
-  unified.baseVelocity = 0.6f;
-  unified.productionNotes.clear();
-  unified.confidence = 0.8f;
-
-  return unified;
-}
-} // namespace
-
-KellyBrain::KellyBrain()
-    : pipeline_(std::make_unique<IntentPipeline>())
-    , midiGenerator_(std::make_unique<MidiGenerator>()) {
-  // IntentPipeline and MidiGenerator are initialized
+    
+    // Add common synonyms
+    synonymIndex_["sad"] = nameIndex_["sadness"];
+    synonymIndex_["happy"] = nameIndex_["happiness"];
+    synonymIndex_["angry"] = nameIndex_["anger"];
+    synonymIndex_["scared"] = nameIndex_["fear"];
+    synonymIndex_["worried"] = nameIndex_["anxiety"];
+    synonymIndex_["hopeless"] = nameIndex_["despair"];
+    synonymIndex_["lonely"] = nameIndex_["loneliness"];
+    synonymIndex_["mad"] = nameIndex_["frustration"];
+    synonymIndex_["upset"] = nameIndex_["disappointment"];
+    synonymIndex_["devastated"] = nameIndex_["grief"];
+    synonymIndex_["heartbroken"] = nameIndex_["grief"];
+    synonymIndex_["lost"] = nameIndex_["loneliness"];
 }
 
-bool KellyBrain::initialize(const std::string &dataPath) {
-  // The existing IntentPipeline already initializes EmotionThesaurus
-  // This could load additional data if needed
-  initialized_ = true;
-  return true;
+const EmotionNode* EmotionThesaurus::findByName(const std::string& name) const {
+    auto it = nameIndex_.find(name);
+    if (it != nameIndex_.end()) {
+        auto nodeIt = nodes_.find(it->second);
+        if (nodeIt != nodes_.end()) {
+            return &nodeIt->second;
+        }
+    }
+    return nullptr;
 }
 
-KellyTypesIntentResult KellyBrain::fromWound(const KellyTypesWound &wound) {
-  // Wound parameter is KellyTypes::Wound (from header via alias)
-  // Convert to Types::Wound for IntentPipeline
-  Wound legacyWound = convertToLegacyWound(wound); // Wound here is Types::Wound
-
-  // Call IntentPipeline with legacy types
-  IntentResult legacyResult =
-      pipeline_->process(legacyWound); // IntentResult is Types::IntentResult
-
-  // Convert result back to unified types (KellyTypes::IntentResult)
-  return convertFromLegacyIntentResult(legacyResult);
+const EmotionNode* EmotionThesaurus::findById(int id) const {
+    auto it = nodes_.find(id);
+    return (it != nodes_.end()) ? &it->second : nullptr;
 }
 
-KellyTypesIntentResult KellyBrain::fromJourney(const SideA &current,
-                                               const SideB &desired) {
-  // SideA/SideB parameters are KellyTypes versions (from header)
-  // Types.h has SideA and SideB with same structure, so we can use them
-  // directly Both have: description, intensity, emotionId
-  SideA legacyCurrent; // Types::SideA
-  legacyCurrent.description = current.description;
-  legacyCurrent.intensity = current.intensity;
-  legacyCurrent.emotionId = current.emotionId;
-
-  SideB legacyDesired; // Types::SideB
-  legacyDesired.description = desired.description;
-  legacyDesired.intensity = desired.intensity;
-  legacyDesired.emotionId = desired.emotionId;
-
-  // Call IntentPipeline
-  IntentResult legacyResult = pipeline_->processJourney(
-      legacyCurrent, legacyDesired); // Types::IntentResult
-
-  // Convert result back to unified types
-  return convertFromLegacyIntentResult(legacyResult);
+const EmotionNode* EmotionThesaurus::findByPosition(int layer, int sub, int subSub) const {
+    for (const auto& [id, node] : nodes_) {
+        if (node.layerIndex == layer && node.subIndex == sub && node.subSubIndex == subSub) {
+            return &node;
+        }
+    }
+    return nullptr;
 }
 
-KellyTypesIntentResult KellyBrain::fromText(const std::string &description) {
-  // Create a wound from text description
-  Wound wound = descriptionToWound(description);
-  return fromWound(wound);
+const EmotionNode* EmotionThesaurus::resolveVernacular(const std::string& vernacular) const {
+    // Try direct name first
+    if (auto node = findByName(vernacular)) return node;
+    
+    // Try synonyms
+    auto it = synonymIndex_.find(vernacular);
+    if (it != synonymIndex_.end()) {
+        return findById(it->second);
+    }
+    
+    // Lowercase search
+    std::string lower = vernacular;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    
+    if (auto node = findByName(lower)) return node;
+    
+    it = synonymIndex_.find(lower);
+    if (it != synonymIndex_.end()) {
+        return findById(it->second);
+    }
+    
+    return nullptr;
 }
 
-KellyTypesIntentResult KellyBrain::fromEmotion(const std::string &emotionName,
-                                               float intensity) {
-  // Look up emotion in thesaurus (returns Types.h EmotionNode)
-  auto emotionOpt = pipeline_->thesaurus().findByName(emotionName);
-  if (emotionOpt) {
-    // Create wound from emotion
-    KellyTypesWound wound;
-    wound.description = "Feeling " + emotionName;
-    wound.urgency = intensity;
-    wound.intensity = intensity;
-    wound.source = "emotion_selection";
-    wound.expression = "Emotion: " + emotionName;
-
-    // Set primary emotion from thesaurus result
-    wound.primaryEmotion.id = emotionOpt->id;
-    wound.primaryEmotion.name = emotionOpt->name;
-    wound.primaryEmotion.categoryEnum =
-        emotionOpt->categoryEnum; // Use categoryEnum, not category
-    wound.primaryEmotion.category =
-        categoryEnumToString(emotionOpt->categoryEnum);
-    wound.primaryEmotion.valence = emotionOpt->valence;
-    wound.primaryEmotion.arousal = emotionOpt->arousal;
-    wound.primaryEmotion.dominance = emotionOpt->dominance;
-    wound.primaryEmotion.intensity = emotionOpt->intensity;
-
-    return fromWound(wound);
-  }
-
-  // Fallback: create basic wound
-  return fromText("Feeling " + emotionName);
+std::vector<const EmotionNode*> EmotionThesaurus::findByValence(float minVal, float maxVal) const {
+    std::vector<const EmotionNode*> result;
+    for (const auto& [id, node] : nodes_) {
+        if (node.valence >= minVal && node.valence <= maxVal) {
+            result.push_back(&node);
+        }
+    }
+    return result;
 }
 
-GeneratedMidi KellyBrain::generateMidi(const KellyTypesIntentResult &intent,
-                                       int bars) {
-  // Fallback if generator is not available
-  if (!midiGenerator_) {
-    GeneratedMidi fallback;
-    fallback.tempoBpm = intent.tempoBpm;
-    fallback.bars = bars;
-    fallback.key = intent.key;
-    fallback.mode = intent.mode;
-    fallback.lengthInBeats = static_cast<double>(bars) * 4.0;
-    fallback.bpm = static_cast<float>(intent.tempoBpm);
+std::vector<const EmotionNode*> EmotionThesaurus::findByArousal(float minArousal, float maxArousal) const {
+    std::vector<const EmotionNode*> result;
+    for (const auto& [id, node] : nodes_) {
+        if (node.arousal >= minArousal && node.arousal <= maxArousal) {
+            result.push_back(&node);
+        }
+    }
+    return result;
+}
+
+float EmotionThesaurus::distance(const EmotionNode& a, const EmotionNode& b) const {
+    float dv = a.valence - b.valence;
+    float da = a.arousal - b.arousal;
+    float dd = a.dominance - b.dominance;
+    return std::sqrt(dv*dv + da*da + dd*dd);
+}
+
+std::vector<const EmotionNode*> EmotionThesaurus::findNearby(const EmotionNode& node, float threshold) const {
+    std::vector<const EmotionNode*> result;
+    for (const auto& [id, other] : nodes_) {
+        if (id != node.id && distance(node, other) <= threshold) {
+            result.push_back(&other);
+        }
+    }
+    return result;
+}
+
+std::vector<const EmotionNode*> EmotionThesaurus::getCategory(EmotionCategory category) const {
+    std::vector<const EmotionNode*> result;
+    for (const auto& [id, node] : nodes_) {
+        if (node.categoryEnum == category) {
+            result.push_back(&node);
+        }
+    }
+    return result;
+}
+
+bool EmotionThesaurus::loadFromFile(const std::string& path) {
+    std::ifstream file(path);
+    if (!file.is_open()) return false;
+    
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    return loadFromJson(buffer.str());
+}
+
+bool EmotionThesaurus::loadFromJson(const std::string& json) {
+    try {
+        auto parsed = juce::JSON::parse(json);
+        if (!parsed.isObject()) return false;
+
+        auto nodes = parsed.getProperty("emotions");
+        if (nodes.isArray()) {
+            for (int i = 0; i < nodes.size(); ++i) {
+                auto nodeVar = nodes[i];
+                if (nodeVar.isObject()) {
+                    EmotionNode node;
+                    node.id = static_cast<int>(nodeVar.getProperty("id"));
+                    node.name = nodeVar.getProperty("name").toString().toStdString();
+                    node.category = nodeVar.getProperty("category").toString().toStdString();
+                    node.valence = static_cast<float>(nodeVar.getProperty("valence"));
+                    node.arousal = static_cast<float>(nodeVar.getProperty("arousal"));
+                    node.dominance = static_cast<float>(nodeVar.getProperty("dominance"));
+                    node.intensity = static_cast<float>(nodeVar.getProperty("intensity"));
+                    
+                    // Layer/Sub/Sub-sub position
+                    node.layerIndex = static_cast<int>(nodeVar.getProperty("layer"));
+                    node.subIndex = static_cast<int>(nodeVar.getProperty("sub"));
+                    node.subSubIndex = static_cast<int>(nodeVar.getProperty("sub_sub"));
+
+                    nodes_[node.id] = node;
+                    nameIndex_[node.name] = node.id;
+                }
+            }
+            return true;
+        }
+    } catch (...) {
+        return false;
+    }
+    return false;
+}
+
+// =============================================================================
+// IntentPipeline Implementation
+// =============================================================================
+
+IntentPipeline::IntentPipeline() 
+    : thesaurus_(std::make_shared<EmotionThesaurus>()) {
+    enabledRuleBreaks_.fill(true);
+    ruleBreakIntensities_.fill(0.5f);
+}
+
+IntentPipeline::IntentPipeline(std::shared_ptr<EmotionThesaurus> thesaurus)
+    : thesaurus_(std::move(thesaurus)) {
+    enabledRuleBreaks_.fill(true);
+    ruleBreakIntensities_.fill(0.5f);
+}
+
+EmotionNode IntentPipeline::resolveEmotion(const Wound& wound) {
+    // Try to find emotion from wound description
+    if (auto node = thesaurus_->resolveVernacular(wound.expression)) {
+        return *node;
+    }
+    
+    // Parse description for emotion keywords
+    std::string desc = wound.description;
+    std::transform(desc.begin(), desc.end(), desc.begin(), ::tolower);
+    
+    std::vector<std::pair<std::string, const EmotionNode*>> matches;
+    
+    // Check for emotion keywords
+    for (const auto& keyword : {"grief", "loss", "sad", "angry", "fear", "joy", "love"}) {
+        if (desc.find(keyword) != std::string::npos) {
+            if (auto node = thesaurus_->resolveVernacular(keyword)) {
+                matches.push_back({keyword, node});
+            }
+        }
+    }
+    
+    if (!matches.empty()) {
+        return *matches[0].second;
+    }
+    
+    // Default to melancholy for unknown wounds
+    if (auto node = thesaurus_->findByName("melancholy")) {
+        return *node;
+    }
+    
+    // Fallback
+    EmotionNode fallback;
+    fallback.name = "melancholy";
+    fallback.valence = -0.5f;
+    fallback.arousal = 0.3f;
     return fallback;
-  }
-
-  // Prepare intent for MidiGenerator (sync emotion and tempo modifier)
-  IntentResult intentForGenerator = intent;
-  intentForGenerator.emotion = intent.sourceWound.primaryEmotion;
-  intentForGenerator.tempo =
-      static_cast<float>(intent.tempoBpm) / 120.0f; // Normalize around 120 BPM
-
-  const float complexity = 0.5f; // TODO: derive from intent when available
-  const float humanize = intent.humanization;
-  const float feel = 0.0f; // Placeholder mapping; can derive from syncopation
-  const float dynamics = intent.dynamicRange;
-
-  GeneratedMidi result = midiGenerator_->generate(
-      intentForGenerator, bars, complexity, humanize, feel, dynamics);
-
-  // Ensure metadata is populated
-  result.tempoBpm = intent.tempoBpm;
-  result.bars = bars;
-  result.key = intent.key;
-  result.mode = intent.mode;
-  result.lengthInBeats = static_cast<double>(bars) * 4.0;
-  result.bpm = static_cast<float>(intent.tempoBpm);
-
-  return result;
 }
 
-GeneratedMidi KellyBrain::generateMidiFromWound(const KellyTypesWound &wound,
-                                                int bars) {
-  KellyTypesIntentResult result = fromWound(wound);
-  return generateMidi(result, bars);
+std::vector<RuleBreak> IntentPipeline::determineRuleBreaks(
+    const EmotionNode& emotion, const Wound& wound) {
+    
+    std::vector<RuleBreak> breaks;
+    
+    // Add suggested rule breaks from emotion
+    for (auto type : emotion.musicalAttributes.suggestedRuleBreaks) {
+        size_t idx = static_cast<size_t>(type);
+        if (enabledRuleBreaks_[idx]) {
+            RuleBreak rb;
+            rb.type = type;
+            rb.intensity = ruleBreakIntensities_[idx] * emotion.intensity;
+            rb.justification = "Emotional authenticity for " + emotion.name;
+            
+            switch (type) {
+                case RuleBreakType::ModalMixture:
+                    rb.description = "Borrow chords from parallel minor/major";
+                    break;
+                case RuleBreakType::ParallelMotion:
+                    rb.description = "Move voices in parallel (defy counterpoint)";
+                    break;
+                case RuleBreakType::UnresolvedTension:
+                    rb.description = "Leave dissonance unresolved";
+                    break;
+                default:
+                    rb.description = ruleBreakToString(type);
+            }
+            
+            breaks.push_back(rb);
+        }
+    }
+    
+    // Check wound urgency for additional breaks
+    if (wound.urgency > 0.7f && enabledRuleBreaks_[static_cast<size_t>(RuleBreakType::DynamicContrast)]) {
+        RuleBreak rb;
+        rb.type = RuleBreakType::DynamicContrast;
+        rb.intensity = wound.urgency;
+        rb.description = "Extreme dynamic shifts";
+        rb.justification = "High emotional urgency";
+        breaks.push_back(rb);
+    }
+    
+    return breaks;
 }
 
-KellyTypesEmotionNode
-KellyBrain::resolveEmotionByName(const std::string &emotionName) {
-  // Try to find emotion in thesaurus (returns Types.h EmotionNode)
-  auto emotionOpt = pipeline_->thesaurus().findByName(emotionName);
-  if (emotionOpt) {
-    // Convert Types.h EmotionNode to KellyTypes.h EmotionNode
-    KellyTypesEmotionNode unified; // KellyTypes::EmotionNode
-    unified.id = emotionOpt->id;
-    unified.name = emotionOpt->name;
-    unified.categoryEnum =
-        emotionOpt->categoryEnum; // Use categoryEnum, not category
-    unified.category = categoryEnumToString(emotionOpt->categoryEnum);
-    unified.valence = emotionOpt->valence;
-    unified.arousal = emotionOpt->arousal;
-    unified.dominance = emotionOpt->dominance;
-    unified.intensity = emotionOpt->intensity;
-    unified.relatedEmotions = emotionOpt->relatedEmotions;
-    // Set defaults for unified-only fields
-    unified.synonyms.clear();
-    unified.layerIndex = 0;
-    unified.subIndex = 0;
-    unified.subSubIndex = 0;
-    return unified;
-  }
-
-  // Fallback: create a basic emotion node (KellyTypes::EmotionNode)
-  KellyTypesEmotionNode fallback;
-  fallback.name = emotionName;
-  fallback.intensity = 0.5f;
-  fallback.valence = 0.0f;
-  fallback.arousal = 0.5f;
-  fallback.dominance = 0.5f;
-  fallback.categoryEnum = static_cast<EmotionCategory>(0); // Joy = 0
-  fallback.category = "Joy";
-
-  return fallback;
+std::vector<std::string> IntentPipeline::generateProgression(
+    const EmotionNode& emotion, const std::vector<RuleBreak>& breaks) {
+    
+    std::vector<std::string> progression;
+    bool useBorrowed = false;
+    
+    for (const auto& rb : breaks) {
+        if (rb.type == RuleBreakType::ModalMixture) {
+            useBorrowed = true;
+            break;
+        }
+    }
+    
+    // Generate based on valence
+    if (emotion.valence > 0.3f) {
+        // Positive: I-V-vi-IV
+        progression = {"I", "V", "vi", "IV"};
+    } else if (emotion.valence > -0.3f) {
+        // Neutral/bittersweet: I-V-vi-iv (borrowed iv)
+        progression = useBorrowed ? 
+            std::vector<std::string>{"I", "V", "vi", "iv"} :
+            std::vector<std::string>{"I", "IV", "vi", "V"};
+    } else {
+        // Negative: vi-IV-I-V or i-bVI-bIII-bVII
+        progression = useBorrowed ?
+            std::vector<std::string>{"i", "bVI", "bIII", "bVII"} :
+            std::vector<std::string>{"vi", "IV", "I", "V"};
+    }
+    
+    return progression;
 }
 
-std::string KellyBrain::woundToDescription(const KellyTypesWound &wound) {
-  if (!wound.expression.empty()) {
+MusicalAttributes IntentPipeline::deriveAttributes(const EmotionNode& emotion) {
+    return emotion.musicalAttributes;
+}
+
+IntentResult IntentPipeline::processWound(const Wound& wound) {
+    EmotionNode emotion = resolveEmotion(wound);
+    emotion = wound.primaryEmotion.id != 0 ? wound.primaryEmotion : emotion;
+    
+    auto ruleBreaks = determineRuleBreaks(emotion, wound);
+    auto progression = generateProgression(emotion, ruleBreaks);
+    auto attributes = deriveAttributes(emotion);
+    
+    IntentResult result;
+    result.key = defaultKey_;
+    result.mode = attributes.mode;
+    result.tempoBpm = static_cast<int>(defaultTempo_ * attributes.tempoModifier);
+    result.chordProgression = progression;
+    result.ruleBreaks = ruleBreaks;
+    
+    result.melodicRange = 0.5f + emotion.arousal * 0.3f;
+    result.leapProbability = emotion.arousal * 0.4f;
+    result.allowChromaticism = attributes.dissonance > 0.3f;
+    
+    result.syncopationLevel = emotion.arousal * 0.5f;
+    result.humanization = 0.1f + (1.0f - emotion.arousal) * 0.1f;
+    
+    result.baseVelocity = attributes.dynamics;
+    result.dynamicRange = emotion.intensity * 0.5f;
+    
+    result.sourceWound = wound;
+    result.confidence = 0.8f;
+    
+    // Production notes
+    if (emotion.valence < -0.3f) {
+        result.productionNotes.push_back("Consider sparse arrangement");
+        result.productionNotes.push_back("Room for breath between phrases");
+    }
+    if (emotion.arousal > 0.6f) {
+        result.productionNotes.push_back("Build energy through arrangement");
+    }
+    
+    return result;
+}
+
+IntentResult IntentPipeline::processEmotion(const EmotionNode& emotion, float intensity) {
+    Wound wound;
+    wound.description = "Feeling " + emotion.name;
+    wound.urgency = intensity;
+    wound.primaryEmotion = emotion;
+    wound.primaryEmotion.intensity = intensity;
+    
+    return processWound(wound);
+}
+
+IntentResult IntentPipeline::processText(const std::string& description) {
+    Wound wound;
+    wound.description = description;
+    wound.urgency = 0.5f;
+    
+    return processWound(wound);
+}
+
+void IntentPipeline::enableRuleBreak(RuleBreakType type, bool enabled) {
+    enabledRuleBreaks_[static_cast<size_t>(type)] = enabled;
+}
+
+void IntentPipeline::setRuleBreakIntensity(RuleBreakType type, float intensity) {
+    ruleBreakIntensities_[static_cast<size_t>(type)] = std::clamp(intensity, 0.0f, 1.0f);
+}
+
+// =============================================================================
+// KellyBrain Implementation
+// =============================================================================
+
+KellyBrain::KellyBrain() 
+    : pipeline_(std::make_unique<IntentPipeline>()) {}
+
+bool KellyBrain::initialize(const std::string& dataPath) {
+    // Load emotion data if available
+    std::string emotionPath = dataPath + "/emotions.json";
+    pipeline_->thesaurus().loadFromFile(emotionPath);
+    
+    initialized_ = true;
+    return true;
+}
+
+IntentResult KellyBrain::fromWound(const Wound& wound) {
+    return pipeline_->processWound(wound);
+}
+
+IntentResult KellyBrain::fromText(const std::string& description) {
+    return pipeline_->processText(description);
+}
+
+IntentResult KellyBrain::fromEmotion(const std::string& emotionName, float intensity) {
+    if (auto node = pipeline_->thesaurus().resolveVernacular(emotionName)) {
+        return pipeline_->processEmotion(*node, intensity);
+    }
+    
+    // Fallback
+    EmotionNode fallback;
+    fallback.name = emotionName;
+    fallback.valence = 0.0f;
+    fallback.arousal = 0.5f;
+    fallback.intensity = intensity;
+    return pipeline_->processEmotion(fallback, intensity);
+}
+
+GeneratedMidi KellyBrain::generateMidi(const IntentResult& intent, int bars) {
+    GeneratedMidi result;
+    result.tempoBpm = intent.tempoBpm;
+    result.bars = bars;
+    result.key = intent.key;
+    result.mode = intent.mode;
+    
+    // Helper to convert Roman numerals to symbols
+    auto romanToSymbol = [&](const std::string& roman) {
+        // Simple mapping for common chords
+        std::string symbol = roman;
+        if (roman == "I") symbol = intent.key;
+        else if (roman == "IV") {
+            int rootIdx = (noteNameToMidi(intent.key + "4") + 5) % 12;
+            symbol = midiNoteToName(rootIdx + 48).substr(0, midiNoteToName(rootIdx + 48).size() - 1);
+        }
+        else if (roman == "V") {
+            int rootIdx = (noteNameToMidi(intent.key + "4") + 7) % 12;
+            symbol = midiNoteToName(rootIdx + 48).substr(0, midiNoteToName(rootIdx + 48).size() - 1);
+        }
+        else if (roman == "vi") {
+            int rootIdx = (noteNameToMidi(intent.key + "4") + 9) % 12;
+            symbol = midiNoteToName(rootIdx + 48).substr(0, midiNoteToName(rootIdx + 48).size() - 1) + "m";
+        }
+        else if (roman == "iv") {
+            int rootIdx = (noteNameToMidi(intent.key + "4") + 5) % 12;
+            symbol = midiNoteToName(rootIdx + 48).substr(0, midiNoteToName(rootIdx + 48).size() - 1) + "m";
+        }
+        return symbol;
+    };
+
+    // Convert roman numerals to chords
+    for (const auto& roman : intent.chordProgression) {
+        Chord chord;
+        chord.romanNumeral = roman;
+        chord.symbol = romanToSymbol(roman);
+        result.chords.push_back(chord);
+    }
+    
+    // Generate basic notes
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    
+    int ticksPerBar = TICKS_PER_BEAT * 4;
+    int baseNote = noteNameToMidi(intent.key + "4");
+    
+    for (int bar = 0; bar < bars; ++bar) {
+        // Root note for each bar
+        MidiNote note;
+        note.pitch = baseNote;
+        note.startTick = bar * ticksPerBar;
+        note.durationTicks = ticksPerBar;
+        note.velocity = static_cast<int>(intent.baseVelocity * 127);
+        result.notes.push_back(note);
+    }
+    
+    return result;
+}
+
+std::string KellyBrain::woundToDescription(const Wound& wound) {
     return wound.description + " - " + wound.expression;
-  }
-  return wound.description;
 }
 
-KellyTypesWound KellyBrain::descriptionToWound(const std::string &description,
-                                               float intensity) {
-  KellyTypesWound wound;
-  wound.description = description;
-  wound.urgency = intensity;
-  wound.intensity = intensity;
-  wound.source = "text_input";
-  wound.expression = description;
-  return wound;
-}
-
-// Implement accessor methods that require IntentPipeline definition
-IntentPipeline &KellyBrain::pipeline() { return *pipeline_; }
-
-const IntentPipeline &KellyBrain::pipeline() const { return *pipeline_; }
-
-IntentPipeline &KellyBrain::getIntentPipeline() { return *pipeline_; }
-
-const IntentPipeline &KellyBrain::getIntentPipeline() const {
-  return *pipeline_;
-}
-
-EmotionThesaurus &KellyBrain::thesaurus() { return pipeline_->thesaurus(); }
-
-const EmotionThesaurus &KellyBrain::thesaurus() const {
-  return pipeline_->thesaurus();
+Wound KellyBrain::descriptionToWound(const std::string& description) {
+    Wound wound;
+    wound.description = description;
+    wound.urgency = 0.5f;
+    return wound;
 }
 
 } // namespace kelly

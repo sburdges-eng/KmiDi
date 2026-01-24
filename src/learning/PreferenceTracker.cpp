@@ -159,6 +159,35 @@ void PreferenceTracker::triggerSave() {
     }
 }
 
+std::map<std::string, float> PreferenceTracker::getPreferredAdjustments() const {
+    std::lock_guard<std::mutex> lock(dataMutex_);
+    
+    std::map<std::string, std::pair<float, int>> parameterSums;
+    
+    // Sum adjustments from parameterAdjustments_
+    for (const auto& adj : parameterAdjustments_) {
+        parameterSums[adj.parameterName].first += (adj.newValue - adj.oldValue);
+        parameterSums[adj.parameterName].second++;
+    }
+    
+    // Also include modifications from midiGenerations_
+    for (const auto& gen : midiGenerations_) {
+        for (const auto& mod : gen.modifications) {
+            parameterSums[mod.parameterName].first += (mod.newValue - mod.oldValue);
+            parameterSums[mod.parameterName].second++;
+        }
+    }
+    
+    std::map<std::string, float> averages;
+    for (const auto& [name, sumPair] : parameterSums) {
+        if (sumPair.second > 0) {
+            averages[name] = sumPair.first / static_cast<float>(sumPair.second);
+        }
+    }
+    
+    return averages;
+}
+
 std::string PreferenceTracker::getCurrentTimestamp() const {
     auto now = std::chrono::system_clock::now();
     auto time = std::chrono::system_clock::to_time_t(now);

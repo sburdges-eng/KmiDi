@@ -208,13 +208,13 @@ class MLMelodyGenerator:
             return
 
         try:
-            from penta_core.ml.inference import create_engine_by_name
+            from penta_core.ml.inference import create_engine
             from penta_core.ml.model_registry import get_model
 
             # Try to load MelodyTransformer
             model_info = get_model("melodytransformer")
             if model_info and Path(model_info.path).exists():
-                engine = create_engine_by_name("melodytransformer")
+                engine = create_engine("melodytransformer")
                 if engine and engine.load():
                     self._ml_model = engine
                     self._ml_available = True
