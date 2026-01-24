@@ -38,7 +38,6 @@ from .inference import (
     InferenceEngine,
     InferenceResult,
     create_engine,
-    create_engine_by_name,
 )
 
 try:
