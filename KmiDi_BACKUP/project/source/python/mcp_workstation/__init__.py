@@ -33,23 +33,61 @@ MCP Server:
     mcp-workstation
 """
 
+from .ai_specializations import (
+    AI_CAPABILITIES,
+    AICapabilities,
+    TaskType,
+    get_agents_for_category,
+    get_best_agent_for_task,
+    get_best_agents_for_task,
+    get_capabilities,
+    get_collaboration_strategy,
+    get_task_assignment_summary,
+    print_ai_summary,
+    suggest_task_assignment,
+)
+from .cpp_planner import (
+    IDAW_CPP_MODULES,
+    CppModule,
+    CppPriority,
+    CppTask,
+    CppTransitionPlanner,
+    PortingStrategy,
+    format_cpp_plan,
+)
+from .debug import (
+    DebugCategory,
+    DebugEvent,
+    DebugProtocol,
+    LogLevel,
+    get_debug,
+    log_debug,
+    log_error,
+    log_info,
+    log_warning,
+    trace,
+)
 from .models import (
     AIAgent,
-    ProposalStatus,
-    ProposalCategory,
-    PhaseStatus,
-    Proposal,
     Phase,
+    PhaseStatus,
     PhaseTask,
+    Proposal,
+    ProposalCategory,
+    ProposalStatus,
     WorkstationState,
 )
-
 from .orchestrator import (
     Workstation,
     get_workstation,
     shutdown_workstation,
 )
-
+from .phases import (
+    IDAW_PHASES,
+    PhaseManager,
+    format_phase_progress,
+    get_next_actions,
+)
 from .proposals import (
     ProposalManager,
     ProposalVote,
@@ -57,51 +95,6 @@ from .proposals import (
     format_proposal_list,
     get_proposal_template,
 )
-
-from .phases import (
-    PhaseManager,
-    IDAW_PHASES,
-    format_phase_progress,
-    get_next_actions,
-)
-
-from .cpp_planner import (
-    CppTransitionPlanner,
-    CppModule,
-    CppTask,
-    CppPriority,
-    PortingStrategy,
-    IDAW_CPP_MODULES,
-    format_cpp_plan,
-)
-
-from .debug import (
-    DebugProtocol,
-    DebugCategory,
-    DebugEvent,
-    LogLevel,
-    get_debug,
-    trace,
-    log_debug,
-    log_info,
-    log_warning,
-    log_error,
-)
-
-from .ai_specializations import (
-    AICapabilities,
-    TaskType,
-    AI_CAPABILITIES,
-    get_capabilities,
-    get_best_agent_for_task,
-    get_best_agents_for_task,
-    get_agents_for_category,
-    suggest_task_assignment,
-    get_collaboration_strategy,
-    print_ai_summary,
-    get_task_assignment_summary,
-)
-
 from .server import (
     get_mcp_tools,
     handle_tool_call,
@@ -118,25 +111,21 @@ __all__ = [
     "Phase",
     "PhaseTask",
     "WorkstationState",
-
     # Orchestrator
     "Workstation",
     "get_workstation",
     "shutdown_workstation",
-
     # Proposals
     "ProposalManager",
     "ProposalVote",
     "format_proposal",
     "format_proposal_list",
     "get_proposal_template",
-
     # Phases
     "PhaseManager",
     "IDAW_PHASES",
     "format_phase_progress",
     "get_next_actions",
-
     # C++ Planner
     "CppTransitionPlanner",
     "CppModule",
@@ -145,7 +134,6 @@ __all__ = [
     "PortingStrategy",
     "IDAW_CPP_MODULES",
     "format_cpp_plan",
-
     # Debug
     "DebugProtocol",
     "DebugCategory",
@@ -157,7 +145,6 @@ __all__ = [
     "log_info",
     "log_warning",
     "log_error",
-
     # AI Specializations
     "AICapabilities",
     "TaskType",
@@ -170,7 +157,6 @@ __all__ = [
     "get_collaboration_strategy",
     "print_ai_summary",
     "get_task_assignment_summary",
-
     # Server
     "get_mcp_tools",
     "handle_tool_call",
@@ -184,6 +170,7 @@ __author__ = "DAiW"
 # =============================================================================
 # Quick Test
 # =============================================================================
+
 
 def _test():
     """Quick test of the workstation."""

@@ -12,16 +12,16 @@ Reaper Specifics:
 - ReaScript (Lua, EEL2, Python) for automation
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Any, Callable
-from pathlib import Path
-from enum import Enum
-import json
 import socket
 import struct
+from dataclasses import dataclass, field
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import mido
+
     MIDO_AVAILABLE = True
 except ImportError:
     MIDO_AVAILABLE = False
@@ -37,6 +37,7 @@ REAPER_OSC_SEND_PORT = 9000
 
 class ReaperTrackType(Enum):
     """Reaper track types."""
+
     AUDIO = "audio"
     MIDI = "midi"
     FOLDER = "folder"
@@ -45,6 +46,7 @@ class ReaperTrackType(Enum):
 
 class ReaperAction(Enum):
     """Common Reaper actions by ID."""
+
     PLAY = 1007
     STOP = 1016
     PAUSE = 1008
@@ -69,6 +71,7 @@ class ReaperTrack:
     Reaper tracks are highly flexible and support
     extensive routing and FX chains.
     """
+
     name: str
     track_type: ReaperTrackType = ReaperTrackType.MIDI
     index: int = 0
@@ -104,13 +107,15 @@ class ReaperTrack:
         channel: int = 0,
     ) -> None:
         """Add a MIDI note to the track."""
-        self.notes.append({
-            "pitch": pitch,
-            "velocity": velocity,
-            "start_tick": start_tick,
-            "duration_ticks": duration_ticks,
-            "channel": channel,
-        })
+        self.notes.append(
+            {
+                "pitch": pitch,
+                "velocity": velocity,
+                "start_tick": start_tick,
+                "duration_ticks": duration_ticks,
+                "channel": channel,
+            }
+        )
 
     def add_item(
         self,
@@ -120,12 +125,14 @@ class ReaperTrack:
         source_file: Optional[str] = None,
     ) -> None:
         """Add a media item to the track."""
-        self.items.append({
-            "name": name,
-            "position": position,
-            "length": length,
-            "source_file": source_file,
-        })
+        self.items.append(
+            {
+                "name": name,
+                "position": position,
+                "length": length,
+                "source_file": source_file,
+            }
+        )
 
 
 @dataclass
@@ -135,6 +142,7 @@ class ReaperProject:
 
     Can export to MIDI and generate basic .rpp structure.
     """
+
     name: str = "Untitled"
     tempo_bpm: float = 120.0
     ppq: int = REAPER_PPQ
@@ -192,24 +200,22 @@ class ReaperProject:
 
         # Initial tempo
         tempo_us = int(60_000_000 / self.tempo_bpm)
-        meta_track.append(mido.MetaMessage('set_tempo', tempo=tempo_us, time=0))
+        meta_track.append(mido.MetaMessage("set_tempo", tempo=tempo_us, time=0))
 
         # Initial time signature
-        meta_track.append(mido.MetaMessage(
-            'time_signature',
-            numerator=self.time_signature[0],
-            denominator=self.time_signature[1],
-            time=0
-        ))
+        meta_track.append(
+            mido.MetaMessage(
+                "time_signature",
+                numerator=self.time_signature[0],
+                denominator=self.time_signature[1],
+                time=0,
+            )
+        )
 
         # Add markers
         for position, name in self.marker_map:
             tick = int(position * self.ppq)
-            meta_track.append(mido.MetaMessage(
-                'marker',
-                text=name,
-                time=tick
-            ))
+            meta_track.append(mido.MetaMessage("marker", text=name, time=tick))
 
         # Export MIDI tracks
         for track in self.tracks:
@@ -218,29 +224,29 @@ class ReaperProject:
                 mid.tracks.append(midi_track)
 
                 # Track name
-                midi_track.append(mido.MetaMessage(
-                    'track_name',
-                    name=track.name,
-                    time=0
-                ))
+                midi_track.append(mido.MetaMessage("track_name", name=track.name, time=0))
 
                 # Build note events
                 events = []
                 for note in track.notes:
-                    events.append((
-                        note["start_tick"],
-                        "note_on",
-                        note["pitch"],
-                        note["velocity"],
-                        note.get("channel", 0),
-                    ))
-                    events.append((
-                        note["start_tick"] + note["duration_ticks"],
-                        "note_off",
-                        note["pitch"],
-                        0,
-                        note.get("channel", 0),
-                    ))
+                    events.append(
+                        (
+                            note["start_tick"],
+                            "note_on",
+                            note["pitch"],
+                            note["velocity"],
+                            note.get("channel", 0),
+                        )
+                    )
+                    events.append(
+                        (
+                            note["start_tick"] + note["duration_ticks"],
+                            "note_off",
+                            note["pitch"],
+                            0,
+                            note.get("channel", 0),
+                        )
+                    )
 
                 events.sort(key=lambda e: e[0])
 
@@ -251,24 +257,18 @@ class ReaperProject:
                     current_tick = tick
 
                     if msg_type == "note_on":
-                        midi_track.append(mido.Message(
-                            'note_on',
-                            note=pitch,
-                            velocity=vel,
-                            channel=ch,
-                            time=delta
-                        ))
+                        midi_track.append(
+                            mido.Message(
+                                "note_on", note=pitch, velocity=vel, channel=ch, time=delta
+                            )
+                        )
                     else:
-                        midi_track.append(mido.Message(
-                            'note_off',
-                            note=pitch,
-                            velocity=0,
-                            channel=ch,
-                            time=delta
-                        ))
+                        midi_track.append(
+                            mido.Message("note_off", note=pitch, velocity=0, channel=ch, time=delta)
+                        )
 
                 # End of track
-                midi_track.append(mido.MetaMessage('end_of_track', time=0))
+                midi_track.append(mido.MetaMessage("end_of_track", time=0))
 
         output_path = Path(output_path)
         mid.save(str(output_path))
@@ -288,23 +288,25 @@ class ReaperProject:
         lines = []
 
         # Header
-        lines.append("<REAPER_PROJECT 0.1 \"7.0\" 1725000000")
+        lines.append('<REAPER_PROJECT 0.1 "7.0" 1725000000')
         lines.append(f"  TEMPO {self.tempo_bpm} {self.time_signature[0]} {self.time_signature[1]}")
         lines.append(f"  SAMPLERATE {self.sample_rate} 0 0")
-        lines.append(f"  PROJECT_NAME \"{self.name}\"")
+        lines.append(f'  PROJECT_NAME "{self.name}"')
 
         # Add markers
         for i, (position, name) in enumerate(self.marker_map):
-            lines.append(f"  MARKER {i} {position} \"{name}\" 0")
+            lines.append(f'  MARKER {i} {position} "{name}" 0')
 
         # Add regions
         for i, (start, end, name) in enumerate(self.region_map):
-            lines.append(f"  MARKER {i + len(self.marker_map)} {start} \"{name}\" 1 0 1 R 0 0 1 {end}")
+            lines.append(
+                f'  MARKER {i + len(self.marker_map)} {start} "{name}" 1 0 1 R 0 0 1 {end}'
+            )
 
         # Add tracks
         for track in self.tracks:
             lines.append("  <TRACK")
-            lines.append(f"    NAME \"{track.name}\"")
+            lines.append(f'    NAME "{track.name}"')
             lines.append(f"    VOLPAN {10 ** (track.volume_db / 20):.6f} {track.pan:.6f} -1 -1 1")
             lines.append(f"    MUTESOLO {1 if track.mute else 0} {1 if track.solo else 0} 0")
 
@@ -312,7 +314,7 @@ class ReaperProject:
             if track.fx_chain:
                 lines.append("    <FXCHAIN")
                 for fx_name in track.fx_chain:
-                    lines.append(f"      <VST \"{fx_name}\"")
+                    lines.append(f'      <VST "{fx_name}"')
                     lines.append("      >")
                 lines.append("    >")
 
@@ -322,8 +324,8 @@ class ReaperProject:
 
         # Write file
         output_path = Path(output_path)
-        with open(output_path, 'w') as f:
-            f.write('\n'.join(lines))
+        with open(output_path, "w") as f:
+            f.write("\n".join(lines))
 
         return str(output_path)
 
@@ -367,7 +369,7 @@ def export_to_reaper(
         for msg in track:
             new_msg = msg.copy()
 
-            if hasattr(msg, 'time'):
+            if hasattr(msg, "time"):
                 new_msg = msg.copy(time=int(msg.time * ppq_ratio))
 
             new_track.append(new_msg)
@@ -397,9 +399,9 @@ def import_from_reaper(midi_path: str) -> ReaperProject:
     time_sig = (4, 4)
     for track in mid.tracks:
         for msg in track:
-            if msg.type == 'set_tempo':
+            if msg.type == "set_tempo":
                 tempo_bpm = 60_000_000 / msg.tempo
-            elif msg.type == 'time_signature':
+            elif msg.type == "time_signature":
                 time_sig = (msg.numerator, msg.denominator)
 
     project = ReaperProject(
@@ -414,13 +416,13 @@ def import_from_reaper(midi_path: str) -> ReaperProject:
         current_tick = 0
         for msg in track:
             current_tick += msg.time
-            if msg.type == 'marker':
+            if msg.type == "marker":
                 position = current_tick / project.ppq
                 project.add_marker(position, msg.text)
 
     # Convert each track
     for i, track in enumerate(mid.tracks):
-        track_name = f"Track {i+1}"
+        track_name = f"Track {i + 1}"
         notes = []
         current_tick = 0
         active_notes = {}
@@ -428,22 +430,24 @@ def import_from_reaper(midi_path: str) -> ReaperProject:
         for msg in track:
             current_tick += msg.time
 
-            if msg.type == 'track_name':
+            if msg.type == "track_name":
                 track_name = msg.name
-            elif msg.type == 'note_on' and msg.velocity > 0:
+            elif msg.type == "note_on" and msg.velocity > 0:
                 key = (msg.channel, msg.note)
                 active_notes[key] = (current_tick, msg.velocity)
-            elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+            elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
                 key = (msg.channel, msg.note)
                 if key in active_notes:
                     start_tick, velocity = active_notes.pop(key)
-                    notes.append({
-                        "pitch": msg.note,
-                        "velocity": velocity,
-                        "start_tick": start_tick,
-                        "duration_ticks": current_tick - start_tick,
-                        "channel": msg.channel,
-                    })
+                    notes.append(
+                        {
+                            "pitch": msg.note,
+                            "velocity": velocity,
+                            "start_tick": start_tick,
+                            "duration_ticks": current_tick - start_tick,
+                            "channel": msg.channel,
+                        }
+                    )
 
         if notes:
             reaper_track = ReaperTrack(
@@ -583,35 +587,35 @@ class ReaperOSC:
     def _encode_osc_message(self, address: str, args: tuple) -> bytes:
         """Encode an OSC message (simplified)."""
         # Pad address to 4-byte boundary
-        address_bytes = address.encode('utf-8') + b'\x00'
+        address_bytes = address.encode("utf-8") + b"\x00"
         while len(address_bytes) % 4 != 0:
-            address_bytes += b'\x00'
+            address_bytes += b"\x00"
 
         # Type tag string
-        type_tags = ','
+        type_tags = ","
         for arg in args:
             if isinstance(arg, int):
-                type_tags += 'i'
+                type_tags += "i"
             elif isinstance(arg, float):
-                type_tags += 'f'
+                type_tags += "f"
             elif isinstance(arg, str):
-                type_tags += 's'
+                type_tags += "s"
 
-        type_tag_bytes = type_tags.encode('utf-8') + b'\x00'
+        type_tag_bytes = type_tags.encode("utf-8") + b"\x00"
         while len(type_tag_bytes) % 4 != 0:
-            type_tag_bytes += b'\x00'
+            type_tag_bytes += b"\x00"
 
         # Encode arguments
-        arg_bytes = b''
+        arg_bytes = b""
         for arg in args:
             if isinstance(arg, int):
-                arg_bytes += struct.pack('>i', arg)
+                arg_bytes += struct.pack(">i", arg)
             elif isinstance(arg, float):
-                arg_bytes += struct.pack('>f', arg)
+                arg_bytes += struct.pack(">f", arg)
             elif isinstance(arg, str):
-                arg_str = arg.encode('utf-8') + b'\x00'
+                arg_str = arg.encode("utf-8") + b"\x00"
                 while len(arg_str) % 4 != 0:
-                    arg_str += b'\x00'
+                    arg_str += b"\x00"
                 arg_bytes += arg_str
 
         return address_bytes + type_tag_bytes + arg_bytes
@@ -713,7 +717,7 @@ def generate_reascript_lua(
         elif action_type == "set_track_name":
             track_idx = action.get("track", 0)
             name = action.get("name", "Track")
-            lines.append(f'  local track = reaper.GetTrack(0, {track_idx})')
+            lines.append(f"  local track = reaper.GetTrack(0, {track_idx})")
             lines.append(f'  reaper.GetSetMediaTrackInfo_String(track, "P_NAME", "{name}", true)')
 
         elif action_type == "insert_midi_note":
@@ -722,32 +726,36 @@ def generate_reascript_lua(
             start = action.get("start", 0)
             end = action.get("end", 1)
             velocity = action.get("velocity", 100)
-            lines.extend([
-                f'  local track = reaper.GetTrack(0, {track_idx})',
-                '  local item = reaper.GetTrackMediaItem(track, 0)',
-                '  if item then',
-                '    local take = reaper.GetActiveTake(item)',
-                '    if take and reaper.TakeIsMIDI(take) then',
-                f'      reaper.MIDI_InsertNote(take, false, false, {start}, {end}, 0, {pitch}, {velocity}, false)',
-                '    end',
-                '  end',
-            ])
+            lines.extend(
+                [
+                    f"  local track = reaper.GetTrack(0, {track_idx})",
+                    "  local item = reaper.GetTrackMediaItem(track, 0)",
+                    "  if item then",
+                    "    local take = reaper.GetActiveTake(item)",
+                    "    if take and reaper.TakeIsMIDI(take) then",
+                    f"      reaper.MIDI_InsertNote(take, false, false, {start}, {end}, 0, {pitch}, {velocity}, false)",
+                    "    end",
+                    "  end",
+                ]
+            )
 
         elif action_type == "set_tempo":
             bpm = action.get("bpm", 120)
-            lines.append(f'  reaper.SetCurrentBPM(0, {bpm}, true)')
+            lines.append(f"  reaper.SetCurrentBPM(0, {bpm}, true)")
 
         elif action_type == "run_action":
             action_id = action.get("id", 0)
-            lines.append(f'  reaper.Main_OnCommand({action_id}, 0)')
+            lines.append(f"  reaper.Main_OnCommand({action_id}, 0)")
 
-    lines.extend([
-        "end",
-        "",
-        "main()",
-    ])
+    lines.extend(
+        [
+            "end",
+            "",
+            "main()",
+        ]
+    )
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def get_reaper_plugin_info() -> Dict[str, Any]:

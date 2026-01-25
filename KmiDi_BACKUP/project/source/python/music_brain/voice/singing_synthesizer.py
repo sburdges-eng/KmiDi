@@ -5,19 +5,21 @@ Provides better phoneme synthesis with consonants, formant filtering,
 and expression controls. Used for quick previews.
 """
 
-import numpy as np
-from typing import List, Optional, Dict
 from dataclasses import dataclass
-from scipy import signal
-import soundfile as sf
+from typing import Dict, Optional
 
-from music_brain.voice.phoneme_processor import PhonemeSequence, Phoneme
+import numpy as np
+import soundfile as sf
+from scipy import signal
+
+from music_brain.voice.phoneme_processor import PhonemeSequence
 from music_brain.voice.pitch_controller import PitchController, PitchCurve
 
 
 @dataclass
 class FormantConfig:
     """Configuration for formant synthesis."""
+
     sample_rate: int = 44100
     formant_emphasis: float = 0.6
     breathiness: float = 0.2
@@ -30,7 +32,7 @@ class FormantConfig:
             "formant_emphasis": self.formant_emphasis,
             "breathiness": self.breathiness,
             "vibrato_rate": self.vibrato_rate,
-            "vibrato_depth": self.vibrato_depth
+            "vibrato_depth": self.vibrato_depth,
         }
 
 
@@ -39,7 +41,7 @@ VOWEL_FORMANTS = {
     "AA": (730, 1090, 2440),  # father
     "AE": (660, 1720, 2410),  # cat
     "AH": (730, 1090, 2440),  # but
-    "AO": (570, 840, 2410),   # law
+    "AO": (570, 840, 2410),  # law
     "AW": (660, 1170, 2440),  # cow
     "AY": (660, 1720, 2410),  # hide
     "EH": (530, 1840, 2480),  # red
@@ -47,10 +49,10 @@ VOWEL_FORMANTS = {
     "EY": (530, 1840, 2480),  # ate
     "IH": (390, 1990, 2550),  # it
     "IY": (270, 2290, 3010),  # eat
-    "OW": (570, 840, 2410),   # show
-    "OY": (570, 840, 2410),   # toy
+    "OW": (570, 840, 2410),  # show
+    "OY": (570, 840, 2410),  # toy
     "UH": (440, 1020, 2240),  # book
-    "UW": (300, 870, 2240),   # two
+    "UW": (300, 870, 2240),  # two
 }
 
 # Consonant characteristics
@@ -62,7 +64,6 @@ CONSONANT_PARAMS = {
     "K": {"type": "stop", "freq": 0, "noise": True},
     "P": {"type": "stop", "freq": 0, "noise": True},
     "T": {"type": "stop", "freq": 0, "noise": True},
-
     # Fricatives
     "CH": {"type": "fricative", "freq": 2000, "noise": True},
     "F": {"type": "fricative", "freq": 1500, "noise": True},
@@ -73,12 +74,10 @@ CONSONANT_PARAMS = {
     "V": {"type": "fricative", "freq": 1500, "noise": False},
     "Z": {"type": "fricative", "freq": 6000, "noise": False},
     "ZH": {"type": "fricative", "freq": 2500, "noise": False},
-
     # Nasals
     "M": {"type": "nasal", "freq": 300, "noise": False},
     "N": {"type": "nasal", "freq": 300, "noise": False},
     "NG": {"type": "nasal", "freq": 300, "noise": False},
-
     # Liquids
     "L": {"type": "liquid", "freq": 500, "noise": False},
     "R": {"type": "liquid", "freq": 1500, "noise": False},
@@ -106,7 +105,7 @@ class SingingSynthesizer:
         self,
         phoneme_sequence: PhonemeSequence,
         pitch_curve: PitchCurve,
-        expression: Optional[Dict] = None
+        expression: Optional[Dict] = None,
     ) -> np.ndarray:
         """
         Synthesize audio from phonemes and pitch.
@@ -130,13 +129,13 @@ class SingingSynthesizer:
         if len(pitch_curve.frequencies) < total_samples:
             # Extend pitch curve
             extended_freqs = np.zeros(total_samples)
-            extended_freqs[:len(pitch_curve.frequencies)] = pitch_curve.frequencies
+            extended_freqs[: len(pitch_curve.frequencies)] = pitch_curve.frequencies
             if len(pitch_curve.frequencies) > 0:
-                extended_freqs[len(pitch_curve.frequencies):] = pitch_curve.frequencies[-1]
+                extended_freqs[len(pitch_curve.frequencies) :] = pitch_curve.frequencies[-1]
             pitch_curve = PitchCurve(
                 frequencies=extended_freqs,
                 sample_rate=pitch_curve.sample_rate,
-                duration_seconds=total_samples / self.config.sample_rate
+                duration_seconds=total_samples / self.config.sample_rate,
             )
         elif len(pitch_curve.frequencies) > total_samples:
             pitch_curve.frequencies = pitch_curve.frequencies[:total_samples]
@@ -153,20 +152,17 @@ class SingingSynthesizer:
                 continue
 
             # Get frequency for this phoneme
-            freq_samples = pitch_curve.frequencies[start_sample:start_sample + duration_samples]
+            freq_samples = pitch_curve.frequencies[start_sample : start_sample + duration_samples]
             avg_freq = np.mean(freq_samples) if len(freq_samples) > 0 else 220.0
 
             # Synthesize phoneme
             phoneme_audio = self._synthesize_phoneme(
-                phoneme.symbol,
-                avg_freq,
-                duration_samples,
-                freq_samples
+                phoneme.symbol, avg_freq, duration_samples, freq_samples
             )
 
             # Add to output
             end_sample = min(start_sample + duration_samples, total_samples)
-            audio[start_sample:end_sample] += phoneme_audio[:end_sample - start_sample]
+            audio[start_sample:end_sample] += phoneme_audio[: end_sample - start_sample]
 
         # Normalize
         if np.max(np.abs(audio)) > 0:
@@ -179,7 +175,7 @@ class SingingSynthesizer:
         phoneme: str,
         base_frequency: float,
         num_samples: int,
-        frequency_curve: Optional[np.ndarray] = None
+        frequency_curve: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """
         Synthesize a single phoneme.
@@ -210,7 +206,7 @@ class SingingSynthesizer:
         phoneme: str,
         base_frequency: float,
         t: np.ndarray,
-        frequency_curve: Optional[np.ndarray] = None
+        frequency_curve: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Synthesize a vowel using formant filtering."""
         # Get formant frequencies
@@ -255,10 +251,7 @@ class SingingSynthesizer:
         return waveform
 
     def _synthesize_consonant(
-        self,
-        phoneme: str,
-        base_frequency: float,
-        t: np.ndarray
+        self, phoneme: str, base_frequency: float, t: np.ndarray
     ) -> np.ndarray:
         """Synthesize a consonant."""
         params = CONSONANT_PARAMS[phoneme]
@@ -281,8 +274,12 @@ class SingingSynthesizer:
 
             # Bandpass filter at characteristic frequency
             if params["freq"] > 0:
-                b, a = signal.butter(4, [params["freq"] * 0.7, params["freq"] * 1.3],
-                                     btype='band', fs=self.config.sample_rate)
+                b, a = signal.butter(
+                    4,
+                    [params["freq"] * 0.7, params["freq"] * 1.3],
+                    btype="band",
+                    fs=self.config.sample_rate,
+                )
                 noise = signal.filtfilt(b, a, noise)
 
             # Add voicing if not noise-only
@@ -305,37 +302,37 @@ class SingingSynthesizer:
             # Liquid/glide: formant-like with characteristic frequency
             waveform = np.sin(2 * np.pi * base_frequency * t)
             if params["freq"] > 0:
-                waveform = self._apply_formant_filters(waveform, params["freq"], params["freq"] * 2, params["freq"] * 4)
+                waveform = self._apply_formant_filters(
+                    waveform, params["freq"], params["freq"] * 2, params["freq"] * 4
+                )
             envelope = self._generate_envelope(num_samples)
             return waveform * envelope * 0.7
 
         return np.zeros(num_samples)
 
     def _apply_formant_filters(
-        self,
-        waveform: np.ndarray,
-        f1: float,
-        f2: float,
-        f3: float
+        self, waveform: np.ndarray, f1: float, f2: float, f3: float
     ) -> np.ndarray:
         """Apply formant filtering to waveform."""
         # Create parallel formant filters
         filtered = np.zeros_like(waveform)
 
         # Formant 1
-        b1, a1 = signal.butter(2, [f1 * 0.8, f1 * 1.2], btype='band', fs=self.config.sample_rate)
+        b1, a1 = signal.butter(2, [f1 * 0.8, f1 * 1.2], btype="band", fs=self.config.sample_rate)
         filtered += signal.filtfilt(b1, a1, waveform) * 1.0
 
         # Formant 2
-        b2, a2 = signal.butter(2, [f2 * 0.8, f2 * 1.2], btype='band', fs=self.config.sample_rate)
+        b2, a2 = signal.butter(2, [f2 * 0.8, f2 * 1.2], btype="band", fs=self.config.sample_rate)
         filtered += signal.filtfilt(b2, a2, waveform) * 0.6
 
         # Formant 3
-        b3, a3 = signal.butter(2, [f3 * 0.8, f3 * 1.2], btype='band', fs=self.config.sample_rate)
+        b3, a3 = signal.butter(2, [f3 * 0.8, f3 * 1.2], btype="band", fs=self.config.sample_rate)
         filtered += signal.filtfilt(b3, a3, waveform) * 0.3
 
         # Mix with original
-        return waveform * (1 - self.config.formant_emphasis) + filtered * self.config.formant_emphasis
+        return (
+            waveform * (1 - self.config.formant_emphasis) + filtered * self.config.formant_emphasis
+        )
 
     def _generate_envelope(self, num_samples: int) -> np.ndarray:
         """Generate ADSR envelope."""
@@ -352,12 +349,12 @@ class SingingSynthesizer:
 
         # Decay
         if decay > 0 and attack + decay < num_samples:
-            envelope[attack:attack + decay] = np.linspace(1, sustain_level, decay)
+            envelope[attack : attack + decay] = np.linspace(1, sustain_level, decay)
 
         # Sustain
         sustain_end = num_samples - release
         if sustain_end > attack + decay:
-            envelope[attack + decay:sustain_end] = sustain_level
+            envelope[attack + decay : sustain_end] = sustain_level
 
         # Release
         if release > 0 and sustain_end < num_samples:

@@ -4,13 +4,14 @@ Voice Input - Recording and Voice Mimicking
 Records user voice and enables mimicking/cloning capabilities.
 """
 
+from typing import Dict, Optional
+
 import numpy as np
-from typing import Optional, Dict, Tuple
-from pathlib import Path
 import soundfile as sf
 
 try:
     import sounddevice as sd
+
     SOUNDDEVICE_AVAILABLE = True
 except ImportError:
     SOUNDDEVICE_AVAILABLE = False
@@ -54,7 +55,7 @@ class VoiceRecorder:
                 int(duration_seconds * self.sample_rate),
                 samplerate=self.sample_rate,
                 channels=self.channels,
-                dtype='float32'
+                dtype="float32",
             )
             sd.wait()  # Wait until recording is finished
             print("Recording complete")
@@ -69,9 +70,7 @@ class VoiceRecorder:
             return None
 
     def record_until_silence(
-        self,
-        silence_threshold: float = 0.01,
-        max_duration: float = 10.0
+        self, silence_threshold: float = 0.01, max_duration: float = 10.0
     ) -> Optional[np.ndarray]:
         """
         Record until silence is detected.
@@ -95,13 +94,15 @@ class VoiceRecorder:
 
         try:
             for _ in range(int(max_duration * 10)):  # Check every 100ms
-                chunk = sd.rec(chunk_size, samplerate=self.sample_rate, channels=self.channels, dtype='float32')
+                chunk = sd.rec(
+                    chunk_size, samplerate=self.sample_rate, channels=self.channels, dtype="float32"
+                )
                 sd.wait()
 
                 if self.channels == 2 and len(chunk.shape) == 2:
                     chunk = np.mean(chunk, axis=1)
 
-                rms = np.sqrt(np.mean(chunk ** 2))
+                rms = np.sqrt(np.mean(chunk**2))
 
                 if rms > silence_threshold:
                     audio_chunks.append(chunk)
@@ -169,6 +170,7 @@ class VoiceMimic:
 
         # Extract pitch statistics
         from music_brain.voice.pitch_controller import PitchController
+
         pitch_controller = PitchController(self.sample_rate)
 
         frequencies, _ = pitch_controller.extract_pitch_from_audio(audio, self.sample_rate)
@@ -186,6 +188,7 @@ class VoiceMimic:
         # Extract spectral characteristics
         try:
             import librosa
+
             # Spectral centroid (brightness)
             spectral_centroids = librosa.feature.spectral_centroid(y=audio, sr=self.sample_rate)[0]
             characteristics["brightness"] = float(np.mean(spectral_centroids))
@@ -219,9 +222,7 @@ class VoiceMimic:
         return characteristics
 
     def apply_voice_characteristics(
-        self,
-        base_audio: np.ndarray,
-        characteristics: Dict
+        self, base_audio: np.ndarray, characteristics: Dict
     ) -> np.ndarray:
         """
         Apply voice characteristics to audio (voice conversion).
@@ -239,7 +240,11 @@ class VoiceMimic:
         # Estimate current pitch
         pitch_controller = PitchController(self.sample_rate)
         frequencies, _ = pitch_controller.extract_pitch_from_audio(base_audio, self.sample_rate)
-        current_pitch = np.mean(frequencies[frequencies > 0]) if len(frequencies[frequencies > 0]) > 0 else 220.0
+        current_pitch = (
+            np.mean(frequencies[frequencies > 0])
+            if len(frequencies[frequencies > 0]) > 0
+            else 220.0
+        )
 
         # Pitch shift
         if current_pitch > 0:
@@ -247,15 +252,15 @@ class VoiceMimic:
             if abs(pitch_ratio - 1.0) > 0.01:  # Only shift if significant difference
                 try:
                     import librosa
+
                     base_audio = librosa.effects.pitch_shift(
-                        base_audio,
-                        sr=self.sample_rate,
-                        n_steps=12 * np.log2(pitch_ratio)
+                        base_audio, sr=self.sample_rate, n_steps=12 * np.log2(pitch_ratio)
                     )
                 except ImportError:
                     # Simple resampling-based pitch shift (crude)
                     if pitch_ratio != 1.0:
                         from scipy import signal
+
                         new_length = int(len(base_audio) / pitch_ratio)
                         base_audio = signal.resample(base_audio, new_length)
 
@@ -263,6 +268,7 @@ class VoiceMimic:
         brightness = characteristics.get("brightness", 2000.0)
         try:
             import librosa
+
             # Apply high-frequency emphasis/de-emphasis
             fft = np.fft.rfft(base_audio)
             freqs = np.fft.rfftfreq(len(base_audio), 1 / self.sample_rate)

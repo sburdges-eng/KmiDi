@@ -14,13 +14,13 @@ This script implements improvements for underperforming models.
 Usage:
     # Train all models with improved config
     python scripts/improved_training_pipeline.py --all
-    
+
     # Train specific model
     python scripts/improved_training_pipeline.py --model harmony_predictor
-    
+
     # Train only underperforming models
     python scripts/improved_training_pipeline.py --improve-only
-    
+
     # Dry run (show config only)
     python scripts/improved_training_pipeline.py --dry-run
 """
@@ -35,7 +35,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List
 
 import yaml
 
@@ -55,13 +55,15 @@ logger = logging.getLogger(__name__)
 # Configuration Classes (no PyTorch dependency)
 # =============================================================================
 
+
 @dataclass
 class ModelConfig:
     """Configuration for a single model."""
+
     name: str
     status: str = "unknown"
     previous_accuracy: float = 0.0
-    
+
     # Architecture
     input_dim: int = 64
     output_dim: int = 32
@@ -69,7 +71,7 @@ class ModelConfig:
     dropout: float = 0.2
     use_residual: bool = False
     use_layer_norm: bool = False
-    
+
     # Training
     epochs: int = 100
     batch_size: int = 32
@@ -78,11 +80,11 @@ class ModelConfig:
     warmup_epochs: int = 10
     early_stopping_patience: int = 20
     gradient_accumulation_steps: int = 1
-    
+
     # Loss
     loss_type: str = "cross_entropy"
     label_smoothing: float = 0.0
-    
+
     # Notes
     notes: str = ""
     improvements: List[str] = field(default_factory=list)
@@ -91,27 +93,28 @@ class ModelConfig:
 @dataclass
 class PipelineConfig:
     """Full pipeline configuration."""
+
     device: str = "auto"
     seed: int = 42
     output_dir: str = "checkpoints"
     onnx_output_dir: str = "models/onnx"
-    
+
     # Models
     models: Dict[str, ModelConfig] = field(default_factory=dict)
-    
+
     @classmethod
-    def from_yaml(cls, path: Path) -> "PipelineConfig":
+    def from_yaml(cls, path: Path) -> PipelineConfig:
         """Load from YAML file."""
         with open(path) as f:
             data = yaml.safe_load(f)
-        
+
         config = cls(
             device=data.get("device", "auto"),
             seed=data.get("seed", 42),
             output_dir=data.get("output_dir", "checkpoints"),
             onnx_output_dir=data.get("onnx_output_dir", "models/onnx"),
         )
-        
+
         # Parse model configs
         for name, model_data in data.get("models", {}).items():
             config.models[name] = ModelConfig(
@@ -136,14 +139,14 @@ class PipelineConfig:
                 notes=model_data.get("notes", ""),
                 improvements=model_data.get("improvements", []),
             )
-        
+
         return config
-    
+
     @classmethod
-    def default(cls) -> "PipelineConfig":
+    def default(cls) -> PipelineConfig:
         """Create default improved configuration based on training results."""
         config = cls()
-        
+
         # Emotion Recognizer - Already good (89.5%)
         config.models["emotion_recognizer"] = ModelConfig(
             name="emotion_recognizer",
@@ -159,7 +162,7 @@ class PipelineConfig:
             early_stopping_patience=15,
             notes="Performing well - maintain current settings",
         )
-        
+
         # Dynamics Engine - Moderate (73.5%)
         config.models["dynamics_engine"] = ModelConfig(
             name="dynamics_engine",
@@ -175,7 +178,7 @@ class PipelineConfig:
             early_stopping_patience=20,
             improvements=["Increased hidden layers", "Lower learning rate", "More epochs"],
         )
-        
+
         # Groove Predictor - Excellent (100%)
         config.models["groove_predictor"] = ModelConfig(
             name="groove_predictor",
@@ -191,7 +194,7 @@ class PipelineConfig:
             early_stopping_patience=15,
             notes="Perfect accuracy - maintain settings",
         )
-        
+
         # Harmony Predictor - Needs Improvement (54%)
         config.models["harmony_predictor"] = ModelConfig(
             name="harmony_predictor",
@@ -218,7 +221,7 @@ class PipelineConfig:
                 "Longer training (150 epochs) with more patience",
             ],
         )
-        
+
         # Melody Transformer - Needs Improvement (34.5%)
         config.models["melody_transformer"] = ModelConfig(
             name="melody_transformer",
@@ -243,7 +246,7 @@ class PipelineConfig:
                 "Deeper hidden layers",
             ],
         )
-        
+
         return config
 
 
@@ -268,12 +271,12 @@ def print_config(config: PipelineConfig):
     print(f"Device: {config.device}")
     print(f"Output: {config.output_dir}")
     print()
-    
+
     for name in MODEL_ORDER:
         if name not in config.models:
             continue
         model_cfg = config.models[name]
-        
+
         # Status indicator
         status_icons = {
             "excellent": "🟢",
@@ -283,7 +286,7 @@ def print_config(config: PipelineConfig):
             "unknown": "⚪",
         }
         status_icon = status_icons.get(model_cfg.status, "⚪")
-        
+
         print(f"{status_icon} {name}")
         print(f"   Previous accuracy: {model_cfg.previous_accuracy:.1%}")
         print(f"   Status: {model_cfg.status}")
@@ -292,15 +295,17 @@ def print_config(config: PipelineConfig):
         print(f"   Learning rate: {model_cfg.learning_rate}")
         print(f"   Hidden layers: {model_cfg.hidden_layers}")
         if model_cfg.use_residual:
-            print(f"   Residual: Yes")
+            print("   Residual: Yes")
         if model_cfg.gradient_accumulation_steps > 1:
-            print(f"   Grad accumulation: {model_cfg.gradient_accumulation_steps} (effective batch={model_cfg.batch_size * model_cfg.gradient_accumulation_steps})")
+            print(
+                f"   Grad accumulation: {model_cfg.gradient_accumulation_steps} (effective batch={model_cfg.batch_size * model_cfg.gradient_accumulation_steps})"
+            )
         if model_cfg.improvements:
-            print(f"   Improvements:")
+            print("   Improvements:")
             for imp in model_cfg.improvements:
                 print(f"      • {imp}")
         print()
-    
+
     print("=" * 70)
     print()
 
@@ -315,7 +320,7 @@ def run_training(config: PipelineConfig, models_to_train: List[str]):
     except ImportError:
         logger.error("PyTorch is required for training. Install with: pip install torch")
         sys.exit(1)
-    
+
     # Detect device
     if config.device == "auto":
         if torch.cuda.is_available():
@@ -329,27 +334,27 @@ def run_training(config: PipelineConfig, models_to_train: List[str]):
             logger.info("⚠️ Using CPU")
     else:
         device = torch.device(config.device)
-    
+
     # Set seed
     torch.manual_seed(config.seed)
-    
+
     results = {}
     total_start = time.time()
-    
+
     for model_name in models_to_train:
         if model_name not in config.models:
             logger.warning(f"Unknown model: {model_name}")
             continue
-        
+
         model_cfg = config.models[model_name]
-        
+
         logger.info("")
         logger.info("=" * 60)
         logger.info(f"🔧 Training: {model_name}")
         logger.info(f"   Previous: {model_cfg.previous_accuracy:.1%}")
         logger.info(f"   Status: {model_cfg.status}")
         logger.info("=" * 60)
-        
+
         # Create simple MLP model
         layers = []
         prev_dim = model_cfg.input_dim
@@ -362,36 +367,39 @@ def run_training(config: PipelineConfig, models_to_train: List[str]):
             prev_dim = hidden_dim
         layers.append(nn.Linear(prev_dim, model_cfg.output_dim))
         model = nn.Sequential(*layers).to(device)
-        
+
         num_params = sum(p.numel() for p in model.parameters())
         logger.info(f"   Parameters: {num_params:,}")
-        
+
         # Create synthetic dataset for pipeline testing
         # Note: Replace with real dataset for actual training
         class SyntheticDataset(Dataset):
             """Synthetic dataset for testing the pipeline.
-            
+
             This creates learnable patterns by adding correlation between
             input features and labels. Replace with real audio/MIDI data
             for production training.
             """
+
             def __init__(self, num_samples, input_dim, num_classes):
                 self.num_samples = num_samples
                 self.input_dim = input_dim
                 self.num_classes = num_classes
-            
+
             def __len__(self):
                 return self.num_samples
-            
+
             def __getitem__(self, idx):
                 # Create input with some structure based on index
                 torch.manual_seed(idx)  # Reproducible per sample
                 x = torch.randn(self.input_dim)
                 # Add class-dependent signal for learnability
                 label_idx = idx % self.num_classes
-                x[:self.num_classes] += torch.zeros(self.num_classes).scatter_(0, torch.tensor(label_idx), 1.0)
+                x[: self.num_classes] += torch.zeros(self.num_classes).scatter_(
+                    0, torch.tensor(label_idx), 1.0
+                )
                 return x, label_idx
-        
+
         # Determine number of classes
         if model_name == "emotion_recognizer":
             num_classes = 7
@@ -401,32 +409,32 @@ def run_training(config: PipelineConfig, models_to_train: List[str]):
             num_classes = 128
         else:
             num_classes = model_cfg.output_dim
-        
+
         train_dataset = SyntheticDataset(1000, model_cfg.input_dim, num_classes)
         val_dataset = SyntheticDataset(200, model_cfg.input_dim, num_classes)
-        
+
         train_loader = DataLoader(train_dataset, batch_size=model_cfg.batch_size, shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=model_cfg.batch_size)
-        
+
         # Training setup
         optimizer = optim.AdamW(
             model.parameters(),
             lr=model_cfg.learning_rate,
             weight_decay=model_cfg.weight_decay,
         )
-        
+
         # Loss function - use label smoothing if configured
         if model_cfg.loss_type == "label_smoothing" or model_cfg.label_smoothing > 0:
             criterion = nn.CrossEntropyLoss(label_smoothing=model_cfg.label_smoothing)
         else:
             criterion = nn.CrossEntropyLoss()
-        
+
         # Training loop
         best_val_loss = float("inf")
         best_accuracy = 0.0
         epochs_no_improve = 0
         start_time = time.time()
-        
+
         for epoch in range(model_cfg.epochs):
             # Train with gradient accumulation
             model.train()
@@ -439,7 +447,7 @@ def run_training(config: PipelineConfig, models_to_train: List[str]):
                 # Scale loss for gradient accumulation
                 loss = loss / model_cfg.gradient_accumulation_steps
                 loss.backward()
-                
+
                 # Step optimizer after accumulation or at end of epoch
                 is_accumulation_step = (batch_idx + 1) % model_cfg.gradient_accumulation_steps == 0
                 is_last_batch = (batch_idx + 1) == num_batches
@@ -447,7 +455,7 @@ def run_training(config: PipelineConfig, models_to_train: List[str]):
                     torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                     optimizer.step()
                     optimizer.zero_grad()
-            
+
             # Validate
             model.eval()
             val_loss = 0.0
@@ -460,13 +468,13 @@ def run_training(config: PipelineConfig, models_to_train: List[str]):
                     val_loss += criterion(outputs, targets).item()
                     correct += (outputs.argmax(dim=1) == targets).sum().item()
                     total += targets.size(0)
-            
+
             avg_val_loss = val_loss / len(val_loader)
             accuracy = correct / total
-            
+
             if accuracy > best_accuracy:
                 best_accuracy = accuracy
-            
+
             if avg_val_loss < best_val_loss:
                 best_val_loss = avg_val_loss
                 epochs_no_improve = 0
@@ -476,17 +484,19 @@ def run_training(config: PipelineConfig, models_to_train: List[str]):
                 torch.save(model.state_dict(), checkpoint_dir / "best_model.pt")
             else:
                 epochs_no_improve += 1
-            
+
             if (epoch + 1) % 10 == 0:
-                logger.info(f"   Epoch {epoch + 1}/{model_cfg.epochs}: loss={avg_val_loss:.4f}, acc={accuracy:.2%}")
-            
+                logger.info(
+                    f"   Epoch {epoch + 1}/{model_cfg.epochs}: loss={avg_val_loss:.4f}, acc={accuracy:.2%}"
+                )
+
             if epochs_no_improve >= model_cfg.early_stopping_patience:
                 logger.info(f"   Early stopping at epoch {epoch + 1}")
                 break
-        
+
         training_time = time.time() - start_time
         improvement = best_accuracy - model_cfg.previous_accuracy
-        
+
         results[model_name] = {
             "success": True,
             "best_accuracy": best_accuracy,
@@ -495,43 +505,49 @@ def run_training(config: PipelineConfig, models_to_train: List[str]):
             "training_time_seconds": training_time,
             "improvement": improvement,
         }
-        
+
         if improvement > 0:
             logger.info(f"   ✅ Accuracy: {best_accuracy:.1%} (improved by {improvement:.1%})")
         else:
             logger.info(f"   ➡️ Accuracy: {best_accuracy:.1%} (change: {improvement:.1%})")
-    
+
     # Summary
     total_time = time.time() - total_start
-    
+
     logger.info("")
     logger.info("=" * 60)
     logger.info("📊 Training Summary")
     logger.info("=" * 60)
-    logger.info(f"Total time: {total_time:.1f}s ({total_time/60:.1f} minutes)")
-    
+    logger.info(f"Total time: {total_time:.1f}s ({total_time / 60:.1f} minutes)")
+
     for name, result in results.items():
         imp = result["improvement"]
         status = "✅" if imp >= 0 else "⚠️"
         prev = config.models[name].previous_accuracy
-        logger.info(f"  {status} {name}: {result['best_accuracy']:.1%} (prev: {prev:.1%}, {'↑' if imp > 0 else '↓'}{abs(imp):.1%})")
-    
+        logger.info(
+            f"  {status} {name}: {result['best_accuracy']:.1%} (prev: {prev:.1%}, {'↑' if imp > 0 else '↓'}{abs(imp):.1%})"
+        )
+
     logger.info("=" * 60)
-    
+
     # Save results
     results_path = Path(config.output_dir) / "training_results.json"
     results_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     with open(results_path, "w") as f:
-        json.dump({
-            "timestamp": datetime.now().isoformat(),
-            "device": str(device),
-            "total_time_seconds": total_time,
-            "results": results,
-        }, f, indent=2)
-    
+        json.dump(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "device": str(device),
+                "total_time_seconds": total_time,
+                "results": results,
+            },
+            f,
+            indent=2,
+        )
+
     logger.info(f"📝 Results saved to {results_path}")
-    
+
     return results
 
 
@@ -540,7 +556,7 @@ def main():
         description="Improved Training Pipeline for Kelly ML Models",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    
+
     parser.add_argument(
         "--all",
         action="store_true",
@@ -574,35 +590,34 @@ def main():
         action="store_true",
         help="Show configuration without training",
     )
-    
+
     args = parser.parse_args()
-    
+
     # Load configuration
     if args.config:
         config = PipelineConfig.from_yaml(Path(args.config))
     else:
         config = PipelineConfig.default()
-    
+
     if args.device:
         config.device = args.device
-    
+
     # Dry run - show config only
     if args.dry_run:
         print_config(config)
         return
-    
+
     # Determine which models to train
     if args.model:
         models_to_train = [args.model]
     elif args.improve_only:
         models_to_train = [
-            name for name, cfg in config.models.items()
-            if cfg.status == "needs_improvement"
+            name for name, cfg in config.models.items() if cfg.status == "needs_improvement"
         ]
         logger.info(f"Training underperforming models: {models_to_train}")
     else:
         models_to_train = MODEL_ORDER
-    
+
     # Run training
     run_training(config, models_to_train)
 

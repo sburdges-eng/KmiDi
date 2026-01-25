@@ -4,28 +4,24 @@
 
 namespace kelly {
 
-enum class IntentPhase {
-    Wound,
-    Emotion,
-    RuleBreak
-};
+enum class IntentPhase { Wound, Emotion, RuleBreak };
 
 struct Wound {
-    std::string description;
-    float intensity;
-    std::string source;
+  std::string description;
+  float intensity;
+  std::string source;
 };
 
 class IntentProcessor {
 public:
-    IntentProcessor() = default;
-    ~IntentProcessor() = default;
+  IntentProcessor() = default;
+  ~IntentProcessor() = default;
 
-    int processWound(const Wound& wound);
-    // Additional methods would be implemented
+  int processWound(const Wound &wound);
+  // Additional methods would be implemented
 
 private:
-    // Implementation details
+  // Implementation details
 };
 
 } // namespace kelly

@@ -2,11 +2,12 @@
 Expression Learning - Learn dynamics/expression patterns from examples.
 """
 
+import json
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
-from collections import Counter, defaultdict
-import json
+
 import numpy as np
 
 DEFAULT_STORAGE = Path.home() / ".parrot" / "music_learning" / "expression"
@@ -17,6 +18,7 @@ PROFILES_DIR = DEFAULT_STORAGE / "profiles"
 @dataclass
 class ExpressionExample:
     """Expression example capturing velocity/dynamics curves."""
+
     velocity_curve: List[int]  # e.g., per-16th velocities
     emotion: str = "neutral"
     instrument: str = "general"
@@ -83,7 +85,7 @@ class ExpressionStore:
         path = self.examples_dir / f"{example_id}.json"
         if not path.exists():
             return None
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
         return ExpressionExample.from_dict(data)
 
@@ -100,7 +102,7 @@ class ExpressionStore:
         path = self.profiles_dir / f"{name}.json"
         if not path.exists():
             return None
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
         return ExpressionProfile.from_dict(data)
 
@@ -112,7 +114,9 @@ class ExpressionLearner:
     def __init__(self):
         pass
 
-    def learn_profile(self, examples: List[ExpressionExample], name: str = "default") -> ExpressionProfile:
+    def learn_profile(
+        self, examples: List[ExpressionExample], name: str = "default"
+    ) -> ExpressionProfile:
         if not examples:
             raise ValueError("No expression examples provided")
 
@@ -143,7 +147,9 @@ class ExpressionLearner:
                 global_velocity.append(avg_velocity)
 
         global_patterns = {
-            "avg_velocity": list(np.mean(np.array(global_velocity), axis=0)) if global_velocity else [],
+            "avg_velocity": list(np.mean(np.array(global_velocity), axis=0))
+            if global_velocity
+            else [],
         }
 
         return ExpressionProfile(
@@ -158,14 +164,20 @@ class ExpressionLearner:
         emotion: str,
         profile: ExpressionProfile,
         length: Optional[int] = None,
-        instrument: str = "general"
+        instrument: str = "general",
     ) -> Dict:
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get(
+            "neutral"
+        )
         if not patterns:
             patterns = profile.global_patterns
 
-        velocity = patterns.get("avg_velocity") or profile.global_patterns.get("avg_velocity") or [80] * (length or 16)
+        velocity = (
+            patterns.get("avg_velocity")
+            or profile.global_patterns.get("avg_velocity")
+            or [80] * (length or 16)
+        )
         if length and len(velocity) < length:
             velocity = (velocity * (length // len(velocity) + 1))[:length]
 
@@ -183,7 +195,9 @@ class ExpressionLearningManager:
     def add_example(self, example: ExpressionExample, name: Optional[str] = None) -> str:
         return self.store.add_example(example, name)
 
-    def learn_profile(self, name: str, example_ids: Optional[List[str]] = None) -> ExpressionProfile:
+    def learn_profile(
+        self, name: str, example_ids: Optional[List[str]] = None
+    ) -> ExpressionProfile:
         if example_ids is None:
             example_ids = self.store.list_examples()
         examples = []
@@ -205,7 +219,7 @@ class ExpressionLearningManager:
         emotion: str,
         profile_name: Optional[str] = None,
         length: Optional[int] = None,
-        instrument: str = "general"
+        instrument: str = "general",
     ) -> Dict:
         profile: Optional[ExpressionProfile] = None
         if profile_name:

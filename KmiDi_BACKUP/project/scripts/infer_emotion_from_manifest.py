@@ -19,7 +19,7 @@ import argparse
 import json
 from collections import Counter
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 try:
     import torch  # type: ignore
@@ -53,21 +53,24 @@ def majority_baseline(labels: List[str]) -> Dict[str, float]:
 
 
 def run_baseline(dataset: UnifiedEmotionDataset) -> List[Dict[str, Any]]:
-    labels = [f"{item['dataset']}_{item['id']}" for item in dataset.items]  # unused but keeps structure
+    labels = [
+        f"{item['dataset']}_{item['id']}" for item in dataset.items
+    ]  # unused but keeps structure
     true_labels = [item.get("label") or item.get("emotion_label") or "" for item in dataset.items]
     # Fall back to dataset name if no explicit label; this keeps output sane for placeholder manifests
-    fallback_labels = [tl if tl else item.get("dataset", "unknown") for tl, item in zip(true_labels, dataset.items)]
+    fallback_labels = [
+        tl if tl else item.get("dataset", "unknown") for tl, item in zip(true_labels, dataset.items)
+    ]
     probs = majority_baseline([l for l in fallback_labels if l])
     if not probs or len(probs) == 0:
         probs = {"unknown": 1.0}
     pred_label = max(probs.items(), key=lambda kv: kv[1])[0]
-    return [
-        {"id": item["id"], "pred_label": pred_label, "probs": probs}
-        for item in dataset.items
-    ]
+    return [{"id": item["id"], "pred_label": pred_label, "probs": probs} for item in dataset.items]
 
 
-def run_torch_inference(dataset: UnifiedEmotionDataset, checkpoint: Path, class_names: List[str]) -> List[Dict[str, Any]]:
+def run_torch_inference(
+    dataset: UnifiedEmotionDataset, checkpoint: Path, class_names: List[str]
+) -> List[Dict[str, Any]]:
     if torch is None or torchaudio is None:
         raise RuntimeError("torch/torchaudio not available; cannot run torch inference.")
 
@@ -85,32 +88,62 @@ def run_torch_inference(dataset: UnifiedEmotionDataset, checkpoint: Path, class_
             wav = batch["audio"]
             logits = model(wav.unsqueeze(0))  # adapt for your model signature
             if logits.shape[-1] != len(labels):
-                raise RuntimeError(f"Model logits dim {logits.shape[-1]} does not match number of class names {len(labels)}")
+                raise RuntimeError(
+                    f"Model logits dim {logits.shape[-1]} does not match number of class names {len(labels)}"
+                )
             probs_tensor = torch.softmax(logits, dim=-1)[0]
             probs = {label: float(probs_tensor[label_to_idx[label]].item()) for label in labels}
-            pred_label = max(probs.items(), key=lambda kv: kv[1])[0] if probs else "unknown"
-            preds.append({
-                "id": batch["id"],
-                "pred_label": pred_label,
-                "probs": probs,
-            })
+            pred_label = max(probs.items(), key=lambda kv: kv[1])[0]
+            preds.append(
+                {
+                    "id": batch["id"],
+                    "pred_label": pred_label,
+                    "probs": probs,
+                }
+            )
     return preds
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate predictions JSONL from unified emotion manifest.")
-    parser.add_argument("--manifest", type=Path, default=Path("datasets/validation/emotion_manifest.json"), help="Unified manifest JSON.")
-    parser.add_argument("--split", type=str, default=None, help="Optional split filter (train|val|test).")
-    parser.add_argument("--checkpoint", type=Path, default=None, help="Optional TorchScript model for real inference.")
-    parser.add_argument("--class-names", type=str, default=None, help="Comma-separated class names matching model logits.")
-    parser.add_argument("--output", type=Path, default=Path("output/audio_emotion_eval/predictions.jsonl"), help="Output JSONL path.")
+    parser = argparse.ArgumentParser(
+        description="Generate predictions JSONL from unified emotion manifest."
+    )
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=Path("datasets/validation/emotion_manifest.json"),
+        help="Unified manifest JSON.",
+    )
+    parser.add_argument(
+        "--split", type=str, default=None, help="Optional split filter (train|val|test)."
+    )
+    parser.add_argument(
+        "--checkpoint",
+        type=Path,
+        default=None,
+        help="Optional TorchScript model for real inference.",
+    )
+    parser.add_argument(
+        "--class-names",
+        type=str,
+        default=None,
+        help="Comma-separated class names matching model logits.",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path("output/audio_emotion_eval/predictions.jsonl"),
+        help="Output JSONL path.",
+    )
     args = parser.parse_args()
 
     dataset = UnifiedEmotionDataset(args.manifest, split=args.split)
 
     if args.checkpoint:
         if not args.class_names:
-            raise SystemExit("When using --checkpoint you must provide --class-names comma-separated.")
+            raise SystemExit(
+                "When using --checkpoint you must provide --class-names comma-separated."
+            )
         class_names = [c.strip() for c in args.class_names.split(",") if c.strip()]
         if not class_names:
             raise SystemExit("No class names parsed from --class-names.")

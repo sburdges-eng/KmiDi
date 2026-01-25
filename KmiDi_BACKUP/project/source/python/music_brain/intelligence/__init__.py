@@ -8,20 +8,9 @@ Includes NLM (Neural Language Model) integrations for:
 - Creative suggestions
 """
 
-from .suggestion_engine import (
-    SuggestionEngine,
-    Suggestion,
-    SuggestionType,
-    SuggestionConfidence,
-)
-
 from .context_analyzer import (
     ContextAnalyzer,
     MusicalContext,
-)
-from .onnx_llm import (
-    OnnxGenAILLM,
-    OnnxLLMConfig,
 )
 from .ollama_bridge import (
     OllamaBridge,
@@ -29,6 +18,16 @@ from .ollama_bridge import (
     create_ollama_bridge,
     generate_lyrics,
     parse_intent,
+)
+from .onnx_llm import (
+    OnnxGenAILLM,
+    OnnxLLMConfig,
+)
+from .suggestion_engine import (
+    Suggestion,
+    SuggestionConfidence,
+    SuggestionEngine,
+    SuggestionType,
 )
 
 __all__ = [

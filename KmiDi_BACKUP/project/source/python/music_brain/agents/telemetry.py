@@ -26,22 +26,22 @@ Usage:
 
 from __future__ import annotations
 
-import time
-import threading
 import logging
+import threading
+import time
 from abc import ABC, abstractmethod
 from collections import deque
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Deque,
     Dict,
     List,
     Optional,
-    TYPE_CHECKING,
 )
 
 if TYPE_CHECKING:
@@ -244,7 +244,7 @@ class HealthChecker(ABC):
         return self._component_type
 
     @abstractmethod
-    def check(self, hub: "UnifiedHub") -> ComponentHealth:
+    def check(self, hub: UnifiedHub) -> ComponentHealth:
         """Perform health check and return status."""
         ...
 
@@ -281,7 +281,7 @@ class DAWHealthChecker(HealthChecker):
     def __init__(self):
         super().__init__(ComponentType.DAW)
 
-    def check(self, hub: "UnifiedHub") -> ComponentHealth:
+    def check(self, hub: UnifiedHub) -> ComponentHealth:
         if not hub._daw:
             return ComponentHealth(
                 component=self._component_type,
@@ -343,7 +343,7 @@ class LLMHealthChecker(HealthChecker):
     def __init__(self):
         super().__init__(ComponentType.LLM)
 
-    def check(self, hub: "UnifiedHub") -> ComponentHealth:
+    def check(self, hub: UnifiedHub) -> ComponentHealth:
         if not hub._llm:
             return ComponentHealth(
                 component=self._component_type,
@@ -406,7 +406,7 @@ class MLPipelineHealthChecker(HealthChecker):
     def __init__(self):
         super().__init__(ComponentType.ML_PIPELINE)
 
-    def check(self, hub: "UnifiedHub") -> ComponentHealth:
+    def check(self, hub: UnifiedHub) -> ComponentHealth:
         if not hub._ml_pipeline:
             return ComponentHealth(
                 component=self._component_type,
@@ -493,7 +493,7 @@ class VoiceHealthChecker(HealthChecker):
     def __init__(self):
         super().__init__(ComponentType.VOICE)
 
-    def check(self, hub: "UnifiedHub") -> ComponentHealth:
+    def check(self, hub: UnifiedHub) -> ComponentHealth:
         if not hub._voice:
             return ComponentHealth(
                 component=self._component_type,
@@ -541,7 +541,7 @@ class AudioHealthChecker(HealthChecker):
         self._last_underrun_time = time.time()
         self.record_failure("Buffer underrun")
 
-    def check(self, hub: "UnifiedHub") -> ComponentHealth:
+    def check(self, hub: UnifiedHub) -> ComponentHealth:
         # Check for recent underruns (last 60 seconds)
         recent_underruns = 0
         if self._last_underrun_time:
@@ -553,7 +553,7 @@ class AudioHealthChecker(HealthChecker):
 
         if recent_underruns > 0:
             status = HealthStatus.DEGRADED
-            message = f"Recent buffer underruns detected"
+            message = "Recent buffer underruns detected"
 
         throughput = self.get_throughput_stats()
         if throughput.failed_requests > 10:
@@ -584,7 +584,7 @@ class PluginHealthChecker(HealthChecker):
     def __init__(self):
         super().__init__(ComponentType.PLUGIN)
 
-    def check(self, hub: "UnifiedHub") -> ComponentHealth:
+    def check(self, hub: UnifiedHub) -> ComponentHealth:
         plugins = hub._plugins.list_plugins()
         total = len(plugins)
         enabled = sum(1 for p in plugins if p.enabled)
@@ -646,7 +646,7 @@ class HealthDashboard:
     aggregated health reports and alerts.
     """
 
-    def __init__(self, hub: "UnifiedHub"):
+    def __init__(self, hub: UnifiedHub):
         self._hub = hub
         self._start_time = time.time()
         self._checkers: Dict[ComponentType, HealthChecker] = {}
@@ -669,9 +669,7 @@ class HealthDashboard:
         self._checkers[ComponentType.AUDIO] = AudioHealthChecker()
         self._checkers[ComponentType.PLUGIN] = PluginHealthChecker()
 
-    def register_checker(
-        self, component_type: ComponentType, checker: HealthChecker
-    ) -> None:
+    def register_checker(self, component_type: ComponentType, checker: HealthChecker) -> None:
         """Register a custom health checker."""
         self._checkers[component_type] = checker
 
@@ -768,9 +766,7 @@ class HealthDashboard:
 
         self._check_interval = interval
         self._running = True
-        self._monitor_thread = threading.Thread(
-            target=self._monitor_loop, daemon=True
-        )
+        self._monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
         self._monitor_thread.start()
         logger.info(f"Health monitoring started (interval: {interval}s)")
 
@@ -796,9 +792,7 @@ class HealthDashboard:
                     break
                 time.sleep(0.1)
 
-    def on_status_change(
-        self, callback: Callable[[ComponentType, HealthStatus], None]
-    ) -> None:
+    def on_status_change(self, callback: Callable[[ComponentType, HealthStatus], None]) -> None:
         """Register callback for component status changes."""
         self._status_callbacks.append(callback)
 
@@ -806,9 +800,7 @@ class HealthDashboard:
         """Register callback for new health reports."""
         self._report_callbacks.append(callback)
 
-    def _notify_status_change(
-        self, component: ComponentType, status: HealthStatus
-    ) -> None:
+    def _notify_status_change(self, component: ComponentType, status: HealthStatus) -> None:
         """Notify listeners of status change."""
         for cb in self._status_callbacks:
             try:
@@ -909,4 +901,3 @@ __all__ = [
     # Dashboard
     "HealthDashboard",
 ]
-

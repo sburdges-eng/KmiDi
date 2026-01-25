@@ -23,6 +23,13 @@ Usage:
 
 from __future__ import annotations
 
+# Import torch for torch.arange usage
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+
 import asyncio
 import json
 import logging
@@ -370,7 +377,17 @@ class PyTorchTrainer(BaseTrainer):
             self.model = self._create_generic_model()
 
         self.model = self.model.to(self.device)
-        self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
+        
+        # Set appropriate loss function based on task type
+        if task in [ModelTask.GROOVE_PREDICTION, ModelTask.DYNAMICS_MAPPING]:
+            # Regression tasks - use MSE loss
+            self.criterion = nn.MSELoss()
+        elif task in [ModelTask.HARMONY_PREDICTION, ModelTask.EMOTION_CLASSIFICATION, ModelTask.MELODY_GENERATION]:
+            # Classification tasks - use CrossEntropy loss
+            self.criterion = nn.CrossEntropyLoss()
+        else:
+            # Default to CrossEntropy for unknown tasks
+            self.criterion = nn.CrossEntropyLoss()
 
         # Setup optimizer
         self.optimizer = torch.optim.AdamW(
@@ -754,7 +771,17 @@ class HarmonyTrainer(PyTorchTrainer):
 
         self.model = self._create_harmony_model()
         self.model = self.model.to(self.device)
-        self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
+        
+        # Set appropriate loss function based on task type
+        if task in [ModelTask.GROOVE_PREDICTION, ModelTask.DYNAMICS_MAPPING]:
+            # Regression tasks - use MSE loss
+            self.criterion = nn.MSELoss()
+        elif task in [ModelTask.HARMONY_PREDICTION, ModelTask.EMOTION_CLASSIFICATION, ModelTask.MELODY_GENERATION]:
+            # Classification tasks - use CrossEntropy loss
+            self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
+        else:
+            # Default to CrossEntropy for unknown tasks
+            self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
 
         self.optimizer = torch.optim.AdamW(
             self.model.parameters(),
@@ -782,7 +809,17 @@ class EmotionTrainer(PyTorchTrainer):
 
         self.model = self._create_emotion_model()
         self.model = self.model.to(self.device)
-        self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
+        
+        # Set appropriate loss function based on task type
+        if task in [ModelTask.GROOVE_PREDICTION, ModelTask.DYNAMICS_MAPPING]:
+            # Regression tasks - use MSE loss
+            self.criterion = nn.MSELoss()
+        elif task in [ModelTask.HARMONY_PREDICTION, ModelTask.EMOTION_CLASSIFICATION, ModelTask.MELODY_GENERATION]:
+            # Classification tasks - use CrossEntropy loss
+            self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
+        else:
+            # Default to CrossEntropy for unknown tasks
+            self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
 
         self.optimizer = torch.optim.AdamW(
             self.model.parameters(),
@@ -810,7 +847,17 @@ class MelodyTrainer(PyTorchTrainer):
 
         self.model = self._create_melody_model()
         self.model = self.model.to(self.device)
-        self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
+        
+        # Set appropriate loss function based on task type
+        if task in [ModelTask.GROOVE_PREDICTION, ModelTask.DYNAMICS_MAPPING]:
+            # Regression tasks - use MSE loss
+            self.criterion = nn.MSELoss()
+        elif task in [ModelTask.HARMONY_PREDICTION, ModelTask.EMOTION_CLASSIFICATION, ModelTask.MELODY_GENERATION]:
+            # Classification tasks - use CrossEntropy loss
+            self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
+        else:
+            # Default to CrossEntropy for unknown tasks
+            self.criterion = nn.CrossEntropyLoss(label_smoothing=self.config.label_smoothing)
 
         self.optimizer = torch.optim.AdamW(
             self.model.parameters(),

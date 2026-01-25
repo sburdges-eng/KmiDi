@@ -1,0 +1,80 @@
+# KMidi Cloud Training - Lambda Labs (as well trained as possible)
+# =============================================================================
+# Target: 1x A100 (40GB) on Lambda Labs.
+#
+# Quick start:
+#   1. Start a Lambda A100 instance; note SSH (e.g. ubuntu@<ip>).
+#   2. Put data at /workspace/data on the instance:
+#        rsync -avz ~/kmidi_datasets/ LAMBDA_SSH:/workspace/data/
+#      or mount/upload so manifests and datasets live under /workspace/data.
+#      This config uses data.root: "/workspace/data" and expects
+#      manifests/train_high_res.jsonl (and val) relative to that root.
+#   3. From the repo:
+#        export LAMBDA_SSH=ubuntu@<ip>
+#        ./scripts/cloud_training/run_from_workspace.sh lambda
+#
+# Epochs (max quality): Melody 200+, Harmony 150+, MIDI 15-30.
+# =============================================================================
+
+model:
+  id: "kmidi_v2_lambda"
+  version: "1.0.0"
+
+models:
+  emotion_recognizer:
+    hidden_dims: [1024, 512, 256]
+    base_channels: 64
+  melody_transformer:
+    d_model: 512
+    nhead: 8
+    num_layers: 12
+    d_ff: 2048
+  harmony_predictor:
+    input_size: 256
+    hidden_dims: [512, 256]
+  dynamics_engine:
+    hidden_dims: [256, 128]
+  groove_predictor:
+    hidden_dims: [256, 128]
+
+# Data: Lambda instance usually has /workspace (repo) and /data (mounted or rsync)
+data:
+  root: "/workspace/data"
+  manifests:
+    train: "manifests/train_high_res.jsonl"
+    val: "manifests/val_high_res.jsonl"
+  batch_size: 128
+  num_workers: 16
+  pin_memory: true
+  prefetch_factor: 4
+  augmentation:
+    enabled: true
+    emotion_jitter: 0.05
+    pitch_shift_range: [-2.0, 2.0]
+    time_stretch_range: [0.9, 1.1]
+    transpose_range: [-5, 6]
+
+# Training: max-quality epochs (Melody 200+, Harmony 150+, MIDI 15-30)
+training:
+  epochs: 200
+  learning_rate: 1e-4
+  weight_decay: 0.01
+  distributed:
+    enabled: true
+    backend: "nccl"
+    find_unused_parameters: false
+  precision: "bf16"
+  amp: true
+  optimizer: "AdamW"
+  scheduler: "cosine"
+  warmup_epochs: 10
+  monitor:
+    wandb: true
+    project: "kmidi-cloud"
+    save_top_k: 5
+    checkpoint_dir: "checkpoints/cloud_run"
+
+export:
+  formats: ["onnx", "mlpackage"]
+  quantization: "int8"
+  opset_version: 17

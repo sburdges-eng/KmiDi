@@ -9,29 +9,30 @@ Provides:
 - Formant preservation
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Callable
-from enum import Enum
 import math
 import random
-import numpy as np
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 
 class PlaybackMode(Enum):
     """Sample playback modes."""
-    ONE_SHOT = "one_shot"       # Play once
-    LOOP = "loop"               # Loop continuously
-    PING_PONG = "ping_pong"     # Loop forward/backward
-    REVERSE = "reverse"         # Play backwards
-    GRANULAR = "granular"       # Granular playback
+
+    ONE_SHOT = "one_shot"  # Play once
+    LOOP = "loop"  # Loop continuously
+    PING_PONG = "ping_pong"  # Loop forward/backward
+    REVERSE = "reverse"  # Play backwards
+    GRANULAR = "granular"  # Granular playback
 
 
 class PitchAlgorithm(Enum):
     """Pitch shifting algorithms."""
-    SIMPLE = "simple"           # Simple resampling (changes length)
-    GRANULAR = "granular"       # Granular time-domain
+
+    SIMPLE = "simple"  # Simple resampling (changes length)
+    GRANULAR = "granular"  # Granular time-domain
     PHASE_VOCODER = "phase_vocoder"  # Phase vocoder (FFT-based)
-    FORMANT = "formant"         # Formant-preserving
+    FORMANT = "formant"  # Formant-preserving
 
 
 @dataclass
@@ -39,23 +40,24 @@ class SamplePlayback:
     """
     Sample playback engine.
     """
+
     samples: List[float] = field(default_factory=list)
     sample_rate: float = 44100.0
     mode: PlaybackMode = PlaybackMode.ONE_SHOT
 
     # Playback parameters
-    start_position: float = 0.0    # Start point (0.0-1.0)
-    end_position: float = 1.0      # End point (0.0-1.0)
-    loop_start: float = 0.0        # Loop start (0.0-1.0)
-    loop_end: float = 1.0          # Loop end (0.0-1.0)
+    start_position: float = 0.0  # Start point (0.0-1.0)
+    end_position: float = 1.0  # End point (0.0-1.0)
+    loop_start: float = 0.0  # Loop start (0.0-1.0)
+    loop_end: float = 1.0  # Loop end (0.0-1.0)
 
     # Playback rate
-    rate: float = 1.0              # Playback rate (1.0 = normal)
-    pitch_semitones: float = 0.0   # Pitch shift in semitones
+    rate: float = 1.0  # Playback rate (1.0 = normal)
+    pitch_semitones: float = 0.0  # Pitch shift in semitones
 
     # State
     _position: float = 0.0
-    _direction: int = 1            # 1 = forward, -1 = backward
+    _direction: int = 1  # 1 = forward, -1 = backward
     _is_playing: bool = False
 
     def start(self):
@@ -158,6 +160,7 @@ class PitchShifter:
     """
     Pitch shifter using granular synthesis.
     """
+
     sample_rate: float = 44100.0
     algorithm: PitchAlgorithm = PitchAlgorithm.GRANULAR
 
@@ -181,11 +184,9 @@ class PitchShifter:
     def _create_window(self, size: int) -> List[float]:
         """Create grain window."""
         if self.window_type == "hann":
-            return [0.5 * (1 - math.cos(2 * math.pi * i / (size - 1)))
-                    for i in range(size)]
+            return [0.5 * (1 - math.cos(2 * math.pi * i / (size - 1))) for i in range(size)]
         elif self.window_type == "hamming":
-            return [0.54 - 0.46 * math.cos(2 * math.pi * i / (size - 1))
-                    for i in range(size)]
+            return [0.54 - 0.46 * math.cos(2 * math.pi * i / (size - 1)) for i in range(size)]
         else:  # Triangle
             mid = size // 2
             return [i / mid if i < mid else 2 - i / mid for i in range(size)]
@@ -327,18 +328,19 @@ class GrainCloud:
     """
     Granular synthesis cloud for textural effects.
     """
+
     samples: List[float] = field(default_factory=list)
     sample_rate: float = 44100.0
 
     # Grain parameters
     grain_size_ms: float = 50.0
     grain_density: float = 10.0  # Grains per second
-    position: float = 0.5        # Source position (0.0-1.0)
+    position: float = 0.5  # Source position (0.0-1.0)
     position_spread: float = 0.1  # Random position spread
 
     # Modulation
-    pitch_spread: float = 0.0    # Random pitch variation (semitones)
-    pan_spread: float = 0.0      # Stereo spread (0.0-1.0)
+    pitch_spread: float = 0.0  # Random pitch variation (semitones)
+    pan_spread: float = 0.0  # Stereo spread (0.0-1.0)
     reverse_probability: float = 0.0  # Chance of reverse grain
 
     # State
@@ -398,15 +400,17 @@ class GrainCloud:
         # Randomize pan
         pan = 0.5 + (random.random() - 0.5) * self.pan_spread
 
-        self._grains.append({
-            "start": start_sample,
-            "position": 0.0,
-            "length": grain_samples,
-            "pitch_ratio": pitch_ratio,
-            "reverse": reverse,
-            "pan": pan,
-            "active": True,
-        })
+        self._grains.append(
+            {
+                "start": start_sample,
+                "position": 0.0,
+                "length": grain_samples,
+                "pitch_ratio": pitch_ratio,
+                "reverse": reverse,
+                "pan": pan,
+                "active": True,
+            }
+        )
 
     def _process_grain(self, grain: Dict) -> float:
         """Process a single grain."""
@@ -527,8 +531,9 @@ def time_stretch(
     hop_out = int(hop_in * factor)
 
     # Create Hann window
-    window = [0.5 * (1 - math.cos(2 * math.pi * i / (grain_samples - 1)))
-              for i in range(grain_samples)]
+    window = [
+        0.5 * (1 - math.cos(2 * math.pi * i / (grain_samples - 1))) for i in range(grain_samples)
+    ]
 
     # Calculate output length
     output_length = int(len(samples) * factor)
@@ -630,45 +635,13 @@ def detect_pitch(
     for lag in range(min_lag, max_lag):
         # Calculate autocorrelation at this lag
         correlation = 0.0
-        for i in range(len(samples_centered) - lag):
-            correlation += samples_centered[i] * samples_centered[i + lag]
-        
-        # Normalize: autocorrelation at lag 0 would be signal_variance
-        # For normalized autocorrelation: divide by autocorrelation at lag 0
-        # But we use a simpler normalization: divide by (length - lag) * variance
-        # Actually, for pitch detection, we want the normalized autocorrelation coefficient
-        correlation_norm = correlation / ((len(samples_centered) - lag) * signal_variance)
-        
-        correlations.append((lag, correlation_norm))
-    
-    # Find peaks: look for local maxima
-    peaks = []
-    for i in range(1, len(correlations) - 1):
-        lag_prev, corr_prev = correlations[i - 1]
-        lag_curr, corr_curr = correlations[i]
-        lag_next, corr_next = correlations[i + 1]
-        
-        # Local maximum
-        if corr_curr > corr_prev and corr_curr > corr_next and corr_curr > 0.1:
-            peaks.append((lag_curr, corr_curr))
-    
-    if not peaks:
-        return None
-    
-    # Find the fundamental: the minimum lag with strong correlation
-    # Sort peaks by lag (ascending) to find the first strong peak
-    peaks.sort(key=lambda x: x[0])  # Sort by lag (ascending)
-    
-    # Find maximum correlation to set threshold
-    max_correlation = max(corr for _, corr in peaks)
-    threshold = max(0.2, max_correlation * 0.4)  # At least 20% or 40% of max
-    
-    best_lag = None
-    best_correlation = 0.0
-    
-    # Find minimum lag above threshold (fundamental period)
-    for lag, corr in peaks:
-        if corr >= threshold:
+        for i in range(len(samples) - lag):
+            correlation += samples[i] * samples[i + lag]
+
+        correlation /= len(samples) - lag
+
+        if correlation > best_correlation:
+            best_correlation = correlation
             best_lag = lag
             best_correlation = corr
             break  # Take the first (smallest lag) peak above threshold

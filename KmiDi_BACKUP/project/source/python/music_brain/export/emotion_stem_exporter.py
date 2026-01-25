@@ -7,22 +7,23 @@ and embedded audio metadata (ID3, BWF, etc.).
 Part of the "New Features" implementation for Kelly MIDI Companion.
 """
 
-from typing import List, Dict, Optional, Tuple
-from pathlib import Path
 import json
 import re
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 
 @dataclass
 class EmotionMetadata:
     """Emotion metadata for a stem."""
+
     emotion_label: Optional[str] = None  # Primary emotion (e.g., "grief", "hope")
-    valence: Optional[float] = None      # -1.0 to 1.0
-    arousal: Optional[float] = None      # 0.0 to 1.0
-    intensity: Optional[float] = None    # 0.0 to 1.0
-    mood_tags: List[str] = None          # Additional mood tags
-    rule_breaks: List[str] = None        # Applied rule-breaking techniques
+    valence: Optional[float] = None  # -1.0 to 1.0
+    arousal: Optional[float] = None  # 0.0 to 1.0
+    intensity: Optional[float] = None  # 0.0 to 1.0
+    mood_tags: List[str] = None  # Additional mood tags
+    rule_breaks: List[str] = None  # Applied rule-breaking techniques
 
     def __post_init__(self):
         if self.mood_tags is None:
@@ -35,7 +36,7 @@ class EmotionMetadata:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict) -> 'EmotionMetadata':
+    def from_dict(cls, data: Dict) -> "EmotionMetadata":
         """Create from dictionary."""
         return cls(**data)
 
@@ -43,6 +44,7 @@ class EmotionMetadata:
 @dataclass
 class StemExportInfo:
     """Information about a stem export with emotion metadata."""
+
     original_filepath: str
     emotion_metadata: EmotionMetadata
     track_name: str
@@ -53,7 +55,7 @@ class StemExportInfo:
         output_directory: str,
         include_emotion: bool = True,
         include_vad: bool = False,
-        format_extension: str = ".wav"
+        format_extension: str = ".wav",
     ) -> str:
         """
         Generate filename with emotion labels.
@@ -67,8 +69,8 @@ class StemExportInfo:
         base_name = self.track_name.lower()
 
         # Sanitize base name
-        base_name = re.sub(r'[^\w\s-]', '', base_name)
-        base_name = re.sub(r'\s+', '_', base_name).strip('_')
+        base_name = re.sub(r"[^\w\s-]", "", base_name)
+        base_name = re.sub(r"\s+", "_", base_name).strip("_")
 
         if not base_name:
             base_name = f"track_{self.track_index}"
@@ -78,17 +80,19 @@ class StemExportInfo:
         # Add emotion label if available
         if include_emotion and self.emotion_metadata.emotion_label:
             emotion = self.emotion_metadata.emotion_label.lower()
-            emotion = re.sub(r'[^\w]', '', emotion)  # Sanitize
+            emotion = re.sub(r"[^\w]", "", emotion)  # Sanitize
             parts.append(emotion)
 
         # Add VAD values if requested
         if include_vad:
             if self.emotion_metadata.valence is not None:
-                parts.append(f"v{self.emotion_metadata.valence:.2f}".replace('.', '').replace('-', 'n'))
+                parts.append(
+                    f"v{self.emotion_metadata.valence:.2f}".replace(".", "").replace("-", "n")
+                )
             if self.emotion_metadata.arousal is not None:
-                parts.append(f"a{self.emotion_metadata.arousal:.2f}".replace('.', ''))
+                parts.append(f"a{self.emotion_metadata.arousal:.2f}".replace(".", ""))
             if self.emotion_metadata.intensity is not None:
-                parts.append(f"i{self.emotion_metadata.intensity:.2f}".replace('.', ''))
+                parts.append(f"i{self.emotion_metadata.intensity:.2f}".replace(".", ""))
 
         # Build filename
         if parts:
@@ -164,7 +168,7 @@ class EmotionStemExporter:
         emotion = self.emotion_map.get(emotion, emotion)
 
         # Remove special characters
-        emotion = re.sub(r'[^\w]', '', emotion)
+        emotion = re.sub(r"[^\w]", "", emotion)
 
         return emotion
 
@@ -201,9 +205,7 @@ class EmotionStemExporter:
         return list(set(tags))  # Remove duplicates
 
     def create_metadata_json(
-        self,
-        export_info: StemExportInfo,
-        output_path: Optional[str] = None
+        self, export_info: StemExportInfo, output_path: Optional[str] = None
     ) -> Dict:
         """
         Create JSON metadata file for stem export.
@@ -219,14 +221,11 @@ class EmotionStemExporter:
             },
             "emotion": export_info.emotion_metadata.to_dict(),
             "tags": self.generate_emotion_tags(export_info.emotion_metadata),
-            "export_info": {
-                "format": "stem_with_emotion_metadata",
-                "version": "1.0.0"
-            }
+            "export_info": {"format": "stem_with_emotion_metadata", "version": "1.0.0"},
         }
 
         if output_path:
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 json.dump(metadata, f, indent=2)
             print(f"Saved metadata to {output_path}")
 
@@ -237,7 +236,7 @@ class EmotionStemExporter:
         export_info: StemExportInfo,
         output_filepath: str,
         create_metadata_file: bool = True,
-        copy_audio: bool = False
+        copy_audio: bool = False,
     ) -> str:
         """
         Export stem with emotion metadata.
@@ -257,6 +256,7 @@ class EmotionStemExporter:
         # Copy audio file if requested
         if copy_audio and Path(export_info.original_filepath).exists():
             import shutil
+
             shutil.copy2(export_info.original_filepath, output_path)
             print(f"Copied audio to {output_path}")
         elif copy_audio:
@@ -264,7 +264,7 @@ class EmotionStemExporter:
 
         # Create metadata JSON file
         if create_metadata_file:
-            metadata_path = output_path.with_suffix('.json')
+            metadata_path = output_path.with_suffix(".json")
             self.create_metadata_json(export_info, str(metadata_path))
 
         # TODO: Embed metadata in audio file (requires mutagen or similar library)
@@ -276,7 +276,7 @@ class EmotionStemExporter:
         self,
         export_infos: List[StemExportInfo],
         output_directory: str,
-        filename_style: str = "emotion"  # "emotion", "vad", "simple"
+        filename_style: str = "emotion",  # "emotion", "vad", "simple"
     ) -> List[str]:
         """
         Batch export multiple stems with emotion metadata.
@@ -297,39 +297,26 @@ class EmotionStemExporter:
         for export_info in export_infos:
             if filename_style == "emotion":
                 filename = export_info.generate_emotion_filename(
-                    str(output_dir),
-                    include_emotion=True,
-                    include_vad=False
+                    str(output_dir), include_emotion=True, include_vad=False
                 )
             elif filename_style == "vad":
                 filename = export_info.generate_emotion_filename(
-                    str(output_dir),
-                    include_emotion=True,
-                    include_vad=True
+                    str(output_dir), include_emotion=True, include_vad=True
                 )
             else:  # simple
                 filename = export_info.generate_emotion_filename(
-                    str(output_dir),
-                    include_emotion=False,
-                    include_vad=False
+                    str(output_dir), include_emotion=False, include_vad=False
                 )
 
             output_path = self.export_with_emotion_metadata(
-                export_info,
-                filename,
-                create_metadata_file=True,
-                copy_audio=True
+                export_info, filename, create_metadata_file=True, copy_audio=True
             )
 
             output_paths.append(output_path)
 
         return output_paths
 
-    def create_export_manifest(
-        self,
-        export_infos: List[StemExportInfo],
-        output_path: str
-    ) -> Dict:
+    def create_export_manifest(self, export_infos: List[StemExportInfo], output_path: str) -> Dict:
         """
         Create manifest file listing all exported stems with their emotion metadata.
 
@@ -341,7 +328,7 @@ class EmotionStemExporter:
                 "total_stems": len(export_infos),
                 "export_date": str(Path(output_path).parent),
             },
-            "stems": []
+            "stems": [],
         }
 
         for export_info in export_infos:
@@ -360,7 +347,7 @@ class EmotionStemExporter:
             }
             manifest["stems"].append(stem_data)
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(manifest, f, indent=2)
 
         print(f"Created export manifest: {output_path}")
@@ -368,9 +355,7 @@ class EmotionStemExporter:
 
 
 def create_emotion_metadata_from_intent(
-    intent_data: Dict,
-    track_name: str,
-    track_index: int = 0
+    intent_data: Dict, track_name: str, track_index: int = 0
 ) -> Tuple[EmotionMetadata, StemExportInfo]:
     """
     Helper function to create emotion metadata from song intent data.
@@ -407,9 +392,7 @@ def create_emotion_metadata_from_intent(
 
     # Create metadata
     metadata = EmotionMetadata(
-        emotion_label=emotion_label,
-        mood_tags=mood_tags,
-        rule_breaks=rule_breaks
+        emotion_label=emotion_label, mood_tags=mood_tags, rule_breaks=rule_breaks
     )
 
     # Create export info (will need original_filepath to be set later)
@@ -417,7 +400,7 @@ def create_emotion_metadata_from_intent(
         original_filepath="",  # Set later
         emotion_metadata=metadata,
         track_name=track_name,
-        track_index=track_index
+        track_index=track_index,
     )
 
     return metadata, export_info
@@ -434,14 +417,14 @@ def main():
         arousal=0.4,
         intensity=0.6,
         mood_tags=["melancholy", "sad"],
-        rule_breaks=["HARMONY_AvoidTonicResolution"]
+        rule_breaks=["HARMONY_AvoidTonicResolution"],
     )
 
     export_info = StemExportInfo(
         original_filepath="bass_track.wav",
         emotion_metadata=metadata,
         track_name="Bass",
-        track_index=0
+        track_index=0,
     )
 
     # Generate filename

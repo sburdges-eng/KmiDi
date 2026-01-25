@@ -15,8 +15,9 @@ import base64
 import json
 import os
 import tempfile
+from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any, Dict, Generator, Optional
+from typing import Any, Dict, Optional
 
 JsonDict = Dict[str, Any]
 
@@ -117,7 +118,3 @@ __all__ = [
     "make_midi_payload",
     "parse_intent_json",
 ]
-
-
-
-

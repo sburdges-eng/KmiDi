@@ -10,7 +10,7 @@ pipeline as needed.
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import torch
 import yaml
@@ -24,7 +24,7 @@ except Exception:  # pragma: no cover - optional dependency
 
 
 def load_config(path: str) -> Dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
@@ -66,7 +66,7 @@ class ManifestAudioDataset(torch.utils.data.Dataset):
         self.n_mels = n_mels
         self.hop_length = hop_length
 
-        with open(manifest_path, "r", encoding="utf-8") as f:
+        with open(manifest_path, encoding="utf-8") as f:
             self.items = [json.loads(line) for line in f if line.strip()]
 
         labels = [str(it[label_key]) for it in self.items if label_key in it]
@@ -204,9 +204,7 @@ def train(cfg_path: str = "config/laptop_m4_small.yaml") -> None:
     )
 
     precision = cfg.get("precision", "fp16")
-    scaler = torch.cuda.amp.GradScaler(
-        enabled=(device.type == "cuda" and precision == "fp16")
-    )
+    scaler = torch.cuda.amp.GradScaler(enabled=(device.type == "cuda" and precision == "fp16"))
 
     grad_accum = cfg["training"]["grad_accum_steps"]
     log_every = cfg["training"]["log_every"]
@@ -275,4 +273,3 @@ def parse_args() -> argparse.Namespace:
 if __name__ == "__main__":
     args = parse_args()
     train(args.config)
-

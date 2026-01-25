@@ -18,7 +18,7 @@ session:
 # -----------------------------------------------------------------------------
 hardware:
   device: mps                   # Metal Performance Shaders
-  precision: fp16               # M4 excels at fp16
+  precision: fp16               # FP16 required for MPS autocast; M4 excels at FP16
   
   # M4 Specifications (14-core GPU variant)
   gpu_cores: 14
@@ -31,6 +31,14 @@ hardware:
     use_mps_graph: true         # MPSGraph for optimization
     enable_fast_math: true
     buffer_pool_size_mb: 4096   # Pre-allocate for consistency
+  
+  # MPS-specific settings
+  mps:
+    num_workers: 0              # CRITICAL: Always 0 for MPS
+    pin_memory: false            # Not beneficial on MPS
+    persistent_workers: false    # Not needed with num_workers=0
+    enable_mps_fallback: true   # Fallback to CPU if MPS unavailable
+    mps_autocast: true          # Use torch.autocast('mps', dtype=torch.float16)
   
   # CoreML integration
   coreml:

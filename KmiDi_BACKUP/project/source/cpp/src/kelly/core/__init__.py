@@ -5,20 +5,20 @@ intent analysis, and MIDI generation.
 """
 
 from kelly.core.emotion_thesaurus import (
-    EmotionThesaurus,
-    EmotionNode,
     EmotionCategory,
+    EmotionNode,
+    EmotionThesaurus,
 )
 from kelly.core.intent_processor import (
-    IntentProcessor,
-    Wound,
-    RuleBreak,
     IntentPhase,
+    IntentProcessor,
+    RuleBreak,
+    Wound,
 )
 from kelly.core.midi_generator import (
-    MidiGenerator,
-    GrooveTemplate,
     Chord,
+    GrooveTemplate,
+    MidiGenerator,
 )
 
 __all__ = [

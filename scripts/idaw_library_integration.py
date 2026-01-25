@@ -13,13 +13,11 @@ Integrates with:
 Author: iDAW Project
 """
 
-import os
 import json
-import subprocess
-from pathlib import Path
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # ============================================================================
 # STANDARD PATHS FOR MAC
@@ -475,64 +473,9 @@ class InstrumentSelection:
 class InstrumentSelector:
     """Selects appropriate instruments based on emotional state."""
 
-    def __init__(self, scanner: LibraryScanner, catalog_path: Optional[Path] = None):
+    def __init__(self, scanner: LibraryScanner):
         self.scanner = scanner
         self.libraries = scanner.libraries
-        self.catalog = None
-        self.catalog_path = catalog_path
-
-        # Load catalog if path provided
-        if catalog_path:
-            self._load_catalog(catalog_path)
-        else:
-            # Try default location
-            default_catalog = (
-                Path(__file__).parent.parent / "data" / "emotion_instrument_library_catalog.json"
-            )
-            if default_catalog.exists():
-                self._load_catalog(default_catalog)
-
-    def _load_catalog(self, catalog_path: Path):
-        """Load the emotion instrument library catalog."""
-        try:
-            with open(catalog_path, "r") as f:
-                self.catalog = json.load(f)
-        except Exception as e:
-            print(f"Warning: Could not load catalog from {catalog_path}: {e}")
-            self.catalog = None
-
-    def get_samples_for_emotion(self, emotion: str, instrument: str) -> List[str]:
-        """
-        Get audio sample file paths for a specific emotion and instrument.
-
-        Args:
-            emotion: Emotion name (e.g., "ANGRY", "GRIEF", "grief")
-            instrument: Instrument category ("drums", "guitar", "piano", "vocals")
-
-        Returns:
-            List of file paths, or empty list if not found
-        """
-        if not self.catalog:
-            return []
-
-        # Normalize emotion name (uppercase for catalog lookup)
-        emotion_upper = emotion.upper()
-
-        # Check if emotion exists in catalog
-        emotions_data = self.catalog.get("emotions", {})
-        if emotion_upper not in emotions_data:
-            return []
-
-        emotion_data = emotions_data[emotion_upper]
-        instruments_data = emotion_data.get("instruments", {})
-
-        # Get files for the requested instrument
-        instrument_files = instruments_data.get(instrument.lower(), [])
-
-        # Extract file paths
-        file_paths = [f["path"] for f in instrument_files if "path" in f]
-
-        return file_paths
 
     def select_for_emotion(
         self, emotion: str, track_type: str = "full"
@@ -575,32 +518,11 @@ class InstrumentSelector:
     def _select_instrument(self, category: str, emotion: str) -> InstrumentSelection:
         """Select a specific instrument."""
         selection = InstrumentSelection(
-            category=(
-                InstrumentCategory(category)
-                if category in [e.value for e in InstrumentCategory]
-                else InstrumentCategory.KEYS_PIANO
-            ),
+            category=InstrumentCategory(category)
+            if category in [e.value for e in InstrumentCategory]
+            else InstrumentCategory.KEYS_PIANO,
             source="user_samples",
         )
-
-        # Map category to catalog instrument name
-        catalog_instrument_map = {
-            "guitar_acoustic": "guitar",
-            "guitar_electric": "guitar",
-            "keys_piano": "piano",
-            "keys_electric": "piano",
-            "vocals": "vocals",
-        }
-
-        catalog_instrument = catalog_instrument_map.get(category)
-
-        # Try catalog first if we have a mapping
-        if catalog_instrument:
-            catalog_samples = self.get_samples_for_emotion(emotion, catalog_instrument)
-            if catalog_samples:
-                selection.sample_paths = catalog_samples
-                selection.source = "emotion_catalog"
-                return selection
 
         mapping = EMOTION_TO_INSTRUMENTS.get(emotion, {})
 
@@ -640,14 +562,6 @@ class InstrumentSelector:
             midi_channel=9,  # GM drum channel
         )
 
-        # Try catalog first
-        catalog_samples = self.get_samples_for_emotion(emotion, "drums")
-        if catalog_samples:
-            selection.sample_paths = catalog_samples
-            selection.source = "emotion_catalog"
-            return selection
-
-        # Fallback to code-based mapping
         mapping = EMOTION_TO_INSTRUMENTS.get(emotion, {})
         user_samples = mapping.get("user_samples", [])
 

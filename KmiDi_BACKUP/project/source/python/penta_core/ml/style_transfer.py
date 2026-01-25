@@ -7,23 +7,21 @@ Provides neural network-based groove style transfer using:
 - Template-based fallback
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Any
-import numpy as np
+from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, List, Optional
 
+import numpy as np
+
+from penta_core.ml.inference import InferenceEngine, create_engine
 from penta_core.ml.model_registry import (
-    ModelInfo,
-    ModelBackend,
-    ModelTask,
     get_model,
-    register_model,
 )
-from penta_core.ml.inference import create_engine, InferenceEngine
 
 
 class GrooveStyle(Enum):
     """Predefined groove styles."""
+
     FUNK = "funk"
     JAZZ = "jazz"
     ROCK = "rock"
@@ -39,6 +37,7 @@ class GrooveStyle(Enum):
 @dataclass
 class GrooveFeatures:
     """Extracted groove features for style transfer."""
+
     # Timing features
     timing_offsets: List[float]  # Offset from grid in ms
     velocity_curve: List[int]  # 0-127 velocities
@@ -69,12 +68,14 @@ class GrooveFeatures:
         features.extend(vels)
 
         # Scalar features
-        features.extend([
-            self.swing_amount,
-            self.ghost_note_ratio,
-            self.density / 4.0,  # Normalize assuming max 4 notes per beat
-            self.syncopation,
-        ])
+        features.extend(
+            [
+                self.swing_amount,
+                self.ghost_note_ratio,
+                self.density / 4.0,  # Normalize assuming max 4 notes per beat
+                self.syncopation,
+            ]
+        )
 
         return np.array(features, dtype=np.float32)
 
@@ -98,6 +99,7 @@ class GrooveFeatures:
 @dataclass
 class StyleTransferResult:
     """Result from groove style transfer."""
+
     original_features: GrooveFeatures
     transferred_features: GrooveFeatures
     source_style: Optional[GrooveStyle]
@@ -456,11 +458,9 @@ class GrooveStyleTransfer:
         intensity: float,
     ) -> GrooveFeatures:
         """Blend two groove features."""
+
         def blend_list(a: List, b: List, t: float) -> List:
-            return [
-                a_val * (1 - t) + b_val * t
-                for a_val, b_val in zip(a, b)
-            ]
+            return [a_val * (1 - t) + b_val * t for a_val, b_val in zip(a, b)]
 
         def blend_scalar(a: float, b: float, t: float) -> float:
             return a * (1 - t) + b * t
@@ -536,9 +536,7 @@ class GrooveStyleTransfer:
             # Apply duration
             if i < len(transferred.note_durations):
                 beat_ticks = ppq
-                new_note["duration_ticks"] = int(
-                    transferred.note_durations[i] * beat_ticks
-                )
+                new_note["duration_ticks"] = int(transferred.note_durations[i] * beat_ticks)
 
             transformed.append(new_note)
 

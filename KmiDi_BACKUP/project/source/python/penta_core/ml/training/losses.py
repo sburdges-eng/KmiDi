@@ -11,7 +11,7 @@ Provides specialized loss functions that understand musical properties:
 
 Usage:
     from penta_core.ml.training.losses import EmotionContrastiveLoss
-    
+
     loss_fn = EmotionContrastiveLoss(temperature=0.07)
     loss = loss_fn(embeddings, labels)
 """
@@ -30,6 +30,7 @@ try:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -37,25 +38,24 @@ except ImportError:
 
 
 if TORCH_AVAILABLE:
-    
     # =========================================================================
     # Focal Loss (for imbalanced datasets)
     # =========================================================================
-    
+
     class FocalLoss(nn.Module):
         """
         Focal Loss for handling class imbalance.
-        
+
         Reduces loss for well-classified examples, focusing on hard examples.
-        
+
         FL(p_t) = -alpha_t * (1 - p_t)^gamma * log(p_t)
-        
+
         Args:
             alpha: Class weights (tensor or float)
             gamma: Focusing parameter (default 2.0)
             reduction: 'mean', 'sum', or 'none'
         """
-        
+
         def __init__(
             self,
             alpha: Optional[Union[float, torch.Tensor]] = None,
@@ -66,7 +66,7 @@ if TORCH_AVAILABLE:
             self.alpha = alpha
             self.gamma = gamma
             self.reduction = reduction
-        
+
         def forward(
             self,
             inputs: torch.Tensor,
@@ -77,42 +77,41 @@ if TORCH_AVAILABLE:
                 inputs: Logits (N, C)
                 targets: Class indices (N,)
             """
-            ce_loss = F.cross_entropy(inputs, targets, reduction='none')
+            ce_loss = F.cross_entropy(inputs, targets, reduction="none")
             pt = torch.exp(-ce_loss)
-            
+
             focal_weight = (1 - pt) ** self.gamma
-            
+
             if self.alpha is not None:
                 if isinstance(self.alpha, (float, int)):
                     alpha_t = self.alpha
                 else:
                     alpha_t = self.alpha[targets]
                 focal_weight = alpha_t * focal_weight
-            
+
             loss = focal_weight * ce_loss
-            
+
             if self.reduction == "mean":
                 return loss.mean()
             elif self.reduction == "sum":
                 return loss.sum()
             return loss
-    
-    
+
     # =========================================================================
     # Label Smoothing Loss
     # =========================================================================
-    
+
     class LabelSmoothingLoss(nn.Module):
         """
         Cross-entropy with label smoothing for better generalization.
-        
+
         Instead of hard labels [0, 1, 0], uses soft labels [ε/K, 1-ε, ε/K]
-        
+
         Args:
             smoothing: Label smoothing factor (0.0 to 1.0)
             num_classes: Number of classes
         """
-        
+
         def __init__(
             self,
             smoothing: float = 0.1,
@@ -122,7 +121,7 @@ if TORCH_AVAILABLE:
             self.smoothing = smoothing
             self.num_classes = num_classes
             self.confidence = 1.0 - smoothing
-        
+
         def forward(
             self,
             inputs: torch.Tensor,
@@ -134,35 +133,34 @@ if TORCH_AVAILABLE:
                 targets: Class indices (N,)
             """
             log_probs = F.log_softmax(inputs, dim=-1)
-            
+
             # Create smooth labels
             with torch.no_grad():
                 smooth_targets = torch.zeros_like(log_probs)
                 smooth_targets.fill_(self.smoothing / (self.num_classes - 1))
                 smooth_targets.scatter_(1, targets.unsqueeze(1), self.confidence)
-            
+
             loss = (-smooth_targets * log_probs).sum(dim=-1)
             return loss.mean()
-    
-    
+
     # =========================================================================
     # Emotion Contrastive Loss
     # =========================================================================
-    
+
     class EmotionContrastiveLoss(nn.Module):
         """
         Contrastive loss for emotion embeddings.
-        
+
         Pulls together embeddings of similar emotions and pushes apart
         embeddings of different emotions, weighted by emotional distance.
-        
+
         Uses valence-arousal space to determine emotional similarity.
-        
+
         Args:
             temperature: Contrastive temperature
             emotion_distances: Pre-computed emotion distance matrix
         """
-        
+
         # Default emotion coordinates in valence-arousal space
         EMOTION_COORDS = {
             "happy": (0.8, 0.6),
@@ -173,7 +171,7 @@ if TORCH_AVAILABLE:
             "disgust": (-0.5, 0.3),
             "neutral": (0.0, 0.0),
         }
-        
+
         def __init__(
             self,
             temperature: float = 0.07,
@@ -181,37 +179,33 @@ if TORCH_AVAILABLE:
         ):
             super().__init__()
             self.temperature = temperature
-            
+
             # Build emotion distance matrix
             if emotion_labels is None:
                 emotion_labels = list(self.EMOTION_COORDS.keys())
-            
+
             self.emotion_labels = emotion_labels
             self.register_buffer(
-                "emotion_distances",
-                self._compute_emotion_distances(emotion_labels)
+                "emotion_distances", self._compute_emotion_distances(emotion_labels)
             )
-        
+
         def _compute_emotion_distances(self, labels: List[str]) -> torch.Tensor:
             """Compute pairwise emotion distances in valence-arousal space."""
             n = len(labels)
             distances = torch.zeros(n, n)
-            
+
             for i, label_i in enumerate(labels):
                 coord_i = self.EMOTION_COORDS.get(label_i, (0, 0))
                 for j, label_j in enumerate(labels):
                     coord_j = self.EMOTION_COORDS.get(label_j, (0, 0))
                     # Euclidean distance in VA space
-                    dist = np.sqrt(
-                        (coord_i[0] - coord_j[0])**2 +
-                        (coord_i[1] - coord_j[1])**2
-                    )
+                    dist = np.sqrt((coord_i[0] - coord_j[0]) ** 2 + (coord_i[1] - coord_j[1]) ** 2)
                     distances[i, j] = dist
-            
+
             # Normalize to [0, 1]
             distances = distances / distances.max()
             return distances
-        
+
         def forward(
             self,
             embeddings: torch.Tensor,
@@ -224,65 +218,64 @@ if TORCH_AVAILABLE:
             """
             # Normalize embeddings
             embeddings = F.normalize(embeddings, dim=1)
-            
+
             # Compute similarity matrix
             similarity = torch.matmul(embeddings, embeddings.T) / self.temperature
-            
+
             # Create mask for positive pairs (same emotion)
             labels = labels.view(-1, 1)
             positive_mask = (labels == labels.T).float()
-            
+
             # Get emotion-weighted negative mask
             # Emotions that are far apart should be pushed further
             batch_distances = self.emotion_distances[labels.squeeze(), :][:, labels.squeeze()]
             negative_weight = batch_distances * (1 - positive_mask)
-            
+
             # Contrastive loss
             # For each sample, maximize similarity to positives, minimize to negatives
             exp_sim = torch.exp(similarity)
-            
+
             # Positive term
             positive_sim = (exp_sim * positive_mask).sum(dim=1)
-            
+
             # Negative term (weighted by emotional distance)
             negative_sim = (exp_sim * negative_weight).sum(dim=1)
-            
+
             # NCE-style loss
             loss = -torch.log(positive_sim / (positive_sim + negative_sim + 1e-8))
-            
+
             return loss.mean()
-    
-    
+
     # =========================================================================
     # Harmony-Aware Loss
     # =========================================================================
-    
+
     class HarmonyAwareLoss(nn.Module):
         """
         Loss function that understands chord relationships.
-        
+
         Penalizes predictions based on harmonic distance:
         - Same chord type: low penalty
         - Related chords (e.g., relative minor): medium penalty
         - Unrelated chords: high penalty
-        
+
         Args:
             chord_vocab: List of chord symbols
             use_circle_of_fifths: Weight by circle of fifths distance
         """
-        
+
         # Chord relationships (simplified)
         CHORD_RELATIONS = {
             # (root_interval, quality_match) -> weight
-            (0, True): 0.0,   # Same chord
+            (0, True): 0.0,  # Same chord
             (0, False): 0.3,  # Same root, different quality
-            (7, True): 0.2,   # Fifth above (dominant)
-            (5, True): 0.2,   # Fourth above (subdominant)
-            (9, True): 0.3,   # Relative minor/major
-            (3, True): 0.3,   # Minor third
-            (4, True): 0.3,   # Major third
+            (7, True): 0.2,  # Fifth above (dominant)
+            (5, True): 0.2,  # Fourth above (subdominant)
+            (9, True): 0.3,  # Relative minor/major
+            (3, True): 0.3,  # Minor third
+            (4, True): 0.3,  # Major third
         }
-        
+
         def __init__(
             self,
             num_chords: int = 48,
@@ -291,32 +284,29 @@ if TORCH_AVAILABLE:
             super().__init__()
             self.num_chords = num_chords
             self.use_circle_of_fifths = use_circle_of_fifths
-            
+
             # Build chord distance matrix
-            self.register_buffer(
-                "chord_distances",
-                self._build_chord_distance_matrix()
-            )
-        
+            self.register_buffer("chord_distances", self._build_chord_distance_matrix())
+
         def _build_chord_distance_matrix(self) -> torch.Tensor:
             """Build matrix of harmonic distances between chords."""
             # Simplified: assume chords are indexed by root * 4 + quality
             # quality: 0=major, 1=minor, 2=dim, 3=aug
-            
+
             distances = torch.ones(self.num_chords, self.num_chords)
-            
+
             for i in range(self.num_chords):
                 root_i = i // 4
                 qual_i = i % 4
-                
+
                 for j in range(self.num_chords):
                     root_j = j // 4
                     qual_j = j % 4
-                    
+
                     # Root interval
                     interval = (root_j - root_i) % 12
-                    quality_match = (qual_i == qual_j)
-                    
+                    quality_match = qual_i == qual_j
+
                     # Check known relationships
                     key = (interval, quality_match)
                     if key in self.CHORD_RELATIONS:
@@ -327,9 +317,9 @@ if TORCH_AVAILABLE:
                         distances[i, j] = 0.6
                     else:
                         distances[i, j] = 0.8
-            
+
             return distances
-        
+
         def forward(
             self,
             logits: torch.Tensor,
@@ -341,38 +331,37 @@ if TORCH_AVAILABLE:
                 targets: Target chord indices (N,)
             """
             # Standard cross-entropy
-            ce_loss = F.cross_entropy(logits, targets, reduction='none')
-            
+            ce_loss = F.cross_entropy(logits, targets, reduction="none")
+
             # Get predicted chord
             predicted = logits.argmax(dim=1)
-            
+
             # Weight by harmonic distance
             harmonic_weight = self.chord_distances[predicted, targets]
-            
+
             # Weighted loss
             weighted_loss = ce_loss * (1 + harmonic_weight)
-            
+
             return weighted_loss.mean()
-    
-    
+
     # =========================================================================
     # Groove Consistency Loss
     # =========================================================================
-    
+
     class GrooveConsistencyLoss(nn.Module):
         """
         Loss for groove/timing prediction that enforces consistency.
-        
+
         Ensures:
         - Timing offsets are smooth (no sudden jumps)
         - Velocity patterns are coherent
         - Style consistency across a sequence
-        
+
         Args:
             smoothness_weight: Weight for smoothness penalty
             style_weight: Weight for style consistency
         """
-        
+
         def __init__(
             self,
             smoothness_weight: float = 0.1,
@@ -381,7 +370,7 @@ if TORCH_AVAILABLE:
             super().__init__()
             self.smoothness_weight = smoothness_weight
             self.style_weight = style_weight
-        
+
         def forward(
             self,
             predictions: torch.Tensor,
@@ -396,14 +385,14 @@ if TORCH_AVAILABLE:
             """
             # Base MSE loss
             mse_loss = F.mse_loss(predictions, targets)
-            
+
             # Smoothness loss: penalize large differences between consecutive steps
             if predictions.dim() == 3:
                 diff = predictions[:, 1:, :] - predictions[:, :-1, :]
-                smoothness_loss = (diff ** 2).mean()
+                smoothness_loss = (diff**2).mean()
             else:
                 smoothness_loss = torch.tensor(0.0, device=predictions.device)
-            
+
             # Style consistency loss
             if style_labels is not None:
                 # Embeddings of same style should be similar
@@ -411,35 +400,32 @@ if TORCH_AVAILABLE:
                 style_loss = torch.tensor(0.0, device=predictions.device)
             else:
                 style_loss = torch.tensor(0.0, device=predictions.device)
-            
+
             total_loss = (
-                mse_loss +
-                self.smoothness_weight * smoothness_loss +
-                self.style_weight * style_loss
+                mse_loss + self.smoothness_weight * smoothness_loss + self.style_weight * style_loss
             )
-            
+
             return total_loss
-    
-    
+
     # =========================================================================
     # Multi-Task Loss
     # =========================================================================
-    
+
     class MultiTaskLoss(nn.Module):
         """
         Combined loss for multi-task learning.
-        
+
         Supports:
         - Fixed weights
         - Learned task weights (uncertainty weighting)
         - Gradient normalization
-        
+
         Args:
             task_losses: Dict of task_name -> loss_fn
             task_weights: Dict of task_name -> weight (or "learned")
             normalize_gradients: Apply gradient normalization
         """
-        
+
         def __init__(
             self,
             task_losses: Dict[str, nn.Module],
@@ -447,23 +433,22 @@ if TORCH_AVAILABLE:
             learn_weights: bool = False,
         ):
             super().__init__()
-            
+
             self.task_losses = nn.ModuleDict(task_losses)
             self.task_names = list(task_losses.keys())
-            
+
             if task_weights is None:
-                task_weights = {name: 1.0 for name in self.task_names}
-            
+                task_weights = dict.fromkeys(self.task_names, 1.0)
+
             if learn_weights:
                 # Learnable log-variance for uncertainty weighting
-                self.log_vars = nn.ParameterDict({
-                    name: nn.Parameter(torch.zeros(1))
-                    for name in self.task_names
-                })
+                self.log_vars = nn.ParameterDict(
+                    {name: nn.Parameter(torch.zeros(1)) for name in self.task_names}
+                )
             else:
                 self.log_vars = None
                 self.task_weights = task_weights
-        
+
         def forward(
             self,
             predictions: Dict[str, torch.Tensor],
@@ -473,51 +458,50 @@ if TORCH_AVAILABLE:
             Args:
                 predictions: Dict of task_name -> predictions
                 targets: Dict of task_name -> targets
-            
+
             Returns:
                 total_loss, task_losses dict
             """
             task_losses = {}
             total_loss = torch.tensor(0.0, device=next(iter(predictions.values())).device)
-            
+
             for name in self.task_names:
                 if name not in predictions or name not in targets:
                     continue
-                
+
                 loss = self.task_losses[name](predictions[name], targets[name])
                 task_losses[name] = loss
-                
+
                 if self.log_vars is not None:
                     # Uncertainty weighting: L = L / (2 * var) + log(var)
                     precision = torch.exp(-self.log_vars[name])
                     weighted_loss = precision * loss + self.log_vars[name]
                 else:
                     weighted_loss = self.task_weights[name] * loss
-                
-                total_loss = total_loss + weighted_loss
-            
-            return total_loss, task_losses
 
+                total_loss = total_loss + weighted_loss
+
+            return total_loss, task_losses
 
     # =========================================================================
     # Contrastive Loss (for Self-Supervised Learning)
     # =========================================================================
-    
+
     class ContrastiveLoss(nn.Module):
         """
         Generic Contrastive Loss (InfoNCE) for Self-Supervised Learning.
-        
+
         Pulls together positive pairs (e.g., two augmentations of the same audio)
         and pushes apart negative pairs (different audio files).
-        
+
         Args:
             temperature: Contrastive temperature
         """
-        
+
         def __init__(self, temperature: float = 0.07):
             super().__init__()
             self.temperature = temperature
-            
+
         def forward(self, z_i: torch.Tensor, z_j: torch.Tensor) -> torch.Tensor:
             """
             Args:
@@ -525,61 +509,60 @@ if TORCH_AVAILABLE:
                 z_j: Embedding 2 (N, D)
             """
             batch_size = z_i.shape[0]
-            
+
             # Normalize embeddings
             z_i = F.normalize(z_i, dim=1)
             z_j = F.normalize(z_j, dim=1)
-            
+
             # Combine embeddings
             representations = torch.cat([z_i, z_j], dim=0)
-            
+
             # Compute similarity matrix
             similarity_matrix = torch.matmul(representations, representations.T) / self.temperature
-            
+
             # Create labels for positive pairs
             # Pair (i, i+N) are positives
             labels = torch.cat([torch.arange(batch_size) for _ in range(2)], dim=0)
             labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
             labels = labels.to(z_i.device)
-            
+
             # Mask out self-similarity
             mask = torch.eye(labels.shape[0], dtype=torch.bool).to(z_i.device)
             labels = labels[~mask].view(labels.shape[0], -1)
             similarity_matrix = similarity_matrix[~mask].view(similarity_matrix.shape[0], -1)
-            
+
             # Select positives
             positives = similarity_matrix[labels.bool()].view(labels.shape[0], -1)
-            
+
             # Select negatives
             negatives = similarity_matrix[~labels.bool()].view(similarity_matrix.shape[0], -1)
-            
+
             logits = torch.cat([positives, negatives], dim=1)
             targets = torch.zeros(logits.shape[0], dtype=torch.long).to(z_i.device)
-            
+
             return F.cross_entropy(logits, targets)
-    
-    
+
     # =========================================================================
     # Music-Aware Combined Loss
     # =========================================================================
-    
+
     class MusicAwareLoss(nn.Module):
         """
         Comprehensive music-aware loss combining multiple objectives.
-        
+
         Combines:
         - Classification/regression loss
         - Contrastive learning
         - Temporal consistency
         - Domain-specific constraints
-        
+
         Args:
             task: Task type ("emotion", "melody", "harmony", "dynamics", "groove")
             base_loss: Base loss function
             contrastive_weight: Weight for contrastive term
             consistency_weight: Weight for temporal consistency
         """
-        
+
         def __init__(
             self,
             task: str = "emotion",
@@ -589,11 +572,11 @@ if TORCH_AVAILABLE:
             label_smoothing: float = 0.1,
         ):
             super().__init__()
-            
+
             self.task = task
             self.contrastive_weight = contrastive_weight
             self.consistency_weight = consistency_weight
-            
+
             # Base loss
             if task in ["emotion", "harmony"]:
                 self.base_loss = LabelSmoothingLoss(
@@ -602,7 +585,7 @@ if TORCH_AVAILABLE:
                 )
             else:
                 self.base_loss = nn.MSELoss()
-            
+
             # Task-specific losses
             if task == "emotion":
                 self.contrastive_loss = EmotionContrastiveLoss()
@@ -612,7 +595,7 @@ if TORCH_AVAILABLE:
                 self.contrastive_loss = GrooveConsistencyLoss()
             else:
                 self.contrastive_loss = None
-        
+
         def forward(
             self,
             predictions: torch.Tensor,
@@ -627,7 +610,7 @@ if TORCH_AVAILABLE:
             """
             # Base loss
             loss = self.base_loss(predictions, targets)
-            
+
             # Contrastive loss
             if self.contrastive_loss is not None and embeddings is not None:
                 if self.task == "emotion":
@@ -636,20 +619,19 @@ if TORCH_AVAILABLE:
                 elif self.task == "harmony":
                     harmony_loss = self.contrastive_loss(predictions, targets)
                     loss = loss + self.contrastive_weight * harmony_loss
-            
-            return loss
 
+            return loss
 
     # =========================================================================
     # Class Weights Utilities
     # =========================================================================
 
     def compute_class_weights(
-        labels: Union[List[int], np.ndarray, "torch.Tensor"],
+        labels: Union[List[int], np.ndarray, torch.Tensor],
         num_classes: Optional[int] = None,
         method: str = "inverse_freq",
         smoothing: float = 0.1,
-    ) -> "torch.Tensor":
+    ) -> torch.Tensor:
         """
         Compute class weights for imbalanced datasets.
 
@@ -699,9 +681,8 @@ if TORCH_AVAILABLE:
 
         return torch.tensor(weights, dtype=torch.float32)
 
-
     def analyze_class_balance(
-        labels: Union[List[int], np.ndarray, "torch.Tensor"],
+        labels: Union[List[int], np.ndarray, torch.Tensor],
         class_names: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
@@ -748,7 +729,6 @@ if TORCH_AVAILABLE:
             "is_severely_imbalanced": imbalance_ratio > 10,
             "recommended_method": "effective" if imbalance_ratio > 10 else "inverse_freq",
         }
-
 
     # =========================================================================
     # Loss Function Factory
@@ -806,9 +786,7 @@ if TORCH_AVAILABLE:
 
         if model_name not in loss_configs:
             # Default to CrossEntropyLoss for unknown models
-            logger.warning(
-                f"No specific loss for {model_name}, using CrossEntropyLoss"
-            )
+            logger.warning(f"No specific loss for {model_name}, using CrossEntropyLoss")
             return nn.CrossEntropyLoss()
 
         config = loss_configs[model_name]
@@ -823,27 +801,27 @@ else:
     class FocalLoss:
         def __init__(self, *args, **kwargs):
             raise ImportError("PyTorch required for loss functions")
-    
+
     class LabelSmoothingLoss:
         def __init__(self, *args, **kwargs):
             raise ImportError("PyTorch required for loss functions")
-    
+
     class EmotionContrastiveLoss:
         def __init__(self, *args, **kwargs):
             raise ImportError("PyTorch required for loss functions")
-    
+
     class HarmonyAwareLoss:
         def __init__(self, *args, **kwargs):
             raise ImportError("PyTorch required for loss functions")
-    
+
     class GrooveConsistencyLoss:
         def __init__(self, *args, **kwargs):
             raise ImportError("PyTorch required for loss functions")
-    
+
     class MultiTaskLoss:
         def __init__(self, *args, **kwargs):
             raise ImportError("PyTorch required for loss functions")
-    
+
     class MusicAwareLoss:
         def __init__(self, *args, **kwargs):
             raise ImportError("PyTorch required for loss functions")

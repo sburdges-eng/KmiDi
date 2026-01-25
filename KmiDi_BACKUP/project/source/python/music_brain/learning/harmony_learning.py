@@ -5,11 +5,12 @@ Stores chord progression examples with emotional context, learns common patterns
 and rule-break effectiveness, and generates adaptive harmonic content.
 """
 
+import json
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-from collections import Counter, defaultdict
-import json
+
 import numpy as np
 
 DEFAULT_STORAGE = Path.home() / ".parrot" / "music_learning" / "harmonies"
@@ -20,6 +21,7 @@ PROFILES_DIR = DEFAULT_STORAGE / "profiles"
 @dataclass
 class ChordExample:
     """Single chord progression example with context."""
+
     progression: List[str]
     roman_numerals: List[str]
     emotion: str = "neutral"
@@ -51,6 +53,7 @@ class ChordExample:
 @dataclass
 class HarmonyProfile:
     """Learned harmony profile with progression statistics."""
+
     name: str
     emotion_patterns: Dict[str, Dict]
     global_patterns: Dict
@@ -95,7 +98,7 @@ class HarmonyStore:
         path = self.examples_dir / f"{example_id}.json"
         if not path.exists():
             return None
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
         return ChordExample.from_dict(data)
 
@@ -112,7 +115,7 @@ class HarmonyStore:
         path = self.profiles_dir / f"{name}.json"
         if not path.exists():
             return None
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
         return HarmonyProfile.from_dict(data)
 
@@ -150,7 +153,9 @@ class HarmonyLearner:
             lengths = []
 
             for ex in group:
-                progression = tuple(ex.roman_numerals) if ex.roman_numerals else tuple(ex.progression)
+                progression = (
+                    tuple(ex.roman_numerals) if ex.roman_numerals else tuple(ex.progression)
+                )
                 progression_counter[progression] += 1
                 transitions = self._progression_to_transitions(ex.roman_numerals or ex.progression)
                 transition_counter.update(transitions)
@@ -183,10 +188,12 @@ class HarmonyLearner:
         profile: HarmonyProfile,
         length: Optional[int] = None,
         key: str = "C",
-        mode: str = "major"
+        mode: str = "major",
     ) -> List[str]:
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get(
+            "neutral"
+        )
         if not patterns:
             patterns = profile.global_patterns
 
@@ -267,7 +274,7 @@ class HarmonyLearningManager:
         profile_name: Optional[str] = None,
         length: Optional[int] = None,
         key: str = "C",
-        mode: str = "major"
+        mode: str = "major",
     ) -> List[str]:
         profile: Optional[HarmonyProfile] = None
         if profile_name:

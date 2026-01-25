@@ -1,6 +1,6 @@
 """Tests for emotion thesaurus."""
-import pytest
-from kelly.core.emotion_thesaurus import EmotionThesaurus, EmotionCategory
+
+from kelly.core.emotion_thesaurus import EmotionCategory, EmotionThesaurus
 
 
 def test_emotion_thesaurus_initialization():

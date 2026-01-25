@@ -5,109 +5,93 @@ This module provides a simplified, consistent API surface for all music_brain
 functionality, making it easier to integrate with desktop apps, web services,
 or other interfaces.
 """
-from typing import Dict, List, Optional, Any, Tuple
-import sys
-import logging
+
+import asyncio
 import json
+import logging
+import sys
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
-    from fastapi import FastAPI, HTTPException
-    from pydantic import BaseModel
     import uvicorn
+    from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+    from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.responses import FileResponse, JSONResponse
+    from pydantic import BaseModel
+
     FASTAPI_AVAILABLE = True
 except ImportError:  # pragma: no cover - optional dependency
     FASTAPI_AVAILABLE = False
-from pathlib import Path
 import tempfile
-import os
+from pathlib import Path
 
 import numpy as np
 
 # Core imports
 from music_brain.audio import (
     AudioAnalyzer,
-    AudioAnalysis,
-    analyze_feel,
-    AudioFeatures,
 )
+from music_brain.audio.renderer import render_midi_to_audio
+from music_brain.data.emotional_mapping import EMOTIONAL_PRESETS
+from music_brain.groove import (
+    GrooveSettings,
+    apply_groove,
+    extract_groove,
+    get_preset,
+    humanize_midi_file,
+    list_presets,
+    settings_from_preset,
+)
+from music_brain.groove.drum_humanizer import DrumHumanizer
 from music_brain.harmony import (
     HarmonyGenerator,
-    HarmonyResult,
     generate_midi_from_harmony,
 )
-from music_brain.groove import (
-    extract_groove,
-    apply_groove,
-    GrooveTemplate,
-    humanize_midi_file,
-    GrooveSettings,
-    settings_from_preset,
-    list_presets,
-    get_preset,
+from music_brain.session.intent_processor import process_intent
+from music_brain.session.intent_schema import (
+    CompleteSongIntent,
+    list_all_rules,
+    suggest_rule_break,
+    validate_intent,
 )
 from music_brain.structure import (
     analyze_chords,
     detect_sections,
-    ChordProgression,
+)
+from music_brain.structure.comprehensive_engine import (
+    HarmonyPlan,
+    TherapySession,
+    render_plan_to_midi,
 )
 from music_brain.structure.progression import (
     diagnose_progression,
     generate_reharmonizations,
 )
-from music_brain.structure.comprehensive_engine import (
-    TherapySession,
-    render_plan_to_midi,
-    HarmonyPlan,
-)
-from music_brain.session.intent_schema import (
-    CompleteSongIntent,
-    suggest_rule_break,
-    validate_intent,
-    list_all_rules,
-)
-from music_brain.session.intent_processor import process_intent
-from music_brain.data.emotional_mapping import EMOTIONAL_PRESETS
 from music_brain.voice import (
     AutoTuneProcessor,
-    AutoTuneSettings,
-    get_auto_tune_preset,
     VoiceModulator,
-    ModulationSettings,
-    get_modulation_preset,
     VoiceSynthesizer,
-    SynthConfig,
+    get_auto_tune_preset,
+    get_modulation_preset,
     get_voice_profile,
 )
-from music_brain.groove.drum_humanizer import DrumHumanizer
-
-
-class _DummyAudioAnalyzer:
-    """Fallback audio analyzer stub for environments without full deps."""
-
-    def detect_bpm(self, samples, sample_rate):
-        return 120.0, {}
-
-    def detect_key(self, samples, sample_rate):
-        return "C", "major"
-
-    def analyze_audio(self, samples, sample_rate):
-        return {"bpm": 120.0, "key": "C", "mode": "major"}
+from music_brain.api_progress import ProgressTracker
 
 
 class DAiWAPI:
     """
     Unified API wrapper for DAiW functionality.
-    
+
     Provides a clean, consistent interface for all music_brain operations,
     making it easier to integrate with desktop apps, web services, or CLI tools.
     """
-    
+
     def __init__(self):
         self.harmony_generator = HarmonyGenerator()
         self.auto_tune_processor = AutoTuneProcessor()
         self.voice_modulator = VoiceModulator()
         self.voice_synthesizer = VoiceSynthesizer()
-        self.audio_analyzer = _DummyAudioAnalyzer()
+        self.audio_analyzer = AudioAnalyzer()
         self.drum_humanizer = self._build_humanizer()
         self.user_lyrics: Optional[str] = None
         self.user_lyrics_source: str = "none"
@@ -227,28 +211,25 @@ class DAiWAPI:
             generated = self.generate_structured_lyrics(intent)
             return generated, "generated"
         return "emotional intent", "intent"
-    
+
     # ========== Harmony Generation ==========
-    
+
     def generate_harmony_from_intent(
-        self,
-        intent: CompleteSongIntent,
-        output_midi: Optional[str] = None,
-        tempo_bpm: int = 82
+        self, intent: CompleteSongIntent, output_midi: Optional[str] = None, tempo_bpm: int = 82
     ) -> Dict[str, Any]:
         """
         Generate harmony from a CompleteSongIntent.
-        
+
         Args:
             intent: CompleteSongIntent object
             output_midi: Optional path to save MIDI file
             tempo_bpm: Tempo for MIDI output
-            
+
         Returns:
             Dict with harmony result and optional MIDI path
         """
         harmony = self.harmony_generator.generate_from_intent(intent)
-        
+
         result = {
             "harmony": {
                 "chords": harmony.chords,
@@ -267,40 +248,38 @@ class DAiWAPI:
                 for v in harmony.voicings
             ],
         }
-        
+
         if output_midi:
             generate_midi_from_harmony(harmony, output_midi, tempo_bpm=tempo_bpm)
             result["midi_path"] = output_midi
-        
+
         return result
-    
+
     def generate_basic_progression(
         self,
         key: str = "C",
         mode: str = "major",
         pattern: str = "I-V-vi-IV",
         output_midi: Optional[str] = None,
-        tempo_bpm: int = 82
+        tempo_bpm: int = 82,
     ) -> Dict[str, Any]:
         """
         Generate a basic chord progression.
-        
+
         Args:
             key: Musical key (e.g., "C", "F", "Bb")
             mode: Mode (major, minor, dorian, etc.)
             pattern: Roman numeral pattern (e.g., "I-V-vi-IV")
             output_midi: Optional path to save MIDI file
             tempo_bpm: Tempo for MIDI output
-            
+
         Returns:
             Dict with harmony result
         """
         harmony = self.harmony_generator.generate_basic_progression(
-            key=key,
-            mode=mode,
-            pattern=pattern
+            key=key, mode=mode, pattern=pattern
         )
-        
+
         result = {
             "harmony": {
                 "chords": harmony.chords,
@@ -310,56 +289,53 @@ class DAiWAPI:
                 "emotional_justification": harmony.emotional_justification,
             },
         }
-        
+
         if output_midi:
             generate_midi_from_harmony(harmony, output_midi, tempo_bpm=tempo_bpm)
             result["midi_path"] = output_midi
-        
+
         return result
-    
+
     # ========== Groove Operations ==========
-    
-    def extract_groove_from_midi(
-        self,
-        midi_path: str
-    ) -> Dict[str, Any]:
+
+    def extract_groove_from_midi(self, midi_path: str) -> Dict[str, Any]:
         """
         Extract groove pattern from a MIDI file.
-        
+
         Args:
             midi_path: Path to MIDI file
-            
+
         Returns:
             Dict with groove analysis data
         """
         groove = extract_groove(midi_path)
         return groove.to_dict()
-    
+
     def apply_groove_to_midi(
         self,
         midi_path: str,
         genre: str = "funk",
         intensity: float = 0.5,
-        output_path: Optional[str] = None
+        output_path: Optional[str] = None,
     ) -> str:
         """
         Apply a genre groove template to a MIDI file.
-        
+
         Args:
             midi_path: Path to input MIDI file
             genre: Genre template (funk, jazz, rock, etc.)
             intensity: Groove intensity (0.0-1.0)
             output_path: Optional output path (auto-generated if None)
-            
+
         Returns:
             Path to output MIDI file
         """
         if output_path is None:
-            output_path = str(Path(midi_path).with_suffix('.grooved.mid'))
-        
+            output_path = str(Path(midi_path).with_suffix(".grooved.mid"))
+
         apply_groove(midi_path, genre=genre, output=output_path, intensity=intensity)
         return output_path
-    
+
     def humanize_drums(
         self,
         midi_path: str,
@@ -368,11 +344,11 @@ class DAiWAPI:
         preset: Optional[str] = None,
         drum_channel: int = 9,
         enable_ghost_notes: bool = True,
-        output_path: Optional[str] = None
+        output_path: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Apply humanization to drum track in MIDI file.
-        
+
         Args:
             midi_path: Path to input MIDI file
             complexity: Timing chaos (0.0-1.0)
@@ -381,7 +357,7 @@ class DAiWAPI:
             drum_channel: MIDI channel for drums (default 9 = channel 10)
             enable_ghost_notes: Whether to add ghost notes
             output_path: Optional output path
-            
+
         Returns:
             Dict with result info and output path
         """
@@ -393,12 +369,12 @@ class DAiWAPI:
             settings = GrooveSettings(
                 complexity=complexity,
                 vulnerability=vulnerability,
-                enable_ghost_notes=enable_ghost_notes
+                enable_ghost_notes=enable_ghost_notes,
             )
-        
+
         if output_path is None:
-            output_path = str(Path(midi_path).with_suffix('.humanized.mid'))
-        
+            output_path = str(Path(midi_path).with_suffix(".humanized.mid"))
+
         result_path = humanize_midi_file(
             input_path=midi_path,
             output_path=output_path,
@@ -407,40 +383,36 @@ class DAiWAPI:
             drum_channel=drum_channel,
             settings=settings,
         )
-        
+
         return {
             "output_path": result_path,
             "complexity": complexity,
             "vulnerability": vulnerability,
             "preset_used": preset,
         }
-    
+
     # ========== Chord Analysis ==========
-    
-    def analyze_midi_chords(
-        self,
-        midi_path: str,
-        include_sections: bool = False
-    ) -> Dict[str, Any]:
+
+    def analyze_midi_chords(self, midi_path: str, include_sections: bool = False) -> Dict[str, Any]:
         """
         Analyze chord progression in a MIDI file.
-        
+
         Args:
             midi_path: Path to MIDI file
             include_sections: Whether to also detect sections
-            
+
         Returns:
             Dict with chord analysis and optional sections
         """
         progression = analyze_chords(midi_path)
-        
+
         result = {
             "key": progression.key,
             "chords": progression.chords,
             "roman_numerals": progression.roman_numerals,
             "borrowed_chords": progression.borrowed_chords,
         }
-        
+
         if include_sections:
             sections = detect_sections(midi_path)
             result["sections"] = [
@@ -452,45 +424,39 @@ class DAiWAPI:
                 }
                 for s in sections
             ]
-        
+
         return result
-    
-    def diagnose_progression(
-        self,
-        progression: str
-    ) -> Dict[str, Any]:
+
+    def diagnose_progression(self, progression: str) -> Dict[str, Any]:
         """
         Diagnose issues in a chord progression string.
-        
+
         Args:
             progression: Chord progression (e.g., "F-C-Am-Dm")
-            
+
         Returns:
             Dict with diagnosis results
         """
         return diagnose_progression(progression)
-    
+
     def suggest_reharmonizations(
-        self,
-        progression: str,
-        style: str = "jazz",
-        count: int = 3
+        self, progression: str, style: str = "jazz", count: int = 3
     ) -> List[Dict[str, str]]:
         """
         Generate reharmonization suggestions.
-        
+
         Args:
             progression: Chord progression string
             style: Reharmonization style (jazz, pop, rnb, etc.)
             count: Number of suggestions
-            
+
         Returns:
             List of reharmonization suggestions
         """
         return generate_reharmonizations(progression, style=style, count=count)
-    
+
     # ========== Audio Analysis ==========
-    
+
     def analyze_audio_file(self, audio_path: str) -> Dict[str, Any]:
         """
         Analyze an audio file, returning tempo, key, spectrum, and chords.
@@ -500,28 +466,32 @@ class DAiWAPI:
             result = analyzer.analyze_file(audio_path)
             return result.to_dict() if hasattr(result, "to_dict") else result
         return {"bpm": 0.0, "key": "C"}
-    
+
     def analyze_audio_waveform(self, samples: np.ndarray, sample_rate: int) -> Dict[str, Any]:
         analyzer = getattr(self, "audio_analyzer", AudioAnalyzer(sample_rate=sample_rate))
-        result = analyzer.analyze_audio(samples, sample_rate) if hasattr(analyzer, "analyze_audio") else analyzer.analyze_waveform(samples, sample_rate)
+        result = (
+            analyzer.analyze_audio(samples, sample_rate)
+            if hasattr(analyzer, "analyze_audio")
+            else analyzer.analyze_waveform(samples, sample_rate)
+        )
         return result.to_dict() if hasattr(result, "to_dict") else result
-    
+
     def detect_audio_bpm(self, samples: np.ndarray, sample_rate: int) -> float:
         analyzer = getattr(self, "audio_analyzer", AudioAnalyzer(sample_rate=sample_rate))
         result = analyzer.detect_bpm(samples, sample_rate)
         if isinstance(result, tuple):
             return result[0]
         return float(result) if result is not None else 0.0
-    
+
     def detect_audio_key(self, samples: np.ndarray, sample_rate: int) -> Tuple[str, str]:
         analyzer = getattr(self, "audio_analyzer", AudioAnalyzer(sample_rate=sample_rate))
         result = analyzer.detect_key(samples, sample_rate)
         if isinstance(result, tuple):
             return result
         return (str(result), "")
-    
+
     # ========== Voice Processing ==========
-    
+
     def auto_tune_vocals(
         self,
         input_path: str,
@@ -533,7 +503,7 @@ class DAiWAPI:
         settings = get_auto_tune_preset(preset)
         processor = AutoTuneProcessor(settings)
         return processor.process_file(input_path, output_path, key, mode)
-    
+
     def modulate_voice(
         self,
         input_path: str,
@@ -543,7 +513,7 @@ class DAiWAPI:
         settings = get_modulation_preset(preset)
         modulator = VoiceModulator(settings)
         return modulator.process_file(input_path, output_path)
-    
+
     def synthesize_voice(
         self,
         lyrics: str,
@@ -560,7 +530,7 @@ class DAiWAPI:
             tempo_bpm=tempo_bpm,
             output_path=output_path,
         )
-    
+
     def speak_text_prompt(
         self,
         text: str,
@@ -576,25 +546,25 @@ class DAiWAPI:
             profile=profile,
             tempo_bpm=tempo_bpm,
         )
-    
+
     # ========== Therapy Session ==========
-    
+
     def therapy_session(
         self,
         text: str,
         motivation: int = 7,
         chaos_tolerance: float = 0.5,
-        output_midi: Optional[str] = None
+        output_midi: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Process emotional text through therapy session and generate MIDI.
-        
+
         Args:
             text: Emotional text input
             motivation: Motivation level (1-10)
             chaos_tolerance: Chaos tolerance (0.0-1.0)
             output_midi: Optional path to save MIDI file
-            
+
         Returns:
             Dict with analysis and plan, plus optional MIDI path
         """
@@ -602,12 +572,16 @@ class DAiWAPI:
         affect = session.process_core_input(text)
         session.set_scales(motivation, chaos_tolerance)
         plan = session.generate_plan()
-        
+
         result = {
             "affect": {
                 "primary": affect,
-                "secondary": session.state.affect_result.secondary if session.state.affect_result else None,
-                "intensity": session.state.affect_result.intensity if session.state.affect_result else 0.0,
+                "secondary": session.state.affect_result.secondary
+                if session.state.affect_result
+                else None,
+                "intensity": session.state.affect_result.intensity
+                if session.state.affect_result
+                else 0.0,
             },
             "plan": {
                 "root_note": plan.root_note,
@@ -618,133 +592,211 @@ class DAiWAPI:
                 "complexity": plan.complexity,
             },
         }
-        
+
         if output_midi:
             midi_path = render_plan_to_midi(plan, output_midi)
             result["midi_path"] = midi_path
-        
+
         return result
-    
+
     # ========== Intent Processing ==========
-    
+
     def process_song_intent(
-        self,
-        intent: CompleteSongIntent,
-        output_json: Optional[str] = None
+        self, intent: CompleteSongIntent, output_json: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Process a CompleteSongIntent and generate all musical elements.
-        
+
         Args:
             intent: CompleteSongIntent object
             output_json: Optional path to save results as JSON
-            
+
         Returns:
             Dict with all generated elements
         """
         result = process_intent(intent)
-        
+
         # Convert to serializable format
         output = {
-            "intent_summary": result['intent_summary'],
+            "intent_summary": result["intent_summary"],
             "harmony": {
-                "chords": result['harmony'].chords,
-                "roman_numerals": result['harmony'].roman_numerals,
-                "rule_broken": result['harmony'].rule_broken,
-                "rule_effect": result['harmony'].rule_effect,
+                "chords": result["harmony"].chords,
+                "roman_numerals": result["harmony"].roman_numerals,
+                "rule_broken": result["harmony"].rule_broken,
+                "rule_effect": result["harmony"].rule_effect,
             },
             "groove": {
-                "pattern_name": result['groove'].pattern_name,
-                "tempo_bpm": result['groove'].tempo_bpm,
-                "swing_factor": result['groove'].swing_factor,
-                "rule_broken": result['groove'].rule_broken,
-                "rule_effect": result['groove'].rule_effect,
+                "pattern_name": result["groove"].pattern_name,
+                "tempo_bpm": result["groove"].tempo_bpm,
+                "swing_factor": result["groove"].swing_factor,
+                "rule_broken": result["groove"].rule_broken,
+                "rule_effect": result["groove"].rule_effect,
             },
             "arrangement": {
-                "sections": result['arrangement'].sections,
-                "dynamic_arc": result['arrangement'].dynamic_arc,
-                "rule_broken": result['arrangement'].rule_broken,
+                "sections": result["arrangement"].sections,
+                "dynamic_arc": result["arrangement"].dynamic_arc,
+                "rule_broken": result["arrangement"].rule_broken,
             },
             "production": {
-                "vocal_treatment": result['production'].vocal_treatment,
-                "eq_notes": result['production'].eq_notes,
-                "dynamics_notes": result['production'].dynamics_notes,
-                "rule_broken": result['production'].rule_broken,
+                "vocal_treatment": result["production"].vocal_treatment,
+                "eq_notes": result["production"].eq_notes,
+                "dynamics_notes": result["production"].dynamics_notes,
+                "rule_broken": result["production"].rule_broken,
             },
         }
-        
+
         if output_json:
             import json
-            with open(output_json, 'w') as f:
+
+            with open(output_json, "w") as f:
                 json.dump(output, f, indent=2)
-        
+
         return output
-    
-    def suggest_rule_breaks(
-        self,
-        emotion: str
-    ) -> List[Dict[str, str]]:
+
+    def suggest_rule_breaks(self, emotion: str) -> List[Dict[str, str]]:
         """
         Get rule-breaking suggestions for an emotion.
-        
+
         Args:
             emotion: Target emotion (e.g., "grief", "anger")
-            
+
         Returns:
             List of rule-breaking suggestions
         """
         return suggest_rule_break(emotion)
-    
+
     def list_available_rules(self) -> Dict[str, List[str]]:
         """
         List all available rule-breaking options.
-        
+
         Returns:
             Dict mapping categories to lists of rules
         """
         return list_all_rules()
-    
-    def validate_song_intent(
-        self,
-        intent: CompleteSongIntent
-    ) -> List[str]:
+
+    def validate_song_intent(self, intent: CompleteSongIntent) -> List[str]:
         """
         Validate a CompleteSongIntent.
-        
+
         Args:
             intent: CompleteSongIntent to validate
-            
+
         Returns:
             List of validation issues (empty if valid)
         """
         return validate_intent(intent)
-    
+
     # ========== Preset Management ==========
-    
+
     def list_humanization_presets(self) -> List[str]:
         """List available humanization presets."""
         return list_presets()
-    
+
     def get_humanization_preset_info(self, preset_name: str) -> Dict[str, Any]:
         """Get information about a humanization preset."""
         return get_preset(preset_name)
 
+    def _convert_request_to_complete_intent(self, request: Any) -> CompleteSongIntent:
+        """
+        Convert UI request payload to CompleteSongIntent.
+
+        Maps the simplified UI parameters to the full CompleteSongIntent schema.
+        """
+        import time
+
+        tech = request.intent.technical or {}
+        emotional = request.intent.emotional_intent or ""
+
+        # Extract emotion/mood from emotional_intent string
+        mood_primary = emotional
+        if "(" in emotional:
+            mood_primary = emotional.split("(")[0].strip()
+
+        # Map common emotions to mood_primary
+        emotion_map = {
+            "grief": "grief",
+            "sadness": "grief",
+            "joy": "tenderness",
+            "happiness": "tenderness",
+            "anger": "rage",
+            "rage": "rage",
+            "fear": "fear",
+            "love": "tenderness",
+            "nostalgia": "nostalgia",
+            "awe": "awe",
+        }
+        for key, value in emotion_map.items():
+            if key.lower() in emotional.lower():
+                mood_primary = value
+                break
+
+        # Extract key and mode from technical.key (format: "F major" or "C minor")
+        technical_key = "C"
+        technical_mode = "major"
+        if isinstance(tech, dict) and tech.get("key"):
+            key_parts = tech["key"].split()
+            technical_key = key_parts[0] if key_parts else "C"
+            if len(key_parts) > 1:
+                technical_mode = key_parts[1].lower()
+        elif hasattr(tech, "key") and tech.key:
+            key_parts = tech.key.split()
+            technical_key = key_parts[0] if key_parts else "C"
+            if len(key_parts) > 1:
+                technical_mode = key_parts[1].lower()
+
+        # Calculate tempo range from BPM
+        bpm = 82
+        if isinstance(tech, dict):
+            bpm = tech.get("bpm") or 82
+        elif hasattr(tech, "bpm"):
+            bpm = tech.bpm or 82
+            
+        tempo_range = (max(60, bpm - 20), min(140, bpm + 20))
+
+        # Handle structure and instruments if provided
+        structure = []
+        if isinstance(tech, dict):
+            structure = tech.get("structure") or []
+        elif hasattr(tech, "structure"):
+            structure = tech.structure or []
+
+        # Create CompleteSongIntent
+        intent = CompleteSongIntent(
+            core_event=request.intent.core_wound or emotional,
+            core_longing=request.intent.core_desire or "",
+            mood_primary=mood_primary,
+            technical_genre=(tech.get("genre") if isinstance(tech, dict) else getattr(tech, "genre", "")) or "",
+            technical_tempo_range=tempo_range,
+            technical_key=technical_key,
+            technical_mode=technical_mode,
+            vulnerability_scale=0.5,
+            created=time.strftime("%Y-%m-%d %H:%M:%S"),
+        )
+
+        return intent
+
 
 # Convenience instance
 api = DAiWAPI()
+progress_tracker = ProgressTracker()
 
-__all__ = ['DAiWAPI', 'api']
+__all__ = ["DAiWAPI", "api"]
 
 
 # ---------- Minimal HTTP API (FastAPI) ----------
 # This provides the server that `python -m music_brain.api` is expected to start.
 
 if FASTAPI_AVAILABLE:
+
     class TechnicalIntent(BaseModel):
         key: Optional[str] = None
         bpm: Optional[int] = None
         progression: Optional[List[str]] = None
         genre: Optional[str] = None
+        duration: Optional[float] = None  # Duration in minutes
+        structure: Optional[List[Dict[str, Any]]] = None  # Song sections with repetitions
+        instruments: Optional[List[Dict[str, Any]]] = None  # Instruments with techniques
+        techniques: Optional[List[str]] = None  # Production techniques
 
     class EmotionalIntent(BaseModel):
         core_wound: Optional[str] = None
@@ -767,9 +819,107 @@ if FASTAPI_AVAILABLE:
 
     app = FastAPI(title="Music Brain API", version="0.1.0")
 
+    # Add CORS middleware to allow requests from frontend
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:1420",  # Vite dev server
+            "http://127.0.0.1:1420",  # Vite dev server (alternative)
+            "tauri://localhost",  # Tauri app
+            "http://localhost:5173",  # Alternative Vite port
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    @app.websocket("/ws/progress/{task_id}")
+    async def progress_ws(websocket: WebSocket, task_id: str):
+        await progress_tracker.connect(task_id, websocket)
+        try:
+            while True:
+                await websocket.receive_text()
+        except WebSocketDisconnect:
+            await progress_tracker.disconnect(task_id, websocket)
+
+    @app.get("/")
+    async def root():
+        """Root endpoint with API information."""
+        return {
+            "name": "Music Brain API",
+            "version": "0.1.0",
+            "status": "running",
+            "endpoints": {
+                "health": "/health",
+                "generate": "/generate (POST)",
+                "emotions": "/emotions",
+                "lyrics": "/lyrics (GET/POST)",
+                "interrogate": "/interrogate (POST)",
+                "docs": "/docs",
+                "openapi": "/openapi.json",
+            },
+            "documentation": "Visit /docs for interactive API documentation",
+        }
+
     @app.get("/health")
     async def health():
         return {"status": "ok", "version": "0.1.0"}
+
+    @app.get("/audio/{file_path:path}")
+    async def serve_audio(file_path: str):
+        """Serve audio files via HTTP. file_path should be URL-encoded."""
+        import urllib.parse
+
+        decoded_path = urllib.parse.unquote(file_path)
+        audio_file = Path(decoded_path)
+
+        logging.info(f"Serving audio file: {decoded_path}")
+        logging.info(
+            f"File exists: {audio_file.exists()}, is_file: {audio_file.is_file() if audio_file.exists() else 'N/A'}"
+        )
+
+        if not audio_file.exists():
+            logging.error(f"Audio file not found: {decoded_path}")
+            # Try to find alternative paths (maybe MIDI file exists but audio doesn't)
+            if decoded_path.endswith((".wav", ".mp3", ".ogg")):
+                midi_path = decoded_path.rsplit(".", 1)[0] + ".mid"
+                if Path(midi_path).exists():
+                    logging.warning(
+                        f"Audio file not found, but MIDI exists: {midi_path}. Audio conversion may be needed."
+                    )
+            raise HTTPException(
+                status_code=404,
+                detail=f"Audio file not found: {decoded_path}. The file may not have been generated yet or may have been cleaned up.",
+            )
+
+        if not audio_file.is_file():
+            logging.error(f"Path is not a file: {decoded_path}")
+            raise HTTPException(status_code=400, detail=f"Path is not a file: {decoded_path}")
+
+        # Determine media type based on file extension
+        media_type = "application/octet-stream"  # Default fallback
+        ext = audio_file.suffix.lower()
+        if ext == ".wav":
+            media_type = "audio/wav"  # or "audio/x-wav" for some browsers
+        elif ext == ".mp3":
+            media_type = "audio/mpeg"
+        elif ext == ".ogg" or ext == ".oga":
+            media_type = "audio/ogg"
+        elif ext == ".m4a":
+            media_type = "audio/mp4"
+        elif ext == ".flac":
+            media_type = "audio/flac"
+        elif ext == ".aac":
+            media_type = "audio/aac"
+
+        logging.info(f"Serving {decoded_path} as {media_type}")
+
+        return FileResponse(
+            path=str(audio_file),
+            media_type=media_type,
+            filename=audio_file.name,
+            headers={"Accept-Ranges": "bytes", "Content-Length": str(audio_file.stat().st_size)},
+        )
 
     @app.get("/emotions")
     async def list_emotions():
@@ -835,7 +985,7 @@ if FASTAPI_AVAILABLE:
     def _load_json_config(path: Path, fallback: Dict[str, Any]) -> Dict[str, Any]:
         if path.exists():
             try:
-                with open(path, "r", encoding="utf-8") as f:
+                with open(path, encoding="utf-8") as f:
                     return json.load(f)
             except Exception:
                 logging.exception("Failed to load %s", path)
@@ -897,6 +1047,7 @@ if FASTAPI_AVAILABLE:
     class SpectocloudRenderRequest(BaseModel):
         midi_events: Optional[List[Dict[str, Any]]] = None
         midi_file_path: Optional[str] = None
+        audio_file_path: Optional[str] = None  # MP3 or WAV file path
         duration: Optional[float] = None
         emotion_trajectory: Optional[List[Dict[str, Any]]] = None
         mode: str = "static"  # "static" or "animation"
@@ -907,13 +1058,7 @@ if FASTAPI_AVAILABLE:
         anchor_density: str = "normal"
         n_particles: int = 1200
 
-    @app.post("/spectocloud/render")
-    async def render_spectocloud(payload: SpectocloudRenderRequest):
-        """
-        Render Spectocloud output (static frame or animation).
-        - For static: mode="static", frame_idx sets which frame to render.
-        - For animation: mode="animation", fps/rotate control output.
-        """
+    def _render_spectocloud_sync(payload: SpectocloudRenderRequest) -> Dict[str, Any]:
         try:
             from music_brain.visualization.spectocloud import Spectocloud  # Lazy import
         except Exception as exc:  # pragma: no cover
@@ -924,13 +1069,41 @@ if FASTAPI_AVAILABLE:
             events: Optional[List[Dict[str, Any]]] = payload.midi_events
             duration = payload.duration
 
+            # Handle audio file input (convert to MIDI events if needed)
+            if payload.audio_file_path:
+                audio_path = Path(payload.audio_file_path)
+                if not audio_path.exists():
+                    raise HTTPException(
+                        status_code=404, detail=f"Audio file not found: {payload.audio_file_path}"
+                    )
+                
+                # Analyze audio to extract characteristics for Spectocloud
+                logging.info(f"Analyzing audio for Spectocloud: {audio_path}")
+                analysis = api.analyze_audio_file(str(audio_path))
+                
+                # If no MIDI events provided, try to use detected tempo and beats
+                if not events and "tempo" in analysis:
+                    bpm = analysis["tempo"].get("bpm", 120.0)
+                    duration = analysis["file_info"].get("duration_seconds", 0.0)
+                    
+                    # Create dummy events based on beats for visualization if MIDI is missing
+                    beat_positions = analysis["tempo"].get("beat_positions", [])
+                    events = [
+                        {"time": t, "type": "note_on", "note": 60, "velocity": 100}
+                        for t in beat_positions
+                    ]
+                    duration = duration or (max(beat_positions) if beat_positions else 0.0)
+
             if payload.midi_file_path:
                 parsed_events, parsed_duration = _parse_midi_file(Path(payload.midi_file_path))
                 events = parsed_events
                 duration = duration or parsed_duration
 
             if not events:
-                raise HTTPException(status_code=400, detail="midi_events cannot be empty (or provide midi_file_path)")
+                raise HTTPException(
+                    status_code=400,
+                    detail="provide audio_file_path, midi_file_path, or midi_events",
+                )
             if duration is None or duration <= 0:
                 # try to infer from events time
                 max_time = max((e.get("time", 0) or 0) for e in events)
@@ -953,7 +1126,9 @@ if FASTAPI_AVAILABLE:
                 emotion_trajectory=payload.emotion_trajectory,
             )
             if not specto.frames:
-                raise HTTPException(status_code=400, detail="No frames generated; check duration/window_size")
+                raise HTTPException(
+                    status_code=400, detail="No frames generated; check duration/window_size"
+                )
             mode = payload.mode.lower()
             if mode not in {"static", "animation"}:
                 raise HTTPException(status_code=400, detail="mode must be 'static' or 'animation'")
@@ -961,7 +1136,9 @@ if FASTAPI_AVAILABLE:
             if mode == "static":
                 if payload.frame_idx < 0:
                     raise HTTPException(status_code=400, detail="frame_idx must be >= 0")
-                out_path = payload.output_path or str(Path(tempfile.gettempdir()) / "spectocloud_frame.png")
+                out_path = payload.output_path or str(
+                    Path(tempfile.gettempdir()) / "spectocloud_frame.png"
+                )
                 specto.render_static_frame(
                     frame_idx=min(payload.frame_idx, max(0, len(specto.frames) - 1)),
                     output_path=out_path,
@@ -975,7 +1152,9 @@ if FASTAPI_AVAILABLE:
                     "frames": len(specto.frames),
                 }
 
-            out_path = payload.output_path or str(Path(tempfile.gettempdir()) / "spectocloud_anim.gif")
+            out_path = payload.output_path or str(
+                Path(tempfile.gettempdir()) / "spectocloud_anim.gif"
+            )
             specto.render_animation(
                 output_path=out_path,
                 fps=payload.fps,
@@ -994,23 +1173,263 @@ if FASTAPI_AVAILABLE:
             logging.exception("spectocloud render failed")
             raise HTTPException(status_code=500, detail=str(exc))
 
-    @app.post("/generate")
-    async def generate_music(request: GenerateRequest):
+    async def _run_spectocloud_task(task_id: str, payload: SpectocloudRenderRequest) -> None:
         try:
-            # Map the simple intent into the therapy session pipeline
+            await progress_tracker.update(
+                task_id,
+                status="running",
+                stage="rendering_spectocloud",
+                progress=10.0,
+            )
+            result = await asyncio.to_thread(_render_spectocloud_sync, payload)
+            await progress_tracker.update(
+                task_id,
+                status="completed",
+                stage="completed",
+                progress=100.0,
+                result=result,
+            )
+            await progress_tracker.publish(task_id, {"type": "task_complete", "task_id": task_id})
+        except Exception as exc:
+            await progress_tracker.update(
+                task_id,
+                status="failed",
+                stage="error",
+                progress=100.0,
+                error=str(exc),
+            )
+            await progress_tracker.publish(
+                task_id, {"type": "task_error", "task_id": task_id, "error": str(exc)}
+            )
+
+    @app.post("/spectocloud/render")
+    async def render_spectocloud(payload: SpectocloudRenderRequest):
+        task_id = await progress_tracker.create_task()
+        asyncio.create_task(_run_spectocloud_task(task_id, payload))
+        return JSONResponse(status_code=202, content={"status": "accepted", "task_id": task_id})
+
+    def _generate_sync(request: GenerateRequest) -> Dict[str, Any]:
+        try:
+            # Try to use full intent pipeline if we have advanced parameters
+            tech = request.intent.technical
+            use_full_pipeline = tech and (
+                tech.duration is not None
+                or tech.structure is not None
+                or tech.instruments is not None
+                or tech.techniques is not None
+            )
+
+            if use_full_pipeline:
+                # Use full CompleteSongIntent pipeline
+                logging.info("Using full intent pipeline with CompleteSongIntent")
+
+                # Convert request to CompleteSongIntent
+                complete_intent = api._convert_request_to_complete_intent(request)
+
+                # Process full intent
+                result = api.process_song_intent(complete_intent, output_json=None)
+
+                # Generate output file if format requested
+                output_midi = None
+                output_audio = None
+                if request.output_format:
+                    import tempfile
+                    import time
+
+                    if request.output_format in ["mid", "midi"]:
+                        output_midi = str(
+                            Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.mid"
+                        )
+                    elif request.output_format in ["wav", "mp3"]:
+                        output_audio = str(
+                            Path(tempfile.gettempdir())
+                            / f"generated_{int(time.time())}.{request.output_format}"
+                        )
+                        output_midi = str(
+                            Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.mid"
+                        )
+
+                # Generate MIDI from harmony result
+                if output_midi and result.get("harmony"):
+                    try:
+                        # Extract harmony info
+                        harmony = result["harmony"]
+                        groove = result.get("groove", {})
+                        tech = request.intent.technical
+
+                        # Access Pydantic model attributes directly
+                        duration_minutes = (
+                            tech.duration if tech and tech.duration is not None else 3.0
+                        )
+                        bpm = (
+                            tech.bpm
+                            if tech and tech.bpm is not None
+                            else (groove.get("tempo_bpm") if isinstance(groove, dict) else 82)
+                        )
+                        length_bars = int((duration_minutes * bpm) / 4)
+                        length_bars = max(16, min(128, length_bars))
+
+                        # Extract key and mode
+                        key_str = tech.key if tech and tech.key else "C major"
+                        key_parts = key_str.split() if key_str else ["C"]
+                        root_note = key_parts[0] if key_parts else "C"
+                        mode = key_parts[1] if len(key_parts) > 1 else "major"
+
+                        # Extract structure and instruments from request
+                        structure = tech.structure if tech else None
+                        instruments = tech.instruments if tech else None
+
+                        # If structure is provided, calculate total bars from structure
+                        # Otherwise use calculated length_bars
+                        if structure:
+                            total_structure_bars = sum(
+                                section.get("bars", 4) * section.get("repetitions", 1)
+                                for section in structure
+                            )
+                            # Use structure bars if it's reasonable, otherwise keep calculated
+                            if total_structure_bars > 0:
+                                length_bars = total_structure_bars
+
+                        # Create HarmonyPlan from result
+                        intent_summary = result.get("intent_summary", {})
+                        plan = HarmonyPlan(
+                            root_note=root_note,
+                            mode=mode,
+                            tempo_bpm=bpm,
+                            time_signature="4/4",
+                            length_bars=length_bars,
+                            chord_symbols=harmony.get("chords", ["C", "Am", "F", "G"]),
+                            harmonic_rhythm="1_chord_per_bar",
+                            mood_profile=intent_summary.get("mood", "neutral"),
+                            complexity=0.5,
+                            structure=intent_summary.get("structure") or structure,
+                            instruments=intent_summary.get("instruments") or instruments,
+                        )
+
+                        # Render MIDI
+                        midi_path = render_plan_to_midi(plan, output_midi)
+                        result["midi_path"] = midi_path
+                    except Exception:
+                        logging.exception("Failed to generate MIDI from full intent, falling back")
+                        # Fall through to simple generation
+                        use_full_pipeline = False
+
+                lyric_text, lyric_source = api._select_lyric_payload(request.intent)
+
+                # Build response with structure and instruments info
+                response = {
+                    "status": "success",
+                    "result": result,
+                    "lyrics": {
+                        "source": lyric_source,
+                        "text": lyric_text,
+                    },
+                }
+
+                # Add structure and instruments information if provided
+                tech = request.intent.technical
+                structure = tech.structure if tech else None
+                instruments = tech.instruments if tech else None
+
+                if structure:
+                    response["structure"] = {
+                        "sections": structure,
+                        "total_bars": sum(
+                            s.get("bars", 4) * s.get("repetitions", 1) if isinstance(s, dict) else 4
+                            for s in structure
+                        ),
+                    }
+
+                if instruments:
+                    response["instruments"] = {
+                        "tracks": [
+                            {
+                                "name": inst.get("name", "instrument")
+                                if isinstance(inst, dict)
+                                else "instrument",
+                                "type": inst.get("type", "chord")
+                                if isinstance(inst, dict)
+                                else "chord",
+                                "channel": inst.get("channel") if isinstance(inst, dict) else None,
+                            }
+                            for inst in instruments
+                        ],
+                    }
+
+                # Add file paths to response
+                if output_midi and result.get("midi_path"):
+                    response["midi_path"] = result["midi_path"]
+                    midi_file = Path(result["midi_path"])
+
+                    if output_audio:
+                        # Construct audio path
+                        audio_path = str(midi_file.with_suffix(f".{request.output_format}"))
+                        response["audio_path"] = audio_path
+                        response["output_path"] = audio_path
+
+                        # Check if audio file actually exists, if not render it
+                        audio_file = Path(audio_path)
+                        if not audio_file.exists() and midi_file.exists():
+                            try:
+                                logging.info(
+                                    f"Rendering MIDI to audio: {midi_file} -> {audio_path}"
+                                )
+                                rendered_path = render_midi_to_audio(
+                                    str(midi_file), audio_path, format=request.output_format
+                                )
+                                response["audio_path"] = rendered_path
+                                response["output_path"] = rendered_path
+                                logging.info(f"Successfully rendered audio: {rendered_path}")
+                            except Exception as render_exc:
+                                logging.exception(f"Failed to render MIDI to audio: {render_exc}")
+                                # Continue without audio, but log the error
+                                response["audio_render_error"] = str(render_exc)
+                        elif not audio_file.exists():
+                            logging.warning(
+                                f"Audio file path returned but file doesn't exist: {audio_path}"
+                            )
+                            logging.info(f"MIDI file exists: {midi_file.exists()}")
+                    else:
+                        response["output_path"] = result["midi_path"]
+
+                return response
+
+            # Fallback to simple therapy_session for backward compatibility
+            logging.info("Using simple therapy_session pipeline")
             chaos = 0.5
             motivation = 7
             if request.intent.technical and request.intent.technical.bpm:
-                # Use bpm as a proxy for motivation scaling (soft heuristic)
                 motivation = max(1, min(10, int(request.intent.technical.bpm / 20)))
             lyric_text, lyric_source = api._select_lyric_payload(request.intent)
+
+            # Generate output file if format requested
+            output_midi = None
+            output_audio = None
+            if request.output_format:
+                import tempfile
+                import time
+
+                if request.output_format in ["mid", "midi"]:
+                    output_midi = str(
+                        Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.mid"
+                    )
+                elif request.output_format in ["wav", "mp3"]:
+                    output_audio = str(
+                        Path(tempfile.gettempdir())
+                        / f"generated_{int(time.time())}.{request.output_format}"
+                    )
+                    output_midi = str(
+                        Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.mid"
+                    )
+
             result = api.therapy_session(
                 text=lyric_text or request.intent.emotional_intent,
                 motivation=motivation,
                 chaos_tolerance=chaos,
-                output_midi=None,
+                output_midi=output_midi,
             )
-            return {
+
+            response = {
                 "status": "success",
                 "result": result,
                 "lyrics": {
@@ -1018,9 +1437,100 @@ if FASTAPI_AVAILABLE:
                     "text": lyric_text,
                 },
             }
+
+            # Add file paths to response
+            if output_midi and result.get("midi_path"):
+                response["midi_path"] = result["midi_path"]
+                midi_file = Path(result["midi_path"])
+
+                if output_audio:
+                    # Construct audio path
+                    audio_path = str(midi_file.with_suffix(f".{request.output_format}"))
+                    response["audio_path"] = audio_path
+                    response["output_path"] = audio_path
+
+                    # Render MIDI to audio if needed
+                    audio_file = Path(audio_path)
+                    if not audio_file.exists() and midi_file.exists():
+                        try:
+                            logging.info(
+                                f"Rendering MIDI to audio (fallback): {midi_file} -> {audio_path}"
+                            )
+                            rendered_path = render_midi_to_audio(
+                                str(midi_file), audio_path, format=request.output_format
+                            )
+                            response["audio_path"] = rendered_path
+                            response["output_path"] = rendered_path
+                            logging.info(f"Successfully rendered audio: {rendered_path}")
+                        except Exception as render_exc:
+                            logging.exception(f"Failed to render MIDI to audio: {render_exc}")
+                            response["audio_render_error"] = str(render_exc)
+                else:
+                    response["output_path"] = result["midi_path"]
+
+            return response
         except Exception as exc:
             logging.exception("generate failed")
             raise HTTPException(status_code=500, detail=str(exc))
+
+    async def _run_generate_task(task_id: str, request: GenerateRequest) -> None:
+        try:
+            await progress_tracker.update(
+                task_id,
+                status="running",
+                stage="generating",
+                progress=10.0,
+            )
+            response = await asyncio.to_thread(_generate_sync, request)
+            await progress_tracker.update(
+                task_id,
+                status="completed",
+                stage="completed",
+                progress=100.0,
+                result=response,
+            )
+            await progress_tracker.publish(task_id, {"type": "task_complete", "task_id": task_id})
+        except Exception as exc:
+            await progress_tracker.update(
+                task_id,
+                status="failed",
+                stage="error",
+                progress=100.0,
+                error=str(exc),
+            )
+            await progress_tracker.publish(
+                task_id, {"type": "task_error", "task_id": task_id, "error": str(exc)}
+            )
+
+    @app.post("/generate")
+    async def generate_music(request: GenerateRequest):
+        task_id = await progress_tracker.create_task()
+        asyncio.create_task(_run_generate_task(task_id, request))
+        return JSONResponse(status_code=202, content={"status": "accepted", "task_id": task_id})
+
+    @app.get("/generate/status/{task_id}")
+    async def generate_status(task_id: str):
+        task = progress_tracker.get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        return task.to_dict()
+
+    @app.get("/generate/result/{task_id}")
+    async def generate_result(task_id: str):
+        task = progress_tracker.get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        if task.status != "completed":
+            return JSONResponse(status_code=202, content=task.to_dict())
+        return task.result or {}
+
+    @app.delete("/generate/result/{task_id}")
+    async def delete_generate_result(task_id: str):
+        task = progress_tracker.get_task(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        progress_tracker.delete_task(task_id)
+        return {"status": "deleted", "task_id": task_id}
 
     @app.post("/interrogate")
     async def interrogate(request: InterrogateRequest):

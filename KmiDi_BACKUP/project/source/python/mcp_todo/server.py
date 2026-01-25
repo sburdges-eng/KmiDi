@@ -11,13 +11,12 @@ Run with:
     mcp-todo-server
 """
 
+import asyncio
 import json
 import sys
-import asyncio
 from typing import Any, Dict, List, Optional
 
 from .storage import TodoStorage
-from .models import Todo, TodoStatus, TodoPriority
 
 
 class MCPTodoServer:
@@ -45,39 +44,36 @@ class MCPTodoServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "title": {
-                            "type": "string",
-                            "description": "The task title (required)"
-                        },
+                        "title": {"type": "string", "description": "The task title (required)"},
                         "description": {
                             "type": "string",
-                            "description": "Detailed description of the task"
+                            "description": "Detailed description of the task",
                         },
                         "priority": {
                             "type": "string",
                             "enum": ["low", "medium", "high", "urgent"],
-                            "description": "Task priority level"
+                            "description": "Task priority level",
                         },
                         "tags": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "Tags for organization"
+                            "description": "Tags for organization",
                         },
                         "project": {
                             "type": "string",
-                            "description": "Project name for grouping tasks"
+                            "description": "Project name for grouping tasks",
                         },
                         "due_date": {
                             "type": "string",
-                            "description": "Due date in ISO format (YYYY-MM-DD)"
+                            "description": "Due date in ISO format (YYYY-MM-DD)",
                         },
                         "context": {
                             "type": "string",
-                            "description": "Additional context for AI assistants"
-                        }
+                            "description": "Additional context for AI assistants",
+                        },
                     },
-                    "required": ["title"]
-                }
+                    "required": ["title"],
+                },
             },
             {
                 "name": "todo_list",
@@ -85,31 +81,28 @@ class MCPTodoServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "project": {
-                            "type": "string",
-                            "description": "Filter by project name"
-                        },
+                        "project": {"type": "string", "description": "Filter by project name"},
                         "status": {
                             "type": "string",
                             "enum": ["pending", "in_progress", "completed", "blocked", "cancelled"],
-                            "description": "Filter by status"
+                            "description": "Filter by status",
                         },
                         "priority": {
                             "type": "string",
                             "enum": ["low", "medium", "high", "urgent"],
-                            "description": "Filter by priority"
+                            "description": "Filter by priority",
                         },
                         "tags": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "Filter by tags (any match)"
+                            "description": "Filter by tags (any match)",
                         },
                         "include_completed": {
                             "type": "boolean",
-                            "description": "Include completed tasks (default: true)"
-                        }
-                    }
-                }
+                            "description": "Include completed tasks (default: true)",
+                        },
+                    },
+                },
             },
             {
                 "name": "todo_get",
@@ -117,17 +110,11 @@ class MCPTodoServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "id": {
-                            "type": "string",
-                            "description": "The TODO ID"
-                        },
-                        "project": {
-                            "type": "string",
-                            "description": "Project name (optional)"
-                        }
+                        "id": {"type": "string", "description": "The TODO ID"},
+                        "project": {"type": "string", "description": "Project name (optional)"},
                     },
-                    "required": ["id"]
-                }
+                    "required": ["id"],
+                },
             },
             {
                 "name": "todo_complete",
@@ -135,17 +122,11 @@ class MCPTodoServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "id": {
-                            "type": "string",
-                            "description": "The TODO ID to complete"
-                        },
-                        "project": {
-                            "type": "string",
-                            "description": "Project name (optional)"
-                        }
+                        "id": {"type": "string", "description": "The TODO ID to complete"},
+                        "project": {"type": "string", "description": "Project name (optional)"},
                     },
-                    "required": ["id"]
-                }
+                    "required": ["id"],
+                },
             },
             {
                 "name": "todo_start",
@@ -153,17 +134,11 @@ class MCPTodoServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "id": {
-                            "type": "string",
-                            "description": "The TODO ID to start"
-                        },
-                        "project": {
-                            "type": "string",
-                            "description": "Project name (optional)"
-                        }
+                        "id": {"type": "string", "description": "The TODO ID to start"},
+                        "project": {"type": "string", "description": "Project name (optional)"},
                     },
-                    "required": ["id"]
-                }
+                    "required": ["id"],
+                },
             },
             {
                 "name": "todo_update",
@@ -171,44 +146,29 @@ class MCPTodoServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "id": {
-                            "type": "string",
-                            "description": "The TODO ID to update"
-                        },
-                        "title": {
-                            "type": "string",
-                            "description": "New title"
-                        },
-                        "description": {
-                            "type": "string",
-                            "description": "New description"
-                        },
+                        "id": {"type": "string", "description": "The TODO ID to update"},
+                        "title": {"type": "string", "description": "New title"},
+                        "description": {"type": "string", "description": "New description"},
                         "priority": {
                             "type": "string",
                             "enum": ["low", "medium", "high", "urgent"],
-                            "description": "New priority"
+                            "description": "New priority",
                         },
                         "status": {
                             "type": "string",
                             "enum": ["pending", "in_progress", "completed", "blocked", "cancelled"],
-                            "description": "New status"
+                            "description": "New status",
                         },
                         "tags": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "New tags (replaces existing)"
+                            "description": "New tags (replaces existing)",
                         },
-                        "project": {
-                            "type": "string",
-                            "description": "Project name"
-                        },
-                        "due_date": {
-                            "type": "string",
-                            "description": "New due date"
-                        }
+                        "project": {"type": "string", "description": "Project name"},
+                        "due_date": {"type": "string", "description": "New due date"},
                     },
-                    "required": ["id"]
-                }
+                    "required": ["id"],
+                },
             },
             {
                 "name": "todo_delete",
@@ -216,17 +176,11 @@ class MCPTodoServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "id": {
-                            "type": "string",
-                            "description": "The TODO ID to delete"
-                        },
-                        "project": {
-                            "type": "string",
-                            "description": "Project name (optional)"
-                        }
+                        "id": {"type": "string", "description": "The TODO ID to delete"},
+                        "project": {"type": "string", "description": "Project name (optional)"},
                     },
-                    "required": ["id"]
-                }
+                    "required": ["id"],
+                },
             },
             {
                 "name": "todo_search",
@@ -234,17 +188,11 @@ class MCPTodoServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "Search query"
-                        },
-                        "project": {
-                            "type": "string",
-                            "description": "Project name (optional)"
-                        }
+                        "query": {"type": "string", "description": "Search query"},
+                        "project": {"type": "string", "description": "Project name (optional)"},
                     },
-                    "required": ["query"]
-                }
+                    "required": ["query"],
+                },
             },
             {
                 "name": "todo_summary",
@@ -252,12 +200,9 @@ class MCPTodoServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "project": {
-                            "type": "string",
-                            "description": "Project name (optional)"
-                        }
-                    }
-                }
+                        "project": {"type": "string", "description": "Project name (optional)"}
+                    },
+                },
             },
             {
                 "name": "todo_add_subtask",
@@ -265,25 +210,13 @@ class MCPTodoServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "parent_id": {
-                            "type": "string",
-                            "description": "ID of the parent TODO"
-                        },
-                        "title": {
-                            "type": "string",
-                            "description": "Subtask title"
-                        },
-                        "description": {
-                            "type": "string",
-                            "description": "Subtask description"
-                        },
-                        "project": {
-                            "type": "string",
-                            "description": "Project name (optional)"
-                        }
+                        "parent_id": {"type": "string", "description": "ID of the parent TODO"},
+                        "title": {"type": "string", "description": "Subtask title"},
+                        "description": {"type": "string", "description": "Subtask description"},
+                        "project": {"type": "string", "description": "Project name (optional)"},
                     },
-                    "required": ["parent_id", "title"]
-                }
+                    "required": ["parent_id", "title"],
+                },
             },
             {
                 "name": "todo_add_note",
@@ -291,21 +224,12 @@ class MCPTodoServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "id": {
-                            "type": "string",
-                            "description": "The TODO ID"
-                        },
-                        "note": {
-                            "type": "string",
-                            "description": "The note to add"
-                        },
-                        "project": {
-                            "type": "string",
-                            "description": "Project name (optional)"
-                        }
+                        "id": {"type": "string", "description": "The TODO ID"},
+                        "note": {"type": "string", "description": "The note to add"},
+                        "project": {"type": "string", "description": "Project name (optional)"},
                     },
-                    "required": ["id", "note"]
-                }
+                    "required": ["id", "note"],
+                },
             },
             {
                 "name": "todo_clear_completed",
@@ -313,12 +237,9 @@ class MCPTodoServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "project": {
-                            "type": "string",
-                            "description": "Project name (optional)"
-                        }
-                    }
-                }
+                        "project": {"type": "string", "description": "Project name (optional)"}
+                    },
+                },
             },
             {
                 "name": "todo_export",
@@ -326,20 +247,14 @@ class MCPTodoServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "project": {
-                            "type": "string",
-                            "description": "Project name (optional)"
-                        }
-                    }
-                }
-            }
+                        "project": {"type": "string", "description": "Project name (optional)"}
+                    },
+                },
+            },
         ]
 
     def handle_tool_call(
-        self,
-        tool_name: str,
-        arguments: Dict[str, Any],
-        ai_source: Optional[str] = None
+        self, tool_name: str, arguments: Dict[str, Any], ai_source: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Handle a tool call and return the result.
@@ -367,7 +282,7 @@ class MCPTodoServer:
                 return {
                     "success": True,
                     "message": f"Created TODO: {todo.title}",
-                    "todo": todo.to_dict()
+                    "todo": todo.to_dict(),
                 }
 
             elif tool_name == "todo_list":
@@ -391,23 +306,14 @@ class MCPTodoServer:
                             "project": t.project,
                         }
                         for t in todos
-                    ]
+                    ],
                 }
 
             elif tool_name == "todo_get":
-                todo = self.storage.get(
-                    arguments["id"],
-                    project=arguments.get("project")
-                )
+                todo = self.storage.get(arguments["id"], project=arguments.get("project"))
                 if todo:
-                    return {
-                        "success": True,
-                        "todo": todo.to_dict()
-                    }
-                return {
-                    "success": False,
-                    "error": f"TODO not found: {arguments['id']}"
-                }
+                    return {"success": True, "todo": todo.to_dict()}
+                return {"success": False, "error": f"TODO not found: {arguments['id']}"}
 
             elif tool_name == "todo_complete":
                 todo = self.storage.complete(
@@ -419,12 +325,9 @@ class MCPTodoServer:
                     return {
                         "success": True,
                         "message": f"Completed: {todo.title}",
-                        "todo": todo.to_dict()
+                        "todo": todo.to_dict(),
                     }
-                return {
-                    "success": False,
-                    "error": f"TODO not found: {arguments['id']}"
-                }
+                return {"success": False, "error": f"TODO not found: {arguments['id']}"}
 
             elif tool_name == "todo_start":
                 todo = self.storage.start(
@@ -436,48 +339,33 @@ class MCPTodoServer:
                     return {
                         "success": True,
                         "message": f"Started: {todo.title}",
-                        "todo": todo.to_dict()
+                        "todo": todo.to_dict(),
                     }
-                return {
-                    "success": False,
-                    "error": f"TODO not found: {arguments['id']}"
-                }
+                return {"success": False, "error": f"TODO not found: {arguments['id']}"}
 
             elif tool_name == "todo_update":
                 todo_id = arguments.pop("id")
                 project = arguments.pop("project", None)
                 todo = self.storage.update(
-                    todo_id,
-                    project=project,
-                    ai_source=ai_source,
-                    **arguments
+                    todo_id, project=project, ai_source=ai_source, **arguments
                 )
                 if todo:
                     return {
                         "success": True,
                         "message": f"Updated: {todo.title}",
-                        "todo": todo.to_dict()
+                        "todo": todo.to_dict(),
                     }
-                return {
-                    "success": False,
-                    "error": f"TODO not found: {todo_id}"
-                }
+                return {"success": False, "error": f"TODO not found: {todo_id}"}
 
             elif tool_name == "todo_delete":
-                success = self.storage.delete(
-                    arguments["id"],
-                    project=arguments.get("project")
-                )
+                success = self.storage.delete(arguments["id"], project=arguments.get("project"))
                 return {
                     "success": success,
-                    "message": "TODO deleted" if success else "TODO not found"
+                    "message": "TODO deleted" if success else "TODO not found",
                 }
 
             elif tool_name == "todo_search":
-                todos = self.storage.search(
-                    arguments["query"],
-                    project=arguments.get("project")
-                )
+                todos = self.storage.search(arguments["query"], project=arguments.get("project"))
                 return {
                     "success": True,
                     "count": len(todos),
@@ -489,17 +377,12 @@ class MCPTodoServer:
                             "priority": t.priority.value,
                         }
                         for t in todos
-                    ]
+                    ],
                 }
 
             elif tool_name == "todo_summary":
-                summary = self.storage.get_summary(
-                    project=arguments.get("project")
-                )
-                return {
-                    "success": True,
-                    "summary": summary
-                }
+                summary = self.storage.get_summary(project=arguments.get("project"))
+                return {"success": True, "summary": summary}
 
             elif tool_name == "todo_add_subtask":
                 todo = self.storage.add_subtask(
@@ -513,65 +396,34 @@ class MCPTodoServer:
                     return {
                         "success": True,
                         "message": f"Created subtask: {todo.title}",
-                        "todo": todo.to_dict()
+                        "todo": todo.to_dict(),
                     }
                 return {
                     "success": False,
-                    "error": f"Parent TODO not found: {arguments['parent_id']}"
+                    "error": f"Parent TODO not found: {arguments['parent_id']}",
                 }
 
             elif tool_name == "todo_add_note":
-                todo = self.storage.get(
-                    arguments["id"],
-                    project=arguments.get("project")
-                )
+                todo = self.storage.get(arguments["id"], project=arguments.get("project"))
                 if todo:
                     todo.add_note(arguments["note"], ai_source=ai_source)
-                    self.storage.update(
-                        todo.id,
-                        project=arguments.get("project"),
-                        notes=todo.notes
-                    )
-                    return {
-                        "success": True,
-                        "message": "Note added",
-                        "todo": todo.to_dict()
-                    }
-                return {
-                    "success": False,
-                    "error": f"TODO not found: {arguments['id']}"
-                }
+                    self.storage.update(todo.id, project=arguments.get("project"), notes=todo.notes)
+                    return {"success": True, "message": "Note added", "todo": todo.to_dict()}
+                return {"success": False, "error": f"TODO not found: {arguments['id']}"}
 
             elif tool_name == "todo_clear_completed":
-                count = self.storage.clear_completed(
-                    project=arguments.get("project")
-                )
-                return {
-                    "success": True,
-                    "message": f"Cleared {count} completed TODOs"
-                }
+                count = self.storage.clear_completed(project=arguments.get("project"))
+                return {"success": True, "message": f"Cleared {count} completed TODOs"}
 
             elif tool_name == "todo_export":
-                markdown = self.storage.export_markdown(
-                    project=arguments.get("project")
-                )
-                return {
-                    "success": True,
-                    "format": "markdown",
-                    "content": markdown
-                }
+                markdown = self.storage.export_markdown(project=arguments.get("project"))
+                return {"success": True, "format": "markdown", "content": markdown}
 
             else:
-                return {
-                    "success": False,
-                    "error": f"Unknown tool: {tool_name}"
-                }
+                return {"success": False, "error": f"Unknown tool: {tool_name}"}
 
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     async def handle_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """Handle an MCP protocol message."""
@@ -588,18 +440,12 @@ class MCPTodoServer:
                     "serverInfo": self.server_info,
                     "capabilities": {
                         "tools": {"listChanged": False},
-                    }
-                }
+                    },
+                },
             }
 
         elif method == "tools/list":
-            return {
-                "jsonrpc": "2.0",
-                "id": msg_id,
-                "result": {
-                    "tools": self.get_tools()
-                }
-            }
+            return {"jsonrpc": "2.0", "id": msg_id, "result": {"tools": self.get_tools()}}
 
         elif method == "tools/call":
             tool_name = params.get("name", "")
@@ -611,14 +457,7 @@ class MCPTodoServer:
             return {
                 "jsonrpc": "2.0",
                 "id": msg_id,
-                "result": {
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": json.dumps(result, indent=2)
-                        }
-                    ]
-                }
+                "result": {"content": [{"type": "text", "text": json.dumps(result, indent=2)}]},
             }
 
         elif method == "notifications/initialized":
@@ -629,10 +468,7 @@ class MCPTodoServer:
             return {
                 "jsonrpc": "2.0",
                 "id": msg_id,
-                "error": {
-                    "code": -32601,
-                    "message": f"Method not found: {method}"
-                }
+                "error": {"code": -32601, "message": f"Method not found: {method}"},
             }
 
     async def run_stdio(self):
@@ -641,9 +477,7 @@ class MCPTodoServer:
 
         while True:
             try:
-                line = await asyncio.get_event_loop().run_in_executor(
-                    None, sys.stdin.readline
-                )
+                line = await asyncio.get_event_loop().run_in_executor(None, sys.stdin.readline)
                 if not line:
                     break
 
@@ -661,10 +495,7 @@ class MCPTodoServer:
                 error_response = {
                     "jsonrpc": "2.0",
                     "id": None,
-                    "error": {
-                        "code": -32700,
-                        "message": f"Parse error: {str(e)}"
-                    }
+                    "error": {"code": -32700, "message": f"Parse error: {str(e)}"},
                 }
                 print(json.dumps(error_response), flush=True)
             except Exception as e:
@@ -676,11 +507,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="MCP TODO Server")
-    parser.add_argument(
-        "--storage-dir",
-        help="Directory for TODO storage",
-        default=None
-    )
+    parser.add_argument("--storage-dir", help="Directory for TODO storage", default=None)
     args = parser.parse_args()
 
     server = MCPTodoServer(storage_dir=args.storage_dir)

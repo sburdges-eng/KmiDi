@@ -11,8 +11,8 @@ Usage:
     audio_gen = Tier1AudioGenerator(device="mps")
 """
 
-from .midi_generator import Tier1MIDIGenerator
 from .audio_generator import Tier1AudioGenerator
+from .midi_generator import Tier1MIDIGenerator
 from .voice_generator import Tier1VoiceGenerator
 
 __all__ = [

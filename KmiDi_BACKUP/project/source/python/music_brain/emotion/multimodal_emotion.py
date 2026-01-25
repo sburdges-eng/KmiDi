@@ -8,17 +8,18 @@ modality is available through modality dropout and attention gating.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from dataclasses import dataclass
-from typing import Optional, Dict, List, Tuple
-import math
 
 
 @dataclass
 class MultimodalEmotionOutput:
     """Output from the multimodal emotion model."""
+
     valence: float
     arousal: float
     base_emotion: str
@@ -44,19 +45,16 @@ class AudioEncoder(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
-
             # (32, 32, T/2) -> (64, 16, T/4)
             nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
-
             # (64, 16, T/4) -> (128, 8, T/8)
             nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
-
             # (128, 8, T/8) -> (256, 4, T/16)
             nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(256),
@@ -139,12 +137,8 @@ class CrossModalAttention(nn.Module):
 
     def __init__(self, embed_dim: int = 256, n_heads: int = 4):
         super().__init__()
-        self.audio_to_text = nn.MultiheadAttention(
-            embed_dim, n_heads, batch_first=True
-        )
-        self.text_to_audio = nn.MultiheadAttention(
-            embed_dim, n_heads, batch_first=True
-        )
+        self.audio_to_text = nn.MultiheadAttention(embed_dim, n_heads, batch_first=True)
+        self.text_to_audio = nn.MultiheadAttention(embed_dim, n_heads, batch_first=True)
         self.norm1 = nn.LayerNorm(embed_dim)
         self.norm2 = nn.LayerNorm(embed_dim)
 
@@ -169,7 +163,7 @@ class CrossModalAttention(nn.Module):
         """
         # Add sequence dimension for attention
         audio_seq = audio_embed.unsqueeze(1)  # (batch, 1, embed)
-        text_seq = text_embed.unsqueeze(1)    # (batch, 1, embed)
+        text_seq = text_embed.unsqueeze(1)  # (batch, 1, embed)
 
         # Audio attends to text
         if text_mask is not None:
@@ -178,7 +172,9 @@ class CrossModalAttention(nn.Module):
             key_padding_mask = None
 
         audio_enhanced, _ = self.audio_to_text(
-            audio_seq, text_seq, text_seq,
+            audio_seq,
+            text_seq,
+            text_seq,
             key_padding_mask=key_padding_mask,
         )
         audio_enhanced = self.norm1(audio_seq + audio_enhanced)
@@ -190,7 +186,9 @@ class CrossModalAttention(nn.Module):
             key_padding_mask = None
 
         text_enhanced, _ = self.text_to_audio(
-            text_seq, audio_seq, audio_seq,
+            text_seq,
+            audio_seq,
+            audio_seq,
             key_padding_mask=key_padding_mask,
         )
         text_enhanced = self.norm2(text_seq + text_enhanced)
@@ -243,7 +241,7 @@ class ModalityGating(nn.Module):
         """
         # Compute raw gates
         audio_weight = self.audio_gate(audio_embed).squeeze(-1)  # (batch,)
-        text_weight = self.text_gate(text_embed).squeeze(-1)     # (batch,)
+        text_weight = self.text_gate(text_embed).squeeze(-1)  # (batch,)
 
         # Zero out unavailable modalities
         audio_weight = audio_weight * audio_available.float()
@@ -255,10 +253,7 @@ class ModalityGating(nn.Module):
         text_weight = text_weight / total
 
         # Weighted sum
-        fused = (
-            audio_embed * audio_weight.unsqueeze(-1) +
-            text_embed * text_weight.unsqueeze(-1)
-        )
+        fused = audio_embed * audio_weight.unsqueeze(-1) + text_embed * text_weight.unsqueeze(-1)
 
         return fused, audio_weight, text_weight
 
@@ -277,8 +272,15 @@ class MultimodalEmotionModel(nn.Module):
 
     BASE_EMOTIONS = ["HAPPY", "SAD", "ANGRY", "FEAR", "SURPRISE", "DISGUST"]
     PRESETS = [
-        "grief", "anxiety", "nostalgia", "calm", "uplifting",
-        "aggressive", "dark", "tension_building", "neutral"
+        "grief",
+        "anxiety",
+        "nostalgia",
+        "calm",
+        "uplifting",
+        "aggressive",
+        "dark",
+        "tension_building",
+        "neutral",
     ]
 
     def __init__(
@@ -400,8 +402,10 @@ class MultimodalEmotionModel(nn.Module):
         both_available = audio_available & text_available
         if both_available.any():
             audio_enhanced, text_enhanced = self.cross_attention(
-                audio_embed, text_embed,
-                audio_available, text_available,
+                audio_embed,
+                text_embed,
+                audio_available,
+                text_available,
             )
             # Blend enhanced embeddings where both available
             audio_embed = torch.where(
@@ -417,8 +421,10 @@ class MultimodalEmotionModel(nn.Module):
 
         # Gated fusion
         fused, audio_weight, text_weight = self.gating(
-            audio_embed, text_embed,
-            audio_available, text_available,
+            audio_embed,
+            text_embed,
+            audio_available,
+            text_available,
         )
 
         # Shared refinement
@@ -486,22 +492,23 @@ class MultimodalEmotionModel(nn.Module):
                 preset_probs.max().item(),
             )
 
-            results.append(MultimodalEmotionOutput(
-                valence=valence,
-                arousal=arousal,
-                base_emotion=base_emotion,
-                base_emotion_probs={
-                    e: base_probs[j].item()
-                    for j, e in enumerate(self.BASE_EMOTIONS)
-                },
-                intensity_tier=intensity_tier,
-                preset=preset,
-                confidence=confidence,
-                modality_weights={
-                    "audio": outputs["audio_weight"][i].item(),
-                    "text": outputs["text_weight"][i].item(),
-                },
-            ))
+            results.append(
+                MultimodalEmotionOutput(
+                    valence=valence,
+                    arousal=arousal,
+                    base_emotion=base_emotion,
+                    base_emotion_probs={
+                        e: base_probs[j].item() for j, e in enumerate(self.BASE_EMOTIONS)
+                    },
+                    intensity_tier=intensity_tier,
+                    preset=preset,
+                    confidence=confidence,
+                    modality_weights={
+                        "audio": outputs["audio_weight"][i].item(),
+                        "text": outputs["text_weight"][i].item(),
+                    },
+                )
+            )
 
         return results
 
@@ -517,7 +524,13 @@ def prepare_text_features(parsed_emotion) -> torch.Tensor:
         (15,) tensor of features
     """
     BASE_EMOTIONS = ["HAPPY", "SAD", "ANGRY", "FEAR", "SURPRISE", "DISGUST"]
-    MODIFIERS = ["ptsd_intrusion", "dissociation", "misdirection", "suppressed", "cathartic_release"]
+    MODIFIERS = [
+        "ptsd_intrusion",
+        "dissociation",
+        "misdirection",
+        "suppressed",
+        "cathartic_release",
+    ]
 
     features = []
 
@@ -645,7 +658,9 @@ if __name__ == "__main__":
     results = model.predict(audio=audio)
     for i, r in enumerate(results):
         print(f"  Sample {i}: {r.base_emotion} (V={r.valence:.2f}, A={r.arousal:.2f})")
-        print(f"    Weights: audio={r.modality_weights['audio']:.2f}, text={r.modality_weights['text']:.2f}")
+        print(
+            f"    Weights: audio={r.modality_weights['audio']:.2f}, text={r.modality_weights['text']:.2f}"
+        )
 
     # Test with text only
     print("\n--- Text Only ---")
@@ -653,17 +668,23 @@ if __name__ == "__main__":
     results = model.predict(text_features=text_features)
     for i, r in enumerate(results):
         print(f"  Sample {i}: {r.base_emotion} (V={r.valence:.2f}, A={r.arousal:.2f})")
-        print(f"    Weights: audio={r.modality_weights['audio']:.2f}, text={r.modality_weights['text']:.2f}")
+        print(
+            f"    Weights: audio={r.modality_weights['audio']:.2f}, text={r.modality_weights['text']:.2f}"
+        )
 
     # Test with both
     print("\n--- Both Modalities ---")
     results = model.predict(audio=audio, text_features=text_features)
     for i, r in enumerate(results):
         print(f"  Sample {i}: {r.base_emotion} (V={r.valence:.2f}, A={r.arousal:.2f})")
-        print(f"    Weights: audio={r.modality_weights['audio']:.2f}, text={r.modality_weights['text']:.2f}")
+        print(
+            f"    Weights: audio={r.modality_weights['audio']:.2f}, text={r.modality_weights['text']:.2f}"
+        )
 
     print("\nModel structure:")
     print(f"  Audio encoder: {sum(p.numel() for p in model.audio_encoder.parameters()):,} params")
     print(f"  Text encoder: {sum(p.numel() for p in model.text_encoder.parameters()):,} params")
-    print(f"  Cross attention: {sum(p.numel() for p in model.cross_attention.parameters()):,} params")
+    print(
+        f"  Cross attention: {sum(p.numel() for p in model.cross_attention.parameters()):,} params"
+    )
     print(f"  Gating: {sum(p.numel() for p in model.gating.parameters()):,} params")

@@ -25,14 +25,13 @@ import argparse
 import json
 import sys
 from pathlib import Path
+
 import numpy as np
-import torch
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from music_brain.tier2 import Tier2LORAfinetuner
-from music_brain.tier1 import Tier1MIDIGenerator
 
 
 def validate_dataset(midi_dir: Path, emotion_dir: Path) -> int:
@@ -102,33 +101,39 @@ Examples:
     --lora-rank 8 \\
     --device mps \\
     --output-dir ./checkpoints/melody_lora
-        """
+        """,
     )
 
-    parser.add_argument("--midi-dir", type=str, required=True,
-                       help="Directory with MIDI files")
-    parser.add_argument("--emotion-dir", type=str, required=True,
-                       help="Directory with emotion JSON files (64-dim vectors)")
-    parser.add_argument("--epochs", type=int, default=10,
-                       help="Training epochs")
-    parser.add_argument("--batch-size", type=int, default=8,
-                       help="Batch size (8-16 for M4 Pro)")
-    parser.add_argument("--learning-rate", type=float, default=1e-4,
-                       help="Learning rate for LoRA")
-    parser.add_argument("--lora-rank", type=int, default=8,
-                       help="LoRA rank (4-16 typical)")
-    parser.add_argument("--lora-alpha", type=float, default=16.0,
-                       help="LoRA alpha (usually 2x rank)")
-    parser.add_argument("--device", type=str, default="auto",
-                       help="Device: auto, mps, cuda, cpu")
-    parser.add_argument("--output-dir", type=str, default="./checkpoints/tier2_lora",
-                       help="Where to save checkpoints")
-    parser.add_argument("--save-every", type=int, default=2,
-                       help="Save checkpoint every N epochs")
-    parser.add_argument("--validation-split", type=float, default=0.1,
-                       help="Validation set fraction")
-    parser.add_argument("--create-dummy-emotions", action="store_true",
-                       help="Create dummy emotion embeddings if missing")
+    parser.add_argument("--midi-dir", type=str, required=True, help="Directory with MIDI files")
+    parser.add_argument(
+        "--emotion-dir",
+        type=str,
+        required=True,
+        help="Directory with emotion JSON files (64-dim vectors)",
+    )
+    parser.add_argument("--epochs", type=int, default=10, help="Training epochs")
+    parser.add_argument("--batch-size", type=int, default=8, help="Batch size (8-16 for M4 Pro)")
+    parser.add_argument("--learning-rate", type=float, default=1e-4, help="Learning rate for LoRA")
+    parser.add_argument("--lora-rank", type=int, default=8, help="LoRA rank (4-16 typical)")
+    parser.add_argument(
+        "--lora-alpha", type=float, default=16.0, help="LoRA alpha (usually 2x rank)"
+    )
+    parser.add_argument("--device", type=str, default="auto", help="Device: auto, mps, cuda, cpu")
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="./checkpoints/tier2_lora",
+        help="Where to save checkpoints",
+    )
+    parser.add_argument("--save-every", type=int, default=2, help="Save checkpoint every N epochs")
+    parser.add_argument(
+        "--validation-split", type=float, default=0.1, help="Validation set fraction"
+    )
+    parser.add_argument(
+        "--create-dummy-emotions",
+        action="store_true",
+        help="Create dummy emotion embeddings if missing",
+    )
 
     args = parser.parse_args()
 
@@ -143,9 +148,9 @@ Examples:
     emotion_dir.mkdir(parents=True, exist_ok=True)
 
     # Validate dataset
-    print("="*70)
+    print("=" * 70)
     print("Tier 2 LoRA Fine-tuning: Configuration")
-    print("="*70)
+    print("=" * 70)
 
     dataset_size = validate_dataset(midi_dir, emotion_dir)
 
@@ -160,10 +165,7 @@ Examples:
     emotion_paths = [emotion_dir / f"{f.stem}.json" for f in midi_paths]
 
     # Filter to only paired files
-    midi_emotion_pairs = [
-        (m, e) for m, e in zip(midi_paths, emotion_paths)
-        if e.exists()
-    ]
+    midi_emotion_pairs = [(m, e) for m, e in zip(midi_paths, emotion_paths) if e.exists()]
 
     if not midi_emotion_pairs:
         print("✗ No MIDI-emotion pairs found!")
@@ -187,6 +189,7 @@ Examples:
     # Load base model
     print("Loading base model...")
     from music_brain.models.melody_transformer import MelodyTransformer
+
     base_model = MelodyTransformer()
 
     # Create finetuner
@@ -196,13 +199,13 @@ Examples:
         device=args.device,
         lora_rank=args.lora_rank,
         lora_alpha=args.lora_alpha,
-        verbose=True
+        verbose=True,
     )
 
     print()
-    print("="*70)
+    print("=" * 70)
     print("Starting training...")
-    print("="*70)
+    print("=" * 70)
     print()
 
     # Fine-tune
@@ -215,12 +218,12 @@ Examples:
             learning_rate=args.learning_rate,
             output_dir=args.output_dir,
             save_every_n_epochs=args.save_every,
-            validation_split=args.validation_split
+            validation_split=args.validation_split,
         )
 
         # Optional: Merge and export
         print()
-        print("="*70)
+        print("=" * 70)
         merged_path = Path(args.output_dir) / "merged_final.pt"
         finetuner.merge_and_export(str(merged_path))
         print(f"✓ Merged model saved to {merged_path}")
@@ -229,13 +232,14 @@ Examples:
         print("✓ Training complete!")
         print(f"  Checkpoints: {args.output_dir}/")
         print(f"  Merged model: {merged_path}")
-        print("="*70)
+        print("=" * 70)
 
         return 0
 
     except Exception as e:
         print(f"\n✗ Training failed: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

@@ -10,10 +10,10 @@ All functions operate on waveform numpy arrays and a sample rate.
 """
 
 from dataclasses import dataclass
-from typing import Callable, List, Optional, Sequence, Tuple
+from typing import Callable, Optional, Tuple
 
-import numpy as np
 import librosa
+import numpy as np
 
 
 @dataclass

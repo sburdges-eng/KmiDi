@@ -38,17 +38,16 @@ Usage:
     python3 sample_downloader.py --check-storage
 """
 
-import os
-import sys
-import json
-import hashlib
 import argparse
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional
-import urllib.request
-import urllib.parse
+import hashlib
+import json
 import shutil
+import sys
+import urllib.parse
+import urllib.request
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List
 
 # Google Drive path
 GDRIVE_ROOT = Path.home() / "sburdges@gmail.com - Google Drive" / "My Drive"
@@ -64,7 +63,7 @@ IDAW_CATEGORIES = {
     "cinema_fx": "Cinema FX & Foley",
     "lo_fi_dreams": "Lo-Fi Dreams",
     "brass_soul": "Brass & Soul",
-    "organic_textures": "Organic Textures"
+    "organic_textures": "Organic Textures",
 }
 
 # Sample sources
@@ -74,43 +73,43 @@ SAMPLE_SOURCES = {
         "url": "https://freesound.org",
         "description": "Public domain sound effects and field recordings",
         "api_required": True,
-        "best_for": ["cinema_fx", "organic_textures"]
+        "best_for": ["cinema_fx", "organic_textures"],
     },
     "bbc": {
         "name": "BBC Sound Effects",
         "url": "http://bbcsfx.acropolis.org.uk",
         "description": "30,000+ BBC sound effects",
         "api_required": False,
-        "best_for": ["cinema_fx", "organic_textures"]
+        "best_for": ["cinema_fx", "organic_textures"],
     },
     "sampleswap": {
         "name": "SampleSwap",
         "url": "https://sampleswap.org",
         "description": "Royalty-free music loops and samples",
         "api_required": False,
-        "best_for": ["rhythm_core", "lo_fi_dreams"]
+        "best_for": ["rhythm_core", "lo_fi_dreams"],
     },
     "sampleradar": {
         "name": "SampleRadar (MusicRadar)",
         "url": "https://www.musicradar.com/news/tech/free-music-samples-royalty-free-loops-hits-and-multis-to-download",
         "description": "64,000+ royalty-free samples",
         "api_required": False,
-        "best_for": ["rhythm_core", "brass_soul", "lo_fi_dreams"]
+        "best_for": ["rhythm_core", "brass_soul", "lo_fi_dreams"],
     },
     "looperman": {
         "name": "Looperman",
         "url": "https://www.looperman.com",
         "description": "Community loops, acapellas, and vocals",
         "api_required": False,
-        "best_for": ["rhythm_core", "velvet_noir"]
+        "best_for": ["rhythm_core", "velvet_noir"],
     },
     "bedroom_producers": {
         "name": "Bedroom Producers Blog",
         "url": "https://bedroomproducersblog.com/free-samples/",
         "description": "Curated free sample packs",
         "api_required": False,
-        "best_for": ["lo_fi_dreams", "rhythm_core"]
-    }
+        "best_for": ["lo_fi_dreams", "rhythm_core"],
+    },
 }
 
 
@@ -132,19 +131,15 @@ class SampleDownloader:
     def load_history(self):
         """Load download history to avoid re-downloading"""
         if self.download_log.exists():
-            with open(self.download_log, 'r') as f:
+            with open(self.download_log) as f:
                 self.history = json.load(f)
         else:
-            self.history = {
-                "downloads": [],
-                "total_bytes": 0,
-                "last_update": None
-            }
+            self.history = {"downloads": [], "total_bytes": 0, "last_update": None}
 
     def save_history(self):
         """Save download history"""
         self.history["last_update"] = datetime.now().isoformat()
-        with open(self.download_log, 'w') as f:
+        with open(self.download_log, "w") as f:
             json.dump(self.history, f, indent=2)
 
     def check_storage(self) -> Dict:
@@ -153,7 +148,7 @@ class SampleDownloader:
             # Calculate Google Drive samples folder size
             gdrive_size = 0
             if self.gdrive_samples.exists():
-                for path in self.gdrive_samples.rglob('*'):
+                for path in self.gdrive_samples.rglob("*"):
                     if path.is_file():
                         try:
                             gdrive_size += path.stat().st_size
@@ -162,7 +157,7 @@ class SampleDownloader:
 
             # Calculate local staging size
             local_size = 0
-            for path in self.local_staging.rglob('*'):
+            for path in self.local_staging.rglob("*"):
                 if path.is_file():
                     try:
                         local_size += path.stat().st_size
@@ -178,7 +173,7 @@ class SampleDownloader:
                 "total_used_gb": total_size / (1024**3),
                 "available_gb": available / (1024**3),
                 "max_storage_gb": self.max_storage_bytes / (1024**3),
-                "percent_used": (total_size / self.max_storage_bytes) * 100
+                "percent_used": (total_size / self.max_storage_bytes) * 100,
             }
         except Exception as e:
             return {"error": str(e)}
@@ -204,14 +199,16 @@ class SampleDownloader:
 
             # Record in history
             file_size = destination.stat().st_size
-            self.history["downloads"].append({
-                "url": url,
-                "path": str(destination),
-                "source": source,
-                "category": category,
-                "size_bytes": file_size,
-                "timestamp": datetime.now().isoformat()
-            })
+            self.history["downloads"].append(
+                {
+                    "url": url,
+                    "path": str(destination),
+                    "source": source,
+                    "category": category,
+                    "size_bytes": file_size,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             self.history["total_bytes"] += file_size
             self.save_history()
 
@@ -239,11 +236,13 @@ class SampleDownloader:
                 if source not in files_by_source:
                     files_by_source[source] = []
 
-                files_by_source[source].append({
-                    "path": file_path,
-                    "size": file_path.stat().st_size,
-                    "timestamp": download.get("timestamp")
-                })
+                files_by_source[source].append(
+                    {
+                        "path": file_path,
+                        "size": file_path.stat().st_size,
+                        "timestamp": download.get("timestamp"),
+                    }
+                )
 
         total_deleted = 0
 
@@ -266,8 +265,12 @@ class SampleDownloader:
             # Delete old files
             if files_to_delete:
                 print(f"\n{source}:")
-                print(f"  Keeping: {current_size / (1024**3):.2f} GB ({len(files) - len(files_to_delete)} files)")
-                print(f"  Deleting: {sum(f['size'] for f in files_to_delete) / (1024**3):.2f} GB ({len(files_to_delete)} files)")
+                print(
+                    f"  Keeping: {current_size / (1024**3):.2f} GB ({len(files) - len(files_to_delete)} files)"
+                )
+                print(
+                    f"  Deleting: {sum(f['size'] for f in files_to_delete) / (1024**3):.2f} GB ({len(files_to_delete)} files)"
+                )
 
                 for file_info in files_to_delete:
                     try:
@@ -280,7 +283,9 @@ class SampleDownloader:
             print(f"\n✓ Freed {total_deleted / (1024**3):.2f} GB of local disk space")
             print(f"  Most recent {max_gb_per_source}GB per source kept for offline use")
 
-    def sync_to_gdrive(self, category: str = None, cleanup_local: bool = True, keep_gb_per_source: float = 5.0):
+    def sync_to_gdrive(
+        self, category: str = None, cleanup_local: bool = True, keep_gb_per_source: float = 5.0
+    ):
         """Sync staged files to Google Drive and manage local cache"""
         print("\n=== Syncing to Google Drive ===")
 
@@ -302,8 +307,8 @@ class SampleDownloader:
             synced_files = []
 
             # Copy files to Google Drive
-            for source_file in source_dir.rglob('*'):
-                if source_file.is_file() and source_file.name != 'download_log.json':
+            for source_file in source_dir.rglob("*"):
+                if source_file.is_file() and source_file.name != "download_log.json":
                     # Determine relative path
                     rel_path = source_file.relative_to(self.local_staging)
                     dest_file = self.gdrive_samples / rel_path
@@ -312,13 +317,19 @@ class SampleDownloader:
                     dest_file.parent.mkdir(parents=True, exist_ok=True)
 
                     # Copy if not exists or different
-                    if not dest_file.exists() or source_file.stat().st_size != dest_file.stat().st_size:
+                    if (
+                        not dest_file.exists()
+                        or source_file.stat().st_size != dest_file.stat().st_size
+                    ):
                         print(f"Syncing: {rel_path}")
                         shutil.copy2(source_file, dest_file)
                         print(f"  ✓ {dest_file}")
 
                     # Verify copy was successful
-                    if dest_file.exists() and dest_file.stat().st_size == source_file.stat().st_size:
+                    if (
+                        dest_file.exists()
+                        and dest_file.stat().st_size == source_file.stat().st_size
+                    ):
                         synced_files.append(source_file)
 
             print("\n✓ Sync complete! Files will upload to Google Drive automatically.")
@@ -335,7 +346,14 @@ class SampleDownloader:
             print("3. Verify the Google Drive folder path:")
             print(f"   {self.gdrive_samples}")
 
-    def download_from_direct_links(self, urls: List[str], source: str, category: str, cleanup_local: bool = True, keep_gb_per_source: float = 5.0):
+    def download_from_direct_links(
+        self,
+        urls: List[str],
+        source: str,
+        category: str,
+        cleanup_local: bool = True,
+        keep_gb_per_source: float = 5.0,
+    ):
         """Download from a list of direct download URLs"""
         category_name = IDAW_CATEGORIES.get(category, category)
         dest_dir = self.local_staging / category_name
@@ -370,12 +388,14 @@ class SampleDownloader:
             if self.download_file(url, dest_file, source, category):
                 success_count += 1
 
-        print(f"\n=== Download Complete ===")
+        print("\n=== Download Complete ===")
         print(f"Successfully downloaded: {success_count}/{len(urls)} files")
 
         # Auto-sync to Google Drive
         if success_count > 0:
-            self.sync_to_gdrive(category, cleanup_local=cleanup_local, keep_gb_per_source=keep_gb_per_source)
+            self.sync_to_gdrive(
+                category, cleanup_local=cleanup_local, keep_gb_per_source=keep_gb_per_source
+            )
 
 
 def main():
@@ -387,9 +407,20 @@ def main():
     parser.add_argument("--category", help="iDAW category (e.g., cinema_fx, rhythm_core)")
     parser.add_argument("--urls", nargs="+", help="Direct download URLs")
     parser.add_argument("--urls-file", help="File containing URLs (one per line)")
-    parser.add_argument("--max-storage-gb", type=float, default=1000, help="Max storage in GB (default: 1000)")
-    parser.add_argument("--keep-local-files", action="store_true", help="Keep ALL local files after syncing (default: keep only 5GB per source)")
-    parser.add_argument("--local-cache-gb", type=float, default=5.0, help="GB to keep locally per source for offline use (default: 5GB)")
+    parser.add_argument(
+        "--max-storage-gb", type=float, default=1000, help="Max storage in GB (default: 1000)"
+    )
+    parser.add_argument(
+        "--keep-local-files",
+        action="store_true",
+        help="Keep ALL local files after syncing (default: keep only 5GB per source)",
+    )
+    parser.add_argument(
+        "--local-cache-gb",
+        type=float,
+        default=5.0,
+        help="GB to keep locally per source for offline use (default: 5GB)",
+    )
 
     args = parser.parse_args()
 
@@ -423,7 +454,9 @@ def main():
             print("\n=== Storage Usage ===")
             print(f"Google Drive: {storage['gdrive_gb']:.2f} GB")
             print(f"Local Staging: {storage['local_staging_gb']:.2f} GB")
-            print(f"Total Used: {storage['total_used_gb']:.2f} GB / {storage['max_storage_gb']:.2f} GB")
+            print(
+                f"Total Used: {storage['total_used_gb']:.2f} GB / {storage['max_storage_gb']:.2f} GB"
+            )
             print(f"Available: {storage['available_gb']:.2f} GB")
             print(f"Usage: {storage['percent_used']:.1f}%")
         return
@@ -438,20 +471,22 @@ def main():
         if args.urls:
             urls.extend(args.urls)
         if args.urls_file:
-            with open(args.urls_file, 'r') as f:
+            with open(args.urls_file) as f:
                 urls.extend([line.strip() for line in f if line.strip()])
 
         # Cleanup local files by default (unless --keep-local-files is specified)
         # If --keep-local-files is used, keep everything; otherwise keep only --local-cache-gb per source
         cleanup_local = not args.keep_local_files
-        keep_gb = args.local_cache_gb if cleanup_local else float('inf')  # Keep everything if --keep-local-files
+        keep_gb = (
+            args.local_cache_gb if cleanup_local else float("inf")
+        )  # Keep everything if --keep-local-files
 
         downloader.download_from_direct_links(
             urls,
             args.source,
             args.category,
             cleanup_local=cleanup_local,
-            keep_gb_per_source=keep_gb
+            keep_gb_per_source=keep_gb,
         )
         return
 
@@ -462,7 +497,9 @@ def main():
     print("  1. List available sources: python3 sample_downloader.py --list-sources")
     print("  2. Check storage: python3 sample_downloader.py --check-storage")
     print("  3. Download samples:")
-    print("     python3 sample_downloader.py --source bbc --category cinema_fx --urls https://example.com/sample.wav")
+    print(
+        "     python3 sample_downloader.py --source bbc --category cinema_fx --urls https://example.com/sample.wav"
+    )
     print("\nFor more options: python3 sample_downloader.py --help")
     print()
 

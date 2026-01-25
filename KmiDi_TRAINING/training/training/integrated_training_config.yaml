@@ -45,6 +45,16 @@ data:
   hop_length: 512
   segment_seconds: 8
   
+  # Dataset sources
+  datasets:
+    - name: "wasabi"
+      path: "data/wasabi/processed"
+      manifest: "train.jsonl"
+      emotion_filter: ["happy", "sad", "angry", "fear", "joy", "sorrow"]
+      year_range: [1950, 2024]
+      require_lyrics: true
+      weight: 1.0  # Primary dataset for emotion-conditioned training
+  
   # Aggressive caching for performance
   cache_mels: true
   cache_dir: ".cache/mels"

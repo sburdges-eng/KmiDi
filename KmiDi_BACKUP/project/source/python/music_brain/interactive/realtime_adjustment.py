@@ -5,14 +5,14 @@ Provides smooth interpolation and parameter morphing for real-time adjustments.
 Part of Phase 2 of the "All-Knowing Interactive Musical Customization System".
 """
 
-from typing import Dict, List, Optional, Tuple, Callable
 from dataclasses import dataclass
 from enum import Enum
-import math
+from typing import Dict, Optional, Tuple
 
 
 class InterpolationType(Enum):
     """Types of parameter interpolation."""
+
     LINEAR = "linear"
     EASE_IN = "ease_in"
     EASE_OUT = "ease_out"
@@ -23,6 +23,7 @@ class InterpolationType(Enum):
 @dataclass
 class ParameterState:
     """State of a single parameter."""
+
     name: str
     value: float
     min_value: float = 0.0
@@ -36,6 +37,7 @@ class ParameterState:
 @dataclass
 class ParameterSet:
     """Set of parameters representing a state."""
+
     parameters: Dict[str, float]
     timestamp: float = 0.0  # Time in seconds
 
@@ -75,7 +77,7 @@ class ParameterMorphEngine:
         start_state: ParameterSet,
         end_state: ParameterSet,
         duration: float,
-        start_time: float = 0.0
+        start_time: float = 0.0,
     ):
         """Setup a morph between two parameter states."""
         self.start_state = start_state
@@ -111,7 +113,9 @@ class ParameterMorphEngine:
 
         # Interpolate all parameters
         result_params = {}
-        all_param_names = set(self.start_state.parameters.keys()) | set(self.end_state.parameters.keys())
+        all_param_names = set(self.start_state.parameters.keys()) | set(
+            self.end_state.parameters.keys()
+        )
 
         for param_name in all_param_names:
             start_val = self.start_state.get(param_name, 0.0)
@@ -170,7 +174,7 @@ class MultiParameterMorpher:
         parameter_name: str,
         target_value: float,
         duration: float = 0.5,
-        current_time: float = 0.0
+        current_time: float = 0.0,
     ):
         """Set target value for a parameter with specified duration."""
         current_value = self.current_state.get(parameter_name)
@@ -195,7 +199,8 @@ class MultiParameterMorpher:
         """
         # Remove completed morphs
         completed = [
-            name for name, (engine, start_time, duration) in self.active_morphs.items()
+            name
+            for name, (engine, start_time, duration) in self.active_morphs.items()
             if current_time >= start_time + duration
         ]
         for name in completed:
@@ -206,7 +211,9 @@ class MultiParameterMorpher:
 
         for param_name, (engine, start_time, duration) in self.active_morphs.items():
             interpolated = engine.interpolate(current_time)
-            result_params[param_name] = interpolated.get(param_name, result_params.get(param_name, 0.0))
+            result_params[param_name] = interpolated.get(
+                param_name, result_params.get(param_name, 0.0)
+            )
 
         self.current_state = ParameterSet(result_params, current_time)
         return self.current_state

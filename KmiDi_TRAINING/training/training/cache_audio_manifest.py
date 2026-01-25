@@ -17,7 +17,7 @@ import json
 import shutil
 import sys
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List
 
 import requests
 
@@ -95,9 +95,7 @@ def main():
     manifest_path = Path(args.manifest)
     out_dir = Path(args.out_dir)
     out_manifest = (
-        Path(args.output_manifest)
-        if args.output_manifest
-        else out_dir / "cached_manifest.jsonl"
+        Path(args.output_manifest) if args.output_manifest else out_dir / "cached_manifest.jsonl"
     )
 
     entries = load_manifest(manifest_path)
@@ -108,9 +106,9 @@ def main():
     for idx, entry in enumerate(entries):
         try:
             cached.append(cache_entry(idx, entry, out_dir))
-            print(f"[{idx+1}/{len(entries)}] cached -> {cached[-1]['path']}")
+            print(f"[{idx + 1}/{len(entries)}] cached -> {cached[-1]['path']}")
         except Exception as exc:  # pragma: no cover
-            print(f"[{idx+1}/{len(entries)}] failed: {exc}", file=sys.stderr)
+            print(f"[{idx + 1}/{len(entries)}] failed: {exc}", file=sys.stderr)
 
     out_dir.mkdir(parents=True, exist_ok=True)
     with out_manifest.open("w") as f:

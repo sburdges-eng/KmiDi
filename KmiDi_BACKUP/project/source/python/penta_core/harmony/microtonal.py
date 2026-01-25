@@ -9,23 +9,24 @@ Provides:
 - Cents-based pitch representation
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
-from enum import Enum
 import math
+from dataclasses import dataclass
+from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 
 class TuningSystem(Enum):
     """Common tuning systems."""
-    EQUAL_12 = "12tet"      # Standard 12-TET
-    EQUAL_19 = "19tet"      # 19-TET
-    EQUAL_24 = "24tet"      # Quarter-tones
-    EQUAL_31 = "31tet"      # 31-TET (close to 1/4 comma meantone)
-    EQUAL_53 = "53tet"      # Very close to just intonation
+
+    EQUAL_12 = "12tet"  # Standard 12-TET
+    EQUAL_19 = "19tet"  # 19-TET
+    EQUAL_24 = "24tet"  # Quarter-tones
+    EQUAL_31 = "31tet"  # 31-TET (close to 1/4 comma meantone)
+    EQUAL_53 = "53tet"  # Very close to just intonation
     JUST_5_LIMIT = "just5"  # 5-limit just intonation
     JUST_7_LIMIT = "just7"  # 7-limit just intonation
-    PYTHAGOREAN = "pyth"    # Pythagorean tuning
-    MEANTONE = "meantone"   # Quarter-comma meantone
+    PYTHAGOREAN = "pyth"  # Pythagorean tuning
+    MEANTONE = "meantone"  # Quarter-comma meantone
 
 
 # Just intonation ratios (5-limit)
@@ -65,6 +66,7 @@ class MicrotonalPitch:
     - Frequency in Hz
     - Ratio from reference pitch
     """
+
     midi_note: int = 60  # Base MIDI note (C4)
     cents_deviation: float = 0.0  # Cents from 12-TET
     frequency: Optional[float] = None  # Hz
@@ -173,10 +175,12 @@ def equal_temperament(
             midi_offset += 1
             cents_dev -= 100
 
-        pitches.append(MicrotonalPitch(
-            midi_note=base_note + midi_offset,
-            cents_deviation=cents_dev,
-        ))
+        pitches.append(
+            MicrotonalPitch(
+                midi_note=base_note + midi_offset,
+                cents_deviation=cents_dev,
+            )
+        )
 
     return pitches
 
@@ -347,9 +351,20 @@ def compare_tunings(
 
     # Just intonation (selecting first 12 intervals)
     ji_pitches = just_intonation(reference_note)
-    ji_names = ["unison", "minor_second", "major_second", "minor_third", "major_third",
-                "perfect_fourth", "tritone", "perfect_fifth", "minor_sixth",
-                "major_sixth", "minor_seventh", "major_seventh"]
+    ji_names = [
+        "unison",
+        "minor_second",
+        "major_second",
+        "minor_third",
+        "major_third",
+        "perfect_fourth",
+        "tritone",
+        "perfect_fifth",
+        "minor_sixth",
+        "major_sixth",
+        "minor_seventh",
+        "major_seventh",
+    ]
     results["Just (5-limit)"] = [
         ji_pitches[name].cents_deviation + (ji_pitches[name].midi_note - reference_note) * 100
         for name in ji_names[:note_count]
@@ -361,6 +376,8 @@ def compare_tunings(
 
     # Quarter-comma meantone
     meantone = meantone_temperament(reference_note)
-    results["Meantone (1/4)"] = [p.total_cents - reference_note * 100 for p in meantone[:note_count]]
+    results["Meantone (1/4)"] = [
+        p.total_cents - reference_note * 100 for p in meantone[:note_count]
+    ]
 
     return results

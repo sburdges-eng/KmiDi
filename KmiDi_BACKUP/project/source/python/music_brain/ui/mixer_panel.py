@@ -9,52 +9,53 @@ Run with:
     streamlit run music_brain/ui/mixer_panel.py
 """
 
-import streamlit as st
-import numpy as np
-from typing import Optional
 import sys
 from pathlib import Path
+
+import numpy as np
+import streamlit as st
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from penta_core.mixer import MixerEngine, MixerState, apply_emotion_to_mixer
-from music_brain.daw.mixer_params import (
-    EmotionMapper,
-    MixerParameters,
-    MIXER_PRESETS
-)
-
+from music_brain.daw.mixer_params import EmotionMapper
+from penta_core.mixer import MixerEngine, apply_emotion_to_mixer
 
 # =============================================================================
 # Session State Initialization
 # =============================================================================
 
+
 def init_session_state():
     """Initialize Streamlit session state."""
-    if 'mixer' not in st.session_state:
+    if "mixer" not in st.session_state:
         st.session_state.mixer = MixerEngine(sample_rate=48000.0)
         st.session_state.mixer.set_num_channels(8)
         st.session_state.mixer.set_num_send_buses(4)
 
-    if 'channel_names' not in st.session_state:
+    if "channel_names" not in st.session_state:
         st.session_state.channel_names = [
-            "Drums", "Bass", "Guitar L", "Guitar R",
-            "Vocals", "Keys", "Pad", "FX"
+            "Drums",
+            "Bass",
+            "Guitar L",
+            "Guitar R",
+            "Vocals",
+            "Keys",
+            "Pad",
+            "FX",
         ]
 
-    if 'send_names' not in st.session_state:
-        st.session_state.send_names = [
-            "Reverb", "Delay", "Chorus", "FX"
-        ]
+    if "send_names" not in st.session_state:
+        st.session_state.send_names = ["Reverb", "Delay", "Chorus", "FX"]
 
-    if 'emotion_mapper' not in st.session_state:
+    if "emotion_mapper" not in st.session_state:
         st.session_state.emotion_mapper = EmotionMapper()
 
 
 # =============================================================================
 # UI Components
 # =============================================================================
+
 
 def render_channel_strip(channel: int, name: str):
     """Render a single channel strip."""
@@ -71,7 +72,7 @@ def render_channel_strip(channel: int, name: str):
             max_value=12.0,
             value=current_gain,
             step=0.1,
-            key=f"gain_{channel}"
+            key=f"gain_{channel}",
         )
         mixer.set_channel_gain(channel, gain)
 
@@ -84,7 +85,7 @@ def render_channel_strip(channel: int, name: str):
             value=current_pan,
             step=0.01,
             key=f"pan_{channel}",
-            format="%.2f"
+            format="%.2f",
         )
         mixer.set_channel_pan(channel, pan)
 
@@ -93,17 +94,13 @@ def render_channel_strip(channel: int, name: str):
 
         with col1:
             muted = st.checkbox(
-                "🔇 Mute",
-                value=mixer._channel_mutes[channel],
-                key=f"mute_{channel}"
+                "🔇 Mute", value=mixer._channel_mutes[channel], key=f"mute_{channel}"
             )
             mixer.set_channel_mute(channel, muted)
 
         with col2:
             soloed = st.checkbox(
-                "🎯 Solo",
-                value=mixer._channel_solos[channel],
-                key=f"solo_{channel}"
+                "🎯 Solo", value=mixer._channel_solos[channel], key=f"solo_{channel}"
             )
             mixer.set_channel_solo(channel, soloed)
 
@@ -127,7 +124,7 @@ def render_channel_strip(channel: int, name: str):
                     max_value=1.0,
                     value=current_send,
                     step=0.01,
-                    key=f"send_{channel}_{send_idx}"
+                    key=f"send_{channel}_{send_idx}",
                 )
                 mixer.set_channel_send(channel, send_idx, send_level)
 
@@ -148,16 +145,12 @@ def render_send_bus(send_idx: int, name: str):
         max_value=2.0,
         value=current_return,
         step=0.01,
-        key=f"return_{send_idx}"
+        key=f"return_{send_idx}",
     )
     mixer.set_send_return_level(send_idx, return_level)
 
     # Mute
-    muted = st.checkbox(
-        "🔇 Mute",
-        value=mixer._send_mutes[send_idx],
-        key=f"send_mute_{send_idx}"
-    )
+    muted = st.checkbox("🔇 Mute", value=mixer._send_mutes[send_idx], key=f"send_mute_{send_idx}")
     mixer.set_send_mute(send_idx, muted)
 
 
@@ -174,7 +167,7 @@ def render_master_section():
         max_value=12.0,
         value=mixer._master_gain,
         step=0.1,
-        key="master_gain"
+        key="master_gain",
     )
     mixer.set_master_gain(master_gain)
 
@@ -182,9 +175,7 @@ def render_master_section():
     st.markdown("### 🛡️ Limiter")
 
     limiter_enabled = st.checkbox(
-        "Enable Limiter",
-        value=mixer._master_limiter_enabled,
-        key="limiter_enabled"
+        "Enable Limiter", value=mixer._master_limiter_enabled, key="limiter_enabled"
     )
 
     limiter_threshold = st.slider(
@@ -193,7 +184,7 @@ def render_master_section():
         max_value=0.0,
         value=mixer._master_limiter_threshold,
         step=0.1,
-        key="limiter_threshold"
+        key="limiter_threshold",
     )
 
     mixer.set_master_limiter(limiter_enabled, limiter_threshold)
@@ -222,9 +213,7 @@ def render_emotion_presets():
     # Preset selector
     preset_names = mapper.list_presets()
     selected_preset = st.selectbox(
-        "Select Emotion Preset",
-        options=preset_names,
-        key="emotion_preset"
+        "Select Emotion Preset", options=preset_names, key="emotion_preset"
     )
 
     # Target channel selector
@@ -233,7 +222,7 @@ def render_emotion_presets():
         "Apply to Channel",
         options=list(range(mixer.num_channels)),
         format_func=lambda i: st.session_state.channel_names[i],
-        key="emotion_target_channel"
+        key="emotion_target_channel",
     )
 
     # Apply button
@@ -241,7 +230,9 @@ def render_emotion_presets():
         emotion_params = mapper.get_preset(selected_preset)
         if emotion_params:
             apply_emotion_to_mixer(mixer, emotion_params, target_channel)
-            st.success(f"Applied '{selected_preset}' to {st.session_state.channel_names[target_channel]}")
+            st.success(
+                f"Applied '{selected_preset}' to {st.session_state.channel_names[target_channel]}"
+            )
             st.rerun()
 
     # Show preset details
@@ -251,7 +242,7 @@ def render_emotion_presets():
             with st.expander("📝 Preset Details"):
                 st.markdown(f"**Description:** {preset.description}")
                 st.markdown(f"**Tags:** {', '.join(preset.tags)}")
-                st.markdown(f"**Emotional Justification:**")
+                st.markdown("**Emotional Justification:**")
                 st.info(preset.emotional_justification)
 
 
@@ -263,7 +254,7 @@ def render_test_signal_generator():
     signal_type = st.selectbox(
         "Signal Type",
         options=["Sine Wave", "White Noise", "Pink Noise", "Impulse"],
-        key="signal_type"
+        key="signal_type",
     )
 
     # Frequency (for sine wave)
@@ -275,7 +266,7 @@ def render_test_signal_generator():
             max_value=20000.0,
             value=440.0,
             step=1.0,
-            key="signal_frequency"
+            key="signal_frequency",
         )
 
     # Duration
@@ -285,7 +276,7 @@ def render_test_signal_generator():
         max_value=5.0,
         value=1.0,
         step=0.1,
-        key="signal_duration"
+        key="signal_duration",
     )
 
     # Generate button
@@ -353,7 +344,7 @@ def render_session_management():
 
     with col2:
         if st.button("📤 Load Session", key="load_session"):
-            if 'saved_mixer_state' in st.session_state:
+            if "saved_mixer_state" in st.session_state:
                 mixer: MixerEngine = st.session_state.mixer
                 mixer.load_state(st.session_state.saved_mixer_state)
                 st.success("Session loaded!")
@@ -380,13 +371,14 @@ def render_session_management():
 # Main Application
 # =============================================================================
 
+
 def main():
     """Main Streamlit application."""
     st.set_page_config(
         page_title="iDAW Mixer Console",
         page_icon="🎛️",
         layout="wide",
-        initial_sidebar_state="expanded"
+        initial_sidebar_state="expanded",
     )
 
     init_session_state()
@@ -443,7 +435,9 @@ def main():
         cols_per_row = 4
         for row_start in range(0, num_channels, cols_per_row):
             cols = st.columns(cols_per_row)
-            for col_idx, channel in enumerate(range(row_start, min(row_start + cols_per_row, num_channels))):
+            for col_idx, channel in enumerate(
+                range(row_start, min(row_start + cols_per_row, num_channels))
+            ):
                 with cols[col_idx]:
                     render_channel_strip(channel, st.session_state.channel_names[channel])
 
@@ -466,11 +460,14 @@ def main():
 
     # Footer
     st.divider()
-    st.markdown("""
+    st.markdown(
+        """
     <div style='text-align: center; color: #666;'>
     iDAW Mixer Console | Powered by Penta-Core | "Interrogate Before Generate"
     </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 if __name__ == "__main__":

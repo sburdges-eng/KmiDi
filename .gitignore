@@ -42,6 +42,10 @@ src-tauri/.cargo/config.toml
 *.tmp
 *.bak
 
+# Cloud training (workspace monitorable state for AI)
+cloud_training/logs/
+cloud_training/status.json
+
 # IDE/editor
 .vscode/
 .idea/
@@ -473,3 +477,33 @@ venv.bak/
 .DS_Store
 Thumbs.db
 kmidi_audio_data/
+
+# Prevent nested git repositories (except legitimate submodules)
+# Archive and quarantine directories should not contain git repos
+ARCHIVE/**/.git
+CANONICAL/**/.git
+_QUARANTINE*/**/.git
+kelly-project/.git
+desktop_app/data/uploaded/**/.git
+
+# =============================================================================
+# Environment Files
+# =============================================================================
+# Ignore actual environment files (secrets)
+.env
+.env.local
+.env.production.local
+.env.*.local
+
+# Ignore feature-specific env files (except examples)
+env/.env.tauri
+env/.env.ml
+env/.env.training
+env/.env.mcp
+env/.env.build
+
+# Keep example files
+!.env.example
+!.env.development
+!.env.production
+!env/.env.*.example

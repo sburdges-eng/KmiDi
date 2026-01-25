@@ -1,136 +1,153 @@
 #pragma once
 /*
- * KellyBrain.h - High-Level Intent Processing API
- * ===============================================
- * Wraps existing IntentPipeline with a simplified high-level API
- *
- * This provides a convenience layer over the existing IntentPipeline,
- * allowing easier access to wound-to-music processing.
+ * KellyBrain.h - Core Intent Processing Engine
+ * =============================================
+ * Processes Wounds → Musical Parameters via EmotionThesaurus
+ * 
+ * Re-enabled bindings using unified KellyTypes.h
+ * Works with IntentPipeline for Wound → EmotionNode → IntentResult flow
  */
 
-// Include KellyTypes.h for the unified type system
 #include "common/KellyTypes.h"
-#include "midi/MidiGenerator.h"
-// Forward declare IntentPipeline to avoid including Types.h here
-// We'll include IntentPipeline.h only in the .cpp file where we can handle
-// conversions
-namespace kelly {
-class IntentPipeline;
-class EmotionThesaurus;
-} // namespace kelly
 #include <memory>
-#include <string>
+#include <functional>
+#include <unordered_map>
 
 namespace kelly {
 
-/**
- * KellyBrain - High-level interface for intent processing
- *
- * This class wraps the existing IntentPipeline to provide:
- * - Simplified initialization
- * - Convenient text-to-intent conversion
- * - Direct emotion-to-intent mapping
- *
- * Usage:
- *   KellyBrain brain;
- *   brain.initialize("./data");
- *   IntentResult result = brain.fromText("I feel lost and alone");
- */
-class KellyBrain {
+// =============================================================================
+// Emotion Thesaurus (216-node system)
+// =============================================================================
+
+class EmotionThesaurus {
 public:
-  KellyBrain();
-  ~KellyBrain() = default;
-
-  /**
-   * Initialize with data directory path
-   * @param dataPath Path to data directory (for emotion thesaurus data)
-   * @return true if initialization successful
-   */
-  bool initialize(const std::string &dataPath);
-
-  /**
-   * Process a wound and generate intent result
-   * Uses existing IntentPipeline::process()
-   */
-  IntentResult fromWound(const Wound &wound);
-
-  /**
-   * Process a journey from Side A (current) to Side B (desired).
-   * Creates a musical journey between two emotional states.
-   */
-  IntentResult fromJourney(const SideA &current, const SideB &desired);
-
-  /**
-   * Process text description and generate intent result
-   * Creates a Wound from text and processes it
-   */
-  IntentResult fromText(const std::string &description);
-
-  /**
-   * Process emotion name and generate intent result
-   * Looks up emotion in thesaurus and processes it
-   */
-  IntentResult fromEmotion(const std::string &emotionName,
-                           float intensity = 0.7f);
-
-  /**
-   * Generate MIDI from intent result
-   */
-  GeneratedMidi generateMidi(const IntentResult &intent, int bars = 8);
-
-  /**
-   * Generate MIDI directly from a wound (convenience method).
-   * Combines fromWound() and generateMidi() in one call.
-   */
-  GeneratedMidi generateMidiFromWound(const Wound &wound, int bars = 8);
-
-  /**
-   * Get direct access to underlying IntentPipeline
-   * Note: Returns a reference to the internal IntentPipeline which uses Types.h
-   * types
-   */
-  IntentPipeline &pipeline();
-  const IntentPipeline &pipeline() const;
-
-  /**
-   * Get direct access to underlying IntentPipeline (alias for pipeline())
-   */
-  IntentPipeline &getIntentPipeline();
-  const IntentPipeline &getIntentPipeline() const;
-
-  /**
-   * Get direct access to EmotionThesaurus
-   */
-  EmotionThesaurus &thesaurus();
-  const EmotionThesaurus &thesaurus() const;
-
-  /**
-   * Check if initialized
-   */
-  bool isInitialized() const { return initialized_; }
-
-  /**
-   * Convert wound to description string
-   */
-  static std::string woundToDescription(const Wound &wound);
-
-  /**
-   * Create wound from description string
-   */
-  static Wound descriptionToWound(const std::string &description,
-                                  float intensity = 0.5f);
+    EmotionThesaurus();
+    ~EmotionThesaurus() = default;
+    
+    // Core lookups
+    const EmotionNode* findByName(const std::string& name) const;
+    const EmotionNode* findById(int id) const;
+    const EmotionNode* findByPosition(int layer, int sub, int subSub) const;
+    
+    // Dimensional queries
+    std::vector<const EmotionNode*> findByValence(float minVal, float maxVal) const;
+    std::vector<const EmotionNode*> findByArousal(float minArousal, float maxArousal) const;
+    std::vector<const EmotionNode*> findNearby(const EmotionNode& node, float threshold = 0.3f) const;
+    
+    // Category queries
+    std::vector<const EmotionNode*> getCategory(EmotionCategory category) const;
+    std::vector<const EmotionNode*> getSubEmotions(int layerIndex) const;
+    
+    // Synonym resolution
+    const EmotionNode* resolveVernacular(const std::string& vernacular) const;
+    
+    // Stats
+    size_t size() const { return nodes_.size(); }
+    
+    // Load from JSON
+    bool loadFromFile(const std::string& path);
+    bool loadFromJson(const std::string& json);
 
 private:
-  // Use pointer to avoid including IntentPipeline.h in header (which would
-  // include Types.h) This allows us to keep KellyTypes.h types in the interface
-  std::unique_ptr<IntentPipeline> pipeline_;
-  std::unique_ptr<MidiGenerator> midiGenerator_;
-  bool initialized_ = false;
-
-  /**
-   * Resolve emotion name to EmotionNode (helper for fromEmotion)
-   */
-  EmotionNode resolveEmotionByName(const std::string &emotionName);
+    void initializeDefault();
+    float distance(const EmotionNode& a, const EmotionNode& b) const;
+    
+    std::unordered_map<int, EmotionNode> nodes_;
+    std::unordered_map<std::string, int> nameIndex_;
+    std::unordered_map<std::string, int> synonymIndex_;
 };
+
+// =============================================================================
+// Intent Pipeline (Wound → IntentResult)
+// =============================================================================
+
+class IntentPipeline {
+public:
+    IntentPipeline();
+    explicit IntentPipeline(std::shared_ptr<EmotionThesaurus> thesaurus);
+    ~IntentPipeline() = default;
+    
+    // Main processing
+    IntentResult processWound(const Wound& wound);
+    IntentResult processEmotion(const EmotionNode& emotion, float intensity = 0.7f);
+    IntentResult processText(const std::string& description);
+    
+    // Access thesaurus
+    EmotionThesaurus& thesaurus() { return *thesaurus_; }
+    const EmotionThesaurus& thesaurus() const { return *thesaurus_; }
+    
+    // Configuration
+    void setDefaultKey(const std::string& key) { defaultKey_ = key; }
+    void setDefaultTempo(int bpm) { defaultTempo_ = bpm; }
+    void setGenre(const std::string& genre) { genre_ = genre; }
+    
+    // Rule-break preferences
+    void enableRuleBreak(RuleBreakType type, bool enabled);
+    void setRuleBreakIntensity(RuleBreakType type, float intensity);
+
+private:
+    // Internal processing stages
+    EmotionNode resolveEmotion(const Wound& wound);
+    std::vector<RuleBreak> determineRuleBreaks(const EmotionNode& emotion, const Wound& wound);
+    std::vector<std::string> generateProgression(const EmotionNode& emotion, const std::vector<RuleBreak>& breaks);
+    MusicalAttributes deriveAttributes(const EmotionNode& emotion);
+    
+    std::shared_ptr<EmotionThesaurus> thesaurus_;
+    std::string defaultKey_ = "C";
+    int defaultTempo_ = 120;
+    std::string genre_ = "lo-fi";
+    
+    std::array<bool, static_cast<size_t>(RuleBreakType::COUNT)> enabledRuleBreaks_;
+    std::array<float, static_cast<size_t>(RuleBreakType::COUNT)> ruleBreakIntensities_;
+};
+
+// =============================================================================
+// KellyBrain - High-Level Interface
+// =============================================================================
+
+class KellyBrain {
+public:
+    KellyBrain();
+    ~KellyBrain() = default;
+    
+    // Initialize from data directory
+    bool initialize(const std::string& dataPath);
+    
+    // Main generation entry points
+    IntentResult fromWound(const Wound& wound);
+    IntentResult fromText(const std::string& description);
+    IntentResult fromEmotion(const std::string& emotionName, float intensity = 0.7f);
+    
+    // Generate MIDI from intent
+    GeneratedMidi generateMidi(const IntentResult& intent, int bars = 8);
+    
+    // Direct access
+    IntentPipeline& pipeline() { return *pipeline_; }
+    EmotionThesaurus& thesaurus() { return pipeline_->thesaurus(); }
+    
+    // Convenience
+    static std::string woundToDescription(const Wound& wound);
+    static Wound descriptionToWound(const std::string& description);
+
+private:
+    std::unique_ptr<IntentPipeline> pipeline_;
+    bool initialized_ = false;
+};
+
+// =============================================================================
+// Factory Functions
+// =============================================================================
+
+inline std::unique_ptr<KellyBrain> createKellyBrain() {
+    return std::make_unique<KellyBrain>();
+}
+
+inline std::unique_ptr<IntentPipeline> createIntentPipeline() {
+    return std::make_unique<IntentPipeline>();
+}
+
+inline std::unique_ptr<EmotionThesaurus> createEmotionThesaurus() {
+    return std::make_unique<EmotionThesaurus>();
+}
 
 } // namespace kelly

@@ -34,8 +34,8 @@
 // This allows compilation even if ONNX Runtime is not available
 // Note: Actual types are defined in onnxruntime_cxx_api.h (included in .cpp)
 
-namespace midikompanion {
-namespace ml {
+namespace kelly {
+namespace ML {
 
 /**
  * ONNX Inference Wrapper - RT-safe ONNX Runtime interface.

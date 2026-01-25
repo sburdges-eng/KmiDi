@@ -30,8 +30,7 @@ class StdOptionalSynthProvider:
             self.payload = self.valobj.GetChildMemberWithName("_M_payload")
             self.value = self.payload.GetChildMemberWithName("_M_payload")
             self.has_value = (
-                self.payload.GetChildMemberWithName("_M_engaged").GetValueAsUnsigned(0)
-                != 0
+                self.payload.GetChildMemberWithName("_M_engaged").GetValueAsUnsigned(0) != 0
             )
         except:
             self.has_value = False
@@ -130,9 +129,7 @@ class StdUnorderedMapSynthProvider:
     def num_children_impl(self):
         logger = lldb.formatters.Logger.Logger()
         try:
-            count = self.head.GetChildMemberWithName(
-                "_M_element_count"
-            ).GetValueAsUnsigned(0)
+            count = self.head.GetChildMemberWithName("_M_element_count").GetValueAsUnsigned(0)
             return count
         except:
             logger >> "Could not determine the size"
@@ -150,12 +147,8 @@ class AbstractListSynthProvider:
         self.valobj = valobj
         self.count = None
         self.has_prev = has_prev
-        self.list_capping_size = (
-            self.valobj.GetTarget().GetMaximumNumberOfChildrenToDisplay()
-        )
-        logger >> "Providing synthetic children for a list named " + str(
-            valobj.GetName()
-        )
+        self.list_capping_size = self.valobj.GetTarget().GetMaximumNumberOfChildrenToDisplay()
+        logger >> "Providing synthetic children for a list named " + str(valobj.GetName())
 
     def next_node(self, node):
         logger = lldb.formatters.Logger.Logger()
@@ -173,7 +166,7 @@ class AbstractListSynthProvider:
     def value(self, node):
         logger = lldb.formatters.Logger.Logger()
         value = node.GetValueAsUnsigned()
-        logger >> "synthetic value for {}: {}".format(str(self.valobj.GetName()), value)
+        logger >> f"synthetic value for {str(self.valobj.GetName())}: {value}"
         return value
 
     # Floyd's cycle-finding algorithm
@@ -361,7 +354,7 @@ class StdListSynthProvider(AbstractListSynthProvider):
 
 
 class StdVectorSynthProvider:
-    class StdVectorImplementation(object):
+    class StdVectorImplementation:
         def __init__(self, valobj):
             self.valobj = valobj
             self.count = None
@@ -447,7 +440,7 @@ class StdVectorSynthProvider:
                 self.count = 0
             return False
 
-    class StdVBoolImplementation(object):
+    class StdVBoolImplementation:
         def __init__(self, valobj, bool_type):
             self.valobj = valobj
             self.bool_type = bool_type
@@ -487,11 +480,7 @@ class StdVectorSynthProvider:
                 self.start_p = self.m_start.GetChildMemberWithName("_M_p")
                 self.finish_p = self.m_finish.GetChildMemberWithName("_M_p")
                 self.offset = self.m_finish.GetChildMemberWithName("_M_offset")
-                if (
-                    self.offset.IsValid()
-                    and self.start_p.IsValid()
-                    and self.finish_p.IsValid()
-                ):
+                if self.offset.IsValid() and self.start_p.IsValid() and self.finish_p.IsValid():
                     self.valid = True
                 else:
                     self.valid = False
@@ -506,9 +495,7 @@ class StdVectorSynthProvider:
             self.impl = self.StdVBoolImplementation(valobj, first_template_arg_type)
         else:
             self.impl = self.StdVectorImplementation(valobj)
-        logger >> "Providing synthetic children for a vector named " + str(
-            valobj.GetName()
-        )
+        logger >> "Providing synthetic children for a vector named " + str(valobj.GetName())
 
     def num_children(self):
         return self.impl.num_children()
@@ -542,10 +529,7 @@ class StdMapLikeSynthProvider:
         self.kind = self.get_object_kind(valobj)
         (
             logger
-            >> "Providing synthetic children for a "
-            + self.kind
-            + " named "
-            + str(valobj.GetName())
+            >> "Providing synthetic children for a " + self.kind + " named " + str(valobj.GetName())
         )
 
     def get_object_kind(self, valobj):
@@ -564,25 +548,13 @@ class StdMapLikeSynthProvider:
     # to find the type name
     def fixup_class_name(self, class_name):
         logger = lldb.formatters.Logger.Logger()
-        if (
-            class_name
-            == "std::basic_string<char, std::char_traits<char>, std::allocator<char> >"
-        ):
+        if class_name == "std::basic_string<char, std::char_traits<char>, std::allocator<char> >":
             return "std::basic_string<char>", True
-        if (
-            class_name
-            == "basic_string<char, std::char_traits<char>, std::allocator<char> >"
-        ):
+        if class_name == "basic_string<char, std::char_traits<char>, std::allocator<char> >":
             return "std::basic_string<char>", True
-        if (
-            class_name
-            == "std::basic_string<char, std::char_traits<char>, std::allocator<char> >"
-        ):
+        if class_name == "std::basic_string<char, std::char_traits<char>, std::allocator<char> >":
             return "std::basic_string<char>", True
-        if (
-            class_name
-            == "basic_string<char, std::char_traits<char>, std::allocator<char> >"
-        ):
+        if class_name == "basic_string<char, std::char_traits<char>, std::allocator<char> >":
             return "std::basic_string<char>", True
         return class_name, False
 
@@ -616,9 +588,7 @@ class StdMapLikeSynthProvider:
                     # std::allocator<...>. For such a case, get the type of
                     # std::pair from a member of std::map.
                     rep_type = self.valobj.GetChildMemberWithName("_M_t").GetType()
-                    self.data_type = (
-                        rep_type.GetTypedefedType().GetTemplateArgumentType(1)
-                    )
+                    self.data_type = rep_type.GetTypedefedType().GetTemplateArgumentType(1)
 
                 # from libstdc++ implementation of _M_root for rbtree
                 self.Mroot = self.Mheader.GetChildMemberWithName("_M_parent")
@@ -640,9 +610,7 @@ class StdMapLikeSynthProvider:
             root_ptr_val = self.node_ptr_value(self.Mroot)
             if root_ptr_val == 0:
                 return 0
-            count = self.Mimpl.GetChildMemberWithName(
-                "_M_node_count"
-            ).GetValueAsUnsigned(0)
+            count = self.Mimpl.GetChildMemberWithName("_M_node_count").GetValueAsUnsigned(0)
             logger >> "I have " + str(count) + " children available"
             return count
         except:
@@ -801,9 +769,7 @@ class StdDequeSynthProvider:
                 (1 + i) * self.valobj.GetProcess().GetAddressByteSize(),
                 self.element_type.GetPointerType(),
             )
-            return node.CreateChildAtOffset(
-                name, j * self.element_size, self.element_type
-            )
+            return node.CreateChildAtOffset(name, j * self.element_size, self.element_type)
 
         except:
             return None
@@ -833,22 +799,16 @@ class StdDequeSynthProvider:
             self.start = impl.GetChildMemberWithName("_M_start")
             self.start_node = self.start.GetChildMemberWithName("_M_node")
             first_node_address = self.start_node.GetValueAsUnsigned(0)
-            first_node_last_elem = self.start.GetChildMemberWithName(
-                "_M_last"
-            ).GetValueAsUnsigned(0)
+            first_node_last_elem = self.start.GetChildMemberWithName("_M_last").GetValueAsUnsigned(
+                0
+            )
             self.first_elem = self.start.GetChildMemberWithName("_M_cur")
             first_node_first_elem = self.first_elem.GetValueAsUnsigned(0)
 
             finish = impl.GetChildMemberWithName("_M_finish")
-            last_node_address = finish.GetChildMemberWithName(
-                "_M_node"
-            ).GetValueAsUnsigned(0)
-            last_node_first_elem = finish.GetChildMemberWithName(
-                "_M_first"
-            ).GetValueAsUnsigned(0)
-            last_node_last_elem = finish.GetChildMemberWithName(
-                "_M_cur"
-            ).GetValueAsUnsigned(0)
+            last_node_address = finish.GetChildMemberWithName("_M_node").GetValueAsUnsigned(0)
+            last_node_first_elem = finish.GetChildMemberWithName("_M_first").GetValueAsUnsigned(0)
+            last_node_last_elem = finish.GetChildMemberWithName("_M_cur").GetValueAsUnsigned(0)
 
             if (
                 first_node_first_elem == 0
@@ -876,12 +836,8 @@ class StdDequeSynthProvider:
 
                 # we calculate the size of the last node
                 finish = impl.GetChildMemberWithName("_M_finish")
-                last_node_address = finish.GetChildMemberWithName(
-                    "_M_node"
-                ).GetValueAsUnsigned(0)
-                count += (
-                    last_node_last_elem - last_node_first_elem
-                ) // self.element_size
+                last_node_address = finish.GetChildMemberWithName("_M_node").GetValueAsUnsigned(0)
+                count += (last_node_last_elem - last_node_first_elem) // self.element_size
 
                 # we calculate the size of the intermediate nodes
                 num_intermediate_nodes = (
@@ -935,9 +891,7 @@ class VariantSynthProvider:
 
     def update(self):
         try:
-            self.index = self.raw_obj.GetChildMemberWithName(
-                "_M_index"
-            ).GetValueAsSigned(-1)
+            self.index = self.raw_obj.GetChildMemberWithName("_M_index").GetValueAsSigned(-1)
             self.is_valid = self.index != -1
             self.data_obj = self.raw_obj.GetChildMemberWithName("_M_u")
         except:
@@ -968,9 +922,7 @@ class VariantSynthProvider:
         #
         # For 2. we have to cast it to underlying template _Type.
 
-        value = node.GetChildMemberWithName("_M_first").GetChildMemberWithName(
-            "_M_storage"
-        )
+        value = node.GetChildMemberWithName("_M_first").GetChildMemberWithName("_M_storage")
         template_type = value.GetType().GetTemplateArgumentType(0)
 
         # Literal type will return None for GetTemplateArgumentType(0)

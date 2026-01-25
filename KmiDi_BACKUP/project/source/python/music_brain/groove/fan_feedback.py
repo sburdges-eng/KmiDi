@@ -4,22 +4,23 @@ Fan Feedback & Learning Module.
 Allows the band (Humanizers) to adapt to user feedback and playstyle.
 Stores 'Fan Profiles' that modulate the base guide rules.
 """
-import json
-from dataclasses import dataclass, asdict, field
+
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Tuple, Dict, Any
+from typing import Any, Dict, Optional, Tuple
 
 
 @dataclass
 class FanProfile:
     """Represents the preferences of a specific audience or user playstyle."""
+
     name: str = "Default Fan"
     description: str = "Standard listener"
 
     # Multipliers/Offsets for Humanization
-    velocity_multiplier: float = 1.0      # >1.0 = Harder, <1.0 = Softer
-    timing_slop_multiplier: float = 1.0   # >1.0 = Looser, <1.0 = Tighter
-    swing_modifier: float = 0.0           # Additive swing (0.0-1.0)
+    velocity_multiplier: float = 1.0  # >1.0 = Harder, <1.0 = Softer
+    timing_slop_multiplier: float = 1.0  # >1.0 = Looser, <1.0 = Tighter
+    swing_modifier: float = 0.0  # Additive swing (0.0-1.0)
 
     # Preference Overrides
     preferred_feel: Optional[str] = None  # "ahead", "behind", "on_grid"
@@ -73,7 +74,7 @@ class FanBase:
                 description="Likes it fast, hard, and tight.",
                 velocity_multiplier=1.2,
                 timing_slop_multiplier=0.5,
-                preferred_feel="ahead"
+                preferred_feel="ahead",
             ),
             "reggae_fan": FanProfile(
                 name="Reggae Fan",
@@ -81,15 +82,15 @@ class FanBase:
                 velocity_multiplier=0.8,
                 timing_slop_multiplier=1.2,
                 swing_modifier=0.15,
-                preferred_feel="behind"
+                preferred_feel="behind",
             ),
             "jazz_cat": FanProfile(
                 name="Jazz Cat",
                 description="Maximum dynamics and swing.",
                 velocity_multiplier=0.9,
                 timing_slop_multiplier=1.5,
-                swing_modifier=0.2
-            )
+                swing_modifier=0.2,
+            ),
         }
         self.active_profile: FanProfile = self.profiles["default"]
         self.storage_path = storage_path
@@ -133,8 +134,7 @@ class FanBase:
             avg = analysis_metrics["avg_velocity"]
             target_mult = avg / 100.0
             # Smooth transition (learning rate)
-            p.velocity_multiplier = (
-                p.velocity_multiplier * 0.8) + (target_mult * 0.2)
+            p.velocity_multiplier = (p.velocity_multiplier * 0.8) + (target_mult * 0.2)
 
         # 2. Swing Matching
         if "swing_detected" in analysis_metrics:
@@ -147,5 +147,4 @@ class FanBase:
             # Low consistency (0.0) -> High slop (1.5)
             consistency = analysis_metrics["timing_consistency"]
             target_slop = 1.5 - consistency
-            p.timing_slop_multiplier = (
-                p.timing_slop_multiplier * 0.8) + (target_slop * 0.2)
+            p.timing_slop_multiplier = (p.timing_slop_multiplier * 0.8) + (target_slop * 0.2)

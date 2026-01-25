@@ -24,6 +24,9 @@ hardware:
   num_gpus: 1
   compile_mode: true
   flash_attention: true         # Enable Flash Attention 2
+  allow_tf32: true
+  cudnn_benchmark: true
+  matmul_precision: "high"
 
 # -----------------------------------------------------------------------------
 # Model Architecture: MusicGen-style Transformer
@@ -84,6 +87,10 @@ data:
       type: "groove_patterns"
     - external: "lakh_midi_clean"  # Popular MIDI dataset
       download: true
+    - external: "wasabi"  # WASABI dataset: 2M songs with lyrics, emotions, chords
+      download: true
+      manifest: "data/wasabi/processed/train.jsonl"
+      emotion_conditioned: true  # Use emotion labels from lyrics
   
   # Tokenization
   tokenizer:
@@ -110,6 +117,8 @@ data:
   num_workers: 16
   pin_memory: true
   persistent_workers: true
+  prefetch_factor: 4
+  drop_last: true
   cache_features: true          # Cache tokenized sequences
   cache_dir: "cache/midi_tokens"
 

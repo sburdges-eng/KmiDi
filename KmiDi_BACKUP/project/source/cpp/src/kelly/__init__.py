@@ -12,13 +12,13 @@ emotions in musical form.
 
 Example:
     >>> from kelly import EmotionThesaurus, IntentProcessor, MidiGenerator
-    >>> 
+    >>>
     >>> # Process a wound
     >>> processor = IntentProcessor()
     >>> from kelly.core.intent_processor import Wound
     >>> wound = Wound("feeling of loss", 0.9, "user_input")
     >>> result = processor.process_intent(wound)
-    >>> 
+    >>>
     >>> # Generate MIDI
     >>> generator = MidiGenerator(tempo=120)
     >>> chords = generator.generate_chord_progression(mode="minor")
@@ -31,20 +31,20 @@ __description__ = "Therapeutic iDAW translating emotions to music"
 
 # Core imports
 from kelly.core.emotion_thesaurus import (
-    EmotionThesaurus,
-    EmotionNode,
     EmotionCategory,
+    EmotionNode,
+    EmotionThesaurus,
 )
 from kelly.core.intent_processor import (
-    IntentProcessor,
-    Wound,
-    RuleBreak,
     IntentPhase,
+    IntentProcessor,
+    RuleBreak,
+    Wound,
 )
 from kelly.core.midi_generator import (
-    MidiGenerator,
-    GrooveTemplate,
     Chord,
+    GrooveTemplate,
+    MidiGenerator,
 )
 
 __all__ = [

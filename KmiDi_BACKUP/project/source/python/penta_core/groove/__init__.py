@@ -9,32 +9,28 @@ Provides:
 - Drum replacement with timing preservation
 """
 
-from penta_core.groove.polyrhythm import (
-    Polyrhythm,
-    PolyrhythmPattern,
-    detect_polyrhythm,
-    generate_polyrhythm,
-    get_common_polyrhythms,
-    calculate_lcm_duration,
+from penta_core.groove.drum_replacement import (
+    DrumReplacement,
+    get_drum_samples,
+    map_drum_hits,
+    preserve_timing,
+    replace_drums,
 )
-
 from penta_core.groove.groove_dna import (
     GrooveDNA,
-    extract_groove_dna,
-    compare_grooves,
     apply_groove_dna,
+    compare_grooves,
+    extract_groove_dna,
     get_artist_groove_dna,
 )
-
 from penta_core.groove.humanization import (
     HumanizationPreset,
     HumanizationStyle,
-    humanize_midi,
+    create_custom_preset,
     get_artist_preset,
     get_genre_preset,
-    create_custom_preset,
+    humanize_midi,
 )
-
 from penta_core.groove.performance import (
     PerformanceAnalysis,
     TimingProfile,
@@ -42,13 +38,13 @@ from penta_core.groove.performance import (
     detect_tempo_variations,
     extract_expression,
 )
-
-from penta_core.groove.drum_replacement import (
-    DrumReplacement,
-    replace_drums,
-    map_drum_hits,
-    preserve_timing,
-    get_drum_samples,
+from penta_core.groove.polyrhythm import (
+    Polyrhythm,
+    PolyrhythmPattern,
+    calculate_lcm_duration,
+    detect_polyrhythm,
+    generate_polyrhythm,
+    get_common_polyrhythms,
 )
 
 __all__ = [

@@ -11,15 +11,15 @@ Usage:
     result = await processor.process(intent_data, context)
 """
 
-from typing import Any, Dict, Optional
 from dataclasses import dataclass, field
+from typing import Any, Dict, Optional
 
-from music_brain.orchestrator.processors.base import BaseProcessor
 from music_brain.orchestrator.interfaces import (
+    ExecutionContext,
     ProcessorConfig,
     ProcessorResult,
-    ExecutionContext,
 )
+from music_brain.orchestrator.processors.base import BaseProcessor
 
 
 @dataclass
@@ -32,6 +32,7 @@ class IntentInput:
     - Phase 1: Emotional intent
     - Phase 2: Technical constraints
     """
+
     # Phase 0: Core
     core_event: str = ""
     core_resistance: str = ""
@@ -90,6 +91,7 @@ class IntentInput:
 @dataclass
 class IntentOutput:
     """Output from intent processing."""
+
     # Validated intent
     intent: Dict[str, Any]
 
@@ -154,11 +156,7 @@ class IntentProcessor(BaseProcessor):
         """Validate intent input - very permissive, will fill in gaps."""
         if isinstance(input_data, IntentInput):
             # At minimum need some emotional direction
-            return bool(
-                input_data.mood_primary
-                or input_data.core_longing
-                or input_data.core_event
-            )
+            return bool(input_data.mood_primary or input_data.core_longing or input_data.core_event)
         if isinstance(input_data, dict):
             return bool(
                 input_data.get("mood_primary")
@@ -237,9 +235,7 @@ class IntentProcessor(BaseProcessor):
 
         # Extract fields, supporting both nested and flat
         tempo_range = (
-            phase_2.get("technical_tempo_range")
-            or data.get("technical_tempo_range")
-            or (80, 120)
+            phase_2.get("technical_tempo_range") or data.get("technical_tempo_range") or (80, 120)
         )
         if isinstance(tempo_range, list):
             tempo_range = tuple(tempo_range)
@@ -290,13 +286,13 @@ class IntentProcessor(BaseProcessor):
         """
         # Lazy imports
         from music_brain.session.intent_schema import (
-            validate_intent,
-            suggest_rule_break,
-            get_affect_mapping,
             CompleteSongIntent,
-            SongRoot,
             SongIntent,
+            SongRoot,
             TechnicalConstraints,
+            get_affect_mapping,
+            suggest_rule_break,
+            validate_intent,
         )
 
         # Build CompleteSongIntent for validation

@@ -2,11 +2,11 @@
 Rule-Breaking Learning - Learn which rule breaks work for which emotions/contexts.
 """
 
+import json
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
-from collections import Counter, defaultdict
-import json
 
 DEFAULT_STORAGE = Path.home() / ".parrot" / "music_learning" / "rulebreaks"
 EXAMPLES_DIR = DEFAULT_STORAGE / "examples"
@@ -81,7 +81,7 @@ class RuleBreakStore:
         path = self.examples_dir / f"{example_id}.json"
         if not path.exists():
             return None
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
         return RuleBreakExample.from_dict(data)
 
@@ -98,7 +98,7 @@ class RuleBreakStore:
         path = self.profiles_dir / f"{name}.json"
         if not path.exists():
             return None
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
         return RuleBreakProfile.from_dict(data)
 
@@ -110,7 +110,9 @@ class RuleBreakLearner:
     def __init__(self):
         pass
 
-    def learn_profile(self, examples: List[RuleBreakExample], name: str = "default") -> RuleBreakProfile:
+    def learn_profile(
+        self, examples: List[RuleBreakExample], name: str = "default"
+    ) -> RuleBreakProfile:
         if not examples:
             raise ValueError("No rule-break examples provided")
 
@@ -153,11 +155,15 @@ class RuleBreakLearner:
         profile: RuleBreakProfile,
     ) -> Optional[str]:
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get(
+            "neutral"
+        )
         if not patterns:
             patterns = profile.global_patterns
 
-        rule_counts = patterns.get("rule_counts") or profile.global_patterns.get("rule_counts") or {}
+        rule_counts = (
+            patterns.get("rule_counts") or profile.global_patterns.get("rule_counts") or {}
+        )
         if not rule_counts:
             return None
 

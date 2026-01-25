@@ -19,15 +19,14 @@ All audio paths are stored workspace-relative in the manifest.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 import json
 import random
-import contextlib
 import wave
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Tuple
-
 
 TARGET_SR = 22050
 MIN_DURATION = 30.0  # seconds
@@ -47,7 +46,9 @@ def read_metadata_csv(csv_path: Path) -> List[Dict[str, str]]:
     return rows
 
 
-def validate_audio(path: Path, target_sr: int = TARGET_SR, min_duration: float = MIN_DURATION) -> List[AudioIssue]:
+def validate_audio(
+    path: Path, target_sr: int = TARGET_SR, min_duration: float = MIN_DURATION
+) -> List[AudioIssue]:
     issues: List[AudioIssue] = []
     try:
         # Use built-in wave module to avoid external deps like librosa.
@@ -81,7 +82,9 @@ def build_entries(
     for row in rows:
         file_rel = row.get("file") or row.get("audio_path") or ""
         if not file_rel:
-            issues.append(AudioIssue(dataset_root, "MISSING_FILE_FIELD", "row missing file/audio_path"))
+            issues.append(
+                AudioIssue(dataset_root, "MISSING_FILE_FIELD", "row missing file/audio_path")
+            )
             continue
 
         audio_path = (audio_dir / file_rel).resolve()
@@ -126,7 +129,9 @@ def assign_splits(entries: List[Dict[str, object]], train: float, val: float, se
             e["split"] = "test"
 
 
-def load_dataset(dataset_dir: Path, dataset_name: str) -> Tuple[List[Dict[str, object]], List[AudioIssue]]:
+def load_dataset(
+    dataset_dir: Path, dataset_name: str
+) -> Tuple[List[Dict[str, object]], List[AudioIssue]]:
     csv_path = dataset_dir / "metadata.csv"
     audio_dir = dataset_dir / "audio"
     if not csv_path.exists():
@@ -167,9 +172,18 @@ def run(root: Path, output_manifest: Path, train_ratio: float, val_ratio: float,
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Normalize DEAM + EMO-Music into a unified manifest.")
-    parser.add_argument("--root", type=Path, default=Path("datasets"), help="Root datasets directory.")
-    parser.add_argument("--output", type=Path, default=Path("datasets/validation/emotion_manifest.json"), help="Output manifest path.")
+    parser = argparse.ArgumentParser(
+        description="Normalize DEAM + EMO-Music into a unified manifest."
+    )
+    parser.add_argument(
+        "--root", type=Path, default=Path("datasets"), help="Root datasets directory."
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path("datasets/validation/emotion_manifest.json"),
+        help="Output manifest path.",
+    )
     parser.add_argument("--train-ratio", type=float, default=0.8, help="Train split ratio.")
     parser.add_argument("--val-ratio", type=float, default=0.1, help="Validation split ratio.")
     parser.add_argument("--seed", type=int, default=42, help="Shuffle seed for split assignment.")

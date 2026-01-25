@@ -13,14 +13,15 @@ Intended to sit between drum analysis and the existing groove engine:
 """
 
 import json
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from music_brain.groove.drum_analysis import AnalysisConfig, DrumAnalyzer, DrumTechniqueProfile
+from music_brain.groove.fan_feedback import FanProfile
 from music_brain.groove.groove_engine import GrooveSettings, humanize_drums
 from music_brain.groove.guide_parser import DrumGuideParser
-from music_brain.groove.fan_feedback import FanProfile
 
 
 @dataclass
@@ -71,8 +72,7 @@ class DrumHumanizer:
         self.guide_parser = DrumGuideParser(guide_path)
         self.guide_rules: Dict[str, GuideRuleSet] = self._build_default_rules()
 
-        loaded_cfg, loaded_analysis, style_override = self._load_config(
-            config_path)
+        loaded_cfg, loaded_analysis, style_override = self._load_config(config_path)
         self.config = config or loaded_cfg
         if style_override:
             self.default_style = style_override
@@ -111,7 +111,7 @@ class DrumHumanizer:
                 hihat_timing_range=hihat_time,
                 snare_ghost_velocity=snare_ghost,
                 snare_main_velocity=snare_main,
-                kick_velocity_range=kick_vel
+                kick_velocity_range=kick_vel,
             )
 
         # 2. Add legacy/fallback styles if they weren't parsed
@@ -191,8 +191,7 @@ class DrumHumanizer:
         settings.complexity = 0.55 + min(0.2, base_ghost)
 
         # Velocity variation is affected by slop multiplier (looser = more variation)
-        settings.vulnerability = (
-            0.5 + (base_vel_var * 0.5)) * fp.timing_slop_multiplier
+        settings.vulnerability = (0.5 + (base_vel_var * 0.5)) * fp.timing_slop_multiplier
         settings.ghost_note_probability = base_ghost
 
         # Swing modulation
@@ -272,14 +271,9 @@ class DrumHumanizer:
             "timing_shift_ms": rules.timing_shift_ms,
             "ghost_rate": rules.ghost_rate,
             "velocity_variation": rules.velocity_variation,
-            "techniques": (
-                profile.__dict__ if profile else {}
-            ),
+            "techniques": (profile.__dict__ if profile else {}),
             "notes": rules.notes
-            + [
-                "TODO: merge Drum Programming Guide + Humanization "
-                "Cheat Sheet."
-            ],
+            + ["TODO: merge Drum Programming Guide + Humanization Cheat Sheet."],
         }
 
     def analyze_notes(
@@ -296,16 +290,18 @@ class DrumHumanizer:
         )
         return analyzer.analyze(list(notes), bpm=bpm or analyzer.bpm)
 
-    def _load_config(self, config_path: Optional[Path]) -> Tuple[HumanizerConfig, Optional[AnalysisConfig], Optional[str]]:
+    def _load_config(
+        self, config_path: Optional[Path]
+    ) -> Tuple[HumanizerConfig, Optional[AnalysisConfig], Optional[str]]:
         """Load HumanizerConfig and AnalysisConfig overrides from JSON if provided."""
         if not config_path:
             return HumanizerConfig(), None, None
         try:
             data = json.loads(Path(config_path).read_text())
-            analysis_cfg = AnalysisConfig.from_dict(
-                data["analysis"]) if "analysis" in data else None
-            config = HumanizerConfig(
-                **{k: v for k, v in data.items() if k in {"ppq", "bpm"}})
+            analysis_cfg = (
+                AnalysisConfig.from_dict(data["analysis"]) if "analysis" in data else None
+            )
+            config = HumanizerConfig(**{k: v for k, v in data.items() if k in {"ppq", "bpm"}})
             style = data.get("default_style")
             return config, analysis_cfg, style
         except FileNotFoundError:
@@ -314,9 +310,7 @@ class DrumHumanizer:
             # On malformed config, fall back to defaults.
             return HumanizerConfig(), None, None
 
-    def _style_from_profile(
-        self, profile: Optional[DrumTechniqueProfile]
-    ) -> str:
+    def _style_from_profile(self, profile: Optional[DrumTechniqueProfile]) -> str:
         """Pick a guide preset based on detected technique."""
         if profile and profile.snare.primary_technique in self.guide_rules:
             return profile.snare.primary_technique

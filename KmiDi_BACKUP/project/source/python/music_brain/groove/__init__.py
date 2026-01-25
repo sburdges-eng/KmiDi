@@ -31,18 +31,18 @@ from music_brain.groove.groove_engine import (
     settings_from_intent,
     settings_from_preset,
 )
-from music_brain.groove.templates import (
-    GENRE_TEMPLATES,
-    get_genre_template,
-    list_genre_templates,
-)
 from music_brain.groove.humanizer import (
-    apply_humanization,
     GrooveHumanizer,
     GrooveTemplate,
     HumanizationProfile,
     TimingHumanizer,
     VelocityHumanizer,
+    apply_humanization,
+)
+from music_brain.groove.templates import (
+    GENRE_TEMPLATES,
+    get_genre_template,
+    list_genre_templates,
 )
 
 __all__ = [

@@ -1,0 +1,857 @@
+# KmiDi Development Guide
+
+**Version:** 1.0  
+**Updated:** 2026-01-18  
+**Target Audience:** Developers working on KmiDi
+
+**Related Materials:**
+- See `Downloads/kelly_week1_build.md` for initial build requirements and setup procedures
+- See `docs/ARCHITECTURE.md` for system architecture overview
+- See `docs/STRUCTURE_CROSS_EXAMINATION/03_CODE_ARCHITECTURE_REPORT.md` for code architecture analysis
+
+## Quick Start
+
+### Prerequisites
+
+- **macOS 10.15+** or **Linux** (Ubuntu 20.04+)
+- **8GB RAM** minimum, 16GB recommended
+- **10GB free disk space** for development environment
+- **Internet connection** for dependency downloads
+
+### One-Command Setup
+
+```bash
+git clone [repository-url] KmiDi
+cd KmiDi
+./scripts/dev-setup.sh
+```
+
+This script will:
+- Install all system dependencies (CMake, Rust, Node.js, Python)
+- Configure build environments (debug/release)
+- Install language-specific packages
+- Create IDE configuration files
+- Test the build system
+
+### Start Development
+
+```bash
+# Start all development servers
+npm run dev:all
+
+# Access the app
+open http://localhost:1420  # or launch Tauri app
+```
+
+## Development Environment Details
+
+### System Requirements
+
+**macOS Development:**
+- Xcode Command Line Tools
+- Homebrew package manager
+- macOS SDK 10.15+
+
+**Linux Development:**
+- GCC 9+ or Clang 10+
+- ALSA/JACK development headers
+- X11 development libraries
+
+### Installed Tools
+
+After running `dev-setup.sh`, you'll have:
+
+```bash
+# Build tools
+cmake 3.27+          # C++ build system
+ninja               # Fast build backend
+rustc 1.70+         # Rust compiler
+cargo               # Rust package manager
+node 18+            # JavaScript runtime
+npm                 # Node package manager
+python3 9+          # Python interpreter
+
+# Development tools
+tauri-cli           # Tauri development CLI
+cargo-watch         # File watching for Rust
+concurrently        # Parallel process runner
+prettier            # Code formatting
+```
+
+## Development Workflows
+
+### Full-Stack Development
+
+**Start All Services:**
+```bash
+npm run dev:all
+```
+
+This starts:
+- React development server (port 1420)
+- C++ file watcher and rebuilder
+- Python Music Brain API server (port 8000)
+- Tauri desktop application
+
+**Development URLs:**
+- React Frontend: http://localhost:1420
+- Python API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+
+### Technology-Specific Development
+
+**React Frontend Only:**
+```bash
+npm run dev:react
+```
+- Hot reload enabled
+- TypeScript type checking
+- Tailwind CSS compilation
+- Access at http://localhost:1420
+
+**C++ Backend Only:**
+```bash
+npm run dev:cpp
+```
+- Watches src/ for file changes
+- Rebuilds automatically
+- Creates debug builds in build/debug/
+- Copies FFI library to Tauri resources
+
+**Python ML Backend Only:**
+```bash
+npm run dev:python
+```
+- Starts Music Brain API server
+- Auto-reload on Python file changes
+- Available at http://localhost:8000
+- Swagger docs at http://localhost:8000/docs
+
+**Tauri Desktop Only:**
+```bash
+npm run dev:tauri
+```
+- Builds and launches desktop app
+- Hot reload for Rust changes
+- Integrates with React dev server
+
+### Build Workflows
+
+**Development Build (with tests):**
+```bash
+npm run build:all-debug
+```
+
+**Production Build:**
+```bash
+npm run build:all-release
+```
+
+**Component Builds:**
+```bash
+npm run build:cpp          # C++ core only
+npm run build:ffi          # FFI library only
+npm run build:plugins      # Audio plugins only
+npm run build              # React frontend only
+```
+
+## Code Organization
+
+### C++ Development
+
+**Directory Structure:**
+```
+src/
+├── engine/          # Kelly Brain AI system
+│   ├── KellyBrain.h/.cpp
+│   ├── EmotionThesaurus.h/.cpp
+│   └── [50+ AI components]
+├── engines/         # Specialized music engines
+│   ├── MelodyEngine.h/.cpp
+│   ├── BassEngine.h/.cpp
+│   └── [22 more engines]
+├── dsp/            # DSP primitives
+├── audio/          # Audio I/O
+├── bridge/         # FFI interface
+└── plugin/         # Plugin implementations
+```
+
+**Coding Standards:**
+- C++20 standard with modern features
+- RAII for resource management
+- `const`-correctness everywhere
+- No exceptions in audio thread
+- Comprehensive documentation
+
+**Key Files:**
+- `src/engine/KellyBrain.h` - Main AI interface
+- `src/bridge/kelly_ffi.h` - C FFI interface
+- `CMakeLists.txt` - Build configuration
+
+### Rust Development
+
+**Directory Structure:**
+```
+src-tauri/src/
+├── commands.rs      # Tauri command definitions
+├── bridge/          # FFI bindings
+│   ├── mod.rs
+│   ├── kelly_ffi.rs
+│   └── musicbrain.rs
+├── state.rs         # State management
+├── events.rs        # Event system
+└── main.rs          # Application entry
+```
+
+**Coding Standards:**
+- Idiomatic Rust patterns
+- Error handling with `Result` types
+- Comprehensive documentation
+- Memory safety enforced by compiler
+- Async/await for non-blocking operations
+
+**Key Files:**
+- `src-tauri/src/commands.rs` - Command interface
+- `src-tauri/src/bridge/kelly_ffi.rs` - Safe FFI wrappers
+- `src-tauri/build.rs` - Build configuration
+
+### React Development
+
+**Directory Structure:**
+```
+src/
+├── components/      # React components
+│   ├── EmotionWheel.tsx
+│   ├── GuideNav.tsx
+│   └── SpectoCloudPanel.tsx
+├── hooks/          # Custom hooks
+│   ├── useKellyBrain.ts
+│   └── useMusicBrain.ts
+├── App.tsx         # Main application
+└── main.tsx        # Entry point
+```
+
+**Coding Standards:**
+- Functional components with hooks
+- TypeScript strict mode
+- Tailwind CSS for styling
+- Props interface definitions
+- Comprehensive error handling
+
+**Key Files:**
+- `src/App.tsx` - Main application component
+- `src/hooks/useKellyBrain.ts` - C++ backend integration
+- `src/hooks/useMusicBrain.ts` - Hybrid API integration
+
+## Debugging Guide
+
+### C++ Debugging
+
+**Setup Debugging:**
+```bash
+# Build with debug symbols
+cd build/debug
+cmake ../../ -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=ON
+make -j4
+
+# Run with debugger
+lldb ./KellyTests  # macOS
+gdb ./KellyTests   # Linux
+```
+
+**VS Code Debugging:**
+1. Set breakpoints in C++ files
+2. Use "Debug C++ Tests" launch configuration
+3. Step through code with full symbol information
+
+**Common Issues:**
+- **Null pointer crashes:** Check FFI parameter validation
+- **Memory leaks:** Run with AddressSanitizer (`DAIW_ENABLE_ASAN=ON`)
+- **Audio glitches:** Profile with Tracy (`ENABLE_TRACY=ON`)
+
+### Rust Debugging
+
+**Environment Variables:**
+```bash
+RUST_LOG=debug              # Detailed logging
+RUST_BACKTRACE=1           # Stack traces on panic
+RUST_LOG=tauri=trace       # Tauri-specific debugging
+```
+
+**VS Code Debugging:**
+1. Use rust-analyzer extension
+2. Set breakpoints in Rust files
+3. Debug Tauri commands directly
+
+**Common Issues:**
+- **FFI crashes:** Check C++ library availability
+- **Linking errors:** Verify `build.rs` configuration
+- **Command failures:** Check parameter serialization
+
+### React Debugging
+
+**Browser DevTools:**
+- Use React DevTools extension
+- Monitor component state and props
+- Profile render performance
+- Network tab for Tauri command calls
+
+**Console Debugging:**
+```javascript
+// Enable detailed logging
+localStorage.setItem('debug', 'kelly:*');
+
+// Monitor hook state
+const { state, error } = useKellyBrain();
+console.log('KellyBrain state:', state);
+```
+
+**Common Issues:**
+- **Hook errors:** Check Tauri command availability
+- **State sync issues:** Monitor event listeners
+- **Performance:** Use React Profiler
+
+### Integration Debugging
+
+**FFI Boundary:**
+```bash
+# Check library loading
+otool -L src-tauri/resources/libKellyFFI.dylib  # macOS
+ldd src-tauri/resources/libKellyFFI.so          # Linux
+
+# Test FFI directly
+cd build/debug && ./KellyTests                  # C++ side
+cd src-tauri && cargo test kelly_ffi           # Rust side
+```
+
+**Event System:**
+```bash
+# Monitor events in browser console
+# Events will appear as Tauri events
+# Check event frequency and data
+
+# Check state synchronization
+curl http://localhost:1420/api/state  # If debug endpoint available
+```
+
+## Performance Optimization
+
+### Profiling
+
+**C++ Profiling:**
+```bash
+# Enable Tracy profiling
+cmake -DENABLE_TRACY=ON
+make -j4
+
+# Run with profiler
+./KellyApp  # Tracy will connect automatically
+```
+
+**Rust Profiling:**
+```bash
+# CPU profiling
+cargo build --release
+perf record ./target/release/idaw  # Linux
+Instruments.app                    # macOS
+
+# Memory profiling
+valgrind --tool=massif ./target/release/idaw
+```
+
+**React Profiling:**
+```bash
+# React DevTools Profiler
+# Measure component render times
+# Identify expensive re-renders
+# Optimize with useMemo/useCallback
+```
+
+### Optimization Strategies
+
+**C++ Optimizations:**
+- Enable SIMD: `DAIW_ENABLE_SIMD=ON`
+- Release builds: `CMAKE_BUILD_TYPE=Release`
+- Profile-guided optimization (PGO)
+- Cache-friendly data structures
+
+**Rust Optimizations:**
+- Release builds with LTO: `cargo build --release`
+- FFI call minimization
+- Batch state updates
+- Async operation optimization
+
+**React Optimizations:**
+- Memoization with `useMemo`/`useCallback`
+- State update batching
+- Lazy loading for large components
+- Efficient event handler cleanup
+
+## Testing Guide
+
+### Running Tests
+
+**All Tests:**
+```bash
+npm run test:all
+```
+
+**Individual Test Suites:**
+```bash
+npm run test:cpp        # C++ unit tests
+npm run test:rust       # Rust tests  
+npm run test:integration # Integration tests
+```
+
+### Writing Tests
+
+**C++ Tests (Catch2):**
+```cpp
+#include <catch2/catch.hpp>
+#include "engine/KellyBrain.h"
+
+TEST_CASE("KellyBrain initialization") {
+    kelly::KellyBrain brain;
+    REQUIRE(brain.initialize("./test-data"));
+}
+```
+
+**Rust Tests:**
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_kelly_ffi_creation() {
+        let brain = KellyBrain::new();
+        assert!(brain.is_ok());
+    }
+}
+```
+
+**React Tests (Vitest):**
+```typescript
+import { describe, it, expect } from 'vitest';
+import { useKellyBrain } from '../hooks/useKellyBrain';
+
+describe('useKellyBrain', () => {
+  it('should initialize correctly', () => {
+    // Test hook behavior
+  });
+});
+```
+
+### Integration Testing
+
+**FFI Integration:**
+- Test C++ ↔ Rust communication
+- Validate memory management
+- Check error handling
+- Performance benchmarking
+
+**Command Integration:**
+- Test Tauri commands end-to-end
+- Validate parameter serialization
+- Check async operation handling
+- Error propagation testing
+
+## Troubleshooting
+
+### Build Issues
+
+**CMake Configuration Errors:**
+```bash
+# Clear CMake cache and reconfigure
+rm -rf build/CMakeCache.txt
+cd build && cmake ..
+
+# Check for missing dependencies
+cmake .. -DCMAKE_FIND_DEBUG_MODE=ON
+```
+
+**Rust Compilation Errors:**
+```bash
+# Update Rust toolchain
+rustup update
+
+# Clear Cargo cache
+cargo clean
+
+# Verbose compilation
+cargo build --verbose
+```
+
+**Node Build Errors:**
+```bash
+# Clear npm cache
+npm cache clean --force
+
+# Reinstall dependencies
+rm -rf node_modules package-lock.json
+npm install
+```
+
+### Runtime Issues
+
+**Library Loading Errors:**
+```bash
+# Check library paths (macOS)
+otool -L src-tauri/resources/libKellyFFI.dylib
+export DYLD_LIBRARY_PATH=./build/debug:$DYLD_LIBRARY_PATH
+
+# Check library paths (Linux)
+ldd src-tauri/resources/libKellyFFI.so
+export LD_LIBRARY_PATH=./build/debug:$LD_LIBRARY_PATH
+```
+
+**Audio Issues:**
+- Check audio device permissions
+- Verify Core Audio/ALSA configuration
+- Test with simple audio applications first
+- Check sample rate compatibility
+
+**Plugin Issues:**
+```bash
+# Check plugin validation
+pluginval KellyPlugin.vst3  # If available
+
+# Test in simple host
+# Use JUCE AudioPluginHost for initial testing
+
+# Check plugin installation paths
+ls ~/Library/Audio/Plug-Ins/VST3/  # macOS
+ls ~/.vst3/                        # Linux
+```
+
+### Performance Issues
+
+**Identify Bottlenecks:**
+```bash
+# Profile C++ code
+# Enable Tracy or use system profilers
+
+# Profile Rust code
+cargo build --release
+perf record ./target/release/idaw
+
+# Profile React code
+# Use browser DevTools Profiler
+```
+
+**Common Performance Fixes:**
+- Reduce FFI call frequency
+- Batch state updates
+- Use appropriate data structures
+- Enable compiler optimizations
+
+## Contributing
+
+### Code Style
+
+**C++ Style:**
+- Follow Google C++ Style Guide
+- Use clang-format with project configuration
+- Comprehensive documentation with Doxygen
+- Unit tests for all public APIs
+
+**Rust Style:**
+- Use `cargo fmt` for formatting
+- Use `cargo clippy` for linting
+- Follow Rust API Guidelines
+- Comprehensive documentation with `cargo doc`
+
+**TypeScript Style:**
+- Use Prettier for formatting
+- Follow React/TypeScript best practices
+- Use ESLint for code quality
+- Props interfaces for all components
+
+### Pull Request Process
+
+1. **Setup Development Environment:**
+   ```bash
+   ./scripts/dev-setup.sh
+   ```
+
+2. **Create Feature Branch:**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+3. **Development:**
+   ```bash
+   # Work on your feature
+   npm run dev:all
+   
+   # Test your changes
+   npm run test:all
+   
+   # Lint and format
+   npm run lint
+   npm run format
+   ```
+
+4. **Build Verification:**
+   ```bash
+   # Test full build
+   npm run build:all-release
+   
+   # Test plugins in DAW
+   npm run build:plugins
+   ```
+
+5. **Submit Pull Request:**
+   - Include comprehensive description
+   - Add tests for new functionality
+   - Update documentation if needed
+   - Verify CI passes
+
+### Testing Guidelines
+
+**Unit Tests Required:**
+- All public C++ APIs
+- All Rust FFI functions
+- All Tauri commands
+- React hooks and utilities
+
+**Integration Tests Required:**
+- C++ ↔ Rust FFI integration
+- Tauri commands end-to-end
+- React ↔ Backend communication
+- Plugin loading in DAWs
+
+**Performance Tests Required:**
+- Audio processing latency
+- UI responsiveness
+- Memory usage
+- FFI call overhead
+
+## Advanced Topics
+
+### Adding New C++ Features
+
+1. **Implement in C++:**
+   ```cpp
+   // src/engine/YourNewFeature.h
+   class YourNewFeature {
+   public:
+       void processAudio(float* buffer, int samples);
+   };
+   ```
+
+2. **Add FFI Wrapper:**
+   ```cpp
+   // src/bridge/kelly_ffi.h
+   extern "C" {
+       int your_new_feature_process(KellyBrain* brain, float* data, int size);
+   }
+   
+   // src/bridge/kelly_ffi.cpp
+   int your_new_feature_process(KellyBrain* brain, float* data, int size) {
+       // Implementation
+   }
+   ```
+
+3. **Add Rust Binding:**
+   ```rust
+   // src-tauri/src/bridge/kelly_ffi.rs
+   extern "C" {
+       fn your_new_feature_process(brain: *mut KellyBrainHandle, data: *mut f32, size: c_int) -> c_int;
+   }
+   
+   impl KellyBrain {
+       pub fn process_new_feature(&mut self, data: &mut [f32]) -> KellyResult<()> {
+           // Safe wrapper
+       }
+   }
+   ```
+
+4. **Add Tauri Command:**
+   ```rust
+   // src-tauri/src/commands.rs
+   #[command]
+   pub async fn process_new_feature(data: Vec<f32>) -> Result<Vec<f32>, String> {
+       // Implementation
+   }
+   ```
+
+5. **Add React Hook:**
+   ```typescript
+   // src/hooks/useKellyBrain.ts
+   const processNewFeature = useCallback(async (data: number[]) => {
+       return await invoke('process_new_feature', { data });
+   }, []);
+   ```
+
+### Adding New UI Features
+
+1. **Create React Component:**
+   ```typescript
+   // src/components/YourNewComponent.tsx
+   interface YourNewComponentProps {
+       // Props definition
+   }
+   
+   export const YourNewComponent: React.FC<YourNewComponentProps> = (props) => {
+       // Implementation
+   };
+   ```
+
+2. **Add to Main App:**
+   ```typescript
+   // src/App.tsx
+   import { YourNewComponent } from './components/YourNewComponent';
+   
+   // Add to JSX
+   ```
+
+3. **Style with Tailwind:**
+   ```css
+   /* Use existing design tokens */
+   className="bg-bg-primary text-text-primary border-border-light"
+   ```
+
+### Plugin Development
+
+**Create New Plugin Type:**
+1. Update CMakeLists.txt with new plugin target
+2. Implement JUCE plugin processor
+3. Add plugin-specific UI
+4. Test in target DAW
+5. Update installation scripts
+
+**Plugin Testing Workflow:**
+```bash
+# Build plugin
+npm run build:plugins
+
+# Install locally
+cp build/release/YourPlugin.vst3 ~/Library/Audio/Plug-Ins/VST3/
+
+# Test in DAW
+open /Applications/Logic\ Pro.app
+# or
+open /Applications/Reaper.app
+```
+
+## Environment Variables
+
+### Build Configuration
+
+```bash
+# Build system
+BUILD_TYPE=Debug|Release        # C++ build type
+BUILD_TESTS=ON|OFF             # Enable test building
+BUILD_PLUGINS=ON|OFF           # Enable plugin building
+CLEAN_BUILD=true|false         # Clean before building
+PARALLEL_JOBS=N                # Number of parallel build jobs
+
+# Runtime configuration
+RUST_LOG=debug                 # Rust logging level
+DYLD_LIBRARY_PATH=./build      # macOS library path
+LD_LIBRARY_PATH=./build        # Linux library path
+
+# Development
+TAURI_DEV_HOST=localhost       # Tauri development host
+HOT_RELOAD=true               # Enable hot reload
+```
+
+### API Configuration
+
+```bash
+# Python API
+MUSIC_BRAIN_API_HOST=127.0.0.1
+MUSIC_BRAIN_API_PORT=8000
+MUSIC_BRAIN_DATA_PATH=./data
+
+# Kelly Brain
+KELLY_DATA_PATH=./data
+KELLY_LOG_LEVEL=info
+KELLY_ENABLE_PROFILING=false
+```
+
+## IDE Configuration
+
+### Visual Studio Code
+
+The development setup creates `.vscode/` configuration:
+
+**Extensions Recommended:**
+- rust-analyzer (Rust support)
+- C++ extension pack (C++ support)
+- Tauri (Tauri development)
+- ES7+ React snippets (React development)
+
+**Configured Tasks:**
+- Build All (Debug/Release)
+- Start Dev Servers
+- Build C++ Only
+- Run Tests
+
+**Debug Configurations:**
+- Debug Tauri App
+- Debug C++ Tests
+- Debug Rust Tests
+
+### Alternative IDEs
+
+**CLion (C++ focused):**
+- Open CMakeLists.txt as project
+- CMake integration works automatically
+- Excellent debugging capabilities
+- Built-in profiling tools
+
+**IntelliJ IDEA (Rust plugin):**
+- Rust plugin for advanced Rust support
+- Integrated terminal for multi-technology work
+- Database tools for data analysis
+
+## Security Considerations
+
+### Development Security
+
+**API Access:**
+- Python API runs on localhost only
+- No external network access by default
+- Tauri CSP configured for development
+
+**File Access:**
+- Tauri file system API restricted
+- User must grant permissions
+- No automatic file system access
+
+**Plugin Security:**
+- Audio thread isolation
+- Parameter validation
+- Host compatibility verification
+- No network access from plugins
+
+### Production Security
+
+**Code Signing (macOS):**
+```bash
+# Sign application
+export DEVELOPER_ID="Your Developer ID"
+./scripts/build-all.sh --sign
+
+# Notarize for distribution  
+export APPLE_ID="your@email.com"
+export APPLE_TEAM_ID="TEAMID"
+./scripts/build-all.sh --sign --notarize
+```
+
+**Distribution:**
+- All libraries embedded in application
+- No external dependencies required
+- Secure update mechanisms
+- User data kept local
+
+---
+
+This guide covers the essential aspects of KmiDi development. For specific technical questions, refer to:
+
+- `ARCHITECTURE.md` - Overall system design
+- `API.md` - API reference documentation
+- Individual component READMEs
+- Inline code documentation

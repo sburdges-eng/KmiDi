@@ -9,12 +9,10 @@ Implements the three-phase interrogation model:
 Plus comprehensive rule-breaking enums for intentional creative choices.
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
-from enum import Enum
 import json
-from pathlib import Path
-
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 # =================================================================
 # VALIDATION CONSTANTS: Enum Values from YAML Schema
@@ -587,7 +585,7 @@ class CompleteSongIntent:
     @classmethod
     def load(cls, path: str) -> "CompleteSongIntent":
         """Load from JSON file."""
-        with open(path, "r") as f:
+        with open(path) as f:
             return cls.from_dict(json.load(f))
 
 
@@ -642,53 +640,14 @@ def validate_intent(intent: CompleteSongIntent) -> List[str]:
     if not intent.song_root.core_longing:
         issues.append("Phase 0: Missing core_longing - what do you want to feel?")
 
-    # Validate core_stakes enum
-    if (
-        intent.song_root.core_stakes
-        and intent.song_root.core_stakes not in VALID_CORE_STAKES_OPTIONS
-    ):
-        issues.append(
-            f"Phase 0: Invalid core_stakes '{intent.song_root.core_stakes}'. Must be one of: {', '.join(VALID_CORE_STAKES_OPTIONS)}"
-        )
-
     # Phase 1 checks
     if not intent.song_intent.mood_primary:
         issues.append("Phase 1: Missing mood_primary - what's the main emotion?")
-    elif intent.song_intent.mood_primary not in VALID_MOOD_PRIMARY_OPTIONS:
-        issues.append(
-            f"Phase 1: Invalid mood_primary '{intent.song_intent.mood_primary}'. Must be one of: {', '.join(VALID_MOOD_PRIMARY_OPTIONS)}"
-        )
-
     if (
         intent.song_intent.mood_secondary_tension < 0
         or intent.song_intent.mood_secondary_tension > 1
     ):
         issues.append("Phase 1: mood_secondary_tension should be 0.0-1.0")
-
-    # Validate imagery_texture enum
-    if (
-        intent.song_intent.imagery_texture
-        and intent.song_intent.imagery_texture not in VALID_IMAGERY_TEXTURE_OPTIONS
-    ):
-        issues.append(
-            f"Phase 1: Invalid imagery_texture '{intent.song_intent.imagery_texture}'. Must be one of: {', '.join(VALID_IMAGERY_TEXTURE_OPTIONS)}"
-        )
-
-    # Validate vulnerability_scale enum
-    if isinstance(intent.song_intent.vulnerability_scale, str):
-        if intent.song_intent.vulnerability_scale not in VALID_VULNERABILITY_SCALE_OPTIONS:
-            issues.append(
-                f"Phase 1: Invalid vulnerability_scale '{intent.song_intent.vulnerability_scale}'. Must be one of: {', '.join(VALID_VULNERABILITY_SCALE_OPTIONS)}"
-            )
-
-    # Validate narrative_arc enum
-    if (
-        intent.song_intent.narrative_arc
-        and intent.song_intent.narrative_arc not in VALID_NARRATIVE_ARC_OPTIONS
-    ):
-        issues.append(
-            f"Phase 1: Invalid narrative_arc '{intent.song_intent.narrative_arc}'. Must be one of: {', '.join(VALID_NARRATIVE_ARC_OPTIONS)}"
-        )
 
     # Phase 2 checks
     if intent.technical_constraints.technical_rule_to_break:
@@ -696,24 +655,6 @@ def validate_intent(intent: CompleteSongIntent) -> List[str]:
             issues.append(
                 "Phase 2: Rule to break specified without justification - WHY break this rule?"
             )
-
-    # Validate genre enum
-    if (
-        intent.technical_constraints.technical_genre
-        and intent.technical_constraints.technical_genre not in VALID_GENRE_OPTIONS
-    ):
-        issues.append(
-            f"Phase 2: Invalid technical_genre '{intent.technical_constraints.technical_genre}'. Must be one of: {', '.join(VALID_GENRE_OPTIONS)}"
-        )
-
-    # Validate groove_feel enum
-    if (
-        intent.technical_constraints.technical_groove_feel
-        and intent.technical_constraints.technical_groove_feel not in VALID_GROOVE_FEEL_OPTIONS
-    ):
-        issues.append(
-            f"Phase 2: Invalid technical_groove_feel '{intent.technical_constraints.technical_groove_feel}'. Must be one of: {', '.join(VALID_GROOVE_FEEL_OPTIONS)}"
-        )
 
     # Consistency checks
     vuln_scale = intent.song_intent.vulnerability_scale

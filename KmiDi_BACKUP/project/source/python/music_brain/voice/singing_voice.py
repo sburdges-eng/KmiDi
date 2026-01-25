@@ -8,15 +8,16 @@ Provides a simple interface that follows the plan:
 - Phase 4: Phoneme + pitch processing helpers.
 """
 
-from typing import List, Optional, Union, Dict
 from pathlib import Path
+from typing import Dict, List, Optional, Union
+
 import numpy as np
 import soundfile as sf
 
-from music_brain.voice.phoneme_processor import PhonemeProcessor
-from music_brain.voice.pitch_controller import PitchController, ExpressionParams, PitchCurve
-from music_brain.voice.singing_synthesizer import SingingSynthesizer, FormantConfig
 from music_brain.voice.neural_backend import NeuralBackend, create_neural_backend
+from music_brain.voice.phoneme_processor import PhonemeProcessor
+from music_brain.voice.pitch_controller import ExpressionParams, PitchController, PitchCurve
+from music_brain.voice.singing_synthesizer import FormantConfig, SingingSynthesizer
 
 
 class SingingVoice:

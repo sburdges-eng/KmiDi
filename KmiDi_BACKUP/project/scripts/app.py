@@ -4,6 +4,7 @@ DAiW Streamlit UI - Desktop-facing product interface.
 
 Simple flow: talk to TherapySession, show the analysis, render MIDI, offer download.
 """
+
 import os
 import tempfile
 
@@ -70,14 +71,8 @@ def main() -> None:
         if session.state.affect_result:
             st.write(f"**Primary affect:** `{affect}`")
             if session.state.affect_result.secondary:
-                st.write(
-                    f"**Secondary undertone:** "
-                    f"`{session.state.affect_result.secondary}`"
-                )
-            st.write(
-                f"**Affect intensity:** "
-                f"`{session.state.affect_result.intensity:.2f}`"
-            )
+                st.write(f"**Secondary undertone:** `{session.state.affect_result.secondary}`")
+            st.write(f"**Affect intensity:** `{session.state.affect_result.intensity:.2f}`")
 
         st.subheader("Generation directive")
         st.write(f"- Mode: **{plan.root_note} {plan.mode}**")

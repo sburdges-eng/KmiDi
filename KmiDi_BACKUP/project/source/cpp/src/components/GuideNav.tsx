@@ -15,6 +15,7 @@ type Props = {
 export function GuideNav({ onSelect }: Props) {
   const [query, setQuery] = useState("");
   const [topicFilter, setTopicFilter] = useState<string | null>(null);
+  const [copiedPath, setCopiedPath] = useState<string | null>(null);
 
   const allTopics = useMemo(() => {
     const topics = new Set<string>();
@@ -39,12 +40,28 @@ export function GuideNav({ onSelect }: Props) {
     try {
       if (navigator?.clipboard?.writeText) {
         await navigator.clipboard.writeText(path);
+        setCopiedPath(path);
+        // Reset the "Copied!" message after 2 seconds
+        setTimeout(() => setCopiedPath(null), 2000);
       } else {
         throw new Error("Clipboard API unavailable");
       }
     } catch (err) {
       console.warn("Could not copy path", err);
-      alert(`Path: ${path}`);
+      // Fallback: show alert if clipboard API fails
+      const message = `Path: ${path}`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        // Try one more time
+        try {
+          await navigator.clipboard.writeText(path);
+          setCopiedPath(path);
+          setTimeout(() => setCopiedPath(null), 2000);
+        } catch {
+          alert(message);
+        }
+      } else {
+        alert(message);
+      }
     }
   };
 
@@ -90,20 +107,27 @@ export function GuideNav({ onSelect }: Props) {
                 <div className="guide-slug">{guide.slug}</div>
               </div>
               <div className="guide-actions">
-                <a
-                  href={`/${encodeURI(guide.path)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="guide-link"
-                >
-                  Open
-                </a>
+                {onSelect && (
+                  <button
+                    type="button"
+                    className="guide-link"
+                    onClick={() => onSelect(guide)}
+                    className="text-accent-primary font-semibold cursor-pointer p-0 no-underline bg-transparent border-0"
+                  >
+                    Open
+                  </button>
+                )}
                 <button
                   type="button"
                   className="copy-btn"
                   onClick={() => handleCopyPath(guide.path)}
+                  className={
+                    copiedPath === guide.path
+                      ? "bg-accent-success text-white"
+                      : ""
+                  }
                 >
-                  Copy path
+                  {copiedPath === guide.path ? "Copied!" : "Copy path"}
                 </button>
                 {onSelect && (
                   <button
@@ -134,4 +158,3 @@ export function GuideNav({ onSelect }: Props) {
 }
 
 export default GuideNav;
-

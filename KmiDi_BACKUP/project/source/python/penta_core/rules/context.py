@@ -9,7 +9,7 @@ from typing import Set
 class MusicalContext(Enum):
     """
     Musical style contexts that affect rule interpretation.
-    
+
     Attributes:
         RENAISSANCE: Palestrina, modal counterpoint (1450-1600)
         BAROQUE: Bach, Handel, figured bass (1600-1750)
@@ -18,16 +18,17 @@ class MusicalContext(Enum):
         JAZZ: Bebop, modal jazz, altered dominants (1920-present)
         CONTEMPORARY: Post-tonal, quartal harmony, polychords (1900-present)
     """
+
     RENAISSANCE = auto()
     BAROQUE = auto()
     CLASSICAL = auto()
     ROMANTIC = auto()
     JAZZ = auto()
     CONTEMPORARY = auto()
-    
+
     def __str__(self) -> str:
         return self.name.lower()
-    
+
     def __repr__(self) -> str:
         return f"MusicalContext.{self.name}"
 
@@ -60,13 +61,13 @@ CONTEXT_GROUPS = {
 def get_context_group(group_name: str) -> Set[MusicalContext]:
     """
     Get a predefined group of musical contexts.
-    
+
     Args:
         group_name: Name of the context group (e.g., "common_practice", "jazz")
-    
+
     Returns:
         Set of MusicalContext values
-    
+
     Raises:
         KeyError: If group_name is not recognized
     """

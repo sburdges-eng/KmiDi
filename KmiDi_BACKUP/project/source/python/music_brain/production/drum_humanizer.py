@@ -4,8 +4,8 @@ Humanization layer that applies the Drum Programming Guide to MIDI events.
 
 from typing import Any, Dict, List, Optional
 
-from music_brain.groove.groove_engine import GrooveSettings, humanize_drums
 from music_brain.groove.drum_analysis import AnalysisConfig, DrumAnalyzer, DrumTechniqueProfile
+from music_brain.groove.groove_engine import GrooveSettings, humanize_drums
 
 
 class DrumHumanizer:
@@ -45,7 +45,7 @@ class DrumHumanizer:
                 "ghost_note_velocity_range": (25, 45),
                 "hihat_timing_mult": 1.5,  # Hi-hats loosest
                 "snare_timing_mult": 1.0,
-                "kick_timing_mult": 0.5,   # Kicks tightest
+                "kick_timing_mult": 0.5,  # Kicks tightest
                 "fill_crescendo": True,
             },
             "hip-hop": {
@@ -70,7 +70,7 @@ class DrumHumanizer:
                 "ghost_note_velocity_range": (30, 45),
                 "hihat_timing_mult": 1.2,
                 "snare_timing_mult": 0.8,  # Tighter snare for rock
-                "kick_timing_mult": 0.4,   # Very tight kick
+                "kick_timing_mult": 0.4,  # Very tight kick
                 "velocity_range_override": (90, 120),
                 "hihat_velocity_pattern": [95, 65, 85, 60, 90, 68, 82, 58],  # Downbeat accent
                 "fill_crescendo": True,
@@ -97,7 +97,7 @@ class DrumHumanizer:
                 "ghost_note_probability": 0.0,
                 "hihat_timing_mult": 0.5,  # Very tight, quantized feel
                 "snare_timing_mult": 0.3,
-                "kick_timing_mult": 0.2,   # Machine-tight
+                "kick_timing_mult": 0.2,  # Machine-tight
                 "velocity_range_override": (100, 127),
                 "fill_crescendo": False,
                 "sidechain_kick": True,
@@ -194,10 +194,17 @@ class DrumHumanizer:
         preset = self._style_presets.get(key, self._style_presets["standard"])
         # Filter to only GrooveSettings-compatible fields
         valid_fields = {
-            "complexity", "vulnerability", "timing_sigma_override",
-            "dropout_prob_override", "velocity_range_override",
-            "kick_timing_mult", "snare_timing_mult", "hihat_timing_mult",
-            "enable_ghost_notes", "ghost_note_probability", "ghost_note_velocity_mult",
+            "complexity",
+            "vulnerability",
+            "timing_sigma_override",
+            "dropout_prob_override",
+            "velocity_range_override",
+            "kick_timing_mult",
+            "snare_timing_mult",
+            "hihat_timing_mult",
+            "enable_ghost_notes",
+            "ghost_note_probability",
+            "ghost_note_velocity_mult",
         }
         filtered = {k: v for k, v in preset.items() if k in valid_fields}
         return GrooveSettings(**filtered)
@@ -225,20 +232,11 @@ class DrumHumanizer:
         vulnerability = settings.vulnerability
 
         if technique_profile:
-            complexity = self._clamp(
-                complexity + (technique_profile.fill_density - 0.5) * 0.2
-            )
-            vulnerability = self._clamp(
-                vulnerability + (technique_profile.tightness - 0.5) * -0.2
-            )
-            if (
-                technique_profile.snare.has_buzz_rolls
-                or technique_profile.ghost_note_density > 0.2
-            ):
+            complexity = self._clamp(complexity + (technique_profile.fill_density - 0.5) * 0.2)
+            vulnerability = self._clamp(vulnerability + (technique_profile.tightness - 0.5) * -0.2)
+            if technique_profile.snare.has_buzz_rolls or technique_profile.ghost_note_density > 0.2:
                 settings.enable_ghost_notes = True
-                settings.ghost_note_probability = max(
-                    settings.ghost_note_probability, 0.12
-                )
+                settings.ghost_note_probability = max(settings.ghost_note_probability, 0.12)
 
         event_copy = [dict(event) for event in events]
         return humanize_drums(
@@ -258,7 +256,7 @@ class DrumHumanizer:
         try:
             import json
 
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
             if isinstance(data, dict):
                 if "styles" in data and isinstance(data["styles"], dict):

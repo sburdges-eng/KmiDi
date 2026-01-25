@@ -5,7 +5,7 @@ Provides comprehensive tools for music ML training:
 
 Modules:
 - augmentation: Advanced audio data augmentation
-- losses: Music-aware custom loss functions  
+- losses: Music-aware custom loss functions
 - architectures: Attention, residual, and multi-task models
 - evaluation: Metrics and validation algorithms
 
@@ -19,6 +19,18 @@ Usage:
 """
 
 # Augmentation
+# Architectures
+from .architectures import (
+    AttentionBlock,
+    ConvBlock,
+    EmotionCNN,
+    HarmonyMLP,
+    MelodyLSTM,
+    MultiHeadAttention,
+    MultiTaskModel,
+    ResidualBlock,
+    create_model,
+)
 from .augmentation import (
     AudioAugmentor,
     AugmentationConfig,
@@ -27,44 +39,31 @@ from .augmentation import (
     create_augmentation_pipeline,
 )
 
-# Losses
-from .losses import (
-    MusicAwareLoss,
-    EmotionContrastiveLoss,
-    HarmonyAwareLoss,
-    GrooveConsistencyLoss,
-    MultiTaskLoss,
-    FocalLoss,
-    LabelSmoothingLoss,
-    get_loss_function,
-)
-
-# Architectures
-from .architectures import (
-    AttentionBlock,
-    MultiHeadAttention,
-    ConvBlock,
-    ResidualBlock,
-    EmotionCNN,
-    MelodyLSTM,
-    HarmonyMLP,
-    MultiTaskModel,
-    create_model,
-)
-
 # Evaluation
 from .evaluation import (
     BaseMetrics,
-    MetricResult,
-    MusicMetrics,
     EmotionMetrics,
     GenreMetrics,
     GrooveMetrics,
+    MetricResult,
     ModelValidator,
-    evaluate_model,
-    cross_validate,
+    MusicMetrics,
     compute_confusion_matrix,
+    cross_validate,
+    evaluate_model,
     plot_confusion_matrix,
+)
+
+# Losses
+from .losses import (
+    EmotionContrastiveLoss,
+    FocalLoss,
+    GrooveConsistencyLoss,
+    HarmonyAwareLoss,
+    LabelSmoothingLoss,
+    MultiTaskLoss,
+    MusicAwareLoss,
+    get_loss_function,
 )
 
 __all__ = [

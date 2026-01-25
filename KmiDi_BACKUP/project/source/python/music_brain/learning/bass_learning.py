@@ -2,11 +2,12 @@
 Bass Learning - Learn bass line patterns from examples.
 """
 
+import json
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
-from collections import Counter, defaultdict
-import json
+
 import numpy as np
 
 DEFAULT_STORAGE = Path.home() / ".parrot" / "music_learning" / "bass"
@@ -17,6 +18,7 @@ PROFILES_DIR = DEFAULT_STORAGE / "profiles"
 @dataclass
 class BassExample:
     """Bass line example with context."""
+
     notes: List[int]  # MIDI notes
     pattern: str = "root_only"
     emotion: str = "neutral"
@@ -89,7 +91,7 @@ class BassStore:
         path = self.examples_dir / f"{example_id}.json"
         if not path.exists():
             return None
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
         return BassExample.from_dict(data)
 
@@ -106,7 +108,7 @@ class BassStore:
         path = self.profiles_dir / f"{name}.json"
         if not path.exists():
             return None
-        with open(path, "r") as f:
+        with open(path) as f:
             data = json.load(f)
         return BassProfile.from_dict(data)
 
@@ -177,18 +179,24 @@ class BassLearner:
         length: Optional[int] = None,
         key: str = "C",
         mode: str = "major",
-        base_note: int = 36  # C2
+        base_note: int = 36,  # C2
     ) -> List[int]:
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get(
+            "neutral"
+        )
         if not patterns:
             patterns = profile.global_patterns
 
         avg_length = int(patterns.get("avg_length", 8))
         length = length or avg_length
 
-        note_freqs = patterns.get("note_frequencies", {}) or profile.global_patterns.get("note_frequencies", {})
-        interval_patterns = patterns.get("interval_patterns", {}) or profile.global_patterns.get("interval_patterns", {})
+        note_freqs = patterns.get("note_frequencies", {}) or profile.global_patterns.get(
+            "note_frequencies", {}
+        )
+        interval_patterns = patterns.get("interval_patterns", {}) or profile.global_patterns.get(
+            "interval_patterns", {}
+        )
 
         notes = []
         if note_freqs:
@@ -251,7 +259,7 @@ class BassLearningManager:
         profile_name: Optional[str] = None,
         length: Optional[int] = None,
         key: str = "C",
-        mode: str = "major"
+        mode: str = "major",
     ) -> List[int]:
         profile: Optional[BassProfile] = None
         if profile_name:

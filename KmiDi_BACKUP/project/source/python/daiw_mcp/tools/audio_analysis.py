@@ -10,13 +10,14 @@ Provides 6 tools:
 - analyze_theory
 """
 
-from typing import Any, Dict, List
 import json
 from pathlib import Path
+from typing import Any
 
 try:
     from mcp.server import Server
-    from mcp.types import Tool, TextContent
+    from mcp.types import TextContent, Tool
+
     MCP_AVAILABLE = True
 except ImportError:
     MCP_AVAILABLE = False
@@ -24,13 +25,12 @@ except ImportError:
 # Import DAiW audio modules
 try:
     from music_brain.audio import (
-        analyze_feel,
-        AudioFeatures,
         AudioAnalyzer,
-        ChordDetector,
         TheoryAnalyzer,
+        analyze_feel,
         detect_chords_from_audio,
     )
+
     AUDIO_AVAILABLE = True
 except ImportError:
     AUDIO_AVAILABLE = False
@@ -38,6 +38,7 @@ except ImportError:
 # Try to import audio cataloger for BPM/key detection
 try:
     from tools.audio_cataloger.audio_cataloger import detect_bpm_key
+
     AUDIO_CATALOGER_AVAILABLE = True
 except ImportError:
     AUDIO_CATALOGER_AVAILABLE = False
@@ -47,9 +48,9 @@ def register_tools(server: Server) -> None:
     """Register all audio analysis tools with the MCP server."""
     if not MCP_AVAILABLE:
         return
-    
+
     @server.list_tools()
-    async def list_tools() -> List[Tool]:
+    async def list_tools() -> list[Tool]:
         """List available audio analysis tools."""
         return [
             Tool(
@@ -60,11 +61,11 @@ def register_tools(server: Server) -> None:
                     "properties": {
                         "audio_file": {
                             "type": "string",
-                            "description": "Path to audio file (WAV, MP3, AIFF, etc.)"
+                            "description": "Path to audio file (WAV, MP3, AIFF, etc.)",
                         }
                     },
-                    "required": ["audio_file"]
-                }
+                    "required": ["audio_file"],
+                },
             ),
             Tool(
                 name="detect_key",
@@ -72,13 +73,10 @@ def register_tools(server: Server) -> None:
                 inputSchema={
                     "type": "object",
                     "properties": {
-                        "audio_file": {
-                            "type": "string",
-                            "description": "Path to audio file"
-                        }
+                        "audio_file": {"type": "string", "description": "Path to audio file"}
                     },
-                    "required": ["audio_file"]
-                }
+                    "required": ["audio_file"],
+                },
             ),
             Tool(
                 name="analyze_audio_feel",
@@ -86,13 +84,10 @@ def register_tools(server: Server) -> None:
                 inputSchema={
                     "type": "object",
                     "properties": {
-                        "audio_file": {
-                            "type": "string",
-                            "description": "Path to audio file"
-                        }
+                        "audio_file": {"type": "string", "description": "Path to audio file"}
                     },
-                    "required": ["audio_file"]
-                }
+                    "required": ["audio_file"],
+                },
             ),
             Tool(
                 name="extract_chords",
@@ -100,18 +95,15 @@ def register_tools(server: Server) -> None:
                 inputSchema={
                     "type": "object",
                     "properties": {
-                        "audio_file": {
-                            "type": "string",
-                            "description": "Path to audio file"
-                        },
+                        "audio_file": {"type": "string", "description": "Path to audio file"},
                         "window_size": {
                             "type": "number",
                             "description": "Chord detection window in seconds",
-                            "default": 0.5
-                        }
+                            "default": 0.5,
+                        },
                     },
-                    "required": ["audio_file"]
-                }
+                    "required": ["audio_file"],
+                },
             ),
             Tool(
                 name="detect_scale",
@@ -119,13 +111,10 @@ def register_tools(server: Server) -> None:
                 inputSchema={
                     "type": "object",
                     "properties": {
-                        "audio_file": {
-                            "type": "string",
-                            "description": "Path to audio file"
-                        }
+                        "audio_file": {"type": "string", "description": "Path to audio file"}
                     },
-                    "required": ["audio_file"]
-                }
+                    "required": ["audio_file"],
+                },
             ),
             Tool(
                 name="analyze_theory",
@@ -133,25 +122,22 @@ def register_tools(server: Server) -> None:
                 inputSchema={
                     "type": "object",
                     "properties": {
-                        "audio_file": {
-                            "type": "string",
-                            "description": "Path to audio file"
-                        }
+                        "audio_file": {"type": "string", "description": "Path to audio file"}
                     },
-                    "required": ["audio_file"]
-                }
+                    "required": ["audio_file"],
+                },
             ),
         ]
-    
+
     @server.call_tool()
-    async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
+    async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         """Handle tool calls."""
         try:
             audio_file = arguments.get("audio_file", "")
-            
+
             if not Path(audio_file).exists():
                 return [TextContent(type="text", text=f"Error: Audio file not found: {audio_file}")]
-            
+
             if name == "detect_bpm":
                 if AUDIO_AVAILABLE:
                     try:
@@ -199,7 +185,7 @@ def register_tools(server: Server) -> None:
                         "note": "Install librosa and optional audio_cataloger helpers",
                     }
                 return [TextContent(type="text", text=json.dumps(result, indent=2))]
-            
+
             elif name == "detect_key":
                 if AUDIO_AVAILABLE:
                     try:
@@ -255,7 +241,7 @@ def register_tools(server: Server) -> None:
                         "error": "Audio analysis modules not available",
                     }
                 return [TextContent(type="text", text=json.dumps(result, indent=2))]
-            
+
             elif name == "analyze_audio_feel":
                 if AUDIO_AVAILABLE:
                     try:
@@ -263,24 +249,28 @@ def register_tools(server: Server) -> None:
                         result = {
                             "audio_file": audio_file,
                             "tempo_bpm": features.tempo_bpm,
-                            "energy_curve": features.energy_curve[:10] if len(features.energy_curve) > 10 else features.energy_curve,
+                            "energy_curve": (
+                                features.energy_curve[:10]
+                                if len(features.energy_curve) > 10
+                                else features.energy_curve
+                            ),
                             "dynamic_range_db": features.dynamic_range_db,
-                            "rms_mean": features.rms_mean
+                            "rms_mean": features.rms_mean,
                         }
                     except Exception as e:
                         result = {
                             "audio_file": audio_file,
                             "error": str(e),
-                            "note": "Audio analysis requires librosa. Install with: pip install librosa"
+                            "note": "Audio analysis requires librosa. Install with: pip install librosa",
                         }
                 else:
                     result = {
                         "audio_file": audio_file,
                         "error": "Audio analysis module not available",
-                        "note": "Install librosa and ensure music_brain.audio is accessible"
+                        "note": "Install librosa and ensure music_brain.audio is accessible",
                     }
                 return [TextContent(type="text", text=json.dumps(result, indent=2))]
-            
+
             elif name == "extract_chords":
                 if AUDIO_AVAILABLE:
                     try:
@@ -292,86 +282,91 @@ def register_tools(server: Server) -> None:
                             "unique_chords": detection.unique_chords,
                             "estimated_key": detection.estimated_key,
                             "confidence": detection.confidence,
-                            "chord_count": len(detection.chords)
+                            "chord_count": len(detection.chords),
                         }
                     except Exception as e:
                         result = {
                             "audio_file": audio_file,
                             "error": str(e),
-                            "note": "Chord detection requires librosa. Install with: pip install librosa"
+                            "note": "Chord detection requires librosa. Install with: pip install librosa",
                         }
                 else:
                     result = {
                         "audio_file": audio_file,
                         "error": "Audio analysis module not available",
-                        "note": "Install librosa: pip install librosa"
+                        "note": "Install librosa: pip install librosa",
                     }
                 return [TextContent(type="text", text=json.dumps(result, indent=2))]
-            
+
             elif name == "detect_scale":
                 if AUDIO_AVAILABLE:
                     try:
                         analyzer = TheoryAnalyzer()
                         analysis = analyzer.analyze_audio(audio_file)
-                        
+
                         scales = []
                         for scale in analysis.detected_scales[:5]:
-                            scales.append({
-                                "scale": scale.full_name,
-                                "confidence": scale.confidence,
-                                "is_mode": scale.is_mode,
-                                "characteristics": scale.characteristics
-                            })
-                        
+                            scales.append(
+                                {
+                                    "scale": scale.full_name,
+                                    "confidence": scale.confidence,
+                                    "is_mode": scale.is_mode,
+                                    "characteristics": scale.characteristics,
+                                }
+                            )
+
                         result = {
                             "audio_file": audio_file,
-                            "primary_scale": analysis.primary_scale.full_name if analysis.primary_scale else None,
+                            "primary_scale": (
+                                analysis.primary_scale.full_name if analysis.primary_scale else None
+                            ),
                             "mode": analysis.mode,
-                            "detected_scales": scales
+                            "detected_scales": scales,
                         }
                     except Exception as e:
                         result = {
                             "audio_file": audio_file,
                             "error": str(e),
-                            "note": "Scale detection requires librosa. Install with: pip install librosa"
+                            "note": "Scale detection requires librosa. Install with: pip install librosa",
                         }
                 else:
                     result = {
                         "audio_file": audio_file,
-                        "error": "Audio analysis module not available"
+                        "error": "Audio analysis module not available",
                     }
                 return [TextContent(type="text", text=json.dumps(result, indent=2))]
-            
+
             elif name == "analyze_theory":
                 if AUDIO_AVAILABLE:
                     try:
                         analyzer = TheoryAnalyzer()
                         analysis = analyzer.analyze_audio(audio_file)
-                        
+
                         result = {
                             "audio_file": audio_file,
                             "key_center": analysis.key_center,
                             "mode": analysis.mode,
                             "harmonic_complexity": analysis.harmonic_complexity,
-                            "primary_scale": analysis.primary_scale.to_dict() if analysis.primary_scale else None,
-                            "detected_scales": [s.to_dict() for s in analysis.detected_scales[:3]]
+                            "primary_scale": (
+                                analysis.primary_scale.to_dict() if analysis.primary_scale else None
+                            ),
+                            "detected_scales": [s.to_dict() for s in analysis.detected_scales[:3]],
                         }
                     except Exception as e:
                         result = {
                             "audio_file": audio_file,
                             "error": str(e),
-                            "note": "Theory analysis requires librosa. Install with: pip install librosa"
+                            "note": "Theory analysis requires librosa. Install with: pip install librosa",
                         }
                 else:
                     result = {
                         "audio_file": audio_file,
-                        "error": "Audio analysis module not available"
+                        "error": "Audio analysis module not available",
                     }
                 return [TextContent(type="text", text=json.dumps(result, indent=2))]
-            
+
             else:
                 return [TextContent(type="text", text=f"Unknown tool: {name}")]
-        
+
         except Exception as e:
             return [TextContent(type="text", text=f"Error: {str(e)}")]
-

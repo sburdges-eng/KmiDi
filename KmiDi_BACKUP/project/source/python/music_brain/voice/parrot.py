@@ -12,19 +12,19 @@ Features:
 - Support for formant (preview) and neural (production) backends
 """
 
+from typing import Dict, List, Optional
+
 import numpy as np
-from typing import List, Optional, Dict, Union
-from pathlib import Path
 import soundfile as sf
 
-from music_brain.voice.phoneme_processor import PhonemeProcessor, PhonemeSequence
-from music_brain.voice.pitch_controller import PitchController, ExpressionParams
-from music_brain.voice.singing_synthesizer import SingingSynthesizer, FormantConfig
-from music_brain.voice.neural_backend import NeuralBackend, create_neural_backend
-from music_brain.voice.voice_input import VoiceRecorder, VoiceMimic
-from music_brain.voice.instrument_synth import InstrumentSynthesizer, get_instrument_preset
-from music_brain.voice.voice_learning import VoiceLearningManager, LearnedVoiceProfile
 from music_brain.groove.fan_feedback import FanProfile
+from music_brain.voice.instrument_synth import InstrumentSynthesizer
+from music_brain.voice.neural_backend import create_neural_backend
+from music_brain.voice.phoneme_processor import PhonemeProcessor
+from music_brain.voice.pitch_controller import ExpressionParams, PitchController
+from music_brain.voice.singing_synthesizer import FormantConfig, SingingSynthesizer
+from music_brain.voice.voice_input import VoiceMimic, VoiceRecorder
+from music_brain.voice.voice_learning import LearnedVoiceProfile, VoiceLearningManager
 
 
 class Parrot:
@@ -61,7 +61,7 @@ class Parrot:
         backend: str = "auto",  # "formant", "neural", or "auto"
         voice_model: Optional[str] = None,
         device: str = "auto",
-        sample_rate: int = 44100
+        sample_rate: int = 44100,
     ):
         """
         Initialize Parrot.
@@ -86,14 +86,12 @@ class Parrot:
         # Neural backend (optional)
         self.neural_backend = None
         if backend in ["neural", "auto"]:
-            self.neural_backend = create_neural_backend(
-                model_path=voice_model,
-                device=device
-            )
+            self.neural_backend = create_neural_backend(model_path=voice_model, device=device)
             if not self.neural_backend.is_available():
                 if backend == "neural":
                     print(
-                        "Warning: Neural backend requested but not available. Using formant backend.")
+                        "Warning: Neural backend requested but not available. Using formant backend."
+                    )
                 self.backend_type = "formant"
 
         # Voice input/mimicking
@@ -125,7 +123,7 @@ class Parrot:
         tempo_bpm: float = 120.0,
         expression: Optional[Dict] = None,
         voice_characteristics: Optional[Dict] = None,
-        fan_profile: Optional[FanProfile] = None
+        fan_profile: Optional[FanProfile] = None,
     ) -> np.ndarray:
         """
         Synthesize singing from lyrics and melody.
@@ -142,13 +140,10 @@ class Parrot:
             Audio signal
         """
         # Process lyrics to phonemes
-        phoneme_sequence = self.phoneme_processor.process_lyrics(
-            lyrics, melody, tempo_bpm
-        )
+        phoneme_sequence = self.phoneme_processor.process_lyrics(lyrics, melody, tempo_bpm)
 
         # Create pitch curve
-        note_durations = [phoneme_sequence.total_duration_ms /
-                          1000.0 / len(melody)] * len(melody)
+        note_durations = [phoneme_sequence.total_duration_ms / 1000.0 / len(melody)] * len(melody)
 
         # Default expression - CURED LARYNGITIS DEFAULTS
         vib_rate = 5.5
@@ -190,9 +185,8 @@ class Parrot:
         expression_params = ExpressionParams(
             vibrato_rate=vib_rate,
             vibrato_depth=vib_depth,
-            portamento_time=expression.get(
-                "portamento_time", 0.05) if expression else 0.05,
-            dynamics=dynamics
+            portamento_time=expression.get("portamento_time", 0.05) if expression else 0.05,
+            dynamics=dynamics,
         )
 
         pitch_curve = self.pitch_controller.create_pitch_curve(
@@ -200,38 +194,30 @@ class Parrot:
         )
 
         # Choose backend
-        use_neural = (
-            self.backend_type == "neural" or
-            (self.backend_type ==
-             "auto" and self.neural_backend and self.neural_backend.is_available())
+        use_neural = self.backend_type == "neural" or (
+            self.backend_type == "auto"
+            and self.neural_backend
+            and self.neural_backend.is_available()
         )
 
         if use_neural:
             # Try neural backend
-            audio = self.neural_backend.synthesize(
-                phoneme_sequence, pitch_curve, expression)
+            audio = self.neural_backend.synthesize(phoneme_sequence, pitch_curve, expression)
             if audio is None:
                 # Fallback to formant
                 use_neural = False
 
         if not use_neural:
             # Use formant backend
-            audio = self.formant_synth.synthesize(
-                phoneme_sequence, pitch_curve, expression)
+            audio = self.formant_synth.synthesize(phoneme_sequence, pitch_curve, expression)
 
         # Apply voice characteristics if provided (mimicking)
         if voice_characteristics:
-            audio = self.voice_mimic.apply_voice_characteristics(
-                audio, voice_characteristics)
+            audio = self.voice_mimic.apply_voice_characteristics(audio, voice_characteristics)
 
         return audio
 
-    def preview(
-        self,
-        lyrics: str,
-        melody: List[int],
-        tempo_bpm: float = 120.0
-    ) -> np.ndarray:
+    def preview(self, lyrics: str, melody: List[int], tempo_bpm: float = 120.0) -> np.ndarray:
         """
         Quick preview (always uses formant backend).
 
@@ -246,9 +232,7 @@ class Parrot:
         return self.sing(lyrics, melody, tempo_bpm)
 
     def record_voice(
-        self,
-        duration_seconds: Optional[float] = None,
-        until_silence: bool = False
+        self, duration_seconds: Optional[float] = None, until_silence: bool = False
     ) -> Optional[np.ndarray]:
         """
         Record voice from microphone.
@@ -285,7 +269,7 @@ class Parrot:
         melody: List[int],
         voice_characteristics: Dict,
         tempo_bpm: float = 120.0,
-        expression: Optional[Dict] = None
+        expression: Optional[Dict] = None,
     ) -> np.ndarray:
         """
         Sing with mimicked voice characteristics.
@@ -302,11 +286,7 @@ class Parrot:
         """
         return self.sing(lyrics, melody, tempo_bpm, expression, voice_characteristics)
 
-    def extract_notes_from_audio(
-        self,
-        audio: np.ndarray,
-        note_duration: float = 0.25
-    ) -> List[int]:
+    def extract_notes_from_audio(self, audio: np.ndarray, note_duration: float = 0.25) -> List[int]:
         """
         Extract MIDI notes from sung audio.
 
@@ -324,7 +304,7 @@ class Parrot:
         midi_notes: List[int],
         instrument: str = "piano",
         note_durations: Optional[List[float]] = None,
-        velocities: Optional[List[float]] = None
+        velocities: Optional[List[float]] = None,
     ) -> np.ndarray:
         """
         Convert MIDI notes to instrument audio.
@@ -382,7 +362,7 @@ class Parrot:
         audio: np.ndarray,
         sample_id: Optional[str] = None,
         text: Optional[str] = None,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict] = None,
     ) -> str:
         """
         Add a voice sample for learning.
@@ -399,9 +379,7 @@ class Parrot:
         return self.learning_manager.add_sample(audio, sample_id, text, metadata)
 
     def learn_voice_profile(
-        self,
-        profile_name: str,
-        sample_ids: Optional[List[str]] = None
+        self, profile_name: str, sample_ids: Optional[List[str]] = None
     ) -> LearnedVoiceProfile:
         """
         Learn a voice profile from stored samples.
@@ -432,9 +410,7 @@ class Parrot:
         return self.learning_manager.list_profiles()
 
     def update_voice_profile(
-        self,
-        profile_name: str,
-        new_sample_ids: List[str]
+        self, profile_name: str, new_sample_ids: List[str]
     ) -> LearnedVoiceProfile:
         """
         Update an existing voice profile with new samples.
@@ -454,7 +430,7 @@ class Parrot:
         melody: List[int],
         profile_name: str,
         tempo_bpm: float = 120.0,
-        expression: Optional[Dict] = None
+        expression: Optional[Dict] = None,
     ) -> np.ndarray:
         """
         Sing using a learned voice profile.
@@ -478,9 +454,7 @@ class Parrot:
 
 # Convenience function
 def create_parrot(
-    backend: str = "auto",
-    voice_model: Optional[str] = None,
-    device: str = "auto"
+    backend: str = "auto", voice_model: Optional[str] = None, device: str = "auto"
 ) -> Parrot:
     """
     Create Parrot instance.

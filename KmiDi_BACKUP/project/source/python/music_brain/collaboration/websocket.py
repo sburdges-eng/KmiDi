@@ -4,17 +4,18 @@ WebSocket Communication - Real-time messaging for collaboration.
 Provides WebSocket server and client for real-time session synchronization.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Callable, Set
-from datetime import datetime
-from enum import Enum
 import asyncio
 import json
 import uuid
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Set
 
 
 class MessageType(Enum):
     """Types of collaboration messages."""
+
     # Connection
     CONNECT = "connect"
     DISCONNECT = "disconnect"
@@ -48,6 +49,7 @@ class MessageType(Enum):
 @dataclass
 class Message:
     """A collaboration message."""
+
     type: MessageType
     payload: Dict[str, Any] = field(default_factory=dict)
     sender_id: Optional[str] = None
@@ -316,11 +318,13 @@ class CollaborationClient:
             asyncio.create_task(self._receive_messages())
 
             # Send connect message
-            await self.send(Message(
-                type=MessageType.CONNECT,
-                sender_id=user_id,
-                payload={"user_id": user_id},
-            ))
+            await self.send(
+                Message(
+                    type=MessageType.CONNECT,
+                    sender_id=user_id,
+                    payload={"user_id": user_id},
+                )
+            )
 
             return True
 
@@ -331,10 +335,12 @@ class CollaborationClient:
     async def disconnect(self) -> None:
         """Disconnect from the server."""
         if self._websocket:
-            await self.send(Message(
-                type=MessageType.DISCONNECT,
-                sender_id=self.user_id,
-            ))
+            await self.send(
+                Message(
+                    type=MessageType.DISCONNECT,
+                    sender_id=self.user_id,
+                )
+            )
             await self._websocket.close()
             self._connected = False
 
@@ -342,26 +348,30 @@ class CollaborationClient:
         """Join a collaborative session."""
         self.session_id = session_id
 
-        await self.send(Message(
-            type=MessageType.JOIN_SESSION,
-            sender_id=self.user_id,
-            session_id=session_id,
-            payload={
-                "user_id": self.user_id,
-                "username": username,
-            },
-        ))
+        await self.send(
+            Message(
+                type=MessageType.JOIN_SESSION,
+                sender_id=self.user_id,
+                session_id=session_id,
+                payload={
+                    "user_id": self.user_id,
+                    "username": username,
+                },
+            )
+        )
 
         return True
 
     async def leave_session(self) -> None:
         """Leave the current session."""
         if self.session_id:
-            await self.send(Message(
-                type=MessageType.LEAVE_SESSION,
-                sender_id=self.user_id,
-                session_id=self.session_id,
-            ))
+            await self.send(
+                Message(
+                    type=MessageType.LEAVE_SESSION,
+                    sender_id=self.user_id,
+                    session_id=self.session_id,
+                )
+            )
             self.session_id = None
 
     async def send(self, message: Message) -> None:
@@ -373,30 +383,38 @@ class CollaborationClient:
 
     async def send_operation(self, operation: Dict[str, Any]) -> None:
         """Send an operation for real-time sync."""
-        await self.send(Message(
-            type=MessageType.OPERATION,
-            payload={"operation": operation},
-        ))
+        await self.send(
+            Message(
+                type=MessageType.OPERATION,
+                payload={"operation": operation},
+            )
+        )
 
     async def send_cursor(self, position: Dict[str, Any]) -> None:
         """Send cursor position update."""
-        await self.send(Message(
-            type=MessageType.CURSOR_MOVE,
-            payload={"position": position},
-        ))
+        await self.send(
+            Message(
+                type=MessageType.CURSOR_MOVE,
+                payload={"position": position},
+            )
+        )
 
     async def send_chat(self, text: str) -> None:
         """Send a chat message."""
-        await self.send(Message(
-            type=MessageType.CHAT_MESSAGE,
-            payload={"text": text},
-        ))
+        await self.send(
+            Message(
+                type=MessageType.CHAT_MESSAGE,
+                payload={"text": text},
+            )
+        )
 
     async def request_sync(self) -> None:
         """Request full sync from server."""
-        await self.send(Message(
-            type=MessageType.SYNC_REQUEST,
-        ))
+        await self.send(
+            Message(
+                type=MessageType.SYNC_REQUEST,
+            )
+        )
 
     async def _receive_messages(self) -> None:
         """Receive and process messages from server."""

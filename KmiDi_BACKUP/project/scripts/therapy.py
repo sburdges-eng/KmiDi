@@ -34,7 +34,9 @@ async def therapy_session_tool(
                 midi_path,
             )
             if "midi_path" in result:
-                result["midi"] = make_midi_payload(result["midi_path"], filename="therapy_session.mid")
+                result["midi"] = make_midi_payload(
+                    result["midi_path"], filename="therapy_session.mid"
+                )
             return result
 
     return await run_sync(
@@ -56,4 +58,3 @@ def register_tools(server) -> None:
 
 
 __all__ = ["register_tools"]
-

@@ -4,9 +4,9 @@ Validation script for iDAW merged repository.
 Checks that all key components from both source repos are present.
 """
 
-import os
 import sys
 from pathlib import Path
+
 
 def check_exists(path, description):
     """Check if a path exists and print result."""
@@ -15,14 +15,15 @@ def check_exists(path, description):
     print(f"{status} {description}: {path}")
     return exists
 
+
 def main():
     print("=" * 60)
     print("iDAW Repository Validation")
     print("=" * 60)
-    
+
     checks_passed = 0
     checks_total = 0
-    
+
     # Check documentation files
     print("\n📄 Documentation Files:")
     checks = [
@@ -37,7 +38,7 @@ def main():
         checks_total += 1
         if check_exists(path, desc):
             checks_passed += 1
-    
+
     # Check configuration files
     print("\n⚙️  Configuration Files:")
     checks = [
@@ -50,7 +51,7 @@ def main():
         checks_total += 1
         if check_exists(path, desc):
             checks_passed += 1
-    
+
     # Check GitHub configuration
     print("\n🔧 GitHub Configuration:")
     checks = [
@@ -62,7 +63,7 @@ def main():
         checks_total += 1
         if check_exists(path, desc):
             checks_passed += 1
-    
+
     # Check penta-core components
     print("\n🔬 Penta Core Components:")
     checks = [
@@ -80,7 +81,7 @@ def main():
         checks_total += 1
         if check_exists(path, desc):
             checks_passed += 1
-    
+
     # Check DAiW-Music-Brain components
     print("\n🎵 DAiW-Music-Brain Components:")
     checks = [
@@ -98,7 +99,7 @@ def main():
         checks_total += 1
         if check_exists(path, desc):
             checks_passed += 1
-    
+
     # Check Python package structure
     print("\n🐍 Python Package Structure:")
     checks = [
@@ -113,20 +114,21 @@ def main():
         checks_total += 1
         if check_exists(path, desc):
             checks_passed += 1
-    
+
     # Summary
     print("\n" + "=" * 60)
     print(f"Validation Results: {checks_passed}/{checks_total} checks passed")
     percentage = (checks_passed / checks_total) * 100 if checks_total > 0 else 0
     print(f"Success Rate: {percentage:.1f}%")
     print("=" * 60)
-    
+
     if checks_passed == checks_total:
         print("\n✅ All validation checks passed!")
         return 0
     else:
         print(f"\n⚠️  {checks_total - checks_passed} checks failed")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -1,3 +1,3 @@
-from .emotion.emotion_thesaurus import EmotionMatch, EmotionThesaurus, BlendMatch
+from .emotion.emotion_thesaurus import BlendMatch, EmotionMatch, EmotionThesaurus
 
 __all__ = ["EmotionMatch", "EmotionThesaurus", "BlendMatch"]

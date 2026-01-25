@@ -28,33 +28,35 @@ Thread Safety:
     The C++ engine uses atomic operations for lock-free parameter updates.
 """
 
-from typing import List, Optional, Tuple
-import numpy as np
 from dataclasses import dataclass
+from typing import List, Optional, Tuple
+
+import numpy as np
 
 
 @dataclass
 class MixerState:
     """Complete state of the mixer at a point in time."""
+
     num_channels: int
     num_send_buses: int
 
     # Channel states
-    channel_gains: List[float]        # dB
-    channel_pans: List[float]         # -1.0 to +1.0
+    channel_gains: List[float]  # dB
+    channel_pans: List[float]  # -1.0 to +1.0
     channel_mutes: List[bool]
     channel_solos: List[bool]
-    channel_peaks: List[float]        # Peak levels
-    channel_rms: List[float]          # RMS levels
+    channel_peaks: List[float]  # Peak levels
+    channel_rms: List[float]  # RMS levels
 
     # Send states
     send_return_levels: List[float]
     send_mutes: List[bool]
 
     # Master state
-    master_gain: float                # dB
+    master_gain: float  # dB
     master_limiter_enabled: bool
-    master_limiter_threshold: float   # dB
+    master_limiter_threshold: float  # dB
     master_peak_l: float
     master_peak_r: float
 
@@ -310,9 +312,7 @@ class MixerEngine:
     # =========================================================================
 
     def process(
-        self,
-        inputs: np.ndarray,
-        num_frames: Optional[int] = None
+        self, inputs: np.ndarray, num_frames: Optional[int] = None
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Process audio through the mixer.
@@ -366,7 +366,7 @@ class MixerEngine:
 
             # Update meters
             self._channel_peaks[ch] = np.max(np.abs(channel_audio))
-            self._channel_rms[ch] = np.sqrt(np.mean(channel_audio ** 2))
+            self._channel_rms[ch] = np.sqrt(np.mean(channel_audio**2))
 
         # Apply master gain
         master_gain_linear = self._db_to_linear(self._master_gain)
@@ -409,7 +409,7 @@ class MixerEngine:
             master_limiter_enabled=self._master_limiter_enabled,
             master_limiter_threshold=self._master_limiter_threshold,
             master_peak_l=self._master_peak_l,
-            master_peak_r=self._master_peak_r
+            master_peak_r=self._master_peak_r,
         )
 
     def load_state(self, state: MixerState) -> None:
@@ -433,10 +433,7 @@ class MixerEngine:
             self.set_send_mute(bus, state.send_mutes[bus])
 
         self.set_master_gain(state.master_gain)
-        self.set_master_limiter(
-            state.master_limiter_enabled,
-            state.master_limiter_threshold
-        )
+        self.set_master_limiter(state.master_limiter_enabled, state.master_limiter_threshold)
 
     # =========================================================================
     # Helper Functions
@@ -459,6 +456,7 @@ class MixerEngine:
             Tuple of (left_gain, right_gain)
         """
         import math
+
         # Constant power pan law
         angle = (pan + 1.0) * 0.25 * math.pi  # 0 to π/2
         pan_l = math.cos(angle)
@@ -466,9 +464,7 @@ class MixerEngine:
         return pan_l, pan_r
 
     def _apply_limiter(
-        self,
-        buffer_l: np.ndarray,
-        buffer_r: np.ndarray
+        self, buffer_l: np.ndarray, buffer_r: np.ndarray
     ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Apply simple limiter to stereo buffer.
@@ -486,11 +482,7 @@ class MixerEngine:
         peak = np.maximum(np.abs(buffer_l), np.abs(buffer_r))
 
         # Calculate gain reduction
-        gain_reduction = np.where(
-            peak > threshold_linear,
-            threshold_linear / peak,
-            1.0
-        )
+        gain_reduction = np.where(peak > threshold_linear, threshold_linear / peak, 1.0)
 
         # Apply gain reduction
         return buffer_l * gain_reduction, buffer_r * gain_reduction
@@ -508,10 +500,9 @@ class MixerEngine:
 # Integration with music_brain mixer_params
 # =============================================================================
 
+
 def apply_emotion_to_mixer(
-    mixer: MixerEngine,
-    emotion_params: 'MixerParameters',
-    channel: int = 0
+    mixer: MixerEngine, emotion_params: "MixerParameters", channel: int = 0
 ) -> None:
     """
     Apply emotion-based mixer parameters to a channel.
@@ -566,17 +557,17 @@ if __name__ == "__main__":
     print(f"\n{mixer}")
 
     # Configure channels
-    mixer.set_channel_gain(0, -6.0)   # Drums: -6dB
-    mixer.set_channel_pan(0, 0.0)     # Center
+    mixer.set_channel_gain(0, -6.0)  # Drums: -6dB
+    mixer.set_channel_pan(0, 0.0)  # Center
 
-    mixer.set_channel_gain(1, -3.0)   # Bass: -3dB
-    mixer.set_channel_pan(1, -0.1)    # Slightly left
+    mixer.set_channel_gain(1, -3.0)  # Bass: -3dB
+    mixer.set_channel_pan(1, -0.1)  # Slightly left
 
-    mixer.set_channel_gain(2, -9.0)   # Guitar: -9dB
-    mixer.set_channel_pan(2, -0.5)    # Left
+    mixer.set_channel_gain(2, -9.0)  # Guitar: -9dB
+    mixer.set_channel_pan(2, -0.5)  # Left
 
-    mixer.set_channel_gain(3, -9.0)   # Vocals: -9dB
-    mixer.set_channel_pan(3, 0.0)     # Center
+    mixer.set_channel_gain(3, -9.0)  # Vocals: -9dB
+    mixer.set_channel_pan(3, 0.0)  # Center
 
     # Configure master
     mixer.set_master_gain(0.0)
@@ -588,13 +579,17 @@ if __name__ == "__main__":
 
     # Create test inputs (simple sine waves at different frequencies)
     import numpy as np
+
     t = np.linspace(0, duration_seconds, num_frames)
-    inputs = np.array([
-        np.sin(2 * np.pi * 440 * t),  # A4 (drums)
-        np.sin(2 * np.pi * 220 * t),  # A3 (bass)
-        np.sin(2 * np.pi * 880 * t),  # A5 (guitar)
-        np.sin(2 * np.pi * 659 * t),  # E5 (vocals)
-    ], dtype=np.float32)
+    inputs = np.array(
+        [
+            np.sin(2 * np.pi * 440 * t),  # A4 (drums)
+            np.sin(2 * np.pi * 220 * t),  # A3 (bass)
+            np.sin(2 * np.pi * 880 * t),  # A5 (guitar)
+            np.sin(2 * np.pi * 659 * t),  # E5 (vocals)
+        ],
+        dtype=np.float32,
+    )
 
     # Process through mixer
     output_l, output_r = mixer.process(inputs)
@@ -612,7 +607,6 @@ if __name__ == "__main__":
 
     # Get mixer state
     state = mixer.get_state()
-    print(f"\nMixer state: {state.num_channels} channels, "
-          f"{state.num_send_buses} sends")
+    print(f"\nMixer state: {state.num_channels} channels, {state.num_send_buses} sends")
 
     print("\n" + "=" * 70)

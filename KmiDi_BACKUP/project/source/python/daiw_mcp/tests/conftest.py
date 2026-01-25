@@ -8,7 +8,6 @@ from pathlib import Path
 
 import pytest
 
-
 # Ensure repository root is on sys.path so local packages import correctly.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
@@ -37,7 +36,3 @@ def pytest_pyfunc_call(pyfuncitem: pytest.Function) -> bool | None:
         return True
 
     return None
-
-
-
-

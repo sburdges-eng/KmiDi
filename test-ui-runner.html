@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI Test Runner</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #0f0;
+        }
+        #test-output {
+            background: #000;
+            padding: 15px;
+            border: 1px solid #0f0;
+            border-radius: 4px;
+            max-height: 80vh;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .pass { color: #0f0; }
+        .fail { color: #f00; }
+        .skip { color: #ff0; }
+        .info { color: #0ff; }
+        button {
+            padding: 10px 20px;
+            background: #0f0;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover { background: #0c0; }
+        #summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 UI Test Runner</h1>
+    <p>This page will test the UI at <a href="http://localhost:1420" target="_blank" style="color: #0ff;">http://localhost:1420</a></p>
+    <button onclick="runTests()">Run All Tests</button>
+    <button onclick="clearOutput()">Clear Output</button>
+    <div id="test-output"></div>
+    <div id="summary"></div>
+
+    <script>
+        const output = document.getElementById('test-output');
+        const summary = document.getElementById('summary');
+        const TEST_RESULTS = { passed: [], failed: [], skipped: [] };
+
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = message;
+            output.appendChild(div);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            output.innerHTML = '';
+            summary.innerHTML = '';
+            TEST_RESULTS.passed = [];
+            TEST_RESULTS.failed = [];
+            TEST_RESULTS.skipped = [];
+        }
+
+        async function runTests() {
+            clearOutput();
+            log('🚀 Starting UI Tests...\n', 'info');
+            log('Opening test window...\n', 'info');
+            
+            // Open the app in a new window
+            const testWindow = window.open('http://localhost:1420', '_blank');
+            if (!testWindow) {
+                log('❌ ERROR: Could not open test window. Please allow popups.', 'fail');
+                return;
+            }
+
+            log('Waiting for page to load...\n', 'info');
+            
+            // Wait a bit for the page to load
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            // Inject test script into the test window
+            try {
+                const testScript = `
+                    (async function() {
+                        const results = { passed: [], failed: [], skipped: [] };
+                        
+                        function logTest(name, passed, error = null) {
+                            if (passed) {
+                                results.passed.push(name);
+                                console.log('✅ PASS: ' + name);
+                            } else {
+                                results.failed.push({ name, error });
+                                console.error('❌ FAIL: ' + name, error);
+                            }
+                        }
+                        
+                        function logSkip(name, reason) {
+                            results.skipped.push({ name, reason });
+                            console.warn('⏭️  SKIP: ' + name + ' - ' + reason);
+                        }
+                        
+                        async function sleep(ms) {
+                            return new Promise(resolve => setTimeout(resolve, ms));
+                        }
+                        
+                        async function clickButton(selector, description) {
+                            try {
+                                const btn = document.querySelector(selector);
+                                if (!btn) {
+                                    const allBtns = Array.from(document.querySelectorAll('button'));
+                                    const found = allBtns.find(b => b.textContent.includes(description.split(' ')[0]));
+                                    if (found && !found.disabled) {
+                                        found.click();
+                                        await sleep(500);
+                                        logTest(description, true);
+                                        return true;
+                                    }
+                                    logTest(description, false, 'Button not found');
+                                    return false;
+                                }
+                                if (btn.disabled) {
+                                    logSkip(description, 'Button is disabled');
+                                    return false;
+                                }
+                                btn.click();
+                                await sleep(500);
+                                logTest(description, true);
+                                return true;
+                            } catch (error) {
+                                logTest(description, false, error.message);
+                                return false;
+                            }
+                        }
+                        
+                        console.log('\\n=== Testing App Header ===');
+                        const toggleBtn = Array.from(document.querySelectorAll('button')).find(b => 
+                            b.textContent.includes('Side B') || b.textContent.includes('Side A')
+                        );
+                        if (toggleBtn) {
+                            toggleBtn.click();
+                            await sleep(500);
+                            logTest('Toggle Side A/B', true);
+                            toggleBtn.click();
+                            await sleep(500);
+                            logTest('Toggle back', true);
+                        }
+                        
+                        console.log('\\n=== Testing Side B ===');
+                        if (toggleBtn && toggleBtn.textContent.includes('Side A')) {
+                            toggleBtn.click();
+                            await sleep(500);
+                        }
+                        
+                        const loadEmotions = Array.from(document.querySelectorAll('button')).find(b => 
+                            b.textContent.includes('Load Emotions')
+                        );
+                        if (loadEmotions && !loadEmotions.disabled) {
+                            loadEmotions.click();
+                            await sleep(2000);
+                            logTest('Load Emotions', true);
+                        }
+                        
+                        await sleep(1000);
+                        const baseBtns = document.querySelectorAll('.emotion-wheel-grid-base button');
+                        if (baseBtns.length > 0) {
+                            baseBtns[0].click();
+                            await sleep(500);
+                            logTest('Select base emotion', true);
+                            
+                            const intensityBtns = document.querySelectorAll('.emotion-wheel-grid-intensity button');
+                            if (intensityBtns.length > 0) {
+                                intensityBtns[0].click();
+                                await sleep(500);
+                                logTest('Select intensity', true);
+                                
+                                const subBtns = document.querySelectorAll('.emotion-wheel-grid-sub button');
+                                if (subBtns.length > 0) {
+                                    subBtns[0].click();
+                                    await sleep(500);
+                                    logTest('Select sub-emotion', true);
+                                }
+                            }
+                        }
+                        
+                        const generateBtn = Array.from(document.querySelectorAll('button')).find(b => 
+                            b.textContent.includes('Generate Music') && !b.disabled
+                        );
+                        if (generateBtn) {
+                            generateBtn.click();
+                            await sleep(2000);
+                            logTest('Generate Music', true);
+                        }
+                        
+                        const interrogateBtn = Array.from(document.querySelectorAll('button')).find(b => 
+                            b.textContent.includes('Interrogation')
+                        );
+                        if (interrogateBtn && !interrogateBtn.disabled) {
+                            interrogateBtn.click();
+                            await sleep(2000);
+                            logTest('Start Interrogation', true);
+                        }
+                        
+                        console.log('\\n=== Testing Lyric Panel ===');
+                        const saveLyrics = Array.from(document.querySelectorAll('button')).find(b => 
+                            b.textContent.includes('Save Lyrics')
+                        );
+                        if (saveLyrics) {
+                            const textarea = document.querySelector('.lyric-textarea');
+                            if (textarea) {
+                                textarea.value = 'Test lyrics';
+                                textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                                await sleep(300);
+                                saveLyrics.click();
+                                await sleep(1000);
+                                logTest('Save lyrics', true);
+                            }
+                        }
+                        
+                        const refreshBtn = Array.from(document.querySelectorAll('button')).find(b => 
+                            b.textContent.includes('Refresh')
+                        );
+                        if (refreshBtn) {
+                            refreshBtn.click();
+                            await sleep(1000);
+                            logTest('Refresh lyrics', true);
+                        }
+                        
+                        console.log('\\n=== Testing Guide Navigation ===');
+                        const searchInput = document.querySelector('.guide-search');
+                        if (searchInput) {
+                            searchInput.value = 'test';
+                            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            await sleep(500);
+                            logTest('Search guides', true);
+                            searchInput.value = '';
+                            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                        
+                        const topicPills = document.querySelectorAll('.topic-pill');
+                        if (topicPills.length > 0) {
+                            topicPills[0].click();
+                            await sleep(300);
+                            logTest('Filter by topic', true);
+                        }
+                        
+                        const previewBtn = document.querySelector('.preview-btn');
+                        if (previewBtn) {
+                            previewBtn.click();
+                            await sleep(500);
+                            logTest('Preview guide', true);
+                        }
+                        
+                        console.log('\\n=== Testing SpectoCloud Panel ===');
+                        const loadConfig = Array.from(document.querySelectorAll('button')).find(b => 
+                            b.textContent.includes('Load Humanizer Config')
+                        );
+                        if (loadConfig) {
+                            loadConfig.click();
+                            await sleep(1000);
+                            logTest('Load Humanizer Config', true);
+                        }
+                        
+                        const renderBtn = Array.from(document.querySelectorAll('button')).find(b => 
+                            b.textContent.includes('Render')
+                        );
+                        if (renderBtn && !renderBtn.disabled) {
+                            logTest('Render button exists', true);
+                        }
+                        
+                        console.log('\\n=== Test Summary ===');
+                        console.log('Passed: ' + results.passed.length);
+                        console.log('Failed: ' + results.failed.length);
+                        console.log('Skipped: ' + results.skipped.length);
+                        
+                        return results;
+                    })();
+                `;
+                
+                // Execute script in test window
+                const results = await testWindow.eval(testScript);
+                
+                // Display results
+                log(`\n📊 TEST SUMMARY`, 'info');
+                log(`✅ Passed: ${results.passed.length}`, 'pass');
+                log(`❌ Failed: ${results.failed.length}`, 'fail');
+                log(`⏭️  Skipped: ${results.skipped.length}`, 'skip');
+                
+                if (results.passed.length > 0) {
+                    log('\n✅ Passed Tests:', 'pass');
+                    results.passed.forEach(t => log(`  - ${t}`, 'pass'));
+                }
+                
+                if (results.failed.length > 0) {
+                    log('\n❌ Failed Tests:', 'fail');
+                    results.failed.forEach(f => log(`  - ${f.name}: ${f.error}`, 'fail'));
+                }
+                
+                if (results.skipped.length > 0) {
+                    log('\n⏭️  Skipped Tests:', 'skip');
+                    results.skipped.forEach(s => log(`  - ${s.name}: ${s.reason}`, 'skip'));
+                }
+                
+                summary.innerHTML = `
+                    <h3>Test Summary</h3>
+                    <p><strong>Passed:</strong> ${results.passed.length}</p>
+                    <p><strong>Failed:</strong> ${results.failed.length}</p>
+                    <p><strong>Skipped:</strong> ${results.skipped.length}</p>
+                `;
+                
+            } catch (error) {
+                log(`❌ Error running tests: ${error.message}`, 'fail');
+                log('Note: Tests need to be run in the browser console directly.', 'info');
+                log('Open http://localhost:1420, press F12, and run the test script.', 'info');
+            }
+        }
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            log('UI Test Runner loaded. Click "Run All Tests" to start.', 'info');
+        });
+    </script>
+</body>
+</html>

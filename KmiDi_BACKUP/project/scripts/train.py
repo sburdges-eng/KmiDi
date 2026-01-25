@@ -31,7 +31,6 @@ import argparse
 import hashlib
 import json
 import logging
-import os
 import platform
 import subprocess
 import sys
@@ -39,7 +38,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -63,12 +62,10 @@ LOGS_DIR = ROOT / "logs" / "training"
 CHECKPOINTS_DIR = ROOT / "checkpoints"
 
 # Device constraint limits for smoke testing on resource-limited devices
-# Set KELLY_EXTENDED_TRAINING=1 to bypass epoch limits
-MAX_EPOCHS_MPS_SMOKE = 5      # Maximum epochs for Apple Silicon MPS (smoke test)
-MAX_EPOCHS_CPU_SMOKE = 10     # Maximum epochs for CPU-only training (smoke test)
-MAX_BATCH_MPS = 8             # Maximum batch size for MPS device
-MAX_BATCH_CPU = 16            # Maximum batch size for CPU device
-EXTENDED_TRAINING = os.environ.get("KELLY_EXTENDED_TRAINING", "0") == "1"
+MAX_EPOCHS_MPS_SMOKE = 5  # Maximum epochs for Apple Silicon MPS
+MAX_EPOCHS_CPU_SMOKE = 10  # Maximum epochs for CPU-only training
+MAX_BATCH_MPS = 8  # Maximum batch size for MPS device
+MAX_BATCH_CPU = 16  # Maximum batch size for CPU device
 
 
 # =============================================================================
@@ -137,7 +134,7 @@ class TrainConfig:
     labels: List[str] = field(default_factory=list)
 
     @classmethod
-    def from_yaml(cls, path: str) -> "TrainConfig":
+    def from_yaml(cls, path: str) -> TrainConfig:
         """Load config from YAML file."""
         try:
             import yaml
@@ -194,7 +191,7 @@ class TrainRun:
             json.dump(data, f, indent=2, default=str)
 
     @classmethod
-    def load(cls, path: Path) -> "TrainRun":
+    def load(cls, path: Path) -> TrainRun:
         """Load run metadata from JSON."""
         with open(path) as f:
             data = json.load(f)
@@ -208,7 +205,7 @@ class TrainRun:
 # =============================================================================
 
 
-def get_device() -> "torch.device":
+def get_device() -> torch.device:
     """Get the best available device for training."""
     import torch
 
@@ -219,7 +216,7 @@ def get_device() -> "torch.device":
     return torch.device("cpu")
 
 
-def enforce_device_constraints(config: TrainConfig, device: "torch.device") -> None:
+def enforce_device_constraints(config: TrainConfig, device: torch.device) -> None:
     """Clamp config for resource-limited devices (e.g., MPS/CPU smoke).
 
     Args:
@@ -232,6 +229,11 @@ def enforce_device_constraints(config: TrainConfig, device: "torch.device") -> N
         Set KELLY_EXTENDED_TRAINING=1 to bypass epoch limits for extended training.
     """
     if device.type in {"mps", "cpu"}:
+        max_epochs = (
+            MAX_EPOCHS_MPS_SMOKE
+            if device.type == "mps"
+            else min(config.epochs, MAX_EPOCHS_CPU_SMOKE)
+        )
         max_batch = MAX_BATCH_MPS if device.type == "mps" else MAX_BATCH_CPU
 
         # Only limit epochs if not in extended training mode
@@ -327,7 +329,7 @@ def ensure_dirs():
 # =============================================================================
 
 
-def build_mlp_model(config: TrainConfig) -> "torch.nn.Module":
+def build_mlp_model(config: TrainConfig) -> torch.nn.Module:
     """Build MLP model."""
     import torch.nn as nn
 
@@ -351,7 +353,7 @@ def build_mlp_model(config: TrainConfig) -> "torch.nn.Module":
     return nn.Sequential(*layers)
 
 
-def build_cnn_model(config: TrainConfig) -> "torch.nn.Module":
+def build_cnn_model(config: TrainConfig) -> torch.nn.Module:
     """Build CNN model for spectrogram input."""
     import torch.nn as nn
 
@@ -396,9 +398,8 @@ def build_cnn_model(config: TrainConfig) -> "torch.nn.Module":
     return AudioCNN(config)
 
 
-def build_lstm_model(config: TrainConfig) -> "torch.nn.Module":
+def build_lstm_model(config: TrainConfig) -> torch.nn.Module:
     """Build LSTM model for sequence data."""
-    import torch
     import torch.nn as nn
 
     class SequenceLSTM(nn.Module):
@@ -433,7 +434,7 @@ def build_lstm_model(config: TrainConfig) -> "torch.nn.Module":
     return SequenceLSTM(config)
 
 
-def build_model(config: TrainConfig) -> "torch.nn.Module":
+def build_model(config: TrainConfig) -> torch.nn.Module:
     """Build model based on architecture type."""
     if config.architecture_type == "cnn":
         return build_cnn_model(config)
@@ -731,7 +732,6 @@ def create_dataloaders(config: TrainConfig, device) -> Tuple:
 
 def train_epoch(model, train_loader, optimizer, loss_fn, device, config: TrainConfig) -> float:
     """Train for one epoch."""
-    import torch
 
     model.train()
     total_loss = 0.0
@@ -1010,7 +1010,6 @@ def export_to_coreml(model, config: TrainConfig, run: TrainRun) -> Optional[Path
 
 def export_to_rtneural_json(model, config: TrainConfig, run: TrainRun) -> Path:
     """Export model weights to RTNeural JSON format."""
-    import torch
 
     json_path = MODELS_DIR / f"{config.model_id}.json"
 
@@ -1021,11 +1020,13 @@ def export_to_rtneural_json(model, config: TrainConfig, run: TrainRun) -> Path:
     layers = []
     for name, param in model.named_parameters():
         if "weight" in name:
-            layers.append({
-                "name": name,
-                "type": "dense" if "linear" in name.lower() or "fc" in name.lower() else "conv",
-                "weights": param.detach().numpy().tolist(),
-            })
+            layers.append(
+                {
+                    "name": name,
+                    "type": "dense" if "linear" in name.lower() or "fc" in name.lower() else "conv",
+                    "weights": param.detach().numpy().tolist(),
+                }
+            )
         elif "bias" in name:
             # Add bias to previous layer
             if layers:
@@ -1080,21 +1081,23 @@ def update_registry(config: TrainConfig, run: TrainRun):
         registry["models"].append(entry)
 
     # Update fields
-    entry.update({
-        "file": f"{config.model_id}.json",
-        "format": "rtneural-json",
-        "model_type": config.model_type,
-        "task": config.task,
-        "input_size": config.input_size,
-        "output_size": config.output_size,
-        "status": "trained",
-        "note": f"Trained {run.start_time[:10]}, commit {run.git_commit}",
-        "arch_hint": "→".join(
-            [str(config.input_size)]
-            + [str(h) for h in config.hidden_layers]
-            + [str(config.output_size)]
-        ),
-    })
+    entry.update(
+        {
+            "file": f"{config.model_id}.json",
+            "format": "rtneural-json",
+            "model_type": config.model_type,
+            "task": config.task,
+            "input_size": config.input_size,
+            "output_size": config.output_size,
+            "status": "trained",
+            "note": f"Trained {run.start_time[:10]}, commit {run.git_commit}",
+            "arch_hint": "→".join(
+                [str(config.input_size)]
+                + [str(h) for h in config.hidden_layers]
+                + [str(config.output_size)]
+            ),
+        }
+    )
 
     # Update training metadata
     entry["training"] = {

@@ -8,7 +8,6 @@ enabling history tracking, branching, merging, and rollback.
 import hashlib
 import json
 import logging
-import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -20,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class ChangeType(str, Enum):
     """Type of change in a diff."""
+
     ADD = "add"
     MODIFY = "modify"
     DELETE = "delete"
@@ -28,6 +28,7 @@ class ChangeType(str, Enum):
 @dataclass
 class Change:
     """A single change in a commit."""
+
     change_type: ChangeType
     path: str
     old_value: Any = None
@@ -54,6 +55,7 @@ class Change:
 @dataclass
 class Commit:
     """A commit in the intent version history."""
+
     commit_id: str
     parent_id: Optional[str]
     timestamp: datetime
@@ -89,6 +91,7 @@ class Commit:
 @dataclass
 class Branch:
     """A branch in the intent version history."""
+
     name: str
     head_commit: str
     created_at: datetime = field(default_factory=datetime.utcnow)
@@ -115,6 +118,7 @@ class Branch:
 @dataclass
 class Tag:
     """A tag marking a specific commit."""
+
     name: str
     commit_id: str
     message: str = ""
@@ -203,7 +207,7 @@ class IntentVersionControl:
         history_file = self.storage_path / "history.json"
         if history_file.exists():
             try:
-                with open(history_file, "r") as f:
+                with open(history_file) as f:
                     data = json.load(f)
 
                 for commit_data in data.get("commits", []):
@@ -224,7 +228,7 @@ class IntentVersionControl:
                 for commit_id in self.commits:
                     snapshot_file = self.storage_path / f"snapshots/{commit_id}.json"
                     if snapshot_file.exists():
-                        with open(snapshot_file, "r") as f:
+                        with open(snapshot_file) as f:
                             self.snapshots[commit_id] = json.load(f)
 
                 # Reconstruct working intent
@@ -307,27 +311,33 @@ class IntentVersionControl:
             new_val = new.get(key)
 
             if key not in old:
-                changes.append(Change(
-                    change_type=ChangeType.ADD,
-                    path=path,
-                    new_value=new_val,
-                ))
+                changes.append(
+                    Change(
+                        change_type=ChangeType.ADD,
+                        path=path,
+                        new_value=new_val,
+                    )
+                )
             elif key not in new:
-                changes.append(Change(
-                    change_type=ChangeType.DELETE,
-                    path=path,
-                    old_value=old_val,
-                ))
+                changes.append(
+                    Change(
+                        change_type=ChangeType.DELETE,
+                        path=path,
+                        old_value=old_val,
+                    )
+                )
             elif isinstance(old_val, dict) and isinstance(new_val, dict):
                 # Recurse into nested dicts
                 changes.extend(self._diff_intents(old_val, new_val, path))
             elif old_val != new_val:
-                changes.append(Change(
-                    change_type=ChangeType.MODIFY,
-                    path=path,
-                    old_value=old_val,
-                    new_value=new_val,
-                ))
+                changes.append(
+                    Change(
+                        change_type=ChangeType.MODIFY,
+                        path=path,
+                        old_value=old_val,
+                        new_value=new_val,
+                    )
+                )
 
         return changes
 
@@ -410,7 +420,8 @@ class IntentVersionControl:
         """
         if path:
             self.staged_changes = [
-                c for c in self.staged_changes
+                c
+                for c in self.staged_changes
                 if not (c.path == path or c.path.startswith(f"{path}."))
             ]
         else:
@@ -483,13 +494,15 @@ class IntentVersionControl:
             if not commit:
                 break
 
-            history.append({
-                "id": commit.commit_id,
-                "timestamp": commit.timestamp.isoformat(),
-                "author": commit.author,
-                "message": commit.message,
-                "changes": len(commit.changes),
-            })
+            history.append(
+                {
+                    "id": commit.commit_id,
+                    "timestamp": commit.timestamp.isoformat(),
+                    "author": commit.author,
+                    "message": commit.message,
+                    "changes": len(commit.changes),
+                }
+            )
 
             current = commit.parent_id
 
@@ -681,30 +694,36 @@ class IntentVersionControl:
         inverse_changes = []
         for change in commit.changes:
             if change.change_type == ChangeType.ADD:
-                inverse_changes.append(Change(
-                    change_type=ChangeType.DELETE,
-                    path=change.path,
-                    old_value=change.new_value,
-                ))
+                inverse_changes.append(
+                    Change(
+                        change_type=ChangeType.DELETE,
+                        path=change.path,
+                        old_value=change.new_value,
+                    )
+                )
             elif change.change_type == ChangeType.DELETE:
-                inverse_changes.append(Change(
-                    change_type=ChangeType.ADD,
-                    path=change.path,
-                    new_value=change.old_value,
-                ))
+                inverse_changes.append(
+                    Change(
+                        change_type=ChangeType.ADD,
+                        path=change.path,
+                        new_value=change.old_value,
+                    )
+                )
             else:
-                inverse_changes.append(Change(
-                    change_type=ChangeType.MODIFY,
-                    path=change.path,
-                    old_value=change.new_value,
-                    new_value=change.old_value,
-                ))
+                inverse_changes.append(
+                    Change(
+                        change_type=ChangeType.MODIFY,
+                        path=change.path,
+                        old_value=change.new_value,
+                        new_value=change.old_value,
+                    )
+                )
 
         # Apply inverse to working intent
         self.working_intent = self._apply_changes(self.working_intent, inverse_changes)
         self.staged_changes = inverse_changes
 
-        return self.commit(f"Revert \"{commit.message}\"", author)
+        return self.commit(f'Revert "{commit.message}"', author)
 
     def reset(self, commit_id: str, mode: str = "soft"):
         """
@@ -760,10 +779,7 @@ class IntentVersionControl:
         self.working_intent = source_intent.copy()
         self.staged_changes = changes
 
-        return self.commit(
-            f"Merge branch '{source_branch}' into {self.current_branch}",
-            author
-        )
+        return self.commit(f"Merge branch '{source_branch}' into {self.current_branch}", author)
 
     # Intent manipulation
 

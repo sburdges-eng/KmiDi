@@ -28,23 +28,20 @@ Usage:
 from __future__ import annotations
 
 import asyncio
-import time
 import uuid
 from collections import defaultdict
+from collections.abc import Awaitable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import IntEnum
 from typing import (
     Any,
-    Awaitable,
     Callable,
     Dict,
     Generic,
     List,
     Optional,
-    Set,
     TypeVar,
-    Union,
 )
 
 T = TypeVar("T")
@@ -103,13 +100,15 @@ class Event:
         }
 
     @classmethod
-    def from_dict(cls, d: Dict[str, Any]) -> "Event":
+    def from_dict(cls, d: Dict[str, Any]) -> Event:
         """Deserialize from dictionary."""
         return cls(
             type=d["type"],
             data=d.get("data"),
             id=d.get("id", str(uuid.uuid4())[:8]),
-            timestamp=datetime.fromisoformat(d["timestamp"]) if "timestamp" in d else datetime.now(),
+            timestamp=datetime.fromisoformat(d["timestamp"])
+            if "timestamp" in d
+            else datetime.now(),
             source=d.get("source"),
             priority=EventPriority(d.get("priority", EventPriority.NORMAL)),
         )
@@ -385,9 +384,7 @@ class EventBus:
             # No event loop - create one temporarily
             asyncio.run(self.emit(event_type, data, source, wait=False))
 
-    def _get_matching_handlers(
-        self, event_type: str
-    ) -> List[tuple]:
+    def _get_matching_handlers(self, event_type: str) -> List[tuple]:
         """Get all handlers matching an event type, including wildcards."""
         result: List[tuple] = []
 
@@ -523,7 +520,9 @@ class EventBus:
         self._pending_requests.clear()
 
     def __repr__(self) -> str:
-        return f"EventBus(handlers={self.get_handler_count()}, events={self._stats['events_emitted']})"
+        return (
+            f"EventBus(handlers={self.get_handler_count()}, events={self._stats['events_emitted']})"
+        )
 
 
 # =============================================================================
@@ -657,4 +656,3 @@ __all__ = [
     "EventChannel",
     "EventQueue",
 ]
-

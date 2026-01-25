@@ -123,9 +123,7 @@ class stdvector_SynthProvider:
             return None
         try:
             offset = index * self.data_size
-            return self.start.CreateChildAtOffset(
-                "[" + str(index) + "]", offset, self.data_type
-            )
+            return self.start.CreateChildAtOffset("[" + str(index) + "]", offset, self.data_type)
         except:
             return None
 
@@ -320,9 +318,7 @@ class stdlist_SynthProvider:
             # unfortunate
             obj = current.GetChildMemberWithName("__value_")
             obj_data = obj.GetData()
-            return self.valobj.CreateValueFromData(
-                "[" + str(index) + "]", obj_data, self.data_type
-            )
+            return self.valobj.CreateValueFromData("[" + str(index) + "]", obj_data, self.data_type)
         except:
             return None
 
@@ -645,9 +641,7 @@ class stddeque_SynthProvider:
         except:
             self.block_size = -1
             self.element_size = -1
-        logger.write(
-            "block_size=%d, element_size=%d" % (self.block_size, self.element_size)
-        )
+        logger.write("block_size=%d, element_size=%d" % (self.block_size, self.element_size))
 
     def find_block_size(self):
         # in order to use the deque we must have the block size, or else
@@ -781,9 +775,7 @@ class stddeque_SynthProvider:
                 logger.write("begin-first doesnt align correctly")
                 return
 
-            logger.write(
-                "update success: count=%r, start=%r, first=%r" % (count, start, first)
-            )
+            logger.write("update success: count=%r, start=%r, first=%r" % (count, start, first))
             # if consistent, save all we really need:
             self.count = count
             self.start = start
@@ -831,17 +823,10 @@ class stdsharedptr_SynthProvider:
             if self.cntrl is None:
                 count = 0
             else:
-                count = (
-                    1
-                    + self.cntrl.GetChildMemberWithName(
-                        "__shared_owners_"
-                    ).GetValueAsSigned()
-                )
+                count = 1 + self.cntrl.GetChildMemberWithName("__shared_owners_").GetValueAsSigned()
             return self.valobj.CreateValueFromData(
                 "count",
-                lldb.SBData.CreateDataFromUInt64Array(
-                    self.endianness, self.pointer_size, [count]
-                ),
+                lldb.SBData.CreateDataFromUInt64Array(self.endianness, self.pointer_size, [count]),
                 self.count_type,
             )
         if index == 2:
@@ -850,24 +835,18 @@ class stdsharedptr_SynthProvider:
             else:
                 count = (
                     1
-                    + self.cntrl.GetChildMemberWithName(
-                        "__shared_weak_owners_"
-                    ).GetValueAsSigned()
+                    + self.cntrl.GetChildMemberWithName("__shared_weak_owners_").GetValueAsSigned()
                 )
             return self.valobj.CreateValueFromData(
                 "weak_count",
-                lldb.SBData.CreateDataFromUInt64Array(
-                    self.endianness, self.pointer_size, [count]
-                ),
+                lldb.SBData.CreateDataFromUInt64Array(self.endianness, self.pointer_size, [count]),
                 self.count_type,
             )
         return None
 
     def update(self):
         logger = lldb.formatters.Logger.Logger()
-        self.ptr = self.valobj.GetChildMemberWithName(
-            "__ptr_"
-        )  # .Cast(self.element_ptr_type)
+        self.ptr = self.valobj.GetChildMemberWithName("__ptr_")  # .Cast(self.element_ptr_type)
         cntrl = self.valobj.GetChildMemberWithName("__cntrl_")
         if cntrl.GetValueAsUnsigned(0):
             self.cntrl = cntrl.Dereference()

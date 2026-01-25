@@ -1,0 +1,116 @@
+.intent-ir-inspector {
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  font-size: 11px;
+  background: rgb(30, 30, 30);
+  color: rgb(212, 212, 212);
+  padding: 12px;
+  border: 1px solid rgb(62, 62, 62);
+  border-radius: 4px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.intent-ir-inspector-empty {
+  padding: 20px;
+  text-align: center;
+  color: rgb(136, 136, 136);
+}
+
+.intent-ir-inspector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgb(62, 62, 62);
+}
+
+.intent-ir-inspector-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(255, 255, 255);
+}
+
+.intent-ir-provenance-badge {
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+}
+
+.intent-ir-inspector-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.intent-ir-section {
+  border: 1px solid rgb(62, 62, 62);
+  border-radius: 3px;
+  background: rgb(37, 37, 38);
+}
+
+.intent-ir-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  color: rgb(78, 201, 176);
+}
+
+.intent-ir-section-header:hover {
+  background: rgb(42, 45, 46);
+}
+
+.intent-ir-section-content {
+  padding: 8px 12px;
+  border-top: 1px solid rgb(62, 62, 62);
+  background: rgb(30, 30, 30);
+}
+
+.intent-ir-field {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid rgb(42, 45, 46);
+}
+
+.intent-ir-field:last-child {
+  border-bottom: none;
+}
+
+.intent-ir-field-name {
+  color: rgb(156, 220, 254);
+  font-weight: 500;
+  min-width: 150px;
+}
+
+.intent-ir-field-value {
+  color: rgb(206, 145, 120);
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  text-align: right;
+}
+
+/* Scrollbar styling */
+.intent-ir-inspector::-webkit-scrollbar {
+  width: 8px;
+}
+
+.intent-ir-inspector::-webkit-scrollbar-track {
+  background: rgb(30, 30, 30);
+}
+
+.intent-ir-inspector::-webkit-scrollbar-thumb {
+  background: rgb(66, 66, 66);
+  border-radius: 4px;
+}
+
+.intent-ir-inspector::-webkit-scrollbar-thumb:hover {
+  background: rgb(78, 78, 78);
+}

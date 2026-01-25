@@ -8,16 +8,16 @@ Provides a common interface for running inference with:
 - PyTorch
 """
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Union
-from pathlib import Path
-import numpy as np
 import time
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Dict, List, Optional
+
+import numpy as np
 
 from penta_core.ml.model_registry import (
-    ModelInfo,
     ModelBackend,
+    ModelInfo,
     get_model,
 )
 
@@ -25,6 +25,7 @@ from penta_core.ml.model_registry import (
 @dataclass
 class InferenceResult:
     """Result from model inference."""
+
     outputs: Dict[str, np.ndarray]
     latency_ms: float
     model_name: str
@@ -289,8 +290,9 @@ class CoreMLEngine(InferenceEngine):
     def load(self) -> bool:
         """Load CoreML model."""
         try:
-            import coremltools as ct
             import platform
+
+            import coremltools as ct
 
             if platform.system() != "Darwin":
                 print("CoreML is only available on macOS/iOS")

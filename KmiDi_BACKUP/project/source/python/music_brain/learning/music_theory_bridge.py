@@ -5,16 +5,17 @@ This module provides bridge functions that are called from C++ MusicTheoryBridge
 to access Python adaptive teacher capabilities.
 """
 
-from typing import Dict, Any, Optional
 import json
+from typing import Any, Dict, Optional
 
 # Try to import adaptive teacher modules
 try:
     from ml_framework.music_theory.adaptive_teacher import AdaptiveMusicTeacher
     from ml_framework.music_theory.exercise_generator import ExerciseGenerator
     from ml_framework.music_theory.explanation_engine import ExplanationEngine
-    from ml_framework.music_theory.user_model import UserModel
     from ml_framework.music_theory.lesson_planner import LessonPlanner
+    from ml_framework.music_theory.user_model import UserModel
+
     ADAPTIVE_TEACHER_AVAILABLE = True
 except ImportError:
     ADAPTIVE_TEACHER_AVAILABLE = False
@@ -90,20 +91,14 @@ def explain_concept(concept: str, style: str, user_level: int) -> Dict[str, Any]
     if engine:
         try:
             explanation = engine.explain(concept, style=style, user_level=user_level)
-            return {
-                "text": explanation.get("text", f"Explanation for {concept}"),
-                "style": style
-            }
+            return {"text": explanation.get("text", f"Explanation for {concept}"), "style": style}
         except Exception as e:
-            return {
-                "text": f"Error explaining concept: {str(e)}",
-                "style": style
-            }
+            return {"text": f"Error explaining concept: {str(e)}", "style": style}
 
     # Fallback
     return {
         "text": f"Explanation for {concept} ({style} style, level {user_level})",
-        "style": style
+        "style": style,
     }
 
 
@@ -129,20 +124,16 @@ def generate_exercise(concept: str, user_profile: Dict[str, Any]) -> Dict[str, A
             return {
                 "question": exercise.get("question", f"Practice {concept}"),
                 "answer": exercise.get("answer", ""),
-                "hints": exercise.get("hints", [])
+                "hints": exercise.get("hints", []),
             }
         except Exception as e:
-            return {
-                "question": f"Error generating exercise: {str(e)}",
-                "answer": "",
-                "hints": []
-            }
+            return {"question": f"Error generating exercise: {str(e)}", "answer": "", "hints": []}
 
     # Fallback
     return {
         "question": f"What is {concept}?",
         "answer": f"Answer for {concept}",
-        "hints": [f"Think about {concept}"]
+        "hints": [f"Think about {concept}"],
     }
 
 
@@ -166,17 +157,14 @@ def provide_feedback(exercise: Dict[str, Any], attempt: Dict[str, Any]) -> Dict[
 
     is_correct = user_answer == correct_answer or user_answer in correct_answer
 
-    feedback = {
-        "is_correct": is_correct,
-        "explanation": "",
-        "hint": "",
-        "suggested_review": []
-    }
+    feedback = {"is_correct": is_correct, "explanation": "", "hint": "", "suggested_review": []}
 
     if is_correct:
         feedback["explanation"] = "Correct! Well done."
     else:
-        feedback["explanation"] = f"Not quite. The correct answer is: {exercise.get('answer', 'N/A')}"
+        feedback["explanation"] = (
+            f"Not quite. The correct answer is: {exercise.get('answer', 'N/A')}"
+        )
         if exercise.get("hints"):
             feedback["hint"] = exercise["hints"][0] if exercise["hints"] else ""
         feedback["suggested_review"] = [exercise.get("concept", "")]
@@ -201,21 +189,22 @@ def create_lesson_plan(concept: str, user_profile: Dict[str, Any]) -> str:
             lesson_plan = planner.create_plan(concept, user_profile)
             return json.dumps(lesson_plan)
         except Exception as e:
-            return json.dumps({
-                "error": f"Error creating lesson plan: {str(e)}",
-                "concept": concept
-            })
+            return json.dumps(
+                {"error": f"Error creating lesson plan: {str(e)}", "concept": concept}
+            )
 
     # Fallback
-    return json.dumps({
-        "concept": concept,
-        "lessons": [
-            {
-                "step": 1,
-                "concept": concept,
-                "rationale": "Introduction to concept",
-                "estimatedMinutes": 10
-            }
-        ],
-        "totalEstimatedHours": 0.2
-    })
+    return json.dumps(
+        {
+            "concept": concept,
+            "lessons": [
+                {
+                    "step": 1,
+                    "concept": concept,
+                    "rationale": "Introduction to concept",
+                    "estimatedMinutes": 10,
+                }
+            ],
+            "totalEstimatedHours": 0.2,
+        }
+    )

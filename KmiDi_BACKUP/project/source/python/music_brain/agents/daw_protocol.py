@@ -30,7 +30,7 @@ from __future__ import annotations
 import abc
 import atexit
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from typing import (
     Any,
     Callable,
@@ -42,7 +42,6 @@ from typing import (
     Type,
     runtime_checkable,
 )
-
 
 # =============================================================================
 # DAW Types
@@ -361,11 +360,9 @@ class DAWProtocol(Protocol):
     # Context Manager
     # =========================================================================
 
-    def __enter__(self) -> "DAWProtocol":
-        ...
+    def __enter__(self) -> DAWProtocol: ...
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        ...
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None: ...
 
 
 # =============================================================================
@@ -511,7 +508,7 @@ class BaseDAWBridge(abc.ABC):
     # Context Manager
     # =========================================================================
 
-    def __enter__(self) -> "BaseDAWBridge":
+    def __enter__(self) -> BaseDAWBridge:
         self.connect()
         return self
 
@@ -577,8 +574,8 @@ class DAWRegistry:
 
         Returns the first DAW type that successfully connects.
         """
-        import subprocess
         import platform
+        import subprocess
 
         system = platform.system()
 
@@ -597,7 +594,11 @@ class DAWRegistry:
         if system == "Darwin":  # macOS
             try:
                 result = subprocess.run(
-                    ["osascript", "-e", 'tell application "System Events" to get name of every process'],
+                    [
+                        "osascript",
+                        "-e",
+                        'tell application "System Events" to get name of every process',
+                    ],
                     capture_output=True,
                     text=True,
                     timeout=5,
@@ -692,4 +693,3 @@ __all__ = [
     # Factory
     "get_daw_bridge",
 ]
-

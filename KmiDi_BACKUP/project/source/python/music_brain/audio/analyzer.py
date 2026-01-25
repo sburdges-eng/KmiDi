@@ -6,11 +6,12 @@ into a single comprehensive analyzer.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Any
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import numpy as np
+
     NUMPY_AVAILABLE = True
 except ImportError:
     np = None  # type: ignore
@@ -18,14 +19,15 @@ except ImportError:
 
 try:
     import librosa
+
     LIBROSA_AVAILABLE = True
 except ImportError:
     librosa = None
     LIBROSA_AVAILABLE = False
 
-from music_brain.audio.feel import analyze_feel, AudioFeatures
 from music_brain.audio.chord_detection import ChordDetector, ChordProgressionDetection
-from music_brain.audio.frequency_analysis import analyze_frequency_bands, FrequencyProfile
+from music_brain.audio.feel import analyze_feel
+from music_brain.audio.frequency_analysis import FrequencyProfile, analyze_frequency_bands
 
 
 @dataclass
@@ -36,6 +38,7 @@ class AudioAnalysis:
     Combines tempo, key, spectral characteristics, and chord detection
     into a single analysis object.
     """
+
     # File info
     filename: str = ""
     duration_seconds: float = 0.0
@@ -135,8 +138,7 @@ class AudioAnalyzer:
         """
         if not LIBROSA_AVAILABLE:
             raise ImportError(
-                "librosa required for AudioAnalyzer. "
-                "Install with: pip install librosa numpy"
+                "librosa required for AudioAnalyzer. Install with: pip install librosa numpy"
             )
 
         self.sample_rate = sample_rate
@@ -230,9 +232,7 @@ class AudioAnalyzer:
         tempo, beat_frames = librosa.beat.beat_track(
             y=samples, sr=sample_rate, hop_length=self.hop_length
         )
-        beat_times = librosa.frames_to_time(
-            beat_frames, sr=sample_rate, hop_length=self.hop_length
-        )
+        beat_times = librosa.frames_to_time(beat_frames, sr=sample_rate, hop_length=self.hop_length)
 
         # RMS energy
         rms = librosa.feature.rms(y=samples, hop_length=self.hop_length)[0]
@@ -245,9 +245,7 @@ class AudioAnalyzer:
         )[0]
 
         # Chromagram for key detection
-        chroma = librosa.feature.chroma_cqt(
-            y=samples, sr=sample_rate, hop_length=self.hop_length
-        )
+        chroma = librosa.feature.chroma_cqt(y=samples, sr=sample_rate, hop_length=self.hop_length)
         key, mode = self._detect_key_from_chroma(chroma)
 
         return AudioAnalysis(
@@ -285,9 +283,7 @@ class AudioAnalyzer:
         if len(samples.shape) > 1:
             samples = np.mean(samples, axis=1)
 
-        tempo, _ = librosa.beat.beat_track(
-            y=samples, sr=sample_rate, hop_length=self.hop_length
-        )
+        tempo, _ = librosa.beat.beat_track(y=samples, sr=sample_rate, hop_length=self.hop_length)
         return float(tempo)
 
     def detect_key(
@@ -313,9 +309,7 @@ class AudioAnalyzer:
             samples = np.mean(samples, axis=1)
 
         # Compute chromagram
-        chroma = librosa.feature.chroma_cqt(
-            y=samples, sr=sample_rate, hop_length=self.hop_length
-        )
+        chroma = librosa.feature.chroma_cqt(y=samples, sr=sample_rate, hop_length=self.hop_length)
 
         return self._detect_key_from_chroma(chroma)
 
@@ -328,11 +322,15 @@ class AudioAnalyzer:
 
         Uses Krumhansl-Schmuckler key-finding algorithm.
         """
-        NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
         # Major and minor key profiles (Krumhansl)
-        MAJOR_PROFILE = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
-        MINOR_PROFILE = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
+        MAJOR_PROFILE = np.array(
+            [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88]
+        )
+        MINOR_PROFILE = np.array(
+            [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17]
+        )
 
         # Average chroma
         chroma_mean = np.mean(chroma, axis=1)

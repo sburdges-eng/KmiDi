@@ -8,11 +8,6 @@ Generates complete song structures with:
 - Genre-specific structures
 """
 
-from music_brain.arrangement.templates import (
-    SectionTemplate,
-    ArrangementTemplate,
-    get_genre_template,
-)
 from music_brain.arrangement.energy_arc import (
     EnergyArc,
     NarrativeArc,
@@ -22,6 +17,11 @@ from music_brain.arrangement.generator import (
     ArrangementGenerator,
     GeneratedArrangement,
     generate_arrangement,
+)
+from music_brain.arrangement.templates import (
+    ArrangementTemplate,
+    SectionTemplate,
+    get_genre_template,
 )
 
 __all__ = [

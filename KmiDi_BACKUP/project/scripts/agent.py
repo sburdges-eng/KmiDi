@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Dict, List, Optional
 
 from music_brain.api import DAiWAPI
 from music_brain.chatbot import tools
@@ -25,7 +25,7 @@ class AgentConfig:
 class LLMRunner:
     """
     Placeholder LLM runner for offline chatbot functionality.
-    
+
     This is a stub implementation that returns echo responses.
     To enable full offline LLM support, integrate with llama.cpp or GPT4All.
     """
@@ -36,7 +36,7 @@ class LLMRunner:
     def generate(self, messages: List[Dict[str, str]]) -> str:
         """
         Generate response from message history.
-        
+
         Note: This is a placeholder implementation. For production use,
         integrate with an offline LLM library (llama.cpp, GPT4All, etc.).
         """
@@ -68,4 +68,3 @@ class ChatAgent:
         if "backing track" in text_lower:
             return tools.describe_backing_workflow()
         return None
-

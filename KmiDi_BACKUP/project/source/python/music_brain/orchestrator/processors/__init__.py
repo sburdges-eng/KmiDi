@@ -27,8 +27,8 @@ from music_brain.orchestrator.processors.base import (
     BaseProcessor,
     PassthroughProcessor,
 )
-from music_brain.orchestrator.processors.harmony import HarmonyProcessor
 from music_brain.orchestrator.processors.groove import GrooveProcessor
+from music_brain.orchestrator.processors.harmony import HarmonyProcessor
 from music_brain.orchestrator.processors.intent import IntentProcessor
 
 __all__ = [

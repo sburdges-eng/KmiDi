@@ -109,7 +109,7 @@ class Command(ABC):
 
     def __init__(
         self,
-        hub: "UnifiedHub",
+        hub: UnifiedHub,
         category: CommandCategory = CommandCategory.CUSTOM,
         description: str = "",
     ):
@@ -150,9 +150,7 @@ class Command(ABC):
         Automatically captures state before execution for undo.
         """
         if self._executed:
-            return CommandResult(
-                success=False, message=f"Command {self.name} already executed"
-            )
+            return CommandResult(success=False, message=f"Command {self.name} already executed")
 
         # Capture state before execution
         self._capture_state()
@@ -162,9 +160,7 @@ class Command(ABC):
             result = self._do_execute()
             self._executed = True
             self._execution_time_ms = (time.perf_counter() - start) * 1000
-            logger.debug(
-                f"Executed {self.name} in {self._execution_time_ms:.2f}ms"
-            )
+            logger.debug(f"Executed {self.name} in {self._execution_time_ms:.2f}ms")
             return result
         except Exception as e:
             logger.error(f"Command {self.name} failed: {e}")
@@ -173,9 +169,7 @@ class Command(ABC):
     def undo(self) -> CommandResult:
         """Undo the command, restoring previous state."""
         if not self._executed:
-            return CommandResult(
-                success=False, message=f"Command {self.name} not executed"
-            )
+            return CommandResult(success=False, message=f"Command {self.name} not executed")
 
         try:
             result = self._do_undo()
@@ -189,9 +183,7 @@ class Command(ABC):
     def redo(self) -> CommandResult:
         """Redo the command (default: re-execute)."""
         if self._executed:
-            return CommandResult(
-                success=False, message=f"Command {self.name} already executed"
-            )
+            return CommandResult(success=False, message=f"Command {self.name} already executed")
 
         try:
             result = self._do_redo()
@@ -240,10 +232,8 @@ class Command(ABC):
 class SetTempoCommand(Command):
     """Command to change DAW tempo."""
 
-    def __init__(self, hub: "UnifiedHub", new_tempo: float):
-        super().__init__(
-            hub, CommandCategory.DAW, f"Set tempo to {new_tempo} BPM"
-        )
+    def __init__(self, hub: UnifiedHub, new_tempo: float):
+        super().__init__(hub, CommandCategory.DAW, f"Set tempo to {new_tempo} BPM")
         self._new_tempo = new_tempo
         self._old_tempo: float = 120.0
 
@@ -274,7 +264,7 @@ class SetTempoCommand(Command):
 class SetVowelCommand(Command):
     """Command to change voice vowel."""
 
-    def __init__(self, hub: "UnifiedHub", vowel: str, channel: int = 0):
+    def __init__(self, hub: UnifiedHub, vowel: str, channel: int = 0):
         super().__init__(hub, CommandCategory.VOICE, f"Set vowel to {vowel}")
         self._new_vowel = vowel.upper()
         self._channel = channel
@@ -305,10 +295,8 @@ class SetVowelCommand(Command):
 class SetBreathinessCommand(Command):
     """Command to change voice breathiness."""
 
-    def __init__(self, hub: "UnifiedHub", amount: float, channel: int = 0):
-        super().__init__(
-            hub, CommandCategory.VOICE, f"Set breathiness to {amount:.2f}"
-        )
+    def __init__(self, hub: UnifiedHub, amount: float, channel: int = 0):
+        super().__init__(hub, CommandCategory.VOICE, f"Set breathiness to {amount:.2f}")
         self._new_amount = max(0.0, min(1.0, amount))
         self._channel = channel
         self._old_amount: float = 0.0
@@ -324,27 +312,21 @@ class SetBreathinessCommand(Command):
         if self._hub._voice:
             self._hub._voice.set_breathiness(self._new_amount, self._channel)
             self._hub._voice_state.breathiness = self._new_amount
-            return CommandResult(
-                success=True, data={"breathiness": self._new_amount}
-            )
+            return CommandResult(success=True, data={"breathiness": self._new_amount})
         return CommandResult(success=False, message="Voice not initialized")
 
     def _do_undo(self) -> CommandResult:
         if self._hub._voice:
             self._hub._voice.set_breathiness(self._old_amount, self._channel)
             self._hub._voice_state.breathiness = self._old_amount
-            return CommandResult(
-                success=True, data={"breathiness": self._old_amount}
-            )
+            return CommandResult(success=True, data={"breathiness": self._old_amount})
         return CommandResult(success=False, message="Voice not initialized")
 
 
 class SetVibratoCommand(Command):
     """Command to change voice vibrato settings."""
 
-    def __init__(
-        self, hub: "UnifiedHub", rate: float, depth: float, channel: int = 0
-    ):
+    def __init__(self, hub: UnifiedHub, rate: float, depth: float, channel: int = 0):
         super().__init__(
             hub,
             CommandCategory.VOICE,
@@ -366,9 +348,7 @@ class SetVibratoCommand(Command):
 
     def _do_execute(self) -> CommandResult:
         if self._hub._voice:
-            self._hub._voice.set_vibrato(
-                self._new_rate, self._new_depth, self._channel
-            )
+            self._hub._voice.set_vibrato(self._new_rate, self._new_depth, self._channel)
             self._hub._voice_state.vibrato_rate = self._new_rate
             self._hub._voice_state.vibrato_depth = self._new_depth
             return CommandResult(
@@ -382,9 +362,7 @@ class SetVibratoCommand(Command):
 
     def _do_undo(self) -> CommandResult:
         if self._hub._voice:
-            self._hub._voice.set_vibrato(
-                self._old_rate, self._old_depth, self._channel
-            )
+            self._hub._voice.set_vibrato(self._old_rate, self._old_depth, self._channel)
             self._hub._voice_state.vibrato_rate = self._old_rate
             self._hub._voice_state.vibrato_depth = self._old_depth
             return CommandResult(
@@ -402,7 +380,7 @@ class NoteOnCommand(Command):
 
     def __init__(
         self,
-        hub: "UnifiedHub",
+        hub: UnifiedHub,
         pitch: int,
         velocity: int = 100,
         channel: int = 0,
@@ -424,9 +402,7 @@ class NoteOnCommand(Command):
 
     def _do_execute(self) -> CommandResult:
         if self._hub._voice:
-            self._hub._voice.note_on(
-                self._pitch, self._velocity, self._channel
-            )
+            self._hub._voice.note_on(self._pitch, self._velocity, self._channel)
             self._hub._voice_state.pitch = self._pitch
             self._hub._voice_state.velocity = self._velocity
             self._hub._voice_state.active = True
@@ -448,13 +424,11 @@ class NoteOffCommand(Command):
 
     def __init__(
         self,
-        hub: "UnifiedHub",
+        hub: UnifiedHub,
         pitch: Optional[int] = None,
         channel: int = 0,
     ):
-        super().__init__(
-            hub, CommandCategory.VOICE, f"Note off: {pitch or 'active'}"
-        )
+        super().__init__(hub, CommandCategory.VOICE, f"Note off: {pitch or 'active'}")
         self._pitch = pitch
         self._channel = channel
         self._was_active: bool = False
@@ -483,26 +457,20 @@ class NoteOffCommand(Command):
     def _do_undo(self) -> CommandResult:
         if self._hub._voice and self._was_active:
             # Re-start the note that was playing
-            self._hub._voice.note_on(
-                self._old_pitch, self._old_velocity, self._channel
-            )
+            self._hub._voice.note_on(self._old_pitch, self._old_velocity, self._channel)
             self._hub._voice_state.active = True
             self._hub._voice_state.pitch = self._old_pitch
             self._hub._voice_state.velocity = self._old_velocity
-            return CommandResult(
-                success=True, data={"note_on": self._old_pitch}
-            )
+            return CommandResult(success=True, data={"note_on": self._old_pitch})
         return CommandResult(success=True, message="No note was active")
 
 
 class UpdateSessionCommand(Command):
     """Command to update session metadata."""
 
-    def __init__(self, hub: "UnifiedHub", **updates: Any) -> None:
+    def __init__(self, hub: UnifiedHub, **updates: Any) -> None:
         keys = list(updates.keys())
-        super().__init__(
-            hub, CommandCategory.SESSION, f"Update session: {keys}"
-        )
+        super().__init__(hub, CommandCategory.SESSION, f"Update session: {keys}")
         self._updates = updates
         self._old_values: Dict[str, Any] = {}
 
@@ -543,7 +511,7 @@ class CompoundCommand(Command):
 
     def __init__(
         self,
-        hub: "UnifiedHub",
+        hub: UnifiedHub,
         commands: List[Command],
         description: str = "Compound command",
     ):
@@ -567,9 +535,7 @@ class CompoundCommand(Command):
                 self._rollback()
                 return CommandResult(
                     success=False,
-                    message=(
-                        f"Compound failed at {cmd.name}: {result.message}"
-                    ),
+                    message=(f"Compound failed at {cmd.name}: {result.message}"),
                     data=results,
                 )
         return CommandResult(
@@ -720,10 +686,7 @@ class CommandHistory:
 
     def get_history(self, limit: int = 20) -> List[CommandMetadata]:
         """Get recent command history."""
-        return [
-            cmd.get_metadata()
-            for cmd in reversed(self._undo_stack[-limit:])
-        ]
+        return [cmd.get_metadata() for cmd in reversed(self._undo_stack[-limit:])]
 
     def get_stats(self) -> HistoryStats:
         """Get history statistics."""
@@ -762,10 +725,7 @@ class CommandHistory:
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize history state (for session save)."""
-        history = [
-            cmd.get_metadata().__dict__
-            for cmd in self._undo_stack[-20:]
-        ]
+        history = [cmd.get_metadata().__dict__ for cmd in self._undo_stack[-20:]]
         return {
             "undo_count": len(self._undo_stack),
             "redo_count": len(self._redo_stack),
@@ -782,7 +742,7 @@ class CommandHistory:
 class CommandFactory:
     """Factory for creating commands with hub reference."""
 
-    def __init__(self, hub: "UnifiedHub"):
+    def __init__(self, hub: UnifiedHub):
         self._hub = hub
 
     def set_tempo(self, tempo: float) -> SetTempoCommand:
@@ -791,32 +751,22 @@ class CommandFactory:
     def set_vowel(self, vowel: str, channel: int = 0) -> SetVowelCommand:
         return SetVowelCommand(self._hub, vowel, channel)
 
-    def set_breathiness(
-        self, amount: float, channel: int = 0
-    ) -> SetBreathinessCommand:
+    def set_breathiness(self, amount: float, channel: int = 0) -> SetBreathinessCommand:
         return SetBreathinessCommand(self._hub, amount, channel)
 
-    def set_vibrato(
-        self, rate: float, depth: float, channel: int = 0
-    ) -> SetVibratoCommand:
+    def set_vibrato(self, rate: float, depth: float, channel: int = 0) -> SetVibratoCommand:
         return SetVibratoCommand(self._hub, rate, depth, channel)
 
-    def note_on(
-        self, pitch: int, velocity: int = 100, channel: int = 0
-    ) -> NoteOnCommand:
+    def note_on(self, pitch: int, velocity: int = 100, channel: int = 0) -> NoteOnCommand:
         return NoteOnCommand(self._hub, pitch, velocity, channel)
 
-    def note_off(
-        self, pitch: Optional[int] = None, channel: int = 0
-    ) -> NoteOffCommand:
+    def note_off(self, pitch: Optional[int] = None, channel: int = 0) -> NoteOffCommand:
         return NoteOffCommand(self._hub, pitch, channel)
 
     def update_session(self, **updates: Any) -> UpdateSessionCommand:
         return UpdateSessionCommand(self._hub, **updates)
 
-    def compound(
-        self, commands: List[Command], description: str = ""
-    ) -> CompoundCommand:
+    def compound(self, commands: List[Command], description: str = "") -> CompoundCommand:
         return CompoundCommand(self._hub, commands, description)
 
 

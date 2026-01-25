@@ -1,0 +1,74 @@
+# Model Sizing Configuration
+# 
+# This file defines the model roster with sizes, classification, and memory budgets
+
+models:
+  # Emotion models (50-300M params, always-on)
+  emotion_classifier:
+    name: "emotion_classifier"
+    size_params_m: 150  # 150M parameters
+    size_bytes: 600000000  # ~600 MB (INT8 quantized)
+    role: "resident"  # Always loaded
+    model_type: "emotion"
+    quantized: true
+    
+  # Intent mapping models (100-500M params, always-on)
+  intent_mapper:
+    name: "intent_mapper"
+    size_params_m: 300  # 300M parameters
+    size_bytes: 1200000000  # ~1.2 GB (INT8 quantized)
+    role: "resident"  # Always loaded
+    model_type: "intent"
+    quantized: true
+    
+  # Harmony / structure models (200-800M params, on-demand)
+  harmony_intelligence:
+    name: "harmony_intelligence"
+    size_params_m: 500  # 500M parameters
+    size_bytes: 2000000000  # ~2 GB (INT8 quantized)
+    role: "on_demand"  # Loaded when needed
+    model_type: "harmony"
+    quantized: true
+    
+  # LLM / text reasoning (not local by default, optional fallback)
+  text_llm_fallback:
+    name: "text_llm_fallback"
+    size_params_m: 1000  # 1B parameters
+    size_bytes: 4000000000  # ~4 GB (INT8 quantized)
+    role: "offline"  # Never loaded during audio
+    model_type: "llm"
+    quantized: true
+
+# Memory budgets per mode
+memory_budgets:
+  # Safe, boring, professional setup
+  safe:
+    total_gb: 1.8  # ~1.8 GB for models
+    resident_gb: 1.8  # All resident models
+    on_demand_gb: 0.0
+    
+  # Aggressive but survivable
+  aggressive:
+    total_gb: 4.0  # ~4 GB for models
+    resident_gb: 1.8  # Resident models
+    on_demand_gb: 2.2  # On-demand models
+    
+  # Absolute ceiling on 16 GB system
+  maximum:
+    total_gb: 5.0  # ~5 GB for models
+    resident_gb: 1.8  # Resident models
+    on_demand_gb: 3.2  # On-demand models
+
+# Hot-swap rules
+hot_swap:
+  # Never evict resident models
+  never_evict_resident: true
+  
+  # Never swap during audio callback
+  never_swap_during_audio: true
+  
+  # Minimum time between swaps (ms)
+  min_swap_interval_ms: 1000
+  
+  # Graceful degradation when models missing
+  allow_graceful_degradation: true

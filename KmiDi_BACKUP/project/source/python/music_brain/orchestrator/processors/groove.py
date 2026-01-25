@@ -11,20 +11,21 @@ Usage:
     result = await processor.process(groove_input, context)
 """
 
-from typing import Any, Dict, Optional, List
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
-from music_brain.orchestrator.processors.base import BaseProcessor
 from music_brain.orchestrator.interfaces import (
+    ExecutionContext,
     ProcessorConfig,
     ProcessorResult,
-    ExecutionContext,
 )
+from music_brain.orchestrator.processors.base import BaseProcessor
 
 
 @dataclass
 class GrooveInput:
     """Input data for groove processing."""
+
     tempo: int = 120
     genre: str = "straight"
     emotion: str = "neutral"
@@ -36,6 +37,7 @@ class GrooveInput:
 @dataclass
 class GrooveOutput:
     """Output from groove processing."""
+
     pattern_name: str
     tempo_bpm: int
     swing_factor: float
@@ -96,7 +98,7 @@ class GrooveProcessor(BaseProcessor):
         if isinstance(input_data, dict):
             return input_data.get("tempo", 120) > 0
         # Accept HarmonyOutput from previous stage - we'll get params from context
-        if hasattr(input_data, 'chords'):
+        if hasattr(input_data, "chords"):
             return True
         return False
 
@@ -128,7 +130,7 @@ class GrooveProcessor(BaseProcessor):
                 )
             elif isinstance(input_data, GrooveInput):
                 groove_input = input_data
-            elif hasattr(input_data, 'chords'):
+            elif hasattr(input_data, "chords"):
                 # Input is from HarmonyProcessor - get params from context
                 groove_input = GrooveInput(
                     tempo=context.get_shared("tempo", 120),
@@ -179,9 +181,9 @@ class GrooveProcessor(BaseProcessor):
         # Lazy import to avoid circular dependencies
         from music_brain.session.intent_processor import (
             generate_groove_constant_displacement,
-            generate_groove_tempo_fluctuation,
-            generate_groove_metric_modulation,
             generate_groove_dropped_beats,
+            generate_groove_metric_modulation,
+            generate_groove_tempo_fluctuation,
         )
 
         rule = input_data.rule_to_break

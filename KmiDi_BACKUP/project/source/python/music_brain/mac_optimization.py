@@ -9,12 +9,12 @@ Features:
   - Quantization support (CPU, not available on MPS yet)
 """
 
-import torch
-import numpy as np
-import time
 import logging
-from typing import Dict, Optional, Tuple
+import time
 from dataclasses import dataclass
+from typing import Dict, Optional, Tuple
+
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MacHardwareInfo:
     """Information about Mac hardware"""
+
     device: str
     mps_available: bool
     mps_device_name: Optional[str]
@@ -63,7 +64,6 @@ class MacOptimizationLayer:
             device = "mps"
             # Try to detect M-chip generation
             try:
-                import platform
                 chip_type = self._detect_m_chip()
             except Exception:
                 chip_type = "unknown"
@@ -74,6 +74,7 @@ class MacOptimizationLayer:
         # Get memory info (approximate)
         try:
             import psutil
+
             total_memory = psutil.virtual_memory().total / (1024**3)
         except (ImportError, Exception):
             total_memory = 16.0  # Assume 16GB for M-series
@@ -84,13 +85,14 @@ class MacOptimizationLayer:
             mps_device_name="Apple Neural Engine" if mps_available else None,
             total_memory_gb=total_memory,
             is_metal_capable=mps_available,
-            chip_type=chip_type
+            chip_type=chip_type,
         )
 
     def _detect_m_chip(self) -> str:
         """Detect M-chip generation"""
         try:
             import platform
+
             version = platform.platform()
 
             if "14." in version or "15." in version:
@@ -126,10 +128,7 @@ class MacOptimizationLayer:
         return "\n".join(lines)
 
     def optimize_model_for_inference(
-        self,
-        model: torch.nn.Module,
-        enable_compile: bool = True,
-        enable_quantize: bool = False
+        self, model: torch.nn.Module, enable_compile: bool = True, enable_quantize: bool = False
     ) -> torch.nn.Module:
         """
         Apply all optimizations to model for inference.
@@ -160,6 +159,7 @@ class MacOptimizationLayer:
         """Apply torch.compile() for optimization (Python 3.11+, PyTorch 2.0+)"""
         try:
             import sys
+
             if sys.version_info >= (3, 11):
                 # Try compile with fallback
                 model = torch.compile(model, backend="eager")
@@ -181,11 +181,7 @@ class MacOptimizationLayer:
                 self._log("⚠ Quantization only supported on CPU; skipping")
                 return model
 
-            model = torch.quantization.quantize_dynamic(
-                model,
-                {torch.nn.Linear},
-                dtype=torch.qint8
-            )
+            model = torch.quantization.quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
 
             self._log("✓ Applied INT8 dynamic quantization")
 
@@ -199,7 +195,7 @@ class MacOptimizationLayer:
         model: torch.nn.Module,
         input_tensor: torch.Tensor,
         max_batch_size: int = 16,
-        show_memory: bool = False
+        show_memory: bool = False,
     ) -> torch.Tensor:
         """
         Run inference with memory management for M4 Pro.
@@ -228,10 +224,10 @@ class MacOptimizationLayer:
         # Otherwise, split into chunks
         outputs = []
         for i in range(0, batch_size, max_batch_size):
-            chunk = input_tensor[i:i+max_batch_size]
+            chunk = input_tensor[i : i + max_batch_size]
 
             if show_memory:
-                self._log(f"  Processing chunk {i//max_batch_size + 1}: {chunk.shape}")
+                self._log(f"  Processing chunk {i // max_batch_size + 1}: {chunk.shape}")
 
             with torch.no_grad():
                 output = model(chunk)
@@ -245,7 +241,7 @@ class MacOptimizationLayer:
         model: torch.nn.Module,
         input_shape: Tuple[int, ...],
         num_runs: int = 100,
-        warmup_runs: int = 10
+        warmup_runs: int = 10,
     ) -> Dict[str, float]:
         """
         Profile inference latency on target device.
@@ -294,7 +290,7 @@ class MacOptimizationLayer:
             "throughput_hz": 1000 / latency_ms,
             "device": self.device,
             "input_shape": input_shape,
-            "num_runs": num_runs
+            "num_runs": num_runs,
         }
 
     def benchmark_models(
@@ -302,7 +298,7 @@ class MacOptimizationLayer:
         models: Dict[str, torch.nn.Module],
         input_shape: Tuple[int, ...],
         warmup_runs: int = 5,
-        timing_runs: int = 50
+        timing_runs: int = 50,
     ) -> Dict[str, Dict[str, float]]:
         """
         Benchmark multiple models and compare.
@@ -321,9 +317,7 @@ class MacOptimizationLayer:
         for name, model in models.items():
             self._log(f"Benchmarking {name}...")
             stats = self.profile_inference_latency(
-                model, input_shape,
-                num_runs=timing_runs,
-                warmup_runs=warmup_runs
+                model, input_shape, num_runs=timing_runs, warmup_runs=warmup_runs
             )
             results[name] = stats
 
@@ -334,16 +328,14 @@ class MacOptimizationLayer:
         self._log("-" * 60)
 
         for name, stats in results.items():
-            self._log(f"{name:<20} {stats['mean_latency_ms']:<15.2f} "
-                     f"{stats['throughput_hz']:<15.1f}")
+            self._log(
+                f"{name:<20} {stats['mean_latency_ms']:<15.2f} {stats['throughput_hz']:<15.1f}"
+            )
 
         return results
 
     def estimate_memory_usage(
-        self,
-        model: torch.nn.Module,
-        input_shape: Tuple[int, ...],
-        batch_size: int = 1
+        self, model: torch.nn.Module, input_shape: Tuple[int, ...], batch_size: int = 1
     ) -> Dict[str, float]:
         """
         Estimate memory usage for model + inference.
@@ -358,17 +350,17 @@ class MacOptimizationLayer:
         """
         # Model parameters
         model_size_bytes = sum(p.numel() * p.element_size() for p in model.parameters())
-        model_size_mb = model_size_bytes / (1024 ** 2)
+        model_size_mb = model_size_bytes / (1024**2)
 
         # Input buffer
         full_input_shape = (batch_size,) + input_shape
         input_buffer = torch.zeros(full_input_shape, device=self.device)
-        input_size_mb = input_buffer.element_size() * input_buffer.nelement() / (1024 ** 2)
+        input_size_mb = input_buffer.element_size() * input_buffer.nelement() / (1024**2)
 
         # Output (estimate from running model)
         with torch.no_grad():
             output = model(input_buffer)
-        output_size_mb = output.element_size() * output.nelement() / (1024 ** 2)
+        output_size_mb = output.element_size() * output.nelement() / (1024**2)
 
         # Optimizer state (if training)
         optimizer_state_mb = model_size_mb * 2  # Approximate: gradient + momentum
@@ -380,7 +372,7 @@ class MacOptimizationLayer:
             "total_inference_mb": model_size_mb + input_size_mb + output_size_mb,
             "optimizer_state_mb": optimizer_state_mb,
             "total_training_mb": model_size_mb * 3 + input_size_mb,  # Model + gradients + optimizer
-            "available_memory_gb": self.hardware_info.total_memory_gb
+            "available_memory_gb": self.hardware_info.total_memory_gb,
         }
 
     def get_optimization_recommendations(self) -> Dict[str, str]:

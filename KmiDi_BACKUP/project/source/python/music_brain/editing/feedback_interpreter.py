@@ -4,11 +4,12 @@ Feedback Interpreter - Maps natural language descriptions to parameters.
 Provides preview and confirmation workflow for natural language editing.
 """
 
-from typing import Dict, List, Optional, Any
 from music_brain.editing.natural_language_processor import (
-    NaturalLanguageProcessor,
+    FeedbackInterpreter as BaseFeedbackInterpreter,
+)
+from music_brain.editing.natural_language_processor import (
     InterpretedFeedback,
-    FeedbackInterpreter as BaseFeedbackInterpreter
+    NaturalLanguageProcessor,
 )
 
 # Re-export for convenience

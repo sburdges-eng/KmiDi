@@ -33,38 +33,33 @@ import asyncio
 import atexit
 import json
 import os
-import time
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
+# Import DAW bridges to trigger auto-registration
+from . import daw_bridges  # noqa: F401
 from .ableton_bridge import (
     AbletonBridge,
     MIDIConfig,
     OSCConfig,
-    TransportState,
-    VoiceCC,
-    VOWEL_FORMANTS,
 )
 from .crewai_music_agents import (
-    AGENT_ROLES,
     LLMBackend,
     LocalLLM,
     LocalLLMConfig,
     MusicCrew,
     OnnxLLM,
     OnnxLLMConfig,
-    ToolManager,
 )
 from .daw_protocol import (
-    DAWType,
-    DAWRegistry,
     BaseDAWBridge,
+    DAWType,
     get_daw_bridge,
 )
-from .events import Event, EventBus, EventPriority
+from .events import EventBus
 from .reactive import ComputedValue, Observable, StateStore
 from .unified_hub import (
     DAWState,
@@ -74,12 +69,9 @@ from .unified_hub import (
     VoiceState,
 )
 
-# Import DAW bridges to trigger auto-registration
-from . import daw_bridges  # noqa: F401
-
 # Optional WebSocket support
 try:
-    from .websocket_api import WebSocketServer, WEBSOCKETS_AVAILABLE
+    from .websocket_api import WEBSOCKETS_AVAILABLE, WebSocketServer
 except ImportError:
     WEBSOCKETS_AVAILABLE = False
     WebSocketServer = None  # type: ignore
@@ -202,7 +194,7 @@ class AsyncUnifiedHub:
     # Lifecycle
     # =========================================================================
 
-    async def start(self) -> "AsyncUnifiedHub":
+    async def start(self) -> AsyncUnifiedHub:
         """Start the hub and all components."""
         self._running = True
         self._loop = asyncio.get_running_loop()
@@ -225,7 +217,7 @@ class AsyncUnifiedHub:
 
         # Initialize voice (needs MIDI bridge for formant control)
         midi_bridge = None
-        if self._bridge and hasattr(self._bridge, 'midi'):
+        if self._bridge and hasattr(self._bridge, "midi"):
             midi_bridge = self._bridge.midi
         self._voice = LocalVoiceSynth(midi_bridge)
 
@@ -261,7 +253,7 @@ class AsyncUnifiedHub:
         # Determine DAW type
         if self._daw_type:
             daw_type = self._daw_type
-        elif hasattr(self.config, 'daw_type') and self.config.daw_type:
+        elif hasattr(self.config, "daw_type") and self.config.daw_type:
             # Map string to DAWType enum
             daw_type_map = {
                 "ableton": DAWType.ABLETON,
@@ -293,6 +285,7 @@ class AsyncUnifiedHub:
             # For Ableton, also keep legacy bridge reference for voice synth
             if self._daw.daw_type == DAWType.ABLETON:
                 from .daw_bridges import AbletonDAWBridge
+
                 if isinstance(self._daw, AbletonDAWBridge):
                     self._bridge = self._daw._osc_bridge  # type: ignore
 
@@ -391,7 +384,7 @@ class AsyncUnifiedHub:
             daw.connect,
         )
 
-        daw_name = daw.daw_type.value if hasattr(daw, 'daw_type') else "ableton"
+        daw_name = daw.daw_type.value if hasattr(daw, "daw_type") else "ableton"
         self._daw_state.update(connected=success)
         await self.events.emit("daw.connected", {"success": success, "daw": daw_name})
         return success
@@ -673,7 +666,7 @@ class AsyncUnifiedHub:
     async def load_session(self, filepath: str) -> bool:
         """Load a session from file."""
         try:
-            with open(filepath, "r") as f:
+            with open(filepath) as f:
                 data = json.load(f)
 
             self._session_state.set(SessionConfig(**data.get("session", {})))
@@ -738,7 +731,7 @@ class AsyncUnifiedHub:
     # Context Manager
     # =========================================================================
 
-    async def __aenter__(self) -> "AsyncUnifiedHub":
+    async def __aenter__(self) -> AsyncUnifiedHub:
         return await self.start()
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
@@ -778,4 +771,3 @@ __all__ = [
     "get_async_hub",
     "stop_async_hub",
 ]
-

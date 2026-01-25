@@ -11,11 +11,11 @@
  *          and note/chord visualization.
  */
 
-#include <juce_gui_basics/juce_gui_basics.h>
-#include <juce_audio_basics/juce_audio_basics.h>
-#include <vector>
-#include <set>
 #include <functional>
+#include <juce_audio_basics/juce_audio_basics.h>
+#include <juce_gui_basics/juce_gui_basics.h>
+#include <set>
+#include <vector>
 
 namespace kelly {
 
@@ -31,53 +31,54 @@ namespace kelly {
  */
 class VirtualKeyboard : public juce::Component {
 public:
-    VirtualKeyboard();
-    ~VirtualKeyboard() override = default;
+  VirtualKeyboard();
+  ~VirtualKeyboard() override = default;
 
-    void paint(juce::Graphics& g) override;
-    void resized() override;
-    void mouseDown(const juce::MouseEvent& e) override;
-    void mouseUp(const juce::MouseEvent& e) override;
+  void paint(juce::Graphics &g) override;
+  void resized() override;
+  void mouseDown(const juce::MouseEvent &e) override;
+  void mouseUp(const juce::MouseEvent &e) override;
 
-    /**
-     * Highlight notes (for scale/chord visualization)
-     */
-    void highlightNotes(const std::vector<int>& midiNotes);
+  /**
+   * Highlight notes (for scale/chord visualization)
+   */
+  void highlightNotes(const std::vector<int> &midiNotes);
 
-    /**
-     * Clear highlights
-     */
-    void clearHighlights();
+  /**
+   * Clear highlights
+   */
+  void clearHighlights();
 
-    /**
-     * Set keyboard range (start note, number of octaves)
-     */
-    void setRange(int startNote, int numOctaves);
+  /**
+   * Set keyboard range (start note, number of octaves)
+   */
+  void setRange(int startNote, int numOctaves);
 
-    // Callbacks
-    std::function<void(int midiNote, bool isNoteOn)> onNotePlayed;
+  // Callbacks
+  std::function<void(int midiNote, bool isNoteOn)> onNotePlayed;
 
 private:
-    // Keyboard configuration
-    int startNote_ = 60;  // C4
-    int numOctaves_ = 2;
-    std::set<int> highlightedNotes_;
-    std::set<int> pressedNotes_;
+  // Keyboard configuration
+  int startNote_ = 60; // C4
+  int numOctaves_ = 2;
+  std::set<int> highlightedNotes_;
+  std::set<int> pressedNotes_;
 
-    struct Key {
-        int midiNote;
-        bool isBlack;
-        juce::Rectangle<float> bounds;
-    };
+  struct Key {
+    int midiNote;
+    bool isBlack;
+    juce::Rectangle<float> bounds;
+  };
 
-    std::vector<Key> keys_;
+  std::vector<Key> keys_;
 
-    void setupKeys();
-    int getMidiNoteAtPoint(juce::Point<float> point) const;
-    void drawKey(juce::Graphics& g, const Key& key, bool isPressed, bool isHighlighted);
-    juce::Rectangle<float> getKeyBounds(int midiNote) const;
+  void setupKeys();
+  int getMidiNoteAtPoint(juce::Point<float> point) const;
+  void drawKey(juce::Graphics &g, const Key &key, bool isPressed,
+               bool isHighlighted);
+  juce::Rectangle<float> getKeyBounds(int midiNote) const;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VirtualKeyboard)
+  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VirtualKeyboard)
 };
 
 } // namespace kelly

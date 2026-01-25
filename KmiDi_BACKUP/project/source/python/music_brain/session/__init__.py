@@ -7,35 +7,35 @@ Intent-based generation with rule-breaking support.
 ML-based melody generation with emotion-aware patterns.
 """
 
-from music_brain.session.teaching import RuleBreakingTeacher
-from music_brain.session.interrogator import SongInterrogator
 from music_brain.session.intent_schema import (
-    CompleteSongIntent,
-    SongRoot,
-    SongIntent,
-    TechnicalConstraints,
-    SystemDirective,
-    HarmonyRuleBreak,
-    RhythmRuleBreak,
+    RULE_BREAKING_EFFECTS,
     ArrangementRuleBreak,
-    ProductionRuleBreak,
-    VulnerabilityScale,
-    NarrativeArc,
+    CompleteSongIntent,
     CoreStakes,
     GrooveFeel,
-    suggest_rule_break,
+    HarmonyRuleBreak,
+    NarrativeArc,
+    ProductionRuleBreak,
+    RhythmRuleBreak,
+    SongIntent,
+    SongRoot,
+    SystemDirective,
+    TechnicalConstraints,
+    VulnerabilityScale,
     get_rule_breaking_info,
-    validate_intent,
     list_all_rules,
-    RULE_BREAKING_EFFECTS,
+    suggest_rule_break,
+    validate_intent,
 )
+from music_brain.session.interrogator import SongInterrogator
 from music_brain.session.ml_melody_generator import (
-    MLMelodyGenerator,
-    MelodyConfig,
     GeneratedMelody,
+    MelodyConfig,
+    MLMelodyGenerator,
     create_melody_generator,
     generate_melody,
 )
+from music_brain.session.teaching import RuleBreakingTeacher
 
 __all__ = [
     # Teaching

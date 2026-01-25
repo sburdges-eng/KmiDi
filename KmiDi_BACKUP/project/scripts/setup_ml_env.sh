@@ -33,20 +33,20 @@ INSTALL_MODE="standard"
 CLEAN_INSTALL=false
 
 for arg in "$@"; do
-    case $arg in
-        --full)
-            INSTALL_MODE="full"
-            shift
-            ;;
-        --minimal)
-            INSTALL_MODE="minimal"
-            shift
-            ;;
-        --clean)
-            CLEAN_INSTALL=true
-            shift
-            ;;
-    esac
+  case $arg in
+    --full)
+      INSTALL_MODE="full"
+      shift
+      ;;
+    --minimal)
+      INSTALL_MODE="minimal"
+      shift
+      ;;
+    --clean)
+      CLEAN_INSTALL=true
+      shift
+      ;;
+  esac
 done
 
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════╗${NC}"
@@ -60,18 +60,18 @@ OS=$(uname -s)
 ARCH=$(uname -m)
 
 if [ "$OS" != "Darwin" ]; then
-    echo -e "${RED}✗ This script is designed for macOS${NC}"
-    exit 1
+  echo -e "${RED}✗ This script is designed for macOS${NC}"
+  exit 1
 fi
 
 if [ "$ARCH" = "arm64" ]; then
-    echo -e "${GREEN}✓ Apple Silicon detected (M1/M2/M3)${NC}"
-    echo -e "  Metal Performance Shaders (MPS) backend will be available"
-    CHIP="apple_silicon"
+  echo -e "${GREEN}✓ Apple Silicon detected (M1/M2/M3)${NC}"
+  echo -e "  Metal Performance Shaders (MPS) backend will be available"
+  CHIP="apple_silicon"
 else
-    echo -e "${YELLOW}⚠ Intel Mac detected${NC}"
-    echo -e "  Training will use CPU only (slower)"
-    CHIP="intel"
+  echo -e "${YELLOW}⚠ Intel Mac detected${NC}"
+  echo -e "  Training will use CPU only (slower)"
+  CHIP="intel"
 fi
 
 # Check Python
@@ -79,29 +79,29 @@ echo ""
 echo -e "${YELLOW}→ Checking Python installation...${NC}"
 
 if command -v python3 &> /dev/null; then
-    PYTHON_VERSION=$(python3 --version 2>&1 | cut -d' ' -f2)
-    PYTHON_MAJOR=$(echo "$PYTHON_VERSION" | cut -d'.' -f1)
-    PYTHON_MINOR=$(echo "$PYTHON_VERSION" | cut -d'.' -f2)
-    
-    if [ "$PYTHON_MAJOR" -ge 3 ] && [ "$PYTHON_MINOR" -ge 10 ]; then
-        echo -e "${GREEN}✓ Python $PYTHON_VERSION found${NC}"
-    else
-        echo -e "${RED}✗ Python 3.10+ required (found $PYTHON_VERSION)${NC}"
-        echo -e "  Install with: brew install python@3.11"
-        exit 1
-    fi
-else
-    echo -e "${RED}✗ Python 3 not found${NC}"
+  PYTHON_VERSION=$(python3 --version 2>&1 | cut -d' ' -f2)
+  PYTHON_MAJOR=$(echo "$PYTHON_VERSION" | cut -d'.' -f1)
+  PYTHON_MINOR=$(echo "$PYTHON_VERSION" | cut -d'.' -f2)
+
+  if [ "$PYTHON_MAJOR" -ge 3 ] && [ "$PYTHON_MINOR" -ge 10 ]; then
+    echo -e "${GREEN}✓ Python $PYTHON_VERSION found${NC}"
+  else
+    echo -e "${RED}✗ Python 3.10+ required (found $PYTHON_VERSION)${NC}"
     echo -e "  Install with: brew install python@3.11"
     exit 1
+  fi
+else
+  echo -e "${RED}✗ Python 3 not found${NC}"
+  echo -e "  Install with: brew install python@3.11"
+  exit 1
 fi
 
 # Clean existing venv if requested
 if [ "$CLEAN_INSTALL" = true ] && [ -d "$VENV_DIR" ]; then
-    echo ""
-    echo -e "${YELLOW}→ Removing existing virtual environment...${NC}"
-    rm -rf "$VENV_DIR"
-    echo -e "${GREEN}✓ Removed $VENV_DIR${NC}"
+  echo ""
+  echo -e "${YELLOW}→ Removing existing virtual environment...${NC}"
+  rm -rf "$VENV_DIR"
+  echo -e "${GREEN}✓ Removed $VENV_DIR${NC}"
 fi
 
 # Create virtual environment
@@ -109,10 +109,10 @@ echo ""
 echo -e "${YELLOW}→ Creating virtual environment...${NC}"
 
 if [ -d "$VENV_DIR" ]; then
-    echo -e "${GREEN}✓ Virtual environment already exists at $VENV_DIR${NC}"
+  echo -e "${GREEN}✓ Virtual environment already exists at $VENV_DIR${NC}"
 else
-    python3 -m venv "$VENV_DIR"
-    echo -e "${GREEN}✓ Created virtual environment at $VENV_DIR${NC}"
+  python3 -m venv "$VENV_DIR"
+  echo -e "${GREEN}✓ Created virtual environment at $VENV_DIR${NC}"
 fi
 
 # Activate venv
@@ -129,20 +129,20 @@ echo ""
 echo -e "${YELLOW}→ Installing dependencies (mode: $INSTALL_MODE)...${NC}"
 
 case $INSTALL_MODE in
-    minimal)
-        echo "Installing minimal dependencies..."
-        pip install numpy scipy librosa soundfile torch torchaudio tqdm pyyaml
-        ;;
-    full)
-        echo "Installing all dependencies..."
-        pip install -r "$PROJECT_ROOT/requirements.txt"
-        # Optional extras
-        pip install openai-whisper pedalboard
-        ;;
-    *)
-        echo "Installing standard dependencies..."
-        pip install -r "$PROJECT_ROOT/requirements.txt"
-        ;;
+  minimal)
+    echo "Installing minimal dependencies..."
+    pip install numpy scipy librosa soundfile torch torchaudio tqdm pyyaml
+    ;;
+  full)
+    echo "Installing all dependencies..."
+    pip install -r "$PROJECT_ROOT/requirements.txt"
+    # Optional extras
+    pip install openai-whisper pedalboard
+    ;;
+  *)
+    echo "Installing standard dependencies..."
+    pip install -r "$PROJECT_ROOT/requirements.txt"
+    ;;
 esac
 
 echo -e "${GREEN}✓ Dependencies installed${NC}"
@@ -182,31 +182,26 @@ EOF
 echo ""
 echo -e "${YELLOW}→ Creating directory structure...${NC}"
 
-# Audio data location - Updated: Files moved from external SSD to local storage (2025-01-09)
-# Priority: Environment variable > New location > Legacy SSD (if remounted)
-AUDIO_DATA_ROOT="${KELLY_AUDIO_DATA_ROOT:-/Users/seanburdges/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data}"
+# Audio data goes to external SSD for space/performance
+AUDIO_DATA_ROOT="/Volumes/Extreme SSD"
+if [ -d "$AUDIO_DATA_ROOT" ]; then
+  echo -e "${GREEN}✓ External SSD detected: $AUDIO_DATA_ROOT${NC}"
+  mkdir -p "$AUDIO_DATA_ROOT/kelly-audio-data/raw"
+  mkdir -p "$AUDIO_DATA_ROOT/kelly-audio-data/processed"
+  mkdir -p "$AUDIO_DATA_ROOT/kelly-audio-data/downloads"
+  mkdir -p "$AUDIO_DATA_ROOT/kelly-audio-data/cache"
 
-# Check if directory exists or parent exists (for creation)
-if [ -d "$AUDIO_DATA_ROOT" ] || [ -d "$(dirname "$AUDIO_DATA_ROOT")" ]; then
-    echo -e "${GREEN}✓ Data directory: $AUDIO_DATA_ROOT${NC}"
-    # AUDIO_DATA_ROOT is already the kelly-audio-data directory, so create subdirs directly
-    mkdir -p "$AUDIO_DATA_ROOT/raw"
-    mkdir -p "$AUDIO_DATA_ROOT/processed"
-    mkdir -p "$AUDIO_DATA_ROOT/downloads"
-    mkdir -p "$AUDIO_DATA_ROOT/cache"
-    
-    # Create symlink in project if not exists (optional)
-    if [ ! -L "$PROJECT_ROOT/data/audio" ] && [ ! -d "$PROJECT_ROOT/data/audio" ]; then
-        ln -sf "$AUDIO_DATA_ROOT" "$PROJECT_ROOT/data/audio"
-        echo -e "${GREEN}✓ Symlinked data/audio → $AUDIO_DATA_ROOT${NC}"
-    fi
+  # Create symlink in project if not exists
+  if [ ! -L "$PROJECT_ROOT/data/audio" ]; then
+    ln -sf "$AUDIO_DATA_ROOT/kelly-audio-data" "$PROJECT_ROOT/data/audio"
+    echo -e "${GREEN}✓ Symlinked data/audio → $AUDIO_DATA_ROOT/kelly-audio-data${NC}"
+  fi
 else
-    echo -e "${YELLOW}⚠ Data directory not found at $AUDIO_DATA_ROOT${NC}"
-    echo -e "  Audio data will be stored locally in data/audio"
-    mkdir -p "$PROJECT_ROOT/data/audio/raw"
-    mkdir -p "$PROJECT_ROOT/data/audio/processed"
-    mkdir -p "$PROJECT_ROOT/data/audio/downloads"
-    mkdir -p "$PROJECT_ROOT/data/audio/cache"
+  echo -e "${YELLOW}⚠ External SSD not found at $AUDIO_DATA_ROOT${NC}"
+  echo -e "  Audio data will be stored locally in data/audio"
+  mkdir -p "$PROJECT_ROOT/data/audio/raw"
+  mkdir -p "$PROJECT_ROOT/data/audio/processed"
+  mkdir -p "$PROJECT_ROOT/data/audio/downloads"
 fi
 
 mkdir -p "$PROJECT_ROOT/data/raw"
@@ -253,9 +248,8 @@ echo -e "  ${GREEN}python scripts/train.py --model emotion_recognizer --epochs 5
 echo ""
 echo -e "Hardware: ${YELLOW}$CHIP${NC}"
 if [ "$CHIP" = "apple_silicon" ]; then
-    echo -e "  Use device='mps' in PyTorch for GPU acceleration"
+  echo -e "  Use device='mps' in PyTorch for GPU acceleration"
 else
-    echo -e "  Training will use CPU (consider smaller batch sizes)"
+  echo -e "  Training will use CPU (consider smaller batch sizes)"
 fi
 echo ""
-

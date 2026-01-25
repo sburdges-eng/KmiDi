@@ -64,7 +64,9 @@ def load_predictions(path: Path) -> List[Dict[str, object]]:
     return preds
 
 
-def compute_confusion(truth: Dict[str, Example], preds: List[Dict[str, object]]) -> Tuple[Dict[str, Dict[str, int]], List[Tuple[float, bool]]]:
+def compute_confusion(
+    truth: Dict[str, Example], preds: List[Dict[str, object]]
+) -> Tuple[Dict[str, Dict[str, int]], List[Tuple[float, bool]]]:
     conf: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
     prob_records: List[Tuple[float, bool]] = []
 
@@ -145,11 +147,28 @@ def expected_calibration_error(prob_records: List[Tuple[float, bool]], n_bins: i
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Evaluate audio emotion predictions without external deps.")
-    parser.add_argument("--manifest", type=Path, default=Path("datasets/validation/audio_emotion_manifest.csv"), help="Ground truth manifest CSV.")
+    parser = argparse.ArgumentParser(
+        description="Evaluate audio emotion predictions without external deps."
+    )
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=Path("datasets/validation/audio_emotion_manifest.csv"),
+        help="Ground truth manifest CSV.",
+    )
     parser.add_argument("--predictions", type=Path, required=True, help="Predictions JSONL file.")
-    parser.add_argument("--split", type=str, default="val_gold", help="Split to evaluate (e.g., val_gold, train, val, test).")
-    parser.add_argument("--output-dir", type=Path, default=Path("output/audio_emotion_eval"), help="Directory to write metrics.json.")
+    parser.add_argument(
+        "--split",
+        type=str,
+        default="val_gold",
+        help="Split to evaluate (e.g., val_gold, train, val, test).",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("output/audio_emotion_eval"),
+        help="Directory to write metrics.json.",
+    )
     args = parser.parse_args()
 
     truth = load_manifest(args.manifest, args.split)

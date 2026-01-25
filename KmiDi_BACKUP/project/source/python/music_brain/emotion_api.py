@@ -75,18 +75,21 @@ HAS_ARRANGEMENT = False
 
 try:
     from music_brain.visualization.spectocloud import Spectocloud
+
     HAS_SPECTOCLOUD = True
 except ImportError:
     pass
 
 try:
     from music_brain.intelligence.suggestion_engine import SuggestionEngine
+
     HAS_SUGGESTIONS = True
 except ImportError:
     pass
 
 try:
     from music_brain.generative.arrangement import ArrangementGenerator
+
     HAS_ARRANGEMENT = True
 except ImportError:
     pass
@@ -108,6 +111,7 @@ INTENT_EXAMPLES = {
 @dataclass
 class GeneratedMusic:
     """Complete music generation result."""
+
     emotional_state: EmotionalState
     musical_params: MusicalParameters
     mixer_params: MixerParameters
@@ -121,8 +125,12 @@ class GeneratedMusic:
         """Convert to dictionary for serialization."""
         return {
             "emotional_state": {
-                "valence": self.emotional_state.valence.value if isinstance(self.emotional_state.valence, Valence) else self.emotional_state.valence,
-                "arousal": self.emotional_state.arousal.value if isinstance(self.emotional_state.arousal, Arousal) else self.emotional_state.arousal,
+                "valence": self.emotional_state.valence.value
+                if isinstance(self.emotional_state.valence, Valence)
+                else self.emotional_state.valence,
+                "arousal": self.emotional_state.arousal.value
+                if isinstance(self.emotional_state.arousal, Arousal)
+                else self.emotional_state.arousal,
                 "primary_emotion": self.emotional_state.primary_emotion,
                 "secondary_emotions": self.emotional_state.secondary_emotions,
             },
@@ -138,9 +146,7 @@ class GeneratedMusic:
             "production_preset": (
                 self.production_preset.as_dict() if self.production_preset else None
             ),
-            "groove_settings": (
-                self.groove_settings.to_dict() if self.groove_settings else None
-            ),
+            "groove_settings": (self.groove_settings.to_dict() if self.groove_settings else None),
             "paths": {
                 "midi": self.midi_path,
                 "automation": self.automation_path,
@@ -260,7 +266,6 @@ class MusicBrain:
             "mourning": (-0.8, 0.2, "grief"),
             "melancholy": (-0.5, 0.2, "grief"),
             "sorrow": (-0.7, 0.3, "grief"),
-
             # Negative valence, high arousal
             "anxiety": (-0.6, 0.8, "anxiety"),
             "anxious": (-0.6, 0.8, "anxiety"),
@@ -268,21 +273,18 @@ class MusicBrain:
             "panic": (-0.7, 0.9, "anxiety"),
             "fear": (-0.6, 0.8, "anxiety"),
             "worry": (-0.5, 0.6, "anxiety"),
-
             # Negative valence, high arousal (anger)
             "anger": (-0.7, 0.9, "anger"),
             "angry": (-0.7, 0.9, "anger"),
             "rage": (-0.9, 0.95, "anger"),
             "fury": (-0.8, 0.95, "anger"),
             "frustration": (-0.5, 0.7, "anger"),
-
             # Positive valence, low arousal
             "calm": (0.3, 0.2, "calm"),
             "peaceful": (0.4, 0.2, "calm"),
             "serene": (0.4, 0.15, "calm"),
             "relaxed": (0.3, 0.25, "calm"),
             "content": (0.4, 0.3, "calm"),
-
             # Positive valence, high arousal
             "hope": (0.6, 0.6, "hope"),
             "hopeful": (0.6, 0.6, "hope"),
@@ -290,27 +292,22 @@ class MusicBrain:
             "happy": (0.7, 0.6, "hope"),
             "excited": (0.7, 0.8, "hope"),
             "euphoria": (0.9, 0.9, "hope"),
-
             # Mixed/complex
             "nostalgia": (-0.2, 0.3, "nostalgia"),
             "nostalgic": (-0.2, 0.3, "nostalgia"),
             "bittersweet": (-0.1, 0.4, "nostalgia"),
             "wistful": (-0.2, 0.3, "nostalgia"),
-
             "tension": (-0.4, 0.7, "tension"),
             "suspense": (-0.4, 0.7, "tension"),
             "building": (-0.3, 0.6, "tension"),
             "uneasy": (-0.4, 0.6, "tension"),
-
             "catharsis": (0.2, 0.8, "catharsis"),
             "release": (0.3, 0.7, "catharsis"),
             "breakthrough": (0.4, 0.8, "catharsis"),
-
             "dissociation": (-0.3, 0.2, "dissociation"),
             "disconnected": (-0.3, 0.2, "dissociation"),
             "numb": (-0.4, 0.1, "dissociation"),
             "detached": (-0.3, 0.2, "dissociation"),
-
             "intimacy": (0.5, 0.3, "intimacy"),
             "intimate": (0.5, 0.3, "intimacy"),
             "vulnerable": (0.1, 0.4, "intimacy"),
@@ -319,10 +316,7 @@ class MusicBrain:
 
     # ========== DECLARATIVE API ==========
 
-    def generate_from_intent(
-        self,
-        intent: CompleteSongIntent
-    ) -> GeneratedMusic:
+    def generate_from_intent(self, intent: CompleteSongIntent) -> GeneratedMusic:
         """
         Generate complete music from intent (simple, one-step).
 
@@ -333,7 +327,11 @@ class MusicBrain:
             GeneratedMusic with all parameters
         """
         # Extract emotion from intent
-        mood = intent.song_intent.mood_primary.lower() if intent.song_intent.mood_primary else "neutral"
+        mood = (
+            intent.song_intent.mood_primary.lower()
+            if intent.song_intent.mood_primary
+            else "neutral"
+        )
 
         # Map mood to valence/arousal
         if mood in self._emotion_keywords:
@@ -351,7 +349,7 @@ class MusicBrain:
         emotional_state = EmotionalState(
             valence=Valence(int(valence * 2)),  # Convert to enum
             arousal=Arousal(int((arousal - 0.5) * 4)),  # Convert to enum
-            primary_emotion=emotion_key
+            primary_emotion=emotion_key,
         )
 
         # Get musical parameters
@@ -365,10 +363,7 @@ class MusicBrain:
             musical_params.tempo_suggested = (tempo_min + tempo_max) // 2
 
         # Map to mixer parameters
-        mixer_params = self.emotion_mapper.map_emotion_to_mixer(
-            emotional_state,
-            musical_params
-        )
+        mixer_params = self.emotion_mapper.map_emotion_to_mixer(emotional_state, musical_params)
 
         production_preset = self.production_mapper.get_production_preset(
             emotion_key,
@@ -388,13 +383,10 @@ class MusicBrain:
             mixer_params=mixer_params,
             production_preset=production_preset,
             groove_settings=groove_settings,
-            intent=intent
+            intent=intent,
         )
 
-    def generate_from_text(
-        self,
-        emotional_text: str
-    ) -> GeneratedMusic:
+    def generate_from_text(self, emotional_text: str) -> GeneratedMusic:
         """
         Generate music from emotional text description.
 
@@ -455,10 +447,7 @@ class MusicBrain:
         musical_params = get_parameters_for_state(emotional_state)
 
         # Map to mixer parameters
-        mixer_params = self.emotion_mapper.map_emotion_to_mixer(
-            emotional_state,
-            musical_params
-        )
+        mixer_params = self.emotion_mapper.map_emotion_to_mixer(emotional_state, musical_params)
 
         # Determine intensity from arousal
         if arousal > 0.7:
@@ -499,11 +488,7 @@ class MusicBrain:
         }
         return mapping.get(neural_emotion, "neutral")
 
-    def export_to_logic(
-        self,
-        music: GeneratedMusic,
-        output_base: str
-    ) -> Dict[str, str]:
+    def export_to_logic(self, music: GeneratedMusic, output_base: str) -> Dict[str, str]:
         """
         Export to Logic Pro format.
 
@@ -698,17 +683,22 @@ class MusicBrain:
             # Convert emotion trajectory to MIDI-like events for visualization
             midi_events = []
             for i, emo in enumerate(emotions):
-                midi_events.append({
-                    "type": "note_on",
-                    "time": i * 0.5,  # 0.5s per emotion point
-                    "note": int(60 + emo.get("valence", 0) * 12),
-                    "velocity": int(64 + emo.get("arousal", 0.5) * 50),
-                })
+                midi_events.append(
+                    {
+                        "type": "note_on",
+                        "time": i * 0.5,  # 0.5s per emotion point
+                        "note": int(60 + emo.get("valence", 0) * 12),
+                        "velocity": int(64 + emo.get("arousal", 0.5) * 50),
+                    }
+                )
             viz.process_midi(midi_events, len(emotions) * 0.5, emotion_trajectory=emotions)
             if output_path:
                 viz.render_static_frame(len(viz.frames) // 2, output_path=output_path, show=False)
                 return {"path": output_path, "frames": len(viz.frames)}
-            return {"frames": len(viz.frames), "data": viz.export_data if hasattr(viz, "export_data") else None}
+            return {
+                "frames": len(viz.frames),
+                "data": viz.export_data if hasattr(viz, "export_data") else None,
+            }
         return {"error": "Spectocloud not available"}
 
     def get_dynamics_profile(
@@ -822,7 +812,7 @@ class MusicBrain:
 
     # ========== FLUENT API ==========
 
-    def process(self, emotional_text: str) -> 'FluentChain':
+    def process(self, emotional_text: str) -> "FluentChain":
         """Start a fluent processing chain."""
         return FluentChain(emotional_text, self)
 
@@ -848,7 +838,7 @@ class FluentChain:
         self.mixer_params: Optional[MixerParameters] = None
         self._paths: Dict[str, str] = {}
 
-    def map_to_emotion(self) -> 'FluentChain':
+    def map_to_emotion(self) -> "FluentChain":
         """Map text to emotional state."""
         text_lower = self.emotional_text.lower()
 
@@ -865,11 +855,11 @@ class FluentChain:
         self.emotional_state = EmotionalState(
             valence=Valence(max(-2, min(2, int(valence * 2)))),
             arousal=Arousal(max(-2, min(2, int((arousal - 0.5) * 4)))),
-            primary_emotion=primary_emotion
+            primary_emotion=primary_emotion,
         )
         return self
 
-    def map_to_music(self) -> 'FluentChain':
+    def map_to_music(self) -> "FluentChain":
         """Map emotion to musical parameters."""
         if not self.emotional_state:
             self.map_to_emotion()
@@ -878,19 +868,18 @@ class FluentChain:
         self.musical_params = get_parameters_for_state(self.emotional_state)
         return self
 
-    def map_to_mixer(self) -> 'FluentChain':
+    def map_to_mixer(self) -> "FluentChain":
         """Map to mixer parameters."""
         if not self.musical_params:
             self.map_to_music()
         if self.emotional_state is None or self.musical_params is None:
             raise RuntimeError("emotional_state or musical_params not initialized after map_to_music()")
         self.mixer_params = self.brain.emotion_mapper.map_emotion_to_mixer(
-            self.emotional_state,
-            self.musical_params
+            self.emotional_state, self.musical_params
         )
         return self
 
-    def with_tempo(self, tempo: int) -> 'FluentChain':
+    def with_tempo(self, tempo: int) -> "FluentChain":
         """Override tempo."""
         if not self.musical_params:
             self.map_to_music()
@@ -899,7 +888,7 @@ class FluentChain:
         self.musical_params.tempo_suggested = tempo
         return self
 
-    def with_dissonance(self, dissonance: float) -> 'FluentChain':
+    def with_dissonance(self, dissonance: float) -> "FluentChain":
         """Override dissonance level (0.0-1.0)."""
         if not self.musical_params:
             self.map_to_music()
@@ -908,7 +897,7 @@ class FluentChain:
         self.musical_params.dissonance = max(0.0, min(1.0, dissonance))
         return self
 
-    def with_timing(self, feel: str) -> 'FluentChain':
+    def with_timing(self, feel: str) -> "FluentChain":
         """Override timing feel (ahead, on, behind)."""
         if not self.musical_params:
             self.map_to_music()
@@ -930,15 +919,14 @@ class FluentChain:
         if self.mixer_params is None:
             raise RuntimeError("mixer_params not initialized after map_to_mixer()")
 
-        automation_path = export_to_logic_automation(
-            self.mixer_params,
-            output_path
-        )
+        automation_path = export_to_logic_automation(self.mixer_params, output_path)
         self._paths["automation"] = automation_path
 
         return {
             "automation": automation_path,
-            "emotional_state": str(self.emotional_state.primary_emotion) if self.emotional_state else "neutral",
+            "emotional_state": str(self.emotional_state.primary_emotion)
+            if self.emotional_state
+            else "neutral",
             "tempo": str(self.musical_params.tempo_suggested) if self.musical_params else "unknown",
         }
 
@@ -958,15 +946,23 @@ class FluentChain:
         return {
             "emotional_text": self.emotional_text,
             "emotional_state": {
-                "primary_emotion": self.emotional_state.primary_emotion if self.emotional_state else None,
+                "primary_emotion": self.emotional_state.primary_emotion
+                if self.emotional_state
+                else None,
                 "valence": self.emotional_state.valence if self.emotional_state else None,
                 "arousal": self.emotional_state.arousal if self.emotional_state else None,
-            } if self.emotional_state else None,
+            }
+            if self.emotional_state
+            else None,
             "musical_params": {
                 "tempo": self.musical_params.tempo_suggested if self.musical_params else None,
                 "dissonance": self.musical_params.dissonance if self.musical_params else None,
-                "timing_feel": self.musical_params.timing_feel.value if self.musical_params else None,
-            } if self.musical_params else None,
+                "timing_feel": self.musical_params.timing_feel.value
+                if self.musical_params
+                else None,
+            }
+            if self.musical_params
+            else None,
             "mixer_params": self.mixer_params.to_dict() if self.mixer_params else None,
             "paths": self._paths,
         }
@@ -976,27 +972,33 @@ class FluentChain:
         lines = []
 
         if self.emotional_state:
-            lines.extend([
-                f"Emotion: {self.emotional_state.primary_emotion}",
-                f"Valence: {self.emotional_state.valence}",
-                f"Arousal: {self.emotional_state.arousal}",
-            ])
+            lines.extend(
+                [
+                    f"Emotion: {self.emotional_state.primary_emotion}",
+                    f"Valence: {self.emotional_state.valence}",
+                    f"Arousal: {self.emotional_state.arousal}",
+                ]
+            )
 
         if self.musical_params:
-            lines.extend([
-                "",
-                f"Tempo: {self.musical_params.tempo_suggested} BPM",
-                f"Timing: {self.musical_params.timing_feel.value}",
-                f"Dissonance: {self.musical_params.dissonance:.0%}",
-            ])
+            lines.extend(
+                [
+                    "",
+                    f"Tempo: {self.musical_params.tempo_suggested} BPM",
+                    f"Timing: {self.musical_params.timing_feel.value}",
+                    f"Dissonance: {self.musical_params.dissonance:.0%}",
+                ]
+            )
 
         if self.mixer_params:
-            lines.extend([
-                "",
-                f"Mixer: {self.mixer_params.description}",
-                f"Reverb: {self.mixer_params.reverb_mix:.0%}",
-                f"Compression: {self.mixer_params.compression_ratio:.1f}:1",
-            ])
+            lines.extend(
+                [
+                    "",
+                    f"Mixer: {self.mixer_params.description}",
+                    f"Reverb: {self.mixer_params.reverb_mix:.0%}",
+                    f"Compression: {self.mixer_params.compression_ratio:.1f}:1",
+                ]
+            )
 
         return "\n".join(lines)
 
@@ -1004,6 +1006,7 @@ class FluentChain:
 # =============================================================================
 # CONVENIENCE FUNCTIONS
 # =============================================================================
+
 
 def quick_generate(emotional_text: str) -> GeneratedMusic:
     """Quick helper to generate music from text."""
@@ -1039,12 +1042,14 @@ if __name__ == "__main__":
 
     # Example 2: Fluent API
     print("\n[Example 2: Fluent Chain]")
-    result = (brain.process("anxiety and tension")
-                   .map_to_emotion()
-                   .map_to_music()
-                   .with_tempo(110)
-                   .map_to_mixer()
-                   .get())
+    result = (
+        brain.process("anxiety and tension")
+        .map_to_emotion()
+        .map_to_music()
+        .with_tempo(110)
+        .map_to_mixer()
+        .get()
+    )
     print(f"  Emotion: {result['emotional_state']['primary_emotion']}")
     print(f"  Tempo: {result['musical_params']['tempo']}")
     print(f"  Compression: {result['mixer_params']['compression']['ratio']:.1f}:1")
@@ -1059,7 +1064,7 @@ if __name__ == "__main__":
         technical_mode="major",
         tempo_range=(78, 86),
         rule_to_break="HARMONY_ModalInterchange",
-        rule_justification="Bbm creates bittersweet hope"
+        rule_justification="Bbm creates bittersweet hope",
     )
     music_from_intent = brain.generate_from_intent(intent)
     print(f"  Title: {intent.title}")

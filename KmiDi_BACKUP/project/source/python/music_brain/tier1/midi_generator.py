@@ -17,12 +17,13 @@ Inference latency (M4 Pro MPS):
   - Total: <200ms for 32-note bar
 """
 
-import torch
-import numpy as np
-from typing import Dict, List, Tuple, Optional
-from pathlib import Path
-import time
 import logging
+import time
+from pathlib import Path
+from typing import Dict, List, Optional
+
+import numpy as np
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -35,14 +36,12 @@ class Tier1MIDIGenerator:
     Pure inference; no backpropagation.
     """
 
-    DEFAULT_CHECKPOINT_DIR = Path(__file__).parent.parent.parent / \
-        "ml_training" / "models" / "trained" / "checkpoints"
+    DEFAULT_CHECKPOINT_DIR = (
+        Path(__file__).parent.parent.parent / "ml_training" / "models" / "trained" / "checkpoints"
+    )
 
     def __init__(
-        self,
-        device: str = "auto",
-        checkpoint_dir: Optional[str] = None,
-        verbose: bool = True
+        self, device: str = "auto", checkpoint_dir: Optional[str] = None, verbose: bool = True
     ):
         """
         Initialize Tier 1 MIDI generator.
@@ -81,9 +80,9 @@ class Tier1MIDIGenerator:
         """Load all pretrained checkpoint models"""
         try:
             # Lazy import to avoid loading models until needed
-            from music_brain.models.melody_transformer import MelodyTransformer
-            from music_brain.models.harmony_predictor import HarmonyPredictor
             from music_brain.models.groove_predictor import GroovePredictor
+            from music_brain.models.harmony_predictor import HarmonyPredictor
+            from music_brain.models.melody_transformer import MelodyTransformer
 
             # Load MelodyTransformer
             self._log("Loading MelodyTransformer...")
@@ -134,7 +133,7 @@ class Tier1MIDIGenerator:
         length: int = 32,
         temperature: float = 0.9,
         nucleus_p: float = 0.9,
-        seed: Optional[int] = None
+        seed: Optional[int] = None,
     ) -> np.ndarray:
         """
         Generate melody from emotion embedding.
@@ -174,10 +173,7 @@ class Tier1MIDIGenerator:
 
                 # Nucleus sampling (top-p)
                 sorted_logits, sorted_indices = torch.sort(next_logits, descending=True)
-                cumsum_probs = torch.cumsum(
-                    torch.softmax(sorted_logits, dim=-1),
-                    dim=0
-                )
+                cumsum_probs = torch.cumsum(torch.softmax(sorted_logits, dim=-1), dim=0)
 
                 # Find cutoff index for nucleus
                 sorted_indices_to_remove = cumsum_probs > nucleus_p
@@ -185,7 +181,7 @@ class Tier1MIDIGenerator:
                 indices_to_remove = sorted_indices[sorted_indices_to_remove]
 
                 # Zero out low probability tokens
-                next_logits[indices_to_remove] = -float('inf')
+                next_logits[indices_to_remove] = -float("inf")
 
                 # Sample from remaining tokens
                 probs = torch.softmax(next_logits, dim=-1)
@@ -196,8 +192,11 @@ class Tier1MIDIGenerator:
                 if step < length - 1:
                     note_encoding = torch.zeros(1, 1, 128, device=self.device)
                     note_encoding[0, 0, next_note_idx] = 1.0
-                    context = torch.cat([context[:, 1:, :], note_encoding], dim=1) \
-                        if context.shape[1] > 1 else note_encoding
+                    context = (
+                        torch.cat([context[:, 1:, :], note_encoding], dim=1)
+                        if context.shape[1] > 1
+                        else note_encoding
+                    )
 
         elapsed_ms = (time.time() - start_time) * 1000
         self._log(f"Generated {length} melody notes in {elapsed_ms:.1f}ms")
@@ -205,9 +204,7 @@ class Tier1MIDIGenerator:
         return np.array(notes, dtype=np.int32)
 
     def generate_harmony(
-        self,
-        melody_notes: np.ndarray,
-        emotion_embedding: np.ndarray
+        self, melody_notes: np.ndarray, emotion_embedding: np.ndarray
     ) -> Dict[int, List[int]]:
         """
         Generate harmonic progression from melody + emotion.
@@ -253,9 +250,7 @@ class Tier1MIDIGenerator:
         return chord_map
 
     def generate_groove(
-        self,
-        emotion_embedding: np.ndarray,
-        base_tempo_bpm: int = 120
+        self, emotion_embedding: np.ndarray, base_tempo_bpm: int = 120
     ) -> Dict[str, float]:
         """
         Generate groove parameters (timing/velocity) from emotion.
@@ -281,13 +276,7 @@ class Tier1MIDIGenerator:
 
         # Extract first 5 groove parameters
         groove_params = {}
-        param_names = [
-            "swing",
-            "displacement",
-            "velocity_variance",
-            "note_density",
-            "humanization"
-        ]
+        param_names = ["swing", "displacement", "velocity_variance", "note_density", "humanization"]
 
         for i, name in enumerate(param_names):
             if i < groove_logits.shape[1]:
@@ -301,8 +290,8 @@ class Tier1MIDIGenerator:
         # Add derived parameters
         groove_params["tempo_bpm"] = base_tempo_bpm
         groove_params["note_density_range"] = (
-            int(4 * groove_params["note_density"]),     # Min notes per bar
-            int(16 * groove_params["note_density"])     # Max notes per bar
+            int(4 * groove_params["note_density"]),  # Min notes per bar
+            int(16 * groove_params["note_density"]),  # Max notes per bar
         )
 
         elapsed_ms = (time.time() - start_time) * 1000
@@ -315,7 +304,7 @@ class Tier1MIDIGenerator:
         emotion_embedding: np.ndarray,
         length: int = 32,
         temperature: float = 0.9,
-        include_dynamics: bool = False
+        include_dynamics: bool = False,
     ) -> Dict:
         """
         Complete Tier 1 MIDI generation pipeline.
@@ -357,11 +346,7 @@ class Tier1MIDIGenerator:
         return result
 
     def melody_to_midi_file(
-        self,
-        notes: np.ndarray,
-        groove_params: Dict,
-        output_path: str,
-        tempo_bpm: int = 120
+        self, notes: np.ndarray, groove_params: Dict, output_path: str, tempo_bpm: int = 120
     ):
         """
         Convert generated melody notes to MIDI file.
@@ -373,7 +358,8 @@ class Tier1MIDIGenerator:
             tempo_bpm: Beats per minute
         """
         try:
-            from music21 import stream, note as m21_note, tempo, instrument
+            from music21 import instrument, stream, tempo
+            from music21 import note as m21_note
 
             # Create score
             s = stream.Score()
@@ -396,9 +382,7 @@ class Tier1MIDIGenerator:
                     offset = quarter_duration * 0.3 * swing
 
                 # Apply velocity variation
-                velocity = max(40, min(127, int(
-                    64 + (np.random.randn() * 32 * velocity_variance)
-                )))
+                velocity = max(40, min(127, int(64 + (np.random.randn() * 32 * velocity_variance))))
 
                 # Create note
                 n = m21_note.Note(midi_note)
@@ -409,7 +393,7 @@ class Tier1MIDIGenerator:
             s.append(part)
 
             # Save
-            s.write('midi', fp=output_path)
+            s.write("midi", fp=output_path)
             self._log(f"✓ Saved MIDI: {output_path}")
 
         except ImportError:
@@ -418,9 +402,7 @@ class Tier1MIDIGenerator:
 
 # Convenience function
 def generate_tier1_midi(
-    emotion_embedding: np.ndarray,
-    length: int = 32,
-    device: str = "auto"
+    emotion_embedding: np.ndarray, length: int = 32, device: str = "auto"
 ) -> Dict:
     """
     Quick wrapper: Generate MIDI from emotion in one line.
@@ -442,11 +424,20 @@ def generate_tier1_midi(
 # ---------------------------------------------------------------------------
 class MelodyTransformer:
     """Stub melody generator with deterministic outputs for testing."""
+
     def __init__(self, device: str = "cpu", seed: Optional[int] = None):
         self._seed = seed
 
-    def generate_melody(self, emotion: str = "neutral", num_notes: int = 16, temperature: float = 0.7, seed: Optional[int] = None):
-        rng = np.random.default_rng(seed if seed is not None else self._seed or abs(hash(emotion)) % (2**32))
+    def generate_melody(
+        self,
+        emotion: str = "neutral",
+        num_notes: int = 16,
+        temperature: float = 0.7,
+        seed: Optional[int] = None,
+    ):
+        rng = np.random.default_rng(
+            seed if seed is not None else self._seed or abs(hash(emotion)) % (2**32)
+        )
         # Constrain to MIDI range 48-72 for pleasant outputs
         return rng.integers(low=48, high=72, size=num_notes, endpoint=False, dtype=int)
 
@@ -465,6 +456,7 @@ class MelodyTransformer:
 
 class HarmonyPredictor:
     """Stub harmony predictor returning simple triads."""
+
     def __init__(self, device: str = "cpu"):
         self.device = device
 
@@ -480,6 +472,7 @@ class HarmonyPredictor:
 
 class GroovePredictor:
     """Stub groove predictor returning simple pattern descriptors."""
+
     def __init__(self, device: str = "cpu"):
         self.device = device
 

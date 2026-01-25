@@ -4,9 +4,10 @@ Auto-tune style pitch correction utilities.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import List, Optional
 
 import numpy as np
 
@@ -116,10 +117,11 @@ class AutoTuneProcessor:
             if np.isnan(midi_val):
                 continue
             pitch_class = int(round(midi_val)) % 12
-            nearest = min(scale, key=lambda s: min(abs((pitch_class - s) % 12), abs((s - pitch_class) % 12)))
+            nearest = min(
+                scale, key=lambda s: min(abs((pitch_class - s) % 12), abs((s - pitch_class) % 12))
+            )
             diff = (nearest - pitch_class) % 12
             if diff > 6:
                 diff -= 12
             diffs.append(diff)
         return np.array(diffs, dtype=float)
-

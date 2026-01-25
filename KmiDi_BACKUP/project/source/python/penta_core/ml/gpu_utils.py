@@ -9,14 +9,15 @@ Provides unified GPU/accelerator detection across:
 - OpenCL
 """
 
-from dataclasses import dataclass
-from typing import List, Optional, Dict, Any
-from enum import Enum
 import platform
+from dataclasses import dataclass
+from enum import Enum
+from typing import List, Optional
 
 
 class DeviceType(Enum):
     """Supported device types."""
+
     CPU = "cpu"
     CUDA = "cuda"
     MPS = "mps"  # Apple Metal
@@ -28,6 +29,7 @@ class DeviceType(Enum):
 @dataclass
 class GPUDevice:
     """Information about a compute device."""
+
     device_type: DeviceType
     name: str
     index: int = 0
@@ -56,11 +58,13 @@ def get_available_devices() -> List[GPUDevice]:
     devices = []
 
     # Always add CPU
-    devices.append(GPUDevice(
-        device_type=DeviceType.CPU,
-        name=platform.processor() or "CPU",
-        index=0,
-    ))
+    devices.append(
+        GPUDevice(
+            device_type=DeviceType.CPU,
+            name=platform.processor() or "CPU",
+            index=0,
+        )
+    )
 
     # Check for CUDA
     cuda_devices = _detect_cuda_devices()
@@ -83,6 +87,7 @@ def _detect_cuda_devices() -> List[GPUDevice]:
 
     try:
         import torch
+
         if torch.cuda.is_available():
             for i in range(torch.cuda.device_count()):
                 props = torch.cuda.get_device_properties(i)
@@ -92,32 +97,36 @@ def _detect_cuda_devices() -> List[GPUDevice]:
                 torch.cuda.set_device(i)
                 memory_free = torch.cuda.memory_reserved(i) // (1024 * 1024)
 
-                devices.append(GPUDevice(
-                    device_type=DeviceType.CUDA,
-                    name=props.name,
-                    index=i,
-                    memory_total_mb=memory_total,
-                    memory_free_mb=memory_total - memory_free,
-                    compute_capability=f"{props.major}.{props.minor}",
-                    backend_device_id=f"cuda:{i}",
-                ))
+                devices.append(
+                    GPUDevice(
+                        device_type=DeviceType.CUDA,
+                        name=props.name,
+                        index=i,
+                        memory_total_mb=memory_total,
+                        memory_free_mb=memory_total - memory_free,
+                        compute_capability=f"{props.major}.{props.minor}",
+                        backend_device_id=f"cuda:{i}",
+                    )
+                )
 
     except ImportError:
         # Try pycuda
         try:
-            import pycuda.driver as cuda
             import pycuda.autoinit
+            import pycuda.driver as cuda
 
             for i in range(cuda.Device.count()):
                 dev = cuda.Device(i)
-                devices.append(GPUDevice(
-                    device_type=DeviceType.CUDA,
-                    name=dev.name(),
-                    index=i,
-                    memory_total_mb=dev.total_memory() // (1024 * 1024),
-                    compute_capability=f"{dev.compute_capability()[0]}.{dev.compute_capability()[1]}",
-                    backend_device_id=f"cuda:{i}",
-                ))
+                devices.append(
+                    GPUDevice(
+                        device_type=DeviceType.CUDA,
+                        name=dev.name(),
+                        index=i,
+                        memory_total_mb=dev.total_memory() // (1024 * 1024),
+                        compute_capability=f"{dev.compute_capability()[0]}.{dev.compute_capability()[1]}",
+                        backend_device_id=f"cuda:{i}",
+                    )
+                )
         except ImportError:
             pass
 
@@ -133,26 +142,30 @@ def _detect_mps_devices() -> List[GPUDevice]:
 
     try:
         import torch
+
         if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
             # Get GPU name from system
             import subprocess
+
             result = subprocess.run(
                 ["system_profiler", "SPDisplaysDataType"],
                 capture_output=True,
                 text=True,
             )
             gpu_name = "Apple GPU"
-            for line in result.stdout.split('\n'):
+            for line in result.stdout.split("\n"):
                 if "Chipset Model:" in line:
                     gpu_name = line.split(":")[-1].strip()
                     break
 
-            devices.append(GPUDevice(
-                device_type=DeviceType.MPS,
-                name=gpu_name,
-                index=0,
-                backend_device_id="mps",
-            ))
+            devices.append(
+                GPUDevice(
+                    device_type=DeviceType.MPS,
+                    name=gpu_name,
+                    index=0,
+                    backend_device_id="mps",
+                )
+            )
 
     except ImportError:
         pass
@@ -166,16 +179,19 @@ def _detect_rocm_devices() -> List[GPUDevice]:
 
     try:
         import torch
+
         if hasattr(torch, "hip") and torch.hip.is_available():
             for i in range(torch.hip.device_count()):
                 props = torch.hip.get_device_properties(i)
-                devices.append(GPUDevice(
-                    device_type=DeviceType.ROCM,
-                    name=props.name,
-                    index=i,
-                    memory_total_mb=props.total_memory // (1024 * 1024),
-                    backend_device_id=f"hip:{i}",
-                ))
+                devices.append(
+                    GPUDevice(
+                        device_type=DeviceType.ROCM,
+                        name=props.name,
+                        index=i,
+                        memory_total_mb=props.total_memory // (1024 * 1024),
+                        backend_device_id=f"hip:{i}",
+                    )
+                )
     except (ImportError, AttributeError):
         pass
 
@@ -204,9 +220,7 @@ def select_best_device(
 
     # Filter by memory
     gpu_devices = [
-        d for d in devices
-        if d.device_type != DeviceType.CPU
-        and d.memory_total_mb >= min_memory_mb
+        d for d in devices if d.device_type != DeviceType.CPU and d.memory_total_mb >= min_memory_mb
     ]
 
     if not gpu_devices:
@@ -310,6 +324,7 @@ def get_onnx_providers() -> List[str]:
     if platform.system() == "Windows":
         try:
             import onnxruntime
+
             if "DmlExecutionProvider" in onnxruntime.get_available_providers():
                 providers.append("DmlExecutionProvider")
         except ImportError:

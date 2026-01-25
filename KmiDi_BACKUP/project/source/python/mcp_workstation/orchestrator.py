@@ -6,26 +6,30 @@ Central coordinator for multi-AI collaboration on the iDAW project.
 
 import json
 import threading
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from pathlib import Path
+from typing import Dict, List, Optional
 
-from .models import (
-    AIAgent, Proposal, ProposalStatus, ProposalCategory,
-    Phase, PhaseStatus, WorkstationState,
+from .ai_specializations import (
+    get_capabilities,
+    suggest_task_assignment,
 )
-from .proposals import ProposalManager, format_proposal_list
-from .phases import PhaseManager, format_phase_progress, get_next_actions
 from .cpp_planner import CppTransitionPlanner, format_cpp_plan
 from .debug import (
-    get_debug, DebugCategory, DebugProtocol, trace,
-    log_info, log_error, log_warning,
+    DebugCategory,
+    get_debug,
+    log_error,
+    log_info,
+    trace,
 )
-from .ai_specializations import (
-    get_capabilities, get_best_agent_for_task,
-    suggest_task_assignment, TaskType, AI_CAPABILITIES,
+from .models import (
+    AIAgent,
+    PhaseStatus,
+    ProposalCategory,
+    ProposalStatus,
 )
-
+from .phases import PhaseManager, format_phase_progress, get_next_actions
+from .proposals import ProposalManager
 
 # =============================================================================
 # Workstation Configuration
@@ -39,6 +43,7 @@ DEBUG_LOG = "workstation_debug.log"
 # =============================================================================
 # Main Workstation Class
 # =============================================================================
+
 
 class Workstation:
     """
@@ -400,45 +405,59 @@ class Workstation:
 
         # Proposals summary
         prop_summary = self.proposals.get_proposal_summary()
-        lines.extend([
-            "PROPOSALS:",
-            f"  Total: {prop_summary['total']} | "
-            f"Approved: {prop_summary['by_status'].get('approved', 0)} | "
-            f"Pending: {prop_summary['by_status'].get('submitted', 0)}",
-            "",
-        ])
+        lines.extend(
+            [
+                "PROPOSALS:",
+                f"  Total: {prop_summary['total']} | "
+                f"Approved: {prop_summary['by_status'].get('approved', 0)} | "
+                f"Pending: {prop_summary['by_status'].get('submitted', 0)}",
+                "",
+            ]
+        )
 
         # Phase summary
         phase_summary = self.phases.get_phase_summary()
-        lines.extend([
-            f"PROJECT PHASE: {phase_summary['current_phase']}",
-            f"  Overall Progress: {phase_summary['overall_progress']:.0%}",
-            "",
-        ])
+        lines.extend(
+            [
+                f"PROJECT PHASE: {phase_summary['current_phase']}",
+                f"  Overall Progress: {phase_summary['overall_progress']:.0%}",
+                "",
+            ]
+        )
 
-        for p in phase_summary['phases']:
-            status_icon = "◐" if p["status"] == "in_progress" else ("●" if p["status"] == "completed" else "○")
-            lines.append(f"  {status_icon} Phase {p['phase_id']}: {p['name']} ({p['progress']:.0%})")
+        for p in phase_summary["phases"]:
+            status_icon = (
+                "◐"
+                if p["status"] == "in_progress"
+                else ("●" if p["status"] == "completed" else "○")
+            )
+            lines.append(
+                f"  {status_icon} Phase {p['phase_id']}: {p['name']} ({p['progress']:.0%})"
+            )
 
         lines.append("")
 
         # C++ transition
         cpp_summary = self.cpp_planner.get_progress_summary()
-        lines.extend([
-            "C++ TRANSITION:",
-            f"  Progress: {cpp_summary['overall_progress']:.0%}",
-            f"  Modules: {cpp_summary['modules_completed']}/{cpp_summary['total_modules']}",
-            f"  Ready to start: {', '.join(cpp_summary['ready_to_start'][:3])}...",
-            "",
-        ])
+        lines.extend(
+            [
+                "C++ TRANSITION:",
+                f"  Progress: {cpp_summary['overall_progress']:.0%}",
+                f"  Modules: {cpp_summary['modules_completed']}/{cpp_summary['total_modules']}",
+                f"  Ready to start: {', '.join(cpp_summary['ready_to_start'][:3])}...",
+                "",
+            ]
+        )
 
         # Next actions
         next_actions = get_next_actions(self.phases)
         if next_actions:
-            lines.extend([
-                "NEXT ACTIONS:",
-                *[f"  • {action}" for action in next_actions[:5]],
-            ])
+            lines.extend(
+                [
+                    "NEXT ACTIONS:",
+                    *[f"  • {action}" for action in next_actions[:5]],
+                ]
+            )
 
         return "\n".join(lines)
 
@@ -459,7 +478,7 @@ class Workstation:
         }
 
         state_file = self.storage_path / STATE_FILE
-        with open(state_file, 'w') as f:
+        with open(state_file, "w") as f:
             json.dump(state, f, indent=2)
 
         log_info(
@@ -479,13 +498,12 @@ class Workstation:
             return
 
         try:
-            with open(state_file, 'r') as f:
+            with open(state_file) as f:
                 state = json.load(f)
 
             # Restore active agents
             self.active_agents = {
-                AIAgent(a): datetime.now()
-                for a in state.get("active_agents", [])
+                AIAgent(a): datetime.now() for a in state.get("active_agents", [])
             }
 
             # Restore managers

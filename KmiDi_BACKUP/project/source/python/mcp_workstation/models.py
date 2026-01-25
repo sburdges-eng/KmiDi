@@ -4,16 +4,17 @@ MCP Workstation - Data Models
 Defines AI agents, proposals, phases, and workstation state.
 """
 
-from enum import Enum
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Dict, List, Optional, Any
 import json
 import uuid
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class AIAgent(str, Enum):
     """AI assistants participating in the workstation."""
+
     CLAUDE = "claude"
     CHATGPT = "chatgpt"
     GEMINI = "gemini"
@@ -32,6 +33,7 @@ class AIAgent(str, Enum):
 
 class ProposalStatus(str, Enum):
     """Status of a proposal."""
+
     DRAFT = "draft"
     SUBMITTED = "submitted"
     UNDER_REVIEW = "under_review"
@@ -43,6 +45,7 @@ class ProposalStatus(str, Enum):
 
 class ProposalCategory(str, Enum):
     """Category of improvement proposal."""
+
     # Core System
     ARCHITECTURE = "architecture"
     PERFORMANCE = "performance"
@@ -77,6 +80,7 @@ class ProposalCategory(str, Enum):
 
 class PhaseStatus(str, Enum):
     """Status of a project phase."""
+
     NOT_STARTED = "not_started"
     IN_PROGRESS = "in_progress"
     BLOCKED = "blocked"
@@ -87,6 +91,7 @@ class PhaseStatus(str, Enum):
 @dataclass
 class Proposal:
     """An improvement proposal from an AI agent."""
+
     id: str
     agent: AIAgent
     title: str
@@ -115,7 +120,9 @@ class Proposal:
             "agent": self.agent.value if isinstance(self.agent, AIAgent) else self.agent,
             "title": self.title,
             "description": self.description,
-            "category": self.category.value if isinstance(self.category, ProposalCategory) else self.category,
+            "category": self.category.value
+            if isinstance(self.category, ProposalCategory)
+            else self.category,
             "status": self.status.value if isinstance(self.status, ProposalStatus) else self.status,
             "priority": self.priority,
             "estimated_effort": self.estimated_effort,
@@ -134,7 +141,9 @@ class Proposal:
             agent=AIAgent(data["agent"]) if data.get("agent") else AIAgent.CLAUDE,
             title=data.get("title", ""),
             description=data.get("description", ""),
-            category=ProposalCategory(data["category"]) if data.get("category") else ProposalCategory.FEATURE_NEW,
+            category=ProposalCategory(data["category"])
+            if data.get("category")
+            else ProposalCategory.FEATURE_NEW,
             status=ProposalStatus(data["status"]) if data.get("status") else ProposalStatus.DRAFT,
             priority=data.get("priority", 5),
             estimated_effort=data.get("estimated_effort", "medium"),
@@ -161,6 +170,7 @@ class Proposal:
 @dataclass
 class PhaseTask:
     """A task within a project phase."""
+
     id: str
     name: str
     description: str
@@ -211,6 +221,7 @@ class PhaseTask:
 @dataclass
 class Phase:
     """A major project phase."""
+
     id: int
     name: str
     description: str
@@ -270,6 +281,7 @@ class Phase:
 @dataclass
 class WorkstationState:
     """Complete workstation state for persistence."""
+
     proposals: List[Proposal] = field(default_factory=list)
     phases: List[Phase] = field(default_factory=list)
     active_agents: List[AIAgent] = field(default_factory=list)
@@ -310,11 +322,11 @@ class WorkstationState:
 
     def save(self, path: str):
         """Save state to JSON file."""
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
     def load(cls, path: str) -> "WorkstationState":
         """Load state from JSON file."""
-        with open(path, 'r') as f:
+        with open(path) as f:
             return cls.from_dict(json.load(f))

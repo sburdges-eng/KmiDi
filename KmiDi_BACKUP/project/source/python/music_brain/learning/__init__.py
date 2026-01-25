@@ -11,47 +11,43 @@ Philosophy: "Meet the student where they are, take them where they need to go."
 """
 
 from music_brain.learning.curriculum import (
+    Curriculum,
+    CurriculumBuilder,
     DifficultyLevel,
-    SkillCategory,
     LearningObjective,
+    LearningPath,
     Lesson,
     Module,
-    Curriculum,
-    LearningPath,
-    CurriculumBuilder,
+    SkillCategory,
 )
-
-from music_brain.learning.resources import (
-    ResourceType,
-    LearningResource,
-    ResourceFetcher,
-    ResourceCache,
-    KNOWN_SOURCES,
-    get_recommended_sources,
-    generate_learning_plan,
-)
-
 from music_brain.learning.instruments import (
-    InstrumentFamily,
-    Instrument,
     INSTRUMENTS,
+    Instrument,
+    InstrumentFamily,
+    get_beginner_instruments,
     get_instrument,
     get_instruments_by_family,
-    get_beginner_instruments,
 )
-
-from music_brain.learning.pedagogy import (
-    TeachingStyle,
-    StudentProfile,
-    LearningPreference,
-    AdaptiveTeacher,
-    PedagogyEngine,
-    generate_ai_teaching_prompt,
-)
-
 from music_brain.learning.openweight_learning import (
     OpenWeightLearner,
     OpenWeightLearningManager,
+)
+from music_brain.learning.pedagogy import (
+    AdaptiveTeacher,
+    LearningPreference,
+    PedagogyEngine,
+    StudentProfile,
+    TeachingStyle,
+    generate_ai_teaching_prompt,
+)
+from music_brain.learning.resources import (
+    KNOWN_SOURCES,
+    LearningResource,
+    ResourceCache,
+    ResourceFetcher,
+    ResourceType,
+    generate_learning_plan,
+    get_recommended_sources,
 )
 
 __all__ = [

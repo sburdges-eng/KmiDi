@@ -1,0 +1,124 @@
+{
+  "scan_timestamp": "2026-01-24T02:14:29.757535",
+  "total_files": 5,
+  "files": [
+    {
+      "path": "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/harmonypredictor.onnx",
+      "name": "harmonypredictor.onnx",
+      "type": "onnx",
+      "size": 11673820,
+      "size_mb": 11.13,
+      "size_gb": 0.01,
+      "last_modified": "2026-01-04T07:44:32.967982",
+      "directory": "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models",
+      "is_checkpoint": false,
+      "config_files": [
+        "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/harmonypredictor.json"
+      ]
+    },
+    {
+      "path": "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/melodytransformer.onnx",
+      "name": "melodytransformer.onnx",
+      "type": "onnx",
+      "size": 3347461,
+      "size_mb": 3.19,
+      "size_gb": 0.0,
+      "last_modified": "2026-01-04T08:02:08.909069",
+      "directory": "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models",
+      "is_checkpoint": false,
+      "config_files": [
+        "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/melodytransformer.json"
+      ]
+    },
+    {
+      "path": "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/emotionrecognizer.onnx",
+      "name": "emotionrecognizer.onnx",
+      "type": "onnx",
+      "size": 1689263,
+      "size_mb": 1.61,
+      "size_gb": 0.0,
+      "last_modified": "2026-01-04T07:47:34.275823",
+      "directory": "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models",
+      "is_checkpoint": false,
+      "config_files": [
+        "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/emotionrecognizer.json"
+      ]
+    },
+    {
+      "path": "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/groovepredictor.onnx",
+      "name": "groovepredictor.onnx",
+      "type": "onnx",
+      "size": 844319,
+      "size_mb": 0.81,
+      "size_gb": 0.0,
+      "last_modified": "2026-01-04T07:31:53.931714",
+      "directory": "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models",
+      "is_checkpoint": false,
+      "config_files": [
+        "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/groovepredictor.json"
+      ]
+    },
+    {
+      "path": "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/dynamicsengine.onnx",
+      "name": "dynamicsengine.onnx",
+      "type": "onnx",
+      "size": 54756,
+      "size_mb": 0.05,
+      "size_gb": 0.0,
+      "last_modified": "2026-01-04T07:20:56.275904",
+      "directory": "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models",
+      "is_checkpoint": false,
+      "config_files": [
+        "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/dynamicsengine.json"
+      ]
+    }
+  ],
+  "categories": {
+    "by_type": {
+      "onnx": 5
+    },
+    "checkpoints": [],
+    "large_models": [],
+    "very_large_models": [],
+    "recent_files": [
+      "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/harmonypredictor.onnx",
+      "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/melodytransformer.onnx",
+      "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/emotionrecognizer.onnx",
+      "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/groovepredictor.onnx",
+      "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/dynamicsengine.onnx"
+    ],
+    "with_configs": [
+      {
+        "path": "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/harmonypredictor.onnx",
+        "configs": [
+          "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/harmonypredictor.json"
+        ]
+      },
+      {
+        "path": "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/melodytransformer.onnx",
+        "configs": [
+          "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/melodytransformer.json"
+        ]
+      },
+      {
+        "path": "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/emotionrecognizer.onnx",
+        "configs": [
+          "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/emotionrecognizer.json"
+        ]
+      },
+      {
+        "path": "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/groovepredictor.onnx",
+        "configs": [
+          "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/groovepredictor.json"
+        ]
+      },
+      {
+        "path": "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/dynamicsengine.onnx",
+        "configs": [
+          "/Users/seanburdges/My Mac/Desktop/KmiDi-remote/models/dynamicsengine.json"
+        ]
+      }
+    ],
+    "total_size_gb": 0.01
+  }
+}

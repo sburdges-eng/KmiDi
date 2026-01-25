@@ -1,4 +1,5 @@
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from "@tauri-apps/api/core";
+import { useKellyBrain, IntentResult, GeneratedMidi } from "./useKellyBrain";
 
 export interface EmotionalIntent {
   core_wound?: string;
@@ -44,6 +45,7 @@ export type SpectocloudMode = "static" | "animation";
 export interface SpectocloudRenderRequest {
   midi_events?: Array<Record<string, any>>;
   midi_file_path?: string;
+  audio_file_path?: string; // MP3 or WAV file path
   duration?: number;
   emotion_trajectory?: Array<Record<string, any>>;
   mode?: SpectocloudMode;
@@ -77,42 +79,203 @@ export interface LyricsUpdateResponse {
 }
 
 export const useMusicBrain = () => {
+  const kellyBrain = useKellyBrain();
+
   const getEmotions = async () => {
     try {
-      const result = await invoke('get_emotions');
-      return result;
+      // Try KellyBrain first if initialized
+      if (kellyBrain.isInitialized) {
+        const emotions = await kellyBrain.getAvailableEmotions();
+        if (emotions) return emotions;
+      }
+
+      // Try REST API first (works in both browser and Tauri mode)
+      try {
+        console.log(
+          "Attempting REST API call to http://127.0.0.1:8000/emotions",
+        );
+        const resp = await fetch("http://127.0.0.1:8000/emotions", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!resp.ok) {
+          const errorText = await resp.text();
+          throw new Error(
+            `API returned ${resp.status}: ${resp.statusText}. ${errorText}`,
+          );
+        }
+
+        const result = await resp.json();
+        console.log("REST API emotions response:", result);
+        return result;
+      } catch (fetchError: any) {
+        console.warn("REST API call failed, trying Tauri invoke:", fetchError);
+
+        // Fallback to Tauri invoke (only works in Tauri app)
+        if (typeof window !== "undefined" && (window as any).__TAURI__) {
+          try {
+            const result = await invoke("get_emotions");
+            return result;
+          } catch (tauriError: any) {
+            // If both fail, throw helpful error
+            if (
+              fetchError.message?.includes("fetch") ||
+              fetchError.message?.includes("Failed to fetch") ||
+              fetchError.message?.includes("ECONNREFUSED")
+            ) {
+              throw new Error(
+                "Music Brain API is not running. Start it with: python -m music_brain.api\n\nMake sure the API is running at http://127.0.0.1:8000",
+              );
+            }
+            throw fetchError;
+          }
+        } else {
+          // In browser mode, throw helpful error
+          if (
+            fetchError.message?.includes("fetch") ||
+            fetchError.message?.includes("Failed to fetch") ||
+            fetchError.message?.includes("ECONNREFUSED")
+          ) {
+            throw new Error(
+              "Music Brain API is not running. Start it with: python -m music_brain.api\n\nMake sure the API is running at http://127.0.0.1:8000",
+            );
+          }
+          throw fetchError;
+        }
+      }
     } catch (error) {
-      console.error('Failed to get emotions:', error);
+      console.error("Failed to get emotions:", error);
       throw error;
     }
   };
 
   const generateMusic = async (request: GenerateRequest) => {
     try {
-      const result = await invoke('generate_music', { request });
-      return result;
+      // Try KellyBrain first if initialized
+      if (kellyBrain.isInitialized) {
+        const intent = await kellyBrain.fromText(
+          request.intent.emotional_intent,
+        );
+        if (intent) {
+          const midi = await kellyBrain.generateMidi(intent, 8);
+          if (midi) {
+            // Convert to expected format
+            return {
+              success: true,
+              intent,
+              midi,
+              source: "kelly_brain_cpp",
+            };
+          }
+        }
+      }
+
+      // Try REST API first (works in both browser and Tauri mode)
+      try {
+        console.log(
+          "Attempting REST API call to http://127.0.0.1:8000/generate",
+        );
+        const resp = await fetch("http://127.0.0.1:8000/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(request),
+        });
+
+        if (!resp.ok) {
+          const errorText = await resp.text();
+          throw new Error(
+            `API returned ${resp.status}: ${resp.statusText}. ${errorText}`,
+          );
+        }
+
+        const result = await resp.json();
+        console.log("REST API response:", result);
+
+        // The API returns { status, result, lyrics, midi_path?, audio_path?, output_path? }
+        // Extract audio file path from result if available
+        if (result?.audio_path) {
+          return result;
+        } else if (result?.output_path) {
+          return {
+            ...result,
+            audio_path: result.output_path,
+          };
+        } else if (result?.midi_path) {
+          // If we only have MIDI, use it as audio path (conversion would happen server-side)
+          return {
+            ...result,
+            audio_path: result.midi_path,
+            output_path: result.midi_path,
+          };
+        } else if (result?.result?.midi_path) {
+          // Nested in result object
+          return {
+            ...result,
+            audio_path: result.result.midi_path,
+            output_path: result.result.midi_path,
+          };
+        }
+
+        return result;
+      } catch (fetchError: any) {
+        console.error("REST API call failed:", fetchError);
+
+        // If fetch fails, try Tauri invoke (only works in Tauri app)
+        if (typeof window !== "undefined" && (window as any).__TAURI__) {
+          console.log("Falling back to Tauri invoke");
+          try {
+            const result = await invoke("generate_music", { request });
+            return result;
+          } catch (tauriError: any) {
+            // If both fail, throw helpful error
+            if (
+              fetchError.message?.includes("fetch") ||
+              fetchError.message?.includes("Failed to fetch") ||
+              fetchError.message?.includes("ECONNREFUSED")
+            ) {
+              throw new Error(
+                "Music Brain API is not running. Start it with: python -m music_brain.api\n\nMake sure the API is running at http://127.0.0.1:8000",
+              );
+            }
+            throw fetchError;
+          }
+        } else {
+          // In browser mode, throw helpful error
+          if (
+            fetchError.message?.includes("fetch") ||
+            fetchError.message?.includes("Failed to fetch") ||
+            fetchError.message?.includes("ECONNREFUSED")
+          ) {
+            throw new Error(
+              "Music Brain API is not running. Start it with: python -m music_brain.api\n\nMake sure the API is running at http://127.0.0.1:8000",
+            );
+          }
+          throw fetchError;
+        }
+      }
     } catch (error) {
-      console.error('Failed to generate music:', error);
+      console.error("Failed to generate music:", error);
       throw error;
     }
   };
 
   const interrogate = async (request: InterrogateRequest) => {
     try {
-      const result = await invoke('interrogate', { request });
+      const result = await invoke("interrogate", { request });
       return result;
     } catch (error) {
-      console.error('Failed to interrogate:', error);
+      console.error("Failed to interrogate:", error);
       throw error;
     }
   };
 
   const getHumanizerConfig = async (): Promise<HumanizerConfig> => {
     try {
-      const result = await invoke('get_humanizer_config');
+      const result = await invoke("get_humanizer_config");
       return result as HumanizerConfig;
     } catch (error) {
-      console.error('Failed to load humanizer config:', error);
+      console.error("Failed to load humanizer config:", error);
       throw error;
     }
   };
@@ -120,9 +283,9 @@ export const useMusicBrain = () => {
   const updateHumanizerConfig = async (
     payload: UpdateHumanizerConfigInput,
   ): Promise<HumanizerConfig> => {
-    const resp = await fetch('http://127.0.0.1:8000/config/humanizer', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+    const resp = await fetch("http://127.0.0.1:8000/config/humanizer", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     if (!resp.ok) {
@@ -134,8 +297,16 @@ export const useMusicBrain = () => {
   const renderSpectocloud = async (
     payload: SpectocloudRenderRequest,
   ): Promise<SpectocloudRenderResponse> => {
-    if ((!payload.midi_events || payload.midi_events.length === 0) && !payload.midi_file_path) {
-      throw new Error("provide midi_events or midi_file_path");
+    // Accept audio_file_path (MP3/WAV), midi_file_path, or midi_events
+    const hasInput =
+      payload.audio_file_path ||
+      payload.midi_file_path ||
+      (payload.midi_events && payload.midi_events.length > 0);
+
+    if (!hasInput) {
+      throw new Error(
+        "provide audio_file_path, midi_file_path, or midi_events",
+      );
     }
     if (payload.midi_events && payload.midi_events.length === 0) {
       throw new Error("midi_events cannot be empty");
@@ -143,33 +314,45 @@ export const useMusicBrain = () => {
     if (payload.duration !== undefined && payload.duration <= 0) {
       throw new Error("duration must be greater than 0 when provided");
     }
-    const resp = await fetch('http://127.0.0.1:8000/spectocloud/render', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+
+    console.log("Calling spectocloud render with:", payload);
+
+    const resp = await fetch("http://127.0.0.1:8000/spectocloud/render", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+
     if (!resp.ok) {
-      throw new Error(`Spectocloud render failed (${resp.status})`);
+      const errorText = await resp.text();
+      throw new Error(
+        `Spectocloud render failed (${resp.status}): ${errorText}`,
+      );
     }
-    return resp.json();
+
+    const result = await resp.json();
+    console.log("Spectocloud render response:", result);
+    return result;
   };
 
-  const setUserLyrics = async (lyrics: string): Promise<LyricsUpdateResponse> => {
+  const setUserLyrics = async (
+    lyrics: string,
+  ): Promise<LyricsUpdateResponse> => {
     try {
-      const result = await invoke('set_user_lyrics', { lyrics });
+      const result = await invoke("set_user_lyrics", { lyrics });
       return result as LyricsUpdateResponse;
     } catch (error) {
-      console.error('Failed to set user lyrics:', error);
+      console.error("Failed to set user lyrics:", error);
       throw error;
     }
   };
 
   const getUserLyrics = async (): Promise<LyricsState> => {
     try {
-      const result = await invoke('get_user_lyrics');
+      const result = await invoke("get_user_lyrics");
       return result as LyricsState;
     } catch (error) {
-      console.error('Failed to get user lyrics:', error);
+      console.error("Failed to get user lyrics:", error);
       throw error;
     }
   };
@@ -183,5 +366,17 @@ export const useMusicBrain = () => {
     renderSpectocloud,
     setUserLyrics,
     getUserLyrics,
+
+    // KellyBrain integration
+    kellyBrain,
+
+    // Direct KellyBrain methods for advanced usage
+    initializeKellyBrain: kellyBrain.initialize,
+    isKellyBrainInitialized: kellyBrain.isInitialized,
+    generateFromText: kellyBrain.fromText,
+    generateFromEmotion: kellyBrain.fromEmotion,
+    generateMidiDirect: kellyBrain.generateMidi,
+    setEmotionParameters: kellyBrain.setEmotionParameters,
+    getEmotionState: kellyBrain.getEmotionState,
   };
 };

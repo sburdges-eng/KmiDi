@@ -12,12 +12,9 @@ Usage:
 """
 
 import argparse
-import json
 import sys
-from typing import Optional
 
 from .storage import TodoStorage
-from .models import TodoStatus, TodoPriority
 
 
 def cmd_add(args, storage: TodoStorage):
@@ -161,9 +158,9 @@ def cmd_summary(args, storage: TodoStorage):
     print(f"  In Progress: {summary['in_progress']}")
     print(f"  Completed: {summary['completed']}")
 
-    if summary['by_priority']:
+    if summary["by_priority"]:
         print("\nBy Priority:")
-        for pri, count in summary['by_priority'].items():
+        for pri, count in summary["by_priority"].items():
             print(f"  {pri}: {count}")
 
 
@@ -189,13 +186,10 @@ Examples:
     mcp-todo list --status pending
     mcp-todo complete abc123
     mcp-todo search "authentication"
-        """
+        """,
     )
 
-    parser.add_argument(
-        "--storage-dir",
-        help="Directory for TODO storage (default: ~/.mcp_todo/)"
-    )
+    parser.add_argument("--storage-dir", help="Directory for TODO storage (default: ~/.mcp_todo/)")
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
@@ -204,10 +198,11 @@ Examples:
     add_parser.add_argument("title", help="Task title")
     add_parser.add_argument("-d", "--description", help="Task description")
     add_parser.add_argument(
-        "-p", "--priority",
+        "-p",
+        "--priority",
         choices=["low", "medium", "high", "urgent"],
         default="medium",
-        help="Priority level"
+        help="Priority level",
     )
     add_parser.add_argument("-t", "--tags", help="Comma-separated tags")
     add_parser.add_argument("--project", help="Project name")
@@ -220,19 +215,13 @@ Examples:
     list_parser.add_argument(
         "--status",
         choices=["pending", "in_progress", "completed", "blocked", "cancelled"],
-        help="Filter by status"
+        help="Filter by status",
     )
     list_parser.add_argument(
-        "--priority",
-        choices=["low", "medium", "high", "urgent"],
-        help="Filter by priority"
+        "--priority", choices=["low", "medium", "high", "urgent"], help="Filter by priority"
     )
     list_parser.add_argument("-t", "--tags", help="Filter by tags (comma-separated)")
-    list_parser.add_argument(
-        "--hide-completed",
-        action="store_true",
-        help="Hide completed tasks"
-    )
+    list_parser.add_argument("--hide-completed", action="store_true", help="Hide completed tasks")
 
     # Get command
     get_parser = subparsers.add_parser("get", help="Get TODO details")

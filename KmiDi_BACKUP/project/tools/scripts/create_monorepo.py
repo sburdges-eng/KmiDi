@@ -15,18 +15,16 @@ Usage:
 """
 
 import argparse
-import os
 from pathlib import Path
-from typing import Dict, List
 
 
 class MonorepoGenerator:
     """Generate monorepo directory structure and configuration files."""
-    
+
     def __init__(self, output_dir: str, dry_run: bool = False):
         self.output_dir = Path(output_dir)
         self.dry_run = dry_run
-        
+
     def create_directory(self, path: Path):
         """Create a directory."""
         if self.dry_run:
@@ -34,71 +32,71 @@ class MonorepoGenerator:
         else:
             path.mkdir(parents=True, exist_ok=True)
             print(f"✓ Created directory: {path}")
-    
+
     def create_file(self, path: Path, content: str):
         """Create a file with content."""
         if self.dry_run:
             print(f"[DRY RUN] Would create file: {path}")
         else:
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(content, encoding='utf-8')
+            path.write_text(content, encoding="utf-8")
             print(f"✓ Created file: {path}")
-    
+
     def generate_structure(self):
         """Generate complete monorepo structure."""
         print(f"Generating Kelly Music Brain 2.0 monorepo at: {self.output_dir}")
-        
+
         # Root directories
         root_dirs = [
-            'packages/core/python/kelly_core',
-            'packages/core/cpp/include/kelly',
-            'packages/core/cpp/src',
-            'packages/cli/kelly_cli',
-            'packages/desktop/src/gui',
-            'packages/desktop/src/audio',
-            'packages/plugins/vst3',
-            'packages/plugins/clap',
-            'packages/mobile/ios',
-            'packages/mobile/android',
-            'packages/web/src',
-            'data/emotions',
-            'data/scales',
-            'data/genres',
-            'data/rule_breaking',
-            'vault/Songwriting_Guides',
-            'vault/Theory_Reference',
-            'tests/python',
-            'tests/cpp',
-            'tools/scripts',
-            'tools/templates',
-            'docs/architecture',
-            'docs/api',
-            'docs/guides',
-            'examples/python_api',
-            'examples/cli_usage',
-            'examples/plugin_integration',
-            'archive',
-            '.github/workflows',
-            '.github/ISSUE_TEMPLATE'
+            "packages/core/python/kelly_core",
+            "packages/core/cpp/include/kelly",
+            "packages/core/cpp/src",
+            "packages/cli/kelly_cli",
+            "packages/desktop/src/gui",
+            "packages/desktop/src/audio",
+            "packages/plugins/vst3",
+            "packages/plugins/clap",
+            "packages/mobile/ios",
+            "packages/mobile/android",
+            "packages/web/src",
+            "data/emotions",
+            "data/scales",
+            "data/genres",
+            "data/rule_breaking",
+            "vault/Songwriting_Guides",
+            "vault/Theory_Reference",
+            "tests/python",
+            "tests/cpp",
+            "tools/scripts",
+            "tools/templates",
+            "docs/architecture",
+            "docs/api",
+            "docs/guides",
+            "examples/python_api",
+            "examples/cli_usage",
+            "examples/plugin_integration",
+            "archive",
+            ".github/workflows",
+            ".github/ISSUE_TEMPLATE",
         ]
-        
+
         for dir_path in root_dirs:
             self.create_directory(self.output_dir / dir_path)
-        
+
         # Generate configuration files
         self.generate_root_configs()
         self.generate_package_configs()
         self.generate_github_workflows()
         self.generate_gitignore()
         self.generate_documentation()
-        
+
         print("\n✅ Monorepo structure generation complete!")
-    
+
     def generate_root_configs(self):
         """Generate root-level configuration files."""
-        
+
         # Root pyproject.toml
-        pyproject_content = '''[build-system]
+        pyproject_content = """[build-system]
 requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
@@ -182,11 +180,11 @@ python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
-'''
-        self.create_file(self.output_dir / 'pyproject.toml', pyproject_content)
-        
+"""
+        self.create_file(self.output_dir / "pyproject.toml", pyproject_content)
+
         # Root CMakeLists.txt
-        cmake_content = '''cmake_minimum_required(VERSION 3.27)
+        cmake_content = """cmake_minimum_required(VERSION 3.27)
 project(KellyMusicBrain VERSION 2.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -250,11 +248,11 @@ message(STATUS "  Build Mobile:   ${BUILD_MOBILE}")
 message(STATUS "  Build Tests:    ${BUILD_TESTS}")
 message(STATUS "  Tracy Profiling: ${ENABLE_TRACY}")
 message(STATUS "")
-'''
-        self.create_file(self.output_dir / 'CMakeLists.txt', cmake_content)
-        
+"""
+        self.create_file(self.output_dir / "CMakeLists.txt", cmake_content)
+
         # Root package.json for web workspace
-        package_json_content = '''{
+        package_json_content = """{
   "name": "kelly-music-brain",
   "version": "2.0.0",
   "private": true,
@@ -278,11 +276,11 @@ message(STATUS "")
   },
   "license": "MIT"
 }
-'''
-        self.create_file(self.output_dir / 'package.json', package_json_content)
-        
+"""
+        self.create_file(self.output_dir / "package.json", package_json_content)
+
         # .pre-commit-config.yaml
-        precommit_content = '''repos:
+        precommit_content = """repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.1.8
     hooks:
@@ -306,14 +304,14 @@ message(STATUS "")
       - id: check-added-large-files
         args: ['--maxkb=1000']
       - id: check-merge-conflict
-'''
-        self.create_file(self.output_dir / '.pre-commit-config.yaml', precommit_content)
-    
+"""
+        self.create_file(self.output_dir / ".pre-commit-config.yaml", precommit_content)
+
     def generate_package_configs(self):
         """Generate package-level configuration files."""
-        
+
         # Core Python package
-        core_py_pyproject = '''[build-system]
+        core_py_pyproject = """[build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
@@ -332,13 +330,10 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["kelly_core*"]
-'''
-        self.create_file(
-            self.output_dir / 'packages/core/python/pyproject.toml',
-            core_py_pyproject
-        )
-        
-        core_py_readme = '''# Kelly Core (Python)
+"""
+        self.create_file(self.output_dir / "packages/core/python/pyproject.toml", core_py_pyproject)
+
+        core_py_readme = """# Kelly Core (Python)
 
 Core emotion processing and music theory engine for Kelly Music Brain 2.0.
 
@@ -348,14 +343,11 @@ Core emotion processing and music theory engine for Kelly Music Brain 2.0.
 - Music theory analysis
 - Chord progression generation
 - Groove extraction and application
-'''
-        self.create_file(
-            self.output_dir / 'packages/core/python/README.md',
-            core_py_readme
-        )
-        
+"""
+        self.create_file(self.output_dir / "packages/core/python/README.md", core_py_readme)
+
         # Core C++ package
-        core_cpp_cmake = '''cmake_minimum_required(VERSION 3.27)
+        core_cpp_cmake = """cmake_minimum_required(VERSION 3.27)
 project(KellyCore VERSION 2.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -387,13 +379,10 @@ install(TARGETS KellyCore
 install(DIRECTORY include/kelly
     DESTINATION include
 )
-'''
-        self.create_file(
-            self.output_dir / 'packages/core/cpp/CMakeLists.txt',
-            core_cpp_cmake
-        )
-        
-        core_cpp_readme = '''# Kelly Core (C++)
+"""
+        self.create_file(self.output_dir / "packages/core/cpp/CMakeLists.txt", core_cpp_cmake)
+
+        core_cpp_readme = """# Kelly Core (C++)
 
 High-performance audio processing and DSP for Kelly Music Brain 2.0.
 
@@ -403,14 +392,11 @@ High-performance audio processing and DSP for Kelly Music Brain 2.0.
 - MIDI event handling
 - DSP algorithms
 - Audio format I/O
-'''
-        self.create_file(
-            self.output_dir / 'packages/core/cpp/README.md',
-            core_cpp_readme
-        )
-        
+"""
+        self.create_file(self.output_dir / "packages/core/cpp/README.md", core_cpp_readme)
+
         # CLI package
-        cli_pyproject = '''[build-system]
+        cli_pyproject = """[build-system]
 requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
@@ -433,14 +419,11 @@ daiw = "kelly_cli.main:app"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["kelly_cli*"]
-'''
-        self.create_file(
-            self.output_dir / 'packages/cli/pyproject.toml',
-            cli_pyproject
-        )
-        
+"""
+        self.create_file(self.output_dir / "packages/cli/pyproject.toml", cli_pyproject)
+
         # Desktop package
-        desktop_cmake = '''cmake_minimum_required(VERSION 3.27)
+        desktop_cmake = """cmake_minimum_required(VERSION 3.27)
 project(KellyDesktop VERSION 2.0.0 LANGUAGES CXX)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets Multimedia)
@@ -461,14 +444,11 @@ target_link_libraries(KellyDesktop PRIVATE
 install(TARGETS KellyDesktop
     RUNTIME DESTINATION bin
 )
-'''
-        self.create_file(
-            self.output_dir / 'packages/desktop/CMakeLists.txt',
-            desktop_cmake
-        )
-        
+"""
+        self.create_file(self.output_dir / "packages/desktop/CMakeLists.txt", desktop_cmake)
+
         # Plugins package
-        plugins_cmake = '''cmake_minimum_required(VERSION 3.27)
+        plugins_cmake = """cmake_minimum_required(VERSION 3.27)
 project(KellyPlugins VERSION 2.0.0 LANGUAGES CXX)
 
 # VST3 plugin
@@ -480,14 +460,11 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/clap")
     add_subdirectory(clap)
 endif()
-'''
-        self.create_file(
-            self.output_dir / 'packages/plugins/CMakeLists.txt',
-            plugins_cmake
-        )
-        
+"""
+        self.create_file(self.output_dir / "packages/plugins/CMakeLists.txt", plugins_cmake)
+
         # Web package
-        web_package_json = '''{
+        web_package_json = """{
   "name": "@kelly/web",
   "version": "2.0.0",
   "private": true,
@@ -509,17 +486,14 @@ endif()
     "vite": "^5.0.0"
   }
 }
-'''
-        self.create_file(
-            self.output_dir / 'packages/web/package.json',
-            web_package_json
-        )
-    
+"""
+        self.create_file(self.output_dir / "packages/web/package.json", web_package_json)
+
     def generate_github_workflows(self):
         """Generate GitHub Actions workflow files."""
-        
+
         # Python CI
-        ci_python = '''name: Python CI
+        ci_python = """name: Python CI
 
 on:
   push:
@@ -568,14 +542,11 @@ jobs:
         with:
           file: ./coverage.xml
           flags: python
-'''
-        self.create_file(
-            self.output_dir / '.github/workflows/ci-python.yml',
-            ci_python
-        )
-        
+"""
+        self.create_file(self.output_dir / ".github/workflows/ci-python.yml", ci_python)
+
         # C++ CI
-        ci_cpp = '''name: C++ CI
+        ci_cpp = """name: C++ CI
 
 on:
   push:
@@ -624,14 +595,11 @@ jobs:
         run: |
           cd build
           ctest --output-on-failure -C ${{ matrix.build_type }}
-'''
-        self.create_file(
-            self.output_dir / '.github/workflows/ci-cpp.yml',
-            ci_cpp
-        )
-        
+"""
+        self.create_file(self.output_dir / ".github/workflows/ci-cpp.yml", ci_cpp)
+
         # Plugin build workflow
-        build_plugins = '''name: Build Plugins
+        build_plugins = """name: Build Plugins
 
 on:
   push:
@@ -688,14 +656,11 @@ jobs:
           path: |
             build/**/*.vst3
             build/**/*.clap
-'''
-        self.create_file(
-            self.output_dir / '.github/workflows/build-plugins.yml',
-            build_plugins
-        )
-        
+"""
+        self.create_file(self.output_dir / ".github/workflows/build-plugins.yml", build_plugins)
+
         # Release workflow
-        release = '''name: Release
+        release = """name: Release
 
 on:
   push:
@@ -732,15 +697,12 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           generate_release_notes: true
-'''
-        self.create_file(
-            self.output_dir / '.github/workflows/release.yml',
-            release
-        )
-    
+"""
+        self.create_file(self.output_dir / ".github/workflows/release.yml", release)
+
     def generate_gitignore(self):
         """Generate comprehensive .gitignore."""
-        gitignore_content = '''# Python
+        gitignore_content = """# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -830,14 +792,14 @@ tmp/
 # OS
 Thumbs.db
 .DS_Store
-'''
-        self.create_file(self.output_dir / '.gitignore', gitignore_content)
-    
+"""
+        self.create_file(self.output_dir / ".gitignore", gitignore_content)
+
     def generate_documentation(self):
         """Generate documentation files."""
-        
+
         # Root README
-        readme = '''# Kelly Music Brain 2.0 🎵
+        readme = """# Kelly Music Brain 2.0 🎵
 
 > Therapeutic iDAW: Translate emotions into music
 
@@ -927,11 +889,11 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 🙏 Acknowledgments
 
 Built on the foundation of DAiW-Music-Brain 1.0.
-'''
-        self.create_file(self.output_dir / 'README.md', readme)
-        
+"""
+        self.create_file(self.output_dir / "README.md", readme)
+
         # Migration guide
-        migration = '''# Migrating from DAiW 1.0 to Kelly 2.0
+        migration = """# Migrating from DAiW 1.0 to Kelly 2.0
 
 ## Overview
 
@@ -1046,8 +1008,8 @@ For migration issues, see:
 
 - **DAiW 1.0**: Legacy support on `1.x-maintenance` branch
 - **Kelly 2.0**: Active development on `main` branch
-'''
-        self.create_file(self.output_dir / 'docs/MIGRATION.md', migration)
+"""
+        self.create_file(self.output_dir / "docs/MIGRATION.md", migration)
 
 
 def main():
@@ -1056,22 +1018,20 @@ def main():
         description="Generate Kelly Music Brain 2.0 monorepo structure"
     )
     parser.add_argument(
-        '--output',
+        "--output",
         type=str,
-        default='.',
-        help='Output directory for monorepo (default: current directory)'
+        default=".",
+        help="Output directory for monorepo (default: current directory)",
     )
     parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='Show what would be created without creating files'
+        "--dry-run", action="store_true", help="Show what would be created without creating files"
     )
-    
+
     args = parser.parse_args()
-    
+
     generator = MonorepoGenerator(args.output, dry_run=args.dry_run)
     generator.generate_structure()
-    
+
     if not args.dry_run:
         print("\n📚 Next steps:")
         print("  1. Review generated structure")
@@ -1081,5 +1041,5 @@ def main():
         print("  5. Start development!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -5,15 +5,14 @@ Provides context-aware suggestions for parameter adjustments, emotions, and rule
 Part of Phase 3 of the "All-Knowing Interactive Musical Customization System".
 """
 
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
-import random
-from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class SuggestionType(Enum):
     """Types of suggestions."""
+
     PARAMETER = "parameter"
     EMOTION = "emotion"
     RULE_BREAK = "rule_break"
@@ -23,6 +22,7 @@ class SuggestionType(Enum):
 
 class SuggestionConfidence(Enum):
     """Confidence levels for suggestions."""
+
     LOW = "low"  # 0.0-0.4
     MEDIUM = "medium"  # 0.4-0.7
     HIGH = "high"  # 0.7-1.0
@@ -31,6 +31,7 @@ class SuggestionConfidence(Enum):
 @dataclass
 class Suggestion:
     """A single suggestion."""
+
     suggestion_type: SuggestionType
     title: str
     description: str
@@ -76,6 +77,7 @@ class SuggestionEngine:
         self.preference_analyzer = None
         if self.preference_model:
             from music_brain.learning.preference_analyzer import PreferenceAnalyzer
+
             self.preference_analyzer = PreferenceAnalyzer(self.preference_model)
 
         # Musical knowledge
@@ -83,9 +85,7 @@ class SuggestionEngine:
         self.parameter_correlations = self._build_parameter_correlations()
 
     def generate_suggestions(
-        self,
-        current_state: Dict[str, Any],
-        max_suggestions: int = 5
+        self, current_state: Dict[str, Any], max_suggestions: int = 5
     ) -> List[Suggestion]:
         """
         Generate suggestions based on current musical state.
@@ -122,10 +122,7 @@ class SuggestionEngine:
 
         return suggestions[:max_suggestions]
 
-    def _generate_parameter_suggestions(
-        self,
-        current_state: Dict[str, Any]
-    ) -> List[Suggestion]:
+    def _generate_parameter_suggestions(self, current_state: Dict[str, Any]) -> List[Suggestion]:
         """Generate parameter adjustment suggestions."""
         suggestions = []
 
@@ -167,16 +164,13 @@ class SuggestionEngine:
                     action={"parameter": param_name, "target_value": target_value},
                     confidence=confidence_score,
                     explanation=f"Your past {param_name} adjustments average to {preferred_mean:.2f} (based on {adjustment_count} adjustments)",
-                    source="user_history"
+                    source="user_history",
                 )
                 suggestions.append(suggestion)
 
         return suggestions
 
-    def _generate_emotion_suggestions(
-        self,
-        current_state: Dict[str, Any]
-    ) -> List[Suggestion]:
+    def _generate_emotion_suggestions(self, current_state: Dict[str, Any]) -> List[Suggestion]:
         """Generate emotion transition suggestions."""
         suggestions = []
 
@@ -196,9 +190,7 @@ class SuggestionEngine:
 
         # Suggest common transitions
         for target_emotion, frequency in sorted(
-            transitions.items(),
-            key=lambda x: x[1],
-            reverse=True
+            transitions.items(), key=lambda x: x[1], reverse=True
         )[:3]:
             if target_emotion != current_emotion:
                 confidence = min(0.8, frequency / 5.0)  # Normalize by max expected frequency
@@ -210,16 +202,13 @@ class SuggestionEngine:
                     action={"emotion": target_emotion},
                     confidence=confidence,
                     explanation=f"Based on musical theory, {current_emotion} → {target_emotion} creates emotional progression",
-                    source="musical_theory" if not self.preference_model else "user_history"
+                    source="musical_theory" if not self.preference_model else "user_history",
                 )
                 suggestions.append(suggestion)
 
         return suggestions
 
-    def _generate_rule_break_suggestions(
-        self,
-        current_state: Dict[str, Any]
-    ) -> List[Suggestion]:
+    def _generate_rule_break_suggestions(self, current_state: Dict[str, Any]) -> List[Suggestion]:
         """Generate rule-breaking suggestions based on emotion."""
         suggestions = []
 
@@ -270,18 +259,15 @@ class SuggestionEngine:
                 description=f"This rule-break enhances the {current_emotion} emotion",
                 action={"add_rule_break": rule_break},
                 confidence=confidence,
-                explanation=f"{rule_break} is commonly used to express {current_emotion}" +
-                           (". You've used this before." if rule_break in user_kept_breaks else ""),
-                source=source
+                explanation=f"{rule_break} is commonly used to express {current_emotion}"
+                + (". You've used this before." if rule_break in user_kept_breaks else ""),
+                source=source,
             )
             suggestions.append(suggestion)
 
         return suggestions
 
-    def _generate_style_suggestions(
-        self,
-        current_state: Dict[str, Any]
-    ) -> List[Suggestion]:
+    def _generate_style_suggestions(self, current_state: Dict[str, Any]) -> List[Suggestion]:
         """Generate style-based suggestions."""
         suggestions = []
 
@@ -328,7 +314,7 @@ class SuggestionEngine:
                 action={"parameter": "tempo", "target_value": suggested_tempo},
                 confidence=confidence,
                 explanation=explanation,
-                source=source
+                source=source,
             )
             suggestions.append(suggestion)
 
@@ -343,7 +329,7 @@ class SuggestionEngine:
                     action={"style": top_style[0]},
                     confidence=top_style[1],
                     explanation=f"Based on your accepted generations, you prefer {top_style[0]} style",
-                    source="user_history"
+                    source="user_history",
                 )
                 suggestions.append(suggestion)
 
@@ -359,6 +345,7 @@ class SuggestionEngine:
                 build_llama_generator,
                 default_llama_config_path,
             )
+
             # Allow override via env/config in the future; use default for now.
             return build_llama_generator(default_llama_config_path())
         except Exception:
@@ -440,9 +427,7 @@ class SuggestionEngine:
         }
 
     def _get_user_similar_states(
-        self,
-        current_state: Dict[str, Any],
-        max_results: int = 5
+        self, current_state: Dict[str, Any], max_results: int = 5
     ) -> List[Dict[str, Any]]:
         """
         Find past states similar to current state.
@@ -471,23 +456,23 @@ class SuggestionEngine:
             similarity = self._calculate_state_similarity(current_params, event.parameters)
 
             if similarity > 0.5:  # Threshold for "similar"
-                similar_states.append({
-                    "event": event,
-                    "similarity": similarity,
-                    "parameters": event.parameters,
-                    "emotion": event.emotion,
-                    "rule_breaks": event.rule_breaks,
-                    "accepted": event.accepted,
-                })
+                similar_states.append(
+                    {
+                        "event": event,
+                        "similarity": similarity,
+                        "parameters": event.parameters,
+                        "emotion": event.emotion,
+                        "rule_breaks": event.rule_breaks,
+                        "accepted": event.accepted,
+                    }
+                )
 
         # Sort by similarity and return top N
         similar_states.sort(key=lambda x: x["similarity"], reverse=True)
         return similar_states[:max_results]
 
     def _calculate_state_similarity(
-        self,
-        params1: Dict[str, float],
-        params2: Dict[str, float]
+        self, params1: Dict[str, float], params2: Dict[str, float]
     ) -> float:
         """
         Calculate similarity between two parameter states.
@@ -517,20 +502,18 @@ class SuggestionEngine:
                 # Range is 0 to 1, so max diff is 1
                 diff = abs(val1 - val2)
 
-            squared_diffs.append(diff ** 2)
+            squared_diffs.append(diff**2)
 
         # Average squared difference
         avg_squared_diff = sum(squared_diffs) / len(squared_diffs) if squared_diffs else 1.0
 
         # Convert to similarity (1.0 = identical, 0.0 = completely different)
-        similarity = 1.0 - (avg_squared_diff ** 0.5)
+        similarity = 1.0 - (avg_squared_diff**0.5)
 
         return max(0.0, min(1.0, similarity))
 
     def _calculate_suggestion_confidence(
-        self,
-        suggestion: Suggestion,
-        current_state: Dict[str, Any]
+        self, suggestion: Suggestion, current_state: Dict[str, Any]
     ) -> float:
         """
         Calculate unified confidence score for a suggestion.
@@ -582,11 +565,7 @@ class SuggestionEngine:
 
         return max(0.0, min(1.0, base_confidence))
 
-    def _explain_suggestion(
-        self,
-        suggestion: Suggestion,
-        current_state: Dict[str, Any]
-    ) -> str:
+    def _explain_suggestion(self, suggestion: Suggestion, current_state: Dict[str, Any]) -> str:
         """
         Generate human-readable explanation for a suggestion.
 
@@ -628,7 +607,7 @@ class SuggestionEngine:
         elif suggestion.suggestion_type == SuggestionType.RULE_BREAK:
             rule_break = suggestion.action.get("add_rule_break", "")
             if rule_break:
-                explanation += f" This rule-break will modify the harmonic/rhythmic structure to enhance the emotional expression."
+                explanation += " This rule-break will modify the harmonic/rhythmic structure to enhance the emotional expression."
 
         return explanation
 
@@ -725,7 +704,7 @@ def main():
             "intensity": 0.6,
             "tempo": 120,
         },
-        "rule_breaks": []
+        "rule_breaks": [],
     }
 
     suggestions = engine.generate_suggestions(current_state, max_suggestions=5)
@@ -734,7 +713,9 @@ def main():
     for i, suggestion in enumerate(suggestions, 1):
         print(f"\n{i}. {suggestion.title}")
         print(f"   {suggestion.description}")
-        print(f"   Confidence: {suggestion.confidence:.2f} ({suggestion.get_confidence_level().value})")
+        print(
+            f"   Confidence: {suggestion.confidence:.2f} ({suggestion.get_confidence_level().value})"
+        )
         print(f"   Explanation: {suggestion.explanation}")
 
 

@@ -1,6 +1,6 @@
 """Tests for MIDI generator."""
-import pytest
-from kelly.core.midi_generator import MidiGenerator, GrooveTemplate
+
+from kelly.core.midi_generator import MidiGenerator
 
 
 def test_midi_generator_initialization():
@@ -36,10 +36,7 @@ def test_generate_chord_progression_minor():
 def test_chord_progression_with_dissonance():
     """Test chord progression with dissonance."""
     generator = MidiGenerator()
-    progression = generator.generate_chord_progression(
-        mode="minor",
-        allow_dissonance=True
-    )
+    progression = generator.generate_chord_progression(mode="minor", allow_dissonance=True)
     # Dissonant chords should have more notes
     assert any(len(chord) > 3 for chord in progression)
 

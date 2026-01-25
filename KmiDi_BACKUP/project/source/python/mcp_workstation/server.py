@@ -6,17 +6,17 @@ Exposes workstation functionality as MCP tools for AI assistants.
 
 import json
 import sys
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List
 
-from .models import AIAgent, ProposalCategory, ProposalStatus, PhaseStatus
-from .orchestrator import get_workstation, Workstation
 from .ai_specializations import TaskType
-from .debug import log_info, log_error, DebugCategory
-
+from .debug import DebugCategory, log_error, log_info
+from .models import AIAgent, PhaseStatus, ProposalCategory, ProposalStatus
+from .orchestrator import get_workstation
 
 # =============================================================================
 # MCP Tool Definitions
 # =============================================================================
+
 
 def get_mcp_tools() -> List[Dict[str, Any]]:
     """
@@ -63,7 +63,6 @@ def get_mcp_tools() -> List[Dict[str, Any]]:
                 "required": ["agent"],
             },
         },
-
         # Proposal Operations
         {
             "name": "proposal_submit",
@@ -172,7 +171,6 @@ def get_mcp_tools() -> List[Dict[str, Any]]:
                 "required": ["agent"],
             },
         },
-
         # Phase Operations
         {
             "name": "phase_status",
@@ -240,7 +238,6 @@ def get_mcp_tools() -> List[Dict[str, Any]]:
                 "required": ["phase_id", "task_id", "agent"],
             },
         },
-
         # C++ Transition
         {
             "name": "cpp_plan",
@@ -305,7 +302,6 @@ def get_mcp_tools() -> List[Dict[str, Any]]:
                 "properties": {},
             },
         },
-
         # Task Assignment
         {
             "name": "suggest_assignments",
@@ -339,7 +335,6 @@ def get_mcp_tools() -> List[Dict[str, Any]]:
                 "properties": {},
             },
         },
-
         # Debug
         {
             "name": "debug_summary",
@@ -355,6 +350,7 @@ def get_mcp_tools() -> List[Dict[str, Any]]:
 # =============================================================================
 # Tool Handlers
 # =============================================================================
+
 
 def handle_tool_call(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -504,6 +500,7 @@ def handle_tool_call(name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
 # =============================================================================
 # MCP Server (stdio transport)
 # =============================================================================
+
 
 def run_server():
     """

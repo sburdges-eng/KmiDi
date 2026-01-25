@@ -1,12 +1,11 @@
 import re
-import os
-import yaml
 from pathlib import Path
 
 ROADMAP_FILES = [
     "DAiW-Music-Brain/vault/Production_Workflows/hybrid_development_roadmap.md",
-    "ROADMAP_penta-core.md"
+    "ROADMAP_penta-core.md",
 ]
+
 
 class RoadmapObjective:
     def __init__(self, title, status, file_path, line_num):
@@ -23,8 +22,11 @@ class RoadmapObjective:
             "line": self.line_num,
         }
 
+
 class RoadmapScanner:
-    STATUS_RE = re.compile(r"\|\s*(.*?)\s*\|\s*(Working|TODO|Implemented|In Progress)\s*\|\s*`([^`]+)`")
+    STATUS_RE = re.compile(
+        r"\|\s*(.*?)\s*\|\s*(Working|TODO|Implemented|In Progress)\s*\|\s*`([^`]+)`"
+    )
 
     def scan(self):
         objectives = []
@@ -32,7 +34,7 @@ class RoadmapScanner:
             path = Path(f)
             if not path.exists():
                 continue
-            with open(path, "r") as fh:
+            with open(path) as fh:
                 for i, line in enumerate(fh):
                     m = self.STATUS_RE.search(line)
                     if m:

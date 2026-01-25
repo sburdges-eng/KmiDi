@@ -15,11 +15,12 @@ Emotion mapping:
   - ANGER: Faster, sharp articulation
 """
 
-import numpy as np
-from typing import Optional, Dict
 import logging
 import tempfile
 from pathlib import Path
+from typing import Dict
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -33,12 +34,7 @@ class Tier1VoiceGenerator:
       2. Fall back to pyttsx3 (always available)
     """
 
-    def __init__(
-        self,
-        device: str = "mps",
-        tts_backend: str = "auto",
-        verbose: bool = True
-    ):
+    def __init__(self, device: str = "mps", tts_backend: str = "auto", verbose: bool = True):
         """
         Initialize Tier 1 voice generator.
 
@@ -61,9 +57,9 @@ class Tier1VoiceGenerator:
         if self.tts_backend in ["auto", "tts2"]:
             try:
                 from TTS.api import TTS as TTS2
+
                 self.tts = TTS2(
-                    model_name="tts_models/en/ljspeech/tacotron2-DDC",
-                    gpu=(self.device == "cuda")
+                    model_name="tts_models/en/ljspeech/tacotron2-DDC", gpu=(self.device == "cuda")
                 )
                 self.backend_used = "TTS2"
                 self._log("✓ Using TTS 2.0 (Tacotron2 + vocoder)")
@@ -76,6 +72,7 @@ class Tier1VoiceGenerator:
         if self.tts_backend in ["auto", "pyttsx3"]:
             try:
                 import pyttsx3
+
                 self.tts = pyttsx3.init()
                 self._configure_pyttsx3()
                 self.backend_used = "pyttsx3"
@@ -88,6 +85,7 @@ class Tier1VoiceGenerator:
         if self.tts_backend in ["auto", "gtts"]:
             try:
                 from gtts import gTTS
+
                 self.tts = gTTS
                 self.backend_used = "gTTS"
                 self._log("✓ Using gTTS (internet-based)")
@@ -100,28 +98,24 @@ class Tier1VoiceGenerator:
     def _configure_pyttsx3(self):
         """Configure pyttsx3 for better quality"""
         # Get available voices
-        voices = self.tts.getProperty('voices')
+        voices = self.tts.getProperty("voices")
 
         # Use female voice if available
         if len(voices) > 1:
-            self.tts.setProperty('voice', voices[1].id)
+            self.tts.setProperty("voice", voices[1].id)
         else:
-            self.tts.setProperty('voice', voices[0].id)
+            self.tts.setProperty("voice", voices[0].id)
 
         # Set default rate and volume
-        self.tts.setProperty('rate', 150)  # Words per minute
-        self.tts.setProperty('volume', 1.0)  # 0.0 to 1.0
+        self.tts.setProperty("rate", 150)  # Words per minute
+        self.tts.setProperty("volume", 1.0)  # 0.0 to 1.0
 
     def _log(self, msg: str):
         if self.verbose:
             logger.info(msg)
 
     def speak_emotion(
-        self,
-        text: str,
-        emotion: str = "neutral",
-        gender: str = "female",
-        sample_rate: int = 22050
+        self, text: str, emotion: str = "neutral", gender: str = "female", sample_rate: int = 22050
     ) -> np.ndarray:
         """
         Generate speech with emotion control.
@@ -158,26 +152,26 @@ class Tier1VoiceGenerator:
         """
         prosody_map = {
             "grief": {
-                "rate": 0.7,       # Slower
-                "pitch": -50,      # Lower
-                "volume": 0.6,     # Quieter
-                "pauses": True,    # More pauses
+                "rate": 0.7,  # Slower
+                "pitch": -50,  # Lower
+                "volume": 0.6,  # Quieter
+                "pauses": True,  # More pauses
             },
             "joy": {
-                "rate": 1.3,       # Faster
-                "pitch": 50,       # Higher
-                "volume": 1.0,     # Full volume
+                "rate": 1.3,  # Faster
+                "pitch": 50,  # Higher
+                "volume": 1.0,  # Full volume
                 "pauses": False,
             },
             "calm": {
-                "rate": 1.0,       # Normal
-                "pitch": 0,        # Normal pitch
+                "rate": 1.0,  # Normal
+                "pitch": 0,  # Normal pitch
                 "volume": 0.8,
                 "pauses": True,
             },
             "anger": {
-                "rate": 1.5,       # Much faster
-                "pitch": 50,       # Raised
+                "rate": 1.5,  # Much faster
+                "pitch": 50,  # Raised
                 "volume": 1.0,
                 "pauses": False,
             },
@@ -186,17 +180,12 @@ class Tier1VoiceGenerator:
                 "pitch": 0,
                 "volume": 0.8,
                 "pauses": False,
-            }
+            },
         }
 
         return prosody_map.get(emotion, prosody_map["neutral"])
 
-    def _speak_tts2(
-        self,
-        text: str,
-        prosody: Dict,
-        sample_rate: int
-    ) -> np.ndarray:
+    def _speak_tts2(self, text: str, prosody: Dict, sample_rate: int) -> np.ndarray:
         """TTS 2.0 synthesis"""
         try:
             # TTS 2.0 returns numpy array or audio bytes
@@ -218,12 +207,7 @@ class Tier1VoiceGenerator:
             self._log(f"⚠ TTS 2.0 error: {e}")
             return np.zeros(int(sample_rate * 2), dtype=np.float32)
 
-    def _speak_pyttsx3(
-        self,
-        text: str,
-        prosody: Dict,
-        sample_rate: int
-    ) -> np.ndarray:
+    def _speak_pyttsx3(self, text: str, prosody: Dict, sample_rate: int) -> np.ndarray:
         """pyttsx3 synthesis"""
         try:
             import scipy.io.wavfile as wavfile
@@ -236,8 +220,8 @@ class Tier1VoiceGenerator:
             rate = int(prosody.get("rate", 1.0) * 150)  # 150 WPM base
             volume = prosody.get("volume", 0.8)
 
-            self.tts.setProperty('rate', max(50, min(300, rate)))
-            self.tts.setProperty('volume', volume)
+            self.tts.setProperty("rate", max(50, min(300, rate)))
+            self.tts.setProperty("volume", volume)
 
             # Generate
             self.tts.save_to_file(text, temp_path)
@@ -251,6 +235,7 @@ class Tier1VoiceGenerator:
                 # Resample if needed
                 if sr != sample_rate:
                     from scipy import signal
+
                     ratio = sample_rate / sr
                     new_length = int(len(audio) * ratio)
                     audio = signal.resample(audio, new_length)
@@ -268,32 +253,37 @@ class Tier1VoiceGenerator:
             self._log(f"⚠ pyttsx3 error: {e}")
             return np.zeros(int(sample_rate * 2), dtype=np.float32)
 
-    def _speak_gtts(
-        self,
-        text: str,
-        prosody: Dict,
-        sample_rate: int
-    ) -> np.ndarray:
+    def _speak_gtts(self, text: str, prosody: Dict, sample_rate: int) -> np.ndarray:
         """gTTS (Google Text-to-Speech) synthesis"""
         try:
-            from gtts import gTTS
             import scipy.io.wavfile as wavfile
+            from gtts import gTTS
 
             # gTTS doesn't support prosody directly; generate and return
             with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
                 temp_path = f.name
 
-            tts = gTTS(text=text, lang='en', slow=prosody.get("rate", 1.0) < 1.0)
+            tts = gTTS(text=text, lang="en", slow=prosody.get("rate", 1.0) < 1.0)
             tts.save(temp_path)
 
             # Convert MP3 to WAV (requires ffmpeg)
             try:
                 import subprocess
+
                 wav_path = temp_path.replace(".mp3", ".wav")
-                subprocess.run([
-                    "ffmpeg", "-i", temp_path, "-acodec", "pcm_s16le",
-                    "-ar", str(sample_rate), wav_path
-                ], capture_output=True)
+                subprocess.run(
+                    [
+                        "ffmpeg",
+                        "-i",
+                        temp_path,
+                        "-acodec",
+                        "pcm_s16le",
+                        "-ar",
+                        str(sample_rate),
+                        wav_path,
+                    ],
+                    capture_output=True,
+                )
 
                 sr, audio_data = wavfile.read(wav_path)
                 audio = audio_data.astype(np.float32) / 32768.0
@@ -312,11 +302,7 @@ class Tier1VoiceGenerator:
             self._log(f"⚠ gTTS error: {e}")
             return np.zeros(int(sample_rate * 2), dtype=np.float32)
 
-    def generate_therapeutic_response(
-        self,
-        emotion_intent: str,
-        wound: str
-    ) -> str:
+    def generate_therapeutic_response(self, emotion_intent: str, wound: str) -> str:
         """
         Generate therapeutic guidance text based on emotion + wound.
 
@@ -351,7 +337,7 @@ class Tier1VoiceGenerator:
             "HOPE": (
                 "Your hope is a strength. Even in darkness, you're reaching toward light. "
                 "This music believes in your tomorrow."
-            )
+            ),
         }
 
         return responses.get(emotion_intent, responses["CALM"])
@@ -359,9 +345,7 @@ class Tier1VoiceGenerator:
 
 # Convenience function
 def generate_tier1_voice(
-    text: str,
-    emotion: str = "neutral",
-    sample_rate: int = 22050
+    text: str, emotion: str = "neutral", sample_rate: int = 22050
 ) -> np.ndarray:
     """
     Quick wrapper: Generate voice in one line.

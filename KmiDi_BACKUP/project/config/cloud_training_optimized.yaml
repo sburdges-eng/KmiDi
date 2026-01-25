@@ -1,0 +1,390 @@
+# =============================================================================
+# Cloud-Based Training Optimization Configuration
+# =============================================================================
+# Optimized for: Cloud GPU instances (AWS, GCP, Azure, Lambda Labs, etc.)
+# Primary: NVIDIA CUDA (A100, H100, RTX 4090, etc.)
+# Fallback: Multi-GPU distributed training
+# Last Updated: 2025-01-24
+# =============================================================================
+#
+# Cloud Training Strategy:
+# 1. Use CUDA for maximum performance
+# 2. Support multi-GPU distributed training
+# 3. Optimize for cost (spot instances, auto-scaling)
+# 4. Enable cloud storage integration
+# 5. Support mixed precision (BF16/FP16)
+# 6. Enable gradient checkpointing for large models
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Cloud Provider Configuration
+# -----------------------------------------------------------------------------
+cloud:
+  provider: auto # auto, aws, gcp, azure, lambda, runpod
+
+  # AWS Configuration
+  aws:
+    instance_type: g5.2xlarge # NVIDIA A10G (24GB) - cost-effective
+    # Alternatives:
+    # - g5.4xlarge (A10G x2) - multi-GPU
+    # - p4d.24xlarge (A100 x8) - high-performance
+    # - p5.48xlarge (H100 x8) - latest gen
+
+    region: us-east-1
+    use_spot: true # Use spot instances (60-90% cost savings)
+    spot_max_price: 2.0 # Max $/hour for spot
+
+    # Storage
+    s3_bucket: kmidi-training-data
+    s3_checkpoint_prefix: checkpoints/
+    s3_data_prefix: data/
+
+    # Auto-scaling
+    auto_scale: true
+    min_instances: 0
+    max_instances: 2
+
+  # GCP Configuration
+  gcp:
+    instance_type: n1-standard-4-a100
+    # Alternatives:
+    # - a2-highgpu-1g (A100 40GB)
+    # - a2-highgpu-2g (A100 x2)
+    # - a3-highgpu-8g (H100 x8)
+
+    zone: us-central1-a
+    use_preemptible: true # Preemptible instances (cheaper)
+
+    # Storage
+    gcs_bucket: kmidi-training
+    gcs_checkpoint_prefix: checkpoints/
+
+  # Azure Configuration
+  azure:
+    vm_size: Standard_NC96ads_A100_v4 # A100 80GB
+    region: eastus
+
+    # Storage
+    storage_account: kmiditraining
+    container: checkpoints
+
+  # Lambda Labs / RunPod (Cost-effective)
+  lambda:
+    instance_type: gpu_1x_a100 # A100 40GB
+    # Alternatives:
+    # - gpu_1x_a10 (A10 24GB) - cheaper
+    # - gpu_2x_a100 (A100 x2) - multi-GPU
+
+    use_spot: true
+
+  # RunPod Configuration
+  runpod:
+    gpu_type: NVIDIA RTX 4090 # Consumer GPU, cost-effective
+    # Alternatives:
+    # - NVIDIA RTX A6000 (48GB)
+    # - NVIDIA A100 (40GB/80GB)
+
+    use_spot: true
+
+# -----------------------------------------------------------------------------
+# Hardware Configuration
+# -----------------------------------------------------------------------------
+hardware:
+  device: cuda
+  precision: bf16 # BF16 for NVIDIA (better than FP16)
+
+  # Multi-GPU configuration
+  distributed:
+    enabled: true
+    backend: nccl # NVIDIA Collective Communications Library
+    strategy: ddp # DistributedDataParallel
+
+    # Multi-node configuration
+    world_size: 1 # Number of nodes
+    rank: 0 # Current node rank
+    local_rank: 0 # GPU rank within node
+
+    # Communication
+    find_unused_parameters: false
+    gradient_as_bucket_view: true # Optimize gradient communication
+
+  # CUDA optimizations
+  cuda:
+    benchmark: true # cuDNN benchmark (faster after warmup)
+    deterministic: false # Speed over reproducibility
+    allow_tf32: true # TensorFloat-32 (faster on Ampere+)
+
+    # Memory management
+    empty_cache_frequency: 100 # Clear cache every N steps
+    max_memory_fraction: 0.95 # Use 95% of GPU memory
+
+    # Mixed precision
+    amp: true
+    amp_dtype: bfloat16 # BF16 for NVIDIA (A100/H100)
+    # amp_dtype: float16         # FP16 for older GPUs (V100, RTX 20xx)
+
+# -----------------------------------------------------------------------------
+# Data Configuration
+# -----------------------------------------------------------------------------
+data:
+  sample_rate: 44100
+  target_lufs: -14
+  n_mels: 128
+  hop_length: 512
+  segment_seconds: 8
+
+  # Cloud storage integration
+  storage:
+    type: s3 # s3, gcs, azure_blob, local
+    bucket: kmidi-training-data
+    prefix: data/
+
+    # Local cache
+    cache_dir: /tmp/kmidi_cache
+    cache_mels: true
+    precompute_all: false # Compute on-the-fly for flexibility
+
+  # Dataset sources (can be cloud paths)
+  train_manifest: s3://kmidi-training-data/manifests/train.jsonl
+  val_manifest: s3://kmidi-training-data/manifests/val.jsonl
+
+  # Data loading optimization for cloud
+  dataloader:
+    batch_size: 32 # Larger batches for cloud GPUs
+    num_workers: 8 # More workers for cloud (high CPU count)
+    pin_memory: true # Faster CPU-GPU transfer
+    persistent_workers: true # Keep workers alive
+    prefetch_factor: 4 # Prefetch batches
+
+    # Multi-GPU: batch_size per GPU
+    batch_size_per_gpu: 16 # Effective batch = 16 * num_gpus
+
+    shuffle: true
+    drop_last: true
+
+# -----------------------------------------------------------------------------
+# Model Architecture
+# -----------------------------------------------------------------------------
+model:
+  backbone: htsat-base # Larger model for cloud (more capacity)
+  embedding_dim: 512 # Increased from 256
+  num_layers: 12 # Deeper for better performance
+  num_heads: 8
+  ff_mult: 4.0
+  dropout: 0.1
+
+  # Gradient checkpointing for large models
+  gradient_checkpointing: true # Trade compute for memory
+
+  # Flash Attention (if available)
+  flash_attention: true # Faster attention on A100/H100
+
+  tasks:
+    - name: genre
+      head: linear
+      classes: 20
+      loss_weight: 3.0
+      auto_class_weights: true
+    - name: emotion
+      head: linear
+      classes: 8
+      loss_weight: 0.5
+
+# -----------------------------------------------------------------------------
+# Optimizer Configuration
+# -----------------------------------------------------------------------------
+optim:
+  name: adamw
+  lr: 5e-4 # Slightly higher for cloud (more stable)
+  weight_decay: 0.01
+  betas: [0.9, 0.98]
+  eps: 1e-8
+  grad_clip: 1.0
+
+  # Fused optimizer (faster on CUDA)
+  fused: true # Use fused AdamW (CUDA only)
+
+# -----------------------------------------------------------------------------
+# Learning Rate Schedule
+# -----------------------------------------------------------------------------
+scheduler:
+  name: cosine_with_warmup
+  warmup_steps: 1000 # Longer warmup for large batches
+  max_steps: 50000
+  min_lr_ratio: 0.1
+
+# -----------------------------------------------------------------------------
+# Training Configuration
+# -----------------------------------------------------------------------------
+training:
+  epochs: 50 # More epochs for cloud (faster training)
+
+  # Gradient accumulation (if needed for very large effective batches)
+  grad_accum_steps: 1 # Usually 1 for cloud (large batch_size)
+
+  # Effective batch size = batch_size * num_gpus * grad_accum_steps
+  # Example: 32 * 4 GPUs * 1 = 128 effective batch
+
+  # Logging and checkpointing
+  log_every: 100
+  eval_every: 1000
+  ckpt_every: 2000
+
+  # Cloud checkpointing (save to cloud storage)
+  cloud_checkpoint:
+    enabled: true
+    frequency: 2000 # Save every N steps
+    keep_last_n: 5 # Keep last N checkpoints
+
+  # Mixed precision
+  amp: true
+  amp_dtype: bfloat16
+
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 15
+    min_delta: 0.001
+    monitor: "val_loss"
+
+  # EMA
+  ema: true # Enable EMA for cloud (more stable)
+  ema_decay: 0.9999
+
+# -----------------------------------------------------------------------------
+# Data Augmentation
+# -----------------------------------------------------------------------------
+augment:
+  enabled: true
+
+  # More aggressive augmentation (cloud can handle it)
+  time_stretch: [0.8, 1.2] # Wider range
+  pitch_shift_semitones: [-5, 5]
+  eq_tilt_db: [-6, 6]
+  noise_snr_db: [15, 45]
+
+  # Heavy augmentations (cloud has compute)
+  reverb_ir: true # Enable IR convolution
+  mixup_alpha: 0.4
+  spec_augment:
+    freq_mask_param: 16
+    time_mask_param: 64
+    n_freq_masks: 3
+    n_time_masks: 3
+
+# -----------------------------------------------------------------------------
+# Cost Optimization
+# -----------------------------------------------------------------------------
+cost_optimization:
+  # Spot instance handling
+  spot_handling:
+    checkpoint_on_interrupt: true # Save checkpoint on spot termination
+    resume_from_checkpoint: true # Resume from last checkpoint
+
+    # Checkpoint frequency for spot instances
+    checkpoint_frequency: 1000 # More frequent checkpoints
+
+  # Auto-scaling
+  auto_scale:
+    enabled: true
+    scale_up_threshold: 0.8 # Scale up at 80% utilization
+    scale_down_threshold: 0.3 # Scale down at 30% utilization
+    cooldown_period: 300 # 5 minutes cooldown
+
+  # Cost tracking
+  track_costs: true
+  cost_alert_threshold: 100 # Alert if cost exceeds $100
+  max_budget: 500 # Hard limit: $500
+
+# -----------------------------------------------------------------------------
+# Monitoring & Logging
+# -----------------------------------------------------------------------------
+logging:
+  level: info
+
+  # Cloud-native logging
+  cloudwatch: # AWS CloudWatch
+    enabled: true
+    log_group: /kmidi/training
+
+  wandb:
+    enabled: true
+    project: "kmidi-cloud-training"
+    tags: ["cloud", "cuda", "distributed"]
+
+  tensorboard:
+    enabled: true
+    log_dir: s3://kmidi-training-data/tensorboard
+
+  # Performance monitoring
+  log_performance: true
+  log_gpu_utilization: true
+  log_memory: true
+  log_costs: true
+
+# -----------------------------------------------------------------------------
+# Export Configuration
+# -----------------------------------------------------------------------------
+export:
+  formats:
+    - pytorch
+    - onnx
+    - tensorrt # NVIDIA TensorRT (optimized inference)
+    - coreml # For Apple devices
+
+  # Cloud storage export
+  export_to_cloud: true
+  cloud_export_path: s3://kmidi-training-data/models/
+
+  # TensorRT optimization (NVIDIA)
+  tensorrt:
+    enabled: true
+    precision: fp16 # FP16 for inference
+    max_batch_size: 32
+    optimization_profile: true
+
+# -----------------------------------------------------------------------------
+# Reproducibility
+# -----------------------------------------------------------------------------
+seed: 42
+deterministic: false # False for speed (set true for reproducibility)
+
+# -----------------------------------------------------------------------------
+# Output Configuration
+# -----------------------------------------------------------------------------
+output_dir: /tmp/checkpoints # Local (will sync to cloud)
+cloud_output_dir: s3://kmidi-training-data/checkpoints/
+
+# -----------------------------------------------------------------------------
+# Notes & Best Practices
+# -----------------------------------------------------------------------------
+notes: |
+  Cloud Training Best Practices:
+
+  1. Use spot/preemptible instances for 60-90% cost savings
+  2. Enable checkpointing every 1000 steps for spot instances
+  3. Use BF16 precision on A100/H100 (better than FP16)
+  4. Enable distributed training for multi-GPU (linear scaling)
+  5. Use larger batch sizes (32-128) for cloud GPUs
+  6. Enable gradient checkpointing for very large models
+  7. Use fused optimizers for faster training
+  8. Monitor costs and set budget alerts
+  9. Export to TensorRT for optimized NVIDIA inference
+
+  Cost Optimization:
+  - AWS: Use g5.2xlarge spot instances (~$0.50/hour vs $2.00/hour)
+  - Lambda Labs: ~$1.10/hour for A100
+  - RunPod: ~$0.50/hour for RTX 4090
+  - Auto-scale down when not training
+
+  Performance Tips:
+  - Use cuDNN benchmark mode (faster after warmup)
+  - Enable TensorFloat-32 (TF32) on Ampere+ GPUs
+  - Use Flash Attention on A100/H100
+  - Pin memory for faster CPU-GPU transfers
+  - Use persistent workers for dataloader
+
+  Multi-GPU:
+  - Use DDP (DistributedDataParallel) for single-node multi-GPU
+  - Use DeepSpeed for very large models (ZeRO optimization)
+  - Effective batch = batch_size * num_gpus * grad_accum_steps

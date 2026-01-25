@@ -38,20 +38,20 @@ def normalize_ppq(
 ) -> Union[int, List[int]]:
     """
     Normalize tick values from one PPQ to another.
-    
+
     Args:
         ticks: Single tick value or list of tick values
         source_ppq: Source PPQ resolution
         target_ppq: Target PPQ resolution (default: 480)
-    
+
     Returns:
         Normalized tick value(s)
     """
     if source_ppq == target_ppq:
         return ticks
-    
+
     ratio = target_ppq / source_ppq
-    
+
     if isinstance(ticks, list):
         return [int(t * ratio) for t in ticks]
     return int(ticks * ratio)
@@ -63,11 +63,11 @@ def scale_ticks(
 ) -> Union[int, List[int]]:
     """
     Scale tick values by a ratio.
-    
+
     Args:
         ticks: Tick value(s) to scale
         ratio: Scaling ratio
-    
+
     Returns:
         Scaled tick value(s)
     """
@@ -82,11 +82,11 @@ def ticks_to_beats(
 ) -> float:
     """
     Convert ticks to beats.
-    
+
     Args:
         ticks: Tick value
         ppq: Pulses per quarter note
-    
+
     Returns:
         Beat position
     """
@@ -99,11 +99,11 @@ def beats_to_ticks(
 ) -> int:
     """
     Convert beats to ticks.
-    
+
     Args:
         beats: Beat position
         ppq: Pulses per quarter note
-    
+
     Returns:
         Tick position
     """
@@ -117,12 +117,12 @@ def ticks_to_bars(
 ) -> float:
     """
     Convert ticks to bar position.
-    
+
     Args:
         ticks: Tick value
         ppq: Pulses per quarter note
         time_signature: (numerator, denominator)
-    
+
     Returns:
         Bar position (float)
     """
@@ -138,12 +138,12 @@ def bars_to_ticks(
 ) -> int:
     """
     Convert bar position to ticks.
-    
+
     Args:
         bars: Bar position
         ppq: Pulses per quarter note
         time_signature: (numerator, denominator)
-    
+
     Returns:
         Tick position
     """
@@ -159,12 +159,12 @@ def ticks_to_seconds(
 ) -> float:
     """
     Convert ticks to seconds.
-    
+
     Args:
         ticks: Tick value
         ppq: Pulses per quarter note
         tempo_bpm: Tempo in BPM
-    
+
     Returns:
         Time in seconds
     """
@@ -180,12 +180,12 @@ def seconds_to_ticks(
 ) -> int:
     """
     Convert seconds to ticks.
-    
+
     Args:
         seconds: Time in seconds
         ppq: Pulses per quarter note
         tempo_bpm: Tempo in BPM
-    
+
     Returns:
         Tick position
     """
@@ -208,12 +208,12 @@ def quantize_ticks(
 ) -> int:
     """
     Quantize tick value to nearest grid position.
-    
+
     Args:
         ticks: Tick value
         ppq: Pulses per quarter note
         resolution: Grid resolution (4=quarter, 8=eighth, 16=sixteenth, etc.)
-    
+
     Returns:
         Quantized tick position
     """
@@ -229,24 +229,24 @@ def get_grid_positions(
 ) -> List[int]:
     """
     Get all grid positions between start and end.
-    
+
     Args:
         start_tick: Start position
         end_tick: End position
         ppq: Pulses per quarter note
         resolution: Grid resolution
-    
+
     Returns:
         List of grid tick positions
     """
     grid_ticks = ppq * 4 // resolution
     positions = []
-    
+
     current = quantize_ticks(start_tick, ppq, resolution)
     while current <= end_tick:
         positions.append(current)
         current += grid_ticks
-    
+
     return positions
 
 
@@ -257,38 +257,38 @@ def calculate_swing_offset(
 ) -> int:
     """
     Calculate swing timing offset for a position.
-    
+
     Swing delays the off-beat (2nd) 8th note in each pair.
-    
+
     Args:
         position_in_beat: Position within the beat (0.0-1.0)
         swing_amount: Swing intensity (0.0=none, 0.5=moderate, 1.0=triplet)
         ppq: PPQ for tick calculation
-    
+
     Returns:
         Timing offset in ticks
     """
     # Swing only affects the "e" of "1 e & a" pattern (position 0.25)
     # and the "a" (position 0.75)
-    
+
     eighth_position = position_in_beat * 4  # 0, 1, 2, 3 in 8th notes
-    
+
     # Check if this is an off-beat 8th note
     if abs(eighth_position - 1) < 0.1 or abs(eighth_position - 3) < 0.1:
         # This is an off-beat - apply swing delay
         max_delay = ppq // 6  # Max swing is triplet (1/3 of beat -> 1/6 delay)
         return int(max_delay * swing_amount)
-    
+
     return 0
 
 
 def get_ppq_for_daw(daw_name: str) -> int:
     """
     Get the default PPQ for a specific DAW.
-    
+
     Args:
         daw_name: DAW name (e.g., "logic_pro", "ableton_live")
-    
+
     Returns:
         PPQ value
     """

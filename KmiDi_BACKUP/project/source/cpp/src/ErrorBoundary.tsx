@@ -1,4 +1,4 @@
-import { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -20,16 +20,18 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
   }
 
   public render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '20px', fontFamily: 'monospace' }}>
+        <div style={{ padding: "20px", fontFamily: "monospace" }}>
           <h1>Something went wrong</h1>
           <p>{this.state.error?.message}</p>
-          <pre style={{ background: '#f0f0f0', padding: '10px', overflow: 'auto' }}>
+          <pre
+            style={{ background: "#f0f0f0", padding: "10px", overflow: "auto" }}
+          >
             {this.state.error?.stack}
           </pre>
           <button onClick={() => window.location.reload()}>Reload App</button>
@@ -42,4 +44,3 @@ class ErrorBoundary extends Component<Props, State> {
 }
 
 export default ErrorBoundary;
-

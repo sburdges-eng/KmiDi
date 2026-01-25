@@ -40,10 +40,13 @@ async def apply_groove_tool(
     Apply a genre groove template to a MIDI file and return the modified file.
     """
 
-    with midi_file_context(
-        midi_path=midi_path or None,
-        midi_base64=midi_base64 or None,
-    ) as source_path, tempfile.TemporaryDirectory(prefix="daiw_mcp_") as tmpdir:
+    with (
+        midi_file_context(
+            midi_path=midi_path or None,
+            midi_base64=midi_base64 or None,
+        ) as source_path,
+        tempfile.TemporaryDirectory(prefix="daiw_mcp_") as tmpdir,
+    ):
         output_path = os.path.join(tmpdir, "grooved.mid")
         result_path = await run_sync(
             api.apply_groove_to_midi,
@@ -56,7 +59,9 @@ async def apply_groove_tool(
         return {
             "genre": genre,
             "intensity": intensity,
-            "midi": make_midi_payload(result_path, filename=f"{os.path.splitext(filename)[0]}_grooved.mid"),
+            "midi": make_midi_payload(
+                result_path, filename=f"{os.path.splitext(filename)[0]}_grooved.mid"
+            ),
         }
 
 
@@ -74,10 +79,13 @@ async def humanize_midi_tool(
     Apply the drum humanization engine and return the resulting MIDI.
     """
 
-    with midi_file_context(
-        midi_path=midi_path or None,
-        midi_base64=midi_base64 or None,
-    ) as source_path, tempfile.TemporaryDirectory(prefix="daiw_mcp_") as tmpdir:
+    with (
+        midi_file_context(
+            midi_path=midi_path or None,
+            midi_base64=midi_base64 or None,
+        ) as source_path,
+        tempfile.TemporaryDirectory(prefix="daiw_mcp_") as tmpdir,
+    ):
         output_path = os.path.join(tmpdir, "humanized.mid")
         result = await run_sync(
             api.humanize_drums,
@@ -92,7 +100,9 @@ async def humanize_midi_tool(
 
         return {
             **result,
-            "midi": make_midi_payload(result["output_path"], filename=f"{os.path.splitext(filename)[0]}_humanized.mid"),
+            "midi": make_midi_payload(
+                result["output_path"], filename=f"{os.path.splitext(filename)[0]}_humanized.mid"
+            ),
         }
 
 
@@ -116,4 +126,3 @@ def register_tools(server) -> None:
 
 
 __all__ = ["register_tools"]
-

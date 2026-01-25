@@ -5,14 +5,12 @@ Provides functions that C++ can call to analyze musical context and get
 context-aware parameter adjustments.
 """
 
-from typing import Dict, List, Any, Optional
 import json
-import threading
+from typing import Any, Dict, Optional
 
 from music_brain.intelligence.context_analyzer import ContextAnalyzer, MusicalContext
 
-
-# Global instance (singleton pattern) with thread safety
+# Global instance (singleton pattern)
 _context_analyzer: Optional[ContextAnalyzer] = None
 _context_lock = threading.Lock()
 
@@ -82,16 +80,18 @@ def analyze_context(state_json: str) -> str:
 
         return json.dumps(result)
 
-    except Exception as e:
+    except Exception:
         # Return default context on error
-        return json.dumps({
-            "emotion_category": "unknown",
-            "complexity_level": "moderate",
-            "parameter_ranges": {},
-            "harmonic_state": None,
-            "rhythmic_state": None,
-            "suggestions": [],
-        })
+        return json.dumps(
+            {
+                "emotion_category": "unknown",
+                "complexity_level": "moderate",
+                "parameter_ranges": {},
+                "harmonic_state": None,
+                "rhythmic_state": None,
+                "suggestions": [],
+            }
+        )
 
 
 def get_contextual_parameters(state_json: str) -> str:
@@ -124,7 +124,7 @@ def get_contextual_parameters(state_json: str) -> str:
 
         return json.dumps(adjustments)
 
-    except Exception as e:
+    except Exception:
         return json.dumps({})
 
 
@@ -168,13 +168,12 @@ def get_contextual_suggestions(state_json: str) -> str:
 
         return json.dumps({"suggestions": suggestions})
 
-    except Exception as e:
+    except Exception:
         return json.dumps({"suggestions": []})
 
 
 def _generate_parameter_adjustments(
-    context: MusicalContext,
-    state: Dict[str, Any]
+    context: MusicalContext, state: Dict[str, Any]
 ) -> Dict[str, Any]:
     """
     Generate parameter adjustments based on context.
@@ -198,7 +197,9 @@ def _generate_parameter_adjustments(
         justification_parts.append("High energy negative emotions work well with faster tempos")
     elif context.emotion_category == "positive_high_energy":
         adjustments["tempo"] = 120
-        justification_parts.append("Positive high energy emotions benefit from moderate-fast tempos")
+        justification_parts.append(
+            "Positive high energy emotions benefit from moderate-fast tempos"
+        )
     else:
         adjustments["tempo"] = 100
         justification_parts.append("Neutral emotions work well with moderate tempos")

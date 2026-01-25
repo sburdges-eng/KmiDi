@@ -5,23 +5,19 @@ Handles the 3-improvement proposal system where each AI submits proposals.
 Includes voting, prioritization, and consensus tracking.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass
 from datetime import datetime
-import json
+from typing import Dict, List, Optional, Tuple
 
-from .models import (
-    Proposal, ProposalStatus, ProposalCategory, AIAgent
-)
-from .debug import get_debug, DebugCategory, trace
-from .ai_specializations import (
-    get_capabilities, get_agents_for_category, TaskType
-)
+from .ai_specializations import get_capabilities
+from .debug import DebugCategory, get_debug, trace
+from .models import AIAgent, Proposal, ProposalCategory, ProposalStatus
 
 
 @dataclass
 class ProposalVote:
     """A vote on a proposal."""
+
     agent: AIAgent
     proposal_id: str
     vote: int  # -1 (reject), 0 (neutral), 1 (approve)
@@ -249,10 +245,7 @@ class ProposalManager:
 
     def get_approved_proposals(self) -> List[Proposal]:
         """Get all approved proposals, sorted by priority."""
-        approved = [
-            p for p in self.proposals.values()
-            if p.status == ProposalStatus.APPROVED
-        ]
+        approved = [p for p in self.proposals.values() if p.status == ProposalStatus.APPROVED]
         return sorted(approved, key=lambda p: (p.priority, p.vote_score), reverse=True)
 
     def get_pending_votes(self, agent: AIAgent) -> List[Proposal]:
@@ -312,10 +305,7 @@ class ProposalManager:
         3. Vote score (highest first)
         4. Phase target (current phase first)
         """
-        approved = [
-            p for p in self.proposals.values()
-            if p.status == ProposalStatus.APPROVED
-        ]
+        approved = [p for p in self.proposals.values() if p.status == ProposalStatus.APPROVED]
 
         # Sort by priority score
         def priority_score(p: Proposal) -> Tuple:
@@ -377,6 +367,7 @@ class ProposalManager:
 # =============================================================================
 # Proposal Templates
 # =============================================================================
+
 
 def get_proposal_template(category: ProposalCategory) -> Dict:
     """Get a template for a proposal in a given category."""
@@ -454,16 +445,20 @@ def get_proposal_template(category: ProposalCategory) -> Dict:
         },
     }
 
-    return templates.get(category, {
-        "title": f"[{category.value}] ",
-        "description_template": "## Description\n\n## Implementation\n\n## Impact\n",
-        "default_effort": "medium",
-    })
+    return templates.get(
+        category,
+        {
+            "title": f"[{category.value}] ",
+            "description_template": "## Description\n\n## Implementation\n\n## Impact\n",
+            "default_effort": "medium",
+        },
+    )
 
 
 # =============================================================================
 # Proposal Display
 # =============================================================================
+
 
 def format_proposal(proposal: Proposal, include_votes: bool = True) -> str:
     """Format a proposal for display."""
@@ -478,26 +473,30 @@ def format_proposal(proposal: Proposal, include_votes: bool = True) -> str:
         f"Priority: {proposal.priority}/10",
         f"Effort:   {proposal.estimated_effort}",
         f"Phase:    {proposal.phase_target}",
-        f"",
+        "",
         "DESCRIPTION:",
         proposal.description,
     ]
 
     if include_votes and proposal.votes:
-        lines.extend([
-            "",
-            f"VOTES (Score: {proposal.vote_score:+d}):",
-        ])
+        lines.extend(
+            [
+                "",
+                f"VOTES (Score: {proposal.vote_score:+d}):",
+            ]
+        )
         for agent_id, vote in proposal.votes.items():
             vote_str = {-1: "REJECT", 0: "NEUTRAL", 1: "APPROVE"}.get(vote, "?")
             lines.append(f"  {agent_id}: {vote_str}")
 
     if proposal.implementation_notes:
-        lines.extend([
-            "",
-            "IMPLEMENTATION NOTES:",
-            proposal.implementation_notes,
-        ])
+        lines.extend(
+            [
+                "",
+                "IMPLEMENTATION NOTES:",
+                proposal.implementation_notes,
+            ]
+        )
 
     return "\n".join(lines)
 
@@ -514,8 +513,6 @@ def format_proposal_list(proposals: List[Proposal]) -> str:
 
     for p in proposals:
         title = p.title[:37] + "..." if len(p.title) > 40 else p.title
-        lines.append(
-            f"{p.id:<10} {p.status.value:<12} {p.agent.value:<15} {title:<40}"
-        )
+        lines.append(f"{p.id:<10} {p.status.value:<12} {p.agent.value:<15} {title:<40}")
 
     return "\n".join(lines)

@@ -5,7 +5,7 @@ Provides a minimal format_phase_progress helper to satisfy CLI/tests without
 the full original implementation.
 """
 
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 
 def format_phase_progress(phases: List[Dict[str, Any]] = None) -> str:

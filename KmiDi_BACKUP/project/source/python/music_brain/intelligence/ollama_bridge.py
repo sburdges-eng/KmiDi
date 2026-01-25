@@ -8,28 +8,27 @@ Provides a simple interface to use local LLMs via Ollama for:
 
 Usage:
     from music_brain.intelligence.ollama_bridge import OllamaBridge
-    
+
     bridge = OllamaBridge()
     lyrics = bridge.generate_lyrics(emotion="grief", theme="loss")
 """
 
 import json
-import subprocess
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Any
 import os
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
 class OllamaConfig:
     """Configuration for Ollama connection."""
-    
+
     model: str = "mistral"  # Default model (Apache 2.0 license)
     host: str = "http://localhost:11434"
     timeout_seconds: int = 60
     temperature: float = 0.7
     max_tokens: int = 512
-    
+
     @classmethod
     def from_env(cls) -> "OllamaConfig":
         """Load configuration from environment variables."""
@@ -45,28 +44,26 @@ class OllamaConfig:
 class OllamaBridge:
     """
     Bridge to Ollama for local NLM inference.
-    
+
     Requires Ollama to be installed and running:
         brew install ollama
         ollama pull mistral
         ollama serve
     """
-    
+
     def __init__(self, config: Optional[OllamaConfig] = None):
         self.config = config or OllamaConfig.from_env()
         self._available = None
-    
+
     def is_available(self) -> bool:
         """Check if Ollama is running and model is available."""
         if self._available is not None:
             return self._available
-        
+
         try:
             import requests
-            response = requests.get(
-                f"{self.config.host}/api/tags",
-                timeout=5
-            )
+
+            response = requests.get(f"{self.config.host}/api/tags", timeout=5)
             if response.status_code == 200:
                 models = response.json().get("models", [])
                 model_names = [m.get("name", "").split(":")[0] for m in models]
@@ -75,9 +72,9 @@ class OllamaBridge:
                 self._available = False
         except Exception:
             self._available = False
-        
+
         return self._available
-    
+
     def _call_ollama(
         self,
         prompt: str,
@@ -90,15 +87,15 @@ class OllamaBridge:
             import requests
         except ImportError:
             return None
-        
+
         if not self.is_available():
             return None
-        
+
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
-        
+
         try:
             response = requests.post(
                 f"{self.config.host}/api/chat",
@@ -109,7 +106,7 @@ class OllamaBridge:
                     "options": {
                         "temperature": temperature or self.config.temperature,
                         "num_predict": max_tokens or self.config.max_tokens,
-                    }
+                    },
                 },
                 timeout=self.config.timeout_seconds,
             )
@@ -122,7 +119,7 @@ class OllamaBridge:
             return None
         except (requests.RequestException, OSError):
             return None
-    
+
     def generate_lyrics(
         self,
         emotion: str,
@@ -132,13 +129,13 @@ class OllamaBridge:
     ) -> Optional[str]:
         """
         Generate lyrics based on emotional intent.
-        
+
         Args:
             emotion: Primary emotion (grief, joy, anger, etc.)
             theme: Optional theme (loss, love, freedom, etc.)
             style: Optional style (folk, hip-hop, pop, etc.)
             lines: Number of lines to generate
-        
+
         Returns:
             Generated lyrics or None if unavailable
         """
@@ -154,23 +151,23 @@ Only output the lyrics, no explanations or titles."""
             prompt_parts.append(f"Theme: {theme}.")
         if style:
             prompt_parts.append(f"Style: {style}.")
-        
+
         return self._call_ollama(
             prompt=" ".join(prompt_parts),
             system_prompt=system_prompt,
             temperature=0.8,  # Slightly higher for creativity
         )
-    
+
     def parse_intent(
         self,
         user_input: str,
     ) -> Optional[Dict[str, Any]]:
         """
         Parse natural language into structured song intent.
-        
+
         Args:
             user_input: Free-form description of what the user wants
-        
+
         Returns:
             Structured intent dictionary or None if unavailable
         """
@@ -191,10 +188,10 @@ Return ONLY valid JSON with these fields:
             system_prompt=system_prompt,
             temperature=0.3,  # Lower for structured output
         )
-        
+
         if not result:
             return None
-        
+
         # Try to extract JSON from response
         try:
             # Handle case where model wraps in markdown
@@ -211,7 +208,7 @@ Return ONLY valid JSON with these fields:
             return json.loads(result.strip())
         except (json.JSONDecodeError, IndexError):
             return None
-    
+
     def suggest_chord_progression(
         self,
         emotion: str,
@@ -220,12 +217,12 @@ Return ONLY valid JSON with these fields:
     ) -> Optional[List[str]]:
         """
         Suggest chord progressions for an emotion.
-        
+
         Args:
             emotion: Target emotion
             genre: Optional genre constraint
             context: Optional context (verse, chorus, bridge)
-        
+
         Returns:
             List of chord suggestions or None
         """
@@ -238,16 +235,16 @@ Include borrowed chords or modal interchange if appropriate for the emotion."""
             prompt_parts.append(f"Genre: {genre}.")
         if context:
             prompt_parts.append(f"Section: {context}.")
-        
+
         result = self._call_ollama(
             prompt=" ".join(prompt_parts),
             system_prompt=system_prompt,
             temperature=0.5,
         )
-        
+
         if not result:
             return None
-        
+
         try:
             # Handle markdown wrapping
             if "```" in result:
@@ -259,7 +256,7 @@ Include borrowed chords or modal interchange if appropriate for the emotion."""
             return json.loads(result.strip())
         except (json.JSONDecodeError, IndexError):
             return None
-    
+
     def explain_rule_break(
         self,
         rule: str,
@@ -267,11 +264,11 @@ Include borrowed chords or modal interchange if appropriate for the emotion."""
     ) -> Optional[str]:
         """
         Explain why a rule should be broken for emotional effect.
-        
+
         Args:
             rule: The rule being broken (e.g., "HARMONY_AvoidTonicResolution")
             emotion: The target emotion
-        
+
         Returns:
             Explanation string or None
         """
@@ -279,13 +276,13 @@ Include borrowed chords or modal interchange if appropriate for the emotion."""
 Be specific about the emotional effect and give concrete examples."""
 
         prompt = f"Explain why breaking '{rule}' is effective for expressing {emotion}."
-        
+
         return self._call_ollama(
             prompt=prompt,
             system_prompt=system_prompt,
             temperature=0.6,
         )
-    
+
     def generate_melody_suggestions(
         self,
         emotion: str,
@@ -295,13 +292,13 @@ Be specific about the emotional effect and give concrete examples."""
     ) -> Optional[Dict[str, Any]]:
         """
         Generate melodic suggestions based on emotional intent.
-        
+
         Args:
             emotion: Target emotion
             key: Musical key (C, F#, etc.)
             mode: major or minor
             phrase_length: Bars in the phrase
-        
+
         Returns:
             Dictionary with melodic suggestions or None
         """
@@ -320,16 +317,16 @@ Return ONLY valid JSON with these fields:
 }"""
 
         prompt = f"Melodic suggestions for {emotion} in {key} {mode}, {phrase_length} bars."
-        
+
         result = self._call_ollama(
             prompt=prompt,
             system_prompt=system_prompt,
             temperature=0.4,
         )
-        
+
         if not result:
             return None
-        
+
         try:
             if "```" in result:
                 result = result.split("```")[1].split("```")[0]

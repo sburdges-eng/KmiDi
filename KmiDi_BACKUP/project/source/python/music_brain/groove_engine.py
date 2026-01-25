@@ -9,8 +9,7 @@ are features, not bugs.
 """
 
 import random
-from typing import List, Dict, Any, Optional
-
+from typing import Any, Dict, List, Optional
 
 # =================================================================
 # CONSTANTS
@@ -26,13 +25,14 @@ HUMAN_LATENCY_BIAS = 2
 MAX_DROPOUT_PROB = 0.2
 
 # Velocity range modifiers
-VELOCITY_RANGE_LOW = 0.7   # Multiplier for soft dynamics
+VELOCITY_RANGE_LOW = 0.7  # Multiplier for soft dynamics
 VELOCITY_RANGE_HIGH = 1.15  # Multiplier for loud dynamics
 
 
 # =================================================================
 # CORE GROOVE FUNCTION
 # =================================================================
+
 
 def apply_groove(
     events: List[Dict[str, Any]],

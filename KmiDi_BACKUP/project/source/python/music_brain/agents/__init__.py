@@ -86,147 +86,152 @@ Shutdown Methods:
 # =============================================================================
 
 from .ableton_bridge import (
+    VOWEL_FORMANTS,
     # Main classes
     AbletonBridge,
-    AbletonOSCBridge,
     AbletonMIDIBridge,
-
+    AbletonOSCBridge,
+    MIDIConfig,
     # Configuration
     OSCConfig,
-    MIDIConfig,
-
+    TrackInfo,
     # State classes
     TransportState,
-    TrackInfo,
-
     # Voice control
     VoiceCC,
-    VOWEL_FORMANTS,
-
-    # Convenience functions
-    get_bridge,
     connect_daw,
     disconnect_daw,
-
+    # Convenience functions
+    get_bridge,
+)
+from .ableton_bridge import (
     # MCP tools
     get_mcp_tools as get_bridge_mcp_tools,
 )
 
 # =============================================================================
-# CrewAI Music Agents - Local LLM Agents
+# Async Hub - Event-Driven Architecture (v2)
 # =============================================================================
-
-from .crewai_music_agents import (
-    # LLM
-    LocalLLM,
-    LocalLLMConfig,
-    OnnxLLM,
-    OnnxLLMConfig,
-    LLMBackend,
-
-    # Tools
-    Tool,
-    ToolManager,
-
-    # Agents
-    AgentRole,
-    MusicAgent,
-    AGENT_ROLES,
-
-    # Crew
-    MusicCrew,
-
-    # Pre-defined tasks
-    voice_production_task,
-    song_production_task,
-
-    # Convenience functions
-    get_crew,
-    get_llm_status,
-    shutdown_crew,
-)
-
-# =============================================================================
-# Voice Profiles - Customizable Voice Characteristics
-# =============================================================================
-
-from .voice_profiles import (
-    # Main classes
-    VoiceProfileManager,
-    VoiceProfile,
-
-    # Enums
-    Gender,
-    AccentRegion,
-    SpeechPattern,
-
-    # Convenience functions
-    get_voice_manager,
-    apply_voice_profile,
-    learn_word,
-    list_accents,
-    list_speech_patterns,
-)
-
-# =============================================================================
-# Unified Hub - Central Orchestration
-# =============================================================================
-
-from .unified_hub import (
-    # Main class
-    UnifiedHub,
-
-    # Configuration
-    HubConfig,
-    SessionConfig,
-
-    # State classes
-    VoiceState,
-    DAWState,
-
-    # Voice synthesis
-    LocalVoiceSynth,
-
-    # Global functions
-    get_hub,
-    start_hub,
-    stop_hub,
-    force_stop_hub,
-    shutdown_all,
-
-    # MCP tools
-    get_hub_mcp_tools,
-)
-
-from .ml_pipeline import (
-    MLPipeline,
-    EmotionFeatures,
-    MLInferenceResult,
-    DynamicsResult,
-    GrooveResult,
-    EmotionEmbedding,
-    HarmonyResult,
-    ModelType as MLModelType,
+from .async_hub import (
+    AsyncUnifiedHub,
+    get_async_hub,
+    stop_async_hub,
 )
 
 # =============================================================================
 # Command History (Undo/Redo)
 # =============================================================================
-
 from .command import (
     Command,
     CommandCategory,
     CommandFactory,
     CommandHistory,
     CommandResult,
-    HistoryStats,
     CompoundCommand,
+    HistoryStats,
+)
+
+# =============================================================================
+# CrewAI Music Agents - Local LLM Agents
+# =============================================================================
+from .crewai_music_agents import (
+    AGENT_ROLES,
+    # Agents
+    AgentRole,
+    LLMBackend,
+    # LLM
+    LocalLLM,
+    LocalLLMConfig,
+    MusicAgent,
+    # Crew
+    MusicCrew,
+    OnnxLLM,
+    OnnxLLMConfig,
+    # Tools
+    Tool,
+    ToolManager,
+    # Convenience functions
+    get_crew,
+    get_llm_status,
+    shutdown_crew,
+    song_production_task,
+    # Pre-defined tasks
+    voice_production_task,
+)
+from .daw_bridges import (
+    # Configs
+    AbletonConfig,
+    # Bridges
+    AbletonDAWBridge,
+    BitwigBridge,
+    BitwigConfig,
+    LogicProBridge,
+    LogicProConfig,
+    ReaperBridge,
+    ReaperConfig,
+)
+
+# =============================================================================
+# DAW Protocol - Multi-DAW Abstraction
+# =============================================================================
+from .daw_protocol import (
+    BaseDAWBridge,
+    DAWCapabilities,
+    # Protocol
+    DAWProtocol,
+    # Registry & Factory
+    DAWRegistry,
+    # Types
+    DAWType,
+    get_daw_bridge,
+)
+
+# =============================================================================
+# Event Bus - Async Pub/Sub
+# =============================================================================
+from .events import (
+    Event,
+    EventBus,
+    EventChannel,
+    EventHandler,
+    EventPriority,
+    EventQueue,
+    EventResult,
+)
+from .ml_pipeline import (
+    DynamicsResult,
+    EmotionEmbedding,
+    EmotionFeatures,
+    GrooveResult,
+    HarmonyResult,
+    MLInferenceResult,
+    MLPipeline,
+)
+from .ml_pipeline import (
+    ModelType as MLModelType,
+)
+
+# =============================================================================
+# Reactive State Management
+# =============================================================================
+from .reactive import (
+    AsyncStateCallback,
+    BatchContext,
+    ComputedState,
+    # Core classes
+    Observable,
+    ReactiveState,
+    StateAggregator,
+    # Types
+    StateCallback,
+    observe,
+    # Decorators
+    reactive_dataclass,
 )
 
 # =============================================================================
 # Health Dashboard & Telemetry
 # =============================================================================
-
 from .telemetry import (
     ComponentType,
     HealthChecker,
@@ -238,90 +243,58 @@ from .telemetry import (
 )
 
 # =============================================================================
-# Async Hub - Event-Driven Architecture (v2)
+# Unified Hub - Central Orchestration
 # =============================================================================
-
-from .async_hub import (
-    AsyncUnifiedHub,
-    get_async_hub,
-    stop_async_hub,
+from .unified_hub import (
+    DAWState,
+    # Configuration
+    HubConfig,
+    # Voice synthesis
+    LocalVoiceSynth,
+    SessionConfig,
+    # Main class
+    UnifiedHub,
+    # State classes
+    VoiceState,
+    force_stop_hub,
+    # Global functions
+    get_hub,
+    # MCP tools
+    get_hub_mcp_tools,
+    shutdown_all,
+    start_hub,
+    stop_hub,
 )
 
 # =============================================================================
-# Event Bus - Async Pub/Sub
+# Voice Profiles - Customizable Voice Characteristics
 # =============================================================================
-
-from .events import (
-    Event,
-    EventResult,
-    EventHandler,
-    EventPriority,
-    EventBus,
-    EventChannel,
-    EventQueue,
-)
-
-# =============================================================================
-# DAW Protocol - Multi-DAW Abstraction
-# =============================================================================
-
-from .daw_protocol import (
-    # Types
-    DAWType,
-    DAWCapabilities,
-    # Protocol
-    DAWProtocol,
-    BaseDAWBridge,
-    # Registry & Factory
-    DAWRegistry,
-    get_daw_bridge,
-)
-
-from .daw_bridges import (
-    # Bridges
-    AbletonDAWBridge,
-    LogicProBridge,
-    ReaperBridge,
-    BitwigBridge,
-    # Configs
-    AbletonConfig,
-    LogicProConfig,
-    ReaperConfig,
-    BitwigConfig,
-)
-
-# =============================================================================
-# Reactive State Management
-# =============================================================================
-
-from .reactive import (
-    # Core classes
-    Observable,
-    ReactiveState,
-    StateAggregator,
-    ComputedState,
-    BatchContext,
-
-    # Types
-    StateCallback,
-    AsyncStateCallback,
-
-    # Decorators
-    reactive_dataclass,
-    observe,
+from .voice_profiles import (
+    AccentRegion,
+    # Enums
+    Gender,
+    SpeechPattern,
+    VoiceProfile,
+    # Main classes
+    VoiceProfileManager,
+    apply_voice_profile,
+    # Convenience functions
+    get_voice_manager,
+    learn_word,
+    list_accents,
+    list_speech_patterns,
 )
 
 # =============================================================================
 # WebSocket Real-time API
 # =============================================================================
-
 from .websocket_api import (
+    HAS_WEBSOCKETS,
     HubWebSocketServer,
+    MessageType,
     WSClient,
     WSMessage,
-    MessageType,
     create_websocket_server,
-    HAS_WEBSOCKETS,
 )
 
 # =============================================================================
@@ -332,9 +305,7 @@ from .websocket_api import (
 shutdown_tools = shutdown_crew
 
 # Keep lambda-style convenience to preserve truthiness expectations
-get_tool_manager = (
-    lambda: (get_crew().tools if get_crew() else None)
-)  # noqa: E731
+get_tool_manager = lambda: (get_crew().tools if get_crew() else None)  # noqa: E731
 
 # =============================================================================
 # Module Info
@@ -355,18 +326,15 @@ __all__ = [
     "connect_daw",
     "disconnect_daw",
     "get_bridge_mcp_tools",
-
     # Local LLM
     "LocalLLM",
     "LocalLLMConfig",
     "OnnxLLM",
     "OnnxLLMConfig",
     "LLMBackend",
-
     # Tools
     "Tool",
     "ToolManager",
-
     # Agents
     "AgentRole",
     "MusicAgent",
@@ -377,7 +345,6 @@ __all__ = [
     "get_crew",
     "get_llm_status",
     "shutdown_crew",
-
     # Voice Profiles
     "VoiceProfileManager",
     "VoiceProfile",
@@ -389,7 +356,6 @@ __all__ = [
     "learn_word",
     "list_accents",
     "list_speech_patterns",
-
     # Unified Hub (Sync)
     "UnifiedHub",
     "HubConfig",
@@ -399,7 +365,6 @@ __all__ = [
     "LocalVoiceSynth",
     "get_hub",
     "start_hub",
-
     # ML Pipeline
     "MLPipeline",
     "EmotionFeatures",
@@ -413,7 +378,6 @@ __all__ = [
     "force_stop_hub",
     "shutdown_all",
     "get_hub_mcp_tools",
-
     # Command History (Undo/Redo)
     "Command",
     "CommandCategory",
@@ -422,7 +386,6 @@ __all__ = [
     "CommandResult",
     "HistoryStats",
     "CompoundCommand",
-
     # Health Dashboard & Telemetry
     "ComponentType",
     "HealthChecker",
@@ -431,12 +394,10 @@ __all__ = [
     "HealthStatus",
     "LatencyStats",
     "ThroughputStats",
-
     # Async Hub (Event-Driven)
     "AsyncUnifiedHub",
     "get_async_hub",
     "stop_async_hub",
-
     # Reactive State
     "Observable",
     "BatchContext",
@@ -447,7 +408,6 @@ __all__ = [
     "AsyncStateCallback",
     "reactive_dataclass",
     "observe",
-
     # Event Bus
     "Event",
     "EventResult",
@@ -456,7 +416,6 @@ __all__ = [
     "EventBus",
     "EventChannel",
     "EventQueue",
-
     # WebSocket API
     "HubWebSocketServer",
     "WSMessage",
@@ -464,7 +423,6 @@ __all__ = [
     "MessageType",
     "create_websocket_server",
     "HAS_WEBSOCKETS",
-
     # DAW Protocol (Multi-DAW)
     "DAWType",
     "DAWCapabilities",
@@ -481,7 +439,6 @@ __all__ = [
     "LogicProConfig",
     "ReaperConfig",
     "BitwigConfig",
-
     # Aliases
     "shutdown_tools",
     "get_tool_manager",
@@ -494,6 +451,7 @@ __author__ = "DAiW"
 # =============================================================================
 # Quick Test
 # =============================================================================
+
 
 def _test() -> None:
     """Quick test of the agent system."""

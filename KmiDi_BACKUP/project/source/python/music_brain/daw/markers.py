@@ -11,12 +11,13 @@ Philosophy: The structure should reflect the emotional journey,
 not arbitrary form conventions.
 """
 
-from typing import List, Optional
 from dataclasses import dataclass
 from pathlib import Path
+from typing import List, Optional
 
 try:
     import mido
+
     MIDO_AVAILABLE = True
 except ImportError:
     mido = None
@@ -27,11 +28,13 @@ except ImportError:
 # DATA CLASSES
 # =================================================================
 
+
 @dataclass
 class MarkerEvent:
     """A single marker to place on the timeline."""
-    bar: int              # 1-indexed bar number
-    text: str             # Marker label
+
+    bar: int  # 1-indexed bar number
+    text: str  # Marker label
     color: Optional[str] = None  # Optional color hint (DAW-specific)
 
 
@@ -43,9 +46,10 @@ class EmotionalSection:
     Connects the standard musical sections to the three-phase
     emotional journey of the song.
     """
+
     start_bar: int
     end_bar: int
-    section_type: str     # intro, verse, chorus, bridge, outro
+    section_type: str  # intro, verse, chorus, bridge, outro
     emotional_label: str  # The Wound, The Resistance, The Transformation
     tension: float = 0.8  # 0-1 tension level
 
@@ -53,6 +57,7 @@ class EmotionalSection:
 # =================================================================
 # PRESET STRUCTURES
 # =================================================================
+
 
 def get_standard_structure(length_bars: int) -> List[MarkerEvent]:
     """
@@ -158,6 +163,7 @@ def get_emotional_structure(
 # MIDI EXPORT
 # =================================================================
 
+
 def export_markers_midi(
     markers: List[MarkerEvent],
     ppq: int,
@@ -204,9 +210,7 @@ def export_markers_midi(
         target_tick = (marker.bar - 1) * bar_ticks
         delta = max(0, target_tick - last_tick)
 
-        track.append(
-            mido.MetaMessage("marker", text=marker.text, time=delta)
-        )
+        track.append(mido.MetaMessage("marker", text=marker.text, time=delta))
         last_tick = target_tick
 
     # End of track
@@ -247,10 +251,7 @@ def export_sections_midi(
 
         # Optionally mark the end
         if section.end_bar > section.start_bar:
-            markers.append(MarkerEvent(
-                bar=section.end_bar,
-                text=f"[End {section.section_type}]"
-            ))
+            markers.append(MarkerEvent(bar=section.end_bar, text=f"[End {section.section_type}]"))
 
     return export_markers_midi(
         markers=markers,

@@ -5,17 +5,16 @@ Provides enhanced export functionality with emotion metadata and social platform
 """
 
 from .emotion_stem_exporter import (
-    EmotionStemExporter,
     EmotionMetadata,
+    EmotionStemExporter,
     StemExportInfo,
     create_emotion_metadata_from_intent,
 )
-
 from .social_platform_exporter import (
-    SocialPlatformExporter,
-    SocialPlatform,
-    PlatformSpec,
     PLATFORM_SPECS,
+    PlatformSpec,
+    SocialPlatform,
+    SocialPlatformExporter,
 )
 
 __all__ = [

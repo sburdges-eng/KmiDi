@@ -1,5 +1,9 @@
 import React, { useState } from "react";
-import { useMusicBrain, SpectocloudRenderRequest, SpectocloudRenderResponse } from "../hooks/useMusicBrain";
+import {
+  useMusicBrain,
+  SpectocloudRenderRequest,
+  SpectocloudRenderResponse,
+} from "../hooks/useMusicBrain";
 
 const presets: Record<string, Partial<SpectocloudRenderRequest>> = {
   preview: { anchor_density: "sparse", n_particles: 600, fps: 8 },
@@ -7,8 +11,12 @@ const presets: Record<string, Partial<SpectocloudRenderRequest>> = {
   high: { anchor_density: "dense", n_particles: 1800, fps: 24 },
 };
 
-export function SpectoCloudPanel() {
-  const { renderSpectocloud, getHumanizerConfig } = useMusicBrain();
+type Props = {
+  lastGeneratedAudioPath?: string | null;
+};
+
+export function SpectoCloudPanel({ lastGeneratedAudioPath }: Props) {
+  const { renderSpectocloud } = useMusicBrain();
   const [mode, setMode] = useState<"static" | "animation">("static");
   const [preset, setPreset] = useState<string>("standard");
   const [fps, setFps] = useState<number>(15);
@@ -17,15 +25,9 @@ export function SpectoCloudPanel() {
   const [particles, setParticles] = useState<number>(1200);
   const [duration, setDuration] = useState<number>(1.0);
   const [frameIdx, setFrameIdx] = useState<number>(0);
-  const [midiEventsJson, setMidiEventsJson] = useState<string>(
-    '[{"time":0,"type":"note_on","note":60,"velocity":90}]'
-  );
-  const [midiFilePath, setMidiFilePath] = useState<string>("");
   const [output, setOutput] = useState<SpectocloudRenderResponse | null>(null);
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const [humanizerConfig, setHumanizerConfig] = useState<any>(null);
-  const [uploadName, setUploadName] = useState<string>("");
 
   const applyPreset = (name: string) => {
     setPreset(name);
@@ -35,20 +37,12 @@ export function SpectoCloudPanel() {
     if (p.n_particles) setParticles(p.n_particles);
   };
 
-  const loadConfig = async () => {
-    try {
-      const cfg = await getHumanizerConfig();
-      setHumanizerConfig(cfg);
-    } catch (e: any) {
-      setError(e.message || String(e));
-    }
-  };
-
   const render = async () => {
     setError("");
     setOutput(null);
     setLoading(true);
     try {
+      // Use the audio file from generated music (MP3/WAV)
       const payload: SpectocloudRenderRequest = {
         mode,
         fps,
@@ -58,12 +52,16 @@ export function SpectoCloudPanel() {
         duration,
         frame_idx: frameIdx,
       };
-      if (midiFilePath.trim()) {
-        payload.midi_file_path = midiFilePath.trim();
+
+      // Use only the audio file from generated music
+      if (lastGeneratedAudioPath) {
+        payload.audio_file_path = lastGeneratedAudioPath;
       } else {
-        const events = JSON.parse(midiEventsJson);
-        payload.midi_events = events;
+        throw new Error(
+          "No audio file available. Please generate music first using the Generate Music button above.",
+        );
       }
+
       const resp = await renderSpectocloud(payload);
       setOutput(resp);
     } catch (e: any) {
@@ -73,134 +71,119 @@ export function SpectoCloudPanel() {
     }
   };
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadName(file.name);
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const text = reader.result?.toString() || "[]";
-        JSON.parse(text); // validate
-        setMidiEventsJson(text);
-        setMidiFilePath("");
-        setError("");
-      } catch (err: any) {
-        setError(`Invalid JSON in uploaded file: ${err.message || err}`);
-      }
-    };
-    reader.readAsText(file);
-  };
-
   return (
-    <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 16, marginTop: 16, background: "#fafafa" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div className="spectocloud-panel">
+      <div className="spectocloud-header">
         <div>
-          <h3>SpectoCloud Render</h3>
-          <p style={{ margin: 0 }}>Choose preset, set mode, and render static or animation.</p>
+          <div className="section-header-inline">
+            <h3>Visualize Your Music</h3>
+            <span className="section-badge">Particle Cloud</span>
+          </div>
+          <p className="section-description">
+            Turn your music into beautiful visual art. See your melodies and
+            rhythms as flowing particle clouds - perfect for sharing or use as
+            album artwork.
+          </p>
         </div>
-        <button onClick={loadConfig} style={{ padding: "6px 10px" }}>Load Humanizer Config</button>
       </div>
 
-      {humanizerConfig && (
-        <div style={{ background: "#f5f5f5", padding: 8, borderRadius: 6, marginTop: 8, fontSize: "0.9em" }}>
-          <strong>Humanizer</strong>: style {humanizerConfig.default_style}, ppq {humanizerConfig.ppq}, bpm {humanizerConfig.bpm}
-        </div>
-      )}
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginTop: 12 }}>
-        <div>
-          <label>Preset</label>
-          <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+      <div className="spectocloud-simple-controls">
+        <div className="simple-control-group">
+          <label className="simple-label">Quality:</label>
+          <div className="preset-buttons-simple">
             {Object.keys(presets).map((p) => (
               <button
                 key={p}
                 onClick={() => applyPreset(p)}
-                style={{ padding: "6px 10px", background: preset === p ? "#444" : "#eee", color: preset === p ? "#fff" : "#000" }}
+                className={`preset-btn-simple ${preset === p ? "preset-btn-simple-active" : ""}`}
               >
-                {p}
+                {p === "preview"
+                  ? "Fast"
+                  : p === "standard"
+                    ? "Balanced"
+                    : "High Quality"}
               </button>
             ))}
           </div>
         </div>
-        <div>
-          <label>Mode</label>
-          <select value={mode} onChange={(e) => setMode(e.target.value as any)}>
-            <option value="static">Static</option>
-            <option value="animation">Animation</option>
-          </select>
+        <div className="simple-control-group">
+          <label className="simple-label">Type:</label>
+          <div className="mode-buttons-simple">
+            <button
+              onClick={() => setMode("static")}
+              className={`mode-btn ${mode === "static" ? "mode-btn-active" : ""}`}
+            >
+              📷 Image
+            </button>
+            <button
+              onClick={() => setMode("animation")}
+              className={`mode-btn ${mode === "animation" ? "mode-btn-active" : ""}`}
+            >
+              🎬 Animation
+            </button>
+          </div>
         </div>
-        <div>
-          <label>FPS</label>
-          <input type="number" value={fps} onChange={(e) => setFps(Number(e.target.value))} />
-        </div>
-        <div>
-          <label>Rotate</label>
-          <input type="checkbox" checked={rotate} onChange={(e) => setRotate(e.target.checked)} />
-        </div>
-        <div>
-          <label>Anchor Density</label>
-          <select value={anchorDensity} onChange={(e) => setAnchorDensity(e.target.value)}>
-            <option value="sparse">sparse</option>
-            <option value="normal">normal</option>
-            <option value="dense">dense</option>
-          </select>
-        </div>
-        <div>
-          <label>Particles</label>
-          <input type="number" value={particles} onChange={(e) => setParticles(Number(e.target.value))} />
-        </div>
-        <div>
-          <label>Duration (s)</label>
-          <input type="number" step="0.1" value={duration} onChange={(e) => setDuration(Number(e.target.value))} />
-        </div>
-        {mode === "static" && (
-          <div>
-            <label>Frame Index</label>
-            <input type="number" value={frameIdx} onChange={(e) => setFrameIdx(Number(e.target.value))} />
+      </div>
+
+      <div className="spectocloud-simple-section">
+        <p className="simple-description">
+          Visualize your generated music automatically. After you generate music
+          using the button above, come back here to turn it into a beautiful
+          particle cloud visualization.
+        </p>
+        {lastGeneratedAudioPath ? (
+          <div className="auto-detection-notice success">
+            <span className="notice-icon">✓</span>
+            <span>Ready to visualize your generated music</span>
+          </div>
+        ) : (
+          <div className="auto-detection-notice warning">
+            <span className="notice-icon">ℹ️</span>
+            <span>
+              Generate music first using the "Generate Music" button above, then
+              return here to visualize it
+            </span>
           </div>
         )}
       </div>
 
-      <div style={{ marginTop: 12 }}>
-        <label>MIDI events (JSON array)</label>
-        <textarea
-          rows={4}
-          style={{ width: "100%" }}
-          value={midiEventsJson}
-          onChange={(e) => setMidiEventsJson(e.target.value)}
-        />
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-          <label style={{ margin: 0 }}>Upload JSON events:</label>
-          <input type="file" accept=".json" onChange={handleUpload} />
-          {uploadName && <span style={{ fontSize: "0.9em", color: "#555" }}>{uploadName}</span>}
-        </div>
-        <div style={{ marginTop: 6 }}>or provide MIDI file path:</div>
-        <input
-          type="text"
-          placeholder="/abs/path/to/file.mid"
-          style={{ width: "100%" }}
-          value={midiFilePath}
-          onChange={(e) => setMidiFilePath(e.target.value)}
-        />
-      </div>
-
       {error && (
-        <div style={{ marginTop: 10, padding: 8, background: "#fee", border: "1px solid #f88" }}>
-          {error}
+        <div className="error-display-card">
+          <strong>Error:</strong> {error}
         </div>
       )}
 
-      <button onClick={render} disabled={loading} style={{ marginTop: 12, padding: "8px 12px" }}>
-        {loading ? "Rendering..." : mode === "static" ? "Render Static" : "Render Animation"}
-      </button>
+      <div className="render-action-section">
+        <button
+          onClick={render}
+          disabled={loading}
+          className="primary-action-btn"
+        >
+          {loading
+            ? "Creating Visualization..."
+            : mode === "static"
+              ? "Create Image"
+              : "Create Animation"}
+        </button>
+        <p className="action-hint">
+          {mode === "static"
+            ? "Generate a beautiful still image of your music."
+            : "Create an animated video of your music flowing over time."}
+        </p>
+      </div>
 
       {output && (
-        <div style={{ marginTop: 12, padding: 8, background: "#f0f7ff", border: "1px solid #c3e0ff" }}>
-          <div><strong>Output</strong></div>
-          <div>Mode: {output.mode}</div>
-          <div>Frames: {output.frames}</div>
-          <div>Path: <code>{output.output_path}</code></div>
+        <div className="output-display-card">
+          <div className="output-display-label">✨ Visualization Complete!</div>
+          <div className="output-display-details">
+            <div>
+              Your {output.mode === "static" ? "image" : "animation"} is ready!
+            </div>
+            <div className="output-location">
+              Saved to:{" "}
+              <span className="output-path-simple">{output.output_path}</span>
+            </div>
+          </div>
         </div>
       )}
     </div>

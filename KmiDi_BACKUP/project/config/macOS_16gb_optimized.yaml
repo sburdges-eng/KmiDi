@@ -3,10 +3,11 @@
 # =============================================================================
 # Optimized for: Apple Silicon (M1/M2/M3/M4) with 16GB RAM
 # Backend: MPS (Metal Performance Shaders)
+# Last Updated: 2025-01-24
 # =============================================================================
 
 device: mps
-precision: fp16
+precision: fp16                # FP16 required for MPS autocast; M4 excels at FP16
 seed: 42
 budget_limit: 100  # Maximum allowed cost in USD (placeholder)
 
@@ -15,14 +16,16 @@ data:
   n_mels: 128
   hop_length: 512
   segment_seconds: 8
-  num_workers: 0               # MPS works best with 0 workers (main thread)
+  num_workers: 0               # CRITICAL: MPS requires 0 workers (main thread only)
   cache_mels: true
+  cache_dir: .cache/mels       # Cache directory for precomputed spectrograms
 
 dataloader:
-  batch_size: 8                # Conservative for 16GB
+  batch_size: 8                # Conservative for 16GB unified memory
   shuffle: true
-  pin_memory: false            # Leave false for MPS
+  pin_memory: false            # Leave false for MPS (not beneficial)
   drop_last: true
+  persistent_workers: false    # Not needed with num_workers=0
 
 model:
   backbone: htsat-small
@@ -33,13 +36,41 @@ optim:
   name: adamw
   lr: 3e-4
   weight_decay: 0.01
+  betas: [0.9, 0.98]
+  eps: 1e-8
+  grad_clip: 1.0
+  fused: false                 # Fused optimizers not available on MPS
+
+scheduler:
+  name: cosine_with_warmup
+  warmup_steps: 500
+  max_steps: 40000
+  min_lr_ratio: 0.1
 
 training:
   epochs: 20
-  grad_accum_steps: 4          # Effective batch size = 32
+  grad_accum_steps: 4          # Effective batch size = 8 * 4 = 32
   log_every: 50
   eval_every: 500
+  ckpt_every: 1000
   ema: false
+  
+  # Mixed precision training (FP16 for MPS)
+  amp: true                    # Enable automatic mixed precision
+  amp_dtype: float16          # Must be float16 for MPS
+  
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 10
+    min_delta: 0.001
+    monitor: "val_loss"
+    mode: "min"
+
+# Memory optimization
+memory:
+  max_memory_percent: 85       # Leave headroom for system
+  enable_gradient_checkpointing: false  # Enable for very large models
 
 # Safety Settings
 ensure_model_copy: true        # Use a copy of the model for training

@@ -12,15 +12,15 @@ Key benefits for Mac:
   ✓ Can merge back into base model for inference
 """
 
+import json
+import logging
+from pathlib import Path
+from typing import Dict, List, Optional
+
+import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
-import numpy as np
-from pathlib import Path
-from typing import List, Dict, Optional, Tuple
-import json
-import time
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class Tier2LORAfinetuner:
         lora_alpha: float = 16.0,
         lora_dropout: float = 0.1,
         target_modules: Optional[List[str]] = None,
-        verbose: bool = True
+        verbose: bool = True,
     ):
         """
         Initialize LoRA fine-tuner.
@@ -93,7 +93,7 @@ class Tier2LORAfinetuner:
         # Wrap model with LoRA
         try:
             # Try using peft library if available
-            from peft import get_peft_model, LoraConfig, TaskType
+            from peft import LoraConfig, TaskType, get_peft_model
 
             lora_config = LoraConfig(
                 task_type=TaskType.TOKEN_CLS,
@@ -102,7 +102,7 @@ class Tier2LORAfinetuner:
                 lora_dropout=self.lora_dropout,
                 bias="none",
                 target_modules=self.target_modules,
-                modules_to_save=[]
+                modules_to_save=[],
             )
 
             self.model = get_peft_model(self.base_model, lora_config)
@@ -125,6 +125,7 @@ class Tier2LORAfinetuner:
 
         Wraps Linear layers with low-rank adapters.
         """
+
         class LoRALinear(nn.Module):
             def __init__(self, original_layer: nn.Linear, rank: int, alpha: float):
                 super().__init__()
@@ -168,7 +169,7 @@ class Tier2LORAfinetuner:
         warmup_steps: int = 100,
         output_dir: str = "./checkpoints/tier2_lora",
         save_every_n_epochs: int = 2,
-        validation_split: float = 0.1
+        validation_split: float = 0.1,
     ) -> Dict:
         """
         Fine-tune model on custom dataset.
@@ -196,9 +197,7 @@ class Tier2LORAfinetuner:
         train_size = int(len(dataset) * (1 - validation_split))
         val_size = len(dataset) - train_size
         train_dataset, val_dataset = torch.utils.data.random_split(
-            dataset,
-            [train_size, val_size],
-            generator=torch.Generator().manual_seed(42)
+            dataset, [train_size, val_size], generator=torch.Generator().manual_seed(42)
         )
 
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
@@ -210,45 +209,38 @@ class Tier2LORAfinetuner:
 
         # Learning rate scheduler
         scheduler = torch.optim.lr_scheduler.OneCycleLR(
-            optimizer,
-            max_lr=learning_rate,
-            total_steps=len(train_loader) * epochs,
-            pct_start=0.1
+            optimizer, max_lr=learning_rate, total_steps=len(train_loader) * epochs, pct_start=0.1
         )
 
         # Loss function
         loss_fn = nn.CrossEntropyLoss()
 
         # Training loop
-        history = {
-            "train_loss": [],
-            "val_loss": [],
-            "learning_rate": []
-        }
+        history = {"train_loss": [], "val_loss": [], "learning_rate": []}
 
         Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-        best_val_loss = float('inf')
+        best_val_loss = float("inf")
 
         for epoch in range(epochs):
             # Training
-            train_loss = self._train_epoch(
-                train_loader, loss_fn, optimizer, scheduler
-            )
+            train_loss = self._train_epoch(train_loader, loss_fn, optimizer, scheduler)
             history["train_loss"].append(train_loss)
-            history["learning_rate"].append(optimizer.param_groups[0]['lr'])
+            history["learning_rate"].append(optimizer.param_groups[0]["lr"])
 
             # Validation
             val_loss = self._validate_epoch(val_loader, loss_fn)
             history["val_loss"].append(val_loss)
 
-            self._log(f"Epoch {epoch+1}/{epochs}: "
-                     f"train_loss={train_loss:.4f}, val_loss={val_loss:.4f}, "
-                     f"lr={optimizer.param_groups[0]['lr']:.2e}")
+            self._log(
+                f"Epoch {epoch + 1}/{epochs}: "
+                f"train_loss={train_loss:.4f}, val_loss={val_loss:.4f}, "
+                f"lr={optimizer.param_groups[0]['lr']:.2e}"
+            )
 
             # Save checkpoint
             if (epoch + 1) % save_every_n_epochs == 0:
-                checkpoint_path = Path(output_dir) / f"epoch_{epoch+1}"
+                checkpoint_path = Path(output_dir) / f"epoch_{epoch + 1}"
                 checkpoint_path.mkdir(parents=True, exist_ok=True)
                 self._save_checkpoint(checkpoint_path)
                 self._log(f"  Saved checkpoint: {checkpoint_path}")
@@ -260,7 +252,7 @@ class Tier2LORAfinetuner:
             else:
                 patience_counter += 1
                 if patience_counter >= 3:
-                    self._log(f"Early stopping at epoch {epoch+1}")
+                    self._log(f"Early stopping at epoch {epoch + 1}")
                     break
 
         # Save final
@@ -276,7 +268,7 @@ class Tier2LORAfinetuner:
         train_loader: DataLoader,
         loss_fn: nn.Module,
         optimizer: torch.optim.Optimizer,
-        scheduler: torch.optim.lr_scheduler._LRScheduler
+        scheduler: torch.optim.lr_scheduler._LRScheduler,
     ) -> float:
         """Train one epoch"""
         self.model.train()
@@ -292,10 +284,7 @@ class Tier2LORAfinetuner:
 
             # Reshape for loss
             B, L, vocab_size = outputs.shape
-            loss = loss_fn(
-                outputs.reshape(B * L, vocab_size),
-                notes.long().reshape(B * L)
-            )
+            loss = loss_fn(outputs.reshape(B * L, vocab_size), notes.long().reshape(B * L))
 
             # Backward
             optimizer.zero_grad()
@@ -308,11 +297,7 @@ class Tier2LORAfinetuner:
 
         return total_loss / len(train_loader)
 
-    def _validate_epoch(
-        self,
-        val_loader: DataLoader,
-        loss_fn: nn.Module
-    ) -> float:
+    def _validate_epoch(self, val_loader: DataLoader, loss_fn: nn.Module) -> float:
         """Validate one epoch"""
         self.model.eval()
         total_loss = 0.0
@@ -325,10 +310,7 @@ class Tier2LORAfinetuner:
                 outputs = self.model(emotion)
 
                 B, L, vocab_size = outputs.shape
-                loss = loss_fn(
-                    outputs.reshape(B * L, vocab_size),
-                    notes.long().reshape(B * L)
-                )
+                loss = loss_fn(outputs.reshape(B * L, vocab_size), notes.long().reshape(B * L))
 
                 total_loss += loss.item()
 
@@ -349,10 +331,7 @@ class Tier2LORAfinetuner:
             torch.save(checkpoint_dict, checkpoint_dir / "lora_weights.pt")
 
     def inference_with_lora(
-        self,
-        emotion_embedding: np.ndarray,
-        length: int = 32,
-        temperature: float = 0.9
+        self, emotion_embedding: np.ndarray, length: int = 32, temperature: float = 0.9
     ) -> np.ndarray:
         """
         Generate using fine-tuned model.
@@ -387,8 +366,11 @@ class Tier2LORAfinetuner:
                 if step < length - 1:
                     note_encoding = torch.zeros(1, 1, 128, device=self.device)
                     note_encoding[0, 0, next_note] = 1.0
-                    context = torch.cat([context[:, 1:, :], note_encoding], dim=1) \
-                        if context.shape[1] > 1 else note_encoding
+                    context = (
+                        torch.cat([context[:, 1:, :], note_encoding], dim=1)
+                        if context.shape[1] > 1
+                        else note_encoding
+                    )
 
         return np.array(notes, dtype=np.int32)
 
@@ -439,10 +421,7 @@ class MIDIEmotionDataset(Dataset):
         with open(self.emotion_paths[idx]) as f:
             emotion = np.array(json.load(f), dtype=np.float32)
 
-        return {
-            "notes": torch.FloatTensor(midi_notes),
-            "emotion": torch.FloatTensor(emotion)
-        }
+        return {"notes": torch.FloatTensor(midi_notes), "emotion": torch.FloatTensor(emotion)}
 
     def _load_midi(self, midi_path: str, max_length: int = 256) -> np.ndarray:
         """Load MIDI file as note sequence"""
@@ -451,9 +430,8 @@ class MIDIEmotionDataset(Dataset):
 
             try:
                 score = converter.parse(midi_path)
-                notes = [int(n.pitch.midi) for n in score.flatten().notes
-                        if hasattr(n, 'pitch')]
-            except Exception:
+                notes = [int(n.pitch.midi) for n in score.flatten().notes if hasattr(n, "pitch")]
+            except:
                 notes = []
 
         except ImportError:
@@ -475,7 +453,7 @@ def finetune_tier2(
     emotion_paths: List[str],
     device: str = "mps",
     epochs: int = 10,
-    output_dir: str = "./checkpoints/tier2"
+    output_dir: str = "./checkpoints/tier2",
 ) -> Tier2LORAfinetuner:
     """
     Quick wrapper for Tier 2 fine-tuning.
@@ -487,9 +465,5 @@ def finetune_tier2(
         )
     """
     finetuner = Tier2LORAfinetuner(base_model, device=device)
-    finetuner.finetune_on_dataset(
-        midi_paths, emotion_paths,
-        epochs=epochs,
-        output_dir=output_dir
-    )
+    finetuner.finetune_on_dataset(midi_paths, emotion_paths, epochs=epochs, output_dir=output_dir)
     return finetuner

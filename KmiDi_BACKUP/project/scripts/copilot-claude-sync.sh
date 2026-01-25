@@ -26,17 +26,17 @@ git log HEAD..origin/main --oneline --decorate
 
 # Pull changes if any (only in interactive mode)
 if [[ -t 0 ]]; then
-    echo ""
-    read -p "Pull latest changes? (y/n): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        git pull origin main
-        echo "✅ Repository updated!"
-    else
-        echo "⏸️  Skipped pull"
-    fi
+  echo ""
+  read -p "Pull latest changes? (y/n): " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    git pull origin main
+    echo "✅ Repository updated!"
+  else
+    echo "⏸️  Skipped pull"
+  fi
 else
-    echo "ℹ️  Non-interactive mode: skipping pull prompt."
+  echo "ℹ️  Non-interactive mode: skipping pull prompt."
 fi
 
 echo ""

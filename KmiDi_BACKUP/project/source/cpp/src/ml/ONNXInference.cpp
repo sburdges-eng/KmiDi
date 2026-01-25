@@ -1,4 +1,5 @@
 #include "ml/ONNXInference.h"
+#include "ml/ModelRegistry.h"
 #include <juce_core/juce_core.h>
 #include <cstring>
 
@@ -8,8 +9,8 @@
 using namespace Ort;
 #endif
 
-namespace midikompanion {
-namespace ml {
+namespace kelly {
+namespace ML {
 
 // Static initialization
 bool ONNXInference::onnxInitialized_ = false;
@@ -69,9 +70,31 @@ bool ONNXInference::loadModel(const juce::File& modelPath) {
 bool ONNXInference::loadModel(const std::string& modelPath) {
     clearError();
 
-    if (!juce::File(modelPath).existsAsFile()) {
-        setError("Model file does not exist: " + juce::String(modelPath));
-        return false;
+    juce::File modelFile(modelPath);
+    juce::String modelName = modelFile.getFileNameWithoutExtension();
+    if (modelName.isEmpty()) {
+        modelName = juce::String(modelPath);
+    }
+
+    auto& registry = ModelRegistry::getInstance();
+    ModelStatus status;
+
+    if (!modelFile.existsAsFile()) {
+        status = registry.resolveModel(modelName, ".onnx");
+        if (status.status == ModelLoadStatus::Missing || !status.path.existsAsFile()) {
+            status.message = "Model file does not exist";
+            registry.updateStatus(status);
+            setError("Model file does not exist: " + juce::String(modelPath));
+            return false;
+        }
+        modelFile = status.path;
+    } else {
+        status.name = modelName;
+        status.extension = ".onnx";
+        status.path = modelFile;
+        status.status = ModelLoadStatus::Available;
+        status.source = "direct_path";
+        registry.updateStatus(status);
     }
 
     initializeONNX();
@@ -99,7 +122,7 @@ bool ONNXInference::loadModel(const std::string& modelPath) {
         // For NVIDIA, could use CUDAExecutionProvider
 
         // Create session
-        sessionPtr_ = new Session(*env, modelPath.c_str(), sessionOptions);
+        sessionPtr_ = new Session(*env, modelFile.getFullPathName().toStdString().c_str(), sessionOptions);
 
         Session* session = static_cast<Session*>(sessionPtr_);
 
@@ -111,8 +134,6 @@ bool ONNXInference::loadModel(const std::string& modelPath) {
             setError("Invalid model: no input or output nodes");
             return false;
         }
-
-        Session* session = static_cast<Session*>(sessionPtr_);
 
         // Get input shape
         AllocatorWithDefaultOptions allocator;
@@ -156,14 +177,19 @@ bool ONNXInference::loadModel(const std::string& modelPath) {
         // Create memory info
         memoryInfoPtr_ = new MemoryInfo(MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault));
 
-        modelPath_ = juce::String(modelPath);
+        modelPath_ = modelFile.getFullPathName();
         isLoaded_ = true;
+        status.status = ModelLoadStatus::Loaded;
+        registry.updateStatus(status);
 
         return true;
 
     } catch (const std::exception& e) {
         setError("Failed to load ONNX model: " + juce::String(e.what()));
         isLoaded_ = false;
+        status.status = ModelLoadStatus::Failed;
+        status.message = juce::String(e.what());
+        registry.updateStatus(status);
         return false;
     }
 #else
@@ -172,8 +198,11 @@ bool ONNXInference::loadModel(const std::string& modelPath) {
     setError("ONNX Runtime not enabled. Set ENABLE_ONNX_RUNTIME=ON in CMake.");
     inputSize_ = 128;  // Default stub sizes
     outputSize_ = 64;
-    modelPath_ = juce::String(modelPath);
+    modelPath_ = modelFile.getFullPathName();
     isLoaded_ = false;  // Mark as not loaded in stub mode
+    status.status = ModelLoadStatus::Failed;
+    status.message = "ONNX Runtime not enabled";
+    registry.updateStatus(status);
     return false;
 #endif
 }

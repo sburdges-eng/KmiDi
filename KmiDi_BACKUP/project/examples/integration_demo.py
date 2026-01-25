@@ -6,8 +6,12 @@ Demonstrates orchestration of C++ engine, rulebooks, and teacher modules.
 """
 
 import numpy as np
+
 from penta_core import PentaCore
-from penta_core.rules import VoiceLeadingRules, HarmonyRules, CounterpointRules, RhythmRules, get_techniques_for_emotion
+from penta_core.rules import (
+    RhythmRules,
+    get_techniques_for_emotion,
+)
 from penta_core.teachers import RuleBreakingTeacher
 
 # Initialize core engine
@@ -24,7 +28,7 @@ print("Musical State:", state)
 
 # OSC communication
 core.start_osc()
-core.osc.send_message('/penta/harmony/chord', 60, 'major')
+core.osc.send_message("/penta/harmony/chord", 60, "major")
 msg = core.osc.receive_message()
 print("OSC Message Received:", msg)
 core.stop_osc()

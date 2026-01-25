@@ -1,0 +1,251 @@
+# Cursor Codebase Indexing Ignore File
+# Files and directories listed here will be excluded from codebase search/indexing
+
+# ============================================
+# Quarantine and Cleanup Directories
+# ============================================
+_QUARANTINE_*/
+_AGGRESSIVE_CLEANUP_PLAN/
+_AUDIT_REPORT_*/
+_DELETION_PLAN/
+_EMPTY_DIRS_CLEANUP/
+_GIT_SAFE_CLEANUP_PLAN/
+_LARGE_FILES_AUDIT_*/
+_PROJECT_DEPENDENCY_CHECK_*/
+
+# ============================================
+# Backup and Legacy Directories
+# ============================================
+*_BACKUP/
+*_FINAL/
+*_PROJECT/
+KmiDi_BACKUP/
+KmiDi_FINAL/
+KmiDi_PROJECT/
+legacy/
+
+# ============================================
+# External Dependencies (third-party code)
+# ============================================
+external/
+.tools/
+
+# ============================================
+# Build Artifacts and Generated Files
+# ============================================
+build/
+build-*/
+cmake-build-*/
+target/
+dist/
+out/
+bin/
+*.o
+*.obj
+*.exe
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+CMakeCache.txt
+CMakeFiles/
+compile_commands.json
+*.pyc
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+*.gcda
+*.gcno
+*.gcov
+
+# ============================================
+# Node/Web Build Artifacts
+# ============================================
+node_modules/
+.next/
+.turbo/
+.parcel-cache/
+*.min.js
+*.bundle.js
+*.map
+!*.md.map
+
+# ============================================
+# Rust Build Artifacts
+# ============================================
+target/
+Cargo.lock
+
+# ============================================
+# IDE and Editor Files
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ============================================
+# Logs and Temporary Files
+# ============================================
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+*.cache
+logs/
+*.prof
+*.perf
+valgrind*.log
+perfetto*.trace
+
+# ============================================
+# Large Binary and Media Files
+# ============================================
+*.wav
+*.mp3
+*.flac
+*.aiff
+*.ogg
+*.mid
+*.midi
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+*.dmg
+*.iso
+*.pdf
+*.docx
+*.pptx
+*.xlsx
+
+# ============================================
+# ML/AI Model Files (large binary files)
+# ============================================
+*.pt
+*.pth
+*.onnx
+*.ckpt
+*.h5
+*.npy
+*.npz
+*.pkl
+*.pickle
+*.wavetable
+checkpoints/
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.ckpt
+models/*.h5
+
+# ============================================
+# Training Data and Results
+# ============================================
+datasets/
+training_results_*.json
+training_results_worker_*.json
+logs/training/
+
+# ============================================
+# Large Data Directories
+# ============================================
+data/xml/
+kmidi_audio_data/
+
+# ============================================
+# Generated Documentation
+# ============================================
+docs/markdown/
+docs/txt/
+docs/html/
+code/python/
+code/
+
+# ============================================
+# Test Artifacts
+# ============================================
+test_results/
+Testing/
+*.gcda
+*.gcno
+*.gcov
+coverage/
+
+# ============================================
+# Platform-Specific Build Directories
+# ============================================
+JuceLibraryCode/
+Builds/
+Plugins/
+*.vst3
+*.clap
+
+# ============================================
+# SDK Extracts
+# ============================================
+*_extract_*/
+idaw_extract_*
+
+# ============================================
+# Environment and Config Files
+# ============================================
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+ENV/
+env/
+*.manifest
+
+# ============================================
+# Lock Files (can be regenerated)
+# ============================================
+yarn.lock
+package-lock.json
+*.lock
+!flake.lock
+
+# ============================================
+# Type Definition Files (large vendor files)
+# ============================================
+lib.dom.d.ts
+lucide-react.d.ts
+dynamicIconImports.d.ts
+
+# ============================================
+# Source Maps (generated)
+# ============================================
+*.map
+!*.md.map
+
+# ============================================
+# OS-Specific Files
+# ============================================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*

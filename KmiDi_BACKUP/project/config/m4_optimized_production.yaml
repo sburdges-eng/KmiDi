@@ -1,0 +1,309 @@
+# =============================================================================
+# M4 Mac Optimized Production Training Configuration
+# =============================================================================
+# Optimized for: Apple M4 Mac (14-core GPU, 16-48GB unified memory)
+# Backend: MPS (Metal Performance Shaders) with best practices
+# Last Updated: 2025-01-24
+# =============================================================================
+#
+# Key Optimizations:
+# - MPS-optimized batch sizes and memory management
+# - FP16 precision with proper autocast handling
+# - Optimized dataloader settings (num_workers=0 for MPS)
+# - Gradient accumulation for effective larger batches
+# - Proper MPS memory management
+# - CoreML export ready
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Hardware Configuration
+# -----------------------------------------------------------------------------
+hardware:
+  device: mps # Metal Performance Shaders
+  precision: fp16 # M4 excels at FP16, required for MPS autocast
+  unified_memory_gb: 24 # Adjust: 16/24/48GB based on your Mac
+
+  # MPS-specific optimizations
+  mps:
+    # Always use num_workers=0 for MPS (main thread only)
+    num_workers: 0
+    pin_memory: false # Not beneficial on MPS
+    persistent_workers: false # Not needed with num_workers=0
+
+    # Memory management
+    enable_mps_fallback: true # Fallback to CPU if MPS unavailable
+    mps_autocast: true # Use torch.autocast('mps', dtype=torch.float16)
+
+    # MPS environment variables (set via export or in script)
+    # PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0  # Disable high watermark
+    # PYTORCH_ENABLE_MPS_FALLBACK=1         # Enable CPU fallback
+
+  # Apple Neural Engine (ANE) - for inference only
+  ane:
+    enabled: false # ANE not used for training, only inference
+    compute_units: "ALL" # CPU + GPU + ANE for CoreML export
+
+# -----------------------------------------------------------------------------
+# Data Configuration
+# -----------------------------------------------------------------------------
+data:
+  sample_rate: 44100
+  target_lufs: -14
+  n_mels: 128 # Standard for audio models
+  hop_length: 512
+  segment_seconds: 8 # Adjust based on memory: 4-16 seconds
+
+  # Dataset sources
+  train_manifest: data/manifests/train.jsonl
+  val_manifest: data/manifests/val.jsonl
+  manifest_audio_key: audio
+  manifest_label_key: label
+
+  # Aggressive caching for M4 (unified memory benefits)
+  cache_mels: true
+  cache_dir: .cache/mels
+  precompute_all: true # Pre-compute all spectrograms
+
+  # Data loading optimization
+  num_workers: 0 # CRITICAL: MPS requires 0 workers
+  pin_memory: false # Not beneficial on MPS
+  prefetch_factor: 2 # Only used if num_workers > 0
+  persistent_workers: false # Not used with num_workers=0
+
+# -----------------------------------------------------------------------------
+# Dataloader Configuration
+# -----------------------------------------------------------------------------
+dataloader:
+  # Batch size tuned for M4 unified memory
+  # Start conservative, increase if stable
+  batch_size: 8 # Base batch size
+
+  # Effective batch size = batch_size * grad_accum_steps
+  # For M4: aim for effective batch of 32-64
+  effective_batch_size: 32 # Target effective batch
+
+  shuffle: true
+  drop_last: true # Avoid partial batches
+
+  # MPS-specific: all false/0
+  pin_memory: false
+  num_workers: 0
+  persistent_workers: false
+
+# -----------------------------------------------------------------------------
+# Model Architecture
+# -----------------------------------------------------------------------------
+model:
+  backbone: htsat-small # Efficient audio transformer
+  embedding_dim: 256
+  num_layers: 6
+  num_heads: 4
+  ff_mult: 2.0
+  dropout: 0.1
+
+  # Multi-task heads
+  tasks:
+    - name: genre
+      head: linear
+      classes: 20
+      loss_weight: 3.0
+      auto_class_weights: true
+    - name: emotion
+      head: linear
+      classes: 8
+      loss_weight: 0.5
+
+# -----------------------------------------------------------------------------
+# Optimizer Configuration
+# -----------------------------------------------------------------------------
+optim:
+  name: adamw
+  lr: 3e-4 # Standard learning rate
+  weight_decay: 0.01
+  betas: [0.9, 0.98] # Standard transformer betas
+  eps: 1e-8
+  grad_clip: 1.0 # Gradient clipping for stability
+
+  # MPS-compatible optimizer settings
+  fused: false # Fused optimizers not available on MPS
+
+# -----------------------------------------------------------------------------
+# Learning Rate Schedule
+# -----------------------------------------------------------------------------
+scheduler:
+  name: cosine_with_warmup
+  warmup_steps: 500
+  max_steps: 40000
+  min_lr_ratio: 0.1 # Minimum LR = 0.1 * initial_lr
+
+  # Alternative: cosine with restarts for better convergence
+  # name: cosine_warmup_restarts
+  # warmup_steps: 500
+  # t_0: 20                       # First restart at 20 epochs
+  # t_mult: 2                     # Double period each restart
+  # eta_min: 1e-6
+
+# -----------------------------------------------------------------------------
+# Training Configuration
+# -----------------------------------------------------------------------------
+training:
+  epochs: 20
+  min_epochs: 5 # Minimum before early stopping
+
+  # Gradient accumulation for effective larger batches
+  # Effective batch = batch_size * grad_accum_steps
+  grad_accum_steps: 4 # Effective batch = 8 * 4 = 32
+
+  # Logging and checkpointing
+  log_every: 50
+  eval_every: 500
+  ckpt_every: 1000
+  save_best: true
+
+  # Mixed precision training (FP16)
+  amp: true # Enable automatic mixed precision
+  amp_dtype: float16 # Must be float16 for MPS
+
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 10
+    min_delta: 0.001
+    monitor: "val_loss"
+    mode: "min"
+
+  # EMA (Exponential Moving Average) - optional
+  ema: false # Enable if stable training
+  ema_decay: 0.9999
+
+# -----------------------------------------------------------------------------
+# Data Augmentation
+# -----------------------------------------------------------------------------
+augment:
+  enabled: true
+
+  # Audio augmentations
+  time_stretch: [0.85, 1.15] # Wider range for diversity
+  pitch_shift_semitones: [-3, 3]
+  eq_tilt_db: [-4, 4]
+  noise_snr_db: [20, 40]
+
+  # Advanced augmentations
+  mixup_alpha: 0.3
+  spec_augment:
+    freq_mask_param: 8
+    time_mask_param: 40
+    n_freq_masks: 2
+    n_time_masks: 2
+
+  # Skip heavy operations on M4
+  reverb_ir: null # Skip IR convolution (memory intensive)
+
+# -----------------------------------------------------------------------------
+# Memory Optimization
+# -----------------------------------------------------------------------------
+memory:
+  # MPS memory management
+  max_memory_percent: 85 # Leave headroom for system
+  enable_gradient_checkpointing: false # Enable for very large models
+
+  # Unified memory benefits
+  # M4 unified memory allows direct GPU access to full RAM
+  # No need for explicit CPU-GPU transfers
+  prefetch: true # Prefetch next batch while training
+
+# -----------------------------------------------------------------------------
+# Validation & Metrics
+# -----------------------------------------------------------------------------
+validation:
+  eval_every: 500
+  metrics:
+    - accuracy
+    - f1_macro
+    - loss
+    - inference_time_ms
+
+  monitor: "val_loss"
+  mode: "min"
+
+# -----------------------------------------------------------------------------
+# Export Configuration
+# -----------------------------------------------------------------------------
+export:
+  formats:
+    - pytorch # Native PyTorch
+    - onnx # ONNX for cross-platform
+    - coreml # CoreML for Apple devices (optimized)
+
+  coreml:
+    convert_precision: "float16"
+    minimum_deployment_target: "macOS14"
+    compute_units: "ALL" # CPU + GPU + ANE
+    enable_mlprogram: true # Use ML Program format
+
+  onnx:
+    opset_version: 17
+    dynamic_axes: true
+
+  # Quantization for deployment
+  quantization:
+    int8: true
+    dynamic: true
+
+# -----------------------------------------------------------------------------
+# Logging & Experiment Tracking
+# -----------------------------------------------------------------------------
+logging:
+  level: info
+
+  wandb:
+    enabled: true
+    project: "kmidi-m4-training"
+    tags: ["m4", "mps", "production"]
+
+  tensorboard:
+    enabled: true
+    log_dir: runs/m4_production
+
+  # Performance monitoring
+  log_performance: true
+  log_memory: true
+
+# -----------------------------------------------------------------------------
+# Reproducibility
+# -----------------------------------------------------------------------------
+seed: 42
+deterministic: false # Set to true for reproducibility (slower)
+
+# -----------------------------------------------------------------------------
+# Output Configuration
+# -----------------------------------------------------------------------------
+output_dir: checkpoints/m4_optimized
+onnx_output_dir: models/onnx
+coreml_output_dir: models/coreml
+
+# -----------------------------------------------------------------------------
+# Notes & Best Practices
+# -----------------------------------------------------------------------------
+notes: |
+  M4 MPS Training Best Practices:
+
+  1. CRITICAL: Always use num_workers=0 for MPS dataloaders
+  2. Use FP16 precision (float16) - M4 excels at FP16
+  3. Enable torch.autocast('mps', dtype=torch.float16) for AMP
+  4. Batch size: Start with 8, increase if memory allows
+  5. Use gradient accumulation for effective larger batches
+  6. Unified memory: No need for explicit CPU-GPU transfers
+  7. Monitor memory usage - M4 has unified memory (shared CPU/GPU)
+  8. Export to CoreML for optimal M4 inference performance
+
+  Performance Tips:
+  - Pre-compute and cache spectrograms
+  - Use persistent workers: false (not needed with num_workers=0)
+  - Enable MPS fallback for compatibility
+  - Monitor GPU utilization with Activity Monitor
+
+  Known Limitations:
+  - Distributed training not supported (single GPU only)
+  - Some operations may fallback to CPU automatically
+  - MPS backend is still in beta (some edge cases)

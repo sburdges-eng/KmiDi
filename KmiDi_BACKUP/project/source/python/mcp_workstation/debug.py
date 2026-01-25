@@ -4,20 +4,21 @@ MCP Workstation - Debugging Protocol
 Comprehensive logging, tracing, and debugging for multi-AI coordination.
 """
 
-import logging
 import json
-import traceback
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Callable
-from functools import wraps
-from enum import Enum
-from dataclasses import dataclass, field
+import logging
 import threading
+import traceback
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from functools import wraps
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
 
 
 class LogLevel(str, Enum):
     """Log severity levels."""
+
     DEBUG = "debug"
     INFO = "info"
     WARNING = "warning"
@@ -27,6 +28,7 @@ class LogLevel(str, Enum):
 
 class DebugCategory(str, Enum):
     """Categories for debugging/tracing."""
+
     AI_COMMUNICATION = "ai_comm"
     PROPOSAL = "proposal"
     PHASE = "phase"
@@ -40,6 +42,7 @@ class DebugCategory(str, Enum):
 @dataclass
 class DebugEvent:
     """A single debug event."""
+
     timestamp: str
     level: LogLevel
     category: DebugCategory
@@ -115,7 +118,7 @@ class DebugProtocol:
         if self.console_output:
             console = logging.StreamHandler()
             console.setLevel(logging.INFO)
-            fmt = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
+            fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
             console.setFormatter(fmt)
             self.logger.addHandler(console)
 
@@ -130,7 +133,7 @@ class DebugProtocol:
 
         self._file_handler = logging.FileHandler(str(self.log_file))
         self._file_handler.setLevel(logging.DEBUG)
-        fmt = logging.Formatter('%(asctime)s [%(levelname)s] %(name)s: %(message)s')
+        fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
         self._file_handler.setFormatter(fmt)
         self.logger.addHandler(self._file_handler)
 
@@ -170,7 +173,7 @@ class DebugProtocol:
         # Store event
         self.events.append(event)
         if len(self.events) > self.max_events:
-            self.events = self.events[-self.max_events:]
+            self.events = self.events[-self.max_events :]
 
         # Python logging
         py_level = getattr(logging, level.value.upper())
@@ -179,7 +182,7 @@ class DebugProtocol:
         # Write to file if enabled
         if self.log_file:
             try:
-                with open(self.log_file, 'a') as f:
+                with open(self.log_file, "a") as f:
                     f.write(json.dumps(event.to_dict()) + "\n")
             except Exception:
                 pass
@@ -198,23 +201,25 @@ class DebugProtocol:
 
     def error(self, category: DebugCategory, message: str, **kwargs):
         """Log error message."""
-        kwargs.setdefault('include_trace', True)
+        kwargs.setdefault("include_trace", True)
         self.log(LogLevel.ERROR, category, message, **kwargs)
 
     def critical(self, category: DebugCategory, message: str, **kwargs):
         """Log critical message."""
-        kwargs.setdefault('include_trace', True)
+        kwargs.setdefault("include_trace", True)
         self.log(LogLevel.CRITICAL, category, message, **kwargs)
 
     # Performance tracing
     def start_timer(self, name: str):
         """Start a performance timer."""
         import time
+
         self._timers[name] = time.perf_counter()
 
     def stop_timer(self, name: str, category: DebugCategory, message: str = "") -> float:
         """Stop timer and log duration."""
         import time
+
         if name not in self._timers:
             return 0.0
 
@@ -321,7 +326,7 @@ class DebugProtocol:
 
     def export_session(self, path: str):
         """Export all events to JSON for session replay."""
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump([e.to_dict() for e in self.events], f, indent=2)
 
     def clear(self):
@@ -344,6 +349,7 @@ def get_debug() -> DebugProtocol:
 # Decorator for function tracing
 def trace(category: DebugCategory = DebugCategory.ORCHESTRATION):
     """Decorator to trace function execution."""
+
     def decorator(func: Callable):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -361,6 +367,7 @@ def trace(category: DebugCategory = DebugCategory.ORCHESTRATION):
                 raise
 
         return wrapper
+
     return decorator
 
 

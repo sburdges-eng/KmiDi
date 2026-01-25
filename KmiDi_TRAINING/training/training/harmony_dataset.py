@@ -10,7 +10,7 @@ Both vectors should be numeric lists; lengths must match model expectations
 
 import json
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List
 
 import torch
 from torch.utils.data import Dataset
