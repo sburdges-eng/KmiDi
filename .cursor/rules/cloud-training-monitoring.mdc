@@ -1,0 +1,18 @@
+---
+description: How to run and monitor cloud training from the workspace; where the AI reads status and logs
+globs: 
+alwaysApply: false
+---
+
+# Cloud training: run from workspace, monitor by AI
+
+- **Start cloud training** (Lambda or any SSH host):
+  - `./scripts/cloud_training/run_from_workspace.sh ssh USER@HOST /remote/path [--config config/cloud_training_lambda.yaml]`
+  - Or: `LAMBDA_SSH=ubuntu@<ip> ./scripts/cloud_training/run_from_workspace.sh lambda`
+- **Re-attach** to an already-running remote run: `./scripts/cloud_training/run_from_workspace.sh attach USER@HOST /remote/path`
+
+When the user asks "how's training?", "cloud training status", or similar:
+1. Read `cloud_training/status.json` for `state`, `message`, `updated_at`, `remote_host`.
+2. Read the last 50–100 lines of `cloud_training/logs/training_latest.log` (or the path in `status.json` under `log_file`) to summarize epoch, loss, or errors.
+
+Use these paths to report progress; do not guess from other files.

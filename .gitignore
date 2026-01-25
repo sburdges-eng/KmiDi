@@ -42,6 +42,10 @@ src-tauri/.cargo/config.toml
 *.tmp
 *.bak
 
+# Cloud training (workspace monitorable state for AI)
+cloud_training/logs/
+cloud_training/status.json
+
 # IDE/editor
 .vscode/
 .idea/
