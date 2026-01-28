@@ -172,7 +172,7 @@ scenes = composer.compose_from_structure(
 )
 ```
 
-### 6. EmbeddingRegularizer (`embedding_regularization.py`) **NEW**
+### 6. EmbeddingRegularizer (`embedding_regularization.py`)
 
 Provides regularization for emotion-visual embeddings to improve prediction accuracy.
 
@@ -220,6 +220,138 @@ embedding = predictor.predict("grief", intensity=0.8)
 # Get performance stats
 stats = predictor.get_performance_stats()
 print(f"Cache hit rate: {stats['cache_hit_rate']:.2%}")
+```
+
+### 7. ONNXModelExporter (`onnx_exporter.py`) **NEW**
+
+Exports trained emotion-visual models to ONNX format for deployment in Unreal Engine.
+
+**Key Features:**
+- PyTorch → ONNX conversion
+- TensorFlow/Keras → ONNX conversion
+- NumPy weights → ONNX graph
+- Model optimization (constant folding, operator fusion)
+- INT8 quantization for faster inference
+- ONNX validation and model inspection
+- Compatible with UE5 NNI plugin (opset 17)
+
+**Usage:**
+```python
+from music_brain.video import export_emotion_visual_model
+
+# Export PyTorch/TensorFlow model to ONNX
+export_emotion_visual_model(
+    trained_model,
+    output_dir=Path("Content/Models"),
+    model_name="EmotionMapper"
+)
+
+# Or use exporter directly for more control
+from music_brain.video import ONNXModelExporter, ONNXExportConfig
+
+config = ONNXExportConfig(
+    input_dim=128,
+    output_dim=256,
+    opset_version=17,
+    optimize=True,
+    quantize=True
+)
+exporter = ONNXModelExporter(config)
+exporter.export_pytorch_model(model, "emotion_mapper.onnx")
+```
+
+### 8. UnrealNNIIntegration (`unreal_nni.py`) **NEW**
+
+Integration with Unreal Engine 5's Neural Network Inference (NNI) plugin for running ONNX models.
+
+**Based on:** https://github.com/microsoft/OnnxRuntime-UnrealEngine
+
+**Key Features:**
+- Deploy ONNX models to Unreal Engine projects
+- NNI plugin configuration (CPU/DirectX12 GPU)
+- Blueprint wrapper generation
+- C++ wrapper generation
+- Model loading and inference via Remote Control API
+- Performance monitoring
+
+**Supported Backends:**
+- **CPU**: Cross-platform (Windows/Linux/Mac/Consoles)
+- **DirectX 12 GPU**: Windows only
+- **AUTO**: Automatic selection
+
+**Usage:**
+```python
+from music_brain.video import UnrealNNIIntegration
+
+# Initialize integration
+nni = UnrealNNIIntegration(
+    project_path=Path("/path/to/UE5Project")
+)
+
+# Deploy ONNX model
+nni.deploy_model(
+    onnx_path=Path("emotion_mapper.onnx"),
+    model_name="EmotionMapper"
+)
+
+# Generate Blueprint wrapper for easy access
+nni.generate_blueprint_wrapper("EmotionMapper")
+
+# Generate C++ wrapper for performance
+nni.generate_cpp_wrapper("EmotionMapper")
+```
+
+### 9. WaveNetGenerator (`wavenet_audio.py`) **NEW**
+
+WaveNet-based audio generation with emotion conditioning for synchronized music video creation.
+
+**Based on:** https://github.com/thakkarV/lc-wavenet
+
+**Key Features:**
+- Emotion-conditioned audio generation
+- MIDI + emotion hybrid conditioning
+- Time-varying emotion trajectories
+- Synchronized audio/video generation
+- Export to ONNX for deployment
+- Musical feature extraction for visual sync
+
+**Conditioning Modes:**
+- **MUSIC**: Generate from MIDI with musical structure
+- **EMOTION**: Direct emotion-to-audio generation
+- **HYBRID**: Combine MIDI structure with emotion
+
+**Usage:**
+```python
+from music_brain.video import create_emotion_conditioned_wavenet
+
+# Create WaveNet generator
+wavenet = create_emotion_conditioned_wavenet()
+
+# Generate audio from emotion
+audio = wavenet.generate_from_emotion(
+    emotion="grief",
+    intensity=0.8,
+    duration=5.0  # seconds
+)
+
+# Generate with emotion trajectory
+trajectory = [
+    ("grief", 0.8, 0.0),   # Start with grief
+    ("peace", 0.5, 5.0),   # Transition to peace
+    ("joy", 0.9, 10.0),    # End with joy
+]
+audio = wavenet.generate_with_trajectory(trajectory, duration=10.0)
+
+# Synchronized audio/video generation
+from music_brain.video import EmotionWaveNetBridge
+
+bridge = EmotionWaveNetBridge()
+audio, video_params = bridge.generate_synchronized(
+    emotion="grief",
+    intensity=0.8,
+    duration=10.0,
+    video_fps=30
+)
 ```
 
 ## Configuration
@@ -274,14 +406,23 @@ config = JespaConfig(
 Run the test suite:
 
 ```bash
-# All video generation tests (67 tests)
-pytest tests/unit/test_video_generation.py tests/unit/test_embedding_regularization.py -v
+# All video generation tests (122 tests)
+pytest tests/unit/test_video_generation.py \
+       tests/unit/test_embedding_regularization.py \
+       tests/unit/test_onnx_unreal.py \
+       tests/unit/test_wavenet_audio.py -v
 
 # Original video tests (35 tests)
 pytest tests/unit/test_video_generation.py -v
 
 # Regularization tests (32 tests)
 pytest tests/unit/test_embedding_regularization.py -v
+
+# ONNX/Unreal tests (29 tests)
+pytest tests/unit/test_onnx_unreal.py -v
+
+# WaveNet tests (26 tests)
+pytest tests/unit/test_wavenet_audio.py -v
 ```
 
 All tests currently passing with stub implementations.
@@ -304,21 +445,22 @@ PYTHONPATH=.:$PYTHONPATH python3 examples/regularization_example.py
 
 ## Future Implementation Plan
 
-### Phase 1: Unreal Engine Integration
-- [ ] Implement Unreal Remote Control API client
-- [ ] Scene loading and asset management
-- [ ] Parameter updating (lighting, camera, effects)
-- [ ] Single frame rendering
-- [ ] Sequence rendering with Movie Render Queue
+### Phase 1: ONNX Export & Unreal Integration
+- [ ] Implement PyTorch → ONNX export with torch.onnx
+- [ ] Implement TensorFlow → ONNX export with tf2onnx
+- [ ] Implement ONNX model optimization pipeline
+- [ ] Create Unreal Remote Control API client
+- [ ] Implement model deployment to UE5 projects
+- [ ] Generate Blueprint/C++ wrappers automatically
 
-### Phase 2: Jespa Integration
-- [ ] Implement Jespa API client
-- [ ] Effect pipeline implementation
-- [ ] Color grading and filters
-- [ ] Transition effects
-- [ ] Video processing and export
+### Phase 2: WaveNet Audio Generation
+- [ ] Train WaveNet on emotion-conditioned music data
+- [ ] Implement MIDI reader and upsampling
+- [ ] Add real-time streaming generation
+- [ ] Integrate beat detection for visual sync
+- [ ] Export WaveNet to ONNX for deployment
 
-### Phase 3: Emotion Mapping
+### Phase 3: Emotion Mapping Enhancement
 - [ ] Sophisticated emotion-color mappings
 - [ ] Cultural context support
 - [ ] Emotion blending algorithms
@@ -332,24 +474,54 @@ PYTHONPATH=.:$PYTHONPATH python3 examples/regularization_example.py
 - [ ] Visual narrative flow
 - [ ] Timeline export formats
 
-### Phase 5: Integration
-- [ ] Full workflow integration
+### Phase 5: Complete Integration
+- [ ] Full workflow integration: Emotion → Audio + Video
 - [ ] Real-time preview support
-- [ ] Batch processing
+- [ ] Batch processing pipeline
 - [ ] Performance optimization
 - [ ] Cloud rendering support
+- [ ] GPU acceleration for all components
 
 ## Dependencies (Future)
 
 When implemented, this module will require:
 
-- Unreal Engine 5.x with Remote Control plugin
-- Jespa video processing server
-- Python packages:
-  - `requests` or `aiohttp` for API communication
-  - `websockets` for real-time communication
-  - `pillow` for image processing
-  - `numpy` for numerical operations
+**For ONNX Export:**
+- `onnx` - ONNX model format
+- `onnxruntime` - ONNX Runtime inference
+- `torch` - PyTorch for model export (optional)
+- `tensorflow` - TensorFlow for model export (optional)
+- `tf2onnx` - TensorFlow to ONNX conversion (optional)
+
+**For Unreal Engine:**
+- Unreal Engine 5.x with NNI (Neural Network Inference) plugin
+- Remote Control API enabled in project
+
+**For WaveNet:**
+- `tensorflow` or `torch` - Deep learning framework
+- `librosa` - Audio processing
+- `mido` - MIDI file reading
+- `soundfile` - Audio file I/O
+
+**Common:**
+- `numpy` - Numerical operations
+- `pillow` - Image processing (for preview)
+
+## External Resources
+
+**ONNX Runtime + Unreal Engine:**
+- Microsoft's OnnxRuntime-UnrealEngine: https://github.com/microsoft/OnnxRuntime-UnrealEngine
+- ONNX Model Zoo: https://github.com/onnx/models
+- Unreal Engine NNI Plugin Docs: https://docs.unrealengine.com/
+
+**WaveNet:**
+- lc-wavenet Repository: https://github.com/thakkarV/lc-wavenet
+- WaveNet Paper: https://arxiv.org/abs/1609.03499
+- MIDI Datasets: https://github.com/bytedance/GiantMIDI-Piano
+
+**General:**
+- Hugging Face Models: https://huggingface.co/models
+- ONNX Runtime Docs: https://onnxruntime.ai/
 
 ## Design Principles
 
