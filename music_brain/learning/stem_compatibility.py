@@ -21,7 +21,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import logging
 
@@ -123,7 +123,7 @@ class StemJEPACompatibility:
 
     def compute_compatibility(
         self,
-        stems: Dict[str, any],
+        stems: Dict[str, Any],
         normalize: bool = True
     ) -> StemCompatibilityScore:
         """
@@ -170,10 +170,10 @@ class StemJEPACompatibility:
 
     def predict_missing_stem(
         self,
-        existing_stems: Dict[str, any],
+        existing_stems: Dict[str, Any],
         target_stem_type: StemType,
-        candidates: Optional[List[any]] = None
-    ) -> Tuple[any, float]:
+        candidates: Optional[List[Any]] = None
+    ) -> Tuple[Optional[Any], float]:
         """
         Predict which stem would best complete the arrangement.
         
@@ -192,7 +192,7 @@ class StemJEPACompatibility:
 
     def validate_arrangement(
         self,
-        stems: Dict[str, any],
+        stems: Dict[str, Any],
         min_compatibility: float = 0.7
     ) -> bool:
         """
@@ -263,7 +263,7 @@ class SelfSupervisedLearner:
 
     def learn_from_stems(
         self,
-        stem_collection: List[Dict[str, any]]
+        stem_collection: List[Dict[str, Any]]
     ) -> None:
         """
         Learn compatibility patterns from a collection of stems.
@@ -277,7 +277,7 @@ class SelfSupervisedLearner:
 
     def predict_compatibility(
         self,
-        stems: Dict[str, any]
+        stems: Dict[str, Any]
     ) -> float:
         """
         Predict compatibility using learned model.

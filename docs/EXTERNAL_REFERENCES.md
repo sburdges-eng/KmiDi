@@ -195,10 +195,10 @@ To add new external resources:
 
 ## Related Documentation
 
-- [Research Directory README](README.md)
-- [Stem-JEPA Integration Plan](STEM_JEPA_INTEGRATION.md)
-- [KmiDi Architecture](../ARCHITECTURE.md)
-- [Learning Module](../../music_brain/learning/)
+- [Research Directory README](research/README.md)
+- [Stem-JEPA Integration Plan](research/STEM_JEPA_INTEGRATION.md)
+- [KmiDi Architecture](ARCHITECTURE.md)
+- [Learning Module](../music_brain/learning/)
 
 ---
 
