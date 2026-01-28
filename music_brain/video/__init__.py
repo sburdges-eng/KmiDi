@@ -62,6 +62,27 @@ from .embedding_regularization import (
     RegularizationType,
     create_regularized_mapper,
 )
+from .onnx_exporter import (
+    ONNXModelExporter,
+    ONNXExportConfig,
+    export_emotion_visual_model,
+)
+from .unreal_nni import (
+    UnrealNNIIntegration,
+    NNIPluginConfig,
+    UnrealNNIModelConfig,
+    NNIBackend,
+    create_nni_project_structure,
+    setup_nni_plugin,
+)
+from .wavenet_audio import (
+    WaveNetGenerator,
+    WaveNetConfig,
+    AudioGenerationConfig,
+    WaveNetMode,
+    EmotionWaveNetBridge,
+    create_emotion_conditioned_wavenet,
+)
 
 __all__ = [
     # Video Generator
@@ -99,4 +120,22 @@ __all__ = [
     "RegularizationConfig",
     "RegularizationType",
     "create_regularized_mapper",
+    # ONNX Export
+    "ONNXModelExporter",
+    "ONNXExportConfig",
+    "export_emotion_visual_model",
+    # Unreal NNI Integration
+    "UnrealNNIIntegration",
+    "NNIPluginConfig",
+    "UnrealNNIModelConfig",
+    "NNIBackend",
+    "create_nni_project_structure",
+    "setup_nni_plugin",
+    # WaveNet Audio Generation
+    "WaveNetGenerator",
+    "WaveNetConfig",
+    "AudioGenerationConfig",
+    "WaveNetMode",
+    "EmotionWaveNetBridge",
+    "create_emotion_conditioned_wavenet",
 ]

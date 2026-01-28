@@ -47,6 +47,11 @@ class UnrealConfig:
     target_fps: int = 30
     max_resolution: Tuple[int, int] = (1920, 1080)
     
+    # ONNX/NNI Integration (NEW)
+    enable_nni: bool = True
+    onnx_models_dir: str = "Models"  # Relative to Content/
+    use_gpu_inference: bool = True   # Use DirectX 12 GPU inference
+    
     # Asset paths
     default_scene: str = "/Game/Scenes/EmotionDriven/Default"
     materials_path: str = "/Game/Materials/EmotionBased"
@@ -133,6 +138,7 @@ class UnrealBridge:
         self.config = config or UnrealConfig()
         self._connected = False
         self._session = None
+        self._onnx_models: Dict[str, str] = {}  # model_name -> asset_path
     
     def connect(self) -> bool:
         """
@@ -313,3 +319,79 @@ class UnrealBridge:
         # TODO: Load and apply Unreal preset asset
         
         return False
+    
+    def load_onnx_model(
+        self,
+        model_name: str,
+        model_asset_path: str
+    ) -> bool:
+        """
+        Load an ONNX model via NNI plugin.
+        
+        Args:
+            model_name: Name to reference the model
+            model_asset_path: Unreal asset path (e.g., "/Game/Models/EmotionMapper")
+        
+        Returns:
+            True if model loaded successfully, False otherwise.
+        
+        Note:
+            This is a stub. Future implementation will:
+            - Load ONNX model via NNI plugin
+            - Verify model inputs/outputs
+            - Cache model handle for inference
+        """
+        if not self._connected:
+            return False
+        
+        if not self.config.enable_nni:
+            return False
+        
+        # TODO: Load ONNX model via Remote Control API
+        # - Send command to load NNI model
+        # - Verify model loaded
+        # - Store model reference
+        
+        self._onnx_models[model_name] = model_asset_path
+        return False
+    
+    def run_onnx_inference(
+        self,
+        model_name: str,
+        inputs: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Run inference on a loaded ONNX model.
+        
+        Args:
+            model_name: Name of loaded model
+            inputs: Dictionary of input tensors
+        
+        Returns:
+            Dictionary of output tensors, or None if inference fails
+        
+        Note:
+            This is a stub. Future implementation will:
+            - Send inputs to Unreal
+            - Trigger NNI inference
+            - Return results
+        """
+        if model_name not in self._onnx_models:
+            return None
+        
+        # TODO: Run inference via Remote Control API
+        # - Format inputs
+        # - Send to Unreal
+        # - Wait for results
+        # - Parse outputs
+        
+        return None
+    
+    def list_loaded_models(self) -> List[str]:
+        """
+        List all loaded ONNX models.
+        
+        Returns:
+            List of model names
+        """
+        return list(self._onnx_models.keys())
