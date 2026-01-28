@@ -24,7 +24,7 @@ namespace ring_buffer {
  * @param channels Number of audio channels
  * @return Recommended buffer size (power of 2)
  */
-size_t calculate_buffer_size(SampleRate sample_rate, double latency_ms, ChannelCount channels) {
+size_t calculate_buffer_size(SampleRate sample_rate, double latency_ms, size_t channels) {
     size_t samples_needed = static_cast<size_t>((sample_rate * latency_ms) / 1000.0);
     samples_needed *= channels;
 
@@ -41,7 +41,7 @@ size_t calculate_buffer_size(SampleRate sample_rate, double latency_ms, ChannelC
 /**
  * Calculate the latency in milliseconds for a given buffer size.
  */
-double calculate_latency_ms(size_t buffer_size, SampleRate sample_rate, ChannelCount channels) {
+double calculate_latency_ms(size_t buffer_size, SampleRate sample_rate, size_t channels) {
     size_t samples = buffer_size / channels;
     return (static_cast<double>(samples) / sample_rate) * 1000.0;
 }

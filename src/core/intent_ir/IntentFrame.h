@@ -136,7 +136,7 @@ public:
     explicit IntentFrameSnapshot(const IntentFrame& frame);
     
     // Audio-thread-safe accessors (read-only)
-    const IntentMeta& getMeta() const { return frame_; }
+    const IntentMeta& getMeta() const { return frame_.meta; }
     const EmotionState& getEmotion() const { return frame_.emotion; }
     const MusicalIntent& getMusic() const { return frame_.music; }
     const TimeScope& getTime() const { return frame_.time; }

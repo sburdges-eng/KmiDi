@@ -126,7 +126,8 @@ void MasterEQProcessor::processBlock(juce::AudioBuffer<float> &buffer) {
 
     for (int ch = 0; ch < numChannels; ++ch) {
       auto *channelData = buffer.getWritePointer(ch);
-      bandFilters_[static_cast<size_t>(ch)][bandIdx].processSamples(channelData, numSamples);
+      for (int i = 0; i < numSamples; ++i)
+        channelData[i] = bandFilters_[static_cast<size_t>(ch)][bandIdx].processSample(channelData[i]);
     }
   }
 

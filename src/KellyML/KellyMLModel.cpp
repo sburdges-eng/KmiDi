@@ -20,10 +20,15 @@ KellyMLModel::~KellyMLModel() {
 KellyMLModel::KellyMLModel(KellyMLModel&& other) noexcept
 #ifdef ENABLE_RTNEURAL
     : model_(std::move(other.model_))
-#endif
     , inputSize_(other.inputSize_)
     , outputSize_(other.outputSize_)
-    , enabled_(other.enabled_) {}
+    , enabled_(other.enabled_)
+#else
+    : inputSize_(other.inputSize_)
+    , outputSize_(other.outputSize_)
+    , enabled_(other.enabled_)
+#endif
+{}
 
 KellyMLModel& KellyMLModel::operator=(KellyMLModel&& other) noexcept {
     if (this != &other) {

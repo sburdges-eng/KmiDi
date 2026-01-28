@@ -43,9 +43,9 @@ VarianceModeler::ProminenceCurve VarianceModeler::generateProminenceCurve(
         return curve;
     }
 
-    // Validate prominence params
-    if (prominence_params.variance_range_min < 0.0f ||
-        prominence_params.variance_range_max < prominence_params.variance_range_min) {
+    // Validate prominence params (ProminenceCharacteristics has stress multipliers, not variance range)
+    if (prominence_params.stress_amplitude_multiplier < 0.0f ||
+        prominence_params.stress_duration_multiplier < 0.0f) {
         penta::getLogger().logRT(penta::LogLevel::Warning,
             "VarianceModeler::generateProminenceCurve: Invalid prominence parameters");
         return curve;

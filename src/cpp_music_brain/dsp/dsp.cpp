@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <vector>
 
 namespace daiw {
 namespace dsp {

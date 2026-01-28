@@ -30,7 +30,7 @@ BiometricInput::~BiometricInput() {
 }
 
 BiometricInput::BiometricInput()
-    : enabled_(false), adaptiveNormalization_(false), streamingActive_(false),
+    : adaptiveNormalization_(false), enabled_(false), streamingActive_(false),
       lastReadingTime_(0.0), healthKitInitialized_(false),
       fitbitInitialized_(false), healthKitBridge_(nullptr),
       fitbitBridge_(nullptr), shouldStream_(false) {
