@@ -4,6 +4,9 @@ music_brain - Music Intelligence Toolkit
 This package provides session/intent management and integrations.
 For the full music_brain toolkit including tier1/tier2 modules,
 ensure KmiDi_PROJECT/source/python is in your PYTHONPATH.
+
+Sub-modules:
+- video: Music video generation stubs (Unreal Engine + Jespa integration)
 """
 
 __version__ = "0.2.0"
