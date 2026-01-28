@@ -192,12 +192,7 @@ class BassLearner:
 
         notes = []
         if note_freqs:
-            counter = Counter(note_freqs)
-            most_common = counter.most_common(1)
-            if most_common:
-                start_note = int(most_common[0][0])
-            else:
-                start_note = base_note
+            start_note = int(Counter(note_freqs).most_common(1)[0][0])
         else:
             start_note = base_note
         notes.append(start_note)

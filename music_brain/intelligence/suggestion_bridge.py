@@ -6,7 +6,6 @@ Provides a simple function that C++ can call to get suggestions.
 
 from typing import Dict, List, Any, Optional
 import json
-import threading
 
 from music_brain.intelligence.suggestion_engine import (
     SuggestionEngine,
@@ -17,11 +16,10 @@ from music_brain.learning.user_preferences import UserPreferenceModel
 from music_brain.intelligence.context_analyzer import ContextAnalyzer
 
 
-# Global instances (singleton pattern) with thread safety
+# Global instances (singleton pattern)
 _preference_model: Optional[UserPreferenceModel] = None
 _suggestion_engine: Optional[SuggestionEngine] = None
 _context_analyzer: Optional[ContextAnalyzer] = None
-_suggestion_lock = threading.Lock()
 
 
 def initialize_suggestion_system(user_id: str = "default"):
@@ -33,13 +31,12 @@ def initialize_suggestion_system(user_id: str = "default"):
     """
     global _preference_model, _suggestion_engine, _context_analyzer
 
-    with _suggestion_lock:
-        _preference_model = UserPreferenceModel(user_id=user_id)
-        _context_analyzer = ContextAnalyzer()
-        _suggestion_engine = SuggestionEngine(
-            preference_model=_preference_model,
-            context_analyzer=_context_analyzer
-        )
+    _preference_model = UserPreferenceModel(user_id=user_id)
+    _context_analyzer = ContextAnalyzer()
+    _suggestion_engine = SuggestionEngine(
+        preference_model=_preference_model,
+        context_analyzer=_context_analyzer
+    )
 
 
 def get_suggestions(
@@ -78,11 +75,9 @@ def get_suggestions(
     """
     global _suggestion_engine, _preference_model
 
-    # Initialize if not already done (with double-check locking)
+    # Initialize if not already done
     if _suggestion_engine is None:
-        with _suggestion_lock:
-            if _suggestion_engine is None:
-                initialize_suggestion_system()
+        initialize_suggestion_system()
 
     try:
         # Parse current state

@@ -1,0 +1,203 @@
+{
+  "metadata": {
+    "title": "Maqam Emotional Mapping",
+    "version": "1.0.0",
+    "created": "2025-01-07",
+    "description": "Mapping of Arabic/Middle Eastern Maqamat to emotional qualities and therapeutic applications",
+    "culture": "Arabic/Middle Eastern",
+    "total_maqamat": 20
+  },
+  "maqamat": [
+    {
+      "name": "Maqam Rast",
+      "intervals_semitones": [0, 2, 4, 5, 7, 9, 11],
+      "tetrachords": [
+        {"interval": "rast", "notes": [0, 2, 4, 5]},
+        {"interval": "rast", "notes": [7, 9, 11, 12]}
+      ],
+      "emotional_qualities": ["proud", "confident", "dignified", "regal", "uplifting"],
+      "therapeutic_use": ["confidence", "pride", "dignity", "self-esteem", "uplifting"],
+      "emotion_mapping": {
+        "confidence": 0.9,
+        "pride": 0.85,
+        "dignity": 0.9,
+        "uplifting": 0.85,
+        "hope": 0.75
+      },
+      "intensity_range": [0.5, 0.8],
+      "notes": "One of the most fundamental maqamat, creates sense of pride and dignity"
+    },
+    {
+      "name": "Maqam Bayati",
+      "intervals_semitones": [0, 1, 4, 5, 7, 8, 11],
+      "tetrachords": [
+        {"interval": "bayati", "notes": [0, 1, 4, 5]},
+        {"interval": "rast", "notes": [7, 8, 11, 12]}
+      ],
+      "emotional_qualities": ["tender", "nostalgic", "melancholic", "yearning", "intimate"],
+      "therapeutic_use": ["nostalgia", "yearning", "tenderness", "intimacy", "melancholy"],
+      "emotion_mapping": {
+        "nostalgia": 0.85,
+        "yearning": 0.8,
+        "tenderness": 0.9,
+        "intimacy": 0.85,
+        "melancholy": 0.75
+      },
+      "intensity_range": [0.3, 0.7],
+      "notes": "Very popular maqam, expresses tender emotions and nostalgia"
+    },
+    {
+      "name": "Maqam Hijaz",
+      "intervals_semitones": [0, 1, 4, 5, 7, 8, 11],
+      "tetrachords": [
+        {"interval": "hijaz", "notes": [0, 1, 4, 5]},
+        {"interval": "rast", "notes": [7, 8, 11, 12]}
+      ],
+      "emotional_qualities": ["exotic", "mysterious", "dramatic", "intense", "powerful"],
+      "therapeutic_use": ["mystery", "intensity", "drama", "power", "exotic"],
+      "emotion_mapping": {
+        "mystery": 0.9,
+        "intensity": 0.85,
+        "drama": 0.9,
+        "power": 0.8,
+        "exotic": 0.85
+      },
+      "intensity_range": [0.5, 0.9],
+      "notes": "Very distinctive sound, associated with drama and intensity"
+    },
+    {
+      "name": "Maqam Saba",
+      "intervals_semitones": [0, 1, 3, 5, 7, 8, 10],
+      "tetrachords": [
+        {"interval": "saba", "notes": [0, 1, 3, 5]},
+        {"interval": "bayati", "notes": [7, 8, 10, 12]}
+      ],
+      "emotional_qualities": ["sad", "mournful", "melancholic", "lamenting", "deep"],
+      "therapeutic_use": ["grief", "sadness", "lament", "mourning", "deep emotion"],
+      "emotion_mapping": {
+        "sad": 0.9,
+        "grief": 0.85,
+        "mourning": 0.9,
+        "lament": 0.85,
+        "deep": 0.8
+      },
+      "intensity_range": [0.4, 0.8],
+      "notes": "One of the saddest maqamat, used for lamentation"
+    },
+    {
+      "name": "Maqam Nahawand",
+      "intervals_semitones": [0, 2, 3, 5, 7, 9, 10],
+      "tetrachords": [
+        {"interval": "nahawand", "notes": [0, 2, 3, 5]},
+        {"interval": "rast", "notes": [7, 9, 10, 12]}
+      ],
+      "emotional_qualities": ["romantic", "lyrical", "expressive", "tender", "warm"],
+      "therapeutic_use": ["romance", "love", "tenderness", "warmth", "expression"],
+      "emotion_mapping": {
+        "love": 0.85,
+        "romance": 0.9,
+        "tenderness": 0.85,
+        "warmth": 0.8,
+        "expression": 0.75
+      },
+      "intensity_range": [0.3, 0.7],
+      "notes": "Romantic maqam, similar to minor scale but with Arabic character"
+    },
+    {
+      "name": "Maqam Ajam",
+      "intervals_semitones": [0, 2, 4, 5, 7, 9, 11],
+      "tetrachords": [
+        {"interval": "ajam", "notes": [0, 2, 4, 5]},
+        {"interval": "ajam", "notes": [7, 9, 11, 12]}
+      ],
+      "emotional_qualities": ["bright", "happy", "joyful", "uplifting", "cheerful"],
+      "therapeutic_use": ["joy", "happiness", "uplifting", "cheer", "positivity"],
+      "emotion_mapping": {
+        "happy": 0.9,
+        "joy": 0.9,
+        "uplifting": 0.85,
+        "cheerful": 0.9,
+        "positivity": 0.85
+      },
+      "intensity_range": [0.5, 0.9],
+      "notes": "Similar to major scale, bright and joyful"
+    },
+    {
+      "name": "Maqam Kurd",
+      "intervals_semitones": [0, 2, 3, 5, 7, 8, 10],
+      "tetrachords": [
+        {"interval": "kurd", "notes": [0, 2, 3, 5]},
+        {"interval": "rast", "notes": [7, 8, 10, 12]}
+      ],
+      "emotional_qualities": ["gentle", "calm", "peaceful", "serene", "soft"],
+      "therapeutic_use": ["calm", "peace", "serenity", "gentleness", "relaxation"],
+      "emotion_mapping": {
+        "calm": 0.9,
+        "peace": 0.9,
+        "serenity": 0.85,
+        "gentleness": 0.85,
+        "relaxation": 0.8
+      },
+      "intensity_range": [0.2, 0.6],
+      "notes": "Gentle, peaceful maqam, similar to natural minor"
+    },
+    {
+      "name": "Maqam Saba Zamzam",
+      "intervals_semitones": [0, 1, 3, 4, 7, 8, 10],
+      "tetrachords": [
+        {"interval": "saba zamzam", "notes": [0, 1, 3, 4]},
+        {"interval": "bayati", "notes": [7, 8, 10, 12]}
+      ],
+      "emotional_qualities": ["mysterious", "dark", "ominous", "unsettled", "tension"],
+      "therapeutic_use": ["mystery", "tension", "unsettled", "dark", "anxiety"],
+      "emotion_mapping": {
+        "mystery": 0.85,
+        "tension": 0.9,
+        "unsettled": 0.85,
+        "dark": 0.8,
+        "anxiety": 0.75
+      },
+      "intensity_range": [0.4, 0.8],
+      "notes": "Dark, mysterious variant of Saba"
+    },
+    {
+      "name": "Maqam Nawa Athar",
+      "intervals_semitones": [0, 2, 4, 6, 7, 9, 11],
+      "tetrachords": [
+        {"interval": "nawa athar", "notes": [0, 2, 4, 6]},
+        {"interval": "ajam", "notes": [7, 9, 11, 12]}
+      ],
+      "emotional_qualities": ["ethereal", "transcendent", "mystical", "elevated", "spiritual"],
+      "therapeutic_use": ["spirituality", "transcendence", "mystical", "elevation", "peace"],
+      "emotion_mapping": {
+        "spiritual": 0.9,
+        "transcendent": 0.85,
+        "mystical": 0.9,
+        "elevated": 0.85,
+        "peace": 0.75
+      },
+      "intensity_range": [0.4, 0.8],
+      "notes": "Ethereal, spiritual maqam"
+    },
+    {
+      "name": "Maqam Huzam",
+      "intervals_semitones": [0, 1, 4, 5, 7, 8, 11],
+      "tetrachords": [
+        {"interval": "huzam", "notes": [0, 1, 4, 5]},
+        {"interval": "rast", "notes": [7, 8, 11, 12]}
+      ],
+      "emotional_qualities": ["passionate", "intense", "dramatic", "fiery", "expressive"],
+      "therapeutic_use": ["passion", "intensity", "drama", "fire", "expression"],
+      "emotion_mapping": {
+        "passion": 0.9,
+        "intensity": 0.9,
+        "drama": 0.85,
+        "fire": 0.9,
+        "expression": 0.8
+      },
+      "intensity_range": [0.5, 0.9],
+      "notes": "Very passionate and intense maqam"
+    }
+  ]
+}
+

@@ -1,0 +1,6 @@
+set(__QT_DEPLOY_TARGET_penta_core_FILE /Users/seanburdges/KmiDi-1/KmiDi_FINAL/_build/macos/engine/src_penta-core/libpenta_core.a)
+set(__QT_DEPLOY_TARGET_penta_core_TYPE STATIC_LIBRARY)
+set(__QT_DEPLOY_TARGET_KellyCore_FILE /Users/seanburdges/KmiDi-1/KmiDi_FINAL/_build/macos/libKellyCore.a)
+set(__QT_DEPLOY_TARGET_KellyCore_TYPE STATIC_LIBRARY)
+set(__QT_DEPLOY_TARGET_KellyApp_FILE /Users/seanburdges/KmiDi-1/KmiDi_FINAL/_build/macos/KmiDi.app/Contents/MacOS/KmiDi)
+set(__QT_DEPLOY_TARGET_KellyApp_TYPE EXECUTABLE)

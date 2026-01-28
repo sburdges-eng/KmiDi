@@ -1,2 +1,15 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Source file migration tracking
+src/plugin/*.cpp linguist-language=C++
+src/plugin/*.h linguist-language=C++
+src/gui/*.cpp linguist-language=C++
+src/gui/*.h linguist-language=C++
+src/bridge/*.cpp linguist-language=C++
+src/bridge/*.h linguist-language=C++
+
+# Mark active development files
+src/**/*.cpp diff=cpp
+src/**/*.h diff=cpp
+src/**/*.hpp diff=cpp

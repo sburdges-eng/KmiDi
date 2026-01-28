@@ -31,7 +31,7 @@ void bind_osc(py::module_& m) {
                 msg.addString(std::string(value));
             },
             py::arg("value"))
-        .def("clear", &OSCMessage::clear)
+        // Note: OSCMessage doesn't have a clear() method - create new message instead
         .def("get_argument", [](const OSCMessage& msg, size_t index) -> py::object {
             try {
                 const auto& arg = msg.getArgument(index);
