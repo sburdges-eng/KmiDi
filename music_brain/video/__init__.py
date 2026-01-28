@@ -54,6 +54,14 @@ from .scene_composer import (
     SceneType,
     TransitionStyle,
 )
+from .embedding_regularization import (
+    EmbeddingRegularizer,
+    FastEmbeddingPredictor,
+    EmbeddingConfig,
+    RegularizationConfig,
+    RegularizationType,
+    create_regularized_mapper,
+)
 
 __all__ = [
     # Video Generator
@@ -84,4 +92,11 @@ __all__ = [
     "SceneTransition",
     "SceneType",
     "TransitionStyle",
+    # Embedding Regularization
+    "EmbeddingRegularizer",
+    "FastEmbeddingPredictor",
+    "EmbeddingConfig",
+    "RegularizationConfig",
+    "RegularizationType",
+    "create_regularized_mapper",
 ]
