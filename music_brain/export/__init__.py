@@ -18,6 +18,12 @@ from .social_platform_exporter import (
     PLATFORM_SPECS,
 )
 
+from .stem_compatibility import (
+    StemType,
+    StemCompatibilityScore,
+    compute_compatibility,
+)
+
 __all__ = [
     # Emotion stem export
     "EmotionStemExporter",
@@ -29,4 +35,8 @@ __all__ = [
     "SocialPlatform",
     "PlatformSpec",
     "PLATFORM_SPECS",
+    # Stem compatibility (pairwise scores; keys are Tuple[StemType, StemType])
+    "StemType",
+    "StemCompatibilityScore",
+    "compute_compatibility",
 ]
