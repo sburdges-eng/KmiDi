@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.27)
-project(Kelly VERSION 0.1.0 LANGUAGES CXX)
+project(Kelly VERSION 0.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -74,14 +74,16 @@ find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
 # JUCE setup
 # Skip building juceaide to avoid macOS 15.0 compatibility issues
 # We only need juce_dsp for penta_core, not the full JUCE build tools
+# Requires a full JUCE clone (incl. extras/Build/CMake) in external/JUCE.
 if(USE_KMI_DI_FINAL AND KMI_DI_FINAL_AVAILABLE AND EXISTS ${KMI_DI_FINAL_ROOT}/build/external/JUCE)
     message(STATUS "Using JUCE from KmiDi_FINAL")
     add_subdirectory(${KMI_DI_FINAL_ROOT}/build/external/JUCE JUCE)
-else()
-    message(STATUS "Using local JUCE")
-    # Set flag to skip juceaide build (macOS 15.0 compatibility)
+elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/external/JUCE/CMakeLists.txt)
+    message(STATUS "Using local JUCE (external/JUCE)")
     set(JUCE_DISABLE_JUCEAIDE_BUILD ON CACHE BOOL "Skip juceaide build")
     add_subdirectory(external/JUCE EXCLUDE_FROM_ALL)
+else()
+    message(FATAL_ERROR "JUCE not found. Clone the full JUCE repo (with root CMakeLists.txt and extras/Build/CMake/) into external/JUCE, e.g.: git clone https://github.com/juce-framework/JUCE external/JUCE")
 endif()
 
 # Readerwriterqueue (lock-free queue) for RT-safe OSC
@@ -259,8 +261,14 @@ if(BUILD_PLUGINS)
     set(KMIDI_PLUGIN_ICON_BIG KmiDi_plugin_256.png)
     set(KMIDI_PLUGIN_ICON_SMALL KmiDi_plugin_64.png)
     set(KMIDI_ICON_ROOT ${CMAKE_SOURCE_DIR}/KmiDi_FINAL/assets/icons/plugin)
-    if(NOT (EXISTS ${KMIDI_ICON_ROOT}/${KMIDI_PLUGIN_ICON_BIG} AND EXISTS ${KMIDI_ICON_ROOT}/${KMIDI_PLUGIN_ICON_SMALL}))
-        message(FATAL_ERROR "KmiDi plugin icons not found at ${KMIDI_ICON_ROOT}; ensure KmiDi_FINAL assets are present.")
+    set(KellyPlugin_ICON_ARGS "")
+    if(EXISTS ${KMIDI_ICON_ROOT}/${KMIDI_PLUGIN_ICON_BIG} AND EXISTS ${KMIDI_ICON_ROOT}/${KMIDI_PLUGIN_ICON_SMALL})
+        set(KellyPlugin_ICON_ARGS
+            ICON_BIG ${KMIDI_ICON_ROOT}/${KMIDI_PLUGIN_ICON_BIG}
+            ICON_SMALL ${KMIDI_ICON_ROOT}/${KMIDI_PLUGIN_ICON_SMALL}
+        )
+    else()
+        message(WARNING "KmiDi plugin icons not found at ${KMIDI_ICON_ROOT}; building without plugin icons.")
     endif()
     # VST3/CLAP plugin
     juce_add_plugin(KellyPlugin
@@ -271,8 +279,7 @@ if(BUILD_PLUGINS)
         PRODUCT_NAME "Kelly Emotion Processor"
         VST3_CATEGORIES Fx Synth
         CLAP_ID com.kelly.emotion-processor
-        ICON_BIG ${KMIDI_ICON_ROOT}/${KMIDI_PLUGIN_ICON_BIG}
-        ICON_SMALL ${KMIDI_ICON_ROOT}/${KMIDI_PLUGIN_ICON_SMALL}
+        ${KellyPlugin_ICON_ARGS}
     )
 
     target_sources(KellyPlugin PRIVATE

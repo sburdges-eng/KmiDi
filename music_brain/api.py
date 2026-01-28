@@ -1449,6 +1449,107 @@ if FASTAPI_AVAILABLE:
             logging.exception("Failed to fetch lyrics")
             raise HTTPException(status_code=500, detail=str(exc))
 
+    # ========== Audio Emotion Classification Endpoints ==========
+
+    class AudioClassifyRequest(BaseModel):
+        audio_path: str
+        model_type: Optional[str] = "emotion_7"
+        top_k: Optional[int] = 3
+
+    @app.post("/audio/classify")
+    async def classify_audio(request: AudioClassifyRequest):
+        """
+        Classify emotion from audio file using trained ML models.
+
+        Returns valence/arousal coordinates for integration with
+        the emotion-to-music generation pipeline.
+        """
+        try:
+            from music_brain.emotion.audio_emotion_classifier import AudioEmotionClassifier
+
+            classifier = AudioEmotionClassifier(model_type=request.model_type)
+            if not classifier.is_available():
+                raise HTTPException(
+                    status_code=503,
+                    detail="Audio classifier model not available. Check model checkpoints."
+                )
+
+            result = classifier.classify(request.audio_path, top_k=request.top_k)
+            return {
+                "status": "success",
+                "result": result.to_dict(),
+            }
+        except ImportError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail=f"Audio classification dependencies not installed: {exc}"
+            )
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+        except Exception as exc:
+            logging.exception("audio classify failed")
+            raise HTTPException(status_code=500, detail=str(exc))
+
+    @app.post("/audio/valence-arousal")
+    async def get_audio_valence_arousal(request: AudioClassifyRequest):
+        """
+        Get valence/arousal coordinates from audio.
+
+        Primary interface for emotion-to-music mapping.
+        """
+        try:
+            from music_brain.emotion.audio_emotion_classifier import AudioEmotionClassifier
+
+            classifier = AudioEmotionClassifier(model_type=request.model_type)
+            if not classifier.is_available():
+                raise HTTPException(
+                    status_code=503,
+                    detail="Audio classifier model not available."
+                )
+
+            va = classifier.get_valence_arousal(request.audio_path)
+            return {
+                "status": "success",
+                "valence": va["valence"],
+                "arousal": va["arousal"],
+                "emotion": va["emotion"],
+                "confidence": va["confidence"],
+            }
+        except ImportError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail=f"Audio classification dependencies not installed: {exc}"
+            )
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+        except Exception as exc:
+            logging.exception("audio valence-arousal failed")
+            raise HTTPException(status_code=500, detail=str(exc))
+
+    @app.get("/audio/models")
+    async def list_audio_models():
+        """List available audio classification models."""
+        try:
+            models_dir = Path(__file__).parent.parent / "models" / "checkpoints"
+            available = []
+
+            if models_dir.exists():
+                for model_dir in models_dir.iterdir():
+                    if model_dir.is_dir() and (model_dir / "best.pt").exists():
+                        available.append({
+                            "name": model_dir.name,
+                            "path": str(model_dir / "best.pt"),
+                        })
+
+            return {
+                "status": "success",
+                "models": available,
+                "supported_types": ["emotion_7", "voice_type"],
+            }
+        except Exception as exc:
+            logging.exception("list audio models failed")
+            raise HTTPException(status_code=500, detail=str(exc))
+
 
 def _main():
     """Entry point for `python -m music_brain.api`."""
