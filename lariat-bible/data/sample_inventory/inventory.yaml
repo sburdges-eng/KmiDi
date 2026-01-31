@@ -1,0 +1,10 @@
+items:
+  - name: eggs
+    quantity: 2
+    unit: pcs
+  - name: milk
+    quantity: 100
+    unit: ml
+  - name: salt
+    quantity: 0.5
+    unit: tsp

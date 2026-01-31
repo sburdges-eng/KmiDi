@@ -1,0 +1,165 @@
+{
+  "products": [
+    {
+      "code": "2175761",
+      "description": "VINEGAR, WHT 5% DISTILLED BTL",
+      "pack_size": "4/128/OZ",
+      "brand": "KATYO",
+      "price": "$27.00",
+      "unit": "CS"
+    },
+    {
+      "code": "1918171",
+      "description": "VINEGAR, MALT",
+      "pack_size": "12/12/OZ",
+      "brand": "HEINZ",
+      "price": "$35.13",
+      "unit": "CS"
+    },
+    {
+      "code": "4884541",
+      "description": "[JIT] TROUT, RAINBOW WHL 9-11Z PBO BTRFLY",
+      "pack_size": "1/10/LBAV",
+      "brand": "22PRM",
+      "price": "$9.98",
+      "unit": "LB"
+    },
+    {
+      "code": "4897141",
+      "description": "TROUT, RAINBOW HD ON BNLS 9-11Z IQF",
+      "pack_size": "1/10/LB",
+      "brand": "P. L.",
+      "price": "$100.32",
+      "unit": "CS"
+    },
+    {
+      "code": "4212861",
+      "description": "TOWEL, PAPR MULTIFOLD WHT",
+      "pack_size": "16/250/PK",
+      "brand": "PRPKO",
+      "price": "$44.20",
+      "unit": "CS"
+    },
+    {
+      "code": "4210061",
+      "description": "TORTILLA, CORN 6\" WHT",
+      "pack_size": "12/60/PK",
+      "brand": "VSTVO",
+      "price": "$42.69",
+      "unit": "CS"
+    },
+    {
+      "code": "4508711",
+      "description": "TOMATO, WHL PLD IN JCE CHO CA CAN",
+      "pack_size": "6/10/CN",
+      "brand": "BHVSO",
+      "price": "$35.79",
+      "unit": "CS"
+    },
+    {
+      "code": "4677031",
+      "description": "TOMATO, HEIRLOOM BABY MEDLEY",
+      "pack_size": "1/10/LB",
+      "brand": "MFC",
+      "price": "$29.14",
+      "unit": "CS"
+    },
+    {
+      "code": "1981851",
+      "description": "TOMATO, HEIRLOOM ASSORT",
+      "pack_size": "1/10/LB",
+      "brand": "P. L.",
+      "price": "$27.19",
+      "unit": "CS"
+    },
+    {
+      "code": "2043241",
+      "description": "TOMATO, GRP RED",
+      "pack_size": "1/5/LB",
+      "brand": "MFC",
+      "price": "$20.23",
+      "unit": "CS"
+    },
+    {
+      "code": "1907631",
+      "description": "TOMATO, 5X6 2 LAYER REFRIG FRSH",
+      "pack_size": "1/60/PK",
+      "brand": "MFC",
+      "price": "$30.89",
+      "unit": "CS"
+    },
+    {
+      "code": "0017925",
+      "description": "TOMATILLO, IMP CAN WHOLE",
+      "pack_size": "6/100/OZ",
+      "brand": "DNDGO",
+      "price": "$37.31",
+      "unit": "CS"
+    },
+    {
+      "code": "0017929",
+      "description": "TOMATILLO, IMP CAN CRUSHED",
+      "pack_size": "6/100/OZ",
+      "brand": "DNDGO",
+      "price": "$40.46",
+      "unit": "CS"
+    },
+    {
+      "code": "4212701",
+      "description": "TISSUE, BATH  2PLY 500 SHEET RL WHT",
+      "pack_size": "96/500/RL",
+      "brand": "PRPKO",
+      "price": "$75.67",
+      "unit": "CS"
+    },
+    {
+      "code": "1959891",
+      "description": "SYRUP, SPRITE BIB",
+      "pack_size": "1/5/GL",
+      "brand": "SPRIT",
+      "price": "$117.30",
+      "unit": "CS"
+    },
+    {
+      "code": "3328181",
+      "description": "SYRUP, GINGER ALE BIB",
+      "pack_size": "1/2.5/GL",
+      "brand": "SEGRM",
+      "price": "$63.86",
+      "unit": "CS"
+    },
+    {
+      "code": "1959771",
+      "description": "SYRUP, COKE DIET BIB",
+      "pack_size": "1/5/GL",
+      "brand": "COKE",
+      "price": "$117.53",
+      "unit": "CS"
+    },
+    {
+      "code": "1959761",
+      "description": "SYRUP, COKE CLASSIC BIB",
+      "pack_size": "1/5/GL",
+      "brand": "COKE",
+      "price": "$118.31",
+      "unit": "CS"
+    },
+    {
+      "code": "3731671",
+      "description": "SUGAR, BROWN DRK",
+      "pack_size": "16/2/LB",
+      "brand": "CHSUG",
+      "price": "$50.99",
+      "unit": "CS"
+    },
+    {
+      "code": "0032622",
+      "description": "STRAW, BEV PP 7.75\" BLK UNWRPD JUMBO",
+      "pack_size": "50/250/PK",
+      "brand": "PRPKO",
+      "price": "$99.24",
+      "unit": "CS"
+    }
+  ],
+  "total": 20
+}

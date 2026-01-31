@@ -1,0 +1,18 @@
+{
+    "cmake.sourceDirectory": "/Users/seanburdges/RECOVERY_OPS/KmiDi",
+    "files.watcherExclude": {
+        "**/node_modules/**": true,
+        "**/venv/**": true,
+        "**/.venv/**": true,
+        "**/dist/**": true,
+        "**/build/**": true,
+        "**/target/**": true,
+        "**/__pycache__/**": true,
+        "**/kmidi_datasets/**": true,
+        "**/datasets/**": true,
+        "**/*.gguf": true,
+        "**/*.pt": true,
+        "**/*.bin": true,
+        "**/*.safetensors": true
+    }
+}

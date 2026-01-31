@@ -1,0 +1,136 @@
+{
+  "kit_name": "LoFi_Bedroom_Kit",
+  "format": "EXS24",
+  "zones": [
+    {
+      "midi_note": 36,
+      "note_name": "Kick",
+      "sample_path": "/Users/seanburdges/Music/AudioVault/refined/Demo_Kit/Kick_01.wav",
+      "relative_path": "Demo_Kit/Kick_01.wav",
+      "velocity_min": 1,
+      "velocity_max": 127,
+      "pitch": 0,
+      "volume": 0
+    },
+    {
+      "midi_note": 38,
+      "note_name": "Snare",
+      "sample_path": "/Users/seanburdges/Music/AudioVault/refined/Demo_Kit/Snare_01.wav",
+      "relative_path": "Demo_Kit/Snare_01.wav",
+      "velocity_min": 1,
+      "velocity_max": 127,
+      "pitch": 0,
+      "volume": 0
+    },
+    {
+      "midi_note": 40,
+      "note_name": "Snare",
+      "sample_path": "/Users/seanburdges/Music/AudioVault/refined/Demo_Kit/Snare_01.wav",
+      "relative_path": "Demo_Kit/Snare_01.wav",
+      "velocity_min": 1,
+      "velocity_max": 127,
+      "pitch": 0,
+      "volume": 0
+    },
+    {
+      "midi_note": 42,
+      "note_name": "HiHat_Closed",
+      "sample_path": "/Users/seanburdges/Music/AudioVault/refined/Demo_Kit/HiHat_Closed_02.wav",
+      "relative_path": "Demo_Kit/HiHat_Closed_02.wav",
+      "velocity_min": 1,
+      "velocity_max": 127,
+      "pitch": 0,
+      "volume": 0
+    },
+    {
+      "midi_note": 44,
+      "note_name": "HiHat_Closed",
+      "sample_path": "/Users/seanburdges/Music/AudioVault/refined/Demo_Kit/HiHat_Closed_02.wav",
+      "relative_path": "Demo_Kit/HiHat_Closed_02.wav",
+      "velocity_min": 1,
+      "velocity_max": 127,
+      "pitch": 0,
+      "volume": 0
+    },
+    {
+      "midi_note": 46,
+      "note_name": "HiHat_Open",
+      "sample_path": "/Users/seanburdges/Music/AudioVault/refined/Demo_Kit/HiHat_Open_01.wav",
+      "relative_path": "Demo_Kit/HiHat_Open_01.wav",
+      "velocity_min": 1,
+      "velocity_max": 127,
+      "pitch": 0,
+      "volume": 0
+    },
+    {
+      "midi_note": 49,
+      "note_name": "Crash",
+      "sample_path": "/Users/seanburdges/Music/AudioVault/refined/Demo_Kit/Crash_01.wav",
+      "relative_path": "Demo_Kit/Crash_01.wav",
+      "velocity_min": 1,
+      "velocity_max": 127,
+      "pitch": 0,
+      "volume": 0
+    },
+    {
+      "midi_note": 51,
+      "note_name": "Crash",
+      "sample_path": "/Users/seanburdges/Music/AudioVault/refined/Demo_Kit/Crash_01.wav",
+      "relative_path": "Demo_Kit/Crash_01.wav",
+      "velocity_min": 1,
+      "velocity_max": 127,
+      "pitch": 0,
+      "volume": 0
+    },
+    {
+      "midi_note": 41,
+      "note_name": "Tom_Low",
+      "sample_path": "/Users/seanburdges/Music/AudioVault/refined/Demo_Kit/Tom_Low_01.wav",
+      "relative_path": "Demo_Kit/Tom_Low_01.wav",
+      "velocity_min": 1,
+      "velocity_max": 127,
+      "pitch": 0,
+      "volume": 0
+    },
+    {
+      "midi_note": 43,
+      "note_name": "Tom_Low",
+      "sample_path": "/Users/seanburdges/Music/AudioVault/refined/Demo_Kit/Tom_Low_01.wav",
+      "relative_path": "Demo_Kit/Tom_Low_01.wav",
+      "velocity_min": 1,
+      "velocity_max": 127,
+      "pitch": 0,
+      "volume": 0
+    },
+    {
+      "midi_note": 45,
+      "note_name": "Tom_Mid",
+      "sample_path": "/Users/seanburdges/Music/AudioVault/refined/Demo_Kit/Tom_Mid_01.wav",
+      "relative_path": "Demo_Kit/Tom_Mid_01.wav",
+      "velocity_min": 1,
+      "velocity_max": 127,
+      "pitch": 0,
+      "volume": 0
+    },
+    {
+      "midi_note": 47,
+      "note_name": "Tom_Mid",
+      "sample_path": "/Users/seanburdges/Music/AudioVault/refined/Demo_Kit/Tom_Mid_01.wav",
+      "relative_path": "Demo_Kit/Tom_Mid_01.wav",
+      "velocity_min": 1,
+      "velocity_max": 127,
+      "pitch": 0,
+      "volume": 0
+    },
+    {
+      "midi_note": 48,
+      "note_name": "Tom_High",
+      "sample_path": "/Users/seanburdges/Music/AudioVault/refined/Demo_Kit/Tom_High_01.wav",
+      "relative_path": "Demo_Kit/Tom_High_01.wav",
+      "velocity_min": 1,
+      "velocity_max": 127,
+      "pitch": 0,
+      "volume": 0
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+# Aggressive exclusion — workspace containment
+**/node_modules
+**/venv
+**/.venv
+**/build
+**/dist
+**/target
+**/.git
+**/__pycache__
+**/Datasets
+**/Models
+**/Backups
+**/Library
+**/Volumes
+**/*.gguf
+**/*.safetensors
+**/*.pt
+**/*.pth
+**/*.bin
+**/*.ckpt
+
+# Forensic index suppression (Phase 2)
+_FORENSIC*
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.wav
+**/*.flac
+**/*.mp4

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Dart Strike - Darts Meets Bowling</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Dart Strike">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#667eea">
+    
+    <!-- iOS Icons -->
+    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="icons/icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="96x96" href="icons/icon-96x96.png">
+    <link rel="apple-touch-icon" sizes="128x128" href="icons/icon-128x128.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="384x384" href="icons/icon-384x384.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512x512.png">
+    
+    <!-- Splash Screens for iOS -->
+    <link rel="apple-touch-startup-image" href="splash/splash-640x1136.png" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="splash/splash-750x1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
+    <link rel="apple-touch-startup-image" href="splash/splash-1242x2208.png" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)">
+    <link rel="apple-touch-startup-image" href="splash/splash-1125x2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
+    
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 DART STRIKE 🎳</h1>
+            <p class="subtitle">Where Darts Meets Bowling</p>
+        </header>
+
+        <div class="game-controls">
+            <button id="newGameBtn" class="btn btn-primary">New Game</button>
+            <button id="addPlayerBtn" class="btn btn-secondary">Add Player</button>
+            <button id="resetPinsBtn" class="btn btn-warning">Reset Pins</button>
+        </div>
+
+        <div class="players-section">
+            <h2>Players</h2>
+            <div id="playersList" class="players-list"></div>
+        </div>
+
+        <div class="current-player">
+            <h2>Current Player: <span id="currentPlayerName">Player 1</span></h2>
+            <p>Frame: <span id="currentFrame">1</span> | Ball: <span id="currentBall">1</span></p>
+        </div>
+
+        <div class="pin-rack">
+            <h2>Pin Rack</h2>
+            <div class="pins-container">
+                <div class="pin-row row-1">
+                    <button class="pin" data-pin="7">7</button>
+                    <button class="pin" data-pin="8">8</button>
+                    <button class="pin" data-pin="9">9</button>
+                    <button class="pin" data-pin="10">10</button>
+                </div>
+                <div class="pin-row row-2">
+                    <button class="pin" data-pin="4">4</button>
+                    <button class="pin" data-pin="5">5</button>
+                    <button class="pin" data-pin="6">6</button>
+                </div>
+                <div class="pin-row row-3">
+                    <button class="pin" data-pin="2">2</button>
+                    <button class="pin" data-pin="3">3</button>
+                </div>
+                <div class="pin-row row-4">
+                    <button class="pin" data-pin="1">1</button>
+                </div>
+            </div>
+            <div class="pin-controls">
+                <button id="submitThrowBtn" class="btn btn-success">Submit Throw</button>
+                <span class="pins-down">Pins Down: <span id="pinsDownCount">0</span></span>
+            </div>
+        </div>
+
+        <div class="scorecard-section">
+            <h2>Scorecard</h2>
+            <div id="scorecards" class="scorecards"></div>
+        </div>
+
+        <div class="game-log">
+            <h3>Game Log</h3>
+            <div id="gameLog" class="log-container"></div>
+        </div>
+    </div>
+
+    <!-- Add Player Modal -->
+    <div id="addPlayerModal" class="modal">
+        <div class="modal-content">
+            <h3>Add New Player</h3>
+            <input type="text" id="newPlayerName" placeholder="Enter player name" maxlength="20">
+            <div class="modal-buttons">
+                <button id="confirmAddPlayer" class="btn btn-primary">Add</button>
+                <button id="cancelAddPlayer" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="bowling-scorer.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker registration failed'));
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local AI Feature Factory | KmiDi</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0d0d14;
+            --bg-secondary: #141420;
+            --bg-tertiary: #1a1a2e;
+            --border: rgba(255,255,255,0.08);
+            --text-primary: #e8e8f0;
+            --text-secondary: #8888a0;
+            --accent-cyan: #00d4ff;
+            --accent-magenta: #ff00e5;
+            --accent-green: #00ff88;
+            --accent-orange: #ff9500;
+            --accent-red: #ff3366;
+        }
+
+        body {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .logo-text {
+            font-size: 14px;
+            font-weight: 600;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .latency-display {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .latency-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .latency-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .latency-dot.local { background: var(--accent-green); }
+        .latency-dot.cloud { background: var(--accent-orange); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Layout */
+        .main {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            height: calc(100vh - 57px);
+        }
+
+        /* Left Panel - AI Controls */
+        .panel-left {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+        }
+
+        .panel-section {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        /* Prompt Input */
+        .prompt-container {
+            position: relative;
+        }
+
+        .prompt-input {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 12px;
+            resize: none;
+            height: 80px;
+        }
+
+        .prompt-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .prompt-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            color: white;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-cyan);
+            color: var(--text-primary);
+        }
+
+        /* Component Presets */
+        .preset-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .preset-btn {
+            padding: 10px 8px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: left;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--accent-cyan);
+            background: var(--bg-tertiary);
+        }
+
+        .preset-btn.active {
+            border-color: var(--accent-magenta);
+            background: rgba(255, 0, 229, 0.1);
+        }
+
+        .preset-icon {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        /* Parameter Sliders */
+        .param-group {
+            margin-bottom: 16px;
+        }
+
+        .param-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            margin-bottom: 6px;
+        }
+
+        .param-value {
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        .param-slider {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            background: var(--bg-primary);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        .param-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            cursor: pointer;
+        }
+
+        /* Center - Canvas */
+        .canvas {
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .canvas-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 4px;
+        }
+
+        .toolbar-btn {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .toolbar-btn:hover, .toolbar-btn.active {
+            border-color: var(--accent-cyan);
+            color: var(--text-primary);
+        }
+
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            overflow: auto;
+        }
+
+        .preview-frame {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            min-width: 400px;
+            max-width: 600px;
+            transition: all 0.3s;
+        }
+
+        /* Generated Components */
+        .gen-fader-strip {
+            background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            width: 120px;
+            transition: all 0.2s;
+        }
+
+        .gen-fader-strip:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.15);
+        }
+
+        .gen-fader-name {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .gen-fader-track {
+            width: 8px;
+            height: 120px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            margin: 0 auto 12px;
+            position: relative;
+        }
+
+        .gen-fader-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(0deg, var(--accent-cyan), var(--accent-magenta));
+            border-radius: 4px;
+            transition: height 0.1s;
+        }
+
+        .gen-fader-thumb {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 12px;
+            background: linear-gradient(135deg, var(--accent-cyan), #0099cc);
+            border-radius: 3px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 212, 255, 0.4);
+        }
+
+        .gen-meter {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        .gen-meter-bar {
+            width: 6px;
+            height: 40px;
+            background: var(--bg-primary);
+            border-radius: 2px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+
+        .gen-meter-fill {
+            background: linear-gradient(0deg, var(--accent-green), var(--accent-orange), var(--accent-red));
+            transition: height 0.05s;
+        }
+
+        .gen-knob-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        .gen-knob {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-primary);
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .gen-knob::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 8px;
+            background: var(--accent-magenta);
+            border-radius: 1px;
+        }
+
+        .gen-btn-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        .gen-btn {
+            flex: 1;
+            padding: 8px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .gen-btn:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .gen-btn.active {
+            background: var(--accent-magenta);
+            border-color: var(--accent-magenta);
+            color: white;
+        }
+
+        /* Emotion Wheel Preview */
+        .gen-emotion-wheel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .gen-emotion-ring {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .gen-emotion-segment {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+
+        .gen-emotion-segment:hover {
+            transform: scale(1.05);
+        }
+
+        .gen-emotion-segment.anger { background: rgba(255, 51, 102, 0.2); color: var(--accent-red); }
+        .gen-emotion-segment.joy { background: rgba(255, 149, 0, 0.2); color: var(--accent-orange); }
+        .gen-emotion-segment.sadness { background: rgba(0, 212, 255, 0.2); color: var(--accent-cyan); }
+        .gen-emotion-segment.fear { background: rgba(136, 0, 255, 0.2); color: #8800ff; }
+        .gen-emotion-segment.surprise { background: rgba(0, 255, 136, 0.2); color: var(--accent-green); }
+        .gen-emotion-segment.love { background: rgba(255, 0, 229, 0.2); color: var(--accent-magenta); }
+
+        .gen-emotion-segment.selected {
+            border-color: currentColor;
+            transform: scale(1.1);
+        }
+
+        /* Waveform Preview */
+        .gen-waveform {
+            height: 80px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gen-waveform-bars {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 2px;
+            padding: 0 16px;
+        }
+
+        .gen-waveform-bar {
+            width: 3px;
+            background: linear-gradient(0deg, var(--accent-cyan), var(--accent-magenta));
+            border-radius: 1px;
+            transition: height 0.1s;
+        }
+
+        .gen-waveform-playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--accent-green);
+            transition: left 0.05s linear;
+        }
+
+        /* Right Panel - AI Output */
+        .panel-right {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .output-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+        }
+
+        .output-indicator.thinking {
+            background: var(--accent-orange);
+            animation: pulse 0.5s infinite;
+        }
+
+        .output-title {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .output-stream {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .output-message {
+            margin-bottom: 16px;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .output-message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .output-message-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+
+        .output-message-icon.ai {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+        }
+
+        .output-message-icon.system {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+        }
+
+        .output-message-time {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .output-message-content {
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+
+        .output-message-content code {
+            background: var(--bg-primary);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: inherit;
+            color: var(--accent-cyan);
+        }
+
+        .output-code-block {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 8px;
+            font-size: 11px;
+            overflow-x: auto;
+        }
+
+        .output-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .iteration-history {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-tertiary);
+        }
+
+        .iteration-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .iteration-list {
+            display: flex;
+            gap: 6px;
+        }
+
+        .iteration-item {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .iteration-item:hover, .iteration-item.active {
+            border-color: var(--accent-cyan);
+        }
+
+        .iteration-item.active {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        /* Status Bar */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 16px;
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border);
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Multi-component preview */
+        .multi-preview {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">K</div>
+            <span class="logo-text">KmiDi Feature Factory</span>
+        </div>
+        <div class="latency-display">
+            <div class="latency-item">
+                <span class="latency-dot local"></span>
+                <span>Local AI</span>
+                <strong id="local-latency">12ms</strong>
+            </div>
+            <div class="latency-item">
+                <span class="latency-dot cloud"></span>
+                <span>Cloud API</span>
+                <strong id="cloud-latency">847ms</strong>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <!-- Left Panel -->
+        <aside class="panel-left">
+            <div class="panel-section">
+                <div class="panel-title">AI Prompt</div>
+                <div class="prompt-container">
+                    <textarea class="prompt-input" id="prompt-input" placeholder="Describe the component you want...
+
+e.g. &quot;Create a channel fader with VU meter and mute/solo buttons&quot;"></textarea>
+                    <div class="prompt-actions">
+                        <button class="btn btn-primary" id="generate-btn">Generate</button>
+                        <button class="btn btn-secondary" id="iterate-btn">Iterate</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">Quick Components</div>
+                <div class="preset-grid">
+                    <button class="preset-btn active" data-component="fader">
+                        <span class="preset-icon">|</span>
+                        Fader Strip
+                    </button>
+                    <button class="preset-btn" data-component="emotion">
+                        <span class="preset-icon">O</span>
+                        Emotion Wheel
+                    </button>
+                    <button class="preset-btn" data-component="waveform">
+                        <span class="preset-icon">~</span>
+                        Waveform
+                    </button>
+                    <button class="preset-btn" data-component="transport">
+                        <span class="preset-icon">></span>
+                        Transport
+                    </button>
+                    <button class="preset-btn" data-component="mixer">
+                        <span class="preset-icon">=</span>
+                        Multi-Fader
+                    </button>
+                    <button class="preset-btn" data-component="meter">
+                        <span class="preset-icon">||</span>
+                        VU Meter
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="panel-title">Style Parameters</div>
+
+                <div class="param-group">
+                    <div class="param-label">
+                        <span>Border Radius</span>
+                        <span class="param-value" id="radius-value">8px</span>
+                    </div>
+                    <input type="range" class="param-slider" id="radius-slider" min="0" max="24" value="8">
+                </div>
+
+                <div class="param-group">
+                    <div class="param-label">
+                        <span>Glow Intensity</span>
+                        <span class="param-value" id="glow-value">0.15</span>
+                    </div>
+                    <input type="range" class="param-slider" id="glow-slider" min="0" max="100" value="15">
+                </div>
+
+                <div class="param-group">
+                    <div class="param-label">
+                        <span>Accent Hue</span>
+                        <span class="param-value" id="hue-value">190°</span>
+                    </div>
+                    <input type="range" class="param-slider" id="hue-slider" min="0" max="360" value="190">
+                </div>
+
+                <div class="param-group">
+                    <div class="param-label">
+                        <span>Component Scale</span>
+                        <span class="param-value" id="scale-value">1.0x</span>
+                    </div>
+                    <input type="range" class="param-slider" id="scale-slider" min="50" max="150" value="100">
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Canvas -->
+        <section class="canvas">
+            <div class="canvas-toolbar">
+                <div class="toolbar-group">
+                    <button class="toolbar-btn active" title="Select">S</button>
+                    <button class="toolbar-btn" title="Move">M</button>
+                    <button class="toolbar-btn" title="Zoom">Z</button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" title="Grid">G</button>
+                    <button class="toolbar-btn" title="Snap">N</button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" title="Undo">U</button>
+                    <button class="toolbar-btn" title="Redo">R</button>
+                </div>
+                <div class="toolbar-group" style="margin-left: auto;">
+                    <button class="toolbar-btn" title="Export">E</button>
+                    <button class="toolbar-btn" title="Copy Code">C</button>
+                </div>
+            </div>
+
+            <div class="canvas-area">
+                <div class="preview-frame" id="preview-frame">
+                    <!-- Dynamic component preview renders here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Panel -->
+        <aside class="panel-right">
+            <div class="output-header">
+                <span class="output-indicator" id="ai-indicator"></span>
+                <span class="output-title">AI Output Stream</span>
+            </div>
+
+            <div class="output-stream" id="output-stream">
+                <!-- AI messages render here -->
+            </div>
+
+            <div class="iteration-history">
+                <div class="iteration-title">Iteration History</div>
+                <div class="iteration-list" id="iteration-list">
+                    <div class="iteration-item active">1</div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <footer class="status-bar">
+        <div class="status-item">
+            <span>Model: llama3.2-3b-local</span>
+        </div>
+        <div class="status-item">
+            <span>VRAM: 2.1GB / 8GB</span>
+        </div>
+        <div class="status-item">
+            <span>Tokens/s: 142</span>
+        </div>
+    </footer>
+
+    <script>
+        // State
+        const state = {
+            currentComponent: 'fader',
+            iteration: 1,
+            params: { radius: 8, glow: 0.15, hue: 190, scale: 1 },
+            isGenerating: false
+        };
+
+        // Component Templates
+        const components = {
+            fader: () => `
+                <div class="gen-fader-strip" style="border-radius: ${state.params.radius}px; transform: scale(${state.params.scale}); box-shadow: 0 4px 20px hsla(${state.params.hue}, 100%, 50%, ${state.params.glow});">
+                    <div class="gen-fader-name">CH 1</div>
+                    <div class="gen-meter">
+                        <div class="gen-meter-bar"><div class="gen-meter-fill" id="meter-l" style="height: 60%"></div></div>
+                        <div class="gen-meter-bar"><div class="gen-meter-fill" id="meter-r" style="height: 45%"></div></div>
+                    </div>
+                    <div class="gen-fader-track">
+                        <div class="gen-fader-fill" id="fader-fill" style="height: 70%; background: linear-gradient(0deg, hsl(${state.params.hue}, 100%, 50%), hsl(${state.params.hue + 60}, 100%, 50%));"></div>
+                        <div class="gen-fader-thumb" id="fader-thumb" style="bottom: calc(70% - 6px); background: linear-gradient(135deg, hsl(${state.params.hue}, 100%, 50%), hsl(${state.params.hue}, 80%, 40%));"></div>
+                    </div>
+                    <div class="gen-knob-row">
+                        <div class="gen-knob" title="Pan"></div>
+                        <div class="gen-knob" title="Send"></div>
+                    </div>
+                    <div class="gen-btn-row">
+                        <button class="gen-btn" id="mute-btn">M</button>
+                        <button class="gen-btn" id="solo-btn">S</button>
+                    </div>
+                </div>
+            `,
+
+            emotion: () => `
+                <div class="gen-emotion-wheel" style="transform: scale(${state.params.scale});">
+                    <div class="gen-emotion-ring">
+                        <span class="gen-emotion-segment anger" style="border-radius: ${state.params.radius + 12}px;">Anger</span>
+                        <span class="gen-emotion-segment joy selected" style="border-radius: ${state.params.radius + 12}px;">Joy</span>
+                        <span class="gen-emotion-segment sadness" style="border-radius: ${state.params.radius + 12}px;">Sadness</span>
+                        <span class="gen-emotion-segment fear" style="border-radius: ${state.params.radius + 12}px;">Fear</span>
+                        <span class="gen-emotion-segment surprise" style="border-radius: ${state.params.radius + 12}px;">Surprise</span>
+                        <span class="gen-emotion-segment love" style="border-radius: ${state.params.radius + 12}px;">Love</span>
+                    </div>
+                    <div class="gen-emotion-ring" style="opacity: 0.7;">
+                        <span class="gen-emotion-segment joy" style="border-radius: ${state.params.radius + 8}px; font-size: 10px;">Elated</span>
+                        <span class="gen-emotion-segment joy" style="border-radius: ${state.params.radius + 8}px; font-size: 10px;">Content</span>
+                        <span class="gen-emotion-segment joy" style="border-radius: ${state.params.radius + 8}px; font-size: 10px;">Hopeful</span>
+                        <span class="gen-emotion-segment joy" style="border-radius: ${state.params.radius + 8}px; font-size: 10px;">Excited</span>
+                    </div>
+                </div>
+            `,
+
+            waveform: () => `
+                <div class="gen-waveform" style="border-radius: ${state.params.radius}px; transform: scale(${state.params.scale});">
+                    <div class="gen-waveform-bars" id="waveform-bars"></div>
+                    <div class="gen-waveform-playhead" id="playhead" style="left: 30%;"></div>
+                </div>
+            `,
+
+            transport: () => `
+                <div style="display: flex; gap: 8px; align-items: center; transform: scale(${state.params.scale});">
+                    <button class="gen-btn" style="width: 40px; height: 40px; border-radius: ${state.params.radius}px;">|<</button>
+                    <button class="gen-btn" style="width: 40px; height: 40px; border-radius: ${state.params.radius}px;"><<</button>
+                    <button class="gen-btn" style="width: 48px; height: 48px; border-radius: 50%; background: hsl(${state.params.hue}, 100%, 50%); border-color: hsl(${state.params.hue}, 100%, 50%); color: white;">▶</button>
+                    <button class="gen-btn" style="width: 40px; height: 40px; border-radius: ${state.params.radius}px;">>></button>
+                    <button class="gen-btn" style="width: 40px; height: 40px; border-radius: ${state.params.radius}px;">>|</button>
+                    <button class="gen-btn active" style="width: 40px; height: 40px; border-radius: ${state.params.radius}px;">●</button>
+                </div>
+            `,
+
+            mixer: () => `
+                <div class="multi-preview">
+                    ${[1,2,3,4].map(i => `
+                        <div class="gen-fader-strip" style="border-radius: ${state.params.radius}px; transform: scale(${state.params.scale * 0.85}); box-shadow: 0 4px 20px hsla(${state.params.hue}, 100%, 50%, ${state.params.glow});">
+                            <div class="gen-fader-name">CH ${i}</div>
+                            <div class="gen-meter">
+                                <div class="gen-meter-bar"><div class="gen-meter-fill" style="height: ${30 + Math.random() * 50}%"></div></div>
+                                <div class="gen-meter-bar"><div class="gen-meter-fill" style="height: ${30 + Math.random() * 50}%"></div></div>
+                            </div>
+                            <div class="gen-fader-track">
+                                <div class="gen-fader-fill" style="height: ${50 + Math.random() * 40}%; background: linear-gradient(0deg, hsl(${state.params.hue}, 100%, 50%), hsl(${state.params.hue + 60}, 100%, 50%));"></div>
+                            </div>
+                            <div class="gen-btn-row">
+                                <button class="gen-btn">M</button>
+                                <button class="gen-btn">S</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `,
+
+            meter: () => `
+                <div style="display: flex; gap: 4px; background: var(--bg-primary); padding: 16px; border-radius: ${state.params.radius}px; transform: scale(${state.params.scale});">
+                    ${Array(8).fill(0).map((_, i) => `
+                        <div class="gen-meter-bar" style="height: 100px;">
+                            <div class="gen-meter-fill" id="vu-${i}" style="height: ${20 + Math.random() * 60}%"></div>
+                        </div>
+                    `).join('')}
+                </div>
+            `
+        };
+
+        // Render preview
+        function renderPreview() {
+            const frame = document.getElementById('preview-frame');
+            frame.innerHTML = components[state.currentComponent]();
+
+            // Initialize waveform if needed
+            if (state.currentComponent === 'waveform') {
+                const container = document.getElementById('waveform-bars');
+                container.innerHTML = Array(60).fill(0).map(() =>
+                    `<div class="gen-waveform-bar" style="height: ${10 + Math.random() * 60}px;"></div>`
+                ).join('');
+            }
+
+            // Add interactivity
+            setupInteractivity();
+        }
+
+        // Setup component interactivity
+        function setupInteractivity() {
+            // Mute/Solo buttons
+            document.querySelectorAll('.gen-btn').forEach(btn => {
+                btn.addEventListener('click', () => btn.classList.toggle('active'));
+            });
+
+            // Emotion segments
+            document.querySelectorAll('.gen-emotion-segment').forEach(seg => {
+                seg.addEventListener('click', () => {
+                    document.querySelectorAll('.gen-emotion-segment').forEach(s => s.classList.remove('selected'));
+                    seg.classList.add('selected');
+                });
+            });
+        }
+
+        // Add AI message
+        function addMessage(content, isAI = true, code = null) {
+            const stream = document.getElementById('output-stream');
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            let html = `
+                <div class="output-message">
+                    <div class="output-message-header">
+                        <div class="output-message-icon ${isAI ? 'ai' : 'system'}">${isAI ? 'AI' : 'S'}</div>
+                        <span class="output-message-time">${time}</span>
+                    </div>
+                    <div class="output-message-content">${content}</div>
+                    ${code ? `<div class="output-code-block"><pre>${code}</pre></div>` : ''}
+                    ${isAI ? `
+                    <div class="output-actions">
+                        <button class="btn btn-secondary">Apply</button>
+                        <button class="btn btn-secondary">Modify</button>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+
+            stream.insertAdjacentHTML('beforeend', html);
+            stream.scrollTop = stream.scrollHeight;
+        }
+
+        // Simulate generation
+        async function generate() {
+            if (state.isGenerating) return;
+            state.isGenerating = true;
+
+            const indicator = document.getElementById('ai-indicator');
+            indicator.classList.add('thinking');
+
+            // Simulate local AI latency
+            const latency = 8 + Math.random() * 15;
+            document.getElementById('local-latency').textContent = `${Math.round(latency)}ms`;
+
+            await new Promise(r => setTimeout(r, latency));
+
+            const prompt = document.getElementById('prompt-input').value || `Generate ${state.currentComponent} component`;
+
+            addMessage(`Analyzing: "<code>${prompt}</code>"`, true);
+
+            await new Promise(r => setTimeout(r, 50 + Math.random() * 100));
+
+            const codeSnippet = `// ${state.currentComponent}.tsx
+const ${state.currentComponent.charAt(0).toUpperCase() + state.currentComponent.slice(1)} = () => {
+  const [value, setValue] = useState(0.7);
+  return (
+    <div className="component" style={{
+      borderRadius: ${state.params.radius}px,
+      boxShadow: '0 4px 20px hsla(${state.params.hue}, 100%, 50%, ${state.params.glow})'
+    }}>
+      {/* Component content */}
+    </div>
+  );
+};`;
+
+            addMessage(
+                `Generated <code>${state.currentComponent}</code> with params: radius=${state.params.radius}px, glow=${state.params.glow.toFixed(2)}, hue=${state.params.hue}°`,
+                true,
+                codeSnippet
+            );
+
+            indicator.classList.remove('thinking');
+            state.isGenerating = false;
+
+            // Add iteration
+            state.iteration++;
+            const list = document.getElementById('iteration-list');
+            list.querySelectorAll('.iteration-item').forEach(i => i.classList.remove('active'));
+            list.insertAdjacentHTML('beforeend', `<div class="iteration-item active">${state.iteration}</div>`);
+        }
+
+        // Animate meters
+        function animateMeters() {
+            document.querySelectorAll('.gen-meter-fill').forEach(fill => {
+                const current = parseFloat(fill.style.height) || 50;
+                const target = 20 + Math.random() * 60;
+                fill.style.height = `${current + (target - current) * 0.3}%`;
+            });
+
+            // Animate playhead
+            const playhead = document.getElementById('playhead');
+            if (playhead) {
+                let pos = parseFloat(playhead.style.left) || 0;
+                pos = (pos + 0.5) % 100;
+                playhead.style.left = `${pos}%`;
+            }
+        }
+
+        // Simulate latency updates
+        function updateLatency() {
+            document.getElementById('local-latency').textContent = `${8 + Math.round(Math.random() * 12)}ms`;
+            document.getElementById('cloud-latency').textContent = `${700 + Math.round(Math.random() * 400)}ms`;
+        }
+
+        // Event listeners
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.currentComponent = btn.dataset.component;
+                renderPreview();
+                addMessage(`Switched to <code>${state.currentComponent}</code> template`, false);
+            });
+        });
+
+        // Parameter sliders
+        document.getElementById('radius-slider').addEventListener('input', e => {
+            state.params.radius = parseInt(e.target.value);
+            document.getElementById('radius-value').textContent = `${state.params.radius}px`;
+            renderPreview();
+        });
+
+        document.getElementById('glow-slider').addEventListener('input', e => {
+            state.params.glow = parseInt(e.target.value) / 100;
+            document.getElementById('glow-value').textContent = state.params.glow.toFixed(2);
+            renderPreview();
+        });
+
+        document.getElementById('hue-slider').addEventListener('input', e => {
+            state.params.hue = parseInt(e.target.value);
+            document.getElementById('hue-value').textContent = `${state.params.hue}°`;
+            renderPreview();
+        });
+
+        document.getElementById('scale-slider').addEventListener('input', e => {
+            state.params.scale = parseInt(e.target.value) / 100;
+            document.getElementById('scale-value').textContent = `${state.params.scale.toFixed(1)}x`;
+            renderPreview();
+        });
+
+        document.getElementById('generate-btn').addEventListener('click', generate);
+        document.getElementById('iterate-btn').addEventListener('click', generate);
+
+        // Keyboard shortcut
+        document.addEventListener('keydown', e => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                generate();
+            }
+        });
+
+        // Initialize
+        renderPreview();
+        addMessage('Local AI ready. Model: <code>llama3.2-3b</code> loaded in VRAM. Avg latency: <code>12ms</code>', false);
+
+        // Animation loops
+        setInterval(animateMeters, 100);
+        setInterval(updateLatency, 2000);
+    </script>
+</body>
+</html>

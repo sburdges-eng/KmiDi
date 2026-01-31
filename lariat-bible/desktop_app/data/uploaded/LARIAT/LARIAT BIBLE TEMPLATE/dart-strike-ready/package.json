@@ -1,0 +1,82 @@
+{
+  "name": "dart-strike",
+  "version": "1.0.0",
+  "description": "Dart Strike - A hybrid darts and bowling scoring game",
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "npx http-server -p 8080",
+    "serve": "python3 -m http.server 8080",
+    "electron": "electron .",
+    "dist-mac": "electron-builder --mac",
+    "dist-all": "electron-builder -mwl",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "keywords": [
+    "darts",
+    "bowling",
+    "game",
+    "scoring"
+  ],
+  "author": "Sean - The Lariat",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4",
+    "http-server": "^14.1.1"
+  },
+  "build": {
+    "appId": "com.thelariat.dartstrike",
+    "productName": "Dart Strike",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!dist${/*}",
+      "!generate_icons.py",
+      "!*.log"
+    ],
+    "mac": {
+      "category": "public.app-category.games",
+      "icon": "icons/icon-512x512.png",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ]
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "title": "Dart Strike Installer"
+    },
+    "win": {
+      "icon": "icons/icon-512x512.png",
+      "target": "nsis"
+    },
+    "linux": {
+      "icon": "icons",
+      "target": "AppImage",
+      "category": "Game"
+    }
+  }
+}

@@ -1,0 +1,51 @@
+# Kelly Project Build Instructions
+
+## Quick Reference
+
+See `QUICK_COMMANDS.md` for all build and install commands.
+
+## After Building Plugin
+
+Always run these commands to bypass Gatekeeper:
+
+1. Code sign:
+
+```bash
+codesign --force --deep --sign - ~/Library/Audio/Plug-Ins/VST3/Kelly\ MIDI\ Companion.vst3
+codesign --force --deep --sign - ~/Library/Audio/Plug-Ins/Components/Kelly\ MIDI\ Companion.component
+
+```
+
+2. Remove quarantine:
+
+```bash
+xattr -cr ~/Library/Audio/Plug-Ins/VST3/Kelly\ MIDI\ Companion.vst3
+xattr -cr ~/Library/Audio/Plug-Ins/Components/Kelly\ MIDI\ Companion.component
+
+```
+
+## Full Build Command
+
+Use the build_and_install.sh script which does everything:
+
+```bash
+./build_and_install.sh          # Debug
+./build_and_install.sh Release  # Release
+
+```
+
+## Build Process
+
+1. Build: `cmake --build build --config Debug` or `cmake --build build --config Release`
+2. Install: Copy plugins to ~/Library/Audio/Plug-Ins/
+3. Sign: Run codesign commands above
+4. Remove quarantine: Run xattr commands above
+
+## Week 1 Tasks Completed
+
+✅ Consolidated markdown documentation
+✅ Load full 216-node emotion thesaurus from JSON files
+✅ Implement emotion parameter controls in PluginProcessor
+✅ Create basic MIDI generation in processBlock()
+✅ Add state save/load for emotion settings
+

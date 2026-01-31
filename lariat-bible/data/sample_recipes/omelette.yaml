@@ -1,0 +1,12 @@
+name: Simple Omelette
+servings: 1
+ingredients:
+  - name: eggs
+    quantity: 3
+    unit: pcs
+  - name: milk
+    quantity: 30
+    unit: ml
+  - name: salt
+    quantity: 1
+    unit: tsp

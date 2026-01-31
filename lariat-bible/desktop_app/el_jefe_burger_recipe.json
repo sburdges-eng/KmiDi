@@ -1,0 +1,75 @@
+{
+  "name": "El Jefe Burger",
+  "category": "Burger",
+  "base_yield": "1 serving",
+  "scaled_yield": "1 serving",
+  "scale_factor": 1.0,
+  "ingredients": [
+    {
+      "name": "Ground beef patty",
+      "base_qty": 8.0,
+      "unit": "ounces",
+      "scaled_qty": 8.0
+    },
+    {
+      "name": "Brioche bun",
+      "base_qty": 1.0,
+      "unit": "each",
+      "scaled_qty": 1.0
+    },
+    {
+      "name": "Pepper jack cheese",
+      "base_qty": 2.0,
+      "unit": "slices",
+      "scaled_qty": 2.0
+    },
+    {
+      "name": "Green chile, roasted",
+      "base_qty": 2.0,
+      "unit": "ounces",
+      "scaled_qty": 2.0
+    },
+    {
+      "name": "Pickled red onions",
+      "base_qty": 1.0,
+      "unit": "ounce",
+      "scaled_qty": 1.0
+    },
+    {
+      "name": "Grilled jalape\u00f1os",
+      "base_qty": 4.0,
+      "unit": "slices",
+      "scaled_qty": 4.0
+    },
+    {
+      "name": "Chipotle aioli",
+      "base_qty": 1.5,
+      "unit": "ounces",
+      "scaled_qty": 1.5
+    },
+    {
+      "name": "Lettuce",
+      "base_qty": 1.0,
+      "unit": "leaf",
+      "scaled_qty": 1.0
+    },
+    {
+      "name": "Tomato",
+      "base_qty": 1.0,
+      "unit": "slice",
+      "scaled_qty": 1.0
+    },
+    {
+      "name": "Tortilla chips",
+      "base_qty": 4.0,
+      "unit": "ounces",
+      "scaled_qty": 4.0
+    },
+    {
+      "name": "Salsa",
+      "base_qty": 2.0,
+      "unit": "ounces",
+      "scaled_qty": 2.0
+    }
+  ]
+}

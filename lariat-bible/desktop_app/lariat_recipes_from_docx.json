@@ -1,0 +1,2765 @@
+{
+  "recipes": [
+    {
+      "name": "Soup Base",
+      "category": "Soup/Base",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "(1 stick) unsalted butter",
+          "base_qty": "8",
+          "unit": "tbsp",
+          "scaled_qty": "8"
+        },
+        {
+          "name": "yellow onions, finely diced",
+          "base_qty": "3",
+          "unit": "large",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "cloves, minced",
+          "base_qty": "6",
+          "unit": "garlic",
+          "scaled_qty": "6"
+        },
+        {
+          "name": "dry white wine (Sauvignon Blanc or Pinot Grigio)",
+          "base_qty": "2",
+          "unit": "cups",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "(8 cups) low-sodium chicken or vegetable stock",
+          "base_qty": "2",
+          "unit": "quarts",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "heavy cream",
+          "base_qty": "4",
+          "unit": "cups",
+          "scaled_qty": "4"
+        },
+        {
+          "name": "6\u20137 sprigs fresh thyme (plus extra for garnish)",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "1\u00bd\u20132 tsp kosher salt (adjust to taste)",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "freshly ground black pepper",
+          "base_qty": "1",
+          "unit": "tsp",
+          "scaled_qty": "1"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Mesa Melt \u2013 Southwest Beer Cheese",
+      "category": "Sauce/Cheese",
+      "base_yield": "Ingredients (Yields ~4 cups)",
+      "scaled_yield": "Ingredients (Yields ~4 cups)",
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "unsalted butter",
+          "base_qty": "2",
+          "unit": "tbsp",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "all-purpose flour",
+          "base_qty": "2",
+          "unit": "tbsp",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "modelo especial",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "whole milk or half-and-half",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "sharp cheddar cheese, shredded",
+          "base_qty": "8",
+          "unit": "oz",
+          "scaled_qty": "8"
+        },
+        {
+          "name": "pepper jack cheese, shredded",
+          "base_qty": "4",
+          "unit": "oz",
+          "scaled_qty": "4"
+        },
+        {
+          "name": "cream cheese, softened",
+          "base_qty": "2",
+          "unit": "oz",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "roasted Hatch green chiles, peeled, seeded, and diced",
+          "base_qty": "2",
+          "unit": "medium",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "chipotle in adobo",
+          "base_qty": "1",
+          "unit": "minced",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "smoked paprika",
+          "base_qty": "1",
+          "unit": "tsp",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "ground cumin",
+          "base_qty": "\u00bd",
+          "unit": "tsp",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "garlic powder",
+          "base_qty": "\u00bd",
+          "unit": "tsp",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "onion powder",
+          "base_qty": "\u00bc",
+          "unit": "tsp",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "salt (adjust to taste)",
+          "base_qty": "\u00bd",
+          "unit": "tsp",
+          "scaled_qty": "\u00bd"
+        }
+      ],
+      "instructions": [
+        "Prepare the Roux: In a medium saucepan, melt the butter over medium heat. Whisk in the flour and cook for 1\u20132 minutes, until lightly golden and aromatic.",
+        "Incorporate Beer: Slowly pour in the beer while whisking continuously. Allow it to foam, then simmer for 1\u20132 minutes until slightly thickened.",
+        "Add Milk: Whisk in the milk or half-and-half, stirring until smooth and gently thickened.",
+        "Melt the Cheeses: Reduce heat to medium-low. Add cheddar, pepper jack, and cream cheese gradually, whisking until fully melted and smooth.",
+        "Integrate Flavors: Stir in roasted Hatch chiles, chipotle, smoked paprika, cumin, garlic powder, onion powder, and salt. Mix thoroughly to incorporate.",
+        "Adjust Consistency: For a thinner sauce, add small increments of milk or beer until desired texture is reached. For thicker consistency, continue simmering gently.",
+        "Hold Warm for Service: Keep over low heat or in a warm holding unit until ready for use. Avoid boiling once cheese is added to maintain a smooth texture."
+      ]
+    },
+    {
+      "name": "Buttermilk Brine",
+      "category": "Brine/Marinade",
+      "base_yield": "Yield: 12 qt of brined chk",
+      "scaled_yield": "Yield: 12 qt of brined chk",
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "Buttermilk",
+          "base_qty": "\u00bd",
+          "unit": "",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "Franks Hot Sauce",
+          "base_qty": "500",
+          "unit": "",
+          "scaled_qty": "500"
+        },
+        {
+          "name": "Garlic Powder",
+          "base_qty": "\u00bc",
+          "unit": "",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "Onion Powder",
+          "base_qty": "\u00bc",
+          "unit": "",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "Ground Black Pepper",
+          "base_qty": "\u00bd",
+          "unit": "",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "Kosher Salt",
+          "base_qty": "\u215b",
+          "unit": "",
+          "scaled_qty": "\u215b"
+        }
+      ],
+      "instructions": [
+        "Combine all ingredients in a cambro and whisk."
+      ]
+    },
+    {
+      "name": "Lariat rub",
+      "category": "Seasoning/Rub",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "salt",
+          "base_qty": "\u00bd",
+          "unit": "cup",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "paprika",
+          "base_qty": "\u2153",
+          "unit": "cup",
+          "scaled_qty": "\u2153"
+        },
+        {
+          "name": "garlic powder",
+          "base_qty": "\u2153",
+          "unit": "cup",
+          "scaled_qty": "\u2153"
+        },
+        {
+          "name": "onion powder",
+          "base_qty": "\u2153",
+          "unit": "cup",
+          "scaled_qty": "\u2153"
+        },
+        {
+          "name": "pepper",
+          "base_qty": "1 \u00bd",
+          "unit": "tbsp",
+          "scaled_qty": "1 \u00bd"
+        },
+        {
+          "name": "turbinado",
+          "base_qty": "\u2153",
+          "unit": "cup",
+          "scaled_qty": "\u2153"
+        },
+        {
+          "name": "cayenne",
+          "base_qty": "1",
+          "unit": "tsp",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "cumin",
+          "base_qty": "1",
+          "unit": "tsp",
+          "scaled_qty": "1"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Queso/ Mac Sauce",
+      "category": "Sauce/Cheese",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "HEAVY CREAM",
+          "base_qty": "3",
+          "unit": "QT",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "WHOLE MILK",
+          "base_qty": "2",
+          "unit": "GALLON",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "5LB CHEESE BLOCK",
+          "base_qty": "4",
+          "unit": "EA.",
+          "scaled_qty": "4"
+        },
+        {
+          "name": "5LB BAGS SHREDDED CHEDDAR",
+          "base_qty": "2",
+          "unit": "EA",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "RUB",
+          "base_qty": "1 \u00bd",
+          "unit": "LARIAT",
+          "scaled_qty": "1 \u00bd"
+        },
+        {
+          "name": "GREEN CHILE",
+          "base_qty": "1",
+          "unit": "BAG",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "BLACKENED SALSA",
+          "base_qty": "2",
+          "unit": "QT",
+          "scaled_qty": "2"
+        }
+      ],
+      "instructions": [
+        "Combine milk and heavy cream in large sauce pot and bring to a boil",
+        "Shred cheese blocks in Robocoupe",
+        "Slowly incorporate shredded cheese blocks and shredded cheddar into boiling pot, stirring until thoroughly melted",
+        "Transfer into 22 Qt. cambro and insert ice wand"
+      ]
+    },
+    {
+      "name": "Blackened Tomato Salsa",
+      "category": "Salsa/Relish",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "tomatoes",
+          "base_qty": "2",
+          "unit": "Cases",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "cilantro",
+          "base_qty": "8",
+          "unit": "Bunches",
+          "scaled_qty": "8"
+        },
+        {
+          "name": "destemmed fresh Jalapenos",
+          "base_qty": "2",
+          "unit": "Quarts",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "onions",
+          "base_qty": "6",
+          "unit": "yellow",
+          "scaled_qty": "6"
+        },
+        {
+          "name": "kosher salt",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "fresh minced garlic",
+          "base_qty": "1 \u00bd",
+          "unit": "cup",
+          "scaled_qty": "1 \u00bd"
+        }
+      ],
+      "instructions": [
+        "Blacken tomatoes on char grill",
+        "Blacken halved onions and jalapenos in salamander"
+      ]
+    },
+    {
+      "name": "Chicken Flour",
+      "category": "Seasoning/Rub",
+      "base_yield": "YIELD: 22 QT",
+      "scaled_yield": "YIELD: 22 QT",
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "AP flour",
+          "base_qty": "18",
+          "unit": "kg",
+          "scaled_qty": "18"
+        },
+        {
+          "name": "kosher salt",
+          "base_qty": "1 \u00bd",
+          "unit": "cups",
+          "scaled_qty": "1 \u00bd"
+        },
+        {
+          "name": "pepper",
+          "base_qty": "2",
+          "unit": "cup",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "paprika",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "onion powder",
+          "base_qty": "1 \u00bd",
+          "unit": "cup",
+          "scaled_qty": "1 \u00bd"
+        },
+        {
+          "name": "garlic powder",
+          "base_qty": "1 \u00bd",
+          "unit": "cup",
+          "scaled_qty": "1 \u00bd"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Nashville hot rub",
+      "category": "Seasoning/Rub",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "lariat rub",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "cayenne",
+          "base_qty": "\u00bc",
+          "unit": "cup",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "chili powder",
+          "base_qty": "10",
+          "unit": "tbsp",
+          "scaled_qty": "10"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Aji Verde",
+      "category": "Salsa/Relish",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "600g cilantro",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "300g lime juice",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "300g mayo",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "100g garlic",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "20g salt",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "80g olive oil",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "250g jalapeno deseeded and deveined",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        }
+      ],
+      "instructions": [
+        "Combine lime juice, mayo, garlic,salt, olive oil, jalapenos, and half of cilantro and blend to a paste"
+      ]
+    },
+    {
+      "name": "Bacon jam",
+      "category": "Condiment",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "15lb bacon diced",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "10ea onion",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "1qt orange juice",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "4lbs brown sugar",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "lariat rub",
+          "base_qty": "\u00bd",
+          "unit": "c",
+          "scaled_qty": "\u00bd"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Special sauce",
+      "category": "Sauce/Cheese",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "mayo",
+          "base_qty": "9",
+          "unit": "cups",
+          "scaled_qty": "9"
+        },
+        {
+          "name": "ketchup",
+          "base_qty": "1 \u00bd",
+          "unit": "cups",
+          "scaled_qty": "1 \u00bd"
+        },
+        {
+          "name": "mustard",
+          "base_qty": "1 \u00bd",
+          "unit": "cups",
+          "scaled_qty": "1 \u00bd"
+        },
+        {
+          "name": "onion powder",
+          "base_qty": "\u00bd",
+          "unit": "cup",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "garlic powder",
+          "base_qty": "\u00bd",
+          "unit": "cup",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "paprika",
+          "base_qty": "\u00bd",
+          "unit": "cup",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "white sugar",
+          "base_qty": "\u00bd",
+          "unit": "cup",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "apple cider vin",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Fish Brine",
+      "category": "Brine/Marinade",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "salt",
+          "base_qty": "1 \u00bc",
+          "unit": "cup",
+          "scaled_qty": "1 \u00bc"
+        },
+        {
+          "name": "sugar",
+          "base_qty": "\u00be",
+          "unit": "cup",
+          "scaled_qty": "\u00be"
+        },
+        {
+          "name": "water",
+          "base_qty": "4",
+          "unit": "qt",
+          "scaled_qty": "4"
+        }
+      ],
+      "instructions": [
+        "Combine ingredients",
+        "Marinade for 7 minutes"
+      ]
+    },
+    {
+      "name": "Corn bread",
+      "category": "Batter/Bread",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "cornbread mixture",
+          "base_qty": "2",
+          "unit": "boxes",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "butter browned",
+          "base_qty": "1.15",
+          "unit": "LB",
+          "scaled_qty": "1.15"
+        },
+        {
+          "name": "buttermilk",
+          "base_qty": "14 \u00be",
+          "unit": "cup",
+          "scaled_qty": "14 \u00be"
+        },
+        {
+          "name": "cheddar",
+          "base_qty": "3 \u00bd",
+          "unit": "cup",
+          "scaled_qty": "3 \u00bd"
+        },
+        {
+          "name": "jalapeno diced",
+          "base_qty": "3 \u00bd",
+          "unit": "cup",
+          "scaled_qty": "3 \u00bd"
+        }
+      ],
+      "instructions": [
+        "Thoroughly whisk together in a large mixing bowl",
+        "Spray cake pans and distribute evenly",
+        "Bake for 500 for 1hr 30min (check for residue with prod)"
+      ]
+    },
+    {
+      "name": "Green Chile",
+      "category": "Other",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "10lbs pork butt medium dice",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "water",
+          "base_qty": "5",
+          "unit": "cups",
+          "scaled_qty": "5"
+        },
+        {
+          "name": "#10 can tomatillos",
+          "base_qty": "2",
+          "unit": "ea",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "hatch chile with juice",
+          "base_qty": "2",
+          "unit": "bags",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "yellow onions small dice",
+          "base_qty": "1 \u00be",
+          "unit": "lbs",
+          "scaled_qty": "1 \u00be"
+        },
+        {
+          "name": "granulated garlic",
+          "base_qty": "\u00bd",
+          "unit": "cup",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "oregano, dried",
+          "base_qty": "\u2153",
+          "unit": "cup",
+          "scaled_qty": "\u2153"
+        },
+        {
+          "name": "cumin",
+          "base_qty": "\u00bd",
+          "unit": "cup",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "chicken base",
+          "base_qty": "3",
+          "unit": "cup",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "garlic puree",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "Add in water and cook 40 to 60 min until pork softens",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Roasted Pepitas",
+      "category": "Other",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "pepitas",
+          "base_qty": "5",
+          "unit": "lbs",
+          "scaled_qty": "5"
+        },
+        {
+          "name": "kosher salt",
+          "base_qty": "\u00bc",
+          "unit": "cup",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "chili powder",
+          "base_qty": "1",
+          "unit": "tbsp",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "cumin",
+          "base_qty": "\u00bd",
+          "unit": "tbsp",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "oil",
+          "base_qty": "\u00bc",
+          "unit": "cup",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "lime juice",
+          "base_qty": "\u00bc",
+          "unit": "cup",
+          "scaled_qty": "\u00bc"
+        }
+      ],
+      "instructions": [
+        "Oil pepitas",
+        "Combine with lime juice/season mix",
+        "Spread evenly across lined baking pan",
+        "Roast in oven @500 degrees fahrenheit for approx 30 mins"
+      ]
+    },
+    {
+      "name": "Santa Fe Caesar Dressing",
+      "category": "Dressing",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "anchovy",
+          "base_qty": "5",
+          "unit": "minced",
+          "scaled_qty": "5"
+        },
+        {
+          "name": "capers",
+          "base_qty": "1",
+          "unit": "tbsp",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "dijon mustard",
+          "base_qty": "\u00be",
+          "unit": "cup",
+          "scaled_qty": "\u00be"
+        },
+        {
+          "name": "lime juice",
+          "base_qty": "\u00bc",
+          "unit": "cup",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "chipotle puree",
+          "base_qty": "\u00be",
+          "unit": "cup",
+          "scaled_qty": "\u00be"
+        },
+        {
+          "name": "mayo",
+          "base_qty": "3 \u00bd",
+          "unit": "cup",
+          "scaled_qty": "3 \u00bd"
+        },
+        {
+          "name": "mince garlic",
+          "base_qty": "\u00bd",
+          "unit": "cup",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "minced cilantro",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        }
+      ],
+      "instructions": [
+        "Combine mustard, lime juice, chipotle, mayo, garlic, cilantro, anchovy, and capers in blender"
+      ]
+    },
+    {
+      "name": "Nashville Oil",
+      "category": "Condiment",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "900g bacon lard",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "cayenne",
+          "base_qty": "3 \u00bd",
+          "unit": "tbsp",
+          "scaled_qty": "3 \u00bd"
+        },
+        {
+          "name": "lariat rub",
+          "base_qty": "3 \u00bd",
+          "unit": "tbsp",
+          "scaled_qty": "3 \u00bd"
+        },
+        {
+          "name": "bread and butter pickle juice",
+          "base_qty": "5 \u00bc",
+          "unit": "cup",
+          "scaled_qty": "5 \u00bc"
+        }
+      ],
+      "instructions": [
+        "Melt Bacon lard until liquified",
+        "Add seasonings and whisk",
+        "REMOVE FROM HEAT SOURCE"
+      ]
+    },
+    {
+      "name": "Tartar Sauce",
+      "category": "Sauce/Cheese",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "mayo",
+          "base_qty": "9",
+          "unit": "cup",
+          "scaled_qty": "9"
+        },
+        {
+          "name": "600g  minced b&b pickles",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "minced shallot",
+          "base_qty": "6 \u00bd",
+          "unit": "cup",
+          "scaled_qty": "6 \u00bd"
+        },
+        {
+          "name": "minced caper",
+          "base_qty": "1 \u00be",
+          "unit": "cup",
+          "scaled_qty": "1 \u00be"
+        },
+        {
+          "name": "40g minced dill",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "lemon juice",
+          "base_qty": "\u00be",
+          "unit": "cup",
+          "scaled_qty": "\u00be"
+        },
+        {
+          "name": "dijon mustard",
+          "base_qty": "\u00be",
+          "unit": "cup",
+          "scaled_qty": "\u00be"
+        },
+        {
+          "name": "black pepper",
+          "base_qty": "4",
+          "unit": "tbsp",
+          "scaled_qty": "4"
+        },
+        {
+          "name": "salt",
+          "base_qty": "2",
+          "unit": "tbsp",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "tabasco",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "sugar",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        }
+      ],
+      "instructions": [
+        "Whisk all ingredients together until well combined",
+        "Beer Batter",
+        "550g guinness",
+        "50g vodka"
+      ]
+    },
+    {
+      "name": "Beer Flour",
+      "category": "Seasoning/Rub",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "cake flour",
+          "base_qty": "17",
+          "unit": "cup",
+          "scaled_qty": "17"
+        },
+        {
+          "name": "salt",
+          "base_qty": "\u00bd",
+          "unit": "cup",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "baking soda",
+          "base_qty": "\u2153",
+          "unit": "cup",
+          "scaled_qty": "\u2153"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Corndog batter",
+      "category": "Batter/Bread",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "600g ap flour",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "400g cornmeal",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "200g sugar",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "20g salt",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "20kg baking powder",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "20kg baking soda",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "15kg pepper",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "880g buttermilk",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Chipotle aioli",
+      "category": "Sauce/Cheese",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "18c Mayo",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "3c Adobo puree",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "Lime juice",
+          "base_qty": "1",
+          "unit": "TBSP",
+          "scaled_qty": "1"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Aji Verde",
+      "category": "Salsa/Relish",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "1200g cilantro",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "600g lime juice",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "600g mayo",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "200g garlic",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "40 salt",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "150 EVOO",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "500g deveined jalapeno",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        }
+      ],
+      "instructions": [
+        "Combine lime juice, mayo, garlic, salt, jalepeno, olive oil,  \u00bd time cilantro.",
+        "Puree",
+        "Add remaining \u00bd cilantro"
+      ]
+    },
+    {
+      "name": "Alabama White Sauce",
+      "category": "Sauce/Cheese",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "mayo",
+          "base_qty": "1",
+          "unit": "gallon",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "horseradish",
+          "base_qty": "\u00bd",
+          "unit": "cup",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "dijon mustard",
+          "base_qty": "\u00bd",
+          "unit": "cup",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "apple cider vin",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "lemon juice",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "granulated garlic",
+          "base_qty": "2",
+          "unit": "tbsp",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "brown sugar",
+          "base_qty": "3",
+          "unit": "cup",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "cayenne",
+          "base_qty": "\u00bd",
+          "unit": "tbsp",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "1tspsalt",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "pepper",
+          "base_qty": "1",
+          "unit": "tsp",
+          "scaled_qty": "1"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Beer Batter",
+      "category": "Batter/Bread",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "AP flour",
+          "base_qty": "24",
+          "unit": "c",
+          "scaled_qty": "24"
+        },
+        {
+          "name": "salt",
+          "base_qty": "12",
+          "unit": "cup",
+          "scaled_qty": "12"
+        },
+        {
+          "name": "baking soda",
+          "base_qty": "\u2153",
+          "unit": "cup",
+          "scaled_qty": "\u2153"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Cream Cheese Spread",
+      "category": "Sauce/Cheese",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "cream cheese",
+          "base_qty": "1/2",
+          "unit": "cup",
+          "scaled_qty": "1/2"
+        },
+        {
+          "name": "shredded Double Gloucester or cheddar",
+          "base_qty": "1/2",
+          "unit": "cup",
+          "scaled_qty": "1/2"
+        },
+        {
+          "name": "heavy cream",
+          "base_qty": "2",
+          "unit": "tablespoons",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "coarse salt",
+          "base_qty": "1/4",
+          "unit": "teaspoon",
+          "scaled_qty": "1/4"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Garlic Spread",
+      "category": "Sauce/Cheese",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "mayonnaise",
+          "base_qty": "1/2",
+          "unit": "cup",
+          "scaled_qty": "1/2"
+        },
+        {
+          "name": "minced garlic",
+          "base_qty": "3/4",
+          "unit": "teaspoons",
+          "scaled_qty": "3/4"
+        },
+        {
+          "name": "coarse salt",
+          "base_qty": "1/4",
+          "unit": "teaspoon",
+          "scaled_qty": "1/4"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Grilled Three-Cheese Sandwich",
+      "category": "Sauce/Cheese",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "of artisan bread",
+          "base_qty": "8",
+          "unit": "slices",
+          "scaled_qty": "8"
+        },
+        {
+          "name": "cheese slices",
+          "base_qty": "8",
+          "unit": "cheddar",
+          "scaled_qty": "8"
+        },
+        {
+          "name": "slices",
+          "base_qty": "8",
+          "unit": "provolone",
+          "scaled_qty": "8"
+        }
+      ],
+      "instructions": [
+        "For Cream Cheese Spread:",
+        "Combine cream cheese, Double Gloucester or cheddar, heavy cream, and salt in food processor. Blend until smooth. Set aside.",
+        "For Garlic Spread:",
+        "Combine mayonnaise, garlic, and salt in small bowl and stir until blended. Set aside.",
+        "For Grilled Three-Cheese Sandwich:",
+        "Lay out artisan bread slices on parchment paper or large cutting board.",
+        "Place 2 slices of cheddar on 4 of the bread slices. Place 2 slices of provolone on remaining bread slices.",
+        "Equally spoon cream cheese spread on slices with provolone. Gently smooth cream cheese spread over each slice.",
+        "Press cheddar side and provolone side together.",
+        "Heat a large skillet over medium heat for 5 minutes, until hot.",
+        "Brush both sides of the sandwiches with garlic spread.",
+        "Grill sandwiches for 2 minutes on each side, until cheese is melted and bread is golden brown."
+      ]
+    },
+    {
+      "name": "Thai chilli",
+      "category": "Other",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "mae Ploy",
+          "base_qty": "1",
+          "unit": "bottle",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "soy sauce",
+          "base_qty": "\u00bc",
+          "unit": "cup",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "honey",
+          "base_qty": "\u00bc",
+          "unit": "cup",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "furikake seasoning",
+          "base_qty": "\u00bc",
+          "unit": "cup",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "sirracha",
+          "base_qty": "\u00bc",
+          "unit": "cup",
+          "scaled_qty": "\u00bc"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Corndog batter",
+      "category": "Batter/Bread",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "AP flour",
+          "base_qty": "17",
+          "unit": "cup",
+          "scaled_qty": "17"
+        },
+        {
+          "name": "cornmeal",
+          "base_qty": "12",
+          "unit": "cup",
+          "scaled_qty": "12"
+        },
+        {
+          "name": "sugar",
+          "base_qty": "4",
+          "unit": "cup",
+          "scaled_qty": "4"
+        },
+        {
+          "name": "salt",
+          "base_qty": "3",
+          "unit": "cup",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "baking soda",
+          "base_qty": "\u2153",
+          "unit": "cup",
+          "scaled_qty": "\u2153"
+        },
+        {
+          "name": "pepper",
+          "base_qty": "\u00bd",
+          "unit": "cup",
+          "scaled_qty": "\u00bd"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Chip aioli",
+      "category": "Sauce/Cheese",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "mayo",
+          "base_qty": "36",
+          "unit": "cup",
+          "scaled_qty": "36"
+        },
+        {
+          "name": "adobo",
+          "base_qty": "6",
+          "unit": "cup",
+          "scaled_qty": "6"
+        },
+        {
+          "name": "lime juice",
+          "base_qty": "3",
+          "unit": "tbsp",
+          "scaled_qty": "3"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Lariat rub",
+      "category": "Seasoning/Rub",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "salt",
+          "base_qty": "1 \u00be",
+          "unit": "cup",
+          "scaled_qty": "1 \u00be"
+        },
+        {
+          "name": "paprika",
+          "base_qty": "18",
+          "unit": "tbsp",
+          "scaled_qty": "18"
+        },
+        {
+          "name": "garlic powder",
+          "base_qty": "3/4",
+          "unit": "cup",
+          "scaled_qty": "3/4"
+        },
+        {
+          "name": "onion powder",
+          "base_qty": "\u00be",
+          "unit": "cup",
+          "scaled_qty": "\u00be"
+        },
+        {
+          "name": "pepper",
+          "base_qty": "\u00bc",
+          "unit": "cup",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "turbinado",
+          "base_qty": "\u00be",
+          "unit": "cup",
+          "scaled_qty": "\u00be"
+        },
+        {
+          "name": "cayenne",
+          "base_qty": "4",
+          "unit": "tbsp",
+          "scaled_qty": "4"
+        },
+        {
+          "name": "cumin",
+          "base_qty": "4",
+          "unit": "tbsp",
+          "scaled_qty": "4"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Pico De Gallo",
+      "category": "Salsa/Relish",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "diced tomatoes",
+          "base_qty": "10",
+          "unit": "C",
+          "scaled_qty": "10"
+        },
+        {
+          "name": "diced red onion",
+          "base_qty": "2",
+          "unit": "C",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "jalapeno",
+          "base_qty": "7",
+          "unit": "dice",
+          "scaled_qty": "7"
+        },
+        {
+          "name": "garlic",
+          "base_qty": "\u00bd",
+          "unit": "minced",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "cilantro",
+          "base_qty": "1",
+          "unit": "C",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "lime juice",
+          "base_qty": "3",
+          "unit": "cup",
+          "scaled_qty": "3"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Chicken Jus",
+      "category": "Soup/Base",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "celery",
+          "base_qty": "2 \u2153",
+          "unit": "cup",
+          "scaled_qty": "2 \u2153"
+        },
+        {
+          "name": "carrot",
+          "base_qty": "7",
+          "unit": "cup",
+          "scaled_qty": "7"
+        },
+        {
+          "name": "onions",
+          "base_qty": "3",
+          "unit": "large",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "chicken wing",
+          "base_qty": "1",
+          "unit": "bag",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "clarified butter",
+          "base_qty": "\u2154",
+          "unit": "cup",
+          "scaled_qty": "\u2154"
+        },
+        {
+          "name": "water combined 8 oz chicken stock",
+          "base_qty": "8",
+          "unit": "QT",
+          "scaled_qty": "8"
+        },
+        {
+          "name": "dry white wine",
+          "base_qty": "4",
+          "unit": "cups",
+          "scaled_qty": "4"
+        },
+        {
+          "name": "Sachet (20 grams rosemary parsley tarragon and thyme)",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "garlic",
+          "base_qty": "\u2154",
+          "unit": "cup",
+          "scaled_qty": "\u2154"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Green chilli",
+      "category": "Other",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "pork butt sliced into 3 inch sections",
+          "base_qty": "20",
+          "unit": "Lbs",
+          "scaled_qty": "20"
+        },
+        {
+          "name": "water and 16 oz. chicken stock combined",
+          "base_qty": "16",
+          "unit": "QT",
+          "scaled_qty": "16"
+        },
+        {
+          "name": "drained tomatillos",
+          "base_qty": "3",
+          "unit": "cans",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "green chiles w/ juice",
+          "base_qty": "4",
+          "unit": "bags",
+          "scaled_qty": "4"
+        },
+        {
+          "name": "diced white onions",
+          "base_qty": "4",
+          "unit": "QT",
+          "scaled_qty": "4"
+        },
+        {
+          "name": "granulated garlic",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "2/3rd cup dried oregano",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "cumin",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "minced garlic",
+          "base_qty": "2",
+          "unit": "cup",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "lariat rub",
+          "base_qty": "1 \u00bd",
+          "unit": "cup",
+          "scaled_qty": "1 \u00bd"
+        },
+        {
+          "name": "Braise for minimum 5 hours at 225 degrees",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Tomatillo salsa",
+      "category": "Salsa/Relish",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "white onions",
+          "base_qty": "4",
+          "unit": "large",
+          "scaled_qty": "4"
+        },
+        {
+          "name": "8 jalapenos, half deveined & de-seeded",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "cloves",
+          "base_qty": "20",
+          "unit": "garlic",
+          "scaled_qty": "20"
+        },
+        {
+          "name": "3 #10 can whole tomatillos",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "salt",
+          "base_qty": "3",
+          "unit": "tbsp",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "pepper",
+          "base_qty": "3",
+          "unit": "tbsp",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "cumin",
+          "base_qty": "2",
+          "unit": "tsp",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "lime zested and juiced",
+          "base_qty": "\u00bd",
+          "unit": "CUP",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "agave",
+          "base_qty": "1",
+          "unit": "tbsp",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "green chile",
+          "base_qty": "\u2153",
+          "unit": "Cup",
+          "scaled_qty": "\u2153"
+        },
+        {
+          "name": "8 avocado",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Miso Honey",
+      "category": "Other",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "\u00bd miso",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "2 cups",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "water",
+          "base_qty": "\u00bd",
+          "unit": "cup",
+          "scaled_qty": "\u00bd"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Cobb Dressing",
+      "category": "Dressing",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "garlic",
+          "base_qty": "8",
+          "unit": "Cloves",
+          "scaled_qty": "8"
+        },
+        {
+          "name": "parsley",
+          "base_qty": "3",
+          "unit": "cups",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "cilantro",
+          "base_qty": "3",
+          "unit": "cups",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "buttermilk",
+          "base_qty": "1",
+          "unit": "QT",
+          "scaled_qty": "1"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "I QT mayonnaise",
+      "category": "Other",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "sour cream",
+          "base_qty": "1",
+          "unit": "QT",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "Zest and juice of 8 lemons",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "4tbsp olive oil",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "bleu cheese crumbles",
+          "base_qty": "2",
+          "unit": "cups",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "S&P TT",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Lemon Thyme Vinagrette",
+      "category": "Other",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "garlic",
+          "base_qty": "2",
+          "unit": "tsp",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "Zest of 4 lemons",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "lemon juice",
+          "base_qty": "3",
+          "unit": "cups",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "EVOO",
+          "base_qty": "2",
+          "unit": "cups",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "canola oil",
+          "base_qty": "2",
+          "unit": "cups",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "honey",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "dijon mustard",
+          "base_qty": "3",
+          "unit": "tbsp",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "dry thyme",
+          "base_qty": "2",
+          "unit": "tsp",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "pepper",
+          "base_qty": "1",
+          "unit": "tsp",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "kosher salt",
+          "base_qty": "4",
+          "unit": "tsp",
+          "scaled_qty": "4"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Coleslaw Dressing",
+      "category": "Dressing",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "mayo",
+          "base_qty": "8",
+          "unit": "cups",
+          "scaled_qty": "8"
+        },
+        {
+          "name": "sugar",
+          "base_qty": "4",
+          "unit": "cups",
+          "scaled_qty": "4"
+        },
+        {
+          "name": "milk",
+          "base_qty": "3",
+          "unit": "cups",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "buttermilk",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "lime juice",
+          "base_qty": "2",
+          "unit": "cups",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "apple cider vin.",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "salt",
+          "base_qty": "6",
+          "unit": "tsp",
+          "scaled_qty": "6"
+        },
+        {
+          "name": "celery salt",
+          "base_qty": "8",
+          "unit": "tsp",
+          "scaled_qty": "8"
+        },
+        {
+          "name": "celery seed",
+          "base_qty": "8",
+          "unit": "tsp",
+          "scaled_qty": "8"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Black Bean& corn succotash",
+      "category": "Other",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "corn",
+          "base_qty": "2",
+          "unit": "QT",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "rinsed black bleans",
+          "base_qty": "1",
+          "unit": "QT",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "onion",
+          "base_qty": "\u00bd",
+          "unit": "diced",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "bell peppers",
+          "base_qty": "1",
+          "unit": "can",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "jalapenos",
+          "base_qty": "4",
+          "unit": "diced",
+          "scaled_qty": "4"
+        },
+        {
+          "name": "cilantro",
+          "base_qty": "1",
+          "unit": "bunch",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "minced garlic",
+          "base_qty": "1",
+          "unit": "tbsp",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "lime juice",
+          "base_qty": "\u00bd",
+          "unit": "cup",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "red wine vin.",
+          "base_qty": "\u215b",
+          "unit": "cup",
+          "scaled_qty": "\u215b"
+        },
+        {
+          "name": "red chili flakes",
+          "base_qty": "\u00bd",
+          "unit": "tbsp",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "cumin",
+          "base_qty": "\u00bd",
+          "unit": "tbsp",
+          "scaled_qty": "\u00bd"
+        },
+        {
+          "name": "salt",
+          "base_qty": "1",
+          "unit": "tbsp",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "EVOO",
+          "base_qty": "2",
+          "unit": "tbsp",
+          "scaled_qty": "2"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Pork chop marinade",
+      "category": "Brine/Marinade",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "adobo",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "dijon",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "minced garlic",
+          "base_qty": "\u00bc",
+          "unit": "cup",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "S&P TT",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "EVOO",
+          "base_qty": "3",
+          "unit": "cups",
+          "scaled_qty": "3"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Honey Mustard",
+      "category": "Other",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "honey",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "yellow mustard",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "mayo",
+          "base_qty": "\u00be",
+          "unit": "cup",
+          "scaled_qty": "\u00be"
+        },
+        {
+          "name": "cayenne",
+          "base_qty": "1",
+          "unit": "tsp",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "cracked pepper",
+          "base_qty": "\u00bc",
+          "unit": "tsp",
+          "scaled_qty": "\u00bc"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Rope Pickle",
+      "category": "Sides",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "water",
+          "base_qty": "2.5",
+          "unit": "QT",
+          "scaled_qty": "2.5"
+        },
+        {
+          "name": "white vinegar",
+          "base_qty": "1",
+          "unit": "QT",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "salt",
+          "base_qty": "\u00bc",
+          "unit": "cup",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "red pepper",
+          "base_qty": "20",
+          "unit": "grams",
+          "scaled_qty": "20"
+        },
+        {
+          "name": "crushed Garlic",
+          "base_qty": "1000",
+          "unit": "Grams",
+          "scaled_qty": "1000"
+        },
+        {
+          "name": "dill",
+          "base_qty": "30",
+          "unit": "grams",
+          "scaled_qty": "30"
+        },
+        {
+          "name": "Q.B. SEASONING",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "chili powder",
+          "base_qty": "4",
+          "unit": "Cups",
+          "scaled_qty": "4"
+        },
+        {
+          "name": "cumin",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "cinnamon",
+          "base_qty": "\u00bc",
+          "unit": "cup",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "black pepper",
+          "base_qty": "\u00bc",
+          "unit": "cup",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "cloves",
+          "base_qty": "\u00bc",
+          "unit": "cup",
+          "scaled_qty": "\u00bc"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Chicken Confit",
+      "category": "Other",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "garlic",
+          "base_qty": "8",
+          "unit": "cloves",
+          "scaled_qty": "8"
+        },
+        {
+          "name": "rosemary",
+          "base_qty": "2",
+          "unit": "sprigs",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "thyme",
+          "base_qty": "2",
+          "unit": "sprigs",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "EVOO",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        }
+      ],
+      "instructions": [
+        "\u201cFrench\u201d chicken legs",
+        "Line shallow hotel pan with chicken legs",
+        "Season both sides w/ green salt (see green salt recipe)",
+        "Fill pan with olive oil until legs are submerged"
+      ]
+    },
+    {
+      "name": "Qb recipe",
+      "category": "Other",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "beef cheeks",
+          "base_qty": "1",
+          "unit": "case",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "birria seasoning",
+          "base_qty": "150",
+          "unit": "grams",
+          "scaled_qty": "150"
+        },
+        {
+          "name": "guajillo peppers",
+          "base_qty": "80",
+          "unit": "grams",
+          "scaled_qty": "80"
+        },
+        {
+          "name": "onion",
+          "base_qty": "4",
+          "unit": "white",
+          "scaled_qty": "4"
+        },
+        {
+          "name": "garlic",
+          "base_qty": "200",
+          "unit": "grams",
+          "scaled_qty": "200"
+        },
+        {
+          "name": "water",
+          "base_qty": "12",
+          "unit": "cups",
+          "scaled_qty": "12"
+        },
+        {
+          "name": "container chicken base",
+          "base_qty": "1 16",
+          "unit": "oz",
+          "scaled_qty": "1 16"
+        },
+        {
+          "name": "achiote",
+          "base_qty": "200",
+          "unit": "grams",
+          "scaled_qty": "200"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Pickles",
+      "category": "Sides",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "water",
+          "base_qty": "2.5",
+          "unit": "quart",
+          "scaled_qty": "2.5"
+        },
+        {
+          "name": "vinegar",
+          "base_qty": "1",
+          "unit": "quart",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "salt",
+          "base_qty": "1/4",
+          "unit": "cup",
+          "scaled_qty": "1/4"
+        },
+        {
+          "name": "sugar",
+          "base_qty": "1",
+          "unit": "cup",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "red pepper",
+          "base_qty": "20",
+          "unit": "grams",
+          "scaled_qty": "20"
+        },
+        {
+          "name": "crushed garlic",
+          "base_qty": "100",
+          "unit": "grams",
+          "scaled_qty": "100"
+        },
+        {
+          "name": "dill",
+          "base_qty": "30",
+          "unit": "grams",
+          "scaled_qty": "30"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "French toast batter",
+      "category": "Batter/Bread",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "egg scrambled eggs",
+          "base_qty": "1000",
+          "unit": "grams",
+          "scaled_qty": "1000"
+        },
+        {
+          "name": "milk",
+          "base_qty": "1000",
+          "unit": "grams",
+          "scaled_qty": "1000"
+        },
+        {
+          "name": "cinnamon",
+          "base_qty": "1/2",
+          "unit": "teaspoon",
+          "scaled_qty": "1/2"
+        },
+        {
+          "name": "vanilla",
+          "base_qty": "1",
+          "unit": "teaspoon",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "sugar",
+          "base_qty": "1",
+          "unit": "tablespoon",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "nutmeg",
+          "base_qty": "1/4",
+          "unit": "teaspoon",
+          "scaled_qty": "1/4"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Ingredients For the Dressing:",
+      "category": "Dressing",
+      "base_yield": "Yield: 12 Quarts",
+      "scaled_yield": "Yield: 12 Quarts",
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "Mayonnaise",
+          "base_qty": "6",
+          "unit": "",
+          "scaled_qty": "6"
+        },
+        {
+          "name": "Drained Pickle Relish",
+          "base_qty": "2\u00bc",
+          "unit": "",
+          "scaled_qty": "2\u00bc"
+        },
+        {
+          "name": "Buttermilk",
+          "base_qty": "\u00be",
+          "unit": "",
+          "scaled_qty": "\u00be"
+        },
+        {
+          "name": "Prepared Horseradish",
+          "base_qty": "\u00bc",
+          "unit": "",
+          "scaled_qty": "\u00bc"
+        },
+        {
+          "name": "Spicy Brown Mustard (or Dijon): \u00bc cup",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "Apple Cider Vinegar",
+          "base_qty": "\u00be",
+          "unit": "",
+          "scaled_qty": "\u00be"
+        },
+        {
+          "name": "Sugar",
+          "base_qty": "3",
+          "unit": "",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "Kosher Salt and Pepper: To taste",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "Green Cabbage, finely shredded: 10 quarts",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "Scallion Greens, finely chopped: 3 cups",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "Scallion Whites, finely chopped: 3 cups",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "the Dressing:",
+          "base_qty": "1.",
+          "unit": "Prepare",
+          "scaled_qty": "1."
+        },
+        {
+          "name": "the Dressing:",
+          "base_qty": "2.",
+          "unit": "Season",
+          "scaled_qty": "2."
+        },
+        {
+          "name": "Add kosher salt and pepper to taste. Adjust seasoning as needed.",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "the Slaw:",
+          "base_qty": "3.",
+          "unit": "Prepare",
+          "scaled_qty": "3."
+        },
+        {
+          "name": "4. Combine:",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "Seasoning:",
+          "base_qty": "5.",
+          "unit": "Adjust",
+          "scaled_qty": "5."
+        },
+        {
+          "name": "6. Storage:",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Herbal butter",
+      "category": "Condiment",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "butter (softened)",
+          "base_qty": "3",
+          "unit": "Lbs",
+          "scaled_qty": "3"
+        },
+        {
+          "name": "parsley",
+          "base_qty": "100",
+          "unit": "grams",
+          "scaled_qty": "100"
+        },
+        {
+          "name": "thyme",
+          "base_qty": "100",
+          "unit": "grams",
+          "scaled_qty": "100"
+        },
+        {
+          "name": "rosemary",
+          "base_qty": "100",
+          "unit": "grams",
+          "scaled_qty": "100"
+        },
+        {
+          "name": "tarragon",
+          "base_qty": "100",
+          "unit": "grams",
+          "scaled_qty": "100"
+        },
+        {
+          "name": "honey",
+          "base_qty": "1",
+          "unit": "Lb",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "3Lb butter (softened)",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Mexi Relish",
+      "category": "Other",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "(5lbs) red cabbage",
+          "base_qty": "1",
+          "unit": "bag",
+          "scaled_qty": "1"
+        },
+        {
+          "name": "chip aioli",
+          "base_qty": "2",
+          "unit": "cups",
+          "scaled_qty": "2"
+        },
+        {
+          "name": "lime juice",
+          "base_qty": "1",
+          "unit": "tbsp",
+          "scaled_qty": "1"
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Chimichurri*",
+      "category": "Salsa/Relish",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "100G PARSLEY",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "100GTHYME",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "100G ROSEMARY",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "100G CALABREAN CHILE",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "300G EVOO",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "20G LEMON JUICE",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "PICK HERBS AND FINELY CHOP",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "MIX WITH PEPPERS LEMON JUICE AND OIL",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        },
+        {
+          "name": "*WORKING RECIPE PLEASE REFINE AND RECORD",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        }
+      ],
+      "instructions": []
+    },
+    {
+      "name": "Tomato confit",
+      "category": "Other",
+      "base_yield": null,
+      "scaled_yield": null,
+      "scale_factor": 1.0,
+      "ingredients": [
+        {
+          "name": "THYME",
+          "base_qty": "20",
+          "unit": "GRAMS",
+          "scaled_qty": "20"
+        },
+        {
+          "name": "TARRAGON",
+          "base_qty": "20",
+          "unit": "GRAMS",
+          "scaled_qty": "20"
+        },
+        {
+          "name": "20 GRAMS",
+          "base_qty": "",
+          "unit": "",
+          "scaled_qty": ""
+        }
+      ],
+      "instructions": []
+    }
+  ]
+}

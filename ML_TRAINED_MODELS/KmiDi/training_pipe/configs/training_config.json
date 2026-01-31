@@ -1,0 +1,98 @@
+{
+  "training": {
+    "epochs": 50,
+    "batch_size": 64,
+    "learning_rate": 0.001,
+    "device": "cpu",
+    "seed": 42
+  },
+  "models": {
+    "emotion_recognizer": {
+      "enabled": true,
+      "input_size": 128,
+      "output_size": 64,
+      "architecture": [512, 256, 128],
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001
+    },
+    "melody_transformer": {
+      "enabled": true,
+      "input_size": 64,
+      "output_size": 128,
+      "architecture": [256, 256, 256],
+      "learning_rate": 0.0005,
+      "weight_decay": 0.0001
+    },
+    "harmony_predictor": {
+      "enabled": true,
+      "input_size": 128,
+      "output_size": 64,
+      "architecture": [256, 128],
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001
+    },
+    "dynamics_engine": {
+      "enabled": true,
+      "input_size": 32,
+      "output_size": 16,
+      "architecture": [128, 64],
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001
+    },
+    "groove_predictor": {
+      "enabled": true,
+      "input_size": 64,
+      "output_size": 32,
+      "architecture": [128, 64],
+      "learning_rate": 0.001,
+      "weight_decay": 0.0001
+    }
+  },
+  "datasets": {
+    "emotion": {
+      "path": "./datasets/audio",
+      "labels": "./datasets/audio/labels.csv",
+      "augmentation": {
+        "pitch_shift": 2,
+        "time_stretch": 0.1,
+        "add_noise": true
+      }
+    },
+    "melody": {
+      "path": "./datasets/midi",
+      "labels": "./datasets/emotion_labels.json",
+      "augmentation": {
+        "transpose": 6,
+        "tempo_change": 0.2
+      }
+    },
+    "harmony": {
+      "path": "./datasets/chords",
+      "augmentation": {
+        "transpose": 12
+      }
+    },
+    "dynamics": {
+      "path": "./datasets/midi"
+    },
+    "groove": {
+      "path": "./datasets/drums",
+      "labels": "./datasets/drum_labels.json"
+    }
+  },
+  "validation": {
+    "split": 0.2,
+    "shuffle": true,
+    "early_stopping": {
+      "enabled": true,
+      "patience": 10,
+      "min_delta": 0.001
+    }
+  },
+  "export": {
+    "format": "rtneural_json",
+    "output_dir": "../models",
+    "checkpoint_dir": "../models/checkpoints",
+    "save_best_only": true
+  }
+}

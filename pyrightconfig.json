@@ -1,0 +1,13 @@
+{
+  "exclude": ["**"],
+  "include": [
+    "src",
+    "core",
+    "engine",
+    "brain",
+    "plugins",
+    "KmiDi_CANON/brain",
+    "KmiDi_CANON/body",
+    "KmiDi_CANON/ui"
+  ]
+}

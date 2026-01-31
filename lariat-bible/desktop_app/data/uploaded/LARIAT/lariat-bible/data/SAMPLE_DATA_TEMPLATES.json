@@ -1,0 +1,372 @@
+{
+  "schema_version": "1.0",
+  "generated_date": "2025-11-18",
+  "description": "Sample data templates in JSON format for Lariat Catering Management System",
+  "samples": {
+    "customer": [
+      {
+        "cust_id": "C001",
+        "first_name": "Sean",
+        "last_name": "Smith",
+        "email": "sean@lariat.com",
+        "phone_no": "970-555-1234",
+        "address": "123 Main St, Fort Collins, CO 80521",
+        "age": 45,
+        "account_number": "987654",
+        "priority_status": 1,
+        "discount": 0.15,
+        "username": "sean_smith",
+        "password": "[HASHED_PASSWORD]",
+        "register_date": "2024-01-01 10:00:00"
+      },
+      {
+        "cust_id": "C002",
+        "first_name": "Maria",
+        "last_name": "Garcia",
+        "email": "maria@catering.com",
+        "phone_no": "720-555-5678",
+        "address": "456 Oak Ave, Denver, CO 80202",
+        "age": 38,
+        "account_number": "987655",
+        "priority_status": 2,
+        "discount": 0.05,
+        "username": "maria_garcia",
+        "password": "[HASHED_PASSWORD]",
+        "register_date": "2024-03-15 14:30:00"
+      }
+    ],
+    "event": [
+      {
+        "event_id": "E001",
+        "name": "Smith Family Reunion",
+        "type": "Family Gathering",
+        "event_date": "2025-07-15",
+        "starting_time": "5:00 PM",
+        "ending_time": "10:00 PM",
+        "guests": 150,
+        "total_cost": 8500.00,
+        "status": "Confirmed",
+        "approved": true,
+        "eve_feedback": "Excellent service!",
+        "cust_id": "C001",
+        "venue_id": "V001",
+        "order_date": "2025-06-01 11:00:00"
+      },
+      {
+        "event_id": "E002",
+        "name": "Garcia Wedding Reception",
+        "type": "Wedding",
+        "event_date": "2025-08-22",
+        "starting_time": "6:00 PM",
+        "ending_time": "11:00 PM",
+        "guests": 350,
+        "total_cost": 45000.00,
+        "status": "Confirmed",
+        "approved": true,
+        "eve_feedback": "Pending",
+        "cust_id": "C002",
+        "venue_id": "V002",
+        "order_date": "2025-07-10 08:30:00"
+      }
+    ],
+    "menu": [
+      {
+        "menu_id": "M001",
+        "menu_name": "Shamrock Premium Steak Package",
+        "menu_type": "Desi/Steakhouse",
+        "specialty": "Grass-fed Beef",
+        "price": 45.99,
+        "cost": 18.50,
+        "charges": 2500.00,
+        "days": 3,
+        "status": 1,
+        "description": "Premium grass-fed beef steak with traditional sides",
+        "menuImage": "/images/steak_menu.jpg",
+        "components": {
+          "rice": "Biryani",
+          "bread": "Tandoori",
+          "protein": "Beef Tenderloin",
+          "beverages": {
+            "coke": 1,
+            "miranda": 0,
+            "sprite": 1,
+            "water": 1
+          },
+          "desserts": {
+            "dryfruit": 1,
+            "sugarfree": 0,
+            "icecream": 1,
+            "cake": 0
+          }
+        }
+      },
+      {
+        "menu_id": "M002",
+        "menu_name": "Shamrock Continental Chicken",
+        "menu_type": "Continental",
+        "specialty": "Herb-Roasted Poultry",
+        "price": 38.50,
+        "cost": 15.00,
+        "charges": 2200.00,
+        "days": 2,
+        "status": 1,
+        "description": "Herb-roasted chicken breast with international sides",
+        "menuImage": "/images/chicken_cont.jpg",
+        "components": {
+          "rice": "Plain Boiled",
+          "bread": "Naan",
+          "protein": "Chicken Breast",
+          "beverages": {
+            "coke": 1,
+            "miranda": 1,
+            "sprite": 0,
+            "water": 1
+          },
+          "desserts": {
+            "dryfruit": 0,
+            "sugarfree": 1,
+            "icecream": 1,
+            "cake": 1
+          }
+        }
+      }
+    ],
+    "venue": [
+      {
+        "venue_id": "V001",
+        "venue_name": "Aura Grande Islamabad",
+        "location": "Islamabad",
+        "address": "Service Road E-11, Islamabad",
+        "city": "Islamabad",
+        "state": "Capital Territory",
+        "pincode": "44000",
+        "capacity": 2000,
+        "category": "Indoor Banquet Hall",
+        "cost": 30000.00,
+        "contact_info": "033-319-922",
+        "description": "Full AC, Parking, Dance Floor, Stage lighting, Professional kitchen"
+      },
+      {
+        "venue_id": "V002",
+        "venue_name": "F9 Park Outdoor",
+        "location": "Islamabad",
+        "address": "F9/1, Islamabad",
+        "city": "Islamabad",
+        "state": "Capital Territory",
+        "pincode": "44000",
+        "capacity": 20000,
+        "category": "Outdoor",
+        "cost": 5000.00,
+        "contact_info": "090-078-601",
+        "description": "Open air venue with parking, tent setup available, backup indoor facility"
+      }
+    ],
+    "catering": [
+      {
+        "cat_id": "CAT001",
+        "cat_name": "Shamrock Foods (PRIMARY VENDOR)",
+        "specialty": "Desi Cuisine",
+        "cat_add": "1234 Vendor St, Denver",
+        "cat_mail_id": "catering@shamrock.com",
+        "contact": "1-800-SHAMROCK",
+        "charges": 2500.00,
+        "days": 3,
+        "notes": "~29.5% cheaper than SYSCO for comparable items",
+        "monthly_volume_estimated": 15000.00,
+        "annual_savings_vs_sysco": 52000.00
+      },
+      {
+        "cat_id": "CAT002",
+        "cat_name": "SYSCO (COMPARISON VENDOR)",
+        "specialty": "Continental & Desi",
+        "cat_add": "5678 Supply Ave, Denver",
+        "cat_mail_id": "orders@sysco.com",
+        "contact": "1-800-SYSCO-1",
+        "charges": 3500.00,
+        "days": 5,
+        "notes": "Higher pricing but wider selection and longer lead times acceptable",
+        "monthly_volume_estimated": 5000.00,
+        "annual_cost_vs_shamrock": 52000.00
+      }
+    ],
+    "staff": [
+      {
+        "emp_id": "E101",
+        "emp_fname": "Diego",
+        "emp_lname": "Martinez",
+        "dob": "1985-03-15",
+        "email": "diego@lariat.com",
+        "emp_phone": "970-555-1111",
+        "emp_add": "555 Chef St, Fort Collins, CO 80521",
+        "emp_salary": 50000.00,
+        "wage_type": "Monthly",
+        "wage_rate": 4166.67,
+        "department": "Kitchen",
+        "role": "Chef",
+        "status": 1,
+        "mgr_id": "E100",
+        "points": 850,
+        "register_date": "2020-06-01"
+      },
+      {
+        "emp_id": "E201",
+        "emp_fname": "Sarah",
+        "emp_lname": "Thompson",
+        "dob": "1992-11-05",
+        "email": "sarah@lariat.com",
+        "emp_phone": "970-555-4444",
+        "emp_add": "888 Service St, Fort Collins, CO 80521",
+        "emp_salary": 28000.00,
+        "wage_type": "Monthly",
+        "wage_rate": 2333.33,
+        "department": "Service",
+        "role": "Event Manager",
+        "status": 1,
+        "mgr_id": "E100",
+        "points": 650,
+        "register_date": "2021-01-10"
+      }
+    ],
+    "photographer": [
+      {
+        "p_id": "P001",
+        "p_fname": "Alex",
+        "p_lname": "Martinez",
+        "p_mail_id": "alex@photos.com",
+        "p_add": "2000 Camera Ln, Denver, CO 80202",
+        "p_charges": 3500.00,
+        "specialties": ["Weddings", "Events"],
+        "experience_years": 12,
+        "portfolio_url": "Available on request"
+      }
+    ],
+    "order": [
+      {
+        "order_id": "ORD001",
+        "customer_id": "C001",
+        "event_id": "E001",
+        "status": 1,
+        "subtotal": 6900.00,
+        "tax": 552.00,
+        "total": 7452.00,
+        "created": "2025-06-01 11:00:00",
+        "items": [
+          {
+            "item_id": "OI001",
+            "menu_id": "M001",
+            "item_quantity": 150,
+            "unit_price": 45.99,
+            "line_total": 6898.50
+          },
+          {
+            "item_id": "OI002",
+            "menu_id": "M004",
+            "item_quantity": 150,
+            "unit_price": 3.50,
+            "line_total": 525.00
+          }
+        ]
+      }
+    ],
+    "vendor_comparison": [
+      {
+        "comparison_id": "VC001",
+        "product_name": "Black Pepper Fine (1LB)",
+        "ingredient_id": "ING001",
+        "shamrock": {
+          "price": 8.99,
+          "case_size": "25LB",
+          "unit": "LB",
+          "availability": "In Stock"
+        },
+        "sysco": {
+          "price": 12.99,
+          "case_size": "6/1LB",
+          "unit": "LB",
+          "availability": "In Stock"
+        },
+        "savings": {
+          "price_difference": 4.00,
+          "percentage": 30.8,
+          "preferred_vendor": "Shamrock Foods"
+        },
+        "last_updated": "2025-11-18"
+      },
+      {
+        "comparison_id": "VC002",
+        "product_name": "Chicken Breast (Bulk)",
+        "ingredient_id": "ING002",
+        "shamrock": {
+          "price": 3.50,
+          "case_size": "40lb box",
+          "unit": "LB",
+          "availability": "In Stock",
+          "price_per_unit": 3.50
+        },
+        "sysco": {
+          "price": 4.99,
+          "case_size": "10lb package",
+          "unit": "LB",
+          "availability": "In Stock",
+          "price_per_unit": 4.99
+        },
+        "savings": {
+          "price_difference": 1.49,
+          "percentage": 29.9,
+          "preferred_vendor": "Shamrock Foods"
+        },
+        "last_updated": "2025-11-18"
+      }
+    ],
+    "margin_analysis": [
+      {
+        "menu_id": "M001",
+        "menu_name": "Shamrock Premium Steak Package",
+        "menu_price": 45.99,
+        "food_cost": 18.50,
+        "margin_percentage": 59.8,
+        "target_margin": 45.0,
+        "variance": 14.8,
+        "costing_vendor": "Shamrock Foods",
+        "savings_vs_sysco": 3.50,
+        "recommended_price_at_target": 33.64,
+        "status": "Above target - consider price reduction or promotion"
+      },
+      {
+        "menu_id": "M002",
+        "menu_name": "Shamrock Continental Chicken",
+        "menu_price": 38.50,
+        "food_cost": 15.00,
+        "margin_percentage": 61.0,
+        "target_margin": 45.0,
+        "variance": 16.0,
+        "costing_vendor": "Shamrock Foods",
+        "savings_vs_sysco": 2.00,
+        "recommended_price_at_target": 27.27,
+        "status": "Above target - strong profitability"
+      },
+      {
+        "menu_id": "M003",
+        "menu_name": "SYSCO Vegetarian Elegance",
+        "menu_price": 32.00,
+        "food_cost": 11.50,
+        "margin_percentage": 64.1,
+        "target_margin": 45.0,
+        "variance": 19.1,
+        "costing_vendor": "SYSCO",
+        "opportunity": "Switch to Shamrock equivalent + 5% margin improvement potential",
+        "recommended_price_at_target": 20.91,
+        "status": "Opportunity - switch vendor for better margins"
+      }
+    ],
+    "key_business_metrics": {
+      "monthly_catering_revenue": 28000.00,
+      "monthly_restaurant_revenue": 20000.00,
+      "target_catering_margin": 0.45,
+      "target_restaurant_margin": 0.04,
+      "annual_savings_shamrock_vs_sysco": 52000.00,
+      "savings_percentage": 0.295,
+      "currency": "USD"
+    }
+  }
+}

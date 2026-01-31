@@ -1,0 +1,37 @@
+KELLY MIDI COMPANION - VERSION INFORMATION
+===========================================
+
+Version: KELLYMIDI-V2.0.0
+Release Date: December 9, 2025
+Build System: CMake 3.22+
+JUCE Version: 8.0.4
+C++ Standard: C++20
+
+PLUGIN FORMATS:
+- VST3
+- AU (macOS)
+- Standalone
+
+FEATURES IN THIS RELEASE:
+- 216-node emotion thesaurus
+- Full MIDI generation (chords, melody, bass)
+- 60 emotion presets
+- Category and style selection
+- Fine-tuning controls (Complexity, Feel, Dynamics, Bars)
+- Full GrooveEngine with humanization
+- Preset import/export
+- Real-time parameter automation
+- Enhanced DAW transport sync
+- Immediate MIDI playback
+- MIDI file export
+- macOS Gatekeeper compatibility
+
+NEW IN v2.0.0:
+- Full cassette visual design with animated tape reels
+- Emotion wheel selector for visual emotion selection
+- Voice synthesis integration framework
+- Biometric input support framework
+- Enhanced UI with toggleable visual components
+
+For detailed release notes, see RELEASE_NOTES_V1.0.0.md
+For changelog, see CHANGELOG.md

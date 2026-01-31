@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Build
+build/
+dist/
+target/
+*.egg-info/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Model weights (large)
+*.pt
+*.pth
+*.ckpt
+*.gguf
+*.safetensors
+*.bin
+*.onnx
+
+# Media (exclude from repo)
+*.mp3
+*.wav
+*.flac
+*.aif
+*.aiff
+
+# Legacy / bulk (reference: extract from branches if needed)
+Desktop/
+ML_TRAINED_MODELS/*.mp3
+
+# IDE
+.cursor/
+.DS_Store
+
+# ENV_SECRETS (keep .example)
+ENV_SECRETS/*
+!ENV_SECRETS/*.example

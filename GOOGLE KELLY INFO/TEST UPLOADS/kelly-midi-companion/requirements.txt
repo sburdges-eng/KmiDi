@@ -1,0 +1,12 @@
+# Python dependencies for Kelly MIDI Companion
+# These are optional - the code will work without them but with reduced functionality
+
+# MIDI file handling (optional - used in groove extraction)
+mido>=1.2.10
+
+# Numerical operations (optional - used for groove analysis)
+numpy>=1.24.0
+
+# YAML parsing (optional - used for song intent schema)
+pyyaml>=6.0
+

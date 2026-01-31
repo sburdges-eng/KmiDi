@@ -1,0 +1,61 @@
+# Build directories
+build/
+cmake-build-*/
+*.xcodeproj
+*.xcworkspace
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Compiled binaries
+*.dylib
+*.so
+*.dll
+*.exe
+*.app
+*.component
+*.vst3
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# JUCE
+JuceLibraryCode/
+
+# Test artifacts
+*.gcda
+*.gcno
+*.gcov
+

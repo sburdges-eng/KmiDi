@@ -1,0 +1,435 @@
+{
+  "name": "iDAWi Feature Test - All Emotions",
+  "description": "Comprehensive Logic Pro test file covering all iDAWi features",
+  "tempo_bpm": 120,
+  "time_signature": [4, 4],
+  "ppq": 480,
+  "key": "C",
+  "mode": "mixed",
+  "idawi_version": "1.0.0",
+  "generated_at": "2024-12-11T00:00:00.000Z",
+
+  "test_scenarios": [
+    {
+      "name": "Grief Scenario",
+      "emotion": "Grief",
+      "description": "Testing unresolved yearning and melancholy",
+      "expected_results": {
+        "tempo_range": [68, 78],
+        "reverb_range": [0.6, 0.8],
+        "compression_range": [0.2, 0.4],
+        "rule_breaks": ["HARMONY_AvoidTonicResolution", "ARRANGEMENT_BuriedVocals"]
+      }
+    },
+    {
+      "name": "Joy Scenario",
+      "emotion": "Joy",
+      "description": "Testing bright, uplifting energy",
+      "expected_results": {
+        "tempo_range": [115, 128],
+        "reverb_range": [0.2, 0.4],
+        "compression_range": [0.4, 0.6],
+        "rule_breaks": ["HARMONY_ModalInterchange"]
+      }
+    },
+    {
+      "name": "Rage Scenario",
+      "emotion": "Rage",
+      "description": "Testing aggressive, intense energy",
+      "expected_results": {
+        "tempo_range": [150, 170],
+        "reverb_range": [0.1, 0.3],
+        "compression_range": [0.8, 1.0],
+        "rule_breaks": ["ARRANGEMENT_ExtremeDynamicRange", "PRODUCTION_Distortion"]
+      }
+    },
+    {
+      "name": "Anxiety Scenario",
+      "emotion": "Anxiety",
+      "description": "Testing unsettling, restless energy",
+      "expected_results": {
+        "tempo_range": [130, 150],
+        "reverb_range": [0.4, 0.5],
+        "compression_range": [0.4, 0.6],
+        "rule_breaks": ["RHYTHM_ConstantDisplacement", "HARMONY_UnresolvedDissonance"]
+      }
+    }
+  ],
+
+  "tracks": [
+    {
+      "name": "Drums - Test All Emotions",
+      "channel": 10,
+      "instrument": null,
+      "type": "drums",
+      "notes": [
+        {"pitch": 36, "velocity": 100, "start_tick": 0, "duration_ticks": 240, "comment": "Kick"},
+        {"pitch": 38, "velocity": 90, "start_tick": 480, "duration_ticks": 240, "comment": "Snare"},
+        {"pitch": 36, "velocity": 100, "start_tick": 960, "duration_ticks": 240, "comment": "Kick"},
+        {"pitch": 38, "velocity": 90, "start_tick": 1440, "duration_ticks": 240, "comment": "Snare"},
+        {"pitch": 42, "velocity": 80, "start_tick": 0, "duration_ticks": 120, "comment": "Hi-Hat"},
+        {"pitch": 42, "velocity": 80, "start_tick": 240, "duration_ticks": 120, "comment": "Hi-Hat"},
+        {"pitch": 42, "velocity": 80, "start_tick": 480, "duration_ticks": 120, "comment": "Hi-Hat"},
+        {"pitch": 42, "velocity": 80, "start_tick": 720, "duration_ticks": 120, "comment": "Hi-Hat"}
+      ],
+      "emotion_params": {
+        "reverb": 0.2,
+        "delay": 0.1,
+        "compression": 0.6
+      }
+    },
+    {
+      "name": "Bass - Grief Progression",
+      "channel": 1,
+      "instrument": 33,
+      "type": "bass",
+      "emotion_tag": "Grief",
+      "notes": [
+        {"pitch": 45, "velocity": 90, "start_tick": 0, "duration_ticks": 1920, "comment": "Am root"},
+        {"pitch": 41, "velocity": 90, "start_tick": 1920, "duration_ticks": 1920, "comment": "F root"},
+        {"pitch": 48, "velocity": 90, "start_tick": 3840, "duration_ticks": 1920, "comment": "C root"},
+        {"pitch": 43, "velocity": 90, "start_tick": 5760, "duration_ticks": 1920, "comment": "G root"}
+      ],
+      "emotion_params": {
+        "reverb": 0.7,
+        "delay": 0.4,
+        "compression": 0.3,
+        "warmth": 0.2
+      }
+    },
+    {
+      "name": "Harmony - Grief (Am F C G - Unresolved)",
+      "channel": 2,
+      "instrument": 0,
+      "type": "piano",
+      "emotion_tag": "Grief",
+      "rule_break": "HARMONY_AvoidTonicResolution",
+      "notes": [
+        {"pitch": 57, "velocity": 70, "start_tick": 0, "duration_ticks": 1920, "comment": "Am - A"},
+        {"pitch": 60, "velocity": 70, "start_tick": 0, "duration_ticks": 1920, "comment": "Am - C"},
+        {"pitch": 64, "velocity": 70, "start_tick": 0, "duration_ticks": 1920, "comment": "Am - E"},
+
+        {"pitch": 53, "velocity": 70, "start_tick": 1920, "duration_ticks": 1920, "comment": "F - F"},
+        {"pitch": 57, "velocity": 70, "start_tick": 1920, "duration_ticks": 1920, "comment": "F - A"},
+        {"pitch": 60, "velocity": 70, "start_tick": 1920, "duration_ticks": 1920, "comment": "F - C"},
+
+        {"pitch": 48, "velocity": 70, "start_tick": 3840, "duration_ticks": 1920, "comment": "C - C"},
+        {"pitch": 52, "velocity": 70, "start_tick": 3840, "duration_ticks": 1920, "comment": "C - E"},
+        {"pitch": 55, "velocity": 70, "start_tick": 3840, "duration_ticks": 1920, "comment": "C - G"},
+
+        {"pitch": 55, "velocity": 70, "start_tick": 5760, "duration_ticks": 1920, "comment": "G - G"},
+        {"pitch": 59, "velocity": 70, "start_tick": 5760, "duration_ticks": 1920, "comment": "G - B"},
+        {"pitch": 62, "velocity": 70, "start_tick": 5760, "duration_ticks": 1920, "comment": "G - D"}
+      ],
+      "emotion_params": {
+        "reverb": 0.7,
+        "delay": 0.4,
+        "compression": 0.3,
+        "warmth": 0.2
+      }
+    },
+    {
+      "name": "Harmony - Joy (C G Am F)",
+      "channel": 3,
+      "instrument": 0,
+      "type": "piano",
+      "emotion_tag": "Joy",
+      "rule_break": "HARMONY_ModalInterchange",
+      "notes": [
+        {"pitch": 60, "velocity": 80, "start_tick": 7680, "duration_ticks": 1920, "comment": "C - C"},
+        {"pitch": 64, "velocity": 80, "start_tick": 7680, "duration_ticks": 1920, "comment": "C - E"},
+        {"pitch": 67, "velocity": 80, "start_tick": 7680, "duration_ticks": 1920, "comment": "C - G"},
+
+        {"pitch": 55, "velocity": 80, "start_tick": 9600, "duration_ticks": 1920, "comment": "G - G"},
+        {"pitch": 59, "velocity": 80, "start_tick": 9600, "duration_ticks": 1920, "comment": "G - B"},
+        {"pitch": 62, "velocity": 80, "start_tick": 9600, "duration_ticks": 1920, "comment": "G - D"},
+
+        {"pitch": 57, "velocity": 80, "start_tick": 11520, "duration_ticks": 1920, "comment": "Am - A"},
+        {"pitch": 60, "velocity": 80, "start_tick": 11520, "duration_ticks": 1920, "comment": "Am - C"},
+        {"pitch": 64, "velocity": 80, "start_tick": 11520, "duration_ticks": 1920, "comment": "Am - E"},
+
+        {"pitch": 53, "velocity": 80, "start_tick": 13440, "duration_ticks": 1920, "comment": "F - F"},
+        {"pitch": 57, "velocity": 80, "start_tick": 13440, "duration_ticks": 1920, "comment": "F - A"},
+        {"pitch": 60, "velocity": 80, "start_tick": 13440, "duration_ticks": 1920, "comment": "F - C"}
+      ],
+      "emotion_params": {
+        "reverb": 0.3,
+        "delay": 0.2,
+        "compression": 0.5,
+        "warmth": 0.7
+      }
+    },
+    {
+      "name": "Harmony - Rage (Em C G D - Power Chords)",
+      "channel": 4,
+      "instrument": 29,
+      "type": "distorted_guitar",
+      "emotion_tag": "Rage",
+      "rule_break": "HARMONY_ParallelFifths",
+      "notes": [
+        {"pitch": 40, "velocity": 110, "start_tick": 15360, "duration_ticks": 960, "comment": "Em - E"},
+        {"pitch": 47, "velocity": 110, "start_tick": 15360, "duration_ticks": 960, "comment": "Em - B (5th)"},
+
+        {"pitch": 36, "velocity": 110, "start_tick": 16320, "duration_ticks": 960, "comment": "C - C"},
+        {"pitch": 43, "velocity": 110, "start_tick": 16320, "duration_ticks": 960, "comment": "C - G (5th)"},
+
+        {"pitch": 43, "velocity": 110, "start_tick": 17280, "duration_ticks": 960, "comment": "G - G"},
+        {"pitch": 50, "velocity": 110, "start_tick": 17280, "duration_ticks": 960, "comment": "G - D (5th)"},
+
+        {"pitch": 38, "velocity": 110, "start_tick": 18240, "duration_ticks": 960, "comment": "D - D"},
+        {"pitch": 45, "velocity": 110, "start_tick": 18240, "duration_ticks": 960, "comment": "D - A (5th)"}
+      ],
+      "emotion_params": {
+        "reverb": 0.2,
+        "delay": 0.1,
+        "compression": 0.9,
+        "warmth": 0.1
+      }
+    },
+    {
+      "name": "Harmony - Anxiety (Dm Am/E Bb F/A - Displacement)",
+      "channel": 5,
+      "instrument": 4,
+      "type": "electric_piano",
+      "emotion_tag": "Anxiety",
+      "rule_break": "RHYTHM_ConstantDisplacement",
+      "notes": [
+        {"pitch": 50, "velocity": 75, "start_tick": 19200, "duration_ticks": 1800, "comment": "Dm - D (displaced)"},
+        {"pitch": 53, "velocity": 75, "start_tick": 19200, "duration_ticks": 1800, "comment": "Dm - F"},
+        {"pitch": 57, "velocity": 75, "start_tick": 19200, "duration_ticks": 1800, "comment": "Dm - A"},
+
+        {"pitch": 40, "velocity": 75, "start_tick": 21120, "duration_ticks": 1800, "comment": "Am/E - E bass"},
+        {"pitch": 57, "velocity": 75, "start_tick": 21120, "duration_ticks": 1800, "comment": "Am/E - A"},
+        {"pitch": 60, "velocity": 75, "start_tick": 21120, "duration_ticks": 1800, "comment": "Am/E - C"},
+        {"pitch": 64, "velocity": 75, "start_tick": 21120, "duration_ticks": 1800, "comment": "Am/E - E"},
+
+        {"pitch": 46, "velocity": 75, "start_tick": 23040, "duration_ticks": 1800, "comment": "Bb - Bb"},
+        {"pitch": 50, "velocity": 75, "start_tick": 23040, "duration_ticks": 1800, "comment": "Bb - D"},
+        {"pitch": 53, "velocity": 75, "start_tick": 23040, "duration_ticks": 1800, "comment": "Bb - F"},
+
+        {"pitch": 45, "velocity": 75, "start_tick": 24960, "duration_ticks": 1800, "comment": "F/A - A bass"},
+        {"pitch": 53, "velocity": 75, "start_tick": 24960, "duration_ticks": 1800, "comment": "F/A - F"},
+        {"pitch": 57, "velocity": 75, "start_tick": 24960, "duration_ticks": 1800, "comment": "F/A - A"},
+        {"pitch": 60, "velocity": 75, "start_tick": 24960, "duration_ticks": 1800, "comment": "F/A - C"}
+      ],
+      "emotion_params": {
+        "reverb": 0.45,
+        "delay": 0.7,
+        "compression": 0.5,
+        "warmth": 0.15
+      }
+    },
+    {
+      "name": "Pad - Longing (Atmospheric)",
+      "channel": 6,
+      "instrument": 89,
+      "type": "pad",
+      "emotion_tag": "Longing",
+      "rule_break": "MELODY_AvoidResolution",
+      "notes": [
+        {"pitch": 57, "velocity": 50, "start_tick": 26880, "duration_ticks": 3840, "comment": "Am sustained"},
+        {"pitch": 60, "velocity": 50, "start_tick": 26880, "duration_ticks": 3840, "comment": "Am sustained"},
+        {"pitch": 64, "velocity": 50, "start_tick": 26880, "duration_ticks": 3840, "comment": "Am sustained"},
+
+        {"pitch": 52, "velocity": 50, "start_tick": 30720, "duration_ticks": 3840, "comment": "Em sustained"},
+        {"pitch": 55, "velocity": 50, "start_tick": 30720, "duration_ticks": 3840, "comment": "Em sustained"},
+        {"pitch": 59, "velocity": 50, "start_tick": 30720, "duration_ticks": 3840, "comment": "Em sustained"}
+      ],
+      "emotion_params": {
+        "reverb": 0.65,
+        "delay": 0.5,
+        "compression": 0.25,
+        "warmth": 0.35
+      }
+    },
+    {
+      "name": "Lead - Passion (Intimate Melody)",
+      "channel": 7,
+      "instrument": 73,
+      "type": "flute",
+      "emotion_tag": "Passion",
+      "rule_break": "PRODUCTION_PitchImperfection",
+      "notes": [
+        {"pitch": 72, "velocity": 85, "start_tick": 34560, "duration_ticks": 480, "comment": "C5"},
+        {"pitch": 71, "velocity": 80, "start_tick": 35040, "duration_ticks": 480, "comment": "B4"},
+        {"pitch": 69, "velocity": 85, "start_tick": 35520, "duration_ticks": 960, "comment": "A4"},
+        {"pitch": 67, "velocity": 75, "start_tick": 36480, "duration_ticks": 480, "comment": "G4"},
+        {"pitch": 65, "velocity": 80, "start_tick": 36960, "duration_ticks": 960, "comment": "F4"},
+        {"pitch": 64, "velocity": 85, "start_tick": 37920, "duration_ticks": 1440, "comment": "E4 - sustained"}
+      ],
+      "emotion_params": {
+        "reverb": 0.4,
+        "delay": 0.3,
+        "compression": 0.5,
+        "warmth": 0.7
+      }
+    },
+    {
+      "name": "Synth - Defiance (Bold, Present)",
+      "channel": 8,
+      "instrument": 81,
+      "type": "lead_synth",
+      "emotion_tag": "Defiance",
+      "rule_break": "HARMONY_ParallelMotion",
+      "notes": [
+        {"pitch": 64, "velocity": 100, "start_tick": 38400, "duration_ticks": 960, "comment": "E"},
+        {"pitch": 67, "velocity": 100, "start_tick": 39360, "duration_ticks": 960, "comment": "G"},
+        {"pitch": 69, "velocity": 100, "start_tick": 40320, "duration_ticks": 960, "comment": "A"},
+        {"pitch": 72, "velocity": 100, "start_tick": 41280, "duration_ticks": 1920, "comment": "C"}
+      ],
+      "emotion_params": {
+        "reverb": 0.3,
+        "delay": 0.2,
+        "compression": 0.8,
+        "warmth": 0.15
+      }
+    },
+    {
+      "name": "Strings - Hope (Ascending)",
+      "channel": 9,
+      "instrument": 48,
+      "type": "strings",
+      "emotion_tag": "Hope",
+      "notes": [
+        {"pitch": 48, "velocity": 60, "start_tick": 42240, "duration_ticks": 1920, "comment": "C3"},
+        {"pitch": 52, "velocity": 65, "start_tick": 44160, "duration_ticks": 1920, "comment": "E3"},
+        {"pitch": 55, "velocity": 70, "start_tick": 46080, "duration_ticks": 1920, "comment": "G3"},
+        {"pitch": 60, "velocity": 75, "start_tick": 48000, "duration_ticks": 3840, "comment": "C4 - resolve"}
+      ],
+      "emotion_params": {
+        "reverb": 0.35,
+        "delay": 0.25,
+        "compression": 0.4,
+        "warmth": 0.6
+      }
+    }
+  ],
+
+  "rule_breaking_manifest": {
+    "description": "This file demonstrates intentional rule-breaking with emotional justification",
+    "rules_broken": [
+      {
+        "rule": "HARMONY_AvoidTonicResolution",
+        "track": "Harmony - Grief",
+        "justification": "Grief rarely resolves cleanly. Music that refuses resolution honors that truth."
+      },
+      {
+        "rule": "HARMONY_ModalInterchange",
+        "track": "Harmony - Joy",
+        "justification": "Real joy often comes from unexpected places."
+      },
+      {
+        "rule": "HARMONY_ParallelFifths",
+        "track": "Harmony - Rage",
+        "justification": "Defiance means breaking the rules on purpose. Parallel fifths convey raw power."
+      },
+      {
+        "rule": "RHYTHM_ConstantDisplacement",
+        "track": "Harmony - Anxiety",
+        "justification": "Anxiety never follows a predictable pattern. Displacement creates restlessness."
+      },
+      {
+        "rule": "MELODY_AvoidResolution",
+        "track": "Pad - Longing",
+        "justification": "Longing by definition never arrives. The melody mirrors emotional incompleteness."
+      },
+      {
+        "rule": "PRODUCTION_PitchImperfection",
+        "track": "Lead - Passion",
+        "justification": "Perfect pitch is a lie we tell ourselves. Imperfection creates intimacy."
+      },
+      {
+        "rule": "HARMONY_ParallelMotion",
+        "track": "Synth - Defiance",
+        "justification": "Defiance means breaking the rules on purpose."
+      }
+    ]
+  },
+
+  "emotion_to_mixer_mapping": {
+    "Grief": {
+      "tempo": 72,
+      "reverb": 0.7,
+      "delay": 0.4,
+      "compression": 0.3,
+      "warmth": 0.2,
+      "description": "Spacious, distant, unresolved"
+    },
+    "Joy": {
+      "tempo": 120,
+      "reverb": 0.3,
+      "delay": 0.2,
+      "compression": 0.5,
+      "warmth": 0.7,
+      "description": "Bright, punchy, present"
+    },
+    "Rage": {
+      "tempo": 160,
+      "reverb": 0.2,
+      "delay": 0.1,
+      "compression": 0.9,
+      "warmth": 0.1,
+      "description": "Aggressive, compressed, in your face"
+    },
+    "Anxiety": {
+      "tempo": 140,
+      "reverb": 0.45,
+      "delay": 0.7,
+      "compression": 0.5,
+      "warmth": 0.15,
+      "description": "Unsettling, delayed, claustrophobic"
+    },
+    "Longing": {
+      "tempo": 75,
+      "reverb": 0.65,
+      "delay": 0.5,
+      "compression": 0.25,
+      "warmth": 0.35,
+      "description": "Yearning, spacious, warm undertones"
+    },
+    "Passion": {
+      "tempo": 90,
+      "reverb": 0.4,
+      "delay": 0.3,
+      "compression": 0.5,
+      "warmth": 0.7,
+      "description": "Intimate, warm, breathing room"
+    },
+    "Defiance": {
+      "tempo": 130,
+      "reverb": 0.3,
+      "delay": 0.2,
+      "compression": 0.8,
+      "warmth": 0.15,
+      "description": "Bold, present, punchy"
+    },
+    "Hope": {
+      "tempo": 110,
+      "reverb": 0.35,
+      "delay": 0.25,
+      "compression": 0.4,
+      "warmth": 0.6,
+      "description": "Open, ascending, warm"
+    }
+  },
+
+  "unified_features_tested": [
+    "Emotion selection (EmotionWheel)",
+    "Interrogator three-phase flow (Phase 0, 1, 2)",
+    "GhostWriter suggestions",
+    "RuleBreaker selection",
+    "Emotion-to-Mixer bridge",
+    "Timeline clip generation",
+    "Transport playback",
+    "VU meter levels",
+    "Chord-to-MIDI conversion",
+    "Logic Pro PPQ (480)",
+    "Multi-track export",
+    "Emotion metadata embedding"
+  ],
+
+  "philosophy": {
+    "core": "Interrogate Before Generate",
+    "explanation": "Every technical choice must be justified by emotional intent. The audience doesn't hear 'borrowed from Dorian.' They hear 'that part made me cry.'"
+  }
+}
