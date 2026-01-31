@@ -36,6 +36,29 @@ If **music_brain** is missing: restore from sburdges-eng/KmiDi forensic or rebui
 3. If full orchestrator: ensure music_brain restored, then `python run_brain.py orchestrator`
 4. For GUI: use Tauri from `tauri-app/`: `cargo tauri dev`
 
+## Reliable recursive run (restart on failure)
+
+For long-running modes (e.g. orchestrator), run in a loop so the Brain restarts on crash:
+
+```bash
+python run_brain.py orchestrator --loop
+```
+
+Options:
+
+- `--loop` — restart after non-zero exit (use with tmux).
+- `--delay SEC` — seconds to wait before restart (default: 2).
+- `--max-restarts N` — stop after N restarts (0 = infinite, default: 0).
+
+Example in tmux:
+
+```bash
+tmux new -s kmidi
+micromamba activate kmidi
+python run_brain.py orchestrator --loop
+# Detach: Ctrl+B then D
+```
+
 ## CI / automation
 
 Consider adding `run_brain.py check` to CI or a pre-push hook to catch missing modules before they break remote runs.

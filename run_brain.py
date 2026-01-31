@@ -15,10 +15,13 @@ import argparse
 import sys
 from pathlib import Path
 
-# Project root
+# Project root and brain path (so penta_core.ml.* resolves when importing from KmiDi_CANON.brain)
 ROOT = Path(__file__).resolve().parent
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+BRAIN = ROOT / "KmiDi_CANON" / "brain"
+for p in (ROOT, BRAIN):
+    p_str = str(p)
+    if p_str not in sys.path:
+        sys.path.insert(0, p_str)
 
 
 def main():
@@ -30,12 +33,33 @@ def main():
         choices=["penta", "orchestrator", "gui", "check"],
         help="Run mode: penta (ML), orchestrator, gui, or check (module status)",
     )
+    parser.add_argument(
+        "--loop",
+        action="store_true",
+        help="Restart on exit: run mode in a loop (use with tmux for long-running Brain)",
+    )
+    parser.add_argument(
+        "--delay",
+        type=float,
+        default=2.0,
+        metavar="SEC",
+        help="Seconds to wait before restart when using --loop (default: 2)",
+    )
+    parser.add_argument(
+        "--max-restarts",
+        type=int,
+        default=0,
+        metavar="N",
+        help="Max restarts when using --loop (0 = infinite, default: 0)",
+    )
     args = parser.parse_args()
 
     if args.mode == "check":
         _check_modules()
         return 0
 
+    if args.loop:
+        return _run_loop(args)
     if args.mode == "penta":
         return _run_penta()
     if args.mode == "orchestrator":
@@ -43,6 +67,42 @@ def main():
     if args.mode == "gui":
         return _run_gui()
 
+    return 1
+
+
+def _run_loop(args):
+    """Run chosen mode in a restart loop. Restarts only on non-zero exit or exception. Use with tmux."""
+    import time
+    import traceback
+
+    restarts = 0
+    while True:
+        if restarts > 0:
+            print(f"[brain] restart #{restarts} in {args.delay}s ...")
+            time.sleep(args.delay)
+        if args.max_restarts and restarts >= args.max_restarts:
+            print(f"[brain] max restarts ({args.max_restarts}) reached, exiting")
+            return 1
+        try:
+            code = _run_mode(args.mode)
+        except Exception as e:
+            print(f"[brain] exception: {e}")
+            traceback.print_exc()
+            code = 1
+        if code == 0:
+            return 0
+        restarts += 1
+    return 1
+
+
+def _run_mode(mode: str) -> int:
+    """Run a single mode; return exit code."""
+    if mode == "penta":
+        return _run_penta()
+    if mode == "orchestrator":
+        return _run_orchestrator()
+    if mode == "gui":
+        return _run_gui()
     return 1
 
 

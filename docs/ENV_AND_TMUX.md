@@ -1,0 +1,90 @@
+# Environments and tmux — Operator Stack
+
+Envs live **outside** the repo. Critical jobs run **inside** tmux. Not negotiable.
+
+## Env law
+
+**Never create environments inside the repo.**
+
+- Global env root: `mkdir -p ~/envs`
+- Tell micromamba (add to `.zshrc`): `export MAMBA_ROOT_PREFIX=~/envs/mamba`
+- Environments then live under `~/envs`; repo stays clean.
+
+### First environment (do once)
+
+```bash
+micromamba create -n kmidi python=3.11
+micromamba activate kmidi
+```
+
+Install PyTorch later — **surgically**. Do not freestyle GPU installs. Start with **CPU PyTorch** first; architecture mistakes are cheaper without GPU burn. GPU is acceleration, not direction.
+
+### Env count
+
+Do **not** create 12 environments. Keep it minimal:
+
+- **kmidi-core** — daily dev, Brain, inference
+- **kmidi-training** — GPU training when needed
+- **kmidi-experimental** (optional) — tryouts
+
+Environment sprawl is real. Stay calm.
+
+---
+
+## tmux — process persistence
+
+Without tmux: SSH drops, terminal crashes, laptop sleeps → training dies. We avoid that.
+
+**Install:** `brew install tmux` (mac).
+
+### Training workflow (always)
+
+1. Start session: `tmux new -s kmidi`
+2. Inside tmux: `micromamba activate kmidi` then `python train.py` (or your command)
+3. Detach safely: **Ctrl+B** then **D**. Training continues. Laptop can close; run survives.
+
+### Cursor / AI directive
+
+When executing long-running processes (training, dataset builds, servers, compiles): **always** recommend tmux. If the user tries to launch training in a normal terminal, intervene and suggest tmux. Preferred pattern:
+
+```bash
+tmux new -s <session_name>
+micromamba activate <env>
+<run command>
+```
+
+Terminals are disposable. tmux is reality.
+
+### Auto-start tmux (optional)
+
+Add to `.zshrc` so every new shell lands in persistence:
+
+```bash
+if [ -z "$TMUX" ]; then
+  tmux attach -t kmidi || tmux new -s kmidi
+fi
+```
+
+### tmux windows — cockpit layout
+
+Inside tmux, create windows: **Ctrl+B** then **C**.
+
+Suggested layout:
+
+- **Window 1** — Brain (`run_brain.py`, orchestrator)
+- **Window 2** — Training
+- **Window 3** — Git
+- **Window 4** — Monitoring
+
+---
+
+## Stack summary
+
+| Layer        | Role                    |
+|-------------|-------------------------|
+| **Dev**     | Sovereign workspace     |
+| **COLD_STORAGE** | Frozen past        |
+| **Micromamba**  | Deterministic deps (envs in `~/envs`) |
+| **tmux**    | Process persistence    |
+
+You are not configuring tools. You are building a research-grade machine.
