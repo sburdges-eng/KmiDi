@@ -10,7 +10,7 @@ Plus comprehensive rule-breaking enums for intentional creative choices.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Any
+from typing import List, Dict, Optional, Tuple
 from enum import Enum
 import json
 from pathlib import Path
@@ -638,17 +638,7 @@ class CompleteSongIntent:
     # Meta
     title: str = ""
     created: str = ""
-
-    # Workflow output (orchestrator: midi/image/audio results and prompts)
-    midi_plan: Dict = field(default_factory=dict)
-    image_prompt: str = ""
-    image_style_constraints: str = ""
-    audio_texture_prompt: str = ""
-    explanation: str = ""
-    rule_breaking_logic: str = ""
-    generated_image_data: Dict = field(default_factory=dict)
-    generated_audio_data: Dict = field(default_factory=dict)
-
+    
     def to_dict(self) -> Dict:
         """Convert to dictionary for serialization."""
         return {
@@ -681,16 +671,8 @@ class CompleteSongIntent:
                 "output_target": self.system_directive.output_target,
                 "output_feedback_loop": self.system_directive.output_feedback_loop,
             },
-            "midi_plan": self.midi_plan,
-            "image_prompt": self.image_prompt,
-            "image_style_constraints": self.image_style_constraints,
-            "audio_texture_prompt": self.audio_texture_prompt,
-            "explanation": self.explanation,
-            "rule_breaking_logic": self.rule_breaking_logic,
-            "generated_image_data": self.generated_image_data,
-            "generated_audio_data": self.generated_audio_data,
         }
-
+    
     @classmethod
     def from_dict(cls, data: Dict) -> "CompleteSongIntent":
         """Create from dictionary."""
@@ -737,99 +719,9 @@ class CompleteSongIntent:
                 output_target=sd.get("output_target", ""),
                 output_feedback_loop=sd.get("output_feedback_loop", ""),
             )
-
-        for key in ("midi_plan", "image_prompt", "image_style_constraints", "audio_texture_prompt",
-                    "explanation", "rule_breaking_logic", "generated_image_data", "generated_audio_data"):
-            if key in data:
-                val = data[key]
-                if key in ("midi_plan", "generated_image_data", "generated_audio_data"):
-                    setattr(intent, key, val if isinstance(val, dict) else {})
-                else:
-                    setattr(intent, key, val if val is not None else "")
-
+        
         return intent
-
-    @classmethod
-    def from_flat(
-        cls,
-        core_event: str = "",
-        core_resistance: str = "",
-        core_longing: str = "",
-        core_stakes: str = "",
-        core_transformation: str = "",
-        mood_primary: str = "",
-        mood_secondary_tension: Any = 0.5,
-        imagery_texture: str = "",
-        vulnerability_scale: str = "Medium",
-        narrative_arc: str = "",
-        technical_genre: str = "",
-        technical_tempo_range: Tuple[int, int] = (80, 120),
-        technical_key: str = "",
-        technical_mode: str = "",
-        technical_groove_feel: str = "",
-        technical_rule_to_break: str = "",
-        rule_breaking_justification: str = "",
-        rule_breaking_logic: str = "",
-        output_target: str = "",
-        output_feedback_loop: str = "",
-        title: str = "",
-        created: str = "",
-        midi_plan: Optional[Dict] = None,
-        image_prompt: str = "",
-        image_style_constraints: str = "",
-        audio_texture_prompt: str = "",
-        explanation: str = "",
-        generated_image_data: Optional[Dict] = None,
-        generated_audio_data: Optional[Dict] = None,
-        **kwargs: Any,
-    ) -> "CompleteSongIntent":
-        """Build nested CompleteSongIntent from flat orchestrator/LLM fields."""
-        if isinstance(mood_secondary_tension, str):
-            try:
-                mood_secondary_tension = float(mood_secondary_tension)
-            except (ValueError, TypeError):
-                mood_secondary_tension = 0.5
-        intent = cls(
-            song_root=SongRoot(
-                core_event=core_event or "",
-                core_resistance=core_resistance or "",
-                core_longing=core_longing or "",
-                core_stakes=core_stakes or "",
-                core_transformation=core_transformation or "",
-            ),
-            song_intent=SongIntent(
-                mood_primary=mood_primary or "",
-                mood_secondary_tension=float(mood_secondary_tension) if mood_secondary_tension is not None else 0.5,
-                imagery_texture=imagery_texture or "",
-                vulnerability_scale=vulnerability_scale or "Medium",
-                narrative_arc=narrative_arc or "",
-            ),
-            technical_constraints=TechnicalConstraints(
-                technical_genre=technical_genre or "",
-                technical_tempo_range=tuple(technical_tempo_range) if technical_tempo_range else (80, 120),
-                technical_key=technical_key or "",
-                technical_mode=technical_mode or "",
-                technical_groove_feel=technical_groove_feel or "",
-                technical_rule_to_break=technical_rule_to_break or "",
-                rule_breaking_justification=rule_breaking_justification or "",
-            ),
-            system_directive=SystemDirective(
-                output_target=output_target or "",
-                output_feedback_loop=output_feedback_loop or "",
-            ),
-            title=title or "",
-            created=created or "",
-            midi_plan=midi_plan or {},
-            image_prompt=image_prompt or "",
-            image_style_constraints=image_style_constraints or "",
-            audio_texture_prompt=audio_texture_prompt or "",
-            explanation=explanation or "",
-            rule_breaking_logic=rule_breaking_logic or "",
-            generated_image_data=generated_image_data or kwargs.get("generated_image_data") or {},
-            generated_audio_data=generated_audio_data or kwargs.get("generated_audio_data") or {},
-        )
-        return intent
-
+    
     def save(self, path: str):
         """Save to JSON file."""
         with open(path, 'w') as f:

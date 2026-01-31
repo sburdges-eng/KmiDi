@@ -2,7 +2,7 @@
 
 **Purpose:** Stop agents from recreating LLM and engine intent code by documenting where original source lives and how to restore or diff from git history.
 
-**References:** `FORENSIC_RECOVERY_REPORT.md`, `docs/DEVELOPMENT_ROADMAP_FORENSIC.md`, `docs/PROJECT_ROADMAP_REIMPLEMENTATION.md`
+**References:** `FORENSIC_RECOVERY_REPORT.md`, `docs/DEVELOPMENT_ROADMAP_FORENSIC.md`, `docs/PROJECT_ROADMAP_REIMPLEMENTATION.md`, `docs/FUNCTION_INDEX_README.md` (repo-wide function/path index for future search).
 
 ---
 
@@ -12,23 +12,23 @@
 
 | What | Canonical git source | In KmiDi canon |
 |------|----------------------|----------------|
-| **intent_schema.py** (CompleteSongIntent, SongRoot, SongIntent, TechnicalConstraints, SystemDirective, from_dict, from_flat) | **Forensic DAiW-Music-Brain** repo | `KmiDi_CANON/brain/music_brain/session/intent_schema.py` (on disk) |
-| **intent_processor.py** (process_intent, rule-breaking, chord/groove/arrangement generation) | **Forensic DAiW-Music-Brain** repo | `KmiDi_CANON/brain/music_brain/session/intent_processor.py` (on disk) |
-| **generator.py**, **interrogator.py**, **teaching.py**, **therapy_prompts.py** | **Forensic DAiW-Music-Brain** repo | `KmiDi_CANON/brain/music_brain/session/*` (on disk) |
+| **intent_schema.py** (CompleteSongIntent, SongRoot, SongIntent, TechnicalConstraints, SystemDirective, from_dict, from_flat) | **Forensic DAiW-Music-Brain** repo | `KmiDi_CANON/brain/music_brain/session/intent_schema.py` (in git) |
+| **intent_processor.py** (process_intent, rule-breaking, chord/groove/arrangement generation) | **Forensic DAiW-Music-Brain** repo | `KmiDi_CANON/brain/music_brain/session/intent_processor.py` (in git) |
+| **generator.py**, **interrogator.py**, **teaching.py**, **therapy_prompts.py** | **Forensic DAiW-Music-Brain** repo | `KmiDi_CANON/brain/music_brain/session/*` (in git) |
 
 - **Forensic repo path:** `~/Dev/_FORENSIC_READONLY_KMIDI/iDAWComp/DAiW-Music-Brain`  
   (Read-only; do not develop there. Extract only.)
 
 - **KmiDi repo:** `~/Dev/KmiDi MIDI Companion`  
-  **Critical:** `KmiDi_CANON/brain/music_brain/` is **untracked** in this repo. It was restored from forensic (Phase 6) but never committed. Commit it to avoid re-recreation and to make git history searches find it.
+  **Done:** `KmiDi_CANON/brain/music_brain/` was restored from forensic (Phase 6) and **committed** (restore commit). It is now in git history; search with `git log -- "KmiDi_CANON/brain/music_brain/"`.
 
 ### 1.2 LLM reasoning engine
 
 | What | Git history | In KmiDi canon |
 |------|-------------|----------------|
-| **llm_reasoning_engine.py** (parse_user_intent → CompleteSongIntent, rule-based + optional GGUF LLM) | **None in either repo.** File was recreated by agents; no historical version exists in git. | `KmiDi_CANON/brain/mcp_workstation/llm_reasoning_engine.py` (untracked) |
+| **llm_reasoning_engine.py** (parse_user_intent → CompleteSongIntent, rule-based + optional GGUF LLM) | **KmiDi MIDI Companion** (restore commit) | `KmiDi_CANON/brain/mcp_workstation/llm_reasoning_engine.py` (in git) |
 
-- **Pathway:** The current `llm_reasoning_engine.py` correctly imports `music_brain.session.intent_schema` (CompleteSongIntent, SongRoot, SongIntent, TechnicalConstraints, SystemDirective) and uses `from_dict` / rule-based parse. **Do not recreate it.** Commit it so it enters history.
+- **Pathway:** The current `llm_reasoning_engine.py` correctly imports `music_brain.session.intent_schema` and uses `from_dict` / rule-based parse. **Do not recreate it.** It is now in git history; search with `git log -- "KmiDi_CANON/brain/mcp_workstation/llm_reasoning_engine.py"`.
 
 ### 1.3 C++ engine / intent (body)
 
@@ -108,7 +108,52 @@ Commit 27148e6f (“KmiDi Companion dev: working tree after forensic recovery an
 
 ---
 
-## 4. Recommended next steps
+## 4. Step 1 — Recovery/reimplementation: find in git
+
+**Do this first.** Use `git log -S "symbol"` (pickaxe) and `git show <commit>:path` to find and restore.
+
+### 4.1 This repo (KmiDi MIDI Companion)
+
+```bash
+cd "/Users/seanburdges/Dev/KmiDi MIDI Companion"
+
+# Pickaxe: commits where symbol was added/removed
+git log -S "parse_user_intent" --oneline -- "*.py"
+git log -S "LLMReasoningEngine" --oneline -- "*.py"
+git log -S "create_engine_by_name" --oneline -- "*.py"
+git log -S "JEPA" --oneline -- "**/*"
+git log -S "stem_jepa" --oneline -- "**/*"
+git log -S "IntentPipeline" --oneline -- "**/*"
+
+# Commits that touched a path
+git log --all --oneline -- "KmiDi_CANON/brain/mcp_workstation/llm_reasoning_engine.py"
+git log --all --oneline -- "KmiDi_CANON/brain/penta_core/ml/*"
+git log --all --oneline -- "KmiDi_CANON/body/engine/*"
+git log --all --oneline -- "src/**/*"
+
+# Restore or diff: show file at commit
+git show <commit>:KmiDi_CANON/brain/mcp_workstation/llm_reasoning_engine.py
+git show <commit>:KmiDi_CANON/brain/penta_core/ml/inference.py
+git show <commit>:src/kelly/integrations/stem_jepa_integration.py
+```
+
+### 4.2 Target symbols/paths (recovery lookup)
+
+| Domain | Symbol or path | Notes |
+|--------|----------------|-------|
+| **Brain / LLM reasoning** | `parse_user_intent`, `LLMReasoningEngine`, `CompleteSongIntent` | This repo + forensic session |
+| **ML / inference** | `create_engine_by_name`, `InferenceEngine`, `KmiDi_CANON/brain/penta_core/ml/*` | This repo |
+| **JEPA / neural** | `JEPA`, `stem_jepa`, `magenta_integration` | `src/kelly/integrations/` |
+| **Engine (C++)** | `IntentPipeline`, `RuleBreakEngine`, `KmiDi_CANON/body/engine/*` | This repo |
+| **Session / intent** | `process_intent`, `intent_schema`, `KmiDi_CANON/brain/music_brain/session/` | This repo + forensic |
+
+### 4.3 Function index (before git)
+
+Find where a symbol is defined: `grep -F "SymbolName" docs/.index/symbol_index_canon.tsv` (see `docs/FUNCTION_INDEX_README.md` §4–5). Then use `git log -S "SymbolName"` and `git show <commit>:path` for that path.
+
+---
+
+## 5. Recommended next steps
 
 1. **Commit untracked brain code in KmiDi** so history searches find it:
    - `KmiDi_CANON/brain/music_brain/`
@@ -121,6 +166,9 @@ Commit 27148e6f (“KmiDi Companion dev: working tree after forensic recovery an
    - Restore from forensic with `git -C <forensic> show <commit>:path` and diff into canon.
 
 3. **Treat forensic as quarry:** Extract specific files or functions when needed; do not promote forensic to active workspace (per FORENSIC_RECOVERY_REPORT Phase 5–6).
+
+4. **Regenerate function index after large changes:**  
+   `python3 scripts/build_function_index.py --canon-only` (commit `docs/.index/symbol_index_canon.tsv`). For full repo index (~410k symbols): `python3 scripts/build_function_index.py` (local use; see FUNCTION_INDEX_README.md).
 
 ---
 

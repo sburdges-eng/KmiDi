@@ -38,6 +38,17 @@ Orchestrator intent parsing can use a local LLM (GGUF) when available. Set one o
 
 If unset or model missing, the engine uses a rule-based keyword parser (no install). For LLM-backed parsing: install `llama-cpp-python`, point env at a GGUF file; see `mcp_workstation/llm_reasoning_engine.py`.
 
+### Image / audio engines (optional)
+
+Orchestrator image and audio generation use optional deps; when missing, engines return **stubbed** so the workflow continues.
+
+| Engine | Env | Default | Deps |
+|--------|-----|---------|------|
+| **Image** | `KMI_DI_IMAGE_MODEL_PATH`, `STABLE_DIFFUSION_MODEL_PATH` | runwayml/stable-diffusion-v1-5 | diffusers, torch |
+| **Audio** | `KMI_DI_AUDIO_MODEL_ID`, `AUDIOCRAFT_MODEL_ID` | musicgen-small | audiocraft, torch |
+
+Status in result dict: `stubbed` (not loaded), `completed`, `failed`. See `docs/CONTRACTS.md` §6.
+
 ---
 
 ## tmux — process persistence

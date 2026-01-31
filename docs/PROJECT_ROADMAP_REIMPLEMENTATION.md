@@ -2,7 +2,7 @@
 
 **Purpose:** Full reimplementation of functions, direct focused reinforcement of critical paths, and durable structural discipline so the canon remains the single source of truth and scales without fragmentation.
 
-**References:** `FORENSIC_RECOVERY_REPORT.md`, `docs/BOOT.md`, `docs/DEVELOPMENT_ROADMAP_FORENSIC.md`, `docs/GIT_RESTORE_PATHWAYS.md`, `.cursor/rules/recovery-code-path.mdc`
+**References:** `FORENSIC_RECOVERY_REPORT.md`, `docs/BOOT.md`, `docs/DEVELOPMENT_ROADMAP_FORENSIC.md`, `docs/GIT_RESTORE_PATHWAYS.md`, `docs/FUNCTION_INDEX_README.md` (function/path index), `.cursor/rules/recovery-code-path.mdc`
 
 ---
 

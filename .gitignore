@@ -37,6 +37,10 @@ target/
 Desktop/
 ML_TRAINED_MODELS/*.mp3
 
+# Function index (full repo ~48MB; regenerate with scripts/build_function_index.py)
+docs/.index/symbol_index.tsv
+docs/.index/symbol_index.jsonl.gz
+
 # IDE
 .cursor/
 .DS_Store

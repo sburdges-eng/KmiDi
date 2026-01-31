@@ -1,9 +1,21 @@
+"""
+Audio generation engine — reimplementation for orchestrator.
+
+Provides AudioGenerationEngine: optional Audiocraft MusicGen for texture generation.
+When not installed or model fails to load, returns stubbed result so orchestrator continues.
+Contract: generate_audio_texture() returns dict with status in {stubbed, completed, failed, timeout},
+details, and when completed: output_path, sample_rate, optionally audio_data_base64.
+
+Deps (optional): audiocraft, torch. Install when audio gen needed.
+Env: KMI_DI_AUDIO_MODEL_ID or AUDIOCRAFT_MODEL_ID — hub id (e.g. musicgen-small). Default: musicgen-small.
+"""
+
 from pathlib import Path
 from typing import Any, Dict, Optional
+import logging
 import threading
 import time
 
-# Optional audiocraft import (e.g., MusicGen)
 try:
     from audiocraft.models import MusicGen  # type: ignore[import-not-found]
     from audiocraft.data.audio import (  # type: ignore[import-not-found]
@@ -15,36 +27,46 @@ except ImportError:
     AUDIOCRAFT_AVAILABLE = False
     MusicGen = None
     audio_write = None
-    print("Warning: 'audiocraft' not found. " "Audio generation will be stubbed.")
+    logging.getLogger(__name__).warning(
+        "audiocraft not found. Audio generation will be stubbed."
+    )
+
+
+def _log():
+    return logging.getLogger(__name__)
 
 
 class AudioGenerationEngine:
     def __init__(
         self,
-        model_id: str = "musicgen-small",
+        model_id: Optional[str] = None,
         output_dir: str = "./audio_output",
     ):
-        self.model_id = model_id
+        import os
+        self.model_id = model_id or os.environ.get(
+            "KMI_DI_AUDIO_MODEL_ID",
+            os.environ.get("AUDIOCRAFT_MODEL_ID", "musicgen-small"),
+        )
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.model = None
         self.lock = threading.Lock()  # For mutual exclusion with LLM
 
-    def _load_model(self):
-        """Loads the audio diffusion model (placeholder)."""
+    def _load_model(self) -> None:
+        """Load audio model (MusicGen). No-op if audiocraft unavailable or load fails."""
         if not AUDIOCRAFT_AVAILABLE:
-            print("Audiocraft not available. Cannot load audio model.")
+            _log().info("Audiocraft not available. Cannot load audio model.")
             return
-
-        if self.model is None:
-            print(f"Loading audio diffusion model: {self.model_id}...")
-            try:
-                self.model = MusicGen.get_pretrained(self.model_id)
-                print("Audio diffusion model loaded.")
-            except Exception as e:
-                print(f"Error loading audio diffusion model: {e}")
-                self.model = None
-                raise
+        if self.model is not None:
+            return
+        _log().info("Loading audio model: %s", self.model_id)
+        try:
+            self.model = MusicGen.get_pretrained(self.model_id)
+            _log().info("Audio model loaded.")
+        except Exception as e:
+            _log().warning("Audio model load failed: %s", e)
+            self.model = None
+            raise
 
     def generate_audio_texture(
         self,
@@ -68,13 +90,12 @@ class AudioGenerationEngine:
             try:
                 self._load_model()
             except Exception as e:
-                print("Audio model load failed; falling back to stub: " f"{e}")
+                _log().warning("Audio model load failed; stub: %s", e)
                 self.model = None
 
         if not AUDIOCRAFT_AVAILABLE or self.model is None:
-            print(
-                "Audio generation engine not fully initialized or "
-                "audiocraft not available. Returning placeholder."
+            _log().info(
+                "Audio generation not available or model not loaded. Returning stubbed result."
             )
             return {
                 "status": "stubbed",
@@ -87,7 +108,7 @@ class AudioGenerationEngine:
             }
 
         def _generate() -> Dict[str, Any]:
-            print(f"Generating audio texture with prompt: {prompt}")
+            _log().info("Generating audio texture: %s", prompt[:80])
             try:
                 import base64
                 import io
@@ -122,7 +143,7 @@ class AudioGenerationEngine:
                     "details": "Audio texture generated successfully.",
                 }
             except Exception as e:
-                print(f"Error during audio generation: {e}")
+                _log().exception("Audio generation failed: %s", e)
                 return {
                     "status": "failed",
                     "prompt": prompt,
@@ -152,7 +173,7 @@ class AudioGenerationEngine:
                 else "Could not acquire audio lock."
             )
             timeout_display = lock_timeout if lock_timeout is not None else "N/A"
-            print(f"Audio generation lock timeout after {timeout_display}s")
+            _log().warning("Audio generation lock timeout after %s", timeout_display)
             return {
                 "status": "timeout",
                 "prompt": prompt,
@@ -178,8 +199,7 @@ class AudioGenerationEngine:
         try:
             self.lock.release()
         except RuntimeError:
-            # Either not acquired or owned by another thread
-            print("Warning: attempted to release an unheld " "audio generation lock.")
+            _log().warning("Attempted to release an unheld audio generation lock.")
 
 
 # Example usage (for testing)

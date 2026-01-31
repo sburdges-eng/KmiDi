@@ -182,37 +182,35 @@ class Orchestrator:
         finally:
             self._release_resource("llm")
 
-        # Convert StructuredIntent to CompleteSongIntent for MIDI pipeline
-        # compatibility. Map all required fields with defaults.
-        complete_intent = CompleteSongIntent(
-            core_event=structured_intent.core_event or "",
-            core_resistance=structured_intent.core_resistance or "",
-            core_longing=structured_intent.core_longing or "",
-            core_stakes=structured_intent.core_stakes or "",
-            core_transformation=structured_intent.core_transformation or "",
-            mood_primary=structured_intent.mood_primary or "",
-            mood_secondary_tension=(structured_intent.mood_secondary_tension or "0.5"),
-            imagery_texture=structured_intent.imagery_texture or "",
-            vulnerability_scale=(structured_intent.vulnerability_scale or "Medium"),
-            narrative_arc=structured_intent.narrative_arc or "",
-            technical_genre=structured_intent.technical_genre or "",
-            technical_tempo_range=(80, 120),  # Default tempo range
-            technical_key=structured_intent.technical_key or "",
-            technical_mode=structured_intent.technical_mode or "",
-            technical_groove_feel=(structured_intent.technical_groove_feel or ""),
-            technical_rule_to_break=(structured_intent.technical_rule_to_break or ""),
-            rule_breaking_justification=(structured_intent.rule_breaking_justification or ""),
-            output_target="",  # Not in StructuredIntent, use default
-            output_feedback_loop="",  # Not in StructuredIntent, use default
-            title="",  # Not in StructuredIntent, use default
-            created="",  # Not in StructuredIntent, use default
-            midi_plan=structured_intent.midi_plan,
-            image_prompt=structured_intent.image_prompt,
-            image_style_constraints=structured_intent.image_style_constraints,
-            audio_texture_prompt=structured_intent.audio_texture_prompt,
-            explanation=structured_intent.explanation,
-            rule_breaking_logic=structured_intent.rule_breaking_logic,
-        )
+        # Use forensic CompleteSongIntent (nested) if LLM returned one; else build from flat.
+        if hasattr(structured_intent, "song_root") and hasattr(structured_intent, "technical_constraints"):
+            complete_intent = structured_intent
+        else:
+            complete_intent = CompleteSongIntent.from_flat(
+                core_event=getattr(structured_intent, "core_event", "") or "",
+                core_resistance=getattr(structured_intent, "core_resistance", "") or "",
+                core_longing=getattr(structured_intent, "core_longing", "") or "",
+                core_stakes=getattr(structured_intent, "core_stakes", "") or "",
+                core_transformation=getattr(structured_intent, "core_transformation", "") or "",
+                mood_primary=getattr(structured_intent, "mood_primary", "") or "",
+                mood_secondary_tension=getattr(structured_intent, "mood_secondary_tension", "0.5") or "0.5",
+                imagery_texture=getattr(structured_intent, "imagery_texture", "") or "",
+                vulnerability_scale=getattr(structured_intent, "vulnerability_scale", "Medium") or "Medium",
+                narrative_arc=getattr(structured_intent, "narrative_arc", "") or "",
+                technical_genre=getattr(structured_intent, "technical_genre", "") or "",
+                technical_tempo_range=getattr(structured_intent, "technical_tempo_range", (80, 120)) or (80, 120),
+                technical_key=getattr(structured_intent, "technical_key", "") or "",
+                technical_mode=getattr(structured_intent, "technical_mode", "") or "",
+                technical_groove_feel=getattr(structured_intent, "technical_groove_feel", "") or "",
+                technical_rule_to_break=getattr(structured_intent, "technical_rule_to_break", "") or "",
+                rule_breaking_justification=getattr(structured_intent, "rule_breaking_justification", "") or "",
+                image_prompt=getattr(structured_intent, "image_prompt", "") or "",
+                image_style_constraints=getattr(structured_intent, "image_style_constraints", "") or "",
+                audio_texture_prompt=getattr(structured_intent, "audio_texture_prompt", "") or "",
+                explanation=getattr(structured_intent, "explanation", "") or "",
+                rule_breaking_logic=getattr(structured_intent, "rule_breaking_logic", "") or "",
+                midi_plan=getattr(structured_intent, "midi_plan", None),
+            )
 
         # Phase 2: MIDI Generation
         # MIDI generation is fast and deterministic, so it might not need a
