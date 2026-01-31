@@ -2,6 +2,16 @@
 
 The **Parrot** function is a vocal synthesizer that learns voice characteristics from uploaded audio and can mimic voices after prolonged exposure.
 
+## prrot / Parrot completeness
+
+| Module | Location | Role |
+|--------|----------|------|
+| **Parrot** (this module) | `music_brain/vocal/parrot.py` | Python: voice learning, formant analysis, train/synthesize; API for MCP, neural_voice, synthesis. |
+| **prrot** (C++) | `KmiDi_CANON/body/prrot/` | Body: phoneme engine, voice profile, pitch/formant/MIDI shaping; real-time rendering. |
+| **Bridge** | `music_brain/voice/cpp_bridge.py` | Sends Parrot models to C++ via OSC for low-latency synthesis. |
+
+Parrot = brain (learn); prrot = body (render). See `KmiDi_CANON/body/prrot/ACTIVE_DEVELOPMENT.md` for prrot status.
+
 ## Features
 
 - **Voice Learning**: Analyzes uploaded audio to learn:

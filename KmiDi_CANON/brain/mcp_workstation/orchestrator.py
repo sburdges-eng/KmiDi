@@ -98,6 +98,14 @@ class Orchestrator:
             )
         self.midi_pipeline = MIDIGenerationPipeline()
 
+        # Coexist router for JEPA shadow/jepa modes (optional)
+        self._capability_router = None
+        try:
+            from KmiDi_CANON.brain.ml import create_coexist_router
+            self._capability_router = create_coexist_router()
+        except ImportError:
+            pass
+
         self.resource_locks = {
             "llm": threading.Lock(),
             "midi_gen": threading.Lock(),
@@ -218,6 +226,7 @@ class Orchestrator:
         # consistency in a multi-resource environment, include it.
         if not self._acquire_resource("midi_gen"):
             raise RuntimeError("Could not acquire MIDI resource.")
+        midi_result: Optional[Dict[str, Any]] = None
         try:
             midi_result = self.midi_pipeline.generate_midi(
                 complete_intent,
@@ -249,6 +258,16 @@ class Orchestrator:
             }
         finally:
             self._release_resource("midi_gen")
+
+        # Coexist shadow: run midi_understanding when mode=shadow (logs side-by-side)
+        if self._capability_router and midi_result and midi_result.get("status") == "completed":
+            try:
+                _ = self._capability_router.run(
+                    "midi_understanding",
+                    {"midi_path": midi_result.get("midi_path"), "intent": complete_intent},
+                )
+            except Exception as e:
+                logging.debug("Coexist midi_understanding shadow: %s", e)
 
         # Phase 3: Image Generation (Optional)
         if enable_image_gen and structured_intent.image_prompt:
@@ -336,6 +355,23 @@ class Orchestrator:
                     }
                 finally:
                     self._release_resource("audio_gen")
+
+                # Coexist shadow: run audio_understanding when mode=shadow
+                if (
+                    self._capability_router
+                    and complete_intent.generated_audio_data
+                    and complete_intent.generated_audio_data.get("status") == "completed"
+                ):
+                    try:
+                        _ = self._capability_router.run(
+                            "audio_understanding",
+                            {
+                                "audio_path": complete_intent.generated_audio_data.get("output_path"),
+                                "intent": complete_intent,
+                            },
+                        )
+                    except Exception as e:
+                        logging.debug("Coexist audio_understanding shadow: %s", e)
 
         end_time = time.time()
         logging.info(

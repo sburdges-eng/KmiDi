@@ -59,7 +59,7 @@ def main():
         return 0
 
     if args.loop:
-        return _run_loop(args)
+        return _run_loop(args, unknown)
     if args.mode == "penta":
         return _run_penta()
     if args.mode == "orchestrator":
@@ -70,12 +70,13 @@ def main():
     return 1
 
 
-def _run_loop(args):
+def _run_loop(args, extra_argv=None):
     """Run chosen mode in a restart loop. Restarts only on non-zero exit or exception. Use with tmux."""
     import time
     import traceback
 
     restarts = 0
+    extra = extra_argv or []
     while True:
         if restarts > 0:
             print(f"[brain] restart #{restarts} in {args.delay}s ...")
@@ -84,7 +85,7 @@ def _run_loop(args):
             print(f"[brain] max restarts ({args.max_restarts}) reached, exiting")
             return 1
         try:
-            code = _run_mode(args.mode)
+            code = _run_mode(args.mode, extra)
         except Exception as e:
             print(f"[brain] exception: {e}")
             traceback.print_exc()
@@ -95,12 +96,12 @@ def _run_loop(args):
     return 1
 
 
-def _run_mode(mode: str) -> int:
-    """Run a single mode; return exit code."""
+def _run_mode(mode: str, extra_argv=None) -> int:
+    """Run a single mode; return exit code. extra_argv passed through to orchestrator when mode is orchestrator."""
     if mode == "penta":
         return _run_penta()
     if mode == "orchestrator":
-        return _run_orchestrator()
+        return _run_orchestrator(extra_argv)
     if mode == "gui":
         return _run_gui()
     return 1
@@ -113,9 +114,11 @@ def _check_modules():
     checks = [
         ("penta_core/ml", (brain / "penta_core" / "ml" / "inference.py").exists()),
         ("music_brain/session", (brain / "music_brain" / "session").exists()),
+        ("music_brain/session/intent_processor", (brain / "music_brain" / "session" / "intent_processor.py").exists()),
         ("music_brain/tier1", (brain / "music_brain" / "tier1" / "midi_pipeline_wrapper.py").exists()),
         ("mcp_workstation", (brain / "mcp_workstation" / "orchestrator.py").exists()),
         ("kmidi_gui", (brain / "kmidi_gui" / "core" / "control_surface.py").exists()),
+        ("brain/ml (coexist)", (brain / "ml" / "router.py").exists()),
     ]
     for name, ok in checks:
         status = "OK" if ok else "MISSING (restore or rebuild)"
@@ -135,7 +138,7 @@ def _run_penta():
 
 
 def _run_orchestrator(extra_argv=None):
-    """Run mcp_workstation Orchestrator. extra_argv: args to pass through (e.g. --llm_model_path, --prompt)."""
+    """Run mcp_workstation Orchestrator. extra_argv: args to pass through (e.g. --llm_model_path, --prompt). Preserved when using --loop."""
     try:
         from KmiDi_CANON.brain.mcp_workstation.orchestrator import main as orch_main
 

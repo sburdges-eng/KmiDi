@@ -51,3 +51,18 @@ def test_process_intent_returns_groove_arrangement_production():
     assert "intent_summary" in result
     assert "mood" in result["intent_summary"]
     assert "rule_broken" in result["intent_summary"]
+
+
+def test_process_intent_returns_melody_texture_temporal():
+    """process_intent (canon) returns melody, texture, temporal for integration."""
+    from music_brain.session.intent_schema import CompleteSongIntent
+    from music_brain.session.intent_processor import process_intent
+
+    intent = CompleteSongIntent.from_flat(technical_key="C", technical_mode="major")
+    result = process_intent(intent)
+    assert "melody" in result
+    assert "texture" in result
+    assert "temporal" in result
+    assert hasattr(result["melody"], "contour")
+    assert hasattr(result["texture"], "density_level")
+    assert hasattr(result["temporal"], "pacing")

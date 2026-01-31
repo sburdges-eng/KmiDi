@@ -1,0 +1,54 @@
+# Audio JEPA (A-JEPA style)
+# Reference: experiments/research JEPA proposal
+# Data: aligned triple (audio, midi, spectocloud) per manifest
+
+seed: 1337
+device: cuda
+precision: bf16
+
+data:
+  manifest: data/manifests/aligned.jsonl
+  audio:
+    sample_rate: 24000
+    n_mels: 96
+    win_ms: 25
+    hop_ms: 10
+    log_mel: true
+    normalize: true
+  split: train
+
+model:
+  encoder: vit_small
+  patch_size: [16, 16]
+  embed_dim: 384
+  depth: 12
+  heads: 6
+  predictor_dim: 384
+  ema:
+    enabled: true
+    momentum: 0.996
+
+masking:
+  curriculum: true
+  schedule:
+    - { epoch: 0, type: random,   mask_ratio: 0.5 }
+    - { epoch: 10, type: tf_block, mask_ratio: 0.6 }
+    - { epoch: 20, type: tf_block, mask_ratio: 0.7 }
+  tf_block:
+    time_span: [8, 32]
+    freq_span: [8, 24]
+
+loss:
+  pred_mse: 1.0
+
+optimizer:
+  name: adamw
+  lr: 2.0e-4
+  weight_decay: 0.05
+
+train:
+  epochs: 50
+  batch_size: 64
+  grad_clip: 1.0
+  log_every: 50
+  save_every: 1

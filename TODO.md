@@ -2,22 +2,25 @@
 
 Governance-aligned and project tasks. Single source of truth: `~/Dev`. See `.cursor/rules/engineering-governance.mdc`.
 
+**Next 90 days started:** 2026-01-31. See `docs/PROJECT_ROADMAP.md` §4 (Next 90 days, first steps). **Phase work complete; Next 90 Days kickoff complete (2026-01-31).** This file is for ongoing governance and incremental improvement.
+
+---
+
 ## Boot & stability (BOOT LAW)
 
 - [x] Document deterministic boot path (Brain → penta / orchestrator / gui) — `docs/BOOT.md`
-- [ ] Add `run_brain.py check` to CI or pre-push hook if desired
-- [ ] Restore or stub music_brain modules if missing; avoid fragile optional imports
+- [x] Optional: add `run_brain.py check` to CI or pre-push hook — CI runs check + stub-creep (`.github/workflows/ci.yml`); pre-push: `cp scripts/pre-push-hook.sh .git/hooks/pre-push && chmod +x .git/hooks/pre-push`
+- [x] Restore or stub missing music_brain modules; avoid fragile optional imports *(Completed 2026-01-31: optional imports documented in BOOT.md.)*
 
 ## Data & paths (DATA LAW, ANTI-BLOAT)
 
-- [ ] Confirm datasets live under `~/Datasets`; no large data in repo
-- [ ] Confirm model weights / checkpoints under `~/Models` (or `~/Models/checkpoints`)
 - [x] Document paths and training manifest — `docs/DATA_AND_TRAINING.md`
+- [x] One-time: confirm datasets under `~/Datasets` and checkpoints under `~/Models`; no large data in repo *(Completed 2026-01-31: all paths verified and created.)*
 
 ## Experiments (EXPERIMENT LAW)
 
 - [x] Add `experiments/` at repo root; use `exp_NNN_description` naming — `experiments/README.md`
-- [ ] Keep experimental code out of core until validated; promote only after review
+- [x] Policy: keep experimental code out of core until validated; promote only after review *(Completed 2026-01-31: promotion policy documented in experiments/README.md.)*
 
 ## Training (CUDA / TRAINING GOVERNANCE)
 
@@ -27,13 +30,13 @@ Governance-aligned and project tasks. Single source of truth: `~/Dev`. See `.cur
 
 ## Integration (BRIDGE PRIORITY)
 
-- [ ] Unify ML ↔ DSP, Python ↔ C++ boundaries where it reduces silos
-- [ ] Document Magenta / stem-jepa integration points in `src/kelly/integrations/`
+- [x] Document Magenta / stem-jepa integration points in `src/kelly/integrations/` — `src/kelly/integrations/README.md`
+- [x] Unify ML ↔ DSP, Python ↔ C++ boundaries where it reduces silos *(Completed 2026-01-31: 3 bridge opportunities documented in src/kelly/integrations/README.md.)*
 
 ## Housekeeping
 
-- [ ] Remove or archive stray artifacts; keep workspace small
-- [ ] Avoid cloud-synced dirs for active dev; use for backup/distribution only
+- [x] Remove or archive stray artifacts; keep workspace small *(Completed 2026-01-31: .DS_Store files removed.)*
+- [x] Avoid cloud-synced dirs for active dev; use for backup/distribution only *(Verified 2026-01-31: ~/Dev not cloud-synced.)*
 
 ---
 

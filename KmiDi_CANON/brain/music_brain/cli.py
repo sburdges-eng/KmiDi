@@ -6,8 +6,6 @@ Usage:
     daiw apply --genre <genre> <midi_file>      Apply groove template
     daiw humanize <midi_file> [options]         Apply drum humanization (Drunken Drummer)
     daiw analyze --chords <midi_file>           Analyze chord progression
-    daiw analyze-audio <audio_file>             Analyze tempo/key/spectrum from audio
-    daiw generate [options]                     Generate harmony from intent or parameters
     daiw diagnose <progression>                 Diagnose harmonic issues
     daiw reharm <progression> [--style <style>] Generate reharmonizations
     daiw teach <topic>                          Interactive teaching mode
@@ -30,9 +28,6 @@ import sys
 import json
 from pathlib import Path
 from typing import Optional
-
-from music_brain.voice.presets import AUTO_TUNE_PRESETS, MODULATION_PRESETS, VOICE_PROFILES
-from music_brain.chatbot.agent import ChatAgent, AgentConfig
 
 # Lazy imports to speed up CLI startup
 def get_groove_module():
@@ -59,53 +54,13 @@ def get_session_module():
 
 def get_intent_module():
     from music_brain.session.intent_schema import (
-        CompleteSongIntent, SongRoot, SongIntent, TechnicalConstraints,
+        CompleteSongIntent, SongRoot, SongIntent, TechnicalConstraints, 
         SystemDirective, suggest_rule_break, validate_intent, list_all_rules
     )
     from music_brain.session.intent_processor import IntentProcessor, process_intent
     return (CompleteSongIntent, SongRoot, SongIntent, TechnicalConstraints,
             SystemDirective, suggest_rule_break, validate_intent, list_all_rules,
             IntentProcessor, process_intent)
-
-
-def get_harmony_module():
-    from music_brain.harmony import HarmonyGenerator, HarmonyResult, generate_midi_from_harmony
-    return HarmonyGenerator, HarmonyResult, generate_midi_from_harmony
-
-
-def get_audio_module():
-    from music_brain.audio import AudioAnalyzer
-    return AudioAnalyzer
-
-
-def get_voice_modules():
-    from music_brain.voice import (
-        AutoTuneProcessor,
-        AutoTuneSettings,
-        get_auto_tune_preset,
-        VoiceModulator,
-        ModulationSettings,
-        get_modulation_preset,
-        VoiceSynthesizer,
-        SynthConfig,
-        get_voice_profile,
-    )
-    return (
-        AutoTuneProcessor,
-        AutoTuneSettings,
-        get_auto_tune_preset,
-        VoiceModulator,
-        ModulationSettings,
-        get_modulation_preset,
-        VoiceSynthesizer,
-        SynthConfig,
-        get_voice_profile,
-    )
-
-
-def get_audio_module():
-    from music_brain.audio import AudioAnalyzer
-    return AudioAnalyzer
 
 
 def cmd_extract(args):
@@ -265,185 +220,6 @@ def cmd_analyze(args):
         for section in sections:
             print(f"  {section.name}: bars {section.start_bar}-{section.end_bar} (energy: {section.energy:.2f})")
     
-    return 0
-
-
-def cmd_analyze_audio(args):
-    """Analyze an audio file for tempo, key, and spectral fingerprint."""
-    AudioAnalyzer = get_audio_module()
-    audio_path = Path(args.audio_file)
-
-    if not audio_path.exists():
-        print(f"Error: File not found: {audio_path}")
-        return 1
-
-    analyzer = AudioAnalyzer()
-    print(f"Analyzing audio file: {audio_path}")
-
-    try:
-        analysis = analyzer.analyze_file(str(audio_path))
-    except Exception as exc:  # pragma: no cover - defensive logging
-        print(f"Error analyzing audio: {exc}")
-        return 1
-
-    print("\n=== Audio Analysis ===")
-    print(f"BPM: {analysis.bpm:.2f}")
-    print(f"Key: {analysis.key} {analysis.mode}")
-    print(f"Energy (RMS): {analysis.spectral.energy:.3f}")
-    print(f"Spectral centroid: {analysis.spectral.spectral_centroid:.1f} Hz")
-
-    print("\nHarmonic content:")
-    for band, amount in analysis.spectral.harmonic_content.items():
-        print(f"  {band}: {amount:.2%}")
-
-    if analysis.chords:
-        print("\nDetected chords:")
-        print("  " + " - ".join(analysis.chords[:12]))
-
-    return 0
-
-
-def cmd_voice(args):
-    """Voice utilities: auto-tune, modulate, synthesize."""
-    (
-        AutoTuneProcessor,
-        AutoTuneSettings,
-        get_auto_tune_preset,
-        VoiceModulator,
-        ModulationSettings,
-        get_modulation_preset,
-        VoiceSynthesizer,
-        SynthConfig,
-        get_voice_profile,
-    ) = get_voice_modules()
-
-    if args.voice_cmd == "tune":
-        settings = get_auto_tune_preset(args.preset) if args.preset else AutoTuneSettings()
-        processor = AutoTuneProcessor(settings)
-        output = processor.process_file(
-            input_path=args.input,
-            output_path=args.output,
-            key=args.key,
-            mode=args.mode,
-        )
-        print(f"Auto-tuned vocal saved to: {output}")
-        return 0
-
-    if args.voice_cmd == "modulate":
-        settings = get_modulation_preset(args.preset)
-        modulator = VoiceModulator(settings)
-        output = modulator.process_file(args.input, args.output)
-        print(f"Modulated vocal saved to: {output}")
-        return 0
-
-    if args.voice_cmd == "synthesize":
-        config = get_voice_profile(args.profile) if args.profile else SynthConfig()
-        synthesizer = VoiceSynthesizer(config)
-        melody = [int(value.strip()) for value in args.melody.split(",") if value.strip()]
-        output = synthesizer.synthesize_guide(
-            lyrics=args.lyrics,
-            melody_midi=melody,
-            tempo_bpm=args.tempo,
-            output_path=args.output or "guide_vocal.wav",
-        )
-        print(f"Synth guide vocal saved to: {output}")
-        return 0
-
-    if args.voice_cmd == "speak":
-        config = get_voice_profile(args.profile) if args.profile else SynthConfig()
-        synthesizer = VoiceSynthesizer(config)
-        output = synthesizer.speak_text(
-            text=args.text,
-            output_path=args.output or "spoken_prompt.wav",
-            profile=args.profile,
-            tempo_bpm=args.tempo,
-        )
-        print(f"Spoken prompt saved to: {output}")
-        return 0
-
-    print("Unknown voice command. Use --help for options.")
-    return 1
-
-
-def cmd_chatbot(args):
-    """Offline chatbot interface."""
-    config = AgentConfig(
-        model_path=Path(args.model),
-        system_prompt=args.persona,
-    )
-    agent = ChatAgent(config)
-    print("DAiW offline chatbot ready. Type 'exit' to quit.\n")
-    while True:
-        try:
-            user_input = input("you> ")
-        except (EOFError, KeyboardInterrupt):
-            break
-        if user_input.strip().lower() in {"exit", "quit"}:
-            break
-        reply = agent.chat(user_input)
-        print(f"daiw> {reply}")
-    return 0
-
-
-def cmd_generate(args):
-    """Generate harmony from intent or basic parameters."""
-    HarmonyGenerator, HarmonyResult, generate_midi_from_harmony = get_harmony_module()
-
-    generator = HarmonyGenerator()
-
-    if args.intent_file:
-        # Generate from intent JSON file
-        intent_file = Path(args.intent_file)
-        if not intent_file.exists():
-            print(f"Error: Intent file not found: {intent_file}")
-            return 1
-
-        with open(intent_file, 'r') as f:
-            intent_data = json.load(f)
-
-        # Import intent schema to load from dict
-        (CompleteSongIntent, SongRoot, SongIntent, TechnicalConstraints,
-         SystemDirective, suggest_rule_break, validate_intent, list_all_rules,
-         IntentProcessor, process_intent) = get_intent_module()
-
-        intent = CompleteSongIntent.from_dict(intent_data)
-
-        print(f"Generating harmony from intent: {intent_file}")
-        harmony = generator.generate_from_intent(intent)
-    else:
-        # Generate basic progression
-        key = args.key or "C"
-        mode = args.mode or "major"
-        pattern = args.pattern or "I-V-vi-IV"
-
-        print(f"Generating basic progression:")
-        print(f"  Key: {key}")
-        print(f"  Mode: {mode}")
-        print(f"  Pattern: {pattern}")
-
-        harmony = generator.generate_basic_progression(
-            key=key,
-            mode=mode,
-            pattern=pattern
-        )
-
-    # Display results
-    print("\n=== Generated Harmony ===")
-    print(f"Key: {harmony.key} {harmony.mode}")
-    print(f"Progression: {' - '.join(harmony.chords)}")
-    if harmony.rule_break_applied:
-        print(f"Rule break: {harmony.rule_break_applied}")
-        print(f"Justification: {harmony.emotional_justification}")
-
-    # Output to MIDI if requested
-    if args.output:
-        output_path = Path(args.output)
-        tempo = args.tempo or 82
-
-        generate_midi_from_harmony(harmony, str(output_path), tempo_bpm=tempo)
-        print(f"\n✓ MIDI saved: {output_path}")
-        print(f"  Tempo: {tempo} BPM")
-
     return 0
 
 
@@ -767,58 +543,7 @@ def main():
     analyze_parser.add_argument('midi_file', help='MIDI file to analyze')
     analyze_parser.add_argument('-c', '--chords', action='store_true', help='Analyze chords')
     analyze_parser.add_argument('-s', '--sections', action='store_true', help='Detect sections')
-
-    # Analyze audio command
-    analyze_audio_parser = subparsers.add_parser(
-        'analyze-audio',
-        help='Analyze audio file for tempo/key/spectrum',
-    )
-    analyze_audio_parser.add_argument('audio_file', help='Audio file to analyze (wav/aiff)')
-
-    # Voice command
-    voice_parser = subparsers.add_parser('voice', help='Voice processing tools')
-    voice_subparsers = voice_parser.add_subparsers(dest='voice_cmd', help='Voice subcommands')
-
-    voice_tune = voice_subparsers.add_parser('tune', help='Auto-tune a vocal stem')
-    voice_tune.add_argument('input', help='Input vocal file (wav)')
-    voice_tune.add_argument('-o', '--output', help='Output file')
-    voice_tune.add_argument('-p', '--preset', choices=list(AUTO_TUNE_PRESETS.keys()), help='Auto-tune preset')
-    voice_tune.add_argument('-k', '--key', help='Song key (e.g., F)')
-    voice_tune.add_argument('-m', '--mode', default='major', help='Mode (major/minor/etc.)')
-
-    voice_mod = voice_subparsers.add_parser('modulate', help='Apply creative vocal modulation')
-    voice_mod.add_argument('input', help='Input vocal file (wav)')
-    voice_mod.add_argument('-o', '--output', help='Output file')
-    voice_mod.add_argument('-p', '--preset', choices=list(MODULATION_PRESETS.keys()), default='intimate_whisper')
-
-    voice_synth = voice_subparsers.add_parser('synthesize', help='Generate guide vocals')
-    voice_synth.add_argument('lyrics', help='Lyric line to render')
-    voice_synth.add_argument('melody', help='Comma-separated MIDI notes (e.g., "60,62,64")')
-    voice_synth.add_argument('-t', '--tempo', type=int, default=82, help='Tempo in BPM')
-    voice_synth.add_argument('-o', '--output', help='Output WAV file')
-    voice_synth.add_argument('-p', '--profile', choices=list(VOICE_PROFILES.keys()), default='guide_vulnerable')
-
-    voice_speak = voice_subparsers.add_parser('speak', help='Text-to-talk voice prompt')
-    voice_speak.add_argument('text', help='Text to speak/announce')
-    voice_speak.add_argument('-o', '--output', help='Output WAV file')
-    voice_speak.add_argument('-p', '--profile', choices=list(VOICE_PROFILES.keys()), default='guide_confident')
-    voice_speak.add_argument('-t', '--tempo', type=int, default=80, help='Speech cadence BPM')
-
-    # Chatbot command
-    chatbot_parser = subparsers.add_parser('chatbot', help='Offline chatbot interface')
-    chatbot_parser.add_argument('--model', required=True, help='Path to local LLM model (gguf/ggml)')
-    chatbot_parser.add_argument('--persona', default='You are DAiW\'s offline companion.', help='System prompt/persona text')
-
-    # Generate command
-    generate_parser = subparsers.add_parser('generate', help='Generate harmony from intent or parameters')
-    generate_parser.add_argument('-i', '--intent-file', help='Intent JSON file')
-    generate_parser.add_argument('-k', '--key', help='Key (e.g., C, F, Bb)')
-    generate_parser.add_argument('-m', '--mode', choices=['major', 'minor', 'dorian', 'phrygian', 'lydian', 'mixolydian'],
-                                 help='Mode/scale')
-    generate_parser.add_argument('-p', '--pattern', help='Roman numeral pattern (e.g., "I-V-vi-IV")')
-    generate_parser.add_argument('-o', '--output', help='Output MIDI file')
-    generate_parser.add_argument('-t', '--tempo', type=int, help='Tempo in BPM (default: 82)')
-
+    
     # Diagnose command
     diagnose_parser = subparsers.add_parser('diagnose', help='Diagnose chord progression')
     diagnose_parser.add_argument('progression', help='Chord progression (e.g., "F-C-Am-Dm")')
@@ -874,14 +599,10 @@ def main():
         'apply': cmd_apply,
         'humanize': cmd_humanize,
         'analyze': cmd_analyze,
-        'analyze-audio': cmd_analyze_audio,
-        'generate': cmd_generate,
         'diagnose': cmd_diagnose,
         'reharm': cmd_reharm,
         'teach': cmd_teach,
         'intent': cmd_intent,
-        'voice': cmd_voice,
-        'chatbot': cmd_chatbot,
     }
     
     return commands[args.command](args)

@@ -1,0 +1,33 @@
+# Multimodal JEPA (cross-modal prediction)
+# Reference: experiments/research JEPA proposal
+# Combines audio + MIDI + Spectocloud with cross-modal predictors
+
+seed: 1337
+device: cuda
+precision: bf16
+
+data:
+  manifest: data/manifests/aligned.jsonl
+  split: train
+
+model:
+  audio_encoder: vit_small
+  midi_encoder: vit_small
+  specto_encoder: vit_small
+  embed_dim: 384
+  predictor_dim: 384
+  ema:
+    enabled: true
+    momentum: 0.996
+
+loss:
+  pred_mse: 1.0
+  cross_mse: 0.5
+  vcr:
+    enabled: false
+    lambda_var: 1.0
+    lambda_cov: 1.0
+
+train:
+  epochs: 100
+  batch_size: 32

@@ -1687,7 +1687,9 @@ def process_intent(intent: CompleteSongIntent) -> Dict:
         intent: Complete song intent
     
     Returns:
-        Dict with harmony, groove, arrangement, production, and summary
+        Dict with harmony, groove, arrangement, production, melody, texture,
+        temporal, and intent_summary. MIDI path uses harmony + groove (tempo);
+        melody/texture/temporal are available for future humanization and arrangement.
     """
     processor = IntentProcessor(intent)
     return processor.generate_all()

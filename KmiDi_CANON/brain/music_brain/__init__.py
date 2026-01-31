@@ -17,27 +17,7 @@ __author__ = "Sean Burdges"
 
 from music_brain.groove import extract_groove, apply_groove, GrooveTemplate
 from music_brain.structure import analyze_chords, detect_sections, ChordProgression
-from music_brain.audio import (
-    analyze_feel,
-    AudioFeatures,
-    AudioAnalyzer,
-    AudioAnalysis,
-    RhythmAnalysis,
-    SpectralAnalysis,
-    FrequencyAnalyzer,
-    FrequencySpectrum,
-    ChordDetector,
-    DetectedChord,
-)
-from music_brain.harmony import HarmonyGenerator, HarmonyResult, generate_midi_from_harmony
-from music_brain.voice import (
-    AutoTuneProcessor,
-    AutoTuneSettings,
-    VoiceModulator,
-    ModulationSettings,
-    VoiceSynthesizer,
-    SynthConfig,
-)
+from music_brain.audio import analyze_feel, AudioFeatures
 
 # New comprehensive engine exports
 from music_brain.structure.comprehensive_engine import (
@@ -48,7 +28,6 @@ from music_brain.structure.comprehensive_engine import (
 )
 from music_brain.groove_engine import apply_groove as apply_groove_events
 from music_brain.text.lyrical_mirror import generate_lyrical_fragments
-from music_brain.api import DAiWAPI, api
 
 __all__ = [
     # Groove (file-based)
@@ -64,25 +43,6 @@ __all__ = [
     # Audio
     "analyze_feel",
     "AudioFeatures",
-    "AudioAnalyzer",
-    "AudioAnalysis",
-    "RhythmAnalysis",
-    "SpectralAnalysis",
-    "FrequencyAnalyzer",
-    "FrequencySpectrum",
-    "ChordDetector",
-    "DetectedChord",
-    # Voice
-    "AutoTuneProcessor",
-    "AutoTuneSettings",
-    "VoiceModulator",
-    "ModulationSettings",
-    "VoiceSynthesizer",
-    "SynthConfig",
-    # Harmony
-    "HarmonyGenerator",
-    "HarmonyResult",
-    "generate_midi_from_harmony",
     # Comprehensive Engine
     "AffectAnalyzer",
     "TherapySession",
@@ -90,7 +50,4 @@ __all__ = [
     "render_plan_to_midi",
     # Text/Lyrical
     "generate_lyrical_fragments",
-    # API Wrapper
-    "DAiWAPI",
-    "api",
 ]

@@ -1,0 +1,44 @@
+# MIDI JEPA (piano-roll)
+# Reference: experiments/research JEPA proposal
+# Data: aligned triple per manifest
+
+seed: 1337
+device: cuda
+precision: bf16
+
+data:
+  manifest: data/manifests/aligned.jsonl
+  midi:
+    representation: piano_roll
+    hop_ms: 20
+    include_velocity: true
+  split: train
+
+model:
+  encoder: vit_small
+  patch_size: [16, 16]
+  embed_dim: 384
+  depth: 10
+  heads: 6
+  predictor_dim: 384
+  ema:
+    enabled: true
+    momentum: 0.996
+
+masking:
+  type: beat_span
+  beat_span: [1, 4]
+  pitch_span: [12, 36]
+  mask_ratio: 0.6
+
+loss:
+  pred_mse: 1.0
+
+optimizer:
+  name: adamw
+  lr: 2.0e-4
+  weight_decay: 0.05
+
+train:
+  epochs: 50
+  batch_size: 64

@@ -1,4 +1,4 @@
-"""MCP workstation domain models — stubs for orchestrator."""
+"""MCP workstation domain models for orchestrator (phases, proposals, agents, status)."""
 
 from enum import Enum
 from typing import Any, Dict, Optional

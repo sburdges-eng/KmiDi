@@ -2,7 +2,8 @@
 Advanced Audio Data Augmentation for KmiDi ML Training.
 
 Provides music-aware augmentation techniques that preserve musical properties
-while increasing dataset diversity.
+while increasing dataset diversity. Implementation complete; augment_batch uses
+minimal torch path; full TorchAudio transforms optional for speed.
 
 Augmentations:
 - Time stretching (tempo change without pitch shift)

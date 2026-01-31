@@ -1,0 +1,44 @@
+# Spectocloud JEPA
+# Reference: experiments/research JEPA proposal
+# Data: spectocloud tensors from POST /spectocloud/render or precomputed cache
+
+seed: 1337
+device: cuda
+precision: bf16
+
+data:
+  manifest: data/manifests/aligned.jsonl
+  spectocloud:
+    tensor_format: npy
+    normalize: true
+    channels: 1
+  split: train
+
+model:
+  encoder: vit_small
+  patch_size: [16, 16]
+  embed_dim: 384
+  depth: 10
+  heads: 6
+  predictor_dim: 384
+  ema:
+    enabled: true
+    momentum: 0.996
+
+masking:
+  type: tf_block
+  time_span: [8, 32]
+  freq_span: [8, 24]
+  mask_ratio: 0.6
+
+loss:
+  pred_mse: 1.0
+
+optimizer:
+  name: adamw
+  lr: 2.0e-4
+  weight_decay: 0.05
+
+train:
+  epochs: 50
+  batch_size: 64

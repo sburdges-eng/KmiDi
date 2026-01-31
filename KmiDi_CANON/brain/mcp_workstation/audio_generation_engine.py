@@ -1,9 +1,9 @@
 """
-Audio generation engine — reimplementation for orchestrator.
+Audio generation engine for orchestrator.
 
 Provides AudioGenerationEngine: optional Audiocraft MusicGen for texture generation.
-When not installed or model fails to load, returns stubbed result so orchestrator continues.
-Contract: generate_audio_texture() returns dict with status in {stubbed, completed, failed, timeout},
+When not installed or model fails to load, returns status "stubbed" so orchestrator continues.
+Contract satisfied: generate_audio_texture() returns dict with status in {stubbed, completed, failed, timeout},
 details, and when completed: output_path, sample_rate, optionally audio_data_base64.
 
 Deps (optional): audiocraft, torch. Install when audio gen needed.

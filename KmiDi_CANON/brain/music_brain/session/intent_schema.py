@@ -639,6 +639,125 @@ class CompleteSongIntent:
     title: str = ""
     created: str = ""
     
+    # Workflow outputs (orchestrator)
+    midi_plan: Dict = field(default_factory=dict)
+    image_prompt: str = ""
+    image_style_constraints: str = ""
+    audio_texture_prompt: str = ""
+    explanation: str = ""
+    rule_breaking_logic: str = ""
+    generated_image_data: Dict = field(default_factory=dict)
+    generated_audio_data: Dict = field(default_factory=dict)
+    
+    # Flat read accessors for orchestrator
+    @property
+    def core_event(self) -> str:
+        return self.song_root.core_event
+    @property
+    def core_resistance(self) -> str:
+        return self.song_root.core_resistance
+    @property
+    def core_longing(self) -> str:
+        return self.song_root.core_longing
+    @property
+    def core_stakes(self) -> str:
+        return self.song_root.core_stakes
+    @property
+    def core_transformation(self) -> str:
+        return self.song_root.core_transformation
+    @property
+    def mood_primary(self) -> str:
+        return self.song_intent.mood_primary
+    @property
+    def mood_secondary_tension(self):
+        return getattr(self.song_intent, 'mood_secondary_tension', 0.5)
+    @property
+    def imagery_texture(self) -> str:
+        return self.song_intent.imagery_texture
+    @property
+    def vulnerability_scale(self) -> str:
+        return getattr(self.song_intent, 'vulnerability_scale', 'Medium')
+    @property
+    def narrative_arc(self) -> str:
+        return self.song_intent.narrative_arc
+    @property
+    def technical_genre(self) -> str:
+        return self.technical_constraints.technical_genre
+    @property
+    def technical_tempo_range(self) -> Tuple[int, int]:
+        return self.technical_constraints.technical_tempo_range
+    @property
+    def technical_key(self) -> str:
+        return self.technical_constraints.technical_key
+    @property
+    def technical_mode(self) -> str:
+        return self.technical_constraints.technical_mode
+    @property
+    def technical_rule_to_break(self) -> str:
+        return self.technical_constraints.technical_rule_to_break
+    @property
+    def technical_groove_feel(self) -> str:
+        return self.technical_constraints.technical_groove_feel
+    @property
+    def rule_breaking_justification(self) -> str:
+        return self.technical_constraints.rule_breaking_justification
+    @property
+    def output_target(self) -> str:
+        return self.system_directive.output_target
+    @property
+    def output_feedback_loop(self) -> str:
+        return self.system_directive.output_feedback_loop
+    
+    @classmethod
+    def from_flat(cls, **kwargs) -> "CompleteSongIntent":
+        """Build from flat kwargs (orchestrator)."""
+        root = SongRoot(
+            core_event=kwargs.get("core_event", ""),
+            core_resistance=kwargs.get("core_resistance", ""),
+            core_longing=kwargs.get("core_longing", ""),
+            core_stakes=kwargs.get("core_stakes", ""),
+            core_transformation=kwargs.get("core_transformation", ""),
+        )
+        si = SongIntent(
+            mood_primary=kwargs.get("mood_primary", ""),
+            mood_secondary_tension=kwargs.get("mood_secondary_tension", 0.5),
+            imagery_texture=kwargs.get("imagery_texture", ""),
+            vulnerability_scale=kwargs.get("vulnerability_scale", "Medium"),
+            narrative_arc=kwargs.get("narrative_arc", ""),
+        )
+        tempo = kwargs.get("technical_tempo_range", (80, 120))
+        if isinstance(tempo, list):
+            tempo = tuple(tempo)
+        tc = TechnicalConstraints(
+            technical_genre=kwargs.get("technical_genre", ""),
+            technical_tempo_range=tempo,
+            technical_key=kwargs.get("technical_key", ""),
+            technical_mode=kwargs.get("technical_mode", ""),
+            technical_groove_feel=kwargs.get("technical_groove_feel", ""),
+            technical_rule_to_break=kwargs.get("technical_rule_to_break", ""),
+            rule_breaking_justification=kwargs.get("rule_breaking_justification", ""),
+        )
+        sd = SystemDirective(
+            output_target=kwargs.get("output_target", ""),
+            output_feedback_loop=kwargs.get("output_feedback_loop", ""),
+        )
+        return cls(
+            song_root=root,
+            song_intent=si,
+            technical_constraints=tc,
+            system_directive=sd,
+            title=kwargs.get("title", ""),
+            created=kwargs.get("created", ""),
+            midi_plan=kwargs.get("midi_plan", {}),
+            image_prompt=kwargs.get("image_prompt", ""),
+            image_style_constraints=kwargs.get("image_style_constraints", ""),
+            audio_texture_prompt=kwargs.get("audio_texture_prompt", ""),
+            explanation=kwargs.get("explanation", ""),
+            rule_breaking_logic=kwargs.get("rule_breaking_logic", ""),
+            generated_image_data=kwargs.get("generated_image_data", {}),
+            generated_audio_data=kwargs.get("generated_audio_data", {}),
+        )
+    
     def to_dict(self) -> Dict:
         """Convert to dictionary for serialization."""
         return {
@@ -671,6 +790,10 @@ class CompleteSongIntent:
                 "output_target": self.system_directive.output_target,
                 "output_feedback_loop": self.system_directive.output_feedback_loop,
             },
+            "midi_plan": self.midi_plan,
+            "explanation": self.explanation,
+            "generated_image_data": self.generated_image_data,
+            "generated_audio_data": self.generated_audio_data,
         }
     
     @classmethod
@@ -720,6 +843,10 @@ class CompleteSongIntent:
                 output_feedback_loop=sd.get("output_feedback_loop", ""),
             )
         
+        intent.midi_plan = data.get("midi_plan", {})
+        intent.explanation = data.get("explanation", "")
+        intent.generated_image_data = data.get("generated_image_data", {})
+        intent.generated_audio_data = data.get("generated_audio_data", {})
         return intent
     
     def save(self, path: str):

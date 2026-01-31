@@ -1,5 +1,9 @@
 """
 Local chatbot agent bridging an offline LLM with DAiW APIs.
+
+DEFERRED: Full offline LLM integration (llama.cpp / GPT4All) is not yet implemented.
+This module returns placeholder responses so the path is not silent. For production,
+integrate an offline LLM and remove the [deferred] prefix from responses.
 """
 
 from __future__ import annotations
@@ -41,7 +45,7 @@ class LLMRunner:
         integrate with an offline LLM library (llama.cpp, GPT4All, etc.).
         """
         last_user = messages[-1]["content"]
-        return f"[offline placeholder] You said: {last_user[:100]}"
+        return f"[deferred] You said: {last_user[:100]} (offline LLM not yet integrated; see module docstring.)"
 
 
 class ChatAgent:

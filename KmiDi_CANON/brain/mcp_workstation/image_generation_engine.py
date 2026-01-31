@@ -1,14 +1,14 @@
 """
-Image generation engine — reimplementation for orchestrator.
+Image generation engine for orchestrator.
 
-Provides ImageGenerationEngine: optional Stable Diffusion (diffusers) pipeline;
-when not installed or configured, returns stubbed result so orchestrator continues.
-Contract: generate() returns dict with status in {stubbed, completed, failed},
+Provides ImageGenerationEngine: optional Stable Diffusion (diffusers) pipeline.
+When not installed or configured, returns status "stubbed" so orchestrator continues.
+Contract satisfied: generate() returns dict with status in {stubbed, completed, failed, timeout},
 details, and when completed: output_path and optionally image_data_base64.
 
 Deps (optional): diffusers, torch, transformers. Install when image gen needed.
 Env: KMI_DI_IMAGE_MODEL_PATH or STABLE_DIFFUSION_MODEL_PATH — model dir or hub id
-     (e.g. runwayml/stable-diffusion-v1-5). Default: stub; check mode runs without.
+     (e.g. runwayml/stable-diffusion-v1-5). Default: stubbed; check mode runs without.
 """
 
 from pathlib import Path

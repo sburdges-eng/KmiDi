@@ -66,6 +66,7 @@ from music_brain.voice import (
     SynthConfig,
     get_voice_profile,
 )
+from music_brain.visualization.spectocloud import render_spectocloud_from_request
 
 
 class DAiWAPI:
@@ -489,7 +490,7 @@ class DAiWAPI:
         """
         result = process_intent(intent)
         
-        # Convert to serializable format
+        # Convert to serializable format (full process_intent output for integration)
         output = {
             "intent_summary": result['intent_summary'],
             "harmony": {
@@ -517,6 +518,39 @@ class DAiWAPI:
                 "rule_broken": result['production'].rule_broken,
             },
         }
+        # Integrate melody, texture, temporal (canon intent_processor) for downstream use
+        if "melody" in result:
+            m = result["melody"]
+            output["melody"] = {
+                "contour": m.contour,
+                "interval_character": m.interval_character,
+                "phrase_structure": m.phrase_structure,
+                "resolution_behavior": m.resolution_behavior,
+                "rhythmic_character": m.rhythmic_character,
+                "range_notes": m.range_notes,
+                "motif_ideas": getattr(m, "motif_ideas", []) or [],
+                "rule_broken": getattr(m, "rule_broken", "") or "",
+                "rule_effect": getattr(m, "rule_effect", "") or "",
+            }
+        if "texture" in result:
+            t = result["texture"]
+            output["texture"] = {
+                "density_level": t.density_level,
+                "frequency_balance": t.frequency_balance,
+                "space_character": getattr(t, "space_character", "") or "",
+                "rule_broken": getattr(t, "rule_broken", "") or "",
+                "rule_effect": getattr(t, "rule_effect", "") or "",
+            }
+        if "temporal" in result:
+            tm = result["temporal"]
+            output["temporal"] = {
+                "pacing": tm.pacing,
+                "pause_strategy": getattr(tm, "pause_strategy", "") or "",
+                "transition_style": getattr(tm, "transition_style", "") or "",
+                "time_feel": getattr(tm, "time_feel", "") or "",
+                "rule_broken": getattr(tm, "rule_broken", "") or "",
+                "rule_effect": getattr(tm, "rule_effect", "") or "",
+            }
         
         if output_json:
             import json
@@ -573,6 +607,15 @@ class DAiWAPI:
     def get_humanization_preset_info(self, preset_name: str) -> Dict[str, Any]:
         """Get information about a humanization preset."""
         return get_preset(preset_name)
+
+    # ========== Visualization (spectocloud — spine CONTRACTS §5b) ==========
+
+    def render_spectocloud(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Render spectocloud from request payload (midi_events or midi_file_path, etc.).
+        Returns dict with status, mode, output_path, frames.
+        """
+        return render_spectocloud_from_request(payload)
 
 
 # Convenience instance

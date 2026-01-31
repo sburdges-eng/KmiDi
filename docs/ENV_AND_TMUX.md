@@ -47,7 +47,7 @@ Orchestrator image and audio generation use optional deps; when missing, engines
 | **Image** | `KMI_DI_IMAGE_MODEL_PATH`, `STABLE_DIFFUSION_MODEL_PATH` | runwayml/stable-diffusion-v1-5 | diffusers, torch |
 | **Audio** | `KMI_DI_AUDIO_MODEL_ID`, `AUDIOCRAFT_MODEL_ID` | musicgen-small | audiocraft, torch |
 
-Status in result dict: `stubbed` (not loaded), `completed`, `failed`. See `docs/CONTRACTS.md` §6.
+Status in result dict: `stubbed` (not loaded), `completed`, `failed`. See `docs/CONTRACTS.md` §7.
 
 ---
 
@@ -64,6 +64,8 @@ Without tmux: SSH drops, terminal crashes, laptop sleeps → training dies. We a
 3. Detach safely: **Ctrl+B** then **D**. Training continues. Laptop can close; run survives.
 
 ### Cursor / AI directive
+
+**Agents:** After the first command in a session, use tmux for any subsequent command that is long-running or starts a process (servers, training, dataset builds, compiles). Do not run critical jobs in ephemeral IDE terminals.
 
 When executing long-running processes (training, dataset builds, servers, compiles): **always** recommend tmux. If the user tries to launch training in a normal terminal, intervene and suggest tmux. Preferred pattern:
 

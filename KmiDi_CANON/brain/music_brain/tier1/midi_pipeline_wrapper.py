@@ -33,10 +33,11 @@ class MIDIGenerationPipeline:
             intent.technical_constraints.technical_mode = "major"
 
         try:
-            # Process intent: harmony, groove, arrangement, production
+            # Process intent: harmony, groove, arrangement, production, melody, texture, temporal
             processed = process_intent(intent)
             progression = processed["harmony"]
             groove = processed.get("groove")
+            # TODO: use groove.timing_offsets_16th / velocity_curve for humanization when tier1 supports it
             tempo_bpm = groove.tempo_bpm if groove else 82
             tempo_range = getattr(
                 intent.technical_constraints,
@@ -62,7 +63,12 @@ class MIDIGenerationPipeline:
             midi_path = output_path / midi_name
             generate_midi_from_harmony(harmony, str(midi_path), tempo_bpm=tempo_bpm)
 
-            return {
+            # Integrate arrangement/melody/texture/temporal summary for orchestrator/dashboard
+            arrangement = processed.get("arrangement")
+            melody = processed.get("melody")
+            texture = processed.get("texture")
+            temporal = processed.get("temporal")
+            out = {
                 "status": "completed",
                 "midi_path": str(midi_path),
                 "key": harmony.key,
@@ -72,6 +78,22 @@ class MIDIGenerationPipeline:
                 "groove_tempo": tempo_bpm,
                 "details": f"MIDI written to {midi_path} (process_intent → harmony → MIDI)",
             }
+            if arrangement:
+                out["arrangement_summary"] = (
+                    len(arrangement.sections) if arrangement.sections else 0
+                )
+                if arrangement.sections:
+                    out["arrangement_section_names"] = [
+                        s.get("name", "") for s in arrangement.sections[:5]
+                    ]
+            if melody:
+                out["melody_contour"] = getattr(melody, "contour", "") or ""
+                out["melody_phrase_structure"] = getattr(melody, "phrase_structure", "") or ""
+            if texture:
+                out["texture_density"] = getattr(texture, "density_level", "") or ""
+            if temporal:
+                out["temporal_pacing"] = getattr(temporal, "pacing", "") or ""
+            return out
         except Exception as e:
             return {
                 "status": "error",
