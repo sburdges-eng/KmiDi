@@ -1,0 +1,44 @@
+# KmiDi cloud trainer — CUDA 12.1, PyTorch, Accelerate.
+# Use on Lambda Labs / RunPod / etc. Never train on ephemeral root disk.
+# Reference: docs/CLOUD_TRAINING.md
+
+FROM nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-pip \
+    python3-dev \
+    git \
+    ffmpeg \
+    libsndfile1 \
+    libsndfile1-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+RUN pip install --upgrade pip setuptools wheel
+
+# PyTorch CUDA 12.1 (do NOT pip install torch blindly)
+RUN pip install --no-cache-dir \
+    torch torchvision torchaudio \
+    --index-url https://download.pytorch.org/whl/cu121
+
+# Training stack
+RUN pip install --no-cache-dir \
+    transformers \
+    accelerate \
+    pytorch-lightning \
+    webdataset \
+    wandb \
+    numpy \
+    scipy \
+    pyyaml \
+    tqdm \
+    librosa \
+    soundfile
+
+WORKDIR /workspace
+
+# Default CMD; cloud_train.sh overrides with volume mounts and config path
+CMD ["python", "-m", "KmiDi_CANON.training.train_jepa", "--config", "/workspace/config.yaml", "--output_dir", "/workspace/checkpoints"]

@@ -1,0 +1,20 @@
+{
+  "registry_version": 1,
+  "model_dirs": [
+    "~/Models/checkpoints",
+    "~/Models/exported"
+  ],
+  "models": [
+    {
+      "id": "emotion_embedding_default",
+      "task": "emotion_embedding",
+      "format": "pytorch",
+      "file": "~/Models/checkpoints/exp_001_emotion_encoder/best.pt",
+      "version": "1.0.0",
+      "sample_rate": 22050,
+      "inference_target_ms": 50,
+      "note": "Emotion embedding model; placeholder path. Weights live under ~/Models, not in repo.",
+      "status": "staging"
+    }
+  ]
+}

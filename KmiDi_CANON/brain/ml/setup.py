@@ -2,8 +2,8 @@
 Coexist router setup — Build registry and router from env.
 
 Reads KMI_DI_MODEL_MODE (current|shadow|jepa), KMI_DI_SHADOW_LOG_DIR.
-Registers stub backends for midi_understanding, audio_understanding, specto_understanding.
-Replace stubs with real models as JEPA training progresses.
+Registers placeholder backends for midi_understanding, audio_understanding, specto_understanding.
+Replace placeholders with real models as JEPA training progresses.
 """
 
 import os
@@ -15,12 +15,12 @@ from .shadow_logger import ShadowLogger
 
 
 def _stub_current_infer(inputs: dict) -> Result:
-    """Stub current backend: returns minimal payload. Replace with real encoder."""
+    """Placeholder current backend: returns minimal payload. Replace with real encoder."""
     return Result(payload={"source": "current", "status": "completed"}, status="completed")
 
 
 def _stub_jepa_infer(inputs: dict) -> Result:
-    """Stub JEPA backend: not yet trained. Replace when JEPA models are available."""
+    """Placeholder JEPA backend: not yet trained. Replace when JEPA models are available."""
     return Result(payload={"source": "jepa", "status": "stub"}, status="stub")
 
 
@@ -28,7 +28,7 @@ def _build_registry() -> CoexistRegistry:
     """Build registry with current and JEPA backends per capability."""
     registry = CoexistRegistry()
 
-    # Stub adapters — same interface: .infer(inputs) -> Result
+    # Placeholder adapters — same interface: .infer(inputs) -> Result
     class StubCurrent:
         def infer(self, x): return _stub_current_infer(x)
 

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kmidi.dev/schemas/registry.json",
+  "title": "KmiDi Model Registry Manifest",
+  "description": "Manifest for penta_core model_registry.load_registry_manifest(). Model weights live under ~/Models; paths may be absolute or relative to manifest dir.",
+  "type": "object",
+  "properties": {
+    "registry_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Schema version for forward compatibility."
+    },
+    "model_dirs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Directories to scan for discovered models (paths resolved from manifest dir or absolute)."
+    },
+    "models": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/model_entry" },
+      "description": "Explicit model entries for discovery and inference."
+    }
+  },
+  "$defs": {
+    "model_entry": {
+      "type": "object",
+      "required": [ "id" ],
+      "properties": {
+        "id": { "type": "string", "description": "Unique model identifier (used by get_model(name))." },
+        "task": {
+          "type": "string",
+          "enum": [
+            "emotion_embedding", "melody_generation", "harmony_prediction", "dynamics_mapping",
+            "groove_prediction", "intent_mapping", "audio_classification", "custom",
+            "chord_prediction", "chord_detection", "key_detection", "tempo_estimation",
+            "style_transfer", "emotion_classification", "audio_generation", "onset_detection", "beat_tracking"
+          ],
+          "description": "ModelTask value for penta_core."
+        },
+        "format": {
+          "type": "string",
+          "enum": [ "onnx", "coreml", "mlmodel", "pytorch", "torchscript", "rtneural-json", "rtneural", "tflite", "tensorflow" ],
+          "description": "Backend / format for loading."
+        },
+        "file": { "type": "string", "description": "Path to model file (relative to manifest dir or absolute)." },
+        "onnx_path": { "type": "string", "description": "Alias for file when format is onnx." },
+        "coreml_path": { "type": "string", "description": "Alias for file when format is coreml." },
+        "version": { "type": "string", "default": "1.0.0" },
+        "input_size": { "type": "integer", "description": "Input size (e.g. feature dim) if applicable." },
+        "output_size": { "type": "integer", "description": "Output size if applicable." },
+        "sample_rate": { "type": "integer", "description": "Audio sample rate if applicable." },
+        "inference_target_ms": { "type": "number", "description": "Target latency in ms." },
+        "note": { "type": "string", "description": "Human-readable description." },
+        "license": { "type": "string" },
+        "status": { "type": "string", "description": "Status tag, e.g. production, staging, experiment." }
+      }
+    }
+  }
+}

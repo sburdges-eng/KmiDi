@@ -1,0 +1,45 @@
+# Cloud training — Lambda Labs / RunPod / etc.
+# Reference: docs/CLOUD_TRAINING.md
+# Mount persistent volume at /workspace. Never train on ephemeral disk.
+# Use with: configs/jepa_audio.yaml as base; this adds cloud-specific overrides.
+
+seed: 1337
+device: cuda
+precision: fp16  # mixed precision for faster training + less VRAM
+
+data:
+  manifest: /workspace/datasets/manifests/aligned.jsonl
+  # WebDataset shards (preferred); fallback to manifest
+  shard_pattern: /workspace/datasets/shards/train-%06d.tar
+  num_workers: 8
+  pin_memory: true
+  prefetch_factor: 2
+  audio:
+    sample_rate: 24000
+    n_mels: 96
+    win_ms: 25
+    hop_ms: 10
+    log_mel: true
+    normalize: true
+
+model:
+  encoder: vit_small
+  patch_size: [16, 16]
+  embed_dim: 384
+  depth: 12
+  heads: 6
+  predictor_dim: 384
+  ema:
+    enabled: true
+    momentum: 0.996
+
+train:
+  batch_size: 64
+  epochs: 50
+  grad_clip: 1.0
+  log_every: 50
+  save_every: 1
+  checkpoint_every_n_steps: 1000
+  checkpoint_every_n_epochs: 1
+  save_best: true
+  auto_resume: true

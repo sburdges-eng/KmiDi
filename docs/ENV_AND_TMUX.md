@@ -77,6 +77,10 @@ micromamba activate <env>
 
 Terminals are disposable. tmux is reality.
 
+### Cloud training (always tmux)
+
+Cloud GPU runs use `scripts/cloud_train.sh`, which launches training **inside tmux** (session: `kmidi-train`). Never run cloud training in a bare SSH session. See [CLOUD_TRAINING.md](CLOUD_TRAINING.md).
+
 ### Auto-start tmux (optional)
 
 Add to `.zshrc` so every new shell lands in persistence:

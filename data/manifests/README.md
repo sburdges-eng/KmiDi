@@ -1,6 +1,11 @@
 # Data Manifests
 
-JEPA training configs (`configs/jepa_*.yaml`) reference `data/manifests/aligned.jsonl`.
+JEPA training configs (`configs/jepa_*.yaml`) reference `data/manifests/aligned.jsonl`. penta_core discovers models from `registry.json` (see [docs/AI_MODEL_STRUCTURES.md](../docs/AI_MODEL_STRUCTURES.md)).
+
+## registry.json / registry.schema.json
+
+- **registry.json** — Model registry manifest for penta_core `model_registry.load_registry_manifest()`. Paths point to `~/Models` (weights never in repo).
+- **registry.schema.json** — JSON schema for `registry.json`; optional validation when `jsonschema` is installed.
 
 ## aligned.jsonl format
 

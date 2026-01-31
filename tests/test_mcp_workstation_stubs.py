@@ -1,5 +1,5 @@
 """
-Tests for newly implemented mcp_workstation stub functions.
+Tests for newly implemented mcp_workstation placeholder functions.
 
 Tests debug.py, ai_specializations.py, and cpp_planner.py implementations.
 """

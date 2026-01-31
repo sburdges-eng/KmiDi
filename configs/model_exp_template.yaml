@@ -1,0 +1,39 @@
+# AI model experiment config template
+# Copy to configs/exp_NNN_short_name.yaml and fill in.
+# Governance: DATA LAW, TRAINING SAFETY LAW — datasets/checkpoints outside repo.
+
+experiment: exp_NNN_short_name  # e.g. exp_001_emotion_encoder
+
+seed: 1337
+device: auto   # auto | cuda | cpu | mps
+precision: bf16  # bf16 | fp16 | fp32
+
+# Paths (outside repo)
+paths:
+  dataset: "~/Datasets/kmidi_learning"           # or ~/Datasets/kmidi_jepa
+  checkpoint_dir: "~/Models/checkpoints/exp_NNN_short_name"
+  log_dir: "~/Models/logs/exp_NNN_short_name"
+  export_dir: "~/Models/exported/exp_NNN_short_name"
+
+# Data
+data:
+  manifest: data/manifests/aligned.jsonl   # or override with absolute path to ~/Datasets/.../manifest
+  split: train
+  # modality-specific (audio / midi / multimodal) — copy from configs/jepa_*.yaml as needed
+
+# Model (architecture / hyperparams)
+model:
+  # Copy from jepa_*.yaml or ML_TRAINED_MODELS/ml/ml-training-suite/configs/config.yaml
+  type: null
+  # ...
+
+# Training
+train:
+  epochs: 50
+  batch_size: 64
+  save_every: 1
+  log_every: 50
+  grad_clip: 1.0
+
+# Run manifest: create experiments/exp_NNN_short_name/manifest_run_YYYYMMDD_HHMM.json
+# with experiment, config path, dataset_path, checkpoint_dir, seed, git_commit, timestamp.

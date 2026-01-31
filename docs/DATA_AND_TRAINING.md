@@ -12,6 +12,8 @@ Datasets and model weights live **outside** the repo. Every training event must 
 
 Never store large datasets inside the repository. Never duplicate datasets. Warn if dataset sprawl appears.
 
+**JEPA + current training env:** See [TRAINING_ENV.md](TRAINING_ENV.md). **JEPA datasets (acquire/create):** See [JEPA_DATASETS.md](JEPA_DATASETS.md). **Cloud GPU training:** See [CLOUD_TRAINING.md](CLOUD_TRAINING.md). Local learning dirs: `./scripts/setup_training_env.sh`.
+
 ## Repo layout for training
 
 - **configs/** — Training/config YAML or JSON (in repo).
