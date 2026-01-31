@@ -29,6 +29,15 @@ Do **not** create 12 environments. Keep it minimal:
 
 Environment sprawl is real. Stay calm.
 
+### LLM model (optional)
+
+Orchestrator intent parsing can use a local LLM (GGUF) when available. Set one of:
+
+- `KMI_DI_LLM_MODEL_PATH` — path to GGUF model file
+- `LLM_MODEL_PATH` — fallback env
+
+If unset or model missing, the engine uses a rule-based keyword parser (no install). For LLM-backed parsing: install `llama-cpp-python`, point env at a GGUF file; see `mcp_workstation/llm_reasoning_engine.py`.
+
 ---
 
 ## tmux — process persistence

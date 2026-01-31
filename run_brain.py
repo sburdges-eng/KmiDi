@@ -52,7 +52,7 @@ def main():
         metavar="N",
         help="Max restarts when using --loop (0 = infinite, default: 0)",
     )
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
 
     if args.mode == "check":
         _check_modules()
@@ -63,7 +63,7 @@ def main():
     if args.mode == "penta":
         return _run_penta()
     if args.mode == "orchestrator":
-        return _run_orchestrator()
+        return _run_orchestrator(unknown)
     if args.mode == "gui":
         return _run_gui()
 
@@ -107,17 +107,15 @@ def _run_mode(mode: str) -> int:
 
 
 def _check_modules():
-    """Report module availability."""
+    """Report spine module availability (per docs/CONTRACTS.md and docs/BOOT.md)."""
     print("KmiDi Brain module check:")
     brain = ROOT / "KmiDi_CANON" / "brain"
     checks = [
         ("penta_core/ml", (brain / "penta_core" / "ml" / "inference.py").exists()),
+        ("music_brain/session", (brain / "music_brain" / "session").exists()),
+        ("music_brain/tier1", (brain / "music_brain" / "tier1" / "midi_pipeline_wrapper.py").exists()),
         ("mcp_workstation", (brain / "mcp_workstation" / "orchestrator.py").exists()),
         ("kmidi_gui", (brain / "kmidi_gui" / "core" / "control_surface.py").exists()),
-        (
-            "music_brain/session",
-            (brain / "music_brain" / "session").exists(),
-        ),
     ]
     for name, ok in checks:
         status = "OK" if ok else "MISSING (restore or rebuild)"
@@ -136,12 +134,17 @@ def _run_penta():
         return 1
 
 
-def _run_orchestrator():
-    """Run mcp_workstation Orchestrator."""
+def _run_orchestrator(extra_argv=None):
+    """Run mcp_workstation Orchestrator. extra_argv: args to pass through (e.g. --llm_model_path, --prompt)."""
     try:
         from KmiDi_CANON.brain.mcp_workstation.orchestrator import main as orch_main
 
-        return orch_main()
+        old_argv = sys.argv
+        sys.argv = ["orchestrator"] + (extra_argv or [])
+        try:
+            return orch_main()
+        finally:
+            sys.argv = old_argv
     except ImportError as e:
         print(f"Orchestrator import error: {e}")
         print("  music_brain.session or music_brain.tier1 may be missing.")

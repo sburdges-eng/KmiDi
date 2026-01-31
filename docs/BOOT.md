@@ -25,9 +25,9 @@ Before relying on orchestrator or full stack, run:
 python run_brain.py check
 ```
 
-Reports: `penta_core/ml`, `mcp_workstation`, `kmidi_gui`, `music_brain/session` — OK or MISSING.
+**Check list (spine order):** `penta_core/ml`, `music_brain/session`, `music_brain/tier1`, `mcp_workstation`, `kmidi_gui` — OK or MISSING. See `docs/CONTRACTS.md` for contract owners.
 
-If **music_brain** is missing: restore from sburdges-eng/KmiDi forensic or rebuild. Not present on all online branches.
+If **music_brain** or **tier1** is missing: restore from sburdges-eng/KmiDi forensic or rebuild. Not present on all online branches.
 
 ## Boot sequence (recommended)
 
@@ -59,6 +59,30 @@ python run_brain.py orchestrator --loop
 # Detach: Ctrl+B then D
 ```
 
+## Orchestrator phase order
+
+Per `docs/CONTRACTS.md`: LLM intent → from_flat or use forensic intent → MIDI pipeline → optional image → optional audio. Error handling: phase failure sets result dict to `status: "error"` or `"failed"` with `details`; workflow still returns the intent.
+
+## Stub vs failed vs completed
+
+- **stubbed** — Capability not loaded (e.g. model missing); placeholder result; orchestrator continues.
+- **failed** — Capability ran but returned error.
+- **completed** — Capability ran and produced output.
+- **error** — Exception or unrecoverable failure.
+
+Orchestrator never blocks on stub; it records status and continues.
+
+## Optional model paths (image / audio)
+
+`run_brain.py check` runs without any of these. Set only when using image or audio generation.
+
+| Env | Purpose | Default / note |
+|-----|---------|----------------|
+| `KMI_DI_IMAGE_MODEL_PATH` or `STABLE_DIFFUSION_MODEL_PATH` | Image pipeline (diffusers hub id or path) | `runwayml/stable-diffusion-v1-5`; stub if diffusers/torch not installed. |
+| `KMI_DI_AUDIO_MODEL_ID` or `AUDIOCRAFT_MODEL_ID` | Audio model (MusicGen hub id) | `musicgen-small`; stub if audiocraft not installed. |
+
+Check mode does not load models; orchestrator preloads image/audio engines and continues with stubbed result if load fails.
+
 ## CI / automation
 
-Consider adding `run_brain.py check` to CI or a pre-push hook to catch missing modules before they break remote runs.
+Consider adding `run_brain.py check` to CI or a pre-push hook to catch missing modules before they break remote runs. Run brain tests: from repo root, `python -m pytest tests/ -v` (requires `tests/conftest.py` path setup).
