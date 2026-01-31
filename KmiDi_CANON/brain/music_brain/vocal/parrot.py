@@ -6,12 +6,15 @@ mimic voices after prolonged exposure. It learns vowels, accents, pitch contours
 and timbre to create realistic voice synthesis.
 """
 
+import logging
 from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Optional, Tuple, Any
 from pathlib import Path
 import json
 import numpy as np
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 try:
     import librosa
@@ -761,14 +764,14 @@ class ParrotVocalSynthesizer:
         Returns:
             Trained VoiceModel
         """
-        print(f"Training Parrot on {len(audio_files)} audio files...")
+        logger.info("Training Parrot on %d audio files...", len(audio_files))
         
         for i, audio_file in enumerate(audio_files, 1):
             if not Path(audio_file).exists():
-                print(f"Warning: Skipping {audio_file} (not found)")
+                logger.warning("Skipping %s (not found)", audio_file)
                 continue
             
-            print(f"  [{i}/{len(audio_files)}] Processing {Path(audio_file).name}...")
+            logger.info("  [%d/%d] Processing %s...", i, len(audio_files), Path(audio_file).name)
             self.analyze_voice(audio_file, voice_name, update_existing=True)
         
         # Get final model
@@ -777,9 +780,9 @@ class ParrotVocalSynthesizer:
         else:
             raise ValueError(f"Failed to create voice model '{voice_name}'")
         
-        print(f"✓ Batch training complete")
-        print(f"  Total exposure: {model.characteristics.exposure_time:.1f}s")
-        print(f"  Confidence: {model.characteristics.confidence:.2%}")
+        logger.info("✓ Batch training complete")
+        logger.info("  Total exposure: %.1fs", model.characteristics.exposure_time)
+        logger.info("  Confidence: %.2f%%", model.characteristics.confidence * 100)
         
         return model
     

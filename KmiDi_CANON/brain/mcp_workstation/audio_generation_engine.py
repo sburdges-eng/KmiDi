@@ -204,7 +204,8 @@ class AudioGenerationEngine:
 
 # Example usage (for testing)
 if __name__ == "__main__":
-    print("Initializing Audio Generation Engine...")
+    log = _log()
+    log.info("Initializing Audio Generation Engine...")
     engine = AudioGenerationEngine()
     # For real use, you'd call engine._load_model() if needed.
 
@@ -212,32 +213,30 @@ if __name__ == "__main__":
     if AUDIOCRAFT_AVAILABLE:
         try:
             engine._load_model()
-            print("Attempting to generate audio...")
+            log.info("Attempting to generate audio...")
             result = engine.generate_audio_texture(
                 prompt="a subtle, evolving drone with metallic overtones"
             )
-            print("Audio Generation Result:")
-            print(result["status"])
-            print(result["details"])
+            log.info("Audio Generation Result: %s %s", result["status"], result["details"])
             if result["status"] == "completed":
-                print("Simulated audio data generated.")
+                log.info("Simulated audio data generated.")
         except Exception as e:
-            print(f"Caught error during example usage: {e}")
+            log.exception("Caught error during example usage: %s", e)
     else:
-        print("Skipping audio generation example: audiocraft not available.")
+        log.info("Skipping audio generation example: audiocraft not available.")
 
     # Test lock mechanism
-    print("\nTesting lock mechanism...")
+    log.info("Testing lock mechanism...")
     if engine.acquire_lock(timeout=1):
-        print("Lock acquired.")
+        log.info("Lock acquired.")
         time.sleep(2)  # Simulate work
         engine.release_lock()
-        print("Lock released.")
+        log.info("Lock released.")
     else:
-        print("Could not acquire lock.")
+        log.warning("Could not acquire lock.")
 
     # Another attempt (should acquire quickly now)
     if engine.acquire_lock(timeout=1):
-        print("Lock acquired again.")
+        log.info("Lock acquired again.")
         engine.release_lock()
-        print("Lock released again.")
+        log.info("Lock released again.")

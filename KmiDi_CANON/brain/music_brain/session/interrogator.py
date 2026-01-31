@@ -14,10 +14,13 @@ This module implements the "Creative Companion, Not a Factory" approach:
 The tool shouldn't finish art for people - it should make them braver.
 """
 
+import logging
+import random
 from typing import List, Dict, Optional, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-import random
+
+logger = logging.getLogger(__name__)
 
 
 class SongPhase(Enum):
@@ -190,15 +193,15 @@ class SongInterrogator:
         Returns:
             SongContext built from responses
         """
-        print("\n" + "=" * 60)
-        print("🎵 SONG INTERROGATOR")
-        print("=" * 60)
-        print("\nLet's dig into what this song really needs to be.")
-        print("Answer honestly. The song will thank you.\n")
+        logger.info("\n" + "=" * 60)
+        logger.info("🎵 SONG INTERROGATOR")
+        logger.info("=" * 60)
+        logger.info("\nLet's dig into what this song really needs to be.")
+        logger.info("Answer honestly. The song will thank you.\n")
         
         if title:
             self.context.title = title
-            print(f"Working on: '{title}'\n")
+            logger.info("Working on: '%s'\n", title)
         
         # Run through phases
         for phase in SongPhase:
@@ -221,14 +224,14 @@ class SongInterrogator:
     
     def _run_phase(self, phase: SongPhase):
         """Run interrogation for a single phase."""
-        print("\n" + "-" * 40)
-        print(f"📋 {phase.value.upper()}")
-        print("-" * 40 + "\n")
+        logger.info("\n" + "-" * 40)
+        logger.info("📋 %s", phase.value.upper())
+        logger.info("-" * 40 + "\n")
         
         questions = INTERROGATION_QUESTIONS[phase]
         
         for i, question in enumerate(questions[:3]):  # Ask 3 questions per phase
-            print(f"Q: {question}")
+            logger.info("Q: %s", question)
             
             try:
                 answer = input("A: ").strip()
@@ -247,9 +250,9 @@ class SongInterrogator:
             # Occasionally challenge or follow up
             if random.random() < 0.3 and i < len(questions) - 1:
                 if random.random() < 0.5:
-                    print(f"\n💭 {random.choice(FOLLOW_UPS)}")
+                    logger.info("\n💭 %s", random.choice(FOLLOW_UPS))
                 else:
-                    print(f"\n⚡ {random.choice(CHALLENGES)}")
+                    logger.info("\n⚡ %s", random.choice(CHALLENGES))
                 
                 try:
                     followup = input("A: ").strip()
@@ -258,7 +261,7 @@ class SongInterrogator:
                 except EOFError:
                     pass
             
-            print()
+            logger.info("")
     
     def _store_answer(self, phase: SongPhase, question: str, answer: str):
         """Store answer in appropriate context field."""
@@ -281,7 +284,7 @@ class SongInterrogator:
                         if word.isdigit():
                             self.context.vulnerability_level = int(word)
                             break
-                except:
+                except (ValueError, AttributeError):
                     pass
         
         elif phase == SongPhase.STORY:
@@ -326,41 +329,41 @@ class SongInterrogator:
                 self.context.production_rules_to_break.append(answer)
     
     def _summarize(self):
-        """Print summary of gathered context."""
-        print("\n" + "=" * 60)
-        print("📝 SONG BRIEF")
-        print("=" * 60)
+        """Log summary of gathered context."""
+        logger.info("\n" + "=" * 60)
+        logger.info("📝 SONG BRIEF")
+        logger.info("=" * 60)
         
         if self.context.title:
-            print(f"\nTitle: {self.context.title}")
+            logger.info("\nTitle: %s", self.context.title)
         
         if self.context.core_emotion:
-            print(f"Core emotion: {self.context.core_emotion}")
+            logger.info("Core emotion: %s", self.context.core_emotion)
         
         if self.context.emotional_arc:
-            print(f"Emotional arc: {' → '.join(self.context.emotional_arc)}")
+            logger.info("Emotional arc: %s", " → ".join(self.context.emotional_arc))
         
         if self.context.subject:
-            print(f"About: {self.context.subject}")
+            logger.info("About: %s", self.context.subject)
         
         if self.context.tempo_feel:
-            print(f"Tempo feel: {self.context.tempo_feel}")
+            logger.info("Tempo feel: %s", self.context.tempo_feel)
         
         if self.context.key_instruments:
-            print(f"Key instruments: {', '.join(self.context.key_instruments)}")
+            logger.info("Key instruments: %s", ", ".join(self.context.key_instruments))
         
         if self.context.production_style:
-            print(f"Production: {self.context.production_style}")
+            logger.info("Production: %s", self.context.production_style)
         
         if self.context.key_phrases:
-            print(f"Key phrases: {'; '.join(self.context.key_phrases)}")
+            logger.info("Key phrases: %s", "; ".join(self.context.key_phrases))
         
         if self.context.production_rules_to_break:
-            print(f"Rules to break: {', '.join(self.context.production_rules_to_break)}")
+            logger.info("Rules to break: %s", ", ".join(self.context.production_rules_to_break))
         
-        print("\n" + "=" * 60)
-        print("\nNow you know what you're making. Go make it brave.")
-        print("=" * 60 + "\n")
+        logger.info("\n" + "=" * 60)
+        logger.info("\nNow you know what you're making. Go make it brave.")
+        logger.info("=" * 60 + "\n")
     
     def quick_questions(self, phase: SongPhase, count: int = 3) -> List[str]:
         """Get questions for a specific phase without interactive session."""

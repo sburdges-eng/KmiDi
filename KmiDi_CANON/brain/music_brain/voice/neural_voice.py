@@ -11,6 +11,7 @@ This module integrates with the existing DAiW voice system,
 providing neural synthesis as an alternative to formant synthesis.
 """
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any, Union
@@ -19,6 +20,8 @@ from enum import Enum
 import numpy as np
 import tempfile
 import os
+
+logger = logging.getLogger(__name__)
 
 # Backend availability
 COQUI_AVAILABLE = False
@@ -194,7 +197,7 @@ class CoquiVoiceSynthesizer(NeuralVoiceSynthesizer):
             True if successful
         """
         if not os.path.exists(reference_audio):
-            print(f"Reference audio not found: {reference_audio}")
+            logger.warning("Reference audio not found: %s", reference_audio)
             return False
 
         self.speaker_wav = reference_audio
@@ -234,7 +237,7 @@ class BarkVoiceSynthesizer(NeuralVoiceSynthesizer):
         self.config = config or NeuralVoiceConfig()
 
         # Preload models
-        print("Loading Bark models...")
+        logger.info("Loading Bark models...")
         preload_models()
 
         self.sample_rate = BARK_SAMPLE_RATE
@@ -266,8 +269,8 @@ class BarkVoiceSynthesizer(NeuralVoiceSynthesizer):
         Bark doesn't support true voice cloning.
         Use speaker presets instead.
         """
-        print("Bark uses speaker presets, not voice cloning.")
-        print("Available presets: v2/en_speaker_0 through v2/en_speaker_9")
+        logger.info("Bark uses speaker presets, not voice cloning.")
+        logger.info("Available presets: v2/en_speaker_0 through v2/en_speaker_9")
         return False
 
     def set_speaker_preset(self, preset: str):
@@ -370,7 +373,7 @@ class OpenVoiceSynthesizer(NeuralVoiceSynthesizer):
             True if successful
         """
         if not self._initialized:
-            print("OpenVoice not fully initialized. Provide checkpoint path.")
+            logger.warning("OpenVoice not fully initialized. Provide checkpoint path.")
             return False
 
         try:
@@ -383,7 +386,7 @@ class OpenVoiceSynthesizer(NeuralVoiceSynthesizer):
             )
             return True
         except Exception as e:
-            print(f"Voice cloning failed: {e}")
+            logger.error("Voice cloning failed: %s", e)
             return False
 
     def get_sample_rate(self) -> int:
@@ -424,13 +427,13 @@ class UnifiedNeuralVoice:
         """Select best available backend"""
         # Priority: Coqui > OpenVoice > Bark
         if COQUI_AVAILABLE:
-            print("Using Coqui TTS backend")
+            logger.info("Using Coqui TTS backend")
             return CoquiVoiceSynthesizer(self.config)
         elif OPENVOICE_AVAILABLE:
-            print("Using OpenVoice backend")
+            logger.info("Using OpenVoice backend")
             return OpenVoiceSynthesizer(self.config)
         elif BARK_AVAILABLE:
-            print("Using Bark backend")
+            logger.info("Using Bark backend")
             return BarkVoiceSynthesizer(self.config)
         else:
             raise ImportError(
@@ -563,7 +566,7 @@ class DAiWNeuralVoiceIntegration:
             self.initialize_neural()
 
         if not self.parrot:
-            print("Parrot not available for voice learning")
+            logger.warning("Parrot not available for voice learning")
             return
 
         # Generate neural audio
@@ -579,7 +582,7 @@ class DAiWNeuralVoiceIntegration:
 
             # Learn with Parrot
             self.parrot.train_parrot(temp_path, voice_name)
-            print(f"Learned voice characteristics as '{voice_name}'")
+            logger.info("Learned voice characteristics as '%s'", voice_name)
 
         finally:
             if os.path.exists(temp_path):

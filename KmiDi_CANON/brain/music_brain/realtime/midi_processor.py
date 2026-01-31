@@ -4,6 +4,7 @@ Real-time MIDI Processor - Core engine for live MIDI processing.
 Handles MIDI input/output ports, message routing, and real-time analysis.
 """
 
+import logging
 import time
 import threading
 from typing import Callable, Optional, List, Dict, Set
@@ -19,6 +20,8 @@ except ImportError:
 
 from music_brain.structure.chord import detect_chord_from_notes, Chord
 from music_brain.groove.extractor import GrooveTemplate
+
+logger = logging.getLogger(__name__)
 
 
 # =================================================================
@@ -161,21 +164,21 @@ class RealtimeMidiProcessor:
                 port_name = input_names[0]  # Use first available
             
             self.input_port = mido.open_input(port_name)
-            print(f"Opened MIDI input: {port_name}")
+            logger.info("Opened MIDI input: %s", port_name)
             
             # Open output port (optional)
             if self.config.output_port_name:
                 output_names = self.list_output_ports()
                 if self.config.output_port_name not in output_names:
-                    print(f"Warning: Output port '{self.config.output_port_name}' not found")
+                    logger.warning("Output port '%s' not found", self.config.output_port_name)
                 else:
                     self.output_port = mido.open_output(self.config.output_port_name)
-                    print(f"Opened MIDI output: {self.config.output_port_name}")
+                    logger.info("Opened MIDI output: %s", self.config.output_port_name)
             
             return True
         
         except Exception as e:
-            print(f"Error opening MIDI ports: {e}")
+            logger.error("Error opening MIDI ports: %s", e)
             return False
     
     def close_ports(self):
@@ -237,7 +240,7 @@ class RealtimeMidiProcessor:
             try:
                 self.output_port.send(msg)
             except Exception as e:
-                print(f"Error sending MIDI message: {e}")
+                logger.error("Error sending MIDI message: %s", e)
     
     def _detect_chord(self, current_time: float):
         """Detect chord from active notes within time window."""
@@ -339,7 +342,7 @@ class RealtimeMidiProcessor:
                 self._process_message(msg)
         
         except Exception as e:
-            print(f"Error in MIDI processing loop: {e}")
+            logger.error("Error in MIDI processing loop: %s", e)
     
     def start(self) -> bool:
         """
@@ -349,7 +352,7 @@ class RealtimeMidiProcessor:
             True if started successfully
         """
         if self.running:
-            print("Processor already running")
+            logger.warning("Processor already running")
             return False
         
         if not self.open_ports():
@@ -365,12 +368,11 @@ class RealtimeMidiProcessor:
                 daemon=True
             )
             self.processing_thread.start()
-            print("Real-time MIDI processing started (threaded)")
+            logger.info("Real-time MIDI processing started (threaded)")
         else:
             # Process in current thread (blocking)
-            print("Real-time MIDI processing started (blocking)")
-            # Note: This will block - consider using threading for production
-            print("Warning: Blocking mode - use processing_thread=True for non-blocking")
+            logger.info("Real-time MIDI processing started (blocking)")
+            logger.warning("Blocking mode - use processing_thread=True for non-blocking")
         
         return True
     
@@ -387,7 +389,7 @@ class RealtimeMidiProcessor:
             self.processing_thread = None
         
         self.close_ports()
-        print("Real-time MIDI processing stopped")
+        logger.info("Real-time MIDI processing stopped")
     
     def get_active_notes(self) -> List[int]:
         """Get list of currently active (held) notes."""

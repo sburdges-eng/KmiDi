@@ -15,6 +15,10 @@ Manifest path `data/manifests/aligned.jsonl` is relative to run dir; use symlink
 
 - `cloud_training.yaml` — Cloud GPU config (mixed precision, num_workers=8, pin_memory, auto_resume). Use with `scripts/cloud_train.sh`. See [docs/CLOUD_TRAINING.md](docs/CLOUD_TRAINING.md).
 
+## M2/M4 MacBook Pro (Apple Silicon)
+
+- `exp_m2_m4_emotion.yaml` — Optimized for MacBook Pro M2/M4 16GB: Metal (MPS), compact model, gradient accumulation. Use with `python -m KmiDi_CANON.training.train_emotion_optimized --config configs/exp_m2_m4_emotion.yaml`. Set `paths.dataset` or `--data-dir` to emotion-labeled audio (e.g. `~/Datasets/Emotion_Instrument_Library/sub`).
+
 ## Experiment config template
 
 - `model_exp_template.yaml` — Template for AI model experiment configs. Copy to `configs/exp_NNN_short_name.yaml`; set paths to `~/Datasets` and `~/Models/checkpoints/<exp_name>`. See [docs/AI_MODEL_STRUCTURES.md](../docs/AI_MODEL_STRUCTURES.md).

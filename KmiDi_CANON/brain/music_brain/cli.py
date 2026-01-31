@@ -24,10 +24,13 @@ Humanization Styles:
 """
 
 import argparse
+import logging
 import sys
 import json
 from pathlib import Path
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 # Lazy imports to speed up CLI startup
 def get_groove_module():
@@ -69,10 +72,10 @@ def cmd_extract(args):
     
     midi_path = Path(args.midi_file)
     if not midi_path.exists():
-        print(f"Error: File not found: {midi_path}")
+        logger.error("Error: File not found: %s", midi_path)
         return 1
     
-    print(f"Extracting groove from: {midi_path}")
+    logger.info(f"Extracting groove from: {midi_path}")
     groove = extract_groove(str(midi_path))
     
     output_path = midi_path.stem + "_groove.json"
@@ -82,10 +85,10 @@ def cmd_extract(args):
     with open(output_path, 'w') as f:
         json.dump(groove.to_dict(), f, indent=2)
     
-    print(f"Groove saved to: {output_path}")
-    print(f"  Timing deviation: {groove.timing_stats['mean_deviation_ms']:.1f}ms avg")
-    print(f"  Velocity range: {groove.velocity_stats['min']}-{groove.velocity_stats['max']}")
-    print(f"  Swing factor: {groove.swing_factor:.2f}")
+    logger.info(f"Groove saved to: {output_path}")
+    logger.info(f"  Timing deviation: {groove.timing_stats['mean_deviation_ms']:.1f}ms avg")
+    logger.info(f"  Velocity range: {groove.velocity_stats['min']}-{groove.velocity_stats['max']}")
+    logger.info(f"  Swing factor: {groove.swing_factor:.2f}")
     return 0
 
 
@@ -95,15 +98,15 @@ def cmd_apply(args):
 
     midi_path = Path(args.midi_file)
     if not midi_path.exists():
-        print(f"Error: File not found: {midi_path}")
+        logger.error("Error: File not found: %s", midi_path)
         return 1
 
-    print(f"Applying {args.genre} groove to: {midi_path}")
+    logger.info(f"Applying {args.genre} groove to: {midi_path}")
 
     output_path = args.output or f"{midi_path.stem}_grooved.mid"
     apply_groove(str(midi_path), genre=args.genre, output=output_path, intensity=args.intensity)
 
-    print(f"Output saved to: {output_path}")
+    logger.info(f"Output saved to: {output_path}")
     return 0
 
 
@@ -115,22 +118,22 @@ def cmd_humanize(args):
     # Handle list-presets subcommand
     if hasattr(args, 'list_presets') and args.list_presets:
         presets = list_presets()
-        print("\n=== Available Humanization Presets ===\n")
+        logger.info("\n=== Available Humanization Presets ===\n")
         for preset_name in sorted(presets):
             preset_data = get_preset(preset_name)
             desc = preset_data.get("description", "No description")
             groove = preset_data.get("groove_settings", {})
             c = groove.get("complexity", 0.5)
             v = groove.get("vulnerability", 0.5)
-            print(f"  {preset_name}")
-            print(f"    {desc}")
-            print(f"    complexity={c:.2f}, vulnerability={v:.2f}")
-            print()
+            logger.info(f"  {preset_name}")
+            logger.info(f"    {desc}")
+            logger.info(f"    complexity={c:.2f}, vulnerability={v:.2f}")
+            logger.info()
         return 0
 
     midi_path = Path(args.midi_file)
     if not midi_path.exists():
-        print(f"Error: File not found: {midi_path}")
+        logger.error("Error: File not found: %s", midi_path)
         return 1
 
     # Determine humanization approach
@@ -141,14 +144,14 @@ def cmd_humanize(args):
             preset_data = get_preset(args.preset)
             complexity = settings.complexity
             vulnerability = settings.vulnerability
-            print(f"Humanizing drums with '{args.preset}' preset: {midi_path}")
-            print(f"  ({preset_data.get('description', '')})")
+            logger.info(f"Humanizing drums with '{args.preset}' preset: {midi_path}")
+            logger.info(f"  ({preset_data.get('description', '')})")
         except ValueError as e:
-            print(f"Error: {e}")
+            logger.error("Error: %s", e)
             return 1
     elif args.style:
         # Quick style preset
-        print(f"Humanizing drums with '{args.style}' style: {midi_path}")
+        logger.info(f"Humanizing drums with '{args.style}' style: {midi_path}")
         complexity_map = {
             "tight": (0.1, 0.2),
             "natural": (0.4, 0.5),
@@ -161,7 +164,7 @@ def cmd_humanize(args):
         # Manual complexity/vulnerability
         complexity = args.complexity
         vulnerability = args.vulnerability
-        print(f"Humanizing drums (complexity={complexity:.2f}, vulnerability={vulnerability:.2f}): {midi_path}")
+        logger.info(f"Humanizing drums (complexity={complexity:.2f}, vulnerability={vulnerability:.2f}): {midi_path}")
         settings = GrooveSettings(complexity=complexity, vulnerability=vulnerability)
 
     # Apply optional overrides
@@ -180,11 +183,11 @@ def cmd_humanize(args):
         seed=args.seed,
     )
 
-    print(f"\n=== Drum Humanization Applied ===")
-    print(f"  Complexity:    {complexity:.2f} (timing chaos)")
-    print(f"  Vulnerability: {vulnerability:.2f} (dynamic fragility)")
-    print(f"  Ghost notes:   {'enabled' if settings.enable_ghost_notes else 'disabled'}")
-    print(f"  Output:        {result_path}")
+    logger.info(f"\n=== Drum Humanization Applied ===")
+    logger.info(f"  Complexity:    {complexity:.2f} (timing chaos)")
+    logger.info(f"  Vulnerability: {vulnerability:.2f} (dynamic fragility)")
+    logger.info(f"  Ghost notes:   {'enabled' if settings.enable_ghost_notes else 'disabled'}")
+    logger.info(f"  Output:        {result_path}")
 
     return 0
 
@@ -195,30 +198,30 @@ def cmd_analyze(args):
     
     midi_path = Path(args.midi_file)
     if not midi_path.exists():
-        print(f"Error: File not found: {midi_path}")
+        logger.error("Error: File not found: %s", midi_path)
         return 1
     
     if args.chords:
-        print(f"Analyzing chords in: {midi_path}")
+        logger.info(f"Analyzing chords in: {midi_path}")
         progression = analyze_chords(str(midi_path))
         
-        print("\n=== Chord Analysis ===")
-        print(f"Key: {progression.key}")
-        print(f"Progression: {' - '.join(progression.chords)}")
-        print(f"Roman numerals: {' - '.join(progression.roman_numerals)}")
+        logger.info("\n=== Chord Analysis ===")
+        logger.info(f"Key: {progression.key}")
+        logger.info(f"Progression: {' - '.join(progression.chords)}")
+        logger.info(f"Roman numerals: {' - '.join(progression.roman_numerals)}")
         
         if progression.borrowed_chords:
-            print(f"\nBorrowed chords detected:")
+            logger.info(f"\nBorrowed chords detected:")
             for chord, source in progression.borrowed_chords.items():
-                print(f"  {chord} ← borrowed from {source}")
+                logger.info(f"  {chord} ← borrowed from {source}")
     
     if args.sections:
-        print(f"\nDetecting sections in: {midi_path}")
+        logger.info(f"\nDetecting sections in: {midi_path}")
         sections = detect_sections(str(midi_path))
         
-        print("\n=== Section Analysis ===")
+        logger.info("\n=== Section Analysis ===")
         for section in sections:
-            print(f"  {section.name}: bars {section.start_bar}-{section.end_bar} (energy: {section.energy:.2f})")
+            logger.info(f"  {section.name}: bars {section.start_bar}-{section.end_bar} (energy: {section.energy:.2f})")
     
     return 0
 
@@ -228,25 +231,25 @@ def cmd_diagnose(args):
     from music_brain.structure.progression import diagnose_progression
     
     progression = args.progression
-    print(f"Diagnosing: {progression}")
+    logger.info(f"Diagnosing: {progression}")
     
     diagnosis = diagnose_progression(progression)
     
-    print("\n=== Harmonic Diagnosis ===")
-    print(f"Key estimate: {diagnosis['key']}")
-    print(f"Mode: {diagnosis['mode']}")
+    logger.info("\n=== Harmonic Diagnosis ===")
+    logger.info(f"Key estimate: {diagnosis['key']}")
+    logger.info(f"Mode: {diagnosis['mode']}")
     
     if diagnosis['issues']:
-        print("\nPotential issues:")
+        logger.info("\nPotential issues:")
         for issue in diagnosis['issues']:
-            print(f"  ⚠ {issue}")
+            logger.info(f"  ⚠ {issue}")
     else:
-        print("\n✓ No obvious issues detected")
+        logger.info("\n✓ No obvious issues detected")
     
     if diagnosis['suggestions']:
-        print("\nSuggestions:")
+        logger.info("\nSuggestions:")
         for suggestion in diagnosis['suggestions']:
-            print(f"  → {suggestion}")
+            logger.info(f"  → {suggestion}")
     
     return 0
 
@@ -258,16 +261,16 @@ def cmd_reharm(args):
     progression = args.progression
     style = args.style or "jazz"
     
-    print(f"Reharmonizing: {progression}")
-    print(f"Style: {style}")
+    logger.info(f"Reharmonizing: {progression}")
+    logger.info(f"Style: {style}")
     
     suggestions = generate_reharmonizations(progression, style=style, count=args.count)
     
-    print("\n=== Reharmonization Suggestions ===")
+    logger.info("\n=== Reharmonization Suggestions ===")
     for i, suggestion in enumerate(suggestions, 1):
-        print(f"\n{i}. {' - '.join(suggestion['chords'])}")
-        print(f"   Technique: {suggestion['technique']}")
-        print(f"   Mood shift: {suggestion['mood']}")
+        logger.info(f"\n{i}. {' - '.join(suggestion['chords'])}")
+        logger.info(f"   Technique: {suggestion['technique']}")
+        logger.info(f"   Mood shift: {suggestion['mood']}")
     
     return 0
 
@@ -284,8 +287,8 @@ def cmd_teach(args):
     ]
     
     if topic not in valid_topics:
-        print(f"Unknown topic: {args.topic}")
-        print(f"Available topics: {', '.join(valid_topics)}")
+        logger.info(f"Unknown topic: {args.topic}")
+        logger.info(f"Available topics: {', '.join(valid_topics)}")
         return 1
     
     teacher = RuleBreakingTeacher()
@@ -308,7 +311,7 @@ def cmd_intent(args):
     
     if args.subcommand == 'new':
         # Create new intent from template
-        print("Creating new song intent...")
+        logger.info("Creating new song intent...")
         
         intent = CompleteSongIntent(
             title=args.title or "Untitled Song",
@@ -343,69 +346,69 @@ def cmd_intent(args):
         
         output = args.output or "song_intent.json"
         intent.save(output)
-        print(f"Template saved to: {output}")
-        print("\nEdit the file to fill in your intent, then run:")
-        print(f"  daiw intent process {output}")
+        logger.info(f"Template saved to: {output}")
+        logger.info("\nEdit the file to fill in your intent, then run:")
+        logger.info(f"  daiw intent process {output}")
     
     elif args.subcommand == 'process':
         # Process intent to generate elements
         if not args.file:
-            print("Error: Please specify an intent file")
+            logger.info("Error: Please specify an intent file")
             return 1
         
         intent_path = Path(args.file)
         if not intent_path.exists():
-            print(f"Error: File not found: {intent_path}")
+            logger.info(f"Error: File not found: {intent_path}")
             return 1
         
-        print(f"Processing intent: {intent_path}")
+        logger.info(f"Processing intent: {intent_path}")
         intent = CompleteSongIntent.load(str(intent_path))
         
         # Validate first
         issues = validate_intent(intent)
         if issues and not args.force:
-            print("\n⚠️  Intent validation issues:")
+            logger.info("\n⚠️  Intent validation issues:")
             for issue in issues:
-                print(f"  - {issue}")
-            print("\nFix issues or use --force to proceed anyway")
+                logger.info(f"  - {issue}")
+            logger.info("\nFix issues or use --force to proceed anyway")
             return 1
         
         # Process
         result = process_intent(intent)
         
         # Display results
-        print("\n" + "=" * 60)
-        print("🎵 GENERATED ELEMENTS")
-        print("=" * 60)
+        logger.info("\n" + "=" * 60)
+        logger.info("🎵 GENERATED ELEMENTS")
+        logger.info("=" * 60)
         
         # Harmony
         harmony = result['harmony']
-        print(f"\n📌 HARMONY ({harmony.rule_broken})")
-        print(f"   Progression: {' - '.join(harmony.chords)}")
-        print(f"   Roman: {' - '.join(harmony.roman_numerals)}")
-        print(f"   Effect: {harmony.rule_effect}")
+        logger.info(f"\n📌 HARMONY ({harmony.rule_broken})")
+        logger.info(f"   Progression: {' - '.join(harmony.chords)}")
+        logger.info(f"   Roman: {' - '.join(harmony.roman_numerals)}")
+        logger.info(f"   Effect: {harmony.rule_effect}")
         
         # Groove
         groove = result['groove']
-        print(f"\n📌 GROOVE ({groove.rule_broken})")
-        print(f"   Pattern: {groove.pattern_name}")
-        print(f"   Tempo: {groove.tempo_bpm} BPM")
-        print(f"   Effect: {groove.rule_effect}")
+        logger.info(f"\n📌 GROOVE ({groove.rule_broken})")
+        logger.info(f"   Pattern: {groove.pattern_name}")
+        logger.info(f"   Tempo: {groove.tempo_bpm} BPM")
+        logger.info(f"   Effect: {groove.rule_effect}")
         
         # Arrangement
         arr = result['arrangement']
-        print(f"\n📌 ARRANGEMENT ({arr.rule_broken})")
+        logger.info(f"\n📌 ARRANGEMENT ({arr.rule_broken})")
         for section in arr.sections:
-            print(f"   {section['name']}: {section['bars']} bars @ {section['energy']:.0%} energy")
+            logger.info(f"   {section['name']}: {section['bars']} bars @ {section['energy']:.0%} energy")
         
         # Production
         prod = result['production']
-        print(f"\n📌 PRODUCTION ({prod.rule_broken})")
-        print(f"   Vocal: {prod.vocal_treatment}")
+        logger.info(f"\n📌 PRODUCTION ({prod.rule_broken})")
+        logger.info(f"   Vocal: {prod.vocal_treatment}")
         for note in prod.eq_notes[:2]:
-            print(f"   EQ: {note}")
+            logger.info(f"   EQ: {note}")
         
-        print("\n" + "=" * 60)
+        logger.info("\n" + "=" * 60)
         
         # Save output if requested
         if args.output:
@@ -435,58 +438,58 @@ def cmd_intent(args):
             }
             with open(args.output, 'w') as f:
                 json.dump(output_data, f, indent=2)
-            print(f"\nOutput saved to: {args.output}")
+            logger.info(f"\nOutput saved to: {args.output}")
     
     elif args.subcommand == 'suggest':
         # Suggest rules to break based on emotion
         emotion = args.emotion
         suggestions = suggest_rule_break(emotion)
         
-        print(f"\n🎯 Suggested rules to break for '{emotion}':\n")
+        logger.info(f"\n🎯 Suggested rules to break for '{emotion}':\n")
         
         if not suggestions:
-            print(f"  No specific suggestions for '{emotion}'")
-            print("  Try: grief, anger, nostalgia, defiance, dissociation")
+            logger.info(f"  No specific suggestions for '{emotion}'")
+            logger.info("  Try: grief, anger, nostalgia, defiance, dissociation")
         else:
             for i, sug in enumerate(suggestions, 1):
-                print(f"{i}. {sug['rule']}")
-                print(f"   What: {sug['description']}")
-                print(f"   Effect: {sug['effect']}")
-                print(f"   Use when: {sug['use_when']}")
-                print()
+                logger.info(f"{i}. {sug['rule']}")
+                logger.info(f"   What: {sug['description']}")
+                logger.info(f"   Effect: {sug['effect']}")
+                logger.info(f"   Use when: {sug['use_when']}")
+                logger.info()
     
     elif args.subcommand == 'list':
         # List all available rules
         rules = list_all_rules()
         
-        print("\n📋 Available Rule-Breaking Options:\n")
+        logger.info("\n📋 Available Rule-Breaking Options:\n")
         for category, rule_list in rules.items():
-            print(f"  {category}:")
+            logger.info(f"  {category}:")
             for rule in rule_list:
-                print(f"    - {rule}")
-            print()
+                logger.info(f"    - {rule}")
+            logger.info()
     
     elif args.subcommand == 'validate':
         # Validate an intent file
         if not args.file:
-            print("Error: Please specify an intent file")
+            logger.info("Error: Please specify an intent file")
             return 1
         
         intent_path = Path(args.file)
         if not intent_path.exists():
-            print(f"Error: File not found: {intent_path}")
+            logger.info(f"Error: File not found: {intent_path}")
             return 1
         
         intent = CompleteSongIntent.load(str(intent_path))
         issues = validate_intent(intent)
         
         if issues:
-            print("\n⚠️  Validation issues found:")
+            logger.info("\n⚠️  Validation issues found:")
             for issue in issues:
-                print(f"  - {issue}")
+                logger.info(f"  - {issue}")
             return 1
         else:
-            print("✅ Intent is valid!")
+            logger.info("✅ Intent is valid!")
             return 0
     
     return 0

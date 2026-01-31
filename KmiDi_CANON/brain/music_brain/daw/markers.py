@@ -11,9 +11,12 @@ Philosophy: The structure should reflect the emotional journey,
 not arbitrary form conventions.
 """
 
+import logging
 from typing import List, Optional
 from dataclasses import dataclass
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 try:
     import mido
@@ -182,7 +185,7 @@ def export_markers_midi(
         Path to the created file
     """
     if not MIDO_AVAILABLE:
-        print("[MARKERS]: mido not installed; skipping marker export.")
+        logger.warning("[MARKERS]: mido not installed; skipping marker export.")
         return output_path
 
     mid = mido.MidiFile()
@@ -278,12 +281,12 @@ def merge_markers_with_midi(
         Path to the merged file
     """
     if not MIDO_AVAILABLE:
-        print("[MARKERS]: mido not installed")
+        logger.warning("[MARKERS]: mido not installed")
         return midi_path
 
     path = Path(midi_path)
     if not path.exists():
-        print(f"[MARKERS]: MIDI file not found: {midi_path}")
+        logger.warning("[MARKERS]: MIDI file not found: %s", midi_path)
         return midi_path
 
     mid = mido.MidiFile(str(path))

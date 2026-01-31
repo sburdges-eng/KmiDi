@@ -5,9 +5,12 @@ This module translates CompleteSongIntent objects into actual harmonic structure
 with intentional rule-breaking applied. Philosophy: "Wrong notes with conviction."
 """
 
+import logging
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 class RuleBreakType(Enum):
@@ -480,12 +483,12 @@ def generate_midi_from_harmony(harmony: HarmonyResult, output_path: str, tempo_b
     
     # Save file
     mid.save(output_path)
-    print(f"MIDI file saved: {output_path}")
-    print(f"Key: {harmony.key} {harmony.mode}")
-    print(f"Chords: {' - '.join(harmony.chords)}")
+    logger.info("MIDI file saved: %s", output_path)
+    logger.info("Key: %s %s", harmony.key, harmony.mode)
+    logger.info("Chords: %s", " - ".join(harmony.chords))
     if harmony.rule_break_applied:
-        print(f"Rule break: {harmony.rule_break_applied}")
-        print(f"Why: {harmony.emotional_justification}")
+        logger.info("Rule break: %s", harmony.rule_break_applied)
+        logger.info("Why: %s", harmony.emotional_justification)
 
 
 # ============================================================================
@@ -494,9 +497,9 @@ def generate_midi_from_harmony(harmony: HarmonyResult, output_path: str, tempo_b
 
 if __name__ == "__main__":
     # Example 1: Kelly song (F-C-Bbm-F with modal interchange)
-    print("=" * 60)
-    print("KELLY SONG EXAMPLE: Modal Interchange in F Major")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("KELLY SONG EXAMPLE: Modal Interchange in F Major")
+    logger.info("=" * 60)
     
     generator = HarmonyGenerator()
     
@@ -522,12 +525,12 @@ if __name__ == "__main__":
     # Generate MIDI
     generate_midi_from_harmony(kelly_harmony, "/home/claude/kelly_song_harmony.mid", tempo_bpm=82)
     
-    print("\n")
+    logger.info("\n")
     
     # Example 2: Basic progression without rule-breaking
-    print("=" * 60)
-    print("BASIC PROGRESSION: I-V-vi-IV in C Major")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("BASIC PROGRESSION: I-V-vi-IV in C Major")
+    logger.info("=" * 60)
     
     basic_harmony = generator.generate_basic_progression(
         key="C",

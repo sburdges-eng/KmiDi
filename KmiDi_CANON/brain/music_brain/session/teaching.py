@@ -11,9 +11,12 @@ Teaches:
 Philosophy: "The wrong note played with conviction is the right note."
 """
 
+import logging
 import random
 from typing import List, Dict, Optional
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 
 # Teaching content database
@@ -276,36 +279,36 @@ class RuleBreakingTeacher:
         topic = topic.lower().replace("-", "_").replace(" ", "_")
         
         if topic not in self.lessons:
-            print(f"Unknown topic: {topic}")
-            print(f"Available topics: {', '.join(self.list_topics())}")
+            logger.info("Unknown topic: %s", topic)
+            logger.info("Available topics: %s", ", ".join(self.list_topics()))
             return
         
         lesson = self.lessons[topic]
         
-        print("\n" + "=" * 60)
-        print(f"📚 {lesson['title']}")
-        print("=" * 60)
-        print(lesson['intro'])
+        logger.info("\n" + "=" * 60)
+        logger.info("📚 %s", lesson['title'])
+        logger.info("=" * 60)
+        logger.info("%s", lesson['intro'])
         
-        print("\n" + "-" * 40)
-        print("EXAMPLES:")
-        print("-" * 40)
+        logger.info("\n" + "-" * 40)
+        logger.info("EXAMPLES:")
+        logger.info("-" * 40)
         
         for i, example in enumerate(lesson['examples'][:3], 1):
             name_key = next((k for k in ['name', 'technique', 'emotion', 'rule'] if k in example), 'Example')
-            print(f"\n{i}. {example.get(name_key, 'Example')}")
+            logger.info("\n%d. %s", i, example.get(name_key, 'Example'))
             for key, value in example.items():
                 if key != name_key:
-                    print(f"   {key.replace('_', ' ').title()}: {value}")
+                    logger.info("   %s: %s", key.replace('_', ' ').title(), value)
         
-        print("\n" + "-" * 40)
-        print("💡 EXERCISE:")
-        print("-" * 40)
-        print(lesson['exercise'])
+        logger.info("\n" + "-" * 40)
+        logger.info("💡 EXERCISE:")
+        logger.info("-" * 40)
+        logger.info("%s", lesson['exercise'])
         
-        print("\n" + "=" * 60)
-        print(f"🎵 Wisdom: \"{self.get_wisdom()}\"")
-        print("=" * 60 + "\n")
+        logger.info("\n" + "=" * 60)
+        logger.info("🎵 Wisdom: \"%s\"", self.get_wisdom())
+        logger.info("=" * 60 + "\n")
         
         self.history.append(topic)
     
@@ -316,35 +319,35 @@ class RuleBreakingTeacher:
         Args:
             topic: Starting topic (optional, shows menu if not provided)
         """
-        print("\n" + "=" * 60)
-        print("🎸 DAiW RULE-BREAKING TEACHING MODULE")
-        print("=" * 60)
-        print("\nLearn when and why to break the rules.\n")
+        logger.info("\n" + "=" * 60)
+        logger.info("🎸 DAiW RULE-BREAKING TEACHING MODULE")
+        logger.info("=" * 60)
+        logger.info("\nLearn when and why to break the rules.\n")
         
         if topic is None:
-            print("Available topics:")
+            logger.info("Available topics:")
             for i, (key, lesson) in enumerate(self.lessons.items(), 1):
-                print(f"  {i}. {lesson['title']}")
-            print(f"  {len(self.lessons) + 1}. Random wisdom")
-            print(f"  {len(self.lessons) + 2}. Exit")
+                logger.info("  %d. %s", i, lesson['title'])
+            logger.info("  %d. Random wisdom", len(self.lessons) + 1)
+            logger.info("  %d. Exit", len(self.lessons) + 2)
             
             try:
                 choice = input("\nSelect topic (number): ").strip()
                 if not choice.isdigit():
-                    print("Please enter a number.")
+                    logger.info("Please enter a number.")
                     return
                 
                 choice = int(choice)
                 if choice == len(self.lessons) + 1:
-                    print(f"\n🎵 \"{self.get_wisdom()}\"\n")
+                    logger.info("\n🎵 \"%s\"\n", self.get_wisdom())
                     return
                 elif choice == len(self.lessons) + 2:
-                    print("\nKeep breaking rules! 🎸\n")
+                    logger.info("\nKeep breaking rules! 🎸\n")
                     return
                 elif 1 <= choice <= len(self.lessons):
                     topic = list(self.lessons.keys())[choice - 1]
                 else:
-                    print("Invalid choice.")
+                    logger.info("Invalid choice.")
                     return
             except (ValueError, EOFError):
                 return

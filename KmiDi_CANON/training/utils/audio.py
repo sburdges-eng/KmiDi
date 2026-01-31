@@ -1,10 +1,13 @@
 """Audio processing utilities for ML training."""
 
+import logging
 import torch
 import torchaudio
 import numpy as np
 from pathlib import Path
 from typing import Tuple, Optional
+
+logger = logging.getLogger(__name__)
 
 # Try to import soundfile as fallback
 try:
@@ -74,7 +77,7 @@ def load_audio(
                 waveform, sr = torchaudio.load(file_path, backend="soundfile")
             except Exception:
                 # Last resort: return silence
-                print(f"Warning: Could not load {file_path}, returning silence")
+                logger.warning("Could not load %s, returning silence", file_path)
                 sr = target_sr
                 samples = int(target_sr * (duration or 1.0))
                 waveform = torch.zeros(1, samples)

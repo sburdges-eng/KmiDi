@@ -7,12 +7,15 @@ from Python to the C++ JUCE VoiceProcessor for real-time synthesis.
 Communication is via OSC (Open Sound Control) protocol.
 """
 
+import logging
 from typing import Optional, List, Dict, Any, Callable
 from dataclasses import dataclass, asdict
 import json
 import time
 import threading
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 try:
     from pythonosc import udp_client, dispatcher, osc_server
@@ -146,11 +149,11 @@ class VoiceCppBridge:
             self.server_thread.start()
 
             self.connected = True
-            print(f"Connected to C++ VoiceProcessor at {self.config.cpp_host}:{self.config.cpp_port}")
+            logger.info("Connected to C++ VoiceProcessor at %s:%s", self.config.cpp_host, self.config.cpp_port)
             return True
 
         except Exception as e:
-            print(f"Failed to connect to C++ VoiceProcessor: {e}")
+            logger.error("Failed to connect to C++ VoiceProcessor: %s", e)
             self.connected = False
             return False
 
@@ -166,7 +169,7 @@ class VoiceCppBridge:
 
         self.client = None
         self.connected = False
-        print("Disconnected from C++ VoiceProcessor")
+        logger.info("Disconnected from C++ VoiceProcessor")
 
     def load_voice_model(self, model: VoiceModel) -> bool:
         """
@@ -179,7 +182,7 @@ class VoiceCppBridge:
             True if model sent successfully
         """
         if not self.connected or not self.client:
-            print("Not connected to C++ VoiceProcessor")
+            logger.warning("Not connected to C++ VoiceProcessor")
             return False
 
         try:
@@ -190,11 +193,11 @@ class VoiceCppBridge:
             self.client.send_message(OSCAddresses.LOAD_VOICE_MODEL, model_json)
 
             self.current_model = model
-            print(f"Loaded voice model '{model.name}' to C++")
+            logger.info("Loaded voice model '%s' to C++", model.name)
             return True
 
         except Exception as e:
-            print(f"Failed to load voice model: {e}")
+            logger.error("Failed to load voice model: %s", e)
             return False
 
     def speak_text(self, text: str, pitch: Optional[float] = None):
@@ -206,7 +209,7 @@ class VoiceCppBridge:
             pitch: Optional pitch override in Hz
         """
         if not self.connected or not self.client:
-            print("Not connected to C++ VoiceProcessor")
+            logger.warning("Not connected to C++ VoiceProcessor")
             return
 
         # Convert text to phonemes
@@ -216,7 +219,7 @@ class VoiceCppBridge:
         for i, phoneme in enumerate(phonemes):
             self._send_phoneme(phoneme, i, pitch)
 
-        print(f"Queued {len(phonemes)} phonemes for synthesis")
+        logger.info("Queued %d phonemes for synthesis", len(phonemes))
 
     def set_vowel(self, vowel: VowelType):
         """Set current vowel for real-time synthesis."""
@@ -452,13 +455,13 @@ class VoiceSynthesisPipeline:
         Returns:
             Trained VoiceModel
         """
-        print(f"Training voice '{voice_name}' from {audio_file}...")
+        logger.info("Training voice '%s' from %s...", voice_name, audio_file)
         model = self.parrot.train_parrot(audio_file, voice_name)
         self.current_voice = voice_name
 
-        print(f"  Exposure time: {model.characteristics.exposure_time:.1f}s")
-        print(f"  Confidence: {model.characteristics.confidence:.2%}")
-        print(f"  Average pitch: {model.characteristics.average_pitch:.1f} Hz")
+        logger.info("  Exposure time: %.1fs", model.characteristics.exposure_time)
+        logger.info("  Confidence: %.2f%%", model.characteristics.confidence * 100)
+        logger.info("  Average pitch: %.1f Hz", model.characteristics.average_pitch)
 
         return model
 
@@ -507,7 +510,7 @@ class VoiceSynthesisPipeline:
             True if voice found and selected
         """
         if voice_name not in self.parrot.voice_models:
-            print(f"Voice '{voice_name}' not found")
+            logger.warning("Voice '%s' not found", voice_name)
             return False
 
         self.current_voice = voice_name
@@ -527,7 +530,7 @@ class VoiceSynthesisPipeline:
             pitch: Optional pitch override in Hz
         """
         if not self.bridge.connected:
-            print("Not connected to C++. Call connect_cpp() first.")
+            logger.warning("Not connected to C++. Call connect_cpp() first.")
             return
 
         self.bridge.speak_text(text, pitch)
@@ -543,7 +546,7 @@ class VoiceSynthesisPipeline:
             note_duration: Duration of each note in beats
         """
         if not self.bridge.connected:
-            print("Not connected to C++. Call connect_cpp() first.")
+            logger.warning("Not connected to C++. Call connect_cpp() first.")
             return
 
         vowel_map = {
@@ -713,4 +716,4 @@ def quick_speak(text: str, voice_file: Optional[str] = None):
         time.sleep(len(text) * 0.1)  # Rough estimate of duration
         pipeline.disconnect_cpp()
     else:
-        print("Failed to connect to C++ synthesizer")
+        logger.error("Failed to connect to C++ synthesizer")

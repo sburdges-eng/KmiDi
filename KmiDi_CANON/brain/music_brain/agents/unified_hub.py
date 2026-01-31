@@ -15,6 +15,7 @@ This hub provides:
 5. MCP server integration for Claude/AI assistants
 """
 
+import logging
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any, Callable, Union
 from enum import Enum
@@ -23,6 +24,8 @@ import asyncio
 import threading
 import queue
 import time
+
+logger = logging.getLogger(__name__)
 from pathlib import Path
 import logging
 
@@ -1244,14 +1247,14 @@ def main():
     if args.connect_daw:
         hub.connect_daw()
 
-    print("DAiW Hub running. Press Ctrl+C to stop.")
+    logger.info("DAiW Hub running. Press Ctrl+C to stop.")
 
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         stop_hub()
-        print("Hub stopped.")
+        logger.info("Hub stopped.")
 
 
 if __name__ == "__main__":

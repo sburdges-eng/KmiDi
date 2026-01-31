@@ -1,4 +1,6 @@
-# Cloud GPU Training — Lambda Labs / RunPod
+# Cloud GPU Training — Lambda Labs / RunPod / AWS
+
+**Quick reference:** [CLOUD_SETUP_REFERENCE.md](CLOUD_SETUP_REFERENCE.md) | **AWS EC2:** [CLOUD_AWS.md](CLOUD_AWS.md)
 
 **Mac = control plane. Cloud = execution plane.** Never invert that.
 

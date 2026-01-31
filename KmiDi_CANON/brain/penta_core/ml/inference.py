@@ -8,12 +8,15 @@ Provides a common interface for running inference with:
 - PyTorch
 """
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any, Union
 from pathlib import Path
 import numpy as np
 import time
+
+logger = logging.getLogger(__name__)
 
 from penta_core.ml.model_registry import (
     ModelInfo,
@@ -135,10 +138,10 @@ class ONNXEngine(InferenceEngine):
             return True
 
         except ImportError:
-            print("ONNX Runtime not installed. Install with: pip install onnxruntime")
+            logger.warning("ONNX Runtime not installed. Install with: pip install onnxruntime")
             return False
         except Exception as e:
-            print(f"Failed to load ONNX model: {e}")
+            logger.error("Failed to load ONNX model: %s", e)
             return False
 
     def unload(self) -> None:
@@ -227,10 +230,10 @@ class TFLiteEngine(InferenceEngine):
             return True
 
         except ImportError:
-            print("TensorFlow not installed. Install with: pip install tensorflow")
+            logger.warning("TensorFlow not installed. Install with: pip install tensorflow")
             return False
         except Exception as e:
-            print(f"Failed to load TFLite model: {e}")
+            logger.error("Failed to load TFLite model: %s", e)
             return False
 
     def unload(self) -> None:
@@ -293,7 +296,7 @@ class CoreMLEngine(InferenceEngine):
             import platform
 
             if platform.system() != "Darwin":
-                print("CoreML is only available on macOS/iOS")
+                logger.warning("CoreML is only available on macOS/iOS")
                 return False
 
             self._model = ct.models.MLModel(self.model_info.path)
@@ -301,10 +304,10 @@ class CoreMLEngine(InferenceEngine):
             return True
 
         except ImportError:
-            print("coremltools not installed. Install with: pip install coremltools")
+            logger.warning("coremltools not installed. Install with: pip install coremltools")
             return False
         except Exception as e:
-            print(f"Failed to load CoreML model: {e}")
+            logger.error("Failed to load CoreML model: %s", e)
             return False
 
     def unload(self) -> None:
@@ -377,10 +380,10 @@ class PyTorchEngine(InferenceEngine):
             return True
 
         except ImportError:
-            print("PyTorch not installed. Install with: pip install torch")
+            logger.warning("PyTorch not installed. Install with: pip install torch")
             return False
         except Exception as e:
-            print(f"Failed to load PyTorch model: {e}")
+            logger.error("Failed to load PyTorch model: %s", e)
             return False
 
     def unload(self) -> None:

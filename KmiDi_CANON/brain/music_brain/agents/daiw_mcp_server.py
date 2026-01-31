@@ -46,7 +46,8 @@ try:
     MCP_AVAILABLE = True
 except ImportError:
     MCP_AVAILABLE = False
-    print("MCP not available. Install with: pip install mcp", file=sys.stderr)
+    # Logger not yet defined; use logging module
+    logging.getLogger("daiw-mcp").error("MCP not available. Install with: pip install mcp")
 
 # DAiW voice imports
 try:
@@ -752,7 +753,7 @@ class DAiWMCPServer:
 async def main():
     """Run the MCP server"""
     if not MCP_AVAILABLE:
-        print("MCP library not available. Install with: pip install mcp")
+        logger.error("MCP library not available. Install with: pip install mcp")
         sys.exit(1)
 
     server = Server("daiw-voice")

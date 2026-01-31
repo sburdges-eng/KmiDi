@@ -8,6 +8,7 @@ This module can be used standalone or as a fallback when the C++ JUCE
 synthesizer is not available.
 """
 
+import logging
 import subprocess
 import tempfile
 import os
@@ -15,6 +16,8 @@ from typing import Optional, List, Dict, Any, Callable
 from dataclasses import dataclass
 from enum import Enum
 import json
+
+logger = logging.getLogger(__name__)
 
 try:
     # Try to import PyObjC for direct macOS API access
@@ -76,7 +79,7 @@ class MacOSSpeechSynthesizer:
 
         # List available voices
         voices = synth.list_voices()
-        print(voices)
+        logger.info("%s", voices)
 
         # Speak text
         synth.speak("Hello, world!")
@@ -98,7 +101,7 @@ class MacOSSpeechSynthesizer:
         if PYOBJC_AVAILABLE:
             self._init_native()
         else:
-            print("PyObjC not available, using 'say' command fallback")
+            logger.info("PyObjC not available, using 'say' command fallback")
 
     def _init_native(self):
         """Initialize native NSSpeechSynthesizer."""
@@ -114,7 +117,7 @@ class MacOSSpeechSynthesizer:
                 self._synthesizer.setRate_(self.config.rate)
                 self._synthesizer.setVolume_(self.config.volume)
         except Exception as e:
-            print(f"Failed to initialize NSSpeechSynthesizer: {e}")
+            logger.error("Failed to initialize NSSpeechSynthesizer: %s", e)
             self._synthesizer = None
 
     def speak(self, text: str, blocking: bool = True):
@@ -189,7 +192,7 @@ class MacOSSpeechSynthesizer:
 
             return os.path.exists(output_path)
         except Exception as e:
-            print(f"Failed to save speech to file: {e}")
+            logger.error("Failed to save speech to file: %s", e)
             return False
 
     def _speak_to_file_say(self, text: str, output_path: str) -> bool:
@@ -209,7 +212,7 @@ class MacOSSpeechSynthesizer:
             subprocess.run(cmd, check=True)
             return os.path.exists(output_path)
         except subprocess.CalledProcessError as e:
-            print(f"'say' command failed: {e}")
+            logger.error("'say' command failed: %s", e)
             return False
 
     def set_voice(self, voice: MacOSVoice):
@@ -283,7 +286,7 @@ class MacOSSpeechSynthesizer:
 
             return result
         except Exception as e:
-            print(f"Failed to list voices: {e}")
+            logger.error("Failed to list voices: %s", e)
             return []
 
     def _list_voices_say(self) -> List[Dict[str, Any]]:
@@ -355,7 +358,7 @@ class MacOSVoiceCloner:
             output_path = os.path.join(output_dir, f"sample_{i:03d}.aiff")
             if self.synth.speak_to_file(text, output_path):
                 output_files.append(output_path)
-                print(f"Generated: {output_path}")
+                logger.info("Generated: %s", output_path)
 
         return output_files
 
@@ -404,7 +407,7 @@ class MacOSVoiceCloner:
             Output WAV path if successful
         """
         if not AUDIO_AVAILABLE:
-            print("soundfile not available for audio conversion")
+            logger.warning("soundfile not available for audio conversion")
             return None
 
         if wav_path is None:
@@ -418,7 +421,7 @@ class MacOSVoiceCloner:
             sf.write(wav_path, data, sr)
             return wav_path
         except Exception as e:
-            print(f"Failed to convert audio: {e}")
+            logger.error("Failed to convert audio: %s", e)
             return None
 
 
@@ -453,7 +456,7 @@ def hybrid_speak(text: str, cpp_bridge=None, macos_fallback: bool = True):
         synth = MacOSSpeechSynthesizer()
         synth.speak(text)
     else:
-        print("No speech backend available")
+        logger.warning("No speech backend available")
 
 
 # Convenience functions

@@ -921,7 +921,7 @@ class ToolManager:
                 try:
                     tool.shutdown()
                 except Exception as e:
-                    print(f"Error shutting down {name}: {e}")
+                    logging.getLogger(__name__).error("Error shutting down %s: %s", name, e)
 
         self._tools.clear()
 

@@ -1,0 +1,65 @@
+# M2/M4 MacBook Pro (16GB) — Optimized emotion classifier training
+# Target: low-latency inference on Apple Silicon; Metal (MPS) for training.
+# For cloud training on NVIDIA, set device: cuda — script auto-detects.
+#
+# Governance: DATA LAW, TRAINING SAFETY LAW — paths outside repo.
+
+experiment: exp_m2_m4_emotion
+seed: 1337
+device: auto   # auto | mps | cuda | cpu — MPS on Apple, CUDA on NVIDIA
+precision: fp16  # fp16 for MPS/CUDA memory efficiency; fp32 fallback if unstable
+
+# Paths (outside repo per DATA LAW)
+paths:
+  dataset: "~/Datasets/kmidi_emotion"  # or ~/Datasets/Emotion_Instrument_Library/sub
+  checkpoint_dir: "~/Models/checkpoints/exp_m2_m4_emotion"
+  log_dir: "~/Models/logs/exp_m2_m4_emotion"
+  export_dir: "~/Models/exported/exp_m2_m4_emotion"
+
+# Data — compact spectrograms for low-latency
+data:
+  sample_rate: 22050
+  duration: 3.0   # shorter = faster training, lower memory
+  n_mels: 96     # reduced from 128 for speed
+  n_fft: 2048
+  hop_length: 512
+  extensions: [".mp3", ".wav", ".aif", ".aiff", ".flac"]
+  num_workers: 0  # 0 on MPS (macOS multiprocessing); 4 on CUDA
+
+# Model — compact for low-latency M2/M4 inference
+model:
+  type: AudioClassifier
+  channels: [24, 48, 96, 192]  # smaller than [32,64,128,256]
+  fc_dim: 256
+  dropout: 0.3
+  lora:
+    enabled: true
+    rank: 4
+    alpha: 8.0
+    target_modules: ["fc"]
+
+# Training — 16GB unified memory optimized
+train:
+  epochs: 50
+  batch_size: 16      # fits 16GB M2/M4
+  grad_accum_steps: 2 # effective batch = 32
+  grad_clip: 1.0
+  log_every: 25
+  save_every: 1
+  early_stopping_patience: 12
+  auto_resume: true
+
+# Optimizer
+optimizer:
+  name: adamw
+  lr: 8.0e-4
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+
+# Scheduler
+scheduler:
+  type: ReduceLROnPlateau
+  mode: min
+  factor: 0.5
+  patience: 5
+  min_lr: 1.0e-6

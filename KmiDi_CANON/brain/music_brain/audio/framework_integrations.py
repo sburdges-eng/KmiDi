@@ -11,6 +11,7 @@ This module provides a consistent API across all backends for the
 DAiW voice synthesis and audio processing pipeline.
 """
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any, Callable, Union
@@ -20,6 +21,8 @@ import numpy as np
 import json
 import threading
 import time
+
+logger = logging.getLogger(__name__)
 
 # Backend availability detection
 PEDALBOARD_AVAILABLE = False
@@ -253,7 +256,7 @@ class PedalboardProcessor(AudioProcessor):
             self.board.append(plugin)
             return True
         except Exception as e:
-            print(f"Failed to load plugin {plugin_path}: {e}")
+            logger.error("Failed to load plugin %s: %s", plugin_path, e)
             return False
 
     def apply_preset(self, preset: EffectPreset):
@@ -339,7 +342,7 @@ class DawDreamerProcessor(AudioProcessor):
             self._processors[name] = processor
             return True
         except Exception as e:
-            print(f"Failed to add plugin {name}: {e}")
+            logger.error("Failed to add plugin %s: %s", name, e)
             return False
 
     def add_faust(self, name: str, dsp_code: str) -> bool:
@@ -359,7 +362,7 @@ class DawDreamerProcessor(AudioProcessor):
             self._processors[name] = processor
             return True
         except Exception as e:
-            print(f"Failed to add FAUST processor {name}: {e}")
+            logger.error("Failed to add FAUST processor %s: %s", name, e)
             return False
 
     def add_playback(self, name: str, audio: np.ndarray) -> bool:
@@ -378,7 +381,7 @@ class DawDreamerProcessor(AudioProcessor):
             self._processors[name] = processor
             return True
         except Exception as e:
-            print(f"Failed to add playback processor {name}: {e}")
+            logger.error("Failed to add playback processor %s: %s", name, e)
             return False
 
     def set_midi(self, processor_name: str, notes: List[tuple]):
@@ -507,7 +510,7 @@ class JackAudioClient:
             return True
 
         except Exception as e:
-            print(f"Failed to start JACK client: {e}")
+            logger.error("Failed to start JACK client: %s", e)
             return False
 
     def stop(self):
@@ -598,7 +601,7 @@ class WebAudioBridge:
             asyncio.get_event_loop().run_until_complete(serve())
 
         except ImportError:
-            print("websockets not available. Install with: pip install websockets")
+            logger.warning("websockets not available. Install with: pip install websockets")
 
     async def _handle_message(self, message: str, websocket):
         """Handle incoming WebSocket message."""

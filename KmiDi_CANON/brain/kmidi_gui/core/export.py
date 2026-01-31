@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """Export pipeline for MIDI, Intent Schema, and ML annotations.
 
 Export is asynchronous and non-blocking. Uses QThread for background operations.
@@ -47,33 +45,52 @@ class ExportWorker(QThread):
 
 
 class MIDIExporter:
-    """Exports MIDI files."""
+    """Exports MIDI files. Accepts file path (copy), pipeline result dict, or mido.MidiFile."""
 
     def export(self, path: Path, midi_data: Any) -> None:
         """Export MIDI data to file.
 
         Args:
             path: Output file path
-            midi_data: MIDI data (format depends on source)
+            midi_data: MIDI source — dict with "file_path"/"path"/"midi_path", Path/str, or mido.MidiFile
 
         Raises:
             IOError: If file cannot be written
         """
-        # TODO: Implement actual MIDI export
-        # For now, create a placeholder file
-        if isinstance(midi_data, dict) and "file_path" in midi_data:
-            # If midi_data contains a file path, copy it
-            from shutil import copy2
-            source_path = Path(midi_data["file_path"])
-            if source_path.exists():
-                copy2(source_path, path)
+        from shutil import copy2
+
+        source_path: Path | None = None
+        if isinstance(midi_data, dict):
+            for key in ("file_path", "path", "midi_path"):
+                if key in midi_data and midi_data[key]:
+                    p = Path(midi_data[key])
+                    if p.exists():
+                        source_path = p
+                        break
+        elif isinstance(midi_data, (str, Path)):
+            p = Path(midi_data)
+            if p.exists():
+                source_path = p
+
+        if source_path is not None:
+            copy2(source_path, path)
+            logger.info(f"Exported MIDI: {path}")
+            return
+
+        # mido.MidiFile-like: use canonical save
+        try:
+            from music_brain.utils.midi_io import save_midi, MIDO_AVAILABLE
+            if MIDO_AVAILABLE and midi_data is not None and hasattr(midi_data, "save") and hasattr(midi_data, "tracks"):
+                save_midi(midi_data, str(path))
                 logger.info(f"Exported MIDI: {path}")
                 return
+        except (ImportError, TypeError, OSError):
+            pass
 
-        # Placeholder: create empty file
+        # No usable source: placeholder
         path.write_bytes(b"")
         logger.warning(
-            f"MIDI export not fully implemented, created placeholder: {path}")
+            "MIDI export: no file path or MidiFile provided; created placeholder: %s", path)
 
 
 class IntentExporter:
@@ -203,4 +220,3 @@ class ExportManager(QObject):
             message: Progress message
         """
         self.export_progress.emit(message)
->>>>>>> Incoming (Background Agent changes)

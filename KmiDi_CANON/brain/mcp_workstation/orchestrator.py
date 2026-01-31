@@ -1,6 +1,8 @@
 import argparse
 import logging
 import os
+
+logger = logging.getLogger(__name__)
 import threading
 import time
 from pathlib import Path
@@ -666,8 +668,8 @@ def main():
             enable_image_gen=not args.no_image_gen,
             enable_audio_gen=args.enable_audio_gen,
         )
-        print("\n--- Workflow Results ---")
-        print(f"User Intent: {args.prompt}")
+        logger.info("--- Workflow Results ---")
+        logger.info("User Intent: %s", args.prompt)
         midi_status = (
             final_intent.midi_plan.get("status", "N/A")
             if isinstance(final_intent.midi_plan, dict)
@@ -683,15 +685,15 @@ def main():
             if isinstance(final_intent.generated_audio_data, dict)
             else "disabled"
         )
-        print(f"Generated MIDI Plan Status: {midi_status}")
-        print(f"Generated Image Status: {image_status}")
-        print(f"Generated Audio Status: {audio_status}")
-        print(f"Explanation: {final_intent.explanation}")
+        logger.info("Generated MIDI Plan Status: %s", midi_status)
+        logger.info("Generated Image Status: %s", image_status)
+        logger.info("Generated Audio Status: %s", audio_status)
+        logger.info("Explanation: %s", final_intent.explanation)
 
         # Optionally save the full intent object to JSON for inspection
         intent_output_path = Path(args.output_dir) / "final_intent.json"
         final_intent.save(str(intent_output_path))
-        print(f"Full intent saved to: {intent_output_path}")
+        logger.info("Full intent saved to: %s", intent_output_path)
 
     except RuntimeError as e:
         logging.error(f"Workflow failed: {e}")

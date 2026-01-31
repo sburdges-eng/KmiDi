@@ -19,10 +19,13 @@ This bridge enables:
 4. AI agent control of Ableton through DAiW MCP
 """
 
+import logging
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any, Callable, Tuple
 from enum import Enum
 import threading
+
+logger = logging.getLogger(__name__)
 import queue
 import time
 import json
@@ -206,7 +209,7 @@ class AbletonOSCBridge:
 
         except Exception as e:
             self._state = AbletonConnectionState.ERROR
-            print(f"Failed to connect to Ableton: {e}")
+            logger.error("Failed to connect to Ableton: %s", e)
             return False
 
     def disconnect(self):
@@ -739,7 +742,7 @@ class AbletonMIDIBridge:
             return True
 
         except Exception as e:
-            print(f"Failed to connect MIDI: {e}")
+            logger.error("Failed to connect MIDI: %s", e)
             return False
 
     def disconnect(self):
@@ -1059,7 +1062,7 @@ class DAiWAbletonIntegration:
             True if successful
         """
         if not self._voice_pipeline:
-            print("Voice pipeline not available")
+            logger.warning("Voice pipeline not available")
             return False
 
         try:
@@ -1089,7 +1092,7 @@ class DAiWAbletonIntegration:
             return True
 
         except Exception as e:
-            print(f"Failed to render text to track: {e}")
+            logger.error("Failed to render text to track: %s", e)
             return False
 
     def enable_midi_voice_control(self, track_idx: int):

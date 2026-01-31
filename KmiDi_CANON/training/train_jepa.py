@@ -12,9 +12,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def _add_repo_to_path():
@@ -61,7 +64,7 @@ def main():
 
     config_path = Path(args.config)
     if not config_path.exists():
-        print(f"[ERROR] Config not found: {config_path}")
+        logger.error("Config not found: %s", config_path)
         return 1
 
     config = _load_config(str(config_path))
@@ -71,29 +74,29 @@ def main():
     # GPU validation
     device = config.get("device", "cuda")
     if device == "cuda" and not _check_gpu():
-        print("[ERROR] CUDA requested but torch.cuda.is_available() is False.")
-        print("  Check: nvidia-smi, CUDA drivers, PyTorch CUDA build.")
+        logger.error("CUDA requested but torch.cuda.is_available() is False.")
+        logger.error("  Check: nvidia-smi, CUDA drivers, PyTorch CUDA build.")
         return 1
 
     import torch
     if device == "cuda":
-        print(f"[OK] GPU: {torch.cuda.get_device_name(0)}")
-        print(f"[OK] VRAM: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+        logger.info("GPU: %s", torch.cuda.get_device_name(0))
+        logger.info("VRAM: %.1f GB", torch.cuda.get_device_properties(0).total_memory / 1e9)
 
     # Auto-resume
     auto_resume = config.get("train", {}).get("auto_resume", True) or args.resume
     ckpt = _find_latest_checkpoint(output_dir) if auto_resume else None
     if ckpt:
-        print(f"[RESUME] From {ckpt}")
+        logger.info("Resume from %s", ckpt)
     else:
-        print("[START] No checkpoint found, starting from scratch.")
+        logger.info("No checkpoint found, starting from scratch.")
 
     # Placeholder: real JEPA training loop not yet implemented.
     # This validates the pipeline and exits. Replace with actual training.
-    print("[INFO] JEPA training loop not yet implemented.")
-    print("  Config loaded. Pipeline ready for implementation.")
-    print("  Checkpoint dir:", output_dir.resolve())
-    print("  See configs/jepa_*.yaml and experiments/research for JEPA spec.")
+    logger.info("JEPA training loop not yet implemented.")
+    logger.info("  Config loaded. Pipeline ready for implementation.")
+    logger.info("  Checkpoint dir: %s", output_dir.resolve())
+    logger.info("  See configs/jepa_*.yaml and experiments/research for JEPA spec.")
 
     # Write minimal manifest for traceability (DATA_AND_TRAINING)
     manifest_path = output_dir / "manifest_run.json"
@@ -107,7 +110,7 @@ def main():
     }
     with open(manifest_path, "w") as f:
         json.dump(manifest, f, indent=2)
-    print("  Manifest:", manifest_path)
+    logger.info("  Manifest: %s", manifest_path)
 
     return 0
 

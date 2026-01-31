@@ -7,9 +7,12 @@ Generates:
 - Basic MIDI arrangements
 """
 
+import logging
 import random
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass, field
+
+logger = logging.getLogger(__name__)
 
 
 # Progression templates by mood
@@ -208,7 +211,7 @@ class SongGenerator:
     Usage:
         gen = SongGenerator()
         song = gen.generate(key="F", mood="bittersweet", genre="lo_fi_bedroom")
-        print(song)
+        logger.info("%s", song)
     """
     
     def __init__(self):

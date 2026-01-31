@@ -8,9 +8,12 @@ Philosophy: Reference tracks inform, not dictate. The emotional
 intent always takes precedence.
 """
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, List, Dict
+
+logger = logging.getLogger(__name__)
 
 try:
     import librosa
@@ -128,12 +131,12 @@ def analyze_reference(path: Path) -> Optional[ReferenceProfile]:
         ReferenceProfile with extracted characteristics, or None if failed
     """
     if not LIBROSA_AVAILABLE:
-        print("[REFERENCE DNA]: librosa not installed. Install with: pip install librosa")
+        logger.warning("[REFERENCE DNA]: librosa not installed. Install with: pip install librosa")
         return None
 
     path = Path(path)
     if not path.exists():
-        print(f"[REFERENCE DNA]: File not found: {path}")
+        logger.warning("[REFERENCE DNA]: File not found: %s", path)
         return None
 
     try:
@@ -181,7 +184,7 @@ def analyze_reference(path: Path) -> Optional[ReferenceProfile]:
         )
 
     except Exception as e:
-        print(f"[REFERENCE DNA]: Analysis failed: {e}")
+        logger.error("[REFERENCE DNA]: Analysis failed: %s", e)
         return None
 
 

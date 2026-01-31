@@ -13,9 +13,12 @@ NoteEvent is the canonical event structure. Anything outside Python
 (C++ plugin, OSC bridge) should speak in terms of NoteEvent fields.
 """
 
+import logging
 import random
 from dataclasses import dataclass
 from typing import List, Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 # ==============================================================================
 # 1. AFFECT ANALYZER (Scored & Ranked)
@@ -314,8 +317,8 @@ def render_plan_to_midi(plan: HarmonyPlan, output_path: str) -> str:
         from music_brain.daw.logic import LogicProject, LOGIC_CHANNELS
     except ImportError as exc:
         # Degrade gracefully: no MIDI engine available
-        print(f"[SYSTEM]: MIDI bridge unavailable: {exc}")
-        print(f"          Chords would have been: {plan.chord_symbols}")
+        logger.warning("[SYSTEM]: MIDI bridge unavailable: %s", exc)
+        logger.warning("          Chords would have been: %s", plan.chord_symbols)
         return output_path
 
     # 1. Build LogicProject
@@ -400,7 +403,7 @@ def render_plan_to_midi(plan: HarmonyPlan, output_path: str) -> str:
     )
 
     midi_path = project.export_midi(output_path)
-    print(f"[SYSTEM]: MIDI written to {midi_path}")
+    logger.info("[SYSTEM]: MIDI written to %s", midi_path)
     return midi_path
 
 
@@ -412,28 +415,28 @@ def render_plan_to_midi(plan: HarmonyPlan, output_path: str) -> str:
 def run_cli() -> None:
     """Simple terminal interface for debugging and quick use."""
     session = TherapySession()
-    print("--- DAiW THERAPY TERMINAL ---")
+    logger.info("--- DAiW THERAPY TERMINAL ---")
 
     # 1. Input Loop
     while True:
         text = input("[THERAPIST]: What is hurting you? >> ").strip()
         if text:
             break
-        print("[THERAPIST]: Silence is an answer, but I need words to build structure.")
+        logger.info("[THERAPIST]: Silence is an answer, but I need words to build structure.")
 
     # 2. Process
     affect = session.process_core_input(text)
 
     # 3. Reflect (Mirroring)
     if session.state.affect_result:
-        print(
-            f"\n[ANALYSIS]: Detected affect '{affect}' "
-            f"with intensity {session.state.affect_result.intensity:.2f}"
+        logger.info(
+            "\n[ANALYSIS]: Detected affect '%s' with intensity %.2f",
+            affect, session.state.affect_result.intensity,
         )
         if session.state.affect_result.secondary:
-            print(
-                f"[ANALYSIS]: Underlying undertone: "
-                f"'{session.state.affect_result.secondary}'"
+            logger.info(
+                "[ANALYSIS]: Underlying undertone: '%s'",
+                session.state.affect_result.secondary,
             )
 
     # 4. Scaling
@@ -442,25 +445,25 @@ def run_cli() -> None:
         chaos_in = int(input("[THERAPIST]: Tolerance for Chaos (1-10)? >> "))
         session.set_scales(mot, chaos_in / 10.0)
     except ValueError:
-        print("[SYSTEM]: Invalid input. Defaulting to safe values.")
+        logger.warning("[SYSTEM]: Invalid input. Defaulting to safe values.")
         session.set_scales(5, 0.3)
 
     # 5. Strategy Injection
     if session.state.chaos_tolerance > 0.6:
         strat = get_strategy(session.state.chaos_tolerance)
-        print(f"\n[OBLIQUE STRATEGY]: {strat}")
+        logger.info("\n[OBLIQUE STRATEGY]: %s", strat)
 
     # 6. Plan Generation
     plan = session.generate_plan()
 
     # 7. Summary
-    print("\n" + "=" * 40)
-    print("GENERATION DIRECTIVE")
-    print("=" * 40)
-    print(f"Target Mode: {plan.root_note} {plan.mode}")
-    print(f"Tempo: {plan.tempo_bpm} BPM")
-    print(f"Length: {plan.length_bars} bars")
-    print(f"Progression: {' - '.join(plan.chord_symbols)}")
+    logger.info("\n" + "=" * 40)
+    logger.info("GENERATION DIRECTIVE")
+    logger.info("=" * 40)
+    logger.info("Target Mode: %s %s", plan.root_note, plan.mode)
+    logger.info("Tempo: %s BPM", plan.tempo_bpm)
+    logger.info("Length: %s bars", plan.length_bars)
+    logger.info("Progression: %s", " - ".join(plan.chord_symbols))
 
     # 8. MIDI Export
     output_path = "daiw_therapy_session.mid"
