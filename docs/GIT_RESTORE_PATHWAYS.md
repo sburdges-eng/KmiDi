@@ -96,15 +96,16 @@ git log -p --all -S "from_dict" -- music_brain/session/
 
 | Path | In git? | Action |
 |------|---------|--------|
-| `KmiDi_CANON/brain/music_brain/` | **No** (untracked) | **Commit** so session, structure, realtime, etc. are in history and searchable. |
-| `KmiDi_CANON/brain/mcp_workstation/llm_reasoning_engine.py` | **No** (untracked) | **Commit** so agents don’t recreate it. |
+| `KmiDi_CANON/brain/music_brain/` | **Yes** (restore commit) | In history; search with `git log -- "KmiDi_CANON/brain/music_brain/"`. |
+| `KmiDi_CANON/brain/mcp_workstation/llm_reasoning_engine.py` | **Yes** (restore commit) | In history; search with `git log -- "**/llm_reasoning_engine.py"`. |
+| `KmiDi_CANON/brain/mcp_workstation/` (phases, proposals, models, ai_specializations, cpp_planner, debug) | **Yes** (restore commit) | Spine stubs tracked to avoid re-creation. |
 | `KmiDi_CANON/brain/mcp_workstation/orchestrator.py` | Yes (from 27148e6f) | Already in history. |
 | `KmiDi_CANON/brain/mcp_workstation/audio_generation_engine.py` | Yes (from 27148e6f) | Already in history. |
 | `KmiDi_CANON/brain/penta_core/ml/*` | Yes (from 27148e6f) | Already in history. |
 | `KmiDi_CANON/brain/kmidi_gui/*` | Yes (from 27148e6f) | Already in history. |
 | `KmiDi_CANON/body/engine/*`, `body/core/intent_ir/*` | Yes | Search with `git log --all -- <path>`. |
 
-Commit 27148e6f (“KmiDi Companion dev: working tree after forensic recovery and cold storage”) added kmidi_gui, mcp_workstation (orchestrator, audio_generation_engine), penta_core/ml. It did **not** add `brain/music_brain/` or `llm_reasoning_engine.py`; those exist only on disk.
+Commit 27148e6f added kmidi_gui, mcp_workstation (orchestrator, audio_generation_engine), penta_core/ml. A later **restore commit** added `brain/music_brain/`, `llm_reasoning_engine.py`, and mcp_workstation stubs (phases, proposals, models, ai_specializations, cpp_planner, debug). Restore docs (GIT_RESTORE_PATHWAYS, DEVELOPMENT_ROADMAP_FORENSIC, FUNCTION_INDEX_README) and `scripts/build_function_index.py` are in history.
 
 ---
 
@@ -155,10 +156,7 @@ Find where a symbol is defined: `grep -F "SymbolName" docs/.index/symbol_index_c
 
 ## 5. Recommended next steps
 
-1. **Commit untracked brain code in KmiDi** so history searches find it:
-   - `KmiDi_CANON/brain/music_brain/`
-   - `KmiDi_CANON/brain/mcp_workstation/llm_reasoning_engine.py`
-   - Other untracked mcp_workstation modules if they are part of the spine (e.g. cognitive_router, models, ai_specializations as needed).
+1. **Done:** Brain code and LLM engine are committed: `music_brain/`, `llm_reasoning_engine.py`, and mcp_workstation stubs (phases, proposals, models, ai_specializations, cpp_planner, debug). Restore docs and `scripts/build_function_index.py` are tracked. Any **new** spine modules: commit when added so agents find them in history.
 
 2. **Before “recreating” LLM or intent:**
    - Search this doc and `FORENSIC_RECOVERY_REPORT.md`.
@@ -172,4 +170,4 @@ Find where a symbol is defined: `grep -F "SymbolName" docs/.index/symbol_index_c
 
 ---
 
-*Last updated: 2026-01-31. After committing music_brain and llm_reasoning_engine, re-run the git log commands above and update this doc if paths or commits change.*
+*Last updated: 2026-01-31. music_brain, llm_reasoning_engine, and mcp_workstation stubs are committed; restore docs and scripts tracked. Re-run git log commands above if paths or commits change.*
