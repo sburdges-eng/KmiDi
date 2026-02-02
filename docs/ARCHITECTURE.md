@@ -311,7 +311,7 @@ User Emotion Input
 ### Key Components
 
 #### 1. VAD-to-Latent Mapping (MusicVAE)
-```python
+```text
 # Attribute vector arithmetic
 z_target = z_base + α_V*(z_HV - z_LV) + α_A*(z_HA - z_LA) + α_D*(z_HD - z_LD)
 
@@ -321,7 +321,7 @@ z_target = z_base + α_V*(z_HV - z_LV) + α_A*(z_HA - z_LA) + α_D*(z_HD - z_LD)
 ```
 
 #### 2. Stem-JEPA FiLM Conditioning
-```python
+```text
 # FiLM modulation per layer
 h_l+1 = σ(γ_l ⊙ (W_l · h_l) + β_l)
 
@@ -362,9 +362,13 @@ struct TrendPrediction {
     float trendStrength;
     std::string trendDescription;
 };
+```
 
-// Python consumes via:
-vad = VADState(valence=..., arousal=..., dominance=...)
+```python
+# Python consumes via EmotionState from music_brain.intent_ir:
+from music_brain.intent_ir import EmotionState
+
+emotion = EmotionState(valence=..., arousal=..., dominance=...)
 ```
 
 #### Stem-JEPA ↔ MusicVAE Latent Space
@@ -417,24 +421,24 @@ pretty_midi >= 0.2.9
 | GrooVAE 2bar_humanize | 50MB | gs://magentadata/ | Apache 2.0 |
 | Stem-JEPA ViT-Base | ~350MB | GitHub/SonyCSL | Research |
 
-### File Structure
+### File Structure (Proposed)
+
+> **Note:** This is a proposed structure for future Magenta/Stem-JEPA integration. Most of these files do not yet exist in the repository.
 
 ```
-kelly/
+KmiDi/
 ├── music_brain/
-│   ├── emotion/
-│   │   ├── vad_calculator.py      # VAD state computation
-│   │   └── trend_analyzer.cpp     # C++ trend prediction
-│   ├── generation/
-│   │   ├── magenta_integration.py # This integration layer
-│   │   ├── stem_jepa_integration.py
-│   │   └── chord_predictor.py     # Existing Kelly code
-│   └── humanization/
-│       └── emotion_humanizer.py
-├── plugins/
-│   └── juce/
-│       └── VADCalculator.h        # C++ header
-└── models/
+│   ├── intent_ir/                 # Existing: EmotionState definition
+│   ├── integrations/              # Existing: dynamics_integration.py
+│   ├── emotion/                   # Existing emotion modules
+│   ├── generation/                # Proposed:
+│   │   ├── magenta_integration.py # Planned integration layer
+│   │   └── stem_jepa_integration.py # Planned integration layer
+│   └── humanization/              # Proposed:
+│       └── emotion_humanizer.py   # Planned humanization
+├── penta_core/                    # Existing C++ RT engine
+│   └── include/penta/dynamics/    # C++ EmotionState/VAD types
+└── models/                        # Proposed checkpoint storage
     ├── musicvae/
     │   └── checkpoints/
     ├── groovae/
@@ -445,20 +449,23 @@ kelly/
 
 ### Quick Start
 
+> **Note:** This is pseudocode for planned Magenta/Stem-JEPA integration APIs. These modules do not yet exist.
+
 ```python
-from magenta_integration import (
-    VADState,
+# Pseudocode for planned integration
+from music_brain.generation.magenta_integration import (
     VADLatentMapper,
     EmotionHumanizer,
     NoteSequenceConverter
 )
-from stem_jepa_integration import (
+from music_brain.generation.stem_jepa_integration import (
     EmotionStemPipeline,
     StemCategory
 )
+from music_brain.intent_ir import EmotionState
 
-# 1. Define emotional intent
-grief = VADState(valence=-0.6, arousal=0.3, dominance=0.4)
+# 1. Define emotional intent (using existing EmotionState type)
+grief = EmotionState(valence=-0.6, arousal=0.3, dominance=0.4)
 
 # 2. Get stem recommendations
 pipeline = EmotionStemPipeline()
