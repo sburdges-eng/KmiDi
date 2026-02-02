@@ -45,8 +45,15 @@ jobs:
       - name: Run example scripts
         run: |
           pip install -e .
-          # Skip example scripts if they don't exist
-          [ -f examples/example.py ] && python examples/example.py || echo "No example scripts found"
+        continue-on-error: true
+      - name: Test example scripts if they exist
+        run: |
+          if [ -f examples/example.py ]; then
+            python examples/example.py
+          else
+            echo "No example scripts found"
+          fi
+        continue-on-error: true
 
   sprint5_platform:
     name: "Sprint 5 – Platform (${{ matrix.os }}, Python ${{ matrix.python-version }})"
