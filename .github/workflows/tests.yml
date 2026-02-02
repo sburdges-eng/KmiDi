@@ -18,5 +18,8 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-    - run: pip install pytest pytest-cov numpy torch
+    - name: Install dependencies
+      run: |
+        pip install numpy scipy torch librosa pyyaml
+        pip install pytest pytest-cov
     - run: pytest tests/unit/ -v --cov=music_brain

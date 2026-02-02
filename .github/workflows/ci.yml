@@ -17,11 +17,11 @@ jobs:
         python-version: '3.11'
     - name: Install dependencies
       run: |
-        pip install -e KmiDi_PROJECT/.[dev,audio]
+        pip install numpy scipy torch librosa pyyaml
         pip install pytest pytest-cov coverage
     - name: Run Python tests
       run: |
-        pytest KmiDi_PROJECT/tests/ml/ KmiDi_PROJECT/tests/dsp/ -v --cov=penta_core.ml --cov=penta_core.dsp --cov=music_brain --cov-report=xml --cov-report=term-missing
+        pytest tests/unit/ -v --cov=music_brain --cov-report=xml --cov-report=term-missing
     - name: Upload coverage
       uses: codecov/codecov-action@v3
       with:

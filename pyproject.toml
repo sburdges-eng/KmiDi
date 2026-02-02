@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "KmiDi"
+version = "1.0.0"
+description = "KmiDi: Unified Music Intelligence & Audio Workstation"
+readme = "START_HERE.md"
+license = {text = "MIT"}
+authors = [
+    {name = "KmiDi Project Team"},
+]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.21",
+    "torch>=2.0",
+    "librosa>=0.10",
+    "pyyaml>=6.0",
+    "scipy>=1.8",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=23.0",
+    "flake8>=6.0",
+    "mypy>=1.0",
+]
+audio = [
+    "soundfile>=0.12",
+    "pydub>=0.25",
+]
+all = [
+    # dev
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=23.0",
+    "flake8>=6.0",
+    "mypy>=1.0",
+    # audio
+    "soundfile>=0.12",
+    "pydub>=0.25",
+]
+
+[tool.setuptools.packages.find]
+include = ["music_brain*", "mcp_workstation*", "mcp_todo*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"
+markers = [
+    "asyncio: mark test as async",
+    "serial: mark test to run in serial (not parallel)",
+    "benchmark: mark test as a benchmark",
+    "slow: mark test as slow-running",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+ignore_missing_imports = true
