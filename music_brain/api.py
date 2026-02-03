@@ -25,6 +25,9 @@ import os
 
 import numpy as np
 
+# Constants for input validation
+VALID_MUSICAL_MODES = {"major", "minor", "dorian", "phrygian", "lydian", "mixolydian", "aeolian", "locrian"}
+
 # Core imports
 from music_brain.audio import (
     AudioAnalyzer,
@@ -819,8 +822,7 @@ class DAiWAPI:
             if len(key_parts) > 1:
                 # Validate mode against known modes
                 mode_candidate = key_parts[1].lower()
-                valid_modes = {"major", "minor", "dorian", "phrygian", "lydian", "mixolydian", "aeolian", "locrian"}
-                technical_mode = mode_candidate if mode_candidate in valid_modes else "major"
+                technical_mode = mode_candidate if mode_candidate in VALID_MUSICAL_MODES else "major"
         
         # Calculate tempo range from BPM with validation
         bpm = tech.get("bpm") or 82
@@ -1266,8 +1268,7 @@ if FASTAPI_AVAILABLE:
                         if len(key_parts) > 1:
                             # Validate mode against known modes
                             mode_candidate = key_parts[1].lower()
-                            valid_modes = {"major", "minor", "dorian", "phrygian", "lydian", "mixolydian", "aeolian", "locrian"}
-                            technical_mode = mode_candidate if mode_candidate in valid_modes else "major"
+                            technical_mode = mode_candidate if mode_candidate in VALID_MUSICAL_MODES else "major"
                     
                     # Validate and clamp BPM to reasonable range (40-300)
                     bpm = tech.bpm if tech and tech.bpm is not None else 82
@@ -1341,8 +1342,7 @@ if FASTAPI_AVAILABLE:
                         root_note = key_parts[0] if key_parts else "C"
                         # Validate mode
                         mode_candidate = key_parts[1] if len(key_parts) > 1 else "major"
-                        valid_modes = {"major", "minor", "dorian", "phrygian", "lydian", "mixolydian", "aeolian", "locrian"}
-                        mode = mode_candidate.lower() if mode_candidate.lower() in valid_modes else "major"
+                        mode = mode_candidate.lower() if mode_candidate.lower() in VALID_MUSICAL_MODES else "major"
                         
                         # Extract structure and instruments from request
                         structure = tech.structure if tech else None

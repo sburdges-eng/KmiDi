@@ -355,6 +355,8 @@ class CompleteSongIntent:
             tension_val = float(mood_secondary_tension)
             tension_val = max(0.0, min(1.0, tension_val))  # Clamp to valid range
         except (ValueError, TypeError):
+            # ValueError: invalid literal for float()
+            # TypeError: float() argument must be a string or a number
             tension_val = 0.5
         
         # Validate vulnerability_scale - normalize to string enum

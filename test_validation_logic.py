@@ -3,6 +3,7 @@
 Isolated test for input validation fixes.
 Tests the specific validation logic without importing full modules.
 """
+import sys
 
 
 def test_tension_clamping():
@@ -281,4 +282,4 @@ def main():
 
 
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())
