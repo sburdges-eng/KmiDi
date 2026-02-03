@@ -216,6 +216,287 @@ sequenceDiagram
     Tauri-->>React: Generated music
 ```
 
+## Kelly Emotion-to-Music Pipeline (Magenta + Stem-JEPA Integration)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         KELLY EMOTION-TO-MUSIC PIPELINE                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────┐    ┌─────────────────┐    ┌─────────────────────────────┐ │
+│  │   INPUT     │    │  EMOTION LAYER  │    │      GENERATION LAYER       │ │
+│  │             │    │                 │    │                             │ │
+│  │ • Biometric │───▶│ VADState        │───▶│  MusicVAE Latent Mapping   │ │
+│  │ • Text      │    │ (V,A,D vector)  │    │  ┌─────────────────────┐   │ │
+│  │ • Audio     │    │                 │    │  │ z = z_base +        │   │ │
+│  │ • Manual    │    │ Trend Analysis  │    │  │   α_V·ΔV + α_A·ΔA + │   │ │
+│  └─────────────┘    │ (C++ analyzer)  │    │  │   α_D·ΔD            │   │ │
+│                     └────────┬────────┘    │  └─────────────────────┘   │ │
+│                              │             │              │              │ │
+│                              ▼             │              ▼              │ │
+│                     ┌─────────────────┐    │  ┌─────────────────────┐   │ │
+│                     │ Emotion-Stem    │    │  │ MusicVAE Decoder    │   │ │
+│                     │ Affinity Matrix │    │  │ (Hierarchical LSTM) │   │ │
+│                     │                 │    │  └──────────┬──────────┘   │ │
+│                     │ grief→strings   │    │             │              │ │
+│                     │ joy→upbeat drums│    │             ▼              │ │
+│                     │ anger→distorted │    │  ┌─────────────────────┐   │ │
+│                     └────────┬────────┘    │  │   NoteSequence      │   │ │
+│                              │             │  │   (Magenta format)  │   │ │
+│                              ▼             │  └──────────┬──────────┘   │ │
+│                     ┌─────────────────┐    │             │              │ │
+│                     │   STEM-JEPA     │    │             ▼              │ │
+│                     │   RETRIEVAL     │◀───┼──│ Chord Predictor     │   │ │
+│                     │                 │    │  │ (LSTM + Markov)     │   │ │
+│                     │ Context Encoder │    │  └─────────────────────┘   │ │
+│                     │ (ViT-Base 768d) │    │                            │ │
+│                     │       │         │    └─────────────────────────────┘ │
+│                     │       ▼         │                                    │
+│                     │ FiLM Predictor  │    ┌─────────────────────────────┐ │
+│                     │ (6-layer MLP)   │    │     HUMANIZATION LAYER      │ │
+│                     │       │         │    │                             │ │
+│                     │       ▼         │    │  ┌─────────────────────┐   │ │
+│                     │ Stem Ranking    │───▶│  │ EmotionHumanizer    │   │ │
+│                     │ (L2 distance)   │    │  │                     │   │ │
+│                     └─────────────────┘    │  │ VAD → timing params │   │ │
+│                                            │  │ • swing amount      │   │ │
+│                                            │  │ • velocity variance │   │ │
+│                                            │  │ • micro-timing      │   │ │
+│                                            │  └──────────┬──────────┘   │ │
+│                                            │             │              │ │
+│                                            │             ▼              │ │
+│                                            │  ┌─────────────────────┐   │ │
+│                                            │  │   MIDI Output       │   │ │
+│                                            │  │   (mido messages)   │   │ │
+│                                            │  └─────────────────────┘   │ │
+│                                            └─────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Data Flow
+
+```
+User Emotion Input
+       │
+       ▼
+┌──────────────────┐
+│    VADState      │ valence: -1.0 to 1.0 (negative→positive)
+│  (3D vector)     │ arousal:  0.0 to 1.0 (calm→excited)
+│                  │ dominance: 0.0 to 1.0 (weak→powerful)
+└────────┬─────────┘
+         │
+    ┌────┴────┬──────────────┬────────────────┐
+    │         │              │                │
+    ▼         ▼              ▼                ▼
+┌────────┐ ┌────────┐ ┌───────────┐ ┌──────────────┐
+│Latent  │ │Stem    │ │Humanize   │ │Chord         │
+│Mapping │ │Affinity│ │Params     │ │Progression   │
+└───┬────┘ └───┬────┘ └─────┬─────┘ └──────┬───────┘
+    │          │            │              │
+    ▼          ▼            ▼              ▼
+┌────────┐ ┌────────┐ ┌───────────┐ ┌──────────────┐
+│MusicVAE│ │StemJEPA│ │Timing +   │ │Resolution    │
+│Decode  │ │Retrieve│ │Velocity   │ │Cadence       │
+└───┬────┘ └───┬────┘ └─────┬─────┘ └──────┬───────┘
+    │          │            │              │
+    └──────────┴────────────┴──────────────┘
+                     │
+                     ▼
+           ┌─────────────────┐
+           │  Humanized MIDI │
+           │  NoteSequence   │
+           └─────────────────┘
+```
+
+### Key Components
+
+#### 1. VAD-to-Latent Mapping (MusicVAE)
+```text
+Attribute vector arithmetic:
+z_target = z_base + α_V*(z_HV - z_LV) + α_A*(z_HA - z_LA) + α_D*(z_HD - z_LD)
+
+Where:
+  z_HV, z_LV = high/low valence centroids from EMOPIA
+  α_V, α_A, α_D = scaled VAD coordinates
+```
+
+#### 2. Stem-JEPA FiLM Conditioning
+```text
+FiLM modulation per layer:
+h_l+1 = σ(γ_l ⊙ (W_l · h_l) + β_l)
+
+Where γ, β derived from:
+  conditioning = [instrument_embedding | emotion_modulation]
+```
+
+#### 3. Emotion Humanization Mapping
+```
+VAD State          →    Humanization Parameters
+─────────────────────────────────────────────────
+High Arousal       →    Tight timing, high velocity variance
+Low Arousal        →    More swing, compressed dynamics
+Positive Valence   →    Slight forward push (anticipation)
+Negative Valence   →    Slight drag (behind beat)
+High Dominance     →    Stronger downbeats
+Low Dominance      →    More even dynamics
+```
+
+### Integration Points
+
+#### Python kellymidicompanion ↔ Magenta
+```python
+# Conversion layer
+NoteSequenceConverter:
+    midi_file_to_notesequence(path) → NoteSequence
+    notesequence_to_midi_file(seq, path)
+    mido_messages_to_notesequence(msgs) → NoteSequence
+    notesequence_to_mido_messages(seq) → List[mido.Message]
+```
+
+#### C++ VAD Analyzer ↔ Python Pipeline
+```cpp
+// C++ produces TrendPrediction
+struct TrendPrediction {
+    VADState predictedState;
+    float confidence;
+    float trendStrength;
+    std::string trendDescription;
+};
+```
+
+```python
+# Python consumes TrendPrediction via dict or EmotionState from music_brain.session.intent_schema
+# Example mapping layer:
+from music_brain.session.intent_schema import SongIntent
+
+vad_dict = {
+    "valence": predicted_state["valence"],
+    "arousal": predicted_state["arousal"],
+    "dominance": predicted_state["dominance"]
+}
+# Or integrate with SongIntent.mood_secondary_tension for arousal/tension mapping
+```
+
+#### Stem-JEPA ↔ MusicVAE Latent Space
+```
+Both use high-dimensional embeddings (512-768 dim)
+Bridge via emotion-to-affinity mapping:
+    VAD → emotion weights → stem affinity scores → candidate ranking
+```
+
+### Latency Targets
+
+| Component | Target | Actual (GPU) | Actual (CPU) |
+|-----------|--------|--------------|--------------|
+| VAD Analysis | <5ms | 1-2ms | 2-5ms |
+| MusicVAE encode | <100ms | 50-100ms | 500-1000ms |
+| MusicVAE decode | <100ms | 50-100ms | 500-1000ms |
+| Stem-JEPA encode | <200ms | 100-200ms | 1-2s |
+| Humanization | <10ms | 2-5ms | 5-10ms |
+| MIDI conversion | <5ms | 1-2ms | 2-5ms |
+| **End-to-end** | **<500ms** | **~300ms** | **~3s** |
+
+### Dependencies
+
+```
+# Core
+Python 3.9 (for Magenta compatibility)
+TensorFlow 2.x (via compat.v1)
+PyTorch 2.x (for Stem-JEPA)
+
+# Audio/MIDI
+note-seq >= 0.0.5
+mido >= 1.2.0
+librosa >= 0.10.0
+
+# ML
+numpy >= 1.21.0
+scipy >= 1.7.0
+
+# Kelly-specific
+music21 >= 8.0.0  # Chord analysis
+pretty_midi >= 0.2.9
+```
+
+### Model Checkpoints
+
+| Model | Size | Source | License |
+|-------|------|--------|---------|
+| MusicVAE mel_2bar | 13MB | gs://magentadata/ | Apache 2.0 |
+| MusicVAE hierdec_mel_16bar | 880MB | gs://magentadata/ | Apache 2.0 |
+| GrooVAE 2bar_humanize | 50MB | gs://magentadata/ | Apache 2.0 |
+| Stem-JEPA ViT-Base | ~350MB | GitHub/SonyCSL | Research |
+
+### File Structure (Proposed)
+
+**Note:** The following structure represents planned/future organization for Magenta and Stem-JEPA integration. Current emotion-related code exists in `music_brain/emotion/`, `music_brain/session/`, and `music_brain/generative/`.
+
+```
+KmiDi/  (repository root)
+├── music_brain/
+│   ├── emotion/
+│   │   ├── emotion_production.py     # Existing: emotion→production mapping
+│   │   ├── emotion_thesaurus.py      # Existing: emotion matching
+│   │   └── (vad_calculator.py)       # Planned: VAD state computation
+│   ├── session/
+│   │   └── intent_schema.py          # Existing: SongIntent, EmotionState
+│   ├── generative/
+│   │   ├── emotion_conditioned.py    # Existing: emotion-conditioned generation
+│   │   ├── (magenta_integration.py)  # Planned: MusicVAE/GrooVAE integration
+│   │   └── (stem_jepa_integration.py)# Planned: Stem-JEPA integration
+│   └── (humanization/)               # Planned: emotion-based humanization
+│       └── (emotion_humanizer.py)
+├── penta_core/ or include/penta/
+│   └── (VADCalculator.h)             # Planned: C++ VAD analyzer header
+└── models/  (or external storage)
+    ├── musicvae/checkpoints/
+    ├── groovae/checkpoints/
+    └── stem_jepa/checkpoints/
+```
+
+### Quick Start (Pseudocode)
+
+**Note:** The following snippet demonstrates the *intended* API design for Magenta and Stem-JEPA integration. These modules and types do not yet exist in the codebase. This serves as a reference for planned implementation.
+
+```python
+# PSEUDOCODE - Planned API design (not yet implemented)
+
+from music_brain.generative.magenta_integration import (
+    VADLatentMapper,
+    EmotionHumanizer,
+    NoteSequenceConverter
+)
+from music_brain.generative.stem_jepa_integration import (
+    EmotionStemPipeline,
+    StemCategory
+)
+from music_brain.session.intent_schema import EmotionState
+
+# 1. Define emotional intent (using dict or future VADState type)
+grief_vad = {"valence": -0.6, "arousal": 0.3, "dominance": 0.4}
+
+# 2. Get stem recommendations
+pipeline = EmotionStemPipeline()
+recs = pipeline.recommend_stems(
+    context_spectrogram,
+    grief_vad,
+    available_stems=[StemCategory.STRINGS, StemCategory.PIANO, StemCategory.DRUMS]
+)
+
+# 3. Generate with MusicVAE
+mapper = VADLatentMapper()
+latent_offset = mapper.vad_to_latent_offset(grief_vad)
+# ... feed to MusicVAE decoder
+
+# 4. Humanize output
+humanizer = EmotionHumanizer()
+humanized = humanizer.humanize_notesequence(generated_sequence, grief_vad)
+
+# 5. Export to MIDI
+converter = NoteSequenceConverter()
+converter.notesequence_to_midi_file(humanized, "output.mid")
+```
+
 ## Integration Patterns
 
 ### 1. FFI Bridge Pattern

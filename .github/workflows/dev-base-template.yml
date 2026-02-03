@@ -48,8 +48,8 @@ jobs:
           ls -la "$OUTPUT_ROOT" || true
       - name: Pytest (core)
         run: |
-          pytest -v tests || true
-          pytest -v music_brain/tests || true
+          pytest -v tests/unit/ || true
+          pytest -v tests/integration/ || true
       - name: Artifacts (logs)
         if: always()
         uses: actions/upload-artifact@v4
