@@ -350,20 +350,36 @@ class CompleteSongIntent:
             core_stakes=core_stakes,
             core_transformation=core_transformation,
         )
+        # Validate and clamp mood_secondary_tension to [0.0, 1.0]
         try:
             tension_val = float(mood_secondary_tension)
-        except Exception:
+            tension_val = max(0.0, min(1.0, tension_val))  # Clamp to valid range
+        except (ValueError, TypeError):
+            # ValueError: invalid literal for float()
+            # TypeError: float() argument must be a string or a number
             tension_val = 0.5
-        try:
-            vuln_val = float(vulnerability_scale)
-        except Exception:
-            vuln_val = 0.5
+        
+        # Validate vulnerability_scale - normalize to string enum
+        if isinstance(vulnerability_scale, (int, float)):
+            # Convert float to string enum
+            vuln_float = float(vulnerability_scale)
+            if vuln_float < 0.33:
+                vuln_str = "Low"
+            elif vuln_float < 0.67:
+                vuln_str = "Medium"
+            else:
+                vuln_str = "High"
+        else:
+            # Validate string enum
+            vuln_str = str(vulnerability_scale).strip().title()
+            if vuln_str not in {"Low", "Medium", "High"}:
+                vuln_str = "Medium"
 
         self.song_intent = SongIntent(
             mood_primary=mood_primary,
             mood_secondary_tension=tension_val,
             imagery_texture=imagery_texture,
-            vulnerability_scale=vuln_val,
+            vulnerability_scale=vuln_str,
             narrative_arc=narrative_arc or "",
         )
         self.technical_constraints = TechnicalConstraints(
@@ -424,7 +440,7 @@ class CompleteSongIntent:
         intent.created = data.get("created", "")
         
         if "song_root" in data:
-            root = data["song_root"]
+            root = data.get("song_root", {})
             intent.song_root = SongRoot(
                 core_event=root.get("core_event", ""),
                 core_resistance=root.get("core_resistance", ""),
@@ -434,17 +450,37 @@ class CompleteSongIntent:
             )
         
         if "song_intent" in data:
-            si = data["song_intent"]
+            si = data.get("song_intent", {})
+            # Validate mood_secondary_tension is in range [0.0, 1.0]
+            tension = si.get("mood_secondary_tension", 0.5)
+            try:
+                tension_val = float(tension)
+                tension_val = max(0.0, min(1.0, tension_val))  # Clamp to valid range
+            except (ValueError, TypeError):
+                tension_val = 0.5
+            
+            # Validate vulnerability_scale is valid enum value
+            vuln = si.get("vulnerability_scale", "Medium")
+            valid_vuln = {"Low", "Medium", "High", "LOW", "MEDIUM", "HIGH"}
+            if isinstance(vuln, str):
+                # Normalize to title case
+                vuln_normalized = vuln.strip().title()
+                if vuln_normalized not in {"Low", "Medium", "High"}:
+                    vuln_normalized = "Medium"  # Default if invalid
+                vuln = vuln_normalized
+            else:
+                vuln = "Medium"
+            
             intent.song_intent = SongIntent(
                 mood_primary=si.get("mood_primary", ""),
-                mood_secondary_tension=si.get("mood_secondary_tension", 0.5),
+                mood_secondary_tension=tension_val,
                 imagery_texture=si.get("imagery_texture", ""),
-                vulnerability_scale=si.get("vulnerability_scale", "Medium"),
+                vulnerability_scale=vuln,
                 narrative_arc=si.get("narrative_arc", ""),
             )
         
         if "technical_constraints" in data:
-            tc = data["technical_constraints"]
+            tc = data.get("technical_constraints", {})
             tempo = tc.get("technical_tempo_range", [80, 120])
             intent.technical_constraints = TechnicalConstraints(
                 technical_genre=tc.get("technical_genre", ""),
@@ -457,7 +493,7 @@ class CompleteSongIntent:
             )
         
         if "system_directive" in data:
-            sd = data["system_directive"]
+            sd = data.get("system_directive", {})
             intent.system_directive = SystemDirective(
                 output_target=sd.get("output_target", ""),
                 output_feedback_loop=sd.get("output_feedback_loop", ""),
