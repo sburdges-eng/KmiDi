@@ -17,6 +17,7 @@ jobs:
         python-version: '3.11'
     - name: Install dependencies
       run: |
+        pip install -e .
         pip install numpy scipy torch librosa pyyaml
         pip install pytest pytest-cov coverage
     - name: Run Python tests
