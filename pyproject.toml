@@ -34,6 +34,7 @@ audio = [
 ]
 
 [tool.setuptools.packages.find]
+where = ["KmiDi_PROJECT/source/python"]
 include = ["music_brain*", "mcp_workstation*", "mcp_todo*"]
 
 [tool.black]
