@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "KmiDi"
 version = "1.0.0"
 description = "KmiDi: Unified Music Intelligence & Audio Workstation"
-readme = "START_HERE.md"
+readme = "README.md"
 license = {text = "MIT"}
 authors = [
     {name = "KmiDi Project Team"},
