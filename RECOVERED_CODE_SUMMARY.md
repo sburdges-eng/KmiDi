@@ -1,6 +1,7 @@
 # Recovered Code Summary
 
 ## Date: January 19, 2026 (Recovery Date: February 3, 2026)
+## Updated: February 3, 2026 (Additional build files recovered)
 
 This document summarizes code that was recovered from quarantine directories created on January 19, 2026.
 
@@ -68,6 +69,22 @@ During repository cleanup on January 19, 2026, several directories were moved to
     - Optimized for 3TB SSD external storage
     - Source: `_QUARANTINE_20260119_042228/config/`
 
+### Additional Build Files (Recovered Feb 3, 2026 - Second Pass)
+
+11. **iDAW-Android/app/build.gradle.kts** (84 lines)
+    - Android application build configuration (Kotlin DSL)
+    - Configures NDK for native C++ audio code
+    - Low-latency audio with Oboe library
+    - Android API 34, Kotlin 1.9, min SDK 29
+    - Source: `_QUARANTINE_20260119_042228/iDAW-Android/app/`
+
+12. **build_fileio/CMakeLists.txt** (110 lines)
+    - DAiW File I/O & MIDI Foundation build configuration
+    - MIDI message/sequence library build
+    - Audio file I/O with libsndfile support
+    - GoogleTest unit test integration
+    - Source: `_QUARANTINE_20260119_042228/build_fileio/`
+
 ## Fixed Issues
 
 ### Broken Symlinks Removed
@@ -80,11 +97,19 @@ These symlinks were created during the quarantine process but pointed to locatio
 
 The following files were found in quarantine but were **not** restored:
 
-1. **mcp_todo/mcp_routes.py** - Legacy file, functionality appears to have been migrated to `scripts/mcp/mcp_todo/http_server.py`
-2. **JUCE library files** - External dependency code that should be managed via submodules or package managers
-3. **.github/workflows/build-macos-app.yml** - Workflow for "Bulling" app (different project)
-4. **.github/workflows/build-plugins.yml** - Partial workflow, functionality covered by existing CI
-5. **Empty config files** - `build-prod-aws.yaml` and `build-train-nvidia.yaml` were empty placeholders
+1. **C++ Source Files** - All C++ files (.cpp, .h, .hpp) in the quarantine directories are JUCE external library code. No custom C++ source files were lost during the quarantine process. All KmiDi-specific C++ code is already present in the main repository (src/, include/ directories).
+
+2. **mcp_todo/mcp_routes.py** - Legacy file, functionality appears to have been migrated to `scripts/mcp/mcp_todo/http_server.py`
+
+3. **JUCE library files** - External dependency code that should be managed via submodules or package managers
+
+4. **.github/workflows/build-macos-app.yml** - Workflow for "Bulling" app (different project)
+
+5. **.github/workflows/build-plugins.yml** - Partial workflow, functionality covered by existing CI
+
+6. **Empty config files** - `build-prod-aws.yaml` and `build-train-nvidia.yaml` were empty placeholders
+
+7. **Generated output** - `output/knowledge_base/` directory contains generated documentation/analysis, not source code
 
 ## Quarantine Directories Still Present
 
@@ -101,6 +126,8 @@ All restored files have been verified for:
 - ✅ Python syntax (all `.py` files compile without errors)
 - ✅ Shell script syntax (all `.sh` files pass `bash -n` validation)
 - ✅ File permissions (executable flags set appropriately)
+- ✅ Build configuration files (Gradle, CMake) have valid syntax
+- ✅ No custom C++ source code was lost
 
 ## Impact
 
@@ -108,7 +135,10 @@ The recovery of these files:
 1. **Restores critical build infrastructure** - Especially `src-tauri/build.rs` which is essential for Tauri builds
 2. **Restores training pipeline tools** - Manifest builders for emotion and audio datasets
 3. **Restores platform-specific optimizations** - M4 Mac and development Mac configurations
-4. **Removes broken references** - Fixes symlinks that would cause errors in CI/CD or other environments
+4. **Restores Android build configuration** - Complete Gradle build setup for Android app
+5. **Restores File I/O build system** - CMake configuration for MIDI and audio file handling
+6. **Removes broken references** - Fixes symlinks that would cause errors in CI/CD or other environments
+7. **Confirms no C++ source loss** - All custom C++ code is present in the repository
 
 ## Recommendations
 
