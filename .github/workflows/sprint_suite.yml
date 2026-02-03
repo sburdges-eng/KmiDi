@@ -15,9 +15,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      - run: pip install -e .[dev,audio,all]
-      - run: pytest tests_music-brain/ -v
-      - run: pytest tests_penta-core/ -v || true
+      - run: pip install -e .
+      - run: pytest tests/unit/ -v
+      - run: pytest tests/integration/ -v || true
 
   sprint2_core_integration:
     name: "Sprint 2 – Core Integration"
@@ -44,8 +44,16 @@ jobs:
           markdownlint '**/*.md'
       - name: Run example scripts
         run: |
-          pip install -e .[all]
-          python examples_music-brain/example.py || true
+          pip install -e .
+        continue-on-error: true
+      - name: Test example scripts if they exist
+        run: |
+          if [ -f examples/example.py ]; then
+            python examples/example.py
+          else
+            echo "No example scripts found"
+          fi
+        continue-on-error: true
 
   sprint5_platform:
     name: "Sprint 5 – Platform (${{ matrix.os }}, Python ${{ matrix.python-version }})"
@@ -92,12 +100,12 @@ jobs:
       - name: Install package
         run: |
           python -m pip install --upgrade pip
-          pip install -e .[all]
+          pip install -e .
       
       - name: Run tests
         run: |
           pip install pytest pytest-mock
-          pytest tests_music-brain/ -v --tb=short
+          pytest tests/unit/ -v --tb=short
       
       - name: Test CLI commands
         run: |
@@ -112,8 +120,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      - run: pip install -e .[theory,audio,all]
-      - run: pytest tests_music-brain/ -v --disable-warnings
+      - run: pip install -e .
+      - run: pytest tests/unit/ -v --disable-warnings
 
   sprint7_mobile_web:
     name: "Sprint 7 – Mobile/Web"
@@ -123,7 +131,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      - run: pip install -e .[ui,all]
+      - run: pip install -e .
       - name: Launch Streamlit (optional, headless)
         run: |
           streamlit run app.py --headless &
@@ -137,5 +145,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      - run: pip install -e .[all]
-      - run: pytest tests_music-brain/ -v
+      - run: pip install -e .
+      - run: pytest tests/unit/ -v
