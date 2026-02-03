@@ -646,34 +646,79 @@ class DAiWAPI:
         """
         result = process_intent(intent)
         
-        # Convert to serializable format
+        # Convert to serializable format with safe dict access
+        # Provide defaults for all keys in case process_intent returns incomplete data
         output = {
-            "intent_summary": result['intent_summary'],
-            "harmony": {
-                "chords": result['harmony'].chords,
-                "roman_numerals": result['harmony'].roman_numerals,
-                "rule_broken": result['harmony'].rule_broken,
-                "rule_effect": result['harmony'].rule_effect,
-            },
-            "groove": {
-                "pattern_name": result['groove'].pattern_name,
-                "tempo_bpm": result['groove'].tempo_bpm,
-                "swing_factor": result['groove'].swing_factor,
-                "rule_broken": result['groove'].rule_broken,
-                "rule_effect": result['groove'].rule_effect,
-            },
-            "arrangement": {
-                "sections": result['arrangement'].sections,
-                "dynamic_arc": result['arrangement'].dynamic_arc,
-                "rule_broken": result['arrangement'].rule_broken,
-            },
-            "production": {
-                "vocal_treatment": result['production'].vocal_treatment,
-                "eq_notes": result['production'].eq_notes,
-                "dynamics_notes": result['production'].dynamics_notes,
-                "rule_broken": result['production'].rule_broken,
-            },
+            "intent_summary": result.get('intent_summary', {}),
         }
+        
+        # Safely extract harmony data
+        harmony = result.get('harmony')
+        if harmony:
+            output["harmony"] = {
+                "chords": getattr(harmony, 'chords', []),
+                "roman_numerals": getattr(harmony, 'roman_numerals', []),
+                "rule_broken": getattr(harmony, 'rule_broken', ""),
+                "rule_effect": getattr(harmony, 'rule_effect', ""),
+            }
+        else:
+            output["harmony"] = {
+                "chords": [],
+                "roman_numerals": [],
+                "rule_broken": "",
+                "rule_effect": "",
+            }
+        
+        # Safely extract groove data
+        groove = result.get('groove')
+        if groove:
+            output["groove"] = {
+                "pattern_name": getattr(groove, 'pattern_name', ""),
+                "tempo_bpm": getattr(groove, 'tempo_bpm', 120),
+                "swing_factor": getattr(groove, 'swing_factor', 0.0),
+                "rule_broken": getattr(groove, 'rule_broken', ""),
+                "rule_effect": getattr(groove, 'rule_effect', ""),
+            }
+        else:
+            output["groove"] = {
+                "pattern_name": "",
+                "tempo_bpm": 120,
+                "swing_factor": 0.0,
+                "rule_broken": "",
+                "rule_effect": "",
+            }
+        
+        # Safely extract arrangement data
+        arrangement = result.get('arrangement')
+        if arrangement:
+            output["arrangement"] = {
+                "sections": getattr(arrangement, 'sections', []),
+                "dynamic_arc": getattr(arrangement, 'dynamic_arc', []),
+                "rule_broken": getattr(arrangement, 'rule_broken', ""),
+            }
+        else:
+            output["arrangement"] = {
+                "sections": [],
+                "dynamic_arc": [],
+                "rule_broken": "",
+            }
+        
+        # Safely extract production data
+        production = result.get('production')
+        if production:
+            output["production"] = {
+                "vocal_treatment": getattr(production, 'vocal_treatment', ""),
+                "eq_notes": getattr(production, 'eq_notes', ""),
+                "dynamics_notes": getattr(production, 'dynamics_notes', ""),
+                "rule_broken": getattr(production, 'rule_broken', ""),
+            }
+        else:
+            output["production"] = {
+                "vocal_treatment": "",
+                "eq_notes": "",
+                "dynamics_notes": "",
+                "rule_broken": "",
+            }
         
         if output_json:
             import json
@@ -772,10 +817,18 @@ class DAiWAPI:
             key_parts = tech["key"].split()
             technical_key = key_parts[0] if key_parts else "C"
             if len(key_parts) > 1:
-                technical_mode = key_parts[1].lower()
+                # Validate mode against known modes
+                mode_candidate = key_parts[1].lower()
+                valid_modes = {"major", "minor", "dorian", "phrygian", "lydian", "mixolydian", "aeolian", "locrian"}
+                technical_mode = mode_candidate if mode_candidate in valid_modes else "major"
         
-        # Calculate tempo range from BPM
+        # Calculate tempo range from BPM with validation
         bpm = tech.get("bpm") or 82
+        try:
+            bpm = int(bpm)
+            bpm = max(40, min(300, bpm))  # Clamp to valid range
+        except (ValueError, TypeError):
+            bpm = 82
         tempo_range = (max(60, bpm - 20), min(140, bpm + 20))
         
         # Create CompleteSongIntent
@@ -1211,9 +1264,19 @@ if FASTAPI_AVAILABLE:
                         key_parts = tech.key.split()
                         technical_key = key_parts[0] if key_parts else "C"
                         if len(key_parts) > 1:
-                            technical_mode = key_parts[1].lower()
+                            # Validate mode against known modes
+                            mode_candidate = key_parts[1].lower()
+                            valid_modes = {"major", "minor", "dorian", "phrygian", "lydian", "mixolydian", "aeolian", "locrian"}
+                            technical_mode = mode_candidate if mode_candidate in valid_modes else "major"
                     
+                    # Validate and clamp BPM to reasonable range (40-300)
                     bpm = tech.bpm if tech and tech.bpm is not None else 82
+                    try:
+                        bpm = int(bpm)
+                        bpm = max(40, min(300, bpm))  # Clamp to valid range
+                    except (ValueError, TypeError):
+                        bpm = 82  # Default if invalid
+                    
                     tempo_range = (max(60, bpm - 20), min(140, bpm + 20))
                     
                     return CompleteSongIntent(
@@ -1253,17 +1316,33 @@ if FASTAPI_AVAILABLE:
                         groove = result.get("groove", {})
                         tech = request.intent.technical
                         
-                        # Access Pydantic model attributes directly
+                        # Validate and clamp duration to positive value (0.1 - 60 minutes)
                         duration_minutes = tech.duration if tech and tech.duration is not None else 3.0
+                        try:
+                            duration_minutes = float(duration_minutes)
+                            duration_minutes = max(0.1, min(60.0, duration_minutes))  # Clamp to reasonable range
+                        except (ValueError, TypeError):
+                            duration_minutes = 3.0
+                        
+                        # Validate and clamp BPM
                         bpm = tech.bpm if tech and tech.bpm is not None else (groove.get("tempo_bpm") if isinstance(groove, dict) else 82)
+                        try:
+                            bpm = int(bpm)
+                            bpm = max(40, min(300, bpm))
+                        except (ValueError, TypeError):
+                            bpm = 82
+                        
                         length_bars = int((duration_minutes * bpm) / 4)
                         length_bars = max(16, min(128, length_bars))
                         
-                        # Extract key and mode
+                        # Extract key and mode with validation
                         key_str = tech.key if tech and tech.key else "C major"
                         key_parts = key_str.split() if key_str else ["C"]
                         root_note = key_parts[0] if key_parts else "C"
-                        mode = key_parts[1] if len(key_parts) > 1 else "major"
+                        # Validate mode
+                        mode_candidate = key_parts[1] if len(key_parts) > 1 else "major"
+                        valid_modes = {"major", "minor", "dorian", "phrygian", "lydian", "mixolydian", "aeolian", "locrian"}
+                        mode = mode_candidate.lower() if mode_candidate.lower() in valid_modes else "major"
                         
                         # Extract structure and instruments from request
                         structure = tech.structure if tech else None
@@ -1369,7 +1448,13 @@ if FASTAPI_AVAILABLE:
             chaos = 0.5
             motivation = 7
             if request.intent.technical and request.intent.technical.bpm:
-                motivation = max(1, min(10, int(request.intent.technical.bpm / 20)))
+                try:
+                    # Safely convert BPM to motivation with validation
+                    bpm = int(request.intent.technical.bpm)
+                    bpm = max(40, min(300, bpm))  # Clamp BPM
+                    motivation = max(1, min(10, int(bpm / 20)))
+                except (ValueError, TypeError):
+                    motivation = 7  # Default if conversion fails
             lyric_text, lyric_source = api._select_lyric_payload(request.intent)
             
             # Generate output file if format requested
@@ -1400,7 +1485,7 @@ if FASTAPI_AVAILABLE:
                 },
             }
             
-            # Add file paths to response
+            # Add file paths to response with safe dict access
             if output_midi and result.get("midi_path"):
                 response["midi_path"] = result["midi_path"]
                 if output_audio:
