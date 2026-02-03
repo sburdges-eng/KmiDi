@@ -22,4 +22,5 @@ jobs:
       run: |
         pip install numpy scipy torch librosa pyyaml
         pip install pytest pytest-cov
+        pip install -e .
     - run: pytest tests/unit/ -v --cov=music_brain
