@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.musicgen/schemas/music-graph.schema.json",
+  "title": "MusicGraph",
+  "type": "object",
+  "required": ["meta", "global", "structure", "tracks", "generation"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["project_id", "schema_version", "created_at"],
+      "properties": {
+        "project_id": { "type": "string", "minLength": 1 },
+        "schema_version": { "type": "string", "const": "0.1.0" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "global": {
+      "type": "object",
+      "required": ["tempo_bpm", "time_signature", "key"],
+      "properties": {
+        "tempo_bpm": { "type": "number", "minimum": 20, "maximum": 300 },
+        "time_signature": {
+          "type": "object",
+          "required": ["numerator", "denominator"],
+          "properties": {
+            "numerator": { "type": "integer", "minimum": 1, "maximum": 32 },
+            "denominator": { "type": "integer", "enum": [1, 2, 4, 8, 16, 32] }
+          },
+          "additionalProperties": false
+        },
+        "key": {
+          "type": "object",
+          "required": ["tonic", "mode"],
+          "properties": {
+            "tonic": { "type": "string", "pattern": "^[A-G](#|b)?$" },
+            "mode": { "type": "string", "enum": ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "locrian"] }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "structure": {
+      "type": "object",
+      "required": ["sections"],
+      "properties": {
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "label", "start_bar", "end_bar"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "label": { "type": "string", "minLength": 1 },
+              "start_bar": { "type": "integer", "minimum": 1 },
+              "end_bar": { "type": "integer", "minimum": 1 }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "tracks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "role", "midi_channel", "notes"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "role": { "type": "string", "enum": ["melody", "harmony", "bass", "drums", "fx", "other"] },
+          "midi_channel": { "type": "integer", "minimum": 1, "maximum": 16 },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["pitch", "start_beat", "end_beat", "velocity"],
+              "properties": {
+                "pitch": { "type": "integer", "minimum": 0, "maximum": 127 },
+                "start_beat": { "type": "number", "minimum": 0 },
+                "end_beat": { "type": "number", "minimum": 0 },
+                "velocity": { "type": "integer", "minimum": 1, "maximum": 127 }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "generation": {
+      "type": "object",
+      "required": ["seed", "model_versions", "revision"],
+      "properties": {
+        "seed": { "type": "integer", "minimum": 0 },
+        "model_versions": {
+          "type": "object",
+          "properties": {
+            "symbolic": { "type": "string" },
+            "embedding": { "type": "string" },
+            "audio": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "revision": { "type": "integer", "minimum": 1 },
+        "prompt": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
