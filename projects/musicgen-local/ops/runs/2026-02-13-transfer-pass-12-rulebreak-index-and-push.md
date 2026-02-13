@@ -19,5 +19,5 @@ Date: 2026-02-13
 - model artifacts: 47
 
 ## Push Metadata
-- commit: 11aefcf31dc0218c8f2fd91ba879bcea3763c160
+- commit: e3572db5545b1472f6da033731e84dd3ff6cd6c6
 - remote ref: origin/codex/musicgen-local-inventory-2026-02-13-rulebreak
