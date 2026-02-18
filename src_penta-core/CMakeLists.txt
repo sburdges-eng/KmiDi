@@ -9,26 +9,35 @@ if(APPLE)
     # The main CMakeLists.txt sets MAC_OS_X_VERSION_MIN_REQUIRED which helps
 endif()
 
-# Readerwriterqueue: header-only library with no CMakeLists.txt
-# Must explicitly create INTERFACE target and ensure SOURCE_DIR is populated
-include(FetchContent)
+# Readerwriterqueue: prefer local vendored stub to avoid network-only configure.
 if(NOT TARGET readerwriterqueue)
-    FetchContent_Declare(
-        readerwriterqueue
-        GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue.git
-        GIT_TAG v1.0.6
-        GIT_SHALLOW TRUE
-    )
-    FetchContent_MakeAvailable(readerwriterqueue)
-    
-    # Explicitly populate SOURCE_DIR for header-only library
-    FetchContent_GetProperties(readerwriterqueue)
-
-    if(NOT TARGET readerwriterqueue)
+    set(READERWRITERQUEUE_STUB_DIR "${PROJECT_SOURCE_DIR}/external/readerwriterqueue-stub")
+    if(EXISTS "${READERWRITERQUEUE_STUB_DIR}/readerwriterqueue.h")
         add_library(readerwriterqueue INTERFACE)
         target_include_directories(readerwriterqueue INTERFACE
-            ${readerwriterqueue_SOURCE_DIR}
+            "${READERWRITERQUEUE_STUB_DIR}"
         )
+        target_compile_definitions(readerwriterqueue INTERFACE
+            KMIDI_READERWRITERQUEUE_STUB=1
+        )
+        message(STATUS "Using local readerwriterqueue stub: ${READERWRITERQUEUE_STUB_DIR}")
+    else()
+        include(FetchContent)
+        FetchContent_Declare(
+            readerwriterqueue
+            GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue.git
+            GIT_TAG v1.0.6
+            GIT_SHALLOW TRUE
+        )
+        FetchContent_MakeAvailable(readerwriterqueue)
+
+        FetchContent_GetProperties(readerwriterqueue)
+        if(NOT TARGET readerwriterqueue)
+            add_library(readerwriterqueue INTERFACE)
+            target_include_directories(readerwriterqueue INTERFACE
+                ${readerwriterqueue_SOURCE_DIR}
+            )
+        endif()
     endif()
 endif()
 

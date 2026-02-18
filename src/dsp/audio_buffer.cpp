@@ -6,6 +6,7 @@
 #include "daiw/types.hpp"
 #include <algorithm>
 #include <cstring>
+#include <vector>
 
 namespace daiw {
 

@@ -1,5 +1,5 @@
 #include "VoiceProcessor.h"
-#include "../Bridge/BridgeClient.h"
+#include "BridgeClient.h"
 #include <cmath>
 
 #ifndef M_PI

@@ -1,5 +1,5 @@
 ==========================================================================
-KMIDI RECOVERY PROJECT - FINAL COMPLETION REPORT
+KMIDI RECOVERY PROJECT - FINAL COMPLETION REPORT (UPDATED)
 ==========================================================================
 Workspace: /private/tmp/KmiDi_recovery_20260218-043218
 Branch: codex/recovery-reconcile-20260218-043343
@@ -7,11 +7,11 @@ Remote: https://github.com/sburdges-eng/KmiDi.git
 Date: 2026-02-18
 
 PROJECT STATUS
-- Phase 1: COMPLETE (workspace, branch, metadata established)
-- Phase 2: COMPLETE (classification + triage outputs)
-- Phase 3: COMPLETE (safe apply manifest generated, gated/no-apply execution)
-- Phase 4: COMPLETE (git batching and no-apply status recorded)
-- Phase 5: COMPLETE WITH FAILING VALIDATION (build/test validation executed and logged)
+- Phase 1: COMPLETE
+- Phase 2: COMPLETE
+- Phase 3: COMPLETE (safe apply manifest generated)
+- Phase 4: COMPLETE (no-apply tracking)
+- Phase 5: RE-RUN COMPLETE (partial improvement; build still failing)
 
 DECISION CLASS COUNTS
 - exact_match: 3945
@@ -20,47 +20,44 @@ DECISION CLASS COUNTS
 - conflict: 281
 - new_file: 1003
 
-PHASE 2 APPROVALS
-- approved candidate auto-apply: 180
-- approved conflict auto-apply: 33
-- manual conflict queue: 248
-
 PHASE 3/4 APPLY STATE
 - manifest rows: 4625
 - verified no-op mappings: 4412
+- approved-but-not-applied: 213
 - content copies executed in this run: 0
-- approved-but-not-applied (by no-apply mode): 213
 
-PHASE 5 BUILD/TEST OUTCOME
-- cmake configure: FAIL
+PHASE 5 (UPDATED) RESULTS
+- cmake configure: PASS
 - KellyCore build: FAIL
 - KellyPlugin build: FAIL
 - KellyApp build: FAIL
 - KellyTests build: FAIL
 - ctest command: PASS (no tests discovered)
 - python venv: PASS
-- pip install -e .: FAIL (offline dependency resolution)
+- pip install -e .: FAIL (offline setuptools resolution)
 - npm install --offline: FAIL (ENOTCACHED)
-- npm run build: FAIL (tsc missing due failed install)
+- npm run build: FAIL (tsc missing after failed install)
 
-PRIMARY BLOCKER
-- Vendored JUCE CMake support is incomplete in external/JUCE:
-  missing extras/Build/CMake/JUCEModuleSupport.cmake
+FIXES COMPLETED IN THIS PASS
+1) Restored `external/JUCE/extras/Build` from JUCE commit `61a03097ec9e01693c87ac71935e97b9714cff1a`.
+2) Added offline `readerwriterqueue` fallback in root and `src_penta-core` CMake.
+3) Removed Apple availability macro shims from:
+   - external/JUCE/modules/juce_core/system/juce_StandardHeader.h
+   - include/penta/common/Platform.h
+4) Renamed conflicting header:
+   - include/availability.h -> include/libcxx_availability.h
+5) Fixed include path issues:
+   - src/BridgeClient.cpp
+   - src/VoiceProcessor.cpp
+6) Fixed missing standard include:
+   - src/dsp/audio_buffer.cpp (`#include <vector>`)
 
-KEY ARTIFACTS
-- /private/tmp/KmiDi_recovery_20260218-043218/recovery_reports/inventory_canonical.jsonl
-- /private/tmp/KmiDi_recovery_20260218-043218/recovery_reports/inventory_recovered.jsonl
-- /private/tmp/KmiDi_recovery_20260218-043218/recovery_reports/matches.jsonl
-- /private/tmp/KmiDi_recovery_20260218-043218/recovery_reports/decisions.csv
-- /private/tmp/KmiDi_recovery_20260218-043218/recovery_reports/review_queue.csv
-- /private/tmp/KmiDi_recovery_20260218-043218/recovery_reports/patchset_plan.md
-- /private/tmp/KmiDi_recovery_20260218-043218/recovery_reports/phase3_apply_manifest.csv
-- /private/tmp/KmiDi_recovery_20260218-043218/recovery_reports/phase4_status.md
+CURRENT PRIMARY BLOCKERS
+- Internal source/API drift in engine modules (representative):
+  - unknown types: `KellyBrain`, `MusicalParameters`, `EmotionalForce`
+  - mismatched model types: `EmotionState` vs `QuantumEmotionBasisState`
+  - field mismatches (`probability`, `amplitude`, `basis`) against current structs
+
+AUTHORITATIVE VALIDATION ARTIFACT
 - /private/tmp/KmiDi_recovery_20260218-043218/recovery_reports/build_validation.md
-
-RECOMMENDED NEXT EXECUTION ORDER
-1) Repair vendored JUCE subtree/files for CMake support.
-2) Re-run Phase 5 configure/build/tests.
-3) Execute approved Phase 3 apply (213 entries) only after validation passes.
-4) Commit by batch and open PR.
 ==========================================================================

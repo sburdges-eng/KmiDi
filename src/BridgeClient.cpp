@@ -1,5 +1,5 @@
 #include "BridgeClient.h"
-#include "../Voice/VoiceProcessor.h"
+#include "VoiceProcessor.h"
 
 //==============================================================================
 // OSC Address Patterns (must match Python cpp_bridge.py)

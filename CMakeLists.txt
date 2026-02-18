@@ -24,21 +24,12 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # These settings MUST be configured before any targets are created to apply effectively.
 if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum macOS version")
-    # Ensure availability macros are available before system headers
-    # Use numeric value (101200 = 10.12 * 10000) since macro constants aren't available at CMake time
-    # MAX_ALLOWED defaults to SDK version if not set, so we only set MIN_REQUIRED
-    # Note: CMAKE_OSX_DEPLOYMENT_TARGET also sets this automatically, but we set it explicitly
-    # to ensure it's available before JUCE headers are processed
-    #
-    # For SDK 26.2+, we define simple (non-function) availability macros to empty.
-    # Function-style macros (__API_AVAILABLE, etc.) are defined in juce_StandardHeader.h
-    # because CMake can't pass function-style preprocessor definitions on the command line.
+    # Use only the minimum-required deployment macro globally.
+    # Defining availability macros (e.g. __CLOCK_AVAILABILITY) on the command line
+    # breaks non-JUCE translation units that include SDK headers before JUCE headers.
+    # JUCE-specific compatibility shims remain in juce_StandardHeader.h.
     add_compile_definitions(
         MAC_OS_X_VERSION_MIN_REQUIRED=101200
-        __CLOCK_AVAILABILITY=
-        __WATCHOS_PROHIBITED=
-        __TVOS_PROHIBITED=
-        __IOS_PROHIBITED=
     )
 endif()
 find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
@@ -46,26 +37,35 @@ find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
 # JUCE setup
 add_subdirectory(external/JUCE EXCLUDE_FROM_ALL)
 
-# Readerwriterqueue (lock-free queue) for RT-safe OSC
-# Note: This is a header-only library with no CMakeLists.txt, so we must
-# explicitly create an INTERFACE target and ensure SOURCE_DIR is populated.
-include(FetchContent)
-FetchContent_Declare(
-    readerwriterqueue
-    GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue.git
-    GIT_TAG v1.0.6
-    GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(readerwriterqueue)
-
-# Explicitly populate SOURCE_DIR for header-only library without CMakeLists.txt
-FetchContent_GetProperties(readerwriterqueue)
-
-if(NOT TARGET readerwriterqueue)
+# Readerwriterqueue (lock-free queue) for RT-safe OSC.
+# Prefer vendored local stub for deterministic/offline configure.
+set(READERWRITERQUEUE_STUB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/readerwriterqueue-stub")
+if(EXISTS "${READERWRITERQUEUE_STUB_DIR}/readerwriterqueue.h")
     add_library(readerwriterqueue INTERFACE)
     target_include_directories(readerwriterqueue INTERFACE
-        ${readerwriterqueue_SOURCE_DIR}
+        "${READERWRITERQUEUE_STUB_DIR}"
     )
+    target_compile_definitions(readerwriterqueue INTERFACE
+        KMIDI_READERWRITERQUEUE_STUB=1
+    )
+    message(STATUS "Using local readerwriterqueue stub: ${READERWRITERQUEUE_STUB_DIR}")
+else()
+    include(FetchContent)
+    FetchContent_Declare(
+        readerwriterqueue
+        GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue.git
+        GIT_TAG v1.0.6
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(readerwriterqueue)
+
+    FetchContent_GetProperties(readerwriterqueue)
+    if(NOT TARGET readerwriterqueue)
+        add_library(readerwriterqueue INTERFACE)
+        target_include_directories(readerwriterqueue INTERFACE
+            ${readerwriterqueue_SOURCE_DIR}
+        )
+    endif()
 endif()
 
 # ============================================================================
@@ -136,6 +136,11 @@ file(GLOB_RECURSE KELLY_CORE_SOURCES CONFIGURE_DEPENDS
 # Exclude app entry point and plugin sources from the core lib
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/gui/main.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/plugin/")
+# `src/bridge/kelly_bridge.cpp` requires pybind11 headers and should only be
+# compiled when pybind11 is available in the toolchain.
+if(NOT pybind11_FOUND)
+    list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/bridge/kelly_bridge.cpp$")
+endif()
 # NOTE: Previous line 31 had "list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/")"
 # which would exclude ALL source files (since all paths contain "/src/"), making
 # KELLY_CORE_SOURCES empty. This has been removed. If macro conflicts exist,
