@@ -1,0 +1,81 @@
+{
+  "timestamp": "2026-02-18T04:43:00Z",
+  "candidates_auto_approve": 180,
+  "conflicts_auto_accept": 33,
+  "conflicts_manual_review": 248,
+  "new_files_to_categorize": 1003,
+  "total_auto_decisions": 213,
+  "total_manual_decisions": 1251,
+  "conflict_analysis": [
+    {
+      "path": "/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/legacy/RECOVERY_SOURCE/Datasets_Project/KmiDi/KmiDi/external/JUCE/BREAKING_CHANGES.md",
+      "candidate": "external/JUCE/BREAKING_CHANGES.md",
+      "score": 0.9018,
+      "delta": 0.14370000000000005,
+      "decision": "auto_accept"
+    },
+    {
+      "path": "/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/legacy/RECOVERY_SOURCE/Datasets_Project/KmiDi/KmiDi/external/JUCE/CHANGE_LIST.md",
+      "candidate": "external/JUCE/CHANGE_LIST.md",
+      "score": 0.9097,
+      "delta": 0.14549999999999996,
+      "decision": "auto_accept"
+    },
+    {
+      "path": "/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/legacy/RECOVERY_SOURCE/Datasets_Project/KmiDi/KmiDi/external/JUCE/CMakeLists.txt",
+      "candidate": "external/JUCE/CMakeLists.txt",
+      "score": 0.9117,
+      "delta": 0.10519999999999996,
+      "decision": "auto_accept"
+    },
+    {
+      "path": "/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/legacy/RECOVERY_SOURCE/Datasets_Project/KmiDi/KmiDi/external/JUCE/CODE_OF_CONDUCT.md",
+      "candidate": "external/JUCE/CODE_OF_CONDUCT.md",
+      "score": 0.9156,
+      "delta": 0.19789999999999996,
+      "decision": "auto_accept"
+    },
+    {
+      "path": "/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/legacy/RECOVERY_SOURCE/Datasets_Project/KmiDi/KmiDi/external/JUCE/LICENSE.md",
+      "candidate": "external/JUCE/LICENSE.md",
+      "score": 0.8853,
+      "delta": 0.12480000000000002,
+      "decision": "auto_accept"
+    },
+    {
+      "path": "/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/legacy/RECOVERY_SOURCE/Datasets_Project/KmiDi/KmiDi_FINAL/python/mcp_workstation/ai_specializations.py",
+      "candidate": "mcp_workstation/ai_specializations.py",
+      "score": 0.8242,
+      "delta": 0.1602,
+      "decision": "auto_accept"
+    },
+    {
+      "path": "/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/legacy/RECOVERY_SOURCE/Datasets_Project/KmiDi/KmiDi_FINAL/python/mcp_workstation/phases.py",
+      "candidate": "mcp_workstation/phases.py",
+      "score": 0.8254,
+      "delta": 0.1301,
+      "decision": "auto_accept"
+    },
+    {
+      "path": "/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/legacy/RECOVERY_SOURCE/Datasets_Project/KmiDi/KmiDi_FINAL/python/penta_core/server.py",
+      "candidate": "python/penta_core/server.py",
+      "score": 0.879,
+      "delta": 0.13390000000000002,
+      "decision": "auto_accept"
+    },
+    {
+      "path": "/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/legacy/RECOVERY_SOURCE/Datasets_Project/KmiDi/KmiDi_FINAL/python/penta_core/utilities.py",
+      "candidate": "python/penta_core/utilities.py",
+      "score": 0.8825,
+      "delta": 0.13359999999999994,
+      "decision": "auto_accept"
+    },
+    {
+      "path": "/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/legacy/RECOVERY_SOURCE/Datasets_Project/KmiDi/music_brain/emotion_scale/feel.py",
+      "candidate": "music_brain/audio/feel.py",
+      "score": 0.8496,
+      "delta": 0.12050000000000005,
+      "decision": "auto_accept"
+    }
+  ]
+}
