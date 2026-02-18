@@ -1,0 +1,20 @@
+{
+  "baseline_ref": "origin/main",
+  "baseline_sha": "1c3412b11564e97c5205f796d6b156087b6397ad",
+  "branch_name": "codex/recovery-reconcile-20260218-043343",
+  "exclusion_patterns": [
+    "/forensics_histories/",
+    "/_QUARANTINE_",
+    "/trash/",
+    "/.Trash/",
+    "/logs/"
+  ],
+  "matcher_version": "v1.0.0",
+  "repo_url": "https://github.com/sburdges-eng/KmiDi.git",
+  "selected_source_roots": [
+    "/System/Volumes/Data/Users/seanburdges/RECOVERY_STAGED_2026-02-18/zip_extract/My Mac/Desktop/KmiDi-remote",
+    "/Volumes/KmiDi-external/COLD_STORAGEEXTERNAL",
+    "/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/legacy/RECOVERY_SOURCE/Datasets_Project/KmiDi"
+  ],
+  "timestamp_utc": "2026-02-18T11:42:41.416747+00:00"
+}
