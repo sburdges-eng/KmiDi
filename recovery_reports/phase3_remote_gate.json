@@ -5,8 +5,8 @@
     "origin",
     "--prune"
   ],
-  "output": "remote: Repository not found.\nfatal: repository 'https://github.com/sburdges-eng/KmiDi-listening-core.git/' not found",
+  "output": "fatal: unable to access 'https://github.com/sburdges-eng/KmiDi.git/': Could not resolve host: github.com",
   "remote_gate_passed": false,
   "return_code": 128,
-  "timestamp_utc": "2026-02-18T12:57:30.580471+00:00"
+  "timestamp_utc": "2026-02-18T13:10:31.877534+00:00"
 }

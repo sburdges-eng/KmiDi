@@ -1,8 +1,8 @@
 # Phase 3 Safe Apply Summary
 
-- timestamp_utc: 2026-02-18T12:57:32.796346+00:00
+- timestamp_utc: 2026-02-18T13:10:33.843898+00:00
 - remote_gate_passed: false
-- apply_mode: apply
+- apply_mode: dry_run
 - total_manifest_records: 4625
 - batch_a_exact: 3945
 - batch_b_duplicate_or_move: 467
