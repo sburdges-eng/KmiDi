@@ -1,5 +1,7 @@
 # PR Checklist
 
+Remote target: `https://github.com/sburdges-eng/KmiDi-listening-core.git`
+
 1. Ensure network access is restored and refresh baseline:
    - `git fetch origin main --prune`
    - `git checkout main && git reset --hard origin/main`
