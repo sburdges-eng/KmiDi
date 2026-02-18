@@ -1,0 +1,12 @@
+{
+  "command": [
+    "git",
+    "fetch",
+    "origin",
+    "--prune"
+  ],
+  "output": "remote: Repository not found.\nfatal: repository 'https://github.com/sburdges-eng/KmiDi-listening-core.git/' not found",
+  "remote_gate_passed": false,
+  "return_code": 128,
+  "timestamp_utc": "2026-02-18T12:57:30.580471+00:00"
+}

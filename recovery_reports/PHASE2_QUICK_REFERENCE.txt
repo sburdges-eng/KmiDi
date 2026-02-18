@@ -1,0 +1,163 @@
+================================================================================
+PHASE 2 QUICK REFERENCE CARD
+================================================================================
+
+TASK: Manual Triage & Categorization (1,251 files)
+
+PHASE 2C: CONFLICT TRIAGE (248 files)
+─────────────────────────────────────
+Input: recovery_reports/review_queue.csv (filter: status=="conflict")
+Output: triage_phase2c_decisions.csv
+
+Decision Logic:
+  IF (top_score - second_score) > 0.05 AND top_score > 0.77:
+    APPROVE (use top_candidate)
+  ELIF delta <= 0.05:
+    AMBIGUOUS (flag for review)
+  ELSE:
+    REJECT (treat as new file)
+
+Expected: ~180 APPROVE, ~50 REJECT, ~18 AMBIGUOUS
+Time: 60-90 minutes
+Effort: Medium
+
+PHASE 3: NEW FILE CATEGORIZATION (1,003 files)
+──────────────────────────────────────────────
+Input: inventory_recovered.jsonl (filter: match_type=="new_file")
+Output: new_file_decisions.csv
+
+File Type Rules:
+  KEEP: .cpp, .py, .h, .md, .json, .yaml, .sh (core project files)
+  DISCARD: .o, .gradle, __pycache__, build/, dist/, .log (artifacts)
+  REVIEW: .pkl, .pt, >50MB files, .csv (large datasets)
+
+Distribution by Extension:
+  .md (625) → KEEP
+  .py (117) → KEEP
+  .cc (73) → KEEP
+  .txt (48) → REVIEW
+  .h (36) → KEEP
+  .cpp (34) → KEEP
+  .sh (13) → KEEP
+  .rs (9) → KEEP
+  .json/.yaml (14) → KEEP
+  Other (34) → REVIEW
+
+Expected: ~650 KEEP, ~250 DISCARD, ~103 REVIEW
+Time: 90-120 minutes
+Effort: Medium
+
+OUTPUT FILES
+────────────
+1. triage_phase2c_decisions.csv
+   Columns: recovered_path, decision, top_candidate, top_score, reasoning
+
+2. new_file_decisions.csv
+   Columns: abs_path, ext, category, decision, size_mb, path_pattern, reasoning
+
+3. phase2_completion_report.md
+   Summary of all decisions and reasoning
+
+4. patchset_phase2c_approved.patch
+   Ready to apply approved conflicts
+
+5. new_files_keep.patch
+   Ready to add approved new files
+
+WORKFLOW
+────────
+Step 1: Phase 2C Triage (60-90 min)
+  □ Open review_queue.csv, filter conflicts
+  □ Review top 10 manually
+  □ Create decision patterns
+  □ Apply to all 248
+  □ Spot-check 20 random
+  □ Output: triage_phase2c_decisions.csv
+
+Step 2: Phase 3 Categorization (90-120 min)
+  □ Analyze extension distribution
+  □ Create decision rules
+  □ Apply rules to 1,003 files
+  □ Manual review edge cases
+  □ Validate distribution
+  □ Output: new_file_decisions.csv
+
+Step 3: Generate Patchsets (30 min)
+  □ Create phase2c_approved.patch
+  □ Create new_files_keep.patch
+  □ Create decisions_summary.md
+  □ Verify patches apply cleanly
+
+Step 4: Documentation (15 min)
+  □ Create phase2_completion_report.md
+  □ Document all decisions
+  □ List ambiguous cases
+  □ Ready for code review
+
+SUCCESS CRITERIA
+────────────────
+✅ All 248 conflicts reviewed and categorized
+✅ All 1,003 new files decided (KEEP/DISCARD/REVIEW)
+✅ Decision files generated with reasoning
+✅ Patchsets created and verified
+✅ Phase 2 completion report created
+✅ Ready for code review and validation
+
+KEY COMMANDS
+────────────
+# View conflicts (sample)
+awk -F, '$1=="conflict" {print $2, $3, $4}' \
+  recovery_reports/review_queue.csv | head -20
+
+# View new files by extension
+grep '"match_type": "new_file"' recovery_reports/matches.jsonl | \
+  jq -r '.ext' | sort | uniq -c | sort -rn
+
+# Check file sizes (>50MB)
+find . -type f -size +50M | awk '{print $0, "-", }' | column -t
+
+# Verify patch applies
+git apply --check patchset_phase2c_approved.patch
+
+DECISION CHECKLIST
+──────────────────
+Phase 2C Conflicts:
+  □ Is top candidate a clear match?
+  □ Is score gap significant (>0.05)?
+  □ Could file be moved/renamed?
+  □ If ambiguous, flag for manual review
+
+Phase 3 New Files:
+  □ Is it essential to project?
+  □ Is it a build artifact?
+  □ Is it too large (>50MB)?
+  □ Does path suggest purpose?
+
+CONTACT/ESCALATION
+───────────────────
+If you encounter:
+  • Unclear decisions → Flag as AMBIGUOUS/REVIEW
+  • Large files (>100MB) → Check if datasets/models
+  • Unexpected file types → Document and flag
+  • Build artifacts in recovered files → DISCARD
+
+NOTES
+──────
+• Time: 2-4 hours total
+• Reversible: Yes (can change decisions later)
+• Risk: Medium (affects final recovery)
+• Effort: Medium (mostly categorization)
+
+REMEMBER
+─────────
+→ Core project files are ESSENTIAL
+→ Build artifacts must be DISCARDED
+→ Large datasets/models require REVIEW
+→ When in doubt, flag as AMBIGUOUS
+→ All decisions must have REASONING
+
+Status: PHASE 2 READY TO BEGIN
+Priority: HIGH
+Owner: Human triage + tool assistance
+
+================================================================================
