@@ -40,12 +40,36 @@ DEFAULT_EXCLUDES = [
     "/logs/",
 ]
 
+# Scoring weights for heuristic matching (sum to 1.0)
+# Path similarity is weighted highest as directory structure is most stable
+PATH_WEIGHT = 0.45  # Weight for directory path similarity
+NAME_WEIGHT = 0.30  # Weight for filename similarity
+EXT_WEIGHT = 0.20   # Weight for extension match
+SIZE_WEIGHT = 0.05  # Weight for file size similarity
+
+# Confidence thresholds for reconciliation decisions
+CANDIDATE_MIN_SCORE = 0.60      # Minimum score to consider a file as a candidate match
+HIGH_CONFIDENCE_SCORE = 0.92    # Score threshold for high-confidence heuristic matches
+MIN_GAP_TO_SECOND = 0.03        # Minimum score gap between top and second candidate to avoid ambiguity
+CONFLICT_MIN_SCORE = 0.75       # Minimum score to treat as potential conflict vs new file
+
 @dataclass(frozen=True)
 class CanonicalFile:
     repo_rel_path: str
     sha256: str
     size: int
     tracked: bool = True
+
+
+@dataclass(frozen=True)
+class PrecomputedCanonicalFile:
+    """Canonical file with precomputed Path fields for efficient heuristic matching."""
+    canonical: CanonicalFile
+    normalized_path: str
+    name: str
+    dir: str
+    ext: str
+
 
 
 def run(cmd: List[str], cwd: Optional[Path] = None) -> str:
@@ -110,7 +134,33 @@ def size_score(a: int, b: int) -> float:
     return max(0.0, 1.0 - abs(a - b) / m)
 
 
+def precompute_canonical(canonical: CanonicalFile) -> PrecomputedCanonicalFile:
+    """Precompute normalized path components for efficient heuristic matching."""
+    norm = normalize(canonical.repo_rel_path)
+    p = Path(norm)
+    return PrecomputedCanonicalFile(
+        canonical=canonical,
+        normalized_path=norm,
+        name=p.name,
+        dir=str(p.parent),
+        ext=p.suffix,
+    )
+
+
+def heuristic_score_precomputed(
+    rec_name: str, rec_dir: str, rec_ext: str, rec_size: int,
+    precomp: PrecomputedCanonicalFile
+) -> float:
+    """Compute heuristic score using precomputed canonical file data."""
+    path_sim = seq_sim(rec_dir, precomp.dir)
+    name_sim = seq_sim(rec_name, precomp.name)
+    ext_match = 1.0 if rec_ext == precomp.ext and rec_ext != "" else 0.0
+    sscore = size_score(rec_size, precomp.canonical.size)
+    return PATH_WEIGHT * path_sim + NAME_WEIGHT * name_sim + EXT_WEIGHT * ext_match + SIZE_WEIGHT * sscore
+
+
 def heuristic_score(recovered_rel: str, recovered_size: int, cand_rel: str, cand_size: int) -> float:
+    """Legacy heuristic score function for backward compatibility."""
     rec_norm = normalize(recovered_rel)
     cand_norm = normalize(cand_rel)
 
@@ -125,7 +175,7 @@ def heuristic_score(recovered_rel: str, recovered_size: int, cand_rel: str, cand
     name_sim = seq_sim(rec_name, cand_name)
     ext_match = 1.0 if rec_ext == cand_ext and rec_ext != "" else 0.0
     sscore = size_score(recovered_size, cand_size)
-    return 0.45 * path_sim + 0.30 * name_sim + 0.20 * ext_match + 0.05 * sscore
+    return PATH_WEIGHT * path_sim + NAME_WEIGHT * name_sim + EXT_WEIGHT * ext_match + SIZE_WEIGHT * sscore
 
 
 def main() -> None:
@@ -213,12 +263,10 @@ def main() -> None:
                 source_root = ""
                 rel_hint = p.name
                 for root in roots:
-                    try:
+                    if p.is_relative_to(root):
                         rel_hint = str(p.relative_to(root)).replace("\\", "/")
                         source_root = str(root)
                         break
-                    except Exception:
-                        continue
                 if not source_root:
                     source_root = str(p.parent)
 
@@ -254,9 +302,9 @@ def main() -> None:
                     if not is_in_scope(p):
                         continue
 
-                    try:
+                    if p.is_relative_to(root):
                         rel_hint = str(p.relative_to(root)).replace("\\", "/")
-                    except Exception:
+                    else:
                         rel_hint = p.name
 
                     try:
@@ -307,7 +355,14 @@ def main() -> None:
         ])
         q_writer.writeheader()
 
-        canonical_for_heuristic = sorted(canonical, key=lambda c: c.repo_rel_path)
+        # Precompute canonical file data and index by extension for efficient lookup
+        precomputed_canonical: List[PrecomputedCanonicalFile] = [
+            precompute_canonical(c) for c in canonical
+        ]
+        canonical_by_ext: Dict[str, List[PrecomputedCanonicalFile]] = {}
+        for pc in precomputed_canonical:
+            ext = pc.ext
+            canonical_by_ext.setdefault(ext, []).append(pc)
 
         for rec in recovered_records:
             rel_hint = rec["rel_hint"]
@@ -342,30 +397,36 @@ def main() -> None:
                     destination = chosen.repo_rel_path
                     reason = "same_hash_different_path"
                 else:
-                    # Heuristic search bounded by extension match first.
-                    ext = Path(rel_hint).suffix.lower()
-                    candidates = [c for c in canonical_for_heuristic if Path(c.repo_rel_path).suffix.lower() == ext] if ext else canonical_for_heuristic
-                    scored: List[Tuple[float, CanonicalFile]] = []
-                    for c in candidates:
-                        score = heuristic_score(rel_hint, rec_size, c.repo_rel_path, c.size)
-                        if score >= 0.60:
-                            scored.append((score, c))
-                    scored.sort(key=lambda t: (-t[0], t[1].repo_rel_path))
+                    # Heuristic search using precomputed canonical data, indexed by extension
+                    rec_norm = normalize(rel_hint)
+                    rec_p = Path(rec_norm)
+                    rec_name = rec_p.name
+                    rec_dir = str(rec_p.parent)
+                    rec_ext = rec_p.suffix
+                    
+                    # Get candidates with matching extension, or all if no extension
+                    candidates = canonical_by_ext.get(rec_ext, []) if rec_ext else precomputed_canonical
+                    scored: List[Tuple[float, PrecomputedCanonicalFile]] = []
+                    for pc in candidates:
+                        score = heuristic_score_precomputed(rec_name, rec_dir, rec_ext, rec_size, pc)
+                        if score >= CANDIDATE_MIN_SCORE:
+                            scored.append((score, pc))
+                    scored.sort(key=lambda t: (-t[0], t[1].canonical.repo_rel_path))
 
                     if scored:
-                        top_score, top = scored[0]
-                        top_candidate = top.repo_rel_path
+                        top_score, top_pc = scored[0]
+                        top_candidate = top_pc.canonical.repo_rel_path
                         if len(scored) > 1:
-                            second_score, second = scored[1]
-                            second_candidate = second.repo_rel_path
+                            second_score, second_pc = scored[1]
+                            second_candidate = second_pc.canonical.repo_rel_path
 
-                        if top_score >= 0.92 and (top_score - second_score) > 0.03:
+                        if top_score >= HIGH_CONFIDENCE_SCORE and (top_score - second_score) > MIN_GAP_TO_SECOND:
                             status = "candidate_match"
                             action = "manual_review_required"
                             confidence = round(top_score, 4)
                             destination = top_candidate
                             reason = "high_confidence_heuristic"
-                        elif top_score >= 0.75:
+                        elif top_score >= CONFLICT_MIN_SCORE:
                             status = "conflict"
                             action = "manual_review_required"
                             confidence = round(top_score, 4)
