@@ -437,11 +437,40 @@ def main() -> None:
 
     # Patchset plan markdown
     patchset_plan_path = report_dir / "patchset_plan.md"
+
+    # Derive remote gate status from an actual remote check.
+    remote_gate_lines: List[str] = ["## Remote Gate\n"]
+    try:
+        # Use a non-destructive dry-run fetch to validate connectivity / ref.
+        fetch_cmd = ["git", "fetch", "--dry-run", args.remote_url, args.baseline_ref]
+        fetch_result = subprocess.run(
+            fetch_cmd,
+            cwd=workspace,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        if fetch_result.returncode == 0:
+            remote_gate_lines.append(
+                "- Online source-of-truth refresh check succeeded for this run.\n"
+            )
+        else:
+            remote_gate_lines.append(
+                "- Online source-of-truth refresh check failed or was not performed in this run.\n"
+            )
+    except Exception:
+        remote_gate_lines.append(
+            "- Online source-of-truth refresh check failed or was not performed in this run.\n"
+        )
+    # This script does not auto-apply any reconciled file changes.
+    remote_gate_lines.append(
+        "- No reconciled file changes were auto-applied by this script.\n\n"
+    )
+    remote_gate_section = "".join(remote_gate_lines)
+
     patchset_plan_path.write_text(
         "# Patchset Plan (Safe Staged Apply)\n\n"
-        "## Remote Gate\n"
-        "- Online source-of-truth refresh failed in this run.\n"
-        "- No reconciled file changes were auto-applied.\n\n"
+        f"{remote_gate_section}"
         "## Batch A (Exact)\n"
         f"- exact_match count: {counts['exact_match']}\n"
         "- action: auto-apply when remote gate is cleared.\n\n"
