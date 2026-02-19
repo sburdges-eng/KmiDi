@@ -213,12 +213,10 @@ def main() -> None:
                 source_root = ""
                 rel_hint = p.name
                 for root in roots:
-                    try:
+                    if p.is_relative_to(root):
                         rel_hint = str(p.relative_to(root)).replace("\\", "/")
                         source_root = str(root)
                         break
-                    except Exception:
-                        continue
                 if not source_root:
                     source_root = str(p.parent)
 
