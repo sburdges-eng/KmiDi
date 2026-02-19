@@ -40,6 +40,17 @@ DEFAULT_EXCLUDES = [
     "/logs/",
 ]
 
+# Reconciliation confidence thresholds
+# These define the confidence bands for file matching heuristics:
+# - CANDIDATE_MIN_SCORE: Minimum score (0-1) to consider a file as a potential match
+# - HIGH_CONFIDENCE_SCORE: Score above which a match is considered high-confidence (with gap check)
+# - MIN_GAP_TO_SECOND: Minimum score difference required between top and second match for high confidence
+# - CONFLICT_MIN_SCORE: Score threshold for ambiguous/medium-confidence matches requiring manual review
+CANDIDATE_MIN_SCORE = 0.60      # Include cutoff - candidates below this are ignored
+HIGH_CONFIDENCE_SCORE = 0.92    # High-confidence threshold (must also exceed MIN_GAP_TO_SECOND)
+MIN_GAP_TO_SECOND = 0.03        # Separation required to differentiate top match from runner-up
+CONFLICT_MIN_SCORE = 0.75       # Medium-confidence threshold - creates conflict requiring review
+
 @dataclass(frozen=True)
 class CanonicalFile:
     repo_rel_path: str
@@ -348,7 +359,7 @@ def main() -> None:
                     scored: List[Tuple[float, CanonicalFile]] = []
                     for c in candidates:
                         score = heuristic_score(rel_hint, rec_size, c.repo_rel_path, c.size)
-                        if score >= 0.60:
+                        if score >= CANDIDATE_MIN_SCORE:
                             scored.append((score, c))
                     scored.sort(key=lambda t: (-t[0], t[1].repo_rel_path))
 
@@ -359,13 +370,13 @@ def main() -> None:
                             second_score, second = scored[1]
                             second_candidate = second.repo_rel_path
 
-                        if top_score >= 0.92 and (top_score - second_score) > 0.03:
+                        if top_score >= HIGH_CONFIDENCE_SCORE and (top_score - second_score) > MIN_GAP_TO_SECOND:
                             status = "candidate_match"
                             action = "manual_review_required"
                             confidence = round(top_score, 4)
                             destination = top_candidate
                             reason = "high_confidence_heuristic"
-                        elif top_score >= 0.75:
+                        elif top_score >= CONFLICT_MIN_SCORE:
                             status = "conflict"
                             action = "manual_review_required"
                             confidence = round(top_score, 4)
