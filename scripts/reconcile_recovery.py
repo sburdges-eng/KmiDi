@@ -40,12 +40,45 @@ DEFAULT_EXCLUDES = [
     "/logs/",
 ]
 
+# Heuristic scoring weights (sum to 1.0).
+# Path similarity is weighted highest because directory structure is the strongest signal
+# for locating a file in the repo. Name similarity is second-most important for identifying
+# the file itself. Extension match ensures type consistency. Size is a weak signal as files
+# may have been edited between recovery snapshots.
+PATH_WEIGHT = 0.45  # Directory structure similarity
+NAME_WEIGHT = 0.30  # Filename similarity
+EXT_WEIGHT = 0.20   # Extension exact match
+SIZE_WEIGHT = 0.05  # File size similarity
+
+# Reconciliation confidence thresholds.
+# These thresholds define the reconciliation policy and map to confidence bands:
+# - CANDIDATE_MIN_SCORE: Minimum score to consider a file as a potential match (0.60)
+# - HIGH_CONFIDENCE_SCORE: Threshold for high-confidence heuristic matches (0.92)
+# - MIN_GAP_TO_SECOND: Minimum score gap to second-best match to avoid ambiguity (0.03)
+# - CONFLICT_MIN_SCORE: Threshold for conflict/medium-confidence matches (0.75)
+CANDIDATE_MIN_SCORE = 0.60      # Include threshold for candidate consideration
+HIGH_CONFIDENCE_SCORE = 0.92    # High-confidence heuristic match threshold
+MIN_GAP_TO_SECOND = 0.03        # Minimum separation from second-best match
+CONFLICT_MIN_SCORE = 0.75       # Conflict/ambiguous match threshold
+
 @dataclass(frozen=True)
 class CanonicalFile:
     repo_rel_path: str
     sha256: str
     size: int
     tracked: bool = True
+
+
+@dataclass(frozen=True)
+class CanonicalFileIndexed:
+    """Pre-computed fields for efficient heuristic matching."""
+    canonical: CanonicalFile
+    normalized_path: str
+    name: str
+    dir: str
+    ext: str
+    name_lower: str
+    dir_lower: str
 
 
 def run(cmd: List[str], cwd: Optional[Path] = None) -> str:
@@ -110,6 +143,11 @@ def size_score(a: int, b: int) -> float:
     return max(0.0, 1.0 - abs(a - b) / m)
 
 
+def redact_sensitive_paths(source_roots: List[str]) -> List[str]:
+    """Redact absolute filesystem paths to avoid exposing sensitive environment details."""
+    return [f"<RECOVERY_ROOT_{i+1}>" for i in range(len(source_roots))]
+
+
 def heuristic_score(recovered_rel: str, recovered_size: int, cand_rel: str, cand_size: int) -> float:
     rec_norm = normalize(recovered_rel)
     cand_norm = normalize(cand_rel)
@@ -125,7 +163,46 @@ def heuristic_score(recovered_rel: str, recovered_size: int, cand_rel: str, cand
     name_sim = seq_sim(rec_name, cand_name)
     ext_match = 1.0 if rec_ext == cand_ext and rec_ext != "" else 0.0
     sscore = size_score(recovered_size, cand_size)
-    return 0.45 * path_sim + 0.30 * name_sim + 0.20 * ext_match + 0.05 * sscore
+    return PATH_WEIGHT * path_sim + NAME_WEIGHT * name_sim + EXT_WEIGHT * ext_match + SIZE_WEIGHT * sscore
+
+
+def heuristic_score_indexed(recovered_rel: str, recovered_size: int, indexed: CanonicalFileIndexed) -> float:
+    """Optimized heuristic scoring using pre-computed candidate fields."""
+    rec_norm = normalize(recovered_rel)
+    rec_path = Path(rec_norm)
+    rec_name = rec_path.name
+    rec_dir = str(rec_path.parent)
+    rec_ext = rec_path.suffix
+
+    path_sim = seq_sim(rec_dir, indexed.dir_lower)
+    name_sim = seq_sim(rec_name, indexed.name_lower)
+    ext_match = 1.0 if rec_ext == indexed.ext and rec_ext != "" else 0.0
+    sscore = size_score(recovered_size, indexed.canonical.size)
+    return PATH_WEIGHT * path_sim + NAME_WEIGHT * name_sim + EXT_WEIGHT * ext_match + SIZE_WEIGHT * sscore
+
+
+def build_canonical_index(canonical_files: List[CanonicalFile]) -> Dict[str, List[CanonicalFileIndexed]]:
+    """Pre-index canonical files by extension for efficient heuristic matching."""
+    index: Dict[str, List[CanonicalFileIndexed]] = {}
+    
+    for cf in canonical_files:
+        norm_path = normalize(cf.repo_rel_path)
+        path_obj = Path(norm_path)
+        ext = path_obj.suffix
+        
+        indexed = CanonicalFileIndexed(
+            canonical=cf,
+            normalized_path=norm_path,
+            name=path_obj.name,
+            dir=str(path_obj.parent),
+            ext=ext,
+            name_lower=path_obj.name,
+            dir_lower=str(path_obj.parent),
+        )
+        
+        index.setdefault(ext, []).append(indexed)
+    
+    return index
 
 
 def main() -> None:
@@ -217,7 +294,7 @@ def main() -> None:
                         rel_hint = str(p.relative_to(root)).replace("\\", "/")
                         source_root = str(root)
                         break
-                    except Exception:
+                    except ValueError:
                         continue
                 if not source_root:
                     source_root = str(p.parent)
@@ -256,7 +333,7 @@ def main() -> None:
 
                     try:
                         rel_hint = str(p.relative_to(root)).replace("\\", "/")
-                    except Exception:
+                    except ValueError:
                         rel_hint = p.name
 
                     try:
@@ -307,7 +384,8 @@ def main() -> None:
         ])
         q_writer.writeheader()
 
-        canonical_for_heuristic = sorted(canonical, key=lambda c: c.repo_rel_path)
+        # Pre-index canonical files by extension for efficient heuristic matching.
+        canonical_index_by_ext = build_canonical_index(canonical)
 
         for rec in recovered_records:
             rel_hint = rec["rel_hint"]
@@ -342,14 +420,18 @@ def main() -> None:
                     destination = chosen.repo_rel_path
                     reason = "same_hash_different_path"
                 else:
-                    # Heuristic search bounded by extension match first.
+                    # Heuristic search using pre-indexed canonical files by extension.
                     ext = Path(rel_hint).suffix.lower()
-                    candidates = [c for c in canonical_for_heuristic if Path(c.repo_rel_path).suffix.lower() == ext] if ext else canonical_for_heuristic
+                    indexed_candidates = canonical_index_by_ext.get(ext, [])
+                    if not ext:
+                        # No extension: search all indexed files.
+                        indexed_candidates = [idx for ext_list in canonical_index_by_ext.values() for idx in ext_list]
+                    
                     scored: List[Tuple[float, CanonicalFile]] = []
-                    for c in candidates:
-                        score = heuristic_score(rel_hint, rec_size, c.repo_rel_path, c.size)
-                        if score >= 0.60:
-                            scored.append((score, c))
+                    for indexed in indexed_candidates:
+                        score = heuristic_score_indexed(rel_hint, rec_size, indexed)
+                        if score >= CANDIDATE_MIN_SCORE:
+                            scored.append((score, indexed.canonical))
                     scored.sort(key=lambda t: (-t[0], t[1].repo_rel_path))
 
                     if scored:
@@ -359,13 +441,13 @@ def main() -> None:
                             second_score, second = scored[1]
                             second_candidate = second.repo_rel_path
 
-                        if top_score >= 0.92 and (top_score - second_score) > 0.03:
+                        if top_score >= HIGH_CONFIDENCE_SCORE and (top_score - second_score) > MIN_GAP_TO_SECOND:
                             status = "candidate_match"
                             action = "manual_review_required"
                             confidence = round(top_score, 4)
                             destination = top_candidate
                             reason = "high_confidence_heuristic"
-                        elif top_score >= 0.75:
+                        elif top_score >= CONFLICT_MIN_SCORE:
                             status = "conflict"
                             action = "manual_review_required"
                             confidence = round(top_score, 4)
@@ -429,7 +511,7 @@ def main() -> None:
         "baseline_sha": baseline_sha,
         "branch_name": run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=workspace),
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "selected_source_roots": sorted(set(args.source_root)),
+        "selected_source_roots": redact_sensitive_paths(sorted(set(args.source_root))),
         "exclusion_patterns": exclude_patterns,
         "matcher_version": args.matcher_version,
     }

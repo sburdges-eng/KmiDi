@@ -12,9 +12,9 @@
   "matcher_version": "v1.0.0",
   "repo_url": "https://github.com/sburdges-eng/KmiDi-listening-core.git",
   "selected_source_roots": [
-    "/System/Volumes/Data/Users/seanburdges/RECOVERY_STAGED_2026-02-18/zip_extract/My Mac/Desktop/KmiDi-remote",
-    "/Volumes/KmiDi-external/COLD_STORAGEEXTERNAL",
-    "/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/legacy/RECOVERY_SOURCE/Datasets_Project/KmiDi"
+    "<RECOVERY_ROOT_1>",
+    "<RECOVERY_ROOT_2>",
+    "<RECOVERY_ROOT_3>"
   ],
   "timestamp_utc": "2026-02-18T11:42:41.416747+00:00"
 }
