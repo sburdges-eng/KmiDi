@@ -48,6 +48,18 @@ class CanonicalFile:
     tracked: bool = True
 
 
+@dataclass(frozen=True)
+class PrecomputedCanonicalFile:
+    """Precomputed fields for efficient heuristic matching."""
+    canonical: CanonicalFile
+    path_obj: Path
+    normalized: str
+    name: str
+    directory: str
+    suffix: str
+    ext_lower: str
+
+
 def run(cmd: List[str], cwd: Optional[Path] = None) -> str:
     return subprocess.check_output(cmd, cwd=str(cwd) if cwd else None, text=True).strip()
 
@@ -110,6 +122,22 @@ def size_score(a: int, b: int) -> float:
     return max(0.0, 1.0 - abs(a - b) / m)
 
 
+def precompute_canonical(c: CanonicalFile) -> PrecomputedCanonicalFile:
+    """Precompute fields for a canonical file to avoid repeated Path(...) work."""
+    path_obj = Path(c.repo_rel_path)
+    normalized = normalize(c.repo_rel_path)
+    norm_path = Path(normalized)
+    return PrecomputedCanonicalFile(
+        canonical=c,
+        path_obj=path_obj,
+        normalized=normalized,
+        name=norm_path.name,
+        directory=str(norm_path.parent),
+        suffix=norm_path.suffix,
+        ext_lower=path_obj.suffix.lower()
+    )
+
+
 def heuristic_score(recovered_rel: str, recovered_size: int, cand_rel: str, cand_size: int) -> float:
     rec_norm = normalize(recovered_rel)
     cand_norm = normalize(cand_rel)
@@ -125,6 +153,16 @@ def heuristic_score(recovered_rel: str, recovered_size: int, cand_rel: str, cand
     name_sim = seq_sim(rec_name, cand_name)
     ext_match = 1.0 if rec_ext == cand_ext and rec_ext != "" else 0.0
     sscore = size_score(recovered_size, cand_size)
+    return 0.45 * path_sim + 0.30 * name_sim + 0.20 * ext_match + 0.05 * sscore
+
+
+def heuristic_score_precomputed(rec_name: str, rec_dir: str, rec_ext: str, rec_size: int, 
+                                precomp: PrecomputedCanonicalFile) -> float:
+    """Optimized heuristic scoring using precomputed canonical file fields."""
+    path_sim = seq_sim(rec_dir, precomp.directory)
+    name_sim = seq_sim(rec_name, precomp.name)
+    ext_match = 1.0 if rec_ext == precomp.suffix and rec_ext != "" else 0.0
+    sscore = size_score(rec_size, precomp.canonical.size)
     return 0.45 * path_sim + 0.30 * name_sim + 0.20 * ext_match + 0.05 * sscore
 
 
@@ -307,7 +345,18 @@ def main() -> None:
         ])
         q_writer.writeheader()
 
-        canonical_for_heuristic = sorted(canonical, key=lambda c: c.repo_rel_path)
+        # Pre-index canonical files by extension and precompute scoring fields
+        # to avoid repeated Path(...) calls in the inner loop
+        precomputed_canonical: List[PrecomputedCanonicalFile] = [
+            precompute_canonical(c) for c in canonical
+        ]
+        canonical_by_ext: Dict[str, List[PrecomputedCanonicalFile]] = {}
+        for pc in precomputed_canonical:
+            ext = pc.ext_lower
+            canonical_by_ext.setdefault(ext, []).append(pc)
+        # Sort each extension bucket for deterministic results
+        for ext_list in canonical_by_ext.values():
+            ext_list.sort(key=lambda pc: pc.canonical.repo_rel_path)
 
         for rec in recovered_records:
             rel_hint = rec["rel_hint"]
@@ -342,22 +391,30 @@ def main() -> None:
                     destination = chosen.repo_rel_path
                     reason = "same_hash_different_path"
                 else:
-                    # Heuristic search bounded by extension match first.
+                    # Heuristic search using pre-indexed canonical files by extension
                     ext = Path(rel_hint).suffix.lower()
-                    candidates = [c for c in canonical_for_heuristic if Path(c.repo_rel_path).suffix.lower() == ext] if ext else canonical_for_heuristic
-                    scored: List[Tuple[float, CanonicalFile]] = []
-                    for c in candidates:
-                        score = heuristic_score(rel_hint, rec_size, c.repo_rel_path, c.size)
+                    candidates = canonical_by_ext.get(ext, []) if ext else precomputed_canonical
+                    
+                    # Precompute recovered file fields once
+                    rec_norm = normalize(rel_hint)
+                    rec_norm_path = Path(rec_norm)
+                    rec_name = rec_norm_path.name
+                    rec_dir = str(rec_norm_path.parent)
+                    rec_ext = rec_norm_path.suffix
+                    
+                    scored: List[Tuple[float, PrecomputedCanonicalFile]] = []
+                    for pc in candidates:
+                        score = heuristic_score_precomputed(rec_name, rec_dir, rec_ext, rec_size, pc)
                         if score >= 0.60:
-                            scored.append((score, c))
-                    scored.sort(key=lambda t: (-t[0], t[1].repo_rel_path))
+                            scored.append((score, pc))
+                    scored.sort(key=lambda t: (-t[0], t[1].canonical.repo_rel_path))
 
                     if scored:
-                        top_score, top = scored[0]
-                        top_candidate = top.repo_rel_path
+                        top_score, top_pc = scored[0]
+                        top_candidate = top_pc.canonical.repo_rel_path
                         if len(scored) > 1:
-                            second_score, second = scored[1]
-                            second_candidate = second.repo_rel_path
+                            second_score, second_pc = scored[1]
+                            second_candidate = second_pc.canonical.repo_rel_path
 
                         if top_score >= 0.92 and (top_score - second_score) > 0.03:
                             status = "candidate_match"
