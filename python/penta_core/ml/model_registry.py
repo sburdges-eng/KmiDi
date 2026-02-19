@@ -49,6 +49,8 @@ class ModelTask(Enum):
     GROOVE_PREDICTION = "groove_prediction"
     INTENT_MAPPING = "intent_mapping"
     AUDIO_CLASSIFICATION = "audio_classification"
+    VOICE_CLASSIFICATION = "voice_classification"
+    VOICE_ACTIVITY_DETECTION = "voice_activity_detection"
     CUSTOM = "custom"
 
 
@@ -155,6 +157,12 @@ class ModelRegistry:
         user_dir = Path.home() / ".idaw" / "models"
         if user_dir.exists():
             self._model_dirs.append(user_dir)
+        governed_dir = Path.home() / "Models"
+        if governed_dir.exists():
+            self._model_dirs.append(governed_dir)
+        governed_ckpt = Path.home() / "Models" / "checkpoints"
+        if governed_ckpt.exists():
+            self._model_dirs.append(governed_ckpt)
 
     def add_model_dir(self, path: str) -> None:
         """Add a directory to search for models."""
@@ -250,6 +258,12 @@ class ModelRegistry:
             return ModelTask.STYLE_TRANSFER
         elif "emotion" in path_str or "mood" in path_str:
             return ModelTask.EMOTION_CLASSIFICATION
+        elif "voice" in path_str and "activity" in path_str:
+            return ModelTask.VOICE_ACTIVITY_DETECTION
+        elif "voice" in path_str:
+            return ModelTask.VOICE_CLASSIFICATION
+        elif "vad" in path_str:
+            return ModelTask.VOICE_ACTIVITY_DETECTION
         elif "onset" in path_str:
             return ModelTask.ONSET_DETECTION
         elif "beat" in path_str:

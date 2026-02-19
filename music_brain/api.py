@@ -34,6 +34,7 @@ from music_brain.audio import (
     AudioAnalysis,
     analyze_feel,
     AudioFeatures,
+    render_midi_to_audio,
 )
 from music_brain.harmony import (
     HarmonyGenerator,
@@ -82,6 +83,7 @@ from music_brain.voice import (
     VoiceSynthesizer,
     SynthConfig,
     get_voice_profile,
+    VoiceClassifier,
 )
 from music_brain.groove.drum_humanizer import DrumHumanizer
 
@@ -581,6 +583,14 @@ class DAiWAPI:
             profile=profile,
             tempo_bpm=tempo_bpm,
         )
+
+    def classify_voice_file(
+        self,
+        audio_path: str,
+        top_k: int = 3,
+    ) -> Dict[str, Any]:
+        classifier = VoiceClassifier()
+        return classifier.classify(audio_path, top_k=top_k)
     
     # ========== Therapy Session ==========
     
@@ -1224,14 +1234,8 @@ if FASTAPI_AVAILABLE:
         try:
             # Try to use full intent pipeline if we have advanced parameters
             tech = request.intent.technical
-            use_full_pipeline = (
-                tech and (
-                    tech.duration is not None or
-                    tech.structure is not None or
-                    tech.instruments is not None or
-                    tech.techniques is not None
-                )
-            )
+            # Default to the full intent pipeline for all requests.
+            use_full_pipeline = True
             
             if use_full_pipeline:
                 # Use full CompleteSongIntent pipeline
@@ -1426,25 +1430,25 @@ if FASTAPI_AVAILABLE:
                     midi_file = Path(result["midi_path"])
                     
                     if output_audio:
-                        # Construct audio path
-                        audio_path = str(midi_file.with_suffix(f".{request.output_format}"))
+                        # Render audio from generated MIDI.
+                        audio_path = str(midi_file.with_suffix(".wav"))
+                        try:
+                            render_midi_to_audio(str(midi_file), audio_path)
+                        except Exception as render_exc:
+                            logging.exception("Audio render failed from MIDI")
+                            raise HTTPException(
+                                status_code=500,
+                                detail=f"MIDI generated but audio render failed: {render_exc}",
+                            )
                         response["audio_path"] = audio_path
                         response["output_path"] = audio_path
-                        
-                        # Check if audio file actually exists
-                        audio_file = Path(audio_path)
-                        if not audio_file.exists():
-                            logging.warning(f"Audio file path returned but file doesn't exist: {audio_path}")
-                            logging.info(f"MIDI file exists: {midi_file.exists()}")
-                            # Note: The audio file may need to be generated from MIDI
-                            # For now, we return the path but the client should handle the case where it doesn't exist
                     else:
                         response["output_path"] = result["midi_path"]
                 
                 return response
             
-            # Fallback to simple therapy_session for backward compatibility
-            logging.info("Using simple therapy_session pipeline")
+            # Legacy fallback retained for safety if forced externally.
+            logging.info("Using legacy therapy_session fallback")
             chaos = 0.5
             motivation = 7
             if request.intent.technical and request.intent.technical.bpm:
@@ -1541,6 +1545,10 @@ if FASTAPI_AVAILABLE:
         model_type: Optional[str] = "emotion_7"
         top_k: Optional[int] = 3
 
+    class VoiceClassifyRequest(BaseModel):
+        audio_path: str
+        top_k: Optional[int] = 3
+
     @app.post("/audio/classify")
     async def classify_audio(request: AudioClassifyRequest):
         """
@@ -1633,6 +1641,16 @@ if FASTAPI_AVAILABLE:
             }
         except Exception as exc:
             logging.exception("list audio models failed")
+            raise HTTPException(status_code=500, detail=str(exc))
+
+    @app.post("/voice/classify")
+    async def classify_voice(request: VoiceClassifyRequest):
+        """Classify voice type (alto/bass/soprano/tenor) from audio."""
+        try:
+            result = api.classify_voice_file(request.audio_path, top_k=request.top_k or 3)
+            return {"status": "success", "result": result}
+        except Exception as exc:
+            logging.exception("voice classify failed")
             raise HTTPException(status_code=500, detail=str(exc))
 
 

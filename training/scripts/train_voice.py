@@ -10,7 +10,6 @@ import argparse
 import torch
 import torch.nn as nn
 from datetime import datetime
-from tqdm import tqdm
 import json
 
 from src.data import AudioDataset, create_dataloaders
@@ -81,7 +80,7 @@ def find_m4singer_files(root_dir, max_files_per_class=None):
 def main():
     parser = argparse.ArgumentParser(description="Train voice type classifier")
     parser.add_argument("--data-dir", type=str,
-                       default="/Volumes/sbdrive/audio/datasets/m4singer/m4singer",
+                       default=str(Path.home() / "Datasets" / "m4singer"),
                        help="Directory with m4singer audio")
     parser.add_argument("--epochs", type=int, default=30, help="Number of epochs")
     parser.add_argument("--batch-size", type=int, default=16, help="Batch size")
@@ -93,6 +92,11 @@ def main():
     parser.add_argument("--name", type=str, default=None, help="Experiment name")
     parser.add_argument("--max-per-class", type=int, default=None,
                        help="Max files per class (for faster training)")
+    parser.add_argument("--output-dir", type=str,
+                       default=str(Path.home() / "Models" / "checkpoints"),
+                       help="Model output directory")
+    parser.add_argument("--export-coreml", action="store_true",
+                       help="Attempt CoreML export in addition to ONNX")
     args = parser.parse_args()
 
     # Experiment name
@@ -146,7 +150,7 @@ def main():
     dataset.idx_to_class = {v: k for k, v in class_to_idx.items()}
 
     # Save class names
-    class_names_path = Path("models/checkpoints") / exp_name
+    class_names_path = Path(args.output_dir) / exp_name
     class_names_path.mkdir(parents=True, exist_ok=True)
     with open(class_names_path / "class_names.json", "w") as f:
         json.dump(list(class_to_idx.keys()), f)
@@ -218,7 +222,7 @@ def main():
         criterion=criterion,
         device=str(device),
         scheduler=scheduler,
-        checkpoint_dir="models/checkpoints",
+        checkpoint_dir=str(Path(args.output_dir)),
         log_dir="logs",
         experiment_name=exp_name,
     )
@@ -236,9 +240,61 @@ def main():
     )
 
     # Save LoRA weights
-    lora_path = Path("models/checkpoints") / exp_name / "lora_weights.pt"
+    lora_path = Path(args.output_dir) / exp_name / "lora_weights.pt"
     save_lora_weights(model, str(lora_path))
     print(f"\nLoRA weights saved to: {lora_path}")
+    # Export deployment artifacts (ONNX required, CoreML optional).
+    export_dir = Path(args.output_dir) / exp_name
+    export_dir.mkdir(parents=True, exist_ok=True)
+    model.eval()
+    time_frames = max(16, int(args.duration * 22050 / 512) + 1)
+    dummy = torch.randn(1, 1, 128, time_frames, device=device)
+    onnx_path = export_dir / "voice_type_classifier.onnx"
+    torch.onnx.export(
+        model,
+        dummy,
+        str(onnx_path),
+        input_names=["input"],
+        output_names=["logits"],
+        dynamic_axes={"input": {0: "batch", 3: "time"}, "logits": {0: "batch"}},
+        opset_version=13,
+    )
+    print(f"ONNX export complete: {onnx_path}")
+
+    if args.export_coreml:
+        try:
+            import coremltools as ct  # type: ignore
+            traced = torch.jit.trace(model.cpu(), torch.randn(1, 1, 128, time_frames))
+            coreml_model = ct.convert(
+                traced,
+                inputs=[ct.TensorType(name="input", shape=(1, 1, 128, time_frames))],
+            )
+            coreml_path = export_dir / "voice_type_classifier.mlpackage"
+            coreml_model.save(str(coreml_path))
+            print(f"CoreML export complete: {coreml_path}")
+        except Exception as coreml_exc:
+            print(f"CoreML export skipped: {coreml_exc}")
+        finally:
+            model = model.to(device)
+
+    # Persist model manifest for registry discovery.
+    manifest = {
+        "name": "voice_type_classifier",
+        "task": "voice_classification",
+        "backend": "onnx",
+        "path": str(onnx_path),
+        "version": datetime.now().strftime("%Y.%m.%d"),
+        "input_shape": [1, 1, 128, time_frames],
+        "output_shape": [1, num_classes],
+        "sample_rate": 22050,
+        "description": "Voice type classifier (alto/bass/soprano/tenor)",
+        "tags": ["voice", "classification", "m4singer"],
+        "class_names": list(class_to_idx.keys()),
+    }
+    with open(export_dir / "model_info.json", "w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=2)
+    print(f"Model manifest written: {export_dir / 'model_info.json'}")
+
 
     # Test evaluation
     print("\n" + "=" * 60)
@@ -250,7 +306,7 @@ def main():
 
     print("\n" + "=" * 60)
     print("Training Complete!")
-    print(f"Checkpoints: models/checkpoints/{exp_name}/")
+    print(f"Checkpoints: {Path(args.output_dir) / exp_name}")
     print("=" * 60)
 
 
