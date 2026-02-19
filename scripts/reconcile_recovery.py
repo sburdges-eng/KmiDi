@@ -40,6 +40,23 @@ DEFAULT_EXCLUDES = [
     "/logs/",
 ]
 
+# Reconciliation Policy Thresholds
+# These thresholds define confidence bands for file matching:
+# - CANDIDATE_MIN_SCORE: Minimum heuristic score (0.0-1.0) to consider a file as a potential match
+# - HIGH_CONFIDENCE_SCORE: Score threshold for high-confidence matches (>= 0.92)
+# - MIN_GAP_TO_SECOND: Minimum score gap between top and second candidate to avoid ambiguity (>= 0.03)
+# - CONFLICT_MIN_SCORE: Score threshold for conflict classification (>= 0.75 but < HIGH_CONFIDENCE_SCORE)
+#
+# Confidence Bands:
+# - High Confidence: score >= 0.92 AND gap >= 0.03 → candidate_match
+# - Conflict: score >= 0.75 AND (score < 0.92 OR gap < 0.03) → manual review
+# - Low Confidence: score >= 0.60 AND score < 0.75 → new_file with candidate info
+# - No Match: score < 0.60 → new_file without candidate
+CANDIDATE_MIN_SCORE = 0.60  # Include threshold for candidate consideration
+HIGH_CONFIDENCE_SCORE = 0.92  # High-confidence match threshold
+MIN_GAP_TO_SECOND = 0.03  # Minimum separation from second-best match
+CONFLICT_MIN_SCORE = 0.75  # Conflict/ambiguity threshold
+
 @dataclass(frozen=True)
 class CanonicalFile:
     repo_rel_path: str
@@ -348,7 +365,7 @@ def main() -> None:
                     scored: List[Tuple[float, CanonicalFile]] = []
                     for c in candidates:
                         score = heuristic_score(rel_hint, rec_size, c.repo_rel_path, c.size)
-                        if score >= 0.60:
+                        if score >= CANDIDATE_MIN_SCORE:
                             scored.append((score, c))
                     scored.sort(key=lambda t: (-t[0], t[1].repo_rel_path))
 
@@ -359,13 +376,13 @@ def main() -> None:
                             second_score, second = scored[1]
                             second_candidate = second.repo_rel_path
 
-                        if top_score >= 0.92 and (top_score - second_score) > 0.03:
+                        if top_score >= HIGH_CONFIDENCE_SCORE and (top_score - second_score) > MIN_GAP_TO_SECOND:
                             status = "candidate_match"
                             action = "manual_review_required"
                             confidence = round(top_score, 4)
                             destination = top_candidate
                             reason = "high_confidence_heuristic"
-                        elif top_score >= 0.75:
+                        elif top_score >= CONFLICT_MIN_SCORE:
                             status = "conflict"
                             action = "manual_review_required"
                             confidence = round(top_score, 4)
