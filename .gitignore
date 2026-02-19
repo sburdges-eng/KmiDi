@@ -3,6 +3,9 @@
 *.swp
 *.swo
 
+# Recovery reports - local path mapping (contains sensitive filesystem paths)
+recovery_reports/*.local.json
+
 # Python
 __pycache__/
 *.py[cod]

@@ -66,6 +66,23 @@ def normalize(s: str) -> str:
     return s
 
 
+def redact_paths(paths: List[str]) -> Tuple[List[str], Dict[str, str]]:
+    """
+    Redact absolute filesystem paths by replacing them with placeholders.
+    
+    Returns:
+        Tuple of (redacted_paths, mapping_dict) where mapping_dict maps
+        placeholder -> original path for local-only reference.
+    """
+    redacted = []
+    mapping = {}
+    for idx, path in enumerate(paths, start=1):
+        placeholder = f"<RECOVERY_ROOT_{idx}>"
+        redacted.append(placeholder)
+        mapping[placeholder] = path
+    return redacted, mapping
+
+
 def classify_hint(path: Path) -> str:
     p = normalize(str(path))
     ext = path.suffix.lower()
@@ -421,19 +438,29 @@ def main() -> None:
                     "reason": reason,
                 })
 
-    # Run metadata
+    # Run metadata (with redacted paths)
     run_meta_path = report_dir / "run_meta.json"
+    source_roots_sorted = sorted(set(args.source_root))
+    redacted_roots, path_mapping = redact_paths(source_roots_sorted)
+    
     run_meta = {
         "repo_url": args.remote_url,
         "baseline_ref": args.baseline_ref,
         "baseline_sha": baseline_sha,
         "branch_name": run(["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=workspace),
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-        "selected_source_roots": sorted(set(args.source_root)),
+        "selected_source_roots": redacted_roots,
         "exclusion_patterns": exclude_patterns,
         "matcher_version": args.matcher_version,
     }
     run_meta_path.write_text(json.dumps(run_meta, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    
+    # Save path mapping to local-only file (not committed to git)
+    path_mapping_file = report_dir / "path_mapping.local.json"
+    path_mapping_file.write_text(
+        json.dumps({"mapping": path_mapping}, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8"
+    )
 
     # Patchset plan markdown
     patchset_plan_path = report_dir / "patchset_plan.md"
