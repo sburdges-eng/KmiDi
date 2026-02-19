@@ -55,7 +55,7 @@ def load_checkpoint(model, optimizer, path: Path):
     """Resumes training from a checkpoint."""
     if not path.exists():
         return 0, 0, float('inf')
-    
+
     logger.info(f"Resuming from checkpoint: {path}")
     ckpt = torch.load(path)
     model.load_state_dict(ckpt["model_state_dict"])
@@ -241,7 +241,7 @@ def train(cfg_path: str = "configs/laptop_m4_small.yaml", data_root: Optional[st
 
     dcfg = cfg["data"]
     logger.info(f"Data root: {data_root_path}")
-    
+
     # Use StreamingAudioDataset if configured or for very large datasets
     if cfg.get("use_streaming", False):
         from python.penta_core.ml.datasets.streaming import StreamingAudioDataset
@@ -322,9 +322,8 @@ def train(cfg_path: str = "configs/laptop_m4_small.yaml", data_root: Optional[st
     start_epoch, total_steps, best_loss = load_checkpoint(model, opt, latest_ckpt)
 
     precision = cfg.get("precision", "fp16")
-    scaler = torch.cuda.amp.GradScaler(
-        enabled=(device.type == "cuda" and precision == "fp16")
-    )
+    use_scaler = device.type == "cuda" and precision == "fp16"
+    scaler = torch.amp.GradScaler("cuda", enabled=use_scaler)
 
     grad_accum = cfg["training"]["grad_accum_steps"]
     log_every = cfg["training"]["log_every"]
@@ -336,7 +335,7 @@ def train(cfg_path: str = "configs/laptop_m4_small.yaml", data_root: Optional[st
     steps = total_steps
     model.train()
     start_time = time.time()
-    
+
     logger.info(f"Training started. Spending Limit: ${spending_limit}")
 
     for epoch in range(start_epoch, cfg["training"]["epochs"]):

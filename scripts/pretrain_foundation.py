@@ -57,7 +57,7 @@ def pretrain(cfg_path: str):
 
     # 1. Dataset & Loader (Streaming)
     dcfg = cfg["data"]
-    # We use StreamingAudioDataset without a fixed transform, 
+    # We use StreamingAudioDataset without a fixed transform,
     # we'll do the augmentations in the loop for SSL.
     dataset = StreamingAudioDataset(
         manifest_path=dcfg["train_manifest"],
@@ -65,7 +65,7 @@ def pretrain(cfg_path: str):
         segment_seconds=dcfg["segment_seconds"],
         audio_key=dcfg["manifest_audio_key"],
     )
-    
+
     loader = DataLoader(
         dataset,
         batch_size=cfg["training"]["batch_size"],
@@ -90,7 +90,7 @@ def pretrain(cfg_path: str):
         torch.nn.Flatten(),
         torch.nn.Linear(128, cfg["model"]["embedding_dim"])
     )
-    
+
     model = MusicFoundationModel(
         backbone=backbone,
         embedding_dim=cfg["model"]["embedding_dim"],
@@ -99,7 +99,7 @@ def pretrain(cfg_path: str):
 
     criterion = ContrastiveLoss(temperature=cfg["ssl"]["temperature"])
     optimizer = torch.optim.AdamW(
-        model.parameters(), 
+        model.parameters(),
         lr=float(cfg["optim"]["lr"]),
         weight_decay=float(cfg["optim"]["weight_decay"])
     )
@@ -129,21 +129,27 @@ def pretrain(cfg_path: str):
             # audio: [B, 1, T]
             x_i = audio.clone()
             x_j = audio.clone()
-            
-            # Apply random augmentations to each branch
-            # (In a real implementation, this would be vectorized on GPU)
-            # For this script, we'll assume the augmentor can handle tensors or we'll loop
-            # x_i = augmentor.augment_batch(x_i) 
-            
+
+            # Apply random augmentations to each branch for contrastive learning
+            for b in range(x_i.size(0)):
+                wav_i = x_i[b].squeeze().numpy()
+                wav_j = x_j[b].squeeze().numpy()
+                x_i[b] = torch.from_numpy(
+                    augmentor.augment(wav_i, dcfg["sample_rate"])
+                ).unsqueeze(0)
+                x_j[b] = torch.from_numpy(
+                    augmentor.augment(wav_j, dcfg["sample_rate"])
+                ).unsqueeze(0)
+
             x_i, x_j = x_i.to(device), x_j.to(device)
 
             optimizer.zero_grad()
-            
+
             # Forward pass
             # audio is [B, 1, T]
             z_i = model(x_i)
             z_j = model(x_j)
-            
+
             loss = criterion(z_i, z_j)
             loss.backward()
             optimizer.step()

@@ -9,6 +9,7 @@ device: mps
 precision: fp16
 seed: 42
 budget_limit: 100  # Maximum allowed cost in USD (placeholder)
+model_id: macOS_16gb_optimized
 
 data:
   sample_rate: 44100
@@ -41,7 +42,11 @@ training:
   eval_every: 500
   ema: false
 
+scheduler:
+  name: cosine
+  warmup_steps: 500
+  max_steps: 20000
+
 # Safety Settings
 ensure_model_copy: true        # Use a copy of the model for training
 output_dir: checkpoints/macos_16gb_optimized
-

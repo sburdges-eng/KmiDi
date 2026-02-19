@@ -9,6 +9,7 @@ device: cuda
 precision: bf16                # Use bfloat16 for modern NVIDIA GPUs
 seed: 42
 budget_limit: 100              # Maximum allowed cost in USD
+model_id: nvidia_cuda_optimized
 
 data:
   sample_rate: 44100
@@ -40,6 +41,11 @@ training:
   log_every: 50
   eval_every: 500
   ema: true
+
+scheduler:
+  name: cosine
+  warmup_steps: 1000
+  max_steps: 50000
 
 # Safety Settings
 ensure_model_copy: true        # Use a copy of the model for training
