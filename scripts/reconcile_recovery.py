@@ -40,6 +40,27 @@ DEFAULT_EXCLUDES = [
     "/logs/",
 ]
 
+# Heuristic matching scoring weights for file reconciliation.
+# These weights determine how much each factor contributes to the overall match score
+# when pairing recovered files with canonical repository files.
+# Weights sum to 1.0 for interpretability (0.0 = no match, 1.0 = perfect match).
+#
+# PATH_WEIGHT (0.45): Highest weight because directory structure is the most stable
+#   indicator of a file's identity. Files rarely move between major subsystems.
+#
+# NAME_WEIGHT (0.30): Second priority. Filename similarity is a strong signal, but
+#   files can be renamed or have similar names in different contexts.
+#
+# EXT_WEIGHT (0.20): Extension matching helps disambiguate files with similar names.
+#   Binary match (1.0 or 0.0) because extension changes are rare and significant.
+#
+# SIZE_WEIGHT (0.05): Lowest weight. File size can vary significantly with minor edits,
+#   so it's used primarily as a tiebreaker rather than a primary matching signal.
+PATH_WEIGHT = 0.45
+NAME_WEIGHT = 0.30
+EXT_WEIGHT = 0.20
+SIZE_WEIGHT = 0.05
+
 @dataclass(frozen=True)
 class CanonicalFile:
     repo_rel_path: str
@@ -125,7 +146,7 @@ def heuristic_score(recovered_rel: str, recovered_size: int, cand_rel: str, cand
     name_sim = seq_sim(rec_name, cand_name)
     ext_match = 1.0 if rec_ext == cand_ext and rec_ext != "" else 0.0
     sscore = size_score(recovered_size, cand_size)
-    return 0.45 * path_sim + 0.30 * name_sim + 0.20 * ext_match + 0.05 * sscore
+    return PATH_WEIGHT * path_sim + NAME_WEIGHT * name_sim + EXT_WEIGHT * ext_match + SIZE_WEIGHT * sscore
 
 
 def main() -> None:
