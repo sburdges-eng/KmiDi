@@ -24,6 +24,8 @@ import argparse
 import json
 import logging
 import os
+import random
+import shutil
 import sys
 import time
 from dataclasses import dataclass
@@ -85,6 +87,7 @@ AUDIO_DATA_ROOT = Path("/Volumes/Extreme SSD/kelly-audio-data")
 MODELS_DIR = ROOT / "models"
 CHECKPOINTS_DIR = ROOT / "checkpoints"
 LOGS_DIR = ROOT / "logs" / "training"
+BUDGET_SAFETY_THRESHOLD_USD = 100.0
 
 
 # =============================================================================
@@ -109,6 +112,9 @@ class TrainingConfig:
     batch_size: int = 16
     learning_rate: float = 0.001
     weight_decay: float = 0.0001
+    grad_accum_steps: int = 1
+    seed: int = 42
+    deterministic: bool = False
     
     # Loss
     loss_type: str = "cross_entropy"
@@ -129,7 +135,12 @@ class TrainingConfig:
     # Output
     output_dir: str = ""
     save_best: bool = True
+    save_interval: int = 0
     log_interval: int = 10
+    sync_local_dir: str = ""
+    sync_every_epochs: int = 0
+    ensure_model_copy: bool = False
+    budget_limit: float = 0.0
     
     # Device
     device: str = "auto"
@@ -141,7 +152,36 @@ class TrainingConfig:
         import yaml
         with open(path) as f:
             data = yaml.safe_load(f)
-        return cls(**{k: v for k, v in data.items() if hasattr(cls, k)})
+
+        # Support both flat and nested config styles used across the repository.
+        nested_overrides = {
+            "batch_size": data.get("dataloader", {}).get("batch_size"),
+            "num_workers": data.get("data", {}).get("num_workers"),
+            "sample_rate": data.get("data", {}).get("sample_rate"),
+            "n_mels": data.get("data", {}).get("n_mels"),
+            "epochs": data.get("training", {}).get("epochs"),
+            "log_interval": data.get("training", {}).get("log_every"),
+            "grad_accum_steps": data.get("training", {}).get("grad_accum_steps"),
+            "learning_rate": data.get("optim", {}).get("lr"),
+            "weight_decay": data.get("optim", {}).get("weight_decay"),
+        }
+
+        # Normalize top-level aliases.
+        model_alias = data.get("model")
+        alias_overrides = {
+            "learning_rate": data.get("lr"),
+            "model_type": model_alias if isinstance(model_alias, str) else None,
+        }
+
+        merged = dict(data)
+        for key, value in nested_overrides.items():
+            if value is not None:
+                merged[key] = value
+        for key, value in alias_overrides.items():
+            if value is not None:
+                merged[key] = value
+
+        return cls(**{k: v for k, v in merged.items() if hasattr(cls, k)})
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -149,6 +189,19 @@ class TrainingConfig:
             k: getattr(self, k) for k in dir(self)
             if not k.startswith("_") and not callable(getattr(self, k))
         }
+
+
+def set_global_seed(seed: int, deterministic: bool = False) -> None:
+    """Set global random seeds for reproducibility."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+    if deterministic:
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
 
 
 # =============================================================================
@@ -372,32 +425,56 @@ class Trainer:
         # Output directory
         self.output_dir = Path(config.output_dir) if config.output_dir else CHECKPOINTS_DIR / config.model_id
         self.output_dir.mkdir(parents=True, exist_ok=True)
-    
+        self.events_path = self.output_dir / "training_events.jsonl"
+
+        # Optional local backup/sync directory (ex: external SSD or mounted cloud drive).
+        self.sync_local_dir = Path(config.sync_local_dir).expanduser() if config.sync_local_dir else None
+        if self.sync_local_dir:
+            self.sync_local_dir.mkdir(parents=True, exist_ok=True)
+        
+        if config.ensure_model_copy:
+            self._save_model_copy()
+
+        self._write_event(
+            event_type="run_started",
+            payload={
+                "device": str(self.device),
+                "output_dir": str(self.output_dir),
+                "sync_local_dir": str(self.sync_local_dir) if self.sync_local_dir else None,
+            },
+        )
+
     def train_epoch(self) -> float:
         """Train for one epoch."""
         self.model.train()
         total_loss = 0.0
         num_batches = 0
+        self.optimizer.zero_grad()
         
         for batch_idx, (inputs, targets) in enumerate(self.train_loader):
             inputs = inputs.to(self.device)
             targets = targets.to(self.device)
             
             # Forward
-            self.optimizer.zero_grad()
             outputs = self.model(inputs)
-            loss = self.criterion(outputs, targets)
+            raw_loss = self.criterion(outputs, targets)
+            loss = raw_loss / max(1, self.config.grad_accum_steps)
             
             # Backward
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
-            self.optimizer.step()
+            should_step = ((batch_idx + 1) % max(1, self.config.grad_accum_steps) == 0) or (
+                batch_idx + 1 == len(self.train_loader)
+            )
+            if should_step:
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
+                self.optimizer.step()
+                self.optimizer.zero_grad()
             
-            total_loss += loss.item()
+            total_loss += raw_loss.item()
             num_batches += 1
             
             if batch_idx % self.config.log_interval == 0:
-                logger.debug(f"  Batch {batch_idx}/{len(self.train_loader)}, Loss: {loss.item():.4f}")
+                logger.debug(f"  Batch {batch_idx}/{len(self.train_loader)}, Loss: {raw_loss.item():.4f}")
         
         return total_loss / num_batches
     
@@ -461,6 +538,18 @@ class Trainer:
                 f"Val Acc: {val_accuracy:.4f}, "
                 f"Time: {epoch_time:.1f}s"
             )
+
+            self._write_event(
+                event_type="epoch_complete",
+                payload={
+                    "epoch": epoch + 1,
+                    "train_loss": train_loss,
+                    "val_loss": val_loss,
+                    "val_accuracy": val_accuracy,
+                    "epoch_time_sec": epoch_time,
+                    "learning_rate": self.optimizer.param_groups[0]["lr"],
+                },
+            )
             
             # Save best model
             if val_loss < self.best_val_loss:
@@ -471,6 +560,16 @@ class Trainer:
                     self._save_checkpoint("best.pt")
             else:
                 self.epochs_no_improve += 1
+
+            if self.config.save_interval > 0 and (epoch + 1) % self.config.save_interval == 0:
+                self._save_checkpoint(f"epoch_{epoch + 1}.pt")
+
+            if (
+                self.sync_local_dir is not None
+                and self.config.sync_every_epochs > 0
+                and (epoch + 1) % self.config.sync_every_epochs == 0
+            ):
+                self._sync_to_local_dir()
             
             # Early stopping
             if self.epochs_no_improve >= self.config.early_stopping_patience:
@@ -488,6 +587,15 @@ class Trainer:
         
         # Save final checkpoint
         self._save_checkpoint("final.pt")
+        if self.sync_local_dir is not None:
+            self._sync_to_local_dir()
+        self._write_event(
+            event_type="run_completed",
+            payload={
+                "best_val_loss": self.best_val_loss,
+                "total_time_sec": total_time,
+            },
+        )
         
         return {
             "history": self.history,
@@ -519,6 +627,36 @@ class Trainer:
         torch.save(self.model.state_dict(), path)
         logger.debug(f"Saved checkpoint: {path}")
 
+    def _save_model_copy(self) -> None:
+        """Persist the initial model state for safety/debugging."""
+        copy_path = self.output_dir / "initial_state_copy.pt"
+        torch.save(self.model.state_dict(), copy_path)
+        logger.info(f"Saved initial model copy: {copy_path}")
+
+    def _write_event(self, event_type: str, payload: Dict[str, Any]) -> None:
+        """Append structured training events for observability/debugging."""
+        event = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "event_type": event_type,
+            "payload": payload,
+        }
+        with open(self.events_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(event, default=str) + "\n")
+
+    def _sync_to_local_dir(self) -> None:
+        """Sync output artifacts to a local drive path."""
+        if self.sync_local_dir is None:
+            return
+
+        destination = self.sync_local_dir / self.output_dir.name
+        destination.mkdir(parents=True, exist_ok=True)
+
+        for path in self.output_dir.iterdir():
+            if path.is_file():
+                shutil.copy2(path, destination / path.name)
+
+        logger.info(f"Synchronized artifacts to: {destination}")
+
 
 # =============================================================================
 # Model Factory
@@ -526,6 +664,14 @@ class Trainer:
 
 def create_model(model_type: str, **kwargs) -> nn.Module:
     """Create model based on type."""
+    normalized = model_type.lower()
+    alias_map = {
+        "emotionrecognizer": "emotion",
+        "melodytransformer": "melody",
+        "harmonypredictor": "harmony",
+    }
+    normalized = alias_map.get(normalized, normalized)
+
     models = {
         "emotion": EmotionCNN,
         "melody": MelodyLSTM,
@@ -533,10 +679,26 @@ def create_model(model_type: str, **kwargs) -> nn.Module:
         "multitask": MultiTaskModel,
     }
     
-    if model_type not in models:
+    if normalized not in models:
         raise ValueError(f"Unknown model type: {model_type}. Available: {list(models.keys())}")
     
-    return models[model_type](**kwargs)
+    return models[normalized](**kwargs)
+
+
+def infer_model_type(config: TrainingConfig) -> str:
+    """Infer a supported model type from config values."""
+    candidate = config.model_type.lower()
+    if candidate in {"emotion", "melody", "harmony", "multitask"}:
+        return candidate
+
+    model_id = config.model_id.lower()
+    if "emotion" in model_id:
+        return "emotion"
+    if "melody" in model_id:
+        return "melody"
+    if "harmony" in model_id:
+        return "harmony"
+    return "emotion"
 
 
 def create_dataloaders(
@@ -576,6 +738,12 @@ def create_dataloaders(
     n_val = int(n_samples * config.val_split)
     n_test = int(n_samples * config.test_split)
     n_train = n_samples - n_val - n_test
+
+    if n_train <= 0:
+        raise ValueError(
+            f"Invalid dataset split. Got {n_samples} samples with val_split={config.val_split} and "
+            f"test_split={config.test_split}, leaving no training samples."
+        )
     
     train_dataset, val_dataset, test_dataset = random_split(
         dataset, [n_train, n_val, n_test]
@@ -622,20 +790,40 @@ def list_models():
     print("-" * 50)
 
 
-def main():
+def validate_config(config: TrainingConfig) -> None:
+    """Validate config and enforce safety limits."""
+    if config.budget_limit > BUDGET_SAFETY_THRESHOLD_USD:
+        raise ValueError(
+            f"Budget limit ${config.budget_limit} exceeds safety threshold ${BUDGET_SAFETY_THRESHOLD_USD}"
+        )
+
+    if config.grad_accum_steps < 1:
+        raise ValueError("grad_accum_steps must be >= 1")
+
+    if not (0.0 <= config.val_split < 1.0) or not (0.0 <= config.test_split < 1.0):
+        raise ValueError("val_split and test_split must be in [0, 1)")
+
+    if config.val_split + config.test_split >= 1.0:
+        raise ValueError("val_split + test_split must be < 1.0")
+
+
+def main() -> int:
     parser = argparse.ArgumentParser(
         description="Train Kelly ML models",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     
     parser.add_argument("--config", type=str, help="Path to YAML config file")
-    parser.add_argument("--model", type=str, default="emotion", help="Model type")
+    parser.add_argument("--model", type=str, default=None, help="Model type")
     parser.add_argument("--data", type=str, help="Path to data directory")
-    parser.add_argument("--epochs", type=int, default=100, help="Number of epochs")
-    parser.add_argument("--batch-size", type=int, default=16, help="Batch size")
-    parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
-    parser.add_argument("--device", type=str, default="auto", help="Device (auto/cpu/cuda/mps)")
+    parser.add_argument("--epochs", type=int, default=None, help="Number of epochs")
+    parser.add_argument("--batch-size", type=int, default=None, help="Batch size")
+    parser.add_argument("--lr", type=float, default=None, help="Learning rate")
+    parser.add_argument("--device", type=str, default=None, help="Device (auto/cpu/cuda/mps)")
     parser.add_argument("--output", type=str, help="Output directory")
+    parser.add_argument("--seed", type=int, default=None, help="Random seed")
+    parser.add_argument("--sync-local-dir", type=str, default=None, help="Local directory for artifact sync")
+    parser.add_argument("--sync-every-epochs", type=int, default=None, help="Sync cadence in epochs")
     parser.add_argument("--list-models", action="store_true", help="List available models")
     parser.add_argument("--synthetic", action="store_true", help="Use synthetic data for testing")
     
@@ -643,7 +831,7 @@ def main():
     
     if args.list_models:
         list_models()
-        return
+        return 0
     
     # Load config
     if args.config:
@@ -652,23 +840,37 @@ def main():
         config = TrainingConfig()
     
     # Override with command line args
-    if args.model:
+    if args.model is not None:
         config.model_type = args.model
     if args.data:
         config.data_path = args.data
-    if args.epochs:
+    if args.epochs is not None:
         config.epochs = args.epochs
-    if args.batch_size:
+    if args.batch_size is not None:
         config.batch_size = args.batch_size
-    if args.lr:
+    if args.lr is not None:
         config.learning_rate = args.lr
-    if args.device:
+    if args.device is not None:
         config.device = args.device
     if args.output:
         config.output_dir = args.output
+    if args.seed is not None:
+        config.seed = args.seed
+    if args.sync_local_dir is not None:
+        config.sync_local_dir = args.sync_local_dir
+    if args.sync_every_epochs is not None:
+        config.sync_every_epochs = args.sync_every_epochs
     
     if args.synthetic:
         config.data_path = ""  # Force synthetic data
+
+    try:
+        validate_config(config)
+    except ValueError as exc:
+        logger.error(str(exc))
+        return 1
+
+    set_global_seed(config.seed, deterministic=config.deterministic)
     
     # Log configuration
     logger.info("=" * 60)
@@ -679,23 +881,26 @@ def main():
     logger.info(f"Batch size: {config.batch_size}")
     logger.info(f"Learning rate: {config.learning_rate}")
     logger.info(f"Data path: {config.data_path or 'synthetic'}")
+    logger.info(f"Seed: {config.seed}")
     logger.info("=" * 60)
     
     # Create data loaders
     train_loader, val_loader, test_loader = create_dataloaders(config)
     
     # Create model
+    resolved_model_type = infer_model_type(config)
+    config.model_type = resolved_model_type
     model_kwargs = {}
-    if config.model_type == "emotion":
+    if resolved_model_type == "emotion":
         model_kwargs = {"num_classes": 7, "use_attention": True}
-    elif config.model_type == "melody":
+    elif resolved_model_type == "melody":
         model_kwargs = {"vocab_size": 128, "num_classes": 128}
-    elif config.model_type == "harmony":
+    elif resolved_model_type == "harmony":
         model_kwargs = {"input_dim": 128, "num_chords": 48}
-    elif config.model_type == "multitask":
+    elif resolved_model_type == "multitask":
         model_kwargs = {"tasks": ["emotion", "genre"]}
     
-    model = create_model(config.model_type, **model_kwargs)
+    model = create_model(resolved_model_type, **model_kwargs)
     
     # Count parameters
     num_params = sum(p.numel() for p in model.parameters())
@@ -709,6 +914,20 @@ def main():
         val_loader=val_loader,
         test_loader=test_loader,
     )
+
+    run_metadata_path = trainer.output_dir / "run_metadata.json"
+    with open(run_metadata_path, "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "config": config.to_dict(),
+                "torch_available": TORCH_AVAILABLE,
+                "torchaudio_available": TORCHAUDIO_AVAILABLE,
+            },
+            f,
+            indent=2,
+            default=str,
+        )
     
     # Train
     results = trainer.train()
@@ -728,8 +947,8 @@ def main():
     
     logger.info(f"Results saved to: {results_path}")
     logger.info("Training complete!")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
-
+    sys.exit(main())

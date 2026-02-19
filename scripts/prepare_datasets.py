@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import logging
 import os
@@ -42,7 +43,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Audio data root on external SSD
-AUDIO_DATA_ROOT = Path("/Volumes/Extreme SSD/kelly-audio-data")
+AUDIO_DATA_ROOT = Path(os.environ.get("KELLY_AUDIO_DATA_ROOT", "/Volumes/Extreme SSD/kelly-audio-data"))
 
 
 # =============================================================================
@@ -468,6 +469,29 @@ def preprocess_audio_file(
         return False
 
 
+def get_audio_info(audio_path: Path) -> Dict[str, Any]:
+    """Get lightweight audio metadata for filtering/traceability."""
+    try:
+        import soundfile as sf
+        info = sf.info(str(audio_path))
+        return {
+            "duration": float(info.frames / max(1, info.samplerate)),
+            "sample_rate": int(info.samplerate),
+            "channels": int(info.channels),
+        }
+    except Exception:
+        return {"duration": 0.0, "sample_rate": 0, "channels": 0}
+
+
+def stable_sample_id(path: Path, root: Path) -> str:
+    """Generate stable ID from file path."""
+    try:
+        rel = str(path.relative_to(root))
+    except ValueError:
+        rel = str(path)
+    return hashlib.sha1(rel.encode("utf-8")).hexdigest()[:12]
+
+
 def extract_mel_spectrogram(
     audio_path: Path,
     output_path: Path,
@@ -549,6 +573,13 @@ def parse_cremad_filename(filename: str) -> str:
     return emotion_map.get(code, "unknown")
 
 
+def _find_files(input_dir: Path, extensions: List[str]) -> List[Path]:
+    """Find files recursively with case-insensitive extension matching."""
+    ext_set = {ext.lower() for ext in extensions}
+    files = [p for p in input_dir.rglob("*") if p.is_file() and p.suffix.lower() in ext_set]
+    return sorted(files)
+
+
 def preprocess_emotion_dataset(
     input_dir: Path,
     output_dir: Path,
@@ -565,7 +596,7 @@ def preprocess_emotion_dataset(
     fail_count = 0
     
     # Find all audio files
-    audio_files = list(input_dir.rglob("*.wav")) + list(input_dir.rglob("*.mp3"))
+    audio_files = _find_files(input_dir, [".wav", ".mp3", ".flac", ".ogg", ".m4a"])
     
     logger.info(f"Found {len(audio_files)} audio files")
     
@@ -585,9 +616,15 @@ def preprocess_emotion_dataset(
             continue
         
         # Create output path
-        output_filename = f"{audio_path.stem}.wav"
+        sample_id = stable_sample_id(audio_path, input_dir)
+        output_filename = f"{audio_path.stem}_{sample_id}.wav"
         emotion_dir = processed_dir / emotion
         output_path = emotion_dir / output_filename
+
+        info = get_audio_info(audio_path)
+        if info["duration"] < config.min_duration:
+            fail_count += 1
+            continue
         
         # Process audio
         if preprocess_audio_file(
@@ -598,8 +635,13 @@ def preprocess_emotion_dataset(
         ):
             metadata.append({
                 "file": str(output_path.relative_to(output_dir)),
+                "sample_id": sample_id,
                 "emotion": emotion,
                 "original_file": audio_path.name,
+                "source_path": str(audio_path),
+                "source_duration_sec": info["duration"],
+                "source_sample_rate": info["sample_rate"],
+                "source_channels": info["channels"],
             })
             success_count += 1
         else:
@@ -644,7 +686,7 @@ def preprocess_midi_dataset(
     fail_count = 0
     
     # Find all MIDI files
-    midi_files = list(input_dir.rglob("*.mid")) + list(input_dir.rglob("*.midi"))
+    midi_files = _find_files(input_dir, [".mid", ".midi"])
     
     logger.info(f"Found {len(midi_files)} MIDI files")
     
@@ -652,27 +694,27 @@ def preprocess_midi_dataset(
         try:
             mid = mido.MidiFile(str(midi_path))
             
-            # Extract note sequences
+            # Extract note sequences from a merged timeline.
             notes = []
             current_time = 0
-            
-            for track in mid.tracks:
-                for msg in track:
-                    current_time += msg.time
-                    if msg.type == "note_on" and msg.velocity > 0:
-                        notes.append({
-                            "time": current_time,
-                            "pitch": msg.note,
-                            "velocity": msg.velocity,
-                            "channel": msg.channel,
-                        })
+            merged_track = mido.merge_tracks(mid.tracks)
+            for msg in merged_track:
+                current_time += msg.time
+                if msg.type == "note_on" and msg.velocity > 0:
+                    notes.append({
+                        "time": current_time,
+                        "pitch": msg.note,
+                        "velocity": msg.velocity,
+                        "channel": getattr(msg, "channel", 0),
+                    })
             
             if len(notes) < 10:
                 fail_count += 1
                 continue
             
             # Save processed notes
-            output_path = processed_dir / f"{midi_path.stem}.json"
+            sample_id = stable_sample_id(midi_path, input_dir)
+            output_path = processed_dir / f"{midi_path.stem}_{sample_id}.json"
             with open(output_path, "w") as f:
                 json.dump({
                     "notes": notes,
@@ -682,7 +724,9 @@ def preprocess_midi_dataset(
             
             metadata.append({
                 "file": str(output_path.relative_to(output_dir)),
+                "sample_id": sample_id,
                 "original_file": midi_path.name,
+                "source_path": str(midi_path),
                 "num_notes": len(notes),
                 "duration": mid.length,
             })
@@ -729,7 +773,13 @@ def preprocess_instrument_dataset(
                 
             # Create output path
             instrument_family = info.get("instrument_family_str", "unknown")
-            output_path = processed_dir / instrument_family / f"{key}.wav"
+            sample_id = stable_sample_id(audio_path, input_dir)
+            output_path = processed_dir / instrument_family / f"{key}_{sample_id}.wav"
+
+            info_audio = get_audio_info(audio_path)
+            if info_audio["duration"] < config.min_duration:
+                fail_count += 1
+                continue
             
             if preprocess_audio_file(
                 audio_path,
@@ -739,10 +789,13 @@ def preprocess_instrument_dataset(
             ):
                 metadata.append({
                     "file": str(output_path.relative_to(output_dir)),
+                    "sample_id": sample_id,
                     "instrument_family": instrument_family,
                     "pitch": info.get("pitch"),
                     "velocity": info.get("velocity"),
                     "source": info.get("instrument_source_str"),
+                    "source_path": str(audio_path),
+                    "source_duration_sec": info_audio["duration"],
                 })
                 success_count += 1
             else:
@@ -774,10 +827,7 @@ def preprocess_generic_dataset(
     fail_count = 0
     
     # Find all audio files
-    extensions = [".wav", ".mp3", ".flac", ".ogg"]
-    audio_files = []
-    for ext in extensions:
-        audio_files.extend(list(input_dir.rglob(f"*{ext}")))
+    audio_files = _find_files(input_dir, [".wav", ".mp3", ".flac", ".ogg", ".m4a"])
     
     logger.info(f"Found {len(audio_files)} audio files for generic processing")
     
@@ -788,7 +838,13 @@ def preprocess_generic_dataset(
             rel_path = audio_path.relative_to(input_dir)
             output_path = processed_dir / rel_path.with_suffix(".wav")
         except ValueError:
-            output_path = processed_dir / f"{audio_path.stem}.wav"
+            sample_id = stable_sample_id(audio_path, input_dir)
+            output_path = processed_dir / f"{audio_path.stem}_{sample_id}.wav"
+
+        info = get_audio_info(audio_path)
+        if info["duration"] < config.min_duration:
+            fail_count += 1
+            continue
             
         if preprocess_audio_file(
             audio_path,
@@ -798,8 +854,11 @@ def preprocess_generic_dataset(
         ):
             metadata.append({
                 "file": str(output_path.relative_to(output_dir)),
+                "sample_id": stable_sample_id(audio_path, input_dir),
                 "original_file": str(audio_path),
                 "label": "generic",
+                "source_duration_sec": info["duration"],
+                "source_sample_rate": info["sample_rate"],
             })
             success_count += 1
         else:
@@ -931,6 +990,7 @@ Examples:
     
     parser.add_argument("--list", action="store_true", help="List available datasets")
     parser.add_argument("--dataset", type=str, help="Dataset name (or 'all')")
+    parser.add_argument("--audio-root", type=str, default=None, help="Override audio root directory")
     parser.add_argument("--download", action="store_true", help="Download dataset")
     parser.add_argument("--preprocess", action="store_true", help="Preprocess dataset")
     parser.add_argument("--stats", action="store_true", help="Show dataset statistics")
@@ -940,11 +1000,9 @@ Examples:
     
     args = parser.parse_args()
     
-    # Check SSD is mounted
-    if not AUDIO_DATA_ROOT.parent.exists():
-        logger.error(f"External SSD not mounted: {AUDIO_DATA_ROOT.parent}")
-        logger.info("Please connect the external SSD and try again")
-        sys.exit(1)
+    global AUDIO_DATA_ROOT
+    if args.audio_root:
+        AUDIO_DATA_ROOT = Path(args.audio_root).expanduser()
     
     # Ensure directories exist
     AUDIO_DATA_ROOT.mkdir(parents=True, exist_ok=True)
