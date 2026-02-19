@@ -163,10 +163,17 @@ def heuristic_score(recovered_rel: str, recovered_size: int, cand_rel: str, cand
     name_sim = seq_sim(rec_name, cand_name)
     ext_match = 1.0 if rec_ext == cand_ext and rec_ext != "" else 0.0
     sscore = size_score(recovered_size, cand_size)
-    return PATH_WEIGHT * path_sim + NAME_WEIGHT * name_sim + EXT_WEIGHT * ext_match + SIZE_WEIGHT * sscore
+    return (
+        PATH_WEIGHT * path_sim
+        + NAME_WEIGHT * name_sim
+        + EXT_WEIGHT * ext_match
+        + SIZE_WEIGHT * sscore
+    )
 
 
-def heuristic_score_indexed(recovered_rel: str, recovered_size: int, indexed: CanonicalFileIndexed) -> float:
+def heuristic_score_indexed(
+    recovered_rel: str, recovered_size: int, indexed: CanonicalFileIndexed
+) -> float:
     """Optimized heuristic scoring using pre-computed candidate fields."""
     rec_norm = normalize(recovered_rel)
     rec_path = Path(rec_norm)
@@ -178,10 +185,17 @@ def heuristic_score_indexed(recovered_rel: str, recovered_size: int, indexed: Ca
     name_sim = seq_sim(rec_name, indexed.name_lower)
     ext_match = 1.0 if rec_ext == indexed.ext and rec_ext != "" else 0.0
     sscore = size_score(recovered_size, indexed.canonical.size)
-    return PATH_WEIGHT * path_sim + NAME_WEIGHT * name_sim + EXT_WEIGHT * ext_match + SIZE_WEIGHT * sscore
+    return (
+        PATH_WEIGHT * path_sim
+        + NAME_WEIGHT * name_sim
+        + EXT_WEIGHT * ext_match
+        + SIZE_WEIGHT * sscore
+    )
 
 
-def build_canonical_index(canonical_files: List[CanonicalFile]) -> Dict[str, List[CanonicalFileIndexed]]:
+def build_canonical_index(
+    canonical_files: List[CanonicalFile],
+) -> Dict[str, List[CanonicalFileIndexed]]:
     """Pre-index canonical files by extension for efficient heuristic matching."""
     index: Dict[str, List[CanonicalFileIndexed]] = {}
     
@@ -425,7 +439,11 @@ def main() -> None:
                     indexed_candidates = canonical_index_by_ext.get(ext, [])
                     if not ext:
                         # No extension: search all indexed files.
-                        indexed_candidates = [idx for ext_list in canonical_index_by_ext.values() for idx in ext_list]
+                        indexed_candidates = [
+                            idx
+                            for ext_list in canonical_index_by_ext.values()
+                            for idx in ext_list
+                        ]
                     
                     scored: List[Tuple[float, CanonicalFile]] = []
                     for indexed in indexed_candidates:
@@ -441,7 +459,9 @@ def main() -> None:
                             second_score, second = scored[1]
                             second_candidate = second.repo_rel_path
 
-                        if top_score >= HIGH_CONFIDENCE_SCORE and (top_score - second_score) > MIN_GAP_TO_SECOND:
+                        if top_score >= HIGH_CONFIDENCE_SCORE and (
+                            top_score - second_score
+                        ) > MIN_GAP_TO_SECOND:
                             status = "candidate_match"
                             action = "manual_review_required"
                             confidence = round(top_score, 4)
