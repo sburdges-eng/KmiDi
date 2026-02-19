@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""
+Recovery reconciliation script for matching recovered files against git baseline.
+
+Privacy & Security:
+- Absolute filesystem paths are redacted in committed reports (run_meta.json)
+- Original paths are saved to path_mapping.local.json (git-ignored)
+- This prevents leaking user directories and volume mount points when sharing reports
+"""
 import argparse
 import csv
 import hashlib
