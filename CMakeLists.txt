@@ -21,7 +21,12 @@ option(USE_KMI_DI_FINAL "Use existing KmiDi_FINAL components" OFF)
 option(BUILD_NATIVE_MACOS_APP "Build native macOS app from KmiDi_FINAL" OFF)
 
 # KmiDi_FINAL paths
-set(KMI_DI_FINAL_ROOT "${CMAKE_SOURCE_DIR}/../KmiDi-1/KmiDi_FINAL"
+# Prefer the in-repo copy if present; fall back to the external sibling path used in older layouts.
+set(_kmidi_final_default "${CMAKE_CURRENT_SOURCE_DIR}/KmiDi_FINAL")
+if(NOT EXISTS "${_kmidi_final_default}")
+    set(_kmidi_final_default "${CMAKE_SOURCE_DIR}/../KmiDi-1/KmiDi_FINAL")
+endif()
+set(KMI_DI_FINAL_ROOT "${_kmidi_final_default}"
     CACHE PATH "Path to KmiDi_FINAL directory")
 
 # CMake modules path

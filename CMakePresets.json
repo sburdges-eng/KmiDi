@@ -1,0 +1,49 @@
+{
+  "version": 5,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 27,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "xcode-debug",
+      "displayName": "Xcode (Debug, arm64)",
+      "description": "Generate an Xcode project that pulls in KmiDi_FINAL components and the native macOS app target.",
+      "generator": "Xcode",
+      "binaryDir": "${sourceDir}/build/xcode-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0",
+        "USE_KMI_DI_FINAL": "ON",
+        "BUILD_NATIVE_MACOS_APP": "ON",
+        "KMI_DI_FINAL_ROOT": "${sourceDir}/KmiDi_FINAL",
+        "CMAKE_PREFIX_PATH": "/opt/homebrew/opt/qt/lib/cmake;/usr/local/opt/qt/lib/cmake"
+      },
+      "warnings": {
+        "dev": true
+      }
+    },
+    {
+      "name": "xcode-release",
+      "displayName": "Xcode (Release, arm64)",
+      "description": "Release build for Xcode with KmiDi_FINAL integration.",
+      "inherits": "xcode-debug",
+      "binaryDir": "${sourceDir}/build/xcode-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "xcode-debug",
+      "configurePreset": "xcode-debug"
+    },
+    {
+      "name": "xcode-release",
+      "configurePreset": "xcode-release"
+    }
+  ]
+}

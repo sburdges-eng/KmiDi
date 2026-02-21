@@ -10,7 +10,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(ENGINE_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/engine)
 set(CPP_ROOT ${ENGINE_ROOT})
 set(PY_PENTA_CORE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/python/penta_core)
-set(PLUGINS_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/plugins)
+set(PLUGINS_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/engine/src/plugin)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/plugins")
+    set(PLUGINS_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/plugins)
+endif()
 set(SHARED_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/shared)
 set(ML_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/ml)
 set(BUILD_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/build)
@@ -21,6 +24,7 @@ option(BUILD_PLUGINS "Build VST3 and CLAP plugins" ON)
 option(BUILD_TESTS "Build tests" ON)
 option(BUILD_KMIDI_CORE "Build KmiDi core library/app/plugins" ON)
 option(BUILD_PENTA_TESTS "Build penta_core test suite" OFF)
+option(BUILD_NATIVE_MACOS_APP "Build native macOS app from apps/macOS" ON)
 option(ENABLE_TRACY "Enable Tracy profiling" OFF)
 option(ENABLE_RTNEURAL "Enable RTNeural for ML inference" OFF)
 option(ENABLE_ONNX_RUNTIME "Enable ONNX Runtime for ML inference" OFF)
@@ -50,8 +54,28 @@ if(APPLE)
 endif()
 find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
 
-# JUCE setup - use consolidated build/external/JUCE
-add_subdirectory(build/external/JUCE EXCLUDE_FROM_ALL)
+# JUCE setup - prefer colocated JUCE copy, then fall back to parent workspace JUCE.
+set(KMIDI_JUCE_ROOT "")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/build/external/JUCE/CMakeLists.txt")
+    set(KMIDI_JUCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/build/external/JUCE")
+elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/_build/external/JUCE/CMakeLists.txt")
+    set(KMIDI_JUCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/_build/external/JUCE")
+elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/JUCE/CMakeLists.txt")
+    set(KMIDI_JUCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/external/JUCE")
+elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../external/JUCE/CMakeLists.txt")
+    set(KMIDI_JUCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../external/JUCE")
+elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../KmiDi/external/JUCE/CMakeLists.txt")
+    set(KMIDI_JUCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../KmiDi/external/JUCE")
+endif()
+
+if(KMIDI_JUCE_ROOT STREQUAL "")
+    message(FATAL_ERROR
+        "JUCE not found. Expected one of: "
+        "build/external/JUCE, _build/external/JUCE, external/JUCE, ../external/JUCE, or ../KmiDi/external/JUCE")
+endif()
+
+message(STATUS "Using JUCE from: ${KMIDI_JUCE_ROOT}")
+add_subdirectory(${KMIDI_JUCE_ROOT} JUCE EXCLUDE_FROM_ALL)
 
 # Ensure juceaide helper is available (needed for plugin targets)
 if(NOT TARGET juce::juceaide)
@@ -398,6 +422,16 @@ if(BUILD_PLUGINS)
 endif()
 
 endif() # BUILD_KMIDI_CORE
+
+# Native macOS app target from consolidated app shell.
+if(BUILD_NATIVE_MACOS_APP AND APPLE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/apps/macOS/build_macos_app.sh")
+    add_custom_target(native_macos_app
+        COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/apps/macOS/build_macos_app.sh"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/macOS"
+        COMMENT "Building native macOS app from KmiDi_FINAL/apps/macOS"
+        VERBATIM
+    )
+endif()
 
 # Tests
 if(BUILD_TESTS AND BUILD_KMIDI_CORE)
