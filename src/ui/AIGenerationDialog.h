@@ -60,7 +60,7 @@ private:
     juce::TextButton cancelButton_;
 
     bool wasCancelled_ = true;
-    int modalResult_ = 0;
+    [[maybe_unused]] int modalResult_ = 0;
     mutable AIGenerationRequest cachedRequest_;
     std::function<void(AIGenerationRequest)> completionCallback_;
 

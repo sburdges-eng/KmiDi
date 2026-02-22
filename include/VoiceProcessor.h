@@ -261,7 +261,7 @@ public:
     std::atomic<float> vibratoAmount{ 1.0f };   // Vibrato intensity
 
 private:
-    BridgeClient* bridgeClient_;
+    [[maybe_unused]] BridgeClient* bridgeClient_;
     double sampleRate_ = 44100.0;
     int blockSize_ = 512;
 

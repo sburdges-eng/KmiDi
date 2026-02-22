@@ -288,9 +288,21 @@ void prepareIntentFrame(IntentFrame& frame) {
             ("IntentIRAdapter::prepareIntentFrame: " + warning).c_str());
     }
 
-    // Use Rust validator for clamping (single source of truth, optimized)
-    // This ensures consistency with Rust validation logic
-    clamp_intent_frame_ffi(&frame);
+    // Clamp values to valid ranges (in-place)
+    frame.emotion.valence = std::clamp(frame.emotion.valence, -1.0f, 1.0f);
+    frame.emotion.arousal = std::clamp(frame.emotion.arousal, 0.0f, 1.0f);
+    frame.emotion.dominance = std::clamp(frame.emotion.dominance, 0.0f, 1.0f);
+    frame.emotion.intensity = std::clamp(frame.emotion.intensity, 0.0f, 1.0f);
+    frame.emotion.confidence = std::clamp(frame.emotion.confidence, 0.0f, 1.0f);
+    frame.music.tempo_bias = std::clamp(frame.music.tempo_bias, -1.0f, 1.0f);
+    frame.music.rhythmic_density = std::clamp(frame.music.rhythmic_density, 0.0f, 1.0f);
+    frame.music.groove_strength = std::clamp(frame.music.groove_strength, 0.0f, 1.0f);
+    frame.music.harmonic_tension = std::clamp(frame.music.harmonic_tension, 0.0f, 1.0f);
+    frame.music.harmonic_motion = std::clamp(frame.music.harmonic_motion, 0.0f, 1.0f);
+    frame.music.melodic_activity = std::clamp(frame.music.melodic_activity, 0.0f, 1.0f);
+    frame.music.contour_variance = std::clamp(frame.music.contour_variance, 0.0f, 1.0f);
+    frame.music.dynamic_range = std::clamp(frame.music.dynamic_range, 0.0f, 1.0f);
+    frame.music.texture_density = std::clamp(frame.music.texture_density, 0.0f, 1.0f);
 
     // Post-validation checks
     if (frame.emotion.valence < -1.0f || frame.emotion.valence > 1.0f) {

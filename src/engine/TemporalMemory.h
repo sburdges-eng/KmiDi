@@ -94,8 +94,8 @@ public:
     static float powerLawKernel(float tau, float alpha = 0.5f);
 
 private:
-    float decayRate_;
-    float halfLife_;
+    [[maybe_unused]] float decayRate_;
+    [[maybe_unused]] float halfLife_;
 };
 
 } // namespace kelly

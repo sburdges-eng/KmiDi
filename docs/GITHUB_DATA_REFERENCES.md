@@ -29,6 +29,7 @@ Curated list of GitHub repos and data sources that are valuable for KmiDi (music
 | [DrumGAN](https://github.com/SonyCSLParis/DrumGAN) | (check repo) | 125 | Drum synthesis with timbral conditioning (GANs). |
 | [codicodec](https://github.com/SonyCSLParis/codicodec) | (check repo) | 79 | Audio encode/decode (continuous/discrete). |
 | [audio-metrics](https://github.com/SonyCSLParis/audio-metrics) | GPL-3.0 | 41 | Audio evaluation metrics. |
+| [Stem-JEPA](https://github.com/SonyCSLParis/Stem-JEPA) | LGPL-3.0 | (check repo) | Stem compatibility in latent space (ISMIR 2024); arrangement validation, stem suggestions. See `docs/research/STEM_JEPA_INTEGRATION.md`. |
 
 ---
 

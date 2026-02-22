@@ -54,7 +54,7 @@ struct VADState {
 
     // Convert to EmotionalState (from EmotionMapper.h)
     EmotionalState toEmotionalState() const {
-        return EmotionalState{valence, arousal, std::clamp(dominance, 0.0f, 1.0f)};
+        return EmotionalState{valence, arousal, std::clamp(dominance, 0.0f, 1.0f), "neutral", {}};
     }
 };
 

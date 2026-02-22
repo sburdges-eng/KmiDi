@@ -181,6 +181,14 @@ file(GLOB_RECURSE KELLY_CORE_SOURCES CONFIGURE_DEPENDS
 # Exclude app entry point and plugin sources from the core lib
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/gui/main.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/plugin/")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/engine/test_kelly\\.cpp$")
+# Exclude Python bridge and cpp_music_brain Python bindings when pybind11 not available
+find_package(pybind11 QUIET)
+if(NOT pybind11_FOUND)
+    list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/bridge/kelly_bridge\\.cpp$")
+    list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/cpp_music_brain/python/.*\\.cpp$")
+    list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/.*\\.cpp$")
+endif()
 # NOTE: Previous line 31 had "list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/")"
 # which would exclude ALL source files (since all paths contain "/src/"), making
 # KELLY_CORE_SOURCES empty. This has been removed. If macro conflicts exist,
@@ -198,6 +206,7 @@ set_source_files_properties(
 
 target_include_directories(KellyCore PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/bridge
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
@@ -234,8 +243,22 @@ endif()
 
 target_compile_options(KellyCore PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>:/W4>
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic
+        -Wno-deprecated-declarations
+        -Wno-unused-parameter
+        -Wno-unused-variable
+        -Wno-unused-private-field
+        -Wno-unused-but-set-variable
+        -Wno-unused-function
+        -Wno-unused-const-variable
+        -Wno-unused-lambda-capture
+        -Wno-sign-compare
+        -Wno-reorder
+        -Wno-overloaded-virtual
+        -Wno-switch>
 )
+# Wno-*: full warning-clean build; many params/vars are interface or reserved. Tidy per-file when touching.
+# -Wno-deprecated-declarations: JUCE Font(height, style) → Font(FontOptions); migrate when editing UI.
 
 # Kelly GUI Application
 if(BUILD_DESKTOP)
@@ -275,7 +298,8 @@ if(BUILD_PLUGINS)
     else()
         message(WARNING "KmiDi plugin icons not found at ${KMIDI_ICON_ROOT}; building without plugin icons.")
     endif()
-    # VST3/CLAP plugin
+    # VST3/CLAP plugin. Note: current JUCE (external/JUCE) does not include CLAP in its
+    # CMake plugin kinds, so only KellyPlugin_VST3 (and KellyPlugin_All) are created.
     juce_add_plugin(KellyPlugin
         COMPANY_NAME "Kelly"
         PLUGIN_MANUFACTURER_CODE Klly
@@ -291,12 +315,15 @@ if(BUILD_PLUGINS)
         src/plugin/PluginProcessor.cpp
         src/plugin/PluginEditor.cpp
         src/plugin/PluginState.cpp
+        src/plugin/MasterEQProcessor.cpp
     )
 
     target_link_libraries(KellyPlugin PRIVATE
         KellyCore
         juce::juce_audio_plugin_client
     )
+    # VST3-only build: no VST2, so ignore parameter ID mismatch warning
+    target_compile_definitions(KellyPlugin PRIVATE JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1)
 endif()
 
 endif() # BUILD_KELLY_CORE

@@ -55,21 +55,21 @@ inline MusicalParameters musicToParams(const MusicalIntent& music) {
     // tempo_bias: -1.0 (slower) to +1.0 (faster)
     // Assuming base tempo of 120 BPM, range of 60-180 BPM
     float tempo_multiplier = 1.0f + (music.tempo_bias * 0.5f); // 0.5x to 1.5x
-    params.tempoBpm = static_cast<int>(120.0f * tempo_multiplier);
+    params.tempoSuggested = static_cast<int>(120.0f * tempo_multiplier);
     
     // Map mode preference
     if (music.mode_preference > 0) {
-        params.mode = "major";
+        params.modeSuggested = "major";
     } else if (music.mode_preference < 0) {
-        params.mode = "minor";
+        params.modeSuggested = "minor";
     } else {
-        params.mode = "neutral";
+        params.modeSuggested = "neutral";
     }
     
     // Map other parameters (these are approximations)
-    params.dynamicRange = music.dynamic_range;
-    params.textureDensity = music.texture_density;
-    params.harmonicTension = music.harmonic_tension;
+    params.dynamicsRange = music.dynamic_range;
+    params.density = music.texture_density;
+    params.dissonance = music.harmonic_tension;
     
     return params;
 }
@@ -81,18 +81,18 @@ inline IntentResult frameToIntentResult(const IntentFrame& frame) {
     IntentResult result;
     
     // Extract emotion
-    result.valence = frame.emotion.valence;
-    result.arousal = frame.emotion.arousal;
-    result.dominance = frame.emotion.dominance;
+    result.emotion.valence = frame.emotion.valence;
+    result.emotion.arousal = frame.emotion.arousal;
+    result.emotion.dominance = frame.emotion.dominance;
     
     // Extract music parameters
     auto params = musicToParams(frame.music);
-    result.bpm = params.tempoBpm;
+    result.tempoBpm = params.tempoSuggested;
     result.key = "C"; // Default, would need more context
-    result.mode = params.mode;
+    result.mode = params.modeSuggested;
     
-    // Set complexity from texture density
-    result.complexity = frame.music.texture_density;
+    // Map texture density to melodic range (0-1)
+    result.melodicRange = frame.music.texture_density;
     
     return result;
 }

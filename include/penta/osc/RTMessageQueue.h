@@ -50,7 +50,7 @@ public:
 
 private:
     std::unique_ptr<moodycamel::ReaderWriterQueue<OSCMessage>> queue_;
-    size_t capacity_;
+    [[maybe_unused]] size_t capacity_;
     // These are for tracking if push/pop actually happened, not queue state directly
     // moodycamel::ReaderWriterQueue is lock-free by itself.
     std::atomic<size_t> writeIndex_;

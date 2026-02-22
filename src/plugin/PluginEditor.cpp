@@ -687,6 +687,15 @@ void PluginEditor::onEmotionSelected(const EmotionNode &emotion) {
   // - Anger/Fear: Aggressive instruments (Distortion Guitar, Brass, Synth Bass)
 }
 
+void PluginEditor::onWoundTextChanged(const juce::String &text) {
+  processor_.setWoundDescription(text);
+}
+
+void PluginEditor::onEmotionTextCommitted(const juce::String &text) {
+  (void)text;
+  // Optional: update emotion parameters from committed text (e.g. parse and set valence/arousal)
+}
+
 //==============================================================================
 // Project Menu Handlers (Phase 0: v1.0 Critical Features)
 //==============================================================================

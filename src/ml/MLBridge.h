@@ -161,8 +161,8 @@ private:
   std::mutex asyncThreadsMutex_;
 
   // Feature extraction settings
-  double sampleRate_ = 44100.0;
-  size_t fftSize_ = 2048UL;
+  [[maybe_unused]] double sampleRate_ = 44100.0;
+  [[maybe_unused]] size_t fftSize_ = 2048UL;
 };
 
 // =============================================================================

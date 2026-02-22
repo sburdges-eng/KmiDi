@@ -474,6 +474,10 @@ venv.bak/
 Thumbs.db
 kmidi_audio_data/
 
+# Datasets: point-only; do not upload data (see datasets/README.md)
+datasets/*
+!datasets/README.md
+
 # Prevent nested git repositories (except legitimate submodules)
 # Archive and quarantine directories should not contain git repos
 ARCHIVE/**/.git

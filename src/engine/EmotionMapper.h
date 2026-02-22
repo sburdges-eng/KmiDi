@@ -26,8 +26,10 @@ enum class TimingFeel {
     Rubato
 };
 
-// EmotionCategory is defined in common/KellyTypes.h
+// EmotionCategory is defined in common/KellyTypes.h (included in global scope to avoid std being parsed inside kelly)
+} // namespace kelly
 #include "common/KellyTypes.h"
+namespace kelly {
 
 // =============================================================================
 // EMOTIONAL STATE (from Python EmotionalState dataclass)

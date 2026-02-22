@@ -96,33 +96,7 @@ static CPUFeatures g_cpu_features;
 
 } // anonymous namespace
 
-// =============================================================================
-// Runtime Dispatch Functions
-// =============================================================================
-
-SimdLevel get_simd_level() {
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
-    if (g_cpu_features.avx512f) return SimdLevel::AVX512;
-    if (g_cpu_features.avx2) return SimdLevel::AVX2;
-    if (g_cpu_features.sse4_2) return SimdLevel::SSE4_2;
-    if (g_cpu_features.sse2) return SimdLevel::SSE2;
-#elif defined(__aarch64__) || defined(_M_ARM64)
-    return SimdLevel::NEON;
-#endif
-    return SimdLevel::Scalar;
-}
-
-const char* get_simd_level_name() {
-    switch (get_simd_level()) {
-        case SimdLevel::AVX512: return "AVX-512";
-        case SimdLevel::AVX2: return "AVX2";
-        case SimdLevel::SSE4_2: return "SSE4.2";
-        case SimdLevel::SSE2: return "SSE2";
-        case SimdLevel::NEON: return "NEON";
-        case SimdLevel::Scalar: return "Scalar";
-        default: return "Unknown";
-    }
-}
+// Runtime get_simd_level / get_simd_level_name are defined inline in daiw/simd.hpp.
 
 // =============================================================================
 // Fallback Scalar Implementations
