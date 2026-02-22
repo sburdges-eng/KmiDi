@@ -1,0 +1,98 @@
+name: PR Review Checks
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  python-lint:
+    name: Python Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install tools
+        run: pip install black flake8 mypy
+
+      - name: Check formatting (black)
+        run: black --check --diff --line-length=100 music_brain/ tests/ scripts/*.py
+
+      - name: Lint (flake8)
+        run: flake8 music_brain/ tests/ scripts/*.py --max-line-length=100 --extend-ignore=E203,W503
+
+      - name: Type check (mypy)
+        run: mypy music_brain/ --ignore-missing-imports
+        continue-on-error: true
+
+  python-tests:
+    name: Python Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install pytest pytest-cov
+
+      - name: Run unit tests
+        run: pytest tests/unit/ -v --tb=short
+
+  commit-messages:
+    name: Commit Message Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate commit messages
+        run: |
+          echo "## Commits in this PR" >> "$GITHUB_STEP_SUMMARY"
+          git log --oneline origin/${{ github.base_ref }}..HEAD | while read -r line; do
+            echo "- $line" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+          # Flag commits with no meaningful message (fewer than 5 chars after hash)
+          BAD=0
+          while read -r msg; do
+            if [ "${#msg}" -lt 5 ]; then
+              echo "::warning::Commit message too short: '$msg'"
+              BAD=1
+            fi
+          done < <(git log --format='%s' origin/${{ github.base_ref }}..HEAD)
+          exit $BAD
+
+  diff-size:
+    name: Diff Size Report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Report diff stats
+        run: |
+          STATS=$(git diff --stat origin/${{ github.base_ref }}..HEAD)
+          CHANGED=$(git diff --numstat origin/${{ github.base_ref }}..HEAD | wc -l)
+
+          echo "## Diff Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "$STATS" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "**Files changed:** $CHANGED" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$CHANGED" -gt 50 ]; then
+            echo "::warning::Large PR — $CHANGED files changed. Consider splitting."
+          fi
