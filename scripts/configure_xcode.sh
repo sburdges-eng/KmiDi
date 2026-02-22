@@ -23,6 +23,9 @@ case "${PRESET}" in
     *) echo "Unknown preset: ${PRESET}. Use xcode-debug or xcode-release."; exit 1 ;;
 esac
 
+echo "Applying local JUCE patches..."
+"${PROJECT_ROOT}/scripts/juce/apply_patches.sh"
+
 echo "Configuring preset '${PRESET}'..."
 cmake --preset "${PRESET}"
 

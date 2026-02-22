@@ -22,6 +22,13 @@ xcode-select -p
 # NOT: /Library/Developer/CommandLineTools
 ```
 
+Initialize JUCE submodule:
+```bash
+cd /Users/seanburdges/Dev/KmiDi
+git submodule sync --recursive
+git submodule update --init --recursive external/JUCE
+```
+
 ---
 
 ## Generate Xcode Project
@@ -32,6 +39,15 @@ cd KmiDi-compile
 ```
 
 This creates `build-xcode/Kelly.xcodeproj`.
+Both `./scripts/generate_xcode_project.sh` and `./scripts/configure_xcode.sh` now run
+`./scripts/juce/apply_patches.sh` before CMake, so the JUCE macOS window snapshot patch
+is applied deterministically.
+
+If you need to apply JUCE patches manually:
+```bash
+cd /Users/seanburdges/Dev/KmiDi
+./scripts/juce/apply_patches.sh
+```
 
 ---
 
@@ -85,3 +101,21 @@ cmake --build build -j8
 ```
 
 This uses the Command Line Tools SDK, which may have the SDK 26.2+ issues we've been working around with the `_time.h` wrapper.
+
+---
+
+## Clean-State Checks
+
+Run these checks before submitting build fixes:
+
+```bash
+cd /Users/seanburdges/Dev/KmiDi
+git status --short
+git submodule status
+git ls-files -s | rg "KmiDi_PROJECT/external/JUCE" || true
+```
+
+Expected:
+- no unexpected tracked changes in `git status`
+- `git submodule status` succeeds
+- no output for `KmiDi_PROJECT/external/JUCE` (legacy gitlink removed)

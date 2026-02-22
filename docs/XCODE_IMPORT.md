@@ -7,14 +7,22 @@ Purpose: Generate an `.xcodeproj` for KmiDi with KmiDi_FINAL integration so it o
 - Xcode 15.1+ (with Command Line Tools)  
 - CMake 3.27+ (`brew install cmake`)  
 - Qt 6 (`brew install qt`) — CMake presets default to `/opt/homebrew/opt/qt/lib/cmake` (Intel: `/usr/local/opt/qt/lib/cmake`)  
-- JUCE already present at `external/JUCE` (this repo contains it)
+- JUCE submodule initialized at `external/JUCE`
+
+Initialize JUCE after clone:
+```bash
+cd /Users/seanburdges/Dev/KmiDi
+git submodule sync --recursive
+git submodule update --init --recursive external/JUCE
+```
 
 ## One-liner (recommended)
 ```bash
 cd /Users/seanburdges/Dev/KmiDi
 ./scripts/configure_xcode.sh xcode-debug   # or xcode-release
 ```
-This runs the preset, generates `build/xcode-*/Kelly.xcodeproj`, and opens it in Xcode.
+This applies JUCE patches, runs the preset, generates `build/xcode-*/Kelly.xcodeproj`,
+and opens it in Xcode.
 
 ## Manual commands (if you prefer)
 ```bash
@@ -56,5 +64,29 @@ open build/xcode-debug/Kelly.xcodeproj
 rm -rf build/xcode-debug build/xcode-release
 cmake --preset xcode-debug
 ```
+
+## JUCE patch pipeline
+- JUCE patches live under `third_party/patches/juce/*.patch`.
+- `scripts/configure_xcode.sh` and `scripts/generate_xcode_project.sh` call
+  `scripts/juce/apply_patches.sh` before CMake configure.
+- The patch script is idempotent:
+  - if patch is already applied, it no-ops;
+  - if patch cannot apply cleanly, it fails with a drift error.
+
+Manual patch apply:
+```bash
+cd /Users/seanburdges/Dev/KmiDi
+./scripts/juce/apply_patches.sh
+```
+
+## Clean-state checks
+```bash
+cd /Users/seanburdges/Dev/KmiDi
+git status --short
+git submodule status
+git ls-files -s | rg "KmiDi_PROJECT/external/JUCE" || true
+```
+
+Expected: no legacy `KmiDi_PROJECT/external/JUCE` gitlink and successful submodule status.
 
 You can now open `Kelly.xcodeproj` and build/debug inside Xcode without extra wiring.

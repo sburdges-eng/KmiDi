@@ -83,6 +83,9 @@ echo -e "${YELLOW}Generating Xcode project ($BUILD_TYPE)...${NC}"
 echo "  Build directory: $XCODE_BUILD_DIR"
 echo ""
 
+echo -e "${YELLOW}Applying local JUCE patches...${NC}"
+"$ROOT/scripts/juce/apply_patches.sh"
+
 # Generate Xcode project
 rm -rf "$XCODE_BUILD_DIR"
 mkdir -p "$XCODE_BUILD_DIR"
