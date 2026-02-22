@@ -19,7 +19,9 @@
         "BUILD_TESTS": "OFF",
         "BUILD_PENTA_TESTS": "OFF",
         "BUILD_NATIVE_MACOS_APP": "ON",
-        "CMAKE_PREFIX_PATH": "/opt/homebrew/opt/qt/lib/cmake;/usr/local/opt/qt/lib/cmake"
+        "CMAKE_PREFIX_PATH": "/opt/homebrew/opt/qt/lib/cmake;/usr/local/opt/qt/lib/cmake",
+        "FETCHCONTENT_UPDATES_DISCONNECTED": "ON",
+        "FETCHCONTENT_FULLY_DISCONNECTED": "ON"
       },
       "warnings": {
         "dev": true

@@ -4,10 +4,31 @@
 #include "penta/common/RTLogger.h"
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <limits>
+#include <unwind.h>
 #include <vector>
 
 namespace kelly {
+
+extern "C" _Unwind_Reason_Code __gcc_personality_v0(
+    int version,
+    _Unwind_Action actions,
+    std::uint64_t exceptionClass,
+    _Unwind_Exception* exceptionObject,
+    _Unwind_Context* context
+);
+
+// Keep this in a frequently-linked TU so static archive link order does not drop it.
+extern "C" _Unwind_Reason_Code rust_eh_personality(
+    int version,
+    _Unwind_Action actions,
+    std::uint64_t exceptionClass,
+    _Unwind_Exception* exceptionObject,
+    _Unwind_Context* context
+) {
+    return __gcc_personality_v0(version, actions, exceptionClass, exceptionObject, context);
+}
 
 // Helper: Map tempo_bias (-1.0 to +1.0) to BPM
 // Assumes center (0.0) = 120 BPM, range is ±60 BPM
@@ -288,9 +309,8 @@ void prepareIntentFrame(IntentFrame& frame) {
             ("IntentIRAdapter::prepareIntentFrame: " + warning).c_str());
     }
 
-    // Use Rust validator for clamping (single source of truth, optimized)
-    // This ensures consistency with Rust validation logic
-    clamp_intent_frame_ffi(&frame);
+    // Use shared IntentIR API so adapter code stays decoupled from raw FFI symbols.
+    intent_frame_clamp(&frame);
 
     // Post-validation checks
     if (frame.emotion.valence < -1.0f || frame.emotion.valence > 1.0f) {

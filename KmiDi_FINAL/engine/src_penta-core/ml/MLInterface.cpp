@@ -9,7 +9,6 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
-#include <fstream>
 #include <mutex>
 #include <thread>
 #include <unordered_map>
@@ -18,11 +17,9 @@
 #ifdef PENTA_HAS_ONNX
 #include <onnxruntime_cxx_api.h>
 #endif
-#include <nlohmann/json.hpp>
+#include <juce_core/juce_core.h>
 
 namespace penta::ml {
-
-using json = nlohmann::json;
 
 /**
  * @brief Private implementation (PIMPL pattern)
@@ -120,35 +117,67 @@ public:
     }
 
     bool loadRegistry(const std::string& registry_path) {
-        std::ifstream file(registry_path);
-        if (!file.is_open()) {
+        const juce::File registry_file(juce::String::fromUTF8(registry_path.c_str()));
+        if (!registry_file.existsAsFile()) {
             return false;
         }
 
-        json registry;
-        try {
-            file >> registry;
-        } catch (...) {
+        juce::var registry;
+        const juce::Result parse_result =
+            juce::JSON::parse(registry_file.loadFileAsString(), registry);
+        if (parse_result.failed()) {
             return false;
         }
 
-        if (!registry.contains("models") || !registry["models"].is_array()) {
+        const auto* root = registry.getDynamicObject();
+        if (root == nullptr) {
             return false;
         }
+
+        const juce::var models_var = root->getProperty("models");
+        if (!models_var.isArray()) {
+            return false;
+        }
+
+        const auto read_string =
+            [](const juce::DynamicObject& obj, const juce::Identifier& key) -> std::string {
+            const juce::var value = obj.getProperty(key);
+            return value.isString() ? value.toString().toStdString() : std::string{};
+        };
+
+        const auto read_size =
+            [](const juce::DynamicObject& obj, const juce::Identifier& key) -> size_t {
+            const juce::var value = obj.getProperty(key);
+            if (!(value.isInt() || value.isInt64() || value.isDouble())) {
+                return 0;
+            }
+
+            const double numeric_value = static_cast<double>(value);
+            return numeric_value > 0.0 ? static_cast<size_t>(numeric_value) : 0;
+        };
 
         bool all_ok = true;
         const auto base_dir = config_.model_directory;
+        const auto* models = models_var.getArray();
 
-        for (const auto& model : registry["models"]) {
-            if (!model.contains("id")) {
+        for (const auto& model_var : *models) {
+            const auto* model = model_var.getDynamicObject();
+            if (model == nullptr) {
                 all_ok = false;
                 continue;
             }
 
-            const std::string id = model.value("id", "");
-            const std::string onnx_path = model.value("onnx_path", "");
-            const std::string file_path = model.value("file", "");
-            const size_t input_size = model.value("input_size", 0);
+            const std::string id = read_string(*model, juce::Identifier("id"));
+            std::string onnx_path = read_string(*model, juce::Identifier("onnx_path"));
+            const std::string file_path = read_string(*model, juce::Identifier("file"));
+            const size_t input_size = read_size(*model, juce::Identifier("input_size"));
+
+            if (onnx_path.empty()) {
+                const juce::var exports_var = model->getProperty("exports");
+                if (const auto* exports = exports_var.getDynamicObject()) {
+                    onnx_path = read_string(*exports, juce::Identifier("onnx_path"));
+                }
+            }
 
             if (id.empty() || input_size == 0 || input_size > MAX_INPUT_SIZE) {
                 all_ok = false;

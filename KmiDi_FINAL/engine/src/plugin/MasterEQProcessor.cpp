@@ -87,6 +87,8 @@ void MasterEQProcessor::processBlock(juce::AudioBuffer<float> &buffer) {
     dryBuffer_.makeCopyOf(buffer, true);
   }
 
+  juce::dsp::AudioBlock<float> wetBlock(buffer);
+
   for (size_t bandIdx = 0; bandIdx < bandSmoothing_.size(); ++bandIdx) {
     if (!bandSmoothing_[bandIdx].enabled) {
       continue;
@@ -125,8 +127,9 @@ void MasterEQProcessor::processBlock(juce::AudioBuffer<float> &buffer) {
     }
 
     for (int ch = 0; ch < numChannels; ++ch) {
-      auto *channelData = buffer.getWritePointer(ch);
-      bandFilters_[static_cast<size_t>(ch)][bandIdx].processSamples(channelData, numSamples);
+      auto channelBlock = wetBlock.getSingleChannelBlock(static_cast<size_t>(ch));
+      juce::dsp::ProcessContextReplacing<float> context(channelBlock);
+      bandFilters_[static_cast<size_t>(ch)][bandIdx].process(context);
     }
   }
 

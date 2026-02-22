@@ -75,6 +75,8 @@ if(KMIDI_JUCE_ROOT STREQUAL "")
 endif()
 
 message(STATUS "Using JUCE from: ${KMIDI_JUCE_ROOT}")
+# Skip juceaide on Xcode 26 SDKs where legacy CoreGraphics capture APIs are unavailable.
+set(JUCE_DISABLE_JUCEAIDE_BUILD ON CACHE BOOL "Skip juceaide build" FORCE)
 add_subdirectory(${KMIDI_JUCE_ROOT} JUCE EXCLUDE_FROM_ALL)
 
 # Ensure juceaide helper is available (needed for plugin targets)
@@ -86,22 +88,14 @@ if(NOT TARGET juce::juceaide)
     endif()
 endif()
 
-# Readerwriterqueue (lock-free queue) for RT-safe OSC
+# Keep FetchContent available for optional dependencies (RTNeural, tests).
 include(FetchContent)
-FetchContent_Declare(
-    readerwriterqueue
-    GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue.git
-    GIT_TAG v1.0.6
-    GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(readerwriterqueue)
 
-FetchContent_GetProperties(readerwriterqueue)
-
+# Provide readerwriterqueue locally to support offline/Xcode-debug flows.
 if(NOT TARGET readerwriterqueue)
     add_library(readerwriterqueue INTERFACE)
     target_include_directories(readerwriterqueue INTERFACE
-        ${readerwriterqueue_SOURCE_DIR}
+        ${ENGINE_ROOT}/include
     )
 endif()
 
@@ -287,20 +281,13 @@ target_include_directories(intent_ir_adapter PUBLIC
     ${CMAKE_BINARY_DIR}/include  # For generated FFI header
 )
 
-target_link_libraries(intent_ir_adapter PUBLIC
-    ${INTENT_IR_RUST_LIB}  # Rust static library (IMPORTED)
-)
-
-# Ensure Rust library directory is in linker search path
-# This propagates to all targets that link to intent_ir_adapter
-# Note: For IMPORTED libraries, CMake should handle paths automatically,
-# but we add the directory explicitly to ensure it's found
-if(TARGET ${INTENT_IR_RUST_LIB})
-    get_target_property(RUST_LIB_LOCATION ${INTENT_IR_RUST_LIB} IMPORTED_LOCATION)
-    if(RUST_LIB_LOCATION)
-        get_filename_component(RUST_LIB_DIR ${RUST_LIB_LOCATION} DIRECTORY)
-        target_link_directories(intent_ir_adapter PUBLIC ${RUST_LIB_DIR})
-    endif()
+if(INTENT_IR_RUST_ARCHIVE)
+    # Link archive path directly; this is more reliable than transitive -l lookup in Xcode.
+    target_link_libraries(intent_ir_adapter PUBLIC "${INTENT_IR_RUST_ARCHIVE}")
+    get_filename_component(RUST_LIB_DIR "${INTENT_IR_RUST_ARCHIVE}" DIRECTORY)
+    target_link_directories(intent_ir_adapter PUBLIC "${RUST_LIB_DIR}")
+elseif(TARGET ${INTENT_IR_RUST_LIB})
+    target_link_libraries(intent_ir_adapter PUBLIC ${INTENT_IR_RUST_LIB})
 endif()
 
 # Link cJSON if available
@@ -323,7 +310,6 @@ target_include_directories(KellyCore PUBLIC
     ${ENGINE_ROOT}/src
     ${ENGINE_ROOT}/include
     ${SHARED_ROOT}/include
-    ${readerwriterqueue_SOURCE_DIR}
     ${CMAKE_BINARY_DIR}/include  # For generated IntentIR FFI header
 )
 

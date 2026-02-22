@@ -117,7 +117,7 @@ SpectralAnalyzer::FormantFrequencies SpectralAnalyzer::extractFormants(
     size_t f3_max_bin = static_cast<size_t>(std::min(F3_MAX / bin_frequency, static_cast<float>(kMaxSpectralBins - 1)));
 
     // Helper lambda for parabolic interpolation to get sub-bin accuracy
-    auto parabolicInterpolation = [&magnitude_buffer_](size_t peak_bin) -> float {
+    auto parabolicInterpolation = [this](size_t peak_bin) -> float {
         if (peak_bin == 0 || peak_bin >= kMaxSpectralBins - 1) {
             return static_cast<float>(peak_bin);
         }

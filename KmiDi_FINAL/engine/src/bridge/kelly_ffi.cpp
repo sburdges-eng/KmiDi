@@ -431,8 +431,10 @@ char* kelly_brain_from_journey(KellyBrain* brain, const char* current_state_json
         kelly::SideA current;
         kelly::SideB desired;
         
-        // In production, use proper JSON parsing
-        current.wound = parse_wound_json(std::string(current_state_json));
+        // In production, use proper JSON parsing for side state payloads.
+        const auto currentWound = parse_wound_json(std::string(current_state_json));
+        current.description = currentWound.description;
+        current.intensity = currentWound.intensity;
         // desired parsing would be similar
         
         kelly::IntentResult result = wrapper->brain->fromJourney(current, desired);
@@ -536,7 +538,7 @@ char* kelly_brain_generate_midi_with_params(KellyBrain* brain, const char* inten
         // Parse intent JSON and generate with specific parameters
         kelly::IntentResult intent;
         // Set specific BPM and key
-        intent.bpm = bpm;
+        intent.tempoBpm = bpm;
         intent.key = std::string(key_signature);
         
         kelly::GeneratedMidi midi = wrapper->brain->generateMidi(intent, bars);

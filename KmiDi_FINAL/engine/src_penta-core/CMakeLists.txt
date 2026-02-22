@@ -17,41 +17,13 @@ if(APPLE)
     # The main CMakeLists.txt sets MAC_OS_X_VERSION_MIN_REQUIRED which helps
 endif()
 
-# Readerwriterqueue: header-only library
-# Must explicitly create INTERFACE target and ensure SOURCE_DIR is populated
-include(FetchContent)
-
-# Always get properties in case it was already fetched by parent CMakeLists
-FetchContent_GetProperties(readerwriterqueue)
-
-if(NOT readerwriterqueue_POPULATED)
-    FetchContent_Declare(
-        readerwriterqueue
-        GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue.git
-        GIT_TAG v1.0.6
-        GIT_SHALLOW TRUE
-    )
-    FetchContent_MakeAvailable(readerwriterqueue)
-endif()
-
-# Explicitly populate SOURCE_DIR for header-only library without CMakeLists.txt
-FetchContent_GetProperties(readerwriterqueue)
-
+# Readerwriterqueue fallback header lives in engine/include.
 if(NOT TARGET readerwriterqueue)
     add_library(readerwriterqueue INTERFACE)
     target_include_directories(readerwriterqueue INTERFACE
-        ${readerwriterqueue_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../include
     )
 endif()
-
-# nlohmann/json for JSON parsing
-FetchContent_Declare(
-    nlohmann_json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG v3.11.3
-    GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(nlohmann_json)
 
 # ============================================================================
 # Penta-Core Library
@@ -75,13 +47,11 @@ add_library(penta_core STATIC ${PENTA_CORE_SOURCES})
 target_include_directories(penta_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${readerwriterqueue_SOURCE_DIR}
 )
 
 # Link libraries
 target_link_libraries(penta_core PUBLIC
     readerwriterqueue
-    nlohmann_json::nlohmann_json
     juce::juce_dsp
 )
 
@@ -118,9 +88,9 @@ option(BUILD_PENTA_TESTS "Build penta-core tests" ON)
 
 if(BUILD_PENTA_TESTS)
     enable_testing()
+    include(FetchContent)
 
     # Fetch GoogleTest
-    include(FetchContent)
     FetchContent_Declare(
         googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
