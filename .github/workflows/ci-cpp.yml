@@ -64,6 +64,16 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ matrix.os }}-${{ matrix.build_type }}
+
+      - name: Verify JUCE patch drift (pre-build)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: ./scripts/juce/apply_patches.sh --check
+
+      - name: Apply JUCE patches
+        if: runner.os != 'Windows'
+        shell: bash
+        run: ./scripts/juce/apply_patches.sh
       
       - name: Configure CMake
         run: |

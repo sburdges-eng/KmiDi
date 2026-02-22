@@ -3,6 +3,37 @@
 
 set -euo pipefail
 
+MODE="apply"
+
+usage() {
+    cat <<'EOF'
+Usage: apply_patches.sh [--check]
+
+Options:
+  --check   Verify patch drift without modifying external/JUCE.
+EOF
+}
+
+if [ $# -gt 1 ]; then
+    usage >&2
+    exit 1
+fi
+
+if [ $# -eq 1 ]; then
+    case "${1}" in
+        --check) MODE="check" ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: ${1}" >&2
+            usage >&2
+            exit 1
+            ;;
+    esac
+fi
+
 SCRIPT_DIR="$(cd -- "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 JUCE_DIR="${PROJECT_ROOT}/external/JUCE"
@@ -36,7 +67,11 @@ for patch in "${PATCHES[@]}"; do
     patch_name="$(basename "${patch}")"
 
     if git -C "${JUCE_DIR}" apply --reverse --check "${patch}" >/dev/null 2>&1; then
-        echo "JUCE patch already applied: ${patch_name}"
+        if [ "${MODE}" = "check" ]; then
+            echo "JUCE patch check passed (already applied): ${patch_name}"
+        else
+            echo "JUCE patch already applied: ${patch_name}"
+        fi
         continue
     fi
 
@@ -45,6 +80,11 @@ for patch in "${PATCHES[@]}"; do
         echo "Failed to apply JUCE patch ${patch_name} on external/JUCE@${juce_head}" >&2
         echo "Patch drift detected. Update ${patch_name} for the current JUCE revision." >&2
         exit 1
+    fi
+
+    if [ "${MODE}" = "check" ]; then
+        echo "JUCE patch check passed (cleanly applicable): ${patch_name}"
+        continue
     fi
 
     git -C "${JUCE_DIR}" apply "${patch}"
