@@ -3,6 +3,8 @@
 # Usage:  ./scripts/review_local.sh [--fix]
 #
 # With --fix, auto-format Python files instead of only checking.
+# -e is deliberately omitted: individual check commands may return non-zero
+# (e.g. black --check on unformatted code) and we capture those via report().
 set -uo pipefail
 
 FIX=false
@@ -64,8 +66,9 @@ fi
 # ── Python type check ──────────────────────────────────────────
 echo "── Python Type Check ──"
 if command -v mypy &>/dev/null; then
-  mypy music_brain/ --ignore-missing-imports 2>/dev/null || true
-  report 0 "mypy (informational)"
+  mypy music_brain/ --ignore-missing-imports 2>/dev/null
+  # Informational only — existing codebase may have type issues.
+  report 0 "mypy (informational, see output above)"
 else
   warn "mypy not installed — skipping type check"
 fi

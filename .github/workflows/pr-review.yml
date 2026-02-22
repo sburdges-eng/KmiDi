@@ -28,6 +28,8 @@ jobs:
         run: flake8 music_brain/ tests/ scripts/*.py --max-line-length=100 --extend-ignore=E203,W503
 
       - name: Type check (mypy)
+        # Informational only — existing codebase has unresolved type issues.
+        # Remove continue-on-error once type coverage is clean.
         run: mypy music_brain/ --ignore-missing-imports
         continue-on-error: true
 
