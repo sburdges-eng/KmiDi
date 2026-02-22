@@ -44,10 +44,15 @@ if(USE_KMI_DI_FINAL OR BUILD_NATIVE_MACOS_APP)
 endif()
 
 # Pure DSP core from KmiDi_FINAL (if available)
-if(USE_KMI_DI_FINAL AND KMI_DI_FINAL_AVAILABLE AND EXISTS ${KMI_DI_FINAL_ROOT}/engine/src/dsp)
+set(_kmidi_final_dsp_dir "${KMI_DI_FINAL_ROOT}/engine/src/dsp")
+set(_kmidi_final_dsp_cmake "${_kmidi_final_dsp_dir}/CMakeLists.txt")
+if(USE_KMI_DI_FINAL AND KMI_DI_FINAL_AVAILABLE AND EXISTS "${_kmidi_final_dsp_cmake}")
     message(STATUS "Including pure DSP core from KmiDi_FINAL")
-    add_subdirectory(${KMI_DI_FINAL_ROOT}/engine/src/dsp kmidi_dsp_core)
+    add_subdirectory("${_kmidi_final_dsp_dir}" kmidi_dsp_core)
     set(KMI_DI_HAS_PURE_DSP ON)
+elseif(USE_KMI_DI_FINAL AND KMI_DI_FINAL_AVAILABLE AND EXISTS "${_kmidi_final_dsp_dir}")
+    message(WARNING
+        "KmiDi_FINAL DSP directory exists but has no CMakeLists.txt; skipping add_subdirectory().")
 endif()
 
 # macOS SDK 26.2+ compatibility fix for __CLOCK_AVAILABILITY
@@ -322,8 +327,17 @@ if(BUILD_PLUGINS)
         KellyCore
         juce::juce_audio_plugin_client
     )
-    # VST3-only build: no VST2, so ignore parameter ID mismatch warning
-    target_compile_definitions(KellyPlugin PRIVATE JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1)
+    # VST3-only build: no VST2 SDK available, so disable VST2 state replacement code.
+    target_compile_definitions(KellyPlugin PRIVATE
+        JUCE_VST3_CAN_REPLACE_VST2=0
+        JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1
+    )
+    if(TARGET KellyPlugin_VST3)
+        target_compile_definitions(KellyPlugin_VST3 PRIVATE
+            JUCE_VST3_CAN_REPLACE_VST2=0
+            JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1
+        )
+    endif()
 endif()
 
 endif() # BUILD_KELLY_CORE

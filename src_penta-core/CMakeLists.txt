@@ -44,15 +44,6 @@ if(NOT TARGET readerwriterqueue)
     )
 endif()
 
-# nlohmann/json for JSON parsing
-FetchContent_Declare(
-    nlohmann_json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG v3.11.3
-    GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(nlohmann_json)
-
 # ============================================================================
 # Penta-Core Library
 # ============================================================================
@@ -84,7 +75,6 @@ find_package(PkgConfig QUIET)
 if(TARGET juce::juce_dsp)
     target_link_libraries(penta_core PUBLIC
         readerwriterqueue
-        nlohmann_json::nlohmann_json
         juce::juce_dsp
     )
 else()
@@ -92,7 +82,6 @@ else()
     message(WARNING "JUCE not available, building penta_core without juce_dsp")
     target_link_libraries(penta_core PUBLIC
         readerwriterqueue
-        nlohmann_json::nlohmann_json
     )
 endif()
 
