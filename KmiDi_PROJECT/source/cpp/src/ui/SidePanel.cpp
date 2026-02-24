@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #include "SidePanel.h"
 #include "KellyLookAndFeel.h"
 
@@ -75,4 +73,3 @@ SideB SidePanel::getSideBState() const {
 }
 
 } // namespace kelly
->>>>>>> Incoming (Background Agent changes)

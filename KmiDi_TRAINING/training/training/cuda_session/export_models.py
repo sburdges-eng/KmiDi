@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #!/usr/bin/env python3
 """
 Export trained models to ONNX and CoreML formats.
@@ -199,4 +197,3 @@ def main():
 
 if __name__ == '__main__':
     main()
->>>>>>> Incoming (Background Agent changes)

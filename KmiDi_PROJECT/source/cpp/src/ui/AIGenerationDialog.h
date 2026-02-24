@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -70,4 +68,3 @@ private:
 };
 
 } // namespace kelly
->>>>>>> Incoming (Background Agent changes)

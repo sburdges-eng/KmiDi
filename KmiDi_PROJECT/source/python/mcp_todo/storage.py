@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """
 TODO Storage Backend
 
@@ -415,4 +413,3 @@ class TodoStorage:
                         lines.append(f"  - Tags: {', '.join(todo.tags)}")
 
         return "\n".join(lines)
->>>>>>> Incoming (Background Agent changes)

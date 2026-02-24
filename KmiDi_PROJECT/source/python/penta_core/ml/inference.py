@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """
 Inference Engine - Unified ML inference across backends.
 
@@ -533,4 +531,3 @@ def load_model(model_path: str, backend: str = "auto") -> Optional[InferenceEngi
         return create_engine(model_info)
     except Exception:
         return None
->>>>>>> Incoming (Background Agent changes)

@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """Session history and undo/redo system.
 
 Supports non-destructive experimentation with per-component undo/redo stacks.
@@ -433,4 +431,3 @@ class HistoryManager:
             self._transaction_groups[component].clear()
 
         logger.debug(f"Ended transaction group for {component}")
->>>>>>> Incoming (Background Agent changes)

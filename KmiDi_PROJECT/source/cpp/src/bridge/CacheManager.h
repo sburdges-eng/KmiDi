@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #pragma once
 
 /**
@@ -109,4 +107,3 @@ private:
 
 } // namespace bridge
 } // namespace kelly
->>>>>>> Incoming (Background Agent changes)

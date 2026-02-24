@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #!/usr/bin/env python3
 """
 Integrated Kelly Model Training Script
@@ -1272,4 +1270,3 @@ def compute_loss(batch, model, device, criterion):
 
 if __name__ == "__main__":
     main()
->>>>>>> Incoming (Background Agent changes)
