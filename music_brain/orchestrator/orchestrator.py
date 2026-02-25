@@ -59,6 +59,7 @@ class OrchestratorConfig:
     Attributes:
         default_timeout: Default timeout for stage execution (seconds)
         max_retries: Maximum retry attempts for failed stages
+        retry_base_delay: Base delay in seconds for exponential backoff between retries
         enable_logging: Enable detailed logging
         log_level: Logging level
         json_logging: Use JSON format for logs
@@ -67,6 +68,7 @@ class OrchestratorConfig:
     """
     default_timeout: float = 30.0
     max_retries: int = 1
+    retry_base_delay: float = 0.5
     enable_logging: bool = True
     log_level: LogLevel = LogLevel.INFO
     json_logging: bool = False
@@ -78,6 +80,7 @@ class OrchestratorConfig:
         return {
             "default_timeout": self.default_timeout,
             "max_retries": self.max_retries,
+            "retry_base_delay": self.retry_base_delay,
             "enable_logging": self.enable_logging,
             "log_level": self.log_level.name,
             "json_logging": self.json_logging,
@@ -385,10 +388,13 @@ class AIOrchestrator:
         for attempt in range(retries + 1):
             try:
                 if attempt > 0:
+                    # Exponential backoff: base_delay * 2^(attempt-1)
+                    delay = self.config.retry_base_delay * (2 ** (attempt - 1))
                     self._logger.info(
-                        "Retrying stage: %s (attempt %d/%d)",
-                        stage.name, attempt + 1, retries + 1,
+                        "Retrying stage: %s (attempt %d/%d, backoff %.1fs)",
+                        stage.name, attempt + 1, retries + 1, delay,
                     )
+                    await asyncio.sleep(delay)
 
                 # Pre-process
                 processed_input = await stage.processor.pre_process(input_data, context)
