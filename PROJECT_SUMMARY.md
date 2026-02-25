@@ -581,11 +581,17 @@ python -m music_brain.api      # Start API at 127.0.0.1:8000
 git clone --depth 1 --branch 8.0.0 \
   https://github.com/juce-framework/JUCE.git external/JUCE
 
-# Configure and build
+# Optional: C++ tests require Catch2 in external/Catch2
+# If you want to build and run tests, first fetch Catch2, e.g.:
+# git clone https://github.com/catchorg/Catch2.git external/Catch2
+
+# Configure and build (enable tests only if Catch2 is present)
 cmake -S . -B build -G Ninja \
   -DBUILD_TESTS=ON \
   -Dpybind11_DIR=$(python3 -c "import pybind11; print(pybind11.get_cmake_dir())")
 cmake --build build
+
+# Optional: run C++ tests (will be skipped if Catch2/tests are not configured)
 ctest --test-dir build --output-on-failure
 ```
 
