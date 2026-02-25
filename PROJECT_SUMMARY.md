@@ -185,22 +185,22 @@ git clone --depth 1 --branch 8.0.0 \
 
 ---
 
-### 2. API–UI Feature Gap (Generation Pipeline Mismatch)
+### 2. API–UI Feature Gap (Generation Pipeline Alignment)
 
-**Severity:** 🔴 Critical — UI collects rich data that the backend ignores
+**Severity:** 🟠 High — most intent fields flow through, but some rich UI data is still underused
 
-The frontend collects detailed parameters (duration, song structure, instruments, techniques, genre), but the `/generate` API endpoint uses a simple `therapy_session()` that only accepts `{ key, bpm, progression, genre }`.
+The frontend collects detailed parameters (duration, song structure, instruments, techniques, genre). The `/generate` API endpoint now goes through the full `CompleteSongIntent` pipeline by default (with a legacy fallback path kept for backward compatibility), so the core intent data is no longer ignored.
 
-**Root cause:** The full `CompleteSongIntent` pipeline exists and works, but the `/generate` endpoint was shipped with an MVP shortcut and never reconnected.
+**Current state / root cause:** While `/generate` is wired to `CompleteSongIntent.from_ui_payload()` → `process_song_intent()`, not every UI field is yet mapped 1:1 into the intent schema or fully honored by the downstream production/humanization layers. Some advanced controls are either collapsed into defaults or only partially respected.
 
-**What's lost:**
-- Duration not respected
-- Song structure (sections, repetitions) ignored
-- Instrument selection ignored (no multi-track MIDI)
-- Production techniques ignored
-- Audio rendering missing (MIDI only, no WAV/MP3)
+**What's still missing or partial:**
+- Duration and section counts are sometimes approximated rather than strictly enforced
+- Complex song structures (non-linear sections, custom repeats) may be simplified
+- Detailed instrument selection and layering are not always reflected as distinct multi-track MIDI outputs
+- Fine-grained production techniques / mix choices are coarsely mapped or ignored
+- Audio rendering remains limited (MIDI-first flow; WAV/MP3 export still treated as a separate step)
 
-**Fix needed:** Wire `/generate` → `CompleteSongIntent.from_ui_payload()` → `process_song_intent()`.
+**Remaining work:** Audit the UI → `CompleteSongIntent.from_ui_payload()` field mapping and `process_song_intent()` outputs, ensure all exposed UI fields have explicit mappings (or documented fallbacks), and extend the production/rendering path so that structure, instrumentation, and technique parameters are faithfully realized.
 
 ---
 
