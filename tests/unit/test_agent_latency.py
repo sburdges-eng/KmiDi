@@ -8,7 +8,7 @@ and exponential backoff retry logic.
 import asyncio
 import importlib.util
 import time
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
