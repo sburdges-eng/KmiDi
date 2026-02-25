@@ -208,18 +208,14 @@ The frontend collects detailed parameters (duration, song structure, instruments
 
 **Severity:** 🟠 High — multiple crash paths from malformed input
 
-10 input validation issues identified across `api.py` and `intent_schema.py`:
+Several input validation issues have been identified across `api.py` and `intent_schema.py`. Some were previously documented but have since been mitigated; this section tracks remaining concerns and notes past fixes that should be re-verified over time.
 
-- **`KeyError` crashes:** Dictionary fields accessed with `data["key"]` instead of `data.get("key", default)` in `CompleteSongIntent.from_dict()` (lines 427, 437, 447, 460 of intent_schema.py).
-- **Unbounded float values:** `mood_secondary_tension` accepts any float (e.g., `999.0`) when the spec requires `[0.0, 1.0]`.
-- **Type coercion failures:** `request.intent.technical.bpm / 20` crashes with `TypeError` if BPM is a string.
-- **Missing result keys:** `result['intent_summary']` and `result['harmony'].chords` crash if `process_intent()` returns an incomplete dict.
+- **Resolved `KeyError` crashes (historical):** Earlier versions of `CompleteSongIntent.from_dict()` accessed dictionary fields with `data["key"]`, which could raise `KeyError` for malformed payloads. The current implementation uses `data.get(...)` throughout, so this specific crash path should now be eliminated.
+- **Resolved unbounded `mood_secondary_tension` (historical):** `mood_secondary_tension` used to accept arbitrary float values (e.g., `999.0`) despite the spec requiring `[0.0, 1.0]`. The current implementation clamps `mood_secondary_tension` to this range; callers should still treat it as a normalized value.
+- **Type coercion failures (to re-verify):** `request.intent.technical.bpm / 20` can still crash with `TypeError` if BPM arrives as a string or non-numeric type. We should either coerce BPM safely or validate and surface a clear error before arithmetic.
+- **Missing result keys (to re-verify):** Accessing `result['intent_summary']` and `result['harmony'].chords` assumes a fully populated dict; if `process_intent()` returns a partial result, these lookups may still raise errors. Defensive `.get(...)` usage or structured result types would harden this path.
 
-**Example crash:**
-```python
-intent = CompleteSongIntent.from_dict({"title": "Test"})
-# KeyError: 'song_root'
-```
+Historical note: Earlier versions reproduced a `KeyError` by calling `CompleteSongIntent.from_dict({"title": "Test"})`. With the newer `.get(...)` usage and clamping logic in `intent_schema.py`, that specific crash should no longer occur, but any new callers should still validate external input before passing it into the intent layer.
 
 ---
 
