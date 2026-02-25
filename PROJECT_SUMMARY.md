@@ -152,7 +152,7 @@ KmiDi/
 |---|---|---|
 | **Python AI** | Python 3.9+, NumPy, PyTorch, librosa, scipy | Music intelligence, emotion mapping, MIDI generation |
 | **REST API** | FastAPI + Uvicorn | HTTP interface at `127.0.0.1:8000` |
-| **C++ Engine** | C++20, CMake 3.22+, Ninja | Real-time audio processing, groove analysis, harmony |
+| **C++ Engine** | C++20, CMake 3.27+, Ninja | Real-time audio processing, groove analysis, harmony |
 | **Audio Framework** | JUCE 8 | Plugin hosting (VST3/CLAP), audio I/O |
 | **Desktop Shell** | Tauri v2 (Rust) | Native app wrapper, FFI to C++ |
 | **Web UI** | React, Vite, Tailwind CSS | Frontend interface |
