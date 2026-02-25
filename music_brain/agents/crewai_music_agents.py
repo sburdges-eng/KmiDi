@@ -23,6 +23,7 @@ Then the system runs 100% locally.
 import hashlib
 import os
 import atexit
+import threading
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
@@ -41,32 +42,37 @@ class _LRUResponseCache:
     def __init__(self, max_size: int = 128):
         self._max_size = max_size
         self._cache: OrderedDict[str, str] = OrderedDict()
+        self._lock = threading.Lock()
 
     @staticmethod
-    def _make_key(model: str, prompt: str, system: str) -> str:
-        raw = f"{model}|{system}|{prompt}"
+    def _make_key(model: str, prompt: str, system: str, extra: str = "") -> str:
+        raw = f"{model}|{system}|{extra}|{prompt}"
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
-    def get(self, model: str, prompt: str, system: str = "") -> Optional[str]:
-        key = self._make_key(model, prompt, system)
-        if key in self._cache:
-            self._cache.move_to_end(key)
-            return self._cache[key]
-        return None
+    def get(self, model: str, prompt: str, system: str = "", extra: str = "") -> Optional[str]:
+        key = self._make_key(model, prompt, system, extra)
+        with self._lock:
+            if key in self._cache:
+                self._cache.move_to_end(key)
+                return self._cache[key]
+            return None
 
-    def put(self, model: str, prompt: str, response: str, system: str = "") -> None:
-        key = self._make_key(model, prompt, system)
-        if key in self._cache:
-            self._cache.move_to_end(key)
-        self._cache[key] = response
-        if len(self._cache) > self._max_size:
-            self._cache.popitem(last=False)
+    def put(self, model: str, prompt: str, response: str, system: str = "", extra: str = "") -> None:
+        key = self._make_key(model, prompt, system, extra)
+        with self._lock:
+            if key in self._cache:
+                self._cache.move_to_end(key)
+            self._cache[key] = response
+            if len(self._cache) > self._max_size:
+                self._cache.popitem(last=False)
 
     def clear(self) -> None:
-        self._cache.clear()
+        with self._lock:
+            self._cache.clear()
 
     def __len__(self) -> int:
-        return len(self._cache)
+        with self._lock:
+            return len(self._cache)
 
 
 # =============================================================================
@@ -186,9 +192,11 @@ class LocalLLM:
                 return self._fallback_response(prompt)
 
         use_model = model or self.config.model
+        use_temp = temperature or self.config.temperature
+        cache_extra = f"t={use_temp}|mt={max_tokens}"
 
         # Check cache
-        cached = self._cache.get(use_model, prompt, system or "")
+        cached = self._cache.get(use_model, prompt, system or "", cache_extra)
         if cached is not None:
             return cached
 
@@ -198,7 +206,7 @@ class LocalLLM:
                 "prompt": prompt,
                 "stream": False,
                 "options": {
-                    "temperature": temperature or self.config.temperature,
+                    "temperature": use_temp,
                     "num_predict": max_tokens,
                 }
             }
@@ -214,7 +222,7 @@ class LocalLLM:
 
             if response.status_code == 200:
                 text = response.json().get("response", "")
-                self._cache.put(use_model, prompt, text, system or "")
+                self._cache.put(use_model, prompt, text, system or "", cache_extra)
                 return text
             else:
                 return self._fallback_response(prompt)
@@ -247,10 +255,12 @@ class LocalLLM:
                 return self._fallback_response(user_msg)
 
         use_model = model or self.config.model
+        use_temp = temperature or self.config.temperature
+        cache_extra = f"t={use_temp}"
 
         # Build cache key from messages
         cache_prompt = "|".join(f"{m.get('role', '')}:{m.get('content', '')}" for m in messages)
-        cached = self._cache.get(use_model, cache_prompt)
+        cached = self._cache.get(use_model, cache_prompt, extra=cache_extra)
         if cached is not None:
             return cached
 
@@ -262,7 +272,7 @@ class LocalLLM:
                     "messages": messages,
                     "stream": False,
                     "options": {
-                        "temperature": temperature or self.config.temperature,
+                        "temperature": use_temp,
                     }
                 },
                 timeout=60
@@ -270,7 +280,7 @@ class LocalLLM:
 
             if response.status_code == 200:
                 text = response.json().get("message", {}).get("content", "")
-                self._cache.put(use_model, cache_prompt, text)
+                self._cache.put(use_model, cache_prompt, text, extra=cache_extra)
                 return text
             else:
                 return self._fallback_response("")
@@ -293,6 +303,12 @@ class LocalLLM:
     def close(self) -> None:
         """Close the HTTP session."""
         self._session.close()
+
+    def __enter__(self) -> "LocalLLM":
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.close()
 
 
 class OnnxLLM:
@@ -349,23 +365,26 @@ class OnnxLLM:
                 return self._fallback_response(prompt)
 
         use_prompt = f"{system}\n\n{prompt}" if system else prompt
+        use_temp = temperature or self.config.temperature
+        use_max = max_tokens or self.config.max_tokens
+        cache_extra = f"t={use_temp}|mt={use_max}|tp={self.config.top_p}"
 
         # Check cache
-        cached = self._cache.get("onnx", use_prompt)
+        cached = self._cache.get("onnx", use_prompt, extra=cache_extra)
         if cached is not None:
             return cached
 
         try:
             payload = {
                 "prompt": use_prompt,
-                "max_tokens": max_tokens or self.config.max_tokens,
-                "temperature": temperature or self.config.temperature,
+                "max_tokens": use_max,
+                "temperature": use_temp,
                 "top_p": self.config.top_p,
             }
             resp = self._session.post(f"{self.config.base_url}/generate", json=payload, timeout=60)
             if resp.status_code == 200:
                 text = resp.json().get("output", "")
-                self._cache.put("onnx", use_prompt, text)
+                self._cache.put("onnx", use_prompt, text, extra=cache_extra)
                 return text
             return self._fallback_response(prompt)
         except Exception as exc:
@@ -385,8 +404,10 @@ class OnnxLLM:
                 return self._fallback_response(user_msg)
 
         # Build cache key from messages
+        use_temp = temperature or self.config.temperature
+        cache_extra = f"t={use_temp}|tp={self.config.top_p}"
         cache_prompt = "|".join(f"{m.get('role', '')}:{m.get('content', '')}" for m in messages)
-        cached = self._cache.get("onnx", cache_prompt)
+        cached = self._cache.get("onnx", cache_prompt, extra=cache_extra)
         if cached is not None:
             return cached
 
@@ -394,13 +415,13 @@ class OnnxLLM:
             payload = {
                 "messages": messages,
                 "max_tokens": self.config.max_tokens,
-                "temperature": temperature or self.config.temperature,
+                "temperature": use_temp,
                 "top_p": self.config.top_p,
             }
             resp = self._session.post(f"{self.config.base_url}/chat", json=payload, timeout=60)
             if resp.status_code == 200:
                 text = resp.json().get("output", "")
-                self._cache.put("onnx", cache_prompt, text)
+                self._cache.put("onnx", cache_prompt, text, extra=cache_extra)
                 return text
             return self._fallback_response("")
         except Exception as exc:
@@ -420,6 +441,12 @@ class OnnxLLM:
     def close(self) -> None:
         """Close the HTTP session."""
         self._session.close()
+
+    def __enter__(self) -> "OnnxLLM":
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.close()
 
 
 # =============================================================================

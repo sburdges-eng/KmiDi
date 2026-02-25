@@ -112,6 +112,46 @@ class TestLRUResponseCache:
         assert len(cache) == 0
         assert cache.get("m", "p1") is None
 
+    def test_extra_param_differentiates_entries(self):
+        """Verify different extra params produce different cache entries."""
+        cache = _LRUResponseCache(max_size=10)
+        cache.put("m", "p1", "resp_low_temp", extra="t=0.1")
+        cache.put("m", "p1", "resp_high_temp", extra="t=0.9")
+        assert cache.get("m", "p1", extra="t=0.1") == "resp_low_temp"
+        assert cache.get("m", "p1", extra="t=0.9") == "resp_high_temp"
+        assert len(cache) == 2
+
+    def test_thread_safety(self):
+        """Verify concurrent put/get operations don't corrupt the cache."""
+        import threading
+        cache = _LRUResponseCache(max_size=1000)
+        errors = []
+
+        def writer(start, count):
+            try:
+                for i in range(start, start + count):
+                    cache.put("m", f"p{i}", f"r{i}")
+            except Exception as e:
+                errors.append(e)
+
+        def reader(start, count):
+            try:
+                for i in range(start, start + count):
+                    cache.get("m", f"p{i}")
+            except Exception as e:
+                errors.append(e)
+
+        threads = []
+        for t in range(4):
+            threads.append(threading.Thread(target=writer, args=(t * 100, 100)))
+            threads.append(threading.Thread(target=reader, args=(t * 100, 100)))
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert not errors, f"Thread errors: {errors}"
+
 
 # ============================================================================
 # Test LocalLLM Connection Pooling and Caching
@@ -212,10 +252,47 @@ class TestLocalLLMLatency:
             llm.close()
             mock_close.assert_called_once()
 
+    def test_context_manager(self):
+        """Verify LocalLLM supports the with-statement pattern."""
+        with LocalLLM() as llm:
+            assert isinstance(llm, LocalLLM)
+        # Session should be closed after exiting context
+        assert llm._session is not None  # object still exists
 
-# ============================================================================
-# Test OnnxLLM Connection Pooling and Caching
-# ============================================================================
+    def test_generate_different_temp_not_cached(self):
+        """Verify generate() with different temperature produces separate cache entries."""
+        llm = LocalLLM()
+        llm._available = True
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {"response": "result"}
+
+        with patch.object(llm._session, 'post', return_value=mock_resp) as mock_post:
+            llm.generate("same prompt", temperature=0.1)
+            llm.generate("same prompt", temperature=0.9)
+            # Both should hit the server (different temperatures)
+            assert mock_post.call_count == 2
+
+        llm.close()
+
+    def test_chat_different_temp_not_cached(self):
+        """Verify chat() with different temperature produces separate cache entries."""
+        llm = LocalLLM()
+        llm._available = True
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {"message": {"content": "result"}}
+
+        messages = [{"role": "user", "content": "Hello"}]
+
+        with patch.object(llm._session, 'post', return_value=mock_resp) as mock_post:
+            llm.chat(messages, temperature=0.1)
+            llm.chat(messages, temperature=0.9)
+            assert mock_post.call_count == 2
+
+        llm.close()
 
 
 @pytest.mark.unit
@@ -277,6 +354,45 @@ class TestOnnxLLMLatency:
         with patch.object(llm._session, 'get') as mock_get:
             _ = llm.is_available
             mock_get.assert_not_called()
+
+        llm.close()
+
+    def test_context_manager(self):
+        """Verify OnnxLLM supports the with-statement pattern."""
+        with OnnxLLM() as llm:
+            assert isinstance(llm, OnnxLLM)
+
+    def test_generate_different_temp_not_cached(self):
+        """Verify generate() with different temperature produces separate cache entries."""
+        llm = OnnxLLM()
+        llm._available = True
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {"output": "result"}
+
+        with patch.object(llm._session, 'post', return_value=mock_resp) as mock_post:
+            llm.generate("same prompt", temperature=0.1)
+            llm.generate("same prompt", temperature=0.9)
+            assert mock_post.call_count == 2
+
+        llm.close()
+
+    def test_chat_different_temp_not_cached(self):
+        """Verify chat() with different temperature produces separate cache entries."""
+        llm = OnnxLLM()
+        llm._available = True
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {"output": "result"}
+
+        messages = [{"role": "user", "content": "Hello"}]
+
+        with patch.object(llm._session, 'post', return_value=mock_resp) as mock_post:
+            llm.chat(messages, temperature=0.1)
+            llm.chat(messages, temperature=0.9)
+            assert mock_post.call_count == 2
 
         llm.close()
 
