@@ -40,12 +40,34 @@ DEFAULT_EXCLUDES = [
     "/logs/",
 ]
 
+# Heuristic scoring weights (sum to 1.0)
+# Path similarity weighted highest as directory structure is most reliable signal
+PATH_WEIGHT = 0.45
+NAME_WEIGHT = 0.30
+EXT_WEIGHT = 0.20
+SIZE_WEIGHT = 0.05
+
+# Reconciliation confidence thresholds
+CANDIDATE_MIN_SCORE = 0.60      # Minimum score to consider as potential match
+HIGH_CONFIDENCE_SCORE = 0.92    # High-confidence automatic candidate threshold
+MIN_GAP_TO_SECOND = 0.03        # Minimum separation from second-best to avoid ambiguity
+CONFLICT_MIN_SCORE = 0.75       # Threshold for ambiguous/conflict matches
+
 @dataclass(frozen=True)
 class CanonicalFile:
     repo_rel_path: str
     sha256: str
     size: int
     tracked: bool = True
+
+@dataclass(frozen=True)
+class PrecomputedCanonicalFile:
+    """Precomputed fields for heuristic matching to avoid repeated Path(...) calls."""
+    canonical: CanonicalFile
+    path_obj: Path
+    name: str
+    dir: str
+    ext: str
 
 
 def run(cmd: List[str], cwd: Optional[Path] = None) -> str:
@@ -125,7 +147,37 @@ def heuristic_score(recovered_rel: str, recovered_size: int, cand_rel: str, cand
     name_sim = seq_sim(rec_name, cand_name)
     ext_match = 1.0 if rec_ext == cand_ext and rec_ext != "" else 0.0
     sscore = size_score(recovered_size, cand_size)
-    return 0.45 * path_sim + 0.30 * name_sim + 0.20 * ext_match + 0.05 * sscore
+    return PATH_WEIGHT * path_sim + NAME_WEIGHT * name_sim + EXT_WEIGHT * ext_match + SIZE_WEIGHT * sscore
+
+
+def heuristic_score_precomputed(recovered_rel: str, recovered_size: int, precomp: PrecomputedCanonicalFile) -> float:
+    """Optimized heuristic score using precomputed canonical file fields."""
+    rec_norm = normalize(recovered_rel)
+    rec_name = Path(rec_norm).name
+    rec_dir = str(Path(rec_norm).parent)
+    rec_ext = Path(rec_norm).suffix
+
+    path_sim = seq_sim(rec_dir, precomp.dir)
+    name_sim = seq_sim(rec_name, precomp.name)
+    ext_match = 1.0 if rec_ext == precomp.ext and rec_ext != "" else 0.0
+    sscore = size_score(recovered_size, precomp.canonical.size)
+    return PATH_WEIGHT * path_sim + NAME_WEIGHT * name_sim + EXT_WEIGHT * ext_match + SIZE_WEIGHT * sscore
+
+
+def precompute_canonical(canonical_files: List[CanonicalFile]) -> List[PrecomputedCanonicalFile]:
+    """Pre-index canonical files with computed Path fields to avoid repeated Path(...) calls."""
+    result = []
+    for c in canonical_files:
+        norm = normalize(c.repo_rel_path)
+        p = Path(norm)
+        result.append(PrecomputedCanonicalFile(
+            canonical=c,
+            path_obj=p,
+            name=p.name,
+            dir=str(p.parent),
+            ext=p.suffix,
+        ))
+    return result
 
 
 def main() -> None:
@@ -213,12 +265,10 @@ def main() -> None:
                 source_root = ""
                 rel_hint = p.name
                 for root in roots:
-                    try:
+                    if p.is_relative_to(root):
                         rel_hint = str(p.relative_to(root)).replace("\\", "/")
                         source_root = str(root)
                         break
-                    except Exception:
-                        continue
                 if not source_root:
                     source_root = str(p.parent)
 
@@ -254,9 +304,9 @@ def main() -> None:
                     if not is_in_scope(p):
                         continue
 
-                    try:
+                    if p.is_relative_to(root):
                         rel_hint = str(p.relative_to(root)).replace("\\", "/")
-                    except Exception:
+                    else:
                         rel_hint = p.name
 
                     try:
@@ -307,7 +357,13 @@ def main() -> None:
         ])
         q_writer.writeheader()
 
-        canonical_for_heuristic = sorted(canonical, key=lambda c: c.repo_rel_path)
+        # Pre-index canonical files by extension for efficient lookup
+        # and precompute Path fields to avoid repeated Path(...) calls in matching loop
+        precomputed_canonical = precompute_canonical(canonical)
+        canonical_by_ext: Dict[str, List[PrecomputedCanonicalFile]] = {}
+        for pc in precomputed_canonical:
+            ext = pc.ext
+            canonical_by_ext.setdefault(ext, []).append(pc)
 
         for rec in recovered_records:
             rel_hint = rec["rel_hint"]
@@ -342,30 +398,30 @@ def main() -> None:
                     destination = chosen.repo_rel_path
                     reason = "same_hash_different_path"
                 else:
-                    # Heuristic search bounded by extension match first.
+                    # Heuristic search using pre-indexed extension lookup
                     ext = Path(rel_hint).suffix.lower()
-                    candidates = [c for c in canonical_for_heuristic if Path(c.repo_rel_path).suffix.lower() == ext] if ext else canonical_for_heuristic
-                    scored: List[Tuple[float, CanonicalFile]] = []
-                    for c in candidates:
-                        score = heuristic_score(rel_hint, rec_size, c.repo_rel_path, c.size)
-                        if score >= 0.60:
-                            scored.append((score, c))
-                    scored.sort(key=lambda t: (-t[0], t[1].repo_rel_path))
+                    candidates = canonical_by_ext.get(ext, []) if ext else precomputed_canonical
+                    scored: List[Tuple[float, PrecomputedCanonicalFile]] = []
+                    for pc in candidates:
+                        score = heuristic_score_precomputed(rel_hint, rec_size, pc)
+                        if score >= CANDIDATE_MIN_SCORE:
+                            scored.append((score, pc))
+                    scored.sort(key=lambda t: (-t[0], t[1].canonical.repo_rel_path))
 
                     if scored:
-                        top_score, top = scored[0]
-                        top_candidate = top.repo_rel_path
+                        top_score, top_pc = scored[0]
+                        top_candidate = top_pc.canonical.repo_rel_path
                         if len(scored) > 1:
-                            second_score, second = scored[1]
-                            second_candidate = second.repo_rel_path
+                            second_score, second_pc = scored[1]
+                            second_candidate = second_pc.canonical.repo_rel_path
 
-                        if top_score >= 0.92 and (top_score - second_score) > 0.03:
+                        if top_score >= HIGH_CONFIDENCE_SCORE and (top_score - second_score) > MIN_GAP_TO_SECOND:
                             status = "candidate_match"
                             action = "manual_review_required"
                             confidence = round(top_score, 4)
                             destination = top_candidate
                             reason = "high_confidence_heuristic"
-                        elif top_score >= 0.75:
+                        elif top_score >= CONFLICT_MIN_SCORE:
                             status = "conflict"
                             action = "manual_review_required"
                             confidence = round(top_score, 4)
