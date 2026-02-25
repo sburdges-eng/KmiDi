@@ -253,11 +253,12 @@ class TestLocalLLMLatency:
             mock_close.assert_called_once()
 
     def test_context_manager(self):
-        """Verify LocalLLM supports the with-statement pattern."""
-        with LocalLLM() as llm:
-            assert isinstance(llm, LocalLLM)
-        # Session should be closed after exiting context
-        assert llm._session is not None  # object still exists
+        """Verify LocalLLM supports the with-statement pattern and closes session."""
+        llm = LocalLLM()
+        with patch.object(llm, 'close') as mock_close:
+            with llm:
+                assert isinstance(llm, LocalLLM)
+            mock_close.assert_called_once()
 
     def test_generate_different_temp_not_cached(self):
         """Verify generate() with different temperature produces separate cache entries."""
@@ -358,9 +359,12 @@ class TestOnnxLLMLatency:
         llm.close()
 
     def test_context_manager(self):
-        """Verify OnnxLLM supports the with-statement pattern."""
-        with OnnxLLM() as llm:
-            assert isinstance(llm, OnnxLLM)
+        """Verify OnnxLLM supports the with-statement pattern and closes session."""
+        llm = OnnxLLM()
+        with patch.object(llm, 'close') as mock_close:
+            with llm:
+                assert isinstance(llm, OnnxLLM)
+            mock_close.assert_called_once()
 
     def test_generate_different_temp_not_cached(self):
         """Verify generate() with different temperature produces separate cache entries."""
