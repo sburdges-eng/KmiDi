@@ -2,7 +2,10 @@
 
 **Date:** 2026-02-24
 **Repository:** [sburdges-eng/KmiDi](https://github.com/sburdges-eng/KmiDi)
-**Version:** 1.0.0 (Python package) / 0.1.0 (C++ Kelly core)
+**Version:** 1.0.0 (pyproject.toml) / 0.2.0 (`music_brain.__version__`) / 0.1.0 (C++ Kelly core)
+
+> **Note:** The Python package version in `pyproject.toml` (1.0.0) and the module-level
+> `__version__` in `music_brain/__init__.py` (0.2.0) are currently out of sync.
 
 ---
 
@@ -167,7 +170,7 @@ KmiDi/
 
 **Severity:** 🔴 Critical — blocks full C++ build
 
-The `external/JUCE` directory is expected by CMakeLists.txt but is not present in the repository. JUCE 8 must be cloned separately.
+`external/JUCE` is configured as a **git submodule** (see `.gitmodules`) but is typically empty/uninitialized after a fresh clone. CMakeLists.txt requires a full JUCE checkout with a root `CMakeLists.txt`; without it the configure step fatals.
 
 **Impact:** `GrooveEngine.cpp` and all JUCE-dependent C++ code fails to compile.
 
@@ -177,11 +180,17 @@ add_subdirectory given source "external/JUCE" which is not an existing directory
 fatal error: juce_dsp/juce_dsp.h: No such file or directory
 ```
 
-**Workaround:**
+**Fix — initialize the submodule:**
 ```bash
-git clone --depth 1 --branch 8.0.0 \
-  https://github.com/juce-framework/JUCE.git external/JUCE
+git submodule update --init external/JUCE
 ```
+
+> Alternatively, if the submodule reference is broken or you need a specific tag:
+> ```bash
+> git clone --depth 1 --branch 8.0.0 \
+>   https://github.com/juce-framework/JUCE.git external/JUCE
+> ```
+> Note: cloning directly into a submodule path will leave the repo in a dirty submodule state.
 
 ---
 
@@ -577,9 +586,8 @@ python -m music_brain.api      # Start API at 127.0.0.1:8000
 ### C++ (penta_core)
 
 ```bash
-# Prerequisite: clone JUCE
-git clone --depth 1 --branch 8.0.0 \
-  https://github.com/juce-framework/JUCE.git external/JUCE
+# Prerequisite: initialize the JUCE submodule
+git submodule update --init external/JUCE
 
 # Optional: C++ tests require Catch2 in external/Catch2
 # If you want to build and run tests, first fetch Catch2, e.g.:
