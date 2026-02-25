@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """
 Neural Backend - DiffSinger/ONNX Voice Integration for Production Quality
 
@@ -431,4 +429,4 @@ def check_neural_availability() -> Dict[str, bool]:
         "diffsinger": DIFFSINGER_AVAILABLE,
         "model_files": Path(DEFAULT_MODEL_DIR).exists(),
     }
->>>>>>> Incoming (Background Agent changes)
+

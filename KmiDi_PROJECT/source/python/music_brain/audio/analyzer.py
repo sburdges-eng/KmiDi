@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """
 AudioAnalyzer - Unified audio analysis interface.
 
@@ -394,4 +392,4 @@ def analyze_audio(
         include_chords=include_chords,
         include_frequency_bands=include_frequency_bands,
     )
->>>>>>> Incoming (Background Agent changes)
+

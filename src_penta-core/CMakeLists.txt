@@ -17,31 +17,29 @@ if(APPLE)
     # The main CMakeLists.txt sets MAC_OS_X_VERSION_MIN_REQUIRED which helps
 endif()
 
-# Readerwriterqueue: header-only library
-# Must explicitly create INTERFACE target and ensure SOURCE_DIR is populated
-include(FetchContent)
-
-# Always get properties in case it was already fetched by parent CMakeLists
-FetchContent_GetProperties(readerwriterqueue)
-
-if(NOT readerwriterqueue_POPULATED)
-    FetchContent_Declare(
-        readerwriterqueue
-        GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue.git
-        GIT_TAG v1.0.6
-        GIT_SHALLOW TRUE
-    )
-    FetchContent_MakeAvailable(readerwriterqueue)
-endif()
-
-# Explicitly populate SOURCE_DIR for header-only library without CMakeLists.txt
-FetchContent_GetProperties(readerwriterqueue)
-
+# ReaderWriterQueue: header-only dependency (offline-only, no network fetch).
 if(NOT TARGET readerwriterqueue)
+    set(READERWRITERQUEUE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/readerwriterqueue")
+    if(NOT EXISTS "${READERWRITERQUEUE_INCLUDE_DIR}/readerwriterqueue.h"
+       AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../KmiDi_FINAL/engine/include/readerwriterqueue.h")
+        set(READERWRITERQUEUE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../KmiDi_FINAL/engine/include")
+    endif()
+
+    if(NOT EXISTS "${READERWRITERQUEUE_INCLUDE_DIR}/readerwriterqueue.h")
+        message(FATAL_ERROR
+            "readerwriterqueue dependency missing. "
+            "Provide local header at third_party/readerwriterqueue/readerwriterqueue.h")
+    endif()
+
+    set(readerwriterqueue_SOURCE_DIR "${READERWRITERQUEUE_INCLUDE_DIR}")
     add_library(readerwriterqueue INTERFACE)
     target_include_directories(readerwriterqueue INTERFACE
-        ${readerwriterqueue_SOURCE_DIR}
+        ${READERWRITERQUEUE_INCLUDE_DIR}
     )
+endif()
+
+if(NOT DEFINED READERWRITERQUEUE_INCLUDE_DIR)
+    get_target_property(READERWRITERQUEUE_INCLUDE_DIR readerwriterqueue INTERFACE_INCLUDE_DIRECTORIES)
 endif()
 
 # ============================================================================
@@ -66,7 +64,7 @@ add_library(penta_core STATIC ${PENTA_CORE_SOURCES})
 target_include_directories(penta_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${readerwriterqueue_SOURCE_DIR}
+    ${READERWRITERQUEUE_INCLUDE_DIR}
 )
 
 # Link libraries
@@ -119,27 +117,39 @@ option(BUILD_PENTA_TESTS "Build penta-core tests" ON)
 if(BUILD_PENTA_TESTS)
     enable_testing()
 
-    # Fetch GoogleTest
-    include(FetchContent)
-    FetchContent_Declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG v1.14.0
-        GIT_SHALLOW TRUE
-    )
-    FetchContent_MakeAvailable(googletest)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../external/googletest/CMakeLists.txt")
+        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../external/googletest"
+                         "${CMAKE_CURRENT_BINARY_DIR}/external-googletest"
+                         EXCLUDE_FROM_ALL)
+    endif()
+
+    if(TARGET GTest::gtest AND TARGET GTest::gtest_main)
+        set(_GTEST_LIB GTest::gtest)
+        set(_GTEST_MAIN_LIB GTest::gtest_main)
+    elseif(TARGET gtest AND TARGET gtest_main)
+        set(_GTEST_LIB gtest)
+        set(_GTEST_MAIN_LIB gtest_main)
+    else()
+        message(FATAL_ERROR
+            "BUILD_PENTA_TESTS=ON requires local googletest. "
+            "Provide external/googletest or pre-install GTest.")
+    endif()
 
     # Create test executable
     file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/../tests/penta_core/*.cpp
     )
+    if("${TEST_SOURCES}" STREQUAL "")
+        message(FATAL_ERROR
+            "BUILD_PENTA_TESTS=ON but no test sources were found under tests/penta_core.")
+    endif()
 
     add_executable(penta_tests ${TEST_SOURCES})
 
     target_link_libraries(penta_tests PRIVATE
         penta_core
-        gtest
-        gtest_main
+        ${_GTEST_LIB}
+        ${_GTEST_MAIN_LIB}
     )
 
     include(GoogleTest)

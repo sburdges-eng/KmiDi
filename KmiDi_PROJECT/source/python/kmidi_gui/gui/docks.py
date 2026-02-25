@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """Dock widgets for KmiDi GUI.
 
 Dock widgets for:
@@ -174,4 +172,4 @@ class LogsDock(QDockWidget):
     def clear(self):
         """Clear all logs."""
         self.log_text.clear()
->>>>>>> Incoming (Background Agent changes)
+

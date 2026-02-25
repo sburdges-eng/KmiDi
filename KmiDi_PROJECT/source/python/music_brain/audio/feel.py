@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """
 Audio Feel Analysis - Extract feel and groove characteristics from audio.
 
@@ -303,4 +301,4 @@ def compare_feel(audio_path1: str, audio_path2: str) -> Dict:
         "file1": features1.to_dict(),
         "file2": features2.to_dict(),
     }
->>>>>>> Incoming (Background Agent changes)
+

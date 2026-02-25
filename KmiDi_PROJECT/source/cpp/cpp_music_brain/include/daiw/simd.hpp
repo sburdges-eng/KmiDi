@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #pragma once
 
 /**
@@ -411,4 +409,4 @@ inline void apply_pan(float* left, float* right, size_t n, float pan) {
 }
 
 } // namespace daiw::simd
->>>>>>> Incoming (Background Agent changes)
+

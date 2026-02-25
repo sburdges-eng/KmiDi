@@ -1,5 +1,0 @@
-filer fuckery|  0B|1|0
-.mypy_cache|  0B|1|0
-__pycache__|  0B|1|0
-.pytest_cache|  0B|1|0
-.cache|  0B|1|0

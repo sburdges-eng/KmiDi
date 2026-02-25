@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """Action controllers - bridge GUI events to core logic.
 
 This layer:
@@ -503,4 +501,4 @@ class ActionController(QObject):
         if logs_dock:
             logs_dock.add_log(message, level)
 
->>>>>>> Incoming (Background Agent changes)
+

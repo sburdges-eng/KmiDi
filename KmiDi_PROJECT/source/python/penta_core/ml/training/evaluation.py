@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """
 Evaluation and Validation Algorithms for KmiDi ML.
 
@@ -887,4 +885,4 @@ class ModelValidator:
 
         return results
 
->>>>>>> Incoming (Background Agent changes)
+

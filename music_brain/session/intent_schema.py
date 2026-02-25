@@ -16,6 +16,14 @@ import json
 from pathlib import Path
 
 
+def _coerce_text(value, default: str = "") -> str:
+    if value is None:
+        return default
+    if isinstance(value, str):
+        return value
+    return str(value)
+
+
 # =================================================================
 # ENUMS: Rule Breaking Categories
 # =================================================================
@@ -344,11 +352,11 @@ class CompleteSongIntent:
         **kwargs,
     ):
         self.song_root = SongRoot(
-            core_event=core_event,
-            core_resistance=core_resistance,
-            core_longing=core_longing,
-            core_stakes=core_stakes,
-            core_transformation=core_transformation,
+            core_event=_coerce_text(core_event),
+            core_resistance=_coerce_text(core_resistance),
+            core_longing=_coerce_text(core_longing),
+            core_stakes=_coerce_text(core_stakes),
+            core_transformation=_coerce_text(core_transformation),
         )
         # Validate and clamp mood_secondary_tension to [0.0, 1.0]
         try:
@@ -376,27 +384,27 @@ class CompleteSongIntent:
                 vuln_str = "Medium"
 
         self.song_intent = SongIntent(
-            mood_primary=mood_primary,
+            mood_primary=_coerce_text(mood_primary),
             mood_secondary_tension=tension_val,
-            imagery_texture=imagery_texture,
+            imagery_texture=_coerce_text(imagery_texture),
             vulnerability_scale=vuln_str,
-            narrative_arc=narrative_arc or "",
+            narrative_arc=_coerce_text(narrative_arc),
         )
         self.technical_constraints = TechnicalConstraints(
-            technical_genre=technical_genre,
+            technical_genre=_coerce_text(technical_genre),
             technical_tempo_range=technical_tempo_range,
-            technical_key=technical_key,
-            technical_mode=technical_mode,
-            technical_groove_feel=technical_groove_feel,
-            technical_rule_to_break=technical_rule_to_break,
-            rule_breaking_justification=rule_breaking_justification,
+            technical_key=_coerce_text(technical_key),
+            technical_mode=_coerce_text(technical_mode),
+            technical_groove_feel=_coerce_text(technical_groove_feel),
+            technical_rule_to_break=_coerce_text(technical_rule_to_break),
+            rule_breaking_justification=_coerce_text(rule_breaking_justification),
         )
         self.system_directive = SystemDirective(
-            output_target=output_target,
-            output_feedback_loop=output_feedback_loop,
+            output_target=_coerce_text(output_target),
+            output_feedback_loop=_coerce_text(output_feedback_loop),
         )
-        self.title = title
-        self.created = created
+        self.title = _coerce_text(title)
+        self.created = _coerce_text(created)
     
     def to_dict(self) -> Dict:
         """Convert to dictionary for serialization."""
@@ -436,17 +444,17 @@ class CompleteSongIntent:
     def from_dict(cls, data: Dict) -> "CompleteSongIntent":
         """Create from dictionary."""
         intent = cls()
-        intent.title = data.get("title", "")
-        intent.created = data.get("created", "")
+        intent.title = _coerce_text(data.get("title", ""))
+        intent.created = _coerce_text(data.get("created", ""))
         
         if "song_root" in data:
             root = data.get("song_root", {})
             intent.song_root = SongRoot(
-                core_event=root.get("core_event", ""),
-                core_resistance=root.get("core_resistance", ""),
-                core_longing=root.get("core_longing", ""),
-                core_stakes=root.get("core_stakes", ""),
-                core_transformation=root.get("core_transformation", ""),
+                core_event=_coerce_text(root.get("core_event", "")),
+                core_resistance=_coerce_text(root.get("core_resistance", "")),
+                core_longing=_coerce_text(root.get("core_longing", "")),
+                core_stakes=_coerce_text(root.get("core_stakes", "")),
+                core_transformation=_coerce_text(root.get("core_transformation", "")),
             )
         
         if "song_intent" in data:
@@ -472,31 +480,31 @@ class CompleteSongIntent:
                 vuln = "Medium"
             
             intent.song_intent = SongIntent(
-                mood_primary=si.get("mood_primary", ""),
+                mood_primary=_coerce_text(si.get("mood_primary", "")),
                 mood_secondary_tension=tension_val,
-                imagery_texture=si.get("imagery_texture", ""),
+                imagery_texture=_coerce_text(si.get("imagery_texture", "")),
                 vulnerability_scale=vuln,
-                narrative_arc=si.get("narrative_arc", ""),
+                narrative_arc=_coerce_text(si.get("narrative_arc", "")),
             )
         
         if "technical_constraints" in data:
             tc = data.get("technical_constraints", {})
             tempo = tc.get("technical_tempo_range", [80, 120])
             intent.technical_constraints = TechnicalConstraints(
-                technical_genre=tc.get("technical_genre", ""),
+                technical_genre=_coerce_text(tc.get("technical_genre", "")),
                 technical_tempo_range=tuple(tempo) if isinstance(tempo, list) else tempo,
-                technical_key=tc.get("technical_key", ""),
-                technical_mode=tc.get("technical_mode", ""),
-                technical_groove_feel=tc.get("technical_groove_feel", ""),
-                technical_rule_to_break=tc.get("technical_rule_to_break", ""),
-                rule_breaking_justification=tc.get("rule_breaking_justification", ""),
+                technical_key=_coerce_text(tc.get("technical_key", "")),
+                technical_mode=_coerce_text(tc.get("technical_mode", "")),
+                technical_groove_feel=_coerce_text(tc.get("technical_groove_feel", "")),
+                technical_rule_to_break=_coerce_text(tc.get("technical_rule_to_break", "")),
+                rule_breaking_justification=_coerce_text(tc.get("rule_breaking_justification", "")),
             )
         
         if "system_directive" in data:
             sd = data.get("system_directive", {})
             intent.system_directive = SystemDirective(
-                output_target=sd.get("output_target", ""),
-                output_feedback_loop=sd.get("output_feedback_loop", ""),
+                output_target=_coerce_text(sd.get("output_target", "")),
+                output_feedback_loop=_coerce_text(sd.get("output_feedback_loop", "")),
             )
         
         return intent

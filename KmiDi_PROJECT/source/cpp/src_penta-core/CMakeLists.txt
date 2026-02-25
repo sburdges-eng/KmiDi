@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 cmake_minimum_required(VERSION 3.22)
 project(penta_core VERSION 1.0.0 LANGUAGES CXX)
 
@@ -147,4 +145,4 @@ if(BUILD_PENTA_TESTS)
     include(GoogleTest)
     gtest_discover_tests(penta_tests)
 endif()
->>>>>>> Incoming (Background Agent changes)
+

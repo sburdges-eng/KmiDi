@@ -1,0 +1,45 @@
+# Baseline category counts for CI gate.
+# Format: <Category>=<Count>
+# Updated from artifacts/debug_baseline/bug_taxonomy_report.md on 2026-02-22.
+
+Logical bugs=0
+Syntax bugs=0
+Runtime errors=0
+Semantic bugs=0
+Concurrency bugs=0
+Race conditions=0
+Deadlocks=0
+Off-by-one errors=0
+Performance bugs=0
+Memory leaks=0
+Null pointer errors=0
+Type errors=0
+Overflow errors=0
+Underflow errors=0
+Floating point precision errors=0
+Security vulnerabilities=0
+Injection flaws=0
+Authentication bugs=0
+Authorization bugs=0
+Integration bugs=0
+API contract violations=0
+Data corruption bugs=0
+Encoding/decoding bugs=0
+State machine bugs=0
+Initialization bugs=0
+Configuration bugs=4
+Dependency bugs=2
+Build/compile errors=0
+Regression bugs=0
+Edge case bugs=0
+Boundary condition bugs=0
+Resource exhaustion bugs=0
+Timeout errors=0
+Exception handling bugs=0
+Infinite loop bugs=0
+Recursion overflow bugs=0
+UI rendering bugs=0
+Event handling bugs=0
+Caching bugs=0
+Serialization bugs=0
+Deserialization bugs=0

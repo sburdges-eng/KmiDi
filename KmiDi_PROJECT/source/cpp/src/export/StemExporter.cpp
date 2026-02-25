@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 /**
  * @file StemExporter.cpp
  * @brief Stem exporter implementation
@@ -327,4 +325,4 @@ std::string StemExporter::getFileExtension(audio::AudioFormat format) {
 
 } // namespace export_ns
 } // namespace daiw
->>>>>>> Incoming (Background Agent changes)
+

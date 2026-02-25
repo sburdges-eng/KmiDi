@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #include "ml/ONNXInference.h"
 #include <juce_core/juce_core.h>
 #include <cstring>
@@ -323,4 +321,4 @@ bool ONNXInference::validateOutputSize(size_t size) {
 
 } // namespace ml
 } // namespace midikompanion
->>>>>>> Incoming (Background Agent changes)
+

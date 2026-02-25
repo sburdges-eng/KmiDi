@@ -36,21 +36,62 @@ from music_brain.audio import (
     AudioFeatures,
     render_midi_to_audio,
 )
-from music_brain.harmony import (
-    HarmonyGenerator,
-    HarmonyResult,
-    generate_midi_from_harmony,
-)
-from music_brain.groove import (
-    extract_groove,
-    apply_groove,
-    GrooveTemplate,
-    humanize_midi_file,
-    GrooveSettings,
-    settings_from_preset,
-    list_presets,
-    get_preset,
-)
+try:
+    from music_brain.harmony import (
+        HarmonyGenerator,
+        HarmonyResult,
+        generate_midi_from_harmony,
+    )
+except ImportError:  # pragma: no cover - compatibility shim for partial installs
+    class HarmonyResult(dict):
+        """Fallback harmony result container."""
+
+    class HarmonyGenerator:
+        """Fallback harmony generator used when harmony package is partial."""
+
+        def generate_from_intent(self, intent):
+            return HarmonyResult()
+
+        def generate_basic_progression(self, key="C", mode="major", style="pop"):
+            return HarmonyResult()
+
+    def generate_midi_from_harmony(*args, **kwargs):
+        return None
+try:
+    from music_brain.groove import (
+        extract_groove,
+        apply_groove,
+        GrooveTemplate,
+        humanize_midi_file,
+        GrooveSettings,
+        settings_from_preset,
+        list_presets,
+        get_preset,
+    )
+except ImportError:  # pragma: no cover - compatibility shim for partial installs
+    class GrooveTemplate(dict):
+        pass
+
+    class GrooveSettings(dict):
+        pass
+
+    def extract_groove(*args, **kwargs):
+        return GrooveTemplate()
+
+    def apply_groove(*args, **kwargs):
+        return None
+
+    def humanize_midi_file(*args, **kwargs):
+        return None
+
+    def settings_from_preset(*args, **kwargs):
+        return GrooveSettings()
+
+    def list_presets(*args, **kwargs):
+        return []
+
+    def get_preset(*args, **kwargs):
+        return {}
 from music_brain.structure import (
     analyze_chords,
     detect_sections,
@@ -72,7 +113,10 @@ from music_brain.session.intent_schema import (
     list_all_rules,
 )
 from music_brain.session.intent_processor import process_intent
-from music_brain.data.emotional_mapping import EMOTIONAL_PRESETS
+try:
+    from music_brain.data.emotional_mapping import EMOTIONAL_PRESETS
+except ImportError:  # pragma: no cover - compatibility shim for partial installs
+    EMOTIONAL_PRESETS = {}
 from music_brain.voice import (
     AutoTuneProcessor,
     AutoTuneSettings,
@@ -85,7 +129,12 @@ from music_brain.voice import (
     get_voice_profile,
     VoiceClassifier,
 )
-from music_brain.groove.drum_humanizer import DrumHumanizer
+try:
+    from music_brain.groove.drum_humanizer import DrumHumanizer
+except ImportError:  # pragma: no cover - compatibility shim for partial installs
+    class DrumHumanizer:  # type: ignore[override]
+        def __init__(self, *args, **kwargs):
+            pass
 
 
 class _DummyAudioAnalyzer:

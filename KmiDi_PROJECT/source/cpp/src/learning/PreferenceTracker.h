@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #pragma once
 /*
  * PreferenceTracker.h - User Preference Learning System
@@ -155,4 +153,4 @@ private:
 };
 
 } // namespace kelly
->>>>>>> Incoming (Background Agent changes)
+

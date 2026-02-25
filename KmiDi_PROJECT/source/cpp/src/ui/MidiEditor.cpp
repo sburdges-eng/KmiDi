@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #include "MidiEditor.h"
 #include "../ui/KellyLookAndFeel.h"
 #include <algorithm>
@@ -723,4 +721,4 @@ MidiEditor::getNotesInBox(const juce::Rectangle<int> &box) const {
 }
 
 } // namespace kelly
->>>>>>> Incoming (Background Agent changes)
+

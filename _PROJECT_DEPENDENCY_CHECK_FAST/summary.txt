@@ -1,7 +1,0 @@
-==== PROJECT DEPENDENCY CHECK SUMMARY ====
-
-Projects checked: 7
-References found: 2
-Symlinks found: 0
-
-⚠️  CONCLUSION: Some references found - review before cleaning

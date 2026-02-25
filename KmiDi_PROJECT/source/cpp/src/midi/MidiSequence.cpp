@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 /**
  * @file MidiSequence.cpp
  * @brief MIDI sequence implementation
@@ -85,4 +83,4 @@ MidiSequence MidiSequence::fromNoteEvents(const std::vector<NoteEvent>& events, 
 
 } // namespace midi
 } // namespace daiw
->>>>>>> Incoming (Background Agent changes)
+

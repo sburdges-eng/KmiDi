@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 /**
  * DAiW MIDI Processing Module
  *
@@ -713,4 +711,4 @@ private:
 
 } // namespace midi
 } // namespace daiw
->>>>>>> Incoming (Background Agent changes)
+

@@ -24,3 +24,40 @@ jobs:
         pip install pytest pytest-cov
         pip install -e .
     - run: pytest tests/unit/ -v --cov=music_brain
+
+  bug-taxonomy-gate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - uses: dtolnay/rust-toolchain@stable
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build build-essential qt6-base-dev
+    - name: Install Python dependencies
+      run: |
+        pip install numpy scipy torch librosa pyyaml
+        pip install pytest pytest-cov
+        pip install -e .
+    - name: Run baseline diagnostics
+      run: |
+        scripts/diagnostics/run_bug_baseline.sh artifacts/debug_baseline_ci
+    - name: Enforce bug taxonomy regression gate
+      run: |
+        python3 scripts/diagnostics/ci_findings_gate.py \
+          --baseline scripts/diagnostics/bug_taxonomy_baseline.txt \
+          --current-report artifacts/debug_baseline_ci/bug_taxonomy_report.md \
+          --min-severity medium
+    - name: Upload taxonomy report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: bug-taxonomy-report
+        path: artifacts/debug_baseline_ci/bug_taxonomy_report.md

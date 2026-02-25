@@ -3,11 +3,10 @@ Audio package exports and compatibility shims.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Iterable, Tuple
 import numpy as np
 
 from .render import render_midi_to_audio
-from .voice_synthesis import synthesize_guide_vocal
 from .instrument_synth import synthesize_instruments_from_midi
 
 
@@ -52,6 +51,25 @@ class AudioAnalyzer:
 
 def analyze_feel(samples: np.ndarray, sample_rate: int) -> Dict[str, Any]:
     return {"energy": 0.5, "warmth": 0.5}
+
+
+def synthesize_guide_vocal(
+    lyrics: str,
+    melody_midi: Iterable[int],
+    output_path: str,
+    profile: str = "guide_vulnerable",
+    tempo_bpm: int = 82,
+) -> str:
+    # Lazy import avoids package init cycles between audio -> voice -> audio.
+    from .voice_synthesis import synthesize_guide_vocal as _synthesize_guide_vocal
+
+    return _synthesize_guide_vocal(
+        lyrics=lyrics,
+        melody_midi=melody_midi,
+        output_path=output_path,
+        profile=profile,
+        tempo_bpm=tempo_bpm,
+    )
 
 
 __all__ = [

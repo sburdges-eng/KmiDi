@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #include "SuggestionOverlay.h"
 #include <algorithm>
 
@@ -224,4 +222,4 @@ void SuggestionOverlay::expandButtonClicked(const std::string& suggestionId) {
 }
 
 } // namespace kelly
->>>>>>> Incoming (Background Agent changes)
+

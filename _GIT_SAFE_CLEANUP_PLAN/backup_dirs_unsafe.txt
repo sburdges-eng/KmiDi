@@ -1,5 +1,0 @@
-KmiDi|35/4205 files tracked in git
-kelly-project|1/3 files tracked in git
-ARCHIVE|1/1 files tracked in git
-CONSOLIDATED_CODE|1/1 files tracked in git
-midikompanion-claude-upload|1/1 files tracked in git

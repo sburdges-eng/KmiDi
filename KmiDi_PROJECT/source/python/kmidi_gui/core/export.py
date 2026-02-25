@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """Export pipeline for MIDI, Intent Schema, and ML annotations.
 
 Export is asynchronous and non-blocking. Uses QThread for background operations.
@@ -203,4 +201,4 @@ class ExportManager(QObject):
             message: Progress message
         """
         self.export_progress.emit(message)
->>>>>>> Incoming (Background Agent changes)
+

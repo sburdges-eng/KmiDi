@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """
 Model Registry - Unified model discovery and management.
 
@@ -449,4 +447,4 @@ def load_registry_manifest(
         Number of models registered.
     """
     return get_registry().load_registry_manifest(path, validate=validate, schema_path=schema_path)
->>>>>>> Incoming (Background Agent changes)
+

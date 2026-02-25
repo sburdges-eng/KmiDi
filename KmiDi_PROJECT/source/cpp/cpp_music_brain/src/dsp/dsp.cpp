@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 /**
  * DAiW DSP Module Implementation
  *
@@ -318,4 +316,4 @@ private:
 
 } // namespace dsp
 } // namespace daiw
->>>>>>> Incoming (Background Agent changes)
+

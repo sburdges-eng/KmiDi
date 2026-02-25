@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #include "TooltipComponent.h"
 #include "KellyLookAndFeel.h"
 
@@ -84,4 +82,4 @@ void TooltipComponent::resized() {
 }
 
 } // namespace kelly
->>>>>>> Incoming (Background Agent changes)
+

@@ -1,6 +1,0 @@
-KmiDi
-kelly-project
-ARCHIVE
-CONSOLIDATED_CODE
-Stashed_Changes
-midikompanion-claude-upload

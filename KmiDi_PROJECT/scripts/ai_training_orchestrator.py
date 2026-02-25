@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #!/usr/bin/env python3
 """
 AI-Powered Training Orchestrator
@@ -804,4 +802,4 @@ Examples:
 
 if __name__ == "__main__":
     main()
->>>>>>> Incoming (Background Agent changes)
+

@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 /**
  * @file memory.hpp
  * @brief Real-time safe memory management for DAiW
@@ -217,4 +215,4 @@ private:
 };
 
 }  // namespace daiw
->>>>>>> Incoming (Background Agent changes)
+

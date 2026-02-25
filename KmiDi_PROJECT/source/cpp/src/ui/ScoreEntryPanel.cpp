@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #include "ui/ScoreEntryPanel.h"
 #include <juce_graphics/juce_graphics.h>
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -761,4 +759,4 @@ void ScoreEntryPanel::onMetronomeToggled() {
 }
 
 } // namespace midikompanion
->>>>>>> Incoming (Background Agent changes)
+

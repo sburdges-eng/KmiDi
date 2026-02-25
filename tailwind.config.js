@@ -3,6 +3,7 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
+    "./KmiDi_FINAL/engine/src/**/*.{js,ts,jsx,tsx}"
   ],
   theme: {
     extend: {

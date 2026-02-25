@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #include "AIGenerationDialog.h"
 #include "KellyLookAndFeel.h"
 
@@ -284,4 +282,4 @@ void AIGenerationDialog::resized() {
 }
 
 } // namespace kelly
->>>>>>> Incoming (Background Agent changes)
+

@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """
 Song Intent Schema - Structured deep interrogation for songwriting.
 
@@ -920,4 +918,4 @@ def list_all_rules() -> Dict[str, List[str]]:
         "Arrangement": [e.value for e in ArrangementRuleBreak],
         "Production": [e.value for e in ProductionRuleBreak],
     }
->>>>>>> Incoming (Background Agent changes)
+

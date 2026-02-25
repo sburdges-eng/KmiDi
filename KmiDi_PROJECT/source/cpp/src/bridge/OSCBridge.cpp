@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #include "bridge/OSCBridge.h"
 #include <juce_osc/juce_osc.h>
 #include <juce_core/juce_core.h>
@@ -518,4 +516,4 @@ void OSCBridge::cleanupTimedOutRequests()
 
 } // namespace bridge
 } // namespace kelly
->>>>>>> Incoming (Background Agent changes)
+

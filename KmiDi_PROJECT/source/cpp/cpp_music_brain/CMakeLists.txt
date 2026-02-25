@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 cmake_minimum_required(VERSION 3.20)
 
 project(DAiW
@@ -319,4 +317,4 @@ endif()
 #     NAMESPACE DAiW::
 #     DESTINATION lib/cmake/DAiW
 # )
->>>>>>> Incoming (Background Agent changes)
+

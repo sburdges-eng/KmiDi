@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #include "KellyMLModel.h"
 
 #ifdef ENABLE_RTNEURAL
@@ -91,4 +89,4 @@ bool KellyMLModel::process(const float* input, float* output) noexcept {
 }
 
 } // namespace kelly::ml
->>>>>>> Incoming (Background Agent changes)
+
