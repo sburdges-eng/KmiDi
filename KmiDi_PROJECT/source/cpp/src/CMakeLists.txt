@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 # Core C++ library
 cmake_minimum_required(VERSION 3.20)
 project(KmiDiCore LANGUAGES CXX)
@@ -93,4 +91,3 @@ endif()
 if(UNIX)
     target_link_libraries(penta_core PUBLIC pthread)
 endif()
->>>>>>> Incoming (Background Agent changes)

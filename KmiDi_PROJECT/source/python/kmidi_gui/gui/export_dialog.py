@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """Export dialog for MIDI, Intent Schema, and ML annotations.
 
 Uses native macOS save dialog. Non-blocking with progress indicator.
@@ -217,4 +215,3 @@ class ExportDialog(QDialog):
                 )
                 QMessageBox.warning(self, "Export Partially Failed", final_message)
                 self.export_complete.emit(False, final_message)
->>>>>>> Incoming (Background Agent changes)

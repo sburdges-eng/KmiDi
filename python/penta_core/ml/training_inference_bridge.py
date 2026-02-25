@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """
 Training-Inference Bridge - Seamless transition from training to inference.
 
@@ -504,4 +502,3 @@ def get_training_bridge() -> TrainingInferenceBridge:
             if _training_bridge is None:
                 _training_bridge = TrainingInferenceBridge()
     return _training_bridge
->>>>>>> Incoming (Background Agent changes)

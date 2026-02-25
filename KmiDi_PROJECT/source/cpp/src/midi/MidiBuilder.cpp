@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #include "midi/MidiBuilder.h"
 #include <algorithm>
 #include <cmath>
@@ -369,4 +367,3 @@ int MidiBuilder::clampChannel(int channel) const {
 }
 
 } // namespace kelly
->>>>>>> Incoming (Background Agent changes)

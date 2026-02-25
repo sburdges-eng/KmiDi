@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """
 Monitoring API - REST endpoints for metrics, status, and historical data.
 
@@ -324,4 +322,3 @@ def get_monitoring_api() -> MonitoringAPI:
             if _monitoring_api is None:
                 _monitoring_api = MonitoringAPI()
     return _monitoring_api
->>>>>>> Incoming (Background Agent changes)

@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """
 Health Check System - Monitor system health and model availability.
 
@@ -414,4 +412,3 @@ def get_health_monitor() -> HealthMonitor:
             if _health_monitor is None:
                 _health_monitor = HealthMonitor()
     return _health_monitor
->>>>>>> Incoming (Background Agent changes)

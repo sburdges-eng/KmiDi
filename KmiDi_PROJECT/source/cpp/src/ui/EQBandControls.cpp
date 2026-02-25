@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #include "ui/EQBandControls.h"
 #include "plugin/PluginProcessor.h"
 
@@ -213,4 +211,3 @@ juce::String EQBandControls::getBandName() const {
 }
 
 } // namespace kelly
->>>>>>> Incoming (Background Agent changes)

@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #include "LyricDisplay.h"
 #include "../voice/LyriSync.h"
 #include <cmath>
@@ -201,4 +199,3 @@ int LyricDisplay::getCurrentSyllableIndex(const LyricLine& line) const {
 }
 
 } // namespace kelly
->>>>>>> Incoming (Background Agent changes)

@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 /**
  * Piano Roll Preview Implementation
  */
@@ -229,4 +227,3 @@ void PianoRollPreview::resized() {
 }
 
 } // namespace kelly
->>>>>>> Incoming (Background Agent changes)
