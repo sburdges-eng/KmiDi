@@ -63,16 +63,16 @@ void KellyLookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Button& but
                                             bool shouldDrawButtonAsDown) {
     auto bounds = button.getLocalBounds().toFloat().reduced(1.0f);
     auto cornerSize = 8.0f;
-    
+
     juce::Colour bgColor = backgroundColour;
-    
+
     if (shouldDrawButtonAsDown) {
         bgColor = primaryColor.darker(0.2f);
     }
     else if (shouldDrawButtonAsHighlighted) {
         bgColor = primaryColor.brighter(0.1f);
     }
-    
+
     // Glass-style button with gradient
     if (button.getToggleState() || shouldDrawButtonAsDown) {
         juce::ColourGradient gradient(primaryColor, bounds.getX(), bounds.getY(),
@@ -82,9 +82,9 @@ void KellyLookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Button& but
     else {
         g.setColour(surfaceColor.withAlpha(0.7f));  // Glass effect
     }
-    
+
     g.fillRoundedRectangle(bounds, cornerSize);
-    
+
     // Glass border
     if (shouldDrawButtonAsHighlighted || button.hasKeyboardFocus(false)) {
         g.setColour(primaryColor.withAlpha(0.5f));
@@ -94,7 +94,7 @@ void KellyLookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Button& but
         g.setColour(glassBorder);
         g.drawRoundedRectangle(bounds, cornerSize, 1.0f);
     }
-    
+
     // Top highlight for glass effect
     juce::ColourGradient highlightGrad(glassHighlight, bounds.getX(), bounds.getY(),
                                         juce::Colours::transparentBlack, bounds.getX(), bounds.getY() + 20,
@@ -108,12 +108,12 @@ void KellyLookAndFeel::drawButtonText(juce::Graphics& g, juce::TextButton& butto
                                       bool shouldDrawButtonAsDown) {
     auto bounds = button.getLocalBounds().toFloat();
     auto font = getTextButtonFont(button, button.getHeight());
-    
+
     g.setFont(font);
     g.setColour(button.findColour(button.getToggleState() ? juce::TextButton::textColourOnId
                                                           : juce::TextButton::textColourOffId)
                 .withMultipliedAlpha(button.isEnabled() ? 1.0f : 0.5f));
-    
+
     g.drawText(button.getButtonText(), bounds, juce::Justification::centred, false);
 }
 
@@ -123,14 +123,14 @@ void KellyLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int wid
     if (style == juce::Slider::LinearHorizontal || style == juce::Slider::LinearVertical) {
         auto trackWidth = 6.0f;
         auto isHorizontal = style == juce::Slider::LinearHorizontal || style == juce::Slider::LinearBar;
-        
+
         if (isHorizontal) {
             auto trackY = (float)y + (float)height * 0.5f - trackWidth * 0.5f;
-            
+
             // Background track (glass)
             g.setColour(surfaceColor.withAlpha(0.6f));
             g.fillRoundedRectangle((float)x, trackY, (float)width, trackWidth, trackWidth * 0.5f);
-            
+
             // Value track with gradient
             auto fillWidth = sliderPos - (float)x;
             if (fillWidth > 0) {
@@ -139,18 +139,18 @@ void KellyLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int wid
                 g.setGradientFill(gradient);
                 g.fillRoundedRectangle((float)x, trackY, fillWidth, trackWidth, trackWidth * 0.5f);
             }
-            
+
             // Glass border
             g.setColour(glassBorder);
             g.drawRoundedRectangle((float)x, trackY, (float)width, trackWidth, trackWidth * 0.5f, 0.5f);
         }
         else {
             auto trackX = (float)x + (float)width * 0.5f - trackWidth * 0.5f;
-            
+
             // Background track (glass)
             g.setColour(surfaceColor.withAlpha(0.6f));
             g.fillRoundedRectangle(trackX, (float)y, trackWidth, (float)height, trackWidth * 0.5f);
-            
+
             // Value track
             auto fillHeight = (float)y + (float)height - sliderPos;
             if (fillHeight > 0) {
@@ -159,12 +159,12 @@ void KellyLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int wid
                 g.setGradientFill(gradient);
                 g.fillRoundedRectangle(trackX, sliderPos, trackWidth, fillHeight, trackWidth * 0.5f);
             }
-            
+
             // Glass border
             g.setColour(glassBorder);
             g.drawRoundedRectangle(trackX, (float)y, trackWidth, (float)height, trackWidth * 0.5f, 0.5f);
         }
-        
+
         // Draw thumb
         drawLinearSliderThumb(g, x, y, width, height, sliderPos, minSliderPos, maxSliderPos, style, slider);
     } else {
@@ -175,12 +175,12 @@ void KellyLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int wid
 void KellyLookAndFeel::drawLinearSliderBackground(juce::Graphics& g, int x, int y, int width, int height,
                                                   float sliderPos, float minSliderPos, float maxSliderPos,
                                                   const juce::Slider::SliderStyle style, juce::Slider& slider) {
-    auto trackBounds = slider.isHorizontal() 
+    auto trackBounds = slider.isHorizontal()
         ? juce::Rectangle<float>(static_cast<float>(x), static_cast<float>(y + height * 0.4f),
                                  static_cast<float>(width), static_cast<float>(height * 0.2f))
         : juce::Rectangle<float>(static_cast<float>(x + width * 0.4f), static_cast<float>(y),
                                  static_cast<float>(width * 0.2f), static_cast<float>(height));
-    
+
     drawModernSliderTrack(g, trackBounds, slider.findColour(juce::Slider::trackColourId));
 }
 
@@ -195,12 +195,12 @@ void KellyLookAndFeel::drawLinearSliderThumb(juce::Graphics& g, int x, int y, in
                                  thumbSize, thumbSize)
         : juce::Rectangle<float>(static_cast<float>(x) + (width - thumbSize) * 0.5f, sliderPos - thumbSize * 0.5f,
                                  thumbSize, thumbSize);
-    
+
     bool isHighlighted = slider.isMouseOverOrDragging();
-    
+
     // Color-code sliders based on function (productivity vs creativity)
     juce::Colour thumbColour = slider.findColour(juce::Slider::thumbColourId);
-    
+
     // Use different colors for different slider types
     auto sliderName = slider.getName();
     if (sliderName.containsIgnoreCase("valence") || sliderName.containsIgnoreCase("arousal")) {
@@ -210,7 +210,7 @@ void KellyLookAndFeel::drawLinearSliderThumb(juce::Graphics& g, int x, int y, in
     } else {
         thumbColour = focusBlue;       // Blue for focus/productivity
     }
-    
+
     drawModernSliderThumb(g, thumbBounds, thumbColour, isHighlighted);
 }
 
@@ -219,32 +219,32 @@ void KellyLookAndFeel::drawComboBox(juce::Graphics& g, int width, int height, bo
                                     juce::ComboBox& box) {
     auto bounds = juce::Rectangle<int>(0, 0, width, height).toFloat().reduced(1.0f);
     auto cornerSize = 6.0f;
-    
+
     // Glass background
     g.setColour(surfaceColor.withAlpha(0.7f));
     g.fillRoundedRectangle(bounds, cornerSize);
-    
+
     // Top highlight for glass effect
     juce::ColourGradient highlightGrad(glassHighlight, bounds.getX(), bounds.getY(),
                                         juce::Colours::transparentBlack, bounds.getX(), bounds.getY() + 30,
                                         false);
     g.setGradientFill(highlightGrad);
     g.fillRoundedRectangle(bounds.removeFromTop(30), cornerSize);
-    
+
     // Border with focus state
-    auto borderColour = box.hasKeyboardFocus(true) 
+    auto borderColour = box.hasKeyboardFocus(true)
         ? primaryColor.withAlpha(0.8f)
         : glassBorder;
     g.setColour(borderColour);
     g.drawRoundedRectangle(bounds, cornerSize, 1.0f);
-    
+
     // Draw text with better visibility
     auto textBounds = bounds.reduced(8.0f, 0.0f);
     textBounds.removeFromRight(static_cast<float>(buttonW));
     g.setColour(textPrimary);
-    g.setFont(juce::FontOptions(14.0f).withStyle("Medium"));
+    g.setFont(juce::Font(14.0f));
     g.drawText(box.getText(), textBounds, juce::Justification::centredLeft, false);
-    
+
     // Arrow with modern styling
     auto arrowZone = juce::Rectangle<float>(static_cast<float>(buttonX), static_cast<float>(buttonY),
                                              static_cast<float>(buttonW), static_cast<float>(buttonH));
@@ -260,13 +260,13 @@ void KellyLookAndFeel::drawTextEditorOutline(juce::Graphics& g, int width, int h
                                              juce::TextEditor& textEditor) {
     auto bounds = juce::Rectangle<int>(0, 0, width, height).toFloat().reduced(0.5f);
     auto cornerSize = 6.0f;
-    
+
     if (textEditor.isEnabled()) {
         if (textEditor.hasKeyboardFocus(true)) {
             // Focus state with glass effect
             g.setColour(primaryColor.withAlpha(0.8f));
             g.drawRoundedRectangle(bounds, cornerSize, 1.5f);
-            
+
             // Inner glow effect
             g.setColour(primaryColor.withAlpha(0.1f));
             g.fillRoundedRectangle(bounds.reduced(1.0f), cornerSize - 1.0f);
@@ -282,13 +282,13 @@ void KellyLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton& b
                                          bool shouldDrawButtonAsDown) {
     auto bounds = button.getLocalBounds().toFloat();
     auto isOn = button.getToggleState();
-    
+
     // Background with color psychology - Use exact documented color
     auto bgColour = isOn ? balanceGreen : surfaceColor;  // Balance Green #22C55E for active (balance/creativity)
     if (shouldDrawButtonAsHighlighted) {
         bgColour = bgColour.brighter(0.15f);
     }
-    
+
     // Subtle gradient
     juce::ColourGradient gradient(
         bgColour.brighter(0.1f), bounds.getTopLeft(),
@@ -297,28 +297,28 @@ void KellyLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton& b
     );
     g.setGradientFill(gradient);
     g.fillRoundedRectangle(bounds.reduced(1.0f), 6.0f);
-    
+
     // Border
     g.setColour(borderColor);
     g.drawRoundedRectangle(bounds.reduced(1.0f), 6.0f, 1.0f);
-    
+
     // Text
     g.setColour(button.findColour(juce::ToggleButton::textColourId)
                 .withMultipliedAlpha(button.isEnabled() ? 1.0f : 0.5f));
-    g.setFont(juce::FontOptions(12.0f));
+    g.setFont(juce::Font(12.0f));
     g.drawText(button.getButtonText(), bounds, juce::Justification::centred, false);
 }
 
 juce::Font KellyLookAndFeel::getTextButtonFont(juce::TextButton&, int buttonHeight) {
-    return juce::FontOptions(static_cast<float>(buttonHeight) * 0.55f).withStyle("SemiBold");  // Larger
+    return juce::Font(static_cast<float>(buttonHeight) * 0.55f, juce::Font::bold);  // Larger
 }
 
 juce::Font KellyLookAndFeel::getLabelFont(juce::Label&) {
-    return juce::FontOptions(14.0f).withStyle("Medium");  // Larger, more readable
+    return juce::Font(14.0f);  // Larger, more readable
 }
 
 juce::Font KellyLookAndFeel::getSliderPopupFont(juce::Slider&) {
-    return juce::FontOptions(16.0f).withStyle("SemiBold");  // Large, bold for slider values
+    return juce::Font(16.0f, juce::Font::bold);  // Large, bold for slider values
 }
 
 int KellyLookAndFeel::getSliderThumbRadius(juce::Slider&) {
@@ -332,13 +332,13 @@ int KellyLookAndFeel::getTextButtonWidthToFitText(juce::TextButton& button, int 
 void KellyLookAndFeel::drawModernButton(juce::Graphics& g, const juce::Rectangle<float>& bounds,
                                         const juce::Colour& baseColour, bool isHighlighted, bool isDown) {
     auto colour = baseColour;
-    
+
     if (isDown) {
         colour = colour.darker(0.2f);
     } else if (isHighlighted) {
         colour = colour.brighter(0.2f);
     }
-    
+
     // Enhanced gradient for depth and engagement
     juce::ColourGradient gradient(
         colour.brighter(0.15f), bounds.getTopLeft(),
@@ -347,19 +347,19 @@ void KellyLookAndFeel::drawModernButton(juce::Graphics& g, const juce::Rectangle
     );
     g.setGradientFill(gradient);
     g.fillRoundedRectangle(bounds, 10.0f);
-    
+
     // Enhanced shadow for depth perception
     g.setColour(juce::Colours::black.withAlpha(0.3f));
     g.fillRoundedRectangle(bounds.translated(0.0f, 2.0f), 10.0f);
-    
+
     // Re-draw on top for proper layering
     g.setGradientFill(gradient);
     g.fillRoundedRectangle(bounds, 10.0f);
-    
+
     // Subtle inner highlight for premium feel
     g.setColour(juce::Colours::white.withAlpha(0.1f));
     g.fillRoundedRectangle(bounds.reduced(1.0f), 9.0f);
-    
+
     // Border with glow effect when highlighted
     if (isHighlighted) {
         g.setColour(colour.brighter(0.4f).withAlpha(0.4f));
@@ -375,7 +375,7 @@ void KellyLookAndFeel::drawModernSliderTrack(juce::Graphics& g, const juce::Rect
     // Glass-style track
     g.setColour(surfaceColor.withAlpha(0.6f));
     g.fillRoundedRectangle(trackBounds, trackBounds.getHeight() * 0.5f);
-    
+
     // Glass border
     g.setColour(glassBorder);
     g.drawRoundedRectangle(trackBounds, trackBounds.getHeight() * 0.5f, 0.5f);
@@ -384,15 +384,15 @@ void KellyLookAndFeel::drawModernSliderTrack(juce::Graphics& g, const juce::Rect
 void KellyLookAndFeel::drawModernSliderThumb(juce::Graphics& g, const juce::Rectangle<float>& thumbBounds,
                                               const juce::Colour& thumbColour, bool isHighlighted) {
     auto colour = isHighlighted ? thumbColour.brighter(0.3f) : thumbColour;
-    
+
     // Outer glow
     g.setColour(colour.withAlpha(0.3f));
     g.fillEllipse(thumbBounds.expanded(2.0f));
-    
+
     // Main thumb with glass effect
     g.setColour(colour.withAlpha(0.9f));
     g.fillEllipse(thumbBounds);
-    
+
     // Glass highlight
     juce::ColourGradient thumbGradient(
         juce::Colours::white.withAlpha(0.3f), thumbBounds.getTopLeft(),
@@ -401,11 +401,11 @@ void KellyLookAndFeel::drawModernSliderThumb(juce::Graphics& g, const juce::Rect
     );
     g.setGradientFill(thumbGradient);
     g.fillEllipse(thumbBounds.reduced(thumbBounds.getWidth() * 0.2f, thumbBounds.getHeight() * 0.2f));
-    
+
     // Inner dot
     g.setColour(colour);
     g.fillEllipse(thumbBounds.reduced(thumbBounds.getWidth() * 0.4f, thumbBounds.getHeight() * 0.4f));
-    
+
     // Glass border
     g.setColour(colour.brighter(0.2f).withAlpha(0.6f));
     g.drawEllipse(thumbBounds, 1.0f);

@@ -142,24 +142,26 @@ private:
     void initializeONNX();
 
     // Validate input/output sizes
-    bool validateInputSize(size_t size) const;
-    bool validateOutputSize(size_t size) const;
+    bool validateInputSize(size_t size);
+    bool validateOutputSize(size_t size);
 
 #ifdef ENABLE_ONNX_RUNTIME
     // ONNX Runtime types (forward declared, actual types in .cpp)
     // Using void* to avoid requiring ONNX Runtime headers in header file
-    void* sessionPtr_;  // Points to Ort::Session
-    void* envPtr_;      // Points to Ort::Env
-    void* memoryInfoPtr_;  // Points to Ort::MemoryInfo
+    [[maybe_unused]] void* sessionPtr_;  // Points to Ort::Session
+    [[maybe_unused]] void* envPtr_;      // Points to Ort::Env
+    [[maybe_unused]] void* memoryInfoPtr_;  // Points to Ort::MemoryInfo
 #else
     // Stub members when ONNX Runtime is not available
-    void* sessionPtr_ = nullptr;
-    void* envPtr_ = nullptr;
-    void* memoryInfoPtr_ = nullptr;
+    [[maybe_unused]] void* sessionPtr_ = nullptr;
+    [[maybe_unused]] void* envPtr_ = nullptr;
+    [[maybe_unused]] void* memoryInfoPtr_ = nullptr;
 #endif
 
     size_t inputSize_ = 0;
     size_t outputSize_ = 0;
+    std::vector<int64_t> inputShape_;
+    std::vector<int64_t> outputShape_;
     bool isLoaded_ = false;
     juce::String modelPath_;
     juce::String lastError_;

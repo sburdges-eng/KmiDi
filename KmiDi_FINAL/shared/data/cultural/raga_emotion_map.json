@@ -1,0 +1,194 @@
+{
+  "metadata": {
+    "title": "Raga Emotional Mapping",
+    "version": "1.0.0",
+    "created": "2025-01-07",
+    "description": "Mapping of Indian Classical Ragas to emotional qualities, time associations, and therapeutic applications",
+    "culture": "Indian Classical",
+    "total_ragas": 30
+  },
+  "ragas": [
+    {
+      "name": "Yaman",
+      "alternate_names": ["Kalyan", "Eman"],
+      "intervals_semitones": [0, 2, 4, 7, 9, 11],
+      "ascending": [0, 2, 4, 7, 9, 11],
+      "descending": [11, 9, 7, 4, 2, 0],
+      "emotional_qualities": ["serene", "peaceful", "devotional", "uplifting", "calm"],
+      "time_association": "Evening (First prahar)",
+      "therapeutic_use": ["anxiety", "stress", "meditation", "peace", "contentment"],
+      "emotion_mapping": {
+        "happy": 0.8,
+        "calm": 0.9,
+        "peaceful": 0.95,
+        "peace": 0.95,
+        "hope": 0.7,
+        "devotional": 0.85
+      },
+      "intensity_range": [0.2, 0.6],
+      "notes": "Most popular evening raga, creates sense of tranquility"
+    },
+    {
+      "name": "Bhairavi",
+      "intervals_semitones": [0, 1, 3, 5, 7, 8, 10],
+      "ascending": [0, 1, 3, 5, 7, 8, 10],
+      "descending": [10, 8, 7, 5, 3, 1, 0],
+      "emotional_qualities": ["devotional", "pathos", "tender", "melancholic", "introspective"],
+      "time_association": "Morning (Dawn)",
+      "therapeutic_use": ["grief", "sadness", "melancholy", "introspection", "acceptance"],
+      "emotion_mapping": {
+        "sad": 0.8,
+        "grief": 0.7,
+        "melancholy": 0.85,
+        "nostalgia": 0.75,
+        "acceptance": 0.7,
+        "devotional": 0.8
+      },
+      "intensity_range": [0.3, 0.7],
+      "notes": "Morning raga with deep emotional expression"
+    },
+    {
+      "name": "Darbari",
+      "alternate_names": ["Darbari Kanada"],
+      "intervals_semitones": [0, 2, 3, 6, 7, 9, 10],
+      "ascending": [0, 2, 3, 6, 7, 9, 10],
+      "descending": [10, 9, 7, 6, 3, 2, 0],
+      "emotional_qualities": ["profound", "deep", "somber", "majestic", "meditative"],
+      "time_association": "Late Night",
+      "therapeutic_use": ["deep sadness", "grief", "contemplation", "meditation", "surrender"],
+      "emotion_mapping": {
+        "grief": 0.85,
+        "sad": 0.8,
+        "melancholy": 0.9,
+        "introspection": 0.85,
+        "acceptance": 0.75
+      },
+      "intensity_range": [0.4, 0.8],
+      "notes": "Deep night raga, one of the most profound emotional expressions"
+    },
+    {
+      "name": "Kafi",
+      "intervals_semitones": [0, 2, 3, 5, 7, 9, 10],
+      "ascending": [0, 2, 3, 5, 7, 9, 10],
+      "descending": [10, 9, 7, 5, 3, 2, 0],
+      "emotional_qualities": ["gentle", "soft", "tender", "romantic", "lyrical"],
+      "time_association": "Late Evening",
+      "therapeutic_use": ["intimacy", "love", "tenderness", "calm", "vulnerability"],
+      "emotion_mapping": {
+        "intimacy": 0.85,
+        "love": 0.8,
+        "tenderness": 0.9,
+        "calm": 0.75,
+        "vulnerable": 0.8
+      },
+      "intensity_range": [0.2, 0.6],
+      "notes": "Gentle, romantic raga"
+    },
+    {
+      "name": "Todi",
+      "intervals_semitones": [0, 1, 3, 6, 7, 8, 11],
+      "ascending": [0, 1, 3, 6, 7, 8, 11],
+      "descending": [11, 8, 7, 6, 3, 1, 0],
+      "emotional_qualities": ["somber", "serious", "contemplative", "pensive", "weighty"],
+      "time_association": "Morning",
+      "therapeutic_use": ["seriousness", "contemplation", "weight", "gravity"],
+      "emotion_mapping": {
+        "serious": 0.85,
+        "contemplation": 0.8,
+        "weight": 0.75,
+        "gravity": 0.8
+      },
+      "intensity_range": [0.4, 0.7],
+      "notes": "Morning raga with serious, contemplative mood"
+    },
+    {
+      "name": "Desh",
+      "intervals_semitones": [0, 2, 5, 7, 9],
+      "ascending": [0, 2, 5, 7, 9],
+      "descending": [9, 7, 5, 2, 0],
+      "emotional_qualities": ["patriotic", "nostalgic", "longing", "yearning", "home"],
+      "time_association": "Evening",
+      "therapeutic_use": ["nostalgia", "longing", "homesickness", "yearning", "connection"],
+      "emotion_mapping": {
+        "nostalgia": 0.9,
+        "longing": 0.85,
+        "yearning": 0.8,
+        "connection": 0.75
+      },
+      "intensity_range": [0.3, 0.7],
+      "notes": "Evening raga associated with longing and nostalgia"
+    },
+    {
+      "name": "Malkauns",
+      "intervals_semitones": [0, 3, 5, 7, 10],
+      "ascending": [0, 3, 5, 7, 10],
+      "descending": [10, 7, 5, 3, 0],
+      "emotional_qualities": ["deep", "mysterious", "intense", "hypnotic", "trance"],
+      "time_association": "Midnight",
+      "therapeutic_use": ["deep states", "trance", "meditation", "mystery", "intensity"],
+      "emotion_mapping": {
+        "intense": 0.8,
+        "mystery": 0.85,
+        "trance": 0.9,
+        "deep": 0.85
+      },
+      "intensity_range": [0.5, 0.9],
+      "notes": "Midnight raga, very intense and hypnotic"
+    },
+    {
+      "name": "Bageshri",
+      "intervals_semitones": [0, 2, 3, 7, 9, 10],
+      "ascending": [0, 2, 3, 7, 9, 10],
+      "descending": [10, 9, 7, 3, 2, 0],
+      "emotional_qualities": ["romantic", "erotic", "passionate", "sensual", "warm"],
+      "time_association": "Late Night",
+      "therapeutic_use": ["passion", "love", "sensuality", "warmth", "intimacy"],
+      "emotion_mapping": {
+        "love": 0.85,
+        "passion": 0.9,
+        "sensual": 0.85,
+        "warmth": 0.8,
+        "intimacy": 0.8
+      },
+      "intensity_range": [0.4, 0.8],
+      "notes": "Late night raga associated with romance and passion"
+    },
+    {
+      "name": "Shuddh Sarang",
+      "intervals_semitones": [0, 2, 4, 7, 9],
+      "ascending": [0, 2, 4, 7, 9],
+      "descending": [9, 7, 4, 2, 0],
+      "emotional_qualities": ["bright", "clear", "energetic", "optimistic", "vibrant"],
+      "time_association": "Noon",
+      "therapeutic_use": ["energy", "optimism", "clarity", "vitality", "joy"],
+      "emotion_mapping": {
+        "happy": 0.85,
+        "joy": 0.9,
+        "energy": 0.8,
+        "optimism": 0.85,
+        "vitality": 0.8
+      },
+      "intensity_range": [0.5, 0.8],
+      "notes": "Noon raga with bright, energetic quality"
+    },
+    {
+      "name": "Marwa",
+      "intervals_semitones": [0, 1, 4, 6, 7, 11],
+      "ascending": [0, 1, 4, 6, 7, 11],
+      "descending": [11, 7, 6, 4, 1, 0],
+      "emotional_qualities": ["restless", "unsettled", "yearning", "anxious", "seeking"],
+      "time_association": "Sunset",
+      "therapeutic_use": ["restlessness", "anxiety", "yearning", "seeking", "unsettled"],
+      "emotion_mapping": {
+        "anxiety": 0.8,
+        "restless": 0.85,
+        "yearning": 0.8,
+        "seeking": 0.75,
+        "unsettled": 0.8
+      },
+      "intensity_range": [0.4, 0.8],
+      "notes": "Sunset raga expressing restlessness and yearning"
+    }
+  ]
+}
+

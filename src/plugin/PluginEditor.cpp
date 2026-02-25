@@ -2,6 +2,8 @@
 #include "common/MusicConstants.h"
 #include "midi/MidiExporter.h"
 #include "project/ProjectManager.h"
+#include "ui/MasterEQComponent.h"
+#include "KellyML/EmotionState.h"
 #include <cmath>
 #include <juce_audio_basics/juce_audio_basics.h>
 
@@ -40,6 +42,16 @@ PluginEditor::PluginEditor(PluginProcessor &p)
   workstation_->onEmotionSelected = [this](const EmotionNode &emotion) {
     onEmotionSelected(emotion);
   };
+  workstation_->onEmotionTextCommitted =
+      [this](const juce::String &text) { onEmotionTextCommitted(text); };
+  workstation_->onWoundTextChanged =
+      [this](const juce::String &text) { onWoundTextChanged(text); };
+  workstation_->onAutoGenerateToggled = [this](bool enabled) {
+    idleAutoGenerateEnabled_ = enabled;
+    if (!enabled) {
+      idleGenerationPending_ = false;
+    }
+  };
 
   // Project menu callbacks
   workstation_->onNewProject = [this]() { onNewProject(); };
@@ -51,17 +63,23 @@ PluginEditor::PluginEditor(PluginProcessor &p)
   addAndMakeVisible(*workstation_);
 
   // ========================================================================
+  // CREATE MASTER EQ COMPONENT
+  // ========================================================================
+  masterEQComponent_ = std::make_unique<MasterEQComponent>(
+      processor_.getAPVTS(), processor_.getMasterEQProcessor());
+  addAndMakeVisible(*masterEQComponent_);
+
+  // ========================================================================
   // WINDOW CONFIGURATION
   // ========================================================================
-  // Set default window size (medium)
-  setSize(800, 900);
+  // Set default window size (medium) - increased height for EQ component
+  setSize(900, 1200);
 
   // Make window resizable with constraints
-  // User requirement: 400x300, 600x450, 800x600 (but we need more height for
-  // all controls)
+  // Increased height to accommodate EQ component
   setResizable(true, true);
-  setResizeLimits(600, 700,    // Minimum: 600x700
-                  1200, 1400); // Maximum: 1200x1400
+  setResizeLimits(600, 1000,    // Minimum: 600x1000 (includes EQ)
+                  1200, 1600); // Maximum: 1200x1600
 
   // ========================================================================
   // ADD PARAMETER LISTENER FOR REAL-TIME UPDATES
@@ -159,6 +177,13 @@ PluginEditor::~PluginEditor() {
   // Remove it from component tree first
   removeChildComponent(workstation_.get());
   workstation_ = nullptr;
+
+  // Master EQ component will be automatically destroyed by unique_ptr
+  // Remove it from component tree first
+  if (masterEQComponent_ != nullptr) {
+    removeChildComponent(masterEQComponent_.get());
+    masterEQComponent_ = nullptr;
+  }
 }
 
 void PluginEditor::paint(juce::Graphics &g) {
@@ -168,10 +193,16 @@ void PluginEditor::paint(juce::Graphics &g) {
 }
 
 void PluginEditor::resized() {
-  // Give entire editor area to workstation
-  // Workstation handles all internal layout of its components
-  if (workstation_ != nullptr) {
-    workstation_->setBounds(getLocalBounds());
+  auto bounds = getLocalBounds();
+
+  // Split area: workstation on top, EQ component at bottom
+  if (workstation_ != nullptr && masterEQComponent_ != nullptr) {
+    const int eqHeight = 300; // EQ component height
+    workstation_->setBounds(bounds.removeFromTop(bounds.getHeight() - eqHeight));
+    masterEQComponent_->setBounds(bounds);
+  } else if (workstation_ != nullptr) {
+    // Fallback if EQ component not created
+    workstation_->setBounds(bounds);
   }
 }
 
@@ -262,6 +293,20 @@ void PluginEditor::timerCallback() {
   float intensity = *processor_.getAPVTS().getRawParameterValue(
       PluginProcessor::PARAM_INTENSITY);
   workstation_->getEmotionRadar().setEmotion(valence, arousal, intensity);
+
+  // ========================================================================
+  // UPDATE EQ AI SUGGESTIONS WITH EMOTION STATE
+  // ========================================================================
+  // Update MasterEQComponent with current emotion state for AI suggestions
+  if (masterEQComponent_ != nullptr) {
+    kelly::ml::EmotionState emotionState;
+    emotionState.valence = valence;
+    emotionState.arousal = arousal;
+    emotionState.dominance = 0.5f; // Default - could be derived from parameters
+    emotionState.complexity = *processor_.getAPVTS().getRawParameterValue(
+        PluginProcessor::PARAM_COMPLEXITY);
+    masterEQComponent_->updateEmotionState(emotionState);
+  }
 }
 
 void PluginEditor::onGenerateClicked() {
@@ -640,6 +685,15 @@ void PluginEditor::onEmotionSelected(const EmotionNode &emotion) {
   // - Joy/Surprise: Bright instruments (Piano, Flute, Trumpet)
   // - Sadness: Warm, mellow instruments (Cello, Viola, Pad Warm)
   // - Anger/Fear: Aggressive instruments (Distortion Guitar, Brass, Synth Bass)
+}
+
+void PluginEditor::onWoundTextChanged(const juce::String &text) {
+  processor_.setWoundDescription(text);
+}
+
+void PluginEditor::onEmotionTextCommitted(const juce::String &text) {
+  (void)text;
+  // Optional: update emotion parameters from committed text (e.g. parse and set valence/arousal)
 }
 
 //==============================================================================

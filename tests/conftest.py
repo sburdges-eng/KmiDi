@@ -1,34 +1,40 @@
-"""
-Pytest configuration for the repo.
+"""Pytest configuration and shared fixtures."""
 
-We explicitly put the project root at the front of sys.path so that imports
-like ``import music_brain`` resolve to the real package instead of the
-similarly named ``tests/music_brain`` test package. We also purge any
-preloaded modules from other checkouts (e.g., miDiKompanion).
-"""
-
-import importlib
 import sys
 from pathlib import Path
 
-# Ensure this repository's root is first on sys.path
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+# Add project root to path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
-# Drop any conflicting installs (e.g., other checkouts of music_brain)
-sys.path = [p for p in sys.path if "miDiKompanion" not in p]
+import pytest
 
-# Purge any preloaded music_brain modules that came from elsewhere
-for name, module in list(sys.modules.items()):
-    if name.startswith("music_brain"):
-        mod_file = getattr(module, "__file__", "") or ""
-        if mod_file and "kelly-clean" not in mod_file:
-            sys.modules.pop(name, None)
 
-importlib.invalidate_caches()
+@pytest.fixture
+def project_root_path():
+    """Return the project root directory."""
+    return project_root
 
-# Force-load local music_brain after cleanup so subsequent imports use it
-import music_brain  # noqa: E402
-import music_brain.groove.templates as _local_templates  # noqa: E402,F401
 
+@pytest.fixture
+def sample_intent():
+    """Create a sample CompleteSongIntent for testing."""
+    from music_brain.session.intent_schema import (
+        CompleteSongIntent,
+        SongRoot,
+        SongIntent,
+        TechnicalConstraints
+    )
+    
+    return CompleteSongIntent(
+        song_root=SongRoot(core_event="Test event"),
+        song_intent=SongIntent(mood_primary="joyful"),
+        technical_constraints=TechnicalConstraints(technical_key="C")
+    )
+
+
+@pytest.fixture
+def sample_emotion_thesaurus():
+    """Create a sample EmotionThesaurus instance."""
+    from music_brain.kelly_companion.core.emotion_thesaurus import EmotionThesaurus
+    return EmotionThesaurus()

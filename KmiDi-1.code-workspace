@@ -1,0 +1,73 @@
+{
+	"folders": [
+		{
+			"name": "KmiDi-1 (Root)",
+			"path": "."
+		},
+		{
+			"name": "Source Code",
+			"path": "./src"
+		},
+		{
+			"name": "Headers",
+			"path": "./include"
+		},
+		{
+			"name": "Penta-Core",
+			"path": "./src_penta-core"
+		},
+		{
+			"name": "Build System",
+			"path": "./cmake"
+		},
+		{
+			"name": "Documentation",
+			"path": "./docs"
+		},
+		{
+			"name": "Scripts",
+			"path": "./scripts"
+		},
+		{
+			"name": "Tests",
+			"path": "./tests"
+		},
+		{
+			"name": "Tauri Backend",
+			"path": "./src-tauri"
+		},
+		{
+			"name": "Config",
+			"path": "./config"
+		},
+		{
+			"name": "Experiments",
+			"path": "./experiments"
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/.git": true,
+			"**/node_modules": true,
+			"**/build": false,
+			"**/_deps": true,
+			"**/.venv*": true,
+			"**/__pycache__": true,
+			"**/*.pyc": true,
+			"**/.pytest_cache": true,
+			"**/_QUARANTINE*": true,
+			"**/_AUDIT*": true,
+			"**/_DELETION*": true,
+			"**/_EMPTY*": true,
+			"**/_GIT*": true,
+			"**/_LARGE*": true,
+			"**/_PROJECT*": true
+		},
+		"search.exclude": {
+			"**/node_modules": true,
+			"**/build": false,
+			"**/_deps": true,
+			"**/.git": true
+		}
+	}
+}

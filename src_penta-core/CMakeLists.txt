@@ -1,4 +1,12 @@
+cmake_minimum_required(VERSION 3.22)
+project(penta_core VERSION 1.0.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # Core C++ library
+cmake_minimum_required(VERSION 3.20)
+project(KmiDiPentaCore LANGUAGES CXX)
 
 # macOS SDK compatibility fix - Define function-style availability macros
 # These must be defined before any system headers are included
@@ -9,137 +17,131 @@ if(APPLE)
     # The main CMakeLists.txt sets MAC_OS_X_VERSION_MIN_REQUIRED which helps
 endif()
 
-# Readerwriterqueue: prefer local vendored stub to avoid network-only configure.
-if(NOT TARGET readerwriterqueue)
-    set(READERWRITERQUEUE_STUB_DIR "${PROJECT_SOURCE_DIR}/external/readerwriterqueue-stub")
-    if(EXISTS "${READERWRITERQUEUE_STUB_DIR}/readerwriterqueue.h")
-        add_library(readerwriterqueue INTERFACE)
-        target_include_directories(readerwriterqueue INTERFACE
-            "${READERWRITERQUEUE_STUB_DIR}"
-        )
-        target_compile_definitions(readerwriterqueue INTERFACE
-            KMIDI_READERWRITERQUEUE_STUB=1
-        )
-        message(STATUS "Using local readerwriterqueue stub: ${READERWRITERQUEUE_STUB_DIR}")
-    else()
-        include(FetchContent)
-        FetchContent_Declare(
-            readerwriterqueue
-            GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue.git
-            GIT_TAG v1.0.6
-            GIT_SHALLOW TRUE
-        )
-        FetchContent_MakeAvailable(readerwriterqueue)
+# Readerwriterqueue: header-only library
+# Must explicitly create INTERFACE target and ensure SOURCE_DIR is populated
+include(FetchContent)
 
-        FetchContent_GetProperties(readerwriterqueue)
-        if(NOT TARGET readerwriterqueue)
-            add_library(readerwriterqueue INTERFACE)
-            target_include_directories(readerwriterqueue INTERFACE
-                ${readerwriterqueue_SOURCE_DIR}
-            )
-        endif()
-    endif()
+# Always get properties in case it was already fetched by parent CMakeLists
+FetchContent_GetProperties(readerwriterqueue)
+
+if(NOT readerwriterqueue_POPULATED)
+    FetchContent_Declare(
+        readerwriterqueue
+        GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue.git
+        GIT_TAG v1.0.6
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(readerwriterqueue)
 endif()
 
-set(PENTA_CORE_SOURCES
-    # Common utilities
-    common/RTMemoryPool.cpp
-    common/RTLogger.cpp
-    
-    # Harmony engine
-    harmony/ChordAnalyzer.cpp
-    harmony/ChordAnalyzerSIMD.cpp
-    harmony/ScaleDetector.cpp
-    harmony/VoiceLeading.cpp
-    harmony/HarmonyEngine.cpp
-    
-    # Groove analysis
-    groove/OnsetDetector.cpp
-    groove/TempoEstimator.cpp
-    groove/RhythmQuantizer.cpp
-    groove/GrooveEngine.cpp
-    
-    # Diagnostics
-    diagnostics/PerformanceMonitor.cpp
-    diagnostics/AudioAnalyzer.cpp
-    diagnostics/DiagnosticsEngine.cpp
-    
-    # OSC communication
-    osc/OSCServer.cpp
-    osc/OSCClient.cpp
-        osc/OSCMessage.cpp
-        osc/OSCClient.cpp
-        osc/OSCHub.cpp
-        osc/RTMessageQueue.cpp
+# Explicitly populate SOURCE_DIR for header-only library without CMakeLists.txt
+FetchContent_GetProperties(readerwriterqueue)
 
-    # ML interface
-    ml/MLInterface.cpp
+if(NOT TARGET readerwriterqueue)
+    add_library(readerwriterqueue INTERFACE)
+    target_include_directories(readerwriterqueue INTERFACE
+        ${readerwriterqueue_SOURCE_DIR}
+    )
+endif()
 
-    # Mixer engine
-    mixer/MixerEngine.cpp
+# ============================================================================
+# Penta-Core Library
+# ============================================================================
+
+# Collect all source files
+file(GLOB_RECURSE PENTA_CORE_SOURCES CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/common/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/diagnostics/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/groove/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/harmony/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mixer/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ml/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/osc/*.cpp
 )
 
-set(PENTA_CORE_HEADERS
-    ${PROJECT_SOURCE_DIR}/include/penta/common/RTMemoryPool.h
-    ${PROJECT_SOURCE_DIR}/include/penta/common/RTLogger.h
-    ${PROJECT_SOURCE_DIR}/include/penta/common/RTTypes.h
-    
-    ${PROJECT_SOURCE_DIR}/include/penta/harmony/ChordAnalyzer.h
-    ${PROJECT_SOURCE_DIR}/include/penta/harmony/ScaleDetector.h
-    ${PROJECT_SOURCE_DIR}/include/penta/harmony/VoiceLeading.h
-    ${PROJECT_SOURCE_DIR}/include/penta/harmony/HarmonyEngine.h
-    
-    ${PROJECT_SOURCE_DIR}/include/penta/groove/OnsetDetector.h
-    ${PROJECT_SOURCE_DIR}/include/penta/groove/TempoEstimator.h
-    ${PROJECT_SOURCE_DIR}/include/penta/groove/RhythmQuantizer.h
-    ${PROJECT_SOURCE_DIR}/include/penta/groove/GrooveEngine.h
-    
-    ${PROJECT_SOURCE_DIR}/include/penta/diagnostics/PerformanceMonitor.h
-    ${PROJECT_SOURCE_DIR}/include/penta/diagnostics/AudioAnalyzer.h
-    ${PROJECT_SOURCE_DIR}/include/penta/diagnostics/DiagnosticsEngine.h
-    
-    ${PROJECT_SOURCE_DIR}/include/penta/osc/OSCServer.h
-    ${PROJECT_SOURCE_DIR}/include/penta/osc/OSCClient.h
-    ${PROJECT_SOURCE_DIR}/include/penta/osc/OSCMessage.h
-    ${PROJECT_SOURCE_DIR}/include/penta/osc/RTMessageQueue.h
-    ${PROJECT_SOURCE_DIR}/include/penta/osc/OSCHub.h
+# Create the library
+add_library(penta_core STATIC ${PENTA_CORE_SOURCES})
 
-    ${PROJECT_SOURCE_DIR}/include/penta/mixer/MixerEngine.h
-    ${PROJECT_SOURCE_DIR}/include/penta/ml/MLInterface.h
-)
-
-add_library(penta_core STATIC
-    ${PENTA_CORE_SOURCES}
-    ${PENTA_CORE_HEADERS}
-)
-
-set_target_properties(penta_core PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
-)
-
+# Include directories
 target_include_directories(penta_core PUBLIC
-    ${PROJECT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${readerwriterqueue_SOURCE_DIR}
 )
 
-target_link_libraries(penta_core PUBLIC
-    readerwriterqueue
-    juce::juce_core
-    juce::juce_audio_devices
-    juce::juce_dsp
-    juce::juce_osc
+# Link libraries
+# Note: juce::juce_dsp is optional - we'll make it conditional
+find_package(PkgConfig QUIET)
+if(TARGET juce::juce_dsp)
+    target_link_libraries(penta_core PUBLIC
+        readerwriterqueue
+        juce::juce_dsp
+    )
+else()
+    # Build without JUCE if not available
+    message(WARNING "JUCE not available, building penta_core without juce_dsp")
+    target_link_libraries(penta_core PUBLIC
+        readerwriterqueue
+    )
+endif()
+
+# Platform-specific settings
+if(APPLE)
+    target_compile_definitions(penta_core PUBLIC
+        MAC_OS_X_VERSION_MIN_REQUIRED=101200
+        MAC_OS_VERSION_15_0=150000
+    )
+endif()
+
+# Compiler warnings
+target_compile_options(penta_core PRIVATE
+    $<$<CXX_COMPILER_ID:MSVC>:/W4>
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
 )
 
-# Enable AVX2 SIMD optimizations if available
+# Check for AVX2 support
 include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag("-mavx2" COMPILER_SUPPORTS_AVX2)
+CHECK_CXX_COMPILER_FLAG("-mavx2 -mfma" COMPILER_SUPPORTS_AVX2)
+
 if(COMPILER_SUPPORTS_AVX2)
-    target_compile_options(penta_core PRIVATE -mavx2 -mpopcnt)
-    message(STATUS "AVX2 SIMD optimizations enabled")
+    message(STATUS "AVX2 available, enabling SIMD optimizations")
+    target_compile_definitions(penta_core PUBLIC ENABLE_AVX2)
+    target_compile_options(penta_core PRIVATE -mavx2 -mfma)
 else()
     message(STATUS "AVX2 not available, using scalar fallback")
 endif()
 
-# Platform-specific threading
-if(UNIX)
-    target_link_libraries(penta_core PUBLIC pthread)
+# ============================================================================
+# Tests (Optional)
+# ============================================================================
+option(BUILD_PENTA_TESTS "Build penta-core tests" ON)
+
+if(BUILD_PENTA_TESTS)
+    enable_testing()
+
+    # Fetch GoogleTest
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.14.0
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(googletest)
+
+    # Create test executable
+    file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS
+        ${CMAKE_CURRENT_SOURCE_DIR}/../tests/penta_core/*.cpp
+    )
+
+    add_executable(penta_tests ${TEST_SOURCES})
+
+    target_link_libraries(penta_tests PRIVATE
+        penta_core
+        gtest
+        gtest_main
+    )
+
+    include(GoogleTest)
+    gtest_discover_tests(penta_tests)
 endif()

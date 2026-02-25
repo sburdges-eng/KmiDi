@@ -20,6 +20,7 @@ namespace daiw {
 using SampleRate = uint32_t;
 using BufferSize = uint32_t;
 using TickCount = int64_t;
+using Tick = TickCount;  // MIDI ticks (PPQ-based), alias for midi.hpp
 using MidiNote = uint8_t;
 using MidiVelocity = uint8_t;
 using MidiChannel = uint8_t;
@@ -53,6 +54,57 @@ constexpr MidiVelocity MIDI_VELOCITY_MIN = 0;
 constexpr MidiVelocity MIDI_VELOCITY_MAX = 127;
 constexpr MidiChannel MIDI_CHANNEL_MIN = 0;
 constexpr MidiChannel MIDI_CHANNEL_MAX = 15;
+
+// =============================================================================
+// MIDI Event Types (for daiw/midi.hpp)
+// =============================================================================
+
+enum class MidiMessageType : uint8_t {
+    NoteOff = 0x80,
+    NoteOn = 0x90,
+    PolyPressure = 0xA0,
+    ControlChange = 0xB0,
+    ProgramChange = 0xC0,
+    ChannelPressure = 0xD0,
+    PitchBend = 0xE0,
+    System = 0xF0
+};
+
+/// Compact MIDI event (for real-time use)
+struct alignas(8) MidiEvent {
+    Tick timestamp = 0;
+    uint8_t status = 0;
+    uint8_t data1 = 0;
+    uint8_t data2 = 0;
+    uint8_t padding = 0;
+
+    MidiEvent() = default;
+
+    MidiEvent(Tick ts, MidiMessageType type, MidiChannel ch, uint8_t d1, uint8_t d2)
+        : timestamp(ts)
+        , status(static_cast<uint8_t>(type) | (ch & 0x0F))
+        , data1(d1)
+        , data2(d2)
+        , padding(0)
+    {}
+
+    MidiMessageType type() const {
+        return static_cast<MidiMessageType>(status & 0xF0);
+    }
+
+    MidiChannel channel() const {
+        return status & 0x0F;
+    }
+
+    bool isNoteOn() const {
+        return type() == MidiMessageType::NoteOn && data2 > 0;
+    }
+
+    bool isNoteOff() const {
+        return type() == MidiMessageType::NoteOff ||
+               (type() == MidiMessageType::NoteOn && data2 == 0);
+    }
+};
 
 // =============================================================================
 // Utility Structures

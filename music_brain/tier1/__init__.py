@@ -1,24 +1,19 @@
 """
-Tier 1: Pretrained models for MIDI/Audio/Voice generation.
-
-No fine-tuning required. Load checkpoints and run inference.
-Optimized for Mac (MPS) + CPU/CUDA.
-
-Usage:
-    from music_brain.tier1 import Tier1MIDIGenerator, Tier1AudioGenerator
-
-    midi_gen = Tier1MIDIGenerator(device="mps")
-    audio_gen = Tier1AudioGenerator(device="mps")
+music_brain.tier1 - Tier 1 generation components.
 """
 
-from .midi_generator import Tier1MIDIGenerator
-from .audio_generator import Tier1AudioGenerator
-from .voice_generator import Tier1VoiceGenerator
+from .midi_pipeline_wrapper import MIDIGenerationPipeline
+from .midi_pipeline import MIDIPipeline
+from .midi_generator import MIDIGenerator
+from .audio_generator import AudioGenerator
+from .voice_generator import VoiceGenerator
+from .voice_pipeline import VoicePipeline
 
 __all__ = [
-    "Tier1MIDIGenerator",
-    "Tier1AudioGenerator",
-    "Tier1VoiceGenerator",
+    "MIDIGenerationPipeline",
+    "MIDIPipeline",
+    "MIDIGenerator",
+    "AudioGenerator",
+    "VoiceGenerator",
+    "VoicePipeline",
 ]
-
-__version__ = "1.0.0"

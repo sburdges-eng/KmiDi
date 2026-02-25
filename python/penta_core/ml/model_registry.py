@@ -2,9 +2,11 @@
 Model Registry - Unified model discovery and management.
 
 Provides a centralized registry for ML models across different backends.
+Enhanced with training lifecycle management for ML training orchestration.
 """
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 from enum import Enum
@@ -29,14 +31,7 @@ class ModelBackend(Enum):
 
 class ModelTask(Enum):
     """Supported ML tasks."""
-    EMOTION_EMBEDDING = "emotion_embedding"
-    MELODY_GENERATION = "melody_generation"
-    HARMONY_PREDICTION = "harmony_prediction"
-    DYNAMICS_MAPPING = "dynamics_mapping"
-    GROOVE_PREDICTION = "groove_prediction"
-    INTENT_MAPPING = "intent_mapping"
-    AUDIO_CLASSIFICATION = "audio_classification"
-    CUSTOM = "custom"
+    # Core prediction tasks
     CHORD_PREDICTION = "chord_prediction"
     CHORD_DETECTION = "chord_detection"
     KEY_DETECTION = "key_detection"
@@ -46,6 +41,17 @@ class ModelTask(Enum):
     AUDIO_GENERATION = "audio_generation"
     ONSET_DETECTION = "onset_detection"
     BEAT_TRACKING = "beat_tracking"
+    # Enhanced ML tasks for penta-core
+    EMOTION_EMBEDDING = "emotion_embedding"
+    MELODY_GENERATION = "melody_generation"
+    HARMONY_PREDICTION = "harmony_prediction"
+    DYNAMICS_MAPPING = "dynamics_mapping"
+    GROOVE_PREDICTION = "groove_prediction"
+    INTENT_MAPPING = "intent_mapping"
+    AUDIO_CLASSIFICATION = "audio_classification"
+    VOICE_CLASSIFICATION = "voice_classification"
+    VOICE_ACTIVITY_DETECTION = "voice_activity_detection"
+    CUSTOM = "custom"
 
 
 @dataclass
@@ -151,6 +157,12 @@ class ModelRegistry:
         user_dir = Path.home() / ".idaw" / "models"
         if user_dir.exists():
             self._model_dirs.append(user_dir)
+        governed_dir = Path.home() / "Models"
+        if governed_dir.exists():
+            self._model_dirs.append(governed_dir)
+        governed_ckpt = Path.home() / "Models" / "checkpoints"
+        if governed_ckpt.exists():
+            self._model_dirs.append(governed_ckpt)
 
     def add_model_dir(self, path: str) -> None:
         """Add a directory to search for models."""
@@ -246,6 +258,12 @@ class ModelRegistry:
             return ModelTask.STYLE_TRANSFER
         elif "emotion" in path_str or "mood" in path_str:
             return ModelTask.EMOTION_CLASSIFICATION
+        elif "voice" in path_str and "activity" in path_str:
+            return ModelTask.VOICE_ACTIVITY_DETECTION
+        elif "voice" in path_str:
+            return ModelTask.VOICE_CLASSIFICATION
+        elif "vad" in path_str:
+            return ModelTask.VOICE_ACTIVITY_DETECTION
         elif "onset" in path_str:
             return ModelTask.ONSET_DETECTION
         elif "beat" in path_str:
@@ -280,7 +298,7 @@ class ModelRegistry:
             self.add_model_dir(dir_path)
 
     # ------------------------------------------------------------------ #
-    # New manifest loader (registry.json / registry.schema.json)
+    # Manifest loader (registry.json / registry.schema.json)
     # ------------------------------------------------------------------ #
     def load_registry_manifest(
         self,
@@ -315,7 +333,6 @@ class ModelRegistry:
             try:
                 model = self._modelinfo_from_manifest_entry(entry, base_dir)
             except Exception:
-                # Skip malformed entries rather than crashing
                 continue
             self.register(model)
             count += 1
@@ -412,3 +429,247 @@ def load_registry_manifest(
         Number of models registered.
     """
     return get_registry().load_registry_manifest(path, validate=validate, schema_path=schema_path)
+
+
+# =============================================================================
+# ENHANCED: Training Lifecycle Management
+# =============================================================================
+
+class TrainingStatus(Enum):
+    """Training lifecycle status."""
+    PENDING = "pending"
+    QUEUED = "queued"
+    TRAINING = "training"
+    VALIDATING = "validating"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+@dataclass
+class TrainingJob:
+    """Tracks a training job lifecycle."""
+    job_id: str
+    model_name: str
+    model_task: ModelTask
+    status: TrainingStatus = TrainingStatus.PENDING
+
+    # Training configuration
+    target_epochs: int = 30
+    current_epoch: int = 0
+    batch_size: int = 32
+    learning_rate: float = 1e-4
+
+    # Metrics
+    best_loss: float = float('inf')
+    best_accuracy: float = 0.0
+    current_loss: float = 0.0
+
+    # Timing
+    created_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
+
+    # Paths
+    checkpoint_dir: str = ""
+    log_file: str = ""
+
+    # Error handling
+    error_message: Optional[str] = None
+    retry_count: int = 0
+    max_retries: int = 3
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "job_id": self.job_id,
+            "model_name": self.model_name,
+            "model_task": self.model_task.value,
+            "status": self.status.value,
+            "target_epochs": self.target_epochs,
+            "current_epoch": self.current_epoch,
+            "batch_size": self.batch_size,
+            "learning_rate": self.learning_rate,
+            "best_loss": self.best_loss,
+            "best_accuracy": self.best_accuracy,
+            "current_loss": self.current_loss,
+            "created_at": self.created_at,
+            "started_at": self.started_at,
+            "completed_at": self.completed_at,
+            "checkpoint_dir": self.checkpoint_dir,
+            "log_file": self.log_file,
+            "error_message": self.error_message,
+            "retry_count": self.retry_count,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "TrainingJob":
+        data = dict(data)  # Copy to avoid mutating input
+        data["model_task"] = ModelTask(data["model_task"])
+        data["status"] = TrainingStatus(data["status"])
+        # Filter to only known fields
+        valid_fields = {f.name for f in cls.__dataclass_fields__.values()}
+        return cls(**{k: v for k, v in data.items() if k in valid_fields})
+
+
+class TrainingJobManager:
+    """
+    Manages training job lifecycle across sessions.
+
+    Persists job state to disk for resumable training.
+    """
+
+    _instance: Optional["TrainingJobManager"] = None
+
+    def __new__(cls) -> "TrainingJobManager":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+
+    def __init__(self):
+        if self._initialized:
+            return
+
+        self._jobs: Dict[str, TrainingJob] = {}
+        self._jobs_dir = Path.home() / ".kelly" / "training_jobs"
+        self._jobs_dir.mkdir(parents=True, exist_ok=True)
+        self._jobs_file = self._jobs_dir / "jobs.json"
+        self._initialized = True
+        self._load_jobs()
+
+    def _load_jobs(self):
+        """Load jobs from disk."""
+        if self._jobs_file.exists():
+            try:
+                with open(self._jobs_file, "r") as f:
+                    data = json.load(f)
+                for job_id, job_data in data.get("jobs", {}).items():
+                    self._jobs[job_id] = TrainingJob.from_dict(job_data)
+            except Exception:
+                self._jobs = {}
+
+    def _save_jobs(self):
+        """Save jobs to disk."""
+        data = {
+            "jobs": {jid: job.to_dict() for jid, job in self._jobs.items()},
+            "updated_at": datetime.now().isoformat(),
+        }
+        with open(self._jobs_file, "w") as f:
+            json.dump(data, f, indent=2)
+
+    def create_job(
+        self,
+        model_name: str,
+        model_task: ModelTask,
+        target_epochs: int = 30,
+        batch_size: int = 32,
+        learning_rate: float = 1e-4,
+    ) -> TrainingJob:
+        """Create a new training job."""
+        import uuid
+        job_id = f"job_{uuid.uuid4().hex[:8]}"
+
+        job = TrainingJob(
+            job_id=job_id,
+            model_name=model_name,
+            model_task=model_task,
+            target_epochs=target_epochs,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            checkpoint_dir=str(self._jobs_dir / job_id / "checkpoints"),
+            log_file=str(self._jobs_dir / job_id / "training.log"),
+        )
+
+        # Create directories
+        Path(job.checkpoint_dir).mkdir(parents=True, exist_ok=True)
+
+        self._jobs[job_id] = job
+        self._save_jobs()
+        return job
+
+    def get_job(self, job_id: str) -> Optional[TrainingJob]:
+        """Get a job by ID."""
+        return self._jobs.get(job_id)
+
+    def list_jobs(
+        self,
+        status: Optional[TrainingStatus] = None,
+        model_task: Optional[ModelTask] = None,
+    ) -> List[TrainingJob]:
+        """List jobs with optional filtering."""
+        jobs = list(self._jobs.values())
+        if status:
+            jobs = [j for j in jobs if j.status == status]
+        if model_task:
+            jobs = [j for j in jobs if j.model_task == model_task]
+        return jobs
+
+    def update_progress(
+        self,
+        job_id: str,
+        epoch: int,
+        loss: float,
+        accuracy: Optional[float] = None,
+    ):
+        """Update job progress."""
+        job = self._jobs.get(job_id)
+        if not job:
+            return
+
+        job.current_epoch = epoch
+        job.current_loss = loss
+
+        if loss < job.best_loss:
+            job.best_loss = loss
+        if accuracy is not None and accuracy > job.best_accuracy:
+            job.best_accuracy = accuracy
+
+        self._save_jobs()
+
+    def start_job(self, job_id: str):
+        """Mark job as started."""
+        job = self._jobs.get(job_id)
+        if job:
+            job.status = TrainingStatus.TRAINING
+            job.started_at = datetime.now().isoformat()
+            self._save_jobs()
+
+    def complete_job(self, job_id: str, success: bool = True, error: Optional[str] = None):
+        """Mark job as completed or failed."""
+        job = self._jobs.get(job_id)
+        if job:
+            job.status = TrainingStatus.COMPLETED if success else TrainingStatus.FAILED
+            job.completed_at = datetime.now().isoformat()
+            if error:
+                job.error_message = error
+            self._save_jobs()
+
+    def cancel_job(self, job_id: str):
+        """Cancel a job."""
+        job = self._jobs.get(job_id)
+        if job and job.status in (TrainingStatus.PENDING, TrainingStatus.QUEUED, TrainingStatus.TRAINING):
+            job.status = TrainingStatus.CANCELLED
+            job.completed_at = datetime.now().isoformat()
+            self._save_jobs()
+
+    def get_resumable_jobs(self) -> List[TrainingJob]:
+        """Get jobs that can be resumed."""
+        return [
+            j for j in self._jobs.values()
+            if j.status == TrainingStatus.TRAINING
+            and j.current_epoch < j.target_epochs
+        ]
+
+
+def get_job_manager() -> TrainingJobManager:
+    """Get the training job manager singleton."""
+    return TrainingJobManager()
+
+
+def create_training_job(
+    model_name: str,
+    model_task: ModelTask,
+    **kwargs
+) -> TrainingJob:
+    """Create a new training job."""
+    return get_job_manager().create_job(model_name, model_task, **kwargs)

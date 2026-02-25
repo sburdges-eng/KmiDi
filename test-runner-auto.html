@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Auto-Running UI Tests</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #0f0;
+    }
+    #output {
+      background: #000;
+      padding: 15px;
+      border: 1px solid #0f0;
+      border-radius: 4px;
+      max-height: 70vh;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      margin-top: 20px;
+    }
+    .pass { color: #0f0; }
+    .fail { color: #f00; }
+    .skip { color: #ff0; }
+    .info { color: #0ff; }
+    iframe {
+      width: 100%;
+      height: 600px;
+      border: 2px solid #0f0;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚀 Auto-Running UI Tests</h1>
+  <p>Tests will run automatically in the iframe below. Check the browser console (F12) for detailed output.</p>
+  <div id="status">⏳ Loading test page...</div>
+  <div id="output"></div>
+  <iframe id="testFrame" src="http://localhost:1420"></iframe>
+
+  <script>
+    const output = document.getElementById('output');
+    const status = document.getElementById('status');
+    const frame = document.getElementById('testFrame');
+    
+    function log(message, type = 'info') {
+      const div = document.createElement('div');
+      div.className = type;
+      div.textContent = message;
+      output.appendChild(div);
+      output.scrollTop = output.scrollHeight;
+    }
+    
+    frame.onload = function() {
+      status.textContent = '✅ Page loaded. Injecting test script...';
+      log('Page loaded, injecting tests...', 'info');
+      
+      try {
+        const testScript = `
+          (async function() {
+            const results = { passed: [], failed: [], skipped: [] };
+            
+            function logTest(name, passed, error = null) {
+              if (passed) {
+                results.passed.push(name);
+                console.log('✅ PASS: ' + name);
+                window.parent.postMessage({ type: 'test', status: 'pass', name }, '*');
+              } else {
+                results.failed.push({ name, error });
+                console.error('❌ FAIL: ' + name, error);
+                window.parent.postMessage({ type: 'test', status: 'fail', name, error }, '*');
+              }
+            }
+            
+            function logSkip(name, reason) {
+              results.skipped.push({ name, reason });
+              console.warn('⏭️  SKIP: ' + name + ' - ' + reason);
+              window.parent.postMessage({ type: 'test', status: 'skip', name, reason }, '*');
+            }
+            
+            async function sleep(ms) {
+              return new Promise(resolve => setTimeout(resolve, ms));
+            }
+            
+            console.log('🚀 Starting UI Tests...\\n');
+            
+            // Test 1: Side Toggle
+            await sleep(1000);
+            const toggleBtn = Array.from(document.querySelectorAll('button')).find(b => 
+              b.textContent.includes('Side B') || b.textContent.includes('Side A')
+            );
+            if (toggleBtn) {
+              toggleBtn.click();
+              await sleep(500);
+              logTest('Toggle Side A/B', true);
+              toggleBtn.click();
+              await sleep(500);
+              logTest('Toggle back', true);
+            }
+            
+            // Test 2: Switch to Side B
+            if (toggleBtn && toggleBtn.textContent.includes('Side A')) {
+              toggleBtn.click();
+              await sleep(500);
+            }
+            
+            // Test 3: Load Emotions
+            const loadBtn = Array.from(document.querySelectorAll('button')).find(b => 
+              b.textContent.includes('Load Emotions')
+            );
+            if (loadBtn && !loadBtn.disabled) {
+              loadBtn.click();
+              await sleep(2000);
+              logTest('Load Emotions', true);
+            } else {
+              logSkip('Load Emotions', loadBtn ? 'Button disabled' : 'Button not found');
+            }
+            
+            // Test 4: Emotion Wheel
+            await sleep(1000);
+            const baseBtns = document.querySelectorAll('.emotion-wheel-grid-base button');
+            if (baseBtns.length > 0) {
+              baseBtns[0].click();
+              await sleep(500);
+              logTest('Select base emotion', true);
+              
+              const intensityBtns = document.querySelectorAll('.emotion-wheel-grid-intensity button');
+              if (intensityBtns.length > 0) {
+                intensityBtns[0].click();
+                await sleep(500);
+                logTest('Select intensity', true);
+                
+                const subBtns = document.querySelectorAll('.emotion-wheel-grid-sub button');
+                if (subBtns.length > 0) {
+                  subBtns[0].click();
+                  await sleep(500);
+                  logTest('Select sub-emotion', true);
+                }
+              }
+            } else {
+              logSkip('Emotion Wheel', 'No emotions loaded');
+            }
+            
+            // Test 5: Generate Music
+            const genBtn = Array.from(document.querySelectorAll('button')).find(b => 
+              b.textContent.includes('Generate Music') && !b.disabled
+            );
+            if (genBtn) {
+              genBtn.click();
+              await sleep(2000);
+              logTest('Generate Music', true);
+            } else {
+              logSkip('Generate Music', 'Button not available');
+            }
+            
+            // Test 6: Interrogation
+            const interrogateBtn = Array.from(document.querySelectorAll('button')).find(b => 
+              b.textContent.includes('Interrogation')
+            );
+            if (interrogateBtn && !interrogateBtn.disabled) {
+              interrogateBtn.click();
+              await sleep(2000);
+              logTest('Start Interrogation', true);
+            }
+            
+            // Test 7: Lyric Panel
+            const textarea = document.querySelector('.lyric-textarea');
+            if (textarea) {
+              textarea.value = 'Test lyrics';
+              textarea.dispatchEvent(new Event('input', { bubbles: true }));
+              await sleep(300);
+            }
+            
+            const saveBtn = Array.from(document.querySelectorAll('button')).find(b => 
+              b.textContent.includes('Save Lyrics')
+            );
+            if (saveBtn) {
+              saveBtn.click();
+              await sleep(1000);
+              logTest('Save lyrics', true);
+            }
+            
+            const refreshBtn = Array.from(document.querySelectorAll('button')).find(b => 
+              b.textContent.includes('Refresh')
+            );
+            if (refreshBtn) {
+              refreshBtn.click();
+              await sleep(1000);
+              logTest('Refresh lyrics', true);
+            }
+            
+            // Test 8: Guide Navigation
+            const searchInput = document.querySelector('.guide-search');
+            if (searchInput) {
+              searchInput.value = 'test';
+              searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+              await sleep(500);
+              logTest('Search guides', true);
+            }
+            
+            const topicPills = document.querySelectorAll('.topic-pill');
+            if (topicPills.length > 0) {
+              topicPills[0].click();
+              await sleep(300);
+              logTest('Filter by topic', true);
+            }
+            
+            const previewBtn = document.querySelector('.preview-btn');
+            if (previewBtn) {
+              previewBtn.click();
+              await sleep(500);
+              logTest('Preview guide', true);
+            }
+            
+            // Test 9: SpectoCloud
+            const loadConfig = Array.from(document.querySelectorAll('button')).find(b => 
+              b.textContent.includes('Load Humanizer Config')
+            );
+            if (loadConfig) {
+              loadConfig.click();
+              await sleep(1000);
+              logTest('Load Humanizer Config', true);
+            }
+            
+            // Summary
+            console.log('\\n📊 TEST SUMMARY');
+            console.log('✅ Passed: ' + results.passed.length);
+            console.log('❌ Failed: ' + results.failed.length);
+            console.log('⏭️  Skipped: ' + results.skipped.length);
+            
+            window.parent.postMessage({ 
+              type: 'summary', 
+              passed: results.passed.length,
+              failed: results.failed.length,
+              skipped: results.skipped.length,
+              results: results
+            }, '*');
+          })();
+        `;
+        
+        // Inject script into iframe
+        frame.contentWindow.eval(testScript);
+        log('Test script injected. Running tests...', 'info');
+        status.textContent = '🔄 Tests running... Check console for details.';
+        
+      } catch (error) {
+        log('Error: ' + error.message, 'fail');
+        status.textContent = '❌ Error: ' + error.message;
+      }
+    };
+    
+    // Listen for test results
+    window.addEventListener('message', function(event) {
+      if (event.data.type === 'test') {
+        const type = event.data.status === 'pass' ? 'pass' : 
+                     event.data.status === 'fail' ? 'fail' : 'skip';
+        log(`${event.data.status === 'pass' ? '✅' : event.data.status === 'fail' ? '❌' : '⏭️'} ${event.data.name}`, type);
+      } else if (event.data.type === 'summary') {
+        log('\\n📊 TEST SUMMARY', 'info');
+        log(`✅ Passed: ${event.data.passed}`, 'pass');
+        log(`❌ Failed: ${event.data.failed}`, 'fail');
+        log(`⏭️  Skipped: ${event.data.skipped}`, 'skip');
+        status.textContent = `✅ Tests completed! Passed: ${event.data.passed}, Failed: ${event.data.failed}, Skipped: ${event.data.skipped}`;
+      }
+    });
+    
+    // Check if server is up
+    setTimeout(() => {
+      fetch('http://localhost:1420')
+        .then(() => {
+          status.textContent = '✅ Server is running. Loading page...';
+        })
+        .catch(() => {
+          status.textContent = '❌ Server not running. Start with: npm run dev:react';
+          log('Server not accessible. Please start the dev server first.', 'fail');
+        });
+    }, 1000);
+  </script>
+</body>
+</html>

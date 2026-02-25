@@ -1,7 +1,7 @@
 #pragma once
 /**
  * EmotionMapper.h
- * 
+ *
  * Ported from Python: kellymidicompanion_emotional_mapping.py
  * Maps emotional states to musical parameters for MIDI generation.
  */
@@ -26,17 +26,10 @@ enum class TimingFeel {
     Rubato
 };
 
-enum class EmotionCategory {
-    Joy,
-    Sadness,
-    Anger,
-    Fear,
-    Surprise,
-    Disgust,
-    Trust,
-    Anticipation,
-    Complex
-};
+// EmotionCategory is defined in common/KellyTypes.h (included in global scope to avoid std being parsed inside kelly)
+} // namespace kelly
+#include "common/KellyTypes.h"
+namespace kelly {
 
 // =============================================================================
 // EMOTIONAL STATE (from Python EmotionalState dataclass)
@@ -48,13 +41,13 @@ struct EmotionalState {
     float intensity = 0.5f;    // 0.0 (subtle) to 1.0 (extreme)
     std::string primaryEmotion = "neutral";
     std::vector<std::string> secondaryEmotions;
-    
+
     void clamp() {
         valence = std::clamp(valence, -1.0f, 1.0f);
         arousal = std::clamp(arousal, 0.0f, 1.0f);
         intensity = std::clamp(intensity, 0.0f, 1.0f);
     }
-    
+
     // Calculate emotional distance in 3D space
     float distanceTo(const EmotionalState& other) const {
         float dv = valence - other.valence;
@@ -73,31 +66,31 @@ struct MusicalParameters {
     int tempoSuggested = 100;
     int tempoMin = 60;
     int tempoMax = 180;
-    
+
     // Key and Mode
     std::string keySuggested = "C";
     std::string modeSuggested = "major";
     std::vector<std::string> modeChoices;
-    
+
     // Expression
     float dissonance = 0.0f;        // 0-1, harmonic tension
     float density = 0.5f;           // 0-1, arrangement density
     float spaceProbability = 0.2f;  // 0-1, probability of rests
     TimingFeel timingFeel = TimingFeel::Straight;
     float swingAmount = 0.0f;       // 0-1 for swing feel
-    
+
     // Dynamics
     float dynamicsRange = 0.5f;     // 0-1, dynamic variation
     int velocityMin = 60;
     int velocityMax = 100;
-    
+
     // Effects suggestions
     float reverbAmount = 0.3f;      // 0-1
     float reverbDecay = 1.5f;       // seconds
     float brightness = 0.5f;        // 0-1, EQ brightness
     float compressionRatio = 2.0f;
     float saturation = 0.0f;        // 0-1
-    
+
     // Humanization
     float timingVariation = 0.02f;  // ±percentage of beat
     float velocityVariation = 0.1f; // ±percentage of velocity
@@ -126,29 +119,29 @@ public:
     EmotionMapper() {
         initializeQuadrants();
     }
-    
+
     /**
      * Convert emotional state to musical parameters.
      * Core algorithm ported from Python get_parameters_for_state()
      */
     MusicalParameters mapToParameters(const EmotionalState& state) const {
         MusicalParameters params;
-        
+
         // Determine quadrant (high/low valence × high/low arousal)
         int valenceSign = state.valence >= 0 ? 1 : -1;
         int arousalLevel = state.arousal >= 0.5f ? 1 : 0;
-        
+
         const QuadrantMapping& quadrant = getQuadrant(valenceSign, arousalLevel);
-        
+
         // --- TEMPO CALCULATION ---
         // Base tempo from quadrant, modified by intensity
         float tempoBase = (quadrant.tempoRange.first + quadrant.tempoRange.second) / 2.0f;
         float tempoRange = (quadrant.tempoRange.second - quadrant.tempoRange.first) / 2.0f;
-        
+
         // Higher arousal = faster, higher intensity = more extreme
         float tempoModifier = (state.arousal - 0.5f) * 2.0f * tempoRange;
         tempoModifier *= (0.5f + state.intensity * 0.5f);
-        
+
         params.tempoSuggested = static_cast<int>(std::clamp(
             tempoBase + tempoModifier,
             static_cast<float>(quadrant.tempoRange.first),
@@ -156,7 +149,7 @@ public:
         ));
         params.tempoMin = quadrant.tempoRange.first;
         params.tempoMax = quadrant.tempoRange.second;
-        
+
         // --- MODE SELECTION ---
         params.modeChoices = quadrant.modes;
         if (!quadrant.modes.empty()) {
@@ -167,7 +160,7 @@ public:
             modeIndex = std::min(modeIndex, quadrant.modes.size() - 1);
             params.modeSuggested = quadrant.modes[modeIndex];
         }
-        
+
         // --- KEY SELECTION ---
         // Negative valence: flat keys (Eb, Bb, F)
         // Positive valence: sharp keys (G, D, A)
@@ -181,7 +174,7 @@ public:
         } else {
             params.keySuggested = state.intensity > 0.7f ? "A" : "G";
         }
-        
+
         // --- DISSONANCE ---
         // Base from quadrant, increased by intensity and negative valence
         params.dissonance = quadrant.dissonance;
@@ -189,21 +182,21 @@ public:
             params.dissonance += std::abs(state.valence) * 0.3f * state.intensity;
         }
         params.dissonance = std::clamp(params.dissonance, 0.0f, 1.0f);
-        
+
         // --- DENSITY ---
         // Higher arousal = denser arrangement
         params.density = 0.3f + state.arousal * 0.5f;
         params.spaceProbability = 1.0f - params.density;
-        
+
         // --- DYNAMICS ---
         // Higher intensity = wider dynamic range
         params.dynamicsRange = 0.3f + state.intensity * 0.7f;
         params.velocityMin = static_cast<int>(40 + (1.0f - params.dynamicsRange) * 40);
         params.velocityMax = static_cast<int>(80 + params.dynamicsRange * 47);
-        
+
         // --- TIMING FEEL ---
         params.timingFeel = quadrant.defaultFeel;
-        
+
         // Override based on specific conditions
         if (state.valence < -0.3f && state.arousal < 0.4f) {
             // Sad, low energy: laid back
@@ -218,28 +211,28 @@ public:
             params.timingFeel = TimingFeel::Swung;
             params.swingAmount = 0.66f;
         }
-        
+
         // --- EFFECTS ---
         params.reverbAmount = quadrant.reverb;
         params.reverbDecay = 1.0f + (1.0f - state.arousal) * 2.0f; // Slower decay for calmer
         params.brightness = quadrant.brightness;
-        
+
         // Compression: more for high intensity
         params.compressionRatio = 2.0f + state.intensity * 4.0f;
-        
+
         // Saturation: for anger/intensity
         if (state.valence < -0.3f && state.intensity > 0.6f) {
             params.saturation = state.intensity * 0.5f;
         }
-        
+
         // --- HUMANIZATION ---
         // More variation for higher intensity and arousal
         params.timingVariation = 0.01f + state.intensity * 0.03f;
         params.velocityVariation = 0.05f + state.intensity * 0.15f;
-        
+
         return params;
     }
-    
+
     /**
      * Get the emotional quadrant mapping
      */
@@ -249,14 +242,14 @@ public:
         if (valenceSign <= 0 && arousalLevel > 0) return quadrantLowHigh_;
         return quadrantLowLow_;
     }
-    
+
 private:
     // Quadrant mappings (ported from Python VALENCE_AROUSAL_MAPPINGS)
     QuadrantMapping quadrantHighHigh_;  // Joy, Excitement
     QuadrantMapping quadrantHighLow_;   // Peace, Contentment
     QuadrantMapping quadrantLowHigh_;   // Anger, Fear
     QuadrantMapping quadrantLowLow_;    // Sadness, Grief
-    
+
     void initializeQuadrants() {
         // High valence, high arousal (Joy, Excitement)
         quadrantHighHigh_ = {
@@ -268,7 +261,7 @@ private:
             0.7f,   // density
             TimingFeel::Straight
         };
-        
+
         // High valence, low arousal (Peace, Contentment)
         quadrantHighLow_ = {
             {60, 90},
@@ -279,7 +272,7 @@ private:
             0.4f,
             TimingFeel::LaidBack
         };
-        
+
         // Low valence, high arousal (Anger, Fear)
         quadrantLowHigh_ = {
             {100, 180},
@@ -290,7 +283,7 @@ private:
             0.8f,
             TimingFeel::Pushed
         };
-        
+
         // Low valence, low arousal (Sadness, Grief)
         quadrantLowLow_ = {
             {50, 80},

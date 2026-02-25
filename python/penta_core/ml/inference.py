@@ -1,475 +1,394 @@
 """
-Inference Engine - Unified ML inference across backends.
+Core Inference Module - Base inference classes and results.
 
-Provides a common interface for running inference with:
-- ONNX Runtime
-- TensorFlow Lite
-- CoreML
-- PyTorch
+Provides:
+- InferenceResult dataclass for standard inference outputs
+- BaseInferenceEngine abstract class for inference implementations
+- Model loading utilities
 """
 
+from __future__ import annotations
+
+import logging
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Union
+from enum import Enum
 from pathlib import Path
-import numpy as np
-import time
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from python.penta_core.ml.model_registry import (
-    ModelInfo,
-    ModelBackend,
-    get_model,
-)
+import numpy as np
+
+logger = logging.getLogger(__name__)
+
+
+class InferenceStatus(Enum):
+    """Status of an inference operation."""
+    SUCCESS = "success"
+    ERROR = "error"
+    TIMEOUT = "timeout"
+    CANCELLED = "cancelled"
+    PENDING = "pending"
 
 
 @dataclass
 class InferenceResult:
-    """Result from model inference."""
-    outputs: Dict[str, np.ndarray]
-    latency_ms: float
-    model_name: str
-    backend: ModelBackend
+    """
+    Result from an inference operation.
 
-    # Optional metadata
-    confidence: Optional[float] = None
-    labels: Optional[List[str]] = None
+    Attributes:
+        outputs: Dictionary of output tensors/arrays
+        latency_ms: Inference latency in milliseconds
+        status: Status of the inference operation
+        model_name: Name of the model used
+        metadata: Additional metadata about the inference
+        error: Error message if status is ERROR
+    """
+    outputs: Dict[str, np.ndarray] = field(default_factory=dict)
+    latency_ms: float = 0.0
+    status: InferenceStatus = InferenceStatus.SUCCESS
+    model_name: str = ""
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    error: Optional[str] = None
 
-    def get_output(self, name: str = None) -> np.ndarray:
-        """Get output by name, or first output if name is None."""
-        if name:
-            return self.outputs[name]
-        return next(iter(self.outputs.values()))
+    @property
+    def success(self) -> bool:
+        """Check if inference was successful."""
+        return self.status == InferenceStatus.SUCCESS
 
-    def get_top_k(
-        self,
-        k: int = 5,
-        output_name: str = None,
-    ) -> List[tuple]:
-        """Get top-k predictions with indices and scores."""
-        output = self.get_output(output_name).flatten()
-        indices = np.argsort(output)[-k:][::-1]
-        scores = output[indices]
+    def get_output(self, name: str, default: Optional[np.ndarray] = None) -> Optional[np.ndarray]:
+        """Get a specific output by name."""
+        return self.outputs.get(name, default)
 
-        if self.labels:
-            return [(self.labels[i], float(s)) for i, s in zip(indices, scores)]
-        return [(int(i), float(s)) for i, s in zip(indices, scores)]
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation."""
+        return {
+            "outputs": {k: v.tolist() if isinstance(v, np.ndarray) else v
+                       for k, v in self.outputs.items()},
+            "latency_ms": self.latency_ms,
+            "status": self.status.value,
+            "model_name": self.model_name,
+            "metadata": self.metadata,
+            "error": self.error,
+        }
 
 
-class InferenceEngine(ABC):
-    """Base class for inference engines."""
+class BaseInferenceEngine(ABC):
+    """
+    Abstract base class for inference engines.
 
-    def __init__(self, model_info: ModelInfo):
-        self.model_info = model_info
-        self._session = None
+    Implementations should handle model loading, inference execution,
+    and resource management.
+    """
+
+    def __init__(self, model_path: Optional[str] = None):
+        self.model_path = model_path
+        self._model = None
         self._loaded = False
+        self._device = "cpu"
 
-    @abstractmethod
-    def load(self) -> bool:
-        """Load the model."""
-        pass
-
-    @abstractmethod
-    def unload(self) -> None:
-        """Unload the model."""
-        pass
-
-    @abstractmethod
-    def infer(
-        self,
-        inputs: Dict[str, np.ndarray],
-    ) -> InferenceResult:
-        """Run inference."""
-        pass
-
+    @property
     def is_loaded(self) -> bool:
         """Check if model is loaded."""
         return self._loaded
 
-    def get_input_shape(self) -> Optional[List[int]]:
-        """Get expected input shape."""
-        return self.model_info.input_shape
+    @abstractmethod
+    def load(self) -> bool:
+        """
+        Load the model.
 
-    def get_output_shape(self) -> Optional[List[int]]:
-        """Get expected output shape."""
-        return self.model_info.output_shape
+        Returns:
+            True if model loaded successfully, False otherwise.
+        """
+        pass
+
+    @abstractmethod
+    def infer(
+        self,
+        inputs: Dict[str, np.ndarray],
+        use_fallback: bool = True
+    ) -> InferenceResult:
+        """
+        Run inference on inputs.
+
+        Args:
+            inputs: Dictionary of input tensors
+            use_fallback: Whether to use fallback on error
+
+        Returns:
+            InferenceResult with outputs or error
+        """
+        pass
+
+    def unload(self) -> None:
+        """Unload the model and free resources."""
+        self._model = None
+        self._loaded = False
+
+    def warmup(self, warmup_inputs: Optional[Dict[str, np.ndarray]] = None) -> bool:
+        """
+        Warmup the model with sample inputs.
+
+        Args:
+            warmup_inputs: Optional inputs for warmup, or use defaults
+
+        Returns:
+            True if warmup successful
+        """
+        if not self._loaded:
+            return False
+
+        try:
+            if warmup_inputs is None:
+                # Create default warmup inputs based on model
+                warmup_inputs = self._create_default_warmup_inputs()
+
+            if warmup_inputs:
+                self.infer(warmup_inputs, use_fallback=False)
+            return True
+        except Exception as e:
+            logger.warning(f"Warmup failed: {e}")
+            return False
+
+    def _create_default_warmup_inputs(self) -> Dict[str, np.ndarray]:
+        """Create default warmup inputs. Override in subclasses."""
+        return {}
 
 
-class ONNXEngine(InferenceEngine):
-    """ONNX Runtime inference engine."""
+class SimpleInferenceEngine(BaseInferenceEngine):
+    """
+    Simple inference engine for basic model execution.
 
-    def __init__(self, model_info: ModelInfo):
-        super().__init__(model_info)
-        self._providers = None
+    Supports PyTorch, ONNX, and numpy-based models.
+    """
+
+    def __init__(
+        self,
+        model_path: Optional[str] = None,
+        backend: str = "auto"
+    ):
+        super().__init__(model_path)
+        self.backend = backend
+        self._session = None
 
     def load(self) -> bool:
+        """Load model from path."""
+        if not self.model_path:
+            logger.error("No model path specified")
+            return False
+
+        path = Path(self.model_path)
+        if not path.exists():
+            logger.error(f"Model path does not exist: {path}")
+            return False
+
+        try:
+            if path.suffix == ".onnx":
+                return self._load_onnx(path)
+            elif path.suffix in (".pt", ".pth"):
+                return self._load_torch(path)
+            elif path.suffix == ".npy":
+                return self._load_numpy(path)
+            else:
+                logger.error(f"Unsupported model format: {path.suffix}")
+                return False
+        except Exception as e:
+            logger.error(f"Failed to load model: {e}")
+            return False
+
+    def _load_onnx(self, path: Path) -> bool:
         """Load ONNX model."""
         try:
             import onnxruntime as ort
-
-            # Select execution providers
-            available_providers = ort.get_available_providers()
-            self._providers = []
-
-            # Prefer GPU providers
-            if "CUDAExecutionProvider" in available_providers:
-                self._providers.append("CUDAExecutionProvider")
-            if "CoreMLExecutionProvider" in available_providers:
-                self._providers.append("CoreMLExecutionProvider")
-            if "DmlExecutionProvider" in available_providers:
-                self._providers.append("DmlExecutionProvider")
-
-            # Always include CPU fallback
-            self._providers.append("CPUExecutionProvider")
-
-            # Create session
-            sess_options = ort.SessionOptions()
-            sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-
-            self._session = ort.InferenceSession(
-                self.model_info.path,
-                sess_options=sess_options,
-                providers=self._providers,
-            )
-
+            self._session = ort.InferenceSession(str(path))
             self._loaded = True
+            self.backend = "onnx"
             return True
-
         except ImportError:
-            print("ONNX Runtime not installed. Install with: pip install onnxruntime")
-            return False
-        except Exception as e:
-            print(f"Failed to load ONNX model: {e}")
+            logger.error("onnxruntime not installed")
             return False
 
-    def unload(self) -> None:
-        """Unload ONNX model."""
-        self._session = None
-        self._loaded = False
+    def _load_torch(self, path: Path) -> bool:
+        """Load PyTorch model."""
+        try:
+            import torch
+            self._model = torch.jit.load(str(path))
+            self._model.eval()
+            self._loaded = True
+            self.backend = "torch"
+            return True
+        except ImportError:
+            logger.error("torch not installed")
+            return False
+
+    def _load_numpy(self, path: Path) -> bool:
+        """Load numpy weights (for simple models)."""
+        try:
+            self._model = np.load(str(path), allow_pickle=True).item()
+            self._loaded = True
+            self.backend = "numpy"
+            return True
+        except Exception as e:
+            logger.error(f"Failed to load numpy model: {e}")
+            return False
 
     def infer(
         self,
         inputs: Dict[str, np.ndarray],
+        use_fallback: bool = True
     ) -> InferenceResult:
-        """Run ONNX inference."""
+        """Run inference."""
         if not self._loaded:
-            raise RuntimeError("Model not loaded")
+            return InferenceResult(
+                status=InferenceStatus.ERROR,
+                error="Model not loaded"
+            )
 
         start_time = time.perf_counter()
 
-        # Get input/output names
+        try:
+            if self.backend == "onnx":
+                outputs = self._infer_onnx(inputs)
+            elif self.backend == "torch":
+                outputs = self._infer_torch(inputs)
+            elif self.backend == "numpy":
+                outputs = self._infer_numpy(inputs)
+            else:
+                return InferenceResult(
+                    status=InferenceStatus.ERROR,
+                    error=f"Unknown backend: {self.backend}"
+                )
+
+            latency_ms = (time.perf_counter() - start_time) * 1000
+
+            return InferenceResult(
+                outputs=outputs,
+                latency_ms=latency_ms,
+                status=InferenceStatus.SUCCESS,
+                model_name=str(self.model_path)
+            )
+
+        except Exception as e:
+            latency_ms = (time.perf_counter() - start_time) * 1000
+            logger.error(f"Inference failed: {e}")
+
+            if use_fallback:
+                return self._create_fallback_result(inputs, latency_ms, str(e))
+
+            return InferenceResult(
+                status=InferenceStatus.ERROR,
+                error=str(e),
+                latency_ms=latency_ms
+            )
+
+    def _infer_onnx(self, inputs: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        """Run ONNX inference."""
         input_names = [inp.name for inp in self._session.get_inputs()]
         output_names = [out.name for out in self._session.get_outputs()]
 
-        # Prepare inputs
+        # Map inputs to session input names
         feed_dict = {}
         for name in input_names:
             if name in inputs:
                 feed_dict[name] = inputs[name]
             else:
-                # Try to find matching input by index
-                idx = input_names.index(name)
-                if idx < len(inputs):
-                    feed_dict[name] = list(inputs.values())[idx]
+                # Try to find matching input
+                for k, v in inputs.items():
+                    if k not in feed_dict.values():
+                        feed_dict[name] = v
+                        break
 
-        # Run inference
-        outputs_list = self._session.run(output_names, feed_dict)
+        results = self._session.run(output_names, feed_dict)
 
-        latency_ms = (time.perf_counter() - start_time) * 1000
+        return {name: result for name, result in zip(output_names, results)}
 
-        # Build output dictionary
-        outputs = {name: arr for name, arr in zip(output_names, outputs_list)}
-
-        return InferenceResult(
-            outputs=outputs,
-            latency_ms=latency_ms,
-            model_name=self.model_info.name,
-            backend=ModelBackend.ONNX,
-        )
-
-    def get_input_names(self) -> List[str]:
-        """Get input tensor names."""
-        if self._session:
-            return [inp.name for inp in self._session.get_inputs()]
-        return []
-
-    def get_output_names(self) -> List[str]:
-        """Get output tensor names."""
-        if self._session:
-            return [out.name for out in self._session.get_outputs()]
-        return []
-
-
-class TFLiteEngine(InferenceEngine):
-    """TensorFlow Lite inference engine."""
-
-    def __init__(self, model_info: ModelInfo):
-        super().__init__(model_info)
-        self._interpreter = None
-        self._input_details = None
-        self._output_details = None
-
-    def load(self) -> bool:
-        """Load TFLite model."""
-        try:
-            import tensorflow as tf
-
-            # Create interpreter
-            self._interpreter = tf.lite.Interpreter(
-                model_path=self.model_info.path,
-                num_threads=4,
-            )
-            self._interpreter.allocate_tensors()
-
-            self._input_details = self._interpreter.get_input_details()
-            self._output_details = self._interpreter.get_output_details()
-
-            self._loaded = True
-            return True
-
-        except ImportError:
-            print("TensorFlow not installed. Install with: pip install tensorflow")
-            return False
-        except Exception as e:
-            print(f"Failed to load TFLite model: {e}")
-            return False
-
-    def unload(self) -> None:
-        """Unload TFLite model."""
-        self._interpreter = None
-        self._input_details = None
-        self._output_details = None
-        self._loaded = False
-
-    def infer(
-        self,
-        inputs: Dict[str, np.ndarray],
-    ) -> InferenceResult:
-        """Run TFLite inference."""
-        if not self._loaded:
-            raise RuntimeError("Model not loaded")
-
-        start_time = time.perf_counter()
-
-        # Set input tensors
-        for i, detail in enumerate(self._input_details):
-            name = detail["name"]
-            if name in inputs:
-                self._interpreter.set_tensor(detail["index"], inputs[name])
-            elif i < len(inputs):
-                self._interpreter.set_tensor(
-                    detail["index"],
-                    list(inputs.values())[i],
-                )
-
-        # Run inference
-        self._interpreter.invoke()
-
-        # Get output tensors
-        outputs = {}
-        for detail in self._output_details:
-            outputs[detail["name"]] = self._interpreter.get_tensor(detail["index"])
-
-        latency_ms = (time.perf_counter() - start_time) * 1000
-
-        return InferenceResult(
-            outputs=outputs,
-            latency_ms=latency_ms,
-            model_name=self.model_info.name,
-            backend=ModelBackend.TENSORFLOW_LITE,
-        )
-
-
-class CoreMLEngine(InferenceEngine):
-    """CoreML inference engine (macOS/iOS only)."""
-
-    def __init__(self, model_info: ModelInfo):
-        super().__init__(model_info)
-        self._model = None
-
-    def load(self) -> bool:
-        """Load CoreML model."""
-        try:
-            import coremltools as ct
-            import platform
-
-            if platform.system() != "Darwin":
-                print("CoreML is only available on macOS/iOS")
-                return False
-
-            self._model = ct.models.MLModel(self.model_info.path)
-            self._loaded = True
-            return True
-
-        except ImportError:
-            print("coremltools not installed. Install with: pip install coremltools")
-            return False
-        except Exception as e:
-            print(f"Failed to load CoreML model: {e}")
-            return False
-
-    def unload(self) -> None:
-        """Unload CoreML model."""
-        self._model = None
-        self._loaded = False
-
-    def infer(
-        self,
-        inputs: Dict[str, np.ndarray],
-    ) -> InferenceResult:
-        """Run CoreML inference."""
-        if not self._loaded:
-            raise RuntimeError("Model not loaded")
-
-        start_time = time.perf_counter()
-
-        # Run prediction
-        result = self._model.predict(inputs)
-
-        # Convert to numpy arrays
-        outputs = {}
-        for name, value in result.items():
-            if hasattr(value, "__array__"):
-                outputs[name] = np.array(value)
-            else:
-                outputs[name] = np.array([value])
-
-        latency_ms = (time.perf_counter() - start_time) * 1000
-
-        return InferenceResult(
-            outputs=outputs,
-            latency_ms=latency_ms,
-            model_name=self.model_info.name,
-            backend=ModelBackend.COREML,
-        )
-
-
-class PyTorchEngine(InferenceEngine):
-    """PyTorch inference engine."""
-
-    def __init__(self, model_info: ModelInfo):
-        super().__init__(model_info)
-        self._model = None
-        self._device = None
-
-    def load(self) -> bool:
-        """Load PyTorch model."""
-        try:
-            import torch
-
-            # Select device
-            if torch.cuda.is_available():
-                self._device = torch.device("cuda")
-            elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-                self._device = torch.device("mps")
-            else:
-                self._device = torch.device("cpu")
-
-            # Load model
-            self._model = torch.load(
-                self.model_info.path,
-                map_location=self._device,
-            )
-
-            if hasattr(self._model, "eval"):
-                self._model.eval()
-
-            self._loaded = True
-            return True
-
-        except ImportError:
-            print("PyTorch not installed. Install with: pip install torch")
-            return False
-        except Exception as e:
-            print(f"Failed to load PyTorch model: {e}")
-            return False
-
-    def unload(self) -> None:
-        """Unload PyTorch model."""
-        self._model = None
-        self._device = None
-        self._loaded = False
-
-    def infer(
-        self,
-        inputs: Dict[str, np.ndarray],
-    ) -> InferenceResult:
+    def _infer_torch(self, inputs: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
         """Run PyTorch inference."""
-        if not self._loaded:
-            raise RuntimeError("Model not loaded")
-
         import torch
 
-        start_time = time.perf_counter()
+        # Convert numpy to torch tensors
+        torch_inputs = [torch.from_numpy(v) for v in inputs.values()]
 
-        # Convert inputs to tensors
-        tensor_inputs = {}
-        for name, arr in inputs.items():
-            tensor_inputs[name] = torch.from_numpy(arr).to(self._device)
-
-        # Run inference
         with torch.no_grad():
-            if len(tensor_inputs) == 1:
-                output = self._model(list(tensor_inputs.values())[0])
-            else:
-                output = self._model(**tensor_inputs)
+            outputs = self._model(*torch_inputs)
 
-        # Convert outputs to numpy
+        # Handle single output or tuple
+        if isinstance(outputs, torch.Tensor):
+            outputs = [outputs]
+
+        return {f"output_{i}": out.numpy() for i, out in enumerate(outputs)}
+
+    def _infer_numpy(self, inputs: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
+        """Run numpy-based inference (simple linear models)."""
+        if callable(self._model):
+            result = self._model(inputs)
+            if isinstance(result, dict):
+                return result
+            return {"output": result}
+
+        # Assume it's a weights dict for simple linear model
+        x = list(inputs.values())[0]
+        if "weight" in self._model and "bias" in self._model:
+            output = np.dot(x, self._model["weight"]) + self._model["bias"]
+            return {"output": output}
+
+        return {"output": x}
+
+    def _create_fallback_result(
+        self,
+        inputs: Dict[str, np.ndarray],
+        latency_ms: float,
+        error: str
+    ) -> InferenceResult:
+        """Create fallback result on error."""
+        # Create zero outputs matching input shapes
         outputs = {}
-        if isinstance(output, dict):
-            for name, tensor in output.items():
-                outputs[name] = tensor.cpu().numpy()
-        elif isinstance(output, (list, tuple)):
-            for i, tensor in enumerate(output):
-                outputs[f"output_{i}"] = tensor.cpu().numpy()
-        else:
-            outputs["output"] = output.cpu().numpy()
-
-        latency_ms = (time.perf_counter() - start_time) * 1000
+        for name, arr in inputs.items():
+            outputs[f"output_{name}"] = np.zeros_like(arr)
 
         return InferenceResult(
             outputs=outputs,
             latency_ms=latency_ms,
-            model_name=self.model_info.name,
-            backend=ModelBackend.PYTORCH,
+            status=InferenceStatus.ERROR,
+            error=f"Fallback used: {error}",
+            metadata={"fallback": True}
         )
 
 
-def create_engine(model_info: ModelInfo) -> InferenceEngine:
+def load_model(
+    model_path: str,
+    backend: str = "auto"
+) -> Optional[BaseInferenceEngine]:
     """
-    Create an inference engine for the given model.
+    Load a model and return an inference engine.
 
     Args:
-        model_info: Model information
+        model_path: Path to the model file
+        backend: Backend to use ("auto", "onnx", "torch", "numpy")
 
     Returns:
-        Appropriate inference engine
+        Inference engine if successful, None otherwise
     """
-    engines = {
-        ModelBackend.ONNX: ONNXEngine,
-        ModelBackend.TENSORFLOW_LITE: TFLiteEngine,
-        ModelBackend.COREML: CoreMLEngine,
-        ModelBackend.PYTORCH: PyTorchEngine,
-        ModelBackend.TORCHSCRIPT: PyTorchEngine,
-    }
-
-    engine_class = engines.get(model_info.backend)
-    if not engine_class:
-        raise ValueError(f"Unsupported backend: {model_info.backend}")
-
-    return engine_class(model_info)
-
-
-def create_engine_by_name(name: str) -> Optional[InferenceEngine]:
-    """
-    Create an inference engine by model name.
-
-    Args:
-        name: Registered model name
-
-    Returns:
-        Inference engine or None if model not found
-    """
-    model_info = get_model(name)
-    if model_info:
-        return create_engine(model_info)
+    engine = SimpleInferenceEngine(model_path, backend)
+    if engine.load():
+        return engine
     return None
+
+
+__all__ = [
+    "InferenceStatus",
+    "InferenceResult",
+    "BaseInferenceEngine",
+    "SimpleInferenceEngine",
+    "load_model",
+    # Aliases for compatibility with __init__.py expectations
+    "InferenceEngine",
+    "create_engine",
+]
+
+# Aliases for compatibility
+InferenceEngine = SimpleInferenceEngine
+
+def create_engine(model_path: str, backend: str = "auto") -> Optional[BaseInferenceEngine]:
+    """Create an inference engine for the given model path."""
+    return load_model(model_path, backend)

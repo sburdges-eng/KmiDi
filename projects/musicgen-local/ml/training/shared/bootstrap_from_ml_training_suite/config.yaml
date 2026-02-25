@@ -1,0 +1,67 @@
+# ML Training Suite Configuration
+
+# Data settings
+data:
+  root_dir: "../data/raw"
+  sample_rate: 22050
+  duration: 5.0  # seconds
+  n_mels: 128
+  n_fft: 2048
+  hop_length: 512
+  extensions:
+    - .mp3
+    - .wav
+    - .aif
+    - .aiff
+    - .flac
+
+# Data splits
+splits:
+  train: 0.8
+  val: 0.1
+  test: 0.1
+  seed: 42
+
+# Model settings
+model:
+  type: "AudioClassifier"  # or "AudioClassifierResNet"
+  num_classes: 10
+  channels: [32, 64, 128, 256]
+  fc_dim: 512
+  dropout: 0.5
+
+# Training settings
+training:
+  batch_size: 32
+  epochs: 100
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  early_stopping_patience: 15
+  num_workers: 4
+
+# Optimizer settings
+optimizer:
+  type: "AdamW"
+  betas: [0.9, 0.999]
+
+# Scheduler settings
+scheduler:
+  type: "ReduceLROnPlateau"
+  mode: "min"
+  factor: 0.5
+  patience: 5
+  min_lr: 0.000001
+
+# Paths
+paths:
+  checkpoint_dir: "models/checkpoints"
+  log_dir: "logs"
+  export_dir: "models/exported"
+
+# Device settings
+device: "auto"  # "auto", "cpu", "cuda", or "mps"
+
+# Experiment tracking
+experiment:
+  name: null  # Auto-generated if null
+  tags: []

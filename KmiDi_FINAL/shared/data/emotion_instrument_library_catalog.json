@@ -1,0 +1,3075 @@
+{
+  "metadata": {
+    "generated": "2026-01-10T01:45:27.317735",
+    "source_path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO",
+    "schema_version": "1.0.0",
+    "statistics": {
+      "total_files": 295,
+      "total_size_mb": 80.35,
+      "emotions": {
+        "ANGRY": {
+          "files": 17,
+          "size_mb": 5.7,
+          "level": "base"
+        },
+        "DISGUST": {
+          "files": 7,
+          "size_mb": 0.39,
+          "level": "base"
+        },
+        "FEAR": {
+          "files": 20,
+          "size_mb": 4.73,
+          "level": "base"
+        },
+        "HAPPY": {
+          "files": 20,
+          "size_mb": 4.37,
+          "level": "base"
+        },
+        "SAD": {
+          "files": 20,
+          "size_mb": 6.89,
+          "level": "base"
+        },
+        "SURPRISE": {
+          "files": 20,
+          "size_mb": 3.6,
+          "level": "base"
+        },
+        "LONELINESS": {
+          "files": 3,
+          "size_mb": 1.41,
+          "level": "sub"
+        },
+        "INDIGNATION": {
+          "files": 0,
+          "size_mb": 0.0,
+          "level": "sub"
+        },
+        "TERROR": {
+          "files": 20,
+          "size_mb": 6.48,
+          "level": "sub"
+        },
+        "VENGEANCE": {
+          "files": 3,
+          "size_mb": 0.25,
+          "level": "sub"
+        },
+        "EXCITEMENT": {
+          "files": 17,
+          "size_mb": 4.61,
+          "level": "sub"
+        },
+        "ANXIETY": {
+          "files": 10,
+          "size_mb": 2.98,
+          "level": "sub"
+        },
+        "DISAPPOINTMENT": {
+          "files": 0,
+          "size_mb": 0.0,
+          "level": "sub"
+        },
+        "LOVE": {
+          "files": 20,
+          "size_mb": 6.23,
+          "level": "sub"
+        },
+        "MELANCHOLY": {
+          "files": 15,
+          "size_mb": 4.08,
+          "level": "sub"
+        },
+        "HURT": {
+          "files": 14,
+          "size_mb": 2.29,
+          "level": "sub"
+        },
+        "GRIEF": {
+          "files": 8,
+          "size_mb": 1.54,
+          "level": "sub"
+        },
+        "CONTENTMENT": {
+          "files": 20,
+          "size_mb": 3.68,
+          "level": "sub"
+        },
+        "IRRITATION": {
+          "files": 3,
+          "size_mb": 1.1,
+          "level": "sub"
+        },
+        "JOY": {
+          "files": 20,
+          "size_mb": 5.14,
+          "level": "sub"
+        },
+        "HOPE": {
+          "files": 20,
+          "size_mb": 6.71,
+          "level": "sub"
+        },
+        "RAGE": {
+          "files": 12,
+          "size_mb": 5.58,
+          "level": "sub"
+        },
+        "HOSTILITY": {
+          "files": 0,
+          "size_mb": 0.0,
+          "level": "sub"
+        },
+        "JEALOUSY": {
+          "files": 0,
+          "size_mb": 0.0,
+          "level": "sub"
+        },
+        "DESPAIR": {
+          "files": 3,
+          "size_mb": 1.26,
+          "level": "sub"
+        },
+        "PRIDE": {
+          "files": 3,
+          "size_mb": 1.33,
+          "level": "sub"
+        }
+      }
+    }
+  },
+  "emotions": {
+    "ANGRY": {
+      "level": "base",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "27836_InduMetal_Drums002_hearted.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/drums/27836_InduMetal_Drums002_hearted.wav.mp3",
+            "size_bytes": 76819,
+            "size_mb": 0.07,
+            "extension": ".mp3",
+            "sample_id": "27836",
+            "modified": "2025-11-28T00:52:38.807563"
+          },
+          {
+            "filename": "394820_Distorted Wah Growl 1.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/drums/394820_Distorted Wah Growl 1.wav.mp3",
+            "size_bytes": 701806,
+            "size_mb": 0.67,
+            "extension": ".mp3",
+            "sample_id": "394820",
+            "modified": "2025-11-28T00:52:22.283371"
+          },
+          {
+            "filename": "394821_Distorted Wah Growl 2.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/drums/394821_Distorted Wah Growl 2.wav.mp3",
+            "size_bytes": 702959,
+            "size_mb": 0.67,
+            "extension": ".mp3",
+            "sample_id": "394821",
+            "modified": "2025-11-28T00:52:35.406947"
+          },
+          {
+            "filename": "421830_Cinematic Angry Astronef Ultimatum.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/drums/421830_Cinematic Angry Astronef Ultimatum.mp3",
+            "size_bytes": 343392,
+            "size_mb": 0.33,
+            "extension": ".mp3",
+            "sample_id": "421830",
+            "modified": "2025-11-28T00:52:30.671154"
+          },
+          {
+            "filename": "701154_Breakbeat Loop.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/drums/701154_Breakbeat Loop.mp3",
+            "size_bytes": 401517,
+            "size_mb": 0.38,
+            "extension": ".mp3",
+            "sample_id": "701154",
+            "modified": "2025-11-28T00:52:26.240346"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "433865_angry bees.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/guitar/433865_angry bees.wav.mp3",
+            "size_bytes": 723898,
+            "size_mb": 0.69,
+            "extension": ".mp3",
+            "sample_id": "433865",
+            "modified": "2025-11-28T00:52:13.442194"
+          },
+          {
+            "filename": "557693_zzzbeats guitar noodling  fretting.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/guitar/557693_zzzbeats guitar noodling  fretting.wav.mp3",
+            "size_bytes": 32143,
+            "size_mb": 0.03,
+            "extension": ".mp3",
+            "sample_id": "557693",
+            "modified": "2025-11-28T00:52:16.240906"
+          },
+          {
+            "filename": "5612_peace and anarchy2.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/guitar/5612_peace and anarchy2.wav.mp3",
+            "size_bytes": 521246,
+            "size_mb": 0.5,
+            "extension": ".mp3",
+            "sample_id": "5612",
+            "modified": "2025-11-28T00:52:05.682211"
+          },
+          {
+            "filename": "701154_Breakbeat Loop.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/guitar/701154_Breakbeat Loop.mp3",
+            "size_bytes": 401517,
+            "size_mb": 0.38,
+            "extension": ".mp3",
+            "sample_id": "701154",
+            "modified": "2025-11-28T00:52:00.785982"
+          },
+          {
+            "filename": "87083_stress.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/guitar/87083_stress.wav.mp3",
+            "size_bytes": 37620,
+            "size_mb": 0.04,
+            "extension": ".mp3",
+            "sample_id": "87083",
+            "modified": "2025-11-28T00:52:08.844839"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "621385_Screaming No - WITHOUT reverb.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/piano/621385_Screaming No - WITHOUT reverb.wav.mp3",
+            "size_bytes": 124132,
+            "size_mb": 0.12,
+            "extension": ".mp3",
+            "sample_id": "621385",
+            "modified": "2025-11-28T00:51:55.171128"
+          },
+          {
+            "filename": "621386_Screaming No - WITH reverb.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/piano/621386_Screaming No - WITH reverb.wav.mp3",
+            "size_bytes": 192573,
+            "size_mb": 0.18,
+            "extension": ".mp3",
+            "sample_id": "621386",
+            "modified": "2025-11-28T00:51:51.542904"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "428668_Angry Goliath Yelling Come On.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/vocals/428668_Angry Goliath Yelling Come On.mp3",
+            "size_bytes": 24525,
+            "size_mb": 0.02,
+            "extension": ".mp3",
+            "sample_id": "428668",
+            "modified": "2025-11-28T00:52:42.067433"
+          },
+          {
+            "filename": "464541_Voices_Collection.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/vocals/464541_Voices_Collection.wav.mp3",
+            "size_bytes": 410084,
+            "size_mb": 0.39,
+            "extension": ".mp3",
+            "sample_id": "464541",
+            "modified": "2025-11-28T00:52:58.353609"
+          },
+          {
+            "filename": "573323_Shut Up.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/vocals/573323_Shut Up.wav.mp3",
+            "size_bytes": 312096,
+            "size_mb": 0.3,
+            "extension": ".mp3",
+            "sample_id": "573323",
+            "modified": "2025-11-28T00:52:46.812289"
+          },
+          {
+            "filename": "700963_Demon Witch Laughter Ch and Rev.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/vocals/700963_Demon Witch Laughter Ch and Rev.wav.mp3",
+            "size_bytes": 370176,
+            "size_mb": 0.35,
+            "extension": ".mp3",
+            "sample_id": "700963",
+            "modified": "2025-11-28T00:52:54.262719"
+          },
+          {
+            "filename": "718967_ShoutingPunches_Male.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/ANGRY/vocals/718967_ShoutingPunches_Male.mp3",
+            "size_bytes": 609984,
+            "size_mb": 0.58,
+            "extension": ".mp3",
+            "sample_id": "718967",
+            "modified": "2025-11-28T00:53:03.441840"
+          }
+        ]
+      }
+    },
+    "DISGUST": {
+      "level": "base",
+      "instruments": {
+        "guitar": [
+          {
+            "filename": "660993_scratchy.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/DISGUST/guitar/660993_scratchy.wav.mp3",
+            "size_bytes": 58137,
+            "size_mb": 0.06,
+            "extension": ".mp3",
+            "sample_id": "660993",
+            "modified": "2025-11-28T00:55:58.702108"
+          },
+          {
+            "filename": "660996_scratchy2.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/DISGUST/guitar/660996_scratchy2.wav.mp3",
+            "size_bytes": 52034,
+            "size_mb": 0.05,
+            "extension": ".mp3",
+            "sample_id": "660996",
+            "modified": "2025-11-28T00:55:55.463667"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "642988_eeww thats disgusting - vocal.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/DISGUST/vocals/642988_eeww thats disgusting - vocal.mp3",
+            "size_bytes": 70536,
+            "size_mb": 0.07,
+            "extension": ".mp3",
+            "sample_id": "642988",
+            "modified": "2025-11-28T00:56:06.221214"
+          },
+          {
+            "filename": "642989_Eewww - vocal dirty one shot 3.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/DISGUST/vocals/642989_Eewww - vocal dirty one shot 3.mp3",
+            "size_bytes": 22704,
+            "size_mb": 0.02,
+            "extension": ".mp3",
+            "sample_id": "642989",
+            "modified": "2025-11-28T00:56:12.445959"
+          },
+          {
+            "filename": "643000_Eel disgust - vocal one shot.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/DISGUST/vocals/643000_Eel disgust - vocal one shot.wav.mp3",
+            "size_bytes": 20496,
+            "size_mb": 0.02,
+            "extension": ".mp3",
+            "sample_id": "643000",
+            "modified": "2025-11-28T00:56:02.349773"
+          },
+          {
+            "filename": "643012_Eww a spider - scared vocal.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/DISGUST/vocals/643012_Eww a spider - scared vocal.mp3",
+            "size_bytes": 48480,
+            "size_mb": 0.05,
+            "extension": ".mp3",
+            "sample_id": "643012",
+            "modified": "2025-11-28T00:56:09.464358"
+          },
+          {
+            "filename": "643291_Nasty disgusting - vocal.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/DISGUST/vocals/643291_Nasty disgusting - vocal.mp3",
+            "size_bytes": 124944,
+            "size_mb": 0.12,
+            "extension": ".mp3",
+            "sample_id": "643291",
+            "modified": "2025-11-28T00:56:16.115367"
+          }
+        ]
+      }
+    },
+    "FEAR": {
+      "level": "base",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "123886_FMJ.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/drums/123886_FMJ.wav.mp3",
+            "size_bytes": 322779,
+            "size_mb": 0.31,
+            "extension": ".mp3",
+            "sample_id": "123886",
+            "modified": "2025-11-28T00:53:55.857972"
+          },
+          {
+            "filename": "648779_Epic SuperHero Loop1.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/drums/648779_Epic SuperHero Loop1.mp3",
+            "size_bytes": 220815,
+            "size_mb": 0.21,
+            "extension": ".mp3",
+            "sample_id": "648779",
+            "modified": "2025-11-28T00:54:03.477327"
+          },
+          {
+            "filename": "652266_No Fear Loop.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/drums/652266_No Fear Loop.mp3",
+            "size_bytes": 309540,
+            "size_mb": 0.3,
+            "extension": ".mp3",
+            "sample_id": "652266",
+            "modified": "2025-11-28T00:53:59.654012"
+          },
+          {
+            "filename": "753457_grito-diabolik.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/drums/753457_grito-diabolik.mp3",
+            "size_bytes": 72649,
+            "size_mb": 0.07,
+            "extension": ".mp3",
+            "sample_id": "753457",
+            "modified": "2025-11-28T00:53:50.888473"
+          },
+          {
+            "filename": "814056_Vibrating Jumpscare.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/drums/814056_Vibrating Jumpscare.mp3",
+            "size_bytes": 198898,
+            "size_mb": 0.19,
+            "extension": ".mp3",
+            "sample_id": "814056",
+            "modified": "2025-11-28T00:54:07.141245"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "57863_DADGAD tk89 RIFF 21FE.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/guitar/57863_DADGAD tk89 RIFF 21FE.wav.mp3",
+            "size_bytes": 325896,
+            "size_mb": 0.31,
+            "extension": ".mp3",
+            "sample_id": "57863",
+            "modified": "2025-11-28T00:53:47.218283"
+          },
+          {
+            "filename": "58305_tk9 RIFF 5E  REVRS.WAV.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/guitar/58305_tk9 RIFF 5E  REVRS.WAV.mp3",
+            "size_bytes": 162163,
+            "size_mb": 0.15,
+            "extension": ".mp3",
+            "sample_id": "58305",
+            "modified": "2025-11-28T00:53:33.984663"
+          },
+          {
+            "filename": "652266_No Fear Loop.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/guitar/652266_No Fear Loop.mp3",
+            "size_bytes": 309540,
+            "size_mb": 0.3,
+            "extension": ".mp3",
+            "sample_id": "652266",
+            "modified": "2025-11-28T00:53:38.829164"
+          },
+          {
+            "filename": "719677_Dark Ambient Guitar Drone E  C.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/guitar/719677_Dark Ambient Guitar Drone E  C.mp3",
+            "size_bytes": 461162,
+            "size_mb": 0.44,
+            "extension": ".mp3",
+            "sample_id": "719677",
+            "modified": "2025-11-28T00:53:42.905543"
+          },
+          {
+            "filename": "795914_Sci-Fi Horror scary mechanical transitio.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/guitar/795914_Sci-Fi Horror scary mechanical transitio.mp3",
+            "size_bytes": 346544,
+            "size_mb": 0.33,
+            "extension": ".mp3",
+            "sample_id": "795914",
+            "modified": "2025-11-28T00:53:30.304894"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "563916_Bad Omen.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/piano/563916_Bad Omen.mp3",
+            "size_bytes": 107136,
+            "size_mb": 0.1,
+            "extension": ".mp3",
+            "sample_id": "563916",
+            "modified": "2025-11-28T00:53:08.128500"
+          },
+          {
+            "filename": "587012_Something creepy.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/piano/587012_Something creepy.mp3",
+            "size_bytes": 172171,
+            "size_mb": 0.16,
+            "extension": ".mp3",
+            "sample_id": "587012",
+            "modified": "2025-11-28T00:53:16.352614"
+          },
+          {
+            "filename": "706754_Youve been trapped short sting.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/piano/706754_Youve been trapped short sting.mp3",
+            "size_bytes": 141768,
+            "size_mb": 0.14,
+            "extension": ".mp3",
+            "sample_id": "706754",
+            "modified": "2025-11-28T00:53:12.849093"
+          },
+          {
+            "filename": "814048_Horror Surprise.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/piano/814048_Horror Surprise.mp3",
+            "size_bytes": 235427,
+            "size_mb": 0.22,
+            "extension": ".mp3",
+            "sample_id": "814048",
+            "modified": "2025-11-28T00:53:25.302556"
+          },
+          {
+            "filename": "814056_Vibrating Jumpscare.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/piano/814056_Vibrating Jumpscare.mp3",
+            "size_bytes": 198898,
+            "size_mb": 0.19,
+            "extension": ".mp3",
+            "sample_id": "814056",
+            "modified": "2025-11-28T00:53:20.013867"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "179317_Male Scream 13.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/vocals/179317_Male Scream 13.mp3",
+            "size_bytes": 174276,
+            "size_mb": 0.17,
+            "extension": ".mp3",
+            "sample_id": "179317",
+            "modified": "2025-11-28T00:54:11.334175"
+          },
+          {
+            "filename": "179326_Male screams Hey.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/vocals/179326_Male screams Hey.mp3",
+            "size_bytes": 65329,
+            "size_mb": 0.06,
+            "extension": ".mp3",
+            "sample_id": "179326",
+            "modified": "2025-11-28T00:54:18.417291"
+          },
+          {
+            "filename": "581837_Male creepy blowing.Fade in reverb_1dns.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/vocals/581837_Male creepy blowing.Fade in reverb_1dns.mp3",
+            "size_bytes": 452784,
+            "size_mb": 0.43,
+            "extension": ".mp3",
+            "sample_id": "581837",
+            "modified": "2025-11-28T00:54:23.699528"
+          },
+          {
+            "filename": "582488_Whisper swoosh_8mltprcssng.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/vocals/582488_Whisper swoosh_8mltprcssng.wav.mp3",
+            "size_bytes": 231960,
+            "size_mb": 0.22,
+            "extension": ".mp3",
+            "sample_id": "582488",
+            "modified": "2025-11-28T00:54:15.194076"
+          },
+          {
+            "filename": "794240_Ghost Crossing - The Beyond.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/FEAR/vocals/794240_Ghost Crossing - The Beyond.mp3",
+            "size_bytes": 452265,
+            "size_mb": 0.43,
+            "extension": ".mp3",
+            "sample_id": "794240",
+            "modified": "2025-11-28T00:54:27.951403"
+          }
+        ]
+      }
+    },
+    "HAPPY": {
+      "level": "base",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "511918_088-DrumbitX.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/drums/511918_088-DrumbitX.wav.mp3",
+            "size_bytes": 137044,
+            "size_mb": 0.13,
+            "extension": ".mp3",
+            "sample_id": "511918",
+            "modified": "2025-11-28T00:49:59.334051"
+          },
+          {
+            "filename": "511923_094-Drumbit.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/drums/511923_094-Drumbit.wav.mp3",
+            "size_bytes": 247968,
+            "size_mb": 0.24,
+            "extension": ".mp3",
+            "sample_id": "511923",
+            "modified": "2025-11-28T00:49:55.350373"
+          },
+          {
+            "filename": "514280_Eletro Hit 4.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/drums/514280_Eletro Hit 4.mp3",
+            "size_bytes": 175323,
+            "size_mb": 0.17,
+            "extension": ".mp3",
+            "sample_id": "514280",
+            "modified": "2025-11-28T00:49:47.611962"
+          },
+          {
+            "filename": "690682_Full Chill Lofi Beat.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/drums/690682_Full Chill Lofi Beat.wav.mp3",
+            "size_bytes": 258091,
+            "size_mb": 0.25,
+            "extension": ".mp3",
+            "sample_id": "690682",
+            "modified": "2025-11-28T00:49:44.284189"
+          },
+          {
+            "filename": "99968_light happy beat 122 bpm.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/drums/99968_light happy beat 122 bpm.wav.mp3",
+            "size_bytes": 97689,
+            "size_mb": 0.09,
+            "extension": ".mp3",
+            "sample_id": "99968",
+            "modified": "2025-11-28T00:49:50.756425"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "514280_Eletro Hit 4.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/guitar/514280_Eletro Hit 4.mp3",
+            "size_bytes": 175323,
+            "size_mb": 0.17,
+            "extension": ".mp3",
+            "sample_id": "514280",
+            "modified": "2025-11-28T00:49:29.865466"
+          },
+          {
+            "filename": "523719_best_piano.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/guitar/523719_best_piano.wav.mp3",
+            "size_bytes": 449046,
+            "size_mb": 0.43,
+            "extension": ".mp3",
+            "sample_id": "523719",
+            "modified": "2025-11-28T00:49:21.922630"
+          },
+          {
+            "filename": "661907_Happy guitar audio logo artxmpl-al-02 .mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/guitar/661907_Happy guitar audio logo artxmpl-al-02 .mp3",
+            "size_bytes": 66986,
+            "size_mb": 0.06,
+            "extension": ".mp3",
+            "sample_id": "661907",
+            "modified": "2025-11-28T00:49:33.300150"
+          },
+          {
+            "filename": "738791_Comedy Upbeat short ver..mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/guitar/738791_Comedy Upbeat short ver..mp3",
+            "size_bytes": 746007,
+            "size_mb": 0.71,
+            "extension": ".mp3",
+            "sample_id": "738791",
+            "modified": "2025-11-28T00:49:26.243319"
+          },
+          {
+            "filename": "760970_Magical Christmas Holidays loop ver.3.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/guitar/760970_Magical Christmas Holidays loop ver.3.mp3",
+            "size_bytes": 446674,
+            "size_mb": 0.43,
+            "extension": ".mp3",
+            "sample_id": "760970",
+            "modified": "2025-11-28T00:49:39.746175"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "128547_PianoMoodHappy6.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/piano/128547_PianoMoodHappy6.wav.mp3",
+            "size_bytes": 200998,
+            "size_mb": 0.19,
+            "extension": ".mp3",
+            "sample_id": "128547",
+            "modified": "2025-11-28T00:49:09.861543"
+          },
+          {
+            "filename": "128548_PianoMoodHappy5.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/piano/128548_PianoMoodHappy5.wav.mp3",
+            "size_bytes": 194341,
+            "size_mb": 0.19,
+            "extension": ".mp3",
+            "sample_id": "128548",
+            "modified": "2025-11-28T00:49:05.692291"
+          },
+          {
+            "filename": "523719_best_piano.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/piano/523719_best_piano.wav.mp3",
+            "size_bytes": 449046,
+            "size_mb": 0.43,
+            "extension": ".mp3",
+            "sample_id": "523719",
+            "modified": "2025-11-28T00:49:01.998058"
+          },
+          {
+            "filename": "654028_Back to School Loop.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/piano/654028_Back to School Loop.mp3",
+            "size_bytes": 304729,
+            "size_mb": 0.29,
+            "extension": ".mp3",
+            "sample_id": "654028",
+            "modified": "2025-11-28T00:49:17.418099"
+          },
+          {
+            "filename": "745361_Intro.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/piano/745361_Intro.mp3",
+            "size_bytes": 162816,
+            "size_mb": 0.16,
+            "extension": ".mp3",
+            "sample_id": "745361",
+            "modified": "2025-11-28T00:49:13.531003"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "136777_Voice Xmas  New Year.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/vocals/136777_Voice Xmas  New Year.mp3",
+            "size_bytes": 63875,
+            "size_mb": 0.06,
+            "extension": ".mp3",
+            "sample_id": "136777",
+            "modified": "2025-11-28T00:50:08.967376"
+          },
+          {
+            "filename": "428668_Angry Goliath Yelling Come On.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/vocals/428668_Angry Goliath Yelling Come On.mp3",
+            "size_bytes": 24525,
+            "size_mb": 0.02,
+            "extension": ".mp3",
+            "sample_id": "428668",
+            "modified": "2025-11-28T00:50:05.792374"
+          },
+          {
+            "filename": "475065_Wow - Vocal Expression Group 1.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/vocals/475065_Wow - Vocal Expression Group 1.mp3",
+            "size_bytes": 129239,
+            "size_mb": 0.12,
+            "extension": ".mp3",
+            "sample_id": "475065",
+            "modified": "2025-11-28T00:50:12.130991"
+          },
+          {
+            "filename": "521900_Voice_Child_WowCelebration.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/vocals/521900_Voice_Child_WowCelebration.wav.mp3",
+            "size_bytes": 201328,
+            "size_mb": 0.19,
+            "extension": ".mp3",
+            "sample_id": "521900",
+            "modified": "2025-11-28T00:50:15.607560"
+          },
+          {
+            "filename": "645367_Vocal one-shot rap  - never surrender to.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/HAPPY/vocals/645367_Vocal one-shot rap  - never surrender to.mp3",
+            "size_bytes": 39024,
+            "size_mb": 0.04,
+            "extension": ".mp3",
+            "sample_id": "645367",
+            "modified": "2025-11-28T00:50:02.949320"
+          }
+        ]
+      }
+    },
+    "SAD": {
+      "level": "base",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "240157_charming loop.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/drums/240157_charming loop.wav.mp3",
+            "size_bytes": 747291,
+            "size_mb": 0.71,
+            "extension": ".mp3",
+            "sample_id": "240157",
+            "modified": "2025-11-28T00:51:28.352531"
+          },
+          {
+            "filename": "410539_Sad Metal Solo.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/drums/410539_Sad Metal Solo.mp3",
+            "size_bytes": 614462,
+            "size_mb": 0.59,
+            "extension": ".mp3",
+            "sample_id": "410539",
+            "modified": "2025-11-28T00:51:17.403171"
+          },
+          {
+            "filename": "570891_bird noisy.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/drums/570891_bird noisy.wav.mp3",
+            "size_bytes": 32854,
+            "size_mb": 0.03,
+            "extension": ".mp3",
+            "sample_id": "570891",
+            "modified": "2025-11-28T00:51:08.568372"
+          },
+          {
+            "filename": "580234_Lucas569895.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/drums/580234_Lucas569895.wav.mp3",
+            "size_bytes": 679542,
+            "size_mb": 0.65,
+            "extension": ".mp3",
+            "sample_id": "580234",
+            "modified": "2025-11-28T00:51:12.919175"
+          },
+          {
+            "filename": "654730_Fusion.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/drums/654730_Fusion.mp3",
+            "size_bytes": 583058,
+            "size_mb": 0.56,
+            "extension": ".mp3",
+            "sample_id": "654730",
+            "modified": "2025-11-28T00:51:05.829101"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "175198_chill-harmonics.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/guitar/175198_chill-harmonics.wav.mp3",
+            "size_bytes": 392342,
+            "size_mb": 0.37,
+            "extension": ".mp3",
+            "sample_id": "175198",
+            "modified": "2025-11-28T00:50:56.557762"
+          },
+          {
+            "filename": "175200_chill-harmonics-04.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/guitar/175200_chill-harmonics-04.wav.mp3",
+            "size_bytes": 255285,
+            "size_mb": 0.24,
+            "extension": ".mp3",
+            "sample_id": "175200",
+            "modified": "2025-11-28T00:51:01.638684"
+          },
+          {
+            "filename": "55083_guitarfx.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/guitar/55083_guitarfx.wav.mp3",
+            "size_bytes": 133152,
+            "size_mb": 0.13,
+            "extension": ".mp3",
+            "sample_id": "55083",
+            "modified": "2025-11-28T00:50:52.186153"
+          },
+          {
+            "filename": "654730_Fusion.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/guitar/654730_Fusion.mp3",
+            "size_bytes": 583058,
+            "size_mb": 0.56,
+            "extension": ".mp3",
+            "sample_id": "654730",
+            "modified": "2025-11-28T00:50:44.382829"
+          },
+          {
+            "filename": "706901_lovescene 76BPM Emin.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/guitar/706901_lovescene 76BPM Emin.wav.mp3",
+            "size_bytes": 294852,
+            "size_mb": 0.28,
+            "extension": ".mp3",
+            "sample_id": "706901",
+            "modified": "2025-11-28T00:50:48.495932"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "128554_PianoMoodSad1.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/piano/128554_PianoMoodSad1.wav.mp3",
+            "size_bytes": 403577,
+            "size_mb": 0.38,
+            "extension": ".mp3",
+            "sample_id": "128554",
+            "modified": "2025-11-28T00:50:39.058918"
+          },
+          {
+            "filename": "238328_A Minor Progression Piano.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/piano/238328_A Minor Progression Piano.wav.mp3",
+            "size_bytes": 228384,
+            "size_mb": 0.22,
+            "extension": ".mp3",
+            "sample_id": "238328",
+            "modified": "2025-11-28T00:50:25.592840"
+          },
+          {
+            "filename": "423879_Biggsmoove - Piano sad - The Secession S.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/piano/423879_Biggsmoove - Piano sad - The Secession S.mp3",
+            "size_bytes": 162217,
+            "size_mb": 0.15,
+            "extension": ".mp3",
+            "sample_id": "423879",
+            "modified": "2025-11-28T00:50:33.634739"
+          },
+          {
+            "filename": "518641_Lofi Tape Piano Chords - 145bpm - Cmin..mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/piano/518641_Lofi Tape Piano Chords - 145bpm - Cmin..mp3",
+            "size_bytes": 296704,
+            "size_mb": 0.28,
+            "extension": ".mp3",
+            "sample_id": "518641",
+            "modified": "2025-11-28T00:50:30.079074"
+          },
+          {
+            "filename": "654730_Fusion.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/piano/654730_Fusion.mp3",
+            "size_bytes": 583058,
+            "size_mb": 0.56,
+            "extension": ".mp3",
+            "sample_id": "654730",
+            "modified": "2025-11-28T00:50:21.688294"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "180305_Sad cry 1.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/vocals/180305_Sad cry 1.mp3",
+            "size_bytes": 111134,
+            "size_mb": 0.11,
+            "extension": ".mp3",
+            "sample_id": "180305",
+            "modified": "2025-11-28T00:51:43.863935"
+          },
+          {
+            "filename": "180307_Sad cry 2.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/vocals/180307_Sad cry 2.mp3",
+            "size_bytes": 131696,
+            "size_mb": 0.13,
+            "extension": ".mp3",
+            "sample_id": "180307",
+            "modified": "2025-11-28T00:51:47.222066"
+          },
+          {
+            "filename": "246310_Meh - vocal.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/vocals/246310_Meh - vocal.mp3",
+            "size_bytes": 102065,
+            "size_mb": 0.1,
+            "extension": ".mp3",
+            "sample_id": "246310",
+            "modified": "2025-11-28T00:51:40.559353"
+          },
+          {
+            "filename": "654730_Fusion.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/vocals/654730_Fusion.mp3",
+            "size_bytes": 583058,
+            "size_mb": 0.56,
+            "extension": ".mp3",
+            "sample_id": "654730",
+            "modified": "2025-11-28T00:51:33.222015"
+          },
+          {
+            "filename": "790476_French Accent Woman Vocal - Therapy Sess.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SAD/vocals/790476_French Accent Woman Vocal - Therapy Sess.mp3",
+            "size_bytes": 290112,
+            "size_mb": 0.28,
+            "extension": ".mp3",
+            "sample_id": "790476",
+            "modified": "2025-11-28T00:51:37.235316"
+          }
+        ]
+      }
+    },
+    "SURPRISE": {
+      "level": "base",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "652406_Hellish Fuzz Bass.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/drums/652406_Hellish Fuzz Bass.mp3",
+            "size_bytes": 285576,
+            "size_mb": 0.27,
+            "extension": ".mp3",
+            "sample_id": "652406",
+            "modified": "2025-11-28T00:55:27.913953"
+          },
+          {
+            "filename": "814044_Creation Magic Blast.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/drums/814044_Creation Magic Blast.mp3",
+            "size_bytes": 170606,
+            "size_mb": 0.16,
+            "extension": ".mp3",
+            "sample_id": "814044",
+            "modified": "2025-11-28T00:55:19.492341"
+          },
+          {
+            "filename": "814045_Dark Sci-Fi Signal.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/drums/814045_Dark Sci-Fi Signal.mp3",
+            "size_bytes": 203012,
+            "size_mb": 0.19,
+            "extension": ".mp3",
+            "sample_id": "814045",
+            "modified": "2025-11-28T00:55:23.583066"
+          },
+          {
+            "filename": "814053_Shockwave.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/drums/814053_Shockwave.mp3",
+            "size_bytes": 177199,
+            "size_mb": 0.17,
+            "extension": ".mp3",
+            "sample_id": "814053",
+            "modified": "2025-11-28T00:55:13.538481"
+          },
+          {
+            "filename": "814057_World Ender Explosion.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/drums/814057_World Ender Explosion.mp3",
+            "size_bytes": 213981,
+            "size_mb": 0.2,
+            "extension": ".mp3",
+            "sample_id": "814057",
+            "modified": "2025-11-28T00:55:32.643640"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "218887_Super shock.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/guitar/218887_Super shock.mp3",
+            "size_bytes": 163834,
+            "size_mb": 0.16,
+            "extension": ".mp3",
+            "sample_id": "218887",
+            "modified": "2025-11-28T00:55:00.701890"
+          },
+          {
+            "filename": "30813_S0L0.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/guitar/30813_S0L0.wav.mp3",
+            "size_bytes": 364718,
+            "size_mb": 0.35,
+            "extension": ".mp3",
+            "sample_id": "30813",
+            "modified": "2025-11-28T00:55:09.288895"
+          },
+          {
+            "filename": "652271_Wild West Loop2.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/guitar/652271_Wild West Loop2.mp3",
+            "size_bytes": 263343,
+            "size_mb": 0.25,
+            "extension": ".mp3",
+            "sample_id": "652271",
+            "modified": "2025-11-28T00:55:04.814150"
+          },
+          {
+            "filename": "652272_Wild West Loop1.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/guitar/652272_Wild West Loop1.mp3",
+            "size_bytes": 265580,
+            "size_mb": 0.25,
+            "extension": ".mp3",
+            "sample_id": "652272",
+            "modified": "2025-11-28T00:54:53.368231"
+          },
+          {
+            "filename": "817421_Lucky Guitar Sound.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/guitar/817421_Lucky Guitar Sound.mp3",
+            "size_bytes": 68253,
+            "size_mb": 0.07,
+            "extension": ".mp3",
+            "sample_id": "817421",
+            "modified": "2025-11-28T00:54:56.721670"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "563916_Bad Omen.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/piano/563916_Bad Omen.mp3",
+            "size_bytes": 107136,
+            "size_mb": 0.1,
+            "extension": ".mp3",
+            "sample_id": "563916",
+            "modified": "2025-11-28T00:54:35.455659"
+          },
+          {
+            "filename": "814044_Creation Magic Blast.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/piano/814044_Creation Magic Blast.mp3",
+            "size_bytes": 170606,
+            "size_mb": 0.16,
+            "extension": ".mp3",
+            "sample_id": "814044",
+            "modified": "2025-11-28T00:54:40.362492"
+          },
+          {
+            "filename": "814045_Dark Sci-Fi Signal.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/piano/814045_Dark Sci-Fi Signal.mp3",
+            "size_bytes": 203012,
+            "size_mb": 0.19,
+            "extension": ".mp3",
+            "sample_id": "814045",
+            "modified": "2025-11-28T00:54:45.414479"
+          },
+          {
+            "filename": "814053_Shockwave.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/piano/814053_Shockwave.mp3",
+            "size_bytes": 177199,
+            "size_mb": 0.17,
+            "extension": ".mp3",
+            "sample_id": "814053",
+            "modified": "2025-11-28T00:54:31.822268"
+          },
+          {
+            "filename": "814057_World Ender Explosion.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/piano/814057_World Ender Explosion.mp3",
+            "size_bytes": 213981,
+            "size_mb": 0.2,
+            "extension": ".mp3",
+            "sample_id": "814057",
+            "modified": "2025-11-28T00:54:49.278721"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "530119_Oh My God Vocals with Echo.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/vocals/530119_Oh My God Vocals with Echo.mp3",
+            "size_bytes": 109157,
+            "size_mb": 0.1,
+            "extension": ".mp3",
+            "sample_id": "530119",
+            "modified": "2025-11-28T00:55:47.279251"
+          },
+          {
+            "filename": "643290_No really - surprised vocal one shot.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/vocals/643290_No really - surprised vocal one shot.mp3",
+            "size_bytes": 30000,
+            "size_mb": 0.03,
+            "extension": ".mp3",
+            "sample_id": "643290",
+            "modified": "2025-11-28T00:55:50.951545"
+          },
+          {
+            "filename": "643309_no no no dont do that - dramatic vocal b.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/vocals/643309_no no no dont do that - dramatic vocal b.mp3",
+            "size_bytes": 74088,
+            "size_mb": 0.07,
+            "extension": ".mp3",
+            "sample_id": "643309",
+            "modified": "2025-11-28T00:55:43.464618"
+          },
+          {
+            "filename": "712113_Cartoon-like male emotions vocal sfx.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/vocals/712113_Cartoon-like male emotions vocal sfx.mp3",
+            "size_bytes": 339840,
+            "size_mb": 0.32,
+            "extension": ".mp3",
+            "sample_id": "712113",
+            "modified": "2025-11-28T00:55:40.464794"
+          },
+          {
+            "filename": "77024_SPOT surprize crowd gasp.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/base/SURPRISE/vocals/77024_SPOT surprize crowd gasp.wav.mp3",
+            "size_bytes": 199680,
+            "size_mb": 0.19,
+            "extension": ".mp3",
+            "sample_id": "77024",
+            "modified": "2025-11-28T00:55:36.504406"
+          }
+        ]
+      }
+    },
+    "LONELINESS": {
+      "level": "sub",
+      "instruments": {
+        "piano": [
+          {
+            "filename": "152508_lonely piano 0M_30p7h.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LONELINESS/piano/152508_lonely piano 0M_30p7h.mp3",
+            "size_bytes": 451966,
+            "size_mb": 0.43,
+            "extension": ".mp3",
+            "sample_id": "152508",
+            "modified": "2025-11-28T01:04:51.714934"
+          },
+          {
+            "filename": "511415_Laid Back Loop.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LONELINESS/piano/511415_Laid Back Loop.mp3",
+            "size_bytes": 389882,
+            "size_mb": 0.37,
+            "extension": ".mp3",
+            "sample_id": "511415",
+            "modified": "2025-11-28T01:04:47.090101"
+          },
+          {
+            "filename": "727437_Minimal Piano Background.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LONELINESS/piano/727437_Minimal Piano Background.mp3",
+            "size_bytes": 639349,
+            "size_mb": 0.61,
+            "extension": ".mp3",
+            "sample_id": "727437",
+            "modified": "2025-11-28T01:04:42.585196"
+          }
+        ]
+      }
+    },
+    "INDIGNATION": {
+      "level": "sub",
+      "instruments": {}
+    },
+    "TERROR": {
+      "level": "sub",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "234347_Terrie_TrailerEnd_2.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/drums/234347_Terrie_TrailerEnd_2.wav.mp3",
+            "size_bytes": 239813,
+            "size_mb": 0.23,
+            "extension": ".mp3",
+            "sample_id": "234347",
+            "modified": "2025-11-28T01:10:13.513677"
+          },
+          {
+            "filename": "234348_Terrie_TrailerEnd_1.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/drums/234348_Terrie_TrailerEnd_1.wav.mp3",
+            "size_bytes": 324655,
+            "size_mb": 0.31,
+            "extension": ".mp3",
+            "sample_id": "234348",
+            "modified": "2025-11-28T01:10:19.017741"
+          },
+          {
+            "filename": "775206_Sparse Glitch-Hop Drum Eerie Organ Perc .mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/drums/775206_Sparse Glitch-Hop Drum Eerie Organ Perc .mp3",
+            "size_bytes": 250891,
+            "size_mb": 0.24,
+            "extension": ".mp3",
+            "sample_id": "775206",
+            "modified": "2025-11-28T01:10:00.052887"
+          },
+          {
+            "filename": "776023_Glitch-Hop Horror Drum Loop 12-Bar Eerie.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/drums/776023_Glitch-Hop Horror Drum Loop 12-Bar Eerie.mp3",
+            "size_bytes": 741601,
+            "size_mb": 0.71,
+            "extension": ".mp3",
+            "sample_id": "776023",
+            "modified": "2025-11-28T01:10:05.853331"
+          },
+          {
+            "filename": "814055_Surprise.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/drums/814055_Surprise.mp3",
+            "size_bytes": 183240,
+            "size_mb": 0.17,
+            "extension": ".mp3",
+            "sample_id": "814055",
+            "modified": "2025-11-28T01:10:09.799933"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "175227_creatures-scuttle-02.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/guitar/175227_creatures-scuttle-02.wav.mp3",
+            "size_bytes": 174542,
+            "size_mb": 0.17,
+            "extension": ".mp3",
+            "sample_id": "175227",
+            "modified": "2025-11-28T01:09:54.748087"
+          },
+          {
+            "filename": "345638_Double horn.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/guitar/345638_Double horn.mp3",
+            "size_bytes": 456960,
+            "size_mb": 0.44,
+            "extension": ".mp3",
+            "sample_id": "345638",
+            "modified": "2025-11-28T01:09:46.807487"
+          },
+          {
+            "filename": "345641_Dark horn.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/guitar/345641_Dark horn.mp3",
+            "size_bytes": 454272,
+            "size_mb": 0.43,
+            "extension": ".mp3",
+            "sample_id": "345641",
+            "modified": "2025-11-28T01:09:51.247168"
+          },
+          {
+            "filename": "345645_Octaving horns.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/guitar/345645_Octaving horns.mp3",
+            "size_bytes": 356160,
+            "size_mb": 0.34,
+            "extension": ".mp3",
+            "sample_id": "345645",
+            "modified": "2025-11-28T01:09:36.075289"
+          },
+          {
+            "filename": "680069_Sci-fi creepy knocking sfx.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/guitar/680069_Sci-fi creepy knocking sfx.mp3",
+            "size_bytes": 602880,
+            "size_mb": 0.57,
+            "extension": ".mp3",
+            "sample_id": "680069",
+            "modified": "2025-11-28T01:09:41.436337"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "563916_Bad Omen.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/piano/563916_Bad Omen.mp3",
+            "size_bytes": 107136,
+            "size_mb": 0.1,
+            "extension": ".mp3",
+            "sample_id": "563916",
+            "modified": "2025-11-28T01:09:19.667524"
+          },
+          {
+            "filename": "570651_Scary Piano Music.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/piano/570651_Scary Piano Music.wav.mp3",
+            "size_bytes": 140354,
+            "size_mb": 0.13,
+            "extension": ".mp3",
+            "sample_id": "570651",
+            "modified": "2025-11-28T01:09:26.756185"
+          },
+          {
+            "filename": "587012_Something creepy.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/piano/587012_Something creepy.mp3",
+            "size_bytes": 172171,
+            "size_mb": 0.16,
+            "extension": ".mp3",
+            "sample_id": "587012",
+            "modified": "2025-11-28T01:09:23.347202"
+          },
+          {
+            "filename": "613151_Big bad boss.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/piano/613151_Big bad boss.mp3",
+            "size_bytes": 677292,
+            "size_mb": 0.65,
+            "extension": ".mp3",
+            "sample_id": "613151",
+            "modified": "2025-11-28T01:09:15.963465"
+          },
+          {
+            "filename": "773935_Toy Piano Eerie Wooden Spooky Horror Key.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/piano/773935_Toy Piano Eerie Wooden Spooky Horror Key.mp3",
+            "size_bytes": 252302,
+            "size_mb": 0.24,
+            "extension": ".mp3",
+            "sample_id": "773935",
+            "modified": "2025-11-28T01:09:30.455047"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "267632_Dreadful prayer 2.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/vocals/267632_Dreadful prayer 2.mp3",
+            "size_bytes": 259192,
+            "size_mb": 0.25,
+            "extension": ".mp3",
+            "sample_id": "267632",
+            "modified": "2025-11-28T01:10:40.032145"
+          },
+          {
+            "filename": "267633_Dreadful prayer 1.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/vocals/267633_Dreadful prayer 1.mp3",
+            "size_bytes": 264203,
+            "size_mb": 0.25,
+            "extension": ".mp3",
+            "sample_id": "267633",
+            "modified": "2025-11-28T01:10:31.431624"
+          },
+          {
+            "filename": "579773_Demon Cry.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/vocals/579773_Demon Cry.wav.mp3",
+            "size_bytes": 397588,
+            "size_mb": 0.38,
+            "extension": ".mp3",
+            "sample_id": "579773",
+            "modified": "2025-11-28T01:10:36.510136"
+          },
+          {
+            "filename": "794239_Ghost Scream - Ghost 05.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/vocals/794239_Ghost Scream - Ghost 05.mp3",
+            "size_bytes": 288386,
+            "size_mb": 0.28,
+            "extension": ".mp3",
+            "sample_id": "794239",
+            "modified": "2025-11-28T01:10:27.874652"
+          },
+          {
+            "filename": "794240_Ghost Crossing - The Beyond.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/TERROR/vocals/794240_Ghost Crossing - The Beyond.mp3",
+            "size_bytes": 452265,
+            "size_mb": 0.43,
+            "extension": ".mp3",
+            "sample_id": "794240",
+            "modified": "2025-11-28T01:10:23.749432"
+          }
+        ]
+      }
+    },
+    "VENGEANCE": {
+      "level": "sub",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "276439_Dubstep Drums.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/VENGEANCE/drums/276439_Dubstep Drums.mp3",
+            "size_bytes": 74170,
+            "size_mb": 0.07,
+            "extension": ".mp3",
+            "sample_id": "276439",
+            "modified": "2025-11-28T01:08:17.618951"
+          },
+          {
+            "filename": "650703_Alan Walker - FadeFaded Pre-Drop Drum F.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/VENGEANCE/drums/650703_Alan Walker - FadeFaded Pre-Drop Drum F.mp3",
+            "size_bytes": 32558,
+            "size_mb": 0.03,
+            "extension": ".mp3",
+            "sample_id": "650703",
+            "modified": "2025-11-28T01:08:20.817194"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "46415_Dramatic piano 2.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/VENGEANCE/piano/46415_Dramatic piano 2.wav.mp3",
+            "size_bytes": 159239,
+            "size_mb": 0.15,
+            "extension": ".mp3",
+            "sample_id": "46415",
+            "modified": "2025-11-28T01:08:06.433400"
+          }
+        ]
+      }
+    },
+    "EXCITEMENT": {
+      "level": "sub",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "30985_Kick3.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/drums/30985_Kick3.wav.mp3",
+            "size_bytes": 76869,
+            "size_mb": 0.07,
+            "extension": ".mp3",
+            "sample_id": "30985",
+            "modified": "2025-11-28T00:59:41.449331"
+          },
+          {
+            "filename": "440829_Sting rimshot drum roll smooth.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/drums/440829_Sting rimshot drum roll smooth.mp3",
+            "size_bytes": 126624,
+            "size_mb": 0.12,
+            "extension": ".mp3",
+            "sample_id": "440829",
+            "modified": "2025-11-28T00:59:48.455372"
+          },
+          {
+            "filename": "459875_Warrior bass T.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/drums/459875_Warrior bass T.wav.mp3",
+            "size_bytes": 43783,
+            "size_mb": 0.04,
+            "extension": ".mp3",
+            "sample_id": "459875",
+            "modified": "2025-11-28T00:59:37.969748"
+          },
+          {
+            "filename": "666788_So Convenient 2 Be A Robot.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/drums/666788_So Convenient 2 Be A Robot.mp3",
+            "size_bytes": 82673,
+            "size_mb": 0.08,
+            "extension": ".mp3",
+            "sample_id": "666788",
+            "modified": "2025-11-28T00:59:44.878664"
+          },
+          {
+            "filename": "744675_145 hat loop t9xj5.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/drums/744675_145 hat loop t9xj5.mp3",
+            "size_bytes": 368592,
+            "size_mb": 0.35,
+            "extension": ".mp3",
+            "sample_id": "744675",
+            "modified": "2025-11-28T00:59:52.694699"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "102818_remix of 41967__REVEREND.BLACK__REV_LOOP.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/guitar/102818_remix of 41967__REVEREND.BLACK__REV_LOOP.mp3",
+            "size_bytes": 226655,
+            "size_mb": 0.22,
+            "extension": ".mp3",
+            "sample_id": "102818",
+            "modified": "2025-11-28T00:59:25.387427"
+          },
+          {
+            "filename": "205620_1-sample impulse  48kHz WAV.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/guitar/205620_1-sample impulse  48kHz WAV.mp3",
+            "size_bytes": 48912,
+            "size_mb": 0.05,
+            "extension": ".mp3",
+            "sample_id": "205620",
+            "modified": "2025-11-28T00:59:29.204726"
+          },
+          {
+            "filename": "533891_Exciter Rock Loop.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/guitar/533891_Exciter Rock Loop.wav.mp3",
+            "size_bytes": 471911,
+            "size_mb": 0.45,
+            "extension": ".mp3",
+            "sample_id": "533891",
+            "modified": "2025-11-28T00:59:14.376476"
+          },
+          {
+            "filename": "58330_ambienta-soundtrack_arppe2600va-upinthes.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/guitar/58330_ambienta-soundtrack_arppe2600va-upinthes.mp3",
+            "size_bytes": 406878,
+            "size_mb": 0.39,
+            "extension": ".mp3",
+            "sample_id": "58330",
+            "modified": "2025-11-28T00:59:34.139589"
+          },
+          {
+            "filename": "797741_Snakebot Loop.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/guitar/797741_Snakebot Loop.mp3",
+            "size_bytes": 519610,
+            "size_mb": 0.5,
+            "extension": ".mp3",
+            "sample_id": "797741",
+            "modified": "2025-11-28T00:59:21.235363"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "608394_Ghosts.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/piano/608394_Ghosts.mp3",
+            "size_bytes": 608823,
+            "size_mb": 0.58,
+            "extension": ".mp3",
+            "sample_id": "608394",
+            "modified": "2025-11-28T00:59:05.987827"
+          },
+          {
+            "filename": "666790_The Circle Is Complete.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/piano/666790_The Circle Is Complete.mp3",
+            "size_bytes": 83401,
+            "size_mb": 0.08,
+            "extension": ".mp3",
+            "sample_id": "666790",
+            "modified": "2025-11-28T00:59:09.133950"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "169336_OOh Female Various.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/vocals/169336_OOh Female Various.mp3",
+            "size_bytes": 442266,
+            "size_mb": 0.42,
+            "extension": ".mp3",
+            "sample_id": "169336",
+            "modified": "2025-11-28T00:59:59.897208"
+          },
+          {
+            "filename": "395570_Four Talons.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/vocals/395570_Four Talons.wav.mp3",
+            "size_bytes": 466636,
+            "size_mb": 0.45,
+            "extension": ".mp3",
+            "sample_id": "395570",
+            "modified": "2025-11-28T01:00:09.507364"
+          },
+          {
+            "filename": "479672_R12-60-Horses Snort and Vocalize.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/vocals/479672_R12-60-Horses Snort and Vocalize.wav.mp3",
+            "size_bytes": 399312,
+            "size_mb": 0.38,
+            "extension": ".mp3",
+            "sample_id": "479672",
+            "modified": "2025-11-28T01:00:04.220912"
+          },
+          {
+            "filename": "560253_I Have To Tell You Something.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/vocals/560253_I Have To Tell You Something.wav.mp3",
+            "size_bytes": 339168,
+            "size_mb": 0.32,
+            "extension": ".mp3",
+            "sample_id": "560253",
+            "modified": "2025-11-28T01:00:14.143513"
+          },
+          {
+            "filename": "584924_Shark Scream Riser 001.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/EXCITEMENT/vocals/584924_Shark Scream Riser 001.wav.mp3",
+            "size_bytes": 113256,
+            "size_mb": 0.11,
+            "extension": ".mp3",
+            "sample_id": "584924",
+            "modified": "2025-11-28T01:00:18.115044"
+          }
+        ]
+      }
+    },
+    "ANXIETY": {
+      "level": "sub",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "244576_drum open air.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/ANXIETY/drums/244576_drum open air.wav.mp3",
+            "size_bytes": 366604,
+            "size_mb": 0.35,
+            "extension": ".mp3",
+            "sample_id": "244576",
+            "modified": "2025-11-28T01:08:54.593793"
+          },
+          {
+            "filename": "390134_RAMELET_Charline_2016_2017_drumBass.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/ANXIETY/drums/390134_RAMELET_Charline_2016_2017_drumBass.wav.mp3",
+            "size_bytes": 147877,
+            "size_mb": 0.14,
+            "extension": ".mp3",
+            "sample_id": "390134",
+            "modified": "2025-11-28T01:09:01.474536"
+          },
+          {
+            "filename": "567859_BRASSEUR_Justine_2020_2021_Heart.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/ANXIETY/drums/567859_BRASSEUR_Justine_2020_2021_Heart.wav.mp3",
+            "size_bytes": 299381,
+            "size_mb": 0.29,
+            "extension": ".mp3",
+            "sample_id": "567859",
+            "modified": "2025-11-28T01:08:50.629204"
+          },
+          {
+            "filename": "640838_HOME SET 6 Anxiety.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/ANXIETY/drums/640838_HOME SET 6 Anxiety.wav.mp3",
+            "size_bytes": 50363,
+            "size_mb": 0.05,
+            "extension": ".mp3",
+            "sample_id": "640838",
+            "modified": "2025-11-28T01:08:57.444253"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "615695_Windtryst And Wednesday 3.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/ANXIETY/guitar/615695_Windtryst And Wednesday 3.mp3",
+            "size_bytes": 376593,
+            "size_mb": 0.36,
+            "extension": ".mp3",
+            "sample_id": "615695",
+            "modified": "2025-11-28T01:08:45.861912"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "249985_Eerie Dark Drone Soundscape.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/ANXIETY/piano/249985_Eerie Dark Drone Soundscape.mp3",
+            "size_bytes": 656418,
+            "size_mb": 0.63,
+            "extension": ".mp3",
+            "sample_id": "249985",
+            "modified": "2025-11-28T01:08:33.651964"
+          },
+          {
+            "filename": "485829_LECLERC_Mathilde_2019_Hes coming.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/ANXIETY/piano/485829_LECLERC_Mathilde_2019_Hes coming.wav.mp3",
+            "size_bytes": 486048,
+            "size_mb": 0.46,
+            "extension": ".mp3",
+            "sample_id": "485829",
+            "modified": "2025-11-28T01:08:41.667953"
+          },
+          {
+            "filename": "730869_PIANO anxiety.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/ANXIETY/piano/730869_PIANO anxiety.mp3",
+            "size_bytes": 411476,
+            "size_mb": 0.39,
+            "extension": ".mp3",
+            "sample_id": "730869",
+            "modified": "2025-11-28T01:08:37.559752"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "789880_Those things arent human. We gotta get.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/ANXIETY/vocals/789880_Those things arent human. We gotta get.mp3",
+            "size_bytes": 138768,
+            "size_mb": 0.13,
+            "extension": ".mp3",
+            "sample_id": "789880",
+            "modified": "2025-11-28T01:09:06.173505"
+          },
+          {
+            "filename": "790148_If you go inside youll DIE - Male Vo.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/ANXIETY/vocals/790148_If you go inside youll DIE - Male Vo.mp3",
+            "size_bytes": 193848,
+            "size_mb": 0.18,
+            "extension": ".mp3",
+            "sample_id": "790148",
+            "modified": "2025-11-28T01:09:10.503021"
+          }
+        ]
+      }
+    },
+    "DISAPPOINTMENT": {
+      "level": "sub",
+      "instruments": {}
+    },
+    "LOVE": {
+      "level": "sub",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "407340_Rhodes Loop 2 140bpm.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/drums/407340_Rhodes Loop 2 140bpm.mp3",
+            "size_bytes": 323391,
+            "size_mb": 0.31,
+            "extension": ".mp3",
+            "sample_id": "407340",
+            "modified": "2025-11-28T01:01:39.162085"
+          },
+          {
+            "filename": "629140_Lofi Drum Loop 70 BPM.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/drums/629140_Lofi Drum Loop 70 BPM.wav.mp3",
+            "size_bytes": 325080,
+            "size_mb": 0.31,
+            "extension": ".mp3",
+            "sample_id": "629140",
+            "modified": "2025-11-28T01:01:27.071794"
+          },
+          {
+            "filename": "629141_Lofi - KickSnareVinyl Static 95 BPM.wa.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/drums/629141_Lofi - KickSnareVinyl Static 95 BPM.wa.mp3",
+            "size_bytes": 241434,
+            "size_mb": 0.23,
+            "extension": ".mp3",
+            "sample_id": "629141",
+            "modified": "2025-11-28T01:01:31.295099"
+          },
+          {
+            "filename": "669324_Victory Fanfare Light Wills Ever.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/drums/669324_Victory Fanfare Light Wills Ever.mp3",
+            "size_bytes": 283848,
+            "size_mb": 0.27,
+            "extension": ".mp3",
+            "sample_id": "669324",
+            "modified": "2025-11-28T01:01:42.798599"
+          },
+          {
+            "filename": "743006_Massive Laser charge-up more bass.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/drums/743006_Massive Laser charge-up more bass.mp3",
+            "size_bytes": 258806,
+            "size_mb": 0.25,
+            "extension": ".mp3",
+            "sample_id": "743006",
+            "modified": "2025-11-28T01:01:35.184412"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "175154_western-chord-02.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/guitar/175154_western-chord-02.wav.mp3",
+            "size_bytes": 224095,
+            "size_mb": 0.21,
+            "extension": ".mp3",
+            "sample_id": "175154",
+            "modified": "2025-11-28T01:01:17.821262"
+          },
+          {
+            "filename": "175227_creatures-scuttle-02.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/guitar/175227_creatures-scuttle-02.wav.mp3",
+            "size_bytes": 174542,
+            "size_mb": 0.17,
+            "extension": ".mp3",
+            "sample_id": "175227",
+            "modified": "2025-11-28T01:01:05.239530"
+          },
+          {
+            "filename": "711192_yunggoth sample 1lovewav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/guitar/711192_yunggoth sample 1lovewav.mp3",
+            "size_bytes": 188992,
+            "size_mb": 0.18,
+            "extension": ".mp3",
+            "sample_id": "711192",
+            "modified": "2025-11-28T01:01:14.286024"
+          },
+          {
+            "filename": "784063_Music loop NA 69 bpm.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/guitar/784063_Music loop NA 69 bpm.mp3",
+            "size_bytes": 670678,
+            "size_mb": 0.64,
+            "extension": ".mp3",
+            "sample_id": "784063",
+            "modified": "2025-11-28T01:01:10.334530"
+          },
+          {
+            "filename": "784188_Music loop NA guitar jaguar flanger dees.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/guitar/784188_Music loop NA guitar jaguar flanger dees.mp3",
+            "size_bytes": 655527,
+            "size_mb": 0.63,
+            "extension": ".mp3",
+            "sample_id": "784188",
+            "modified": "2025-11-28T01:01:21.539183"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "370745_Piano Ambiance 2 90bpm.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/piano/370745_Piano Ambiance 2 90bpm.wav.mp3",
+            "size_bytes": 623616,
+            "size_mb": 0.59,
+            "extension": ".mp3",
+            "sample_id": "370745",
+            "modified": "2025-11-28T01:00:39.081409"
+          },
+          {
+            "filename": "407340_Rhodes Loop 2 140bpm.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/piano/407340_Rhodes Loop 2 140bpm.mp3",
+            "size_bytes": 323391,
+            "size_mb": 0.31,
+            "extension": ".mp3",
+            "sample_id": "407340",
+            "modified": "2025-11-28T01:00:51.897003"
+          },
+          {
+            "filename": "428249_DSV1_SuspensfulRhodes01_C_70bpm.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/piano/428249_DSV1_SuspensfulRhodes01_C_70bpm.wav.mp3",
+            "size_bytes": 291843,
+            "size_mb": 0.28,
+            "extension": ".mp3",
+            "sample_id": "428249",
+            "modified": "2025-11-28T01:00:47.700356"
+          },
+          {
+            "filename": "428292_DSV1_SuspensfulRhodes02_C_70bpm.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/piano/428292_DSV1_SuspensfulRhodes02_C_70bpm.wav.mp3",
+            "size_bytes": 295175,
+            "size_mb": 0.28,
+            "extension": ".mp3",
+            "sample_id": "428292",
+            "modified": "2025-11-28T01:00:43.674322"
+          },
+          {
+            "filename": "784063_Music loop NA 69 bpm.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/piano/784063_Music loop NA 69 bpm.mp3",
+            "size_bytes": 670678,
+            "size_mb": 0.64,
+            "extension": ".mp3",
+            "sample_id": "784063",
+            "modified": "2025-11-28T01:00:57.865220"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "428668_Angry Goliath Yelling Come On.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/vocals/428668_Angry Goliath Yelling Come On.mp3",
+            "size_bytes": 24525,
+            "size_mb": 0.02,
+            "extension": ".mp3",
+            "sample_id": "428668",
+            "modified": "2025-11-28T01:01:54.422323"
+          },
+          {
+            "filename": "500658_Vocal Bit.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/vocals/500658_Vocal Bit.wav.mp3",
+            "size_bytes": 418309,
+            "size_mb": 0.4,
+            "extension": ".mp3",
+            "sample_id": "500658",
+            "modified": "2025-11-28T01:01:48.588526"
+          },
+          {
+            "filename": "642495_I love you variations.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/vocals/642495_I love you variations.mp3",
+            "size_bytes": 433536,
+            "size_mb": 0.41,
+            "extension": ".mp3",
+            "sample_id": "642495",
+            "modified": "2025-11-28T01:02:02.674799"
+          },
+          {
+            "filename": "644026_My intention is love - vocal.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/vocals/644026_My intention is love - vocal.mp3",
+            "size_bytes": 76488,
+            "size_mb": 0.07,
+            "extension": ".mp3",
+            "sample_id": "644026",
+            "modified": "2025-11-28T01:01:57.622907"
+          },
+          {
+            "filename": "645755_ Spread the love yall- vocal.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/LOVE/vocals/645755_ Spread the love yall- vocal.wav.mp3",
+            "size_bytes": 31296,
+            "size_mb": 0.03,
+            "extension": ".mp3",
+            "sample_id": "645755",
+            "modified": "2025-11-28T01:01:51.393609"
+          }
+        ]
+      }
+    },
+    "MELANCHOLY": {
+      "level": "sub",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "179532_clinthammermusic-keys-melancholy.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/MELANCHOLY/drums/179532_clinthammermusic-keys-melancholy.wav.mp3",
+            "size_bytes": 224362,
+            "size_mb": 0.21,
+            "extension": ".mp3",
+            "sample_id": "179532",
+            "modified": "2025-11-28T01:05:36.204437"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "12697_burzGuit3.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/MELANCHOLY/guitar/12697_burzGuit3.wav.mp3",
+            "size_bytes": 62311,
+            "size_mb": 0.06,
+            "extension": ".mp3",
+            "sample_id": "12697",
+            "modified": "2025-11-28T01:05:32.201552"
+          },
+          {
+            "filename": "221812_Synth seq mellow bass guitar melody 90.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/MELANCHOLY/guitar/221812_Synth seq mellow bass guitar melody 90.mp3",
+            "size_bytes": 451998,
+            "size_mb": 0.43,
+            "extension": ".mp3",
+            "sample_id": "221812",
+            "modified": "2025-11-28T01:05:29.611831"
+          },
+          {
+            "filename": "51245_Atmospheric Ambient Short Piano and Bass.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/MELANCHOLY/guitar/51245_Atmospheric Ambient Short Piano and Bass.mp3",
+            "size_bytes": 67270,
+            "size_mb": 0.06,
+            "extension": ".mp3",
+            "sample_id": "51245",
+            "modified": "2025-11-28T01:05:25.576858"
+          },
+          {
+            "filename": "532154_midnight ride.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/MELANCHOLY/guitar/532154_midnight ride.wav.mp3",
+            "size_bytes": 664080,
+            "size_mb": 0.63,
+            "extension": ".mp3",
+            "sample_id": "532154",
+            "modified": "2025-11-28T01:05:17.939017"
+          },
+          {
+            "filename": "663484_Touching Acoustic Spot.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/MELANCHOLY/guitar/663484_Touching Acoustic Spot.mp3",
+            "size_bytes": 671411,
+            "size_mb": 0.64,
+            "extension": ".mp3",
+            "sample_id": "663484",
+            "modified": "2025-11-28T01:05:22.954679"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "128548_PianoMoodHappy5.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/MELANCHOLY/piano/128548_PianoMoodHappy5.wav.mp3",
+            "size_bytes": 194341,
+            "size_mb": 0.19,
+            "extension": ".mp3",
+            "sample_id": "128548",
+            "modified": "2025-11-28T01:05:01.665282"
+          },
+          {
+            "filename": "128556_PianoMoodMelancholy1.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/MELANCHOLY/piano/128556_PianoMoodMelancholy1.wav.mp3",
+            "size_bytes": 301155,
+            "size_mb": 0.29,
+            "extension": ".mp3",
+            "sample_id": "128556",
+            "modified": "2025-11-28T01:05:09.015499"
+          },
+          {
+            "filename": "128560_PianoMoodMelancholy3.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/MELANCHOLY/piano/128560_PianoMoodMelancholy3.wav.mp3",
+            "size_bytes": 369606,
+            "size_mb": 0.35,
+            "extension": ".mp3",
+            "sample_id": "128560",
+            "modified": "2025-11-28T01:05:05.339247"
+          },
+          {
+            "filename": "128563_PianoMoodMelancholy10.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/MELANCHOLY/piano/128563_PianoMoodMelancholy10.wav.mp3",
+            "size_bytes": 474108,
+            "size_mb": 0.45,
+            "extension": ".mp3",
+            "sample_id": "128563",
+            "modified": "2025-11-28T01:04:58.527909"
+          },
+          {
+            "filename": "688747_melancholy piano arpeggio.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/MELANCHOLY/piano/688747_melancholy piano arpeggio.wav.mp3",
+            "size_bytes": 177619,
+            "size_mb": 0.17,
+            "extension": ".mp3",
+            "sample_id": "688747",
+            "modified": "2025-11-28T01:05:12.740802"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "54620_Melancholy Choir.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/MELANCHOLY/vocals/54620_Melancholy Choir.wav.mp3",
+            "size_bytes": 230624,
+            "size_mb": 0.22,
+            "extension": ".mp3",
+            "sample_id": "54620",
+            "modified": "2025-11-28T01:05:39.732477"
+          },
+          {
+            "filename": "643461_Sad weeping crying talking - relationshi.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/MELANCHOLY/vocals/643461_Sad weeping crying talking - relationshi.mp3",
+            "size_bytes": 347112,
+            "size_mb": 0.33,
+            "extension": ".mp3",
+            "sample_id": "643461",
+            "modified": "2025-11-28T01:05:46.268291"
+          },
+          {
+            "filename": "643462_Please begging voice - vocal.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/MELANCHOLY/vocals/643462_Please begging voice - vocal.mp3",
+            "size_bytes": 24072,
+            "size_mb": 0.02,
+            "extension": ".mp3",
+            "sample_id": "643462",
+            "modified": "2025-11-28T01:05:42.101651"
+          },
+          {
+            "filename": "643463_Yes mommy - vocal by 29 year old male.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/MELANCHOLY/vocals/643463_Yes mommy - vocal by 29 year old male.mp3",
+            "size_bytes": 26376,
+            "size_mb": 0.03,
+            "extension": ".mp3",
+            "sample_id": "643463",
+            "modified": "2025-11-28T01:05:49.034815"
+          }
+        ]
+      }
+    },
+    "HURT": {
+      "level": "sub",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "21900_Djembe_fingers_1.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HURT/drums/21900_Djembe_fingers_1.wav.mp3",
+            "size_bytes": 10440,
+            "size_mb": 0.01,
+            "extension": ".mp3",
+            "sample_id": "21900",
+            "modified": "2025-11-28T01:06:15.670746"
+          },
+          {
+            "filename": "21902_Djembe_low_2_loud.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HURT/drums/21902_Djembe_low_2_loud.wav.mp3",
+            "size_bytes": 6408,
+            "size_mb": 0.01,
+            "extension": ".mp3",
+            "sample_id": "21902",
+            "modified": "2025-11-28T01:06:12.763200"
+          },
+          {
+            "filename": "21906_Djembe_mid_quiet_2.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HURT/drums/21906_Djembe_mid_quiet_2.wav.mp3",
+            "size_bytes": 6696,
+            "size_mb": 0.01,
+            "extension": ".mp3",
+            "sample_id": "21906",
+            "modified": "2025-11-28T01:06:18.350949"
+          },
+          {
+            "filename": "266342_Lo fi clap.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HURT/drums/266342_Lo fi clap.mp3",
+            "size_bytes": 31506,
+            "size_mb": 0.03,
+            "extension": ".mp3",
+            "sample_id": "266342",
+            "modified": "2025-11-28T01:06:10.403974"
+          },
+          {
+            "filename": "507610_Similar to Glitch stage 1 110bpm - var.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HURT/drums/507610_Similar to Glitch stage 1 110bpm - var.mp3",
+            "size_bytes": 215940,
+            "size_mb": 0.21,
+            "extension": ".mp3",
+            "sample_id": "507610",
+            "modified": "2025-11-28T01:06:21.898732"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "175210_creatures-loud-buzz.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HURT/guitar/175210_creatures-loud-buzz.wav.mp3",
+            "size_bytes": 160919,
+            "size_mb": 0.15,
+            "extension": ".mp3",
+            "sample_id": "175210",
+            "modified": "2025-11-28T01:05:53.164704"
+          },
+          {
+            "filename": "395486_Extreme machine malfunction.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HURT/guitar/395486_Extreme machine malfunction.wav.mp3",
+            "size_bytes": 160039,
+            "size_mb": 0.15,
+            "extension": ".mp3",
+            "sample_id": "395486",
+            "modified": "2025-11-28T01:05:56.695094"
+          },
+          {
+            "filename": "651866_Supafuzz.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HURT/guitar/651866_Supafuzz.mp3",
+            "size_bytes": 371520,
+            "size_mb": 0.35,
+            "extension": ".mp3",
+            "sample_id": "651866",
+            "modified": "2025-11-28T01:06:02.396565"
+          },
+          {
+            "filename": "713365_Guitar Cable Feedback.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HURT/guitar/713365_Guitar Cable Feedback.mp3",
+            "size_bytes": 495238,
+            "size_mb": 0.47,
+            "extension": ".mp3",
+            "sample_id": "713365",
+            "modified": "2025-11-28T01:06:07.064668"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "166124_Groan_male.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HURT/vocals/166124_Groan_male.wav.mp3",
+            "size_bytes": 103680,
+            "size_mb": 0.1,
+            "extension": ".mp3",
+            "sample_id": "166124",
+            "modified": "2025-11-28T01:06:29.118847"
+          },
+          {
+            "filename": "171758_Groan_male_normalised.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HURT/vocals/171758_Groan_male_normalised.wav.mp3",
+            "size_bytes": 104064,
+            "size_mb": 0.1,
+            "extension": ".mp3",
+            "sample_id": "171758",
+            "modified": "2025-11-28T01:06:41.075185"
+          },
+          {
+            "filename": "394608_Female horror cries Omg.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HURT/vocals/394608_Female horror cries Omg.mp3",
+            "size_bytes": 412294,
+            "size_mb": 0.39,
+            "extension": ".mp3",
+            "sample_id": "394608",
+            "modified": "2025-11-28T01:06:33.567388"
+          },
+          {
+            "filename": "614072_Male Zombie Groan 9.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HURT/vocals/614072_Male Zombie Groan 9.wav.mp3",
+            "size_bytes": 61724,
+            "size_mb": 0.06,
+            "extension": ".mp3",
+            "sample_id": "614072",
+            "modified": "2025-11-28T01:06:25.437582"
+          },
+          {
+            "filename": "638896_Alien Growls.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HURT/vocals/638896_Alien Growls.mp3",
+            "size_bytes": 262076,
+            "size_mb": 0.25,
+            "extension": ".mp3",
+            "sample_id": "638896",
+            "modified": "2025-11-28T01:06:37.944814"
+          }
+        ]
+      }
+    },
+    "GRIEF": {
+      "level": "sub",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "334460_Industrial Music Snare two variations.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/GRIEF/drums/334460_Industrial Music Snare two variations.mp3",
+            "size_bytes": 49487,
+            "size_mb": 0.05,
+            "extension": ".mp3",
+            "sample_id": "334460",
+            "modified": "2025-11-28T01:03:58.883945"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "555803_Sunset Loop.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/GRIEF/piano/555803_Sunset Loop.mp3",
+            "size_bytes": 517543,
+            "size_mb": 0.49,
+            "extension": ".mp3",
+            "sample_id": "555803",
+            "modified": "2025-11-28T01:03:50.731883"
+          },
+          {
+            "filename": "555804_Romantic Lounge Loop.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/GRIEF/piano/555804_Romantic Lounge Loop.mp3",
+            "size_bytes": 517244,
+            "size_mb": 0.49,
+            "extension": ".mp3",
+            "sample_id": "555804",
+            "modified": "2025-11-28T01:03:55.137053"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "180305_Sad cry 1.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/GRIEF/vocals/180305_Sad cry 1.mp3",
+            "size_bytes": 111134,
+            "size_mb": 0.11,
+            "extension": ".mp3",
+            "sample_id": "180305",
+            "modified": "2025-11-28T01:04:02.738597"
+          },
+          {
+            "filename": "180307_Sad cry 2.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/GRIEF/vocals/180307_Sad cry 2.mp3",
+            "size_bytes": 131696,
+            "size_mb": 0.13,
+            "extension": ".mp3",
+            "sample_id": "180307",
+            "modified": "2025-11-28T01:04:06.072157"
+          },
+          {
+            "filename": "180312_Sad cry 9.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/GRIEF/vocals/180312_Sad cry 9.mp3",
+            "size_bytes": 83121,
+            "size_mb": 0.08,
+            "extension": ".mp3",
+            "sample_id": "180312",
+            "modified": "2025-11-28T01:04:09.552432"
+          },
+          {
+            "filename": "180313_Sad cry 8.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/GRIEF/vocals/180313_Sad cry 8.mp3",
+            "size_bytes": 98716,
+            "size_mb": 0.09,
+            "extension": ".mp3",
+            "sample_id": "180313",
+            "modified": "2025-11-28T01:04:13.056911"
+          },
+          {
+            "filename": "180315_Sad cry 6.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/GRIEF/vocals/180315_Sad cry 6.mp3",
+            "size_bytes": 100598,
+            "size_mb": 0.1,
+            "extension": ".mp3",
+            "sample_id": "180315",
+            "modified": "2025-11-28T01:04:20.186188"
+          }
+        ]
+      }
+    },
+    "CONTENTMENT": {
+      "level": "sub",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "351917_House Kick 5 Less Deep Sub.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/drums/351917_House Kick 5 Less Deep Sub.mp3",
+            "size_bytes": 13031,
+            "size_mb": 0.01,
+            "extension": ".mp3",
+            "sample_id": "351917",
+            "modified": "2025-11-28T00:57:03.440239"
+          },
+          {
+            "filename": "407236_Ambient Piano Loop 9_16 SideChained-Amb.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/drums/407236_Ambient Piano Loop 9_16 SideChained-Amb.mp3",
+            "size_bytes": 160394,
+            "size_mb": 0.15,
+            "extension": ".mp3",
+            "sample_id": "407236",
+            "modified": "2025-11-28T00:57:13.265041"
+          },
+          {
+            "filename": "546247_Drumloop 110 BPM Drums 001.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/drums/546247_Drumloop 110 BPM Drums 001.mp3",
+            "size_bytes": 113131,
+            "size_mb": 0.11,
+            "extension": ".mp3",
+            "sample_id": "546247",
+            "modified": "2025-11-28T00:57:00.682754"
+          },
+          {
+            "filename": "785798_Pressure Kick by Alien I Trust 125_Bpm.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/drums/785798_Pressure Kick by Alien I Trust 125_Bpm.mp3",
+            "size_bytes": 66289,
+            "size_mb": 0.06,
+            "extension": ".mp3",
+            "sample_id": "785798",
+            "modified": "2025-11-28T00:57:06.145028"
+          },
+          {
+            "filename": "785800_Pressure Kick by Alien I Trust 125_Bpm.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/drums/785800_Pressure Kick by Alien I Trust 125_Bpm.mp3",
+            "size_bytes": 67574,
+            "size_mb": 0.06,
+            "extension": ".mp3",
+            "sample_id": "785800",
+            "modified": "2025-11-28T00:57:09.262286"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "298995_Korg Z1 - Z1 Guitar - F5 Z1 Guitar-78-1.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/guitar/298995_Korg Z1 - Z1 Guitar - F5 Z1 Guitar-78-1.mp3",
+            "size_bytes": 244432,
+            "size_mb": 0.23,
+            "extension": ".mp3",
+            "sample_id": "298995",
+            "modified": "2025-11-28T00:56:53.093304"
+          },
+          {
+            "filename": "299024_Korg Z1 - Z1 Guitar - B7 Z1 Guitar-107-.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/guitar/299024_Korg Z1 - Z1 Guitar - B7 Z1 Guitar-107-.mp3",
+            "size_bytes": 242884,
+            "size_mb": 0.23,
+            "extension": ".mp3",
+            "sample_id": "299024",
+            "modified": "2025-11-28T00:56:56.815819"
+          },
+          {
+            "filename": "299025_Korg Z1 - Z1 Guitar - C8 Z1 Guitar-108-.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/guitar/299025_Korg Z1 - Z1 Guitar - C8 Z1 Guitar-108-.mp3",
+            "size_bytes": 241123,
+            "size_mb": 0.23,
+            "extension": ".mp3",
+            "sample_id": "299025",
+            "modified": "2025-11-28T00:56:49.148219"
+          },
+          {
+            "filename": "587782_Short Metal Intro  Fill.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/guitar/587782_Short Metal Intro  Fill.mp3",
+            "size_bytes": 52777,
+            "size_mb": 0.05,
+            "extension": ".mp3",
+            "sample_id": "587782",
+            "modified": "2025-11-28T00:56:45.643878"
+          },
+          {
+            "filename": "645430_Cheerful Intro.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/guitar/645430_Cheerful Intro.mp3",
+            "size_bytes": 234852,
+            "size_mb": 0.22,
+            "extension": ".mp3",
+            "sample_id": "645430",
+            "modified": "2025-11-28T00:56:42.430500"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "387588_Piano Ambiance 4 120bpmCC0 - Ambient.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/piano/387588_Piano Ambiance 4 120bpmCC0 - Ambient.mp3",
+            "size_bytes": 187392,
+            "size_mb": 0.18,
+            "extension": ".mp3",
+            "sample_id": "387588",
+            "modified": "2025-11-28T00:56:37.135865"
+          },
+          {
+            "filename": "407236_Ambient Piano Loop 9_16 SideChained-Amb.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/piano/407236_Ambient Piano Loop 9_16 SideChained-Amb.mp3",
+            "size_bytes": 160394,
+            "size_mb": 0.15,
+            "extension": ".mp3",
+            "sample_id": "407236",
+            "modified": "2025-11-28T00:56:33.604432"
+          },
+          {
+            "filename": "477094_Ambient Piano Loop 65 Ambiance-90 BPM.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/piano/477094_Ambient Piano Loop 65 Ambiance-90 BPM.mp3",
+            "size_bytes": 250224,
+            "size_mb": 0.24,
+            "extension": ".mp3",
+            "sample_id": "477094",
+            "modified": "2025-11-28T00:56:29.316154"
+          },
+          {
+            "filename": "477116_Ambient Piano Loop 59_3 Ambiance-170 .mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/piano/477116_Ambient Piano Loop 59_3 Ambiance-170 .mp3",
+            "size_bytes": 137683,
+            "size_mb": 0.13,
+            "extension": ".mp3",
+            "sample_id": "477116",
+            "modified": "2025-11-28T00:56:24.255434"
+          },
+          {
+            "filename": "477124_Ambient Piano Loop 4 Ambiance-90 Bpm.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/piano/477124_Ambient Piano Loop 4 Ambiance-90 Bpm.mp3",
+            "size_bytes": 635000,
+            "size_mb": 0.61,
+            "extension": ".mp3",
+            "sample_id": "477124",
+            "modified": "2025-11-28T00:56:20.881061"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "267166_Seascraper - Equation of Love Sophie  J.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/vocals/267166_Seascraper - Equation of Love Sophie  J.mp3",
+            "size_bytes": 656883,
+            "size_mb": 0.63,
+            "extension": ".mp3",
+            "sample_id": "267166",
+            "modified": "2025-11-28T00:57:29.537745"
+          },
+          {
+            "filename": "2671_TAPE29.WAV.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/vocals/2671_TAPE29.WAV.mp3",
+            "size_bytes": 24941,
+            "size_mb": 0.02,
+            "extension": ".mp3",
+            "sample_id": "2671",
+            "modified": "2025-11-28T00:57:32.169295"
+          },
+          {
+            "filename": "2678_TAPE36.WAV.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/vocals/2678_TAPE36.WAV.mp3",
+            "size_bytes": 73371,
+            "size_mb": 0.07,
+            "extension": ".mp3",
+            "sample_id": "2678",
+            "modified": "2025-11-28T00:57:25.199393"
+          },
+          {
+            "filename": "371934_m-train-dpa.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/vocals/371934_m-train-dpa.wav.mp3",
+            "size_bytes": 193456,
+            "size_mb": 0.18,
+            "extension": ".mp3",
+            "sample_id": "371934",
+            "modified": "2025-11-28T00:57:17.526121"
+          },
+          {
+            "filename": "427942_419331__thescarlettwitch89__female-ooh-s.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/CONTENTMENT/vocals/427942_419331__thescarlettwitch89__female-ooh-s.mp3",
+            "size_bytes": 122325,
+            "size_mb": 0.12,
+            "extension": ".mp3",
+            "sample_id": "427942",
+            "modified": "2025-11-28T00:57:21.129955"
+          }
+        ]
+      }
+    },
+    "IRRITATION": {
+      "level": "sub",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "232242_Irritation 1E35.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/IRRITATION/drums/232242_Irritation 1E35.mp3",
+            "size_bytes": 448293,
+            "size_mb": 0.43,
+            "extension": ".mp3",
+            "sample_id": "232242",
+            "modified": "2025-11-28T01:06:52.154338"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "232242_Irritation 1E35.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/IRRITATION/piano/232242_Irritation 1E35.mp3",
+            "size_bytes": 448293,
+            "size_mb": 0.43,
+            "extension": ".mp3",
+            "sample_id": "232242",
+            "modified": "2025-11-28T01:06:46.562913"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "180342_Screams of frustration 2.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/IRRITATION/vocals/180342_Screams of frustration 2.mp3",
+            "size_bytes": 247013,
+            "size_mb": 0.24,
+            "extension": ".mp3",
+            "sample_id": "180342",
+            "modified": "2025-11-28T01:06:56.807089"
+          }
+        ]
+      }
+    },
+    "JOY": {
+      "level": "sub",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "106370_1 bar 111.3 fill.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/drums/106370_1 bar 111.3 fill.wav.mp3",
+            "size_bytes": 47955,
+            "size_mb": 0.05,
+            "extension": ".mp3",
+            "sample_id": "106370",
+            "modified": "2025-11-28T00:58:38.071809"
+          },
+          {
+            "filename": "232190_drum loop 001 078 BPM.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/drums/232190_drum loop 001 078 BPM.wav.mp3",
+            "size_bytes": 78389,
+            "size_mb": 0.07,
+            "extension": ".mp3",
+            "sample_id": "232190",
+            "modified": "2025-11-28T00:58:35.102486"
+          },
+          {
+            "filename": "477359_Whistling Song Loop.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/drums/477359_Whistling Song Loop.wav.mp3",
+            "size_bytes": 448276,
+            "size_mb": 0.43,
+            "extension": ".mp3",
+            "sample_id": "477359",
+            "modified": "2025-11-28T00:58:32.159795"
+          },
+          {
+            "filename": "514280_Eletro Hit 4.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/drums/514280_Eletro Hit 4.mp3",
+            "size_bytes": 175323,
+            "size_mb": 0.17,
+            "extension": ".mp3",
+            "sample_id": "514280",
+            "modified": "2025-11-28T00:58:28.504988"
+          },
+          {
+            "filename": "568376_Eletro Hit 8.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/drums/568376_Eletro Hit 8.mp3",
+            "size_bytes": 175747,
+            "size_mb": 0.17,
+            "extension": ".mp3",
+            "sample_id": "568376",
+            "modified": "2025-11-28T00:58:41.609231"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "514280_Eletro Hit 4.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/guitar/514280_Eletro Hit 4.mp3",
+            "size_bytes": 175323,
+            "size_mb": 0.17,
+            "extension": ".mp3",
+            "sample_id": "514280",
+            "modified": "2025-11-28T00:58:10.252503"
+          },
+          {
+            "filename": "561030_Quick bouncy happy bright melody.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/guitar/561030_Quick bouncy happy bright melody.mp3",
+            "size_bytes": 503390,
+            "size_mb": 0.48,
+            "extension": ".mp3",
+            "sample_id": "561030",
+            "modified": "2025-11-28T00:58:21.007110"
+          },
+          {
+            "filename": "710556_Born To Drive loop ver.3.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/guitar/710556_Born To Drive loop ver.3.mp3",
+            "size_bytes": 498003,
+            "size_mb": 0.47,
+            "extension": ".mp3",
+            "sample_id": "710556",
+            "modified": "2025-11-28T00:58:25.093443"
+          },
+          {
+            "filename": "738791_Comedy Upbeat short ver..mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/guitar/738791_Comedy Upbeat short ver..mp3",
+            "size_bytes": 746007,
+            "size_mb": 0.71,
+            "extension": ".mp3",
+            "sample_id": "738791",
+            "modified": "2025-11-28T00:58:06.742533"
+          },
+          {
+            "filename": "760970_Magical Christmas Holidays loop ver.3.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/guitar/760970_Magical Christmas Holidays loop ver.3.mp3",
+            "size_bytes": 446674,
+            "size_mb": 0.43,
+            "extension": ".mp3",
+            "sample_id": "760970",
+            "modified": "2025-11-28T00:58:15.419829"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "455039_Ode to Joy Piano.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/piano/455039_Ode to Joy Piano.mp3",
+            "size_bytes": 489546,
+            "size_mb": 0.47,
+            "extension": ".mp3",
+            "sample_id": "455039",
+            "modified": "2025-11-28T00:57:41.576882"
+          },
+          {
+            "filename": "645038_XP Paino Intermission.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/piano/645038_XP Paino Intermission.wav.mp3",
+            "size_bytes": 381216,
+            "size_mb": 0.36,
+            "extension": ".mp3",
+            "sample_id": "645038",
+            "modified": "2025-11-28T00:57:45.905930"
+          },
+          {
+            "filename": "654028_Back to School Loop.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/piano/654028_Back to School Loop.mp3",
+            "size_bytes": 304729,
+            "size_mb": 0.29,
+            "extension": ".mp3",
+            "sample_id": "654028",
+            "modified": "2025-11-28T00:57:37.400146"
+          },
+          {
+            "filename": "654034_Summer Upbeat Loop.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/piano/654034_Summer Upbeat Loop.mp3",
+            "size_bytes": 263568,
+            "size_mb": 0.25,
+            "extension": ".mp3",
+            "sample_id": "654034",
+            "modified": "2025-11-28T00:57:50.640053"
+          },
+          {
+            "filename": "745362_Level up.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/piano/745362_Level up.mp3",
+            "size_bytes": 53520,
+            "size_mb": 0.05,
+            "extension": ".mp3",
+            "sample_id": "745362",
+            "modified": "2025-11-28T00:58:01.803883"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "254288_Male Laugh  - Laughter.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/vocals/254288_Male Laugh  - Laughter.mp3",
+            "size_bytes": 99504,
+            "size_mb": 0.09,
+            "extension": ".mp3",
+            "sample_id": "254288",
+            "modified": "2025-11-28T00:58:59.247146"
+          },
+          {
+            "filename": "254289_Male Laugh  - Laughter.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/vocals/254289_Male Laugh  - Laughter.mp3",
+            "size_bytes": 31008,
+            "size_mb": 0.03,
+            "extension": ".mp3",
+            "sample_id": "254289",
+            "modified": "2025-11-28T00:58:44.875953"
+          },
+          {
+            "filename": "254328_Male Laugh  - Laughter.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/vocals/254328_Male Laugh  - Laughter.mp3",
+            "size_bytes": 73728,
+            "size_mb": 0.07,
+            "extension": ".mp3",
+            "sample_id": "254328",
+            "modified": "2025-11-28T00:58:47.636713"
+          },
+          {
+            "filename": "408421_Female Laugh Hysterical  Comical.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/vocals/408421_Female Laugh Hysterical  Comical.mp3",
+            "size_bytes": 314880,
+            "size_mb": 0.3,
+            "extension": ".mp3",
+            "sample_id": "408421",
+            "modified": "2025-11-28T00:58:51.437388"
+          },
+          {
+            "filename": "528140_wind 2.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/JOY/vocals/528140_wind 2.wav.mp3",
+            "size_bytes": 84169,
+            "size_mb": 0.08,
+            "extension": ".mp3",
+            "sample_id": "528140",
+            "modified": "2025-11-28T00:58:55.580590"
+          }
+        ]
+      }
+    },
+    "HOPE": {
+      "level": "sub",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "275334_Trust.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/drums/275334_Trust.wav.mp3",
+            "size_bytes": 277298,
+            "size_mb": 0.26,
+            "extension": ".mp3",
+            "sample_id": "275334",
+            "modified": "2025-11-28T01:03:04.256612"
+          },
+          {
+            "filename": "335688_credits4.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/drums/335688_credits4.wav.mp3",
+            "size_bytes": 370306,
+            "size_mb": 0.35,
+            "extension": ".mp3",
+            "sample_id": "335688",
+            "modified": "2025-11-28T01:02:58.556107"
+          },
+          {
+            "filename": "339245_Edge_drumloop_pondotek2015.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/drums/339245_Edge_drumloop_pondotek2015.wav.mp3",
+            "size_bytes": 480864,
+            "size_mb": 0.46,
+            "extension": ".mp3",
+            "sample_id": "339245",
+            "modified": "2025-11-28T01:03:10.308962"
+          },
+          {
+            "filename": "564404_Ta-daa fanfare.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/drums/564404_Ta-daa fanfare.wav.mp3",
+            "size_bytes": 219312,
+            "size_mb": 0.21,
+            "extension": ".mp3",
+            "sample_id": "564404",
+            "modified": "2025-11-28T01:03:18.516518"
+          },
+          {
+            "filename": "621846_Orchestral Score - Viola Solo.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/drums/621846_Orchestral Score - Viola Solo.wav.mp3",
+            "size_bytes": 492270,
+            "size_mb": 0.47,
+            "extension": ".mp3",
+            "sample_id": "621846",
+            "modified": "2025-11-28T01:03:14.764722"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "483130_Electric bass guitar loop 2 bpm 110.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/guitar/483130_Electric bass guitar loop 2 bpm 110.wav.mp3",
+            "size_bytes": 162714,
+            "size_mb": 0.16,
+            "extension": ".mp3",
+            "sample_id": "483130",
+            "modified": "2025-11-28T01:02:30.137737"
+          },
+          {
+            "filename": "528767_New Beginning 30 Ambient Guitar Soundt.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/guitar/528767_New Beginning 30 Ambient Guitar Soundt.mp3",
+            "size_bytes": 656794,
+            "size_mb": 0.63,
+            "extension": ".mp3",
+            "sample_id": "528767",
+            "modified": "2025-11-28T01:02:49.434133"
+          },
+          {
+            "filename": "633807_Rock_Short_24.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/guitar/633807_Rock_Short_24.wav.mp3",
+            "size_bytes": 542569,
+            "size_mb": 0.52,
+            "extension": ".mp3",
+            "sample_id": "633807",
+            "modified": "2025-11-28T01:02:54.267216"
+          },
+          {
+            "filename": "642542_Aggressive Rhythm Guitar.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/guitar/642542_Aggressive Rhythm Guitar.mp3",
+            "size_bytes": 271104,
+            "size_mb": 0.26,
+            "extension": ".mp3",
+            "sample_id": "642542",
+            "modified": "2025-11-28T01:02:44.421232"
+          },
+          {
+            "filename": "782938_Three Days Out - Intro.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/guitar/782938_Three Days Out - Intro.mp3",
+            "size_bytes": 399233,
+            "size_mb": 0.38,
+            "extension": ".mp3",
+            "sample_id": "782938",
+            "modified": "2025-11-28T01:02:40.211279"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "428249_DSV1_SuspensfulRhodes01_C_70bpm.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/piano/428249_DSV1_SuspensfulRhodes01_C_70bpm.wav.mp3",
+            "size_bytes": 291843,
+            "size_mb": 0.28,
+            "extension": ".mp3",
+            "sample_id": "428249",
+            "modified": "2025-11-28T01:02:14.773036"
+          },
+          {
+            "filename": "428292_DSV1_SuspensfulRhodes02_C_70bpm.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/piano/428292_DSV1_SuspensfulRhodes02_C_70bpm.wav.mp3",
+            "size_bytes": 295175,
+            "size_mb": 0.28,
+            "extension": ".mp3",
+            "sample_id": "428292",
+            "modified": "2025-11-28T01:02:06.708276"
+          },
+          {
+            "filename": "428299_DSV1_SuspensfulRhodes05_G_77bpm.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/piano/428299_DSV1_SuspensfulRhodes05_G_77bpm.wav.mp3",
+            "size_bytes": 266211,
+            "size_mb": 0.25,
+            "extension": ".mp3",
+            "sample_id": "428299",
+            "modified": "2025-11-28T01:02:21.024870"
+          },
+          {
+            "filename": "515089_piano background 4.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/piano/515089_piano background 4.wav.mp3",
+            "size_bytes": 311798,
+            "size_mb": 0.3,
+            "extension": ".mp3",
+            "sample_id": "515089",
+            "modified": "2025-11-28T01:02:10.667260"
+          },
+          {
+            "filename": "539218_Dirty Deeds Trippy Piano - 123bpm - Fmin.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/piano/539218_Dirty Deeds Trippy Piano - 123bpm - Fmin.mp3",
+            "size_bytes": 333711,
+            "size_mb": 0.32,
+            "extension": ".mp3",
+            "sample_id": "539218",
+            "modified": "2025-11-28T01:02:25.745679"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "203532_Matts Beatbox Loop 100bpm.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/vocals/203532_Matts Beatbox Loop 100bpm.mp3",
+            "size_bytes": 243162,
+            "size_mb": 0.23,
+            "extension": ".mp3",
+            "sample_id": "203532",
+            "modified": "2025-11-28T01:03:36.941537"
+          },
+          {
+            "filename": "203977_Matts Beatbox Harmonies Loop 100 bpm.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/vocals/203977_Matts Beatbox Harmonies Loop 100 bpm.mp3",
+            "size_bytes": 228193,
+            "size_mb": 0.22,
+            "extension": ".mp3",
+            "sample_id": "203977",
+            "modified": "2025-11-28T01:03:32.971675"
+          },
+          {
+            "filename": "624131_Distorted Electric Sexy Female Vocal We.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/vocals/624131_Distorted Electric Sexy Female Vocal We.mp3",
+            "size_bytes": 405369,
+            "size_mb": 0.39,
+            "extension": ".mp3",
+            "sample_id": "624131",
+            "modified": "2025-11-28T01:03:28.828513"
+          },
+          {
+            "filename": "624132_Dark Medieval Female Background Vocal - .mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/vocals/624132_Dark Medieval Female Background Vocal - .mp3",
+            "size_bytes": 395511,
+            "size_mb": 0.38,
+            "extension": ".mp3",
+            "sample_id": "624132",
+            "modified": "2025-11-28T01:03:45.147871"
+          },
+          {
+            "filename": "673072_Fear itself.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/HOPE/vocals/673072_Fear itself.mp3",
+            "size_bytes": 377566,
+            "size_mb": 0.36,
+            "extension": ".mp3",
+            "sample_id": "673072",
+            "modified": "2025-11-28T01:03:23.416322"
+          }
+        ]
+      }
+    },
+    "RAGE": {
+      "level": "sub",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "211191_Pitbull loop.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/RAGE/drums/211191_Pitbull loop.wav.mp3",
+            "size_bytes": 342673,
+            "size_mb": 0.33,
+            "extension": ".mp3",
+            "sample_id": "211191",
+            "modified": "2025-11-28T01:07:47.378214"
+          },
+          {
+            "filename": "39262_Noisebeat 100.012bpm.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/RAGE/drums/39262_Noisebeat 100.012bpm.wav.mp3",
+            "size_bytes": 221174,
+            "size_mb": 0.21,
+            "extension": ".mp3",
+            "sample_id": "39262",
+            "modified": "2025-11-28T01:07:43.880116"
+          },
+          {
+            "filename": "676038_The Open Sidewalk.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/RAGE/drums/676038_The Open Sidewalk.mp3",
+            "size_bytes": 489886,
+            "size_mb": 0.47,
+            "extension": ".mp3",
+            "sample_id": "676038",
+            "modified": "2025-11-28T01:07:51.913080"
+          },
+          {
+            "filename": "703345_Fish Fry Lullaby.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/RAGE/drums/703345_Fish Fry Lullaby.mp3",
+            "size_bytes": 580659,
+            "size_mb": 0.55,
+            "extension": ".mp3",
+            "sample_id": "703345",
+            "modified": "2025-11-28T01:07:35.152635"
+          },
+          {
+            "filename": "735579_Disconnected.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/RAGE/drums/735579_Disconnected.mp3",
+            "size_bytes": 672119,
+            "size_mb": 0.64,
+            "extension": ".mp3",
+            "sample_id": "735579",
+            "modified": "2025-11-28T01:07:40.054446"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "676750_Ash Wednesday.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/RAGE/guitar/676750_Ash Wednesday.mp3",
+            "size_bytes": 637082,
+            "size_mb": 0.61,
+            "extension": ".mp3",
+            "sample_id": "676750",
+            "modified": "2025-11-28T01:07:11.716427"
+          },
+          {
+            "filename": "700440_Like the Other Day.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/RAGE/guitar/700440_Like the Other Day.mp3",
+            "size_bytes": 611390,
+            "size_mb": 0.58,
+            "extension": ".mp3",
+            "sample_id": "700440",
+            "modified": "2025-11-28T01:07:29.339015"
+          },
+          {
+            "filename": "703345_Fish Fry Lullaby.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/RAGE/guitar/703345_Fish Fry Lullaby.mp3",
+            "size_bytes": 580659,
+            "size_mb": 0.55,
+            "extension": ".mp3",
+            "sample_id": "703345",
+            "modified": "2025-11-28T01:07:20.615200"
+          },
+          {
+            "filename": "782938_Three Days Out - Intro.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/RAGE/guitar/782938_Three Days Out - Intro.mp3",
+            "size_bytes": 399233,
+            "size_mb": 0.38,
+            "extension": ".mp3",
+            "sample_id": "782938",
+            "modified": "2025-11-28T01:07:16.225948"
+          },
+          {
+            "filename": "788679_WindTryst Boogie.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/RAGE/guitar/788679_WindTryst Boogie.mp3",
+            "size_bytes": 401152,
+            "size_mb": 0.38,
+            "extension": ".mp3",
+            "sample_id": "788679",
+            "modified": "2025-11-28T01:07:25.015118"
+          }
+        ],
+        "piano": [
+          {
+            "filename": "815497_Creepy dramatic piano sound effect.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/RAGE/piano/815497_Creepy dramatic piano sound effect.mp3",
+            "size_bytes": 577506,
+            "size_mb": 0.55,
+            "extension": ".mp3",
+            "sample_id": "815497",
+            "modified": "2025-11-28T01:07:03.671102"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "211191_Pitbull loop.wav.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/RAGE/vocals/211191_Pitbull loop.wav.mp3",
+            "size_bytes": 342673,
+            "size_mb": 0.33,
+            "extension": ".mp3",
+            "sample_id": "211191",
+            "modified": "2025-11-28T01:07:57.103890"
+          }
+        ]
+      }
+    },
+    "HOSTILITY": {
+      "level": "sub",
+      "instruments": {}
+    },
+    "JEALOUSY": {
+      "level": "sub",
+      "instruments": {}
+    },
+    "DESPAIR": {
+      "level": "sub",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "128061_despair s53mc.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/DESPAIR/drums/128061_despair s53mc.mp3",
+            "size_bytes": 472216,
+            "size_mb": 0.45,
+            "extension": ".mp3",
+            "sample_id": "128061",
+            "modified": "2025-11-28T01:04:31.247511"
+          },
+          {
+            "filename": "135379_desperate s47g2.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/DESPAIR/drums/135379_desperate s47g2.mp3",
+            "size_bytes": 377607,
+            "size_mb": 0.36,
+            "extension": ".mp3",
+            "sample_id": "135379",
+            "modified": "2025-11-28T01:04:36.087999"
+          }
+        ],
+        "guitar": [
+          {
+            "filename": "128061_despair s53mc.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/DESPAIR/guitar/128061_despair s53mc.mp3",
+            "size_bytes": 472216,
+            "size_mb": 0.45,
+            "extension": ".mp3",
+            "sample_id": "128061",
+            "modified": "2025-11-28T01:04:25.566312"
+          }
+        ]
+      }
+    },
+    "PRIDE": {
+      "level": "sub",
+      "instruments": {
+        "drums": [
+          {
+            "filename": "501749_James Brown - Soul Pride Drum Loop - Am.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/PRIDE/drums/501749_James Brown - Soul Pride Drum Loop - Am.mp3",
+            "size_bytes": 631066,
+            "size_mb": 0.6,
+            "extension": ".mp3",
+            "sample_id": "501749",
+            "modified": "2025-11-28T01:00:24.252435"
+          }
+        ],
+        "vocals": [
+          {
+            "filename": "267107_Seascraper - Nanobots For Women - Pleasu.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/PRIDE/vocals/267107_Seascraper - Nanobots For Women - Pleasu.mp3",
+            "size_bytes": 100608,
+            "size_mb": 0.1,
+            "extension": ".mp3",
+            "sample_id": "267107",
+            "modified": "2025-11-28T01:00:33.707116"
+          },
+          {
+            "filename": "267166_Seascraper - Equation of Love Sophie  J.mp3",
+            "path": "/Users/seanburdges/Library/CloudStorage/GoogleDrive-sburdges@gmail.com/My Drive/GOOGLE KELLY INFO/iDAW_Samples/Emotion_Instrument_Library/sub/PRIDE/vocals/267166_Seascraper - Equation of Love Sophie  J.mp3",
+            "size_bytes": 656883,
+            "size_mb": 0.63,
+            "extension": ".mp3",
+            "sample_id": "267166",
+            "modified": "2025-11-28T01:00:29.362700"
+          }
+        ]
+      }
+    }
+  },
+  "scale_library": {}
+}

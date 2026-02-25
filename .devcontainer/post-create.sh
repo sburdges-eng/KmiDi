@@ -34,6 +34,37 @@ if [ -f .pre-commit-config.yaml ]; then
     pre-commit install || echo "⚠️  Pre-commit install failed"
 fi
 
+# Install pnpm (Node feature provides Node/npm)
+echo "📦 Ensuring pnpm is available..."
+if command -v corepack &> /dev/null; then
+    corepack enable
+    corepack prepare pnpm@8 --activate
+elif command -v npm &> /dev/null; then
+    npm install -g pnpm@8
+else
+    echo "⚠️  Node/npm not found; pnpm not installed"
+fi
+
+# Install Gemini CLI for AI assistance
+echo "🤖 Installing Gemini CLI..."
+if command -v npm &> /dev/null; then
+    npm install -g @google/gemini-cli
+    # Configure Gemini if API key is set via GEMINI_API_KEY secret
+    if [ -n "$GEMINI_API_KEY" ]; then
+        echo "Gemini API key found, initializing..."
+        gemini /init 2>/dev/null || true
+    else
+        echo "⚠️  Set GEMINI_API_KEY Codespace secret for Gemini CLI"
+    fi
+else
+    echo "⚠️  npm not found; Gemini CLI not installed"
+fi
+
+# Configure OpenAI if API key is set
+if [ -n "$OPENAI_API_KEY" ]; then
+    echo "✅ OpenAI API key configured"
+fi
+
 # Create common directories if they don't exist
 echo "📁 Creating directory structure..."
 mkdir -p tools/scripts
@@ -75,3 +106,26 @@ echo "  - Build C++: cmake -B build && cmake --build build"
 echo "  - Run tests: pytest tests/python"
 echo ""
 echo "Happy coding! 🎹"
+
+# Set up dataset access (SSH to Mac or B2 cloud)
+echo ""
+echo "☁️  Checking dataset access..."
+if [ -n "$MAC_SSH_HOST" ] && [ -n "$MAC_SSH_USER" ]; then
+    echo "SSH credentials found. Mounting datasets from local Mac..."
+    bash .devcontainer/setup-ssh-mount.sh || echo "⚠️  SSH mount failed - is tunnel running?"
+elif [ -n "$B2_ACCOUNT_ID" ] && [ -n "$B2_APPLICATION_KEY" ]; then
+    echo "B2 credentials found. Setting up cloud storage..."
+    bash .devcontainer/setup-cloud-storage.sh || echo "⚠️  Cloud storage setup failed"
+else
+    echo "ℹ️  No dataset access configured. Options:"
+    echo ""
+    echo "   Option 1: SSH to Local Mac (recommended)"
+    echo "   - MAC_SSH_HOST: your Mac IP or 'localhost' with tunnel"
+    echo "   - MAC_SSH_USER: your Mac username"
+    echo "   - MAC_SSH_KEY: base64-encoded SSH private key (optional)"
+    echo ""
+    echo "   Option 2: Backblaze B2 Cloud Storage"
+    echo "   - B2_ACCOUNT_ID"
+    echo "   - B2_APPLICATION_KEY"
+    echo "   - B2_BUCKET_NAME (optional)"
+fi

@@ -1,0 +1,183 @@
+{
+  "metadata": {
+    "title": "East Asian Pentatonic Emotional Mapping",
+    "version": "1.0.0",
+    "created": "2025-01-07",
+    "description": "Mapping of East Asian pentatonic scales (Chinese, Japanese, Korean) to emotional qualities",
+    "culture": "East Asian",
+    "total_pentatonic_systems": 15
+  },
+  "pentatonic_systems": [
+    {
+      "name": "Chinese Gong (Major Pentatonic)",
+      "culture": "Chinese",
+      "intervals_semitones": [0, 2, 4, 7, 9],
+      "scale_degrees": ["Gong", "Shang", "Jue", "Zhi", "Yu"],
+      "emotional_qualities": ["peaceful", "serene", "balanced", "harmonious", "natural"],
+      "therapeutic_use": ["peace", "balance", "harmony", "serenity", "nature"],
+      "emotion_mapping": {
+        "peace": 0.9,
+        "balance": 0.85,
+        "harmony": 0.9,
+        "serenity": 0.85,
+        "calm": 0.8
+      },
+      "intensity_range": [0.2, 0.6],
+      "notes": "Most fundamental Chinese scale, represents balance and harmony"
+    },
+    {
+      "name": "Chinese Zhi (Minor Pentatonic)",
+      "culture": "Chinese",
+      "intervals_semitones": [0, 3, 5, 7, 10],
+      "scale_degrees": ["Zhi", "Yu", "Gong", "Shang", "Jue"],
+      "emotional_qualities": ["melancholic", "contemplative", "thoughtful", "introspective", "deep"],
+      "therapeutic_use": ["melancholy", "contemplation", "introspection", "thought", "depth"],
+      "emotion_mapping": {
+        "melancholy": 0.85,
+        "contemplation": 0.9,
+        "introspection": 0.85,
+        "thought": 0.8,
+        "sad": 0.75
+      },
+      "intensity_range": [0.3, 0.7],
+      "notes": "Minor pentatonic with melancholic quality"
+    },
+    {
+      "name": "Japanese In Sen",
+      "culture": "Japanese",
+      "intervals_semitones": [0, 1, 5, 7, 10],
+      "scale_degrees": ["In", "Sen"],
+      "emotional_qualities": ["mysterious", "meditative", "spiritual", "ethereal", "contemplative"],
+      "therapeutic_use": ["meditation", "spirituality", "mystery", "contemplation", "peace"],
+      "emotion_mapping": {
+        "meditation": 0.9,
+        "spiritual": 0.85,
+        "mystery": 0.8,
+        "contemplation": 0.85,
+        "peace": 0.75
+      },
+      "intensity_range": [0.2, 0.7],
+      "notes": "Japanese scale used in traditional music, very meditative"
+    },
+    {
+      "name": "Japanese Yo Sen",
+      "culture": "Japanese",
+      "intervals_semitones": [0, 2, 5, 7, 9],
+      "scale_degrees": ["Yo", "Sen"],
+      "emotional_qualities": ["bright", "cheerful", "energetic", "uplifting", "optimistic"],
+      "therapeutic_use": ["cheer", "energy", "uplifting", "optimism", "joy"],
+      "emotion_mapping": {
+        "happy": 0.85,
+        "cheerful": 0.9,
+        "energy": 0.8,
+        "uplifting": 0.85,
+        "optimism": 0.8
+      },
+      "intensity_range": [0.4, 0.8],
+      "notes": "Bright Japanese scale, more energetic than In Sen"
+    },
+    {
+      "name": "Japanese Hirajoshi",
+      "culture": "Japanese",
+      "intervals_semitones": [0, 2, 3, 7, 9],
+      "scale_degrees": ["Hira", "joshi"],
+      "emotional_qualities": ["delicate", "refined", "elegant", "subtle", "graceful"],
+      "therapeutic_use": ["delicacy", "refinement", "elegance", "subtlety", "grace"],
+      "emotion_mapping": {
+        "delicate": 0.9,
+        "refined": 0.85,
+        "elegant": 0.9,
+        "subtle": 0.85,
+        "grace": 0.85
+      },
+      "intensity_range": [0.2, 0.6],
+      "notes": "Very delicate and refined scale"
+    },
+    {
+      "name": "Japanese Kumoi",
+      "culture": "Japanese",
+      "intervals_semitones": [0, 1, 5, 7, 8],
+      "scale_degrees": ["Kumoi"],
+      "emotional_qualities": ["melancholic", "yearning", "nostalgic", "wistful", "tender"],
+      "therapeutic_use": ["melancholy", "yearning", "nostalgia", "wistful", "tenderness"],
+      "emotion_mapping": {
+        "melancholy": 0.85,
+        "yearning": 0.8,
+        "nostalgia": 0.85,
+        "wistful": 0.9,
+        "tenderness": 0.8
+      },
+      "intensity_range": [0.3, 0.7],
+      "notes": "Melancholic Japanese scale"
+    },
+    {
+      "name": "Korean Gyemyeonjo",
+      "culture": "Korean",
+      "intervals_semitones": [0, 2, 3, 7, 9],
+      "scale_degrees": ["Gye", "myeon", "jo"],
+      "emotional_qualities": ["mournful", "lamenting", "sad", "expressive", "deep"],
+      "therapeutic_use": ["grief", "sadness", "lament", "mourning", "expression"],
+      "emotion_mapping": {
+        "sad": 0.9,
+        "grief": 0.85,
+        "mourning": 0.9,
+        "lament": 0.85,
+        "deep": 0.8
+      },
+      "intensity_range": [0.4, 0.8],
+      "notes": "Korean scale for expressing deep sadness and lament"
+    },
+    {
+      "name": "Korean Pyeongjo",
+      "culture": "Korean",
+      "intervals_semitones": [0, 2, 4, 7, 9],
+      "scale_degrees": ["Pyeong", "jo"],
+      "emotional_qualities": ["peaceful", "calm", "balanced", "harmonious", "stable"],
+      "therapeutic_use": ["peace", "calm", "balance", "harmony", "stability"],
+      "emotion_mapping": {
+        "peace": 0.9,
+        "calm": 0.9,
+        "balance": 0.85,
+        "harmony": 0.9,
+        "stability": 0.85
+      },
+      "intensity_range": [0.2, 0.6],
+      "notes": "Korean scale representing peace and balance"
+    },
+    {
+      "name": "Chinese Yu (Pentatonic Minor)",
+      "culture": "Chinese",
+      "intervals_semitones": [0, 3, 5, 8, 10],
+      "scale_degrees": ["Yu", "Gong", "Shang", "Jue", "Zhi"],
+      "emotional_qualities": ["serious", "dignified", "solemn", "respectful", "weighty"],
+      "therapeutic_use": ["seriousness", "dignity", "solemnity", "respect", "gravity"],
+      "emotion_mapping": {
+        "serious": 0.85,
+        "dignity": 0.9,
+        "solemn": 0.85,
+        "respect": 0.8,
+        "gravity": 0.8
+      },
+      "intensity_range": [0.3, 0.7],
+      "notes": "Serious and dignified Chinese scale"
+    },
+    {
+      "name": "Mongolian Pentatonic",
+      "culture": "Mongolian",
+      "intervals_semitones": [0, 2, 4, 7, 9],
+      "scale_degrees": ["Traditional Mongolian"],
+      "emotional_qualities": ["vast", "expansive", "free", "open", "epic"],
+      "therapeutic_use": ["freedom", "openness", "expansiveness", "vastness", "epic"],
+      "emotion_mapping": {
+        "freedom": 0.9,
+        "openness": 0.85,
+        "expansive": 0.9,
+        "vast": 0.85,
+        "epic": 0.8
+      },
+      "intensity_range": [0.4, 0.8],
+      "notes": "Mongolian scale expressing vast open spaces"
+    }
+  ]
+}
+

@@ -104,7 +104,7 @@ public:
 
   // Async processing of feature JSON payloads; invokes callback on completion.
   bool processAsync(const std::string &inputJson,
-                    std::function<void(const KellyTypesIntentResult &)> callback);
+                    std::function<void(const kelly::IntentResult &)> callback);
 
   // === Generate from ML Outputs ===
 
@@ -161,8 +161,8 @@ private:
   std::mutex asyncThreadsMutex_;
 
   // Feature extraction settings
-  double sampleRate_ = 44100.0;
-  size_t fftSize_ = 2048UL;
+  [[maybe_unused]] double sampleRate_ = 44100.0;
+  [[maybe_unused]] size_t fftSize_ = 2048UL;
 };
 
 // =============================================================================

@@ -49,6 +49,19 @@ from music_brain.learning.pedagogy import (
     generate_ai_teaching_prompt,
 )
 
+from music_brain.learning.openweight_learning import (
+    OpenWeightLearner,
+    OpenWeightLearningManager,
+)
+
+from music_brain.learning.stem_compatibility import (
+    StemType,
+    StemCompatibilityScore,
+    StemJEPACompatibility,
+    SelfSupervisedLearner,
+    get_jepa_integration_status,
+)
+
 __all__ = [
     # Curriculum
     "DifficultyLevel",
@@ -81,4 +94,13 @@ __all__ = [
     "AdaptiveTeacher",
     "PedagogyEngine",
     "generate_ai_teaching_prompt",
+    # OpenWeight Learning
+    "OpenWeightLearner",
+    "OpenWeightLearningManager",
+    # Stem Compatibility (JEPA-based)
+    "StemType",
+    "StemCompatibilityScore",
+    "StemJEPACompatibility",
+    "SelfSupervisedLearner",
+    "get_jepa_integration_status",
 ]

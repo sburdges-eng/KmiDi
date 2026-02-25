@@ -5,8 +5,8 @@ namespace kelly {
 namespace bridge {
 
 BridgeBase::BridgeBase(const std::string& bridgeName)
-    : bridgeName_(bridgeName)
-    , available_(false)
+    : available_(false)
+    , bridgeName_(bridgeName)
 {
 }
 

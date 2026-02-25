@@ -1,4 +1,3 @@
-# ruff: noqa: I001
 """
 ML Model Integration - Machine Learning inference for iDAW.
 
@@ -13,81 +12,118 @@ Supports:
 - Style transfer for groove
 - Emotion classification
 - Audio feature extraction
-- Mac-optimized training (MPS/CPU)
-- Model export (ONNX, Core ML, RTNeural)
-
-See docs/MK_TRAINING_GUIDELINES.md for training workflow.
+- Multi-model training orchestration
+- Dynamics training for emotion-aware processing
 """
 
-from python.penta_core.ml.model_registry import (
+from .model_registry import (
     ModelRegistry,
     ModelInfo,
     ModelBackend,
-    load_registry_manifest,
+    ModelTask,
     register_model,
     get_model,
+    get_registry,
     list_models,
+    load_registry_manifest,
+    # Training lifecycle
+    TrainingStatus,
+    TrainingJob,
+    TrainingJobManager,
+    get_job_manager,
+    create_training_job,
 )
 
-from python.penta_core.ml.inference import (
+from .inference import (
     InferenceEngine,
     InferenceResult,
     create_engine,
 )
 
-from python.penta_core.ml.chord_predictor import (
-    ChordPredictor,
-    ChordPrediction,
-    predict_next_chord,
-    predict_progression,
-)
-
-from python.penta_core.ml.style_transfer import (
-    GrooveStyleTransfer,
-    StyleTransferResult,
-    transfer_groove_style,
-)
-
-from python.penta_core.ml.gpu_utils import (
-    get_available_devices,
-    select_best_device,
-    GPUDevice,
-    DeviceType,
-)
-
-# Training and export utilities (optional imports)
 try:
-    from python.penta_core.ml.audio_dataset import (  # noqa: F401
-        AudioDataset,
-        AudioDatasetTorch,
-        AudioSample,
-        create_dataloaders,
-        create_metadata_template,
+    from .chord_predictor import (
+        ChordPredictor,
+        ChordPrediction,
+        predict_next_chord,
+        predict_progression,
     )
-    _HAS_DATASET = True
 except ImportError:
-    _HAS_DATASET = False
+    ChordPredictor = None
+    ChordPrediction = None
+    predict_next_chord = None
+    predict_progression = None
 
 try:
-    from python.penta_core.ml.export import (  # noqa: F401
-        ModelExporter,
-        ExportConfig,
-        verify_onnx_model,
-        verify_coreml_model,
+    from .style_transfer import (
+        GrooveStyleTransfer,
+        StyleTransferResult,
+        transfer_groove_style,
     )
-    _HAS_EXPORT = True
 except ImportError:
-    _HAS_EXPORT = False
+    GrooveStyleTransfer = None
+    StyleTransferResult = None
+    transfer_groove_style = None
+
+try:
+    from .gpu_utils import (
+        get_available_devices,
+        select_best_device,
+        GPUDevice,
+        DeviceType,
+    )
+except ImportError:
+    get_available_devices = None
+    select_best_device = None
+    GPUDevice = None
+    DeviceType = None
+
+from .dynamics_training import (
+    SectionType,
+    DynamicLevel,
+    SectionContext,
+    TempoPoint,
+    TempoMap,
+    GroundTruthLabel,
+    LUFSMeter,
+    PositionTokenizer,
+    calculate_dynamics_targets_from_emotion,
+)
+
+from .training_orchestrator import (
+    TrainingConfig,
+    OrchestratorConfig,
+    TrainingCallback,
+    ProgressCallback,
+    CheckpointCallback,
+    BaseTrainer,
+    DummyTrainer,
+    PyTorchTrainer,
+    GrooveTrainer,
+    HarmonyTrainer,
+    EmotionTrainer,
+    MelodyTrainer,
+    TrainingOrchestrator,
+    train_all_models,
+    train_model,
+)
 
 __all__ = [
     # Registry
     "ModelRegistry",
     "ModelInfo",
     "ModelBackend",
-    "load_registry_manifest",
+    "ModelTask",
     "register_model",
     "get_model",
+    "get_registry",
     "list_models",
+    "load_registry_manifest",
+    # Training Lifecycle
+    "TrainingStatus",
+    "TrainingJob",
+    "TrainingJobManager",
+    "get_job_manager",
+    "create_training_job",
     # Inference
     "InferenceEngine",
     "InferenceResult",
@@ -106,23 +142,30 @@ __all__ = [
     "select_best_device",
     "GPUDevice",
     "DeviceType",
+    # Dynamics Training
+    "SectionType",
+    "DynamicLevel",
+    "SectionContext",
+    "TempoPoint",
+    "TempoMap",
+    "GroundTruthLabel",
+    "LUFSMeter",
+    "PositionTokenizer",
+    "calculate_dynamics_targets_from_emotion",
+    # Training Orchestrator
+    "TrainingConfig",
+    "OrchestratorConfig",
+    "TrainingCallback",
+    "ProgressCallback",
+    "CheckpointCallback",
+    "BaseTrainer",
+    "DummyTrainer",
+    "PyTorchTrainer",
+    "GrooveTrainer",
+    "HarmonyTrainer",
+    "EmotionTrainer",
+    "MelodyTrainer",
+    "TrainingOrchestrator",
+    "train_all_models",
+    "train_model",
 ]
-
-# Add dataset exports if available
-if _HAS_DATASET:
-    __all__.extend([
-        "AudioDataset",
-        "AudioDatasetTorch",
-        "AudioSample",
-        "create_dataloaders",
-        "create_metadata_template",
-    ])
-
-# Add export utilities if available
-if _HAS_EXPORT:
-    __all__.extend([
-        "ModelExporter",
-        "ExportConfig",
-        "verify_onnx_model",
-        "verify_coreml_model",
-    ])
