@@ -330,7 +330,7 @@ class TestOrchestratorBackoff:
             elapsed = time.perf_counter() - start
             return result, elapsed
 
-        result, elapsed = asyncio.get_event_loop().run_until_complete(run())
+        result, elapsed = asyncio.run(run())
 
         assert result.success
         assert result.final_output == "ok after 3 attempts"
@@ -357,7 +357,7 @@ class TestOrchestratorBackoff:
             elapsed = time.perf_counter() - start
             return result, elapsed
 
-        result, elapsed = asyncio.get_event_loop().run_until_complete(run())
+        result, elapsed = asyncio.run(run())
 
         assert result.success
         # Should complete quickly without any backoff delay
@@ -379,6 +379,6 @@ class TestOrchestratorBackoff:
         async def run():
             return await orchestrator.execute(pipeline, "test_input")
 
-        result = asyncio.get_event_loop().run_until_complete(run())
+        result = asyncio.run(run())
         assert not result.success
         assert "always_fail" in result.error
