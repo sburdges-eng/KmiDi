@@ -20,11 +20,53 @@ One-Time Setup:
 Then the system runs 100% locally.
 """
 
+import hashlib
 import os
 import atexit
+import time
+from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Optional, Dict, List, Any, Callable
+from typing import Optional, Dict, List, Any, Callable, Tuple
 from enum import Enum
+
+
+# =============================================================================
+# Response Cache for LLM calls
+# =============================================================================
+
+
+class _LRUResponseCache:
+    """Thread-safe LRU cache for LLM responses to avoid redundant inference."""
+
+    def __init__(self, max_size: int = 128):
+        self._max_size = max_size
+        self._cache: OrderedDict[str, str] = OrderedDict()
+
+    @staticmethod
+    def _make_key(model: str, prompt: str, system: str) -> str:
+        raw = f"{model}|{system}|{prompt}"
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+    def get(self, model: str, prompt: str, system: str = "") -> Optional[str]:
+        key = self._make_key(model, prompt, system)
+        if key in self._cache:
+            self._cache.move_to_end(key)
+            return self._cache[key]
+        return None
+
+    def put(self, model: str, prompt: str, response: str, system: str = "") -> None:
+        key = self._make_key(model, prompt, system)
+        if key in self._cache:
+            self._cache.move_to_end(key)
+        self._cache[key] = response
+        if len(self._cache) > self._max_size:
+            self._cache.popitem(last=False)
+
+    def clear(self) -> None:
+        self._cache.clear()
+
+    def __len__(self) -> int:
+        return len(self._cache)
 
 
 # =============================================================================
@@ -41,6 +83,9 @@ class LocalLLMConfig:
     # Specialized models for different tasks
     code_model: str = "codellama"   # For code generation
     music_model: str = "llama3"     # For music/creative tasks
+    # Performance tuning
+    cache_max_size: int = 128       # Max cached LLM responses
+    health_check_ttl: float = 30.0  # Seconds to cache health check result
 
 
 class LLMBackend(Enum):
@@ -59,6 +104,9 @@ class OnnxLLMConfig:
     max_tokens: int = 512
     temperature: float = 0.7
     top_p: float = 0.9
+    # Performance tuning
+    cache_max_size: int = 128       # Max cached LLM responses
+    health_check_ttl: float = 30.0  # Seconds to cache health check result
 
 
 # =============================================================================
@@ -71,6 +119,11 @@ class LocalLLM:
 
     NO CLOUD APIs - All inference runs locally.
 
+    Performance features:
+    - Connection pooling via requests.Session (TCP keep-alive)
+    - LRU response caching for identical prompts
+    - TTL-based health check caching
+
     Usage:
         llm = LocalLLM()
         response = llm.generate("Write a chord progression for grief")
@@ -79,22 +132,31 @@ class LocalLLM:
     def __init__(self, config: Optional[LocalLLMConfig] = None):
         self.config = config or LocalLLMConfig()
         self._available = False
+        self._health_checked_at: float = 0.0
+        self._cache = _LRUResponseCache(max_size=self.config.cache_max_size)
+        # Connection-pooled HTTP session (TCP keep-alive)
+        import requests
+        self._session = requests.Session()
         self._check_availability()
 
     def _check_availability(self) -> None:
-        """Check if Ollama is running."""
+        """Check if Ollama is running (cached with TTL)."""
+        now = time.monotonic()
+        if now - self._health_checked_at < self.config.health_check_ttl:
+            return
         try:
-            import requests
-            response = requests.get(
+            response = self._session.get(
                 f"{self.config.base_url}/api/tags",
                 timeout=2
             )
             self._available = response.status_code == 200
         except Exception:
             self._available = False
+        self._health_checked_at = now
 
     @property
     def is_available(self) -> bool:
+        self._check_availability()
         return self._available
 
     def generate(
@@ -119,13 +181,20 @@ class LocalLLM:
             Generated text
         """
         if not self._available:
-            return self._fallback_response(prompt)
+            self._check_availability()
+            if not self._available:
+                return self._fallback_response(prompt)
+
+        use_model = model or self.config.model
+
+        # Check cache
+        cached = self._cache.get(use_model, prompt, system or "")
+        if cached is not None:
+            return cached
 
         try:
-            import requests
-
             data = {
-                "model": model or self.config.model,
+                "model": use_model,
                 "prompt": prompt,
                 "stream": False,
                 "options": {
@@ -137,14 +206,16 @@ class LocalLLM:
             if system:
                 data["system"] = system
 
-            response = requests.post(
+            response = self._session.post(
                 f"{self.config.base_url}/api/generate",
                 json=data,
                 timeout=60
             )
 
             if response.status_code == 200:
-                return response.json().get("response", "")
+                text = response.json().get("response", "")
+                self._cache.put(use_model, prompt, text, system or "")
+                return text
             else:
                 return self._fallback_response(prompt)
 
@@ -170,16 +241,24 @@ class LocalLLM:
             Assistant response
         """
         if not self._available:
-            user_msg = messages[-1].get("content", "") if messages else ""
-            return self._fallback_response(user_msg)
+            self._check_availability()
+            if not self._available:
+                user_msg = messages[-1].get("content", "") if messages else ""
+                return self._fallback_response(user_msg)
+
+        use_model = model or self.config.model
+
+        # Build cache key from messages
+        cache_prompt = "|".join(f"{m.get('role', '')}:{m.get('content', '')}" for m in messages)
+        cached = self._cache.get(use_model, cache_prompt)
+        if cached is not None:
+            return cached
 
         try:
-            import requests
-
-            response = requests.post(
+            response = self._session.post(
                 f"{self.config.base_url}/api/chat",
                 json={
-                    "model": model or self.config.model,
+                    "model": use_model,
                     "messages": messages,
                     "stream": False,
                     "options": {
@@ -190,13 +269,19 @@ class LocalLLM:
             )
 
             if response.status_code == 200:
-                return response.json().get("message", {}).get("content", "")
+                text = response.json().get("message", {}).get("content", "")
+                self._cache.put(use_model, cache_prompt, text)
+                return text
             else:
                 return self._fallback_response("")
 
         except Exception as e:
             print(f"LLM chat error: {e}")
             return self._fallback_response("")
+
+    def clear_cache(self) -> None:
+        """Clear the response cache."""
+        self._cache.clear()
 
     def _fallback_response(self, prompt: str) -> str:
         """Fallback when LLM is not available."""
@@ -205,6 +290,10 @@ class LocalLLM:
             f"Prompt was: {prompt[:100]}..."
         )
 
+    def close(self) -> None:
+        """Close the HTTP session."""
+        self._session.close()
+
 
 class OnnxLLM:
     """
@@ -212,25 +301,39 @@ class OnnxLLM:
 
     Uses the `/health`, `/generate`, and `/chat` endpoints from
     `music_brain.intelligence.onnx_llm_server`.
+
+    Performance features:
+    - Connection pooling via requests.Session (TCP keep-alive)
+    - LRU response caching for identical prompts
+    - TTL-based health check caching
     """
 
     def __init__(self, config: Optional[OnnxLLMConfig] = None):
         self.config = config or OnnxLLMConfig()
         self._available = False
+        self._health_checked_at: float = 0.0
+        self._cache = _LRUResponseCache(max_size=self.config.cache_max_size)
+        # Connection-pooled HTTP session (TCP keep-alive)
+        import requests
+        self._session = requests.Session()
         self._check_availability()
 
     @property
     def is_available(self) -> bool:
+        self._check_availability()
         return self._available
 
     def _check_availability(self) -> None:
+        """Check ONNX service health (cached with TTL)."""
+        now = time.monotonic()
+        if now - self._health_checked_at < self.config.health_check_ttl:
+            return
         try:
-            import requests
-
-            resp = requests.get(f"{self.config.base_url}/health", timeout=2)
+            resp = self._session.get(f"{self.config.base_url}/health", timeout=2)
             self._available = resp.status_code == 200 and resp.json().get("status") == "ok"
         except Exception:
             self._available = False
+        self._health_checked_at = now
 
     def generate(
         self,
@@ -241,21 +344,29 @@ class OnnxLLM:
         max_tokens: Optional[int] = None,
     ) -> str:
         if not self._available:
-            return self._fallback_response(prompt)
+            self._check_availability()
+            if not self._available:
+                return self._fallback_response(prompt)
+
+        use_prompt = f"{system}\n\n{prompt}" if system else prompt
+
+        # Check cache
+        cached = self._cache.get("onnx", use_prompt)
+        if cached is not None:
+            return cached
 
         try:
-            import requests
-
-            use_prompt = f"{system}\n\n{prompt}" if system else prompt
             payload = {
                 "prompt": use_prompt,
                 "max_tokens": max_tokens or self.config.max_tokens,
                 "temperature": temperature or self.config.temperature,
                 "top_p": self.config.top_p,
             }
-            resp = requests.post(f"{self.config.base_url}/generate", json=payload, timeout=60)
+            resp = self._session.post(f"{self.config.base_url}/generate", json=payload, timeout=60)
             if resp.status_code == 200:
-                return resp.json().get("output", "")
+                text = resp.json().get("output", "")
+                self._cache.put("onnx", use_prompt, text)
+                return text
             return self._fallback_response(prompt)
         except Exception as exc:
             print(f"ONNX LLM error: {exc}")
@@ -268,31 +379,47 @@ class OnnxLLM:
         temperature: Optional[float] = None,
     ) -> str:
         if not self._available:
-            user_msg = messages[-1].get("content", "") if messages else ""
-            return self._fallback_response(user_msg)
+            self._check_availability()
+            if not self._available:
+                user_msg = messages[-1].get("content", "") if messages else ""
+                return self._fallback_response(user_msg)
+
+        # Build cache key from messages
+        cache_prompt = "|".join(f"{m.get('role', '')}:{m.get('content', '')}" for m in messages)
+        cached = self._cache.get("onnx", cache_prompt)
+        if cached is not None:
+            return cached
 
         try:
-            import requests
-
             payload = {
                 "messages": messages,
                 "max_tokens": self.config.max_tokens,
                 "temperature": temperature or self.config.temperature,
                 "top_p": self.config.top_p,
             }
-            resp = requests.post(f"{self.config.base_url}/chat", json=payload, timeout=60)
+            resp = self._session.post(f"{self.config.base_url}/chat", json=payload, timeout=60)
             if resp.status_code == 200:
-                return resp.json().get("output", "")
+                text = resp.json().get("output", "")
+                self._cache.put("onnx", cache_prompt, text)
+                return text
             return self._fallback_response("")
         except Exception as exc:
             print(f"ONNX LLM chat error: {exc}")
             return self._fallback_response("")
+
+    def clear_cache(self) -> None:
+        """Clear the response cache."""
+        self._cache.clear()
 
     def _fallback_response(self, prompt: str) -> str:
         return (
             "[ONNX LLM not available. Start daiw-llm-onnx or set LLM backend to Ollama.]\n"
             f"Prompt was: {prompt[:100]}..."
         )
+
+    def close(self) -> None:
+        """Close the HTTP session."""
+        self._session.close()
 
 
 # =============================================================================
@@ -790,6 +917,8 @@ class MusicCrew:
             agent.clear_history()
         self._agents.clear()
         self.tools.shutdown()
+        if hasattr(self.llm, 'close'):
+            self.llm.close()
 
     def __enter__(self):
         self.setup()
