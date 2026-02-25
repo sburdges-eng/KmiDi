@@ -421,7 +421,13 @@ class OnnxLLM:
         """Close the HTTP session."""
         self._session.close()
 
+    def __enter__(self) -> "OnnxLLM":
+        """Enter the runtime context for use in a 'with' statement."""
+        return self
 
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Exit the runtime context, ensuring the HTTP session is closed."""
+        self.close()
 # =============================================================================
 # Tool Definitions
 # =============================================================================
