@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 #!/usr/bin/env python3
 """
 MIDI Generator Transformer - CUDA Training Script
@@ -919,4 +917,3 @@ if __name__ == '__main__':
     parser.add_argument('--config', type=str, default='midi_generator_training_config.yaml')
     args = parser.parse_args()
     main(args.config)
->>>>>>> Incoming (Background Agent changes)

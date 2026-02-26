@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 # CPM.cmake - Package Manager
 # https://github.com/cpm-cmake/CPM.cmake
 
@@ -22,4 +20,3 @@ file(DOWNLOAD
 )
 
 include(${CPM_DOWNLOAD_LOCATION})
->>>>>>> Incoming (Background Agent changes)

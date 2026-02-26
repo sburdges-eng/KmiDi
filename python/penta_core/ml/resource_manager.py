@@ -1,5 +1,3 @@
-<<<<<<< Current (Your changes)
-=======
 """
 Resource Manager - Centralized resource management for GPU, memory, and CPU.
 
@@ -473,4 +471,3 @@ class ResourceManager:
 def get_resource_manager() -> ResourceManager:
     """Get the resource manager singleton."""
     return ResourceManager()
->>>>>>> Incoming (Background Agent changes)
