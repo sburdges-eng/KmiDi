@@ -1,0 +1,14 @@
+{
+  "version": "1.0",
+  "axes": [
+    "valence",
+    "energy",
+    "density",
+    "complexity"
+  ],
+  "axisFieldCandidates": [
+    "axisTargets",
+    "axes",
+    "targets"
+  ]
+}

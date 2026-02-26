@@ -1,0 +1,67 @@
+name: Pre-Training Hardening Gates
+
+on:
+  pull_request:
+  push:
+    branches:
+      - TEST
+      - main
+      - Kelly-Master
+      - "codex/**"
+
+permissions:
+  contents: read
+
+jobs:
+  python-contract-gates:
+    name: Python Contract Gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml zstandard pytest
+      - name: Run packaging + contract tests
+        run: |
+          python -m pytest \
+            tests/test_manifest_integrity.py \
+            tests/test_ci_shard_naming.py \
+            tests/test_ci_teacher_guardrails.py \
+            tests/test_ci_no_teacher_in_local.py \
+            tests/test_ci_run_contract.py \
+            tests/test_splits_deterministic.py \
+            tests/test_license_gate.py \
+            tests/test_incremental_sync.py \
+            -v --tb=short
+
+  offline-gate:
+    name: Offline Fail-Closed Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify offline gate fails without local JUCE
+        shell: bash
+        run: |
+          set -euo pipefail
+          if cmake -S . -B build-offline-gate -DOFFLINE_BUILD=ON -DJUCE_EXTERNAL_ROOT= -DKELLY_ENABLE_TESTS=OFF; then
+            echo "Expected OFFLINE_BUILD gate failure, but configure succeeded."
+            exit 1
+          fi
+          grep -q "OFFLINE_BUILD is ON and no local JUCE source is configured" build-offline-gate/CMakeFiles/CMakeOutput.log || true
+
+  runtime-contract-cpp:
+    name: Runtime Contract C++ Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure and build runtime contract tests
+        run: |
+          cmake -S . -B build-ci-runtime -DOFFLINE_BUILD=OFF -DJUCE_EXTERNAL_ROOT= -DKELLY_ENABLE_TESTS=ON
+          cmake --build build-ci-runtime --target runtime_contract_tests -j2
+      - name: Run runtime contract tests
+        run: |
+          ctest --test-dir build-ci-runtime --output-on-failure -R runtime_contract_tests

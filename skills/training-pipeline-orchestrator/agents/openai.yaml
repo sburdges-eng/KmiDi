@@ -1,0 +1,4 @@
+interface:
+  display_name: "Training Pipeline Orchestrator"
+  short_description: "Coordinate packaging and AWS training workflow."
+  default_prompt: "Orchestrate the full Kelly training pipeline: package dataset with validation gates, launch AWS training with dry-run preflight, monitor cockpit status, and fetch artifacts safely."

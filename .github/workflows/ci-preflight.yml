@@ -1,0 +1,72 @@
+name: CI Preflight Gate
+
+on:
+  pull_request:
+    branches: [Kelly-Master, main]
+  push:
+    branches: [Kelly-Master, main]
+
+permissions:
+  contents: read
+
+jobs:
+  # ──────────────────────────────────────────────────────────
+  # Gate 1: Python contract + dataset pipeline checks
+  # ──────────────────────────────────────────────────────────
+  contract-checks:
+    name: Contract & Dataset Pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pyyaml zstandard
+
+      # ── G1: Manifest schema validation against fixture ───
+      - name: "G1: Manifest schema validation"
+        run: |
+          python -m pytest tests/test_manifest_integrity.py -v --tb=short
+
+      # ── G2: Shard naming + checksums presence ────────────
+      - name: "G2: Shard naming & checksum fixture check"
+        run: |
+          python -m pytest tests/test_ci_shard_naming.py -v --tb=short
+
+      # ── G3: fetch_aws_artifacts defaults to student-only ─
+      - name: "G3: Teacher fetch guardrail"
+        run: |
+          python -m pytest tests/test_ci_teacher_guardrails.py -v --tb=short
+
+      # ── G4: No teacher prefix in local-safe paths ────────
+      - name: "G4: No teacher prefix in local-safe defaults"
+        run: |
+          python tests/test_ci_no_teacher_in_local.py
+
+      # ── G5: run_contract.yaml required keys ─────────────
+      - name: "G5: Run contract validation"
+        run: |
+          python -m pytest tests/test_ci_run_contract.py -v --tb=short
+
+      # ── G6: Existing pipeline unit tests ────────────────
+      - name: "G6: Pipeline unit tests"
+        run: |
+          python -m pytest tests/test_splits_deterministic.py tests/test_license_gate.py tests/test_incremental_sync.py -v --tb=short
+
+  # ──────────────────────────────────────────────────────────
+  # Gate 2: Static C++ guardrails (no build required)
+  # ──────────────────────────────────────────────────────────
+  static-guardrails:
+    name: Static Listening Guardrails
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ripgrep
+        run: sudo apt-get install -y ripgrep
+
+      - name: Run ci_listening_guardrails.sh
+        run: bash ci_listening_guardrails.sh

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dataset Packaging"
+  short_description: "Package and sync training datasets safely."
+  default_prompt: "Run the dataset packaging workflow end to end: build records from transcript JSONL, split deterministically, package shards, validate manifests/checksums, and sync to S3 with dry-run guardrails first."

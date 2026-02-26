@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "task",
+    "createdAt",
+    "hashAlgorithm",
+    "compression",
+    "splits",
+    "totals"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "packageId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task": {
+      "type": "string",
+      "enum": [
+        "intent_router",
+        "axis_proposer"
+      ]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "hashAlgorithm": {
+      "type": "string",
+      "const": "sha256"
+    },
+    "compression": {
+      "type": "string",
+      "enum": [
+        "zstd",
+        "identity"
+      ]
+    },
+    "labelSpace": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "axisNames": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "splits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "train",
+        "val",
+        "test"
+      ],
+      "properties": {
+        "train": {
+          "$ref": "#/$defs/split"
+        },
+        "val": {
+          "$ref": "#/$defs/split"
+        },
+        "test": {
+          "$ref": "#/$defs/split"
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recordCount",
+        "shardCount"
+      ],
+      "properties": {
+        "recordCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "shardCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "$defs": {
+    "split": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recordCount",
+        "shards"
+      ],
+      "properties": {
+        "recordCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "shards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/shard"
+          }
+        }
+      }
+    },
+    "shard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "split",
+        "recordCount",
+        "sha256",
+        "sizeBytes",
+        "compression"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "pattern": "^(train|val|test)-[0-9]{4}\\.jsonl(\\.zst)?$"
+        },
+        "split": {
+          "type": "string",
+          "enum": [
+            "train",
+            "val",
+            "test"
+          ]
+        },
+        "recordCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "compression": {
+          "type": "string",
+          "enum": [
+            "zstd",
+            "identity"
+          ]
+        }
+      }
+    }
+  }
+}

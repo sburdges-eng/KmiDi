@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "1.1",
+  "s3": {
+    "packageBucket": "example-kelly-package-bucket",
+    "packagePrefix": "training/packages",
+    "runBucket": "example-kelly-run-bucket",
+    "runPrefix": "training/runs",
+    "teacherPrefix": "artifacts/teacher",
+    "studentPrefix": "artifacts/student"
+  },
+  "aws": {
+    "region": "us-east-1",
+    "profile": "",
+    "breakGlassProfile": "teacher-breakglass"
+  },
+  "training": {
+    "activePackageId": "",
+    "defaultRunIdPrefix": "run",
+    "defaultInstanceType": "g5.xlarge",
+    "defaultMaxRuntimeHours": 4.0,
+    "budgetCapUsd": 100.0,
+    "checkpoints": {
+      "defaultCadenceSteps": 10,
+      "minCadenceSteps": 1,
+      "maxCadenceSteps": 1000,
+      "defaultMaxCheckpoints": 3,
+      "maxCheckpoints": 20,
+      "maxTotalCheckpoints": 21
+    },
+    "earlyStop": {
+      "enabled": true,
+      "metricPath": "student.intent.val_macro_f1",
+      "patience": 6,
+      "minDelta": 0.001,
+      "minEpochs": 8,
+      "autoShutdownDefault": false
+    },
+    "ops": {
+      "preflightCommand": "./scripts/security_compliance_preflight.sh",
+      "tmuxSessionPrefix": "train",
+      "datasetCache": {
+        "defaultMode": "auto",
+        "ebsFallbackRoot": "/var/tmp/listening-cache",
+        "allowStreamingFallback": true
+      }
+    }
+  },
+  "security": {
+    "teacherFetch": {
+      "allowByDefault": false,
+      "requiredProfile": "teacher-breakglass",
+      "requiredRoleArn": ""
+    }
+  }
+}

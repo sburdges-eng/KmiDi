@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "packageId": "ci-fixture",
+  "task": "intent_router",
+  "createdAt": "2026-02-16T00:00:00Z",
+  "hashAlgorithm": "sha256",
+  "compression": "zstd",
+  "labelSpace": [
+    "VALID",
+    "ABSTAIN",
+    "INVALID"
+  ],
+  "splits": {
+    "train": {
+      "recordCount": 1,
+      "shards": [
+        {
+          "file": "train-0000.jsonl.zst",
+          "split": "train",
+          "recordCount": 1,
+          "sha256": "865a04abcc616ff7e1707b878fd680b522fe06d3e50a5f271362540908d92135",
+          "sizeBytes": 104,
+          "compression": "zstd"
+        }
+      ]
+    },
+    "val": {
+      "recordCount": 1,
+      "shards": [
+        {
+          "file": "val-0000.jsonl.zst",
+          "split": "val",
+          "recordCount": 1,
+          "sha256": "f60e3309d6ad803def3395781079b886312619da4c411e8f0b954dc35f1f986b",
+          "sizeBytes": 92,
+          "compression": "zstd"
+        }
+      ]
+    },
+    "test": {
+      "recordCount": 1,
+      "shards": [
+        {
+          "file": "test-0000.jsonl.zst",
+          "split": "test",
+          "recordCount": 1,
+          "sha256": "bc73c6313d8f15b44307bffb3ba5cbf7cc49992815a0624e1159bd3d5b5bad42",
+          "sizeBytes": 107,
+          "compression": "zstd"
+        }
+      ]
+    }
+  },
+  "totals": {
+    "recordCount": 3,
+    "shardCount": 3
+  }
+}

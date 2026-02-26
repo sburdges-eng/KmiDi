@@ -1,0 +1,13 @@
+tools/open_train_terminal.sh
+tools/tmux_train_layout.sh
+tools/precache_dataset.sh
+tools/watchdog.sh
+tools/cost_estimate.sh
+tools/open_workbench_wezterm.sh
+tools/tag_training_ops_yellow.sh
+tools/training_ops_files.txt
+scripts/launch_aws_train.py
+scripts/aws_train_entrypoint.py
+scripts/fetch_aws_artifacts.py
+scripts/training_common.py
+README.md

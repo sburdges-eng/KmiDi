@@ -1,0 +1,4 @@
+interface:
+  display_name: "Training Ops Cockpit"
+  short_description: "Operate AWS training runs with guardrails."
+  default_prompt: "Run the Kelly training operations workflow: validate preflight, dry-run launch, launch training, monitor tmux cockpit status, and fetch artifacts with policy-safe defaults."
