@@ -1,4 +1,8 @@
+pub mod bridge;
+pub mod commands;
+pub mod events;
 pub mod intent_ir;
+pub mod state;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

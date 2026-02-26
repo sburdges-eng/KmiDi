@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { getLogger } from '../debug/IntentLogger';
+import { getLogger } from '../diagnostics/IntentLogger';
 
 /**
  * useIntentIR - React hook for subscribing to IntentFrame snapshots

@@ -1,5 +1,6 @@
 use std::ffi::{CStr, CString};
 use std::os::raw::{c_char, c_float, c_int};
+use std::path::Path;
 use std::ptr;
 use std::sync::{Arc, Mutex, OnceLock};
 use serde::{Deserialize, Serialize};
@@ -38,6 +39,7 @@ pub struct IntentResult {
     pub progression: Vec<String>,
     pub key: String,
     pub bpm: i32,
+    #[serde(default)]
     pub genre: String,
 }
 
@@ -186,6 +188,20 @@ impl KellyBrain {
     
     /// Initialize KellyBrain with data directory
     pub fn initialize(&mut self, data_path: &str) -> KellyResult<()> {
+        if data_path.trim().is_empty() {
+            return Err(KellyError {
+                code: KellyErrorCode::InvalidParameter,
+                message: "Data path cannot be empty".to_string(),
+            });
+        }
+
+        if !Path::new(data_path).exists() {
+            return Err(KellyError {
+                code: KellyErrorCode::FileNotFound,
+                message: format!("Data path not found: {}", data_path),
+            });
+        }
+
         let c_path = CString::new(data_path)
             .map_err(|_| KellyError {
                 code: KellyErrorCode::InvalidParameter,
@@ -206,6 +222,13 @@ impl KellyBrain {
     
     /// Process text and generate intent result
     pub fn from_text(&mut self, text: &str) -> KellyResult<IntentResult> {
+        if !self.is_initialized() {
+            return Err(KellyError {
+                code: KellyErrorCode::InitializationFailed,
+                message: "KellyBrain not initialized".to_string(),
+            });
+        }
+
         let c_text = CString::new(text)
             .map_err(|_| KellyError {
                 code: KellyErrorCode::InvalidParameter,
@@ -233,6 +256,13 @@ impl KellyBrain {
     
     /// Process emotion name and generate intent result
     pub fn from_emotion(&mut self, emotion_name: &str, intensity: f32) -> KellyResult<IntentResult> {
+        if !self.is_initialized() {
+            return Err(KellyError {
+                code: KellyErrorCode::InitializationFailed,
+                message: "KellyBrain not initialized".to_string(),
+            });
+        }
+
         let c_emotion = CString::new(emotion_name)
             .map_err(|_| KellyError {
                 code: KellyErrorCode::InvalidParameter,
@@ -463,6 +493,10 @@ impl KellyBrain {
     
     /// Check if data files are available
     pub fn check_data_files(data_path: &str) -> bool {
+        if data_path.trim().is_empty() || !Path::new(data_path).exists() {
+            return false;
+        }
+
         let c_path = match CString::new(data_path) {
             Ok(path) => path,
             Err(_) => return false,

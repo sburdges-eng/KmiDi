@@ -17,6 +17,7 @@ venv/
 
 # CMake / build
 build/
+build_out/
 build-*/
 cmake-build-*/
 CMakeCache.txt
@@ -34,6 +35,7 @@ dist/
 
 # Rust / Cargo
 target/
+src-tauri/gen/
 # Machine-specific Cargo config (contains absolute paths)
 src-tauri/.cargo/config.toml
 
@@ -245,6 +247,7 @@ _codeql_detected_source_root
 *.xcf
 !assets/icons/*.png
 !docs/images/*.png
+!src-tauri/icons/*.png
 
 # Node native binaries
 *.node
@@ -511,3 +514,12 @@ env/.env.build
 !.env.development
 !.env.production
 !env/.env.*.example
+
+# =============================================================================
+# Consolidation Artifacts
+# =============================================================================
+_imports_archive/
+_merge_backups/
+MERGE_FULL_PASS_REPORT_*.md
+MERGE_CONFLICT_REPORT.txt
+experiments/MERGE_CONFLICT_REPORT.txt

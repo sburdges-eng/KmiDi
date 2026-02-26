@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::time::{Duration, Instant};
 use tokio::sync::broadcast;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter};
 use crate::bridge::kelly_ffi::{EmotionState, IntentResult, GeneratedMidi};
 
 // =============================================================================
@@ -286,8 +286,8 @@ pub fn start_background_tasks() {
                 
                 if let Ok(emotion_state) = emotion_result {
                     let state_manager = get_state_manager();
-                    let mut state_guard = state_manager.lock().unwrap();
-                    state_guard.set_emotion_state(emotion_state.valence, emotion_state.arousal, emotion_state.dominance, emotion_state.complexity);
+                    let state_guard = state_manager.lock().unwrap();
+                    state_guard.set_emotion_state(emotion_state);
                 }
             }
         }

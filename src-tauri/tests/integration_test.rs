@@ -1,6 +1,12 @@
 use std::time::Duration;
 use tokio::time::timeout;
 use serde_json;
+use idaw_lib::bridge::kelly_ffi::{
+    get_kelly_brain_manager, EmotionState, KellyBrain, KellyBrainManager, KellyError,
+    KellyErrorCode,
+};
+use idaw_lib::events::{get_event_manager, EventManager, KellyEvent};
+use idaw_lib::state::{get_state_manager, StateEvent, StateManager};
 
 // Note: Integration tests need to be in the same crate or use the public API
 // For now, we'll test the public Tauri commands via invoke calls
@@ -263,7 +269,7 @@ async fn test_error_to_string_conversion() {
         message: "Test error message".to_string(),
     };
     
-    let error_string: String = error.into();
+    let error_string = format!("KellyBrain Error: {}", error.message);
     assert!(error_string.contains("Test error message"));
     assert!(error_string.contains("KellyBrain Error"));
 }
@@ -377,14 +383,14 @@ async fn test_concurrent_state_access() {
     for i in 0..10 {
         let manager_clone = manager.clone();
         let handle = tokio::spawn(async move {
-            let manager_guard = manager_clone.lock().unwrap();
-            
-            // Simulate state operations
-            manager_guard.set_processing(true, Some(format!("operation_{}", i)));
+            {
+                let manager_guard = manager_clone.lock().unwrap();
+                manager_guard.set_processing(true, Some(format!("operation_{}", i)));
+            }
             tokio::time::sleep(Duration::from_millis(10)).await;
-            manager_guard.set_processing(false, Some(format!("operation_{}", i)));
             
-            // Get final state
+            let manager_guard = manager_clone.lock().unwrap();
+            manager_guard.set_processing(false, Some(format!("operation_{}", i)));
             manager_guard.get_state()
         });
         handles.push(handle);
@@ -457,7 +463,7 @@ async fn test_event_emission_and_subscription() {
 async fn test_memory_safety() {
     // Test that creating and dropping many KellyBrain instances doesn't leak memory
     for _ in 0..100 {
-        let brain = KellyBrain::new().expect("Failed to create KellyBrain");
+        let mut brain = KellyBrain::new().expect("Failed to create KellyBrain");
         
         // Try some operations (may fail, but should not leak)
         let _result = brain.get_emotion_state();

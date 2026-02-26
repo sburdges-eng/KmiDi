@@ -17,15 +17,18 @@ fn main() {
     let profile = env::var("PROFILE").unwrap_or_else(|_| "debug".to_string());
     let target_os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_default();
     
-    // Determine build directory based on profile
-    let cmake_build_dir = if profile == "release" {
-        "../build/release"
+    // Determine build directories based on profile.
+    // Support both multi-config (build/{debug,release}) and single-config (build).
+    let cmake_build_dirs = if profile == "release" {
+        vec!["../build/release", "../build"]
     } else {
-        "../build/debug"
+        vec!["../build/debug", "../build"]
     };
     
-    // Set library search path
-    println!("cargo:rustc-link-search=native={}", cmake_build_dir);
+    // Set library search paths
+    for build_dir in &cmake_build_dirs {
+        println!("cargo:rustc-link-search=native={}", build_dir);
+    }
     
     // Platform-specific library linking
     match target_os.as_str() {
@@ -78,11 +81,13 @@ fn main() {
     
     // Check if Kelly FFI library exists
     let mut ffi_lib_found = false;
-    let possible_lib_paths = [
-        format!("{}/libKellyFFI.dylib", cmake_build_dir),    // macOS
-        format!("{}/libKellyFFI.so", cmake_build_dir),       // Linux
-        format!("{}/KellyFFI.dll", cmake_build_dir),         // Windows
-    ];
+    let mut possible_lib_paths = Vec::new();
+    for build_dir in &cmake_build_dirs {
+        possible_lib_paths.push(format!("{}/libKellyFFI.1.dylib", build_dir)); // macOS (install name)
+        possible_lib_paths.push(format!("{}/libKellyFFI.dylib", build_dir));   // macOS (unversioned symlink)
+        possible_lib_paths.push(format!("{}/libKellyFFI.so", build_dir));      // Linux
+        possible_lib_paths.push(format!("{}/KellyFFI.dll", build_dir));         // Windows
+    }
     
     for lib_path in &possible_lib_paths {
         if std::path::Path::new(lib_path).exists() {
@@ -160,6 +165,56 @@ fn main() {
                 println!("cargo:warning=Failed to copy FFI library to resources: {}", e);
             } else {
                 println!("cargo:warning=Copied FFI library to: {}", dest_path.display());
+            }
+        }
+    }
+
+    // For macOS tests, Cargo test binaries resolve @rpath from target/<profile>.
+    // Stage KellyFFI into those runtime locations using the install-name filename.
+    if target_os == "macos" {
+        if let Ok(out_dir) = env::var("OUT_DIR") {
+            let out_dir = PathBuf::from(out_dir);
+            if let Some(target_profile_dir) = out_dir.ancestors().nth(3) {
+                let runtime_dirs = [
+                    target_profile_dir.join("Resources"),
+                    target_profile_dir.join("Frameworks"),
+                    target_profile_dir.to_path_buf(),
+                ];
+
+                let source_lib = possible_lib_paths
+                    .iter()
+                    .find(|path| std::path::Path::new(path).exists());
+
+                if let Some(source_lib) = source_lib {
+                    for runtime_dir in &runtime_dirs {
+                        if let Err(e) = std::fs::create_dir_all(runtime_dir) {
+                            println!(
+                                "cargo:warning=Failed to create runtime dir {}: {}",
+                                runtime_dir.display(),
+                                e
+                            );
+                            continue;
+                        }
+
+                        for lib_name in ["libKellyFFI.1.dylib", "libKellyFFI.dylib"] {
+                            let dest_path = runtime_dir.join(lib_name);
+                            if let Err(e) = std::fs::copy(source_lib, &dest_path) {
+                                println!(
+                                    "cargo:warning=Failed to stage {} in {}: {}",
+                                    lib_name,
+                                    runtime_dir.display(),
+                                    e
+                                );
+                            } else {
+                                println!(
+                                    "cargo:warning=Staged {} in {}",
+                                    lib_name,
+                                    runtime_dir.display()
+                                );
+                            }
+                        }
+                    }
+                }
             }
         }
     }
