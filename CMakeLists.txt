@@ -96,24 +96,25 @@ else()
     message(FATAL_ERROR "JUCE not found. Clone the full JUCE repo (with root CMakeLists.txt and extras/Build/CMake/) into external/JUCE, e.g.: git clone https://github.com/juce-framework/JUCE external/JUCE")
 endif()
 
-# ReaderWriterQueue (offline, deterministic, fail-closed).
-set(READERWRITERQUEUE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/readerwriterqueue")
-if(NOT EXISTS "${READERWRITERQUEUE_INCLUDE_DIR}/readerwriterqueue.h"
-   AND EXISTS "${KMI_DI_FINAL_ROOT}/engine/include/readerwriterqueue.h")
-    set(READERWRITERQUEUE_INCLUDE_DIR "${KMI_DI_FINAL_ROOT}/engine/include")
-endif()
+# Readerwriterqueue (lock-free queue) for RT-safe OSC
+# Note: This is a header-only library with no CMakeLists.txt, so we must
+# explicitly create an INTERFACE target and ensure SOURCE_DIR is populated.
+include(FetchContent)
+FetchContent_Declare(
+    readerwriterqueue
+    GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue.git
+    GIT_TAG v1.0.6
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(readerwriterqueue)
 
-if(NOT EXISTS "${READERWRITERQUEUE_INCLUDE_DIR}/readerwriterqueue.h")
-    message(FATAL_ERROR
-        "readerwriterqueue dependency missing. "
-        "Provide local header at third_party/readerwriterqueue/readerwriterqueue.h")
-endif()
+# Explicitly populate SOURCE_DIR for header-only library without CMakeLists.txt
+FetchContent_GetProperties(readerwriterqueue)
 
-set(readerwriterqueue_SOURCE_DIR "${READERWRITERQUEUE_INCLUDE_DIR}")
 if(NOT TARGET readerwriterqueue)
     add_library(readerwriterqueue INTERFACE)
     target_include_directories(readerwriterqueue INTERFACE
-        ${READERWRITERQUEUE_INCLUDE_DIR}
+        ${readerwriterqueue_SOURCE_DIR}
     )
 endif()
 
@@ -149,9 +150,17 @@ if(ENABLE_RTNEURAL)
     if(RTNeural_FOUND)
         message(STATUS "RTNeural enabled: ${RTNeural_INCLUDE_DIRS}")
     else()
-        message(FATAL_ERROR
-            "ENABLE_RTNEURAL=ON but RTNeural was not found locally. "
-            "Install RTNeural in a local deterministic path and set RTNeural_DIR.")
+        # Try to fetch RTNeural if not found
+        message(STATUS "RTNeural not found locally, fetching from GitHub...")
+        FetchContent_Declare(
+            rtneural
+            GIT_REPOSITORY https://github.com/jatinchowdhury18/RTNeural.git
+            GIT_TAG main
+            GIT_SHALLOW TRUE
+        )
+        FetchContent_MakeAvailable(rtneural)
+        set(RTNeural_FOUND TRUE)
+        set(RTNeural_INCLUDE_DIRS ${rtneural_SOURCE_DIR})
     endif()
 endif()
 
@@ -378,8 +387,9 @@ if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE)
     
     # Set FFI-specific properties
     set_target_properties(KellyFFI PROPERTIES
-        CXX_VISIBILITY_PRESET hidden
-        VISIBILITY_INLINES_HIDDEN TRUE
+        C_VISIBILITY_PRESET default
+        CXX_VISIBILITY_PRESET default
+        VISIBILITY_INLINES_HIDDEN FALSE
         VERSION 1.0.0
         SOVERSION 1
     )
@@ -478,20 +488,15 @@ endif()
 
 if(BUILD_PENTA_TESTS)
     enable_testing()
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/googletest/CMakeLists.txt")
-        add_subdirectory(external/googletest EXCLUDE_FROM_ALL)
-    elseif(NOT TARGET gtest AND NOT TARGET GTest::gtest)
-        message(FATAL_ERROR
-            "BUILD_PENTA_TESTS=ON requires local googletest. "
-            "Provide external/googletest or pre-install GTest.")
-    endif()
-
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/penta_core/CMakeLists.txt")
-        add_subdirectory(tests/penta_core)
-    else()
-        message(FATAL_ERROR
-            "BUILD_PENTA_TESTS=ON but tests/penta_core/CMakeLists.txt is missing.")
-    endif()
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.14.0
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(googletest)
+    add_subdirectory(tests/penta_core)
 endif()
 
 # Tracy profiling
