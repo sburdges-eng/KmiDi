@@ -20,6 +20,14 @@ jobs:
         pip install -e .
         pip install numpy scipy torch librosa pyyaml
         pip install pytest pytest-cov coverage
+    - name: Sync canonical entity contracts
+      run: |
+        python3 scripts/sync_entities.py
+    - name: Verify generated contracts are committed
+      run: |
+        git diff --exit-code -- shared_schemas/CompleteSongIntentRequest.json src/types/Intent.ts src-tauri/src/generated/intent.rs
+    - name: Run schema security tests
+      run: pytest tests/unit/test_api_schema.py -q
     - name: Run Python tests
       run: |
         pytest tests/unit/ -v --cov=music_brain --cov-report=xml --cov-report=term-missing
@@ -194,6 +202,72 @@ jobs:
         # auval -v aufx KmDi Ersr || true  # Eraser
         # auval -v aufx KmDi Prss || true  # Press
         echo "JUCE plugin validation placeholder - requires full plugin build"
+
+  v1_shell_build:
+    name: V1 Shell (Tauri + React)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+    - uses: dtolnay/rust-toolchain@stable
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+        cache: "pip"
+    - name: Install system dependencies (Linux)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libwebkit2gtk-4.1-dev \
+          build-essential \
+          curl \
+          wget \
+          file \
+          libxdo-dev \
+          libssl-dev \
+          libayatana-appindicator3-dev \
+          librsvg2-dev \
+          libasound2-dev \
+          libjack-dev \
+          qt6-base-dev \
+          ninja-build
+    - name: Install Python deps
+      run: |
+        python -m pip install --upgrade pip
+        pip install pybind11 pydantic
+    - name: Sync canonical entities
+      run: python3 scripts/sync_entities.py
+    - name: Verify entity contract drift
+      run: |
+        git diff --exit-code -- shared_schemas/CompleteSongIntentRequest.json src/types/Intent.ts src-tauri/src/generated/intent.rs
+    - name: Bootstrap
+      run: bash scripts/bootstrap.sh
+    - name: Build Kelly FFI (C++ core for Tauri)
+      run: |
+        PYBIND_DIR=$(python -c "import pybind11; print(pybind11.get_cmake_dir())")
+        cmake -B build -S . -G Ninja \
+          -DCMAKE_BUILD_TYPE=Release \
+          -Dpybind11_DIR="$PYBIND_DIR" \
+          -DBUILD_KELLY_CORE=ON \
+          -DBUILD_KELLY_FFI=ON \
+          -DBUILD_DESKTOP=OFF \
+          -DBUILD_PLUGINS=OFF \
+          -DBUILD_PYTHON_BINDINGS=OFF \
+          -DBUILD_PENTA_TESTS=OFF \
+          -DKMIDI_BUILD_QT_UI=OFF \
+          -DKMIDI_BUILD_JUCE_UI=OFF
+        cmake --build build --target KellyFFI --parallel 4
+    - name: Build Tauri app
+      run: |
+        npm ci
+        npm run tauri build
+    - name: Run Tauri integration tests
+      run: |
+        cd src-tauri && cargo test --no-fail-fast
 
   quality:
     name: Code Quality Checks

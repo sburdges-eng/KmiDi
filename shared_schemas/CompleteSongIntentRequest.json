@@ -1,0 +1,120 @@
+{
+  "$defs": {
+    "StructureSection": {
+      "properties": {
+        "name": {
+          "pattern": "^(intro|verse|chorus|bridge|outro|build|drop)$",
+          "title": "Name",
+          "type": "string"
+        },
+        "bars": {
+          "maximum": 128,
+          "minimum": 1,
+          "title": "Bars",
+          "type": "integer"
+        },
+        "repetitions": {
+          "default": 1,
+          "maximum": 16,
+          "minimum": 1,
+          "title": "Repetitions",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "bars"
+      ],
+      "title": "StructureSection",
+      "type": "object"
+    },
+    "TrackIntent": {
+      "properties": {
+        "instrument": {
+          "description": "Canonical instrument name (e.g., piano, synth_bass)",
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Instrument",
+          "type": "string"
+        },
+        "techniques": {
+          "description": "Allowed techniques",
+          "items": {
+            "type": "string"
+          },
+          "title": "Techniques",
+          "type": "array"
+        }
+      },
+      "required": [
+        "instrument"
+      ],
+      "title": "TrackIntent",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "core_desire": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "title": "Core Desire",
+      "type": "string"
+    },
+    "mood_primary": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Mood Primary",
+      "type": "string"
+    },
+    "genre": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Genre",
+      "type": "string"
+    },
+    "tempo": {
+      "default": 120,
+      "description": "BPM clamped to engine limits",
+      "maximum": 300,
+      "minimum": 40,
+      "title": "Tempo",
+      "type": "integer"
+    },
+    "key_mode": {
+      "pattern": "^[A-G][#b]?\\s(major|minor|dorian|mixolydian|lydian|phrygian|locrian)$",
+      "title": "Key Mode",
+      "type": "string"
+    },
+    "structure": {
+      "items": {
+        "$ref": "#/$defs/StructureSection"
+      },
+      "minItems": 1,
+      "title": "Structure",
+      "type": "array"
+    },
+    "instruments": {
+      "items": {
+        "$ref": "#/$defs/TrackIntent"
+      },
+      "minItems": 1,
+      "title": "Instruments",
+      "type": "array"
+    },
+    "allow_legacy_fallback": {
+      "default": false,
+      "title": "Allow Legacy Fallback",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "core_desire",
+    "mood_primary",
+    "genre",
+    "key_mode",
+    "structure",
+    "instruments"
+  ],
+  "title": "CompleteSongIntentRequest",
+  "type": "object"
+}

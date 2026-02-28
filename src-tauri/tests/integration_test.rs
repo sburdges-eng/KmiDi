@@ -13,19 +13,41 @@ use idaw_lib::state::{get_state_manager, StateEvent, StateManager};
 // Direct module access would require making modules public or restructuring
 
 // =============================================================================
-// FFI Integration Tests
+// Intent schema tests (no FFI required)
 // =============================================================================
 
-// Integration tests will be implemented via Tauri command testing
-// Direct FFI testing requires the library to be built and linked
-// For now, these are placeholder tests that would work once FFI is properly linked
-
 #[tokio::test]
-async fn test_tauri_command_structure() {
-    // Test that Tauri commands are properly structured
-    // This is a placeholder - actual testing requires the FFI library to be built
-    assert!(true, "Placeholder test - requires FFI library build");
+async fn test_complete_song_intent_request_roundtrip() {
+    use idaw_lib::generated::intent::CompleteSongIntentRequest;
+    let json = r#"{
+        "core_desire": "I want to feel calm",
+        "mood_primary": "peaceful",
+        "genre": "ambient",
+        "tempo": 90,
+        "key_mode": "C major",
+        "structure": [{"name": "intro", "bars": 8, "repetitions": null}],
+        "instruments": [{"instrument": "pad", "techniques": null}],
+        "allow_legacy_fallback": true
+    }"#;
+    let intent: CompleteSongIntentRequest = serde_json::from_str(json).expect("deserialize intent");
+    assert_eq!(intent.core_desire, "I want to feel calm");
+    assert_eq!(intent.mood_primary, "peaceful");
+    assert_eq!(intent.genre, "ambient");
+    assert_eq!(intent.tempo, Some(90));
+    assert_eq!(intent.key_mode, "C major");
+    assert_eq!(intent.structure.len(), 1);
+    assert_eq!(intent.structure[0].name, "intro");
+    assert_eq!(intent.structure[0].bars, 8);
+    assert_eq!(intent.instruments.len(), 1);
+    assert_eq!(intent.instruments[0].instrument, "pad");
+    assert_eq!(intent.allow_legacy_fallback, Some(true));
+    let back = serde_json::to_string(&intent).expect("serialize intent");
+    let _again: CompleteSongIntentRequest = serde_json::from_str(&back).expect("roundtrip");
 }
+
+// =============================================================================
+// FFI Integration Tests (require KellyFFI built and linked)
+// =============================================================================
 
 #[tokio::test]
 async fn test_kelly_brain_initialization() {

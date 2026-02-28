@@ -15,28 +15,32 @@
 
 ### One-Command Setup
 
+From repo root (after cloning and with CMake 3.27+, Node 20+, Rust, Python 3.11+ available):
+
 ```bash
-git clone [repository-url] KmiDi
-cd KmiDi
 ./scripts/dev-setup.sh
 ```
 
-This script will:
-- Install all system dependencies (CMake, Rust, Node.js, Python)
-- Configure build environments (debug/release)
-- Install language-specific packages
-- Create IDE configuration files
-- Test the build system
+This runs:
+- **scripts/bootstrap.sh** — JUCE submodule sync, CMake/Node version checks, pybind11 hint
+- **npm install** — React and Tauri dependencies
+- **pip install -e .** — `music_brain` and tools (sync_entities, tests)
+
+To install system tools (CMake, Ninja, Node, Rust, Python) use your OS package manager or [tauri.app](https://tauri.app) / [vitejs.dev](https://vitejs.dev) docs.
 
 ### Start Development
 
 ```bash
-# Start all development servers
+# Full stack: React dev server + Tauri app + Music Brain API (port 8000)
 npm run dev:all
 
-# Access the app
-open http://localhost:1420  # or launch Tauri app
+# Or run individually:
+npm run dev          # React only (http://localhost:1420)
+npm run dev:tauri    # Tauri desktop app (uses React dev server)
+npm run dev:python   # Music Brain API (http://localhost:8000, docs at /docs)
 ```
+
+Open http://localhost:1420 in the browser or use the Tauri desktop window.
 
 ## Development Environment Details
 
@@ -52,26 +56,13 @@ open http://localhost:1420  # or launch Tauri app
 - ALSA/JACK development headers
 - X11 development libraries
 
-### Installed Tools
+### Expected tools
 
-After running `dev-setup.sh`, you'll have:
+Have these available (install via OS package manager or official installers). `dev-setup.sh` uses them; it does not install them:
 
-```bash
-# Build tools
-cmake 3.27+          # C++ build system
-ninja               # Fast build backend
-rustc 1.70+         # Rust compiler
-cargo               # Rust package manager
-node 18+            # JavaScript runtime
-npm                 # Node package manager
-python3 9+          # Python interpreter
-
-# Development tools
-tauri-cli           # Tauri development CLI
-cargo-watch         # File watching for Rust
-concurrently        # Parallel process runner
-prettier            # Code formatting
-```
+- **CMake** 3.27+, **Ninja**, **Rust** (stable), **Node** 20+, **Python** 3.11+
+- **npm install** (run by dev-setup) adds Tauri CLI, Vite, concurrently, etc.
+- **pip install -e .** (run by dev-setup) adds `music_brain`, pybind11, pydantic, uvicorn
 
 ## Development Workflows
 
@@ -95,60 +86,33 @@ This starts:
 
 ### Technology-Specific Development
 
-**React Frontend Only:**
-```bash
-npm run dev:react
-```
-- Hot reload enabled
-- TypeScript type checking
-- Tailwind CSS compilation
-- Access at http://localhost:1420
+**React frontend only:** `npm run dev:react` (or `npm run dev`) — hot reload, http://localhost:1420
 
-**C++ Backend Only:**
-```bash
-npm run dev:cpp
-```
-- Watches src/ for file changes
-- Rebuilds automatically
-- Creates debug builds in build/debug/
-- Copies FFI library to Tauri resources
+**Tauri desktop only:** `npm run dev:tauri` — launches app; uses React dev server when running together
 
-**Python ML Backend Only:**
-```bash
-npm run dev:python
-```
-- Starts Music Brain API server
-- Auto-reload on Python file changes
-- Available at http://localhost:8000
-- Swagger docs at http://localhost:8000/docs
+**Python API only:** `npm run dev:python` — Music Brain API at http://localhost:8000, Swagger at /docs
 
-**Tauri Desktop Only:**
-```bash
-npm run dev:tauri
-```
-- Builds and launches desktop app
-- Hot reload for Rust changes
-- Integrates with React dev server
+**C++ (Kelly FFI):** Build from repo root: `cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_KELLY_CORE=ON` then `cmake --build build --target KellyFFI`. Re-run after C++ changes; Tauri will pick up the library from `build/` or `build/release/`.
 
 ### Build Workflows
 
-**Development Build (with tests):**
+**V1 full pipeline (canonical):** from repo root:
 ```bash
-npm run build:all-debug
+./scripts/build_v1.sh
+```
+Builds: sync entities → C++ headless core + Python bindings → PyInstaller-packaged Music Brain API → Tauri app. Requires Python (pybind11, pyinstaller), Node, Rust, CMake.
+
+**Tauri desktop app only** (after C++ KellyFFI is built):
+```bash
+npm ci && npm run tauri build
 ```
 
-**Production Build:**
-```bash
-npm run build:all-release
-```
+**Component builds:**
+- `npm run build` — React frontend only
+- CMake: `cmake --build build --target KellyFFI` — FFI library for Tauri
+- `./scripts/build-all.sh` — Full multi-technology stack (see script for options)
 
-**Component Builds:**
-```bash
-npm run build:cpp          # C++ core only
-npm run build:ffi          # FFI library only
-npm run build:plugins      # Audio plugins only
-npm run build              # React frontend only
-```
+**API/schema (UI–engine contract):** The single source of truth is `shared_schemas/CompleteSongIntentRequest.json`. Run `python3 scripts/sync_entities.py` after schema changes; CI verifies no drift between JSON, `src/types/Intent.ts`, and `src-tauri/src/generated/intent.rs`. Python validation: `pytest tests/unit/test_api_schema.py`.
 
 ## Code Organization
 
