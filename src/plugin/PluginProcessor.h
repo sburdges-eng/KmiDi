@@ -78,6 +78,9 @@ public:
 
   void processBlock(juce::AudioBuffer<float> &, juce::MidiBuffer &) override;
 
+  /** Store device workgroup for realtime workers (Apple Silicon low-latency). */
+  void audioWorkgroupContextChanged(const juce::AudioWorkgroup &workgroup) override;
+
   juce::AudioProcessorEditor *createEditor() override;
   bool hasEditor() const override { return true; }
 
@@ -377,6 +380,9 @@ private:
 
   // Master EQ processor
   MasterEQProcessor masterEQProcessor_;
+
+  /** Device audio workgroup (set by host). Use for realtime worker join on macOS. */
+  juce::AudioWorkgroup audioWorkgroup_;
 
   // Lookahead buffer for ML inference
   static constexpr int ML_LOOKAHEAD_MS = 20;
