@@ -129,6 +129,11 @@ fi
 
 log_success "All build requirements satisfied"
 
+# Keep UI/Rust entities in sync with canonical Python models before UI builds.
+log_step "Syncing canonical entity contracts..."
+python3 "$PROJECT_ROOT/scripts/sync_entities.py"
+log_success "Entity contracts synced"
+
 # =============================================================================
 # Clean Previous Builds (Optional)
 # =============================================================================

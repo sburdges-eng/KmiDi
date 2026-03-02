@@ -1,0 +1,95 @@
+name: V1 Deterministic Build and Release
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  CMAKE_BUILD_TYPE: Release
+
+jobs:
+  build-and-test:
+    name: Build Headless Core and Package App
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+
+    steps:
+      - name: Checkout Code and Submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install System Dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            qt6-base-dev \
+            ninja-build
+
+      - name: Install Python Toolchain
+        run: |
+          python -m pip install --upgrade pip
+          pip install pybind11 pydantic pytest
+
+      - name: Sync Canonical Entities
+        run: |
+          python3 scripts/sync_entities.py
+
+      - name: Verify Entity Contract Drift
+        run: |
+          git diff --exit-code -- shared_schemas/CompleteSongIntentRequest.json src/types/Intent.ts src-tauri/src/generated/intent.rs
+
+      - name: Bootstrap Environment
+        run: bash scripts/bootstrap.sh
+
+      - name: Build Headless Core
+        run: |
+          PYBIND_DIR=$(python -c "import pybind11; print(pybind11.get_cmake_dir())")
+          cmake -B build -S . \
+            -G "Ninja" \
+            -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }} \
+            -Dpybind11_DIR="$PYBIND_DIR" \
+            -DBUILD_KELLY_CORE=OFF \
+            -DBUILD_DESKTOP=OFF \
+            -DBUILD_PLUGINS=OFF \
+            -DKMIDI_BUILD_QT_UI=OFF \
+            -DKMIDI_BUILD_JUCE_UI=OFF
+          cmake --build build --config ${{ env.CMAKE_BUILD_TYPE }} --parallel 4
+
+      - name: Run Schema Security Tests
+        run: pytest tests/unit/test_api_schema.py -q
+
+      - name: Build Tauri App
+        run: |
+          npm ci
+          npm run tauri build
+

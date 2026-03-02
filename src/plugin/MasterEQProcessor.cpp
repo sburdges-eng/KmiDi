@@ -1,7 +1,77 @@
 #include "plugin/MasterEQProcessor.h"
 #include "plugin/PluginProcessor.h"
+#include <cmath>
+#include <algorithm>
 
 namespace kelly {
+
+namespace {
+
+// Realtime-safe: write biquad coefficients into out[0..5] (b0,b1,b2,a0,a1,a2).
+// Matches JUCE IIR::ArrayCoefficients formulas; no allocation.
+constexpr float kMinimumDecibels = -300.0f;
+
+void fillHighPass(float sampleRate, float frequency, float Q, float* out) {
+  const float n = std::tan(static_cast<float>(juce::MathConstants<float>::pi) * frequency / sampleRate);
+  const float nSquared = n * n;
+  const float invQ = 1.0f / std::max(Q, 0.001f);
+  const float c1 = 1.0f / (1.0f + invQ * n + nSquared);
+  out[0] = c1;
+  out[1] = c1 * -2.0f;
+  out[2] = c1;
+  out[3] = 1.0f;
+  out[4] = c1 * 2.0f * (nSquared - 1.0f);
+  out[5] = c1 * (1.0f - invQ * n + nSquared);
+}
+
+void fillLowShelf(float sampleRate, float cutOffFrequency, float Q, float gainFactor, float* out) {
+  const float A = std::sqrt(juce::Decibels::gainWithLowerBound(gainFactor, kMinimumDecibels));
+  const float aminus1 = A - 1.0f;
+  const float aplus1 = A + 1.0f;
+  const float omega = (2.0f * static_cast<float>(juce::MathConstants<float>::pi) * std::max(cutOffFrequency, 2.0f)) / sampleRate;
+  const float coso = std::cos(omega);
+  const float beta = std::sin(omega) * std::sqrt(A) / std::max(Q, 0.001f);
+  const float aminus1TimesCoso = aminus1 * coso;
+  out[0] = A * (aplus1 - aminus1TimesCoso + beta);
+  out[1] = A * 2.0f * (aminus1 - aplus1 * coso);
+  out[2] = A * (aplus1 - aminus1TimesCoso - beta);
+  out[3] = aplus1 + aminus1TimesCoso + beta;
+  out[4] = -2.0f * (aminus1 + aplus1 * coso);
+  out[5] = aplus1 + aminus1TimesCoso - beta;
+}
+
+void fillPeakFilter(float sampleRate, float frequency, float Q, float gainFactor, float* out) {
+  const float A = std::sqrt(juce::Decibels::gainWithLowerBound(std::max(gainFactor, 0.0001f), kMinimumDecibels));
+  const float omega = (2.0f * static_cast<float>(juce::MathConstants<float>::pi) * std::max(frequency, 2.0f)) / sampleRate;
+  const float alpha = std::sin(omega) / (std::max(Q, 0.001f) * 2.0f);
+  const float c2 = -2.0f * std::cos(omega);
+  const float alphaTimesA = alpha * A;
+  const float alphaOverA = alpha / A;
+  out[0] = 1.0f + alphaTimesA;
+  out[1] = c2;
+  out[2] = 1.0f - alphaTimesA;
+  out[3] = 1.0f + alphaOverA;
+  out[4] = c2;
+  out[5] = 1.0f - alphaOverA;
+}
+
+void fillHighShelf(float sampleRate, float cutOffFrequency, float Q, float gainFactor, float* out) {
+  const float A = std::sqrt(juce::Decibels::gainWithLowerBound(gainFactor, kMinimumDecibels));
+  const float aminus1 = A - 1.0f;
+  const float aplus1 = A + 1.0f;
+  const float omega = (2.0f * static_cast<float>(juce::MathConstants<float>::pi) * std::max(cutOffFrequency, 2.0f)) / sampleRate;
+  const float coso = std::cos(omega);
+  const float beta = std::sin(omega) * std::sqrt(A) / std::max(Q, 0.001f);
+  const float aminus1TimesCoso = aminus1 * coso;
+  out[0] = A * (aplus1 + aminus1TimesCoso + beta);
+  out[1] = A * -2.0f * (aminus1 + aplus1 * coso);
+  out[2] = A * (aplus1 + aminus1TimesCoso - beta);
+  out[3] = aplus1 - aminus1TimesCoso + beta;
+  out[4] = 2.0f * (aminus1 - aplus1 * coso);
+  out[5] = aplus1 - aminus1TimesCoso - beta;
+}
+
+} // namespace
 
 MasterEQProcessor::MasterEQProcessor() {
   // Initialize all smoothed values to their defaults
@@ -97,25 +167,23 @@ void MasterEQProcessor::processBlock(juce::AudioBuffer<float> &buffer) {
     const float q = bandSmoothing_[bandIdx].q.getNextValue();
     const float gain = juce::Decibels::decibelsToGain(gainDb);
 
+    // Realtime-safe: update coefficients in place (no allocation). See docs/apple-silicon-low-latency.md.
+    float* raw = bandCoefficients_[bandIdx]->getRawCoefficients();
     switch (bandIdx) {
       case 0:
-        bandCoefficients_[bandIdx] = juce::dsp::IIR::Coefficients<float>::makeHighPass(
-            currentSampleRate_, freq);
+        fillHighPass(static_cast<float>(currentSampleRate_), freq, 0.707f, raw);
         break;
       case 1:
-        bandCoefficients_[bandIdx] = juce::dsp::IIR::Coefficients<float>::makeLowShelf(
-            currentSampleRate_, freq, q, gain);
+        fillLowShelf(static_cast<float>(currentSampleRate_), freq, q, gain, raw);
         break;
       case 2:
       case 3:
       case 4:
-        bandCoefficients_[bandIdx] = juce::dsp::IIR::Coefficients<float>::makePeakFilter(
-            currentSampleRate_, freq, q, gain);
+        fillPeakFilter(static_cast<float>(currentSampleRate_), freq, q, gain, raw);
         break;
       case 5:
       default:
-        bandCoefficients_[bandIdx] = juce::dsp::IIR::Coefficients<float>::makeHighShelf(
-            currentSampleRate_, freq, q, gain);
+        fillHighShelf(static_cast<float>(currentSampleRate_), freq, q, gain, raw);
         break;
     }
 

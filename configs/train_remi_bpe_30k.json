@@ -1,0 +1,10 @@
+{
+  "max_seq_len": 1024,
+  "batch_size": 128,
+  "lr": 1e-4,
+  "tokenizer": "remi_bpe_30k",
+  "dataset_dir": "tokens",
+  "pad_token": "PAD",
+  "bos_token": "BOS",
+  "eos_token": "EOS"
+}

@@ -12,6 +12,8 @@ option(BUILD_PLUGINS "Build VST3 and CLAP plugins" ON)
 option(BUILD_TESTS "Build tests" OFF)
 option(BUILD_KELLY_CORE "Build Kelly core library/app/plugins" ON)
 option(BUILD_PENTA_TESTS "Build penta_core test suite" OFF)
+option(KMIDI_BUILD_QT_UI "Build legacy Qt6 UI surfaces" OFF)
+option(KMIDI_BUILD_JUCE_UI "Build legacy JUCE UI surfaces" OFF)
 option(ENABLE_TRACY "Enable Tracy profiling" OFF)
 option(ENABLE_RTNEURAL "Enable RTNeural for ML inference" OFF)
 option(ENABLE_ONNX_RUNTIME "Enable ONNX Runtime for ML inference" OFF)
@@ -79,7 +81,25 @@ if(APPLE)
         __IOS_PROHIBITED=
     )
 endif()
-find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
+
+# v1 stabilization defaults: keep legacy UI surfaces off unless explicitly requested.
+if(NOT KMIDI_BUILD_QT_UI)
+    set(BUILD_DESKTOP OFF CACHE BOOL "Build desktop GUI application" FORCE)
+endif()
+
+if(NOT KMIDI_BUILD_JUCE_UI)
+    set(BUILD_PLUGINS OFF CACHE BOOL "Build VST3 and CLAP plugins" FORCE)
+endif()
+
+# Qt is only required when Qt-backed targets are being built.
+set(KMIDI_REQUIRE_QT OFF)
+if(BUILD_KELLY_CORE OR BUILD_DESKTOP OR BUILD_PLUGINS)
+    set(KMIDI_REQUIRE_QT ON)
+endif()
+
+if(KMIDI_REQUIRE_QT)
+    find_package(Qt6 COMPONENTS Core Widgets REQUIRED)
+endif()
 
 # JUCE setup
 # Skip building juceaide to avoid macOS 15.0 compatibility issues
@@ -155,7 +175,7 @@ if(ENABLE_RTNEURAL)
         FetchContent_Declare(
             rtneural
             GIT_REPOSITORY https://github.com/jatinchowdhury18/RTNeural.git
-            GIT_TAG main
+            GIT_TAG 1fb1f075a5d66e85bfc8f488c3f3626840cb3a1d
             GIT_SHALLOW TRUE
         )
         FetchContent_MakeAvailable(rtneural)
@@ -216,8 +236,6 @@ target_include_directories(KellyCore PUBLIC
 )
 
 target_link_libraries(KellyCore PUBLIC
-    Qt6::Core
-    Qt6::Widgets
     juce::juce_audio_basics
     juce::juce_audio_devices
     juce::juce_audio_formats
@@ -231,6 +249,13 @@ target_link_libraries(KellyCore PUBLIC
     juce::juce_osc
     readerwriterqueue
 )
+
+if(KMIDI_REQUIRE_QT)
+    target_link_libraries(KellyCore PUBLIC
+        Qt6::Core
+        Qt6::Widgets
+    )
+endif()
 
 # ML Dependencies
 if(ENABLE_RTNEURAL AND RTNeural_FOUND)

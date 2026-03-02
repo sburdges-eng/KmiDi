@@ -6,6 +6,7 @@ import MusicCustomizer from "./components/MusicCustomizer";
 import SongStructureEditor, { SongSection } from "./components/SongStructureEditor";
 import SpectoCloudPanel from "./components/SpectoCloudPanel";
 import LyricPanel from "./components/LyricPanel";
+import IntentBuilder from "../../../src/components/IntentBuilder";
 import "./App.css";
 
 function App() {
@@ -323,8 +324,19 @@ function App() {
             </p>
           </div>
 
-          <LyricPanel onSave={setUserLyrics} loadLyrics={getUserLyrics} />
-          
+<LyricPanel onSave={setUserLyrics} loadLyrics={getUserLyrics} />
+
+          <div className="intent-builder-section" style={{ marginTop: 'var(--spacing-8)' }}>
+            <div className="section-header-inline">
+              <h3>Intent Builder</h3>
+              <span className="section-badge">Schema</span>
+            </div>
+            <p className="section-description">
+              Design your generation intent with strict API constraints. Core desire, structure, and instruments match the engine schema.
+            </p>
+            <IntentBuilder />
+          </div>
+
           <div className="emotion-section">
             <div className="section-header-inline">
               <h3>Emotion Wheel</h3>

@@ -65,6 +65,10 @@ Wound convertLegacyToKellyTypesWound(const Wound &legacy) {
 #include "plugin/PluginEditor.h"
 #include "plugin/MasterEQProcessor.h"
 #include "project/ProjectManager.h"
+#if JUCE_MAC
+#include <pthread.h>
+#include <sys/qos.h>
+#endif
 
 using namespace kelly::MusicConstants;
 using namespace midikompanion;
@@ -324,6 +328,13 @@ void PluginProcessor::releaseResources() {
   }
 }
 
+void PluginProcessor::audioWorkgroupContextChanged(
+    const juce::AudioWorkgroup &workgroup) {
+  audioWorkgroup_ = workgroup;
+  // Any render-adjacent worker thread can join via workgroup.join(token).
+  // See docs/apple-silicon-low-latency.md.
+}
+
 bool PluginProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const {
   // MIDI effect - accept any layout
   juce::ignoreUnused(layouts);
@@ -332,6 +343,10 @@ bool PluginProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const {
 
 void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                    juce::MidiBuffer &midiMessages) {
+#if JUCE_MAC
+  // Promote to interactive QoS so we stay off E-cores (Apple Silicon low-latency).
+  pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+#endif
   juce::ScopedNoDenormals noDenormals;
 
   const int numSamples = buffer.getNumSamples();

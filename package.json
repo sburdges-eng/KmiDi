@@ -5,6 +5,10 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
+        "dev:react": "vite",
+        "dev:tauri": "tauri dev",
+        "dev:python": "python3 -m uvicorn music_brain.api:app --reload --port 8000",
+        "dev:all": "concurrently -k -n react,tauri,api -c blue,green,magenta \"npm run dev\" \"npm run tauri dev\" \"npm run dev:python\"",
         "build": "tsc && vite build",
         "preview": "vite preview",
         "tauri": "tauri"
@@ -29,6 +33,7 @@
         "postcss": "^8.5.6",
         "tailwindcss": "^4.1.17",
         "typescript": "~5.8.3",
-        "vite": "^7.0.4"
+        "vite": "^7.0.4",
+        "concurrently": "^9.1.0"
     }
 }

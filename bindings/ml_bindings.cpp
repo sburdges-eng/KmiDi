@@ -77,6 +77,7 @@ void bind_ml(py::module_& m) {
              py::arg("model_type"),
              py::arg("features"),
              py::arg("timestamp") = 0,
+             py::call_guard<py::gil_scoped_release>(),
              "Submit inference request with feature vector. Returns (queued, request_id).")
         .def("poll_result",
              [](MLInterface& self) -> py::object {
@@ -98,6 +99,7 @@ void bind_ml(py::module_& m) {
                  out["output"] = std::move(data);
                  return out;
              },
+             py::call_guard<py::gil_scoped_release>(),
              "Poll for next inference result. Returns dict or None if empty.");
 }
 

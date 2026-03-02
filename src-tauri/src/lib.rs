@@ -1,6 +1,7 @@
 pub mod bridge;
 pub mod commands;
 pub mod events;
+pub mod generated;
 pub mod intent_ir;
 pub mod state;
 

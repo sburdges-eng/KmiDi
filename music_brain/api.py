@@ -14,7 +14,7 @@ try:
     from fastapi import FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import FileResponse
-    from pydantic import BaseModel
+    from pydantic import BaseModel, ValidationError
     import uvicorn
     FASTAPI_AVAILABLE = True
 except ImportError:  # pragma: no cover - optional dependency
@@ -113,6 +113,7 @@ from music_brain.session.intent_schema import (
     list_all_rules,
 )
 from music_brain.session.intent_processor import process_intent
+from music_brain.engine_api.schema import CompleteSongIntentRequest
 try:
     from music_brain.data.emotional_mapping import EMOTIONAL_PRESETS
 except ImportError:  # pragma: no cover - compatibility shim for partial installs
@@ -1285,59 +1286,67 @@ if FASTAPI_AVAILABLE:
             tech = request.intent.technical
             # Default to the full intent pipeline for all requests.
             use_full_pipeline = True
+            strict_intent = None
             
             if use_full_pipeline:
                 # Use full CompleteSongIntent pipeline
                 logging.info("Using full intent pipeline with CompleteSongIntent")
+
+                if tech is None:
+                    raise HTTPException(
+                        status_code=422,
+                        detail="technical payload is required for complete intent generation",
+                    )
+
+                # Strict boundary validation for UI->engine payload.
+                structure_payload = tech.structure or []
+                instruments_payload = []
+                for inst in (tech.instruments or []):
+                    if isinstance(inst, dict):
+                        instruments_payload.append(
+                            {
+                                "instrument": inst.get("instrument")
+                                or inst.get("name")
+                                or inst.get("type")
+                                or "",
+                                "techniques": inst.get("techniques", []) or [],
+                            }
+                        )
+                    else:
+                        instruments_payload.append({"instrument": str(inst), "techniques": []})
+
+                strict_payload = {
+                    "core_desire": request.intent.core_desire or "",
+                    "mood_primary": request.intent.emotional_intent or "",
+                    "genre": tech.genre or "",
+                    "tempo": tech.bpm if tech.bpm is not None else 120,
+                    "key_mode": tech.key or "",
+                    "structure": structure_payload,
+                    "instruments": instruments_payload,
+                    "allow_legacy_fallback": False,
+                }
+                try:
+                    if hasattr(CompleteSongIntentRequest, "model_validate"):
+                        strict_intent = CompleteSongIntentRequest.model_validate(strict_payload)
+                    else:  # pydantic v1 compatibility
+                        strict_intent = CompleteSongIntentRequest.parse_obj(strict_payload)
+                except ValidationError as validation_error:
+                    raise HTTPException(status_code=422, detail=validation_error.errors()) from validation_error
                 
                 # Convert request to CompleteSongIntent
-                def _convert_to_intent(req: GenerateRequest) -> CompleteSongIntent:
+                def _convert_to_intent(req: GenerateRequest, validated: CompleteSongIntentRequest) -> CompleteSongIntent:
                     """Helper to convert request to CompleteSongIntent."""
                     import time
-                    tech = req.intent.technical
-                    emotional = req.intent.emotional_intent or ""
-                    
-                    mood_primary = emotional
-                    if "(" in emotional:
-                        mood_primary = emotional.split("(")[0].strip()
-                    
-                    emotion_map = {
-                        "grief": "grief", "sadness": "grief",
-                        "joy": "tenderness", "happiness": "tenderness",
-                        "anger": "rage", "rage": "rage",
-                        "fear": "fear", "love": "tenderness",
-                        "nostalgia": "nostalgia", "awe": "awe",
-                    }
-                    for key, value in emotion_map.items():
-                        if key.lower() in emotional.lower():
-                            mood_primary = value
-                            break
-                    
-                    technical_key = "C"
-                    technical_mode = "major"
-                    if tech and tech.key:
-                        key_parts = tech.key.split()
-                        technical_key = key_parts[0] if key_parts else "C"
-                        if len(key_parts) > 1:
-                            # Validate mode against known modes
-                            mode_candidate = key_parts[1].lower()
-                            technical_mode = mode_candidate if mode_candidate in VALID_MUSICAL_MODES else "major"
-                    
-                    # Validate and clamp BPM to reasonable range (40-300)
-                    bpm = tech.bpm if tech and tech.bpm is not None else 82
-                    try:
-                        bpm = int(bpm)
-                        bpm = max(40, min(300, bpm))  # Clamp to valid range
-                    except (ValueError, TypeError):
-                        bpm = 82  # Default if invalid
-                    
-                    tempo_range = (max(60, bpm - 20), min(140, bpm + 20))
+                    key_parts = validated.key_mode.split()
+                    technical_key = key_parts[0]
+                    technical_mode = key_parts[1].lower()
+                    tempo_range = (max(60, validated.tempo - 20), min(140, validated.tempo + 20))
                     
                     return CompleteSongIntent(
-                        core_event=req.intent.core_wound or emotional,
-                        core_longing=req.intent.core_desire or "",
-                        mood_primary=mood_primary,
-                        technical_genre=tech.genre if tech and tech.genre else "",
+                        core_event=req.intent.core_wound or validated.core_desire,
+                        core_longing=validated.core_desire,
+                        mood_primary=validated.mood_primary,
+                        technical_genre=validated.genre,
                         technical_tempo_range=tempo_range,
                         technical_key=technical_key,
                         technical_mode=technical_mode,
@@ -1345,7 +1354,7 @@ if FASTAPI_AVAILABLE:
                         created=time.strftime("%Y-%m-%d %H:%M:%S"),
                     )
                 
-                complete_intent = _convert_to_intent(request)
+                complete_intent = _convert_to_intent(request, strict_intent)
                 
                 # Process full intent
                 result = api.process_song_intent(complete_intent, output_json=None)
@@ -1368,8 +1377,6 @@ if FASTAPI_AVAILABLE:
                         # Extract harmony info
                         harmony = result["harmony"]
                         groove = result.get("groove", {})
-                        tech = request.intent.technical
-                        
                         # Validate and clamp duration to positive value (0.1 - 60 minutes)
                         duration_minutes = tech.duration if tech and tech.duration is not None else 3.0
                         try:
@@ -1379,27 +1386,26 @@ if FASTAPI_AVAILABLE:
                             duration_minutes = 3.0
                         
                         # Validate and clamp BPM
-                        bpm = tech.bpm if tech and tech.bpm is not None else (groove.get("tempo_bpm") if isinstance(groove, dict) else 82)
-                        try:
-                            bpm = int(bpm)
-                            bpm = max(40, min(300, bpm))
-                        except (ValueError, TypeError):
-                            bpm = 82
+                        bpm = strict_intent.tempo if strict_intent else 82
                         
                         length_bars = int((duration_minutes * bpm) / 4)
                         length_bars = max(16, min(128, length_bars))
                         
                         # Extract key and mode with validation
-                        key_str = tech.key if tech and tech.key else "C major"
-                        key_parts = key_str.split() if key_str else ["C"]
-                        root_note = key_parts[0] if key_parts else "C"
-                        # Validate mode
-                        mode_candidate = key_parts[1] if len(key_parts) > 1 else "major"
-                        mode = mode_candidate.lower() if mode_candidate.lower() in VALID_MUSICAL_MODES else "major"
+                        key_str = strict_intent.key_mode if strict_intent else "C major"
+                        key_parts = key_str.split()
+                        root_note = key_parts[0]
+                        mode = key_parts[1].lower()
                         
                         # Extract structure and instruments from request
-                        structure = tech.structure if tech else None
-                        instruments = tech.instruments if tech else None
+                        structure = [
+                            section.model_dump() if hasattr(section, "model_dump") else section.dict()
+                            for section in strict_intent.structure
+                        ] if strict_intent else None
+                        instruments = [
+                            track.model_dump() if hasattr(track, "model_dump") else track.dict()
+                            for track in strict_intent.instruments
+                        ] if strict_intent else None
                         
                         # If structure is provided, calculate total bars from structure
                         # Otherwise use calculated length_bars
@@ -1432,8 +1438,13 @@ if FASTAPI_AVAILABLE:
                         result["midi_path"] = midi_path
                     except Exception as midi_exc:
                         logging.exception("Failed to generate MIDI from full intent, falling back")
-                        # Fall through to simple generation
-                        use_full_pipeline = False
+                        if strict_intent and strict_intent.allow_legacy_fallback:
+                            use_full_pipeline = False
+                        else:
+                            raise HTTPException(
+                                status_code=500,
+                                detail=f"MIDI generation failed and legacy fallback is disabled: {midi_exc}",
+                            ) from midi_exc
                 
                 lyric_text, lyric_source = api._select_lyric_payload(request.intent)
                 
@@ -1448,9 +1459,14 @@ if FASTAPI_AVAILABLE:
                 }
                 
                 # Add structure and instruments information if provided
-                tech = request.intent.technical
-                structure = tech.structure if tech else None
-                instruments = tech.instruments if tech else None
+                structure = [
+                    section.model_dump() if hasattr(section, "model_dump") else section.dict()
+                    for section in strict_intent.structure
+                ] if strict_intent else None
+                instruments = [
+                    track.model_dump() if hasattr(track, "model_dump") else track.dict()
+                    for track in strict_intent.instruments
+                ] if strict_intent else None
                 
                 if structure:
                     response["structure"] = {
@@ -1548,6 +1564,8 @@ if FASTAPI_AVAILABLE:
                     response["output_path"] = result["midi_path"]
             
             return response
+        except HTTPException:
+            raise
         except Exception as exc:
             logging.exception("generate failed")
             raise HTTPException(status_code=500, detail=str(exc))

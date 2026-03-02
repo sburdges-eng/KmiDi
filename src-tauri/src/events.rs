@@ -68,8 +68,7 @@ impl EventManager {
         self.state_receiver = Some(state_manager_guard.subscribe());
         drop(state_manager_guard);
         
-        // Start event forwarding task
-        self.start_event_forwarding();
+        // Event forwarding is started from main.rs inside async runtime (no reactor during setup)
     }
     
     /// Emit event to all listeners
@@ -130,13 +129,13 @@ impl EventManager {
         });
     }
     
-    /// Start event forwarding from state manager
-    fn start_event_forwarding(&mut self) {
+    /// Start event forwarding from state manager. Call from async context (e.g. Tauri spawn).
+    pub fn start_event_forwarding(&mut self) {
         if let Some(mut receiver) = self.state_receiver.take() {
             let event_sender = self.event_sender.clone();
             let app_handle = self.app_handle.clone();
             
-            tokio::spawn(async move {
+            tauri::async_runtime::spawn(async move {
                 loop {
                     match receiver.recv().await {
                         Ok(state_event) => {
@@ -237,10 +236,17 @@ pub fn initialize_event_manager(app_handle: AppHandle) {
     manager_guard.initialize(app_handle);
 }
 
+/// Start event forwarding; call once from inside Tauri async runtime (e.g. main.rs spawn).
+pub fn start_event_forwarding_if_needed() {
+    let manager = get_event_manager();
+    let mut manager_guard = manager.lock().unwrap();
+    manager_guard.start_event_forwarding();
+}
+
 /// Start background event system tasks
 pub fn start_event_tasks() {
     // Cleanup task for inactive listeners
-    tokio::spawn(async {
+    tauri::async_runtime::spawn(async {
         let mut interval = tokio::time::interval(Duration::from_secs(300)); // 5 minutes
         
         loop {
@@ -253,7 +259,7 @@ pub fn start_event_tasks() {
     });
     
     // Connection monitoring task - uses direct FFI calls to avoid circular dependency
-    tokio::spawn(async {
+    tauri::async_runtime::spawn(async {
         let mut interval = tokio::time::interval(Duration::from_secs(30)); // 30 seconds
         let mut last_connection_status = false;
         

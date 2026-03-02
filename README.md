@@ -30,6 +30,11 @@ That path includes:
 - `training/` — model training and assertions
 - `ui/` — UI bindings for Rust-facing surfaces
 
+## V1 build and dev
+
+- **Dev setup:** `./scripts/dev-setup.sh` then `npm run dev:all` (see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)).
+- **Full v1 build:** `./scripts/build_v1.sh` (entities → C++/Python → Tauri).
+
 ## Operational Notes
 
 - Preserve the separation between UI systems and avoid editing duplicate snapshots.

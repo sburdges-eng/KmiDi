@@ -81,6 +81,7 @@ void bind_harmony(py::module_& m) {
         .def("process_notes", [](HarmonyEngine& self, const std::vector<Note>& notes) {
             self.processNotes(notes.data(), notes.size());
         }, py::arg("notes"),
+        py::call_guard<py::gil_scoped_release>(),
         "Process MIDI notes for harmony analysis")
         .def("get_current_chord", &HarmonyEngine::getCurrentChord,
             py::return_value_policy::copy,
