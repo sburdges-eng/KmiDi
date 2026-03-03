@@ -105,11 +105,13 @@ class Event:
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "Event":
         """Deserialize from dictionary."""
+        ts_raw = d.get("timestamp")
+        timestamp = datetime.fromisoformat(ts_raw) if ts_raw is not None else datetime.now()
         return cls(
             type=d["type"],
             data=d.get("data"),
             id=d.get("id", str(uuid.uuid4())[:8]),
-            timestamp=datetime.fromisoformat(d["timestamp"]) if "timestamp" in d else datetime.now(),
+            timestamp=timestamp,
             source=d.get("source"),
             priority=EventPriority(d.get("priority", EventPriority.NORMAL)),
         )
@@ -523,7 +525,10 @@ class EventBus:
         self._pending_requests.clear()
 
     def __repr__(self) -> str:
-        return f"EventBus(handlers={self.get_handler_count()}, events={self._stats['events_emitted']})"
+        return (
+            f"EventBus(handlers={self.get_handler_count()},"
+            f" events={self._stats['events_emitted']})"
+        )
 
 
 # =============================================================================
