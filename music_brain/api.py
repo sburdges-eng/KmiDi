@@ -876,8 +876,8 @@ class DAiWAPI:
         # Extract key and mode from technical.key (format: "F major" or "C minor")
         technical_key = "C"
         technical_mode = "major"
-        if tech.get("key"):
-            key_parts = tech["key"].split()
+        if tech.key:
+            key_parts = tech.key.split()
             technical_key = key_parts[0] if key_parts else "C"
             if len(key_parts) > 1:
                 # Validate mode against known modes
@@ -885,7 +885,7 @@ class DAiWAPI:
                 technical_mode = mode_candidate if mode_candidate in VALID_MUSICAL_MODES else "major"
         
         # Calculate tempo range from BPM with validation
-        bpm = tech.get("bpm") or 82
+        bpm = tech.bpm or 82
         try:
             bpm = int(bpm)
             bpm = max(40, min(300, bpm))  # Clamp to valid range
@@ -898,11 +898,16 @@ class DAiWAPI:
             core_event=request.intent.core_wound or emotional,
             core_longing=request.intent.core_desire or "",
             mood_primary=mood_primary,
-            technical_genre=tech.get("genre") or "",
+            technical_genre=tech.genre or "",
             technical_tempo_range=tempo_range,
             technical_key=technical_key,
             technical_mode=technical_mode,
-            vulnerability_scale=0.5,
+            technical_groove_feel=tech.groove_feel or "Straight/Driving",
+            technical_rule_to_break=tech.rule_to_break or "",
+            rule_breaking_justification=tech.rule_justification or "",
+            vulnerability_scale=request.intent.vulnerability_scale if request.intent.vulnerability_scale is not None else 0.5,
+            imagery_texture=request.intent.imagery_texture or "",
+            narrative_arc=tech.narrative_arc or "Climb-to-Climax",
             created=time.strftime("%Y-%m-%d %H:%M:%S"),
         )
         
@@ -928,12 +933,19 @@ if FASTAPI_AVAILABLE:
         structure: Optional[List[Dict[str, Any]]] = None  # Song sections with repetitions
         instruments: Optional[List[Dict[str, Any]]] = None  # Instruments with techniques
         techniques: Optional[List[str]] = None  # Production techniques
+        groove_feel: Optional[str] = None  # Rhythmic feel (e.g. "Straight/Driving")
+        rule_to_break: Optional[str] = None  # Intentional theory violation
+        rule_justification: Optional[str] = None  # Narrative reason for rule break
 
     class EmotionalIntent(BaseModel):
         core_wound: Optional[str] = None
         core_desire: Optional[str] = None
         emotional_intent: str
+        imagery_texture: Optional[str] = None
+        vulnerability_scale: Optional[float] = None
         technical: Optional[TechnicalIntent] = None
+        vulnerability_scale: Optional[float] = None  # 0.0 - 1.0 emotional openness
+        narrative_arc: Optional[str] = None  # Energetic trajectory (e.g. "Climb-to-Climax")
 
     class GenerateRequest(BaseModel):
         intent: EmotionalIntent
@@ -1324,7 +1336,15 @@ if FASTAPI_AVAILABLE:
                     "structure": structure_payload,
                     "instruments": instruments_payload,
                     "allow_legacy_fallback": False,
+                    "rule_to_break": tech.rule_to_break,
+                    "rule_justification": tech.rule_justification,
                 }
+                # Only include optional fields when the UI provided them;
+                # otherwise let CompleteSongIntentRequest schema defaults apply.
+                if tech.groove_feel is not None:
+                    strict_payload["groove_feel"] = tech.groove_feel
+                if request.intent.narrative_arc is not None:
+                    strict_payload["narrative_arc"] = request.intent.narrative_arc
                 try:
                     if hasattr(CompleteSongIntentRequest, "model_validate"):
                         strict_intent = CompleteSongIntentRequest.model_validate(strict_payload)
@@ -1346,11 +1366,15 @@ if FASTAPI_AVAILABLE:
                         core_event=req.intent.core_wound or validated.core_desire,
                         core_longing=validated.core_desire,
                         mood_primary=validated.mood_primary,
+                        narrative_arc=validated.narrative_arc,
+                        vulnerability_scale=req.intent.vulnerability_scale if req.intent.vulnerability_scale is not None else 0.5,
                         technical_genre=validated.genre,
                         technical_tempo_range=tempo_range,
                         technical_key=technical_key,
                         technical_mode=technical_mode,
-                        vulnerability_scale=0.5,
+                        technical_groove_feel=validated.groove_feel,
+                        technical_rule_to_break=validated.rule_to_break or "",
+                        rule_breaking_justification=validated.rule_justification or "",
                         created=time.strftime("%Y-%m-%d %H:%M:%S"),
                     )
                 

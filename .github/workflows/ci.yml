@@ -245,7 +245,7 @@ jobs:
       run: |
         git diff --exit-code -- shared_schemas/CompleteSongIntentRequest.json src/types/Intent.ts src-tauri/src/generated/intent.rs
     - name: Bootstrap
-      run: bash bootstrap.sh
+      run: ./bootstrap.sh
     - name: Build Kelly FFI (C++ core for Tauri)
       run: |
         PYBIND_DIR=$(python -c "import pybind11; print(pybind11.get_cmake_dir())")
