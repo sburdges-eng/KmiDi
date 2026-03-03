@@ -1,0 +1,47 @@
+---
+description: Data paths, model paths, and training run governance (DATA LAW + CUDA TRAINING GOVERNANCE)
+globs:
+  - "configs/**"
+  - "scripts/train*.py"
+  - "scripts/train*.sh"
+  - "training/**"
+  - "cloud_training/**"
+alwaysApply: false
+---
+
+# Engineering Governance: DATA LAW & CUDA TRAINING GOVERNANCE
+
+## DATA LAW — datasets
+
+- **Datasets live in `~/Datasets` only.** Never commit audio, MIDI, or large binary
+  dataset files to the repo.
+- Use symlinks when a dataset is on an external drive:
+  `ln -s /path/to/external ~/Datasets/<dataset-name>`
+- Override the root via `KELLY_AUDIO_DATA_ROOT` env var; scripts must read this variable
+  instead of hardcoding paths.
+- See `docs/DATA_AND_TRAINING.md §1` for the standard directory layout.
+
+## DATA LAW — model weights & checkpoints
+
+- **Weights and checkpoints live in `~/Models/checkpoints/<experiment_name>/`.**
+  Never commit `.pt`, `.pth`, `.ckpt`, `.safetensors`, `.onnx`, or similar files.
+- Override the root via `KELLY_MODEL_ROOT` env var.
+- See `docs/DATA_AND_TRAINING.md §2` for the standard directory layout.
+
+## CUDA TRAINING GOVERNANCE — required before every training run
+
+1. Pick a **unique experiment name** (e.g. `wavjepa-emotion-v2-2026-03`).
+2. Create `~/Models/checkpoints/<experiment_name>/run_manifest.yaml`
+   using the template in `docs/DATA_AND_TRAINING.md §4`.
+3. Commit the hyperparameter config to `configs/` *before* launching.
+4. Set a **budget cap** (`max_gpu_hours`) in the manifest.
+5. Record `git_commit`, `random_seed`, `dataset_split_hash`, and dependency versions.
+6. All output (checkpoints, logs) must go to `~/Models/` — **never** into the repo tree.
+
+Every training event must be traceable via its `run_manifest.yaml`.
+
+## Prohibited patterns (will be flagged by guardrails)
+
+- Hardcoded `/Users/<name>/…` paths in source or config files.
+- Hardcoded `/Volumes/…` paths outside of env-var default expressions.
+- `checkpoint_dir` or `output_dir` pointing inside the repo directory.
