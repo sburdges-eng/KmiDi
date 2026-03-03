@@ -35,14 +35,22 @@ if command -v node >/dev/null 2>&1; then
   fi
 fi
 
-# Resolve Python interpreter: respect $PYTHON if set, otherwise prefer "python" with a fallback to "python3".
-PYTHON=${PYTHON:-python}
-if ! command -v "$PYTHON" >/dev/null 2>&1; then
-  if command -v python3 >/dev/null 2>&1; then
-    PYTHON=python3
-  else
-    echo "FATAL: Neither 'python' nor 'python3' was found in PATH. Please install Python."
+# Resolve Python interpreter: if $PYTHON is explicitly set, validate it strictly.
+# Otherwise prefer "python" with a fallback to "python3".
+if [[ -n "${PYTHON:-}" ]]; then
+  if ! command -v "$PYTHON" >/dev/null 2>&1; then
+    echo "FATAL: Explicitly set PYTHON='$PYTHON' was not found in PATH."
     exit 1
+  fi
+else
+  PYTHON=python
+  if ! command -v "$PYTHON" >/dev/null 2>&1; then
+    if command -v python3 >/dev/null 2>&1; then
+      PYTHON=python3
+    else
+      echo "FATAL: Neither 'python' nor 'python3' was found in PATH. Please install Python."
+      exit 1
+    fi
   fi
 fi
 
