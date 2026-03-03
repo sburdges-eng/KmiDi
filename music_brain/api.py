@@ -1400,7 +1400,6 @@ if FASTAPI_AVAILABLE:
                     try:
                         # Extract harmony info
                         harmony = result["harmony"]
-                        groove = result.get("groove", {})
                         # Validate and clamp duration to positive value (0.1 - 60 minutes)
                         duration_minutes = tech.duration if tech and tech.duration is not None else 3.0
                         try:

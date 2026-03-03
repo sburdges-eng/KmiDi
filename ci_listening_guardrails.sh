@@ -3,13 +3,17 @@
 # Ensures no forbidden patterns or accidental hardcoded paths remain in the codebase.
 set -euo pipefail
 
+if ! command -v rg >/dev/null 2>&1; then
+  echo "ERROR: ripgrep (rg) is not installed. Install it before running guardrails." >&2
+  exit 1
+fi
+
 echo "=> Running Static Listening Guardrails..."
 
-# Require ripgrep; fail early with a clear install hint if it's missing.
+# 0) Verify ripgrep is available
 if ! command -v rg >/dev/null 2>&1; then
-  echo "FATAL: 'rg' (ripgrep) is not installed or not on PATH."
-  echo "       Install it: https://github.com/BurntSushi/ripgrep#installation"
-  echo "       e.g. apt-get install ripgrep  |  brew install ripgrep"
+  echo "FATAL: ripgrep (rg) is not installed." >&2
+  echo "       Install it from https://github.com/BurntSushi/ripgrep or via your package manager (e.g. brew install ripgrep / apt-get install ripgrep)." >&2
   exit 1
 fi
 
@@ -18,7 +22,7 @@ echo "-> Checking for local path leakage..."
 FORBIDDEN_PATHS=("/Users/" "/home/sburdges" "/home/runner/work/KmiDi/KmiDi/KmiDi_FINAL")
 for path in "${FORBIDDEN_PATHS[@]}"; do
   if rg -q "$path" -g "!.git/*" -g "!.agents/*" -g "!ci_listening_guardrails.sh"; then
-    echo "FATAL: Hardcoded path '$path' found in codebase."
+    echo "FATAL: Hardcoded path '$path' found in codebase." >&2
     rg "$path" -g "!.git/*" -g "!.agents/*" -g "!ci_listening_guardrails.sh"
     exit 1
   fi
