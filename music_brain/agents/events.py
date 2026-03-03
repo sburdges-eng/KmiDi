@@ -107,8 +107,10 @@ class Event:
             data=d.get("data"),
             id=d.get("id", str(uuid.uuid4())[: 8]),
             timestamp=datetime.fromisoformat(d["timestamp"])
-            if "timestamp" in d else datetime.now(), source=d.get("source"),
-            priority=EventPriority(d.get("priority", EventPriority.NORMAL)),)
+            if "timestamp" in d else datetime.now(),
+            source=d.get("source"),
+            priority=EventPriority(d.get("priority", EventPriority.NORMAL)),
+        )
 
 
 @dataclass
