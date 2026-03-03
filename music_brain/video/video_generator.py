@@ -252,10 +252,9 @@ class VideoGenerator:
         outside of it.
 
         Note:
-            This is a stub. Future implementation will:
+            This is a partial implementation. Future updates will:
             - Close Unreal Engine connection
             - Release GPU resources
-            - Clear temporary files
         """
         # TODO: Cleanup Unreal Engine connection
         # TODO: Cleanup Jespa resources
