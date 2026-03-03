@@ -41,23 +41,7 @@ def _json_to_ts(name: str, node: Dict[str, Any], schema: Dict[str, Any]) -> str:
         ref_name = node["$ref"].split("/")[-1]
         return ref_name
 
-    if "anyOf" in node:
-        union_parts = []
-        for variant in node.get("anyOf", []):
-            ts_variant = _json_to_ts(name, variant, schema)
-            if ts_variant not in union_parts:
-                union_parts.append(ts_variant)
-        return " | ".join(union_parts) if union_parts else "unknown"
-
     node_type = node.get("type")
-    if isinstance(node_type, list):
-        union_parts = []
-        for variant_type in node_type:
-            ts_variant = _json_to_ts(name, {"type": variant_type}, schema)
-            if ts_variant not in union_parts:
-                union_parts.append(ts_variant)
-        return " | ".join(union_parts) if union_parts else "unknown"
-
     if "enum" in node:
         return " | ".join(f'"{value}"' for value in node["enum"])
     if node_type == "string":
@@ -66,8 +50,6 @@ def _json_to_ts(name: str, node: Dict[str, Any], schema: Dict[str, Any]) -> str:
         return "number"
     if node_type == "boolean":
         return "boolean"
-    if node_type == "null":
-        return "null"
     if node_type == "array":
         item_type = _json_to_ts(name, node.get("items", {}), schema)
         return f"{item_type}[]"

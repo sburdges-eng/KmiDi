@@ -37,6 +37,10 @@ class VideoConfig:
     
     # Output settings
     output_path: Optional[Path] = None
+    # Optional base directory under which the generator creates its own
+    # ``_kmidi_video_temp`` subdirectory.  Only that owned subdirectory is
+    # cleared on cleanup; ``temp_dir`` itself and any sibling paths are left
+    # untouched.  Safe to point at any writable directory (e.g. ``/tmp``).
     temp_dir: Optional[Path] = None
     format: VideoFormat = VideoFormat.MP4
     quality: VideoQuality = VideoQuality.MEDIUM
@@ -98,7 +102,10 @@ class VideoGenerator:
         ... )
         >>> print(f"Video saved to: {result.output_path}")
     """
-    
+
+    # Name of the generator-owned subdirectory created inside VideoConfig.temp_dir.
+    _OWNED_SUBDIR = "_kmidi_video_temp"
+
     def __init__(self, config: Optional[VideoConfig] = None):
         """
         Initialize the video generator.
@@ -237,17 +244,23 @@ class VideoGenerator:
     def cleanup(self) -> None:
         """
         Clean up video generation resources.
-        
+
+        Removes all files and subdirectories inside the generator-owned
+        ``_kmidi_video_temp`` subdirectory of :attr:`VideoConfig.temp_dir`
+        (the subdirectory itself is preserved).  Only this owned directory is
+        touched, so a misconfigured ``temp_dir`` value cannot cause data loss
+        outside of it.
+
         Note:
-            This is a stub. Future implementation will:
+            This is a partial implementation. Future updates will:
             - Close Unreal Engine connection
             - Release GPU resources
-            - Clear temporary files
         """
         # TODO: Cleanup Unreal Engine connection
         # TODO: Cleanup Jespa resources
 
-        # Clear temp files
+        # Only delete within the generator-owned subdirectory so a
+        # misconfigured temp_dir cannot cause data loss in arbitrary paths.
         if self.config.temp_dir and self.config.temp_dir.is_dir():
             for item in self.config.temp_dir.iterdir():
                 try:
