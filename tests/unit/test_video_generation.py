@@ -85,15 +85,17 @@ class TestVideoGenerator:
         assert gen._initialized is False
 
     def test_cleanup_temp_files(self, tmp_path):
-        """Test cleaning up temporary files."""
-        # Create a temporary directory with some files
+        """Test cleaning up temporary files inside the generator-owned subdirectory."""
+        # Create the generator-owned subdirectory with some artifacts
         temp_dir = tmp_path / "video_temp"
         temp_dir.mkdir()
+        owned = temp_dir / VideoGenerator._OWNED_SUBDIR
+        owned.mkdir()
 
-        file1 = temp_dir / "frame_001.png"
+        file1 = owned / "frame_001.png"
         file1.write_text("dummy data")
 
-        subdir = temp_dir / "cache"
+        subdir = owned / "cache"
         subdir.mkdir()
         file2 = subdir / "meta.json"
         file2.write_text("{}")
@@ -110,10 +112,12 @@ class TestVideoGenerator:
         # Run cleanup
         gen.cleanup()
 
-        # Verify files and subdirectories are gone, but temp_dir itself remains
+        # Verify files and subdirectories inside the owned dir are gone,
+        # but the owned dir itself and temp_dir remain.
         assert not file1.exists()
         assert not file2.exists()
         assert not subdir.exists()
+        assert owned.exists()
         assert temp_dir.exists()
 
 
