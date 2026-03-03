@@ -1,6 +1,7 @@
 """Unit tests for video generation module."""
 
 import pytest
+from pathlib import Path
 from music_brain.video import (
     VideoGenerator,
     VideoConfig,
@@ -85,36 +86,69 @@ class TestVideoGenerator:
         assert gen._initialized is False
 
     def test_cleanup_temp_files(self, tmp_path):
-        """Test cleaning up temporary files."""
-        # Create a temporary directory with some files
+        """Test that cleanup removes only the generator-owned temp subdirectory."""
+        # Base temp dir provided by the caller
         temp_dir = tmp_path / "video_temp"
         temp_dir.mkdir()
 
-        file1 = temp_dir / "frame_001.png"
-        file1.write_text("dummy data")
+        # A file placed *outside* the generator's owned subdir (not owned by gen)
+        external_file = temp_dir / "external.txt"
+        external_file.write_text("do not delete me")
 
-        subdir = temp_dir / "cache"
-        subdir.mkdir()
-        file2 = subdir / "meta.json"
-        file2.write_text("{}")
-
-        # Initialize generator with this temp directory
         config = VideoConfig(temp_dir=temp_dir)
         gen = VideoGenerator(config=config)
+        gen.initialize()
 
-        # Verify files exist
-        assert file1.exists()
-        assert file2.exists()
-        assert subdir.exists()
+        # After initialize(), the generator should have created its own subdir
+        assert gen._owned_temp_dir is not None
+        assert gen._owned_temp_dir.is_dir()
+        sentinel = gen._owned_temp_dir / VideoGenerator._SENTINEL_FILENAME
+        assert sentinel.is_file()
 
-        # Run cleanup
+        # Place a file inside the owned subdir to verify it gets cleaned up
+        owned_file = gen._owned_temp_dir / "frame_001.png"
+        owned_file.write_text("dummy frame data")
+
+        owned_dir = gen._owned_temp_dir
         gen.cleanup()
 
-        # Verify files and subdirectories are gone, but temp_dir itself remains
-        assert not file1.exists()
-        assert not file2.exists()
-        assert not subdir.exists()
+        # Generator's subdirectory should be gone
+        assert not owned_dir.exists()
+        assert not owned_file.exists()
+
+        # The base temp_dir and external files must NOT be touched
         assert temp_dir.exists()
+        assert external_file.exists()
+
+    def test_cleanup_no_sentinel_skips_deletion(self, tmp_path):
+        """Test that cleanup skips deletion when sentinel file is missing."""
+        temp_dir = tmp_path / "video_temp"
+        temp_dir.mkdir()
+
+        config = VideoConfig(temp_dir=temp_dir)
+        gen = VideoGenerator(config=config)
+        gen.initialize()
+
+        owned_dir = gen._owned_temp_dir
+        assert owned_dir is not None
+
+        # Remove the sentinel to simulate tampering / corruption
+        sentinel = owned_dir / VideoGenerator._SENTINEL_FILENAME
+        sentinel.unlink()
+
+        gen.cleanup()
+
+        # Owned dir should NOT have been deleted (sentinel was missing)
+        assert owned_dir.exists()
+
+    def test_cleanup_dangerous_temp_dir_rejected(self, tmp_path):
+        """Test that a high-risk temp_dir is rejected during initialize()."""
+        config = VideoConfig(temp_dir=Path.home())
+        gen = VideoGenerator(config=config)
+        result = gen.initialize()
+        # initialize() should still return True but _owned_temp_dir stays None
+        assert result is True
+        assert gen._owned_temp_dir is None
 
 
 class TestUnrealBridge:

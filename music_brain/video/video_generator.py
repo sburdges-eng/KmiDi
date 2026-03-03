@@ -6,6 +6,7 @@ Unreal Engine and Jespa to create synchronized music videos.
 """
 
 import shutil
+import tempfile
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any, List
 from pathlib import Path
@@ -96,6 +97,9 @@ class VideoGenerator:
         >>> print(f"Video saved to: {result.output_path}")
     """
     
+    # Sentinel file name placed inside every generator-owned temp subdirectory.
+    _SENTINEL_FILENAME = ".video_gen_owned"
+
     def __init__(self, config: Optional[VideoConfig] = None):
         """
         Initialize the video generator.
@@ -105,6 +109,9 @@ class VideoGenerator:
         """
         self.config = config or VideoConfig()
         self._initialized = False
+        # Subdirectory created by *this* instance under config.temp_dir.
+        # Only this path will ever be deleted by cleanup().
+        self._owned_temp_dir: Optional[Path] = None
         
     def initialize(self) -> bool:
         """
@@ -124,7 +131,25 @@ class VideoGenerator:
         # TODO: Initialize Jespa connector
         # TODO: Load emotion-visual mappings
         # TODO: Verify rendering capabilities
-        
+
+        # Create a generator-owned temp subdirectory so that cleanup() never
+        # touches files outside of a directory it created.
+        if self.config.temp_dir is not None:
+            try:
+                self._validate_temp_dir(self.config.temp_dir)
+                self.config.temp_dir.mkdir(parents=True, exist_ok=True)
+                owned = Path(
+                    tempfile.mkdtemp(prefix="video_gen_", dir=self.config.temp_dir)
+                )
+                (owned / self._SENTINEL_FILENAME).touch()
+                self._owned_temp_dir = owned
+            except (ValueError, OSError) as e:
+                print(
+                    f"Warning: could not create owned temp dir: {e} "
+                    "Temporary files will not be managed; cleanup() will be a no-op."
+                )
+                self._owned_temp_dir = None
+
         self._initialized = True
         return True
     
@@ -231,6 +256,53 @@ class VideoGenerator:
         
         return None
     
+    @staticmethod
+    def _validate_temp_dir(path: Path) -> None:
+        """Raise ValueError if *path* looks like a dangerous location to delete.
+
+        Guardrails checked:
+        - Must be an absolute path with at least 3 components (e.g. /tmp/myapp).
+        - Must not be the filesystem root.
+        - Must not be the user's home directory.
+        - Must not be a common system directory (/etc, /usr, /bin, /lib, /var, /boot).
+        """
+        resolved = path.resolve()
+        home = Path.home().resolve()
+
+        dangerous_roots = {
+            Path("/"),
+            home,
+            Path("/etc"),
+            Path("/usr"),
+            Path("/bin"),
+            Path("/lib"),
+            Path("/var"),
+            Path("/boot"),
+            Path("/sbin"),
+            Path("/sys"),
+            Path("/proc"),
+        }
+
+        if resolved in dangerous_roots:
+            raise ValueError(
+                f"Refusing to use '{resolved}' as temp_dir: high-risk path."
+            )
+
+        # Require the path to be nested at least 2 levels below the root
+        # (e.g. /tmp/video_gen is fine; /tmp is not).
+        if len(resolved.parts) < 3:
+            raise ValueError(
+                f"Refusing to use '{resolved}' as temp_dir: path is too shallow."
+            )
+
+        # Guard against immediate children of the home directory
+        # (e.g. ~/Downloads is still too risky).
+        if resolved.parent == home:
+            raise ValueError(
+                f"Refusing to use '{resolved}' as temp_dir: "
+                "path is too close to the home directory."
+            )
+
     def cleanup(self) -> None:
         """
         Clean up video generation resources.
@@ -244,16 +316,22 @@ class VideoGenerator:
         # TODO: Cleanup Unreal Engine connection
         # TODO: Cleanup Jespa resources
 
-        # Clear temp files
-        if self.config.temp_dir and self.config.temp_dir.is_dir():
-            for item in self.config.temp_dir.iterdir():
+        # Only delete the subdirectory that *this instance* created during
+        # initialize().  We verify the sentinel file is present before
+        # removing anything, so a misconfigured temp_dir can never cause
+        # accidental data loss.
+        if self._owned_temp_dir is not None:
+            sentinel = self._owned_temp_dir / self._SENTINEL_FILENAME
+            if sentinel.is_file():
                 try:
-                    if item.is_file() or item.is_symlink():
-                        item.unlink()
-                    elif item.is_dir():
-                        shutil.rmtree(item)
+                    shutil.rmtree(self._owned_temp_dir)
                 except Exception as e:
-                    # Use standard print for stub implementation, but could use logging
-                    print(f"Error cleaning up {item}: {e}")
-        
+                    print(f"Error cleaning up temp dir {self._owned_temp_dir}: {e}")
+            else:
+                print(
+                    f"Warning: sentinel file missing in {self._owned_temp_dir}; "
+                    "skipping cleanup to avoid accidental data loss."
+                )
+            self._owned_temp_dir = None
+
         self._initialized = False
