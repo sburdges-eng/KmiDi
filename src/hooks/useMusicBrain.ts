@@ -57,6 +57,7 @@ export type SpectocloudMode = "static" | "animation";
 export interface SpectocloudRenderRequest {
   midi_events?: Array<Record<string, unknown>>;
   midi_file_path?: string;
+  audio_file_path?: string;
   duration?: number;
   emotion_trajectory?: Array<Record<string, unknown>>;
   mode?: SpectocloudMode;
