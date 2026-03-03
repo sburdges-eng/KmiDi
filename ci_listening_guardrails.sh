@@ -5,6 +5,11 @@ set -euo pipefail
 
 echo "=> Running Static Listening Guardrails..."
 
+if ! command -v rg >/dev/null 2>&1; then
+  echo "FATAL: 'rg' (ripgrep) is not installed. Install it via your OS package manager (e.g. 'brew install ripgrep' or 'apt-get install ripgrep')."
+  exit 1
+fi
+
 SCAN_SCOPE="${GUARDRAILS_SCAN_SCOPE:-changed}"
 
 collect_files_to_scan() {
