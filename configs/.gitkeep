@@ -1,2 +1,0 @@
-# This file ensures the configs/ directory is tracked by git even when it would otherwise be empty or contain only ignored files.
-# See configs/README.md for usage conventions.
