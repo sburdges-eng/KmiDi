@@ -21,7 +21,7 @@ constexpr float GHOST_NOTE_VELOCITY_MULT = 0.4f;
 constexpr float MAX_PUSH_PULL_BEATS = 0.05f;  // Max 5% of beat for push/pull
 constexpr float SWING_MAX_OFFSET = 0.083f;    // Max swing offset (1/3 of 8th note = triplet)
 
-GrooveEngine::GrooveEngine() : rng_(std::random_device{}()) {
+GrooveEngine::GrooveEngine(uint32_t seed) : rng_(seed) {
     initializeTemplates();
 }
 

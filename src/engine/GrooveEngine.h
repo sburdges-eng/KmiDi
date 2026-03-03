@@ -92,10 +92,11 @@ struct MidiNoteEvent {
 // Renamed to avoid conflict with src/midi/GrooveEngine
 class GrooveTemplateEngine {
 public:
+    static constexpr unsigned int kDeterministicSeed = 0x00C0FFEE;
+
     GrooveTemplateEngine(unsigned int seed = 0) {
         if (seed == 0) {
-            std::random_device rd;
-            seed = rd();
+            seed = kDeterministicSeed;
         }
         rng_.seed(seed);
         initializeTemplates();

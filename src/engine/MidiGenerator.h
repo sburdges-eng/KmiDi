@@ -170,15 +170,16 @@ public:
 // =============================================================================
 
 class MidiGenerator {
-public:
-    MidiGenerator(int tempo = 120, unsigned int seed = 0)
-        : tempo_(tempo), grooveEngine_(seed) {
-        if (seed == 0) {
-            std::random_device rd;
-            seed = rd();
-        }
-        rng_.seed(seed);
-    }
+	public:
+        static constexpr unsigned int kDeterministicSeed = 0x0BADF00D;
+
+	    MidiGenerator(int tempo = 120, unsigned int seed = 0)
+	        : tempo_(tempo), grooveEngine_(seed) {
+	        if (seed == 0) {
+	            seed = kDeterministicSeed;
+	        }
+	        rng_.seed(seed);
+	    }
 
     /**
      * Generate a chord progression.

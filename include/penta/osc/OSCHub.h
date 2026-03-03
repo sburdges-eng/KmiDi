@@ -19,7 +19,7 @@ namespace osc {
 class OSCHub {
 public:
     struct Config {
-        std::string serverAddress = "0.0.0.0";
+        std::string serverAddress = "127.0.0.1";
         uint16_t serverPort = 8000;
         std::string clientAddress = "127.0.0.1";
         uint16_t clientPort = 9000;

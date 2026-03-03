@@ -19,10 +19,8 @@ detect_local_juce_root() {
   local candidates=(
     "${ROOT}/external/JUCE"
     "${ROOT}/../JUCE"
-    "/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/external/JUCE"
-    "/Volumes/KmiDi-external/My MacEXTERNAL/Desktop/KmiDi-remote/external/JUCE"
-    "/Volumes/KmiDi-external/My MacEXTERNAL/KmiDi MIDI Companion/KmiDi-compile/external/JUCE"
-    "/Volumes/KmiDi-external/_sortedEXTERNAL/CPP_JUCE"
+    "${HOME}/external/JUCE"
+    "${HOME}/JUCE"
   )
   local candidate
   for candidate in "${candidates[@]}"; do

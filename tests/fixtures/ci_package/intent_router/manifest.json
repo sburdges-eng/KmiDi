@@ -1,14 +1,61 @@
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": "2.0",
   "packageId": "ci-fixture",
   "task": "intent_router",
   "createdAt": "2026-02-16T00:00:00Z",
+  "license": "CC0-1.0",
+  "source": "KmiDi local fixture source",
+  "collectionMethod": "curated",
   "hashAlgorithm": "sha256",
+  "hashManifest": {
+    "algorithm": "sha256",
+    "entries": [
+      {
+        "file": "train-0000.jsonl.zst",
+        "sha256": "865a04abcc616ff7e1707b878fd680b522fe06d3e50a5f271362540908d92135",
+        "sizeBytes": 104
+      },
+      {
+        "file": "val-0000.jsonl.zst",
+        "sha256": "f60e3309d6ad803def3395781079b886312619da4c411e8f0b954dc35f1f986b",
+        "sizeBytes": 92
+      },
+      {
+        "file": "test-0000.jsonl.zst",
+        "sha256": "bc73c6313d8f15b44307bffb3ba5cbf7cc49992815a0624e1159bd3d5b5bad42",
+        "sizeBytes": 107
+      }
+    ]
+  },
   "compression": "zstd",
+  "compressionFormat": "zstd",
   "labelSpace": [
     "VALID",
     "ABSTAIN",
     "INVALID"
+  ],
+  "shardChecksums": [
+    {
+      "file": "train-0000.jsonl.zst",
+      "split": "train",
+      "sha256": "865a04abcc616ff7e1707b878fd680b522fe06d3e50a5f271362540908d92135",
+      "sizeBytes": 104,
+      "compression": "zstd"
+    },
+    {
+      "file": "val-0000.jsonl.zst",
+      "split": "val",
+      "sha256": "f60e3309d6ad803def3395781079b886312619da4c411e8f0b954dc35f1f986b",
+      "sizeBytes": 92,
+      "compression": "zstd"
+    },
+    {
+      "file": "test-0000.jsonl.zst",
+      "split": "test",
+      "sha256": "bc73c6313d8f15b44307bffb3ba5cbf7cc49992815a0624e1159bd3d5b5bad42",
+      "sizeBytes": 107,
+      "compression": "zstd"
+    }
   ],
   "splits": {
     "train": {

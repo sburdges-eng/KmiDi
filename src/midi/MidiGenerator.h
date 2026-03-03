@@ -20,6 +20,7 @@
 #include "engines/ArrangementEngine.h"
 #include "engines/VariationEngine.h"
 #include <vector>
+#include <cstdint>
 #include <random>
 
 namespace kelly {
@@ -45,7 +46,7 @@ namespace kelly {
  */
 class MidiGenerator {
 public:
-    MidiGenerator();
+    explicit MidiGenerator(std::uint32_t seed = 0x0F1E2D3C);
 
     /**
      * Generate complete MIDI arrangement from emotional intent.

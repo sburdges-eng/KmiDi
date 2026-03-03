@@ -7,8 +7,8 @@
 namespace kelly {
 using namespace MusicConstants;
 
-ChordGenerator::ChordGenerator()
-    : rng_(std::random_device{}()),
+ChordGenerator::ChordGenerator(uint32_t seed)
+    : rng_(seed),
       voiceLeadingEngine_(std::make_unique<VoiceLeadingEngine>()) {
   std::lock_guard<std::mutex> lock(mutex_);
   initializeProgressionFamilies();

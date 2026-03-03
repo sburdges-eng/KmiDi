@@ -4,6 +4,7 @@
 #include "engines/VoiceLeading.h"
 #include <vector>
 #include <string>
+#include <cstdint>
 #include <random>
 #include <map>
 #include <memory>
@@ -28,7 +29,7 @@ namespace kelly {
  */
 class ChordGenerator {
 public:
-    ChordGenerator();
+    explicit ChordGenerator(uint32_t seed = 0xB00B1E55);
     
     /**
      * Generate chord progression from emotional intent

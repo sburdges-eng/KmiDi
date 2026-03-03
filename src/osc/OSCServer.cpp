@@ -5,6 +5,12 @@
 namespace penta {
 namespace osc {
 
+namespace {
+bool isLoopbackAddress(const std::string& address) {
+    return address.empty() || address == "127.0.0.1" || address == "::1";
+}
+} // namespace
+
 // Full definition of OSCListener class (must be defined before use)
 class OSCServer::OSCListener
     : public juce::OSCReceiver::Listener<juce::OSCReceiver::RealtimeCallback> {
@@ -73,6 +79,12 @@ OSCServer::~OSCServer() {
 bool OSCServer::start() {
     if (running_.load()) {
         return true;
+    }
+
+    if (!isLoopbackAddress(address_)) {
+        juce::Logger::writeToLog("OSCServer: Refusing non-loopback bind address " +
+                                 juce::String(address_));
+        return false;
     }
 
     if (!receiver_->connect(static_cast<int>(port_))) {

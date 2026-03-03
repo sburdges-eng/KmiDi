@@ -66,17 +66,28 @@ def package_task(
     task_output_dir.mkdir(parents=True, exist_ok=True)
 
     manifest: dict[str, Any] = {
-        "schemaVersion": "1.0",
+        "schemaVersion": "2.0",
         "packageId": package_id,
         "task": task,
         "createdAt": deterministic_timestamp(deterministic),
         "hashAlgorithm": "sha256",
+        "license": "CC0-1.0",
+        "source": "KmiDi split dataset pipeline",
+        "collectionMethod": "generated",
+        "compressionFormat": "identity",
+        "hashManifest": {
+            "algorithm": "sha256",
+            "entries": [],
+        },
+        "shardChecksums": [],
         "splits": {},
         "totals": {"recordCount": 0, "shardCount": 0},
     }
 
     all_compressions: set[str] = set()
     checksums: list[tuple[str, str]] = []
+    hash_manifest_entries: list[dict[str, Any]] = []
+    shard_checksums: list[dict[str, Any]] = []
 
     for split_name in SPLITS:
         split_file = task_input_dir / f"{split_name}.jsonl"
@@ -107,6 +118,18 @@ def package_task(
                     "compression": compression,
                 }
             )
+            shard_checksums.append(
+                {
+                    "file": shard_name,
+                    "split": split_name,
+                    "sha256": checksum,
+                    "sizeBytes": size_bytes,
+                    "compression": compression,
+                }
+            )
+            hash_manifest_entries.append(
+                {"file": shard_name, "sha256": checksum, "sizeBytes": size_bytes}
+            )
             checksums.append((checksum, shard_name))
 
         manifest["totals"]["recordCount"] += len(records)
@@ -131,6 +154,13 @@ def package_task(
             f"{task}: mixed shard compression is not allowed in pre-training freeze mode: {sorted(all_compressions)}"
         )
     manifest["compression"] = next(iter(all_compressions)) if all_compressions else "identity"
+    manifest["compressionFormat"] = manifest["compression"]
+    manifest["shardChecksums"] = sorted(
+        shard_checksums, key=lambda entry: entry["file"]
+    )
+    manifest["hashManifest"]["entries"] = sorted(
+        hash_manifest_entries, key=lambda entry: entry["file"]
+    )
 
     semantic_errors = validate_manifest_semantics(manifest)
     if semantic_errors:

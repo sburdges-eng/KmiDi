@@ -1,7 +1,6 @@
-# Dataset download/prepare scripts on external drive (Sean's SSD)
+# Dataset download/prepare scripts on external drive
 
-Found on **`/Volumes/Sean's SSD`** (the currently mounted drive). Use for reference when locating or consolidating dataset tooling.  
-*Currently mounted:* Yes — this catalog was generated from the drive at `/Volumes/Sean's SSD`.
+Found under **`$KMIDI_DATA_ROOT`** (set in `.env` when the external drive is mounted; no hardcoded volume name). Use for reference when locating or consolidating dataset tooling. Paths below are relative to that root.
 
 ---
 

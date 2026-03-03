@@ -6,7 +6,6 @@ so you can delete everything outside KmiDi-compile and keep scripts working.
 Usage:
     python scripts/migrate_data_into_kmidi_compile.py --dry-run
     python scripts/migrate_data_into_kmidi_compile.py --copy
-    python scripts/migrate_data_into_kmidi_compile.py --link
 """
 
 from __future__ import annotations
@@ -28,12 +27,11 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Move or link sibling data into KmiDi-compile")
     ap.add_argument("--dry-run", action="store_true", help="Only print what would be done")
     ap.add_argument("--copy", action="store_true", help="Copy AUDIO_MIDI_DATA into datasets/audio")
-    ap.add_argument("--link", action="store_true", help="Symlink AUDIO_MIDI_DATA into datasets/audio")
     args = ap.parse_args()
 
-    if not args.dry_run and not args.copy and not args.link:
+    if not args.dry_run and not args.copy:
         ap.print_help()
-        print("\nProvide one of: --dry-run, --copy, --link")
+        print("\nProvide one of: --dry-run, --copy")
         return 1
 
     if args.dry_run:
@@ -45,8 +43,6 @@ def main() -> int:
                 if src.exists():
                     if args.copy:
                         print("  COPY:", src, "->", TARGET_AUDIO)
-                    elif args.link:
-                        print("  LINK:", src, "->", TARGET_AUDIO / name)
         else:
             print("  (AUDIO_MIDI_DATA sibling not found:", AUDIO_MIDI_SIBLING, ")")
         return 0
@@ -64,18 +60,6 @@ def main() -> int:
                 continue
             print("Copy:", src, "->", dest)
             shutil.copytree(src, dest, symlinks=False, dirs_exist_ok=True)
-
-    if args.link:
-        for name in ("kelly-audio-data", "SSD_Transfer"):
-            src = AUDIO_MIDI_SIBLING / name
-            if not src.exists():
-                continue
-            dest = TARGET_AUDIO / name
-            if dest.exists():
-                print("Skip (exists):", dest)
-                continue
-            print("Link:", src, "->", dest)
-            dest.symlink_to(src)
 
     print("\nNext: set KELLY_AUDIO_DATA_ROOT and AUDIO_DATA_ROOT to:", TARGET_AUDIO)
     return 0

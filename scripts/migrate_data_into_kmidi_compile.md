@@ -35,11 +35,9 @@ AUDIO_DATA_ROOT=/Users/seanburdges/KmiDi MIDI Companion/KmiDi-compile/datasets/a
 
 ---
 
-## 3. Copy (or symlink) from AUDIO_MIDI_DATA
+## 3. Copy from AUDIO_MIDI_DATA
 
 If you want to keep a copy of `AUDIO_MIDI_DATA` inside KmiDi-compile:
-
-**Option A – copy (uses more disk, safest)**
 
 ```bash
 WORKSPACE="/Users/seanburdges/KmiDi MIDI Companion"
@@ -50,17 +48,6 @@ cp -R "$WORKSPACE/AUDIO_MIDI_DATA/kelly-audio-data/"* "$KMIDI/datasets/audio/" 2
 cp -R "$WORKSPACE/AUDIO_MIDI_DATA/SSD_Transfer/kelly-audio-data/"* "$KMIDI/datasets/audio/" 2>/dev/null || true
 ```
 
-**Option B – symlink (no extra space, link breaks if you delete AUDIO_MIDI_DATA)**
-
-```bash
-WORKSPACE="/Users/seanburdges/KmiDi MIDI Companion"
-KMIDI="$WORKSPACE/KmiDi-compile"
-
-ln -s "$WORKSPACE/AUDIO_MIDI_DATA/kelly-audio-data" "$KMIDI/datasets/audio/kelly-audio-data"
-```
-
-Only use Option B if you plan to keep AUDIO_MIDI_DATA elsewhere or on another volume.
-
 ---
 
 ## 4. Run the migration script (optional)
@@ -70,8 +57,6 @@ From the repo root (KmiDi-compile):
 ```bash
 python scripts/migrate_data_into_kmidi_compile.py --dry-run
 python scripts/migrate_data_into_kmidi_compile.py --copy    # copy from sibling AUDIO_MIDI_DATA
-# or
-python scripts/migrate_data_into_kmidi_compile.py --link   # symlink instead of copy
 ```
 
 (See that script’s `--help` for exact behavior.)
@@ -94,7 +79,7 @@ Optional: set `KMIDI_CHECKPOINTS_DIR` in `.env` to override the search path.
 
 - [ ] `python scripts/check_external_dependencies.py` run and reviewed  
 - [ ] `KELLY_AUDIO_DATA_ROOT` and `AUDIO_DATA_ROOT` set to `KmiDi-compile/datasets/audio` (or your chosen path)  
-- [ ] Any needed data from AUDIO_MIDI_DATA copied or linked into `KmiDi-compile/datasets/audio`  
+- [ ] Any needed data from AUDIO_MIDI_DATA copied into `KmiDi-compile/datasets/audio`  
 - [ ] `audio_emotion_classifier.py` updated or configured to use `models/checkpoints` (or env)  
 - [ ] Training/scripts that use `KELLY_AUDIO_DATA_ROOT` tested with the new path  
 

@@ -8,7 +8,8 @@ Downloads, preprocesses, and prepares real audio datasets for training:
 - Chord progression datasets
 - Groove/timing datasets
 
-All data is stored on: /Volumes/Extreme SSD/kelly-audio-data/
+All data is stored in a repository-relative default location unless overridden via
+AUDIO_DATA_ROOT or KMIDI_DATA_ROOT.
 
 Usage:
     python scripts/prepare_datasets.py --dataset emotion --download
@@ -41,17 +42,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Audio data root on external SSD (override via env AUDIO_DATA_ROOT or --root)
+# Audio data root (override via env AUDIO_DATA_ROOT, KMIDI_DATA_ROOT, or --root)
 def _detect_default_root() -> Path:
     """Pick the best available mount point for large datasets."""
     candidates = [
         Path(os.environ.get("AUDIO_DATA_ROOT")) if os.environ.get("AUDIO_DATA_ROOT") else None,
-        Path("/Volumes/sbdrive/kmidi_audio_data"),
-        Path("/Volumes/Extreme SSD/kmidi_audio_data"),
-        Path("/Users/seanburdges/BASIC STRUCTURE FOR miDiKompanion"),
+        # KmiDi .env: use Datasets on external drive so prepare_datasets writes there
+        (Path(os.environ.get("KMIDI_DATA_ROOT")) / "Datasets") if os.environ.get("KMIDI_DATA_ROOT") else None,
+        ROOT / "kmidi_audio_data",
+        ROOT / "datasets" / "kmidi_audio_data",
+        Path.home() / "kmidi_audio_data",
     ]
     for path in candidates:
-        if path and path.parent.exists():
+        if not path:
+            continue
+        candidate = path.expanduser()
+        if candidate.exists():
+            return candidate
+        if candidate.parent.exists():
             return path
     # Fallback to workspace
     return Path.cwd() / "kmidi_audio_data"
@@ -303,6 +311,7 @@ def download_from_url(url: str, output_dir: Path) -> Optional[Path]:
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
     
+    total_size = 0
     try:
         response = requests.get(url, stream=True, headers=headers, timeout=30)
         response.raise_for_status()
@@ -315,14 +324,25 @@ def download_from_url(url: str, output_dir: Path) -> Optional[Path]:
                     if chunk:
                         f.write(chunk)
                         pbar.update(len(chunk))
+            f.flush()
+            os.fsync(f.fileno())
         
-        partial_path.rename(output_path)
+        if partial_path.exists():
+            shutil.move(str(partial_path), str(output_path))
+        elif output_path.exists() and output_path.stat().st_size >= total_size:
+            # Partial was already moved or renamed (e.g. external drive sync)
+            pass
+        else:
+            raise FileNotFoundError(f"Partial file missing after write: {partial_path}")
         logger.info(f"Downloaded: {output_path}")
         return output_path
     except Exception as e:
         logger.error(f"Download failed for {url}: {e}")
         if partial_path.exists():
             partial_path.unlink()
+        if total_size and output_path.exists() and output_path.stat().st_size >= total_size:
+            logger.info(f"Using existing file: {output_path}")
+            return output_path
         return None
 
 
@@ -376,21 +396,53 @@ def download_from_huggingface(dataset_name: str, output_dir: Path, split: str = 
         return False
 
 
+def _is_safe_relative_path(path: str) -> bool:
+    norm_path = Path(path).as_posix()
+    return (
+        not norm_path.startswith("/")
+        and not norm_path.startswith("\\")
+        and ".." not in norm_path.split("/")
+    )
+
+
+def _is_safe_extracted_path(output_dir: Path, path: str) -> bool:
+    base_path = output_dir.resolve()
+    target = (output_dir / path).resolve()
+    return str(target).startswith(f"{base_path}{os.sep}") or target == base_path
+
+
 def extract_archive(archive_path: Path, output_dir: Path) -> bool:
-    """Extract zip/tar archive."""
+    """Extract zip/tar archive with traversal-safe validation."""
     import tarfile
     import zipfile
-    
+
     logger.info(f"Extracting: {archive_path}")
-    
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     try:
         if archive_path.suffix == ".zip":
             with zipfile.ZipFile(archive_path, "r") as zf:
-                zf.extractall(output_dir)
+                members = sorted(zf.infolist(), key=lambda item: item.filename)
+                for member in members:
+                    if not _is_safe_relative_path(member.filename):
+                        logger.error(f"Unsafe zip entry blocked: {member.filename}")
+                        return False
+                    if not _is_safe_extracted_path(output_dir, member.filename):
+                        logger.error(f"Unsafe zip path blocked: {member.filename}")
+                        return False
+                    zf.extract(member, output_dir)
         elif archive_path.suffix in [".tar", ".gz", ".tgz"] or ".tar" in archive_path.name:
             mode = "r:gz" if ".gz" in archive_path.name else "r"
             with tarfile.open(archive_path, mode) as tf:
-                tf.extractall(output_dir)
+                members = sorted(tf.getmembers(), key=lambda item: item.name)
+                for member in members:
+                    if not _is_safe_relative_path(member.name):
+                        logger.error(f"Unsafe tar entry blocked: {member.name}")
+                        return False
+                    if not _is_safe_extracted_path(output_dir, member.name):
+                        logger.error(f"Unsafe tar path blocked: {member.name}")
+                        return False
+                    tf.extract(member, output_dir)
         else:
             logger.error(f"Unknown archive format: {archive_path}")
             return False

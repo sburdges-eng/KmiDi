@@ -5,6 +5,7 @@
 #include <random>
 #include <map>
 #include <string>
+#include <cstdint>
 
 namespace kelly {
 
@@ -33,7 +34,7 @@ struct GrooveTemplateData {
  */
 class GrooveEngine {
 public:
-    GrooveEngine();
+    explicit GrooveEngine(uint32_t seed = 0xB16B00B5);
     ~GrooveEngine() = default;
     
     /**
@@ -145,4 +146,3 @@ private:
 };
 
 } // namespace kelly
-

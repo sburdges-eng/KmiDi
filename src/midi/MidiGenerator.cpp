@@ -13,7 +13,10 @@
 namespace kelly {
 using namespace MusicConstants;
 
-MidiGenerator::MidiGenerator() : rng_(std::random_device{}()) {}
+MidiGenerator::MidiGenerator(std::uint32_t seed)
+    : chordGen_(seed + 1),
+      grooveEngine_(seed + 2),
+      rng_(seed) {}
 
 GeneratedMidi MidiGenerator::generate(const IntentResult &intent, int bars,
                                       float complexity, float humanize,

@@ -4,6 +4,12 @@
 namespace penta {
 namespace osc {
 
+namespace {
+bool isLoopbackAddress(const std::string& address) {
+    return address.empty() || address == "127.0.0.1" || address == "::1";
+}
+} // namespace
+
 // OSCHub Constructor
 OSCHub::OSCHub()
     : config_(),
@@ -69,6 +75,12 @@ void OSCHub::processCallbacks() {
 }
 
 void OSCHub::updateConfig(const Config &config) {
+    if (!isLoopbackAddress(config.serverAddress) || !isLoopbackAddress(config.clientAddress)) {
+        juce::Logger::writeToLog(
+            "OSCHub: Refusing non-loopback OSC config change");
+        return;
+    }
+
     config_ = config;
     server_->stop();
     server_ = std::make_unique<OSCServer>(config_.serverAddress, config_.serverPort);

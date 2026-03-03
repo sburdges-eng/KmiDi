@@ -1,20 +1,27 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DatasetManifest",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schemaVersion",
     "task",
     "createdAt",
+    "license",
+    "source",
+    "collectionMethod",
     "hashAlgorithm",
+    "hashManifest",
     "compression",
+    "compressionFormat",
+    "shardChecksums",
     "splits",
     "totals"
   ],
   "properties": {
     "schemaVersion": {
       "type": "string",
-      "const": "1.0"
+      "const": "2.0"
     },
     "packageId": {
       "type": "string",
@@ -31,11 +38,73 @@
       "type": "string",
       "format": "date-time"
     },
+    "license": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "collectionMethod": {
+      "type": "string",
+      "enum": [
+        "curated",
+        "generated",
+        "mixed"
+      ]
+    },
     "hashAlgorithm": {
       "type": "string",
       "const": "sha256"
     },
+    "hashManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "entries"
+      ],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "const": "sha256"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "sha256",
+              "sizeBytes"
+            ],
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "sizeBytes": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
     "compression": {
+      "type": "string",
+      "enum": [
+        "zstd",
+        "identity"
+      ]
+    },
+    "compressionFormat": {
       "type": "string",
       "enum": [
         "zstd",
@@ -52,6 +121,49 @@
       "type": "array",
       "items": {
         "type": "string"
+      }
+    },
+    "shardChecksums": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "file",
+          "split",
+          "sha256",
+          "sizeBytes",
+          "compression"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "pattern": "^(train|val|test)-[0-9]{4}\\.jsonl(\\.zst)?$"
+          },
+          "split": {
+            "type": "string",
+            "enum": [
+              "train",
+              "val",
+              "test"
+            ]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "compression": {
+            "type": "string",
+            "enum": [
+              "zstd",
+              "identity"
+            ]
+          }
+        }
       }
     },
     "splits": {
