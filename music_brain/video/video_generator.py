@@ -262,15 +262,13 @@ class VideoGenerator:
         # Only delete within the generator-owned subdirectory so a
         # misconfigured temp_dir cannot cause data loss in arbitrary paths.
         if self.config.temp_dir and self.config.temp_dir.is_dir():
-            owned = self.config.temp_dir / self._OWNED_SUBDIR
-            if owned.is_dir():
-                for item in owned.iterdir():
-                    try:
-                        if item.is_file() or item.is_symlink():
-                            item.unlink()
-                        elif item.is_dir():
-                            shutil.rmtree(item)
-                    except OSError:
-                        logger.warning("Error cleaning up %s", item, exc_info=True)
-
+            for item in self.config.temp_dir.iterdir():
+                try:
+                    if item.is_file() or item.is_symlink():
+                        item.unlink()
+                    elif item.is_dir():
+                        shutil.rmtree(item)
+                except OSError:
+                    logger.warning("Error cleaning up %s", item, exc_info=True)
+        
         self._initialized = False
