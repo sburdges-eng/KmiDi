@@ -58,16 +58,41 @@ if [[ ${#EXISTING_DIRS[@]} -eq 0 ]]; then
   exit 0
 fi
 
+if ! command -v rg >/dev/null 2>&1; then
+  echo "ERROR: ripgrep (rg) is not installed; cannot run forbidden-path scan."
+  exit 2
+fi
+
 echo "==> Scanning for hardcoded /Users/ paths in: ${EXISTING_DIRS[*]}"
 
 # Run ripgrep; collect matches (exit 0 = found, exit 1 = no match, exit 2 = error)
 # Exclude check_external_dependencies.py because it is a detection script that
 # intentionally contains the patterns it scans for.
-MATCHES=$(rg --no-heading --line-number "/Users/" \
+set +e
+RG_OUTPUT=$(rg --no-heading --line-number "/Users/" \
   "${GLOB_FLAGS[@]}" \
   --glob '!check_external_dependencies.py' \
-  "${EXISTING_DIRS[@]}" 2>/dev/null || true)
+  "${EXISTING_DIRS[@]}" 2>/dev/null)
+RG_STATUS=$?
+set -e
 
+case "$RG_STATUS" in
+  0)
+    MATCHES="$RG_OUTPUT"
+    ;;
+  1)
+    # No matches found; this is not an error.
+    MATCHES=""
+    ;;
+  2)
+    echo "ERROR: ripgrep (rg) failed with exit code 2 while scanning for /Users/ paths."
+    exit 2
+    ;;
+  *)
+    echo "ERROR: ripgrep (rg) failed with unexpected exit code: $RG_STATUS"
+    exit "$RG_STATUS"
+    ;;
+esac
 if [[ -n "$MATCHES" ]]; then
   echo ""
   echo "ERROR: Hardcoded /Users/ path(s) found in source files:"
