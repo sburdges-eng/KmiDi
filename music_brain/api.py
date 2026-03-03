@@ -933,10 +933,9 @@ if FASTAPI_AVAILABLE:
         structure: Optional[List[Dict[str, Any]]] = None  # Song sections with repetitions
         instruments: Optional[List[Dict[str, Any]]] = None  # Instruments with techniques
         techniques: Optional[List[str]] = None  # Production techniques
-        groove_feel: Optional[str] = None
-        narrative_arc: Optional[str] = None
-        rule_to_break: Optional[str] = None
-        rule_justification: Optional[str] = None
+        groove_feel: Optional[str] = None  # Rhythmic feel (e.g. "Straight/Driving")
+        rule_to_break: Optional[str] = None  # Intentional theory violation
+        rule_justification: Optional[str] = None  # Narrative reason for rule break
 
     class EmotionalIntent(BaseModel):
         core_wound: Optional[str] = None
@@ -945,6 +944,8 @@ if FASTAPI_AVAILABLE:
         imagery_texture: Optional[str] = None
         vulnerability_scale: Optional[float] = None
         technical: Optional[TechnicalIntent] = None
+        vulnerability_scale: Optional[float] = None  # 0.0 - 1.0 emotional openness
+        narrative_arc: Optional[str] = None  # Energetic trajectory (e.g. "Climb-to-Climax")
 
     class GenerateRequest(BaseModel):
         intent: EmotionalIntent
@@ -1335,11 +1336,15 @@ if FASTAPI_AVAILABLE:
                     "structure": structure_payload,
                     "instruments": instruments_payload,
                     "allow_legacy_fallback": False,
-                    "groove_feel": tech.groove_feel or "Straight/Driving",
-                    "narrative_arc": tech.narrative_arc or "Climb-to-Climax",
                     "rule_to_break": tech.rule_to_break,
                     "rule_justification": tech.rule_justification,
                 }
+                # Only include optional fields when the UI provided them;
+                # otherwise let CompleteSongIntentRequest schema defaults apply.
+                if tech.groove_feel is not None:
+                    strict_payload["groove_feel"] = tech.groove_feel
+                if request.intent.narrative_arc is not None:
+                    strict_payload["narrative_arc"] = request.intent.narrative_arc
                 try:
                     if hasattr(CompleteSongIntentRequest, "model_validate"):
                         strict_intent = CompleteSongIntentRequest.model_validate(strict_payload)
@@ -1361,16 +1366,15 @@ if FASTAPI_AVAILABLE:
                         core_event=req.intent.core_wound or validated.core_desire,
                         core_longing=validated.core_desire,
                         mood_primary=validated.mood_primary,
+                        narrative_arc=validated.narrative_arc,
+                        vulnerability_scale=req.intent.vulnerability_scale if req.intent.vulnerability_scale is not None else 0.5,
                         technical_genre=validated.genre,
                         technical_tempo_range=tempo_range,
                         technical_key=technical_key,
                         technical_mode=technical_mode,
                         technical_groove_feel=validated.groove_feel,
-                        technical_rule_to_break=validated.rule_to_break,
-                        rule_breaking_justification=validated.rule_justification,
-                        vulnerability_scale=req.intent.vulnerability_scale if req.intent.vulnerability_scale is not None else 0.5,
-                        imagery_texture=req.intent.imagery_texture or "",
-                        narrative_arc=validated.narrative_arc,
+                        technical_rule_to_break=validated.rule_to_break or "",
+                        rule_breaking_justification=validated.rule_justification or "",
                         created=time.strftime("%Y-%m-%d %H:%M:%S"),
                     )
                 

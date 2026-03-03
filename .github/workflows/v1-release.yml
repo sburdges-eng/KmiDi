@@ -69,8 +69,7 @@ jobs:
           git diff --exit-code -- shared_schemas/CompleteSongIntentRequest.json src/types/Intent.ts src-tauri/src/generated/intent.rs
 
       - name: Bootstrap Environment
-        run: bash bootstrap.sh
-        shell: bash
+        run: ./bootstrap.sh
 
       - name: Build Headless Core
         run: |
