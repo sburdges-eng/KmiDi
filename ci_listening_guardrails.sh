@@ -5,6 +5,13 @@ set -euo pipefail
 
 echo "=> Running Static Listening Guardrails..."
 
+# Verify ripgrep is available before any rg invocations
+if ! command -v rg &>/dev/null; then
+  echo "ERROR: 'rg' (ripgrep) is not installed or not on PATH."
+  echo "  Install it with: brew install ripgrep  OR  apt-get install ripgrep  OR  cargo install ripgrep"
+  exit 1
+fi
+
 # 1) Check for hardcoded local paths that shouldn't be in CI
 echo "-> Checking for local path leakage..."
 FORBIDDEN_PATHS=("/Users/" "/home/sburdges" "/home/runner/work/KmiDi/KmiDi/KmiDi_FINAL")
