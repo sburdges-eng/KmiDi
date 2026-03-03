@@ -119,11 +119,15 @@ pub async fn kelly_brain_get_version() -> Result<String, String> {
 
 #[command]
 pub async fn generate_music(request: GenerateRequest) -> Result<serde_json::Value, String> {
-    // Try C++ backend first
-    if let Ok(true) = kelly_brain_is_initialized().await {
-        // Convert request to C++ format
-        let intent_result = kelly_brain_from_text(request.intent.emotional_intent.clone()).await?;
-        let midi_result = kelly_brain_generate_midi(intent_result, 8).await?;
+    // Use direct FFI, not Tauri commands, to avoid circular dependency
+    let manager = get_kelly_brain_manager();
+
+    if manager.is_initialized() {
+        let midi_result = manager.with_brain(|brain| {
+            let intent = brain.from_text(&request.intent.emotional_intent)?;
+            brain.generate_midi(&intent, 8)
+        }).map_err(String::from)?;
+
         return Ok(serde_json::to_value(midi_result).unwrap());
     }
     
@@ -135,9 +139,14 @@ pub async fn generate_music(request: GenerateRequest) -> Result<serde_json::Valu
 
 #[command]
 pub async fn interrogate(request: InterrogateRequest) -> Result<serde_json::Value, String> {
-    // Try C++ backend first
-    if let Ok(true) = kelly_brain_is_initialized().await {
-        let intent_result = kelly_brain_from_text(request.message.clone()).await?;
+    // Use direct FFI, not Tauri commands, to avoid circular dependency
+    let manager = get_kelly_brain_manager();
+
+    if manager.is_initialized() {
+        let intent_result = manager.with_brain(|brain| {
+            brain.from_text(&request.message)
+        }).map_err(String::from)?;
+
         return Ok(serde_json::to_value(intent_result).unwrap());
     }
     
@@ -149,9 +158,12 @@ pub async fn interrogate(request: InterrogateRequest) -> Result<serde_json::Valu
 
 #[command]
 pub async fn get_emotions() -> Result<serde_json::Value, String> {
-    // Try C++ backend first
-    if let Ok(true) = kelly_brain_is_initialized().await {
-        return kelly_brain_get_available_emotions().await;
+    // Use direct FFI, not Tauri commands, to avoid circular dependency
+    let manager = get_kelly_brain_manager();
+
+    if manager.is_initialized() {
+        return manager.with_brain(|brain| brain.get_available_emotions())
+            .map_err(String::from);
     }
     
     // Fallback to Python HTTP API
