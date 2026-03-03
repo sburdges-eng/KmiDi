@@ -202,9 +202,11 @@ class IntegrationValidator:
     def validate_compliance(self):
         """Validate that compliance improvements are achievable"""
         # Check that all required components are available
+        # Note: Native macOS App (AppKitShell) is deprecated per ADR 001.
+        # The primary UI is now Tauri/React at src-tauri/
         components = {
             "Pure DSP": self.kmidi_final_root / "engine" / "src" / "dsp" / "audio_buffer.cpp",
-            "Native macOS App": self.kmidi_final_root / "apps" / "macOS" / "AppKitShell",
+            "Legacy macOS App": self.kmidi_root / "legacy" / "ui" / "appkit_shell",
             "Integration Guide": self.kmidi_root / "KmiDi_FINAL_INTEGRATION_GUIDE.md",
             "Build Script": self.kmidi_root / "build_with_kmidi_final.sh"
         }

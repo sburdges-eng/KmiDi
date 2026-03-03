@@ -17,10 +17,11 @@ if [ ! -d "$KMI_DI_FINAL_ROOT" ]; then
 fi
 
 # Check required directories
+# Note: apps/macOS is still present but AppKitShell moved to legacy/ui/appkit_shell (per ADR 001)
 REQUIRED_DIRS=("engine/src/dsp" "apps/macOS" "CMakeLists.txt")
 for dir in "${REQUIRED_DIRS[@]}"; do
-    if [ ! -d "$KMI_DI_FINAL_ROOT/$dir" ]; then
-        echo "❌ Missing required directory: $dir"
+    if [ ! -d "$KMI_DI_FINAL_ROOT/$dir" ] && [ ! -f "$KMI_DI_FINAL_ROOT/$dir" ]; then
+        echo "❌ Missing required directory or file: $dir"
         exit 1
     fi
 done
