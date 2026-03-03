@@ -895,12 +895,17 @@ class DAiWAPI:
         
         # Create CompleteSongIntent
         # narrative_arc and vulnerability_scale are on request.intent, not tech
+        vulnerability_scale = (
+            request.intent.vulnerability_scale
+            if request.intent.vulnerability_scale is not None
+            else 0.5
+        )
         intent = CompleteSongIntent(
             core_event=request.intent.core_wound or emotional,
             core_longing=request.intent.core_desire or "",
             mood_primary=mood_primary,
             narrative_arc=request.intent.narrative_arc or "",
-            vulnerability_scale=request.intent.vulnerability_scale if request.intent.vulnerability_scale is not None else 0.5,
+            vulnerability_scale=vulnerability_scale,
             technical_genre=tech.get("genre") or "",
             technical_tempo_range=tempo_range,
             technical_key=technical_key,
