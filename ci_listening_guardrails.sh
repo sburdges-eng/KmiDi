@@ -3,6 +3,11 @@
 # Ensures no forbidden patterns or accidental hardcoded paths remain in the codebase.
 set -euo pipefail
 
+if ! command -v rg &>/dev/null; then
+  echo "ERROR: ripgrep (rg) is not installed. Install it before running guardrails." >&2
+  exit 1
+fi
+
 echo "=> Running Static Listening Guardrails..."
 
 # 1) Check for hardcoded local paths that shouldn't be in CI
