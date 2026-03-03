@@ -64,13 +64,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Install ripgrep
         run: sudo apt-get install -y ripgrep
 
       - name: Run ci_listening_guardrails.sh
-        env:
-          GUARDRAILS_SCAN_SCOPE: changed
         run: bash ci_listening_guardrails.sh
