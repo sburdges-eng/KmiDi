@@ -25,7 +25,7 @@ The Tauri desktop shell, C++ KellyCore engine, Streamlit mixer panel, and Androi
 - **TypeScript type-check**: `npx tsc --noEmit`
 - **Frontend build**: `npm run build` (runs `tsc && vite build`)
 - **Python lint**: `python3 -m flake8 music_brain/ --max-line-length 100` (flake8 is enforced in CI; ensure your changes pass with no new issues, respecting the repo’s flake8 configuration and ignore set)
-- **Python tests**: `python3 -m pytest tests/` (228 tests, configured in `pytest.ini`)
+- **Python tests**: `python3 -m pytest tests/` (configured via `pytest.ini`)
 - **pytest-timeout** is not installed; do not pass `--timeout` to pytest.
 
 ### Gotchas
