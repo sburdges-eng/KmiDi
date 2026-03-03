@@ -15,8 +15,8 @@ The Tauri desktop shell, C++ KellyCore engine, Streamlit mixer panel, and Androi
 
 ### Running services
 
-- Start both required services together: `npm run dev:all` (uses `concurrently`; Tauri will fail in the cloud VM but the React and Python services start fine).
-- Or start them individually: `npm run dev` and `npm run dev:python`.
+- **Local (with Tauri installed)**: you can start everything together with `npm run dev:all` (uses `concurrently -k`; if the Tauri process exits or fails, the React and Python processes will also be terminated).
+- **Cloud VM (no Tauri)**: start the required services separately with `npm run dev` and `npm run dev:python` (do **not** use `npm run dev:all`, because the `-k` flag will stop all processes when Tauri fails in this environment).
 - The Python API requires `fastapi`, `uvicorn`, and `pydantic` in addition to the base `pip install -e .` dependencies.
 - `$HOME/.local/bin` must be on `PATH` for `uvicorn` to be found when installed with `--user`.
 
