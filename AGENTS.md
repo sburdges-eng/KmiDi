@@ -9,7 +9,7 @@ KmiDi / iDAW is an AI-powered music creation platform (monorepo). The two **requ
 | Service | Command | URL |
 |---|---|---|
 | React frontend (Vite) | `npm run dev` | http://localhost:1420 |
-| Music Brain Python API | `npm run dev:python` (or `python3 -m uvicorn music_brain.api:app --reload --port 8000`) | http://localhost:8000 |
+| Music Brain Python API | `npm run dev:python` (or `python3 -m uvicorn music_brain.api:app --reload --port 8000 --host 0.0.0.0` if you need access from outside this VM/container) | http://localhost:8000 |
 
 The Tauri desktop shell, C++ KellyCore engine, Streamlit mixer panel, and Android app are **optional** and require native toolchains not present in the cloud VM.
 
