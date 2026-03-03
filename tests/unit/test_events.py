@@ -3,14 +3,19 @@ import importlib.util
 import sys
 import pytest
 from datetime import datetime
+from pathlib import Path
 
 
 # Load events module directly to bypass pre-existing async_hub import issue
 def _load_events():
+    project_root = Path(__file__).resolve().parents[2]
+    events_path = project_root / "music_brain" / "agents" / "events.py"
     spec = importlib.util.spec_from_file_location(
         "music_brain.agents.events",
-        "music_brain/agents/events.py",
+        str(events_path),
     )
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Could not load music_brain.agents.events from {events_path}")
     mod = importlib.util.module_from_spec(spec)
     sys.modules["music_brain.agents.events"] = mod
     spec.loader.exec_module(mod)
