@@ -163,7 +163,7 @@ def suggest_build_commands():
     print("=" * 80)
     print()
     print("1. Configure CMake:")
-    print("   cd /path/to/KmiDi")
+    print("   cd /path/to/<repo-root>")
     print("   cmake -B build -S .")
     print()
     print("2. Build the project:")
