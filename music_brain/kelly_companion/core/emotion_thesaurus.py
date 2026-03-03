@@ -727,9 +727,10 @@ class EmotionThesaurus:
                             arousal=interp_arousal,
                             intensity=interp_intensity,
                             words=[],
-                            description=f"Transitional emotion between {
-                                last_node.name}  and {
-                                end.name} ",
+                            description=(
+                                f"Transitional emotion between "
+                                f"{last_node.name} and {end.name}"
+                            ),
                             musical=self._generate_musical_attributes(
                                 last_node.category, interp_intensity, interp_valence, interp_arousal
                             ),

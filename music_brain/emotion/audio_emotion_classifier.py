@@ -434,9 +434,10 @@ class AudioEmotionClassifier:
 
     def __repr__(self):
         status = "loaded" if self.model else "not loaded"
-        return f"AudioEmotionClassifier(model_type={
-            self.model_type}, device={
-            self.device}, status={status}) "
+        return (
+            f"AudioEmotionClassifier(model_type={self.model_type}, "
+            f"device={self.device}, status={status})"
+        )
 
 
 # Convenience function for quick classification

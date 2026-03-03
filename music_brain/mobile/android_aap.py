@@ -175,6 +175,19 @@ include(":app")
 
 def generate_manifest(config: AndroidAAPConfig) -> str:
     """Generate AndroidManifest.xml."""
+    ui_section = ""
+    if config.has_ui:
+        ui_section = f'''
+        <activity
+            android:name=".{config.ui_activity}"
+            android:exported="true"
+            android:theme="@style/Theme.iDAW">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        '''
     return f'''<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -201,17 +214,7 @@ def generate_manifest(config: AndroidAAPConfig) -> str:
                 android:resource="@xml/aap_metadata" />
         </service>
 
-        {"" if not config.has_ui else f'''
-        <activity
-            android:name=".{config.ui_activity}"
-            android:exported="true"
-            android:theme="@style/Theme.iDAW">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        '''}
+        {ui_section}
 
     </application>
 
