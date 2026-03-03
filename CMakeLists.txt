@@ -204,7 +204,7 @@ file(GLOB_RECURSE KELLY_CORE_SOURCES CONFIGURE_DEPENDS
 )
 
 # Exclude app entry point and plugin sources from the core lib
-list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/gui/main.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/legacy/ui/qt_gui/main.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/plugin/")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/engine/test_kelly\\.cpp$")
 # Exclude Python bridge and cpp_music_brain Python bindings when pybind11 not available
@@ -290,14 +290,14 @@ target_compile_options(KellyCore PRIVATE
 # Wno-*: full warning-clean build; many params/vars are interface or reserved. Tidy per-file when touching.
 # -Wno-deprecated-declarations: JUCE Font(height, style) → Font(FontOptions); migrate when editing UI.
 
-# Kelly GUI Application
+# Kelly GUI Application (Legacy Qt - see legacy/ui/qt_gui/)
 if(BUILD_DESKTOP)
     if(NOT BUILD_KELLY_CORE)
         message(FATAL_ERROR "BUILD_DESKTOP requires BUILD_KELLY_CORE=ON")
     endif()
     add_executable(KellyApp
-        src/gui/main.cpp
-        src/gui/main_window.cpp
+        legacy/ui/qt_gui/main.cpp
+        legacy/ui/qt_gui/main_window.cpp
     )
 
     set_target_properties(KellyApp PROPERTIES

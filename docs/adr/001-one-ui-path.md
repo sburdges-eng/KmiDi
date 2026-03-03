@@ -24,3 +24,12 @@ strict pipeline contracts, and a headless-capable engine build path.
 - CI validates deterministic bootstrap + build with a headless-leaning configuration.
 - API/schema hardening becomes mandatory at the UI-to-engine boundary.
 - New feature work must align with this architecture until a future ADR supersedes it.
+
+## Legacy UI Locations
+
+Deprecated UI surfaces have been moved to `legacy/ui/`:
+
+- `legacy/ui/appkit_shell/` - Native macOS AppKit shell (previously at `KmiDi_FINAL/apps/macOS/AppKitShell/`)
+- `legacy/ui/qt_gui/` - Qt6 UI surface (previously at `src/gui/`)
+
+See `legacy/ui/README.md` for details on these deprecated surfaces.

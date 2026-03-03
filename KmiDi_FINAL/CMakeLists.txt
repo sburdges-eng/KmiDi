@@ -24,7 +24,7 @@ option(BUILD_PLUGINS "Build VST3 and CLAP plugins" ON)
 option(BUILD_TESTS "Build tests" ON)
 option(BUILD_KMIDI_CORE "Build KmiDi core library/app/plugins" ON)
 option(BUILD_PENTA_TESTS "Build penta_core test suite" OFF)
-option(BUILD_NATIVE_MACOS_APP "Build native macOS app from apps/macOS" ON)
+option(BUILD_NATIVE_MACOS_APP "Build native macOS app (legacy - see legacy/ui/appkit_shell/)" OFF)
 option(ENABLE_TRACY "Enable Tracy profiling" OFF)
 option(ENABLE_RTNEURAL "Enable RTNeural for ML inference" OFF)
 option(ENABLE_ONNX_RUNTIME "Enable ONNX Runtime for ML inference" OFF)
@@ -409,14 +409,19 @@ endif()
 
 endif() # BUILD_KMIDI_CORE
 
-# Native macOS app target from consolidated app shell.
-if(BUILD_NATIVE_MACOS_APP AND APPLE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/apps/macOS/build_macos_app.sh")
+# Native macOS app target (Legacy - AppKitShell moved to legacy/ui/appkit_shell/)
+# This option is disabled by default per ADR 001. Re-enable only if needed.
+set(_legacy_macos_build_script "${CMAKE_SOURCE_DIR}/legacy/ui/appkit_shell/build_macos_app.sh")
+if(BUILD_NATIVE_MACOS_APP AND APPLE AND EXISTS "${_legacy_macos_build_script}")
+    message(WARNING "BUILD_NATIVE_MACOS_APP is enabled but AppKitShell is deprecated per ADR 001")
     add_custom_target(native_macos_app
-        COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/apps/macOS/build_macos_app.sh"
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/apps/macOS"
-        COMMENT "Building native macOS app from KmiDi_FINAL/apps/macOS"
+        COMMAND "${_legacy_macos_build_script}"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/legacy/ui/appkit_shell"
+        COMMENT "Building legacy native macOS app from legacy/ui/appkit_shell"
         VERBATIM
     )
+elseif(BUILD_NATIVE_MACOS_APP AND APPLE)
+    message(WARNING "BUILD_NATIVE_MACOS_APP enabled but build script not found at ${_legacy_macos_build_script}")
 endif()
 
 # Tests
