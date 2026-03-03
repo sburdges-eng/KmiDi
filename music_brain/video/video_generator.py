@@ -5,10 +5,19 @@ Integrates emotion-driven music with visual generation through
 Unreal Engine and Jespa to create synchronized music videos.
 """
 
+import logging
+import shutil
+import tempfile
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any
 from pathlib import Path
 from enum import Enum
+
+logger = logging.getLogger(__name__)
+
+# Known subdirectory prefix for generator-created temp dirs. Used to ensure
+# cleanup only removes dirs created by this generator.
+TEMP_SUBDIR_PREFIX = "kmidi_video_gen_"
 
 
 class VideoFormat(Enum):
@@ -103,6 +112,7 @@ class VideoGenerator:
         """
         self.config = config or VideoConfig()
         self._initialized = False
+        self._temp_dir: Optional[Path] = None
 
     def initialize(self) -> bool:
         """
@@ -229,18 +239,83 @@ class VideoGenerator:
 
         return None
 
+    def _ensure_temp_dir(self) -> Path:
+        """
+        Create and return a temp directory for this generator. Uses a known
+        prefix so cleanup can safely identify and remove only our dirs.
+
+        Returns:
+            Path to the created temp directory.
+        """
+        if self._temp_dir is not None and self._temp_dir.exists():
+            return self._temp_dir
+        base = Path(tempfile.gettempdir())
+        self._temp_dir = Path(tempfile.mkdtemp(prefix=TEMP_SUBDIR_PREFIX, dir=base))
+        logger.debug("Created temp dir for video generation: %s", self._temp_dir)
+        return self._temp_dir
+
+    def _is_safe_to_delete(self, path: Path) -> bool:
+        """
+        Check if the given path is safe to delete (inside system temp and
+        created by this generator).
+
+        Returns:
+            True if path is safe to delete.
+        """
+        try:
+            resolved = path.resolve()
+            system_temp = Path(tempfile.gettempdir()).resolve()
+            # Must be inside system temp directory
+            if not str(resolved).startswith(str(system_temp)):
+                logger.warning(
+                    "Refusing to delete path outside system temp: %s (system temp: %s)",
+                    resolved,
+                    system_temp,
+                )
+                return False
+            # Must contain our known subdirectory prefix
+            if TEMP_SUBDIR_PREFIX not in resolved.name:
+                logger.warning(
+                    "Refusing to delete path not created by this generator: %s "
+                    "(expected prefix: %s)",
+                    resolved,
+                    TEMP_SUBDIR_PREFIX,
+                )
+                return False
+            return True
+        except (OSError, RuntimeError) as e:
+            logger.warning("Could not resolve path for safety check: %s - %s", path, e)
+            return False
+
     def cleanup(self) -> None:
         """
         Clean up video generation resources.
 
-        Note:
-            This is a stub. Future implementation will:
-            - Close Unreal Engine connection
-            - Release GPU resources
-            - Clear temporary files
+        Safely removes only temp directories created by this generator:
+        - Only deletes paths inside the system temp directory
+        - Only deletes dirs with our known subdirectory prefix
+        - Uses structured logging and proper error handling
         """
         # TODO: Cleanup Unreal Engine connection
         # TODO: Cleanup Jespa resources
-        # TODO: Clear temp files
+
+        if self._temp_dir is not None:
+            path = self._temp_dir
+            self._temp_dir = None
+            if path.exists() and self._is_safe_to_delete(path):
+                try:
+                    shutil.rmtree(path)
+                    logger.info("Cleaned up video generator temp dir: %s", path)
+                except OSError as e:
+                    logger.exception(
+                        "Failed to remove temp dir %s: %s",
+                        path,
+                        e,
+                        exc_info=True,
+                    )
+            elif path.exists():
+                logger.debug(
+                    "Skipped deletion of temp dir (safety check failed): %s", path
+                )
 
         self._initialized = False

@@ -4,183 +4,126 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion",
-    "seed",
-    "text",
-    "intent"
+    "core_desire",
+    "mood_primary",
+    "genre",
+    "key_mode",
+    "structure",
+    "instruments"
   ],
   "properties": {
-    "schemaVersion": {
-      "type": "string",
-      "const": "1.0"
-    },
-    "seed": {
-      "type": "integer",
-      "minimum": 0
-    },
-    "text": {
+    "core_desire": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 5000
+      "maxLength": 1000,
+      "description": "High-level emotional / production goal"
     },
-    "intent": {
+    "mood_primary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Primary mood of the song"
+    },
+    "genre": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Genre of the song"
+    },
+    "tempo": {
+      "type": "integer",
+      "minimum": 40,
+      "maximum": 300,
+      "default": 120,
+      "description": "BPM clamped to engine limits"
+    },
+    "key_mode": {
+      "type": "string",
+      "pattern": "^[A-G][#b]?\\s(major|minor|dorian|mixolydian|lydian|phrygian|aeolian|locrian)$",
+      "description": "Key and mode (e.g., C_major)"
+    },
+    "structure": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/StructureSection"
+      },
+      "description": "Song structure sections"
+    },
+    "instruments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/TrackIntent"
+      },
+      "description": "Track intents with instruments"
+    },
+    "groove_feel": {
+      "type": "string",
+      "default": "Straight/Driving",
+      "description": "Rhythmic feel dictating quantization/swing"
+    },
+    "narrative_arc": {
+      "type": "string",
+      "default": "Climb-to-Climax",
+      "description": "Overall energetic trajectory of the song"
+    },
+    "rule_to_break": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Intentional music theory violation for emotional effect"
+    },
+    "rule_justification": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Narrative reason for the rule break"
+    },
+    "allow_legacy_fallback": {
+      "type": "boolean",
+      "default": false,
+      "description": "Allow fallback to legacy generation"
+    }
+  },
+  "$defs": {
+    "StructureSection": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "harmonic",
-        "rhythmic",
-        "dynamic",
-        "tempo"
-      ],
+      "required": ["name"],
       "properties": {
-        "harmonic": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "chordDensity",
-            "voiceLeading",
-            "tension",
-            "invariants"
-          ],
-          "properties": {
-            "chordDensity": {
-              "type": "number",
-              "minimum": 0.0,
-              "maximum": 1.0
-            },
-            "voiceLeading": {
-              "type": "number",
-              "minimum": 0.0,
-              "maximum": 1.0
-            },
-            "tension": {
-              "type": "number",
-              "minimum": 0.0,
-              "maximum": 1.0
-            },
-            "invariants": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "default": [
-                "chordDensity + voiceLeading <= 1.5",
-                "tension >= 0.0"
-              ]
-            }
-          }
+        "name": {
+          "type": "string",
+          "pattern": "^(intro|verse|chorus|bridge|outro|build|drop)$"
         },
-        "rhythmic": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "noteDensity",
-            "swing",
-            "syncopation",
-            "invariants"
-          ],
-          "properties": {
-            "noteDensity": {
-              "type": "number",
-              "minimum": 0.0,
-              "maximum": 1.0
-            },
-            "swing": {
-              "type": "number",
-              "minimum": -1.0,
-              "maximum": 1.0
-            },
-            "syncopation": {
-              "type": "number",
-              "minimum": 0.0,
-              "maximum": 1.0
-            },
-            "invariants": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "default": [
-                "swing + syncopation <= 1.0",
-                "noteDensity >= 0.0"
-              ]
-            }
-          }
+        "bars": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128,
+          "default": 1
         },
-        "dynamic": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "velocityRange",
-            "accentStrength",
-            "dynamicSpread",
-            "invariants"
-          ],
-          "properties": {
-            "velocityRange": {
-              "type": "number",
-              "minimum": 0.0,
-              "maximum": 1.0
-            },
-            "accentStrength": {
-              "type": "number",
-              "minimum": 0.0,
-              "maximum": 1.0
-            },
-            "dynamicSpread": {
-              "type": "number",
-              "minimum": 0.0,
-              "maximum": 1.0
-            },
-            "invariants": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "default": [
-                "accentStrength >= 0.0",
-                "velocityRange <= 1.0"
-              ]
-            }
-          }
+        "repetitions": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "default": 1
+        }
+      }
+    },
+    "TrackIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["instrument"],
+      "properties": {
+        "instrument": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Canonical instrument name (e.g., piano, synth_bass)"
         },
-        "tempo": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "bpm",
-            "microTiming",
-            "humanization",
-            "invariants"
-          ],
-          "properties": {
-            "bpm": {
-              "type": "integer",
-              "minimum": 40,
-              "maximum": 300
-            },
-            "microTiming": {
-              "type": "number",
-              "minimum": 0.0,
-              "maximum": 1.0
-            },
-            "humanization": {
-              "type": "number",
-              "minimum": 0.0,
-              "maximum": 1.0
-            },
-            "invariants": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "default": [
-                "bpm >= 40",
-                "bpm <= 300",
-                "microTiming + humanization <= 2.0"
-              ]
-            }
-          }
+        "techniques": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Allowed techniques"
         }
       }
     }
