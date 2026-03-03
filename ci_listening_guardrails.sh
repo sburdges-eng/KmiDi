@@ -3,6 +3,11 @@
 # Ensures no forbidden patterns or accidental hardcoded paths remain in the codebase.
 set -euo pipefail
 
+if ! command -v rg >/dev/null 2>&1; then
+  echo "ERROR: ripgrep (rg) is not installed. Install it before running guardrails." >&2
+  exit 1
+fi
+
 echo "=> Running Static Listening Guardrails..."
 
 # 0) Verify ripgrep is available
