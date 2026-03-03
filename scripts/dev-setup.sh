@@ -10,7 +10,7 @@ cd "$ROOT_DIR"
 echo "=> KmiDi v1 dev setup (bootstrap + npm + pip)..."
 
 # 1) Bootstrap (JUCE submodule, CMake/Node checks, pybind11 hint)
-bash scripts/bootstrap.sh
+./bootstrap.sh
 
 # 2) Node deps (Tauri + React)
 if command -v npm >/dev/null 2>&1; then
@@ -24,7 +24,7 @@ fi
 if command -v python3 >/dev/null 2>&1; then
   echo "-> pip install -e . (music_brain)..."
   python3 -m pip install -e . --quiet
-  python3 -m pip install pybind11 pydantic uvicorn --quiet 2>/dev/null || true
+  python3 -m pip install pydantic uvicorn --quiet 2>/dev/null || true
 else
   echo "WARNING: python3 not found. Install Python 3.11+ and run: pip install -e ."
 fi

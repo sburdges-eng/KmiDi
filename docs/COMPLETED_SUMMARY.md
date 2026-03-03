@@ -43,10 +43,10 @@ Summary of completed work and the approaches used, derived from the repository s
 
 **How it was done:**
 
-- **`scripts/dev-setup.sh`:** Runs (1) `scripts/bootstrap.sh`, (2) `npm install`, (3) `pip install -e .` (and optional uvicorn/pybind11/pydantic). After this, developers use `npm run dev:all` (or individual dev commands).
-- **`scripts/bootstrap.sh`:** (1) Initializes the JUCE submodule (`git submodule update --init --recursive external/JUCE`) to unblock the C++ build; (2) Checks CMake ≥ 3.27 and Node version for Tauri; (3) Resolves pybind11 for CMake and echoes the recommended `cmake` invocation.
+- **`scripts/dev-setup.sh`:** Runs (1) `bootstrap.sh`, (2) `npm install`, (3) `pip install -e .` (and optional uvicorn/pybind11/pydantic). After this, developers use `npm run dev:all` (or individual dev commands).
+- **`bootstrap.sh`:** (1) Initializes the JUCE submodule (`git submodule update --init --recursive external/JUCE`) to unblock the C++ build; (2) Checks CMake ≥ 3.27 and Node version for Tauri; (3) Resolves pybind11 for CMake and echoes the recommended `cmake` invocation.
 
-**References:** `docs/DEVELOPMENT.md`, `scripts/dev-setup.sh`, `scripts/bootstrap.sh`.
+**References:** `docs/DEVELOPMENT.md`, `scripts/dev-setup.sh`, `bootstrap.sh`.
 
 ---
 
