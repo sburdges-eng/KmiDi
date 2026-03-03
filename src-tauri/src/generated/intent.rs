@@ -24,13 +24,8 @@ pub struct CompleteSongIntentRequest {
     pub structure: Vec<StructureSection>,
     pub instruments: Vec<TrackIntent>,
     pub allow_legacy_fallback: Option<bool>,
-    /// UI-sourced; passed through to Python when present.
-    #[serde(default)]
     pub groove_feel: Option<String>,
-    #[serde(default)]
     pub narrative_arc: Option<String>,
-    #[serde(default)]
-    pub rule_to_break: Option<String>,
-    #[serde(default)]
-    pub rule_justification: Option<String>,
+    pub rule_to_break: Option<serde_json::Value>,
+    pub rule_justification: Option<serde_json::Value>,
 }
