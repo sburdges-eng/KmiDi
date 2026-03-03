@@ -1,6 +1,9 @@
 import pytest
-from music_brain.api import TechnicalIntent, EmotionalIntent, GenerateRequest, DAiWAPI
-from music_brain.session.intent_schema import CompleteSongIntent
+
+pytest.importorskip("fastapi", reason="FastAPI is required for UI mapping models")
+
+from music_brain.api import TechnicalIntent, EmotionalIntent, GenerateRequest, DAiWAPI  # noqa: E402
+from music_brain.session.intent_schema import CompleteSongIntent  # noqa: E402
 
 def test_ui_mapping_completeness():
     # 1. Setup mock UI request with all fields
