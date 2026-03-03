@@ -10,7 +10,7 @@ cd "$ROOT_DIR"
 echo "=> KmiDi v1 dev setup (bootstrap + npm + pip)..."
 
 # 1) Bootstrap (JUCE submodule, CMake/Node checks, pybind11 hint)
-./bootstrap.sh
+bash ./bootstrap.sh
 
 # 2) Node deps (Tauri + React)
 if command -v npm >/dev/null 2>&1; then

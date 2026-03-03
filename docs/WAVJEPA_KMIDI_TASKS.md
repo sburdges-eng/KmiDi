@@ -34,14 +34,14 @@ Concrete tasks for the three workstreams from the plan. **Do not execute** until
 
 ### A1. Experiment directory and deps
 
-- **Dir:** `experiments/wavjepa_emotion/`
+- **Dir:** `experiments/exp_002_wavjepa_emotion/`
 - **Files to add:**
   - `README.md` — Purpose (emotional separability of WavJEPA embeddings), datasets (CREMA-D, RAVDESS), metrics (NMI, adjusted Rand, optional shallow-head accuracy), and pointer to protocol doc.
   - `requirements.txt` or note in README: `transformers`, `torch`, `scikit-learn`, `soundfile`/`librosa` (resample 16 kHz), and reference to `labhamlet/wavjepa-base` or official WavJEPA repo for loading.
 
 ### A2. Data loading and preprocessing
 
-- **File:** `experiments/wavjepa_emotion/dataset.py` (or `load_emotion_data.py`)
+- **File:** `experiments/exp_002_wavjepa_emotion/dataset.py` (or `load_emotion_data.py`)
 - **Responsibilities:**
   - Load CREMA-D and/or RAVDESS from paths (env or config: `KMIDI_DATASETS_PATH` or `~/Datasets`; reuse logic from `scripts/utilities/prepare_datasets.py` / `KmiDi_PROJECT/scripts/prepare_datasets.py` for paths and filename parsing — see `parse_ravdess_filename`, `parse_crema_emotion`).
   - Output: (audio_path, emotion_label) per sample; optional (audio_path, valence, arousal) if you add V-A later.
@@ -49,15 +49,15 @@ Concrete tasks for the three workstreams from the plan. **Do not execute** until
 
 ### A3. Embedding extraction
 
-- **File:** `experiments/wavjepa_emotion/extract_embeddings.py`
+- **File:** `experiments/exp_002_wavjepa_emotion/extract_embeddings.py`
 - **Responsibilities:**
   - Load frozen WavJEPA (e.g. `labhamlet/wavjepa-base` via Hugging Face or official repo).
   - For each (audio_path, label): load audio → preprocess → forward → save (embedding, label) per clip (or per 2 s window); optionally pool (mean) per file.
-  - Output: one `.npy` or DataFrame with embeddings + labels, or a small cache dir (e.g. `experiments/wavjepa_emotion/cache/embeddings.npz`).
+  - Output: one `.npy` or DataFrame with embeddings + labels, or a small cache dir (e.g. `experiments/exp_002_wavjepa_emotion/cache/embeddings.npz`).
 
 ### A4. Evaluation: clustering and optional shallow head
 
-- **File:** `experiments/wavjepa_emotion/evaluate.py`
+- **File:** `experiments/exp_002_wavjepa_emotion/evaluate.py`
 - **Responsibilities:**
   - Load cached embeddings + labels.
   - Clustering: k-means with k = number of emotion classes; compute NMI, adjusted Rand index (and optionally accuracy by assigning cluster id to majority class).
@@ -66,10 +66,10 @@ Concrete tasks for the three workstreams from the plan. **Do not execute** until
 
 ### A5. Config and entrypoint
 
-- **File:** `experiments/wavjepa_emotion/config.yaml` (or `config.json`)
+- **File:** `experiments/exp_002_wavjepa_emotion/config.yaml` (or `config.json`)
 - **Contents:** Dataset roots (CREMA-D, RAVDESS), split ratio or fixed split file, 16 kHz, window length (e.g. 2 s), WavJEPA checkpoint id, output dir for metrics.
 
-- **File:** `experiments/wavjepa_emotion/run.py` (or single CLI script)
+- **File:** `experiments/exp_002_wavjepa_emotion/run.py` (or single CLI script)
 - **Responsibilities:** Parse config, run dataset load → extract_embeddings → evaluate; print or save metrics (NMI, adj Rand, accuracy).
 
 ### A6. Protocol and conclusion doc
@@ -85,30 +85,30 @@ Concrete tasks for the three workstreams from the plan. **Do not execute** until
 
 ### B1. Extend experiment layout
 
-- **Dir:** Reuse `experiments/wavjepa_emotion/` or add `experiments/wavjepa_baselines/` (recommended: same dir with encoder key in config).
+- **Dir:** Reuse `experiments/exp_002_wavjepa_emotion/` or add `experiments/wavjepa_baselines/` (recommended: same dir with encoder key in config).
 - **Config:** Add `encoder: wavjepa | hubert_base | wav2vec2_base` (or explicit checkpoint ids). Same `dataset`, `split`, `metrics` for all.
 
 ### B2. Encoder abstraction and baseline loaders
 
-- **File:** `experiments/wavjepa_emotion/encoders.py` (or `experiments/wavjepa_baselines/encoders.py`)
+- **File:** `experiments/exp_002_wavjepa_emotion/encoders.py` (or `experiments/wavjepa_baselines/encoders.py`)
 - **Responsibilities:**
   - Common interface: `load_encoder(name)`, `extract(encoder, audio_16k)` → embedding matrix (same pooling strategy as A: e.g. per-clip mean or per-window).
   - Implement for: WavJEPA (existing extract script), HuBERT base (e.g. `facebook/hubert-base-ls960`), Wav2Vec2 base (e.g. `facebook/wav2vec2-base`). All frozen; preprocessing per model (WavJEPA: their norm; HuBERT/Wav2Vec2: standard 16 kHz).
 
 ### B3. Embedding extraction for all encoders
 
-- **File:** Extend `experiments/wavjepa_emotion/extract_embeddings.py` (or add `extract_all_encoders.py`)
+- **File:** Extend `experiments/exp_002_wavjepa_emotion/extract_embeddings.py` (or add `extract_all_encoders.py`)
 - **Responsibilities:** Loop over `encoder in [wavjepa, hubert_base, wav2vec2_base]`; run same dataset → same splits → save embeddings per encoder (e.g. `cache/embeddings_wavjepa.npz`, `cache/embeddings_hubert.npz`, `cache/embeddings_wav2vec2.npz`).
 
 ### B4. Matched evaluation
 
-- **File:** Extend `experiments/wavjepa_emotion/evaluate.py`
+- **File:** Extend `experiments/exp_002_wavjepa_emotion/evaluate.py`
 - **Responsibilities:** For each encoder’s cache, run same clustering + same shallow head (linear or 1-layer MLP), same metrics (NMI, adj Rand, accuracy). Output one table: rows = encoders, columns = metrics (emotion task). Same train/val split and seed for all.
 
 ### B5. (Optional) Music tasks
 
 - **Data:** Add 1–2 music datasets (e.g. genre or instrument from a standard set — e.g. GTZAN subset or a small MusicBrainz-tagged set) if readily available; otherwise skip and note “music tasks TBD.”
-- **File:** `experiments/wavjepa_emotion/dataset_music.py` or extend `dataset.py` with `task: emotion | genre | instrument`.
+- **File:** `experiments/exp_002_wavjepa_emotion/dataset_music.py` or extend `dataset.py` with `task: emotion | genre | instrument`.
 - **Eval:** Same pipeline: extract embeddings per encoder → same shallow head → accuracy/NMI. Add rows (or a second table) for music tasks.
 
 ### B6. Results table and methods paragraph

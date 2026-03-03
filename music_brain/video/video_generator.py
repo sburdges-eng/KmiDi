@@ -5,6 +5,7 @@ Integrates emotion-driven music with visual generation through
 Unreal Engine and Jespa to create synchronized music videos.
 """
 
+import shutil
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any, List
 from pathlib import Path
@@ -33,6 +34,7 @@ class VideoConfig:
     
     # Output settings
     output_path: Optional[Path] = None
+    temp_dir: Optional[Path] = None
     format: VideoFormat = VideoFormat.MP4
     quality: VideoQuality = VideoQuality.MEDIUM
     
@@ -241,6 +243,17 @@ class VideoGenerator:
         """
         # TODO: Cleanup Unreal Engine connection
         # TODO: Cleanup Jespa resources
-        # TODO: Clear temp files
+
+        # Clear temp files
+        if self.config.temp_dir and self.config.temp_dir.is_dir():
+            for item in self.config.temp_dir.iterdir():
+                try:
+                    if item.is_file() or item.is_symlink():
+                        item.unlink()
+                    elif item.is_dir():
+                        shutil.rmtree(item)
+                except Exception as e:
+                    # Use standard print for stub implementation, but could use logging
+                    print(f"Error cleaning up {item}: {e}")
         
         self._initialized = False
