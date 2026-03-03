@@ -5,6 +5,12 @@ set -euo pipefail
 
 echo "=> Running Static Listening Guardrails..."
 
+# Require ripgrep; fail fast with a clear message if it's not installed.
+if ! command -v rg &>/dev/null; then
+  echo "FATAL: ripgrep (rg) is not installed. Install it before running guardrails." >&2
+  exit 1
+fi
+
 # 1) Check for hardcoded local paths that shouldn't be in CI
 echo "-> Checking for local path leakage..."
 FORBIDDEN_PATHS=("/Users/" "/home/sburdges" "/home/runner/work/KmiDi/KmiDi/KmiDi_FINAL")
