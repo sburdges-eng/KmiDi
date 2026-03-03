@@ -116,6 +116,27 @@ class TestVideoGenerator:
         assert not subdir.exists()
         assert temp_dir.exists()
 
+    def test_cleanup_skips_unsafe_temp_dir(self, tmp_path, monkeypatch):
+        """Test that cleanup skips temp_dir not within the system temp directory."""
+        unsafe_dir = tmp_path / "unsafe_project_dir"
+        unsafe_dir.mkdir()
+        important_file = unsafe_dir / "important.txt"
+        important_file.write_text("keep me")
+
+        # Make the system temp dir appear to be something else so unsafe_dir
+        # is seen as outside it.
+        monkeypatch.setattr(
+            "music_brain.video.video_generator.tempfile.gettempdir",
+            lambda: "/nonexistent/other/temp",
+        )
+
+        config = VideoConfig(temp_dir=unsafe_dir)
+        gen = VideoGenerator(config=config)
+        gen.cleanup()
+
+        # File must NOT be deleted because temp_dir is "outside" system temp
+        assert important_file.exists()
+
 
 class TestUnrealBridge:
     """Test UnrealBridge class."""

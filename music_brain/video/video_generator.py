@@ -5,11 +5,15 @@ Integrates emotion-driven music with visual generation through
 Unreal Engine and Jespa to create synchronized music videos.
 """
 
+import logging
 import shutil
+import tempfile
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 class VideoFormat(Enum):
@@ -34,6 +38,11 @@ class VideoConfig:
     
     # Output settings
     output_path: Optional[Path] = None
+    # Path to a directory used for intermediate/temporary video generation files.
+    # VideoGenerator.cleanup() deletes all files and subdirectories within this
+    # directory (preserving the directory itself). Must be a subdirectory of the
+    # system temporary directory (e.g. within tempfile.gettempdir()) to prevent
+    # accidental data loss.
     temp_dir: Optional[Path] = None
     format: VideoFormat = VideoFormat.MP4
     quality: VideoQuality = VideoQuality.MEDIUM
@@ -234,7 +243,14 @@ class VideoGenerator:
     def cleanup(self) -> None:
         """
         Clean up video generation resources.
-        
+
+        If ``config.temp_dir`` is set, all files and subdirectories inside it
+        are removed while the directory itself is preserved.  The path must
+        resolve to a location within the system temporary directory
+        (``tempfile.gettempdir()``); if it does not, cleanup is skipped and a
+        warning is logged to prevent accidental data loss from a misconfigured
+        path.
+
         Note:
             This is a stub. Future implementation will:
             - Close Unreal Engine connection
@@ -244,16 +260,27 @@ class VideoGenerator:
         # TODO: Cleanup Unreal Engine connection
         # TODO: Cleanup Jespa resources
 
-        # Clear temp files
+        # Clear temp files - guard against misconfigured paths outside system temp
         if self.config.temp_dir and self.config.temp_dir.is_dir():
-            for item in self.config.temp_dir.iterdir():
-                try:
-                    if item.is_file() or item.is_symlink():
-                        item.unlink()
-                    elif item.is_dir():
-                        shutil.rmtree(item)
-                except Exception as e:
-                    # Use standard print for stub implementation, but could use logging
-                    print(f"Error cleaning up {item}: {e}")
-        
+            try:
+                self.config.temp_dir.resolve().relative_to(
+                    Path(tempfile.gettempdir()).resolve()
+                )
+            except ValueError:
+                logger.warning(
+                    "Skipping cleanup: temp_dir %s is not within the system "
+                    "temporary directory (%s).",
+                    self.config.temp_dir,
+                    tempfile.gettempdir(),
+                )
+            else:
+                for item in self.config.temp_dir.iterdir():
+                    try:
+                        if item.is_file() or item.is_symlink():
+                            item.unlink()
+                        elif item.is_dir():
+                            shutil.rmtree(item)
+                    except OSError as e:
+                        logger.warning("Error cleaning up %s: %s", item, e)
+
         self._initialized = False
