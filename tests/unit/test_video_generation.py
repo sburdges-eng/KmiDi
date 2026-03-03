@@ -1,6 +1,7 @@
 """Unit tests for video generation module."""
 
 import pytest
+from pathlib import Path
 from music_brain.video import (
     VideoGenerator,
     VideoConfig,
@@ -85,36 +86,78 @@ class TestVideoGenerator:
         assert gen._initialized is False
 
     def test_cleanup_temp_files(self, tmp_path):
-        """Test cleaning up temporary files."""
-        # Create a temporary directory with some files
+        """Test that cleanup removes only the generator-owned subdirectory."""
         temp_dir = tmp_path / "video_temp"
         temp_dir.mkdir()
 
-        file1 = temp_dir / "frame_001.png"
-        file1.write_text("dummy data")
+        # Files placed directly in temp_dir by the caller — must NOT be touched.
+        caller_file = temp_dir / "caller_data.txt"
+        caller_file.write_text("important data")
 
-        subdir = temp_dir / "cache"
-        subdir.mkdir()
-        file2 = subdir / "meta.json"
-        file2.write_text("{}")
-
-        # Initialize generator with this temp directory
+        # Initialize generator; this creates temp_dir/kmidi_video/ with marker.
         config = VideoConfig(temp_dir=temp_dir)
         gen = VideoGenerator(config=config)
+        gen.initialize()
 
-        # Verify files exist
-        assert file1.exists()
-        assert file2.exists()
-        assert subdir.exists()
+        # Simulate files written by the generator inside its owned subdir.
+        work_dir = gen._work_dir
+        assert work_dir is not None
+        assert work_dir.is_dir()
+        (work_dir / "frame_001.png").write_bytes(b"dummy")
+        subdir = work_dir / "cache"
+        subdir.mkdir()
+        (subdir / "meta.json").write_text("{}")
 
-        # Run cleanup
+        # Run cleanup.
         gen.cleanup()
 
-        # Verify files and subdirectories are gone, but temp_dir itself remains
-        assert not file1.exists()
-        assert not file2.exists()
-        assert not subdir.exists()
+        # Generator-owned subdir and its contents must be gone.
+        assert not work_dir.exists()
+
+        # Caller-owned files in temp_dir must be preserved.
+        assert caller_file.exists()
+        # temp_dir itself must remain.
         assert temp_dir.exists()
+
+    def test_cleanup_skips_dangerous_paths(self, tmp_path, monkeypatch):
+        """cleanup() skips deletion when _work_dir is flagged as dangerous."""
+        from music_brain.video import video_generator as vg
+        from music_brain.video.video_generator import _MARKER_FILENAME
+
+        # Create a valid work_dir (with marker) that would normally be cleaned up.
+        work_dir = tmp_path / "kmidi_video"
+        work_dir.mkdir()
+        (work_dir / _MARKER_FILENAME).touch()
+
+        gen = VideoGenerator()
+        gen._work_dir = work_dir
+        gen._initialized = True
+
+        # Simulate _is_dangerous_path returning True for this path.
+        monkeypatch.setattr(vg, "_is_dangerous_path", lambda _: True)
+
+        gen.cleanup()
+
+        # Directory must not have been removed.
+        assert work_dir.exists()
+        assert gen._initialized is False
+
+    def test_cleanup_requires_marker_file(self, tmp_path):
+        """Test that cleanup skips a work_dir missing the marker file."""
+        from music_brain.video.video_generator import _MARKER_FILENAME
+
+        fake_work_dir = tmp_path / "kmidi_video"
+        fake_work_dir.mkdir()
+        # No marker file written — cleanup must not remove the directory.
+        (fake_work_dir / "important.txt").write_text("keep me")
+
+        gen = VideoGenerator()
+        gen._work_dir = fake_work_dir
+        gen._initialized = True
+        gen.cleanup()
+
+        assert fake_work_dir.exists()
+        assert (fake_work_dir / "important.txt").exists()
 
 
 class TestUnrealBridge:

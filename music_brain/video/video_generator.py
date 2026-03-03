@@ -12,6 +12,41 @@ from pathlib import Path
 from enum import Enum
 
 
+# Subdirectory name created exclusively by this generator inside temp_dir.
+# cleanup() only ever removes this subdirectory, never temp_dir itself.
+_OWNED_SUBDIR_NAME = "kmidi_video"
+
+# Marker file written into the owned subdirectory so cleanup() can verify
+# it is actually a generator-created directory before deleting it.
+_MARKER_FILENAME = ".kmidi_video_gen"
+
+
+def _is_dangerous_path(path: Path) -> bool:
+    """Return True if *path* is too high-risk to use as a deletion target.
+
+    Rejects paths that are very shallow in the filesystem hierarchy (e.g. ``/``,
+    ``/tmp``, ``/home``) and the current user's home directory, which would
+    cause catastrophic data loss if deleted.
+    """
+    try:
+        resolved = path.resolve()
+    except (OSError, ValueError):
+        return True
+
+    # Reject root and any path with fewer than 3 components (e.g. /, /tmp)
+    if len(resolved.parts) < 3:
+        return True
+
+    # Reject the user's home directory
+    try:
+        if resolved == Path.home().resolve():
+            return True
+    except RuntimeError:
+        pass
+
+    return False
+
+
 class VideoFormat(Enum):
     """Supported video output formats."""
     MP4 = "mp4"
@@ -105,6 +140,7 @@ class VideoGenerator:
         """
         self.config = config or VideoConfig()
         self._initialized = False
+        self._work_dir: Optional[Path] = None
         
     def initialize(self) -> bool:
         """
@@ -124,7 +160,15 @@ class VideoGenerator:
         # TODO: Initialize Jespa connector
         # TODO: Load emotion-visual mappings
         # TODO: Verify rendering capabilities
-        
+
+        # Create the generator-owned temp subdirectory so cleanup() has a
+        # bounded, marker-verified target and never touches caller-owned files.
+        if self.config.temp_dir and not _is_dangerous_path(self.config.temp_dir):
+            work_dir = self.config.temp_dir / _OWNED_SUBDIR_NAME
+            work_dir.mkdir(parents=True, exist_ok=True)
+            (work_dir / _MARKER_FILENAME).touch()
+            self._work_dir = work_dir
+
         self._initialized = True
         return True
     
@@ -234,7 +278,12 @@ class VideoGenerator:
     def cleanup(self) -> None:
         """
         Clean up video generation resources.
-        
+
+        Only the generator-owned subdirectory (``<temp_dir>/kmidi_video/``) is
+        removed. The subdirectory must contain the ``_MARKER_FILENAME`` sentinel
+        and must not resolve to a dangerous path, preventing accidental deletion
+        of caller-owned or system directories if ``temp_dir`` is misconfigured.
+
         Note:
             This is a stub. Future implementation will:
             - Close Unreal Engine connection
@@ -244,16 +293,18 @@ class VideoGenerator:
         # TODO: Cleanup Unreal Engine connection
         # TODO: Cleanup Jespa resources
 
-        # Clear temp files
-        if self.config.temp_dir and self.config.temp_dir.is_dir():
-            for item in self.config.temp_dir.iterdir():
-                try:
-                    if item.is_file() or item.is_symlink():
-                        item.unlink()
-                    elif item.is_dir():
-                        shutil.rmtree(item)
-                except Exception as e:
-                    # Use standard print for stub implementation, but could use logging
-                    print(f"Error cleaning up {item}: {e}")
-        
+        # Only delete the generator-owned subdirectory; never touch temp_dir itself.
+        work_dir = self._work_dir
+        if (
+            work_dir is not None
+            and work_dir.is_dir()
+            and not _is_dangerous_path(work_dir)
+            and (work_dir / _MARKER_FILENAME).exists()
+        ):
+            try:
+                shutil.rmtree(work_dir)
+            except Exception as e:
+                print(f"Error cleaning up {work_dir}: {e}")
+
+        self._work_dir = None
         self._initialized = False
