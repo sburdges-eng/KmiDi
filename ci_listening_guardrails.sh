@@ -53,6 +53,22 @@ for d in "${SOURCE_DIRS[@]}"; do
   [[ -d "$d" ]] && EXISTING_DIRS+=("$d")
 done
 
+# ---------------------------------------------------------------------------
+# Also include root-level source files (maxdepth 1) so that a /Users/ leak
+# added directly to e.g. bootstrap.sh or a top-level .py script is caught.
+# ci_listening_guardrails.sh is excluded because it contains the scan pattern
+# itself (in echo/comment strings, not as a real path).
+# ---------------------------------------------------------------------------
+while IFS= read -r -d '' f; do
+  EXISTING_DIRS+=("$f")
+done < <(find . -maxdepth 1 -type f \( \
+  -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \
+  -o -name "*.py" \
+  -o -name "*.rs" \
+  -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \
+  -o -name "*.sh" \
+\) ! -name "ci_listening_guardrails.sh" -print0 2>/dev/null)
+
 if [[ ${#EXISTING_DIRS[@]} -eq 0 ]]; then
   echo "WARNING: No source directories found; skipping forbidden-path scan."
   exit 0
