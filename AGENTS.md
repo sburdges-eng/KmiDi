@@ -16,7 +16,7 @@ The Tauri desktop shell, C++ KellyCore engine, Streamlit mixer panel, and Androi
 ### Running services
 
 - **Local (with Tauri installed)**: you can start everything together with `npm run dev:all` (uses `concurrently -k`; if the Tauri process exits or fails, the React and Python processes will also be terminated).
-- **Cloud VM (no Tauri)**: start the required services separately with `npm run dev` and `npm run dev:python` to avoid the `-k` flag termination issue.
+- **Cloud VM (no Tauri)**: start the required services separately with `npm run dev` and `npm run dev:python` (do **not** use `npm run dev:all`, because the `-k` flag will stop all processes when Tauri fails in this environment).
 - The Python API requires `fastapi`, `uvicorn`, and `pydantic` in addition to the base `pip install -e .` dependencies.
 - `$HOME/.local/bin` must be on `PATH` for `uvicorn` to be found when installed with `--user`.
 
@@ -24,7 +24,7 @@ The Tauri desktop shell, C++ KellyCore engine, Streamlit mixer panel, and Androi
 
 - **TypeScript type-check**: `npx tsc --noEmit`
 - **Frontend build**: `npm run build` (runs `tsc && vite build`)
-- **Python lint**: `python3 -m flake8 music_brain/ --max-line-length 100` (flake8 is enforced in CI; ensure your changes introduce no new violations)
+- **Python lint**: `python3 -m flake8 music_brain/ --max-line-length 100` (flake8 is enforced in CI; ensure your changes pass with no new issues, respecting the repo’s flake8 configuration and ignore set)
 - **Python tests**: `python3 -m pytest tests/` (configured via `pytest.ini`)
 - **pytest-timeout** is not installed; do not pass `--timeout` to pytest.
 
