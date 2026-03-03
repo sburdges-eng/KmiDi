@@ -70,7 +70,6 @@ jobs:
 
       - name: Bootstrap Environment
         run: ./bootstrap.sh
-        shell: bash
 
       - name: Build Headless Core
         run: |
