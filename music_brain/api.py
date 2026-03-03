@@ -928,11 +928,18 @@ if FASTAPI_AVAILABLE:
         structure: Optional[List[Dict[str, Any]]] = None  # Song sections with repetitions
         instruments: Optional[List[Dict[str, Any]]] = None  # Instruments with techniques
         techniques: Optional[List[str]] = None  # Production techniques
+        groove_feel: Optional[str] = None
+        narrative_arc: Optional[str] = None
+        rule_to_break: Optional[str] = None
+        rule_justification: Optional[str] = None
 
     class EmotionalIntent(BaseModel):
         core_wound: Optional[str] = None
         core_desire: Optional[str] = None
         emotional_intent: str
+        vulnerability_scale: Optional[float] = None
+        secondary_tension: Optional[float] = None
+        imagery_texture: Optional[str] = None
         technical: Optional[TechnicalIntent] = None
 
     class GenerateRequest(BaseModel):
@@ -1324,6 +1331,10 @@ if FASTAPI_AVAILABLE:
                     "structure": structure_payload,
                     "instruments": instruments_payload,
                     "allow_legacy_fallback": False,
+                    "groove_feel": tech.groove_feel or "Straight/Driving",
+                    "narrative_arc": tech.narrative_arc or "Climb-to-Climax",
+                    "rule_to_break": tech.rule_to_break,
+                    "rule_justification": tech.rule_justification,
                 }
                 try:
                     if hasattr(CompleteSongIntentRequest, "model_validate"):
@@ -1333,28 +1344,16 @@ if FASTAPI_AVAILABLE:
                 except ValidationError as validation_error:
                     raise HTTPException(status_code=422, detail=validation_error.errors()) from validation_error
                 
-                # Convert request to CompleteSongIntent
-                def _convert_to_intent(req: GenerateRequest, validated: CompleteSongIntentRequest) -> CompleteSongIntent:
-                    """Helper to convert request to CompleteSongIntent."""
-                    import time
-                    key_parts = validated.key_mode.split()
-                    technical_key = key_parts[0]
-                    technical_mode = key_parts[1].lower()
-                    tempo_range = (max(60, validated.tempo - 20), min(140, validated.tempo + 20))
-                    
-                    return CompleteSongIntent(
-                        core_event=req.intent.core_wound or validated.core_desire,
-                        core_longing=validated.core_desire,
-                        mood_primary=validated.mood_primary,
-                        technical_genre=validated.genre,
-                        technical_tempo_range=tempo_range,
-                        technical_key=technical_key,
-                        technical_mode=technical_mode,
-                        vulnerability_scale=0.5,
-                        created=time.strftime("%Y-%m-%d %H:%M:%S"),
-                    )
-                
-                complete_intent = _convert_to_intent(request, strict_intent)
+                # Convert validated request to domain CompleteSongIntent
+                ui_data = strict_intent.model_dump() if hasattr(strict_intent, "model_dump") else strict_intent.dict()
+                # Add extra emotional fields if present in the original request
+                ui_data.update({
+                    "core_wound": request.intent.core_wound,
+                    "vulnerability_scale": request.intent.vulnerability_scale,
+                    "secondary_tension": request.intent.secondary_tension,
+                    "imagery_texture": request.intent.imagery_texture,
+                })
+                complete_intent = CompleteSongIntent.from_ui_payload(ui_data)
                 
                 # Process full intent
                 result = api.process_song_intent(complete_intent, output_json=None)

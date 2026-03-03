@@ -6,11 +6,22 @@ export interface EmotionalIntent {
   core_wound?: string;
   core_desire?: string;
   emotional_intent: string;
+  vulnerability_scale?: number;
+  secondary_tension?: number;
+  imagery_texture?: string;
   technical?: {
     key?: string;
     bpm?: number;
     progression?: string[];
     genre?: string;
+    duration?: number;
+    structure?: any[];
+    instruments?: any[];
+    techniques?: string[];
+    groove_feel?: string;
+    narrative_arc?: string;
+    rule_to_break?: string;
+    rule_justification?: string;
   };
 }
 

@@ -441,6 +441,52 @@ class CompleteSongIntent:
         }
     
     @classmethod
+    def from_ui_payload(cls, data: Dict) -> "CompleteSongIntent":
+        """
+        Create a CompleteSongIntent from a UI payload.
+        This handles the mapping from the flat-ish UI structure to the internal phased structure.
+        """
+        import time
+
+        # Extract base fields
+        core_desire = data.get("core_desire", "")
+        mood_primary = data.get("mood_primary", "")
+        genre = data.get("genre", "")
+        tempo = data.get("tempo", 120)
+        key_mode = data.get("key_mode", "C major")
+
+        # Handle key/mode split
+        key_parts = key_mode.split()
+        technical_key = key_parts[0] if len(key_parts) > 0 else "C"
+        technical_mode = key_parts[1].lower() if len(key_parts) > 1 else "major"
+
+        # Calculate tempo range
+        try:
+            bpm = int(tempo)
+            tempo_range = (max(40, bpm - 20), min(300, bpm + 20))
+        except (ValueError, TypeError):
+            tempo_range = (80, 120)
+
+        # Mapping UI fields to internal CompleteSongIntent fields
+        return cls(
+            core_event=data.get("core_wound") or core_desire,
+            core_longing=core_desire,
+            mood_primary=mood_primary,
+            mood_secondary_tension=data.get("secondary_tension", 0.5),
+            imagery_texture=data.get("imagery_texture", ""),
+            vulnerability_scale=data.get("vulnerability_scale", 0.5),
+            narrative_arc=data.get("narrative_arc", "Climb-to-Climax"),
+            technical_genre=genre,
+            technical_tempo_range=tempo_range,
+            technical_key=technical_key,
+            technical_mode=technical_mode,
+            technical_groove_feel=data.get("groove_feel", "Straight/Driving"),
+            technical_rule_to_break=data.get("rule_to_break", ""),
+            rule_breaking_justification=data.get("rule_justification", ""),
+            created=time.strftime("%Y-%m-%d %H:%M:%S"),
+        )
+
+    @classmethod
     def from_dict(cls, data: Dict) -> "CompleteSongIntent":
         """Create from dictionary."""
         intent = cls()
