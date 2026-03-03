@@ -34,6 +34,13 @@ class VideoConfig:
     
     # Output settings
     output_path: Optional[Path] = None
+    # Optional directory for intermediate/temporary render files.
+    # Cleanup semantics: VideoGenerator.cleanup() deletes ALL contents
+    # (files, symlinks, and sub-directories) but preserves the directory
+    # itself so the same path can be reused across runs without recreation.
+    # Always provide a path dedicated exclusively to this generator instance;
+    # every item inside will be unconditionally removed on cleanup.
+    # If None, the temporary-file removal step is skipped entirely.
     temp_dir: Optional[Path] = None
     format: VideoFormat = VideoFormat.MP4
     quality: VideoQuality = VideoQuality.MEDIUM
@@ -234,7 +241,14 @@ class VideoGenerator:
     def cleanup(self) -> None:
         """
         Clean up video generation resources.
-        
+
+        If :attr:`VideoConfig.temp_dir` is set and exists, every file,
+        symlink, and sub-directory inside it is deleted.  The directory
+        **itself** is kept so callers can reuse the same path in a subsequent
+        run without having to recreate it.  Only supply a path that is
+        exclusively owned by this generator instance; the cleanup step is
+        unconditional and will remove **all** contents.
+
         Note:
             This is a stub. Future implementation will:
             - Close Unreal Engine connection
