@@ -22,7 +22,7 @@ From repo root (after cloning and with CMake 3.27+, Node 20+, Rust, Python 3.11+
 ```
 
 This runs:
-- **scripts/bootstrap.sh** — JUCE submodule sync, CMake/Node version checks, pybind11 hint
+- **bootstrap.sh** — JUCE submodule sync, CMake/Node version checks, pybind11 hint
 - **npm install** — React and Tauri dependencies
 - **pip install -e .** — `music_brain` and tools (sync_entities, tests)
 
