@@ -90,7 +90,11 @@ class AIAssistantDock(QDockWidget):
 
         if confidence is not None:
             confidence_pct = int(confidence * 100)
-            color = AudioColors.STATUS_OK if confidence >= 0.7 else AudioColors.STATUS_WARN if confidence >= 0.5 else AudioColors.STATUS_ERROR
+            color = (
+                AudioColors.STATUS_OK if confidence >= 0.7
+                else AudioColors.STATUS_WARN if confidence >= 0.5
+                else AudioColors.STATUS_ERROR
+            )
             self.confidence_label.setText(
                 f'<span style="color: {color}">{confidence_pct}%</span>'
             )
@@ -172,4 +176,3 @@ class LogsDock(QDockWidget):
     def clear(self):
         """Clear all logs."""
         self.log_text.clear()
-

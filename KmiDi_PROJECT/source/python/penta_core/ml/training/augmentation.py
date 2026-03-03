@@ -77,7 +77,7 @@ class AugmentationConfig:
 
     # Music-Aware Specifics
     p_harmonic_mix: float = 0.2
-    p_phase_align: float = 0.5 # for multi-track mixing
+    p_phase_align: float = 0.5  # for multi-track mixing
     harmonic_mix_alpha: float = 0.4
 
 
@@ -94,7 +94,6 @@ class AudioAugmentor:
 
     def _check_librosa(self) -> bool:
         try:
-            import librosa
             return True
         except ImportError:
             logger.warning("librosa not available, some augmentations disabled")
@@ -112,7 +111,6 @@ class AudioAugmentor:
         # audio_batch: [B, C, T]
         # In a real implementation, we would use TorchAudio transforms for speed.
         # This is a stub for the logic.
-        import torchaudio.transforms as T
 
         # 1. Random Gain
         gain = 0.8 + 0.4 * torch.rand(audio_batch.size(0), 1, 1).to(audio_batch.device)
@@ -790,5 +788,3 @@ def create_augmentation_pipeline(
     }
 
     return AugmentationPipeline(presets.get(preset, presets["default"]))
-
-

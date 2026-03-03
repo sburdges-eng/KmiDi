@@ -11,16 +11,12 @@ The core philosophy: Rules are broken INTENTIONALLY based on
 emotional justification from the intent schema.
 """
 
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional
 from dataclasses import dataclass, field
 import random
 
 from music_brain.session.intent_schema import (
     CompleteSongIntent,
-    HarmonyRuleBreak,
-    RhythmRuleBreak,
-    ArrangementRuleBreak,
-    ProductionRuleBreak,
     RULE_BREAKING_EFFECTS,
 )
 from music_brain.structure.progression import normalize_note_name
@@ -52,7 +48,7 @@ BORROWED_FROM_MINOR = {
 # Modal interchange options
 MODAL_INTERCHANGE = {
     'lydian': {'#IV': 'maj'},      # Raised 4th, dreamy
-    'mixolydian': {'bVII': 'maj'}, # Flat 7, rock
+    'mixolydian': {'bVII': 'maj'},  # Flat 7, rock
     'dorian': {'IV': 'maj'},       # Major IV in minor context
     'phrygian': {'bII': 'maj'},    # Flat 2, Spanish/tension
 }
@@ -118,7 +114,7 @@ def _get_note_index(note: str) -> int:
 def _transpose_chord(chord: str, key: str) -> str:
     """Transpose a chord to a specific key."""
     # Simple implementation - just prepend key
-    root_idx = _get_note_index(key)
+    _get_note_index(key)
     return chord  # Full implementation would transpose
 
 
@@ -224,7 +220,9 @@ def generate_progression_parallel_motion(key: str, mode: str = "major") -> Gener
     )
 
 
-def generate_progression_unresolved_dissonance(key: str, mode: str = "major") -> GeneratedProgression:
+def generate_progression_unresolved_dissonance(
+    key: str, mode: str = "major",
+) -> GeneratedProgression:
     """
     HARMONY_UnresolvedDissonance
     Leave 7ths, 9ths, tritones hanging.
@@ -253,7 +251,7 @@ def generate_progression_unresolved_dissonance(key: str, mode: str = "major") ->
 def _romans_to_chords(romans: List[str], key: str, mode: str) -> List[str]:
     """Convert Roman numerals to chord names in key."""
     # Simplified mapping - full implementation would be more complete
-    key_root = _get_note_index(key)
+    _get_note_index(key)
 
     # Scale degrees for major
     major_intervals = [0, 2, 4, 5, 7, 9, 11]  # I, ii, iii, IV, V, vi, vii
@@ -397,7 +395,7 @@ def generate_groove_metric_modulation(tempo: int) -> GeneratedGroove:
         100, 60, 80, 60,  # Bar 1: 4/4
         100, 60, 80, 60,  # Bar 2: 4/4
         100, 60, 80, 60,  # Bar 3: 4/4
-        100, 70, 80, 100, # Bar 4: shifted accents imply 3/4
+        100, 70, 80, 100,  # Bar 4: shifted accents imply 3/4
     ]
 
     return GeneratedGroove(
@@ -510,7 +508,8 @@ def generate_arrangement_extreme_dynamics() -> GeneratedArrangement:
         {"name": "Build", "bars": 8, "energy": 0.4, "notes": "Gradual increase"},
         {"name": "EXPLOSION", "bars": 4, "energy": 1.0, "notes": "Maximum possible volume"},
         {"name": "Silence", "bars": 2, "energy": 0.0, "notes": "Complete stop"},
-        {"name": "Resolution", "bars": 16, "energy": 0.5, "notes": "Normal level feels loud after silence"},
+        {"name": "Resolution", "bars": 16, "energy": 0.5,
+            "notes": "Normal level feels loud after silence"},
     ]
 
     return GeneratedArrangement(
@@ -741,4 +740,3 @@ def process_intent(intent: CompleteSongIntent) -> Dict:
     """
     processor = IntentProcessor(intent)
     return processor.generate_all()
-

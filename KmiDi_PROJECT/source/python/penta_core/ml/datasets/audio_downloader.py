@@ -26,8 +26,6 @@ Usage:
 
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
 import os
 import shutil
@@ -35,13 +33,12 @@ import tarfile
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, List, Optional, Union
 from urllib.parse import urlparse
 
 from . import get_downloads_dir, get_raw_audio_dir
 
 # Load environment variables from project root
-from pathlib import Path
 import sys
 
 # Add project root to path if not already there
@@ -60,7 +57,7 @@ try:
         features.extend(['mcp'])
     if not features:
         features = ['ml']  # Default to ML features
-    
+
     load_kmidi_env(features=features, verbose=False)
 except ImportError:
     # Fallback to simple dotenv if kmidi_env not available
@@ -110,7 +107,7 @@ class AudioDownloader:
         self.download_dir.mkdir(parents=True, exist_ok=True)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"AudioDownloader initialized")
+        logger.info("AudioDownloader initialized")
         logger.info(f"  Download dir: {self.download_dir}")
         logger.info(f"  Output dir: {self.output_dir}")
 
@@ -491,5 +488,3 @@ def download_audio(
         extract=extract,
         extract_to=downloader.output_dir / output_subdir if output_subdir else None,
     )
-
-

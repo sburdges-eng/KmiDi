@@ -201,4 +201,3 @@ class ExportManager(QObject):
             message: Progress message
         """
         self.export_progress.emit(message)
-

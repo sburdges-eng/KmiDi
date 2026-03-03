@@ -22,7 +22,7 @@ import logging
 import platform
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 
@@ -145,7 +145,7 @@ class ModelExporter:
                 from onnxruntime.transformers import optimizer
 
                 # Load and optimize
-                model_onnx = onnx.load(output_path)
+                onnx.load(output_path)
                 optimized_model = optimizer.optimize_model(
                     output_path,
                     model_type="bert",  # Generic optimization
@@ -153,7 +153,7 @@ class ModelExporter:
                     hidden_size=0,
                 )
                 optimized_model.save_model_to_file(output_path)
-                logger.info(f"Applied ONNX optimizations")
+                logger.info("Applied ONNX optimizations")
             except ImportError:
                 logger.debug(
                     "onnxruntime.transformers not available, skipping optimization")
@@ -411,8 +411,10 @@ class ModelExporter:
                     "num_features": module.num_features,
                     "running_mean": module.running_mean.numpy().tolist(),
                     "running_var": module.running_var.numpy().tolist(),
-                    "weight": module.weight.detach().numpy().tolist() if module.weight is not None else None,
-                    "bias": module.bias.detach().numpy().tolist() if module.bias is not None else None,
+                    "weight": module.weight.detach(
+                        ).numpy().tolist() if module.weight is not None else None,
+                    "bias": module.bias.detach(
+                        ).numpy().tolist() if module.bias is not None else None,
                 })
 
         # Build model data
@@ -520,7 +522,9 @@ def verify_onnx_model(model_path: Union[str, Path]) -> bool:
         input_shape = session.get_inputs()[0].shape
 
         # Create dummy input
-        dummy_input = np.random.randn(*[s if isinstance(s, int) else 1 for s in input_shape]).astype(np.float32)
+        dummy_input = np.random.randn(*[
+            s if isinstance(s, int) else 1 for s in input_shape
+        ]).astype(np.float32)
 
         # Run inference
         output = session.run(None, {input_name: dummy_input})
@@ -636,4 +640,3 @@ def export_to_onnx(
 
     logger.info(f"Exported ONNX: {output_path}")
     return output_path
-

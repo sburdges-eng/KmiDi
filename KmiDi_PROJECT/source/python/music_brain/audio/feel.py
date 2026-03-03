@@ -9,7 +9,7 @@ Analyzes:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict
 from pathlib import Path
 
 # Optional imports for audio processing
@@ -238,7 +238,7 @@ def _estimate_swing(beat_times: "np.ndarray" if NUMPY_AVAILABLE else List[float]
     return float(swing)
 
 
-def _estimate_groove_regularity(beat_times: "np.ndarray" if NUMPY_AVAILABLE else List[float]) -> float:
+def _estimate_groove_regularity(beat_times) -> float:
     """
     Estimate how regular/consistent the groove is.
 
@@ -285,7 +285,10 @@ def compare_feel(audio_path1: str, audio_path2: str) -> Dict:
     swing_diff = abs(features1.swing_estimate - features2.swing_estimate)
     swing_similarity = 1 - swing_diff
 
-    energy_similarity = 1 - abs(features1.rms_mean - features2.rms_mean) / max(features1.rms_mean, features2.rms_mean, 0.001)
+    energy_similarity = (
+        1 - abs(features1.rms_mean - features2.rms_mean)
+        / max(features1.rms_mean, features2.rms_mean, 0.001)
+    )
 
     brightness_diff = abs(features1.spectral_centroid_mean - features2.spectral_centroid_mean)
     brightness_similarity = max(0, 1 - brightness_diff / 2000)
@@ -301,4 +304,3 @@ def compare_feel(audio_path1: str, audio_path2: str) -> Dict:
         "file1": features1.to_dict(),
         "file2": features2.to_dict(),
     }
-

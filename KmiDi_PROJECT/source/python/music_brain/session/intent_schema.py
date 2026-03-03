@@ -589,7 +589,9 @@ class CompleteSongIntent:
                 "technical_mode": self.technical_constraints.technical_mode,
                 "technical_groove_feel": self.technical_constraints.technical_groove_feel,
                 "technical_rule_to_break": self.technical_constraints.technical_rule_to_break,
-                "rule_breaking_justification": self.technical_constraints.rule_breaking_justification,
+                "rule_breaking_justification": (
+                    self.technical_constraints.rule_breaking_justification
+                ),
             },
             "system_directive": {
                 "output_target": self.system_directive.output_target,
@@ -832,7 +834,9 @@ def validate_intent(intent: CompleteSongIntent) -> List[str]:
         and intent.song_root.core_stakes not in VALID_CORE_STAKES_OPTIONS
     ):
         issues.append(
-            f"Phase 0: Invalid core_stakes '{intent.song_root.core_stakes}'. Must be one of: {', '.join(VALID_CORE_STAKES_OPTIONS)}"
+            f"Phase 0: Invalid core_stakes"
+            f" '{intent.song_root.core_stakes}'."
+            f" Must be one of: {', '.join(VALID_CORE_STAKES_OPTIONS)}"
         )
 
     # Phase 1 checks
@@ -840,7 +844,9 @@ def validate_intent(intent: CompleteSongIntent) -> List[str]:
         issues.append("Phase 1: Missing mood_primary - what's the main emotion?")
     elif intent.song_intent.mood_primary not in VALID_MOOD_PRIMARY_OPTIONS:
         issues.append(
-            f"Phase 1: Invalid mood_primary '{intent.song_intent.mood_primary}'. Must be one of: {', '.join(VALID_MOOD_PRIMARY_OPTIONS)}"
+            f"Phase 1: Invalid mood_primary"
+            f" '{intent.song_intent.mood_primary}'."
+            f" Must be one of: {', '.join(VALID_MOOD_PRIMARY_OPTIONS)}"
         )
 
     if (
@@ -855,14 +861,20 @@ def validate_intent(intent: CompleteSongIntent) -> List[str]:
         and intent.song_intent.imagery_texture not in VALID_IMAGERY_TEXTURE_OPTIONS
     ):
         issues.append(
-            f"Phase 1: Invalid imagery_texture '{intent.song_intent.imagery_texture}'. Must be one of: {', '.join(VALID_IMAGERY_TEXTURE_OPTIONS)}"
+            f"Phase 1: Invalid imagery_texture"
+            f" '{intent.song_intent.imagery_texture}'."
+            f" Must be one of:"
+            f" {', '.join(VALID_IMAGERY_TEXTURE_OPTIONS)}"
         )
 
     # Validate vulnerability_scale enum
     if isinstance(intent.song_intent.vulnerability_scale, str):
         if intent.song_intent.vulnerability_scale not in VALID_VULNERABILITY_SCALE_OPTIONS:
             issues.append(
-                f"Phase 1: Invalid vulnerability_scale '{intent.song_intent.vulnerability_scale}'. Must be one of: {', '.join(VALID_VULNERABILITY_SCALE_OPTIONS)}"
+                f"Phase 1: Invalid vulnerability_scale"
+                f" '{intent.song_intent.vulnerability_scale}'."
+                f" Must be one of:"
+                f" {', '.join(VALID_VULNERABILITY_SCALE_OPTIONS)}"
             )
 
     # Validate narrative_arc enum
@@ -871,7 +883,10 @@ def validate_intent(intent: CompleteSongIntent) -> List[str]:
         and intent.song_intent.narrative_arc not in VALID_NARRATIVE_ARC_OPTIONS
     ):
         issues.append(
-            f"Phase 1: Invalid narrative_arc '{intent.song_intent.narrative_arc}'. Must be one of: {', '.join(VALID_NARRATIVE_ARC_OPTIONS)}"
+            f"Phase 1: Invalid narrative_arc"
+            f" '{intent.song_intent.narrative_arc}'."
+            f" Must be one of:"
+            f" {', '.join(VALID_NARRATIVE_ARC_OPTIONS)}"
         )
 
     # Phase 2 checks
@@ -887,7 +902,10 @@ def validate_intent(intent: CompleteSongIntent) -> List[str]:
         and intent.technical_constraints.technical_genre not in VALID_GENRE_OPTIONS
     ):
         issues.append(
-            f"Phase 2: Invalid technical_genre '{intent.technical_constraints.technical_genre}'. Must be one of: {', '.join(VALID_GENRE_OPTIONS)}"
+            f"Phase 2: Invalid technical_genre"
+            f" '{intent.technical_constraints.technical_genre}'."
+            f" Must be one of:"
+            f" {', '.join(VALID_GENRE_OPTIONS)}"
         )
 
     # Validate groove_feel enum
@@ -896,7 +914,10 @@ def validate_intent(intent: CompleteSongIntent) -> List[str]:
         and intent.technical_constraints.technical_groove_feel not in VALID_GROOVE_FEEL_OPTIONS
     ):
         issues.append(
-            f"Phase 2: Invalid technical_groove_feel '{intent.technical_constraints.technical_groove_feel}'. Must be one of: {', '.join(VALID_GROOVE_FEEL_OPTIONS)}"
+            f"Phase 2: Invalid technical_groove_feel"
+            f" '{intent.technical_constraints.technical_groove_feel}'."
+            f" Must be one of:"
+            f" {', '.join(VALID_GROOVE_FEEL_OPTIONS)}"
         )
 
     # Consistency checks
@@ -918,4 +939,3 @@ def list_all_rules() -> Dict[str, List[str]]:
         "Arrangement": [e.value for e in ArrangementRuleBreak],
         "Production": [e.value for e in ProductionRuleBreak],
     }
-

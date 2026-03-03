@@ -9,7 +9,7 @@ Features:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Set
+from typing import List, Dict, Optional, Tuple
 from pathlib import Path
 from enum import Enum
 
@@ -591,4 +591,3 @@ def analyze_chords(midi_path: str, quantize_beats: float = 0.5) -> ChordProgress
         source_file=str(midi_path),
         tempo_bpm=tempo_bpm,
     )
-

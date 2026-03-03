@@ -500,5 +500,3 @@ class ActionController(QObject):
         logs_dock = self.main_window.get_logs_dock()
         if logs_dock:
             logs_dock.add_log(message, level)
-
-

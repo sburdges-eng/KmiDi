@@ -9,10 +9,9 @@ Provides neural network-based singing voice synthesis using:
 Quality: 7-8/10 with trained models (vs 3/10 formant backend)
 """
 
-import os
 import numpy as np
 from dataclasses import dataclass
-from typing import Optional, Dict, List, Any, Tuple
+from typing import Optional, Dict, List, Any
 from pathlib import Path
 
 # Try to import torch
@@ -123,7 +122,6 @@ class NeuralBackend:
         """Get appropriate device."""
         if device == "auto":
             if TORCH_AVAILABLE:
-                import torch
                 if torch.cuda.is_available():
                     return "cuda"
                 elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
@@ -429,4 +427,3 @@ def check_neural_availability() -> Dict[str, bool]:
         "diffsinger": DIFFSINGER_AVAILABLE,
         "model_files": Path(DEFAULT_MODEL_DIR).exists(),
     }
-
