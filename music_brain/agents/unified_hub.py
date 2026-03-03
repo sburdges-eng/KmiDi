@@ -392,14 +392,16 @@ class LocalVoiceSynth:
             self.midi.set_vowel(vowel, channel)
 
     def set_formants(self, f1: int, f2: int, channel: int = 0):
-        """Set formant frequencies directly (via CC)."""
+        """Set formant frequencies directly (via CC).
+
+        Only F1 is sent via MIDI CC (VoiceCC.FORMANT_SHIFT).  F2 is accepted
+        as a parameter for API compatibility but has no dedicated CC slot in the
+        current VoiceCC mapping; it is intentionally not transmitted.
+        """
         if self.midi:
-            # Map F1 (200-1000 Hz) to CC value
+            # Map F1 (200-1000 Hz) to CC value 0-127
             f1_cc = int((f1 - 200) / 800 * 127)
-            # Map F2 (500-3000 Hz) to CC value
-            f2_cc = int((f2 - 500) / 2500 * 127)
             self.midi.send_cc(VoiceCC.FORMANT_SHIFT.value, f1_cc, channel)
-            # Could add F2 CC if available
 
     def set_breathiness(self, amount: float, channel: int = 0):
         """Set breathiness (0-1)."""
