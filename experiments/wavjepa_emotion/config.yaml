@@ -1,0 +1,28 @@
+# WavJEPA emotion / baseline comparison
+# encoder: wavjepa | hubert_base | wav2vec2_base (Option B: same dir, encoder key)
+encoder: wavjepa
+
+# Checkpoint IDs (Hugging Face or local)
+wavjepa_checkpoint: "labhamlet/wavjepa-base"
+hubert_checkpoint: "facebook/hubert-base-ls960"
+wav2vec2_checkpoint: "facebook/wav2vec2-base"
+
+# Data: root = KMIDI_DATASETS_PATH | AUDIO_DATA_ROOT | config dataset_root | ~/Datasets
+# Subpaths: emotions/ravdess, emotions/cremad. Default "data" = this experiment's data/ folder (put or symlink WAVs there).
+dataset_root: "data"
+dataset_subpaths:
+  crema_d: "emotions/cremad"
+  ravdess: "emotions/ravdess"
+datasets:
+  - crema_d
+  - ravdess
+split_ratio: 0.8
+seed: 42
+
+# Preprocessing (match WavJEPA: 16 kHz, 2 s windows)
+sample_rate: 16000
+window_seconds: 2.0
+
+# Output (relative to config file dir)
+output_dir: "output"
+cache_dir: "cache"

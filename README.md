@@ -25,6 +25,7 @@ The canonical Rust layer is maintained outside this repository at:
 - `~/Dev/swif:xcode/KmiDi/KmiDi_CANON/`
 
 That path includes:
+
 - `body/` — core runtime and engine code
 - `brain/` — orchestration and model-facing logic
 - `training/` — model training and assertions
@@ -34,6 +35,7 @@ That path includes:
 
 - **Dev setup:** `./scripts/dev-setup.sh` then `npm run dev:all` (see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)).
 - **Full v1 build:** `./scripts/build_v1.sh` (entities → C++/Python → Tauri).
+- **React/Tauri/C++ integration:** See [docs/FULL_STACK_BUILD.md](docs/FULL_STACK_BUILD.md) for KellyFFI linkage, plugin build verification, and DAW/automation validation procedures.
 
 ## Operational Notes
 

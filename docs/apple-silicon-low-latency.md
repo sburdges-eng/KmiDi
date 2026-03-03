@@ -1,6 +1,6 @@
 # Low-latency tuning on Apple Silicon
 
-Practical plan for ultra-low-latency audio/ML loops on M-series Macs, tuned for KmiDi/JEPA-style streaming (I/O → encode → DSP → out). Target: sub-10 ms end-to-end; OS-level scheduling and inference placement usually dominate over micro-optimizing DSP.
+Practical plan for ultra-low-latency audio/ML loops on M-series Macs, tuned for KmiDi/JEPA-style streaming (I/O → encode → DSP → out). Target: sub-10 ms end-to-end; OS-level scheduling and inference placement usually dominate over micro-optimizing DSP. For the **encode** step (frozen audio front-end), see [WAVJEPA_LATENT_PIPELINE.md](WAVJEPA_LATENT_PIPELINE.md).
 
 ---
 

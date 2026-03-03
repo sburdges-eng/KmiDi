@@ -1,0 +1,12 @@
+{
+  "encoder": "hubert_base",
+  "n_train": 16,
+  "n_val": 4,
+  "n_classes": 5,
+  "nmi_train": 0.4639865289937396,
+  "ari_train": 0.08216783216783216,
+  "nmi_val": 0.7020168761809934,
+  "ari_val": 0.3333333333333333,
+  "accuracy_train": 1.0,
+  "accuracy_val": 0.0
+}

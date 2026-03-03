@@ -68,6 +68,8 @@ Have these available (install via OS package manager or official installers). `d
 
 ### Full-Stack Development
 
+Detailed integration/build matrix (React -> Tauri -> KellyFFI -> KellyCore) lives in [`docs/FULL_STACK_BUILD.md`](FULL_STACK_BUILD.md).
+
 **Start All Services:**
 ```bash
 npm run dev:all
@@ -92,7 +94,9 @@ This starts:
 
 **Python API only:** `npm run dev:python` — Music Brain API at http://localhost:8000, Swagger at /docs
 
-**C++ (Kelly FFI):** Build from repo root: `cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_KELLY_CORE=ON` then `cmake --build build --target KellyFFI`. Re-run after C++ changes; Tauri will pick up the library from `build/` or `build/release/`.
+**C++ (Kelly FFI):** Build from repo root: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_KELLY_CORE=ON -DKMIDI_BUILD_JUCE_UI=ON -DBUILD_PLUGINS=ON` then `cmake --build build --target KellyFFI`. Re-run after C++ changes; Tauri picks up the library from `build/`, `build/debug/`, or `build/release/` per `src-tauri/build.rs`.
+
+**Plugin notes:** Root project uses `BUILD_PLUGINS`/`KMIDI_BUILD_JUCE_UI` (Kelly VST3 path). Legacy `DAIW_BUILD_VST3`/`DAIW_BUILD_AU` options belong to `KmiDi_FINAL/engine/cpp_music_brain` only.
 
 ### Build Workflows
 

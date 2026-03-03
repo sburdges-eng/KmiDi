@@ -1,0 +1,10 @@
+# WavJEPA emotion / baseline comparison (frozen encoders, inference only)
+transformers>=4.36
+torch
+scikit-learn
+soundfile
+librosa
+numpy
+pyyaml
+
+# WavJEPA: labhamlet/wavjepa-base (Hugging Face) or official repo for loading

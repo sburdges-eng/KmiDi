@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-28  
 **Purpose:** Architecture for conditioning JEPA on high-resolution UMP controller data via a parallel expressive channel (no raw CC tokens in the note stream).  
-**Related:** [STEM_JEPA_INTEGRATION.md](research/STEM_JEPA_INTEGRATION.md), [REMI_BPE_TOKENIZATION.md](REMI_BPE_TOKENIZATION.md), [apple-silicon-low-latency.md](apple-silicon-low-latency.md)
+**Related:** [STEM_JEPA_INTEGRATION.md](research/STEM_JEPA_INTEGRATION.md), [REMI_BPE_TOKENIZATION.md](REMI_BPE_TOKENIZATION.md), [apple-silicon-low-latency.md](apple-silicon-low-latency.md), [WAVJEPA_LATENT_PIPELINE.md](WAVJEPA_LATENT_PIPELINE.md)
 
 ---
 
@@ -68,7 +68,7 @@ Reference: `experiments/ump_jepa/control_embedding.py` (UMPControlEmbedding).
 
 ## 3. JEPA integration
 
-- **Context encoder:** receives note (or audio) tokens **and** control embedding. Inject control as a **bias** (e.g. linear projection of control embedding added to encoder hidden states). Do not concatenate to every token; do not inflate sequence length.
+- **Context encoder:** receives note (or audio) tokens **and** control embedding. Inject control as a **bias** (e.g. linear projection of control embedding added to encoder hidden states). Do not concatenate to every token; do not inflate sequence length. A frozen audio front-end (e.g. WavJEPA) can feed the context encoder; see [WAVJEPA_LATENT_PIPELINE.md](WAVJEPA_LATENT_PIPELINE.md).
 - **Target encoder:** does **not** see control. It encodes future tokens only.
 - **Loss:** standard JEPA latent alignment (e.g. cosine similarity between predicted and target latents).
 
