@@ -310,5 +310,107 @@ class TestSemanticCorrectness:
         assert intent.song_intent.mood_secondary_tension <= 0.2
 
 
+class TestStrictParameterMapping:
+    """Test that UI parameters map strictly through to CompleteSongIntent (no silent defaults)."""
+
+    def _make_validated_request(self, overrides=None):
+        """Build a minimal valid CompleteSongIntentRequest payload."""
+        from music_brain.engine_api.schema import CompleteSongIntentRequest
+
+        payload = {
+            "core_desire": "healing through loss",
+            "mood_primary": "melancholy",
+            "genre": "ambient",
+            "tempo": 90,
+            "key_mode": "C minor",
+            "structure": [{"name": "intro", "bars": 8, "repetitions": 1}],
+            "instruments": [{"instrument": "piano", "techniques": ["arpeggiated"]}],
+            "allow_legacy_fallback": False,
+            "groove_feel": "Swing/Laid-back",
+            "narrative_arc": "Slow-Burn",
+            "rule_to_break": "parallel_fifths",
+            "rule_justification": "Creates raw emotional power",
+        }
+        if overrides:
+            payload.update(overrides)
+        return CompleteSongIntentRequest.model_validate(payload)
+
+    def test_groove_feel_maps_to_intent(self):
+        """groove_feel must reach CompleteSongIntent.technical_constraints."""
+        validated = self._make_validated_request()
+        intent = CompleteSongIntent(
+            technical_groove_feel=validated.groove_feel,
+        )
+        assert intent.technical_constraints.technical_groove_feel == "Swing/Laid-back"
+
+    def test_narrative_arc_maps_to_intent(self):
+        """narrative_arc must reach CompleteSongIntent.song_intent."""
+        validated = self._make_validated_request()
+        intent = CompleteSongIntent(
+            narrative_arc=validated.narrative_arc,
+        )
+        assert intent.song_intent.narrative_arc == "Slow-Burn"
+
+    def test_rule_to_break_maps_to_intent(self):
+        """rule_to_break must reach CompleteSongIntent.technical_constraints."""
+        validated = self._make_validated_request()
+        intent = CompleteSongIntent(
+            technical_rule_to_break=validated.rule_to_break or "",
+            rule_breaking_justification=validated.rule_justification or "",
+        )
+        assert intent.technical_constraints.technical_rule_to_break == "parallel_fifths"
+        assert intent.technical_constraints.rule_breaking_justification == "Creates raw emotional power"
+
+    def test_vulnerability_scale_not_hardcoded(self):
+        """vulnerability_scale from the request must not be replaced by a hardcoded 0.5."""
+        intent_low = CompleteSongIntent(vulnerability_scale=0.1)
+        assert intent_low.song_intent.vulnerability_scale == "Low"
+
+        intent_high = CompleteSongIntent(vulnerability_scale=0.9)
+        assert intent_high.song_intent.vulnerability_scale == "High"
+
+    def test_defaults_when_optional_fields_absent(self):
+        """Optional fields use sensible defaults, not empty strings."""
+        validated = self._make_validated_request(
+            {"rule_to_break": None, "rule_justification": None}
+        )
+        assert validated.groove_feel == "Swing/Laid-back"
+        assert validated.narrative_arc == "Slow-Burn"
+        assert validated.rule_to_break is None
+        assert validated.rule_justification is None
+
+    def test_full_convert_roundtrip(self):
+        """Simulate the full _convert_to_intent mapping path."""
+        validated = self._make_validated_request()
+        key_parts = validated.key_mode.split()
+        technical_key = key_parts[0]
+        technical_mode = key_parts[1].lower()
+        tempo_range = (max(60, validated.tempo - 20), min(140, validated.tempo + 20))
+
+        intent = CompleteSongIntent(
+            core_event=validated.core_desire,
+            core_longing=validated.core_desire,
+            mood_primary=validated.mood_primary,
+            narrative_arc=validated.narrative_arc,
+            vulnerability_scale=0.7,
+            technical_genre=validated.genre,
+            technical_tempo_range=tempo_range,
+            technical_key=technical_key,
+            technical_mode=technical_mode,
+            technical_groove_feel=validated.groove_feel,
+            technical_rule_to_break=validated.rule_to_break or "",
+            rule_breaking_justification=validated.rule_justification or "",
+        )
+
+        assert intent.song_intent.narrative_arc == "Slow-Burn"
+        assert intent.song_intent.vulnerability_scale == "High"
+        assert intent.technical_constraints.technical_groove_feel == "Swing/Laid-back"
+        assert intent.technical_constraints.technical_rule_to_break == "parallel_fifths"
+        assert intent.technical_constraints.rule_breaking_justification == "Creates raw emotional power"
+        assert intent.technical_constraints.technical_genre == "ambient"
+        assert intent.technical_constraints.technical_key == "C"
+        assert intent.technical_constraints.technical_mode == "minor"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
