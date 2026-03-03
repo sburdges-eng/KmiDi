@@ -52,7 +52,8 @@ Compute **windowed** expressive state per CC:
 
 - **Perceptual quantization:** map 32-bit value to ~14-bit effective (e.g. sqrt scaling) so resolution matches perceptual sensitivity.
 - **Per window:** mean, std, slope (or similar) → 3 integers per CC. Dense, not spam.
-- Reference implementation: `experiments/exp_001_ump_jepa/ump_aggregate.py` (perceptual_quantize, aggregate_window).
+
+Reference implementation: `experiments/ump_jepa/ump_aggregate.py` (perceptual_quantize, aggregate_window).
 
 ---
 
@@ -60,7 +61,8 @@ Compute **windowed** expressive state per CC:
 
 - Embed the aggregated control state **numerically** (embedding over binned values), not as giant discrete vocab tokens.
 - Per CC: embed mean, std, slope; combine by **sum** (or concat if you want a larger projection). Output: one vector per window.
-- Reference: `experiments/exp_001_ump_jepa/control_embedding.py` (UMPControlEmbedding).
+
+Reference: `experiments/ump_jepa/control_embedding.py` (UMPControlEmbedding).
 
 ---
 

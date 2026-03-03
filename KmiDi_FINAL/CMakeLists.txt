@@ -133,7 +133,8 @@ if(ENABLE_RTNEURAL)
         FetchContent_Declare(
             rtneural
             GIT_REPOSITORY https://github.com/jatinchowdhury18/RTNeural.git
-            GIT_TAG 1fb1f075a5d66e85bfc8f488c3f3626840cb3a1d
+            GIT_TAG main
+            GIT_SHALLOW TRUE
         )
         FetchContent_MakeAvailable(rtneural)
         set(RTNeural_FOUND TRUE)

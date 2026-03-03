@@ -44,7 +44,7 @@ Summary of completed work and the approaches used, derived from the repository s
 **How it was done:**
 
 - **`scripts/dev-setup.sh`:** Runs (1) `bootstrap.sh`, (2) `npm install`, (3) `pip install -e .` (and optional uvicorn/pybind11/pydantic). After this, developers use `npm run dev:all` (or individual dev commands).
-- **`bootstrap.sh`:** (1) Initializes all git submodules recursively (e.g. `git submodule update --init --recursive`) to unblock the C++ build; (2) Checks CMake ≥ 3.27 and Node version for Tauri; (3) Resolves pybind11 for CMake and echoes the recommended `cmake` invocation.
+- **`bootstrap.sh`:** (1) Initializes the JUCE submodule (`git submodule update --init --recursive external/JUCE`) to unblock the C++ build; (2) Checks CMake ≥ 3.27 and Node version for Tauri; (3) Resolves pybind11 for CMake and echoes the recommended `cmake` invocation.
 
 **References:** `docs/DEVELOPMENT.md`, `scripts/dev-setup.sh`, `bootstrap.sh`.
 
@@ -125,7 +125,7 @@ Summary of completed work and the approaches used, derived from the repository s
 | **V1 architecture** | Single UI path (Tauri+React), headless engine | ADR 001; CMake defaults; CI v1 build |
 | **API/schema** | SSOT for intent request; TS + Rust generation | Pydantic `engine_api.schema`; `sync_entities.py`; drift check in CI |
 | **Dev setup** | One-command dev env | `dev-setup.sh` → bootstrap + npm + pip |
-| **Bootstrap** | All submodules, CMake/Node checks, pybind11 | `bootstrap.sh` |
+| **Bootstrap** | JUCE submodule, CMake/Node checks, pybind11 | `bootstrap.sh` |
 | **V1 build** | Full pipeline: entities → C++ → PyInstaller → Tauri | `build_v1.sh` |
 | **CI** | Python + C++ + v1 shell + drift + schema tests | `.github/workflows/ci.yml` |
 | **V1 release** | Cross-OS build and contract checks | `.github/workflows/v1-release.yml` |

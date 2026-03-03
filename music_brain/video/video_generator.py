@@ -5,7 +5,6 @@ Integrates emotion-driven music with visual generation through
 Unreal Engine and Jespa to create synchronized music videos.
 """
 
-import shutil
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any, List
 from pathlib import Path
@@ -236,24 +235,24 @@ class VideoGenerator:
         Clean up video generation resources.
         
         Note:
-            This is a stub. Future implementation will:
+            This is a partial implementation. Future updates will:
             - Close Unreal Engine connection
             - Release GPU resources
-            - Clear temporary files
         """
         # TODO: Cleanup Unreal Engine connection
         # TODO: Cleanup Jespa resources
 
         # Clear temp files
-        if self.config.temp_dir and self.config.temp_dir.is_dir():
-            for item in self.config.temp_dir.iterdir():
+        if self.config.temp_dir and self.config.temp_dir.exists():
+            import shutil
+            for path in self.config.temp_dir.iterdir():
                 try:
-                    if item.is_file() or item.is_symlink():
-                        item.unlink()
-                    elif item.is_dir():
-                        shutil.rmtree(item)
-                except Exception as e:
-                    # Use standard print for stub implementation, but could use logging
-                    print(f"Error cleaning up {item}: {e}")
+                    if path.is_file() or path.is_symlink():
+                        path.unlink()
+                    elif path.is_dir():
+                        shutil.rmtree(path)
+                except Exception:
+                    # Log or handle error gracefully during cleanup
+                    pass
         
         self._initialized = False

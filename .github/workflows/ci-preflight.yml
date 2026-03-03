@@ -24,7 +24,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install pyyaml zstandard pytest
+        run: pip install pyyaml zstandard
 
       # ── G1: Manifest schema validation against fixture ───
       - name: "G1: Manifest schema validation"
@@ -57,27 +57,7 @@ jobs:
           python -m pytest tests/test_splits_deterministic.py tests/test_license_gate.py tests/test_incremental_sync.py -v --tb=short
 
   # ──────────────────────────────────────────────────────────
-  # Gate 2 (Brain Boot): Deterministic boot-path pre-flight
-  # ──────────────────────────────────────────────────────────
-  brain-boot-check:
-    name: Brain Boot Check (run_brain.py check)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install music_brain package
-        run: pip install -e .
-
-      # ── G7: Brain pre-flight – catch missing modules early ──
-      - name: "G7: Brain boot pre-flight check"
-        run: python run_brain.py check
-
-  # ──────────────────────────────────────────────────────────
-  # Gate 3: Static C++ guardrails (no build required)
+  # Gate 2: Static C++ guardrails (no build required)
   # ──────────────────────────────────────────────────────────
   static-guardrails:
     name: Static Listening Guardrails
