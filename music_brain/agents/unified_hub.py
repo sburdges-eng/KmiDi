@@ -401,6 +401,8 @@ class LocalVoiceSynth:
         if self.midi:
             # Map F1 (200-1000 Hz) to CC value 0-127
             f1_cc = int((f1 - 200) / 800 * 127)
+            # Clamp to valid MIDI CC range to avoid out-of-range values
+            f1_cc = max(0, min(127, f1_cc))
             self.midi.send_cc(VoiceCC.FORMANT_SHIFT.value, f1_cc, channel)
 
     def set_breathiness(self, amount: float, channel: int = 0):
