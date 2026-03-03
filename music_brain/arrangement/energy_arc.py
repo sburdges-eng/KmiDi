@@ -8,7 +8,7 @@ Creates energy progression curves based on:
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Callable
+from typing import List, Dict, Optional
 from enum import Enum
 import math
 
@@ -31,35 +31,35 @@ class EnergyArc:
     energy_curve: List[float]  # Energy value per section (0.0-1.0)
     peak_position: float = 0.7  # Where peak occurs (0.0-1.0)
     intensity_range: tuple = (0.2, 0.9)  # Min/max energy
-    
+
     def get_energy_at_position(self, position: float) -> float:
         """
         Get energy at a specific position in the song.
-        
+
         Args:
             position: Position from 0.0 (start) to 1.0 (end)
-        
+
         Returns:
             Energy level at that position
         """
         if not self.energy_curve:
             return 0.5
-        
+
         # Interpolate between points
         index = position * (len(self.energy_curve) - 1)
         lower_idx = int(index)
         upper_idx = min(lower_idx + 1, len(self.energy_curve) - 1)
-        
+
         if lower_idx == upper_idx:
             return self.energy_curve[lower_idx]
-        
+
         # Linear interpolation
         frac = index - lower_idx
         lower_val = self.energy_curve[lower_idx]
         upper_val = self.energy_curve[upper_idx]
-        
+
         return lower_val + (upper_val - lower_val) * frac
-    
+
     def to_dict(self) -> Dict:
         """Convert to dictionary."""
         return {
@@ -78,50 +78,50 @@ def calculate_energy_curve(
 ) -> EnergyArc:
     """
     Calculate energy curve for a given narrative arc.
-    
+
     Args:
         narrative_arc: Type of narrative progression
         num_sections: Number of sections in arrangement
         base_intensity: Overall intensity level (0.0-1.0)
         peak_position: Where peak should occur (None = use default)
-    
+
     Returns:
         EnergyArc with calculated curve
     """
     # Determine intensity range based on base intensity
     min_energy = max(0.1, base_intensity - 0.3)
     max_energy = min(1.0, base_intensity + 0.3)
-    
+
     # Use default peak position if not specified
     if peak_position is None:
         peak_position = _get_default_peak_position(narrative_arc)
-    
+
     # Calculate curve based on arc type
     if narrative_arc == NarrativeArc.CLIMB_TO_CLIMAX:
         energy_curve = _climb_to_climax(num_sections, min_energy, max_energy, peak_position)
-    
+
     elif narrative_arc == NarrativeArc.SLOW_REVEAL:
         energy_curve = _slow_reveal(num_sections, min_energy, max_energy)
-    
+
     elif narrative_arc == NarrativeArc.REPETITIVE_DESPAIR:
         energy_curve = _repetitive_despair(num_sections, base_intensity)
-    
+
     elif narrative_arc == NarrativeArc.SUDDEN_BREAK:
         energy_curve = _sudden_break(num_sections, min_energy, max_energy)
-    
+
     elif narrative_arc == NarrativeArc.QUIET_ACCEPTANCE:
         energy_curve = _quiet_acceptance(num_sections, min_energy)
-    
+
     elif narrative_arc == NarrativeArc.EXPLOSIVE_START:
         energy_curve = _explosive_start(num_sections, min_energy, max_energy)
-    
+
     elif narrative_arc == NarrativeArc.WAVE_PATTERN:
         energy_curve = _wave_pattern(num_sections, min_energy, max_energy)
-    
+
     else:
         # Default linear growth
         energy_curve = _linear_growth(num_sections, min_energy, max_energy)
-    
+
     return EnergyArc(
         narrative_arc=narrative_arc,
         energy_curve=energy_curve,
@@ -157,7 +157,7 @@ def _climb_to_climax(
     """Gradual build to peak, then slight decline."""
     curve = []
     peak_idx = int(num_sections * peak_pos)
-    
+
     for i in range(num_sections):
         if i < peak_idx:
             # Build to peak
@@ -168,9 +168,9 @@ def _climb_to_climax(
             # Slight decline after peak
             progress = (i - peak_idx) / max(num_sections - peak_idx, 1)
             energy = max_energy - (max_energy - min_energy) * 0.2 * progress
-        
+
         curve.append(energy)
-    
+
     return curve
 
 
@@ -178,7 +178,7 @@ def _slow_reveal(num_sections: int, min_energy: float, max_energy: float) -> Lis
     """Stay low for most of song, late intensity surge."""
     curve = []
     reveal_point = int(num_sections * 0.7)
-    
+
     for i in range(num_sections):
         if i < reveal_point:
             # Stay relatively flat and low
@@ -188,9 +188,9 @@ def _slow_reveal(num_sections: int, min_energy: float, max_energy: float) -> Lis
             # Rapid rise to full intensity
             progress = (i - reveal_point) / max(num_sections - reveal_point, 1)
             energy = min_energy + (max_energy - min_energy) * (0.2 + 0.8 * (progress ** 0.5))
-        
+
         curve.append(energy)
-    
+
     return curve
 
 
@@ -204,7 +204,7 @@ def _repetitive_despair(num_sections: int, base_intensity: float) -> List[float]
         variation = 0.1 * math.sin(phase * 2)  # Two cycles
         energy = base_intensity + variation
         curve.append(max(0.2, min(0.8, energy)))
-    
+
     return curve
 
 
@@ -212,7 +212,7 @@ def _sudden_break(num_sections: int, min_energy: float, max_energy: float) -> Li
     """Calm opening, sudden shift to intensity."""
     curve = []
     break_point = int(num_sections * 0.4)
-    
+
     for i in range(num_sections):
         if i < break_point:
             # Stay calm
@@ -220,9 +220,9 @@ def _sudden_break(num_sections: int, min_energy: float, max_energy: float) -> Li
         else:
             # Sudden jump to high energy
             energy = max_energy * 0.95
-        
+
         curve.append(energy)
-    
+
     return curve
 
 
@@ -234,7 +234,7 @@ def _quiet_acceptance(num_sections: int, min_energy: float) -> List[float]:
         progress = i / max(num_sections - 1, 1)
         energy = min_energy + 0.15 * progress
         curve.append(min(0.5, energy))
-    
+
     return curve
 
 
@@ -246,7 +246,7 @@ def _explosive_start(num_sections: int, min_energy: float, max_energy: float) ->
         # Exponential decay
         energy = max_energy - (max_energy - min_energy) * (progress ** 0.7)
         curve.append(energy)
-    
+
     return curve
 
 
@@ -254,18 +254,18 @@ def _wave_pattern(num_sections: int, min_energy: float, max_energy: float) -> Li
     """Multiple peaks and valleys."""
     curve = []
     num_waves = 2  # Two major waves
-    
+
     for i in range(num_sections):
         # Sine wave with upward trend
         phase = (i / num_sections) * num_waves * 2 * math.pi
         wave = (math.sin(phase) + 1) / 2  # Normalize to 0-1
-        
+
         # Add upward trend
         trend = i / max(num_sections - 1, 1) * 0.3
-        
+
         energy = min_energy + (max_energy - min_energy) * (wave * 0.7 + trend)
         curve.append(energy)
-    
+
     return curve
 
 
@@ -276,7 +276,7 @@ def _linear_growth(num_sections: int, min_energy: float, max_energy: float) -> L
         progress = i / max(num_sections - 1, 1)
         energy = min_energy + (max_energy - min_energy) * progress
         curve.append(energy)
-    
+
     return curve
 
 
@@ -287,28 +287,28 @@ def _linear_growth(num_sections: int, min_energy: float, max_energy: float) -> L
 def smooth_energy_curve(curve: List[float], smoothing: float = 0.3) -> List[float]:
     """
     Smooth energy curve to avoid sudden jumps.
-    
+
     Args:
         curve: Energy curve to smooth
         smoothing: Smoothing factor (0.0 = no smoothing, 1.0 = max smoothing)
-    
+
     Returns:
         Smoothed curve
     """
     if len(curve) < 3 or smoothing <= 0:
         return curve
-    
+
     smoothed = [curve[0]]  # Keep first value
-    
+
     for i in range(1, len(curve) - 1):
         # Simple moving average
         avg = (curve[i-1] + curve[i] + curve[i+1]) / 3
         # Blend original and averaged
         smoothed_val = curve[i] * (1 - smoothing) + avg * smoothing
         smoothed.append(smoothed_val)
-    
+
     smoothed.append(curve[-1])  # Keep last value
-    
+
     return smoothed
 
 
@@ -318,11 +318,11 @@ def map_emotion_to_arc(
 ) -> NarrativeArc:
     """
     Map emotional state to narrative arc.
-    
+
     Args:
         primary_emotion: Primary emotion (grief, anxiety, etc.)
         secondary_tension: Internal conflict level (0.0-1.0)
-    
+
     Returns:
         Recommended narrative arc
     """
@@ -338,10 +338,10 @@ def map_emotion_to_arc(
         "joy": NarrativeArc.WAVE_PATTERN,
         "calm": NarrativeArc.QUIET_ACCEPTANCE,
     }
-    
+
     # Get base arc from emotion
     base_arc = emotion_arcs.get(primary_emotion.lower(), NarrativeArc.CLIMB_TO_CLIMAX)
-    
+
     # Modify based on secondary tension
     if secondary_tension > 0.7:
         # High tension -> more dramatic arcs
@@ -349,5 +349,5 @@ def map_emotion_to_arc(
             return NarrativeArc.SUDDEN_BREAK
         elif base_arc == NarrativeArc.SLOW_REVEAL:
             return NarrativeArc.CLIMB_TO_CLIMAX
-    
+
     return base_arc

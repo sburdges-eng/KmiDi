@@ -4,13 +4,11 @@ Suggestion Bridge - Python interface for C++ to call SuggestionEngine.
 Provides a simple function that C++ can call to get suggestions.
 """
 
-from typing import Dict, List, Any, Optional
+from typing import Optional
 import json
 
 from music_brain.intelligence.suggestion_engine import (
     SuggestionEngine,
-    Suggestion,
-    SuggestionType,
 )
 from music_brain.learning.user_preferences import UserPreferenceModel
 from music_brain.intelligence.context_analyzer import ContextAnalyzer
@@ -73,8 +71,6 @@ def get_suggestions(
             ...
         ]
     """
-    global _suggestion_engine, _preference_model
-
     # Initialize if not already done
     if _suggestion_engine is None:
         initialize_suggestion_system()
@@ -104,7 +100,7 @@ def get_suggestions(
 
         return json.dumps(suggestions_dict)
 
-    except Exception as e:
+    except Exception:  # noqa: F841
         # Return empty list on error
         return json.dumps([])
 
@@ -122,8 +118,6 @@ def record_suggestion_shown(
         suggestion_type: Type of suggestion ("parameter", "emotion", etc.)
         context_json: JSON string with context information
     """
-    global _preference_model
-
     if _preference_model is None:
         initialize_suggestion_system()
 
@@ -134,7 +128,7 @@ def record_suggestion_shown(
             suggestion_type=suggestion_type,
             context=context
         )
-    except Exception as e:
+    except Exception:  # noqa: F841
         pass  # Silently fail - tracking is not critical
 
 
@@ -145,14 +139,12 @@ def record_suggestion_accepted(suggestion_id: str):
     Args:
         suggestion_id: Unique identifier for the suggestion
     """
-    global _preference_model
-
     if _preference_model is None:
         initialize_suggestion_system()
 
     try:
         _preference_model.record_suggestion_accepted(suggestion_id)
-    except Exception as e:
+    except Exception:  # noqa: F841
         pass  # Silently fail - tracking is not critical
 
 
@@ -163,12 +155,10 @@ def record_suggestion_dismissed(suggestion_id: str):
     Args:
         suggestion_id: Unique identifier for the suggestion
     """
-    global _preference_model
-
     if _preference_model is None:
         initialize_suggestion_system()
 
     try:
         _preference_model.record_suggestion_dismissed(suggestion_id)
-    except Exception as e:
+    except Exception:  # noqa: F841
         pass  # Silently fail - tracking is not critical

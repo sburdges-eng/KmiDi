@@ -7,7 +7,6 @@ specification. These are used for emitting IntentFrames from Python ML code.
 
 from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import Optional
 import json
 
 # Intent IR version
@@ -92,7 +91,7 @@ class IntentFrame:
     time: TimeScope = field(default_factory=TimeScope)
     constraints: IntentConstraints = field(default_factory=IntentConstraints)
     provenance: IntentProvenance = field(default_factory=IntentProvenance)
-    
+
     def to_json(self) -> str:
         """Serialize IntentFrame to JSON"""
         # Convert enum to int for JSON serialization
@@ -132,7 +131,8 @@ class IntentFrame:
                 'allowed_engines_mask': self.constraints.allowed_engines_mask,
                 'forbidden_engines_mask': self.constraints.forbidden_engines_mask,
                 'max_cpu_cost': self.constraints.max_cpu_cost,
-                'max_event_rate': self.constraints.max_event_rate if self.constraints.max_event_rate != float('inf') else -1.0,
+                'max_event_rate': self.constraints.max_event_rate if self.constraints.max_event_rate != float('inf') else -1.0,  # noqa: E501
+
             },
             'provenance': {
                 'source': int(self.provenance.source),
@@ -140,17 +140,17 @@ class IntentFrame:
             },
         }
         return json.dumps(data)
-    
+
     @classmethod
     def from_json(cls, json_str: str) -> 'IntentFrame':
         """Deserialize IntentFrame from JSON"""
         data = json.loads(json_str)
-        
+
         # Handle max_event_rate special case
         max_event_rate = data['constraints']['max_event_rate']
         if max_event_rate == -1.0:
             max_event_rate = float('inf')
-        
+
         return cls(
             meta=IntentMeta(**data['meta']),
             emotion=EmotionState(**data['emotion']),

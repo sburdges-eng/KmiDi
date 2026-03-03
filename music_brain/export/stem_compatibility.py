@@ -2,7 +2,8 @@
 Stem compatibility scoring.
 
 Public API: StemCompatibilityScore.stem_pairs is Dict[Tuple[StemType, StemType], float].
-Keys are always StemType pairs so callers can look up via stem_pairs[(StemType.BASS, StemType.DRUMS)].
+Keys are always StemType pairs so callers can look up via stem_pairs[(StemType.BASS, StemType.DRUMS)].  # noqa: E501
+
 Input stems may be passed as str or StemType; we normalize to StemType when building stem_pairs.
 """
 
@@ -66,6 +67,7 @@ def compute_compatibility(
             ka = StemType.from_key(keys[i])
             kb = StemType.from_key(keys[j])
             pair = (ka, kb) if ka.value <= kb.value else (kb, ka)
-            # Placeholder: real implementation would compute score from stems[keys[i]], stems[keys[j]]
+            # Placeholder: real implementation would compute score from stems[keys[i]], stems[keys[j]]  # noqa: E501
+
             score.stem_pairs[pair] = 1.0
     return score

@@ -5,7 +5,7 @@ Provides comprehensive tools for music ML training:
 
 Modules:
 - augmentation: Advanced audio data augmentation
-- losses: Music-aware custom loss functions  
+- losses: Music-aware custom loss functions
 - architectures: Attention, residual, and multi-task models
 - evaluation: Metrics and validation algorithms
 

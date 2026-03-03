@@ -9,8 +9,7 @@ Provides:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
-from enum import Enum
+from typing import List, Dict, Optional
 import math
 
 
@@ -114,8 +113,11 @@ class Polyrhythm:
 
         for layer_idx, positions in self.pattern.get_all_positions().items():
             layer_notes = self.notes[layer_idx] if layer_idx < len(self.notes) else [60]
-            layer_velocities = self.velocities[layer_idx] if layer_idx < len(self.velocities) else [100]
-            layer_accents = self.pattern.accents[layer_idx] if layer_idx < len(self.pattern.accents) else [1.0]
+            layer_velocities = self.velocities[layer_idx] if layer_idx < len(self.velocities) else [
+                                                                             100]
+            layer_accents = self.pattern.accents[layer_idx] if layer_idx < len(self.pattern.accents) else [  # noqa: E501
+
+                                                                               1.0]
 
             for i, pos in enumerate(positions):
                 note = layer_notes[i % len(layer_notes)]
@@ -361,7 +363,7 @@ def create_polyrhythmic_grid(
     Returns:
         2D list where each row is a layer and columns are subdivisions
     """
-    lcm = calculate_lcm(*ratios)
+    _lcm = calculate_lcm(*ratios)  # noqa: F841
     grid = []
 
     for ratio in ratios:

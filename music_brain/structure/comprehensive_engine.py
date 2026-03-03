@@ -14,15 +14,15 @@ for people; it should make them braver.
 """
 
 import random
-import sys
 from pathlib import Path
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Any
+from dataclasses import dataclass
+from typing import List, Dict, Optional, Any
 MIDO_AVAILABLE = False
 
 # ==============================================================================
 # 1. AFFECT ANALYZER (Scored & Ranked)
 # ==============================================================================
+
 
 @dataclass
 class AffectResult:
@@ -39,12 +39,16 @@ class AffectAnalyzer:
     Exposes raw scores for tie-breaking and nuance.
     """
     KEYWORDS = {
-        "grief": {"loss", "gone", "miss", "dead", "died", "funeral", "mourning", "never again", "empty"},
-        "rage": {"angry", "furious", "hate", "betrayed", "unfair", "revenge", "burn", "fight", "destroy"},
+        "grief": {"loss", "gone", "miss", "dead", "died", "funeral", "mourning", "never again", "empty"},  # noqa: E501
+
+        "rage": {"angry", "furious", "hate", "betrayed", "unfair", "revenge", "burn", "fight", "destroy"},  # noqa: E501
+
         "awe": {"wonder", "beautiful", "infinite", "god", "universe", "transcend", "light", "vast"},
-        "nostalgia": {"remember", "used to", "childhood", "back when", "old days", "memory", "home"},
+        "nostalgia": {"remember", "used to", "childhood", "back when", "old days", "memory", "home"},  # noqa: E501
+
         "fear": {"scared", "terrified", "panic", "can't breathe", "trapped", "anxious", "dread"},
-        "dissociation": {"numb", "nothing", "floating", "unreal", "detached", "fog", "grey", "wall"},
+        "dissociation": {"numb", "nothing", "floating", "unreal", "detached", "fog", "grey", "wall"},  # noqa: E501
+
         "defiance": {"won't", "refuse", "stand", "strong", "break", "free", "my own", "no more"},
         "tenderness": {"soft", "gentle", "hold", "love", "kind", "care", "fragile", "warm"},
         "confusion": {"why", "lost", "don't know", "spinning", "chaos", "strange", "question"}
@@ -75,7 +79,8 @@ class AffectAnalyzer:
         sorted_affects = sorted(scores.items(), key=lambda x: x[1], reverse=True)
 
         primary = sorted_affects[0][0] if sorted_affects[0][1] > 0 else "neutral"
-        secondary = sorted_affects[1][0] if len(sorted_affects) > 1 and sorted_affects[1][1] > 0 else None
+        secondary = sorted_affects[1][0] if len(
+            sorted_affects) > 1 and sorted_affects[1][1] > 0 else None
 
         # Calculate intensity (simple saturation at 3 keywords)
         intensity = min(1.0, sorted_affects[0][1] / 3.0) if sorted_affects[0][1] > 0 else 0.0
@@ -129,7 +134,8 @@ class HarmonyPlan:
     complexity: float         # 0.0 - 1.0, influences generation chaos
     vulnerability: float = 0.0  # Optional vulnerability scale (0-1) for therapy contexts
     structure: Optional[List[Dict[str, Any]]] = None  # Song sections with bars and chords
-    instruments: Optional[List[Dict[str, Any]]] = None  # Instrument definitions with channels and types
+    # Instrument definitions with channels and types
+    instruments: Optional[List[Dict[str, Any]]] = None
 
 
 # ==============================================================================
@@ -200,7 +206,7 @@ class TherapySession:
             "nostalgia": "dorian",     # Sentimental minor
             "rage": "phrygian",        # Aggressive minor (flamenco)
             "fear": "phrygian",        # Tension
-            "dissociation": "locrian", # Unstable, diminished
+            "dissociation": "locrian",  # Unstable, diminished
             "grief": "aeolian",        # Sad natural minor
             "defiance": "mixolydian",  # Major with flat 7 (rock/rebellion)
             "tenderness": "ionian",    # Gentle major
@@ -326,17 +332,17 @@ class TherapySession:
 # 5. INSTRUMENT PATTERN GENERATORS
 # ==============================================================================
 
-def generate_bass_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, beats_per_bar: int) -> List[Dict[str, Any]]:
+def generate_bass_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, beats_per_bar: int) -> List[Dict[str, Any]]:  # noqa: E501
     """
     Generate bass pattern (root notes) from chord progression.
-    
+
     Args:
         chords: List of parsed chord objects
         bars: Number of bars
         tempo: Tempo in BPM
         ppq: Pulses per quarter note
         beats_per_bar: Beats per bar
-        
+
     Returns:
         List of note dicts for bass track
     """
@@ -344,15 +350,15 @@ def generate_bass_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, be
     bar_ticks = beats_per_bar * ppq
     start_tick = 0
     current_bar = 0
-    
+
     while current_bar < bars:
         for parsed in chords:
             if current_bar >= bars:
                 break
-            
+
             root_midi = 36 + parsed.root_num  # C2 as base for bass (one octave below C3)
             duration_ticks = bar_ticks
-            
+
             # Simple root note on beat 1, optional 8th note on beat 3
             notes.append({
                 "pitch": root_midi,
@@ -360,7 +366,7 @@ def generate_bass_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, be
                 "start_tick": start_tick,
                 "duration_ticks": duration_ticks // 2,
             })
-            
+
             # Optional 8th note on beat 3
             if current_bar % 2 == 0:  # Every other bar
                 notes.append({
@@ -369,39 +375,41 @@ def generate_bass_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, be
                     "start_tick": start_tick + (bar_ticks // 2),
                     "duration_ticks": duration_ticks // 4,
                 })
-            
+
             start_tick += duration_ticks
             current_bar += 1
-    
+
     return notes
 
 
-def generate_drum_pattern(bars: int, tempo: int, ppq: int, beats_per_bar: int, style: str = "pop") -> List[Dict[str, Any]]:
+def generate_drum_pattern(
+        bars: int, tempo: int, ppq: int, beats_per_bar: int, style: str = "pop") -> List[
+        Dict[str, Any]]:
     """
     Generate drum pattern (kick, snare, hi-hat).
-    
+
     Args:
         bars: Number of bars
         tempo: Tempo in BPM
         ppq: Pulses per quarter note
         beats_per_bar: Beats per bar
         style: Drum style ("pop", "rock", "jazz")
-        
+
     Returns:
         List of note dicts for drum track
     """
     notes = []
     bar_ticks = beats_per_bar * ppq
     sixteenth_ticks = ppq // 4
-    
+
     # GM drum notes
     KICK = 36   # C1
     SNARE = 38  # D1
     HIHAT = 42  # F#1
-    
+
     for bar in range(bars):
         bar_start = bar * bar_ticks
-        
+
         if style == "pop" or style == "rock":
             # Kick on 1 and 3
             notes.append({
@@ -416,7 +424,7 @@ def generate_drum_pattern(bars: int, tempo: int, ppq: int, beats_per_bar: int, s
                 "start_tick": bar_start + (bar_ticks // 2),
                 "duration_ticks": sixteenth_ticks * 2,
             })
-            
+
             # Snare on 2 and 4
             notes.append({
                 "pitch": SNARE,
@@ -430,7 +438,7 @@ def generate_drum_pattern(bars: int, tempo: int, ppq: int, beats_per_bar: int, s
                 "start_tick": bar_start + (3 * bar_ticks // 4),
                 "duration_ticks": sixteenth_ticks * 2,
             })
-            
+
             # Hi-hat on 8th notes
             for i in range(8):
                 notes.append({
@@ -453,21 +461,21 @@ def generate_drum_pattern(bars: int, tempo: int, ppq: int, beats_per_bar: int, s
                 "start_tick": bar_start + (bar_ticks // 2),
                 "duration_ticks": sixteenth_ticks * 2,
             })
-    
+
     return notes
 
 
-def generate_arpeggio_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, beats_per_bar: int) -> List[Dict[str, Any]]:
+def generate_arpeggio_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, beats_per_bar: int) -> List[Dict[str, Any]]:  # noqa: E501
     """
     Generate arpeggiated chord pattern.
-    
+
     Args:
         chords: List of parsed chord objects
         bars: Number of bars
         tempo: Tempo in BPM
         ppq: Pulses per quarter note
         beats_per_bar: Beats per bar
-        
+
     Returns:
         List of note dicts for arpeggio track
     """
@@ -475,26 +483,26 @@ def generate_arpeggio_pattern(chords: List[Any], bars: int, tempo: int, ppq: int
     bar_ticks = beats_per_bar * ppq
     start_tick = 0
     current_bar = 0
-    
+
     try:
         from music_brain.structure.chord import CHORD_QUALITIES
     except ImportError:
         CHORD_QUALITIES = {"maj": (0, 4, 7), "min": (0, 3, 7)}
-    
+
     while current_bar < bars:
         for parsed in chords:
             if current_bar >= bars:
                 break
-            
+
             quality = parsed.quality
             intervals = CHORD_QUALITIES.get(quality)
             if intervals is None:
                 base_quality = "min" if "m" in quality else "maj"
                 intervals = CHORD_QUALITIES.get(base_quality, (0, 4, 7))
-            
+
             root_midi = 48 + parsed.root_num  # C3 as base
             eighth_ticks = ppq // 2
-            
+
             # Arpeggiate chord notes in sequence
             for i, interval in enumerate(intervals):
                 notes.append({
@@ -503,17 +511,17 @@ def generate_arpeggio_pattern(chords: List[Any], bars: int, tempo: int, ppq: int
                     "start_tick": start_tick + (i * eighth_ticks),
                     "duration_ticks": eighth_ticks,
                 })
-            
+
             start_tick += bar_ticks
             current_bar += 1
-    
+
     return notes
 
 
-def generate_melody_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, beats_per_bar: int, mode: str = "major") -> List[Dict[str, Any]]:
+def generate_melody_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, beats_per_bar: int, mode: str = "major") -> List[Dict[str, Any]]:  # noqa: E501
     """
     Generate simple melody pattern from chord progression.
-    
+
     Args:
         chords: List of parsed chord objects
         bars: Number of bars
@@ -521,7 +529,7 @@ def generate_melody_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, 
         ppq: Pulses per quarter note
         beats_per_bar: Beats per bar
         mode: Musical mode
-        
+
     Returns:
         List of note dicts for melody track
     """
@@ -529,40 +537,40 @@ def generate_melody_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, 
     bar_ticks = beats_per_bar * ppq
     start_tick = 0
     current_bar = 0
-    
+
     try:
         from music_brain.structure.chord import CHORD_QUALITIES
     except ImportError:
         CHORD_QUALITIES = {"maj": (0, 4, 7), "min": (0, 3, 7)}
-    
+
     while current_bar < bars:
         for parsed in chords:
             if current_bar >= bars:
                 break
-            
+
             quality = parsed.quality
             intervals = CHORD_QUALITIES.get(quality)
             if intervals is None:
                 base_quality = "min" if "m" in quality else "maj"
                 intervals = CHORD_QUALITIES.get(base_quality, (0, 4, 7))
-            
+
             root_midi = 60 + parsed.root_num  # C4 as base for melody
             quarter_ticks = ppq
-            
+
             # Play root, third, or fifth based on bar position
             note_index = current_bar % len(intervals)
             pitch = root_midi + intervals[note_index]
-            
+
             notes.append({
                 "pitch": pitch,
                 "velocity": 90,
                 "start_tick": start_tick,
                 "duration_ticks": quarter_ticks * 2,  # Half note
             })
-            
+
             start_tick += bar_ticks
             current_bar += 1
-    
+
     return notes
 
 
@@ -570,7 +578,8 @@ def generate_melody_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, 
 # 6. HARMONY -> MIDI BRIDGE (REAL INTEGRATION)
 # ==============================================================================
 
-def render_plan_to_midi(plan: HarmonyPlan, output_path: str, include_guide_tones: bool = True) -> str:
+def render_plan_to_midi(
+        plan: HarmonyPlan, output_path: str, include_guide_tones: bool = True) -> str:
     """
     Render a HarmonyPlan to a MIDI file using existing music_brain components:
     - music_brain.structure.progression.parse_progression_string
@@ -623,21 +632,21 @@ def render_plan_to_midi(plan: HarmonyPlan, output_path: str, include_guide_tones
         # Process structure sections
         sections_data = []
         total_bars = 0
-        
+
         for section in plan.structure:
             section_name = section.get("name", "section")
             section_bars = section.get("bars", 4)
             repetitions = section.get("repetitions", 1)
             section_chords = section.get("chords")
-            
+
             # Use section-specific chords if provided, otherwise use plan chords
             if section_chords:
                 progression_str = "-".join(section_chords)
             else:
                 progression_str = "-".join(plan.chord_symbols)
-            
+
             parsed_chords = parse_progression_string(progression_str)
-            
+
             for rep in range(repetitions):
                 sections_data.append({
                     "name": f"{section_name}_{rep+1}" if repetitions > 1 else section_name,
@@ -667,7 +676,7 @@ def render_plan_to_midi(plan: HarmonyPlan, output_path: str, include_guide_tones
             inst_channel = inst_def.get("channel")
             inst_technique = inst_def.get("technique") or inst_def.get("pattern", "")
             inst_style = inst_def.get("style", "pop")
-            
+
             # Determine MIDI channel
             if inst_channel is not None:
                 channel = inst_channel
@@ -679,15 +688,15 @@ def render_plan_to_midi(plan: HarmonyPlan, output_path: str, include_guide_tones
                 channel = LOGIC_CHANNELS.get("guitar", 3)
             else:
                 channel = LOGIC_CHANNELS.get("keys", 2)
-            
+
             # Generate notes based on instrument type
             all_notes = []
             current_tick = 0
-            
+
             for section in sections_data:
                 section_chords = section["chords"]
                 section_bars = section["bars"]
-                
+
                 if inst_type == "bass":
                     section_notes = generate_bass_pattern(
                         section_chords, section_bars, plan.tempo_bpm, ppq, beats_per_bar
@@ -696,7 +705,8 @@ def render_plan_to_midi(plan: HarmonyPlan, output_path: str, include_guide_tones
                     section_notes = generate_drum_pattern(
                         section_bars, plan.tempo_bpm, ppq, beats_per_bar, inst_style
                     )
-                elif inst_type == "arpeggio" or (inst_type == "chord" and inst_technique == "arpeggio"):
+                elif inst_type == "arpeggio" or (inst_type == "chord" and inst_technique == "arpeggio"):  # noqa: E501
+
                     section_notes = generate_arpeggio_pattern(
                         section_chords, section_bars, plan.tempo_bpm, ppq, beats_per_bar
                     )
@@ -708,21 +718,21 @@ def render_plan_to_midi(plan: HarmonyPlan, output_path: str, include_guide_tones
                     section_notes = []
                     section_start_tick = current_tick
                     section_current_bar = 0
-                    
+
                     while section_current_bar < section_bars:
                         for parsed in section_chords:
                             if section_current_bar >= section_bars:
                                 break
-                            
+
                             quality = parsed.quality
                             intervals = CHORD_QUALITIES.get(quality)
                             if intervals is None:
                                 base_quality = "min" if "m" in quality else "maj"
                                 intervals = CHORD_QUALITIES.get(base_quality, (0, 4, 7))
-                            
+
                             root_midi = 48 + parsed.root_num  # C3 as base
                             duration_ticks = bar_ticks
-                            
+
                             for interval in intervals:
                                 section_notes.append({
                                     "pitch": root_midi + interval,
@@ -730,17 +740,17 @@ def render_plan_to_midi(plan: HarmonyPlan, output_path: str, include_guide_tones
                                     "start_tick": section_start_tick,
                                     "duration_ticks": duration_ticks,
                                 })
-                            
+
                             section_start_tick += duration_ticks
                             section_current_bar += 1
-                
+
                 # Adjust tick offsets for section position
                 for note in section_notes:
                     note["start_tick"] += current_tick
-                
+
                 all_notes.extend(section_notes)
                 current_tick += section_bars * bar_ticks
-            
+
             # Add track
             project.add_track(
                 name=inst_name,
@@ -752,27 +762,27 @@ def render_plan_to_midi(plan: HarmonyPlan, output_path: str, include_guide_tones
         # Default: single harmony track (backward compatibility)
         all_notes = []
         current_tick = 0
-        
+
         for section in sections_data:
             section_chords = section["chords"]
             section_bars = section["bars"]
             section_start_tick = current_tick
             section_current_bar = 0
-            
+
             while section_current_bar < section_bars:
                 for parsed in section_chords:
                     if section_current_bar >= section_bars:
                         break
-                    
+
                     quality = parsed.quality
                     intervals = CHORD_QUALITIES.get(quality)
                     if intervals is None:
                         base_quality = "min" if "m" in quality else "maj"
                         intervals = CHORD_QUALITIES.get(base_quality, (0, 4, 7))
-                    
+
                     root_midi = 48 + parsed.root_num  # C3 as base
                     duration_ticks = bar_ticks
-                    
+
                     for interval in intervals:
                         all_notes.append({
                             "pitch": root_midi + interval,
@@ -780,12 +790,12 @@ def render_plan_to_midi(plan: HarmonyPlan, output_path: str, include_guide_tones
                             "start_tick": section_start_tick,
                             "duration_ticks": duration_ticks,
                         })
-                    
+
                     section_start_tick += duration_ticks
                     section_current_bar += 1
-            
+
             current_tick += section_bars * bar_ticks
-        
+
         channel = LOGIC_CHANNELS.get("keys", 2)
         project.add_track(
             name="Harmony",
@@ -793,7 +803,7 @@ def render_plan_to_midi(plan: HarmonyPlan, output_path: str, include_guide_tones
             instrument=None,
             notes=all_notes,
         )
-        
+
         if include_guide_tones:
             project.add_track(
                 name="Guide Tones",
@@ -844,7 +854,9 @@ def run_cli():
 
     # 3. Reflect (Mirroring)
     if session.state.affect_result:
-        print(f"\n[ANALYSIS]: Detected affect '{affect}' with intensity {session.state.affect_result.intensity:.2f}")
+        print(
+            f"\n[ANALYSIS]: Detected affect '{affect}' with intensity {session.state.affect_result.intensity:.2f}")  # noqa: E501
+
         if session.state.affect_result.secondary:
             print(f"[ANALYSIS]: Underlying undertone: '{session.state.affect_result.secondary}'")
 

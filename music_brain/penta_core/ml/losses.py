@@ -835,7 +835,8 @@ try:
     class TorchEmotionAwareLoss(nn.Module):
         """PyTorch wrapper for EmotionAwareLoss."""
 
-        def __init__(self, weight: float = 1.0, valence_weight: float = 0.5, arousal_weight: float = 0.5):
+        def __init__(self, weight: float = 1.0, valence_weight: float = 0.5, arousal_weight: float = 0.5):  # noqa: E501
+
             super().__init__()
             self.loss_fn = EmotionAwareLoss(weight, valence_weight, arousal_weight)
 

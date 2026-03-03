@@ -8,13 +8,16 @@ Phase 1: Project Infrastructure
 import os
 import subprocess
 
+
 class InfrastructurePhase:
     """
     Handles project infrastructure setup: CMake, dependencies, cross-platform support.
     """
+
     def __init__(self, root_dir=None):
         # Use the workspace root (where CMakeLists.txt is), not the python package root
-        self.root_dir = root_dir or os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..'))
+        self.root_dir = root_dir or os.path.abspath(
+            os.path.join(os.path.dirname(__file__), '../../../..'))
 
     def setup_cmake(self):
         """Configure CMake build system (creates build directory and runs cmake)."""

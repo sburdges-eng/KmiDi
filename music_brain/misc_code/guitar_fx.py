@@ -5,10 +5,8 @@ Combines all effects, modulation, routing, and presets.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Callable, Tuple, Union
+from typing import Dict, List, Optional, Any
 import json
-import math
-from pathlib import Path
 
 from music_brain.effects.base import (
     BaseEffect,
@@ -23,12 +21,6 @@ from music_brain.effects.base import (
     MIDISource,
     EmotionSource,
     WaveShape,
-    DistortionType,
-    DelayType,
-    ReverbType,
-    FilterType,
-    AmpModel,
-    CabinetType,
 )
 
 from music_brain.effects.effects import (
@@ -70,7 +62,8 @@ from music_brain.effects.effects import (
 
 EFFECT_CATEGORIES = {
     EffectCategory.DISTORTION: ["Distortion", "Overdrive", "Fuzz"],
-    EffectCategory.MODULATION: ["Chorus", "Flanger", "Phaser", "Tremolo", "Vibrato", "Rotary", "Ring Mod", "Univibe"],
+    EffectCategory.MODULATION: ["Chorus", "Flanger", "Phaser", "Tremolo", "Vibrato", "Rotary", "Ring Mod", "Univibe"],  # noqa: E501
+
     EffectCategory.TIME: ["Delay", "Reverb"],
     EffectCategory.DYNAMICS: ["Compressor", "Noise Gate"],
     EffectCategory.FILTER: ["EQ", "Wah", "Filter"],
@@ -194,60 +187,62 @@ class SignalRouter:
     """
     Flexible signal routing with parallel/serial support.
     """
-    
+
     def __init__(self):
         self.paths: List[SignalPath] = []
         self.aux_sends: Dict[str, float] = {}  # aux_N -> level
         self.aux_returns: Dict[str, float] = {}
         self.master_volume: float = 1.0
-        
+
     def add_path(self, source: str, destination: str, gain: float = 1.0):
         """Add a signal path."""
         path = SignalPath(source=source, destination=destination, gain=gain)
         self.paths.append(path)
         return path
-    
+
     def remove_path(self, source: str, destination: str):
         """Remove a signal path."""
-        self.paths = [p for p in self.paths if not (p.source == source and p.destination == destination)]
-    
+        self.paths = [p for p in self.paths if not (
+            p.source == source and p.destination == destination)]
+
     def create_serial_chain(self, effects: List[str]):
         """Create a simple serial effect chain."""
         self.paths.clear()
-        
+
         if not effects:
             self.add_path("input", "output")
             return
-        
+
         # Input -> first effect
         self.add_path("input", effects[0])
-        
+
         # Chain effects
         for i in range(len(effects) - 1):
             self.add_path(effects[i], effects[i + 1])
-        
+
         # Last effect -> output
         self.add_path(effects[-1], "output")
-    
+
     def create_parallel_chain(self, effects: List[str], blend: float = 0.5):
         """Create parallel effect paths."""
         self.paths.clear()
-        
+
         for effect in effects:
             self.add_path("input", effect, gain=blend / len(effects))
             self.add_path(effect, "output")
-        
+
         # Dry path
         self.add_path("input", "output", gain=1 - blend)
-    
+
     def to_dict(self) -> Dict:
         return {
-            "paths": [{"source": p.source, "destination": p.destination, "gain": p.gain, "pan": p.pan} for p in self.paths],
+            "paths": [{"source": p.source, "destination": p.destination, "gain": p.gain, "pan": p.pan} for p in self.paths],  # noqa: E501
+
             "aux_sends": self.aux_sends,
             "aux_returns": self.aux_returns,
             "master_volume": self.master_volume,
         }
-    
+
     def from_dict(self, data: Dict):
         self.paths = [SignalPath(**p) for p in data.get("paths", [])]
         self.aux_sends = data.get("aux_sends", {})
@@ -273,14 +268,14 @@ class ModulationMatrix:
     """
     Full modulation matrix - any source can modulate any parameter.
     """
-    
+
     def __init__(self):
         self.sources: Dict[str, ModulationSource] = {}
         self.routes: List[ModulationRoute] = []
-        
+
         # Create default sources
         self._create_default_sources()
-    
+
     def _create_default_sources(self):
         """Create standard modulation sources."""
         # LFOs
@@ -288,39 +283,39 @@ class ModulationMatrix:
         self.add_source(LFOSource("LFO2", rate=0.5, shape=WaveShape.TRIANGLE))
         self.add_source(LFOSource("LFO3", rate=2.0, shape=WaveShape.SQUARE))
         self.add_source(LFOSource("LFO4", rate=0.25, shape=WaveShape.SAW_UP))
-        
+
         # Envelope followers
         self.add_source(EnvelopeFollower("EnvFollow1", attack=0.01, release=0.1))
         self.add_source(EnvelopeFollower("EnvFollow2", attack=0.05, release=0.5))
-        
+
         # Step sequencers
         self.add_source(StepSequencer("StepSeq1", num_steps=8))
         self.add_source(StepSequencer("StepSeq2", num_steps=16))
-        
+
         # Random
         self.add_source(RandomSource("Random1", rate=1.0, smoothing=0.1))
         self.add_source(RandomSource("Random2", rate=4.0, smoothing=0.0))
-        
+
         # Expression
         self.add_source(ExpressionInput("Expression"))
-        
+
         # MIDI
         self.add_source(MIDISource("MIDI_CC1", cc_number=1))
         self.add_source(MIDISource("MIDI_CC11", cc_number=11))
-        
+
         # Emotion (DAiW specific!)
         self.add_source(EmotionSource("Emotion"))
-    
+
     def add_source(self, source: ModulationSource):
         """Add a modulation source."""
         self.sources[source.name] = source
-    
+
     def remove_source(self, name: str):
         """Remove a modulation source."""
         if name in self.sources:
             del self.sources[name]
             self.routes = [r for r in self.routes if r.source_name != name]
-    
+
     def add_route(
         self,
         source_name: str,
@@ -337,34 +332,35 @@ class ModulationMatrix:
         )
         self.routes.append(route)
         return route
-    
+
     def remove_route(self, source_name: str, target_effect: str, target_param: str):
         """Remove a modulation route."""
-        self.routes = [
-            r for r in self.routes
-            if not (r.source_name == source_name and r.target_effect == target_effect and r.target_param == target_param)
-        ]
-    
+        self.routes = [r for r in self.routes if not (
+            r.source_name == source_name and r.target_effect == target_effect and r.target_param == target_param)]  # noqa: E501
+
     def update_sources(self, delta_time: float, **kwargs):
         """Update all modulation sources."""
         for source in self.sources.values():
             source.update(delta_time, **kwargs)
-    
+
     def get_modulation(self, effect_name: str, param_name: str) -> float:
         """Get total modulation amount for a parameter."""
         total = 0.0
-        
+
         for route in self.routes:
-            if route.enabled and route.target_effect == effect_name and route.target_param == param_name:
+            if route.enabled and route.target_effect == effect_name and route.target_param == param_name:  # noqa: E501
+
                 if route.source_name in self.sources:
                     total += self.sources[route.source_name].output * route.amount
-        
+
         return max(-1, min(1, total))
-    
+
     def to_dict(self) -> Dict:
         return {
-            "sources": {name: {"type": type(s).__name__, "params": vars(s)} for name, s in self.sources.items()},
-            "routes": [{"source": r.source_name, "effect": r.target_effect, "param": r.target_param, "amount": r.amount} for r in self.routes],
+            "sources": {name: {"type": type(s).__name__, "params": vars(s)} for name, s in self.sources.items()},  # noqa: E501
+
+            "routes": [{"source": r.source_name, "effect": r.target_effect, "param": r.target_param, "amount": r.amount} for r in self.routes],  # noqa: E501
+
         }
 
 
@@ -376,7 +372,7 @@ class EffectChain:
     """
     A chain of effects with ordering and bypass.
     """
-    
+
     def __init__(self, name: str = "Default"):
         self.name = name
         self.effects: Dict[str, BaseEffect] = {}
@@ -384,50 +380,52 @@ class EffectChain:
         self.global_bypass: bool = False
         self.input_level: float = 1.0
         self.output_level: float = 1.0
-    
+
     def add_effect(self, effect: BaseEffect, position: Optional[int] = None):
         """Add an effect to the chain."""
         self.effects[effect.name] = effect
-        
+
         if position is not None and 0 <= position <= len(self.order):
             self.order.insert(position, effect.name)
         else:
             self.order.append(effect.name)
-    
+
     def remove_effect(self, name: str):
         """Remove an effect from the chain."""
         if name in self.effects:
             del self.effects[name]
             self.order = [n for n in self.order if n != name]
-    
+
     def move_effect(self, name: str, new_position: int):
         """Move an effect to a new position."""
         if name in self.order:
             self.order.remove(name)
             self.order.insert(max(0, min(new_position, len(self.order))), name)
-    
+
     def get_effect(self, name: str) -> Optional[BaseEffect]:
         """Get an effect by name."""
         return self.effects.get(name)
-    
+
     def set_param(self, effect_name: str, param_name: str, value: float):
         """Set a parameter on an effect."""
         if effect_name in self.effects:
             self.effects[effect_name].set_param(param_name, value)
-    
-    def process(self, samples: List[float], sample_rate: int, modulation: Optional[ModulationMatrix] = None) -> List[float]:
+
+    def process(
+            self, samples: List[float],
+            sample_rate: int, modulation: Optional[ModulationMatrix] = None) -> List[float]:
         """Process audio through the chain."""
         if self.global_bypass:
             return samples
-        
+
         # Apply input level
         output = [s * self.input_level for s in samples]
-        
+
         # Process through each effect in order
         for effect_name in self.order:
             if effect_name in self.effects:
                 effect = self.effects[effect_name]
-                
+
                 # Apply modulation to parameters
                 if modulation:
                     for param_name, param in effect.parameters.items():
@@ -437,14 +435,14 @@ class EffectChain:
                             mod_range = param.max_val - param.min_val
                             param.value = param.default + mod_amount * mod_range * param.mod_amount
                             param.value = max(param.min_val, min(param.max_val, param.value))
-                
+
                 output = effect.process(output, sample_rate)
-        
+
         # Apply output level
         output = [s * self.output_level for s in output]
-        
+
         return output
-    
+
     def to_dict(self) -> Dict:
         return {
             "name": self.name,
@@ -454,14 +452,14 @@ class EffectChain:
             "input_level": self.input_level,
             "output_level": self.output_level,
         }
-    
+
     def from_dict(self, data: Dict):
         self.name = data.get("name", "Default")
         self.order = data.get("order", [])
         self.global_bypass = data.get("global_bypass", False)
         self.input_level = data.get("input_level", 1.0)
         self.output_level = data.get("output_level", 1.0)
-        
+
         # Recreate effects
         self.effects = {}
         for name, eff_data in data.get("effects", {}).items():
@@ -486,11 +484,11 @@ class EffectPreset:
     author: str = ""
     tags: List[str] = field(default_factory=list)
     emotion: Optional[str] = None  # DAiW emotion association
-    
+
     chain_data: Dict = field(default_factory=dict)
     modulation_data: Dict = field(default_factory=dict)
     routing_data: Dict = field(default_factory=dict)
-    
+
     def save(self, path: str):
         """Save preset to JSON file."""
         data = {
@@ -503,16 +501,16 @@ class EffectPreset:
             "modulation": self.modulation_data,
             "routing": self.routing_data,
         }
-        
+
         with open(path, "w") as f:
             json.dump(data, f, indent=2)
-    
+
     @classmethod
     def load(cls, path: str) -> "EffectPreset":
         """Load preset from JSON file."""
         with open(path, "r") as f:
             data = json.load(f)
-        
+
         return cls(
             name=data.get("name", "Untitled"),
             description=data.get("description", ""),
@@ -532,7 +530,7 @@ class EffectPreset:
 class GuitarFXEngine:
     """
     The complete guitar effects engine.
-    
+
     Features:
     - 28+ effect types
     - Full modulation matrix
@@ -540,50 +538,50 @@ class GuitarFXEngine:
     - Preset system
     - DAiW emotion integration
     """
-    
+
     def __init__(self):
         self.chain = EffectChain("Main")
         self.modulation = ModulationMatrix()
         self.router = SignalRouter()
-        
+
         self.tempo_bpm: float = 120.0
         self.sample_rate: int = 44100
-        
+
         # Input/output
         self.input_level: float = 1.0
         self.output_level: float = 1.0
         self.noise_gate_active: bool = False
-        
+
         # Tuner
         self.tuner_active: bool = False
         self.detected_pitch: float = 0.0
         self.detected_note: str = ""
-        
+
         # Current emotion (DAiW)
         self.current_emotion: Optional[str] = None
         self.emotion_intensity: float = 1.0
-    
+
     def add_effect(self, effect_type: str, position: Optional[int] = None) -> BaseEffect:
         """Add an effect by type name."""
         if effect_type not in ALL_EFFECTS:
             raise ValueError(f"Unknown effect type: {effect_type}")
-        
+
         effect = ALL_EFFECTS[effect_type]()
         self.chain.add_effect(effect, position)
         return effect
-    
+
     def remove_effect(self, name: str):
         """Remove an effect by name."""
         self.chain.remove_effect(name)
-    
+
     def get_effect(self, name: str) -> Optional[BaseEffect]:
         """Get an effect by name."""
         return self.chain.get_effect(name)
-    
+
     def set_param(self, effect_name: str, param_name: str, value: float):
         """Set a parameter on an effect."""
         self.chain.set_param(effect_name, param_name, value)
-    
+
     def add_modulation(
         self,
         source_name: str,
@@ -593,7 +591,7 @@ class GuitarFXEngine:
     ):
         """Add a modulation route."""
         self.modulation.add_route(source_name, effect_name, param_name, amount)
-    
+
     def set_emotion(self, emotion: str, intensity: float = 1.0):
         """
         Set the current emotion for DAiW-aware processing.
@@ -601,27 +599,27 @@ class GuitarFXEngine:
         """
         self.current_emotion = emotion.lower()
         self.emotion_intensity = intensity
-        
+
         # Update emotion modulation source
         if "Emotion" in self.modulation.sources:
             emotion_source = self.modulation.sources["Emotion"]
             if isinstance(emotion_source, EmotionSource):
                 emotion_source.set_emotion(emotion, intensity)
-    
+
     def get_emotion_suggestions(self) -> Dict[str, Any]:
         """Get effect suggestions based on current emotion."""
         if not self.current_emotion:
             return {}
-        
+
         return EMOTION_EFFECT_MAP.get(self.current_emotion, {})
-    
+
     def apply_emotion_preset(self, emotion: str, blend: float = 1.0):
         """
         Apply effect settings based on emotion.
         This is the DAiW magic - emotion → effects mapping.
         """
         suggestions = EMOTION_EFFECT_MAP.get(emotion.lower(), {})
-        
+
         for effect_type, params in suggestions.items():
             # Add effect if not present
             effect_name = effect_type.replace("_", " ").title()
@@ -630,7 +628,7 @@ class GuitarFXEngine:
                     self.add_effect(effect_name)
                 except ValueError:
                     continue
-            
+
             # Set parameters with blend
             effect = self.chain.get_effect(effect_name)
             if effect:
@@ -641,7 +639,7 @@ class GuitarFXEngine:
                         current = effect.parameters[param_name].value
                         blended = current + (value - current) * blend
                         effect.set_param(param_name, blended)
-    
+
     def process(self, samples: List[float]) -> List[float]:
         """Process audio through the complete effects chain."""
         # Update modulation sources
@@ -652,18 +650,18 @@ class GuitarFXEngine:
             emotion=self.current_emotion,
             intensity=self.emotion_intensity,
         )
-        
+
         # Apply input level
         samples = [s * self.input_level for s in samples]
-        
+
         # Process through chain
         output = self.chain.process(samples, self.sample_rate, self.modulation)
-        
+
         # Apply output level
         output = [s * self.output_level for s in output]
-        
+
         return output
-    
+
     def save_preset(self, name: str, path: str, description: str = ""):
         """Save current state as a preset."""
         preset = EffectPreset(
@@ -676,19 +674,19 @@ class GuitarFXEngine:
         )
         preset.save(path)
         return preset
-    
+
     def load_preset(self, path: str):
         """Load a preset from file."""
         preset = EffectPreset.load(path)
-        
+
         self.chain.from_dict(preset.chain_data)
         # Modulation and routing would need similar from_dict methods
-        
+
         if preset.emotion:
             self.set_emotion(preset.emotion)
-        
+
         return preset
-    
+
     def get_state(self) -> Dict:
         """Get complete engine state."""
         return {
@@ -702,15 +700,15 @@ class GuitarFXEngine:
             "modulation": self.modulation.to_dict(),
             "routing": self.router.to_dict(),
         }
-    
+
     def list_effects(self) -> List[str]:
         """List all available effect types."""
         return list(ALL_EFFECTS.keys())
-    
+
     def list_effects_by_category(self) -> Dict[str, List[str]]:
         """List effects organized by category."""
         return {cat.value: effects for cat, effects in EFFECT_CATEGORIES.items()}
-    
+
     def get_effect_params(self, effect_name: str) -> Dict[str, Parameter]:
         """Get all parameters for an effect."""
         effect = self.chain.get_effect(effect_name)
@@ -730,7 +728,7 @@ def create_preset_from_emotion(emotion: str, intensity: float = 1.0) -> EffectPr
     """
     engine = GuitarFXEngine()
     engine.apply_emotion_preset(emotion, intensity)
-    
+
     preset = EffectPreset(
         name=f"{emotion.title()} Preset",
         description=f"Auto-generated preset for {emotion} emotion at {intensity:.0%} intensity",
@@ -740,14 +738,14 @@ def create_preset_from_emotion(emotion: str, intensity: float = 1.0) -> EffectPr
         modulation_data=engine.modulation.to_dict(),
         routing_data=engine.router.to_dict(),
     )
-    
+
     return preset
 
 
 def get_effect_suggestions(emotion: str) -> List[Dict[str, Any]]:
     """Get effect suggestions for an emotion."""
     suggestions = EMOTION_EFFECT_MAP.get(emotion.lower(), {})
-    
+
     result = []
     for effect_type, params in suggestions.items():
         result.append({
@@ -755,6 +753,5 @@ def get_effect_suggestions(emotion: str) -> List[Dict[str, Any]]:
             "params": params,
             "reason": f"Complements {emotion} emotional quality",
         })
-    
-    return result
 
+    return result

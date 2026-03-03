@@ -112,7 +112,7 @@ class WSMessage:
                 channels=obj.get("channels", []),
                 raw=data,
             )
-        except (json.JSONDecodeError, ValueError) as e:
+        except (json.JSONDecodeError, ValueError):  # noqa: F841
             return cls(type=MessageType.ERROR, raw=data)
 
 
@@ -675,4 +675,3 @@ __all__ = [
     "create_websocket_server",
     "HAS_WEBSOCKETS",
 ]
-

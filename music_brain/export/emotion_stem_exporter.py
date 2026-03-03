@@ -84,7 +84,8 @@ class StemExportInfo:
         # Add VAD values if requested
         if include_vad:
             if self.emotion_metadata.valence is not None:
-                parts.append(f"v{self.emotion_metadata.valence:.2f}".replace('.', '').replace('-', 'n'))
+                parts.append(f"v{self.emotion_metadata.valence:.2f}".replace(
+                    '.', '').replace('-', 'n'))
             if self.emotion_metadata.arousal is not None:
                 parts.append(f"a{self.emotion_metadata.arousal:.2f}".replace('.', ''))
             if self.emotion_metadata.intensity is not None:

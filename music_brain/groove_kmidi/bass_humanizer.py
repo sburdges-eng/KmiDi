@@ -5,9 +5,9 @@ Reads 'Bass Programming Guide.md' to apply timing shifts (pocket) and
 velocity dynamics (ghost notes, accents).
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 from music_brain.groove.guide_parser import BassGuideParser
 from music_brain.groove.fan_feedback import FanProfile
@@ -38,7 +38,8 @@ class BassHumanizer:
         self.parser = BassGuideParser(guide_path)
         self.rules = self.parser.parse()
 
-    def get_timing_offset(self, feel: Optional[str] = None, fan_profile: Optional[FanProfile] = None) -> float:
+    def get_timing_offset(
+            self, feel: Optional[str] = None, fan_profile: Optional[FanProfile] = None) -> float:
         """Returns timing offset in ms based on feel (behind/ahead)."""
         feel = feel or self.config.timing_feel
 
@@ -57,7 +58,7 @@ class BassHumanizer:
 
         return base_offset
 
-    def get_velocity_range(self, note_type: str = "root", fan_profile: Optional[FanProfile] = None) -> Tuple[int, int]:
+    def get_velocity_range(self, note_type: str = "root", fan_profile: Optional[FanProfile] = None) -> Tuple[int, int]:  # noqa: E501
         """Returns velocity range for a given note type."""
         # root, ghost, passing
         base_range = self.rules.get("velocity", {}).get(note_type, (80, 100))
@@ -67,12 +68,14 @@ class BassHumanizer:
 
         return base_range
 
-    def apply(self, midi_events: List[Any], feel: Optional[str] = None, fan_profile: Optional[FanProfile] = None) -> List[Any]:
+    def apply(
+            self, midi_events: List[Any],
+            feel: Optional[str] = None, fan_profile: Optional[FanProfile] = None) -> List[Any]:
         """
         Apply humanization to a list of MIDI events.
         (Stub implementation - would modify timing/velocity in place)
         """
-        offset = self.get_timing_offset(feel, fan_profile)
+        _offset = self.get_timing_offset(feel, fan_profile)  # noqa: F841
         # In a real implementation, we would iterate events and shift timestamps
         # and randomize velocities based on self.rules["humanize"]["velocity_range"]
         return midi_events

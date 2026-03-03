@@ -12,7 +12,7 @@ from dataclasses import dataclass
 class Emotion(Enum):
     """
     Emotional states expressible through music theory choices.
-    
+
     Based on Meyer's "Emotion and Meaning in Music" and Huron's "Sweet Anticipation".
     """
     # Core emotions (Plutchik's wheel)
@@ -22,7 +22,7 @@ class Emotion(Enum):
     FEAR = auto()
     SURPRISE = auto()
     ANTICIPATION = auto()
-    
+
     # Musical emotions (Zentner/Eerola taxonomy)
     TENSION = auto()
     RESOLUTION = auto()
@@ -31,13 +31,13 @@ class Emotion(Enum):
     TENDERNESS = auto()
     POWER = auto()
     PEACEFULNESS = auto()
-    
+
     # Complex states
     GRIEF = auto()
     TRIUMPH = auto()
     YEARNING = auto()
     MYSTERY = auto()
-    
+
     def __str__(self) -> str:
         return self.name.lower()
 
@@ -46,7 +46,7 @@ class Emotion(Enum):
 class EmotionalMapping:
     """
     Maps a music theory technique to its emotional effect.
-    
+
     Attributes:
         rule_name: The technique/rule being applied or broken
         emotion: Primary emotional effect
@@ -70,7 +70,7 @@ EMOTION_TO_TECHNIQUES: Dict[Emotion, List[str]] = {
         "descending_chromatic_bass",  # Lament bass
         "avoid_perfect_cadences",  # Lack of closure
     ],
-    
+
     Emotion.POWER: [
         "parallel_fifths",  # Medieval organum, rock power chords
         "parallel_octaves",  # Unison doubling
@@ -78,7 +78,7 @@ EMOTION_TO_TECHNIQUES: Dict[Emotion, List[str]] = {
         "strong_downbeats",  # Metric emphasis
         "wide_spacing",  # Orchestral doubling
     ],
-    
+
     Emotion.TENSION: [
         "unprepared_dissonance",  # Sudden harmonic clash
         "augmented_intervals",  # Tritones, aug 2nds
@@ -86,7 +86,7 @@ EMOTION_TO_TECHNIQUES: Dict[Emotion, List[str]] = {
         "metric_displacement",  # Syncopation against pulse
         "dense_voicing",  # Cluster chords
     ],
-    
+
     Emotion.RESOLUTION: [
         "stepwise_contrary_motion",  # V→I voice leading
         "prepared_suspensions",  # 4-3, 7-6 resolutions
@@ -94,7 +94,7 @@ EMOTION_TO_TECHNIQUES: Dict[Emotion, List[str]] = {
         "tonic_pedal",  # Harmonic stability
         "consonant_intervals",  # 3rds, 6ths
     ],
-    
+
     Emotion.YEARNING: [
         "dominant_prolongation",  # Extended V chords
         "secondary_dominants",  # Tonicization of non-tonic
@@ -102,7 +102,7 @@ EMOTION_TO_TECHNIQUES: Dict[Emotion, List[str]] = {
         "suspension_chains",  # 7-6, 6-5, 5-4 sequences
         "raised_scale_degrees",  # Leading tones, alterations
     ],
-    
+
     Emotion.MYSTERY: [
         "whole_tone_scale",  # Ambiguous tonality
         "diminished_seventh",  # Symmetrical, directionless
@@ -110,7 +110,7 @@ EMOTION_TO_TECHNIQUES: Dict[Emotion, List[str]] = {
         "parallel_quartal_harmony",  # Modal ambiguity
         "avoid_cadences",  # No tonal center establishment
     ],
-    
+
     Emotion.PEACEFULNESS: [
         "consonant_intervals",  # Pure 3rds, 6ths
         "stepwise_motion",  # Smooth melodic contour
@@ -118,7 +118,7 @@ EMOTION_TO_TECHNIQUES: Dict[Emotion, List[str]] = {
         "regular_phrase_lengths",  # Metric predictability
         "slow_harmonic_rhythm",  # Infrequent chord changes
     ],
-    
+
     Emotion.TRIUMPH: [
         "parallel_octaves",  # Orchestral unison
         "perfect_authentic_cadence",  # V→I with scale degrees 7→1
@@ -137,7 +137,7 @@ for emotion, techniques in EMOTION_TO_TECHNIQUES.items():
     for technique in techniques:
         if technique not in TECHNIQUE_TO_EMOTIONS:
             TECHNIQUE_TO_EMOTIONS[technique] = []
-        
+
         # Create emotional mapping with context
         mapping = EmotionalMapping(
             rule_name=technique,
@@ -152,13 +152,13 @@ for emotion, techniques in EMOTION_TO_TECHNIQUES.items():
 def get_techniques_for_emotion(emotion: Emotion) -> List[str]:
     """
     Get music theory techniques that evoke a specific emotion.
-    
+
     Args:
         emotion: Target emotional state
-    
+
     Returns:
         List of rule/technique names
-    
+
     Example:
         >>> get_techniques_for_emotion(Emotion.GRIEF)
         ['non_resolution', 'modal_interchange', 'tempo_fluctuation', ...]
@@ -169,13 +169,13 @@ def get_techniques_for_emotion(emotion: Emotion) -> List[str]:
 def get_emotions_for_technique(technique: str) -> List[EmotionalMapping]:
     """
     Get emotional effects of a music theory technique.
-    
+
     Args:
         technique: Rule or technique name
-    
+
     Returns:
         List of emotional mappings with intensity and context
-    
+
     Example:
         >>> get_emotions_for_technique("parallel_fifths")
         [EmotionalMapping(emotion=POWER, intensity=8, ...)]

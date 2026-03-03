@@ -6,7 +6,7 @@ Unreal Engine and Jespa to create synchronized music videos.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from pathlib import Path
 from enum import Enum
 
@@ -30,29 +30,29 @@ class VideoQuality(Enum):
 @dataclass
 class VideoConfig:
     """Configuration for video generation."""
-    
+
     # Output settings
     output_path: Optional[Path] = None
     format: VideoFormat = VideoFormat.MP4
     quality: VideoQuality = VideoQuality.MEDIUM
-    
+
     # Resolution and frame rate
     width: int = 1920
     height: int = 1080
     fps: int = 30
-    
+
     # Rendering backend
     use_unreal: bool = True
     use_jespa: bool = True
-    
+
     # Performance
     use_gpu: bool = True
     max_render_time: Optional[float] = None  # seconds, None = unlimited
-    
+
     # Scene settings
     auto_sync_to_music: bool = True
     scene_transition_style: str = "crossfade"
-    
+
     # Additional metadata
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -60,7 +60,7 @@ class VideoConfig:
 @dataclass
 class VideoGenerationResult:
     """Result from video generation process."""
-    
+
     success: bool
     output_path: Optional[Path] = None
     duration: float = 0.0  # seconds
@@ -75,14 +75,14 @@ class VideoGenerationResult:
 class VideoGenerator:
     """
     Main orchestrator for emotion-driven music video generation.
-    
+
     Coordinates between:
     - Emotion analysis from music_brain
     - Visual parameter mapping
     - Scene composition
     - Unreal Engine rendering
     - Jespa post-processing
-    
+
     Example:
         >>> from music_brain.video import VideoGenerator, VideoConfig
         >>> gen = VideoGenerator()
@@ -93,24 +93,24 @@ class VideoGenerator:
         ... )
         >>> print(f"Video saved to: {result.output_path}")
     """
-    
+
     def __init__(self, config: Optional[VideoConfig] = None):
         """
         Initialize the video generator.
-        
+
         Args:
             config: Optional video configuration. Defaults to VideoConfig().
         """
         self.config = config or VideoConfig()
         self._initialized = False
-        
+
     def initialize(self) -> bool:
         """
         Initialize all video generation backends.
-        
+
         Returns:
             True if initialization successful, False otherwise.
-        
+
         Note:
             This is a stub. Future implementation will:
             - Initialize Unreal Engine connection
@@ -122,10 +122,10 @@ class VideoGenerator:
         # TODO: Initialize Jespa connector
         # TODO: Load emotion-visual mappings
         # TODO: Verify rendering capabilities
-        
+
         self._initialized = True
         return True
-    
+
     def generate_from_emotion(
         self,
         emotion: str,
@@ -135,16 +135,16 @@ class VideoGenerator:
     ) -> VideoGenerationResult:
         """
         Generate a music video from an emotion and optional music file.
-        
+
         Args:
             emotion: Primary emotion (e.g., "grief", "joy", "fear")
             music_path: Path to music audio file. If None, generates video from emotion only.
             intensity: Emotion intensity from 0.0 to 1.0
             config: Optional config override
-        
+
         Returns:
             VideoGenerationResult with generation details
-        
+
         Note:
             This is a stub. Future implementation will:
             - Analyze music for structure and timing
@@ -155,7 +155,7 @@ class VideoGenerator:
         """
         if not self._initialized:
             self.initialize()
-        
+
         # TODO: Implement actual generation
         # 1. Analyze music (if provided) for beats, sections, dynamics
         # 2. Map emotion + intensity to visual parameters
@@ -163,12 +163,12 @@ class VideoGenerator:
         # 4. Render scenes with Unreal Engine
         # 5. Apply Jespa effects and transitions
         # 6. Export final video
-        
+
         return VideoGenerationResult(
             success=False,
             error_message="Video generation not yet implemented - this is a stub"
         )
-    
+
     def generate_from_intent(
         self,
         intent: Dict[str, Any],
@@ -177,32 +177,32 @@ class VideoGenerator:
     ) -> VideoGenerationResult:
         """
         Generate a music video from a complete song intent.
-        
+
         Args:
             intent: SongIntent dictionary with emotional and musical parameters
             music_path: Path to generated or existing music file
             config: Optional config override
-        
+
         Returns:
             VideoGenerationResult with generation details
-        
+
         Note:
             This is a stub. Future implementation will use the full
             intent schema to create sophisticated, emotionally-aligned visuals.
         """
         if not self._initialized:
             self.initialize()
-        
+
         # TODO: Extract emotion from intent
         # TODO: Use musical structure from intent for scene timing
         # TODO: Apply rule-breaking justifications to visual choices
         # TODO: Generate video with emotional coherence
-        
+
         return VideoGenerationResult(
             success=False,
             error_message="Intent-based video generation not yet implemented - this is a stub"
         )
-    
+
     def preview_scene(
         self,
         emotion: str,
@@ -211,28 +211,28 @@ class VideoGenerator:
     ) -> Optional[bytes]:
         """
         Generate a single preview frame for a given emotion and time.
-        
+
         Args:
             emotion: Emotion to visualize
             timestamp: Time position in seconds
             intensity: Emotion intensity 0.0-1.0
-        
+
         Returns:
             PNG image data as bytes, or None if preview fails
-        
+
         Note:
             This is a stub for real-time preview functionality.
         """
         # TODO: Implement preview rendering
         # - Use Unreal Engine's quick render mode
         # - Return single frame as PNG
-        
+
         return None
-    
+
     def cleanup(self) -> None:
         """
         Clean up video generation resources.
-        
+
         Note:
             This is a stub. Future implementation will:
             - Close Unreal Engine connection
@@ -242,5 +242,5 @@ class VideoGenerator:
         # TODO: Cleanup Unreal Engine connection
         # TODO: Cleanup Jespa resources
         # TODO: Clear temp files
-        
+
         self._initialized = False

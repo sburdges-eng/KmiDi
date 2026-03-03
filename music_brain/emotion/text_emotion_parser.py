@@ -10,13 +10,12 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Tuple
-from pathlib import Path
 
 # Import from sibling modules
 try:
-    from .emotion_thesaurus import EmotionThesaurus, EmotionMatch, BlendMatch
+    from .emotion_thesaurus import EmotionThesaurus
 except ImportError:
-    from emotion_thesaurus import EmotionThesaurus, EmotionMatch, BlendMatch
+    from emotion_thesaurus import EmotionThesaurus
 
 
 @dataclass
@@ -40,8 +39,14 @@ class ParsedEmotion:
         return {
             "valence": self.valence,
             "arousal": self.arousal,
-            "primary_emotion": self.base_emotion.lower() if self.base_emotion else "neutral",
-            "secondary_emotions": [c.lower() for c in self.blend_components] if self.blend_components else [],
+            "primary_emotion": (
+                self.base_emotion.lower() if self.base_emotion else "neutral"
+            ),
+            "secondary_emotions": (
+                [c.lower() for c in self.blend_components]
+                if self.blend_components
+                else []
+            ),
             "has_intrusions": "ptsd_intrusion" in self.modifiers,
         }
 
@@ -150,7 +155,10 @@ class TextEmotionParser:
                         for syn in synonyms:
                             key = syn.lower().strip()
                             # Keep highest intensity match
-                            if key not in self._synonym_to_emotion or tier > self._synonym_to_emotion[key][3]:
+                            if (
+                                key not in self._synonym_to_emotion
+                                or tier > self._synonym_to_emotion[key][3]
+                            ):
                                 self._synonym_to_emotion[key] = (base_upper, sub, subsub, tier)
 
         # Add common emotion words that may not be in thesaurus
@@ -309,7 +317,8 @@ class TextEmotionParser:
             if blend_matches:
                 best_blend = blend_matches[0]
                 blend_components = best_blend.components
-                blend_ratio = best_blend.ratio if best_blend.ratio else [1.0 / len(blend_components)] * len(blend_components)
+                blend_ratio = best_blend.ratio if best_blend.ratio else [
+                    1.0 / len(blend_components)] * len(blend_components)
 
             return ParsedEmotion(
                 valence=valence,
@@ -330,7 +339,8 @@ class TextEmotionParser:
             # Only blend match, no direct emotion
             best_blend = blend_matches[0]
             blend_components = best_blend.components
-            blend_ratio = best_blend.ratio if best_blend.ratio else [1.0 / len(blend_components)] * len(blend_components)
+            blend_ratio = best_blend.ratio if best_blend.ratio else [
+                1.0 / len(blend_components)] * len(blend_components)
 
             # Infer valence/arousal from blend components
             valence = 0.0

@@ -3,7 +3,7 @@ Rule-Breaking Teaching Module - Interactive lessons on creative music theory.
 
 Teaches:
 - Borrowed chords and modal mixture
-- Emotional chord substitutions  
+- Emotional chord substitutions
 - Rhythmic misdirection
 - Production philosophy
 - When and why to break rules
@@ -13,7 +13,6 @@ Philosophy: "The wrong note played with conviction is the right note."
 
 import random
 from typing import List, Dict, Optional
-from dataclasses import dataclass
 
 
 # Teaching content database
@@ -53,9 +52,10 @@ The most common borrowed chords:
                 "famous_use": "Beatles 'Norwegian Wood'",
             },
         ],
-        "exercise": "Take your progression and replace ONE major chord with its minor borrowed equivalent. Listen to how the mood shifts.",
+        "exercise": "Take your progression and replace ONE major chord with its minor borrowed equivalent. Listen to how the mood shifts.",  # noqa: E501
+
     },
-    
+
     "modal_mixture": {
         "title": "Modal Mixture Deep Dive",
         "intro": """
@@ -85,9 +85,10 @@ The key: Use borrowed chords at moments of emotional shift.
                 "when_to_use": "When you want sad but not tragic",
             },
         ],
-        "exercise": "Write a 4-chord progression. Insert a chord from a different mode at the emotional peak.",
+        "exercise": "Write a 4-chord progression. Insert a chord from a different mode at the emotional peak.",  # noqa: E501
+
     },
-    
+
     "emotional_substitutions": {
         "title": "Emotional Chord Substitutions",
         "intro": """
@@ -131,9 +132,10 @@ Substitute based on emotion, not just theory.
                 "explanation": "bVII creates floating, disconnected sensation",
             },
         ],
-        "exercise": "Pick an emotion. Find a stock progression. Substitute one chord to make it actually feel that way.",
+        "exercise": "Pick an emotion. Find a stock progression. Substitute one chord to make it actually feel that way.",  # noqa: E501
+
     },
-    
+
     "rhythmic_misdirection": {
         "title": "Rhythmic Misdirection",
         "intro": """
@@ -173,9 +175,10 @@ The goal: Make listeners FEEL something in their body, not just their ears.
                 "genre": "Progressive, Jazz, Art rock",
             },
         ],
-        "exercise": "Take a quantized MIDI drum pattern. Move the snare 10-20ms late. Move hi-hats slightly early. Notice how the feel changes completely.",
+        "exercise": "Take a quantized MIDI drum pattern. Move the snare 10-20ms late. Move hi-hats slightly early. Notice how the feel changes completely.",  # noqa: E501
+
     },
-    
+
     "production_philosophy": {
         "title": "Production Rule-Breaking Philosophy",
         "intro": """
@@ -214,7 +217,8 @@ Imperfection is a feature, not a bug.
                 "famous_example": "Shoegaze genre - deliberately obscured",
             },
         ],
-        "exercise": "Pick one 'rule' you always follow. Break it intentionally in your next mix. Document what emotion it creates.",
+        "exercise": "Pick one 'rule' you always follow. Break it intentionally in your next mix. Document what emotion it creates.",  # noqa: E501
+
     },
 }
 
@@ -241,78 +245,80 @@ WISDOM = [
 class RuleBreakingTeacher:
     """
     Interactive teaching module for creative music theory and rule-breaking.
-    
+
     Usage:
         teacher = RuleBreakingTeacher()
         teacher.interactive_session("borrowed_chords")
-        
+
         # Or quick lesson
         teacher.quick_lesson("modal_mixture")
-        
+
         # Random wisdom
         print(teacher.get_wisdom())
     """
-    
+
     def __init__(self):
         self.lessons = LESSONS
         self.wisdom = WISDOM
         self.history = []
-    
+
     def list_topics(self) -> List[str]:
         """Get list of available topics."""
         return list(self.lessons.keys())
-    
+
     def get_wisdom(self) -> str:
         """Get a random piece of wisdom."""
         return random.choice(self.wisdom)
-    
+
     def quick_lesson(self, topic: str):
         """
         Print a quick lesson on a topic.
-        
+
         Args:
             topic: Topic key (borrowed_chords, modal_mixture, etc.)
         """
         topic = topic.lower().replace("-", "_").replace(" ", "_")
-        
+
         if topic not in self.lessons:
             print(f"Unknown topic: {topic}")
             print(f"Available topics: {', '.join(self.list_topics())}")
             return
-        
+
         lesson = self.lessons[topic]
-        
+
         print("\n" + "=" * 60)
         print(f"📚 {lesson['title']}")
         print("=" * 60)
         print(lesson['intro'])
-        
+
         print("\n" + "-" * 40)
         print("EXAMPLES:")
         print("-" * 40)
-        
+
         for i, example in enumerate(lesson['examples'][:3], 1):
-            name_key = next((k for k in ['name', 'technique', 'emotion', 'rule'] if k in example), 'Example')
+            name_key = next(
+                (k for k in ['name', 'technique', 'emotion', 'rule'] if k in example),
+                'Example')
             print(f"\n{i}. {example.get(name_key, 'Example')}")
             for key, value in example.items():
                 if key != name_key:
                     print(f"   {key.replace('_', ' ').title()}: {value}")
-        
+
         print("\n" + "-" * 40)
         print("💡 EXERCISE:")
         print("-" * 40)
         print(lesson['exercise'])
-        
+
         print("\n" + "=" * 60)
         print(f"🎵 Wisdom: \"{self.get_wisdom()}\"")
         print("=" * 60 + "\n")
-        
+
         self.history.append(topic)
-    
+
     def interactive_session(self, topic: Optional[str] = None):
         """
         Run an interactive teaching session.
-        
+
         Args:
             topic: Starting topic (optional, shows menu if not provided)
         """
@@ -320,20 +326,20 @@ class RuleBreakingTeacher:
         print("🎸 Kelly MIDI Companion RULE-BREAKING TEACHING MODULE")
         print("=" * 60)
         print("\nLearn when and why to break the rules.\n")
-        
+
         if topic is None:
             print("Available topics:")
             for i, (key, lesson) in enumerate(self.lessons.items(), 1):
                 print(f"  {i}. {lesson['title']}")
             print(f"  {len(self.lessons) + 1}. Random wisdom")
             print(f"  {len(self.lessons) + 2}. Exit")
-            
+
             try:
                 choice = input("\nSelect topic (number): ").strip()
                 if not choice.isdigit():
                     print("Please enter a number.")
                     return
-                
+
                 choice = int(choice)
                 if choice == len(self.lessons) + 1:
                     print(f"\n🎵 \"{self.get_wisdom()}\"\n")
@@ -348,45 +354,45 @@ class RuleBreakingTeacher:
                     return
             except (ValueError, EOFError):
                 return
-        
+
         self.quick_lesson(topic)
-        
+
         try:
             another = input("Learn another topic? (y/n): ").strip().lower()
             if another == 'y':
                 self.interactive_session()
         except EOFError:
             pass
-    
+
     def get_lesson_content(self, topic: str) -> Optional[Dict]:
         """Get raw lesson content for programmatic use."""
         return self.lessons.get(topic)
-    
+
     def suggest_for_emotion(self, emotion: str) -> Dict:
         """
         Suggest rule-breaking techniques for a target emotion.
-        
+
         Args:
             emotion: Target emotion (grief, nostalgia, anger, etc.)
-        
+
         Returns:
             Dict with suggested techniques
         """
         emotion = emotion.lower()
-        
+
         suggestions = {
             "emotion": emotion,
             "chord_substitutions": [],
             "production_tips": [],
             "rhythmic_ideas": [],
         }
-        
+
         # Find matching substitutions
         sub_lesson = self.lessons.get("emotional_substitutions", {})
         for example in sub_lesson.get("examples", []):
             if example.get("emotion", "").lower() == emotion:
                 suggestions["chord_substitutions"].append(example)
-        
+
         # Add general tips based on emotion
         if emotion in ["grief", "sadness", "melancholy"]:
             suggestions["production_tips"] = [
@@ -399,7 +405,7 @@ class RuleBreakingTeacher:
                 "Ghost notes add vulnerability",
                 "Let silence do work - don't fill every space",
             ]
-        
+
         elif emotion in ["anger", "frustration", "intensity"]:
             suggestions["production_tips"] = [
                 "Don't be afraid of distortion and saturation",
@@ -411,7 +417,7 @@ class RuleBreakingTeacher:
                 "Hard, quantized drums for mechanical anger",
                 "Sudden dynamic shifts create tension",
             ]
-        
+
         elif emotion in ["nostalgia", "memory", "bittersweet"]:
             suggestions["production_tips"] = [
                 "Lo-fi textures evoke memory",
@@ -423,7 +429,7 @@ class RuleBreakingTeacher:
                 "Imprecise timing feels more 'remembered'",
                 "Rubato on melodic instruments",
             ]
-        
+
         elif emotion in ["hope", "transcendence", "uplift"]:
             suggestions["production_tips"] = [
                 "Open up the high end",
@@ -435,16 +441,16 @@ class RuleBreakingTeacher:
                 "Build energy through density",
                 "Release tension at key moments",
             ]
-        
+
         return suggestions
 
 
 def main():
     """Run the teaching module from command line."""
     import sys
-    
+
     teacher = RuleBreakingTeacher()
-    
+
     if len(sys.argv) > 1:
         topic = sys.argv[1]
         teacher.quick_lesson(topic)

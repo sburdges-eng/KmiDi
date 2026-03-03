@@ -77,4 +77,3 @@ def generate(request: PromptRequest) -> dict:
         temperature=request.temperature,
         top_p=request.top_p,
     )
-

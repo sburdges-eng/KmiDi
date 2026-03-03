@@ -12,15 +12,19 @@ from music_brain.emotion.emotion_production import (
 )
 
 # Audio emotion classification (lazy import to avoid torch dependency if not needed)
+
+
 def get_audio_classifier():
     """Get the audio emotion classifier (lazy import)."""
     from music_brain.emotion.audio_emotion_classifier import AudioEmotionClassifier
     return AudioEmotionClassifier
 
+
 def classify_audio_emotion(audio_path: str):
     """Quick audio emotion classification."""
     from music_brain.emotion.audio_emotion_classifier import classify_audio_emotion as _classify
     return _classify(audio_path)
+
 
 __all__ = [
     "EmotionThesaurus",

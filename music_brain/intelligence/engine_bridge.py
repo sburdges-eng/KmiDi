@@ -13,8 +13,6 @@ import json
 
 from music_brain.intelligence.suggestion_engine import (
     SuggestionEngine,
-    Suggestion,
-    SuggestionType,
 )
 from music_brain.intelligence.context_analyzer import ContextAnalyzer
 from music_brain.learning.user_preferences import UserPreferenceModel
@@ -75,8 +73,6 @@ def get_engine_suggestions(
             "confidence": 0.85
         }
     """
-    global _suggestion_engine, _preference_model
-
     # Initialize if not already done
     if _suggestion_engine is None:
         initialize_engine_system()
@@ -99,7 +95,7 @@ def get_engine_suggestions(
 
         return json.dumps(suggestions)
 
-    except Exception as e:
+    except Exception:  # noqa: F841
         # Return default suggestions on error
         return json.dumps(_get_default_suggestions(engine_type))
 
@@ -137,7 +133,7 @@ def get_batch_engine_suggestions(
 
         return json.dumps(batch_suggestions)
 
-    except Exception as e:
+    except Exception:  # noqa: F841
         return json.dumps({})
 
 
@@ -154,8 +150,6 @@ def record_suggestion_applied(
         suggestion_json: The suggestion that was applied
         result_json: Result of applying the suggestion (for learning)
     """
-    global _preference_model
-
     if _preference_model is None:
         initialize_engine_system()
 
@@ -170,7 +164,7 @@ def record_suggestion_applied(
             suggestion=suggestion,
             result=result
         )
-    except Exception as e:
+    except Exception:  # noqa: F841
         pass  # Silently fail - tracking is not critical
 
 

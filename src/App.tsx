@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Transport } from './components/SideA/Transport';
 import { Mixer } from './components/SideA/Mixer';
 import { Timeline } from './components/SideA/Timeline';
@@ -6,8 +6,10 @@ import { VUMeter } from './components/SideA/VUMeter';
 import { EmotionWheel } from './components/SideB/EmotionWheel';
 import { GhostWriter } from './components/SideB/GhostWriter';
 import { Interrogator } from './components/SideB/Interrogator';
+import IntentBuilder from './components/IntentBuilder';
+import { useMusicBrain } from './hooks/useMusicBrain';
 
-type Side = 'side-a' | 'side-b';
+type Side = 'side-a' | 'side-b' | 'intent';
 
 type Channel = {
   id: string;
@@ -40,6 +42,15 @@ export default function App() {
   const [interactions, setInteractions] = useState<string[]>([
     'KmiDi loaded. Ask it for an arrangement brief.',
   ]);
+  const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+
+  const brain = useMusicBrain();
+
+  useEffect(() => {
+    brain.healthCheck()
+      .then(() => setApiStatus('online'))
+      .catch(() => setApiStatus('offline'));
+  }, []);
 
   const timelineBars = useMemo(() => Math.max(8, tempo > 140 ? 24 : tempo > 95 ? 16 : 12), [tempo]);
 
@@ -73,12 +84,44 @@ export default function App() {
     };
   }, [isPlaying]);
 
-  const activeTitle = side === 'side-a' ? 'Side A Studio' : 'Side B Studio';
+  const handleGhostGenerate = useCallback(async (localText: string) => {
+    if (apiStatus === 'online') {
+      try {
+        await brain.setUserLyrics(localText);
+        const lyrics = await brain.getUserLyrics();
+        setGhostText(lyrics.lyrics ?? lyrics.generated ?? localText);
+        return;
+      } catch {
+        // fall through to local text
+      }
+    }
+    setGhostText(localText);
+  }, [apiStatus, brain]);
+
+  const handleInterrogatorAsk = useCallback(async (question: string) => {
+    setInteractions((prev) => [...prev, `You: ${question}`]);
+    if (apiStatus === 'online') {
+      try {
+        const response = await brain.interrogate({ message: question });
+        setInteractions((prev) => [...prev, `KmiDi: ${response.reply}`]);
+        return;
+      } catch {
+        // fall through to local response
+      }
+    }
+    setInteractions((prev) => [
+      ...prev,
+      `KmiDi: Drafted approach aligned to ${selectedEmotion?.base ?? 'global intent'} path.`,
+    ]);
+  }, [apiStatus, brain, selectedEmotion]);
+
+  const activeTitle =
+    side === 'side-a' ? 'Side A Studio' : side === 'side-b' ? 'Side B Studio' : 'Intent Builder';
 
   return (
     <div className="km-frame">
       <header className="km-header">
-        <h1 className="app-title">KmiDi UI</h1>
+        <h1 className="app-title">KmiDi</h1>
         <div className="km-toggle" role="tablist" aria-label="Studio mode">
           <button
             type="button"
@@ -94,7 +137,15 @@ export default function App() {
           >
             Side B
           </button>
+          <button
+            type="button"
+            className={side === 'intent' ? 'tab active' : 'tab'}
+            onClick={() => setSide('intent')}
+          >
+            Generate
+          </button>
         </div>
+        <span className={`api-badge ${apiStatus}`}>{apiStatus === 'online' ? 'API Online' : apiStatus === 'offline' ? 'API Offline' : '...'}</span>
       </header>
 
       <section className="km-titlebar">
@@ -155,10 +206,9 @@ export default function App() {
             <article className="panel">
               <h2 className="panel-title">Master Output</h2>
               <VUMeter value={masterVu} isActive={isPlaying} />
-              <p className="hint">This is a deterministic UI mock for immediate visual feedback.</p>
             </article>
           </section>
-        ) : (
+        ) : side === 'side-b' ? (
           <section className="km-side-grid" aria-label="Side B creative station">
             <article className="panel">
               <h2 className="panel-title">Emotion Wheel</h2>
@@ -171,7 +221,7 @@ export default function App() {
               <h2 className="panel-title">Ghost Writer</h2>
               <GhostWriter
                 seed={selectedEmotion ? `${selectedEmotion.base} ${selectedEmotion.intensity}` : ''}
-                onGenerate={(value) => setGhostText(value)}
+                onGenerate={handleGhostGenerate}
                 output={ghostText}
               />
             </article>
@@ -179,13 +229,7 @@ export default function App() {
               <h2 className="panel-title">Interrogator</h2>
               <Interrogator
                 starter={selectedEmotion ? `How should this feel: ${selectedEmotion.base}` : 'Start a prompt'}
-                onAsk={(question) =>
-                  setInteractions((prev) => [
-                    ...prev,
-                    `You: ${question}`,
-                    `KmiDi: Drafted approach aligned to ${selectedEmotion?.base ?? 'global intent'} path.`,
-                  ])
-                }
+                onAsk={handleInterrogatorAsk}
               />
             </article>
             <article className="panel">
@@ -198,6 +242,10 @@ export default function App() {
                 ))}
               </ul>
             </article>
+          </section>
+        ) : (
+          <section className="km-intent-section" aria-label="Intent Builder">
+            <IntentBuilder />
           </section>
         )}
       </main>

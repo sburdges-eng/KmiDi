@@ -109,18 +109,18 @@ DEFAULT_TRAITS = {
 @dataclass
 class MelodyConfig:
     """Configuration for melody generation."""
-    
+
     key: str = "C"
     mode: str = "major"
     octave: int = 4  # Base octave (middle C = C4 = MIDI 60)
     length_notes: int = 8
     tempo_bpm: float = 120.0
     time_signature: Tuple[int, int] = (4, 4)
-    
+
     # Generation parameters
     use_ml_model: bool = True
     ml_model_path: Optional[str] = None
-    
+
     def get_root_midi(self) -> int:
         """Get MIDI note number for root note."""
         note_map = {
@@ -134,19 +134,19 @@ class MelodyConfig:
 @dataclass
 class GeneratedMelody:
     """A generated melody with metadata."""
-    
+
     notes: List[int]  # MIDI note numbers
     durations: List[float]  # Duration in beats
     velocities: List[int]  # MIDI velocity (0-127)
-    
+
     key: str = "C"
     mode: str = "major"
     emotion: str = "neutral"
-    
+
     # Generation metadata
     method: str = "rule_based"  # "rule_based" or "ml_model"
     confidence: float = 0.0
-    
+
     def to_dict(self) -> Dict:
         """Serialize to dictionary."""
         return {
@@ -159,7 +159,7 @@ class GeneratedMelody:
             "method": self.method,
             "confidence": self.confidence,
         }
-    
+
     def transpose(self, semitones: int) -> "GeneratedMelody":
         """Return a transposed copy of this melody."""
         return GeneratedMelody(
@@ -177,25 +177,25 @@ class GeneratedMelody:
 class MLMelodyGenerator:
     """
     ML-based melody generator using trained models.
-    
+
     Falls back to rule-based generation when models are unavailable.
     """
-    
+
     def __init__(self, config: Optional[MelodyConfig] = None):
         self.config = config or MelodyConfig()
         self._ml_model = None
         self._ml_available = False
         self._load_ml_model()
-    
+
     def _load_ml_model(self) -> None:
         """Attempt to load the ML melody model."""
         if not self.config.use_ml_model:
             return
-        
+
         try:
             from penta_core.ml.inference import create_engine_by_name
             from penta_core.ml.model_registry import get_model
-            
+
             # Try to load MelodyTransformer
             model_info = get_model("melodytransformer")
             if model_info and Path(model_info.path).exists():
@@ -207,11 +207,11 @@ class MLMelodyGenerator:
             pass
         except Exception:
             pass
-    
+
     def is_ml_available(self) -> bool:
         """Check if ML model is available."""
         return self._ml_available
-    
+
     def generate(
         self,
         emotion: str,
@@ -222,31 +222,31 @@ class MLMelodyGenerator:
     ) -> GeneratedMelody:
         """
         Generate a melody for the given emotion.
-        
+
         Args:
             emotion: Target emotion (grief, joy, anger, etc.)
             length: Number of notes to generate
             key: Musical key (overrides config)
             mode: Scale mode (overrides config)
             context_notes: Optional previous notes for continuation
-        
+
         Returns:
             GeneratedMelody with notes, durations, and velocities
         """
         length = length or self.config.length_notes
         key = key or self.config.key
         mode = mode or self.config.mode
-        
+
         # Try ML model first
         if self._ml_available and self._ml_model:
             try:
                 return self._generate_ml(emotion, length, key, mode, context_notes)
             except Exception:
                 pass
-        
+
         # Fall back to rule-based generation
         return self._generate_rule_based(emotion, length, key, mode, context_notes)
-    
+
     def _generate_ml(
         self,
         emotion: str,
@@ -256,28 +256,27 @@ class MLMelodyGenerator:
         context_notes: Optional[List[int]],
     ) -> GeneratedMelody:
         """Generate melody using ML model."""
-        import numpy as np
-        
+
         # Create emotion embedding (simplified - real implementation would use EmotionRecognizer)
         emotion_embedding = self._create_emotion_embedding(emotion)
-        
+
         # Prepare input
         inputs = {"emotion_embedding": emotion_embedding}
-        
+
         # Run inference
         result = self._ml_model.infer(inputs)
-        
+
         # Extract note probabilities from output
         note_probs = result.get_output()
-        
+
         # Sample notes from probabilities
         notes = self._sample_notes_from_probs(note_probs, length, key, mode)
-        
+
         # Generate durations and velocities based on emotion
         traits = EMOTION_MELODIC_TRAITS.get(emotion.lower(), DEFAULT_TRAITS)
         durations = self._generate_durations(length, traits)
         velocities = self._generate_velocities(length, emotion)
-        
+
         return GeneratedMelody(
             notes=notes,
             durations=durations,
@@ -288,7 +287,7 @@ class MLMelodyGenerator:
             method="ml_model",
             confidence=float(result.confidence or 0.8),
         )
-    
+
     def _generate_rule_based(
         self,
         emotion: str,
@@ -300,22 +299,22 @@ class MLMelodyGenerator:
         """Generate melody using rule-based approach."""
         # Get traits for this emotion
         traits = EMOTION_MELODIC_TRAITS.get(emotion.lower(), DEFAULT_TRAITS)
-        
+
         # Get scale for this key/mode
         scale = self._get_scale(key, mode)
-        
+
         # Calculate MIDI root
         config = MelodyConfig(key=key, mode=mode)
         root = config.get_root_midi()
-        
+
         # Generate notes
         notes = []
         current_note = root
-        
+
         # Use context if available
         if context_notes:
             current_note = context_notes[-1]
-        
+
         for i in range(length):
             if i == 0 and not context_notes:
                 # Start on tonic, 3rd, or 5th
@@ -327,17 +326,17 @@ class MLMelodyGenerator:
                 current_note = self._choose_next_note(
                     current_note, root, scale, traits, i, length
                 )
-            
+
             notes.append(current_note)
-        
+
         # Apply resolution if needed
         if traits["resolution_strength"] > 0.5:
             notes = self._apply_resolution(notes, root, scale, traits)
-        
+
         # Generate durations and velocities
         durations = self._generate_durations(length, traits)
         velocities = self._generate_velocities(length, emotion)
-        
+
         return GeneratedMelody(
             notes=notes,
             durations=durations,
@@ -348,11 +347,11 @@ class MLMelodyGenerator:
             method="rule_based",
             confidence=0.6,
         )
-    
+
     def _get_scale(self, key: str, mode: str) -> List[int]:
         """Get scale intervals for key and mode."""
         return SCALE_PATTERNS.get(mode.lower(), SCALE_PATTERNS["major"])
-    
+
     def _choose_next_note(
         self,
         current: int,
@@ -366,50 +365,50 @@ class MLMelodyGenerator:
         # Build list of possible scale notes within range
         range_semitones = int(traits["range_octaves"] * 12)
         possible_notes = []
-        
+
         for octave_offset in range(-1, 2):
             for interval in scale:
                 note = root + (octave_offset * 12) + interval
                 if abs(note - current) <= range_semitones:
                     possible_notes.append(note)
-        
+
         if not possible_notes:
             possible_notes = [current]
-        
+
         # Calculate probabilities based on traits
         probs = []
         for note in possible_notes:
             interval = abs(note - current)
-            
+
             # Base probability
             prob = 1.0
-            
+
             # Prefer or avoid certain intervals
             if interval in traits.get("preferred_intervals", []):
                 prob *= 1.5
             if interval in traits.get("avoid_intervals", []):
                 prob *= 0.3
-            
+
             # Step vs leap preference
             if interval > 4:  # Leap
                 prob *= traits["leap_probability"]
             else:  # Step
                 prob *= (1 - traits["leap_probability"])
-            
+
             # Ascending vs descending bias
             if note > current:
                 prob *= traits["ascending_bias"]
             elif note < current:
                 prob *= (1 - traits["ascending_bias"])
-            
+
             probs.append(max(prob, 0.1))
-        
+
         # Normalize probabilities
         probs = np.array(probs)
         probs = probs / probs.sum()
-        
+
         return np.random.choice(possible_notes, p=probs)
-    
+
     def _apply_resolution(
         self,
         notes: List[int],
@@ -420,9 +419,9 @@ class MLMelodyGenerator:
         """Apply melodic resolution at the end if appropriate."""
         if len(notes) < 2:
             return notes
-        
+
         resolution_strength = traits["resolution_strength"]
-        
+
         if np.random.random() < resolution_strength:
             # Resolve to tonic, 3rd, or 5th
             resolution_notes = [
@@ -430,18 +429,18 @@ class MLMelodyGenerator:
                 root + scale[2] if len(scale) > 2 else root,
                 root + scale[4] if len(scale) > 4 else root,
             ]
-            
+
             # Choose closest resolution note
             last_note = notes[-1]
             closest = min(resolution_notes, key=lambda x: abs(x - last_note))
             notes[-1] = closest
-        
+
         return notes
-    
+
     def _generate_durations(self, length: int, traits: Dict) -> List[float]:
         """Generate note durations in beats."""
-        durations = []
-        
+        _durations = []  # noqa: F841
+
         # Common duration patterns
         patterns = [
             [1.0] * length,  # All quarter notes
@@ -449,10 +448,10 @@ class MLMelodyGenerator:
             [1.0, 0.5, 0.5] * (length // 3 + 1),  # Quarter, eighth, eighth
             [0.5, 0.5, 1.0] * (length // 3 + 1),  # Eighth, eighth, quarter
         ]
-        
+
         pattern = patterns[np.random.randint(len(patterns))]
         return pattern[:length]
-    
+
     def _generate_velocities(self, length: int, emotion: str) -> List[int]:
         """Generate MIDI velocities based on emotion."""
         # Base velocity by emotion
@@ -466,9 +465,9 @@ class MLMelodyGenerator:
             "nostalgia": 70,
             "defiance": 95,
         }
-        
+
         base = base_velocities.get(emotion.lower(), 75)
-        
+
         # Add some variation
         velocities = []
         for i in range(length):
@@ -477,25 +476,25 @@ class MLMelodyGenerator:
             variation = np.random.randint(-8, 8)
             velocity = max(40, min(127, base + accent + variation))
             velocities.append(velocity)
-        
+
         return velocities
-    
+
     def _create_emotion_embedding(self, emotion: str) -> np.ndarray:
         """Create a simple emotion embedding vector."""
         # This is a placeholder - real implementation would use EmotionRecognizer
         embedding = np.zeros(64, dtype=np.float32)
-        
+
         # Simple encoding based on emotion
         emotion_indices = {
             "joy": 0, "grief": 1, "anger": 2, "fear": 3,
             "hope": 4, "longing": 5, "nostalgia": 6, "defiance": 7,
         }
-        
+
         idx = emotion_indices.get(emotion.lower(), 0)
         embedding[idx * 8:(idx + 1) * 8] = 1.0
-        
+
         return embedding.reshape(1, -1)
-    
+
     def _sample_notes_from_probs(
         self,
         probs: np.ndarray,
@@ -508,7 +507,7 @@ class MLMelodyGenerator:
         scale = self._get_scale(key, mode)
         config = MelodyConfig(key=key, mode=mode)
         root = config.get_root_midi()
-        
+
         notes = []
         for i in range(length):
             # Get probabilities for this position
@@ -516,16 +515,16 @@ class MLMelodyGenerator:
                 note_probs = probs[0, i]
             else:
                 note_probs = probs.flatten()
-            
+
             # Sample from probabilities
             note_idx = np.random.choice(len(note_probs), p=note_probs / note_probs.sum())
-            
+
             # Map to scale note
             scale_degree = note_idx % len(scale)
             octave_offset = note_idx // len(scale) - 2
             note = root + (octave_offset * 12) + scale[scale_degree]
             notes.append(note)
-        
+
         return notes
 
 

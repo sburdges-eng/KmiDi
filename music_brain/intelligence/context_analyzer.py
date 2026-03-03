@@ -166,9 +166,11 @@ class ContextAnalyzer:
 
         # Emotion category hints
         if context.emotion_category == "negative_low_energy":
-            hints.append("Low energy emotions often benefit from slower tempos and darker harmonies")
+            hints.append("Low energy emotions often benefit from slower tempos and darker harmonies")  # noqa: E501
+
         elif context.emotion_category == "negative_high_energy":
-            hints.append("High energy negative emotions work well with aggressive rhythms and distortion")
+            hints.append(
+                "High energy negative emotions work well with aggressive rhythms and distortion")
 
         # Parameter range hints
         low_params = [p for p, r in context.parameter_ranges.items() if r == "low"]

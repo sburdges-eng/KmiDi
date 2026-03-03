@@ -5,7 +5,7 @@ Python utilities for MIDI editing operations.
 Part of Phase 5 of the "All-Knowing Interactive Musical Customization System".
 """
 
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime
@@ -302,7 +302,8 @@ class MidiEditor:
             return 0
 
         # Find earliest note in clipboard to calculate offset
-        earliest_tick = min(note.get("startTick", 0) for note in self.clipboard) if self.clipboard else 0
+        earliest_tick = min(note.get("startTick", 0)
+                            for note in self.clipboard) if self.clipboard else 0
 
         pasted_count = 0
         for note in self.clipboard:
@@ -344,7 +345,10 @@ class MidiEditor:
             return None
 
         part_map = {
-            "melody": getattr(self.midi_data, "melody", None) or getattr(self.midi_data, "notes", None),
+            "melody": (
+                getattr(self.midi_data, "melody", None)
+                or getattr(self.midi_data, "notes", None)
+            ),
             "bass": getattr(self.midi_data, "bass", None),
             "drums": getattr(self.midi_data, "drumGroove", None),
             "pad": getattr(self.midi_data, "pad", None),

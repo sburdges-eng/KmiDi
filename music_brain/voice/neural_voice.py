@@ -12,9 +12,8 @@ providing neural synthesis as an alternative to formant synthesis.
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import Optional, List, Dict, Any, Union
-from pathlib import Path
+from dataclasses import dataclass
+from typing import Optional, List, Dict
 from enum import Enum
 import numpy as np
 import tempfile
@@ -98,17 +97,14 @@ class NeuralVoiceSynthesizer(ABC):
     @abstractmethod
     def synthesize(self, text: str) -> np.ndarray:
         """Synthesize speech from text"""
-        pass
 
     @abstractmethod
     def clone_voice(self, reference_audio: str) -> bool:
         """Clone a voice from reference audio"""
-        pass
 
     @abstractmethod
     def get_sample_rate(self) -> int:
         """Get output sample rate"""
-        pass
 
 
 class CoquiVoiceSynthesizer(NeuralVoiceSynthesizer):
@@ -133,7 +129,8 @@ class CoquiVoiceSynthesizer(NeuralVoiceSynthesizer):
         if self.config.device == "auto":
             if TORCH_AVAILABLE and torch.cuda.is_available():
                 self.device = "cuda"
-            elif TORCH_AVAILABLE and hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            elif TORCH_AVAILABLE and hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():  # noqa: E501
+
                 self.device = "mps"
             else:
                 self.device = "cpu"
@@ -228,7 +225,8 @@ class BarkVoiceSynthesizer(NeuralVoiceSynthesizer):
     def __init__(self, config: Optional[NeuralVoiceConfig] = None):
         if not BARK_AVAILABLE:
             raise ImportError(
-                "Bark not available. Install with: pip install git+https://github.com/suno-ai/bark.git"
+                "Bark not available. Install with: pip install git+https://github.com/suno-ai/bark.git"  # noqa: E501
+
             )
 
         self.config = config or NeuralVoiceConfig()
@@ -611,7 +609,8 @@ def quick_neural_speak(text: str, output_path: Optional[str] = None) -> np.ndarr
     return audio
 
 
-def quick_voice_clone(reference_audio: str, text: str, output_path: Optional[str] = None) -> np.ndarray:
+def quick_voice_clone(
+        reference_audio: str, text: str, output_path: Optional[str] = None) -> np.ndarray:
     """
     Quick function to clone a voice and synthesize.
 

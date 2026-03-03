@@ -13,8 +13,7 @@ Philosophy: "The best teacher adapts to the student, not the other way around."
 
 from enum import Enum, auto
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any, Callable
-from datetime import datetime
+from typing import List, Dict, Optional, Any
 import random
 
 
@@ -402,7 +401,7 @@ class AdaptiveTeacher:
         # Constructive feedback
         if success_level < 0.9:
             feedback["constructive"] = [
-                f"Focus on the specific areas where you felt uncertain",
+                "Focus on the specific areas where you felt uncertain",
                 "Try practicing at a slower tempo",
                 "Break the skill into smaller components",
             ]
@@ -469,7 +468,8 @@ class PedagogyEngine:
             context_parts.extend([
                 f"Student Age: {student.age}",
                 f"Experience Level: {student.experience_level}/10",
-                f"Learning Style: {', '.join(p.name for p in student.learning_preferences) or 'Not specified'}",
+                f"Learning Style: {', '.join(p.name for p in student.learning_preferences) or 'Not specified'}",  # noqa: E501
+
                 f"Primary Goal: {student.primary_goal}",
             ])
             if student.challenges:
@@ -498,10 +498,12 @@ class PedagogyEngine:
         duration_minutes: int = 30,
     ) -> str:
         """Generate a comprehensive lesson prompt."""
-        return f"""Design a {duration_minutes}-minute lesson plan for teaching {topic} on {instrument}.
+        return f"""Design a {duration_minutes} -minute lesson plan for teaching {topic}  on {
+            instrument}.
 
 STUDENT PROFILE:
 {self._format_student_profile(student)}
+
 
 LESSON REQUIREMENTS:
 1. Include a warm-up activity (3-5 minutes)
@@ -538,7 +540,7 @@ FORMAT YOUR RESPONSE AS:
 
 ## Success Criteria
 [How to know when they've got it]
-"""
+            """
 
     def generate_assessment_prompt(
         self,
@@ -702,7 +704,8 @@ INCLUDE:
 
 Be genuine and avoid empty praise.""",
 
-    "assess": """Create an assessment for {topic} on {instrument} at difficulty level {difficulty}/10.
+    "assess": """Create an assessment for {topic} on {instrument} at difficulty level {difficulty}/10.  # noqa: E501
+
 
 CONTEXT:
 {context}
@@ -732,7 +735,8 @@ THE PLAN SHOULD INCLUDE:
 
 Be specific and realistic.""",
 
-    "song_suggestion": """Suggest songs for practicing {topic} on {instrument} at difficulty level {difficulty}/10.
+    "song_suggestion": """Suggest songs for practicing {topic} on {instrument} at difficulty level {difficulty}/10.  # noqa: E501
+
 
 CONTEXT:
 {context}

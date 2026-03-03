@@ -33,7 +33,7 @@ class CompleteSongIntentRequest(BaseModel):
     tempo: int = Field(default=120, ge=40, le=300, description="BPM clamped to engine limits")
     key_mode: str = Field(
         ...,
-        pattern=r"^[A-G][#b]?\s(major|minor|dorian|mixolydian|lydian|phrygian|locrian)$",
+        pattern=r"^[A-G][#b]?\s(major|minor|dorian|mixolydian|lydian|phrygian|aeolian|locrian)$",
     )
     structure: List[StructureSection] = Field(min_length=1)
     instruments: List[TrackIntent] = Field(min_length=1)
@@ -64,4 +64,3 @@ class CompleteSongIntentRequest(BaseModel):
         if total_bars > 1000:
             raise ValueError(f"Total structure exceeds maximum safe bar count: {total_bars}")
         return sections
-

@@ -8,7 +8,7 @@ to build a structured ruleset.
 
 import re
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 
 
 class BaseGuideParser:
@@ -29,7 +29,6 @@ class BaseGuideParser:
 
     def _parse_content(self, content: str):
         """Override this to implement specific parsing logic."""
-        pass
 
     def _get_fallback_rules(self) -> Dict[str, Any]:
         """Override this to provide default rules."""
@@ -82,14 +81,16 @@ class DrumGuideParser(BaseGuideParser):
 
         # Main hits: "Velocity range: 95-115"
         main_match = re.search(
-            r"Main Snare Variation.*?Velocity range: (\d+)-(\d+)", content, re.DOTALL | re.IGNORECASE)
+            r"Main Snare Variation.*?Velocity range: (\d+)-(\d+)", content, re.DOTALL | re.IGNORECASE)  # noqa: E501
+
         if main_match:
             self.rules["snare"]["main_velocity"] = (
                 int(main_match.group(1)), int(main_match.group(2)))
 
         # Timing: "Slight timing drift: ±5-10ms"
         time_match = re.search(
-            r"Main Snare Variation.*?timing drift: [±\+\-](\d+)-(\d+)ms", content, re.DOTALL | re.IGNORECASE)
+            r"Main Snare Variation.*?timing drift: [±\+\-](\d+)-(\d+)ms", content, re.DOTALL | re.IGNORECASE)  # noqa: E501
+
         if time_match:
             self.rules["snare"]["timing_variation_ms"] = (
                 int(time_match.group(1)), int(time_match.group(2)))
@@ -168,7 +169,8 @@ class DrumGuideParser(BaseGuideParser):
         """Hardcoded fallback if file is missing."""
         return {
             "hihat": {"velocity_variation": (5, 10), "timing_variation_ms": (10, 20)},
-            "snare": {"ghost_velocity": (25, 45), "main_velocity": (95, 115), "timing_variation_ms": (5, 10)},
+            "snare": {"ghost_velocity": (25, 45), "main_velocity": (95, 115), "timing_variation_ms": (5, 10)},  # noqa: E501
+
             "kick": {"velocity_range": (85, 110), "timing_variation_ms": (0, 5)},
             "genres": {
                 "rock": {"swing": 0.0, "timing_shift": 0.0},
@@ -279,9 +281,10 @@ class GuitarGuideParser(BaseGuideParser):
             "velocity": {}
         }
 
+
 class EQGuideParser(BaseGuideParser):
     """Parses the EQ Deep Dive Guide."""
-    
+
     def __init__(self, guide_path: Path):
         super().__init__(guide_path)
         self.rules = {
@@ -291,7 +294,7 @@ class EQGuideParser(BaseGuideParser):
     def _parse_content(self, content: str):
         # Parse "What Lives Where" table
         # | Kick drum | Sub: 50-60Hz, Body: 80-100Hz, Click: 3-5kHz |
-        
+
         # Find table section
         table_match = re.search(r"## What Lives Where\n\n(.*?)\n\n", content, re.DOTALL)
         if table_match:
@@ -300,12 +303,12 @@ class EQGuideParser(BaseGuideParser):
             for row in rows:
                 if "|" not in row or "Instrument" in row or "---" in row:
                     continue
-                
+
                 parts = [p.strip() for p in row.split('|') if p.strip()]
                 if len(parts) >= 2:
                     inst = parts[0].lower()
                     desc = parts[1]
-                    
+
                     # Parse frequency ranges: "Sub: 50-60Hz"
                     ranges = {}
                     # Regex for "Label: RangeHz"
@@ -315,7 +318,7 @@ class EQGuideParser(BaseGuideParser):
                         label = m.group(1).lower()
                         val_str = m.group(2)
                         unit = m.group(3)
-                        
+
                         # Convert to Hz
                         try:
                             if '-' in val_str:
@@ -324,15 +327,15 @@ class EQGuideParser(BaseGuideParser):
                                 high = float(high)
                             else:
                                 low = high = float(val_str)
-                                
+
                             if unit == 'kHz':
                                 low *= 1000
                                 high *= 1000
-                                
+
                             ranges[label] = (low, high)
                         except ValueError:
                             continue
-                            
+
                     self.rules["instruments"][inst] = ranges
 
     def _get_fallback_rules(self) -> Dict[str, Any]:
@@ -346,7 +349,7 @@ class EQGuideParser(BaseGuideParser):
 
 class CompressionGuideParser(BaseGuideParser):
     """Parses the Compression Deep Dive Guide."""
-    
+
     def __init__(self, guide_path: Path):
         super().__init__(guide_path)
         self.rules = {
@@ -364,9 +367,9 @@ class CompressionGuideParser(BaseGuideParser):
         matches = re.finditer(r"\|\s*(\d+):1\s*\|\s*([^|]+)\s*\|\s*([^|]+)\|", content)
         for m in matches:
             ratio = int(m.group(1))
-            desc = m.group(2).strip()
+            _desc = m.group(2).strip()  # noqa: F841
             uses = m.group(3).strip().lower()
-            
+
             # Map uses to ratio
             if "drums" in uses:
                 self.rules["ratios"]["drums"] = ratio

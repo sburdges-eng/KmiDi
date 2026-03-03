@@ -9,7 +9,6 @@ from typing import List, Dict, Optional, Any, Callable
 from datetime import datetime
 from enum import Enum
 import uuid
-import json
 
 
 class SessionRole(Enum):

@@ -9,9 +9,8 @@ Provides a common interface for running inference with:
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Union
-from pathlib import Path
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 import numpy as np
 import time
 
@@ -66,12 +65,10 @@ class InferenceEngine(ABC):
     @abstractmethod
     def load(self) -> bool:
         """Load the model."""
-        pass
 
     @abstractmethod
     def unload(self) -> None:
         """Unload the model."""
-        pass
 
     @abstractmethod
     def infer(
@@ -79,7 +76,6 @@ class InferenceEngine(ABC):
         inputs: Dict[str, np.ndarray],
     ) -> InferenceResult:
         """Run inference."""
-        pass
 
     def is_loaded(self) -> bool:
         """Check if model is loaded."""
