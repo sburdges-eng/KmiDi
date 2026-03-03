@@ -876,8 +876,8 @@ class DAiWAPI:
         # Extract key and mode from technical.key (format: "F major" or "C minor")
         technical_key = "C"
         technical_mode = "major"
-        if tech.get("key"):
-            key_parts = tech["key"].split()
+        if tech.key:
+            key_parts = tech.key.split()
             technical_key = key_parts[0] if key_parts else "C"
             if len(key_parts) > 1:
                 # Validate mode against known modes
@@ -885,7 +885,7 @@ class DAiWAPI:
                 technical_mode = mode_candidate if mode_candidate in VALID_MUSICAL_MODES else "major"
         
         # Calculate tempo range from BPM with validation
-        bpm = tech.get("bpm") or 82
+        bpm = tech.bpm or 82
         try:
             bpm = int(bpm)
             bpm = max(40, min(300, bpm))  # Clamp to valid range
@@ -898,11 +898,16 @@ class DAiWAPI:
             core_event=request.intent.core_wound or emotional,
             core_longing=request.intent.core_desire or "",
             mood_primary=mood_primary,
-            technical_genre=tech.get("genre") or "",
+            technical_genre=tech.genre or "",
             technical_tempo_range=tempo_range,
             technical_key=technical_key,
             technical_mode=technical_mode,
-            vulnerability_scale=0.5,
+            technical_groove_feel=tech.groove_feel or "Straight/Driving",
+            technical_rule_to_break=tech.rule_to_break or "",
+            rule_breaking_justification=tech.rule_justification or "",
+            vulnerability_scale=request.intent.vulnerability_scale if request.intent.vulnerability_scale is not None else 0.5,
+            imagery_texture=request.intent.imagery_texture or "",
+            narrative_arc=tech.narrative_arc or "Climb-to-Climax",
             created=time.strftime("%Y-%m-%d %H:%M:%S"),
         )
         
@@ -936,6 +941,8 @@ if FASTAPI_AVAILABLE:
         core_wound: Optional[str] = None
         core_desire: Optional[str] = None
         emotional_intent: str
+        imagery_texture: Optional[str] = None
+        vulnerability_scale: Optional[float] = None
         technical: Optional[TechnicalIntent] = None
         vulnerability_scale: Optional[float] = None  # 0.0 - 1.0 emotional openness
         narrative_arc: Optional[str] = None  # Energetic trajectory (e.g. "Climb-to-Climax")
@@ -1393,7 +1400,6 @@ if FASTAPI_AVAILABLE:
                     try:
                         # Extract harmony info
                         harmony = result["harmony"]
-                        groove = result.get("groove", {})
                         # Validate and clamp duration to positive value (0.1 - 60 minutes)
                         duration_minutes = tech.duration if tech and tech.duration is not None else 3.0
                         try:
