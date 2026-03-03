@@ -1,0 +1,2 @@
+# This file ensures the configs/ directory is tracked by git even when config outputs are gitignored.
+# See configs/README.md for usage conventions.
