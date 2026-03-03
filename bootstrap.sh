@@ -45,7 +45,9 @@ if ! python3 -c "import pybind11" 2>/dev/null; then
 fi
 
 PYBIND_DIR="$(python3 -c 'import pybind11; print(pybind11.get_cmake_dir())' 2>/dev/null || true)"
+PYBIND_HINT="${PYBIND_DIR}"
 if [ -z "${PYBIND_DIR}" ]; then
+  PYBIND_HINT="<path-to-pybind11-cmake-dir>"
   echo "WARNING: pybind11 still not found. CMake may fail for Python bindings."
 else
   echo "   pybind11 found at: ${PYBIND_DIR}"
@@ -53,4 +55,4 @@ fi
 
 echo "=> Bootstrap complete. Environment ready."
 echo "   To configure C++ build:"
-echo "   cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Release -Dpybind11_DIR=${PYBIND_DIR}"
+echo "   cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Release -Dpybind11_DIR=${PYBIND_HINT}"
