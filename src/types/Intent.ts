@@ -20,12 +20,8 @@ export interface CompleteSongIntentRequest {
   structure: StructureSection[];
   instruments: TrackIntent[];
   allow_legacy_fallback?: boolean;
-  /** Rhythmic feel (e.g. Straight/Driving). */
   groove_feel?: string;
-  /** Energetic trajectory (e.g. Climb-to-Climax). */
   narrative_arc?: string;
-  /** Intentional theory violation for effect. */
-  rule_to_break?: string | null;
-  /** Narrative reason for the rule break. */
-  rule_justification?: string | null;
+  rule_to_break?: unknown;
+  rule_justification?: unknown;
 }
