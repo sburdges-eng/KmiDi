@@ -31,7 +31,31 @@ The Tauri desktop shell, C++ KellyCore engine, Streamlit mixer panel, and Androi
 ### Gotchas
 
 - No lockfile exists (`package-lock.json`, `yarn.lock`, etc.). `npm install` is the canonical command.
-- The `/generate` endpoint requires `structure` (list of sections with lowercase `name` matching `^(intro|verse|chorus|bridge|outro|build|drop)$`) and `instruments` (non-empty list). See `music_brain/engine_api/schema.py` for the `CompleteSongIntentRequest` Pydantic model.
+- The `/generate` endpoint expects a strict `intent` payload (see `CompleteSongIntentRequest` in `music_brain/engine_api/schema.py`). At minimum you must provide:
+  - `intent.core_desire` (high-level emotional / production goal string)
+  - `intent.technical` object, which is required (omitting it returns HTTP 422)
+  - `intent.technical.genre` (string)
+  - `intent.technical.key` (string matching the `key_mode` pattern, e.g. `"C_major"`)
+  - `intent.technical.structure` — list of sections with lowercase `name` matching `^(intro|verse|chorus|bridge|outro|build|drop)$`
+  - `intent.technical.instruments` — non-empty list
+  - Minimal example:
+    ```json
+    {
+      "intent": {
+        "core_desire": "emotional pop ballad, intimate but powerful",
+        "technical": {
+          "genre": "pop",
+          "key": "C_major",
+          "structure": [
+            { "name": "intro" },
+            { "name": "verse" },
+            { "name": "chorus" }
+          ],
+          "instruments": ["piano", "bass", "drums"]
+        }
+      }
+    }
+    ```
 - `bootstrap.sh` tries to `git submodule update --init --recursive` and checks for `external/JUCE/CMakeLists.txt`. The JUCE submodule is large; in cloud VMs the C++ build path is not required so this step can be skipped.
 - Vite is configured to bind to `0.0.0.0` (see `vite.config.ts`), so the frontend is accessible from outside the container.
 
