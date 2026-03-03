@@ -1656,7 +1656,7 @@ if FASTAPI_AVAILABLE:
                 response["midi_path"] = result["midi_path"]
                 if output_audio:
                     response["audio_path"] = result["midi_path"].replace(
-                        ".mid", f".{request.output_format} ")
+                        ".mid", f".{request.output_format}")
                     response["output_path"] = response["audio_path"]
                 else:
                     response["output_path"] = result["midi_path"]

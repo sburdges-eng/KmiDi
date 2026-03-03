@@ -385,10 +385,8 @@ class LocalVoiceSynth:
         if self.midi:
             # Map F1 (200-1000 Hz) to CC value
             f1_cc = int((f1 - 200) / 800 * 127)
-            # Map F2 (500-3000 Hz) to CC value
-            _f2_cc = int((f2 - 500) / 2500 * 127)  # noqa: F841
             self.midi.send_cc(VoiceCC.FORMANT_SHIFT.value, f1_cc, channel)
-            # Could add F2 CC if available
+            # F2 CC not yet mapped in VoiceCC; f2 parameter reserved for future use
 
     def set_breathiness(self, amount: float, channel: int = 0):
         """Set breathiness (0-1)."""
