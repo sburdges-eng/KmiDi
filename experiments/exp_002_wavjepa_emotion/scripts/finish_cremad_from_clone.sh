@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # After git clone + LFS pull of CREMA-D finishes in data/_cremad_clone/repo,
-# run this from the experiment root (experiments/wavjepa_emotion) to copy
+# run this from the experiment root (experiments/exp_002_wavjepa_emotion) to copy
 # real WAVs into data/raw/emotions/cremad and remove the clone.
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
