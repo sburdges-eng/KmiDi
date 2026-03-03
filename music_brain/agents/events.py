@@ -519,9 +519,9 @@ class EventBus:
         self._pending_requests.clear()
 
     def __repr__(self) -> str:
-        return f"EventBus(handlers={
-            self.get_handler_count()}, events={
-            self._stats['events_emitted']}) "
+        hc = self.get_handler_count()
+        ee = self._stats['events_emitted']
+        return f"EventBus(handlers={hc}, events={ee})"
 
 
 # =============================================================================
