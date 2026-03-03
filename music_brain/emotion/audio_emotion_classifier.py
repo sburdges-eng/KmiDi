@@ -215,7 +215,6 @@ class AudioEmotionClassifier:
             Path(__file__).parent.parent.parent / "models" / "checkpoints",  # KmiDi/models/checkpoints
             Path(__file__).parent.parent.parent.parent / "models" / "checkpoints",  # parent/models/checkpoints
             Path.home() / "models" / "audio_classifiers",
-            Path("/Users/seanburdges/RECOVERY_OPS/sbdrive/ml-training-suite/models/checkpoints"),  # ML Training Suite
         ]
 
         model_dirs = {
