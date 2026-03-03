@@ -46,17 +46,36 @@ if command -v node >/dev/null 2>&1; then
   fi
 fi
 
+# Resolve Python interpreter: respect $PYTHON if set, otherwise prefer "python" with a fallback to "python3".
+if [ -n "${PYTHON:-}" ]; then
+  if ! command -v "$PYTHON" >/dev/null 2>&1; then
+    echo "FATAL: \$PYTHON is set to '${PYTHON}' but that interpreter was not found in PATH."
+    exit 1
+  fi
+else
+  if command -v python >/dev/null 2>&1; then
+    PYTHON=python
+  elif command -v python3 >/dev/null 2>&1; then
+    PYTHON=python3
+  else
+    echo "FATAL: Neither 'python' nor 'python3' was found in PATH. Please install Python or set \$PYTHON."
+    exit 1
+  fi
+fi
+
 # 3) Handle pybind11
 echo "-> Checking for pybind11..."
-if ! python3 -c "import pybind11" 2>/dev/null; then
+if ! "$PYTHON" -c "import pybind11" 2>/dev/null; then
   echo "-> pybind11 not found. Attempting to install..."
-  python3 -m pip install pybind11 --quiet || {
+  "$PYTHON" -m pip install pybind11 --quiet || {
     echo "WARNING: Failed to install pybind11 automatically. You may need to run: pip install pybind11"
   }
 fi
 
-PYBIND_DIR="$(python3 -c 'import pybind11; print(pybind11.get_cmake_dir())' 2>/dev/null || true)"
+PYBIND_DIR="$("$PYTHON" -c 'import pybind11; print(pybind11.get_cmake_dir())' 2>/dev/null || true)"
+PYBIND_HINT="${PYBIND_DIR}"
 if [ -z "${PYBIND_DIR}" ]; then
+  PYBIND_HINT="<path-to-pybind11-cmake-dir>"
   echo "WARNING: pybind11 still not found. CMake may fail for Python bindings."
 else
   echo "   pybind11 found at: ${PYBIND_DIR}"
