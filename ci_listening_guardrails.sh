@@ -37,6 +37,7 @@ EXTENSIONS=(
   "*.rs"
   "*.ts" "*.tsx" "*.js" "*.jsx"
   "*.sh"
+  "*.cmake" "CMakeLists.txt"
 )
 
 # Build ripgrep glob flags
@@ -67,6 +68,7 @@ done < <(find . -maxdepth 1 -type f \( \
   -o -name "*.rs" \
   -o -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \
   -o -name "*.sh" \
+  -o -name "*.cmake" -o -name "CMakeLists.txt" \
 \) ! -name "ci_listening_guardrails.sh" -print0 2>/dev/null)
 
 if [[ ${#EXISTING_DIRS[@]} -eq 0 ]]; then
