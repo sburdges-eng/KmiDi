@@ -5,11 +5,14 @@ Integrates emotion-driven music with visual generation through
 Unreal Engine and Jespa to create synchronized music videos.
 """
 
+import logging
 import shutil
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 class VideoFormat(Enum):
@@ -252,8 +255,7 @@ class VideoGenerator:
                         item.unlink()
                     elif item.is_dir():
                         shutil.rmtree(item)
-                except Exception as e:
-                    # Use standard print for stub implementation, but could use logging
-                    print(f"Error cleaning up {item}: {e}")
+                except OSError:
+                    logger.warning("Error cleaning up %s", item, exc_info=True)
         
         self._initialized = False
