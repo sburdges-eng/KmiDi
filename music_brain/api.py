@@ -1329,11 +1329,15 @@ if FASTAPI_AVAILABLE:
                     "structure": structure_payload,
                     "instruments": instruments_payload,
                     "allow_legacy_fallback": False,
-                    "groove_feel": tech.groove_feel or "Straight/Driving",
-                    "narrative_arc": request.intent.narrative_arc or "Climb-to-Climax",
                     "rule_to_break": tech.rule_to_break,
                     "rule_justification": tech.rule_justification,
                 }
+                # Only include optional fields when the UI provided them;
+                # otherwise let CompleteSongIntentRequest schema defaults apply.
+                if tech.groove_feel is not None:
+                    strict_payload["groove_feel"] = tech.groove_feel
+                if request.intent.narrative_arc is not None:
+                    strict_payload["narrative_arc"] = request.intent.narrative_arc
                 try:
                     if hasattr(CompleteSongIntentRequest, "model_validate"):
                         strict_intent = CompleteSongIntentRequest.model_validate(strict_payload)
