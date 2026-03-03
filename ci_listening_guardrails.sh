@@ -16,7 +16,7 @@ echo "-> Checking for local path leakage..."
 FORBIDDEN_PATHS=("/Users/" "/home/sburdges" "/home/runner/work/KmiDi/KmiDi/KmiDi_FINAL")
 for path in "${FORBIDDEN_PATHS[@]}"; do
   if rg -q "$path" -g "!.git/*" -g "!.agents/*" -g "!ci_listening_guardrails.sh"; then
-    echo "FATAL: Hardcoded path '$path' found in codebase."
+    echo "FATAL: Hardcoded path '$path' found in codebase." >&2
     rg "$path" -g "!.git/*" -g "!.agents/*" -g "!ci_listening_guardrails.sh"
     exit 1
   fi
