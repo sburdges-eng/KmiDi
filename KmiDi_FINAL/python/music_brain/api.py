@@ -7,6 +7,7 @@ or other interfaces.
 """
 from typing import Dict, List, Optional, Any, Tuple
 import sys
+import asyncio
 import logging
 import json
 
@@ -961,8 +962,13 @@ if FASTAPI_AVAILABLE:
         cfg_dir.mkdir(parents=True, exist_ok=True)
         normalized = _normalize_humanizer_config(payload)
         cfg_path = cfg_dir / "humanizer.json"
-        with open(cfg_path, "w", encoding="utf-8") as f:
-            json.dump(normalized, f, indent=2)
+
+        def write_file():
+            with open(cfg_path, "w", encoding="utf-8") as f:
+                json.dump(normalized, f, indent=2)
+
+        await asyncio.to_thread(write_file)
+
         try:
             api.reload_humanizer()
         except Exception:
