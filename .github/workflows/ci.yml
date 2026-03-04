@@ -45,7 +45,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake ninja-build build-essential
+        sudo apt-get install -y cmake ninja-build build-essential qt6-base-dev
     - name: Configure CMake
       run: |
         mkdir build && cd build
@@ -96,7 +96,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake ninja-build build-essential valgrind
+        sudo apt-get install -y cmake ninja-build build-essential qt6-base-dev valgrind
     - name: Configure CMake (Debug)
       run: |
         mkdir build && cd build
@@ -130,7 +130,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake ninja-build build-essential
+        sudo apt-get install -y cmake ninja-build build-essential qt6-base-dev
     - name: Configure CMake (Release)
       run: |
         mkdir build && cd build
@@ -159,7 +159,7 @@ jobs:
     - name: Install C++ coverage tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake ninja-build build-essential lcov
+        sudo apt-get install -y cmake ninja-build build-essential qt6-base-dev lcov
     - name: Configure CMake (Coverage)
       run: |
         mkdir build && cd build
@@ -189,7 +189,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install dependencies
       run: |
-        brew install cmake ninja
+        brew install cmake ninja qt@6
     - name: Build JUCE plugins
       run: |
         mkdir build && cd build
