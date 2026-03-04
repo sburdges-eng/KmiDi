@@ -1,5 +1,7 @@
 import type { CompleteSongIntentRequest } from '../types/Intent';
 
+/** External API is deny-by-default; set VITE_KMIDI_USE_API=true to allow (e.g. dev). Unset in freeze/CI. */
+const USE_EXTERNAL_API = import.meta.env.VITE_KMIDI_USE_API === 'true';
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://127.0.0.1:8000';
 
 export interface TechnicalIntent {
@@ -100,6 +102,11 @@ export interface AudioClassifyResult {
 }
 
 async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  if (!USE_EXTERNAL_API) {
+    throw new Error(
+      'External Music Brain API is disabled. Set VITE_KMIDI_USE_API=true to enable (dev only; leave unset in freeze/CI).'
+    );
+  }
   const resp = await fetch(`${API_BASE}${endpoint}`, {
     headers: { 'Content-Type': 'application/json' },
     ...options,

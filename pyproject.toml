@@ -2,6 +2,9 @@
 requires = ["setuptools>=65", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[tool.uv.workspace]
+members = ["apps/*", "libs/*"]
+
 [project]
 name = "KmiDi"
 version = "1.0.0"
@@ -48,3 +51,7 @@ target-version = ["py39", "py310", "py311"]
 python_version = "3.9"
 warn_return_any = true
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests", "apps/kmidi/tests", "libs/ai-core/tests"]

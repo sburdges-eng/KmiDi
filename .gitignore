@@ -254,7 +254,7 @@ _codeql_detected_source_root
 
 # Lock files (regenerate locally)
 yarn.lock
-package-lock.json
+# package-lock.json kept for reproducible npm install (CI: npm ci / --frozen-lockfile)
 *.lock
 !flake.lock
 
