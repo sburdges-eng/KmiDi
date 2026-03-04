@@ -934,6 +934,7 @@ if FASTAPI_AVAILABLE:
         instruments: Optional[List[Dict[str, Any]]] = None  # Instruments with techniques
         techniques: Optional[List[str]] = None  # Production techniques
         groove_feel: Optional[str] = None  # Rhythmic feel (e.g. "Straight/Driving")
+        narrative_arc: Optional[str] = None  # Flow of the song
         rule_to_break: Optional[str] = None  # Intentional theory violation
         rule_justification: Optional[str] = None  # Narrative reason for rule break
 
