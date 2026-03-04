@@ -852,13 +852,17 @@ def save_to_database(analysis):
     freq = analysis.get('frequency_balance', {})
     relative = freq.get('relative_to_mid_db', {})
     absolute = freq.get('absolute_db', {})
+    freq_data = []
     for band in FREQ_BANDS.keys():
         if band in relative:
-            cursor.execute('''
-                INSERT INTO frequency_balance
-                (analysis_id, band_name, energy_db, relative_to_mid_db)
-                VALUES (?, ?, ?, ?)
-            ''', (analysis_id, band, absolute.get(band, 0), relative.get(band, 0)))
+            freq_data.append((analysis_id, band, absolute.get(band, 0), relative.get(band, 0)))
+
+    if freq_data:
+        cursor.executemany('''
+            INSERT INTO frequency_balance
+            (analysis_id, band_name, energy_db, relative_to_mid_db)
+            VALUES (?, ?, ?, ?)
+        ''', freq_data)
     
     # Stereo
     stereo = analysis.get('stereo', {})
@@ -873,12 +877,16 @@ def save_to_database(analysis):
         ))
     
     # Genre matches
+    genre_data = []
     for genre, match_data in analysis.get('genre_matches', {}).items():
-        cursor.execute('''
+        genre_data.append((analysis_id, genre, match_data['score']))
+
+    if genre_data:
+        cursor.executemany('''
             INSERT INTO genre_matches
             (analysis_id, genre, match_score)
             VALUES (?, ?, ?)
-        ''', (analysis_id, genre, match_data['score']))
+        ''', genre_data)
     
     conn.commit()
     conn.close()
