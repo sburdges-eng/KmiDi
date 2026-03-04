@@ -185,8 +185,17 @@ if(ENABLE_RTNEURAL)
     find_package(RTNeural QUIET)
     if(RTNeural_FOUND)
         message(STATUS "RTNeural enabled: ${RTNeural_INCLUDE_DIRS}")
+    elseif(KMIDI_OFFLINE_BUILD)
+        set(_rtneural_dir "${CMAKE_CURRENT_SOURCE_DIR}/external/RTNeural")
+        if(NOT EXISTS "${_rtneural_dir}/CMakeLists.txt")
+            message(FATAL_ERROR
+                "KMIDI_OFFLINE_BUILD=ON but vendored RTNeural not found at ${_rtneural_dir}. "
+                "Vendor RTNeural into external/RTNeural.")
+        endif()
+        add_subdirectory("${_rtneural_dir}" rtneural EXCLUDE_FROM_ALL)
+        set(RTNeural_FOUND TRUE)
+        set(RTNeural_INCLUDE_DIRS "${_rtneural_dir}")
     else()
-        # Try to fetch RTNeural if not found
         message(STATUS "RTNeural not found locally, fetching from GitHub...")
         FetchContent_Declare(
             rtneural
@@ -529,14 +538,24 @@ endif()
 
 if(BUILD_PENTA_TESTS)
     enable_testing()
-    include(FetchContent)
-    FetchContent_Declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG v1.14.0
-        GIT_SHALLOW TRUE
-    )
-    FetchContent_MakeAvailable(googletest)
+    if(KMIDI_OFFLINE_BUILD)
+        set(_gtest_dir "${CMAKE_CURRENT_SOURCE_DIR}/external/googletest")
+        if(NOT EXISTS "${_gtest_dir}/CMakeLists.txt")
+            message(FATAL_ERROR
+                "KMIDI_OFFLINE_BUILD=ON but vendored googletest not found at ${_gtest_dir}. "
+                "Vendor googletest into external/googletest.")
+        endif()
+        add_subdirectory("${_gtest_dir}" googletest EXCLUDE_FROM_ALL)
+    else()
+        include(FetchContent)
+        FetchContent_Declare(
+            googletest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG v1.14.0
+            GIT_SHALLOW TRUE
+        )
+        FetchContent_MakeAvailable(googletest)
+    endif()
     add_subdirectory(tests/penta_core)
 endif()
 
