@@ -904,12 +904,10 @@ class DAiWAPI:
             core_event=request.intent.core_wound or emotional,
             core_longing=request.intent.core_desire or "",
             mood_primary=mood_primary,
-            narrative_arc=request.intent.narrative_arc or "",
+
+            narrative_arc=request.intent.narrative_arc or "Climb-to-Climax",
             vulnerability_scale=vulnerability_scale,
-            technical_genre=tech.get("genre") or "",
-            technical_tempo_range=tempo_range,
-            technical_key=technical_key,
-            technical_mode=technical_mode,
+
             technical_genre=tech.genre or "",
             technical_tempo_range=tempo_range,
             technical_key=technical_key,
@@ -917,9 +915,9 @@ class DAiWAPI:
             technical_groove_feel=tech.groove_feel or "Straight/Driving",
             technical_rule_to_break=tech.rule_to_break or "",
             rule_breaking_justification=tech.rule_justification or "",
-            vulnerability_scale=request.intent.vulnerability_scale if request.intent.vulnerability_scale is not None else 0.5,
+
             imagery_texture=request.intent.imagery_texture or "",
-            narrative_arc=tech.narrative_arc or "Climb-to-Climax",
+
             created=time.strftime("%Y-%m-%d %H:%M:%S"),
         )
         
@@ -954,10 +952,9 @@ if FASTAPI_AVAILABLE:
         core_desire: Optional[str] = None
         emotional_intent: str
         imagery_texture: Optional[str] = None
-        vulnerability_scale: Optional[float] = None
-        technical: Optional[TechnicalIntent] = None
         vulnerability_scale: Optional[float] = None  # 0.0 - 1.0 emotional openness
         narrative_arc: Optional[str] = None  # Energetic trajectory (e.g. "Climb-to-Climax")
+        technical: Optional[TechnicalIntent] = None
 
     class GenerateRequest(BaseModel):
         intent: EmotionalIntent
