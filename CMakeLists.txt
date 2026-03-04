@@ -121,26 +121,37 @@ endif()
 # Readerwriterqueue (lock-free queue) for RT-safe OSC
 # Note: This is a header-only library with no CMakeLists.txt, so we must
 # explicitly create an INTERFACE target and ensure SOURCE_DIR is populated.
-if(KMIDI_OFFLINE_BUILD)
-    message(FATAL_ERROR "KMIDI_OFFLINE_BUILD=ON forbids FetchContent network pulls. Vendor readerwriterqueue, RTNeural, and googletest in external/ and use add_subdirectory or target_include_directories.")
-endif()
 include(FetchContent)
-FetchContent_Declare(
-    readerwriterqueue
-    GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue.git
-    GIT_TAG v1.0.6
-    GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(readerwriterqueue)
-
-# Explicitly populate SOURCE_DIR for header-only library without CMakeLists.txt
-FetchContent_GetProperties(readerwriterqueue)
-
-if(NOT TARGET readerwriterqueue)
-    add_library(readerwriterqueue INTERFACE)
-    target_include_directories(readerwriterqueue INTERFACE
-        ${readerwriterqueue_SOURCE_DIR}
+if(KMIDI_OFFLINE_BUILD)
+    # Offline build: use vendored copy instead of FetchContent
+    set(_rwq_dir "${CMAKE_CURRENT_SOURCE_DIR}/external/readerwriterqueue")
+    if(NOT EXISTS "${_rwq_dir}/readerwriterqueue.h")
+        message(FATAL_ERROR
+            "KMIDI_OFFLINE_BUILD=ON but vendored readerwriterqueue not found at ${_rwq_dir}. "
+            "Vendor readerwriterqueue into external/readerwriterqueue.")
+    endif()
+    if(NOT TARGET readerwriterqueue)
+        add_library(readerwriterqueue INTERFACE)
+        target_include_directories(readerwriterqueue INTERFACE "${_rwq_dir}")
+    endif()
+else()
+    FetchContent_Declare(
+        readerwriterqueue
+        GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue.git
+        GIT_TAG v1.0.6
+        GIT_SHALLOW TRUE
     )
+    FetchContent_MakeAvailable(readerwriterqueue)
+
+    # Explicitly populate SOURCE_DIR for header-only library without CMakeLists.txt
+    FetchContent_GetProperties(readerwriterqueue)
+
+    if(NOT TARGET readerwriterqueue)
+        add_library(readerwriterqueue INTERFACE)
+        target_include_directories(readerwriterqueue INTERFACE
+            ${readerwriterqueue_SOURCE_DIR}
+        )
+    endif()
 endif()
 
 # ============================================================================
