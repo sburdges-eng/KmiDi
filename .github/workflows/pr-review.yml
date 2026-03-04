@@ -19,7 +19,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install tools
-        run: pip install black flake8 mypy
+        run: pip install black flake8 mypy pydantic
 
       - name: Check formatting (black)
         run: black --check --diff --line-length=100 music_brain/ tests/ scripts/*.py
@@ -46,7 +46,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e .
-          pip install pytest pytest-cov
+          pip install pytest pytest-cov pydantic
 
       - name: Run unit tests
         run: pytest tests/unit/ -v --tb=short
