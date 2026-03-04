@@ -852,6 +852,10 @@ class DAiWAPI:
         import time
 
         tech = request.intent.technical or {}
+        if hasattr(tech, "model_dump"):
+            tech = tech.model_dump()
+        elif not isinstance(tech, dict):
+            tech = getattr(tech, "__dict__", {}) or {}
         emotional = request.intent.emotional_intent or ""
 
         # Extract emotion/mood from emotional_intent string
@@ -900,16 +904,22 @@ class DAiWAPI:
             bpm = 82
         tempo_range = (max(60, bpm - 20), min(140, bpm + 20))
 
-        # Create CompleteSongIntent
+        # Create CompleteSongIntent (include UI mapping fields for song_intent and technical_constraints)
+        vuln = getattr(request.intent, "vulnerability_scale", 0.5)
         intent = CompleteSongIntent(
             core_event=request.intent.core_wound or emotional,
             core_longing=request.intent.core_desire or "",
             mood_primary=mood_primary,
+            imagery_texture=getattr(request.intent, "imagery_texture", "") or "",
+            narrative_arc=tech.get("narrative_arc") or getattr(request.intent, "narrative_arc", "") or "",
+            vulnerability_scale=vuln,
             technical_genre=tech.get("genre") or "",
             technical_tempo_range=tempo_range,
             technical_key=technical_key,
             technical_mode=technical_mode,
-            vulnerability_scale=0.5,
+            technical_groove_feel=tech.get("groove_feel") or "",
+            technical_rule_to_break=tech.get("rule_to_break") or "",
+            rule_breaking_justification=tech.get("rule_justification") or "",
             created=time.strftime("%Y-%m-%d %H:%M:%S"),
         )
 
@@ -938,6 +948,7 @@ if FASTAPI_AVAILABLE:
         groove_feel: Optional[str] = None  # Rhythmic feel (e.g. "Straight/Driving")
         rule_to_break: Optional[str] = None  # Intentional theory violation
         rule_justification: Optional[str] = None  # Narrative reason for rule break
+        narrative_arc: Optional[str] = None  # Energetic trajectory (e.g. "Sudden Shift")
 
     class EmotionalIntent(BaseModel):
         core_wound: Optional[str] = None
@@ -946,6 +957,7 @@ if FASTAPI_AVAILABLE:
         technical: Optional[TechnicalIntent] = None
         vulnerability_scale: Optional[float] = None  # 0.0 - 1.0 emotional openness
         narrative_arc: Optional[str] = None  # Energetic trajectory (e.g. "Climb-to-Climax")
+        imagery_texture: Optional[str] = None  # Sensory/visual texture (e.g. "foggy and cold")
 
     class GenerateRequest(BaseModel):
         intent: EmotionalIntent
