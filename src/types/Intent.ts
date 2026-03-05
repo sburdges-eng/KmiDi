@@ -22,6 +22,6 @@ export interface CompleteSongIntentRequest {
   allow_legacy_fallback?: boolean;
   groove_feel?: string;
   narrative_arc?: string;
-  rule_to_break?: unknown;
-  rule_justification?: unknown;
+  rule_to_break?: string | null;
+  rule_justification?: string | null;
 }
