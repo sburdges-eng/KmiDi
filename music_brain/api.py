@@ -1347,12 +1347,10 @@ if FASTAPI_AVAILABLE:
                 # Convert validated request to domain CompleteSongIntent
                 ui_data = strict_intent.model_dump() if hasattr(strict_intent, "model_dump") else strict_intent.dict()
                 # Add extra emotional fields if present in the original request
-                ui_data.update({
-                    "core_wound": request.intent.core_wound,
-                    "vulnerability_scale": request.intent.vulnerability_scale,
-                    "secondary_tension": request.intent.secondary_tension,
-                    "imagery_texture": request.intent.imagery_texture,
-                })
+                for field in ["core_wound", "vulnerability_scale", "secondary_tension", "imagery_texture"]:
+                    val = getattr(request.intent, field, None)
+                    if val is not None:
+                        ui_data[field] = val
                 complete_intent = CompleteSongIntent.from_ui_payload(ui_data)
                 
                 # Process full intent
