@@ -233,4 +233,3 @@ class ControlSurfacePanel(QWidget):
         self.project_path = project_path
         self.control_manager.load_mappings(project_path)
         self._refresh_mappings()
-

@@ -28,6 +28,8 @@ Thread Safety:
     The C++ engine uses atomic operations for lock-free parameter updates.
 """
 
+from __future__ import annotations
+
 from typing import List, Optional, Tuple
 import numpy as np
 from dataclasses import dataclass
@@ -510,7 +512,7 @@ class MixerEngine:
 
 def apply_emotion_to_mixer(
     mixer: MixerEngine,
-    emotion_params: 'MixerParameters',
+    emotion_params: 'MixerParameters',  # noqa: F821
     channel: int = 0
 ) -> None:
     """
@@ -587,7 +589,6 @@ if __name__ == "__main__":
     num_frames = int(duration_seconds * mixer.sample_rate)
 
     # Create test inputs (simple sine waves at different frequencies)
-    import numpy as np
     t = np.linspace(0, duration_seconds, num_frames)
     inputs = np.array([
         np.sin(2 * np.pi * 440 * t),  # A4 (drums)

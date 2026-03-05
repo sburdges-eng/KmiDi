@@ -180,15 +180,20 @@ class BassLearner:
         base_note: int = 36  # C2
     ) -> List[int]:
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(
+            emotion_key) or profile.emotion_patterns.get("neutral")
         if not patterns:
             patterns = profile.global_patterns
 
         avg_length = int(patterns.get("avg_length", 8))
         length = length or avg_length
 
-        note_freqs = patterns.get("note_frequencies", {}) or profile.global_patterns.get("note_frequencies", {})
-        interval_patterns = patterns.get("interval_patterns", {}) or profile.global_patterns.get("interval_patterns", {})
+        note_freqs = patterns.get(
+            "note_frequencies", {}) or profile.global_patterns.get(
+            "note_frequencies", {})
+        interval_patterns = patterns.get(
+            "interval_patterns", {}) or profile.global_patterns.get(
+            "interval_patterns", {})
 
         notes = []
         if note_freqs:

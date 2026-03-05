@@ -7,20 +7,16 @@ This module takes a CompleteSongIntent and generates:
 - Arrangement suggestions
 - Production guidelines
 
-The core philosophy: Rules are broken INTENTIONALLY based on 
+The core philosophy: Rules are broken INTENTIONALLY based on
 emotional justification from the intent schema.
 """
 
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict
 from dataclasses import dataclass, field
 import random
 
 from music_brain.session.intent_schema import (
     CompleteSongIntent,
-    HarmonyRuleBreak,
-    RhythmRuleBreak,
-    ArrangementRuleBreak,
-    ProductionRuleBreak,
     RULE_BREAKING_EFFECTS,
 )
 
@@ -35,14 +31,14 @@ CHROMATIC_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B
 
 # Diatonic chords in major key (roman numerals)
 MAJOR_DIATONIC = {
-    'I': 'maj', 'ii': 'min', 'iii': 'min', 'IV': 'maj', 
+    'I': 'maj', 'ii': 'min', 'iii': 'min', 'IV': 'maj',
     'V': 'maj', 'vi': 'min', 'vii°': 'dim'
 }
 
 # Borrowed chords from parallel minor
 BORROWED_FROM_MINOR = {
     'iv': 'min',      # Sad IV
-    'bVI': 'maj',     # Epic chord  
+    'bVI': 'maj',     # Epic chord
     'bVII': 'maj',    # Rock swagger
     'bIII': 'maj',    # Brightness from minor
     'ii°': 'dim',     # Tension
@@ -51,7 +47,7 @@ BORROWED_FROM_MINOR = {
 # Modal interchange options
 MODAL_INTERCHANGE = {
     'lydian': {'#IV': 'maj'},      # Raised 4th, dreamy
-    'mixolydian': {'bVII': 'maj'}, # Flat 7, rock
+    'mixolydian': {'bVII': 'maj'},  # Flat 7, rock
     'dorian': {'IV': 'maj'},       # Major IV in minor context
     'phrygian': {'bII': 'maj'},    # Flat 2, Spanish/tension
 }
@@ -82,7 +78,7 @@ class GeneratedGroove:
     rule_effect: str
 
 
-@dataclass 
+@dataclass
 class GeneratedArrangement:
     """Arrangement structure with sections."""
     sections: List[Dict]  # [{name, bars, energy, chords}]
@@ -121,7 +117,7 @@ def _get_note_index(note: str) -> int:
 def _transpose_chord(chord: str, key: str) -> str:
     """Transpose a chord to a specific key."""
     # Simple implementation - just prepend key
-    root_idx = _get_note_index(key)
+    _root_idx = _get_note_index(key)  # noqa: F841
     return chord  # Full implementation would transpose
 
 
@@ -143,13 +139,13 @@ def generate_progression_avoid_tonic(key: str, mode: str = "major") -> Generated
             (['i', 'VI', 'III', 'VII'], "Minor with bVII ending"),
             (['i', 'iv', 'VI', 'iv'], "Cycling minor, never resolves"),
         ]
-    
+
     choice = random.choice(progressions)
     romans, effect = choice
-    
+
     # Convert to actual chords
     chords = _romans_to_chords(romans, key, mode)
-    
+
     return GeneratedProgression(
         chords=chords,
         key=key,
@@ -181,17 +177,17 @@ def generate_progression_modal_interchange(key: str, mode: str = "major") -> Gen
             (['i', 'IV', 'V', 'i'], "Major IV (Dorian) - hope in darkness"),
             (['i', 'bVI', 'III', 'VII'], "Natural minor with major III"),
         ]
-    
+
     choice = random.choice(progressions)
     romans, effect = choice
     chords = _romans_to_chords(romans, key, mode)
-    
+
     return GeneratedProgression(
         chords=chords,
         key=key,
         mode=mode,
         roman_numerals=romans,
-        rule_broken="HARMONY_ModalInterchange", 
+        rule_broken="HARMONY_ModalInterchange",
         rule_effect=effect,
         emotional_arc=["grounded", "questioning", "shifted", "returned"],
         voice_leading_notes=["Watch chromatic movement in borrowed chord"],
@@ -210,11 +206,11 @@ def generate_progression_parallel_motion(key: str, mode: str = "major") -> Gener
         (['i5', 'bVII5', 'bVI5', 'V5'], "Metal descent"),
         (['I5', 'bIII5', 'IV5', 'V5'], "Punk parallel climb"),
     ]
-    
+
     choice = random.choice(progressions)
     romans, effect = choice
     chords = _romans_to_chords(romans, key, mode)
-    
+
     return GeneratedProgression(
         chords=chords,
         key=key,
@@ -227,7 +223,8 @@ def generate_progression_parallel_motion(key: str, mode: str = "major") -> Gener
     )
 
 
-def generate_progression_unresolved_dissonance(key: str, mode: str = "major") -> GeneratedProgression:
+def generate_progression_unresolved_dissonance(
+        key: str, mode: str = "major") -> GeneratedProgression:
     """
     HARMONY_UnresolvedDissonance
     Leave 7ths, 9ths, tritones hanging.
@@ -237,11 +234,11 @@ def generate_progression_unresolved_dissonance(key: str, mode: str = "major") ->
         (['Imaj9', 'vim7', 'IVadd9', 'Vsus4'], "Extensions and sus - nothing fully resolves"),
         (['Im7', 'bVImaj7', 'IVm7', 'bVII7'], "Minor 7th chain - perpetual tension"),
     ]
-    
+
     choice = random.choice(progressions)
     romans, effect = choice
     chords = _romans_to_chords(romans, key, mode)
-    
+
     return GeneratedProgression(
         chords=chords,
         key=key,
@@ -256,38 +253,38 @@ def generate_progression_unresolved_dissonance(key: str, mode: str = "major") ->
 def _romans_to_chords(romans: List[str], key: str, mode: str) -> List[str]:
     """Convert Roman numerals to chord names in key."""
     # Simplified mapping - full implementation would be more complete
-    key_root = _get_note_index(key)
-    
+    _key_root = _get_note_index(key)  # noqa: F841
+
     # Scale degrees for major
     major_intervals = [0, 2, 4, 5, 7, 9, 11]  # I, ii, iii, IV, V, vi, vii
     minor_intervals = [0, 2, 3, 5, 7, 8, 10]  # i, ii°, III, iv, v, VI, VII
-    
+
     intervals = major_intervals if mode == "major" else minor_intervals
-    
+
     result = []
     for roman in romans:
         chord = _roman_to_chord(roman, key, intervals)
         result.append(chord)
-    
+
     return result
 
 
 def _roman_to_chord(roman: str, key: str, intervals: List[int]) -> str:
     """Convert single Roman numeral to chord."""
     key_idx = _get_note_index(key)
-    
+
     # Parse the roman numeral
     roman_clean = roman.upper().replace('5', '').replace('°', '')
-    
+
     # Handle flats
     flat_offset = 0
     if roman_clean.startswith('B'):
         flat_offset = -1
         roman_clean = roman_clean[1:]
-    
+
     # Map to scale degree
     degree_map = {'I': 0, 'II': 1, 'III': 2, 'IV': 3, 'V': 4, 'VI': 5, 'VII': 6}
-    
+
     # Handle extensions
     suffix = ''
     for ext in ['MAJ7', 'MAJ9', 'M7', 'M9', 'ADD9', 'SUS4', 'SUS2', '7', '9', '11', '13']:
@@ -295,7 +292,7 @@ def _roman_to_chord(roman: str, key: str, intervals: List[int]) -> str:
             suffix = ext.lower().replace('maj', 'maj').replace('add', 'add').replace('sus', 'sus')
             roman_clean = roman_clean.replace(ext, '')
             break
-    
+
     # Get base roman
     for deg, idx in degree_map.items():
         if deg in roman_clean:
@@ -303,19 +300,19 @@ def _roman_to_chord(roman: str, key: str, intervals: List[int]) -> str:
             interval = intervals[idx] if idx < len(intervals) else 0
             root_idx = (key_idx + interval + flat_offset) % 12
             root = CHROMATIC_FLAT[root_idx] if flat_offset < 0 else CHROMATIC[root_idx]
-            
+
             # Determine quality from original roman
             if roman.islower() or 'm' in roman.lower():
                 quality = 'm' if '°' not in roman else 'dim'
             else:
                 quality = ''
-            
+
             # Handle power chords
             if '5' in roman:
                 return f"{root}5"
-            
+
             return f"{root}{quality}{suffix}"
-    
+
     return roman  # Fallback
 
 
@@ -331,15 +328,15 @@ def generate_groove_constant_displacement(tempo: int) -> GeneratedGroove:
     # 16 slots per bar at 16th note resolution
     # Positive = late, negative = early
     base_offset_ms = (60000 / tempo) / 4  # Duration of one 16th
-    
+
     # Shift everything late by ~half a 16th
     displacement = base_offset_ms * 0.5
-    
+
     timing = [displacement] * 16  # Constant late feel
-    
+
     # Velocity: emphasize 2 and 4 (backbeat)
     velocity = [90, 60, 80, 60, 100, 60, 80, 60, 90, 60, 80, 60, 100, 60, 80, 60]
-    
+
     return GeneratedGroove(
         pattern_name="Displaced Pocket",
         tempo_bpm=tempo,
@@ -359,7 +356,7 @@ def generate_groove_tempo_fluctuation(tempo: int) -> GeneratedGroove:
     # Create tempo drift curve over 16 beats (4 bars)
     # Starts at tempo, drifts up to tempo+5, back down
     import math
-    
+
     timing = []
     for i in range(16):
         # Sinusoidal drift
@@ -369,9 +366,9 @@ def generate_groove_tempo_fluctuation(tempo: int) -> GeneratedGroove:
         drifted_16th_ms = (60000 / (tempo + drift)) / 4
         offset = drifted_16th_ms - base_16th_ms
         timing.append(offset)
-    
+
     velocity = [95, 70, 85, 70, 100, 70, 85, 70, 95, 70, 85, 70, 100, 70, 85, 70]
-    
+
     return GeneratedGroove(
         pattern_name="Breathing Tempo",
         tempo_bpm=tempo,
@@ -390,9 +387,9 @@ def generate_groove_metric_modulation(tempo: int) -> GeneratedGroove:
     """
     # First 12 16ths in 4/4, last 4 feel like 3/4
     # Create accent pattern that implies 3/4 at end
-    
+
     timing = [0] * 16
-    
+
     # Velocity emphasizes different groupings
     # Bars 1-3: normal 4/4
     # Bar 4: implies 3/4 (accents every 3 instead of 4)
@@ -400,9 +397,9 @@ def generate_groove_metric_modulation(tempo: int) -> GeneratedGroove:
         100, 60, 80, 60,  # Bar 1: 4/4
         100, 60, 80, 60,  # Bar 2: 4/4
         100, 60, 80, 60,  # Bar 3: 4/4
-        100, 70, 80, 100, # Bar 4: shifted accents imply 3/4
+        100, 70, 80, 100,  # Bar 4: shifted accents imply 3/4
     ]
-    
+
     return GeneratedGroove(
         pattern_name="Metric Shift",
         tempo_bpm=tempo,
@@ -426,9 +423,9 @@ def generate_groove_dropped_beats(tempo: int) -> GeneratedGroove:
         100, 0, 85, 70,   # Bar 3: drop the 2
         100, 70, 0, 70,   # Bar 4: drop the 3
     ]
-    
+
     timing = [0] * 16
-    
+
     return GeneratedGroove(
         pattern_name="Breathe Space",
         tempo_bpm=tempo,
@@ -460,7 +457,7 @@ def generate_arrangement_structural_mismatch(narrative_arc: str) -> GeneratedArr
             {"name": "Outro", "bars": 8, "energy": 0.3, "notes": "Gentle landing"},
         ]
         arc = [0.3, 0.4, 0.7, 1.0, 0.6, 0.3]
-    
+
     elif narrative_arc == "Slow Reveal":
         # Through-composed, no repetition
         sections = [
@@ -471,7 +468,7 @@ def generate_arrangement_structural_mismatch(narrative_arc: str) -> GeneratedArr
             {"name": "Coda", "bars": 8, "energy": 0.2, "notes": "Resolution"},
         ]
         arc = [0.3, 0.5, 0.7, 0.4, 0.2]
-    
+
     elif narrative_arc == "Repetitive Despair":
         # Same section repeating with minor variations
         sections = [
@@ -482,7 +479,7 @@ def generate_arrangement_structural_mismatch(narrative_arc: str) -> GeneratedArr
             {"name": "Loop A''''", "bars": 8, "energy": 0.45, "notes": "Fading energy"},
         ]
         arc = [0.5, 0.55, 0.6, 0.5, 0.45]
-    
+
     else:  # Default Climb-to-Climax
         sections = [
             {"name": "Intro", "bars": 4, "energy": 0.2, "notes": "Minimal"},
@@ -494,7 +491,7 @@ def generate_arrangement_structural_mismatch(narrative_arc: str) -> GeneratedArr
             {"name": "Outro", "bars": 8, "energy": 0.3, "notes": "Descent"},
         ]
         arc = [0.2, 0.4, 0.6, 0.8, 0.5, 1.0, 0.3]
-    
+
     return GeneratedArrangement(
         sections=sections,
         dynamic_arc=arc,
@@ -513,9 +510,9 @@ def generate_arrangement_extreme_dynamics() -> GeneratedArrangement:
         {"name": "Build", "bars": 8, "energy": 0.4, "notes": "Gradual increase"},
         {"name": "EXPLOSION", "bars": 4, "energy": 1.0, "notes": "Maximum possible volume"},
         {"name": "Silence", "bars": 2, "energy": 0.0, "notes": "Complete stop"},
-        {"name": "Resolution", "bars": 16, "energy": 0.5, "notes": "Normal level feels loud after silence"},
-    ]
-    
+        {"name": "Resolution", "bars": 16, "energy": 0.5,
+         "notes": "Normal level feels loud after silence"},]
+
     return GeneratedArrangement(
         sections=sections,
         dynamic_arc=[0.1, 0.4, 1.0, 0.0, 0.5],
@@ -534,13 +531,13 @@ def generate_production_guidelines(
     imagery: str
 ) -> GeneratedProduction:
     """Generate production guidelines based on intent."""
-    
+
     # Base guidelines
     eq_notes = []
     dynamics_notes = []
     space_notes = []
     vocal_treatment = ""
-    
+
     # Rule-specific modifications
     if rule_to_break == "PRODUCTION_ExcessiveMud":
         eq_notes = [
@@ -551,37 +548,37 @@ def generate_production_guidelines(
         dynamics_notes = ["Heavy compression to emphasize density"]
         space_notes = ["Minimal reverb - keep it close and suffocating"]
         vocal_treatment = "Slightly buried, fighting through the mud"
-    
+
     elif rule_to_break == "PRODUCTION_PitchImperfection":
         eq_notes = ["Natural, minimal processing"]
         dynamics_notes = ["Light compression to preserve dynamics"]
         space_notes = ["Room sound acceptable"]
         vocal_treatment = "NO pitch correction - the drift IS the emotion"
-    
+
     elif rule_to_break == "PRODUCTION_BuriedVocals":
         eq_notes = ["Roll off some highs on vocal for distance"]
         dynamics_notes = ["Compress heavily to make it part of the texture"]
         space_notes = ["Heavy reverb on vocal, less on instruments"]
         vocal_treatment = "Sit BEHIND the instruments - intimacy through distance"
-    
+
     elif rule_to_break == "PRODUCTION_RoomNoise":
         eq_notes = ["Don't filter out room tone"]
         dynamics_notes = ["Let natural dynamics exist"]
         space_notes = ["The room IS the reverb"]
         vocal_treatment = "Record in the space, not the booth"
-    
+
     elif rule_to_break == "PRODUCTION_Distortion":
         eq_notes = ["Saturate the mids", "Let it clip intentionally"]
         dynamics_notes = ["Crush the dynamics on specific elements"]
         space_notes = ["Distortion provides its own 'space'"]
         vocal_treatment = "Consider vocal distortion at emotional peaks"
-    
+
     elif rule_to_break == "PRODUCTION_MonoCollapse":
         eq_notes = ["Check in mono frequently", "Bass and kick center"]
         dynamics_notes = ["Standard"]
         space_notes = ["Narrow stereo field intentionally", "Creates claustrophobia"]
         vocal_treatment = "Dead center, no width"
-    
+
     else:
         # Default based on vulnerability
         if vulnerability == "High":
@@ -594,7 +591,7 @@ def generate_production_guidelines(
             dynamics_notes = ["Appropriate compression"]
             space_notes = ["Genre-appropriate space"]
             vocal_treatment = "Clear and present"
-    
+
     # Imagery texture modifications
     if "vast" in imagery.lower() or "open" in imagery.lower():
         space_notes.append("Wide stereo field")
@@ -605,7 +602,7 @@ def generate_production_guidelines(
     elif "sharp" in imagery.lower():
         eq_notes.append("Emphasize presence frequencies (2-5kHz)")
         dynamics_notes.append("Fast attack compression")
-    
+
     return GeneratedProduction(
         eq_notes=eq_notes,
         dynamics_notes=dynamics_notes,
@@ -623,7 +620,7 @@ def generate_production_guidelines(
 class IntentProcessor:
     """
     Processes a CompleteSongIntent to generate musical elements.
-    
+
     Usage:
         processor = IntentProcessor(intent)
         progression = processor.generate_harmony()
@@ -631,11 +628,11 @@ class IntentProcessor:
         arrangement = processor.generate_arrangement()
         production = processor.generate_production()
     """
-    
+
     def __init__(self, intent: CompleteSongIntent):
         self.intent = intent
         self._parse_intent()
-    
+
     def _parse_intent(self):
         """Extract key parameters from intent."""
         self.key = self.intent.technical_constraints.technical_key or "F"
@@ -646,11 +643,11 @@ class IntentProcessor:
         self.narrative_arc = self.intent.song_intent.narrative_arc
         self.vulnerability = self.intent.song_intent.vulnerability_scale
         self.imagery = self.intent.song_intent.imagery_texture
-    
+
     def generate_harmony(self) -> GeneratedProgression:
         """Generate chord progression based on harmony rule to break."""
         rule = self.rule_to_break
-        
+
         if rule == "HARMONY_AvoidTonicResolution":
             return generate_progression_avoid_tonic(self.key, self.mode)
         elif rule == "HARMONY_ModalInterchange":
@@ -662,11 +659,11 @@ class IntentProcessor:
         else:
             # Default to modal interchange for most emotional contexts
             return generate_progression_modal_interchange(self.key, self.mode)
-    
+
     def generate_groove(self) -> GeneratedGroove:
         """Generate groove pattern based on rhythm rule to break."""
         rule = self.rule_to_break
-        
+
         if rule == "RHYTHM_ConstantDisplacement":
             return generate_groove_constant_displacement(self.tempo)
         elif rule == "RHYTHM_TempoFluctuation":
@@ -682,18 +679,18 @@ class IntentProcessor:
                 return generate_groove_constant_displacement(self.tempo)
             else:
                 return generate_groove_tempo_fluctuation(self.tempo)
-    
+
     def generate_arrangement(self) -> GeneratedArrangement:
         """Generate arrangement based on narrative arc."""
         rule = self.rule_to_break
-        
+
         if rule == "ARRANGEMENT_StructuralMismatch":
             return generate_arrangement_structural_mismatch(self.narrative_arc)
         elif rule == "ARRANGEMENT_ExtremeDynamicRange":
             return generate_arrangement_extreme_dynamics()
         else:
             return generate_arrangement_structural_mismatch(self.narrative_arc)
-    
+
     def generate_production(self) -> GeneratedProduction:
         """Generate production guidelines."""
         return generate_production_guidelines(
@@ -701,7 +698,7 @@ class IntentProcessor:
             self.vulnerability,
             self.imagery
         )
-    
+
     def generate_all(self) -> Dict:
         """Generate all elements and return as dict."""
         return {
@@ -722,10 +719,10 @@ class IntentProcessor:
 def process_intent(intent: CompleteSongIntent) -> Dict:
     """
     Convenience function to process an intent and return all generated elements.
-    
+
     Args:
         intent: Complete song intent
-    
+
     Returns:
         Dict with harmony, groove, arrangement, production, and summary
     """

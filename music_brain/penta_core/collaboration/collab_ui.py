@@ -676,7 +676,8 @@ def render_collaboration_ui():
         st.markdown("""
         ## How it works
 
-        1. **Create or join a session** - Enter any session ID to create a new session or join an existing one
+        1. **Create or join a session** - Enter any session ID to create a new session or join an existing one  # noqa: E501
+
         2. **Edit collaboratively** - Changes sync in real-time with other participants
         3. **See who's editing** - Collaborator badges show who's in the session
         4. **Chat with your team** - Built-in chat for discussing ideas

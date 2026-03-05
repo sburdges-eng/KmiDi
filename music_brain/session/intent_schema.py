@@ -13,7 +13,6 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Tuple
 from enum import Enum
 import json
-from pathlib import Path
 
 
 def _coerce_text(value, default: str = "") -> str:
@@ -68,7 +67,7 @@ class ProductionRuleBreak(Enum):
 class VulnerabilityScale(Enum):
     """Vulnerability level for emotional exposure."""
     LOW = "Low"       # Guarded, protective
-    MEDIUM = "Medium" # Honest but controlled
+    MEDIUM = "Medium"  # Honest but controlled
     HIGH = "High"     # Raw, exposed
 
 
@@ -148,7 +147,7 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Grief, longing, or open questions",
         "example_emotions": ["grief", "longing", "uncertainty"],
     },
-    
+
     # Rhythm
     "RHYTHM_ConstantDisplacement": {
         "description": "Shift pattern one 16th note late/early",
@@ -180,7 +179,7 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Creating impact through absence",
         "example_emotions": ["shock", "emphasis", "breath"],
     },
-    
+
     # Arrangement
     "ARRANGEMENT_UnbalancedDynamics": {
         "description": "Keep element too loud/quiet for standard",
@@ -212,7 +211,7 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Aftermath is the point",
         "example_emotions": ["aftermath", "reflection"],
     },
-    
+
     # Production
     "PRODUCTION_ExcessiveMud": {
         "description": "Leave 200-400Hz buildup",
@@ -255,7 +254,7 @@ RULE_BREAKING_EFFECTS = {
 class SongRoot:
     """
     Phase 0: The Core Wound/Desire
-    
+
     Deep interrogation to find what the song NEEDS to express.
     """
     core_event: str = ""           # The inciting moment/realization
@@ -269,7 +268,7 @@ class SongRoot:
 class SongIntent:
     """
     Phase 1: Emotional & Intent
-    
+
     Validated by Phase 0, guides all technical decisions.
     """
     mood_primary: str = ""                  # Primary emotion
@@ -283,7 +282,7 @@ class SongIntent:
 class TechnicalConstraints:
     """
     Phase 2: Technical Constraints
-    
+
     Implementation of intent into concrete musical decisions.
     """
     technical_genre: str = ""
@@ -306,22 +305,22 @@ class SystemDirective:
 class CompleteSongIntent:
     """
     Complete song intent combining all phases.
-    
+
     This is the full specification for a song that DAiW
     uses to generate meaningful, emotionally-aligned output.
     """
     # Phase 0
     song_root: SongRoot = field(default_factory=SongRoot)
-    
+
     # Phase 1
     song_intent: SongIntent = field(default_factory=SongIntent)
-    
+
     # Phase 2
     technical_constraints: TechnicalConstraints = field(default_factory=TechnicalConstraints)
-    
+
     # System
     system_directive: SystemDirective = field(default_factory=SystemDirective)
-    
+
     # Meta
     title: str = ""
     created: str = ""
@@ -366,7 +365,7 @@ class CompleteSongIntent:
             # ValueError: invalid literal for float()
             # TypeError: float() argument must be a string or a number
             tension_val = 0.5
-        
+
         # Validate vulnerability_scale - normalize to string enum
         if isinstance(vulnerability_scale, (int, float)):
             # Convert float to string enum
@@ -405,7 +404,7 @@ class CompleteSongIntent:
         )
         self.title = _coerce_text(title)
         self.created = _coerce_text(created)
-    
+
     def to_dict(self) -> Dict:
         """Convert to dictionary for serialization."""
         return {
@@ -432,21 +431,22 @@ class CompleteSongIntent:
                 "technical_mode": self.technical_constraints.technical_mode,
                 "technical_groove_feel": self.technical_constraints.technical_groove_feel,
                 "technical_rule_to_break": self.technical_constraints.technical_rule_to_break,
-                "rule_breaking_justification": self.technical_constraints.rule_breaking_justification,
+                "rule_breaking_justification": self.technical_constraints.rule_breaking_justification,  # noqa: E501
+
             },
             "system_directive": {
                 "output_target": self.system_directive.output_target,
                 "output_feedback_loop": self.system_directive.output_feedback_loop,
             },
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict) -> "CompleteSongIntent":
         """Create from dictionary."""
         intent = cls()
         intent.title = _coerce_text(data.get("title", ""))
         intent.created = _coerce_text(data.get("created", ""))
-        
+
         if "song_root" in data:
             root = data.get("song_root", {})
             intent.song_root = SongRoot(
@@ -456,7 +456,7 @@ class CompleteSongIntent:
                 core_stakes=_coerce_text(root.get("core_stakes", "")),
                 core_transformation=_coerce_text(root.get("core_transformation", "")),
             )
-        
+
         if "song_intent" in data:
             si = data.get("song_intent", {})
             # Validate mood_secondary_tension is in range [0.0, 1.0]
@@ -466,10 +466,10 @@ class CompleteSongIntent:
                 tension_val = max(0.0, min(1.0, tension_val))  # Clamp to valid range
             except (ValueError, TypeError):
                 tension_val = 0.5
-            
+
             # Validate vulnerability_scale is valid enum value
             vuln = si.get("vulnerability_scale", "Medium")
-            valid_vuln = {"Low", "Medium", "High", "LOW", "MEDIUM", "HIGH"}
+            _valid_vuln = {"Low", "Medium", "High", "LOW", "MEDIUM", "HIGH"}  # noqa: F841
             if isinstance(vuln, str):
                 # Normalize to title case
                 vuln_normalized = vuln.strip().title()
@@ -478,7 +478,7 @@ class CompleteSongIntent:
                 vuln = vuln_normalized
             else:
                 vuln = "Medium"
-            
+
             intent.song_intent = SongIntent(
                 mood_primary=_coerce_text(si.get("mood_primary", "")),
                 mood_secondary_tension=tension_val,
@@ -486,7 +486,7 @@ class CompleteSongIntent:
                 vulnerability_scale=vuln,
                 narrative_arc=_coerce_text(si.get("narrative_arc", "")),
             )
-        
+
         if "technical_constraints" in data:
             tc = data.get("technical_constraints", {})
             tempo = tc.get("technical_tempo_range", [80, 120])
@@ -499,21 +499,21 @@ class CompleteSongIntent:
                 technical_rule_to_break=_coerce_text(tc.get("technical_rule_to_break", "")),
                 rule_breaking_justification=_coerce_text(tc.get("rule_breaking_justification", "")),
             )
-        
+
         if "system_directive" in data:
             sd = data.get("system_directive", {})
             intent.system_directive = SystemDirective(
                 output_target=_coerce_text(sd.get("output_target", "")),
                 output_feedback_loop=_coerce_text(sd.get("output_feedback_loop", "")),
             )
-        
+
         return intent
-    
+
     def save(self, path: str):
         """Save to JSON file."""
         with open(path, 'w') as f:
             json.dump(self.to_dict(), f, indent=2)
-    
+
     @classmethod
     def load(cls, path: str) -> "CompleteSongIntent":
         """Load from JSON file."""
@@ -528,16 +528,16 @@ class CompleteSongIntent:
 def suggest_rule_break(emotion: str) -> List[Dict]:
     """
     Suggest appropriate rules to break based on target emotion.
-    
+
     Args:
         emotion: Target emotion (grief, defiance, etc.)
-    
+
     Returns:
         List of rule-breaking suggestions with justifications
     """
     emotion_lower = emotion.lower()
     suggestions = []
-    
+
     for rule_key, rule_data in RULE_BREAKING_EFFECTS.items():
         if any(e in emotion_lower for e in rule_data.get("example_emotions", [])):
             suggestions.append({
@@ -546,7 +546,7 @@ def suggest_rule_break(emotion: str) -> List[Dict]:
                 "effect": rule_data["effect"],
                 "use_when": rule_data["use_when"],
             })
-    
+
     return suggestions
 
 
@@ -558,33 +558,36 @@ def get_rule_breaking_info(rule_key: str) -> Optional[Dict]:
 def validate_intent(intent: CompleteSongIntent) -> List[str]:
     """
     Validate a song intent for completeness and consistency.
-    
+
     Returns list of issues found (empty = valid).
     """
     issues: List[str] = []
-    
+
     # Phase 0 checks
     if not intent.song_root.core_event:
         issues.append("Phase 0: Missing core_event - what happened?")
     if not intent.song_root.core_longing:
         issues.append("Phase 0: Missing core_longing - what do you want to feel?")
-    
+
     # Phase 1 checks
     if not intent.song_intent.mood_primary:
         issues.append("Phase 1: Missing mood_primary - what's the main emotion?")
-    if intent.song_intent.mood_secondary_tension < 0 or intent.song_intent.mood_secondary_tension > 1:
+    if intent.song_intent.mood_secondary_tension < 0 or intent.song_intent.mood_secondary_tension > 1:  # noqa: E501
+
         issues.append("Phase 1: mood_secondary_tension should be 0.0-1.0")
-    
+
     # Phase 2 checks
     if intent.technical_constraints.technical_rule_to_break:
         if not intent.technical_constraints.rule_breaking_justification:
-            issues.append("Phase 2: Rule to break specified without justification - WHY break this rule?")
-    
+            issues.append(
+                "Phase 2: Rule to break specified without justification - WHY break this rule?")
+
     # Consistency checks
     if intent.song_intent.vulnerability_scale == "High":
         if intent.song_intent.mood_secondary_tension < 0.3:
-            issues.append("Consistency: High vulnerability usually implies some tension (tension is very low)")
-    
+            issues.append(
+                "Consistency: High vulnerability usually implies some tension (tension is very low)")  # noqa: E501
+
     return issues
 
 

@@ -12,7 +12,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Any, Dict
-import numpy as np
 import soundfile as sf
 
 from music_brain.voice.singing_voice import SingingVoice
@@ -115,8 +114,13 @@ class VoiceGenerationPipeline:
         output_path: Optional[Path] = None,
     ) -> VoiceRenderResult:
         expr = expression or self._default_expression(len(notes))
-        out_path = output_path or Path.home() / "Music" / "iDAW_Output" / "voice" / "voice_render.wav"
-        return self.performer.render(notes=notes, identity=identity, expression=expr, output_path=out_path)
+        out_path = (
+            output_path
+            or Path.home() / "Music" / "iDAW_Output" / "voice" / "voice_render.wav"
+        )
+        return self.performer.render(
+            notes=notes, identity=identity,
+            expression=expr, output_path=out_path)
 
     @staticmethod
     def _default_expression(n: int) -> VocalExpression:
@@ -132,5 +136,3 @@ class VoiceGenerationPipeline:
 # Convenience factory
 def create_voice_pipeline(sample_rate: int = 44100) -> VoiceGenerationPipeline:
     return VoiceGenerationPipeline(sample_rate=sample_rate)
-
-

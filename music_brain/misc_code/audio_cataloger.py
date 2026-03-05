@@ -7,7 +7,6 @@ Part of the Music Brain system.
 """
 
 import argparse
-import os
 import sqlite3
 from pathlib import Path
 from datetime import datetime
@@ -35,6 +34,7 @@ MODE_NAMES = ['minor', 'major']
 # ============================================================================
 # Database Functions
 # ============================================================================
+
 
 def init_database():
     """Initialize SQLite database with schema."""
@@ -71,6 +71,7 @@ def init_database():
     conn.close()
     print(f"Database initialized at: {DB_PATH}")
 
+
 def get_connection():
     """Get database connection."""
     if not DB_PATH.exists():
@@ -80,6 +81,7 @@ def get_connection():
 # ============================================================================
 # Audio Analysis Functions
 # ============================================================================
+
 
 def analyze_audio_file(filepath):
     """
@@ -93,7 +95,7 @@ def analyze_audio_file(filepath):
         # Load audio file
         y, sr = librosa.load(filepath, sr=None, mono=True, duration=60)  # First 60 sec
 
-        duration = librosa.get_duration(y=y, sr=sr)
+        _duration = librosa.get_duration(y=y, sr=sr)  # noqa: F841
 
         # Get full duration if file is longer
         full_duration = librosa.get_duration(path=filepath)
@@ -118,8 +120,10 @@ def analyze_audio_file(filepath):
             key_idx = int(np.argmax(chroma_mean))
 
             # Determine major/minor using Krumhansl-Schmuckler profiles (simplified)
-            major_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
-            minor_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
+            major_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09,
+                                     2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
+            minor_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53,
+                                     2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
 
             major_corr = np.correlate(chroma_mean, np.roll(major_profile, key_idx))[0]
             minor_corr = np.correlate(chroma_mean, np.roll(minor_profile, key_idx))[0]
@@ -151,6 +155,7 @@ def analyze_audio_file(filepath):
         print(f"  Error analyzing {filepath}: {e}")
         return analyze_audio_basic(filepath)
 
+
 def analyze_audio_basic(filepath):
     """Basic analysis without librosa (fallback)."""
     try:
@@ -175,6 +180,7 @@ def analyze_audio_basic(filepath):
 # ============================================================================
 # Scanner Functions
 # ============================================================================
+
 
 def scan_folder(folder_path, recursive=True):
     """Scan a folder for audio files and catalog them."""
@@ -270,6 +276,7 @@ def scan_folder(folder_path, recursive=True):
 # Search Functions
 # ============================================================================
 
+
 def search_catalog(query=None, key=None, bpm_min=None, bpm_max=None, limit=50):
     """Search the audio catalog."""
     conn = get_connection()
@@ -309,6 +316,7 @@ def search_catalog(query=None, key=None, bpm_min=None, bpm_max=None, limit=50):
 
     return results
 
+
 def print_search_results(results):
     """Print search results in a readable format."""
     if not results:
@@ -329,6 +337,7 @@ def print_search_results(results):
 
         print(f"{name_display:<40} {dur_str:<10} {bpm_str:<8} {key_str:<10}")
 
+
 def export_results(results, output_path):
     """Export search results to markdown."""
     output = Path(output_path).expanduser()
@@ -336,8 +345,8 @@ def export_results(results, output_path):
     with open(output, 'w') as f:
         f.write("# Audio Catalog Search Results\n\n")
         f.write(f"Exported: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n\n")
-        f.write(f"| Filename | Duration | BPM | Key |\n")
-        f.write(f"|----------|----------|-----|-----|\n")
+        f.write("| Filename | Duration | BPM | Key |\n")
+        f.write("|----------|----------|-----|-----|\n")
 
         for filename, folder, duration, bpm, key, filepath in results:
             dur_str = f"{duration:.1f}s" if duration else "?"
@@ -346,6 +355,7 @@ def export_results(results, output_path):
             f.write(f"| {filename} | {dur_str} | {bpm_str} | {key_str} |\n")
 
     print(f"Exported to: {output}")
+
 
 def show_stats():
     """Show catalog statistics."""
@@ -361,7 +371,9 @@ def show_stats():
     cursor.execute('SELECT SUM(file_size_bytes) FROM audio_files')
     total_size = cursor.fetchone()[0] or 0
 
-    cursor.execute('SELECT estimated_key, COUNT(*) FROM audio_files WHERE estimated_key IS NOT NULL GROUP BY estimated_key ORDER BY COUNT(*) DESC LIMIT 5')
+    cursor.execute(
+        'SELECT estimated_key, COUNT(*) FROM audio_files WHERE estimated_key IS NOT NULL GROUP BY estimated_key ORDER BY COUNT(*) DESC LIMIT 5')  # noqa: E501
+
     top_keys = cursor.fetchall()
 
     cursor.execute('SELECT AVG(estimated_bpm) FROM audio_files WHERE estimated_bpm IS NOT NULL')
@@ -378,9 +390,10 @@ def show_stats():
         print(f"Average BPM: {avg_bpm:.0f}")
 
     if top_keys:
-        print(f"\nTop keys:")
+        print("\nTop keys:")
         for key, count in top_keys:
             print(f"  {key}: {count} files")
+
 
 def list_all(limit=100):
     """List all cataloged files."""
@@ -402,6 +415,7 @@ def list_all(limit=100):
 # ============================================================================
 # CLI Interface
 # ============================================================================
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -478,6 +492,7 @@ Examples:
 
     else:
         parser.print_help()
+
 
 if __name__ == '__main__':
     main()

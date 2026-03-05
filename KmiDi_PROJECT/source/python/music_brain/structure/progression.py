@@ -52,6 +52,8 @@ def note_name_to_index(note: str) -> Optional[int]:
         return None
 
 # Scale degrees for common modes
+
+
 MODES = {
     'major': [0, 2, 4, 5, 7, 9, 11],
     'minor': [0, 2, 3, 5, 7, 8, 10],
@@ -338,7 +340,10 @@ def diagnose_progression(progression: str, key: Optional[str] = None) -> Dict:
             elif interval == 10 and mode == 'major':
                 issues.append(f"{chord.original}: bVII (borrowed/mixolydian)")
             else:
-                issues.append(f"{chord.original}: non-diatonic root ({NOTE_NAMES[interval]} in {key_name} {mode})")
+                issues.append(
+                    f"{chord.original}: non-diatonic root"
+                    f" ({NOTE_NAMES[interval]}"
+                    f" in {key_name} {mode})")
         else:
             # Handle borrowed qualities (e.g., iv in a major key)
             if mode == 'major' and interval == 5 and chord.quality.startswith('min'):
@@ -349,13 +354,18 @@ def diagnose_progression(progression: str, key: Optional[str] = None) -> Dict:
             prev_chord = chords[i - 1]
             root_motion = (chord.root_num - prev_chord.root_num) % 12
             if root_motion == 6:  # Tritone motion
-                suggestions.append(f"Tritone motion between {prev_chord.original} and {chord.original} - can feel unstable")
+                suggestions.append(
+                    f"Tritone motion between {prev_chord.original}"
+                    f" and {chord.original} - can feel unstable"
+                )
 
     # Check for resolution
     last_chord = chords[-1]
     last_interval = (last_chord.root_num - key_num) % 12
     if last_interval not in [0, 7]:  # Not tonic or dominant
-        suggestions.append(f"Progression ends on {last_chord.original} - consider resolving to {key_name}")
+        suggestions.append(
+            f"Progression ends on {last_chord.original}"
+            f" - consider resolving to {key_name}")
 
     # Check for missing V-I
     has_dominant = any((c.root_num - key_num) % 12 == 7 for c in chords)
@@ -515,4 +525,3 @@ def generate_reharmonizations(
             })
 
     return suggestions[:count]
-

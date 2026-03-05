@@ -32,19 +32,16 @@ import os
 import json
 import time
 import threading
-import queue
 import atexit
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Dict, List, Any, Callable, Tuple, Union
-from enum import Enum
+from typing import Optional, Dict, List, Any, Callable
 
 from .reactive import (
     ReactiveState,
     StateAggregator,
     BatchContext,
-    observe,
 )
 from .websocket_api import (
     HubWebSocketServer,
@@ -54,27 +51,20 @@ from .websocket_api import (
 
 from .ableton_bridge import (
     AbletonBridge,
-    AbletonOSCBridge,
     AbletonMIDIBridge,
     OSCConfig,
     MIDIConfig,
-    TransportState,
     VoiceCC,
-    VOWEL_FORMANTS,
 )
 from .crewai_music_agents import (
     MusicCrew,
-    MusicAgent,
     LocalLLM,
     LocalLLMConfig,
     OnnxLLM,
     OnnxLLMConfig,
-    ToolManager,
-    AGENT_ROLES,
     LLMBackend,
 )
 from .voice_profiles import (
-    VoiceProfileManager,
     VoiceProfile,
     Gender,
     AccentRegion,
@@ -279,10 +269,9 @@ class LocalVoiceSynth:
 
                 subprocess.Popen(
                     ["powershell", "-Command", ps_command],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
-                )
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                    creationflags=subprocess.CREATE_NO_WINDOW
+                    if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0)
                 return True
             else:
                 print(f"TTS not implemented for {self._platform}")
@@ -392,18 +381,12 @@ class LocalVoiceSynth:
             self.midi.set_vowel(vowel, channel)
 
     def set_formants(self, f1: int, f2: int, channel: int = 0):
-        """Set formant frequencies directly (via CC).
-
-        Only F1 is sent via MIDI CC (VoiceCC.FORMANT_SHIFT).  F2 is accepted
-        as a parameter for API compatibility but has no dedicated CC slot in the
-        current VoiceCC mapping; it is intentionally not transmitted.
-        """
+        """Set formant frequencies directly (via CC)."""
         if self.midi:
-            # Map F1 (200-1000 Hz) to CC value 0-127
+            # Map F1 (200-1000 Hz) to CC value
             f1_cc = int((f1 - 200) / 800 * 127)
-            # Clamp to valid MIDI CC range to avoid out-of-range values
-            f1_cc = max(0, min(127, f1_cc))
             self.midi.send_cc(VoiceCC.FORMANT_SHIFT.value, f1_cc, channel)
+            # F2 CC not yet mapped in VoiceCC; f2 parameter reserved for future use
 
     def set_breathiness(self, amount: float, channel: int = 0):
         """Set breathiness (0-1)."""
@@ -501,7 +484,8 @@ class UnifiedHub:
         self._running = True
 
         # Initialize LLM (Ollama by default, ONNX HTTP optional)
-        backend = LLMBackend.ONNX_HTTP if self.config.llm_backend.lower() in ["onnx", "onnx_http"] else LLMBackend.OLLAMA
+        backend = LLMBackend.ONNX_HTTP if self.config.llm_backend.lower(
+        ) in ["onnx", "onnx_http"] else LLMBackend.OLLAMA
 
         if backend == LLMBackend.ONNX_HTTP:
             self._llm = OnnxLLM(OnnxLLMConfig(base_url=self.config.llm_onnx_url))

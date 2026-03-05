@@ -87,7 +87,8 @@ class LocalMultiModelOrchestrator:
             else None
         )
         self._audio_texture = (
-            AudioTextureJob(AudioTextureConfig(output_dir=self.config.output_root / "audio_textures"))
+            AudioTextureJob(AudioTextureConfig(
+                output_dir=self.config.output_root / "audio_textures"))
             if config.enable_audio_texture
             else None
         )
@@ -156,7 +157,9 @@ class LocalMultiModelOrchestrator:
                         for index, pitch in enumerate(melody)
                     ]
                     expr = VocalExpression(intensity_curve=[0.6, 0.6], phrasing_offsets=[0.0, 0.0])
-                    voice_out = self._voice.generate(identity=identity, notes=notes, expression=expr)
+                    voice_out = self._voice.generate(
+                        identity=identity, notes=notes,
+                        expression=expr)
                     if voice_out.audio_path:
                         result.voice_outputs.append(voice_out.audio_path)
                 except Exception:
@@ -258,5 +261,3 @@ def create_local_orchestrator(
         enable_voice=enable_voice,
     )
     return LocalMultiModelOrchestrator(cfg)
-
-

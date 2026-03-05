@@ -28,7 +28,6 @@ See configs/storage.py for full configuration options.
 """
 
 from pathlib import Path
-from typing import Optional
 import os
 import sys
 
@@ -39,7 +38,7 @@ try:
     if _configs_path.exists() and str(_configs_path) not in sys.path:
         sys.path.insert(0, str(_configs_path.parent))
 
-    from configs.storage import (
+    from configs.storage import (  # noqa: F401
         StorageConfig,
         get_storage_config,
         reset_storage_config,
@@ -79,7 +78,7 @@ try:
         features.extend(['mcp'])
     if not features:
         features = ['ml']  # Default to ML features
-    
+
     load_kmidi_env(features=features, verbose=False)
 except ImportError:
     # Fallback to simple dotenv if kmidi_env not available
@@ -206,7 +205,7 @@ def ensure_audio_directories() -> dict:
 
 # Import submodules
 try:
-    from .audio_downloader import (
+    from .audio_downloader import (  # noqa: F401
         AudioDownloader,
         DownloadResult,
         download_audio,
@@ -216,7 +215,7 @@ except ImportError:
     _HAS_DOWNLOADER = False
 
 try:
-    from .audio_features import (
+    from .audio_features import (  # noqa: F401
         AudioFeatures,
         AudioFeatureExtractor,
         extract_audio_features,
@@ -227,7 +226,7 @@ except ImportError:
     _HAS_FEATURES = False
 
 try:
-    from .thesaurus_loader import (
+    from .thesaurus_loader import (  # noqa: F401
         ThesaurusLoader,
         EmotionNode,
         ThesaurusLabels,
@@ -278,7 +277,7 @@ if _HAS_THESAURUS:
 
 # Import synthetic data utilities
 try:
-    from .synthetic import (
+    from .synthetic import (  # noqa: F401
         SyntheticGenerator,
         GeneratorConfig,
         create_synthetic_dataset,
@@ -301,4 +300,3 @@ if _HAS_SYNTHETIC:
         "generate_harmony_samples",
         "generate_groove_samples",
     ])
-

@@ -8,7 +8,7 @@ from enum import Enum, auto
 class RuleSeverity(Enum):
     """
     Severity levels for music theory rule violations.
-    
+
     Attributes:
         STRICT: Forbidden in all contexts (e.g., parallel fifths in strict counterpoint)
         GUIDELINE: Strong preference, breakable with justification (e.g., voice crossing)
@@ -19,9 +19,9 @@ class RuleSeverity(Enum):
     GUIDELINE = auto()
     STYLISTIC = auto()
     MODERN = auto()
-    
+
     def __str__(self) -> str:
         return self.name.lower()
-    
+
     def __repr__(self) -> str:
         return f"RuleSeverity.{self.name}"

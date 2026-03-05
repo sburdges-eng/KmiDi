@@ -214,35 +214,36 @@ pub extern "C" fn intent_ir_update_music(
     }
 }
 
+/// NUL-terminated static C strings for FFI (safe for C consumers)
+static ERR_SUCCESS: &[u8] = b"Success\0";
+static ERR_INVALID_VERSION: &[u8] = b"Invalid IR version\0";
+static ERR_OUT_OF_RANGE: &[u8] = b"Value out of range\0";
+static ERR_INVALID_DISCRETE_ID: &[u8] = b"Invalid discrete emotion ID\0";
+static ERR_INVALID_TIME_SCOPE: &[u8] = b"Invalid time scope\0";
+static ERR_INVALID_CONSTRAINTS: &[u8] = b"Invalid constraints\0";
+static ERR_NULL_POINTER: &[u8] = b"Null pointer\0";
+static ERR_MEMORY: &[u8] = b"Memory error\0";
+static ERR_UNKNOWN: &[u8] = b"Unknown error\0";
+static ERR_SEE_CODE: &[u8] = b"See error code for details\0";
+
 /// Get error message for error code
 #[no_mangle]
 pub extern "C" fn intent_ir_get_error_message(error_code: IntentIRErrorCode) -> *const c_char {
-    static ERROR_MESSAGES: &[(&str, IntentIRErrorCode)] = &[
-        ("Success", IntentIRErrorCode::Success),
-        ("Invalid IR version", IntentIRErrorCode::ErrorInvalidVersion),
-        ("Value out of range", IntentIRErrorCode::ErrorOutOfRange),
-        ("Invalid discrete emotion ID", IntentIRErrorCode::ErrorInvalidDiscreteId),
-        ("Invalid time scope", IntentIRErrorCode::ErrorInvalidTimeScope),
-        ("Invalid constraints", IntentIRErrorCode::ErrorInvalidConstraints),
-        ("Null pointer", IntentIRErrorCode::ErrorNullPointer),
-        ("Memory error", IntentIRErrorCode::ErrorMemory),
-        ("Unknown error", IntentIRErrorCode::ErrorUnknown),
-    ];
-    
-    for (msg, code) in ERROR_MESSAGES {
-        if *code == error_code {
-            return msg.as_ptr() as *const c_char;
-        }
+    match error_code {
+        IntentIRErrorCode::Success => ERR_SUCCESS.as_ptr() as *const c_char,
+        IntentIRErrorCode::ErrorInvalidVersion => ERR_INVALID_VERSION.as_ptr() as *const c_char,
+        IntentIRErrorCode::ErrorOutOfRange => ERR_OUT_OF_RANGE.as_ptr() as *const c_char,
+        IntentIRErrorCode::ErrorInvalidDiscreteId => ERR_INVALID_DISCRETE_ID.as_ptr() as *const c_char,
+        IntentIRErrorCode::ErrorInvalidTimeScope => ERR_INVALID_TIME_SCOPE.as_ptr() as *const c_char,
+        IntentIRErrorCode::ErrorInvalidConstraints => ERR_INVALID_CONSTRAINTS.as_ptr() as *const c_char,
+        IntentIRErrorCode::ErrorNullPointer => ERR_NULL_POINTER.as_ptr() as *const c_char,
+        IntentIRErrorCode::ErrorMemory => ERR_MEMORY.as_ptr() as *const c_char,
+        IntentIRErrorCode::ErrorUnknown => ERR_UNKNOWN.as_ptr() as *const c_char,
     }
-    
-    "Unknown error".as_ptr() as *const c_char
 }
 
 /// Get last error message
 #[no_mangle]
 pub extern "C" fn intent_ir_get_last_error() -> *const c_char {
-    // This is a bit tricky - we need to return a static string
-    // For now, return a generic message. In a real implementation,
-    // you'd want to use a thread-local or global error buffer.
-    "See error code for details".as_ptr() as *const c_char
+    ERR_SEE_CODE.as_ptr() as *const c_char
 }

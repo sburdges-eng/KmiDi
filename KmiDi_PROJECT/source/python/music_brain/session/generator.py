@@ -106,7 +106,10 @@ STRUCTURE_TEMPLATES = {
     "verse_heavy": ["intro", "verse", "verse", "chorus", "verse", "chorus", "outro"],
     "minimal": ["intro", "verse", "chorus", "verse", "chorus"],
     "progressive": ["intro", "verse", "bridge", "verse", "chorus", "bridge", "outro"],
-    "building": ["intro", "verse", "verse", "prechorus", "chorus", "verse", "prechorus", "chorus", "chorus", "outro"],
+    "building": [
+        "intro", "verse", "verse", "prechorus", "chorus",
+        "verse", "prechorus", "chorus", "chorus", "outro",
+    ],
     "storytelling": ["verse", "verse", "verse", "chorus", "verse", "chorus", "outro"],
 }
 
@@ -201,7 +204,9 @@ class GeneratedSong:
         ]
 
         for section in self.sections:
-            lines.append(f"[{section.name.upper()}] ({section.bars} bars, energy: {section.energy:.1f})")
+            lines.append(
+                f"[{section.name.upper()}] ({section.bars} bars,"
+                f" energy: {section.energy:.1f})")
             lines.append(f"  {' | '.join(section.chords)}")
             if section.notes:
                 lines.append(f"  → {section.notes}")
@@ -260,7 +265,8 @@ class SongGenerator:
         if structure is None:
             structure = random.choice(list(self.structure_templates.keys()))
 
-        structure_sections = self.structure_templates.get(structure, self.structure_templates["standard"])
+        structure_sections = self.structure_templates.get(
+            structure, self.structure_templates["standard"])
 
         # Get base progression for mood
         base_progression = self._get_progression_for_mood(mood)
@@ -497,4 +503,3 @@ class SongGenerator:
             "chords": chords,
             "bars": bars,
         }
-

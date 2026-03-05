@@ -21,22 +21,28 @@ TEST_RESULTS = {
     'skipped': []
 }
 
+
 def log_test(name, passed, error=None):
     if passed:
         TEST_RESULTS['passed'].append(name)
         print(f"✅ PASS: {name}")
     else:
-        TEST_RESULTS['failed'].append({'name': name, 'error': str(error) if error else 'Unknown error'})
+        TEST_RESULTS['failed'].append({
+            'name': name,
+            'error': str(error) if error else 'Unknown error',
+        })
         print(f"❌ FAIL: {name} - {error}")
+
 
 def log_skip(name, reason):
     TEST_RESULTS['skipped'].append({'name': name, 'reason': reason})
     print(f"⏭️  SKIP: {name} - {reason}")
 
+
 async def test_app_header(page):
     """Test header buttons and controls"""
     print("\n=== Testing App Header ===")
-    
+
     try:
         # Test Side Toggle Button
         toggle_btn = page.locator('button').filter(has_text=page.locator('text=/Side [AB]/'))
@@ -44,14 +50,14 @@ async def test_app_header(page):
             await toggle_btn.first.click()
             await page.wait_for_timeout(500)
             log_test("Toggle Side A/B", True)
-            
+
             # Toggle back
             await toggle_btn.first.click()
             await page.wait_for_timeout(500)
             log_test("Toggle back to Side A", True)
         else:
             log_skip("Toggle Side A/B", "Button not found")
-        
+
         # Test Error Dismiss (if exists)
         error_dismiss = page.locator('.bg-accent-error button, .lyric-error button').first
         if await error_dismiss.count() > 0:
@@ -61,17 +67,18 @@ async def test_app_header(page):
     except Exception as e:
         log_test("App Header Tests", False, e)
 
+
 async def test_side_a(page):
     """Test Side A (Professional DAW)"""
     print("\n=== Testing Side A (Professional DAW) ===")
-    
+
     try:
         # Switch to Side A
         toggle_btn = page.locator('button').filter(has_text='Side B')
         if await toggle_btn.count() > 0:
             await toggle_btn.first.click()
             await page.wait_for_timeout(500)
-        
+
         # Test Generate Music button
         generate_btn = page.locator('button').filter(has_text='Test Generate Music')
         if await generate_btn.count() > 0:
@@ -86,17 +93,18 @@ async def test_side_a(page):
     except Exception as e:
         log_test("Side A Tests", False, e)
 
+
 async def test_side_b(page):
     """Test Side B (Therapeutic Interface)"""
     print("\n=== Testing Side B (Therapeutic Interface) ===")
-    
+
     try:
         # Switch to Side B
         toggle_btn = page.locator('button').filter(has_text='Side A')
         if await toggle_btn.count() > 0:
             await toggle_btn.first.click()
             await page.wait_for_timeout(500)
-        
+
         # Test Load Emotions button
         load_emotions = page.locator('button').filter(has_text='Load Emotions')
         if await load_emotions.count() > 0:
@@ -106,7 +114,7 @@ async def test_side_b(page):
                 log_test("Load Emotions", True)
             else:
                 log_skip("Load Emotions", "Button is disabled")
-        
+
         # Test Emotion Wheel
         await page.wait_for_timeout(1000)
         base_emotion_btns = page.locator('.emotion-wheel-grid-base button')
@@ -115,37 +123,39 @@ async def test_side_b(page):
             await base_emotion_btns.first.click()
             await page.wait_for_timeout(500)
             log_test("Select base emotion", True)
-            
+
             # Select intensity
             intensity_btns = page.locator('.emotion-wheel-grid-intensity button')
             if await intensity_btns.count() > 0:
                 await intensity_btns.first.click()
                 await page.wait_for_timeout(500)
                 log_test("Select intensity level", True)
-                
+
                 # Select sub-emotion
                 sub_btns = page.locator('.emotion-wheel-grid-sub button')
                 if await sub_btns.count() > 0:
                     await sub_btns.first.click()
                     await page.wait_for_timeout(500)
                     log_test("Select sub-emotion", True)
-                    
+
                     # Test Clear button
                     clear_btn = page.locator('.emotion-wheel-clear-btn')
                     if await clear_btn.count() > 0:
                         await clear_btn.first.click()
                         await page.wait_for_timeout(300)
                         log_test("Clear emotion selection", True)
-        
+
         # Test Generate Music button (requires emotion)
-        generate_btn = page.locator('button').filter(has_text='Generate Music').filter(has_not=page.locator(':disabled'))
+        generate_btn = page.locator('button').filter(
+            has_text='Generate Music',
+        ).filter(has_not=page.locator(':disabled'))
         if await generate_btn.count() > 0:
             await generate_btn.first.click()
             await page.wait_for_timeout(2000)
             log_test("Generate Music (Side B)", True)
         else:
             log_skip("Generate Music (Side B)", "Requires emotion selection")
-        
+
         # Test Interrogator button
         interrogate_btn = page.locator('button').filter(has_text='Start Interrogation')
         if await interrogate_btn.count() > 0:
@@ -158,10 +168,11 @@ async def test_side_b(page):
     except Exception as e:
         log_test("Side B Tests", False, e)
 
+
 async def test_lyric_panel(page):
     """Test Lyric Panel functions"""
     print("\n=== Testing Lyric Panel ===")
-    
+
     try:
         # Test Save Lyrics button
         save_btn = page.locator('button').filter(has_text='Save Lyrics')
@@ -174,21 +185,21 @@ async def test_lyric_panel(page):
                 await save_btn.first.click()
                 await page.wait_for_timeout(1000)
                 log_test("Save lyrics", True)
-        
+
         # Test Refresh button
         refresh_btn = page.locator('button').filter(has_text='Refresh')
         if await refresh_btn.count() > 0:
             await refresh_btn.first.click()
             await page.wait_for_timeout(1000)
             log_test("Refresh lyrics", True)
-        
+
         # Test Clear button
         clear_btn = page.locator('button').filter(has_text='Clear')
         if await clear_btn.count() > 0:
             await clear_btn.first.click()
             await page.wait_for_timeout(1000)
             log_test("Clear lyrics", True)
-        
+
         # Test Load from File button (may require Tauri)
         load_file_btn = page.locator('button').filter(has_text='Load .txt/.lrc')
         if await load_file_btn.count() > 0:
@@ -197,10 +208,11 @@ async def test_lyric_panel(page):
     except Exception as e:
         log_test("Lyric Panel Tests", False, e)
 
+
 async def test_guide_nav(page):
     """Test Guide Navigation"""
     print("\n=== Testing Guide Navigation ===")
-    
+
     try:
         # Test search input
         search_input = page.locator('.guide-search')
@@ -208,11 +220,11 @@ async def test_guide_nav(page):
             await search_input.first.fill("test")
             await page.wait_for_timeout(500)
             log_test("Search guides", True)
-            
+
             # Clear search
             await search_input.first.fill("")
             await page.wait_for_timeout(500)
-        
+
         # Test topic filter buttons
         topic_pills = page.locator('.topic-pill')
         if await topic_pills.count() > 0:
@@ -222,25 +234,25 @@ async def test_guide_nav(page):
                 await all_btn.first.click()
                 await page.wait_for_timeout(300)
                 log_test("Filter guides by topic (All)", True)
-            
+
             # Click first specific topic
             if await topic_pills.count() > 1:
                 await topic_pills.nth(1).click()
                 await page.wait_for_timeout(300)
                 log_test("Filter guides by specific topic", True)
-        
+
         # Test guide card buttons
         guide_cards = page.locator('.guide-card')
         if await guide_cards.count() > 0:
             first_card = guide_cards.first
-            
+
             # Test Preview button
             preview_btn = first_card.locator('.preview-btn')
             if await preview_btn.count() > 0:
                 await preview_btn.first.click()
                 await page.wait_for_timeout(500)
                 log_test("Preview guide", True)
-            
+
             # Test Copy path button
             copy_btn = first_card.locator('.copy-btn')
             if await copy_btn.count() > 0:
@@ -250,10 +262,11 @@ async def test_guide_nav(page):
     except Exception as e:
         log_test("Guide Navigation Tests", False, e)
 
+
 async def test_spectocloud_panel(page):
     """Test SpectoCloud Panel"""
     print("\n=== Testing SpectoCloud Panel ===")
-    
+
     try:
         # Test Load Humanizer Config button
         load_config_btn = page.locator('button').filter(has_text='Load Humanizer Config')
@@ -261,27 +274,29 @@ async def test_spectocloud_panel(page):
             await load_config_btn.first.click()
             await page.wait_for_timeout(1000)
             log_test("Load Humanizer Config", True)
-        
+
         # Test preset buttons
         presets = ['preview', 'standard', 'high']
         for preset in presets:
-            preset_btn = page.locator('button').filter(has_text=preset, has_not=page.locator('.emotion-wheel-btn'))
+            preset_btn = page.locator('button').filter(
+                has_text=preset,
+                has_not=page.locator('.emotion-wheel-btn'))
             if await preset_btn.count() > 0:
                 await preset_btn.first.click()
                 await page.wait_for_timeout(300)
                 log_test(f"Select preset: {preset}", True)
-        
+
         # Test mode dropdown
         mode_select = page.locator('select').first
         if await mode_select.count() > 0:
             await mode_select.select_option('animation')
             await page.wait_for_timeout(300)
             log_test("Change mode to animation", True)
-            
+
             await mode_select.select_option('static')
             await page.wait_for_timeout(300)
             log_test("Change mode to static", True)
-        
+
         # Test render button
         render_btn = page.locator('button').filter(has_text='Render')
         if await render_btn.count() > 0:
@@ -294,22 +309,23 @@ async def test_spectocloud_panel(page):
     except Exception as e:
         log_test("SpectoCloud Panel Tests", False, e)
 
+
 async def run_all_tests():
     """Run all UI tests"""
     print("🚀 Starting Comprehensive UI Tests...\n")
     print("Make sure the dev server is running at http://localhost:1420\n")
-    
+
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=False)  # Set to True for headless
         context = await browser.new_context()
         page = await context.new_page()
-        
+
         try:
             # Navigate to the app
             print("Navigating to http://localhost:1420...")
             await page.goto('http://localhost:1420', wait_until='networkidle', timeout=10000)
             await page.wait_for_timeout(2000)  # Wait for React to render
-            
+
             # Run all test suites
             await test_app_header(page)
             await test_side_a(page)
@@ -317,7 +333,7 @@ async def run_all_tests():
             await test_lyric_panel(page)
             await test_guide_nav(page)
             await test_spectocloud_panel(page)
-            
+
             # Print summary
             print("\n" + "=" * 50)
             print("📊 TEST SUMMARY")
@@ -325,22 +341,22 @@ async def run_all_tests():
             print(f"✅ Passed: {len(TEST_RESULTS['passed'])}")
             print(f"❌ Failed: {len(TEST_RESULTS['failed'])}")
             print(f"⏭️  Skipped: {len(TEST_RESULTS['skipped'])}")
-            
+
             if TEST_RESULTS['failed']:
                 print("\n❌ Failed Tests:")
                 for f in TEST_RESULTS['failed']:
                     print(f"  - {f['name']}: {f['error']}")
-            
+
             if TEST_RESULTS['skipped']:
                 print("\n⏭️  Skipped Tests:")
                 for s in TEST_RESULTS['skipped']:
                     print(f"  - {s['name']}: {s['reason']}")
-            
+
             print("\n✅ All tests completed!")
-            
+
             # Keep browser open for a moment to see results
             await page.wait_for_timeout(3000)
-            
+
         except PlaywrightTimeout:
             print("❌ Timeout: Could not connect to http://localhost:1420")
             print("   Make sure the dev server is running: npm run dev:react")

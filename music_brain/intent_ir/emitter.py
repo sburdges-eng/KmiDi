@@ -6,26 +6,27 @@ to IntentFrame, with provenance tracking and emission to Rust validator.
 """
 
 from typing import Optional, Dict, Any
-from . import IntentFrame, IntentMeta, EmotionState, MusicalIntent, TimeScope, IntentConstraints, IntentProvenance, IntentSource, INTENT_IR_VERSION
+from . import IntentFrame, IntentMeta, EmotionState, MusicalIntent, TimeScope, IntentConstraints, IntentProvenance, IntentSource, INTENT_IR_VERSION  # noqa: E501
+
 import hashlib
 import time
 
 
 class IntentIREmitter:
     """Emitter for Intent IR frames with provenance tracking"""
-    
+
     def __init__(self, session_id: Optional[int] = None):
         """Initialize emitter with optional session ID"""
         self.session_id = session_id or int(time.time() * 1000)  # Use timestamp as default
         self._intent_counter = 0
-    
+
     def _generate_intent_id(self, data: Dict[str, Any]) -> int:
         """Generate stable hash for intent ID"""
         # Create hash from key fields
         hash_input = f"{data.get('emotion', {})}{data.get('music', {})}{data.get('time', {})}"
         hash_bytes = hashlib.sha256(hash_input.encode()).digest()
         return int.from_bytes(hash_bytes[:8], byteorder='big')
-    
+
     def emit_from_emotion(
         self,
         valence: float,
@@ -46,17 +47,17 @@ class IntentIREmitter:
             intensity=intensity,
             confidence=confidence,
         )
-        
+
         # Default musical intent (neutral)
         music = MusicalIntent()
-        
+
         # Generate intent ID
         intent_id = self._generate_intent_id({
             'emotion': {'valence': valence, 'arousal': arousal, 'dominance': dominance},
             'music': {},
             'time': {},
         })
-        
+
         frame = IntentFrame(
             meta=IntentMeta(
                 ir_version=INTENT_IR_VERSION,
@@ -72,9 +73,9 @@ class IntentIREmitter:
                 user_override_weight=user_override_weight,
             ),
         )
-        
+
         return frame
-    
+
     def emit_from_music_params(
         self,
         tempo_bias: float = 0.0,
@@ -104,7 +105,7 @@ class IntentIREmitter:
             dynamic_range=dynamic_range,
             texture_density=texture_density,
         )
-        
+
         # Generate intent ID
         intent_id = self._generate_intent_id({
             'emotion': {},
@@ -115,7 +116,7 @@ class IntentIREmitter:
             },
             'time': {},
         })
-        
+
         frame = IntentFrame(
             meta=IntentMeta(
                 ir_version=INTENT_IR_VERSION,
@@ -131,9 +132,9 @@ class IntentIREmitter:
                 user_override_weight=user_override_weight,
             ),
         )
-        
+
         return frame
-    
+
     def emit_from_full_state(
         self,
         emotion: EmotionState,
@@ -160,7 +161,7 @@ class IntentIREmitter:
                 'end_bar': time.end_bar if time else -1,
             },
         })
-        
+
         frame = IntentFrame(
             meta=IntentMeta(
                 ir_version=INTENT_IR_VERSION,
@@ -176,10 +177,12 @@ class IntentIREmitter:
                 user_override_weight=user_override_weight,
             ),
         )
-        
+
         return frame
-    
-    def emit_from_dict(self, data: Dict[str, Any], source: IntentSource = IntentSource.ML_TEXT) -> IntentFrame:
+
+    def emit_from_dict(
+            self, data: Dict[str, Any],
+            source: IntentSource = IntentSource.ML_TEXT) -> IntentFrame:
         """Emit IntentFrame from dictionary (for JSON deserialization)"""
         # This is a convenience method for creating frames from external data
         # The data should match the IntentFrame structure
@@ -188,7 +191,7 @@ class IntentIREmitter:
         time_data = data.get('time', {})
         constraints_data = data.get('constraints', {})
         provenance_data = data.get('provenance', {})
-        
+
         emotion = EmotionState(**emotion_data)
         music = MusicalIntent(**music_data)
         time = TimeScope(**time_data)
@@ -197,7 +200,7 @@ class IntentIREmitter:
             source=IntentSource(provenance_data.get('source', source)),
             user_override_weight=provenance_data.get('user_override_weight', 0.0),
         )
-        
+
         return self.emit_from_full_state(
             emotion=emotion,
             music=music,

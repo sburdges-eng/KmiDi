@@ -90,7 +90,6 @@ class AudioGenerationEngine:
             print(f"Generating audio texture with prompt: {prompt}")
             try:
                 import base64
-                import io
 
                 # Generate audio using MusicGen model
                 self.model.set_generation_params(duration=duration)
@@ -221,4 +220,3 @@ if __name__ == "__main__":
         print("Lock acquired again.")
         engine.release_lock()
         print("Lock released again.")
-

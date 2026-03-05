@@ -23,9 +23,8 @@ Usage:
 import threading
 import queue
 import time
-import json
 import atexit
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional, Callable, Dict, List, Any, Tuple
 from enum import Enum
 
@@ -336,7 +335,7 @@ class AbletonOSCBridge:
         if self._server:
             try:
                 self._server.shutdown()
-            except:
+            except Exception:
                 pass
             self._server = None
 
@@ -350,7 +349,7 @@ class AbletonOSCBridge:
         while not self._message_queue.empty():
             try:
                 self._message_queue.get_nowait()
-            except:
+            except Exception:
                 pass
 
     def __enter__(self):
@@ -526,14 +525,14 @@ class AbletonMIDIBridge:
                 self.all_notes_off()
                 time.sleep(0.05)  # Brief delay for messages to send
                 self._output.close()
-            except:
+            except Exception:
                 pass
             self._output = None
 
         if self._input:
             try:
                 self._input.close()
-            except:
+            except Exception:
                 pass
             self._input = None
 

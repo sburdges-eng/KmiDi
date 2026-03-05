@@ -146,4 +146,3 @@ class OnnxGenAILLM:
             temperature=temperature,
             top_p=top_p,
         )
-

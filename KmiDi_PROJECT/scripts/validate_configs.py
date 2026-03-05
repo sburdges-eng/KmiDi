@@ -16,8 +16,6 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 # Load environment variables from project root
-from pathlib import Path
-import sys
 
 # Add project root to path if not already there
 project_root = Path(__file__).resolve().parent.parent.parent.parent
@@ -35,7 +33,7 @@ try:
         features.extend(['mcp'])
     if not features:
         features = ['ml']  # Default to ML features
-    
+
     load_kmidi_env(features=features, verbose=False)
 except ImportError:
     # Fallback to simple dotenv if kmidi_env not available
@@ -94,9 +92,14 @@ def validate_paths(config: dict, file_path: Path) -> List[str]:
             if 'data_path' in key_path.lower() or 'path' in key_path.lower():
                 if value.startswith('/Volumes/'):
                     # External SSD path - check if exists or has fallback
-                    if '${KMI_DI_AUDIO_DATA_ROOT' not in value and '${KELLY_AUDIO_DATA_ROOT' not in value and not Path(value).exists():
+                    if ('${KMI_DI_AUDIO_DATA_ROOT' not in value
+                            and '${KELLY_AUDIO_DATA_ROOT' not in value
+                            and not Path(value).exists()):
                         # Check for environment variable fallback
-                        env_var = os.getenv('KMI_DI_AUDIO_DATA_ROOT') or os.getenv('KELLY_AUDIO_DATA_ROOT')
+                        env_var = (
+                            os.getenv('KMI_DI_AUDIO_DATA_ROOT')
+                            or os.getenv('KELLY_AUDIO_DATA_ROOT')
+                        )
                         if not env_var:
                             issues.append(
                                 f"External path '{value}' at '{key_path}' may not exist. "
@@ -200,7 +203,10 @@ def main():
     print(f"Checked {total_count} YAML files\n")
 
     for result in results:
-        status = "✓" if result['valid'] and not result['warnings'] else "⚠" if result['valid'] else "✗"
+        status = (
+            "✓" if result['valid'] and not result['warnings']
+            else "⚠" if result['valid'] else "✗"
+        )
         print(f"{status} {result['file']}")
 
         if result['errors']:
@@ -232,5 +238,3 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-
-

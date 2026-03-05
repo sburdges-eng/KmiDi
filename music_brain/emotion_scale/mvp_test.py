@@ -22,7 +22,7 @@ def run_mvp():
     out_path = OUT_DIR / "i_feel_broken.mid"
     midi_path = render_plan_to_midi(plan, str(out_path), vulnerability=0.6)
 
-    print(f"MVP test complete.")
+    print("MVP test complete.")
     print(f"  Mood : {mood}")
     print(f"  Mode : {plan.mode}")
     print(f"  Bars : {plan.length_bars}")

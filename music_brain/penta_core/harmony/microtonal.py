@@ -9,7 +9,7 @@ Provides:
 - Cents-based pitch representation
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Dict, Optional, Tuple
 from enum import Enum
 import math
@@ -361,6 +361,6 @@ def compare_tunings(
 
     # Quarter-comma meantone
     meantone = meantone_temperament(reference_note)
-    results["Meantone (1/4)"] = [p.total_cents - reference_note * 100 for p in meantone[:note_count]]
+    results["Meantone (1/4)"] = [p.total_cents - reference_note * 100 for p in meantone[:note_count]]  # noqa: E501
 
     return results

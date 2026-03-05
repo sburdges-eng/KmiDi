@@ -23,9 +23,8 @@ Usage:
 import threading
 import queue
 import time
-import json
 import atexit
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional, Callable, Dict, List, Any, Tuple
 from enum import Enum
 
@@ -798,4 +797,3 @@ if __name__ == "__main__":
             print("  1. python-osc is installed: pip install python-osc")
             print("  2. mido is installed: pip install mido python-rtmidi")
             print("  3. Ableton Live is running with OSC enabled")
-

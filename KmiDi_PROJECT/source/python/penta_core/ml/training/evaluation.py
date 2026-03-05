@@ -884,5 +884,3 @@ class ModelValidator:
         results["parameters"] = self.count_parameters()
 
         return results
-
-

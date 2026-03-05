@@ -4,8 +4,7 @@ Fan Feedback & Learning Module.
 Allows the band (Humanizers) to adapt to user feedback and playstyle.
 Stores 'Fan Profiles' that modulate the base guide rules.
 """
-import json
-from dataclasses import dataclass, asdict, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Tuple, Dict, Any
 

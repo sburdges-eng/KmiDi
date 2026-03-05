@@ -98,6 +98,13 @@ fn main() {
     }
     
     if !ffi_lib_found {
+        let is_ci = env::var("CI").as_deref() == Ok("true");
+        if is_ci {
+            panic!(
+                "Kelly FFI library not found. Expected one of: {:?}. Run CMake build for KellyFFI first (e.g. cmake -B build && cmake --build build --target KellyFFI).",
+                possible_lib_paths
+            );
+        }
         println!("cargo:warning=Kelly FFI library not found. Build may fail.");
         println!("cargo:warning=Run CMake build first: cd ../build && cmake .. && make KellyFFI");
         println!("cargo:warning=Expected locations: {:?}", possible_lib_paths);

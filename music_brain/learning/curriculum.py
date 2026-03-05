@@ -14,7 +14,7 @@ Philosophy: "Small steps, consistently applied, create mastery."
 from enum import Enum, auto
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Any, Set
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 
 
@@ -313,7 +313,7 @@ class Module:
             title=data["title"],
             description=data["description"],
             difficulty_range=tuple(data["difficulty_range"]),
-            lessons=[Lesson.from_dict(l) for l in data.get("lessons", [])],
+            lessons=[Lesson.from_dict(lesson) for lesson in data.get("lessons", [])],
             skill_focus=[SkillCategory[s] for s in data.get("skill_focus", [])],
             prerequisite_module_ids=data.get("prerequisite_module_ids", []),
             required_lesson_ids=data.get("required_lesson_ids", []),

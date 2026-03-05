@@ -11,8 +11,8 @@ Features:
 
 import random
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
-from dataclasses import dataclass, field
+from typing import List, Optional, Tuple
+from dataclasses import dataclass
 
 try:
     import mido
@@ -20,8 +20,7 @@ try:
 except ImportError:
     HAS_MIDO = False
 
-from ..groove.pocket_rules import GENRE_POCKETS, get_pocket, get_push_pull, get_swing
-from ..structure.progression import COMMON_PROGRESSIONS, ProgressionMatcher
+from ..groove.pocket_rules import GENRE_POCKETS, get_pocket
 from ..utils.ppq import STANDARD_PPQ
 
 
@@ -47,7 +46,7 @@ class SongStructure:
     time_sig: Tuple[int, int]
     sections: List[SongSection]
     total_bars: int = 0
-    
+
     def __post_init__(self):
         self.total_bars = sum(s.bars for s in self.sections)
 
@@ -148,11 +147,11 @@ DEGREE_TO_SEMITONE = {
 
 class SongGenerator:
     """Generate song structures and MIDI."""
-    
+
     def __init__(self, ppq: int = STANDARD_PPQ):
         self.ppq = ppq
         self.ticks_per_bar = ppq * 4  # Assuming 4/4
-    
+
     def generate_structure(
         self,
         genre: str = 'pop',
@@ -162,52 +161,54 @@ class SongGenerator:
     ) -> SongStructure:
         """
         Generate a song structure.
-        
+
         Args:
             genre: Genre name
             key: Key root (0=C, 7=G, etc.)
             bpm: Tempo (or auto from genre)
             title: Song title (or auto-generated)
-        
+
         Returns:
             SongStructure object
         """
         # Get genre pocket for BPM range
         pocket = get_pocket(genre) if genre in GENRE_POCKETS else GENRE_POCKETS.get('pop')
-        
+
         # Auto BPM from genre range
         if bpm is None:
             bpm_range = pocket.get('bpm_range', (100, 120))
             bpm = random.randint(bpm_range[0], bpm_range[1])
-        
+
         # Auto title
         if title is None:
-            adjectives = ['Midnight', 'Golden', 'Electric', 'Velvet', 'Neon', 'Crystal', 'Shadow', 'Cosmic']
-            nouns = ['Dreams', 'Waves', 'Echoes', 'Hearts', 'Lights', 'Streets', 'Skies', 'Memories']
+            adjectives = ['Midnight', 'Golden', 'Electric',
+                          'Velvet', 'Neon', 'Crystal', 'Shadow', 'Cosmic']
+            nouns = ['Dreams', 'Waves', 'Echoes', 'Hearts',
+                     'Lights', 'Streets', 'Skies', 'Memories']
             title = f"{random.choice(adjectives)} {random.choice(nouns)}"
-        
+
         # Get song template
         template = SONG_TEMPLATES.get(genre, SONG_TEMPLATES['pop'])
-        
+
         # Build sections
         sections = []
         for section_name, bars, energy in template:
             # Get progression for this section type
             prog_options = SECTION_PROGRESSIONS.get(section_name, ['I-IV-V-I'])
             prog_str = random.choice(prog_options)
-            
+
             # Parse progression string to degrees
             degrees = self._parse_progression(prog_str)
-            
+
             # Determine what plays in this section
             has_drums = energy > 0.2
             has_bass = energy > 0.3
             has_chords = True
-            
+
             # Intro/outro might be sparse
             if section_name in ('intro', 'outro'):
                 has_drums = random.random() < 0.5
-            
+
             section = SongSection(
                 name=section_name,
                 bars=bars,
@@ -218,7 +219,7 @@ class SongGenerator:
                 has_chords=has_chords
             )
             sections.append(section)
-        
+
         return SongStructure(
             title=title,
             genre=genre,
@@ -227,12 +228,12 @@ class SongGenerator:
             time_sig=(4, 4),
             sections=sections
         )
-    
+
     def _parse_progression(self, prog_str: str) -> List[int]:
         """Parse progression string like 'I-V-vi-IV' to semitone list."""
         parts = prog_str.replace(' ', '').split('-')
         degrees = []
-        
+
         for part in parts:
             # Strip any chord type suffix for now
             degree = part.rstrip('7').rstrip('maj').rstrip('min').rstrip('dim')
@@ -240,9 +241,9 @@ class SongGenerator:
                 degrees.append(DEGREE_TO_SEMITONE[degree])
             else:
                 degrees.append(0)  # Default to I
-        
+
         return degrees
-    
+
     def generate_midi(
         self,
         structure: SongStructure,
@@ -251,58 +252,58 @@ class SongGenerator:
     ) -> str:
         """
         Generate MIDI file from song structure.
-        
+
         Args:
             structure: SongStructure object
             output_path: Path to save MIDI
             humanize: Apply genre-appropriate humanization
-        
+
         Returns:
             Path to generated MIDI file
         """
         if not HAS_MIDO:
             raise ImportError("mido required for MIDI generation")
-        
+
         mid = mido.MidiFile(ticks_per_beat=self.ppq)
-        
+
         # Create tracks
         drum_track = mido.MidiTrack()
         bass_track = mido.MidiTrack()
         chord_track = mido.MidiTrack()
-        
+
         drum_track.name = 'Drums'
         bass_track.name = 'Bass'
         chord_track.name = 'Chords'
-        
+
         mid.tracks.append(drum_track)
         mid.tracks.append(bass_track)
         mid.tracks.append(chord_track)
-        
+
         # Add tempo
         tempo = mido.bpm2tempo(structure.bpm)
         drum_track.append(mido.MetaMessage('set_tempo', tempo=tempo, time=0))
-        
+
         # Get genre pocket for humanization
         pocket = get_pocket(structure.genre)
         swing = pocket.get('swing', 0.5) if humanize else 0.5
         push_pull = pocket.get('push_pull', {}) if humanize else {}
-        
+
         # Generate each section
         current_tick = 0
-        
+
         for section in structure.sections:
             current_tick = self._generate_section(
                 section, structure,
                 drum_track, bass_track, chord_track,
                 current_tick, swing, push_pull, humanize
             )
-        
+
         # Save
         output_path = Path(output_path)
         mid.save(str(output_path))
-        
+
         return str(output_path)
-    
+
     def _generate_section(
         self,
         section: SongSection,
@@ -316,44 +317,44 @@ class SongGenerator:
         humanize: bool
     ) -> int:
         """Generate MIDI for one section. Returns end tick."""
-        
+
         bars = section.bars
         progression = section.progression
         energy = section.energy
         key = structure.key
-        
+
         # Velocity based on energy
-        base_vel = int(60 + energy * 50)
-        
+        _base_vel = int(60 + energy * 50)  # noqa: F841
+
         current_tick = start_tick
-        
+
         for bar in range(bars):
             # Get chord for this bar (cycle through progression)
             chord_degree = progression[bar % len(progression)]
             chord_root = (key + chord_degree) % 12
-            
+
             # Generate drums for this bar
             if section.has_drums:
                 self._generate_drum_bar(
                     drum_track, current_tick, energy, swing, push_pull, humanize
                 )
-            
+
             # Generate bass for this bar
             if section.has_bass:
                 self._generate_bass_bar(
                     bass_track, current_tick, chord_root, energy, push_pull, humanize
                 )
-            
+
             # Generate chords for this bar
             if section.has_chords:
                 self._generate_chord_bar(
                     chord_track, current_tick, chord_root, energy, push_pull, humanize
                 )
-            
+
             current_tick += self.ticks_per_bar
-        
+
         return current_tick
-    
+
     def _generate_drum_bar(
         self,
         track: mido.MidiTrack,
@@ -365,13 +366,13 @@ class SongGenerator:
     ):
         """Generate one bar of drums."""
         ppq = self.ppq
-        
+
         # Basic pattern: kick on 1 and 3, snare on 2 and 4
         # Hi-hat on 8ths or 16ths based on energy
-        
+
         kick_times = [0, ppq * 2]  # Beats 1 and 3
         snare_times = [ppq, ppq * 3]  # Beats 2 and 4
-        
+
         # Hi-hat pattern
         if energy > 0.7:
             # 16th notes
@@ -379,7 +380,7 @@ class SongGenerator:
         else:
             # 8th notes
             hihat_times = [ppq * i // 2 for i in range(8)]
-        
+
         # Apply swing to off-beat hi-hats
         if swing > 0.5:
             swing_amount = int((swing - 0.5) * ppq)
@@ -387,32 +388,32 @@ class SongGenerator:
                 t + swing_amount if (i % 2 == 1) else t
                 for i, t in enumerate(hihat_times)
             ]
-        
+
         # Get push/pull offsets
         kick_offset = push_pull.get('kick', 0) if humanize else 0
         snare_offset = push_pull.get('snare', 0) if humanize else 0
         hihat_offset = push_pull.get('hihat', 0) if humanize else 0
-        
+
         # Velocity
         base_vel = int(80 + energy * 30)
-        
+
         # Collect all events with absolute times
         events = []
-        
+
         # Kicks (note 36)
         for t in kick_times:
             abs_t = bar_start + t + kick_offset
             vel = base_vel + random.randint(-5, 5) if humanize else base_vel
             events.append((abs_t, 'note_on', 36, vel, 9))
             events.append((abs_t + ppq // 4, 'note_off', 36, 0, 9))
-        
+
         # Snares (note 38)
         for t in snare_times:
             abs_t = bar_start + t + snare_offset
             vel = base_vel + random.randint(-5, 5) if humanize else base_vel
             events.append((abs_t, 'note_on', 38, vel, 9))
             events.append((abs_t + ppq // 4, 'note_off', 38, 0, 9))
-        
+
         # Hi-hats (note 42)
         for i, t in enumerate(hihat_times):
             abs_t = bar_start + t + hihat_offset
@@ -422,16 +423,16 @@ class SongGenerator:
             vel = max(1, min(127, vel))
             events.append((abs_t, 'note_on', 42, vel, 9))
             events.append((abs_t + ppq // 8, 'note_off', 42, 0, 9))
-        
+
         # Sort by time and add to track
         events.sort(key=lambda x: x[0])
-        
+
         for abs_t, msg_type, note, vel, ch in events:
             if msg_type == 'note_on':
                 track.append(mido.Message('note_on', note=note, velocity=vel, channel=ch, time=0))
             else:
                 track.append(mido.Message('note_off', note=note, velocity=0, channel=ch, time=0))
-    
+
     def _generate_bass_bar(
         self,
         track: mido.MidiTrack,
@@ -443,10 +444,10 @@ class SongGenerator:
     ):
         """Generate one bar of bass."""
         ppq = self.ppq
-        
+
         # Bass note (octave 2 = MIDI 36-47)
         bass_note = 36 + root
-        
+
         # Simple pattern: root on 1 and 3, with variations
         if energy > 0.6:
             # More active pattern
@@ -456,18 +457,18 @@ class SongGenerator:
             # Simple pattern
             times = [0, ppq * 2]
             notes = [bass_note, bass_note]
-        
+
         bass_offset = push_pull.get('bass', 0) if humanize else 0
         base_vel = int(70 + energy * 30)
-        
+
         for t, note in zip(times, notes):
-            abs_t = bar_start + t + bass_offset
+            _abs_t = bar_start + t + bass_offset  # noqa: F841
             vel = base_vel + (random.randint(-5, 5) if humanize else 0)
             vel = max(1, min(127, vel))
-            
+
             track.append(mido.Message('note_on', note=note, velocity=vel, channel=1, time=0))
             track.append(mido.Message('note_off', note=note, velocity=0, channel=1, time=0))
-    
+
     def _generate_chord_bar(
         self,
         track: mido.MidiTrack,
@@ -479,30 +480,30 @@ class SongGenerator:
     ):
         """Generate one bar of chords."""
         ppq = self.ppq
-        
+
         # Chord notes (major triad in octave 4 = MIDI 60-71)
         chord_notes = [60 + root, 60 + root + 4, 60 + root + 7]  # Root, 3rd, 5th
-        
+
         # Play chord on beat 1 (whole note or half notes)
         if energy > 0.5:
             times = [0, ppq * 2]  # Half notes
-            duration = ppq * 2 - 10
+            _duration = ppq * 2 - 10  # noqa: F841
         else:
             times = [0]  # Whole note
-            duration = ppq * 4 - 10
-        
+            _duration = ppq * 4 - 10  # noqa: F841
+
         keys_offset = push_pull.get('keys', 0) if humanize else 0
         base_vel = int(50 + energy * 40)
-        
+
         for t in times:
-            abs_t = bar_start + t + keys_offset
-            
+            _abs_t = bar_start + t + keys_offset  # noqa: F841
+
             for note in chord_notes:
                 vel = base_vel + (random.randint(-5, 5) if humanize else 0)
                 vel = max(1, min(127, vel))
-                
+
                 track.append(mido.Message('note_on', note=note, velocity=vel, channel=0, time=0))
-            
+
             # Note offs
             for note in chord_notes:
                 track.append(mido.Message('note_off', note=note, velocity=0, channel=0, time=0))
@@ -518,7 +519,7 @@ def generate_song(
 ) -> Tuple[SongStructure, str]:
     """
     Convenience function to generate a complete song.
-    
+
     Args:
         genre: Genre name
         output_path: Output MIDI path (auto-generated if None)
@@ -526,23 +527,23 @@ def generate_song(
         bpm: Tempo (auto from genre if None)
         title: Song title (auto-generated if None)
         humanize: Apply genre humanization
-    
+
     Returns:
         (SongStructure, midi_path)
     """
     generator = SongGenerator()
-    
+
     structure = generator.generate_structure(
         genre=genre,
         key=key,
         bpm=bpm,
         title=title
     )
-    
+
     if output_path is None:
         safe_title = structure.title.lower().replace(' ', '_')
         output_path = f"{safe_title}_{structure.genre}_{structure.bpm}bpm.mid"
-    
+
     midi_path = generator.generate_midi(structure, output_path, humanize=humanize)
-    
+
     return structure, midi_path

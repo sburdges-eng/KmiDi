@@ -3,7 +3,7 @@ Tempo and Key Adaptive MIDI Generation.
 Adjusts emotion-to-MIDI mapping based on locked BPM and key parameters.
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -45,7 +45,7 @@ KEY_BRIGHTNESS_MAP = {
     "B": KeyBrightness.VERY_BRIGHT, "F#": KeyBrightness.VERY_BRIGHT,
     "Db": KeyBrightness.DARK, "Ab": KeyBrightness.DARK,
     "Eb": KeyBrightness.DARK, "Bb": KeyBrightness.NEUTRAL, "F": KeyBrightness.NEUTRAL,
-    
+
     # Minor keys
     "Am": KeyBrightness.NEUTRAL, "Em": KeyBrightness.DARK, "Bm": KeyBrightness.DARK,
     "F#m": KeyBrightness.DARK, "C#m": KeyBrightness.DARK,
@@ -82,18 +82,18 @@ def adapt_emotion_to_tempo(
 ) -> Dict[str, float]:
     """
     Adjust emotional expression based on tempo change.
-    
+
     Args:
         emotion: Target emotion
         bpm: New locked tempo
         original_bpm: Suggested tempo from emotion
-    
+
     Returns:
         Adjustment multipliers for musical parameters
     """
     tempo_class = classify_tempo(bpm)
-    original_class = classify_tempo(original_bpm)
-    
+    _original_class = classify_tempo(original_bpm)  # noqa: F841
+
     # Base adjustments by tempo class
     adjustments = {
         TempoClass.GLACIAL: {
@@ -132,31 +132,31 @@ def adapt_emotion_to_tempo(
             "harmonic_complexity": 0.6,  # Very simple
         }
     }
-    
+
     # Emotion-specific tempo sensitivities
     emotion_lower = emotion.lower()
-    
+
     # Grief/sadness at fast tempos = anxiety not sadness
     if "grief" in emotion_lower or "sad" in emotion_lower:
         if tempo_class in [TempoClass.FAST, TempoClass.FRANTIC]:
             adjustments[tempo_class]["note_density"] *= 1.2
             adjustments[tempo_class]["syncopation"] *= 1.4
             adjustments[tempo_class]["velocity_variance"] *= 1.3
-    
+
     # Joy at slow tempos = contentment/peace not excitement
     elif "joy" in emotion_lower or "happy" in emotion_lower:
         if tempo_class in [TempoClass.GLACIAL, TempoClass.SLOW]:
             adjustments[tempo_class]["note_density"] *= 0.6
             adjustments[tempo_class]["syncopation"] *= 0.3
             adjustments[tempo_class]["harmonic_complexity"] *= 0.8
-    
+
     # Anger at slow tempos = seething rage not explosion
     elif "anger" in emotion_lower or "rage" in emotion_lower:
         if tempo_class in [TempoClass.GLACIAL, TempoClass.SLOW]:
             adjustments[tempo_class]["velocity_variance"] *= 1.5
             adjustments[tempo_class]["harmonic_complexity"] *= 1.4
             adjustments[tempo_class]["articulation"] *= 1.3
-    
+
     return adjustments[tempo_class]
 
 
@@ -169,20 +169,20 @@ def adapt_emotion_to_key(
 ) -> Dict[str, float]:
     """
     Adjust emotional expression based on key change.
-    
+
     Args:
         emotion: Target emotion
         key: New locked key
         mode: New mode (major/minor)
         original_key: Suggested key from emotion
         original_mode: Suggested mode
-    
+
     Returns:
         Adjustment multipliers for musical parameters
     """
     brightness = get_key_brightness(key, mode)
-    original_brightness = get_key_brightness(original_key, original_mode)
-    
+    _original_brightness = get_key_brightness(original_key, original_mode)  # noqa: F841
+
     # Base adjustments by key brightness
     adjustments = {
         KeyBrightness.VERY_DARK: {
@@ -216,22 +216,22 @@ def adapt_emotion_to_key(
             "velocity_variance": 1.3,
         }
     }
-    
+
     # Emotion-specific key sensitivities
     emotion_lower = emotion.lower()
-    
+
     # Grief in bright keys = bittersweet not purely sad
     if "grief" in emotion_lower or "sad" in emotion_lower:
         if brightness in [KeyBrightness.BRIGHT, KeyBrightness.VERY_BRIGHT]:
             adjustments[brightness]["harmonic_complexity"] *= 1.3
             adjustments[brightness]["velocity_variance"] *= 1.2
-    
+
     # Joy in dark keys = defiant joy not pure happiness
     elif "joy" in emotion_lower or "happy" in emotion_lower:
         if brightness in [KeyBrightness.VERY_DARK, KeyBrightness.DARK]:
             adjustments[brightness]["velocity_variance"] *= 1.4
             adjustments[brightness]["harmonic_complexity"] *= 1.2
-    
+
     return adjustments[brightness]
 
 
@@ -246,7 +246,7 @@ def generate_adaptive_parameters(
 ) -> AdaptiveParameters:
     """
     Generate adapted parameters when user locks tempo/key.
-    
+
     Args:
         emotion: Target emotion
         locked_bpm: User-locked tempo (None if not locked)
@@ -255,7 +255,7 @@ def generate_adaptive_parameters(
         suggested_bpm: System-suggested tempo from emotion
         suggested_key: System-suggested key from emotion
         suggested_mode: System-suggested mode from emotion
-    
+
     Returns:
         AdaptiveParameters with adjusted values
     """
@@ -269,7 +269,7 @@ def generate_adaptive_parameters(
         register_shift=0,
         chord_voicing_spread=12
     )
-    
+
     # Apply tempo adaptations if locked
     if locked_bpm and locked_bpm != suggested_bpm:
         tempo_adj = adapt_emotion_to_tempo(emotion, locked_bpm, suggested_bpm)
@@ -280,7 +280,7 @@ def generate_adaptive_parameters(
         base_params.harmonic_complexity = int(
             base_params.harmonic_complexity * tempo_adj["harmonic_complexity"]
         )
-    
+
     # Apply key adaptations if locked
     if locked_key and (locked_key != suggested_key or locked_mode != suggested_mode):
         key_adj = adapt_emotion_to_key(
@@ -298,7 +298,7 @@ def generate_adaptive_parameters(
             base_params.harmonic_complexity * key_adj["harmonic_complexity"]
         )
         base_params.velocity_variance *= key_adj["velocity_variance"]
-    
+
     return base_params
 
 
@@ -312,22 +312,22 @@ def should_regenerate_midi(
 ) -> bool:
     """
     Determine if MIDI needs regeneration based on parameter changes.
-    
+
     Returns:
         True if changes cross emotional threshold requiring regeneration
     """
     if new_bpm and abs(new_bpm - current_bpm) > 20:
         # >20 BPM change = different tempo class likely
         return True
-    
+
     if new_key and new_key != current_key:
         # Key change always requires regeneration
         return True
-    
+
     if new_mode and new_mode != current_mode:
         # Mode change (major/minor) always requires regeneration
         return True
-    
+
     return False
 
 
@@ -340,14 +340,14 @@ def regenerate_with_locked_params(
 ) -> Dict:
     """
     Example: Regenerate MIDI with locked user parameters.
-    
+
     Returns:
         Dict with adapted parameters for MIDI generation
     """
     # Get emotion's natural suggestions
     from kellymidicompanion_emotional_mapping import get_parameters_for_state, EmotionalState
     from kellymidicompanion_emotion_api import emotion_to_valence_arousal
-    
+
     valence, arousal = emotion_to_valence_arousal(emotion)
     state = EmotionalState(
         valence=valence,
@@ -355,7 +355,7 @@ def regenerate_with_locked_params(
         primary_emotion=emotion
     )
     suggested_params = get_parameters_for_state(state)
-    
+
     # Generate adaptive parameters
     adapted = generate_adaptive_parameters(
         emotion=emotion,
@@ -366,7 +366,7 @@ def regenerate_with_locked_params(
         suggested_key=suggested_params.key_suggested,
         suggested_mode=suggested_params.mode_suggested
     )
-    
+
     return {
         "emotion": emotion,
         "bpm": locked_bpm or suggested_params.tempo_suggested,

@@ -5,10 +5,9 @@ Provides smooth interpolation and parameter morphing for real-time adjustments.
 Part of Phase 2 of the "All-Knowing Interactive Musical Customization System".
 """
 
-from typing import Dict, List, Optional, Tuple, Callable
+from typing import Dict, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
-import math
 
 
 class InterpolationType(Enum):
@@ -111,7 +110,9 @@ class ParameterMorphEngine:
 
         # Interpolate all parameters
         result_params = {}
-        all_param_names = set(self.start_state.parameters.keys()) | set(self.end_state.parameters.keys())
+        all_param_names = set(
+            self.start_state.parameters.keys()) | set(
+            self.end_state.parameters.keys())
 
         for param_name in all_param_names:
             start_val = self.start_state.get(param_name, 0.0)
@@ -206,7 +207,8 @@ class MultiParameterMorpher:
 
         for param_name, (engine, start_time, duration) in self.active_morphs.items():
             interpolated = engine.interpolate(current_time)
-            result_params[param_name] = interpolated.get(param_name, result_params.get(param_name, 0.0))
+            result_params[param_name] = interpolated.get(
+                param_name, result_params.get(param_name, 0.0))
 
         self.current_state = ParameterSet(result_params, current_time)
         return self.current_state

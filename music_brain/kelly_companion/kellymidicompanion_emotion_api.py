@@ -21,7 +21,6 @@ Usage (Fluent):
 from dataclasses import dataclass
 from typing import Optional, Dict, Any, List, Tuple
 from pathlib import Path
-import json
 
 # Import existing modules
 from kellymidicompanion.kellymidicompanion_session.kellymidicompanion_intent_schema import (
@@ -31,9 +30,7 @@ from kellymidicompanion.kellymidicompanion_session.kellymidicompanion_intent_sch
     TechnicalConstraints,
     SystemDirective,
     suggest_rule_break,
-    validate_intent,
     get_affect_mapping,
-    AFFECT_MODE_MAP,
 )
 from kellymidicompanion.kellymidicompanion_data.kellymidicompanion_emotional_mapping import (
     EmotionalState,
@@ -41,11 +38,72 @@ from kellymidicompanion.kellymidicompanion_data.kellymidicompanion_emotional_map
     Valence,
     Arousal,
     TimingFeel,
-    Mode,
-    EMOTIONAL_PRESETS,
     get_parameters_for_state,
-    describe_parameters,
 )
+
+
+@dataclass
+class MixerParameters:
+    """Mixer automation parameters derived from emotional state."""
+    volume: float = 0.8
+    pan: float = 0.5
+    reverb: float = 0.3
+    delay: float = 0.2
+    eq_low: float = 0.5
+    eq_mid: float = 0.5
+    eq_high: float = 0.5
+    compression: float = 0.4
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "volume": self.volume, "pan": self.pan,
+            "reverb": self.reverb, "delay": self.delay,
+            "eq_low": self.eq_low, "eq_mid": self.eq_mid,
+            "eq_high": self.eq_high, "compression": self.compression,
+        }
+
+
+class EmotionMapper:
+    """Maps emotions to mixer parameters and musical presets."""
+
+    def __init__(self):
+        self._presets: Dict[str, MixerParameters] = {}
+
+    def map(self, emotion: str) -> MixerParameters:
+        return self._presets.get(emotion, MixerParameters())
+
+    def list_presets(self) -> List[str]:
+        return list(self._presets.keys())
+
+    def get_preset(self, emotion: str) -> Optional[MixerParameters]:
+        return self._presets.get(emotion)
+
+
+def export_to_logic_automation(
+    mixer_params: Optional[MixerParameters],
+    output_path: str,
+) -> str:
+    """Export mixer parameters as Logic Pro automation JSON."""
+    import json
+    data = mixer_params.to_dict() if mixer_params else {}
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        json.dump({"automation": data}, f, indent=2)
+    return output_path
+
+
+def export_mixer_settings(
+    mixer_params: Optional[MixerParameters],
+    output_path: str,
+    format: str = "json",
+) -> str:
+    """Export mixer settings in the specified format."""
+    import json
+    data = mixer_params.to_dict() if mixer_params else {}
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        json.dump(data, f, indent=2)
+    return output_path
 
 
 # Intent examples for reference
@@ -75,8 +133,10 @@ class GeneratedMusic:
         """Convert to dictionary for serialization."""
         return {
             "emotional_state": {
-                "valence": self.emotional_state.valence.value if isinstance(self.emotional_state.valence, Valence) else self.emotional_state.valence,
-                "arousal": self.emotional_state.arousal.value if isinstance(self.emotional_state.arousal, Arousal) else self.emotional_state.arousal,
+                "valence": self.emotional_state.valence.value if isinstance(self.emotional_state.valence, Valence) else self.emotional_state.valence,  # noqa: E501
+
+                "arousal": self.emotional_state.arousal.value if isinstance(self.emotional_state.arousal, Arousal) else self.emotional_state.arousal,  # noqa: E501
+
                 "primary_emotion": self.emotional_state.primary_emotion,
                 "secondary_emotions": self.emotional_state.secondary_emotions,
             },
@@ -114,9 +174,11 @@ class GeneratedMusic:
             "",
             "Mixer Settings:",
             f"  Description: {self.mixer_params.description}",
-            f"  Reverb: {self.mixer_params.reverb_mix:.0%} mix, {self.mixer_params.reverb_decay:.1f}s decay",
+            f"  Reverb: {self.mixer_params.reverb_mix:.0%} mix, {self.mixer_params.reverb_decay:.1f}s decay",  # noqa: E501
+
             f"  Compression: {self.mixer_params.compression_ratio:.1f}:1",
-            f"  Saturation: {self.mixer_params.saturation:.0%} ({self.mixer_params.saturation_type})",
+            f"  Saturation: {self.mixer_params.saturation:.0%} ({self.mixer_params.saturation_type})",  # noqa: E501
+
             "",
             "Output Files:",
             f"  MIDI: {self.midi_path or 'Not generated'}",
@@ -222,7 +284,7 @@ class MusicBrain:
             GeneratedMusic with all parameters
         """
         # Extract emotion from intent
-        mood = intent.song_intent.mood_primary.lower() if intent.song_intent.mood_primary else "neutral"
+        mood = intent.song_intent.mood_primary.lower() if intent.song_intent.mood_primary else "neutral"  # noqa: E501
 
         # Map mood to valence/arousal
         if mood in self._emotion_keywords:
@@ -543,7 +605,8 @@ class FluentChain:
 
         return {
             "automation": automation_path,
-            "emotional_state": str(self.emotional_state.primary_emotion) if self.emotional_state else "neutral",
+            "emotional_state": str(self.emotional_state.primary_emotion) if self.emotional_state else "neutral",  # noqa: E501
+
             "tempo": str(self.musical_params.tempo_suggested) if self.musical_params else "unknown",
         }
 
@@ -561,14 +624,16 @@ class FluentChain:
         return {
             "emotional_text": self.emotional_text,
             "emotional_state": {
-                "primary_emotion": self.emotional_state.primary_emotion if self.emotional_state else None,
+                "primary_emotion": self.emotional_state.primary_emotion if self.emotional_state else None,  # noqa: E501
+
                 "valence": self.emotional_state.valence if self.emotional_state else None,
                 "arousal": self.emotional_state.arousal if self.emotional_state else None,
             } if self.emotional_state else None,
             "musical_params": {
                 "tempo": self.musical_params.tempo_suggested if self.musical_params else None,
                 "dissonance": self.musical_params.dissonance if self.musical_params else None,
-                "timing_feel": self.musical_params.timing_feel.value if self.musical_params else None,
+                "timing_feel": self.musical_params.timing_feel.value if self.musical_params else None,  # noqa: E501
+
             } if self.musical_params else None,
             "mixer_params": self.mixer_params.to_dict() if self.mixer_params else None,
             "paths": self._paths,

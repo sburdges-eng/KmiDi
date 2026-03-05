@@ -424,4 +424,3 @@ class MainWindow(QMainWindow):
             self.setWindowTitle(f"KmiDi - {path.name}")
         else:
             self.setWindowTitle("KmiDi - Intelligent Digital Audio Workstation")
-

@@ -21,7 +21,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, TypeVar, Generic
+from typing import Any, Dict, Optional, TypeVar, Generic
 
 
 class ProcessorStatus(Enum):
@@ -163,7 +163,6 @@ class ProcessorInterface(ABC, Generic[T_Input, T_Output]):
         Returns:
             ProcessorResult with output data or error
         """
-        pass
 
     async def validate_input(self, input_data: T_Input) -> bool:
         """
@@ -319,7 +318,6 @@ class CallbackInterface(ABC):
         context: ExecutionContext,
     ):
         """Called when pipeline execution starts."""
-        pass
 
     @abstractmethod
     async def on_pipeline_complete(
@@ -329,7 +327,6 @@ class CallbackInterface(ABC):
         duration_ms: float,
     ):
         """Called when pipeline execution completes successfully."""
-        pass
 
     @abstractmethod
     async def on_pipeline_error(
@@ -339,7 +336,6 @@ class CallbackInterface(ABC):
         error: Exception,
     ):
         """Called when pipeline execution fails."""
-        pass
 
     @abstractmethod
     async def on_stage_start(
@@ -348,7 +344,6 @@ class CallbackInterface(ABC):
         context: ExecutionContext,
     ):
         """Called when a stage starts processing."""
-        pass
 
     @abstractmethod
     async def on_stage_complete(
@@ -359,7 +354,6 @@ class CallbackInterface(ABC):
         duration_ms: float,
     ):
         """Called when a stage completes processing."""
-        pass
 
     @abstractmethod
     async def on_stage_error(
@@ -369,7 +363,6 @@ class CallbackInterface(ABC):
         error: Exception,
     ):
         """Called when a stage fails."""
-        pass
 
 
 class DefaultCallback(CallbackInterface):

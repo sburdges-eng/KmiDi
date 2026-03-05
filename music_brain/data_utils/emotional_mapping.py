@@ -542,7 +542,7 @@ if __name__ == "__main__":
     print(f"   Valence: {state.valence}, Arousal: {state.arousal}")
 
     params = get_parameters_for_state(state)
-    print(f"\n🎵 Musical Parameters:")
+    print("\n🎵 Musical Parameters:")
     print(f"   Tempo: {params.tempo_suggested} BPM "
           f"({params.tempo_min}-{params.tempo_max})")
     print(f"   Mode: {max(params.mode_weights, key=params.mode_weights.get)}")
@@ -551,12 +551,12 @@ if __name__ == "__main__":
     print(f"   Density: {params.density.value}")
 
     prompts = get_interrogation_prompts(params)
-    print(f"\n💬 Interrogation Prompts:")
+    print("\n💬 Interrogation Prompts:")
     for i, prompt in enumerate(prompts, 1):
         print(f"   {i}. {prompt}")
 
     # Test misdirection technique
-    print(f"\n🎭 Misdirection Technique:")
+    print("\n🎭 Misdirection Technique:")
     misdirection = get_misdirection_technique("nostalgia", "grief")
     if misdirection:
         print(f"   {misdirection['name']}")

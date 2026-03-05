@@ -85,14 +85,15 @@ COMMON_PROGRESSIONS = {
 # Database Setup
 # ============================================================================
 
+
 def init_database():
     """Initialize SQLite database."""
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
-    
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
+
     # Main analysis table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS structure_analyses (
@@ -108,7 +109,7 @@ def init_database():
             date_analyzed TEXT
         )
     ''')
-    
+
     # Chord progressions
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS chord_progressions (
@@ -124,7 +125,7 @@ def init_database():
             FOREIGN KEY (analysis_id) REFERENCES structure_analyses(id)
         )
     ''')
-    
+
     # Detected patterns
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS detected_patterns (
@@ -139,7 +140,7 @@ def init_database():
             FOREIGN KEY (analysis_id) REFERENCES structure_analyses(id)
         )
     ''')
-    
+
     # Melody contours
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS melody_contours (
@@ -156,7 +157,7 @@ def init_database():
             FOREIGN KEY (analysis_id) REFERENCES structure_analyses(id)
         )
     ''')
-    
+
     # Phrase structure
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS phrase_structure (
@@ -171,7 +172,7 @@ def init_database():
             FOREIGN KEY (analysis_id) REFERENCES structure_analyses(id)
         )
     ''')
-    
+
     # Harmonic rhythm
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS harmonic_rhythm (
@@ -184,10 +185,11 @@ def init_database():
             FOREIGN KEY (analysis_id) REFERENCES structure_analyses(id)
         )
     ''')
-    
+
     conn.commit()
     conn.close()
     print(f"Database initialized: {DB_PATH}")
+
 
 def get_connection():
     if not DB_PATH.exists():
@@ -198,11 +200,13 @@ def get_connection():
 # MIDI Loading
 # ============================================================================
 
+
 def load_midi(filepath):
     """Load MIDI file."""
     if not MIDO_AVAILABLE:
         raise ImportError("mido required")
     return mido.MidiFile(filepath)
+
 
 def get_tempo(mid):
     """Extract tempo from MIDI."""
@@ -212,6 +216,7 @@ def get_tempo(mid):
                 return mido.tempo2bpm(msg.tempo)
     return 120.0
 
+
 def extract_notes(mid):
     """
     Extract all notes with timing info.
@@ -219,24 +224,24 @@ def extract_notes(mid):
     """
     ppq = mid.ticks_per_beat
     all_notes = []
-    
+
     for track in mid.tracks:
         current_tick = 0
         active_notes = {}
-        
+
         for msg in track:
             current_tick += msg.time
-            
+
             if msg.type == 'note_on' and msg.velocity > 0:
                 key = (msg.channel, msg.note)
                 active_notes[key] = (current_tick, msg.velocity)
-            
+
             elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
                 key = (msg.channel, msg.note)
                 if key in active_notes:
                     start_tick, velocity = active_notes.pop(key)
                     duration = current_tick - start_tick
-                    
+
                     all_notes.append({
                         'tick': start_tick,
                         'note': msg.note,
@@ -244,9 +249,10 @@ def extract_notes(mid):
                         'duration': duration,
                         'channel': msg.channel
                     })
-    
+
     all_notes.sort(key=lambda x: x['tick'])
     return all_notes, ppq
+
 
 def separate_melody_harmony(notes, ppq):
     """
@@ -255,22 +261,22 @@ def separate_melody_harmony(notes, ppq):
     """
     # Remove drums
     non_drum = [n for n in notes if n['channel'] != 9]
-    
+
     if not non_drum:
         return [], []
-    
+
     # Group by time windows
     window_size = ppq // 4  # 16th note windows
-    
+
     melody_notes = []
     harmony_notes = []
-    
+
     # Group notes by start time
     time_groups = defaultdict(list)
     for note in non_drum:
         window = note['tick'] // window_size
         time_groups[window].append(note)
-    
+
     for window, group in time_groups.items():
         if len(group) == 1:
             melody_notes.append(group[0])
@@ -279,20 +285,23 @@ def separate_melody_harmony(notes, ppq):
             sorted_group = sorted(group, key=lambda x: x['note'], reverse=True)
             melody_notes.append(sorted_group[0])
             harmony_notes.extend(sorted_group[1:])
-    
+
     return melody_notes, harmony_notes
 
 # ============================================================================
 # Chord Detection
 # ============================================================================
 
+
 def note_to_pitch_class(note):
     """Convert MIDI note to pitch class (0-11)."""
     return note % 12
 
+
 def pitch_class_to_name(pc):
     """Convert pitch class to note name."""
     return NOTE_NAMES[pc]
+
 
 def detect_chord(pitch_classes):
     """
@@ -301,37 +310,38 @@ def detect_chord(pitch_classes):
     """
     if len(pitch_classes) < 2:
         return None, None, 0
-    
+
     pitch_set = set(pitch_classes)
     best_match = None
     best_score = 0
-    
+
     # Try each pitch class as potential root
     for root in range(12):
         # Transpose pitch set to root = 0
         transposed = set((p - root) % 12 for p in pitch_set)
-        
+
         # Compare against templates
         for chord_type, template in CHORD_TEMPLATES.items():
             template_set = set(template)
-            
+
             # Calculate match score
             matches = len(transposed & template_set)
             total = len(template_set)
             extras = len(transposed - template_set)
-            
+
             # Score: matches / total, penalized for extra notes
             if total > 0:
                 score = (matches / total) - (extras * 0.1)
-                
+
                 if score > best_score:
                     best_score = score
                     best_match = (root, chord_type)
-    
+
     if best_match and best_score > 0.5:
         return best_match[0], best_match[1], best_score
-    
+
     return None, None, 0
+
 
 def get_chord_family(chord_type):
     """Get the family a chord type belongs to."""
@@ -340,6 +350,7 @@ def get_chord_family(chord_type):
             return family
     return 'other'
 
+
 def analyze_chords(notes, ppq, beats_per_bar=4):
     """
     Analyze chord progression over time.
@@ -347,30 +358,30 @@ def analyze_chords(notes, ppq, beats_per_bar=4):
     """
     if not notes:
         return []
-    
-    ticks_per_bar = ppq * beats_per_bar
+
+    _ticks_per_bar = ppq * beats_per_bar  # noqa: F841
     ticks_per_beat = ppq
-    
+
     # Group notes by beat
     beat_groups = defaultdict(list)
-    
+
     for note in notes:
         beat = note['tick'] // ticks_per_beat
         beat_groups[beat].append(note)
-    
+
     chords = []
     current_chord = None
     current_start = 0
-    
+
     for beat in sorted(beat_groups):
         notes_in_beat = beat_groups[beat]
         pitch_classes = [note_to_pitch_class(n['note']) for n in notes_in_beat]
-        
+
         root, chord_type, confidence = detect_chord(pitch_classes)
-        
+
         if root is not None:
             chord_key = (root, chord_type)
-            
+
             if chord_key != current_chord:
                 # Save previous chord
                 if current_chord is not None:
@@ -385,10 +396,10 @@ def analyze_chords(notes, ppq, beats_per_bar=4):
                         'duration_beats': beat - current_start,
                         'confidence': confidence
                     })
-                
+
                 current_chord = chord_key
                 current_start = beat
-    
+
     # Add final chord
     if current_chord is not None:
         prev_root, prev_type = current_chord
@@ -403,12 +414,13 @@ def analyze_chords(notes, ppq, beats_per_bar=4):
             'duration_beats': final_beat - current_start,
             'confidence': confidence
         })
-    
+
     return chords
 
 # ============================================================================
 # Progression Detection
 # ============================================================================
+
 
 def detect_progression_patterns(chords):
     """
@@ -417,12 +429,12 @@ def detect_progression_patterns(chords):
     """
     if len(chords) < 3:
         return []
-    
+
     detected = []
-    
+
     # Extract chord sequence as (root_pc, type) tuples
     chord_seq = [(c['root_pc'], c['type'].split('7')[0].split('9')[0]) for c in chords]
-    
+
     # Simplify chord types
     def simplify_type(t):
         if t in ['maj', 'maj7', 'maj9', '6', 'add9']:
@@ -434,30 +446,30 @@ def detect_progression_patterns(chords):
         elif t in ['dim', 'dim7', 'hdim7']:
             return 'dim'
         return t
-    
+
     chord_seq_simple = [(c[0], simplify_type(c[1])) for c in chord_seq]
-    
+
     # Try to detect patterns at different transpositions
     for pattern_name, pattern_template in COMMON_PROGRESSIONS.items():
         pattern_len = len(pattern_template)
-        
+
         # Simplify template
         template_simple = [(p[0], simplify_type(p[1])) for p in pattern_template]
-        
+
         # Slide window through chord sequence
         for i in range(len(chord_seq_simple) - pattern_len + 1):
             window = chord_seq_simple[i:i + pattern_len]
-            
+
             # Try each transposition
             for trans in range(12):
                 transposed_template = [((t[0] + trans) % 12, t[1]) for t in template_simple]
-                
+
                 # Check match
-                matches = sum(1 for w, t in zip(window, transposed_template) 
-                             if w[0] == t[0] and (w[1] == t[1] or t[1] == 'maj' and w[1] in ['maj', 'dom7']))
-                
+                matches = sum(1 for w, t in zip(window, transposed_template) if w[0] == t[0] and (
+                    w[1] == t[1] or t[1] == 'maj' and w[1] in ['maj', 'dom7']))
+
                 confidence = matches / pattern_len
-                
+
                 if confidence >= 0.75:  # 75% match threshold
                     detected.append({
                         'pattern': pattern_name,
@@ -467,31 +479,33 @@ def detect_progression_patterns(chords):
                         'key': NOTE_NAMES[trans],
                         'confidence': confidence
                     })
-    
+
     # Remove duplicates, keep highest confidence
     unique = {}
     for d in detected:
         key = (d['pattern'], d['start_bar'])
         if key not in unique or d['confidence'] > unique[key]['confidence']:
             unique[key] = d
-    
+
     return list(unique.values())
+
 
 def analyze_chord_families(chords):
     """Analyze distribution of chord families."""
     family_counts = Counter(c['family'] for c in chords)
     total = sum(family_counts.values())
-    
+
     distribution = {
         family: count / total if total > 0 else 0
         for family, count in family_counts.items()
     }
-    
+
     return distribution
 
 # ============================================================================
 # Melody Analysis
 # ============================================================================
+
 
 def analyze_melody_contour(melody_notes, ppq, beats_per_bar=4):
     """
@@ -500,46 +514,46 @@ def analyze_melody_contour(melody_notes, ppq, beats_per_bar=4):
     """
     if len(melody_notes) < 2:
         return []
-    
+
     ticks_per_bar = ppq * beats_per_bar
-    
+
     # Detect phrases by gaps
     phrases = []
     current_phrase = [melody_notes[0]]
     gap_threshold = ppq * 2  # Half bar gap = new phrase
-    
+
     for i in range(1, len(melody_notes)):
         gap = melody_notes[i]['tick'] - (melody_notes[i-1]['tick'] + melody_notes[i-1]['duration'])
-        
+
         if gap > gap_threshold:
             if len(current_phrase) >= 2:
                 phrases.append(current_phrase)
             current_phrase = []
-        
+
         current_phrase.append(melody_notes[i])
-    
+
     if len(current_phrase) >= 2:
         phrases.append(current_phrase)
-    
+
     # Analyze each phrase
     contours = []
     for i, phrase in enumerate(phrases):
         pitches = [n['note'] for n in phrase]
-        
+
         # Calculate intervals
         intervals = [pitches[j+1] - pitches[j] for j in range(len(pitches)-1)]
-        
+
         # Classify intervals
         steps = sum(1 for iv in intervals if abs(iv) <= 2)
         leaps = sum(1 for iv in intervals if abs(iv) > 2)
-        
+
         # Overall direction
-        direction = 'ascending' if pitches[-1] > pitches[0] else 'descending' if pitches[-1] < pitches[0] else 'static'
-        
+        direction = 'ascending' if pitches[-1] > pitches[0] else 'descending' if pitches[-1] < pitches[0] else 'static'  # noqa: E501
+
         # Contour type
         max_idx = pitches.index(max(pitches))
         min_idx = pitches.index(min(pitches))
-        
+
         if max_idx < len(pitches) // 3:
             contour_type = 'descending_arch'
         elif max_idx > 2 * len(pitches) // 3:
@@ -550,10 +564,10 @@ def analyze_melody_contour(melody_notes, ppq, beats_per_bar=4):
             contour_type = 'descending_arch'
         else:
             contour_type = 'arch' if max_idx < min_idx else 'inverse_arch'
-        
+
         start_bar = phrase[0]['tick'] / ticks_per_bar
         end_bar = (phrase[-1]['tick'] + phrase[-1]['duration']) / ticks_per_bar
-        
+
         contours.append({
             'phrase_number': i + 1,
             'start_bar': round(start_bar, 2),
@@ -567,21 +581,22 @@ def analyze_melody_contour(melody_notes, ppq, beats_per_bar=4):
             'leap_count': leaps,
             'step_ratio': steps / max(1, steps + leaps)
         })
-    
+
     return contours
+
 
 def calculate_melody_statistics(melody_notes):
     """Calculate overall melody statistics."""
     if not melody_notes:
         return {}
-    
+
     pitches = [n['note'] for n in melody_notes]
     velocities = [n['velocity'] for n in melody_notes]
-    durations = [n['duration'] for n in melody_notes]
-    
+    _durations = [n['duration'] for n in melody_notes]  # noqa: F841
+
     # Interval statistics
     intervals = [abs(pitches[i+1] - pitches[i]) for i in range(len(pitches)-1)]
-    
+
     return {
         'pitch_mean': statistics.mean(pitches),
         'pitch_std': statistics.stdev(pitches) if len(pitches) > 1 else 0,
@@ -599,22 +614,24 @@ def calculate_melody_statistics(melody_notes):
 # Phrase Structure
 # ============================================================================
 
+
 def analyze_phrase_lengths(melody_notes, ppq, beats_per_bar=4):
     """Analyze phrase length patterns."""
     ticks_per_bar = ppq * beats_per_bar
-    
+
     # Detect phrases
     phrases = []
     current_phrase_start = melody_notes[0]['tick'] if melody_notes else 0
     current_phrase_notes = []
     gap_threshold = ppq * 2
-    
+
     for i, note in enumerate(melody_notes):
         if i > 0:
             gap = note['tick'] - (melody_notes[i-1]['tick'] + melody_notes[i-1]['duration'])
             if gap > gap_threshold:
                 if current_phrase_notes:
-                    phrase_end = current_phrase_notes[-1]['tick'] + current_phrase_notes[-1]['duration']
+                    phrase_end = current_phrase_notes[-1]['tick'] + \
+                        current_phrase_notes[-1]['duration']
                     phrases.append({
                         'start': current_phrase_start,
                         'end': phrase_end,
@@ -622,9 +639,9 @@ def analyze_phrase_lengths(melody_notes, ppq, beats_per_bar=4):
                     })
                 current_phrase_start = note['tick']
                 current_phrase_notes = []
-        
+
         current_phrase_notes.append(note)
-    
+
     # Add final phrase
     if current_phrase_notes:
         phrase_end = current_phrase_notes[-1]['tick'] + current_phrase_notes[-1]['duration']
@@ -633,7 +650,7 @@ def analyze_phrase_lengths(melody_notes, ppq, beats_per_bar=4):
             'end': phrase_end,
             'notes': current_phrase_notes
         })
-    
+
     # Calculate phrase lengths in bars
     phrase_lengths = []
     for phrase in phrases:
@@ -644,40 +661,41 @@ def analyze_phrase_lengths(melody_notes, ppq, beats_per_bar=4):
             'note_count': len(phrase['notes']),
             'note_density': len(phrase['notes']) / max(0.1, length_bars)
         })
-    
+
     # Statistics
     lengths = [p['length_bars'] for p in phrase_lengths]
-    
+
     return {
         'phrases': phrase_lengths,
         'count': len(phrase_lengths),
         'avg_length': statistics.mean(lengths) if lengths else 0,
         'std_length': statistics.stdev(lengths) if len(lengths) > 1 else 0,
-        'common_lengths': Counter(round(l, 0) for l in lengths).most_common(3)
+        'common_lengths': Counter(round(length, 0) for length in lengths).most_common(3)
     }
 
 # ============================================================================
 # Harmonic Rhythm
 # ============================================================================
 
+
 def analyze_harmonic_rhythm(chords, beats_per_bar=4):
     """Analyze harmonic rhythm patterns."""
     if not chords:
         return {}
-    
+
     durations = [c['duration_beats'] for c in chords]
-    
+
     # Calculate changes per bar
     total_beats = sum(durations)
     total_bars = total_beats / beats_per_bar
     changes_per_bar = len(chords) / max(1, total_bars)
-    
+
     # Detect rhythm pattern
     # Round durations to common values
     rounded = [round(d / 0.5) * 0.5 for d in durations]
     pattern_counter = Counter(rounded)
     most_common = pattern_counter.most_common(1)
-    
+
     if most_common:
         dominant_duration = most_common[0][0]
         if dominant_duration >= 4:
@@ -690,14 +708,14 @@ def analyze_harmonic_rhythm(chords, beats_per_bar=4):
             rhythm_pattern = 'eighth_note'
     else:
         rhythm_pattern = 'irregular'
-    
+
     # Consistency (how regular are the changes)
     if len(durations) > 1:
         consistency = 1 - (statistics.stdev(durations) / statistics.mean(durations))
         consistency = max(0, min(1, consistency))
     else:
         consistency = 1
-    
+
     return {
         'avg_chord_duration': statistics.mean(durations),
         'changes_per_bar': round(changes_per_bar, 2),
@@ -710,6 +728,7 @@ def analyze_harmonic_rhythm(chords, beats_per_bar=4):
 # Key Detection
 # ============================================================================
 
+
 def detect_key(notes):
     """
     Detect the key of the piece using Krumhansl-Schmuckler algorithm.
@@ -717,54 +736,55 @@ def detect_key(notes):
     """
     if not notes:
         return None, None, 0
-    
+
     # Major and minor key profiles (Krumhansl)
     major_profile = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88]
     minor_profile = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17]
-    
+
     # Count pitch classes
     pc_counts = [0] * 12
     for note in notes:
         pc = note['note'] % 12
         pc_counts[pc] += 1
-    
+
     # Normalize
     total = sum(pc_counts)
     if total == 0:
         return None, None, 0
     pc_dist = [c / total for c in pc_counts]
-    
+
     # Correlate with each possible key
     best_key = None
     best_mode = None
     best_corr = -1
-    
+
     for root in range(12):
         # Rotate distribution
         rotated = pc_dist[root:] + pc_dist[:root]
-        
+
         # Correlate with major
         major_corr = sum(r * m for r, m in zip(rotated, major_profile))
         if major_corr > best_corr:
             best_corr = major_corr
             best_key = root
             best_mode = 'major'
-        
+
         # Correlate with minor
         minor_corr = sum(r * m for r, m in zip(rotated, minor_profile))
         if minor_corr > best_corr:
             best_corr = minor_corr
             best_key = root
             best_mode = 'minor'
-    
+
     # Normalize confidence to 0-1 range
     confidence = min(1, max(0, best_corr / 30))
-    
+
     return NOTE_NAMES[best_key], best_mode, confidence
 
 # ============================================================================
 # Full Analysis Pipeline
 # ============================================================================
+
 
 def analyze_structure(filepath, name=None, genre=None):
     """
@@ -772,49 +792,50 @@ def analyze_structure(filepath, name=None, genre=None):
     """
     filepath = Path(filepath)
     print(f"Analyzing structure: {filepath.name}")
-    
+
     # Load MIDI
     mid = load_midi(str(filepath))
     ppq = mid.ticks_per_beat
     bpm = get_tempo(mid)
-    
+
     # Extract notes
     all_notes, ppq = extract_notes(mid)
     melody_notes, harmony_notes = separate_melody_harmony(all_notes, ppq)
-    
+
     print(f"  PPQ: {ppq}, BPM: {bpm:.1f}")
-    print(f"  Total notes: {len(all_notes)}, Melody: {len(melody_notes)}, Harmony: {len(harmony_notes)}")
-    
+    print(
+        f"  Total notes: {len(all_notes)}, Melody: {len(melody_notes)}, Harmony: {len(harmony_notes)}")  # noqa: E501
+
     # Calculate total bars
     max_tick = max(n['tick'] + n['duration'] for n in all_notes) if all_notes else 0
     total_bars = math.ceil(max_tick / (ppq * 4))
-    
+
     # Detect key
     key, mode, key_confidence = detect_key(all_notes)
     print(f"  Detected key: {key} {mode} (confidence: {key_confidence:.2f})")
-    
+
     # Analyze chords
     print("  Analyzing chords...")
     chords = analyze_chords(harmony_notes + [n for n in melody_notes], ppq)
     chord_families = analyze_chord_families(chords)
-    
+
     # Detect progressions
     print("  Detecting progressions...")
     progressions = detect_progression_patterns(chords)
-    
+
     # Analyze melody
     print("  Analyzing melody...")
     melody_contours = analyze_melody_contour(melody_notes, ppq)
     melody_stats = calculate_melody_statistics(melody_notes)
-    
+
     # Analyze phrases
     print("  Analyzing phrases...")
     phrase_analysis = analyze_phrase_lengths(melody_notes, ppq)
-    
+
     # Analyze harmonic rhythm
     print("  Analyzing harmonic rhythm...")
     harmonic_rhythm = analyze_harmonic_rhythm(chords)
-    
+
     # Compile results
     analysis = {
         'metadata': {
@@ -842,8 +863,9 @@ def analyze_structure(filepath, name=None, genre=None):
         'phrases': phrase_analysis,
         'harmonic_rhythm': harmonic_rhythm
     }
-    
+
     return analysis
+
 
 def save_analysis(analysis, output_path=None):
     """Save analysis to JSON."""
@@ -852,47 +874,50 @@ def save_analysis(analysis, output_path=None):
         output_path = OUTPUT_PATH / f"{name}_structure.json"
     else:
         output_path = Path(output_path)
-    
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     with open(output_path, 'w') as f:
         json.dump(analysis, f, indent=2)
-    
+
     print(f"Saved analysis: {output_path}")
     return output_path
+
 
 def save_to_database(analysis):
     """Save analysis to SQLite database."""
     conn = get_connection()
     cursor = conn.cursor()
-    
+
     meta = analysis['metadata']
-    
+
     # Insert main record
     cursor.execute('''
         INSERT INTO structure_analyses
-        (name, source_file, genre, key_detected, mode_detected, bpm, time_signature, total_bars, date_analyzed)
+        (name, source_file, genre, key_detected, mode_detected, bpm, time_signature, total_bars, date_analyzed)  # noqa: E501
+
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         meta['name'], meta['source_file'], meta['genre'],
         meta['key'], meta['mode'], meta['bpm'],
         meta['time_signature'], meta['total_bars'], meta['date_analyzed']
     ))
-    
+
     analysis_id = cursor.lastrowid
-    
+
     # Insert chords
     for chord in analysis['chords']['progression']:
         cursor.execute('''
             INSERT INTO chord_progressions
-            (analysis_id, bar_number, beat, root_note, chord_type, chord_family, duration_beats, confidence)
+            (analysis_id, bar_number, beat, root_note, chord_type, chord_family, duration_beats, confidence)  # noqa: E501
+
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             analysis_id, chord['bar'], chord['beat'],
             chord['root'], chord['type'], chord['family'],
             chord['duration_beats'], chord['confidence']
         ))
-    
+
     # Insert detected patterns
     for pattern in analysis['chords']['detected_patterns']:
         cursor.execute('''
@@ -903,12 +928,13 @@ def save_to_database(analysis):
             analysis_id, pattern['pattern'], 'chord_progression',
             pattern['start_bar'], pattern['transposition'], pattern['confidence']
         ))
-    
+
     # Insert melody contours
     for contour in analysis['melody']['contours']:
         cursor.execute('''
             INSERT INTO melody_contours
-            (analysis_id, phrase_number, start_bar, end_bar, contour_type, pitch_range, direction, step_count, leap_count)
+            (analysis_id, phrase_number, start_bar, end_bar, contour_type, pitch_range, direction, step_count, leap_count)  # noqa: E501
+
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             analysis_id, contour['phrase_number'],
@@ -916,7 +942,7 @@ def save_to_database(analysis):
             contour['contour_type'], contour['pitch_range'],
             contour['direction'], contour['step_count'], contour['leap_count']
         ))
-    
+
     # Insert phrase structure
     for i, phrase in enumerate(analysis['phrases']['phrases']):
         cursor.execute('''
@@ -927,7 +953,7 @@ def save_to_database(analysis):
             analysis_id, i + 1,
             phrase['start_bar'], phrase['length_bars'], phrase['note_density']
         ))
-    
+
     # Insert harmonic rhythm
     hr = analysis['harmonic_rhythm']
     if hr:
@@ -942,10 +968,10 @@ def save_to_database(analysis):
             hr.get('rhythm_pattern', ''),
             hr.get('consistency', 0)
         ))
-    
+
     conn.commit()
     conn.close()
-    
+
     print(f"Saved to database with ID: {analysis_id}")
     return analysis_id
 
@@ -953,24 +979,25 @@ def save_to_database(analysis):
 # Query Functions
 # ============================================================================
 
+
 def list_analyses(genre=None, key=None, limit=50):
     """List all analyses."""
     conn = get_connection()
     cursor = conn.cursor()
-    
+
     conditions = []
     params = []
-    
+
     if genre:
         conditions.append("genre LIKE ?")
         params.append(f'%{genre}%')
-    
+
     if key:
         conditions.append("key_detected = ?")
         params.append(key)
-    
+
     where_clause = " AND ".join(conditions) if conditions else "1=1"
-    
+
     cursor.execute(f'''
         SELECT id, name, genre, key_detected, mode_detected, bpm, total_bars
         FROM structure_analyses
@@ -978,37 +1005,38 @@ def list_analyses(genre=None, key=None, limit=50):
         ORDER BY date_analyzed DESC
         LIMIT ?
     ''', params + [limit])
-    
+
     results = cursor.fetchall()
     conn.close()
-    
+
     print(f"\n{'ID':<6} {'Name':<30} {'Genre':<12} {'Key':<8} {'BPM':<8} {'Bars':<6}")
     print("-" * 75)
-    
+
     for row in results:
         id_, name, genre, key, mode, bpm, bars = row
         name_display = name[:28] + '..' if len(name) > 30 else name
         key_display = f"{key or '?'} {mode or ''}"[:8]
-        print(f"{id_:<6} {name_display:<30} {genre or '':<12} {key_display:<8} {bpm or '?':<8} {bars or '?':<6}")
+        print(f"{id_:<6} {name_display:<30} {genre or '':<12} {key_display:<8} {bpm or '?':<8} {bars or '?':<6}")  # noqa: E501
+
 
 def show_detail(analysis_id):
     """Show detailed analysis."""
     conn = get_connection()
     cursor = conn.cursor()
-    
+
     cursor.execute('SELECT * FROM structure_analyses WHERE id = ?', (analysis_id,))
     analysis = cursor.fetchone()
-    
+
     if not analysis:
         print(f"Analysis {analysis_id} not found")
         return
-    
+
     print(f"\n{'='*60}")
     print(f"Analysis: {analysis[1]}")
     print(f"Key: {analysis[4]} {analysis[5]}")
     print(f"BPM: {analysis[6]}, Bars: {analysis[8]}")
     print(f"{'='*60}")
-    
+
     # Show chord progression
     cursor.execute('''
         SELECT bar_number, root_note, chord_type, duration_beats
@@ -1017,55 +1045,56 @@ def show_detail(analysis_id):
         ORDER BY bar_number, beat
         LIMIT 20
     ''', (analysis_id,))
-    
-    print(f"\nChord Progression (first 20):")
+
+    print("\nChord Progression (first 20):")
     print(f"{'Bar':<6} {'Chord':<12} {'Duration':<10}")
     print("-" * 30)
-    
+
     for bar, root, ctype, dur in cursor.fetchall():
         print(f"{bar:<6} {root}{ctype:<10} {dur:.1f} beats")
-    
+
     # Show detected patterns
     cursor.execute('''
         SELECT pattern_name, start_bar, transposition, confidence
         FROM detected_patterns
         WHERE analysis_id = ?
     ''', (analysis_id,))
-    
+
     patterns = cursor.fetchall()
     if patterns:
-        print(f"\nDetected Patterns:")
+        print("\nDetected Patterns:")
         for name, bar, trans, conf in patterns:
             print(f"  {name} in {NOTE_NAMES[trans]} (bar {bar}, confidence {conf:.0%})")
-    
+
     # Show harmonic rhythm
     cursor.execute('''
         SELECT avg_chord_duration, changes_per_bar, rhythm_pattern, consistency
         FROM harmonic_rhythm
         WHERE analysis_id = ?
     ''', (analysis_id,))
-    
+
     hr = cursor.fetchone()
     if hr:
-        print(f"\nHarmonic Rhythm:")
+        print("\nHarmonic Rhythm:")
         print(f"  Average chord duration: {hr[0]:.1f} beats")
         print(f"  Changes per bar: {hr[1]:.2f}")
         print(f"  Pattern: {hr[2]}")
         print(f"  Consistency: {hr[3]:.0%}")
-    
+
     conn.close()
+
 
 def scan_folder(folder_path, genre=None, recursive=True):
     """Scan folder for MIDI files."""
     folder = Path(folder_path).expanduser().resolve()
-    
+
     pattern = '**/*.mid' if recursive else '*.mid'
     midi_files = list(folder.glob(pattern))
     midi_files.extend(folder.glob(pattern.replace('.mid', '.midi')))
-    
+
     print(f"Found {len(midi_files)} MIDI files")
     print("-" * 50)
-    
+
     for filepath in midi_files:
         try:
             analysis = analyze_structure(filepath, genre=genre)
@@ -1079,6 +1108,7 @@ def scan_folder(folder_path, genre=None, recursive=True):
 # CLI
 # ============================================================================
 
+
 def main():
     parser = argparse.ArgumentParser(
         description='MIDI Structure Analyzer - Extract chord progressions, melody shapes, and more',
@@ -1091,37 +1121,37 @@ Examples:
   %(prog)s detail 5
         '''
     )
-    
+
     subparsers = parser.add_subparsers(dest='command', help='Commands')
-    
+
     # Analyze command
     analyze_parser = subparsers.add_parser('analyze', help='Analyze MIDI file')
     analyze_parser.add_argument('file', help='MIDI file path')
     analyze_parser.add_argument('--name', help='Analysis name')
     analyze_parser.add_argument('--genre', help='Genre tag')
     analyze_parser.add_argument('--output', help='Output JSON path')
-    
+
     # Scan command
     scan_parser = subparsers.add_parser('scan', help='Scan folder')
     scan_parser.add_argument('folder', help='Folder path')
     scan_parser.add_argument('--genre', help='Genre tag')
     scan_parser.add_argument('--no-recursive', action='store_true')
-    
+
     # List command
     list_parser = subparsers.add_parser('list', help='List analyses')
     list_parser.add_argument('--genre', help='Filter by genre')
     list_parser.add_argument('--key', help='Filter by key')
     list_parser.add_argument('--limit', type=int, default=50)
-    
+
     # Detail command
     detail_parser = subparsers.add_parser('detail', help='Show analysis details')
     detail_parser.add_argument('id', type=int, help='Analysis ID')
-    
+
     # Init command
     subparsers.add_parser('init', help='Initialize database')
-    
+
     args = parser.parse_args()
-    
+
     if args.command == 'analyze':
         analysis = analyze_structure(args.file, name=args.name, genre=args.genre)
         if args.output:
@@ -1129,21 +1159,22 @@ Examples:
         else:
             save_analysis(analysis)
         save_to_database(analysis)
-    
+
     elif args.command == 'scan':
         scan_folder(args.folder, genre=args.genre, recursive=not args.no_recursive)
-    
+
     elif args.command == 'list':
         list_analyses(genre=args.genre, key=args.key, limit=args.limit)
-    
+
     elif args.command == 'detail':
         show_detail(args.id)
-    
+
     elif args.command == 'init':
         init_database()
-    
+
     else:
         parser.print_help()
+
 
 if __name__ == '__main__':
     main()

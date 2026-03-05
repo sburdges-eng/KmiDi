@@ -6,10 +6,9 @@ Part of Phase 6 of the "All-Knowing Interactive Musical Customization System".
 """
 
 from typing import Dict, List, Optional, Tuple, Any
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 import re
-from collections import defaultdict
 
 
 class FeedbackType(Enum):
@@ -65,7 +64,11 @@ class NaturalLanguageProcessor:
         self.emotional_terms = self._build_emotional_term_map()
         self.part_keywords = self._build_part_keywords()
 
-    def interpret(self, feedback_text: str, current_state: Optional[Dict[str, Any]] = None) -> InterpretedFeedback:
+    def interpret(
+        self,
+        feedback_text: str,
+        current_state: Optional[Dict[str, Any]] = None,
+    ) -> InterpretedFeedback:
         """
         Interpret user feedback and generate parameter changes.
 
@@ -119,7 +122,8 @@ class NaturalLanguageProcessor:
     def _extract_intent(self, text: str) -> Intent:
         """Extract user intent from text."""
         increase_keywords = ["more", "add", "increase", "boost", "enhance", "needs", "wants"]
-        decrease_keywords = ["less", "reduce", "decrease", "lower", "remove", "don't want", "doesn't need"]
+        decrease_keywords = ["less", "reduce", "decrease",
+                             "lower", "remove", "don't want", "doesn't need"]
         remove_keywords = ["remove", "delete", "get rid of", "eliminate"]
         keep_keywords = ["keep", "maintain", "preserve"]
 

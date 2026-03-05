@@ -11,18 +11,15 @@ Run with:
 
 import streamlit as st
 import numpy as np
-from typing import Optional
 import sys
 from pathlib import Path
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from penta_core.mixer import MixerEngine, MixerState, apply_emotion_to_mixer
-from music_brain.daw.mixer_params import (
-    EmotionMapper,
-    MixerParameters,
-    MIXER_PRESETS
+from penta_core.mixer import MixerEngine, apply_emotion_to_mixer  # noqa: E402
+from music_brain.daw.mixer_params import (  # noqa: E402
+    EmotionMapper
 )
 
 
@@ -241,7 +238,8 @@ def render_emotion_presets():
         emotion_params = mapper.get_preset(selected_preset)
         if emotion_params:
             apply_emotion_to_mixer(mixer, emotion_params, target_channel)
-            st.success(f"Applied '{selected_preset}' to {st.session_state.channel_names[target_channel]}")
+            st.success(
+                f"Applied '{selected_preset}' to {st.session_state.channel_names[target_channel]}")
             st.rerun()
 
     # Show preset details
@@ -251,7 +249,7 @@ def render_emotion_presets():
             with st.expander("📝 Preset Details"):
                 st.markdown(f"**Description:** {preset.description}")
                 st.markdown(f"**Tags:** {', '.join(preset.tags)}")
-                st.markdown(f"**Emotional Justification:**")
+                st.markdown("**Emotional Justification:**")
                 st.info(preset.emotional_justification)
 
 
@@ -443,7 +441,8 @@ def main():
         cols_per_row = 4
         for row_start in range(0, num_channels, cols_per_row):
             cols = st.columns(cols_per_row)
-            for col_idx, channel in enumerate(range(row_start, min(row_start + cols_per_row, num_channels))):
+            for col_idx, channel in enumerate(
+                    range(row_start, min(row_start + cols_per_row, num_channels))):
                 with cols[col_idx]:
                     render_channel_strip(channel, st.session_state.channel_names[channel])
 

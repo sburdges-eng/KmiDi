@@ -62,6 +62,7 @@ def shutdown_workstation(workstation=None):
     """No-op shutdown helper to mirror CLI expectations."""
     return True
 
+
 __all__ = [
     # Core Orchestrator
     "AIOrchestrator",

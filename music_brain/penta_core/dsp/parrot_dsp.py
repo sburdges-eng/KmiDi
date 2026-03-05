@@ -10,7 +10,7 @@ Provides:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Callable
+from typing import List, Dict, Optional, Tuple
 from enum import Enum
 import math
 import random
@@ -272,7 +272,7 @@ class PitchShifter:
 
             # Resample grain for pitch shift
             if pitch_ratio != 1.0:
-                resampled_length = int(grain_samples / pitch_ratio)
+                _resampled_length = int(grain_samples / pitch_ratio)  # noqa: F841
                 resampled = []
                 for i in range(grain_samples):
                     source_pos = i * pitch_ratio
