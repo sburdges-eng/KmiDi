@@ -17,6 +17,17 @@ from music_brain.engine_api.schema import CompleteSongIntentRequest
 SCHEMA_DIR = ROOT / "shared_schemas"
 SCHEMA_PATH = SCHEMA_DIR / "CompleteSongIntentRequest.json"
 # Backward-compatible alias for older scripts/workflows.
+def _unwrap_anyof_nullable(node: Dict[str, Any]) -> Dict[str, Any]:
+    """Unwrap anyOf: [{type: T}, {type: "null"}] for Pydantic v2 nullables."""
+    if "anyOf" in node:
+        types = node["anyOf"]
+        if len(types) == 2:
+            # Look for the non-null type
+            non_null = [t for t in types if t.get("type") != "null"]
+            if len(non_null) == 1:
+                return non_null[0]
+    return node
+
 LEGACY_SCHEMA_PATH = SCHEMA_DIR / "CompleteSongIntent.json"
 TS_OUT = ROOT / "src" / "types" / "Intent.ts"
 RUST_OUT = ROOT / "src-tauri" / "src" / "generated" / "intent.rs"
@@ -37,6 +48,7 @@ def _resolve_ref(ref: str, schema: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _json_to_ts(name: str, node: Dict[str, Any], schema: Dict[str, Any]) -> str:
+    node = _unwrap_anyof_nullable(node)
     if "$ref" in node:
         ref_name = node["$ref"].split("/")[-1]
         return ref_name
@@ -66,6 +78,7 @@ def _json_to_ts(name: str, node: Dict[str, Any], schema: Dict[str, Any]) -> str:
 
 
 def _json_to_rust_type(node: Dict[str, Any], required: bool = True) -> str:
+    node = _unwrap_anyof_nullable(node)
     if "$ref" in node:
         base = node["$ref"].split("/")[-1]
         return base if required else f"Option<{base}>"
@@ -137,18 +150,16 @@ def sync_boundaries() -> None:
     schema = _model_schema()
     schema_payload = json.dumps(schema, indent=2) + "\n"
     SCHEMA_PATH.write_text(schema_payload, encoding="utf-8")
-    LEGACY_SCHEMA_PATH.write_text(schema_payload, encoding="utf-8")
     TS_OUT.write_text(_render_typescript(schema), encoding="utf-8")
     RUST_OUT.write_text(_render_rust(schema), encoding="utf-8")
 
     print("Schema exported to:", SCHEMA_PATH)
-    print("Legacy schema alias updated:", LEGACY_SCHEMA_PATH)
     print("TypeScript contract written to:", TS_OUT)
     print("Rust contract written to:", RUST_OUT)
+    print("Contract sync complete.")
     print("Next steps for CI:")
     print("-> python scripts/sync_entities.py")
     print("-> verify generated artifacts are committed")
-
 
 if __name__ == "__main__":
     sync_boundaries()
