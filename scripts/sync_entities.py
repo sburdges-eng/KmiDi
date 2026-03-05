@@ -48,7 +48,15 @@ def _resolve_ref(ref: str, schema: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _json_to_ts(name: str, node: Dict[str, Any], schema: Dict[str, Any]) -> str:
-    node = _unwrap_anyof_nullable(node)
+    # Handle pydantic v2 nullable anyOf: [{type: T}, {type: "null"}]
+    if "anyOf" in node:
+        types = node["anyOf"]
+        non_null = [t for t in types if t.get("type") != "null"]
+        has_null = any(t.get("type") == "null" for t in types)
+        if len(non_null) == 1 and has_null:
+            base = _json_to_ts(name, non_null[0], schema)
+            return f"{base} | null"
+
     if "$ref" in node:
         ref_name = node["$ref"].split("/")[-1]
         return ref_name
@@ -71,6 +79,10 @@ def _json_to_ts(name: str, node: Dict[str, Any], schema: Dict[str, Any]) -> str:
         lines = ["{"]
         for key, value in props.items():
             optional = "" if key in required else "?"
+            description = value.get("description")
+            if description:
+                sanitized = description.replace("*/", "* /").replace("/*", "/ *")
+                lines.append(f"  /** {sanitized} */")
             lines.append(f"  {key}{optional}: {_json_to_ts(key, value, schema)};")
         lines.append("}")
         return "\n".join(lines)

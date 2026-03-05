@@ -1,5 +1,7 @@
 // Music Brain API client - connects directly to Python backend at http://127.0.0.1:8000
 
+import { StructureSection, TrackIntent } from '../types/Intent';
+
 const API_BASE = 'http://127.0.0.1:8000';
 
 export interface EmotionalIntent {
@@ -15,13 +17,13 @@ export interface EmotionalIntent {
     progression?: string[];
     genre?: string;
     duration?: number;
-    structure?: any[];
-    instruments?: any[];
+    structure?: StructureSection[];
+    instruments?: TrackIntent[];
     techniques?: string[];
     groove_feel?: string;
     narrative_arc?: string;
-    rule_to_break?: string;
-    rule_justification?: string;
+    rule_to_break?: string | null;
+    rule_justification?: string | null;
   };
 }
 
