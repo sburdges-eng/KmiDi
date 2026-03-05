@@ -153,6 +153,6 @@
     "structure",
     "instruments"
   ],
-  "title": "CompleteSongIntentRequest",
+  "title": "CompleteSongIntent",
   "type": "object"
 }

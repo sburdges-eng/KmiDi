@@ -137,7 +137,12 @@ def sync_boundaries() -> None:
     schema = _model_schema()
     schema_payload = json.dumps(schema, indent=2) + "\n"
     SCHEMA_PATH.write_text(schema_payload, encoding="utf-8")
-    LEGACY_SCHEMA_PATH.write_text(schema_payload, encoding="utf-8")
+    # Legacy alias: same structure as CompleteSongIntentRequest, but with its own title
+    # so tooling that reads the file by title sees the correct name.
+    legacy_schema = dict(schema)
+    legacy_schema["title"] = "CompleteSongIntent"
+    legacy_schema_payload = json.dumps(legacy_schema, indent=2) + "\n"
+    LEGACY_SCHEMA_PATH.write_text(legacy_schema_payload, encoding="utf-8")
     TS_OUT.write_text(_render_typescript(schema), encoding="utf-8")
     RUST_OUT.write_text(_render_rust(schema), encoding="utf-8")
 
