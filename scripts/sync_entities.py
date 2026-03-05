@@ -41,7 +41,17 @@ def _json_to_ts(name: str, node: Dict[str, Any], schema: Dict[str, Any]) -> str:
         ref_name = node["$ref"].split("/")[-1]
         return ref_name
 
+    # Handle pydantic v2 anyOf (e.g. Optional[str] → anyOf: [{type: string}, {type: null}])
+    if "anyOf" in node:
+        parts = []
+        for variant in node["anyOf"]:
+            ts_type = _json_to_ts(name, variant, schema)
+            parts.append(ts_type)
+        return " | ".join(parts)
+
     node_type = node.get("type")
+    if node_type == "null":
+        return "null"
     if "enum" in node:
         return " | ".join(f'"{value}"' for value in node["enum"])
     if node_type == "string":
@@ -58,6 +68,10 @@ def _json_to_ts(name: str, node: Dict[str, Any], schema: Dict[str, Any]) -> str:
         required = set(node.get("required", []))
         lines = ["{"]
         for key, value in props.items():
+            description = value.get("description")
+            if description:
+                safe_desc = description.replace("*/", "*\\/").replace("\n", " ")
+                lines.append(f"  /** {safe_desc} */")
             optional = "" if key in required else "?"
             lines.append(f"  {key}{optional}: {_json_to_ts(key, value, schema)};")
         lines.append("}")
