@@ -4,7 +4,7 @@ Formant Synthesis Engine for Parrot
 Implements proper formant synthesis using learned voice characteristics.
 """
 
-from typing import List, Optional, Tuple
+from typing import List, Optional
 import numpy as np
 from scipy import signal
 
@@ -16,7 +16,7 @@ except ImportError:
     librosa = None
 
 from music_brain.vocal.parrot import VoiceModel, FormantData, VowelType
-from music_brain.vocal.phonemes import Phoneme, text_to_phonemes, phoneme_to_vowel_type
+from music_brain.vocal.phonemes import Phoneme, phoneme_to_vowel_type
 
 
 def formant_synthesize(
@@ -28,30 +28,30 @@ def formant_synthesize(
 ) -> np.ndarray:
     """
     Synthesize audio using formant synthesis.
-    
+
     Args:
         phonemes: List of phonemes to synthesize
         voice_model: Learned voice model
         sample_rate: Sample rate for output
         emotion: Emotion preset (happy, sad, angry, etc.)
         expression_intensity: Expression intensity (0.0-1.0)
-    
+
     Returns:
         Synthesized audio as numpy array
     """
     audio_segments = []
     char = voice_model.characteristics
-    
+
     # Emotion modifications
     emotion_mods = _get_emotion_modifications(emotion, expression_intensity) if emotion else {}
-    
+
     for phoneme in phonemes:
         if phoneme.phoneme_type.value == 'silence':
             # Generate silence
             silence_samples = int(phoneme.duration * sample_rate)
             audio_segments.append(np.zeros(silence_samples))
             continue
-        
+
         # Get formant data for vowel
         if phoneme.phoneme_type.value == 'vowel':
             vowel_type_str = phoneme_to_vowel_type(phoneme)
@@ -59,7 +59,7 @@ def formant_synthesize(
                 try:
                     vowel_type = VowelType[vowel_type_str]
                     formants_list = char.vowel_formants.get(vowel_type, [])
-                    
+
                     if formants_list:
                         # Use average formants for this vowel
                         avg_formants = _average_formants(formants_list)
@@ -70,11 +70,11 @@ def formant_synthesize(
                     avg_formants = _get_standard_formants('A')
             else:
                 avg_formants = _get_standard_formants('A')
-            
+
             # Apply emotion modifications
             if emotion_mods:
                 avg_formants = _apply_emotion_to_formants(avg_formants, emotion_mods)
-            
+
             # Synthesize vowel with formants
             segment = _synthesize_vowel(
                 avg_formants,
@@ -90,22 +90,22 @@ def formant_synthesize(
                 char,
                 sample_rate
             )
-        
+
         audio_segments.append(segment)
-    
+
     # Concatenate all segments
     if audio_segments:
         audio = np.concatenate(audio_segments)
     else:
         audio = np.array([])
-    
+
     # Apply global voice characteristics
     audio = _apply_voice_characteristics(audio, char, sample_rate, emotion_mods)
-    
+
     # Normalize
     if len(audio) > 0 and np.max(np.abs(audio)) > 0:
         audio = audio / np.max(np.abs(audio)) * 0.8
-    
+
     return audio
 
 
@@ -120,20 +120,20 @@ def _synthesize_vowel(
     duration = phoneme.duration
     num_samples = int(duration * sample_rate)
     t = np.linspace(0, duration, num_samples)
-    
+
     # Get pitch
     base_pitch = char.average_pitch if char.average_pitch > 0 else 200.0
     if phoneme.pitch:
         base_pitch = phoneme.pitch
-    
+
     # Apply stress (higher pitch for stressed syllables)
     if phoneme.stress > 0:
         base_pitch *= (1.0 + phoneme.stress * 0.1)
-    
+
     # Apply emotion pitch modifications
     if emotion_mods.get('pitch_shift', 0) != 0:
         base_pitch *= (1.0 + emotion_mods['pitch_shift'])
-    
+
     # Generate pitch contour with vibrato
     if char.vibrato_rate > 0 and char.vibrato_depth > 0:
         vibrato = np.sin(2 * np.pi * char.vibrato_rate * t)
@@ -141,57 +141,59 @@ def _synthesize_vowel(
         pitch_contour = base_pitch * (1.0 + vibrato * vibrato_depth_ratio)
     else:
         pitch_contour = np.full_like(t, base_pitch)
-    
+
     # Add jitter (pitch period variation)
     if char.jitter > 0:
         jitter_amount = char.jitter / 100.0
         jitter_noise = np.random.normal(0, jitter_amount, len(t))
         pitch_contour *= (1.0 + jitter_noise)
-    
+
     # Generate excitation signal (glottal pulse)
     excitation = _generate_glottal_pulse(pitch_contour, t, sample_rate, char)
-    
+
     # Apply formant filters
     audio = excitation.copy()
-    
+
     # F1 filter (first formant)
     if formants.f1 > 0:
         audio = _apply_formant_filter(audio, formants.f1, 50, sample_rate)
-    
+
     # F2 filter (second formant)
     if formants.f2 > 0:
         audio = _apply_formant_filter(audio, formants.f2, 70, sample_rate)
-    
+
     # F3 filter (third formant)
     if formants.f3 > 0:
         audio = _apply_formant_filter(audio, formants.f3, 90, sample_rate)
-    
+
     # Apply timbre shaping
     audio = _apply_timbre_shaping(audio, char, sample_rate)
-    
+
     # Add breathiness
     if char.breathiness > 0:
         breath_noise = np.random.normal(0, char.breathiness * 0.1, len(audio))
         audio = audio * (1.0 - char.breathiness * 0.3) + breath_noise * char.breathiness
-    
+
     # Add shimmer (amplitude variation)
     if char.shimmer > 0:
         shimmer_amount = char.shimmer / 100.0
         shimmer_noise = np.random.normal(1.0, shimmer_amount, len(audio))
         audio *= shimmer_noise
-    
+
     # Apply attack and release envelopes
-    attack_samples = int(char.attack_time * sample_rate) if char.attack_time > 0 else int(0.01 * sample_rate)
-    release_samples = int(char.release_time * sample_rate) if char.release_time > 0 else int(0.05 * sample_rate)
-    
+    attack_samples = int(
+        char.attack_time * sample_rate) if char.attack_time > 0 else int(0.01 * sample_rate)
+    release_samples = int(
+        char.release_time * sample_rate) if char.release_time > 0 else int(0.05 * sample_rate)
+
     if attack_samples > 0:
         attack_env = np.linspace(0, 1, attack_samples)
         audio[:attack_samples] *= attack_env
-    
+
     if release_samples > 0:
         release_env = np.linspace(1, 0, release_samples)
         audio[-release_samples:] *= release_env
-    
+
     return audio
 
 
@@ -203,10 +205,10 @@ def _synthesize_consonant(
     """Synthesize a consonant."""
     duration = phoneme.duration
     num_samples = int(duration * sample_rate)
-    
+
     # Consonants are noise-based or brief transitions
     consonant_type = phoneme.symbol
-    
+
     # Fricatives (noise-based)
     fricatives = ['f', 'v', 'θ', 'ð', 's', 'z', 'ʃ', 'ʒ', 'h']
     if consonant_type in fricatives:
@@ -221,7 +223,7 @@ def _synthesize_consonant(
             fft[freqs < 1000] *= 0.1
             noise = np.real(np.fft.ifft(fft))
         return noise
-    
+
     # Plosives (brief burst)
     plosives = ['p', 'b', 't', 'd', 'k', 'g']
     if consonant_type in plosives:
@@ -236,7 +238,7 @@ def _synthesize_consonant(
             silence = np.zeros(num_samples - burst_samples)
             return np.concatenate([burst, silence])
         return burst[:num_samples]
-    
+
     # Nasals and liquids (formant-like)
     nasals_liquids = ['m', 'n', 'ŋ', 'l', 'r', 'w', 'j']
     if consonant_type in nasals_liquids:
@@ -248,7 +250,7 @@ def _synthesize_consonant(
         envelope = np.exp(-t * 10)  # Quick decay
         signal *= envelope
         return signal
-    
+
     # Default: brief silence
     return np.zeros(num_samples)
 
@@ -261,24 +263,24 @@ def _generate_glottal_pulse(
 ) -> np.ndarray:
     """Generate glottal pulse excitation signal."""
     excitation = np.zeros_like(t)
-    
+
     for i, pitch in enumerate(pitch_contour):
         if pitch > 0:
             period = 1.0 / pitch
             phase = (t[i] % period) / period
-            
+
             # Simple glottal pulse model (Rosenberg model)
             if phase < 0.5:
                 pulse = np.sin(np.pi * phase)
             else:
                 pulse = 0.0
-            
+
             excitation[i] = pulse
-    
+
     # Normalize
     if np.max(np.abs(excitation)) > 0:
         excitation = excitation / np.max(np.abs(excitation))
-    
+
     return excitation * 0.5
 
 
@@ -293,11 +295,11 @@ def _apply_formant_filter(
     nyquist = sample_rate / 2.0
     low = max(1.0, (formant_freq - bandwidth) / nyquist)
     high = min(0.99, (formant_freq + bandwidth) / nyquist)
-    
+
     if low < high:
         b, a = signal.butter(2, [low, high], btype='band')
         audio = signal.filtfilt(b, a, audio)
-    
+
     return audio
 
 
@@ -309,7 +311,7 @@ def _apply_timbre_shaping(
     """Apply timbre characteristics using spectral shaping."""
     if not LIBROSA_AVAILABLE:
         return audio
-    
+
     # Apply spectral centroid (brightness)
     if char.spectral_centroid_mean > 0:
         # Simple brightness adjustment using high-pass
@@ -318,7 +320,7 @@ def _apply_timbre_shaping(
         if cutoff > 0.01:
             b, a = signal.butter(2, cutoff, btype='high')
             audio = signal.filtfilt(b, a, audio)
-    
+
     return audio
 
 
@@ -338,7 +340,7 @@ def _apply_voice_characteristics(
             b, a = signal.butter(2, [nasal_freq * 0.8, nasal_freq * 1.2], btype='band')
             nasal_component = signal.filtfilt(b, a, audio) * char.nasality * 0.3
             audio = audio + nasal_component
-    
+
     return audio
 
 
@@ -346,12 +348,12 @@ def _average_formants(formants_list: List[FormantData]) -> FormantData:
     """Calculate average formants from a list."""
     if not formants_list:
         return FormantData(f1=0, f2=0, f3=0)
-    
+
     avg_f1 = np.mean([f.f1 for f in formants_list])
     avg_f2 = np.mean([f.f2 for f in formants_list])
     avg_f3 = np.mean([f.f3 for f in formants_list])
     avg_conf = np.mean([f.confidence for f in formants_list])
-    
+
     return FormantData(
         f1=float(avg_f1),
         f2=float(avg_f2),
@@ -413,11 +415,10 @@ def _apply_emotion_to_formants(
     f1_shift = emotion_mods.get('formant_shift_f1', 0.0)
     f2_shift = emotion_mods.get('formant_shift_f2', 0.0)
     f3_shift = emotion_mods.get('formant_shift_f3', 0.0)
-    
+
     return FormantData(
         f1=formants.f1 * (1.0 + f1_shift),
         f2=formants.f2 * (1.0 + f2_shift),
         f3=formants.f3 * (1.0 + f3_shift),
         confidence=formants.confidence
     )
-

@@ -71,7 +71,6 @@ class BaseProcessor(ProcessorInterface):
         Returns:
             ProcessorResult with output data
         """
-        pass
 
     async def _validate_impl(self, input_data: Any) -> bool:
         """

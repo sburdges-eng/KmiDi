@@ -84,37 +84,16 @@ class TestVideoGenerator:
         # Should reset initialized flag
         assert gen._initialized is False
 
-    def test_cleanup_temp_files(self, tmp_path):
-        """Test cleaning up temporary files."""
-        # Create a temporary directory with some files
-        temp_dir = tmp_path / "video_temp"
-        temp_dir.mkdir()
-
-        file1 = temp_dir / "frame_001.png"
-        file1.write_text("dummy data")
-
-        subdir = temp_dir / "cache"
-        subdir.mkdir()
-        file2 = subdir / "meta.json"
-        file2.write_text("{}")
-
-        # Initialize generator with this temp directory
-        config = VideoConfig(temp_dir=temp_dir)
-        gen = VideoGenerator(config=config)
-
-        # Verify files exist
-        assert file1.exists()
-        assert file2.exists()
-        assert subdir.exists()
-
-        # Run cleanup
-        gen.cleanup()
-
-        # Verify files and subdirectories are gone, but temp_dir itself remains
-        assert not file1.exists()
-        assert not file2.exists()
-        assert not subdir.exists()
+    def test_cleanup_safely_removes_temp_dir(self):
+        """Test that cleanup safely removes only generator-created temp dirs."""
+        gen = VideoGenerator()
+        temp_dir = gen._ensure_temp_dir()
         assert temp_dir.exists()
+        assert "kmidi_video_gen_" in temp_dir.name
+        gen.cleanup()
+        assert not temp_dir.exists()
+        assert gen._initialized is False
+        assert gen._temp_dir is None
 
 
 class TestUnrealBridge:

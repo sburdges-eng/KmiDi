@@ -15,7 +15,3 @@ except Exception:  # pragma: no cover - defensive fallback for missing deps
         return {"chords": chords, "key": key, "status": "stubbed"}
 
 __all__ = ["voice_leading_tool"]
-
-
-
-

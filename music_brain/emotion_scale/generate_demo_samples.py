@@ -38,7 +38,7 @@ def generate_kit():
     if not HAS_SF:
         print("❌ soundfile not installed. Run: pip install soundfile")
         return
-        
+
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     # Kick

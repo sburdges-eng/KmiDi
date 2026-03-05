@@ -1,0 +1,6 @@
+[project]
+name = "ai-core"
+version = "0.1.0"
+description = "KmiDi ML and music brain core libraries"
+requires-python = ">=3.11"
+dependencies = []

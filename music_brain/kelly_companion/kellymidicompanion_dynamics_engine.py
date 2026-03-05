@@ -11,8 +11,8 @@ The dynamics ARE the emotional respiration.
 """
 
 from dataclasses import dataclass, field
-from enum import Enum, auto
-from typing import Optional, List, Dict, Tuple, Callable
+from enum import Enum
+from typing import Optional, List, Dict
 import random
 import math
 
@@ -98,12 +98,12 @@ class DynamicCurve:
     end_marking: DynamicMarking
     peak_position: float = 0.5      # Where the peak occurs (0.0-1.0)
     peak_marking: Optional[DynamicMarking] = None
-    
+
     # Expression parameters
     has_accents: bool = False
     accent_positions: List[float] = field(default_factory=list)
     accent_strength: float = 0.2    # How much louder accents are
-    
+
     # Humanization
     velocity_variance: int = 5      # Random variance in velocity
     timing_variance: float = 0.02   # Random variance in timing
@@ -135,14 +135,14 @@ class DynamicsProfile:
     curve: DynamicCurve
     breathing: Optional[BreathingPattern]
     silences: List[SilenceEvent]
-    
+
     # Per-instrument adjustments
     instrument_offsets: Dict[str, int] = field(default_factory=dict)
-    
+
     # Expression
     use_expression_cc: bool = True
     use_volume_cc: bool = False     # Usually expression is preferred
-    
+
     # Metadata
     emotion: str = ""
     section_type: str = ""
@@ -168,7 +168,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "out",
     },
-    
+
     "sadness": {
         "base_dynamic": DynamicMarking.MP,
         "max_dynamic": DynamicMarking.F,
@@ -184,7 +184,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "out",
     },
-    
+
     "melancholy": {
         "base_dynamic": DynamicMarking.P,
         "max_dynamic": DynamicMarking.MF,
@@ -200,7 +200,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "out",
     },
-    
+
     "rage": {
         "base_dynamic": DynamicMarking.FF,
         "max_dynamic": DynamicMarking.FFFF,
@@ -216,7 +216,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": True,
         "fade_tendency": "none",
     },
-    
+
     "anger": {
         "base_dynamic": DynamicMarking.F,
         "max_dynamic": DynamicMarking.FFF,
@@ -232,7 +232,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": True,
         "fade_tendency": "none",
     },
-    
+
     "fear": {
         "base_dynamic": DynamicMarking.PP,
         "max_dynamic": DynamicMarking.FF,
@@ -248,7 +248,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": True,
         "fade_tendency": "in",          # Fear builds
     },
-    
+
     "anxiety": {
         "base_dynamic": DynamicMarking.MP,
         "max_dynamic": DynamicMarking.F,
@@ -264,7 +264,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": True,
         "fade_tendency": "none",
     },
-    
+
     "hope": {
         "base_dynamic": DynamicMarking.MF,
         "max_dynamic": DynamicMarking.FF,
@@ -280,7 +280,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "in",          # Hope builds
     },
-    
+
     "joy": {
         "base_dynamic": DynamicMarking.F,
         "max_dynamic": DynamicMarking.FFF,
@@ -296,7 +296,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "none",
     },
-    
+
     "peace": {
         "base_dynamic": DynamicMarking.PP,
         "max_dynamic": DynamicMarking.MP,
@@ -312,7 +312,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "out",
     },
-    
+
     "nostalgia": {
         "base_dynamic": DynamicMarking.MP,
         "max_dynamic": DynamicMarking.MF,
@@ -328,12 +328,13 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "out",
     },
-    
+
     "longing": {
         "base_dynamic": DynamicMarking.MP,
         "max_dynamic": DynamicMarking.F,
         "min_dynamic": DynamicMarking.P,
-        "preferred_shapes": [DynamicShape.CRESCENDO, DynamicShape.SWELL, DynamicShape.INVERSE_SWELL],
+        "preferred_shapes": [DynamicShape.CRESCENDO, DynamicShape.SWELL, DynamicShape.INVERSE_SWELL],  # noqa: E501
+
         "breathing_depth": 0.6,
         "breath_cycle_bars": 4,
         "silence_frequency": 0.2,
@@ -344,7 +345,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "in",
     },
-    
+
     "tension": {
         "base_dynamic": DynamicMarking.MF,
         "max_dynamic": DynamicMarking.FF,
@@ -360,7 +361,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": True,
         "fade_tendency": "in",
     },
-    
+
     "defiance": {
         "base_dynamic": DynamicMarking.F,
         "max_dynamic": DynamicMarking.FFFF,
@@ -376,7 +377,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": True,
         "fade_tendency": "none",
     },
-    
+
     "vulnerability": {
         "base_dynamic": DynamicMarking.PP,
         "max_dynamic": DynamicMarking.MP,
@@ -392,7 +393,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "out",
     },
-    
+
     "euphoria": {
         "base_dynamic": DynamicMarking.FF,
         "max_dynamic": DynamicMarking.FFFF,
@@ -408,7 +409,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "none",
     },
-    
+
     "emptiness": {
         "base_dynamic": DynamicMarking.PPP,
         "max_dynamic": DynamicMarking.P,
@@ -435,23 +436,23 @@ INSTRUMENT_DEFAULT_OFFSETS: Dict[str, int] = {
     # Rhythm section - foundation
     "drums": 5,
     "bass": 0,
-    
+
     # Harmonic
     "piano": 0,
     "keys": 0,
     "guitar": -3,
     "chords": -5,
-    
+
     # Melodic
     "melody": 10,
     "lead": 10,
     "vocal": 15,
-    
+
     # Textural
     "pad": -10,
     "strings": -5,
     "synth": -5,
-    
+
     # Decorative
     "arpeggio": -8,
     "counter_melody": 5,
@@ -472,29 +473,29 @@ def generate_dynamic_curve(
     peak_position: float = 0.5,
 ) -> List[int]:
     """Generate velocity values for a dynamic shape."""
-    
+
     if peak_velocity is None:
         peak_velocity = max(start_velocity, end_velocity)
-    
+
     points = []
-    
+
     if shape == DynamicShape.FLAT:
         avg = (start_velocity + end_velocity) // 2
         points = [avg] * num_points
-    
+
     elif shape == DynamicShape.CRESCENDO:
         for i in range(num_points):
             t = i / (num_points - 1) if num_points > 1 else 0
             # Exponential curve for more natural crescendo
             t_exp = t ** 1.5
             points.append(int(start_velocity + t_exp * (end_velocity - start_velocity)))
-    
+
     elif shape == DynamicShape.DECRESCENDO:
         for i in range(num_points):
             t = i / (num_points - 1) if num_points > 1 else 0
             t_exp = t ** 0.7  # Inverse curve
             points.append(int(start_velocity - t_exp * (start_velocity - end_velocity)))
-    
+
     elif shape == DynamicShape.SWELL:
         for i in range(num_points):
             t = i / (num_points - 1) if num_points > 1 else 0
@@ -506,7 +507,7 @@ def generate_dynamic_curve(
                 # Falling
                 local_t = (t - peak_position) / (1 - peak_position)
                 points.append(int(peak_velocity - local_t * (peak_velocity - end_velocity)))
-    
+
     elif shape == DynamicShape.INVERSE_SWELL:
         valley = min(start_velocity, end_velocity, peak_velocity) - 10
         valley = max(1, valley)
@@ -518,7 +519,7 @@ def generate_dynamic_curve(
             else:
                 local_t = (t - peak_position) / (1 - peak_position)
                 points.append(int(valley + local_t * (end_velocity - valley)))
-    
+
     elif shape == DynamicShape.ACCENT:
         for i in range(num_points):
             t = i / (num_points - 1) if num_points > 1 else 0
@@ -529,7 +530,7 @@ def generate_dynamic_curve(
                 # Quick decay
                 decay_t = (t - 0.1) / 0.9
                 points.append(int(peak_velocity - decay_t * (peak_velocity - end_velocity)))
-    
+
     elif shape == DynamicShape.SFORZANDO:
         for i in range(num_points):
             t = i / (num_points - 1) if num_points > 1 else 0
@@ -542,7 +543,7 @@ def generate_dynamic_curve(
             else:
                 # Sustain at lower level
                 points.append(int(start_velocity * 0.8))
-    
+
     elif shape == DynamicShape.SUBITO:
         mid_point = num_points // 2
         for i in range(num_points):
@@ -550,7 +551,7 @@ def generate_dynamic_curve(
                 points.append(start_velocity)
             else:
                 points.append(end_velocity)
-    
+
     elif shape == DynamicShape.TERRACED:
         num_steps = 4
         step_size = num_points // num_steps
@@ -558,7 +559,7 @@ def generate_dynamic_curve(
         for i in range(num_points):
             step = min(i // step_size, num_steps - 1)
             points.append(int(start_velocity + step * vel_step))
-    
+
     elif shape == DynamicShape.WAVE:
         num_waves = 2
         for i in range(num_points):
@@ -567,7 +568,7 @@ def generate_dynamic_curve(
             mid = (start_velocity + end_velocity) / 2
             amplitude = (peak_velocity - min(start_velocity, end_velocity)) / 2
             points.append(int(mid + wave * amplitude - amplitude / 2))
-    
+
     elif shape == DynamicShape.BREATH:
         # Natural breathing: inhale (build), hold, exhale (release), rest
         phases = [0.25, 0.1, 0.35, 0.3]  # inhale, hold, exhale, rest
@@ -587,7 +588,7 @@ def generate_dynamic_curve(
             else:
                 # Rest
                 points.append(end_velocity)
-    
+
     elif shape == DynamicShape.HEARTBEAT:
         for i in range(num_points):
             t = i / (num_points - 1) if num_points > 1 else 0
@@ -605,7 +606,7 @@ def generate_dynamic_curve(
             else:
                 # Rest
                 points.append(start_velocity)
-    
+
     elif shape == DynamicShape.STUTTER:
         for i in range(num_points):
             t = i / (num_points - 1) if num_points > 1 else 0
@@ -619,7 +620,7 @@ def generate_dynamic_curve(
                 points.append(int((start_velocity + peak_velocity) / 2))
             else:
                 points.append(start_velocity)
-    
+
     elif shape == DynamicShape.FADE_IN:
         for i in range(num_points):
             t = i / (num_points - 1) if num_points > 1 else 0
@@ -629,7 +630,7 @@ def generate_dynamic_curve(
                 points.append(int(1 + log_t * (end_velocity - 1)))
             else:
                 points.append(1)
-    
+
     elif shape == DynamicShape.FADE_OUT:
         for i in range(num_points):
             t = i / (num_points - 1) if num_points > 1 else 0
@@ -640,10 +641,10 @@ def generate_dynamic_curve(
                 points.append(int(1 + log_t * (start_velocity - 1)))
             else:
                 points.append(1)
-    
+
     else:
         points = [start_velocity] * num_points
-    
+
     # Clamp all values
     return [max(1, min(127, p)) for p in points]
 
@@ -655,13 +656,13 @@ def generate_dynamic_curve(
 class DynamicsEngine:
     """
     Generates dynamic curves and breathing patterns for emotional expression.
-    
+
     Coordinates volume, velocity, and expression across sections and instruments.
     """
-    
+
     def __init__(self, seed: Optional[int] = None):
         self.rng = random.Random(seed)
-    
+
     def generate_section_dynamics(
         self,
         emotion: str,
@@ -673,7 +674,7 @@ class DynamicsEngine:
     ) -> DynamicsProfile:
         """
         Generate dynamics profile for a section.
-        
+
         Args:
             emotion: Primary emotion
             section_type: Type of section (verse, chorus, etc.)
@@ -681,7 +682,7 @@ class DynamicsEngine:
             beats_per_bar: Time signature numerator
             position_in_song: 0.0-1.0 position in song
             is_climax: Whether this is the emotional peak
-            
+
         Returns:
             DynamicsProfile with curves and silences
         """
@@ -690,7 +691,7 @@ class DynamicsEngine:
             emotion_lower,
             EMOTION_DYNAMICS_PROFILES["sadness"]
         )
-        
+
         # Determine dynamic range based on section type
         section_modifiers = {
             "intro": (-10, 0.7),      # Quieter, less range
@@ -707,23 +708,24 @@ class DynamicsEngine:
             "solo": (5, 0.9),
             "silence": (-30, 0.3),
         }
-        
+
         offset, range_mult = section_modifiers.get(section_type.lower(), (0, 0.8))
-        
+
         # Calculate velocities
         base_vel = profile["base_dynamic"].value + offset
         if is_climax:
             max_vel = profile["max_dynamic"].value
         else:
-            max_vel = int(profile["base_dynamic"].value + 
-                         (profile["max_dynamic"].value - profile["base_dynamic"].value) * range_mult)
+            max_vel = int(
+                profile["base_dynamic"].value +
+                (profile["max_dynamic"].value - profile["base_dynamic"].value) * range_mult)
         min_vel = int(profile["min_dynamic"].value + offset * 0.5)
-        
+
         # Clamp
         base_vel = max(1, min(127, base_vel))
         max_vel = max(1, min(127, max_vel))
         min_vel = max(1, min(127, min_vel))
-        
+
         # Select shape
         if section_type.lower() == "build":
             shape = DynamicShape.CRESCENDO
@@ -737,10 +739,10 @@ class DynamicsEngine:
             shape = DynamicShape.FADE_IN
         else:
             shape = self.rng.choice(profile["preferred_shapes"])
-        
+
         # Generate curve
         num_points = bars * beats_per_bar
-        
+
         # Determine start/end based on shape
         if shape in [DynamicShape.CRESCENDO, DynamicShape.FADE_IN]:
             start_vel, end_vel = min_vel, max_vel
@@ -748,7 +750,7 @@ class DynamicsEngine:
             start_vel, end_vel = max_vel, min_vel
         else:
             start_vel, end_vel = base_vel, base_vel
-        
+
         velocities = generate_dynamic_curve(
             shape=shape,
             num_points=num_points,
@@ -756,30 +758,30 @@ class DynamicsEngine:
             end_velocity=end_vel,
             peak_velocity=max_vel,
         )
-        
+
         # Build curve object
         curve_points = []
         for i, vel in enumerate(velocities):
             pos = i / (len(velocities) - 1) if len(velocities) > 1 else 0
-            
+
             # Add variance
             vel_with_variance = vel + self.rng.randint(
-                -profile["velocity_variance"], 
+                -profile["velocity_variance"],
                 profile["velocity_variance"]
             )
             vel_with_variance = max(1, min(127, vel_with_variance))
-            
+
             # Calculate expression
             expr_min, expr_max = profile["expression_range"]
             expr = int(expr_min + (vel / 127) * (expr_max - expr_min))
-            
+
             curve_points.append(DynamicPoint(
                 position=pos,
                 velocity=vel_with_variance,
                 expression=expr,
                 volume=100,
             ))
-        
+
         # Generate accents
         accent_positions = []
         if profile["accent_probability"] > 0:
@@ -790,7 +792,7 @@ class DynamicsEngine:
                 if self.rng.random() < profile["accent_probability"] * 0.5:
                     # Occasional accent on beat 3
                     accent_positions.append((i + 0.5) / bars)
-        
+
         curve = DynamicCurve(
             points=curve_points,
             shape=shape,
@@ -803,7 +805,7 @@ class DynamicsEngine:
             accent_strength=0.2,
             velocity_variance=profile["velocity_variance"],
         )
-        
+
         # Generate breathing pattern
         breathing = None
         if shape == DynamicShape.BREATH or profile["breathing_depth"] > 0.4:
@@ -815,7 +817,7 @@ class DynamicsEngine:
                 rest_bars=cycle_bars * 0.2,
                 depth=profile["breathing_depth"],
             )
-        
+
         # Generate silences
         silences = []
         if profile["silence_frequency"] > 0:
@@ -823,7 +825,7 @@ class DynamicsEngine:
             for _ in range(num_potential_silences):
                 if self.rng.random() < profile["silence_frequency"]:
                     silence_type = self.rng.choice(profile["silence_types"])
-                    
+
                     # Duration based on type
                     if silence_type == SilenceType.BREATH:
                         duration = 0.5
@@ -835,14 +837,14 @@ class DynamicsEngine:
                         duration = 1.5
                     else:
                         duration = 0.25
-                    
+
                     silences.append(SilenceEvent(
                         position=self.rng.random(),
                         duration_beats=duration,
                         silence_type=silence_type,
                         has_reverb_tail=silence_type in [SilenceType.DECAY, SilenceType.PAUSE],
                     ))
-        
+
         return DynamicsProfile(
             curve=curve,
             breathing=breathing,
@@ -852,7 +854,7 @@ class DynamicsEngine:
             emotion=emotion_lower,
             section_type=section_type,
         )
-    
+
     def get_velocity_at_position(
         self,
         profile: DynamicsProfile,
@@ -860,68 +862,68 @@ class DynamicsEngine:
         instrument: str = "",
     ) -> int:
         """Get velocity at a specific position in the section."""
-        
+
         if not profile.curve.points:
             return 80
-        
+
         # Find surrounding points
         prev_point = profile.curve.points[0]
         next_point = profile.curve.points[-1]
-        
+
         for i, point in enumerate(profile.curve.points):
             if point.position >= position:
                 next_point = point
                 prev_point = profile.curve.points[max(0, i - 1)]
                 break
-        
+
         # Interpolate
         if prev_point.position == next_point.position:
             base_vel = prev_point.velocity
         else:
             t = (position - prev_point.position) / (next_point.position - prev_point.position)
             base_vel = int(prev_point.velocity + t * (next_point.velocity - prev_point.velocity))
-        
+
         # Apply instrument offset
         if instrument:
             offset = profile.instrument_offsets.get(instrument.lower(), 0)
             base_vel += offset
-        
+
         # Check for accent
         if profile.curve.has_accents:
             for accent_pos in profile.curve.accent_positions:
                 if abs(position - accent_pos) < 0.02:
                     base_vel = int(base_vel * (1 + profile.curve.accent_strength))
                     break
-        
+
         return max(1, min(127, base_vel))
-    
+
     def get_expression_at_position(
         self,
         profile: DynamicsProfile,
         position: float,
     ) -> int:
         """Get expression CC value at position."""
-        
+
         if not profile.curve.points:
             return 100
-        
+
         # Find surrounding points
         prev_point = profile.curve.points[0]
         next_point = profile.curve.points[-1]
-        
+
         for i, point in enumerate(profile.curve.points):
             if point.position >= position:
                 next_point = point
                 prev_point = profile.curve.points[max(0, i - 1)]
                 break
-        
+
         # Interpolate
         if prev_point.position == next_point.position:
             return prev_point.expression
-        
+
         t = (position - prev_point.position) / (next_point.position - prev_point.position)
         return int(prev_point.expression + t * (next_point.expression - prev_point.expression))
-    
+
     def is_silence_at_position(
         self,
         profile: DynamicsProfile,
@@ -929,18 +931,18 @@ class DynamicsEngine:
         beats_per_bar: int = 4,
     ) -> Optional[SilenceEvent]:
         """Check if there's a silence event at this position."""
-        
+
         for silence in profile.silences:
             # Calculate silence window
             silence_duration_normalized = silence.duration_beats / (beats_per_bar * 4)  # Rough
             if silence.position <= position < silence.position + silence_duration_normalized:
                 return silence
-        
+
         return None
-    
+
     def _velocity_to_marking(self, velocity: int) -> DynamicMarking:
         """Convert velocity to traditional marking."""
-        
+
         if velocity <= 10:
             return DynamicMarking.NIENTE
         elif velocity <= 20:
@@ -963,44 +965,48 @@ class DynamicsEngine:
             return DynamicMarking.FFF
         else:
             return DynamicMarking.FFFF
-    
+
     def print_dynamics(self, profile: DynamicsProfile) -> str:
         """Generate visual representation of dynamics."""
-        
+
         lines = []
-        lines.append(f"═══ DYNAMICS: {profile.emotion.upper()} / {profile.section_type.upper()} ═══")
+        lines.append(
+            f"═══ DYNAMICS: {profile.emotion.upper()} / {profile.section_type.upper()} ═══")
         lines.append(f"Shape: {profile.curve.shape.value}")
-        lines.append(f"Range: {profile.curve.start_marking.name} → {profile.curve.end_marking.name}")
+        lines.append(
+            f"Range: {profile.curve.start_marking.name} → {profile.curve.end_marking.name}")
         lines.append("")
-        
+
         # Visual curve
         width = 50
         lines.append("Velocity Curve:")
-        
+
         # Sample 20 points
         for i in range(20):
             pos = i / 19
             vel = self.get_velocity_at_position(profile, pos)
             bar_len = int((vel / 127) * width)
             bar = "█" * bar_len + "░" * (width - bar_len)
-            
+
             # Mark accents
             is_accent = any(abs(pos - ap) < 0.03 for ap in profile.curve.accent_positions)
             accent_mark = ">" if is_accent else " "
-            
+
             lines.append(f"  {pos:.1f} [{bar}] {vel:3d} {accent_mark}")
-        
+
         if profile.silences:
             lines.append("")
             lines.append(f"Silences: {len(profile.silences)}")
             for s in profile.silences[:3]:
-                lines.append(f"  @{s.position:.2f}: {s.silence_type.value} ({s.duration_beats} beats)")
-        
+                lines.append(
+                    f"  @{s.position:.2f}: {s.silence_type.value} ({s.duration_beats} beats)")
+
         if profile.breathing:
             lines.append("")
             lines.append(f"Breathing: depth={profile.breathing.depth:.1f}")
-            lines.append(f"  Cycle: inhale {profile.breathing.inhale_bars:.1f}b → hold {profile.breathing.hold_bars:.1f}b → exhale {profile.breathing.exhale_bars:.1f}b → rest {profile.breathing.rest_bars:.1f}b")
-        
+            lines.append(
+                f"  Cycle: inhale {profile.breathing.inhale_bars:.1f}b → hold {profile.breathing.hold_bars:.1f}b → exhale {profile.breathing.exhale_bars:.1f}b → rest {profile.breathing.rest_bars:.1f}b")  # noqa: E501
+
         return "\n".join(lines)
 
 
@@ -1041,9 +1047,9 @@ if __name__ == "__main__":
     print("╔══════════════════════════════════════════╗")
     print("║      KELLY DYNAMICS ENGINE - TIER 3      ║")
     print("╚══════════════════════════════════════════╝\n")
-    
+
     engine = DynamicsEngine(seed=42)
-    
+
     # Test different emotions and sections
     test_cases = [
         ("grief", "verse"),
@@ -1052,14 +1058,14 @@ if __name__ == "__main__":
         ("fear", "breakdown"),
         ("peace", "outro"),
     ]
-    
+
     for emotion, section in test_cases:
         print(f"\n{'='*60}")
-        
+
         profile = engine.generate_section_dynamics(
             emotion=emotion,
             section_type=section,
             bars=8,
         )
-        
+
         print(engine.print_dynamics(profile))

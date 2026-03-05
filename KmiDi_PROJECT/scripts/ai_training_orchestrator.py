@@ -24,22 +24,21 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 from pathlib import Path
 
+from typing import List, Optional
+
 # Load environment variables from project root
-import sys
-project_root = Path(__file__).resolve().parent.parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
+_project_root = Path(__file__).resolve().parent.parent.parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
 try:
     from python.kmidi_env import load_kmidi_env
     load_kmidi_env(features=['ml', 'training'], verbose=False)
 except ImportError:
-    # Fallback to simple dotenv
     from dotenv import load_dotenv
-    load_dotenv(project_root / '.env')
-    load_dotenv(project_root / '.env.local', override=True)
-from typing import Any, Dict, List, Optional
+    load_dotenv(_project_root / '.env')
+    load_dotenv(_project_root / '.env.local', override=True)
 
-# Lazy imports for faster startup
+
 def get_openai_client():
     """Get OpenAI client with API key from environment."""
     from openai import OpenAI
@@ -206,7 +205,10 @@ Respond in JSON format with this structure:
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "You are an expert ML engineer specializing in music/audio AI. Provide practical, actionable analysis."},
+            {"role": "system", "content": (
+                "You are an expert ML engineer specializing in "
+                "music/audio AI. Provide practical, actionable analysis."
+            )},
             {"role": "user", "content": prompt}
         ],
         temperature=0.3,
@@ -235,10 +237,10 @@ Respond in JSON format with this structure:
         print(f"Dataset: {analysis.dataset_name}")
         print(f"Samples: {analysis.total_samples:,}")
         print(f"\nAnalysis: {analysis.analysis}")
-        print(f"\nQuality Issues:")
+        print("\nQuality Issues:")
         for issue in analysis.quality_issues:
             print(f"  - {issue}")
-        print(f"\nPreprocessing Recommendations:")
+        print("\nPreprocessing Recommendations:")
         for rec in analysis.preprocessing_recommendations:
             print(f"  - {rec}")
 
@@ -322,7 +324,10 @@ Respond in JSON:
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "You are an expert ML engineer. Create practical, optimized training plans."},
+            {"role": "system", "content": (
+                "You are an expert ML engineer. "
+                "Create practical, optimized training plans."
+            )},
             {"role": "user", "content": prompt}
         ],
         temperature=0.3,
@@ -360,7 +365,10 @@ Respond in JSON:
         print(f"\n{'='*40}")
         print(f"Model: {plan.model_name} (Priority: {plan.priority})")
         print(f"{'='*40}")
-        print(f"Epochs: {plan.suggested_epochs}, Batch: {plan.suggested_batch_size}, LR: {plan.suggested_lr}")
+        print(
+            f"Epochs: {plan.suggested_epochs}, "
+            f"Batch: {plan.suggested_batch_size}, LR: {plan.suggested_lr}"
+        )
         print(f"Estimated time: {plan.estimated_time}")
         print(f"\nReasoning: {plan.reasoning}")
         print(f"\nPreprocessing: {', '.join(plan.preprocessing_steps)}")
@@ -384,7 +392,7 @@ Respond in JSON:
 
 def train_with_ai_guidance(model_name: str, use_plan: bool = True):
     """Train a model with AI-guided hyperparameters and monitoring."""
-    client = get_openai_client()
+    get_openai_client()  # validate API key is present
 
     print("\n" + "="*60)
     print(f"AI-Guided Training: {model_name}")
@@ -403,7 +411,7 @@ def train_with_ai_guidance(model_name: str, use_plan: bool = True):
     else:
         epochs, batch_size, lr = 50, 16, 0.001
 
-    print(f"\nStarting training with AI-suggested parameters:")
+    print("\nStarting training with AI-suggested parameters:")
     print(f"  Epochs: {epochs}")
     print(f"  Batch Size: {batch_size}")
     print(f"  Learning Rate: {lr}")
@@ -489,7 +497,10 @@ Respond in JSON:
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "You are an expert ML engineer. Provide actionable feedback on training results."},
+            {"role": "system", "content": (
+                "You are an expert ML engineer. "
+                "Provide actionable feedback on training results."
+            )},
             {"role": "user", "content": prompt}
         ],
         temperature=0.3,
@@ -546,7 +557,8 @@ def interactive_training_session():
     print("Type 'quit' to exit.\n")
 
     conversation = [
-        {"role": "system", "content": """You are an expert ML engineer helping train music AI models.
+        {"role": "system",
+            "content": """You are an expert ML engineer helping train music AI models.
 
 Available models:
 - emotion_recognizer: CNN for audio emotion classification
@@ -650,7 +662,11 @@ Format with clear sections and bullet points."""
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "You are a world-class ML researcher specializing in music AI, audio processing, and MIDI analysis. Provide deep, technical, and actionable research."},
+            {"role": "system", "content": (
+                "You are a world-class ML researcher specializing in "
+                "music AI, audio processing, and MIDI analysis. "
+                "Provide deep, technical, and actionable research."
+            )},
             {"role": "user", "content": prompt}
         ],
         temperature=0.2,
@@ -663,7 +679,8 @@ Format with clear sections and bullet points."""
     # Save research
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
     safe_topic = topic.replace(" ", "_").replace("/", "-")[:50]
-    research_file = LOGS_DIR / f"research_{safe_topic}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+    ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+    research_file = LOGS_DIR / f"research_{safe_topic}_{ts}.md"
     with open(research_file, 'w') as f:
         f.write(f"# Deep Research: {topic}\n\n")
         f.write(f"*Generated: {datetime.now().isoformat()}*\n\n")
@@ -716,7 +733,9 @@ Focus on practical, immediately usable code."""
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "You are an expert Python developer. Write clean, well-documented, production-ready code."},
+            {"role": "system",
+             "content": "You are an expert Python developer."
+             " Write clean, well-documented, production-ready code."},
             {"role": "user", "content": impl_prompt}
         ],
         temperature=0.2,
@@ -727,9 +746,13 @@ Focus on practical, immediately usable code."""
     print(implementation)
 
     # Save implementation
-    impl_file = LOGS_DIR / f"implementation_{topic.replace(' ', '_')[:30]}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.py"
+    impl_file = LOGS_DIR / f"implementation_{topic.replace(
+        ' ', '_')[:30]}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.py"
     with open(impl_file, 'w') as f:
-        f.write(f'"""\nGenerated Implementation: {topic}\nBased on deep research conducted {datetime.now().isoformat()}\n"""\n\n')
+        f.write(
+            f'"""\nGenerated Implementation: {topic}\n'
+            f'Based on deep research conducted '
+            f'{datetime.now().isoformat()}\n"""\n\n')
         # Extract code blocks
         import re
         code_blocks = re.findall(r'```python\n(.*?)```', implementation, re.DOTALL)
@@ -760,21 +783,21 @@ Examples:
     )
 
     parser.add_argument("--analyze-datasets", action="store_true",
-                       help="Analyze datasets with AI")
+                        help="Analyze datasets with AI")
     parser.add_argument("--plan-training", action="store_true",
-                       help="Create AI-optimized training plans")
+                        help="Create AI-optimized training plans")
     parser.add_argument("--train-with-guidance", action="store_true",
-                       help="Train with AI-suggested hyperparameters")
+                        help="Train with AI-suggested hyperparameters")
     parser.add_argument("--evaluate-results", action="store_true",
-                       help="Evaluate training results with AI")
+                        help="Evaluate training results with AI")
     parser.add_argument("--interactive", action="store_true",
-                       help="Start interactive training session")
+                        help="Start interactive training session")
     parser.add_argument("--model", type=str,
-                       help="Specific model to focus on")
+                        help="Specific model to focus on")
     parser.add_argument("--research", type=str,
-                       help="Deep research on a topic")
+                        help="Deep research on a topic")
     parser.add_argument("--implement", action="store_true",
-                       help="Generate implementation code from research")
+                        help="Generate implementation code from research")
 
     args = parser.parse_args()
 
@@ -802,4 +825,3 @@ Examples:
 
 if __name__ == "__main__":
     main()
-

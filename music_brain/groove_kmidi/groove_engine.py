@@ -19,7 +19,7 @@ compared to the basic random humanization in applicator.py.
 
 import random
 from typing import List, Dict, Any, Optional
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 # ==============================================================================
@@ -350,7 +350,7 @@ def apply_groove(
         # ----------------------------------------------------------------------
         if (settings.enable_ghost_notes and
             vulnerability > 0.6 and
-            random.random() < settings.ghost_note_probability):
+                random.random() < settings.ghost_note_probability):
 
             ghost = new_note.copy()
             ghost["velocity"] = max(
@@ -421,12 +421,14 @@ def humanize_midi_file(
     try:
         import mido
     except ImportError:
-        # Fallback: return input path (or copy) so downstream steps can continue in test environments.
+        # Fallback: return input path (or copy) so downstream steps can continue in test environments.  # noqa: E501
+
         if output_path is None:
             return str(input_path)
         from pathlib import Path
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        Path(output_path).write_bytes(Path(input_path).read_bytes() if Path(input_path).exists() else b"")
+        Path(output_path).write_bytes(Path(input_path).read_bytes()
+                                      if Path(input_path).exists() else b"")
         return str(output_path)
 
     from pathlib import Path

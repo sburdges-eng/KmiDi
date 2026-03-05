@@ -16,7 +16,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import Optional, Callable
+from typing import Optional
 
 try:
     import librosa
@@ -46,7 +46,7 @@ def _get_pipelines():
     """Build pipelines only if libs available."""
     if not HAS_AUDIO_LIBS:
         return {}, None, None, None
-    
+
     pipe_clean = Compose([
         Trim(top_db=20, p=1.0),
         Normalize(p=1.0),
@@ -80,7 +80,7 @@ def _get_pipelines():
         "04_Texture_Foley": pipe_tape_rot,
         "default": pipe_clean,
     }
-    
+
     return pipeline_map, pipe_clean, pipe_industrial, pipe_tape_rot
 
 
@@ -92,7 +92,7 @@ def process_file(file_path: str, output_path: str, pipeline) -> None:
     if not HAS_AUDIO_LIBS:
         print("❌ Audio libraries not installed (librosa, soundfile, audiomentations)")
         return
-        
+
     try:
         y, _ = librosa.load(file_path, sr=SAMPLE_RATE, mono=True)
         y_proc = pipeline(samples=y, sample_rate=SAMPLE_RATE)
@@ -106,7 +106,7 @@ def process_file(file_path: str, output_path: str, pipeline) -> None:
 def refine_folder(
     input_dir: Path,
     output_dir: Path,
-    pipeline = None,
+    pipeline=None,
 ) -> None:
     """
     Generic folder → folder refinement with a specific pipeline.
@@ -114,7 +114,7 @@ def refine_folder(
     if not HAS_AUDIO_LIBS:
         print("❌ Audio libraries not installed")
         return
-        
+
     if pipeline is None:
         pipeline = pipe_clean
 
@@ -140,7 +140,7 @@ def run_refinery(target_subfolder: Optional[str] = None) -> None:
         print("❌ Audio libraries not installed. Run:")
         print("   pip install librosa soundfile audiomentations")
         return
-        
+
     print("🏭 DAiW Audio Refinery")
     print(f"   Input : {INPUT_DIR}")
     print(f"   Output: {OUTPUT_DIR}")

@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import logging
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
@@ -31,7 +31,8 @@ logger = logging.getLogger(__name__)
 # Instrument families and their characteristics
 INSTRUMENT_FAMILIES = {
     'piano': {
-        'specific': ['acoustic_grand', 'acoustic_upright', 'electric_piano', 'honky_tonk', 'clavinet'],
+        'specific': ['acoustic_grand', 'acoustic_upright', 'electric_piano', 'honky_tonk', 'clavinet'],  # noqa: E501
+
         'techniques': ['sustained', 'staccato', 'legato', 'hammered', 'tremolo'],
         'articulations': ['normal', 'accented', 'tenuto', 'marcato'],
         'registers': [0, 1, 2],  # All registers
@@ -41,7 +42,8 @@ INSTRUMENT_FAMILIES = {
         'typical_emotions': ['happy', 'sad', 'contemplative', 'passionate', 'playful'],
     },
     'guitar': {
-        'specific': ['acoustic_steel', 'acoustic_nylon', 'electric_clean', 'electric_distorted', 'bass'],
+        'specific': ['acoustic_steel', 'acoustic_nylon', 'electric_clean', 'electric_distorted', 'bass'],  # noqa: E501
+
         'techniques': ['strummed', 'picked', 'fingerstyle', 'palm_muted', 'harmonics', 'slapped'],
         'articulations': ['normal', 'accented', 'staccato', 'legato'],
         'registers': [0, 1, 2],
@@ -299,14 +301,14 @@ MUSICAL_ROLES = {
 @dataclass
 class InstrumentGeneratorConfig:
     """Configuration for synthetic instrument data generation."""
-    
+
     samples_per_family: int = 500
     samples_per_emotion: int = 200
-    
+
     # Feature ranges
     pitch_range: Tuple[int, int] = (36, 96)  # MIDI notes
     duration_range: Tuple[float, float] = (0.5, 5.0)  # seconds
-    
+
     # Randomization
     random_seed: Optional[int] = None
     add_noise: bool = True
@@ -321,29 +323,29 @@ class InstrumentGeneratorConfig:
 class InstrumentSyntheticGenerator:
     """
     Generates synthetic labeled data for instrument recognition training.
-    
+
     Creates samples with both technical labels (instrument, technique) and
     emotional labels (expression, energy, sentiment).
-    
+
     Usage:
         generator = InstrumentSyntheticGenerator()
-        
+
         # Generate full dataset
         samples = generator.generate_full_dataset(1000)
-        
+
         # Generate for specific instrument
         piano_samples = generator.generate_for_family('piano', 100)
-        
+
         # Generate for specific emotion
         sad_samples = generator.generate_for_emotion('melancholic', 100)
     """
-    
+
     def __init__(self, config: Optional[InstrumentGeneratorConfig] = None):
         self.config = config or InstrumentGeneratorConfig()
         if self.config.random_seed is not None:
             random.seed(self.config.random_seed)
             np.random.seed(self.config.random_seed)
-    
+
     def generate_full_dataset(
         self,
         total_samples: int,
@@ -351,20 +353,20 @@ class InstrumentSyntheticGenerator:
     ) -> List[Dict[str, Any]]:
         """Generate a complete balanced dataset."""
         samples = []
-        
+
         # Distribute samples across families and emotions
         families = list(INSTRUMENT_FAMILIES.keys())
         emotions = list(EXPRESSION_PROFILES.keys())
-        
+
         samples_per_combo = total_samples // (len(families) * 2)  # Rough distribution
-        
+
         for family in families:
             family_samples = self.generate_for_family(
-                family, 
+                family,
                 samples_per_combo * 2,
             )
             samples.extend(family_samples)
-        
+
         # Ensure emotional balance
         for emotion in emotions:
             emotion_samples = self.generate_for_emotion(
@@ -372,17 +374,17 @@ class InstrumentSyntheticGenerator:
                 samples_per_combo,
             )
             samples.extend(emotion_samples)
-        
+
         # Shuffle
         random.shuffle(samples)
-        
+
         # Save if output_dir provided
         if output_dir:
             self._save_samples(samples, output_dir)
-        
+
         logger.info(f"Generated {len(samples)} synthetic instrument samples")
         return samples
-    
+
     def generate_for_family(
         self,
         family: str,
@@ -392,26 +394,26 @@ class InstrumentSyntheticGenerator:
         if family not in INSTRUMENT_FAMILIES:
             logger.warning(f"Unknown instrument family: {family}")
             return []
-        
+
         family_info = INSTRUMENT_FAMILIES[family]
         samples = []
-        
+
         for i in range(num_samples):
             # Choose specific instrument and characteristics
             specific = random.choice(family_info['specific'])
             technique = random.choice(family_info['techniques'])
             articulation = random.choice(family_info['articulations'])
             register = random.choice(family_info['registers'])
-            
+
             # Choose emotion (biased toward typical emotions for this instrument)
             if random.random() < 0.7:
                 emotion = random.choice(family_info['typical_emotions'])
             else:
                 emotion = random.choice(list(EXPRESSION_PROFILES.keys()))
-            
+
             # Choose musical role
             role = random.choice(list(MUSICAL_ROLES.keys()))
-            
+
             # Generate the sample
             sample = self._generate_sample(
                 family=family,
@@ -425,9 +427,9 @@ class InstrumentSyntheticGenerator:
                 index=i,
             )
             samples.append(sample)
-        
+
         return samples
-    
+
     def generate_for_emotion(
         self,
         emotion: str,
@@ -437,21 +439,21 @@ class InstrumentSyntheticGenerator:
         if emotion not in EXPRESSION_PROFILES:
             logger.warning(f"Unknown emotion: {emotion}")
             return []
-        
+
         samples = []
         families = list(INSTRUMENT_FAMILIES.keys())
-        
+
         for i in range(num_samples):
             # Choose random family
             family = random.choice(families)
             family_info = INSTRUMENT_FAMILIES[family]
-            
+
             specific = random.choice(family_info['specific'])
             technique = random.choice(family_info['techniques'])
             articulation = random.choice(family_info['articulations'])
             register = random.choice(family_info['registers'])
             role = random.choice(list(MUSICAL_ROLES.keys()))
-            
+
             sample = self._generate_sample(
                 family=family,
                 specific=specific,
@@ -464,9 +466,9 @@ class InstrumentSyntheticGenerator:
                 index=i,
             )
             samples.append(sample)
-        
+
         return samples
-    
+
     def _generate_sample(
         self,
         family: str,
@@ -482,16 +484,16 @@ class InstrumentSyntheticGenerator:
         """Generate a single synthetic sample with all labels."""
         expr_profile = EXPRESSION_PROFILES[emotion]
         role_info = MUSICAL_ROLES[role]
-        
+
         # Generate technical features
         harmonic_ratio = random.uniform(*family_info['harmonic_ratio'])
         base_attack = random.uniform(*family_info['attack_range_ms'])
         base_decay = random.uniform(*family_info['decay_range_ms'])
-        
+
         # Modify by expression
         attack_mult = random.uniform(*expr_profile['attack_multiplier'])
         attack_ms = base_attack * attack_mult
-        
+
         # Generate pitch based on register
         pitch_ranges = [
             (36, 55),   # Bass
@@ -501,23 +503,23 @@ class InstrumentSyntheticGenerator:
         pitch_range = pitch_ranges[register]
         pitch_mean = random.uniform(*pitch_range)
         pitch_std = random.uniform(2, 12)
-        
+
         # Generate vibrato
         vibrato_depth = random.uniform(*expr_profile['vibrato_depth'])
         vibrato_rate = random.uniform(4, 8) if vibrato_depth > 10 else 0
-        
+
         # Generate dynamics
         energy = random.uniform(*expr_profile['energy_range'])
         energy *= role_info['energy_modifier']
         dynamics_variance = random.uniform(*expr_profile['dynamics_variance'])
         dynamics_variance *= (1 + role_info['articulation_variance'])
-        
+
         # Generate sentiment
         brightness = random.uniform(*expr_profile['brightness'])
         tension = random.uniform(*expr_profile['tension'])
         valence = random.uniform(*expr_profile['valence'])
         arousal = random.uniform(*expr_profile['arousal'])
-        
+
         # Determine legato/staccato tendency
         if technique in ['legato', 'sustained', 'bowed']:
             legato_score = random.uniform(0.6, 1.0)
@@ -526,11 +528,11 @@ class InstrumentSyntheticGenerator:
         else:
             legato_score = random.uniform(0.3, 0.7)
         staccato_score = 1.0 - legato_score
-        
+
         # Humanization
         timing_human = random.uniform(5, 30) if emotion != 'aggressive' else random.uniform(2, 15)
         velocity_human = dynamics_variance * random.uniform(0.5, 1.5)
-        
+
         # Build technical feature vector (80 dims, normalized)
         technical_vector = self._build_technical_vector(
             harmonic_ratio=harmonic_ratio,
@@ -544,7 +546,7 @@ class InstrumentSyntheticGenerator:
             legato_score=legato_score,
             staccato_score=staccato_score,
         )
-        
+
         # Build emotional feature vector (80 dims, normalized)
         emotional_vector = self._build_emotional_vector(
             energy=energy,
@@ -556,26 +558,26 @@ class InstrumentSyntheticGenerator:
             timing_human=timing_human,
             velocity_human=velocity_human,
         )
-        
+
         # Create sample dict
         sample = {
             'id': f"synth_inst_{family}_{index:05d}",
             'is_synthetic': True,
-            
+
             # Technical labels
             'instrument_family': family,
             'instrument_specific': specific,
             'technique': technique,
             'articulation': articulation,
             'register': register,
-            
+
             # Emotional labels
             'expression_style': emotion,
             'energy_level': int(energy * 8),  # 0-8 scale
             'musical_role': role,
             'sentiment_valence': valence,
             'sentiment_arousal': arousal,
-            
+
             # Derived features
             'harmonic_ratio': harmonic_ratio,
             'attack_time_ms': attack_ms,
@@ -590,93 +592,94 @@ class InstrumentSyntheticGenerator:
             'tension': tension,
             'timing_humanization': timing_human,
             'velocity_humanization': velocity_human,
-            
+
             # Feature vectors
             'technical_vector': technical_vector,
             'emotional_vector': emotional_vector,
             'combined_vector': technical_vector + emotional_vector,
         }
-        
+
         return sample
-    
+
     def _build_technical_vector(self, **kwargs) -> List[float]:
         """Build 80-dim technical feature vector."""
         vec = []
-        
+
         # Spectral features (40 dims) - simulated
         vec.append(kwargs.get('harmonic_ratio', 0.5))
         vec.extend([random.gauss(0.5, 0.1) for _ in range(7)])  # Spectral contrast
         vec.extend([random.gauss(0, 0.2) for _ in range(20)])   # MFCCs
         vec.extend([random.gauss(0, 0.1) for _ in range(12)])   # More spectral
-        
+
         # Harmonic features (12 dims)
         vec.append(kwargs.get('harmonic_ratio', 0.5))
         vec.append(kwargs.get('pitch_mean', 60) / 127)
         vec.extend([random.gauss(0.5, 0.1) for _ in range(10)])
-        
+
         # Attack/decay (12 dims)
         vec.append(kwargs.get('attack_ms', 50) / 500)
         vec.append(kwargs.get('decay_ms', 500) / 5000)
         vec.extend([random.gauss(0.5, 0.1) for _ in range(10)])
-        
+
         # Technique (8 dims)
         vec.append(kwargs.get('vibrato_rate', 0) / 10)
         vec.append(kwargs.get('vibrato_depth', 0) / 100)
         vec.append(kwargs.get('legato_score', 0.5))
         vec.append(kwargs.get('staccato_score', 0.5))
         vec.extend([random.gauss(0.5, 0.1) for _ in range(4)])
-        
+
         # Register (8 dims)
         vec.append(kwargs.get('pitch_mean', 60) / 127)
         vec.append(kwargs.get('pitch_std', 10) / 24)
         vec.append(kwargs.get('register', 1) / 2)
         vec.extend([random.gauss(0.5, 0.1) for _ in range(5)])
-        
+
         # Pad/truncate to 80
         while len(vec) < 80:
             vec.append(random.gauss(0.5, 0.1))
         return vec[:80]
-    
+
     def _build_emotional_vector(self, **kwargs) -> List[float]:
         """Build 80-dim emotional feature vector."""
         vec = []
-        
+
         # Expression (20 dims)
         vec.append(kwargs.get('energy', 0.5))
         vec.append(kwargs.get('dynamics_variance', 0.2))
-        vec.extend([random.gauss(kwargs.get('energy', 0.5), 0.1) for _ in range(8)])  # Dynamic curve
+        vec.extend([random.gauss(kwargs.get('energy', 0.5), 0.1)
+                   for _ in range(8)])  # Dynamic curve
         vec.extend([random.gauss(0.5, 0.1) for _ in range(10)])
-        
+
         # Energy (16 dims)
         vec.append(kwargs.get('energy', 0.5))
         vec.extend([random.gauss(kwargs.get('energy', 0.5), 0.1) for _ in range(8)])  # Energy curve
         vec.extend([random.gauss(0.5, 0.1) for _ in range(7)])
-        
+
         # Sentiment (20 dims)
         vec.append(kwargs.get('brightness', 0.5))
         vec.append(kwargs.get('tension', 0.5))
         vec.append((kwargs.get('valence', 0) + 1) / 2)  # Normalize to 0-1
         vec.append(kwargs.get('arousal', 0.5))
         vec.extend([random.gauss(0.5, 0.1) for _ in range(16)])
-        
+
         # Human feel (16 dims)
         vec.append(kwargs.get('timing_human', 15) / 50)
         vec.append(kwargs.get('velocity_human', 0.2))
         vec.extend([random.gauss(0.5, 0.1) for _ in range(14)])
-        
+
         # Padding (8 dims)
         vec.extend([random.gauss(0.5, 0.1) for _ in range(8)])
-        
+
         # Pad/truncate to 80
         while len(vec) < 80:
             vec.append(random.gauss(0.5, 0.1))
         return vec[:80]
-    
+
     def _save_samples(self, samples: List[Dict], output_dir: Path):
         """Save samples to disk."""
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Save manifest
         manifest = {
             'count': len(samples),
@@ -684,18 +687,18 @@ class InstrumentSyntheticGenerator:
             'emotions': list(set(s['expression_style'] for s in samples)),
             'generated_at': str(np.datetime64('now')),
         }
-        
+
         with open(output_dir / 'manifest.json', 'w') as f:
             json.dump(manifest, f, indent=2)
-        
+
         # Save samples
         for sample in samples:
             family_dir = output_dir / sample['instrument_family']
             family_dir.mkdir(exist_ok=True)
-            
+
             with open(family_dir / f"{sample['id']}.json", 'w') as f:
                 json.dump(sample, f, indent=2)
-        
+
         logger.info(f"Saved {len(samples)} samples to {output_dir}")
 
 
@@ -730,4 +733,3 @@ def generate_for_expression(
     """Generate samples for a specific expression style."""
     generator = InstrumentSyntheticGenerator()
     return generator.generate_for_emotion(expression_style, num_samples)
-

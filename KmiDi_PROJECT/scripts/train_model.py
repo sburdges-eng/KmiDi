@@ -31,7 +31,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import numpy as np
 
 # Add project root to path
 ROOT = Path(__file__).resolve().parent.parent
@@ -57,20 +56,16 @@ except ImportError:
     TORCHAUDIO_AVAILABLE = False
 
 # Import training utilities
-from penta_core.ml.training import (
+from penta_core.ml.training import (  # noqa: E402
     AudioAugmentor,
     AugmentationConfig,
     EmotionCNN,
     MelodyLSTM,
     HarmonyMLP,
     MultiTaskModel,
-    MusicAwareLoss,
     FocalLoss,
     LabelSmoothingLoss,
-    MusicMetrics,
     EmotionMetrics,
-    GrooveMetrics,
-    ModelValidator,
     evaluate_model,
 )
 
@@ -81,38 +76,25 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Paths
-# Updated: Files moved from external SSD to local storage (2025-01-09)
-# Use environment variable or auto-detect from configs.storage
-import os
-from configs.storage import get_audio_data_root
-AUDIO_DATA_ROOT = Path(
 # Load environment variables from project root
-from pathlib import Path
-import sys
-
-# Add project root to path if not already there
-project_root = Path(__file__).resolve().parent.parent.parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
+_env_root = Path(__file__).resolve().parent.parent.parent.parent
+if str(_env_root) not in sys.path:
+    sys.path.insert(0, str(_env_root))
 
 try:
     from python.kmidi_env import load_kmidi_env
-    # Determine features based on file location
-    features = []
-    file_str = str(Path(__file__))
-    if 'training' in file_str or 'train' in file_str:
-        features.extend(['ml', 'training'])
-    if 'mcp' in file_str or 'penta' in file_str:
-        features.extend(['mcp'])
-    if not features:
-        features = ['ml']  # Default to ML features
-    
-    load_kmidi_env(features=features, verbose=False)
+    load_kmidi_env(features=['ml', 'training'], verbose=False)
 except ImportError:
-    # Fallback to simple dotenv if kmidi_env not available
-    from dotenv import load_dotenv
-    load_dotenv(project_root / ".env")
-    load_dotenv(project_root / ".env.local", override=True)
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(_env_root / ".env")
+        load_dotenv(_env_root / ".env.local", override=True)
+    except ImportError:
+        pass
+
+# Updated: Files moved from external SSD to local storage (2025-01-09)
+from configs.storage import get_audio_data_root  # noqa: E402
+AUDIO_DATA_ROOT = Path(
     os.getenv("KMI_DI_AUDIO_DATA_ROOT")
     or os.getenv("KELLY_AUDIO_DATA_ROOT")
     or str(get_audio_data_root())
@@ -407,7 +389,11 @@ class Trainer:
         }
 
         # Output directory
-        self.output_dir = Path(config.output_dir) if config.output_dir else CHECKPOINTS_DIR / config.model_id
+        self.output_dir = (
+            Path(config.output_dir)
+            if config.output_dir
+            else CHECKPOINTS_DIR / config.model_id
+        )
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def train_epoch(self) -> float:
@@ -434,7 +420,9 @@ class Trainer:
             num_batches += 1
 
             if batch_idx % self.config.log_interval == 0:
-                logger.debug(f"  Batch {batch_idx}/{len(self.train_loader)}, Loss: {loss.item():.4f}")
+                logger.debug(
+                    f"  Batch {batch_idx}/{len(self.train_loader)},"
+                    f" Loss: {loss.item():.4f}")
 
         return total_loss / num_batches
 
@@ -783,4 +771,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -13,7 +13,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from dataclasses import dataclass
 from typing import Optional, Dict, List, Tuple
-import math
 
 
 @dataclass
@@ -517,7 +516,8 @@ def prepare_text_features(parsed_emotion) -> torch.Tensor:
         (15,) tensor of features
     """
     BASE_EMOTIONS = ["HAPPY", "SAD", "ANGRY", "FEAR", "SURPRISE", "DISGUST"]
-    MODIFIERS = ["ptsd_intrusion", "dissociation", "misdirection", "suppressed", "cathartic_release"]
+    MODIFIERS = ["ptsd_intrusion", "dissociation",
+                 "misdirection", "suppressed", "cathartic_release"]
 
     features = []
 
@@ -645,7 +645,10 @@ if __name__ == "__main__":
     results = model.predict(audio=audio)
     for i, r in enumerate(results):
         print(f"  Sample {i}: {r.base_emotion} (V={r.valence:.2f}, A={r.arousal:.2f})")
-        print(f"    Weights: audio={r.modality_weights['audio']:.2f}, text={r.modality_weights['text']:.2f}")
+        print(
+            f"    Weights: audio={r.modality_weights['audio']:.2f}, "
+            f"text={r.modality_weights['text']:.2f}"
+        )
 
     # Test with text only
     print("\n--- Text Only ---")
@@ -653,17 +656,26 @@ if __name__ == "__main__":
     results = model.predict(text_features=text_features)
     for i, r in enumerate(results):
         print(f"  Sample {i}: {r.base_emotion} (V={r.valence:.2f}, A={r.arousal:.2f})")
-        print(f"    Weights: audio={r.modality_weights['audio']:.2f}, text={r.modality_weights['text']:.2f}")
+        print(
+            f"    Weights: audio={r.modality_weights['audio']:.2f}, "
+            f"text={r.modality_weights['text']:.2f}"
+        )
 
     # Test with both
     print("\n--- Both Modalities ---")
     results = model.predict(audio=audio, text_features=text_features)
     for i, r in enumerate(results):
         print(f"  Sample {i}: {r.base_emotion} (V={r.valence:.2f}, A={r.arousal:.2f})")
-        print(f"    Weights: audio={r.modality_weights['audio']:.2f}, text={r.modality_weights['text']:.2f}")
+        print(
+            f"    Weights: audio={r.modality_weights['audio']:.2f}, "
+            f"text={r.modality_weights['text']:.2f}"
+        )
 
     print("\nModel structure:")
     print(f"  Audio encoder: {sum(p.numel() for p in model.audio_encoder.parameters()):,} params")
     print(f"  Text encoder: {sum(p.numel() for p in model.text_encoder.parameters()):,} params")
-    print(f"  Cross attention: {sum(p.numel() for p in model.cross_attention.parameters()):,} params")
+    print(
+        f"  Cross attention: "
+        f"{sum(p.numel() for p in model.cross_attention.parameters()):,} params"
+    )
     print(f"  Gating: {sum(p.numel() for p in model.gating.parameters()):,} params")

@@ -9,7 +9,6 @@ from typing import Dict, List, Optional, Any
 from pathlib import Path
 from enum import Enum
 import json
-import os
 
 try:
     import jsonschema

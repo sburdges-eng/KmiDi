@@ -9,9 +9,12 @@ Includes:
 - "Drunken Drummer" humanization engine for emotionally-driven processing
 """
 
-from kellymidicompanion.kellymidicompanion_groove.kellymidicompanion_extractor import extract_groove, GrooveTemplate
-from kellymidicompanion.kellymidicompanion_groove.kellymidicompanion_applicator import apply_groove, humanize
-from kellymidicompanion.kellymidicompanion_groove.kellymidicompanion_templates import get_genre_template, GENRE_TEMPLATES
+from kellymidicompanion.kellymidicompanion_groove.kellymidicompanion_extractor import extract_groove, GrooveTemplate  # noqa: E501
+
+from kellymidicompanion.kellymidicompanion_groove.kellymidicompanion_applicator import apply_groove, humanize  # noqa: E501
+
+from kellymidicompanion.kellymidicompanion_groove.kellymidicompanion_templates import get_genre_template, GENRE_TEMPLATES  # noqa: E501
+
 from kellymidicompanion.kellymidicompanion_groove.kellymidicompanion_groove_engine import (
     humanize_drums,
     humanize_midi_file,

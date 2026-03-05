@@ -185,7 +185,7 @@ class DrumHumanizer:
         # Base values
         base_ghost = rules.ghost_rate
         base_vel_var = rules.velocity_variation
-        base_swing = rules.swing
+        _base_swing = rules.swing  # noqa: F841
 
         # Modulated values
         settings.complexity = 0.55 + min(0.2, base_ghost)
@@ -296,7 +296,9 @@ class DrumHumanizer:
         )
         return analyzer.analyze(list(notes), bpm=bpm or analyzer.bpm)
 
-    def _load_config(self, config_path: Optional[Path]) -> Tuple[HumanizerConfig, Optional[AnalysisConfig], Optional[str]]:
+    def _load_config(self, config_path: Optional[Path]) -> Tuple[HumanizerConfig,
+                                                                 Optional[AnalysisConfig],
+                                                                 Optional[str]]:
         """Load HumanizerConfig and AnalysisConfig overrides from JSON if provided."""
         if not config_path:
             return HumanizerConfig(), None, None

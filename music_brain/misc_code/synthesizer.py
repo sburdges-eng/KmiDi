@@ -5,7 +5,6 @@ Intent-aware vocal synthesis (guide vocals / robotic tones).
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Iterable, List, Optional
 
 import numpy as np
@@ -143,4 +142,3 @@ class VoiceSynthesizer:
         base = 67  # G3-ish
         pattern = [0, 2, -1, 3]
         return [base + pattern[i % len(pattern)] for i in range(count)]
-

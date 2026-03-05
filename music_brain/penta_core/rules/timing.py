@@ -25,7 +25,7 @@ class SwingType(Enum):
 class TimingPocket:
     """
     Genre-specific timing characteristics.
-    
+
     Attributes:
         swing_ratio: Ratio of first/second note in swing pair (0.5 = straight)
         kick_offset_ms: Milliseconds before (-) or after (+) the beat
@@ -56,7 +56,7 @@ GENRE_POCKETS: Dict[str, TimingPocket] = {
         humanization_variance=15.0,  # High variation
         push_pull_tendency=10.0,  # Overall dragging feel
     ),
-    
+
     "madlib": TimingPocket(
         swing_ratio=0.58,
         kick_offset_ms=5,
@@ -66,7 +66,7 @@ GENRE_POCKETS: Dict[str, TimingPocket] = {
         humanization_variance=12.0,
         push_pull_tendency=3.0,
     ),
-    
+
     "alchemist": TimingPocket(
         swing_ratio=0.54,  # More subtle swing
         kick_offset_ms=-5,  # Kicks slightly early (urgent)
@@ -76,7 +76,7 @@ GENRE_POCKETS: Dict[str, TimingPocket] = {
         humanization_variance=8.0,
         push_pull_tendency=-2.0,
     ),
-    
+
     # Jazz styles
     "bebop": TimingPocket(
         swing_ratio=0.54,  # Light swing
@@ -87,7 +87,7 @@ GENRE_POCKETS: Dict[str, TimingPocket] = {
         humanization_variance=10.0,
         push_pull_tendency=-5.0,  # Tendency to rush
     ),
-    
+
     "new_orleans": TimingPocket(
         swing_ratio=0.62,  # Hard swing
         kick_offset_ms=10,  # Laid-back kick
@@ -97,7 +97,7 @@ GENRE_POCKETS: Dict[str, TimingPocket] = {
         humanization_variance=12.0,
         push_pull_tendency=8.0,  # Dragging behind
     ),
-    
+
     # Electronic
     "techno": TimingPocket(
         swing_ratio=0.50,  # Straight quantization
@@ -108,7 +108,7 @@ GENRE_POCKETS: Dict[str, TimingPocket] = {
         humanization_variance=0.0,  # No humanization
         push_pull_tendency=0.0,
     ),
-    
+
     "house": TimingPocket(
         swing_ratio=0.50,
         kick_offset_ms=0,
@@ -118,7 +118,7 @@ GENRE_POCKETS: Dict[str, TimingPocket] = {
         humanization_variance=2.0,  # Minimal variation
         push_pull_tendency=0.0,
     ),
-    
+
     "dnb": TimingPocket(
         swing_ratio=0.50,
         kick_offset_ms=-5,  # Kicks early for impact
@@ -128,7 +128,7 @@ GENRE_POCKETS: Dict[str, TimingPocket] = {
         humanization_variance=3.0,
         push_pull_tendency=-3.0,
     ),
-    
+
     # Rock/funk
     "funk": TimingPocket(
         swing_ratio=0.52,  # Slight swing
@@ -139,7 +139,7 @@ GENRE_POCKETS: Dict[str, TimingPocket] = {
         humanization_variance=8.0,
         push_pull_tendency=-3.0,
     ),
-    
+
     "reggae": TimingPocket(
         swing_ratio=0.50,
         kick_offset_ms=20,  # Very laid-back kick
@@ -149,7 +149,7 @@ GENRE_POCKETS: Dict[str, TimingPocket] = {
         humanization_variance=10.0,
         push_pull_tendency=15.0,  # Heavy dragging
     ),
-    
+
     # Blues/soul
     "shuffle": TimingPocket(
         swing_ratio=0.67,  # Triplet shuffle
@@ -160,7 +160,7 @@ GENRE_POCKETS: Dict[str, TimingPocket] = {
         humanization_variance=12.0,
         push_pull_tendency=5.0,
     ),
-    
+
     "motown": TimingPocket(
         swing_ratio=0.51,  # Very subtle swing
         kick_offset_ms=-2,
@@ -176,13 +176,13 @@ GENRE_POCKETS: Dict[str, TimingPocket] = {
 def get_genre_pocket(genre: str) -> Optional[TimingPocket]:
     """
     Get timing pocket for a specific genre or producer.
-    
+
     Args:
         genre: Genre name or producer style (e.g., "dilla", "bebop", "techno")
-    
+
     Returns:
         TimingPocket with microtiming characteristics, or None if not found
-    
+
     Example:
         >>> pocket = get_genre_pocket("dilla")
         >>> print(pocket.swing_ratio)
@@ -200,12 +200,12 @@ def apply_pocket_to_midi(
 ) -> list:
     """
     Apply timing pocket to MIDI note data.
-    
+
     Args:
         midi_notes: List of (pitch, time_ms, velocity) tuples
         pocket: TimingPocket to apply
         instrument_type: "kick", "snare", "hihat", or "bass"
-    
+
     Returns:
         Modified MIDI notes with pocket timing applied
     """
@@ -215,9 +215,9 @@ def apply_pocket_to_midi(
         "hihat": pocket.hihat_offset_ms,
         "bass": pocket.bass_offset_ms,
     }
-    
+
     offset = offset_map.get(instrument_type, 0.0)
-    
+
     # Apply offset and humanization
     import random
     result = []
@@ -228,5 +228,5 @@ def apply_pocket_to_midi(
         )
         new_time = time_ms + offset + variance + pocket.push_pull_tendency
         result.append((pitch, new_time, velocity))
-    
+
     return result

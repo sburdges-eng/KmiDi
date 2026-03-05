@@ -6,7 +6,7 @@ AAP is the emerging standard for audio plugins on Android.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Any
 
 
 @dataclass
@@ -175,6 +175,19 @@ include(":app")
 
 def generate_manifest(config: AndroidAAPConfig) -> str:
     """Generate AndroidManifest.xml."""
+    ui_section = ""
+    if config.has_ui:
+        ui_section = f'''
+        <activity
+            android:name=".{config.ui_activity}"
+            android:exported="true"
+            android:theme="@style/Theme.iDAW">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        '''
     return f'''<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -201,17 +214,7 @@ def generate_manifest(config: AndroidAAPConfig) -> str:
                 android:resource="@xml/aap_metadata" />
         </service>
 
-        {"" if not config.has_ui else f'''
-        <activity
-            android:name=".{config.ui_activity}"
-            android:exported="true"
-            android:theme="@style/Theme.iDAW">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        '''}
+        {ui_section}
 
     </application>
 
@@ -245,10 +248,12 @@ def generate_aap_metadata(config: AndroidAAPConfig) -> str:
             <port direction="output" content="audio" name="Right Out" />
 
             {"<!-- MIDI Input -->" if config.midi_input else ""}
-            {"<port direction='input' content='midi2' name='MIDI In' />" if config.midi_input else ""}
+            {"<port direction='input' content='midi2' name='MIDI In' />" if config.midi_input else ""}  # noqa: E501
+
 
             {"<!-- MIDI Output -->" if config.midi_output else ""}
-            {"<port direction='output' content='midi2' name='MIDI Out' />" if config.midi_output else ""}
+            {"<port direction='output' content='midi2' name='MIDI Out' />" if config.midi_output else ""}  # noqa: E501
+
 
             <!-- Parameters -->
             <port direction="input" content="other" name="Volume"
@@ -425,7 +430,8 @@ Java_{config.package_name.replace('.', '_')}_PluginProcessor_nativeProcess(
 }}
 
 {"JNIEXPORT void JNICALL" if config.midi_input else ""}
-{"Java_" + config.package_name.replace('.', '_') + "_PluginProcessor_nativeHandleMidi(" if config.midi_input else ""}
+{"Java_" + config.package_name.replace('.', '_') + "_PluginProcessor_nativeHandleMidi(" if config.midi_input else ""}  # noqa: E501
+
 {"    JNIEnv* env," if config.midi_input else ""}
 {"    jobject /* this */," if config.midi_input else ""}
 {"    jbyteArray data," if config.midi_input else ""}
@@ -534,7 +540,8 @@ void {config.name}DSPKernel::process(float* inL, float* inR,
     }}
 }}
 
-{"void " + config.name + "DSPKernel::handleMidi(const uint8_t* data, int length) {{" if config.midi_input else ""}
+{"void " + config.name + "DSPKernel::handleMidi(const uint8_t* data, int length) {{" if config.midi_input else ""}  # noqa: E501
+
 {"    if (length < 1) return;" if config.midi_input else ""}
 {"" if config.midi_input else ""}
 {"    uint8_t status = data[0] & 0xF0;" if config.midi_input else ""}

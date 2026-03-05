@@ -12,12 +12,8 @@ import requests
 import time
 from pathlib import Path
 from datetime import datetime
-from collections import defaultdict
-import urllib.parse
 
 # Load environment variables from project root
-from pathlib import Path
-import sys
 
 # Add project root to path if not already there
 project_root = Path(__file__).resolve().parent.parent.parent.parent
@@ -35,7 +31,7 @@ try:
         features.extend(['mcp'])
     if not features:
         features = ['ml']  # Default to ML features
-    
+
     load_kmidi_env(features=features, verbose=False)
 except ImportError:
     # Fallback to simple dotenv if kmidi_env not available
@@ -103,6 +99,7 @@ DOWNLOAD_LOG = DOWNLOAD_LOG_DIR / "emotion_scale_downloads.json"
 # Size limits
 MAX_SIZE_PER_COMBO_MB = 25
 MAX_SIZE_PER_COMBO_BYTES = MAX_SIZE_PER_COMBO_MB * 1024 * 1024
+
 
 class FreesoundFetcher:
     """Fetch samples from Freesound.org API"""
@@ -202,6 +199,7 @@ class FreesoundFetcher:
             print(f"Download error: {e}")
             return 0
 
+
 class EmotionScaleSampler:
     """Main sampler class"""
 
@@ -229,10 +227,10 @@ class EmotionScaleSampler:
                     print(f"Warning: Could not load scales DB from {candidate_path}: {e}")
                     continue
 
-        print(f"Error: Scales database not found. Tried:")
+        print("Error: Scales database not found. Tried:")
         for path in SCALES_DB_CANDIDATES:
             print(f"  - {path}")
-        print(f"\nSet SCALES_DB_PATH environment variable to specify custom location.")
+        print("\nSet SCALES_DB_PATH environment variable to specify custom location.")
         return None
 
     def extract_emotions(self):
@@ -393,7 +391,9 @@ class EmotionScaleSampler:
 
                     downloaded_count += 1
                     print(f"    ✓ Downloaded {downloaded_size / 1024 / 1024:.2f}MB")
-                    print(f"    Total: {current_size / 1024 / 1024:.2f}MB / {MAX_SIZE_PER_COMBO_MB}MB")
+                    print(
+                        f"    Total: {current_size / 1024 / 1024:.2f}MB"
+                        f" / {MAX_SIZE_PER_COMBO_MB}MB")
 
                     # Save progress
                     self.save_download_log()
@@ -401,9 +401,11 @@ class EmotionScaleSampler:
                     # Rate limiting
                     time.sleep(1)
                 else:
-                    print(f"    ✗ Download failed")
+                    print("    ✗ Download failed")
 
-        print(f"\n✓ Completed {emotion}/{scale}: {downloaded_count} files, {current_size / 1024 / 1024:.2f}MB")
+        print(
+            f"\n✓ Completed {emotion}/{scale}: {downloaded_count}"
+            f" files, {current_size / 1024 / 1024:.2f}MB")
 
     def sync_to_gdrive(self):
         """Sync local staging to Google Drive"""
@@ -474,10 +476,13 @@ class EmotionScaleSampler:
         print(f"Total Size: {total_size / 1024 / 1024:.2f}MB")
         print(f"\nAvailable Emotions: {len(self.emotions)}")
         print(f"Available Scales: {len(self.base_scales)}")
-        print(f"Max Combinations: {len(self.emotions)} × {len(self.base_scales)} = {len(self.emotions) * len(self.base_scales)}")
+        combos = len(self.emotions) * len(self.base_scales)
+        print(
+            f"Max Combinations: {len(self.emotions)}"
+            f" x {len(self.base_scales)} = {combos}")
 
         if total_combos > 0:
-            print(f"\nTop 10 Downloaded Combinations:")
+            print("\nTop 10 Downloaded Combinations:")
             sorted_combos = sorted(
                 self.download_log['combinations'].items(),
                 key=lambda x: x[1]['total_size_bytes'],
@@ -487,7 +492,10 @@ class EmotionScaleSampler:
             for i, (key, data) in enumerate(sorted_combos[:10], 1):
                 size_mb = data['total_size_bytes'] / 1024 / 1024
                 file_count = len(data['files'])
-                print(f"  {i}. {data['emotion']}/{data['scale']}: {file_count} files, {size_mb:.2f}MB")
+                print(
+                    f"  {i}. {data['emotion']}/{data['scale']}:"
+                    f" {file_count} files, {size_mb:.2f}MB")
+
 
 def main():
     if len(sys.argv) < 2:
@@ -498,15 +506,16 @@ def main():
         print("74 emotions × 52 scales = 3,848 combinations")
         print("25MB limit per combination")
         print("\nUSAGE:")
-        print("  python -m music_brain.samples.emotion_scale_sampler setup   # Configure Freesound API key")
-        print("  python -m music_brain.samples.emotion_scale_sampler fetch <emotion> <scale>")
-        print("  python -m music_brain.samples.emotion_scale_sampler batch <count>  # Fetch random combinations")
-        print("  python -m music_brain.samples.emotion_scale_sampler sync    # Sync to Google Drive")
-        print("  python -m music_brain.samples.emotion_scale_sampler stats   # Show statistics")
-        print("  python -m music_brain.samples.emotion_scale_sampler list    # List emotions and scales")
+        _mod = "python -m music_brain.samples.emotion_scale_sampler"
+        print(f"  {_mod} setup   # Configure Freesound API key")
+        print(f"  {_mod} fetch <emotion> <scale>")
+        print(f"  {_mod} batch <count>  # Fetch random combinations")
+        print(f"  {_mod} sync    # Sync to Google Drive")
+        print(f"  {_mod} stats   # Show statistics")
+        print(f"  {_mod} list    # List emotions and scales")
         print("\nEXAMPLES:")
-        print("  python -m music_brain.samples.emotion_scale_sampler fetch melancholy dorian")
-        print("  python -m music_brain.samples.emotion_scale_sampler batch 10")
+        print(f"  {_mod} fetch melancholy dorian")
+        print(f"  {_mod} batch 10")
         print("")
         return
 
@@ -550,12 +559,12 @@ def main():
 
         if emotion not in sampler.emotions:
             print(f"Error: Unknown emotion '{emotion}'")
-            print(f"Run './emotion_scale_sampler.py list' to see available emotions")
+            print("Run './emotion_scale_sampler.py list' to see available emotions")
             return
 
         if scale not in sampler.base_scales:
             print(f"Error: Unknown scale '{scale}'")
-            print(f"Run './emotion_scale_sampler.py list' to see available scales")
+            print("Run './emotion_scale_sampler.py list' to see available scales")
             return
 
         sampler.download_for_combination(emotion, scale)
@@ -590,6 +599,6 @@ def main():
     else:
         print(f"Error: Unknown command '{command}'")
 
+
 if __name__ == "__main__":
     main()
-

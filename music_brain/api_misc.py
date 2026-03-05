@@ -7,27 +7,20 @@ or other interfaces.
 """
 from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
-import tempfile
-import os
 
 import numpy as np
 
 # Core imports
 from music_brain.audio import (
     AudioAnalyzer,
-    AudioAnalysis,
-    analyze_feel,
-    AudioFeatures,
 )
 from music_brain.harmony import (
     HarmonyGenerator,
-    HarmonyResult,
     generate_midi_from_harmony,
 )
 from music_brain.groove import (
     extract_groove,
     apply_groove,
-    GrooveTemplate,
     humanize_midi_file,
     GrooveSettings,
     settings_from_preset,
@@ -37,7 +30,6 @@ from music_brain.groove import (
 from music_brain.structure import (
     analyze_chords,
     detect_sections,
-    ChordProgression,
 )
 from music_brain.structure.progression import (
     diagnose_progression,
@@ -46,7 +38,6 @@ from music_brain.structure.progression import (
 from music_brain.structure.comprehensive_engine import (
     TherapySession,
     render_plan_to_midi,
-    HarmonyPlan,
 )
 from music_brain.session.intent_schema import (
     CompleteSongIntent,
@@ -57,13 +48,10 @@ from music_brain.session.intent_schema import (
 from music_brain.session.intent_processor import process_intent
 from music_brain.voice import (
     AutoTuneProcessor,
-    AutoTuneSettings,
     get_auto_tune_preset,
     VoiceModulator,
-    ModulationSettings,
     get_modulation_preset,
     VoiceSynthesizer,
-    SynthConfig,
     get_voice_profile,
 )
 
@@ -71,19 +59,19 @@ from music_brain.voice import (
 class DAiWAPI:
     """
     Unified API wrapper for DAiW functionality.
-    
+
     Provides a clean, consistent interface for all music_brain operations,
     making it easier to integrate with desktop apps, web services, or CLI tools.
     """
-    
+
     def __init__(self):
         self.harmony_generator = HarmonyGenerator()
         self.auto_tune_processor = AutoTuneProcessor()
         self.voice_modulator = VoiceModulator()
         self.voice_synthesizer = VoiceSynthesizer()
-    
+
     # ========== Harmony Generation ==========
-    
+
     def generate_harmony_from_intent(
         self,
         intent: CompleteSongIntent,
@@ -92,17 +80,17 @@ class DAiWAPI:
     ) -> Dict[str, Any]:
         """
         Generate harmony from a CompleteSongIntent.
-        
+
         Args:
             intent: CompleteSongIntent object
             output_midi: Optional path to save MIDI file
             tempo_bpm: Tempo for MIDI output
-            
+
         Returns:
             Dict with harmony result and optional MIDI path
         """
         harmony = self.harmony_generator.generate_from_intent(intent)
-        
+
         result = {
             "harmony": {
                 "chords": harmony.chords,
@@ -121,13 +109,13 @@ class DAiWAPI:
                 for v in harmony.voicings
             ],
         }
-        
+
         if output_midi:
             generate_midi_from_harmony(harmony, output_midi, tempo_bpm=tempo_bpm)
             result["midi_path"] = output_midi
-        
+
         return result
-    
+
     def generate_basic_progression(
         self,
         key: str = "C",
@@ -138,14 +126,14 @@ class DAiWAPI:
     ) -> Dict[str, Any]:
         """
         Generate a basic chord progression.
-        
+
         Args:
             key: Musical key (e.g., "C", "F", "Bb")
             mode: Mode (major, minor, dorian, etc.)
             pattern: Roman numeral pattern (e.g., "I-V-vi-IV")
             output_midi: Optional path to save MIDI file
             tempo_bpm: Tempo for MIDI output
-            
+
         Returns:
             Dict with harmony result
         """
@@ -154,7 +142,7 @@ class DAiWAPI:
             mode=mode,
             pattern=pattern
         )
-        
+
         result = {
             "harmony": {
                 "chords": harmony.chords,
@@ -164,31 +152,31 @@ class DAiWAPI:
                 "emotional_justification": harmony.emotional_justification,
             },
         }
-        
+
         if output_midi:
             generate_midi_from_harmony(harmony, output_midi, tempo_bpm=tempo_bpm)
             result["midi_path"] = output_midi
-        
+
         return result
-    
+
     # ========== Groove Operations ==========
-    
+
     def extract_groove_from_midi(
         self,
         midi_path: str
     ) -> Dict[str, Any]:
         """
         Extract groove pattern from a MIDI file.
-        
+
         Args:
             midi_path: Path to MIDI file
-            
+
         Returns:
             Dict with groove analysis data
         """
         groove = extract_groove(midi_path)
         return groove.to_dict()
-    
+
     def apply_groove_to_midi(
         self,
         midi_path: str,
@@ -198,22 +186,22 @@ class DAiWAPI:
     ) -> str:
         """
         Apply a genre groove template to a MIDI file.
-        
+
         Args:
             midi_path: Path to input MIDI file
             genre: Genre template (funk, jazz, rock, etc.)
             intensity: Groove intensity (0.0-1.0)
             output_path: Optional output path (auto-generated if None)
-            
+
         Returns:
             Path to output MIDI file
         """
         if output_path is None:
             output_path = str(Path(midi_path).with_suffix('.grooved.mid'))
-        
+
         apply_groove(midi_path, genre=genre, output=output_path, intensity=intensity)
         return output_path
-    
+
     def humanize_drums(
         self,
         midi_path: str,
@@ -226,7 +214,7 @@ class DAiWAPI:
     ) -> Dict[str, Any]:
         """
         Apply humanization to drum track in MIDI file.
-        
+
         Args:
             midi_path: Path to input MIDI file
             complexity: Timing chaos (0.0-1.0)
@@ -235,7 +223,7 @@ class DAiWAPI:
             drum_channel: MIDI channel for drums (default 9 = channel 10)
             enable_ghost_notes: Whether to add ghost notes
             output_path: Optional output path
-            
+
         Returns:
             Dict with result info and output path
         """
@@ -249,10 +237,10 @@ class DAiWAPI:
                 vulnerability=vulnerability,
                 enable_ghost_notes=enable_ghost_notes
             )
-        
+
         if output_path is None:
             output_path = str(Path(midi_path).with_suffix('.humanized.mid'))
-        
+
         result_path = humanize_midi_file(
             input_path=midi_path,
             output_path=output_path,
@@ -261,16 +249,16 @@ class DAiWAPI:
             drum_channel=drum_channel,
             settings=settings,
         )
-        
+
         return {
             "output_path": result_path,
             "complexity": complexity,
             "vulnerability": vulnerability,
             "preset_used": preset,
         }
-    
+
     # ========== Chord Analysis ==========
-    
+
     def analyze_midi_chords(
         self,
         midi_path: str,
@@ -278,23 +266,23 @@ class DAiWAPI:
     ) -> Dict[str, Any]:
         """
         Analyze chord progression in a MIDI file.
-        
+
         Args:
             midi_path: Path to MIDI file
             include_sections: Whether to also detect sections
-            
+
         Returns:
             Dict with chord analysis and optional sections
         """
         progression = analyze_chords(midi_path)
-        
+
         result = {
             "key": progression.key,
             "chords": progression.chords,
             "roman_numerals": progression.roman_numerals,
             "borrowed_chords": progression.borrowed_chords,
         }
-        
+
         if include_sections:
             sections = detect_sections(midi_path)
             result["sections"] = [
@@ -306,24 +294,24 @@ class DAiWAPI:
                 }
                 for s in sections
             ]
-        
+
         return result
-    
+
     def diagnose_progression(
         self,
         progression: str
     ) -> Dict[str, Any]:
         """
         Diagnose issues in a chord progression string.
-        
+
         Args:
             progression: Chord progression (e.g., "F-C-Am-Dm")
-            
+
         Returns:
             Dict with diagnosis results
         """
         return diagnose_progression(progression)
-    
+
     def suggest_reharmonizations(
         self,
         progression: str,
@@ -332,41 +320,41 @@ class DAiWAPI:
     ) -> List[Dict[str, str]]:
         """
         Generate reharmonization suggestions.
-        
+
         Args:
             progression: Chord progression string
             style: Reharmonization style (jazz, pop, rnb, etc.)
             count: Number of suggestions
-            
+
         Returns:
             List of reharmonization suggestions
         """
         return generate_reharmonizations(progression, style=style, count=count)
-    
+
     # ========== Audio Analysis ==========
-    
+
     def analyze_audio_file(self, audio_path: str) -> Dict[str, Any]:
         """
         Analyze an audio file, returning tempo, key, spectrum, and chords.
         """
         analyzer = AudioAnalyzer()
         return analyzer.analyze_file(audio_path).to_dict()
-    
+
     def analyze_audio_waveform(self, samples: np.ndarray, sample_rate: int) -> Dict[str, Any]:
         analyzer = AudioAnalyzer(sample_rate=sample_rate)
         return analyzer.analyze_waveform(samples, sample_rate).to_dict()
-    
+
     def detect_audio_bpm(self, samples: np.ndarray, sample_rate: int) -> float:
         analyzer = AudioAnalyzer(sample_rate=sample_rate)
         bpm, _ = analyzer.detect_bpm(samples, sample_rate)
         return bpm
-    
+
     def detect_audio_key(self, samples: np.ndarray, sample_rate: int) -> Tuple[str, str]:
         analyzer = AudioAnalyzer(sample_rate=sample_rate)
         return analyzer.detect_key(samples, sample_rate)
-    
+
     # ========== Voice Processing ==========
-    
+
     def auto_tune_vocals(
         self,
         input_path: str,
@@ -378,7 +366,7 @@ class DAiWAPI:
         settings = get_auto_tune_preset(preset)
         processor = AutoTuneProcessor(settings)
         return processor.process_file(input_path, output_path, key, mode)
-    
+
     def modulate_voice(
         self,
         input_path: str,
@@ -388,7 +376,7 @@ class DAiWAPI:
         settings = get_modulation_preset(preset)
         modulator = VoiceModulator(settings)
         return modulator.process_file(input_path, output_path)
-    
+
     def synthesize_voice(
         self,
         lyrics: str,
@@ -405,7 +393,7 @@ class DAiWAPI:
             tempo_bpm=tempo_bpm,
             output_path=output_path,
         )
-    
+
     def speak_text_prompt(
         self,
         text: str,
@@ -421,9 +409,9 @@ class DAiWAPI:
             profile=profile,
             tempo_bpm=tempo_bpm,
         )
-    
+
     # ========== Therapy Session ==========
-    
+
     def therapy_session(
         self,
         text: str,
@@ -433,13 +421,13 @@ class DAiWAPI:
     ) -> Dict[str, Any]:
         """
         Process emotional text through therapy session and generate MIDI.
-        
+
         Args:
             text: Emotional text input
             motivation: Motivation level (1-10)
             chaos_tolerance: Chaos tolerance (0.0-1.0)
             output_midi: Optional path to save MIDI file
-            
+
         Returns:
             Dict with analysis and plan, plus optional MIDI path
         """
@@ -447,12 +435,18 @@ class DAiWAPI:
         affect = session.process_core_input(text)
         session.set_scales(motivation, chaos_tolerance)
         plan = session.generate_plan()
-        
+
         result = {
             "affect": {
                 "primary": affect,
-                "secondary": session.state.affect_result.secondary if session.state.affect_result else None,
-                "intensity": session.state.affect_result.intensity if session.state.affect_result else 0.0,
+                "secondary": (
+                    session.state.affect_result.secondary
+                    if session.state.affect_result else None
+                ),
+                "intensity": (
+                    session.state.affect_result.intensity
+                    if session.state.affect_result else 0.0
+                ),
             },
             "plan": {
                 "root_note": plan.root_note,
@@ -463,15 +457,15 @@ class DAiWAPI:
                 "complexity": plan.complexity,
             },
         }
-        
+
         if output_midi:
             midi_path = render_plan_to_midi(plan, output_midi)
             result["midi_path"] = midi_path
-        
+
         return result
-    
+
     # ========== Intent Processing ==========
-    
+
     def process_song_intent(
         self,
         intent: CompleteSongIntent,
@@ -479,16 +473,16 @@ class DAiWAPI:
     ) -> Dict[str, Any]:
         """
         Process a CompleteSongIntent and generate all musical elements.
-        
+
         Args:
             intent: CompleteSongIntent object
             output_json: Optional path to save results as JSON
-            
+
         Returns:
             Dict with all generated elements
         """
         result = process_intent(intent)
-        
+
         # Convert to serializable format
         output = {
             "intent_summary": result['intent_summary'],
@@ -517,59 +511,59 @@ class DAiWAPI:
                 "rule_broken": result['production'].rule_broken,
             },
         }
-        
+
         if output_json:
             import json
             with open(output_json, 'w') as f:
                 json.dump(output, f, indent=2)
-        
+
         return output
-    
+
     def suggest_rule_breaks(
         self,
         emotion: str
     ) -> List[Dict[str, str]]:
         """
         Get rule-breaking suggestions for an emotion.
-        
+
         Args:
             emotion: Target emotion (e.g., "grief", "anger")
-            
+
         Returns:
             List of rule-breaking suggestions
         """
         return suggest_rule_break(emotion)
-    
+
     def list_available_rules(self) -> Dict[str, List[str]]:
         """
         List all available rule-breaking options.
-        
+
         Returns:
             Dict mapping categories to lists of rules
         """
         return list_all_rules()
-    
+
     def validate_song_intent(
         self,
         intent: CompleteSongIntent
     ) -> List[str]:
         """
         Validate a CompleteSongIntent.
-        
+
         Args:
             intent: CompleteSongIntent to validate
-            
+
         Returns:
             List of validation issues (empty if valid)
         """
         return validate_intent(intent)
-    
+
     # ========== Preset Management ==========
-    
+
     def list_humanization_presets(self) -> List[str]:
         """List available humanization presets."""
         return list_presets()
-    
+
     def get_humanization_preset_info(self, preset_name: str) -> Dict[str, Any]:
         """Get information about a humanization preset."""
         return get_preset(preset_name)
@@ -579,4 +573,3 @@ class DAiWAPI:
 api = DAiWAPI()
 
 __all__ = ['DAiWAPI', 'api']
-

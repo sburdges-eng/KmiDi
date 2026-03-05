@@ -12,7 +12,7 @@ from .context import MusicalContext
 class Rule:
     """
     Base class for music theory rules.
-    
+
     Attributes:
         name: Short identifier (e.g., "no_parallel_fifths")
         description: Human-readable explanation
@@ -29,24 +29,24 @@ class Rule:
     reason: str
     exceptions: List[str] = field(default_factory=list)
     category: str = ""
-    
+
     def applies_to_context(self, context: MusicalContext) -> bool:
         """Check if this rule applies in the given musical context."""
         return context in self.contexts
-    
+
     def get_severity_for_context(self, context: MusicalContext) -> RuleSeverity:
         """
         Get severity level for a specific musical context.
-        
+
         Allows same rule to have different severity in different styles.
         E.g., parallel fifths are STRICT in classical, FLEXIBLE in jazz.
-        
+
         Args:
             context: Musical context to check
-        
+
         Returns:
             RuleSeverity for that context, or default severity if not context-dependent
-        
+
         Example:
             >>> rule = Rule(name="parallel_fifths", severity={
             ...     MusicalContext.CLASSICAL: RuleSeverity.STRICT,
@@ -58,13 +58,13 @@ class Rule:
         if isinstance(self.severity, dict):
             return self.severity.get(context, RuleSeverity.GUIDELINE)
         return self.severity
-    
+
     def is_strict(self) -> bool:
         """Check if this is a strict (non-breakable) rule in any context."""
         if isinstance(self.severity, dict):
             return RuleSeverity.STRICT in self.severity.values()
         return self.severity == RuleSeverity.STRICT
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert rule to dictionary format (backward compatibility)."""
         severity_repr = (
@@ -86,7 +86,7 @@ class Rule:
 class RuleViolation:
     """
     Detected violation of a music theory rule.
-    
+
     Attributes:
         rule: The rule that was violated
         location: Musical location (measure number, beat, voice, etc.)
@@ -99,12 +99,12 @@ class RuleViolation:
     pitches: List[int]
     explanation: str
     severity_override: Optional[RuleSeverity] = None
-    
+
     @property
     def effective_severity(self) -> RuleSeverity:
         """Get the severity, accounting for any override."""
         return self.severity_override if self.severity_override else self.rule.severity
-    
+
     def __str__(self) -> str:
         return (
             f"{self.rule.name} at {self.location}: "
@@ -116,7 +116,7 @@ class RuleViolation:
 class RuleBreakSuggestion:
     """
     Pedagogical suggestion for deliberately breaking a rule.
-    
+
     Attributes:
         rule: The rule to break
         context: Musical context where the break is effective
@@ -129,7 +129,7 @@ class RuleBreakSuggestion:
     musical_example: List[int]  # MIDI notes
     explanation: str
     difficulty: int = 3  # 1=beginner, 5=advanced
-    
+
     def __str__(self) -> str:
         return (
             f"Break '{self.rule.name}' in {self.context} context: "

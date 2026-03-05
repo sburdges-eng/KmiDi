@@ -365,8 +365,17 @@ class ModelRegistry:
             return ""
         p = Path(path_str)
         if p.is_absolute():
-            return str(p)
-        return str((base_dir / p).resolve())
+            resolved = p.resolve()
+        else:
+            resolved = (base_dir / p).resolve()
+        # Containment: resolved path must stay under base_dir (approved model root)
+        try:
+            resolved.relative_to(base_dir.resolve())
+        except ValueError:
+            raise ValueError(
+                f"Model path escapes approved root: {resolved} is not under {base_dir.resolve()}"
+            )
+        return str(resolved)
 
     def _modelinfo_from_manifest_entry(self, entry: Dict[str, Any], base_dir: Path) -> ModelInfo:
         file_path = (

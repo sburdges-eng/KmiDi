@@ -10,7 +10,7 @@ Implements traditional counterpoint rules and generation:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Set
+from typing import List, Dict, Optional
 from enum import Enum
 
 
@@ -163,7 +163,7 @@ def check_counterpoint_rules(
     violations = []
 
     # Get applicable rules
-    applicable_rules = [r for r in COUNTERPOINT_RULES if species in r.applies_to]
+    _applicable_rules = [r for r in COUNTERPOINT_RULES if species in r.applies_to]  # noqa: F841
 
     min_len = min(len(cantus_firmus.notes), len(counterpoint.notes))
 
@@ -222,7 +222,7 @@ def check_counterpoint_rules(
                     "rule": "perfect_cadence",
                     "position": i,
                     "severity": "error",
-                    "description": f"First/last interval should be perfect consonance",
+                    "description": "First/last interval should be perfect consonance",
                 })
 
     return violations
@@ -287,7 +287,7 @@ def generate_counterpoint(
     Returns:
         Generated counterpoint voice
     """
-    cf = CounterpointVoice(notes=cantus_firmus, is_cantus_firmus=True)
+    _cf = CounterpointVoice(notes=cantus_firmus, is_cantus_firmus=True)  # noqa: F841
     cp_notes = []
 
     # Scale degrees in the key

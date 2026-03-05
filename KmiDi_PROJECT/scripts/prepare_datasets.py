@@ -33,8 +33,6 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 
 # Load environment variables from project root
-from pathlib import Path
-import sys
 
 # Add project root to path if not already there
 project_root = Path(__file__).resolve().parent.parent.parent.parent
@@ -52,7 +50,7 @@ try:
         features.extend(['mcp'])
     if not features:
         features = ['ml']  # Default to ML features
-    
+
     load_kmidi_env(features=features, verbose=False)
 except ImportError:
     # Fallback to simple dotenv if kmidi_env not available
@@ -69,7 +67,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Audio data root (override via env KMI_DI_AUDIO_DATA_ROOT, KELLY_AUDIO_DATA_ROOT, AUDIO_DATA_ROOT, or --root)
+# Audio data root (override via env KMI_DI_AUDIO_DATA_ROOT,
+# KELLY_AUDIO_DATA_ROOT, AUDIO_DATA_ROOT, or --root)
+
+
 def _detect_default_root() -> Path:
     """Pick the best available location for large datasets."""
     env_root = (
@@ -136,7 +137,8 @@ DATASETS = {
         sources=[
             {
                 "type": "url",
-                "url": "https://github.com/CheyneyComputerScience/CREMA-D/archive/refs/heads/master.zip",
+                "url": "https://github.com/CheyneyComputerScience"
+                       "/CREMA-D/archive/refs/heads/master.zip",
             }
         ],
         output_dir="emotions/cremad",
@@ -162,7 +164,8 @@ DATASETS = {
         sources=[
             {
                 "type": "url",
-                "url": "https://storage.googleapis.com/magentadata/datasets/groove/groove-v1.0.0-midionly.zip",
+                "url": "https://storage.googleapis.com/magentadata"
+                       "/datasets/groove/groove-v1.0.0-midionly.zip",
             }
         ],
         output_dir="grooves/groove_midi",
@@ -174,7 +177,8 @@ DATASETS = {
         sources=[
             {
                 "type": "url",
-                "url": "https://storage.googleapis.com/magentadata/datasets/maestro/v3.0.0/maestro-v3.0.0-midi.zip",
+                "url": "https://storage.googleapis.com/magentadata"
+                       "/datasets/maestro/v3.0.0/maestro-v3.0.0-midi.zip",
             }
         ],
         output_dir="melodies/maestro",
@@ -276,7 +280,8 @@ DATASETS = {
         sources=[
             {
                 "type": "url",
-                "url": "https://storage.googleapis.com/magentadata/datasets/nsynth/nsynth-train.jsonwav.tar.gz",
+                "url": "https://storage.googleapis.com/magentadata"
+                       "/datasets/nsynth/nsynth-train.jsonwav.tar.gz",
             }
         ],
         output_dir="raw/nsynth",
@@ -335,7 +340,11 @@ def download_from_url(url: str, output_dir: Path) -> Optional[Path]:
     logger.info(f"Downloading: {url}")
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        "User-Agent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"
+            " AppleWebKit/537.36 (KHTML, like Gecko)"
+            " Chrome/91.0.4472.124 Safari/537.36"
+        ),
     }
 
     try:
@@ -346,7 +355,7 @@ def download_from_url(url: str, output_dir: Path) -> Optional[Path]:
 
         with open(partial_path, "wb") as f:
             with tqdm(total=total_size, unit="B", unit_scale=True, desc=filename) as pbar:
-                for chunk in response.iter_content(chunk_size=1024*1024): # 1MB chunks
+                for chunk in response.iter_content(chunk_size=1024*1024):  # 1MB chunks
                     if chunk:
                         f.write(chunk)
                         pbar.update(len(chunk))
@@ -987,9 +996,12 @@ Examples:
     parser.add_argument("--download", action="store_true", help="Download dataset")
     parser.add_argument("--preprocess", action="store_true", help="Preprocess dataset")
     parser.add_argument("--stats", action="store_true", help="Show dataset statistics")
-    parser.add_argument("--sanitize", action="store_true", help="Sanitize dataset (check for silence/corruption)")
-    parser.add_argument("--golden", action="store_true", help="Mark this dataset as the 'Golden' validation set")
-    parser.add_argument("--pack", action="store_true", help="Pack dataset into LMDB for high-speed I/O")
+    parser.add_argument("--sanitize", action="store_true",
+                        help="Sanitize dataset (check for silence/corruption)")
+    parser.add_argument("--golden", action="store_true",
+                        help="Mark this dataset as the 'Golden' validation set")
+    parser.add_argument("--pack", action="store_true",
+                        help="Pack dataset into LMDB for high-speed I/O")
 
     args = parser.parse_args()
 
@@ -1087,4 +1099,3 @@ Examples:
 
 if __name__ == "__main__":
     main()
-

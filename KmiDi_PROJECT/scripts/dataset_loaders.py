@@ -18,14 +18,12 @@ Usage:
 """
 
 import os
-import json
 import random
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 from dataclasses import dataclass
 # Default dataset root
 # Load environment variables from project root
-from pathlib import Path
 import sys
 
 # Add project root to path if not already there
@@ -44,13 +42,15 @@ try:
         features.extend(['mcp'])
     if not features:
         features = ['ml']  # Default to ML features
-    
+
     load_kmidi_env(features=features, verbose=False)
 except ImportError:
     # Fallback to simple dotenv if kmidi_env not available
     from dotenv import load_dotenv
     load_dotenv(project_root / ".env")
     load_dotenv(project_root / ".env.local", override=True)
+
+
 def default_data_root() -> str:
     return (
         os.environ.get("KMI_DI_AUDIO_DATA_ROOT")
@@ -58,9 +58,10 @@ def default_data_root() -> str:
         or str(Path(__file__).resolve().parent.parent / "data" / "audio")
     )
 
-import numpy as np
-import torch
-from torch.utils.data import Dataset, DataLoader
+
+import numpy as np  # noqa: E402
+import torch  # noqa: E402
+from torch.utils.data import Dataset, DataLoader  # noqa: E402
 
 # Optional imports - gracefully handle missing dependencies
 try:
@@ -239,7 +240,7 @@ class LakhMIDIDataset(Dataset):
                 tempo=tempo
             )
 
-        except Exception as e:
+        except Exception :
             return None
 
     def _get_melody_features(self, features: MIDIFeatures) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -324,11 +325,16 @@ class LakhMIDIDataset(Dataset):
         if features is None:
             # Return dummy data on failure
             if self.task == "melody":
-                return torch.zeros(self.seq_length, 1, dtype=torch.float32), torch.tensor(0, dtype=torch.long)
+                return (torch.zeros(self.seq_length, 1, dtype=torch.float32),
+                        torch.tensor(0, dtype=torch.long))
             elif self.task == "harmony":
-                return torch.zeros(self.seq_length * self.NUM_PITCHES, dtype=torch.float32), torch.tensor(0, dtype=torch.long)
+                return (
+                    torch.zeros(self.seq_length * self.NUM_PITCHES, dtype=torch.float32),
+                    torch.tensor(0, dtype=torch.long),
+                )
             else:  # groove
-                return torch.zeros(self.seq_length, 2, dtype=torch.float32), torch.zeros(32, dtype=torch.float32)
+                return (torch.zeros(self.seq_length, 2, dtype=torch.float32),
+                        torch.zeros(32, dtype=torch.float32))
 
         # Get task-specific features
         if self.task == "melody":
@@ -474,12 +480,18 @@ class M4SingerDataset(Dataset):
 
         # Normalize and combine
         rms = (rms - rms.mean()) / (rms.std() + 1e-6)
-        spectral_centroid = (spectral_centroid - spectral_centroid.mean()) / (spectral_centroid.std() + 1e-6)
+        spectral_centroid = (
+            (spectral_centroid - spectral_centroid.mean())
+            / (spectral_centroid.std() + 1e-6)
+        )
 
         # Pad/truncate to fixed size
         target_len = 32
         rms = np.pad(rms, (0, max(0, target_len - len(rms))))[:target_len]
-        spectral_centroid = np.pad(spectral_centroid, (0, max(0, target_len - len(spectral_centroid))))[:target_len]
+        spectral_centroid = np.pad(
+            spectral_centroid,
+            (0, max(0, target_len - len(spectral_centroid))),
+        )[:target_len]
 
         x = torch.tensor(rms, dtype=torch.float32)
         y = torch.tensor(spectral_centroid[:16], dtype=torch.float32)
@@ -496,7 +508,8 @@ class M4SingerDataset(Dataset):
         if audio is None:
             # Return dummy data
             if self.task == "emotion":
-                return torch.zeros(1, 64, 128, dtype=torch.float32), torch.tensor(0, dtype=torch.long)
+                return (torch.zeros(1, 64, 128, dtype=torch.float32),
+                        torch.tensor(0, dtype=torch.long))
             else:
                 return torch.zeros(32, dtype=torch.float32), torch.zeros(16, dtype=torch.float32)
 
@@ -613,4 +626,3 @@ if __name__ == "__main__":
         if batch_idx >= 2:
             break
     print("Done!")
-

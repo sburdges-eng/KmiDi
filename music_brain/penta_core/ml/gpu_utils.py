@@ -10,7 +10,7 @@ Provides unified GPU/accelerator detection across:
 """
 
 from dataclasses import dataclass
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from enum import Enum
 import platform
 
@@ -106,7 +106,6 @@ def _detect_cuda_devices() -> List[GPUDevice]:
         # Try pycuda
         try:
             import pycuda.driver as cuda
-            import pycuda.autoinit
 
             for i in range(cuda.Device.count()):
                 dev = cuda.Device(i)
@@ -115,7 +114,8 @@ def _detect_cuda_devices() -> List[GPUDevice]:
                     name=dev.name(),
                     index=i,
                     memory_total_mb=dev.total_memory() // (1024 * 1024),
-                    compute_capability=f"{dev.compute_capability()[0]}.{dev.compute_capability()[1]}",
+                    compute_capability=f"{dev.compute_capability()[0]}.{dev.compute_capability()[1]}",  # noqa: E501
+
                     backend_device_id=f"cuda:{i}",
                 ))
         except ImportError:

@@ -2,7 +2,7 @@
 MIDI I/O Utilities - Load, save, and inspect MIDI files.
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 from pathlib import Path
 from dataclasses import dataclass
 
@@ -31,59 +31,59 @@ class MidiInfo:
 def load_midi(path: str) -> "mido.MidiFile":
     """
     Load a MIDI file.
-    
+
     Args:
         path: Path to MIDI file
-    
+
     Returns:
         mido.MidiFile object
     """
     if not MIDO_AVAILABLE:
         raise ImportError("mido package required. Install with: pip install mido")
-    
+
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(f"MIDI file not found: {path}")
-    
+
     return mido.MidiFile(str(path))
 
 
 def save_midi(midi_file: "mido.MidiFile", path: str):
     """
     Save a MIDI file.
-    
+
     Args:
         midi_file: mido.MidiFile object
         path: Output path
     """
     if not MIDO_AVAILABLE:
         raise ImportError("mido package required")
-    
+
     midi_file.save(str(path))
 
 
 def get_midi_info(path: str) -> MidiInfo:
     """
     Get basic information about a MIDI file.
-    
+
     Args:
         path: Path to MIDI file
-    
+
     Returns:
         MidiInfo with file statistics
     """
     if not MIDO_AVAILABLE:
         raise ImportError("mido package required")
-    
+
     path = Path(path)
     mid = mido.MidiFile(str(path))
-    
+
     # Extract metadata
     ppq = mid.ticks_per_beat
     tempo_bpm = 120.0  # Default
     time_sig = (4, 4)
     track_names = []
-    
+
     for track in mid.tracks:
         for msg in track:
             if msg.type == 'set_tempo':
@@ -92,11 +92,11 @@ def get_midi_info(path: str) -> MidiInfo:
                 time_sig = (msg.numerator, msg.denominator)
             elif msg.type == 'track_name':
                 track_names.append(msg.name)
-    
+
     # Calculate duration and note count
     total_ticks = 0
     note_count = 0
-    
+
     for track in mid.tracks:
         track_ticks = 0
         for msg in track:
@@ -104,11 +104,11 @@ def get_midi_info(path: str) -> MidiInfo:
             if msg.type == 'note_on' and msg.velocity > 0:
                 note_count += 1
         total_ticks = max(total_ticks, track_ticks)
-    
+
     # Convert ticks to seconds
     seconds_per_tick = 60.0 / (tempo_bpm * ppq)
     duration_seconds = total_ticks * seconds_per_tick
-    
+
     return MidiInfo(
         filename=str(path),
         format_type=mid.type,
@@ -126,16 +126,16 @@ def get_midi_info(path: str) -> MidiInfo:
 def merge_tracks(midi_file: "mido.MidiFile") -> "mido.MidiTrack":
     """
     Merge all tracks into a single track.
-    
+
     Args:
         midi_file: MIDI file with multiple tracks
-    
+
     Returns:
         Single merged track
     """
     if not MIDO_AVAILABLE:
         raise ImportError("mido package required")
-    
+
     merged = mido.merge_tracks(midi_file.tracks)
     return merged
 
@@ -143,15 +143,15 @@ def merge_tracks(midi_file: "mido.MidiFile") -> "mido.MidiTrack":
 def split_by_channel(midi_file: "mido.MidiFile") -> Dict[int, List]:
     """
     Split MIDI file by channel.
-    
+
     Args:
         midi_file: MIDI file
-    
+
     Returns:
         Dict mapping channel number to list of messages
     """
     channels = {}
-    
+
     for track in midi_file.tracks:
         current_tick = 0
         for msg in track:
@@ -160,30 +160,30 @@ def split_by_channel(midi_file: "mido.MidiFile") -> Dict[int, List]:
                 if msg.channel not in channels:
                     channels[msg.channel] = []
                 channels[msg.channel].append((current_tick, msg))
-    
+
     return channels
 
 
 def extract_notes(midi_file: "mido.MidiFile") -> List[Dict]:
     """
     Extract all notes from MIDI file as list of dicts.
-    
+
     Returns:
         List of note dicts with pitch, velocity, start, duration, channel
     """
     notes = []
-    
+
     for track_idx, track in enumerate(midi_file.tracks):
         current_tick = 0
         active_notes = {}  # (channel, pitch) -> (start_tick, velocity)
-        
+
         for msg in track:
             current_tick += msg.time
-            
+
             if msg.type == 'note_on' and msg.velocity > 0:
                 key = (msg.channel, msg.note)
                 active_notes[key] = (current_tick, msg.velocity)
-            
+
             elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
                 key = (msg.channel, msg.note)
                 if key in active_notes:
@@ -196,7 +196,7 @@ def extract_notes(midi_file: "mido.MidiFile") -> List[Dict]:
                         'channel': msg.channel,
                         'track': track_idx,
                     })
-    
+
     # Sort by start time
     notes.sort(key=lambda n: n['start_tick'])
     return notes

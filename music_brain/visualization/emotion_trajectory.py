@@ -9,13 +9,10 @@ Part of the "New Features" implementation for Kelly MIDI Companion.
 
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
-from pathlib import Path
 import json
-from datetime import datetime
 
 try:
     import matplotlib.pyplot as plt
-    import matplotlib.dates as mdates
     import numpy as np
     MATPLOTLIB_AVAILABLE = True
     NUMPY_AVAILABLE = True
@@ -31,7 +28,7 @@ class EmotionSnapshot:
     timestamp: float  # Time in seconds
     valence: float    # -1.0 to 1.0 (negative to positive)
     arousal: float   # 0.0 to 1.0 (calm to excited)
-    intensity: float # 0.0 to 1.0 (weak to intense)
+    intensity: float  # 0.0 to 1.0 (weak to intense)
     emotion_label: Optional[str] = None  # Primary emotion name
     metadata: Optional[Dict] = None
 
@@ -82,14 +79,14 @@ class EmotionTrajectoryVisualizer:
             "longing": "#9467bd",    # Purple
             "hope": "#2ca02c",       # Green
             "rage": "#d62728",       # Red
-            "tenderness": "#ff7f0e", # Orange
+            "tenderness": "#ff7f0e",  # Orange
             "anxiety": "#bcbd22",    # Yellow-green
             "euphoria": "#17becf",   # Cyan
-            "melancholy": "#7f7f7f", # Gray
+            "melancholy": "#7f7f7f",  # Gray
             "nostalgia": "#e377c2",  # Pink
             "catharsis": "#8c564b",  # Brown
-            "dissociation": "#c49c94", # Tan
-            "determination": "#ff9896", # Light red
+            "dissociation": "#c49c94",  # Tan
+            "determination": "#ff9896",  # Light red
             "surrender": "#c5b0d5",  # Lavender
         }
 
@@ -322,7 +319,7 @@ class EmotionTrajectoryVisualizer:
         # 2D Valence-Arousal scatter over time (colored by intensity)
         ax4 = fig.add_subplot(gs[2, 0])
         scatter = ax4.scatter(valence, arousal, c=intensity, cmap='viridis',
-                             s=50, alpha=0.7, edgecolors='black', linewidth=0.5)
+                              s=50, alpha=0.7, edgecolors='black', linewidth=0.5)
         ax4.set_xlabel('Valence', fontsize=10, fontweight='bold')
         ax4.set_ylabel('Arousal', fontsize=10, fontweight='bold')
         ax4.set_xlim(-1.1, 1.1)
@@ -344,7 +341,7 @@ class EmotionTrajectoryVisualizer:
                         label_times = [timestamps[j] for j in label_indices]
                         color = self.color_map.get(label.lower(), '#7f7f7f')
                         ax5.scatter(label_times, [i] * len(label_times),
-                                  c=color, s=100, label=label, alpha=0.7)
+                                    c=color, s=100, label=label, alpha=0.7)
                 ax5.set_yticks(range(len(unique_labels)))
                 ax5.set_yticklabels(unique_labels)
                 ax5.set_xlabel('Time (seconds)', fontsize=10, fontweight='bold')
@@ -369,7 +366,6 @@ class EmotionTrajectoryVisualizer:
         show_plot: bool
     ):
         """3D plot of VAD space."""
-        from mpl_toolkits.mplot3d import Axes3D
 
         fig = plt.figure(figsize=(12, 10))
         ax = fig.add_subplot(111, projection='3d')
@@ -380,7 +376,7 @@ class EmotionTrajectoryVisualizer:
 
         # Color by time
         scatter = ax.scatter(valence, arousal, intensity, c=timestamps,
-                           cmap='viridis', s=50, alpha=0.7, edgecolors='black', linewidth=0.5)
+                             cmap='viridis', s=50, alpha=0.7, edgecolors='black', linewidth=0.5)
 
         # Plot trajectory line
         ax.plot(valence, arousal, intensity, 'k-', linewidth=1, alpha=0.3)

@@ -8,14 +8,12 @@ Stores preferences locally in JSON format at ~/.kelly/user_preferences.json
 """
 
 import json
-import os
 from pathlib import Path
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from collections import defaultdict
 import statistics
-import uuid
 
 
 @dataclass
@@ -166,7 +164,8 @@ class UserPreferenceModel:
 
         Args:
             user_id: Unique identifier for user
-            preferences_path: Path to preferences JSON file (defaults to ~/.kelly/user_preferences.json)
+            preferences_path: Path to preferences JSON file (defaults to ~/.kelly/user_preferences.json)  # noqa: E501
+
         """
         self.user_id = user_id
 

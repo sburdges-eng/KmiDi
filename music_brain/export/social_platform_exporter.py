@@ -319,7 +319,7 @@ class SocialPlatformExporter:
         if create_video:
             if not visual_file and spec.requires_visual:
                 print(f"  Warning: {spec.name} requires a visual component")
-                print(f"  Provide a visual_file or use create_video=False for audio-only")
+                print("  Provide a visual_file or use create_video=False for audio-only")
 
         return result
 

@@ -40,8 +40,8 @@ DRUM_CATEGORIES = {
     'hihat': ['hihat_closed', 'hihat_pedal', 'hihat_open'],
     'tom': ['tom_low', 'tom_mid', 'tom_high'],
     'cymbal': ['crash', 'ride', 'china', 'splash'],
-    'percussion': ['tambourine', 'cowbell', 'bongo_high', 'bongo_low', 
-                   'conga_mute', 'conga_open', 'conga_low', 
+    'percussion': ['tambourine', 'cowbell', 'bongo_high', 'bongo_low',
+                   'conga_mute', 'conga_open', 'conga_low',
                    'timbale_high', 'timbale_low', 'cabasa', 'maracas',
                    'clave', 'woodblock_high', 'woodblock_low']
 }
@@ -61,8 +61,8 @@ GM_PROGRAMS = {
     (80, 87): 'lead',     # Synth Lead
     (88, 95): 'pad',      # Synth Pad
     (96, 103): 'fx',      # Synth Effects
-    (104, 111): 'ethnic', # Ethnic
-    (112, 119): 'percussion', # Percussive
+    (104, 111): 'ethnic',  # Ethnic
+    (112, 119): 'percussion',  # Percussive
     (120, 127): 'fx'      # Sound Effects
 }
 
@@ -92,21 +92,21 @@ def classify_program(program: int) -> str:
 def classify_note(channel: int, pitch: int, program: Optional[int] = None) -> str:
     """
     Classify a note to its instrument type.
-    
+
     Args:
         channel: MIDI channel (0-15)
         pitch: Note number (0-127)
         program: Optional program number for melodic instruments
-    
+
     Returns:
         Instrument type string
     """
     if channel == DRUM_CHANNEL:
         return get_drum_category(pitch)
-    
+
     if program is not None:
         return classify_program(program)
-    
+
     # Fallback based on pitch range if no program info
     if pitch < 40:
         return 'bass'
@@ -128,7 +128,7 @@ def get_instrument_priority() -> list:
     """
     return [
         'kick',
-        'snare', 
+        'snare',
         'hihat',
         'bass',
         'percussion',

@@ -30,7 +30,7 @@ from __future__ import annotations
 import abc
 import atexit
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from typing import (
     Any,
     Callable,
@@ -459,7 +459,6 @@ class BaseDAWBridge(abc.ABC):
 
     def set_loop(self, enabled: bool, start: float = 0.0, end: float = 4.0) -> None:
         """Default: no-op (not all DAWs support remote loop control)."""
-        pass
 
     # =========================================================================
     # Track Control (defaults)
@@ -478,11 +477,9 @@ class BaseDAWBridge(abc.ABC):
 
     def fire_clip(self, track: int, clip: int) -> None:
         """Default: no-op."""
-        pass
 
     def stop_clip(self, track: int, clip: int) -> None:
         """Default: no-op."""
-        pass
 
     # =========================================================================
     # Callbacks
@@ -597,11 +594,9 @@ class DAWRegistry:
         if system == "Darwin":  # macOS
             try:
                 result = subprocess.run(
-                    ["osascript", "-e", 'tell application "System Events" to get name of every process'],
-                    capture_output=True,
-                    text=True,
-                    timeout=5,
-                )
+                    ["osascript", "-e",
+                     'tell application "System Events" to get name of every process'],
+                    capture_output=True, text=True, timeout=5,)
                 running = result.stdout.lower()
 
                 for daw_type, names in daw_processes.items():
@@ -692,4 +687,3 @@ __all__ = [
     # Factory
     "get_daw_bridge",
 ]
-

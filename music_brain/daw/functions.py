@@ -8,7 +8,6 @@ standard DAW functions including transport, tracks, MIDI editing, mixing, etc.
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Tuple, Any
 from enum import Enum
-from pathlib import Path
 
 
 # =============================================================================
@@ -63,34 +62,34 @@ class Transport:
     loop_start: float = 0.0
     loop_end: float = 4.0
     is_looping: bool = False
-    
+
     def play(self) -> None:
         """Start playback."""
         self.state = TransportState.PLAYING
-    
+
     def stop(self) -> None:
         """Stop playback and return to start."""
         self.state = TransportState.STOPPED
         self.position = 0.0
-    
+
     def pause(self) -> None:
         """Pause playback at current position."""
         self.state = TransportState.PAUSED
-    
+
     def record(self) -> None:
         """Start recording."""
         self.state = TransportState.RECORDING
-    
+
     def set_loop(self, start: float, end: float) -> None:
         """Set loop region in bars."""
         self.loop_start = start
         self.loop_end = end
         self.is_looping = True
-    
+
     def toggle_loop(self) -> None:
         """Toggle loop on/off."""
         self.is_looping = not self.is_looping
-    
+
     def go_to_position(self, position: float) -> None:
         """Jump to position in bars."""
         self.position = position
@@ -115,39 +114,39 @@ class Track:
     output_bus: Optional[str] = None
     instrument: Optional[int] = None  # GM program number
     color: str = "#667eea"
-    
+
     # Effects
     inserts: List[str] = field(default_factory=list)  # Effect names/IDs
     sends: Dict[str, float] = field(default_factory=dict)  # Bus name -> send level
-    
+
     def set_volume(self, db: float) -> None:
         """Set track volume in dB."""
         self.volume = max(-60.0, min(12.0, db))
-    
+
     def set_pan(self, pan: float) -> None:
         """Set pan position (-1.0 to 1.0)."""
         self.pan = max(-1.0, min(1.0, pan))
-    
+
     def toggle_mute(self) -> None:
         """Toggle mute."""
         self.mute = not self.mute
-    
+
     def toggle_solo(self) -> None:
         """Toggle solo."""
         self.solo = not self.solo
-    
+
     def add_insert(self, effect_name: str, position: int = -1) -> None:
         """Add insert effect."""
         if position == -1:
             self.inserts.append(effect_name)
         else:
             self.inserts.insert(position, effect_name)
-    
+
     def remove_insert(self, effect_name: str) -> None:
         """Remove insert effect."""
         if effect_name in self.inserts:
             self.inserts.remove(effect_name)
-    
+
     def set_send(self, bus_name: str, level: float) -> None:
         """Set send level to bus."""
         self.sends[bus_name] = max(0.0, min(1.0, level))
@@ -165,11 +164,11 @@ class MIDINote:
     start_time: float  # Bars
     duration: float  # Bars
     channel: int = 0
-    
+
     def transpose(self, semitones: int) -> None:
         """Transpose note."""
         self.pitch = max(0, min(127, self.pitch + semitones))
-    
+
     def set_velocity(self, velocity: int) -> None:
         """Set velocity."""
         self.velocity = max(0, min(127, velocity))
@@ -178,7 +177,7 @@ class MIDINote:
 @dataclass
 class MIDIEditor:
     """MIDI editing functions reference."""
-    
+
     @staticmethod
     def quantize(
         notes: List[MIDINote],
@@ -187,12 +186,12 @@ class MIDIEditor:
     ) -> List[MIDINote]:
         """
         Quantize notes to grid.
-        
+
         Args:
             notes: List of MIDI notes
             grid: Quantization grid
             strength: Quantization strength (0.0-1.0)
-        
+
         Returns:
             Quantized notes
         """
@@ -201,7 +200,7 @@ class MIDIEditor:
             grid_value = 1.0 / grid.value
         else:
             grid_value = 1.0 / 16  # Default to 16th notes
-        
+
         quantized = []
         for note in notes:
             new_note = MIDINote(
@@ -211,16 +210,16 @@ class MIDIEditor:
                 duration=note.duration,
                 channel=note.channel,
             )
-            
+
             # Quantize start time
             original = new_note.start_time
             quantized_time = round(original / grid_value) * grid_value
             new_note.start_time = original + (quantized_time - original) * strength
-            
+
             quantized.append(new_note)
-        
+
         return quantized
-    
+
     @staticmethod
     def humanize(
         notes: List[MIDINote],
@@ -229,17 +228,17 @@ class MIDIEditor:
     ) -> List[MIDINote]:
         """
         Humanize notes (add slight randomness).
-        
+
         Args:
             notes: List of MIDI notes
             timing_variance: Timing variance in bars
             velocity_variance: Velocity variance (0-127)
-        
+
         Returns:
             Humanized notes
         """
         import random
-        
+
         humanized = []
         for note in notes:
             new_note = MIDINote(
@@ -249,18 +248,18 @@ class MIDIEditor:
                 duration=note.duration,
                 channel=note.channel,
             )
-            
+
             # Add timing variance
             new_note.start_time += random.uniform(-timing_variance, timing_variance)
-            
+
             # Add velocity variance
             vel_change = random.randint(-int(velocity_variance), int(velocity_variance))
             new_note.velocity = max(1, min(127, new_note.velocity + vel_change))
-            
+
             humanized.append(new_note)
-        
+
         return humanized
-    
+
     @staticmethod
     def transpose_notes(notes: List[MIDINote], semitones: int) -> List[MIDINote]:
         """Transpose all notes."""
@@ -275,7 +274,7 @@ class MIDIEditor:
             )
             transposed.append(new_note)
         return transposed
-    
+
     @staticmethod
     def scale_velocity(notes: List[MIDINote], factor: float) -> List[MIDINote]:
         """Scale all velocities by factor."""
@@ -304,18 +303,18 @@ class MixerChannel:
     pan: float = 0.0
     mute: bool = False
     solo: bool = False
-    
+
     # EQ (simplified - 3-band)
     eq_low_gain: float = 0.0  # dB
     eq_mid_gain: float = 0.0
     eq_high_gain: float = 0.0
-    
+
     # Compression (simplified)
     compressor_threshold: float = -12.0  # dB
     compressor_ratio: float = 4.0
     compressor_attack: float = 0.003  # seconds
     compressor_release: float = 0.1  # seconds
-    
+
     # Reverb send
     reverb_send: float = 0.0  # 0.0-1.0
 
@@ -332,28 +331,28 @@ class DAWProject:
     time_signature: Tuple[int, int] = (4, 4)
     key: str = "C"
     mode: str = "major"
-    
+
     tracks: List[Track] = field(default_factory=list)
     transport: Transport = field(default_factory=Transport)
-    
+
     # Timeline markers
     markers: List[Dict[str, Any]] = field(default_factory=list)
-    
+
     def add_track(self, track: Track) -> None:
         """Add track to project."""
         self.tracks.append(track)
-    
+
     def remove_track(self, track_name: str) -> None:
         """Remove track by name."""
         self.tracks = [t for t in self.tracks if t.name != track_name]
-    
+
     def get_track(self, track_name: str) -> Optional[Track]:
         """Get track by name."""
         for track in self.tracks:
             if track.name == track_name:
                 return track
         return None
-    
+
     def add_marker(self, name: str, position: float) -> None:
         """Add timeline marker."""
         self.markers.append({
@@ -445,4 +444,3 @@ def get_mixing_reference() -> Dict[str, str]:
 def get_project_reference() -> Dict[str, str]:
     """Get project management reference."""
     return DAW_FUNCTIONS_REFERENCE["project"]
-

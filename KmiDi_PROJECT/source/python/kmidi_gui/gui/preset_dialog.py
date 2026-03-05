@@ -118,11 +118,13 @@ class PresetDialog(QWidget):
             self.preset_manager.save_preset(preset, self.project_path)
             self._refresh_list()
             self.preset_saved.emit(preset)
-            QMessageBox.information(self, "Preset Saved",
-                                     f"Preset '{name}' saved successfully.")
+            QMessageBox.information(
+                self, "Preset Saved",
+                f"Preset '{name}' saved successfully.")
         except Exception as e:
-            QMessageBox.critical(self, "Save Failed",
-                                  f"Failed to save preset: {e}")
+            QMessageBox.critical(
+                self, "Save Failed",
+                f"Failed to save preset: {e}")
 
     def _on_load_clicked(self):
         """Handle load button click."""
@@ -145,7 +147,9 @@ class PresetDialog(QWidget):
 
         self.current_preset = preset
         self.preset_loaded.emit(preset)
-        QMessageBox.information(self, "Preset Loaded", f"Preset '{preset.name}' loaded successfully.")
+        QMessageBox.information(
+            self, "Preset Loaded",
+            f"Preset '{preset.name}' loaded successfully.")
 
     def _on_delete_clicked(self):
         """Handle delete button click."""
@@ -209,4 +213,3 @@ class PresetDialog(QWidget):
             teaching_mode=teaching_mode,
             trust_settings=trust_settings,
         )
-

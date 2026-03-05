@@ -9,9 +9,9 @@ Provides a common interface for running inference with:
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Union
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Dict, List, Optional
 import numpy as np
 import time
 
@@ -475,24 +475,22 @@ def create_engine_by_name(name: str) -> Optional[InferenceEngine]:
     return None
 
 
-
 def load_model(model_path: str, backend: str = "auto") -> Optional[InferenceEngine]:
     """
     Load a model from a file path and return an inference engine.
-    
+
     Args:
         model_path: Path to the model file
         backend: Backend to use ("auto", "onnx", "torch", "coreml", "tflite")
-        
+
     Returns:
         Inference engine if successful, None otherwise
     """
-    from pathlib import Path
-    
+
     path = Path(model_path)
     if not path.exists():
         return None
-    
+
     # Auto-detect backend from file extension
     if backend == "auto":
         ext = path.suffix.lower()
@@ -506,7 +504,7 @@ def load_model(model_path: str, backend: str = "auto") -> Optional[InferenceEngi
             backend = "tflite"
         else:
             return None
-    
+
     backend_map = {
         "onnx": ModelBackend.ONNX,
         "torch": ModelBackend.PYTORCH,
@@ -514,11 +512,11 @@ def load_model(model_path: str, backend: str = "auto") -> Optional[InferenceEngi
         "coreml": ModelBackend.COREML,
         "tflite": ModelBackend.TENSORFLOW_LITE,
     }
-    
+
     model_backend = backend_map.get(backend)
     if not model_backend:
         return None
-    
+
     # Create a minimal ModelInfo for loading
     model_info = ModelInfo(
         name=path.stem,
@@ -526,9 +524,8 @@ def load_model(model_path: str, backend: str = "auto") -> Optional[InferenceEngi
         backend=model_backend,
         task=None,  # Will be inferred if needed
     )
-    
+
     try:
         return create_engine(model_info)
     except Exception:
         return None
-

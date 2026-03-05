@@ -20,7 +20,8 @@ Usage:
     from penta_core.ml.augmentation import AudioAugmentor, ChainedAugmentation
 
     augmentor = AudioAugmentor()
-    augmented_audio = augmentor.augment(audio, sr=16000, augmentations=['pitch_shift', 'time_stretch'])
+    augmented_audio = augmentor.augment(audio, sr=16000, augmentations=['pitch_shift', 'time_stretch'])  # noqa: E501
+
 
     # For training
     chain = ChainedAugmentation([
@@ -34,8 +35,8 @@ from __future__ import annotations
 
 import logging
 import random
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from dataclasses import dataclass
+from typing import Any, List, Optional, Tuple
 
 import numpy as np
 
@@ -645,7 +646,8 @@ class ChainedAugmentation:
 class RandomChoice:
     """Randomly choose one augmentation from a list."""
 
-    def __init__(self, augmentations: List[BaseAugmentation], weights: Optional[List[float]] = None):
+    def __init__(self, augmentations: List[BaseAugmentation],
+                 weights: Optional[List[float]] = None):
         """
         Initialize random choice augmentation.
 
