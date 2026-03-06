@@ -16,10 +16,21 @@ from music_brain.engine_api.schema import CompleteSongIntentRequest
 
 SCHEMA_DIR = ROOT / "shared_schemas"
 SCHEMA_PATH = SCHEMA_DIR / "CompleteSongIntentRequest.json"
-# Backward-compatible alias for older scripts/workflows.
+# Backward-compatible alias for older scripts/workflows (DEPRECATED: do not overwrite).
 LEGACY_SCHEMA_PATH = SCHEMA_DIR / "CompleteSongIntent.json"
 TS_OUT = ROOT / "src" / "types" / "Intent.ts"
 RUST_OUT = ROOT / "src-tauri" / "src" / "generated" / "intent.rs"
+
+
+def _unwrap_anyof_nullable(node: Dict[str, Any]) -> Dict[str, Any] | None:
+    """If *node* is ``anyOf: [{type: T}, {type: null}]`` return the non-null branch."""
+    any_of = node.get("anyOf")
+    if not isinstance(any_of, list) or len(any_of) != 2:
+        return None
+    non_null = [b for b in any_of if b.get("type") != "null"]
+    if len(non_null) == 1:
+        return non_null[0]
+    return None
 
 
 def _model_schema() -> Dict[str, Any]:
@@ -41,6 +52,10 @@ def _json_to_ts(name: str, node: Dict[str, Any], schema: Dict[str, Any]) -> str:
         ref_name = node["$ref"].split("/")[-1]
         return ref_name
 
+    nullable_inner = _unwrap_anyof_nullable(node)
+    if nullable_inner is not None:
+        return f"{_json_to_ts(name, nullable_inner, schema)} | null"
+
     node_type = node.get("type")
     if "enum" in node:
         return " | ".join(f'"{value}"' for value in node["enum"])
@@ -59,6 +74,9 @@ def _json_to_ts(name: str, node: Dict[str, Any], schema: Dict[str, Any]) -> str:
         lines = ["{"]
         for key, value in props.items():
             optional = "" if key in required else "?"
+            desc = value.get("description")
+            if desc:
+                lines.append(f"  /** {desc} */")
             lines.append(f"  {key}{optional}: {_json_to_ts(key, value, schema)};")
         lines.append("}")
         return "\n".join(lines)
@@ -69,6 +87,10 @@ def _json_to_rust_type(node: Dict[str, Any], required: bool = True) -> str:
     if "$ref" in node:
         base = node["$ref"].split("/")[-1]
         return base if required else f"Option<{base}>"
+
+    nullable_inner = _unwrap_anyof_nullable(node)
+    if nullable_inner is not None:
+        return f"Option<{_json_to_rust_type(nullable_inner, required=True)}>"
 
     node_type = node.get("type")
     if node_type == "string":
@@ -137,14 +159,14 @@ def sync_boundaries() -> None:
     schema = _model_schema()
     schema_payload = json.dumps(schema, indent=2) + "\n"
     SCHEMA_PATH.write_text(schema_payload, encoding="utf-8")
-    LEGACY_SCHEMA_PATH.write_text(schema_payload, encoding="utf-8")
+    # DO NOT OVERWRITE LEGACY_SCHEMA_PATH - it is a distinct internal contract.
     TS_OUT.write_text(_render_typescript(schema), encoding="utf-8")
     RUST_OUT.write_text(_render_rust(schema), encoding="utf-8")
 
     print("Schema exported to:", SCHEMA_PATH)
-    print("Legacy schema alias updated:", LEGACY_SCHEMA_PATH)
     print("TypeScript contract written to:", TS_OUT)
     print("Rust contract written to:", RUST_OUT)
+    print("Contract sync complete.")
     print("Next steps for CI:")
     print("-> python scripts/sync_entities.py")
     print("-> verify generated artifacts are committed")
@@ -152,4 +174,3 @@ def sync_boundaries() -> None:
 
 if __name__ == "__main__":
     sync_boundaries()
-

@@ -26,6 +26,6 @@ pub struct CompleteSongIntentRequest {
     pub allow_legacy_fallback: Option<bool>,
     pub groove_feel: Option<String>,
     pub narrative_arc: Option<String>,
-    pub rule_to_break: Option<serde_json::Value>,
-    pub rule_justification: Option<serde_json::Value>,
+    pub rule_to_break: Option<String>,
+    pub rule_justification: Option<String>,
 }

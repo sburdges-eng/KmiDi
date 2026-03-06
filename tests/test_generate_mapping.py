@@ -1,15 +1,7 @@
-import sys
-import os
-from pathlib import Path
-
-# Add root to sys.path
-sys.path.append(str(Path(__file__).resolve().parents[1]))
-
-from music_brain.api import DAiWAPI
 from music_brain.session.intent_schema import CompleteSongIntent
 
-def test_mapping():
-    print("Testing UI-to-Engine Mapping...")
+def test_ui_to_engine_parameter_mapping():
+    """Verify that the UI payload is strictly and correctly mapped to the internal CompleteSongIntent."""
 
     # Mock payload from UI
     payload = {
@@ -31,7 +23,6 @@ def test_mapping():
     }
 
     # Simulate what happens in /generate endpoint
-    # 1. Map to strict payload for CompleteSongIntentRequest validation
     tech = payload["technical"]
     strict_payload = {
         "core_desire": payload["core_desire"],
@@ -48,8 +39,6 @@ def test_mapping():
         "rule_justification": tech.get("rule_justification"),
     }
 
-    # 2. Map to domain CompleteSongIntent
-    # In api.py we merge strict_intent.dict() with request.intent fields
     ui_data = strict_payload.copy()
     ui_data.update({
         "core_wound": payload.get("core_wound"),
@@ -60,23 +49,14 @@ def test_mapping():
 
     intent = CompleteSongIntent.from_ui_payload(ui_data)
 
-    # Assertions
-    assert intent.song_intent.mood_primary == "Serene"
-    assert intent.song_intent.vulnerability_scale == "High"  # 0.8 -> High
-    assert intent.song_intent.mood_secondary_tension == 0.2
-    assert intent.song_intent.imagery_texture == "Soft clouds"
-    assert intent.technical_constraints.technical_genre == "Ambient"
-    assert intent.technical_constraints.technical_key == "G"
-    assert intent.technical_constraints.technical_mode == "major"
-    assert intent.technical_constraints.technical_groove_feel == "Ethereal"
-    assert intent.technical_constraints.technical_rule_to_break == "HARMONY_ParallelMotion"
-    assert intent.technical_constraints.rule_breaking_justification == "Break tradition for peace"
-
-    print("Mapping test passed!")
-
-if __name__ == "__main__":
-    try:
-        test_mapping()
-    except Exception as e:
-        print(f"Test failed: {e}")
-        sys.exit(1)
+    # Assertions with descriptive messages
+    assert intent.song_intent.mood_primary == "Serene", f"Expected mood_primary 'Serene', got '{intent.song_intent.mood_primary}'"
+    assert intent.song_intent.vulnerability_scale == "High", f"Expected vulnerability_scale 'High' for 0.8, got '{intent.song_intent.vulnerability_scale}'"
+    assert intent.song_intent.mood_secondary_tension == 0.2, f"Expected tension 0.2, got {intent.song_intent.mood_secondary_tension}"
+    assert intent.song_intent.imagery_texture == "Soft clouds", f"Expected imagery 'Soft clouds', got '{intent.song_intent.imagery_texture}'"
+    assert intent.technical_constraints.technical_genre == "Ambient", f"Expected genre 'Ambient', got '{intent.technical_constraints.technical_genre}'"
+    assert intent.technical_constraints.technical_key == "G", f"Expected key 'G', got '{intent.technical_constraints.technical_key}'"
+    assert intent.technical_constraints.technical_mode == "major", f"Expected mode 'major', got '{intent.technical_constraints.technical_mode}'"
+    assert intent.technical_constraints.technical_groove_feel == "Ethereal", f"Expected groove 'Ethereal', got '{intent.technical_constraints.technical_groove_feel}'"
+    assert intent.technical_constraints.technical_rule_to_break == "HARMONY_ParallelMotion", f"Expected rule 'HARMONY_ParallelMotion', got '{intent.technical_constraints.technical_rule_to_break}'"
+    assert intent.technical_constraints.rule_breaking_justification == "Break tradition for peace", f"Expected justification 'Break tradition for peace', got '{intent.technical_constraints.rule_breaking_justification}'"

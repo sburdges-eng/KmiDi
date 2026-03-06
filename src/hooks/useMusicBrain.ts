@@ -1,4 +1,4 @@
-// Music Brain API client - connects directly to Python backend at http://127.0.0.1:8000
+import type { StructureSection, TrackIntent } from "../types/Intent";
 
 import type { StructureSection, TrackIntent } from '../types/Intent';
 
