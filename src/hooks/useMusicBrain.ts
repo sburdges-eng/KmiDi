@@ -1,5 +1,7 @@
 import type { StructureSection, TrackIntent } from "../types/Intent";
 
+import type { StructureSection, TrackIntent } from '../types/Intent';
+
 const API_BASE = 'http://127.0.0.1:8000';
 
 export interface EmotionalIntent {
