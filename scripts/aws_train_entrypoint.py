@@ -67,17 +67,27 @@ def require_aws_gpu() -> None:
         is_aws = uuid_value.startswith("ec2")
 
     if not is_aws:
-        raise RuntimeError("AWS check failed: training entrypoint can run only on AWS GPU instances.")
+        raise RuntimeError(
+            "AWS check failed: training entrypoint can run only on AWS GPU instances."
+        )
 
     if shutil.which("nvidia-smi") is None:
-        raise RuntimeError("GPU check failed: nvidia-smi not found. This runner must execute on AWS GPU instances.")
-    process = subprocess.run(["nvidia-smi", "-L"], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        raise RuntimeError(
+            "GPU check failed: nvidia-smi not found. This runner must execute on AWS GPU instances."
+        )
+    process = subprocess.run(
+        ["nvidia-smi", "-L"], check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     if process.returncode != 0 or not process.stdout.strip():
-        raise RuntimeError("GPU check failed: no NVIDIA GPU detected. Training is restricted to AWS GPU instances.")
+        raise RuntimeError(
+            "GPU check failed: no NVIDIA GPU detected. Training is restricted to AWS GPU instances."
+        )
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="AWS training entrypoint for listening-contract models.")
+    parser = argparse.ArgumentParser(
+        description="AWS training entrypoint for listening-contract models."
+    )
     parser.add_argument(
         "--package-s3-uri",
         default="",
@@ -94,20 +104,26 @@ def parse_args() -> argparse.Namespace:
         default="",
         help="S3 URI root for training artifacts. Defaults from run contract.",
     )
-    parser.add_argument("--package-id", default="", help="Package ID used when --package-s3-uri is omitted")
+    parser.add_argument(
+        "--package-id", default="", help="Package ID used when --package-s3-uri is omitted"
+    )
     parser.add_argument("--run-id", default="", help="Run ID; default uses UTC timestamp")
     parser.add_argument("--workdir", type=Path, default=Path("/tmp/listening-train"))
     parser.add_argument("--teacher-hf-model", default="", help="Optional HF teacher model ID")
     parser.add_argument("--teacher-hf-revision", default="main")
     parser.add_argument("--hf-token-env", default="HF_TOKEN")
-    parser.add_argument("--allow-non-aws", action="store_true", help="Bypass AWS GPU enforcement (debug only)")
+    parser.add_argument(
+        "--allow-non-aws", action="store_true", help="Bypass AWS GPU enforcement (debug only)"
+    )
     parser.add_argument(
         "--run-contract",
         type=Path,
         default=DEFAULT_RUN_CONTRACT_PATH,
         help="Run contract config path (YAML/JSON).",
     )
-    parser.add_argument("--dry-run", action="store_true", help="Print resolved S3/run details and exit")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Print resolved S3/run details and exit"
+    )
     parser.add_argument(
         "--checkpoint-cadence-steps",
         type=int,
@@ -158,24 +174,33 @@ def resolve_training_uris(
 ) -> tuple[str, str]:
     package_uri = args.package_s3_uri.strip()
     if not package_uri:
-        package_id = args.package_id.strip() or str(
-            run_contract_get(contract, "training", "activePackageId", default="")
-        ).strip()
+        package_id = (
+            args.package_id.strip()
+            or str(run_contract_get(contract, "training", "activePackageId", default="")).strip()
+        )
         package_bucket = str(run_contract_get(contract, "s3", "packageBucket", default="")).strip()
         package_prefix_root = str(
             run_contract_get(contract, "s3", "packagePrefix", default="training/packages")
         ).strip("/")
         if not package_id:
-            raise ValueError("Missing package id: provide --package-s3-uri, --package-id, or training.activePackageId")
+            raise ValueError(
+                "Missing package id: provide --package-s3-uri, --package-id, or training.activePackageId"
+            )
         if not package_bucket:
-            raise ValueError("Missing package bucket: provide --package-s3-uri or set s3.packageBucket")
-        package_prefix = f"{package_prefix_root}/{package_id}" if package_prefix_root else package_id
+            raise ValueError(
+                "Missing package bucket: provide --package-s3-uri or set s3.packageBucket"
+            )
+        package_prefix = (
+            f"{package_prefix_root}/{package_id}" if package_prefix_root else package_id
+        )
         package_uri = build_s3_uri(package_bucket, package_prefix)
 
     output_uri = args.output_s3_uri.strip()
     if not output_uri:
         run_bucket = str(run_contract_get(contract, "s3", "runBucket", default="")).strip()
-        run_prefix = str(run_contract_get(contract, "s3", "runPrefix", default="training/runs")).strip("/")
+        run_prefix = str(
+            run_contract_get(contract, "s3", "runPrefix", default="training/runs")
+        ).strip("/")
         if not run_bucket:
             raise ValueError("Missing run bucket: provide --output-s3-uri or set s3.runBucket")
         output_uri = build_s3_uri(run_bucket, run_prefix)
@@ -188,8 +213,13 @@ def resolve_max_total_checkpoints(args: argparse.Namespace, contract: dict[str, 
     if not isinstance(policy, dict):
         policy = {}
 
-    resolved = args.max_total_checkpoints if args.max_total_checkpoints > 0 else int(
-        policy.get("maxTotalCheckpoints", args.max_checkpoints + 1) or (args.max_checkpoints + 1)
+    resolved = (
+        args.max_total_checkpoints
+        if args.max_total_checkpoints > 0
+        else int(
+            policy.get("maxTotalCheckpoints", args.max_checkpoints + 1)
+            or (args.max_checkpoints + 1)
+        )
     )
     if resolved <= 0:
         raise ValueError("max total checkpoints must be > 0")
@@ -200,20 +230,32 @@ def resolve_max_total_checkpoints(args: argparse.Namespace, contract: dict[str, 
     return resolved
 
 
-def resolve_early_stop_settings(args: argparse.Namespace, contract: dict[str, Any]) -> dict[str, Any]:
+def resolve_early_stop_settings(
+    args: argparse.Namespace, contract: dict[str, Any]
+) -> dict[str, Any]:
     policy = run_contract_get(contract, "training", "earlyStop", default={})
     if not isinstance(policy, dict):
         policy = {}
 
     enabled = args.early_stop_enabled or normalize_boolish(policy.get("enabled", False))
-    patience = args.early_stop_patience if args.early_stop_patience > 0 else int(policy.get("patience", 0) or 0)
+    patience = (
+        args.early_stop_patience
+        if args.early_stop_patience > 0
+        else int(policy.get("patience", 0) or 0)
+    )
     min_delta = (
         args.early_stop_min_delta
         if args.early_stop_min_delta >= 0
         else float(policy.get("minDelta", 0.0) or 0.0)
     )
-    min_epochs = args.early_stop_min_epochs if args.early_stop_min_epochs > 0 else int(policy.get("minEpochs", 0) or 0)
-    metric_path = args.early_stop_metric.strip() or str(policy.get("metricPath", "student.intent.val_macro_f1"))
+    min_epochs = (
+        args.early_stop_min_epochs
+        if args.early_stop_min_epochs > 0
+        else int(policy.get("minEpochs", 0) or 0)
+    )
+    metric_path = args.early_stop_metric.strip() or str(
+        policy.get("metricPath", "student.intent.val_macro_f1")
+    )
     auto_shutdown = bool(args.auto_shutdown_on_complete)
 
     if enabled and patience <= 0:
@@ -269,7 +311,9 @@ def prune_checkpoints(
     if final_export_path is not None:
         final_export_name = final_export_path.name
         if not final_export_path.exists():
-            raise RuntimeError(f"Final export missing before checkpoint pruning: {final_export_path}")
+            raise RuntimeError(
+                f"Final export missing before checkpoint pruning: {final_export_path}"
+            )
 
     checkpoint_files = sorted(checkpoint_dir.glob("checkpoint-step-*.json"))
     if not checkpoint_files:
@@ -308,8 +352,10 @@ def prune_checkpoints(
                 continue
             scored.append((metric, path))
         if scored:
-            best_metric, best_path = max(scored, key=lambda item: item[0]) if higher_is_better else min(
-                scored, key=lambda item: item[0]
+            best_metric, best_path = (
+                max(scored, key=lambda item: item[0])
+                if higher_is_better
+                else min(scored, key=lambda item: item[0])
             )
             _ = best_metric
             keep.add(best_path)
@@ -425,7 +471,11 @@ def train_intent_softmax(
         bias -= lr * grad_b
         last_epoch = epoch
 
-        if checkpoint_callback and checkpoint_cadence_steps > 0 and (epoch % checkpoint_cadence_steps == 0):
+        if (
+            checkpoint_callback
+            and checkpoint_cadence_steps > 0
+            and (epoch % checkpoint_cadence_steps == 0)
+        ):
             checkpoint_callback(epoch, weights.copy(), bias.copy())
 
         if epoch_callback and not epoch_callback(epoch, weights.copy(), bias.copy()):
@@ -467,7 +517,11 @@ def train_intent_student(
         bias -= lr * grad_b
         last_epoch = epoch
 
-        if checkpoint_callback and checkpoint_cadence_steps > 0 and (epoch % checkpoint_cadence_steps == 0):
+        if (
+            checkpoint_callback
+            and checkpoint_cadence_steps > 0
+            and (epoch % checkpoint_cadence_steps == 0)
+        ):
             checkpoint_callback(epoch, weights.copy(), bias.copy())
 
         if epoch_callback and not epoch_callback(epoch, weights.copy(), bias.copy()):
@@ -541,7 +595,9 @@ def mean_squared_error(y_true, y_pred) -> float:
     return float(np.mean((y_true - y_pred) ** 2))
 
 
-def load_manifest_and_shards(s3_client: object, package_uri: str, local_root: Path) -> dict[str, dict[str, Any]]:
+def load_manifest_and_shards(
+    s3_client: object, package_uri: str, local_root: Path
+) -> dict[str, dict[str, Any]]:
     bucket, prefix = parse_s3_uri(package_uri)
     manifests: dict[str, dict[str, Any]] = {}
 
@@ -614,7 +670,9 @@ def load_manifest_from_local_package(package_root: Path) -> dict[str, dict[str, 
     return manifests
 
 
-def load_task_split_records(task_dir: Path, manifest: dict[str, Any], split_name: str) -> list[dict[str, Any]]:
+def load_task_split_records(
+    task_dir: Path, manifest: dict[str, Any], split_name: str
+) -> list[dict[str, Any]]:
     split_payload = manifest.get("splits", {}).get(split_name, {})
     if not isinstance(split_payload, dict):
         return []
@@ -718,7 +776,9 @@ def run_training(args: argparse.Namespace) -> dict[str, Any]:
         raise RuntimeError("numpy is required on AWS training hosts") from exc
 
     workdir = args.workdir
-    package_local = args.package_local_dir if args.package_local_dir is not None else workdir / "package"
+    package_local = (
+        args.package_local_dir if args.package_local_dir is not None else workdir / "package"
+    )
     package_local = package_local.resolve()
     upload_root = workdir / "upload_bundle"
     artifacts_root = upload_root / "artifacts"
@@ -740,12 +800,16 @@ def run_training(args: argparse.Namespace) -> dict[str, Any]:
     if args.package_local_dir is not None:
         manifests = load_manifest_from_local_package(package_local)
     else:
-        manifests = load_manifest_and_shards(s3_client=s3_client, package_uri=args.package_s3_uri, local_root=package_local)
+        manifests = load_manifest_and_shards(
+            s3_client=s3_client, package_uri=args.package_s3_uri, local_root=package_local
+        )
 
     notices: list[ThirdPartyNotice] = []
     hf_token = os.environ.get(args.hf_token_env, "")
     if args.teacher_hf_model:
-        license_id, _ = validate_hf_model_license(args.teacher_hf_model, token=hf_token, allowlist=ALLOWED_LICENSES)
+        license_id, _ = validate_hf_model_license(
+            args.teacher_hf_model, token=hf_token, allowlist=ALLOWED_LICENSES
+        )
         notices.append(
             ThirdPartyNotice(
                 name=args.teacher_hf_model,
@@ -894,12 +958,16 @@ def run_training(args: argparse.Namespace) -> dict[str, Any]:
         }
         write_json(student_eval_summary_path, live_summary)
 
-        metric_from_summary = read_metric_from_summary(student_eval_summary_path, args.early_stop_metric)
+        metric_from_summary = read_metric_from_summary(
+            student_eval_summary_path, args.early_stop_metric
+        )
         if metric_from_summary is None:
             metric_from_summary = metric_for_stop
 
         best_metric = early_stop_state["bestMetric"]
-        improved_after_read = best_metric is None or metric_from_summary > (float(best_metric) + float(args.early_stop_min_delta))
+        improved_after_read = best_metric is None or metric_from_summary > (
+            float(best_metric) + float(args.early_stop_min_delta)
+        )
         if improved_after_read:
             early_stop_state["bestMetric"] = metric_from_summary
             early_stop_state["bestEpoch"] = epoch
@@ -945,10 +1013,18 @@ def run_training(args: argparse.Namespace) -> dict[str, Any]:
         student_intent_w = best_student_weights
         student_intent_b = best_student_bias
 
-    teacher_intent_val_pred = intent_predict_labels(x_intent_val, teacher_intent_w, teacher_intent_b)
-    teacher_intent_test_pred = intent_predict_labels(x_intent_test, teacher_intent_w, teacher_intent_b)
-    student_intent_val_pred = intent_predict_labels(x_student_val, student_intent_w, student_intent_b)
-    student_intent_test_pred = intent_predict_labels(x_student_test, student_intent_w, student_intent_b)
+    teacher_intent_val_pred = intent_predict_labels(
+        x_intent_val, teacher_intent_w, teacher_intent_b
+    )
+    teacher_intent_test_pred = intent_predict_labels(
+        x_intent_test, teacher_intent_w, teacher_intent_b
+    )
+    student_intent_val_pred = intent_predict_labels(
+        x_student_val, student_intent_w, student_intent_b
+    )
+    student_intent_test_pred = intent_predict_labels(
+        x_student_test, student_intent_w, student_intent_b
+    )
 
     x_axis_train = vectorize_texts(axis_data["train"].texts, args.intent_dim)
     x_axis_val = vectorize_texts(axis_data["val"].texts, args.intent_dim)
@@ -965,8 +1041,12 @@ def run_training(args: argparse.Namespace) -> dict[str, Any]:
     x_axis_student_val = vectorize_texts(axis_data["val"].texts, args.student_intent_dim)
     x_axis_student_test = vectorize_texts(axis_data["test"].texts, args.student_intent_dim)
 
-    blended_axis_targets = (args.distill_alpha * y_axis_train) + ((1.0 - args.distill_alpha) * teacher_axis_train_pred)
-    student_axis_w, student_axis_b = train_axis_ridge(x_axis_student_train, blended_axis_targets, l2=args.axis_l2)
+    blended_axis_targets = (args.distill_alpha * y_axis_train) + (
+        (1.0 - args.distill_alpha) * teacher_axis_train_pred
+    )
+    student_axis_w, student_axis_b = train_axis_ridge(
+        x_axis_student_train, blended_axis_targets, l2=args.axis_l2
+    )
 
     teacher_axis_val_pred = axis_predict(x_axis_val, teacher_axis_w, teacher_axis_b)
     teacher_axis_test_pred = axis_predict(x_axis_test, teacher_axis_w, teacher_axis_b)
@@ -977,8 +1057,12 @@ def run_training(args: argparse.Namespace) -> dict[str, Any]:
         "intent": {
             "val_accuracy": accuracy(intent_data["val"].labels, teacher_intent_val_pred),
             "test_accuracy": accuracy(intent_data["test"].labels, teacher_intent_test_pred),
-            "val_macro_f1": macro_f1(intent_data["val"].labels, teacher_intent_val_pred, len(INTENT_LABEL_TO_ID)),
-            "test_macro_f1": macro_f1(intent_data["test"].labels, teacher_intent_test_pred, len(INTENT_LABEL_TO_ID)),
+            "val_macro_f1": macro_f1(
+                intent_data["val"].labels, teacher_intent_val_pred, len(INTENT_LABEL_TO_ID)
+            ),
+            "test_macro_f1": macro_f1(
+                intent_data["test"].labels, teacher_intent_test_pred, len(INTENT_LABEL_TO_ID)
+            ),
         },
         "axis": {
             "val_mse": mean_squared_error(y_axis_val, teacher_axis_val_pred),
@@ -990,8 +1074,12 @@ def run_training(args: argparse.Namespace) -> dict[str, Any]:
         "intent": {
             "val_accuracy": accuracy(intent_data["val"].labels, student_intent_val_pred),
             "test_accuracy": accuracy(intent_data["test"].labels, student_intent_test_pred),
-            "val_macro_f1": macro_f1(intent_data["val"].labels, student_intent_val_pred, len(INTENT_LABEL_TO_ID)),
-            "test_macro_f1": macro_f1(intent_data["test"].labels, student_intent_test_pred, len(INTENT_LABEL_TO_ID)),
+            "val_macro_f1": macro_f1(
+                intent_data["val"].labels, student_intent_val_pred, len(INTENT_LABEL_TO_ID)
+            ),
+            "test_macro_f1": macro_f1(
+                intent_data["test"].labels, student_intent_test_pred, len(INTENT_LABEL_TO_ID)
+            ),
         },
         "axis": {
             "val_mse": mean_squared_error(y_axis_val, student_axis_val_pred),
@@ -1039,7 +1127,9 @@ def run_training(args: argparse.Namespace) -> dict[str, Any]:
     student_bundle_path = student_dir / "model_bundle.json"
     write_model_artifact(teacher_bundle_path, teacher_artifacts)
     write_model_artifact(student_bundle_path, student_artifacts)
-    write_json(teacher_dir / "eval_summary.json", {"status": "complete", "teacher": teacher_metrics})
+    write_json(
+        teacher_dir / "eval_summary.json", {"status": "complete", "teacher": teacher_metrics}
+    )
     write_json(
         student_dir / "eval_summary.json",
         {
@@ -1113,7 +1203,9 @@ def run_training(args: argparse.Namespace) -> dict[str, Any]:
     assert_teacher_prefix(upload_root)
 
     output_uri = args.output_s3_uri.rstrip("/") + f"/{args.run_id}"
-    uploaded_files = upload_directory_to_s3(s3_client=s3_client, local_root=upload_root, s3_uri=output_uri)
+    uploaded_files = upload_directory_to_s3(
+        s3_client=s3_client, local_root=upload_root, s3_uri=output_uri
+    )
 
     result = {
         "runId": args.run_id,
@@ -1150,7 +1242,9 @@ def main() -> int:
     else:
         if not args.output_s3_uri:
             run_bucket = str(run_contract_get(contract, "s3", "runBucket", default="")).strip()
-            run_prefix = str(run_contract_get(contract, "s3", "runPrefix", default="training/runs")).strip("/")
+            run_prefix = str(
+                run_contract_get(contract, "s3", "runPrefix", default="training/runs")
+            ).strip("/")
             if not run_bucket:
                 raise ValueError("Missing run bucket: provide --output-s3-uri or set s3.runBucket")
             args.output_s3_uri = build_s3_uri(run_bucket, run_prefix)
@@ -1174,7 +1268,11 @@ def main() -> int:
     package_resolved: dict[str, Any]
     if args.package_local_dir is None:
         package_bucket, package_prefix = parse_s3_uri(args.package_s3_uri)
-        package_resolved = {"bucket": package_bucket, "prefix": package_prefix, "uri": args.package_s3_uri}
+        package_resolved = {
+            "bucket": package_bucket,
+            "prefix": package_prefix,
+            "uri": args.package_s3_uri,
+        }
     else:
         package_resolved = {"localDir": str(args.package_local_dir.resolve())}
     output_bucket, output_prefix = parse_s3_uri(args.output_s3_uri)
@@ -1187,7 +1285,11 @@ def main() -> int:
             "runId": args.run_id,
             "resolved": {
                 "package": package_resolved,
-                "outputRoot": {"bucket": output_bucket, "prefix": output_prefix, "uri": args.output_s3_uri},
+                "outputRoot": {
+                    "bucket": output_bucket,
+                    "prefix": output_prefix,
+                    "uri": args.output_s3_uri,
+                },
                 "outputRun": {
                     "bucket": resolved_output_bucket,
                     "prefix": resolved_output_prefix,
