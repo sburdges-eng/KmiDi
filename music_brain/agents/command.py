@@ -218,7 +218,6 @@ class Command(ABC):
 
     def _capture_state(self) -> None:
         """Capture relevant state before execution. Override as needed."""
-        pass
 
     def get_metadata(self) -> CommandMetadata:
         """Get command metadata."""

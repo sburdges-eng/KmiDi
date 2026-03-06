@@ -26,36 +26,25 @@ from dataclasses import dataclass, asdict
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-try:
-    import torch
-    TORCH_AVAILABLE = True
 # Load environment variables from project root
-from pathlib import Path
-import sys
-
-# Add project root to path if not already there
-project_root = Path(__file__).resolve().parent.parent.parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
+_env_root = Path(__file__).resolve().parent.parent.parent.parent
+if str(_env_root) not in sys.path:
+    sys.path.insert(0, str(_env_root))
 
 try:
     from python.kmidi_env import load_kmidi_env
-    # Determine features based on file location
-    features = []
-    file_str = str(Path(__file__))
-    if 'training' in file_str or 'train' in file_str:
-        features.extend(['ml', 'training'])
-    if 'mcp' in file_str or 'penta' in file_str:
-        features.extend(['mcp'])
-    if not features:
-        features = ['ml']  # Default to ML features
-    
-    load_kmidi_env(features=features, verbose=False)
+    load_kmidi_env(features=['ml', 'training'], verbose=False)
 except ImportError:
-    # Fallback to simple dotenv if kmidi_env not available
-    from dotenv import load_dotenv
-    load_dotenv(project_root / ".env")
-    load_dotenv(project_root / ".env.local", override=True)
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(_env_root / ".env")
+        load_dotenv(_env_root / ".env.local", override=True)
+    except ImportError:
+        pass
+
+try:
+    import torch
+    TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
     print("WARNING: PyTorch not available. Model validation will be limited.")
@@ -129,14 +118,20 @@ class ModelValidator:
             # First attempt: with weights_only=True (safe, PyTorch 2.6+ default)
             try:
                 checkpoint = torch.load(model_path, map_location='cpu', weights_only=True)
-            except Exception as e:
-                # If that fails, try with weights_only=False (needed for TorchScript and older formats)
-                # This is safe since we're loading from RECOVERY_OPS (trusted source)
+            except Exception:
+                # If that fails, try with weights_only=False
+                # (needed for TorchScript and older formats).
+                # This is safe since we're loading from
+                # RECOVERY_OPS (trusted source)
                 checkpoint = torch.load(model_path, map_location='cpu', weights_only=False)
 
             info = {
                 'validated': True,
-                'checkpoint_keys': list(checkpoint.keys()) if isinstance(checkpoint, dict) else None,
+                'checkpoint_keys': (
+                    list(checkpoint.keys())
+                    if isinstance(checkpoint, dict)
+                    else None
+                ),
             }
 
             # Check for common checkpoint structures
@@ -145,7 +140,8 @@ class ModelValidator:
                 if 'state_dict' in checkpoint:
                     state_dict = checkpoint['state_dict']
                     info['num_parameters'] = sum(p.numel() for p in state_dict.values())
-                    info['architecture'] = checkpoint.get('arch', checkpoint.get('model_name', 'unknown'))
+                    info['architecture'] = checkpoint.get(
+                        'arch', checkpoint.get('model_name', 'unknown'))
                     info['epoch'] = checkpoint.get('epoch')
                     info['checkpoint_type'] = 'state_dict'
                 elif 'model_state_dict' in checkpoint:
@@ -154,7 +150,8 @@ class ModelValidator:
                     info['architecture'] = checkpoint.get('model_type', 'unknown')
                     info['epoch'] = checkpoint.get('epoch')
                     info['checkpoint_type'] = 'model_state_dict'
-                elif any(key.endswith('.weight') or key.endswith('.bias') for key in checkpoint.keys()):
+                elif any(key.endswith('.weight') or key.endswith('.bias')
+                         for key in checkpoint.keys()):
                     # Direct state dict
                     info['num_parameters'] = sum(p.numel() for p in checkpoint.values())
                     info['checkpoint_type'] = 'direct_state_dict'
@@ -207,7 +204,7 @@ class ModelScanner:
             print(f"Scanning {ml_models_dir}...")
             search_paths = [ml_models_dir]
         else:
-            print(f"ML_TRAINED_MODELS not found, scanning entire RECOVERY_OPS...")
+            print("ML_TRAINED_MODELS not found, scanning entire RECOVERY_OPS...")
             search_paths = [self.recovery_ops_path]
 
         seen_files = set()
@@ -300,7 +297,9 @@ class ModelIntegrator:
 
         self.models_dir.mkdir(parents=True, exist_ok=True)
 
-    def integrate_model(self, model: ModelInfo, dry_run: bool = False) -> Tuple[bool, Optional[str]]:
+    def integrate_model(
+        self, model: ModelInfo, dry_run: bool = False,
+    ) -> Tuple[bool, Optional[str]]:
         """
         Copy a validated model to the project models directory.
 
@@ -444,7 +443,7 @@ def main():
     valid_models = [m for m in models if m.is_valid]
     invalid_models = [m for m in models if not m.is_valid]
 
-    print(f"Step 3: Summary")
+    print("Step 3: Summary")
     print(f"  Total found: {len(models)}")
     print(f"  Valid: {len(valid_models)}")
     print(f"  Invalid: {len(invalid_models)}")
@@ -501,7 +500,10 @@ def main():
     report = IntegrationReport(
         models_found=len(models),
         models_valid=len(valid_models),
-        models_copied=len([m for m in valid_models if m in integrated]) if 'integrated' in locals() else 0,
+        models_copied=(
+            len([m for m in valid_models if m in integrated])
+            if 'integrated' in locals() else 0
+        ),
         models_skipped=len(invalid_models) + (len(skipped) if 'skipped' in locals() else 0),
         errors=[m.error_message for m in invalid_models if m.error_message],
         details=[asdict(m) for m in models]
@@ -521,5 +523,3 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
-
-

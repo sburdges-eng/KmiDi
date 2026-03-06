@@ -1,0 +1,3 @@
+# Schema/migration manifest for KmiDi (optional).
+# Used for data schema versioning and migration tracking.
+version: "0.1.0"

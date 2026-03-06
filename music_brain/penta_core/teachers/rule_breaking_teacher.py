@@ -6,31 +6,31 @@ by intentionally breaking them, helping students understand the "why" behind
 music theory conventions.
 """
 
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Tuple
 import random
 
 # Import comprehensive rulebooks
 from .voice_leading_rules import VoiceLeadingRules, RuleSeverity
-from .harmony_rules import HarmonyRules, ChordQuality
+from .harmony_rules import HarmonyRules
 from .counterpoint_rules import CounterpointRules, Species
 
 
 class RuleBreakingTeacher:
     """
     Interactive music theory teacher that demonstrates concepts by breaking rules.
-    
+
     This teacher introduces harmonic rules (parallel fifths, voice leading,
     spacing, etc.) by showing both correct and incorrect examples, helping
     students develop critical listening and theoretical understanding.
     """
-    
+
     def __init__(self):
         """Initialize the rule-breaking teacher with comprehensive rulebook integration."""
         # Load all comprehensive rules
         self.voice_leading_rules = VoiceLeadingRules.get_all_rules()
         self.harmony_rules = HarmonyRules.get_all_rules()
         self.counterpoint_rules = CounterpointRules.get_all_rules()
-        
+
         # Legacy simple rules for backward compatibility
         self.rules = {
             "parallel_fifths": {
@@ -74,17 +74,17 @@ class RuleBreakingTeacher:
                 "severity": "medium"
             }
         }
-        
+
         self.current_rule = None
         self.violation_count = 0
-    
+
     def get_comprehensive_rules(self, context: str = "all") -> Dict[str, Any]:
         """
         Get comprehensive rules from all rulebooks.
-        
+
         Args:
             context: "classical", "jazz", "contemporary", or "all"
-            
+
         Returns:
             Dictionary containing all rules organized by category
         """
@@ -93,14 +93,14 @@ class RuleBreakingTeacher:
             "harmony": self.harmony_rules,
             "counterpoint": self.counterpoint_rules,
         }
-    
+
     def get_rules_by_severity(self, min_severity: RuleSeverity) -> Dict[str, Any]:
         """
         Get rules filtered by severity level.
-        
+
         Args:
             min_severity: Minimum severity to include
-            
+
         Returns:
             Dictionary of rules meeting severity threshold
         """
@@ -109,26 +109,26 @@ class RuleBreakingTeacher:
             "harmony": self.harmony_rules,  # Add severity filtering for harmony
             "counterpoint": self.counterpoint_rules,
         }
-    
+
     def get_species_counterpoint_rules(self, species: Species) -> Dict[str, Dict]:
         """
         Get rules for specific species counterpoint.
-        
+
         Args:
             species: Species enum (FIRST, SECOND, THIRD, FOURTH, FIFTH)
-            
+
         Returns:
             Dictionary of rules for that species
         """
         return CounterpointRules.get_species_rules(species)
-        
+
     def teach_rule(self, rule_name: str) -> Dict[str, Any]:
         """
         Teach a specific rule by showing violations and corrections.
-        
+
         Args:
             rule_name: Name of the rule to teach (e.g., "parallel_fifths")
-            
+
         Returns:
             Dictionary containing rule info, examples, and explanations
         """
@@ -137,10 +137,10 @@ class RuleBreakingTeacher:
                 "error": f"Unknown rule: {rule_name}",
                 "available_rules": list(self.rules.keys())
             }
-        
+
         self.current_rule = rule_name
         rule = self.rules[rule_name]
-        
+
         return {
             "rule": rule_name,
             "description": rule["description"],
@@ -148,20 +148,20 @@ class RuleBreakingTeacher:
             "severity": rule["severity"],
             "lesson": self._generate_lesson(rule_name)
         }
-    
+
     def _generate_lesson(self, rule_name: str) -> Dict[str, Any]:
         """
         Generate a lesson demonstrating rule violations and corrections.
-        
+
         Args:
             rule_name: The rule to create a lesson for
-            
+
         Returns:
             Dictionary with incorrect and correct examples
         """
         # This would generate actual musical examples in a full implementation
         # For now, return conceptual examples
-        
+
         lessons = {
             "parallel_fifths": {
                 "violation_example": "C-G moving to D-A (parallel perfect fifths)",
@@ -176,51 +176,52 @@ class RuleBreakingTeacher:
             "voice_crossing": {
                 "violation_example": "Alto moves below tenor line",
                 "correct_example": "Alto stays within its range above tenor",
-                "listening_tip": "Voice crossing creates momentary confusion about which voice is which"
+                "listening_tip": "Voice crossing creates momentary confusion about which voice is which"  # noqa: E501
+
             }
         }
-        
+
         return lessons.get(rule_name, {
             "violation_example": "Example violation to be implemented",
             "correct_example": "Example correction to be implemented",
             "listening_tip": "Listen for the difference in sound quality"
         })
-    
+
     def break_rule(self, rule_name: str, progression: List[List[int]]) -> Tuple[bool, str]:
         """
         Intentionally break a rule in a chord progression for demonstration.
-        
+
         Args:
             rule_name: The rule to violate
             progression: Chord progression as list of note lists (MIDI numbers)
-            
+
         Returns:
             Tuple of (was_violated, explanation)
         """
         self.violation_count += 1
-        
+
         # This would analyze and modify the progression to demonstrate the violation
         # For now, return a conceptual explanation
-        
+
         return (True, f"Demonstration {self.violation_count}: Breaking '{rule_name}' rule")
-    
+
     def quiz(self, num_questions: int = 5) -> List[Dict[str, Any]]:
         """
         Generate a quiz with examples that may or may not violate rules.
-        
+
         Args:
             num_questions: Number of quiz questions to generate
-            
+
         Returns:
             List of quiz questions with examples and correct answers
         """
         questions = []
         rule_names = list(self.rules.keys())
-        
+
         for i in range(num_questions):
             rule = random.choice(rule_names)
             has_violation = random.choice([True, False])
-            
+
             questions.append({
                 "question_num": i + 1,
                 "rule_tested": rule,
@@ -228,25 +229,25 @@ class RuleBreakingTeacher:
                 "example": f"Example progression {i+1} (to be generated)",
                 "hint": self.rules[rule]["description"]
             })
-        
+
         return questions
-    
+
     def get_all_rules(self) -> Dict[str, Dict[str, str]]:
         """
         Get information about all available rules.
-        
+
         Returns:
             Dictionary of all rules with their descriptions and metadata
         """
         return self.rules.copy()
-    
+
     def suggest_practice_progression(self, difficulty: str = "beginner") -> Dict[str, Any]:
         """
         Suggest a practice progression for learning voice leading rules.
-        
+
         Args:
             difficulty: "beginner", "intermediate", or "advanced"
-            
+
         Returns:
             Suggested practice sequence and exercises
         """
@@ -266,9 +267,9 @@ class RuleBreakingTeacher:
                 "augmented_second"
             ]
         }
-        
+
         sequence = progressions.get(difficulty, progressions["beginner"])
-        
+
         return {
             "difficulty": difficulty,
             "rule_sequence": sequence,

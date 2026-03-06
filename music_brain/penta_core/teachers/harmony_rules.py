@@ -5,7 +5,7 @@ This module provides comprehensive rules for chord construction,
 progression, and harmonic analysis.
 """
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional
 from enum import Enum
 
 
@@ -31,7 +31,7 @@ class HarmonyRules:
     - Berklee jazz harmony
     - Pop/rock harmony practices
     """
-    
+
     CHORD_CONSTRUCTION_RULES = {
         "triad_spelling": {
             "name": "Triad Spelling",
@@ -44,7 +44,7 @@ class HarmonyRules:
             },
             "note": "Intervals measured in semitones from root"
         },
-        
+
         "seventh_chords": {
             "name": "Seventh Chord Construction",
             "description": "Seventh chords add a seventh above the root",
@@ -58,7 +58,7 @@ class HarmonyRules:
                 "augmented_major7": [0, 4, 8, 11],    # M3, A5, M7
             }
         },
-        
+
         "extended_chords": {
             "name": "Extended Chord Construction",
             "description": "Chords extended beyond the 7th",
@@ -72,17 +72,17 @@ class HarmonyRules:
             "elevenths": {
                 "major11": [0, 4, 7, 11, 14, 17],    # Add P11
                 "minor11": [0, 3, 7, 10, 14, 17],    # Add P11
-                "dominant11": [0, 4, 7, 10, 14, 17], # Add P11
-                "dominant♯11": [0, 4, 7, 10, 14, 18], # Add augmented 11
+                "dominant11": [0, 4, 7, 10, 14, 17],  # Add P11
+                "dominant♯11": [0, 4, 7, 10, 14, 18],  # Add augmented 11
             },
             "thirteenths": {
                 "major13": [0, 4, 7, 11, 14, 17, 21],    # Add M13
                 "minor13": [0, 3, 7, 10, 14, 17, 21],    # Add M13
-                "dominant13": [0, 4, 7, 10, 14, 17, 21], # Add M13
+                "dominant13": [0, 4, 7, 10, 14, 17, 21],  # Add M13
             },
             "note": "Extensions typically omit the 5th and sometimes 11th"
         },
-        
+
         "altered_dominants": {
             "name": "Altered Dominant Chords",
             "description": "Dominant chords with altered 5th and/or 9th",
@@ -102,19 +102,19 @@ class HarmonyRules:
                 "7♭5": [0, 4, 6, 10],                 # Flat 5
             }
         },
-        
+
         "sus_chords": {
             "name": "Suspended Chords",
             "description": "Replace third with second or fourth",
             "types": {
                 "sus2": [0, 2, 7],      # Root, M2, P5
                 "sus4": [0, 5, 7],      # Root, P4, P5
-                "7sus4": [0, 5, 7, 10], # Root, P4, P5, m7
-                "9sus4": [0, 5, 7, 10, 14], # Add M9
+                "7sus4": [0, 5, 7, 10],  # Root, P4, P5, m7
+                "9sus4": [0, 5, 7, 10, 14],  # Add M9
             },
             "resolution": "Typically resolves to major or minor triad"
         },
-        
+
         "add_chords": {
             "name": "Add Chords",
             "description": "Add extensions without implying full extended chord",
@@ -129,7 +129,7 @@ class HarmonyRules:
             "note": "Add chords skip intermediate extensions"
         },
     }
-    
+
     FUNCTIONAL_HARMONY_RULES = {
         "tonic_function": {
             "name": "Tonic Function",
@@ -146,14 +146,14 @@ class HarmonyRules:
             ],
             "characteristic": "Stable, conclusive, home feeling"
         },
-        
+
         "dominant_function": {
             "name": "Dominant Function",
             "description": "Chords that create tension and lead to tonic",
             "major_key": [
                 "V",    # Primary dominant
                 "V7",   # Dominant seventh (stronger)
-                "vii°", # Leading tone diminished
+                "vii°",  # Leading tone diminished
                 "VII",  # Subtonic (modal)
             ],
             "minor_key": [
@@ -168,7 +168,7 @@ class HarmonyRules:
                 "seventh": "resolves down by step"
             }
         },
-        
+
         "subdominant_function": {
             "name": "Subdominant Function",
             "description": "Chords that create motion away from tonic",
@@ -184,7 +184,7 @@ class HarmonyRules:
             ],
             "characteristic": "Departure from tonic, preparation for dominant"
         },
-        
+
         "pre_dominant_function": {
             "name": "Pre-Dominant Chords",
             "description": "Chords that typically precede dominant",
@@ -192,7 +192,7 @@ class HarmonyRules:
             "note": "Subdominant function chords used before dominant"
         },
     }
-    
+
     PROGRESSION_RULES = {
         "circle_of_fifths": {
             "name": "Circle of Fifths Progressions",
@@ -205,7 +205,7 @@ class HarmonyRules:
             ],
             "note": "Root movement down P5 (up P4) is strongest progression"
         },
-        
+
         "ascending_thirds": {
             "name": "Ascending Third Progressions",
             "description": "Progressions moving up by thirds",
@@ -216,7 +216,7 @@ class HarmonyRules:
             ],
             "note": "Creates smooth bass line"
         },
-        
+
         "descending_thirds": {
             "name": "Descending Third Progressions",
             "description": "Progressions moving down by thirds",
@@ -226,7 +226,7 @@ class HarmonyRules:
                 "I → vi → ii → V",
             ]
         },
-        
+
         "stepwise_bass": {
             "name": "Stepwise Bass Motion",
             "description": "Bass moves by step (ascending or descending)",
@@ -237,7 +237,7 @@ class HarmonyRules:
             ],
             "note": "Creates conjunct bass line"
         },
-        
+
         "deceptive_cadence": {
             "name": "Deceptive Cadence",
             "description": "V → vi instead of expected V → I",
@@ -245,7 +245,7 @@ class HarmonyRules:
             "effect": "Surprise, continuation rather than conclusion",
             "voice_leading": "Keep common tones, bass moves up by step"
         },
-        
+
         "plagal_cadence": {
             "name": "Plagal Cadence (Amen)",
             "description": "IV → I progression",
@@ -253,7 +253,7 @@ class HarmonyRules:
             "context": "Church music, hymns, supplementary cadence after authentic",
             "voice_leading": "Smooth common-tone connection"
         },
-        
+
         "authentic_cadence": {
             "name": "Authentic Cadence",
             "description": "V → I progression",
@@ -264,7 +264,7 @@ class HarmonyRules:
             "strength": "Strongest conclusion",
             "voice_leading": "Leading tone → tonic, seventh → third of I"
         },
-        
+
         "half_cadence": {
             "name": "Half Cadence",
             "description": "Phrase ending on V chord",
@@ -273,7 +273,7 @@ class HarmonyRules:
             "effect": "Question, continuation needed"
         },
     }
-    
+
     JAZZ_HARMONY_RULES = {
         "ii_V_I": {
             "name": "ii-V-I Progression",
@@ -290,7 +290,7 @@ class HarmonyRules:
             },
             "voice_leading": "Guide tones (3rd & 7th) move smoothly"
         },
-        
+
         "tritone_substitution": {
             "name": "Tritone Substitution",
             "description": "Replace V⁷ with ♭II⁷ (tritone away)",
@@ -302,7 +302,7 @@ class HarmonyRules:
             },
             "voice_leading": "Creates chromatic bass motion (♭II → I)"
         },
-        
+
         "secondary_dominants": {
             "name": "Secondary Dominants",
             "description": "Dominant of non-tonic chord",
@@ -314,7 +314,7 @@ class HarmonyRules:
             },
             "effect": "Temporary tonicization of target chord"
         },
-        
+
         "modal_interchange": {
             "name": "Modal Interchange (Borrowed Chords)",
             "description": "Borrow chords from parallel minor/major",
@@ -332,7 +332,7 @@ class HarmonyRules:
             },
             "effect": "Color, darkness/brightness shift"
         },
-        
+
         "extended_dominants": {
             "name": "Extended Dominant Chain",
             "description": "Series of secondary dominants",
@@ -340,7 +340,7 @@ class HarmonyRules:
             "example_C": "B⁷ → E⁷ → A⁷ → D⁷ → G⁷ → C",
             "note": "Each chord is dominant of the next"
         },
-        
+
         "diminished_passing": {
             "name": "Diminished Seventh Passing Chords",
             "description": "Diminished 7 chords between diatonic chords",
@@ -352,7 +352,7 @@ class HarmonyRules:
             "function": "Chromatic passing motion, voice leading"
         },
     }
-    
+
     POP_ROCK_HARMONY_RULES = {
         "I_V_vi_IV": {
             "name": "I-V-vi-IV (Pop-Punk) Progression",
@@ -365,7 +365,7 @@ class HarmonyRules:
                 "vi-IV-I-V",  # Relative minor start
             ]
         },
-        
+
         "I_♭VII_IV": {
             "name": "Mixolydian ♭VII Progression",
             "description": "Major with flatted seventh from Mixolydian mode",
@@ -373,7 +373,7 @@ class HarmonyRules:
             "effect": "Rock/modal sound",
             "note": "Borrowed from parallel Mixolydian"
         },
-        
+
         "power_chords": {
             "name": "Power Chords (Root-Fifth)",
             "description": "Two-note chords (root + P5), no third",
@@ -381,7 +381,7 @@ class HarmonyRules:
             "context": "Rock, metal with distortion",
             "reason": "No third avoids dissonant intermodulation from distortion"
         },
-        
+
         "pedal_point": {
             "name": "Pedal Point Bass",
             "description": "Sustained or repeated bass note while harmony changes",
@@ -392,7 +392,7 @@ class HarmonyRules:
             "effect": "Drone, tension, or stability depending on context"
         },
     }
-    
+
     @classmethod
     def get_all_rules(cls) -> Dict[str, Dict]:
         """Get all harmony rules organized by category."""
@@ -403,15 +403,15 @@ class HarmonyRules:
             "jazz_harmony": cls.JAZZ_HARMONY_RULES,
             "pop_rock_harmony": cls.POP_ROCK_HARMONY_RULES,
         }
-    
+
     @classmethod
     def get_chord_intervals(cls, quality: str) -> Optional[List[int]]:
         """
         Get the interval structure for a chord quality.
-        
+
         Args:
             quality: Chord quality name
-            
+
         Returns:
             List of semitones from root, or None if not found
         """
@@ -421,17 +421,17 @@ class HarmonyRules:
                 if "types" in rule_data and quality in rule_data["types"]:
                     return rule_data["types"][quality]
         return None
-    
+
     @classmethod
     def get_progression_strength(cls, from_chord: str, to_chord: str, key: str = "C") -> str:
         """
         Evaluate the strength of a harmonic progression.
-        
+
         Args:
             from_chord: Roman numeral of source chord
             to_chord: Roman numeral of target chord
             key: Key context (default C major)
-            
+
         Returns:
             Strength description: "very_strong", "strong", "moderate", "weak", "unusual"
         """

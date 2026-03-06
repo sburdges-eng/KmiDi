@@ -27,7 +27,7 @@ import threading
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Optional, Dict, List, Any, Callable, Tuple
+from typing import Optional, Dict, List, Any, Callable
 from enum import Enum
 
 
@@ -57,7 +57,10 @@ class _LRUResponseCache:
                 return self._cache[key]
             return None
 
-    def put(self, model: str, prompt: str, response: str, system: str = "", extra: str = "") -> None:
+    def put(
+        self, model: str, prompt: str, response: str,
+        system: str = "", extra: str = ""
+    ) -> None:
         key = self._make_key(model, prompt, system, extra)
         with self._lock:
             if key in self._cache:

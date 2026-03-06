@@ -10,7 +10,7 @@ Provides:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Callable
+from typing import List, Dict, Optional
 from enum import Enum
 import random
 import math
@@ -42,7 +42,7 @@ class HumanizationPreset:
     # Velocity parameters (0.0-1.0 scale)
     velocity_random: float = 0.05       # Random velocity variation
     velocity_curve: float = 0.0         # Accent curve (-1 to 1)
-    velocity_dynamic_range: float = 1.0 # Dynamic range compression/expansion
+    velocity_dynamic_range: float = 1.0  # Dynamic range compression/expansion
 
     # Swing/shuffle
     swing_amount: float = 0.0           # Swing ratio (0.0-1.0)

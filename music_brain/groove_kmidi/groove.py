@@ -56,7 +56,8 @@ async def apply_groove_tool(
         return {
             "genre": genre,
             "intensity": intensity,
-            "midi": make_midi_payload(result_path, filename=f"{os.path.splitext(filename)[0]}_grooved.mid"),
+            "midi": make_midi_payload(result_path, filename=f"{os.path.splitext(filename)[0]}_grooved.mid"),  # noqa: E501
+
         }
 
 
@@ -92,7 +93,8 @@ async def humanize_midi_tool(
 
         return {
             **result,
-            "midi": make_midi_payload(result["output_path"], filename=f"{os.path.splitext(filename)[0]}_humanized.mid"),
+            "midi": make_midi_payload(result["output_path"], filename=f"{os.path.splitext(filename)[0]}_humanized.mid"),  # noqa: E501
+
         }
 
 
@@ -116,4 +118,3 @@ def register_tools(server) -> None:
 
 
 __all__ = ["register_tools"]
-

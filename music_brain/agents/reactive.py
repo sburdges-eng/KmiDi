@@ -35,7 +35,7 @@ import asyncio
 import functools
 import threading
 import weakref
-from dataclasses import asdict, dataclass, field, is_dataclass
+from dataclasses import asdict, is_dataclass
 from typing import (
     Any,
     Callable,
@@ -98,7 +98,8 @@ class Observable:
         def unsubscribe():
             with self._lock:
                 if is_async:
-                    self._async_observers = [r for r in self._async_observers if r() is not callback]
+                    self._async_observers = [
+                        r for r in self._async_observers if r() is not callback]
                 else:
                     self._observers = [r for r in self._observers if r() is not callback]
 
@@ -403,7 +404,11 @@ def observe(state_name: str):
             # If result is a dict, broadcast changes
             if isinstance(result, dict):
                 for key, value in result.items():
-                    old_value = state.get(key) if hasattr(state, "get") else getattr(state, key, None)
+                    _old_value = (  # noqa: F841
+                        state.get(key)
+                        if hasattr(state, "get")
+                        else getattr(state, key, None)
+                    )
                     if hasattr(state, "update"):
                         state.update({key: value})
                     else:
@@ -602,4 +607,3 @@ __all__ = [
     "reactive_dataclass",
     "observe",
 ]
-

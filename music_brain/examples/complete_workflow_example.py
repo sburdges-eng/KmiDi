@@ -19,7 +19,7 @@ import argparse
 import numpy as np
 import json
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 import logging
 
 # Configure logging
@@ -166,8 +166,8 @@ class iDAWWorkflow:
         embedding[32:] = np.linspace(arousal_intensity, 0, 32)
 
         logger.info(f"Created emotion embedding: {emotion_label} "
-                   f"(valence={emotion_config['valence']:.2f}, "
-                   f"arousal={emotion_config['arousal']:.2f})")
+                    f"(valence={emotion_config['valence']:.2f}, "
+                    f"arousal={emotion_config['arousal']:.2f})")
 
         return embedding
 
@@ -253,7 +253,7 @@ class iDAWWorkflow:
             "components": midi_result
         }
 
-        logger.info(f"\n✓ Generation complete!")
+        logger.info("\n✓ Generation complete!")
         logger.info(f"  Audio: {len(audio)} samples")
         logger.info(f"  MIDI: {len(midi_result['melody'])} notes")
 
@@ -380,7 +380,7 @@ def main():
     parser = argparse.ArgumentParser(description="iDAW Complete Workflow")
     parser.add_argument("--wound", type=str, default="I feel lost and alone")
     parser.add_argument("--emotion", type=str, default="GRIEF",
-                       choices=["GRIEF", "JOY", "CALM", "ANGER", "ANXIETY", "HOPE"])
+                        choices=["GRIEF", "JOY", "CALM", "ANGER", "ANXIETY", "HOPE"])
     parser.add_argument("--genre", type=str, default="ballad")
     parser.add_argument("--duration", type=int, default=8)
     parser.add_argument("--intensity", type=float, default=0.7)
@@ -408,7 +408,7 @@ def main():
         workflow.save_outputs(result, args.output_dir)
 
     logger.info(f"\n{'='*60}")
-    logger.info(f"Generation Summary")
+    logger.info("Generation Summary")
     logger.info(f"{'='*60}")
     logger.info(f"Emotion: {result['metadata']['emotion']}")
     logger.info(f"Duration: {result['metadata']['duration_bars']} bars")

@@ -5,7 +5,7 @@ Maps emotional states to musical parameters for Logic Pro integration.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict
+from typing import List
 from enum import Enum
 
 

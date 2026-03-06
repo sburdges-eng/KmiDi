@@ -30,7 +30,7 @@ GENRE_TEMPLATES = {
             0, -8, 5, -5,   # Beat 1: slight push on 16th notes
             12, -6, 8, -4,  # Beat 2: laid back snare
             0, -10, 6, -6,  # Beat 3
-            15, -5, 10, -3, # Beat 4: laid back snare
+            15, -5, 10, -3,  # Beat 4: laid back snare
         ],
         # Velocity pattern per 16th note (0-127)
         "velocity_curve": [
@@ -60,7 +60,7 @@ GENRE_TEMPLATES = {
             55, 32, 42, 38,
         ],
     },
-    
+
     "jazz": {
         "name": "Jazz Swing",
         "description": "Classic triplet swing feel with brush-like dynamics",
@@ -79,7 +79,7 @@ GENRE_TEMPLATES = {
             88, 52, 78, 62,
         ],
     },
-    
+
     "rock": {
         "name": "Rock Drive",
         "description": "Straight feel with strong backbeat, slight push",
@@ -98,7 +98,7 @@ GENRE_TEMPLATES = {
             118, 75, 92, 68,  # Heavy snare
         ],
     },
-    
+
     "hiphop": {
         "name": "Hip-Hop Pocket",
         "description": "Deep laid-back pocket with heavy ghost notes",
@@ -117,7 +117,7 @@ GENRE_TEMPLATES = {
             55, 32, 42, 38,
         ],
     },
-    
+
     "edm": {
         "name": "EDM Quantized",
         "description": "Machine-tight with subtle humanization",
@@ -136,7 +136,7 @@ GENRE_TEMPLATES = {
             124, 94, 106, 89,
         ],
     },
-    
+
     "latin": {
         "name": "Latin Clave",
         "description": "Syncopated feel based on 3-2 clave",
@@ -155,7 +155,7 @@ GENRE_TEMPLATES = {
             88, 73, 85, 68,
         ],
     },
-    
+
     "blues": {
         "name": "Blues Shuffle",
         "description": "12/8 shuffle feel with expressive dynamics",
@@ -174,7 +174,7 @@ GENRE_TEMPLATES = {
             98, 58, 88, 62,
         ],
     },
-    
+
     "bedroom_lofi": {
         "name": "Lo-Fi Bedroom",
         "description": "Intentionally imperfect, organic feel",
@@ -221,10 +221,10 @@ def create_basic_drum_pattern(path: str, tempo_bpm: int = 120, bars: int = 2):
 def get_genre_template(genre: str) -> GrooveTemplate:
     """
     Get a pre-defined groove template for a genre.
-    
+
     Args:
         genre: Genre name (funk, jazz, rock, hiphop, edm, latin, blues, bedroom_lofi)
-    
+
     Returns:
         GrooveTemplate with genre characteristics
     """
@@ -233,13 +233,13 @@ def get_genre_template(genre: str) -> GrooveTemplate:
     raw_key = genre.lower()
     if raw_key in GENRE_ALIASES:
         genre_lower = GENRE_ALIASES[raw_key]
-    
+
     if genre_lower not in GENRE_TEMPLATES:
         available = ", ".join(sorted(list_genre_templates()))
         raise ValueError(f"Unknown genre: {genre}. Available: {available}")
-    
+
     data = GENRE_TEMPLATES[genre_lower]
-    
+
     return GrooveTemplate(
         name=data["name"],
         source_file=f"preset:{genre_lower}",
@@ -249,7 +249,8 @@ def get_genre_template(genre: str) -> GrooveTemplate:
         timing_deviations=data["timing_deviations"],
         velocity_curve=data["velocity_curve"],
         timing_stats={
-            "mean_deviation_ms": sum(abs(d) for d in data["timing_deviations"]) / len(data["timing_deviations"]) * 0.5,
+            "mean_deviation_ms": sum(abs(d) for d in data["timing_deviations"]) / len(data["timing_deviations"]) * 0.5,  # noqa: E501
+
             "description": data["description"],
         },
         velocity_stats={

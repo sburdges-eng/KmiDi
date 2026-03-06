@@ -112,7 +112,8 @@ class ExpressionLearner:
     def __init__(self):
         pass
 
-    def learn_profile(self, examples: List[ExpressionExample], name: str = "default") -> ExpressionProfile:
+    def learn_profile(self, examples: List[ExpressionExample],
+                      name: str = "default") -> ExpressionProfile:
         if not examples:
             raise ValueError("No expression examples provided")
 
@@ -142,9 +143,8 @@ class ExpressionLearner:
             if avg_velocity:
                 global_velocity.append(avg_velocity)
 
-        global_patterns = {
-            "avg_velocity": list(np.mean(np.array(global_velocity), axis=0)) if global_velocity else [],
-        }
+        global_patterns = {"avg_velocity": list(
+            np.mean(np.array(global_velocity), axis=0)) if global_velocity else [], }
 
         return ExpressionProfile(
             name=name,
@@ -161,11 +161,13 @@ class ExpressionLearner:
         instrument: str = "general"
     ) -> Dict:
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(
+            emotion_key) or profile.emotion_patterns.get("neutral")
         if not patterns:
             patterns = profile.global_patterns
 
-        velocity = patterns.get("avg_velocity") or profile.global_patterns.get("avg_velocity") or [80] * (length or 16)
+        velocity = patterns.get("avg_velocity") or profile.global_patterns.get(
+            "avg_velocity") or [80] * (length or 16)
         if length and len(velocity) < length:
             velocity = (velocity * (length // len(velocity) + 1))[:length]
 
@@ -183,7 +185,8 @@ class ExpressionLearningManager:
     def add_example(self, example: ExpressionExample, name: Optional[str] = None) -> str:
         return self.store.add_example(example, name)
 
-    def learn_profile(self, name: str, example_ids: Optional[List[str]] = None) -> ExpressionProfile:
+    def learn_profile(
+            self, name: str, example_ids: Optional[List[str]] = None) -> ExpressionProfile:
         if example_ids is None:
             example_ids = self.store.list_examples()
         examples = []

@@ -83,7 +83,8 @@ class PerformanceAnalysis:
 
     # Expression markers
     accents: List[Tuple[float, float]] = field(default_factory=list)  # (time, intensity)
-    crescendos: List[Tuple[float, float, float]] = field(default_factory=list)  # (start, end, intensity)
+    crescendos: List[Tuple[float, float, float]] = field(
+        default_factory=list)  # (start, end, intensity)
     decrescendos: List[Tuple[float, float, float]] = field(default_factory=list)
 
     # Overall
@@ -115,7 +116,8 @@ class PerformanceAnalysis:
         # Timing feedback
         if self.timing.mean_deviation_ms > 15:
             feedback.append(
-                f"Work on timing precision - average deviation is {self.timing.mean_deviation_ms:.0f}ms"
+                f"Work on timing precision - average deviation is {self.timing.mean_deviation_ms:.0f}ms"  # noqa: E501
+
             )
         if self.timing.ahead_percentage > 65:
             feedback.append("Try to relax tempo - tendency to rush")
@@ -523,7 +525,7 @@ def _analyze_tempo_stability(
         return 1.0
 
     tempos = [t[1] for t in tempo_variations]
-    mean_tempo = sum(tempos) / len(tempos)
+    _mean_tempo = sum(tempos) / len(tempos)  # noqa: F841
 
     # Calculate variance from reference
     variance = sum((t - reference_tempo) ** 2 for t in tempos) / len(tempos)

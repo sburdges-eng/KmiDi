@@ -5,10 +5,12 @@ Phase 2: Python API Wrapper
 
 import importlib
 
+
 class PythonAPIPhase:
     """
     Handles high-level Python API wrapper for the C++ engine.
     """
+
     def __init__(self, package='penta_core'):
         self.package = package
 
@@ -30,7 +32,7 @@ class PythonAPIPhase:
         print("[Phase2] Testing API instantiation...")
         try:
             from penta_core import HarmonyEngine
-            engine = HarmonyEngine()
+            _engine = HarmonyEngine()  # noqa: F841
             print("HarmonyEngine instantiated successfully.")
         except Exception as e:
             print(f"API test failed: {e}")

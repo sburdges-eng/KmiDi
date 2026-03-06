@@ -4,7 +4,8 @@ Preference Bridge - Command-line interface for C++ to call Python preference mod
 
 This script allows C++ code to record preferences by calling this script as a subprocess.
 Usage:
-    python preference_bridge.py record_parameter_adjustment '{"parameter_name": "valence", "old_value": 0.5, "new_value": 0.7}'
+    python preference_bridge.py record_parameter_adjustment '{"parameter_name": "valence", "old_value": 0.5, "new_value": 0.7}'  # noqa: E501
+
 """
 
 import sys
@@ -15,7 +16,7 @@ from pathlib import Path
 # Add parent directory to path to import music_brain
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from music_brain.learning.user_preferences import UserPreferenceModel
+from music_brain.learning.user_preferences import UserPreferenceModel  # noqa: E402
 
 
 def record_parameter_adjustment(model, args):

@@ -17,9 +17,8 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 import numpy as np
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional
 import json
-import time
 import logging
 
 logger = logging.getLogger(__name__)
@@ -243,8 +242,8 @@ class Tier2LORAfinetuner:
             history["val_loss"].append(val_loss)
 
             self._log(f"Epoch {epoch+1}/{epochs}: "
-                     f"train_loss={train_loss:.4f}, val_loss={val_loss:.4f}, "
-                     f"lr={optimizer.param_groups[0]['lr']:.2e}")
+                      f"train_loss={train_loss:.4f}, val_loss={val_loss:.4f}, "
+                      f"lr={optimizer.param_groups[0]['lr']:.2e}")
 
             # Save checkpoint
             if (epoch + 1) % save_every_n_epochs == 0:
@@ -447,8 +446,8 @@ class MIDIEmotionDataset(Dataset):
             try:
                 score = converter.parse(midi_path)
                 notes = [int(n.pitch.midi) for n in score.flatten().notes
-                        if hasattr(n, 'pitch')]
-            except:
+                         if hasattr(n, 'pitch')]
+            except Exception:
                 notes = []
 
         except ImportError:

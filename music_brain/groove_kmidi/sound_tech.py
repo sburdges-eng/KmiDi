@@ -6,9 +6,9 @@ It parses EQ and Compression guides to apply mix settings, and simulates
 venues (Reverb/Delay) based on the Fan Profile.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
 
 from music_brain.groove.guide_parser import EQGuideParser, CompressionGuideParser
 from music_brain.groove.fan_feedback import FanProfile
@@ -71,7 +71,7 @@ class SoundTech:
         # Default
         return self.venues["studio"]
 
-    def get_mix_settings(self, instrument: str, fan_profile: Optional[FanProfile] = None) -> Dict[str, Any]:
+    def get_mix_settings(self, instrument: str, fan_profile: Optional[FanProfile] = None) -> Dict[str, Any]:  # noqa: E501
         """
         Returns EQ and Compression settings for an instrument, adapted to the fan.
         """

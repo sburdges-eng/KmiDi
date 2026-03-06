@@ -5,7 +5,7 @@ Provides detailed analysis and recommendations for mobile development approach.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from enum import Enum
 
 
@@ -302,7 +302,7 @@ def get_platform_recommendation(requirements: Dict[str, Any]) -> List[MobilePlat
     Returns:
         List of recommended platforms in priority order
     """
-    platforms = evaluate_platforms()
+    _platforms = evaluate_platforms()  # noqa: F841
     recommendations = []
 
     need_audio_units = requirements.get("need_audio_units", False)

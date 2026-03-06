@@ -7,7 +7,7 @@ velocity accents.
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from music_brain.groove.guide_parser import GuitarGuideParser
 from music_brain.groove.fan_feedback import FanProfile
@@ -59,13 +59,15 @@ class GuitarHumanizer:
             "note_stagger_ms": stagger
         }
 
-    def apply_strum(self, chord_notes: List[Any], direction: str = "down", fan_profile: Optional[FanProfile] = None) -> List[Any]:
+    def apply_strum(
+            self, chord_notes: List[Any],
+            direction: str = "down", fan_profile: Optional[FanProfile] = None) -> List[Any]:
         """
         Applies strumming delays to a chord (list of simultaneous notes).
         """
         params = self.get_strum_parameters()
         stagger_range = params["note_stagger_ms"]
-        avg_stagger = sum(stagger_range) / 2.0
+        _avg_stagger = sum(stagger_range) / 2.0  # noqa: F841
 
         # Sort notes by pitch
         # Assuming notes have a .pitch attribute

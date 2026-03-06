@@ -5,17 +5,12 @@ Provides functions to process intents using Python intent_processor and convert
 between Python CompleteSongIntent and C++ IntentResult formats.
 """
 
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional
 import json
 
 from music_brain.session.intent_processor import IntentProcessor
 from music_brain.session.intent_schema import (
     CompleteSongIntent,
-    HarmonyRuleBreak,
-    RhythmRuleBreak,
-    ArrangementRuleBreak,
-    ProductionRuleBreak,
-    MelodyRuleBreak,
 )
 
 
@@ -69,8 +64,6 @@ def process_intent(intent_json: str) -> str:
             ...
         }
     """
-    global _intent_processor
-
     # Initialize if not already done
     if _intent_processor is None:
         initialize_intent_system()
@@ -88,7 +81,7 @@ def process_intent(intent_json: str) -> str:
 
         return json.dumps(cpp_result)
 
-    except Exception as e:
+    except Exception:  # noqa: F841
         # Return default result on error
         return json.dumps(_get_default_cpp_result())
 
@@ -134,7 +127,7 @@ def convert_to_python_intent(cpp_intent_json: str) -> str:
 
         return json.dumps(python_intent)
 
-    except Exception as e:
+    except Exception:  # noqa: F841
         return json.dumps({
             "phase_1": {"mood_primary": "neutral"},
             "phase_2": {"technical_key": "C", "technical_mode": "major"},
@@ -166,7 +159,7 @@ def validate_result(result_json: str) -> bool:
 
         return True
 
-    except Exception as e:
+    except Exception:  # noqa: F841
         return False
 
 

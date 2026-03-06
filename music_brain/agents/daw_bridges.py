@@ -14,20 +14,17 @@ Each bridge auto-registers with the DAWRegistry on import.
 from __future__ import annotations
 
 import platform
-import queue
 import subprocess
 import threading
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import List, Optional
 
 from .daw_protocol import (
     BaseDAWBridge,
     DAWCapabilities,
     DAWRegistry,
     DAWType,
-    TrackInfo,
-    TransportState,
 )
 
 
@@ -1010,4 +1007,3 @@ __all__ = [
     "VoiceCC",
     "VOWEL_FORMANTS",
 ]
-

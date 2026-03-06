@@ -20,7 +20,7 @@ Usage:
         suggestions = integration.receive_suggestions()
 """
 
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 import json
 import logging
@@ -571,7 +571,8 @@ class LocalPentaCoreIntegration:
 
             return {
                 "chord": {"root": max_pc, "quality": quality},
-                "scale": {"root": max_pc, "type": "natural_minor" if quality == "minor" else "major"},
+                "scale": {"root": max_pc, "type": "natural_minor" if quality == "minor" else "major"},  # noqa: E501
+
             }
 
     def get_chord_suggestions(
@@ -800,7 +801,8 @@ class LocalPentaCoreIntegration:
                     for chord in context[-8:]:  # Last 8 chords
                         root = chord.get("root", 0)
                         quality = chord.get("quality", "major")
-                        note_names = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
+                        note_names = ["C", "Db", "D", "Eb", "E",
+                                      "F", "Gb", "G", "Ab", "A", "Bb", "B"]
                         symbol = note_names[root % 12]
                         if quality == "minor":
                             symbol += "m"

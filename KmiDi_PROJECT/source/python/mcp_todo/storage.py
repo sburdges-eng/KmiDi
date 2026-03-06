@@ -6,7 +6,6 @@ Supports multiple projects and concurrent access patterns.
 """
 
 import json
-import os
 import sys
 from pathlib import Path
 from typing import List, Optional, Dict, Any
@@ -15,18 +14,22 @@ from datetime import datetime
 # Cross-platform file locking
 if sys.platform == 'win32':
     import msvcrt
+
     def _lock_file(f):
         msvcrt.locking(f.fileno(), msvcrt.LK_LOCK, 1)
+
     def _unlock_file(f):
         msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
 else:
     import fcntl
+
     def _lock_file(f):
         fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+
     def _unlock_file(f):
         fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
-from .models import Todo, TodoStatus, TodoPriority, TodoList
+from .models import Todo, TodoStatus, TodoPriority
 
 
 class TodoStorage:
@@ -230,11 +233,17 @@ class TodoStorage:
             return True
         return False
 
-    def complete(self, todo_id: str, project: Optional[str] = None, ai_source: Optional[str] = None) -> Optional[Todo]:
+    def complete(
+        self, todo_id: str, project: Optional[str] = None,
+        ai_source: Optional[str] = None,
+    ) -> Optional[Todo]:
         """Mark a TODO as completed."""
         return self.update(todo_id, project=project, status="completed", ai_source=ai_source)
 
-    def start(self, todo_id: str, project: Optional[str] = None, ai_source: Optional[str] = None) -> Optional[Todo]:
+    def start(
+        self, todo_id: str, project: Optional[str] = None,
+        ai_source: Optional[str] = None,
+    ) -> Optional[Todo]:
         """Mark a TODO as in progress."""
         return self.update(todo_id, project=project, status="in_progress", ai_source=ai_source)
 
@@ -405,7 +414,9 @@ class TodoStorage:
                 lines.append(f"\n{status_headers[status]}\n")
                 for todo in by_status[status]:
                     checkbox = "x" if status == "completed" else " "
-                    pri_marker = "!" * ["low", "medium", "high", "urgent"].index(todo.priority.value)
+                    pri_marker = "!" * [
+                        "low", "medium", "high", "urgent",
+                    ].index(todo.priority.value)
                     lines.append(f"- [{checkbox}] {pri_marker} {todo.title} `{todo.id}`")
                     if todo.description:
                         lines.append(f"  - {todo.description}")
@@ -413,4 +424,3 @@ class TodoStorage:
                         lines.append(f"  - Tags: {', '.join(todo.tags)}")
 
         return "\n".join(lines)
-

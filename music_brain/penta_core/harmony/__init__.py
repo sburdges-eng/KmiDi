@@ -9,13 +9,13 @@ Advanced harmony implementations including:
 - Tension analysis
 """
 
-from .counterpoint import *
-from .jazz_voicings import *
-from .neo_riemannian import *
-from .microtonal import *
-from .tension import *
+from .counterpoint import *  # noqa: F403,F405
+from .jazz_voicings import *  # noqa: F403,F405
+from .neo_riemannian import *  # noqa: F403,F405
+from .microtonal import *  # noqa: F403,F405
+from .tension import *  # noqa: F403,F405
 
-__all__ = [
+__all__ = [  # noqa: F405
     # Counterpoint
     "CounterpointGenerator",
     "VoiceLeading",

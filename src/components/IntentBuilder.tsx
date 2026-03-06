@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type { CompleteSongIntentRequest } from '../types/Intent';
+import { useMusicBrain, buildGeneratePayload } from '../hooks/useMusicBrain';
 
-// Tauri IPC (no-op in browser; invoke/listen are undefined until app runs in Tauri)
 async function safeInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   const { invoke } = await import('@tauri-apps/api/core');
   return invoke(cmd, args) as Promise<T>;
@@ -18,6 +18,10 @@ async function safeListen(
   }
 }
 
+const IS_TAURI = Boolean(
+  typeof window !== 'undefined' && (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__
+);
+
 // Constants strictly mapped to Pydantic (music_brain/engine_api/schema.py):
 // - key_mode: ^[A-G][#b]?\s(major|minor|...) → two <select>s (Root + Mode), never free text
 // - structure.name: ^(intro|verse|chorus|bridge|outro|build|drop)$ → SECTION_NAMES dropdown only
@@ -25,7 +29,7 @@ async function safeListen(
 // - bars 1–128, repetitions 1–16, tempo 40–300, maxLength on text fields per schema
 const SECTION_NAMES = ["intro", "verse", "chorus", "bridge", "outro", "build", "drop"];
 const KEYS = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
-const MODES = ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "locrian"];
+const MODES = ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "aeolian", "locrian"];
 
 /** Demo intent: all interactive features, ~1 min at 120 BPM (30 bars). Matches scripts/demo_run.py. */
 const DEMO_INTENT: CompleteSongIntentRequest = {
@@ -54,7 +58,8 @@ const DEMO_INTENT: CompleteSongIntentRequest = {
 };
 
 export default function IntentBuilder() {
-  // 1. Initial State Matching the Generated Contract
+  const { generateMusic } = useMusicBrain();
+
   const [intent, setIntent] = useState<CompleteSongIntentRequest>({
     core_desire: '',
     mood_primary: '',
@@ -187,12 +192,21 @@ export default function IntentBuilder() {
 
       console.log('Dispatching valid Pydantic payload:', pydanticPayload);
 
-      const jobId = await safeInvoke<number>('start_generation', {
-        intentJson: JSON.stringify(pydanticPayload),
-      });
-      setActiveJobId(jobId);
-      setJobStatus('GENERATING...');
-      // isGenerating stays true until gen-result is received in useEffect
+      if (IS_TAURI) {
+        const jobId = await safeInvoke<number>('start_generation', {
+          intentJson: JSON.stringify(pydanticPayload),
+        });
+        setActiveJobId(jobId);
+        setJobStatus('GENERATING...');
+      } else {
+        setJobStatus('GENERATING VIA HTTP...');
+        const apiPayload = buildGeneratePayload(intent);
+        const result = await generateMusic(apiPayload);
+        console.log('Generation result:', result);
+        setIsGenerating(false);
+        setJobStatus('GENERATION COMPLETE');
+        setMeterLevel(0);
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       console.error('[IntentBuilder] handleGenerate failed:', err);

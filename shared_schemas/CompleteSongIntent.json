@@ -1,150 +1,8 @@
 {
-  "$defs": {
-    "StructureSection": {
-      "properties": {
-        "name": {
-          "pattern": "^(intro|verse|chorus|bridge|outro|build|drop)$",
-          "title": "Name",
-          "type": "string"
-        },
-        "bars": {
-          "maximum": 128,
-          "minimum": 1,
-          "title": "Bars",
-          "type": "integer"
-        },
-        "repetitions": {
-          "default": 1,
-          "maximum": 16,
-          "minimum": 1,
-          "title": "Repetitions",
-          "type": "integer"
-        }
-      },
-      "required": [
-        "name",
-        "bars"
-      ],
-      "title": "StructureSection",
-      "type": "object"
-    },
-    "TrackIntent": {
-      "properties": {
-        "instrument": {
-          "description": "Canonical instrument name (e.g., piano, synth_bass)",
-          "maxLength": 64,
-          "minLength": 1,
-          "title": "Instrument",
-          "type": "string"
-        },
-        "techniques": {
-          "description": "Allowed techniques",
-          "items": {
-            "type": "string"
-          },
-          "title": "Techniques",
-          "type": "array"
-        }
-      },
-      "required": [
-        "instrument"
-      ],
-      "title": "TrackIntent",
-      "type": "object"
-    }
-  },
-  "properties": {
-    "core_desire": {
-      "maxLength": 1000,
-      "minLength": 1,
-      "title": "Core Desire",
-      "type": "string"
-    },
-    "mood_primary": {
-      "maxLength": 100,
-      "minLength": 1,
-      "title": "Mood Primary",
-      "type": "string"
-    },
-    "genre": {
-      "maxLength": 100,
-      "minLength": 1,
-      "title": "Genre",
-      "type": "string"
-    },
-    "tempo": {
-      "default": 120,
-      "description": "BPM clamped to engine limits",
-      "maximum": 300,
-      "minimum": 40,
-      "title": "Tempo",
-      "type": "integer"
-    },
-    "key_mode": {
-      "pattern": "^[A-G][#b]?\\s(major|minor|dorian|mixolydian|lydian|phrygian|locrian)$",
-      "title": "Key Mode",
-      "type": "string"
-    },
-    "structure": {
-      "items": {
-        "$ref": "#/$defs/StructureSection"
-      },
-      "minItems": 1,
-      "title": "Structure",
-      "type": "array"
-    },
-    "instruments": {
-      "items": {
-        "$ref": "#/$defs/TrackIntent"
-      },
-      "minItems": 1,
-      "title": "Instruments",
-      "type": "array"
-    },
-    "allow_legacy_fallback": {
-      "default": false,
-      "title": "Allow Legacy Fallback",
-      "type": "boolean"
-    },
-    "groove_feel": {
-      "default": "Straight/Driving",
-      "description": "Rhythmic feel dictating quantization/swing",
-      "title": "Groove Feel",
-      "type": "string"
-    },
-    "narrative_arc": {
-      "default": "Climb-to-Climax",
-      "description": "Overall energetic trajectory of the song",
-      "title": "Narrative Arc",
-      "type": "string"
-    },
-    "rule_to_break": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "description": "Intentional music theory violation for emotional effect",
-      "title": "Rule To Break"
-    },
-    "rule_justification": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "description": "Narrative reason for the rule break",
-      "title": "Rule Justification"
-    }
-  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CompleteSongIntent",
+  "type": "object",
+  "additionalProperties": false,
   "required": [
     "core_desire",
     "mood_primary",
@@ -153,6 +11,121 @@
     "structure",
     "instruments"
   ],
-  "title": "CompleteSongIntentRequest",
-  "type": "object"
+  "properties": {
+    "core_desire": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "description": "High-level emotional / production goal"
+    },
+    "mood_primary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Primary mood of the song"
+    },
+    "genre": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Genre of the song"
+    },
+    "tempo": {
+      "type": "integer",
+      "minimum": 40,
+      "maximum": 300,
+      "default": 120,
+      "description": "BPM clamped to engine limits"
+    },
+    "key_mode": {
+      "type": "string",
+      "pattern": "^[A-G][#b]?\\s(major|minor|dorian|mixolydian|lydian|phrygian|aeolian|locrian)$",
+      "description": "Key and mode (e.g., C_major)"
+    },
+    "structure": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/StructureSection"
+      },
+      "description": "Song structure sections"
+    },
+    "instruments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/TrackIntent"
+      },
+      "description": "Track intents with instruments"
+    },
+    "groove_feel": {
+      "type": "string",
+      "default": "Straight/Driving",
+      "description": "Rhythmic feel dictating quantization/swing"
+    },
+    "narrative_arc": {
+      "type": "string",
+      "default": "Climb-to-Climax",
+      "description": "Overall energetic trajectory of the song"
+    },
+    "rule_to_break": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Intentional music theory violation for emotional effect"
+    },
+    "rule_justification": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Narrative reason for the rule break"
+    },
+    "allow_legacy_fallback": {
+      "type": "boolean",
+      "default": false,
+      "description": "Allow fallback to legacy generation"
+    }
+  },
+  "$defs": {
+    "StructureSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^(intro|verse|chorus|bridge|outro|build|drop)$"
+        },
+        "bars": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128,
+          "default": 1
+        },
+        "repetitions": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "default": 1
+        }
+      }
+    },
+    "TrackIntent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["instrument"],
+      "properties": {
+        "instrument": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Canonical instrument name (e.g., piano, synth_bass)"
+        },
+        "techniques": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Allowed techniques"
+        }
+      }
+    }
+  }
 }

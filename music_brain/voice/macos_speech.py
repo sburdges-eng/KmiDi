@@ -9,17 +9,13 @@ synthesizer is not available.
 """
 
 import subprocess
-import tempfile
 import os
 from typing import Optional, List, Dict, Any, Callable
 from dataclasses import dataclass
 from enum import Enum
-import json
 
 try:
     # Try to import PyObjC for direct macOS API access
-    import objc
-    from Foundation import NSObject
     from AppKit import NSSpeechSynthesizer
     PYOBJC_AVAILABLE = True
 except ImportError:
@@ -27,7 +23,6 @@ except ImportError:
 
 try:
     import soundfile as sf
-    import numpy as np
     AUDIO_AVAILABLE = True
 except ImportError:
     AUDIO_AVAILABLE = False

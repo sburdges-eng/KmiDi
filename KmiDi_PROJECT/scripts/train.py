@@ -47,8 +47,6 @@ if TYPE_CHECKING:
     import torch
 
 # Load environment variables from project root
-from pathlib import Path
-import sys
 
 # Add project root to path if not already there
 project_root = Path(__file__).resolve().parent.parent.parent.parent
@@ -66,7 +64,7 @@ try:
         features.extend(['mcp'])
     if not features:
         features = ['ml']  # Default to ML features
-    
+
     load_kmidi_env(features=features, verbose=False)
 except ImportError:
     # Fallback to simple dotenv if kmidi_env not available
@@ -263,7 +261,10 @@ def enforce_device_constraints(config: TrainConfig, device: "torch.device") -> N
 
         # Only limit epochs if not in extended training mode
         if not EXTENDED_TRAINING:
-            max_epochs = MAX_EPOCHS_MPS_SMOKE if device.type == "mps" else min(config.epochs, MAX_EPOCHS_CPU_SMOKE)
+            max_epochs = (
+                MAX_EPOCHS_MPS_SMOKE if device.type == "mps"
+                else min(config.epochs, MAX_EPOCHS_CPU_SMOKE)
+            )
             if config.epochs > max_epochs:
                 logger.info(
                     "Device %s detected; reducing epochs from %d to %d for smoke runs",
@@ -425,7 +426,6 @@ def build_cnn_model(config: TrainConfig) -> "torch.nn.Module":
 
 def build_lstm_model(config: TrainConfig) -> "torch.nn.Module":
     """Build LSTM model for sequence data."""
-    import torch
     import torch.nn as nn
 
     class SequenceLSTM(nn.Module):
@@ -761,7 +761,6 @@ def create_dataloaders(config: TrainConfig, device) -> Tuple:
 
 def train_epoch(model, train_loader, optimizer, loss_fn, device, config: TrainConfig) -> float:
     """Train for one epoch."""
-    import torch
 
     model.train()
     total_loss = 0.0
@@ -1040,7 +1039,6 @@ def export_to_coreml(model, config: TrainConfig, run: TrainRun) -> Optional[Path
 
 def export_to_rtneural_json(model, config: TrainConfig, run: TrainRun) -> Path:
     """Export model weights to RTNeural JSON format."""
-    import torch
 
     json_path = MODELS_DIR / f"{config.model_id}.json"
 
@@ -1428,4 +1426,3 @@ Examples:
 
 if __name__ == "__main__":
     main()
-

@@ -4,8 +4,8 @@ String Engine - Generates emotion-driven orchestral string arrangements.
 Part of Kelly MIDI Companion Tier 2.
 
 Philosophy: Strings are the voice of the soul. They can whisper intimate
-grief or roar with collective rage. A tremolo string speaks fear. A 
-pizzicato speaks playfulness or unease. A sustained legato line is 
+grief or roar with collective rage. A tremolo string speaks fear. A
+pizzicato speaks playfulness or unease. A sustained legato line is
 pure emotional breath. The articulation IS the emotion.
 
 GM String Programs:
@@ -22,7 +22,7 @@ GM String Programs:
 
 Integration:
     from kellymidicompanion_string_engine import StringEngine, StringConfig
-    
+
     engine = StringEngine()
     strings = engine.generate(
         emotion="grief",
@@ -175,7 +175,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.CELLO,
         "gm_instrument": GM_STRINGS["ensemble_1"],
     },
-    
+
     "sadness": {
         "articulation": StringArticulation.LEGATO,
         "dynamic": StringDynamic.DIMINUENDO,
@@ -192,7 +192,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.VIOLIN_1,
         "gm_instrument": GM_STRINGS["violin"],
     },
-    
+
     "hope": {
         "articulation": StringArticulation.LEGATO,
         "dynamic": StringDynamic.CRESCENDO,
@@ -209,7 +209,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["ensemble_1"],
     },
-    
+
     "joy": {
         "articulation": StringArticulation.SPICCATO,
         "dynamic": StringDynamic.PULSING,
@@ -226,7 +226,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["ensemble_1"],
     },
-    
+
     "rage": {
         "articulation": StringArticulation.MARCATO,
         "dynamic": StringDynamic.SFORZANDO,
@@ -243,7 +243,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["ensemble_1"],
     },
-    
+
     "anger": {
         "articulation": StringArticulation.TREMOLO,
         "dynamic": StringDynamic.CRESCENDO,
@@ -260,7 +260,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["tremolo"],
     },
-    
+
     "fear": {
         "articulation": StringArticulation.TREMOLO,
         "dynamic": StringDynamic.HAIRPIN,
@@ -277,7 +277,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.VIOLA,
         "gm_instrument": GM_STRINGS["tremolo"],
     },
-    
+
     "anxiety": {
         "articulation": StringArticulation.SUL_PONT,
         "dynamic": StringDynamic.PULSING,
@@ -294,7 +294,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.VIOLIN_1,
         "gm_instrument": GM_STRINGS["ensemble_2"],
     },
-    
+
     "tension": {
         "articulation": StringArticulation.TREMOLO,
         "dynamic": StringDynamic.CRESCENDO,
@@ -311,7 +311,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["tremolo"],
     },
-    
+
     "longing": {
         "articulation": StringArticulation.LEGATO,
         "dynamic": StringDynamic.SWELL,
@@ -328,7 +328,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.CELLO,
         "gm_instrument": GM_STRINGS["cello"],
     },
-    
+
     "nostalgia": {
         "articulation": StringArticulation.SUL_TASTO,
         "dynamic": StringDynamic.SWELL,
@@ -345,7 +345,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.VIOLA,
         "gm_instrument": GM_STRINGS["ensemble_2"],
     },
-    
+
     "peace": {
         "articulation": StringArticulation.LEGATO,
         "dynamic": StringDynamic.FLAT,
@@ -362,7 +362,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["ensemble_2"],
     },
-    
+
     "euphoria": {
         "articulation": StringArticulation.LEGATO,
         "dynamic": StringDynamic.CRESCENDO,
@@ -379,7 +379,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["ensemble_1"],
     },
-    
+
     "wonder": {
         "articulation": StringArticulation.HARMONIC,
         "dynamic": StringDynamic.SWELL,
@@ -396,7 +396,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.VIOLIN_1,
         "gm_instrument": GM_STRINGS["ensemble_2"],
     },
-    
+
     "playful": {
         "articulation": StringArticulation.PIZZICATO,
         "dynamic": StringDynamic.PULSING,
@@ -413,7 +413,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["pizzicato"],
     },
-    
+
     "mystery": {
         "articulation": StringArticulation.SUL_PONT,
         "dynamic": StringDynamic.HAIRPIN,
@@ -430,7 +430,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.VIOLA,
         "gm_instrument": GM_STRINGS["ensemble_2"],
     },
-    
+
     "dread": {
         "articulation": StringArticulation.COL_LEGNO,
         "dynamic": StringDynamic.CRESCENDO,
@@ -447,7 +447,7 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.CELLO,
         "gm_instrument": GM_STRINGS["ensemble_2"],
     },
-    
+
     "neutral": {
         "articulation": StringArticulation.LEGATO,
         "dynamic": StringDynamic.FLAT,
@@ -493,7 +493,7 @@ class StringVoice:
     channel: int
 
 
-@dataclass 
+@dataclass
 class StringConfig:
     """Configuration for string generation."""
     emotion: str = "neutral"
@@ -533,14 +533,14 @@ def note_name_to_midi(note: str, octave: int = 4) -> int:
     else:
         base = note[0].upper()
         modifier = ''
-    
+
     base_idx = CHROMATIC.index(base) if base in CHROMATIC else 0
-    
+
     if modifier == '#':
         base_idx += 1
     elif modifier == 'b':
         base_idx -= 1
-    
+
     base_idx = base_idx % 12
     return base_idx + (octave + 1) * 12
 
@@ -548,24 +548,24 @@ def note_name_to_midi(note: str, octave: int = 4) -> int:
 def parse_chord(chord_symbol: str) -> Tuple[str, str, Optional[str]]:
     """Parse chord symbol."""
     chord_symbol = chord_symbol.strip()
-    
+
     bass_note = None
     if '/' in chord_symbol:
         chord_symbol, bass_note = chord_symbol.split('/')
-    
+
     if len(chord_symbol) > 1 and chord_symbol[1] in ['#', 'b']:
         root = chord_symbol[:2]
         quality = chord_symbol[2:] or "maj"
     else:
         root = chord_symbol[0]
         quality = chord_symbol[1:] or "maj"
-    
+
     quality = quality.lower()
     if quality == '':
         quality = 'maj'
     elif quality in ['m', '-']:
         quality = 'min'
-    
+
     return root, quality, bass_note
 
 
@@ -613,30 +613,30 @@ def apply_voicing_to_pitches(
     """Apply voicing style. Returns (pitch, function, section) tuples."""
     if not pitches:
         return []
-    
+
     root = pitches[0]
     result = []
-    
+
     if voicing == StringVoicing.UNISON:
         result.append((root, "root", StringSection.FULL))
-        
+
     elif voicing == StringVoicing.OCTAVES:
         result.append((root, "root", StringSection.CELLO))
         result.append((root + 12, "octave", StringSection.VIOLA))
         result.append((root + 24, "high_octave", StringSection.VIOLIN_1))
-        
+
     elif voicing == StringVoicing.SOLO:
         result.append((root, "root", profile["preferred_section"]))
         if len(pitches) > 2:
             result.append((pitches[2], "fifth", profile["preferred_section"]))
-            
+
     elif voicing == StringVoicing.DIVISI:
         result.append((root, "root", StringSection.CELLO))
         if len(pitches) > 1:
             result.append((pitches[1] + 12, "third", StringSection.VIOLA))
         if len(pitches) > 2:
             result.append((pitches[2] + 12, "fifth", StringSection.VIOLIN_2))
-            
+
     elif voicing == StringVoicing.FULL_SECTION:
         result.append((root - 12, "bass", StringSection.BASS))
         result.append((root, "root", StringSection.CELLO))
@@ -645,7 +645,7 @@ def apply_voicing_to_pitches(
         if len(pitches) > 2:
             result.append((pitches[2] + 12, "fifth", StringSection.VIOLIN_2))
             result.append((pitches[2] + 24, "high_fifth", StringSection.VIOLIN_1))
-            
+
     elif voicing == StringVoicing.CLUSTER:
         # Close voicing with possible dissonance
         result.append((root, "root", StringSection.VIOLA))
@@ -657,7 +657,7 @@ def apply_voicing_to_pitches(
             func = ["root", "third", "fifth", "seventh"][min(i, 3)]
             sect = [StringSection.CELLO, StringSection.VIOLA, StringSection.VIOLIN_2][i % 3]
             result.append((adj_p, func, sect))
-            
+
     elif voicing == StringVoicing.OPEN:
         # Wide spread
         result.append((root - 12, "bass", StringSection.BASS))
@@ -666,7 +666,7 @@ def apply_voicing_to_pitches(
             result.append((pitches[2] + 12, "fifth", StringSection.VIOLA))
         if len(pitches) > 1:
             result.append((pitches[1] + 24, "third", StringSection.VIOLIN_1))
-    
+
     return result
 
 
@@ -679,10 +679,10 @@ def generate_velocity_curve(
     """Generate expression curve for string note."""
     num_points = max(4, duration_ticks // (TICKS_PER_BEAT // 2))
     depth = expression_depth * 0.4  # Max 40% variation
-    
+
     if dynamic == StringDynamic.FLAT:
         return [base_velocity] * num_points
-        
+
     elif dynamic == StringDynamic.SWELL:
         curve = []
         for i in range(num_points):
@@ -691,7 +691,7 @@ def generate_velocity_curve(
             mod = math.sin(progress * math.pi) * depth
             curve.append(max(1, min(127, int(base_velocity * (1 + mod)))))
         return curve
-        
+
     elif dynamic == StringDynamic.CRESCENDO:
         curve = []
         for i in range(num_points):
@@ -699,7 +699,7 @@ def generate_velocity_curve(
             mod = progress * depth
             curve.append(max(1, min(127, int(base_velocity * (1 + mod)))))
         return curve
-        
+
     elif dynamic == StringDynamic.DIMINUENDO:
         curve = []
         for i in range(num_points):
@@ -707,20 +707,20 @@ def generate_velocity_curve(
             mod = (1 - progress) * depth
             curve.append(max(1, min(127, int(base_velocity * (1 + mod)))))
         return curve
-        
+
     elif dynamic == StringDynamic.SFORZANDO:
         curve = [int(base_velocity * 1.3)]
         for i in range(1, num_points):
             curve.append(int(base_velocity * 0.7))
         return [max(1, min(127, v)) for v in curve]
-        
+
     elif dynamic == StringDynamic.FP:
         curve = [int(base_velocity * 1.2)]
         for i in range(1, num_points):
             progress = i / num_points
             curve.append(int(base_velocity * (0.5 + 0.3 * progress)))
         return [max(1, min(127, v)) for v in curve]
-        
+
     elif dynamic == StringDynamic.HAIRPIN:
         curve = []
         for i in range(num_points):
@@ -731,14 +731,14 @@ def generate_velocity_curve(
                 mod = ((1 - progress) / 0.7) * depth
             curve.append(max(1, min(127, int(base_velocity * (1 + mod)))))
         return curve
-        
+
     elif dynamic == StringDynamic.PULSING:
         curve = []
         for i in range(num_points):
             mod = math.sin(i * math.pi) * depth * 0.5
             curve.append(max(1, min(127, int(base_velocity * (1 + mod)))))
         return curve
-    
+
     return [base_velocity] * num_points
 
 
@@ -768,14 +768,14 @@ def get_articulation_duration_modifier(articulation: StringArticulation) -> floa
 class StringEngine:
     """
     Generates emotion-driven orchestral string arrangements.
-    
+
     Strings provide the emotional voice - from intimate solo lines
     to powerful tutti swells.
     """
-    
+
     def __init__(self):
         self.profiles = EMOTION_PROFILES
-    
+
     def generate(
         self,
         emotion: str,
@@ -791,43 +791,43 @@ class StringEngine:
     ) -> StringOutput:
         """Generate string arrangement for chord progression."""
         profile = self.profiles.get(emotion.lower(), self.profiles["neutral"])
-        
+
         articulation = articulation_override or profile["articulation"]
         voicing = voicing_override or profile["voicing"]
         role = role_override or profile["role"]
         dynamic = profile["dynamic"]
-        
+
         beats_per_bar = time_signature[0]
         ticks_per_bar = TICKS_PER_BEAT * beats_per_bar
         total_ticks = ticks_per_bar * bars
         ticks_per_chord = total_ticks // len(chord_progression)
-        
+
         all_notes = []
         voices_dict = {}  # section -> list of notes
-        
+
         current_tick = 0
-        
+
         for chord_idx, chord_symbol in enumerate(chord_progression):
             root, quality, bass = parse_chord(chord_symbol)
-            
+
             # Determine base octave based on preferred section
             section = profile["preferred_section"]
             range_low, range_high = get_section_range(section)
             base_octave = (range_low // 12) + 1
-            
+
             pitches = get_chord_pitches(root, quality, base_octave)
-            
+
             # Apply voicing
             voiced = apply_voicing_to_pitches(pitches, voicing, profile)
-            
+
             # Calculate duration
             base_duration = ticks_per_chord
             dur_mod = get_articulation_duration_modifier(articulation)
             duration = int(base_duration * profile["sustain_ratio"] * dur_mod)
-            
+
             # Generate notes for each voice
             vel_min, vel_max = profile["velocity_range"]
-            
+
             for pitch, func, note_section in voiced:
                 # Clamp to section range
                 sec_low, sec_high = get_section_range(note_section)
@@ -835,27 +835,27 @@ class StringEngine:
                     pitch += 12
                 while pitch > sec_high:
                     pitch -= 12
-                
+
                 # Velocity
                 base_vel = random.randint(vel_min, vel_max)
                 vel_curve = generate_velocity_curve(
                     base_vel, duration, dynamic, profile["expression_depth"]
                 )
-                
+
                 # Humanize timing
                 timing_offset = random.randint(
                     -profile["humanize_timing"],
                     profile["humanize_timing"]
                 )
                 final_tick = max(0, current_tick + timing_offset)
-                
+
                 # Humanize velocity
                 base_vel += random.randint(
                     -profile["humanize_velocity"],
                     profile["humanize_velocity"]
                 )
                 base_vel = max(1, min(127, base_vel))
-                
+
                 note = StringNote(
                     pitch=pitch,
                     start_tick=final_tick,
@@ -866,15 +866,15 @@ class StringEngine:
                     voice_function=func,
                     velocity_curve=vel_curve,
                 )
-                
+
                 all_notes.append(note)
-                
+
                 if note_section not in voices_dict:
                     voices_dict[note_section] = []
                 voices_dict[note_section].append(note)
-            
+
             current_tick += ticks_per_chord
-        
+
         # Build voice objects
         voices = []
         channel = 4  # Start at channel 4 for strings
@@ -887,9 +887,9 @@ class StringEngine:
             )
             voices.append(voice)
             channel += 1
-        
+
         all_notes.sort(key=lambda n: n.start_tick)
-        
+
         return StringOutput(
             voices=voices,
             notes=all_notes,
@@ -907,7 +907,7 @@ class StringEngine:
                 "chord_progression": chord_progression,
             }
         )
-    
+
     def generate_for_section(
         self,
         emotion: str,
@@ -919,7 +919,7 @@ class StringEngine:
     ) -> StringOutput:
         """Generate strings adjusted for song section."""
         profile = self.profiles.get(emotion.lower(), self.profiles["neutral"])
-        
+
         if section_type == "intro":
             voicing = StringVoicing.SOLO
             articulation = StringArticulation.SUL_TASTO
@@ -941,7 +941,7 @@ class StringEngine:
         else:
             voicing = profile["voicing"]
             articulation = profile["articulation"]
-        
+
         return self.generate(
             emotion=emotion,
             chord_progression=chord_progression,
@@ -951,7 +951,7 @@ class StringEngine:
             voicing_override=voicing,
             articulation_override=articulation,
         )
-    
+
     def get_available_emotions(self) -> List[str]:
         """Get list of supported emotions."""
         return list(self.profiles.keys())
@@ -982,7 +982,7 @@ def generate_epic_strings(chords: List[str], key: str = "C", bars: int = 4) -> S
 def strings_to_midi_events(string_output: StringOutput) -> List[Dict]:
     """Convert StringOutput to MIDI event list with multiple channels."""
     events = []
-    
+
     for voice in string_output.voices:
         events.append({
             "type": "program_change",
@@ -990,7 +990,7 @@ def strings_to_midi_events(string_output: StringOutput) -> List[Dict]:
             "channel": voice.channel,
             "program": voice.gm_instrument,
         })
-        
+
         for note in voice.notes:
             events.append({
                 "type": "note_on",
@@ -1006,7 +1006,7 @@ def strings_to_midi_events(string_output: StringOutput) -> List[Dict]:
                 "pitch": note.pitch,
                 "velocity": 0,
             })
-    
+
     events.sort(key=lambda e: (e["tick"], 0 if e["type"] == "note_on" else 1))
     return events
 
@@ -1017,13 +1017,13 @@ def strings_to_midi_events(string_output: StringOutput) -> List[Dict]:
 
 if __name__ == "__main__":
     engine = StringEngine()
-    
+
     print("=== STRING ENGINE DEMO ===\n")
-    
+
     chords = ["F", "C", "Dm", "Bbm"]
-    
+
     emotions = ["grief", "hope", "fear", "joy", "peace"]
-    
+
     for emotion in emotions:
         strings = engine.generate(
             emotion=emotion,
@@ -1032,7 +1032,7 @@ if __name__ == "__main__":
             bars=4,
             tempo_bpm=82,
         )
-        
+
         print(f"--- {emotion.upper()} ---")
         print(f"Articulation: {strings.articulation_used.value}")
         print(f"Dynamic: {strings.dynamic_used.value}")

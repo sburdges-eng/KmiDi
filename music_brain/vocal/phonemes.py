@@ -28,17 +28,17 @@ class Phoneme:
 def text_to_phonemes(text: str) -> List[Phoneme]:
     """
     Convert text to phonemes.
-    
+
     Args:
         text: Input text
-        
+
     Returns:
         List of Phoneme objects
     """
     # Simple implementation - split by words and create basic phonemes
     words = text.split()
     phonemes = []
-    
+
     for word in words:
         # Create a simple vowel phoneme for each word
         # In a full implementation, this would use a proper phoneme converter
@@ -47,26 +47,26 @@ def text_to_phonemes(text: str) -> List[Phoneme]:
             symbol="ah",  # Default vowel
             duration=0.3,
         ))
-    
+
     return phonemes
 
 
 def phoneme_to_vowel_type(phoneme: Phoneme) -> Optional[str]:
     """
     Convert phoneme to vowel type string.
-    
+
     Args:
         phoneme: Phoneme object
-        
+
     Returns:
         Vowel type string (A, E, I, O, U) or None
     """
     if phoneme.phoneme_type != PhonemeType.VOWEL:
         return None
-    
+
     # Simple mapping - in full implementation would use proper vowel classification
     symbol_lower = phoneme.symbol.lower()
-    
+
     if 'a' in symbol_lower or 'ah' in symbol_lower:
         return 'A'
     elif 'e' in symbol_lower or 'eh' in symbol_lower:
@@ -77,5 +77,5 @@ def phoneme_to_vowel_type(phoneme: Phoneme) -> Optional[str]:
         return 'O'
     elif 'u' in symbol_lower or 'oo' in symbol_lower:
         return 'U'
-    
+
     return 'A'  # Default

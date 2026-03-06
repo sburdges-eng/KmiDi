@@ -1,0 +1,66 @@
+"""
+Groove package – compatibility shim.
+
+Re-exports everything from groove_kmidi so that imports like
+``from music_brain.groove import …`` resolve correctly.
+"""
+
+from music_brain.groove_kmidi import (  # noqa: F401
+    apply_groove,
+    humanize,
+    DrumAnalyzer,
+    DrumTechniqueProfile,
+    HiHatAlternation,
+    SnareBounceSignature,
+    analyze_drum_technique,
+    DrumHumanizer,
+    GrooveTemplate,
+    extract_groove,
+    GrooveSettings,
+    get_preset,
+    humanize_drums,
+    humanize_midi_file,
+    list_presets,
+    load_presets,
+    quick_humanize,
+    settings_from_intent,
+    settings_from_preset,
+    GENRE_TEMPLATES,
+    get_genre_template,
+    list_genre_templates,
+    apply_humanization,
+    GrooveHumanizer,
+    HumanizationProfile,
+    TimingHumanizer,
+    VelocityHumanizer,
+)
+
+__all__ = [
+    "extract_groove",
+    "GrooveTemplate",
+    "apply_groove",
+    "humanize",
+    "get_genre_template",
+    "list_genre_templates",
+    "GENRE_TEMPLATES",
+    "humanize_drums",
+    "humanize_midi_file",
+    "GrooveSettings",
+    "settings_from_intent",
+    "quick_humanize",
+    "load_presets",
+    "list_presets",
+    "get_preset",
+    "settings_from_preset",
+    "SnareBounceSignature",
+    "HiHatAlternation",
+    "DrumTechniqueProfile",
+    "DrumAnalyzer",
+    "analyze_drum_technique",
+    "DrumHumanizer",
+    "GrooveHumanizer",
+    "HumanizationProfile",
+    "TimingHumanizer",
+    "VelocityHumanizer",
+    "apply_humanization",
+]

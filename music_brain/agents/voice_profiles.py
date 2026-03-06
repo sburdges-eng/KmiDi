@@ -170,7 +170,7 @@ ACCENT_PHONEME_MAPS = {
     AccentRegion.BRITISH_COCKNEY: {
         # TH-fronting
         "th_voice": "v",   # "brother" → "bruvver"
-        "th_unvoice": "f", # "think" → "fink"
+        "th_unvoice": "f",  # "think" → "fink"
         # H-dropping
         "h_init": "",      # "hello" → "'ello"
         # Glottal stop
@@ -191,7 +191,7 @@ ACCENT_PHONEME_MAPS = {
     AccentRegion.BRITISH_IRISH: {
         # TH sounds
         "th_voice": "d",   # "the" → "de"
-        "th_unvoice": "t", # "think" → "tink"
+        "th_unvoice": "t",  # "think" → "tink"
         # Soft T
         "t": "t̪",
     },
@@ -228,7 +228,7 @@ ACCENT_PHONEME_MAPS = {
     AccentRegion.FRENCH_ACCENT: {
         # TH → Z/S
         "th_voice": "z",   # "the" → "ze"
-        "th_unvoice": "s", # "think" → "sink"
+        "th_unvoice": "s",  # "think" → "sink"
         # H silent
         "h_init": "",      # "hello" → "ello"
         # R uvular
@@ -911,5 +911,5 @@ if __name__ == "__main__":
     # Test learning
     manager.learn_pronunciation("test_voice", "hello", "howdy")
     modified2, _ = manager.apply_profile(test_text, "test_voice")
-    print(f"\nAfter learning 'hello' → 'howdy':")
+    print("\nAfter learning 'hello' → 'howdy':")
     print(f"Modified: {modified2}")

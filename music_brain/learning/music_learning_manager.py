@@ -77,7 +77,8 @@ class MusicLearningManager:
     def learn_melody_profile(self, name: str, ids: Optional[List[str]] = None) -> MelodyProfile:
         return self.melody.learn_profile(name, ids)
 
-    def generate_melody(self, emotion: str, profile: Optional[str] = None, length: Optional[int] = None) -> List[int]:
+    def generate_melody(self, emotion: str, profile: Optional[str] = None, length: Optional[int] = None) -> List[int]:  # noqa: E501
+
         return self.melody.generate(emotion, profile, length)
 
     # Harmony
@@ -104,7 +105,9 @@ class MusicLearningManager:
     def learn_groove_profile(self, name: str, ids: Optional[List[str]] = None) -> GrooveProfile:
         return self.groove.learn_profile(name, ids)
 
-    def generate_groove(self, emotion: str, profile: Optional[str] = None, tempo: Optional[int] = None, genre: str = "straight") -> Dict:
+    def generate_groove(
+            self, emotion: str, profile: Optional[str] = None, tempo: Optional[int] = None,
+            genre: str = "straight") -> Dict:
         return self.groove.generate(emotion, profile, tempo, genre)
 
     # Bass
@@ -125,30 +128,38 @@ class MusicLearningManager:
         return self.bass.generate(emotion, profile, length, key, mode)
 
     # Arrangement
-    def add_arrangement_example(self, example: ArrangementExample, name: Optional[str] = None) -> str:
+    def add_arrangement_example(
+            self, example: ArrangementExample, name: Optional[str] = None) -> str:
         return self.arrangement.add_example(example, name)
 
-    def learn_arrangement_profile(self, name: str, ids: Optional[List[str]] = None) -> ArrangementProfile:
+    def learn_arrangement_profile(
+            self, name: str, ids: Optional[List[str]] = None) -> ArrangementProfile:
         return self.arrangement.learn_profile(name, ids)
 
-    def generate_arrangement(self, emotion: str, profile: Optional[str] = None, length: Optional[int] = None, genre: str = "general") -> Dict:
+    def generate_arrangement(
+            self, emotion: str, profile: Optional[str] = None, length: Optional[int] = None,
+            genre: str = "general") -> Dict:
         return self.arrangement.generate(emotion, profile, length, genre)
 
     # Expression
     def add_expression_example(self, example: ExpressionExample, name: Optional[str] = None) -> str:
         return self.expression.add_example(example, name)
 
-    def learn_expression_profile(self, name: str, ids: Optional[List[str]] = None) -> ExpressionProfile:
+    def learn_expression_profile(
+            self, name: str, ids: Optional[List[str]] = None) -> ExpressionProfile:
         return self.expression.learn_profile(name, ids)
 
-    def generate_expression(self, emotion: str, profile: Optional[str] = None, length: Optional[int] = None, instrument: str = "general") -> Dict:
+    def generate_expression(
+            self, emotion: str, profile: Optional[str] = None, length: Optional[int] = None,
+            instrument: str = "general") -> Dict:
         return self.expression.generate(emotion, profile, length, instrument)
 
     # Rule breaking
     def add_rulebreak_example(self, example: RuleBreakExample, name: Optional[str] = None) -> str:
         return self.rulebreak.add_example(example, name)
 
-    def learn_rulebreak_profile(self, name: str, ids: Optional[List[str]] = None) -> RuleBreakProfile:
+    def learn_rulebreak_profile(
+            self, name: str, ids: Optional[List[str]] = None) -> RuleBreakProfile:
         return self.rulebreak.learn_profile(name, ids)
 
     def choose_rulebreak(self, emotion: str, profile: Optional[str] = None) -> Optional[str]:
@@ -167,7 +178,7 @@ class MusicLearningManager:
         """Update weights for an adaptive task."""
         import numpy as np
         return self.openweight.update_learner(
-            task_name, 
-            np.array([x]), 
+            task_name,
+            np.array([x]),
             np.array([y])
         )

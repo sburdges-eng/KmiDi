@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 import random
 
-from .teaching import RuleBreakingTeacher, LESSONS
+from .teaching import RuleBreakingTeacher
 
 
 class ChallengeDifficulty(Enum):
@@ -94,10 +94,12 @@ CHALLENGES = [
     Challenge(
         id="challenge_001",
         title="Create Tension with Borrowed Chords",
-        description="Take a basic major key progression and introduce borrowed chords to create emotional tension.",
+        description="Take a basic major key progression and introduce borrowed chords to create emotional tension.",  # noqa: E501
+
         difficulty=ChallengeDifficulty.BEGINNER,
         category="harmony",
-        objective="Modify a I-IV-V-I progression to include at least one borrowed chord (iv, bVI, or bVII) that creates tension.",
+        objective="Modify a I-IV-V-I progression to include at least one borrowed chord (iv, bVI, or bVII) that creates tension.",  # noqa: E501
+
         constraints=[
             "Start with a major key progression (e.g., F - Bb - C - F)",
             "Replace at least one chord with a borrowed chord",
@@ -116,10 +118,12 @@ CHALLENGES = [
     Challenge(
         id="challenge_002",
         title="Avoid Tonic Resolution",
-        description="Create a progression that deliberately avoids resolving to the tonic, maintaining tension.",
+        description="Create a progression that deliberately avoids resolving to the tonic, maintaining tension.",  # noqa: E501
+
         difficulty=ChallengeDifficulty.INTERMEDIATE,
         category="harmony",
-        objective="Write an 8-chord progression that never resolves to the I chord, ending on a different chord.",
+        objective="Write an 8-chord progression that never resolves to the I chord, ending on a different chord.",  # noqa: E501
+
         constraints=[
             "Use 8 chords total",
             "Cannot end on the I chord",
@@ -138,10 +142,12 @@ CHALLENGES = [
     Challenge(
         id="challenge_003",
         title="Laid Back Groove",
-        description="Take a perfectly quantized drum pattern and add timing variations to create a 'pocket' feel.",
+        description="Take a perfectly quantized drum pattern and add timing variations to create a 'pocket' feel.",  # noqa: E501
+
         difficulty=ChallengeDifficulty.BEGINNER,
         category="rhythm",
-        objective="Adjust a drum pattern so that the snare hits 10-20ms late to create a laid-back feel.",
+        objective="Adjust a drum pattern so that the snare hits 10-20ms late to create a laid-back feel.",  # noqa: E501
+
         constraints=[
             "Start with a quantized pattern",
             "Snare should be noticeably behind the beat",
@@ -159,10 +165,12 @@ CHALLENGES = [
     Challenge(
         id="challenge_004",
         title="Buried Vocals for Intimacy",
-        description="Intentionally mix vocals lower than 'standard' to create an intimate or dissociative feeling.",
+        description="Intentionally mix vocals lower than 'standard' to create an intimate or dissociative feeling.",  # noqa: E501
+
         difficulty=ChallengeDifficulty.INTERMEDIATE,
         category="production",
-        objective="Create a mix where vocals are intentionally lower in the mix than typical, but still audible.",
+        objective="Create a mix where vocals are intentionally lower in the mix than typical, but still audible.",  # noqa: E501
+
         constraints=[
             "Vocals should be audible but not prominent",
             "Use reverb/delay to create space",
@@ -180,10 +188,12 @@ CHALLENGES = [
     Challenge(
         id="challenge_005",
         title="Pitch Imperfection as Emotion",
-        description="Leave intentional pitch imperfections in a vocal or instrument performance to add emotional honesty.",
+        description="Leave intentional pitch imperfections in a vocal or instrument performance to add emotional honesty.",  # noqa: E501
+
         difficulty=ChallengeDifficulty.ADVANCED,
         category="production",
-        objective="Identify moments in a performance where pitch correction would be 'correct' but removing it serves the emotion.",
+        objective="Identify moments in a performance where pitch correction would be 'correct' but removing it serves the emotion.",  # noqa: E501
+
         constraints=[
             "Must be intentional, not just lazy",
             "The imperfection should serve the emotion",
@@ -194,7 +204,8 @@ CHALLENGES = [
             "Slight pitch drift can add human feeling",
             "Sometimes the 'crack' in the voice IS the emotion"
         ],
-        example_solution="Keep slight flat note on emotional phrase like 'I miss you' - adds weight to the sadness",
+        example_solution="Keep slight flat note on emotional phrase like 'I miss you' - adds weight to the sadness",  # noqa: E501
+
         points=30,
     ),
 
@@ -215,7 +226,8 @@ CHALLENGES = [
             "Use longer notes that cross bar lines",
             "Listen to funk and jazz for syncopation examples"
         ],
-        example_solution="Melody starts on 'and of 1', emphasizes 'and of 2' and 'and of 4', while kick stays on 1 and 3",
+        example_solution="Melody starts on 'and of 1', emphasizes 'and of 2' and 'and of 4', while kick stays on 1 and 3",  # noqa: E501
+
         points=20,
     ),
 
@@ -225,7 +237,8 @@ CHALLENGES = [
         description="Combine two genres by breaking rules from both, creating something new.",
         difficulty=ChallengeDifficulty.ADVANCED,
         category="harmony",
-        objective="Create a progression that blends jazz harmony with rock production, or similar genre combination.",
+        objective="Create a progression that blends jazz harmony with rock production, or similar genre combination.",  # noqa: E501
+
         constraints=[
             "Must clearly reference two different genres",
             "Rule-breaking should bridge the genres",
@@ -236,7 +249,8 @@ CHALLENGES = [
             "Try jazz voicings with rock distortion",
             "Use modal interchange to bridge harmonic languages"
         ],
-        example_solution="Cmaj7 - Fmaj7 - Am - G (jazz) with distorted guitar (rock) = jazz-rock fusion",
+        example_solution="Cmaj7 - Fmaj7 - Am - G (jazz) with distorted guitar (rock) = jazz-rock fusion",  # noqa: E501
+
         points=35,
     ),
 ]
@@ -386,11 +400,12 @@ class ChallengeSystem:
             is_valid = self._validate_solution(challenge, solution)
         else:
             is_valid = True  # Accept all solutions for now (user self-validates)
-            feedback = feedback or "Solution submitted. Review your work against the objective and constraints."
+            feedback = feedback or "Solution submitted. Review your work against the objective and constraints."  # noqa: E501
 
         if is_valid:
             progress.status = ChallengeStatus.COMPLETED
-            progress.feedback = feedback or "Challenge completed! Great work breaking the rules intentionally."
+            progress.feedback = feedback or "Challenge completed! Great work breaking the rules intentionally."  # noqa: E501
+
             # Note: In a real implementation, you'd set completed_at timestamp
         else:
             progress.feedback = feedback or "Solution doesn't meet all constraints. Try again!"
@@ -419,8 +434,10 @@ class ChallengeSystem:
         """Get overall challenge statistics."""
         total = len(self.challenges)
         completed = sum(1 for p in self.progress.values() if p.status == ChallengeStatus.COMPLETED)
-        in_progress = sum(1 for p in self.progress.values() if p.status == ChallengeStatus.IN_PROGRESS)
-        total_points = sum(p.points for p in self.progress.values() if p.status == ChallengeStatus.COMPLETED)
+        in_progress = sum(1 for p in self.progress.values()
+                          if p.status == ChallengeStatus.IN_PROGRESS)
+        total_points = sum(p.points for p in self.progress.values()
+                           if p.status == ChallengeStatus.COMPLETED)
 
         return {
             "total_challenges": total,
@@ -434,10 +451,8 @@ class ChallengeSystem:
     def get_recommended_challenge(self) -> Optional[Challenge]:
         """Get a recommended challenge based on progress."""
         # Find challenges not yet completed
-        not_completed = [
-            ch for ch in self.challenges.values()
-            if self.progress.get(ch.id, ChallengeProgress(challenge_id=ch.id)).status != ChallengeStatus.COMPLETED
-        ]
+        not_completed = [ch for ch in self.challenges.values() if self.progress.get(
+            ch.id, ChallengeProgress(challenge_id=ch.id)).status != ChallengeStatus.COMPLETED]
 
         if not not_completed:
             return None
@@ -490,7 +505,8 @@ class ChallengeSystem:
         hint_count = 0
         while True:
             try:
-                action = input("\n[W]ork on it | [H]int | [S]ubmit solution | [E]xit: ").strip().lower()
+                action = input(
+                    "\n[W]ork on it | [H]int | [S]ubmit solution | [E]xit: ").strip().lower()
 
                 if action == 'h':
                     if hint_count < len(challenge.hints):
@@ -524,7 +540,9 @@ class ChallengeSystem:
     def _select_challenge_interactive(self) -> Optional[str]:
         """Interactive challenge selection."""
         stats = self.get_statistics()
-        print(f"\nProgress: {stats['completed']}/{stats['total_challenges']} completed ({stats['completion_rate']:.1f}%)")
+        print(
+            f"\nProgress: {stats['completed']}/{stats['total_challenges']} completed ({stats['completion_rate']:.1f}%)")  # noqa: E501
+
         print(f"Total Points: {stats['total_points']}")
 
         print("\nAvailable challenges:")
@@ -544,7 +562,8 @@ class ChallengeSystem:
             elif choice == 'l':
                 challenges = self.list_challenges()
                 for i, ch in enumerate(challenges, 1):
-                    status = self.progress.get(ch.id, ChallengeProgress(challenge_id=ch.id)).status.value
+                    status = self.progress.get(
+                        ch.id, ChallengeProgress(challenge_id=ch.id)).status.value
                     print(f"  {i}. [{status[0].upper()}] {ch.title} ({ch.difficulty.value})")
                 try:
                     num = int(input("\nSelect challenge number: ").strip())

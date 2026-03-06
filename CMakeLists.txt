@@ -17,6 +17,8 @@ option(KMIDI_BUILD_JUCE_UI "Build legacy JUCE UI surfaces" OFF)
 option(ENABLE_TRACY "Enable Tracy profiling" OFF)
 option(ENABLE_RTNEURAL "Enable RTNeural for ML inference" OFF)
 option(ENABLE_ONNX_RUNTIME "Enable ONNX Runtime for ML inference" OFF)
+# Freeze/CI: when ON, disallow FetchContent; vendor readerwriterqueue, RTNeural, googletest in external/
+option(KMIDI_OFFLINE_BUILD "Disallow network dependency resolution at configure/build time" OFF)
 
 # KmiDi_FINAL integration options
 option(USE_KMI_DI_FINAL "Use existing KmiDi_FINAL components" OFF)
@@ -119,6 +121,9 @@ endif()
 # Readerwriterqueue (lock-free queue) for RT-safe OSC
 # Note: This is a header-only library with no CMakeLists.txt, so we must
 # explicitly create an INTERFACE target and ensure SOURCE_DIR is populated.
+if(KMIDI_OFFLINE_BUILD)
+    message(FATAL_ERROR "KMIDI_OFFLINE_BUILD=ON forbids FetchContent network pulls. Vendor readerwriterqueue, RTNeural, and googletest in external/ and use add_subdirectory or target_include_directories.")
+endif()
 include(FetchContent)
 FetchContent_Declare(
     readerwriterqueue

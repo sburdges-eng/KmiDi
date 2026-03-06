@@ -33,6 +33,7 @@ except ImportError:
 import asyncio
 import json
 import logging
+import random
 import os
 import signal
 import sys
@@ -67,6 +68,18 @@ except ImportError:
     HAS_GPU_UTILS = False
 
 logger = logging.getLogger(__name__)
+
+
+def _set_determinism(seed: int) -> None:
+    """Set global seed and deterministic backends for reproducible training."""
+    random.seed(seed)
+    if TORCH_AVAILABLE:
+        import torch
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
 
 
 # =============================================================================
@@ -577,7 +590,7 @@ class PyTorchTrainer(BaseTrainer):
 
         return GenericMLP()
 
-    def _create_dummy_dataloader(self, split: str = "train"):
+    def _create_dummy_dataloader(self, split: str = "train", generator=None):
         """Create dummy dataloader for demonstration."""
         import torch
         from torch.utils.data import DataLoader, TensorDataset
@@ -608,6 +621,7 @@ class PyTorchTrainer(BaseTrainer):
             batch_size=batch_size,
             shuffle=(split == "train"),
             num_workers=0,
+            generator=generator,
         )
 
     def train(self, job: TrainingJob) -> Dict[str, float]:
@@ -618,11 +632,15 @@ class PyTorchTrainer(BaseTrainer):
 
         import torch
 
+        seed = getattr(self.config, "seed", 42)
+        _set_determinism(seed)
+        g = torch.Generator().manual_seed(seed) if HAS_TORCH else None
+
         self._setup_model()
         self._notify_callbacks("on_train_begin", self.config, job)
 
-        train_loader = self._create_dummy_dataloader("train")
-        val_loader = self._create_dummy_dataloader("val")
+        train_loader = self._create_dummy_dataloader("train", generator=g)
+        val_loader = self._create_dummy_dataloader("val", generator=g)
 
         metrics = {
             "loss": float("inf"),

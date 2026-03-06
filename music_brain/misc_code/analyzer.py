@@ -9,7 +9,7 @@ Provides unified access to:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional
 from pathlib import Path
 from enum import Enum
 import warnings
@@ -52,12 +52,12 @@ class KeyDetectionResult:
     mode: KeyMode
     confidence: float  # 0.0 - 1.0
     correlation_vector: List[float] = field(default_factory=list)  # 12 values
-    
+
     @property
     def full_key(self) -> str:
         """Full key name (e.g., 'C major', 'A minor')."""
         return f"{self.key} {self.mode.value}"
-    
+
     def to_dict(self) -> Dict:
         return {
             "key": self.key,
@@ -75,7 +75,7 @@ class BPMDetectionResult:
     beat_frames: List[int] = field(default_factory=list)
     beat_times: List[float] = field(default_factory=list)  # In seconds
     tempo_alternatives: List[float] = field(default_factory=list)  # Other likely tempos
-    
+
     def to_dict(self) -> Dict:
         return {
             "bpm": self.bpm,
@@ -94,7 +94,7 @@ class AudioSegment:
     key: Optional[str] = None
     bpm: Optional[float] = None
     label: str = ""  # e.g., "intro", "verse", "chorus"
-    
+
     @property
     def duration(self) -> float:
         return self.end_time - self.start_time
@@ -106,22 +106,22 @@ class AudioAnalysis:
     filepath: str
     duration_seconds: float
     sample_rate: int
-    
+
     # Detected features
     bpm_result: Optional[BPMDetectionResult] = None
     key_result: Optional[KeyDetectionResult] = None
-    
+
     # Audio features
     features: Optional[AudioFeatures] = None
     feature_summary: Dict[str, float] = field(default_factory=dict)
-    
+
     # Segmentation
     segments: List[AudioSegment] = field(default_factory=list)
-    
+
     # Raw features (for advanced use)
     chroma: Optional[List[List[float]]] = None
     mfcc: Optional[List[List[float]]] = None
-    
+
     def to_dict(self) -> Dict:
         result = {
             "filepath": self.filepath,
@@ -162,30 +162,30 @@ def detect_key(
 ) -> KeyDetectionResult:
     """
     Detect the musical key of audio using the Krumhansl-Schmuckler algorithm.
-    
+
     Args:
         audio_data: Audio samples (mono)
         sr: Sample rate
         hop_length: Analysis hop length
-    
+
     Returns:
         KeyDetectionResult with detected key and confidence
     """
     if not LIBROSA_AVAILABLE or np is None:
         raise ImportError("librosa required for key detection")
-    
+
     # Preference harmonic content for tonal estimation
     harmonic = librosa.effects.harmonic(audio_data)
     chroma_cqt = librosa.feature.chroma_cqt(y=harmonic, sr=sr, hop_length=hop_length)
     chroma_cens = librosa.feature.chroma_cens(y=harmonic, sr=sr, hop_length=hop_length)
     chroma = 0.6 * chroma_cqt + 0.4 * chroma_cens
     chroma_mean = np.mean(chroma, axis=1)
-    
+
     # Normalize
     chroma_sum = np.sum(chroma_mean)
     if chroma_sum > 0:
         chroma_mean = chroma_mean / chroma_sum
-    
+
     correlations = []
     major_profile = np.array(MAJOR_PROFILE_VALUES)
     minor_profile = np.array(MINOR_PROFILE_VALUES)
@@ -199,14 +199,14 @@ def detect_key(
         corr_minor = float(np.corrcoef(chroma_mean, shifted_minor)[0, 1])
         correlations.append({"key": KEY_NAMES[shift], "mode": "major", "correlation": corr_major})
         correlations.append({"key": KEY_NAMES[shift], "mode": "minor", "correlation": corr_minor})
-    
+
     best = max(correlations, key=lambda item: item["correlation"])
     all_corrs = np.array([c["correlation"] for c in correlations])
     percentile = np.percentile(all_corrs, 75)
     max_corr = best["correlation"]
     confidence = (max_corr - percentile) / (abs(max_corr) + 1e-6)
     confidence = float(np.clip(confidence, 0.0, 1.0))
-    
+
     return KeyDetectionResult(
         key=best["key"],
         mode=KeyMode.MAJOR if best["mode"] == "major" else KeyMode.MINOR,
@@ -226,30 +226,31 @@ def detect_bpm(
 ) -> BPMDetectionResult:
     """
     Detect tempo/BPM from audio.
-    
+
     Args:
         audio_data: Audio samples (mono)
         sr: Sample rate
         hop_length: Analysis hop length
-    
+
     Returns:
         BPMDetectionResult with detected BPM and confidence
     """
     if not LIBROSA_AVAILABLE or np is None:
         raise ImportError("librosa required for BPM detection")
-    
+
     percussive = librosa.effects.percussive(audio_data)
     onset_env = librosa.onset.onset_strength(y=percussive, sr=sr, hop_length=hop_length)
-    tempo, beat_frames = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr, hop_length=hop_length)
+    tempo, beat_frames = librosa.beat.beat_track(
+        onset_envelope=onset_env, sr=sr, hop_length=hop_length)
     beat_times = librosa.frames_to_time(beat_frames, sr=sr, hop_length=hop_length)
-    
+
     # Get alternative tempo candidates from tempogram autocorrelation
     alternatives = _extract_tempo_candidates(onset_env, sr, hop_length)
-    
+
     # Calculate confidence from beat interval consistency
     temp_array = np.asarray(tempo)
     primary_bpm = float(temp_array.item()) if temp_array.size == 1 else float(temp_array[0])
-    
+
     if len(beat_frames) > 2:
         intervals = np.diff(beat_times)
         expected = 60.0 / primary_bpm
@@ -257,10 +258,10 @@ def detect_bpm(
         confidence = float(np.clip(1.0 - np.mean(deviations), 0.0, 1.0))
     else:
         confidence = 0.4
-    
+
     # Filter alternatives to exclude the primary tempo and keep reasonable range
     alternatives = [t for t in alternatives if abs(t - primary_bpm) > 5 and 60 <= t <= 200][:4]
-    
+
     return BPMDetectionResult(
         bpm=primary_bpm,
         confidence=confidence,
@@ -278,22 +279,22 @@ def _extract_tempo_candidates(
 ) -> List[float]:
     """
     Extract tempo candidates from tempogram autocorrelation peaks.
-    
+
     Uses the tempogram to find peaks in the tempo distribution,
     providing meaningful alternative tempo estimates.
-    
+
     Args:
         onset_env: Onset strength envelope
         sr: Sample rate
         hop_length: Analysis hop length
         n_candidates: Maximum number of candidates to return
-    
+
     Returns:
         List of tempo candidates in BPM, sorted by strength
     """
     if not LIBROSA_AVAILABLE or np is None:
         return []
-    
+
     try:
         # Compute tempogram (autocorrelation of onset envelope)
         tempogram = librosa.feature.tempogram(
@@ -301,11 +302,11 @@ def _extract_tempo_candidates(
             sr=sr,
             hop_length=hop_length,
         )
-        
+
         # Aggregate tempogram across time to get global tempo distribution
         # Shape: (n_tempo_bins,)
         tempo_distribution = np.mean(tempogram, axis=1)
-        
+
         # Get the tempo axis (BPM values for each bin)
         # librosa's tempogram uses lag-based representation
         # Convert lag indices to BPM: BPM = 60 * sr / (lag * hop_length)
@@ -313,7 +314,7 @@ def _extract_tempo_candidates(
         lag_to_bpm = np.zeros(n_bins)
         for lag in range(1, n_bins):
             lag_to_bpm[lag] = 60.0 * sr / (lag * hop_length)
-        
+
         # Find peaks in the tempo distribution (local maxima)
         candidates = []
         for i in range(2, n_bins - 2):
@@ -324,15 +325,15 @@ def _extract_tempo_candidates(
                 if (tempo_distribution[i] > tempo_distribution[i-1] and
                     tempo_distribution[i] > tempo_distribution[i+1] and
                     tempo_distribution[i] > tempo_distribution[i-2] and
-                    tempo_distribution[i] > tempo_distribution[i+2]):
+                        tempo_distribution[i] > tempo_distribution[i+2]):
                     candidates.append((bpm, tempo_distribution[i]))
-        
+
         # Sort by strength (distribution value) descending
         candidates.sort(key=lambda x: x[1], reverse=True)
-        
+
         # Return top N BPM values
         return [round(c[0], 1) for c in candidates[:n_candidates]]
-    
+
     except Exception:
         # Fallback: return empty list if tempogram analysis fails
         return []
@@ -349,24 +350,27 @@ def extract_features(
 ) -> Dict:
     """
     Extract comprehensive audio features.
-    
+
     Args:
         audio_data: Audio samples (mono)
         sr: Sample rate
         hop_length: Analysis hop length
-    
+
     Returns:
         Dictionary of extracted features
     """
     if not LIBROSA_AVAILABLE or np is None:
         raise ImportError("librosa required for feature extraction")
-    
+
     harmonic = librosa.effects.harmonic(audio_data)
     percussive = librosa.effects.percussive(audio_data)
-    spectral_centroid = librosa.feature.spectral_centroid(y=audio_data, sr=sr, hop_length=hop_length)
-    spectral_bandwidth = librosa.feature.spectral_bandwidth(y=audio_data, sr=sr, hop_length=hop_length)
+    spectral_centroid = librosa.feature.spectral_centroid(
+        y=audio_data, sr=sr, hop_length=hop_length)
+    spectral_bandwidth = librosa.feature.spectral_bandwidth(
+        y=audio_data, sr=sr, hop_length=hop_length)
     spectral_rolloff = librosa.feature.spectral_rolloff(y=audio_data, sr=sr, hop_length=hop_length)
-    spectral_contrast = librosa.feature.spectral_contrast(y=audio_data, sr=sr, hop_length=hop_length)
+    spectral_contrast = librosa.feature.spectral_contrast(
+        y=audio_data, sr=sr, hop_length=hop_length)
     spectral_flatness = librosa.feature.spectral_flatness(y=audio_data, hop_length=hop_length)
     rms = librosa.feature.rms(y=audio_data, hop_length=hop_length)
     zcr = librosa.feature.zero_crossing_rate(audio_data, hop_length=hop_length)
@@ -378,7 +382,7 @@ def extract_features(
         tempo_curve = tempo_func.tempo(onset_envelope=onset_strength, sr=sr, aggregate=None)
     else:
         tempo_curve = librosa.beat.tempo(onset_envelope=onset_strength, sr=sr, aggregate=None)
-    
+
     return {
         "spectral_centroid_mean": float(np.mean(spectral_centroid)),
         "spectral_centroid_std": float(np.std(spectral_centroid)),
@@ -404,11 +408,11 @@ def extract_features(
 class AudioAnalyzer:
     """
     Main audio analysis interface for DAiW.
-    
+
     Provides unified access to BPM detection, key detection, structural segmentation,
     and feature extraction tuned for emotional workflows.
     """
-    
+
     def __init__(self, hop_length: int = DEFAULT_HOP_LENGTH, target_sr: int = DEFAULT_TARGET_SR):
         if not LIBROSA_AVAILABLE:
             raise ImportError(
@@ -417,7 +421,7 @@ class AudioAnalyzer:
             )
         self.hop_length = hop_length
         self.target_sr = target_sr
-    
+
     # ------------------------------------------------------------------ #
     # Public API
     # ------------------------------------------------------------------ #
@@ -435,17 +439,17 @@ class AudioAnalyzer:
         filepath = Path(filepath)
         if not filepath.exists():
             raise FileNotFoundError(f"Audio file not found: {filepath}")
-        
+
         audio_data, sr, duration = self._load_audio(filepath, max_duration=max_duration)
         result = AudioAnalysis(
             filepath=str(filepath),
             duration_seconds=duration,
             sample_rate=sr,
         )
-        
+
         harmonic = librosa.effects.harmonic(audio_data)
         percussive = librosa.effects.percussive(audio_data)
-        
+
         if detect_key:
             result.key_result = self.detect_key(harmonic, sr)
         if detect_bpm:
@@ -460,18 +464,18 @@ class AudioAnalyzer:
                 warnings.warn(f"Feel analysis unavailable: {exc}", RuntimeWarning)
         if analyze_segments:
             result.segments = self._segment_from_data(audio_data, sr, num_segments=num_segments)
-        
+
         return result
-    
+
     def detect_key(self, audio_data: "np.ndarray", sr: int) -> KeyDetectionResult:
         return detect_key(audio_data, sr, self.hop_length)
-    
+
     def detect_bpm(self, audio_data: "np.ndarray", sr: int) -> BPMDetectionResult:
         return detect_bpm(audio_data, sr, self.hop_length)
-    
+
     def extract_features(self, audio_data: "np.ndarray", sr: int) -> Dict:
         return extract_features(audio_data, sr, self.hop_length)
-    
+
     def segment_audio(
         self,
         filepath: str,
@@ -480,7 +484,7 @@ class AudioAnalyzer:
         """Segment audio file into labeled regions."""
         audio_data, sr, _ = self._load_audio(Path(filepath))
         return self._segment_from_data(audio_data, sr, num_segments=num_segments)
-    
+
     # ------------------------------------------------------------------ #
     # Internal helpers
     # ------------------------------------------------------------------ #
@@ -500,7 +504,7 @@ class AudioAnalyzer:
         if peak > 0:
             y = y / peak
         return y, sr, duration
-    
+
     def _segment_from_data(
         self,
         audio_data: "np.ndarray",
@@ -513,21 +517,21 @@ class AudioAnalyzer:
                 RuntimeWarning,
             )
             return []
-        
+
         novelty = librosa.onset.onset_strength(y=audio_data, sr=sr, hop_length=self.hop_length)
         height = np.percentile(novelty, 75)
         peaks, _ = find_peaks(novelty, height=height, distance=int(0.5 * sr / self.hop_length))
-        
+
         if len(peaks) < num_segments - 1:
             extra = np.linspace(0, len(novelty) - 1, num_segments + 1, dtype=int)[1:-1]
             peaks = np.unique(np.concatenate([peaks, extra]))
         else:
             idx = np.argsort(novelty[peaks])[-(num_segments - 1):]
             peaks = np.sort(peaks[idx])
-        
+
         boundary_frames = np.concatenate([[0], peaks, [len(novelty) - 1]])
         boundary_times = librosa.frames_to_time(boundary_frames, sr=sr, hop_length=self.hop_length)
-        
+
         segments: List[AudioSegment] = []
         for start, end in zip(boundary_times[:-1], boundary_times[1:]):
             start_sample = int(start * sr)
@@ -541,10 +545,10 @@ class AudioAnalyzer:
                     energy=energy,
                 )
             )
-        
+
         self._label_segments(segments)
         return segments
-    
+
     def _label_segments(self, segments: List[AudioSegment]) -> None:
         labels = ["intro", "verse", "pre-chorus", "chorus", "bridge", "break", "outro"]
         if not segments:
@@ -557,4 +561,3 @@ class AudioAnalyzer:
         max_energy_idx = max(range(len(segments)), key=lambda i: segments[i].energy)
         segments[max_energy_idx].label = "chorus"
         segments[-1].label = "outro"
-
