@@ -48,6 +48,7 @@ export default function App() {
   ]);
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [lastAudioPath, setLastAudioPath] = useState<string | undefined>();
+  const logRef = useRef<HTMLUListElement>(null);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [selectedTechniques, setSelectedTechniques] = useState<string[]>([]);
@@ -116,6 +117,10 @@ export default function App() {
     setInteractions((prev) => [...prev, `Quick Start: ${template.name} (${template.config.key ?? 'C'}, ${template.config.bpm ?? 120} BPM)`]);
     if (template.config.bpm) setTempo(template.config.bpm);
   }, []);
+
+  useEffect(() => {
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
+  }, [interactions]);
 
   const activeTitle = side === 'side-a' ? 'Side A · Studio'
     : side === 'side-b' ? 'Side B · Creative'
@@ -208,7 +213,7 @@ export default function App() {
             </article>
             <article className="panel">
               <h2 className="panel-title">Session Log</h2>
-              <ul className="log-list">
+              <ul className="log-list" ref={logRef}>
                 {interactions.map((entry, index) => (
                   <li key={`${entry.slice(0, 20)}-${index}`}>{entry}</li>
                 ))}
