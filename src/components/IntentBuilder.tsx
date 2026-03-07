@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import type { CompleteSongIntentRequest } from '../types/Intent';
 import { useMusicBrain, buildGeneratePayload } from '../hooks/useMusicBrain';
 
@@ -22,16 +22,30 @@ const IS_TAURI = Boolean(
   typeof window !== 'undefined' && (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__
 );
 
-// Constants strictly mapped to Pydantic (music_brain/engine_api/schema.py):
-// - key_mode: ^[A-G][#b]?\s(major|minor|...) → two <select>s (Root + Mode), never free text
-// - structure.name: ^(intro|verse|chorus|bridge|outro|build|drop)$ → SECTION_NAMES dropdown only
-// - total_bars: computed like Python validate_total_duration, shown live, submit disabled if > 1000
-// - bars 1–128, repetitions 1–16, tempo 40–300, maxLength on text fields per schema
 const SECTION_NAMES = ["intro", "verse", "chorus", "bridge", "outro", "build", "drop"];
 const KEYS = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
 const MODES = ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "aeolian", "locrian"];
 
-/** Demo intent: all interactive features, ~1 min at 120 BPM (30 bars). Matches scripts/demo_run.py. */
+const SECTION_COLORS: Record<string, string> = {
+  intro: '#6366f1', verse: '#22c55e', chorus: '#ec4899',
+  bridge: '#f59e0b', outro: '#8b5cf6', build: '#06b6d4', drop: '#ef4444',
+};
+
+const MOODS = [
+  { id: 'nostalgic', label: 'Nostalgic', color: '#a78bfa' },
+  { id: 'melancholic', label: 'Melancholic', color: '#818cf8' },
+  { id: 'grief', label: 'Grief', color: '#6366f1' },
+  { id: 'tender', label: 'Tender', color: '#f9a8d4' },
+  { id: 'romantic', label: 'Romantic', color: '#fb7185' },
+  { id: 'hopeful', label: 'Hopeful', color: '#fb923c' },
+  { id: 'joyful', label: 'Joyful', color: '#fbbf24' },
+  { id: 'energetic', label: 'Energetic', color: '#34d399' },
+  { id: 'fierce', label: 'Fierce', color: '#f87171' },
+  { id: 'mysterious', label: 'Mysterious', color: '#7c3aed' },
+  { id: 'ethereal', label: 'Ethereal', color: '#22d3ee' },
+  { id: 'calm', label: 'Calm', color: '#5eead4' },
+];
+
 const DEMO_INTENT: CompleteSongIntentRequest = {
   core_desire:
     'A driving synthwave track that evokes a nighttime highway drive; resolve internal tension with hopeful momentum.',
@@ -61,10 +75,7 @@ export default function IntentBuilder() {
   const { generateMusic } = useMusicBrain();
 
   const [intent, setIntent] = useState<CompleteSongIntentRequest>({
-    core_desire: '',
-    mood_primary: '',
-    genre: '',
-    tempo: 120,
+    core_desire: '', mood_primary: '', genre: '', tempo: 120,
     key_mode: 'C major',
     structure: [{ name: 'intro', bars: 8, repetitions: 1 }],
     instruments: [{ instrument: 'piano', techniques: [] }],
@@ -73,17 +84,17 @@ export default function IntentBuilder() {
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [jobStatus, setJobStatus] = useState('AWAITING INTENT...');
+  const [jobStatus, setJobStatus] = useState('');
   const [activeJobId, setActiveJobId] = useState<number | null>(null);
   const [meterLevel, setMeterLevel] = useState(0);
-
-  // Refs so cleanup can run unlisten even when setup() is still async
+  const [selectedSection, setSelectedSection] = useState<number | null>(null);
+  const [showLengthWarning, setShowLengthWarning] = useState(false);
+  const [showRuleFields, setShowRuleFields] = useState(false);
+  const tapsRef = useRef<number[]>([]);
   const unlistenRef = useRef<{ progress?: () => void; result?: () => void }>({});
 
-  // ── Real Tauri event listeners (gen-progress, gen-result) ──
   useEffect(() => {
     let mounted = true;
-
     const setup = async () => {
       try {
         const unProg = await safeListen('gen-progress', (payload: { status?: string; percent?: number }) => {
@@ -93,93 +104,65 @@ export default function IntentBuilder() {
         });
         if (!mounted) return;
         unlistenRef.current.progress = unProg ?? undefined;
-
-        const unRes = await safeListen('gen-result', (payload: { ok?: boolean; error?: string; midi?: unknown }) => {
+        const unRes = await safeListen('gen-result', (payload: { ok?: boolean; error?: string }) => {
           if (!mounted) return;
           setIsGenerating(false);
           setActiveJobId(null);
-          if (payload?.ok) {
-            setJobStatus('GENERATION COMPLETE');
-            setMeterLevel(0);
-            setError(null);
-          } else {
-            setError(payload?.error ?? 'Engine error');
-            setJobStatus('FAILED');
-          }
+          if (payload?.ok) { setJobStatus('COMPLETE'); setMeterLevel(0); setError(null); }
+          else { setError(payload?.error ?? 'Engine error'); setJobStatus('FAILED'); }
         });
         if (!mounted) return;
         unlistenRef.current.result = unRes ?? undefined;
-      } catch (e) {
-        if (mounted) console.warn('Tauri event setup failed (expected in browser):', e);
-      }
+      } catch { /* expected in browser */ }
     };
     setup();
-
-    return () => {
-      mounted = false;
-      unlistenRef.current.progress?.();
-      unlistenRef.current.result?.();
-      unlistenRef.current = {};
-    };
+    return () => { mounted = false; unlistenRef.current.progress?.(); unlistenRef.current.result?.(); unlistenRef.current = {}; };
   }, []);
 
-  // 2. Real-time Validations (Mirroring Pydantic Exactly)
-  const totalBars = useMemo(() => {
-    return intent.structure.reduce((acc, sec) => acc + (sec.bars * (sec.repetitions ?? 1)), 0);
-  }, [intent.structure]);
+  const totalBars = useMemo(() =>
+    intent.structure.reduce((acc, s) => acc + s.bars * (s.repetitions ?? 1), 0),
+  [intent.structure]);
 
-  const validation = useMemo(() => {
-    return {
-      core_desire: intent.core_desire.trim().length >= 1 && intent.core_desire.length <= 1000,
-      mood_primary: intent.mood_primary.trim().length >= 1 && intent.mood_primary.length <= 100,
-      genre: intent.genre.trim().length >= 1 && intent.genre.length <= 100,
-      tempo: (intent.tempo ?? 120) >= 40 && (intent.tempo ?? 120) <= 300,
-      totalBars: totalBars <= 1000,
-      structureLen: intent.structure.length >= 1,
-      instrumentsLen: intent.instruments.length >= 1,
-      instrumentsValid: intent.instruments.every(i => i.instrument.trim().length >= 1 && i.instrument.length <= 64)
-    };
-  }, [intent, totalBars]);
+  const validation = useMemo(() => ({
+    core_desire: intent.core_desire.trim().length >= 1 && intent.core_desire.length <= 1000,
+    mood_primary: intent.mood_primary.trim().length >= 1 && intent.mood_primary.length <= 100,
+    genre: intent.genre.trim().length >= 1 && intent.genre.length <= 100,
+    tempo: (intent.tempo ?? 120) >= 40 && (intent.tempo ?? 120) <= 300,
+    totalBars: totalBars <= 1000,
+    structureLen: intent.structure.length >= 1,
+    instrumentsLen: intent.instruments.length >= 1,
+    instrumentsValid: intent.instruments.every(i => i.instrument.trim().length >= 1 && i.instrument.length <= 64),
+  }), [intent, totalBars]);
 
   const isFormValid = Object.values(validation).every(Boolean);
 
-  // 3. Update Helpers
-  const updateBase = (field: keyof CompleteSongIntentRequest, value: any) => {
+  const set = useCallback((field: keyof CompleteSongIntentRequest, value: unknown) => {
     setIntent(prev => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
-  // Helper to split and update the strict regex key_mode
   const currentKey = intent.key_mode.split(' ')[0] || 'C';
   const currentMode = intent.key_mode.split(' ')[1] || 'major';
 
-  // ── Strict Pydantic contract adapter: flat shape for Rust → Python ──
   const handleGenerate = async () => {
+    if (!validation.totalBars) { setShowLengthWarning(true); return; }
     if (!isFormValid) return;
     setIsGenerating(true);
     setError(null);
-    setJobStatus('COMPILING INTENT...');
+    setJobStatus('COMPILING...');
 
     try {
-      const tempoResolved = Math.round(
-        (intent.tempo ?? 120) >= 40 && (intent.tempo ?? 120) <= 300
-          ? (intent.tempo ?? 120)
-          : 120
-      );
+      const tempo = Math.round(Math.max(40, Math.min(300, intent.tempo ?? 120)));
       const keyMode = intent.key_mode.trim();
       const keyModeValid = /^[A-G][#b]?\s(major|minor|dorian|mixolydian|lydian|phrygian|locrian)$/.test(keyMode);
 
-      const pydanticPayload = {
+      const payload = {
         core_desire: intent.core_desire.trim().substring(0, 1000),
         mood_primary: intent.mood_primary.trim().substring(0, 100),
         genre: intent.genre.trim().substring(0, 100),
-        tempo: tempoResolved,
+        tempo,
         key_mode: keyModeValid ? keyMode : 'C major',
-        structure: intent.structure.map((s) => ({
-          name: s.name,
-          bars: s.bars,
-          repetitions: s.repetitions ?? 1,
-        })),
-        instruments: intent.instruments.map((i) => ({
+        structure: intent.structure.map(s => ({ name: s.name, bars: s.bars, repetitions: s.repetitions ?? 1 })),
+        instruments: intent.instruments.map(i => ({
           instrument: i.instrument.trim().toLowerCase().replace(/\s+/g, '_').replace(/-/g, '_').substring(0, 64),
           techniques: i.techniques ?? [],
         })),
@@ -190,347 +173,281 @@ export default function IntentBuilder() {
         rule_justification: intent.rule_justification?.trim() || null,
       };
 
-      console.log('Dispatching valid Pydantic payload:', pydanticPayload);
-
       if (IS_TAURI) {
-        const jobId = await safeInvoke<number>('start_generation', {
-          intentJson: JSON.stringify(pydanticPayload),
-        });
+        const jobId = await safeInvoke<number>('start_generation', { intentJson: JSON.stringify(payload) });
         setActiveJobId(jobId);
         setJobStatus('GENERATING...');
       } else {
-        setJobStatus('GENERATING VIA HTTP...');
+        setJobStatus('GENERATING...');
         const apiPayload = buildGeneratePayload(intent);
-        const result = await generateMusic(apiPayload);
-        console.log('Generation result:', result);
+        await generateMusic(apiPayload);
         setIsGenerating(false);
-        setJobStatus('GENERATION COMPLETE');
+        setJobStatus('COMPLETE');
         setMeterLevel(0);
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error('[IntentBuilder] handleGenerate failed:', err);
-      setError(message);
+      setError(err instanceof Error ? err.message : String(err));
       setIsGenerating(false);
-      setJobStatus('FAILED TO DISPATCH');
+      setJobStatus('');
     }
   };
 
   const handleCancel = async () => {
     if (activeJobId == null) return;
-    try {
-      await safeInvoke('cancel_generation', { jobId: activeJobId });
-      setJobStatus('CANCELLING...');
-    } catch (err) {
-      console.error('Failed to cancel:', err);
-    }
+    try { await safeInvoke('cancel_generation', { jobId: activeJobId }); setJobStatus('CANCELLING...'); }
+    catch { /* ignore */ }
   };
+
+  const handleTap = useCallback(() => {
+    const now = performance.now();
+    tapsRef.current.push(now);
+    if (tapsRef.current.length > 6) tapsRef.current.shift();
+    if (tapsRef.current.length >= 2) {
+      const intervals = [];
+      for (let i = 1; i < tapsRef.current.length; i++) intervals.push(tapsRef.current[i] - tapsRef.current[i - 1]);
+      const avg = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      const bpm = Math.round(60000 / avg);
+      if (bpm >= 40 && bpm <= 300) set('tempo', bpm);
+    }
+  }, [set]);
+
+  const handleTempoWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -1 : 1;
+    set('tempo', Math.max(40, Math.min(300, (intent.tempo ?? 120) + delta)));
+  }, [intent.tempo, set]);
+
+  const updateSection = (idx: number, field: string, value: unknown) => {
+    const next = [...intent.structure];
+    (next[idx] as unknown as Record<string, unknown>)[field] = value;
+    set('structure', next);
+  };
+
+  const addSection = () => set('structure', [...intent.structure, { name: 'verse', bars: 8, repetitions: 1 }]);
+  const removeSection = (idx: number) => {
+    set('structure', intent.structure.filter((_, i) => i !== idx));
+    setSelectedSection(null);
+  };
+
+  const updateInstrument = (idx: number, field: string, value: unknown) => {
+    const next = [...intent.instruments];
+    (next[idx] as unknown as Record<string, unknown>)[field] = value;
+    set('instruments', next);
+  };
+
+  const addInstrument = () => set('instruments', [...intent.instruments, { instrument: '', techniques: [] }]);
+  const removeInstrument = (idx: number) => set('instruments', intent.instruments.filter((_, i) => i !== idx));
 
   const handleLoadDemo = () => {
     setIntent({ ...DEMO_INTENT });
     setError(null);
-    setJobStatus('AWAITING INTENT...');
+    setJobStatus('');
+    setShowRuleFields(true);
   };
 
+  const activeMoodColor = MOODS.find(m => m.label.toLowerCase() === intent.mood_primary.toLowerCase())?.color;
+
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8 bg-white text-slate-900 rounded-xl shadow-sm border border-slate-200">
-      <header className="border-b pb-4 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">LASKmiDi Intent Builder</h1>
-          <p className="text-slate-500 mt-1">Design your generation intent. Constraints are strictly enforced by the API schema.</p>
+    <div className="gen-workspace">
+
+      {/* ── Top bar ── */}
+      <div className="gen-topbar">
+        <button type="button" className="gen-demo-btn" onClick={handleLoadDemo}>Load Demo</button>
+        <div className="gen-topbar-right">
+          {isGenerating && <button type="button" className="gen-cancel-btn" onClick={handleCancel}>Cancel</button>}
+          <button
+            type="button"
+            className={`gen-go-btn ${isGenerating || !isFormValid ? 'gen-go-disabled' : ''}`}
+            disabled={!isFormValid || isGenerating}
+            onClick={handleGenerate}
+          >
+            {isGenerating ? jobStatus : 'Generate'}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={handleLoadDemo}
-          className="shrink-0 py-2 px-4 rounded-md font-medium border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-        >
-          Load demo (1 min)
-        </button>
-      </header>
+      </div>
 
-      {/* GLOBAL SETTINGS */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold border-b pb-2">1. Global Metadata</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="col-span-1 md:col-span-2">
-            <label className="block text-sm font-medium mb-1">
-              Core Desire <span className={!validation.core_desire ? 'text-red-500' : ''}>*</span>
-            </label>
-            <textarea
-              value={intent.core_desire}
-              onChange={e => updateBase('core_desire', e.target.value)}
-              className="w-full border border-slate-300 p-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              placeholder="A driving synthwave track that evokes a nighttime highway drive..."
-              rows={3}
-              maxLength={1000}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Primary Mood <span className={!validation.mood_primary ? 'text-red-500' : ''}>*</span>
-            </label>
-            <input
-              type="text" value={intent.mood_primary}
-              onChange={e => updateBase('mood_primary', e.target.value)}
-              className="w-full border border-slate-300 p-2 rounded-md" placeholder="e.g., Melancholic, Energetic"
-              maxLength={100}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Genre <span className={!validation.genre ? 'text-red-500' : ''}>*</span>
-            </label>
-            <input
-              type="text" value={intent.genre}
-              onChange={e => updateBase('genre', e.target.value)}
-              className="w-full border border-slate-300 p-2 rounded-md" placeholder="e.g., Synthwave, Orchestral"
-              maxLength={100}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1 flex justify-between">
-              <span>Tempo (BPM)</span>
-              <span className={!validation.tempo ? "text-red-500 font-bold" : "text-slate-500"}>{intent.tempo}</span>
-            </label>
-            <input
-              type="range" min="40" max="300" value={intent.tempo}
-              onChange={e => updateBase('tempo', parseInt(e.target.value))}
-              className="w-full accent-blue-600"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Key & Mode</label>
-            <div className="flex gap-2">
-              <select
-                className="w-1/2 border border-slate-300 p-2 rounded-md bg-white outline-none"
-                value={currentKey}
-                onChange={e => updateBase('key_mode', `${e.target.value} ${currentMode}`)}
-              >
-                {KEYS.map(k => <option key={k} value={k}>{k}</option>)}
-              </select>
-              <select
-                className="w-1/2 border border-slate-300 p-2 rounded-md bg-white outline-none"
-                value={currentMode}
-                onChange={e => updateBase('key_mode', `${currentKey} ${e.target.value}`)}
-              >
-                {MODES.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-200">
-          <div>
-            <label className="block text-sm font-medium mb-1 text-slate-600">Groove / Feel</label>
-            <input
-              type="text"
-              value={intent.groove_feel ?? ''}
-              onChange={e => updateBase('groove_feel', e.target.value || undefined)}
-              className="w-full border border-slate-300 p-2 rounded-md"
-              placeholder="e.g. Straight/Driving, Laid-back"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1 text-slate-600">Narrative arc</label>
-            <input
-              type="text"
-              value={intent.narrative_arc ?? ''}
-              onChange={e => updateBase('narrative_arc', e.target.value || undefined)}
-              className="w-full border border-slate-300 p-2 rounded-md"
-              placeholder="e.g. Climb-to-Climax, Plateau"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium mb-1 text-slate-600">Rule to break (optional)</label>
-            <input
-              type="text"
-              value={intent.rule_to_break ?? ''}
-              onChange={e => updateBase('rule_to_break', e.target.value || null)}
-              className="w-full border border-slate-300 p-2 rounded-md"
-              placeholder="Intentional theory violation for effect"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium mb-1 text-slate-600">Rule justification (optional)</label>
-            <input
-              type="text"
-              value={intent.rule_justification ?? ''}
-              onChange={e => updateBase('rule_justification', e.target.value || null)}
-              className="w-full border border-slate-300 p-2 rounded-md"
-              placeholder="Narrative reason for the rule break"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* STRUCTURE BUILDER */}
-      <section className="space-y-4">
-        <div className="flex justify-between items-end border-b pb-2">
-          <h2 className="text-xl font-semibold">2. Structure</h2>
-          <span className={`text-sm font-bold ${validation.totalBars ? 'text-slate-600' : 'text-red-600'}`}>
-            Total Bars: {totalBars} / 1000
-          </span>
-        </div>
-
-        <div className="space-y-3">
-          {intent.structure.map((sec, idx) => (
-            <div key={idx} className="flex flex-wrap md:flex-nowrap gap-3 items-center bg-slate-50 p-3 rounded-md border border-slate-200">
-              <select
-                value={sec.name}
-                onChange={e => {
-                  const newStruct = [...intent.structure];
-                  newStruct[idx].name = e.target.value;
-                  updateBase('structure', newStruct);
-                }}
-                className="border border-slate-300 p-2 rounded-md uppercase text-sm bg-white flex-1 min-w-[120px] outline-none"
-              >
-                {SECTION_NAMES.map(name => <option key={name} value={name}>{name}</option>)}
-              </select>
-
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-slate-500">Bars:</label>
-                <input
-                  type="number" min="1" max="128" value={sec.bars}
-                  onChange={e => {
-                    const newStruct = [...intent.structure];
-                    newStruct[idx].bars = parseInt(e.target.value) || 1;
-                    updateBase('structure', newStruct);
-                  }}
-                  className="border border-slate-300 p-2 rounded-md w-20 text-center outline-none"
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-slate-500">Reps:</label>
-                <input
-                  type="number" min="1" max="16" value={sec.repetitions || 1}
-                  onChange={e => {
-                    const newStruct = [...intent.structure];
-                    newStruct[idx].repetitions = parseInt(e.target.value) || 1;
-                    updateBase('structure', newStruct);
-                  }}
-                  className="border border-slate-300 p-2 rounded-md w-20 text-center outline-none"
-                />
-              </div>
-
-              <button
-                onClick={() => {
-                  const newStruct = intent.structure.filter((_, i) => i !== idx);
-                  updateBase('structure', newStruct);
-                }}
-                disabled={intent.structure.length <= 1}
-                className="ml-auto text-red-500 hover:text-red-700 font-bold px-2 disabled:opacity-30"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-        </div>
-        <button
-          onClick={() => updateBase('structure', [...intent.structure, { name: 'verse', bars: 8, repetitions: 1 }])}
-          className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
-        >
-          <span>+</span> Add Section
-        </button>
-      </section>
-
-      {/* INSTRUMENTS MANAGER */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-semibold border-b pb-2">3. Instruments (Tracks)</h2>
-        <div className="space-y-3">
-          {intent.instruments.map((inst, idx) => (
-            <div key={idx} className="flex flex-wrap md:flex-nowrap gap-3 items-center bg-slate-50 p-3 rounded-md border border-slate-200">
-              <input
-                type="text" value={inst.instrument}
-                onChange={e => {
-                  const newInst = [...intent.instruments];
-                  newInst[idx].instrument = e.target.value;
-                  updateBase('instruments', newInst);
-                }}
-                placeholder="Instrument (e.g., piano, synth_bass)"
-                className="border border-slate-300 p-2 rounded-md flex-1 min-w-[200px] outline-none"
-                maxLength={64}
-              />
-              <input
-                type="text" value={inst.techniques?.join(', ') || ''}
-                onChange={e => {
-                  const newInst = [...intent.instruments];
-                  // Automatically parse comma-separated strings to an Array of strings
-                  newInst[idx].techniques = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
-                  updateBase('instruments', newInst);
-                }}
-                placeholder="Techniques (comma separated)"
-                className="border border-slate-300 p-2 rounded-md flex-1 min-w-[200px] outline-none"
-              />
-              <button
-                onClick={() => {
-                  const newInst = intent.instruments.filter((_, i) => i !== idx);
-                  updateBase('instruments', newInst);
-                }}
-                disabled={intent.instruments.length <= 1}
-                className="ml-auto text-red-500 hover:text-red-700 font-bold px-2 disabled:opacity-30"
-              >
-                ✕
-              </button>
-            </div>
-          ))}
-        </div>
-        <button
-          onClick={() => updateBase('instruments', [...intent.instruments, { instrument: '', techniques: [] }])}
-          className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
-        >
-          <span>+</span> Add Instrument
-        </button>
-      </section>
-
-      {/* ERROR REPORTING */}
-      {error && (
-        <div className="p-4 bg-red-50 text-red-700 border border-red-200 rounded-md text-sm">
-          <strong>Backend Error:</strong> {error}
+      {/* ── Progress ── */}
+      {isGenerating && meterLevel > 0 && (
+        <div className="gen-progress-track">
+          <div className="gen-progress-fill" style={{ width: `${Math.min(100, meterLevel * 100)}%` }} />
         </div>
       )}
 
-      {/* SUBMISSION */}
-      <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={intent.allow_legacy_fallback}
-            onChange={e => updateBase('allow_legacy_fallback', e.target.checked)}
-            className="rounded text-blue-600 focus:ring-blue-500"
-          />
-          Allow Legacy Generation Fallback
-        </label>
+      {/* ── Three-column workspace ── */}
+      <div className="gen-columns">
 
-        <div className="flex flex-wrap items-center gap-3">
-          {isGenerating && (
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="py-2 px-4 rounded-md font-medium bg-slate-600 text-white hover:bg-slate-700"
-            >
-              Cancel
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={!isFormValid || isGenerating}
-            className={`py-3 px-8 rounded-md font-bold text-white transition-all
-              ${isGenerating || !isFormValid ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 shadow-sm'}`}
-          >
-            {isGenerating ? jobStatus : '▶ GENERATE'}
-          </button>
-        </div>
-        {meterLevel > 0 && isGenerating && (
-          <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-500 transition-all duration-300"
-              style={{ width: `${Math.min(100, meterLevel * 100)}%` }}
+        {/* ─ Left: Emotion ─ */}
+        <section className="gen-panel gen-panel-emotion">
+          <h3 className="gen-panel-label">Mood</h3>
+          <div className="vinyl-wrap">
+            <div className="vinyl-disc">
+              <div className="vinyl-spin" />
+              <div className="vinyl-center" style={activeMoodColor ? { borderColor: activeMoodColor, boxShadow: `0 0 20px ${activeMoodColor}40` } : undefined}>
+                <span className="vinyl-center-text">{intent.mood_primary || 'Select'}</span>
+              </div>
+            </div>
+            <div className="mood-ring">
+              {MOODS.map((m, i) => {
+                const angle = (i * 360 / MOODS.length) - 90;
+                const rad = angle * Math.PI / 180;
+                const R = 118;
+                const x = Math.cos(rad) * R;
+                const y = Math.sin(rad) * R;
+                const active = intent.mood_primary.toLowerCase() === m.label.toLowerCase();
+                return (
+                  <button
+                    key={m.id} type="button"
+                    className={`mood-node ${active ? 'mood-node-active' : ''}`}
+                    style={{ transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`, '--mc': m.color } as React.CSSProperties}
+                    onClick={() => set('mood_primary', m.label)}
+                  >{m.label}</button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* ─ Center: Song Details ─ */}
+        <section className="gen-panel gen-panel-details">
+          <h3 className="gen-panel-label">Song Details</h3>
+          <div className="gf-group">
+            <label className="gf-label">Describe your song</label>
+            <textarea
+              className="gf-textarea"
+              value={intent.core_desire}
+              onChange={e => set('core_desire', e.target.value)}
+              placeholder="A driving synthwave track that evokes a nighttime highway drive..."
+              rows={3} maxLength={1000}
             />
           </div>
-        )}
+          <div className="gf-row">
+            <div className="gf-group gf-grow">
+              <label className="gf-label">Genre</label>
+              <input className="gf-input" value={intent.genre} onChange={e => set('genre', e.target.value)} placeholder="Synthwave, Jazz, Orchestral..." maxLength={100} />
+            </div>
+            <div className="gf-group">
+              <label className="gf-label">Key</label>
+              <div className="gf-key-row">
+                <select className="gf-select" value={currentKey} onChange={e => set('key_mode', `${e.target.value} ${currentMode}`)}>
+                  {KEYS.map(k => <option key={k}>{k}</option>)}
+                </select>
+                <select className="gf-select" value={currentMode} onChange={e => set('key_mode', `${currentKey} ${e.target.value}`)}>
+                  {MODES.map(m => <option key={m}>{m}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div className="gf-row">
+            <div className="gf-group gf-grow">
+              <label className="gf-label">Groove / Feel</label>
+              <input className="gf-input" value={intent.groove_feel ?? ''} onChange={e => set('groove_feel', e.target.value || undefined)} placeholder="Straight/Driving, Laid-back..." />
+            </div>
+            <div className="gf-group gf-grow">
+              <label className="gf-label">Narrative Arc</label>
+              <input className="gf-input" value={intent.narrative_arc ?? ''} onChange={e => set('narrative_arc', e.target.value || undefined)} placeholder="Climb-to-Climax, Plateau..." />
+            </div>
+          </div>
+          <button type="button" className="gf-toggle-link" onClick={() => setShowRuleFields(!showRuleFields)}>
+            {showRuleFields ? '− Hide rule break' : '+ Rule break (optional)'}
+          </button>
+          {showRuleFields && (
+            <div className="gf-row gf-rule-row">
+              <div className="gf-group gf-grow">
+                <label className="gf-label">Rule to break</label>
+                <input className="gf-input" value={intent.rule_to_break ?? ''} onChange={e => set('rule_to_break', e.target.value || null)} placeholder="e.g. parallel fifths" />
+              </div>
+              <div className="gf-group gf-grow">
+                <label className="gf-label">Justification</label>
+                <input className="gf-input" value={intent.rule_justification ?? ''} onChange={e => set('rule_justification', e.target.value || null)} placeholder="Narrative reason..." />
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* ─ Right: Structure + Instruments ─ */}
+        <section className="gen-panel gen-panel-arrange">
+          <h3 className="gen-panel-label">Arrangement</h3>
+
+          {/* Structure timeline */}
+          <div className="stl-track">
+            {intent.structure.map((sec, i) => {
+              const pct = Math.max(8, (sec.bars * (sec.repetitions ?? 1)) / Math.max(1, totalBars) * 100);
+              return (
+                <button
+                  key={i} type="button"
+                  className={`stl-block ${selectedSection === i ? 'stl-block-sel' : ''}`}
+                  style={{ flex: `${pct} 0 0%`, '--bc': SECTION_COLORS[sec.name] || '#6366f1' } as React.CSSProperties}
+                  onClick={() => setSelectedSection(selectedSection === i ? null : i)}
+                >
+                  <span className="stl-name">{sec.name}</span>
+                  <span className="stl-bars">{sec.bars}{(sec.repetitions ?? 1) > 1 ? `×${sec.repetitions}` : ''}</span>
+                </button>
+              );
+            })}
+            <button type="button" className="stl-add" onClick={addSection}>+</button>
+          </div>
+
+          {/* Section editor */}
+          {selectedSection !== null && selectedSection < intent.structure.length && (
+            <div className="stl-editor">
+              <select className="gf-select" value={intent.structure[selectedSection].name} onChange={e => updateSection(selectedSection, 'name', e.target.value)}>
+                {SECTION_NAMES.map(n => <option key={n}>{n}</option>)}
+              </select>
+              <label className="stl-ed-label">Bars
+                <input type="number" className="stl-ed-num" min={1} max={128} value={intent.structure[selectedSection].bars} onChange={e => updateSection(selectedSection, 'bars', parseInt(e.target.value) || 1)} />
+              </label>
+              <label className="stl-ed-label">Reps
+                <input type="number" className="stl-ed-num" min={1} max={16} value={intent.structure[selectedSection].repetitions ?? 1} onChange={e => updateSection(selectedSection, 'repetitions', parseInt(e.target.value) || 1)} />
+              </label>
+              <button type="button" className="stl-remove" onClick={() => removeSection(selectedSection)} disabled={intent.structure.length <= 1}>Remove</button>
+            </div>
+          )}
+
+          {/* Instruments */}
+          <h3 className="gen-panel-label" style={{ marginTop: 16 }}>Instruments</h3>
+          <div className="inst-rack">
+            {intent.instruments.map((inst, i) => (
+              <div key={i} className="inst-module">
+                <div className="inst-knob">
+                  <span className="inst-knob-label">{inst.instrument ? inst.instrument.charAt(0).toUpperCase() : '?'}</span>
+                </div>
+                <input className="inst-name" value={inst.instrument} onChange={e => updateInstrument(i, 'instrument', e.target.value)} placeholder="instrument" maxLength={64} />
+                <input className="inst-tech" value={inst.techniques?.join(', ') || ''} onChange={e => updateInstrument(i, 'techniques', e.target.value.split(',').map(s => s.trim()).filter(Boolean))} placeholder="techniques" />
+                <button type="button" className="inst-remove" onClick={() => removeInstrument(i)} disabled={intent.instruments.length <= 1}>×</button>
+              </div>
+            ))}
+            <button type="button" className="inst-add" onClick={addInstrument}>+ Add</button>
+          </div>
+        </section>
       </div>
+
+      {/* ── Tempo bar ── */}
+      <div className="gen-tempo-bar">
+        <div className="tempo-bpm" onWheel={handleTempoWheel}>
+          <span className="tempo-num">{intent.tempo}</span>
+          <span className="tempo-unit">BPM</span>
+        </div>
+        <button type="button" className="tempo-tap" onClick={handleTap}>TAP</button>
+        <input type="range" className="tempo-slider" min={40} max={300} value={intent.tempo} onChange={e => set('tempo', parseInt(e.target.value))} />
+      </div>
+
+      {/* ── Error ── */}
+      {error && (
+        <div className="gen-error">
+          <span>{error}</span>
+          <button type="button" onClick={() => setError(null)}>×</button>
+        </div>
+      )}
+
+      {/* ── Length warning modal ── */}
+      {showLengthWarning && (
+        <div className="gen-modal-overlay" onClick={() => setShowLengthWarning(false)}>
+          <div className="gen-modal" onClick={e => e.stopPropagation()}>
+            <p>Song length exceeded. Please shorten the structure.</p>
+            <button type="button" onClick={() => setShowLengthWarning(false)}>OK</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -143,9 +143,7 @@ export default function App() {
             </button>
           ))}
         </div>
-        <span className={`api-badge ${apiStatus}`}>
-          {apiStatus === 'online' ? 'API Online' : apiStatus === 'offline' ? 'API Offline' : '...'}
-        </span>
+        {/* API status kept internal; errors surface contextually */}
       </header>
 
       <section className="km-titlebar">
