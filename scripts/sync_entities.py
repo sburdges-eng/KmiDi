@@ -16,10 +16,21 @@ from music_brain.engine_api.schema import CompleteSongIntentRequest
 
 SCHEMA_DIR = ROOT / "shared_schemas"
 SCHEMA_PATH = SCHEMA_DIR / "CompleteSongIntentRequest.json"
-# Backward-compatible alias for older scripts/workflows.
+# Backward-compatible alias for older scripts/workflows (DEPRECATED: do not overwrite).
 LEGACY_SCHEMA_PATH = SCHEMA_DIR / "CompleteSongIntent.json"
 TS_OUT = ROOT / "src" / "types" / "Intent.ts"
 RUST_OUT = ROOT / "src-tauri" / "src" / "generated" / "intent.rs"
+
+
+def _unwrap_anyof_nullable(node: Dict[str, Any]) -> Dict[str, Any] | None:
+    """If *node* is ``anyOf: [{type: T}, {type: null}]`` return the non-null branch."""
+    any_of = node.get("anyOf")
+    if not isinstance(any_of, list) or len(any_of) != 2:
+        return None
+    non_null = [b for b in any_of if b.get("type") != "null"]
+    if len(non_null) == 1:
+        return non_null[0]
+    return None
 
 
 def _model_schema() -> Dict[str, Any]:
@@ -41,23 +52,11 @@ def _json_to_ts(name: str, node: Dict[str, Any], schema: Dict[str, Any]) -> str:
         ref_name = node["$ref"].split("/")[-1]
         return ref_name
 
-    if "anyOf" in node:
-        union_parts = []
-        for variant in node.get("anyOf", []):
-            ts_variant = _json_to_ts(name, variant, schema)
-            if ts_variant not in union_parts:
-                union_parts.append(ts_variant)
-        return " | ".join(union_parts) if union_parts else "unknown"
+    nullable_inner = _unwrap_anyof_nullable(node)
+    if nullable_inner is not None:
+        return f"{_json_to_ts(name, nullable_inner, schema)} | null"
 
     node_type = node.get("type")
-    if isinstance(node_type, list):
-        union_parts = []
-        for variant_type in node_type:
-            ts_variant = _json_to_ts(name, {"type": variant_type}, schema)
-            if ts_variant not in union_parts:
-                union_parts.append(ts_variant)
-        return " | ".join(union_parts) if union_parts else "unknown"
-
     if "enum" in node:
         return " | ".join(f'"{value}"' for value in node["enum"])
     if node_type == "string":
@@ -66,8 +65,6 @@ def _json_to_ts(name: str, node: Dict[str, Any], schema: Dict[str, Any]) -> str:
         return "number"
     if node_type == "boolean":
         return "boolean"
-    if node_type == "null":
-        return "null"
     if node_type == "array":
         item_type = _json_to_ts(name, node.get("items", {}), schema)
         return f"{item_type}[]"
@@ -77,6 +74,9 @@ def _json_to_ts(name: str, node: Dict[str, Any], schema: Dict[str, Any]) -> str:
         lines = ["{"]
         for key, value in props.items():
             optional = "" if key in required else "?"
+            desc = value.get("description")
+            if desc:
+                lines.append(f"  /** {desc} */")
             lines.append(f"  {key}{optional}: {_json_to_ts(key, value, schema)};")
         lines.append("}")
         return "\n".join(lines)
@@ -87,6 +87,10 @@ def _json_to_rust_type(node: Dict[str, Any], required: bool = True) -> str:
     if "$ref" in node:
         base = node["$ref"].split("/")[-1]
         return base if required else f"Option<{base}>"
+
+    nullable_inner = _unwrap_anyof_nullable(node)
+    if nullable_inner is not None:
+        return f"Option<{_json_to_rust_type(nullable_inner, required=True)}>"
 
     node_type = node.get("type")
     if node_type == "string":
@@ -112,9 +116,8 @@ def _render_typescript(schema: Dict[str, Any]) -> str:
     for name, node in defs.items():
         lines.append(f"export interface {name} {_json_to_ts(name, node, schema)}")
         lines.append("")
-    lines.append(
-        f"export interface CompleteSongIntentRequest {_json_to_ts('CompleteSongIntentRequest', schema, schema)}"
-    )
+    root_ts = _json_to_ts("CompleteSongIntentRequest", schema, schema)
+    lines.append(f"export interface CompleteSongIntentRequest {root_ts}")
     lines.append("")
     return "\n".join(lines)
 
@@ -131,7 +134,10 @@ def _render_rust(schema: Dict[str, Any]) -> str:
         lines.append("#[derive(Debug, Clone, Serialize, Deserialize)]")
         lines.append(f"pub struct {name} {{")
         for key, value in node.get("properties", {}).items():
-            field_type = _json_to_rust_type(value, key in required)
+            is_required = key in required
+            field_type = _json_to_rust_type(value, is_required)
+            if not is_required:
+                lines.append("    #[serde(default)]")
             lines.append(f"    pub {key}: {field_type},")
         lines.append("}")
         lines.append("")
@@ -140,7 +146,10 @@ def _render_rust(schema: Dict[str, Any]) -> str:
     lines.append("#[derive(Debug, Clone, Serialize, Deserialize)]")
     lines.append("pub struct CompleteSongIntentRequest {")
     for key, value in schema.get("properties", {}).items():
-        field_type = _json_to_rust_type(value, key in required_root)
+        is_required = key in required_root
+        field_type = _json_to_rust_type(value, is_required)
+        if not is_required:
+            lines.append("    #[serde(default)]")
         lines.append(f"    pub {key}: {field_type},")
     lines.append("}")
     lines.append("")
@@ -155,14 +164,14 @@ def sync_boundaries() -> None:
     schema = _model_schema()
     schema_payload = json.dumps(schema, indent=2) + "\n"
     SCHEMA_PATH.write_text(schema_payload, encoding="utf-8")
-    LEGACY_SCHEMA_PATH.write_text(schema_payload, encoding="utf-8")
+    # DO NOT OVERWRITE LEGACY_SCHEMA_PATH - it is a distinct internal contract.
     TS_OUT.write_text(_render_typescript(schema), encoding="utf-8")
     RUST_OUT.write_text(_render_rust(schema), encoding="utf-8")
 
     print("Schema exported to:", SCHEMA_PATH)
-    print("Legacy schema alias updated:", LEGACY_SCHEMA_PATH)
     print("TypeScript contract written to:", TS_OUT)
     print("Rust contract written to:", RUST_OUT)
+    print("Contract sync complete.")
     print("Next steps for CI:")
     print("-> python scripts/sync_entities.py")
     print("-> verify generated artifacts are committed")
@@ -170,4 +179,3 @@ def sync_boundaries() -> None:
 
 if __name__ == "__main__":
     sync_boundaries()
-

@@ -48,6 +48,7 @@ export default function App() {
   ]);
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [lastAudioPath, setLastAudioPath] = useState<string | undefined>();
+  const logRef = useRef<HTMLUListElement>(null);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [selectedTechniques, setSelectedTechniques] = useState<string[]>([]);
@@ -117,6 +118,10 @@ export default function App() {
     if (template.config.bpm) setTempo(template.config.bpm);
   }, []);
 
+  useEffect(() => {
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
+  }, [interactions]);
+
   const activeTitle = side === 'side-a' ? 'Side A · Studio'
     : side === 'side-b' ? 'Side B · Creative'
     : side === 'create' ? 'Create · Quick Start'
@@ -138,9 +143,7 @@ export default function App() {
             </button>
           ))}
         </div>
-        <span className={`api-badge ${apiStatus}`}>
-          {apiStatus === 'online' ? 'API Online' : apiStatus === 'offline' ? 'API Offline' : '...'}
-        </span>
+        {/* API status kept internal; errors surface contextually */}
       </header>
 
       <section className="km-titlebar">
@@ -208,7 +211,7 @@ export default function App() {
             </article>
             <article className="panel">
               <h2 className="panel-title">Session Log</h2>
-              <ul className="log-list">
+              <ul className="log-list" ref={logRef}>
                 {interactions.map((entry, index) => (
                   <li key={`${entry.slice(0, 20)}-${index}`}>{entry}</li>
                 ))}

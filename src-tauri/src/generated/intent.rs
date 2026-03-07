@@ -5,12 +5,14 @@ use serde::{Deserialize, Serialize};
 pub struct StructureSection {
     pub name: String,
     pub bars: i64,
+    #[serde(default)]
     pub repetitions: Option<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrackIntent {
     pub instrument: String,
+    #[serde(default)]
     pub techniques: Option<Vec<String>>,
 }
 
@@ -19,13 +21,19 @@ pub struct CompleteSongIntentRequest {
     pub core_desire: String,
     pub mood_primary: String,
     pub genre: String,
+    #[serde(default)]
     pub tempo: Option<i64>,
     pub key_mode: String,
     pub structure: Vec<StructureSection>,
     pub instruments: Vec<TrackIntent>,
+    #[serde(default)]
     pub allow_legacy_fallback: Option<bool>,
+    #[serde(default)]
     pub groove_feel: Option<String>,
+    #[serde(default)]
     pub narrative_arc: Option<String>,
-    pub rule_to_break: Option<serde_json::Value>,
-    pub rule_justification: Option<serde_json::Value>,
+    #[serde(default)]
+    pub rule_to_break: Option<String>,
+    #[serde(default)]
+    pub rule_justification: Option<String>,
 }
