@@ -904,14 +904,20 @@ class DAiWAPI:
             bpm = 82
         tempo_range = (max(60, bpm - 20), min(140, bpm + 20))
 
-        # Create CompleteSongIntent (include UI mapping fields for song_intent and technical_constraints)
         vuln = getattr(request.intent, "vulnerability_scale", 0.5)
+        arc = (
+            tech.get("narrative_arc")
+            or getattr(request.intent, "narrative_arc", "")
+            or ""
+        )
         intent = CompleteSongIntent(
             core_event=request.intent.core_wound or emotional,
             core_longing=request.intent.core_desire or "",
             mood_primary=mood_primary,
-            imagery_texture=getattr(request.intent, "imagery_texture", "") or "",
-            narrative_arc=tech.get("narrative_arc") or getattr(request.intent, "narrative_arc", "") or "",
+            imagery_texture=getattr(
+                request.intent, "imagery_texture", "",
+            ) or "",
+            narrative_arc=arc,
             vulnerability_scale=vuln,
             technical_genre=tech.get("genre") or "",
             technical_tempo_range=tempo_range,
@@ -941,15 +947,14 @@ if FASTAPI_AVAILABLE:
         bpm: Optional[int] = None
         progression: Optional[List[str]] = None
         genre: Optional[str] = None
-        duration: Optional[float] = None  # Duration in minutes
-        structure: Optional[List[Dict[str, Any]]] = None  # Song sections with repetitions
-        instruments: Optional[List[Dict[str, Any]]] = None  # Instruments with techniques
-        techniques: Optional[List[str]] = None  # Production techniques
-        groove_feel: Optional[str] = None  # Rhythmic feel (e.g. "Straight/Driving")
-        narrative_arc: Optional[str] = None  # Flow of the song
-        rule_to_break: Optional[str] = None  # Intentional theory violation
-        rule_justification: Optional[str] = None  # Narrative reason for rule break
-        narrative_arc: Optional[str] = None  # Energetic trajectory (e.g. "Sudden Shift")
+        duration: Optional[float] = None
+        structure: Optional[List[Dict[str, Any]]] = None
+        instruments: Optional[List[Dict[str, Any]]] = None
+        techniques: Optional[List[str]] = None
+        groove_feel: Optional[str] = None
+        narrative_arc: Optional[str] = None
+        rule_to_break: Optional[str] = None
+        rule_justification: Optional[str] = None
 
     class EmotionalIntent(BaseModel):
         core_wound: Optional[str] = None
@@ -1383,9 +1388,10 @@ if FASTAPI_AVAILABLE:
                     else:  # pydantic v1 compatibility
                         strict_intent = CompleteSongIntentRequest.parse_obj(strict_payload)
                 except ValidationError as validation_error:
+                    safe_errors = json.loads(validation_error.json())
                     raise HTTPException(
                         status_code=422,
-                        detail=validation_error.errors()
+                        detail=safe_errors,
                     ) from validation_error
 
                 # Convert request to CompleteSongIntent
