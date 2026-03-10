@@ -190,6 +190,8 @@ datalad run -m "Regenerate 8s windows from supervisions" \
 
 **Goal:** Use devices like Sensel Morph or K‑Board Pro 4 to capture high‑resolution, per‑note expressive control mapped into the affect channel and/or MPE parameters.
 
+**Status:** Implemented. Profile doc: `midi/sensel_kmidi_profile.md`. Bridge: `scripts/morph_affect_bridge.py` (MIDI-in and optional Sensel API; optional UMP forward). See `midi/README.md` § Expressive Controller.
+
 ### 5.1 Sensel Morph Profile
 
 - Define a SenselApp profile:

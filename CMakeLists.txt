@@ -19,6 +19,8 @@ option(ENABLE_RTNEURAL "Enable RTNeural for ML inference" OFF)
 option(ENABLE_ONNX_RUNTIME "Enable ONNX Runtime for ML inference" OFF)
 # Freeze/CI: when ON, disallow FetchContent; vendor readerwriterqueue, RTNeural, googletest in external/
 option(KMIDI_OFFLINE_BUILD "Disallow network dependency resolution at configure/build time" OFF)
+# Headless RT callback harness for engine (section 3.3)
+option(BUILD_RT_HARNESS "Build headless RT callback harness" ON)
 
 # KmiDi_FINAL integration options
 option(USE_KMI_DI_FINAL "Use existing KmiDi_FINAL components" OFF)
@@ -141,6 +143,18 @@ if(NOT TARGET readerwriterqueue)
     target_include_directories(readerwriterqueue INTERFACE
         ${readerwriterqueue_SOURCE_DIR}
     )
+endif()
+
+# ============================================================================
+# KmiDi engine (C ABI for RT harness and plugin/FFI)
+# ============================================================================
+add_subdirectory(engine)
+
+# ============================================================================
+# RT Harness (headless callback runner, P50/P90/P99 stats)
+# ============================================================================
+if(BUILD_RT_HARNESS)
+  add_subdirectory(rt_harness)
 endif()
 
 # ============================================================================

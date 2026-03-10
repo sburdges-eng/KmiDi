@@ -1,0 +1,99 @@
+# Build engine + rt_harness, run harness 30s, fail if p90_us exceeds threshold.
+# See docs/research/MULTIMODAL_IMPLEMENTATIONS_PLAN.md section 3.3.
+name: RT Harness CI
+
+on:
+  push:
+    branches: [main, develop, 'feature/**', 'copilot/**']
+    paths:
+      - 'engine/**'
+      - 'rt_harness/**'
+      - 'CMakeLists.txt'
+      - '.github/workflows/ci-rt-harness.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'engine/**'
+      - 'rt_harness/**'
+      - 'CMakeLists.txt'
+
+jobs:
+  rt-harness:
+    name: RT Harness on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    env:
+      # P90 callback time must stay under this (µs). ~10% of 256@48kHz block time.
+      RT_HARNESS_P90_US_MAX: 500
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build build-essential
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cmake ninja
+
+      - name: Verify JUCE patch drift (pre-build)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          if [ -f scripts/juce/apply_patches.sh ]; then
+            ./scripts/juce/apply_patches.sh --check || true
+          fi
+
+      - name: Apply JUCE patches
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          if [ -f scripts/juce/apply_patches.sh ]; then
+            ./scripts/juce/apply_patches.sh || true
+          fi
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_RT_HARNESS=ON \
+            -DBUILD_KELLY_CORE=OFF \
+            -DBUILD_DESKTOP=OFF \
+            -DBUILD_PLUGINS=OFF \
+            -DBUILD_TESTS=OFF
+
+      - name: Build engine and rt_harness
+        run: |
+          cmake --build build -j ${{ runner.os == 'Windows' && '4' || '$(nproc)' }} --target rt_harness
+
+      - name: Run RT harness
+        run: |
+          ./build/rt_harness/rt_harness --duration 30 --output build/callback_stats.json
+
+      - name: Check P90 threshold
+        run: |
+          python3 -c "
+          import json, os, sys
+          with open('build/callback_stats.json') as f:
+              d = json.load(f)
+          p90 = d.get('p90_us')
+          max_us = float(os.environ.get('RT_HARNESS_P90_US_MAX', '500'))
+          if p90 is None:
+              print('Could not read p90_us', file=sys.stderr)
+              sys.exit(1)
+          print(f'p90_us={p90} max_allowed={max_us}')
+          if p90 > max_us:
+              print(f'FAIL: p90_us ({p90}) exceeds threshold ({max_us})', file=sys.stderr)
+              sys.exit(1)
+          print('PASS: p90_us within threshold')
+          "

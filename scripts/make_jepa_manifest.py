@@ -232,7 +232,10 @@ def write_manifest_args(out_dir: Path, args: argparse.Namespace) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Generate JEPA manifests (Lhotse RecordingSet, SupervisionSet, CutSet) for audio+MIDI datasets.",
+        description=(
+            "Generate JEPA manifests (Lhotse RecordingSet, SupervisionSet, CutSet) "
+            "for audio+MIDI datasets.",
+        ),
     )
     parser.add_argument(
         "--audio-root", type=Path, required=True,
@@ -249,6 +252,10 @@ def main() -> int:
     parser.add_argument(
         "--pattern", default="**/*.wav",
         help="Glob pattern for audio under audio-root",
+    )
+    parser.add_argument(
+        "--midi-suffix", default=".mid",
+        help="MIDI file extension (default: .mid; use .midi for MAESTRO v3)",
     )
     parser.add_argument(
         "--window-seconds", type=float, default=8.0,
@@ -282,7 +289,11 @@ def main() -> int:
         print(f"Error: --midi-root is not a directory: {midi_root}", file=sys.stderr)
         return 1
 
-    pairs = _discover_pairs(audio_root, midi_root, pattern=args.pattern)
+    pairs = _discover_pairs(
+        audio_root, midi_root,
+        pattern=args.pattern,
+        midi_suffix=args.midi_suffix,
+    )
     if not pairs:
         print("No audio files found.", file=sys.stderr)
         return 1

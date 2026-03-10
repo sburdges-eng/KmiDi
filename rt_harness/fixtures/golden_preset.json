@@ -1,0 +1,6 @@
+{
+  "description": "Golden preset for RT harness: default config for reproducible callback timing.",
+  "sample_rate": 48000,
+  "max_block_size": 256,
+  "num_channels": 2
+}

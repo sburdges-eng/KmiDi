@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "com.sburdges.kmidi/affect.v1",
+  "title": "KmiDi Affect Resource",
+  "description": "Property Exchange resource for valence, arousal, dynamics and mode. Per MIDI-CI PE Common Rules (M2-103) and MULTIMODAL_REPRESENTATIONS_2026.md.",
+  "type": "object",
+  "properties": {
+    "valence": {
+      "type": "number",
+      "minimum": -1,
+      "maximum": 1,
+      "description": "Emotional valence (negative to positive)."
+    },
+    "arousal": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Emotional arousal (low to high)."
+    },
+    "dynamics": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Perceived dynamics / intensity (0..1)."
+    },
+    "timestamp": {
+      "oneOf": [{ "type": "number" }, { "type": "string" }],
+      "description": "Optional timestamp for the affect state."
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["ride", "snapshot"],
+      "description": "ride = continuous control; snapshot = one-shot state."
+    }
+  },
+  "required": ["valence", "arousal", "dynamics"],
+  "additionalProperties": false
+}

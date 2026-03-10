@@ -17,6 +17,7 @@ venv/
 
 # CMake / build
 build/
+build_rt/
 build_out/
 build-*/
 cmake-build-*/

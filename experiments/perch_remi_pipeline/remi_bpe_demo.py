@@ -62,24 +62,28 @@ def load_model(model_id: str):
     return model
 
 
-def load_midi(tokens_path: Optional[Path], midi_path: Path, tokenizer) -> list[int]:
+def load_midi(
+    tokens_path: Optional[Path], midi_path: Path, tokenizer
+) -> tuple[list[int], object | None]:
     """
-    Tokenize a MIDI file into REMI-BPE ids.
+    Tokenize a MIDI file. Returns (token_ids, first_sequence_or_none).
+    Pass first_sequence to decode_to_midi for round-trip so MidiTok gets correct format.
     """
     if tokens_path and tokens_path.is_file():
         import json
 
         with tokens_path.open("r", encoding="utf-8") as f:
             data = json.load(f)
-        return data["token_ids"]
+        ids = data["token_ids"]
+        return (ids, None)
 
     tok_out = tokenizer(midi_path)
-    # MidiTok: may return list of TokenizedMusic or single; .ids on first sequence
     if hasattr(tok_out, "__getitem__") and len(tok_out):
         first = tok_out[0]
-        return first.ids if hasattr(first, "ids") else list(first)
+        ids = first.ids if hasattr(first, "ids") else list(first)
+        return (ids, first)
     if hasattr(tok_out, "ids"):
-        return tok_out.ids
+        return (tok_out.ids, tok_out)
     raise ValueError("Unexpected tokenizer output")
 
 
@@ -110,13 +114,20 @@ def generate_tokens(
     return out[0].tolist()
 
 
-def decode_to_midi(token_ids: list[int], tokenizer, output_path: Path) -> None:
+def decode_to_midi(
+    token_ids: list[int], tokenizer, output_path: Path, tok_sequence: object | None = None
+) -> None:
     """
-    Decode token ids back to MIDI and save to disk.
-    Supports MidiTok 3 (decode -> Score.dump_midi) and older (TokenizedMusic + tokens_to_midi).
+    Decode token ids back to MIDI. If tok_sequence is the tokenizer's sequence object,
+    pass it so MidiTok 3 decode gets the correct format (avoids KeyError on vocab).
     """
     if hasattr(tokenizer, "decode"):
-        score = tokenizer.decode(token_ids)
+        # MidiTok 3 decode expects list of track sequences for round-trip
+        if tok_sequence is not None:
+            to_decode = [tok_sequence] if not isinstance(tok_sequence, list) else tok_sequence
+        else:
+            to_decode = token_ids
+        score = tokenizer.decode(to_decode)
         if hasattr(score, "dump_midi"):
             score.dump_midi(str(output_path))
         else:
@@ -180,11 +191,12 @@ def main() -> None:
     tokens_cache = Path(args.tokens_cache).expanduser().resolve() if args.tokens_cache else None
 
     tokenizer = load_tokenizer(args.model)
-    token_ids = load_midi(tokens_cache, midi_path, tokenizer)
+    token_ids, tok_seq = load_midi(tokens_cache, midi_path, tokenizer)
     print(f"[remi_bpe_demo] Loaded {len(token_ids)} tokens from {midi_path}")
 
     if args.tokenize_only:
         full_ids = token_ids
+        out_seq = tok_seq  # use same sequence for decode so format matches
         print("[remi_bpe_demo] Tokenize-only: skipping model, decoding back to MIDI.")
     else:
         model = load_model(args.model)
@@ -194,10 +206,11 @@ def main() -> None:
             max_new_tokens=args.max_new_tokens,
             temperature=args.temperature,
         )
+        out_seq = None  # model output is flat ids
         print(f"[remi_bpe_demo] Generated total sequence length: {len(full_ids)}")
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    decode_to_midi(full_ids, tokenizer, output_path)
+    decode_to_midi(full_ids, tokenizer, output_path, tok_sequence=out_seq)
     print(f"[remi_bpe_demo] Wrote MIDI to {output_path}")
 
 

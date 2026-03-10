@@ -4,18 +4,22 @@ on:
   push:
     branches: [main, develop, 'feature/**', 'copilot/**']
     paths:
-      - 'packages/core/cpp/**'
-      - 'packages/desktop/**'
-      - 'packages/plugins/**'
+      - 'src/**'
+      - 'plugins/**'
+      - 'src_penta-core/**'
+      - 'engine/**'
+      - 'rt_harness/**'
       - 'tests/cpp/**'
       - 'CMakeLists.txt'
       - '.github/workflows/ci-cpp.yml'
   pull_request:
     branches: [main, develop]
     paths:
-      - 'packages/core/cpp/**'
-      - 'packages/desktop/**'
-      - 'packages/plugins/**'
+      - 'src/**'
+      - 'plugins/**'
+      - 'src_penta-core/**'
+      - 'engine/**'
+      - 'rt_harness/**'
       - 'tests/cpp/**'
       - 'CMakeLists.txt'
 
@@ -99,8 +103,8 @@ jobs:
         with:
           name: kelly-core-${{ matrix.os }}-${{ matrix.build_type }}
           path: |
-            build/packages/core/cpp/libKellyCore.*
-            build/packages/desktop/KellyDesktop*
+            build/engine/libengine.a
+            build/rt_harness/rt_harness
           retention-days: 7
   
   static-analysis:
@@ -120,14 +124,14 @@ jobs:
       
       - name: Run clang-tidy
         run: |
-          find packages/core/cpp packages/desktop -name '*.cpp' -o -name '*.h' | \
+          find src plugins src_penta-core engine rt_harness -name '*.cpp' -o -name '*.h' 2>/dev/null | \
             xargs clang-tidy -p build || true
         continue-on-error: true
       
       - name: Run cppcheck
         run: |
           cppcheck --enable=all --inconclusive --xml --xml-version=2 \
-            packages/core/cpp packages/desktop 2> cppcheck-report.xml || true
+            src plugins src_penta-core engine rt_harness 2> cppcheck-report.xml || true
         continue-on-error: true
       
       - name: Upload analysis reports
