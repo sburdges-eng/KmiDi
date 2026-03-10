@@ -22,11 +22,27 @@ Research on integrating Joint-Embedding Predictive Architecture (JEPA) for music
 - Paper: https://arxiv.org/abs/2408.02514
 - Conference: ISMIR 2024
 
+### Multimodal Representation & JEPA Ecosystem (2026)
+**Document:** [MULTIMODAL_REPRESENTATIONS_2026.md](MULTIMODAL_REPRESENTATIONS_2026.md)  
+**Author:** Internal synthesis (KmiDi)  
+**Status:** Planning / Design
+
+Survey of 2026-era multimodal representation learning (alignment, canonicalization, continual learning, representation analysis) and practical audio/symbolic tooling for KmiDi. Captures concrete integration paths around Perch audio embeddings, REMI-BPE tokenization, Lhotse+DataLad manifests, BNNS + Audio Workgroups, a shared C ABI for the DSP/latent engine, and MIDI 2.0 Property Exchange + UMP for live affect control.
+
 ## Integration Status
 
 | Technology | Status | Documentation | Next Steps |
 |-----------|---------|---------------|-----------|
 | Stem-JEPA | Planning | STEM_JEPA_INTEGRATION.md | Proof-of-concept |
+| Multimodal JEPA & tooling | Planning | MULTIMODAL_REPRESENTATIONS_2026.md | Perch+REMI-BPE prototype, JEPA manifest + RT/PE pipelines |
+
+## References from Pulse recovery
+
+Recovered ChatGPT Pulse entries (see [../PULSE_RECOVERY_ENTRIES.md](../PULSE_RECOVERY_ENTRIES.md)) surface the following for benchmarks, audit, and datasets:
+
+- **AI music benchmarks & audit (#010068):** NIST draft standards, MuSpike benchmark, I‑O audit architecture, improved audio metrics (MAD) for reproducibility and model audits. Use when defining evaluation or guardrails.
+- **MIDI tooling (#010051):** Controllable MIDI models (MIDI GPT), tuning practices; Autotroph noted as proprietary/internal with no public trace.
+- **MIDI datasets & models (#010067):** Large MIDI dataset releases and new symbolic music models. Cross-reference when curating datasets or reviewing literature.
 
 ## Contributing Research
 

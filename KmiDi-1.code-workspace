@@ -43,6 +43,9 @@
 		{
 			"name": "Experiments",
 			"path": "./experiments"
+		},
+		{
+			"path": "../../Desktop/openai_pulse_recovery_2026-03-06"
 		}
 	],
 	"settings": {

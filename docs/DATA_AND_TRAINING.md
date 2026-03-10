@@ -155,3 +155,4 @@ If you add a new format, ensure it is covered:
 - `.cursor/rules/engineering-governance.mdc` — Cursor AI enforcement rules
 - `docs/ENVIRONMENT.md` — all environment variables (`KELLY_AUDIO_DATA_ROOT`, etc.)
 - `docs/DATASETS_PREPARE_SCRIPT.md` — how to download and prepare datasets
+- `docs/PULSE_RECOVERY_ENTRIES.md` — recovered Pulse entries: MIDI datasets/symbolic models, NIST/MuSpike/MAD benchmarks, reproducibility and model audit references
