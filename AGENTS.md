@@ -31,31 +31,37 @@ The Tauri desktop shell, C++ KellyCore engine, Streamlit mixer panel, and Androi
 ### Gotchas
 
 - No lockfile exists (`package-lock.json`, `yarn.lock`, etc.). `npm install` is the canonical command.
-- The `/generate` endpoint expects a strict `intent` payload (see `CompleteSongIntentRequest` in `music_brain/engine_api/schema.py`). At minimum you must provide:
-  - `intent.core_desire` (high-level emotional / production goal string)
-  - `intent.technical` object, which is required (omitting it returns HTTP 422)
+- The `/generate` endpoint uses `GenerateRequest` → `EmotionalIntent` (defined inline in `music_brain/api.py`), **not** `CompleteSongIntentRequest`. At minimum you must provide:
+  - `intent.emotional_intent` (required string — mood/emotion description)
   - `intent.technical.genre` (string)
-  - `intent.technical.key` (string matching the `key_mode` pattern, e.g. `"C_major"`)
-  - `intent.technical.structure` — list of sections with lowercase `name` matching `^(intro|verse|chorus|bridge|outro|build|drop)$`
-  - `intent.technical.instruments` — non-empty list
-  - Minimal example:
+  - `intent.technical.key` (string with space, e.g. `"C major"`)
+  - `intent.technical.structure` — list of dicts with `name` matching `^(intro|verse|chorus|bridge|outro|build|drop)$` and `bars` (int)
+  - `intent.technical.instruments` — list of **dicts** with an `instrument` key (not plain strings)
+  - Minimal working example:
     ```json
     {
       "intent": {
-        "core_desire": "emotional pop ballad, intimate but powerful",
+        "emotional_intent": "intimate and powerful pop ballad",
+        "core_desire": "emotional pop ballad",
         "technical": {
           "genre": "pop",
-          "key": "C_major",
+          "key": "C major",
+          "bpm": 120,
           "structure": [
-            { "name": "intro" },
-            { "name": "verse" },
-            { "name": "chorus" }
+            { "name": "intro", "bars": 4 },
+            { "name": "verse", "bars": 8 },
+            { "name": "chorus", "bars": 8 }
           ],
-          "instruments": ["piano", "bass", "drums"]
+          "instruments": [
+            { "instrument": "piano" },
+            { "instrument": "bass" },
+            { "instrument": "drums" }
+          ]
         }
       }
     }
     ```
+  - Note: `CompleteSongIntentRequest` in `music_brain/engine_api/schema.py` is a separate strict schema used at the engine boundary, not the `/generate` API payload.
 - `bootstrap.sh` tries to `git submodule update --init --recursive` and checks for `external/JUCE/CMakeLists.txt`. The JUCE submodule is large; in cloud VMs the C++ build path is not required so this step can be skipped.
 - Vite is configured to bind to `0.0.0.0` (see `vite.config.ts`), so the frontend is accessible from outside the container.
 
