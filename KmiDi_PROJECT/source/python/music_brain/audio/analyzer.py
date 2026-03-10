@@ -23,7 +23,7 @@ except ImportError:
     librosa = None
     LIBROSA_AVAILABLE = False
 
-from music_brain.audio.feel import analyze_feel, AudioFeatures
+from music_brain.audio.feel import analyze_feel
 from music_brain.audio.chord_detection import ChordDetector, ChordProgressionDetection
 from music_brain.audio.frequency_analysis import analyze_frequency_bands, FrequencyProfile
 
@@ -338,8 +338,14 @@ class AudioAnalyzer:
         NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
         # Major and minor key profiles (Krumhansl)
-        MAJOR_PROFILE = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
-        MINOR_PROFILE = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
+        MAJOR_PROFILE = np.array([
+            6.35, 2.23, 3.48, 2.33, 4.38, 4.09,
+            2.52, 5.19, 2.39, 3.66, 2.29, 2.88,
+        ])
+        MINOR_PROFILE = np.array([
+            6.33, 2.68, 3.52, 5.38, 2.60, 3.53,
+            2.54, 4.75, 3.98, 2.69, 3.34, 3.17,
+        ])
 
         # Average chroma
         chroma_mean = np.mean(chroma, axis=1)
@@ -392,4 +398,3 @@ def analyze_audio(
         include_chords=include_chords,
         include_frequency_bands=include_frequency_bands,
     )
-

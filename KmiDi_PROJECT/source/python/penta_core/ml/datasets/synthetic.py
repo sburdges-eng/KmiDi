@@ -348,7 +348,10 @@ class SyntheticGenerator:
 
             # Parse chord (simplified)
             chord_root = self._parse_chord_root(chord_symbol, scale)
-            chord_type = 'min' if 'i' in chord_symbol.lower() and chord_symbol[0].islower() else 'maj'
+            chord_type = (
+                'min' if 'i' in chord_symbol.lower()
+                and chord_symbol[0].islower() else 'maj'
+            )
 
             # Get chord notes
             chord_pattern = CHORDS[chord_type]
@@ -750,16 +753,18 @@ class SyntheticGenerator:
             duration_ticks = int(note['duration'] * tempo / 60 * ticks_per_beat)
 
             delta = onset_ticks - last_time
-            track.append(mido.Message('note_on',
-                                      note=note['pitch'],
-                                      velocity=note['velocity'],
-                                      time=max(0, delta)
-                                     ))
-            track.append(mido.Message('note_off',
-                                      note=note['pitch'],
-                                      velocity=0,
-                                      time=duration_ticks
-                                     ))
+            track.append(mido.Message(
+                'note_on',
+                note=note['pitch'],
+                velocity=note['velocity'],
+                time=max(0, delta),
+            ))
+            track.append(mido.Message(
+                'note_off',
+                note=note['pitch'],
+                velocity=0,
+                time=duration_ticks,
+            ))
             last_time = onset_ticks + duration_ticks
 
         output_path = output_dir / f"{sample['id']}.mid"
@@ -896,7 +901,9 @@ try:
                     # Add some bias based on emotion features
                     if len(features) >= 2:
                         mel_spec += features[0] * 0.1  # valence bias
-                        mel_spec[:, :mel_height//2, :] += features[1] * 0.1  # arousal in upper freqs
+                        mel_spec[:, :mel_height // 2, :] += (
+                            features[1] * 0.1
+                        )
                     self.inputs.append(torch.from_numpy(mel_spec))
                 elif self.model_name == "melody_transformer":
                     # MelodyLSTM expects integer indices for embedding: (seq_len,)
@@ -905,7 +912,10 @@ try:
                     notes = sample.get("notes", [])
                     if notes:
                         # Extract pitch values from notes
-                        pitches = [int(n.get("pitch", 60)) % self.input_dim for n in notes[:seq_len]]
+                        pitches = [
+                            int(n.get("pitch", 60)) % self.input_dim
+                            for n in notes[:seq_len]
+                        ]
                         # Pad if needed
                         while len(pitches) < seq_len:
                             pitches.append(60 % self.input_dim)  # Pad with middle C
@@ -980,7 +990,6 @@ try:
         def __getitem__(self, idx: int):
             return self.inputs[idx], self.targets[idx]
 
-
     def create_synthetic_dataset(
         model_name: str,
         num_samples: int = 1000,
@@ -1022,4 +1031,3 @@ except ImportError:
     # PyTorch not available
     def create_synthetic_dataset(*args, **kwargs):
         raise ImportError("PyTorch required for create_synthetic_dataset")
-

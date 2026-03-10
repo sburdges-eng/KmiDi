@@ -23,7 +23,6 @@ from music_brain.session.intent_schema import CompleteSongIntent
 from music_brain.tier1.midi_pipeline_wrapper import MIDIGenerationPipeline
 
 # Load environment variables from project root
-from pathlib import Path
 import sys
 
 # Add project root to path if not already there
@@ -42,7 +41,7 @@ try:
         features.extend(['mcp'])
     if not features:
         features = ['ml']  # Default to ML features
-    
+
     load_kmidi_env(features=features, verbose=False)
 except ImportError:
     # Fallback to simple dotenv if kmidi_env not available
@@ -667,4 +666,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -43,17 +43,17 @@ class Section:
     end_bar: int
     start_tick: int = 0
     end_tick: int = 0
-    
+
     # Analysis metrics
     energy: float = 0.5  # 0.0-1.0
     note_density: float = 0.0  # Notes per beat
     avg_velocity: float = 64.0
     pitch_range: Tuple[int, int] = (0, 127)
-    
+
     # Pattern info
     is_repeated: bool = False
     similar_to: Optional[int] = None  # Index of similar section
-    
+
     @property
     def length_bars(self) -> int:
         return self.end_bar - self.start_bar
@@ -67,7 +67,7 @@ class SectionAnalysis:
     ppq: int
     tempo_bpm: float
     time_signature: Tuple[int, int]
-    
+
     def get_section_at_bar(self, bar: int) -> Optional[Section]:
         """Get section containing given bar."""
         for section in self.sections:
@@ -84,11 +84,11 @@ def calculate_energy(
 ) -> dict:
     """
     Calculate energy metrics for a section.
-    
+
     Returns dict with energy, density, avg_velocity, pitch_range.
     """
     section_notes = [(t, p, v) for t, p, v in notes if start_tick <= t < end_tick]
-    
+
     if not section_notes:
         return {
             "energy": 0.0,
@@ -96,26 +96,26 @@ def calculate_energy(
             "avg_velocity": 0,
             "pitch_range": (60, 60),
         }
-    
+
     # Note density (notes per beat)
     duration_beats = (end_tick - start_tick) / ppq
     density = len(section_notes) / max(duration_beats, 1)
-    
+
     # Average velocity
     avg_velocity = sum(v for _, _, v in section_notes) / len(section_notes)
-    
+
     # Pitch range
     pitches = [p for _, p, _ in section_notes]
     pitch_range = (min(pitches), max(pitches))
-    
+
     # Combined energy score
     # Higher density + higher velocity + wider range = more energy
     density_factor = min(density / 8.0, 1.0)  # Normalize to ~8 notes/beat max
     velocity_factor = avg_velocity / 127.0
     range_factor = (pitch_range[1] - pitch_range[0]) / 48.0  # Normalize to 4 octaves
-    
+
     energy = (density_factor * 0.4 + velocity_factor * 0.4 + range_factor * 0.2)
-    
+
     return {
         "energy": min(energy, 1.0),
         "density": density,
@@ -130,19 +130,19 @@ def detect_section_boundaries(
 ) -> List[int]:
     """
     Detect section boundaries from energy curve.
-    
+
     Returns list of bar indices where sections change.
     """
     if len(energy_curve) < 4:
         return [0]
-    
+
     boundaries = [0]
-    
+
     for i in range(1, len(energy_curve)):
         diff = abs(energy_curve[i] - energy_curve[i-1])
         if diff > threshold:
             boundaries.append(i)
-    
+
     return boundaries
 
 
@@ -159,26 +159,26 @@ def classify_section(
     if position_ratio < 0.1:
         if energy < 0.3:
             return SectionType.INTRO
-    
-    # Outro detection  
+
+    # Outro detection
     if position_ratio > 0.85:
         if energy < 0.4 or (prev_section and energy < prev_section.energy - 0.2):
             return SectionType.OUTRO
-    
+
     # High energy = chorus/drop
     if energy > 0.7:
         return SectionType.CHORUS
-    
+
     # Medium-high with buildup
     if energy > 0.5:
         if prev_section and prev_section.energy < energy - 0.2:
             return SectionType.CHORUS
         return SectionType.PRECHORUS
-    
+
     # Low energy
     if energy < 0.35:
         return SectionType.BREAKDOWN
-    
+
     # Default to verse
     return SectionType.VERSE
 
@@ -190,37 +190,37 @@ def detect_sections(
 ) -> List[Section]:
     """
     Detect sections in a MIDI file.
-    
+
     Args:
         midi_path: Path to MIDI file
         min_section_bars: Minimum section length
         analysis_resolution: Bar resolution for energy analysis
-    
+
     Returns:
         List of detected sections
     """
     if not MIDO_AVAILABLE:
         raise ImportError("mido package required. Install with: pip install mido")
-    
+
     midi_path = Path(midi_path)
     if not midi_path.exists():
         raise FileNotFoundError(f"MIDI file not found: {midi_path}")
-    
+
     mid = mido.MidiFile(str(midi_path))
     ppq = mid.ticks_per_beat
-    
+
     # Get tempo and time signature
-    tempo_bpm = 120.0
+    _tempo_bpm = 120.0  # noqa: F841
     time_sig = (4, 4)
     for track in mid.tracks:
         for msg in track:
             if msg.type == 'set_tempo':
-                tempo_bpm = mido.tempo2bpm(msg.tempo)
+                _tempo_bpm = mido.tempo2bpm(msg.tempo)  # noqa: F841
             elif msg.type == 'time_signature':
                 time_sig = (msg.numerator, msg.denominator)
-    
+
     ticks_per_bar = ppq * time_sig[0]
-    
+
     # Collect all notes
     all_notes = []
     for track in mid.tracks:
@@ -229,14 +229,14 @@ def detect_sections(
             current_tick += msg.time
             if msg.type == 'note_on' and msg.velocity > 0:
                 all_notes.append((current_tick, msg.note, msg.velocity))
-    
+
     if not all_notes:
         return []
-    
+
     # Calculate total length
     max_tick = max(t for t, _, _ in all_notes)
     total_bars = (max_tick // ticks_per_bar) + 1
-    
+
     # Calculate energy for each analysis window
     energy_curve = []
     for bar in range(0, total_bars, analysis_resolution):
@@ -244,14 +244,14 @@ def detect_sections(
         end_tick = (bar + analysis_resolution) * ticks_per_bar
         metrics = calculate_energy(all_notes, start_tick, end_tick, ppq)
         energy_curve.append(metrics["energy"])
-    
+
     # Detect boundaries
     boundary_indices = detect_section_boundaries(energy_curve)
-    
+
     # Convert to bar boundaries
     bar_boundaries = [i * analysis_resolution for i in boundary_indices]
     bar_boundaries.append(total_bars)
-    
+
     # Merge short sections
     merged_boundaries = [bar_boundaries[0]]
     for boundary in bar_boundaries[1:]:
@@ -259,21 +259,21 @@ def detect_sections(
             merged_boundaries.append(boundary)
         elif merged_boundaries:
             merged_boundaries[-1] = boundary
-    
+
     if merged_boundaries[-1] != total_bars:
         merged_boundaries.append(total_bars)
-    
+
     # Build sections - optimized with enumerate and zip
     sections = []
     section_counts = {}  # Track section type counts for naming
-    
+
     for i, (start_bar, end_bar) in enumerate(zip(merged_boundaries[:-1], merged_boundaries[1:])):
         start_tick = start_bar * ticks_per_bar
         end_tick = end_bar * ticks_per_bar
-        
+
         # Calculate section metrics
         metrics = calculate_energy(all_notes, start_tick, end_tick, ppq)
-        
+
         # Classify section
         position_ratio = (start_bar + end_bar) / 2 / total_bars
         prev_section = sections[-1] if sections else None
@@ -283,13 +283,13 @@ def detect_sections(
             end_bar - start_bar,
             prev_section,
         )
-        
+
         # Generate name with count
         type_name = section_type.value
         section_counts[type_name] = section_counts.get(type_name, 0) + 1
         count = section_counts[type_name]
         name = f"{type_name.title()} {count}" if count > 1 else type_name.title()
-        
+
         section = Section(
             name=name,
             section_type=section_type,
@@ -303,7 +303,7 @@ def detect_sections(
             pitch_range=metrics["pitch_range"],
         )
         sections.append(section)
-    
+
     # Detect repeated sections
     for i, section in enumerate(sections):
         for j, other in enumerate(sections[:i]):
@@ -313,5 +313,5 @@ def detect_sections(
                         section.is_repeated = True
                         section.similar_to = j
                         break
-    
+
     return sections

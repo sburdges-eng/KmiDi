@@ -10,7 +10,7 @@ Provides:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Callable
+from typing import List, Dict, Optional
 from enum import Enum
 import math
 
@@ -20,7 +20,7 @@ class EnvelopeMode(Enum):
     PEAK = "peak"           # Peak detection
     RMS = "rms"             # RMS (average power)
     PEAK_RMS = "peak_rms"   # Hybrid peak/RMS
-    TRUE_PEAK = "true_peak" # Oversampled peak detection
+    TRUE_PEAK = "true_peak"  # Oversampled peak detection
 
 
 class AutomationCurve(Enum):

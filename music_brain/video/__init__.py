@@ -14,7 +14,7 @@ Core components:
 
 Usage:
     from music_brain.video import VideoGenerator
-    
+
     gen = VideoGenerator()
     video = gen.generate_from_emotion(emotion="grief", music_path="song.wav")
 """

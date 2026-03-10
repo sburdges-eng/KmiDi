@@ -28,7 +28,6 @@ Usage:
 from __future__ import annotations
 
 import asyncio
-import time
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -42,9 +41,7 @@ from typing import (
     Generic,
     List,
     Optional,
-    Set,
     TypeVar,
-    Union,
 )
 
 T = TypeVar("T")
@@ -108,8 +105,9 @@ class Event:
         return cls(
             type=d["type"],
             data=d.get("data"),
-            id=d.get("id", str(uuid.uuid4())[:8]),
-            timestamp=datetime.fromisoformat(d["timestamp"]) if "timestamp" in d else datetime.now(),
+            id=d.get("id", str(uuid.uuid4())[: 8]),
+            timestamp=datetime.fromisoformat(d["timestamp"])
+            if "timestamp" in d else datetime.now(),
             source=d.get("source"),
             priority=EventPriority(d.get("priority", EventPriority.NORMAL)),
         )
@@ -523,7 +521,9 @@ class EventBus:
         self._pending_requests.clear()
 
     def __repr__(self) -> str:
-        return f"EventBus(handlers={self.get_handler_count()}, events={self._stats['events_emitted']})"
+        hc = self.get_handler_count()
+        ee = self._stats['events_emitted']
+        return f"EventBus(handlers={hc}, events={ee})"
 
 
 # =============================================================================
@@ -657,4 +657,3 @@ __all__ = [
     "EventChannel",
     "EventQueue",
 ]
-

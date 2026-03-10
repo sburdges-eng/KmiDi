@@ -12,14 +12,14 @@ Philosophy: "Stand on the shoulders of giants - learn from the best educators."
 
 from enum import Enum, auto
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any, Callable
+from typing import List, Dict, Optional, Any
 from datetime import datetime, timedelta
 from pathlib import Path
 import json
 import hashlib
 import time
 import re
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse
 
 
 class ResourceType(Enum):
@@ -632,7 +632,8 @@ Focus on extracting actionable learning content. Skip navigation, ads, and irrel
             data = {}
 
         # Generate a unique ID
-        resource_id = hashlib.sha256(f"{url}:{datetime.now().isoformat()}".encode()).hexdigest()[:12]
+        resource_id = hashlib.sha256(
+            f"{url}:{datetime.now().isoformat()}".encode()).hexdigest()[:12]
 
         # Map resource type
         type_str = data.get("resource_type", "ARTICLE").upper()
@@ -714,7 +715,6 @@ Focus on extracting actionable learning content. Skip navigation, ads, and irrel
         from music_brain.learning.curriculum import (
             CurriculumBuilder,
             DifficultyLevel,
-            SkillCategory,
         )
 
         # Group resources by difficulty
@@ -813,8 +813,8 @@ def generate_learning_plan(
         sources = fetcher.get_sources_for_instrument(instrument)
         level_sources = [
             s for s in sources
-            if s.get("difficulty_range", (1, 10))[0] <= level <= s.get("difficulty_range", (1, 10))[1]
-        ]
+            if s.get("difficulty_range", (1, 10))[0] <= level <= s.get(
+                "difficulty_range", (1, 10))[1]]
 
         phase = {
             "level": level,
@@ -838,4 +838,4 @@ def generate_learning_plan(
 
 
 # Import DifficultyLevel for generate_learning_plan
-from music_brain.learning.curriculum import DifficultyLevel
+from music_brain.learning.curriculum import DifficultyLevel  # noqa: E402

@@ -81,7 +81,7 @@
       "type": "integer"
     },
     "key_mode": {
-      "pattern": "^[A-G][#b]?\\s(major|minor|dorian|mixolydian|lydian|phrygian|locrian)$",
+      "pattern": "^[A-G][#b]?\\s(major|minor|dorian|mixolydian|lydian|phrygian|aeolian|locrian)$",
       "title": "Key Mode",
       "type": "string"
     },

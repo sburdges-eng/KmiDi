@@ -16,12 +16,16 @@ Usage
   python run_brain.py penta
   python run_brain.py orchestrator
   python run_brain.py gui
+
+  # Restart on non-zero exit (tmux-friendly):
+  python run_brain.py gui --loop --delay 5 --max-restarts 10
 """
 from __future__ import annotations
 
 import argparse
 import importlib
 import sys
+import time
 
 
 # ---------------------------------------------------------------------------
@@ -133,6 +137,25 @@ def main() -> int:
         choices=["penta", "orchestrator", "gui", "check"],
         help="Boot mode to run.",
     )
+    parser.add_argument(
+        "--loop",
+        action="store_true",
+        help="On non-zero exit, wait --delay seconds and restart (for tmux). Ignored for check.",
+    )
+    parser.add_argument(
+        "--delay",
+        type=float,
+        default=5.0,
+        metavar="SECS",
+        help="Seconds to wait before restart when --loop (default: 5.0).",
+    )
+    parser.add_argument(
+        "--max-restarts",
+        type=int,
+        default=0,
+        metavar="N",
+        help="Max restarts when --loop; 0 = unlimited (default: 0).",
+    )
     args = parser.parse_args()
 
     dispatch = {
@@ -141,7 +164,23 @@ def main() -> int:
         "orchestrator": _orchestrator,
         "gui": _gui,
     }
-    return dispatch[args.mode]()
+
+    def run_once() -> int:
+        return dispatch[args.mode]()
+
+    if not args.loop or args.mode == "check":
+        return run_once()
+
+    restarts = 0
+    while True:
+        code = run_once()
+        if code == 0:
+            return 0
+        if args.max_restarts and restarts >= args.max_restarts:
+            return code
+        restarts += 1
+        if args.delay > 0:
+            time.sleep(args.delay)
 
 
 if __name__ == "__main__":

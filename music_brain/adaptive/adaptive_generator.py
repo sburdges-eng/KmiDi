@@ -5,6 +5,7 @@ Wraps IntentPipeline to adapt generation based on user feedback and preferences.
 Part of Phase 4 of the "All-Knowing Interactive Musical Customization System".
 """
 
+from collections import defaultdict
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -180,7 +181,9 @@ class AdaptiveGenerator:
         # Track parameter changes
         for param_name, new_value in modifications.get("parameters", {}).items():
             old_value = original_parameters.get(param_name)
-            if old_value is not None and isinstance(new_value, (int, float)) and isinstance(old_value, (int, float)):
+            if old_value is not None and isinstance(
+                    new_value, (int, float)) and isinstance(
+                    old_value, (int, float)):
                 # Calculate adjustment needed
                 adjustment = new_value - old_value
 

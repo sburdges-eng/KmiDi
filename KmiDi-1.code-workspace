@@ -68,6 +68,7 @@
 			"**/build": false,
 			"**/_deps": true,
 			"**/.git": true
-		}
+		},
+		"java.configuration.updateBuildConfiguration": "interactive"
 	}
 }

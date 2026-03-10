@@ -111,4 +111,3 @@ def register_tools(server) -> None:
 
 
 __all__ = ["register_tools"]
-

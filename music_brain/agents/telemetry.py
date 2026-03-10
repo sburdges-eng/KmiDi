@@ -553,7 +553,7 @@ class AudioHealthChecker(HealthChecker):
 
         if recent_underruns > 0:
             status = HealthStatus.DEGRADED
-            message = f"Recent buffer underruns detected"
+            message = "Recent buffer underruns detected"
 
         throughput = self.get_throughput_stats()
         if throughput.failed_requests > 10:
@@ -909,4 +909,3 @@ __all__ = [
     # Dashboard
     "HealthDashboard",
 ]
-

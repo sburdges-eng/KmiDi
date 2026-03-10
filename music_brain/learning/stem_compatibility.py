@@ -8,7 +8,7 @@ estimation into KmiDi's music generation pipeline.
 Based on research by Alain Riou (aRI0U) at Sony CSL Paris:
 https://github.com/SonyCSLParis/Stem-JEPA
 
-Paper: "Stem-JEPA: A Joint-Embedding Predictive Architecture for 
+Paper: "Stem-JEPA: A Joint-Embedding Predictive Architecture for
 Musical Stem Compatibility Estimation" (ISMIR 2024)
 https://arxiv.org/abs/2408.02514
 
@@ -21,7 +21,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import logging
 
@@ -44,7 +44,7 @@ class StemType(Enum):
 class StemCompatibilityScore:
     """
     Compatibility score between multiple stems.
-    
+
     Attributes:
         score: Overall compatibility score (0.0 to 1.0)
         stem_pairs: Individual pair-wise compatibility scores
@@ -64,16 +64,16 @@ class StemCompatibilityScore:
 class StemJEPACompatibility:
     """
     Interface for JEPA-based stem compatibility estimation.
-    
+
     This is a placeholder/stub implementation that will be replaced
     with actual JEPA model integration in the future.
-    
+
     Usage:
         >>> checker = StemJEPACompatibility()
         >>> stems = {'bass': bass_audio, 'drums': drums_audio}
         >>> score = checker.compute_compatibility(stems)
         >>> print(f"Compatibility: {score.score:.2%}")
-    
+
     Future Implementation:
         - Load pre-trained Stem-JEPA model
         - Convert KmiDi audio format to JEPA input format
@@ -89,7 +89,7 @@ class StemJEPACompatibility:
     ):
         """
         Initialize JEPA compatibility checker.
-        
+
         Args:
             model_path: Path to pre-trained JEPA model (if available)
             device: Computation device ('cpu', 'cuda', 'mps')
@@ -100,7 +100,7 @@ class StemJEPACompatibility:
         self.use_cache = use_cache
         self._cache = {} if use_cache else None
         self._model = None
-        
+
         logger.info(
             f"Initialized StemJEPACompatibility (stub implementation) "
             f"on device: {device}"
@@ -109,10 +109,10 @@ class StemJEPACompatibility:
     def load_model(self, model_path: Path) -> None:
         """
         Load pre-trained JEPA model.
-        
+
         Args:
             model_path: Path to model checkpoint
-            
+
         TODO: Implement actual model loading when integrating Stem-JEPA
         """
         logger.warning(
@@ -128,36 +128,36 @@ class StemJEPACompatibility:
     ) -> StemCompatibilityScore:
         """
         Compute compatibility score between multiple stems.
-        
+
         Args:
             stems: Dictionary mapping stem names to audio data
             normalize: Whether to normalize scores to [0, 1]
-            
+
         Returns:
             StemCompatibilityScore with overall and pair-wise scores
-            
+
         TODO: Replace with actual JEPA inference
         """
         logger.warning(
             "Using placeholder compatibility computation. "
             "Actual JEPA model not yet integrated."
         )
-        
+
         # Placeholder: return neutral score
         # In real implementation, this would:
         # 1. Convert audio to mel-spectrograms
         # 2. Run through JEPA encoder
         # 3. Compute embeddings
         # 4. Predict compatibility from embeddings
-        
+
         stem_pairs = {}
         stem_list = list(stems.keys())
-        
+
         for i, stem1 in enumerate(stem_list):
             for stem2 in stem_list[i+1:]:
                 # Placeholder score
                 stem_pairs[(stem1, stem2)] = 0.5
-        
+
         return StemCompatibilityScore(
             score=0.5,  # Neutral placeholder
             stem_pairs=stem_pairs,
@@ -176,15 +176,15 @@ class StemJEPACompatibility:
     ) -> Tuple[Optional[Any], float]:
         """
         Predict which stem would best complete the arrangement.
-        
+
         Args:
             existing_stems: Current stems in the arrangement
             target_stem_type: Type of stem to add
             candidates: Optional list of candidate stems to choose from
-            
+
         Returns:
             Tuple of (best_stem, compatibility_score)
-            
+
         TODO: Implement using JEPA stem retrieval capability
         """
         logger.warning("Stem prediction not yet implemented.")
@@ -197,11 +197,11 @@ class StemJEPACompatibility:
     ) -> bool:
         """
         Validate if an arrangement meets minimum compatibility threshold.
-        
+
         Args:
             stems: Complete arrangement to validate
             min_compatibility: Minimum required compatibility score
-            
+
         Returns:
             True if arrangement is compatible, False otherwise
         """
@@ -212,13 +212,13 @@ class StemJEPACompatibility:
 class SelfSupervisedLearner:
     """
     Self-supervised learning system using JEPA-style approaches.
-    
+
     This class provides interfaces for learning musical relationships
     from unlabeled audio data, without requiring explicit annotations.
-    
+
     Based on the JEPA paradigm of predicting in latent space rather
     than reconstructing raw audio.
-    
+
     Future Capabilities:
         - Learn user's musical preferences from listening history
         - Extract common patterns from stem collections
@@ -229,14 +229,14 @@ class SelfSupervisedLearner:
     def __init__(self, storage_dir: Optional[Path] = None):
         """
         Initialize self-supervised learner.
-        
+
         Args:
             storage_dir: Directory for storing learned models
         """
         self.storage_dir = storage_dir
         self._encoder = None
         self._predictor = None
-        
+
         logger.info("Initialized SelfSupervisedLearner (stub implementation)")
 
     def train_on_directory(
@@ -247,15 +247,15 @@ class SelfSupervisedLearner:
     ) -> Dict:
         """
         Train on unlabeled audio files in a directory.
-        
+
         Args:
             path: Directory containing audio files
             epochs: Number of training epochs
             save_model: Optional path to save trained model
-            
+
         Returns:
             Training metrics dictionary
-            
+
         TODO: Implement self-supervised training loop
         """
         logger.warning("Self-supervised training not yet implemented.")
@@ -267,10 +267,10 @@ class SelfSupervisedLearner:
     ) -> None:
         """
         Learn compatibility patterns from a collection of stems.
-        
+
         Args:
             stem_collection: List of stem dictionaries to learn from
-            
+
         TODO: Implement pattern extraction from stem data
         """
         logger.warning("Stem pattern learning not yet implemented.")
@@ -281,13 +281,13 @@ class SelfSupervisedLearner:
     ) -> float:
         """
         Predict compatibility using learned model.
-        
+
         Args:
             stems: Stems to evaluate
-            
+
         Returns:
             Predicted compatibility score
-            
+
         TODO: Implement inference with learned model
         """
         logger.warning("Compatibility prediction not yet implemented.")
@@ -297,7 +297,7 @@ class SelfSupervisedLearner:
 def get_jepa_integration_status() -> Dict[str, str]:
     """
     Get the current status of JEPA integration.
-    
+
     Returns:
         Dictionary with integration status information
     """

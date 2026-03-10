@@ -13,9 +13,7 @@ Detects and identifies:
 
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Tuple, Set
-from enum import Enum
 from pathlib import Path
-import math
 
 try:
     import numpy as np
@@ -44,7 +42,7 @@ SCALES = {
     'natural_minor': [0, 2, 3, 5, 7, 8, 10],
     'harmonic_minor': [0, 2, 3, 5, 7, 8, 11],
     'melodic_minor': [0, 2, 3, 5, 7, 9, 11],
-    
+
     # Modes (built on major scale degrees)
     'ionian': [0, 2, 4, 5, 7, 9, 11],        # Same as major
     'dorian': [0, 2, 3, 5, 7, 9, 10],        # Minor with raised 6th
@@ -53,21 +51,21 @@ SCALES = {
     'mixolydian': [0, 2, 4, 5, 7, 9, 10],    # Major with flat 7th
     'aeolian': [0, 2, 3, 5, 7, 8, 10],       # Same as natural minor
     'locrian': [0, 1, 3, 5, 6, 8, 10],       # Diminished scale
-    
+
     # Pentatonic scales
     'major_pentatonic': [0, 2, 4, 7, 9],
     'minor_pentatonic': [0, 3, 5, 7, 10],
-    
+
     # Blues scales
     'blues': [0, 3, 5, 6, 7, 10],            # Minor pentatonic + blue note
     'major_blues': [0, 2, 3, 4, 7, 9],       # Major pentatonic + blue note
-    
+
     # Exotic scales
     'whole_tone': [0, 2, 4, 6, 8, 10],
     'diminished': [0, 2, 3, 5, 6, 8, 9, 11],  # Half-whole
     'diminished_half_whole': [0, 1, 3, 4, 6, 7, 9, 10],
     'chromatic': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-    
+
     # World scales
     'hungarian_minor': [0, 2, 3, 6, 7, 8, 11],
     'phrygian_dominant': [0, 1, 4, 5, 7, 8, 10],  # Spanish/Jewish
@@ -75,7 +73,7 @@ SCALES = {
     'japanese': [0, 1, 5, 7, 8],                   # In scale
     'hirajoshi': [0, 2, 3, 7, 8],
     'persian': [0, 1, 4, 5, 6, 8, 11],
-    
+
     # Jazz scales
     'bebop_dominant': [0, 2, 4, 5, 7, 9, 10, 11],
     'bebop_major': [0, 2, 4, 5, 7, 8, 9, 11],
@@ -161,11 +159,11 @@ class ScaleDetection:
     is_mode: bool = False
     parent_scale: Optional[str] = None
     characteristics: Dict = field(default_factory=dict)
-    
+
     @property
     def full_name(self) -> str:
         return f"{self.root} {self.scale_name}"
-    
+
     def to_dict(self) -> Dict:
         return {
             "scale": self.scale_name,
@@ -189,12 +187,12 @@ class TriadDetection:
     inversion: int  # 0 = root, 1 = first, 2 = second
     confidence: float
     voicing: str = "close"  # close, open, spread
-    
+
     @property
     def full_name(self) -> str:
         inv_suffix = ["", "/1st", "/2nd", "/3rd"][min(self.inversion, 3)]
         return f"{self.root}{self.quality}{inv_suffix}"
-    
+
     def to_dict(self) -> Dict:
         return {
             "chord": self.full_name,
@@ -215,7 +213,7 @@ class ArpeggioDetection:
     intervals: List[int]  # Intervals in pattern
     speed_category: str  # slow, medium, fast
     confidence: float
-    
+
     def to_dict(self) -> Dict:
         return {
             "chord": self.chord_base,
@@ -234,7 +232,7 @@ class IntervalAnalysis:
     consonant_ratio: float  # Ratio of consonant intervals
     average_interval_size: float
     melodic_contour: str  # "ascending", "descending", "arch", "wave"
-    
+
     def to_dict(self) -> Dict:
         return {
             "interval_histogram": self.interval_histogram,
@@ -250,22 +248,22 @@ class TheoryAnalysis:
     # Scale/Mode
     detected_scales: List[ScaleDetection] = field(default_factory=list)
     primary_scale: Optional[ScaleDetection] = None
-    
+
     # Chords
     detected_triads: List[TriadDetection] = field(default_factory=list)
     detected_sevenths: List[TriadDetection] = field(default_factory=list)
-    
+
     # Patterns
     detected_arpeggios: List[ArpeggioDetection] = field(default_factory=list)
-    
+
     # Intervals
     interval_analysis: Optional[IntervalAnalysis] = None
-    
+
     # Summary
     key_center: Optional[str] = None
     mode: Optional[str] = None
     harmonic_complexity: float = 0.0  # 0-1
-    
+
     def to_dict(self) -> Dict:
         return {
             "key_center": self.key_center,
@@ -275,7 +273,8 @@ class TheoryAnalysis:
             "detected_chords": [t.to_dict() for t in self.detected_triads[:10]],
             "detected_arpeggios": [a.to_dict() for a in self.detected_arpeggios[:5]],
             "harmonic_complexity": self.harmonic_complexity,
-            "interval_analysis": self.interval_analysis.to_dict() if self.interval_analysis else None,
+            "interval_analysis": self.interval_analysis.to_dict() if self.interval_analysis else None,  # noqa: E501
+
         }
 
 
@@ -305,10 +304,10 @@ def rotate_scale(intervals: List[int], steps: int) -> List[int]:
     n = len(intervals)
     if n == 0:
         return intervals
-    
+
     # Normalize steps
     steps = steps % n
-    
+
     # Rotate and normalize to start from 0
     rotated = intervals[steps:] + [i + 12 for i in intervals[:steps]]
     base = rotated[0]
@@ -319,18 +318,18 @@ def calculate_scale_match(pitch_classes: Set[int], scale_intervals: List[int], r
     """Calculate how well pitch classes match a scale."""
     # Transpose scale to root
     scale_pcs = set((root + i) % 12 for i in scale_intervals)
-    
+
     # Calculate overlap
     present_in_scale = len(pitch_classes & scale_pcs)
     outside_scale = len(pitch_classes - scale_pcs)
-    
+
     if len(pitch_classes) == 0:
         return 0.0
-    
+
     # Score: reward notes in scale, penalize notes outside
     match_score = present_in_scale / len(scale_pcs)
     penalty = outside_scale * 0.15  # Each outside note reduces score
-    
+
     return max(0.0, min(1.0, match_score - penalty))
 
 
@@ -344,7 +343,7 @@ def detect_melodic_contour(notes: List[int]) -> str:
     """Detect overall melodic contour."""
     if len(notes) < 3:
         return "static"
-    
+
     # Calculate direction changes
     directions = []
     for i in range(1, len(notes)):
@@ -355,18 +354,18 @@ def detect_melodic_contour(notes: List[int]) -> str:
             directions.append(-1)
         else:
             directions.append(0)
-    
+
     # Analyze pattern
     ascending_count = sum(1 for d in directions if d > 0)
     descending_count = sum(1 for d in directions if d < 0)
-    
+
     total = len(directions)
     if total == 0:
         return "static"
-    
+
     asc_ratio = ascending_count / total
     desc_ratio = descending_count / total
-    
+
     # Determine contour
     if asc_ratio > 0.7:
         return "ascending"
@@ -377,16 +376,16 @@ def detect_melodic_contour(notes: List[int]) -> str:
         midpoint = len(notes) // 2
         first_half = notes[:midpoint]
         second_half = notes[midpoint:]
-        
+
         if len(first_half) > 1 and len(second_half) > 1:
             first_trend = first_half[-1] - first_half[0]
             second_trend = second_half[-1] - second_half[0]
-            
+
             if first_trend > 0 and second_trend < 0:
                 return "arch"
             elif first_trend < 0 and second_trend > 0:
                 return "valley"
-    
+
     return "wave"
 
 
@@ -397,17 +396,17 @@ def detect_melodic_contour(notes: List[int]) -> str:
 class TheoryAnalyzer:
     """
     Comprehensive music theory analyzer.
-    
+
     Detects scales, modes, triads, arpeggios, and harmonic patterns
     from MIDI notes or audio.
     """
-    
+
     def __init__(self):
         """Initialize theory analyzer."""
         self.scales = SCALES
         self.triads = TRIADS
         self.seventh_chords = SEVENTH_CHORDS
-    
+
     def analyze_notes(
         self,
         notes: List[int],
@@ -416,12 +415,12 @@ class TheoryAnalyzer:
     ) -> TheoryAnalysis:
         """
         Analyze a sequence of MIDI notes.
-        
+
         Args:
             notes: List of MIDI note numbers
             durations: Optional list of note durations
             velocities: Optional list of velocities
-        
+
         Returns:
             TheoryAnalysis with all detected patterns
         """
@@ -432,36 +431,36 @@ class TheoryAnalyzer:
                 detected_sevenths=[],
                 detected_arpeggios=[],
             )
-        
+
         # Get pitch classes
         pitch_classes = get_pitch_class_set(notes)
-        
+
         # Detect scales and modes
         detected_scales = self.detect_scales(pitch_classes)
         primary_scale = detected_scales[0] if detected_scales else None
-        
+
         # Detect triads and chords
         detected_triads = self.detect_triads_in_sequence(notes)
         detected_sevenths = self.detect_seventh_chords_in_sequence(notes)
-        
+
         # Detect arpeggios
         detected_arpeggios = self.detect_arpeggios(notes, durations)
-        
+
         # Analyze intervals
         interval_analysis = self.analyze_intervals(notes)
-        
+
         # Determine key center and mode
         key_center = None
         mode = None
         if primary_scale:
             key_center = primary_scale.root
             mode = primary_scale.scale_name
-        
+
         # Calculate harmonic complexity
         complexity = self._calculate_complexity(
             pitch_classes, detected_triads, detected_sevenths
         )
-        
+
         return TheoryAnalysis(
             detected_scales=detected_scales,
             primary_scale=primary_scale,
@@ -473,7 +472,7 @@ class TheoryAnalyzer:
             mode=mode,
             harmonic_complexity=complexity,
         )
-    
+
     def detect_scales(
         self,
         pitch_classes: Set[int],
@@ -481,30 +480,30 @@ class TheoryAnalyzer:
     ) -> List[ScaleDetection]:
         """
         Detect possible scales from pitch classes.
-        
+
         Args:
             pitch_classes: Set of pitch classes (0-11)
             top_n: Number of top matches to return
-        
+
         Returns:
             List of ScaleDetection sorted by confidence
         """
         detections = []
-        
+
         for scale_name, intervals in self.scales.items():
             for root in range(12):
                 confidence = calculate_scale_match(pitch_classes, intervals, root)
-                
+
                 if confidence > 0.3:  # Minimum threshold
                     # Calculate which notes are present/missing
                     scale_pcs = set((root + i) % 12 for i in intervals)
                     present = sorted(pitch_classes & scale_pcs)
                     missing = sorted(scale_pcs - pitch_classes)
-                    
+
                     # Check if this is a mode
                     is_mode = scale_name in MODE_CHARACTERISTICS
                     characteristics = MODE_CHARACTERISTICS.get(scale_name, {})
-                    
+
                     detections.append(ScaleDetection(
                         scale_name=scale_name,
                         root=NOTE_NAMES[root],
@@ -515,12 +514,12 @@ class TheoryAnalyzer:
                         is_mode=is_mode,
                         characteristics=characteristics,
                     ))
-        
+
         # Sort by confidence
         detections.sort(key=lambda x: x.confidence, reverse=True)
-        
+
         return detections[:top_n]
-    
+
     def detect_triads_in_sequence(
         self,
         notes: List[int],
@@ -528,26 +527,26 @@ class TheoryAnalyzer:
     ) -> List[TriadDetection]:
         """
         Detect triads in a note sequence.
-        
+
         Args:
             notes: List of MIDI notes
             window_size: Notes to consider together
-        
+
         Returns:
             List of detected triads
         """
         detections = []
-        
+
         for i in range(len(notes) - window_size + 1):
             window = notes[i:i + window_size]
-            
+
             # Try to identify as triad
             triad = self._identify_triad(window)
             if triad:
                 detections.append(triad)
-        
+
         return detections
-    
+
     def detect_seventh_chords_in_sequence(
         self,
         notes: List[int],
@@ -557,43 +556,43 @@ class TheoryAnalyzer:
         Detect seventh chords in a note sequence.
         """
         detections = []
-        
+
         for i in range(len(notes) - window_size + 1):
             window = notes[i:i + window_size]
-            
+
             # Try to identify as seventh chord
             chord = self._identify_seventh_chord(window)
             if chord:
                 detections.append(chord)
-        
+
         return detections
-    
+
     def _identify_triad(self, notes: List[int]) -> Optional[TriadDetection]:
         """Identify a triad from notes."""
         if len(notes) < 3:
             return None
-        
+
         # Get pitch classes
         pcs = sorted(set(midi_to_pitch_class(n) for n in notes))
         if len(pcs) < 3:
             return None
-        
+
         best_match = None
         best_score = 0.0
-        
+
         for quality, intervals in self.triads.items():
             for root_idx in range(12):
                 # Generate expected pitch classes
                 expected = set((root_idx + i) % 12 for i in intervals)
-                
+
                 # Check match
                 match_count = len(set(pcs) & expected)
                 if match_count >= 3:
                     score = match_count / len(expected)
-                    
+
                     if score > best_score:
                         best_score = score
-                        
+
                         # Determine inversion
                         bass_pc = midi_to_pitch_class(min(notes))
                         if bass_pc == root_idx:
@@ -604,7 +603,7 @@ class TheoryAnalyzer:
                             inversion = 2
                         else:
                             inversion = 0
-                        
+
                         # Determine voicing
                         note_range = max(notes) - min(notes)
                         if note_range <= 12:
@@ -613,7 +612,7 @@ class TheoryAnalyzer:
                             voicing = "open"
                         else:
                             voicing = "spread"
-                        
+
                         best_match = TriadDetection(
                             chord_name=f"{NOTE_NAMES[root_idx]}{quality}",
                             root=NOTE_NAMES[root_idx],
@@ -624,32 +623,32 @@ class TheoryAnalyzer:
                             confidence=score,
                             voicing=voicing,
                         )
-        
+
         return best_match
-    
+
     def _identify_seventh_chord(self, notes: List[int]) -> Optional[TriadDetection]:
         """Identify a seventh chord from notes."""
         if len(notes) < 4:
             return None
-        
+
         pcs = sorted(set(midi_to_pitch_class(n) for n in notes))
         if len(pcs) < 4:
             return None
-        
+
         best_match = None
         best_score = 0.0
-        
+
         for quality, intervals in self.seventh_chords.items():
             for root_idx in range(12):
                 expected = set((root_idx + i) % 12 for i in intervals)
-                
+
                 match_count = len(set(pcs) & expected)
                 if match_count >= 4:
                     score = match_count / len(expected)
-                    
+
                     if score > best_score:
                         best_score = score
-                        
+
                         best_match = TriadDetection(
                             chord_name=f"{NOTE_NAMES[root_idx]}{quality}",
                             root=NOTE_NAMES[root_idx],
@@ -659,9 +658,9 @@ class TheoryAnalyzer:
                             inversion=0,
                             confidence=score,
                         )
-        
+
         return best_match
-    
+
     def detect_arpeggios(
         self,
         notes: List[int],
@@ -670,32 +669,32 @@ class TheoryAnalyzer:
     ) -> List[ArpeggioDetection]:
         """
         Detect arpeggio patterns in a note sequence.
-        
+
         Args:
             notes: List of MIDI notes
             durations: Optional note durations
             min_notes: Minimum notes for arpeggio
-        
+
         Returns:
             List of detected arpeggios
         """
         if len(notes) < min_notes:
             return []
-        
+
         detections = []
-        
+
         # Sliding window analysis
         for window_size in range(min_notes, min(8, len(notes) + 1)):
             for i in range(len(notes) - window_size + 1):
                 window = notes[i:i + window_size]
-                
+
                 # Check if notes form a chord arpeggio
                 arpeggio = self._identify_arpeggio(window, durations)
                 if arpeggio:
                     detections.append(arpeggio)
-        
+
         return detections
-    
+
     def _identify_arpeggio(
         self,
         notes: List[int],
@@ -704,19 +703,19 @@ class TheoryAnalyzer:
         """Identify an arpeggio pattern."""
         if len(notes) < 3:
             return None
-        
+
         # Get pitch classes
         pcs = [midi_to_pitch_class(n) for n in notes]
         unique_pcs = set(pcs)
-        
+
         # Check against chord templates
         for quality, intervals in {**self.triads, **self.seventh_chords}.items():
             for root_idx in range(12):
                 expected = set((root_idx + i) % 12 for i in intervals)
-                
+
                 if unique_pcs <= expected and len(unique_pcs) >= 3:
                     # This is an arpeggio!
-                    
+
                     # Determine pattern direction
                     if notes == sorted(notes):
                         pattern = "ascending"
@@ -726,7 +725,7 @@ class TheoryAnalyzer:
                         pattern = "ascending_then_descending"
                     else:
                         pattern = "broken"
-                    
+
                     # Estimate speed
                     if durations:
                         avg_duration = sum(durations) / len(durations)
@@ -738,13 +737,13 @@ class TheoryAnalyzer:
                             speed = "slow"
                     else:
                         speed = "unknown"
-                    
+
                     # Calculate intervals
                     melodic_intervals = [
-                        notes[i+1] - notes[i] 
+                        notes[i+1] - notes[i]
                         for i in range(len(notes) - 1)
                     ]
-                    
+
                     return ArpeggioDetection(
                         chord_base=f"{NOTE_NAMES[root_idx]}{quality}",
                         pattern=pattern,
@@ -753,16 +752,16 @@ class TheoryAnalyzer:
                         speed_category=speed,
                         confidence=len(unique_pcs) / len(intervals),
                     )
-        
+
         return None
-    
+
     def analyze_intervals(self, notes: List[int]) -> IntervalAnalysis:
         """
         Analyze melodic intervals in a note sequence.
-        
+
         Args:
             notes: List of MIDI notes
-        
+
         Returns:
             IntervalAnalysis with interval statistics
         """
@@ -774,7 +773,7 @@ class TheoryAnalyzer:
                 average_interval_size=0.0,
                 melodic_contour="static",
             )
-        
+
         # Calculate intervals
         intervals = []
         for i in range(len(notes) - 1):
@@ -782,22 +781,22 @@ class TheoryAnalyzer:
             abs_semitones = abs(semitones)
             name = INTERVALS.get(abs_semitones % 12, f"{abs_semitones}_semitones")
             intervals.append((semitones, name))
-        
+
         # Build histogram
         histogram = {}
         for _, name in intervals:
             histogram[name] = histogram.get(name, 0) + 1
-        
+
         # Calculate consonance ratio
         consonant_count = sum(1 for s, _ in intervals if is_consonant_interval(abs(s)))
         consonant_ratio = consonant_count / len(intervals) if intervals else 1.0
-        
+
         # Average interval size
         avg_size = sum(abs(s) for s, _ in intervals) / len(intervals) if intervals else 0.0
-        
+
         # Melodic contour
         contour = detect_melodic_contour(notes)
-        
+
         return IntervalAnalysis(
             intervals=intervals,
             interval_histogram=histogram,
@@ -805,7 +804,7 @@ class TheoryAnalyzer:
             average_interval_size=avg_size,
             melodic_contour=contour,
         )
-    
+
     def _calculate_complexity(
         self,
         pitch_classes: Set[int],
@@ -818,24 +817,24 @@ class TheoryAnalyzer:
         # - Presence of chromatic notes
         # - Seventh chord usage
         # - Chord variety
-        
+
         pc_score = min(1.0, len(pitch_classes) / 7.0)  # 7 notes = full scale
-        
+
         # Check for chromatic content
         chromatic_pairs = sum(
-            1 for pc in pitch_classes 
+            1 for pc in pitch_classes
             if (pc + 1) % 12 in pitch_classes
         )
         chromatic_score = min(1.0, chromatic_pairs / 3.0)
-        
+
         # Seventh chord presence
         seventh_score = min(1.0, len(sevenths) / 3.0) if sevenths else 0.0
-        
+
         # Combine scores
         complexity = (pc_score * 0.3 + chromatic_score * 0.3 + seventh_score * 0.4)
-        
+
         return complexity
-    
+
     def analyze_audio(
         self,
         filepath: str,
@@ -843,43 +842,43 @@ class TheoryAnalyzer:
     ) -> TheoryAnalysis:
         """
         Analyze music theory elements from audio file.
-        
+
         Args:
             filepath: Path to audio file
             max_duration: Maximum duration to analyze
-        
+
         Returns:
             TheoryAnalysis
         """
         if not LIBROSA_AVAILABLE:
             raise ImportError("librosa required for audio analysis")
-        
+
         filepath = Path(filepath)
         if not filepath.exists():
             raise FileNotFoundError(f"Audio file not found: {filepath}")
-        
+
         # Load audio
         y, sr = librosa.load(str(filepath), sr=None, mono=True, duration=max_duration)
-        
+
         # Extract chromagram
         chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
-        
+
         # Convert to pitch class presence
         chroma_mean = np.mean(chroma, axis=1)
         threshold = np.mean(chroma_mean) + np.std(chroma_mean) * 0.5
-        
+
         pitch_classes = set(
-            i for i in range(12) 
+            i for i in range(12)
             if chroma_mean[i] > threshold
         )
-        
+
         # Detect scales
         detected_scales = self.detect_scales(pitch_classes)
         primary_scale = detected_scales[0] if detected_scales else None
-        
+
         # For audio, we can't easily detect specific triads/arpeggios
         # without pitch tracking, so return scale analysis primarily
-        
+
         return TheoryAnalysis(
             detected_scales=detected_scales,
             primary_scale=primary_scale,
@@ -899,10 +898,10 @@ class TheoryAnalyzer:
 def detect_scale(notes: List[int]) -> Optional[ScaleDetection]:
     """
     Detect the primary scale from MIDI notes.
-    
+
     Args:
         notes: List of MIDI note numbers
-    
+
     Returns:
         ScaleDetection or None
     """
@@ -915,10 +914,10 @@ def detect_scale(notes: List[int]) -> Optional[ScaleDetection]:
 def detect_mode(notes: List[int]) -> Optional[str]:
     """
     Detect the mode from MIDI notes.
-    
+
     Args:
         notes: List of MIDI note numbers
-    
+
     Returns:
         Mode name or None
     """
@@ -931,13 +930,12 @@ def detect_mode(notes: List[int]) -> Optional[str]:
 def analyze_harmony(notes: List[int]) -> TheoryAnalysis:
     """
     Perform complete harmonic analysis.
-    
+
     Args:
         notes: List of MIDI note numbers
-    
+
     Returns:
         TheoryAnalysis
     """
     analyzer = TheoryAnalyzer()
     return analyzer.analyze_notes(notes)
-

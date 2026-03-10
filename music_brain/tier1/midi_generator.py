@@ -4,7 +4,7 @@ Tier1 MIDI generator.
 
 from __future__ import annotations
 
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 
 class MIDIGenerator:

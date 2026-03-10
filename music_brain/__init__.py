@@ -13,7 +13,7 @@ __version__ = "0.2.0"
 
 # Re-export commonly used items from kelly_companion.session
 try:
-    from .kelly_companion.session.intent_schema import (
+    from .kelly_companion.session.intent_schema import (  # noqa: F401
         CompleteSongIntent,
         SongIntent,
         SongRoot,

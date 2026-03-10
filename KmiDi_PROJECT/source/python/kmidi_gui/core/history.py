@@ -431,4 +431,3 @@ class HistoryManager:
             self._transaction_groups[component].clear()
 
         logger.debug(f"Ended transaction group for {component}")
-

@@ -1,0 +1,14 @@
+# Break-and-fix run log
+
+Systematic break-and-fix per [Break and fix sections systematically](.cursor/plans/break_and_fix_sections_systematically_0deb9780.plan.md).
+
+| Section | What broke | How it was broken | Why that action broke it | Fix applied | Verification |
+|---------|------------|-------------------|--------------------------|-------------|--------------|
+| A | API schema rejects valid structure name "verse" | In `music_brain/engine_api/schema.py`, changed `StructureSection.name` pattern from `^(intro\|verse\|chorus\|...)$` to `^(intro\|chorus\|...)$` (removed `verse`) | `pytest tests/unit/test_api_schema.py` fails: 3 tests send payload with `structure[].name == "verse"`; Pydantic ValidationError (string_pattern_mismatch) | Restored `verse` in the regex pattern in schema.py | `pytest tests/unit/test_api_schema.py` — 8 passed |
+| B | TypeScript type/import error in IntentBuilder | In `IntentBuilder.tsx`, changed import to `CompleteSongIntentRequst` (typo) so the type is not imported | `npx tsc --noEmit` fails: module has no exported member `CompleteSongIntentRequst`; Cannot find name `CompleteSongIntentRequest` at 3 usages | Restored correct import `CompleteSongIntentRequest` | `npx tsc --noEmit` and `npm run build` — pass |
+| C | API schema expects wrong field name for intent | In `music_brain/engine_api/schema.py`, renamed `core_desire` to `core_desire_x` | `pytest tests/unit/test_api_schema.py` fails: 3 tests send `core_desire`; Pydantic ValidationError (core_desire_x Field required) | Restored field name `core_desire` in schema.py | `pytest tests/unit/test_api_schema.py` and flake8 — pass |
+| D | Unit test wrong assertion | In `tests/unit/test_api_schema.py`, changed `assert model.tempo == 120` to `assert model.tempo == 999` | `pytest tests/unit/test_api_schema.py` fails: AssertionError (120 == 999) in test_schema_accepts_valid_payload | Restored correct assertion `model.tempo == 120` | `pytest tests/unit/test_api_schema.py` — 8 passed |
+| E | Script writes to path whose parent does not exist | In `scripts/sync_entities.py`, set `SCHEMA_PATH = SCHEMA_DIR / "nonexistent_subdir" / "CompleteSongIntentRequest.json"` | `python3 scripts/sync_entities.py` fails: FileNotFoundError when writing (parent dir missing) | Restored `SCHEMA_PATH = SCHEMA_DIR / "CompleteSongIntentRequest.json"` | `python3 scripts/sync_entities.py` — completes successfully |
+| F | Integration test wrong expectation | In `tests/integration/test_workflow.py`, changed `assert processor.intent == sample_intent` to `!=` | `pytest tests/integration/test_workflow.py` fails: AssertionError (intent equals sample_intent, so != fails) | Restored correct assertion `processor.intent == sample_intent` | `pytest tests/integration/` — pass |
+| G | Optional native (C++/Rust/Tauri) | — | — | — | Skipped |
+| | | | | | |

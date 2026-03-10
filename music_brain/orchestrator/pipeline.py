@@ -107,7 +107,8 @@ class PipelineStage:
     config: ProcessorConfig = field(default_factory=lambda: ProcessorConfig(name=""))
     condition: Optional[Callable[[ExecutionContext], bool]] = None
     transform_input: Optional[Callable[[Any, ExecutionContext], Any]] = None
-    transform_output: Optional[Callable[[ProcessorResult, ExecutionContext], ProcessorResult]] = None
+    transform_output: Optional[Callable[[ProcessorResult, ExecutionContext],
+                                        ProcessorResult]] = None
 
     def __post_init__(self):
         if not self.config.name:

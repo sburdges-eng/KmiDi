@@ -5,11 +5,9 @@ Provides context-aware suggestions for parameter adjustments, emotions, and rule
 Part of Phase 3 of the "All-Knowing Interactive Musical Customization System".
 """
 
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
-import random
-from pathlib import Path
 
 
 class SuggestionType(Enum):
@@ -163,10 +161,12 @@ class SuggestionEngine:
                 suggestion = Suggestion(
                     suggestion_type=SuggestionType.PARAMETER,
                     title=f"{direction.title()} {param_name}",
-                    description=f"Based on your history, you typically prefer {param_name} around {preferred_mean:.2f}",
+                    description=f"Based on your history, you typically prefer {param_name} around {preferred_mean:.2f}",  # noqa: E501
+
                     action={"parameter": param_name, "target_value": target_value},
                     confidence=confidence_score,
-                    explanation=f"Your past {param_name} adjustments average to {preferred_mean:.2f} (based on {adjustment_count} adjustments)",
+                    explanation=f"Your past {param_name} adjustments average to {preferred_mean:.2f} (based on {adjustment_count} adjustments)",  # noqa: E501
+
                     source="user_history"
                 )
                 suggestions.append(suggestion)
@@ -209,7 +209,8 @@ class SuggestionEngine:
                     description=f"{current_emotion} often pairs well with {target_emotion}",
                     action={"emotion": target_emotion},
                     confidence=confidence,
-                    explanation=f"Based on musical theory, {current_emotion} → {target_emotion} creates emotional progression",
+                    explanation=f"Based on musical theory, {current_emotion} → {target_emotion} creates emotional progression",  # noqa: E501
+
                     source="musical_theory" if not self.preference_model else "user_history"
                 )
                 suggestions.append(suggestion)
@@ -271,7 +272,7 @@ class SuggestionEngine:
                 action={"add_rule_break": rule_break},
                 confidence=confidence,
                 explanation=f"{rule_break} is commonly used to express {current_emotion}" +
-                           (". You've used this before." if rule_break in user_kept_breaks else ""),
+                (". You've used this before." if rule_break in user_kept_breaks else ""),
                 source=source
             )
             suggestions.append(suggestion)
@@ -342,7 +343,8 @@ class SuggestionEngine:
                     description=f"You often prefer {top_style[0]} style in your music",
                     action={"style": top_style[0]},
                     confidence=top_style[1],
-                    explanation=f"Based on your accepted generations, you prefer {top_style[0]} style",
+                    explanation=f"Based on your accepted generations, you prefer {top_style[0]} style",  # noqa: E501
+
                     source="user_history"
                 )
                 suggestions.append(suggestion)
@@ -617,7 +619,7 @@ class SuggestionEngine:
             if current_value is not None and target_value is not None:
                 diff = abs(target_value - current_value)
                 if diff > 0.3:
-                    explanation += f" This is a significant change from your current {param_name} of {current_value:.2f}."
+                    explanation += f" This is a significant change from your current {param_name} of {current_value:.2f}."  # noqa: E501
 
         elif suggestion.suggestion_type == SuggestionType.EMOTION:
             current_emotion = current_state.get("emotion", "")
@@ -628,7 +630,7 @@ class SuggestionEngine:
         elif suggestion.suggestion_type == SuggestionType.RULE_BREAK:
             rule_break = suggestion.action.get("add_rule_break", "")
             if rule_break:
-                explanation += f" This rule-break will modify the harmonic/rhythmic structure to enhance the emotional expression."
+                explanation += " This rule-break will modify the harmonic/rhythmic structure to enhance the emotional expression."  # noqa: E501
 
         return explanation
 
@@ -734,7 +736,9 @@ def main():
     for i, suggestion in enumerate(suggestions, 1):
         print(f"\n{i}. {suggestion.title}")
         print(f"   {suggestion.description}")
-        print(f"   Confidence: {suggestion.confidence:.2f} ({suggestion.get_confidence_level().value})")
+        print(
+            f"   Confidence: {suggestion.confidence:.2f} ({suggestion.get_confidence_level().value})")  # noqa: E501
+
         print(f"   Explanation: {suggestion.explanation}")
 
 

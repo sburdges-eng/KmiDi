@@ -10,17 +10,17 @@ Includes:
 - "Drunken Drummer" humanization engine for emotionally-driven processing
 """
 
-from music_brain.groove.applicator import apply_groove, humanize
-from music_brain.groove.drum_analysis import (
+from .applicator import apply_groove, humanize
+from .drum_analysis import (
     DrumAnalyzer,
     DrumTechniqueProfile,
     HiHatAlternation,
     SnareBounceSignature,
     analyze_drum_technique,
 )
-from music_brain.groove.drum_humanizer import DrumHumanizer
-from music_brain.groove.extractor import GrooveTemplate, extract_groove
-from music_brain.groove.groove_engine import (
+from .drum_humanizer import DrumHumanizer
+from .extractor import GrooveTemplate, extract_groove
+from .groove_engine import (
     GrooveSettings,
     get_preset,
     humanize_drums,
@@ -31,15 +31,14 @@ from music_brain.groove.groove_engine import (
     settings_from_intent,
     settings_from_preset,
 )
-from music_brain.groove.templates import (
+from .templates import (
     GENRE_TEMPLATES,
     get_genre_template,
     list_genre_templates,
 )
-from music_brain.groove.humanizer import (
+from .humanizer import (
     apply_humanization,
     GrooveHumanizer,
-    GrooveTemplate,
     HumanizationProfile,
     TimingHumanizer,
     VelocityHumanizer,

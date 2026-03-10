@@ -6,7 +6,7 @@ Part of Phase 2 of the "All-Knowing Interactive Musical Customization System".
 """
 
 from typing import Dict, List, Optional, Tuple, Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from collections import defaultdict
 
@@ -139,7 +139,6 @@ class EmotionWheelGestureHandler:
         norm_y = gesture.current_position[1] / self.wheel_radius
 
         # Clamp to unit circle
-        import math
         distance = (norm_x * norm_x + norm_y * norm_y) ** 0.5
         if distance > 1.0:
             norm_x /= distance

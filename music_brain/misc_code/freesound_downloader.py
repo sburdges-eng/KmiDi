@@ -62,7 +62,7 @@ if __name__ == "__main__":
         query = sys.argv[1]
     else:
         query = "glitch industrial"
-    
+
     download_pack_by_tags(
         [query],
         "./audio_vault/raw/Downloaded_Samples",

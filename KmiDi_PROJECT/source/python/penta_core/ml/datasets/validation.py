@@ -480,8 +480,8 @@ class DatasetValidator:
     def _validate_from_files(self, dataset_path: Path, report: ValidationReport):
         """Validate dataset from files when no manifest exists."""
         # Count files
-        midi_files = (list(dataset_path.glob("**/*.mid")) +
-                       list(dataset_path.glob("**/*.midi")))
+        midi_files = (list(dataset_path.glob("**/*.mid"))
+                      + list(dataset_path.glob("**/*.midi")))
         audio_files = list(dataset_path.glob("**/*.wav")) + list(dataset_path.glob("**/*.mp3"))
 
         report.total_samples = len(midi_files) + len(audio_files)
@@ -500,7 +500,8 @@ class DatasetValidator:
             report.add_issue(
                 "warning",
                 "quality",
-                f"Missing annotations: {report.total_samples} samples but only {len(annotation_files)} annotation files",
+                f"Missing annotations: {report.total_samples} samples but only {len(
+                    annotation_files)} annotation files",
             )
 
         # Try to infer categories from directory structure
@@ -514,8 +515,10 @@ class DatasetValidator:
         """Generate recommendations based on validation results."""
         # Balance recommendations
         if report.balance_score < 0.5:
-            low_cats = [c for c, n in report.category_counts.items()
-                       if n < report.max_category_size * 0.5]
+            low_cats = [
+                c for c, n in report.category_counts.items()
+                if n < report.max_category_size * 0.5
+            ]
             if low_cats:
                 report.recommendations.append(
                     f"Add more samples to underrepresented categories: {', '.join(low_cats)}"
@@ -551,7 +554,8 @@ class DatasetValidator:
         for cat, count in report.category_counts.items():
             if count < 100:
                 report.recommendations.append(
-                    f"Category '{cat}' needs at least {100 - count} more samples for reliable training"
+                    f"Category '{cat}' needs at least"
+                    f" {100 - count} more samples for reliable training"
                 )
 
         # Split recommendations
@@ -596,5 +600,3 @@ def print_dataset_stats(dataset_path: Path):
     """Print comprehensive dataset statistics."""
     report = validate_dataset(dataset_path)
     report.print_summary()
-
-

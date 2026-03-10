@@ -9,7 +9,7 @@ Provides:
 - Upper structure voicings
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Dict, Optional, Tuple
 from enum import Enum
 
@@ -340,7 +340,8 @@ def _minimize_voice_movement(
 
     # Try different inversions/octave shifts
     best_notes = curr_notes
-    best_movement = sum(abs(c - p) for c, p in zip(curr_notes, prev_notes) if len(prev_notes) >= len(curr_notes))
+    best_movement = sum(abs(c - p) for c, p in zip(curr_notes, prev_notes)
+                        if len(prev_notes) >= len(curr_notes))
 
     for octave_shift in range(-12, 13, 12):
         for inversion, _ in enumerate(curr_notes):
@@ -374,7 +375,8 @@ def get_common_progressions() -> Dict[str, List[Tuple[str, str]]]:
         "ii-V-I minor": [("D", "min7b5"), ("G", "7b9"), ("C", "min7")],
         "I-VI-ii-V": [("C", "maj7"), ("A", "min7"), ("D", "min7"), ("G", "dom7")],
         "iii-VI-ii-V": [("E", "min7"), ("A", "dom7"), ("D", "min7"), ("G", "dom7")],
-        "Coltrane changes": [("C", "maj7"), ("Eb", "dom7"), ("Ab", "maj7"), ("B", "dom7"), ("E", "maj7"), ("G", "dom7")],
+        "Coltrane changes": [("C", "maj7"), ("Eb", "dom7"), ("Ab", "maj7"), ("B", "dom7"), ("E", "maj7"), ("G", "dom7")],  # noqa: E501
+
         "rhythm changes A": [("Bb", "maj7"), ("G", "min7"), ("C", "min7"), ("F", "dom7")],
         "blues": [("C", "dom7"), ("F", "dom7"), ("C", "dom7"), ("C", "dom7"),
                   ("F", "dom7"), ("F", "dom7"), ("C", "dom7"), ("A", "dom7"),

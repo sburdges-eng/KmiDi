@@ -155,7 +155,8 @@ class ExportDialog(QDialog):
 
         if self.annotations_checkbox.isChecked() and self.current_annotations:
             annotations_path = base_path / "ml_annotations.json"
-            worker = self.export_manager.export_annotations(annotations_path, self.current_annotations)
+            worker = self.export_manager.export_annotations(
+                annotations_path, self.current_annotations)
             self.active_workers.append(worker)
             exports_started += 1
 
@@ -215,4 +216,3 @@ class ExportDialog(QDialog):
                 )
                 QMessageBox.warning(self, "Export Partially Failed", final_message)
                 self.export_complete.emit(False, final_message)
-

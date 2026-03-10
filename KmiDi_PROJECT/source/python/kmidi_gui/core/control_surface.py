@@ -64,7 +64,7 @@ class ControlMapping:
         )
 
     def matches(self, midi_type: str, channel: int, cc_or_note: int,
-                 device_id: str = "") -> bool:
+                device_id: str = "") -> bool:
         """Check if MIDI message matches this mapping.
 
         Args:
@@ -178,7 +178,10 @@ class ControlSurfaceManager:
         except Exception as e:
             logger.error(f"Failed to disconnect from MIDI device: {e}")
 
-    def start_learn_mode(self, parameter: str, callback: Optional[Callable[[ControlMapping], None]] = None) -> None:
+    def start_learn_mode(
+        self, parameter: str,
+        callback: Optional[Callable[[ControlMapping], None]] = None,
+    ) -> None:
         """Start learn mode for a parameter.
 
         When learn mode is active, the next MIDI message will be mapped to the parameter.
@@ -242,7 +245,9 @@ class ControlSurfaceManager:
                 return mapping
         return None
 
-    def register_parameter_callback(self, parameter: str, callback: Callable[[float], None]) -> None:
+    def register_parameter_callback(
+        self, parameter: str, callback: Callable[[float], None],
+    ) -> None:
         """Register callback for parameter updates.
 
         Args:
@@ -313,7 +318,11 @@ class ControlSurfaceManager:
             for mapping in self.mappings:
                 if mapping.matches("cc", channel, cc_number, device_id):
                     # Map MIDI value (0-127) to parameter range
-                    normalized = (value / 127.0) * (mapping.max_value - mapping.min_value) + mapping.min_value
+                    normalized = (
+                        (value / 127.0)
+                        * (mapping.max_value - mapping.min_value)
+                        + mapping.min_value
+                    )
                     self._update_parameter(mapping.parameter, normalized)
                     return
 
@@ -325,7 +334,11 @@ class ControlSurfaceManager:
             for mapping in self.mappings:
                 if mapping.matches("note", channel, note_number, device_id):
                     # Map velocity (0-127) to parameter range
-                    normalized = (velocity / 127.0) * (mapping.max_value - mapping.min_value) + mapping.min_value
+                    normalized = (
+                        (velocity / 127.0)
+                        * (mapping.max_value - mapping.min_value)
+                        + mapping.min_value
+                    )
                     self._update_parameter(mapping.parameter, normalized)
                     return
 
@@ -390,4 +403,3 @@ class ControlSurfaceManager:
                 f"Loaded {len(self.mappings)} control mappings from {mappings_file}")
         except Exception as e:
             logger.error(f"Failed to load control mappings: {e}")
-

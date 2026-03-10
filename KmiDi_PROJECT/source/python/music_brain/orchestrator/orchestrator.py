@@ -28,17 +28,14 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Dict, List, Optional
 
 from music_brain.orchestrator.logging_utils import (
-    OrchestratorLogger,
     LogLevel,
     get_logger,
 )
 from music_brain.orchestrator.interfaces import (
-    ProcessorInterface,
     ProcessorResult,
-    ProcessorStatus,
     ExecutionContext,
     CallbackInterface,
     DefaultCallback,
@@ -46,7 +43,6 @@ from music_brain.orchestrator.interfaces import (
 from music_brain.orchestrator.pipeline import (
     Pipeline,
     PipelineStage,
-    PipelineStatus,
     StageResult,
 )
 
@@ -451,7 +447,9 @@ class AIOrchestrator:
         # All retries failed
         duration_ms = (time.perf_counter() - start_time) * 1000
         self._logger.stage_failed(stage.name, Exception(last_error or "Unknown error"))
-        await self._notify_stage_error(stage.name, context, Exception(last_error or "Unknown error"))
+        await self._notify_stage_error(
+            stage.name, context,
+            Exception(last_error or "Unknown error"))
 
         return StageResult(
             stage_name=stage.name,
@@ -585,4 +583,3 @@ class AIOrchestrator:
             f"AIOrchestrator(running={len(self._running_executions)}, "
             f"history={len(self._execution_history)})"
         )
-

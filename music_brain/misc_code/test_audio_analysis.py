@@ -40,4 +40,3 @@ def test_audio_analyzer_waveform():
     analysis = analyzer.analyze_waveform(wave, sr)
     assert analysis.key == "A"
     assert analysis.chords
-

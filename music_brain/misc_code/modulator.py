@@ -91,4 +91,3 @@ class VoiceModulator:
     def _bitcrush(self, audio: np.ndarray, bits: int) -> np.ndarray:
         levels = 2 ** bits
         return np.round(audio * levels) / levels
-

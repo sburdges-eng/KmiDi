@@ -4,8 +4,8 @@ Tension Analysis - Harmonic tension and release analysis.
 Analyzes and plans tension curves for emotional impact.
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
+from dataclasses import dataclass
+from typing import List, Dict, Tuple
 from enum import Enum
 
 

@@ -16,31 +16,30 @@ Three-Phase Intent Building:
 
 Integration:
     from kellymidicompanion_interrogator import Interrogator, InterrogationSession
-    
+
     interrogator = Interrogator()
     session = interrogator.start_session()
-    
+
     # Get first question
     q = session.get_next_question()
     print(q.text)
-    
+
     # User responds
     session.answer(q.id, "it feels like drowning")
-    
+
     # Continue until intent is built
     while not session.is_complete():
         q = session.get_next_question()
         session.answer(q.id, user_input)
-    
+
     # Get final intent
     intent = session.build_intent()
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple, Callable, Any
+from typing import List, Dict, Optional, Tuple, Any
 from enum import Enum
 import random
-import re
 
 
 # =============================================================================
@@ -82,7 +81,8 @@ class EmotionCategory(Enum):
 WOUND_QUESTIONS = [
     {
         "id": "wound_core",
-        "text": "What's the feeling you're trying to express? Not the story, but the raw sensation.",
+        "text": "What's the feeling you're trying to express? Not the story, but the raw sensation.",  # noqa: E501
+
         "type": QuestionType.OPEN,
         "phase": InterrogationPhase.WOUND,
         "weight": 1.0,
@@ -115,7 +115,8 @@ WOUND_QUESTIONS = [
     },
     {
         "id": "wound_time",
-        "text": "Does this feel like something that just happened, or something you've carried for years?",
+        "text": "Does this feel like something that just happened, or something you've carried for years?",  # noqa: E501
+
         "type": QuestionType.CHOICE,
         "phase": InterrogationPhase.WOUND,
         "weight": 0.6,
@@ -159,14 +160,22 @@ EMOTION_QUESTIONS = [
         "phase": InterrogationPhase.EMOTION,
         "weight": 1.0,
         "choices": [
-            ("grief - the weight of loss", {"primary_emotion": "grief", "valence": -0.8, "arousal": 0.3}),
-            ("anger - the heat of injustice", {"primary_emotion": "anger", "valence": -0.6, "arousal": 0.9}),
-            ("fear - the cold of uncertainty", {"primary_emotion": "fear", "valence": -0.7, "arousal": 0.8}),
-            ("longing - the ache of distance", {"primary_emotion": "longing", "valence": -0.4, "arousal": 0.4}),
-            ("hope - the warmth of possibility", {"primary_emotion": "hope", "valence": 0.6, "arousal": 0.5}),
-            ("joy - the lightness of being", {"primary_emotion": "joy", "valence": 0.8, "arousal": 0.7}),
-            ("love - the fullness of connection", {"primary_emotion": "love", "valence": 0.7, "arousal": 0.6}),
-            ("numbness - the absence of feeling", {"primary_emotion": "dissociation", "valence": 0.0, "arousal": 0.1}),
+            ("grief - the weight of loss", {"primary_emotion": "grief", "valence": -0.8, "arousal": 0.3}),  # noqa: E501
+
+            ("anger - the heat of injustice", {"primary_emotion": "anger", "valence": -0.6, "arousal": 0.9}),  # noqa: E501
+
+            ("fear - the cold of uncertainty", {"primary_emotion": "fear", "valence": -0.7, "arousal": 0.8}),  # noqa: E501
+
+            ("longing - the ache of distance", {"primary_emotion": "longing", "valence": -0.4, "arousal": 0.4}),  # noqa: E501
+
+            ("hope - the warmth of possibility", {"primary_emotion": "hope", "valence": 0.6, "arousal": 0.5}),  # noqa: E501
+
+            ("joy - the lightness of being", {"primary_emotion": "joy", "valence": 0.8, "arousal": 0.7}),  # noqa: E501
+
+            ("love - the fullness of connection", {"primary_emotion": "love", "valence": 0.7, "arousal": 0.6}),  # noqa: E501
+
+            ("numbness - the absence of feeling", {"primary_emotion": "dissociation", "valence": 0.0, "arousal": 0.1}),  # noqa: E501
+
         ],
     },
     {
@@ -303,7 +312,8 @@ RULE_BREAK_QUESTIONS = [
         "phase": InterrogationPhase.RULE_BREAK,
         "weight": 0.6,
         "maps_to": "predictability",
-        "scale_labels": ("predictable", "mostly expected", "some surprises", "unpredictable", "chaotic"),
+        "scale_labels": ("predictable", "mostly expected", "some surprises", "unpredictable", "chaotic"),  # noqa: E501
+
     },
     {
         "id": "rule_genre",
@@ -335,14 +345,14 @@ KEYWORD_EMOTION_MAP = {
     "funeral": {"emotion": "grief", "valence": -0.8, "arousal": 0.3},
     "empty": {"emotion": "grief", "valence": -0.6, "arousal": 0.2},
     "hollow": {"emotion": "dissociation", "valence": -0.4, "arousal": 0.1},
-    
+
     # Anger family
     "angry": {"emotion": "anger", "valence": -0.6, "arousal": 0.9},
     "furious": {"emotion": "rage", "valence": -0.8, "arousal": 1.0},
     "hate": {"emotion": "rage", "valence": -0.9, "arousal": 0.8},
     "betrayed": {"emotion": "anger", "valence": -0.7, "arousal": 0.7},
     "unfair": {"emotion": "defiance", "valence": -0.5, "arousal": 0.7},
-    
+
     # Fear family
     "scared": {"emotion": "fear", "valence": -0.7, "arousal": 0.8},
     "terrified": {"emotion": "fear", "valence": -0.9, "arousal": 0.9},
@@ -350,14 +360,14 @@ KEYWORD_EMOTION_MAP = {
     "worried": {"emotion": "anxiety", "valence": -0.4, "arousal": 0.6},
     "panic": {"emotion": "fear", "valence": -0.8, "arousal": 1.0},
     "dread": {"emotion": "fear", "valence": -0.7, "arousal": 0.6},
-    
+
     # Joy family
     "happy": {"emotion": "joy", "valence": 0.7, "arousal": 0.6},
     "excited": {"emotion": "euphoria", "valence": 0.8, "arousal": 0.9},
     "peaceful": {"emotion": "tenderness", "valence": 0.5, "arousal": 0.2},
     "grateful": {"emotion": "joy", "valence": 0.6, "arousal": 0.4},
     "love": {"emotion": "love", "valence": 0.7, "arousal": 0.6},
-    
+
     # Complex
     "numb": {"emotion": "dissociation", "valence": 0.0, "arousal": 0.1},
     "confused": {"emotion": "anxiety", "valence": -0.3, "arousal": 0.5},
@@ -410,28 +420,28 @@ class MusicalIntent:
     valence: float = 0.0           # -1 to 1
     arousal: float = 0.5           # 0 to 1
     intensity: float = 0.5         # 0 to 1
-    
+
     # Temporal
     temporal_quality: str = "present"  # acute, recent, chronic, deep
     narrative_arc: str = "linear"      # transformation, dwelling, release
-    
+
     # Musical directives
     mode_tendency: str = "minor"       # major, minor, modal, dissonant
     tempo_feel: str = "moderate"       # frozen, slow, moderate, fast, frantic
     texture: str = "sustained"         # sharp, dull, wave, sustained, fragmented
     density: str = "moderate"          # sparse, moderate, dense
-    
+
     # Rule breaks
     rule_breaks: List[str] = field(default_factory=list)
     resolve: bool = True
     humanization: float = 0.5          # 0 = perfect, 1 = broken
     dissonance_tolerance: float = 0.3  # 0 = consonant, 1 = harsh
     genre_adherence: float = 0.5
-    
+
     # Metadata
     audience: str = "self"
     confidence_score: float = 0.0
-    
+
     def to_dict(self) -> Dict:
         """Convert to dictionary for JSON export."""
         return {
@@ -454,7 +464,7 @@ class MusicalIntent:
             "audience": self.audience,
             "confidence_score": self.confidence_score,
         }
-    
+
     def get_suggested_tempo(self) -> int:
         """Convert tempo_feel to BPM suggestion."""
         tempo_map = {
@@ -465,7 +475,7 @@ class MusicalIntent:
             "frantic": 170,
         }
         return tempo_map.get(self.tempo_feel, 100)
-    
+
     def get_suggested_key(self) -> str:
         """Suggest a key based on emotion."""
         emotion_keys = {
@@ -488,7 +498,7 @@ class MusicalIntent:
         return emotion_keys.get(self.primary_emotion, "C")
 
 
-@dataclass 
+@dataclass
 class InterrogationState:
     """Current state of an interrogation session."""
     phase: InterrogationPhase = InterrogationPhase.WOUND
@@ -507,19 +517,19 @@ class InterrogationState:
 class InterrogationSession:
     """
     A single interrogation session that builds intent through Q&A.
-    
+
     Usage:
         session = InterrogationSession()
-        
+
         while not session.is_complete():
             q = session.get_next_question()
             print(q.text)
             user_response = input()
             session.answer(q.id, user_response)
-        
+
         intent = session.build_intent()
     """
-    
+
     def __init__(
         self,
         min_questions: int = 6,
@@ -530,7 +540,7 @@ class InterrogationSession:
         self.min_questions = min_questions
         self.max_questions = max_questions
         self.skip_phases = skip_phases or []
-        
+
         # Build question pool
         self.questions = {}
         for q_data in WOUND_QUESTIONS + EMOTION_QUESTIONS + RULE_BREAK_QUESTIONS:
@@ -547,103 +557,107 @@ class InterrogationSession:
                 follow_ups=q_data.get("follow_ups", []),
             )
             self.questions[q.id] = q
-        
+
         self._pending_follow_ups = []
-    
+
     def get_next_question(self) -> Optional[Question]:
         """Get the next question to ask."""
         if self.state.is_complete:
             return None
-        
+
         # Check for pending follow-ups
         if self._pending_follow_ups:
             follow_id = self._pending_follow_ups.pop(0)
             if follow_id in self.questions and follow_id not in self.state.questions_asked:
                 return self.questions[follow_id]
-        
+
         # Get questions for current phase
         phase_questions = [
             q for q in self.questions.values()
             if q.phase == self.state.phase
             and q.id not in self.state.questions_asked
         ]
-        
+
         if not phase_questions:
             # Move to next phase
             self._advance_phase()
             return self.get_next_question()
-        
+
         # Check if we've asked enough for this phase
         phase_asked = len([
             a for a in self.state.answers
             if self.questions[a.question_id].phase == self.state.phase
         ])
-        
+
         if phase_asked >= self.state.max_questions_per_phase:
             self._advance_phase()
             return self.get_next_question()
-        
+
         # Weight by importance and randomize slightly
         phase_questions.sort(key=lambda q: -q.weight + random.uniform(0, 0.3))
-        
+
         return phase_questions[0]
-    
+
     def answer(self, question_id: str, response: Any) -> Dict:
         """
         Record an answer and return interpreted parameters.
-        
+
         Args:
             question_id: ID of the question being answered
             response: User's response (text, number, or choice index)
-        
+
         Returns:
             Dictionary of interpreted musical parameters
         """
         if question_id not in self.questions:
             return {}
-        
+
         question = self.questions[question_id]
         interpreted = self._interpret_answer(question, response)
-        
+
         answer = Answer(
             question_id=question_id,
             raw_value=response,
             interpreted=interpreted,
         )
-        
+
         self.state.answers.append(answer)
         self.state.questions_asked.append(question_id)
-        
+
         # Merge into accumulated params
         for key, value in interpreted.items():
             if key in self.state.accumulated_params:
                 # Average numeric values
-                if isinstance(value, (int, float)) and isinstance(self.state.accumulated_params[key], (int, float)):
-                    self.state.accumulated_params[key] = (self.state.accumulated_params[key] + value) / 2
+                if isinstance(
+                        value, (int, float)) and isinstance(
+                        self.state.accumulated_params[key],
+                        (int, float)):
+                    self.state.accumulated_params[key] = (
+                        self.state.accumulated_params[key] + value) / 2
                 elif isinstance(value, list):
                     self.state.accumulated_params[key].extend(value)
                 else:
                     self.state.accumulated_params[key] = value
             else:
                 self.state.accumulated_params[key] = value
-        
+
         # Add follow-ups
         if question.follow_ups:
             self._pending_follow_ups.extend(question.follow_ups)
-        
+
         # Check completion
         self._check_completion()
-        
+
         return interpreted
-    
+
     def _interpret_answer(self, question: Question, response: Any) -> Dict:
         """Interpret a response into musical parameters."""
         params = {}
-        
+
         if question.type == QuestionType.OPEN:
             # Analyze free text for keywords
             params = self._analyze_text(str(response))
-        
+
         elif question.type == QuestionType.CHOICE:
             # Direct mapping from choice
             if question.choices and isinstance(response, (int, str)):
@@ -657,7 +671,7 @@ class InterrogationSession:
                         if response_lower in text.lower() or text.lower() in response_lower:
                             params = choice_params.copy()
                             break
-        
+
         elif question.type == QuestionType.SCALE:
             # Convert 1-10 to 0-1 range
             try:
@@ -665,23 +679,26 @@ class InterrogationSession:
                 normalized = (value - 1) / 9  # 1-10 -> 0-1
                 if question.maps_to:
                     params[question.maps_to] = normalized
-                    
+
                     # Also map to descriptive label
                     if question.scale_labels:
-                        label_idx = min(int(normalized * len(question.scale_labels)), len(question.scale_labels) - 1)
+                        label_idx = min(
+                            int(normalized * len(question.scale_labels)),
+                            len(question.scale_labels) - 1)
                         params[f"{question.maps_to}_label"] = question.scale_labels[label_idx]
             except (ValueError, TypeError):
                 pass
-        
+
         elif question.type == QuestionType.BINARY:
             # Yes/No or A/B
             if question.choices and len(question.choices) == 2:
                 response_str = str(response).lower()
-                if response_str in ["yes", "y", "1", "true", "a"] or response_str in question.choices[0][0].lower():
+                if response_str in ["yes", "y", "1", "true", "a"] or response_str in question.choices[0][0].lower():  # noqa: E501
+
                     params = question.choices[0][1].copy()
                 else:
                     params = question.choices[1][1].copy()
-        
+
         elif question.type == QuestionType.METAPHOR:
             # Similar to choice but with richer mapping
             if question.choices:
@@ -690,9 +707,9 @@ class InterrogationSession:
                     if text.lower() in response_lower or response_lower in text.lower():
                         params = choice_params.copy()
                         break
-        
+
         return params
-    
+
     def _analyze_text(self, text: str) -> Dict:
         """Analyze free text for emotional keywords."""
         text_lower = text.lower()
@@ -701,12 +718,12 @@ class InterrogationSession:
             "arousal": 0.5,
             "detected_keywords": [],
         }
-        
+
         matches = 0
         for keyword, mapping in KEYWORD_EMOTION_MAP.items():
             if keyword in text_lower:
                 params["detected_keywords"].append(keyword)
-                
+
                 if "emotion" in mapping:
                     params["detected_emotion"] = mapping["emotion"]
                 if "valence" in mapping:
@@ -714,66 +731,71 @@ class InterrogationSession:
                     matches += 1
                 if "arousal" in mapping:
                     params["arousal"] += mapping["arousal"]
-        
+
         # Average the accumulated values
         if matches > 0:
             params["valence"] /= matches
             params["arousal"] /= matches
-        
+
         return params
-    
+
     def _advance_phase(self):
         """Move to the next interrogation phase."""
-        phases = [InterrogationPhase.WOUND, InterrogationPhase.EMOTION, InterrogationPhase.RULE_BREAK]
-        
+        phases = [InterrogationPhase.WOUND,
+                  InterrogationPhase.EMOTION, InterrogationPhase.RULE_BREAK]
+
         try:
             current_idx = phases.index(self.state.phase)
             next_idx = current_idx + 1
-            
+
             while next_idx < len(phases):
                 if phases[next_idx] not in self.skip_phases:
                     self.state.phase = phases[next_idx]
                     return
                 next_idx += 1
-            
+
             # No more phases
             self.state.is_complete = True
         except ValueError:
             self.state.is_complete = True
-    
+
     def _check_completion(self):
         """Check if interrogation is complete."""
         total_questions = len(self.state.answers)
-        
+
         if total_questions >= self.max_questions:
             self.state.is_complete = True
-        elif total_questions >= self.min_questions and self.state.phase == InterrogationPhase.RULE_BREAK:
+        elif total_questions >= self.min_questions and self.state.phase == InterrogationPhase.RULE_BREAK:  # noqa: E501
+
             # Can complete early if we have enough
             phase_counts = {phase: 0 for phase in InterrogationPhase}
             for answer in self.state.answers:
                 q = self.questions[answer.question_id]
                 phase_counts[q.phase] += 1
-            
-            if all(count >= 1 for phase, count in phase_counts.items() if phase not in self.skip_phases):
+
+            if all(count >= 1 for phase, count in phase_counts.items()
+                   if phase not in self.skip_phases):
                 self.state.is_complete = True
-    
+
     def is_complete(self) -> bool:
         """Check if session is complete."""
         return self.state.is_complete
-    
+
     def build_intent(self) -> MusicalIntent:
         """Build final MusicalIntent from all answers."""
         params = self.state.accumulated_params
-        
+
         intent = MusicalIntent(
-            primary_emotion=params.get("primary_emotion", params.get("detected_emotion", "neutral")),
+            primary_emotion=params.get(
+                "primary_emotion", params.get("detected_emotion", "neutral")),
             secondary_emotions=[params.get("secondary")] if params.get("secondary") else [],
             valence=params.get("valence", 0.0),
             arousal=params.get("arousal", 0.5),
             intensity=params.get("intensity", 0.5),
             temporal_quality=params.get("temporal", "present"),
             narrative_arc=params.get("narrative_arc", "linear"),
-            mode_tendency=params.get("mode_tendency", "minor" if params.get("valence", 0) < 0 else "major"),
+            mode_tendency=params.get(
+                "mode_tendency", "minor" if params.get("valence", 0) < 0 else "major"),
             tempo_feel=params.get("tempo_feel_label", "moderate"),
             texture=params.get("texture", "sustained"),
             density="sparse" if params.get("rest_density") == "high" else "moderate",
@@ -783,11 +805,10 @@ class InterrogationSession:
             dissonance_tolerance=params.get("dissonance_tolerance", 0.3),
             genre_adherence=params.get("genre_adherence", 0.5),
             audience=params.get("audience", "self"),
-            confidence_score=len(self.state.answers) / self.max_questions,
-        )
-        
+            confidence_score=len(self.state.answers) / self.max_questions,)
+
         return intent
-    
+
     def get_summary(self) -> str:
         """Get a summary of the session so far."""
         lines = [
@@ -797,10 +818,10 @@ class InterrogationSession:
             "",
             "Accumulated parameters:",
         ]
-        
+
         for key, value in self.state.accumulated_params.items():
             lines.append(f"  {key}: {value}")
-        
+
         return "\n".join(lines)
 
 
@@ -811,18 +832,18 @@ class InterrogationSession:
 class Interrogator:
     """
     Main interrogator class for creating and managing sessions.
-    
+
     Usage:
         interrogator = Interrogator()
         session = interrogator.start_session()
-        
+
         # Or quick interrogation
         intent = interrogator.quick_interrogate("I feel like I'm drowning in grief")
     """
-    
+
     def __init__(self):
         pass
-    
+
     def start_session(
         self,
         min_questions: int = 6,
@@ -835,26 +856,26 @@ class Interrogator:
             max_questions=max_questions,
             skip_phases=skip_phases,
         )
-    
+
     def quick_interrogate(self, description: str) -> MusicalIntent:
         """
         Quick interrogation from a single text description.
         Analyzes keywords to build intent without full Q&A.
-        
+
         Args:
             description: Free text describing the feeling
-        
+
         Returns:
             MusicalIntent based on text analysis
         """
         session = InterrogationSession(min_questions=1, max_questions=1)
-        
+
         # Use the wound_core question with the description
         session.answer("wound_core", description)
-        
+
         # Add some defaults based on analysis
         params = session.state.accumulated_params
-        
+
         intent = MusicalIntent(
             primary_emotion=params.get("detected_emotion", "neutral"),
             valence=params.get("valence", 0.0),
@@ -864,18 +885,18 @@ class Interrogator:
             humanization=0.3,
             confidence_score=0.3,  # Low confidence for quick interrogation
         )
-        
+
         return intent
-    
+
     def from_emotion(self, emotion: str, intensity: float = 0.7) -> MusicalIntent:
         """
         Create intent directly from emotion name.
         Bypasses interrogation for when emotion is known.
-        
+
         Args:
             emotion: Emotion name (grief, hope, rage, etc.)
             intensity: 0-1 intensity
-        
+
         Returns:
             MusicalIntent configured for that emotion
         """
@@ -894,11 +915,11 @@ class Interrogator:
             "euphoria": {"valence": 0.9, "arousal": 0.9, "mode": "major", "tempo": "fast"},
             "dissociation": {"valence": 0.0, "arousal": 0.1, "mode": "modal", "tempo": "slow"},
         }
-        
+
         preset = emotion_presets.get(emotion.lower(), {
             "valence": 0.0, "arousal": 0.5, "mode": "minor", "tempo": "moderate"
         })
-        
+
         return MusicalIntent(
             primary_emotion=emotion.lower(),
             valence=preset["valence"] * intensity,
@@ -930,7 +951,7 @@ def interrogate_from_text(text: str) -> MusicalIntent:
 
 if __name__ == "__main__":
     print("=== INTERROGATOR ENGINE DEMO ===\n")
-    
+
     # Quick interrogation
     print("--- Quick Interrogation ---")
     intent = Interrogator().quick_interrogate(
@@ -942,18 +963,19 @@ if __name__ == "__main__":
     print(f"Suggested key: {intent.get_suggested_key()}")
     print(f"Suggested tempo: {intent.get_suggested_tempo()} BPM")
     print()
-    
+
     # From emotion
     print("--- From Emotion ---")
     for emotion in ["grief", "hope", "rage"]:
         intent = Interrogator().from_emotion(emotion)
-        print(f"{emotion}: key={intent.get_suggested_key()}, tempo={intent.get_suggested_tempo()}, mode={intent.mode_tendency}")
+        print(f"{emotion}: key={intent.get_suggested_key()}, tempo={intent.get_suggested_tempo()}, mode={intent.mode_tendency}")  # noqa: E501
+
     print()
-    
+
     # Interactive demo
     print("--- Interactive Session (simulated) ---")
     session = Interrogator().start_session(min_questions=3, max_questions=5)
-    
+
     # Simulate answers
     simulated_answers = [
         ("wound_core", "I lost someone and I can't stop thinking about them"),
@@ -961,7 +983,7 @@ if __name__ == "__main__":
         ("emotion_intensity", 8),
         ("rule_resolution", "stay unresolved"),
     ]
-    
+
     for q_id, answer in simulated_answers:
         if session.is_complete():
             break
@@ -974,9 +996,9 @@ if __name__ == "__main__":
                 session.answer(q.id, answer)
             else:
                 print(f"(skipped - expected {q_id})")
-    
+
     final_intent = session.build_intent()
-    print(f"\nFinal Intent:")
+    print("\nFinal Intent:")
     print(f"  Emotion: {final_intent.primary_emotion}")
     print(f"  Resolve: {final_intent.resolve}")
     print(f"  Confidence: {final_intent.confidence_score:.2f}")

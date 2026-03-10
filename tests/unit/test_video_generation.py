@@ -84,6 +84,17 @@ class TestVideoGenerator:
         # Should reset initialized flag
         assert gen._initialized is False
 
+    def test_cleanup_safely_removes_temp_dir(self):
+        """Test that cleanup safely removes only generator-created temp dirs."""
+        gen = VideoGenerator()
+        temp_dir = gen._ensure_temp_dir()
+        assert temp_dir.exists()
+        assert "kmidi_video_gen_" in temp_dir.name
+        gen.cleanup()
+        assert not temp_dir.exists()
+        assert gen._initialized is False
+        assert gen._temp_dir is None
+
 
 class TestUnrealBridge:
     """Test UnrealBridge class."""

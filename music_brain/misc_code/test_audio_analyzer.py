@@ -46,4 +46,3 @@ def test_extract_features_handles_scalar_tempo(monkeypatch):
     assert isinstance(features["tempo_curve"], list)
     assert "tempo_curve_tail" in features
     assert isinstance(features["tempo_curve_tail"], list)
-

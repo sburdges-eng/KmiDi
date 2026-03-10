@@ -9,7 +9,6 @@ from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
 from enum import Enum
 import json
-import os
 
 try:
     import jsonschema
@@ -399,10 +398,14 @@ class ModelRegistry:
 
     def _select_latest(self, name: str) -> Optional[ModelInfo]:
         """Select the latest registered version for a model name."""
-        candidates = [model for (model_name, _), model in self._models.items() if model_name == name]
+        candidates = [
+            model for (model_name, _), model
+            in self._models.items() if model_name == name
+        ]
         if not candidates:
             return None
         # Prefer highest semver if possible; otherwise fall back to newest registration order.
+
         def parse_version(version: str) -> Tuple[int, ...]:
             parts = []
             for token in (version or "").split("."):
@@ -447,4 +450,3 @@ def load_registry_manifest(
         Number of models registered.
     """
     return get_registry().load_registry_manifest(path, validate=validate, schema_path=schema_path)
-

@@ -1,0 +1,24 @@
+# KmiDi SageMaker training image (GPU).
+# Build from repo root: docker build -f Dockerfile.train -t kmidi-train:latest .
+# Push to your ECR (you already have a domain/repo):
+#   aws ecr get-login-password --region <region> | docker login --username AWS --password-stdin <account>.dkr.ecr.<region>.amazonaws.com
+#   docker tag kmidi-train:latest <account>.dkr.ecr.<region>.amazonaws.com/<your-repo>/kmidi-train:latest
+#   docker push <account>.dkr.ecr.<region>.amazonaws.com/<your-repo>/kmidi-train:latest
+
+ARG PYTORCH_IMAGE=pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime
+FROM ${PYTORCH_IMAGE}
+
+WORKDIR /opt/ml/code
+
+# Runtime deps (entrypoint + training)
+RUN pip install --no-cache-dir boto3 huggingface_hub zstandard
+
+# Config and scripts (same set as EC2 runner upload)
+COPY config/run_contract.yaml config/run_contract.yaml
+COPY scripts/aws_train_entrypoint.py scripts/aws_train_entrypoint.py
+COPY scripts/training_common.py scripts/training_common.py
+COPY scripts/license_gate.py scripts/license_gate.py
+COPY scripts/sagemaker_entrypoint.py scripts/sagemaker_entrypoint.py
+
+ENV PYTHONPATH=/opt/ml/code
+ENTRYPOINT ["python3", "scripts/sagemaker_entrypoint.py"]

@@ -22,5 +22,5 @@ Optional music tasks (genre / instrument): add columns or a second table after a
 ## Reproducibility
 
 - **Dataset paths:** Set `KMIDI_DATASETS_PATH` or use `~/Datasets`; see [wavjepa_emotion_protocol.md](wavjepa_emotion_protocol.md).
-- **Config:** `experiments/wavjepa_emotion/config.yaml` (encoder, checkpoints, split_ratio, seed).
+  - **Config:** `experiments/exp_002_wavjepa_emotion/config.yaml` (encoder, checkpoints, split_ratio, seed).
 - **Commands (after A2–B4 implemented):** e.g. `python run.py --encoder wavjepa`, `python run.py --encoder hubert_base`, `python run.py --encoder wav2vec2_base` (or equivalent from config).

@@ -31,7 +31,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -389,15 +388,16 @@ class DynamicsIntegration:
 
         return DynamicsParameters(
             target_lufs=a.target_lufs + (b.target_lufs - a.target_lufs) * t,
-            target_crest_factor=a.target_crest_factor + (b.target_crest_factor - a.target_crest_factor) * t,
-            target_dynamic_range=a.target_dynamic_range + (b.target_dynamic_range - a.target_dynamic_range) * t,
+            target_crest_factor=a.target_crest_factor +
+            (b.target_crest_factor - a.target_crest_factor) * t,
+            target_dynamic_range=a.target_dynamic_range +
+            (b.target_dynamic_range - a.target_dynamic_range) * t,
             velocity_mean=int(a.velocity_mean + (b.velocity_mean - a.velocity_mean) * t),
             velocity_min=int(a.velocity_min + (b.velocity_min - a.velocity_min) * t),
             velocity_max=int(a.velocity_max + (b.velocity_max - a.velocity_max) * t),
             note_density=a.note_density + (b.note_density - a.note_density) * t,
             voice_count=int(a.voice_count + (b.voice_count - a.voice_count) * t),
-            emotion=a.emotion.lerp(b.emotion, t),
-        )
+            emotion=a.emotion.lerp(b.emotion, t),)
 
     # =========================================================================
     # User Preference Integration

@@ -7,7 +7,9 @@ export interface StructureSection {
 }
 
 export interface TrackIntent {
+  /** Canonical instrument name (e.g., piano, synth_bass) */
   instrument: string;
+  /** Allowed techniques */
   techniques?: string[];
 }
 
@@ -15,13 +17,18 @@ export interface CompleteSongIntentRequest {
   core_desire: string;
   mood_primary: string;
   genre: string;
+  /** BPM clamped to engine limits */
   tempo?: number;
   key_mode: string;
   structure: StructureSection[];
   instruments: TrackIntent[];
   allow_legacy_fallback?: boolean;
+  /** Rhythmic feel dictating quantization/swing */
   groove_feel?: string;
+  /** Overall energetic trajectory of the song */
   narrative_arc?: string;
-  rule_to_break?: unknown;
-  rule_justification?: unknown;
+  /** Intentional music theory violation for emotional effect */
+  rule_to_break?: string | null;
+  /** Narrative reason for the rule break */
+  rule_justification?: string | null;
 }

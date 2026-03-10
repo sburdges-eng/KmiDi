@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Transport } from './components/SideA/Transport';
 import { Mixer } from './components/SideA/Mixer';
 import { Timeline } from './components/SideA/Timeline';
@@ -6,8 +6,14 @@ import { VUMeter } from './components/SideA/VUMeter';
 import { EmotionWheel } from './components/SideB/EmotionWheel';
 import { GhostWriter } from './components/SideB/GhostWriter';
 import { Interrogator } from './components/SideB/Interrogator';
+import IntentBuilder from './components/IntentBuilder';
+import { QuickStartPanel } from './components/QuickStartPanel';
+import LyricPanel from './components/LyricPanel';
+import { SpectoCloudPanel } from './components/SpectoCloudPanel';
+import { MusicCustomizer } from './components/MusicCustomizer';
+import { useMusicBrain } from './hooks/useMusicBrain';
 
-type Side = 'side-a' | 'side-b';
+type Side = 'side-a' | 'side-b' | 'create' | 'intent';
 
 type Channel = {
   id: string;
@@ -40,76 +46,115 @@ export default function App() {
   const [interactions, setInteractions] = useState<string[]>([
     'KmiDi loaded. Ask it for an arrangement brief.',
   ]);
+  const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+  const [lastAudioPath, setLastAudioPath] = useState<string | undefined>();
+  const logRef = useRef<HTMLUListElement>(null);
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [selectedTechniques, setSelectedTechniques] = useState<string[]>([]);
+
+  const brain = useMusicBrain();
+
+  useEffect(() => {
+    brain.healthCheck()
+      .then(() => setApiStatus('online'))
+      .catch(() => setApiStatus('offline'));
+  }, []);
 
   const timelineBars = useMemo(() => Math.max(8, tempo > 140 ? 24 : tempo > 95 ? 16 : 12), [tempo]);
 
   useEffect(() => {
-    if (!isPlaying) {
-      return undefined;
-    }
+    if (!isPlaying) return undefined;
 
     const timer = window.setInterval(() => {
       playTickRef.current += 1;
-      setMasterVu((prev) => {
-        const wave =
-          Math.sin((playTickRef.current) * 0.35) * 0.4 + Math.cos((playTickRef.current) * 0.18) * 0.2;
+      setMasterVu(() => {
+        const wave = Math.sin(playTickRef.current * 0.35) * 0.4 + Math.cos(playTickRef.current * 0.18) * 0.2;
         const next = 0.35 + wave * 0.4;
         return Number(Math.min(0.94, Math.max(0.12, next)).toFixed(3));
       });
-
       setChannels((prev) =>
         prev.map((channel, index) => {
           const wave = Math.sin(playTickRef.current * 0.3 + index * 0.65);
-          return {
-            ...channel,
-            level: Number((0.35 + Math.max(-0.18, Math.min(0.58, wave * 0.28))).toFixed(3)),
-          };
+          return { ...channel, level: Number((0.35 + Math.max(-0.18, Math.min(0.58, wave * 0.28))).toFixed(3)) };
         }),
       );
     }, 120);
 
-    return () => {
-      window.clearInterval(timer);
-    };
+    return () => window.clearInterval(timer);
   }, [isPlaying]);
 
-  const activeTitle = side === 'side-a' ? 'Side A Studio' : 'Side B Studio';
+  const handleGhostGenerate = useCallback(async (localText: string) => {
+    if (apiStatus === 'online') {
+      try {
+        await brain.setUserLyrics(localText);
+        const lyrics = await brain.getUserLyrics();
+        setGhostText(lyrics.lyrics ?? lyrics.generated ?? localText);
+        return;
+      } catch { /* fall through */ }
+    }
+    setGhostText(localText);
+  }, [apiStatus, brain]);
+
+  const handleInterrogatorAsk = useCallback(async (question: string) => {
+    setInteractions((prev) => [...prev, `You: ${question}`]);
+    if (apiStatus === 'online') {
+      try {
+        const response = await brain.interrogate({ message: question });
+        setInteractions((prev) => [...prev, `KmiDi: ${response.reply}`]);
+        return;
+      } catch { /* fall through */ }
+    }
+    setInteractions((prev) => [
+      ...prev,
+      `KmiDi: Drafted approach aligned to ${selectedEmotion?.base ?? 'global intent'} path.`,
+    ]);
+  }, [apiStatus, brain, selectedEmotion]);
+
+  const handleQuickStart = useCallback(async (template: {
+    id: string; name: string; config: { bpm?: number; key?: string };
+  }) => {
+    setInteractions((prev) => [...prev, `Quick Start: ${template.name} (${template.config.key ?? 'C'}, ${template.config.bpm ?? 120} BPM)`]);
+    if (template.config.bpm) setTempo(template.config.bpm);
+  }, []);
+
+  useEffect(() => {
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
+  }, [interactions]);
+
+  const activeTitle = side === 'side-a' ? 'Side A · Studio'
+    : side === 'side-b' ? 'Side B · Creative'
+    : side === 'create' ? 'Create · Quick Start'
+    : 'Generate · Intent';
 
   return (
     <div className="km-frame">
       <header className="km-header">
-        <h1 className="app-title">KmiDi UI</h1>
+        <h1 className="app-title">KmiDi</h1>
         <div className="km-toggle" role="tablist" aria-label="Studio mode">
-          <button
-            type="button"
-            className={side === 'side-a' ? 'tab active' : 'tab'}
-            onClick={() => setSide('side-a')}
-          >
-            Side A
-          </button>
-          <button
-            type="button"
-            className={side === 'side-b' ? 'tab active' : 'tab'}
-            onClick={() => setSide('side-b')}
-          >
-            Side B
-          </button>
+          {(['side-a', 'side-b', 'create', 'intent'] as Side[]).map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={side === s ? 'tab active' : 'tab'}
+              onClick={() => setSide(s)}
+            >
+              {s === 'side-a' ? 'Studio' : s === 'side-b' ? 'Creative' : s === 'create' ? 'Create' : 'Generate'}
+            </button>
+          ))}
         </div>
+        {/* API status kept internal; errors surface contextually */}
       </header>
 
       <section className="km-titlebar">
-        <p className="km-subtitle">Current mode: {activeTitle}</p>
-        <button
-          type="button"
-          className="mode-reset-btn"
-          onClick={() => setIsPlaying(false)}
-        >
+        <p className="km-subtitle">{activeTitle}</p>
+        <button type="button" className="mode-reset-btn" onClick={() => setIsPlaying(false)}>
           Reset playback
         </button>
       </section>
 
       <main>
-        {side === 'side-a' ? (
+        {side === 'side-a' && (
           <section className="km-side-grid" aria-label="Side A console">
             <article className="panel">
               <h2 className="panel-title">Transport</h2>
@@ -117,16 +162,9 @@ export default function App() {
                 isPlaying={isPlaying}
                 isRecording={isRecording}
                 tempo={tempo}
-                onPlayPause={() => {
-                  setIsPlaying((value) => !value);
-                  setIsRecording(false);
-                }}
-                onStop={() => {
-                  setIsPlaying(false);
-                  playTickRef.current = 0;
-                  setMasterVu(0);
-                }}
-                onRecord={() => setIsRecording((value) => !value)}
+                onPlayPause={() => { setIsPlaying((v) => !v); setIsRecording(false); }}
+                onStop={() => { setIsPlaying(false); playTickRef.current = 0; setMasterVu(0); }}
+                onRecord={() => setIsRecording((v) => !v)}
                 onTempoChange={setTempo}
               />
             </article>
@@ -135,16 +173,7 @@ export default function App() {
               <Mixer
                 channels={channels}
                 onChannelChange={(channelId, patch) => {
-                  setChannels((prev) =>
-                    prev.map((channel) =>
-                      channel.id === channelId
-                        ? {
-                            ...channel,
-                            ...patch,
-                          }
-                        : channel,
-                    ),
-                  );
+                  setChannels((prev) => prev.map((ch) => ch.id === channelId ? { ...ch, ...patch } : ch));
                 }}
               />
             </article>
@@ -155,23 +184,21 @@ export default function App() {
             <article className="panel">
               <h2 className="panel-title">Master Output</h2>
               <VUMeter value={masterVu} isActive={isPlaying} />
-              <p className="hint">This is a deterministic UI mock for immediate visual feedback.</p>
             </article>
           </section>
-        ) : (
+        )}
+
+        {side === 'side-b' && (
           <section className="km-side-grid" aria-label="Side B creative station">
             <article className="panel">
               <h2 className="panel-title">Emotion Wheel</h2>
-              <EmotionWheel
-                onSelect={(emotion) => setSelectedEmotion(emotion)}
-                selected={selectedEmotion}
-              />
+              <EmotionWheel onSelect={(emotion) => setSelectedEmotion(emotion)} selected={selectedEmotion} />
             </article>
             <article className="panel">
               <h2 className="panel-title">Ghost Writer</h2>
               <GhostWriter
                 seed={selectedEmotion ? `${selectedEmotion.base} ${selectedEmotion.intensity}` : ''}
-                onGenerate={(value) => setGhostText(value)}
+                onGenerate={handleGhostGenerate}
                 output={ghostText}
               />
             </article>
@@ -179,25 +206,51 @@ export default function App() {
               <h2 className="panel-title">Interrogator</h2>
               <Interrogator
                 starter={selectedEmotion ? `How should this feel: ${selectedEmotion.base}` : 'Start a prompt'}
-                onAsk={(question) =>
-                  setInteractions((prev) => [
-                    ...prev,
-                    `You: ${question}`,
-                    `KmiDi: Drafted approach aligned to ${selectedEmotion?.base ?? 'global intent'} path.`,
-                  ])
-                }
+                onAsk={handleInterrogatorAsk}
               />
             </article>
             <article className="panel">
               <h2 className="panel-title">Session Log</h2>
-              <ul className="log-list">
+              <ul className="log-list" ref={logRef}>
                 {interactions.map((entry, index) => (
-                  <li key={`${entry}-${index}`}>
-                    {entry}
-                  </li>
+                  <li key={`${entry.slice(0, 20)}-${index}`}>{entry}</li>
                 ))}
               </ul>
             </article>
+          </section>
+        )}
+
+        {side === 'create' && (
+          <section className="km-side-grid" aria-label="Quick creation tools">
+            <article className="panel wide">
+              <h2 className="panel-title">Quick Start Templates</h2>
+              <QuickStartPanel onTemplateSelect={handleQuickStart} />
+            </article>
+            <article className="panel wide">
+              <h2 className="panel-title">Music Customizer</h2>
+              <MusicCustomizer
+                selectedGenre={selectedGenre}
+                selectedEmotion={selectedMood}
+                selectedTechniques={selectedTechniques}
+                onGenreChange={(genre) => { setSelectedGenre(genre); setInteractions((p) => [...p, `Genre: ${genre}`]); }}
+                onEmotionChange={(emotion) => { setSelectedMood(emotion); setInteractions((p) => [...p, `Emotion: ${emotion}`]); }}
+                onTechniquesChange={(techs) => { setSelectedTechniques(techs); }}
+              />
+            </article>
+            <article className="panel">
+              <h2 className="panel-title">Lyrics</h2>
+              <LyricPanel />
+            </article>
+            <article className="panel">
+              <h2 className="panel-title">Spectocloud</h2>
+              <SpectoCloudPanel lastGeneratedAudioPath={lastAudioPath} />
+            </article>
+          </section>
+        )}
+
+        {side === 'intent' && (
+          <section className="km-intent-section" aria-label="Intent Builder">
+            <IntentBuilder />
           </section>
         )}
       </main>

@@ -46,7 +46,7 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          ruff check packages/core/python packages/cli tests/python
+          python -m ruff check packages/core/python packages/cli tests/python
         continue-on-error: false
 
       - name: Format check with black

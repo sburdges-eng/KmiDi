@@ -20,12 +20,9 @@ import os
 import subprocess
 import sys
 import time
-from datetime import datetime
 from pathlib import Path
 
 # Load environment variables from project root
-from pathlib import Path
-import sys
 
 # Add project root to path if not already there
 project_root = Path(__file__).resolve().parent.parent.parent.parent
@@ -43,7 +40,7 @@ try:
         features.extend(['mcp'])
     if not features:
         features = ['ml']  # Default to ML features
-    
+
     load_kmidi_env(features=features, verbose=False)
 except ImportError:
     # Fallback to simple dotenv if kmidi_env not available
@@ -115,7 +112,6 @@ def get_memory_usage():
                         pass
 
             # Calculate usage
-            page_size = 16384
             free = stats.get("Pages free", 0)
             active = stats.get("Pages active", 0)
             inactive = stats.get("Pages inactive", 0)
@@ -336,4 +332,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

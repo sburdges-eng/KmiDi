@@ -30,7 +30,7 @@ from __future__ import annotations
 import abc
 import atexit
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from typing import (
     Any,
     Callable,
@@ -599,7 +599,8 @@ class DAWRegistry:
         if system == "Darwin":  # macOS
             try:
                 result = subprocess.run(
-                    ["osascript", "-e", 'tell application "System Events" to get name of every process'],
+                    ["osascript", "-e",
+                        'tell application "System Events" to get name of every process'],
                     capture_output=True,
                     text=True,
                     timeout=5,
@@ -694,5 +695,3 @@ __all__ = [
     # Factory
     "get_daw_bridge",
 ]
-
-
