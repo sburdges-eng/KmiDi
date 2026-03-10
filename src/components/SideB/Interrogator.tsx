@@ -21,14 +21,14 @@ export function Interrogator({ starter, onAsk }: Props) {
   return (
     <form className="interrogator" onSubmit={handleSubmit}>
       <label>
-        Prompt
+        What do you need?
         <input
           value={prompt}
           onChange={(event) => setPrompt(event.target.value)}
-          placeholder="Ask about arrangement, harmony, or mood"
+          placeholder="Try: 'What chord comes next?' or 'Make the chorus bigger'"
         />
       </label>
-      <button type="submit" className="outline">Run query</button>
+      <button type="submit" className="outline">Ask KmiDi</button>
     </form>
   );
 }
