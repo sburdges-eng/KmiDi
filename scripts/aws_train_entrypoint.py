@@ -154,6 +154,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--intent-dim", type=int, default=2048)
     parser.add_argument("--student-intent-dim", type=int, default=512)
+    # Defaults tuned for kmidi-100-limit (config/run_contract.yaml)
     parser.add_argument("--intent-epochs", type=int, default=40)
     parser.add_argument("--student-intent-epochs", type=int, default=50)
     parser.add_argument("--intent-lr", type=float, default=0.5)

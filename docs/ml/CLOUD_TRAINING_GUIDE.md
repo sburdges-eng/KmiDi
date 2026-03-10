@@ -112,7 +112,17 @@ For **as well trained as possible** on Lambda, use a **1x A100 (40GB)** instance
 
 4. Logs stream into `cloud_training/logs/training_latest.log`; status is in `cloud_training/status.json`. If you disconnect, training continues; use `./scripts/cloud_training/run_from_workspace.sh attach ubuntu@<ip> /workspace/KmiDi` to tail again.
 
-## 6. Other Cloud Execution Options
+## 6. AWS SageMaker (managed training jobs)
+
+For **managed GPU training** on AWS (no EC2/SSH), use SageMaker training jobs with the same entrypoint as the EC2 path (`scripts/aws_train_entrypoint.py`). You provide a custom container image (ECR) that runs that entrypoint; input and output are S3.
+
+- **Setup:** [docs/CLOUD_SAGEMAKER.md](../CLOUD_SAGEMAKER.md) — IAM role, S3 buckets, container contract.
+- **Env:** `cp config/env.sagemaker.example .env.sagemaker` and fill (role ARN, image URI, buckets).
+- **Launch:** `./scripts/launch_sagemaker_training.py --image-uri <ECR-URI> --package-s3-uri ... --output-s3-uri ... --run-id run-$(date +%Y%m%d-%H%M)`.
+
+Requires a training image in ECR; see the doc for an optional Dockerfile and build/push steps.
+
+## 7. Other Cloud Execution Options
 
 ### Automated Remote Deployment (legacy)
 ```bash
@@ -127,14 +137,14 @@ For A100/H100 clusters, use the distributed runner **on the cloud instance**:
 ./scripts/train_cloud.sh --config config/cloud_training.yaml --gpus 8
 ```
 
-## 7. Configuration (config/cloud_training.yaml, config/cloud_training_lambda.yaml)
+## 8. Configuration (config/cloud_training.yaml, config/cloud_training_lambda.yaml)
 
 - **Distributed**: Uses PyTorch DDP (`nccl` backend).
 - **Precision**: Supports `bf16` (bfloat16) for Ampere+ hardware.
 - **AMP**: Automatic Mixed Precision enabled.
 - **Scaling**: Architectures configured for the scaled parameter targets.
 
-## 8. Output & Export
+## 9. Output & Export
 
 - **Checkpoints**: Saved to `checkpoints/cloud_run/`.
 - **Exports**: ONNX and Core ML packages with `int8` quantization for local real-time inference.

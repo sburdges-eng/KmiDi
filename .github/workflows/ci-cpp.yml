@@ -87,8 +87,7 @@ jobs:
       
       - name: Build
         run: |
-          cmake --build build --config ${{ matrix.build_type }} -j $(nproc)
-      
+          cmake --build build --config ${{ matrix.build_type }} -j ${{ runner.os == 'Windows' && '4' || '$(nproc)' }}
       - name: Run tests
         run: |
           cd build

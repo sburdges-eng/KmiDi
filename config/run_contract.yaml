@@ -17,22 +17,22 @@
     "activePackageId": "",
     "defaultRunIdPrefix": "run",
     "defaultInstanceType": "g5.xlarge",
-    "defaultMaxRuntimeHours": 4.0,
+    "defaultMaxRuntimeHours": 6.0,
     "budgetCapUsd": 100.0,
     "checkpoints": {
-      "defaultCadenceSteps": 10,
+      "defaultCadenceSteps": 5,
       "minCadenceSteps": 1,
       "maxCadenceSteps": 1000,
-      "defaultMaxCheckpoints": 3,
+      "defaultMaxCheckpoints": 5,
       "maxCheckpoints": 20,
       "maxTotalCheckpoints": 21
     },
     "earlyStop": {
       "enabled": true,
       "metricPath": "student.intent.val_macro_f1",
-      "patience": 6,
+      "patience": 8,
       "minDelta": 0.001,
-      "minEpochs": 8,
+      "minEpochs": 10,
       "autoShutdownDefault": false
     },
     "ops": {

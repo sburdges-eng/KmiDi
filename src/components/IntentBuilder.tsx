@@ -135,6 +135,18 @@ export default function IntentBuilder() {
   }), [intent, totalBars]);
 
   const isFormValid = Object.values(validation).every(Boolean);
+  /** True when every field is valid except totalBars (so Generate can be clicked to show length modal). */
+  const isFormValidExceptLength = useMemo(
+    () =>
+      validation.core_desire &&
+      validation.mood_primary &&
+      validation.genre &&
+      validation.tempo &&
+      validation.structureLen &&
+      validation.instrumentsLen &&
+      validation.instrumentsValid,
+    [validation]
+  );
 
   const set = useCallback((field: keyof CompleteSongIntentRequest, value: unknown) => {
     setIntent(prev => ({ ...prev, [field]: value }));
