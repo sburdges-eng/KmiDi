@@ -149,6 +149,27 @@ If you add a new format, ensure it is covered:
 
 ---
 
+## 7. JEPA manifest generator (Lhotse + DataLad)
+
+For reproducible audio+MIDI manifests (e.g. MAESTRO) with fixed windows and SHA1 provenance:
+
+- **Script:** `scripts/make_jepa_manifest.py` (requires optional deps: `pip install -e ".[jepa]"`).
+- **DataLad workflow:** Create a DataLad dataset, run the script with `datalad run`, then `datalad save` so the exact command and outputs are versioned. See [docs/JEPA_MANIFEST_DATALAD.md](JEPA_MANIFEST_DATALAD.md) for step-by-step commands and versioning conventions.
+
+Example (from KmiDi repo root, paths adjusted to your dataset):
+
+```bash
+datalad run -m "Generate JEPA manifests (8s windows)" \
+  "python scripts/make_jepa_manifest.py \
+   --audio-root /path/to/maestro/audio \
+   --midi-root /path/to/maestro/midi \
+   --out-dir manifests \
+   --window-seconds 8.0 \
+   --stride-seconds 4.0"
+```
+
+---
+
 ## References
 
 - `configs/README.md` — conventions for the `configs/` directory
@@ -156,3 +177,4 @@ If you add a new format, ensure it is covered:
 - `docs/ENVIRONMENT.md` — all environment variables (`KELLY_AUDIO_DATA_ROOT`, etc.)
 - `docs/DATASETS_PREPARE_SCRIPT.md` — how to download and prepare datasets
 - `docs/PULSE_RECOVERY_ENTRIES.md` — recovered Pulse entries: MIDI datasets/symbolic models, NIST/MuSpike/MAD benchmarks, reproducibility and model audit references
+- `docs/JEPA_MANIFEST_DATALAD.md` — JEPA manifest generator and DataLad workflow (Lhotse, provenance)
