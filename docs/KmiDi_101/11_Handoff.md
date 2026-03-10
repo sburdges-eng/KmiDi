@@ -38,15 +38,32 @@ The next writer/session should read the handoff note, then continue from “Next
 
 ## Handoff note (template — update as you go)
 
-**Last completed:** All sections 0–11 implemented. Initial 101 module is complete: 00_Overview.md (Sections 0–1), 02_Through_09_By_Area.md (Sections 2–9), 10_Dependency_Map.md (Section 10), 11_Handoff.md (Section 11 + this handoff).
+*Copy the block below; fill in the four fields before you stop so the next writer/session can continue from "Next" without redoing work.*
 
-**Next:** Optional. Deepen any section (e.g. more detail in Section 5 for a specific music_brain folder, or more Tauri commands in Section 6). Or add new sections if the project grows. When deepening, update the dependency map if new “who calls whom” links are found.
+---
+
+**Last completed:** *[Section or file you just finished, e.g. "Section 5 deepened for music_brain/session" or "Discovery for process_intent added to 10_Dependency_Map" or "Initial 101 complete (sections 0–11)."]*
+
+**Next:** *[Exact section or task to do next, e.g. "Trace callers of useMusicBrain in src/ and add to 10_Dependency_Map" or "Deepen Section 6 (Tauri commands)" or "Run find_deps.sh for intent_bridge.py."]*
 
 **Key files to open:**  
+*[List 3–6 files the next person should have open; include 101 docs and any code files central to "Next".]*  
 - `docs/KmiDi_101/00_Overview.md`  
 - `docs/KmiDi_101/02_Through_09_By_Area.md`  
 - `docs/KmiDi_101/10_Dependency_Map.md`  
 - `docs/KmiDi_101/DISCOVERY_WORKFLOW.md` (when the next task is dependency discovery)  
 - If present: a KmiDi 101 plan in .cursor/plans or project docs
 
-**One-sentence discovery:** (Leave blank or add when you find something important, e.g. “intent_bridge.py is used by MCP/tools, not by the main web UI.”)
+**One-sentence discovery:** *[Leave blank or one sentence when something important came up, e.g. “intent_bridge.py is used by MCP/tools, not by the main web UI.”]*
+
+---
+
+
+## Conclude project context
+
+When wrapping up or handing off, the next writer/session has enough context if they know:
+
+- **What KmiDi is:** AI-powered music creation from natural-language intent; React + Music Brain API + optional Tauri/C++ engine. See **00_Overview.md** (Sections 0–1).
+- **Where the 101 lives:** **docs/KmiDi_101/** — 00_Overview, 02_Through_09_By_Area, 10_Dependency_Map, DISCOVERY_WORKFLOW, this file (11_Handoff).
+- **How to resume:** Read the handoff block above; continue from **Next**; open **Key files to open**; check **DISCOVERY_WORKFLOW.md** "What has already been gathered" before re-tracing a symbol.
+- **Single source for "what was done / what's next":** The handoff block (Last completed, Next, One-sentence discovery). Keep it updated so no one redoes work.
