@@ -869,17 +869,21 @@ def save_to_database(analysis):
         spec.get('flux_mean', 0), spec.get('brightness', 0)
     ))
 
-    # Frequency balance
+    # Frequency balance (executemany for batch insert)
     freq = analysis.get('frequency_balance', {})
     relative = freq.get('relative_to_mid_db', {})
     absolute = freq.get('absolute_db', {})
-    for band in FREQ_BANDS.keys():
-        if band in relative:
-            cursor.execute('''
-                INSERT INTO frequency_balance
-                (analysis_id, band_name, energy_db, relative_to_mid_db)
-                VALUES (?, ?, ?, ?)
-            ''', (analysis_id, band, absolute.get(band, 0), relative.get(band, 0)))
+    freq_data = [
+        (analysis_id, band, absolute.get(band, 0), relative.get(band, 0))
+        for band in FREQ_BANDS.keys()
+        if band in relative
+    ]
+    if freq_data:
+        cursor.executemany('''
+            INSERT INTO frequency_balance
+            (analysis_id, band_name, energy_db, relative_to_mid_db)
+            VALUES (?, ?, ?, ?)
+        ''', freq_data)
 
     # Stereo
     stereo = analysis.get('stereo', {})
@@ -893,13 +897,17 @@ def save_to_database(analysis):
             stereo.get('mid_side_ratio_db', 0), stereo.get('correlation', 0)
         ))
 
-    # Genre matches
-    for genre, match_data in analysis.get('genre_matches', {}).items():
-        cursor.execute('''
+    # Genre matches (executemany for batch insert)
+    genre_data = [
+        (analysis_id, genre, match_data['score'])
+        for genre, match_data in analysis.get('genre_matches', {}).items()
+    ]
+    if genre_data:
+        cursor.executemany('''
             INSERT INTO genre_matches
             (analysis_id, genre, match_score)
             VALUES (?, ?, ?)
-        ''', (analysis_id, genre, match_data['score']))
+        ''', genre_data)
 
     conn.commit()
     conn.close()

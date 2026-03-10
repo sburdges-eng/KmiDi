@@ -904,11 +904,16 @@ class DAiWAPI:
             bpm = 82
         tempo_range = (max(60, bpm - 20), min(140, bpm + 20))
 
-        vuln = getattr(request.intent, "vulnerability_scale", 0.5)
-        arc = (
-            tech.get("narrative_arc")
-            or getattr(request.intent, "narrative_arc", "")
-            or ""
+        # narrative_arc and vulnerability_scale are on request.intent, not tech
+        vulnerability_scale = (
+            request.intent.vulnerability_scale
+            if getattr(request.intent, "vulnerability_scale", None) is not None
+            else 0.5
+        )
+        narrative_arc = (
+            getattr(request.intent, "narrative_arc", None)
+            or tech.get("narrative_arc")
+            or "Climb-to-Climax"
         )
         intent = CompleteSongIntent(
             core_event=request.intent.core_wound or emotional,
@@ -917,8 +922,8 @@ class DAiWAPI:
             imagery_texture=getattr(
                 request.intent, "imagery_texture", "",
             ) or "",
-            narrative_arc=arc,
-            vulnerability_scale=vuln,
+            narrative_arc=narrative_arc,
+            vulnerability_scale=vulnerability_scale,
             technical_genre=tech.get("genre") or "",
             technical_tempo_range=tempo_range,
             technical_key=technical_key,
