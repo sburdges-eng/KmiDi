@@ -1,0 +1,18 @@
+---
+description: When the user asks "what depends on X," "who calls X," or "trace dependencies for X" — follow the KmiDi 101 discovery workflow and update the dependency map.
+globs:
+alwaysApply: false
+---
+
+# KmiDi 101 — "What depends on X" discovery
+
+When the user asks **what depends on X**, **who calls X**, or **trace dependencies for X**:
+
+1. **Open and follow** [docs/KmiDi_101/DISCOVERY_WORKFLOW.md](docs/KmiDi_101/DISCOVERY_WORKFLOW.md) (steps 1–6). Check "What has already been gathered" first so you don't re-trace the same symbol.
+2. **Run the script** (from repo root): `./scripts/docs/find_deps.sh <symbol> [scope]` with the user's symbol and an appropriate scope (`music_brain` | `src` | `src-tauri` | `cpp` | `all`). Use the file:line output to infer callers and callees.
+3. **Summarize** in the four-column format used in 10_Dependency_Map: **Name** | **What it does** | **What calls it** | **What it calls**. One row per important function, module, or file.
+4. **Propose edits:**  
+   - Add or extend a table in [docs/KmiDi_101/10_Dependency_Map.md](docs/KmiDi_101/10_Dependency_Map.md) (Generate path, Intent contract, Tauri/C++ bridge, or Other).  
+   - If something important was discovered, propose a one-line addition to the handoff block in [docs/KmiDi_101/11_Handoff.md](docs/KmiDi_101/11_Handoff.md) and an entry in the "What has already been gathered" list in DISCOVERY_WORKFLOW.md.
+
+Keep the dependency map format consistent: short "What it does," concrete "What calls it" / "What it calls" names.
