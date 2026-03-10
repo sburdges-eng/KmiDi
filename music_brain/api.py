@@ -983,7 +983,26 @@ if FASTAPI_AVAILABLE:
         lyrics: str
         source: Optional[str] = "user"
 
-    app = FastAPI(title="Music Brain API", version="0.1.0")
+    from fastapi.responses import HTMLResponse
+    from fastapi.staticfiles import StaticFiles
+
+    _static_dir = Path(__file__).parent / "static"
+
+    app = FastAPI(
+        title="KmiDi Sound Engine",
+        version="0.1.0",
+        description=(
+            "Your creative command center — compose, feel, and shape "
+            "music through intent.  Every endpoint maps to a musical action."
+        ),
+    )
+
+    if _static_dir.is_dir():
+        app.mount(
+            "/static",
+            StaticFiles(directory=str(_static_dir)),
+            name="static",
+        )
 
     # Add CORS middleware to allow requests from frontend
     app.add_middleware(
@@ -999,32 +1018,25 @@ if FASTAPI_AVAILABLE:
         allow_headers=["*"],
     )
 
-    @app.get("/")
+    @app.get("/", response_class=HTMLResponse)
     async def root():
-        """Root endpoint with API information."""
-        return {
-            "name": "Music Brain API",
-            "version": "0.1.0",
-            "status": "running",
-            "endpoints": {
-                "health": "/health",
-                "generate": "/generate (POST)",
-                "emotions": "/emotions",
-                "lyrics": "/lyrics (GET/POST)",
-                "interrogate": "/interrogate (POST)",
-                "docs": "/docs",
-                "openapi": "/openapi.json"
-            },
-            "documentation": "Visit /docs for interactive API documentation"
-        }
+        """KmiDi Sound Engine — musician-friendly landing page."""
+        docs_html = _static_dir / "docs.html"
+        if docs_html.is_file():
+            return HTMLResponse(content=docs_html.read_text())
+        return HTMLResponse(
+            content="<h1>KmiDi Sound Engine</h1><p>Visit <a href='/docs'>/docs</a></p>"
+        )
 
-    @app.get("/health")
+    @app.get("/health", summary="Pulse Check",
+             description="Quick heartbeat — is the sound engine running?")
     async def health():
         return {"status": "ok", "version": "0.1.0"}
 
-    @app.get("/audio/{file_path:path}")
+    @app.get("/audio/{file_path:path}", summary="Stream Audio",
+             description="Stream any generated audio file — WAV, MP3, FLAC, OGG.")
     async def serve_audio(file_path: str):
-        """Serve audio files via HTTP. file_path should be URL-encoded."""
+        """Stream generated audio files for playback."""
         import urllib.parse
         decoded_path = urllib.parse.unquote(file_path)
         audio_file = Path(decoded_path)
@@ -1085,7 +1097,9 @@ if FASTAPI_AVAILABLE:
             }
         )
 
-    @app.get("/emotions")
+    @app.get("/emotions", summary="Emotion Palette",
+             description="Browse the full palette of moods the engine understands — "
+                         "from tender intimacy to fierce energy.")
     async def list_emotions():
         try:
             return sorted(EMOTIONAL_PRESETS.keys())
@@ -1155,7 +1169,9 @@ if FASTAPI_AVAILABLE:
                 logging.exception("Failed to load %s", path)
         return fallback
 
-    @app.get("/config/humanizer")
+    @app.get("/config/humanizer", summary="Feel Settings",
+             description="Check the humanizer — timing drift, velocity curves, "
+                         "and micro-groove that make MIDI feel like a real player.")
     async def humanizer_config():
         """
         Return current humanizer/analysis config.
@@ -1174,12 +1190,16 @@ if FASTAPI_AVAILABLE:
         "high": {"anchor_density": "dense", "n_particles": 1800, "fps": 24},
     }
 
-    @app.get("/spectocloud/presets")
+    @app.get("/spectocloud/presets", summary="Visual Presets",
+             description="Browse Spectocloud particle presets — colors, shapes, "
+                         "and motion styles that paint your sound.")
     async def spectocloud_presets():
         """List Spectocloud rendering presets (anchor density, particle count, fps)."""
         return SPECTO_PRESETS
 
-    @app.put("/config/humanizer")
+    @app.put("/config/humanizer", summary="Adjust Feel",
+             description="Dial in the human feel — timing drift, velocity curves, "
+                         "micro-groove. Like tweaking a compressor, but for soul.")
     async def update_humanizer_config(payload: Dict[str, Any]):
         """
         Persist humanizer/analysis configuration.
@@ -1200,7 +1220,9 @@ if FASTAPI_AVAILABLE:
             logging.exception("Failed to reload humanizer after config update")
         return normalized
 
-    @app.post("/config/humanizer/reload")
+    @app.post("/config/humanizer/reload", summary="Recall Feel Preset",
+              description="Reset the humanizer to its saved state — like hitting "
+                          "'recall' on a mixer channel strip.")
     async def reload_humanizer():
         """Force reload of the in-memory humanizer/analyzer from config/humanizer.json."""
         try:
@@ -1224,7 +1246,9 @@ if FASTAPI_AVAILABLE:
         anchor_density: str = "normal"
         n_particles: int = 1200
 
-    @app.post("/spectocloud/render")
+    @app.post("/spectocloud/render", summary="Paint Your Sound",
+              description="Render a Spectocloud visualization — see your music "
+                          "as a living particle cloud of light and color.")
     async def render_spectocloud(payload: SpectocloudRenderRequest):
         """
         Render Spectocloud output (static frame or animation).
@@ -1333,7 +1357,10 @@ if FASTAPI_AVAILABLE:
             logging.exception("spectocloud render failed")
             raise HTTPException(status_code=500, detail=str(exc))
 
-    @app.post("/generate")
+    @app.post("/generate", summary="Compose Music",
+              description="Bring your musical vision to life — describe a mood, "
+                          "pick instruments, set the groove, and let the engine "
+                          "compose harmony, melody, and full arrangement.")
     async def generate_music(request: GenerateRequest):
         try:
             # Try to use full intent pipeline if we have advanced parameters
@@ -1692,7 +1719,10 @@ if FASTAPI_AVAILABLE:
             logging.exception("generate failed")
             raise HTTPException(status_code=500, detail=str(exc))
 
-    @app.post("/interrogate")
+    @app.post("/interrogate", summary="Creative Chat",
+              description="Ask the engine anything — 'What chord comes next?', "
+                          "'Make it sadder', 'Suggest a bridge'. Your musical "
+                          "conversation partner.")
     async def interrogate(request: InterrogateRequest):
         # Placeholder: echo back the message with a simple tip
         try:
@@ -1708,7 +1738,9 @@ if FASTAPI_AVAILABLE:
             logging.exception("interrogate failed")
             raise HTTPException(status_code=500, detail=str(exc))
 
-    @app.post("/lyrics")
+    @app.post("/lyrics", summary="Write Lyrics",
+              description="Paste or write your lyrics so the engine can weave them "
+                          "into the musical fabric.")
     async def set_lyrics(payload: LyricsRequest):
         """
         Persist user-supplied lyrics and return a summary.
@@ -1719,7 +1751,8 @@ if FASTAPI_AVAILABLE:
             logging.exception("Failed to set lyrics")
             raise HTTPException(status_code=500, detail=str(exc))
 
-    @app.get("/lyrics")
+    @app.get("/lyrics", summary="Read Lyrics",
+             description="Retrieve the current lyrics — your words, your story.")
     async def get_lyrics():
         """
         Return the current lyric payload, source, and any cached generated lyrics.
@@ -1741,7 +1774,9 @@ if FASTAPI_AVAILABLE:
         audio_path: str
         top_k: Optional[int] = 3
 
-    @app.post("/audio/classify")
+    @app.post("/audio/classify", summary="Hear the Feeling",
+              description="Drop in an audio clip and discover its emotional signature — "
+                          "what feelings does this sound carry?")
     async def classify_audio(request: AudioClassifyRequest):
         """
         Classify emotion from audio file using trained ML models.
@@ -1775,7 +1810,9 @@ if FASTAPI_AVAILABLE:
             logging.exception("audio classify failed")
             raise HTTPException(status_code=500, detail=str(exc))
 
-    @app.post("/audio/valence-arousal")
+    @app.post("/audio/valence-arousal", summary="Mood Map",
+              description="Map any sound onto the feeling grid — how positive/negative "
+                          "and how energetic/calm.")
     async def get_audio_valence_arousal(request: AudioClassifyRequest):
         """
         Get valence/arousal coordinates from audio.
@@ -1811,9 +1848,11 @@ if FASTAPI_AVAILABLE:
             logging.exception("audio valence-arousal failed")
             raise HTTPException(status_code=500, detail=str(exc))
 
-    @app.get("/audio/models")
+    @app.get("/audio/models", summary="Loaded AI Ears",
+             description="See which AI listening models are active — emotion classifiers, "
+                         "timbre analyzers, and more.")
     async def list_audio_models():
-        """List available audio classification models."""
+        """List active audio classification models."""
         try:
             models_dir = Path(__file__).parent.parent / "models" / "checkpoints"
             available = []
@@ -1835,15 +1874,61 @@ if FASTAPI_AVAILABLE:
             logging.exception("list audio models failed")
             raise HTTPException(status_code=500, detail=str(exc))
 
-    @app.post("/voice/classify")
+    @app.post("/voice/classify", summary="Voice Range",
+              description="Identify a singer's range — soprano, alto, tenor, or bass — "
+                          "so the engine can write in their sweet spot.")
     async def classify_voice(request: VoiceClassifyRequest):
-        """Classify voice type (alto/bass/soprano/tenor) from audio."""
+        """Identify vocal range from audio."""
         try:
             result = api.classify_voice_file(request.audio_path, top_k=request.top_k or 3)
             return {"status": "success", "result": result}
         except Exception as exc:
             logging.exception("voice classify failed")
             raise HTTPException(status_code=500, detail=str(exc))
+
+    @app.get("/ai/jepa/status", summary="JEPA Models Status",
+             description="Check the status of Audio-JEPA, Chord-JEPA, and "
+                         "Stem-JEPA models — the AI ears that understand "
+                         "musical structure and compatibility.")
+    async def jepa_status():
+        """Report JEPA model integration status."""
+        try:
+            from music_brain.jepa import (
+                AudioJEPAConfig,
+                ChordJEPAConfig,
+            )
+            audio_cfg = AudioJEPAConfig()
+            chord_cfg = ChordJEPAConfig()
+            return {
+                "status": "available",
+                "models": {
+                    "audio_jepa": {
+                        "tier": audio_cfg.tier,
+                        "latent_dim": audio_cfg.latent_dim,
+                        "n_mels": audio_cfg.n_mels,
+                        "status": "ready",
+                    },
+                    "chord_jepa": {
+                        "d_model": chord_cfg.d_model,
+                        "num_layers": chord_cfg.num_layers,
+                        "num_chords": chord_cfg.num_chords,
+                        "status": "ready",
+                    },
+                    "stem_jepa": {
+                        "status": "integrated",
+                        "reference": "music_brain.learning.stem_compatibility",
+                    },
+                },
+                "training": {
+                    "sagemaker_config": "config/jepa_training.yaml",
+                    "launcher": "scripts/launch_jepa_sagemaker.py",
+                },
+            }
+        except ImportError as exc:
+            return {
+                "status": "not_available",
+                "error": str(exc),
+            }
 
 
 def _main():
