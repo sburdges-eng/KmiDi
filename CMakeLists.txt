@@ -421,26 +421,29 @@ if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     
-    target_link_libraries(KellyFFI PUBLIC
-        KellyCore
+    # Link JUCE and Qt PRIVATE so consumers (e.g. KellyFFIBenchmark) do not get a
+    # second copy of JUCE. Two copies cause allocator mismatch: dylib's static
+    # init (e.g. JuceVersionPrinter) allocates with dylib's JUCE heap, then exe's
+    # JUCE can run release() and abort with "pointer being freed was not allocated".
+    target_link_libraries(KellyFFI PUBLIC KellyCore PRIVATE
         Qt6::Core
         Qt6::Widgets
         juce::juce_audio_basics
         juce::juce_core
     )
     
-    # Set FFI-specific properties
+    # Avoid JUCE debug static initializer (JuceVersionPrinter) in the dylib to
+    # prevent any cross-boundary string ops during load.
+    target_compile_definitions(KellyFFI PRIVATE
+        KELLY_FFI_BUILDING_DLL
+        JUCE_DISABLE_JUCE_VERSION_PRINTING=1
+    )
     set_target_properties(KellyFFI PROPERTIES
         C_VISIBILITY_PRESET default
         CXX_VISIBILITY_PRESET default
         VISIBILITY_INLINES_HIDDEN FALSE
         VERSION 1.0.0
         SOVERSION 1
-    )
-    
-    # Export C symbols for FFI
-    target_compile_definitions(KellyFFI PRIVATE
-        KELLY_FFI_BUILDING_DLL
     )
     
     # Platform-specific settings

@@ -29,4 +29,13 @@ Examples: `exp_001_ump_jepa/`, `exp_002_wavjepa_emotion/`
 | 001 | [exp_001_ump_jepa](exp_001_ump_jepa/) | 🔬 active | UMP → JEPA expressive conditioning scaffold |
 | 002 | [exp_002_wavjepa_emotion](exp_002_wavjepa_emotion/) | 🔬 active | WavJEPA emotional separability probe |
 
+## Reference materials
+
+NotebookLM mind maps (exported visuals for research/planning):
+
+- [NotebookLM Mind Map.png](NotebookLM%20Mind%20Map.png)
+- [NotebookLM Mind Map (1).png](NotebookLM%20Mind%20Map%20(1).png)
+- [NotebookLM Mind Map (2).png](NotebookLM%20Mind%20Map%20(2).png)
+- [NotebookLM Mind Map (3).png](NotebookLM%20Mind%20Map%20(3).png)
+
 Ref: `.cursor/rules/engineering-governance.mdc`

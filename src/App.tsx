@@ -122,10 +122,10 @@ export default function App() {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
   }, [interactions]);
 
-  const activeTitle = side === 'side-a' ? 'Side A · Studio'
-    : side === 'side-b' ? 'Side B · Creative'
-    : side === 'create' ? 'Create · Quick Start'
-    : 'Generate · Intent';
+  const activeTitle = side === 'side-a' ? 'Mix Console'
+    : side === 'side-b' ? 'Inspiration Board'
+    : side === 'create' ? 'Quick Create'
+    : 'Song Builder';
 
   return (
     <div className="km-frame">
@@ -139,7 +139,7 @@ export default function App() {
               className={side === s ? 'tab active' : 'tab'}
               onClick={() => setSide(s)}
             >
-              {s === 'side-a' ? 'Studio' : s === 'side-b' ? 'Creative' : s === 'create' ? 'Create' : 'Generate'}
+              {s === 'side-a' ? 'Mix' : s === 'side-b' ? 'Inspire' : s === 'create' ? 'Create' : 'Compose'}
             </button>
           ))}
         </div>
@@ -155,7 +155,7 @@ export default function App() {
 
       <main>
         {side === 'side-a' && (
-          <section className="km-side-grid" aria-label="Side A console">
+          <section className="km-side-grid" aria-label="Mix console">
             <article className="panel">
               <h2 className="panel-title">Transport</h2>
               <Transport
@@ -182,20 +182,20 @@ export default function App() {
               <Timeline bars={timelineBars} tempo={tempo} />
             </article>
             <article className="panel">
-              <h2 className="panel-title">Master Output</h2>
+              <h2 className="panel-title">Master Level</h2>
               <VUMeter value={masterVu} isActive={isPlaying} />
             </article>
           </section>
         )}
 
         {side === 'side-b' && (
-          <section className="km-side-grid" aria-label="Side B creative station">
+          <section className="km-side-grid" aria-label="Inspiration board">
             <article className="panel">
-              <h2 className="panel-title">Emotion Wheel</h2>
+              <h2 className="panel-title">Mood Picker</h2>
               <EmotionWheel onSelect={(emotion) => setSelectedEmotion(emotion)} selected={selectedEmotion} />
             </article>
             <article className="panel">
-              <h2 className="panel-title">Ghost Writer</h2>
+              <h2 className="panel-title">Lyric Spark</h2>
               <GhostWriter
                 seed={selectedEmotion ? `${selectedEmotion.base} ${selectedEmotion.intensity}` : ''}
                 onGenerate={handleGhostGenerate}
@@ -203,14 +203,14 @@ export default function App() {
               />
             </article>
             <article className="panel wide">
-              <h2 className="panel-title">Interrogator</h2>
+              <h2 className="panel-title">Creative Assistant</h2>
               <Interrogator
                 starter={selectedEmotion ? `How should this feel: ${selectedEmotion.base}` : 'Start a prompt'}
                 onAsk={handleInterrogatorAsk}
               />
             </article>
             <article className="panel">
-              <h2 className="panel-title">Session Log</h2>
+              <h2 className="panel-title">Activity Feed</h2>
               <ul className="log-list" ref={logRef}>
                 {interactions.map((entry, index) => (
                   <li key={`${entry.slice(0, 20)}-${index}`}>{entry}</li>
@@ -223,11 +223,11 @@ export default function App() {
         {side === 'create' && (
           <section className="km-side-grid" aria-label="Quick creation tools">
             <article className="panel wide">
-              <h2 className="panel-title">Quick Start Templates</h2>
+              <h2 className="panel-title">Starter Kits</h2>
               <QuickStartPanel onTemplateSelect={handleQuickStart} />
             </article>
             <article className="panel wide">
-              <h2 className="panel-title">Music Customizer</h2>
+              <h2 className="panel-title">Sound Palette</h2>
               <MusicCustomizer
                 selectedGenre={selectedGenre}
                 selectedEmotion={selectedMood}

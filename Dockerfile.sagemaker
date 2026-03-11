@@ -1,0 +1,22 @@
+# SageMaker training image for KmiDi JEPA (Audio-JEPA / Chord-JEPA).
+# Build from repo root: docker build -f Dockerfile.sagemaker -t kmidi-jepa-train .
+# Push to ECR and set KMIDI_SAGEMAKER_IMAGE_URI when launching jobs.
+# For other regions, replace us-east-1 in the image path (see AWS docs for ECR image URIs).
+
+FROM 763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:2.1.0-gpu-py310
+
+WORKDIR /app
+
+# Install project and dependencies (librosa for audio, mido optional for MIDI)
+COPY pyproject.toml .
+COPY music_brain ./music_brain
+COPY config ./config
+COPY scripts/sagemaker_train.py ./scripts/
+
+RUN pip install --no-cache-dir -e . \
+    && pip install --no-cache-dir librosa pyyaml
+
+# SageMaker runs the container with /opt/ml/input/data/* and writes to /opt/ml/model.
+# Our entrypoint reads hyperparameters from /opt/ml/input/config/hyperparameters.json.
+ENV PYTHONUNBUFFERED=1
+ENTRYPOINT ["python", "/app/scripts/sagemaker_train.py"]

@@ -1,0 +1,61 @@
+# KmiDi JEPA Training Configuration
+# Used by scripts/launch_jepa_sagemaker.py and music_brain.jepa.trainer
+
+audio_jepa:
+  tier: medium
+  latent_dim: 256
+  n_mels: 128
+  max_frames: 512
+  sample_rate: 22050
+  hop_length: 512
+  mask_ratio: 0.6
+  mask_block_size: 4
+
+chord_jepa:
+  d_model: 256
+  num_heads: 8
+  num_layers: 4
+  seq_len: 64
+  num_chords: 170
+  dropout: 0.1
+  mask_ratio: 0.6
+
+training:
+  epochs: 120
+  batch_size: 12
+  learning_rate: 3.0e-4
+  weight_decay: 0.01
+  warmup_epochs: 10
+  save_every: 5
+  early_stop_patience: 15
+  mixed_precision: true
+  gradient_clip: 1.0
+
+sagemaker:
+  instance_type: ml.g5.xlarge
+  max_run_seconds: 86400
+  volume_size_gb: 100
+  framework: pytorch
+  framework_version: "2.1.0"
+  py_version: py310
+
+datasets:
+  audio:
+    s3_prefix: s3://kmidi-datasets/audio/
+    local_cache: /opt/ml/input/data/audio
+    formats: [wav, mp3, flac]
+  midi:
+    s3_prefix: s3://kmidi-datasets/midi/
+    local_cache: /opt/ml/input/data/midi
+    formats: [mid, midi]
+
+checkpoints:
+  s3_prefix: s3://kmidi-runs/jepa/
+  local_dir: /opt/ml/model
+  export_onnx: true
+
+experiment:
+  project: kmidi-jepa
+  tags:
+    model: jepa
+    version: "1.0"

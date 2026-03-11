@@ -19,11 +19,11 @@ export function GhostWriter({ seed, output, onGenerate }: Props) {
   return (
     <div className="ghost">
       <label>
-        Seed phrase
+        Starting vibe
         <input
           type="text"
           value={seed}
-          placeholder="Optional emotion seed"
+          placeholder="Pick a mood above to seed the lyrics"
           readOnly
           aria-readonly="true"
         />
@@ -33,9 +33,9 @@ export function GhostWriter({ seed, output, onGenerate }: Props) {
         className="outline"
         onClick={() => onGenerate(BASE_TEXTS[key] ?? BASE_TEXTS.default)}
       >
-        Generate lyric hint
+        Spark a lyric
       </button>
-      <p className="ghost-output">{output || 'Output will appear here.'}</p>
+      <p className="ghost-output">{output || 'Your lyric spark will appear here.'}</p>
     </div>
   );
 }

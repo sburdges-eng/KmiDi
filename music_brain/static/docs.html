@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KmiDi — Sound Engine API</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --surface: rgba(11, 16, 24, 0.76);
+      --surface-raised: rgba(18, 24, 38, 0.9);
+      --border: rgba(255, 255, 255, 0.1);
+      --border-hover: rgba(255, 255, 255, 0.22);
+      --accent: #6f7cff;
+      --accent-hover: #8b96ff;
+      --text-primary: #ebeff8;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --radius: 10px;
+      --radius-lg: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(145deg, #0d1328 0%, #141a2d 55%, #11151f 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    .shell {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.5px; }
+    .logo span { color: var(--accent); }
+    .badge {
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 28px;
+    }
+    .section-title {
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin: 28px 0 12px;
+      padding-left: 2px;
+    }
+    .card-grid { display: grid; gap: 12px; }
+    .card {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .card-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .method {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .method.get { background: rgba(34,197,94,0.15); color: var(--success); }
+    .method.post { background: rgba(111,124,255,0.15); color: var(--accent); }
+    .method.put { background: rgba(245,158,11,0.15); color: var(--warning); }
+    .path { font-weight: 600; font-size: 0.9rem; }
+    .card-desc { color: var(--text-secondary); font-size: 0.82rem; }
+    .card-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .tag {
+      font-size: 0.68rem;
+      padding: 1px 7px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.06);
+      color: var(--text-muted);
+    }
+    footer {
+      margin-top: 40px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    footer a:hover { text-decoration: underline; }
+    .status-bar {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 16px;
+      margin-bottom: 20px;
+      font-size: 0.82rem;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .dot.green { background: var(--success); box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+    .status-label { color: var(--text-secondary); }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="logo">Kmi<span>Di</span></div>
+      <div>
+        <span class="badge">v0.1.0</span>
+      </div>
+    </header>
+
+    <div class="status-bar">
+      <span class="dot green"></span>
+      <span class="status-label">Sound Engine Online</span>
+      <span style="margin-left:auto; color:var(--text-muted)">
+        <a href="/docs" style="margin-right:12px">Swagger</a>
+        <a href="/openapi.json">OpenAPI</a>
+      </span>
+    </div>
+
+    <p class="subtitle">
+      Your creative command center — compose, feel, and shape music through intent.
+      Every knob below maps to a musical action.
+    </p>
+
+    <div class="section-title">🎹 Compose &amp; Create</div>
+    <div class="card-grid">
+      <div class="card" onclick="window.location='/docs#/default/generate_music_generate_post'">
+        <div class="card-head">
+          <span class="method post">POST</span>
+          <span class="path">/generate</span>
+        </div>
+        <div class="card-desc">
+          Bring your musical vision to life — describe a mood, pick instruments,
+          set the groove, and let the engine compose harmony, melody, and arrangement.
+        </div>
+        <div class="card-tags">
+          <span class="tag">mood</span>
+          <span class="tag">harmony</span>
+          <span class="tag">arrangement</span>
+          <span class="tag">instruments</span>
+        </div>
+      </div>
+      <div class="card" onclick="window.location='/docs#/default/interrogate_interrogate_post'">
+        <div class="card-head">
+          <span class="method post">POST</span>
+          <span class="path">/interrogate</span>
+        </div>
+        <div class="card-desc">
+          Ask the engine anything — "What chord comes next?", "Make it sadder",
+          "Suggest a bridge section". Your creative conversation partner.
+        </div>
+        <div class="card-tags">
+          <span class="tag">chat</span>
+          <span class="tag">creative direction</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">🎭 Feeling &amp; Emotion</div>
+    <div class="card-grid">
+      <div class="card" onclick="window.location='/docs#/default/list_emotions_emotions_get'">
+        <div class="card-head">
+          <span class="method get">GET</span>
+          <span class="path">/emotions</span>
+        </div>
+        <div class="card-desc">
+          Browse the palette of emotions the engine understands — from tender
+          intimacy to fierce energy. Use these to guide your compositions.
+        </div>
+        <div class="card-tags">
+          <span class="tag">palette</span>
+          <span class="tag">mood presets</span>
+        </div>
+      </div>
+      <div class="card" onclick="window.location='/docs#/default/classify_audio_audio_classify_post'">
+        <div class="card-head">
+          <span class="method post">POST</span>
+          <span class="path">/audio/classify</span>
+        </div>
+        <div class="card-desc">
+          Drop in an audio clip and discover its emotional signature — what
+          feelings does this sound carry?
+        </div>
+        <div class="card-tags">
+          <span class="tag">analysis</span>
+          <span class="tag">emotion detection</span>
+        </div>
+      </div>
+      <div class="card" onclick="window.location='/docs#/default/get_audio_valence_arousal_audio_valence_arousal_post'">
+        <div class="card-head">
+          <span class="method post">POST</span>
+          <span class="path">/audio/valence-arousal</span>
+        </div>
+        <div class="card-desc">
+          Map any sound onto the feeling grid — how positive/negative and
+          how energetic/calm is this audio?
+        </div>
+        <div class="card-tags">
+          <span class="tag">valence</span>
+          <span class="tag">arousal</span>
+          <span class="tag">mood mapping</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">✍️ Lyrics &amp; Words</div>
+    <div class="card-grid">
+      <div class="card" onclick="window.location='/docs#/default/get_lyrics_lyrics_get'">
+        <div class="card-head">
+          <span class="method get">GET</span>
+          <span class="path">/lyrics</span>
+        </div>
+        <div class="card-desc">
+          Retrieve the current lyrics — your words, your story.
+        </div>
+        <div class="card-tags"><span class="tag">read</span></div>
+      </div>
+      <div class="card" onclick="window.location='/docs#/default/set_lyrics_lyrics_post'">
+        <div class="card-head">
+          <span class="method post">POST</span>
+          <span class="path">/lyrics</span>
+        </div>
+        <div class="card-desc">
+          Write or paste your lyrics so the engine can weave them into the
+          musical fabric.
+        </div>
+        <div class="card-tags"><span class="tag">write</span><span class="tag">lyric sync</span></div>
+      </div>
+    </div>
+
+    <div class="section-title">🎛️ Sound Shaping</div>
+    <div class="card-grid">
+      <div class="card" onclick="window.location='/docs#/default/humanizer_config_config_humanizer_get'">
+        <div class="card-head">
+          <span class="method get">GET</span>
+          <span class="path">/config/humanizer</span>
+        </div>
+        <div class="card-desc">
+          Check the humanizer settings — the subtle timing, velocity, and feel
+          variations that make MIDI sound like a real player.
+        </div>
+        <div class="card-tags"><span class="tag">feel</span><span class="tag">groove</span></div>
+      </div>
+      <div class="card" onclick="window.location='/docs#/default/update_humanizer_config_config_humanizer_put'">
+        <div class="card-head">
+          <span class="method put">PUT</span>
+          <span class="path">/config/humanizer</span>
+        </div>
+        <div class="card-desc">
+          Dial in the human feel — adjust timing drift, velocity curves,
+          and micro-groove to taste.
+        </div>
+        <div class="card-tags"><span class="tag">adjust</span><span class="tag">feel knobs</span></div>
+      </div>
+      <div class="card" onclick="window.location='/docs#/default/reload_humanizer_config_humanizer_reload_post'">
+        <div class="card-head">
+          <span class="method post">POST</span>
+          <span class="path">/config/humanizer/reload</span>
+        </div>
+        <div class="card-desc">
+          Reset the humanizer to its saved preset — like hitting "recall" on a mixer.
+        </div>
+        <div class="card-tags"><span class="tag">reset</span></div>
+      </div>
+    </div>
+
+    <div class="section-title">🌈 Visuals &amp; Spectocloud</div>
+    <div class="card-grid">
+      <div class="card" onclick="window.location='/docs#/default/spectocloud_presets_spectocloud_presets_get'">
+        <div class="card-head">
+          <span class="method get">GET</span>
+          <span class="path">/spectocloud/presets</span>
+        </div>
+        <div class="card-desc">
+          Browse visual presets for the Spectocloud — particle colors, shapes,
+          and motion styles that paint your sound.
+        </div>
+        <div class="card-tags"><span class="tag">visual presets</span></div>
+      </div>
+      <div class="card" onclick="window.location='/docs#/default/render_spectocloud_spectocloud_render_post'">
+        <div class="card-head">
+          <span class="method post">POST</span>
+          <span class="path">/spectocloud/render</span>
+        </div>
+        <div class="card-desc">
+          Render a Spectocloud visualization — see your sound as a living particle cloud.
+        </div>
+        <div class="card-tags"><span class="tag">render</span><span class="tag">particles</span></div>
+      </div>
+    </div>
+
+    <div class="section-title">🎤 Voice &amp; Audio Models</div>
+    <div class="card-grid">
+      <div class="card" onclick="window.location='/docs#/default/classify_voice_voice_classify_post'">
+        <div class="card-head">
+          <span class="method post">POST</span>
+          <span class="path">/voice/classify</span>
+        </div>
+        <div class="card-desc">
+          Identify a singer's range — soprano, alto, tenor, or bass — so the
+          engine can write in their sweet spot.
+        </div>
+        <div class="card-tags"><span class="tag">voice type</span><span class="tag">range</span></div>
+      </div>
+      <div class="card" onclick="window.location='/docs#/default/list_audio_models_audio_models_get'">
+        <div class="card-head">
+          <span class="method get">GET</span>
+          <span class="path">/audio/models</span>
+        </div>
+        <div class="card-desc">
+          See which AI listening models are loaded — emotion classifiers,
+          timbre analyzers, and more.
+        </div>
+        <div class="card-tags"><span class="tag">AI models</span><span class="tag">status</span></div>
+      </div>
+    </div>
+
+    <div class="section-title">🔊 Playback</div>
+    <div class="card-grid">
+      <div class="card" onclick="window.location='/docs#/default/serve_audio_audio__file_path__get'">
+        <div class="card-head">
+          <span class="method get">GET</span>
+          <span class="path">/audio/{file}</span>
+        </div>
+        <div class="card-desc">
+          Stream any generated audio file — WAV, MP3, FLAC, OGG.
+        </div>
+        <div class="card-tags"><span class="tag">stream</span><span class="tag">playback</span></div>
+      </div>
+    </div>
+
+    <div class="section-title">🩺 System</div>
+    <div class="card-grid">
+      <div class="card" onclick="window.location='/docs#/default/health_health_get'">
+        <div class="card-head">
+          <span class="method get">GET</span>
+          <span class="path">/health</span>
+        </div>
+        <div class="card-desc">Quick pulse check — is the engine running?</div>
+        <div class="card-tags"><span class="tag">status</span></div>
+      </div>
+    </div>
+
+    <footer>
+      <p>
+        KmiDi Sound Engine &middot;
+        <a href="/docs">Full Swagger UI</a> &middot;
+        <a href="/openapi.json">OpenAPI Spec</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

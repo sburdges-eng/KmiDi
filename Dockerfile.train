@@ -15,10 +15,17 @@ RUN pip install --no-cache-dir boto3 huggingface_hub zstandard
 
 # Config and scripts (same set as EC2 runner upload)
 COPY config/run_contract.yaml config/run_contract.yaml
+COPY config/jepa_training.yaml config/jepa_training.yaml
 COPY scripts/aws_train_entrypoint.py scripts/aws_train_entrypoint.py
 COPY scripts/training_common.py scripts/training_common.py
 COPY scripts/license_gate.py scripts/license_gate.py
 COPY scripts/sagemaker_entrypoint.py scripts/sagemaker_entrypoint.py
+COPY scripts/launch_jepa_sagemaker.py scripts/launch_jepa_sagemaker.py
+
+# JEPA models and music_brain package
+COPY pyproject.toml pyproject.toml
+COPY music_brain/ music_brain/
+RUN pip install --no-cache-dir -e ".[jepa]"
 
 ENV PYTHONPATH=/opt/ml/code
 ENTRYPOINT ["python3", "scripts/sagemaker_entrypoint.py"]
