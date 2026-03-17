@@ -223,6 +223,7 @@ cmake -S KmiDi_FINAL/engine/cpp_music_brain -B KmiDi_FINAL/engine/cpp_music_brai
 Current status:
 
 - The macOS 15+ `juceaide` failure (`CGWindowListCreateImage` obsoleted) is addressed:
+  - The legacy project sets `JUCE_DISABLE_JUCEAIDE_BUILD ON` (in `KmiDi_FINAL/engine/cpp_music_brain/CMakeLists.txt`) so juceaide is not built whether JUCE is taken from the repo or fetched via CPM.
   - When building from the KmiDi repo, the legacy project uses the repo's `external/JUCE` (no CPM fetch for JUCE), which is JUCE 8–aligned and includes the ScreenCaptureKit path.
   - When building the legacy project standalone (without repo `external/JUCE`), CPM fetches JUCE 8.x (e.g. GIT_TAG 8.0.0), which includes the macOS 15 fix.
 - JUCE 8 is required for macOS 15+ SDK compatibility; JUCE 7 does not receive the ScreenCaptureKit fix.

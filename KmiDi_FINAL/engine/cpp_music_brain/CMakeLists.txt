@@ -55,6 +55,8 @@ include(cmake/CPM.cmake)
 
 # JUCE Framework: use repo external/JUCE when building from KmiDi (macOS 15+ compatible);
 # otherwise fetch JUCE 8.x for standalone builds (JUCE 7 lacks ScreenCaptureKit fix).
+# Skip juceaide to avoid macOS 15+ SDK build failure (CGWindowListCreateImage obsoleted).
+set(JUCE_DISABLE_JUCEAIDE_BUILD ON CACHE BOOL "Skip juceaide build")
 get_filename_component(_repo_root "${CMAKE_CURRENT_SOURCE_DIR}/../../.." ABSOLUTE)
 set(_repo_juce "${_repo_root}/external/JUCE")
 if(EXISTS "${_repo_juce}/CMakeLists.txt")
@@ -69,6 +71,7 @@ CPMAddPackage(
     OPTIONS
         "JUCE_BUILD_EXAMPLES OFF"
         "JUCE_BUILD_EXTRAS OFF"
+        "JUCE_DISABLE_JUCEAIDE_BUILD ON"
 )
 
 # fmt for formatting
