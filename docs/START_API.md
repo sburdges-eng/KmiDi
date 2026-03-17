@@ -4,19 +4,19 @@ The frontend application requires the Music Brain API to be running in the backg
 
 ## Quick Start
 
-Run this command in a terminal:
+From the repo root:
 
 ```bash
-./start-api.sh
+python3 -m uvicorn music_brain.api:app --reload --port 8000 --host 0.0.0.0
 ```
 
-Or manually:
+Or with a custom host (e.g. local only):
 
 ```bash
-python3 -m music_brain.api
+python3 -m uvicorn music_brain.api:app --reload --port 8000
 ```
 
-The API will start at: **http://127.0.0.1:8000**
+The API will start at: **http://127.0.0.1:8000** (see [AGENTS.md](../AGENTS.md) and `npm run dev:python`).
 
 ## If You Get Import Errors
 
