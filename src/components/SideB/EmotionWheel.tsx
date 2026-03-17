@@ -60,7 +60,7 @@ export function EmotionWheel({ selected, onSelect }: Props) {
       <label>
         Feeling
         <select value={selected?.base ?? ''} onChange={handleBase}>
-          <option value="">pick a mood</option>
+          <option value="">choose a mood</option>
           {baseKeys.map((base) => (
             <option key={base} value={base}>
               {base}
@@ -76,7 +76,7 @@ export function EmotionWheel({ selected, onSelect }: Props) {
           onChange={handleIntensity}
           disabled={!selected}
         >
-          <option value="">how strong?</option>
+          <option value="">intensity</option>
           {INTENSITIES.map((intensity) => (
             <option key={intensity} value={intensity}>
               {intensity}
@@ -88,7 +88,7 @@ export function EmotionWheel({ selected, onSelect }: Props) {
       <label>
         Color
         <select value={selected?.detail ?? ''} onChange={handleDetail} disabled={!selected}>
-          <option value="">add nuance</option>
+          <option value="">shade</option>
           {(selected ? EMOTIONS[selected.base as keyof typeof EMOTIONS] : []).map((detail) => (
             <option key={detail} value={detail}>
               {detail}
@@ -100,7 +100,7 @@ export function EmotionWheel({ selected, onSelect }: Props) {
       <p className="emotion-output">
         {selected
           ? `${selected.base} · ${selected.intensity} · ${selected.detail}`
-          : 'Choose a feeling to start'}
+          : 'Set a feeling to begin'}
       </p>
     </div>
   );

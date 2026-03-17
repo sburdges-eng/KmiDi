@@ -44,7 +44,7 @@ export default function App() {
   const [selectedEmotion, setSelectedEmotion] = useState<SelectedEmotion | null>(null);
   const [ghostText, setGhostText] = useState('');
   const [interactions, setInteractions] = useState<string[]>([
-    'KmiDi loaded. Ask it for an arrangement brief.',
+    'What are you making?',
   ]);
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [lastAudioPath, setLastAudioPath] = useState<string | undefined>();
@@ -107,14 +107,14 @@ export default function App() {
     }
     setInteractions((prev) => [
       ...prev,
-      `KmiDi: Drafted approach aligned to ${selectedEmotion?.base ?? 'global intent'} path.`,
+      `KmiDi: Shaped around ${selectedEmotion?.base ?? 'your direction'}.`,
     ]);
   }, [apiStatus, brain, selectedEmotion]);
 
   const handleQuickStart = useCallback(async (template: {
     id: string; name: string; config: { bpm?: number; key?: string };
   }) => {
-    setInteractions((prev) => [...prev, `Quick Start: ${template.name} (${template.config.key ?? 'C'}, ${template.config.bpm ?? 120} BPM)`]);
+    setInteractions((prev) => [...prev, `Started: ${template.name} (${template.config.key ?? 'C'}, ${template.config.bpm ?? 120} BPM)`]);
     if (template.config.bpm) setTempo(template.config.bpm);
   }, []);
 
@@ -122,38 +122,47 @@ export default function App() {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
   }, [interactions]);
 
-  const activeTitle = side === 'side-a' ? 'Mix Console'
-    : side === 'side-b' ? 'Inspiration Board'
-    : side === 'create' ? 'Quick Create'
-    : 'Song Builder';
+  const activeTitle = side === 'side-a' ? 'Mix'
+    : side === 'side-b' ? 'Inspire'
+    : side === 'create' ? 'Create'
+    : 'Compose';
 
   return (
     <div className="km-frame">
       <header className="km-header">
         <h1 className="app-title">KmiDi</h1>
-        <div className="km-toggle" role="tablist" aria-label="Studio mode">
-          {(['side-a', 'side-b', 'create', 'intent'] as Side[]).map((s) => (
+        <nav className="km-toggle" role="tablist" aria-label="Studio mode">
+          {(['side-a', 'side-b', 'create', 'intent'] as Side[]).map((s, i) => (
             <button
               key={s}
               type="button"
+              role="tab"
+              aria-selected={side === s}
+              aria-controls="main-content"
+              id={`tab-${s}`}
+              tabIndex={side === s ? 0 : -1}
               className={side === s ? 'tab active' : 'tab'}
               onClick={() => setSide(s)}
             >
               {s === 'side-a' ? 'Mix' : s === 'side-b' ? 'Inspire' : s === 'create' ? 'Create' : 'Compose'}
             </button>
           ))}
-        </div>
-        {/* API status kept internal; errors surface contextually */}
+        </nav>
       </header>
 
-      <section className="km-titlebar">
+      <section className="km-titlebar" aria-hidden="true">
         <p className="km-subtitle">{activeTitle}</p>
-        <button type="button" className="mode-reset-btn" onClick={() => setIsPlaying(false)}>
-          Reset playback
+        <button
+          type="button"
+          className="mode-reset-btn"
+          onClick={() => setIsPlaying(false)}
+          aria-label="Reset playback"
+        >
+          Reset
         </button>
       </section>
 
-      <main>
+      <main id="main-content" role="tabpanel" aria-labelledby={`tab-${side}`} tabIndex={0}>
         {side === 'side-a' && (
           <section className="km-side-grid" aria-label="Mix console">
             <article className="panel">
@@ -182,7 +191,7 @@ export default function App() {
               <Timeline bars={timelineBars} tempo={tempo} />
             </article>
             <article className="panel">
-              <h2 className="panel-title">Master Level</h2>
+              <h2 className="panel-title">Master</h2>
               <VUMeter value={masterVu} isActive={isPlaying} />
             </article>
           </section>
@@ -191,7 +200,7 @@ export default function App() {
         {side === 'side-b' && (
           <section className="km-side-grid" aria-label="Inspiration board">
             <article className="panel">
-              <h2 className="panel-title">Mood Picker</h2>
+              <h2 className="panel-title">Mood</h2>
               <EmotionWheel onSelect={(emotion) => setSelectedEmotion(emotion)} selected={selectedEmotion} />
             </article>
             <article className="panel">
@@ -203,14 +212,14 @@ export default function App() {
               />
             </article>
             <article className="panel wide">
-              <h2 className="panel-title">Creative Assistant</h2>
+              <h2 className="panel-title">Ask</h2>
               <Interrogator
-                starter={selectedEmotion ? `How should this feel: ${selectedEmotion.base}` : 'Start a prompt'}
+                starter={selectedEmotion ? `How should this feel: ${selectedEmotion.base}` : 'Ask something'}
                 onAsk={handleInterrogatorAsk}
               />
             </article>
             <article className="panel">
-              <h2 className="panel-title">Activity Feed</h2>
+              <h2 className="panel-title">Session</h2>
               <ul className="log-list" ref={logRef}>
                 {interactions.map((entry, index) => (
                   <li key={`${entry.slice(0, 20)}-${index}`}>{entry}</li>
@@ -223,7 +232,7 @@ export default function App() {
         {side === 'create' && (
           <section className="km-side-grid" aria-label="Quick creation tools">
             <article className="panel wide">
-              <h2 className="panel-title">Starter Kits</h2>
+              <h2 className="panel-title">Starters</h2>
               <QuickStartPanel onTemplateSelect={handleQuickStart} />
             </article>
             <article className="panel wide">

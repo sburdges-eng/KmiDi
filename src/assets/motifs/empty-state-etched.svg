@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 64" fill="none" aria-hidden="true">
+  <title>Empty state etched motif</title>
+  <g id="empty-state-motif" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Single calm curve (wave / level abstraction) -->
+    <path id="level-curve" stroke="rgba(255,255,255,0.1)" stroke-width="0.5" d="M 12 40 Q 40 16 68 40"/>
+    <!-- Horizontal baseline -->
+    <line id="baseline" x1="12" y1="48" x2="68" y2="48" stroke="rgba(255,255,255,0.06)" stroke-width="0.4"/>
+    <!-- Calibration ticks (left) -->
+    <g id="cal-ticks" stroke="rgba(255,255,255,0.08)" stroke-width="0.35">
+      <line x1="12" y1="20" x2="16" y2="20"/>
+      <line x1="12" y1="32" x2="16" y2="32"/>
+      <line x1="12" y1="40" x2="16" y2="40"/>
+      <line x1="12" y1="48" x2="16" y2="48"/>
+    </g>
+    <!-- One subtle circular reference -->
+    <circle id="ref-dot" cx="40" cy="32" r="2" stroke="rgba(255,255,255,0.06)" stroke-width="0.4" fill="none"/>
+  </g>
+</svg>

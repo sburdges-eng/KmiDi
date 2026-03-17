@@ -132,12 +132,11 @@ export function QuickStartPanel({ onTemplateSelect, onGenerateWithTemplate }: Pr
     <div className="quickstart-panel">
       <div className="section-header">
         <div className="section-header-inline">
-          <h2>Quick Start</h2>
+          <h2>Quick start</h2>
           <span className="section-badge">Templates</span>
         </div>
         <p className="section-description">
-          Choose a ready-made template to get started quickly. Each template includes 
-          pre-configured settings optimized for different genres and moods.
+          Pick a starting point. Each has key, tempo, and feel set.
         </p>
       </div>
 
@@ -172,7 +171,7 @@ export function QuickStartPanel({ onTemplateSelect, onGenerateWithTemplate }: Pr
         <div className="template-preview-card">
           <div className="template-preview-header">
             <div>
-              <h3>Selected Template: {selectedTemplate.name}</h3>
+              <h3>Selected: {selectedTemplate.name}</h3>
               <p className="template-preview-description">{selectedTemplate.description}</p>
             </div>
             <button
@@ -204,11 +203,10 @@ export function QuickStartPanel({ onTemplateSelect, onGenerateWithTemplate }: Pr
             onClick={handleUseTemplate}
             className="primary-action-btn"
           >
-            Create Music with This Template
+            Start from this
           </button>
           <p className="action-hint">
-            This will automatically generate music using the template settings. 
-            You can always adjust the emotion or lyrics to personalize it.
+            This starts a piece with these settings. Adjust mood or lyrics after.
           </p>
         </div>
       )}
@@ -217,22 +215,22 @@ export function QuickStartPanel({ onTemplateSelect, onGenerateWithTemplate }: Pr
         <div className="quickstart-action-card">
           <div className="action-icon">🎵</div>
           <div className="action-content">
-            <h4>Start from Emotion</h4>
-            <p>Use the Emotion Wheel above to create music based on how you feel</p>
+            <h4>Start from mood</h4>
+            <p>Set a mood above, then shape the piece.</p>
           </div>
         </div>
         <div className="quickstart-action-card">
           <div className="action-icon">📝</div>
           <div className="action-content">
-            <h4>Start from Lyrics</h4>
-            <p>Write or paste your lyrics to guide the musical generation</p>
+            <h4>Start from lyrics</h4>
+            <p>Paste or write lyrics to guide the piece.</p>
           </div>
         </div>
         <div className="quickstart-action-card">
           <div className="action-icon">💬</div>
           <div className="action-content">
-            <h4>Start from Conversation</h4>
-            <p>Describe what you want and let the Interrogator help refine your idea</p>
+            <h4>Start from conversation</h4>
+            <p>Describe what you want; the assistant helps refine it.</p>
           </div>
         </div>
       </div>

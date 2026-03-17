@@ -21,9 +21,11 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import logging
 import os
+import random
 import shutil
 import sys
 from dataclasses import dataclass
@@ -31,6 +33,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
+
+try:
+    import yaml
+except ImportError:
+    yaml = None  # type: ignore[assignment]
 
 # Add project root to path
 ROOT = Path(__file__).resolve().parent.parent
@@ -617,6 +624,110 @@ def parse_cremad_filename(filename: str) -> str:
     return emotion_map.get(code, "unknown")
 
 
+def file_content_hash(path: Path, chunk_size: int = 1024 * 1024) -> str:
+    """Compute SHA-256 content hash for deduplication."""
+    hasher = hashlib.sha256()
+    with open(path, "rb") as f:
+        while True:
+            chunk = f.read(chunk_size)
+            if not chunk:
+                break
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def dedupe_metadata(samples: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Remove duplicate samples by source path or output file path."""
+    deduped: List[Dict[str, Any]] = []
+    seen_keys = set()
+    for sample in samples:
+        key = sample.get("source_content_hash") or sample.get("source_path") or sample.get("file")
+        if not key:
+            continue
+        if key in seen_keys:
+            continue
+        seen_keys.add(key)
+        deduped.append(sample)
+    return deduped
+
+
+def save_metadata_files(output_dir: Path, samples: List[Dict[str, Any]]) -> None:
+    """Persist metadata in JSON + CSV with dynamic columns."""
+    metadata_path = output_dir / "metadata.json"
+    with open(metadata_path, "w", encoding="utf-8") as f:
+        json.dump({"samples": samples}, f, indent=2)
+
+    csv_path = output_dir / "metadata.csv"
+    fieldnames = sorted({k for s in samples for k in s.keys()}) if samples else ["file"]
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(samples)
+
+
+def create_split_manifests(
+    output_dir: Path,
+    samples: List[Dict[str, Any]],
+    seed: int = 42,
+    train_ratio: float = 0.8,
+    val_ratio: float = 0.1,
+    test_ratio: float = 0.1,
+) -> Dict[str, int]:
+    """Create train/val/test JSONL manifests with optional stratification."""
+    if not samples:
+        return {"train": 0, "val": 0, "test": 0}
+
+    if abs((train_ratio + val_ratio + test_ratio) - 1.0) > 1e-6:
+        raise ValueError("Split ratios must sum to 1.0")
+
+    rng = random.Random(seed)
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    for sample in samples:
+        label = sample.get("emotion") or sample.get("instrument_family") or sample.get("label") or "__all__"
+        grouped.setdefault(str(label), []).append(sample)
+
+    train_samples: List[Dict[str, Any]] = []
+    val_samples: List[Dict[str, Any]] = []
+    test_samples: List[Dict[str, Any]] = []
+
+    for group in grouped.values():
+        rng.shuffle(group)
+        n = len(group)
+        n_train = int(n * train_ratio)
+        n_val = int(n * val_ratio)
+        n_test = n - n_train - n_val
+
+        if n > 0 and n_train == 0:
+            n_train = 1
+            if n_val > 0:
+                n_val -= 1
+            elif n_test > 0:
+                n_test -= 1
+
+        train_samples.extend(group[:n_train])
+        val_samples.extend(group[n_train : n_train + n_val])
+        test_samples.extend(group[n_train + n_val : n_train + n_val + n_test])
+
+    splits_dir = output_dir / "splits"
+    splits_dir.mkdir(parents=True, exist_ok=True)
+
+    split_map = {
+        "train": train_samples,
+        "val": val_samples,
+        "test": test_samples,
+    }
+    for split_name, split_samples in split_map.items():
+        path = splits_dir / f"{split_name}.jsonl"
+        with open(path, "w", encoding="utf-8") as f:
+            for sample in split_samples:
+                f.write(json.dumps(sample, ensure_ascii=True) + "\n")
+
+    summary = {name: len(data) for name, data in split_map.items()}
+    with open(splits_dir / "summary.json", "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2)
+    return summary
+
+
 def preprocess_emotion_dataset(
     input_dir: Path,
     output_dir: Path,
@@ -631,12 +742,14 @@ def preprocess_emotion_dataset(
     metadata = []
     success_count = 0
     fail_count = 0
-    
+    duplicate_count = 0
+    seen_content_hashes: set[str] = set()
+
     # Find all audio files
     audio_files = list(input_dir.rglob("*.wav")) + list(input_dir.rglob("*.mp3"))
-    
+
     logger.info(f"Found {len(audio_files)} audio files")
-    
+
     for audio_path in tqdm(audio_files, desc="Processing"):
         # Parse filename for metadata
         if "ravdess" in str(input_dir).lower():
@@ -647,16 +760,26 @@ def preprocess_emotion_dataset(
         else:
             # Try to infer emotion from directory structure
             emotion = audio_path.parent.name.lower()
-        
+
         if emotion == "unknown":
             fail_count += 1
             continue
-        
+
+        try:
+            source_hash = file_content_hash(audio_path)
+        except Exception as e:
+            logger.debug(f"Failed to hash {audio_path}: {e}")
+            fail_count += 1
+            continue
+        if source_hash in seen_content_hashes:
+            duplicate_count += 1
+            continue
+
         # Create output path
         output_filename = f"{audio_path.stem}.wav"
         emotion_dir = processed_dir / emotion
         output_path = emotion_dir / output_filename
-        
+
         # Process audio
         if preprocess_audio_file(
             audio_path,
@@ -668,25 +791,21 @@ def preprocess_emotion_dataset(
                 "file": str(output_path.relative_to(output_dir)),
                 "emotion": emotion,
                 "original_file": audio_path.name,
+                "source_path": str(audio_path),
+                "source_content_hash": source_hash,
             })
+            seen_content_hashes.add(source_hash)
             success_count += 1
         else:
             fail_count += 1
-    
-    # Save metadata
-    metadata_path = output_dir / "metadata.json"
-    with open(metadata_path, "w") as f:
-        json.dump({"samples": metadata}, f, indent=2)
-    
-    # Also save as CSV
-    csv_path = output_dir / "metadata.csv"
-    with open(csv_path, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["file", "emotion", "original_file"])
-        writer.writeheader()
-        writer.writerows(metadata)
-    
+
+    metadata = dedupe_metadata(metadata)
+    save_metadata_files(output_dir, metadata)
+
     logger.info(f"Saved metadata: {len(metadata)} samples")
-    
+    if duplicate_count > 0:
+        logger.info(f"Skipped duplicate files by content hash: {duplicate_count}")
+
     return success_count, fail_count
 
 
@@ -710,20 +829,32 @@ def preprocess_midi_dataset(
     metadata = []
     success_count = 0
     fail_count = 0
-    
+    duplicate_count = 0
+    seen_content_hashes: set[str] = set()
+
     # Find all MIDI files
     midi_files = list(input_dir.rglob("*.mid")) + list(input_dir.rglob("*.midi"))
-    
+
     logger.info(f"Found {len(midi_files)} MIDI files")
-    
+
     for midi_path in tqdm(midi_files, desc="Processing MIDI"):
         try:
+            source_hash = file_content_hash(midi_path)
+        except Exception as e:
+            logger.debug(f"Failed to hash {midi_path}: {e}")
+            fail_count += 1
+            continue
+        if source_hash in seen_content_hashes:
+            duplicate_count += 1
+            continue
+
+        try:
             mid = mido.MidiFile(str(midi_path))
-            
+
             # Extract note sequences
             notes = []
             current_time = 0
-            
+
             for track in mid.tracks:
                 for msg in track:
                     current_time += msg.time
@@ -734,11 +865,11 @@ def preprocess_midi_dataset(
                             "velocity": msg.velocity,
                             "channel": msg.channel,
                         })
-            
+
             if len(notes) < 10:
                 fail_count += 1
                 continue
-            
+
             # Save processed notes
             output_path = processed_dir / f"{midi_path.stem}.json"
             with open(output_path, "w") as f:
@@ -747,24 +878,27 @@ def preprocess_midi_dataset(
                     "ticks_per_beat": mid.ticks_per_beat,
                     "length": mid.length,
                 }, f)
-            
+
             metadata.append({
                 "file": str(output_path.relative_to(output_dir)),
                 "original_file": midi_path.name,
                 "num_notes": len(notes),
                 "duration": mid.length,
+                "source_path": str(midi_path),
+                "source_content_hash": source_hash,
             })
+            seen_content_hashes.add(source_hash)
             success_count += 1
-            
+
         except Exception as e:
             logger.debug(f"Failed to process {midi_path}: {e}")
             fail_count += 1
-    
-    # Save metadata
-    metadata_path = output_dir / "metadata.json"
-    with open(metadata_path, "w") as f:
-        json.dump({"samples": metadata}, f, indent=2)
-    
+
+    metadata = dedupe_metadata(metadata)
+    save_metadata_files(output_dir, metadata)
+    if duplicate_count > 0:
+        logger.info(f"Skipped duplicate MIDI files by content hash: {duplicate_count}")
+
     return success_count, fail_count
 
 
@@ -840,16 +974,28 @@ def preprocess_generic_dataset(
     metadata = []
     success_count = 0
     fail_count = 0
-    
+    duplicate_count = 0
+    seen_content_hashes: set[str] = set()
+
     # Find all audio files
     extensions = [".wav", ".mp3", ".flac", ".ogg"]
     audio_files = []
     for ext in extensions:
         audio_files.extend(list(input_dir.rglob(f"*{ext}")))
-    
+
     logger.info(f"Found {len(audio_files)} audio files for generic processing")
-    
+
     for audio_path in tqdm(audio_files, desc="Processing"):
+        try:
+            source_hash = file_content_hash(audio_path)
+        except Exception as e:
+            logger.debug(f"Failed to hash {audio_path}: {e}")
+            fail_count += 1
+            continue
+        if source_hash in seen_content_hashes:
+            duplicate_count += 1
+            continue
+
         # Create output path preserving some structure or just flattening
         # For local music, we preserve relative structure
         try:
@@ -857,7 +1003,7 @@ def preprocess_generic_dataset(
             output_path = processed_dir / rel_path.with_suffix(".wav")
         except ValueError:
             output_path = processed_dir / f"{audio_path.stem}.wav"
-            
+
         if preprocess_audio_file(
             audio_path,
             output_path,
@@ -868,36 +1014,42 @@ def preprocess_generic_dataset(
                 "file": str(output_path.relative_to(output_dir)),
                 "original_file": str(audio_path),
                 "label": "generic",
+                "source_content_hash": source_hash,
             })
+            seen_content_hashes.add(source_hash)
             success_count += 1
         else:
             fail_count += 1
-            
-    # Save metadata
-    metadata_path = output_dir / "metadata.json"
-    with open(metadata_path, "w") as f:
-        json.dump({"samples": metadata}, f, indent=2)
-        
+
+    metadata = dedupe_metadata(metadata)
+    save_metadata_files(output_dir, metadata)
+    if duplicate_count > 0:
+        logger.info(f"Skipped duplicate generic files by content hash: {duplicate_count}")
+
     return success_count, fail_count
 
 
-def preprocess_dataset(dataset_name: str) -> bool:
+def preprocess_dataset(
+    dataset_name: str,
+    seed: int = 42,
+    split_ratios: Tuple[float, float, float] = (0.8, 0.1, 0.1),
+) -> bool:
     """Preprocess a downloaded dataset."""
     if dataset_name not in DATASETS:
         logger.error(f"Unknown dataset: {dataset_name}")
         return False
-    
+
     config = DATASETS[dataset_name]
-    
+
     input_dir = AUDIO_DATA_ROOT / "raw" / config.output_dir
     output_dir = AUDIO_DATA_ROOT / "processed" / config.output_dir
-    
+
     if not input_dir.exists():
         logger.error(f"Dataset not downloaded: {input_dir}")
         return False
-    
+
     logger.info(f"Preprocessing: {config.name}")
-    
+
     if config.task == "emotion":
         success, fail = preprocess_emotion_dataset(input_dir, output_dir, config)
     elif config.task == "instrument":
@@ -909,7 +1061,23 @@ def preprocess_dataset(dataset_name: str) -> bool:
     else:
         logger.error(f"Unknown task type: {config.task}")
         return False
-    
+
+    metadata_path = output_dir / "metadata.json"
+    if metadata_path.exists():
+        with open(metadata_path, "r", encoding="utf-8") as f:
+            metadata = json.load(f).get("samples", [])
+        split_counts = create_split_manifests(
+            output_dir=output_dir,
+            samples=metadata,
+            seed=seed,
+            train_ratio=split_ratios[0],
+            val_ratio=split_ratios[1],
+            test_ratio=split_ratios[2],
+        )
+        logger.info(
+            f"Generated splits: train={split_counts['train']}, val={split_counts['val']}, test={split_counts['test']}"
+        )
+
     logger.info(f"Preprocessing complete: {success} success, {fail} failed")
     return success > 0
 
@@ -1001,18 +1169,69 @@ Examples:
     parser.add_argument("--root", type=str, help=f"Override data root (default: {AUDIO_DATA_ROOT})")
     parser.add_argument("--list", action="store_true", help="List available datasets")
     parser.add_argument("--dataset", type=str, help="Dataset name (or 'all')")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for split generation")
+    parser.add_argument(
+        "--split-ratios",
+        type=str,
+        default="0.8,0.1,0.1",
+        help="Train/val/test ratios as comma-separated floats",
+    )
     parser.add_argument("--download", action="store_true", help="Download dataset")
     parser.add_argument("--preprocess", action="store_true", help="Preprocess dataset")
     parser.add_argument("--stats", action="store_true", help="Show dataset statistics")
     parser.add_argument("--sanitize", action="store_true", help="Sanitize dataset (check for silence/corruption)")
     parser.add_argument("--golden", action="store_true", help="Mark this dataset as the 'Golden' validation set")
     parser.add_argument("--pack", action="store_true", help="Pack dataset into LMDB for high-speed I/O")
+    parser.add_argument(
+        "--source-manifest", type=Path, default=None,
+        help="Path to source_manifest.yaml (used with --list-from-manifest)",
+    )
+    parser.add_argument(
+        "--list-from-manifest", action="store_true",
+        help="List adopted dataset sources from config/source_manifest.yaml and exit",
+    )
     
     args = parser.parse_args()
+
+    if args.list_from_manifest:
+        repo_root = ROOT.parent  # ROOT is scripts/, repo root is scripts/.parent
+        manifest = args.source_manifest or (repo_root / "config" / "source_manifest.yaml")
+        if not manifest.is_file():
+            logger.error("Manifest not found: %s", manifest)
+            sys.exit(1)
+        if yaml is None:
+            logger.error("yaml required for --list-from-manifest; pip install pyyaml")
+            sys.exit(1)
+        with manifest.open() as f:
+            data = yaml.safe_load(f) or {}
+        sources = data.get("sources") or []
+        adopted = [
+            s for s in sources
+            if s.get("adoption_decision") == "adopted"
+            and ("dataset" in (s.get("artifact_classes") or []) or "midi" in (s.get("integration_domain") or "").lower() or "emotion" in (s.get("integration_domain") or "").lower())
+        ]
+        if not adopted:
+            print("No adopted dataset sources in manifest.")
+            print("Set adoption_decision: adopted for dataset-like items in config/source_manifest.yaml.")
+        else:
+            for s in adopted:
+                path = s.get("proposed_storage_path") or "(none)"
+                env = s.get("storage_env_var") or "(none)"
+                print(f"  {s.get('source_item', '?')}: proposed_storage_path={path} storage_env_var={env}")
+        return
     
     # Allow overriding root after parsing
     if args.root:
         AUDIO_DATA_ROOT = Path(args.root).expanduser()
+
+    try:
+        split_ratios = tuple(float(x.strip()) for x in args.split_ratios.split(","))
+    except ValueError:
+        logger.error("Invalid --split-ratios format. Use e.g. 0.8,0.1,0.1")
+        sys.exit(1)
+    if len(split_ratios) != 3 or abs(sum(split_ratios) - 1.0) > 1e-6:
+        logger.error("--split-ratios must contain 3 values summing to 1.0")
+        sys.exit(1)
 
     # Check SSD is mounted
     if not AUDIO_DATA_ROOT.parent.exists():
@@ -1054,7 +1273,11 @@ Examples:
             download_dataset(DATASETS[dataset_name])
         
         if args.preprocess:
-            preprocess_dataset(dataset_name)
+            preprocess_dataset(
+                dataset_name,
+                seed=args.seed,
+                split_ratios=split_ratios,
+            )
         
         if args.sanitize:
             logger.info(f"Sanitizing: {dataset_name}")

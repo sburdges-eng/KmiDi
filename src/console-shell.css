@@ -1,0 +1,561 @@
+/* ═══════════════════════════════════════════════════
+   KmiDi Console Shell — split-deck layout
+   Depends on :root tokens from index.css
+   ═══════════════════════════════════════════════════ */
+
+/* ─── Reset: override #root padding ─── */
+#root:has(.console-shell) {
+  padding: 0;
+}
+
+/* ─── Full-viewport shell ─── */
+.console-shell {
+  display: grid;
+  grid-template-rows: 160px 1fr;
+  width: 100%;
+  height: 100vh;
+  background: var(--surface);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Noise grain */
+.console-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* ═══════════════════════════════════════════════════
+   UPPER DECK (160px fixed)
+   ═══════════════════════════════════════════════════ */
+
+.upper-deck {
+  display: grid;
+  grid-template-columns: 200px 1fr 200px;
+  align-items: stretch;
+  background: var(--surface-inset);
+  border-bottom: 1px solid var(--border-strong);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+  padding: var(--space-2) var(--space-4);
+  gap: 0;
+  position: relative;
+  z-index: 2;
+  height: 160px;
+  max-height: 160px;
+  overflow: hidden;
+}
+
+.upper-deck__zone {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 var(--space-3);
+  overflow: hidden;
+  min-width: 0;
+  max-height: 100%;
+}
+
+.upper-deck__zone:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+
+.upper-deck__zone:first-child { padding-left: 0; }
+.upper-deck__zone:last-child { padding-right: 0; }
+
+/* Wordmark */
+.console-wordmark {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+  margin: 0 0 4px 0;
+  line-height: 1;
+}
+
+/* ─── UPPER DECK: Transport zone overrides ─── */
+.upper-deck .transport-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.upper-deck .control-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.upper-deck .control-row button {
+  padding: 3px 7px;
+  font-size: 10px;
+  border-radius: 4px;
+  line-height: 1.2;
+}
+
+.upper-deck .tempo {
+  font-size: 9px;
+  gap: 2px;
+  color: var(--text-secondary);
+}
+
+.upper-deck .tempo input[type='range'] {
+  height: 3px;
+}
+
+.upper-deck .tempo input[type='range']::-webkit-slider-thumb {
+  width: 8px;
+  height: 8px;
+}
+
+.upper-deck .tempo input[type='range']::-moz-range-thumb {
+  width: 8px;
+  height: 8px;
+}
+
+/* ─── UPPER DECK: Timeline zone overrides ─── */
+.upper-deck .timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+  height: 100%;
+  justify-content: center;
+}
+
+.upper-deck .timeline-meta {
+  font-size: 9px;
+  margin: 0;
+  line-height: 1;
+}
+
+.upper-deck .timeline-ruler {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 1px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.upper-deck .timeline-ruler::-webkit-scrollbar {
+  display: none;
+}
+
+.upper-deck .beat {
+  flex: 0 0 22px;
+  padding: 2px 0;
+  font-size: 8px;
+  border-radius: 2px;
+  min-height: 0;
+  line-height: 1.2;
+}
+
+/* ─── UPPER DECK: VU + Mixer zone overrides ─── */
+.upper-deck .vu-wrap {
+  padding: 0;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.upper-deck .vu-title {
+  font-size: 8px;
+  margin: 0;
+}
+
+.upper-deck .vu-track {
+  height: 6px;
+}
+
+.upper-deck .vu-value {
+  font-size: 10px;
+  margin: 0;
+  line-height: 1;
+}
+
+.upper-deck .mixer-grid {
+  display: flex !important;
+  gap: 3px;
+  flex-wrap: nowrap;
+}
+
+.upper-deck .mixer-strip {
+  flex: 1;
+  min-width: 0;
+  padding: 3px;
+  border-radius: 3px;
+  gap: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hide vol/pan sliders in upper deck — show only name + meter */
+.upper-deck .mixer-strip label {
+  display: none !important;
+}
+
+.upper-deck .mixer-label {
+  font-size: 8px;
+  margin: 0 0 2px;
+  text-align: center;
+  line-height: 1;
+}
+
+.upper-deck .meter {
+  height: 28px;
+  border-radius: 2px;
+}
+
+/* ═══════════════════════════════════════════════════
+   LOWER DECK
+   ═══════════════════════════════════════════════════ */
+
+.lower-deck {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  grid-template-rows: 1fr 32px;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Nav Rail ─── */
+.nav-rail {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: var(--space-5);
+  gap: var(--space-4);
+  z-index: 1;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+}
+
+/* Reset global button styles on nav items */
+.nav-rail__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer;
+  padding: 0 !important;
+  border-radius: var(--radius);
+  transition: color 120ms ease;
+  box-shadow: none !important;
+}
+
+.nav-rail__item svg {
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+  transition: color 120ms ease;
+}
+
+.nav-rail__item:hover svg {
+  color: var(--text-secondary);
+}
+
+.nav-rail__item[aria-selected="true"] svg {
+  color: var(--text-primary);
+}
+
+/* Active LED */
+.nav-rail__item[aria-selected="true"]::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent-muted);
+  animation: led-throb 200ms ease-out;
+}
+
+@keyframes led-throb {
+  0% { transform: translateY(-50%) scale(1); opacity: 0.5; }
+  50% { transform: translateY(-50%) scale(1.8); opacity: 1; }
+  100% { transform: translateY(-50%) scale(1); opacity: 1; }
+}
+
+/* Tooltip */
+.nav-rail__tooltip {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--surface-overlay);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 120ms ease;
+  z-index: 10;
+  border: none;
+}
+
+.nav-rail__item:hover .nav-rail__tooltip,
+.nav-rail__item:focus-visible .nav-rail__tooltip {
+  opacity: 1;
+}
+
+.nav-rail__item:focus-visible {
+  outline: 2px solid var(--accent-focus);
+  outline-offset: 2px;
+}
+
+/* ─── Workspace ─── */
+.workspace {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-4);
+}
+
+/* ─── Session Bar ─── */
+.session-bar {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-4);
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-ui);
+  background: var(--surface);
+}
+
+.session-bar__text {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 80%;
+}
+
+.session-bar__status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 11px;
+}
+
+.session-bar__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  border: none;
+  padding: 0;
+}
+
+.session-bar__dot--online {
+  background: var(--success);
+  box-shadow: 0 0 4px var(--success);
+}
+
+.session-bar__dot--offline {
+  background: var(--danger);
+}
+
+/* ═══════════════════════════════════════════════════
+   CONSOLE PANELS
+   ═══════════════════════════════════════════════════ */
+
+.console-panel {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: border-color 150ms ease;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+}
+
+.console-panel:hover {
+  border-color: var(--border-hover);
+}
+
+.console-panel__title {
+  font-family: var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 400;
+  margin: 0 0 var(--space-3) 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   MODE LAYOUTS
+   ═══════════════════════════════════════════════════ */
+
+.mode-inspire {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  grid-template-rows: 1fr 1fr;
+  gap: var(--space-3);
+  height: 100%;
+  min-height: 0;
+}
+
+.mode-inspire > :first-child {
+  grid-row: 1 / -1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.mode-create {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--space-3);
+  height: 100%;
+  min-height: 0;
+}
+
+.mode-create > :first-child {
+  grid-column: 1 / -1;
+}
+
+.mode-create > :last-child {
+  grid-column: 1 / -1;
+}
+
+.mode-compose {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  height: 100%;
+  min-height: 0;
+}
+
+.mode-mix-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  height: 100%;
+  align-content: start;
+  min-height: 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   WORKSPACE COMPONENT OVERRIDES
+   ═══════════════════════════════════════════════════ */
+
+/* Emotion wheel: single column in workspace panel */
+.workspace .emotion-wheel {
+  grid-template-columns: 1fr;
+}
+
+/* Mix Detail: full 4-col mixer */
+.workspace .mode-mix-detail .mixer-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.workspace .mode-mix-detail .meter {
+  height: 100px;
+}
+
+/* ═══════════════════════════════════════════════════
+   ATMOSPHERIC GLOW
+   ═══════════════════════════════════════════════════ */
+
+.workspace::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  transition: background 200ms ease;
+}
+
+.workspace--inspire::before {
+  background: radial-gradient(ellipse at 20% 80%, rgba(201, 162, 39, 0.04) 0%, transparent 60%);
+}
+
+.workspace--create::before {
+  background: radial-gradient(ellipse at 50% 50%, rgba(45, 138, 94, 0.04) 0%, transparent 60%);
+}
+
+.workspace--compose::before {
+  background: radial-gradient(ellipse at 50% 20%, rgba(242, 242, 241, 0.03) 0%, transparent 60%);
+}
+
+.workspace--mix-detail::before {
+  background: none;
+}
+
+/* ═══════════════════════════════════════════════════
+   TRANSITIONS (200ms max)
+   ═══════════════════════════════════════════════════ */
+
+.mode-enter {
+  animation: mode-in 120ms ease-out forwards;
+}
+
+.workspace--exiting > * {
+  animation: mode-out 80ms ease-out forwards;
+}
+
+@keyframes mode-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes mode-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════
+   REDUCED MOTION
+   ═══════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .mode-enter,
+  .workspace--exiting > * {
+    animation-duration: 100ms;
+  }
+
+  @keyframes mode-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes led-throb {
+    from { opacity: 1; }
+    to { opacity: 1; }
+  }
+
+  .workspace::before {
+    transition: none;
+  }
+}

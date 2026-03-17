@@ -29,9 +29,9 @@ Reference files:
 
 There are two separate plugin/build contexts in this repo:
 
-1. Root project (`/Users/seanburdges/Dev/KmiDi`)
+1. Root project (repo root)
    - CMake options: `BUILD_PLUGINS`, `KMIDI_BUILD_JUCE_UI`, `BUILD_KELLY_FFI`
-   - Produces: Kelly full stack and `KellyPlugin` (`VST3` target confirmed)
+   - Produces: Kelly full stack and `KellyPlugin_VST3`
 2. Legacy DAIW project (`KmiDi_FINAL/engine/cpp_music_brain`)
    - CMake options: `DAIW_BUILD_VST3`, `DAIW_BUILD_AU`
    - Produces: legacy DAIW plugin targets (separate pipeline)
@@ -49,10 +49,10 @@ Do not mix option names across these two build roots.
 
 ## Full Stack Build (Root Kelly Project)
 
-Use the root workspace path:
+From the repository root:
 
 ```bash
-cd /Users/seanburdges/Dev/KmiDi
+cd <path-to-KmiDi-repo>
 mkdir -p build
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DKMIDI_BUILD_JUCE_UI=ON -DBUILD_PLUGINS=ON -DBUILD_KELLY_FFI=ON
 ```
@@ -111,7 +111,7 @@ Options:
 These tests exercise the Rust bridge and FFI-facing behavior.
 
 ```bash
-cd /Users/seanburdges/Dev/KmiDi/src-tauri
+cd src-tauri
 cargo test
 ```
 

@@ -52,11 +52,16 @@ while [[ $# -gt 0 ]]; do
 done
 
 echo "[1/4] Configuring CMake in $BUILD_DIR"
+PYBIND_DIR="$(python3 -c "import pybind11; print(pybind11.get_cmake_dir())" 2>/dev/null)" || true
+CMAKE_EXTRA=()
+[[ -n "$PYBIND_DIR" ]] && CMAKE_EXTRA+=(-Dpybind11_DIR="$PYBIND_DIR")
 cmake -S "$ROOT_DIR" -B "$BUILD_DIR" \
   -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+  -DBUILD_KELLY_CORE=ON \
   -DKMIDI_BUILD_JUCE_UI=ON \
   -DBUILD_PLUGINS="$BUILD_PLUGINS" \
-  -DBUILD_KELLY_FFI=ON
+  -DBUILD_KELLY_FFI=ON \
+  "${CMAKE_EXTRA[@]}"
 
 echo "[2/4] Building KellyFFI"
 cmake --build "$BUILD_DIR" --target KellyFFI -j"$JOBS"

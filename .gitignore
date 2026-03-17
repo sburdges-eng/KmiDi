@@ -41,6 +41,12 @@ target/
 src-tauri/gen/
 # Machine-specific Cargo config (contains absolute paths)
 src-tauri/.cargo/config.toml
+# Tauri-packaged Python engine binary (build via PyInstaller; do not commit)
+src-tauri/binaries/
+
+# Large generated/audit lists (regenerate from SSD if needed; keep .md docs)
+docs/EXTERNAL_DRIVE_AUDIO_COMPLETE_LIST.txt
+docs/EXTERNAL_DRIVE_AUDIO_FULL_LIST.txt
 
 # Logs and temp
 *.log

@@ -1,10 +1,10 @@
-# Kelly - Build Instructions
+# KmiDi / Kelly — Build Instructions
 
-This document is the canonical build reference for the Kelly project.
+This document is the canonical build reference for the KmiDi monorepo (Kelly C++ engine, KellyFFI, Tauri shell).
 
 ## Prerequisites
 
-- CMake `>= 3.22`
+- CMake `>= 3.27`
 - Ninja build system
 - Python `>= 3.10`
 - Node.js `>= 20`
@@ -13,35 +13,40 @@ This document is the canonical build reference for the Kelly project.
 ## Quick Start
 
 ```bash
-git clone <your-kelly-repo-url>
-cd KmiDi_recovery_20260218-0329
-python -m venv .venv
-source .venv/bin/activate
+git clone <your-kmidi-repo-url>
+cd KmiDi
 pip install -e .
+./scripts/dev-setup.sh
 ```
 
-## Configure
+## Configure (canonical build dir: `build`)
+
+For the V1 native path (KellyFFI + optional plugin), from repo root:
 
 ```bash
-cmake -S . -B build_out -G Ninja \
+cmake -S . -B build -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DKMIDI_BUILD_JUCE_UI=ON \
   -DBUILD_PLUGINS=ON \
-  -DBUILD_DESKTOP=ON \
-  -DBUILD_TESTS=ON
+  -DBUILD_KELLY_FFI=ON
 ```
 
-## Build Targets
+To also enable desktop app or native tests: `-DBUILD_DESKTOP=ON` / `-DBUILD_TESTS=ON` (require Qt/JUCE UI).
+
+## Build Targets (V1-relevant)
 
 ```bash
-cmake --build build_out --target KellyCore
-cmake --build build_out --target KellyPlugin
-cmake --build build_out --target KellyApp
-cmake --build build_out --target KellyTests
+cmake --build build --target KellyCore
+cmake --build build --target KellyFFI
+cmake --build build --target KellyPlugin_VST3
 ```
+
+Optional: `KellyApp` (desktop host), `KellyTests` (when `BUILD_TESTS=ON`).
 
 ## Run Tests
 
 ```bash
-ctest --test-dir build_out --output-on-failure
+ctest --test-dir build --output-on-failure
 pytest tests -q
 ```
 
@@ -55,12 +60,13 @@ npm run build
 For desktop development:
 
 ```bash
-npm run tauri dev
+npm run dev:tauri
 ```
 
 ## Common Build Flags
 
-- `BUILD_PLUGINS=ON|OFF` - JUCE plugin targets.
+- `BUILD_KELLY_FFI=ON` - Shared library for Tauri (V1 native path).
+- `BUILD_PLUGINS=ON` / `KMIDI_BUILD_JUCE_UI=ON` - JUCE plugin targets (e.g. KellyPlugin_VST3).
 - `BUILD_DESKTOP=ON|OFF` - Desktop host app targets.
 - `BUILD_TESTS=ON|OFF` - Native/unit test targets.
 
@@ -70,7 +76,7 @@ This project is aligned to JUCE 8. If you encounter SDK issues, confirm the JUCE
 
 ## Troubleshooting
 
-- **CMake configure fails:** remove `build_out` and reconfigure.
+- **CMake configure fails:** remove `build` and reconfigure.
 - **Missing Python modules:** re-run `pip install -e .`.
 - **Node/Tauri errors:** remove `node_modules` and reinstall.
-- **Plugin host issues:** rebuild `KellyPlugin` and verify output binary paths.
+- **Plugin host issues:** rebuild `KellyPlugin_VST3` and verify artifact under `build/KellyPlugin_artefacts/`.

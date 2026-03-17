@@ -77,9 +77,10 @@ npm run dev:all
 
 This starts:
 - React development server (port 1420)
-- C++ file watcher and rebuilder
 - Python Music Brain API server (port 8000)
 - Tauri desktop application
+
+(C++ KellyFFI must be built separately when using pipeline B; re-run CMake build after C++ changes.)
 
 **Development URLs:**
 - React Frontend: http://localhost:1420
@@ -100,20 +101,19 @@ This starts:
 
 ### Build Workflows
 
-**V1 full pipeline (canonical):** from repo root:
-```bash
-./scripts/build_v1.sh
-```
-Builds: sync entities → C++ headless core + Python bindings → PyInstaller-packaged Music Brain API → Tauri app. Requires Python (pybind11, pyinstaller), Node, Rust, CMake.
+Two V1 build paths:
 
-**Tauri desktop app only** (after C++ KellyFFI is built):
+- **V1 pipeline A (penta_core + PyInstaller + Tauri):** from repo root: `./scripts/build_v1.sh`. Builds: sync entities → C++ penta_core / Python bindings → PyInstaller-packaged Music Brain API → Tauri app. Requires Python (pybind11, pyinstaller), Node, Rust, CMake. Does not build KellyFFI.
+- **V1 pipeline B (KellyFFI + Tauri):** See [FULL_STACK_BUILD.md](FULL_STACK_BUILD.md) and `./scripts/build-full-stack.sh`. Builds KellyFFI (and optional KellyPlugin_VST3) for native desktop integration (React → Tauri → KellyFFI → KellyCore).
+
+**Tauri desktop app only** (after C++ KellyFFI is built for pipeline B):
 ```bash
 npm ci && npm run tauri build
 ```
 
 **Component builds:**
 - `npm run build` — React frontend only
-- CMake: `cmake --build build --target KellyFFI` — FFI library for Tauri
+- CMake: `cmake --build build --target KellyFFI` — FFI library for Tauri (pipeline B)
 - `./scripts/build-all.sh` — Full multi-technology stack (see script for options)
 
 **API/schema (UI–engine contract):** The single source of truth is `shared_schemas/CompleteSongIntentRequest.json`. Run `python3 scripts/sync_entities.py` after schema changes; CI verifies no drift between JSON, `src/types/Intent.ts`, and `src-tauri/src/generated/intent.rs`. Python validation: `pytest tests/unit/test_api_schema.py`.
@@ -354,17 +354,19 @@ valgrind --tool=massif ./target/release/idaw
 
 ### Running Tests
 
-**All Tests:**
+**Python (repo test suite):**
 ```bash
-npm run test:all
+python3 -m pytest tests/
 ```
 
-**Individual Test Suites:**
+**Schema/API contract (UI–engine):**
 ```bash
-npm run test:cpp        # C++ unit tests
-npm run test:rust       # Rust tests  
-npm run test:integration # Integration tests
+python3 -m pytest tests/unit/test_api_schema.py
 ```
+
+**Rust/Tauri:** from repo root, `cd src-tauri && cargo test`.
+
+**C++ (when BUILD_TESTS=ON):** `ctest --test-dir build --output-on-failure`.
 
 ### Writing Tests
 
@@ -547,21 +549,17 @@ perf record ./target/release/idaw
    # Work on your feature
    npm run dev:all
    
-   # Test your changes
-   npm run test:all
-   
-   # Lint and format
-   npm run lint
-   npm run format
+   # Test your changes (Python)
+   python3 -m pytest tests/
+   # Optional: cd src-tauri && cargo test
    ```
 
 4. **Build Verification:**
    ```bash
-   # Test full build
-   npm run build:all-release
-   
-   # Test plugins in DAW
-   npm run build:plugins
+   # Frontend build
+   npm run build
+   # Native (pipeline B): ./scripts/build-full-stack.sh
+   # Plugins: cmake --build build --target KellyPlugin_VST3
    ```
 
 5. **Submit Pull Request:**
@@ -686,17 +684,27 @@ perf record ./target/release/idaw
 
 **Plugin Testing Workflow:**
 ```bash
-# Build plugin
-npm run build:plugins
+# Build plugin (from repo root, after CMake configure with BUILD_PLUGINS=ON)
+cmake --build build --target KellyPlugin_VST3
 
 # Install locally
-cp build/release/YourPlugin.vst3 ~/Library/Audio/Plug-Ins/VST3/
+cp build/KellyPlugin_artefacts/Release/VST3/*.vst3 ~/Library/Audio/Plug-Ins/VST3/
 
 # Test in DAW
 open /Applications/Logic\ Pro.app
 # or
 open /Applications/Reaper.app
 ```
+
+## External sources and dataset layout
+
+External assets (datasets, weights, benchmarks) and the canonical dataset volume layout are documented and driven by manifest + scripts so they cooperate with existing structure.
+
+- **Dataset layout:** Set `KMIDI_DATASETS_PATH` to the Datasets root that contains `by_source/`, `by_domain/`, etc. See [docs/DATASETS_LAYOUT.md](DATASETS_LAYOUT.md) for the full layout (by_source per source, downloads/raw/processed, and how prepare_datasets vs acquisition scripts use it).
+- **Source manifest:** [config/source_manifest.yaml](../config/source_manifest.yaml) lists external source items (verification status, storage path, license, adoption). No downloads until primary URLs and licenses are verified.
+- **Briefings:** One briefing per source item in [docs/research/sources/](research/sources/) (exact template, verification_basis).
+- **Acquisition script:** `python scripts/acquire/acquire_from_manifest.py --list` and `--resolve-paths` / `--dry-run` resolve storage paths from the manifest; dataset-like items use `$KMIDI_DATASETS_PATH/by_source/<source_item>/downloads`. No fetch is performed until URLs are in the manifest and approved. See [scripts/acquire/README.md](../scripts/acquire/README.md).
+- **Plan and phases:** [docs/SOURCE_INTEGRATION_PLAN.md](SOURCE_INTEGRATION_PLAN.md) describes integration and download phases; Phase 3 (this wiring) is low-risk only.
 
 ## Environment Variables
 
@@ -814,7 +822,7 @@ export APPLE_TEAM_ID="TEAMID"
 
 This guide covers the essential aspects of KmiDi development. For specific technical questions, refer to:
 
-- `ARCHITECTURE.md` - Overall system design
-- `API.md` - API reference documentation
+- `docs/ARCHITECTURE.md` - Overall system design
+- `docs/API.md` - API reference documentation
 - Individual component READMEs
 - Inline code documentation

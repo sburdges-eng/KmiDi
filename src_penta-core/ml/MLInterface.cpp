@@ -113,6 +113,7 @@ public:
         }
 #else
         // Stub implementation without ONNX
+        (void)path;
         loaded_models_.insert(type);
         return true;
 #endif

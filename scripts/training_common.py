@@ -86,7 +86,10 @@ def validate_run_contract(contract: dict[str, Any]) -> dict[str, Any]:
     s3 = _expect_allowed_keys(
         _expect_dict(contract.get("s3"), "s3"),
         "s3",
-        allowed={"packageBucket", "packagePrefix", "runBucket", "runPrefix", "teacherPrefix", "studentPrefix"},
+        allowed={
+            "packageBucket", "packagePrefix", "runBucket", "runPrefix",
+            "teacherPrefix", "studentPrefix",
+        },
         required={"packageBucket", "packagePrefix", "runBucket", "runPrefix"},
     )
     aws = _expect_allowed_keys(
@@ -149,7 +152,10 @@ def validate_run_contract(contract: dict[str, Any]) -> dict[str, Any]:
             raise ValueError("training.activePackageId must be a string")
     _expect_non_empty_string(training.get("defaultRunIdPrefix"), "training.defaultRunIdPrefix")
     _expect_non_empty_string(training.get("defaultInstanceType"), "training.defaultInstanceType")
-    _expect_positive_number(training.get("defaultMaxRuntimeHours"), "training.defaultMaxRuntimeHours")
+    _expect_positive_number(
+        training.get("defaultMaxRuntimeHours"),
+        "training.defaultMaxRuntimeHours",
+    )
     budget_cap = _expect_positive_number(training.get("budgetCapUsd"), "training.budgetCapUsd")
     if budget_cap > 100.0:
         raise ValueError("training.budgetCapUsd must be <= 100.0")
@@ -174,31 +180,51 @@ def validate_run_contract(contract: dict[str, Any]) -> dict[str, Any]:
             "maxTotalCheckpoints",
         },
     )
-    default_cadence = _expect_positive_int(checkpoints.get("defaultCadenceSteps"), "training.checkpoints.defaultCadenceSteps")
-    min_cadence = _expect_positive_int(checkpoints.get("minCadenceSteps"), "training.checkpoints.minCadenceSteps")
-    max_cadence = _expect_positive_int(checkpoints.get("maxCadenceSteps"), "training.checkpoints.maxCadenceSteps")
+    default_cadence = _expect_positive_int(
+        checkpoints.get("defaultCadenceSteps"), "training.checkpoints.defaultCadenceSteps"
+    )
+    min_cadence = _expect_positive_int(
+        checkpoints.get("minCadenceSteps"), "training.checkpoints.minCadenceSteps"
+    )
+    max_cadence = _expect_positive_int(
+        checkpoints.get("maxCadenceSteps"), "training.checkpoints.maxCadenceSteps"
+    )
     if min_cadence > max_cadence:
         raise ValueError("training.checkpoints.minCadenceSteps must be <= maxCadenceSteps")
     if default_cadence < min_cadence or default_cadence > max_cadence:
-        raise ValueError("training.checkpoints.defaultCadenceSteps must be within [minCadenceSteps, maxCadenceSteps]")
+        raise ValueError(
+            "training.checkpoints.defaultCadenceSteps must be within "
+            "[minCadenceSteps, maxCadenceSteps]"
+        )
     default_keep = _expect_positive_int(
         checkpoints.get("defaultMaxCheckpoints"),
         "training.checkpoints.defaultMaxCheckpoints",
     )
-    max_keep = _expect_positive_int(checkpoints.get("maxCheckpoints"), "training.checkpoints.maxCheckpoints")
-    max_total = _expect_positive_int(checkpoints.get("maxTotalCheckpoints"), "training.checkpoints.maxTotalCheckpoints")
+    max_keep = _expect_positive_int(
+        checkpoints.get("maxCheckpoints"), "training.checkpoints.maxCheckpoints"
+    )
+    max_total = _expect_positive_int(
+        checkpoints.get("maxTotalCheckpoints"), "training.checkpoints.maxTotalCheckpoints"
+    )
     if max_keep < default_keep:
         raise ValueError("training.checkpoints.maxCheckpoints must be >= defaultMaxCheckpoints")
     if max_total < max_keep + 1:
         raise ValueError(
-            "training.checkpoints.maxTotalCheckpoints must allow keep-last-N + best policy (>= maxCheckpoints + 1)"
+            "training.checkpoints.maxTotalCheckpoints must allow "
+            "keep-last-N + best policy (>= maxCheckpoints + 1)"
         )
 
     early_stop = _expect_allowed_keys(
         _expect_dict(training.get("earlyStop"), "training.earlyStop"),
         "training.earlyStop",
-        allowed={"enabled", "metricPath", "patience", "minDelta", "minEpochs", "autoShutdownDefault"},
-        required={"enabled", "metricPath", "patience", "minDelta", "minEpochs", "autoShutdownDefault"},
+        allowed={
+            "enabled", "metricPath", "patience", "minDelta", "minEpochs",
+            "autoShutdownDefault",
+        },
+        required={
+            "enabled", "metricPath", "patience", "minDelta", "minEpochs",
+            "autoShutdownDefault",
+        },
     )
     _expect_bool(early_stop.get("enabled"), "training.earlyStop.enabled")
     _expect_non_empty_string(early_stop.get("metricPath"), "training.earlyStop.metricPath")
@@ -206,8 +232,13 @@ def validate_run_contract(contract: dict[str, Any]) -> dict[str, Any]:
     _expect_non_negative_number(early_stop.get("minDelta"), "training.earlyStop.minDelta")
     min_epochs = early_stop.get("minEpochs")
     if isinstance(min_epochs, bool) or not isinstance(min_epochs, int) or min_epochs < 0:
-        raise ValueError("training.earlyStop.minEpochs must be a non-negative integer")
-    _expect_bool(early_stop.get("autoShutdownDefault"), "training.earlyStop.autoShutdownDefault")
+        raise ValueError(
+            "training.earlyStop.minEpochs must be a non-negative integer"
+        )
+    _expect_bool(
+        early_stop.get("autoShutdownDefault"),
+        "training.earlyStop.autoShutdownDefault",
+    )
 
     ops = _expect_allowed_keys(
         _expect_dict(training.get("ops"), "training.ops"),
@@ -220,14 +251,29 @@ def validate_run_contract(contract: dict[str, Any]) -> dict[str, Any]:
     dataset_cache = _expect_allowed_keys(
         _expect_dict(ops.get("datasetCache"), "training.ops.datasetCache"),
         "training.ops.datasetCache",
-        allowed={"defaultMode", "ebsFallbackRoot", "allowStreamingFallback"},
-        required={"defaultMode", "ebsFallbackRoot", "allowStreamingFallback"},
+        allowed={
+            "defaultMode", "ebsFallbackRoot", "allowStreamingFallback",
+        },
+        required={
+            "defaultMode", "ebsFallbackRoot", "allowStreamingFallback",
+        },
     )
-    cache_mode = _expect_non_empty_string(dataset_cache.get("defaultMode"), "training.ops.datasetCache.defaultMode")
+    cache_mode = _expect_non_empty_string(
+        dataset_cache.get("defaultMode"), "training.ops.datasetCache.defaultMode"
+    )
     if cache_mode not in {"auto", "nvme", "ebs", "stream"}:
-        raise ValueError("training.ops.datasetCache.defaultMode must be one of auto|nvme|ebs|stream")
-    _expect_non_empty_string(dataset_cache.get("ebsFallbackRoot"), "training.ops.datasetCache.ebsFallbackRoot")
-    _expect_bool(dataset_cache.get("allowStreamingFallback"), "training.ops.datasetCache.allowStreamingFallback")
+        raise ValueError(
+            "training.ops.datasetCache.defaultMode must be one of "
+            "auto|nvme|ebs|stream"
+        )
+    _expect_non_empty_string(
+        dataset_cache.get("ebsFallbackRoot"),
+        "training.ops.datasetCache.ebsFallbackRoot",
+    )
+    _expect_bool(
+        dataset_cache.get("allowStreamingFallback"),
+        "training.ops.datasetCache.allowStreamingFallback",
+    )
 
     teacher_fetch = _expect_allowed_keys(
         _expect_dict(security.get("teacherFetch"), "security.teacherFetch"),
@@ -235,7 +281,10 @@ def validate_run_contract(contract: dict[str, Any]) -> dict[str, Any]:
         allowed={"allowByDefault", "requiredProfile", "requiredRoleArn"},
         required={"allowByDefault", "requiredProfile", "requiredRoleArn"},
     )
-    allow_by_default = _expect_bool(teacher_fetch.get("allowByDefault"), "security.teacherFetch.allowByDefault")
+    allow_by_default = _expect_bool(
+        teacher_fetch.get("allowByDefault"),
+        "security.teacherFetch.allowByDefault",
+    )
     if allow_by_default:
         raise ValueError("security.teacherFetch.allowByDefault must be false (fail-closed)")
     required_profile = _expect_non_empty_string(
@@ -247,7 +296,10 @@ def validate_run_contract(contract: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("security.teacherFetch.requiredRoleArn must be a string")
     if break_glass_profile:
         if break_glass_profile != required_profile:
-            raise ValueError("aws.breakGlassProfile must match security.teacherFetch.requiredProfile")
+            raise ValueError(
+                "aws.breakGlassProfile must match "
+                "security.teacherFetch.requiredProfile"
+            )
 
     return contract
 
@@ -297,24 +349,38 @@ def validate_manifest_semantics(manifest: dict[str, Any]) -> list[str]:
             continue
         record_count = split_payload.get("recordCount")
         if not isinstance(record_count, int) or record_count < 0:
-            _manifest_error(f"splits.{split_name}.recordCount", "must be a non-negative integer", errors)
+            _manifest_error(
+                f"splits.{split_name}.recordCount",
+                "must be a non-negative integer",
+                errors,
+            )
             continue
         shards = split_payload.get("shards")
         if not isinstance(shards, list):
-            _manifest_error(f"splits.{split_name}.shards", "must be a list", errors)
+            _manifest_error(
+                f"splits.{split_name}.shards", "must be a list", errors
+            )
             continue
 
         split_sum = 0
         for idx, shard in enumerate(shards):
             if not isinstance(shard, dict):
-                _manifest_error(f"splits.{split_name}.shards[{idx}]", "must be an object", errors)
+                _manifest_error(
+                    f"splits.{split_name}.shards[{idx}]",
+                    "must be an object",
+                    errors,
+                )
                 continue
             shard_file = shard.get("file")
             shard_split = shard.get("split")
             shard_count = shard.get("recordCount")
             shard_compression = shard.get("compression")
             if not isinstance(shard_file, str) or not shard_file:
-                _manifest_error(f"splits.{split_name}.shards[{idx}].file", "must be a non-empty string", errors)
+                _manifest_error(
+                    f"splits.{split_name}.shards[{idx}].file",
+                    "must be a non-empty string",
+                    errors,
+                )
                 continue
             if shard_split != split_name:
                 _manifest_error(
@@ -342,7 +408,8 @@ def validate_manifest_semantics(manifest: dict[str, Any]) -> list[str]:
                 if not shard_file.endswith(expected_suffix):
                     _manifest_error(
                         f"splits.{split_name}.shards[{idx}].file",
-                        f"must end with '{expected_suffix}' for compression '{shard_compression}'",
+                        f"must end with '{expected_suffix}' for "
+                        f"compression '{shard_compression}'",
                         errors,
                     )
         if split_sum != record_count:
@@ -415,7 +482,9 @@ def load_yaml_or_json(path: Path) -> Any:
         try:
             import yaml  # type: ignore
         except Exception as exc:
-            raise RuntimeError(f"Unable to parse {path}: install PyYAML or use JSON-compatible YAML") from exc
+            raise RuntimeError(
+                f"Unable to parse {path}: install PyYAML or use JSON-compatible YAML"
+            ) from exc
         return yaml.safe_load(text)
 
 
@@ -452,7 +521,10 @@ def resolve_checkpoint_settings(
 
     default_max_checkpoints = int(policy.get("defaultMaxCheckpoints", 3) or 3)
     max_checkpoints_limit = int(policy.get("maxCheckpoints", 20) or 20)
-    max_total_checkpoints = int(policy.get("maxTotalCheckpoints", max_checkpoints_limit + 1) or (max_checkpoints_limit + 1))
+    max_total_checkpoints = int(
+        policy.get("maxTotalCheckpoints", max_checkpoints_limit + 1)
+        or (max_checkpoints_limit + 1)
+    )
 
     resolved_cadence = cadence_steps if cadence_steps > 0 else default_cadence
     resolved_max_checkpoints = max_checkpoints if max_checkpoints > 0 else default_max_checkpoints
@@ -466,14 +538,15 @@ def resolve_checkpoint_settings(
         raise ValueError("max checkpoints must be > 0")
     if resolved_max_checkpoints > max_checkpoints_limit:
         raise ValueError(
-            f"max checkpoints {resolved_max_checkpoints} exceeds run-contract limit {max_checkpoints_limit}"
+            f"max checkpoints {resolved_max_checkpoints} exceeds "
+            f"run-contract limit {max_checkpoints_limit}"
         )
     if max_total_checkpoints <= 0:
         raise ValueError("max total checkpoints must be > 0")
     if max_total_checkpoints < resolved_max_checkpoints + 1:
         raise ValueError(
-            f"max total checkpoints {max_total_checkpoints} is too small for keep-last-N + best policy "
-            f"({resolved_max_checkpoints + 1})"
+            f"max total checkpoints {max_total_checkpoints} is too small "
+            f"for keep-last-N + best policy ({resolved_max_checkpoints + 1})"
         )
 
     return {
@@ -552,6 +625,28 @@ def chunked(records: list[dict[str, Any]], chunk_size: int) -> Iterator[list[dic
         raise ValueError("chunk_size must be > 0")
     for idx in range(0, len(records), chunk_size):
         yield records[idx : idx + chunk_size]
+
+
+def shard_indices_for_rank(rank: int, world_size: int, num_shards: int) -> list[int]:
+    """Shard indices assigned to this rank (round-robin). For distributed cloud training."""
+    if world_size <= 0 or num_shards <= 0:
+        return list(range(num_shards)) if world_size <= 1 else []
+    if rank < 0 or rank >= world_size:
+        return []
+    return [i for i in range(num_shards) if i % world_size == rank]
+
+
+def filter_shards_for_rank(
+    shards: list[dict[str, Any]], rank: int, world_size: int, train_only: bool = True
+) -> list[dict[str, Any]]:
+    """Return shard entries for this rank by position index. If not train_only,
+    returns all (for val/test).
+    """
+    if not shards or world_size <= 1 or rank < 0:
+        return shards
+    if train_only:
+        return [s for i, s in enumerate(shards) if i % world_size == rank]
+    return shards
 
 
 def parse_s3_uri(uri: str) -> tuple[str, str]:

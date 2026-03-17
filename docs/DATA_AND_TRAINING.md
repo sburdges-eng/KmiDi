@@ -16,7 +16,7 @@ model weights, and GPU training runs.
 | **Symlinks OK** | If a dataset lives on an external drive or SSD, symlink it: `ln -s /Volumes/Extreme\ SSD/kelly-audio-data ~/Datasets/kelly-audio-data` |
 | **Env override** | Set `KELLY_AUDIO_DATA_ROOT` to point to an alternative root; scripts read this variable |
 
-**Dataset root resolution order** (used by experiments and dataset loaders): `KMIDI_DATASETS_PATH` → `AUDIO_DATA_ROOT` → config `dataset_root` → `~/Datasets`. See [DISCOVERY_DATASETS_KMIDI_PATH.md](DISCOVERY_DATASETS_KMIDI_PATH.md). Optional location `~/Datasets/by_source/kmidi` is not referenced in code; it may hold KmiDi-sourced audio if you use it locally.
+**Dataset root resolution order** (used by experiments and dataset loaders): `KMIDI_DATASETS_PATH` → `AUDIO_DATA_ROOT` → config `dataset_root` → `~/Datasets`. See [DISCOVERY_DATASETS_KMIDI_PATH.md](DISCOVERY_DATASETS_KMIDI_PATH.md). For the full canonical layout (by_source, by_domain, acquisition paths), see [DATASETS_LAYOUT.md](DATASETS_LAYOUT.md).
 
 ### Standard layout under `~/Datasets/`
 

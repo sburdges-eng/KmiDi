@@ -144,7 +144,8 @@ Variables are loaded in this order (later files override earlier ones):
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `LOCAL_RANK` | `0` | Local rank for distributed training |
-| `WORLD_SIZE` | `1` | Total number of processes |
+| `RANK` | `0` | Global rank (used by AWS entrypoint for shard-aware loading) |
+| `WORLD_SIZE` | `1` | Total number of processes; when > 1, each rank downloads/loads only its train shards |
 | `CUDA_VISIBLE_DEVICES` | `0` | GPU device IDs |
 | `TRAINING_BATCH_SIZE` | `32` | Training batch size |
 

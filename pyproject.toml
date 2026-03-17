@@ -2,8 +2,9 @@
 requires = ["setuptools>=65", "wheel"]
 build-backend = "setuptools.build_meta"
 
+# This repo is not a uv workspace; music_brain is the single package at root.
 [tool.uv.workspace]
-members = ["apps/*", "libs/*"]
+members = []
 
 [project]
 name = "KmiDi"
@@ -21,11 +22,10 @@ dependencies = [
     "librosa>=0.10",
     "pyyaml>=6.0",
     "scipy>=1.8",
-    "pydantic",
+    "pydantic>=2.0",
     "pybind11>=2.10",
     "fastapi>=0.100",
     "uvicorn>=0.20",
-    "pydantic>=2.0",
 ]
 
 [project.optional-dependencies]
@@ -61,4 +61,4 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-testpaths = ["tests", "apps/kmidi/tests", "libs/ai-core/tests"]
+testpaths = ["tests"]

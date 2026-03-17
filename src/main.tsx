@@ -1,8 +1,10 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App';
+import AppConsole from './AppConsole';
 import ErrorBoundary from './ErrorBoundary';
 import './index.css';
+
+// Default shell: AppConsole. App.tsx is legacy/alternate and is not mounted here.
 
 const root = document.getElementById('root');
 
@@ -13,7 +15,7 @@ if (!root) {
 createRoot(root).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <AppConsole />
     </ErrorBoundary>
   </StrictMode>,
 );

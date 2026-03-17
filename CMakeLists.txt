@@ -276,6 +276,10 @@ if(KMIDI_REQUIRE_QT)
     )
 endif()
 
+if(pybind11_FOUND)
+    target_link_libraries(KellyCore PUBLIC pybind11::pybind11)
+endif()
+
 # ML Dependencies
 if(ENABLE_RTNEURAL AND RTNeural_FOUND)
     target_include_directories(KellyCore PUBLIC ${RTNeural_INCLUDE_DIRS})

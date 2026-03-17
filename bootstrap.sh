@@ -38,6 +38,11 @@ else
   NINJA_AVAILABLE=1
 fi
 
+if ! command -v rg >/dev/null 2>&1; then
+  echo "WARNING: ripgrep (rg) not found. Some scripts use it for fast search."
+  echo "         Install via: brew install ripgrep  (macOS) / apt-get install ripgrep (Linux)"
+fi
+
 if command -v node >/dev/null 2>&1; then
   NODE_VER="$(node -v | sed 's/^v//')"
   REQUIRED_NODE="20.0.0"

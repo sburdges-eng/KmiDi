@@ -30,5 +30,5 @@ else
 fi
 
 echo "=> Dev setup complete."
-echo "   Start full stack: npm run dev:all"
-echo "   Or: npm run dev (React) | npm run tauri dev (Tauri) | npm run dev:python (API on :8000)"
+echo "   React + API: npm run dev:all"
+echo "   Or: npm run dev (React) | npm run dev:tauri (Tauri) | npm run dev:python (API on :8000)"

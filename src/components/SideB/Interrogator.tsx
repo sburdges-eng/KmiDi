@@ -25,10 +25,10 @@ export function Interrogator({ starter, onAsk }: Props) {
         <input
           value={prompt}
           onChange={(event) => setPrompt(event.target.value)}
-          placeholder="Try: 'What chord comes next?' or 'Make the chorus bigger'"
+          placeholder="e.g. What chord next? Make the chorus bigger"
         />
       </label>
-      <button type="submit" className="outline">Ask KmiDi</button>
+      <button type="submit" className="outline">Ask</button>
     </form>
   );
 }

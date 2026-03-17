@@ -83,7 +83,7 @@ private:
     std::unique_ptr<RhythmQuantizer> quantizer_;
 
     uint64_t samplePosition_;
-    uint64_t lastAnalysisPosition_;  // Per-instance analysis timing (not static)
+    [[maybe_unused]] uint64_t lastAnalysisPosition_;  // Reserved: per-instance analysis timing
     std::vector<uint64_t> onsetHistory_;
 };
 

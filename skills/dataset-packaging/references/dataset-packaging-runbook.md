@@ -142,3 +142,36 @@ Sync failures:
 - Provide explicit `--s3-uri` or fill `s3.packageBucket` in `config/run_contract.yaml`.
 - Ensure AWS credentials/profile/region are valid for the package bucket.
 - Install `boto3` if missing in local environment.
+
+## Cloud training optimization (sharded data)
+
+Training data is sharded so that multi-node or multi-GPU runs can load only a subset of shards per worker, reducing download and memory.
+
+### Sharding for cloud
+
+- **Records per shard**: When packaging, use `--records-per-shard` so the number of **train** shards is at least the number of workers (e.g. 500–2000 records per shard). Example: 50k train records with `--records-per-shard 2000` → 25 train shards, enough for up to 25-way distribution.
+- **Split layout**: Only the **train** split is shard-distributed. Val and test are loaded in full on every rank so evaluation is consistent.
+
+### Distributed run (S3)
+
+Set `RANK` and `WORLD_SIZE` (or pass `--rank` and `--world-size`). The AWS training entrypoint will:
+
+- Download only this rank’s train shards from S3 (round-robin: rank `r` gets shards `r`, `r+world_size`, …).
+- Load only those train shards; val/test shards are downloaded and loaded in full on every rank.
+
+Example (2 workers):
+
+```bash
+# Worker 0
+RANK=0 WORLD_SIZE=2 python scripts/aws_train_entrypoint.py --package-s3-uri s3://bucket/prefix ...
+
+# Worker 1
+RANK=1 WORLD_SIZE=2 python scripts/aws_train_entrypoint.py --package-s3-uri s3://bucket/prefix ...
+```
+
+### Pre-cached package (local)
+
+With a full package already on disk (`tools/precache_dataset.sh` or `scripts/sync_package_to_s3.py` used to download, or a shared volume):
+
+- Use `--package-local-dir /path/to/PACKAGES/<package-id>`.
+- All shards must be present. Each rank still only **loads** its share of train shards (filtered by `RANK`/`WORLD_SIZE`), so memory and read I/O scale with world size.

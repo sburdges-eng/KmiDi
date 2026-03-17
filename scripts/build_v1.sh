@@ -25,8 +25,8 @@ mkdir -p "${ROOT_DIR}/music_brain/native"
 cp "${BUILD_DIR}"/python/penta_core_native* "${ROOT_DIR}/music_brain/native/" 2>/dev/null || true
 
 echo "==> 2. Packaging Python engine sidecar"
-python3 -m pip install -r "${ROOT_DIR}/requirements.txt"
-python3 -m pip install pyinstaller
+python3 -m pip install -e "${ROOT_DIR}" --quiet
+python3 -m pip install pyinstaller --quiet
 pyinstaller --noconfirm --clean --name kmidi_brain --onefile "${ROOT_DIR}/music_brain/api.py"
 
 mkdir -p "${ROOT_DIR}/src-tauri/binaries"

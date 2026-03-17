@@ -19,19 +19,20 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 FEATURES="${@:-tauri ml training mcp}"
 
 # Function to load .env file if it exists
+# Parses KEY=VAL so values containing '=' are handled (first '=' is the separator).
 load_env_file() {
     local file="$1"
     if [ -f "$file" ]; then
         echo "Loading: $file" >&2
-        # Export variables, handling comments and empty lines
-        # Use a safer method that works in all shells
         while IFS= read -r line || [ -n "$line" ]; do
             # Skip comments and empty lines
             [[ "$line" =~ ^[[:space:]]*# ]] && continue
             [[ -z "${line// }" ]] && continue
-            
-            # Export the variable
-            export "$line" 2>/dev/null || true
+            # Split on first '=' so VALUE can contain '='
+            key="${line%%=*}"
+            val="${line#*=}"
+            [ -z "$key" ] && continue
+            export "$key=$val" 2>/dev/null || true
         done < "$file"
     fi
 }

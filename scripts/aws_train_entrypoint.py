@@ -24,6 +24,7 @@ from scripts.license_gate import (
 from scripts.training_common import (
     DEFAULT_RUN_CONTRACT_PATH,
     build_s3_uri,
+    filter_shards_for_rank,
     load_json,
     load_run_contract,
     normalize_boolish,
@@ -154,13 +155,29 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--intent-dim", type=int, default=2048)
     parser.add_argument("--student-intent-dim", type=int, default=512)
-    # Defaults tuned for kmidi-100-limit (config/run_contract.yaml)
     parser.add_argument("--intent-epochs", type=int, default=40)
     parser.add_argument("--student-intent-epochs", type=int, default=50)
     parser.add_argument("--intent-lr", type=float, default=0.5)
     parser.add_argument("--distill-alpha", type=float, default=0.7, help="Weight on hard labels")
     parser.add_argument("--axis-l2", type=float, default=1.0)
-    return parser.parse_args()
+    parser.add_argument(
+        "--rank",
+        type=int,
+        default=None,
+        help="Distributed rank (0..world_size-1). Default: RANK env or 0.",
+    )
+    parser.add_argument(
+        "--world-size",
+        type=int,
+        default=None,
+        help="Number of distributed workers. Default: WORLD_SIZE env or 1.",
+    )
+    args = parser.parse_args()
+    if args.rank is None:
+        args.rank = int(os.environ.get("RANK", os.environ.get("LOCAL_RANK", "0")))
+    if args.world_size is None:
+        args.world_size = int(os.environ.get("WORLD_SIZE", "1"))
+    return args
 
 
 def load_run_contract_optional(path: Path) -> dict[str, Any]:
@@ -185,7 +202,8 @@ def resolve_training_uris(
         ).strip("/")
         if not package_id:
             raise ValueError(
-                "Missing package id: provide --package-s3-uri, --package-id, or training.activePackageId"
+                "Missing package id: provide --package-s3-uri, --package-id, or "
+                "training.activePackageId"
             )
         if not package_bucket:
             raise ValueError(
@@ -226,7 +244,8 @@ def resolve_max_total_checkpoints(args: argparse.Namespace, contract: dict[str, 
         raise ValueError("max total checkpoints must be > 0")
     if resolved < args.max_checkpoints + 1:
         raise ValueError(
-            f"max total checkpoints {resolved} is too small for keep-last-N + best policy ({args.max_checkpoints + 1})"
+            f"max total checkpoints {resolved} is too small for keep-last-N + best "
+            f"policy ({args.max_checkpoints + 1})"
         )
     return resolved
 
@@ -597,8 +616,15 @@ def mean_squared_error(y_true, y_pred) -> float:
 
 
 def load_manifest_and_shards(
-    s3_client: object, package_uri: str, local_root: Path
+    s3_client: object,
+    package_uri: str,
+    local_root: Path,
+    rank: int = 0,
+    world_size: int = 1,
 ) -> dict[str, dict[str, Any]]:
+    """Download manifest and shards. For distributed (world_size > 1), only train
+    shards for this rank are downloaded.
+    """
     bucket, prefix = parse_s3_uri(package_uri)
     manifests: dict[str, dict[str, Any]] = {}
 
@@ -618,12 +644,15 @@ def load_manifest_and_shards(
         if not isinstance(splits, dict):
             raise ValueError(f"Manifest missing splits object for task {task}")
 
-        for split_payload in splits.values():
+        for split_name, split_payload in splits.items():
             if not isinstance(split_payload, dict):
                 continue
             shards = split_payload.get("shards", [])
             if not isinstance(shards, list):
                 continue
+            # For distributed: only this rank's train shards; val/test get all
+            if split_name == "train" and world_size > 1:
+                shards = filter_shards_for_rank(shards, rank, world_size, train_only=True)
             for shard in shards:
                 if not isinstance(shard, dict):
                     continue
@@ -631,7 +660,9 @@ def load_manifest_and_shards(
                 if not isinstance(shard_name, str) or not shard_name:
                     continue
                 shard_path = task_dir / shard_name
-                shard_key = f"{prefix}/{task}/{shard_name}" if prefix else f"{task}/{shard_name}"
+                shard_key = (
+                    f"{prefix}/{task}/{shard_name}" if prefix else f"{task}/{shard_name}"
+                )
                 s3_client.download_file(bucket, shard_key, str(shard_path))
 
     return manifests
@@ -666,22 +697,33 @@ def load_manifest_from_local_package(package_root: Path) -> dict[str, dict[str, 
                     continue
                 shard_path = task_dir / shard_name
                 if not shard_path.exists():
-                    raise FileNotFoundError(f"Local package shard missing: {shard_path}")
+                    raise FileNotFoundError(
+                        f"Local package shard missing: {shard_path}"
+                    )
 
     return manifests
 
 
 def load_task_split_records(
-    task_dir: Path, manifest: dict[str, Any], split_name: str
+    task_dir: Path,
+    manifest: dict[str, Any],
+    split_name: str,
+    rank: int = 0,
+    world_size: int = 1,
 ) -> list[dict[str, Any]]:
+    """Load records for a split. For train and world_size > 1, only this rank's
+    shards are loaded.
+    """
     split_payload = manifest.get("splits", {}).get(split_name, {})
     if not isinstance(split_payload, dict):
         return []
 
-    records: list[dict[str, Any]] = []
     shards = split_payload.get("shards", [])
     if not isinstance(shards, list):
         return []
+    if split_name == "train" and world_size > 1:
+        shards = filter_shards_for_rank(shards, rank, world_size, train_only=True)
+    records: list[dict[str, Any]] = []
     for shard in shards:
         if not isinstance(shard, dict):
             continue
@@ -802,7 +844,11 @@ def run_training(args: argparse.Namespace) -> dict[str, Any]:
         manifests = load_manifest_from_local_package(package_local)
     else:
         manifests = load_manifest_and_shards(
-            s3_client=s3_client, package_uri=args.package_s3_uri, local_root=package_local
+            s3_client=s3_client,
+            package_uri=args.package_s3_uri,
+            local_root=package_local,
+            rank=args.rank,
+            world_size=args.world_size,
         )
 
     notices: list[ThirdPartyNotice] = []
@@ -833,7 +879,13 @@ def run_training(args: argparse.Namespace) -> dict[str, Any]:
 
     intent_data = {
         split: build_intent_dataset(
-            load_task_split_records(package_local / "intent_router", intent_manifest, split)
+            load_task_split_records(
+                package_local / "intent_router",
+                intent_manifest,
+                split,
+                rank=args.rank,
+                world_size=args.world_size,
+            )
         )
         for split in SPLITS
     }
@@ -845,7 +897,13 @@ def run_training(args: argparse.Namespace) -> dict[str, Any]:
 
     axis_data = {
         split: build_axis_dataset(
-            load_task_split_records(package_local / "axis_proposer", axis_manifest, split),
+            load_task_split_records(
+                package_local / "axis_proposer",
+                axis_manifest,
+                split,
+                rank=args.rank,
+                world_size=args.world_size,
+            ),
             axis_names,
         )
         for split in SPLITS
@@ -855,8 +913,6 @@ def run_training(args: argparse.Namespace) -> dict[str, Any]:
         raise RuntimeError("IntentRouter training split is empty")
     if len(axis_data["train"].targets) == 0:
         raise RuntimeError("AxisProposer training split is empty")
-
-    import numpy as np
 
     x_intent_train = vectorize_texts(intent_data["train"].texts, args.intent_dim)
     x_intent_val = vectorize_texts(intent_data["val"].texts, args.intent_dim)

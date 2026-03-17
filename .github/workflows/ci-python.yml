@@ -1,20 +1,18 @@
-name: Python CI (Monorepo)
+name: Python CI
 
 on:
   push:
     branches: [main, develop, 'feature/**', 'copilot/**']
     paths:
-      - 'packages/core/python/**'
-      - 'packages/cli/**'
-      - 'tests/python/**'
+      - 'music_brain/**'
+      - 'tests/**'
       - 'pyproject.toml'
       - '.github/workflows/ci-python.yml'
   pull_request:
     branches: [main, develop]
     paths:
-      - 'packages/core/python/**'
-      - 'packages/cli/**'
-      - 'tests/python/**'
+      - 'music_brain/**'
+      - 'tests/**'
       - 'pyproject.toml'
 
 jobs:
@@ -46,24 +44,23 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          python -m ruff check packages/core/python packages/cli tests/python
+          python -m ruff check music_brain tests
         continue-on-error: false
 
       - name: Format check with black
         run: |
-          black --check --line-length=100 packages/core/python packages/cli tests/python
+          black --check --line-length=100 music_brain tests
         continue-on-error: false
 
       - name: Type check with mypy
         run: |
-          mypy packages/core/python packages/cli
+          mypy music_brain
         continue-on-error: true
 
       - name: Run pytest with coverage
         run: |
-          pytest tests/python -v \
-            --cov=packages/core/python \
-            --cov=packages/cli \
+          pytest tests -v \
+            --cov=music_brain \
             --cov-report=term-missing \
             --cov-report=xml \
             --cov-report=html
@@ -110,7 +107,7 @@ jobs:
 
       - name: Run bandit
         run: |
-          bandit -r packages/core/python packages/cli -f json -o bandit-report.json
+          bandit -r music_brain -f json -o bandit-report.json
         continue-on-error: true
 
       - name: Upload security reports

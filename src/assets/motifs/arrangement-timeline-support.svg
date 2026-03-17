@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 48" fill="none" aria-hidden="true">
+  <title>Arrangement / timeline support motif</title>
+  <g id="timeline-motif" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Horizontal grid lines (time base) -->
+    <g id="grid-lines" stroke="rgba(255,255,255,0.06)" stroke-width="0.4">
+      <line x1="8" y1="24" x2="152" y2="24"/>
+      <line x1="8" y1="12" x2="152" y2="12"/>
+      <line x1="8" y1="36" x2="152" y2="36"/>
+    </g>
+    <!-- Bar / measure ticks -->
+    <g id="bar-ticks" stroke="rgba(255,255,255,0.12)" stroke-width="0.5">
+      <line x1="16" y1="20" x2="16" y2="28"/>
+      <line x1="48" y1="20" x2="48" y2="28"/>
+      <line x1="80" y1="20" x2="80" y2="28"/>
+      <line x1="112" y1="20" x2="112" y2="28"/>
+      <line x1="144" y1="20" x2="144" y2="28"/>
+    </g>
+    <!-- Waveform-inspired fragment (single cycle abstraction) -->
+    <path id="wave-fragment" stroke="rgba(255,255,255,0.1)" stroke-width="0.5" d="M 24 24 q 8 -6 16 0 t 16 0 t 16 0 t 8 6"/>
+    <!-- Arrangement marker dots (subtle) -->
+    <g id="markers" fill="rgba(255,255,255,0.08)">
+      <circle cx="40" cy="24" r="1.2"/>
+      <circle cx="72" cy="24" r="1.2"/>
+      <circle cx="104" cy="24" r="1.2"/>
+    </g>
+    <!-- Restrained accent: one tick emphasized -->
+    <line id="accent-tick" x1="80" y1="18" x2="80" y2="30" stroke="rgba(201,162,39,0.3)" stroke-width="0.6"/>
+  </g>
+</svg>

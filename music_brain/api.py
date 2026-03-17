@@ -6,6 +6,7 @@ functionality, making it easier to integrate with desktop apps, web services,
 or other interfaces.
 """
 from typing import Dict, List, Optional, Any, Tuple
+import os
 import sys
 import logging
 import json
@@ -14,7 +15,7 @@ try:
     from fastapi import FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import FileResponse
-    from pydantic import BaseModel, ValidationError
+    from pydantic import BaseModel, Field, ValidationError
     import uvicorn
     FASTAPI_AVAILABLE = True
 except ImportError:  # pragma: no cover - optional dependency
@@ -975,18 +976,19 @@ if FASTAPI_AVAILABLE:
         output_format: Optional[str] = None
 
     class InterrogateRequest(BaseModel):
-        message: str
+        message: str = Field(..., max_length=4096)
         session_id: Optional[str] = None
         context: Optional[Dict[str, Any]] = None
 
     class LyricsRequest(BaseModel):
-        lyrics: str
+        lyrics: str = Field(..., max_length=32768)
         source: Optional[str] = "user"
 
     from fastapi.responses import HTMLResponse
     from fastapi.staticfiles import StaticFiles
 
     _static_dir = Path(__file__).parent / "static"
+    _HTTP_500_DETAIL = "Internal server error."
 
     app = FastAPI(
         title="KmiDi Sound Engine",
@@ -1033,13 +1035,41 @@ if FASTAPI_AVAILABLE:
     async def health():
         return {"status": "ok", "version": "0.1.0"}
 
+    # Sandbox for /audio/ serving: only files under this directory are allowed (prevents path traversal).
+    _audio_serve_root = Path(
+        os.environ.get("KMIDI_AUDIO_SERVE_ROOT", str(tempfile.gettempdir()))
+    ).resolve()
+
+    def _resolve_audio_path_sandbox(audio_path: str) -> Path:
+        """Resolve audio_path and ensure it is under _audio_serve_root. Raises HTTPException 400 if outside."""
+        resolved = Path(audio_path).resolve()
+        try:
+            resolved.relative_to(_audio_serve_root)
+        except ValueError:
+            logging.warning("Classify audio path outside sandbox rejected: %s", audio_path)
+            raise HTTPException(
+                status_code=400,
+                detail="Audio path is not allowed.",
+            ) from None
+        return resolved
+
     @app.get("/audio/{file_path:path}", summary="Stream Audio",
              description="Stream any generated audio file — WAV, MP3, FLAC, OGG.")
     async def serve_audio(file_path: str):
-        """Stream generated audio files for playback."""
+        """Stream generated audio files for playback. Paths are restricted to KMIDI_AUDIO_SERVE_ROOT (default: temp)."""
         import urllib.parse
         decoded_path = urllib.parse.unquote(file_path)
-        audio_file = Path(decoded_path)
+        audio_file = Path(decoded_path).resolve()
+
+        # Reject path traversal: file must be under the allowed root.
+        try:
+            audio_file.relative_to(_audio_serve_root)
+        except ValueError:
+            logging.warning(f"Audio path outside sandbox rejected: {decoded_path}")
+            raise HTTPException(
+                status_code=404,
+                detail="Audio file path is not allowed.",
+            ) from None
 
         logging.info(f"Serving audio file: {decoded_path}")
         logging.info(
@@ -1105,7 +1135,7 @@ if FASTAPI_AVAILABLE:
             return sorted(EMOTIONAL_PRESETS.keys())
         except Exception as exc:  # pragma: no cover
             logging.exception("Failed to list emotions")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
     def _normalize_humanizer_config(data: Dict[str, Any]) -> Dict[str, Any]:
         default_analysis = {
@@ -1139,7 +1169,7 @@ if FASTAPI_AVAILABLE:
         try:
             mid = mido.MidiFile(str(path))
         except Exception as exc:
-            raise HTTPException(status_code=400, detail=f"Failed to read MIDI: {exc}") from exc
+            raise HTTPException(status_code=400, detail="Failed to read MIDI file.") from exc
 
         tempo = 500000  # default 120 BPM
         events: List[Dict[str, Any]] = []
@@ -1212,8 +1242,23 @@ if FASTAPI_AVAILABLE:
         cfg_dir.mkdir(parents=True, exist_ok=True)
         normalized = _normalize_humanizer_config(payload)
         cfg_path = cfg_dir / "humanizer.json"
-        with open(cfg_path, "w", encoding="utf-8") as f:
-            json.dump(normalized, f, indent=2)
+        fd, tmp_path = tempfile.mkstemp(
+            dir=str(cfg_dir), prefix="humanizer.", suffix=".json"
+        )
+        try:
+            with open(fd, "w", encoding="utf-8") as f:
+                json.dump(normalized, f, indent=2)
+                f.flush()
+                if hasattr(os, "fsync"):
+                    os.fsync(f.fileno())
+            os.replace(tmp_path, cfg_path)
+        except Exception:
+            if Path(tmp_path).exists():
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
+            raise
         try:
             api.reload_humanizer()
         except Exception:
@@ -1230,7 +1275,7 @@ if FASTAPI_AVAILABLE:
             return {"status": "ok"}
         except Exception as exc:
             logging.exception("Failed to reload humanizer")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
     class SpectocloudRenderRequest(BaseModel):
         midi_events: Optional[List[Dict[str, Any]]] = None
@@ -1259,7 +1304,7 @@ if FASTAPI_AVAILABLE:
             from music_brain.visualization.spectocloud import Spectocloud  # Lazy import
         except Exception as exc:  # pragma: no cover
             logging.exception("Failed to import Spectocloud")
-            raise HTTPException(status_code=500, detail=f"Spectocloud import failed: {exc}")
+            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
         try:
             events: Optional[List[Dict[str, Any]]] = payload.midi_events
@@ -1283,7 +1328,8 @@ if FASTAPI_AVAILABLE:
                 )
 
             if payload.midi_file_path:
-                parsed_events, parsed_duration = _parse_midi_file(Path(payload.midi_file_path))
+                safe_midi_path = _resolve_audio_path_sandbox(payload.midi_file_path)
+                parsed_events, parsed_duration = _parse_midi_file(safe_midi_path)
                 events = parsed_events
                 duration = duration or parsed_duration
 
@@ -1322,8 +1368,11 @@ if FASTAPI_AVAILABLE:
             if mode == "static":
                 if payload.frame_idx < 0:
                     raise HTTPException(status_code=400, detail="frame_idx must be >= 0")
-                out_path = payload.output_path or str(
-                    Path(tempfile.gettempdir()) / "spectocloud_frame.png")
+                if payload.output_path:
+                    out_path = str(_resolve_audio_path_sandbox(payload.output_path))
+                else:
+                    out_path = str(
+                        Path(tempfile.gettempdir()) / "spectocloud_frame.png")
                 specto.render_static_frame(
                     frame_idx=min(payload.frame_idx, max(0, len(specto.frames) - 1)),
                     output_path=out_path,
@@ -1337,8 +1386,11 @@ if FASTAPI_AVAILABLE:
                     "frames": len(specto.frames),
                 }
 
-            out_path = payload.output_path or str(
-                Path(tempfile.gettempdir()) / "spectocloud_anim.gif")
+            if payload.output_path:
+                out_path = str(_resolve_audio_path_sandbox(payload.output_path))
+            else:
+                out_path = str(
+                    Path(tempfile.gettempdir()) / "spectocloud_anim.gif")
             specto.render_animation(
                 output_path=out_path,
                 fps=payload.fps,
@@ -1355,7 +1407,7 @@ if FASTAPI_AVAILABLE:
             raise
         except Exception as exc:  # pragma: no cover
             logging.exception("spectocloud render failed")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
     @app.post("/generate", summary="Compose Music",
               description="Bring your musical vision to life — describe a mood, "
@@ -1434,8 +1486,8 @@ if FASTAPI_AVAILABLE:
                     """Helper to convert request to CompleteSongIntent."""
                     import time
                     key_parts = validated.key_mode.split()
-                    technical_key = key_parts[0]
-                    technical_mode = key_parts[1].lower()
+                    technical_key = key_parts[0] if key_parts else "C"
+                    technical_mode = key_parts[1].lower() if len(key_parts) > 1 else "major"
                     tempo_range = (
                         max(60, validated.tempo - 20),
                         min(140, validated.tempo + 20),
@@ -1717,7 +1769,7 @@ if FASTAPI_AVAILABLE:
             raise
         except Exception as exc:
             logging.exception("generate failed")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
     @app.post("/interrogate", summary="Creative Chat",
               description="Ask the engine anything — 'What chord comes next?', "
@@ -1736,7 +1788,7 @@ if FASTAPI_AVAILABLE:
             }
         except Exception as exc:  # pragma: no cover
             logging.exception("interrogate failed")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
     @app.post("/lyrics", summary="Write Lyrics",
               description="Paste or write your lyrics so the engine can weave them "
@@ -1749,7 +1801,7 @@ if FASTAPI_AVAILABLE:
             return api.set_lyrics(payload.lyrics, source=payload.source or "user")
         except Exception as exc:  # pragma: no cover
             logging.exception("Failed to set lyrics")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
     @app.get("/lyrics", summary="Read Lyrics",
              description="Retrieve the current lyrics — your words, your story.")
@@ -1761,7 +1813,7 @@ if FASTAPI_AVAILABLE:
             return api.get_lyrics()
         except Exception as exc:  # pragma: no cover
             logging.exception("Failed to fetch lyrics")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
     # ========== Audio Emotion Classification Endpoints ==========
 
@@ -1785,6 +1837,7 @@ if FASTAPI_AVAILABLE:
         the emotion-to-music generation pipeline.
         """
         try:
+            safe_path = _resolve_audio_path_sandbox(request.audio_path)
             from music_brain.emotion.audio_emotion_classifier import AudioEmotionClassifier
 
             classifier = AudioEmotionClassifier(model_type=request.model_type)
@@ -1794,21 +1847,23 @@ if FASTAPI_AVAILABLE:
                     detail="Audio classifier model not available. Check model checkpoints."
                 )
 
-            result = classifier.classify(request.audio_path, top_k=request.top_k)
+            result = classifier.classify(str(safe_path), top_k=request.top_k)
             return {
                 "status": "success",
                 "result": result.to_dict(),
             }
-        except ImportError as exc:
+        except ImportError:
             raise HTTPException(
                 status_code=503,
-                detail=f"Audio classification dependencies not installed: {exc}"
+                detail="Audio classification dependencies not installed.",
             )
-        except FileNotFoundError as exc:
-            raise HTTPException(status_code=404, detail=str(exc))
+        except HTTPException:
+            raise
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail="Audio file not found.")
         except Exception as exc:
             logging.exception("audio classify failed")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail="Internal server error.")
 
     @app.post("/audio/valence-arousal", summary="Mood Map",
               description="Map any sound onto the feeling grid — how positive/negative "
@@ -1820,6 +1875,7 @@ if FASTAPI_AVAILABLE:
         Primary interface for emotion-to-music mapping.
         """
         try:
+            safe_path = _resolve_audio_path_sandbox(request.audio_path)
             from music_brain.emotion.audio_emotion_classifier import AudioEmotionClassifier
 
             classifier = AudioEmotionClassifier(model_type=request.model_type)
@@ -1829,7 +1885,7 @@ if FASTAPI_AVAILABLE:
                     detail="Audio classifier model not available."
                 )
 
-            va = classifier.get_valence_arousal(request.audio_path)
+            va = classifier.get_valence_arousal(str(safe_path))
             return {
                 "status": "success",
                 "valence": va["valence"],
@@ -1837,16 +1893,18 @@ if FASTAPI_AVAILABLE:
                 "emotion": va["emotion"],
                 "confidence": va["confidence"],
             }
+        except HTTPException:
+            raise
         except ImportError as exc:
             raise HTTPException(
                 status_code=503,
-                detail=f"Audio classification dependencies not installed: {exc}"
-            )
-        except FileNotFoundError as exc:
-            raise HTTPException(status_code=404, detail=str(exc))
+                detail="Audio classification dependencies not installed.",
+            ) from exc
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail="Audio file not found.")
         except Exception as exc:
             logging.exception("audio valence-arousal failed")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail="Internal server error.")
 
     @app.get("/audio/models", summary="Loaded AI Ears",
              description="See which AI listening models are active — emotion classifiers, "
@@ -1872,7 +1930,7 @@ if FASTAPI_AVAILABLE:
             }
         except Exception as exc:
             logging.exception("list audio models failed")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
     @app.post("/voice/classify", summary="Voice Range",
               description="Identify a singer's range — soprano, alto, tenor, or bass — "
@@ -1880,11 +1938,16 @@ if FASTAPI_AVAILABLE:
     async def classify_voice(request: VoiceClassifyRequest):
         """Identify vocal range from audio."""
         try:
-            result = api.classify_voice_file(request.audio_path, top_k=request.top_k or 3)
+            safe_path = _resolve_audio_path_sandbox(request.audio_path)
+            result = api.classify_voice_file(str(safe_path), top_k=request.top_k or 3)
             return {"status": "success", "result": result}
+        except HTTPException:
+            raise
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail="Audio file not found.")
         except Exception as exc:
             logging.exception("voice classify failed")
-            raise HTTPException(status_code=500, detail=str(exc))
+            raise HTTPException(status_code=500, detail="Internal server error.")
 
     @app.get("/ai/jepa/status", summary="JEPA Models Status",
              description="Check the status of Audio-JEPA, Chord-JEPA, and "

@@ -7,6 +7,21 @@ on:
     branches: [ main ]
 
 jobs:
+  frontend:
+    name: Frontend (TypeScript & Build)
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+    - name: Install dependencies
+      run: npm ci
+    - name: TypeScript check
+      run: npx tsc --noEmit
+    - name: Build frontend
+      run: npm run build
+
   python_tests:
     name: Python Tests
     runs-on: ubuntu-latest
@@ -281,8 +296,8 @@ jobs:
       run: |
         pip install black flake8 mypy
     - name: Run black formatting check
-      run: black --check --line-length=100 music_brain/ KmiDi_PROJECT/source/python/music_brain/ KmiDi_PROJECT/tests/ || true
+      run: black --check --line-length=100 music_brain/ tests/ || true
     - name: Run flake8 linting
-      run: flake8 music_brain/ KmiDi_PROJECT/source/python/music_brain/ KmiDi_PROJECT/tests/ --max-line-length=100 --extend-ignore=E203,W503 || true
+      run: flake8 music_brain/ tests/ --max-line-length=100 --extend-ignore=E203,W503 || true
     - name: Run mypy type checking
-      run: mypy music_brain/ KmiDi_PROJECT/source/python/music_brain/ KmiDi_PROJECT/tests/ --ignore-missing-imports || true
+      run: mypy music_brain/ tests/ --ignore-missing-imports || true

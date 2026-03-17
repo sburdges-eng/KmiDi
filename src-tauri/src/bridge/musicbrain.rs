@@ -8,6 +8,7 @@ use crate::commands::{GenerateRequest, InterrogateRequest};
 
 fn api_base_url() -> String {
     env::var("MUSIC_BRAIN_API_URL")
+        .or_else(|_| env::var("KMIDI_API_URL"))
         .unwrap_or_else(|_| "http://127.0.0.1:8000".to_string())
         .trim_end_matches('/')
         .to_string()

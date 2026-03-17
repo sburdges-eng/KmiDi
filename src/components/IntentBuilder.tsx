@@ -92,6 +92,8 @@ export default function IntentBuilder() {
   const [showRuleFields, setShowRuleFields] = useState(false);
   const tapsRef = useRef<number[]>([]);
   const unlistenRef = useRef<{ progress?: () => void; result?: () => void }>({});
+  const tempoWheelRef = useRef<HTMLDivElement>(null);
+  const tempoValueRef = useRef(120);
 
   useEffect(() => {
     let mounted = true;
@@ -117,6 +119,21 @@ export default function IntentBuilder() {
     };
     setup();
     return () => { mounted = false; unlistenRef.current.progress?.(); unlistenRef.current.result?.(); unlistenRef.current = {}; };
+  }, []);
+
+  tempoValueRef.current = intent.tempo ?? 120;
+  useEffect(() => {
+    const el = tempoWheelRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -1 : 1;
+      const next = Math.max(40, Math.min(300, tempoValueRef.current + delta));
+      tempoValueRef.current = next;
+      setIntent(prev => ({ ...prev, tempo: next }));
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
   }, []);
 
   const totalBars = useMemo(() =>
@@ -147,6 +164,10 @@ export default function IntentBuilder() {
       validation.instrumentsValid,
     [validation]
   );
+  /** When totalBars > 1000 we still allow click so handleGenerate can show the length-warning modal. */
+  const canClickGenerate =
+    !isGenerating &&
+    (totalBars > 1000 ? isFormValidExceptLength : isFormValid);
 
   const set = useCallback((field: keyof CompleteSongIntentRequest, value: unknown) => {
     setIntent(prev => ({ ...prev, [field]: value }));
@@ -156,7 +177,10 @@ export default function IntentBuilder() {
   const currentMode = intent.key_mode.split(' ')[1] || 'major';
 
   const handleGenerate = async () => {
-    if (!validation.totalBars) { setShowLengthWarning(true); return; }
+    if (!validation.totalBars) {
+      setShowLengthWarning(true);
+      return;
+    }
     if (!isFormValid) return;
     setIsGenerating(true);
     setError(null);
@@ -223,12 +247,6 @@ export default function IntentBuilder() {
     }
   }, [set]);
 
-  const handleTempoWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -1 : 1;
-    set('tempo', Math.max(40, Math.min(300, (intent.tempo ?? 120) + delta)));
-  }, [intent.tempo, set]);
-
   const updateSection = (idx: number, field: string, value: unknown) => {
     const next = [...intent.structure];
     (next[idx] as unknown as Record<string, unknown>)[field] = value;
@@ -269,8 +287,8 @@ export default function IntentBuilder() {
           {isGenerating && <button type="button" className="gen-cancel-btn" onClick={handleCancel}>Cancel</button>}
           <button
             type="button"
-            className={`gen-go-btn ${isGenerating || !isFormValid ? 'gen-go-disabled' : ''}`}
-            disabled={!isFormValid || isGenerating}
+            className={`gen-go-btn ${!canClickGenerate ? 'gen-go-disabled' : ''}`}
+            disabled={!canClickGenerate}
             onClick={handleGenerate}
           >
             {isGenerating ? jobStatus : 'Generate'}
@@ -435,7 +453,7 @@ export default function IntentBuilder() {
 
       {/* ── Tempo bar ── */}
       <div className="gen-tempo-bar">
-        <div className="tempo-bpm" onWheel={handleTempoWheel}>
+        <div className="tempo-bpm" ref={tempoWheelRef}>
           <span className="tempo-num">{intent.tempo}</span>
           <span className="tempo-unit">BPM</span>
         </div>

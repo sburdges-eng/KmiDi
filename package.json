@@ -6,9 +6,10 @@
     "scripts": {
         "dev": "vite",
         "dev:react": "vite",
+        "dev:ui": "vite",
         "dev:tauri": "tauri dev",
         "dev:python": "python3 -m uvicorn music_brain.api:app --reload --port 8000",
-        "dev:all": "concurrently -k -n react,tauri,api -c blue,green,magenta \"npm run dev\" \"npm run tauri dev\" \"npm run dev:python\"",
+        "dev:all": "concurrently -k -n react,api -c blue,magenta \"npm run dev\" \"npm run dev:python\"",
         "build": "tsc && vite build",
         "preview": "vite preview",
         "tauri": "tauri"

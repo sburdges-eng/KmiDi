@@ -18,10 +18,10 @@ python3 scripts/verify_build.py
 
 ### 2. Set Up Build
 ```bash
-# Automated setup (recommended)
-./scripts/setup_build.sh
+# Canonical dev setup (recommended)
+./scripts/dev-setup.sh
 
-# Or manual setup (see BUILD_STATUS.md)
+# Optional: ./scripts/setup_build.sh or see BUILD.md for manual CMake setup
 ```
 
 ### 3. Run Tests
@@ -42,12 +42,11 @@ python3 scripts/verify_imports.py
 - `scripts/setup_build.sh` - Automated build setup
 
 ### Documentation
-- `START_HERE.md` - Quick start guide
-- `NEXT_DEVELOPMENT_PHASE.md` - Development roadmap
-- `BUILD_STATUS.md` - Build configuration status
-- `PHASE_1_PROGRESS.md` - Phase 1 progress tracking
-- `QUICK_START.md` - Usage guide
-- `WORKSPACE_SETUP.md` - Development environment
+- `docs/START_HERE.md` - Quick start guide
+- `docs/NEXT_DEVELOPMENT_PHASE.md` - Development roadmap
+- `docs/WORKSPACE_SETUP.md` - Development environment
+- `QUICK_START.md` - Repo quick start + Kelly Companion usage
+- *(Legacy: BUILD_STATUS.md, PHASE_1_PROGRESS.md — not present in repo; see BUILD.md and docs/DEVELOPMENT.md for current build status.)*
 
 ## ✅ Current Status
 
@@ -144,17 +143,16 @@ python3 -c "import sys; print('\n'.join(sys.path))"
 # Check prerequisites
 python3 scripts/verify_build.py
 
-# See BUILD_STATUS.md for solutions
-cat BUILD_STATUS.md
+# See BUILD.md and docs/DEVELOPMENT.md for solutions
 ```
 
 ### Module Not Found
 ```bash
-# Ensure you're in project root
-cd /Users/seanburdges/KmiDi-1
+# Ensure you're in repo root (KmiDi)
+cd /path/to/KmiDi
 
 # Check if module exists
-ls -la music_brain/session/
+ls -la music_brain/
 ```
 
 ## 📝 Next Steps
@@ -173,10 +171,9 @@ ls -la music_brain/session/
 
 ## 🔗 Useful Links
 
-- **Development Roadmap:** `NEXT_DEVELOPMENT_PHASE.md`
-- **Build Status:** `BUILD_STATUS.md`
-- **Progress Tracking:** `PHASE_1_PROGRESS.md`
-- **Quick Start:** `START_HERE.md`
+- **Development Roadmap:** `docs/NEXT_DEVELOPMENT_PHASE.md`
+- **Build / dev:** `BUILD.md`, `docs/DEVELOPMENT.md`
+- **Quick Start:** `QUICK_START.md`, `docs/START_HERE.md`
 
 ---
 

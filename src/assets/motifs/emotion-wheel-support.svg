@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+  <title>Emotion wheel support motif</title>
+  <g id="emotion-wheel-motif" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Outer calibration ring -->
+    <circle id="calibration-outer" cx="60" cy="60" r="52" stroke="rgba(255,255,255,0.08)" stroke-width="0.6"/>
+    <!-- Harmonic arcs (segments, not full circle) -->
+    <path id="harmonic-arcs" stroke="rgba(255,255,255,0.12)" stroke-width="0.5" d="M 60 12 A 48 48 0 0 1 98 42 M 98 42 A 48 48 0 0 1 60 72 M 60 72 A 48 48 0 0 1 22 42 M 22 42 A 48 48 0 0 1 60 12"/>
+    <!-- Radial tick marks at cardinal and ordinal -->
+    <g id="radial-ticks" stroke="rgba(255,255,255,0.1)" stroke-width="0.4">
+      <line x1="60" y1="14" x2="60" y2="18"/>
+      <line x1="60" y1="102" x2="60" y2="106"/>
+      <line x1="14" y1="60" x2="18" y2="60"/>
+      <line x1="102" y1="60" x2="106" y2="60"/>
+      <line x1="24" y1="24" x2="27" y2="27"/>
+      <line x1="96" y1="24" x2="93" y2="27"/>
+      <line x1="96" y1="96" x2="93" y2="93"/>
+      <line x1="24" y1="96" x2="27" y2="93"/>
+    </g>
+    <!-- Inner reference circle -->
+    <circle id="inner-ref" cx="60" cy="60" r="28" stroke="rgba(255,255,255,0.06)" stroke-width="0.4"/>
+    <!-- Restrained amber accent: single arc segment -->
+    <path id="accent-arc" stroke="rgba(201,162,39,0.35)" stroke-width="0.5" d="M 60 36 A 24 24 0 0 1 82 52"/>
+  </g>
+</svg>

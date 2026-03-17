@@ -16,19 +16,19 @@ const LyricPanel = () => {
       if (payload?.lyrics) {
         setLyrics(payload.lyrics);
         setSource(payload.source || "user");
-        setStatus("Loaded from backend");
+        setStatus("Loaded.");
       } else if (payload?.generated) {
         setLyrics(payload.generated);
         setSource("generated");
-        setStatus("Loaded generated draft");
+        setStatus("Generated draft loaded.");
       } else {
         setLyrics("");
         setSource("none");
-        setStatus("No lyrics stored");
+        setStatus("No lyrics yet.");
       }
     } catch (err) {
       console.error("Failed to load lyrics", err);
-      setError("Music Brain API not reachable for lyrics");
+      setError("Can't reach the studio. Check your connection.");
     }
   };
 
@@ -39,12 +39,12 @@ const LyricPanel = () => {
   const persistLyrics = async (text: string) => {
     try {
       const resp = await setUserLyrics(text);
-      setStatus(`Saved (${resp.lines} lines)`);
+      setStatus(`Saved. ${resp.lines} lines.`);
       setSource(resp.source);
       setError(null);
     } catch (err) {
       console.error("Failed to persist lyrics", err);
-      setError("Could not save lyrics to backend");
+      setError("Couldn't save. Check your connection.");
     }
   };
 
@@ -61,7 +61,7 @@ const LyricPanel = () => {
       await persistLyrics(text);
     } catch (err) {
       console.error("Failed to read file", err);
-      setError("Could not read the selected file");
+      setError("Couldn't read that file.");
     }
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -77,13 +77,13 @@ const LyricPanel = () => {
     <div className="lyric-panel">
       <div className="lyric-panel__header">
         <div>
-          <h3>Lyric Priority (User First)</h3>
+          <h3>Lyrics</h3>
           <p className="lyric-panel__subtitle">
-            Load or type lyrics to drive intent and prosody. Empty lyrics fall back to generated drafts.
+            Your words first. Type or load lyrics; leave blank to use a generated draft.
           </p>
         </div>
         <span className={`lyric-badge lyric-badge--${source || "none"}`}>
-          Source: {source || "none"}
+          {source === 'user' ? 'You' : source === 'generated' ? 'Generated' : '—'}
         </span>
       </div>
 
@@ -99,9 +99,9 @@ const LyricPanel = () => {
       />
 
       <div className="lyric-actions">
-        <button onClick={handleLoadFromFile}>Load .txt/.lrc</button>
-        <button onClick={() => persistLyrics(lyrics)}>Save Lyrics</button>
-        <button onClick={refresh}>Refresh</button>
+        <button onClick={handleLoadFromFile}>Load file</button>
+        <button onClick={() => persistLyrics(lyrics)}>Save</button>
+        <button onClick={refresh}>Reload</button>
         <button onClick={handleClear}>Clear</button>
       </div>
 
@@ -109,7 +109,7 @@ const LyricPanel = () => {
         className="lyric-textarea"
         value={lyrics}
         onChange={(e) => setLyrics(e.target.value)}
-        placeholder="Paste or type your lyrics here. Downbeats will align to stressed syllables."
+        placeholder="Paste or type. Stressed syllables can align to downbeats."
       />
     </div>
   );

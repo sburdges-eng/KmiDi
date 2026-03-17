@@ -47,17 +47,18 @@ const genres: Genre[] = [
   { id: "ambient", name: "Ambient", icon: "🌌", description: "Atmospheric and textural" },
 ];
 
+/* Muted palette aligned with design system (no purple/indigo) */
 const quickEmotions: QuickEmotion[] = [
-  { id: "happy", name: "Happy", icon: "😊", color: "#fbbf24" },
-  { id: "sad", name: "Sad", icon: "😢", color: "#60a5fa" },
-  { id: "angry", name: "Angry", icon: "😠", color: "#f87171" },
-  { id: "peaceful", name: "Peaceful", icon: "😌", color: "#34d399" },
-  { id: "energetic", name: "Energetic", icon: "⚡", color: "#fbbf24" },
-  { id: "melancholic", name: "Melancholic", icon: "🌙", color: "#818cf8" },
-  { id: "romantic", name: "Romantic", icon: "💕", color: "#f472b6" },
-  { id: "nostalgic", name: "Nostalgic", icon: "📷", color: "#a78bfa" },
-  { id: "hopeful", name: "Hopeful", icon: "🌅", color: "#fb923c" },
-  { id: "mysterious", name: "Mysterious", icon: "🔮", color: "#7c3aed" },
+  { id: "happy", name: "Happy", icon: "😊", color: "#c9a227" },
+  { id: "sad", name: "Sad", icon: "😢", color: "#5c7c8a" },
+  { id: "angry", name: "Angry", icon: "😠", color: "#b54a4a" },
+  { id: "peaceful", name: "Peaceful", icon: "😌", color: "#4a7c6b" },
+  { id: "energetic", name: "Energetic", icon: "⚡", color: "#c9a227" },
+  { id: "melancholic", name: "Melancholic", icon: "🌙", color: "#6b7c8a" },
+  { id: "romantic", name: "Romantic", icon: "💕", color: "#9e6b7c" },
+  { id: "nostalgic", name: "Nostalgic", icon: "📷", color: "#8a7c6b" },
+  { id: "hopeful", name: "Hopeful", icon: "🌅", color: "#7c9e6b" },
+  { id: "mysterious", name: "Mysterious", icon: "🔮", color: "#6b5c8a" },
 ];
 
 type Props = {
@@ -89,18 +90,18 @@ export function MusicCustomizer({
     <div className="music-customizer">
       <div className="section-header">
         <div className="section-header-inline">
-          <h2>Customize Your Music</h2>
+          <h2>Shape the sound</h2>
           <span className="section-badge">Style & Mood</span>
         </div>
         <p className="section-description">
-          Choose your genre, mood, and production techniques. Mix and match to create your unique sound.
+          Pick genre, mood, and techniques. Mix and match.
         </p>
       </div>
 
       <div className="customizer-section">
         <div className="customizer-header">
           <h3>Genre</h3>
-          <p className="customizer-hint">Pick the style of music you want</p>
+          <p className="customizer-hint">Style of music</p>
         </div>
         <div className="genre-grid">
           {genres.map((genre) => (
@@ -119,8 +120,8 @@ export function MusicCustomizer({
 
       <div className="customizer-section">
         <div className="customizer-header">
-          <h3>Emotion & Mood</h3>
-          <p className="customizer-hint">Set the emotional tone</p>
+          <h3>Mood</h3>
+          <p className="customizer-hint">Emotional tone</p>
         </div>
         <div className="emotion-quick-grid">
           {quickEmotions.map((emotion) => (
@@ -142,8 +143,8 @@ export function MusicCustomizer({
 
       <div className="customizer-section">
         <div className="customizer-header">
-          <h3>Production Techniques</h3>
-          <p className="customizer-hint">Select effects and techniques (mix and match)</p>
+          <h3>Techniques</h3>
+          <p className="customizer-hint">Effects and techniques</p>
         </div>
         <div className="technique-grid">
           {musicTechniques.map((technique) => (
@@ -162,7 +163,7 @@ export function MusicCustomizer({
 
       {(selectedGenre || selectedEmotion || selectedTechniques.length > 0) && (
         <div className="customizer-summary">
-          <div className="summary-header">Your Customization:</div>
+          <div className="summary-header">Your choices:</div>
           <div className="summary-tags">
             {selectedGenre && (
               <span className="summary-tag">

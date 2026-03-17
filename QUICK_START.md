@@ -1,8 +1,18 @@
-# Kelly Companion - Quick Start Guide
+# Quick Start
 
-## Installation
+## Repo build and dev (canonical)
 
-The Kelly Companion system is already integrated into KmiDi-1. No additional installation needed.
+From the KmiDi repo root:
+
+1. **Setup:** `./scripts/dev-setup.sh`
+2. **Run:** `npm run dev:all` (React + Tauri + Music Brain API), or run separately: `npm run dev`, `npm run dev:tauri`, `npm run dev:python`
+3. **Full builds:** See [README.md](README.md) for the two V1 pipelines (penta_core + PyInstaller vs KellyFFI + Tauri) and [docs/FULL_STACK_BUILD.md](docs/FULL_STACK_BUILD.md) for native integration.
+
+---
+
+## Kelly Companion — Python usage
+
+The Kelly Companion system is already integrated into KmiDi. No additional installation needed.
 
 ## Basic Usage
 

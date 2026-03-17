@@ -41,8 +41,11 @@ That path includes:
 ## V1 build and dev
 
 - **Dev setup:** `./scripts/dev-setup.sh` then `npm run dev:all` (see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)).
-- **Full v1 build:** `./scripts/build_v1.sh` (entities → C++/Python → Tauri).
-- **React/Tauri/C++ integration:** See [docs/FULL_STACK_BUILD.md](docs/FULL_STACK_BUILD.md) for KellyFFI linkage, plugin build verification, and DAW/automation validation procedures.
+
+Two V1 build paths (use the one that matches your goal):
+
+- **V1 pipeline A — penta_core + PyInstaller + Tauri:** `./scripts/build_v1.sh`. Builds: sync entities → C++ penta_core / Python bindings → PyInstaller-packaged Music Brain API → Tauri app. No KellyFFI.
+- **V1 pipeline B — KellyFFI + Tauri (native desktop integration):** See [docs/FULL_STACK_BUILD.md](docs/FULL_STACK_BUILD.md) and `./scripts/build-full-stack.sh`. Builds KellyFFI shared lib (and optional KellyPlugin_VST3) for React → Tauri → KellyFFI → KellyCore. Use this path for plugin build verification and DAW/automation validation.
 
 ## Operational Notes
 

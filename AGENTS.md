@@ -28,13 +28,13 @@ KmiDi/
 ├── src-tauri/              # Tauri app (Rust commands, bridge, build.rs)
 ├── music_brain/            # Python FastAPI app and engine API
 ├── shared_schemas/         # Single source of truth for intent (JSON → sync to TS/Rust)
-├── scripts/                # sync_entities.py, dev-setup, build, env
+├── scripts/                # sync_entities.py, dev-setup, build, env, acquire/ (source_manifest)
 ├── tests/                  # Python tests (pytest)
 ├── engine/, include/, src/  # C++ (engine, bridge, plugin)
 ├── external/JUCE/          # JUCE 8 (required for C++/plugins/FFI)
 ├── cmake/                  # CMake helpers
-├── config/                 # Training/config YAML
-├── docs/                   # DEVELOPMENT.md, ENVIRONMENT.md, FULL_STACK_BUILD.md
+├── config/                 # Training/config YAML, source_manifest.yaml (external sources)
+├── docs/                   # DEVELOPMENT.md, ENVIRONMENT.md, FULL_STACK_BUILD.md, DATASETS_LAYOUT.md
 ├── BUILD.md                # C++ / CMake / Tauri build reference
 ├── pyproject.toml          # Python deps (music_brain, fastapi, uvicorn, pydantic)
 └── package.json            # npm scripts (dev, build, tauri)
@@ -66,14 +66,14 @@ In cloud VMs, JUCE submodule step can be skipped if C++ build is not needed.
 
 | Context | Command | Notes |
 |---------|---------|--------|
-| **Cloud / no Tauri** | `npm run dev` and `npm run dev:python` **separately** | Do **not** use `npm run dev:all` (Tauri failure will kill all via `-k`) |
-| **Local (Tauri installed)** | `npm run dev:all` | React + Tauri + Music Brain together |
+| **Any (React + API)** | `npm run dev:all` | React (Vite) + Music Brain API only; no port collision |
+| **Desktop (Tauri)** | `npm run dev:tauri` | Run **separately**; Tauri starts its own Vite. For API, run `npm run dev:python` in another terminal |
 
 | Service | Command | URL |
 |---------|---------|-----|
 | React (Vite) | `npm run dev` (or `npm run dev:react`) | http://localhost:1420 |
 | Music Brain API | `npm run dev:python` or `python3 -m uvicorn music_brain.api:app --reload --port 8000 --host 0.0.0.0` | http://localhost:8000, docs at /docs |
-| Tauri desktop | `npm run dev:tauri` | Uses React dev server when run with dev |
+| Tauri desktop | `npm run dev:tauri` | Starts Vite then opens http://localhost:1420 in the native window |
 
 - Python API needs `fastapi`, `uvicorn`, `pydantic` (and `pip install -e .`). Ensure `$HOME/.local/bin` is on `PATH` if uvicorn is installed with `--user`.
 - Vite is bound to `0.0.0.0` (see `vite.config.ts`) so the frontend is reachable outside the host.
@@ -87,8 +87,9 @@ In cloud VMs, JUCE submodule step can be skipped if C++ build is not needed.
 - **Dev:** `npm run dev` (Vite, port 1420).
 - **Type-check:** `npx tsc --noEmit`.
 - **Production:** `npm run build` (runs `tsc && vite build`).
+- **TypeScript:** `strict` is off in tsconfig; enable incrementally and fix errors before enabling.
 
-No lockfile; `npm install` is canonical.
+`package-lock.json` is committed; use `npm ci` in CI for reproducible installs, or `npm install` for local dev.
 
 ### Python
 
@@ -208,8 +209,9 @@ Minimal working example:
 
 ## Gotchas
 
-- **No lockfile:** Use `npm install`; do not rely on a committed lockfile.
-- **Cloud vs local:** In environments where Tauri does not run, start React and Python **separately**; do not use `npm run dev:all`.
+- **Lockfile:** `package-lock.json` is committed; use `npm ci` in CI and `npm install` for local dev.
+- **App shell:** Default entrypoint is `AppConsole` (main.tsx). `App.tsx` is legacy/alternate and not imported.
+- **Cloud vs local:** `npm run dev:all` runs React + API only (safe everywhere). For desktop, run `npm run dev:tauri` separately.
 - **JUCE:** Large submodule; in cloud-only workflows bootstrap can skip `git submodule update` for JUCE if C++ is not built.
 - **Two build contexts:** Root CMake uses `BUILD_PLUGINS`, `KMIDI_BUILD_JUCE_UI`, `BUILD_KELLY_FFI`. Legacy DAIW in `KmiDi_FINAL/engine/cpp_music_brain` uses `DAIW_BUILD_VST3` / `DAIW_BUILD_AU` — do not mix.
 - **KellyFFI and JUCE:** KellyFFI is built with JUCE linked **PRIVATE** and `JUCE_DISABLE_JUCE_VERSION_PRINTING=1` to avoid two copies of JUCE and static-init crashes when the benchmark (or any exe that only links the dylib) runs.
@@ -224,6 +226,8 @@ Minimal working example:
 | `docs/DEVELOPMENT.md` | Full dev guide, workflows, debugging, C++/Rust/React structure |
 | `docs/ENVIRONMENT.md` | Env vars, file layout, loading, validation |
 | `docs/FULL_STACK_BUILD.md` | React ↔ Tauri ↔ KellyFFI ↔ KellyCore, build order, integration tests |
+| `docs/DATASETS_LAYOUT.md` | Canonical dataset volume layout (by_source, by_domain), KMIDI_DATASETS_PATH, acquisition paths |
+| `docs/SOURCE_INTEGRATION_PLAN.md` | Source integration and download plan; external briefings in `docs/research/sources/` |
 | `docs/AU_PLUGIN_ARCHITECTURE.md` | Audio Unit (AU) plugin architecture: macOS, iOS AUv3, build contexts |
 | `docs/SAGEMAKER_SETUP.md` | SageMaker AI training (JEPA): IAM, S3, ECR, image build, launch jobs |
 | `BUILD.md` | C++ / CMake / Tauri build instructions and prerequisites |

@@ -12,6 +12,10 @@ Usage (from repo root):
     --midi-root ~/Datasets/maestro/midi --out-dir manifests --window-seconds 8 --stride-seconds 4
 
 See docs/DATA_AND_TRAINING.md and docs/research/MULTIMODAL_IMPLEMENTATIONS_PLAN.md.
+
+Optional: --source-manifest and --list-from-manifest use config/source_manifest.yaml to list
+adopted dataset-like sources (adoption_decision=adopted) that could drive --audio-root/--midi-root
+once paths are set. See docs/SOURCE_INTEGRATION_PLAN.md Phase 4.
 """
 
 from __future__ import annotations
@@ -38,6 +42,11 @@ try:
     import soundfile as sf
 except ImportError:
     sf = None  # type: ignore[assignment]
+
+try:
+    import yaml
+except ImportError:
+    yaml = None  # type: ignore[assignment]
 
 
 def _sha1_path(path: Path, chunk_kb: int = 8192) -> str:
@@ -215,6 +224,38 @@ def build_cuts(
     return CutSet.from_cuts(cuts_list)
 
 
+def list_adopted_jepa_sources(manifest_path: Path) -> int:
+    """List source_manifest entries with adoption_decision=adopted that are JEPA/dataset-relevant."""
+    if yaml is None:
+        print("yaml required for --list-from-manifest; pip install pyyaml", file=sys.stderr)
+        return 1
+    if not manifest_path.is_file():
+        print(f"Manifest not found: {manifest_path}", file=sys.stderr)
+        return 1
+    with manifest_path.open() as f:
+        data = yaml.safe_load(f) or {}
+    sources = data.get("sources") or []
+    jepa_domain = ("jepa", "midi", "wavjepa", "transcriber")
+    adopted = [
+        s
+        for s in sources
+        if (s.get("adoption_decision") == "adopted")
+        and (
+            any(d in (s.get("integration_domain") or "").lower() for d in jepa_domain)
+            or "dataset" in (s.get("artifact_classes") or [])
+        )
+    ]
+    if not adopted:
+        print("No adopted JEPA/dataset sources in manifest.", file=sys.stderr)
+        print("Set adoption_decision: adopted and add proposed_storage_path for dataset-like items.", file=sys.stderr)
+        return 0
+    for s in adopted:
+        path = s.get("proposed_storage_path") or "(none)"
+        env = s.get("storage_env_var") or "(none)"
+        print(f"  {s.get('source_item', '?')}: proposed_storage_path={path} storage_env_var={env}")
+    return 0
+
+
 def write_manifest_args(out_dir: Path, args: argparse.Namespace) -> None:
     """Write manifest_args.json for reproducibility."""
     d = {
@@ -238,12 +279,12 @@ def main() -> int:
         ),
     )
     parser.add_argument(
-        "--audio-root", type=Path, required=True,
-        help="Root directory of audio files (e.g. MAESTRO WAV)",
+        "--audio-root", type=Path, default=None,
+        help="Root directory of audio files (e.g. MAESTRO WAV); required unless --list-from-manifest",
     )
     parser.add_argument(
-        "--midi-root", type=Path, required=True,
-        help="Root directory of MIDI sidecars",
+        "--midi-root", type=Path, default=None,
+        help="Root directory of MIDI sidecars; required unless --list-from-manifest",
     )
     parser.add_argument(
         "--out-dir", type=Path, default=Path("manifests"),
@@ -277,8 +318,23 @@ def main() -> int:
         "--config", type=Path, default=None,
         help="Optional YAML config (CLI overrides)",
     )
+    parser.add_argument(
+        "--source-manifest", type=Path, default=None,
+        help="Path to source_manifest.yaml (used with --list-from-manifest)",
+    )
+    parser.add_argument(
+        "--list-from-manifest", action="store_true",
+        help="List adopted JEPA/dataset sources from source_manifest and exit",
+    )
     args = parser.parse_args()
 
+    if args.list_from_manifest:
+        manifest = args.source_manifest or Path(__file__).resolve().parent.parent / "config" / "source_manifest.yaml"
+        return list_adopted_jepa_sources(manifest)
+
+    if args.audio_root is None or args.midi_root is None:
+        print("Error: --audio-root and --midi-root are required (or use --list-from-manifest).", file=sys.stderr)
+        return 1
     audio_root = args.audio_root.resolve()
     midi_root = args.midi_root.resolve()
     out_dir = args.out_dir.resolve()

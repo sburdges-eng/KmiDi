@@ -51,7 +51,7 @@ export function SpectoCloudPanel({ lastGeneratedAudioPath }: Props) {
       if (lastGeneratedAudioPath) {
         payload.audio_file_path = lastGeneratedAudioPath;
       } else {
-        throw new Error("No audio file available. Please generate music first using the Generate Music button above.");
+        throw new Error("No piece yet. Generate one in Compose, then return here.");
       }
 
       const resp = await renderSpectocloud(payload);
@@ -68,12 +68,11 @@ export function SpectoCloudPanel({ lastGeneratedAudioPath }: Props) {
       <div className="spectocloud-header">
         <div>
           <div className="section-header-inline">
-            <h3>Visualize Your Music</h3>
+            <h3>Visualize</h3>
             <span className="section-badge">Particle Cloud</span>
           </div>
           <p className="section-description">
-            Turn your music into beautiful visual art. See your melodies and rhythms 
-            as flowing particle clouds - perfect for sharing or use as album artwork.
+            Turn your piece into a visual. Share it or use it as art.
           </p>
         </div>
       </div>
@@ -114,25 +113,24 @@ export function SpectoCloudPanel({ lastGeneratedAudioPath }: Props) {
 
       <div className="spectocloud-simple-section">
         <p className="simple-description">
-          Visualize your generated music automatically. After you generate music using the button above, 
-          come back here to turn it into a beautiful particle cloud visualization.
+          After you generate a piece, return here to turn it into a visual.
         </p>
         {lastGeneratedAudioPath ? (
           <div className="auto-detection-notice success">
             <span className="notice-icon">✓</span>
-            <span>Ready to visualize your generated music</span>
+            <span>Ready. Build an image or animation below.</span>
           </div>
         ) : (
           <div className="auto-detection-notice warning">
             <span className="notice-icon">ℹ️</span>
-            <span>Generate music first using the "Generate Music" button above, then return here to visualize it</span>
+            <span>Generate a piece first, then return here.</span>
           </div>
         )}
       </div>
 
       {error && (
         <div className="error-display-card">
-          <strong>Error:</strong> {error}
+          {error}
         </div>
       )}
 
@@ -143,25 +141,25 @@ export function SpectoCloudPanel({ lastGeneratedAudioPath }: Props) {
           className="primary-action-btn"
         >
           {loading 
-            ? "Creating Visualization..." 
+            ? "Building…" 
             : mode === "static" 
-              ? "Create Image" 
-              : "Create Animation"}
+              ? "Build image" 
+              : "Build animation"}
         </button>
         <p className="action-hint">
           {mode === "static" 
-            ? "Generate a beautiful still image of your music."
-            : "Create an animated video of your music flowing over time."}
+            ? "A still image of your piece."
+            : "An animated take on your piece."}
         </p>
       </div>
 
       {output && (
         <div className="output-display-card">
-          <div className="output-display-label">✨ Visualization Complete!</div>
+          <div className="output-display-label">Done.</div>
           <div className="output-display-details">
-            <div>Your {output.mode === "static" ? "image" : "animation"} is ready!</div>
+            <div>Saved.</div>
             <div className="output-location">
-              Saved to: <span className="output-path-simple">{output.output_path}</span>
+              <span className="output-path-simple">{output.output_path}</span>
             </div>
           </div>
         </div>

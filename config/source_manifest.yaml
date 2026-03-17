@@ -1,0 +1,413 @@
+# KmiDi external source manifest (Phase 1)
+# Schema: source_item, canonical_title, category, verification_status, verification_basis,
+# primary_url, secondary_urls, primary_source_type, license, usage_constraints,
+# downloadable, artifact_classes, manual_review_required, storage_env_var, proposed_storage_path,
+# expected_size, integration_domain, repo_relevance, adoption_priority, adoption_decision,
+# owner, last_verified_at, checksum_required, checksum_algorithm, notes
+# Full source block was not pasted; all entries are repo-aware / title-only. No downloads in Phase 1.
+
+sources:
+  - source_item: song_generation_v2
+    canonical_title: UNKNOWN
+    category: product/spec
+    verification_status: UNVERIFIED
+    verification_basis: source_title_only
+    primary_url: UNKNOWN
+    secondary_urls: []
+    primary_source_type: other
+    license: UNKNOWN
+    accept_unknown_license: true
+    usage_constraints: UNKNOWN
+    downloadable: unknown
+    artifact_classes: [docs]
+    manual_review_required: true
+    storage_env_var: null
+    proposed_storage_path: null
+    expected_size: unknown
+    integration_domain: open_song_generation
+    repo_relevance: music_brain api, session/generative, docs
+    adoption_priority: unset
+    adoption_decision: pending
+    owner: UNKNOWN
+    last_verified_at: null
+    checksum_required: false
+    checksum_algorithm: null
+    notes: 'No pasted source; may be conceptual or third-party. v2 and open release undefined.'
+
+  - source_item: miditok_recipes_autotroph
+    canonical_title: UNKNOWN
+    category: config/recipes
+    verification_status: PARTIALLY_VERIFIED
+    verification_basis: repo_scan_only + source_title_only
+    primary_url: UNKNOWN
+    secondary_urls: []
+    primary_source_type: repo
+    license: UNKNOWN
+    accept_unknown_license: true
+    usage_constraints: UNKNOWN
+    downloadable: yes
+    artifact_classes: [repo, docs, other]
+    manual_review_required: true
+    storage_env_var: null
+    proposed_storage_path: null
+    expected_size: small
+    integration_domain: tokenization_autotroph
+    repo_relevance: experiments/perch_remi_pipeline, docs/REMI_BPE_TOKENIZATION.md
+    adoption_priority: medium
+    adoption_decision: pending
+    owner: UNKNOWN
+    last_verified_at: null
+    checksum_required: false
+    checksum_algorithm: null
+    notes: MidiTok in repo; Autotroph not in repo. Recipes may be internal.
+
+  - source_item: creative_seed_bbm_void
+    canonical_title: UNKNOWN
+    category: concept
+    verification_status: UNVERIFIED
+    verification_basis: source_title_only
+    primary_url: UNKNOWN
+    secondary_urls: []
+    primary_source_type: other
+    license: N/A
+    accept_unknown_license: true
+    usage_constraints: null
+    downloadable: no
+    artifact_classes: [other]
+    manual_review_required: false
+    storage_env_var: null
+    proposed_storage_path: null
+    expected_size: none
+    integration_domain: creative_seed
+    repo_relevance: shared_schemas, Intent, docs
+    adoption_priority: low
+    adoption_decision: pending
+    owner: UNKNOWN
+    last_verified_at: null
+    checksum_required: false
+    checksum_algorithm: null
+    notes: 'Void is KmiDi vocabulary. Bbm = key vs metaphor; conceptual only.'
+
+  - source_item: brain_body_test_harness
+    canonical_title: UNKNOWN
+    category: tool/harness
+    verification_status: UNVERIFIED
+    verification_basis: source_title_only
+    primary_url: UNKNOWN
+    secondary_urls: []
+    primary_source_type: other
+    license: UNKNOWN
+    accept_unknown_license: true
+    usage_constraints: UNKNOWN
+    downloadable: unknown
+    artifact_classes: [repo, docs, other]
+    manual_review_required: true
+    storage_env_var: null
+    proposed_storage_path: null
+    expected_size: unknown
+    integration_domain: kellybrain_brain_body_kellyharness
+    repo_relevance: docs/DEVELOPMENT.md, rt_harness
+    adoption_priority: medium
+    adoption_decision: pending
+    owner: UNKNOWN
+    last_verified_at: null
+    checksum_required: false
+    checksum_algorithm: null
+    notes: Brain–Body and kellyharness not in repo; relationship to rt_harness unclear.
+
+  - source_item: jepa_to_midi_transcriber_probe
+    canonical_title: UNKNOWN
+    category: implementation
+    verification_status: PARTIALLY_VERIFIED
+    verification_basis: repo_scan_only + source_title_only
+    primary_url: UNKNOWN
+    secondary_urls: []
+    primary_source_type: other
+    license: UNKNOWN
+    accept_unknown_license: true
+    usage_constraints: UNKNOWN
+    downloadable: unknown
+    artifact_classes: [docs, other]
+    manual_review_required: true
+    storage_env_var: null
+    proposed_storage_path: null
+    expected_size: medium
+    integration_domain: jepa_wavjepa_transcriber_moe
+    repo_relevance: docs/WAVJEPA_LATENT_PIPELINE.md, mt3-transcription-baseline.md, music_brain/jepa
+    adoption_priority: high
+    adoption_decision: pending
+    owner: UNKNOWN
+    last_verified_at: null
+    checksum_required: false
+    checksum_algorithm: null
+    notes: Probe not implemented; design in repo. Which JEPA encoder and training data UNKNOWN.
+
+  - source_item: frozen_jepa_moe_bridge
+    canonical_title: UNKNOWN
+    category: prototype
+    verification_status: UNVERIFIED
+    verification_basis: source_title_only
+    primary_url: UNKNOWN
+    secondary_urls: []
+    primary_source_type: other
+    license: UNKNOWN
+    accept_unknown_license: true
+    usage_constraints: UNKNOWN
+    downloadable: unknown
+    artifact_classes: [repo, weights, docs, other]
+    manual_review_required: true
+    storage_env_var: null
+    proposed_storage_path: null
+    expected_size: unknown
+    integration_domain: jepa_wavjepa_transcriber_moe
+    repo_relevance: docs/WAVJEPA_LATENT_PIPELINE.md, music_brain/jepa
+    adoption_priority: medium
+    adoption_decision: pending
+    owner: UNKNOWN
+    last_verified_at: null
+    checksum_required: false
+    checksum_algorithm: null
+    notes: 'MoE not in repo; bridge role undefined. No primary source.'
+
+  - source_item: wavjepa_pretrained_encoder
+    canonical_title: UNKNOWN
+    category: weights/model
+    verification_status: PARTIALLY_VERIFIED
+    verification_basis: repo_scan_only + source_title_only
+    primary_url: https://huggingface.co/labhamlet/wavjepa-base/resolve/main/README.md
+    secondary_urls: []
+    primary_source_type: model_hub
+    license: UNKNOWN
+    accept_unknown_license: true
+    usage_constraints: UNKNOWN
+    downloadable: yes
+    artifact_classes: [weights, model_card, docs]
+    manual_review_required: true
+    storage_env_var: KELLY_MODELS_PATH
+    proposed_storage_path: wavjepa
+    expected_size: large
+    integration_domain: jepa_wavjepa_transcriber_moe
+    repo_relevance: experiments/exp_002_wavjepa_emotion, docs/WAVJEPA_*
+    adoption_priority: high
+    adoption_decision: adopted
+    owner: UNKNOWN
+    last_verified_at: null
+    checksum_required: true
+    checksum_algorithm: sha256
+    notes: 'Repo references e.g. labhamlet/wavjepa-base (HF). Official release URL unverified.'
+
+  - source_item: new_midi_datasets_models
+    canonical_title: UNKNOWN
+    category: dataset
+    verification_status: UNVERIFIED
+    verification_basis: source_title_only
+    primary_url: UNKNOWN
+    secondary_urls: []
+    primary_source_type: other
+    license: UNKNOWN
+    accept_unknown_license: true
+    usage_constraints: UNKNOWN
+    downloadable: unknown
+    artifact_classes: [dataset, weights, docs]
+    manual_review_required: true
+    storage_env_var: KMIDI_DATASETS_PATH
+    proposed_storage_path: null
+    expected_size: large
+    integration_domain: midi_datasets_emotion
+    repo_relevance: scripts/make_jepa_manifest.py, prepare_datasets.py, config
+    adoption_priority: medium
+    adoption_decision: pending
+    owner: UNKNOWN
+    last_verified_at: null
+    checksum_required: false
+    checksum_algorithm: null
+    notes: 'New unspecified; no names or URLs. DatasetManifest 2.0 and Lhotse in repo.'
+
+  - source_item: apple_silicon_latency_microbench
+    canonical_title: UNKNOWN
+    category: benchmark
+    verification_status: PARTIALLY_VERIFIED
+    verification_basis: repo_scan_only + source_title_only
+    primary_url: UNKNOWN
+    secondary_urls: []
+    primary_source_type: docs
+    license: N/A
+    accept_unknown_license: true
+    usage_constraints: null
+    downloadable: no
+    artifact_classes: [docs]
+    manual_review_required: false
+    storage_env_var: null
+    proposed_storage_path: null
+    expected_size: none
+    integration_domain: apple_silicon_ipc
+    repo_relevance: docs/apple-silicon-low-latency.md
+    adoption_priority: medium
+    adoption_decision: pending
+    owner: UNKNOWN
+    last_verified_at: null
+    checksum_required: false
+    checksum_algorithm: null
+    notes: 'Procedure in doc; one-way scope and script vs procedure undefined.'
+
+  - source_item: xpc_uds_shared_rings
+    canonical_title: UNKNOWN
+    category: other
+    verification_status: UNVERIFIED
+    verification_basis: source_title_only
+    primary_url: UNKNOWN
+    secondary_urls: []
+    primary_source_type: other
+    license: N/A
+    accept_unknown_license: true
+    usage_constraints: UNKNOWN
+    downloadable: no
+    artifact_classes: [docs]
+    manual_review_required: true
+    storage_env_var: null
+    proposed_storage_path: null
+    expected_size: none
+    integration_domain: apple_silicon_ipc
+    repo_relevance: none
+    adoption_priority: medium
+    adoption_decision: pending
+    owner: UNKNOWN
+    last_verified_at: null
+    checksum_required: false
+    checksum_algorithm: null
+    notes: XPC, UDS, shared rings not in repo. Human decision required before implementation.
+
+  - source_item: label_studio_to_lhotse
+    canonical_title: UNKNOWN
+    category: pipeline/script
+    verification_status: PARTIALLY_VERIFIED
+    verification_basis: repo_scan_only + source_title_only
+    primary_url: UNKNOWN
+    secondary_urls: []
+    primary_source_type: docs
+    license: UNKNOWN
+    accept_unknown_license: true
+    usage_constraints: UNKNOWN
+    downloadable: yes
+    artifact_classes: [docs, other]
+    manual_review_required: true
+    storage_env_var: null
+    proposed_storage_path: null
+    expected_size: small
+    integration_domain: label_studio_lhotse
+    repo_relevance: scripts/make_jepa_manifest.py (Lhotse format)
+    adoption_priority: medium
+    adoption_decision: pending
+    owner: UNKNOWN
+    last_verified_at: null
+    checksum_required: false
+    checksum_algorithm: null
+    notes: Label Studio not in repo. Export schema to verify. Conversion script not yet implemented.
+
+  - source_item: emotion_labeled_music_corpora
+    canonical_title: UNKNOWN
+    category: dataset
+    verification_status: PARTIALLY_VERIFIED
+    verification_basis: repo_scan_only + source_title_only
+    primary_url: UNKNOWN
+    secondary_urls: []
+    primary_source_type: other
+    license: UNKNOWN
+    accept_unknown_license: true
+    usage_constraints: UNKNOWN
+    downloadable: yes
+    artifact_classes: [dataset, docs]
+    manual_review_required: true
+    storage_env_var: KMIDI_DATASETS_PATH
+    proposed_storage_path: emotions
+    expected_size: medium
+    integration_domain: midi_datasets_emotion
+    repo_relevance: experiments/exp_002_wavjepa_emotion, CREMA-D, RAVDESS
+    adoption_priority: high
+    adoption_decision: pending
+    owner: UNKNOWN
+    last_verified_at: null
+    checksum_required: false
+    checksum_algorithm: null
+    notes: 'CREMA-D/RAVDESS in repo; music vs speech ambiguity. License per corpus.'
+
+  - source_item: apple_music_ai_tagging
+    canonical_title: UNKNOWN
+    category: policy/spec
+    verification_status: UNVERIFIED
+    verification_basis: source_title_only
+    primary_url: UNKNOWN
+    secondary_urls: []
+    primary_source_type: policy_page
+    license: UNKNOWN
+    accept_unknown_license: true
+    usage_constraints: UNKNOWN
+    downloadable: unknown
+    artifact_classes: [docs]
+    manual_review_required: true
+    storage_env_var: null
+    proposed_storage_path: null
+    expected_size: none
+    integration_domain: evaluation_provenance
+    repo_relevance: none
+    adoption_priority: medium
+    adoption_decision: pending
+    owner: UNKNOWN
+    last_verified_at: null
+    checksum_required: false
+    checksum_algorithm: null
+    notes: No ref in repo. Need primary source for rules and scope.
+
+  - source_item: new_standards_music_ai_benchmarks
+    canonical_title: UNKNOWN
+    category: standards/benchmarks
+    verification_status: UNVERIFIED
+    verification_basis: source_title_only
+    primary_url: UNKNOWN
+    secondary_urls: []
+    primary_source_type: other
+    license: UNKNOWN
+    accept_unknown_license: true
+    usage_constraints: UNKNOWN
+    downloadable: unknown
+    artifact_classes: [docs, benchmark, dataset]
+    manual_review_required: true
+    storage_env_var: null
+    proposed_storage_path: null
+    expected_size: unknown
+    integration_domain: evaluation_provenance
+    repo_relevance: KellyFFIBenchmark, wavjepa baselines, research
+    adoption_priority: medium
+    adoption_decision: pending
+    owner: UNKNOWN
+    last_verified_at: null
+    checksum_required: false
+    checksum_algorithm: null
+    notes: 'New unspecified. No central benchmark manifest in repo.'
+
+  - source_item: jepa_encoder_core_ml_export
+    canonical_title: UNKNOWN
+    category: pipeline/export
+    verification_status: UNVERIFIED
+    verification_basis: source_title_only
+    primary_url: UNKNOWN
+    secondary_urls: []
+    primary_source_type: other
+    license: UNKNOWN
+    accept_unknown_license: true
+    usage_constraints: UNKNOWN
+    downloadable: unknown
+    artifact_classes: [weights, docs, other]
+    manual_review_required: true
+    storage_env_var: KELLY_MODELS_PATH
+    proposed_storage_path: core_ml_export
+    expected_size: large
+    integration_domain: core_ml_export
+    repo_relevance: music_brain/jepa; Core ML not in repo
+    adoption_priority: low
+    adoption_decision: pending
+    owner: UNKNOWN
+    last_verified_at: null
+    checksum_required: false
+    checksum_algorithm: null
+    notes: 'Which encoder (WavJEPA vs in-repo JEPA) and toolchain unverified. Intent quantization in repo is rhythmic only.'

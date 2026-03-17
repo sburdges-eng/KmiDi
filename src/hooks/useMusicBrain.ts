@@ -1,7 +1,7 @@
 import type { CompleteSongIntentRequest } from '../types/Intent';
 
 /** External API is deny-by-default; set VITE_KMIDI_USE_API=true to allow (e.g. dev). Unset in freeze/CI. */
-const USE_EXTERNAL_API = import.meta.env.VITE_KMIDI_USE_API === 'true';
+export const USE_EXTERNAL_API = import.meta.env.VITE_KMIDI_USE_API === 'true';
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://127.0.0.1:8000';
 
 export interface TechnicalIntent {
@@ -230,6 +230,9 @@ export const useMusicBrain = () => {
   };
 
   const healthCheck = async (): Promise<{ status: string; version: string }> => {
+    if (!USE_EXTERNAL_API) {
+      return Promise.reject(new Error('API disabled (no cloud required)'));
+    }
     return apiCall('/health');
   };
 

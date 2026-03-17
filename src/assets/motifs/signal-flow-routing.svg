@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" fill="none" aria-hidden="true">
+  <title>Signal-flow / routing support motif</title>
+  <g id="signal-flow-motif" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Input node -->
+    <circle id="input-node" cx="20" cy="40" r="4" stroke="rgba(255,255,255,0.1)" stroke-width="0.5" fill="none"/>
+    <!-- Main trunk -->
+    <line id="trunk" x1="24" y1="40" x2="56" y2="40" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+    <!-- Branch point -->
+    <path id="branch-a" stroke="rgba(255,255,255,0.1)" stroke-width="0.45" d="M 56 40 L 76 20"/>
+    <path id="branch-b" stroke="rgba(255,255,255,0.1)" stroke-width="0.45" d="M 56 40 L 76 40"/>
+    <path id="branch-c" stroke="rgba(255,255,255,0.1)" stroke-width="0.45" d="M 56 40 L 76 60"/>
+    <!-- Output nodes (small circles) -->
+    <g id="output-nodes" stroke="rgba(255,255,255,0.08)" stroke-width="0.4" fill="none">
+      <circle cx="80" cy="20" r="2.5"/>
+      <circle cx="80" cy="40" r="2.5"/>
+      <circle cx="80" cy="60" r="2.5"/>
+    </g>
+    <!-- Routing direction ticks (flow hint) -->
+    <g id="flow-ticks" stroke="rgba(255,255,255,0.06)" stroke-width="0.35">
+      <line x1="32" y1="40" x2="36" y2="40"/>
+      <line x1="44" y1="40" x2="48" y2="40"/>
+    </g>
+    <!-- Restrained amber on center branch only -->
+    <path id="accent-branch" stroke="rgba(201,162,39,0.28)" stroke-width="0.5" d="M 56 40 L 76 40"/>
+  </g>
+</svg>
