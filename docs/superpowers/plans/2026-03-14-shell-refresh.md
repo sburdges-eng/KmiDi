@@ -889,7 +889,7 @@ git commit -m "feat(shell): AppConsole main component — state, upper deck, low
 **Files:**
 - Modify: `src/AppConsole.tsx`
 
-- [ ] **Step 1: Replace the mode content placeholder with actual mode rendering**
+- [x] **Step 1: Replace the mode content placeholder with actual mode rendering**
 
 Replace the `{/* Mode content — next step (uses displayMode, not mode) */}` comment inside the workspace div with the following. Note: all conditions use `displayMode` (not `mode`) so the outgoing content stays visible during the 80ms exit fade:
 
@@ -971,12 +971,12 @@ Replace the `{/* Mode content — next step (uses displayMode, not mode) */}` co
           )}
 ```
 
-- [ ] **Step 2: Verify TypeScript compiles**
+- [x] **Step 2: Verify TypeScript compiles**
 
 Run: `npx tsc --noEmit`
 Expected: No errors (AppConsole.tsx uses same component APIs as App.tsx)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/AppConsole.tsx
