@@ -2,6 +2,9 @@
   "plugins": {
     "deploy-on-aws": {
       "enabled": true
+    },
+    "huggingface-skills": {
+      "enabled": true
     }
   }
 }

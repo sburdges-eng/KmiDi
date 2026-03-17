@@ -24,6 +24,8 @@ build_rt/
 build_out/
 build-*/
 cmake-build-*/
+# Swift Package Manager build directories
+.build/
 CMakeCache.txt
 CMakeFiles/
 Makefile

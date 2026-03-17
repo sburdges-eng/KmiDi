@@ -21,6 +21,8 @@ option(ENABLE_ONNX_RUNTIME "Enable ONNX Runtime for ML inference" OFF)
 option(KMIDI_OFFLINE_BUILD "Disallow network dependency resolution at configure/build time" OFF)
 # Headless RT callback harness for engine (section 3.3)
 option(BUILD_RT_HARNESS "Build headless RT callback harness" ON)
+# MIDI-CI Property Exchange daemon (JSON microformat -> SysEx via libremidi)
+option(BUILD_MIDI_CI_DAEMON "Build MIDI-CI microformat-to-SysEx daemon" OFF)
 
 # KmiDi_FINAL integration options
 option(USE_KMI_DI_FINAL "Use existing KmiDi_FINAL components" OFF)
@@ -506,6 +508,16 @@ if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE)
     message(STATUS "Kelly FFI library will be built")
 else()
     message(STATUS "Kelly FFI library disabled (requires BUILD_KELLY_CORE=ON)")
+endif()
+
+# MIDI-CI daemon (optional; requires network for FetchContent unless vendored)
+if(BUILD_MIDI_CI_DAEMON AND NOT KMIDI_OFFLINE_BUILD)
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/midi_ci_daemon/CMakeLists.txt)
+        add_subdirectory(tools/midi_ci_daemon)
+        message(STATUS "MIDI-CI daemon enabled (tools/midi_ci_daemon)")
+    else()
+        message(WARNING "BUILD_MIDI_CI_DAEMON=ON but tools/midi_ci_daemon/CMakeLists.txt not found")
+    endif()
 endif()
 
 # Tests

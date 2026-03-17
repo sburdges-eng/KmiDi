@@ -221,6 +221,17 @@ Minimal working example:
 
 ---
 
+## On-device and alignment tools
+
+- **MIDI-CI daemon:** Optional build `-DBUILD_MIDI_CI_DAEMON=ON` produces `tools/midi_ci_daemon/midi_ci_daemon`; reads JSON microformat from stdin and sends MIDI-CI Property Exchange SysEx via libremidi. See `tools/midi_ci_daemon/README.md`.
+- **Core ML LLM (stateful KV-cache):** `scripts/export_llm_coreml.py` wraps ExecuTorch export with Core ML state + b4w quantize; `tools/coreml_llm_runner` Swift app runs state-threaded greedy decode. Sub-15 ms/token target on M4. See `docs/FULL_STACK_BUILD.md` and `tools/coreml_llm_runner/README.md`.
+- **PID Flow diagnostic:** `penta_core.ml.diagnostics.pid_flow` computes layer-wise Redundant / Text Unique / Audio Unique / Synergy to detect modality collapse. Run `scripts/run_pid_flow.py --dummy` to validate (use `PYTHONPATH=music_brain` from repo root).
+- **Canonicalization (vector DB hot-swap):** `penta_core.ml.canonicalize_embeddings.fit_orthogonal_map(anchor_old, anchor_new)` plus `apply_map` for backward-compatible retrieval after encoder upgrades. CLI: `scripts/canonicalize_embeddings.py --old-embeddings ... --new-embeddings ... --output map.npz`.
+- **APSC Multi-Stem Wrapper:** `music_brain/penta_core/ml/apsc_wrapper.py` mitigates position bias via prompt permutation and majority vote.
+- **StructXLIP Symbolic Preprocessor:** `music_brain/penta_core/ml/structxlip/` extracts audio edge maps (onset, flux) and alignment losses for structure-aware training.
+
+---
+
 ## Reference docs
 
 | Doc | Content |
@@ -232,4 +243,5 @@ Minimal working example:
 | `docs/SOURCE_INTEGRATION_PLAN.md` | Source integration and download plan; external briefings in `docs/research/sources/` |
 | `docs/AU_PLUGIN_ARCHITECTURE.md` | Audio Unit (AU) plugin architecture: macOS, iOS AUv3, build contexts |
 | `docs/SAGEMAKER_SETUP.md` | SageMaker AI training (JEPA): IAM, S3, ECR, image build, launch jobs |
+| `docs/LATENT_ARCHITECTURE.md` | Six high-leverage tools (stateful KV-cache, MIDI-CI, canonicalization, APSC, StructXLIP, PID Flow) |
 | `BUILD.md` | C++ / CMake / Tauri build instructions and prerequisites |

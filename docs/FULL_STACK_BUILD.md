@@ -104,6 +104,36 @@ Options:
 - `--build-dir <path>` (custom build dir)
 - `--no-tauri` (skip Tauri cargo validation build)
 
+## On-device LLM (Core ML stateful KV-cache)
+
+For **sub-15 ms/token** greedy decoding on M4 (or compatible Apple Silicon), use the stateful Core ML path:
+
+1. **Export** (requires ExecuTorch elsewhere; not bundled in repo):
+
+   ```bash
+   EXECUTORCH_DIR=/path/to/executorch python scripts/export_llm_coreml.py \
+     --model-path /path/to/llama-checkpoint --output-dir ./coreml_llm_export
+   ```
+
+   This wraps `export_llama_lib.py` with `--coreml-enable-state`, `--coreml-preserve-sdpa`, `--coreml-quantize b4w`, `--disable_dynamic_shape`, `--use_kv_cache`, `--use_sdpa_with_kv_cache`.
+
+2. **Compile** the generated `.mlpackage` to mlmodelc:
+
+   ```bash
+   xcrun coremlcompiler compile Model.mlpackage ./build/
+   ```
+
+3. **Run** the Swift runner (state-threaded greedy loop):
+
+   ```bash
+   cd tools/coreml_llm_runner && swift build -c release
+   .build/release/CoreMLLMRunner ./build/Model.mlmodelc --max-tokens 64 --timing
+   ```
+
+Stateful prediction requires **macOS 15+ / iOS 18+**. See `tools/coreml_llm_runner/README.md` for usage and Tauri integration notes.
+
+**Other optional tools:** MIDI-CI daemon (`-DBUILD_MIDI_CI_DAEMON=ON`, see `tools/midi_ci_daemon/README.md`), PID Flow diagnostic (`penta_core.ml.diagnostics.pid_flow`), latent canonicalization (`penta_core.ml.canonicalize_embeddings`), APSC Wrapper (`penta_core.ml.apsc_wrapper`), and StructXLIP Preprocessor (`penta_core.ml.structxlip`) are documented in `AGENTS.md` under "On-device and alignment tools".
+
 ## Integration Testing Procedures
 
 ## 1) Rust FFI integration tests
