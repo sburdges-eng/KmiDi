@@ -901,15 +901,13 @@ def suggest_instrument(
 INSTRUMENT_LEARNING_PATHS = {
     "piano": {
         "starter_path": ["posture", "note_reading", "basic_chords", "scales", "simple_songs"],
-        "intermediate_path": ["arpeggios", "hand_independence", "pedaling", "dynamics", "repertoire"],  # noqa: E501
-
+        "intermediate_path": ["arpeggios", "hand_independence", "pedaling", "dynamics", "repertoire"],
         "advanced_path": ["advanced_technique", "improvisation", "sight_reading", "performance"],
         "recommended_order": ["technique", "theory", "repertoire", "ear_training"],
     },
     "guitar": {
         "starter_path": ["tuning", "posture", "open_chords", "strumming", "simple_songs"],
-        "intermediate_path": ["barre_chords", "fingerpicking", "scales", "music_theory", "lead_playing"],  # noqa: E501
-
+        "intermediate_path": ["barre_chords", "fingerpicking", "scales", "music_theory", "lead_playing"],
         "advanced_path": ["advanced_technique", "improvisation", "songwriting", "performance"],
         "recommended_order": ["rhythm", "chords", "scales", "theory"],
     },
@@ -921,8 +919,7 @@ INSTRUMENT_LEARNING_PATHS = {
     },
     "voice": {
         "starter_path": ["breathing", "posture", "pitch_matching", "range_finding", "simple_songs"],
-        "intermediate_path": ["breath_support", "registration", "dynamics", "phrasing", "repertoire"],  # noqa: E501
-
+        "intermediate_path": ["breath_support", "registration", "dynamics", "phrasing", "repertoire"],
         "advanced_path": ["advanced_technique", "styles", "performance", "improvisation"],
         "recommended_order": ["breathing", "technique", "repertoire", "performance"],
     },

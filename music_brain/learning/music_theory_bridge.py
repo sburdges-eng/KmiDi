@@ -176,9 +176,7 @@ def provide_feedback(exercise: Dict[str, Any], attempt: Dict[str, Any]) -> Dict[
     if is_correct:
         feedback["explanation"] = "Correct! Well done."
     else:
-        feedback["explanation"] = (
-            f"Not quite. The correct answer is: {exercise.get('answer', 'N/A')}"
-        )
+        feedback["explanation"] = f"Not quite. The correct answer is: {exercise.get('answer', 'N/A')}"
         if exercise.get("hints"):
             feedback["hint"] = exercise["hints"][0] if exercise["hints"] else ""
         feedback["suggested_review"] = [exercise.get("concept", "")]

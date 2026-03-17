@@ -44,9 +44,9 @@ fi
 
 # Engine DSP only (no ui, gui, components, plugin UI)
 if [[ -d "$FINAL/engine/src/dsp" ]]; then
-  mkdir -p src
-  rsync -a --exclude='.DS_Store' "$FINAL/engine/src/dsp" src/
-  echo "Copied engine/src/dsp -> src/dsp"
+  mkdir -p engine/src
+  rsync -a --exclude='.DS_Store' "$FINAL/engine/src/dsp" engine/src/
+  echo "Copied engine/src/dsp -> engine/src/dsp"
 fi
 
 # Intent IR C++ (for alignment; main has src-tauri intent_ir)
@@ -77,18 +77,22 @@ fi
 
 # ---- 3. Configs (no large binaries) ----
 if [[ -d "$FINAL/configs" ]]; then
-  for f in "$FINAL/configs"/*.yaml "$FINAL/configs"/*.yml 2>/dev/null; do
+  shopt -s nullglob
+  for f in "$FINAL/configs"/*.yaml "$FINAL/configs"/*.yml; do
     [[ -f "$f" ]] && cp "$f" config/ 2>/dev/null && echo "Copied config $(basename "$f")"
   done
+  shopt -u nullglob 2>/dev/null || true
 fi
 
 # ---- 4. Scripts (merge; avoid overwriting main entrypoints) ----
 if [[ -d "$FINAL/scripts" ]]; then
+  shopt -s nullglob
   for name in robustness verify build_intent; do
-    for f in "$FINAL/scripts/"*"$name"* 2>/dev/null; do
+    for f in "$FINAL/scripts/"*"$name"*; do
       [[ -f "$f" ]] && cp "$f" scripts/ 2>/dev/null && echo "Copied script $(basename "$f")"
     done
   done
+  shopt -u nullglob 2>/dev/null || true
 fi
 
 echo "Done. Next: resolve includes, CMake targets, Python imports; run build and tests."

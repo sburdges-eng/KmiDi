@@ -12,6 +12,10 @@ import statistics
 
 from music_brain.learning.user_preferences import (
     UserPreferenceModel,
+    UserPreferenceProfile,
+    ParameterAdjustment,
+    EmotionSelection,
+    MidiGenerationEvent,
 )
 
 
@@ -103,10 +107,11 @@ class PreferenceAnalyzer:
 
         result = []
         for fingerprint, count in sorted_combos[:top_n]:
-            result.append(
-                {"parameters": combination_params[fingerprint],
-                 "frequency": count, "percentage": count / len(self.profile.midi_generations) * 100
-                 if self.profile.midi_generations else 0})
+            result.append({
+                "parameters": combination_params[fingerprint],
+                "frequency": count,
+                "percentage": count / len(self.profile.midi_generations) * 100 if self.profile.midi_generations else 0
+            })
 
         return result
 

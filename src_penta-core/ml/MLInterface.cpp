@@ -9,8 +9,6 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
-#include <fstream>
-#include <iterator>
 #include <mutex>
 #include <thread>
 #include <unordered_map>
@@ -113,40 +111,54 @@ public:
         }
 #else
         // Stub implementation without ONNX
-        (void)path;
         loaded_models_.insert(type);
         return true;
 #endif
     }
 
     bool loadRegistry(const std::string& registry_path) {
-        std::ifstream file(registry_path, std::ios::in | std::ios::binary);
-        if (!file) {
+        const juce::File registry_file(juce::String::fromUTF8(registry_path.c_str()));
+        if (!registry_file.existsAsFile()) {
             return false;
         }
 
-        const std::string registry_text{
-            std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>{}};
-        const juce::String registry_juce_text(
-            juce::String::fromUTF8(registry_text.data(), static_cast<int>(registry_text.size())));
-        const juce::var registry_var = juce::JSON::parse(registry_juce_text);
-        const auto* registry_obj = registry_var.getDynamicObject();
-        if (registry_obj == nullptr) {
+        juce::var registry;
+        const juce::Result parse_result =
+            juce::JSON::parse(registry_file.loadFileAsString(), registry);
+        if (parse_result.failed()) {
             return false;
         }
 
-        const juce::var models_var = registry_obj->getProperty("models");
+        const auto* root = registry.getDynamicObject();
+        if (root == nullptr) {
+            return false;
+        }
+
+        const juce::var models_var = root->getProperty("models");
         if (!models_var.isArray()) {
             return false;
         }
 
-        const auto* models = models_var.getArray();
-        if (models == nullptr) {
-            return false;
-        }
+        const auto read_string =
+            [](const juce::DynamicObject& obj, const juce::Identifier& key) -> std::string {
+            const juce::var value = obj.getProperty(key);
+            return value.isString() ? value.toString().toStdString() : std::string{};
+        };
+
+        const auto read_size =
+            [](const juce::DynamicObject& obj, const juce::Identifier& key) -> size_t {
+            const juce::var value = obj.getProperty(key);
+            if (!(value.isInt() || value.isInt64() || value.isDouble())) {
+                return 0;
+            }
+
+            const double numeric_value = static_cast<double>(value);
+            return numeric_value > 0.0 ? static_cast<size_t>(numeric_value) : 0;
+        };
 
         bool all_ok = true;
         const auto base_dir = config_.model_directory;
+        const auto* models = models_var.getArray();
 
         for (const auto& model_var : *models) {
             const auto* model = model_var.getDynamicObject();
@@ -155,16 +167,15 @@ public:
                 continue;
             }
 
-            const auto id = model->getProperty("id").toString().toStdString();
-            const auto onnx_path = model->getProperty("onnx_path").toString().toStdString();
-            const auto file_path = model->getProperty("file").toString().toStdString();
+            const std::string id = read_string(*model, juce::Identifier("id"));
+            std::string onnx_path = read_string(*model, juce::Identifier("onnx_path"));
+            const std::string file_path = read_string(*model, juce::Identifier("file"));
+            const size_t input_size = read_size(*model, juce::Identifier("input_size"));
 
-            size_t input_size = 0;
-            const juce::var input_size_var = model->getProperty("input_size");
-            if (input_size_var.isInt() || input_size_var.isInt64() || input_size_var.isDouble()) {
-                const auto numeric_input_size = static_cast<double>(input_size_var);
-                if (numeric_input_size > 0.0) {
-                    input_size = static_cast<size_t>(numeric_input_size);
+            if (onnx_path.empty()) {
+                const juce::var exports_var = model->getProperty("exports");
+                if (const auto* exports = exports_var.getDynamicObject()) {
+                    onnx_path = read_string(*exports, juce::Identifier("onnx_path"));
                 }
             }
 

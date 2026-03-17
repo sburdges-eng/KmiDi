@@ -15,6 +15,9 @@ venv/
 .env.*
 !.env.example
 
+# Archive (e.g. nested KmiDi tree after merge)
+_archive/
+
 # CMake / build
 build/
 build_rt/

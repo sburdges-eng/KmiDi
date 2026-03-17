@@ -16,7 +16,7 @@ namespace penta {
 namespace osc {
 
 struct OSCServerSettings {
-    std::string address = "127.0.0.1"; // Loopback default for deterministic local operation
+    std::string address = "127.0.0.1"; // Not strictly used for binding, but for config
     uint16_t port = 9000;
 };
 

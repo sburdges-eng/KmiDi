@@ -5,10 +5,11 @@ Implements learning with open (trainable) weights for dynamic adaptation
 in music generation and analysis.
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 import numpy as np
 import pickle
+import os
 from pathlib import Path
 
 
@@ -270,8 +271,7 @@ class OpenWeightLearner:
         self.loss_fn = data.get('loss_fn', self.loss_fn)
         self.scheduler = data.get('scheduler', self.scheduler)
         self.warmup_epochs = data.get('warmup_epochs', self.warmup_epochs)
-        self.early_stopping_patience = data.get(
-            'early_stopping_patience', self.early_stopping_patience)
+        self.early_stopping_patience = data.get('early_stopping_patience', self.early_stopping_patience)
         self.min_delta = data.get('min_delta', self.min_delta)
         # Hardware parameters
         self.device = data.get('device', self.device)
@@ -295,8 +295,7 @@ class OpenWeightLearner:
         self.use_gpu = data.get('use_gpu', self.use_gpu)
         self.use_coreml = data.get('use_coreml', self.use_coreml)
         self.timeout_ms = data.get('timeout_ms', self.timeout_ms)
-        self.inference_thread_priority = data.get(
-            'inference_thread_priority', self.inference_thread_priority)
+        self.inference_thread_priority = data.get('inference_thread_priority', self.inference_thread_priority)
         # Additional training parameters
         self.loss = data.get('loss', self.loss)
         self.focal_gamma = data.get('focal_gamma', self.focal_gamma)
@@ -329,7 +328,7 @@ class OpenWeightLearningManager:
         self.storage_dir.mkdir(exist_ok=True)
 
     def add_learner(self, task_name: str, input_dim: int, output_dim: int,
-                    learning_rate: float = 0.01, regularization: float = 0.0):
+                   learning_rate: float = 0.01, regularization: float = 0.0):
         """
         Add a learner for a specific task.
 
@@ -527,8 +526,7 @@ def load_teaching_parameters() -> Dict[str, Any]:
     }
 
 
-def create_learner_from_teaching_data(
-        task_name: str, data_type: str = 'instruments') -> OpenWeightLearner:
+def create_learner_from_teaching_data(task_name: str, data_type: str = 'instruments') -> OpenWeightLearner:
     """
     Create an OpenWeightLearner initialized with teaching data.
 
@@ -609,7 +607,7 @@ def create_generation_learner() -> OpenWeightLearner:
 
 
 def create_adaptive_learner(input_dim: int, output_dim: int,
-                            learning_rate: float = 0.05) -> OpenWeightLearner:
+                          learning_rate: float = 0.05) -> OpenWeightLearner:
     """Create an adaptive learner with optimized defaults."""
     return OpenWeightLearner(
         input_dim=input_dim,
@@ -617,3 +615,4 @@ def create_adaptive_learner(input_dim: int, output_dim: int,
         learning_rate=learning_rate,
         regularization=0.001  # Light regularization
     )
+

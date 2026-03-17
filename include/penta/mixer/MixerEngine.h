@@ -274,7 +274,7 @@ public:
     void resetAllMeters() noexcept;
 
 private:
-    [[maybe_unused]] double sampleRate_;  // Set from prepareToPlay; reserved for future use
+    double sampleRate_;
     size_t numChannels_;
     size_t numSendBuses_;
 

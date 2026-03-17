@@ -165,6 +165,27 @@
   margin-bottom: 4px;
 }
 
+.upper-deck .vu-wrap .compact-meter {
+  padding: var(--space-2);
+  font-size: 11px;
+}
+
+.upper-deck .vu-wrap .compact-meter__head {
+  margin-bottom: 4px;
+}
+
+.upper-deck .vu-wrap .compact-meter__label {
+  font-size: 10px;
+}
+
+.upper-deck .vu-wrap .compact-meter__value {
+  font-size: 11px;
+}
+
+.upper-deck .vu-wrap .compact-meter__track {
+  height: 4px;
+}
+
 .upper-deck .vu-title {
   font-size: 8px;
   margin: 0;
@@ -196,7 +217,11 @@
   flex-direction: column;
 }
 
-/* Hide vol/pan sliders in upper deck — show only name + meter */
+/* Hide vol/pan sliders and knob in upper deck — show only name + meter */
+.upper-deck .mixer-strip__vol {
+  display: none !important;
+}
+
 .upper-deck .mixer-strip label {
   display: none !important;
 }
@@ -211,6 +236,27 @@
 .upper-deck .meter {
   height: 28px;
   border-radius: 2px;
+}
+
+.upper-deck .mixer-strip .compact-meter {
+  padding: var(--space-2);
+  font-size: 10px;
+}
+
+.upper-deck .mixer-strip .compact-meter__head {
+  margin-bottom: 2px;
+}
+
+.upper-deck .mixer-strip .compact-meter__label {
+  font-size: 9px;
+}
+
+.upper-deck .mixer-strip .compact-meter__value {
+  font-size: 10px;
+}
+
+.upper-deck .mixer-strip .compact-meter__track {
+  height: 4px;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -266,6 +312,12 @@
 
 .nav-rail__item:hover svg {
   color: var(--text-secondary);
+}
+
+.nav-rail__item[aria-selected="true"] {
+  border-left: 2px solid var(--accent);
+  margin-left: -2px;
+  padding-left: 2px;
 }
 
 .nav-rail__item[aria-selected="true"] svg {
@@ -397,6 +449,8 @@
   overflow: hidden;
   min-width: 0;
   min-height: 0;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .console-panel:hover {
@@ -411,6 +465,17 @@
   font-size: 11px;
   font-weight: 400;
   margin: 0 0 var(--space-3) 0;
+}
+
+/* Context panel body: 11–12pt, 16–20px line height */
+.console-panel p,
+.console-panel .emotion-output,
+.console-panel .ghost-output,
+.console-panel .lyric-textarea,
+.console-panel .lyric-status,
+.console-panel .lyric-error {
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 /* ═══════════════════════════════════════════════════

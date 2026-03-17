@@ -2,11 +2,50 @@
 #include <algorithm>
 #include <numeric>
 
+// Platform-specific high-resolution timer includes
+#ifdef _WIN32
+#include <windows.h>
+#elif __APPLE__
+#include <mach/mach_time.h>
+#else
+#include <time.h>
+#endif
+
 namespace penta::diagnostics
 {
 
-    // Latency measurement uses std::chrono (Clock::now()) in beginMeasurement/endMeasurement.
-    // Platform-specific getHighResTimestamp() was removed as dead code.
+    namespace
+    {
+
+        // Get high-resolution timestamp in nanoseconds
+        // Platform-specific implementation for minimal overhead
+        inline uint64_t getHighResTimestamp() noexcept
+        {
+#ifdef _WIN32
+            // Windows: QueryPerformanceCounter
+            LARGE_INTEGER counter, frequency;
+            QueryPerformanceCounter(&counter);
+            QueryPerformanceFrequency(&frequency);
+            return static_cast<uint64_t>((counter.QuadPart * 1000000000ULL) / frequency.QuadPart);
+#elif __APPLE__
+            // macOS: mach_absolute_time with timebase conversion
+            static mach_timebase_info_data_t timebase = {0, 0};
+            if (timebase.denom == 0)
+            {
+                mach_timebase_info(&timebase);
+            }
+            uint64_t absolute_time = mach_absolute_time();
+            return (absolute_time * timebase.numer) / timebase.denom;
+#else
+            // Linux: clock_gettime with CLOCK_MONOTONIC
+            struct timespec ts;
+            clock_gettime(CLOCK_MONOTONIC, &ts);
+            return static_cast<uint64_t>(ts.tv_sec) * 1000000000ULL +
+                   static_cast<uint64_t>(ts.tv_nsec);
+#endif
+        }
+
+    } // anonymous namespace
 
     PerformanceMonitor::PerformanceMonitor()
         : measurementStart_(), latencyHistory_(kHistorySize, 0), historyIndex_(0), peakLatencyUs_(0), xrunCount_(0)

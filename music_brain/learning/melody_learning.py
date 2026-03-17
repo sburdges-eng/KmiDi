@@ -8,7 +8,7 @@ ML models (e.g., MelodyTransformer) as a fallback.
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from collections import Counter, defaultdict
 import json
 import numpy as np
@@ -212,8 +212,7 @@ class MelodyLearner:
     ) -> List[int]:
         """Generate a melody using learned patterns (basic statistical sampling)."""
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(
-            emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
         if not patterns:
             patterns = profile.global_patterns
 
@@ -227,7 +226,12 @@ class MelodyLearner:
         # Simple sampling: start from most common note, apply common interval patterns
         notes = []
         if note_freqs:
-            most_common_note = int(Counter(note_freqs).most_common(1)[0][0])
+            counter = Counter(note_freqs)
+            most_common = counter.most_common(1)
+            if most_common:
+                most_common_note = int(most_common[0][0])
+            else:
+                most_common_note = 60  # Default to C4
         else:
             # Default to C4
             most_common_note = 60

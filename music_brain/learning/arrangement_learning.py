@@ -116,8 +116,7 @@ class ArrangementLearner:
     def __init__(self):
         pass
 
-    def learn_profile(self, examples: List[ArrangementExample],
-                      name: str = "default") -> ArrangementProfile:
+    def learn_profile(self, examples: List[ArrangementExample], name: str = "default") -> ArrangementProfile:
         if not examples:
             raise ValueError("No arrangement examples provided")
 
@@ -138,8 +137,7 @@ class ArrangementLearner:
 
             for ex in group:
                 section_counter.update(ex.sections)
-                transitions = [(ex.sections[i], ex.sections[i + 1])
-                               for i in range(len(ex.sections) - 1)]
+                transitions = [(ex.sections[i], ex.sections[i + 1]) for i in range(len(ex.sections) - 1)]
                 transition_counter.update(transitions)
                 instrument_counter.update(ex.instruments)
                 lengths.append(len(ex.sections))
@@ -176,17 +174,13 @@ class ArrangementLearner:
         genre: str = "general"
     ) -> Dict:
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(
-            emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
         if not patterns:
             patterns = profile.global_patterns
 
-        section_counts = patterns.get(
-            "section_counts") or profile.global_patterns.get("section_counts") or {}
-        transition_counts = patterns.get(
-            "transition_counts") or profile.global_patterns.get("transition_counts") or {}
-        instrument_counts = patterns.get(
-            "instrument_counts") or profile.global_patterns.get("instrument_counts") or {}
+        section_counts = patterns.get("section_counts") or profile.global_patterns.get("section_counts") or {}
+        transition_counts = patterns.get("transition_counts") or profile.global_patterns.get("transition_counts") or {}
+        instrument_counts = patterns.get("instrument_counts") or profile.global_patterns.get("instrument_counts") or {}
 
         length = length or int(patterns.get("avg_length", 5))
 
@@ -235,8 +229,7 @@ class ArrangementLearningManager:
     def add_example(self, example: ArrangementExample, name: Optional[str] = None) -> str:
         return self.store.add_example(example, name)
 
-    def learn_profile(
-            self, name: str, example_ids: Optional[List[str]] = None) -> ArrangementProfile:
+    def learn_profile(self, name: str, example_ids: Optional[List[str]] = None) -> ArrangementProfile:
         if example_ids is None:
             example_ids = self.store.list_examples()
         examples = []

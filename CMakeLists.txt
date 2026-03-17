@@ -163,6 +163,14 @@ endif()
 add_subdirectory(src_penta-core)
 
 # ============================================================================
+# In-repo DSP core (merged from KmiDi_FINAL; optional link into KellyCore)
+# ============================================================================
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/engine/src/dsp/CMakeLists.txt)
+    add_subdirectory(engine/src/dsp)
+    set(KMIDI_HAS_INREPO_DSP ON)
+endif()
+
+# ============================================================================
 # Python Bindings (Optional)
 # ============================================================================
 option(BUILD_PYTHON_BINDINGS "Build Python bindings for penta-core" ON)

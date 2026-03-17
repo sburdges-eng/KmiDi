@@ -150,9 +150,7 @@ class HarmonyLearner:
             lengths = []
 
             for ex in group:
-                progression = tuple(
-                    ex.roman_numerals) if ex.roman_numerals else tuple(
-                    ex.progression)
+                progression = tuple(ex.roman_numerals) if ex.roman_numerals else tuple(ex.progression)
                 progression_counter[progression] += 1
                 transitions = self._progression_to_transitions(ex.roman_numerals or ex.progression)
                 transition_counter.update(transitions)
@@ -188,8 +186,7 @@ class HarmonyLearner:
         mode: str = "major"
     ) -> List[str]:
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(
-            emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
         if not patterns:
             patterns = profile.global_patterns
 

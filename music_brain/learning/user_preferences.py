@@ -8,12 +8,14 @@ Stores preferences locally in JSON format at ~/.kelly/user_preferences.json
 """
 
 import json
+import os
 from pathlib import Path
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from collections import defaultdict
 import statistics
+import uuid
 
 
 @dataclass
@@ -164,8 +166,7 @@ class UserPreferenceModel:
 
         Args:
             user_id: Unique identifier for user
-            preferences_path: Path to preferences JSON file (defaults to ~/.kelly/user_preferences.json)  # noqa: E501
-
+            preferences_path: Path to preferences JSON file (defaults to ~/.kelly/user_preferences.json)
         """
         self.user_id = user_id
 
@@ -365,7 +366,7 @@ class UserPreferenceModel:
                 bin_key = round(val * 10) / 10  # Round to 0.1
                 bins[bin_key] += 1
 
-            if bins:
+            if bins and len(bins) > 0:
                 most_common_bin = max(bins.items(), key=lambda x: x[1])[0]
                 stats[param_name]["most_used_range"] = (most_common_bin, most_common_bin + 0.1)
 

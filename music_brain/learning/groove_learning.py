@@ -163,8 +163,7 @@ class GrooveLearner:
 
         global_patterns = {
             "avg_timing": list(np.mean(np.array(global_timing), axis=0)) if global_timing else [],
-            "avg_velocity": list(np.mean(np.array(global_velocity), axis=0)) if global_velocity else [],  # noqa: E501
-
+            "avg_velocity": list(np.mean(np.array(global_velocity), axis=0)) if global_velocity else [],
         }
 
         return GrooveProfile(
@@ -182,15 +181,12 @@ class GrooveLearner:
         genre: str = "straight"
     ) -> Dict:
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(
-            emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
         if not patterns:
             patterns = profile.global_patterns
 
-        timing = patterns.get("avg_timing") or profile.global_patterns.get(
-            "avg_timing") or [0.0] * 16
-        velocity = patterns.get("avg_velocity") or profile.global_patterns.get(
-            "avg_velocity") or [80] * 16
+        timing = patterns.get("avg_timing") or profile.global_patterns.get("avg_timing") or [0.0] * 16
+        velocity = patterns.get("avg_velocity") or profile.global_patterns.get("avg_velocity") or [80] * 16
         swing = patterns.get("avg_swing", 0.0)
         tempo = tempo or int(patterns.get("avg_tempo", 120))
 

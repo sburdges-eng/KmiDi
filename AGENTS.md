@@ -26,11 +26,13 @@ KmiDi / iDAW is an **AI-powered music creation platform** (monorepo). Stack:
 KmiDi/
 ├── src/                    # React app (components, hooks, types)
 ├── src-tauri/              # Tauri app (Rust commands, bridge, build.rs)
-├── music_brain/            # Python FastAPI app and engine API
+├── music_brain/            # Python FastAPI app and engine API (prrot, learning, voice)
 ├── shared_schemas/         # Single source of truth for intent (JSON → sync to TS/Rust)
 ├── scripts/                # sync_entities.py, dev-setup, build, env, acquire/ (source_manifest)
 ├── tests/                  # Python tests (pytest)
-├── engine/, include/, src/  # C++ (engine, bridge, plugin)
+├── engine/, include/, src/ # C++ (engine, bridge, plugin); engine/src/dsp, engine/intent_ir (merged)
+├── include/prrot, include/penta  # PRROT/penta headers (merged from KmiDi_FINAL)
+├── src_penta-core/         # Penta-core C++ (harmony, groove, diagnostics, etc.)
 ├── external/JUCE/          # JUCE 8 (required for C++/plugins/FFI)
 ├── cmake/                  # CMake helpers
 ├── config/                 # Training/config YAML, source_manifest.yaml (external sources)

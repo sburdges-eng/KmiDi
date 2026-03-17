@@ -1,4 +1,6 @@
 import { ChangeEvent } from 'react';
+import { CompactMeter } from './CompactMeter';
+import { Knob } from '../ui/Knob';
 
 type Channel = {
   id: string;
@@ -18,19 +20,30 @@ export function Mixer({ channels, onChannelChange }: Props) {
       {channels.map((channel) => (
         <div key={channel.id} className="mixer-strip">
           <p className="mixer-label">{channel.name}</p>
-          <label>
-            Vol
-            <input
-              type="range"
+          <div className="mixer-strip__vol">
+            <Knob
+              value={channel.level}
               min={0}
               max={1}
-              step={0.01}
-              value={channel.level}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                onChannelChange(channel.id, { level: Number(event.target.value) })
-              }
+              step={0.05}
+              stepFine={0.01}
+              onChange={(v) => onChannelChange(channel.id, { level: v })}
+              aria-label={`${channel.name} level`}
             />
-          </label>
+            <label>
+              Vol
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={channel.level}
+                onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                  onChannelChange(channel.id, { level: Number(event.target.value) })
+                }
+              />
+            </label>
+          </div>
           <label>
             Pan
             <input
@@ -44,9 +57,12 @@ export function Mixer({ channels, onChannelChange }: Props) {
               }
             />
           </label>
-          <div className="meter" aria-hidden="true">
-            <span style={{ transform: `scaleY(${channel.level})` }} />
-          </div>
+          <CompactMeter
+            label={channel.name}
+            value={channel.level}
+            valueIsLinear
+            aria-label={`${channel.name} level`}
+          />
         </div>
       ))}
     </div>

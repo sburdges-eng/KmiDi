@@ -41,7 +41,7 @@ cmake --build build --target KellyFFI
 cmake --build build --target KellyPlugin_VST3
 ```
 
-Optional: `KellyApp` (desktop host), `KellyTests` (when `BUILD_TESTS=ON`).
+Optional: `KellyApp` (desktop host), `KellyTests` (when `BUILD_TESTS=ON`). In-repo DSP (merged from KmiDi_FINAL): `kmidi_dsp_core` (built when `engine/src/dsp/CMakeLists.txt` exists); link into KellyCore if needed.
 
 ## Run Tests
 
@@ -69,6 +69,7 @@ npm run dev:tauri
 - `BUILD_PLUGINS=ON` / `KMIDI_BUILD_JUCE_UI=ON` - JUCE plugin targets (e.g. KellyPlugin_VST3).
 - `BUILD_DESKTOP=ON|OFF` - Desktop host app targets.
 - `BUILD_TESTS=ON|OFF` - Native/unit test targets.
+- `USE_KMI_DI_FINAL=OFF` - Do not enable KmiDi_FINAL UI or duplicate entrypoints; canonical UI is Tauri + React. In-repo merged content (include/prrot, engine/src/dsp, music_brain/prrot, etc.) is built without that option.
 
 ## JUCE 8 Note
 
