@@ -59,4 +59,19 @@ After this, the graph is a single line. All previous commit hashes are gone; lin
 
 ---
 
+## Squash and keep history
+
+You can squash into one commit on `main` and still keep the full history:
+
+1. **Tag the tip before squashing** (so that tip stays reachable):
+   ```bash
+   git tag archive/main-pre-squash-2026-03   # or: git tag archive/main-pre-squash-2026-03 main
+   ```
+2. **Then squash** (e.g. `git reset --soft origin/main` and `git commit -m "..."`).
+3. **History is preserved:** `git log archive/main-pre-squash-2026-03` shows the full pre-squash history; `main` has the single squashed commit.
+
+On GitHub, **Squash and merge** keeps the PR’s commit list and discussion; the branch (or a tag) keeps the commits in the repo.
+
+---
+
 **Recommendation:** Use **1** (squash merges going forward + optional squash of your 8 before push) unless you specifically need a single-commit history for the whole repo, in which case use **3** with care.
