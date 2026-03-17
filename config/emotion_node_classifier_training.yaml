@@ -1,0 +1,220 @@
+# Training Configuration for Emotion Node Classifier
+# 6×6×6 thesaurus validation model for 216 emotion nodes across 24 keys
+
+model:
+  name: emotionnodeclassifier
+  task: emotion_classification
+  architecture: cnn_multi_head_hierarchical
+
+  # Backbone CNN
+  backbone:
+    type: cnn
+    layers:
+      - type: conv2d
+        in_channels: 1
+        out_channels: 64
+        kernel_size: 7
+        stride: 2
+        padding: 3
+      - type: conv2d
+        in_channels: 64
+        out_channels: 128
+        kernel_size: 3
+        stride: 2
+        padding: 1
+      - type: conv2d
+        in_channels: 128
+        out_channels: 256
+        kernel_size: 3
+        stride: 2
+        padding: 1
+      - type: conv2d
+        in_channels: 256
+        out_channels: 512
+        kernel_size: 3
+        stride: 2
+        padding: 1
+      - type: adaptive_avg_pool
+        output_size: 1
+      - type: flatten
+      - type: dense
+        in_features: 512
+        out_features: 512
+        activation: gelu
+
+  # Multi-head outputs
+  heads:
+    emotion_node:
+      output_size: 216
+      loss: cross_entropy
+      weight: 1.0
+      description: "Full 6×6×6 node classification"
+      layers:
+        - type: dense
+          in_features: 512
+          out_features: 256
+          activation: gelu
+        - type: dropout
+          p: 0.2
+        - type: dense
+          in_features: 256
+          out_features: 216
+
+    base_emotion:
+      output_size: 6
+      loss: cross_entropy
+      weight: 0.5
+      labels: [HAPPY, SAD, ANGRY, FEAR, SURPRISE, DISGUST]
+      layers:
+        - type: dense
+          in_features: 512
+          out_features: 128
+          activation: relu
+        - type: dense
+          in_features: 128
+          out_features: 6
+
+    sub_emotion:
+      output_size: 36
+      loss: cross_entropy
+      weight: 0.3
+      description: "6 per base emotion"
+      layers:
+        - type: dense
+          in_features: 512
+          out_features: 128
+          activation: relu
+        - type: dense
+          in_features: 128
+          out_features: 36
+
+    intensity_tier:
+      output_size: 6
+      loss: cross_entropy
+      weight: 0.3
+      labels: [subtle, mild, moderate, strong, intense, overwhelming]
+      layers:
+        - type: dense
+          in_features: 512
+          out_features: 64
+          activation: relu
+        - type: dense
+          in_features: 64
+          out_features: 6
+
+    key_detection:
+      output_size: 24
+      loss: cross_entropy
+      weight: 0.2
+      labels: [C_major, C_minor, Db_major, Db_minor, D_major, D_minor,
+               Eb_major, Eb_minor, E_major, E_minor, F_major, F_minor,
+               Gb_major, Gb_minor, G_major, G_minor, Ab_major, Ab_minor,
+               A_major, A_minor, Bb_major, Bb_minor, B_major, B_minor]
+      layers:
+        - type: dense
+          in_features: 512
+          out_features: 128
+          activation: relu
+        - type: dense
+          in_features: 128
+          out_features: 24
+
+  # Thesaurus structure
+  thesaurus:
+    structure: "6×6×6"
+    total_nodes: 216
+    intensity_tiers: 6
+    keys: 24
+    base_emotions: [HAPPY, SAD, ANGRY, FEAR, SURPRISE, DISGUST]
+    source: data/emotion_thesaurus/
+
+training:
+  epochs: 150
+  batch_size: 32
+  learning_rate: 0.0005
+  optimizer: adam
+  weight_decay: 1e-5
+
+  # Hierarchical loss weights
+  loss_weights:
+    emotion_node: 1.0
+    base_emotion: 0.5
+    sub_emotion: 0.3
+    intensity_tier: 0.3
+    key_detection: 0.2
+
+  # Learning rate schedule
+  lr_scheduler: cosine
+  lr_warmup_epochs: 15
+  lr_min_factor: 0.01
+
+  # Regularization
+  dropout: 0.2
+  label_smoothing: 0.1
+
+  # Early stopping
+  early_stopping: true
+  patience: 20
+  min_delta: 1e-4
+
+  # Mixed precision
+  use_amp: true
+  amp_dtype: float16
+
+data:
+  # Dataset paths (to be configured)
+  train_dir: data/datasets/emotion_thesaurus_dataset_v1/train
+  val_dir: data/datasets/emotion_thesaurus_dataset_v1/val
+  test_dir: data/datasets/emotion_thesaurus_dataset_v1/test
+
+  # Data splits (if using single directory)
+  train_split: 0.8
+  val_split: 0.1
+  test_split: 0.1
+
+  # Audio processing
+  sample_rate: 22050
+  n_fft: 2048
+  hop_length: 512
+  n_mels: 128
+  duration_seconds: 3.0
+
+  # Augmentation
+  augmentation:
+    enabled: true
+    time_shift: 0.1
+    pitch_shift: 2
+    time_stretch: 0.1
+    noise: 0.01
+    gain: 0.1
+
+  num_workers: 4
+  pin_memory: true
+
+checkpointing:
+  save_dir: checkpoints/emotion_node_classifier
+  save_every_n_epochs: 10
+  keep_n_checkpoints: 3
+  save_best_only: true
+
+export:
+  formats: [rtneural, onnx, coreml]
+  output_dir: ml/models
+  include_metadata: true
+
+logging:
+  log_dir: logs/emotion_node_classifier
+  log_to_tensorboard: true
+  log_to_wandb: false
+  log_every_n_steps: 10
+
+# Notes:
+# - Requires emotion_thesaurus_dataset_v1 with hierarchical labels:
+#   - Base emotion (6 classes)
+#   - Sub emotion (36 classes, 6 per base)
+#   - Sub-sub emotion (216 classes, 6 per sub)
+#   - Intensity tier (6 levels)
+#   - Key (24 keys: 12 major + 12 minor)
+# - Node ID formula: base_idx * 36 + sub_idx * 6 + subsub_idx
+# - Thesaurus structure source: data/emotion_thesaurus/
+# - Fallback available if model unavailable

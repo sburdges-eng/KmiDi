@@ -1,0 +1,19 @@
+[package]
+name = "intent_ir"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "intent_ir"
+crate-type = ["staticlib"]
+
+[profile.release]
+panic = "abort"
+lto = true
+
+[dependencies]
+
+[dev-dependencies]
+
+[build-dependencies]
+cbindgen = "0.26"
