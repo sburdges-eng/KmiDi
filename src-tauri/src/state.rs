@@ -298,6 +298,7 @@ pub fn start_background_tasks() {
 // Helper Functions for Commands
 // =============================================================================
 
+#[allow(dead_code)]
 /// Update state when KellyBrain operations complete
 pub fn update_state_after_operation<T>(
     operation: &str, 
@@ -315,6 +316,7 @@ pub fn update_state_after_operation<T>(
     }
 }
 
+#[allow(dead_code)]
 /// Set processing state before operation
 pub fn set_processing_state(operation: &str) {
     let manager = get_state_manager();
@@ -322,6 +324,7 @@ pub fn set_processing_state(operation: &str) {
     manager_guard.set_processing(true, Some(operation.to_string()));
 }
 
+#[allow(dead_code)]
 /// Update state with intent result
 pub fn update_state_with_intent(intent: &IntentResult) {
     let manager = get_state_manager();
@@ -329,6 +332,7 @@ pub fn update_state_with_intent(intent: &IntentResult) {
     manager_guard.set_current_intent(intent.clone());
 }
 
+#[allow(dead_code)]
 /// Update state with MIDI result
 pub fn update_state_with_midi(midi: &GeneratedMidi) {
     let manager = get_state_manager();
@@ -336,6 +340,7 @@ pub fn update_state_with_midi(midi: &GeneratedMidi) {
     manager_guard.set_current_midi(midi.clone());
 }
 
+#[allow(dead_code)]
 /// Update initialization state
 pub fn update_initialization_state(initialized: bool) {
     let manager = get_state_manager();

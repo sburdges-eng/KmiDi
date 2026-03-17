@@ -3,6 +3,9 @@ name = "idaw"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+ffi = []
+
 [dependencies]
 tauri = { version = "2.0", features = [] }
 tauri-plugin-dialog = "2"

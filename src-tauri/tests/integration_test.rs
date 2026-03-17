@@ -302,7 +302,7 @@ async fn test_error_to_string_conversion() {
 
 #[tokio::test]
 async fn test_ffi_call_performance() {
-    let mut brain = KellyBrain::new().expect("Failed to create KellyBrain");
+    let brain = KellyBrain::new().expect("Failed to create KellyBrain");
     
     // Measure time for multiple calls
     let start = std::time::Instant::now();
@@ -544,7 +544,7 @@ async fn test_concurrent_manager_operations() {
     
     for i in 0..5 {
         let handle = tokio::spawn(async move {
-            let result = manager.with_brain(|brain| {
+            let result = manager.with_brain(|_brain| {
                 // Try to get version (safe operation)
                 Ok(KellyBrain::get_version())
             });

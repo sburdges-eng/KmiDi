@@ -136,8 +136,8 @@ pub fn constraints_apply(
             }
             ConstraintKind::LimitRange => {
                 if let ValueState::Present(v) = state {
-                    if *v < c.min_val || *v > c.max_val {
-                        let clamped = if *v < c.min_val {
+                    if v < c.min_val || v > c.max_val {
+                        let clamped = if v < c.min_val {
                             c.min_val
                         } else {
                             c.max_val

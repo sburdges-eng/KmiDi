@@ -72,6 +72,7 @@
 			"**/_deps": true,
 			"**/.git": true
 		},
-		"java.configuration.updateBuildConfiguration": "interactive"
+		"java.configuration.updateBuildConfiguration": "interactive",
+		"markdown.validate.enabled": true
 	}
 }
