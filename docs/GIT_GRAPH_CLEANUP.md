@@ -70,6 +70,8 @@ You can squash into one commit on `main` and still keep the full history:
 2. **Then squash** (e.g. `git reset --soft origin/main` and `git commit -m "..."`).
 3. **History is preserved:** `git log archive/main-pre-squash-2026-03` shows the full pre-squash history; `main` has the single squashed commit.
 
+**Note:** If that history ever contained files over GitHub's 100 MB limit (e.g. the `kmidi_brain` binary), do not push the archive tag — GitHub will reject it. Keep the tag local only; you can still run `git log archive/main-pre-squash-2026-03` to see the full history.
+
 On GitHub, **Squash and merge** keeps the PR’s commit list and discussion; the branch (or a tag) keeps the commits in the repo.
 
 ---
