@@ -2,6 +2,9 @@
 #include "bridge/kelly_ffi.h"
 #include <string>
 #include <memory>
+#include <thread>
+#include <atomic>
+#include <vector>
 
 // =============================================================================
 // C FFI Integration Tests
@@ -9,7 +12,7 @@
 
 class KellyFFITestFixture {
 public:
-    KellyBrainWrapper() {
+    KellyFFITestFixture() {
         brain = kelly_brain_create();
         REQUIRE(brain != nullptr);
     }
@@ -246,6 +249,113 @@ TEST_CASE("Kelly FFI - Memory Management") {
         }
         
         kelly_brain_destroy(brain);
+    }
+}
+
+TEST_CASE_METHOD(KellyFFITestFixture, "Kelly FFI - Journey/Wound Intensity (F1)") {
+    kelly_brain_initialize(brain, "./data");
+
+    SECTION("Wound with explicit intensity") {
+        const char* wound_json =
+            R"({"description": "loss", "intensity": 0.4, "desire": "peace", "expression": "soft ballad"})";
+        char* result = kelly_brain_from_wound(brain, wound_json);
+
+        if (result != nullptr) {
+            std::string json(result);
+            REQUIRE_FALSE(json.empty());
+            REQUIRE(json.find("{") != std::string::npos);
+            REQUIRE(json.find("core_wound") != std::string::npos);
+            kelly_free_string(result);
+        }
+    }
+
+    SECTION("Wound with urgency maps to intensity") {
+        const char* wound_json =
+            R"({"description": "anger", "urgency": 0.9, "desire": "release", "expression": "heavy rock"})";
+        char* result = kelly_brain_from_wound(brain, wound_json);
+
+        if (result != nullptr) {
+            std::string json(result);
+            REQUIRE_FALSE(json.empty());
+            REQUIRE(json.find("{") != std::string::npos);
+            kelly_free_string(result);
+        }
+    }
+
+    SECTION("Journey with custom intensity") {
+        const char* current_json =
+            R"({"description": "grief", "intensity": 0.3, "desire": "acceptance"})";
+        const char* desired_json =
+            R"({"description": "hope", "intensity": 0.8})";
+        char* result = kelly_brain_from_journey(brain, current_json, desired_json);
+
+        if (result != nullptr) {
+            std::string json(result);
+            REQUIRE_FALSE(json.empty());
+            REQUIRE(json.find("{") != std::string::npos);
+            REQUIRE(json.find("emotional_intent") != std::string::npos);
+            kelly_free_string(result);
+        }
+    }
+
+    SECTION("Journey null parameters") {
+        char* r1 = kelly_brain_from_journey(brain, nullptr, "{}");
+        REQUIRE(r1 == nullptr);
+
+        char* r2 = kelly_brain_from_journey(brain, "{}", nullptr);
+        REQUIRE(r2 == nullptr);
+    }
+}
+
+TEST_CASE_METHOD(KellyFFITestFixture, "Kelly FFI - JSON Escaping (F2)") {
+    kelly_brain_initialize(brain, "./data");
+
+    SECTION("Wound with quotes and backslashes in description") {
+        const char* wound_json =
+            R"({"description": "Say \"hi\" and \\ path", "desire": "a \"new\" world", "expression": "test"})";
+        char* result = kelly_brain_from_wound(brain, wound_json);
+
+        if (result != nullptr) {
+            std::string json(result);
+            REQUIRE_FALSE(json.empty());
+            REQUIRE(json.front() == '{');
+            REQUIRE(json.back() == '}');
+
+            // The output must contain escaped quotes inside the core_wound value.
+            // A bare unescaped quote inside the string would break JSON validity.
+            // Verify the output contains the key and the value is not truncated
+            // at the first embedded quote.
+            size_t wound_key = json.find("\"core_wound\"");
+            REQUIRE(wound_key != std::string::npos);
+
+            // Verify desire key is present (would be missing if unescaped quotes
+            // from core_wound corrupted the JSON structure)
+            size_t desire_key = json.find("\"core_desire\"");
+            REQUIRE(desire_key != std::string::npos);
+            REQUIRE(desire_key > wound_key);
+
+            kelly_free_string(result);
+        }
+    }
+
+    SECTION("Text processing with special characters") {
+        char* result = kelly_brain_from_text(brain,
+            "I feel \"broken\" inside, like a path\\to\\nowhere");
+
+        if (result != nullptr) {
+            std::string json(result);
+            REQUIRE_FALSE(json.empty());
+            REQUIRE(json.front() == '{');
+            REQUIRE(json.back() == '}');
+
+            // All JSON keys should be present -- if escaping failed, the JSON
+            // would be malformed and later keys would be missing
+            REQUIRE(json.find("\"core_wound\"") != std::string::npos);
+            REQUIRE(json.find("\"key\"") != std::string::npos);
+            REQUIRE(json.find("\"bpm\"") != std::string::npos);
+
+            kelly_free_string(result);
+        }
     }
 }
 

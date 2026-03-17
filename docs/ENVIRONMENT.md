@@ -116,7 +116,8 @@ Variables are loaded in this order (later files override earlier ones):
 |----------|----------|---------|-------------|
 | `TAURI_DEV_HOST` | No | `localhost` | Tauri dev server host |
 | `TAURI_PLATFORM` | No | `macos` | Target platform (macos/windows/linux) |
-| `KMIDI_API_URL` | No | `http://127.0.0.1:8000` | Backend API URL |
+| `KMIDI_API_URL` | No | `http://127.0.0.1:8000` | Backend API URL; used by Python, frontend, and Tauri (when `MUSIC_BRAIN_API_URL` is unset) |
+| `MUSIC_BRAIN_API_URL` | No | (fallback: `KMIDI_API_URL`) | Music Brain API URL; Tauri uses this first, then `KMIDI_API_URL`. Set either—e.g. only `KMIDI_API_URL`—to configure the stack. |
 | `ML_INFERENCE_URL` | No | `http://127.0.0.1:8001` | ML inference service |
 | `MCP_SERVER_PORT` | No | `3000` | MCP server port |
 

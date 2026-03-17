@@ -6,6 +6,7 @@ use serde_json::{json, Value};
 
 use crate::commands::{GenerateRequest, InterrogateRequest};
 
+/// Music Brain API base URL. Prefers MUSIC_BRAIN_API_URL; if unset, uses KMIDI_API_URL so one var configures the whole stack.
 fn api_base_url() -> String {
     env::var("MUSIC_BRAIN_API_URL")
         .or_else(|_| env::var("KMIDI_API_URL"))
@@ -71,4 +72,37 @@ pub async fn set_lyrics(lyrics: String) -> Result<Value, String> {
 
 pub async fn get_lyrics() -> Result<Value, String> {
     get_json("/lyrics").await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn api_base_url_falls_back_to_kmidi_api_url_when_music_brain_unset() {
+        env::remove_var("MUSIC_BRAIN_API_URL");
+        env::set_var("KMIDI_API_URL", "http://127.0.0.1:8001");
+        let url = api_base_url();
+        env::remove_var("KMIDI_API_URL");
+        assert_eq!(url, "http://127.0.0.1:8001");
+    }
+
+    #[test]
+    fn api_base_url_prefers_music_brain_api_url_when_both_set() {
+        env::set_var("MUSIC_BRAIN_API_URL", "http://brain:8000");
+        env::set_var("KMIDI_API_URL", "http://kmidi:8001");
+        let url = api_base_url();
+        env::remove_var("MUSIC_BRAIN_API_URL");
+        env::remove_var("KMIDI_API_URL");
+        assert_eq!(url, "http://brain:8000");
+    }
+
+    #[test]
+    fn api_base_url_trims_trailing_slash() {
+        env::remove_var("MUSIC_BRAIN_API_URL");
+        env::set_var("KMIDI_API_URL", "http://127.0.0.1:8001/");
+        let url = api_base_url();
+        env::remove_var("KMIDI_API_URL");
+        assert_eq!(url, "http://127.0.0.1:8001");
+    }
 }
