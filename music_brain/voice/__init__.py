@@ -5,27 +5,29 @@ This module provides voice processing capabilities including:
 - AutoTuneProcessor: Pitch correction for vocals
 - VoiceModulator: Voice character modification
 - VoiceSynthesizer: Text-to-speech and guide vocal generation
-- NeuralBackend: DiffSinger/ONNX neural voice synthesis (7-8/10 quality)
+- NeuralBackend: DiffSinger/ONNX neural voice synthesis when available
 """
 
 from dataclasses import dataclass
 
-# Import neural backend (should always work)
-from music_brain.voice.neural_backend import (
-    NeuralBackend,
-    VoiceSynthesisConfig,
-    create_neural_backend,
-    check_neural_availability,
-)
-
 # Try to import other components (may fail if dependencies missing)
-__all__ = [
-    # Neural Backend (always available)
-    "NeuralBackend",
-    "VoiceSynthesisConfig",
-    "create_neural_backend",
-    "check_neural_availability",
-]
+__all__ = []
+
+try:
+    from music_brain.voice.neural_backend import (
+        NeuralBackend,
+        VoiceSynthesisConfig,
+        create_neural_backend,
+        check_neural_availability,
+    )
+    __all__.extend([
+        "NeuralBackend",
+        "VoiceSynthesisConfig",
+        "create_neural_backend",
+        "check_neural_availability",
+    ])
+except ImportError:
+    pass
 
 try:
     from music_brain.voice.auto_tune import (

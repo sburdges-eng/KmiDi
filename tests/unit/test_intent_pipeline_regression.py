@@ -101,7 +101,18 @@ class TestPipelineTempoBpm:
         intent = pipeline.expand(req, validated, normalized)
         assert validated.tempo == 300
         lo, hi = intent.technical_constraints.technical_tempo_range
-        assert isinstance(lo, int) and isinstance(hi, int)
+        assert (lo, hi) == (140, 140)
+
+    def test_tempo_low_end_clamped_to_ordered_range(self):
+        req = _make_request(bpm=20)  # under 40
+        pipeline = IntentPipeline()
+        normalized = pipeline.normalize(req)
+        assert normalized["tempo"] == 40
+        validated = pipeline.validate(normalized)
+        intent = pipeline.expand(req, validated, normalized)
+        assert validated.tempo == 40
+        lo, hi = intent.technical_constraints.technical_tempo_range
+        assert (lo, hi) == (60, 60)
 
     def test_tempo_preserved_valid(self):
         req = _make_request(bpm=100)

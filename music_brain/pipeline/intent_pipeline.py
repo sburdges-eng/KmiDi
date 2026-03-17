@@ -293,9 +293,13 @@ class IntentPipeline:
         tempo_val = getattr(validated, "tempo", None)
         if tempo_val is None:
             tempo_val = norm.get("tempo", DEFAULT_TEMPO)
+        tempo_lo = min(140, max(60, tempo_val - 20))
+        tempo_hi = min(140, max(60, tempo_val + 20))
+        if tempo_hi < tempo_lo:
+            tempo_hi = tempo_lo
         tempo_range = (
-            max(60, tempo_val - 20),
-            min(140, tempo_val + 20),
+            tempo_lo,
+            tempo_hi,
         )
 
         # core_event: request core_wound > validated.core_desire > normalized > request emotional
