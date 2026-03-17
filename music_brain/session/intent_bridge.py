@@ -8,21 +8,10 @@ between Python CompleteSongIntent and C++ IntentResult formats.
 from typing import Dict, Any, Optional
 import json
 
-from music_brain.session.intent_processor import IntentProcessor
+from music_brain.session.intent_processor import process_intent as process_intent_canonical
 from music_brain.session.intent_schema import (
     CompleteSongIntent,
 )
-
-
-# Global instance (singleton pattern)
-_intent_processor: Optional[IntentProcessor] = None
-
-
-def initialize_intent_system():
-    """Initialize the intent processing system."""
-    global _intent_processor
-    if _intent_processor is None:
-        _intent_processor = IntentProcessor()
 
 
 def process_intent(intent_json: str) -> str:
@@ -64,17 +53,13 @@ def process_intent(intent_json: str) -> str:
             ...
         }
     """
-    # Initialize if not already done
-    if _intent_processor is None:
-        initialize_intent_system()
-
     try:
         # Parse intent
         intent_dict = json.loads(intent_json)
         intent = CompleteSongIntent.from_dict(intent_dict)
 
-        # Process intent
-        result = _intent_processor.process_intent(intent)
+        # Process intent via canonical process_intent(CompleteSongIntent)
+        result = process_intent_canonical(intent)
 
         # Convert to C++ format
         cpp_result = _convert_to_cpp_format(result)
