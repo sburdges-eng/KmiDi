@@ -36,7 +36,7 @@
    bash scripts/merge-from-kmidi-final.sh
    ```
 2. The script copies only chosen dirs:
-   - **C++:** `engine/include/prrot` → `include/prrot`; `engine/include/penta` → `include/penta`; `engine/src_penta-core/*` → `src_penta-core/`; `engine/src/dsp` → `src/dsp`; `engine/intent_ir` → `engine/intent_ir`.
+   - **C++:** `engine/include/prrot` → `include/prrot`; `engine/include/penta` → `include/penta`; `engine/src_penta-core/*` → `src_penta-core/`; `engine/src/dsp` → `engine/src/dsp`; `engine/intent_ir` → `engine/intent_ir`.
    - **Python:** `python/prrot` → `music_brain/prrot`; `python/music_brain/learning` → `music_brain/learning`; `python/music_brain/voice` → `music_brain/voice`.
    - **Config / scripts:** selected YAML from `configs/` → `config/`; robustness/verify scripts → `scripts/`.
 3. Resolve includes, CMake targets, and Python imports in the main repo (see §4).  
@@ -60,25 +60,26 @@
 
 ---
 
-## 4. Suggested order of operations
+## 4. Suggested order of operations (after running merge script)
 
 1. **CMake / C++**  
-   - Merge PRROT-related and engine/DSP from KmiDi_FINAL into `engine/`, `include/`, `src_penta-core` (or equivalent).  
-   - Ensure `rt_harness` and KellyFFI still build; add any new targets (e.g. PRROT lib) under the same CMake options (BUILD_RT_HARNESS, BUILD_KELLY_CORE).
+   - Wire `include/prrot` and any new sources into root `CMakeLists.txt` or `engine/CMakeLists.txt` (e.g. `target_include_directories(..., include/prrot)`).  
+   - If `engine/src/dsp` was copied, add it to KellyCore or a dedicated target; ensure `rt_harness` and KellyFFI still build.  
+   - Add any PRROT lib under existing options (BUILD_RT_HARNESS, BUILD_KELLY_CORE).
 
 2. **Python**  
-   - Merge `KmiDi_FINAL/python/prrot` into `music_brain` or a top-level `prrot` package; keep `pip install -e .` and one API.  
-   - Merge learning, voice, pipeline modules into `music_brain/`; avoid two competing `music_brain` roots.
+   - Ensure `music_brain/prrot`, `music_brain/learning`, `music_brain/voice` are on the package path (`pyproject.toml` / `music_brain/__init__.py`).  
+   - Keep single entrypoint: `pip install -e .` and `music_brain.api`.
 
 3. **Intent IR**  
-   - Align KmiDi_FINAL Intent IR schema and C++ usage with `src-tauri/src/intent_ir/` and `shared_schemas/` so there is one contract.
+   - Align `engine/intent_ir` (if copied) with `src-tauri/src/intent_ir/` and `shared_schemas/`; one schema contract.
 
 4. **Config / scripts**  
-   - Copy training/experiment configs into `config/`, `experiments/`; merge scripts into `scripts/` and retire duplicates.
+   - Review copied configs in `config/` and scripts in `scripts/`; retire or rename duplicates.
 
 5. **AGENTS.md and BUILD.md**  
-   - Update AGENTS.md “Repository layout” and BUILD.md if new top-level dirs or build options appear (e.g. PRROT, KmiDi_FINAL-origin paths).  
-   - Keep “one UI path” and headless/rt_harness as the canonical story.
+   - Update repository layout and build options if new dirs (e.g. `include/prrot`, `music_brain/prrot`) or CMake targets appear.  
+   - Keep “one UI path” and headless/rt_harness as canonical.
 
 ---
 
@@ -94,4 +95,19 @@ If the repo contains a nested `KmiDi/` (e.g. legacy clone with its own JUCE), tr
 
 - **Include:** PRROT, engine/DSP, Intent IR alignment, music_brain learning/voice, configs, scripts.  
 - **Exclude:** All UI implementations (standalone app, React from KmiDi_FINAL, plugin editors, Qt/JUCE UI).  
-- **Method:** Worktree or subtree merge, then move only chosen paths into canonical layout and delete the rest; or one-time copy with a short “merged from KmiDi_FINAL” doc.
+- **Method:** Run `scripts/merge-from-kmidi-final.sh` (Option A in-repo); then resolve build/imports and update AGENTS.md/BUILD.md. Optional: subtree or external worktree if KmiDi_FINAL is a separate repo.
+
+---
+
+## 7. Post-merge audit (main-repo behaviour)
+
+The merge script **overwrites** (does not delete) these destinations when they exist: `include/penta`, `src_penta-core/*`, `engine/src/dsp`, `engine/intent_ir`, `music_brain/prrot`, `music_brain/learning`, `music_brain/voice`, matching `config/*.yaml`, and scripts matching `*robustness*`, `*verify*`, `*build_intent*`.
+
+**Git-history audit (vs current):**
+
+- **music_brain/voice:** Main had `macos_speech`, `neural_voice`, `presets`, and a minimal `__init__` (auto_tune, modulator, synthesizer, voice_classifier). Current tree keeps all main-only files; post-merge `__init__.py` was updated to **re-export** main-only surface so nothing is lost: `MODULATION_PRESETS`, `AUTO_TUNE_PRESETS`, `VOICE_PROFILES`, and optional `MacOSVoice`/`MacOSSpeechSynthesizer`, `UnifiedNeuralVoice`/`NeuralVoiceConfig`/`NeuralVoiceBackend` are now on `music_brain.voice` when available.
+- **music_brain/learning:** Current dir is a superset of both main and FINAL (c72f0322 recovery + merge); no behaviour removed.
+- **scripts/verify_models.py:** Uses `music_brain.penta_core.ml.model_registry`; no prior main-only version found in history; current script retained.
+- **engine/src/dsp, engine/intent_ir, include/penta:** No file deletions; any overwrite replaced content with FINAL’s version. Core KmiDi (React, Tauri, `music_brain.api`) is never touched by the script.
+
+**Restored:** `music_brain/voice/__init__.py` now exposes presets and optional macos_speech/neural_voice so main-repo callers can use `from music_brain.voice import VOICE_PROFILES` (or MacOSVoice, UnifiedNeuralVoice) as before.
