@@ -1,3 +1,4 @@
+# SAFE_TO_DELETE: Canonical intent processor is music_brain.session.intent_processor. Not imported elsewhere.
 """
 Intent Processor - Executes song intent to generate musical elements.
 

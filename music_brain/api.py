@@ -113,6 +113,7 @@ from music_brain.session.intent_schema import (  # noqa: E402
 )
 from music_brain.session.intent_processor import process_intent  # noqa: E402
 from music_brain.engine_api.schema import CompleteSongIntentRequest  # noqa: E402
+from music_brain.pipeline import IntentPipeline  # noqa: E402
 try:
     from music_brain.data_utils.emotional_mapping import EMOTIONAL_PRESETS
 except ImportError:  # pragma: no cover - compatibility shim for partial installs
@@ -848,94 +849,9 @@ class DAiWAPI:
         """
         Convert UI request payload to CompleteSongIntent.
 
-        Maps the simplified UI parameters to the full CompleteSongIntent schema.
+        Uses the deterministic 3-stage IntentPipeline (normalize → validate → expand).
         """
-        import time
-
-        tech = request.intent.technical or {}
-        if hasattr(tech, "model_dump"):
-            tech = tech.model_dump()
-        elif not isinstance(tech, dict):
-            tech = getattr(tech, "__dict__", {}) or {}
-        emotional = request.intent.emotional_intent or ""
-
-        # Extract emotion/mood from emotional_intent string
-        mood_primary = emotional
-        if "(" in emotional:
-            mood_primary = emotional.split("(")[0].strip()
-
-        # Map common emotions to mood_primary
-        emotion_map = {
-            "grief": "grief",
-            "sadness": "grief",
-            "joy": "tenderness",
-            "happiness": "tenderness",
-            "anger": "rage",
-            "rage": "rage",
-            "fear": "fear",
-            "love": "tenderness",
-            "nostalgia": "nostalgia",
-            "awe": "awe",
-        }
-        for key, value in emotion_map.items():
-            if key.lower() in emotional.lower():
-                mood_primary = value
-                break
-
-        # Extract key and mode from technical.key (format: "F major" or "C minor")
-        technical_key = "C"
-        technical_mode = "major"
-        if tech.get("key"):
-            key_parts = tech["key"].split()
-            technical_key = key_parts[0] if key_parts else "C"
-            if len(key_parts) > 1:
-                # Validate mode against known modes
-                mode_candidate = key_parts[1].lower()
-                technical_mode = (
-                    mode_candidate if mode_candidate in VALID_MUSICAL_MODES
-                    else "major"
-                )
-
-        # Calculate tempo range from BPM with validation
-        bpm = tech.get("bpm") or 82
-        try:
-            bpm = int(bpm)
-            bpm = max(40, min(300, bpm))  # Clamp to valid range
-        except (ValueError, TypeError):
-            bpm = 82
-        tempo_range = (max(60, bpm - 20), min(140, bpm + 20))
-
-        # narrative_arc and vulnerability_scale are on request.intent, not tech
-        vulnerability_scale = (
-            request.intent.vulnerability_scale
-            if getattr(request.intent, "vulnerability_scale", None) is not None
-            else 0.5
-        )
-        narrative_arc = (
-            getattr(request.intent, "narrative_arc", None)
-            or tech.get("narrative_arc")
-            or "Climb-to-Climax"
-        )
-        intent = CompleteSongIntent(
-            core_event=request.intent.core_wound or emotional,
-            core_longing=request.intent.core_desire or "",
-            mood_primary=mood_primary,
-            imagery_texture=getattr(
-                request.intent, "imagery_texture", "",
-            ) or "",
-            narrative_arc=narrative_arc,
-            vulnerability_scale=vulnerability_scale,
-            technical_genre=tech.get("genre") or "",
-            technical_tempo_range=tempo_range,
-            technical_key=technical_key,
-            technical_mode=technical_mode,
-            technical_groove_feel=tech.get("groove_feel") or "",
-            technical_rule_to_break=tech.get("rule_to_break") or "",
-            rule_breaking_justification=tech.get("rule_justification") or "",
-            created=time.strftime("%Y-%m-%d %H:%M:%S"),
-        )
-
-        return intent
+        return IntentPipeline().run(request)
 
 
 # Convenience instance
@@ -1419,10 +1335,10 @@ if FASTAPI_AVAILABLE:
             tech = request.intent.technical
             # Default to the full intent pipeline for all requests.
             use_full_pipeline = True
-            strict_intent = None
+            validated = None
 
             if use_full_pipeline:
-                # Use full CompleteSongIntent pipeline
+                # Use full CompleteSongIntent pipeline (normalize → validate → expand)
                 logging.info("Using full intent pipeline with CompleteSongIntent")
 
                 if tech is None:
@@ -1431,87 +1347,27 @@ if FASTAPI_AVAILABLE:
                         detail="technical payload is required for complete intent generation",
                     )
 
-                # Strict boundary validation for UI->engine payload.
-                structure_payload = tech.structure or []
-                instruments_payload = []
-                for inst in (tech.instruments or []):
-                    if isinstance(inst, dict):
-                        instruments_payload.append(
-                            {
-                                "instrument": inst.get("instrument")
-                                or inst.get("name")
-                                or inst.get("type")
-                                or "",
-                                "techniques": inst.get("techniques", []) or [],
-                            }
-                        )
-                    else:
-                        instruments_payload.append({"instrument": str(inst), "techniques": []})
-
-                strict_payload = {
-                    "core_desire": request.intent.core_desire or "",
-                    "mood_primary": request.intent.emotional_intent or "",
-                    "genre": tech.genre or "",
-                    "tempo": tech.bpm if tech.bpm is not None else 120,
-                    "key_mode": tech.key or "",
-                    "structure": structure_payload,
-                    "instruments": instruments_payload,
-                    "allow_legacy_fallback": False,
-                    "rule_to_break": tech.rule_to_break,
-                    "rule_justification": tech.rule_justification,
-                }
-                # Only include optional fields when the UI provided them;
-                # otherwise let CompleteSongIntentRequest schema defaults apply.
-                if tech.groove_feel is not None:
-                    strict_payload["groove_feel"] = tech.groove_feel
-                if request.intent.narrative_arc is not None:
-                    strict_payload["narrative_arc"] = request.intent.narrative_arc
+                pipeline = IntentPipeline()
+                normalized = pipeline.normalize(request)
                 try:
-                    if hasattr(CompleteSongIntentRequest, "model_validate"):
-                        strict_intent = CompleteSongIntentRequest.model_validate(strict_payload)
-                    else:  # pydantic v1 compatibility
-                        strict_intent = CompleteSongIntentRequest.parse_obj(strict_payload)
+                    validated = pipeline.validate(normalized)
                 except ValidationError as validation_error:
                     safe_errors = json.loads(validation_error.json())
                     raise HTTPException(
                         status_code=422,
                         detail=safe_errors,
                     ) from validation_error
+                try:
+                    complete_intent = pipeline.expand(request, validated, normalized)
+                except Exception as expand_exc:
+                    # Fail-closed: no fallback to partial intent
+                    logging.exception("Intent expansion failed")
+                    raise HTTPException(
+                        status_code=500,
+                        detail="intent expansion failed; no partial intent fallback",
+                    ) from expand_exc
 
-                # Convert request to CompleteSongIntent
-                def _convert_to_intent(
-                    req: GenerateRequest,
-                    validated: CompleteSongIntentRequest,
-                ) -> CompleteSongIntent:
-                    """Helper to convert request to CompleteSongIntent."""
-                    import time
-                    key_parts = validated.key_mode.split()
-                    technical_key = key_parts[0] if key_parts else "C"
-                    technical_mode = key_parts[1].lower() if len(key_parts) > 1 else "major"
-                    tempo_range = (
-                        max(60, validated.tempo - 20),
-                        min(140, validated.tempo + 20),
-                    )
-
-                    return CompleteSongIntent(
-                        core_event=req.intent.core_wound or validated.core_desire,
-                        core_longing=validated.core_desire, mood_primary=validated.mood_primary,
-                        narrative_arc=validated.narrative_arc,
-                        vulnerability_scale=(
-                            req.intent.vulnerability_scale
-                            if req.intent.vulnerability_scale is not None
-                            else 0.5
-                        ),
-                        technical_genre=validated.genre, technical_tempo_range=tempo_range,
-                        technical_key=technical_key, technical_mode=technical_mode,
-                        technical_groove_feel=validated.groove_feel,
-                        technical_rule_to_break=validated.rule_to_break or "",
-                        rule_breaking_justification=validated.rule_justification or "",
-                        created=time.strftime("%Y-%m-%d %H:%M:%S"),)
-
-                complete_intent = _convert_to_intent(request, strict_intent)
-
-                # Process full intent
+                # Process full intent (CompleteSongIntent only; no Request past this point)
                 result = api.process_song_intent(complete_intent, output_json=None)
 
                 # Generate output file if format requested
@@ -1555,13 +1411,13 @@ if FASTAPI_AVAILABLE:
                             duration_minutes = 3.0
 
                         # Validate and clamp BPM
-                        bpm = strict_intent.tempo if strict_intent else 82
+                        bpm = validated.tempo if validated else 82
 
                         length_bars = int((duration_minutes * bpm) / 4)
                         length_bars = max(16, min(128, length_bars))
 
                         # Extract key and mode with validation
-                        key_str = strict_intent.key_mode if strict_intent else "C major"
+                        key_str = validated.key_mode if validated else "C major"
                         key_parts = key_str.split()
                         root_note = key_parts[0]
                         mode = key_parts[1].lower()
@@ -1571,14 +1427,14 @@ if FASTAPI_AVAILABLE:
                             section.model_dump()
                             if hasattr(section, "model_dump")
                             else section.dict()
-                            for section in strict_intent.structure
-                        ] if strict_intent else None
+                            for section in validated.structure
+                        ] if validated else None
                         instruments = [
                             track.model_dump()
                             if hasattr(track, "model_dump")
                             else track.dict()
-                            for track in strict_intent.instruments
-                        ] if strict_intent else None
+                            for track in validated.instruments
+                        ] if validated else None
 
                         # If structure is provided, calculate total bars from structure
                         # Otherwise use calculated length_bars
@@ -1611,7 +1467,7 @@ if FASTAPI_AVAILABLE:
                         result["midi_path"] = midi_path
                     except Exception as midi_exc:
                         logging.exception("Failed to generate MIDI from full intent, falling back")
-                        if strict_intent and strict_intent.allow_legacy_fallback:
+                        if validated and validated.allow_legacy_fallback:
                             use_full_pipeline = False
                         else:
                             raise HTTPException(
@@ -1639,14 +1495,14 @@ if FASTAPI_AVAILABLE:
                     section.model_dump()
                     if hasattr(section, "model_dump")
                     else section.dict()
-                    for section in strict_intent.structure
-                ] if strict_intent else None
+                    for section in validated.structure
+                ] if validated else None
                 instruments = [
                     track.model_dump()
                     if hasattr(track, "model_dump")
                     else track.dict()
-                    for track in strict_intent.instruments
-                ] if strict_intent else None
+                    for track in validated.instruments
+                ] if validated else None
 
                 if structure:
                     response["structure"] = {
