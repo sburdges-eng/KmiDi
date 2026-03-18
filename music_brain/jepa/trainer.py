@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from dataclasses import asdict
-from typing import Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 import torch
 import torch.nn as nn
@@ -79,6 +80,7 @@ def train_audio_jepa(
     training: TrainingConfig,
     checkpoint_dir: str = "checkpoints/audio_jepa",
     export_path: Optional[str] = None,
+    progress_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
 ) -> Dict:
     """
     Full Audio-JEPA training loop with EMA teacher.
@@ -106,11 +108,13 @@ def train_audio_jepa(
     patience_counter = 0
     metrics: Dict = {"epochs": [], "best_loss": float("inf")}
 
+    n_batches_total = len(dataloader)
     for epoch in range(training.epochs):
         epoch_loss = 0.0
         n_batches = 0
 
-        for batch in dataloader:
+        for batch_idx, batch in enumerate(dataloader):
+            t0 = time.perf_counter()
             batch = batch.to(device)
             with torch.amp.autocast(
                 "cuda" if device.type == "cuda" else "cpu",
@@ -148,11 +152,36 @@ def train_audio_jepa(
                 optimizer.step()
 
             teacher.update(encoder)
-            epoch_loss += loss.item()
+            loss_val = loss.item()
+            epoch_loss += loss_val
             n_batches += 1
+            if progress_callback is not None:
+                progress_callback({
+                    "model_name": "Audio-JEPA",
+                    "epoch": epoch,
+                    "total_epochs": training.epochs,
+                    "batch_idx": batch_idx,
+                    "n_batches": n_batches_total,
+                    "loss": loss_val,
+                    "epoch_loss": epoch_loss,
+                    "n_batches_so_far": n_batches,
+                    "best_loss": best_loss,
+                    "batch_time": time.perf_counter() - t0,
+                    "device": str(device),
+                })
 
         avg_loss = epoch_loss / max(n_batches, 1)
         metrics["epochs"].append({"epoch": epoch, "loss": avg_loss})
+        if progress_callback is not None:
+            progress_callback({
+                "model_name": "Audio-JEPA",
+                "epoch": epoch,
+                "total_epochs": training.epochs,
+                "epoch_done": True,
+                "avg_loss": avg_loss,
+                "best_loss": best_loss,
+                "device": str(device),
+            })
         logger.info("Epoch %d | Loss %.6f", epoch, avg_loss)
 
         if avg_loss < best_loss:
@@ -201,6 +230,7 @@ def train_chord_jepa(
     config: ChordJEPAConfig,
     training: TrainingConfig,
     checkpoint_dir: str = "checkpoints/chord_jepa",
+    progress_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
 ) -> Dict:
     """
     Full Chord-JEPA training loop.
@@ -224,12 +254,14 @@ def train_chord_jepa(
 
     best_loss = float("inf")
     metrics: Dict = {"epochs": [], "best_loss": float("inf")}
+    n_batches_total = len(dataloader)
 
     for epoch in range(training.epochs):
         epoch_loss = 0.0
         n_batches = 0
 
-        for chords in dataloader:
+        for batch_idx, chords in enumerate(dataloader):
+            t0 = time.perf_counter()
             chords = chords.to(device)
             z = embedding(chords)
             masked, _ = mask_latents(
@@ -252,11 +284,36 @@ def train_chord_jepa(
                 )
             optimizer.step()
 
-            epoch_loss += loss.item()
+            loss_val = loss.item()
+            epoch_loss += loss_val
             n_batches += 1
+            if progress_callback is not None:
+                progress_callback({
+                    "model_name": "Chord-JEPA",
+                    "epoch": epoch,
+                    "total_epochs": training.epochs,
+                    "batch_idx": batch_idx,
+                    "n_batches": n_batches_total,
+                    "loss": loss_val,
+                    "epoch_loss": epoch_loss,
+                    "n_batches_so_far": n_batches,
+                    "best_loss": best_loss,
+                    "batch_time": time.perf_counter() - t0,
+                    "device": str(device),
+                })
 
         avg_loss = epoch_loss / max(n_batches, 1)
         metrics["epochs"].append({"epoch": epoch, "loss": avg_loss})
+        if progress_callback is not None:
+            progress_callback({
+                "model_name": "Chord-JEPA",
+                "epoch": epoch,
+                "total_epochs": training.epochs,
+                "epoch_done": True,
+                "avg_loss": avg_loss,
+                "best_loss": best_loss,
+                "device": str(device),
+            })
         logger.info("Epoch %d | Loss %.6f", epoch, avg_loss)
 
         if avg_loss < best_loss:

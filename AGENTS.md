@@ -62,6 +62,8 @@ One-command setup from repo root:
 Runs: bootstrap (JUCE submodule, version checks), `npm install`, `pip install -e .` (music_brain + tests).  
 In cloud VMs, JUCE submodule step can be skipped if C++ build is not needed.
 
+For **local training first** (16 GB Mac or free tier): see [docs/LOCAL_TRAINING_SETUP.md](docs/LOCAL_TRAINING_SETUP.md). For **cloud training** (Lambda, SageMaker, EC2): run `./scripts/dev-setup-cloud.sh` and follow [docs/CLOUD_DEV_SETUP.md](docs/CLOUD_DEV_SETUP.md).
+
 ---
 
 ## Running services
@@ -243,5 +245,7 @@ Minimal working example:
 | `docs/SOURCE_INTEGRATION_PLAN.md` | Source integration and download plan; external briefings in `docs/research/sources/` |
 | `docs/AU_PLUGIN_ARCHITECTURE.md` | Audio Unit (AU) plugin architecture: macOS, iOS AUv3, build contexts |
 | `docs/SAGEMAKER_SETUP.md` | SageMaker AI training (JEPA): IAM, S3, ECR, image build, launch jobs |
+| `docs/CLOUD_DEV_SETUP.md` | Cloud dev environment: prerequisites, env (Lambda/SageMaker/EC2), run/monitor links |
+| `docs/LOCAL_TRAINING_SETUP.md` | Local training on 16 GB Mac or free tier (Colab/Kaggle); JEPA + integrated scripts |
 | `docs/LATENT_ARCHITECTURE.md` | Six high-leverage tools (stateful KV-cache, MIDI-CI, canonicalization, APSC, StructXLIP, PID Flow) |
 | `BUILD.md` | C++ / CMake / Tauri build instructions and prerequisites |
