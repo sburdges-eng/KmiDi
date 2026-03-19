@@ -641,7 +641,7 @@ void PluginProcessor::getStateInformation(juce::MemoryBlock &destData) {
   if (selectedEmotionId_) {
     cassetteState.sideA.emotionId = *selectedEmotionId_;
   }
-  cassetteState.sideB.description = "musical expression";
+  cassetteState.sideB.description = cassetteState.sideA.description;
   cassetteState.sideB.intensity = cassetteState.sideA.intensity;
   cassetteState.isFlipped = false;
 
@@ -698,15 +698,19 @@ void PluginProcessor::generateMidi() {
     emotionId = selectedEmotionId_;
   }
 
-  if (woundDesc.isNotEmpty()) {
-    wound.description = woundDesc.toStdString();
-    wound.intensity = intensity;
-    wound.source = "user_input";
-  } else {
-    wound.description = "emotional state";
-    wound.intensity = intensity;
-    wound.source = "parameters";
+  if (woundDesc.isEmpty()) {
+    {
+      std::lock_guard<std::mutex> lock(midiMutex_);
+      generatedMidi_ = GeneratedMidi{};
+    }
+    hasPendingMidi_.store(false);
+    isGenerating_.store(false);
+    return;
   }
+
+  wound.description = woundDesc.toStdString();
+  wound.intensity = intensity;
+  wound.source = "user_input";
 
   // Get music theory settings (may override emotion-derived parameters)
   MusicTheorySettings theorySettings;
@@ -742,7 +746,7 @@ void PluginProcessor::generateMidi() {
           sideA.emotionId = *emotionId;
 
           ::kelly::SideB sideB;
-          sideB.description = "musical expression";
+          sideB.description = wound.description;
           sideB.intensity = intensity;
           sideB.emotionId = *emotionId;
 
@@ -775,7 +779,7 @@ void PluginProcessor::generateMidi() {
         sideA.emotionId = nearestEmotion.id;
 
         ::kelly::SideB sideB;
-        sideB.description = "musical expression";
+        sideB.description = wound.description;
         sideB.intensity = intensity;
         sideB.emotionId = nearestEmotion.id;
 
@@ -800,7 +804,7 @@ void PluginProcessor::generateMidi() {
           sideA.emotionId = *emotionId;
 
           SideB sideB;
-          sideB.description = "musical expression";
+          sideB.description = wound.description;
           sideB.intensity = intensity;
           sideB.emotionId = *emotionId;
 
@@ -835,7 +839,7 @@ void PluginProcessor::generateMidi() {
         sideA.emotionId = nearestEmotion.id;
 
         SideB sideB;
-        sideB.description = "musical expression";
+        sideB.description = wound.description;
         sideB.intensity = intensity;
         sideB.emotionId = nearestEmotion.id;
 
@@ -845,6 +849,17 @@ void PluginProcessor::generateMidi() {
 
     // Store the processed emotion for UI access
     lastProcessedEmotion_ = processedEmotion;
+  }
+
+  if (!canProduceOutput(intent)) {
+    {
+      std::lock_guard<std::mutex> lock(midiMutex_);
+      generatedMidi_ = GeneratedMidi{};
+    }
+    hasPendingMidi_.store(false);
+    parametersChanged_.store(false);
+    isGenerating_.store(false);
+    return;
   }
 
   // Override mode and tempo from MusicTheoryPanel if set

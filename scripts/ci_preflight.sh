@@ -83,6 +83,16 @@ else
     echo "SKIP [G7]: ripgrep (rg) not installed"
 fi
 
+# ── G8: Project artifact contract ─────────────────────
+echo ""
+echo "[G8] Project artifact contract (freeze-readiness)"
+if python3 -m pytest tests/test_project_artifact_contract.py -v --tb=short 2>&1; then
+    echo "PASS [G8]"
+else
+    echo "FAIL [G8]"
+    FAILED=1
+fi
+
 echo ""
 echo "═══════════════════════════════════════════════════"
 if [ $FAILED -eq 0 ]; then

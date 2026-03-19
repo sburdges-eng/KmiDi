@@ -9,6 +9,7 @@
 
 #include <juce_core/juce_core.h>
 #include <array>
+#include <cstdlib>
 #include <string>
 
 namespace kelly {
@@ -18,11 +19,35 @@ namespace ml {
  * Default model directory relative to application data.
  */
 inline juce::File getDefaultModelsDirectory() {
+    const auto findRepoModelsDir = [](juce::File start) {
+        for (int depth = 0; depth < 6 && start.exists(); ++depth) {
+            const auto kmidiFinalModels =
+                start.getChildFile("KmiDi_FINAL").getChildFile("ml").getChildFile("models");
+            if (kmidiFinalModels.isDirectory()) {
+                return kmidiFinalModels;
+            }
+
+            const auto rootModels = start.getChildFile("ml").getChildFile("models");
+            if (rootModels.isDirectory()) {
+                return rootModels;
+            }
+
+            const auto parent = start.getParentDirectory();
+            if (parent == start) {
+                break;
+            }
+            start = parent;
+        }
+
+        return juce::File{};
+    };
+
     // Try several locations in order of preference:
     // 1. Environment variable
     // 2. Alongside executable
-    // 3. User application data
-    // 4. System application data
+    // 3. Repo-local production model registry
+    // 4. User application data
+    // 5. System application data
 
     // Check environment variable
     const char* envPath = std::getenv("KELLY_MODELS_PATH");
@@ -43,6 +68,17 @@ inline juce::File getDefaultModelsDirectory() {
         .getChildFile("Resources").getChildFile("models");
     if (resourcesModels.isDirectory()) {
         return resourcesModels;
+    }
+
+    const auto repoModelsFromExec = findRepoModelsDir(execDir);
+    if (repoModelsFromExec.isDirectory()) {
+        return repoModelsFromExec;
+    }
+
+    const auto repoModelsFromCwd =
+        findRepoModelsDir(juce::File::getCurrentWorkingDirectory());
+    if (repoModelsFromCwd.isDirectory()) {
+        return repoModelsFromCwd;
     }
 
     // User application data
@@ -81,6 +117,9 @@ struct InferenceConfig {
     bool enableHarmonyPredictor = true;
     bool enableDynamicsEngine = true;
     bool enableGroovePredictor = true;
+    bool enableAudioJEPA = true;
+    bool enableChordJEPA = true;
+    bool enableLanguageModel = true;
 
     // Fallback behavior
     bool useFallbackOnError = true;     // Use heuristics if model fails
@@ -96,6 +135,9 @@ struct ModelFiles {
     static constexpr const char* HarmonyPredictor = "harmonypredictor";
     static constexpr const char* DynamicsEngine = "dynamicsengine";
     static constexpr const char* GroovePredictor = "groovepredictor";
+    static constexpr const char* AudioJEPA = "audiojepa";
+    static constexpr const char* ChordJEPA = "chordjepa";
+    static constexpr const char* LanguageModel = "languagemodel";
 };
 
 /**
@@ -103,20 +145,33 @@ struct ModelFiles {
  * Tries RTNeural (.json) first, then ONNX (.onnx).
  */
 inline juce::File getModelPath(const juce::File& modelsDir, const char* modelName) {
-    // Try RTNeural JSON first
-    auto jsonPath = modelsDir.getChildFile(juce::String(modelName) + ".json");
-    if (jsonPath.existsAsFile()) {
-        return jsonPath;
+    juce::StringArray candidates{juce::String(modelName)};
+
+    if (juce::String(modelName) == ModelFiles::AudioJEPA) {
+        candidates.addIfNotAlreadyThere("audio_jepa");
+    } else if (juce::String(modelName) == ModelFiles::ChordJEPA) {
+        candidates.addIfNotAlreadyThere("chord_jepa");
+    } else if (juce::String(modelName) == ModelFiles::LanguageModel) {
+        candidates.addIfNotAlreadyThere("language_model");
+        candidates.addIfNotAlreadyThere("llama_onnx");
     }
 
-    // Try ONNX
-    auto onnxPath = modelsDir.getChildFile(juce::String(modelName) + ".onnx");
-    if (onnxPath.existsAsFile()) {
-        return onnxPath;
+    for (const auto& candidate : candidates) {
+        const auto jsonPath = modelsDir.getChildFile(candidate + ".json");
+        if (jsonPath.existsAsFile()) {
+            return jsonPath;
+        }
+    }
+
+    for (const auto& candidate : candidates) {
+        const auto onnxPath = modelsDir.getChildFile(candidate + ".onnx");
+        if (onnxPath.existsAsFile()) {
+            return onnxPath;
+        }
     }
 
     // Return JSON path (will trigger fallback mode)
-    return jsonPath;
+    return modelsDir.getChildFile(juce::String(modelName) + ".json");
 }
 
 /**
@@ -132,7 +187,10 @@ inline bool validateModelsDirectory(const juce::File& modelsDir) {
         ModelFiles::MelodyTransformer,
         ModelFiles::HarmonyPredictor,
         ModelFiles::DynamicsEngine,
-        ModelFiles::GroovePredictor
+        ModelFiles::GroovePredictor,
+        ModelFiles::AudioJEPA,
+        ModelFiles::ChordJEPA,
+        ModelFiles::LanguageModel
     };
 
     for (const auto* model : requiredModels) {
@@ -186,4 +244,3 @@ private:
 
 } // namespace ml
 } // namespace kelly
-

@@ -63,6 +63,9 @@
             "harmony_prediction",
             "dynamics_mapping",
             "groove_prediction",
+            "audio_jepa",
+            "chord_jepa",
+            "language_model",
             "key_detection",
             "intent_mapping",
             "audio_classification",
@@ -249,4 +252,3 @@
     }
   }
 }
-

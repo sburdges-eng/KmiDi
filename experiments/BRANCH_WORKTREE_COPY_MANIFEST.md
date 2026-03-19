@@ -1,0 +1,6 @@
+# Branch/Worktree Copy Manifest
+
+| Original path | Destination path | Copy name |
+|---------------|------------------|----------|
+| /Users/seanburdges/.claude-worktrees/kelly-midi-companion | /Users/seanburdges/Dev/KmiDi/experiments/kelly-midi-companion_run1 | kelly-midi-companion_run1 |
+| /Users/seanburdges/.claude-worktrees/iDAW-copilot-merge-code-assets-workflows | /Users/seanburdges/Dev/KmiDi/experiments/iDAW-copilot-merge-code-assets-workflows_run1 | iDAW-copilot-merge-code-assets-workflows_run1 |

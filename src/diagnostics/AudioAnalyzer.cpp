@@ -46,8 +46,16 @@ void AudioAnalyzer::analyze(const float* buffer, size_t frames, size_t channels)
     __m256 vPeak = _mm256_setzero_ps();
     __m256 vThreshold = _mm256_set1_ps(clippingThreshold_);
     
+    // Check if buffer is 32-byte aligned for faster loads
+    const bool isAligned = (reinterpret_cast<std::uintptr_t>(buffer) % 32 == 0);
+    
     for (size_t i = 0; i < simdSamples; i += simdWidth) {
-        __m256 vSamples = _mm256_loadu_ps(&buffer[i]);
+        __m256 vSamples;
+        if (isAligned) {
+            vSamples = _mm256_load_ps(&buffer[i]);
+        } else {
+            vSamples = _mm256_loadu_ps(&buffer[i]);
+        }
         
         // Absolute values for peak detection
         __m256 vAbs = _mm256_andnot_ps(_mm256_set1_ps(-0.0f), vSamples);

@@ -1,7 +1,165 @@
 #include "project/ProjectManager.h"
 #include "common/Types.h"
 #include "plugin/PluginState.h" // Include PluginState for Preset type
+#include <array>
+#include <cstdlib>
 #include <juce_core/juce_core.h>
+
+namespace {
+
+constexpr auto kProjectSchemaVersion = "1.0";
+constexpr std::array<const char*, 5> kProjectInvariants = {
+    "schemaVersion_required",
+    "canonical_key_order",
+    "timestamp_stable_when_payload_unchanged",
+    "generated_midi_track_order_preserved",
+    "selected_emotion_order_preserved",
+};
+
+template <size_t N>
+juce::Array<juce::var> buildInvariantArray(const std::array<const char*, N>& invariants) {
+  juce::Array<juce::var> values;
+  for (const auto* invariant : invariants) {
+    values.add(juce::String(invariant));
+  }
+  return values;
+}
+
+void appendInvariantTree(juce::ValueTree& parent,
+                         const std::array<const char*, 5>& invariants) {
+  auto invariantsTree = juce::ValueTree("Invariants");
+  for (const auto* invariant : invariants) {
+    auto invariantTree = juce::ValueTree("Invariant");
+    invariantTree.setProperty("name", juce::String(invariant), nullptr);
+    invariantsTree.appendChild(invariantTree, nullptr);
+  }
+  parent.appendChild(invariantsTree, nullptr);
+}
+
+juce::Time zeroTime() {
+  return juce::Time(static_cast<juce::int64>(0));
+}
+
+std::optional<juce::Time> parseSourceDateEpoch() {
+  const char* raw = std::getenv("SOURCE_DATE_EPOCH");
+  if (raw == nullptr || *raw == '\0') {
+    return std::nullopt;
+  }
+
+  char* end = nullptr;
+  const auto seconds = std::strtoll(raw, &end, 10);
+  if (end == raw || (end != nullptr && *end != '\0') || seconds < 0) {
+    return std::nullopt;
+  }
+
+  return juce::Time(static_cast<juce::int64>(seconds) * 1000);
+}
+
+juce::Time resolvePersistenceTimestamp() {
+  if (const auto deterministic = parseSourceDateEpoch(); deterministic.has_value()) {
+    return *deterministic;
+  }
+  return juce::Time::getCurrentTime();
+}
+
+midikompanion::ProjectManager::ProjectData normalizedProjectForComparison(
+    const midikompanion::ProjectManager::ProjectData& projectData) {
+  auto normalized = projectData;
+  normalized.createdTime = zeroTime();
+  normalized.modifiedTime = zeroTime();
+  normalized.pluginState.createdTime = zeroTime();
+  normalized.pluginState.modifiedTime = zeroTime();
+  return normalized;
+}
+
+bool projectEquivalentIgnoringTimestamps(
+    const midikompanion::ProjectManager::ProjectData& lhs,
+    const midikompanion::ProjectManager::ProjectData& rhs) {
+  return juce::JSON::toString(normalizedProjectForComparison(lhs).toJson(), false)
+      == juce::JSON::toString(normalizedProjectForComparison(rhs).toJson(), false);
+}
+
+std::optional<midikompanion::ProjectManager::ProjectData> loadExistingProjectData(
+    const juce::File& file) {
+  if (!file.existsAsFile()) {
+    return std::nullopt;
+  }
+
+  juce::var jsonData;
+  const auto result = juce::JSON::parse(file.loadFileAsString(), jsonData);
+  if (result.failed()) {
+    return std::nullopt;
+  }
+
+  return midikompanion::ProjectManager::ProjectData::fromJson(jsonData);
+}
+
+void applyProjectPersistenceTimestamps(
+    midikompanion::ProjectManager::ProjectData& projectData,
+    const std::optional<midikompanion::ProjectManager::ProjectData>& existingProject) {
+  const auto resolvedTimestamp = resolvePersistenceTimestamp();
+
+  if (!existingProject.has_value()) {
+    projectData.createdTime = resolvedTimestamp;
+    projectData.modifiedTime = resolvedTimestamp;
+    projectData.pluginState.createdTime = resolvedTimestamp;
+    projectData.pluginState.modifiedTime = resolvedTimestamp;
+    return;
+  }
+
+  projectData.createdTime = existingProject->createdTime.toMilliseconds() > 0
+      ? existingProject->createdTime
+      : resolvedTimestamp;
+  projectData.pluginState.createdTime = existingProject->pluginState.createdTime.toMilliseconds() > 0
+      ? existingProject->pluginState.createdTime
+      : projectData.createdTime;
+
+  if (projectEquivalentIgnoringTimestamps(*existingProject, projectData)) {
+    projectData.modifiedTime = existingProject->modifiedTime.toMilliseconds() > 0
+        ? existingProject->modifiedTime
+        : projectData.createdTime;
+    projectData.pluginState.modifiedTime =
+        existingProject->pluginState.modifiedTime.toMilliseconds() > 0
+        ? existingProject->pluginState.modifiedTime
+        : projectData.pluginState.createdTime;
+    return;
+  }
+
+  projectData.modifiedTime = resolvedTimestamp;
+  projectData.pluginState.modifiedTime = resolvedTimestamp;
+}
+
+bool hasSupportedProjectSchema(const juce::DynamicObject* obj) {
+  if (obj == nullptr) {
+    return false;
+  }
+  if (obj->hasProperty("schemaVersion")) {
+    return obj->getProperty("schemaVersion").toString() == kProjectSchemaVersion;
+  }
+  return obj->hasProperty("version");
+}
+
+bool hasSupportedProjectSchema(const juce::ValueTree& tree) {
+  if (tree.hasProperty("schemaVersion")) {
+    return tree.getProperty("schemaVersion").toString() == kProjectSchemaVersion;
+  }
+  return tree.hasProperty("version");
+}
+
+template <typename T>
+bool hasOptionalItems(const std::optional<std::vector<T>>& items) {
+  return items.has_value() && !items->empty();
+}
+
+template <typename T>
+std::vector<T>& ensureOptionalItems(std::optional<std::vector<T>>& items) {
+  if (!items.has_value()) {
+    items.emplace();
+  }
+  return *items;
+}
+
+} // namespace
 
 namespace midikompanion {
 
@@ -18,13 +176,18 @@ bool ProjectManager::saveProject(const juce::File &file,
                                  const std::vector<juce::String> &lyrics,
                                  const std::vector<int> &selectedEmotionIds,
                                  const std::optional<int> &primaryEmotionId) {
+  // Support s3:// URI if passed as a path string
+  if (file.getFullPathName().startsWith("s3://")) {
+    return saveProjectToS3(file.getFullPathName(), state, generatedMidi, 
+                            vocalNotes, lyrics, selectedEmotionIds, primaryEmotionId);
+  }
+
   clearError();
+  const auto existingProject = loadExistingProjectData(file);
 
   // Create project data structure
   ProjectData projectData;
   projectData.name = file.getFileNameWithoutExtension();
-  projectData.createdTime = juce::Time::getCurrentTime();
-  projectData.modifiedTime = juce::Time::getCurrentTime();
   projectData.versionMajor = 1;
   projectData.versionMinor = 0;
 
@@ -49,6 +212,8 @@ bool ProjectManager::saveProject(const juce::File &file,
     projectData.tempo = 120.0f; // Default
   }
 
+  applyProjectPersistenceTimestamps(projectData, existingProject);
+
   // Convert to JSON
   juce::var json = projectData.toJson();
 
@@ -71,6 +236,12 @@ bool ProjectManager::loadProject(const juce::File &file,
                                  std::vector<juce::String> &outLyrics,
                                  std::vector<int> &outSelectedEmotionIds,
                                  std::optional<int> &outPrimaryEmotionId) {
+  // Support s3:// URI if passed as a path string
+  if (file.getFullPathName().startsWith("s3://")) {
+    return loadProjectFromS3(file.getFullPathName(), outState, outGeneratedMidi,
+                              outVocalNotes, outLyrics, outSelectedEmotionIds, outPrimaryEmotionId);
+  }
+
   clearError();
 
   if (!file.existsAsFile()) {
@@ -78,42 +249,70 @@ bool ProjectManager::loadProject(const juce::File &file,
     return false;
   }
 
-  // Read JSON from file
   juce::var jsonData;
   juce::Result result = juce::JSON::parse(file.loadFileAsString(), jsonData);
-
   if (result.failed()) {
     setError("Failed to parse project file: " + result.getErrorMessage());
     return false;
   }
 
-  // Parse project data
   auto projectData = ProjectData::fromJson(jsonData);
   if (!projectData.has_value()) {
     setError("Invalid project file format");
     return false;
   }
 
-  // Restore plugin state (full preset including CassetteState)
+  const auto invariantCheck = projectData->verifyInvariants();
+  if (!invariantCheck.ok) {
+    setError(invariantCheck.message);
+    return false;
+  }
+
   outState = projectData->pluginState;
-
-  // Restore generated MIDI metadata
-  // Note: For v1.0, we restore metadata only. Full MIDI restoration can be
-  // added in v1.1 User will need to regenerate MIDI after loading (acceptable
-  // for v1.0)
   outGeneratedMidi = projectData->generatedMidi;
-  // The generatedMidi structure will have metadata but empty note vectors
-  // This is acceptable for v1.0 - user can regenerate
-
-  // Restore vocal data
   outVocalNotes = projectData->vocalNotes;
   outLyrics = projectData->lyrics;
-
-  // Restore emotion selections
   outSelectedEmotionIds = projectData->selectedEmotionIds;
   outPrimaryEmotionId = projectData->primaryEmotionId;
 
   return true;
+}
+
+bool ProjectManager::loadProjectFromS3(const juce::String& s3Uri,
+                                       kelly::PluginState::Preset& outState,
+                                       GeneratedMidi& outGeneratedMidi,
+                                       std::vector<MidiNote>& outVocalNotes,
+                                       std::vector<juce::String>& outLyrics,
+                                       std::vector<int>& outSelectedEmotionIds,
+                                       std::optional<int>& outPrimaryEmotionId) {
+  clearError();
+  if (!s3Uri.startsWith("s3://")) {
+    setError("Invalid S3 URI: " + s3Uri);
+    return false;
+  }
+  
+  // Implementation for S3 fetch would go here
+  // For v1.0, this is a stub for future direct AWS integration
+  setError("S3 project loading not yet implemented for current build: " + s3Uri);
+  return false;
+}
+
+bool ProjectManager::saveProjectToS3(const juce::String& s3Uri,
+                                     const kelly::PluginState::Preset& state,
+                                     const GeneratedMidi& generatedMidi,
+                                     const std::vector<MidiNote>& vocalNotes,
+                                     const std::vector<juce::String>& lyrics,
+                                     const std::vector<int>& selectedEmotionIds,
+                                     const std::optional<int>& primaryEmotionId) {
+  clearError();
+  if (!s3Uri.startsWith("s3://")) {
+    setError("Invalid S3 URI: " + s3Uri);
+    return false;
+  }
+  
+  // Implementation for S3 upload would go here
+  setError("S3 project saving not yet implemented for current build: " + s3Uri);
+  return false;
 }
 
 bool ProjectManager::isValidProjectFile(const juce::File &file) const {
@@ -138,17 +337,8 @@ bool ProjectManager::isValidProjectFile(const juce::File &file) const {
     return false;
   }
 
-  auto *obj = jsonData.getDynamicObject();
-  if (!obj) {
-    return false;
-  }
-
-  // Check for version field (indicates project file)
-  if (!obj->hasProperty("version")) {
-    return false;
-  }
-
-  return true;
+  auto projectData = ProjectData::fromJson(jsonData);
+  return projectData.has_value() && projectData->verifyInvariants().ok;
 }
 
 std::optional<ProjectManager::ProjectData>
@@ -167,9 +357,14 @@ ProjectManager::getProjectMetadata(const juce::File &file) const {
   if (!projectData.has_value()) {
     return std::nullopt;
   }
+  if (!projectData->verifyInvariants().ok) {
+    return std::nullopt;
+  }
 
   // Return metadata only (don't load full MIDI data)
   ProjectData metadata;
+  metadata.schemaVersion = projectData->schemaVersion;
+  metadata.invariants = projectData->invariants;
   metadata.name = projectData->name;
   metadata.createdTime = projectData->createdTime;
   metadata.modifiedTime = projectData->modifiedTime;
@@ -189,6 +384,8 @@ juce::ValueTree ProjectManager::ProjectData::toValueTree() const {
   juce::ValueTree tree("Project");
 
   // Metadata
+  tree.setProperty("schemaVersion", juce::String(kProjectSchemaVersion), nullptr);
+  appendInvariantTree(tree, kProjectInvariants);
   tree.setProperty(
       "version", juce::String(versionMajor) + "." + juce::String(versionMinor),
       nullptr);
@@ -210,8 +407,8 @@ juce::ValueTree ProjectManager::ProjectData::toValueTree() const {
   // Generated MIDI (simplified - store as JSON string for now)
   // Full implementation would serialize each track separately
   tree.setProperty("hasGeneratedMidi",
-                   !generatedMidi.melody.empty() ||
-                       !generatedMidi.bass.empty() ||
+                   hasOptionalItems(generatedMidi.melody) ||
+                       hasOptionalItems(generatedMidi.bass) ||
                        !generatedMidi.chords.empty(),
                    nullptr);
 
@@ -261,6 +458,20 @@ ProjectManager::ProjectData::fromValueTree(const juce::ValueTree &tree) {
   }
 
   ProjectData data;
+  if (tree.hasProperty("schemaVersion")) {
+    data.schemaVersion = tree.getProperty("schemaVersion").toString();
+  } else if (tree.hasProperty("version")) {
+    data.schemaVersion = tree.getProperty("version").toString();
+  }
+  auto invariantsTree = tree.getChildWithName("Invariants");
+  if (invariantsTree.isValid()) {
+    for (int i = 0; i < invariantsTree.getNumChildren(); ++i) {
+      const auto invariantTree = invariantsTree.getChild(i);
+      if (invariantTree.hasType("Invariant") && invariantTree.hasProperty("name")) {
+        data.invariants.push_back(invariantTree.getProperty("name").toString());
+      }
+    }
+  }
 
   // Metadata
   if (tree.hasProperty("version")) {
@@ -359,10 +570,65 @@ ProjectManager::ProjectData::fromValueTree(const juce::ValueTree &tree) {
   return data;
 }
 
+ProjectManager::InvariantCheck ProjectManager::ProjectData::verifyInvariants() const {
+  InvariantCheck check;
+
+  if (schemaVersion.isEmpty()) {
+    check.message = "Project artifact is corrupted: missing schemaVersion.";
+    return check;
+  }
+
+  if (schemaVersion != kProjectSchemaVersion) {
+    check.obsolete = true;
+    check.message = "Project artifact is obsolete: schemaVersion "
+        + schemaVersion + " is not supported. Expected "
+        + juce::String(kProjectSchemaVersion) + ".";
+    return check;
+  }
+
+  if (invariants.size() != kProjectInvariants.size()) {
+    check.message = "Project artifact is corrupted: invariant list is missing or incomplete.";
+    return check;
+  }
+
+  for (size_t i = 0; i < kProjectInvariants.size(); ++i) {
+    if (invariants[i] != juce::String(kProjectInvariants[i])) {
+      check.message = "Project artifact is corrupted: invariant contract mismatch at position "
+          + juce::String(static_cast<int>(i)) + ".";
+      return check;
+    }
+  }
+
+  if (name.trim().isEmpty()) {
+    check.message = "Project artifact is corrupted: missing project name.";
+    return check;
+  }
+
+  if (tempo < 20.0f || tempo > 999.0f) {
+    check.message = "Project artifact is corrupted: tempo is out of range.";
+    return check;
+  }
+
+  if (timeSignature.numerator <= 0 || timeSignature.denominator <= 0) {
+    check.message = "Project artifact is corrupted: invalid time signature.";
+    return check;
+  }
+
+  if (pluginState.name.isEmpty()) {
+    check.message = "Project artifact is corrupted: nested plugin state is missing.";
+    return check;
+  }
+
+  check.ok = true;
+  return check;
+}
+
 juce::var ProjectManager::ProjectData::toJson() const {
   juce::DynamicObject::Ptr obj = new juce::DynamicObject();
 
   // Metadata
+  obj->setProperty("schemaVersion", juce::String(kProjectSchemaVersion));
+  obj->setProperty("invariants", juce::var(buildInvariantArray(kProjectInvariants)));
   obj->setProperty("version", juce::String(versionMajor) + "." +
                                   juce::String(versionMinor));
   obj->setProperty("name", name);
@@ -392,50 +658,66 @@ juce::var ProjectManager::ProjectData::toJson() const {
   // methods)
   ProjectManager tempManager;
   juce::Array<juce::var> melodyArray;
-  for (const auto &note : generatedMidi.melody) {
-    melodyArray.add(tempManager.serializeMidiNote(note));
+  if (generatedMidi.melody.has_value()) {
+    for (const auto &note : *generatedMidi.melody) {
+      melodyArray.add(tempManager.serializeMidiNote(note));
+    }
   }
   midiObj->setProperty("melody", juce::var(melodyArray));
 
   juce::Array<juce::var> bassArray;
-  for (const auto &note : generatedMidi.bass) {
-    bassArray.add(tempManager.serializeMidiNote(note));
+  if (generatedMidi.bass.has_value()) {
+    for (const auto &note : *generatedMidi.bass) {
+      bassArray.add(tempManager.serializeMidiNote(note));
+    }
   }
   midiObj->setProperty("bass", juce::var(bassArray));
 
   juce::Array<juce::var> counterMelodyArray;
-  for (const auto &note : generatedMidi.counterMelody) {
-    counterMelodyArray.add(tempManager.serializeMidiNote(note));
+  if (generatedMidi.counterMelody.has_value()) {
+    for (const auto &note : *generatedMidi.counterMelody) {
+      counterMelodyArray.add(tempManager.serializeMidiNote(note));
+    }
   }
   midiObj->setProperty("counterMelody", juce::var(counterMelodyArray));
 
   juce::Array<juce::var> padArray;
-  for (const auto &note : generatedMidi.pad) {
-    padArray.add(tempManager.serializeMidiNote(note));
+  if (generatedMidi.pad.has_value()) {
+    for (const auto &note : *generatedMidi.pad) {
+      padArray.add(tempManager.serializeMidiNote(note));
+    }
   }
   midiObj->setProperty("pad", juce::var(padArray));
 
   juce::Array<juce::var> stringsArray;
-  for (const auto &note : generatedMidi.strings) {
-    stringsArray.add(tempManager.serializeMidiNote(note));
+  if (generatedMidi.strings.has_value()) {
+    for (const auto &note : *generatedMidi.strings) {
+      stringsArray.add(tempManager.serializeMidiNote(note));
+    }
   }
   midiObj->setProperty("strings", juce::var(stringsArray));
 
   juce::Array<juce::var> fillsArray;
-  for (const auto &note : generatedMidi.fills) {
-    fillsArray.add(tempManager.serializeMidiNote(note));
+  if (generatedMidi.fills.has_value()) {
+    for (const auto &note : *generatedMidi.fills) {
+      fillsArray.add(tempManager.serializeMidiNote(note));
+    }
   }
   midiObj->setProperty("fills", juce::var(fillsArray));
 
   juce::Array<juce::var> rhythmArray;
-  for (const auto &note : generatedMidi.rhythm) {
-    rhythmArray.add(tempManager.serializeMidiNote(note));
+  if (generatedMidi.rhythm.has_value()) {
+    for (const auto &note : *generatedMidi.rhythm) {
+      rhythmArray.add(tempManager.serializeMidiNote(note));
+    }
   }
   midiObj->setProperty("rhythm", juce::var(rhythmArray));
 
   juce::Array<juce::var> drumGrooveArray;
-  for (const auto &note : generatedMidi.drumGroove) {
-    drumGrooveArray.add(tempManager.serializeMidiNote(note));
+  if (generatedMidi.drumGroove.has_value()) {
+    for (const auto &note : *generatedMidi.drumGroove) {
+      drumGrooveArray.add(tempManager.serializeMidiNote(note));
+    }
   }
   midiObj->setProperty("drumGroove", juce::var(drumGrooveArray));
 
@@ -489,11 +771,29 @@ ProjectManager::ProjectData::fromJson(const juce::var &json) {
   }
 
   auto *obj = json.getDynamicObject();
-  if (!obj) {
+  if (obj == nullptr) {
+    return std::nullopt;
+  }
+  if (!obj->hasProperty("schemaVersion") && !obj->hasProperty("version")) {
     return std::nullopt;
   }
 
   ProjectData data;
+  if (obj->hasProperty("schemaVersion")) {
+    data.schemaVersion = obj->getProperty("schemaVersion").toString();
+  } else if (obj->hasProperty("version")) {
+    data.schemaVersion = obj->getProperty("version").toString();
+  }
+  if (obj->hasProperty("invariants")) {
+    auto invariantsVar = obj->getProperty("invariants");
+    if (invariantsVar.isArray()) {
+      if (auto *array = invariantsVar.getArray()) {
+        for (const auto &invariant : *array) {
+          data.invariants.push_back(invariant.toString());
+        }
+      }
+    }
+  }
 
   // Metadata
   if (obj->hasProperty("version")) {
@@ -569,7 +869,7 @@ ProjectManager::ProjectData::fromJson(const juce::var &json) {
               MidiNote note;
               if (tempManager.deserializeMidiNote(array->getReference(i),
                                                   note)) {
-                data.generatedMidi.melody.push_back(note);
+                ensureOptionalItems(data.generatedMidi.melody).push_back(note);
               }
             }
           }
@@ -583,7 +883,7 @@ ProjectManager::ProjectData::fromJson(const juce::var &json) {
               MidiNote note;
               if (tempManager.deserializeMidiNote(array->getReference(i),
                                                   note)) {
-                data.generatedMidi.bass.push_back(note);
+                ensureOptionalItems(data.generatedMidi.bass).push_back(note);
               }
             }
           }
@@ -597,7 +897,7 @@ ProjectManager::ProjectData::fromJson(const juce::var &json) {
               MidiNote note;
               if (tempManager.deserializeMidiNote(array->getReference(i),
                                                   note)) {
-                data.generatedMidi.counterMelody.push_back(note);
+                ensureOptionalItems(data.generatedMidi.counterMelody).push_back(note);
               }
             }
           }
@@ -611,7 +911,7 @@ ProjectManager::ProjectData::fromJson(const juce::var &json) {
               MidiNote note;
               if (tempManager.deserializeMidiNote(array->getReference(i),
                                                   note)) {
-                data.generatedMidi.pad.push_back(note);
+                ensureOptionalItems(data.generatedMidi.pad).push_back(note);
               }
             }
           }
@@ -625,7 +925,7 @@ ProjectManager::ProjectData::fromJson(const juce::var &json) {
               MidiNote note;
               if (tempManager.deserializeMidiNote(array->getReference(i),
                                                   note)) {
-                data.generatedMidi.strings.push_back(note);
+                ensureOptionalItems(data.generatedMidi.strings).push_back(note);
               }
             }
           }
@@ -639,7 +939,7 @@ ProjectManager::ProjectData::fromJson(const juce::var &json) {
               MidiNote note;
               if (tempManager.deserializeMidiNote(array->getReference(i),
                                                   note)) {
-                data.generatedMidi.fills.push_back(note);
+                ensureOptionalItems(data.generatedMidi.fills).push_back(note);
               }
             }
           }
@@ -653,7 +953,7 @@ ProjectManager::ProjectData::fromJson(const juce::var &json) {
               MidiNote note;
               if (tempManager.deserializeMidiNote(array->getReference(i),
                                                   note)) {
-                data.generatedMidi.rhythm.push_back(note);
+                ensureOptionalItems(data.generatedMidi.rhythm).push_back(note);
               }
             }
           }
@@ -667,7 +967,7 @@ ProjectManager::ProjectData::fromJson(const juce::var &json) {
               MidiNote note;
               if (tempManager.deserializeMidiNote(array->getReference(i),
                                                   note)) {
-                data.generatedMidi.drumGroove.push_back(note);
+                ensureOptionalItems(data.generatedMidi.drumGroove).push_back(note);
               }
             }
           }
@@ -765,8 +1065,10 @@ ProjectManager::serializeGeneratedMidi(const GeneratedMidi &midi) const {
 
   // Serialize tracks (simplified - store note counts for now)
   // Full implementation would serialize all notes
-  obj->setProperty("melodyNoteCount", static_cast<int>(midi.melody.size()));
-  obj->setProperty("bassNoteCount", static_cast<int>(midi.bass.size()));
+  obj->setProperty("melodyNoteCount",
+                   static_cast<int>(midi.melody.has_value() ? midi.melody->size() : 0));
+  obj->setProperty("bassNoteCount",
+                   static_cast<int>(midi.bass.has_value() ? midi.bass->size() : 0));
   obj->setProperty("chordCount", static_cast<int>(midi.chords.size()));
 
   return juce::var(obj.get());

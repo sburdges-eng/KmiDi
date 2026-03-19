@@ -1,6 +1,6 @@
 {
   "model_name": "llama_onnx_placeholder",
-  "model_path": "/absolute/path/to/llama.onnx",
+  "model_path": "llama.onnx",
   "provider": "cpu", 
   "session_threads": 4,
   "intra_op_num_threads": 4,
@@ -12,4 +12,3 @@
   "timeout_ms": 5000,
   "notes": "Replace model_path with your LLaMA ONNX file. Set provider to 'cpu', 'coreml', or 'cuda' as available."
 }
-

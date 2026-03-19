@@ -190,12 +190,13 @@ PYBIND11_MODULE(kelly_bridge, m) {
       .def_readonly("bpm", &GeneratedMidi::bpm)
       .def("__repr__", [](const GeneratedMidi &gm) {
         return "GeneratedMidi(chords=" + std::to_string(gm.chords.size()) +
-               ", melody=" + std::to_string(gm.melody.size()) +
-               ", bass=" + std::to_string(gm.bass.size()) +
-               ", counterMelody=" + std::to_string(gm.counterMelody.size()) +
-               ", pad=" + std::to_string(gm.pad.size()) +
-               ", strings=" + std::to_string(gm.strings.size()) +
-               ", fills=" + std::to_string(gm.fills.size()) +
+               ", melody=" + std::to_string(midiLayerOrEmpty(gm.melody).size()) +
+               ", bass=" + std::to_string(midiLayerOrEmpty(gm.bass).size()) +
+               ", counterMelody=" +
+                   std::to_string(midiLayerOrEmpty(gm.counterMelody).size()) +
+               ", pad=" + std::to_string(midiLayerOrEmpty(gm.pad).size()) +
+               ", strings=" + std::to_string(midiLayerOrEmpty(gm.strings).size()) +
+               ", fills=" + std::to_string(midiLayerOrEmpty(gm.fills).size()) +
                ", lengthInBeats=" + std::to_string(gm.lengthInBeats) + ")";
       });
 

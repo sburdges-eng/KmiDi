@@ -123,27 +123,23 @@ else()
 endif()
 
 # Readerwriterqueue (lock-free queue) for RT-safe OSC
-# Note: This is a header-only library with no CMakeLists.txt, so we must
-# explicitly create an INTERFACE target and ensure SOURCE_DIR is populated.
-if(KMIDI_OFFLINE_BUILD)
-    message(FATAL_ERROR "KMIDI_OFFLINE_BUILD=ON forbids FetchContent network pulls. Vendor readerwriterqueue, RTNeural, and googletest in external/ and use add_subdirectory or target_include_directories.")
+# Note: This is a header-only library with no CMakeLists.txt.
+set(READERWRITERQUEUE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/readerwriterqueue")
+if(NOT EXISTS "${READERWRITERQUEUE_INCLUDE_DIR}/readerwriterqueue.h"
+   AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/KmiDi_FINAL/engine/include/readerwriterqueue.h")
+    set(READERWRITERQUEUE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/KmiDi_FINAL/engine/include")
 endif()
-include(FetchContent)
-FetchContent_Declare(
-    readerwriterqueue
-    GIT_REPOSITORY https://github.com/cameron314/readerwriterqueue.git
-    GIT_TAG v1.0.6
-    GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(readerwriterqueue)
 
-# Explicitly populate SOURCE_DIR for header-only library without CMakeLists.txt
-FetchContent_GetProperties(readerwriterqueue)
+if(NOT EXISTS "${READERWRITERQUEUE_INCLUDE_DIR}/readerwriterqueue.h")
+    message(FATAL_ERROR
+        "readerwriterqueue dependency missing. "
+        "Provide a local header under third_party/readerwriterqueue/ or KmiDi_FINAL/engine/include.")
+endif()
 
 if(NOT TARGET readerwriterqueue)
     add_library(readerwriterqueue INTERFACE)
     target_include_directories(readerwriterqueue INTERFACE
-        ${readerwriterqueue_SOURCE_DIR}
+        ${READERWRITERQUEUE_INCLUDE_DIR}
     )
 endif()
 
@@ -193,13 +189,22 @@ endif()
 # ML Dependencies (Optional)
 # ============================================================================
 
+set(KMIDI_ENABLE_FETCHCONTENT ON)
+if(KMIDI_OFFLINE_BUILD)
+    set(KMIDI_ENABLE_FETCHCONTENT OFF)
+endif()
+
 # RTNeural - Header-only neural network library for real-time inference
 if(ENABLE_RTNEURAL)
     find_package(RTNeural QUIET)
     if(RTNeural_FOUND)
         message(STATUS "RTNeural enabled: ${RTNeural_INCLUDE_DIRS}")
-    else()
-        # Try to fetch RTNeural if not found
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/RTNeural/RTNeural/RTNeural.h")
+        set(RTNeural_FOUND TRUE)
+        set(RTNeural_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/third_party/RTNeural")
+        message(STATUS "RTNeural enabled from vendored source: ${RTNeural_INCLUDE_DIRS}")
+    elseif(KMIDI_ENABLE_FETCHCONTENT)
+        include(FetchContent)
         message(STATUS "RTNeural not found locally, fetching from GitHub...")
         FetchContent_Declare(
             rtneural
@@ -210,6 +215,11 @@ if(ENABLE_RTNEURAL)
         FetchContent_MakeAvailable(rtneural)
         set(RTNeural_FOUND TRUE)
         set(RTNeural_INCLUDE_DIRS ${rtneural_SOURCE_DIR})
+    else()
+        message(WARNING
+            "RTNeural requested but not available locally in offline mode. "
+            "KellyCore will build without RTNeural support.")
+        set(ENABLE_RTNEURAL OFF CACHE BOOL "Enable RTNeural for ML inference" FORCE)
     endif()
 endif()
 
@@ -522,8 +532,16 @@ endif()
 
 # Tests
 if(BUILD_TESTS AND BUILD_KELLY_CORE)
+    enable_testing()
+
+    add_executable(project_persistence_contract_tests
+        tests/project_persistence_contract_tests.cpp
+        src/plugin/PluginState.cpp
+    )
+    target_link_libraries(project_persistence_contract_tests PRIVATE KellyCore)
+    add_test(NAME project_persistence_contract_tests COMMAND project_persistence_contract_tests)
+
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/external/Catch2/CMakeLists.txt)
-        enable_testing()
         add_subdirectory(external/Catch2 EXCLUDE_FROM_ALL)
         add_executable(KellyTests
             tests/cpp/test_emotion_engine.cpp
@@ -559,14 +577,21 @@ endif()
 
 if(BUILD_PENTA_TESTS)
     enable_testing()
-    include(FetchContent)
-    FetchContent_Declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG v1.14.0
-        GIT_SHALLOW TRUE
-    )
-    FetchContent_MakeAvailable(googletest)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/googletest/CMakeLists.txt")
+        add_subdirectory(external/googletest EXCLUDE_FROM_ALL)
+    elseif(KMIDI_ENABLE_FETCHCONTENT)
+        include(FetchContent)
+        FetchContent_Declare(
+            googletest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG v1.14.0
+            GIT_SHALLOW TRUE
+        )
+        FetchContent_MakeAvailable(googletest)
+    else()
+        message(FATAL_ERROR
+            "BUILD_PENTA_TESTS=ON requires a local googletest checkout when KMIDI_OFFLINE_BUILD=ON.")
+    endif()
     add_subdirectory(tests/penta_core)
 endif()
 
@@ -595,13 +620,25 @@ if(BUILD_KELLY_CORE)
         FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
     )
 
-    # Install ML models
-    install(DIRECTORY models/
-        DESTINATION share/kelly/models
-        FILES_MATCHING
-        PATTERN "*.json"
-        PATTERN "*.onnx"
-    )
+    # Install ML models from the production registry root when present.
+    set(KELLY_INSTALL_MODELS_DIR "")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/KmiDi_FINAL/ml/models/registry.json")
+        set(KELLY_INSTALL_MODELS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/KmiDi_FINAL/ml/models")
+    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/ml/models/registry.json")
+        set(KELLY_INSTALL_MODELS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ml/models")
+    endif()
+
+    if(KELLY_INSTALL_MODELS_DIR)
+        install(DIRECTORY ${KELLY_INSTALL_MODELS_DIR}/
+            DESTINATION share/kelly/models
+            FILES_MATCHING
+            PATTERN "*.json"
+            PATTERN "*.onnx"
+            PATTERN "README.md"
+        )
+    else()
+        message(STATUS "No production ML model directory found; skipping model artifact install")
+    endif()
 
     # Install Python ML module (optional)
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/python/penta_core)

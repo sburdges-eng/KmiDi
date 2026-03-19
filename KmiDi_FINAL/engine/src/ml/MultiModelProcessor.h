@@ -35,7 +35,10 @@ enum class ModelType : size_t {
     HarmonyPredictor  = 2,  // Context → Chords
     DynamicsEngine    = 3,  // Context → Expression
     GroovePredictor   = 4,  // Emotion → Groove
-    COUNT             = 5
+    AudioJEPA         = 5,  // Mel → Latent (Self-Supervised)
+    ChordJEPA         = 6,  // MIDI → Latent (Self-Supervised)
+    LanguageModel     = 7,  // Text/Tokens → Decision (LLM)
+    COUNT             = 8
 };
 
 // ============================================================================
@@ -48,12 +51,15 @@ struct ModelSpec {
     size_t estimatedParams;
 };
 
-constexpr std::array<ModelSpec, 5> MODEL_SPECS = {{
+constexpr std::array<ModelSpec, 8> MODEL_SPECS = {{
     {"EmotionRecognizer", 128, 64,  497664},
     {"MelodyTransformer", 64,  128, 412672},
     {"HarmonyPredictor",  128, 64,  74048},
     {"DynamicsEngine",    32,  16,  13456},
-    {"GroovePredictor",   64,  32,  19040}
+    {"GroovePredictor",   64,  32,  19040},
+    {"AudioJEPA",         256, 128, 800000}, // Placeholder sizes
+    {"ChordJEPA",         128, 64,  300000},
+    {"LanguageModel",     512, 128, 1500000} // LLaMA-style small
 }};
 
 // ============================================================================
@@ -65,6 +71,9 @@ struct InferenceResult {
     std::array<float, 64>  harmonyPrediction{};   // Model 2 output
     std::array<float, 16>  dynamicsOutput{};      // Model 3 output
     std::array<float, 32>  grooveParameters{};    // Model 4 output
+    std::array<float, 128> audioJepaLatent{};     // Model 5 output
+    std::array<float, 64>  chordJepaLatent{};     // Model 6 output
+    std::array<float, 128> llmDecision{};         // Model 7 output
     bool valid = false;
 };
 

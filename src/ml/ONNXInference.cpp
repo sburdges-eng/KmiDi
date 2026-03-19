@@ -1,5 +1,6 @@
 #include "ml/ONNXInference.h"
 #include <juce_core/juce_core.h>
+#include <algorithm>
 #include <cstring>
 
 #ifdef ENABLE_ONNX_RUNTIME
@@ -295,12 +296,12 @@ bool ONNXInference::infer(const float* input, float* output) {
         return false;
     }
 #else
-    // Stub mode: Return random data for testing
+    // Stub mode: Return deterministic zero data and report failure.
     setError("ONNX Runtime not enabled");
-    for (size_t i = 0; i < outputSize_; ++i) {
-        output[i] = (static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f;  // Random -1 to 1
+    if (output != nullptr) {
+        std::fill(output, output + outputSize_, 0.0f);
     }
-    return false;  // Return false to indicate stub mode
+    return false;
 #endif
 }
 

@@ -26,6 +26,7 @@ import logging
 import os
 import shutil
 import sys
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -66,6 +67,20 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def _suppress_native_stderr():
+    """Silence decoder stderr emitted by native audio libraries."""
+    saved_stderr = os.dup(2)
+    try:
+        with open(os.devnull, "w", encoding="utf-8") as devnull:
+            sys.stderr.flush()
+            os.dup2(devnull.fileno(), 2)
+            yield
+    finally:
+        os.dup2(saved_stderr, 2)
+        os.close(saved_stderr)
 
 # Audio data root (override via env KMI_DI_AUDIO_DATA_ROOT,
 # KELLY_AUDIO_DATA_ROOT, AUDIO_DATA_ROOT, or --root)
@@ -512,7 +527,8 @@ def preprocess_audio_file(
 
     try:
         # Load audio
-        y, sr = librosa.load(str(input_path), sr=target_sr, duration=max_duration)
+        with _suppress_native_stderr():
+            y, sr = librosa.load(str(input_path), sr=target_sr, duration=max_duration)
 
         # Normalize
         if normalize:
@@ -543,7 +559,8 @@ def extract_mel_spectrogram(
         return False
 
     try:
-        y, _ = librosa.load(str(audio_path), sr=sr)
+        with _suppress_native_stderr():
+            y, _ = librosa.load(str(audio_path), sr=sr)
 
         mel_spec = librosa.feature.melspectrogram(
             y=y, sr=sr, n_mels=n_mels, n_fft=n_fft, hop_length=hop_length

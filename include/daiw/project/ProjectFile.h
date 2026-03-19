@@ -66,12 +66,15 @@ struct MixerState {
  * @brief Project metadata
  */
 struct ProjectMetadata {
+    static constexpr int SCHEMA_VERSION = 2; // Incremented for relative paths + invariants
+    
     std::string name = "Untitled";
     std::string author;
     std::string createdDate;
     std::string modifiedDate;
     int versionMajor = 1;
     int versionMinor = 0;
+    int schemaVersion = SCHEMA_VERSION;
 };
 
 /**
@@ -87,7 +90,7 @@ public:
     /**
      * @brief Load project from JSON file
      * @param filepath Path to .idaw.json file
-     * @return true if successful
+     * @return true if successful and valid
      */
     bool load(const std::string& filepath);
 
@@ -97,6 +100,12 @@ public:
      * @return true if successful
      */
     bool save(const std::string& filepath) const;
+
+    /**
+     * @brief Verify project invariants for freeze readiness
+     * @return true if all invariants are satisfied
+     */
+    [[nodiscard]] bool verifyInvariants() const;
 
     /**
      * @brief Get project metadata

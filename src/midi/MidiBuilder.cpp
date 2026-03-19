@@ -54,55 +54,55 @@ juce::MidiFile MidiBuilder::buildMidiFile(const GeneratedMidi& midi) {
     }
 
     // Track 2: Melody
-    if (!midi.melody.empty()) {
+    if (hasMidiLayer(midi.melody)) {
         juce::MidiMessageSequence melodyTrack;
         int channel = getChannelForLayer("melody");
-        addNotesToSequence(melodyTrack, midi.melody, MIDI_PPQ, channel);
+        addNotesToSequence(melodyTrack, *midi.melody, MIDI_PPQ, channel);
         melodyTrack.updateMatchedPairs();
         file.addTrack(melodyTrack);
     }
 
     // Track 3: Bass
-    if (!midi.bass.empty()) {
+    if (hasMidiLayer(midi.bass)) {
         juce::MidiMessageSequence bassTrack;
         int channel = getChannelForLayer("bass");
-        addNotesToSequence(bassTrack, midi.bass, MIDI_PPQ, channel);
+        addNotesToSequence(bassTrack, *midi.bass, MIDI_PPQ, channel);
         bassTrack.updateMatchedPairs();
         file.addTrack(bassTrack);
     }
 
     // Track 4: Counter-melody
-    if (!midi.counterMelody.empty()) {
+    if (hasMidiLayer(midi.counterMelody)) {
         juce::MidiMessageSequence counterMelodyTrack;
         int channel = getChannelForLayer("counterMelody");
-        addNotesToSequence(counterMelodyTrack, midi.counterMelody, MIDI_PPQ, channel);
+        addNotesToSequence(counterMelodyTrack, *midi.counterMelody, MIDI_PPQ, channel);
         counterMelodyTrack.updateMatchedPairs();
         file.addTrack(counterMelodyTrack);
     }
 
     // Track 5: Pad
-    if (!midi.pad.empty()) {
+    if (hasMidiLayer(midi.pad)) {
         juce::MidiMessageSequence padTrack;
         int channel = getChannelForLayer("pad");
-        addNotesToSequence(padTrack, midi.pad, MIDI_PPQ, channel);
+        addNotesToSequence(padTrack, *midi.pad, MIDI_PPQ, channel);
         padTrack.updateMatchedPairs();
         file.addTrack(padTrack);
     }
 
     // Track 6: Strings
-    if (!midi.strings.empty()) {
+    if (hasMidiLayer(midi.strings)) {
         juce::MidiMessageSequence stringsTrack;
         int channel = getChannelForLayer("strings");
-        addNotesToSequence(stringsTrack, midi.strings, MIDI_PPQ, channel);
+        addNotesToSequence(stringsTrack, *midi.strings, MIDI_PPQ, channel);
         stringsTrack.updateMatchedPairs();
         file.addTrack(stringsTrack);
     }
 
     // Track 7: Fills
-    if (!midi.fills.empty()) {
+    if (hasMidiLayer(midi.fills)) {
         juce::MidiMessageSequence fillsTrack;
         int channel = getChannelForLayer("fills");
-        addNotesToSequence(fillsTrack, midi.fills, MIDI_PPQ, channel);
+        addNotesToSequence(fillsTrack, *midi.fills, MIDI_PPQ, channel);
         fillsTrack.updateMatchedPairs();
         file.addTrack(fillsTrack);
     }
@@ -149,9 +149,9 @@ juce::MidiBuffer MidiBuilder::buildMidiBuffer(const GeneratedMidi& midi,
     }
 
     // Add melody
-    if (!midi.melody.empty()) {
+    if (hasMidiLayer(midi.melody)) {
         int channel = getChannelForLayer("melody");
-        for (const auto& note : midi.melody) {
+        for (const auto& note : *midi.melody) {
             int startSample = beatsToSamples(note.startBeat, sampleRate, bpm);
             int endSample = beatsToSamples(note.startBeat + note.duration, sampleRate, bpm);
 
@@ -169,9 +169,9 @@ juce::MidiBuffer MidiBuilder::buildMidiBuffer(const GeneratedMidi& midi,
     }
 
     // Add bass
-    if (!midi.bass.empty()) {
+    if (hasMidiLayer(midi.bass)) {
         int channel = getChannelForLayer("bass");
-        for (const auto& note : midi.bass) {
+        for (const auto& note : *midi.bass) {
             int startSample = beatsToSamples(note.startBeat, sampleRate, bpm);
             int endSample = beatsToSamples(note.startBeat + note.duration, sampleRate, bpm);
 
@@ -189,9 +189,9 @@ juce::MidiBuffer MidiBuilder::buildMidiBuffer(const GeneratedMidi& midi,
     }
 
     // Add counter-melody
-    if (!midi.counterMelody.empty()) {
+    if (hasMidiLayer(midi.counterMelody)) {
         int channel = getChannelForLayer("counterMelody");
-        for (const auto& note : midi.counterMelody) {
+        for (const auto& note : *midi.counterMelody) {
             int startSample = beatsToSamples(note.startBeat, sampleRate, bpm);
             int endSample = beatsToSamples(note.startBeat + note.duration, sampleRate, bpm);
 
@@ -209,9 +209,9 @@ juce::MidiBuffer MidiBuilder::buildMidiBuffer(const GeneratedMidi& midi,
     }
 
     // Add pad
-    if (!midi.pad.empty()) {
+    if (hasMidiLayer(midi.pad)) {
         int channel = getChannelForLayer("pad");
-        for (const auto& note : midi.pad) {
+        for (const auto& note : *midi.pad) {
             int startSample = beatsToSamples(note.startBeat, sampleRate, bpm);
             int endSample = beatsToSamples(note.startBeat + note.duration, sampleRate, bpm);
 
@@ -229,9 +229,9 @@ juce::MidiBuffer MidiBuilder::buildMidiBuffer(const GeneratedMidi& midi,
     }
 
     // Add strings
-    if (!midi.strings.empty()) {
+    if (hasMidiLayer(midi.strings)) {
         int channel = getChannelForLayer("strings");
-        for (const auto& note : midi.strings) {
+        for (const auto& note : *midi.strings) {
             int startSample = beatsToSamples(note.startBeat, sampleRate, bpm);
             int endSample = beatsToSamples(note.startBeat + note.duration, sampleRate, bpm);
 
@@ -249,9 +249,9 @@ juce::MidiBuffer MidiBuilder::buildMidiBuffer(const GeneratedMidi& midi,
     }
 
     // Add fills
-    if (!midi.fills.empty()) {
+    if (hasMidiLayer(midi.fills)) {
         int channel = getChannelForLayer("fills");
-        for (const auto& note : midi.fills) {
+        for (const auto& note : *midi.fills) {
             int startSample = beatsToSamples(note.startBeat, sampleRate, bpm);
             int endSample = beatsToSamples(note.startBeat + note.duration, sampleRate, bpm);
 

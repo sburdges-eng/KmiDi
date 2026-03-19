@@ -6,12 +6,36 @@
 #include <cmath>
 #include <cstdint>
 
+namespace {
+
+bool violatesHardConstraints(const kelly::EmotionNode& emotion,
+                             const std::vector<kelly::RuleBreak>& ruleBreaks) {
+    if (emotion.intensity < 0.95f || emotion.arousal < 0.8f) {
+        return false;
+    }
+
+    return std::any_of(ruleBreaks.begin(), ruleBreaks.end(), [](const kelly::RuleBreak& ruleBreak) {
+        return ruleBreak.type == kelly::RuleBreakType::CrossRhythm
+            && ruleBreak.intensity >= 0.8f;
+    });
+}
+
+} // namespace
+
 namespace kelly {
 
 IntentPipeline::IntentPipeline() : woundProcessor_(thesaurus_) {
 }
 
 IntentResult IntentPipeline::process(const Wound& wound) {
+    // =====================================================================
+    // GUARDRAIL: Empty or ambiguous input must ABSTAIN (Gate 1)
+    // =====================================================================
+    if (wound.description.empty() || 
+        wound.description.find_first_not_of(" \t\n\r") == std::string::npos) {
+        return IntentResult::abstain(AbstainReason::EMPTY_INPUT);
+    }
+
     // =====================================================================
     // PHASE 1: Wound → Emotion
     // =====================================================================
@@ -34,6 +58,16 @@ IntentResult IntentPipeline::process(const Wound& wound) {
 }
 
 IntentResult IntentPipeline::processJourney(const SideA& current, const SideB& desired) {
+    // =====================================================================
+    // GUARDRAIL: Absence is signal (Gate 1). Empty Side A or Side B must ABSTAIN.
+    // =====================================================================
+    if (current.description.empty() || 
+        current.description.find_first_not_of(" \t\n\r") == std::string::npos ||
+        desired.description.empty() ||
+        desired.description.find_first_not_of(" \t\n\r") == std::string::npos) {
+        return IntentResult::abstain(AbstainReason::EMPTY_INPUT);
+    }
+
     // =====================================================================
     // PHASE 1: Process both sides to emotions
     // =====================================================================
@@ -106,6 +140,10 @@ IntentResult IntentPipeline::compileMusicalParams(
     const EmotionNode& emotion,
     const std::vector<RuleBreak>& ruleBreaks
 ) {
+    if (violatesHardConstraints(emotion, ruleBreaks)) {
+        return IntentResult::invalid();
+    }
+
     IntentResult result;
 
     // Store source data

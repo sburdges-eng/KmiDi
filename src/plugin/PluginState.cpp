@@ -1,6 +1,118 @@
 #include "plugin/PluginState.h"
 #include "plugin/PluginProcessor.h"
+#include <array>
+#include <cstdlib>
 #include <juce_core/juce_core.h>
+
+namespace {
+
+constexpr auto kPresetSchemaVersion = "1.0";
+constexpr std::array<const char*, 4> kPresetInvariants = {
+    "schemaVersion_required",
+    "canonical_key_order",
+    "timestamp_stable_when_payload_unchanged",
+    "cassette_state_order_preserved",
+};
+
+template <size_t N>
+juce::Array<juce::var> buildInvariantArray(const std::array<const char*, N>& invariants) {
+    juce::Array<juce::var> values;
+    for (const auto* invariant : invariants) {
+        values.add(juce::String(invariant));
+    }
+    return values;
+}
+
+void appendInvariantTree(juce::ValueTree& parent, const std::array<const char*, 4>& invariants) {
+    auto invariantsTree = juce::ValueTree("Invariants");
+    for (const auto* invariant : invariants) {
+        auto invariantTree = juce::ValueTree("Invariant");
+        invariantTree.setProperty("name", juce::String(invariant), nullptr);
+        invariantsTree.appendChild(invariantTree, nullptr);
+    }
+    parent.appendChild(invariantsTree, nullptr);
+}
+
+juce::Time zeroTime() {
+    return juce::Time(static_cast<juce::int64>(0));
+}
+
+std::optional<juce::Time> parseSourceDateEpoch() {
+    const char* raw = std::getenv("SOURCE_DATE_EPOCH");
+    if (raw == nullptr || *raw == '\0') {
+        return std::nullopt;
+    }
+
+    char* end = nullptr;
+    const auto seconds = std::strtoll(raw, &end, 10);
+    if (end == raw || (end != nullptr && *end != '\0') || seconds < 0) {
+        return std::nullopt;
+    }
+
+    return juce::Time(static_cast<juce::int64>(seconds) * 1000);
+}
+
+juce::Time resolvePersistenceTimestamp() {
+    if (const auto deterministic = parseSourceDateEpoch(); deterministic.has_value()) {
+        return *deterministic;
+    }
+    return juce::Time::getCurrentTime();
+}
+
+kelly::PluginState::Preset normalizedPresetForComparison(
+    const kelly::PluginState::Preset& preset) {
+    auto normalized = preset;
+    normalized.createdTime = zeroTime();
+    normalized.modifiedTime = zeroTime();
+    return normalized;
+}
+
+bool presetEquivalentIgnoringTimestamps(const kelly::PluginState::Preset& lhs,
+                                        const kelly::PluginState::Preset& rhs) {
+    return juce::JSON::toString(normalizedPresetForComparison(lhs).toJson(), false)
+        == juce::JSON::toString(normalizedPresetForComparison(rhs).toJson(), false);
+}
+
+std::optional<kelly::PluginState::Preset> loadExistingPresetMetadata(const juce::File& presetFile) {
+    if (!presetFile.existsAsFile()) {
+        return std::nullopt;
+    }
+
+    juce::var jsonData;
+    const auto result = juce::JSON::parse(presetFile.loadFileAsString(), jsonData);
+    if (result.failed()) {
+        return std::nullopt;
+    }
+
+    return kelly::PluginState::Preset::fromJson(jsonData);
+}
+
+void applyPresetPersistenceTimestamps(
+    kelly::PluginState::Preset& preset,
+    const std::optional<kelly::PluginState::Preset>& existingPreset) {
+    const auto resolvedTimestamp = resolvePersistenceTimestamp();
+
+    if (!existingPreset.has_value()) {
+        preset.createdTime = resolvedTimestamp;
+        preset.modifiedTime = resolvedTimestamp;
+        return;
+    }
+
+    preset.createdTime = existingPreset->createdTime.toMilliseconds() > 0
+        ? existingPreset->createdTime
+        : resolvedTimestamp;
+
+    if (presetEquivalentIgnoringTimestamps(*existingPreset, preset)) {
+        preset.modifiedTime = existingPreset->modifiedTime.toMilliseconds() > 0
+            ? existingPreset->modifiedTime
+            : preset.createdTime;
+        return;
+    }
+
+    preset.modifiedTime = resolvedTimestamp;
+}
+
+} // namespace
 
 namespace kelly {
 
@@ -166,15 +278,17 @@ bool PluginState::savePreset(const juce::String& presetName,
                               const juce::String& woundDescription,
                               const std::optional<int>& selectedEmotionId,
                               const CassetteState& cassetteState) const {
+    juce::File presetFile = getPresetFile(presetName);
+
     // Create preset from current state
     Preset preset = createPresetFromState(presetName, description, author, apvts,
                                           woundDescription, selectedEmotionId, cassetteState);
+    applyPresetPersistenceTimestamps(preset, loadExistingPresetMetadata(presetFile));
     
     // Convert to JSON
     juce::var json = preset.toJson();
     
     // Write to file
-    juce::File presetFile = getPresetFile(presetName);
     juce::String jsonString = juce::JSON::toString(json, true);
     bool success = presetFile.replaceWithText(jsonString);
 
@@ -290,8 +404,8 @@ PluginState::Preset PluginState::createPresetFromState(const juce::String& name,
     preset.name = name;
     preset.description = description;
     preset.author = author;
-    preset.createdTime = juce::Time::getCurrentTime();
-    preset.modifiedTime = juce::Time::getCurrentTime();
+    preset.createdTime = resolvePersistenceTimestamp();
+    preset.modifiedTime = preset.createdTime;
     
     // Extract parameter values
     preset.valence = getParameterValue(apvts, PluginProcessor::PARAM_VALENCE);
@@ -379,6 +493,8 @@ void PluginState::setParameterValue(juce::AudioProcessorValueTreeState& apvts, c
 juce::ValueTree PluginState::Preset::toValueTree() const {
     juce::ValueTree tree("Preset");
     
+    tree.setProperty("schemaVersion", juce::String(kPresetSchemaVersion), nullptr);
+    appendInvariantTree(tree, kPresetInvariants);
     tree.setProperty("name", name, nullptr);
     tree.setProperty("description", juce::String(description), nullptr);
     tree.setProperty("author", author, nullptr);
@@ -428,6 +544,10 @@ juce::ValueTree PluginState::Preset::toValueTree() const {
 
 std::optional<PluginState::Preset> PluginState::Preset::fromValueTree(const juce::ValueTree& tree) {
     if (!tree.isValid() || !tree.hasType("Preset")) {
+        return std::nullopt;
+    }
+    if (tree.hasProperty("schemaVersion")
+        && tree.getProperty("schemaVersion").toString() != kPresetSchemaVersion) {
         return std::nullopt;
     }
     
@@ -493,6 +613,8 @@ juce::var PluginState::Preset::toJson() const {
     // so using 'new' is correct and the Ptr manages lifetime automatically
     juce::DynamicObject::Ptr obj = new juce::DynamicObject();
     
+    obj->setProperty("schemaVersion", juce::String(kPresetSchemaVersion));
+    obj->setProperty("invariants", juce::var(buildInvariantArray(kPresetInvariants)));
     obj->setProperty("name", name);
     obj->setProperty("description", juce::String(description));
     obj->setProperty("author", author);
@@ -550,6 +672,10 @@ std::optional<PluginState::Preset> PluginState::Preset::fromJson(const juce::var
     
     auto* obj = json.getDynamicObject();
     if (obj == nullptr) {
+        return std::nullopt;
+    }
+    if (obj->hasProperty("schemaVersion")
+        && obj->getProperty("schemaVersion").toString() != kPresetSchemaVersion) {
         return std::nullopt;
     }
     

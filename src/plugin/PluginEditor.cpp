@@ -336,16 +336,24 @@ void PluginEditor::onGenerateClicked() {
   // ========================================================================
   // Retrieve wound text from workstation's text input field
   juce::String woundText = workstation_->getWoundText().trim();
+  auto abortGenerate = [&](const juce::String &title,
+                           const juce::String &message) {
+    generateButton.stopGenerateAnimation();
+    generateButton.setEnabled(true);
+    juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::WarningIcon,
+                                           title, message, "OK");
+  };
+
+  if (woundText.isEmpty()) return abortGenerate(
+      "Input Required",
+      "Enter a request before generating MIDI.");
 
   // Validate wound text (optional - allow empty for parameter-only generation)
   // If wound text is provided, check it's not too long
   if (woundText.isNotEmpty() && woundText.length() > 1000) {
-    generateButton.stopGenerateAnimation();
-    generateButton.setEnabled(true);
-    juce::AlertWindow::showMessageBoxAsync(
-        juce::AlertWindow::WarningIcon, "Invalid Input",
-        "Wound text is too long. Please limit to 1000 characters.", "OK");
-    return;
+    return abortGenerate("Invalid Input",
+                         "Wound text is too long. Please limit to 1000 "
+                         "characters.");
   }
 
   // ========================================================================

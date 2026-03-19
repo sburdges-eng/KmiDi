@@ -30,6 +30,10 @@ from .ollama_bridge import (
     generate_lyrics,
     parse_intent,
 )
+from .gemini_bridge import (
+    GeminiBridge,
+    GeminiConfig,
+)
 
 __all__ = [
     "SuggestionEngine",
@@ -45,4 +49,6 @@ __all__ = [
     "create_ollama_bridge",
     "generate_lyrics",
     "parse_intent",
+    "GeminiBridge",
+    "GeminiConfig",
 ]

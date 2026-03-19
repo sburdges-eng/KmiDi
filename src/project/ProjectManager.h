@@ -49,10 +49,19 @@ using kelly::Chord;
  */
 class ProjectManager {
 public:
+    struct InvariantCheck {
+        bool ok = false;
+        bool obsolete = false;
+        juce::String message;
+    };
+
     /**
      * Project data structure - Complete project state
      */
     struct ProjectData {
+        juce::String schemaVersion;
+        std::vector<juce::String> invariants;
+
         // Metadata
         juce::String name = "Untitled Project";
         juce::Time createdTime;
@@ -98,6 +107,11 @@ public:
          * Load from JSON var
          */
         static std::optional<ProjectData> fromJson(const juce::var& json);
+
+        /**
+         * Verify project invariants for UI-facing load validation.
+         */
+        InvariantCheck verifyInvariants() const;
     };
 
     ProjectManager();
@@ -148,6 +162,46 @@ public:
                      std::vector<juce::String>& outLyrics,
                      std::vector<int>& outSelectedEmotionIds,
                      std::optional<int>& outPrimaryEmotionId);
+
+    /**
+     * Load complete project from an S3 URI.
+     * 
+     * @param s3Uri S3 URI (e.g., s3://bucket/path/to/project.midikompanion)
+     * @param outState Output: PluginStatePreset to restore
+     * @param outGeneratedMidi Output: Generated MIDI data
+     * @param outVocalNotes Output: Vocal notes
+     * @param outLyrics Output: Lyrics
+     * @param outSelectedEmotionIds Output: Emotion node selections
+     * @param outPrimaryEmotionId Output: Primary emotion ID
+     * @return true if successful
+     */
+    bool loadProjectFromS3(const juce::String& s3Uri,
+                           kelly::PluginState::Preset& outState,
+                           GeneratedMidi& outGeneratedMidi,
+                           std::vector<MidiNote>& outVocalNotes,
+                           std::vector<juce::String>& outLyrics,
+                           std::vector<int>& outSelectedEmotionIds,
+                           std::optional<int>& outPrimaryEmotionId);
+
+    /**
+     * Save complete project to an S3 URI.
+     * 
+     * @param s3Uri S3 URI (e.g., s3://bucket/path/to/project.midikompanion)
+     * @param state PluginStatePreset containing current plugin parameters
+     * @param generatedMidi Current generated MIDI data
+     * @param vocalNotes Current vocal notes
+     * @param lyrics Current lyrics
+     * @param selectedEmotionIds Current emotion node selections
+     * @param primaryEmotionId Primary emotion ID
+     * @return true if successful
+     */
+    bool saveProjectToS3(const juce::String& s3Uri,
+                         const kelly::PluginState::Preset& state,
+                         const GeneratedMidi& generatedMidi,
+                         const std::vector<MidiNote>& vocalNotes = {},
+                         const std::vector<juce::String>& lyrics = {},
+                         const std::vector<int>& selectedEmotionIds = {},
+                         const std::optional<int>& primaryEmotionId = std::nullopt);
 
     /**
      * Get last error message if save/load failed.

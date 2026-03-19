@@ -163,6 +163,27 @@ void ModelWrapper::computeFallback(const float* input) {
             }
             break;
 
+        case ModelType::AudioJEPA:
+            // Placeholder JEPA latent representation from Mel
+            for (size_t i = 0; i < output_.size(); ++i) {
+                output_[i] = std::tanh(input[i % 256] * 0.2f);
+            }
+            break;
+
+        case ModelType::ChordJEPA:
+            // Placeholder JEPA latent representation from MIDI
+            for (size_t i = 0; i < output_.size(); ++i) {
+                output_[i] = std::tanh(input[i % 128] * 0.25f);
+            }
+            break;
+
+        case ModelType::LanguageModel:
+            // Placeholder LLM decision output
+            for (size_t i = 0; i < output_.size(); ++i) {
+                output_[i] = 1.0f / (1.0f + std::exp(-input[i % 512]));
+            }
+            break;
+
         default:
             break;
     }
@@ -255,6 +276,33 @@ InferenceResult MultiModelProcessor::runFullPipeline(const std::array<float, 128
     if (models_[4]->isEnabled()) {
         auto groove = models_[4]->forward(result.emotionEmbedding.data(), 64);
         std::copy_n(groove.begin(), 32, result.grooveParameters.begin());
+    }
+
+    // 6. AudioJEPA: audio features → latent
+    if (models_[5]->isEnabled()) {
+        // Expand 128 mel features to 256 for JEPA if needed, or use as is
+        std::array<float, 256> expanded{};
+        std::copy_n(audioFeatures.begin(), 128, expanded.begin());
+        auto latent = models_[5]->forward(expanded.data(), 256);
+        std::copy_n(latent.begin(), 128, result.audioJepaLatent.begin());
+    }
+
+    // 7. ChordJEPA: harmony → latent
+    if (models_[6]->isEnabled()) {
+        std::array<float, 128> harmonyContext{};
+        std::copy_n(result.harmonyPrediction.begin(), 64, harmonyContext.begin());
+        auto latent = models_[6]->forward(harmonyContext.data(), 128);
+        std::copy_n(latent.begin(), 64, result.chordJepaLatent.begin());
+    }
+
+    // 8. LanguageModel: JEPA latents + Emotion → Decisions
+    if (models_[7]->isEnabled()) {
+        std::array<float, 512> llmInput{};
+        std::copy_n(result.audioJepaLatent.begin(), 128, llmInput.begin());
+        std::copy_n(result.chordJepaLatent.begin(), 64, llmInput.begin() + 128);
+        std::copy_n(result.emotionEmbedding.begin(), 64, llmInput.begin() + 192);
+        auto decision = models_[7]->forward(llmInput.data(), 512);
+        std::copy_n(decision.begin(), 128, result.llmDecision.begin());
     }
 
     result.valid = true;

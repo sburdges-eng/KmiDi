@@ -232,10 +232,15 @@ std::vector<Chord> ChordGenerator::generate(const IntentResult &intent,
                                             int bars) {
   std::lock_guard<std::mutex> lock(mutex_);
 
+  if (!canProduceOutput(intent)) {
+    return {};
+  }
+
   float valence = intent.emotion.valence;
   float arousal = intent.emotion.arousal;
   float intensity = intent.emotion.intensity;
   std::string mode = intent.mode;
+  const bool escalationTokenPresent = intent.escalationTokenPresent;
 
   // Select progression family based on emotion
   const ProgressionFamily *family =
@@ -270,8 +275,7 @@ std::vector<Chord> ChordGenerator::generate(const IntentResult &intent,
     // Convert template to family format
     ProgressionFamily fallbackFamily;
     fallbackFamily.degrees = best->degrees;
-    fallbackFamily.useExtensions =
-        intensity > CHORD_EXTENSION_INTENSITY_THRESHOLD;
+    fallbackFamily.useExtensions = escalationTokenPresent;
     family = &fallbackFamily;
   }
 
@@ -283,8 +287,7 @@ std::vector<Chord> ChordGenerator::generate(const IntentResult &intent,
   double beatsPerChord = (bars * BEATS_PER_BAR) / family->degrees.size();
   double currentBeat = 0.0;
 
-  bool addExtensions =
-      family->useExtensions || intensity > CHORD_EXTENSION_INTENSITY_THRESHOLD;
+  bool addExtensions = escalationTokenPresent && family->useExtensions;
 
   for (size_t i = 0; i < family->degrees.size(); ++i) {
     int degree = family->degrees[i];

@@ -61,6 +61,20 @@ enum class RuleBreakType : uint8_t {
   COUNT
 };
 
+enum class AbstainReason : uint8_t {
+  NONE = 0,
+  EMPTY_INPUT,
+  UNDERSPECIFIED,
+  GENERATOR_EMPTY,
+  NON_AUDITABLE_PATH
+};
+
+enum class IntentResultStatus : uint8_t {
+  VALID = 0,
+  ABSTAIN = 1,
+  INVALID = 2
+};
+
 // =============================================================================
 // MIDI STRUCTURES (Unified - resolves midi_pipeline.h conflict)
 // =============================================================================
@@ -115,15 +129,15 @@ struct GeneratedMidi {
   std::map<std::string, std::string> metadata;
 
   // Compatibility fields for existing GeneratedMidi structure (Types.h)
-  std::vector<MidiNote> melody;
-  std::vector<MidiNote> bass;
-  std::vector<MidiNote> counterMelody;
-  std::vector<MidiNote> pad;
-  std::vector<MidiNote> strings;
-  std::vector<MidiNote> fills;
-  std::vector<MidiNote> rhythm;
-  std::vector<MidiNote> drumGroove;
-  std::vector<MidiNote> transitions;
+  std::optional<std::vector<MidiNote>> melody;
+  std::optional<std::vector<MidiNote>> bass;
+  std::optional<std::vector<MidiNote>> counterMelody;
+  std::optional<std::vector<MidiNote>> pad;
+  std::optional<std::vector<MidiNote>> strings;
+  std::optional<std::vector<MidiNote>> fills;
+  std::optional<std::vector<MidiNote>> rhythm;
+  std::optional<std::vector<MidiNote>> drumGroove;
+  std::optional<std::vector<MidiNote>> transitions;
   double lengthInBeats = 0.0;
   float bpm = 120.0f;
 
@@ -132,6 +146,26 @@ struct GeneratedMidi {
   ArrangementOutput *arrangement =
       nullptr; // Section structure metadata (optional, null if not set)
 };
+
+template <typename T>
+inline bool hasMidiLayer(const std::optional<std::vector<T>> &layer) {
+  return layer.has_value() && !layer->empty();
+}
+
+template <typename T>
+inline const std::vector<T> &midiLayerOrEmpty(
+    const std::optional<std::vector<T>> &layer) {
+  static const std::vector<T> kEmptyLayer;
+  return layer.has_value() ? *layer : kEmptyLayer;
+}
+
+template <typename T>
+inline std::vector<T> &ensureMidiLayer(std::optional<std::vector<T>> &layer) {
+  if (!layer.has_value()) {
+    layer.emplace();
+  }
+  return *layer;
+}
 
 // =============================================================================
 // TIME SIGNATURES
@@ -234,6 +268,9 @@ struct RuleBreak {
 };
 
 struct IntentResult {
+  IntentResultStatus status = IntentResultStatus::VALID;
+  AbstainReason abstainReason = AbstainReason::NONE;
+
   // Musical parameters derived from wound
   std::string key = "F";
   std::string mode = "major"; // Major for misdirection
@@ -268,6 +305,27 @@ struct IntentResult {
   // Source tracking
   Wound sourceWound;
   float confidence = 0.8f;
+  bool escalationTokenPresent = false;
+
+  // Helper methods
+  bool isValid() const { return status == IntentResultStatus::VALID; }
+  bool isAbstain() const { return status == IntentResultStatus::ABSTAIN; }
+  bool isInvalid() const { return status == IntentResultStatus::INVALID; }
+
+  static IntentResult abstain(AbstainReason reason = AbstainReason::NONE) {
+    IntentResult r;
+    r.status = IntentResultStatus::ABSTAIN;
+    r.abstainReason = reason;
+    r.confidence = 0.0f;
+    return r;
+  }
+
+  static IntentResult invalid() {
+    IntentResult r;
+    r.status = IntentResultStatus::INVALID;
+    r.confidence = 0.0f;
+    return r;
+  }
 
   // Compatibility fields for existing IntentResult structure (Types.h)
   // These map to the unified structure fields above
@@ -277,6 +335,13 @@ struct IntentResult {
                        // sourceWound.primaryEmotion)
   float tempo = 1.0f;  // BPM modifier (0.5 to 2.0) - computed from tempoBpm
 };
+
+/**
+ * Global output gate to check if an intent result is valid for generation.
+ */
+inline bool canProduceOutput(const IntentResult &result) {
+  return result.status == IntentResultStatus::VALID;
+}
 
 // =============================================================================
 // GROOVE/RHYTHM

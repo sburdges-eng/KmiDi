@@ -81,6 +81,9 @@ struct InferenceConfig {
     bool enableHarmonyPredictor = true;
     bool enableDynamicsEngine = true;
     bool enableGroovePredictor = true;
+    bool enableAudioJEPA = true;
+    bool enableChordJEPA = true;
+    bool enableLanguageModel = true;
 
     // Fallback behavior
     bool useFallbackOnError = true;     // Use heuristics if model fails
@@ -96,6 +99,9 @@ struct ModelFiles {
     static constexpr const char* HarmonyPredictor = "harmonypredictor";
     static constexpr const char* DynamicsEngine = "dynamicsengine";
     static constexpr const char* GroovePredictor = "groovepredictor";
+    static constexpr const char* AudioJEPA = "audiojepa";
+    static constexpr const char* ChordJEPA = "chordjepa";
+    static constexpr const char* LanguageModel = "languagemodel";
 };
 
 /**
@@ -132,7 +138,10 @@ inline bool validateModelsDirectory(const juce::File& modelsDir) {
         ModelFiles::MelodyTransformer,
         ModelFiles::HarmonyPredictor,
         ModelFiles::DynamicsEngine,
-        ModelFiles::GroovePredictor
+        ModelFiles::GroovePredictor,
+        ModelFiles::AudioJEPA,
+        ModelFiles::ChordJEPA,
+        ModelFiles::LanguageModel
     };
 
     for (const auto* model : requiredModels) {

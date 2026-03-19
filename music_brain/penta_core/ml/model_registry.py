@@ -33,6 +33,9 @@ class ModelTask(Enum):
     HARMONY_PREDICTION = "harmony_prediction"
     DYNAMICS_MAPPING = "dynamics_mapping"
     GROOVE_PREDICTION = "groove_prediction"
+    AUDIO_JEPA = "audio_jepa"
+    CHORD_JEPA = "chord_jepa"
+    LANGUAGE_MODEL = "language_model"
     INTENT_MAPPING = "intent_mapping"
     AUDIO_CLASSIFICATION = "audio_classification"
     VOICE_CLASSIFICATION = "voice_classification"
@@ -241,7 +244,13 @@ class ModelRegistry:
         """Infer model task from path."""
         path_str = str(path).lower()
 
-        if "chord" in path_str:
+        if "audiojepa" in path_str or "audio_jepa" in path_str:
+            return ModelTask.AUDIO_JEPA
+        elif "chordjepa" in path_str or "chord_jepa" in path_str:
+            return ModelTask.CHORD_JEPA
+        elif "llama" in path_str or "languagemodel" in path_str or "language_model" in path_str:
+            return ModelTask.LANGUAGE_MODEL
+        elif "chord" in path_str:
             if "detect" in path_str:
                 return ModelTask.CHORD_DETECTION
             return ModelTask.CHORD_PREDICTION
@@ -367,7 +376,9 @@ class ModelRegistry:
     def _modelinfo_from_manifest_entry(self, entry: Dict[str, Any], base_dir: Path) -> ModelInfo:
         file_path = (
             entry.get("onnx_path")
+            or entry.get("exports", {}).get("onnx_path")
             or entry.get("coreml_path")
+            or entry.get("exports", {}).get("coreml_path")
             or entry.get("file")
             or ""
         )

@@ -6,11 +6,12 @@ Phase 3: jepa (MultiJEPA) + memory + personality -> think -> decide (policy with
 
 
 class KellyBrain:
-    def __init__(self, audio_model=None, chord_model=None, emotion_model=None, jepa=None, memory=None, personality=None):
+    def __init__(self, audio_model=None, chord_model=None, emotion_model=None, jepa=None, language_model=None, memory=None, personality=None):
         self.audio = audio_model
         self.chords = chord_model
         self.emotion = emotion_model
         self.jepa = jepa
+        self.language_model = language_model
         self.memory = memory
         self.personality = personality
 
@@ -27,7 +28,12 @@ class KellyBrain:
                     states = self.jepa(features)
             else:
                 states = self.jepa(features)
-            decision = self.decide_from_states(states)
+            
+            # Use Language Model if available to process JEPA states
+            if self.language_model is not None:
+                decision = self.decide_via_llm(states)
+            else:
+                decision = self.decide_from_states(states)
         else:
             # Phase 2: audio + chord + emotion
             if isinstance(features, torch.Tensor):
@@ -65,6 +71,29 @@ class KellyBrain:
                 decision = self.decide(emotions, harmony)
         if self.memory is not None:
             self.memory.store(decision)
+        return decision
+
+    def decide_via_llm(self, states):
+        """Use the language model to make high-level decisions from JEPA states."""
+        import torch
+        # Combine states into a context vector or tokens for the LLM
+        # This is a placeholder for actual tokenization/embedding logic
+        context = []
+        for k, v in states.items():
+            if hasattr(v, "mean"):
+                context.append(v.mean(dim=0).flatten())
+            else:
+                context.append(torch.tensor(v).flatten())
+        
+        context_tensor = torch.cat(context)
+        
+        with torch.no_grad():
+            llm_output = self.language_model(context_tensor)
+            
+        # Parse LLM output into decision dict
+        # Assuming output is a vector of probabilities or logits
+        decision = self.decide_from_states(states)
+        decision["llm_influence"] = llm_output.mean().item() if hasattr(llm_output, "mean") else 0.0
         return decision
 
     def decide_from_states(self, states):

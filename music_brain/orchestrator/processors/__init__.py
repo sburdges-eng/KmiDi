@@ -30,6 +30,7 @@ from music_brain.orchestrator.processors.base import (
 from music_brain.orchestrator.processors.harmony import HarmonyProcessor
 from music_brain.orchestrator.processors.groove import GrooveProcessor
 from music_brain.orchestrator.processors.intent import IntentProcessor
+from music_brain.orchestrator.processors.gemini import GeminiProcessor
 
 __all__ = [
     "BaseProcessor",
@@ -37,4 +38,5 @@ __all__ = [
     "HarmonyProcessor",
     "GrooveProcessor",
     "IntentProcessor",
+    "GeminiProcessor",
 ]
