@@ -6,14 +6,10 @@ import { VUMeter } from './components/SideA/VUMeter';
 import { EmotionWheel } from './components/SideB/EmotionWheel';
 import { GhostWriter } from './components/SideB/GhostWriter';
 import { Interrogator } from './components/SideB/Interrogator';
-import IntentBuilder from './components/IntentBuilder';
-import { QuickStartPanel } from './components/QuickStartPanel';
 import LyricPanel from './components/LyricPanel';
 import { SpectoCloudPanel } from './components/SpectoCloudPanel';
-import { MusicCustomizer } from './components/MusicCustomizer';
+import UniversalMusicInput from './components/UniversalMusicInput/UniversalMusicInput';
 import { useMusicBrain } from './hooks/useMusicBrain';
-
-type Side = 'side-a' | 'side-b' | 'create' | 'intent';
 
 type Channel = {
   id: string;
@@ -29,7 +25,6 @@ type SelectedEmotion = {
 };
 
 export default function App() {
-  const [side, setSide] = useState<Side>('side-a');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [tempo, setTempo] = useState(120);
@@ -43,15 +38,8 @@ export default function App() {
   ]);
   const [selectedEmotion, setSelectedEmotion] = useState<SelectedEmotion | null>(null);
   const [ghostText, setGhostText] = useState('');
-  const [interactions, setInteractions] = useState<string[]>([
-    'What are you making?',
-  ]);
   const [apiStatus, setApiStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const [lastAudioPath, setLastAudioPath] = useState<string | undefined>();
-  const logRef = useRef<HTMLUListElement>(null);
-  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
-  const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [selectedTechniques, setSelectedTechniques] = useState<string[]>([]);
 
   const brain = useMusicBrain();
 
@@ -65,7 +53,6 @@ export default function App() {
 
   useEffect(() => {
     if (!isPlaying) return undefined;
-
     const timer = window.setInterval(() => {
       playTickRef.current += 1;
       setMasterVu(() => {
@@ -80,7 +67,6 @@ export default function App() {
         }),
       );
     }, 120);
-
     return () => window.clearInterval(timer);
   }, [isPlaying]);
 
@@ -96,172 +82,73 @@ export default function App() {
     setGhostText(localText);
   }, [apiStatus, brain]);
 
-  const handleInterrogatorAsk = useCallback(async (question: string) => {
-    setInteractions((prev) => [...prev, `You: ${question}`]);
-    if (apiStatus === 'online') {
-      try {
-        const response = await brain.interrogate({ message: question });
-        setInteractions((prev) => [...prev, `KmiDi: ${response.reply}`]);
-        return;
-      } catch { /* fall through */ }
-    }
-    setInteractions((prev) => [
-      ...prev,
-      `KmiDi: Shaped around ${selectedEmotion?.base ?? 'your direction'}.`,
-    ]);
-  }, [apiStatus, brain, selectedEmotion]);
-
-  const handleQuickStart = useCallback(async (template: {
-    id: string; name: string; config: { bpm?: number; key?: string };
-  }) => {
-    setInteractions((prev) => [...prev, `Started: ${template.name} (${template.config.key ?? 'C'}, ${template.config.bpm ?? 120} BPM)`]);
-    if (template.config.bpm) setTempo(template.config.bpm);
-  }, []);
-
-  useEffect(() => {
-    logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
-  }, [interactions]);
-
-  const activeTitle = side === 'side-a' ? 'Mix'
-    : side === 'side-b' ? 'Inspire'
-    : side === 'create' ? 'Create'
-    : 'Compose';
+  // Tool drawer content — existing components re-parented into the new layout
+  const toolDrawerContent = (
+    <div className="umi-drawer-grid">
+      <article className="panel">
+        <h3 className="panel-title">Transport</h3>
+        <Transport
+          isPlaying={isPlaying}
+          isRecording={isRecording}
+          tempo={tempo}
+          onPlayPause={() => { setIsPlaying((v) => !v); setIsRecording(false); }}
+          onStop={() => { setIsPlaying(false); playTickRef.current = 0; setMasterVu(0); }}
+          onRecord={() => setIsRecording((v) => !v)}
+          onTempoChange={setTempo}
+        />
+      </article>
+      <article className="panel">
+        <h3 className="panel-title">Mixer</h3>
+        <Mixer
+          channels={channels}
+          onChannelChange={(channelId, patch) => {
+            setChannels((prev) => prev.map((ch) => ch.id === channelId ? { ...ch, ...patch } : ch));
+          }}
+        />
+      </article>
+      <article className="panel">
+        <h3 className="panel-title">Master</h3>
+        <VUMeter value={masterVu} isActive={isPlaying} />
+      </article>
+      <article className="panel wide">
+        <h3 className="panel-title">Timeline</h3>
+        <Timeline bars={timelineBars} tempo={tempo} />
+      </article>
+      <article className="panel">
+        <h3 className="panel-title">Mood</h3>
+        <EmotionWheel onSelect={(emotion) => setSelectedEmotion(emotion)} selected={selectedEmotion} />
+      </article>
+      <article className="panel">
+        <h3 className="panel-title">Lyric Spark</h3>
+        <GhostWriter
+          seed={selectedEmotion ? `${selectedEmotion.base} ${selectedEmotion.intensity}` : ''}
+          onGenerate={handleGhostGenerate}
+          output={ghostText}
+        />
+      </article>
+      <article className="panel">
+        <h3 className="panel-title">Lyrics</h3>
+        <LyricPanel />
+      </article>
+      <article className="panel">
+        <h3 className="panel-title">Spectocloud</h3>
+        <SpectoCloudPanel lastGeneratedAudioPath={lastAudioPath} />
+      </article>
+    </div>
+  );
 
   return (
     <div className="km-frame">
       <header className="km-header">
         <h1 className="app-title">KmiDi</h1>
-        <nav className="km-toggle" role="tablist" aria-label="Studio mode">
-          {(['side-a', 'side-b', 'create', 'intent'] as Side[]).map((s, i) => (
-            <button
-              key={s}
-              type="button"
-              role="tab"
-              aria-selected={side === s}
-              aria-controls="main-content"
-              id={`tab-${s}`}
-              tabIndex={side === s ? 0 : -1}
-              className={side === s ? 'tab active' : 'tab'}
-              onClick={() => setSide(s)}
-            >
-              {s === 'side-a' ? 'Mix' : s === 'side-b' ? 'Inspire' : s === 'create' ? 'Create' : 'Compose'}
-            </button>
-          ))}
-        </nav>
+        <span className="km-subtitle">Universal Music Input</span>
       </header>
 
-      <section className="km-titlebar" aria-hidden="true">
-        <p className="km-subtitle">{activeTitle}</p>
-        <button
-          type="button"
-          className="mode-reset-btn"
-          onClick={() => setIsPlaying(false)}
-          aria-label="Reset playback"
-        >
-          Reset
-        </button>
-      </section>
-
-      <main id="main-content" role="tabpanel" aria-labelledby={`tab-${side}`} tabIndex={0}>
-        {side === 'side-a' && (
-          <section className="km-side-grid" aria-label="Mix console">
-            <article className="panel">
-              <h2 className="panel-title">Transport</h2>
-              <Transport
-                isPlaying={isPlaying}
-                isRecording={isRecording}
-                tempo={tempo}
-                onPlayPause={() => { setIsPlaying((v) => !v); setIsRecording(false); }}
-                onStop={() => { setIsPlaying(false); playTickRef.current = 0; setMasterVu(0); }}
-                onRecord={() => setIsRecording((v) => !v)}
-                onTempoChange={setTempo}
-              />
-            </article>
-            <article className="panel">
-              <h2 className="panel-title">Mixer</h2>
-              <Mixer
-                channels={channels}
-                onChannelChange={(channelId, patch) => {
-                  setChannels((prev) => prev.map((ch) => ch.id === channelId ? { ...ch, ...patch } : ch));
-                }}
-              />
-            </article>
-            <article className="panel wide">
-              <h2 className="panel-title">Timeline</h2>
-              <Timeline bars={timelineBars} tempo={tempo} />
-            </article>
-            <article className="panel">
-              <h2 className="panel-title">Master</h2>
-              <VUMeter value={masterVu} isActive={isPlaying} />
-            </article>
-          </section>
-        )}
-
-        {side === 'side-b' && (
-          <section className="km-side-grid" aria-label="Inspiration board">
-            <article className="panel">
-              <h2 className="panel-title">Mood</h2>
-              <EmotionWheel onSelect={(emotion) => setSelectedEmotion(emotion)} selected={selectedEmotion} />
-            </article>
-            <article className="panel">
-              <h2 className="panel-title">Lyric Spark</h2>
-              <GhostWriter
-                seed={selectedEmotion ? `${selectedEmotion.base} ${selectedEmotion.intensity}` : ''}
-                onGenerate={handleGhostGenerate}
-                output={ghostText}
-              />
-            </article>
-            <article className="panel wide">
-              <h2 className="panel-title">Ask</h2>
-              <Interrogator
-                starter={selectedEmotion ? `How should this feel: ${selectedEmotion.base}` : 'Ask something'}
-                onAsk={handleInterrogatorAsk}
-              />
-            </article>
-            <article className="panel">
-              <h2 className="panel-title">Session</h2>
-              <ul className="log-list" ref={logRef}>
-                {interactions.map((entry, index) => (
-                  <li key={`${entry.slice(0, 20)}-${index}`}>{entry}</li>
-                ))}
-              </ul>
-            </article>
-          </section>
-        )}
-
-        {side === 'create' && (
-          <section className="km-side-grid" aria-label="Quick creation tools">
-            <article className="panel wide">
-              <h2 className="panel-title">Starters</h2>
-              <QuickStartPanel onTemplateSelect={handleQuickStart} />
-            </article>
-            <article className="panel wide">
-              <h2 className="panel-title">Sound Palette</h2>
-              <MusicCustomizer
-                selectedGenre={selectedGenre}
-                selectedEmotion={selectedMood}
-                selectedTechniques={selectedTechniques}
-                onGenreChange={(genre) => { setSelectedGenre(genre); setInteractions((p) => [...p, `Genre: ${genre}`]); }}
-                onEmotionChange={(emotion) => { setSelectedMood(emotion); setInteractions((p) => [...p, `Emotion: ${emotion}`]); }}
-                onTechniquesChange={(techs) => { setSelectedTechniques(techs); }}
-              />
-            </article>
-            <article className="panel">
-              <h2 className="panel-title">Lyrics</h2>
-              <LyricPanel />
-            </article>
-            <article className="panel">
-              <h2 className="panel-title">Spectocloud</h2>
-              <SpectoCloudPanel lastGeneratedAudioPath={lastAudioPath} />
-            </article>
-          </section>
-        )}
-
-        {side === 'intent' && (
-          <section className="km-intent-section" aria-label="Intent Builder">
-            <IntentBuilder />
-          </section>
-        )}
+      <main id="main-content" tabIndex={0}>
+        <UniversalMusicInput
+          apiStatus={apiStatus}
+          toolDrawerContent={toolDrawerContent}
+        />
       </main>
     </div>
   );

@@ -6,15 +6,13 @@ import { VUMeter } from './components/SideA/VUMeter';
 import { EmotionWheel } from './components/SideB/EmotionWheel';
 import { GhostWriter } from './components/SideB/GhostWriter';
 import { Interrogator } from './components/SideB/Interrogator';
-import IntentBuilder from './components/IntentBuilder';
-import { QuickStartPanel } from './components/QuickStartPanel';
 import LyricPanel from './components/LyricPanel';
 import { SpectoCloudPanel } from './components/SpectoCloudPanel';
-import { MusicCustomizer } from './components/MusicCustomizer';
+import UniversalMusicInput from './components/UniversalMusicInput/UniversalMusicInput';
 import { useMusicBrain } from './hooks/useMusicBrain';
 import './console-shell.css';
 
-type Mode = 'mix-detail' | 'inspire' | 'create' | 'compose';
+type Mode = 'mix-detail' | 'inspire' | 'create' | 'compose'; // kept for NavRail type but nav rail is removed
 
 type Channel = {
   id: string;
@@ -173,6 +171,7 @@ export default function AppConsole() {
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [selectedTechniques, setSelectedTechniques] = useState<string[]>([]);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const brain = useMusicBrain();
 
@@ -206,11 +205,16 @@ export default function AppConsole() {
   const handleGhostGenerate = useCallback(async (localText: string) => {
     if (apiStatus === 'online') {
       try {
+        setApiError(null);
         await brain.setUserLyrics(localText);
         const lyrics = await brain.getUserLyrics();
         setGhostText(lyrics.lyrics ?? lyrics.generated ?? localText);
         return;
-      } catch { /* fall through */ }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Unknown error';
+        console.error('[GhostGenerate] API call failed:', msg);
+        setApiError(`Lyrics generation failed: ${msg}`);
+      }
     }
     setGhostText(localText);
   }, [apiStatus, brain]);
@@ -219,10 +223,15 @@ export default function AppConsole() {
     setInteractions((prev) => [...prev, `You: ${question}`]);
     if (apiStatus === 'online') {
       try {
+        setApiError(null);
         const response = await brain.interrogate({ message: question });
         setInteractions((prev) => [...prev, `KmiDi: ${response.reply}`]);
         return;
-      } catch { /* fall through */ }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Unknown error';
+        console.error('[Interrogator] API call failed:', msg);
+        setApiError(`Interrogator request failed: ${msg}`);
+      }
     }
     setInteractions((prev) => [
       ...prev,
@@ -282,92 +291,44 @@ export default function AppConsole() {
       </header>
 
       <div className="lower-deck">
-        <NavRail activeMode={mode} onModeChange={setMode} />
-
-        <div
-          id="workspace-panel"
-          role="tabpanel"
-          aria-labelledby={`tab-${mode}`}
-          tabIndex={0}
-          className={`workspace workspace--${displayMode} ${transitioning ? 'workspace--exiting' : ''}`}
-        >
-          {displayMode === 'mix-detail' && (
-            <section className="mode-mix-detail mode-enter" aria-label="Mix detail">
+        <UniversalMusicInput
+          apiStatus={apiStatus}
+          toolDrawerContent={
+            <div className="umi-drawer-grid">
               <article className="console-panel">
-                <h2 className="console-panel__title">Mixer</h2>
-                <Mixer
-                  channels={channels}
-                  onChannelChange={(channelId, patch) => {
-                    setChannels((prev) => prev.map((ch) => ch.id === channelId ? { ...ch, ...patch } : ch));
-                  }}
-                />
-              </article>
-              <article className="console-panel">
-                <h2 className="console-panel__title">Master</h2>
-                <VUMeter value={masterVu} isActive={isPlaying} />
-              </article>
-            </section>
-          )}
-
-          {displayMode === 'inspire' && (
-            <section className="mode-inspire mode-enter" aria-label="Inspiration board">
-              <article className="console-panel">
-                <h2 className="console-panel__title">Mood</h2>
+                <h3 className="console-panel__title">Mood</h3>
                 <EmotionWheel onSelect={(emotion) => setSelectedEmotion(emotion)} selected={selectedEmotion} />
               </article>
               <article className="console-panel">
-                <h2 className="console-panel__title">Ask</h2>
-                <Interrogator
-                  starter={selectedEmotion ? `How should this feel: ${selectedEmotion.base}` : 'Ask something'}
-                  onAsk={handleInterrogatorAsk}
-                />
-              </article>
-              <article className="console-panel">
-                <h2 className="console-panel__title">Lyric Spark</h2>
+                <h3 className="console-panel__title">Lyric Spark</h3>
                 <GhostWriter
                   seed={selectedEmotion ? `${selectedEmotion.base} ${selectedEmotion.intensity}` : ''}
                   onGenerate={handleGhostGenerate}
                   output={ghostText}
                 />
               </article>
-            </section>
-          )}
-
-          {displayMode === 'create' && (
-            <section className="mode-create mode-enter" aria-label="Quick creation tools">
               <article className="console-panel">
-                <h2 className="console-panel__title">Starters</h2>
-                <QuickStartPanel onTemplateSelect={handleQuickStart} />
-              </article>
-              <article className="console-panel">
-                <h2 className="console-panel__title">Sound Palette</h2>
-                <MusicCustomizer
-                  selectedGenre={selectedGenre}
-                  selectedEmotion={selectedMood}
-                  selectedTechniques={selectedTechniques}
-                  onGenreChange={(genre) => { setSelectedGenre(genre); setInteractions((p) => [...p, `Genre: ${genre}`]); }}
-                  onEmotionChange={(emotion) => { setSelectedMood(emotion); setInteractions((p) => [...p, `Emotion: ${emotion}`]); }}
-                  onTechniquesChange={(techs) => { setSelectedTechniques(techs); }}
-                />
-              </article>
-              <article className="console-panel">
-                <h2 className="console-panel__title">Lyrics</h2>
+                <h3 className="console-panel__title">Lyrics</h3>
                 <LyricPanel />
               </article>
               <article className="console-panel">
-                <h2 className="console-panel__title">Spectocloud</h2>
+                <h3 className="console-panel__title">Spectocloud</h3>
                 <SpectoCloudPanel lastGeneratedAudioPath={lastAudioPath} />
               </article>
-            </section>
-          )}
+            </div>
+          }
+        />
 
-          {displayMode === 'compose' && (
-            <section className="mode-compose mode-enter" aria-label="Intent Builder">
-              <IntentBuilder />
-            </section>
-          )}
-        </div>
-
+        {apiError && (
+          <div
+            role="alert"
+            className="session-bar"
+            style={{ color: '#f87171', cursor: 'pointer' }}
+            onClick={() => setApiError(null)}
+          >
+            {apiError}
+          </div>
+        )}
         <SessionBar lastInteraction={lastInteraction} apiStatus={apiStatus} />
       </div>
     </div>

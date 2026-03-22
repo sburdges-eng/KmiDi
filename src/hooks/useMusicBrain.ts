@@ -229,6 +229,24 @@ export const useMusicBrain = () => {
     return apiCall('/audio/models');
   };
 
+  const parseText = async (
+    text: string,
+    locale?: string,
+    userId?: string,
+  ): Promise<import('../types/Interpretation').ParseTextResponse> => {
+    // Bypass USE_EXTERNAL_API gate — parse-text is a local dev tool,
+    // not a cloud dependency. Always try the local API directly.
+    const resp = await fetch(`${API_BASE}/parse-text`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, locale: locale ?? 'en', user_id: userId }),
+    });
+    if (!resp.ok) {
+      throw new Error(`parse-text failed (${resp.status})`);
+    }
+    return resp.json();
+  };
+
   const healthCheck = async (): Promise<{ status: string; version: string }> => {
     if (!USE_EXTERNAL_API) {
       return Promise.reject(new Error('API disabled (no cloud required)'));
@@ -237,6 +255,7 @@ export const useMusicBrain = () => {
   };
 
   return {
+    parseText,
     getEmotions,
     generateMusic,
     generateFromIntent,

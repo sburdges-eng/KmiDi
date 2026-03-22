@@ -922,18 +922,22 @@ if FASTAPI_AVAILABLE:
             name="static",
         )
 
-    # Add CORS middleware to allow requests from frontend
+    # Add CORS middleware to allow requests from frontend.
+    # Override with KMIDI_CORS_ORIGINS env var (comma-separated) for production.
+    _default_origins = [
+        "http://localhost:1420",   # Vite dev server
+        "http://127.0.0.1:1420",  # Vite dev server (alternative)
+        "tauri://localhost",       # Tauri app
+    ]
+    _cors_origins = os.environ.get("KMIDI_CORS_ORIGINS")
+    _origins = [o.strip() for o in _cors_origins.split(",") if o.strip()] if _cors_origins else _default_origins
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:1420",  # Vite dev server
-            "http://127.0.0.1:1420",  # Vite dev server (alternative)
-            "tauri://localhost",      # Tauri app
-            "http://localhost:5173",  # Alternative Vite port
-        ],
+        allow_origins=_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Authorization"],
     )
 
     @app.get("/", response_class=HTMLResponse)
@@ -958,11 +962,15 @@ if FASTAPI_AVAILABLE:
 
     def _resolve_audio_path_sandbox(audio_path: str) -> Path:
         """Resolve audio_path and ensure it is under _audio_serve_root. Raises HTTPException 400 if outside."""
-        resolved = Path(audio_path).resolve()
+        raw = Path(audio_path)
+        if raw.is_symlink():
+            logging.warning("Audio sandbox rejected symlink")
+            raise HTTPException(status_code=400, detail="Audio path is not allowed.") from None
+        resolved = raw.resolve()
         try:
             resolved.relative_to(_audio_serve_root)
         except ValueError:
-            logging.warning("Classify audio path outside sandbox rejected: %s", audio_path)
+            logging.warning("Audio path outside sandbox rejected")
             raise HTTPException(
                 status_code=400,
                 detail="Audio path is not allowed.",
@@ -975,19 +983,9 @@ if FASTAPI_AVAILABLE:
         """Stream generated audio files for playback. Paths are restricted to KMIDI_AUDIO_SERVE_ROOT (default: temp)."""
         import urllib.parse
         decoded_path = urllib.parse.unquote(file_path)
-        audio_file = Path(decoded_path).resolve()
+        audio_file = _resolve_audio_path_sandbox(decoded_path)
 
-        # Reject path traversal: file must be under the allowed root.
-        try:
-            audio_file.relative_to(_audio_serve_root)
-        except ValueError:
-            logging.warning(f"Audio path outside sandbox rejected: {decoded_path}")
-            raise HTTPException(
-                status_code=404,
-                detail="Audio file path is not allowed.",
-            ) from None
-
-        logging.info(f"Serving audio file: {decoded_path}")
+        logging.info("Serving audio file: %s", audio_file.name)
         logging.info(
             f"File exists: {audio_file.exists()}, "
             f"is_file: {audio_file.is_file() if audio_file.exists() else 'N/A'}"
@@ -1396,7 +1394,6 @@ if FASTAPI_AVAILABLE:
                     try:
                         # Extract harmony info
                         harmony = result["harmony"]
-                        _ = result.get("groove", {})  # noqa: F841
                         # Validate and clamp duration to positive value (0.1 - 60 minutes)
                         duration_minutes = (
                             tech.duration
@@ -1646,6 +1643,31 @@ if FASTAPI_AVAILABLE:
             logging.exception("interrogate failed")
             raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
+    class ParseTextRequest(BaseModel):
+        text: str = Field(..., max_length=4096)
+        locale: Optional[str] = "en"
+        user_id: Optional[str] = None
+
+    @app.post("/parse-text", summary="Interpret Text",
+              description="Convert natural language into probabilistic musical "
+                          "parameter distributions. Returns context clusters, "
+                          "activated taxonomy nodes, and confidence levels — "
+                          "not fixed values, but probability ranges that can be "
+                          "sampled differently each time.")
+    async def parse_text(request: ParseTextRequest):
+        try:
+            from music_brain.nlp.text_to_intent_service import TextToIntentService
+            service = TextToIntentService()
+            result = service.parse(
+                text=request.text,
+                locale=request.locale or "en",
+                user_id=request.user_id,
+            )
+            return result
+        except Exception as exc:  # pragma: no cover
+            logging.exception("parse-text failed")
+            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
+
     @app.post("/lyrics", summary="Write Lyrics",
               description="Paste or write your lyrics so the engine can weave them "
                           "into the musical fabric.")
@@ -1848,6 +1870,43 @@ if FASTAPI_AVAILABLE:
                 "status": "not_available",
                 "error": str(exc),
             }
+
+    # ------------------------------------------------------------------
+    # Per-engine generation endpoints  (Sprint 8)
+    # ------------------------------------------------------------------
+
+    @app.post("/engine/{engine_name}/generate", summary="Engine Generate",
+              description="Generate MIDI from a specific companion engine.")
+    async def generate_from_engine(engine_name: str, request: dict):
+        """Generate MIDI from a specific companion engine."""
+        from kelly_companion.engine_dispatch import get_engine, ENGINE_DISPATCH
+
+        if engine_name not in ENGINE_DISPATCH:
+            raise HTTPException(status_code=404, detail=f"Unknown engine: {engine_name}")
+        try:
+            engine = get_engine(engine_name)
+            result = engine.generate(**request)
+            return {"engine": engine_name, "result": result}
+        except Exception as exc:
+            logger.exception("Engine %s generation failed", engine_name)
+            raise HTTPException(status_code=500, detail=str(exc))
+
+    @app.get("/engines", summary="List Engines",
+             description="List available companion engines and their metadata.")
+    async def list_engines():
+        """List available companion engines."""
+        from kelly_companion.engine_dispatch import ENGINE_DISPATCH
+
+        return {
+            "engines": {
+                name: {
+                    "engine_class": entry["engine"],
+                    "ir_params": entry["ir_params"],
+                    "ml_influence": entry["ml_influence"],
+                }
+                for name, entry in ENGINE_DISPATCH.items()
+            }
+        }
 
 
 def _main():

@@ -265,8 +265,8 @@
 
 .lower-deck {
   display: grid;
-  grid-template-columns: 48px 1fr;
-  grid-template-rows: 1fr 32px;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr auto;
   overflow: hidden;
   position: relative;
   z-index: 1;
