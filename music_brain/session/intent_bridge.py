@@ -66,7 +66,7 @@ def process_intent(intent_json: str) -> str:
 
         return json.dumps(cpp_result)
 
-    except Exception:  # noqa: F841
+    except Exception:
         # Return default result on error
         return json.dumps(_get_default_cpp_result())
 
@@ -112,7 +112,7 @@ def convert_to_python_intent(cpp_intent_json: str) -> str:
 
         return json.dumps(python_intent)
 
-    except Exception:  # noqa: F841
+    except Exception:
         return json.dumps({
             "phase_1": {"mood_primary": "neutral"},
             "phase_2": {"technical_key": "C", "technical_mode": "major"},
@@ -144,7 +144,7 @@ def validate_result(result_json: str) -> bool:
 
         return True
 
-    except Exception:  # noqa: F841
+    except Exception:
         return False
 
 

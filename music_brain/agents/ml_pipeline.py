@@ -189,8 +189,11 @@ class EmotionEmbedding:
     @classmethod
     def from_output(cls, output: List[float], confidence: float = 0.0) -> EmotionEmbedding:
         """Parse ML output into structured result."""
-        embedding = np.array(output[:64], dtype=np.float32) if len(
-            output) >= 64 else np.zeros(64, dtype=np.float32)
+        if len(output) >= 64:
+            embedding = np.array(output[:64], dtype=np.float32)
+        else:
+            logger.warning("Returning stub/placeholder: EmotionEmbedding.from_output() got short output (%d), falling back to zero embedding", len(output))
+            embedding = np.zeros(64, dtype=np.float32)
 
         # Determine primary emotion from embedding (simplified)
         # In production, this would use a classifier head
@@ -416,8 +419,11 @@ class MLPipeline:
             Request ID if queued, None if failed
         """
         # DynamicsEngine expects 32-dim input (we use first 32 of embedding)
-        features = emotion_embedding[:32] if len(
-            emotion_embedding) >= 32 else np.zeros(32, dtype=np.float32)
+        if len(emotion_embedding) >= 32:
+            features = emotion_embedding[:32]
+        else:
+            logger.warning("Returning stub/placeholder: submit_dynamics() got short embedding (%d), falling back to zero features", len(emotion_embedding))
+            features = np.zeros(32, dtype=np.float32)
         return self._submit_features(ModelType.DynamicsEngine, features, timestamp)
 
     def submit_groove(
@@ -436,8 +442,11 @@ class MLPipeline:
             Request ID if queued, None if failed
         """
         # GroovePredictor expects 64-dim input
-        features = emotion_embedding if len(
-            emotion_embedding) >= 64 else np.zeros(64, dtype=np.float32)
+        if len(emotion_embedding) >= 64:
+            features = emotion_embedding
+        else:
+            logger.warning("Returning stub/placeholder: submit_groove() got short embedding (%d), falling back to zero features", len(emotion_embedding))
+            features = np.zeros(64, dtype=np.float32)
         return self._submit_features(ModelType.GroovePredictor, features, timestamp)
 
     def submit_harmony(

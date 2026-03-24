@@ -16,6 +16,8 @@ interface UseTextParseResult {
   parseNow: (text: string) => void;
   /** Parse text with debounce */
   parseDebounced: (text: string) => void;
+  /** Force a reparse of the latest text */
+  forceReparse: () => void;
   /** Last error, if any */
   error: string | null;
 }
@@ -53,13 +55,14 @@ export function useTextParse(options?: UseTextParseOptions): UseTextParseResult 
     setError(null);
 
     try {
-      const result = await brain.parseText(text, locale);
+      const result = await brain.parseText(text, locale, undefined, abortRef.current?.signal);
       // Only update if this is still the latest request
       if (text === latestTextRef.current) {
         setParseResult(result);
         setIsParsing(false);
       }
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       if (text === latestTextRef.current) {
         // On API failure, try offline keyword matching
         setParseResult(offlineFallback(text));
@@ -81,6 +84,13 @@ export function useTextParse(options?: UseTextParseOptions): UseTextParseResult 
     doParseRequest(text);
   }, [doParseRequest]);
 
+  const forceReparse = useCallback(() => {
+    if (latestTextRef.current.trim()) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      doParseRequest(latestTextRef.current);
+    }
+  }, [doParseRequest]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -89,7 +99,7 @@ export function useTextParse(options?: UseTextParseOptions): UseTextParseResult 
     };
   }, []);
 
-  return { parseResult, isParsing, parseNow, parseDebounced, error };
+  return { parseResult, isParsing, parseNow, parseDebounced, forceReparse, error };
 }
 
 /**

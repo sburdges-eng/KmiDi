@@ -233,13 +233,90 @@ void MasterEQComponent::updateEmotionState(
 }
 
 void MasterEQComponent::applySuggestedCurve() {
-  // TODO: Apply AI suggested curve to user parameters
-  // This would need to map the suggested curve back to band parameters
-  // For now, this is a placeholder
-  juce::AlertWindow::showMessageBoxAsync(
-      juce::AlertWindow::InfoIcon, "Apply Suggested Curve",
-      "This feature will map the AI suggested curve to EQ band parameters.",
-      "OK");
+  // Per spec 07: AI suggestions clamped to +/-1.5 dB max adjustment per band.
+  // User curve has absolute priority -- AI only suggests, never overrides.
+  // ai_eq_intensity (0-1) scales how much of the suggestion is applied.
+  // If ai_eq_lock_user_bands is true, bands the user manually adjusted are skipped.
+  static constexpr float kMaxAISuggestionDb = 1.5f;
+
+  if (!aiEnabled_) {
+    return;
+  }
+
+  // Read current AI settings
+  auto *intensityParam =
+      apvts_.getRawParameterValue(PluginProcessor::PARAM_AI_EQ_INTENSITY);
+  const float aiIntensity =
+      intensityParam ? static_cast<float>(*intensityParam) : 0.5f;
+
+  auto *lockParam =
+      apvts_.getRawParameterValue(PluginProcessor::PARAM_AI_EQ_LOCK_USER_BANDS);
+  const bool lockBands = lockParam ? (*lockParam > 0.5f) : false;
+
+  // Get the base AI curve (raw suggestion from emotion state)
+  auto baseCurve = aiEngine_.generateBaseAICurve(currentEmotionState_);
+
+  // Get current EQ state to read user gains
+  auto eqState = eqProcessor_.getCurrentState();
+
+  // Per-band gain parameter IDs (bands 0 has no gain -- low cut only)
+  static const char *bandGainParams[6] = {
+      nullptr, // Band 0: Low Cut -- no gain parameter
+      PluginProcessor::PARAM_EQ_BAND_1_GAIN,
+      PluginProcessor::PARAM_EQ_BAND_2_GAIN,
+      PluginProcessor::PARAM_EQ_BAND_3_GAIN,
+      PluginProcessor::PARAM_EQ_BAND_4_GAIN,
+      PluginProcessor::PARAM_EQ_BAND_5_GAIN,
+  };
+
+  // Map the suggested curve to per-band gain adjustments
+  const auto &freqGrid = AIEQSuggestionEngine::getFrequencyGrid();
+
+  for (int band = 0; band < 6; ++band) {
+    // Band 0 (Low Cut) has no gain parameter -- skip
+    if (bandGainParams[band] == nullptr) {
+      continue;
+    }
+
+    // If lock_user_bands is true, skip bands the user has manually adjusted
+    // (gain != 0.0 indicates user has touched the band)
+    if (lockBands) {
+      float userGain = eqState.bands[band].gain;
+      if (std::abs(userGain) > 0.01f) {
+        continue; // User has adjusted this band -- skip per spec
+      }
+    }
+
+    // Find the curve point nearest to this band's center frequency
+    float bandFreq = eqState.bands[band].freq;
+    int nearestIdx = 0;
+    float minDist = std::abs(freqGrid[0] - bandFreq);
+    for (int i = 1; i < AIEQSuggestionEngine::CURVE_POINTS; ++i) {
+      float dist = std::abs(freqGrid[i] - bandFreq);
+      if (dist < minDist) {
+        minDist = dist;
+        nearestIdx = i;
+      }
+    }
+
+    // Get AI suggested gain at band center, clamp to +/-1.5 dB
+    float aiGain = baseCurve[static_cast<size_t>(nearestIdx)];
+    aiGain = juce::jlimit(-kMaxAISuggestionDb, kMaxAISuggestionDb, aiGain);
+
+    // Scale by AI intensity
+    float suggestedGain = aiGain * aiIntensity;
+
+    // Blend: user gain + scaled AI suggestion
+    float userGain = eqState.bands[band].gain;
+    float newGain = userGain + suggestedGain;
+
+    // Apply to APVTS parameter (clamped to parameter range by JUCE)
+    auto *param = apvts_.getParameter(bandGainParams[band]);
+    if (param != nullptr) {
+      float normValue = param->convertTo0to1(newGain);
+      param->setValueNotifyingHost(normValue);
+    }
+  }
 }
 
 void MasterEQComponent::updateUserCurve() {

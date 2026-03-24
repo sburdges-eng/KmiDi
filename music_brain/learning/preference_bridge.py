@@ -7,14 +7,11 @@ Usage:
     python preference_bridge.py record_parameter_adjustment '{"parameter_name": "valence", "old_value": 0.5, "new_value": 0.7}'
 """
 
-import sys
 import json
 import argparse
 from pathlib import Path
 
-# Add parent directory to path to import music_brain
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
+# Package installed via pip install -e .
 from music_brain.learning.user_preferences import UserPreferenceModel
 
 

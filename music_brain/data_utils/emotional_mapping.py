@@ -49,6 +49,58 @@ class Density(Enum):
     DENSE = "dense"  # Busy, complex
 
 
+# --- Merged from iDAWComp archive (KmiDi_FINAL version) ---
+
+class Valence(Enum):
+    """Emotional valence (positive/negative) - Russell's Circumplex Model"""
+    VERY_NEGATIVE = -2
+    NEGATIVE = -1
+    NEUTRAL = 0
+    POSITIVE = 1
+    VERY_POSITIVE = 2
+
+
+class Arousal(Enum):
+    """Emotional arousal (energy level) - Russell's Circumplex Model"""
+    VERY_LOW = -2
+    LOW = -1
+    NEUTRAL = 0
+    HIGH = 1
+    VERY_HIGH = 2
+
+
+class Mode(Enum):
+    """Musical modes with emotional associations"""
+    MAJOR = "major"              # Bright, resolved
+    MINOR = "minor"              # Sad, introspective
+    DORIAN = "dorian"            # Minor but hopeful
+    PHRYGIAN = "phrygian"        # Dark, exotic, anxious
+    LYDIAN = "lydian"            # Dreamy, floating
+    MIXOLYDIAN = "mixolydian"    # Bluesy major, nostalgic
+    LOCRIAN = "locrian"          # Unstable, diminished
+
+
+@dataclass
+class EmotionModifier:
+    """Modifier to layer on base emotional parameters (from iDAWComp archive)"""
+    name: str
+
+    # Additive adjustments
+    tempo_adjust: int = 0
+    dissonance_adjust: float = 0.0
+    density_adjust: float = 0.0
+    register_shift: int = 0  # Semitones
+
+    # Override
+    timing_override: Optional[TimingFeel] = None
+
+    # Intrusion pattern
+    intrusion_probability: float = 0.0
+    intrusion_types: List[str] = field(default_factory=list)
+
+# --- End merged enums/classes ---
+
+
 @dataclass
 class EmotionalState:
     """
@@ -528,6 +580,69 @@ EMOTIONAL_STATE_PRESETS: Dict[str, EmotionalState] = {
         intrusion_probability=0.0,
     ),
 }
+
+
+# =============================================================================
+# FUNCTIONS MERGED FROM iDAWComp ARCHIVE (KmiDi_FINAL version)
+# =============================================================================
+
+def _derive_from_dimensions(valence: Valence, arousal: Arousal) -> Dict:
+    """
+    Derive parameters from arousal/valence when no named emotion.
+    Uses Russell's Circumplex quadrant mapping.
+    """
+    if arousal.value <= 0:
+        if valence.value <= 0:
+            return EMOTIONAL_PRESETS["grief"]
+        else:
+            return EMOTIONAL_PRESETS["calm"]
+    else:
+        if valence.value <= 0:
+            return EMOTIONAL_PRESETS["anxiety"]
+        else:
+            # No "joy" preset yet - use calm with higher tempo
+            params = EMOTIONAL_PRESETS["calm"]
+            return params
+
+
+def _apply_modifier(
+    params: MusicalParameters,
+    modifier: EmotionModifier
+) -> MusicalParameters:
+    """Apply an EmotionModifier to musical parameters (additive adjustment)."""
+    try:
+        from dataclasses import replace
+    except ImportError:
+        return params
+
+    new_params = replace(params)
+
+    new_params.tempo_suggested += modifier.tempo_adjust
+    new_params.dissonance = min(1.0, max(0.0,
+        new_params.dissonance + modifier.dissonance_adjust))
+
+    if modifier.timing_override:
+        new_params.timing_feel = modifier.timing_override
+
+    return new_params
+
+
+def describe_parameters(params: MusicalParameters) -> str:
+    """Human-readable description of musical parameters."""
+    mode_str = ", ".join(
+        f"{m} ({w*100:.0f}%)"
+        for m, w in sorted(params.mode_weights.items(), key=lambda x: -x[1])
+        if w > 0.1
+    )
+
+    lines = [
+        f"Tempo: {params.tempo_suggested} BPM (range {params.tempo_min}-{params.tempo_max})",
+        f"Modes: {mode_str}",
+        f"Dissonance level: {params.dissonance:.0%}",
+        f"Timing feel: {params.timing_feel.value}",
+        f"Space probability: {params.space_probability:.0%}",
+    ]
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":

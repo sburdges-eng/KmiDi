@@ -70,16 +70,63 @@ PluginEditor::PluginEditor(PluginProcessor &p)
   addAndMakeVisible(*masterEQComponent_);
 
   // ========================================================================
+  // Region 3: ML PARAMETER PANEL — 5 automatable ML influence sliders
+  // ========================================================================
+  auto setupMLSlider = [this](juce::Slider &slider, juce::Label &label,
+                              const juce::String &labelText) {
+    slider.setSliderStyle(juce::Slider::LinearHorizontal);
+    slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 50, 20);
+    addAndMakeVisible(slider);
+
+    label.setText(labelText, juce::dontSendNotification);
+    label.setJustificationType(juce::Justification::centredLeft);
+    label.setColour(juce::Label::textColourId, juce::Colour(0xFFCCCCCC));
+    addAndMakeVisible(label);
+  };
+
+  setupMLSlider(mlIntensitySlider_, mlIntensityLabel_, "ML Intensity");
+  setupMLSlider(melodyInfluenceSlider_, melodyInfluenceLabel_, "Melody Influence");
+  setupMLSlider(harmonyInfluenceSlider_, harmonyInfluenceLabel_, "Harmony Influence");
+  setupMLSlider(grooveInfluenceSlider_, grooveInfluenceLabel_, "Groove Influence");
+  setupMLSlider(dynamicsInfluenceSlider_, dynamicsInfluenceLabel_, "Dynamics Influence");
+
+  // Wire sliders to APVTS via SliderAttachment
+  mlIntensityAttachment_ = std::make_unique<
+      juce::AudioProcessorValueTreeState::SliderAttachment>(
+      processor_.getAPVTS(), PluginProcessor::PARAM_ML_INTENSITY, mlIntensitySlider_);
+  melodyInfluenceAttachment_ = std::make_unique<
+      juce::AudioProcessorValueTreeState::SliderAttachment>(
+      processor_.getAPVTS(), PluginProcessor::PARAM_MELODY_INFLUENCE, melodyInfluenceSlider_);
+  harmonyInfluenceAttachment_ = std::make_unique<
+      juce::AudioProcessorValueTreeState::SliderAttachment>(
+      processor_.getAPVTS(), PluginProcessor::PARAM_HARMONY_INFLUENCE, harmonyInfluenceSlider_);
+  grooveInfluenceAttachment_ = std::make_unique<
+      juce::AudioProcessorValueTreeState::SliderAttachment>(
+      processor_.getAPVTS(), PluginProcessor::PARAM_GROOVE_INFLUENCE, grooveInfluenceSlider_);
+  dynamicsInfluenceAttachment_ = std::make_unique<
+      juce::AudioProcessorValueTreeState::SliderAttachment>(
+      processor_.getAPVTS(), PluginProcessor::PARAM_DYNAMICS_INFLUENCE, dynamicsInfluenceSlider_);
+
+  // ========================================================================
+  // Region 5: ML HINT PANEL — confidence bars + auto-dismiss text (10s)
+  // ========================================================================
+  mlHintLabel_.setText("ML hints will appear here", juce::dontSendNotification);
+  mlHintLabel_.setJustificationType(juce::Justification::centred);
+  mlHintLabel_.setColour(juce::Label::textColourId, juce::Colour(0xFF888888));
+  mlHintLabel_.setColour(juce::Label::backgroundColourId, juce::Colour(0xFF222222));
+  addAndMakeVisible(mlHintLabel_);
+
+  // ========================================================================
   // WINDOW CONFIGURATION
   // ========================================================================
-  // Set default window size (medium) - increased height for EQ component
-  setSize(900, 1200);
+  // Set default window size (medium) - increased height for all 5 regions
+  setSize(900, 1400);
 
   // Make window resizable with constraints
-  // Increased height to accommodate EQ component
+  // Height accommodates all 5 layout regions
   setResizable(true, true);
-  setResizeLimits(600, 1000,    // Minimum: 600x1000 (includes EQ)
-                  1200, 1600); // Maximum: 1200x1600
+  setResizeLimits(600, 1000,    // Minimum: 600x1000
+                  1200, 1800); // Maximum: 1200x1800
 
   // ========================================================================
   // ADD PARAMETER LISTENER FOR REAL-TIME UPDATES
@@ -173,6 +220,13 @@ PluginEditor::~PluginEditor() {
   processor_.getAPVTS().removeParameterListener(PluginProcessor::PARAM_BARS,
                                                 this);
 
+  // Destroy ML slider attachments before components are torn down
+  mlIntensityAttachment_ = nullptr;
+  melodyInfluenceAttachment_ = nullptr;
+  harmonyInfluenceAttachment_ = nullptr;
+  grooveInfluenceAttachment_ = nullptr;
+  dynamicsInfluenceAttachment_ = nullptr;
+
   // Workstation will be automatically destroyed by unique_ptr
   // Remove it from component tree first
   removeChildComponent(workstation_.get());
@@ -194,16 +248,56 @@ void PluginEditor::paint(juce::Graphics &g) {
 
 void PluginEditor::resized() {
   auto bounds = getLocalBounds();
+  const int totalHeight = bounds.getHeight();
 
-  // Split area: workstation on top, EQ component at bottom
-  if (workstation_ != nullptr && masterEQComponent_ != nullptr) {
-    const int eqHeight = 300; // EQ component height
-    workstation_->setBounds(bounds.removeFromTop(bounds.getHeight() - eqHeight));
-    masterEQComponent_->setBounds(bounds);
-  } else if (workstation_ != nullptr) {
-    // Fallback if EQ component not created
-    workstation_->setBounds(bounds);
+  // ========================================================================
+  // 5-Region Vertical Layout (per spec 02_LAYOUT_NAVIGATION)
+  //   Region 1: Header          ~8%  — Plugin name, bypass, preset (inside workstation)
+  //   Region 2: Emotion Panel   ~12% — Valence, Arousal, Dominance, Complexity (inside workstation)
+  //   Region 3: ML Param Panel  ~20% — 5 ML influence sliders
+  //   Region 4: Master EQ Panel ~40% — User curve + AI ghost curve + Apply button
+  //   Region 5: ML Hint Panel   ~20% — Confidence bars + text (auto-dismiss 10s)
+  // ========================================================================
+
+  // Regions 1+2 combined: Header + Emotion Panel (~20% total, handled by workstation)
+  const int workstationHeight = static_cast<int>(totalHeight * 0.20f);
+  // Region 3: ML Params
+  const int mlParamsHeight = static_cast<int>(totalHeight * 0.20f);
+  // Region 4: Master EQ
+  const int eqHeight = static_cast<int>(totalHeight * 0.40f);
+  // Region 5: ML Hints (remainder)
+
+  // Region 1+2: Workstation (Header + Emotion Panel)
+  if (workstation_ != nullptr) {
+    workstation_->setBounds(bounds.removeFromTop(workstationHeight));
   }
+
+  // Region 3: ML Parameter Panel
+  {
+    auto mlArea = bounds.removeFromTop(mlParamsHeight);
+    const int sliderHeight = mlArea.getHeight() / 5;
+    const int labelWidth = 130;
+
+    auto layoutSliderRow = [&](juce::Label &label, juce::Slider &slider) {
+      auto row = mlArea.removeFromTop(sliderHeight);
+      label.setBounds(row.removeFromLeft(labelWidth));
+      slider.setBounds(row);
+    };
+
+    layoutSliderRow(mlIntensityLabel_, mlIntensitySlider_);
+    layoutSliderRow(melodyInfluenceLabel_, melodyInfluenceSlider_);
+    layoutSliderRow(harmonyInfluenceLabel_, harmonyInfluenceSlider_);
+    layoutSliderRow(grooveInfluenceLabel_, grooveInfluenceSlider_);
+    layoutSliderRow(dynamicsInfluenceLabel_, dynamicsInfluenceSlider_);
+  }
+
+  // Region 4: Master EQ Panel
+  if (masterEQComponent_ != nullptr) {
+    masterEQComponent_->setBounds(bounds.removeFromTop(eqHeight));
+  }
+
+  // Region 5: ML Hint Panel (remainder)
+  mlHintLabel_.setBounds(bounds);
 }
 
 void PluginEditor::timerCallback() {

@@ -75,7 +75,7 @@ class BassHumanizer:
         Apply humanization to a list of MIDI events.
         (Stub implementation - would modify timing/velocity in place)
         """
-        _offset = self.get_timing_offset(feel, fan_profile)  # noqa: F841
-        # In a real implementation, we would iterate events and shift timestamps
+        offset = self.get_timing_offset(feel, fan_profile)
+        # TODO: Iterate events and shift timestamps by offset
         # and randomize velocities based on self.rules["humanize"]["velocity_range"]
         return midi_events

@@ -3,6 +3,12 @@
 *.swp
 *.swo
 
+# Unrelated experiment artifacts
+**/hungry-taussig/
+
+# Archive staging (local copies from OneDrive for merge operations)
+_archive/
+
 # Python
 __pycache__/
 *.py[cod]

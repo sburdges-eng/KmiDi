@@ -302,7 +302,7 @@ def get_platform_recommendation(requirements: Dict[str, Any]) -> List[MobilePlat
     Returns:
         List of recommended platforms in priority order
     """
-    _platforms = evaluate_platforms()  # noqa: F841
+    platforms = evaluate_platforms()
     recommendations = []
 
     need_audio_units = requirements.get("need_audio_units", False)

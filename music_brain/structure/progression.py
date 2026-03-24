@@ -20,6 +20,46 @@ FLAT_TO_SHARP = {
     'Ab': 'G#', 'Bb': 'A#', 'Cb': 'B'
 }
 
+# Merged from KmiDi_FINAL archive
+NOTE_TO_SEMITONE = {
+    'C': 0,
+    'D': 2,
+    'E': 4,
+    'F': 5,
+    'G': 7,
+    'A': 9,
+    'B': 11,
+}
+
+
+# Merged from KmiDi_FINAL archive
+def normalize_note_name(note: str) -> Optional[str]:
+    """Normalize note names to sharp-based representation."""
+    if not note:
+        return None
+    match = re.match(r'^([A-Ga-g])([#b]{0,2})?', note.strip())
+    if not match:
+        return None
+    root = match.group(1).upper()
+    accidental = match.group(2) or ""
+    semitone = NOTE_TO_SEMITONE[root]
+    for symbol in accidental:
+        semitone += 1 if symbol == "#" else -1
+    return NOTE_NAMES[semitone % 12]
+
+
+# Merged from KmiDi_FINAL archive
+def note_name_to_index(note: str) -> Optional[int]:
+    """Convert a note name to a chromatic index (0-11)."""
+    normalized = normalize_note_name(note)
+    if not normalized:
+        return None
+    try:
+        return NOTE_NAMES.index(normalized)
+    except ValueError:
+        return None
+
+
 # Scale degrees for common modes
 MODES = {
     'major': [0, 2, 4, 5, 7, 9, 11],

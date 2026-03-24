@@ -167,8 +167,6 @@ class ScaleGenerator:
 
         scale = self.scales[scale_type]
         intervals = scale['intervals_semitones']
-        _ = scale.get('intervals_names', [])  # noqa: F841
-
         root = self._normalize_root(root)
         root_idx = self._get_root_index(root)
         use_flats = self._use_flats(root)

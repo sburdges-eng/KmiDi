@@ -12,6 +12,8 @@ Usage:
     # Returns: {"emotion": "happy", "confidence": 0.95, "valence": 0.8, "arousal": 0.7}
 """
 
+import os
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -212,16 +214,16 @@ class AudioEmotionClassifier:
         # Search in common locations
         # Path from emotion/audio_emotion_classifier.py -> music_brain -> KmiDi -> models
         search_paths = [
-            Path(__file__).parent.parent.parent / "models" / "checkpoints",  # KmiDi/models/checkpoints  # noqa: E501
+            # KmiDi/models/checkpoints
+            Path(__file__).parent.parent.parent / "models" / "checkpoints",
 
             # parent/models/checkpoints
             Path(__file__).parent.parent.parent.parent / "models" / "checkpoints",
             Path.home() / "models" / "audio_classifiers",
-            # ML Training Suite
+            # ML Training Suite (via environment variable)
             Path(
-                "/Users/seanburdges/RECOVERY_OPS/sbdrive/"
-                "ml-training-suite/models/checkpoints"
-            ),
+                os.environ.get("KELLY_MODELS_PATH", "models")
+            ) / "checkpoints",
         ]
 
         model_dirs = {

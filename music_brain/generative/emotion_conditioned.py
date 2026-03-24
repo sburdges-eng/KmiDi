@@ -384,10 +384,10 @@ class EmotionConditionedGenerator(GenerativeModel):
 
         # Simple sine wave based on emotion
         base_freq = 220 if "m" in params.get("key", "C") else 261.63
-        _valence = params.get("valence", 0.5)  # noqa: F841
+        valence = params.get("valence", 0.5)
 
-        # Generate harmonics
-        audio = np.sin(2 * np.pi * base_freq * t)
+        # Generate harmonics (modulate amplitude by valence)
+        audio = np.sin(2 * np.pi * base_freq * t) * (0.5 + valence * 0.5)
         audio += 0.5 * np.sin(2 * np.pi * base_freq * 2 * t)  # Octave
         audio += 0.3 * np.sin(2 * np.pi * base_freq * 1.5 * t)  # Fifth
 

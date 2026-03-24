@@ -14,6 +14,12 @@ from music_brain.kelly_companion.groove.extractor import GrooveTemplate
 # Swing: 0.0=straight, 0.5=moderate swing, 0.67=triplet swing
 # Timing deviations: positive=late (laid back), negative=early (pushed)
 
+# Merged from KmiDi_FINAL archive
+GENRE_ALIASES = {
+    "boom-bap": "boom_bap",
+    "boom bap": "boom_bap",
+}
+
 GENRE_TEMPLATES = {
     "funk": {
         "name": "Funk Pocket",
@@ -33,6 +39,26 @@ GENRE_TEMPLATES = {
             95, 55, 75, 50,   # Beat 2: snare accent
             85, 50, 70, 45,   # Beat 3
             100, 60, 80, 55,  # Beat 4: snare accent
+        ],
+    },
+
+    # Merged from KmiDi_FINAL archive
+    "boom_bap": {
+        "name": "Boom-Bap Pocket",
+        "description": "Classic boom-bap feel (maps to hip-hop groove)",
+        "swing_factor": 0.25,
+        "tempo_range": (85, 100),
+        "timing_deviations": [
+            0, 15, 8, 18,
+            20, 12, 15, 20,
+            5, 18, 10, 22,
+            25, 15, 18, 25,
+        ],
+        "velocity_curve": [
+            120, 35, 45, 30,
+            60, 30, 40, 35,
+            100, 38, 48, 32,
+            55, 32, 42, 38,
         ],
     },
 
@@ -182,9 +208,13 @@ def get_genre_template(genre: str) -> GrooveTemplate:
         GrooveTemplate with genre characteristics
     """
     genre_lower = genre.lower().replace("-", "_").replace(" ", "_")
+    # Resolve aliases (merged from KmiDi_FINAL archive)
+    raw_key = genre.lower()
+    if raw_key in GENRE_ALIASES:
+        genre_lower = GENRE_ALIASES[raw_key]
 
     if genre_lower not in GENRE_TEMPLATES:
-        available = ", ".join(GENRE_TEMPLATES.keys())
+        available = ", ".join(sorted(list_genre_templates()))
         raise ValueError(f"Unknown genre: {genre}. Available: {available}")
 
     data = GENRE_TEMPLATES[genre_lower]
@@ -221,3 +251,50 @@ def get_genre_info(genre: str) -> dict:
     if genre_lower not in GENRE_TEMPLATES:
         return None
     return GENRE_TEMPLATES[genre_lower]
+
+
+# Merged from KmiDi_FINAL archive
+
+def create_basic_drum_pattern(path: str, tempo_bpm: int = 120, bars: int = 2):
+    """
+    Create a minimal drum MIDI placeholder for tests.
+
+    If MIDI dependencies are unavailable, this simply touches the file so that
+    downstream humanization steps have an input path to operate on.
+    """
+    from pathlib import Path
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        import mido
+
+        mid = mido.MidiFile()
+        track = mido.MidiTrack()
+        mid.tracks.append(track)
+        mid.save(p)
+    except Exception:
+        p.write_bytes(b"")
+    return str(p)
+
+
+def list_genre_templates(include_aliases: bool = True):
+    """
+    List available genre templates.
+    Args:
+        include_aliases: include known alias keys (e.g., boom-bap)
+    """
+    genres = set(GENRE_TEMPLATES.keys())
+    if include_aliases:
+        genres.update(GENRE_ALIASES.keys())
+    return sorted(genres)
+
+
+__all__ = [
+    "GENRE_TEMPLATES",
+    "GENRE_ALIASES",
+    "list_genre_templates",
+    "get_genre_template",
+    "list_genres",
+    "get_genre_info",
+    "create_basic_drum_pattern",
+]

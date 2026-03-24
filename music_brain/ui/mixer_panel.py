@@ -11,14 +11,11 @@ Run with:
 
 import streamlit as st
 import numpy as np
-import sys
 from pathlib import Path
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from penta_core.mixer import MixerEngine, apply_emotion_to_mixer  # noqa: E402
-from music_brain.daw.mixer_params import (  # noqa: E402
+# Package installed via pip install -e .
+from penta_core.mixer import MixerEngine, apply_emotion_to_mixer
+from music_brain.daw.mixer_params import (
     EmotionMapper
 )
 

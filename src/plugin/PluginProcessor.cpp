@@ -44,6 +44,15 @@ EmotionNode convertKellyTypesToLegacyEmotionNode(const EmotionNode &kelly) {
   return kelly; // Types are the same, just return copy
 }
 
+template <typename SideType>
+SideType makeSide(const juce::String& description, float intensity, int emotionId) {
+  SideType s;
+  s.description = description;
+  s.intensity = intensity;
+  s.emotionId = emotionId;
+  return s;
+}
+
 // Convert Types::Wound to KellyTypes::Wound
 // Note: Since Types.h includes KellyTypes.h, they're the same types
 Wound convertLegacyToKellyTypesWound(const Wound &legacy) {
@@ -99,6 +108,13 @@ PluginProcessor::PluginProcessor()
   apvts_.addParameterListener(PARAM_DYNAMICS, this);
   apvts_.addParameterListener(PARAM_BARS, this);
   apvts_.addParameterListener(PARAM_BYPASS, this);
+
+  // ML influence parameter listeners
+  apvts_.addParameterListener(PARAM_ML_INTENSITY, this);
+  apvts_.addParameterListener(PARAM_MELODY_INFLUENCE, this);
+  apvts_.addParameterListener(PARAM_HARMONY_INFLUENCE, this);
+  apvts_.addParameterListener(PARAM_GROOVE_INFLUENCE, this);
+  apvts_.addParameterListener(PARAM_DYNAMICS_INFLUENCE, this);
 }
 
 PluginProcessor::~PluginProcessor() {
@@ -118,6 +134,13 @@ PluginProcessor::~PluginProcessor() {
   apvts_.removeParameterListener(PARAM_DYNAMICS, this);
   apvts_.removeParameterListener(PARAM_BARS, this);
   apvts_.removeParameterListener(PARAM_BYPASS, this);
+
+  // Remove ML influence parameter listeners
+  apvts_.removeParameterListener(PARAM_ML_INTENSITY, this);
+  apvts_.removeParameterListener(PARAM_MELODY_INFLUENCE, this);
+  apvts_.removeParameterListener(PARAM_HARMONY_INFLUENCE, this);
+  apvts_.removeParameterListener(PARAM_GROOVE_INFLUENCE, this);
+  apvts_.removeParameterListener(PARAM_DYNAMICS_INFLUENCE, this);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout
@@ -168,6 +191,32 @@ PluginProcessor::createParameterLayout() {
 
   params.push_back(std::make_unique<juce::AudioParameterBool>(
       juce::ParameterID{PARAM_BYPASS, PARAM_VERSION}, "Bypass", false));
+
+  // ML Influence Parameters (Sprint 3 — wired to companion engines in Sprint 8)
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_ML_INTENSITY, PARAM_VERSION}, "ML Intensity",
+      juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.5f,
+      juce::AudioParameterFloatAttributes().withLabel("ML Intensity")));
+
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_MELODY_INFLUENCE, PARAM_VERSION}, "Melody Influence",
+      juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.5f,
+      juce::AudioParameterFloatAttributes().withLabel("Melody Influence")));
+
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_HARMONY_INFLUENCE, PARAM_VERSION}, "Harmony Influence",
+      juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.5f,
+      juce::AudioParameterFloatAttributes().withLabel("Harmony Influence")));
+
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_GROOVE_INFLUENCE, PARAM_VERSION}, "Groove Influence",
+      juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.5f,
+      juce::AudioParameterFloatAttributes().withLabel("Groove Influence")));
+
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_DYNAMICS_INFLUENCE, PARAM_VERSION}, "Dynamics Influence",
+      juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.5f,
+      juce::AudioParameterFloatAttributes().withLabel("Dynamics Influence")));
 
   // Master EQ Parameters
   params.push_back(std::make_unique<juce::AudioParameterBool>(
@@ -420,6 +469,17 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     masterEQProcessor_.processBlock(buffer);
   }
   // If EQ is bypassed, audio passes through unchanged
+
+  // ML influence params — wired to companion engines in Sprint 8
+  {
+    const float mlIntensity = *apvts_.getRawParameterValue(PARAM_ML_INTENSITY);
+    const float melodyInfluence = *apvts_.getRawParameterValue(PARAM_MELODY_INFLUENCE);
+    const float harmonyInfluence = *apvts_.getRawParameterValue(PARAM_HARMONY_INFLUENCE);
+    const float grooveInfluence = *apvts_.getRawParameterValue(PARAM_GROOVE_INFLUENCE);
+    const float dynamicsInfluence = *apvts_.getRawParameterValue(PARAM_DYNAMICS_INFLUENCE);
+    juce::ignoreUnused(mlIntensity, melodyInfluence, harmonyInfluence,
+                       grooveInfluence, dynamicsInfluence);
+  }
 
   // Check bypass - use atomic-safe parameter read
   auto *bypassParam = apvts_.getRawParameterValue(PARAM_BYPASS);
@@ -740,18 +800,9 @@ void PluginProcessor::generateMidi() {
           kellyWound.primaryEmotion =
               convertLegacyToKellyTypesEmotionNode(processedEmotion);
 
-          ::kelly::SideA sideA;
-          sideA.description = wound.description;
-          sideA.intensity = intensity;
-          sideA.emotionId = *emotionId;
+          auto sideA = makeSide<::kelly::SideA>(wound.description, intensity, *emotionId);
+          auto sideB = makeSide<::kelly::SideB>(wound.description, intensity, *emotionId);
 
-          ::kelly::SideB sideB;
-          sideB.description = wound.description;
-          sideB.intensity = intensity;
-          sideB.emotionId = *emotionId;
-
-          // Use fromJourney() method on KellyBrain, not
-          // pipeline().processJourney()
           ::kelly::IntentResult kellyIntent =
               kellyBrain_->fromJourney(sideA, sideB);
           // Convert KellyTypes::IntentResult to Types::IntentResult
@@ -773,15 +824,8 @@ void PluginProcessor::generateMidi() {
                                                             intensity);
         processedEmotion = nearestEmotion;
 
-        ::kelly::SideA sideA;
-        sideA.description = wound.description;
-        sideA.intensity = intensity;
-        sideA.emotionId = nearestEmotion.id;
-
-        ::kelly::SideB sideB;
-        sideB.description = wound.description;
-        sideB.intensity = intensity;
-        sideB.emotionId = nearestEmotion.id;
+        auto sideA = makeSide<::kelly::SideA>(wound.description, intensity, nearestEmotion.id);
+        auto sideB = makeSide<::kelly::SideB>(wound.description, intensity, nearestEmotion.id);
 
         ::kelly::IntentResult kellyIntent =
             kellyBrain_->fromJourney(sideA, sideB);
@@ -798,15 +842,8 @@ void PluginProcessor::generateMidi() {
           // Emotion ID found in thesaurus - use it for journey
           processedEmotion = *emotionOpt;
 
-          SideA sideA;
-          sideA.description = wound.description;
-          sideA.intensity = intensity;
-          sideA.emotionId = *emotionId;
-
-          SideB sideB;
-          sideB.description = wound.description;
-          sideB.intensity = intensity;
-          sideB.emotionId = *emotionId;
+          auto sideA = makeSide<SideA>(wound.description, intensity, *emotionId);
+          auto sideB = makeSide<SideB>(wound.description, intensity, *emotionId);
 
           intent = intentPipeline_.processJourney(sideA, sideB);
         } else {
@@ -833,15 +870,8 @@ void PluginProcessor::generateMidi() {
             valence, arousal, intensity);
         processedEmotion = nearestEmotion;
 
-        SideA sideA;
-        sideA.description = wound.description;
-        sideA.intensity = intensity;
-        sideA.emotionId = nearestEmotion.id;
-
-        SideB sideB;
-        sideB.description = wound.description;
-        sideB.intensity = intensity;
-        sideB.emotionId = nearestEmotion.id;
+        auto sideA = makeSide<SideA>(wound.description, intensity, nearestEmotion.id);
+        auto sideB = makeSide<SideB>(wound.description, intensity, nearestEmotion.id);
 
         intent = intentPipeline_.processJourney(sideA, sideB);
       }

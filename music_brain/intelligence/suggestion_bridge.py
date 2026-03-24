@@ -100,7 +100,7 @@ def get_suggestions(
 
         return json.dumps(suggestions_dict)
 
-    except Exception:  # noqa: F841
+    except Exception:
         # Return empty list on error
         return json.dumps([])
 
@@ -128,7 +128,7 @@ def record_suggestion_shown(
             suggestion_type=suggestion_type,
             context=context
         )
-    except Exception:  # noqa: F841
+    except Exception:
         pass  # Silently fail - tracking is not critical
 
 
@@ -144,7 +144,7 @@ def record_suggestion_accepted(suggestion_id: str):
 
     try:
         _preference_model.record_suggestion_accepted(suggestion_id)
-    except Exception:  # noqa: F841
+    except Exception:
         pass  # Silently fail - tracking is not critical
 
 
@@ -160,5 +160,5 @@ def record_suggestion_dismissed(suggestion_id: str):
 
     try:
         _preference_model.record_suggestion_dismissed(suggestion_id)
-    except Exception:  # noqa: F841
+    except Exception:
         pass  # Silently fail - tracking is not critical

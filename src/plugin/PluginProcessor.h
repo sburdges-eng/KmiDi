@@ -118,6 +118,13 @@ public:
   static constexpr const char *PARAM_SONG_AMOUNT = "song_amount";
   static constexpr const char *PARAM_USE_HOST_TEMPO = "use_host_tempo";
 
+  // ML Influence Parameter IDs (Sprint 3 — wired to companion engines in Sprint 8)
+  static constexpr const char *PARAM_ML_INTENSITY = "ml_intensity";
+  static constexpr const char *PARAM_MELODY_INFLUENCE = "melody_influence";
+  static constexpr const char *PARAM_HARMONY_INFLUENCE = "harmony_influence";
+  static constexpr const char *PARAM_GROOVE_INFLUENCE = "groove_influence";
+  static constexpr const char *PARAM_DYNAMICS_INFLUENCE = "dynamics_influence";
+
   // Master EQ Parameter IDs
   static constexpr const char *PARAM_EQ_BYPASS = "eq_bypass";
   static constexpr const char *PARAM_AI_EQ_ENABLED = "ai_eq_enabled";

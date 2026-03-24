@@ -322,10 +322,10 @@ def create_nni_project_structure(
 
     # Create directory structure
     content_dir = project_path / "Content"
-    _models_dir = content_dir / "Models"  # noqa: F841
-    _blueprints_dir = content_dir / "Blueprints" / "ML"  # noqa: F841
+    models_dir = content_dir / "Models"
+    blueprints_dir = content_dir / "Blueprints" / "ML"
 
-    _source_dir = project_path / "Source" / project_name / "ML"  # noqa: F841
+    source_dir = project_path / "Source" / project_name / "ML"
 
     # TODO: Create directories and initial files
     # models_dir.mkdir(parents=True, exist_ok=True)

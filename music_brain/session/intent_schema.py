@@ -15,6 +15,109 @@ from enum import Enum
 import json
 
 
+# =================================================================
+# VALIDATION CONSTANTS: Enum Values from YAML Schema
+# Merged from KmiDi_FINAL archive
+# =================================================================
+
+# Mood/Emotion Primaries (18 options from YAML schema)
+VALID_MOOD_PRIMARY_OPTIONS = [
+    "Grief",
+    "Joy",
+    "Nervousness",
+    "Defiance",
+    "Liberation",
+    "Longing",
+    "Rage",
+    "Acceptance",
+    "Nostalgia",
+    "Dissociation",
+    "Triumphant Hope",
+    "Bittersweet",
+    "Melancholy",
+    "Euphoria",
+    "Desperation",
+    "Serenity",
+    "Confusion",
+    "Determination",
+]
+
+# Imagery Textures (15 options from YAML schema)
+VALID_IMAGERY_TEXTURE_OPTIONS = [
+    "Sharp Edges",
+    "Muffled",
+    "Open/Vast",
+    "Claustrophobic",
+    "Hazy/Dreamy",
+    "Crystalline",
+    "Muddy/Thick",
+    "Sparse/Empty",
+    "Chaotic",
+    "Flowing/Liquid",
+    "Fractured",
+    "Warm/Enveloping",
+    "Cold/Distant",
+    "Blinding Light",
+    "Deep Shadow",
+]
+
+# Vulnerability Scale
+VALID_VULNERABILITY_SCALE_OPTIONS = ["Low", "Medium", "High"]
+
+# Narrative Arc Options (8 options from YAML schema)
+VALID_NARRATIVE_ARC_OPTIONS = [
+    "Climb-to-Climax",
+    "Slow Reveal",
+    "Repetitive Despair",
+    "Static Reflection",
+    "Sudden Shift",
+    "Descent",
+    "Rise and Fall",
+    "Spiral",
+]
+
+# Core Stakes Options (6 options from YAML schema)
+VALID_CORE_STAKES_OPTIONS = [
+    "Personal",
+    "Relational",
+    "Existential",
+    "Survival",
+    "Creative",
+    "Moral",
+]
+
+# Genre Options (15 options from YAML schema)
+VALID_GENRE_OPTIONS = [
+    "Cinematic Neo-Soul",
+    "Lo-Fi Bedroom",
+    "Industrial Pop",
+    "Synthwave",
+    "Confessional Acoustic",
+    "Art Rock",
+    "Indie Folk",
+    "Post-Punk",
+    "Chamber Pop",
+    "Electronic",
+    "Hip-Hop",
+    "R&B",
+    "Alternative",
+    "Shoegaze",
+    "Dream Pop",
+]
+
+# Groove Feel Options (8 options from YAML schema)
+VALID_GROOVE_FEEL_OPTIONS = [
+    "Straight/Driving",
+    "Laid Back",
+    "Swung",
+    "Syncopated",
+    "Rubato/Free",
+    "Mechanical",
+    "Organic/Breathing",
+    "Push-Pull",
+]
+
+
 def _coerce_text(value, default: str = "") -> str:
     if value is None:
         return default
@@ -62,6 +165,24 @@ class ProductionRuleBreak(Enum):
     ROOM_NOISE = "PRODUCTION_RoomNoise"
     DISTORTION = "PRODUCTION_Distortion"
     MONO_COLLAPSE = "PRODUCTION_MonoCollapse"
+
+
+# Merged from KmiDi_FINAL archive
+class RuleBreakingCategory(Enum):
+    """Top-level rule breaking categories."""
+    HARMONY = "harmony"
+    RHYTHM = "rhythm"
+    ARRANGEMENT = "arrangement"
+    PRODUCTION = "production"
+    MELODY = "melody"
+
+
+# Merged from KmiDi_FINAL archive
+class MelodyRuleBreak(Enum):
+    """Melody rules to intentionally break."""
+    AVOID_RESOLUTION = "MELODY_AvoidResolution"
+    ANTI_CLIMAX = "MELODY_AntiClimax"
+    EXCESSIVE_REPETITION = "MELODY_ExcessiveRepetition"
 
 
 class VulnerabilityScale(Enum):
@@ -333,9 +454,9 @@ class CompleteSongIntent:
         core_stakes: str = "",
         core_transformation: str = "",
         mood_primary: str = "",
-        mood_secondary_tension: str = "",
+        mood_secondary_tension: float = 0.5,
         imagery_texture: str = "",
-        vulnerability_scale: float = 0.0,
+        vulnerability_scale: str = "Medium",
         narrative_arc: str = "",
         technical_genre: str = "",
         technical_tempo_range: tuple = (60, 140),
@@ -469,11 +590,11 @@ class CompleteSongIntent:
 
             # Validate vulnerability_scale is valid enum value
             vuln = si.get("vulnerability_scale", "Medium")
-            _valid_vuln = {"Low", "Medium", "High", "LOW", "MEDIUM", "HIGH"}  # noqa: F841
+            valid_vuln = {"Low", "Medium", "High"}
             if isinstance(vuln, str):
                 # Normalize to title case
                 vuln_normalized = vuln.strip().title()
-                if vuln_normalized not in {"Low", "Medium", "High"}:
+                if vuln_normalized not in valid_vuln:
                     vuln_normalized = "Medium"  # Default if invalid
                 vuln = vuln_normalized
             else:
@@ -598,4 +719,117 @@ def list_all_rules() -> Dict[str, List[str]]:
         "Rhythm": [e.value for e in RhythmRuleBreak],
         "Arrangement": [e.value for e in ArrangementRuleBreak],
         "Production": [e.value for e in ProductionRuleBreak],
+        "Melody": [e.value for e in MelodyRuleBreak],  # Merged from KmiDi_FINAL archive
     }
+
+
+# =================================================================
+# AFFECT MAPPINGS: Mood -> Musical Parameters
+# Merged from KmiDi_FINAL archive
+# =================================================================
+
+AFFECT_MAPPINGS: Dict[str, Dict] = {
+    "Grief": {
+        "modes": ["aeolian", "phrygian", "dorian"],
+        "tempo_range": (50, 80),
+        "key_preference": "minor",
+    },
+    "Joy": {
+        "modes": ["ionian", "lydian", "mixolydian"],
+        "tempo_range": (100, 140),
+        "key_preference": "major",
+    },
+    "Nervousness": {
+        "modes": ["locrian", "phrygian"],
+        "tempo_range": (90, 130),
+        "key_preference": "minor",
+    },
+    "Defiance": {
+        "modes": ["mixolydian", "dorian"],
+        "tempo_range": (110, 150),
+        "key_preference": "major",
+    },
+    "Liberation": {
+        "modes": ["lydian", "ionian"],
+        "tempo_range": (100, 130),
+        "key_preference": "major",
+    },
+    "Longing": {
+        "modes": ["dorian", "aeolian"],
+        "tempo_range": (60, 90),
+        "key_preference": "minor",
+    },
+    "Rage": {
+        "modes": ["phrygian", "locrian"],
+        "tempo_range": (130, 180),
+        "key_preference": "minor",
+    },
+    "Acceptance": {
+        "modes": ["ionian", "mixolydian"],
+        "tempo_range": (70, 100),
+        "key_preference": "major",
+    },
+    "Nostalgia": {
+        "modes": ["dorian", "mixolydian"],
+        "tempo_range": (70, 100),
+        "key_preference": "major",
+    },
+    "Dissociation": {
+        "modes": ["locrian", "phrygian"],
+        "tempo_range": (60, 90),
+        "key_preference": "minor",
+    },
+    "Triumphant Hope": {
+        "modes": ["lydian", "ionian"],
+        "tempo_range": (100, 130),
+        "key_preference": "major",
+    },
+    "Bittersweet": {
+        "modes": ["dorian", "mixolydian"],
+        "tempo_range": (70, 100),
+        "key_preference": "minor",
+    },
+    "Melancholy": {
+        "modes": ["aeolian", "dorian"],
+        "tempo_range": (50, 80),
+        "key_preference": "minor",
+    },
+    "Euphoria": {
+        "modes": ["lydian", "ionian"],
+        "tempo_range": (120, 150),
+        "key_preference": "major",
+    },
+    "Desperation": {
+        "modes": ["phrygian", "aeolian"],
+        "tempo_range": (90, 130),
+        "key_preference": "minor",
+    },
+    "Serenity": {
+        "modes": ["ionian", "lydian"],
+        "tempo_range": (60, 90),
+        "key_preference": "major",
+    },
+    "Confusion": {
+        "modes": ["locrian", "phrygian"],
+        "tempo_range": (80, 120),
+        "key_preference": "minor",
+    },
+    "Determination": {
+        "modes": ["dorian", "mixolydian"],
+        "tempo_range": (100, 130),
+        "key_preference": "major",
+    },
+}
+
+
+def get_affect_mapping(mood_primary: str) -> Optional[Dict]:
+    """
+    Get musical parameters (modes, tempo, key) based on mood.
+
+    Args:
+        mood_primary: The primary mood from VALID_MOOD_PRIMARY_OPTIONS
+
+    Returns:
+        Dict with 'modes', 'tempo_range', 'key_preference' or None if not found
+    """
+    return AFFECT_MAPPINGS.get(mood_primary)

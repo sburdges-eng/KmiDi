@@ -18,6 +18,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
+try:
+    import wandb
+    WANDB_AVAILABLE = True
+except ImportError:
+    WANDB_AVAILABLE = False
+
 from music_brain.jepa.audio_jepa import (
     AudioJEPAEncoder,
     EMATargetEncoder,
@@ -90,6 +96,13 @@ def train_audio_jepa(
     """
     device = get_device()
     logger.info("Audio-JEPA training on %s (%d batches)", device, len(dataloader))
+
+    if WANDB_AVAILABLE:
+        wandb.init(
+            project="kmidi",
+            name="audio-jepa",
+            config=asdict(config) | asdict(training),
+        )
 
     encoder = AudioJEPAEncoder(config=config).to(device)
     predictor = LatentPredictor(latent_dim=config.latent_dim).to(device)
@@ -183,6 +196,8 @@ def train_audio_jepa(
                 "device": str(device),
             })
         logger.info("Epoch %d | Loss %.6f", epoch, avg_loss)
+        if WANDB_AVAILABLE:
+            wandb.log({"loss": avg_loss, "epoch": epoch, "best_loss": best_loss})
 
         if avg_loss < best_loss:
             best_loss = avg_loss
@@ -222,6 +237,9 @@ def train_audio_jepa(
         dummy = torch.randn(1, 1, config.n_mels, config.max_frames)
         export_onnx(encoder, export_path, dummy, ["mel"], ["latent"])
 
+    if WANDB_AVAILABLE:
+        wandb.finish()
+
     return metrics
 
 
@@ -240,6 +258,13 @@ def train_chord_jepa(
     """
     device = get_device()
     logger.info("Chord-JEPA training on %s (%d batches)", device, len(dataloader))
+
+    if WANDB_AVAILABLE:
+        wandb.init(
+            project="kmidi",
+            name="chord-jepa",
+            config=asdict(config) | asdict(training),
+        )
 
     embedding = ChordEmbedding(
         num_chords=config.num_chords, d_model=config.d_model
@@ -315,6 +340,8 @@ def train_chord_jepa(
                 "device": str(device),
             })
         logger.info("Epoch %d | Loss %.6f", epoch, avg_loss)
+        if WANDB_AVAILABLE:
+            wandb.log({"loss": avg_loss, "epoch": epoch, "best_loss": best_loss})
 
         if avg_loss < best_loss:
             best_loss = avg_loss
@@ -331,4 +358,8 @@ def train_chord_jepa(
             )
 
     metrics["best_loss"] = best_loss
+
+    if WANDB_AVAILABLE:
+        wandb.finish()
+
     return metrics

@@ -735,6 +735,12 @@ if TORCH_AVAILABLE:
                     "output_dim": output_dim,
                 },
             },
+            "texture_density_predictor": {
+                "class": _TextureDensityPredictor,
+                "kwargs": {
+                    "input_dim": input_dim,
+                },
+            },
         }
 
         if model_name not in model_configs:
@@ -802,6 +808,33 @@ if TORCH_AVAILABLE:
             # Use last hidden state
             out = self.fc(h_n[-1])
             return out
+
+    class _TextureDensityPredictor(nn.Module):
+        """
+        MLP for texture density prediction.
+
+        Maps emotion embedding + harmonic context → texture density scalar [0, 1].
+        Closes the last parameter coverage gap (texture_density).
+
+        Input: concatenated [emotion_embedding, harmonic_context] vector
+        Output: single scalar via sigmoid (0 = sparse, 1 = dense)
+        """
+
+        def __init__(self, input_dim: int = 32, dropout: float = 0.15):
+            super().__init__()
+            self.net = nn.Sequential(
+                nn.Linear(input_dim, 64),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+                nn.Linear(64, 32),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+                nn.Linear(32, 1),
+                nn.Sigmoid(),  # Output in [0, 1]
+            )
+
+        def forward(self, x: torch.Tensor) -> torch.Tensor:
+            return self.net(x).squeeze(-1)
 
 
 else:

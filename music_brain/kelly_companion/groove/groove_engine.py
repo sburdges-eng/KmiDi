@@ -724,3 +724,124 @@ def settings_from_preset(preset_name: str, path: Optional[str] = None) -> Groove
 
     groove_data = preset.get("groove_settings", {})
     return GrooveSettings.from_dict(groove_data)
+
+
+# ==============================================================================
+# PRODUCTION GUIDE INTEGRATION
+# Merged from KmiDi_FINAL archive
+# ==============================================================================
+
+# Import production guides for integration
+try:
+    from music_brain.production.emotion_production import ProductionPreset
+    PRODUCTION_GUIDES_AVAILABLE = True
+except ImportError:
+    PRODUCTION_GUIDES_AVAILABLE = False
+    ProductionPreset = None  # type: ignore
+
+
+def settings_from_production_preset(preset: "ProductionPreset") -> GrooveSettings:
+    """
+    Create GrooveSettings from a ProductionPreset (production guide integration).
+
+    This integrates the production guides (emotion_production, drum_humanizer, dynamics_engine)
+    with the groove engine by converting a ProductionPreset into GrooveSettings.
+
+    Args:
+        preset: ProductionPreset from EmotionProductionMapper
+
+    Returns:
+        GrooveSettings configured from the production preset
+    """
+    if not PRODUCTION_GUIDES_AVAILABLE:
+        # Fallback to defaults if production guides not available
+        return GrooveSettings()
+
+    # Map drum style to complexity
+    style_complexity_map = {
+        "standard": 0.4,
+        "rock": 0.5,
+        "hip-hop": 0.3,
+        "pop": 0.3,
+        "edm": 0.2,
+        "jazzy": 0.7,
+        "laid-back": 0.6,
+    }
+    drum_style = getattr(preset, "drum_style", "standard")
+    dynamics_level = getattr(preset, "dynamics_level", "mf")
+    intensity_tier = getattr(preset, "intensity_tier", None)
+    swing = getattr(preset, "swing", 0)
+    groove_motif = getattr(preset, "groove_motif", "")
+    feel = getattr(preset, "feel", "")
+
+    complexity = style_complexity_map.get(drum_style.lower(), 0.4)
+
+    # Map dynamics level to vulnerability
+    dynamics_vulnerability_map = {
+        "ppp": 0.9, "pp": 0.8, "p": 0.7,
+        "mp": 0.6, "mf": 0.5, "f": 0.4,
+        "ff": 0.3, "fff": 0.2
+    }
+    vulnerability = dynamics_vulnerability_map.get(dynamics_level.lower(), 0.5)
+
+    # Adjust based on intensity tier if available
+    if intensity_tier:
+        # Higher intensity -> more complexity, less vulnerability
+        complexity = min(1.0, complexity + (intensity_tier - 3) * 0.1)
+        vulnerability = max(0.1, vulnerability - (intensity_tier - 3) * 0.05)
+
+    # Create settings
+    settings = GrooveSettings(
+        complexity=complexity,
+        vulnerability=vulnerability,
+    )
+
+    # Apply swing if specified
+    if swing > 0:
+        settings.hihat_timing_mult = 1.0 + swing * 2.0  # Amplify swing on hi-hats
+
+    # Apply groove motif adjustments
+    if "swing" in groove_motif.lower() or feel == "swing":
+        settings.hihat_timing_mult = 1.5
+        settings.ghost_note_probability = 0.2
+
+    # Adjust ghost notes based on drum style
+    if drum_style.lower() in ["jazzy", "laid-back"]:
+        settings.enable_ghost_notes = True
+        settings.ghost_note_probability = 0.25
+    elif drum_style.lower() in ["edm", "pop"]:
+        settings.enable_ghost_notes = False
+
+    return settings
+
+
+def humanize_with_production_guide(
+    events: List[Dict[str, Any]],
+    preset: "ProductionPreset",
+    ppq: int = 480,
+    seed: Optional[int] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Humanize drums using a ProductionPreset (integrates production guides).
+
+    This is the main integration point between production guides and groove engine.
+    It converts a ProductionPreset into GrooveSettings and applies humanization.
+
+    Args:
+        events: List of note events to humanize
+        preset: ProductionPreset from EmotionProductionMapper
+        ppq: Pulses per quarter note
+        seed: Random seed for reproducibility
+
+    Returns:
+        Humanized events
+    """
+    settings = settings_from_production_preset(preset)
+    return humanize_drums(
+        events=events,
+        complexity=settings.complexity,
+        vulnerability=settings.vulnerability,
+        ppq=ppq,
+        settings=settings,
+        seed=seed,
+    )

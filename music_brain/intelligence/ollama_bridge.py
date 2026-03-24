@@ -14,9 +14,13 @@ Usage:
 """
 
 import json
+import logging
+import time
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Iterator
 import os
+
+_logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -51,18 +55,30 @@ class OllamaBridge:
         ollama serve
     """
 
+    _AVAILABILITY_TTL = 60.0  # seconds before re-checking availability
+
     def __init__(self, config: Optional[OllamaConfig] = None):
         self.config = config or OllamaConfig.from_env()
-        self._available = None
+        self._available: Optional[bool] = None
+        self._available_checked_at: float = 0.0
+        self._session = None  # Lazy-init requests.Session for connection pooling
+
+    def _get_session(self):
+        """Get or create a reusable HTTP session (TCP keepalive)."""
+        if self._session is None:
+            import requests
+            self._session = requests.Session()
+        return self._session
 
     def is_available(self) -> bool:
-        """Check if Ollama is running and model is available."""
-        if self._available is not None:
+        """Check if Ollama is running and model is available (cached with TTL)."""
+        now = time.monotonic()
+        if self._available is not None and (now - self._available_checked_at) < self._AVAILABILITY_TTL:
             return self._available
 
         try:
-            import requests
-            response = requests.get(
+            session = self._get_session()
+            response = session.get(
                 f"{self.config.host}/api/tags",
                 timeout=5
             )
@@ -75,6 +91,7 @@ class OllamaBridge:
         except Exception:
             self._available = False
 
+        self._available_checked_at = now
         return self._available
 
     def _call_ollama(
@@ -84,7 +101,7 @@ class OllamaBridge:
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
     ) -> Optional[str]:
-        """Make a call to Ollama API."""
+        """Make a call to Ollama API with streaming, connection pooling, and retry."""
         try:
             import requests
         except ImportError:
@@ -93,31 +110,119 @@ class OllamaBridge:
         if not self.is_available():
             return None
 
-        messages = []
+        messages: List[Dict[str, str]] = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
 
+        payload = {
+            "model": self.config.model,
+            "messages": messages,
+            "stream": True,
+            "options": {
+                "temperature": temperature or self.config.temperature,
+                "num_predict": max_tokens or self.config.max_tokens,
+            }
+        }
+
+        session = self._get_session()
+        last_error: Optional[Exception] = None
+
+        # Exponential backoff retry (max 3 attempts)
+        for attempt in range(3):
+            try:
+                response = session.post(
+                    f"{self.config.host}/api/chat",
+                    json=payload,
+                    timeout=self.config.timeout_seconds,
+                    stream=True,
+                )
+
+                if response.status_code != 200:
+                    _logger.warning("Ollama returned %d on attempt %d", response.status_code, attempt + 1)
+                    last_error = Exception(f"HTTP {response.status_code}")
+                    continue
+
+                # Accumulate streaming chunks
+                chunks: List[str] = []
+                for line in response.iter_lines(decode_unicode=True):
+                    if not line:
+                        continue
+                    try:
+                        chunk = json.loads(line)
+                        content = chunk.get("message", {}).get("content", "")
+                        if content:
+                            chunks.append(content)
+                        if chunk.get("done", False):
+                            break
+                    except json.JSONDecodeError:
+                        continue
+
+                return "".join(chunks) if chunks else None
+
+            except Exception as e:
+                last_error = e
+                if attempt < 2:
+                    backoff = 0.5 * (2 ** attempt)  # 0.5s, 1.0s
+                    _logger.debug("Ollama attempt %d failed, retrying in %.1fs: %s", attempt + 1, backoff, e)
+                    time.sleep(backoff)
+
+        _logger.warning("Ollama call failed after 3 attempts: %s", last_error)
+        return None
+
+    def stream_call(
+        self,
+        prompt: str,
+        system_prompt: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> Iterator[str]:
+        """Streaming variant — yields tokens as they arrive."""
         try:
-            response = requests.post(
+            import requests  # noqa: F811
+        except ImportError:
+            return
+
+        if not self.is_available():
+            return
+
+        messages: List[Dict[str, str]] = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        session = self._get_session()
+        try:
+            response = session.post(
                 f"{self.config.host}/api/chat",
                 json={
                     "model": self.config.model,
                     "messages": messages,
-                    "stream": False,
+                    "stream": True,
                     "options": {
                         "temperature": temperature or self.config.temperature,
                         "num_predict": max_tokens or self.config.max_tokens,
                     }
                 },
                 timeout=self.config.timeout_seconds,
+                stream=True,
             )
-
-            if response.status_code == 200:
-                return response.json().get("message", {}).get("content", "")
-            return None
-        except Exception:
-            return None
+            if response.status_code != 200:
+                return
+            for line in response.iter_lines(decode_unicode=True):
+                if not line:
+                    continue
+                try:
+                    chunk = json.loads(line)
+                    content = chunk.get("message", {}).get("content", "")
+                    if content:
+                        yield content
+                    if chunk.get("done", False):
+                        break
+                except json.JSONDecodeError:
+                    continue
+        except Exception as e:
+            _logger.warning("Ollama stream failed: %s", e)
 
     def generate_lyrics(
         self,
@@ -334,14 +439,23 @@ def create_ollama_bridge(config: Optional[OllamaConfig] = None) -> OllamaBridge:
     return OllamaBridge(config)
 
 
-# Convenience functions for quick access
+# Module-level singleton — reuses connection pool and availability cache
+_default_bridge: Optional[OllamaBridge] = None
+
+
+def _get_default_bridge() -> OllamaBridge:
+    global _default_bridge
+    if _default_bridge is None:
+        _default_bridge = OllamaBridge()
+    return _default_bridge
+
+
+# Convenience functions for quick access (reuse singleton)
 def generate_lyrics(emotion: str, **kwargs) -> Optional[str]:
     """Quick lyrics generation."""
-    bridge = OllamaBridge()
-    return bridge.generate_lyrics(emotion, **kwargs)
+    return _get_default_bridge().generate_lyrics(emotion, **kwargs)
 
 
 def parse_intent(user_input: str) -> Optional[Dict[str, Any]]:
     """Quick intent parsing."""
-    bridge = OllamaBridge()
-    return bridge.parse_intent(user_input)
+    return _get_default_bridge().parse_intent(user_input)

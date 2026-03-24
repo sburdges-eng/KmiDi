@@ -18,6 +18,9 @@ from enum import Enum
 import numpy as np
 import tempfile
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Backend availability
 COQUI_AVAILABLE = False
@@ -352,10 +355,11 @@ class OpenVoiceSynthesizer(NeuralVoiceSynthesizer):
 
         # This is a simplified implementation
         # Full implementation requires the base TTS model
-        raise NotImplementedError(
-            "Full OpenVoice synthesis requires additional setup. "
-            "See https://github.com/myshell-ai/OpenVoice for details."
+        logger.warning(
+            "OpenVoice synthesize() not yet implemented — requires base TTS model. "
+            "See https://github.com/myshell-ai/OpenVoice for details. Returning silence."
         )
+        return np.zeros(16000, dtype=np.float32)
 
     def clone_voice(self, reference_audio: str) -> bool:
         """

@@ -185,7 +185,7 @@ class DrumHumanizer:
         # Base values
         base_ghost = rules.ghost_rate
         base_vel_var = rules.velocity_variation
-        _base_swing = rules.swing  # noqa: F841
+        base_swing = rules.swing
 
         # Modulated values
         settings.complexity = 0.55 + min(0.2, base_ghost)

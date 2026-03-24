@@ -13,6 +13,9 @@ from typing import Optional, Dict, Any, List, Tuple
 from pathlib import Path
 from enum import Enum
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class WaveNetMode(Enum):
@@ -182,6 +185,7 @@ class WaveNetGenerator:
         # 4. Post-process (normalize, fade, etc.)
 
         # Return stub: silence
+        logger.warning("Returning stub/placeholder: generate() returning silence (%d samples)", num_samples)
         return np.zeros(num_samples, dtype=np.float32)
 
     def generate_from_midi(
@@ -209,7 +213,7 @@ class WaveNetGenerator:
         # 4. Blend with emotion embedding
         # 5. Generate audio
 
-        print(f"MIDI generation from {midi_path} - stub implementation")
+        logger.warning("Returning stub/placeholder: generate_from_midi() returning 1s silence for %s", midi_path)
         return np.zeros(16000, dtype=np.float32)
 
     def generate_with_trajectory(
@@ -236,6 +240,7 @@ class WaveNetGenerator:
         # 3. Generate audio with smooth transitions
 
         num_samples = int(duration * self.wavenet_config.sample_rate)
+        logger.warning("Returning stub/placeholder: generate_with_trajectory() returning silence (%d samples)", num_samples)
         return np.zeros(num_samples, dtype=np.float32)
 
     def export_to_onnx(

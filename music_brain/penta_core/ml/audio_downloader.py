@@ -1,7 +1,7 @@
 """
 Audio Downloader - Download and manage audio datasets.
 
-Downloads audio to /Volumes/Extreme SSD/kelly-audio-data/
+Downloads audio to $KELLY_AUDIO_DATA_ROOT (default: ~/.kelly/audio-data).
 
 Supported sources:
 - Freesound (requires API key)
@@ -55,7 +55,7 @@ class AudioDownloader:
     """
     Download and manage audio datasets.
 
-    All downloads go to /Volumes/Extreme SSD/kelly-audio-data/downloads/
+    All downloads go to $KELLY_AUDIO_DATA_ROOT/downloads/
     """
 
     def __init__(
@@ -435,7 +435,7 @@ def download_audio(
     """
     Quick download helper.
 
-    Downloads to /Volumes/Extreme SSD/kelly-audio-data/
+    Downloads to $KELLY_AUDIO_DATA_ROOT/
 
     Args:
         url: URL to download

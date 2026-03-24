@@ -6,13 +6,13 @@ async function safeInvoke<T>(cmd: string, args?: Record<string, unknown>): Promi
   const { invoke } = await import('@tauri-apps/api/core');
   return invoke(cmd, args) as Promise<T>;
 }
-async function safeListen(
+async function safeListen<T = unknown>(
   event: string,
-  handler: (payload: unknown) => void
+  handler: (payload: T) => void
 ): Promise<(() => void) | undefined> {
   try {
     const { listen } = await import('@tauri-apps/api/event');
-    return await listen(event, (e: { payload: unknown }) => handler(e.payload));
+    return await listen(event, (e: { payload: unknown }) => handler(e.payload as T));
   } catch {
     return undefined;
   }

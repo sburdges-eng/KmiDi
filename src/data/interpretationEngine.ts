@@ -289,6 +289,15 @@ export function sample(
     ? sampleDiscrete(result.distributions.mode_weights)
     : 'major';
 
+  // Sample key
+  const KEY_DEFAULT: ParamDistribution = {
+    type: 'discrete',
+    weights: { C: 0.18, G: 0.14, D: 0.12, A: 0.10, E: 0.08, F: 0.10, Bb: 0.08, Eb: 0.06, Ab: 0.05, B: 0.04, Db: 0.03, Gb: 0.02 },
+  };
+  const key = result.distributions.key_weights
+    ? sampleDiscrete(result.distributions.key_weights)
+    : sampleDiscrete(KEY_DEFAULT);
+
   // Sample groove feel
   const grooveFeel = result.distributions.groove_feel
     ? sampleDiscrete(result.distributions.groove_feel)
@@ -302,7 +311,7 @@ export function sample(
     mood_primary: genre,
     genre,
     tempo,
-    key_mode: `C ${mode}`,
+    key_mode: `${key} ${mode}`,
     structure: [
       { name: 'intro', bars: 4, repetitions: 1 },
       { name: 'verse', bars: 8, repetitions: 2 },

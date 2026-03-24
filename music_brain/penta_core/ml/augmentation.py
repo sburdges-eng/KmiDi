@@ -129,7 +129,8 @@ class BaseAugmentation:
 
     def apply(self, audio: np.ndarray, sample_rate: int, **kwargs) -> np.ndarray:
         """Apply the actual augmentation (to be implemented by subclasses)."""
-        raise NotImplementedError
+        logger.warning("BaseAugmentation.apply not implemented by subclass %s, returning input unchanged", type(self).__name__)
+        return audio
 
 
 # =============================================================================

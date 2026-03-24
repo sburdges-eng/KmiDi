@@ -348,4 +348,36 @@ float MasterEQProcessor::calculateSmoothingCoeff(double timeConstantSeconds,
   return static_cast<float>(1.0 - std::exp(-1.0 / (timeConstantSeconds * sampleRate)));
 }
 
+void MasterEQProcessor::applySuggestedCurve(const float suggestedGains[6],
+                                            float aiIntensity,
+                                            bool lockUserBands,
+                                            unsigned int userTouchedBands) {
+  // Per spec 07_PLUGIN_SPECIFIC:
+  // - AI suggestions clamped to ±1.5 dB
+  // - User curve has priority
+  // - ai_intensity scales the blend
+  // - lockUserBands skips user-touched bands
+  aiIntensity = std::clamp(aiIntensity, 0.0f, 1.0f);
+
+  for (int band = 0; band < 6; ++band) {
+    // Skip user-touched bands if lock is enabled
+    if (lockUserBands && (userTouchedBands & (1u << band))) {
+      continue;
+    }
+
+    // Clamp AI suggestion to ±MAX_AI_EQ_ADJUSTMENT_DB
+    float clamped = std::clamp(suggestedGains[band],
+                               -MAX_AI_EQ_ADJUSTMENT_DB,
+                                MAX_AI_EQ_ADJUSTMENT_DB);
+
+    // Scale by AI intensity
+    float adjustment = clamped * aiIntensity;
+
+    // Blend: add AI adjustment to the current smoothed gain target
+    // The smoothed value will interpolate to the new target (30ms ramp)
+    float currentGain = bandSmoothing_[static_cast<size_t>(band)].gain.getTargetValue();
+    bandSmoothing_[static_cast<size_t>(band)].gain.setTargetValue(currentGain + adjustment);
+  }
+}
+
 } // namespace kelly

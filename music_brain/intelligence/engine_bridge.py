@@ -95,7 +95,7 @@ def get_engine_suggestions(
 
         return json.dumps(suggestions)
 
-    except Exception:  # noqa: F841
+    except Exception:
         # Return default suggestions on error
         return json.dumps(_get_default_suggestions(engine_type))
 
@@ -133,7 +133,7 @@ def get_batch_engine_suggestions(
 
         return json.dumps(batch_suggestions)
 
-    except Exception:  # noqa: F841
+    except Exception:
         return json.dumps({})
 
 
@@ -164,7 +164,7 @@ def record_suggestion_applied(
             suggestion=suggestion,
             result=result
         )
-    except Exception:  # noqa: F841
+    except Exception:
         pass  # Silently fail - tracking is not critical
 
 

@@ -231,14 +231,11 @@ class EmotionVisualMapper:
             with regularization to prevent overfitting.
         """
         # Get embedding prediction (with caching for speed)
-        _embedding = self._embedding_predictor.predict(  # noqa: F841
-            emotion=emotion,
-            intensity=intensity,
-            use_cache=True  # Fast path
-        )
-
-        # TODO: Convert embedding to VisualParams
-        # For now, fall back to rule-based with embedding influence
+        # TODO: Use embedding prediction to influence visual params
+        # embedding = self._embedding_predictor.predict(
+        #     emotion=emotion, intensity=intensity, use_cache=True
+        # )
+        # For now, fall back to rule-based mapping
         params = self._map_rule_based(emotion, intensity, style)
 
         # Add embedding data to metadata for future use

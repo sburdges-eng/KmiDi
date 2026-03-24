@@ -233,6 +233,7 @@ export const useMusicBrain = () => {
     text: string,
     locale?: string,
     userId?: string,
+    signal?: AbortSignal,
   ): Promise<import('../types/Interpretation').ParseTextResponse> => {
     // Bypass USE_EXTERNAL_API gate — parse-text is a local dev tool,
     // not a cloud dependency. Always try the local API directly.
@@ -240,6 +241,7 @@ export const useMusicBrain = () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, locale: locale ?? 'en', user_id: userId }),
+      signal,
     });
     if (!resp.ok) {
       throw new Error(`parse-text failed (${resp.status})`);

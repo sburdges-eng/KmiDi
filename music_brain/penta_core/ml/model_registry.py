@@ -5,10 +5,13 @@ Provides a centralized registry for ML models across different backends.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
 from enum import Enum
 import json
+import logging
+import threading
+import time
 
 try:
     import jsonschema
@@ -50,6 +53,7 @@ class ModelTask(Enum):
     AUDIO_GENERATION = "audio_generation"
     ONSET_DETECTION = "onset_detection"
     BEAT_TRACKING = "beat_tracking"
+    TEXTURE_PREDICTION = "texture_prediction"
 
 
 @dataclass
@@ -116,14 +120,31 @@ class ModelInfo:
         )
 
 
+_logger = logging.getLogger(__name__)
+
+
+@dataclass
+class _CacheEntry:
+    """Internal entry for the engine cache."""
+    engine: Any  # InferenceEngine instance
+    created_at: float
+    last_accessed: float
+
+
 class ModelRegistry:
     """
     Centralized registry for ML models.
 
     Manages model discovery, loading, and caching.
+    Engine instances are cached with LRU eviction and TTL expiry
+    to avoid repeated model loading overhead.
     """
 
     _instance: Optional["ModelRegistry"] = None
+
+    # Cache configuration
+    ENGINE_CACHE_MAX_SIZE: int = 10
+    ENGINE_CACHE_TTL_SECONDS: float = 1800.0  # 30 minutes
 
     def __new__(cls) -> "ModelRegistry":
         """Singleton pattern."""
@@ -138,7 +159,8 @@ class ModelRegistry:
 
         self._models: Dict[str, ModelInfo] = {}
         self._model_dirs: List[Path] = []
-        self._cache: Dict[str, Any] = {}
+        self._cache: Dict[str, _CacheEntry] = {}
+        self._cache_lock = threading.Lock()
         self._initialized = True
 
         # Add default model directories
@@ -272,8 +294,99 @@ class ModelRegistry:
             return ModelTask.ONSET_DETECTION
         elif "beat" in path_str:
             return ModelTask.BEAT_TRACKING
+        elif "texture" in path_str or "density" in path_str:
+            return ModelTask.TEXTURE_PREDICTION
 
         return ModelTask.CHORD_PREDICTION  # Default
+
+    # ------------------------------------------------------------------ #
+    # Engine caching — LRU with TTL eviction
+    # ------------------------------------------------------------------ #
+
+    def get_engine(self, name: str) -> Optional[Any]:
+        """
+        Get a cached inference engine by model name, creating one if needed.
+
+        Engines are lazily loaded on first access and kept warm in an
+        LRU cache with configurable max size and TTL.
+
+        Returns:
+            InferenceEngine instance, or None if model is not registered.
+        """
+        with self._cache_lock:
+            # Check cache first
+            entry = self._cache.get(name)
+            if entry is not None:
+                # Check TTL
+                if (time.monotonic() - entry.created_at) < self.ENGINE_CACHE_TTL_SECONDS:
+                    entry.last_accessed = time.monotonic()
+                    return entry.engine
+                else:
+                    # Expired — remove and recreate
+                    del self._cache[name]
+                    _logger.debug("Engine cache TTL expired for '%s'", name)
+
+        # Not cached or expired — create outside lock to avoid holding it during I/O
+        model_info = self.get(name)
+        if model_info is None:
+            return None
+
+        # Lazy import to avoid circular dependency
+        from penta_core.ml.inference import create_engine
+        try:
+            engine = create_engine(model_info)
+        except Exception:
+            _logger.exception("Failed to create engine for '%s'", name)
+            return None
+
+        now = time.monotonic()
+        new_entry = _CacheEntry(engine=engine, created_at=now, last_accessed=now)
+
+        with self._cache_lock:
+            # Evict LRU if at capacity
+            while len(self._cache) >= self.ENGINE_CACHE_MAX_SIZE:
+                oldest_name = min(self._cache, key=lambda k: self._cache[k].last_accessed)
+                _logger.debug("Evicting LRU engine '%s' from cache", oldest_name)
+                del self._cache[oldest_name]
+
+            self._cache[name] = new_entry
+
+        _logger.debug("Cached engine for '%s'", name)
+        return engine
+
+    def release_engine(self, name: str) -> bool:
+        """Remove a cached engine, freeing its resources."""
+        with self._cache_lock:
+            if name in self._cache:
+                del self._cache[name]
+                _logger.debug("Released engine '%s' from cache", name)
+                return True
+        return False
+
+    def clear_engine_cache(self) -> int:
+        """Clear all cached engines. Returns the number evicted."""
+        with self._cache_lock:
+            count = len(self._cache)
+            self._cache.clear()
+        _logger.debug("Cleared %d cached engines", count)
+        return count
+
+    def engine_cache_stats(self) -> Dict[str, Any]:
+        """Return cache diagnostics."""
+        with self._cache_lock:
+            now = time.monotonic()
+            return {
+                "size": len(self._cache),
+                "max_size": self.ENGINE_CACHE_MAX_SIZE,
+                "ttl_seconds": self.ENGINE_CACHE_TTL_SECONDS,
+                "entries": {
+                    name: {
+                        "age_seconds": round(now - entry.created_at, 1),
+                        "idle_seconds": round(now - entry.last_accessed, 1),
+                    }
+                    for name, entry in self._cache.items()
+                },
+            }
 
     def save_registry(self, path: str) -> None:
         """Save registry to JSON file."""
@@ -422,6 +535,11 @@ def get_model(name: str) -> Optional[ModelInfo]:
 def list_models(task: Optional[ModelTask] = None) -> List[ModelInfo]:
     """List models in the global registry."""
     return get_registry().list(task)
+
+
+def get_engine(name: str) -> Optional[Any]:
+    """Get a cached engine from the global registry (lazy-loads on first use)."""
+    return get_registry().get_engine(name)
 
 
 def load_registry_manifest(

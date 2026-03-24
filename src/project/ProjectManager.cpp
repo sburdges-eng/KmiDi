@@ -1,4 +1,5 @@
 #include "project/ProjectManager.h"
+#include "common/PersistenceTimestamp.h"
 #include "common/Types.h"
 #include "plugin/PluginState.h" // Include PluginState for Preset type
 #include <array>
@@ -36,31 +37,8 @@ void appendInvariantTree(juce::ValueTree& parent,
   parent.appendChild(invariantsTree, nullptr);
 }
 
-juce::Time zeroTime() {
-  return juce::Time(static_cast<juce::int64>(0));
-}
-
-std::optional<juce::Time> parseSourceDateEpoch() {
-  const char* raw = std::getenv("SOURCE_DATE_EPOCH");
-  if (raw == nullptr || *raw == '\0') {
-    return std::nullopt;
-  }
-
-  char* end = nullptr;
-  const auto seconds = std::strtoll(raw, &end, 10);
-  if (end == raw || (end != nullptr && *end != '\0') || seconds < 0) {
-    return std::nullopt;
-  }
-
-  return juce::Time(static_cast<juce::int64>(seconds) * 1000);
-}
-
-juce::Time resolvePersistenceTimestamp() {
-  if (const auto deterministic = parseSourceDateEpoch(); deterministic.has_value()) {
-    return *deterministic;
-  }
-  return juce::Time::getCurrentTime();
-}
+using kelly::persistence::zeroTime;
+using kelly::persistence::resolvePersistenceTimestamp;
 
 midikompanion::ProjectManager::ProjectData normalizedProjectForComparison(
     const midikompanion::ProjectManager::ProjectData& projectData) {
@@ -176,11 +154,12 @@ bool ProjectManager::saveProject(const juce::File &file,
                                  const std::vector<juce::String> &lyrics,
                                  const std::vector<int> &selectedEmotionIds,
                                  const std::optional<int> &primaryEmotionId) {
-  // Support s3:// URI if passed as a path string
+#if KMIDI_ENABLE_S3
   if (file.getFullPathName().startsWith("s3://")) {
-    return saveProjectToS3(file.getFullPathName(), state, generatedMidi, 
+    return saveProjectToS3(file.getFullPathName(), state, generatedMidi,
                             vocalNotes, lyrics, selectedEmotionIds, primaryEmotionId);
   }
+#endif
 
   clearError();
   const auto existingProject = loadExistingProjectData(file);
@@ -236,11 +215,12 @@ bool ProjectManager::loadProject(const juce::File &file,
                                  std::vector<juce::String> &outLyrics,
                                  std::vector<int> &outSelectedEmotionIds,
                                  std::optional<int> &outPrimaryEmotionId) {
-  // Support s3:// URI if passed as a path string
+#if KMIDI_ENABLE_S3
   if (file.getFullPathName().startsWith("s3://")) {
     return loadProjectFromS3(file.getFullPathName(), outState, outGeneratedMidi,
                               outVocalNotes, outLyrics, outSelectedEmotionIds, outPrimaryEmotionId);
   }
+#endif
 
   clearError();
 
@@ -278,6 +258,7 @@ bool ProjectManager::loadProject(const juce::File &file,
   return true;
 }
 
+#if KMIDI_ENABLE_S3
 bool ProjectManager::loadProjectFromS3(const juce::String& s3Uri,
                                        kelly::PluginState::Preset& outState,
                                        GeneratedMidi& outGeneratedMidi,
@@ -290,9 +271,8 @@ bool ProjectManager::loadProjectFromS3(const juce::String& s3Uri,
     setError("Invalid S3 URI: " + s3Uri);
     return false;
   }
-  
-  // Implementation for S3 fetch would go here
-  // For v1.0, this is a stub for future direct AWS integration
+
+  jassertfalse; // S3 stub reached — implementation required
   setError("S3 project loading not yet implemented for current build: " + s3Uri);
   return false;
 }
@@ -309,11 +289,12 @@ bool ProjectManager::saveProjectToS3(const juce::String& s3Uri,
     setError("Invalid S3 URI: " + s3Uri);
     return false;
   }
-  
-  // Implementation for S3 upload would go here
+
+  jassertfalse; // S3 stub reached — implementation required
   setError("S3 project saving not yet implemented for current build: " + s3Uri);
   return false;
 }
+#endif
 
 bool ProjectManager::isValidProjectFile(const juce::File &file) const {
   if (!file.existsAsFile()) {

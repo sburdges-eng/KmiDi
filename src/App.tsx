@@ -10,6 +10,7 @@ import LyricPanel from './components/LyricPanel';
 import { SpectoCloudPanel } from './components/SpectoCloudPanel';
 import UniversalMusicInput from './components/UniversalMusicInput/UniversalMusicInput';
 import { useMusicBrain } from './hooks/useMusicBrain';
+import { useGateway } from './hooks/useGateway';
 
 type Channel = {
   id: string;
@@ -42,6 +43,7 @@ export default function App() {
   const [lastAudioPath, setLastAudioPath] = useState<string | undefined>();
 
   const brain = useMusicBrain();
+  const gateway = useGateway('daiw-main');
 
   useEffect(() => {
     brain.healthCheck()
@@ -142,6 +144,9 @@ export default function App() {
       <header className="km-header">
         <h1 className="app-title">KmiDi</h1>
         <span className="km-subtitle">Universal Music Input</span>
+        <span className="km-gateway-status" title={`Gateway: ${gateway.connection}${gateway.lastTierUsed ? ` | Last: ${gateway.lastTierUsed} (${gateway.lastLatencyMs}ms)` : ''}`}>
+          <span className={`status-dot ${gateway.isConnected ? 'connected' : gateway.connection === 'error' ? 'error' : 'disconnected'}`} />
+        </span>
       </header>
 
       <main id="main-content" tabIndex={0}>

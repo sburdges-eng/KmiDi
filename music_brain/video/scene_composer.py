@@ -229,7 +229,7 @@ class SceneComposer:
 
         for i in range(len(scenes) - 1):
             current_scene = scenes[i]
-            _next_scene = scenes[i + 1]  # noqa: F841
+            next_scene = scenes[i + 1]
 
             # Transition starts at end of current scene
             transition_start = current_scene.start_time + current_scene.duration

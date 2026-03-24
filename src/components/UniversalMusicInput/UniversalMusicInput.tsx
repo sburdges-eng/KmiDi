@@ -7,144 +7,7 @@ import { useTextParse } from '../../hooks/useTextParse';
 import { useMusicBrain, buildGeneratePayload } from '../../hooks/useMusicBrain';
 import type { CompleteSongIntentRequest } from '../../types/Intent';
 import type { ParseTextResponse } from '../../types/Interpretation';
-
-// Minimal placeholder taxonomy until the full data layer is loaded
-const PLACEHOLDER_TAXONOMY = [
-  {
-    id: 'harmony', label: 'Harmony', keywords: ['harmony', 'chords', 'keys'],
-    children: [
-      {
-        id: 'harmony.scales', label: 'Scales & Modes', keywords: ['scales', 'modes'],
-        children: [
-          { id: 'harmony.scales.major', label: 'Major (Ionian)', keywords: ['major', 'ionian', 'happy', 'bright'] },
-          { id: 'harmony.scales.minor', label: 'Minor (Aeolian)', keywords: ['minor', 'aeolian', 'sad', 'dark'] },
-          { id: 'harmony.scales.dorian', label: 'Dorian', keywords: ['dorian', 'jazzy', 'soulful'] },
-          { id: 'harmony.scales.phrygian', label: 'Phrygian', keywords: ['phrygian', 'spanish', 'metal', 'dark'] },
-          { id: 'harmony.scales.lydian', label: 'Lydian', keywords: ['lydian', 'dreamy', 'bright', 'floating'] },
-          { id: 'harmony.scales.mixolydian', label: 'Mixolydian', keywords: ['mixolydian', 'bluesy', 'dominant'] },
-          { id: 'harmony.scales.locrian', label: 'Locrian', keywords: ['locrian', 'diminished', 'unstable'] },
-          { id: 'harmony.scales.pentatonic-minor', label: 'Pentatonic Minor', keywords: ['pentatonic', 'blues', 'rock'] },
-          { id: 'harmony.scales.blues', label: 'Blues Scale', keywords: ['blues', 'bluesy'] },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'rhythm', label: 'Rhythm', keywords: ['rhythm', 'beat', 'groove'],
-    children: [
-      {
-        id: 'rhythm.density', label: 'Density', keywords: ['density', 'busy', 'sparse'],
-        children: [
-          { id: 'rhythm.density.sparse', label: 'Sparse', keywords: ['sparse', 'minimal', 'space'] },
-          { id: 'rhythm.density.medium', label: 'Medium', keywords: ['medium', 'balanced'] },
-          { id: 'rhythm.density.dense', label: 'Dense', keywords: ['dense', 'busy', 'fast', 'complex'] },
-        ],
-      },
-      {
-        id: 'rhythm.groove-feel', label: 'Groove Feel', keywords: ['groove', 'feel'],
-        children: [
-          { id: 'rhythm.groove-feel.straight-driving', label: 'Straight/Driving', keywords: ['straight', 'driving', 'tight'] },
-          { id: 'rhythm.groove-feel.laid-back', label: 'Laid Back', keywords: ['laid-back', 'relaxed', 'chill'] },
-          { id: 'rhythm.groove-feel.swung', label: 'Swung', keywords: ['swing', 'swung', 'shuffle'] },
-          { id: 'rhythm.groove-feel.syncopated', label: 'Syncopated', keywords: ['syncopated', 'funky', 'offbeat'] },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'dynamics', label: 'Dynamics', keywords: ['dynamics', 'volume', 'loud', 'quiet'],
-    children: [
-      { id: 'dynamics.levels.pp', label: 'Pianissimo (pp)', keywords: ['very quiet', 'whisper', 'pp'] },
-      { id: 'dynamics.levels.p', label: 'Piano (p)', keywords: ['quiet', 'soft', 'gentle'] },
-      { id: 'dynamics.levels.mf', label: 'Mezzo Forte (mf)', keywords: ['moderate', 'medium'] },
-      { id: 'dynamics.levels.f', label: 'Forte (f)', keywords: ['loud', 'strong'] },
-      { id: 'dynamics.levels.ff', label: 'Fortissimo (ff)', keywords: ['very loud', 'powerful', 'aggressive'] },
-    ],
-  },
-  {
-    id: 'articulation', label: 'Articulation', keywords: ['articulation', 'technique'],
-    children: [
-      { id: 'articulation.staccato', label: 'Staccato', keywords: ['staccato', 'short', 'detached'] },
-      { id: 'articulation.legato', label: 'Legato', keywords: ['legato', 'smooth', 'connected'] },
-      { id: 'articulation.vibrato', label: 'Vibrato', keywords: ['vibrato', 'wobble'] },
-      { id: 'articulation.portamento', label: 'Portamento', keywords: ['portamento', 'slide', 'glide'] },
-      { id: 'articulation.tremolo', label: 'Tremolo', keywords: ['tremolo', 'rapid', 'shake'] },
-    ],
-  },
-  {
-    id: 'timbre', label: 'Timbre', keywords: ['timbre', 'instrument', 'sound'],
-    children: [
-      {
-        id: 'timbre.instruments', label: 'Instruments', keywords: ['instruments'],
-        children: [
-          { id: 'timbre.instruments.piano', label: 'Piano', keywords: ['piano', 'keys', 'keyboard'] },
-          { id: 'timbre.instruments.electric-guitar', label: 'Electric Guitar', keywords: ['guitar', 'electric guitar'] },
-          { id: 'timbre.instruments.acoustic-guitar', label: 'Acoustic Guitar', keywords: ['acoustic', 'acoustic guitar'] },
-          { id: 'timbre.instruments.bass-guitar', label: 'Bass Guitar', keywords: ['bass', 'bass guitar'] },
-          { id: 'timbre.instruments.synth-lead', label: 'Synth Lead', keywords: ['synth', 'synthesizer', 'lead'] },
-          { id: 'timbre.instruments.synth-pad', label: 'Synth Pad', keywords: ['pad', 'synth pad', 'ambient'] },
-          { id: 'timbre.instruments.strings', label: 'Strings', keywords: ['strings', 'orchestral', 'violin', 'cello'] },
-          { id: 'timbre.instruments.brass', label: 'Brass', keywords: ['brass', 'trumpet', 'horn'] },
-          { id: 'timbre.instruments.drums', label: 'Drums', keywords: ['drums', 'percussion', 'beat'] },
-          { id: 'timbre.instruments.sax', label: 'Saxophone', keywords: ['sax', 'saxophone'] },
-          { id: 'timbre.instruments.808', label: '808', keywords: ['808', 'trap', 'sub bass'] },
-        ],
-      },
-      {
-        id: 'timbre.effects', label: 'Effects', keywords: ['effects', 'fx'],
-        children: [
-          { id: 'timbre.effects.distortion', label: 'Distortion', keywords: ['distortion', 'distorted', 'heavy'] },
-          { id: 'timbre.effects.overdrive', label: 'Overdrive', keywords: ['overdrive', 'drive', 'crunch'] },
-          { id: 'timbre.effects.clean', label: 'Clean', keywords: ['clean', 'pristine', 'pure'] },
-          { id: 'timbre.effects.reverb', label: 'Reverb', keywords: ['reverb', 'spacious', 'echo'] },
-          { id: 'timbre.effects.delay', label: 'Delay', keywords: ['delay', 'echo', 'repeat'] },
-          { id: 'timbre.effects.lo-fi', label: 'Lo-Fi', keywords: ['lo-fi', 'lofi', 'tape', 'vinyl'] },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'expression', label: 'Expression', keywords: ['expression', 'mood', 'emotion'],
-    children: [
-      { id: 'expression.mood.nostalgic', label: 'Nostalgic', keywords: ['nostalgic', 'nostalgia', 'memories'] },
-      { id: 'expression.mood.melancholic', label: 'Melancholic', keywords: ['melancholic', 'sad', 'somber'] },
-      { id: 'expression.mood.joyful', label: 'Joyful', keywords: ['joyful', 'happy', 'upbeat'] },
-      { id: 'expression.mood.fierce', label: 'Fierce', keywords: ['fierce', 'intense', 'aggressive'] },
-      { id: 'expression.mood.ethereal', label: 'Ethereal', keywords: ['ethereal', 'dreamy', 'otherworldly'] },
-      { id: 'expression.mood.calm', label: 'Calm', keywords: ['calm', 'peaceful', 'serene'] },
-    ],
-  },
-  {
-    id: 'structure', label: 'Structure', keywords: ['structure', 'form', 'arrangement'],
-    children: [
-      { id: 'structure.narrative-arc.climb-to-climax', label: 'Climb to Climax', keywords: ['build', 'climax', 'crescendo'] },
-      { id: 'structure.narrative-arc.slow-reveal', label: 'Slow Reveal', keywords: ['reveal', 'gradual', 'unfolding'] },
-      { id: 'structure.narrative-arc.rise-and-fall', label: 'Rise and Fall', keywords: ['rise', 'fall', 'arc'] },
-      { id: 'structure.narrative-arc.sudden-shift', label: 'Sudden Shift', keywords: ['sudden', 'shift', 'surprise'] },
-    ],
-  },
-  {
-    id: 'production', label: 'Production', keywords: ['production', 'mix', 'spatial'],
-    children: [
-      { id: 'production.register.bass', label: 'Bass Register', keywords: ['bass', 'low', 'sub'] },
-      { id: 'production.register.mid', label: 'Mid Register', keywords: ['mid', 'middle'] },
-      { id: 'production.register.high', label: 'High Register', keywords: ['high', 'treble', 'bright'] },
-      { id: 'production.spatial.wide-stereo', label: 'Wide Stereo', keywords: ['wide', 'stereo', 'spacious'] },
-      { id: 'production.mix-style.lo-fi', label: 'Lo-Fi Mix', keywords: ['lo-fi', 'lofi', 'raw', 'tape'] },
-      { id: 'production.mix-style.polished', label: 'Polished Mix', keywords: ['polished', 'clean', 'professional'] },
-    ],
-  },
-];
-
-// Try to load the full taxonomy tree (will be available after agents complete)
-let taxonomyTree = PLACEHOLDER_TAXONOMY;
-try {
-  // Dynamic import will work once the file exists
-  // const { TAXONOMY_TREE } = await import('../../data/taxonomyTree');
-  // taxonomyTree = TAXONOMY_TREE;
-} catch {
-  // Use placeholder
-}
+import { TAXONOMY_TREE } from '../../data/taxonomyTree';
 
 interface UniversalMusicInputProps {
   apiStatus: 'checking' | 'online' | 'offline';
@@ -162,7 +25,7 @@ export default function UniversalMusicInput({ apiStatus, toolDrawerContent }: Un
   const [isGenerating, setIsGenerating] = useState(false);
 
   const brain = useMusicBrain();
-  const { parseResult, isParsing, parseDebounced } = useTextParse();
+  const { parseResult, isParsing, parseDebounced, forceReparse } = useTextParse();
 
   // NLP-detected nodes from parse result
   const nlpDetectedNodes = useMemo(() => {
@@ -220,12 +83,10 @@ export default function UniversalMusicInput({ apiStatus, toolDrawerContent }: Un
   }, []);
 
   const handleReinterpret = useCallback(() => {
-    // Re-parse the same text (will get different results if backend has randomness)
     if (naturalText.trim()) {
-      parseDebounced(naturalText + ' '); // tiny change to force re-parse
-      setTimeout(() => parseDebounced(naturalText), 50);
+      forceReparse();
     }
-  }, [naturalText, parseDebounced]);
+  }, [naturalText, forceReparse]);
 
   // --- Summary ---
   const summary = useMemo(() => {
@@ -273,7 +134,8 @@ export default function UniversalMusicInput({ apiStatus, toolDrawerContent }: Un
           ? Math.round(parseResult.param_distributions.tempo.center)
           : 120,
         key_mode: buildKeyModeFromWeights(
-          parseResult?.param_distributions?.mode_weights?.weights
+          parseResult?.param_distributions?.mode_weights?.weights,
+          parseResult?.param_distributions?.key_weights?.weights,
         ),
         structure: [
           { name: 'intro', bars: 4, repetitions: 1 },
@@ -297,7 +159,7 @@ export default function UniversalMusicInput({ apiStatus, toolDrawerContent }: Un
   return (
     <div className="umi-container">
       <SideAPane
-        taxonomyNodes={taxonomyTree}
+        taxonomyNodes={TAXONOMY_TREE}
         nodeWeights={nodeWeights}
         nlpDetectedNodes={nlpDetectedNodes}
         pinnedNodes={pinnedNodes}
@@ -332,10 +194,17 @@ export default function UniversalMusicInput({ apiStatus, toolDrawerContent }: Un
 
 // --- Helpers ---
 
-function buildKeyModeFromWeights(weights?: Record<string, number>): string {
-  if (!weights) return 'C major';
-  const topMode = Object.entries(weights).sort(([, a], [, b]) => b - a)[0];
-  return topMode ? `C ${topMode[0]}` : 'C major';
+function buildKeyModeFromWeights(
+  modeWeights?: Record<string, number>,
+  keyWeights?: Record<string, number>,
+): string {
+  const mode = modeWeights
+    ? Object.entries(modeWeights).sort(([, a], [, b]) => b - a)[0]?.[0] ?? 'major'
+    : 'major';
+  const key = keyWeights
+    ? Object.entries(keyWeights).sort(([, a], [, b]) => b - a)[0]?.[0] ?? 'C'
+    : 'C';
+  return `${key} ${mode}`;
 }
 
 function buildInstrumentsFromNodes(manual: Set<string>, nlp: Set<string>) {

@@ -86,6 +86,32 @@ private:
   // Master EQ component
   std::unique_ptr<MasterEQComponent> masterEQComponent_;
 
+  // ========================================================================
+  // Region 3: ML Parameter Panel — 5 automatable ML influence sliders
+  // ========================================================================
+  juce::Slider mlIntensitySlider_;
+  juce::Slider melodyInfluenceSlider_;
+  juce::Slider harmonyInfluenceSlider_;
+  juce::Slider grooveInfluenceSlider_;
+  juce::Slider dynamicsInfluenceSlider_;
+
+  juce::Label mlIntensityLabel_;
+  juce::Label melodyInfluenceLabel_;
+  juce::Label harmonyInfluenceLabel_;
+  juce::Label grooveInfluenceLabel_;
+  juce::Label dynamicsInfluenceLabel_;
+
+  std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mlIntensityAttachment_;
+  std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> melodyInfluenceAttachment_;
+  std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> harmonyInfluenceAttachment_;
+  std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> grooveInfluenceAttachment_;
+  std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> dynamicsInfluenceAttachment_;
+
+  // ========================================================================
+  // Region 5: ML Hint Panel — confidence bars + auto-dismiss text
+  // ========================================================================
+  juce::Label mlHintLabel_;
+
   // Track last pending MIDI state to detect changes
   bool lastPendingMidiState_ = false;
   bool idleAutoGenerateEnabled_ = true;

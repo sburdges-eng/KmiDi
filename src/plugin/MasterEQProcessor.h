@@ -62,6 +62,28 @@ public:
 
   EQState getCurrentState() const;
 
+  /**
+   * Apply AI-suggested EQ curve, per spec 07_PLUGIN_SPECIFIC.
+   *
+   * Rules:
+   * - AI suggestions clamped to ±MAX_AI_EQ_ADJUSTMENT_DB per band
+   * - User curve has absolute priority (AI only suggests, never overrides)
+   * - ai_intensity (0–1) scales how much of the suggestion is applied
+   * - If lockUserBands is true, bands the user has manually adjusted are skipped
+   *
+   * @param suggestedGains  Array of 6 suggested gain values (dB) from AI
+   * @param aiIntensity     0.0–1.0 blend factor
+   * @param lockUserBands   If true, skip user-touched bands
+   * @param userTouchedBands Bitmask of bands the user has manually adjusted
+   */
+  void applySuggestedCurve(const float suggestedGains[6],
+                           float aiIntensity,
+                           bool lockUserBands,
+                           unsigned int userTouchedBands = 0);
+
+  /// Maximum AI EQ adjustment per band (dB). Per spec 07.
+  static constexpr float MAX_AI_EQ_ADJUSTMENT_DB = 1.5f;
+
 private:
   // Smoothed values for each band parameter
   // Time constants: Gain=30ms, Freq=60ms, Q=120ms

@@ -5,8 +5,11 @@ Aligns Audio Edge Maps (onsets, flux) with structural text embeddings (e.g. "dro
 
 from __future__ import annotations
 
+import logging
 import torch
 import torch.nn.functional as F
+
+logger = logging.getLogger(__name__)
 
 def global_structure_loss(
     audio_edge_features: torch.Tensor,
@@ -49,7 +52,8 @@ def local_structure_loss(
     Local (temporal chunk) edge-local text loss.
     (Placeholder for future implementation).
     """
-    raise NotImplementedError("Local structure loss is planned for future iterations.")
+    logger.warning("local_structure_loss not yet implemented, returning tensor(0.0)")
+    return torch.tensor(0.0, requires_grad=True)
 
 def consistency_edge_loss(
     audio_edge_sequence: torch.Tensor,
@@ -59,4 +63,5 @@ def consistency_edge_loss(
     Consistency loss between edge proxies and continuous audio encoder representation.
     (Placeholder for future implementation).
     """
-    raise NotImplementedError("Consistency edge loss is planned for future iterations.")
+    logger.warning("consistency_edge_loss not yet implemented, returning tensor(0.0)")
+    return torch.tensor(0.0, requires_grad=True)

@@ -22,12 +22,15 @@ Usage:
 
 import argparse
 import json
+import logging
 import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -41,6 +44,7 @@ class TrainingResult:
     training_time_seconds: float = 0.0
     checkpoint_path: str = ""
     error_message: str = ""
+    loss_history: List[float] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -52,6 +56,7 @@ class TrainingResult:
             "training_time_seconds": self.training_time_seconds,
             "checkpoint_path": self.checkpoint_path,
             "error_message": self.error_message,
+            "loss_history": self.loss_history,
         }
 
 
@@ -281,7 +286,7 @@ class M4TrainingOrchestrator:
             import torch
             from penta_core.ml.training.architectures import create_model
             from penta_core.ml.training.losses import get_loss_function
-            from penta_core.ml.datasets.synthetic import create_synthetic_dataset
+            from penta_core.ml.synthetic import create_synthetic_dataset
         except ImportError as e:
             return TrainingResult(
                 model_name=model_name,
@@ -346,6 +351,7 @@ class M4TrainingOrchestrator:
         best_val_loss = float("inf")
         patience_counter = 0
         best_accuracy = 0.0
+        loss_history: List[float] = []
 
         # Training loop
         for epoch in range(epochs):
@@ -387,6 +393,11 @@ class M4TrainingOrchestrator:
 
             avg_val_loss = val_loss / len(val_loader)
             accuracy = correct / total if total > 0 else 0.0
+            loss_history.append(avg_val_loss)
+            logger.info(
+                "%s epoch %d/%d: val_loss=%.4f acc=%.2f%%",
+                model_name, epoch + 1, epochs, avg_val_loss, accuracy * 100,
+            )
 
             if accuracy > best_accuracy:
                 best_accuracy = accuracy
@@ -420,6 +431,7 @@ class M4TrainingOrchestrator:
             loss=best_val_loss,
             epochs_completed=epoch + 1,
             checkpoint_path=str(checkpoint_path),
+            loss_history=loss_history,
         )
 
     def export_to_onnx(self, model_names: Optional[List[str]] = None) -> Dict[str, bool]:

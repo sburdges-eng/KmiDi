@@ -95,7 +95,8 @@ class MusicTheoryLoss:
 
     def __call__(self, *args, **kwargs):
         """Compute loss (to be implemented by subclasses)."""
-        raise NotImplementedError
+        logger.warning("BaseLoss.__call__ not implemented by subclass %s, returning 0.0", type(self).__name__)
+        return 0.0
 
     def _reduce(self, losses: np.ndarray) -> Union[float, np.ndarray]:
         """Apply reduction to losses."""

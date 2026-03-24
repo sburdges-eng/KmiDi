@@ -75,7 +75,7 @@ def analyze_context(state_json: str) -> str:
 
         return json.dumps(result)
 
-    except Exception:  # noqa: F841
+    except Exception:
         # Return default context on error
         return json.dumps({
             "emotion_category": "unknown",
@@ -115,7 +115,7 @@ def get_contextual_parameters(state_json: str) -> str:
 
         return json.dumps(adjustments)
 
-    except Exception:  # noqa: F841
+    except Exception:
         return json.dumps({})
 
 
@@ -156,7 +156,7 @@ def get_contextual_suggestions(state_json: str) -> str:
 
         return json.dumps({"suggestions": suggestions})
 
-    except Exception:  # noqa: F841
+    except Exception:
         return json.dumps({"suggestions": []})
 
 

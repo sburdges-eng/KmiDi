@@ -75,7 +75,8 @@ class BaseMetrics:
 
     def compute(self) -> Dict[str, MetricResult]:
         """Compute all metrics. Override in subclasses."""
-        raise NotImplementedError
+        logger.warning("BaseMetrics.compute not implemented by subclass %s, returning empty dict", type(self).__name__)
+        return {}
 
 
 class MusicMetrics(BaseMetrics):

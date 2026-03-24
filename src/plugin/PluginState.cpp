@@ -1,4 +1,5 @@
 #include "plugin/PluginState.h"
+#include "common/PersistenceTimestamp.h"
 #include "plugin/PluginProcessor.h"
 #include <array>
 #include <cstdlib>
@@ -33,31 +34,8 @@ void appendInvariantTree(juce::ValueTree& parent, const std::array<const char*, 
     parent.appendChild(invariantsTree, nullptr);
 }
 
-juce::Time zeroTime() {
-    return juce::Time(static_cast<juce::int64>(0));
-}
-
-std::optional<juce::Time> parseSourceDateEpoch() {
-    const char* raw = std::getenv("SOURCE_DATE_EPOCH");
-    if (raw == nullptr || *raw == '\0') {
-        return std::nullopt;
-    }
-
-    char* end = nullptr;
-    const auto seconds = std::strtoll(raw, &end, 10);
-    if (end == raw || (end != nullptr && *end != '\0') || seconds < 0) {
-        return std::nullopt;
-    }
-
-    return juce::Time(static_cast<juce::int64>(seconds) * 1000);
-}
-
-juce::Time resolvePersistenceTimestamp() {
-    if (const auto deterministic = parseSourceDateEpoch(); deterministic.has_value()) {
-        return *deterministic;
-    }
-    return juce::Time::getCurrentTime();
-}
+using kelly::persistence::zeroTime;
+using kelly::persistence::resolvePersistenceTimestamp;
 
 kelly::PluginState::Preset normalizedPresetForComparison(
     const kelly::PluginState::Preset& preset) {

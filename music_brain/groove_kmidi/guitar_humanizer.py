@@ -67,7 +67,7 @@ class GuitarHumanizer:
         """
         params = self.get_strum_parameters()
         stagger_range = params["note_stagger_ms"]
-        _avg_stagger = sum(stagger_range) / 2.0  # noqa: F841
+        avg_stagger = sum(stagger_range) / 2.0
 
         # Sort notes by pitch
         # Assuming notes have a .pitch attribute

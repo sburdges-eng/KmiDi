@@ -195,9 +195,10 @@ class GrooveApplicator:
         note_cat = self._categorize_note(msg.note)
 
         # Apply timing adjustment (swing + push/pull)
-        _ = self._apply_timing(  # noqa: F841
+        adjusted_time = self._apply_timing(
             time, note_cat, groove, intensity
         )
+        new_msg.time = adjusted_time
 
         # Apply velocity adjustment
         if msg.type == 'note_on' and msg.velocity > 0:

@@ -8,10 +8,13 @@ Based on Microsoft's OnnxRuntime-UnrealEngine integration:
 https://github.com/microsoft/OnnxRuntime-UnrealEngine
 """
 
+import logging
 from dataclasses import dataclass, field
 from typing import Optional, Dict, Any, Tuple
 from pathlib import Path
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -87,38 +90,40 @@ class ONNXModelExporter:
 
         Returns:
             True if export successful
-
-        Note:
-            This is a stub. Future implementation will:
-            - Use torch.onnx.export() for conversion
-            - Validate output with ONNX checker
-            - Optimize for inference
         """
         try:
-            pass
+            import torch
         except ImportError:
-            print("PyTorch not installed. Cannot export PyTorch models.")
+            logger.error("PyTorch not installed. Cannot export PyTorch models.")
             return False
 
-        # TODO: Implement actual PyTorch export
-        # Example implementation:
-        # model.eval()
-        # if sample_input is None:
-        #     sample_input = torch.randn(1, self.config.input_dim)
-        #
-        # torch.onnx.export(
-        #     model,
-        #     sample_input,
-        #     output_path,
-        #     opset_version=self.config.opset_version,
-        #     input_names=['emotion_embedding'],
-        #     output_names=['visual_parameters'],
-        #     dynamic_axes={'emotion_embedding': {0: 'batch'}} if self.config.dynamic_batch else None  # noqa: E501
+        try:
+            model.eval()
+            if sample_input is not None:
+                dummy_input = torch.from_numpy(sample_input).float()
+            else:
+                dummy_input = torch.randn(1, self.config.input_dim)
 
-        # )
+            dynamic_axes = (
+                {'emotion_embedding': {0: 'batch'}, 'visual_parameters': {0: 'batch'}}
+                if self.config.dynamic_batch else None
+            )
 
-        print(f"PyTorch export to {output_path} - stub implementation")
-        return False
+            Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+            torch.onnx.export(
+                model,
+                dummy_input,
+                str(output_path),
+                opset_version=self.config.opset_version,
+                input_names=['emotion_embedding'],
+                output_names=['visual_parameters'],
+                dynamic_axes=dynamic_axes,
+            )
+            logger.info("Exported PyTorch model to ONNX: %s", output_path)
+            return True
+        except Exception as e:
+            logger.error("ONNX export failed: %s", e)
+            return False
 
     def export_tensorflow_model(
         self,
@@ -134,33 +139,36 @@ class ONNXModelExporter:
 
         Returns:
             True if export successful
-
-        Note:
-            This is a stub. Future implementation will:
-            - Use tf2onnx for conversion
-            - Validate and optimize model
         """
         try:
-            pass
+            import tensorflow as tf
+            import tf2onnx
         except ImportError:
-            print("tf2onnx not installed. Cannot export TensorFlow models.")
+            logger.warning(
+                "tf2onnx and/or tensorflow not installed. "
+                "Install with: pip install tf2onnx tensorflow"
+            )
             return False
 
-        # TODO: Implement TensorFlow export
-        # import onnx
-        #
-        # spec = (tf.TensorSpec((None, self.config.input_dim), tf.float32, name="input"),)
-        # output_path_str = str(output_path)
-        #
-        # model_proto, _ = tf2onnx.convert.from_keras(
-        #     model,
-        #     input_signature=spec,
-        #     opset=self.config.opset_version,
-        #     output_path=output_path_str
-        # )
+        try:
+            spec = (
+                tf.TensorSpec(
+                    (None, self.config.input_dim), tf.float32, name="input"
+                ),
+            )
 
-        print(f"TensorFlow export to {output_path} - stub implementation")
-        return False
+            Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+            model_proto, _ = tf2onnx.convert.from_keras(
+                model,
+                input_signature=spec,
+                opset=self.config.opset_version,
+                output_path=str(output_path),
+            )
+            logger.info("Exported TensorFlow model to ONNX: %s", output_path)
+            return True
+        except Exception as e:
+            logger.error("TensorFlow ONNX export failed: %s", e)
+            return False
 
     def export_numpy_weights(
         self,

@@ -439,8 +439,6 @@ class MLMelodyGenerator:
 
     def _generate_durations(self, length: int, traits: Dict) -> List[float]:
         """Generate note durations in beats."""
-        _durations = []  # noqa: F841
-
         # Common duration patterns
         patterns = [
             [1.0] * length,  # All quarter notes

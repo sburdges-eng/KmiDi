@@ -134,6 +134,13 @@ h4 { margin: 0; font-size: 0.8125rem; font-weight: 600; }
   letter-spacing: 0.02em;
 }
 
+/* ─── Gateway status indicator ─ */
+.km-gateway-status { display: inline-flex; align-items: center; margin-left: 8px; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; }
+.status-dot.connected { background: #4ade80; box-shadow: 0 0 4px #4ade8060; }
+.status-dot.disconnected { background: #666; }
+.status-dot.error { background: #f87171; }
+
 /* ─── Tabs: mode selection, instrument-grade contrast ─ */
 
 .km-toggle {

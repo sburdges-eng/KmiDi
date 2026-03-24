@@ -163,18 +163,7 @@ public:
                      std::vector<int>& outSelectedEmotionIds,
                      std::optional<int>& outPrimaryEmotionId);
 
-    /**
-     * Load complete project from an S3 URI.
-     * 
-     * @param s3Uri S3 URI (e.g., s3://bucket/path/to/project.midikompanion)
-     * @param outState Output: PluginStatePreset to restore
-     * @param outGeneratedMidi Output: Generated MIDI data
-     * @param outVocalNotes Output: Vocal notes
-     * @param outLyrics Output: Lyrics
-     * @param outSelectedEmotionIds Output: Emotion node selections
-     * @param outPrimaryEmotionId Output: Primary emotion ID
-     * @return true if successful
-     */
+#if KMIDI_ENABLE_S3
     bool loadProjectFromS3(const juce::String& s3Uri,
                            kelly::PluginState::Preset& outState,
                            GeneratedMidi& outGeneratedMidi,
@@ -183,18 +172,6 @@ public:
                            std::vector<int>& outSelectedEmotionIds,
                            std::optional<int>& outPrimaryEmotionId);
 
-    /**
-     * Save complete project to an S3 URI.
-     * 
-     * @param s3Uri S3 URI (e.g., s3://bucket/path/to/project.midikompanion)
-     * @param state PluginStatePreset containing current plugin parameters
-     * @param generatedMidi Current generated MIDI data
-     * @param vocalNotes Current vocal notes
-     * @param lyrics Current lyrics
-     * @param selectedEmotionIds Current emotion node selections
-     * @param primaryEmotionId Primary emotion ID
-     * @return true if successful
-     */
     bool saveProjectToS3(const juce::String& s3Uri,
                          const kelly::PluginState::Preset& state,
                          const GeneratedMidi& generatedMidi,
@@ -202,6 +179,7 @@ public:
                          const std::vector<juce::String>& lyrics = {},
                          const std::vector<int>& selectedEmotionIds = {},
                          const std::optional<int>& primaryEmotionId = std::nullopt);
+#endif
 
     /**
      * Get last error message if save/load failed.
