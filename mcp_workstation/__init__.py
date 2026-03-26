@@ -6,7 +6,6 @@ work when the repo root is on sys.path.  The single source of truth is
 ``scripts/mcp/mcp_workstation/``; nothing is duplicated here.
 """
 
-import importlib
 import importlib.util
 import sys
 import os as _os
@@ -18,6 +17,9 @@ import os as _os
 _SCRIPTS_MCP = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
                               "scripts", "mcp")
 
+# Note: this mutates sys.path for the lifetime of the process. Intentional:
+# the facade needs scripts/mcp on the path so the canonical package's
+# relative imports resolve correctly.
 if _SCRIPTS_MCP not in sys.path:
     sys.path.insert(0, _SCRIPTS_MCP)
 
@@ -145,7 +147,6 @@ _SUBMODULES = [
     "debug",
     "ai_specializations",
     "server",
-    "cli",
 ]
 
 for _submod in _SUBMODULES:

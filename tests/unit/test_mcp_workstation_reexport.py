@@ -11,10 +11,8 @@ import sys
 import os
 import pytest
 
-# Ensure repo root is on sys.path so the facade package is importable.
+# conftest.py already ensures repo root is on sys.path.
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-if REPO_ROOT not in sys.path:
-    sys.path.insert(0, REPO_ROOT)
 
 
 # ---------------------------------------------------------------------------
@@ -192,3 +190,9 @@ class TestSingleSourceOfTruth:
         # Should be instantiable (basic smoke test).
         ws = Workstation()
         assert ws is not None
+
+    def test_symbols_are_identical_objects(self):
+        import sys
+        from mcp_workstation import AIAgent
+        impl = sys.modules["_mcp_workstation_impl"]
+        assert AIAgent is impl.AIAgent, "Facade must re-export the same object, not a copy"
