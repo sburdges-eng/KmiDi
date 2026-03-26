@@ -75,12 +75,20 @@ def _load_subpackage(name):
         submodule_search_locations=[subpkg_path],
     )
     sub_mod = importlib.util.module_from_spec(sub_spec)
+    # Set __package__ to the internal alias so relative imports within the
+    # canonical subpackage resolve correctly against _penta_core_impl.
     sub_mod.__package__ = real_name
     sys.modules[real_name] = sub_mod
     try:
         sub_spec.loader.exec_module(sub_mod)
-    except Exception:
+    except Exception as exc:
         del sys.modules[real_name]
+        import warnings
+        warnings.warn(
+            f"penta_core facade: failed to load subpackage '{name}': {exc}",
+            ImportWarning,
+            stacklevel=2,
+        )
         return None
 
     sys.modules[alias] = sub_mod
