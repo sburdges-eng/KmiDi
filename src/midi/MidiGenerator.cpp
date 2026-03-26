@@ -874,9 +874,9 @@ void MidiGenerator::applyGrooveAndHumanize(GeneratedMidi &midi, float humanize,
     grooveType = GrooveType::Swing;
 
   // Apply emotion-based timing
-  if (midi.melody)
+  if (hasMidiLayer(midi.melody))
     midi.melody = grooveEngine_.applyEmotionTiming(*midi.melody, emotion);
-  if (midi.bass)
+  if (hasMidiLayer(midi.bass))
     midi.bass = grooveEngine_.applyEmotionTiming(*midi.bass, emotion);
   if (hasMidiLayer(midi.counterMelody)) {
     midi.counterMelody =
@@ -884,9 +884,9 @@ void MidiGenerator::applyGrooveAndHumanize(GeneratedMidi &midi, float humanize,
   }
 
   // Apply groove
-  if (midi.melody)
+  if (hasMidiLayer(midi.melody))
     midi.melody = grooveEngine_.applyGroove(*midi.melody, grooveType, humanize);
-  if (midi.bass)
+  if (hasMidiLayer(midi.bass))
     midi.bass = grooveEngine_.applyGroove(*midi.bass, grooveType,
                                           humanize * BASS_HUMANIZE_MULTIPLIER);
   if (hasMidiLayer(midi.counterMelody)) {
@@ -897,9 +897,9 @@ void MidiGenerator::applyGrooveAndHumanize(GeneratedMidi &midi, float humanize,
 
   // Apply feel (pull/push) using GrooveEngine's timing feel
   if (std::abs(feel) > MIN_HUMANIZE_THRESHOLD) {
-    if (midi.melody)
+    if (hasMidiLayer(midi.melody))
       midi.melody = grooveEngine_.applyTimingFeel(*midi.melody, feel, 1.0f);
-    if (midi.bass)
+    if (hasMidiLayer(midi.bass))
       midi.bass = grooveEngine_.applyTimingFeel(*midi.bass, feel,
                                                 BASS_HUMANIZE_MULTIPLIER);
     if (hasMidiLayer(midi.counterMelody)) {

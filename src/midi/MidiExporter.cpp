@@ -169,9 +169,10 @@ bool MidiExporter::exportToFileWithVocals(const juce::File& file,
 
 bool MidiExporter::validateMidiData(const GeneratedMidi& midi) const {
     // Check if we have any MIDI data
-    if (!hasMidiLayer(midi.melody) && !hasMidiLayer(midi.bass) && midi.chords.empty() &&
-        !hasMidiLayer(midi.counterMelody) && !hasMidiLayer(midi.pad) && !hasMidiLayer(midi.strings) &&
-        !hasMidiLayer(midi.fills) && !hasMidiLayer(midi.rhythm) && !hasMidiLayer(midi.drumGroove)) {
+    if (midi.notes.empty() && !hasMidiLayer(midi.melody) && !hasMidiLayer(midi.bass) &&
+        midi.chords.empty() && !hasMidiLayer(midi.counterMelody) && !hasMidiLayer(midi.pad) &&
+        !hasMidiLayer(midi.strings) && !hasMidiLayer(midi.fills) && !hasMidiLayer(midi.rhythm) &&
+        !hasMidiLayer(midi.drumGroove)) {
         setError("No MIDI data to export");
         return false;
     }
