@@ -145,12 +145,12 @@ void WorkstationPanel::updateTracks(const GeneratedMidi& midi) {
         }
     }
 
-    tracks_[1].notes = midi.melody;        // Melody
-    tracks_[2].notes = midi.bass;         // Bass
-    tracks_[3].notes = midi.counterMelody; // Counter-melody
-    tracks_[4].notes = midi.pad;          // Pad
-    tracks_[5].notes = midi.strings;       // Strings
-    tracks_[6].notes = midi.fills;        // Fills
+    tracks_[1].notes = midi.melody.value_or(std::vector<MidiNote>{});        // Melody
+    tracks_[2].notes = midi.bass.value_or(std::vector<MidiNote>{});         // Bass
+    tracks_[3].notes = midi.counterMelody.value_or(std::vector<MidiNote>{}); // Counter-melody
+    tracks_[4].notes = midi.pad.value_or(std::vector<MidiNote>{});          // Pad
+    tracks_[5].notes = midi.strings.value_or(std::vector<MidiNote>{});       // Strings
+    tracks_[6].notes = midi.fills.value_or(std::vector<MidiNote>{});        // Fills
 
     // Update track list size
     trackList_.setSize(getWidth(), static_cast<int>(tracks_.size()) * TRACK_HEIGHT);

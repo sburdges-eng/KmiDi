@@ -4,6 +4,7 @@
 
 #include "PianoRollPreview.h"
 #include "../ui/KellyLookAndFeel.h"
+#include "common/KellyTypes.h"  // midiLayerOrEmpty
 #include <algorithm>
 #include <cmath>
 
@@ -19,15 +20,15 @@ void PianoRollPreview::setMidiData(const GeneratedMidi& midi) {
     // Auto-calculate time range
     double maxTime = 0.0;
     const std::vector<const std::vector<MidiNote>*> tracks = {
-        &midi.melody,
-        &midi.bass,
-        &midi.counterMelody,
-        &midi.pad,
-        &midi.strings,
-        &midi.fills,
-        &midi.rhythm,
-        &midi.drumGroove,
-        &midi.transitions,
+        &midiLayerOrEmpty(midi.melody),
+        &midiLayerOrEmpty(midi.bass),
+        &midiLayerOrEmpty(midi.counterMelody),
+        &midiLayerOrEmpty(midi.pad),
+        &midiLayerOrEmpty(midi.strings),
+        &midiLayerOrEmpty(midi.fills),
+        &midiLayerOrEmpty(midi.rhythm),
+        &midiLayerOrEmpty(midi.drumGroove),
+        &midiLayerOrEmpty(midi.transitions),
         &midi.notes,
     };
 
@@ -147,15 +148,15 @@ void PianoRollPreview::drawNotes(juce::Graphics& g, const juce::Rectangle<int>& 
 
     int trackIndex = 0;
     const std::vector<const std::vector<MidiNote>*> tracks = {
-        &midiData_.melody,
-        &midiData_.bass,
-        &midiData_.counterMelody,
-        &midiData_.pad,
-        &midiData_.strings,
-        &midiData_.fills,
-        &midiData_.rhythm,
-        &midiData_.drumGroove,
-        &midiData_.transitions,
+        &midiLayerOrEmpty(midiData_.melody),
+        &midiLayerOrEmpty(midiData_.bass),
+        &midiLayerOrEmpty(midiData_.counterMelody),
+        &midiLayerOrEmpty(midiData_.pad),
+        &midiLayerOrEmpty(midiData_.strings),
+        &midiLayerOrEmpty(midiData_.fills),
+        &midiLayerOrEmpty(midiData_.rhythm),
+        &midiLayerOrEmpty(midiData_.drumGroove),
+        &midiLayerOrEmpty(midiData_.transitions),
         &midiData_.notes,
     };
 

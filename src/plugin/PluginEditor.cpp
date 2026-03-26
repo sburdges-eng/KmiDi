@@ -1,5 +1,6 @@
 #include "plugin/PluginEditor.h"
 #include "common/MusicConstants.h"
+#include "common/KellyTypes.h"  // hasMidiLayer
 #include "midi/MidiExporter.h"
 #include "project/ProjectManager.h"
 #include "ui/MasterEQComponent.h"
@@ -153,7 +154,7 @@ PluginEditor::PluginEditor(PluginProcessor &p)
   // Check for existing generated MIDI and load into displays
   if (processor_.hasPendingMidi()) {
     const auto &generatedMidi = processor_.getGeneratedMidi();
-    if (!generatedMidi.chords.empty() || !generatedMidi.melody.empty()) {
+    if (!generatedMidi.chords.empty() || hasMidiLayer(generatedMidi.melody)) {
       workstation_->getPianoRollPreview().setMidiData(generatedMidi);
       if (!generatedMidi.chords.empty()) {
         const auto &firstChord = generatedMidi.chords[0];
@@ -637,8 +638,8 @@ void PluginEditor::onExportClicked() {
     const auto &generatedMidi = processor_.getGeneratedMidi();
 
     // Validate that we have MIDI data to export
-    if (generatedMidi.chords.empty() && generatedMidi.melody.empty() &&
-        generatedMidi.bass.empty()) {
+    if (generatedMidi.chords.empty() && !hasMidiLayer(generatedMidi.melody) &&
+        !hasMidiLayer(generatedMidi.bass)) {
       juce::AlertWindow::showMessageBoxAsync(
           juce::AlertWindow::WarningIcon, "No MIDI to Export",
           "Please generate MIDI first by clicking the Generate button.", "OK");

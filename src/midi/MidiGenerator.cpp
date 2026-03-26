@@ -2,6 +2,7 @@
 #include "common/MusicConstants.h"
 #include "common/IntentIRAdapter.h"
 #include "common/IntentIRExtractor.h"
+#include "common/KellyTypes.h"  // hasMidiLayer, midiLayerOrEmpty
 #include "engine/EmotionMusicMapper.h"
 #include "engines/ArrangementEngine.h"
 #include <algorithm>
@@ -92,9 +93,9 @@ GeneratedMidi MidiGenerator::generate(const IntentResult &intent, int bars,
   }
 
   // Generate counter melody (if complexity is high)
-  if (layers.counterMelody && !result.melody.empty()) {
+  if (layers.counterMelody && hasMidiLayer(result.melody)) {
     result.counterMelody =
-        generateCounterMelody(result.melody, intent, complexity);
+        generateCounterMelody(midiLayerOrEmpty(result.melody), intent, complexity);
   }
 
   // ========================================================================
@@ -587,8 +588,8 @@ void MidiGenerator::applyDynamics(GeneratedMidi &midi,
   config.applyAccents = true;
 
   // Apply to melody
-  if (!midi.melody.empty()) {
-    config.notes = midi.melody;
+  if (hasMidiLayer(midi.melody)) {
+    config.notes = *midi.melody;
     config.totalTicks =
         beatsToTicks(midi.lengthInBeats, static_cast<int>(midi.bpm));
     DynamicsOutput output = dynamicsEngine_.apply(config);
@@ -596,15 +597,15 @@ void MidiGenerator::applyDynamics(GeneratedMidi &midi,
   }
 
   // Apply to bass
-  if (!midi.bass.empty()) {
-    config.notes = midi.bass;
+  if (hasMidiLayer(midi.bass)) {
+    config.notes = *midi.bass;
     DynamicsOutput output = dynamicsEngine_.apply(config);
     midi.bass = output.notes;
   }
 
   // Apply to counter melody
-  if (!midi.counterMelody.empty()) {
-    config.notes = midi.counterMelody;
+  if (hasMidiLayer(midi.counterMelody)) {
+    config.notes = *midi.counterMelody;
     DynamicsOutput output = dynamicsEngine_.apply(config);
     midi.counterMelody = output.notes;
   }
@@ -692,16 +693,20 @@ void MidiGenerator::applyRuleBreaks(GeneratedMidi &midi,
       // Apply syncopation based on severity
       if (severity > RULE_BREAK_LOW) {
         float syncAmount = severity * SYNCOPATION_MAX_SHIFT;
-        for (auto &note : midi.melody) {
-          std::uniform_real_distribution<float> dist(-syncAmount, syncAmount);
-          note.startBeat += dist(rng_);
+        if (midi.melody) {
+          for (auto &note : *midi.melody) {
+            std::uniform_real_distribution<float> dist(-syncAmount, syncAmount);
+            note.startBeat += dist(rng_);
+          }
         }
         // Also apply to bass
-        for (auto &note : midi.bass) {
-          std::uniform_real_distribution<float> dist(
-              -syncAmount * BASS_HUMANIZE_MULTIPLIER,
-              syncAmount * BASS_HUMANIZE_MULTIPLIER);
-          note.startBeat += dist(rng_);
+        if (midi.bass) {
+          for (auto &note : *midi.bass) {
+            std::uniform_real_distribution<float> dist(
+                -syncAmount * BASS_HUMANIZE_MULTIPLIER,
+                syncAmount * BASS_HUMANIZE_MULTIPLIER);
+            note.startBeat += dist(rng_);
+          }
         }
       }
       break;
@@ -719,9 +724,11 @@ void MidiGenerator::applyRuleBreaks(GeneratedMidi &midi,
                       DYNAMICS_RULE_BREAK_VELOCITY_ADJUSTMENT));
       minVel = std::clamp(minVel, MIDI_VELOCITY_MIN, MIDI_VELOCITY_MAX);
       maxVel = std::clamp(maxVel, MIDI_VELOCITY_MIN, MIDI_VELOCITY_MAX);
-      for (auto &note : midi.melody) {
-        std::uniform_int_distribution<int> velDist(minVel, maxVel);
-        note.velocity = velDist(rng_);
+      if (midi.melody) {
+        for (auto &note : *midi.melody) {
+          std::uniform_int_distribution<int> velDist(minVel, maxVel);
+          note.velocity = velDist(rng_);
+        }
       }
       break;
     }
@@ -729,8 +736,8 @@ void MidiGenerator::applyRuleBreaks(GeneratedMidi &midi,
     case RuleBreakType::ParallelMotion:
     case RuleBreakType::RegisterShift: {
       // Apply melodic rule breaks (wide leaps, chromaticism)
-      if (severity > RULE_BREAK_MODERATE) {
-        for (auto &note : midi.melody) {
+      if (severity > RULE_BREAK_MODERATE && midi.melody) {
+        for (auto &note : *midi.melody) {
           // Add chromaticism occasionally
           std::uniform_real_distribution<float> dist(0.0f, 1.0f);
           if (dist(rng_) < severity * CHROMATICISM_PROBABILITY_FACTOR) {
@@ -746,10 +753,10 @@ void MidiGenerator::applyRuleBreaks(GeneratedMidi &midi,
 
     case RuleBreakType::UnresolvedTension: {
       // Apply structural breaks (rests, fragmentation)
-      if (severity > RULE_BREAK_LOW) {
+      if (severity > RULE_BREAK_LOW && midi.melody) {
         std::uniform_real_distribution<float> dist(0.0f, 1.0f);
         float restProb = severity * REST_PROBABILITY_FACTOR;
-        for (auto &note : midi.melody) {
+        for (auto &note : *midi.melody) {
           if (dist(rng_) < restProb) {
             // Remove note by setting duration to 0 (or skip in playback)
             note.duration = 0.0;
@@ -780,10 +787,10 @@ void MidiGenerator::applyVariations(GeneratedMidi &midi,
     mode = musicalParams.detailedMode;
 
   // Apply variations to melody if it exists
-  if (!midi.melody.empty()) {
+  if (hasMidiLayer(midi.melody)) {
     VariationConfig config;
     config.emotion = getEmotionName(intent.emotion);
-    config.source = midi.melody;
+    config.source = *midi.melody;
     config.key = key;
     config.mode = mode;
     config.intensity = complexity;
@@ -806,10 +813,10 @@ void MidiGenerator::applyVariations(GeneratedMidi &midi,
   }
 
   // Apply variations to bass (lighter touch)
-  if (!midi.bass.empty() && complexity > BASS_VARIATION_THRESHOLD) {
+  if (hasMidiLayer(midi.bass) && complexity > BASS_VARIATION_THRESHOLD) {
     VariationConfig config;
     config.emotion = getEmotionName(intent.emotion);
-    config.source = midi.bass;
+    config.source = *midi.bass;
     config.key = key;
     config.mode = mode;
     config.preserveContour = true;
@@ -825,11 +832,11 @@ void MidiGenerator::applyVariations(GeneratedMidi &midi,
   }
 
   // Apply variations to counter melody (if exists)
-  if (!midi.counterMelody.empty() &&
+  if (hasMidiLayer(midi.counterMelody) &&
       complexity > COUNTER_MELODY_VARIATION_THRESHOLD) {
     VariationConfig config;
     config.emotion = getEmotionName(intent.emotion);
-    config.source = midi.counterMelody;
+    config.source = *midi.counterMelody;
     config.key = key;
     config.mode = mode;
     config.intensity =
@@ -867,31 +874,37 @@ void MidiGenerator::applyGrooveAndHumanize(GeneratedMidi &midi, float humanize,
     grooveType = GrooveType::Swing;
 
   // Apply emotion-based timing
-  midi.melody = grooveEngine_.applyEmotionTiming(midi.melody, emotion);
-  midi.bass = grooveEngine_.applyEmotionTiming(midi.bass, emotion);
-  if (!midi.counterMelody.empty()) {
+  if (midi.melody)
+    midi.melody = grooveEngine_.applyEmotionTiming(*midi.melody, emotion);
+  if (midi.bass)
+    midi.bass = grooveEngine_.applyEmotionTiming(*midi.bass, emotion);
+  if (hasMidiLayer(midi.counterMelody)) {
     midi.counterMelody =
-        grooveEngine_.applyEmotionTiming(midi.counterMelody, emotion);
+        grooveEngine_.applyEmotionTiming(*midi.counterMelody, emotion);
   }
 
   // Apply groove
-  midi.melody = grooveEngine_.applyGroove(midi.melody, grooveType, humanize);
-  midi.bass = grooveEngine_.applyGroove(midi.bass, grooveType,
-                                        humanize * BASS_HUMANIZE_MULTIPLIER);
-  if (!midi.counterMelody.empty()) {
+  if (midi.melody)
+    midi.melody = grooveEngine_.applyGroove(*midi.melody, grooveType, humanize);
+  if (midi.bass)
+    midi.bass = grooveEngine_.applyGroove(*midi.bass, grooveType,
+                                          humanize * BASS_HUMANIZE_MULTIPLIER);
+  if (hasMidiLayer(midi.counterMelody)) {
     midi.counterMelody = grooveEngine_.applyGroove(
-        midi.counterMelody, grooveType,
+        *midi.counterMelody, grooveType,
         humanize * COUNTER_MELODY_HUMANIZE_MULTIPLIER);
   }
 
   // Apply feel (pull/push) using GrooveEngine's timing feel
   if (std::abs(feel) > MIN_HUMANIZE_THRESHOLD) {
-    midi.melody = grooveEngine_.applyTimingFeel(midi.melody, feel, 1.0f);
-    midi.bass = grooveEngine_.applyTimingFeel(midi.bass, feel,
-                                              BASS_HUMANIZE_MULTIPLIER);
-    if (!midi.counterMelody.empty()) {
+    if (midi.melody)
+      midi.melody = grooveEngine_.applyTimingFeel(*midi.melody, feel, 1.0f);
+    if (midi.bass)
+      midi.bass = grooveEngine_.applyTimingFeel(*midi.bass, feel,
+                                                BASS_HUMANIZE_MULTIPLIER);
+    if (hasMidiLayer(midi.counterMelody)) {
       midi.counterMelody = grooveEngine_.applyTimingFeel(
-          midi.counterMelody, feel, COUNTER_MELODY_HUMANIZE_MULTIPLIER);
+          *midi.counterMelody, feel, COUNTER_MELODY_HUMANIZE_MULTIPLIER);
     }
   }
 }

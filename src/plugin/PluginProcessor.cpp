@@ -47,7 +47,7 @@ EmotionNode convertKellyTypesToLegacyEmotionNode(const EmotionNode &kelly) {
 template <typename SideType>
 SideType makeSide(const juce::String& description, float intensity, int emotionId) {
   SideType s;
-  s.description = description;
+  s.description = description.toStdString();
   s.intensity = intensity;
   s.emotionId = emotionId;
   return s;
@@ -595,86 +595,98 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     // Schedule melody notes (channel 2)
     // Convert ticks to beats (480 ticks per quarter note)
     constexpr double TICKS_PER_BEAT = 480.0;
-    for (const auto &note : generatedMidi_.melody) {
-      double noteStartBeat = note.startTick / TICKS_PER_BEAT;
-      double noteEndBeat =
-          (note.startTick + note.durationTicks) / TICKS_PER_BEAT;
+    if (generatedMidi_.melody) {
+      for (const auto &note : *generatedMidi_.melody) {
+        double noteStartBeat = note.startTick / TICKS_PER_BEAT;
+        double noteEndBeat =
+            (note.startTick + note.durationTicks) / TICKS_PER_BEAT;
 
-      if (noteEndBeat > blockStartBeat && noteStartBeat < blockEndBeat) {
-        scheduleNoteEvent(MIDI_CHANNEL_MELODY + 1, note.pitch, note.velocity,
-                          noteStartBeat, true);
-        scheduleNoteEvent(MIDI_CHANNEL_MELODY + 1, note.pitch, 0, noteEndBeat,
-                          false);
+        if (noteEndBeat > blockStartBeat && noteStartBeat < blockEndBeat) {
+          scheduleNoteEvent(MIDI_CHANNEL_MELODY + 1, note.pitch, note.velocity,
+                            noteStartBeat, true);
+          scheduleNoteEvent(MIDI_CHANNEL_MELODY + 1, note.pitch, 0, noteEndBeat,
+                            false);
+        }
       }
     }
 
     // Schedule bass notes (channel 3)
-    for (const auto &note : generatedMidi_.bass) {
-      double noteStartBeat = note.startTick / TICKS_PER_BEAT;
-      double noteEndBeat =
-          (note.startTick + note.durationTicks) / TICKS_PER_BEAT;
+    if (generatedMidi_.bass) {
+      for (const auto &note : *generatedMidi_.bass) {
+        double noteStartBeat = note.startTick / TICKS_PER_BEAT;
+        double noteEndBeat =
+            (note.startTick + note.durationTicks) / TICKS_PER_BEAT;
 
-      if (noteEndBeat > blockStartBeat && noteStartBeat < blockEndBeat) {
-        scheduleNoteEvent(MIDI_CHANNEL_BASS + 1, note.pitch, note.velocity,
-                          noteStartBeat, true);
-        scheduleNoteEvent(MIDI_CHANNEL_BASS + 1, note.pitch, 0, noteEndBeat,
-                          false);
+        if (noteEndBeat > blockStartBeat && noteStartBeat < blockEndBeat) {
+          scheduleNoteEvent(MIDI_CHANNEL_BASS + 1, note.pitch, note.velocity,
+                            noteStartBeat, true);
+          scheduleNoteEvent(MIDI_CHANNEL_BASS + 1, note.pitch, 0, noteEndBeat,
+                            false);
+        }
       }
     }
 
     // Schedule counter-melody notes (channel 4)
-    for (const auto &note : generatedMidi_.counterMelody) {
-      double noteStartBeat = note.startTick / TICKS_PER_BEAT;
-      double noteEndBeat =
-          (note.startTick + note.durationTicks) / TICKS_PER_BEAT;
+    if (generatedMidi_.counterMelody) {
+      for (const auto &note : *generatedMidi_.counterMelody) {
+        double noteStartBeat = note.startTick / TICKS_PER_BEAT;
+        double noteEndBeat =
+            (note.startTick + note.durationTicks) / TICKS_PER_BEAT;
 
-      if (noteEndBeat > blockStartBeat && noteStartBeat < blockEndBeat) {
-        scheduleNoteEvent(MIDI_CHANNEL_COUNTER_MELODY + 1, note.pitch,
-                          note.velocity, noteStartBeat, true);
-        scheduleNoteEvent(MIDI_CHANNEL_COUNTER_MELODY + 1, note.pitch, 0,
-                          noteEndBeat, false);
+        if (noteEndBeat > blockStartBeat && noteStartBeat < blockEndBeat) {
+          scheduleNoteEvent(MIDI_CHANNEL_COUNTER_MELODY + 1, note.pitch,
+                            note.velocity, noteStartBeat, true);
+          scheduleNoteEvent(MIDI_CHANNEL_COUNTER_MELODY + 1, note.pitch, 0,
+                            noteEndBeat, false);
+        }
       }
     }
 
     // Schedule pad notes (channel 5)
-    for (const auto &note : generatedMidi_.pad) {
-      double noteStartBeat = note.startTick / TICKS_PER_BEAT;
-      double noteEndBeat =
-          (note.startTick + note.durationTicks) / TICKS_PER_BEAT;
+    if (generatedMidi_.pad) {
+      for (const auto &note : *generatedMidi_.pad) {
+        double noteStartBeat = note.startTick / TICKS_PER_BEAT;
+        double noteEndBeat =
+            (note.startTick + note.durationTicks) / TICKS_PER_BEAT;
 
-      if (noteEndBeat > blockStartBeat && noteStartBeat < blockEndBeat) {
-        scheduleNoteEvent(MIDI_CHANNEL_PAD + 1, note.pitch, note.velocity,
-                          noteStartBeat, true);
-        scheduleNoteEvent(MIDI_CHANNEL_PAD + 1, note.pitch, 0, noteEndBeat,
-                          false);
+        if (noteEndBeat > blockStartBeat && noteStartBeat < blockEndBeat) {
+          scheduleNoteEvent(MIDI_CHANNEL_PAD + 1, note.pitch, note.velocity,
+                            noteStartBeat, true);
+          scheduleNoteEvent(MIDI_CHANNEL_PAD + 1, note.pitch, 0, noteEndBeat,
+                            false);
+        }
       }
     }
 
     // Schedule string notes (channel 6)
-    for (const auto &note : generatedMidi_.strings) {
-      double noteStartBeat = note.startTick / TICKS_PER_BEAT;
-      double noteEndBeat =
-          (note.startTick + note.durationTicks) / TICKS_PER_BEAT;
+    if (generatedMidi_.strings) {
+      for (const auto &note : *generatedMidi_.strings) {
+        double noteStartBeat = note.startTick / TICKS_PER_BEAT;
+        double noteEndBeat =
+            (note.startTick + note.durationTicks) / TICKS_PER_BEAT;
 
-      if (noteEndBeat > blockStartBeat && noteStartBeat < blockEndBeat) {
-        scheduleNoteEvent(MIDI_CHANNEL_STRINGS + 1, note.pitch, note.velocity,
-                          noteStartBeat, true);
-        scheduleNoteEvent(MIDI_CHANNEL_STRINGS + 1, note.pitch, 0, noteEndBeat,
-                          false);
+        if (noteEndBeat > blockStartBeat && noteStartBeat < blockEndBeat) {
+          scheduleNoteEvent(MIDI_CHANNEL_STRINGS + 1, note.pitch, note.velocity,
+                            noteStartBeat, true);
+          scheduleNoteEvent(MIDI_CHANNEL_STRINGS + 1, note.pitch, 0, noteEndBeat,
+                            false);
+        }
       }
     }
 
     // Schedule fill notes (channel 7)
-    for (const auto &note : generatedMidi_.fills) {
-      double noteStartBeat = note.startTick / TICKS_PER_BEAT;
-      double noteEndBeat =
-          (note.startTick + note.durationTicks) / TICKS_PER_BEAT;
+    if (generatedMidi_.fills) {
+      for (const auto &note : *generatedMidi_.fills) {
+        double noteStartBeat = note.startTick / TICKS_PER_BEAT;
+        double noteEndBeat =
+            (note.startTick + note.durationTicks) / TICKS_PER_BEAT;
 
-      if (noteEndBeat > blockStartBeat && noteStartBeat < blockEndBeat) {
-        scheduleNoteEvent(MIDI_CHANNEL_FILLS + 1, note.pitch, note.velocity,
-                          noteStartBeat, true);
-        scheduleNoteEvent(MIDI_CHANNEL_FILLS + 1, note.pitch, 0, noteEndBeat,
-                          false);
+        if (noteEndBeat > blockStartBeat && noteStartBeat < blockEndBeat) {
+          scheduleNoteEvent(MIDI_CHANNEL_FILLS + 1, note.pitch, note.velocity,
+                            noteStartBeat, true);
+          scheduleNoteEvent(MIDI_CHANNEL_FILLS + 1, note.pitch, 0, noteEndBeat,
+                            false);
+        }
       }
     }
 

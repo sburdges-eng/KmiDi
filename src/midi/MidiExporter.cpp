@@ -2,12 +2,15 @@
 #include "midi/MidiBuilder.h"  // Include MidiBuilder implementation
 #include "common/MusicConstants.h"
 #include "common/Types.h"
+#include "common/KellyTypes.h"  // hasMidiLayer, midiLayerOrEmpty
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <algorithm>
 #include <cmath>
 
 namespace midikompanion {
 using namespace kelly::MusicConstants;
+using kelly::hasMidiLayer;
+using kelly::midiLayerOrEmpty;
 
 MidiExporter::MidiExporter() {
     clearError();
@@ -166,9 +169,9 @@ bool MidiExporter::exportToFileWithVocals(const juce::File& file,
 
 bool MidiExporter::validateMidiData(const GeneratedMidi& midi) const {
     // Check if we have any MIDI data
-    if (midi.melody.empty() && midi.bass.empty() && midi.chords.empty() &&
-        midi.counterMelody.empty() && midi.pad.empty() && midi.strings.empty() &&
-        midi.fills.empty() && midi.rhythm.empty() && midi.drumGroove.empty()) {
+    if (!hasMidiLayer(midi.melody) && !hasMidiLayer(midi.bass) && midi.chords.empty() &&
+        !hasMidiLayer(midi.counterMelody) && !hasMidiLayer(midi.pad) && !hasMidiLayer(midi.strings) &&
+        !hasMidiLayer(midi.fills) && !hasMidiLayer(midi.rhythm) && !hasMidiLayer(midi.drumGroove)) {
         setError("No MIDI data to export");
         return false;
     }
@@ -209,10 +212,10 @@ juce::MidiFile MidiExporter::buildMultiTrackFile(const GeneratedMidi& midi,
     }
 
     // Track 2: Melody
-    if (!midi.melody.empty()) {
+    if (hasMidiLayer(midi.melody)) {
         juce::MidiMessageSequence melodyTrack;
         int channel = midiBuilder_.getChannelForLayer("melody");
-        midiBuilder_.addNotesToSequence(melodyTrack, midi.melody, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(melodyTrack, midiLayerOrEmpty(midi.melody), options.ticksPerQuarterNote, channel);
         if (options.includeExpression) {
             addExpressionEvents(melodyTrack, midi, options.ticksPerQuarterNote);
         }
@@ -221,10 +224,10 @@ juce::MidiFile MidiExporter::buildMultiTrackFile(const GeneratedMidi& midi,
     }
 
     // Track 3: Bass
-    if (!midi.bass.empty()) {
+    if (hasMidiLayer(midi.bass)) {
         juce::MidiMessageSequence bassTrack;
         int channel = midiBuilder_.getChannelForLayer("bass");
-        midiBuilder_.addNotesToSequence(bassTrack, midi.bass, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(bassTrack, midiLayerOrEmpty(midi.bass), options.ticksPerQuarterNote, channel);
         if (options.includeExpression) {
             addExpressionEvents(bassTrack, midi, options.ticksPerQuarterNote);
         }
@@ -233,55 +236,55 @@ juce::MidiFile MidiExporter::buildMultiTrackFile(const GeneratedMidi& midi,
     }
 
     // Track 4: Counter-melody
-    if (!midi.counterMelody.empty()) {
+    if (hasMidiLayer(midi.counterMelody)) {
         juce::MidiMessageSequence counterMelodyTrack;
         int channel = midiBuilder_.getChannelForLayer("counterMelody");
-        midiBuilder_.addNotesToSequence(counterMelodyTrack, midi.counterMelody, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(counterMelodyTrack, midiLayerOrEmpty(midi.counterMelody), options.ticksPerQuarterNote, channel);
         counterMelodyTrack.updateMatchedPairs();
         file.addTrack(counterMelodyTrack);
     }
 
     // Track 5: Pad
-    if (!midi.pad.empty()) {
+    if (hasMidiLayer(midi.pad)) {
         juce::MidiMessageSequence padTrack;
         int channel = midiBuilder_.getChannelForLayer("pad");
-        midiBuilder_.addNotesToSequence(padTrack, midi.pad, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(padTrack, midiLayerOrEmpty(midi.pad), options.ticksPerQuarterNote, channel);
         padTrack.updateMatchedPairs();
         file.addTrack(padTrack);
     }
 
     // Track 6: Strings
-    if (!midi.strings.empty()) {
+    if (hasMidiLayer(midi.strings)) {
         juce::MidiMessageSequence stringsTrack;
         int channel = midiBuilder_.getChannelForLayer("strings");
-        midiBuilder_.addNotesToSequence(stringsTrack, midi.strings, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(stringsTrack, midiLayerOrEmpty(midi.strings), options.ticksPerQuarterNote, channel);
         stringsTrack.updateMatchedPairs();
         file.addTrack(stringsTrack);
     }
 
     // Track 7: Fills
-    if (!midi.fills.empty()) {
+    if (hasMidiLayer(midi.fills)) {
         juce::MidiMessageSequence fillsTrack;
         int channel = midiBuilder_.getChannelForLayer("fills");
-        midiBuilder_.addNotesToSequence(fillsTrack, midi.fills, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(fillsTrack, midiLayerOrEmpty(midi.fills), options.ticksPerQuarterNote, channel);
         fillsTrack.updateMatchedPairs();
         file.addTrack(fillsTrack);
     }
 
     // Track 8: Rhythm
-    if (!midi.rhythm.empty()) {
+    if (hasMidiLayer(midi.rhythm)) {
         juce::MidiMessageSequence rhythmTrack;
         int channel = midiBuilder_.getChannelForLayer("rhythm");
-        midiBuilder_.addNotesToSequence(rhythmTrack, midi.rhythm, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(rhythmTrack, midiLayerOrEmpty(midi.rhythm), options.ticksPerQuarterNote, channel);
         rhythmTrack.updateMatchedPairs();
         file.addTrack(rhythmTrack);
     }
 
     // Track 9: Drum Groove
-    if (!midi.drumGroove.empty()) {
+    if (hasMidiLayer(midi.drumGroove)) {
         juce::MidiMessageSequence drumTrack;
         int channel = MIDI_CHANNEL_DRUMS;  // Channel 10 (9 in 0-indexed) for drums
-        midiBuilder_.addNotesToSequence(drumTrack, midi.drumGroove, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(drumTrack, midiLayerOrEmpty(midi.drumGroove), options.ticksPerQuarterNote, channel);
         drumTrack.updateMatchedPairs();
         file.addTrack(drumTrack);
     }
@@ -312,46 +315,46 @@ juce::MidiFile MidiExporter::buildSingleTrackFile(const GeneratedMidi& midi,
     }
 
     // Melody
-    if (!midi.melody.empty()) {
+    if (hasMidiLayer(midi.melody)) {
         int channel = midiBuilder_.getChannelForLayer("melody");
-        midiBuilder_.addNotesToSequence(mergedTrack, midi.melody, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(mergedTrack, midiLayerOrEmpty(midi.melody), options.ticksPerQuarterNote, channel);
     }
 
     // Bass
-    if (!midi.bass.empty()) {
+    if (hasMidiLayer(midi.bass)) {
         int channel = midiBuilder_.getChannelForLayer("bass");
-        midiBuilder_.addNotesToSequence(mergedTrack, midi.bass, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(mergedTrack, midiLayerOrEmpty(midi.bass), options.ticksPerQuarterNote, channel);
     }
 
     // Add other tracks...
-    if (!midi.counterMelody.empty()) {
+    if (hasMidiLayer(midi.counterMelody)) {
         int channel = midiBuilder_.getChannelForLayer("counterMelody");
-        midiBuilder_.addNotesToSequence(mergedTrack, midi.counterMelody, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(mergedTrack, midiLayerOrEmpty(midi.counterMelody), options.ticksPerQuarterNote, channel);
     }
 
-    if (!midi.pad.empty()) {
+    if (hasMidiLayer(midi.pad)) {
         int channel = midiBuilder_.getChannelForLayer("pad");
-        midiBuilder_.addNotesToSequence(mergedTrack, midi.pad, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(mergedTrack, midiLayerOrEmpty(midi.pad), options.ticksPerQuarterNote, channel);
     }
 
-    if (!midi.strings.empty()) {
+    if (hasMidiLayer(midi.strings)) {
         int channel = midiBuilder_.getChannelForLayer("strings");
-        midiBuilder_.addNotesToSequence(mergedTrack, midi.strings, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(mergedTrack, midiLayerOrEmpty(midi.strings), options.ticksPerQuarterNote, channel);
     }
 
-    if (!midi.fills.empty()) {
+    if (hasMidiLayer(midi.fills)) {
         int channel = midiBuilder_.getChannelForLayer("fills");
-        midiBuilder_.addNotesToSequence(mergedTrack, midi.fills, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(mergedTrack, midiLayerOrEmpty(midi.fills), options.ticksPerQuarterNote, channel);
     }
 
-    if (!midi.rhythm.empty()) {
+    if (hasMidiLayer(midi.rhythm)) {
         int channel = midiBuilder_.getChannelForLayer("rhythm");
-        midiBuilder_.addNotesToSequence(mergedTrack, midi.rhythm, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(mergedTrack, midiLayerOrEmpty(midi.rhythm), options.ticksPerQuarterNote, channel);
     }
 
-    if (!midi.drumGroove.empty()) {
+    if (hasMidiLayer(midi.drumGroove)) {
         int channel = MIDI_CHANNEL_DRUMS;
-        midiBuilder_.addNotesToSequence(mergedTrack, midi.drumGroove, options.ticksPerQuarterNote, channel);
+        midiBuilder_.addNotesToSequence(mergedTrack, midiLayerOrEmpty(midi.drumGroove), options.ticksPerQuarterNote, channel);
     }
 
     // Add expression if requested
