@@ -51,6 +51,10 @@ from music_brain.orchestrator.logging_utils import (
     LogFormatter,
     get_logger,
 )
+try:
+    from music_brain.orchestrator.comprehensive_manager import ComprehensiveIntegrationManager
+except ImportError:
+    ComprehensiveIntegrationManager = None  # type: ignore[assignment,misc]
 
 
 def get_workstation():
@@ -64,6 +68,8 @@ def shutdown_workstation(workstation=None):
 
 
 __all__ = [
+    # Integration manager
+    "ComprehensiveIntegrationManager",
     # Core Orchestrator
     "AIOrchestrator",
     "OrchestratorConfig",
