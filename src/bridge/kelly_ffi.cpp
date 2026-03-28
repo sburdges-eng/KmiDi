@@ -2,6 +2,8 @@
 #include "engine/KellyBrain.h"
 #include "engine/EmotionThesaurus.h"
 #include "common/KellyTypes.h"
+#include "penta/common/RTState.h"
+#include "readerwriterqueue.h"
 #include <memory>
 #include <string>
 #include <cstring>
@@ -21,14 +23,26 @@
 /**
  * Internal wrapper for KellyBrain C++ object
  */
+// RT parameter update queue capacity
+constexpr size_t kRTParamQueueCapacity = 256;
+
 struct KellyBrainWrapper {
     std::unique_ptr<kelly::KellyBrain> brain;
     KellyEventCallback callback;
     void* callback_user_data;
     std::mutex mutex; // Thread safety for state access
     bool initialized;
-    
-    KellyBrainWrapper() : callback(nullptr), callback_user_data(nullptr), initialized(false) {
+
+    // Phase 3: Real-time state and parameter queue
+    penta::RTState rtState;
+    moodycamel::ReaderWriterQueue<penta::RTParameterUpdate> rtParamQueue;
+
+    KellyBrainWrapper()
+        : callback(nullptr)
+        , callback_user_data(nullptr)
+        , initialized(false)
+        , rtParamQueue(kRTParamQueueCapacity)
+    {
         brain = std::make_unique<kelly::KellyBrain>();
     }
 };
@@ -777,11 +791,94 @@ bool kelly_check_data_files(const char* data_path) {
     if (data_path == nullptr) {
         return false;
     }
-    
+
     // Check if required data files exist
     // This would check for emotion thesaurus files, etc.
     // Simplified implementation for now
     return true;
+}
+
+// =============================================================================
+// Real-Time State Interface (Phase 3)
+// =============================================================================
+
+KellyErrorCode kelly_brain_get_rt_state(const KellyBrain* brain, KellyRTState* out_state) {
+    if (brain == nullptr || out_state == nullptr) {
+        return KELLY_ERROR_NULL_POINTER;
+    }
+
+    auto* wrapper = reinterpret_cast<const KellyBrainWrapper*>(brain);
+    const auto& s = wrapper->rtState;
+
+    // Lock-free reads from atomics — safe to call from any thread at high frequency
+    out_state->bpm              = s.bpm.load(std::memory_order_relaxed);
+    out_state->sample_position  = s.samplePosition.load(std::memory_order_relaxed);
+    out_state->bar_start        = s.barStart.load(std::memory_order_relaxed);
+    out_state->bar              = s.bar.load(std::memory_order_relaxed);
+    out_state->beat             = s.beat.load(std::memory_order_relaxed);
+    out_state->numerator        = s.numerator.load(std::memory_order_relaxed);
+    out_state->denominator      = s.denominator.load(std::memory_order_relaxed);
+    out_state->playing          = s.playing.load(std::memory_order_relaxed) ? 1 : 0;
+
+    out_state->valence              = s.valence.load(std::memory_order_relaxed);
+    out_state->arousal              = s.arousal.load(std::memory_order_relaxed);
+    out_state->dominance            = s.dominance.load(std::memory_order_relaxed);
+    out_state->discrete_emotion_id  = s.discreteEmotionId.load(std::memory_order_relaxed);
+    out_state->emotion_intensity    = s.emotionIntensity.load(std::memory_order_relaxed);
+    out_state->emotion_confidence   = s.emotionConfidence.load(std::memory_order_relaxed);
+
+    out_state->tempo_bias        = s.tempoBias.load(std::memory_order_relaxed);
+    out_state->rhythmic_density  = s.rhythmicDensity.load(std::memory_order_relaxed);
+    out_state->groove_strength   = s.grooveStrength.load(std::memory_order_relaxed);
+    out_state->harmonic_tension  = s.harmonicTension.load(std::memory_order_relaxed);
+    out_state->harmonic_motion   = s.harmonicMotion.load(std::memory_order_relaxed);
+    out_state->melodic_activity  = s.melodicActivity.load(std::memory_order_relaxed);
+    out_state->texture_density   = s.textureDensity.load(std::memory_order_relaxed);
+    out_state->dynamic_range     = s.dynamicRange.load(std::memory_order_relaxed);
+
+    static_assert(sizeof(out_state->track_params) / sizeof(float) == penta::kMaxTrackParams,
+                  "KellyRTState.track_params size must match kMaxTrackParams");
+    for (size_t i = 0; i < penta::kMaxTrackParams; ++i) {
+        out_state->track_params[i] = s.trackParams[i].load(std::memory_order_relaxed);
+    }
+
+    out_state->sequence = s.sequence.load(std::memory_order_acquire);
+
+    return KELLY_SUCCESS;
+}
+
+KellyErrorCode kelly_brain_push_rt_param(KellyBrain* brain, KellyRTTarget target,
+                                         uint8_t param_index, float value) {
+    if (brain == nullptr) {
+        return KELLY_ERROR_NULL_POINTER;
+    }
+
+    // Validate enum range
+    if (target < KELLY_RT_TARGET_BPM || target > KELLY_RT_TARGET_TRANSPORT) {
+        return KELLY_ERROR_INVALID_PARAMETER;
+    }
+
+    // Validate track param index bounds
+    if (target == KELLY_RT_TARGET_TRACK_PARAM && param_index >= penta::kMaxTrackParams) {
+        return KELLY_ERROR_INVALID_PARAMETER;
+    }
+
+    auto* wrapper = reinterpret_cast<KellyBrainWrapper*>(brain);
+
+    penta::RTParameterUpdate update(
+        static_cast<penta::RTParameterUpdate::Target>(target),
+        param_index,
+        value,
+        0  // immediate
+    );
+
+    // try_enqueue is non-blocking; avoid set_last_error() here as this
+    // may be called from a near-RT context (no heap allocs on this path).
+    if (!wrapper->rtParamQueue.try_enqueue(update)) {
+        return KELLY_ERROR_INVALID_PARAMETER;
+    }
+
+    return KELLY_SUCCESS;
 }
 
 } // extern "C"
