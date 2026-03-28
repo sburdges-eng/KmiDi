@@ -58,7 +58,7 @@ from .daw_protocol import (
     get_daw_bridge,
 )
 from .events import EventBus
-from .reactive import ComputedValue, Observable, StateStore
+from .reactive import ComputedValue, ReactiveState, StateStore
 from .unified_hub import (
     DAWState,
     HubConfig,
@@ -120,9 +120,9 @@ class AsyncUnifiedHub:
         self.state = StateStore()
 
         # Register observable states
-        self._session_state = Observable(SessionConfig(), name="session")
-        self._voice_state = Observable(VoiceState(), name="voice")
-        self._daw_state = Observable(DAWState(), name="daw")
+        self._session_state = ReactiveState(SessionConfig(), name="session")
+        self._voice_state = ReactiveState(VoiceState(), name="voice")
+        self._daw_state = ReactiveState(DAWState(), name="daw")
 
         self.state.register("session", self._session_state)
         self.state.register("voice", self._voice_state)

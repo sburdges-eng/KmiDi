@@ -18,10 +18,16 @@ venv/
 # Archive (e.g. nested KmiDi tree after merge)
 _archive/
 
+# Android/Gradle
+iDAW-Android/app/.gradle/
+
 # CMake / build
 build/
 build_rt/
 build_out/
+build_fileio/
+build_debug/
+build-debug/
 build-*/
 cmake-build-*/
 # Swift Package Manager build directories

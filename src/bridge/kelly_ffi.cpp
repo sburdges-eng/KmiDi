@@ -69,7 +69,7 @@ static char* string_to_c_str(const std::string& str) {
         return nullptr;
     }
     
-    std::strcpy(result, str.c_str());
+    std::memcpy(result, str.c_str(), len);
     return result;
 }
 

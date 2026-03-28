@@ -596,6 +596,13 @@ class BatchContext:
 # Exports
 # =============================================================================
 
+# Compatibility aliases used by async_hub.py
+ComputedValue = ComputedState
+StateStore = StateAggregator
+
+# StateStore.register() → StateAggregator.add()
+StateAggregator.register = StateAggregator.add  # type: ignore[attr-defined]
+
 __all__ = [
     "Observable",
     "ReactiveState",
@@ -606,4 +613,7 @@ __all__ = [
     "AsyncStateCallback",
     "reactive_dataclass",
     "observe",
+    # Compatibility aliases
+    "ComputedValue",
+    "StateStore",
 ]
