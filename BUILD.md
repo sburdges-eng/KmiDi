@@ -73,7 +73,7 @@ npm run dev:tauri
 
 ## JUCE 8 Note
 
-This project is aligned to JUCE 8. If you encounter SDK issues, confirm the JUCE subtree in `external/JUCE` resolves to a JUCE 8 tag or a JUCE 8-compatible commit.
+This project is aligned to JUCE 8. If you encounter SDK issues, confirm the JUCE subtree in `external/JUCE` resolves to a JUCE 8 tag or a JUCE 8-compatible commit. For the legacy DAIW build (KmiDi_FINAL/engine/cpp_music_brain) on macOS 15+, the project uses repo `external/JUCE` or JUCE 8.x; see [FULL_STACK_BUILD.md](docs/FULL_STACK_BUILD.md) (Legacy DAIW VST3/AU Notes).
 
 ## Troubleshooting
 

@@ -220,13 +220,12 @@ Legacy configure command:
 cmake -S KmiDi_FINAL/engine/cpp_music_brain -B KmiDi_FINAL/engine/cpp_music_brain/build -DDAIW_BUILD_VST3=ON -DDAIW_BUILD_AU=ON -DCMAKE_BUILD_TYPE=Release
 ```
 
-Current status on this machine:
+Current status:
 
-- configuration fails while building JUCE `juceaide` due macOS 15+ SDK API obsolescence (`CGWindowListCreateImage` unavailable in this legacy JUCE path).
-
-Implication:
-
-- AU verification is currently blocked in legacy DAIW path until JUCE compatibility fix is applied in that tree.
+- The macOS 15+ `juceaide` failure (`CGWindowListCreateImage` obsoleted) is addressed:
+  - When building from the KmiDi repo, the legacy project uses the repo's `external/JUCE` (no CPM fetch for JUCE), which is JUCE 8–aligned and includes the ScreenCaptureKit path.
+  - When building the legacy project standalone (without repo `external/JUCE`), CPM fetches JUCE 8.x (e.g. GIT_TAG 8.0.0), which includes the macOS 15 fix.
+- JUCE 8 is required for macOS 15+ SDK compatibility; JUCE 7 does not receive the ScreenCaptureKit fix.
 
 ## Quick Command Summary
 

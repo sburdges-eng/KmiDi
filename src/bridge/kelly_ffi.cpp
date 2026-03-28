@@ -11,10 +11,7 @@
 #include <thread>
 #include <sstream>
 #include <iostream>
-
-// JSON serialization - using a simple approach for now
-// In a full implementation, you'd want to use nlohmann/json or similar
-#include <sstream>
+#include <cstdio>
 
 // =============================================================================
 // Internal Structures and Utilities
@@ -77,17 +74,44 @@ static char* string_to_c_str(const std::string& str) {
 }
 
 /**
- * Simple JSON serialization helper for basic types
- * In production, use a proper JSON library
+ * Escape a string for safe embedding in a JSON string value.
+ * Handles backslash, double-quote, and ASCII control characters.
  */
+static std::string escape_json_string(const std::string& s) {
+    std::string out;
+    out.reserve(s.size() + 8);
+    for (char c : s) {
+        switch (c) {
+            case '\\': out += "\\\\"; break;
+            case '"':  out += "\\\""; break;
+            case '\n': out += "\\n";  break;
+            case '\r': out += "\\r";  break;
+            case '\t': out += "\\t";  break;
+            case '\b': out += "\\b";  break;
+            case '\f': out += "\\f";  break;
+            default:
+                if (static_cast<unsigned char>(c) < 0x20) {
+                    char buf[8];
+                    std::snprintf(buf, sizeof(buf), "\\u%04x",
+                                  static_cast<unsigned>(static_cast<unsigned char>(c)));
+                    out += buf;
+                } else {
+                    out += c;
+                }
+                break;
+        }
+    }
+    return out;
+}
+
 static std::string serialize_intent_result(const kelly::IntentResult& result) {
     std::ostringstream json;
     json << "{\n";
     
     // Extract wound information from sourceWound
-    json << "  \"core_wound\": \"" << result.sourceWound.description << "\",\n";
-    json << "  \"core_desire\": \"" << result.sourceWound.desire << "\",\n";
-    json << "  \"emotional_intent\": \"" << result.sourceWound.expression << "\",\n";
+    json << "  \"core_wound\": \"" << escape_json_string(result.sourceWound.description) << "\",\n";
+    json << "  \"core_desire\": \"" << escape_json_string(result.sourceWound.desire) << "\",\n";
+    json << "  \"emotional_intent\": \"" << escape_json_string(result.sourceWound.expression) << "\",\n";
     
     // Extract emotion values from sourceWound.primaryEmotion
     json << "  \"valence\": " << result.sourceWound.primaryEmotion.valence << ",\n";
@@ -99,13 +123,13 @@ static std::string serialize_intent_result(const kelly::IntentResult& result) {
     json << "  \"progression\": [";
     for (size_t i = 0; i < result.chordProgression.size(); ++i) {
         if (i > 0) json << ", ";
-        json << "\"" << result.chordProgression[i] << "\"";
+        json << "\"" << escape_json_string(result.chordProgression[i]) << "\"";
     }
     json << "],\n";
     
-    json << "  \"key\": \"" << result.key << "\",\n";
+    json << "  \"key\": \"" << escape_json_string(result.key) << "\",\n";
     json << "  \"bpm\": " << result.tempoBpm << ",\n";
-    json << "  \"mode\": \"" << result.mode << "\",\n";
+    json << "  \"mode\": \"" << escape_json_string(result.mode) << "\",\n";
     json << "  \"time_signature\": \"" << result.timeSignature.numerator << "/" << result.timeSignature.denominator << "\",\n";
     json << "  \"confidence\": " << result.confidence << ",\n";
     
@@ -128,10 +152,10 @@ static std::string serialize_intent_result(const kelly::IntentResult& result) {
     json << "  \"production_notes\": [";
     for (size_t i = 0; i < result.productionNotes.size(); ++i) {
         if (i > 0) json << ", ";
-        json << "\"" << result.productionNotes[i] << "\"";
+        json << "\"" << escape_json_string(result.productionNotes[i]) << "\"";
     }
     json << "],\n";
-    json << "  \"narrative_arc\": \"" << result.narrativeArc << "\",\n";
+    json << "  \"narrative_arc\": \"" << escape_json_string(result.narrativeArc) << "\",\n";
     
     // Rule breaks (theoretical parameters)
     json << "  \"rule_breaks\": [";
@@ -139,8 +163,8 @@ static std::string serialize_intent_result(const kelly::IntentResult& result) {
         if (i > 0) json << ", ";
         const auto& rb = result.ruleBreaks[i];
         json << "{\"type\": " << static_cast<int>(rb.type) 
-             << ", \"description\": \"" << rb.description 
-             << "\", \"justification\": \"" << rb.justification 
+             << ", \"description\": \"" << escape_json_string(rb.description) 
+             << "\", \"justification\": \"" << escape_json_string(rb.justification) 
              << "\", \"intensity\": " << rb.intensity << "}";
     }
     json << "]\n";
@@ -158,8 +182,8 @@ static std::string serialize_generated_midi(const kelly::GeneratedMidi& midi) {
     json << "{\n";
     json << "  \"bars\": " << midi.bars << ",\n";
     json << "  \"bpm\": " << midi.tempoBpm << ",\n";
-    json << "  \"key\": \"" << midi.key << "\",\n";
-    json << "  \"mode\": \"" << midi.mode << "\",\n";
+    json << "  \"key\": \"" << escape_json_string(midi.key) << "\",\n";
+    json << "  \"mode\": \"" << escape_json_string(midi.mode) << "\",\n";
     
     // Serialize notes grouped by channel (simulating tracks)
     std::map<int, std::vector<kelly::MidiNote>> notesByChannel;
@@ -198,7 +222,7 @@ static std::string serialize_generated_midi(const kelly::GeneratedMidi& midi) {
     json << "  \"chords\": [";
     for (size_t i = 0; i < midi.chords.size(); ++i) {
         if (i > 0) json << ", ";
-        json << "\"" << midi.chords[i].symbol << "\"";
+        json << "\"" << escape_json_string(midi.chords[i].symbol) << "\"";
     }
     json << "]\n";
     json << "}";
@@ -243,13 +267,11 @@ static kelly::Wound parse_wound_json(const std::string& json) {
         }
     }
     
-    // Extract urgency/intensity
+    // Extract urgency (prefer explicit "urgency" key)
     size_t urgency_pos = json.find("\"urgency\":");
-    if (urgency_pos == std::string::npos) {
-        urgency_pos = json.find("\"intensity\":");
-    }
     if (urgency_pos != std::string::npos) {
-        size_t start = json.find_first_not_of(" \t", urgency_pos + 10);
+        size_t colon = urgency_pos + 10;
+        size_t start = json.find_first_not_of(" \t", colon);
         if (start != std::string::npos) {
             try {
                 wound.urgency = std::stof(json.substr(start));
@@ -258,7 +280,28 @@ static kelly::Wound parse_wound_json(const std::string& json) {
             }
         }
     }
-    
+
+    // Extract intensity (prefer explicit "intensity" key; fall back to urgency)
+    size_t intensity_pos = json.find("\"intensity\":");
+    if (intensity_pos != std::string::npos) {
+        size_t colon = intensity_pos + 12;
+        size_t start = json.find_first_not_of(" \t", colon);
+        if (start != std::string::npos) {
+            try {
+                wound.intensity = std::stof(json.substr(start));
+            } catch (...) {
+                wound.intensity = 0.5f;
+            }
+        }
+    }
+
+    // Keep urgency and intensity in sync when only one is provided
+    if (urgency_pos != std::string::npos && intensity_pos == std::string::npos) {
+        wound.intensity = wound.urgency;
+    } else if (intensity_pos != std::string::npos && urgency_pos == std::string::npos) {
+        wound.urgency = wound.intensity;
+    }
+
     return wound;
 }
 

@@ -53,11 +53,19 @@ endif()
 # CPM.cmake for package management
 include(cmake/CPM.cmake)
 
-# JUCE Framework
+# JUCE Framework: use repo external/JUCE when building from KmiDi (macOS 15+ compatible);
+# otherwise fetch JUCE 8.x for standalone builds (JUCE 7 lacks ScreenCaptureKit fix).
+get_filename_component(_repo_root "${CMAKE_CURRENT_SOURCE_DIR}/../../.." ABSOLUTE)
+set(_repo_juce "${_repo_root}/external/JUCE")
+if(EXISTS "${_repo_juce}/CMakeLists.txt")
+    set(CPM_JUCE_SOURCE "${_repo_juce}")
+    message(STATUS "Using repo JUCE at ${_repo_juce}")
+endif()
+
 CPMAddPackage(
     NAME JUCE
     GITHUB_REPOSITORY juce-framework/JUCE
-    GIT_TAG 7.0.9
+    GIT_TAG 8.0.0
     OPTIONS
         "JUCE_BUILD_EXAMPLES OFF"
         "JUCE_BUILD_EXTRAS OFF"
