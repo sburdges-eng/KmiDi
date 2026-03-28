@@ -340,6 +340,72 @@ class ComprehensiveIntegrationManager:
         return True
 
     # ------------------------------------------------------------------
+    # DAW bridge (Phase 4b)
+    # ------------------------------------------------------------------
+
+    def send_to_daw(
+        self,
+        daw_name: str,
+        midi_data: list[dict],
+        channel: int = 0,
+    ) -> bool:
+        """
+        Send MIDI data to a DAW via the registered bridge.
+
+        Args:
+            daw_name: DAW identifier ("ableton", "logic_pro", "reaper", "bitwig")
+            midi_data: List of MIDI event dicts, each with:
+                - "type": "note_on" | "note_off" | "cc" | "pitch_bend"
+                - "note" / "cc" / "value": int
+                - "velocity": int (for note_on)
+                - "channel": int (optional, overrides channel arg)
+            channel: Default MIDI channel for all events.
+
+        Returns:
+            True if all events were sent successfully.
+        """
+        from music_brain.agents.daw_protocol import DAWType, get_daw_bridge
+
+        # Resolve DAW type from name
+        try:
+            daw_type = DAWType(daw_name)
+        except ValueError:
+            logger.error("Unknown DAW: %s", daw_name)
+            return False
+
+        bridge = get_daw_bridge(daw_type)
+        if bridge is None:
+            logger.error("No bridge available for %s", daw_name)
+            return False
+
+        if not bridge.is_connected:
+            if not bridge.connect():
+                logger.error("Failed to connect to %s", daw_name)
+                return False
+
+        ok = True
+        for event in midi_data:
+            ch = event.get("channel", channel)
+            evt_type = event.get("type", "")
+            try:
+                if evt_type == "note_on":
+                    bridge.send_note_on(event["note"], event.get("velocity", 100), ch)
+                elif evt_type == "note_off":
+                    bridge.send_note_off(event["note"], ch)
+                elif evt_type == "cc":
+                    bridge.send_cc(event["cc"], event["value"], ch)
+                elif evt_type == "pitch_bend":
+                    bridge.send_pitch_bend(event["value"], ch)
+                else:
+                    logger.warning("Unknown MIDI event type: %s", evt_type)
+                    ok = False
+            except Exception:
+                logger.exception("Failed to send %s event to %s", evt_type, daw_name)
+                ok = False
+
+        return ok
+
+    # ------------------------------------------------------------------
     # Direct state access (non-polling)
     # ------------------------------------------------------------------
 
