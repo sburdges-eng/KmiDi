@@ -1,0 +1,16 @@
+{
+  "registry_version": "1.0",
+  "description": "KmiDi model checkpoint registry. Auto-discovered by ModelRegistry.",
+  "models": [
+    {
+      "id": "chord_jepa_v1",
+      "task": "chord_jepa",
+      "format": "pytorch",
+      "file": "chord_jepa/best_model.pt",
+      "version": "1.0.0",
+      "sample_rate": 22050,
+      "note": "Chord-JEPA trained on MIDI chord sequences",
+      "status": "trained"
+    }
+  ]
+}

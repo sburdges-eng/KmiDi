@@ -47,6 +47,9 @@ class ModelTask(Enum):
     AUDIO_GENERATION = "audio_generation"
     ONSET_DETECTION = "onset_detection"
     BEAT_TRACKING = "beat_tracking"
+    # JEPA models (Phase 5)
+    AUDIO_JEPA = "audio_jepa"
+    CHORD_JEPA = "chord_jepa"
 
 
 @dataclass
@@ -143,7 +146,12 @@ class ModelRegistry:
 
     def _add_default_dirs(self) -> None:
         """Add default model search directories."""
-        # Project model directory
+        # Project checkpoints directory (Phase 5)
+        project_ckpt = Path(__file__).parent.parent.parent.parent / "checkpoints"
+        if project_ckpt.exists():
+            self._model_dirs.append(project_ckpt)
+
+        # Project model directory (legacy)
         project_dir = Path(__file__).parent.parent.parent.parent / "Data_Files" / "models"
         if project_dir.exists():
             self._model_dirs.append(project_dir)
@@ -241,7 +249,12 @@ class ModelRegistry:
         """Infer model task from path."""
         path_str = str(path).lower()
 
-        if "chord" in path_str:
+        # JEPA checks first (more specific than "chord" alone)
+        if "audio_jepa" in path_str or "audio-jepa" in path_str:
+            return ModelTask.AUDIO_JEPA
+        elif "chord_jepa" in path_str or "chord-jepa" in path_str:
+            return ModelTask.CHORD_JEPA
+        elif "chord" in path_str:
             if "detect" in path_str:
                 return ModelTask.CHORD_DETECTION
             return ModelTask.CHORD_PREDICTION
