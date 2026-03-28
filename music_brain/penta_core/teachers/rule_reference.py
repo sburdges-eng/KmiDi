@@ -12,7 +12,7 @@ Usage:
 import argparse
 from typing import Dict, Any
 
-from penta_core.teachers import (
+from . import (
     VoiceLeadingRules,
     HarmonyRules,
     CounterpointRules,

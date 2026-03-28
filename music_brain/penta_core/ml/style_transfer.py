@@ -12,10 +12,10 @@ from typing import List, Dict, Optional
 import numpy as np
 from enum import Enum
 
-from penta_core.ml.model_registry import (
+from .model_registry import (
     get_model,
 )
-from penta_core.ml.inference import create_engine, InferenceEngine
+from .inference import create_engine, InferenceEngine
 
 
 class GrooveStyle(Enum):

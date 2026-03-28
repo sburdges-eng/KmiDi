@@ -14,7 +14,7 @@ from typing import Dict, List, Optional
 import numpy as np
 import time
 
-from penta_core.ml.model_registry import (
+from .model_registry import (
     ModelInfo,
     ModelBackend,
     get_model,

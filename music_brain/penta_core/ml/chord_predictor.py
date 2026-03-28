@@ -12,14 +12,14 @@ from typing import List, Dict, Optional, Tuple
 import numpy as np
 from collections import defaultdict
 
-from penta_core.ml.model_registry import (
+from .model_registry import (
     ModelInfo,
     ModelBackend,
     ModelTask,
     get_model,
     register_model,
 )
-from penta_core.ml.inference import create_engine, InferenceEngine
+from .inference import create_engine, InferenceEngine
 
 
 # Chord vocabulary

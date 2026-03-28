@@ -279,9 +279,9 @@ class M4TrainingOrchestrator:
         """Run actual training using penta_core.ml infrastructure."""
         try:
             import torch
-            from penta_core.ml.training.architectures import create_model
-            from penta_core.ml.training.losses import get_loss_function
-            from penta_core.ml.datasets.synthetic import create_synthetic_dataset
+            from .training.architectures import create_model
+            from .training.losses import get_loss_function
+            from .datasets.synthetic import create_synthetic_dataset
         except ImportError as e:
             return TrainingResult(
                 model_name=model_name,
@@ -452,8 +452,8 @@ class M4TrainingOrchestrator:
         """Export a single model to ONNX."""
         try:
             import torch
-            from penta_core.ml.training.architectures import create_model
-            from penta_core.ml.export import export_to_onnx
+            from .training.architectures import create_model
+            from .export import export_to_onnx
         except ImportError:
             return False
 

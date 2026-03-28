@@ -7,7 +7,7 @@ Provides:
 - Common DSP building blocks
 """
 
-from penta_core.dsp.trace_dsp import (
+from .trace_dsp import (
     EnvelopeFollower,
     EnvelopeMode,
     PatternAutomation,
@@ -18,7 +18,7 @@ from penta_core.dsp.trace_dsp import (
     generate_lfo_pattern,
 )
 
-from penta_core.dsp.parrot_dsp import (
+from .parrot_dsp import (
     SamplePlayback,
     PitchShifter,
     GrainCloud,

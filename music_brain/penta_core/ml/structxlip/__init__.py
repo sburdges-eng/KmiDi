@@ -9,12 +9,12 @@ Experimental: use for fine-tuning when you need the model to ground temporal bou
 """
 
 try:
-    from penta_core.ml.structxlip.audio_edges import (
+    from .audio_edges import (
         extract_onset_envelope,
         extract_spectral_flux,
         extract_audio_edge_maps,
     )
-    from penta_core.ml.structxlip.structure_losses import (
+    from .structure_losses import (
         global_structure_loss,
         local_structure_loss,
         consistency_edge_loss,

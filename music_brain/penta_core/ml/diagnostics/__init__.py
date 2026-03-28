@@ -1,6 +1,6 @@
 # Diagnostics and training probes (e.g. PID Flow for modality collapse).
 
-from penta_core.ml.diagnostics.pid_flow import (
+from .pid_flow import (
     check_modality_collapse,
     compute_layer_pid,
     run_pid_flow_report,
