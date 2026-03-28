@@ -23,6 +23,11 @@ from .comprehensive_bridge import (
     RTSnapshot,
 )
 
+from .prrot_bridge import (
+    PRROTBridge,
+    VoiceAnalysisResult,
+)
+
 from .dynamics_integration import (
     SectionType,
     EmotionState,
@@ -38,6 +43,9 @@ __all__ = [
     # Comprehensive RT Bridge (Phase 3)
     "ComprehensiveIntegrationManager",
     "RTSnapshot",
+    # PRROT Voice Bridge (Phase 4b)
+    "PRROTBridge",
+    "VoiceAnalysisResult",
     # Penta-Core Integration
     "PentaCoreConfig",
     "PentaCoreIntegration",
