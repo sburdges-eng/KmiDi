@@ -309,8 +309,6 @@ std::string MusicTheoryBridge::createLessonPlan(
     }
 
     // Fallback to C++ MusicTheoryBrain
-    // FIXME: Temporarily disabled due to struct member mismatches
-    /*
     if (brain_) {
         midikompanion::theory::UserProfile profile;
         auto curriculum = brain_->getCustomLearningPath(conceptName, profile);
@@ -326,7 +324,6 @@ std::string MusicTheoryBridge::createLessonPlan(
         json << "]}";
         return json.str();
     }
-    */
 
     return "{\"error\":\"Lesson plan not available\"}";
 }

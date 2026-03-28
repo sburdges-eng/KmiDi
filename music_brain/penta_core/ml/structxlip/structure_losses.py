@@ -44,19 +44,63 @@ def global_structure_loss(
 def local_structure_loss(
     audio_edge_sequence: torch.Tensor,
     text_chunk_features: torch.Tensor,
+    temperature: float = 0.07,
 ) -> torch.Tensor:
     """
-    Local (temporal chunk) edge-local text loss.
-    (Placeholder for future implementation).
+    Local (temporal chunk) edge–text alignment loss.
+
+    Aligns temporal chunks of audio edge features with corresponding
+    text descriptions. Each chunk in the sequence is matched to the
+    text embedding at the same temporal position.
+
+    Args:
+        audio_edge_sequence: (batch, num_chunks, embed_dim) — edge features per chunk.
+        text_chunk_features: (batch, num_chunks, embed_dim) — text embeddings per chunk.
+        temperature: Softmax temperature.
+
+    Returns:
+        Scalar loss (mean over batch and chunks).
     """
-    raise NotImplementedError("Local structure loss is planned for future iterations.")
+    audio_norm = F.normalize(audio_edge_sequence, p=2, dim=-1)
+    text_norm = F.normalize(text_chunk_features, p=2, dim=-1)
+
+    # Per-chunk cosine similarity: (batch, num_chunks)
+    similarity = (audio_norm * text_norm).sum(dim=-1) / temperature
+
+    # Target: maximize similarity at each position (sigmoid BCE with target=1)
+    loss = F.binary_cross_entropy_with_logits(
+        similarity,
+        torch.ones_like(similarity),
+    )
+    return loss
+
 
 def consistency_edge_loss(
     audio_edge_sequence: torch.Tensor,
     audio_main_sequence: torch.Tensor,
+    margin: float = 0.1,
 ) -> torch.Tensor:
     """
-    Consistency loss between edge proxies and continuous audio encoder representation.
-    (Placeholder for future implementation).
+    Consistency loss between edge proxies and continuous audio encoder.
+
+    Encourages the edge-based representation to stay close to the main
+    audio encoder's representation, acting as a regularizer to prevent
+    the edge proxy from drifting into a degenerate space.
+
+    Args:
+        audio_edge_sequence: (batch, seq_len, embed_dim) — from edge map encoder.
+        audio_main_sequence: (batch, seq_len, embed_dim) — from main audio encoder.
+        margin: Minimum cosine similarity before penalty applies.
+
+    Returns:
+        Scalar loss.
     """
-    raise NotImplementedError("Consistency edge loss is planned for future iterations.")
+    edge_norm = F.normalize(audio_edge_sequence, p=2, dim=-1)
+    main_norm = F.normalize(audio_main_sequence, p=2, dim=-1)
+
+    # Cosine similarity per position: (batch, seq_len)
+    cos_sim = (edge_norm * main_norm).sum(dim=-1)
+
+    # Hinge-style: penalize when similarity drops below margin
+    loss = F.relu(margin - cos_sim).mean()
+    return loss
