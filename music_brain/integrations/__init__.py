@@ -18,6 +18,11 @@ from .penta_core import (
     LocalPentaCoreIntegration,
 )
 
+from .comprehensive_bridge import (
+    ComprehensiveIntegrationManager,
+    RTSnapshot,
+)
+
 from .dynamics_integration import (
     SectionType,
     EmotionState,
@@ -30,6 +35,9 @@ from .dynamics_integration import (
 )
 
 __all__ = [
+    # Comprehensive RT Bridge (Phase 3)
+    "ComprehensiveIntegrationManager",
+    "RTSnapshot",
     # Penta-Core Integration
     "PentaCoreConfig",
     "PentaCoreIntegration",

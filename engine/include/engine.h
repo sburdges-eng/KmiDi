@@ -68,6 +68,58 @@ const char* kmidi_engine_last_error(void);
  */
 size_t kmidi_engine_query_scratch(const kmidi_engine_t* engine);
 
+/* =========================================================================
+ * Real-Time State (Phase 3)
+ * ========================================================================= */
+
+/** C-compatible engine state snapshot. */
+typedef struct kmidi_engine_state {
+  double   bpm;
+  uint64_t sample_position;
+  uint32_t bar;
+  uint32_t beat;
+  uint32_t numerator;
+  uint32_t denominator;
+  int      playing;
+
+  float    valence;
+  float    arousal;
+  float    dominance;
+  float    emotion_intensity;
+
+  float    groove_strength;
+  float    harmonic_tension;
+  float    rhythmic_density;
+  float    melodic_activity;
+
+  uint64_t sequence;
+} kmidi_engine_state_t;
+
+/**
+ * Get a snapshot of the engine's real-time state.
+ * Lock-free — safe to call from any thread at any frequency.
+ * Returns 0 on success, non-zero on error.
+ */
+int kmidi_engine_get_state(const kmidi_engine_t* engine,
+                           kmidi_engine_state_t* out_state);
+
+/** Parameter update target. */
+typedef enum {
+  KMIDI_PARAM_BPM        = 0,
+  KMIDI_PARAM_EMOTION    = 1,
+  KMIDI_PARAM_INTENT     = 2,
+  KMIDI_PARAM_TRANSPORT  = 3
+} kmidi_param_target_t;
+
+/**
+ * Push a parameter update into the RT-safe queue.
+ * Returns 0 on success, -1 if queue is full.
+ */
+int kmidi_engine_push_param(kmidi_engine_t* engine,
+                            kmidi_param_target_t target,
+                            uint8_t param_index,
+                            float value);
+
 #ifdef __cplusplus
 }
 #endif

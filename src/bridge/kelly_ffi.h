@@ -237,6 +237,85 @@ KellyErrorCode kelly_brain_register_callback(KellyBrain* brain, KellyEventCallba
 KellyErrorCode kelly_brain_unregister_callback(KellyBrain* brain);
 
 // =============================================================================
+// Real-Time State Interface (Phase 3)
+// =============================================================================
+
+/**
+ * C-compatible snapshot of the real-time engine state.
+ * Populated by kelly_brain_get_rt_state(). All values are plain floats/ints
+ * so Python ctypes can consume them directly.
+ */
+typedef struct {
+    // Timing
+    double   bpm;
+    uint64_t sample_position;
+    uint64_t bar_start;
+    uint32_t bar;
+    uint32_t beat;
+    uint32_t numerator;
+    uint32_t denominator;
+    int      playing;  // bool as int for C compat
+
+    // Emotion (VAD)
+    float    valence;
+    float    arousal;
+    float    dominance;
+    int16_t  discrete_emotion_id;
+    float    emotion_intensity;
+    float    emotion_confidence;
+
+    // Musical intent
+    float    tempo_bias;
+    float    rhythmic_density;
+    float    groove_strength;
+    float    harmonic_tension;
+    float    harmonic_motion;
+    float    melodic_activity;
+    float    texture_density;
+    float    dynamic_range;
+
+    // Track parameters
+    float    track_params[16];
+
+    // Monotonic sequence counter
+    uint64_t sequence;
+} KellyRTState;
+
+/**
+ * Parameter update target for kelly_brain_push_rt_param()
+ */
+typedef enum {
+    KELLY_RT_TARGET_BPM = 0,
+    KELLY_RT_TARGET_EMOTION = 1,
+    KELLY_RT_TARGET_INTENT = 2,
+    KELLY_RT_TARGET_TRACK_PARAM = 3,
+    KELLY_RT_TARGET_TRANSPORT = 4
+} KellyRTTarget;
+
+/**
+ * Get a snapshot of the current real-time engine state.
+ * Lock-free read from atomic fields — safe to call at high frequency.
+ *
+ * @param brain KellyBrain instance
+ * @param out_state Pointer to caller-allocated KellyRTState
+ * @return KELLY_SUCCESS on success, error code on failure
+ */
+KellyErrorCode kelly_brain_get_rt_state(const KellyBrain* brain, KellyRTState* out_state);
+
+/**
+ * Push a parameter update into the RT-safe queue.
+ * The audio thread will consume it on its next callback.
+ *
+ * @param brain KellyBrain instance
+ * @param target Which parameter category to update
+ * @param param_index Sub-parameter index (meaning depends on target)
+ * @param value New value
+ * @return KELLY_SUCCESS on success, KELLY_ERROR_INVALID_PARAMETER if queue full
+ */
+KellyErrorCode kelly_brain_push_rt_param(KellyBrain* brain, KellyRTTarget target,
+                                         uint8_t param_index, float value);
+
+// =============================================================================
 // Utility Functions
 // =============================================================================
 
