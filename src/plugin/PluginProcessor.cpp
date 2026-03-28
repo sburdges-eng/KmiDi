@@ -275,6 +275,11 @@ PluginProcessor::createParameterLayout() {
 void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
   currentSampleRate_ = sampleRate;
   currentBlockSize_ = samplesPerBlock;
+
+  // Set latency instrument deadline based on buffer size
+  double bufferMs = 1000.0 * samplesPerBlock / sampleRate;
+  latencyInstrument_.setDeadlineUs(bufferMs * 1000.0 * 0.8); // 80% of buffer = overrun
+  latencyInstrument_.reset();
   playheadPosition_ = 0.0;
   sampleCounter_ = 0;
 
@@ -343,6 +348,9 @@ bool PluginProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const {
 
 void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
                                    juce::MidiBuffer &midiMessages) {
+  // Per-block latency measurement (RT-safe, no allocations)
+  auto latencyScope = latencyInstrument_.measure();
+
 #if JUCE_MAC
   // Promote to interactive QoS so we stay off E-cores (Apple Silicon low-latency).
   pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);

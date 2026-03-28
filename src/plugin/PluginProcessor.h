@@ -55,6 +55,7 @@ class MLIntentPipeline;
 } // namespace kelly
 using KellyBrain = kelly::KellyBrain;
 using MLIntentPipeline = kelly::MLIntentPipeline;
+#include "penta/diagnostics/BlockLatencyInstrument.h"
 #include <array>
 #include <atomic>
 #include <memory>
@@ -383,6 +384,9 @@ private:
 
   /** Device audio workgroup (set by host). Use for realtime worker join on macOS. */
   juce::AudioWorkgroup audioWorkgroup_;
+
+  /** Per-block latency instrument — captures P50/P90/P99 processing times. */
+  penta::diagnostics::BlockLatencyInstrument latencyInstrument_;
 
   // Lookahead buffer for ML inference
   static constexpr int ML_LOOKAHEAD_MS = 20;
