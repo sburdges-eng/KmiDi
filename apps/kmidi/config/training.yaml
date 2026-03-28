@@ -1,0 +1,43 @@
+# KmiDi JEPA training config (align with libs/jepa when implemented)
+# Stub: copy to training_local.yaml and fill for your runs.
+
+job_name: kmidi-jepa-audio
+
+# Encoder
+encoder:
+  context:
+    type: "cnn"  # or transformer
+    embed_dim: 256
+    # ...
+  target:
+    type: "cnn"
+    embed_dim: 256
+    stop_gradient: true
+
+# Predictor
+predictor:
+  hidden_dims: [512, 256]
+  output_dim: 256
+
+# Loss (e.g. VICReg-style or MSE)
+loss:
+  type: "vicreg"  # or mse
+  lambda_inv: 25.0
+  lambda_var: 25.0
+  lambda_cov: 1.0
+
+# Data (see config/datasets.toml)
+data:
+  manifest_path: "data/splits/train.csv"
+  batch_size: 32
+  num_workers: 4
+  # audio:
+  #   sample_rate: 16000
+  #   chunk_seconds: 2.0
+
+# Train
+train:
+  epochs: 100
+  lr: 1.0e-3
+  output_dir: "data/checkpoints/jepa"
+  save_every: 10

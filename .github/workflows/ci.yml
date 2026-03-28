@@ -284,6 +284,18 @@ jobs:
       run: |
         cd src-tauri && cargo test --no-fail-fast
 
+  secrets_scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Secrets scan
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   quality:
     name: Code Quality Checks
     runs-on: ubuntu-latest

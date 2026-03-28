@@ -59,7 +59,6 @@ export function useTextParse(options?: UseTextParseOptions): UseTextParseResult 
       // Only update if this is still the latest request
       if (text === latestTextRef.current) {
         setParseResult(result);
-        setIsParsing(false);
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
@@ -67,6 +66,10 @@ export function useTextParse(options?: UseTextParseOptions): UseTextParseResult 
         // On API failure, try offline keyword matching
         setParseResult(offlineFallback(text));
         setError(err instanceof Error ? err.message : 'Parse failed');
+      }
+    } finally {
+      // Always reset isParsing for the latest request to avoid stuck spinner
+      if (text === latestTextRef.current) {
         setIsParsing(false);
       }
     }

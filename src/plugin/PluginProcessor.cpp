@@ -517,10 +517,15 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
   // numSamples already defined earlier in function - don't redeclare
 
-  // CRITICAL: Audio thread must NEVER block. Use try_lock instead of
-  // lock_guard. If we can't acquire the lock immediately, skip this block to
-  // avoid audio glitches.
-  if (hasPendingMidi_.load() && isPlaying) {
+  // CRITICAL: Audio thread must NEVER block. Use try_lock so we skip
+  // this block if the mutex is held by the generation thread.
+  // NOTE: std::mutex::try_lock is technically not RT-safe (POSIX spec
+  // allows it to be a syscall), but on macOS/Windows it compiles to a
+  // single atomic CAS when uncontended. A fully lock-free SPSC queue
+  // would be ideal but requires refactoring all midiMutex_ call sites.
+  // Accepted trade-off: if priority inversion occurs the audio block is
+  // skipped (return below), not blocked.
+  if (hasPendingMidi_.load(std::memory_order_acquire) && isPlaying) {
     std::unique_lock<std::mutex> lock(midiMutex_, std::try_to_lock);
     if (!lock.owns_lock()) {
       // Couldn't acquire lock - skip this block to avoid blocking audio thread

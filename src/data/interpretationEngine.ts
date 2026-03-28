@@ -9,6 +9,7 @@
 
 import type { CompleteSongIntentRequest } from '../types/Intent';
 import type { ParamDistribution } from '../types/Interpretation';
+import { TAXONOMY_TREE, type TaxonomyNode } from './taxonomyTree';
 
 // ─── Types ───────────────────────────────────────
 
@@ -184,6 +185,27 @@ export function mergeDistributions(
   return merged;
 }
 
+// ─── Node Contributions ─────────────────────────
+
+/** Walk taxonomy tree and collect paramContributions for all active node IDs. */
+function collectNodeContributions(
+  activeNodeIds: Set<string>,
+): Record<string, ParamDistribution>[] {
+  const contributions: Record<string, ParamDistribution>[] = [];
+
+  function walk(nodes: TaxonomyNode[]) {
+    for (const node of nodes) {
+      if (activeNodeIds.has(node.id) && node.paramContributions) {
+        contributions.push(node.paramContributions);
+      }
+      if (node.children) walk(node.children);
+    }
+  }
+
+  walk(TAXONOMY_TREE);
+  return contributions;
+}
+
 // ─── Interpret ──────────────────────────────────
 
 export function interpret(
@@ -197,12 +219,15 @@ export function interpret(
   // 1. Resolve clusters
   const scoredClusters = resolveContextClusters(activeNodeIds, keywords, clusters);
 
-  // 2. Merge cluster overrides
+  // 2. Collect paramContributions from active taxonomy nodes
+  const contributions = collectNodeContributions(activeNodeIds);
+
+  // 3. Merge node contributions + cluster overrides
   const overrides = scoredClusters.map((sc) => sc.cluster.parameterOverrides);
   const weights = scoredClusters.map((sc) => sc.score);
-  const distributions = mergeDistributions([], overrides, weights);
+  const distributions = mergeDistributions(contributions, overrides, weights);
 
-  // 3. Apply interpretive level (scale spreads)
+  // 4. Apply interpretive level (scale spreads)
   const spreadScale = 0.1 + interpretiveLevel * 0.9;
   for (const [param, dist] of Object.entries(distributions)) {
     if (dist.type === 'gaussian' && dist.spread !== undefined) {
@@ -210,7 +235,7 @@ export function interpret(
     }
   }
 
-  // 4. Apply pinned params
+  // 5. Apply pinned params
   for (const [param, value] of pinnedParams) {
     if (typeof value === 'number') {
       distributions[param] = { type: 'gaussian', center: value, spread: 0 };

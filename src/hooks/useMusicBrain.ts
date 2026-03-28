@@ -145,7 +145,11 @@ export function buildGeneratePayload(intent: CompleteSongIntentRequest): Generat
   };
 }
 
-export const useMusicBrain = () => {
+/**
+ * Music Brain API client — module-level singleton, not a React hook.
+ * All methods are stable references safe for use in dependency arrays.
+ */
+function createMusicBrain() {
   const getEmotions = async (): Promise<string[]> => {
     return apiCall<string[]>('/emotions');
   };
@@ -272,4 +276,10 @@ export const useMusicBrain = () => {
     getAudioModels,
     healthCheck,
   };
-};
+}
+
+/** Stable singleton — safe for React dependency arrays */
+export const musicBrain = createMusicBrain();
+
+/** @deprecated Use `musicBrain` directly instead of calling this as a hook */
+export const useMusicBrain = () => musicBrain;

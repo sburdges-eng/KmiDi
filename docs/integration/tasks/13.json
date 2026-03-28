@@ -1,0 +1,11 @@
+{
+  "id": "13",
+  "subject": "Phase 4b: Implement DAW send_to_daw bridge",
+  "description": "Gap 7: Implement send_to_daw(daw_name, midi_data) in ComprehensiveIntegrationManager by delegating to music_brain.agents.ableton_bridge or equivalent when daw_bridges initialized. Wire OSC bridges into main execute_workflow path. Document DAW connection requirements.",
+  "activeForm": "Implementing DAW bridge",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": [
+    "9"
+  ]
+}

@@ -3,4 +3,8 @@ name = "kmidi"
 version = "0.1.0"
 description = "KmiDi desktop and Music Brain API app"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "pydantic>=2.0",
+    "fastapi>=0.100",
+    "uvicorn>=0.20",
+]

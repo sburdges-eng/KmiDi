@@ -224,7 +224,10 @@ juce::File PluginState::getPresetsDirectory() const {
     
     // Create directory if it doesn't exist
     if (!presetsDir.exists()) {
-        presetsDir.createDirectory();
+        auto result = presetsDir.createDirectory();
+        if (result.failed()) {
+            DBG("Failed to create presets directory: " + result.getErrorMessage());
+        }
     }
     
     return presetsDir;

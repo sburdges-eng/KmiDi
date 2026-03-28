@@ -54,8 +54,7 @@ jobs:
 
       - name: Type check with mypy
         run: |
-          mypy music_brain
-        continue-on-error: true
+          mypy music_brain/api.py music_brain/intelligence/ music_brain/penta_core/ml/model_registry.py --ignore-missing-imports
 
       - name: Run pytest with coverage
         run: |

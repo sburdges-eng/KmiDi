@@ -546,3 +546,6 @@ experiments/MERGE_CONFLICT_REPORT.txt
 
 # Local PR description draft (use with gh pr create --body-file)
 .pr-body.md
+
+# Git worktrees
+.worktrees/

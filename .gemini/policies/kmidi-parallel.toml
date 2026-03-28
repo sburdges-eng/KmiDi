@@ -1,0 +1,283 @@
+# KMiDi Parallel Workflow Policy
+# Gemini: planning, review, exploration, code proposals
+# Claude: heavy coding, all commits and approvals
+#
+# Load with: gemini --policy .gemini/policies/kmidi-parallel.toml
+
+# ============================================================================
+# FULL READ ACCESS
+# ============================================================================
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "read_file"
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "list_directory"
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "grep_search"
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "glob"
+
+# ============================================================================
+# SHELL — exploration, git read, tests, python
+# ============================================================================
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "bash" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "ls" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "cat" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "head" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "tail" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "find" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "grep" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "rg" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "wc" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "diff" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "echo" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "pwd" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "which" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "command" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "nm" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "file" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "sort" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "uniq" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "cd" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "df" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "du" ]
+
+# Git — all subcommands (Gemini reviews, Claude commits)
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "git" ]
+
+# Python / testing
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "python3" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "/Users/seanburdges/Dev/KmiDi/venv/bin/python" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "cmake" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "npm" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "pip" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "chmod" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "tmux" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "ps" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "kill" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "sleep" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "true" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "source" ]
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "run_shell_command"
+commandPrefix = [ "export" ]
+
+# ============================================================================
+# WRITE — allowed (Claude reviews and commits)
+# ============================================================================
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "write_file"
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "replace"
+
+# ============================================================================
+# MEMORY / INTERACTION / AGENTS
+# ============================================================================
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "save_memory"
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "ask_user"
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "write_todos"
+
+[[rule]]
+decision = "allow"
+priority = 950
+toolName = "google_web_search"

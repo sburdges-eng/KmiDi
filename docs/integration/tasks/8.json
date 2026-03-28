@@ -1,0 +1,14 @@
+{
+  "id": "8",
+  "subject": "Phase 1b: Create penta_core re-export package at repo root",
+  "description": "Gap 2: Create penta_core/ at repo root that re-exports from KmiDi_CANON.brain.penta_core. Ensures 'from penta_core.ml.inference import X' works regardless of path order. Mirrors mcp_workstation approach.",
+  "activeForm": "Creating penta_core re-export package",
+  "status": "completed",
+  "blocks": [
+    "9",
+    "10"
+  ],
+  "blockedBy": [
+    "7"
+  ]
+}

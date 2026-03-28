@@ -1,0 +1,12 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ai-core"
+version = "0.1.0"
+description = "Shared LangGraph-based AI orchestration core"
+requires-python = ">=3.11"
+dependencies = [
+    "langgraph",
+]

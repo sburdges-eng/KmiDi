@@ -1,0 +1,11 @@
+{
+  "id": "12",
+  "subject": "Phase 4a: Create PRROT Python bridge (pybind11 or ctypes wrapper)",
+  "description": "Gap 6: Create Python bindings for PRROT C++ engine (pybind11 preferred, ctypes fallback). Wire prrot_bridge into AIOrchestrator and IntegrationBridge. Fix IntegrationBridge import from src.prrot.PRROTEngine (C++ only, not Python importable). PRROT .cpp files exist in KmiDi_FINAL/engine/src/prrot/ and xcode/KmiDi_CANON/body/prrot/.",
+  "activeForm": "Creating PRROT Python bridge",
+  "status": "completed",
+  "blocks": [],
+  "blockedBy": [
+    "10"
+  ]
+}

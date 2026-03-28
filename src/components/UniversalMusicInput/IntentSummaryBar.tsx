@@ -1,5 +1,3 @@
-import type { ParseTextResponse } from '../../types/Interpretation';
-
 interface IntentSummaryBarProps {
   summary: string;
   isValid: boolean;

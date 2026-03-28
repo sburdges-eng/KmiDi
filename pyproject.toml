@@ -17,15 +17,15 @@ authors = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "numpy>=1.21",
-    "torch>=2.0",
-    "librosa>=0.10",
+    "numpy~=1.21",
+    "torch~=2.0",
+    "librosa~=0.10",
     "pyyaml>=6.0",
-    "scipy>=1.8",
-    "pydantic>=2.0",
+    "scipy~=1.8",
+    "pydantic~=2.0",
     "pybind11>=2.10",
-    "fastapi>=0.100",
-    "uvicorn>=0.20",
+    "fastapi~=0.100",
+    "uvicorn~=0.20",
 ]
 
 [project.optional-dependencies]

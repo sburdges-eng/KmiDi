@@ -45,7 +45,16 @@
 			"path": "./experiments"
 		},
 		{
-			"path": "../../Desktop/openai_pulse_recovery_2026-03-06"
+			"name": "App (Python)",
+			"path": "./apps/kmidi"
+		},
+		{
+			"name": "JEPA (RT AI)",
+			"path": "./libs/jepa"
+		},
+		{
+			"name": "AI Core",
+			"path": "./libs/ai_core"
 		}
 	],
 	"settings": {

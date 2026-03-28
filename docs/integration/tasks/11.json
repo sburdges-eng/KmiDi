@@ -1,0 +1,12 @@
+{
+  "id": "11",
+  "subject": "Phase 3: Wire real-time engine + behavior_lab through IntegrationBridge",
+  "description": "Gap 5: Connect music_brain.realtime to AIOrchestrator path. Wire behavior_lab through ComprehensiveIntegrationManager. Ensure IntegrationBridge can resolve KmiDi_CANON.brain.music_brain.realtime import. Complete run_behavior_scenario delegation.",
+  "activeForm": "Wiring real-time + behavior_lab",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": [
+    "9",
+    "10"
+  ]
+}

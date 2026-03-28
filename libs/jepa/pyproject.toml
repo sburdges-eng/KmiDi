@@ -1,0 +1,13 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jepa"
+version = "0.1.0"
+description = "Joint-Embedding Predictive Architecture stubs for self-supervised representation learning"
+requires-python = ">=3.11"
+dependencies = [
+    "torch",
+    "numpy",
+]

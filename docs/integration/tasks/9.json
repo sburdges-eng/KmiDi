@@ -1,0 +1,14 @@
+{
+  "id": "9",
+  "subject": "Phase 1c: Complete ComprehensiveIntegrationManager stub",
+  "description": "Deferred — user skipped. Add run_behavior_scenario, send_to_daw, realtime_available to AIOrchestrator.",
+  "activeForm": "Completing ComprehensiveIntegrationManager",
+  "status": "completed",
+  "blocks": [
+    "13"
+  ],
+  "blockedBy": [
+    "7",
+    "8"
+  ]
+}

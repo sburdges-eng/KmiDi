@@ -1,54 +1,65 @@
-# KmiDi Canonical Repository
+# KMiDi
 
-`KmiDi/` is the active canonical workspace for the KmiDi product line.
+Emotion-driven music generation platform featuring 10 DAW plugins, 12 companion engines, and 23 ML model tasks. Built with React, Tauri, JUCE, Python, Rust, and C++.
 
-## Canonical UI Surface (V1)
+## Architecture
 
-The only supported V1 desktop shell is **Tauri + React**:
-- `src-tauri/` — Rust Tauri host bindings
-- React frontend (web layer)
+- **music_brain/** -- Python ML core: emotion analysis, groove generation, audio processing
+- **apps/kmidi/** -- Tauri desktop app with React frontend
+- **libs/ai-core/** -- Shared ML and inference libraries
+- **src/** -- JUCE C++ audio plugins and Rust bindings
+- **src-tauri/** -- Rust Tauri host bindings
+- **plugin/** -- JUCE audio/MIDI plugin implementation
+- **docs/** -- Full documentation and ADRs
 
-## Supporting Layers
+## Quickstart
 
-- `src/ui/` — JUCE/C++ audio visualization and controls (not standalone UI)
-- `plugin/` — JUCE audio/MIDI plugin implementation
-- `KmiDi_FINAL/engine/` — Engine components
-- `src_penta-core/`, `python/`, `training/` — Model and toolchain layers
-- `music_brain/` — Python intent pipeline
-- `build/`, `tools/`, `scripts/` — Build and maintenance utilities
+### Prerequisites
 
-## Legacy UI Surfaces (Deprecated)
+- Node.js >= 18
+- Python >= 3.9
+- Rust toolchain (for Tauri builds)
 
-Per [ADR 001](docs/adr/001-one-ui-path.md), legacy UI surfaces have been moved to `legacy/ui/`:
-- `legacy/ui/appkit_shell/` — Native macOS AppKit shell
-- `legacy/ui/qt_gui/` — Qt6 UI surface
+### Install
 
-See `legacy/ui/README.md` for details on deprecated surfaces.
+```bash
+# Frontend and Tauri dependencies
+npm install
 
-## Canonical Rust Layer
+# Python environment (editable install)
+pip install -e ".[dev,audio]"
 
-The canonical Rust layer is maintained outside this repository at:
+# Run the dev server
+npm run dev
+```
 
-- `~/Dev/swif:xcode/KmiDi/KmiDi_CANON/`
+### Running Tests
 
-That path includes:
+```bash
+pytest
+npm test
+```
 
-- `body/` — core runtime and engine code
-- `brain/` — orchestration and model-facing logic
-- `training/` — model training and assertions
-- `ui/` — UI bindings for Rust-facing surfaces (external, not in V1 build)
+## V1 Build Paths
 
-## V1 build and dev
+- **Pipeline A (penta_core + PyInstaller + Tauri):** `./scripts/build_v1.sh`
+- **Pipeline B (KellyFFI + Tauri):** `./scripts/build-full-stack.sh` -- see [docs/FULL_STACK_BUILD.md](docs/FULL_STACK_BUILD.md)
 
-- **Dev setup:** `./scripts/dev-setup.sh` then `npm run dev:all` (see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)).
+## Development
 
-Two V1 build paths (use the one that matches your goal):
+Pre-commit hooks are configured for linting, formatting, type checking, and secret scanning:
 
-- **V1 pipeline A — penta_core + PyInstaller + Tauri:** `./scripts/build_v1.sh`. Builds: sync entities → C++ penta_core / Python bindings → PyInstaller-packaged Music Brain API → Tauri app. No KellyFFI.
-- **V1 pipeline B — KellyFFI + Tauri (native desktop integration):** See [docs/FULL_STACK_BUILD.md](docs/FULL_STACK_BUILD.md) and `./scripts/build-full-stack.sh`. Builds KellyFFI shared lib (and optional KellyPlugin_VST3) for React → Tauri → KellyFFI → KellyCore. Use this path for plugin build verification and DAW/automation validation.
+```bash
+pip install pre-commit
+pre-commit install
+```
 
-## Operational Notes
+Dev setup script: `./scripts/dev-setup.sh` -- see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for details.
 
-- Preserve the separation between UI systems and avoid editing duplicate snapshots.
-- If you need to add or adjust a workflow, prefer updating this repo and matching canonical references in `swif:xcode/KmiDi/KmiDi_CANON/` where applicable.
-- Keep this repository as the workspace source of truth for active UI work.
+## Documentation
+
+See [docs/](docs/) for detailed guides on model training, plugin development, companion engine APIs, and architecture decision records.
+
+## License
+
+MIT

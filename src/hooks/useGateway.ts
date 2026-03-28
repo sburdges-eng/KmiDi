@@ -38,6 +38,9 @@ interface GatewayState {
 export function useGateway(sessionId: string) {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttempts = useRef(0);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
+  const connectRef = useRef<(() => void) | undefined>(undefined);
   const pendingCallbacks = useRef<Map<string, {
     resolve: (resp: PluginGatewayResponse) => void;
     reject: (err: Error) => void;
@@ -102,11 +105,11 @@ export function useGateway(sessionId: string) {
       }
       pendingCallbacks.current.clear();
 
-      // Auto-reconnect
-      if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
+      // Auto-reconnect (use ref to avoid stale closure)
+      if (mountedRef.current && reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
         reconnectAttempts.current += 1;
-        setTimeout(connect, RECONNECT_DELAY_MS);
-      } else {
+        reconnectTimerRef.current = setTimeout(() => connectRef.current?.(), RECONNECT_DELAY_MS);
+      } else if (mountedRef.current) {
         setState(s => ({ ...s, connection: 'error' }));
       }
     };
@@ -118,7 +121,11 @@ export function useGateway(sessionId: string) {
     wsRef.current = ws;
   }, [sessionId]);
 
+  // Keep connectRef in sync with latest connect callback
+  connectRef.current = connect;
+
   const disconnect = useCallback(() => {
+    if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
     wsRef.current?.close();
     wsRef.current = null;
     setState(s => ({ ...s, connection: 'disconnected' }));
@@ -194,8 +201,12 @@ export function useGateway(sessionId: string) {
   // ── Lifecycle ────────────────────────────────────────────────────────────
 
   useEffect(() => {
+    mountedRef.current = true;
     connect();
-    return disconnect;
+    return () => {
+      mountedRef.current = false;
+      disconnect();
+    };
   }, [connect, disconnect]);
 
   return {

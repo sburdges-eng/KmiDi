@@ -182,11 +182,17 @@ def dispatch_intent(
 
         try:
             engine = get_engine(engine_name)
+        except ImportError:
+            logger.warning("Engine %s not available (missing module)", engine_name)
+            results[engine_name] = None
+            continue
+
+        try:
             output = engine.generate(**engine_params)
             results[engine_name] = output
             logger.info("Engine %s produced output", engine_name)
         except Exception:
-            logger.exception("Engine %s failed", engine_name)
-            results[engine_name] = {"error": f"Engine {engine_name} failed"}
+            logger.exception("Engine %s failed during generation", engine_name)
+            results[engine_name] = None
 
     return results

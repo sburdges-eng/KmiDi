@@ -40,8 +40,17 @@ ingest_dataset() {
 # Run for mtg_jamendo
 ingest_dataset "mtg_jamendo"
 
-# Run for fma_full
-ingest_dataset "fma_full"
+# Run for fma_full using aria2 for robust resume
+echo ""
+echo ">>> Starting ingestion for: fma_full"
+echo ">>> [1/2] Downloading (using aria2)..."
+chmod +x scripts/download_fma_full_aria2.sh
+./scripts/download_fma_full_aria2.sh
+
+echo ">>> [2/2] Preprocessing..."
+python3 scripts/utilities/prepare_datasets.py --dataset "fma_full" --preprocess
+
+echo ">>> Finished: fma_full"
 
 echo ""
 echo "===================================================="

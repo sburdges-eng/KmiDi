@@ -1,0 +1,13 @@
+{
+  "ui": {
+    "hideContextSummary": false,
+    "errorVerbosity": "full"
+  },
+  "general": {
+    "defaultApprovalMode": "auto_edit"
+  },
+  "context": {
+    "discoveryMaxDirs": 500,
+    "loadMemoryFromIncludeDirectories": true
+  }
+}

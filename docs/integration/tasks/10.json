@@ -1,0 +1,15 @@
+{
+  "id": "10",
+  "subject": "Phase 2: Fix C++ build — JUCE + pybind11 → compiled artifacts",
+  "description": "Gap 3: Configure CMake with pybind11, build KellyCore, KellyFFI, penta_core_native.so, KellyPlugin_VST3. Verify JUCE at external/JUCE, fix any missing deps (googletest). Produce compiled .so/.dylib files. Includes plugin builds (VST3/CLAP).",
+  "activeForm": "Fixing C++ build system",
+  "status": "completed",
+  "blocks": [
+    "14",
+    "11"
+  ],
+  "blockedBy": [
+    "7",
+    "8"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "7",
+  "subject": "Phase 1a: Create mcp_workstation re-export package at repo root",
+  "description": "Gap 1: Create mcp_workstation/ at repo root with __init__.py that re-exports from KmiDi_CANON.brain.mcp_workstation. Ensures 'from mcp_workstation.X' works when repo root is on path. Single source of truth remains CANON; root package is a thin facade.",
+  "activeForm": "Creating mcp_workstation re-export package",
+  "status": "completed",
+  "blocks": [
+    "8",
+    "9",
+    "10"
+  ],
+  "blockedBy": []
+}

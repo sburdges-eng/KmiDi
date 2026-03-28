@@ -1,0 +1,11 @@
+{
+  "id": "14",
+  "subject": "Phase 5: Consolidate training infrastructure",
+  "description": "Gap 4: Document JEPA as canonical training path (KmiDi_CANON.training.train_jepa). Either implement root training/ stubs or consolidate into KmiDi_CANON/training. Wire JEPA checkpoints to penta_core.ml.inference via model registry.",
+  "activeForm": "Consolidating training infrastructure",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": [
+    "10"
+  ]
+}
