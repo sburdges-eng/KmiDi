@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use tauri::command;
-use crate::bridge::kelly_ffi::{get_kelly_brain_manager, IntentResult, GeneratedMidi, EmotionState, KellyResult, KellyError};
+use crate::bridge::kelly_ffi::{get_kelly_brain_manager, IntentResult, GeneratedMidi, EmotionState, RTState, RTParamTarget, KellyResult, KellyError};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EmotionalIntent {
@@ -111,6 +111,34 @@ pub async fn kelly_brain_get_available_emotions() -> Result<serde_json::Value, S
 #[command]
 pub async fn kelly_brain_get_version() -> Result<String, String> {
     Ok(crate::bridge::kelly_ffi::KellyBrain::get_version())
+}
+
+// =============================================================================
+// Real-Time State Commands (Phase 3 — Direct C FFI, no Python)
+// =============================================================================
+
+#[command]
+pub async fn kelly_brain_get_rt_state() -> Result<RTState, String> {
+    let manager = get_kelly_brain_manager();
+    manager.with_brain(|brain| brain.get_rt_state())
+        .map_err(|e| e.into())
+}
+
+#[command]
+pub async fn kelly_brain_push_rt_param(target: i32, param_index: u8, value: f32) -> Result<bool, String> {
+    let manager = get_kelly_brain_manager();
+    let rt_target = match target {
+        0 => RTParamTarget::Bpm,
+        1 => RTParamTarget::Emotion,
+        2 => RTParamTarget::Intent,
+        3 => RTParamTarget::TrackParam,
+        4 => RTParamTarget::Transport,
+        _ => return Err("Invalid RT param target".to_string()),
+    };
+    match manager.with_brain(|brain| brain.push_rt_param(rt_target, param_index, value)) {
+        Ok(()) => Ok(true),
+        Err(e) => Err(e.into()),
+    }
 }
 
 // =============================================================================

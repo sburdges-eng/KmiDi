@@ -118,12 +118,100 @@ extern "C" {
     // Utility functions
     fn kelly_get_version() -> *const c_char;
     fn kelly_check_data_files(data_path: *const c_char) -> bool;
+
+    // Real-time state (Phase 3)
+    fn kelly_brain_get_rt_state(brain: *const KellyBrainHandle, out_state: *mut KellyRTStateC) -> KellyErrorCode;
+    fn kelly_brain_push_rt_param(brain: *mut KellyBrainHandle, target: c_int, param_index: u8, value: c_float) -> KellyErrorCode;
 }
 
 // Opaque handle type (matches C typedef)
 #[repr(C)]
 pub struct KellyBrainHandle {
     _private: [u8; 0],
+}
+
+// =============================================================================
+// Real-Time State (Phase 3 — must match KellyRTState in kelly_ffi.h)
+// =============================================================================
+
+#[repr(C)]
+#[derive(Debug, Clone, Default)]
+pub struct KellyRTStateC {
+    pub bpm: f64,
+    pub sample_position: u64,
+    pub bar_start: u64,
+    pub bar: u32,
+    pub beat: u32,
+    pub numerator: u32,
+    pub denominator: u32,
+    pub playing: c_int,
+
+    pub valence: c_float,
+    pub arousal: c_float,
+    pub dominance: c_float,
+    pub discrete_emotion_id: i16,
+    pub emotion_intensity: c_float,
+    pub emotion_confidence: c_float,
+
+    pub tempo_bias: c_float,
+    pub rhythmic_density: c_float,
+    pub groove_strength: c_float,
+    pub harmonic_tension: c_float,
+    pub harmonic_motion: c_float,
+    pub melodic_activity: c_float,
+    pub texture_density: c_float,
+    pub dynamic_range: c_float,
+
+    pub track_params: [c_float; 16],
+
+    pub sequence: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RTState {
+    pub bpm: f64,
+    pub bar: u32,
+    pub beat: u32,
+    pub playing: bool,
+    pub valence: f32,
+    pub arousal: f32,
+    pub dominance: f32,
+    pub emotion_intensity: f32,
+    pub groove_strength: f32,
+    pub harmonic_tension: f32,
+    pub rhythmic_density: f32,
+    pub melodic_activity: f32,
+    pub sequence: u64,
+}
+
+impl From<&KellyRTStateC> for RTState {
+    fn from(c: &KellyRTStateC) -> Self {
+        RTState {
+            bpm: c.bpm,
+            bar: c.bar,
+            beat: c.beat,
+            playing: c.playing != 0,
+            valence: c.valence,
+            arousal: c.arousal,
+            dominance: c.dominance,
+            emotion_intensity: c.emotion_intensity,
+            groove_strength: c.groove_strength,
+            harmonic_tension: c.harmonic_tension,
+            rhythmic_density: c.rhythmic_density,
+            melodic_activity: c.melodic_activity,
+            sequence: c.sequence,
+        }
+    }
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub enum RTParamTarget {
+    Bpm = 0,
+    Emotion = 1,
+    Intent = 2,
+    TrackParam = 3,
+    Transport = 4,
 }
 
 // =============================================================================
@@ -505,6 +593,29 @@ impl KellyBrain {
         unsafe { kelly_check_data_files(c_path.as_ptr()) }
     }
     
+    /// Get real-time engine state snapshot (lock-free)
+    pub fn get_rt_state(&self) -> KellyResult<RTState> {
+        let mut c_state = KellyRTStateC::default();
+        let result = unsafe {
+            kelly_brain_get_rt_state(self.handle, &mut c_state)
+        };
+        match result {
+            KellyErrorCode::Success => Ok(RTState::from(&c_state)),
+            error => Err(error.into()),
+        }
+    }
+
+    /// Push a parameter update into the RT-safe queue
+    pub fn push_rt_param(&mut self, target: RTParamTarget, param_index: u8, value: f32) -> KellyResult<()> {
+        let result = unsafe {
+            kelly_brain_push_rt_param(self.handle, target as c_int, param_index, value as c_float)
+        };
+        match result {
+            KellyErrorCode::Success => Ok(()),
+            error => Err(error.into()),
+        }
+    }
+
     /// Get last error from C library
     fn get_last_error(&self) -> KellyError {
         unsafe {
