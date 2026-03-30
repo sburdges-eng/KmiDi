@@ -29,7 +29,7 @@ namespace kelly {
 
 class KellyBrainLegacy {
 public:
-    KellyBrain(int tempo = 120, unsigned int seed = 0)
+    KellyBrainLegacy(int tempo = 120, unsigned int seed = 0)
         : midiGenerator_(tempo, seed),
           vadSystem_(&intentProcessor_.thesaurus()) {}  // thesaurus() returns const&, which is fine
 

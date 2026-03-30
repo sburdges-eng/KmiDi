@@ -124,7 +124,7 @@ struct IntentResult {
 
 class InlineEmotionThesaurus {
 public:
-    EmotionThesaurus() {
+    InlineEmotionThesaurus() {
         initializeNodes();
     }
     
