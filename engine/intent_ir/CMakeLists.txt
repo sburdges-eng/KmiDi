@@ -11,7 +11,7 @@ option(
 
 set(PREBUILT_RUST_LIB "${CMAKE_CURRENT_SOURCE_DIR}/target/release/libintent_ir.a")
 set(FFI_HEADER "${CMAKE_BINARY_DIR}/include/intent_ir_ffi.h")
-set(SOURCE_FFI_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/../src/bridge/intent_ir_ffi.h")
+set(SOURCE_FFI_HEADER "${CMAKE_SOURCE_DIR}/src/bridge/intent_ir_ffi.h")
 
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
@@ -60,7 +60,7 @@ else()
     add_custom_target(intent_ir_rust_lib)
 endif()
 
-add_library(intent_ir_rust STATIC IMPORTED)
+add_library(intent_ir_rust STATIC IMPORTED GLOBAL)
 set_target_properties(intent_ir_rust PROPERTIES IMPORTED_LOCATION ${PREBUILT_RUST_LIB})
 add_dependencies(intent_ir_rust intent_ir_rust_lib)
 

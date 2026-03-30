@@ -165,6 +165,15 @@ endif()
 add_subdirectory(src_penta-core)
 
 # ============================================================================
+# Intent IR Rust crate (validation, clamping, builder)
+# ============================================================================
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/engine/intent_ir/CMakeLists.txt)
+    add_subdirectory(engine/intent_ir)
+    set(KMIDI_HAS_INTENT_IR ON)
+    message(STATUS "Intent IR Rust crate enabled")
+endif()
+
+# ============================================================================
 # In-repo DSP core (merged from KmiDi_FINAL; optional link into KellyCore)
 # ============================================================================
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/engine/src/dsp/CMakeLists.txt)
@@ -296,6 +305,13 @@ target_link_libraries(KellyCore PUBLIC
     juce::juce_osc
     readerwriterqueue
 )
+# Link Rust Intent IR if available
+if(KMIDI_HAS_INTENT_IR)
+    target_link_libraries(KellyCore PUBLIC ${INTENT_IR_RUST_ARCHIVE})
+    add_dependencies(KellyCore intent_ir_rust_lib)
+    target_compile_definitions(KellyCore PRIVATE INTENT_IR_RUST_AVAILABLE)
+    message(STATUS "KellyCore: Intent IR Rust linkage enabled (${INTENT_IR_RUST_ARCHIVE})")
+endif()
 
 if(KMIDI_REQUIRE_QT)
     target_link_libraries(KellyCore PUBLIC
