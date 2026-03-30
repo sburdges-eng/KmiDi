@@ -1,5 +1,6 @@
 #pragma once
 
+#include "voice/CMUDictionary.h"
 #include "voice/LyricTypes.h"
 #include <string>
 #include <vector>
@@ -115,6 +116,8 @@ public:
     float calculateRhythmScore(const std::vector<int>& stressPattern) const;
 
 private:
+    CMUDictionary cmuDictionary_;
+
     /**
      * Simple vowel detection (letter-based).
      */
