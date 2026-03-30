@@ -225,6 +225,11 @@ if(ENABLE_ONNX_RUNTIME)
 endif()
 
 # ============================================================================
+# daiw_core — standalone RT-safe primitives library
+# ============================================================================
+add_subdirectory(libs/daiw)
+
+# ============================================================================
 # Main Kelly library (shared core)
 # ============================================================================
 file(GLOB_RECURSE KELLY_CORE_SOURCES CONFIGURE_DEPENDS
@@ -243,11 +248,23 @@ if(NOT pybind11_FOUND)
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/cpp_music_brain/python/.*\\.cpp$")
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/.*\\.cpp$")
 endif()
-# NOTE: Previous line 31 had "list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/")"
-# which would exclude ALL source files (since all paths contain "/src/"), making
-# KELLY_CORE_SOURCES empty. This has been removed. If macro conflicts exist,
-# they should be fixed by excluding specific problematic files/directories rather
-# than excluding everything.
+# Exclude daiw-namespace files (built separately as daiw_core static lib)
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/dsp/audio_buffer\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/dsp/simd_ops\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/dsp/dsp\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/core/memory\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/core/logging\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/core/types\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/midi/midi_engine\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/midi/MidiIO\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/midi/MidiMessage\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/midi/MidiSequence\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/harmony/chord\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/harmony/progression\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/audio/AudioFile\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/export/StemExporter\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/project/ProjectFile\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/groove_bindings\\.cpp$")
 
 if(BUILD_KELLY_CORE)
 add_library(KellyCore STATIC ${KELLY_CORE_SOURCES})
@@ -265,6 +282,7 @@ target_include_directories(KellyCore PUBLIC
 )
 
 target_link_libraries(KellyCore PUBLIC
+    daiw_core
     juce::juce_audio_basics
     juce::juce_audio_devices
     juce::juce_audio_formats
@@ -302,6 +320,12 @@ if(ENABLE_ONNX_RUNTIME AND ONNXRuntime_FOUND)
     target_link_libraries(KellyCore PUBLIC ${ONNXRuntime_LIBRARIES})
     target_compile_definitions(KellyCore PUBLIC ENABLE_ONNX_RUNTIME)
     message(STATUS "KellyCore: ONNX Runtime inference enabled")
+endif()
+
+# Python bridge activation — enables 52 call sites across 9 bridge files
+if(pybind11_FOUND)
+    target_compile_definitions(KellyCore PRIVATE PYTHON_AVAILABLE)
+    message(STATUS "KellyCore: PYTHON_AVAILABLE defined (bridge layer active)")
 endif()
 
 target_compile_options(KellyCore PRIVATE

@@ -28,7 +28,6 @@
 #include "MusicianCommandPanel.h"
 #include "ScoreEntryPanel.h"
 #include "MixerConsolePanel.h"
-#include "../music_theory/MusicTheoryBrain.h"
 #include <memory>
 
 namespace midikompanion {
@@ -289,7 +288,6 @@ private:
     // Music Theory Integration
     //==========================================================================
 
-    std::shared_ptr<theory::MusicTheoryBrain> theoryBrain_;
 
     //==========================================================================
     // Templates

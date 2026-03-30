@@ -360,9 +360,17 @@ std::vector<std::string> LyricGenerator::getWordsForDominance(float dominance) {
 }
 
 LyricStructure LyricGenerator::generateStructure(const std::string& templateName) {
+    // Check templateCache_ first
+    auto cacheIt = templateCache_.find(templateName);
+    if (cacheIt != templateCache_.end()) {
+        LyricStructure structure = cacheIt->second;
+        structure.rhymeScheme = getRhymeScheme(rhymeSchemeName_);
+        return structure;
+    }
+
     LyricStructure structure;
 
-    // Default structure
+    // Fall back to hardcoded structures
     if (templateName == "verse_chorus" || templateName.empty()) {
         structure.pattern = "V-C-V-C-B-C";
 
@@ -606,16 +614,53 @@ std::vector<std::string> LyricGenerator::selectWords(
         return selected;
     }
 
+    // If a stress pattern is provided, use meter-aware selection
+    if (!stressPattern.empty()) {
+        ProsodyAnalyzer::MeterType meterType = prosodyAnalyzer_.detectMeter(stressPattern);
+        ProsodyAnalyzer::MeterPattern meterPattern = prosodyAnalyzer_.getMeterPattern(meterType, targetSyllables);
+        meterPattern.pattern = stressPattern; // Use the actual requested pattern
+
+        // Get words sorted by meter match
+        std::vector<std::string> candidates = prosodyAnalyzer_.selectWordsForMeter(vocabulary, meterPattern);
+
+        // Fill from meter-sorted candidates
+        int currentSyllables = 0;
+        int maxAttempts = targetSyllables * 3;
+        int attempts = 0;
+        size_t candidateIdx = 0;
+
+        while (currentSyllables < targetSyllables && attempts < maxAttempts && !candidates.empty()) {
+            const std::string& word = candidates[candidateIdx % candidates.size()];
+            int wordSyllables = prosodyAnalyzer_.countSyllables(word);
+
+            if (wordSyllables > 0 && currentSyllables + wordSyllables <= targetSyllables) {
+                selected.push_back(word);
+                currentSyllables += wordSyllables;
+            }
+            candidateIdx++;
+            attempts++;
+        }
+
+        return selected;
+    }
+
+    // No stress pattern: random selection with real syllable counting
     std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<size_t> vocabDist(0, vocabulary.size() - 1);
 
     int currentSyllables = 0;
-    int wordsNeeded = std::max(1, targetSyllables / 2); // Rough estimate
+    int maxAttempts = targetSyllables * 3;
+    int attempts = 0;
 
-    for (int i = 0; i < wordsNeeded && currentSyllables < targetSyllables; ++i) {
+    while (currentSyllables < targetSyllables && attempts < maxAttempts) {
         std::string word = vocabulary[vocabDist(rng)];
-        selected.push_back(word);
-        currentSyllables += 2; // Simplified syllable count
+        int wordSyllables = prosodyAnalyzer_.countSyllables(word);
+
+        if (wordSyllables > 0 && currentSyllables + wordSyllables <= targetSyllables) {
+            selected.push_back(word);
+            currentSyllables += wordSyllables;
+        }
+        attempts++;
     }
 
     return selected;
@@ -651,12 +696,61 @@ bool LyricGenerator::loadTemplates(const std::string& filePath) {
     auto* root = parsedJson.getDynamicObject();
     if (!root) return false;
 
-    // Templates are now available in JSON, but we'll use them when generateStructure() is called
-    // The JSON structure is already being used by the hardcoded templates
-    // This function validates the file exists and is readable
-    // Future enhancement: Store templates in member variables for dynamic loading
+    // Parse templates from JSON and store in templateCache_
+    auto templates = root->getProperty("templates");
+    if (templates.isObject()) {
+        auto* templatesObj = templates.getDynamicObject();
+        if (templatesObj) {
+            for (auto& prop : templatesObj->getProperties()) {
+                std::string templateName = prop.name.toString().toStdString();
+                LyricStructure structure;
 
-    juce::Logger::writeToLog("LyricGenerator: Loaded templates from " + jsonFile.getFileName());
+                if (prop.value.isObject()) {
+                    auto* templateObj = prop.value.getDynamicObject();
+                    if (templateObj) {
+                        // Parse pattern string
+                        if (templateObj->hasProperty("pattern")) {
+                            structure.pattern = templateObj->getProperty("pattern").toString().toStdString();
+                        }
+
+                        // Parse sections array
+                        auto sectionsVar = templateObj->getProperty("sections");
+                        if (sectionsVar.isArray()) {
+                            for (const auto& sectionVar : *sectionsVar.getArray()) {
+                                if (!sectionVar.isObject()) continue;
+                                auto* sectionObj = sectionVar.getDynamicObject();
+                                if (!sectionObj) continue;
+
+                                LyricSection section;
+                                std::string typeStr = sectionObj->getProperty("type").toString().toLowerCase().toStdString();
+                                if (typeStr == "verse") section.type = LyricSectionType::Verse;
+                                else if (typeStr == "chorus") section.type = LyricSectionType::Chorus;
+                                else if (typeStr == "bridge") section.type = LyricSectionType::Bridge;
+                                else section.type = LyricSectionType::Verse;
+
+                                int numLines = static_cast<int>(sectionObj->getProperty("lines"));
+                                if (numLines <= 0) numLines = 4;
+                                section.lines.resize(numLines);
+
+                                if (sectionObj->hasProperty("section_number")) {
+                                    section.sectionNumber = static_cast<int>(sectionObj->getProperty("section_number"));
+                                }
+
+                                structure.sections.push_back(section);
+                            }
+                        }
+                    }
+                }
+
+                if (!structure.sections.empty()) {
+                    templateCache_[templateName] = structure;
+                }
+            }
+        }
+    }
+
+    juce::Logger::writeToLog("LyricGenerator: Loaded " + juce::String(static_cast<int>(templateCache_.size()))
+                             + " templates from " + jsonFile.getFileName());
     return true;
 }
 

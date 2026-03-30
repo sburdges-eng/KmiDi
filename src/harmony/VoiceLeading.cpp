@@ -202,4 +202,108 @@ float VoiceLeading::calculateMotionCost(
     return distance;
 }
 
+// --- Ported from kelly::VoiceLeadingEngine ---
+
+VoiceLeading::VoiceLeadingResult VoiceLeading::analyze(
+    const std::vector<Note>& fromVoicing,
+    const std::vector<Note>& toVoicing
+) const noexcept {
+    VoiceLeadingResult result;
+    result.fromVoicing = fromVoicing;
+    result.toVoicing = toVoicing;
+    result.hasParallelFifths = false;
+    result.hasParallelOctaves = false;
+
+    size_t minSize = std::min(fromVoicing.size(), toVoicing.size());
+
+    for (size_t i = 0; i < minSize; ++i) {
+        VoiceMovement movement;
+        movement.fromPitch = fromVoicing[i].pitch;
+        movement.toPitch = toVoicing[i].pitch;
+        movement.interval = static_cast<int>(toVoicing[i].pitch) -
+                            static_cast<int>(fromVoicing[i].pitch);
+        result.movements.push_back(movement);
+    }
+
+    // Check for parallel fifths and octaves
+    for (size_t i = 0; i < minSize; ++i) {
+        for (size_t j = i + 1; j < minSize; ++j) {
+            int fromInterval = std::abs(static_cast<int>(fromVoicing[i].pitch) -
+                                        static_cast<int>(fromVoicing[j].pitch)) % 12;
+            int toInterval = std::abs(static_cast<int>(toVoicing[i].pitch) -
+                                      static_cast<int>(toVoicing[j].pitch)) % 12;
+
+            int dir_i = result.movements[i].interval;
+            int dir_j = result.movements[j].interval;
+
+            if (fromInterval == 7 && toInterval == 7 &&
+                ((dir_i > 0 && dir_j > 0) || (dir_i < 0 && dir_j < 0))) {
+                result.hasParallelFifths = true;
+            }
+            if (fromInterval == 0 && toInterval == 0 &&
+                ((dir_i > 0 && dir_j > 0) || (dir_i < 0 && dir_j < 0))) {
+                result.hasParallelOctaves = true;
+            }
+        }
+    }
+
+    result.smoothnessScore = calculateSmoothness(result.movements);
+    return result;
+}
+
+std::vector<std::vector<Note>> VoiceLeading::voiceProgression(
+    const std::vector<Chord>& chords,
+    const std::vector<Note>& startingVoices,
+    uint8_t targetOctave
+) const noexcept {
+    std::vector<std::vector<Note>> result;
+    if (chords.empty()) return result;
+
+    std::vector<Note> currentVoices = startingVoices;
+
+    for (const auto& chord : chords) {
+        auto voiced = findOptimalVoicing(chord, currentVoices, targetOctave);
+        result.push_back(voiced);
+        currentVoices = voiced;
+    }
+
+    return result;
+}
+
+float VoiceLeading::calculateSmoothness(
+    const std::vector<VoiceMovement>& movements
+) const noexcept {
+    if (movements.empty()) return 1.0f;
+
+    float totalMovement = 0;
+    int stepwiseCount = 0;
+
+    for (const auto& m : movements) {
+        totalMovement += std::abs(m.interval);
+        if (std::abs(m.interval) <= 2) stepwiseCount++;
+    }
+
+    float avgMovement = totalMovement / static_cast<float>(movements.size());
+    float stepwiseRatio = static_cast<float>(stepwiseCount) /
+                          static_cast<float>(movements.size());
+
+    // Lower average movement and higher stepwise ratio = smoother
+    float smoothness = (1.0f - avgMovement / 12.0f) * 0.5f + stepwiseRatio * 0.5f;
+    return std::clamp(smoothness, 0.0f, 1.0f);
+}
+
+std::vector<Note> VoiceLeading::invertVoicing(
+    const std::vector<Note>& voicing,
+    int inversion
+) noexcept {
+    if (voicing.empty()) return voicing;
+
+    std::vector<Note> result = voicing;
+    for (int i = 0; i < inversion && !result.empty(); ++i) {
+        result[0].pitch += 12;
+        std::rotate(result.begin(), result.begin() + 1, result.end());
+    }
+    return result;
+}
+
 } // namespace penta::harmony

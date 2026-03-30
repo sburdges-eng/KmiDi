@@ -638,7 +638,15 @@ VariationOutput VariationEngine::generate(const VariationConfig &config) {
       OrnamentType orn = profile.ornaments[rng() % profile.ornaments.size()];
       result = ornament(result, orn, rng);
     }
-    description = "Melodic variation with embellishments";
+    // Snap all pitches to scale to avoid dissonance
+    {
+      auto scale = getScalePitches(config.key.empty() ? "C" : config.key,
+                                   config.mode.empty() ? "major" : config.mode);
+      for (auto& note : result) {
+        note.pitch = snapToScale(note.pitch, scale);
+      }
+    }
+    description = "Melodic variation with scale-aware embellishments";
     break;
   }
 

@@ -22,8 +22,6 @@ MusicianCommandPanel::MusicianCommandPanel()
     , successColor_(juce::Colour(0xff4caf50))
     , errorColor_(juce::Colour(0xfff44336))
 {
-    // Initialize theory engine
-    theoryBrain_ = std::make_unique<theory::MusicTheoryBrain>();
 
     // Initialize context with defaults
     context_.key = "C Major";

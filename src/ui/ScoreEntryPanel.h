@@ -25,7 +25,6 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_basics/juce_audio_basics.h>
-#include "../music_theory/MusicTheoryBrain.h"
 #include <memory>
 #include <vector>
 #include <functional>
@@ -345,7 +344,6 @@ private:
     // Music Theory Integration
     //==========================================================================
 
-    std::unique_ptr<theory::MusicTheoryBrain> theoryBrain_;
 
     //==========================================================================
     // Score Data

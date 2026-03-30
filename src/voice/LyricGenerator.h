@@ -97,6 +97,9 @@ private:
     // Semantic expansion
     std::map<std::string, std::vector<std::string>> emotionVocabulary_;
 
+    // Template cache for dynamic template loading
+    std::map<std::string, LyricStructure> templateCache_;
+
     /**
      * Expand emotion into vocabulary words
      * @param emotion The emotion node

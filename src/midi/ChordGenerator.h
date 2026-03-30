@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common/Types.h"
-#include "engines/VoiceLeading.h"
+#include "midi/VoiceLeadingAdapter.h"
 #include <vector>
 #include <string>
 #include <cstdint>

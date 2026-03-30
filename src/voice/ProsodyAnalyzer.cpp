@@ -7,16 +7,33 @@
 namespace kelly {
 
 ProsodyAnalyzer::ProsodyAnalyzer() {
-    // Initialize prosody analyzer
+    // Initialize prosody analyzer with embedded CMU dictionary data
+    cmuDictionary_.loadEmbeddedDictionary();
 }
 
 std::vector<int> ProsodyAnalyzer::detectStress(const std::string& word) {
     std::string normalized = normalizeWord(word);
     if (normalized.empty()) return {};
 
-    // Simplified stress detection based on word patterns
-    // For a full implementation, this would use a dictionary with stress markings
+    // Try CMU Dictionary first for accurate stress patterns
+    auto phonemes = cmuDictionary_.lookup(normalized);
+    if (!phonemes.empty()) {
+        std::vector<int> stress;
+        for (const auto& phoneme : phonemes) {
+            if (!phoneme.empty() && std::isdigit(phoneme.back())) {
+                int cmuStress = phoneme.back() - '0';
+                // Map CMU stress (0=none, 1=primary, 2=secondary)
+                // to ProsodyAnalyzer convention (0=unstressed, 1=secondary, 2=primary)
+                int mappedStress = 0;
+                if (cmuStress == 1) mappedStress = 2;      // primary -> 2
+                else if (cmuStress == 2) mappedStress = 1;  // secondary -> 1
+                stress.push_back(mappedStress);
+            }
+        }
+        if (!stress.empty()) return stress;
+    }
 
+    // Heuristic fallback: stress detection based on word patterns
     std::vector<int> stress;
 
     // Count syllables first
@@ -220,6 +237,19 @@ int ProsodyAnalyzer::countSyllables(const std::string& word) const {
     std::string normalized = normalizeWord(word);
     if (normalized.empty()) return 0;
 
+    // Try CMU Dictionary first for accurate syllable count
+    auto phonemes = cmuDictionary_.lookup(normalized);
+    if (!phonemes.empty()) {
+        int dictSyllables = 0;
+        for (const auto& phoneme : phonemes) {
+            if (!phoneme.empty() && std::isdigit(phoneme.back())) {
+                dictSyllables++;  // vowel phonemes carry stress digits
+            }
+        }
+        if (dictSyllables > 0) return dictSyllables;
+    }
+
+    // Heuristic fallback: vowel-cluster counting
     int syllables = 0;
     bool inVowelCluster = false;
 
@@ -261,9 +291,57 @@ std::vector<std::string> ProsodyAnalyzer::selectWordsForMeter(
     const std::vector<std::string>& words,
     const MeterPattern& targetMeter) const
 {
-    // Simplified implementation: return words as-is
-    // Full implementation would score each word against target meter and select best matches
-    return words;
+    if (words.empty() || targetMeter.pattern.empty()) return words;
+
+    // Score each word by how well its stress pattern matches the target meter
+    struct ScoredWord {
+        std::string word;
+        float score;
+    };
+
+    std::vector<ScoredWord> scored;
+    scored.reserve(words.size());
+
+    for (const auto& word : words) {
+        // Get stress pattern for this word using CMU dictionary or heuristic
+        std::vector<int> wordStress;
+        std::string normalized = normalizeWord(word);
+        auto phonemes = cmuDictionary_.lookup(normalized);
+        if (!phonemes.empty()) {
+            for (const auto& phoneme : phonemes) {
+                if (!phoneme.empty() && std::isdigit(phoneme.back())) {
+                    int cmuStress = phoneme.back() - '0';
+                    int mapped = 0;
+                    if (cmuStress == 1) mapped = 2;
+                    else if (cmuStress == 2) mapped = 1;
+                    wordStress.push_back(mapped);
+                }
+            }
+        }
+        // Heuristic fallback: single-syllable words get primary stress,
+        // multi-syllable words get primary on first, rest unstressed
+        if (wordStress.empty()) {
+            int numSyl = countSyllables(normalized);
+            wordStress.resize(numSyl, 0);
+            if (numSyl >= 1) wordStress[0] = 2;
+        }
+
+        float score = matchMeter(wordStress, targetMeter.type);
+        scored.push_back({word, score});
+    }
+
+    // Sort by score descending (best meter matches first)
+    std::sort(scored.begin(), scored.end(),
+        [](const ScoredWord& a, const ScoredWord& b) {
+            return a.score > b.score;
+        });
+
+    std::vector<std::string> result;
+    result.reserve(scored.size());
+    for (const auto& sw : scored) {
+        result.push_back(sw.word);
+    }
+    return result;
 }
 
 float ProsodyAnalyzer::calculateRhythmScore(const std::vector<int>& stressPattern) const {

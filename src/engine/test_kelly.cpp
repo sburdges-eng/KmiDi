@@ -223,7 +223,7 @@ void testMidiGenerator() {
 void testKellyBrain() {
     printSeparator("KELLY BRAIN INTEGRATION TEST");
     
-    KellyBrain brain(85);  // 85 BPM
+    KellyBrainLegacy brain(85);  // 85 BPM
     
     std::cout << "Quick generation test:\n";
     auto [result, midi] = brain.quickGenerate("deep sorrow after losing someone close", 0.85f, 4);

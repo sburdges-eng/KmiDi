@@ -23,10 +23,11 @@
 namespace kelly {
 
 // =============================================================================
-// KELLY BRAIN - High-level API (from Python MusicBrain class)
+// KELLY BRAIN LEGACY - Inline version for test_kelly.cpp only
+// Renamed to avoid ODR collision with standalone KellyBrain.h (pimpl version)
 // =============================================================================
 
-class KellyBrain {
+class KellyBrainLegacy {
 public:
     KellyBrain(int tempo = 120, unsigned int seed = 0)
         : midiGenerator_(tempo, seed),

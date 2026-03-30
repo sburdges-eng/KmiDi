@@ -239,8 +239,7 @@ MixerConsolePanel::MixerConsolePanel()
       showCompressor_(true),
       showInserts_(true),
       showSends_(true),
-      showMeters_(true),
-      theoryBrain_(std::make_unique<theory::MusicTheoryBrain>()) // Initialize MusicTheoryBrain
+      showMeters_(true)
 {
     // Initialize UI components for the mixer console
     channelContainer_.reset(new juce::Component("Channel Container"));
