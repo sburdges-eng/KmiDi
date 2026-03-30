@@ -9,11 +9,19 @@ pybind11_add_module(penta_core_native
     diagnostics_bindings.cpp
     osc_bindings.cpp
     ml_bindings.cpp
+    prrot_bindings.cpp
 )
 
 target_link_libraries(penta_core_native PRIVATE
     penta_core
     juce::juce_osc
+    juce::juce_dsp
+    $<$<TARGET_EXISTS:KellyCore>:KellyCore>
+)
+
+# PRROT bindings need access to src/ headers (PRROTEngine, VoiceProfile, etc.)
+target_include_directories(penta_core_native PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
 )
 
 # Set output directory for Python module

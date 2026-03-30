@@ -99,7 +99,7 @@ void bind_prrot(py::module_& m) {
         .def(py::init<>())
         .def_readwrite("time_ms", &BreathMarker::time_ms)
         .def_readwrite("duration_ms", &BreathMarker::duration_ms)
-        .def_readwrite("confidence", &BreathMarker::confidence);
+        .def_readwrite("intensity", &BreathMarker::intensity);
 
     // -------------------------------------------------------------------------
     // VoiceProfile

@@ -10,6 +10,7 @@ void bind_groove(py::module_& m);
 void bind_diagnostics(py::module_& m);
 void bind_osc(py::module_& m);
 void bind_ml(py::module_& m);
+void bind_prrot(py::module_& m);
 
 PYBIND11_MODULE(penta_core_native, m) {
     m.doc() = "Penta Core C++ engine with Python bindings";
@@ -31,4 +32,7 @@ PYBIND11_MODULE(penta_core_native, m) {
     bind_diagnostics(diagnostics);
     bind_osc(osc);
     bind_ml(ml);
+
+    // PRROT voice engine (Phase 4b)
+    bind_prrot(m);
 }
