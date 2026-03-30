@@ -45,7 +45,48 @@ public:
     
     // Configuration
     void updateConfig(const Config& config) noexcept;
-    
+
+    // --- Ported from kelly::VoiceLeadingEngine ---
+
+    struct VoiceMovement {
+        uint8_t fromPitch;
+        uint8_t toPitch;
+        int interval;  // toPitch - fromPitch (positive=up, negative=down, 0=static)
+    };
+
+    struct VoiceLeadingResult {
+        std::vector<Note> fromVoicing;
+        std::vector<Note> toVoicing;
+        std::vector<VoiceMovement> movements;
+        float smoothnessScore;
+        bool hasParallelFifths;
+        bool hasParallelOctaves;
+    };
+
+    // Analyze movement between two voicings
+    VoiceLeadingResult analyze(
+        const std::vector<Note>& fromVoicing,
+        const std::vector<Note>& toVoicing
+    ) const noexcept;
+
+    // Voice an entire chord progression
+    std::vector<std::vector<Note>> voiceProgression(
+        const std::vector<Chord>& chords,
+        const std::vector<Note>& startingVoices,
+        uint8_t targetOctave = 4
+    ) const noexcept;
+
+    // Smoothness metric (0.0 = poor, 1.0 = ideal)
+    float calculateSmoothness(
+        const std::vector<VoiceMovement>& movements
+    ) const noexcept;
+
+    // Chord inversion (rotate voices by N positions, octave-shift the rotated note)
+    static std::vector<Note> invertVoicing(
+        const std::vector<Note>& voicing,
+        int inversion
+    ) noexcept;
+
 private:
     struct VoicingCandidate {
         std::vector<Note> voices;
