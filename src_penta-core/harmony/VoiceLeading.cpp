@@ -22,8 +22,10 @@ std::vector<Note> VoiceLeading::findOptimalVoicing(
         // Extract chord tones from pitch class set
         for (int i = 0; i < 12; ++i) {
             if (targetChord.pitchClass[i]) {
+                int p = static_cast<int>(targetOctave) * 12 + i;
+                if (p > 127) continue;
                 Note note;
-                note.pitch = targetOctave * 12 + i;
+                note.pitch = static_cast<uint8_t>(p);
                 note.velocity = 80;
                 note.timestamp = 0.0;
                 result.push_back(note);
@@ -147,8 +149,10 @@ void VoiceLeading::generateVoicingCandidates(
         VoicingCandidate candidate;
         
         for (uint8_t tone : chordTones) {
+            int p = oct * 12 + tone;
+            if (p > 127) continue;
             Note note;
-            note.pitch = oct * 12 + tone;
+            note.pitch = static_cast<uint8_t>(p);
             note.velocity = 80;
             note.timestamp = 0.0;
             candidate.voices.push_back(note);
@@ -171,12 +175,15 @@ void VoiceLeading::generateVoicingCandidates(
             size_t toneIndex = (bassIndex + i) % chordTones.size();
             uint8_t tone = chordTones[toneIndex];
             
-            Note note;
-            note.pitch = octave * 12 + tone;
+            int p = static_cast<int>(octave) * 12 + tone;
             // Adjust octave for lower voices if needed
-            if (i > 0 && note.pitch <= candidate.voices.back().pitch) {
-                note.pitch += 12;
+            if (i > 0 && !candidate.voices.empty()
+                && p <= static_cast<int>(candidate.voices.back().pitch)) {
+                p += 12;
             }
+            if (p > 127) continue;
+            Note note;
+            note.pitch = static_cast<uint8_t>(p);
             note.velocity = 80;
             note.timestamp = 0.0;
             candidate.voices.push_back(note);
