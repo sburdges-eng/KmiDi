@@ -124,8 +124,7 @@ void ScoreEntryPanel::initializeComponents()
     tempoLabel_.reset(new juce::Label("Tempo", "120 BPM"));
     addAndMakeVisible(*tempoLabel_);
 
-    // --- Music Theory Brain ---
-    theoryBrain_.reset(new theory::MusicTheoryBrain());
+    // --- Music Theory Brain (removed: MusicTheoryBrain deleted) ---
 }
 
 void ScoreEntryPanel::initializeTemplates()

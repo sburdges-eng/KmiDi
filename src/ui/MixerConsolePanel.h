@@ -28,7 +28,6 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_processors/juce_audio_processors.h>
-#include "../music_theory/MusicTheoryBrain.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -434,7 +433,6 @@ private:
     // Music Theory Integration
     //==========================================================================
 
-    std::unique_ptr<theory::MusicTheoryBrain> theoryBrain_;
 
     //==========================================================================
     // Template Initialization

@@ -28,7 +28,6 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_basics/juce_audio_basics.h>
-#include "../music_theory/MusicTheoryBrain.h"
 #include <memory>
 #include <queue>
 
@@ -129,7 +128,6 @@ private:
     // Music Theory Engine
     //==========================================================================
 
-    std::unique_ptr<theory::MusicTheoryBrain> theoryBrain_;
 
     //==========================================================================
     // Command Parser
