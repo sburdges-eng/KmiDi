@@ -118,10 +118,11 @@ struct IntentResult {
 };
 
 // =============================================================================
-// EMOTION THESAURUS (216-node system)
+// EMOTION THESAURUS (216-node system) - IntentProcessor's inline version
+// Renamed to avoid ODR collision with standalone EmotionThesaurus.h
 // =============================================================================
 
-class EmotionThesaurus {
+class InlineEmotionThesaurus {
 public:
     EmotionThesaurus() {
         initializeNodes();
@@ -702,7 +703,7 @@ public:
         return result;
     }
     
-    const EmotionThesaurus& thesaurus() const { return thesaurus_; }
+    const InlineEmotionThesaurus& thesaurus() const { return thesaurus_; }
     const std::vector<Wound>& woundHistory() const { return woundHistory_; }
     const std::vector<RuleBreak>& ruleBreaks() const { return ruleBreaks_; }
     
@@ -712,7 +713,7 @@ public:
     }
 
 private:
-    EmotionThesaurus thesaurus_;
+    InlineEmotionThesaurus thesaurus_;
     EmotionMapper emotionMapper_;
     std::vector<Wound> woundHistory_;
     std::vector<RuleBreak> ruleBreaks_;

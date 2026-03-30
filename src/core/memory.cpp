@@ -11,10 +11,10 @@
 namespace daiw {
 
 // =============================================================================
-// MemoryPool Implementation
+// MutexMemoryPool Implementation
 // =============================================================================
 
-MemoryPool::MemoryPool(size_t blockSize, size_t numBlocks)
+MutexMemoryPool::MutexMemoryPool(size_t blockSize, size_t numBlocks)
     : blockSize_(blockSize)
     , numBlocks_(numBlocks)
     , freeCount_(numBlocks)
@@ -29,9 +29,9 @@ MemoryPool::MemoryPool(size_t blockSize, size_t numBlocks)
     }
 }
 
-MemoryPool::~MemoryPool() = default;
+MutexMemoryPool::~MutexMemoryPool() = default;
 
-void* MemoryPool::allocate() noexcept {
+void* MutexMemoryPool::allocate() noexcept {
     std::lock_guard<std::mutex> lock(mutex_);
     size_t available = freeCount_.load(std::memory_order_acquire);
     if (available == 0) {
@@ -42,7 +42,7 @@ void* MemoryPool::allocate() noexcept {
     return ptr;
 }
 
-void MemoryPool::deallocate(void* ptr) noexcept {
+void MutexMemoryPool::deallocate(void* ptr) noexcept {
     if (!ptr || !contains(ptr)) {
         return;
     }
@@ -52,14 +52,14 @@ void MemoryPool::deallocate(void* ptr) noexcept {
     freeCount_.store(count + 1, std::memory_order_release);
 }
 
-bool MemoryPool::contains(void* ptr) const noexcept {
+bool MutexMemoryPool::contains(void* ptr) const noexcept {
     auto* bytePtr = static_cast<std::byte*>(ptr);
     auto* start = memory_.get();
     auto* end = start + (blockSize_ * numBlocks_);
     return bytePtr >= start && bytePtr < end;
 }
 
-size_t MemoryPool::availableBlocks() const noexcept {
+size_t MutexMemoryPool::availableBlocks() const noexcept {
     return freeCount_.load(std::memory_order_acquire);
 }
 

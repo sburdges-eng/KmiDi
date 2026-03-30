@@ -23,21 +23,23 @@ namespace daiw {
 // =============================================================================
 
 /**
- * @brief Fixed-size memory pool for real-time allocation
+ * @brief Fixed-size memory pool for real-time allocation (mutex-based)
  *
- * Pre-allocates blocks of memory for O(1) allocation and deallocation
- * without malloc/free calls on the audio thread.
+ * Pre-allocates blocks of memory for O(1) allocation and deallocation.
+ * NOTE: Uses mutex — NOT suitable for RT audio threads.
+ * For RT-safe allocation, use the template MemoryPool in memory_pool.hpp.
+ * Renamed from MemoryPool to avoid ODR collision with memory_pool.hpp.
  */
-class MemoryPool {
+class MutexMemoryPool {
 public:
-    explicit MemoryPool(size_t blockSize, size_t numBlocks);
-    ~MemoryPool();
+    explicit MutexMemoryPool(size_t blockSize, size_t numBlocks);
+    ~MutexMemoryPool();
 
     // Non-copyable, non-movable
-    MemoryPool(const MemoryPool&) = delete;
-    MemoryPool& operator=(const MemoryPool&) = delete;
-    MemoryPool(MemoryPool&&) = delete;
-    MemoryPool& operator=(MemoryPool&&) = delete;
+    MutexMemoryPool(const MutexMemoryPool&) = delete;
+    MutexMemoryPool& operator=(const MutexMemoryPool&) = delete;
+    MutexMemoryPool(MutexMemoryPool&&) = delete;
+    MutexMemoryPool& operator=(MutexMemoryPool&&) = delete;
 
     /**
      * @brief Allocate a block from the pool
@@ -85,15 +87,16 @@ private:
 // =============================================================================
 
 /**
- * @brief SPSC (Single-Producer, Single-Consumer) lock-free ring buffer
+ * @brief SPSC (Single-Producer, Single-Consumer) lock-free event ring buffer
  *
- * Safe for use between audio thread (producer) and GUI thread (consumer)
- * or vice versa.
+ * Single-element push/pop for event passing between threads.
+ * For bulk audio streaming, use RingBuffer in ring_buffer.hpp.
+ * Renamed from RingBuffer to avoid ODR collision with ring_buffer.hpp.
  */
 template<typename T, size_t Capacity>
-class RingBuffer {
+class EventRingBuffer {
 public:
-    RingBuffer() : head_(0), tail_(0) {
+    EventRingBuffer() : head_(0), tail_(0) {
         static_assert((Capacity & (Capacity - 1)) == 0,
                       "Capacity must be power of 2");
     }
