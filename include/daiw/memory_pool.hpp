@@ -29,7 +29,7 @@ public:
             slots_[i].next.store(i + 1, std::memory_order_relaxed);
         }
         slots_[Capacity - 1].next.store(INVALID_INDEX, std::memory_order_relaxed);
-        free_head_.store(0, std::memory_order_release);
+        free_head_.store(pack(0, 0), std::memory_order_release);
         allocated_count_.store(0, std::memory_order_relaxed);
     }
 
@@ -53,26 +53,28 @@ public:
      */
     template<typename... Args>
     T* acquire(Args&&... args) {
-        size_t head;
-        size_t new_head;
+        uint64_t head_tagged;
+        uint64_t new_head_tagged;
 
         do {
-            head = free_head_.load(std::memory_order_acquire);
-            if (head == INVALID_INDEX) {
+            head_tagged = free_head_.load(std::memory_order_acquire);
+            uint32_t head_idx = index_of(head_tagged);
+            if (head_idx == static_cast<uint32_t>(INVALID_INDEX)) {
                 return nullptr;  // Pool exhausted
             }
-            new_head = slots_[head].next.load(std::memory_order_relaxed);
+            uint32_t next_idx = static_cast<uint32_t>(
+                slots_[head_idx].next.load(std::memory_order_relaxed));
+            uint32_t new_gen = gen_of(head_tagged) + 1;
+            new_head_tagged = pack(new_gen, next_idx);
         } while (!free_head_.compare_exchange_weak(
-            head, new_head,
+            head_tagged, new_head_tagged,
             std::memory_order_release,
             std::memory_order_relaxed));
 
-        // Mark slot as in use
-        slots_[head].in_use.store(true, std::memory_order_release);
+        uint32_t head_idx = index_of(head_tagged);
+        slots_[head_idx].in_use.store(true, std::memory_order_release);
         allocated_count_.fetch_add(1, std::memory_order_relaxed);
-
-        // Construct object in place
-        return new (&slots_[head].storage) T(std::forward<Args>(args)...);
+        return new (&slots_[head_idx].storage) T(std::forward<Args>(args)...);
     }
 
     /**
@@ -82,29 +84,22 @@ public:
     void release(T* ptr) {
         if (!ptr) return;
 
-        // Find slot index
         auto* slot_ptr = reinterpret_cast<Slot*>(
             reinterpret_cast<char*>(ptr) - offsetof(Slot, storage));
         size_t index = slot_ptr - slots_.data();
 
-        if (index >= Capacity) {
-            return;  // Invalid pointer
-        }
+        if (index >= Capacity) return;
 
-        // Destruct object
         std::destroy_at(ptr);
-
-        // Mark as not in use
         slots_[index].in_use.store(false, std::memory_order_release);
         allocated_count_.fetch_sub(1, std::memory_order_relaxed);
 
-        // Add back to free list
-        size_t head;
+        uint64_t head_tagged;
         do {
-            head = free_head_.load(std::memory_order_acquire);
-            slots_[index].next.store(head, std::memory_order_relaxed);
+            head_tagged = free_head_.load(std::memory_order_acquire);
+            slots_[index].next.store(index_of(head_tagged), std::memory_order_relaxed);
         } while (!free_head_.compare_exchange_weak(
-            head, index,
+            head_tagged, pack(gen_of(head_tagged) + 1, static_cast<uint32_t>(index)),
             std::memory_order_release,
             std::memory_order_relaxed));
     }
@@ -132,8 +127,21 @@ private:
     };
 
     std::array<Slot, Capacity> slots_;
-    std::atomic<size_t> free_head_{0};
+    // Tagged pointer: upper 32 bits = generation counter, lower 32 bits = index
+    // Prevents ABA problem in lock-free free-list
+    std::atomic<uint64_t> free_head_{0};
     std::atomic<size_t> allocated_count_{0};
+
+    static constexpr uint64_t pack(uint32_t gen, uint32_t idx) {
+        return (static_cast<uint64_t>(gen) << 32) | idx;
+    }
+    static constexpr uint32_t index_of(uint64_t tagged) {
+        return static_cast<uint32_t>(tagged & 0xFFFFFFFF);
+    }
+    static constexpr uint32_t gen_of(uint64_t tagged) {
+        return static_cast<uint32_t>(tagged >> 32);
+    }
+    static constexpr uint64_t INVALID_TAGGED = pack(0, static_cast<uint32_t>(INVALID_INDEX));
 };
 
 } // namespace daiw

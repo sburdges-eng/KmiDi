@@ -120,14 +120,18 @@ private:
  * Multi-Producer Single-Consumer (MPSC) queue.
  *
  * Multiple threads can push, single thread pops.
- * Useful for collecting events from multiple sources.
+ * Uses per-slot ready flags to prevent publish-before-write races.
  */
 template<typename T, size_t Capacity>
 class MPSCQueue {
     static_assert((Capacity & (Capacity - 1)) == 0, "Capacity must be power of 2");
 
 public:
-    MPSCQueue() : head_(0), tail_(0) {}
+    MPSCQueue() : head_(0), tail_(0) {
+        for (size_t i = 0; i < Capacity; ++i) {
+            ready_[i].store(false, std::memory_order_relaxed);
+        }
+    }
 
     /**
      * Push an item (can be called from multiple threads).
@@ -145,10 +149,12 @@ public:
             }
         } while (!tail_.compare_exchange_weak(
             tail, next_tail,
-            std::memory_order_release,
+            std::memory_order_acq_rel,
             std::memory_order_relaxed));
 
+        // Write data FIRST, then publish via ready flag
         buffer_[tail] = item;
+        ready_[tail].store(true, std::memory_order_release);
         return true;
     }
 
@@ -162,7 +168,13 @@ public:
             return std::nullopt;
         }
 
+        // Wait for the slot to be ready (producer may have reserved but not yet written)
+        if (!ready_[head].load(std::memory_order_acquire)) {
+            return std::nullopt;  // Slot reserved but data not yet written
+        }
+
         T item = std::move(buffer_[head]);
+        ready_[head].store(false, std::memory_order_release);
         head_.store((head + 1) & MASK, std::memory_order_release);
         return item;
     }
@@ -176,6 +188,7 @@ private:
     static constexpr size_t MASK = Capacity - 1;
 
     alignas(64) std::array<T, Capacity> buffer_;
+    alignas(64) std::array<std::atomic<bool>, Capacity> ready_;
     alignas(64) std::atomic<size_t> head_;
     alignas(64) std::atomic<size_t> tail_;
 };

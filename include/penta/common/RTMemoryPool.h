@@ -10,8 +10,12 @@
 namespace penta {
 
 /**
- * Real-time safe memory pool allocator
- * Pre-allocates memory blocks to avoid malloc/free in audio thread
+ * Real-time safe memory pool allocator.
+ * Pre-allocates memory blocks to avoid malloc/free in audio thread.
+ *
+ * NOTE: The lock-free free-list is safe for SPSC use (single allocator +
+ * single deallocator). For MPMC use, the CAS loop is susceptible to ABA.
+ * In KmiDi, the audio thread is the sole user of this pool.
  */
 class RTMemoryPool {
 public:
