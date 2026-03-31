@@ -1,0 +1,407 @@
+{
+  "$defs": {
+    "DSPTargetsSchema": {
+      "additionalProperties": false,
+      "description": "DSP targets with per-parameter confidence and stale flag.\nSafe defaults: filter mid-open, reverb subtle, drive off, stale=True.",
+      "properties": {
+        "filter_cutoff": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Filter Cutoff",
+          "type": "number"
+        },
+        "filter_cutoff_confidence": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Filter Cutoff Confidence",
+          "type": "number"
+        },
+        "reverb_send": {
+          "default": 0.2,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Reverb Send",
+          "type": "number"
+        },
+        "reverb_send_confidence": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Reverb Send Confidence",
+          "type": "number"
+        },
+        "drive": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Drive",
+          "type": "number"
+        },
+        "drive_confidence": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Drive Confidence",
+          "type": "number"
+        },
+        "stale": {
+          "default": true,
+          "description": "True if DSP values are not yet valid",
+          "title": "Stale",
+          "type": "boolean"
+        }
+      },
+      "title": "DSPTargetsSchema",
+      "type": "object"
+    },
+    "EmotionStateSchema": {
+      "additionalProperties": false,
+      "description": "Canonical emotion contract v1. Source of truth for all language bindings.",
+      "properties": {
+        "valence": {
+          "default": 0.0,
+          "description": "Negative to positive [-1, 1]",
+          "maximum": 1.0,
+          "minimum": -1.0,
+          "title": "Valence",
+          "type": "number"
+        },
+        "arousal": {
+          "default": 0.5,
+          "description": "Calm to excited [0, 1]",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Arousal",
+          "type": "number"
+        },
+        "dominance": {
+          "default": 0.5,
+          "description": "Submissive to dominant [0, 1]",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Dominance",
+          "type": "number"
+        },
+        "tags": {
+          "description": "Max 3 tags from controlled vocabulary",
+          "items": {
+            "$ref": "#/$defs/EmotionTag"
+          },
+          "maxItems": 3,
+          "title": "Tags",
+          "type": "array"
+        },
+        "confidence": {
+          "default": 0.0,
+          "description": "Inference quality gate [0, 1]",
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        }
+      },
+      "title": "EmotionStateSchema",
+      "type": "object"
+    },
+    "EmotionTag": {
+      "enum": [
+        "tension",
+        "release",
+        "warm",
+        "cold",
+        "bright",
+        "dark",
+        "drive",
+        "float"
+      ],
+      "title": "EmotionTag",
+      "type": "string"
+    },
+    "IntentConstraintsSchema": {
+      "additionalProperties": false,
+      "description": "Intent constraints \u2014 limit generation, not force it.",
+      "properties": {
+        "allowed_engines_mask": {
+          "default": 4294967295,
+          "minimum": 0,
+          "title": "Allowed Engines Mask",
+          "type": "integer"
+        },
+        "forbidden_engines_mask": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Forbidden Engines Mask",
+          "type": "integer"
+        },
+        "max_cpu_cost": {
+          "default": 1.0,
+          "minimum": 0.0,
+          "title": "Max Cpu Cost",
+          "type": "number"
+        },
+        "max_event_rate": {
+          "default": 1000.0,
+          "minimum": 0.0,
+          "title": "Max Event Rate",
+          "type": "number"
+        }
+      },
+      "title": "IntentConstraintsSchema",
+      "type": "object"
+    },
+    "IntentMetaSchema": {
+      "additionalProperties": false,
+      "description": "Intent metadata \u2014 version and routing IDs.",
+      "properties": {
+        "schema_version": {
+          "default": 1,
+          "description": "Schema version",
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "intent_id": {
+          "default": 0,
+          "description": "Monotonic intent ID",
+          "minimum": 0,
+          "title": "Intent Id",
+          "type": "integer"
+        },
+        "session_id": {
+          "default": 0,
+          "description": "Session ID",
+          "minimum": 0,
+          "title": "Session Id",
+          "type": "integer"
+        }
+      },
+      "title": "IntentMetaSchema",
+      "type": "object"
+    },
+    "IntentProvenanceSchema": {
+      "additionalProperties": false,
+      "description": "Intent provenance \u2014 debugging and trust.",
+      "properties": {
+        "source": {
+          "default": 0,
+          "maximum": 5,
+          "minimum": 0,
+          "title": "Source",
+          "type": "integer"
+        },
+        "user_override_weight": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "User Override Weight",
+          "type": "number"
+        }
+      },
+      "title": "IntentProvenanceSchema",
+      "type": "object"
+    },
+    "MusicHintsSchema": {
+      "additionalProperties": false,
+      "description": "Music hints \u2014 key, tempo, chord bias, section role.",
+      "properties": {
+        "key": {
+          "default": "",
+          "description": "Key (e.g. 'C', 'F#')",
+          "maxLength": 3,
+          "title": "Key",
+          "type": "string"
+        },
+        "tempo_bpm": {
+          "default": 0.0,
+          "description": "Tempo BPM (0 = unspecified)",
+          "minimum": 0.0,
+          "title": "Tempo Bpm",
+          "type": "number"
+        },
+        "chord_bias": {
+          "default": "",
+          "description": "Chord bias",
+          "maxLength": 32,
+          "title": "Chord Bias",
+          "type": "string"
+        },
+        "section_role": {
+          "$ref": "#/$defs/SectionRole",
+          "default": "",
+          "description": "Section role"
+        }
+      },
+      "title": "MusicHintsSchema",
+      "type": "object"
+    },
+    "MusicalIntentSchema": {
+      "additionalProperties": false,
+      "description": "Musical intent \u2014 biases and tendencies.",
+      "properties": {
+        "tempo_bias": {
+          "default": 0.0,
+          "maximum": 1.0,
+          "minimum": -1.0,
+          "title": "Tempo Bias",
+          "type": "number"
+        },
+        "rhythmic_density": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Rhythmic Density",
+          "type": "number"
+        },
+        "groove_strength": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Groove Strength",
+          "type": "number"
+        },
+        "harmonic_tension": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Harmonic Tension",
+          "type": "number"
+        },
+        "harmonic_motion": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Harmonic Motion",
+          "type": "number"
+        },
+        "mode_preference": {
+          "default": 0,
+          "maximum": 1,
+          "minimum": -1,
+          "title": "Mode Preference",
+          "type": "integer"
+        },
+        "melodic_activity": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Melodic Activity",
+          "type": "number"
+        },
+        "contour_variance": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Contour Variance",
+          "type": "number"
+        },
+        "dynamic_range": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Dynamic Range",
+          "type": "number"
+        },
+        "texture_density": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Texture Density",
+          "type": "number"
+        }
+      },
+      "title": "MusicalIntentSchema",
+      "type": "object"
+    },
+    "SectionRole": {
+      "enum": [
+        "intro",
+        "verse",
+        "chorus",
+        "bridge",
+        "outro",
+        "build",
+        "drop",
+        ""
+      ],
+      "title": "SectionRole",
+      "type": "string"
+    },
+    "TimeScopeSchema": {
+      "additionalProperties": false,
+      "description": "Time scope \u2014 intent without time is noise.",
+      "properties": {
+        "start_bar": {
+          "default": -1,
+          "description": "Start bar (-1 = immediate)",
+          "title": "Start Bar",
+          "type": "integer"
+        },
+        "end_bar": {
+          "default": -1,
+          "description": "End bar (-1 = open-ended)",
+          "title": "End Bar",
+          "type": "integer"
+        },
+        "fade_in_beats": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Fade In Beats",
+          "type": "number"
+        },
+        "fade_out_beats": {
+          "default": 0.0,
+          "minimum": 0.0,
+          "title": "Fade Out Beats",
+          "type": "number"
+        }
+      },
+      "title": "TimeScopeSchema",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "IntentFrame \u2014 top-level unit representing one musical intention.",
+  "properties": {
+    "meta": {
+      "$ref": "#/$defs/IntentMetaSchema"
+    },
+    "timestamp_ms": {
+      "default": 0,
+      "description": "Monotonic ms since session start",
+      "minimum": 0,
+      "title": "Timestamp Ms",
+      "type": "integer"
+    },
+    "emotion": {
+      "$ref": "#/$defs/EmotionStateSchema"
+    },
+    "music": {
+      "$ref": "#/$defs/MusicalIntentSchema"
+    },
+    "music_hints": {
+      "$ref": "#/$defs/MusicHintsSchema"
+    },
+    "dsp_targets": {
+      "$ref": "#/$defs/DSPTargetsSchema"
+    },
+    "time": {
+      "$ref": "#/$defs/TimeScopeSchema"
+    },
+    "constraints": {
+      "$ref": "#/$defs/IntentConstraintsSchema"
+    },
+    "provenance": {
+      "$ref": "#/$defs/IntentProvenanceSchema"
+    },
+    "latency_budget_ms": {
+      "default": 10.0,
+      "description": "Max ms for RT engine",
+      "minimum": 0.0,
+      "title": "Latency Budget Ms",
+      "type": "number"
+    }
+  },
+  "title": "IntentFrameSchema",
+  "type": "object"
+}
