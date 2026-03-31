@@ -1007,6 +1007,19 @@ void PluginProcessor::enableMLInference(bool enable) {
   mlInferenceEnabled_.store(enable);
 
   if (enable) {
+    // Start AudioEmotionRunner if not already running
+    if (!emotionRunner_ || !emotionRunner_->isRunning()) {
+      penta::ml::AudioEmotionRunnerConfig config;
+      config.model_path = "";
+      config.sample_rate = static_cast<size_t>(currentSampleRate_);
+      config.ring_capacity = 524288;
+      config.slew_time_ms = 20.0f;
+      config.confidence_threshold = 0.3f;
+
+      emotionRunner_ = std::make_unique<penta::ml::AudioEmotionRunner>();
+      emotionRunner_->initialize(config);
+    }
+
     // Try to load default model if available
     juce::File modelFile =
         juce::File::getSpecialLocation(juce::File::currentApplicationFile)
@@ -1031,6 +1044,12 @@ void PluginProcessor::enableMLInference(bool enable) {
           modelFile.getFullPathName());
     }
   } else {
+    // Shut down AudioEmotionRunner
+    if (emotionRunner_) {
+      emotionRunner_->shutdown();
+      emotionRunner_.reset();
+    }
+
     inferenceManager_.stop();
   }
 }
