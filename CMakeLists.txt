@@ -578,6 +578,19 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
         include(CTest)
         include(Catch2)
         catch_discover_tests(KellyTests)
+        # AudioEmotionRunner tests
+        add_executable(AudioEmotionRunnerTests
+            tests/cpp/test_audio_emotion_runner.cpp
+        )
+        target_link_libraries(AudioEmotionRunnerTests PRIVATE
+            KellyCore
+            Catch2::Catch2WithMain
+        )
+        target_include_directories(AudioEmotionRunnerTests PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
+        )
+        catch_discover_tests(AudioEmotionRunnerTests)
     else()
         message(WARNING "Catch2 not found; skipping tests. Set BUILD_TESTS=OFF or add external/Catch2.")
     endif()
