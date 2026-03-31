@@ -225,14 +225,15 @@ def _render_emotion_rust(schema: dict) -> str:
     lines.append("#[serde(deny_unknown_fields)]")
     lines.append("pub struct EmotionState {")
     for key, value in props.items():
-        is_required = key in required
         if key == "tags":
             lines.append("    #[serde(default)]")
             lines.append("    pub tags: Vec<EmotionTag>,")
         else:
-            field_type = _json_to_rust_type(value, is_required)
-            if not is_required:
-                lines.append("    #[serde(default)]")
+            # All numeric fields are f64 with serde(default), not Option<f64>.
+            # Pydantic v2 omits `required` when all fields have defaults,
+            # but these are always present in valid emotion payloads.
+            field_type = _json_to_rust_type(value, required=True)
+            lines.append("    #[serde(default)]")
             lines.append(f"    pub {key}: {field_type},")
     lines.append("}")
     lines.append("")

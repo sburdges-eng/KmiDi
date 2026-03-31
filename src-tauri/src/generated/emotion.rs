@@ -25,15 +25,15 @@ pub enum EmotionTag {
 #[serde(deny_unknown_fields)]
 pub struct EmotionState {
     #[serde(default)]
-    pub valence: Option<f64>,
+    pub valence: f64,
     #[serde(default)]
-    pub arousal: Option<f64>,
+    pub arousal: f64,
     #[serde(default)]
-    pub dominance: Option<f64>,
+    pub dominance: f64,
     #[serde(default)]
     pub tags: Vec<EmotionTag>,
     #[serde(default)]
-    pub confidence: Option<f64>,
+    pub confidence: f64,
 }
 
 impl EmotionState {
