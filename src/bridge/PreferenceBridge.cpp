@@ -12,6 +12,15 @@
 
 namespace kelly {
 
+// JSON string escape helper for safe serialization
+static juce::String escapeJsonString(const juce::String& s) {
+    return s.replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t");
+}
+
 // Worker thread for processing Python calls
 class PreferenceBridge::WorkerThread : public juce::Thread {
 public:
@@ -355,7 +364,7 @@ void PreferenceBridge::processPendingOperations() {
             bool firstData = true;
             for (const auto& [key, value] : op.data) {
                 if (!firstData) jsonStream << ",\n";
-                jsonStream << "      \"" << key << "\": \"" << value << "\"";
+                jsonStream << "      \"" << escapeJsonString(key).toStdString() << "\": \"" << escapeJsonString(value).toStdString() << "\"";
                 firstData = false;
             }
             jsonStream << "\n    }\n";

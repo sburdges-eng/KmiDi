@@ -141,7 +141,8 @@ void MasterEQProcessor::releaseResources() {
 
 void MasterEQProcessor::processBlock(juce::AudioBuffer<float> &buffer) {
   const int numSamples = buffer.getNumSamples();
-  const int numChannels = buffer.getNumChannels();
+  int numChannels = buffer.getNumChannels();
+  numChannels = std::min(numChannels, static_cast<int>(bandFilters_.size()));
 
   if (numSamples == 0 || numChannels == 0) {
     return;

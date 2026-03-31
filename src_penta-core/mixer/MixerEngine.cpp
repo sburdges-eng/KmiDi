@@ -23,6 +23,8 @@ void ChannelStrip::processAudio(
     float* outputR,
     size_t numFrames
 ) noexcept {
+    if (numFrames == 0) return;
+
     // Load current parameters (relaxed ordering OK for audio params)
     const bool muted = muted_.load(std::memory_order_relaxed);
     if (muted) {

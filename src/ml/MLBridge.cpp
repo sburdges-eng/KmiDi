@@ -660,7 +660,7 @@ GeneratedMidi MLIntentPipeline::generateFromAudio(const float *audioData,
     for (size_t i = 0; i < numSamples && i < 2048; ++i) {
       rms += audioData[i] * audioData[i];
     }
-    rms = std::sqrt(rms / numSamples);
+    rms = (numSamples > 0) ? std::sqrt(rms / static_cast<float>(numSamples)) : 0.0f;
     for (size_t i = 0; i < 128; ++i) {
       features[i] = rms;
     }

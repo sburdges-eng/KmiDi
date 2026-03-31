@@ -4,6 +4,7 @@
 #include <array>
 #include <cstring>
 #include <cstddef>
+#include <type_traits>
 
 namespace kelly {
 
@@ -20,6 +21,8 @@ template<typename T, size_t Capacity>
 class LockFreeRingBuffer {
 public:
     static_assert((Capacity & (Capacity - 1)) == 0, "Capacity must be power of 2");
+    static_assert(std::is_trivially_copyable_v<T>,
+        "LockFreeRingBuffer requires trivially copyable types");
 
     LockFreeRingBuffer() : writePos_(0), readPos_(0) {
         buffer_.fill(T{});

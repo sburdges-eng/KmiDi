@@ -4,6 +4,7 @@
 
 #include <array>
 #include <atomic>
+#include <cassert>
 #include <cstdint>
 #include <vector>
 
@@ -76,10 +77,12 @@ struct AudioBuffer {
         , frames(fr) {}
     
     T* getChannelData(size_t channel) {
+        assert(channel < channels && "AudioBuffer: channel index out of bounds");
         return data.data() + (channel * frames);
     }
-    
+
     const T* getChannelData(size_t channel) const {
+        assert(channel < channels && "AudioBuffer: channel index out of bounds");
         return data.data() + (channel * frames);
     }
     

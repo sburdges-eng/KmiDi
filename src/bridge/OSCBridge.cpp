@@ -122,11 +122,14 @@ void OSCBridge::requestGenerate(
         return;
     }
 
-    // Create JSON request
-    juce::String jsonRequest = juce::String::formatted(
-        R"({"text":"%s","motivation":%.2f,"chaos":%.2f,"vulnerability":%.2f,"response_port":%d})",
-        text.c_str(), motivation, chaos, vulnerability, listenPort_
-    );
+    // Create JSON request (use juce::JSON for proper escaping)
+    auto obj = new juce::DynamicObject();
+    obj->setProperty("text", juce::String(text.c_str()));
+    obj->setProperty("motivation", motivation);
+    obj->setProperty("chaos", chaos);
+    obj->setProperty("vulnerability", vulnerability);
+    obj->setProperty("response_port", listenPort_);
+    juce::String jsonRequest = juce::JSON::toString(juce::var(obj));
 
     // Store callback
     uint32_t msgId = generateMessageId();

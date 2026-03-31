@@ -225,36 +225,36 @@ InferenceResult MultiModelProcessor::runFullPipeline(const std::array<float, 128
     // 1. EmotionRecognizer: audio → emotion
     if (models_[0]->isEnabled()) {
         auto emotion = models_[0]->forward(audioFeatures.data(), 128);
-        std::copy_n(emotion.begin(), 64, result.emotionEmbedding.begin());
+        std::copy_n(emotion.begin(), std::min(emotion.size(), size_t(64)), result.emotionEmbedding.begin());
     }
 
     // 2. MelodyTransformer: emotion → melody
     if (models_[1]->isEnabled()) {
         auto melody = models_[1]->forward(result.emotionEmbedding.data(), 64);
-        std::copy_n(melody.begin(), 128, result.melodyProbabilities.begin());
+        std::copy_n(melody.begin(), std::min(melody.size(), size_t(128)), result.melodyProbabilities.begin());
     }
 
     // 3. HarmonyPredictor: context (emotion + audio) → harmony
     if (models_[2]->isEnabled()) {
         std::array<float, 128> context{};
-        std::copy_n(result.emotionEmbedding.begin(), 64, context.begin());
-        std::copy_n(audioFeatures.begin(), 64, context.begin() + 64);
+        std::copy_n(result.emotionEmbedding.begin(), std::min(result.emotionEmbedding.size(), size_t(64)), context.begin());
+        std::copy_n(audioFeatures.begin(), std::min(audioFeatures.size(), size_t(64)), context.begin() + 64);
         auto harmony = models_[2]->forward(context.data(), 128);
-        std::copy_n(harmony.begin(), 64, result.harmonyPrediction.begin());
+        std::copy_n(harmony.begin(), std::min(harmony.size(), size_t(64)), result.harmonyPrediction.begin());
     }
 
     // 4. DynamicsEngine: compact emotion → dynamics
     if (models_[3]->isEnabled()) {
         std::array<float, 32> compact{};
-        std::copy_n(result.emotionEmbedding.begin(), 32, compact.begin());
+        std::copy_n(result.emotionEmbedding.begin(), std::min(result.emotionEmbedding.size(), size_t(32)), compact.begin());
         auto dynamics = models_[3]->forward(compact.data(), 32);
-        std::copy_n(dynamics.begin(), 16, result.dynamicsOutput.begin());
+        std::copy_n(dynamics.begin(), std::min(dynamics.size(), size_t(16)), result.dynamicsOutput.begin());
     }
 
     // 5. GroovePredictor: emotion → groove
     if (models_[4]->isEnabled()) {
         auto groove = models_[4]->forward(result.emotionEmbedding.data(), 64);
-        std::copy_n(groove.begin(), 32, result.grooveParameters.begin());
+        std::copy_n(groove.begin(), std::min(groove.size(), size_t(32)), result.grooveParameters.begin());
     }
 
     result.valid = true;
