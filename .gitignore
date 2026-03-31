@@ -282,6 +282,7 @@ yarn.lock
 *.pt
 *.pth
 *.onnx
+*.mlpackage/
 *.ckpt
 *.h5
 *.npy
@@ -427,6 +428,8 @@ output.mid
 # Training logs and checkpoints
 logs/training/
 checkpoints/
+# Benchmark reports (regenerable)
+bench/
 # Keep registry tracked but ignore generated model weights
 models/*.json
 !models/registry.json
