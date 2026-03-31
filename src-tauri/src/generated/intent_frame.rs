@@ -2,7 +2,7 @@
 use serde::{Deserialize, Serialize};
 use super::emotion::{EmotionState, EmotionTag};
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub enum SectionRole {
     #[serde(rename = "intro")]
     Intro,
@@ -18,11 +18,12 @@ pub enum SectionRole {
     Build,
     #[serde(rename = "drop")]
     Drop,
+    #[default]
     #[serde(rename = "")]
     Unspecified,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DSPTargets {
     #[serde(default)]
@@ -41,7 +42,7 @@ pub struct DSPTargets {
     pub stale: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct IntentConstraints {
     #[serde(default)]
@@ -54,7 +55,7 @@ pub struct IntentConstraints {
     pub max_event_rate: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct IntentMeta {
     #[serde(default)]
@@ -65,7 +66,7 @@ pub struct IntentMeta {
     pub session_id: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct IntentProvenance {
     #[serde(default)]
@@ -74,7 +75,7 @@ pub struct IntentProvenance {
     pub user_override_weight: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MusicHints {
     #[serde(default)]
@@ -87,7 +88,7 @@ pub struct MusicHints {
     pub section_role: SectionRole,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MusicalIntent {
     #[serde(default)]
@@ -112,7 +113,7 @@ pub struct MusicalIntent {
     pub texture_density: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TimeScope {
     #[serde(default)]
@@ -125,7 +126,7 @@ pub struct TimeScope {
     pub fade_out_beats: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct IntentFrame {
     #[serde(default)]

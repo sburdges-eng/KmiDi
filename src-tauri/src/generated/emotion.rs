@@ -21,7 +21,7 @@ pub enum EmotionTag {
     Float,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EmotionState {
     #[serde(default)]
