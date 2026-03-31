@@ -428,8 +428,9 @@ output.mid
 # Training logs and checkpoints
 logs/training/
 checkpoints/
-# Benchmark reports (regenerable)
+# Benchmark reports (regenerable, but track the latest report)
 bench/
+!bench/latency_report.md
 # Keep registry tracked but ignore generated model weights
 models/*.json
 !models/registry.json
