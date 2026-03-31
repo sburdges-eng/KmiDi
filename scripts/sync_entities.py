@@ -226,7 +226,7 @@ def _render_emotion_rust(schema: dict) -> str:
             lines.append("}")
             lines.append("")
 
-    lines.append("#[derive(Debug, Clone, Serialize, Deserialize)]")
+    lines.append("#[derive(Debug, Clone, Default, Serialize, Deserialize)]")
     lines.append("#[serde(deny_unknown_fields)]")
     lines.append("pub struct EmotionState {")
     for key, value in props.items():
@@ -384,11 +384,12 @@ def _render_intent_frame_rust(schema: Dict[str, Any]) -> str:
     # Emit SectionRole enum
     if "SectionRole" in defs:
         sr = defs["SectionRole"]
-        lines.append("#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]")
+        lines.append("#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]")
         lines.append("pub enum SectionRole {")
         for val in sr["enum"]:
             if val == "":
                 variant = "Unspecified"
+                lines.append("    #[default]")
             else:
                 variant = val.capitalize()
             lines.append(f'    #[serde(rename = "{val}")]')
@@ -402,7 +403,7 @@ def _render_intent_frame_rust(schema: Dict[str, Any]) -> str:
             continue
         struct_name = _strip_schema_suffix(def_name)
         props = def_node.get("properties", {})
-        lines.append("#[derive(Debug, Clone, Serialize, Deserialize)]")
+        lines.append("#[derive(Debug, Clone, Default, Serialize, Deserialize)]")
         lines.append("#[serde(deny_unknown_fields)]")
         lines.append(f"pub struct {struct_name} {{")
         for key, value in props.items():
@@ -414,7 +415,7 @@ def _render_intent_frame_rust(schema: Dict[str, Any]) -> str:
 
     # Emit root IntentFrame struct
     root_props = schema.get("properties", {})
-    lines.append("#[derive(Debug, Clone, Serialize, Deserialize)]")
+    lines.append("#[derive(Debug, Clone, Default, Serialize, Deserialize)]")
     lines.append("#[serde(deny_unknown_fields)]")
     lines.append("pub struct IntentFrame {")
     for key, value in root_props.items():
