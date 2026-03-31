@@ -60,7 +60,7 @@ class TestOnnxExport:
                 encoder,
                 dummy,
                 out_path,
-                opset_version=17,
+                opset_version=18,
                 input_names=["mel"],
                 output_names=["latent"],
             )
@@ -78,7 +78,7 @@ class TestOnnxExport:
                 encoder,
                 dummy,
                 out_path,
-                opset_version=17,
+                opset_version=18,
                 input_names=["mel"],
                 output_names=["latent"],
             )
@@ -98,7 +98,7 @@ class TestOnnxExport:
                 encoder,
                 dummy,
                 out_path,
-                opset_version=17,
+                opset_version=18,
                 input_names=["mel"],
                 output_names=["latent"],
             )
