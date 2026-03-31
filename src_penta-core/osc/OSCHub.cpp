@@ -76,24 +76,24 @@ void OSCHub::processCallbacks() {
     }
 }
 
-bool OSCHub::matchPattern(const std::string& address, const std::string& pattern) const {
+bool OSCHub::matchPattern(const std::string& address, const std::string& pattern,
+                          size_t addrPos, size_t patPos, int depth) const {
     // Simple pattern matching with wildcards
     // * matches any sequence of characters
     // ? matches any single character
-    
-    size_t addrPos = 0;
-    size_t patPos = 0;
-    
+
+    if (depth > 100) return false;  // Prevent stack overflow from pathological patterns
+
     while (addrPos < address.length() && patPos < pattern.length()) {
         if (pattern[patPos] == '*') {
             // Wildcard - try to match rest of pattern
             if (patPos + 1 >= pattern.length()) {
                 return true;  // * at end matches everything
             }
-            
+
             // Try to match remaining pattern at each position
             for (size_t i = addrPos; i <= address.length(); ++i) {
-                if (matchPattern(address.substr(i), pattern.substr(patPos + 1))) {
+                if (matchPattern(address, pattern, i, patPos + 1, depth + 1)) {
                     return true;
                 }
             }
@@ -106,7 +106,7 @@ bool OSCHub::matchPattern(const std::string& address, const std::string& pattern
             return false;
         }
     }
-    
+
     // Check if we matched entire pattern and address
     return addrPos == address.length() && patPos == pattern.length();
 }

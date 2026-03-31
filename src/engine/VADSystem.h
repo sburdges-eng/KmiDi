@@ -24,7 +24,6 @@
 #include "engine/EmotionThesaurus.h"
 #include "biometric/BiometricInput.h"
 #include "common/Types.h"
-#include "core/intent_ir/IntentFrame.h"
 #include <vector>
 #include <optional>
 #include <chrono>
@@ -163,16 +162,7 @@ public:
         bool generateOSC = false
     );
     
-    /**
-     * Process IntentFrame emotion state (Intent IR v1)
-     * @param frame IntentFrame containing emotion state
-     * @param generateOSC Whether to generate OSC output
-     * @return Complete processing result
-     */
-    ProcessingResult processIntentFrame(
-        const intent_ir::IntentFrame& frame,
-        bool generateOSC = false
-    );
+    // processIntentFrame removed: declared but never implemented (H9)
     
     /**
      * Get statistics about VAD history

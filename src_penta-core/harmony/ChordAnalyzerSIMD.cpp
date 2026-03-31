@@ -76,7 +76,7 @@ void ChordAnalyzer::findBestMatchSIMD(
     uint8_t bestQuality = 0;
     
     // Prepare 8 scores at a time using AVX2
-    alignas(32) float scores[8];
+    alignas(32) float scores[8] = {};
     __m256 vBestScore = _mm256_setzero_ps();
     
     // Try all roots
