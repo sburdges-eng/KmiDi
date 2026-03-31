@@ -10,6 +10,12 @@ void DDSPProcessor::prepare(double sampleRate) {
   harmonicAmplitudes_.resize(N_HARMONICS, 0.0f);
   noiseMagnitudes_.resize(N_NOISE_FILTERS, 0.0f);
   phaseAccumulators_.resize(N_HARMONICS, 0.0f);
+
+  // Pre-allocate RT-safe buffers (avoid heap alloc in processBlock)
+  const size_t maxBlockSize = static_cast<size_t>(HOP_SIZE * 2);
+  harmonicBuffer_.resize(maxBlockSize, 0.0f);
+  noiseBuffer_.resize(maxBlockSize, 0.0f);
+  whiteNoiseBuffer_.resize(maxBlockSize, 0.0f);
 }
 
 void DDSPProcessor::processBlock(const float *f0, const float *loudness,
@@ -56,18 +62,18 @@ void DDSPProcessor::processBlock(const float *f0, const float *loudness,
     noiseMagnitudes_[n] = noiseLevel;
   }
 
-  // Synthesize harmonics
-  std::vector<float> harmonicOutput(numSamples, 0.0f);
-  synthesizeHarmonics(f0, harmonicAmplitudes_.data(), harmonicOutput.data(),
+  // Synthesize harmonics (using pre-allocated buffers)
+  std::fill_n(harmonicBuffer_.data(), numSamples, 0.0f);
+  synthesizeHarmonics(f0, harmonicAmplitudes_.data(), harmonicBuffer_.data(),
                       numSamples);
 
-  // Synthesize noise
-  std::vector<float> noiseOutput(numSamples, 0.0f);
-  synthesizeNoise(noiseMagnitudes_.data(), noiseOutput.data(), numSamples);
+  // Synthesize noise (using pre-allocated buffers)
+  std::fill_n(noiseBuffer_.data(), numSamples, 0.0f);
+  synthesizeNoise(noiseMagnitudes_.data(), noiseBuffer_.data(), numSamples);
 
   // Combine harmonic and noise components
   for (int i = 0; i < numSamples; ++i) {
-    output[i] = harmonicOutput[i] + noiseOutput[i];
+    output[i] = harmonicBuffer_[i] + noiseBuffer_[i];
 
     // Apply overall amplitude control
     output[i] *= overallAmplitude_;
@@ -159,10 +165,9 @@ void DDSPProcessor::synthesizeNoise(const float * /*magnitudes*/, float *output,
   thread_local std::mt19937 rng(std::random_device{}());
   std::normal_distribution<float> noiseDist(0.0f, 1.0f);
 
-  // Create noise buffer
-  std::vector<float> whiteNoise(static_cast<size_t>(numSamples));
+  // Fill pre-allocated noise buffer
   for (int i = 0; i < numSamples; ++i) {
-    whiteNoise[static_cast<size_t>(i)] = noiseDist(rng);
+    whiteNoiseBuffer_[static_cast<size_t>(i)] = noiseDist(rng);
   }
 
   // Apply bandpass filters for each noise band
@@ -186,7 +191,7 @@ void DDSPProcessor::synthesizeNoise(const float * /*magnitudes*/, float *output,
     for (int i = 0; i < numSamples; ++i) {
       // Simplified: Apply magnitude envelope
       // Real implementation would use IIR/FIR bandpass filter
-      output[i] += whiteNoise[static_cast<size_t>(i)] * filterGain *
+      output[i] += whiteNoiseBuffer_[static_cast<size_t>(i)] * filterGain *
                    0.1f; // Scale down noise
     }
   }

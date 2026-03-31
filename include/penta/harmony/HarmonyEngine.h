@@ -6,6 +6,7 @@
 #include "penta/harmony/ChordAnalyzer.h"
 #include "penta/harmony/ScaleDetector.h"
 #include "penta/harmony/VoiceLeading.h"
+#include <array>
 #include <memory>
 #include <vector>
 
@@ -75,8 +76,8 @@ namespace penta::harmony
         Chord currentChord_;
         Scale currentScale_;
 
-        std::vector<Chord> chordHistory_;
-        std::vector<Scale> scaleHistory_;
+        std::array<Chord, kHistoryCapacity> chordHistory_;
+        std::array<Scale, kHistoryCapacity> scaleHistory_;
         size_t chordHistoryWriteIndex_ = 0;
         size_t chordHistoryCount_ = 0;
         size_t scaleHistoryWriteIndex_ = 0;

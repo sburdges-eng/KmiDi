@@ -82,6 +82,11 @@ private:
   // Phase accumulation for smooth harmonic synthesis
   std::vector<float> phaseAccumulators_;
 
+  // Pre-allocated RT-safe buffers (sized in prepare())
+  std::vector<float> harmonicBuffer_;
+  std::vector<float> noiseBuffer_;
+  std::vector<float> whiteNoiseBuffer_;
+
   /**
    * Synthesize harmonic signal from f0 and amplitudes.
    * Implements proper additive synthesis with 64 harmonics.

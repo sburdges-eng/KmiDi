@@ -55,13 +55,10 @@ void HarmonyEngine::updateChordAnalysis() noexcept {
         newChord.quality != currentChord_.quality ||
         newChord.confidence > 0.7f) {
         
-        // Add to history (non-RT allocation, but limited size)
-        // Use deque for efficient front removal
-        chordHistory_.push_back(newChord);
-        if (chordHistory_.size() > 1000) {  // Limit history to prevent unbounded growth
-            // Remove oldest entry efficiently with deque
-            chordHistory_.erase(chordHistory_.begin());
-        }
+        // Add to history using circular buffer (RT-safe, no heap alloc)
+        chordHistory_[chordHistoryWriteIndex_] = newChord;
+        chordHistoryWriteIndex_ = (chordHistoryWriteIndex_ + 1) % kHistoryCapacity;
+        if (chordHistoryCount_ < kHistoryCapacity) chordHistoryCount_++;
     }
     
     currentChord_ = newChord;
@@ -84,13 +81,10 @@ void HarmonyEngine::updateScaleDetection() noexcept {
         newScale.mode != currentScale_.mode ||
         newScale.confidence > 0.7f) {
         
-        // Add to history (non-RT allocation, but limited size)
-        // Use deque for efficient front removal
-        scaleHistory_.push_back(newScale);
-        if (scaleHistory_.size() > 1000) {  // Limit history to prevent unbounded growth
-            // Remove oldest entry efficiently with deque
-            scaleHistory_.erase(scaleHistory_.begin());
-        }
+        // Add to history using circular buffer (RT-safe, no heap alloc)
+        scaleHistory_[scaleHistoryWriteIndex_] = newScale;
+        scaleHistoryWriteIndex_ = (scaleHistoryWriteIndex_ + 1) % kHistoryCapacity;
+        if (scaleHistoryCount_ < kHistoryCapacity) scaleHistoryCount_++;
     }
     
     currentScale_ = newScale;
@@ -120,33 +114,47 @@ void HarmonyEngine::updateConfig(const Config& config) {
 }
 
 std::vector<Chord> HarmonyEngine::getChordHistory(size_t maxCount) const {
-    // Return most recent chords up to maxCount
-    if (chordHistory_.empty()) {
+    // Return most recent chords up to maxCount from circular buffer
+    if (chordHistoryCount_ == 0) {
         return {currentChord_};
     }
-    
-    size_t count = std::min(maxCount, chordHistory_.size());
-    size_t startIdx = chordHistory_.size() - count;
-    
-    return std::vector<Chord>(
-        chordHistory_.begin() + startIdx,
-        chordHistory_.end()
-    );
+
+    size_t count = std::min(maxCount, chordHistoryCount_);
+    std::vector<Chord> result;
+    result.reserve(count);
+
+    // Read from oldest to newest within the requested count
+    size_t startIdx;
+    if (chordHistoryCount_ < kHistoryCapacity) {
+        startIdx = (chordHistoryWriteIndex_ + kHistoryCapacity - count) % kHistoryCapacity;
+    } else {
+        startIdx = (chordHistoryWriteIndex_ + kHistoryCapacity - count) % kHistoryCapacity;
+    }
+
+    for (size_t i = 0; i < count; ++i) {
+        result.push_back(chordHistory_[(startIdx + i) % kHistoryCapacity]);
+    }
+
+    return result;
 }
 
 std::vector<Scale> HarmonyEngine::getScaleHistory(size_t maxCount) const {
-    // Return most recent scales up to maxCount
-    if (scaleHistory_.empty()) {
+    // Return most recent scales up to maxCount from circular buffer
+    if (scaleHistoryCount_ == 0) {
         return {currentScale_};
     }
-    
-    size_t count = std::min(maxCount, scaleHistory_.size());
-    size_t startIdx = scaleHistory_.size() - count;
-    
-    return std::vector<Scale>(
-        scaleHistory_.begin() + startIdx,
-        scaleHistory_.end()
-    );
+
+    size_t count = std::min(maxCount, scaleHistoryCount_);
+    std::vector<Scale> result;
+    result.reserve(count);
+
+    size_t startIdx = (scaleHistoryWriteIndex_ + kHistoryCapacity - count) % kHistoryCapacity;
+
+    for (size_t i = 0; i < count; ++i) {
+        result.push_back(scaleHistory_[(startIdx + i) % kHistoryCapacity]);
+    }
+
+    return result;
 }
 
 } // namespace penta::harmony

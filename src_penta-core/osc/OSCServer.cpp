@@ -7,7 +7,7 @@ namespace osc {
 
 // Full definition of OSCListener class
 class OSCServer::OSCListener
-    : public juce::OSCReceiver::Listener<juce::OSCReceiver::RealtimeCallback> {
+    : public juce::OSCReceiver::Listener<juce::OSCReceiver::MessageLoopCallback> {
 public:
     explicit OSCListener(OSCServer* server) : server_(server) {}
 

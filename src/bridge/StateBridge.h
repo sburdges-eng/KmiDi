@@ -23,8 +23,7 @@
 #include <map>
 #include <memory>
 #include <atomic>
-#include <mutex>
-#include <queue>
+#include <readerwriterqueue.h>
 
 namespace kelly {
 
@@ -119,8 +118,7 @@ private:
         std::string stateJson;
         std::chrono::steady_clock::time_point timestamp;
     };
-    std::queue<StateUpdate> stateQueue_;
-    std::mutex queueMutex_;
+    std::unique_ptr<moodycamel::ReaderWriterQueue<StateUpdate>> stateQueue_;
     static constexpr size_t MAX_QUEUE_SIZE = 1000;
 
     // Worker thread for processing state updates

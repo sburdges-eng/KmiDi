@@ -9,8 +9,6 @@
 #include <sstream>
 #include <thread>
 #include <chrono>
-#include <queue>
-#include <mutex>
 #include <atomic>
 #include <memory>
 
@@ -51,6 +49,7 @@ StateBridge::StateBridge()
     , emitStateFunc_(nullptr)
     , getCurrentStateFunc_(nullptr)
     , getEngineStateFunc_(nullptr)
+    , stateQueue_(std::make_unique<moodycamel::ReaderWriterQueue<StateUpdate>>(256))
     , workerThread_(nullptr)
 {
 }
@@ -147,19 +146,11 @@ void StateBridge::emitStateUpdate(
     }
 
     // Add to queue (lock-free for audio thread safety)
-    {
-        std::lock_guard<std::mutex> lock(queueMutex_);
-        if (stateQueue_.size() >= MAX_QUEUE_SIZE) {
-            // Queue full - drop oldest entry
-            stateQueue_.pop();
-        }
-
-        StateUpdate update;
-        update.engineType = engineType;
-        update.stateJson = stateJson;
-        update.timestamp = std::chrono::steady_clock::now();
-        stateQueue_.push(update);
-    }
+    StateUpdate update;
+    update.engineType = engineType;
+    update.stateJson = stateJson;
+    update.timestamp = std::chrono::steady_clock::now();
+    stateQueue_->try_enqueue(update);
 }
 
 std::string StateBridge::getCurrentState() {
@@ -239,13 +230,8 @@ void StateBridge::processStateQueue() {
 
     while (processed < MAX_BATCH) {
         StateUpdate update;
-        {
-            std::lock_guard<std::mutex> lock(queueMutex_);
-            if (stateQueue_.empty()) {
-                break;
-            }
-            update = stateQueue_.front();
-            stateQueue_.pop();
+        if (!stateQueue_->try_dequeue(update)) {
+            break;
         }
 
 #ifdef PYTHON_AVAILABLE
