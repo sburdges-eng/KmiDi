@@ -204,6 +204,41 @@ def _render_emotion_typescript(schema: dict) -> str:
     return "\n".join(lines)
 
 
+def _rust_literal(value: Any, node: Dict[str, Any]) -> str:
+    """Convert a Python default value to a Rust literal string."""
+    node_type = node.get("type")
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if node_type == "integer":
+        return str(int(value))
+    if node_type == "number":
+        s = repr(float(value))
+        # Ensure it has a decimal point for f64
+        if "." not in s and "e" not in s and "E" not in s:
+            s += ".0"
+        return s
+    if node_type == "string":
+        return f'String::new()' if value == "" else f'"{value}".to_string()'
+    # fallback
+    return f"{value}"
+
+
+def _type_zero(node: Dict[str, Any]) -> Any:
+    """Return the zero/empty value for a JSON Schema type."""
+    t = node.get("type")
+    if t == "integer":
+        return 0
+    if t == "number":
+        return 0.0
+    if t == "boolean":
+        return False
+    if t == "string":
+        return ""
+    if t == "array":
+        return []
+    return 0
+
+
 def _render_emotion_rust(schema: dict) -> str:
     props = schema.get("properties", {})
     required = set(schema.get("required", []))
@@ -226,7 +261,7 @@ def _render_emotion_rust(schema: dict) -> str:
             lines.append("}")
             lines.append("")
 
-    lines.append("#[derive(Debug, Clone, Default, Serialize, Deserialize)]")
+    lines.append("#[derive(Debug, Clone, Serialize, Deserialize)]")
     lines.append("#[serde(deny_unknown_fields)]")
     lines.append("pub struct EmotionState {")
     for key, value in props.items():
@@ -240,6 +275,21 @@ def _render_emotion_rust(schema: dict) -> str:
             field_type = _json_to_rust_type(value, required=True)
             lines.append("    #[serde(default)]")
             lines.append(f"    pub {key}: {field_type},")
+    lines.append("}")
+    lines.append("")
+
+    # Emit manual impl Default with schema defaults
+    lines.append("impl Default for EmotionState {")
+    lines.append("    fn default() -> Self {")
+    lines.append("        Self {")
+    for key, value in props.items():
+        if key == "tags":
+            lines.append("            tags: Vec::new(),")
+        else:
+            default_val = value.get("default", 0.0)
+            lines.append(f"            {key}: {_rust_literal(default_val, value)},")
+    lines.append("        }")
+    lines.append("    }")
     lines.append("}")
     lines.append("")
 
@@ -260,6 +310,14 @@ def _render_emotion_rust(schema: dict) -> str:
     lines.append("        }")
     lines.append("        if self.tags.len() > 3 {")
     lines.append('            return Err(format!("tags count {} exceeds max 3", self.tags.len()));')
+    lines.append("        }")
+    lines.append("        // Check tag uniqueness")
+    lines.append("        for i in 0..self.tags.len() {")
+    lines.append("            for j in (i+1)..self.tags.len() {")
+    lines.append("                if self.tags[i] == self.tags[j] {")
+    lines.append('                    return Err("duplicate tags".to_string());')
+    lines.append("                }")
+    lines.append("            }")
     lines.append("        }")
     lines.append("        Ok(())")
     lines.append("    }")
@@ -403,7 +461,15 @@ def _render_intent_frame_rust(schema: Dict[str, Any]) -> str:
             continue
         struct_name = _strip_schema_suffix(def_name)
         props = def_node.get("properties", {})
-        lines.append("#[derive(Debug, Clone, Default, Serialize, Deserialize)]")
+        # Check if any property has a non-zero default
+        has_nonzero = any(
+            p.get("default") not in (None, 0, 0.0, False, "")
+            for p in props.values()
+        )
+        if has_nonzero:
+            lines.append("#[derive(Debug, Clone, Serialize, Deserialize)]")
+        else:
+            lines.append("#[derive(Debug, Clone, Default, Serialize, Deserialize)]")
         lines.append("#[serde(deny_unknown_fields)]")
         lines.append(f"pub struct {struct_name} {{")
         for key, value in props.items():
@@ -413,9 +479,35 @@ def _render_intent_frame_rust(schema: Dict[str, Any]) -> str:
         lines.append("}")
         lines.append("")
 
+        # Emit manual impl Default if needed
+        if has_nonzero:
+            lines.append(f"impl Default for {struct_name} {{")
+            lines.append("    fn default() -> Self {")
+            lines.append("        Self {")
+            for key, value in props.items():
+                if "$ref" in value:
+                    # Reference types use their own Default
+                    ref_name = _resolve_ref_name(value["$ref"])
+                    lines.append(f"            {key}: {ref_name}::default(),")
+                else:
+                    default_val = value.get("default", _type_zero(value))
+                    lines.append(f"            {key}: {_rust_literal(default_val, value)},")
+            lines.append("        }")
+            lines.append("    }")
+            lines.append("}")
+            lines.append("")
+
     # Emit root IntentFrame struct
     root_props = schema.get("properties", {})
-    lines.append("#[derive(Debug, Clone, Default, Serialize, Deserialize)]")
+    has_nonzero_root = any(
+        p.get("default") not in (None, 0, 0.0, False, "")
+        for p in root_props.values()
+        if "$ref" not in p
+    )
+    if has_nonzero_root:
+        lines.append("#[derive(Debug, Clone, Serialize, Deserialize)]")
+    else:
+        lines.append("#[derive(Debug, Clone, Default, Serialize, Deserialize)]")
     lines.append("#[serde(deny_unknown_fields)]")
     lines.append("pub struct IntentFrame {")
     for key, value in root_props.items():
@@ -425,7 +517,34 @@ def _render_intent_frame_rust(schema: Dict[str, Any]) -> str:
     lines.append("}")
     lines.append("")
 
-    # Add validate() impl
+    # Emit manual impl Default for IntentFrame if needed
+    if has_nonzero_root:
+        lines.append("impl Default for IntentFrame {")
+        lines.append("    fn default() -> Self {")
+        lines.append("        Self {")
+        for key, value in root_props.items():
+            if "$ref" in value:
+                ref_name = _resolve_ref_name(value["$ref"])
+                lines.append(f"            {key}: {ref_name}::default(),")
+            else:
+                default_val = value.get("default", _type_zero(value))
+                lines.append(f"            {key}: {_rust_literal(default_val, value)},")
+        lines.append("        }")
+        lines.append("    }")
+        lines.append("}")
+        lines.append("")
+
+    # Add validate() impl — check ALL [0,1] clamped fields
+    # Collect clamped fields from MusicalIntent
+    musical_intent_props = {}
+    dsp_targets_props = {}
+    for dn, dnode in defs.items():
+        sn = _strip_schema_suffix(dn)
+        if sn == "MusicalIntent":
+            musical_intent_props = dnode.get("properties", {})
+        elif sn == "DSPTargets":
+            dsp_targets_props = dnode.get("properties", {})
+
     lines.append("impl IntentFrame {")
     lines.append("    pub fn validate(&self) -> Result<(), String> {")
     lines.append("        if self.meta.schema_version != 1 {")
@@ -434,6 +553,29 @@ def _render_intent_frame_rust(schema: Dict[str, Any]) -> str:
     lines.append("        if self.music.tempo_bias < -1.0 || self.music.tempo_bias > 1.0 {")
     lines.append('            return Err(format!("tempo_bias {} out of range [-1.0, 1.0]", self.music.tempo_bias));')
     lines.append("        }")
+
+    # Validate all [0,1] clamped fields in MusicalIntent
+    for field_name, field_node in musical_intent_props.items():
+        if field_name == "tempo_bias":
+            continue  # already handled above
+        ft = field_node.get("type")
+        mn = field_node.get("minimum")
+        mx = field_node.get("maximum")
+        if ft == "number" and mn == 0.0 and mx == 1.0:
+            lines.append(f"        if self.music.{field_name} < 0.0 || self.music.{field_name} > 1.0 {{")
+            lines.append(f'            return Err(format!("{field_name} {{}} out of range [0.0, 1.0]", self.music.{field_name}));')
+            lines.append("        }")
+
+    # Validate all [0,1] clamped fields in DSPTargets
+    for field_name, field_node in dsp_targets_props.items():
+        ft = field_node.get("type")
+        mn = field_node.get("minimum")
+        mx = field_node.get("maximum")
+        if ft == "number" and mn == 0.0 and mx == 1.0:
+            lines.append(f"        if self.dsp_targets.{field_name} < 0.0 || self.dsp_targets.{field_name} > 1.0 {{")
+            lines.append(f'            return Err(format!("{field_name} {{}} out of range [0.0, 1.0]", self.dsp_targets.{field_name}));')
+            lines.append("        }")
+
     lines.append("        if self.provenance.source < 0 || self.provenance.source > 5 {")
     lines.append('            return Err(format!("source {} out of range [0, 5]", self.provenance.source));')
     lines.append("        }")

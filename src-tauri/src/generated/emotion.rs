@@ -21,7 +21,7 @@ pub enum EmotionTag {
     Float,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EmotionState {
     #[serde(default)]
@@ -34,6 +34,18 @@ pub struct EmotionState {
     pub tags: Vec<EmotionTag>,
     #[serde(default)]
     pub confidence: f64,
+}
+
+impl Default for EmotionState {
+    fn default() -> Self {
+        Self {
+            valence: 0.0,
+            arousal: 0.5,
+            dominance: 0.5,
+            tags: Vec::new(),
+            confidence: 0.0,
+        }
+    }
 }
 
 impl EmotionState {
@@ -52,6 +64,14 @@ impl EmotionState {
         }
         if self.tags.len() > 3 {
             return Err(format!("tags count {} exceeds max 3", self.tags.len()));
+        }
+        // Check tag uniqueness
+        for i in 0..self.tags.len() {
+            for j in (i+1)..self.tags.len() {
+                if self.tags[i] == self.tags[j] {
+                    return Err("duplicate tags".to_string());
+                }
+            }
         }
         Ok(())
     }

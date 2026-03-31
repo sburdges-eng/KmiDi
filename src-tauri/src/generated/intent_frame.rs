@@ -23,7 +23,7 @@ pub enum SectionRole {
     Unspecified,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DSPTargets {
     #[serde(default)]
@@ -42,7 +42,21 @@ pub struct DSPTargets {
     pub stale: bool,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+impl Default for DSPTargets {
+    fn default() -> Self {
+        Self {
+            filter_cutoff: 0.5,
+            filter_cutoff_confidence: 0.0,
+            reverb_send: 0.2,
+            reverb_send_confidence: 0.0,
+            drive: 0.0,
+            drive_confidence: 0.0,
+            stale: true,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct IntentConstraints {
     #[serde(default)]
@@ -55,7 +69,18 @@ pub struct IntentConstraints {
     pub max_event_rate: f64,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+impl Default for IntentConstraints {
+    fn default() -> Self {
+        Self {
+            allowed_engines_mask: 4294967295,
+            forbidden_engines_mask: 0,
+            max_cpu_cost: 1.0,
+            max_event_rate: 1000.0,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct IntentMeta {
     #[serde(default)]
@@ -66,13 +91,32 @@ pub struct IntentMeta {
     pub session_id: i64,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+impl Default for IntentMeta {
+    fn default() -> Self {
+        Self {
+            schema_version: 1,
+            intent_id: 0,
+            session_id: 0,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct IntentProvenance {
     #[serde(default)]
     pub source: i64,
     #[serde(default)]
     pub user_override_weight: f64,
+}
+
+impl Default for IntentProvenance {
+    fn default() -> Self {
+        Self {
+            source: 0,
+            user_override_weight: 0.5,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -88,7 +132,7 @@ pub struct MusicHints {
     pub section_role: SectionRole,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct MusicalIntent {
     #[serde(default)]
@@ -113,7 +157,24 @@ pub struct MusicalIntent {
     pub texture_density: f64,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+impl Default for MusicalIntent {
+    fn default() -> Self {
+        Self {
+            tempo_bias: 0.0,
+            rhythmic_density: 0.5,
+            groove_strength: 0.5,
+            harmonic_tension: 0.5,
+            harmonic_motion: 0.5,
+            mode_preference: 0,
+            melodic_activity: 0.5,
+            contour_variance: 0.5,
+            dynamic_range: 0.5,
+            texture_density: 0.5,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TimeScope {
     #[serde(default)]
@@ -126,7 +187,18 @@ pub struct TimeScope {
     pub fade_out_beats: f64,
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+impl Default for TimeScope {
+    fn default() -> Self {
+        Self {
+            start_bar: -1,
+            end_bar: -1,
+            fade_in_beats: 0.0,
+            fade_out_beats: 0.0,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct IntentFrame {
     #[serde(default)]
@@ -151,6 +223,23 @@ pub struct IntentFrame {
     pub latency_budget_ms: f64,
 }
 
+impl Default for IntentFrame {
+    fn default() -> Self {
+        Self {
+            meta: IntentMeta::default(),
+            timestamp_ms: 0,
+            emotion: EmotionState::default(),
+            music: MusicalIntent::default(),
+            music_hints: MusicHints::default(),
+            dsp_targets: DSPTargets::default(),
+            time: TimeScope::default(),
+            constraints: IntentConstraints::default(),
+            provenance: IntentProvenance::default(),
+            latency_budget_ms: 10.0,
+        }
+    }
+}
+
 impl IntentFrame {
     pub fn validate(&self) -> Result<(), String> {
         if self.meta.schema_version != 1 {
@@ -158,6 +247,48 @@ impl IntentFrame {
         }
         if self.music.tempo_bias < -1.0 || self.music.tempo_bias > 1.0 {
             return Err(format!("tempo_bias {} out of range [-1.0, 1.0]", self.music.tempo_bias));
+        }
+        if self.music.rhythmic_density < 0.0 || self.music.rhythmic_density > 1.0 {
+            return Err(format!("rhythmic_density {} out of range [0.0, 1.0]", self.music.rhythmic_density));
+        }
+        if self.music.groove_strength < 0.0 || self.music.groove_strength > 1.0 {
+            return Err(format!("groove_strength {} out of range [0.0, 1.0]", self.music.groove_strength));
+        }
+        if self.music.harmonic_tension < 0.0 || self.music.harmonic_tension > 1.0 {
+            return Err(format!("harmonic_tension {} out of range [0.0, 1.0]", self.music.harmonic_tension));
+        }
+        if self.music.harmonic_motion < 0.0 || self.music.harmonic_motion > 1.0 {
+            return Err(format!("harmonic_motion {} out of range [0.0, 1.0]", self.music.harmonic_motion));
+        }
+        if self.music.melodic_activity < 0.0 || self.music.melodic_activity > 1.0 {
+            return Err(format!("melodic_activity {} out of range [0.0, 1.0]", self.music.melodic_activity));
+        }
+        if self.music.contour_variance < 0.0 || self.music.contour_variance > 1.0 {
+            return Err(format!("contour_variance {} out of range [0.0, 1.0]", self.music.contour_variance));
+        }
+        if self.music.dynamic_range < 0.0 || self.music.dynamic_range > 1.0 {
+            return Err(format!("dynamic_range {} out of range [0.0, 1.0]", self.music.dynamic_range));
+        }
+        if self.music.texture_density < 0.0 || self.music.texture_density > 1.0 {
+            return Err(format!("texture_density {} out of range [0.0, 1.0]", self.music.texture_density));
+        }
+        if self.dsp_targets.filter_cutoff < 0.0 || self.dsp_targets.filter_cutoff > 1.0 {
+            return Err(format!("filter_cutoff {} out of range [0.0, 1.0]", self.dsp_targets.filter_cutoff));
+        }
+        if self.dsp_targets.filter_cutoff_confidence < 0.0 || self.dsp_targets.filter_cutoff_confidence > 1.0 {
+            return Err(format!("filter_cutoff_confidence {} out of range [0.0, 1.0]", self.dsp_targets.filter_cutoff_confidence));
+        }
+        if self.dsp_targets.reverb_send < 0.0 || self.dsp_targets.reverb_send > 1.0 {
+            return Err(format!("reverb_send {} out of range [0.0, 1.0]", self.dsp_targets.reverb_send));
+        }
+        if self.dsp_targets.reverb_send_confidence < 0.0 || self.dsp_targets.reverb_send_confidence > 1.0 {
+            return Err(format!("reverb_send_confidence {} out of range [0.0, 1.0]", self.dsp_targets.reverb_send_confidence));
+        }
+        if self.dsp_targets.drive < 0.0 || self.dsp_targets.drive > 1.0 {
+            return Err(format!("drive {} out of range [0.0, 1.0]", self.dsp_targets.drive));
+        }
+        if self.dsp_targets.drive_confidence < 0.0 || self.dsp_targets.drive_confidence > 1.0 {
+            return Err(format!("drive_confidence {} out of range [0.0, 1.0]", self.dsp_targets.drive_confidence));
         }
         if self.provenance.source < 0 || self.provenance.source > 5 {
             return Err(format!("source {} out of range [0, 5]", self.provenance.source));
