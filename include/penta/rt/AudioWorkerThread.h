@@ -67,6 +67,8 @@ private:
 
         while (running_.load(std::memory_order_relaxed)) {
             work_();
+            // Yield to prevent burning CPU when work returns quickly
+            std::this_thread::yield();
         }
 
         leaveWorkgroup();

@@ -4,10 +4,15 @@
 #include <readerwriterqueue.h>
 
 #include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <cmath>
 #include <cstring>
 #include <thread>
+
+#if defined(__SSE__)
+#include <xmmintrin.h>
+#endif
 
 #ifdef ENABLE_ONNX_RUNTIME
 #include "ml/ONNXInference.h"
@@ -127,6 +132,9 @@ struct AudioEmotionRunnerImpl {
     }
 
     EmotionResult mapLatentToEmotion(const float* pooled, size_t dim) {
+        assert(dim <= 256 && "mapLatentToEmotion: dim exceeds allocated weight dimensions");
+        assert(dim * 4 <= emotionWeights.size() && "mapLatentToEmotion: weight buffer too small for dim");
+
         EmotionResult e;
         float raw[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
@@ -163,6 +171,11 @@ struct AudioEmotionRunnerImpl {
     }
 
     void workerLoop() {
+        // Flush denormals to zero — prevents 100x slowdown on near-silence
+#if defined(__SSE__)
+        _mm_setcsr(_mm_getcsr() | 0x8040);  // FTZ (bit 15) + DAZ (bit 6)
+#endif
+
         const size_t requiredSamples = MelSpectrogram::kRequiredSamples;
         const size_t latentDim = 256;
         const size_t latentFrames = 512;

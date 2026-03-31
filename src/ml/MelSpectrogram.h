@@ -28,6 +28,12 @@ public:
 
     MelSpectrogram();
 
+    // Non-copyable, non-movable — compute() uses internal scratch buffers (not thread-safe)
+    MelSpectrogram(const MelSpectrogram&) = delete;
+    MelSpectrogram& operator=(const MelSpectrogram&) = delete;
+    MelSpectrogram(MelSpectrogram&&) = delete;
+    MelSpectrogram& operator=(MelSpectrogram&&) = delete;
+
     /**
      * Compute log-mel spectrogram from raw audio samples.
      *
