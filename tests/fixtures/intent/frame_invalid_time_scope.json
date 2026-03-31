@@ -1,0 +1,12 @@
+{
+  "meta": {"schema_version": 1, "intent_id": 0, "session_id": 0},
+  "timestamp_ms": 0,
+  "emotion": {"valence": 0.0, "arousal": 0.5, "dominance": 0.5, "confidence": 0.0},
+  "music": {"tempo_bias": 0.0, "rhythmic_density": 0.5, "groove_strength": 0.5, "harmonic_tension": 0.5, "harmonic_motion": 0.5, "mode_preference": 0, "melodic_activity": 0.5, "contour_variance": 0.5, "dynamic_range": 0.5, "texture_density": 0.5},
+  "music_hints": {"key": "", "tempo_bpm": 0.0, "chord_bias": "", "section_role": ""},
+  "dsp_targets": {"filter_cutoff": 0.5, "filter_cutoff_confidence": 0.0, "reverb_send": 0.2, "reverb_send_confidence": 0.0, "drive": 0.0, "drive_confidence": 0.0, "stale": true},
+  "time": {"start_bar": 5, "end_bar": 2, "fade_in_beats": 0.0, "fade_out_beats": 0.0},
+  "constraints": {"allowed_engines_mask": 4294967295, "forbidden_engines_mask": 0, "max_cpu_cost": 1.0, "max_event_rate": 1000.0},
+  "provenance": {"source": 0, "user_override_weight": 0.5},
+  "latency_budget_ms": 10.0
+}
