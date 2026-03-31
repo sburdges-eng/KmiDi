@@ -43,6 +43,8 @@
 #include "ml/MLFeatureExtractor.h"
 #include "ml/MultiModelProcessor.h"
 #include "ml/PluginLatencyManager.h"
+#include "penta/ml/AudioEmotionRunner.h"
+#include "penta/common/RTState.h"
 #include "plugin/PluginState.h"
 #include "plugin/MasterEQProcessor.h"
 // Forward declare KellyBrain and MLIntentPipeline to avoid type conflicts
@@ -400,6 +402,12 @@ private:
   std::atomic<float> mlValence_{0.0f};
   std::atomic<float> mlArousal_{0.0f};
   int64_t sampleCounter_ = 0;
+
+  // AudioEmotionRunner — RT-safe JEPA emotion inference
+  std::unique_ptr<penta::ml::AudioEmotionRunner> emotionRunner_;
+  penta::RTState emotionRTState_;
+  std::vector<float> monoMixBuffer_; // Pre-allocated scratch for mono downmix
+
   std::atomic<float> hostTempoBpm_{120.0f};
 
   // Feature extraction and emotion application

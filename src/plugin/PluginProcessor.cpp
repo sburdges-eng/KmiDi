@@ -329,9 +329,30 @@ void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
     asyncMLPipeline_ =
         std::make_unique<Kelly::ML::AsyncMLPipeline>(multiModelProcessor_);
   }
+
+  // Initialize AudioEmotionRunner for RT emotion detection
+  if (mlInferenceEnabled_.load()) {
+    penta::ml::AudioEmotionRunnerConfig emotionConfig;
+    emotionConfig.model_path = "";  // Stub mode — no ONNX model yet
+    emotionConfig.sample_rate = static_cast<size_t>(sampleRate);
+    emotionConfig.ring_capacity = 524288;
+    emotionConfig.slew_time_ms = 20.0f;
+    emotionConfig.confidence_threshold = 0.3f;
+
+    emotionRunner_ = std::make_unique<penta::ml::AudioEmotionRunner>();
+    emotionRunner_->initialize(emotionConfig);
+  }
+
+  // Pre-allocate mono mix buffer (no heap alloc in processBlock)
+  monoMixBuffer_.resize(static_cast<size_t>(samplesPerBlock));
 }
 
 void PluginProcessor::releaseResources() {
+  if (emotionRunner_) {
+    emotionRunner_->shutdown();
+    emotionRunner_.reset();
+  }
+
   inferenceManager_.stop();
 
   // Stop async ML pipeline
