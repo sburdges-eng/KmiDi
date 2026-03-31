@@ -24,7 +24,9 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <atomic>
 #include <map>
+#include <mutex>
 
 namespace kelly {
 namespace bridge {
@@ -45,7 +47,7 @@ using OSCStringResponseHandler = std::function<void(const std::string& response)
  * Uses RealtimeCallback for better real-time performance.
  * Supports both initialize()/shutdown() and connect()/disconnect() APIs.
  */
-class OSCBridge : public BridgeBase, public juce::OSCReceiver::Listener<juce::OSCReceiver::RealtimeCallback> {
+class OSCBridge : public BridgeBase, public juce::OSCReceiver::Listener<juce::OSCReceiver::MessageLoopCallback> {
 public:
     OSCBridge();
     ~OSCBridge() override;
@@ -192,8 +194,9 @@ private:
         OSCStringResponseHandler stringCallback;
         juce::Time timestamp;
     };
-    std::map<int, PendingRequest> pendingRequests_;
-    int nextMessageId_ = 1;
+    std::map<uint32_t, PendingRequest> pendingRequests_;
+    mutable std::mutex pendingRequestsMutex_;
+    std::atomic<uint32_t> nextMessageId_{0};
     static constexpr int REQUEST_TIMEOUT_MS = 5000;
 
     // OSC sender and receiver
@@ -203,7 +206,7 @@ private:
     /**
      * Generate unique message ID
      */
-    int generateMessageId() { return nextMessageId_++; }
+    uint32_t generateMessageId() { return nextMessageId_.fetch_add(1, std::memory_order_relaxed); }
 
     /**
      * OSCReceiver::Listener callbacks
@@ -214,7 +217,7 @@ private:
     /**
      * Handle incoming OSC message by address pattern
      */
-    void handleResponseMessage(const juce::OSCMessage& message, int msgId);
+    void handleResponseMessage(const juce::OSCMessage& message, uint32_t msgId);
 
     /**
      * Clean up timed-out requests

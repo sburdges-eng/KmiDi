@@ -1,10 +1,9 @@
 #include "penta/common/RTLogger.h"
 #include <iostream>
 #include <cstring>
+#include <mutex>
 
 namespace penta {
-
-static RTLogger* g_logger = nullptr;
 
 RTLogger::RTLogger()
     : writeIndex_(0)
@@ -93,11 +92,10 @@ void RTLogger::processingThread() {
 }
 
 RTLogger& getLogger() {
-    if (!g_logger) {
-        g_logger = new RTLogger();
-        g_logger->start();
-    }
-    return *g_logger;
+    static RTLogger instance;
+    static std::once_flag startFlag;
+    std::call_once(startFlag, [&]{ instance.start(); });
+    return instance;
 }
 
 } // namespace penta

@@ -49,7 +49,7 @@ private:
     using TimePoint = Clock::time_point;
     
     TimePoint measurementStart_;
-    std::vector<uint64_t> latencyHistory_;
+    std::vector<std::atomic<uint64_t>> latencyHistory_;
     std::atomic<size_t> historyIndex_;
     std::atomic<uint64_t> peakLatencyUs_;
     std::atomic<size_t> xrunCount_;

@@ -48,8 +48,11 @@ namespace penta::diagnostics
     } // anonymous namespace
 
     PerformanceMonitor::PerformanceMonitor()
-        : measurementStart_(), latencyHistory_(kHistorySize, 0), historyIndex_(0), peakLatencyUs_(0), xrunCount_(0)
+        : measurementStart_(), latencyHistory_(kHistorySize), historyIndex_(0), peakLatencyUs_(0), xrunCount_(0)
     {
+        for (auto& entry : latencyHistory_) {
+            entry.store(0, std::memory_order_relaxed);
+        }
     }
 
     void PerformanceMonitor::beginMeasurement() noexcept
@@ -74,9 +77,9 @@ namespace penta::diagnostics
             latencyUs = 1;
         }
 
-        // Update circular buffer (RT-safe)
+        // Update circular buffer (RT-safe, atomic store)
         size_t idx = historyIndex_.fetch_add(1, std::memory_order_relaxed) % kHistorySize;
-        latencyHistory_[idx] = latencyUs;
+        latencyHistory_[idx].store(latencyUs, std::memory_order_relaxed);
 
         // Update peak (RT-safe atomic)
         uint64_t currentPeak = peakLatencyUs_.load(std::memory_order_relaxed);
@@ -103,7 +106,7 @@ namespace penta::diagnostics
         uint64_t sum = 0;
         for (size_t i = 0; i < count; ++i)
         {
-            sum += latencyHistory_[i];
+            sum += latencyHistory_[i].load(std::memory_order_relaxed);
         }
 
         return static_cast<float>(sum) / static_cast<float>(count);
@@ -141,7 +144,9 @@ namespace penta::diagnostics
         historyIndex_.store(0, std::memory_order_relaxed);
         peakLatencyUs_.store(0, std::memory_order_relaxed);
         xrunCount_.store(0, std::memory_order_relaxed);
-        std::fill(latencyHistory_.begin(), latencyHistory_.end(), 0);
+        for (auto& entry : latencyHistory_) {
+            entry.store(0, std::memory_order_relaxed);
+        }
     }
 
 } // namespace penta::diagnostics

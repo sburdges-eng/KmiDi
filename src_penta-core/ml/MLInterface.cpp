@@ -27,12 +27,12 @@ namespace penta::ml {
 class MLInterface::Impl {
 public:
     explicit Impl(const MLConfig& config) : config_(config) {
-        stats_.total_requests = 0;
-        stats_.completed_requests = 0;
-        stats_.failed_requests = 0;
-        stats_.queue_overflows = 0;
-        stats_.avg_latency_ms = 0.0f;
-        stats_.max_latency_ms = 0.0f;
+        total_requests_.store(0, std::memory_order_relaxed);
+        completed_requests_.store(0, std::memory_order_relaxed);
+        failed_requests_.store(0, std::memory_order_relaxed);
+        queue_overflows_.store(0, std::memory_order_relaxed);
+        avg_latency_ms_.store(0.0f, std::memory_order_relaxed);
+        max_latency_ms_.store(0.0f, std::memory_order_relaxed);
     }
 
     ~Impl() {
@@ -68,10 +68,10 @@ public:
 
     bool submitRequest(const InferenceRequest& request) noexcept {
         if (!request_queue_.try_push(request)) {
-            stats_.queue_overflows++;
+            queue_overflows_.fetch_add(1, std::memory_order_relaxed);
             return false;
         }
-        stats_.total_requests++;
+        total_requests_.fetch_add(1, std::memory_order_relaxed);
 
         // Wake up inference thread (non-blocking notification)
         cv_.notify_one();
@@ -222,7 +222,14 @@ public:
     }
 
     Stats getStats() const {
-        return stats_;
+        Stats s;
+        s.total_requests = total_requests_.load(std::memory_order_relaxed);
+        s.completed_requests = completed_requests_.load(std::memory_order_relaxed);
+        s.failed_requests = failed_requests_.load(std::memory_order_relaxed);
+        s.queue_overflows = queue_overflows_.load(std::memory_order_relaxed);
+        s.avg_latency_ms = avg_latency_ms_.load(std::memory_order_relaxed);
+        s.max_latency_ms = max_latency_ms_.load(std::memory_order_relaxed);
+        return s;
     }
 
 private:
@@ -358,16 +365,19 @@ private:
 
     void updateStats(const InferenceResult& result) {
         if (result.success) {
-            stats_.completed_requests++;
+            completed_requests_.fetch_add(1, std::memory_order_relaxed);
             // Exponential moving average for latency
             float alpha = 0.1f;
-            stats_.avg_latency_ms = alpha * result.latency_ms +
-                                    (1.0f - alpha) * stats_.avg_latency_ms;
-            if (result.latency_ms > stats_.max_latency_ms) {
-                stats_.max_latency_ms = result.latency_ms;
+            float old_avg = avg_latency_ms_.load(std::memory_order_relaxed);
+            avg_latency_ms_.store(alpha * result.latency_ms +
+                                  (1.0f - alpha) * old_avg,
+                                  std::memory_order_relaxed);
+            float old_max = max_latency_ms_.load(std::memory_order_relaxed);
+            if (result.latency_ms > old_max) {
+                max_latency_ms_.store(result.latency_ms, std::memory_order_relaxed);
             }
         } else {
-            stats_.failed_requests++;
+            failed_requests_.fetch_add(1, std::memory_order_relaxed);
         }
     }
 
@@ -393,8 +403,13 @@ private:
     std::unordered_set<ModelType> loaded_models_;
 #endif
 
-    // Statistics
-    mutable Stats stats_{};
+    // Statistics (atomic for cross-thread access)
+    std::atomic<uint64_t> total_requests_{0};
+    std::atomic<uint64_t> completed_requests_{0};
+    std::atomic<uint64_t> failed_requests_{0};
+    std::atomic<uint64_t> queue_overflows_{0};
+    std::atomic<float> avg_latency_ms_{0.0f};
+    std::atomic<float> max_latency_ms_{0.0f};
 };
 
 // ============================================================================
