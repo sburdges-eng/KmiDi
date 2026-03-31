@@ -66,6 +66,7 @@ Wound convertLegacyToKellyTypesWound(const Wound &legacy) {
 #include "plugin/MasterEQProcessor.h"
 #include "project/ProjectManager.h"
 #if JUCE_MAC
+#include <cstring>
 #include <pthread.h>
 #include <sys/qos.h>
 #endif
@@ -417,6 +418,61 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
     InferenceResult result;
     while (inferenceManager_.getResult(result)) {
       applyEmotionVector(result.emotionVector);
+    }
+
+    // --- AudioEmotionRunner: push mono-mixed audio and blend ---
+    if (emotionRunner_ && emotionRunner_->isRunning()) {
+      // Mono downmix into pre-allocated buffer
+      const size_t n = static_cast<size_t>(numSamples);
+      if (n <= monoMixBuffer_.size()) {
+        if (numChannels == 1) {
+          std::memcpy(monoMixBuffer_.data(), buffer.getReadPointer(0),
+                      n * sizeof(float));
+        } else {
+          const float *left = buffer.getReadPointer(0);
+          const float *right =
+              numChannels > 1 ? buffer.getReadPointer(1) : left;
+          for (size_t i = 0; i < n; ++i) {
+            monoMixBuffer_[i] = 0.5f * (left[i] + right[i]);
+          }
+        }
+
+        // Push to ring buffer (lock-free, non-blocking)
+        emotionRunner_->pushSamples(monoMixBuffer_.data(), n);
+
+        // Read latest inference results into RTState (lock-free)
+        emotionRunner_->updateParams(emotionRTState_,
+                                     static_cast<size_t>(numSamples));
+
+        // Blend detected emotion with manual slider values
+        const float blend =
+            apvts_.getRawParameterValue(PARAM_ML_INFLUENCE)->load();
+
+        if (blend > 0.0f) {
+          const float detectedV =
+              emotionRTState_.valence.load(std::memory_order_relaxed);
+          const float detectedA =
+              emotionRTState_.arousal.load(std::memory_order_relaxed);
+          const float manualV =
+              apvts_.getRawParameterValue(PARAM_VALENCE)->load();
+          const float manualA =
+              apvts_.getRawParameterValue(PARAM_AROUSAL)->load();
+
+          // Linear blend: 0=fully manual, 1=fully detected
+          mlValence_.store((1.0f - blend) * manualV + blend * detectedV,
+                          std::memory_order_relaxed);
+          mlArousal_.store((1.0f - blend) * manualA + blend * detectedA,
+                          std::memory_order_relaxed);
+        } else {
+          // Pure manual mode — use slider values directly
+          mlValence_.store(
+              apvts_.getRawParameterValue(PARAM_VALENCE)->load(),
+              std::memory_order_relaxed);
+          mlArousal_.store(
+              apvts_.getRawParameterValue(PARAM_AROUSAL)->load(),
+              std::memory_order_relaxed);
+        }
+      }
     }
 
     // Read delayed audio from lookahead buffer
