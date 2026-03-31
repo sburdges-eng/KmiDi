@@ -195,22 +195,22 @@ class TestEngineInstantiation:
 # ---------------------------------------------------------------------------
 
 class TestProcessAudio:
-    @pytest.mark.skip(reason="KNOWN BUG: PRROTEngine segfaults on synthetic audio — needs C++ fix in PhonemeSegmenter/SpectralAnalyzer")
+
     def test_sine_wave(self, engine, sine_wave):
         result = engine.process_audio_segment(sine_wave, SAMPLE_RATE, 120.0)
         assert isinstance(result, prrot.PhonemeControlData)
 
-    @pytest.mark.skip(reason="KNOWN BUG: PRROTEngine segfaults — needs C++ fix")
+
     def test_silence(self, engine, silence):
         result = engine.process_audio_segment(silence, SAMPLE_RATE, 120.0)
         assert isinstance(result, prrot.PhonemeControlData)
 
-    @pytest.mark.skip(reason="KNOWN BUG: PRROTEngine segfaults — needs C++ fix")
+
     def test_default_args(self, engine, sine_wave):
         result = engine.process_audio_segment(sine_wave)
         assert isinstance(result, prrot.PhonemeControlData)
 
-    @pytest.mark.skip(reason="KNOWN BUG: PRROTEngine segfaults — needs C++ fix")
+
     def test_short_audio(self, engine):
         short = np.zeros(100, dtype=np.float32)
         result = engine.process_audio_segment(short, SAMPLE_RATE)
@@ -227,17 +227,14 @@ class TestProcessAudio:
 # ---------------------------------------------------------------------------
 
 class TestAnalyzePhonemes:
-    @pytest.mark.skip(reason="KNOWN BUG: PRROTEngine::analyzePhonemes segfaults on synthetic audio — needs C++ fix in PhonemeSegmenter")
     def test_sine_wave(self, engine, sine_wave):
         phonemes = engine.analyze_phonemes(sine_wave, SAMPLE_RATE)
         assert isinstance(phonemes, list)
 
-    @pytest.mark.skip(reason="KNOWN BUG: PRROTEngine::analyzePhonemes segfaults — needs C++ fix")
     def test_silence(self, engine, silence):
         phonemes = engine.analyze_phonemes(silence, SAMPLE_RATE)
         assert isinstance(phonemes, list)
 
-    @pytest.mark.skip(reason="KNOWN BUG: PRROTEngine::analyzePhonemes segfaults — needs C++ fix")
     def test_phoneme_timing_fields(self, engine, sine_wave):
         phonemes = engine.analyze_phonemes(sine_wave, SAMPLE_RATE)
         if len(phonemes) > 0:
@@ -252,17 +249,17 @@ class TestAnalyzePhonemes:
 # ---------------------------------------------------------------------------
 
 class TestDetectBreathMarkers:
-    @pytest.mark.skip(reason="KNOWN BUG: PRROTEngine segfaults on synthetic audio — needs C++ fix")
+
     def test_sine_wave(self, engine, sine_wave):
         markers = engine.detect_breath_markers(sine_wave, SAMPLE_RATE)
         assert isinstance(markers, list)
 
-    @pytest.mark.skip(reason="KNOWN BUG: PRROTEngine segfaults — needs C++ fix")
+
     def test_silence(self, engine, silence):
         markers = engine.detect_breath_markers(silence, SAMPLE_RATE)
         assert isinstance(markers, list)
 
-    @pytest.mark.skip(reason="KNOWN BUG: PRROTEngine segfaults — needs C++ fix")
+
     def test_marker_fields(self, engine, sine_wave):
         markers = engine.detect_breath_markers(sine_wave, SAMPLE_RATE)
         if len(markers) > 0:

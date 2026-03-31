@@ -46,6 +46,7 @@ ArticulationAnalyzer::OnsetInfo ArticulationAnalyzer::detectOnset(
 
     // Compute energy envelope
     size_t window_size = static_cast<size_t>(sample_rate_hz * 0.005f); // 5ms windows
+    if (window_size == 0) window_size = 1; // Prevent division by zero
     size_t num_windows = samples_to_analyze / window_size;
 
     for (size_t i = 0; i < num_windows && i < kMaxAnalysisWindow; ++i) {
@@ -122,6 +123,7 @@ ArticulationAnalyzer::OffsetInfo ArticulationAnalyzer::detectOffset(
 
     // Compute energy envelope (same as onset detection)
     size_t window_size = static_cast<size_t>(sample_rate_hz * 0.005f);
+    if (window_size == 0) window_size = 1; // Prevent division by zero
     size_t num_windows = samples_to_analyze / window_size;
 
     for (size_t i = 0; i < num_windows && i < kMaxAnalysisWindow; ++i) {

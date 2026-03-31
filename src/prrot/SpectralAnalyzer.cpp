@@ -305,13 +305,26 @@ float SpectralAnalyzer::computeSpectralFlux(
 }
 
 void SpectralAnalyzer::computeFFT(const float* input, float* real, float* imag, size_t size) const noexcept {
-    if (!input || !real || !imag || size == 0 || size > kFFTSize || !fft_) {
+    if (!real || !imag || size == 0 || !fft_) {
         return;
     }
 
-    // Copy input to real buffer (zero-pad if needed)
-    std::memset(real, 0, kFFTSize * sizeof(float));
-    std::copy(input, input + size, real);
+    // Copy input to real buffer if it's not already there
+    if (input && input != real) {
+        std::memset(real, 0, kFFTSize * sizeof(float));
+        std::copy(input, input + std::min(size, kFFTSize), real);
+    } else if (!input) {
+        // If no input provided, assume data is already in 'real' and just zero-pad the rest
+        if (size < kFFTSize) {
+            std::memset(real + size, 0, (kFFTSize - size) * sizeof(float));
+        }
+    }
+    // If input == real, data is already in place (but we should still zero-pad the rest if needed)
+    else if (input == real && size < kFFTSize) {
+        std::memset(real + size, 0, (kFFTSize - size) * sizeof(float));
+    }
+
+    // Always ensure imag is zeroed for real-only forward transform
     std::memset(imag, 0, kFFTSize * sizeof(float));
 
     // JUCE FFT uses interleaved complex format for real-only input

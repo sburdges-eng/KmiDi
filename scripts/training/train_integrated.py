@@ -471,7 +471,7 @@ class AudioEmotionDataset(Dataset):
         # Pool across time to fixed n_mels vector (EmotionRecognizer expects length=128)
         feat = log_mel.mean(axis=1).astype(np.float32)
 
-        x = torch.tensor(feat).unsqueeze(0)  # (1, n_mels)
+        x = torch.tensor(feat)  # (n_mels,) — model's forward() adds channel dim
         y = torch.tensor(self.label_to_idx[entry["label"]], dtype=torch.long)
         return x, y
 
