@@ -34,8 +34,10 @@ ONNXInference::~ONNXInference() {
         delete static_cast<MemoryInfo*>(memoryInfoPtr_);
         memoryInfoPtr_ = nullptr;
     }
-    // Note: Env is typically kept alive for the lifetime of the application
-    // We'll keep it for now (could be made static if needed)
+    if (envPtr_) {
+        delete static_cast<Env*>(envPtr_);
+        envPtr_ = nullptr;
+    }
 #endif
 }
 
@@ -85,6 +87,12 @@ bool ONNXInference::loadModel(const std::string& modelPath) {
         // Create ONNX Runtime environment if not already created
         if (!envPtr_) {
             envPtr_ = new Env(ORT_LOGGING_LEVEL_WARNING, "MidiKompanion");
+        }
+
+        // Delete previous session before creating a new one (prevent leak)
+        if (sessionPtr_) {
+            delete static_cast<Session*>(sessionPtr_);
+            sessionPtr_ = nullptr;
         }
         Env* env = static_cast<Env*>(envPtr_);
 
@@ -152,6 +160,12 @@ bool ONNXInference::loadModel(const std::string& modelPath) {
                 outputSize_ *= 64;
                 break;
             }
+        }
+
+        // Delete previous memory info before creating a new one (prevent leak)
+        if (memoryInfoPtr_) {
+            delete static_cast<MemoryInfo*>(memoryInfoPtr_);
+            memoryInfoPtr_ = nullptr;
         }
 
         // Create memory info

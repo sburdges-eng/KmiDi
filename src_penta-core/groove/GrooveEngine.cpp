@@ -49,6 +49,9 @@ namespace penta::groove
 
     void GrooveEngine::processAudio(const float *buffer, size_t frames) noexcept
     {
+        // Skip processing while config is being updated (H18 race fix)
+        if (configUpdating_.load(std::memory_order_acquire)) return;
+
         if (onsetDetector_)
         {
             onsetDetector_->process(buffer, frames);
@@ -157,6 +160,8 @@ namespace penta::groove
 
     void GrooveEngine::updateConfig(const Config &config)
     {
+        configUpdating_.store(true, std::memory_order_release);
+
         config_ = config;
 
         OnsetDetector::Config onsetConfig;
@@ -180,6 +185,8 @@ namespace penta::groove
             qConfig.swingAmount = std::clamp(0.5f + (analysis_.swing * 0.25f), 0.0f, 1.0f);
             quantizer_->updateConfig(qConfig);
         }
+
+        configUpdating_.store(false, std::memory_order_release);
     }
 
     void GrooveEngine::reset()

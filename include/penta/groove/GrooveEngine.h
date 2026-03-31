@@ -4,6 +4,7 @@
 #include "penta/groove/OnsetDetector.h"
 #include "penta/groove/TempoEstimator.h"
 #include "penta/groove/RhythmQuantizer.h"
+#include <atomic>
 #include <memory>
 #include <vector>
 
@@ -85,6 +86,9 @@ private:
     uint64_t samplePosition_;
     uint64_t lastAnalysisPosition_;  // Per-instance analysis timing (not static)
     std::vector<uint64_t> onsetHistory_;
+
+    // Guard against concurrent processAudio / updateConfig (H18 fix)
+    std::atomic<bool> configUpdating_{false};
 };
 
 } // namespace penta::groove

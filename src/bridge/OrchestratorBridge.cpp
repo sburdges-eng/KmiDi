@@ -71,6 +71,15 @@ bool OrchestratorBridge::initializePython() {
 }
 
 void OrchestratorBridge::shutdownPython() {
+    // Join all async threads before tearing down Python state
+    {
+        std::lock_guard<std::mutex> lock(asyncThreadsMutex_);
+        for (auto& t : asyncThreads_) {
+            if (t.joinable()) t.join();
+        }
+        asyncThreads_.clear();
+    }
+
 #ifdef PYTHON_AVAILABLE
     if (executePipelineFunc_) {
         Py_DECREF(static_cast<PyObject*>(executePipelineFunc_));
@@ -146,11 +155,14 @@ void OrchestratorBridge::executePipelineAsync(
         return;
     }
 
-    // Execute in background thread
-    std::thread([this, pipelineName, inputDataJson, callback]() {
-        std::string result = executePipeline(pipelineName, inputDataJson);
-        callback(result);
-    }).detach();
+    // Execute in background thread (stored, joined in destructor)
+    {
+        std::lock_guard<std::mutex> lock(asyncThreadsMutex_);
+        asyncThreads_.emplace_back([this, pipelineName, inputDataJson, callback]() {
+            std::string result = executePipeline(pipelineName, inputDataJson);
+            callback(result);
+        });
+    }
 }
 
 std::string OrchestratorBridge::getExecutionStatus(const std::string& executionId) {

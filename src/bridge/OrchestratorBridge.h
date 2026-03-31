@@ -23,6 +23,8 @@
 #include <map>
 #include <memory>
 #include <functional>
+#include <thread>
+#include <mutex>
 
 namespace kelly {
 
@@ -150,6 +152,10 @@ private:
     bool initializePython();
     void shutdownPython();
     std::string generateExecutionId();
+
+    // Async thread storage (H1 fix: avoid detached threads)
+    std::vector<std::thread> asyncThreads_;
+    std::mutex asyncThreadsMutex_;
 };
 
 } // namespace kelly
