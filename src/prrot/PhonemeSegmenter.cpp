@@ -119,18 +119,20 @@ PhonemeSegmenter::SegmentResult PhonemeSegmenter::segment(
     }
 
     // Classify segments (simplified - would need more sophisticated analysis)
-    for (size_t i = 0; i < result.boundaries_ms.size() - 1; ++i) {
-        size_t start_sample = static_cast<size_t>((result.boundaries_ms[i] / 1000.0f) * sample_rate_hz);
-        size_t end_sample = static_cast<size_t>((result.boundaries_ms[i + 1] / 1000.0f) * sample_rate_hz);
-        size_t segment_samples = end_sample - start_sample;
+    if (result.boundaries_ms.size() > 1) {
+        for (size_t i = 0; i < result.boundaries_ms.size() - 1; ++i) {
+            size_t start_sample = static_cast<size_t>((result.boundaries_ms[i] / 1000.0f) * sample_rate_hz);
+            size_t end_sample = static_cast<size_t>((result.boundaries_ms[i + 1] / 1000.0f) * sample_rate_hz);
+            size_t segment_samples = end_sample - start_sample;
 
-        if (start_sample < samples_to_process && segment_samples > 0) {
-            PhonemeType phoneme = classifyPhoneme(
-                analysis_buffer_.data() + start_sample,
-                std::min(segment_samples, samples_to_process - start_sample),
-                sample_rate_hz
-            );
-            result.phonemes.push_back(phoneme);
+            if (start_sample < samples_to_process && segment_samples > 0) {
+                PhonemeType phoneme = classifyPhoneme(
+                    analysis_buffer_.data() + start_sample,
+                    std::min(segment_samples, samples_to_process - start_sample),
+                    sample_rate_hz
+                );
+                result.phonemes.push_back(phoneme);
+            }
         }
     }
 
@@ -404,17 +406,17 @@ float PhonemeSegmenter::computeAdaptiveEnergyThreshold(
     for (size_t i = 0; i < num_samples; ++i) {
         rms += samples[i] * samples[i];
     }
-    rms = std::sqrt(rms / num_samples);
+    rms = std::sqrt(rms / static_cast<float>(num_samples));
 
     // Estimate noise floor (use minimum energy in small windows)
     float min_energy = rms;
-    size_t window_size = std::min(num_samples / 10, static_cast<size_t>(100));
-    for (size_t i = 0; i < num_samples - window_size; i += window_size) {
+    size_t window_size = std::max(static_cast<size_t>(1), std::min(num_samples / 10, static_cast<size_t>(100)));
+    for (size_t i = 0; i <= num_samples - window_size; i += window_size) {
         float window_energy = 0.0f;
-        for (size_t j = i; j < i + window_size && j < num_samples; ++j) {
-            window_energy += samples[j] * samples[j];
+        for (size_t j = i; j < i + window_size; ++j) {
+            window_energy += analysis_buffer_[j] * analysis_buffer_[j];
         }
-        window_energy = std::sqrt(window_energy / window_size);
+        window_energy = std::sqrt(window_energy / static_cast<float>(window_size));
         min_energy = std::min(min_energy, window_energy);
     }
 
@@ -446,7 +448,7 @@ float PhonemeSegmenter::calculateSegmentationConfidence(
         if (boundary_frame < energies.size()) {
             // Check if energy change is significant at boundary
             float energy_change = 0.0f;
-            if (boundary_frame > 0 && boundary_frame < energies.size() - 1) {
+            if (boundary_frame > 0 && energies.size() > 1 && boundary_frame < energies.size() - 1) {
                 energy_change = std::abs(energies[boundary_frame] - energies[boundary_frame - 1]);
             }
             // Low energy change = low clarity
@@ -460,10 +462,12 @@ float PhonemeSegmenter::calculateSegmentationConfidence(
     // Factor 2: Segment duration consistency
     float min_duration = std::numeric_limits<float>::max();
     float max_duration = 0.0f;
-    for (size_t i = 0; i < result.boundaries_ms.size() - 1; ++i) {
-        float duration = result.boundaries_ms[i + 1] - result.boundaries_ms[i];
-        min_duration = std::min(min_duration, duration);
-        max_duration = std::max(max_duration, duration);
+    if (result.boundaries_ms.size() > 1) {
+        for (size_t i = 0; i < result.boundaries_ms.size() - 1; ++i) {
+            float duration = result.boundaries_ms[i + 1] - result.boundaries_ms[i];
+            min_duration = std::min(min_duration, duration);
+            max_duration = std::max(max_duration, duration);
+        }
     }
     if (max_duration > 0.0f) {
         float duration_ratio = min_duration / max_duration;
@@ -499,17 +503,21 @@ bool PhonemeSegmenter::validateSegmentation(
     constexpr size_t kMaxPhonemes = 256;
 
     // Check boundaries are in order
-    for (size_t i = 0; i < result.boundaries_ms.size() - 1; ++i) {
-        if (result.boundaries_ms[i] >= result.boundaries_ms[i + 1]) {
-            return false; // Boundaries out of order
+    if (result.boundaries_ms.size() > 1) {
+        for (size_t i = 0; i < result.boundaries_ms.size() - 1; ++i) {
+            if (result.boundaries_ms[i] >= result.boundaries_ms[i + 1]) {
+                return false; // Boundaries out of order
+            }
         }
     }
 
     // Check segment durations
-    for (size_t i = 0; i < result.boundaries_ms.size() - 1; ++i) {
-        float duration = result.boundaries_ms[i + 1] - result.boundaries_ms[i];
-        if (duration < kMinPhonemeDurationMs || duration > kMaxPhonemeDurationMs) {
-            return false; // Invalid duration
+    if (result.boundaries_ms.size() > 1) {
+        for (size_t i = 0; i < result.boundaries_ms.size() - 1; ++i) {
+            float duration = result.boundaries_ms[i + 1] - result.boundaries_ms[i];
+            if (duration < kMinPhonemeDurationMs || duration > kMaxPhonemeDurationMs) {
+                return false; // Invalid duration
+            }
         }
     }
 
@@ -543,22 +551,30 @@ bool PhonemeSegmenter::isConsonantLike(float zero_crossing_rate, float energy) c
 
 void PhonemeSegmenter::computeFFT(const float* input, float* real, float* imag, size_t size) noexcept {
     // Validate inputs
-    if (!input || !real || !imag || size == 0 || size > kPhonemeFFTSize || !fft_) {
-        if (!input || !real || !imag) {
+    if (!real || !imag || size == 0 || !fft_) {
+        if (!real || !imag) {
             penta::getLogger().logRT(penta::LogLevel::Error,
                 "PhonemeSegmenter::computeFFT: Null pointer argument");
-        }
-        if (size > kPhonemeFFTSize) {
-            penta::getLogger().logRT(penta::LogLevel::Warning,
-                ("PhonemeSegmenter::computeFFT: Size " + std::to_string(size) +
-                 " exceeds maximum " + std::to_string(kPhonemeFFTSize)).c_str());
         }
         return;
     }
 
-    // Copy input to real buffer (zero-pad if needed)
-    std::memset(real, 0, kPhonemeFFTSize * sizeof(float));
-    std::copy(input, input + std::min(size, kPhonemeFFTSize), real);
+    // Copy input to real buffer if it's not already there
+    if (input && input != real) {
+        std::memset(real, 0, kPhonemeFFTSize * sizeof(float));
+        std::copy(input, input + std::min(size, kPhonemeFFTSize), real);
+    } else if (!input) {
+        // If no input provided, assume data is already in 'real' and just zero-pad the rest
+        if (size < kPhonemeFFTSize) {
+            std::memset(real + size, 0, (kPhonemeFFTSize - size) * sizeof(float));
+        }
+    }
+    // If input == real, data is already in place (but we should still zero-pad the rest if needed)
+    else if (input == real && size < kPhonemeFFTSize) {
+        std::memset(real + size, 0, (kPhonemeFFTSize - size) * sizeof(float));
+    }
+
+    // Always ensure imag is zeroed for real-only forward transform
     std::memset(imag, 0, kPhonemeFFTSize * sizeof(float));
 
     // JUCE FFT uses interleaved complex format for real-only input
