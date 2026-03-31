@@ -5,6 +5,7 @@
 #include <Python.h>
 #endif
 
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <chrono>
@@ -16,13 +17,12 @@
 namespace kelly {
 
 OrchestratorBridge::OrchestratorBridge()
-    : available_(false)
-    , executePipelineFunc_(nullptr)
+    : executePipelineFunc_(nullptr)
     , executePipelineAsyncFunc_(nullptr)
     , getStatusFunc_(nullptr)
     , cancelExecutionFunc_(nullptr)
 {
-    available_ = initializePython();
+    available_.store(initializePython());
 }
 
 OrchestratorBridge::~OrchestratorBridge() {
@@ -106,7 +106,7 @@ std::string OrchestratorBridge::executePipeline(
     const std::string& pipelineName,
     const std::string& inputDataJson
 ) {
-    if (!available_) {
+    if (!available_.load()) {
         return R"({"success": false, "error": "Python orchestrator not available"})";
     }
 
@@ -151,13 +151,18 @@ void OrchestratorBridge::executePipelineAsync(
     const std::string& inputDataJson,
     std::function<void(const std::string&)> callback
 ) {
-    if (!available_ || !callback) {
+    if (!available_.load() || !callback) {
         return;
     }
 
     // Execute in background thread (stored, joined in destructor)
     {
         std::lock_guard<std::mutex> lock(asyncThreadsMutex_);
+        // Prune completed threads
+        asyncThreads_.erase(
+            std::remove_if(asyncThreads_.begin(), asyncThreads_.end(),
+                [](std::thread& t) { return !t.joinable(); }),
+            asyncThreads_.end());
         asyncThreads_.emplace_back([this, pipelineName, inputDataJson, callback]() {
             std::string result = executePipeline(pipelineName, inputDataJson);
             callback(result);
@@ -166,7 +171,7 @@ void OrchestratorBridge::executePipelineAsync(
 }
 
 std::string OrchestratorBridge::getExecutionStatus(const std::string& executionId) {
-    if (!available_ || !getStatusFunc_) {
+    if (!available_.load() || !getStatusFunc_) {
         return R"({"status": "unknown", "error": "Status check not available"})";
     }
 
@@ -199,7 +204,7 @@ std::string OrchestratorBridge::getExecutionStatus(const std::string& executionI
 }
 
 bool OrchestratorBridge::cancelExecution(const std::string& executionId) {
-    if (!available_ || !cancelExecutionFunc_) {
+    if (!available_.load() || !cancelExecutionFunc_) {
         return false;
     }
 

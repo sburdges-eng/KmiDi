@@ -1,4 +1,5 @@
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -7,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_intent_frame_schema_json_exists_after_sync():
     import subprocess
     result = subprocess.run(
-        ["/Library/Frameworks/Python.framework/Versions/3.13/bin/python3.13",
+        [sys.executable,
          "scripts/sync_entities.py"],
         cwd=str(ROOT), capture_output=True, text=True
     )

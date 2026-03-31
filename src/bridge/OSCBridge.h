@@ -70,7 +70,7 @@ public:
     /**
      * Check if bridge is connected
      */
-    bool isConnected() const { return connected_; }
+    bool isConnected() const { return connected_.load(); }
 
     /**
      * Process incoming OSC messages (call from message thread or timer)
@@ -183,7 +183,7 @@ public:
     void ping(OSCStringResponseHandler callback = nullptr);
 
 private:
-    bool connected_ = false;
+    std::atomic<bool> connected_{false};
     std::string brainHost_;
     int brainPort_ = 5005;
     int listenPort_ = 5006;

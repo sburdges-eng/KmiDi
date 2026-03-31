@@ -75,8 +75,9 @@ bool PluginLogger::exportToFile(const juce::File& file) const {
             entry.timestamp.time_since_epoch()
         ).count() % 1000;
         
-        std::tm* local_time = std::localtime(&time_t);
-        oss << std::put_time(local_time, "%Y-%m-%d %H:%M:%S");
+        std::tm local_time_buf;
+        localtime_r(&time_t, &local_time_buf);
+        oss << std::put_time(&local_time_buf, "%Y-%m-%d %H:%M:%S");
         oss << "." << std::setfill('0') << std::setw(3) << ms << " ";
         oss << "[" << entry.thread_name << "] ";
         oss << entry.event_type << " ";

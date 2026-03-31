@@ -25,7 +25,7 @@ bool OSCBridge::initialize(
     int brainPort,
     int listenPort)
 {
-    if (connected_) {
+    if (connected_.load()) {
         shutdown();
     }
 
@@ -50,7 +50,7 @@ bool OSCBridge::initialize(
         // Register message handler
         receiver_->addListener(this);
 
-        connected_ = true;
+        connected_.store(true);
         setAvailable(true);
         logInfo("Connected to brain server at " + brainHost + ":" + std::to_string(brainPort));
         return true;
@@ -75,7 +75,7 @@ void OSCBridge::requestGenerate(
     float vulnerability,
     OSCResponseHandler callback)
 {
-    if (!connected_) {
+    if (!connected_.load()) {
         logError("Not connected, cannot send generate request");
         return;
     }
@@ -95,7 +95,10 @@ void OSCBridge::requestGenerate(
     PendingRequest request;
     request.varCallback = callback;
     request.timestamp = juce::Time::getCurrentTime();
-    pendingRequests_[msgId] = request;
+    {
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
+        pendingRequests_[msgId] = request;
+    }
 
     // Send OSC message
     juce::OSCMessage msg("/daiw/generate");
@@ -104,6 +107,7 @@ void OSCBridge::requestGenerate(
 
     if (!sender_->send(msg)) {
         logError("Failed to send generate request");
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
         pendingRequests_.erase(msgId);
     }
 }
@@ -115,7 +119,7 @@ void OSCBridge::requestGenerate(
     float vulnerability,
     OSCStringResponseHandler callback)
 {
-    if (!connected_) {
+    if (!connected_.load()) {
         if (callback) {
             callback(R"({"status":"error","message":"Not connected"})");
         }
@@ -136,7 +140,10 @@ void OSCBridge::requestGenerate(
     PendingRequest request;
     request.stringCallback = callback;
     request.timestamp = juce::Time::getCurrentTime();
-    pendingRequests_[msgId] = request;
+    {
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
+        pendingRequests_[msgId] = request;
+    }
 
     // Send OSC message
     juce::OSCMessage msg("/daiw/generate");
@@ -148,6 +155,7 @@ void OSCBridge::requestGenerate(
         if (callback) {
             callback(R"({"status":"error","message":"Send failed"})");
         }
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
         pendingRequests_.erase(msgId);
     }
 }
@@ -156,13 +164,16 @@ void OSCBridge::requestAnalyzeChords(
     const std::string& progression,
     OSCResponseHandler callback)
 {
-    if (!connected_) return;
+    if (!connected_.load()) return;
 
     uint32_t msgId = generateMessageId();
     PendingRequest request;
     request.varCallback = callback;
     request.timestamp = juce::Time::getCurrentTime();
-    pendingRequests_[msgId] = request;
+    {
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
+        pendingRequests_[msgId] = request;
+    }
 
     juce::OSCMessage msg("/daiw/analyze/chords");
     msg.addString(progression);
@@ -175,7 +186,7 @@ void OSCBridge::requestAnalyzeChords(
     const std::string& progression,
     OSCStringResponseHandler callback)
 {
-    if (!connected_) {
+    if (!connected_.load()) {
         if (callback) {
             callback(R"({"status":"error","message":"Not connected"})");
         }
@@ -186,7 +197,10 @@ void OSCBridge::requestAnalyzeChords(
     PendingRequest request;
     request.stringCallback = callback;
     request.timestamp = juce::Time::getCurrentTime();
-    pendingRequests_[msgId] = request;
+    {
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
+        pendingRequests_[msgId] = request;
+    }
 
     juce::OSCMessage msg("/daiw/analyze/chords");
     msg.addString(progression);
@@ -196,6 +210,7 @@ void OSCBridge::requestAnalyzeChords(
         if (callback) {
             callback(R"({"status":"error","message":"Send failed"})");
         }
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
         pendingRequests_.erase(msgId);
     }
 }
@@ -204,13 +219,16 @@ void OSCBridge::requestIntentProcess(
     const std::string& intentFile,
     OSCResponseHandler callback)
 {
-    if (!connected_) return;
+    if (!connected_.load()) return;
 
     uint32_t msgId = generateMessageId();
     PendingRequest request;
     request.varCallback = callback;
     request.timestamp = juce::Time::getCurrentTime();
-    pendingRequests_[msgId] = request;
+    {
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
+        pendingRequests_[msgId] = request;
+    }
 
     juce::OSCMessage msg("/daiw/intent/process");
     msg.addString(intentFile);
@@ -223,7 +241,7 @@ void OSCBridge::requestIntentProcess(
     const std::string& intentFile,
     OSCStringResponseHandler callback)
 {
-    if (!connected_) {
+    if (!connected_.load()) {
         if (callback) {
             callback(R"({"status":"error","message":"Not connected"})");
         }
@@ -234,7 +252,10 @@ void OSCBridge::requestIntentProcess(
     PendingRequest request;
     request.stringCallback = callback;
     request.timestamp = juce::Time::getCurrentTime();
-    pendingRequests_[msgId] = request;
+    {
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
+        pendingRequests_[msgId] = request;
+    }
 
     juce::OSCMessage msg("/daiw/intent/process");
     msg.addString(intentFile);
@@ -244,6 +265,7 @@ void OSCBridge::requestIntentProcess(
         if (callback) {
             callback(R"({"status":"error","message":"Send failed"})");
         }
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
         pendingRequests_.erase(msgId);
     }
 }
@@ -252,13 +274,16 @@ void OSCBridge::requestIntentSuggest(
     const std::string& emotion,
     OSCResponseHandler callback)
 {
-    if (!connected_) return;
+    if (!connected_.load()) return;
 
     uint32_t msgId = generateMessageId();
     PendingRequest request;
     request.varCallback = callback;
     request.timestamp = juce::Time::getCurrentTime();
-    pendingRequests_[msgId] = request;
+    {
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
+        pendingRequests_[msgId] = request;
+    }
 
     juce::OSCMessage msg("/daiw/intent/suggest");
     msg.addString(emotion);
@@ -271,7 +296,7 @@ void OSCBridge::requestIntentSuggest(
     const std::string& emotion,
     OSCStringResponseHandler callback)
 {
-    if (!connected_) {
+    if (!connected_.load()) {
         if (callback) {
             callback(R"({"status":"error","message":"Not connected"})");
         }
@@ -282,7 +307,10 @@ void OSCBridge::requestIntentSuggest(
     PendingRequest request;
     request.stringCallback = callback;
     request.timestamp = juce::Time::getCurrentTime();
-    pendingRequests_[msgId] = request;
+    {
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
+        pendingRequests_[msgId] = request;
+    }
 
     juce::OSCMessage msg("/daiw/intent/suggest");
     msg.addString(emotion);
@@ -292,19 +320,23 @@ void OSCBridge::requestIntentSuggest(
         if (callback) {
             callback(R"({"status":"error","message":"Send failed"})");
         }
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
         pendingRequests_.erase(msgId);
     }
 }
 
 void OSCBridge::ping(OSCResponseHandler callback)
 {
-    if (!connected_) return;
+    if (!connected_.load()) return;
 
     uint32_t msgId = generateMessageId();
     PendingRequest request;
     request.varCallback = callback;
     request.timestamp = juce::Time::getCurrentTime();
-    pendingRequests_[msgId] = request;
+    {
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
+        pendingRequests_[msgId] = request;
+    }
 
     juce::OSCMessage msg("/daiw/ping");
     msg.addInt32(static_cast<int32_t>(msgId));
@@ -314,7 +346,7 @@ void OSCBridge::ping(OSCResponseHandler callback)
 
 void OSCBridge::ping(OSCStringResponseHandler callback)
 {
-    if (!connected_) {
+    if (!connected_.load()) {
         if (callback) {
             callback(R"({"status":"error","message":"Not connected"})");
         }
@@ -325,7 +357,10 @@ void OSCBridge::ping(OSCStringResponseHandler callback)
     PendingRequest request;
     request.stringCallback = callback;
     request.timestamp = juce::Time::getCurrentTime();
-    pendingRequests_[msgId] = request;
+    {
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
+        pendingRequests_[msgId] = request;
+    }
 
     juce::OSCMessage msg("/daiw/ping");
     msg.addInt32(static_cast<int32_t>(msgId));
@@ -334,6 +369,7 @@ void OSCBridge::ping(OSCStringResponseHandler callback)
         if (callback) {
             callback(R"({"status":"error","message":"Send failed"})");
         }
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
         pendingRequests_.erase(msgId);
     }
 }
@@ -349,9 +385,12 @@ void OSCBridge::shutdown()
         sender_->disconnect();
     }
 
-    connected_ = false;
+    connected_.store(false);
     setAvailable(false);
-    pendingRequests_.clear();
+    {
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
+        pendingRequests_.clear();
+    }
 }
 
 void OSCBridge::processMessages()
@@ -369,23 +408,30 @@ void OSCBridge::oscMessageReceived(const juce::OSCMessage& message)
         msgId = static_cast<uint32_t>(message[0].getInt32());
     }
 
-    // Handle by address pattern or message ID
-    if (msgId > 0 && pendingRequests_.count(msgId)) {
-        handleResponseMessage(message, msgId);
-    } else if (address == "/daiw/generate/response" ||
-               address == "/daiw/analyze/chords/response" ||
-               address == "/daiw/intent/process/response" ||
-               address == "/daiw/intent/suggest/response" ||
-               address == "/daiw/ping/response") {
-        // Try to find matching request by address (fallback)
-        // This handles cases where message ID matching fails
-        for (auto& [id, request] : pendingRequests_) {
-            if (request.stringCallback || request.varCallback) {
-                handleResponseMessage(message, id);
-                break;
+    // Determine which request to dispatch (under lock)
+    uint32_t dispatchId = 0;
+    {
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
+        if (msgId > 0 && pendingRequests_.count(msgId)) {
+            dispatchId = msgId;
+        } else if (address == "/daiw/generate/response" ||
+                   address == "/daiw/analyze/chords/response" ||
+                   address == "/daiw/intent/process/response" ||
+                   address == "/daiw/intent/suggest/response" ||
+                   address == "/daiw/ping/response") {
+            // Try to find matching request by address (fallback)
+            for (auto& [id, request] : pendingRequests_) {
+                if (request.stringCallback || request.varCallback) {
+                    dispatchId = id;
+                    break;
+                }
             }
         }
-    } else {
+    }
+
+    if (dispatchId > 0) {
+        handleResponseMessage(message, dispatchId);
+    } else if (msgId == 0) {
         logError("Received unknown message: " + address.toStdString());
     }
 }
@@ -401,13 +447,16 @@ void OSCBridge::oscBundleReceived(const juce::OSCBundle& bundle)
 
 void OSCBridge::handleResponseMessage(const juce::OSCMessage& message, uint32_t msgId)
 {
-    auto it = pendingRequests_.find(msgId);
-    if (it == pendingRequests_.end()) {
-        return;
+    PendingRequest request;
+    {
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
+        auto it = pendingRequests_.find(msgId);
+        if (it == pendingRequests_.end()) {
+            return;
+        }
+        request = it->second;
+        pendingRequests_.erase(it);
     }
-
-    PendingRequest request = it->second;
-    pendingRequests_.erase(it);
 
     // Extract response JSON string
     std::string responseJson;
@@ -435,23 +484,31 @@ void OSCBridge::handleResponseMessage(const juce::OSCMessage& message, uint32_t 
 
 void OSCBridge::cleanupTimedOutRequests()
 {
-    auto now = juce::Time::getCurrentTime();
-    auto it = pendingRequests_.begin();
-    while (it != pendingRequests_.end()) {
-        auto elapsed = now - it->second.timestamp;
-        if (elapsed.inMilliseconds() > REQUEST_TIMEOUT_MS) {
-            // Call callback with timeout error
-            if (it->second.stringCallback) {
-                it->second.stringCallback(R"({"status":"error","message":"Request timeout"})");
-            } else if (it->second.varCallback) {
-                juce::DynamicObject::Ptr errorObj = new juce::DynamicObject();
-                errorObj->setProperty("status", juce::String("error"));
-                errorObj->setProperty("message", juce::String("Request timeout"));
-                it->second.varCallback(juce::var(errorObj));
+    std::vector<PendingRequest> timedOut;
+    {
+        std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
+        auto now = juce::Time::getCurrentTime();
+        auto it = pendingRequests_.begin();
+        while (it != pendingRequests_.end()) {
+            auto elapsed = now - it->second.timestamp;
+            if (elapsed.inMilliseconds() > REQUEST_TIMEOUT_MS) {
+                timedOut.push_back(it->second);
+                it = pendingRequests_.erase(it);
+            } else {
+                ++it;
             }
-            it = pendingRequests_.erase(it);
-        } else {
-            ++it;
+        }
+    }
+
+    // Invoke callbacks outside the lock
+    for (auto& request : timedOut) {
+        if (request.stringCallback) {
+            request.stringCallback(R"({"status":"error","message":"Request timeout"})");
+        } else if (request.varCallback) {
+            juce::DynamicObject::Ptr errorObj = new juce::DynamicObject();
+            errorObj->setProperty("status", juce::String("error"));
+            errorObj->setProperty("message", juce::String("Request timeout"));
+            request.varCallback(juce::var(errorObj));
         }
     }
 }

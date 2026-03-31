@@ -192,8 +192,10 @@ void PreferenceTracker::triggerSave() {
 std::string PreferenceTracker::getCurrentTimestamp() const {
     auto now = std::chrono::system_clock::now();
     auto time = std::chrono::system_clock::to_time_t(now);
+    std::tm buf;
+    localtime_r(&time, &buf);
     std::stringstream ss;
-    ss << std::put_time(std::localtime(&time), "%Y-%m-%dT%H:%M:%S");
+    ss << std::put_time(&buf, "%Y-%m-%dT%H:%M:%S");
     return ss.str();
 }
 

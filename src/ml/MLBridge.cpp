@@ -696,6 +696,11 @@ void MLIntentPipeline::setModelEnabled(Kelly::ML::ModelType type,
 void MLIntentPipeline::spawnAsyncTask(std::function<void()> task) {
   if (shuttingDown_.load()) return;
   std::lock_guard<std::mutex> lock(asyncThreadsMutex_);
+  // Prune completed threads
+  asyncThreads_.erase(
+      std::remove_if(asyncThreads_.begin(), asyncThreads_.end(),
+          [](std::thread& t) { return !t.joinable(); }),
+      asyncThreads_.end());
   asyncThreads_.emplace_back([this, t = std::move(task)]() {
     t();
   });

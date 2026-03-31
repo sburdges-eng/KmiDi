@@ -25,6 +25,7 @@
 #include <functional>
 #include <thread>
 #include <mutex>
+#include <atomic>
 
 namespace kelly {
 
@@ -127,10 +128,10 @@ public:
     /**
      * Check if Python bridge is available.
      */
-    bool isAvailable() const { return available_; }
+    bool isAvailable() const { return available_.load(); }
 
 private:
-    bool available_;
+    std::atomic<bool> available_{false};
 
     // Python function pointers
     void* executePipelineFunc_;
