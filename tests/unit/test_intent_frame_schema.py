@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 import pytest
 from music_brain.engine_api.schema import (
     IntentMetaSchema,
@@ -98,3 +101,37 @@ def test_invalid_section_role():
 def test_invalid_dsp_cutoff_oob():
     with pytest.raises(Exception):
         DSPTargetsSchema(filter_cutoff=2.0)
+
+
+FIXTURE_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "intent"
+
+VALID_FRAME_FIXTURES = [
+    "frame_valid_default.json",
+    "frame_valid_full.json",
+    "frame_valid_ml_audio.json",
+]
+
+INVALID_FRAME_FIXTURES = [
+    "frame_invalid_version.json",
+    "frame_invalid_tempo_oob.json",
+    "frame_invalid_time_scope.json",
+    "frame_invalid_extra_field.json",
+]
+
+
+@pytest.mark.parametrize("fixture_name", VALID_FRAME_FIXTURES)
+def test_valid_frame_fixture_accepted(fixture_name):
+    data = json.loads((FIXTURE_DIR / fixture_name).read_text())
+    f = IntentFrameSchema(**data)
+    assert f.meta.schema_version == 1
+    assert f.timestamp_ms >= 0
+    assert -1.0 <= f.music.tempo_bias <= 1.0
+    assert 0.0 <= f.dsp_targets.filter_cutoff <= 1.0
+    assert 0.0 <= f.latency_budget_ms
+
+
+@pytest.mark.parametrize("fixture_name", INVALID_FRAME_FIXTURES)
+def test_invalid_frame_fixture_rejected(fixture_name):
+    data = json.loads((FIXTURE_DIR / fixture_name).read_text())
+    with pytest.raises(Exception):
+        IntentFrameSchema(**data)
