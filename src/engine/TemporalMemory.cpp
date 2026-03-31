@@ -118,7 +118,8 @@ float TemporalMemory::gaussianKernel(float tau, float sigma) {
 
 float TemporalMemory::powerLawKernel(float tau, float alpha) {
     // K(τ) = τ^(-α)
-    if (tau <= 0.0f) return 0.0f;
+    // Guard: very small positive tau with alpha > 0 produces Inf via pow()
+    if (tau <= 1e-6f) return 0.0f;
     return std::pow(tau, -alpha);
 }
 

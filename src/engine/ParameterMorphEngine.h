@@ -114,6 +114,9 @@ private:
     mutable std::mutex morphMutex_;
     CurveType curveType_ = CurveType::EaseInOut;
 
+    // Internal helper — assumes morphMutex_ is already held
+    float getCurrentValueLocked(const juce::String& parameterName) const;
+
     // Interpolation helpers
     float interpolate(float start, float end, float t, CurveType curve) const;
     float applyCurve(float t, CurveType curve) const;

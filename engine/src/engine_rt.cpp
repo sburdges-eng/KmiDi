@@ -25,27 +25,38 @@ int kmidi_engine_get_state(const kmidi_engine_t* engine,
                            kmidi_engine_state_t* out_state) {
     if (!engine || !out_state) return -1;
 
-    std::memset(out_state, 0, sizeof(*out_state));
+    // Seqlock pattern: retry if the writer was mid-update (odd sequence)
+    // or if the sequence changed between our two reads (torn snapshot).
+    // The writer must: seq.fetch_add(1, release) before writes,
+    //                  seq.fetch_add(1, release) after writes.
+    uint64_t seq1, seq2;
+    do {
+        seq1 = g_rtState.sequence.load(std::memory_order_acquire);
 
-    out_state->bpm             = g_rtState.bpm.load(std::memory_order_relaxed);
-    out_state->sample_position = g_rtState.samplePosition.load(std::memory_order_relaxed);
-    out_state->bar             = g_rtState.bar.load(std::memory_order_relaxed);
-    out_state->beat            = g_rtState.beat.load(std::memory_order_relaxed);
-    out_state->numerator       = g_rtState.numerator.load(std::memory_order_relaxed);
-    out_state->denominator     = g_rtState.denominator.load(std::memory_order_relaxed);
-    out_state->playing         = g_rtState.playing.load(std::memory_order_relaxed) ? 1 : 0;
+        std::memset(out_state, 0, sizeof(*out_state));
 
-    out_state->valence           = g_rtState.valence.load(std::memory_order_relaxed);
-    out_state->arousal           = g_rtState.arousal.load(std::memory_order_relaxed);
-    out_state->dominance         = g_rtState.dominance.load(std::memory_order_relaxed);
-    out_state->emotion_intensity = g_rtState.emotionIntensity.load(std::memory_order_relaxed);
+        out_state->bpm             = g_rtState.bpm.load(std::memory_order_relaxed);
+        out_state->sample_position = g_rtState.samplePosition.load(std::memory_order_relaxed);
+        out_state->bar             = g_rtState.bar.load(std::memory_order_relaxed);
+        out_state->beat            = g_rtState.beat.load(std::memory_order_relaxed);
+        out_state->numerator       = g_rtState.numerator.load(std::memory_order_relaxed);
+        out_state->denominator     = g_rtState.denominator.load(std::memory_order_relaxed);
+        out_state->playing         = g_rtState.playing.load(std::memory_order_relaxed) ? 1 : 0;
 
-    out_state->groove_strength   = g_rtState.grooveStrength.load(std::memory_order_relaxed);
-    out_state->harmonic_tension  = g_rtState.harmonicTension.load(std::memory_order_relaxed);
-    out_state->rhythmic_density  = g_rtState.rhythmicDensity.load(std::memory_order_relaxed);
-    out_state->melodic_activity  = g_rtState.melodicActivity.load(std::memory_order_relaxed);
+        out_state->valence           = g_rtState.valence.load(std::memory_order_relaxed);
+        out_state->arousal           = g_rtState.arousal.load(std::memory_order_relaxed);
+        out_state->dominance         = g_rtState.dominance.load(std::memory_order_relaxed);
+        out_state->emotion_intensity = g_rtState.emotionIntensity.load(std::memory_order_relaxed);
 
-    out_state->sequence = g_rtState.sequence.load(std::memory_order_acquire);
+        out_state->groove_strength   = g_rtState.grooveStrength.load(std::memory_order_relaxed);
+        out_state->harmonic_tension  = g_rtState.harmonicTension.load(std::memory_order_relaxed);
+        out_state->rhythmic_density  = g_rtState.rhythmicDensity.load(std::memory_order_relaxed);
+        out_state->melodic_activity  = g_rtState.melodicActivity.load(std::memory_order_relaxed);
+
+        seq2 = g_rtState.sequence.load(std::memory_order_acquire);
+    } while (seq1 != seq2 || (seq1 & 1));
+
+    out_state->sequence = seq2;
 
     return 0;
 }

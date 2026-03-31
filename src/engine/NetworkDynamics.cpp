@@ -112,13 +112,8 @@ VADState NetworkDynamics::simulateDiffusion(
     laplacian.arousal = average.arousal - agent.emotionalState.arousal;
     laplacian.dominance = average.dominance - agent.emotionalState.dominance;
 
-    // Calculate neighborhood average
+    // Neighborhood average (calculateAverageVAD already divides by size)
     VADState neighborhoodAvg = calculateAverageVAD(neighbors);
-    if (!neighbors.empty()) {
-        neighborhoodAvg.valence /= neighbors.size();
-        neighborhoodAvg.arousal /= neighbors.size();
-        neighborhoodAvg.dominance /= neighbors.size();
-    }
 
     VADState result;
 

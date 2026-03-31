@@ -16,7 +16,7 @@ void ParameterMorphEngine::morphParameter(const juce::String& parameterName, flo
     std::lock_guard<std::mutex> lock(morphMutex_);
 
     auto& state = morphStates_[parameterName];
-    state.startValue = state.active ? getCurrentValue(parameterName) : targetValue;
+    state.startValue = state.active ? getCurrentValueLocked(parameterName) : targetValue;
     state.targetValue = targetValue;
     state.startTime = juce::Time::currentTimeMillis();
     state.durationMs = durationMs;
@@ -28,7 +28,7 @@ void ParameterMorphEngine::morphParameters(const std::map<juce::String, float>& 
 
     for (const auto& [name, target] : targets) {
         auto& state = morphStates_[name];
-        state.startValue = state.active ? getCurrentValue(name) : target;
+        state.startValue = state.active ? getCurrentValueLocked(name) : target;
         state.targetValue = target;
         state.startTime = juce::Time::currentTimeMillis();
         state.durationMs = durationMs;
@@ -38,7 +38,10 @@ void ParameterMorphEngine::morphParameters(const std::map<juce::String, float>& 
 
 float ParameterMorphEngine::getCurrentValue(const juce::String& parameterName) const {
     std::lock_guard<std::mutex> lock(morphMutex_);
+    return getCurrentValueLocked(parameterName);
+}
 
+float ParameterMorphEngine::getCurrentValueLocked(const juce::String& parameterName) const {
     auto it = morphStates_.find(parameterName);
     if (it == morphStates_.end() || !it->second.active) {
         return 0.0f;
