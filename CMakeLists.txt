@@ -591,6 +591,19 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
             ${CMAKE_CURRENT_SOURCE_DIR}/src
         )
         catch_discover_tests(AudioEmotionRunnerTests)
+        # EmotionSchema parity tests
+        add_executable(EmotionSchemaTests
+            tests/cpp/test_emotion_schema.cpp
+        )
+        target_link_libraries(EmotionSchemaTests PRIVATE
+            KellyCore
+            Catch2::Catch2WithMain
+        )
+        target_include_directories(EmotionSchemaTests PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
+        )
+        catch_discover_tests(EmotionSchemaTests)
     else()
         message(WARNING "Catch2 not found; skipping tests. Set BUILD_TESTS=OFF or add external/Catch2.")
     endif()
