@@ -1,7 +1,7 @@
 #include "penta/ml/AudioEmotionRunner.h"
 #include "ml/MelSpectrogram.h"
 
-#include <readerwriterqueue/readerwriterqueue.h>
+#include <readerwriterqueue.h>
 
 #include <algorithm>
 #include <chrono>
