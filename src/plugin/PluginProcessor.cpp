@@ -169,6 +169,13 @@ PluginProcessor::createParameterLayout() {
   params.push_back(std::make_unique<juce::AudioParameterBool>(
       juce::ParameterID{PARAM_BYPASS, PARAM_VERSION}, "Bypass", false));
 
+  params.push_back(std::make_unique<juce::AudioParameterFloat>(
+      juce::ParameterID{PARAM_ML_INFLUENCE, PARAM_VERSION},
+      "ML Influence",
+      juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f),
+      0.0f,
+      juce::AudioParameterFloatAttributes().withLabel("Blend")));
+
   // Master EQ Parameters
   params.push_back(std::make_unique<juce::AudioParameterBool>(
       juce::ParameterID{PARAM_EQ_BYPASS, PARAM_VERSION}, "EQ Bypass", false));

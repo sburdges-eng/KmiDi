@@ -118,6 +118,7 @@ public:
   static constexpr const char *PARAM_SONG_SECTION = "song_section";
   static constexpr const char *PARAM_SONG_AMOUNT = "song_amount";
   static constexpr const char *PARAM_USE_HOST_TEMPO = "use_host_tempo";
+  static constexpr const char *PARAM_ML_INFLUENCE = "ml_influence";
 
   // Master EQ Parameter IDs
   static constexpr const char *PARAM_EQ_BYPASS = "eq_bypass";
