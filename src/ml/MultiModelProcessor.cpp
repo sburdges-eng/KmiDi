@@ -351,7 +351,8 @@ bool AsyncMLPipeline::hasResult(uint64_t requestId) const {
 
 InferenceResult AsyncMLPipeline::getResult() {
     hasResult_.store(false, std::memory_order_release);
-    return latestResult_;
+    int readIdx = activeResultIdx_.load(std::memory_order_acquire);
+    return resultBuffers_[readIdx];
 }
 
 InferenceResult AsyncMLPipeline::getResult(uint64_t requestId) {
@@ -360,7 +361,8 @@ InferenceResult AsyncMLPipeline::getResult(uint64_t requestId) {
     }
 
     hasResult_.store(false, std::memory_order_release);
-    return latestResult_;
+    int readIdx = activeResultIdx_.load(std::memory_order_acquire);
+    return resultBuffers_[readIdx];
 }
 
 void AsyncMLPipeline::run() {
@@ -368,11 +370,14 @@ void AsyncMLPipeline::run() {
         if (hasRequest_.load(std::memory_order_acquire)) {
             hasRequest_.store(false, std::memory_order_release);
 
-            // Run inference on background thread
-            latestResult_ = processor_.runFullPipeline(pendingFeatures_);
+            // Run inference on background thread — write to inactive buffer
+            int writeIdx = 1 - activeResultIdx_.load(std::memory_order_relaxed);
+            resultBuffers_[writeIdx] = processor_.runFullPipeline(pendingFeatures_);
             latestResultId_.store(pendingRequestId_.load(std::memory_order_acquire),
                                   std::memory_order_release);
 
+            // Swap active buffer so readers pick up the new result
+            activeResultIdx_.store(writeIdx, std::memory_order_release);
             hasResult_.store(true, std::memory_order_release);
         } else {
             juce::Thread::sleep(1);

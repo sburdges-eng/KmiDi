@@ -9,6 +9,7 @@
 
 #include <memory_resource>
 #include <atomic>
+#include <cassert>
 #include <mutex>
 #include <vector>
 #include <string>
@@ -61,6 +62,7 @@ public:
         std::lock_guard<std::mutex> lock(stateMutex_);
 
         if (currentState_.load() == State::SideB_Dream) {
+            sideB_active_ = false;
             purgeDreamState();
         }
         currentState_.store(State::SideA_Work, std::memory_order_release);
@@ -74,16 +76,20 @@ public:
      */
     void switchToSideB() {
         std::lock_guard<std::mutex> lock(stateMutex_);
+        sideB_active_ = true;
         currentState_.store(State::SideB_Dream, std::memory_order_release);
 
         DBG("Switched to Side B (Dream State)");
     }
 
     /**
-     * Purge all Dream State memory.
-     * INSTANTLY releases all memory used by Side B allocations.
+     * Purge Side B (dream state) memory.
+     *
+     * SAFETY: Caller MUST ensure no Side B allocations are referenced
+     * after this call. Any pointers from Side B become dangling.
      */
     void purgeDreamState() {
+        assert(!sideB_active_ && "Cannot purge dream state while Side B is active");
         std::lock_guard<std::mutex> lock(sideBMutex_);
 
         // Release all Side B memory at once
@@ -165,6 +171,7 @@ private:
 
     // State tracking
     std::atomic<State> currentState_;
+    bool sideB_active_ = false;  // true while Side B is the active state
     std::mutex stateMutex_;
     std::mutex sideBMutex_;
 

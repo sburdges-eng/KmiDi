@@ -167,7 +167,12 @@ private:
     std::atomic<uint64_t> pendingRequestId_{0};
     std::atomic<uint64_t> latestResultId_{0};
     std::array<float, 128> pendingFeatures_{};
-    InferenceResult latestResult_;
+
+    // Double-buffer for lock-free result handoff between worker and reader.
+    // Writer fills resultBuffers_[1 - activeResultIdx_], then swaps the index.
+    // Reader always reads from resultBuffers_[activeResultIdx_].
+    std::array<InferenceResult, 2> resultBuffers_;
+    std::atomic<int> activeResultIdx_{0};
 };
 
 } // namespace ML
