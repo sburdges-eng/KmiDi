@@ -1,0 +1,65 @@
+{
+  "$defs": {
+    "EmotionTag": {
+      "enum": [
+        "tension",
+        "release",
+        "warm",
+        "cold",
+        "bright",
+        "dark",
+        "drive",
+        "float"
+      ],
+      "title": "EmotionTag",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Canonical emotion contract v1. Source of truth for all language bindings.",
+  "properties": {
+    "valence": {
+      "default": 0.0,
+      "description": "Negative to positive [-1, 1]",
+      "maximum": 1.0,
+      "minimum": -1.0,
+      "title": "Valence",
+      "type": "number"
+    },
+    "arousal": {
+      "default": 0.5,
+      "description": "Calm to excited [0, 1]",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Arousal",
+      "type": "number"
+    },
+    "dominance": {
+      "default": 0.5,
+      "description": "Submissive to dominant [0, 1]",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Dominance",
+      "type": "number"
+    },
+    "tags": {
+      "description": "Max 3 tags from controlled vocabulary",
+      "items": {
+        "$ref": "#/$defs/EmotionTag"
+      },
+      "maxItems": 3,
+      "title": "Tags",
+      "type": "array"
+    },
+    "confidence": {
+      "default": 0.0,
+      "description": "Inference quality gate [0, 1]",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    }
+  },
+  "title": "EmotionStateSchema",
+  "type": "object"
+}
