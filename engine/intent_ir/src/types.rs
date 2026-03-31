@@ -27,7 +27,9 @@ pub struct EmotionState {
     pub valence: f32,      // [-1.0, 1.0]
     pub arousal: f32,      // [0.0, 1.0]
     pub dominance: f32,    // [0.0, 1.0]
+    /// DEPRECATED: Not part of canonical emotion_schema.json v1. Will be removed.
     pub discrete_id: i16,  // -1 if unused
+    /// DEPRECATED: Not part of canonical emotion_schema.json v1. Will be removed.
     pub intensity: f32,    // [0.0, 1.0]
     pub confidence: f32,    // [0.0, 1.0]
 }

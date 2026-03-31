@@ -8,6 +8,7 @@ specification. These are used for emitting IntentFrames from Python ML code.
 from dataclasses import dataclass, field
 from enum import IntEnum
 import json
+import warnings
 
 # Intent IR version
 INTENT_IR_VERSION = 1
@@ -33,13 +34,32 @@ class IntentMeta:
 
 @dataclass
 class EmotionState:
-    """Emotion State - VAD coordinates with optional discrete mapping"""
+    """Emotion State - VAD coordinates with optional discrete mapping.
+
+    NOTE: discrete_id and intensity are deprecated. They are not part of
+    the canonical emotion_schema.json v1 contract. Use EmotionStateSchema
+    from music_brain.engine_api.schema for new code.
+    """
     valence: float = 0.0  # [-1.0, 1.0]
     arousal: float = 0.5  # [0.0, 1.0]
     dominance: float = 0.5  # [0.0, 1.0]
-    discrete_id: int = -1  # -1 if unused, else EmotionThesaurus ID
-    intensity: float = 0.0  # [0.0, 1.0]
+    discrete_id: int = -1  # DEPRECATED - not in emotion_schema.json v1
+    intensity: float = 0.0  # DEPRECATED - not in emotion_schema.json v1
     confidence: float = 0.0  # [0.0, 1.0]
+
+    def __post_init__(self):
+        if self.discrete_id != -1:
+            warnings.warn(
+                "EmotionState.discrete_id is deprecated and will be removed. "
+                "Use EmotionStateSchema from music_brain.engine_api.schema.",
+                DeprecationWarning, stacklevel=2,
+            )
+        if self.intensity != 0.0:
+            warnings.warn(
+                "EmotionState.intensity is deprecated and will be removed. "
+                "Use EmotionStateSchema from music_brain.engine_api.schema.",
+                DeprecationWarning, stacklevel=2,
+            )
 
 
 @dataclass
