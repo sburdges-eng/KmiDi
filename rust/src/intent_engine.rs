@@ -22,15 +22,6 @@ fn aspect_from_input_type(input_type: &str) -> IntentAspect {
     }
 }
 
-fn value_type_from_aspect(aspect: IntentAspect) -> ValueType {
-    match aspect {
-        IntentAspect::Harmonic => ValueType::HarmonicTension,
-        IntentAspect::Rhythmic => ValueType::RhythmicDensity,
-        IntentAspect::Dynamic => ValueType::DynamicRange,
-        IntentAspect::Tempo => ValueType::TempoBias,
-    }
-}
-
 pub fn infer_intent(input: &AbstractInput) -> MusicalIntent {
     let aspect = if input.input_type.is_empty() {
         input.aspect

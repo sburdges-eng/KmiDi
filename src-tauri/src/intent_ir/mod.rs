@@ -3,6 +3,8 @@
 //! This module defines the IntentFrame structure that serves as the single
 //! source of truth for musical intent, independent of UI, ML models, or DSP implementation.
 
+#![allow(dead_code, unused_imports)]
+
 pub mod validator;
 pub mod serde;
 pub mod ffi;

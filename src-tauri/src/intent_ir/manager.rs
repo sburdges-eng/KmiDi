@@ -10,7 +10,7 @@
 use super::*;
 use super::validator::{validate_and_clamp, clamp_frame, ValidationError};
 use super::ffi::{to_c_frame, CIntentFrame};
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Intent IR Manager - Single source of truth for IntentFrame

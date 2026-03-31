@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, Emitter};
+use tauri::{AppHandle, Emitter};
 use tokio::sync::broadcast;
 
-use crate::state::{StateEvent, get_state_manager, KellyBrainState};
+use crate::state::{StateEvent, get_state_manager};
 
 // =============================================================================
 // Event Types
@@ -98,6 +98,7 @@ impl EventManager {
     }
     
     /// Subscribe to events
+    #[allow(dead_code)]
     pub fn subscribe(&self) -> broadcast::Receiver<KellyEvent> {
         self.event_sender.subscribe()
     }
@@ -332,6 +333,7 @@ pub async fn emit_test_event() -> Result<bool, String> {
 // =============================================================================
 
 /// Emit emotion update event
+#[allow(dead_code)]
 pub fn emit_emotion_update(valence: f32, arousal: f32, dominance: f32, complexity: f32) {
     let manager = get_event_manager();
     let manager_guard = manager.lock().unwrap();
@@ -344,6 +346,7 @@ pub fn emit_emotion_update(valence: f32, arousal: f32, dominance: f32, complexit
 }
 
 /// Emit processing progress event
+#[allow(dead_code)]
 pub fn emit_processing_progress(operation: &str, progress: f32) {
     let manager = get_event_manager();
     let manager_guard = manager.lock().unwrap();
@@ -354,6 +357,7 @@ pub fn emit_processing_progress(operation: &str, progress: f32) {
 }
 
 /// Emit parameter changed event
+#[allow(dead_code)]
 pub fn emit_parameter_changed(parameter: &str, value: serde_json::Value) {
     let manager = get_event_manager();
     let manager_guard = manager.lock().unwrap();
@@ -364,6 +368,7 @@ pub fn emit_parameter_changed(parameter: &str, value: serde_json::Value) {
 }
 
 /// Emit error event
+#[allow(dead_code)]
 pub fn emit_error(message: &str) {
     let manager = get_event_manager();
     let manager_guard = manager.lock().unwrap();
@@ -374,6 +379,7 @@ pub fn emit_error(message: &str) {
 }
 
 /// Emit audio analysis update
+#[allow(dead_code)]
 pub fn emit_audio_analysis_update(analysis: serde_json::Value) {
     let manager = get_event_manager();
     let manager_guard = manager.lock().unwrap();

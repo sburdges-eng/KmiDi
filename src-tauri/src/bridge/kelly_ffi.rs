@@ -80,6 +80,7 @@ pub struct EmotionState {
 // FFI Declarations (external C functions)
 // =============================================================================
 
+#[allow(dead_code)]
 #[link(name = "KellyFFI")]
 extern "C" {
     // Error handling
@@ -134,6 +135,7 @@ pub struct KellyBrainHandle {
 // Real-Time State (Phase 3 — must match KellyRTState in kelly_ffi.h)
 // =============================================================================
 
+#[allow(dead_code)]
 #[repr(C)]
 #[derive(Debug, Clone, Default)]
 pub struct KellyRTStateC {
@@ -167,6 +169,7 @@ pub struct KellyRTStateC {
     pub sequence: u64,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RTState {
     pub bpm: f64,
@@ -204,6 +207,7 @@ impl From<&KellyRTStateC> for RTState {
     }
 }
 
+#[allow(dead_code)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub enum RTParamTarget {
@@ -580,6 +584,7 @@ impl KellyBrain {
     }
     
     /// Check if data files are available
+    #[allow(dead_code)]
     pub fn check_data_files(data_path: &str) -> bool {
         if data_path.trim().is_empty() || !Path::new(data_path).exists() {
             return false;
@@ -594,6 +599,7 @@ impl KellyBrain {
     }
     
     /// Get real-time engine state snapshot (lock-free)
+    #[allow(dead_code)]
     pub fn get_rt_state(&self) -> KellyResult<RTState> {
         let mut c_state = KellyRTStateC::default();
         let result = unsafe {
@@ -606,6 +612,7 @@ impl KellyBrain {
     }
 
     /// Push a parameter update into the RT-safe queue
+    #[allow(dead_code)]
     pub fn push_rt_param(&mut self, target: RTParamTarget, param_index: u8, value: f32) -> KellyResult<()> {
         let result = unsafe {
             kelly_brain_push_rt_param(self.handle, target as c_int, param_index, value as c_float)

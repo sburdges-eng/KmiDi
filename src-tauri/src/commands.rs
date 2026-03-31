@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use tauri::command;
-use crate::bridge::kelly_ffi::{get_kelly_brain_manager, IntentResult, GeneratedMidi, EmotionState, RTState, RTParamTarget, KellyResult, KellyError};
+use crate::bridge::kelly_ffi::{get_kelly_brain_manager, IntentResult, GeneratedMidi, EmotionState, RTState, RTParamTarget, KellyError};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EmotionalIntent {
@@ -117,6 +117,7 @@ pub async fn kelly_brain_get_version() -> Result<String, String> {
 // Real-Time State Commands (Phase 3 — Direct C FFI, no Python)
 // =============================================================================
 
+#[allow(dead_code)]
 #[command]
 pub async fn kelly_brain_get_rt_state() -> Result<RTState, String> {
     let manager = get_kelly_brain_manager();
@@ -124,6 +125,7 @@ pub async fn kelly_brain_get_rt_state() -> Result<RTState, String> {
         .map_err(|e| e.into())
 }
 
+#[allow(dead_code)]
 #[command]
 pub async fn kelly_brain_push_rt_param(target: i32, param_index: u8, value: f32) -> Result<bool, String> {
     let manager = get_kelly_brain_manager();
