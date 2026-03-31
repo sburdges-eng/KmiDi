@@ -407,8 +407,9 @@ if(BUILD_PLUGINS)
         COMPANY_NAME "Kelly"
         PLUGIN_MANUFACTURER_CODE Klly
         PLUGIN_CODE Klp1
-        FORMATS VST3 CLAP
+        FORMATS AU VST3 CLAP
         PRODUCT_NAME "Kelly Emotion Processor"
+        AU_MAIN_TYPE kAudioUnitType_MusicEffect
         VST3_CATEGORIES Fx Synth
         CLAP_ID com.kelly.emotion-processor
         ${KellyPlugin_ICON_ARGS}
