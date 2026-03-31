@@ -89,8 +89,8 @@ IntentIRErrorCode intent_ir_initialize(uint64_t session_id) {
 
     if (session_id == 0) {
         // Auto-generate session ID from time + random
-        session_id = static_cast<uint64_t>(std::rand()) << 32 |
-                     static_cast<uint64_t>(std::rand());
+        session_id = static_cast<uint64_t>(arc4random()) << 32 |
+                     static_cast<uint64_t>(arc4random());
     }
 
     g_state.sessionId.store(session_id, std::memory_order_release);
@@ -193,8 +193,8 @@ uint64_t intent_ir_get_current_session_id(void) {
 }
 
 uint64_t intent_ir_new_session_id(void) {
-    uint64_t id = static_cast<uint64_t>(std::rand()) << 32 |
-                  static_cast<uint64_t>(std::rand());
+    uint64_t id = static_cast<uint64_t>(arc4random()) << 32 |
+                  static_cast<uint64_t>(arc4random());
     g_state.sessionId.store(id, std::memory_order_release);
     return id;
 }

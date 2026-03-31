@@ -17,9 +17,10 @@ VADSystem::VADSystem(const EmotionThesaurus* thesaurus)
     // Set current time from system clock
     auto now = std::chrono::system_clock::now();
     auto time_t = std::chrono::system_clock::to_time_t(now);
-    std::tm* localTime = std::localtime(&time_t);
-    currentHour_ = localTime->tm_hour;
-    currentDayOfWeek_ = localTime->tm_wday;
+    std::tm localTime_buf;
+    localtime_r(&time_t, &localTime_buf);
+    currentHour_ = localTime_buf.tm_hour;
+    currentDayOfWeek_ = localTime_buf.tm_wday;
 }
 
 VADSystem::ProcessingResult VADSystem::processEmotionId(

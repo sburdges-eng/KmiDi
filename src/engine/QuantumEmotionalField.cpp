@@ -172,8 +172,7 @@ EmotionBasis QuantumEmotionalField::collapse(const QuantumEmotionalState &state,
 
   // Generate random value if not provided
   if (randomValue < 0.0f) {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
+    thread_local std::mt19937 gen(std::random_device{}());
     std::uniform_real_distribution<float> dis(0.0f, 1.0f);
     randomValue = dis(gen);
   }

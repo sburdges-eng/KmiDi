@@ -156,7 +156,7 @@ void DDSPProcessor::synthesizeNoise(const float * /*magnitudes*/, float *output,
   std::fill(output, output + numSamples, 0.0f);
 
   // Generate white noise
-  static std::mt19937 rng(std::random_device{}());
+  thread_local std::mt19937 rng(std::random_device{}());
   std::normal_distribution<float> noiseDist(0.0f, 1.0f);
 
   // Create noise buffer

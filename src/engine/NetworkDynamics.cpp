@@ -134,8 +134,7 @@ VADState NetworkDynamics::simulateDiffusion(
 
     // Noise term: η_i(t)
     if (noise > 0.0f) {
-        static std::random_device rd;
-        static std::mt19937 gen(rd());
+        thread_local std::mt19937 gen(std::random_device{}());
         std::normal_distribution<float> dis(0.0f, noise);
 
         result.valence += dis(gen);
