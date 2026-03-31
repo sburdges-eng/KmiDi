@@ -2,12 +2,46 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import List, Optional
 
 try:
     from pydantic import BaseModel, Field, field_validator
 except ImportError:  # pragma: no cover
     from pydantic import BaseModel, Field, validator as field_validator  # type: ignore
+
+
+class EmotionTag(str, Enum):
+    TENSION = "tension"
+    RELEASE = "release"
+    WARM = "warm"
+    COLD = "cold"
+    BRIGHT = "bright"
+    DARK = "dark"
+    DRIVE = "drive"
+    FLOAT = "float"
+
+
+class EmotionStateSchema(BaseModel):
+    """Canonical emotion contract v1. Source of truth for all language bindings."""
+    model_config = {"extra": "forbid"}
+
+    valence: float = Field(default=0.0, ge=-1.0, le=1.0, description="Negative to positive [-1, 1]")
+    arousal: float = Field(default=0.5, ge=0.0, le=1.0, description="Calm to excited [0, 1]")
+    dominance: float = Field(default=0.5, ge=0.0, le=1.0, description="Submissive to dominant [0, 1]")
+    tags: List[EmotionTag] = Field(
+        default_factory=list,
+        max_length=3,
+        description="Max 3 tags from controlled vocabulary",
+    )
+    confidence: float = Field(default=0.0, ge=0.0, le=1.0, description="Inference quality gate [0, 1]")
+
+    @field_validator("tags")
+    @classmethod
+    def validate_unique_tags(cls, v: List[EmotionTag]) -> List[EmotionTag]:
+        if len(v) != len(set(v)):
+            raise ValueError("Tags must be unique")
+        return v
 
 
 class TrackIntent(BaseModel):
