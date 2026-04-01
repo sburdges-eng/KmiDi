@@ -64,6 +64,32 @@ Practical plan for ultra-low-latency audio/ML loops on M-series Macs, tuned for 
 
 **KmiDi:** `MLConfig::use_coreml` and penta-core ML bindings already support Core ML; ensure the streaming path uses it and compare ANE vs GPU variants.
 
+## 2026 export/runtime watchlist
+
+Use this as a pinned-risk list for Core ML and ExecuTorch work:
+
+- Prefer stable macOS/iOS builds for validation. User briefings noted Core ML regressions on beta OS builds that break previously working models.
+- Pin known-good versions of `coremltools`, ExecuTorch, and deployment targets in CI. Stateful export paths are still sensitive to converter and runtime drift.
+- Treat rotary-attention and complex `einsum` lowering as a known risk area. If a model uses those patterns, expect graph rewrites or decomposition before Core ML conversion succeeds.
+- Validate both delegated and fallback paths. ANE/Metal fallback behavior can differ when mutable buffers or KV-cache state are involved.
+- Keep export tests around exact output parity, not only compile success.
+
+## 2026 optimization levers
+
+- **BNNSGraphBuilder:** prebuild and optimize compute graphs ahead of runtime when the deployment path supports it.
+- **Metal 4 explicit timing tools:** use command-buffer groups, events, and timestamp queries so GPU work can be measured against audio deadlines instead of guessed.
+- **Activation quantization:** newer Core ML tooling supports calibration-based activation quantization in addition to weight compression; use representative clips to reduce peak memory before shipping.
+- **Sub-4-bit compression:** promising for offline experiments and LLM-style helper models, but keep the plugin/runtime path conservative until calibration, accuracy, and export stability are proven on-device.
+
+## GPU scheduling caveat
+
+Audio Workgroups and QoS help the CPU side honor deadlines, but Apple does not expose a hard real-time GPU guarantee. Design for graceful degradation:
+
+- keep CPU or ANE fallback paths available,
+- instrument GPU work with timestamps,
+- budget for contention from unrelated GPU activity,
+- prefer bounded precompiled graphs over ad hoc dispatch in the hot loop.
+
 ---
 
 ## Step 3 — Housekeeping that protects tails
@@ -103,6 +129,7 @@ Or from inside an already-created thread (e.g. `std::thread`): call `pthread_set
 
 1. Add **Audio Workgroup** handling + QoS bump → run **(A)** at 128-sample → expect fewer dropouts and tighter P99.
 2. Convert model to **Core ML**, run **(B)** with ANE → expect lower CPU and steadier tails; keep 128-sample stable, then try 64-sample.
+3. Pin one stable OS + `coremltools` + ExecuTorch tuple in CI and replay a parity fixture before testing betas or alternate delegates.
 
 ---
 

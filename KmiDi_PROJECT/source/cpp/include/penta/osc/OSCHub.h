@@ -57,7 +57,8 @@ public:
     // Non-RT: Configuration
     void updateConfig(const Config& config);
 
-    bool matchPattern(const std::string& address, const std::string& pattern) const;
+    bool matchPattern(const std::string& address, const std::string& pattern,
+                      size_t addrPos = 0, size_t patPos = 0, int depth = 0) const;
 
 private:
     Config config_;
