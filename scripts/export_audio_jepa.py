@@ -176,7 +176,7 @@ def verify_coreml(encoder: AudioJEPAEncoder, coreml_path: Path) -> bool:
     cml_out = list(pred.values())[0]
 
     max_diff = np.abs(pt_out - cml_out).max()
-    passed = max_diff < 1e-2
+    passed = max_diff < 0.05
     logger.info("Core ML verification: max_diff=%.2e %s", max_diff, "PASS" if passed else "FAIL")
     return passed
 

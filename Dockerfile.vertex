@@ -1,0 +1,22 @@
+# Vertex AI training image for KmiDi JEPA (Audio-JEPA / Chord-JEPA).
+# Build from repo root: docker build -f Dockerfile.vertex -t us-central1-docker.pkg.dev/[PROJECT_ID]/[REPO]/kmidi-jepa-train:v1 .
+# Push to Artifact Registry and set KMIDI_VERTEX_IMAGE_URI when launching jobs.
+
+FROM us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-1.py310:latest
+
+WORKDIR /app
+
+# Install project and dependencies
+COPY pyproject.toml .
+COPY music_brain ./music_brain
+COPY config ./config
+COPY scripts/vertex_train.py ./scripts/
+
+# Install dependencies needed for training
+RUN pip install --no-cache-dir -e . \
+    && pip install --no-cache-dir librosa pyyaml google-cloud-aiplatform
+
+# Vertex AI passes hyperparameters as command-line arguments to the ENTRYPOINT.
+# It also mounts GCS buckets at /gcs/[bucket_name]/ and sets AIP_ env vars.
+ENV PYTHONUNBUFFERED=1
+ENTRYPOINT ["python", "/app/scripts/vertex_train.py"]
