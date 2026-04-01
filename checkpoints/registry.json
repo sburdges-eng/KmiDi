@@ -11,6 +11,26 @@
       "sample_rate": 22050,
       "note": "Chord-JEPA trained on MIDI chord sequences",
       "status": "trained"
+    },
+    {
+      "id": "audio_jepa_v01",
+      "task": "audio_jepa",
+      "format": "onnx",
+      "file": "../models/audio_jepa_v01.onnx",
+      "version": "0.1.0",
+      "sample_rate": 22050,
+      "note": "Audio JEPA encoder medium tier — mel to latent",
+      "status": "exported"
+    },
+    {
+      "id": "audio_jepa_v01_coreml",
+      "task": "audio_jepa",
+      "format": "coreml",
+      "file": "../models/audio_jepa_v01.mlpackage",
+      "version": "0.1.0",
+      "sample_rate": 22050,
+      "note": "Audio JEPA encoder medium tier — Core ML ANE-preferred",
+      "status": "exported"
     }
   ]
 }

@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """
-Export Audio JEPA encoder to ONNX (and Core ML when supported) for Apple Silicon.
+Export Audio JEPA encoder to ONNX and Core ML for Apple Silicon ANE inference.
+
+Core ML export requires coremltools (macOS only, Python <=3.13).
+Use --skip-coreml to export ONNX only.
 
 Usage:
     python scripts/export_audio_jepa.py
     python scripts/export_audio_jepa.py --checkpoint path/to/model.pt --output-dir models/
     python scripts/export_audio_jepa.py --benchmark --warmup 50 --iterations 200
+    python scripts/export_audio_jepa.py --skip-coreml
 """
 
 from __future__ import annotations
@@ -103,25 +107,38 @@ def verify_onnx(encoder: AudioJEPAEncoder, onnx_path: Path) -> bool:
     return passed
 
 
-def export_coreml(encoder: AudioJEPAEncoder, output_path: Path) -> Optional[Path]:
-    """Export encoder to Core ML .mlpackage (ANE-preferred).
+class _CoreMLEncoderWrapper(torch.nn.Module):
+    """Wrapper that avoids dynamic shape unpacking for coremltools tracing."""
 
-    NOTE: Requires coremltools with native bindings for the current Python version.
-    As of 2026-03-31, coremltools 9.0 does not support Python 3.14.
-    """
+    def __init__(self, encoder: AudioJEPAEncoder):
+        super().__init__()
+        self.conv = encoder.conv
+        self.proj = encoder.proj
+        self.layer_norm = encoder.layer_norm
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        h = self.conv(x)                      # (B, C, F, T)
+        h = h.permute(0, 3, 1, 2)             # (B, T, C, F)
+        h = h.flatten(2)                       # (B, T, C*F)
+        h = self.proj(h)                       # (B, T, latent_dim)
+        return self.layer_norm(h)
+
+
+def export_coreml(encoder: AudioJEPAEncoder, output_path: Path) -> Optional[Path]:
+    """Export encoder to Core ML .mlpackage (ANE-preferred)."""
     if platform.system() != "Darwin":
         logger.warning("Core ML export requires macOS, skipping")
         return None
 
-    try:
-        import coremltools as ct
-    except ImportError:
-        logger.warning("coremltools not installed, skipping Core ML export")
-        return None
+    import coremltools as ct
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     dummy = torch.randn(*INPUT_SHAPE)
-    traced = torch.jit.trace(encoder, dummy)
+
+    # Use wrapper to avoid dynamic shape ops that coremltools can't lower
+    wrapper = _CoreMLEncoderWrapper(encoder)
+    wrapper.eval()
+    traced = torch.jit.trace(wrapper, dummy)
 
     mlmodel = ct.convert(
         traced,
@@ -136,6 +153,8 @@ def export_coreml(encoder: AudioJEPAEncoder, output_path: Path) -> Optional[Path
     mlmodel.save(str(output_path))
     logger.info("Core ML exported: %s", output_path)
     return output_path
+
+
 
 
 def verify_coreml(encoder: AudioJEPAEncoder, coreml_path: Path) -> bool:
@@ -228,8 +247,7 @@ def benchmark_coreml(coreml_path: Path, warmup: int = 50, iterations: int = 200)
 
 def write_latency_report(
     output_dir: Path,
-    onnx_bench: Optional[dict],
-    coreml_bench: Optional[dict],
+    benchmarks: list[dict],
     result: ExportResult,
 ) -> Path:
     """Write bench/latency_report.md."""
@@ -249,7 +267,7 @@ def write_latency_report(
         "| Format | Path | Verified |",
         "|--------|------|----------|",
         f"| ONNX | `{result.onnx_path}` | {'PASS' if result.onnx_verified else 'FAIL'} |",
-        f"| Core ML | `{result.coreml_path or 'N/A (deferred)'}` | {'PASS' if result.coreml_verified else 'N/A'} |",
+        f"| Core ML | `{result.coreml_path or 'N/A'}` | {'PASS' if result.coreml_verified else 'N/A'} |",
         "",
         "## Latency (warm-started, batch=1)",
         "",
@@ -257,12 +275,11 @@ def write_latency_report(
         "|---------|----------|----------|----------|----------|----------|",
     ]
 
-    for bench in [onnx_bench, coreml_bench]:
-        if bench:
-            lines.append(
-                f"| {bench['runtime']} | {bench['p50_ms']} | {bench['p95_ms']} "
-                f"| {bench['p99_ms']} | {bench['min_ms']} | {bench['max_ms']} |"
-            )
+    for bench in benchmarks:
+        lines.append(
+            f"| {bench['runtime']} | {bench['p50_ms']} | {bench['p95_ms']} "
+            f"| {bench['p99_ms']} | {bench['min_ms']} | {bench['max_ms']} |"
+        )
 
     lines.append("")
     lines.append("## Target")
@@ -271,13 +288,25 @@ def write_latency_report(
     lines.append("")
     lines.append("## Notes")
     lines.append("")
-    lines.append("- Core ML export deferred: coremltools 9.0 lacks Python 3.14 native bindings.")
-    lines.append("  Re-run with a Python 3.12 venv or when coremltools ships 3.14 support.")
+    lines.append(f"- Exported with coremltools, Python {platform.python_version()}, "
+                 f"compute_units=ALL (ANE-preferred)")
+    lines.append("- mlProgram format uses fp16 weights by default (macOS13+ deployment target)")
     lines.append("")
 
     report_path.write_text("\n".join(lines))
     logger.info("Report written: %s", report_path)
     return report_path
+
+
+def _coreml_available() -> bool:
+    """Check if coremltools is importable on macOS."""
+    if platform.system() != "Darwin":
+        return False
+    try:
+        import coremltools  # noqa: F401
+        return True
+    except ImportError:
+        return False
 
 
 def main():
@@ -290,7 +319,10 @@ def main():
     parser.add_argument("--benchmark", action="store_true", help="Run latency benchmarks")
     parser.add_argument("--warmup", type=int, default=50, help="Benchmark warmup iterations")
     parser.add_argument("--iterations", type=int, default=200, help="Benchmark timed iterations")
-    parser.add_argument("--coreml", action="store_true", help="Attempt Core ML export (requires compatible coremltools)")
+    parser.add_argument(
+        "--skip-coreml", action="store_true",
+        help="Skip Core ML export (default: export when coremltools is available)",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -306,43 +338,48 @@ def main():
     result.onnx_path = export_onnx(encoder, onnx_path)
     result.onnx_verified = verify_onnx(encoder, onnx_path)
 
-    # Core ML (opt-in due to Python version constraints)
-    if args.coreml:
+    # Core ML (default on macOS when coremltools is installed)
+    do_coreml = not args.skip_coreml and _coreml_available()
+    if do_coreml:
         coreml_path = output_dir / "audio_jepa_v01.mlpackage"
         coreml_result = export_coreml(encoder, coreml_path)
         if coreml_result:
             result.coreml_path = coreml_result
             result.coreml_verified = verify_coreml(encoder, coreml_result)
+    elif args.skip_coreml:
+        logger.info("Core ML export skipped (--skip-coreml)")
     else:
-        logger.info("Core ML export skipped (use --coreml to attempt)")
+        logger.info("Core ML export skipped (coremltools not available)")
 
     # Benchmark
-    onnx_bench = None
-    coreml_bench = None
+    benchmarks = []
     if args.benchmark:
         logger.info("Benchmarking (%d warmup, %d iterations)...", args.warmup, args.iterations)
         onnx_bench = benchmark_onnx(onnx_path, args.warmup, args.iterations)
+        benchmarks.append(onnx_bench)
         logger.info("ONNX: p50=%.1fms p95=%.1fms p99=%.1fms",
                      onnx_bench["p50_ms"], onnx_bench["p95_ms"], onnx_bench["p99_ms"])
 
         if result.coreml_path:
-            coreml_bench = benchmark_coreml(result.coreml_path, args.warmup, args.iterations)
+            coreml_bench = benchmark_coreml(
+                result.coreml_path, args.warmup, args.iterations,
+            )
             if coreml_bench:
-                logger.info("Core ML: p50=%.1fms p95=%.1fms p99=%.1fms",
-                             coreml_bench["p50_ms"], coreml_bench["p95_ms"], coreml_bench["p99_ms"])
+                benchmarks.append(coreml_bench)
+                logger.info("Core ML f32: p50=%.1fms p95=%.1fms p99=%.1fms",
+                             coreml_bench["p50_ms"], coreml_bench["p95_ms"],
+                             coreml_bench["p99_ms"])
 
     # Report
     if args.benchmark:
-        write_latency_report(Path("bench"), onnx_bench, coreml_bench, result)
+        write_latency_report(Path("bench"), benchmarks, result)
 
     # Summary
     print("\n=== Export Summary ===")
-    print(f"ONNX:    {result.onnx_path} (verified={result.onnx_verified})")
-    print(f"CoreML:  {result.coreml_path or 'N/A (deferred)'} (verified={result.coreml_verified})")
-    if onnx_bench:
-        print(f"ONNX latency:    p50={onnx_bench['p50_ms']}ms p99={onnx_bench['p99_ms']}ms")
-    if coreml_bench:
-        print(f"CoreML latency:  p50={coreml_bench['p50_ms']}ms p99={coreml_bench['p99_ms']}ms")
+    print(f"ONNX:   {result.onnx_path} (verified={result.onnx_verified})")
+    print(f"CoreML: {result.coreml_path or 'N/A'} (verified={result.coreml_verified})")
+    for bench in benchmarks:
+        print(f"  {bench['runtime']}: p50={bench['p50_ms']}ms p99={bench['p99_ms']}ms")
 
 
 if __name__ == "__main__":
