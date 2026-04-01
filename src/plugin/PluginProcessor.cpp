@@ -334,7 +334,18 @@ void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
   // Initialize AudioEmotionRunner for RT emotion detection
   if (mlInferenceEnabled_.load()) {
     penta::ml::AudioEmotionRunnerConfig emotionConfig;
-    emotionConfig.model_path = "";  // Stub mode — no ONNX model yet
+    // Resolve model path: bundle Resources → sibling models/ → dev fallback
+    auto pluginFile = juce::File::getSpecialLocation(
+        juce::File::currentApplicationFile);
+    auto modelFile = pluginFile.getChildFile(
+        "Contents/Resources/models/audio_jepa_v01.onnx");
+    if (!modelFile.existsAsFile())
+      modelFile = pluginFile.getParentDirectory().getChildFile(
+          "models/audio_jepa_v01.onnx");
+    if (!modelFile.existsAsFile())
+      modelFile = juce::File(
+          "/Users/seanburdges/Dev/KmiDi/models/audio_jepa_v01.onnx");
+    emotionConfig.model_path = modelFile.getFullPathName().toStdString();
     emotionConfig.sample_rate = static_cast<size_t>(sampleRate);
     emotionConfig.ring_capacity = 524288;
     emotionConfig.slew_time_ms = 20.0f;

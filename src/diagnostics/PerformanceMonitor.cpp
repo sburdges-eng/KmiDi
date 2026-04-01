@@ -45,7 +45,7 @@ inline uint64_t getHighResTimestamp() noexcept {
 
 PerformanceMonitor::PerformanceMonitor()
     : measurementStart_()
-    , latencyHistory_(kHistorySize, 0)
+    , latencyHistory_(kHistorySize)
     , historyIndex_(0)
     , peakLatencyUs_(0)
     , xrunCount_(0)
