@@ -30,6 +30,8 @@ training:
   early_stop_patience: 15
   mixed_precision: true
   gradient_clip: 1.0
+  emotion_loss_weight: 0.1
+  emotion_probe_checkpoint: "checkpoints/emotion_probe/best_probe.pt"
 
 sagemaker:
   instance_type: ml.g5.xlarge

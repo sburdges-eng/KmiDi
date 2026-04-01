@@ -67,6 +67,9 @@ class TrainingConfig:
     mixed_precision: bool = True
     gradient_clip: float = 1.0
 
+    emotion_loss_weight: float = 0.0
+    emotion_probe_checkpoint: str = ""
+
     # SageMaker
     instance_type: str = "ml.g5.xlarge"
     s3_output_uri: Optional[str] = None

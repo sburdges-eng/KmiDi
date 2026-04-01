@@ -99,6 +99,22 @@ def train_audio_jepa(
         weight_decay=training.weight_decay,
     )
 
+    # Optional emotion auxiliary loss
+    emotion_probe = None
+    if training.emotion_loss_weight > 0 and training.emotion_probe_checkpoint:
+        from music_brain.jepa.emotion_probe import EmotionProbe
+        probe_ckpt = torch.load(training.emotion_probe_checkpoint,
+                                map_location="cpu", weights_only=False)
+        emotion_probe = EmotionProbe(
+            latent_dim=probe_ckpt.get("latent_dim", 256),
+            hidden_dim=probe_ckpt.get("hidden_dim", 128),
+        )
+        emotion_probe.load_state_dict(probe_ckpt["probe"])
+        emotion_probe.to(device).eval()
+        for p in emotion_probe.parameters():
+            p.requires_grad = False
+        logger.info("Emotion auxiliary loss enabled (weight=%.2f)", training.emotion_loss_weight)
+
     use_amp = training.mixed_precision and device.type == "cuda"
     scaler = torch.amp.GradScaler("cuda") if use_amp else None
 
@@ -126,6 +142,16 @@ def train_audio_jepa(
                 )
                 pred = predictor(masked)
                 loss = F.mse_loss(pred, z_target)
+
+                # Emotion auxiliary: steer latent geometry toward emotion-relevant features
+                if emotion_probe is not None:
+                    z_pooled = z.mean(dim=1)  # (B, latent_dim)
+                    emotion_pred = emotion_probe(z_pooled)
+                    with torch.no_grad():
+                        z_target_pooled = z_target.mean(dim=1)
+                        emotion_target = emotion_probe(z_target_pooled)
+                    emotion_loss = F.mse_loss(emotion_pred, emotion_target)
+                    loss = loss + training.emotion_loss_weight * emotion_loss
 
             optimizer.zero_grad()
             if scaler is not None:
