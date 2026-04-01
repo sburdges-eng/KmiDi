@@ -12,8 +12,6 @@ HarmonyEngine::HarmonyEngine(const Config& config)
     activeNotes_.fill(0);
     pitchClassSet_.fill(false);
 
-    chordHistory_.resize(kHistoryCapacity);
-    scaleHistory_.resize(kHistoryCapacity);
 }
 
 HarmonyEngine::~HarmonyEngine() = default;

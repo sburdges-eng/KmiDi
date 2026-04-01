@@ -88,7 +88,8 @@ void OSCHub::updateConfig(const Config &config) {
     server_->start();
 }
 
-bool OSCHub::matchPattern(const std::string &address, const std::string &pattern) const {
+bool OSCHub::matchPattern(const std::string &address, const std::string &pattern,
+                          size_t addrPos, size_t patPos, int depth) const {
     if (pattern.empty()) {
         return address.empty(); // Empty pattern only matches empty address
     }

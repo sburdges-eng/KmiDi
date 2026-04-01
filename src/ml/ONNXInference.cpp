@@ -278,10 +278,12 @@ bool ONNXInference::infer(const float* input, float* output) {
         );
 
         // Run inference
+        const char* inputNamePtr = inputName.get();
+        const char* outputNamePtr = outputName.get();
         auto outputTensors = session->Run(
             RunOptions{nullptr},
-            &inputName.get(), &inputTensor, 1,
-            &outputName.get(), 1
+            &inputNamePtr, &inputTensor, 1,
+            &outputNamePtr, 1
         );
 
         if (outputTensors.empty()) {
