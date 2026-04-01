@@ -33,6 +33,21 @@ from music_brain.jepa.audio_jepa import AudioJEPAEncoder
 from music_brain.jepa.config import AudioJEPAConfig
 
 
+def load_emotion_probe(checkpoint_path: str = "checkpoints/emotion_probe/best_probe.pt"):
+    """Load trained emotion probe if available."""
+    if not Path(checkpoint_path).exists():
+        return None
+    from music_brain.jepa.emotion_probe import EmotionProbe
+    ckpt = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
+    probe = EmotionProbe(
+        latent_dim=ckpt.get("latent_dim", 256),
+        hidden_dim=ckpt.get("hidden_dim", 128),
+    )
+    probe.load_state_dict(ckpt["probe"])
+    probe.eval()
+    return probe
+
+
 def load_encoder(checkpoint_path: str) -> AudioJEPAEncoder:
     ckpt = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
     config = AudioJEPAConfig(**ckpt["config"])
@@ -86,28 +101,27 @@ def audio_to_mel(audio: np.ndarray, sr: int = 22050, n_mels: int = 128,
     return mel_db
 
 
-def latent_to_emotion(latent: np.ndarray) -> dict:
-    """Map pooled latent vector to emotion coordinates.
+def latent_to_emotion(latent: np.ndarray, probe=None) -> dict:
+    """Map latent to emotion using trained probe or heuristic fallback."""
+    pooled = latent[0].mean(axis=0)  # (256,)
 
-    This is a simplified version of AudioEmotionRunner's mapping.
-    The real mapping would use a trained emotion classifier head.
-    For proof-of-life, we use statistical features of the latent space.
-    """
-    # Pool across time dimension: (1, T, 256) → (256,)
-    pooled = latent[0].mean(axis=0)
+    if probe is not None:
+        with torch.no_grad():
+            inp = torch.from_numpy(pooled).unsqueeze(0).float()
+            out = probe(inp).squeeze(0).numpy()
+        valence = float(out[0])
+        arousal = float((out[1] + 1.0) * 0.5)  # [-1,1] → [0,1]
+    else:
+        # Heuristic fallback (same as before)
+        mean_val = float(pooled.mean())
+        std_val = float(pooled.std())
+        energy = float(np.abs(pooled).mean())
+        skew = float(np.mean((pooled - mean_val) ** 3) / (std_val ** 3 + 1e-8))
+        valence = float(np.tanh(skew * 2))
+        arousal = float(np.clip(energy * 3, 0, 1))
 
-    # Simple mapping using latent statistics
-    # These are placeholder heuristics — a trained classifier would replace this
-    mean_val = float(pooled.mean())
-    std_val = float(pooled.std())
-    energy = float(np.abs(pooled).mean())
-    skew = float(np.mean((pooled - mean_val) ** 3) / (std_val ** 3 + 1e-8))
-
-    # Map to emotion coordinates
-    valence = float(np.tanh(skew * 2))            # [-1, 1]: positive skew → positive valence
-    arousal = float(np.clip(energy * 3, 0, 1))    # [0, 1]: higher energy → higher arousal
-    dominance = float(np.clip(std_val * 2, 0, 1)) # [0, 1]: higher variance → more dominant
-    confidence = float(np.clip(1.0 - abs(mean_val) * 5, 0.3, 1.0))
+    dominance = float(np.clip(0.5 + 0.3 * arousal + 0.2 * abs(valence), 0, 1))
+    confidence = 0.8 if probe else 0.3
 
     return {
         "valence": round(valence, 3),
@@ -156,6 +170,11 @@ def main():
     print("=" * 60)
     print("  KmiDi Demo: Audio JEPA → Emotion Detection")
     print("=" * 60)
+    probe = load_emotion_probe()
+    if probe:
+        print("Emotion probe: TRAINED (using learned mapping)")
+    else:
+        print("Emotion probe: not found (using heuristic fallback)")
     print()
 
     # Load audio
@@ -215,7 +234,7 @@ def main():
         latency_ms = (time.perf_counter_ns() - t0) / 1e6
 
         # Map to emotion
-        emotion = latent_to_emotion(latent)
+        emotion = latent_to_emotion(latent, probe=probe)
 
         # Display
         print(f"\n  [{time_s:5.1f}s - {(end/sr):5.1f}s]  (inference: {latency_ms:.1f}ms)")
