@@ -68,7 +68,8 @@ struct AudioEmotionRunnerImpl {
 
     // ONNX inference
 #ifdef ENABLE_ONNX_RUNTIME
-    std::unique_ptr<midikompanion::ml::ONNXInference> onnx;
+    std::unique_ptr<midikompanion::ml::ONNXInference> onnx;       // JEPA encoder
+    std::unique_ptr<midikompanion::ml::ONNXInference> probeOnnx;  // Emotion probe
 #endif
 
     // Mel spectrogram computer
@@ -224,9 +225,24 @@ struct AudioEmotionRunnerImpl {
                 pooledLatent[d] *= invFrames;
             }
 
-            // 4. Map to emotion + DSP
+            // 4. Map to emotion: use probe ONNX if available, else hardcoded
             EmotionRunnerResult result;
+#ifdef ENABLE_ONNX_RUNTIME
+            if (probeOnnx && probeOnnx->isLoaded()) {
+                float probeOut[2] = {0.0f, 0.0f};
+                probeOnnx->infer(pooledLatent.data(), probeOut);
+                result.emotion.valence   = std::clamp(probeOut[0], -1.0f, 1.0f);
+                result.emotion.arousal   = std::clamp((probeOut[1] + 1.0f) * 0.5f, 0.0f, 1.0f);
+                result.emotion.dominance = std::clamp(
+                    0.5f + 0.3f * result.emotion.arousal + 0.2f * std::abs(result.emotion.valence),
+                    0.0f, 1.0f);
+                result.emotion.confidence = 0.8f;
+            } else {
+                result.emotion = mapLatentToEmotion(pooledLatent.data(), latentDim);
+            }
+#else
             result.emotion = mapLatentToEmotion(pooledLatent.data(), latentDim);
+#endif
             result.dsp = mapEmotionToDSP(result.emotion);
             result.sequence_id = sequenceCounter.fetch_add(1, std::memory_order_relaxed);
 
@@ -280,6 +296,13 @@ bool AudioEmotionRunner::initialize(const AudioEmotionRunnerConfig& config) {
     impl_->onnx = std::make_unique<midikompanion::ml::ONNXInference>();
     if (!impl_->onnx->loadModel(config.model_path)) {
         impl_->onnx.reset();
+    }
+
+    if (!config.probe_model_path.empty()) {
+        impl_->probeOnnx = std::make_unique<midikompanion::ml::ONNXInference>();
+        if (!impl_->probeOnnx->loadModel(config.probe_model_path)) {
+            impl_->probeOnnx.reset();
+        }
     }
 #endif
 

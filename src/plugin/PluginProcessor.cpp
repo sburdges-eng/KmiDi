@@ -346,6 +346,18 @@ void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
       modelFile = juce::File(
           "/Users/seanburdges/Dev/KmiDi/models/audio_jepa_v01.onnx");
     emotionConfig.model_path = modelFile.getFullPathName().toStdString();
+
+    // Resolve emotion probe model path
+    auto probeFile = pluginFile.getChildFile(
+        "Contents/Resources/models/emotion_probe_v01.onnx");
+    if (!probeFile.existsAsFile())
+      probeFile = pluginFile.getParentDirectory().getChildFile(
+          "models/emotion_probe_v01.onnx");
+    if (!probeFile.existsAsFile())
+      probeFile = juce::File(
+          "/Users/seanburdges/Dev/KmiDi/models/emotion_probe_v01.onnx");
+    emotionConfig.probe_model_path = probeFile.getFullPathName().toStdString();
+
     emotionConfig.sample_rate = static_cast<size_t>(sampleRate);
     emotionConfig.ring_capacity = 524288;
     emotionConfig.slew_time_ms = 20.0f;

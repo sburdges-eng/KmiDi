@@ -43,7 +43,8 @@ struct EmotionRunnerResult {
 // ─── Configuration ──────────────────────────────────────────────────────────
 
 struct AudioEmotionRunnerConfig {
-    std::string model_path;                // Path to .onnx file
+    std::string model_path;                // Path to JEPA .onnx file
+    std::string probe_model_path;          // Path to emotion probe .onnx file
     size_t sample_rate         = 48000;
     size_t ring_capacity       = 524288;   // ~10.9s at 48kHz
     float  slew_time_ms        = 20.0f;    // Per-parameter ramp
