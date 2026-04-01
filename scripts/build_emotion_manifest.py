@@ -1,22 +1,25 @@
 #!/usr/bin/env python3
 """
-Build emotion manifest from DEAM and PMEmo datasets.
+Build emotion manifest from RAVDESS, CREMA-D, and TESS datasets.
 
-Scans audio files and annotation CSVs from DEAM and PMEmo, normalises
-valence/arousal to [-1, 1], assigns deterministic 70/15/15 train/val/test
+Scans each dataset's metadata.csv, maps categorical emotion labels to
+valence/arousal coordinates, assigns deterministic 70/15/15 train/val/test
 splits, and writes data/emotion_manifest.json.
 
 Usage:
     python scripts/build_emotion_manifest.py
     python scripts/build_emotion_manifest.py \\
-        --datasets-root ~/Datasets --output data/emotion_manifest.json
+        --datasets-root "/Volumes/Sean's SSD/Datasets/processed/emotions" \\
+        --output data/emotion_manifest.json
 """
 
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import logging
+import re
 import sys
 from pathlib import Path
 
@@ -27,14 +30,38 @@ if _PROJECT_ROOT not in sys.path:
 
 logger = logging.getLogger(__name__)
 
-# 1-9 annotation scale → [-1, 1]
-_SCALE_MIN = 1.0
-_SCALE_MAX = 9.0
+# Categorical emotion → (valence, arousal) mapping
+# "calm" is a RAVDESS-specific label; mapped to a low-arousal, near-neutral position.
+EMOTION_VA_MAP = {
+    "angry":    {"valence": -0.6, "arousal":  0.8},
+    "calm":     {"valence":  0.2, "arousal": -0.3},
+    "disgust":  {"valence": -0.7, "arousal":  0.3},
+    "fear":     {"valence": -0.6, "arousal":  0.7},
+    "happy":    {"valence":  0.8, "arousal":  0.6},
+    "neutral":  {"valence":  0.0, "arousal":  0.3},
+    "sad":      {"valence": -0.7, "arousal": -0.3},
+    "surprise": {"valence":  0.3, "arousal":  0.8},
+}
+
+# TESS prefix patterns to strip, with special-case normalisation
+# "pleasant_surprise" and "pleasant_surprised" both map to "surprise"
+_TESS_PREFIX_RE = re.compile(r"^(?:yaf|oaf)_(.+)$", re.IGNORECASE)
+_TESS_ALIAS = {
+    "pleasant_surprise":  "surprise",
+    "pleasant_surprised": "surprise",
+}
 
 
-def _normalise(value: float) -> float:
-    """Normalise a [1, 9] annotation value to [-1, 1]."""
-    return 2.0 * (value - _SCALE_MIN) / (_SCALE_MAX - _SCALE_MIN) - 1.0
+def _normalise_tess_emotion(raw: str) -> str | None:
+    """Strip yaf_/oaf_ prefix from a TESS emotion label and return base name.
+
+    Returns None if the label can't be mapped to EMOTION_VA_MAP.
+    """
+    raw = raw.strip().lower()
+    m = _TESS_PREFIX_RE.match(raw)
+    base = m.group(1) if m else raw
+    base = _TESS_ALIAS.get(base, base)
+    return base if base in EMOTION_VA_MAP else None
 
 
 def _assign_splits(entries: list[dict]) -> list[dict]:
@@ -54,209 +81,127 @@ def _assign_splits(entries: list[dict]) -> list[dict]:
     return entries_sorted
 
 
-def _find_audio(audio_dir: Path, stem: str) -> Path | None:
-    """Find an audio file by stem, checking .wav then .mp3."""
-    for ext in (".wav", ".mp3"):
-        candidate = audio_dir / f"{stem}{ext}"
-        if candidate.exists():
-            return candidate
-    return None
+def load_dataset(
+    dataset_dir: Path,
+    dataset_name: str,
+    is_tess: bool = False,
+) -> tuple[list[dict], int]:
+    """Load entries from a single dataset directory using its metadata.csv.
 
-
-def load_deam(deam_root: Path) -> list[dict]:
-    """Load entries from the DEAM dataset.
-
-    Expected layout:
-        <deam_root>/audio/*.{wav,mp3}
-        <deam_root>/annotations/valence.csv   — columns: song_id, mean
-        <deam_root>/annotations/arousal.csv   — columns: song_id, mean
+    Returns (entries, skip_count).
     """
-    try:
-        import csv
-    except ImportError:
-        import csv  # noqa: F811 (always stdlib)
-
-    audio_dir = deam_root / "audio"
-    annotations_dir = deam_root / "annotations"
-    valence_csv = annotations_dir / "valence.csv"
-    arousal_csv = annotations_dir / "arousal.csv"
-
-    if not audio_dir.is_dir():
-        logger.warning("DEAM audio dir not found: %s — skipping", audio_dir)
-        return []
-    if not valence_csv.exists():
-        logger.warning("DEAM valence.csv not found: %s — skipping", valence_csv)
-        return []
-    if not arousal_csv.exists():
-        logger.warning("DEAM arousal.csv not found: %s — skipping", arousal_csv)
-        return []
-
-    # Load valence
-    valence_map: dict[str, float] = {}
-    with valence_csv.open(newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            # Strip whitespace from keys/values for robustness
-            row = {k.strip(): v.strip() for k, v in row.items() if k}
-            song_id = row.get("song_id") or row.get("Song_id") or row.get("songId") or ""
-            mean_val = None
-            for key in ("mean", "mean_all", "valence_mean", "mean_valence"):
-                if key in row:
-                    mean_val = row[key]
-                    break
-            if song_id and mean_val:
-                try:
-                    valence_map[song_id.strip()] = float(mean_val)
-                except ValueError:
-                    pass
-
-    # Load arousal
-    arousal_map: dict[str, float] = {}
-    with arousal_csv.open(newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            row = {k.strip(): v.strip() for k, v in row.items() if k}
-            song_id = row.get("song_id") or row.get("Song_id") or row.get("songId") or ""
-            mean_val = None
-            for key in ("mean", "mean_all", "arousal_mean", "mean_arousal"):
-                if key in row:
-                    mean_val = row[key]
-                    break
-            if song_id and mean_val:
-                try:
-                    arousal_map[song_id.strip()] = float(mean_val)
-                except ValueError:
-                    pass
-
-    common_ids = set(valence_map) & set(arousal_map)
-    logger.info(
-        "DEAM: %d valence, %d arousal, %d common IDs",
-        len(valence_map), len(arousal_map), len(common_ids),
-    )
+    metadata_csv = dataset_dir / "metadata.csv"
+    if not metadata_csv.exists():
+        logger.warning("%s metadata.csv not found at %s — skipping", dataset_name, metadata_csv)
+        return [], 0
 
     entries: list[dict] = []
-    missing_audio = 0
-    for song_id in sorted(common_ids):
-        audio_path = _find_audio(audio_dir, song_id)
-        if audio_path is None:
-            missing_audio += 1
-            continue
-        entries.append({
-            "id": f"deam_{song_id}",
-            "dataset": "DEAM",
-            "audio_path": str(audio_path),
-            "valence": _normalise(valence_map[song_id]),
-            "arousal": _normalise(arousal_map[song_id]),
-            "split": None,  # assigned later
-        })
+    skipped_missing = 0
+    skipped_unknown = 0
 
-    if missing_audio:
-        logger.warning("DEAM: %d entries skipped (audio file not found)", missing_audio)
-    logger.info("DEAM: loaded %d entries", len(entries))
-    return entries
-
-
-def load_pmemo(pmemo_root: Path) -> list[dict]:
-    """Load entries from the PMEmo dataset.
-
-    Expected layout:
-        <pmemo_root>/audio/*.{wav,mp3}
-        <pmemo_root>/annotations/static_annotations.csv
-            — columns: musicId, mean_valence, mean_arousal (scale 1-9)
-    """
-    try:
-        import csv
-    except ImportError:
-        import csv  # noqa: F811
-
-    audio_dir = pmemo_root / "audio"
-    annotations_csv = pmemo_root / "annotations" / "static_annotations.csv"
-
-    if not audio_dir.is_dir():
-        logger.warning("PMEmo audio dir not found: %s — skipping", audio_dir)
-        return []
-    if not annotations_csv.exists():
-        logger.warning("PMEmo static_annotations.csv not found: %s — skipping", annotations_csv)
-        return []
-
-    entries: list[dict] = []
-    missing_audio = 0
-
-    with annotations_csv.open(newline="") as f:
+    with metadata_csv.open(newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            row = {k.strip(): v.strip() for k, v in row.items() if k}
-            music_id = (
-                row.get("musicId")
-                or row.get("music_id")
-                or row.get("MusicId")
-                or ""
-            ).strip()
-            if not music_id:
+            rel_file = row.get("file", "").strip()
+            raw_emotion = row.get("emotion", "").strip()
+
+            if not rel_file or not raw_emotion:
+                skipped_unknown += 1
                 continue
 
-            val_str = row.get("mean_valence") or row.get("valence") or ""
-            aro_str = row.get("mean_arousal") or row.get("arousal") or ""
-            try:
-                valence = float(val_str)
-                arousal = float(aro_str)
-            except ValueError:
+            # Resolve audio path
+            audio_path = dataset_dir / rel_file
+            if not audio_path.exists():
+                logger.debug("Missing audio: %s", audio_path)
+                skipped_missing += 1
                 continue
 
-            audio_path = _find_audio(audio_dir, music_id)
-            if audio_path is None:
-                missing_audio += 1
+            # Map emotion label to valence/arousal
+            if is_tess:
+                emotion = _normalise_tess_emotion(raw_emotion)
+            else:
+                emotion = raw_emotion.strip().lower()
+                if emotion not in EMOTION_VA_MAP:
+                    emotion = None
+
+            if emotion is None:
+                logger.debug("Unknown emotion %r in %s — skipping", raw_emotion, dataset_name)
+                skipped_unknown += 1
                 continue
+
+            va = EMOTION_VA_MAP[emotion]
+            entry_id = f"{dataset_name.lower()}_{Path(rel_file).stem}"
 
             entries.append({
-                "id": f"pmemo_{music_id}",
-                "dataset": "PMEmo",
+                "id": entry_id,
+                "dataset": dataset_name,
                 "audio_path": str(audio_path),
-                "valence": _normalise(valence),
-                "arousal": _normalise(arousal),
-                "split": None,
+                "valence": va["valence"],
+                "arousal": va["arousal"],
+                "emotion": emotion,
+                "split": None,  # assigned later
             })
 
-    if missing_audio:
-        logger.warning("PMEmo: %d entries skipped (audio file not found)", missing_audio)
-    logger.info("PMEmo: loaded %d entries", len(entries))
-    return entries
+    total_skipped = skipped_missing + skipped_unknown
+    if skipped_missing:
+        logger.warning(
+            "%s: %d entries skipped (audio file not found)", dataset_name, skipped_missing
+        )
+    if skipped_unknown:
+        logger.warning(
+            "%s: %d entries skipped (unknown/unmappable emotion)", dataset_name, skipped_unknown
+        )
+    logger.info(
+        "%s: loaded %d entries, skipped %d total", dataset_name, len(entries), total_skipped
+    )
+    return entries, total_skipped
 
 
-def print_summary(entries: list[dict]) -> None:
-    """Print summary statistics for the manifest."""
+def print_summary(entries: list[dict], total_skipped: int) -> None:
+    """Print manifest summary statistics."""
     from collections import Counter
 
     datasets = Counter(e["dataset"] for e in entries)
     splits = Counter(e["split"] for e in entries)
+    emotions = Counter(e["emotion"] for e in entries)
 
     print("\n=== Emotion Manifest Summary ===")
     print(f"Total entries: {len(entries)}")
+    print(f"Total skipped: {total_skipped}")
+
     print("\nBy dataset:")
     for ds, count in sorted(datasets.items()):
         print(f"  {ds}: {count}")
+
     print("\nBy split:")
     for split, count in sorted(splits.items()):
         print(f"  {split}: {count}")
 
+    print("\nBy emotion:")
+    for emo, count in sorted(emotions.items()):
+        print(f"  {emo}: {count}")
+
     if entries:
         valences = [e["valence"] for e in entries]
         arousals = [e["arousal"] for e in entries]
-        print(f"\nValence: min={min(valences):.3f} max={max(valences):.3f} "
-              f"mean={sum(valences)/len(valences):.3f}")
-        print(f"Arousal: min={min(arousals):.3f} max={max(arousals):.3f} "
-              f"mean={sum(arousals)/len(arousals):.3f}")
+        print(f"\nValence: min={min(valences):.3f}  max={max(valences):.3f}"
+              f"  mean={sum(valences)/len(valences):.3f}")
+        print(f"Arousal: min={min(arousals):.3f}  max={max(arousals):.3f}"
+              f"  mean={sum(arousals)/len(arousals):.3f}")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Build emotion manifest from DEAM and PMEmo datasets."
+        description="Build emotion manifest from RAVDESS, CREMA-D, and TESS datasets."
     )
     parser.add_argument(
         "--datasets-root",
         type=Path,
-        default=Path.home() / "Datasets",
-        help="Root directory containing datasets (default: ~/Datasets)",
+        default=Path("/Volumes/Sean's SSD/Datasets/processed/emotions"),
+        help=(
+            "Root directory containing ravdess/, cremad/, tess/ subdirs "
+            "(default: /Volumes/Sean's SSD/Datasets/processed/emotions)"
+        ),
     )
     parser.add_argument(
         "--output",
@@ -269,27 +214,35 @@ def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     datasets_root = args.datasets_root.expanduser().resolve()
-    emotions_root = datasets_root / "by_domain" / "emotions"
-
-    deam_root = emotions_root / "DEAM"
-    pmemo_root = emotions_root / "PMEmo"
+    if not datasets_root.is_dir():
+        logger.error("Datasets root not found: %s", datasets_root)
+        return 1
 
     all_entries: list[dict] = []
+    grand_skipped = 0
 
-    # Load DEAM
-    if deam_root.is_dir():
-        all_entries.extend(load_deam(deam_root))
-    else:
-        logger.warning("DEAM dataset not found at %s — skipping", deam_root)
+    # RAVDESS
+    ravdess_dir = datasets_root / "ravdess"
+    entries, skipped = load_dataset(ravdess_dir, "RAVDESS", is_tess=False)
+    all_entries.extend(entries)
+    grand_skipped += skipped
 
-    # Load PMEmo
-    if pmemo_root.is_dir():
-        all_entries.extend(load_pmemo(pmemo_root))
-    else:
-        logger.warning("PMEmo dataset not found at %s — skipping", pmemo_root)
+    # CREMA-D
+    cremad_dir = datasets_root / "cremad"
+    entries, skipped = load_dataset(cremad_dir, "CREMAD", is_tess=False)
+    all_entries.extend(entries)
+    grand_skipped += skipped
+
+    # TESS
+    tess_dir = datasets_root / "tess"
+    entries, skipped = load_dataset(tess_dir, "TESS", is_tess=True)
+    all_entries.extend(entries)
+    grand_skipped += skipped
 
     if not all_entries:
-        logger.error("No entries loaded. Check dataset paths and annotation files.")
+        logger.error(
+            "No entries loaded. Check that datasets-root contains ravdess/, cremad/, tess/."
+        )
         return 1
 
     # Assign deterministic splits
@@ -304,8 +257,8 @@ def main() -> int:
     with output_path.open("w") as f:
         json.dump(all_entries, f, indent=2)
 
-    logger.info("Manifest written to %s", output_path)
-    print_summary(all_entries)
+    logger.info("Manifest written to %s (%d entries)", output_path, len(all_entries))
+    print_summary(all_entries, grand_skipped)
     return 0
 
 
