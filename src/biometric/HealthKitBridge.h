@@ -1,16 +1,18 @@
 #pragma once
-
-/**
- * HealthKitBridge - macOS HealthKit Integration
- * =============================================
+/*
+ * HealthKitBridge.h - macOS HealthKit Integration
+ * ===============================================
  *
- * Provides real-time access to health data from Apple HealthKit:
- * - Heart rate (HR)
- * - Heart rate variability (HRV)
- * - Heart rate recovery
- * - Activity data
+ * CONNECTIONS (for Cursor Graph):
+ * - Biometric Layer: BiometricInput (aggregates HR/HRV into plugin state)
+ * - Biometric Layer: AdaptiveNormalizer (baseline-relative scaling)
+ * - Platform: HealthKit (JUCE_MAC / Objective-C++ bridge when enabled)
  *
- * Note: Requires HealthKit framework and proper entitlements.
+ * Purpose: Reads Apple HealthKit metrics for emotion and physiology-driven music.
+ *
+ * Features:
+ * - Heart rate, HRV, recovery, and activity samples
+ * - Stub path when HEALTHKIT_AVAILABLE is 0 for pure C++ builds
  */
 
 #include <chrono>

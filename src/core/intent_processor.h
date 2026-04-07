@@ -1,4 +1,17 @@
 #pragma once
+/*
+ * intent_processor.h - Legacy Intent Phase Stub
+ * ==============================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: engine/IntentProcessor.h (full three-phase port — use instead)
+ * - Core Layer: Minimal Wound + IntentPhase placeholder
+ *
+ * Purpose: Early scaffold; kept to avoid breaking includes in legacy targets.
+ *
+ * Features:
+ * - processWound placeholder returning int status
+ */
 
 #include <string>
 

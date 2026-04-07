@@ -2,10 +2,18 @@
 /*
  * KellyBrain.h - High-Level Intent Processing API
  * ===============================================
- * Wraps existing IntentPipeline with a simplified high-level API
  *
- * This provides a convenience layer over the existing IntentPipeline,
- * allowing easier access to wound-to-music processing.
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: IntentPipeline (core wound → IntentResult / IntentFrame)
+ * - MIDI Layer: MidiGenerator (note generation from intents)
+ * - Common Layer: KellyTypes.h, IntentIRAdapter, kmidi::IntentFrame
+ * - Contrast: Kelly.h / KellyBrainLegacy (monolithic test header)
+ *
+ * Purpose: Pimpl façade for plugin code: init data dirs, text → MIDI workflows.
+ *
+ * Features:
+ * - Lazy pipeline construction
+ * - Wound and journey helpers without exposing IntentPipeline headers widely
  */
 
 // Include KellyTypes.h for the unified type system
@@ -25,19 +33,6 @@ class EmotionThesaurus;
 
 namespace kelly {
 
-/**
- * KellyBrain - High-level interface for intent processing
- *
- * This class wraps the existing IntentPipeline to provide:
- * - Simplified initialization
- * - Convenient text-to-intent conversion
- * - Direct emotion-to-intent mapping
- *
- * Usage:
- *   KellyBrain brain;
- *   brain.initialize("./data");
- *   IntentResult result = brain.fromText("I feel lost and alone");
- */
 class KellyBrain {
 public:
   KellyBrain();

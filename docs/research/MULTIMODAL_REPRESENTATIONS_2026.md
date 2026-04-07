@@ -46,6 +46,35 @@ These can be layered on top of evolving academic work on hierarchical alignment,
 - **Industry multimodal models:**  
   - **Phi‑4‑reasoning‑vision‑15B** emphasizes: heavily curated data, mixed reasoning vs non‑reasoning batches, and careful curriculum — all applicable to constructing future KmiDi multimodal corpora (audio, MIDI, text prompts, affect labels).
 
+### 1.1 User briefing update (2026-03-31)
+
+Status: external briefing captured for planning; source verification still required before implementation claims.
+
+- **Disentangled latent spaces are moving from theory to architecture guidance:** user-provided notes on **DecAlign** reinforce a split between modality-shared and modality-specific latents, aligned with prototype-guided optimal transport and distribution matching.
+- **Non-autoregressive multimodal generation is becoming more credible:** **CrossFlows** was highlighted as a flow-matching approach over joint discrete + continuous spaces, which is relevant to KmiDi if symbolic tokens, audio latents, and control signals are modeled in one program.
+- **Robustness is now a first-class training objective:** **DMAST** was described as a two-player multimodal safety regime using imitation learning, supervised fine-tuning, and RL self-play to harden systems against cross-modal attacks.
+- **Prototype abstraction is a scaling lever:** **MFCPL** uses shared prototypes plus contrastive alignment to keep training useful when modalities are missing, which matters for KmiDi where some corpora have audio only, symbolic only, or sparse affect labels.
+- **Hybrid objective stacking appears to be the new default:** the briefing called out a converged recipe of contrastive loss for alignment, masked prediction for intra-modal structure, and matching/translation losses for cross-modal mapping.
+- **Incremental modality onboarding matters more than full retraining:** **CACARA** was cited as evidence that new modalities can be attached relative to an anchor modality without full multimodal retraining.
+- **Generalization techniques may shift from dataset scaling to architecture normalization:** **OmniVaT** was described as mapping modalities into a shared embedding-frequency space to reduce domain and modality gaps.
+- **Workshop themes confirm the direction of travel:** CVPR 2026 workshop topics reportedly center on self-supervised multimodal learning, multimodal diffusion, cross-modal transfer/adaptation, and multimodal LLM integration.
+
+### 1.2 Implications for KmiDi
+
+- Maintain a two-part latent design where shared emotion/structure space is separated from modality-private residue rather than forcing every modality into one collapsed embedding.
+- Keep training pipelines multi-objective by default: contrastive alignment, masked/predictive structure losses, and explicit translation heads should be treated as complementary rather than mutually exclusive.
+- Preserve the option to add control modalities incrementally (gesture, MIDI 2.0 PE streams, tactile surfaces, visual cues) without re-running the full training stack from scratch.
+- Add robustness and missing-modality evaluation to every cross-modal benchmark; "works when audio and symbolic are both present" is not an adequate acceptance gate.
+- Treat flow-style multimodal generation as a research branch, not the default runtime path, until export/runtime support is clearer for Apple-silicon deployment.
+
+### 1.3 Caveats from the same briefing
+
+- Many of these directions still build on contrastive alignment, so this is an evolution of CLIP-like paradigms rather than a clean replacement.
+- Molecular, tactile, or federated multimodal papers may not transfer directly to music/audio-control stacks.
+- Prototype-heavy methods can trade away instance-level fidelity.
+- Flow-based multimodal generation is promising but not yet the obvious production default.
+- Emergent-alignment schemes may rely heavily on a strong anchor modality such as text.
+
 ### 2. Practical Audio / Symbolic Backbone
 
 #### 2.1 Perch audio embeddings
@@ -226,4 +255,3 @@ Mapping to UMP:
   - MAPLE (modality‑aligned preference learning).  
   - PID Flow (information‑theoretic decomposition of multimodal representations).  
   - Phi‑4‑reasoning‑vision‑15B training report.
-

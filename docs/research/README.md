@@ -29,12 +29,28 @@ Research on integrating Joint-Embedding Predictive Architecture (JEPA) for music
 
 Survey of 2026-era multimodal representation learning (alignment, canonicalization, continual learning, representation analysis) and practical audio/symbolic tooling for KmiDi. Captures concrete integration paths around Perch audio embeddings, REMI-BPE tokenization, Lhotse+DataLad manifests, BNNS + Audio Workgroups, a shared C ABI for the DSP/latent engine, and MIDI 2.0 Property Exchange + UMP for live affect control.
 
+### KmiDi 90-Day Demo Roadmap (2026 Q2)
+**Document:** [KMIDI_90_DAY_DEMO_ROADMAP_2026.md](KMIDI_90_DAY_DEMO_ROADMAP_2026.md)  
+**Author:** User briefing captured in repo  
+**Status:** Proposed
+
+Execution-focused roadmap for a demo-ready local stack: canonical emotion and intent contracts, a lightweight JEPA audio encoder, and a local AU helper that maps intent to DSP parameters under strict latency constraints.
+
+### KmiDi Platform Watchlist (2026)
+**Document:** [KMIDI_PLATFORM_WATCHLIST_2026.md](KMIDI_PLATFORM_WATCHLIST_2026.md)  
+**Author:** User briefings captured in repo  
+**Status:** Informational / planning input
+
+Consolidated notes covering multi-agent baton handoffs, Tauri updater rollout, Core ML/ExecuTorch export and attestation concerns, stateful KV-cache loops, symbolic tokenizer defaults, expressive MIDI datasets, and hardware/controller watch items.
+
 ## Integration Status
 
 | Technology | Status | Documentation | Next Steps |
 |-----------|---------|---------------|-----------|
 | Stem-JEPA | Planning | STEM_JEPA_INTEGRATION.md | Proof-of-concept |
 | Multimodal JEPA & tooling | Planning | MULTIMODAL_REPRESENTATIONS_2026.md | Perch+REMI-BPE prototype, JEPA manifest + RT/PE pipelines |
+| 90-day demo slice | Proposed | KMIDI_90_DAY_DEMO_ROADMAP_2026.md | Canonical schema, short-window JEPA, local AU helper |
+| Platform/runtime watchlist | Informational | KMIDI_PLATFORM_WATCHLIST_2026.md | Verify sources, promote adopted items into canonical schemas/docs |
 
 ## References from Pulse recovery
 

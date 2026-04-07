@@ -1,4 +1,21 @@
 #pragma once
+/*
+ * EmotionToMusicMapper.h - VAD / Quantum Field → Frequencies & Voice
+ * ===================================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: VADCalculator (continuous affect coordinates)
+ * - Engine Layer: QuantumEmotionalField (quantum affect layer)
+ * - Common Layer: MusicConstants.h (pitch / theory anchors)
+ * - Voice Layer: VoiceParameters consumed by synthesis paths
+ *
+ * Purpose: Maps emotions and quantum field state to audio frequencies,
+ *          chords, scales, timbres, and voice synthesis parameters.
+ *
+ * Features:
+ * - VoiceParameters bundle for vocoder/singer
+ * - Chord/scale selection from VAD regions
+ */
 
 #include "engine/VADCalculator.h"
 #include "engine/QuantumEmotionalField.h"

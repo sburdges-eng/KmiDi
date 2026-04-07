@@ -1,16 +1,18 @@
 #pragma once
-
-/**
- * FitbitBridge - Fitbit API Integration
- * ======================================
+/*
+ * FitbitBridge.h - Fitbit REST API Integration
+ * ============================================
  *
- * Provides access to Fitbit health data via REST API:
- * - Heart rate (HR)
- * - Heart rate variability (HRV)
- * - Activity data
- * - Sleep data
+ * CONNECTIONS (for Cursor Graph):
+ * - Biometric Layer: BiometricInput (Fitbit metrics as BiometricData)
+ * - Biometric Layer: AdaptiveNormalizer (user-relative normalization)
+ * - External: Fitbit OAuth 2.0 and REST endpoints
  *
- * Note: Requires OAuth 2.0 authentication with Fitbit API.
+ * Purpose: Pulls wearable data from Fitbit for biometric-driven parameters.
+ *
+ * Features:
+ * - HR, HRV, resting HR, steps, calories, sleep summaries
+ * - Async callbacks into JUCE message thread
  */
 
 #include <juce_core/juce_core.h>

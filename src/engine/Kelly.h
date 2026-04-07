@@ -1,16 +1,19 @@
 #pragma once
-/**
- * Kelly.h
+/*
+ * Kelly.h - Umbrella Include / KellyBrainLegacy Facade
+ * ======================================================
  *
- * Unified API for the Kelly MIDI Companion system.
- * Includes all ported Python modules in a single header.
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: IntentProcessor, VADSystem, EmotionThesaurus, GrooveEngine
+ * - MIDI Layer: MidiGenerator (note generation from IntentResult)
+ * - Standalone: KellyBrain.h (pimpl API — prefer for plugin integration)
  *
- * Usage:
- *   #include "Kelly.h"
+ * Purpose: Single-header entry for tests and tools that need the legacy
+ *          inline KellyBrain and all core engine types.
  *
- *   kelly::KellyBrain brain;
- *   auto result = brain.processWound("feeling of loss", 0.8f);
- *   auto midi = brain.generateMidi(result, 4);
+ * Features:
+ * - KellyBrainLegacy demonstration implementation
+ * - Aggregated includes for emotion → MIDI workflows
  */
 
 #include "EmotionMapper.h"

@@ -1,14 +1,23 @@
 #pragma once
+/*
+ * TooltipComponent.h - Transient Tooltip Overlay
+ * ===============================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - UI Layer: EmotionWorkstation, PluginEditor (attach via TooltipHelper)
+ * - Framework: juce::Component help text integration
+ *
+ * Purpose: Lightweight overlay and helpers for discoverability copy.
+ *
+ * Features:
+ * - Timed show/hide singleton-style API
+ * - TooltipHelper::setTooltip wraps setHelpText
+ */
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace kelly {
 
-/**
- * Tooltip Component - Provides helpful tooltips for UI elements
- * 
- * Based on UX research: Tooltips reduce cognitive load and improve discoverability
- */
 class TooltipComponent : public juce::Component {
 public:
     TooltipComponent();

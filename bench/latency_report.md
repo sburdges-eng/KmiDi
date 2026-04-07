@@ -1,6 +1,6 @@
 # Audio JEPA Latency Report
 
-**Date:** 2026-03-31 19:52
+**Date:** 2026-04-01 20:15
 **Platform:** macOS-26.4-arm64-arm-64bit-Mach-O
 **Input shape:** (1, 1, 128, 512) — 128 mels, 512 frames @ 22050 Hz
 **Output shape:** (1, 512, 256)
@@ -10,14 +10,14 @@
 | Format | Path | Verified |
 |--------|------|----------|
 | ONNX | `models/audio_jepa_v01.onnx` | PASS |
-| Core ML | `models/audio_jepa_v01.mlpackage` | PASS |
+| Core ML | `models/audio_jepa_v01.mlpackage` | N/A |
 
 ## Latency (warm-started, batch=1)
 
 | Runtime | p50 (ms) | p95 (ms) | p99 (ms) | min (ms) | max (ms) |
 |---------|----------|----------|----------|----------|----------|
-| ONNX Runtime | 9.733 | 12.466 | 12.845 | 8.077 | 13.082 |
-| Core ML (ALL compute units) | 0.561 | 0.617 | 0.637 | 0.516 | 0.655 |
+| ONNX Runtime | 8.678 | 9.382 | 9.712 | 8.095 | 9.867 |
+| Core ML (ALL compute units) | 0.564 | 0.598 | 0.653 | 0.542 | 0.677 |
 
 ## Target
 

@@ -1,4 +1,19 @@
 #pragma once
+/*
+ * ResonanceCalculator.h - Biometric ↔ Emotion Coherence
+ * ======================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: VADCalculator (VAD history and targets)
+ * - Biometric Layer: BiometricInput (HR/HRV/EDA streams)
+ * - Engine Layer: VADSystem (consumes ResonanceMetrics)
+ *
+ * Purpose: Scores how well physiology and reported emotion align over time.
+ *
+ * Features:
+ * - ResonanceMetrics struct (coherence, stability, cross-signal match)
+ * - Rolling-window statistical helpers
+ */
 
 #include "engine/VADCalculator.h"
 #include "biometric/BiometricInput.h"

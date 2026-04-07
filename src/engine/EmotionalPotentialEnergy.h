@@ -1,17 +1,24 @@
 #pragma once
+/*
+ * EmotionalPotentialEnergy.h - Quadratic VAD Potential Well
+ * ==========================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: VADCalculator (VADState positions)
+ * - Engine Layer: UnifiedFieldEnergy (U_E term)
+ * - Engine Layer: TemporalMemory (driving forces over time)
+ *
+ * Purpose: Harmonic-style potential and restoring forces in VAD space.
+ *
+ * Features:
+ * - Per-axis spring constants k_V, k_A, k_D
+ * - EmotionalForce gradient output
+ */
 
 #include "engine/VADCalculator.h"
 #include <array>
 
 namespace kelly {
-
-/**
- * Emotional Potential Energy System
- * 
- * Implements classical potential energy and force calculations:
- * - U_E = (1/2)k_V V² + (1/2)k_A A² + (1/2)k_D D²
- * - F_E = -∇U_E = [-k_V V, -k_A A, -k_D D]
- */
 
 struct EmotionalForce {
     float valenceForce;    // -k_V V
@@ -28,9 +35,6 @@ struct EmotionalForce {
     }
 };
 
-/**
- * Emotional Potential Energy Calculator
- */
 class EmotionalPotentialEnergy {
 public:
     EmotionalPotentialEnergy(

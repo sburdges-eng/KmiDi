@@ -1,4 +1,18 @@
 #pragma once
+/*
+ * PredictiveTrendAnalyzer.h - Short-Horizon VAD Forecasting
+ * ==========================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: VADCalculator, VADSystem (history ingestion)
+ * - Engine Layer: OSCOutputGenerator (optional future-state export)
+ *
+ * Purpose: Linear regression / moving-average trend estimates for VAD.
+ *
+ * Features:
+ * - TrendPrediction with confidence
+ * - TrendMetrics aggregate slopes
+ */
 
 #include "engine/VADCalculator.h"
 #include <vector>
@@ -7,12 +21,6 @@
 
 namespace kelly {
 
-/**
- * Predictive Trend Analyzer
- * 
- * Analyzes VAD trends over time and predicts future states.
- * Uses simple linear regression and moving averages.
- */
 struct TrendPrediction {
     VADState predictedState;      // Predicted VAD at next time point
     float confidence;              // 0.0-1.0, confidence in prediction
@@ -32,9 +40,6 @@ struct TrendMetrics {
                     dominanceTrend(0.0f), overallTrend(0.0f) {}
 };
 
-/**
- * Predictive Trend Analyzer
- */
 class PredictiveTrendAnalyzer {
 public:
     PredictiveTrendAnalyzer(size_t historySize = 20);

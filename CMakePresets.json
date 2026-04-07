@@ -34,6 +34,45 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "ninja-debug",
+      "displayName": "Ninja (Debug)",
+      "description": "Ninja debug build for iterative C++ work and rt_harness.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "BUILD_RT_HARNESS": "ON",
+        "CMAKE_PREFIX_PATH": "/opt/homebrew/opt/qt/lib/cmake;/usr/local/opt/qt/lib/cmake"
+      }
+    },
+    {
+      "name": "ninja-asan",
+      "displayName": "Ninja (Debug + ASan)",
+      "description": "Ninja debug build with AddressSanitizer enabled.",
+      "inherits": "ninja-debug",
+      "binaryDir": "${sourceDir}/build-asan",
+      "cacheVariables": {
+        "CMAKE_C_FLAGS": "-fsanitize=address -fno-omit-frame-pointer -g",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address -fno-omit-frame-pointer -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address",
+        "CMAKE_SHARED_LINKER_FLAGS": "-fsanitize=address"
+      }
+    },
+    {
+      "name": "ninja-tsan",
+      "displayName": "Ninja (Debug + TSan)",
+      "description": "Ninja debug build with ThreadSanitizer enabled.",
+      "inherits": "ninja-debug",
+      "binaryDir": "${sourceDir}/build-tsan",
+      "cacheVariables": {
+        "CMAKE_C_FLAGS": "-fsanitize=thread -g",
+        "CMAKE_CXX_FLAGS": "-fsanitize=thread -g",
+        "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=thread",
+        "CMAKE_SHARED_LINKER_FLAGS": "-fsanitize=thread"
+      }
     }
   ],
   "buildPresets": [
@@ -44,6 +83,24 @@
     {
       "name": "xcode-release",
       "configurePreset": "xcode-release"
+    },
+    {
+      "name": "ninja-debug-rt-harness",
+      "displayName": "Build rt_harness (Debug)",
+      "configurePreset": "ninja-debug",
+      "targets": ["rt_harness"]
+    },
+    {
+      "name": "ninja-asan-rt-harness",
+      "displayName": "Build rt_harness (ASan)",
+      "configurePreset": "ninja-asan",
+      "targets": ["rt_harness"]
+    },
+    {
+      "name": "ninja-tsan-rt-harness",
+      "displayName": "Build rt_harness (TSan)",
+      "configurePreset": "ninja-tsan",
+      "targets": ["rt_harness"]
     }
   ]
 }

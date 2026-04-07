@@ -1,4 +1,17 @@
 #pragma once
+/*
+ * chord_diagnostics.h - Chord Analysis Utilities
+ * ===============================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - UI Layer: ChordDisplay, theory panels
+ * - Engine Layer: RuleBreakEngine / harmony analysis (optional)
+ *
+ * Purpose: Dissonance scoring and chord labeling from MIDI pitch classes.
+ *
+ * Features:
+ * - calculateDissonance, identifyChord, consonance test
+ */
 
 #include <vector>
 #include <string>

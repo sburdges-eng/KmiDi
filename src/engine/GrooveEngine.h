@@ -1,9 +1,18 @@
 #pragma once
-/**
- * GrooveEngine.h
- * 
- * Ported from Python: kellymidicompanion_groove_engine.py
- * Provides groove templates and humanization for MIDI generation.
+/*
+ * GrooveEngine.h - Groove Templates and Humanization
+ * ===================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: EmotionMapper, IntentPipeline (timing feel inputs)
+ * - MIDI Layer: MidiGenerator (applies GrooveTemplate to note streams)
+ * - Core Layer: groove_templates.h (legacy template data, if linked)
+ * - Legacy Parity: kellymidicompanion_groove_engine.py
+ *
+ * Purpose: Swung/shuffled micro-timing and velocity templates for MIDI output.
+ *
+ * Features:
+ * - Named GrooveTemplate patterns and random humanization
  */
 
 #include <string>

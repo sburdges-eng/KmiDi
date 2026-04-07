@@ -1,9 +1,20 @@
 #pragma once
-/**
- * EmotionMapper.h
+/*
+ * EmotionMapper.h - Emotional State → Musical Parameters
+ * ========================================================
  *
- * Ported from Python: kellymidicompanion_emotional_mapping.py
- * Maps emotional states to musical parameters for MIDI generation.
+ * CONNECTIONS (for Cursor Graph):
+ * - Common Layer: KellyTypes.h (EmotionCategory, shared enums)
+ * - Engine Layer: IntentProcessor, VADCalculator, GrooveEngine
+ * - Engine Layer: MidiKompanionBrain (consumes mapped parameters)
+ * - Legacy Parity: kellymidicompanion_emotional_mapping.py
+ *
+ * Purpose: Converts categorical and continuous emotional state into tempo,
+ *          harmony, rhythm feel, and performance parameters.
+ *
+ * Features:
+ * - TimingFeel and expressive timing offsets
+ * - Scale, mode, and dynamic mapping tables
  */
 
 #include <string>

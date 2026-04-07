@@ -1,4 +1,20 @@
 #pragma once
+/*
+ * VADCalculator.h - Valence, Arousal, Dominance Coordinates
+ * ==========================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: EmotionThesaurus, EmotionMapper (semantic → VAD)
+ * - Biometric Layer: BiometricInput (HR, HRV, EDA, temperature)
+ * - Engine Layer: VADSystem (aggregates calculator output)
+ *
+ * Purpose: Computes VAD from emotions, biometrics, and context windows.
+ *
+ * Features:
+ * - Emotion-ID primary path
+ * - Biometric fusion and smoothing
+ * - Circadian / time-of-day adjustments
+ */
 
 #include "common/Types.h"
 #include "engine/EmotionThesaurus.h"

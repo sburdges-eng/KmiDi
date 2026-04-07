@@ -1,17 +1,24 @@
 #pragma once
+/*
+ * AIGenerationDialog.h - AI Track Generation Prompt UI
+ * ====================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - UI Layer: WorkstationPanel / PluginEditor (invokes dialog)
+ * - Bridge Layer: LLM or cloud APIs (via request.apiKey and callbacks)
+ * - Engine Layer: MidiKompanionBrain (downstream generation)
+ *
+ * Purpose: Collects user constraints for multi-track AI MIDI generation.
+ *
+ * Features:
+ * - Side A/B blending and variability controls
+ * - Modal helper `showDialog`
+ */
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace kelly {
 
-/**
- * AI Generation Dialog
- *
- * Allows user to request AI-generated MIDI tracks with:
- * - Variable number of tracks
- * - Input from A-side (theory), B-side (emotion), or both
- * - Variability options for different outputs each time
- */
 class AIGenerationDialog : public juce::Component {
 public:
     struct AIGenerationRequest {

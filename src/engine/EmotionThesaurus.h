@@ -1,4 +1,19 @@
 #pragma once
+/*
+ * EmotionThesaurus.h - 216-Node Emotion Lexicon
+ * ==============================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: WoundProcessor, VADCalculator, IntentPipeline
+ * - Engine Layer: EmotionThesaurusLoader (JSON hydration)
+ * - Common Layer: Types.h (EmotionNode, IDs, VAD fields)
+ *
+ * Purpose: Canonical lookup graph for affect labels, synonyms, and VAD coords.
+ *
+ * Features:
+ * - findById, findByName, findNearest, findNearestVAD
+ * - Thread-safe accessors where noted in implementation
+ */
 
 #include "common/Types.h"
 #include <unordered_map>
@@ -7,31 +22,6 @@
 
 namespace kelly {
 
-/**
- * The 216-node emotion thesaurus.
- * 
- * Structure: 6 base emotions × 6 sub-emotions × 6 sub-sub-emotions = 216 nodes
- * 
- * Organized around VAD (Valence-Arousal-Dominance) dimensions:
- * - Valence: Negative (-1.0) to Positive (+1.0) - pleasantness
- * - Arousal: Calm (0.0) to Excited (1.0) - energy level
- * - Dominance: Submissive (0.0) to Dominant (1.0) - sense of control
- * - Intensity: Subtle (0.0) to Extreme (1.0) - strength of emotion
- *
- * VAD Calculations:
- * - Dominance is calculated from valence and arousal:
- *   * High arousal + positive valence → higher dominance
- *   * High arousal + negative valence → lower dominance
- *   * Low arousal → moderate dominance
- *
- * Each emotion maps to musical attributes that drive generation.
- * 
- * Lookup Methods:
- * - findById: Direct ID lookup
- * - findByName: Case-insensitive name lookup (includes synonyms)
- * - findNearest: Find closest emotion by VAI (Valence-Arousal-Intensity)
- * - findNearestVAD: Find closest emotion by VAD (Valence-Arousal-Dominance)
- */
 class EmotionThesaurus {
 public:
     EmotionThesaurus();
