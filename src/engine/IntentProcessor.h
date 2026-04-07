@@ -1,12 +1,20 @@
 #pragma once
-/**
- * IntentProcessor.h
- * 
- * Ported from Python: intent_processor.py
- * Implements three-phase therapeutic intent processing:
- *   Phase 1: Wound identification
- *   Phase 2: Emotional mapping  
- *   Phase 3: Musical rule-breaking for expression
+/*
+ * IntentProcessor.h - Three-Phase Therapeutic Intent Pipeline
+ * ============================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: EmotionMapper (Phase 2 affect → music parameters)
+ * - Engine Layer: RuleBreakEngine / Wound types (Phase 3 expression)
+ * - Common Layer: KellyTypes.h (IntentResult, wounds, rule breaks)
+ * - Legacy Parity: Python intent_processor.py
+ *
+ * Purpose: Identifies wounds, maps them emotionally, and prepares musical
+ *          rule-breaking for generative output.
+ *
+ * Features:
+ * - Wound struct and NLP-style parsing hooks
+ * - Phased IntentResult assembly
  */
 
 #include <string>

@@ -1,23 +1,24 @@
 #pragma once
+/*
+ * QuantumEntropy.h - Entropy and Information on Emotional States
+ * ===============================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: QuantumEmotionalField (QuantumEmotionalState input)
+ * - Engine Layer: QuantumVADSystem, UnifiedFieldEnergy (stability metrics)
+ *
+ * Purpose: Information-theoretic measures over quantum emotional distributions.
+ *
+ * Features:
+ * - Shannon-style emotional entropy
+ * - Mutual information and decoherence proxies
+ */
 
 #include "engine/QuantumEmotionalField.h"
 #include <vector>
 
 namespace kelly {
 
-/**
- * Quantum Entropy and Information Theory
- *
- * Implements:
- * - Emotional entropy
- * - Mutual information
- * - Decoherence
- * - Information measures
- */
-
-/**
- * Quantum Entropy Calculator
- */
 class QuantumEntropy {
 public:
     /**

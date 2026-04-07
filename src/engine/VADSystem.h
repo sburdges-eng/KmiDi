@@ -1,19 +1,20 @@
 #pragma once
-
-/**
- * VADSystem.h
- * 
- * Integrated VAD (Valence-Arousal-Dominance) calculation system.
- * 
- * This is the main integration point that combines:
- * - VAD calculations from emotion IDs
- * - Biometric → VAD mapping
- * - Emotion-to-music parameter mapping
- * - Context-aware adjustments
- * - Resonance/coherence calculations
- * - MIDI/OSC output generation
- * - Predictive trend analysis
- * - Integration with existing Kelly engines
+/*
+ * VADSystem.h - Integrated Valence-Arousal-Dominance Pipeline
+ * ============================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: VADCalculator, ResonanceCalculator, PredictiveTrendAnalyzer
+ * - Engine Layer: OSCOutputGenerator, EmotionMapper, EmotionThesaurus
+ * - Biometric Layer: BiometricInput (physiology → VAD)
+ * - Bridge Layer: OSC / external controllers (telemetry out)
+ *
+ * Purpose: Central orchestration of VAD, mapping, trends, and OSC output.
+ *
+ * Features:
+ * - Emotion-ID and biometric fusion
+ * - Context-aware VAD adjustments
+ * - Coherence/resonance and predictive trend hooks
  */
 
 #include "engine/VADCalculator.h"

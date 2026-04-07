@@ -1,4 +1,22 @@
 #pragma once
+/*
+ * PhonemeConverter.h - Text-to-Phoneme (G2P) Conversion
+ * ======================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Voice Layer: CMUDictionary (ARPABET / dictionary lookups)
+ * - Voice Layer: LyricTypes.h (Phoneme, syllable metadata)
+ * - Voice Layer: VoiceSynthesizer / VocoderEngine (consumes phoneme sequences)
+ * - Used By: PitchPhonemeAligner, lyric pipelines
+ *
+ * Purpose: Converts text and words to phoneme sequences, syllables, and stress
+ *          for singing synthesis and alignment.
+ *
+ * Features:
+ * - Grapheme-to-phoneme conversion
+ * - Syllable splitting and stress detection
+ * - Phoneme-to-formant mapping hooks
+ */
 
 #include "voice/LyricTypes.h"
 #include "voice/CMUDictionary.h"

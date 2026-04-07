@@ -1,19 +1,24 @@
 #pragma once
+/*
+ * KellyLookAndFeel.h - JUCE LookAndFeel for Kelly / miDiKompanion
+ * ================================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - UI Layer: PluginEditor, EmotionWorkstation (global skin application)
+ * - UI Layer: MidiKompanionLookAndFeel (related alternate theme)
+ * - Framework: juce::LookAndFeel_V4
+ *
+ * Purpose: Centralized colors, typography, and control drawing for the product UI.
+ *
+ * Features:
+ * - Gradient and surface palette
+ * - Button, slider, and combo styling
+ */
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace kelly {
 
-/**
- * Kelly Look and Feel - Modern, sleek design system
- * 
- * Features:
- * - Modern color palette with gradients
- * - Smooth animations and transitions
- * - Clean typography
- * - Rounded corners and shadows
- * - Professional button styles
- */
 class KellyLookAndFeel : public juce::LookAndFeel_V4 {
 public:
     KellyLookAndFeel();

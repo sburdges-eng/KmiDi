@@ -1,4 +1,17 @@
 #pragma once
+/*
+ * emotion_thesaurus.h - Legacy Emotion Thesaurus Stub
+ * ====================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: engine/EmotionThesaurus.h (216-node implementation)
+ * - Engine Layer: EmotionThesaurusLoader (JSON-backed data)
+ *
+ * Purpose: Placeholder thesaurus API from early architecture iterations.
+ *
+ * Features:
+ * - EmotionThesaurusNode and minimal getNode
+ */
 
 #include <string>
 

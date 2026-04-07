@@ -1,4 +1,17 @@
 #pragma once
+/*
+ * midi_pipeline.h - Legacy MIDI Note Buffer
+ * ==========================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - MIDI Layer: midi/MidiGenerator (full pipeline — prefer for production)
+ * - Core Layer: Simple tick-based MidiNote list for prototypes
+ *
+ * Purpose: Lightweight container for tempo plus monophonic/polyphonic note lists.
+ *
+ * Features:
+ * - setTempo, addNote, clear
+ */
 
 #include <string>
 #include <vector>

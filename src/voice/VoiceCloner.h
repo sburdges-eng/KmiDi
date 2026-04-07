@@ -1,4 +1,20 @@
 #pragma once
+/*
+ * VoiceCloner.h - Voice Formant Analysis / Cloning
+ * ================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Voice Layer: VocoderEngine (applies extracted FormantProfile)
+ * - Audio: Monophonic sample analysis (LPC / formant estimation)
+ *
+ * Purpose: Extracts formant characteristics from recordings so synthesis can
+ *          approximate a target voice timbre.
+ *
+ * Features:
+ * - LPC-based formant analysis
+ * - Vowel segment profiling
+ * - FormantProfile for F1–F4 and brightness
+ */
 
 #include "voice/VocoderEngine.h"
 #include <vector>

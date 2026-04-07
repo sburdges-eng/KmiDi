@@ -1,20 +1,21 @@
 #pragma once
-
-/**
- * OSCBridge - Unified OSC Client for C++ Plugin ↔ Python Brain Communication
- * ===========================================================================
+/*
+ * OSCBridge.h - JUCE OSC Client for Plugin ↔ Python Brain
+ * ========================================================
  *
- * Implements OSC client functionality to communicate with the Python brain server.
- * This enables the hybrid architecture:
- * - C++ Body (plugin): Sends requests via OSC
- * - Python Brain (server): Processes requests and responds
- * - OSC Bridge: Communication layer
+ * CONNECTIONS (for Cursor Graph):
+ * - Bridge Layer: BridgeBase (shared bridge contracts)
+ * - Python Brain: OSC server (intent, generation, state sync)
+ * - Plugin Host: Real-time audio thread vs message thread dispatch
+ * - Related: penta/osc/OSCClient.h (alternate lightweight client)
  *
- * Unified implementation combining OSCBridge and OSCClient features:
- * - Uses RealtimeCallback for better real-time performance
- * - Message ID-based response matching (robust)
- * - Timeout handling for requests
- * - Supports both juce::var and std::string callbacks
+ * Purpose: Sends and receives OSC to the Python “brain” with timeouts,
+ *          correlation IDs, and JUCE-friendly callbacks.
+ *
+ * Features:
+ * - Realtime-safe callback path
+ * - Request/response matching and timeouts
+ * - juce::var and std::string response handlers
  */
 
 #include "bridge/BridgeBase.h"

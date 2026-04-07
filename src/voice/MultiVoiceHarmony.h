@@ -1,4 +1,19 @@
 #pragma once
+/*
+ * MultiVoiceHarmony.h - Multi-Part Vocal Harmony
+ * ==============================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Voice Layer: VoiceSynthesizer (VocalNote generation per part)
+ * - Voice Layer: VocoderEngine (harmony timbre / formant shaping)
+ * - Common Layer: Types.h (EmotionNode, VoiceType)
+ *
+ * Purpose: Builds SATB-style harmony parts from a melody and emotion context.
+ *
+ * Features:
+ * - Parallel and styled harmony generation
+ * - Per-part pitch, volume, formant, and vibrato configuration
+ */
 
 #include "voice/VoiceSynthesizer.h"
 #include "voice/VocoderEngine.h"

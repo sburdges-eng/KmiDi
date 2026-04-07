@@ -1,4 +1,22 @@
 #pragma once
+/*
+ * PitchPhonemeAligner.h - MIDI Pitch to Phoneme Alignment
+ * ========================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Voice Layer: PhonemeConverter (phoneme sequences from lyrics)
+ * - Voice Layer: VoiceSynthesizer (VocalNote timing and pitch)
+ * - Voice Layer: LyricTypes.h (Phoneme structures)
+ * - Common Layer: Types.h (emotion / musical context)
+ * - Engine Layer: GeneratedMidi (optional alignment to generated MIDI)
+ *
+ * Purpose: Aligns phonemes to MIDI notes, including melisma and timing.
+ *
+ * Features:
+ * - Per-phoneme pitch and duration
+ * - Syllable boundary metadata
+ * - Portamento / melisma handling hooks
+ */
 
 #include "voice/LyricTypes.h"
 #include "voice/PhonemeConverter.h"

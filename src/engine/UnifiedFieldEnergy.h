@@ -1,4 +1,20 @@
 #pragma once
+/*
+ * UnifiedFieldEnergy.h - Lagrangian Energy for Quantum Emotional Field
+ * ======================================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: QuantumEmotionalField (Ψ_E and gradients)
+ * - Engine Layer: EmotionalPotentialEnergy, NetworkDynamics, PhysiologicalResonance
+ * - Engine Layer: VADSystem (boundary conditions / drivers)
+ *
+ * Purpose: Scalar energy functional combining potential, bio coupling, network
+ *          diffusion, and nonlinear resonance terms.
+ *
+ * Features:
+ * - Lagrangian and Hamiltonian-style evaluators
+ * - Tunable coupling gains (g_bio, g_net, g_res)
+ */
 
 #include "engine/QuantumEmotionalField.h"
 #include "engine/EmotionalPotentialEnergy.h"
@@ -9,16 +25,6 @@
 
 namespace kelly {
 
-/**
- * Unified Field Energy System
- * 
- * Implements the complete Quantum Emotional Field Lagrangian:
- * L_QEF = (1/2)|∇Ψ_E|² - U_E + g_bio E_bio + g_net Σ K_ij(E_j - E_i)² + g_res |Ψ_E|⁴
- */
-
-/**
- * Unified Field Energy Calculator
- */
 class UnifiedFieldEnergy {
 public:
     UnifiedFieldEnergy();

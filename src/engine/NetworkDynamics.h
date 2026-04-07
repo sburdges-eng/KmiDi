@@ -1,4 +1,19 @@
 #pragma once
+/*
+ * NetworkDynamics.h - Multi-Agent Emotional Coupling
+ * ====================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: VADCalculator, QuantumEmotionalField (per-agent state)
+ * - Engine Layer: UnifiedFieldEnergy (network Laplacian term)
+ * - Engine Layer: TimeSpacePropagation (spatial coupling)
+ *
+ * Purpose: Graph-based diffusion and coherence between emotional agents.
+ *
+ * Features:
+ * - Agent struct with classical and quantum states
+ * - Phase locking and diffusion updates
+ */
 
 #include "engine/VADCalculator.h"
 #include "engine/QuantumEmotionalField.h"
@@ -7,17 +22,6 @@
 #include <complex>
 
 namespace kelly {
-
-/**
- * Network Dynamics for Multi-Agent Emotional Systems
- *
- * Implements:
- * - Emotional coupling between agents
- * - Diffusion equation
- * - Phase coherence
- * - Field propagation
- * - Phase locking value
- */
 
 struct Agent {
     int id;
@@ -30,9 +34,6 @@ struct Agent {
     }
 };
 
-/**
- * Network Dynamics Calculator
- */
 class NetworkDynamics {
 public:
     NetworkDynamics();

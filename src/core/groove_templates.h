@@ -1,4 +1,18 @@
 #pragma once
+/*
+ * groove_templates.h - Legacy Groove Template Registry
+ * =====================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: GrooveEngine.h (rich templates + humanization)
+ * - Core Layer: Named map of simple GrooveTemplate structs
+ *
+ * Purpose: Static groove presets for early prototypes.
+ *
+ * Features:
+ * - initializeTemplates catalog
+ * - Lookup by name
+ */
 
 #include <string>
 #include <vector>

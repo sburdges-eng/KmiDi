@@ -1,4 +1,19 @@
 #pragma once
+/*
+ * TemporalMemory.h - Emotional Hysteresis and Decay
+ * ==================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: VADCalculator (VADState streams)
+ * - Engine Layer: EmotionalPotentialEnergy (restoring “forces”)
+ * - Engine Layer: VADSystem (smoothed outputs)
+ *
+ * Purpose: Convolutional memory kernels over past VAD samples.
+ *
+ * Features:
+ * - Decay, half-life, and custom kernels
+ * - Deque-backed history access
+ */
 
 #include "engine/VADCalculator.h"
 #include "engine/EmotionalPotentialEnergy.h"
@@ -8,19 +23,6 @@
 
 namespace kelly {
 
-/**
- * Temporal Memory System
- *
- * Implements:
- * - Emotional hysteresis (memory of feeling)
- * - Temporal decay
- * - Emotional momentum
- * - Memory kernel functions
- */
-
-/**
- * Temporal Memory Calculator
- */
 class TemporalMemory {
 public:
     TemporalMemory(float decayRate = 0.1f, float halfLife = 5.0f);

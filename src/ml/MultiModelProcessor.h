@@ -1,13 +1,18 @@
 #pragma once
 /*
- * Kelly MIDI Companion - Multi-Model ML Processor
- * ================================================
- * 5-Model Architecture (~1M params, ~4MB, <10ms inference):
- *   1. EmotionRecognizer:  128→512→256→128→64  (~500K)
- *   2. MelodyTransformer:  64→256→256→256→128  (~400K)
- *   3. HarmonyPredictor:   128→256→128→64      (~100K)
- *   4. DynamicsEngine:     32→128→64→16        (~20K)
- *   5. GroovePredictor:    64→128→64→32        (~25K)
+ * MultiModelProcessor.h - Five-Head RTNeural Inference Stack
+ * ============================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - ML Layer: ONNXInference, RTNeuralProcessor, MLFeatureExtractor (sibling paths)
+ * - Engine Layer: Emotion / groove / harmony consumers in Kelly pipeline
+ * - Build: ENABLE_RTNEURAL gates RTNeural weights
+ *
+ * Purpose: Bundled real-time models for audio→emotion and generative assistants.
+ *
+ * Features:
+ * - ModelType enum (EmotionRecognizer, MelodyTransformer, HarmonyPredictor, …)
+ * - Specs for ~1M params across five models; <10 ms inference target
  */
 
 #include <juce_core/juce_core.h>

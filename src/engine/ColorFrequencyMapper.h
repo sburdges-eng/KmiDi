@@ -1,20 +1,24 @@
 #pragma once
+/*
+ * ColorFrequencyMapper.h - VAD → Color and Light Frequency
+ * ==========================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: VADCalculator (emotion coordinates)
+ * - UI Layer: EmotionWheel, visualization components
+ *
+ * Purpose: Maps affective state to visible spectrum proxies for UI theming.
+ *
+ * Features:
+ * - Wavelength, THz frequency, and eV energy estimates
+ * - RGB triplets and named colors
+ */
 
 #include "engine/VADCalculator.h"
 #include <string>
 #include <map>
 
 namespace kelly {
-
-/**
- * Color and Frequency Mapping
- * 
- * Maps emotions to:
- * - Wavelength (nm)
- * - Frequency (THz)
- * - Energy (eV)
- * - RGB values
- */
 
 struct ColorMapping {
     float wavelength;      // nm
@@ -24,9 +28,6 @@ struct ColorMapping {
     std::string name;      // Color name
 };
 
-/**
- * Color Frequency Mapper
- */
 class ColorFrequencyMapper {
 public:
     ColorFrequencyMapper();
