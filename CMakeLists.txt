@@ -24,6 +24,9 @@ option(KMIDI_OFFLINE_BUILD "Disallow network dependency resolution at configure/
 option(BUILD_RT_HARNESS "Build headless RT callback harness" ON)
 # MIDI-CI Property Exchange daemon (JSON microformat -> SysEx via libremidi)
 option(BUILD_MIDI_CI_DAEMON "Build MIDI-CI microformat-to-SysEx daemon" OFF)
+# Sanitizers (ASan+UBSan or TSan; Debug builds only; mutually exclusive)
+option(KMIDI_ENABLE_ASAN "Enable AddressSanitizer + UndefinedBehaviorSanitizer" OFF)
+option(KMIDI_ENABLE_TSAN "Enable ThreadSanitizer (mutually exclusive with ASAN)" OFF)
 
 # KmiDi_FINAL integration options
 option(USE_KMI_DI_FINAL "Use existing KmiDi_FINAL components" OFF)
@@ -363,6 +366,21 @@ target_compile_options(KellyCore PRIVATE
 )
 # Wno-*: full warning-clean build; many params/vars are interface or reserved. Tidy per-file when touching.
 # -Wno-deprecated-declarations: JUCE Font(height, style) → Font(FontOptions); migrate when editing UI.
+
+# Sanitizer instrumentation (Debug builds; compile after all KellyCore config is settled)
+if(KMIDI_ENABLE_ASAN AND KMIDI_ENABLE_TSAN)
+    message(FATAL_ERROR "KMIDI_ENABLE_ASAN and KMIDI_ENABLE_TSAN are mutually exclusive")
+endif()
+if(KMIDI_ENABLE_ASAN)
+    include(Sanitizers)
+    enable_sanitizers(KellyCore)
+    message(STATUS "KellyCore: ASan + UBSan enabled")
+endif()
+if(KMIDI_ENABLE_TSAN)
+    include(Sanitizers)
+    enable_thread_sanitizer(KellyCore)
+    message(STATUS "KellyCore: ThreadSanitizer enabled")
+endif()
 
 # Kelly GUI Application (Legacy Qt - see legacy/ui/qt_gui/)
 if(BUILD_DESKTOP)

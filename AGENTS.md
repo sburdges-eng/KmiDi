@@ -120,6 +120,8 @@ In cloud VMs, JUCE submodule step can be skipped if C++ build is not needed.
   | `ENABLE_TRACY` | OFF | Tracy profiling |
   | `ENABLE_RTNEURAL` / `ENABLE_ONNX_RUNTIME` | OFF | ML inference |
   | `KMIDI_OFFLINE_BUILD` | OFF | No FetchContent; vendor deps in external/ |
+  | `KMIDI_ENABLE_ASAN` | OFF | AddressSanitizer + UBSan (Debug builds; mutually exclusive with TSan) |
+  | `KMIDI_ENABLE_TSAN` | OFF | ThreadSanitizer (Debug builds; mutually exclusive with ASan) |
 
   \*With default options, `BUILD_DESKTOP` and `BUILD_PLUGINS` are forced OFF unless Qt/JUCE UI are enabled.
 
@@ -229,6 +231,20 @@ Minimal working example:
 - **Canonicalization (vector DB hot-swap):** `penta_core.ml.canonicalize_embeddings.fit_orthogonal_map(anchor_old, anchor_new)` plus `apply_map` for backward-compatible retrieval after encoder upgrades. CLI: `scripts/canonicalize_embeddings.py --old-embeddings ... --new-embeddings ... --output map.npz`.
 - **APSC Multi-Stem Wrapper:** `music_brain/penta_core/ml/apsc_wrapper.py` mitigates position bias via prompt permutation and majority vote.
 - **StructXLIP Symbolic Preprocessor:** `music_brain/penta_core/ml/structxlip/` extracts audio edge maps (onset, flux) and alignment losses for structure-aware training.
+
+---
+
+## Integration gate (merge checklist)
+
+Every PR or feature branch touching native code must satisfy all of the following before merge:
+
+- [ ] **Clean build** of every affected target (`KellyCore`, `KellyFFI`, plugins, tests) with no warnings promoted to errors.
+- [ ] **Sanitizer clean:** Debug build with `KMIDI_ENABLE_ASAN=ON` passes all tests with zero ASan/UBSan findings. Document any waiver with a tracking ticket.
+- [ ] **No new heap allocations or locks on RT paths.** Audio callbacks must remain `noexcept`, allocation-free, and lock-free. Review any code that runs inside `processBlock` or the RT callback harness.
+- [ ] **No duplicate JUCE linkage / ODR violations.** KellyFFI links JUCE PRIVATE. Any new executable or shared library must not also link JUCE directly — verify with `nm` or linker diagnostics if in doubt.
+- [ ] **Single canonical tree.** New code goes into the repo root, not `KmiDi_FINAL/`, `KmiDi_PROJECT/`, or worktree-only paths. If importing from KmiDi_FINAL, copy into root and delete the worktree copy in the same PR.
+- [ ] **Schema sync.** If `shared_schemas/` changed, `scripts/sync_entities.py` was run and generated files are committed.
+- [ ] **Python lint + tests pass.** `flake8 music_brain/` and `pytest tests/` green.
 
 ---
 

@@ -1,0 +1,18 @@
+{
+  "general": {
+    "defaultApprovalMode": "auto_edit"
+  },
+  "permissions": {
+    "allowedPaths": [
+      "/Users/seanburdges/Dev/KmiDi/**",
+      "/Users/seanburdges/Dev/workspace-scaffold/**"
+    ],
+    "blockedPatterns": [
+      "*.env",
+      "*.env.*",
+      "kaggle.json",
+      "**/credentials/**",
+      "**/secrets/**"
+    ]
+  }
+}
