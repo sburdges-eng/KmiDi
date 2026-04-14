@@ -1042,7 +1042,7 @@ if FASTAPI_AVAILABLE:
     async def list_emotions():
         try:
             return sorted(EMOTIONAL_PRESETS.keys())
-        except Exception as exc:  # pragma: no cover
+        except Exception:  # pragma: no cover
             logging.exception("Failed to list emotions")
             raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
@@ -1182,7 +1182,7 @@ if FASTAPI_AVAILABLE:
         try:
             api.reload_humanizer()
             return {"status": "ok"}
-        except Exception as exc:
+        except Exception:
             logging.exception("Failed to reload humanizer")
             raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
@@ -1211,7 +1211,7 @@ if FASTAPI_AVAILABLE:
         """
         try:
             from music_brain.visualization.spectocloud import Spectocloud  # Lazy import
-        except Exception as exc:  # pragma: no cover
+        except Exception:  # pragma: no cover
             logging.exception("Failed to import Spectocloud")
             raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
@@ -1314,7 +1314,7 @@ if FASTAPI_AVAILABLE:
             }
         except HTTPException:
             raise
-        except Exception as exc:  # pragma: no cover
+        except Exception:  # pragma: no cover
             logging.exception("spectocloud render failed")
             raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
@@ -1633,7 +1633,7 @@ if FASTAPI_AVAILABLE:
                 status_code=504,
                 detail="Generation timed out (30s). Try simpler parameters.",
             )
-        except Exception as exc:
+        except Exception:
             logging.exception("generate failed")
             raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
@@ -1685,7 +1685,7 @@ if FASTAPI_AVAILABLE:
                 ),
                 "session_id": request.session_id,
             }
-        except Exception as exc:  # pragma: no cover
+        except Exception:  # pragma: no cover
             logging.exception("interrogate failed")
             raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
@@ -1698,7 +1698,7 @@ if FASTAPI_AVAILABLE:
         """
         try:
             return api.set_lyrics(payload.lyrics, source=payload.source or "user")
-        except Exception as exc:  # pragma: no cover
+        except Exception:  # pragma: no cover
             logging.exception("Failed to set lyrics")
             raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
@@ -1710,7 +1710,7 @@ if FASTAPI_AVAILABLE:
         """
         try:
             return api.get_lyrics()
-        except Exception as exc:  # pragma: no cover
+        except Exception:  # pragma: no cover
             logging.exception("Failed to fetch lyrics")
             raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
@@ -1760,7 +1760,7 @@ if FASTAPI_AVAILABLE:
             raise
         except FileNotFoundError:
             raise HTTPException(status_code=404, detail="Audio file not found.")
-        except Exception as exc:
+        except Exception:
             logging.exception("audio classify failed")
             raise HTTPException(status_code=500, detail="Internal server error.")
 
@@ -1801,7 +1801,7 @@ if FASTAPI_AVAILABLE:
             ) from exc
         except FileNotFoundError:
             raise HTTPException(status_code=404, detail="Audio file not found.")
-        except Exception as exc:
+        except Exception:
             logging.exception("audio valence-arousal failed")
             raise HTTPException(status_code=500, detail="Internal server error.")
 
@@ -1827,7 +1827,7 @@ if FASTAPI_AVAILABLE:
                 "models": available,
                 "supported_types": ["emotion_7", "voice_type"],
             }
-        except Exception as exc:
+        except Exception:
             logging.exception("list audio models failed")
             raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
@@ -1844,7 +1844,7 @@ if FASTAPI_AVAILABLE:
             raise
         except FileNotFoundError:
             raise HTTPException(status_code=404, detail="Audio file not found.")
-        except Exception as exc:
+        except Exception:
             logging.exception("voice classify failed")
             raise HTTPException(status_code=500, detail="Internal server error.")
 
