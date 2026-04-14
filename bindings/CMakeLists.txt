@@ -14,8 +14,10 @@ pybind11_add_module(penta_core_native
 
 target_link_libraries(penta_core_native PRIVATE
     penta_core
-    juce::juce_osc
-    juce::juce_dsp
+    # JUCE is linked PRIVATE by penta_core — do NOT re-link here.
+    # Direct juce:: linkage was removed to prevent duplicate JUCE / ODR
+    # violation / allocator mismatch in the Python process.
+    # See AGENTS.md § "Duplicate JUCE / ODR / allocator mismatch".
     $<$<TARGET_EXISTS:KellyCore>:KellyCore>
 )
 

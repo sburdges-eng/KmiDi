@@ -91,7 +91,8 @@ void bind_harmony(py::module_& m) {
             "Get currently detected scale")
         .def("suggest_voice_leading", &HarmonyEngine::suggestVoiceLeading,
             py::arg("target_chord"), py::arg("current_voices"),
-            "Get voice leading suggestions for target chord")
+            py::call_guard<py::gil_scoped_release>(),
+            "Get voice leading suggestions for target chord (RT-safe)")
         .def("update_config", &HarmonyEngine::updateConfig,
             py::arg("config"),
             "Update engine configuration")

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=65", "wheel"]
+requires = ["setuptools>=65", "wheel", "pybind11>=2.10"]
 build-backend = "setuptools.build_meta"
 
 # This repo is not a uv workspace; music_brain is the single package at root.
@@ -17,18 +17,20 @@ authors = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "numpy>=1.21",
-    "torch>=2.0",
-    "librosa>=0.10",
-    "pyyaml>=6.0",
-    "scipy>=1.8",
-    "pydantic>=2.0",
-    "pybind11>=2.10",
-    "fastapi>=0.100",
-    "uvicorn>=0.20",
+    "numpy>=1.21,<3",
+    "pyyaml>=6.0,<7",
+    "scipy>=1.8,<2",
+    "pydantic>=2.0,<3",
+    "fastapi>=0.100,<1",
+    "uvicorn>=0.20,<1",
+    "requests>=2.28,<3",
 ]
 
 [project.optional-dependencies]
+ml = [
+    "torch>=2.0,<3",
+    "librosa>=0.10,<1",
+]
 dev = [
     "pybind11>=2.10",
     "pytest>=7.0",

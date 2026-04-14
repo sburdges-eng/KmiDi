@@ -7,7 +7,7 @@ and rule-break effectiveness, and generates adaptive harmonic content.
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 from collections import Counter, defaultdict
 import json
 import numpy as np
@@ -15,6 +15,50 @@ import numpy as np
 DEFAULT_STORAGE = Path.home() / ".parrot" / "music_learning" / "harmonies"
 EXAMPLES_DIR = DEFAULT_STORAGE / "examples"
 PROFILES_DIR = DEFAULT_STORAGE / "profiles"
+
+
+def _encode_progression_dict(d: Dict[Union[str, Tuple], int]) -> Dict[str, int]:
+    out: Dict[str, int] = {}
+    for k, v in d.items():
+        if isinstance(k, tuple):
+            out[json.dumps(list(k))] = int(v)
+        else:
+            out[str(k)] = int(v)
+    return out
+
+
+def _decode_progression_dict(d: Dict[str, int]) -> Dict[Tuple, int]:
+    out: Dict[Tuple, int] = {}
+    for k, v in d.items():
+        try:
+            parsed = json.loads(k)
+            if isinstance(parsed, list):
+                out[tuple(str(x) for x in parsed)] = int(v)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            continue
+    return out
+
+
+def _encode_transition_dict(d: Dict[Union[str, Tuple], int]) -> Dict[str, int]:
+    out: Dict[str, int] = {}
+    for k, v in d.items():
+        if isinstance(k, tuple):
+            out[json.dumps(list(k))] = int(v)
+        else:
+            out[str(k)] = int(v)
+    return out
+
+
+def _decode_transition_dict(d: Dict[str, int]) -> Dict[Tuple, int]:
+    out: Dict[Tuple, int] = {}
+    for k, v in d.items():
+        try:
+            parsed = json.loads(k)
+            if isinstance(parsed, list) and len(parsed) == 2:
+                out[tuple(str(x) for x in parsed)] = int(v)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            continue
+    return out
 
 
 @dataclass
@@ -57,19 +101,53 @@ class HarmonyProfile:
     example_count: int
 
     def to_dict(self) -> Dict:
+        emotion_out: Dict[str, Dict] = {}
+        for em, stats in self.emotion_patterns.items():
+            s = dict(stats)
+            if "progressions" in s and isinstance(s["progressions"], dict):
+                s["progressions"] = _encode_progression_dict(s["progressions"])
+            if "transitions" in s and isinstance(s["transitions"], dict):
+                s["transitions"] = _encode_transition_dict(s["transitions"])
+            emotion_out[em] = s
+        gp = dict(self.global_patterns)
+        if "progressions" in gp and isinstance(gp["progressions"], dict):
+            gp["progressions"] = _encode_progression_dict(gp["progressions"])
+        if "transitions" in gp and isinstance(gp["transitions"], dict):
+            gp["transitions"] = _encode_transition_dict(gp["transitions"])
         return {
             "name": self.name,
-            "emotion_patterns": self.emotion_patterns,
-            "global_patterns": self.global_patterns,
+            "emotion_patterns": emotion_out,
+            "global_patterns": gp,
             "example_count": self.example_count,
         }
 
     @classmethod
     def from_dict(cls, data: Dict) -> "HarmonyProfile":
+        emotion_in: Dict[str, Dict] = {}
+        for em, stats in (data.get("emotion_patterns") or {}).items():
+            s = dict(stats)
+            if "progressions" in s and isinstance(s["progressions"], dict):
+                s["progressions"] = _decode_progression_dict(
+                    {k: int(v) for k, v in s["progressions"].items()}
+                )
+            if "transitions" in s and isinstance(s["transitions"], dict):
+                s["transitions"] = _decode_transition_dict(
+                    {k: int(v) for k, v in s["transitions"].items()}
+                )
+            emotion_in[em] = s
+        gp = dict(data.get("global_patterns") or {})
+        if "progressions" in gp and isinstance(gp["progressions"], dict):
+            gp["progressions"] = _decode_progression_dict(
+                {k: int(v) for k, v in gp["progressions"].items()}
+            )
+        if "transitions" in gp and isinstance(gp["transitions"], dict):
+            gp["transitions"] = _decode_transition_dict(
+                {k: int(v) for k, v in gp["transitions"].items()}
+            )
         return cls(
             name=data.get("name", ""),
-            emotion_patterns=data.get("emotion_patterns", {}),
-            global_patterns=data.get("global_patterns", {}),
+            emotion_patterns=emotion_in,
+            global_patterns=gp,
             example_count=data.get("example_count", 0),
         )
 
@@ -196,6 +274,10 @@ class HarmonyLearner:
         progressions = patterns.get("progressions", {})
         if not progressions and profile.global_patterns.get("progressions"):
             progressions = profile.global_patterns["progressions"]
+        if progressions and all(isinstance(k, str) for k in progressions):
+            progressions = _decode_progression_dict(
+                {k: int(v) for k, v in progressions.items()}
+            )
 
         if progressions:
             # Choose a progression weighted by frequency
@@ -208,29 +290,56 @@ class HarmonyLearner:
             # Default I-V-vi-IV pattern
             chords = ["I", "V", "vi", "IV"]
 
-        # Convert roman numerals to simple chords relative to key
-        # Simple mapping for major/minor keys
-        numeral_to_chord_major = {
-            "I": "C",
-            "ii": "Dm",
-            "iii": "Em",
-            "IV": "F",
-            "V": "G",
-            "vi": "Am",
-            "vii°": "Bdim",
-        }
-        numeral_to_chord_minor = {
-            "i": "Am",
-            "ii°": "Bdim",
-            "III": "C",
-            "iv": "Dm",
-            "v": "Em",
-            "VI": "F",
-            "VII": "G",
-        }
+        # Convert roman numerals to chords in the requested key.
+        # Build the diatonic mapping dynamically instead of hardcoding C.
+        CHROMATIC = ['C', 'C#', 'D', 'D#', 'E', 'F',
+                     'F#', 'G', 'G#', 'A', 'A#', 'B']
+        CHROMATIC_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F',
+                         'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
 
-        mapping = numeral_to_chord_major if mode.lower() == "major" else numeral_to_chord_minor
-        result_chords = [mapping.get(ch, ch) for ch in chords]
+        # Resolve key root index
+        key_clean = key.strip()
+        if key_clean in CHROMATIC:
+            key_idx = CHROMATIC.index(key_clean)
+            use_flats = False
+        elif key_clean in CHROMATIC_FLAT:
+            key_idx = CHROMATIC_FLAT.index(key_clean)
+            use_flats = True
+        else:
+            key_idx = 0
+            use_flats = False
+
+        names = CHROMATIC_FLAT if use_flats else CHROMATIC
+
+        # Intervals: scale degree → semitone offset from root
+        major_intervals = [0, 2, 4, 5, 7, 9, 11]
+        minor_intervals = [0, 2, 3, 5, 7, 8, 10]
+
+        if mode.lower() == "major":
+            intervals = major_intervals
+            # Roman → (degree_index, quality_suffix)
+            numeral_map = {
+                "I": (0, ""), "ii": (1, "m"), "iii": (2, "m"),
+                "IV": (3, ""), "V": (4, ""), "vi": (5, "m"),
+                "vii°": (6, "dim"),
+            }
+        else:
+            intervals = minor_intervals
+            numeral_map = {
+                "i": (0, "m"), "ii°": (1, "dim"), "III": (2, ""),
+                "iv": (3, "m"), "v": (4, "m"), "VI": (5, ""),
+                "VII": (6, ""),
+            }
+
+        result_chords = []
+        for ch in chords:
+            if ch in numeral_map:
+                deg, qual = numeral_map[ch]
+                root = names[(key_idx + intervals[deg]) % 12]
+                result_chords.append(f"{root}{qual}")
+            else:
+                # Pass through unrecognised numerals unchanged
+                result_chords.append(ch)
         return result_chords
 
 

@@ -5,18 +5,18 @@ This module provides a simplified, consistent API surface for all music_brain
 functionality, making it easier to integrate with desktop apps, web services,
 or other interfaces.
 """
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Annotated, Dict, List, Optional, Any, Tuple
 import os
 import sys
 import logging
 import json
+import asyncio
 
 try:
-    from fastapi import FastAPI, HTTPException
+    from fastapi import APIRouter, Body, FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import FileResponse
     from pydantic import BaseModel, Field, ValidationError
-    import uvicorn
     FASTAPI_AVAILABLE = True
 except ImportError:  # pragma: no cover - optional dependency
     FASTAPI_AVAILABLE = False
@@ -113,6 +113,14 @@ from music_brain.session.intent_schema import (  # noqa: E402
 )
 from music_brain.session.intent_processor import process_intent  # noqa: E402
 from music_brain.engine_api.schema import CompleteSongIntentRequest  # noqa: E402
+from music_brain.api_schemas.generate_v1 import (  # noqa: E402
+    EmotionalIntent,
+    GENERATE_REQUEST_OPENAPI_EXAMPLES,
+    GenerateRequest,
+    InterrogateRequest,
+    LyricsRequest,
+    TechnicalIntent,
+)
 from music_brain.pipeline import IntentPipeline  # noqa: E402
 try:
     from music_brain.data_utils.emotional_mapping import EMOTIONAL_PRESETS
@@ -857,49 +865,24 @@ class DAiWAPI:
 # Convenience instance
 api = DAiWAPI()
 
-__all__ = ['DAiWAPI', 'api']
+__all__ = [
+    "DAiWAPI",
+    "api",
+    "app",
+    "EmotionalIntent",
+    "TechnicalIntent",
+    "GenerateRequest",
+    "InterrogateRequest",
+    "LyricsRequest",
+]
 
 
 # ---------- Minimal HTTP API (FastAPI) ----------
 # This provides the server that `python -m music_brain.api` is expected to start.
 
+app = None  # overwritten below when FastAPI is available
+
 if FASTAPI_AVAILABLE:
-    class TechnicalIntent(BaseModel):
-        key: Optional[str] = None
-        bpm: Optional[int] = None
-        progression: Optional[List[str]] = None
-        genre: Optional[str] = None
-        duration: Optional[float] = None
-        structure: Optional[List[Dict[str, Any]]] = None
-        instruments: Optional[List[Dict[str, Any]]] = None
-        techniques: Optional[List[str]] = None
-        groove_feel: Optional[str] = None
-        narrative_arc: Optional[str] = None
-        rule_to_break: Optional[str] = None
-        rule_justification: Optional[str] = None
-
-    class EmotionalIntent(BaseModel):
-        core_wound: Optional[str] = None
-        core_desire: Optional[str] = None
-        emotional_intent: str
-        technical: Optional[TechnicalIntent] = None
-        vulnerability_scale: Optional[float] = None  # 0.0 - 1.0 emotional openness
-        narrative_arc: Optional[str] = None  # Energetic trajectory (e.g. "Climb-to-Climax")
-        imagery_texture: Optional[str] = None  # Sensory/visual texture (e.g. "foggy and cold")
-
-    class GenerateRequest(BaseModel):
-        intent: EmotionalIntent
-        output_format: Optional[str] = None
-
-    class InterrogateRequest(BaseModel):
-        message: str = Field(..., max_length=4096)
-        session_id: Optional[str] = None
-        context: Optional[Dict[str, Any]] = None
-
-    class LyricsRequest(BaseModel):
-        lyrics: str = Field(..., max_length=32768)
-        source: Optional[str] = "user"
-
     from fastapi.responses import HTMLResponse
     from fastapi.staticfiles import StaticFiles
 
@@ -908,10 +891,12 @@ if FASTAPI_AVAILABLE:
 
     app = FastAPI(
         title="KmiDi Sound Engine",
-        version="0.1.0",
+        version="0.2.0",
         description=(
             "Your creative command center — compose, feel, and shape "
-            "music through intent.  Every endpoint maps to a musical action."
+            "music through intent.  Every endpoint maps to a musical action. "
+            "PRD-aligned TTG v1: POST /v1/generate (intent_schema_version, timeline, "
+            "orchestration)."
         ),
     )
 
@@ -922,17 +907,25 @@ if FASTAPI_AVAILABLE:
             name="static",
         )
 
-    # Add CORS middleware to allow requests from frontend
+    # Add CORS middleware to allow requests from frontend.
+    # Override with KMIDI_CORS_ORIGINS env var (comma-separated) in production.
+    _default_cors_origins = [
+        "http://localhost:1420",   # Vite dev server
+        "http://127.0.0.1:1420",  # Vite dev server (alternative)
+        "tauri://localhost",       # Tauri app
+        "http://localhost:5173",   # Alternative Vite port
+    ]
+    _cors_env = os.environ.get("KMIDI_CORS_ORIGINS", "")
+    _cors_origins = (
+        [o.strip() for o in _cors_env.split(",") if o.strip()]
+        if _cors_env
+        else _default_cors_origins
+    )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:1420",  # Vite dev server
-            "http://127.0.0.1:1420",  # Vite dev server (alternative)
-            "tauri://localhost",      # Tauri app
-            "http://localhost:5173",  # Alternative Vite port
-        ],
+        allow_origins=_cors_origins,
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "PUT", "OPTIONS"],
         allow_headers=["*"],
     )
 
@@ -949,7 +942,7 @@ if FASTAPI_AVAILABLE:
     @app.get("/health", summary="Pulse Check",
              description="Quick heartbeat — is the sound engine running?")
     async def health():
-        return {"status": "ok", "version": "0.1.0"}
+        return {"status": "ok", "version": "0.2.0"}
 
     # Sandbox for /audio/ serving: only files under this directory are allowed (prevents path traversal).
     _audio_serve_root = Path(
@@ -1325,11 +1318,7 @@ if FASTAPI_AVAILABLE:
             logging.exception("spectocloud render failed")
             raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
-    @app.post("/generate", summary="Compose Music",
-              description="Bring your musical vision to life — describe a mood, "
-                          "pick instruments, set the groove, and let the engine "
-                          "compose harmony, melody, and full arrangement.")
-    async def generate_music(request: GenerateRequest):
+    async def _handle_generate_music(request: GenerateRequest):
         try:
             # Try to use full intent pipeline if we have advanced parameters
             tech = request.intent.technical
@@ -1368,7 +1357,13 @@ if FASTAPI_AVAILABLE:
                     ) from expand_exc
 
                 # Process full intent (CompleteSongIntent only; no Request past this point)
-                result = api.process_song_intent(complete_intent, output_json=None)
+                # Run CPU-bound work off the event loop with a 30s deadline.
+                result = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        api.process_song_intent, complete_intent, None
+                    ),
+                    timeout=30.0,
+                )
 
                 # Generate output file if format requested
                 output_midi = None
@@ -1419,8 +1414,8 @@ if FASTAPI_AVAILABLE:
                         # Extract key and mode with validation
                         key_str = validated.key_mode if validated else "C major"
                         key_parts = key_str.split()
-                        root_note = key_parts[0]
-                        mode = key_parts[1].lower()
+                        root_note = key_parts[0] if key_parts else "C"
+                        mode = key_parts[1].lower() if len(key_parts) > 1 else "major"
 
                         # Extract structure and instruments from request
                         structure = [
@@ -1483,12 +1478,16 @@ if FASTAPI_AVAILABLE:
                 # Build response with structure and instruments info
                 response = {
                     "status": "success",
+                    "intent_schema_version": request.intent_schema_version,
                     "result": result,
                     "lyrics": {
                         "source": lyric_source,
                         "text": lyric_text,
                     },
                 }
+                ec = normalized.get("energy_curve")
+                if ec is not None:
+                    response["energy_curve"] = ec
 
                 # Add structure and instruments information if provided
                 structure = [
@@ -1594,15 +1593,20 @@ if FASTAPI_AVAILABLE:
                         / f"generated_{int(time.time())}.mid"
                     )
 
-            result = api.therapy_session(
-                text=lyric_text or request.intent.emotional_intent,
-                motivation=motivation,
-                chaos_tolerance=chaos,
-                output_midi=output_midi,
+            result = await asyncio.wait_for(
+                asyncio.to_thread(
+                    api.therapy_session,
+                    text=lyric_text or request.intent.emotional_intent,
+                    motivation=motivation,
+                    chaos_tolerance=chaos,
+                    output_midi=output_midi,
+                ),
+                timeout=30.0,
             )
 
             response = {
                 "status": "success",
+                "intent_schema_version": request.intent_schema_version,
                 "result": result,
                 "lyrics": {
                     "source": lyric_source,
@@ -1623,9 +1627,48 @@ if FASTAPI_AVAILABLE:
             return response
         except HTTPException:
             raise
+        except asyncio.TimeoutError:
+            logging.warning("generate timed out after 30s")
+            raise HTTPException(
+                status_code=504,
+                detail="Generation timed out (30s). Try simpler parameters.",
+            )
         except Exception as exc:
             logging.exception("generate failed")
             raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
+
+    @app.post("/generate", summary="Compose Music",
+              description="Bring your musical vision to life — describe a mood, "
+                          "pick instruments, set the groove, and let the engine "
+                          "compose harmony, melody, and full arrangement.")
+    async def generate_music(
+        request: Annotated[
+            GenerateRequest,
+            Body(openapi_examples=GENERATE_REQUEST_OPENAPI_EXAMPLES),
+        ],
+    ):
+        return await _handle_generate_music(request)
+
+    v1_router = APIRouter(
+        prefix="/v1",
+        tags=["v1-prd"],
+    )
+
+    @v1_router.post(
+        "/generate",
+        summary="Compose Music (PRD v1)",
+        description="Versioned generate — intent_schema_version, TTG timeline, "
+                    "orchestration (docs/prd/KMIDI_PRD.md). Same handler as /generate.",
+    )
+    async def generate_music_v1(
+        request: Annotated[
+            GenerateRequest,
+            Body(openapi_examples=GENERATE_REQUEST_OPENAPI_EXAMPLES),
+        ],
+    ):
+        return await _handle_generate_music(request)
+
+    app.include_router(v1_router)
 
     @app.post("/interrogate", summary="Creative Chat",
               description="Ask the engine anything — 'What chord comes next?', "
@@ -1858,6 +1901,8 @@ def _main():
             file=sys.stderr,
         )
         sys.exit(1)
+
+    import uvicorn
 
     uvicorn.run("music_brain.api:app", host="127.0.0.1", port=8000, reload=False)
 
