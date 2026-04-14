@@ -29,22 +29,38 @@ PAIRS=(
     "groove/TempoEstimator.cpp"
 )
 
-# Extract method definitions: lines that look like a function definition with
-# a Class::method( pattern, collapsed to just Class::method for diff purposes.
+# Extract method definitions belonging to THIS file's class, derived from the
+# filename (e.g. GrooveEngine.cpp → class GrooveEngine). This avoids false
+# positives from stdlib/JUCE template instantiations (std::sort, std::clamp,
+# juce::jlimit, juce::MemoryBlock::copyFrom, Logger::writeToLog, etc.) that
+# an unscoped `Class::method(` grep picked up. See 2026-04-13 verification
+# note in SALVAGE_CATALOG — GrooveEngine/OnsetDetector canonical side was
+# originally miscategorised because the unscoped regex counted std::sort
+# instantiations as "methods only in src/".
 extract_api() {
     local file="$1"
     [ -f "$file" ] || { echo "(file missing)"; return; }
-    # Match "Type Class::method(" and capture Class::method
-    grep -hoE '[A-Za-z_][A-Za-z0-9_]*::[A-Za-z_~][A-Za-z0-9_]*\(' "$file" \
+    # Class name = filename without extension (ChordAnalyzerSIMD.cpp → ChordAnalyzerSIMD).
+    # For SIMD suffix files, also include the base class (ChordAnalyzer) since
+    # some methods in *SIMD.cpp are defined on the non-SIMD class.
+    local base="$(basename "$file" .cpp)"
+    local class_primary="$base"
+    local class_secondary="${base%SIMD}"
+    # Match "Type <Class>::method(" where <Class> is this file's class.
+    # Handles: inline `Type` tokens, templated returns, pointer returns, const.
+    grep -hoE "\\b(${class_primary}|${class_secondary})::[A-Za-z_~][A-Za-z0-9_]*\\(" "$file" \
         | sed 's/($//' \
         | sort -u
 }
 
 # Is callsite from outside the pair-file referencing the src/ unique method?
-# (Helps flag whether removing src/-only methods would break other code.)
+# Matches only fully-qualified `Class::method` to avoid catching bare std::
+# function calls that happen to share the method name.
 find_callers() {
     local method="$1"; local pair="$2"
-    grep -rln "\\b${method}\\b" src/ engine/ plugins/ bindings/ \
+    # method arrives as Class::methodName — use as literal search (with word
+    # boundaries) so std::sort != penta::harmony::X::sort, etc.
+    grep -rln "${method}" src/ engine/ plugins/ bindings/ \
         --include='*.cpp' --include='*.h' --include='*.hpp' 2>/dev/null \
         | grep -vE "^(src|src_penta-core)/${pair}" \
         | head -3
@@ -209,4 +225,13 @@ After reviewing the above, for each pair the action is one of:
 
 No file deletions performed by this report. Human review required before
 CMakeLists.txt edits.
+
+## Behavioral-equivalence caveats
+
+The API-level analysis above only catches *link-correctness* issues. Pairs
+that link cleanly may still differ in runtime behaviour (analysis cadence,
+buffer layout, dedup logic, etc.). See
+[`CODEAUDIT_ODR_BEHAVIORAL_CAVEATS_2026Q2.md`](CODEAUDIT_ODR_BEHAVIORAL_CAVEATS_2026Q2.md)
+for the known algorithmic differences in `GrooveEngine`, `OnsetDetector`,
+`HarmonyEngine`, and `OSCServer`, plus suggested spot-check procedures.
 FOOTER

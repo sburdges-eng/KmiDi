@@ -20,12 +20,12 @@ external callers are flagged explicitly — those MUST be preserved.
 
 | side | methods | size |
 |------|---------|------|
-| `src/` | 11 | 11731 B |
-| `src_penta-core/` | 11 | 8691 B |
+| `src/` | 10 | 11731 B |
+| `src_penta-core/` | 10 | 8691 B |
 
 **Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (293 vs 196 lines; src_penta-core/ (mtime newer))
 
-### In both (11)
+### In both (10)
 
 - `ChordAnalyzer::analyze`
 - `ChordAnalyzer::analyzeSIMD`
@@ -37,7 +37,6 @@ external callers are flagged explicitly — those MUST be preserved.
 - `ChordAnalyzer::setConfidenceThreshold`
 - `ChordAnalyzer::setTemporalSmoothing`
 - `ChordAnalyzer::update`
-- `std::clamp`
 
 ---
 
@@ -62,12 +61,12 @@ external callers are flagged explicitly — those MUST be preserved.
 
 | side | methods | size |
 |------|---------|------|
-| `src/` | 10 | 4760 B |
-| `src_penta-core/` | 10 | 5018 B |
+| `src/` | 9 | 4760 B |
+| `src_penta-core/` | 9 | 5018 B |
 
 **Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (149 vs 160 lines; src/ (mtime newer))
 
-### In both (10)
+### In both (9)
 
 - `HarmonyEngine::~HarmonyEngine`
 - `HarmonyEngine::getChordHistory`
@@ -78,7 +77,6 @@ external callers are flagged explicitly — those MUST be preserved.
 - `HarmonyEngine::updateChordAnalysis`
 - `HarmonyEngine::updateConfig`
 - `HarmonyEngine::updateScaleDetection`
-- `std::min`
 
 ---
 
@@ -86,12 +84,12 @@ external callers are flagged explicitly — those MUST be preserved.
 
 | side | methods | size |
 |------|---------|------|
-| `src/` | 10 | 4937 B |
-| `src_penta-core/` | 10 | 4937 B |
+| `src/` | 7 | 4937 B |
+| `src_penta-core/` | 7 | 4937 B |
 
 **Recommended canonical**: **either (BYTE-IDENTICAL)** — auto-resolvable, pick either, delete other
 
-### In both (10)
+### In both (7)
 
 - `ScaleDetector::analyze`
 - `ScaleDetector::correlateWithProfile`
@@ -100,9 +98,6 @@ external callers are flagged explicitly — those MUST be preserved.
 - `ScaleDetector::setConfidenceThreshold`
 - `ScaleDetector::setDecayFactor`
 - `ScaleDetector::update`
-- `std::accumulate`
-- `std::clamp`
-- `std::sqrt`
 
 ---
 
@@ -110,31 +105,20 @@ external callers are flagged explicitly — those MUST be preserved.
 
 | side | methods | size |
 |------|---------|------|
-| `src/` | 15 | 10198 B |
-| `src_penta-core/` | 8 | 6623 B |
+| `src/` | 10 | 10198 B |
+| `src_penta-core/` | 6 | 6623 B |
 
-**Recommended canonical**: **src/** (has 2 method(s) called externally that src_penta-core/ lacks)
+**Recommended canonical**: src/
 
-### Only in `src/harmony/VoiceLeading.cpp` (7)
+### Only in `src/harmony/VoiceLeading.cpp` (4)
 
-- `std::clamp` — **called from**:
-    - src/ui/ScoreEntryPanel.cpp
-    - src/midi/MidiBuilder.cpp
-    - src/midi/MidiGenerator.cpp
-- `std::min` — **called from**:
-    - src/ui/EQCurveView.cpp
-    - src/ui/EmotionWheel.cpp
-    - src/ui/WorkstationPanel.cpp
-- `std::rotate` (no external callers)
 - `VoiceLeading::analyze` (no external callers)
 - `VoiceLeading::calculateSmoothness` (no external callers)
 - `VoiceLeading::invertVoicing` (no external callers)
 - `VoiceLeading::voiceProgression` (no external callers)
 
-### In both (8)
+### In both (6)
 
-- `std::abs`
-- `std::sort`
 - `VoiceLeading::calculateCost`
 - `VoiceLeading::calculateMotionCost`
 - `VoiceLeading::findOptimalVoicing`
@@ -148,25 +132,13 @@ external callers are flagged explicitly — those MUST be preserved.
 
 | side | methods | size |
 |------|---------|------|
-| `src/` | 12 | 3600 B |
-| `src_penta-core/` | 10 | 3779 B |
+| `src/` | 9 | 3600 B |
+| `src_penta-core/` | 9 | 3779 B |
 
-**Recommended canonical**: **src/** (has 2 method(s) called externally that src_penta-core/ lacks)
+**Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (114 vs 132 lines; src_penta-core/ (mtime newer))
 
-### Only in `src/osc/OSCClient.cpp` (2)
+### In both (9)
 
-- `juce::MemoryBlock` — **called from**:
-    - src/plugin/PluginProcessor.h
-    - src/plugin/plugin_processor.h
-    - src/plugin/PluginProcessor.cpp
-- `Logger::writeToLog` — **called from**:
-    - src/midi/MidiIO.cpp
-    - src/osc/OSCHub.cpp
-    - src/osc/OSCServer.cpp
-
-### In both (10)
-
-- `juce::String`
 - `OSCClient::~OSCClient`
 - `OSCClient::connectInternal`
 - `OSCClient::disconnectInternal`
@@ -183,25 +155,10 @@ external callers are flagged explicitly — those MUST be preserved.
 
 | side | methods | size |
 |------|---------|------|
-| `src/` | 13 | 3401 B |
+| `src/` | 10 | 3401 B |
 | `src_penta-core/` | 10 | 3878 B |
 
-**Recommended canonical**: **src/** (has 3 method(s) called externally that src_penta-core/ lacks)
-
-### Only in `src/osc/OSCHub.cpp` (3)
-
-- `juce::String` — **called from**:
-    - src/ui/EQCurveView.cpp
-    - src/ui/CassetteView.h
-    - src/ui/EmotionWorkstation.h
-- `Logger::writeToLog` — **called from**:
-    - src/midi/MidiIO.cpp
-    - src/osc/OSCClient.cpp
-    - src/osc/OSCServer.cpp
-- `std::move` — **called from**:
-    - src/ui/WorkstationPanel.cpp
-    - src/ui/EditCommand.cpp
-    - src/ui/AIGenerationDialog.cpp
+**Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (105 vs 134 lines; src/ (mtime newer))
 
 ### In both (10)
 
@@ -222,12 +179,12 @@ external callers are flagged explicitly — those MUST be preserved.
 
 | side | methods | size |
 |------|---------|------|
-| `src/` | 11 | 1988 B |
-| `src_penta-core/` | 11 | 2027 B |
+| `src/` | 10 | 1988 B |
+| `src_penta-core/` | 10 | 2027 B |
 
 **Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (71 vs 73 lines; src_penta-core/ (mtime newer))
 
-### In both (11)
+### In both (10)
 
 - `OSCMessage::addBlob`
 - `OSCMessage::addFloat`
@@ -239,7 +196,6 @@ external callers are flagged explicitly — those MUST be preserved.
 - `OSCMessage::getInt`
 - `OSCMessage::getString`
 - `OSCMessage::OSCMessage`
-- `std::out_of_range`
 
 ---
 
@@ -247,21 +203,18 @@ external callers are flagged explicitly — those MUST be preserved.
 
 | side | methods | size |
 |------|---------|------|
-| `src/` | 8 | 3406 B |
-| `src_penta-core/` | 8 | 2978 B |
+| `src/` | 5 | 3406 B |
+| `src_penta-core/` | 5 | 2978 B |
 
 **Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (116 vs 104 lines; src_penta-core/ (mtime newer))
 
-### In both (8)
+### In both (5)
 
-- `juce::String`
-- `Logger::writeToLog`
 - `OSCServer::~OSCServer`
 - `OSCServer::getMessageQueue`
 - `OSCServer::OSCServer`
 - `OSCServer::start`
 - `OSCServer::stop`
-- `Time::getMillisecondCounterHiRes`
 
 ---
 
@@ -290,28 +243,12 @@ external callers are flagged explicitly — those MUST be preserved.
 
 | side | methods | size |
 |------|---------|------|
-| `src/` | 14 | 11107 B |
-| `src_penta-core/` | 14 | 11634 B |
+| `src/` | 10 | 11107 B |
+| `src_penta-core/` | 10 | 11634 B |
 
-**Recommended canonical**: **src/** (has 2 method(s) called externally that src_penta-core/ lacks)
+**Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (334 vs 337 lines; src_penta-core/ (mtime newer))
 
-### Only in `src/groove/GrooveEngine.cpp` (2)
-
-- `std::abs` — **called from**:
-    - src/ui/AIEQSuggestionEngine.cpp
-    - src/ui/MidiEditor.cpp
-    - src/core/chord_diagnostics.cpp
-- `std::sort` — **called from**:
-    - src/ui/MidiEditor.cpp
-    - src/core/chord_diagnostics.cpp
-    - src/midi/midi_engine.cpp
-
-### Only in `src_penta-core/groove/GrooveEngine.cpp` (2)
-
-- `std::fmod`
-- `std::llround`
-
-### In both (12)
+### In both (10)
 
 - `GrooveEngine::~GrooveEngine`
 - `GrooveEngine::analyzeSwing`
@@ -323,8 +260,6 @@ external callers are flagged explicitly — those MUST be preserved.
 - `GrooveEngine::reset`
 - `GrooveEngine::updateConfig`
 - `GrooveEngine::updateTempoEstimate`
-- `std::clamp`
-- `std::move`
 
 ---
 
@@ -332,27 +267,12 @@ external callers are flagged explicitly — those MUST be preserved.
 
 | side | methods | size |
 |------|---------|------|
-| `src/` | 12 | 4891 B |
-| `src_penta-core/` | 16 | 6744 B |
+| `src/` | 7 | 4891 B |
+| `src_penta-core/` | 7 | 6744 B |
 
-**Recommended canonical**: **src/** (has 1 method(s) called externally that src_penta-core/ lacks)
+**Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (171 vs 200 lines; src_penta-core/ (mtime newer))
 
-### Only in `src/groove/OnsetDetector.cpp` (1)
-
-- `juce::jlimit` — **called from**:
-    - src/ui/EQCurveView.cpp
-    - src/ui/EmotionRadar.cpp
-    - src/ui/EditCommand.cpp
-
-### Only in `src_penta-core/groove/OnsetDetector.cpp` (5)
-
-- `SIMDKernels::applyWindow`
-- `SIMDKernels::spectralFlux`
-- `std::abs`
-- `std::log2`
-- `std::rotate`
-
-### In both (11)
+### In both (7)
 
 - `OnsetDetector::~OnsetDetector`
 - `OnsetDetector::computeSpectralFlux`
@@ -361,10 +281,6 @@ external callers are flagged explicitly — those MUST be preserved.
 - `OnsetDetector::process`
 - `OnsetDetector::reset`
 - `OnsetDetector::setThreshold`
-- `std::cos`
-- `std::fill`
-- `std::min`
-- `std::sqrt`
 
 ---
 
@@ -372,12 +288,12 @@ external callers are flagged explicitly — those MUST be preserved.
 
 | side | methods | size |
 |------|---------|------|
-| `src/` | 7 | 4695 B |
-| `src_penta-core/` | 7 | 5436 B |
+| `src/` | 6 | 4695 B |
+| `src_penta-core/` | 6 | 5436 B |
 
 **Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (137 vs 148 lines; src_penta-core/ (mtime newer))
 
-### In both (7)
+### In both (6)
 
 - `RhythmQuantizer::applySwing`
 - `RhythmQuantizer::findNearestGridPoint`
@@ -385,7 +301,6 @@ external callers are flagged explicitly — those MUST be preserved.
 - `RhythmQuantizer::quantize`
 - `RhythmQuantizer::RhythmQuantizer`
 - `RhythmQuantizer::updateConfig`
-- `std::clamp`
 
 ---
 
@@ -393,18 +308,13 @@ external callers are flagged explicitly — those MUST be preserved.
 
 | side | methods | size |
 |------|---------|------|
-| `src/` | 13 | 4998 B |
-| `src_penta-core/` | 13 | 5483 B |
+| `src/` | 8 | 4998 B |
+| `src_penta-core/` | 8 | 5483 B |
 
 **Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (162 vs 168 lines; src_penta-core/ (mtime newer))
 
-### In both (13)
+### In both (8)
 
-- `std::abs`
-- `std::clamp`
-- `std::exp`
-- `std::max`
-- `std::round`
 - `TempoEstimator::addOnset`
 - `TempoEstimator::computeCorrelation`
 - `TempoEstimator::estimateTempo`
@@ -439,3 +349,12 @@ After reviewing the above, for each pair the action is one of:
 
 No file deletions performed by this report. Human review required before
 CMakeLists.txt edits.
+
+## Behavioral-equivalence caveats
+
+The API-level analysis above only catches *link-correctness* issues. Pairs
+that link cleanly may still differ in runtime behaviour (analysis cadence,
+buffer layout, dedup logic, etc.). See
+[`CODEAUDIT_ODR_BEHAVIORAL_CAVEATS_2026Q2.md`](CODEAUDIT_ODR_BEHAVIORAL_CAVEATS_2026Q2.md)
+for the known algorithmic differences in `GrooveEngine`, `OnsetDetector`,
+`HarmonyEngine`, and `OSCServer`, plus suggested spot-check procedures.
