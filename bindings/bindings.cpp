@@ -34,5 +34,6 @@ PYBIND11_MODULE(penta_core_native, m) {
     bind_ml(ml);
 
     // PRROT voice engine (Phase 4b)
-    bind_prrot(m);
+    auto prrot = m.def_submodule("prrot", "Voice engine PRROT binding module");
+    bind_prrot(prrot);
 }

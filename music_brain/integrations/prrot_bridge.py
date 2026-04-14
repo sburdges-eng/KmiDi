@@ -32,8 +32,8 @@ logger = logging.getLogger(__name__)
 _prrot_available = False
 _prrot = None
 try:
-    # The pybind11 module is built as part of the kmidi_bindings package
-    from kmidi_bindings import prrot as _prrot
+    # The pybind11 module is built as part of the penta_core_native package
+    from penta_core_native import prrot as _prrot
     _prrot_available = True
 except ImportError:
     try:
