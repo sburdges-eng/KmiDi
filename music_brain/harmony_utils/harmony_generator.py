@@ -204,6 +204,10 @@ class HarmonyGenerator:
         Returns:
             List of chord symbols (e.g., ['F', 'C', 'Dm', 'Bb'])
         """
+        # Accept minor-key inputs like "Am" or "f#m" — strip trailing 'm'
+        # before uppercasing so NOTE_TO_MIDI lookup succeeds.
+        if key.lower().endswith("m"):
+            key = key[:-1]
         key = key.upper()
         scale = self.SCALES['major'] if mode == 'major' else self.SCALES['natural_minor']
         root_midi = NOTE_TO_MIDI[key]
