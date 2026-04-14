@@ -1,4 +1,19 @@
 #pragma once
+/*
+ * EmotionThesaurusLoader.h - JSON Loader for EmotionThesaurus
+ * ============================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: EmotionThesaurus (in-memory 216-node graph)
+ * - Engine Layer: IntentPipeline, KellyBrain (initialization via loadWithFallbacks)
+ * - Data: JSON files on disk or embedded defaults (JUCE File API)
+ *
+ * Purpose: Resolves data paths and populates thesaurus nodes from JSON.
+ *
+ * Features:
+ * - Multi-path fallback search
+ * - Handles "category" vs "name" JSON fields
+ */
 
 #include "engine/EmotionThesaurus.h"
 #include <juce_core/juce_core.h>
@@ -7,32 +22,6 @@
 
 namespace kelly {
 
-/**
- * Loads the 216-node emotion thesaurus from JSON files.
- *
- * Features:
- * - Multiple fallback paths for finding JSON files
- * - Embedded default JSON data as last resort
- * - Handles both "category" and "name" fields in JSON
- *
- * Expected JSON structure:
- * {
- *   "name": "SAD" or "category": "sad",
- *   "sub_emotions": {
- *     "GRIEF": {
- *       "sub_sub_emotions": {
- *         "bereaved": {
- *           "intensity_tiers": {
- *             "1_subtle": ["touched", "moved"],
- *             "2_mild": ["bereaved", "mourning"],
- *             ...
- *           }
- *         }
- *       }
- *     }
- *   }
- * }
- */
 class EmotionThesaurusLoader {
 public:
     /**

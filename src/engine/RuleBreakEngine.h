@@ -1,4 +1,19 @@
 #pragma once
+/*
+ * RuleBreakEngine.h - Emotion-Driven Theory “Rule Breaks”
+ * =======================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: IntentPipeline (Phase 2 injection)
+ * - Common Layer: Types.h (RuleBreak, RuleBreakType)
+ * - Engine Layer: EmotionMapper (parallel expressive parameters)
+ *
+ * Purpose: Selects intentional harmonic/rhythmic/dynamic violations from affect.
+ *
+ * Features:
+ * - Category-specific break catalogs
+ * - Severity scaled by emotion intensity
+ */
 
 #include "common/Types.h"  // For RuleBreak and RuleBreakType definitions (matching IntentPipeline)
 #include <vector>
@@ -7,27 +22,6 @@
 
 namespace kelly {
 
-/**
- * Rule Break Engine - Determines which musical rules to break for emotional authenticity.
- * 
- * This engine analyzes emotional states and generates intentional music theory violations
- * that serve emotional expression. The core principle is that authentic emotion sometimes
- * requires breaking conventional rules:
- * 
- * - Negative emotions (sadness, grief, despair) → Dissonance, unresolved tensions, voice leading violations
- * - High arousal (anger, fear, anxiety) → Rhythmic disruption, syncopation, irregular meters
- * - Extreme intensity → Dynamic extremes, structural disruption, texture collisions
- * - Low arousal + negative valence (depression, emptiness) → Silence, fragmentation, rests
- * - Specific emotion categories → Targeted rule breaks (e.g., grief breaks voice leading)
- * 
- * Each rule break includes:
- * - Type (Harmony, Rhythm, Dynamics, Melody, Form) - matching Types.h definition
- * - Severity (0.0-1.0, scaled by emotion intensity)
- * - Description and emotional justification (reason field)
- * 
- * Note: Uses Types.h's RuleBreak definition to match IntentPipeline expectations.
- * Voice leading violations map to Harmony, texture to Form, range to Melody.
- */
 class RuleBreakEngine {
 public:
     RuleBreakEngine() = default;

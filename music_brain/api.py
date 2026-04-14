@@ -5,18 +5,20 @@ This module provides a simplified, consistent API surface for all music_brain
 functionality, making it easier to integrate with desktop apps, web services,
 or other interfaces.
 """
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Annotated, Dict, List, Optional, Any, Tuple
 import os
 import sys
 import logging
 import json
+import asyncio
+import time
 
 try:
-    from fastapi import FastAPI, HTTPException
+    from fastapi import APIRouter, Body, FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.responses import FileResponse
+    from fastapi.responses import FileResponse, StreamingResponse
+    from fastapi.concurrency import run_in_threadpool
     from pydantic import BaseModel, Field, ValidationError
-    import uvicorn
     FASTAPI_AVAILABLE = True
 except ImportError:  # pragma: no cover - optional dependency
     FASTAPI_AVAILABLE = False
@@ -24,10 +26,11 @@ from pathlib import Path  # noqa: E402
 import tempfile  # noqa: E402
 
 import numpy as np  # noqa: E402
+from music_brain.utils.serialization import pydantic_to_dict  # noqa: E402
+from music_brain.utils.error_handlers import api_error_handler  # noqa: E402
+from music_brain.utils.io_utils import load_json_config, save_json_config  # noqa: E402
 
 # Constants for input validation
-VALID_MUSICAL_MODES = {"major", "minor", "dorian",
-                       "phrygian", "lydian", "mixolydian", "aeolian", "locrian"}
 
 # Core imports
 from music_brain.audio import (  # noqa: E402
@@ -113,6 +116,14 @@ from music_brain.session.intent_schema import (  # noqa: E402
 )
 from music_brain.session.intent_processor import process_intent  # noqa: E402
 from music_brain.engine_api.schema import CompleteSongIntentRequest  # noqa: E402
+from music_brain.api_schemas.generate_v1 import (  # noqa: E402
+    EmotionalIntent,
+    GENERATE_REQUEST_OPENAPI_EXAMPLES,
+    GenerateRequest,
+    InterrogateRequest,
+    LyricsRequest,
+    TechnicalIntent,
+)
 from music_brain.pipeline import IntentPipeline  # noqa: E402
 try:
     from music_brain.data_utils.emotional_mapping import EMOTIONAL_PRESETS
@@ -163,9 +174,6 @@ class DAiWAPI:
         self.voice_synthesizer = VoiceSynthesizer()
         self.audio_analyzer = _DummyAudioAnalyzer()
         self.drum_humanizer = self._build_humanizer()
-        self.user_lyrics: Optional[str] = None
-        self.user_lyrics_source: str = "none"
-        self.last_generated_lyrics: Optional[str] = None
 
     def _build_humanizer(self) -> DrumHumanizer:
         """Create DrumHumanizer, pulling config from config/humanizer.json if present."""
@@ -180,107 +188,6 @@ class DAiWAPI:
     def reload_humanizer(self) -> None:
         """Reload humanizer configuration from disk."""
         self.drum_humanizer = self._build_humanizer()
-
-    # ========== Lyrics Handling ==========
-
-    def set_lyrics(self, lyrics: str, source: str = "user") -> Dict[str, Any]:
-        """
-        Persist user-provided lyrics (or clear when empty) and return a lightweight summary.
-        """
-        cleaned = (lyrics or "").strip()
-        if not cleaned:
-            self.user_lyrics = None
-            self.user_lyrics_source = "none"
-            return {
-                "status": "cleared",
-                "source": self.user_lyrics_source,
-                "lines": 0,
-                "word_count": 0,
-            }
-
-        self.user_lyrics = cleaned
-        self.user_lyrics_source = source or "user"
-        self.last_generated_lyrics = None
-
-        return {
-            "status": "stored",
-            "source": self.user_lyrics_source,
-            "lines": len(cleaned.splitlines()),
-            "word_count": len(cleaned.split()),
-            "preview": cleaned[:140],
-        }
-
-    def get_lyrics(self) -> Dict[str, Any]:
-        """Return the active lyric payload and provenance."""
-        return {
-            "lyrics": self.user_lyrics,
-            "source": self.user_lyrics_source,
-            "generated": self.last_generated_lyrics,
-        }
-
-    def _intent_field(self, intent: Any, name: str, default: str = "") -> str:
-        """Safely pull a field from either a dict-like intent or pydantic model."""
-        if intent is None:
-            return default
-        if isinstance(intent, dict):
-            return str(intent.get(name, default) or default)
-        return str(getattr(intent, name, default) or default)
-
-    def generate_structured_lyrics(self, intent: Any) -> str:
-        """
-        Lightweight, dependency-free fallback lyric generator.
-
-        Produces a simple verse/chorus layout conditioned on the emotional intent fields
-        without pulling heavyweight models into the runtime.
-        """
-        wound = self._intent_field(intent, "core_wound", "unspecified wound")
-        desire = self._intent_field(intent, "core_desire", "longing")
-        emotion = self._intent_field(intent, "emotional_intent", "unspecified emotion")
-
-        verse1 = [
-            f"I carry {wound} in the seams of the day",
-            f"Tracing {emotion} shadows that won't fade away",
-            f"Still I keep moving with {desire} in my hands",
-            "Hoping the light remembers where I stand",
-        ]
-        chorus = [
-            f"Hold me when the night gets loud with {emotion}",
-            f"Sing back the truth, I'm more than {wound}",
-            f"Step into the dawn, let {desire} bloom",
-            "Every note a bridge across the room",
-        ]
-        verse2 = [
-            "I tune my breathing to the softest drum",
-            "Let the melody confess what I've become",
-            "If I am fading, let the chorus know",
-            "I was a spark before the river froze",
-        ]
-
-        generated = "\n".join(
-            ["[Verse 1]"]
-            + verse1
-            + ["", "[Chorus]"]
-            + chorus
-            + ["", "[Verse 2]"]
-            + verse2
-            + ["", "[Chorus]", *chorus]
-        )
-        self.last_generated_lyrics = generated
-        return generated
-
-    def _select_lyric_payload(self, intent: Any) -> Tuple[str, str]:
-        """
-        Decide which text should drive generation:
-        - User lyrics when present (highest priority)
-        - Generated fallback lyrics when no user payload exists
-        - Raw emotional intent as a final fallback
-        """
-        if self.user_lyrics:
-            return self.user_lyrics, self.user_lyrics_source
-        if intent:
-            generated = self.generate_structured_lyrics(intent)
-            return generated, "generated"
-        return "emotional intent", "intent"
 
     # ========== Harmony Generation ==========
 
@@ -790,9 +697,7 @@ class DAiWAPI:
             }
 
         if output_json:
-            import json
-            with open(output_json, 'w') as f:
-                json.dump(output, f, indent=2)
+            save_json_config(Path(output_json), output)
 
         return output
 
@@ -854,52 +759,124 @@ class DAiWAPI:
         return IntentPipeline().run(request)
 
 
+# ========== Global Session State (stateless DAiWAPI — Phase 4) ==========
+_SESSION_STATE: Dict[str, Any] = {
+    "user_lyrics": None,
+    "user_lyrics_source": "none",
+    "last_generated_lyrics": None,
+}
+
+
+def set_lyrics(lyrics: str, source: str = "user") -> Dict[str, Any]:
+    """Persist user-provided lyrics (or clear when empty) and return a lightweight summary."""
+    cleaned = (lyrics or "").strip()
+    if not cleaned:
+        _SESSION_STATE["user_lyrics"] = None
+        _SESSION_STATE["user_lyrics_source"] = "none"
+        return {
+            "status": "cleared",
+            "source": _SESSION_STATE["user_lyrics_source"],
+            "lines": 0,
+            "word_count": 0,
+        }
+
+    _SESSION_STATE["user_lyrics"] = cleaned
+    _SESSION_STATE["user_lyrics_source"] = source or "user"
+    _SESSION_STATE["last_generated_lyrics"] = None
+
+    return {
+        "status": "stored",
+        "source": _SESSION_STATE["user_lyrics_source"],
+        "lines": len(cleaned.splitlines()),
+        "word_count": len(cleaned.split()),
+        "preview": cleaned[:140],
+    }
+
+
+def get_lyrics() -> Dict[str, Any]:
+    """Return the active lyric payload and provenance."""
+    return {
+        "lyrics": _SESSION_STATE["user_lyrics"],
+        "source": _SESSION_STATE["user_lyrics_source"],
+        "generated": _SESSION_STATE["last_generated_lyrics"],
+    }
+
+
+def intent_field(intent: Any, name: str, default: str = "") -> str:
+    """Safely pull a field from either a dict-like intent or pydantic model."""
+    if intent is None:
+        return default
+    if isinstance(intent, dict):
+        return str(intent.get(name, default) or default)
+    return str(getattr(intent, name, default) or default)
+
+
+def generate_structured_lyrics(intent: Any) -> str:
+    """Lightweight, dependency-free fallback lyric generator."""
+    wound = intent_field(intent, "core_wound", "unspecified wound")
+    desire = intent_field(intent, "core_desire", "longing")
+    emotion = intent_field(intent, "emotional_intent", "unspecified emotion")
+
+    verse1 = [
+        f"I carry {wound} in the seams of the day",
+        f"Tracing {emotion} shadows that won't fade away",
+        f"Still I keep moving with {desire} in my hands",
+        "Hoping the light remembers where I stand",
+    ]
+    chorus = [
+        f"Hold me when the night gets loud with {emotion}",
+        f"Sing back the truth, I'm more than {wound}",
+        f"Step into the dawn, let {desire} bloom",
+        "Every note a bridge across the room",
+    ]
+    verse2 = [
+        "I tune my breathing to the softest drum",
+        "Let the melody confess what I've become",
+        "If I am fading, let the chorus know",
+        "I was a spark before the river froze",
+    ]
+
+    generated = "\n".join(
+        ["[Verse 1]"] + verse1
+        + ["", "[Chorus]"] + chorus
+        + ["", "[Verse 2]"] + verse2
+        + ["", "[Chorus]", *chorus]
+    )
+    _SESSION_STATE["last_generated_lyrics"] = generated
+    return generated
+
+
+def select_lyric_payload(intent: Any) -> Tuple[str, str]:
+    """Decide which text drives generation; user lyrics > generated > intent."""
+    if _SESSION_STATE["user_lyrics"]:
+        return _SESSION_STATE["user_lyrics"], _SESSION_STATE["user_lyrics_source"]
+    if intent:
+        generated = generate_structured_lyrics(intent)
+        return generated, "generated"
+    return "emotional intent", "intent"
+
+
 # Convenience instance
 api = DAiWAPI()
 
-__all__ = ['DAiWAPI', 'api']
+__all__ = [
+    "DAiWAPI",
+    "api",
+    "app",
+    "EmotionalIntent",
+    "TechnicalIntent",
+    "GenerateRequest",
+    "InterrogateRequest",
+    "LyricsRequest",
+]
 
 
 # ---------- Minimal HTTP API (FastAPI) ----------
 # This provides the server that `python -m music_brain.api` is expected to start.
 
+app = None  # overwritten below when FastAPI is available
+
 if FASTAPI_AVAILABLE:
-    class TechnicalIntent(BaseModel):
-        key: Optional[str] = None
-        bpm: Optional[int] = None
-        progression: Optional[List[str]] = None
-        genre: Optional[str] = None
-        duration: Optional[float] = None
-        structure: Optional[List[Dict[str, Any]]] = None
-        instruments: Optional[List[Dict[str, Any]]] = None
-        techniques: Optional[List[str]] = None
-        groove_feel: Optional[str] = None
-        narrative_arc: Optional[str] = None
-        rule_to_break: Optional[str] = None
-        rule_justification: Optional[str] = None
-
-    class EmotionalIntent(BaseModel):
-        core_wound: Optional[str] = None
-        core_desire: Optional[str] = None
-        emotional_intent: str
-        technical: Optional[TechnicalIntent] = None
-        vulnerability_scale: Optional[float] = None  # 0.0 - 1.0 emotional openness
-        narrative_arc: Optional[str] = None  # Energetic trajectory (e.g. "Climb-to-Climax")
-        imagery_texture: Optional[str] = None  # Sensory/visual texture (e.g. "foggy and cold")
-
-    class GenerateRequest(BaseModel):
-        intent: EmotionalIntent
-        output_format: Optional[str] = None
-
-    class InterrogateRequest(BaseModel):
-        message: str = Field(..., max_length=4096)
-        session_id: Optional[str] = None
-        context: Optional[Dict[str, Any]] = None
-
-    class LyricsRequest(BaseModel):
-        lyrics: str = Field(..., max_length=32768)
-        source: Optional[str] = "user"
-
     from fastapi.responses import HTMLResponse
     from fastapi.staticfiles import StaticFiles
 
@@ -908,10 +885,12 @@ if FASTAPI_AVAILABLE:
 
     app = FastAPI(
         title="KmiDi Sound Engine",
-        version="0.1.0",
+        version="0.2.0",
         description=(
             "Your creative command center — compose, feel, and shape "
-            "music through intent.  Every endpoint maps to a musical action."
+            "music through intent.  Every endpoint maps to a musical action. "
+            "PRD-aligned TTG v1: POST /v1/generate (intent_schema_version, timeline, "
+            "orchestration)."
         ),
     )
 
@@ -922,17 +901,25 @@ if FASTAPI_AVAILABLE:
             name="static",
         )
 
-    # Add CORS middleware to allow requests from frontend
+    # Add CORS middleware to allow requests from frontend.
+    # Override with KMIDI_CORS_ORIGINS env var (comma-separated) in production.
+    _default_cors_origins = [
+        "http://localhost:1420",   # Vite dev server
+        "http://127.0.0.1:1420",  # Vite dev server (alternative)
+        "tauri://localhost",       # Tauri app
+        "http://localhost:5173",   # Alternative Vite port
+    ]
+    _cors_env = os.environ.get("KMIDI_CORS_ORIGINS", "")
+    _cors_origins = (
+        [o.strip() for o in _cors_env.split(",") if o.strip()]
+        if _cors_env
+        else _default_cors_origins
+    )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:1420",  # Vite dev server
-            "http://127.0.0.1:1420",  # Vite dev server (alternative)
-            "tauri://localhost",      # Tauri app
-            "http://localhost:5173",  # Alternative Vite port
-        ],
+        allow_origins=_cors_origins,
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "PUT", "OPTIONS"],
         allow_headers=["*"],
     )
 
@@ -949,7 +936,7 @@ if FASTAPI_AVAILABLE:
     @app.get("/health", summary="Pulse Check",
              description="Quick heartbeat — is the sound engine running?")
     async def health():
-        return {"status": "ok", "version": "0.1.0"}
+        return {"status": "ok", "version": "0.2.0"}
 
     # Sandbox for /audio/ serving: only files under this directory are allowed (prevents path traversal).
     _audio_serve_root = Path(
@@ -1043,15 +1030,12 @@ if FASTAPI_AVAILABLE:
             }
         )
 
-    @app.get("/emotions", summary="Emotion Palette",
-             description="Browse the full palette of moods the engine understands — "
+    @app.get("/emotions", summary="Read the Room",
+             description="Get the list of emotions the AI currently understands — "
                          "from tender intimacy to fierce energy.")
+    @api_error_handler(log_message="Failed to list emotions", detail=_HTTP_500_DETAIL)
     async def list_emotions():
-        try:
-            return sorted(EMOTIONAL_PRESETS.keys())
-        except Exception as exc:  # pragma: no cover
-            logging.exception("Failed to list emotions")
-            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
+        return sorted(EMOTIONAL_PRESETS.keys())
 
     def _normalize_humanizer_config(data: Dict[str, Any]) -> Dict[str, Any]:
         default_analysis = {
@@ -1106,15 +1090,6 @@ if FASTAPI_AVAILABLE:
                 )
         return events, current_time
 
-    def _load_json_config(path: Path, fallback: Dict[str, Any]) -> Dict[str, Any]:
-        if path.exists():
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except Exception:
-                logging.exception("Failed to load %s", path)
-        return fallback
-
     @app.get("/config/humanizer", summary="Feel Settings",
              description="Check the humanizer — timing drift, velocity curves, "
                          "and micro-groove that make MIDI feel like a real player.")
@@ -1124,7 +1099,7 @@ if FASTAPI_AVAILABLE:
         - Loads `config/humanizer.json` if present; otherwise defaults.
         - Also exposes analysis thresholds (flam/buzz/drag/alternation).
         """
-        cfg = _load_json_config(
+        cfg = load_json_config(
             Path("config/humanizer.json"),
             _normalize_humanizer_config({}),
         )
@@ -1158,23 +1133,10 @@ if FASTAPI_AVAILABLE:
         cfg_dir.mkdir(parents=True, exist_ok=True)
         normalized = _normalize_humanizer_config(payload)
         cfg_path = cfg_dir / "humanizer.json"
-        fd, tmp_path = tempfile.mkstemp(
-            dir=str(cfg_dir), prefix="humanizer.", suffix=".json"
-        )
-        try:
-            with open(fd, "w", encoding="utf-8") as f:
-                json.dump(normalized, f, indent=2)
-                f.flush()
-                if hasattr(os, "fsync"):
-                    os.fsync(f.fileno())
-            os.replace(tmp_path, cfg_path)
-        except Exception:
-            if Path(tmp_path).exists():
-                try:
-                    os.unlink(tmp_path)
-                except OSError:
-                    pass
-            raise
+        
+        success = save_json_config(cfg_path, normalized)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to save humanizer config")
         try:
             api.reload_humanizer()
         except Exception:
@@ -1184,14 +1146,11 @@ if FASTAPI_AVAILABLE:
     @app.post("/config/humanizer/reload", summary="Recall Feel Preset",
               description="Reset the humanizer to its saved state — like hitting "
                           "'recall' on a mixer channel strip.")
+    @api_error_handler(log_message="Failed to reload humanizer", detail=_HTTP_500_DETAIL)
     async def reload_humanizer():
         """Force reload of the in-memory humanizer/analyzer from config/humanizer.json."""
-        try:
-            api.reload_humanizer()
-            return {"status": "ok"}
-        except Exception as exc:
-            logging.exception("Failed to reload humanizer")
-            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
+        api.reload_humanizer()
+        return {"status": "ok"}
 
     class SpectocloudRenderRequest(BaseModel):
         midi_events: Optional[List[Dict[str, Any]]] = None
@@ -1210,6 +1169,7 @@ if FASTAPI_AVAILABLE:
     @app.post("/spectocloud/render", summary="Paint Your Sound",
               description="Render a Spectocloud visualization — see your music "
                           "as a living particle cloud of light and color.")
+    @api_error_handler(log_message="spectocloud render failed", detail=_HTTP_500_DETAIL)
     async def render_spectocloud(payload: SpectocloudRenderRequest):
         """
         Render Spectocloud output (static frame or animation).
@@ -1218,11 +1178,10 @@ if FASTAPI_AVAILABLE:
         """
         try:
             from music_brain.visualization.spectocloud import Spectocloud  # Lazy import
-        except Exception as exc:  # pragma: no cover
+        except Exception:  # pragma: no cover
             logging.exception("Failed to import Spectocloud")
             raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
-        try:
             events: Optional[List[Dict[str, Any]]] = payload.midi_events
             duration = payload.duration
 
@@ -1319,17 +1278,24 @@ if FASTAPI_AVAILABLE:
                 "output_path": out_path,
                 "frames": len(specto.frames),
             }
-        except HTTPException:
-            raise
-        except Exception as exc:  # pragma: no cover
-            logging.exception("spectocloud render failed")
-            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
-    @app.post("/generate", summary="Compose Music",
-              description="Bring your musical vision to life — describe a mood, "
-                          "pick instruments, set the groove, and let the engine "
-                          "compose harmony, melody, and full arrangement.")
-    async def generate_music(request: GenerateRequest):
+    def _create_output_paths(output_format: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
+        if not output_format:
+            return None, None
+        import tempfile
+        import time
+        output_midi = None
+        output_audio = None
+        if output_format in ['mid', 'midi']:
+            output_midi = str(Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.mid")
+        elif output_format in ['wav', 'mp3']:
+            output_audio = str(Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.{output_format}")
+            output_midi = str(Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.mid")
+        return output_midi, output_audio
+
+    @api_error_handler(log_message="generate failed", detail=_HTTP_500_DETAIL)
+    async def _handle_generate_music(request: GenerateRequest):
+        # We explicitly handle TimeoutError inside.
         try:
             # Try to use full intent pipeline if we have advanced parameters
             tech = request.intent.technical
@@ -1347,56 +1313,85 @@ if FASTAPI_AVAILABLE:
                         detail="technical payload is required for complete intent generation",
                     )
 
-                pipeline = IntentPipeline()
-                normalized = pipeline.normalize(request)
-                try:
-                    validated = pipeline.validate(normalized)
-                except ValidationError as validation_error:
-                    safe_errors = json.loads(validation_error.json())
-                    raise HTTPException(
-                        status_code=422,
-                        detail=safe_errors,
-                    ) from validation_error
-                try:
-                    complete_intent = pipeline.expand(request, validated, normalized)
-                except Exception as expand_exc:
-                    # Fail-closed: no fallback to partial intent
-                    logging.exception("Intent expansion failed")
+                from music_brain.orchestrator.orchestrator import AIOrchestrator, OrchestratorConfig, Pipeline
+                from music_brain.orchestrator.processors.intent import IntentProcessor as OrchestratorIntentProcessor
+                from music_brain.orchestrator.processors.harmony import HarmonyProcessor as OrchestratorHarmonyProcessor
+                from music_brain.orchestrator.processors.groove import GrooveProcessor as OrchestratorGrooveProcessor
+                
+                config = OrchestratorConfig(enable_logging=True)
+                orchestrator = AIOrchestrator(config)
+                
+                pipeline = Pipeline("http_generate")
+                pipeline.add_stage("intent", OrchestratorIntentProcessor())
+                pipeline.add_stage("harmony", OrchestratorHarmonyProcessor())
+                pipeline.add_stage("groove", OrchestratorGrooveProcessor())
+                
+                key_raw = getattr(tech, "key", "C major") if tech else "C major"
+                key_parts = key_raw.split(maxsplit=1)
+                key_root = key_parts[0] if key_parts else "C"
+                key_mode = key_parts[1] if len(key_parts) > 1 else "major"
+                base_bpm = getattr(tech, "bpm", 120) if tech else 120
+                if base_bpm is None:
+                    base_bpm = 120
+                
+                input_data = {
+                    "title": "Generated Song",
+                    "phase_0": {
+                        "core_desire": request.intent.core_desire or "",
+                    },
+                    "phase_1": {
+                        "mood_primary": request.intent.emotional_intent or "neutral",
+                        "narrative_arc": getattr(tech, "narrative_arc", "") if tech else "",
+                    },
+                    "phase_2": {
+                        "technical_genre": getattr(tech, "genre", "") if tech else "",
+                        "technical_key": key_root,
+                        "technical_mode": key_mode,
+                        "technical_tempo_range": [base_bpm, base_bpm],
+                    }
+                }
+                
+                result = await orchestrator.execute(pipeline, input_data)
+                if not result.success:
                     raise HTTPException(
                         status_code=500,
-                        detail="intent expansion failed; no partial intent fallback",
-                    ) from expand_exc
-
-                # Process full intent (CompleteSongIntent only; no Request past this point)
-                result = api.process_song_intent(complete_intent, output_json=None)
+                        detail=result.error or "Pipeline execution failed",
+                    )
+                
+                # Reconstruct the output dictionary expected by the endpoint
+                intent_res = result.context.get_shared("intent") or {}
+                harmony = result.context.get_shared("harmony") or {}
+                groove = result.context.get_shared("groove") or {}
+                
+                res_output = {
+                    "intent_summary": {
+                        "mood": intent_res.get("intent", {}).get("phase_1", {}).get("mood_primary", ""),
+                        "rule_broken": intent_res.get("intent", {}).get("phase_2", {}).get("technical_rule_to_break", ""),
+                    },
+                    "harmony": {
+                        "chords": harmony.get("chords", []),
+                        "roman_numerals": harmony.get("roman_numerals", []),
+                        "rule_broken": harmony.get("rule_broken", ""),
+                        "rule_effect": harmony.get("rule_effect", ""),
+                    },
+                    "groove": {
+                        "pattern_name": groove.get("pattern_name", ""),
+                        "tempo_bpm": groove.get("tempo_bpm", base_bpm),
+                        "feel": "Straight",
+                    },
+                    "arrangement": {"sections": []},
+                    "production": {"notes": []},
+                }
 
                 # Generate output file if format requested
-                output_midi = None
-                output_audio = None
-                if request.output_format:
-                    import tempfile
-                    import time
-                    if request.output_format in ['mid', 'midi']:
-                        output_midi = str(
-                            Path(tempfile.gettempdir())
-                            / f"generated_{int(time.time())}.mid"
-                        )
-                    elif request.output_format in ['wav', 'mp3']:
-                        output_audio = str(
-                            Path(tempfile.gettempdir())
-                            / f"generated_{int(time.time())}.{request.output_format}"
-                        )
-                        output_midi = str(
-                            Path(tempfile.gettempdir())
-                            / f"generated_{int(time.time())}.mid"
-                        )
+                output_midi, output_audio = _create_output_paths(request.output_format)
 
                 # Generate MIDI from harmony result
-                if output_midi and result.get("harmony"):
+                if output_midi and res_output.get("harmony"):
                     try:
                         # Extract harmony info
-                        harmony = result["harmony"]
-                        _ = result.get("groove", {})  # noqa: F841
+                        harmony = res_output["harmony"]
+                        _ = res_output.get("groove", {})  # noqa: F841
                         # Validate and clamp duration to positive value (0.1 - 60 minutes)
                         duration_minutes = (
                             tech.duration
@@ -1411,30 +1406,26 @@ if FASTAPI_AVAILABLE:
                             duration_minutes = 3.0
 
                         # Validate and clamp BPM
-                        bpm = validated.tempo if validated else 82
+                        bpm = base_bpm
 
                         length_bars = int((duration_minutes * bpm) / 4)
                         length_bars = max(16, min(128, length_bars))
 
                         # Extract key and mode with validation
-                        key_str = validated.key_mode if validated else "C major"
-                        key_parts = key_str.split()
-                        root_note = key_parts[0]
-                        mode = key_parts[1].lower()
+                        root_note = key_root
+                        mode = key_mode
 
                         # Extract structure and instruments from request
-                        structure = [
-                            section.model_dump()
-                            if hasattr(section, "model_dump")
-                            else section.dict()
-                            for section in validated.structure
-                        ] if validated else None
-                        instruments = [
-                            track.model_dump()
-                            if hasattr(track, "model_dump")
-                            else track.dict()
-                            for track in validated.instruments
-                        ] if validated else None
+                        structure = None
+                        instruments = None
+                        if tech:
+                            t_dict = pydantic_to_dict(tech)
+                            if t_dict.get("timeline"):
+                                from music_brain.api_schemas.ttg_adapter import ttg_dict_to_structure_list
+                                structure = ttg_dict_to_structure_list(t_dict.get("timeline", {}))
+                            if t_dict.get("orchestration"):
+                                from music_brain.api_schemas.ttg_adapter import orchestration_dict_to_instruments
+                                instruments = orchestration_dict_to_instruments(t_dict.get("orchestration", {}))
 
                         # If structure is provided, calculate total bars from structure
                         # Otherwise use calculated length_bars
@@ -1456,7 +1447,7 @@ if FASTAPI_AVAILABLE:
                             length_bars=length_bars,
                             chord_symbols=harmony.get("chords", ["C", "Am", "F", "G"]),
                             harmonic_rhythm="1_chord_per_bar",
-                            mood_profile=result.get("intent_summary", {}).get("mood", "neutral"),
+                            mood_profile=res_output.get("intent_summary", {}).get("mood", "neutral"),
                             complexity=0.5,
                             structure=structure,
                             instruments=instruments
@@ -1464,45 +1455,43 @@ if FASTAPI_AVAILABLE:
 
                         # Render MIDI
                         midi_path = render_plan_to_midi(plan, output_midi)
-                        result["midi_path"] = midi_path
+                        res_output["midi_path"] = midi_path
                     except Exception as midi_exc:
                         logging.exception("Failed to generate MIDI from full intent, falling back")
-                        if validated and validated.allow_legacy_fallback:
-                            use_full_pipeline = False
-                        else:
-                            raise HTTPException(
-                                status_code=500,
-                                detail=(
-                                    f"MIDI generation failed and legacy "
-                                    f"fallback is disabled: {midi_exc}"
-                                ),
-                            ) from midi_exc
+                        raise HTTPException(
+                            status_code=500,
+                            detail="MIDI generation failed",
+                        ) from midi_exc
 
-                lyric_text, lyric_source = api._select_lyric_payload(request.intent)
+                lyric_text, lyric_source = select_lyric_payload(request.intent)
 
                 # Build response with structure and instruments info
                 response = {
                     "status": "success",
-                    "result": result,
+                    "intent_schema_version": request.intent_schema_version,
+                    "result": res_output,
                     "lyrics": {
                         "source": lyric_source,
                         "text": lyric_text,
                     },
                 }
+                if tech and hasattr(tech, "energy_curve") and tech.energy_curve is not None:
+                    response["energy_curve"] = pydantic_to_dict(tech.energy_curve)
 
                 # Add structure and instruments information if provided
-                structure = [
-                    section.model_dump()
-                    if hasattr(section, "model_dump")
-                    else section.dict()
-                    for section in validated.structure
-                ] if validated else None
-                instruments = [
-                    track.model_dump()
-                    if hasattr(track, "model_dump")
-                    else track.dict()
-                    for track in validated.instruments
-                ] if validated else None
+                struct_res = None
+                inst_res = None
+                if tech:
+                    t_dict = pydantic_to_dict(tech)
+                    if t_dict.get("timeline"):
+                        from music_brain.api_schemas.ttg_adapter import ttg_dict_to_structure_list
+                        struct_res = ttg_dict_to_structure_list(t_dict.get("timeline", {}))
+                    if t_dict.get("orchestration"):
+                        from music_brain.api_schemas.ttg_adapter import orchestration_dict_to_instruments
+                        inst_res = orchestration_dict_to_instruments(t_dict.get("orchestration", {}))
+                
+                structure = struct_res
+                instruments = inst_res
 
                 if structure:
                     response["structure"] = {
@@ -1574,35 +1563,22 @@ if FASTAPI_AVAILABLE:
             lyric_text, lyric_source = api._select_lyric_payload(request.intent)
 
             # Generate output file if format requested
-            output_midi = None
-            output_audio = None
-            if request.output_format:
-                import tempfile
-                import time
-                if request.output_format in ['mid', 'midi']:
-                    output_midi = str(
-                        Path(tempfile.gettempdir())
-                        / f"generated_{int(time.time())}.mid"
-                    )
-                elif request.output_format in ['wav', 'mp3']:
-                    output_audio = str(
-                        Path(tempfile.gettempdir())
-                        / f"generated_{int(time.time())}.{request.output_format}"
-                    )
-                    output_midi = str(
-                        Path(tempfile.gettempdir())
-                        / f"generated_{int(time.time())}.mid"
-                    )
+            output_midi, output_audio = _create_output_paths(request.output_format)
 
-            result = api.therapy_session(
-                text=lyric_text or request.intent.emotional_intent,
-                motivation=motivation,
-                chaos_tolerance=chaos,
-                output_midi=output_midi,
+            result = await asyncio.wait_for(
+                asyncio.to_thread(
+                    api.therapy_session,
+                    text=lyric_text or request.intent.emotional_intent,
+                    motivation=motivation,
+                    chaos_tolerance=chaos,
+                    output_midi=output_midi,
+                ),
+                timeout=30.0,
             )
 
             response = {
                 "status": "success",
+                "intent_schema_version": request.intent_schema_version,
                 "result": result,
                 "lyrics": {
                     "source": lyric_source,
@@ -1623,53 +1599,79 @@ if FASTAPI_AVAILABLE:
             return response
         except HTTPException:
             raise
-        except Exception as exc:
-            logging.exception("generate failed")
-            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
+        except asyncio.TimeoutError:
+            logging.warning("generate timed out after 30s")
+            raise HTTPException(
+                status_code=504,
+                detail="Generation timed out (30s). Try simpler parameters.",
+            )
 
-    @app.post("/interrogate", summary="Creative Chat",
-              description="Ask the engine anything — 'What chord comes next?', "
-                          "'Make it sadder', 'Suggest a bridge'. Your musical "
-                          "conversation partner.")
+    @app.post("/generate", summary="Compose Music",
+              description="Bring your musical vision to life — describe a mood, "
+                          "pick instruments, set the groove, and let the engine "
+                          "compose harmony, melody, and full arrangement.")
+    async def generate_music(
+        request: Annotated[
+            GenerateRequest,
+            Body(openapi_examples=GENERATE_REQUEST_OPENAPI_EXAMPLES),
+        ],
+    ):
+        return await _handle_generate_music(request)
+
+    v1_router = APIRouter(
+        prefix="/v1",
+        tags=["v1-prd"],
+    )
+
+    @v1_router.post(
+        "/generate",
+        summary="Compose Music (PRD v1)",
+        description="Versioned generate — intent_schema_version, TTG timeline, "
+                    "orchestration (docs/prd/KMIDI_PRD.md). Same handler as /generate.",
+    )
+    async def generate_music_v1(
+        request: Annotated[
+            GenerateRequest,
+            Body(openapi_examples=GENERATE_REQUEST_OPENAPI_EXAMPLES),
+        ],
+    ):
+        return await _handle_generate_music(request)
+
+    app.include_router(v1_router)
+
+    @app.post("/interrogate", summary="Consult the Muse",
+              description="Ask the engine exactly how it interpreted your intent — "
+                          "see the invisible connections it made.")
+    @api_error_handler(log_message="interrogate failed", detail=_HTTP_500_DETAIL)
     async def interrogate(request: InterrogateRequest):
-        # Placeholder: echo back the message with a simple tip
-        try:
-            return {
-                "status": "success",
-                "reply": (
-                    f"Noted: {request.message}. "
-                    "Consider clarifying the desired mood or groove."
-                ),
-                "session_id": request.session_id,
-            }
-        except Exception as exc:  # pragma: no cover
-            logging.exception("interrogate failed")
-            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
+        """Query the current state, logic, or meaning of the session."""
+        return {
+            "status": "success",
+            "reply": (
+                f"Noted: {request.message}. "
+                "Consider clarifying the desired mood or groove."
+            ),
+            "session_id": request.session_id,
+        }
 
     @app.post("/lyrics", summary="Write Lyrics",
               description="Paste or write your lyrics so the engine can weave them "
                           "into the musical fabric.")
-    async def set_lyrics(payload: LyricsRequest):
+    @api_error_handler(log_message="Failed to set lyrics", detail=_HTTP_500_DETAIL)
+    async def set_lyrics_endpoint(payload: LyricsRequest):
         """
         Persist user-supplied lyrics and return a summary.
         """
-        try:
-            return api.set_lyrics(payload.lyrics, source=payload.source or "user")
-        except Exception as exc:  # pragma: no cover
-            logging.exception("Failed to set lyrics")
-            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
+        return set_lyrics(payload.lyrics, source=payload.source or "user")
 
     @app.get("/lyrics", summary="Read Lyrics",
              description="Retrieve the current lyrics — your words, your story.")
-    async def get_lyrics():
+    @api_error_handler(log_message="Failed to fetch lyrics", detail=_HTTP_500_DETAIL)
+    async def get_lyrics_endpoint():
         """
         Return the current lyric payload, source, and any cached generated lyrics.
         """
-        try:
-            return api.get_lyrics()
-        except Exception as exc:  # pragma: no cover
-            logging.exception("Failed to fetch lyrics")
-            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
+        return get_lyrics()
 
     # ========== Audio Emotion Classification Endpoints ==========
 
@@ -1685,6 +1687,7 @@ if FASTAPI_AVAILABLE:
     @app.post("/audio/classify", summary="Hear the Feeling",
               description="Drop in an audio clip and discover its emotional signature — "
                           "what feelings does this sound carry?")
+    @api_error_handler(log_message="audio classify failed", detail="Internal server error.")
     async def classify_audio(request: AudioClassifyRequest):
         """
         Classify emotion from audio file using trained ML models.
@@ -1713,17 +1716,13 @@ if FASTAPI_AVAILABLE:
                 status_code=503,
                 detail="Audio classification dependencies not installed.",
             )
-        except HTTPException:
-            raise
         except FileNotFoundError:
             raise HTTPException(status_code=404, detail="Audio file not found.")
-        except Exception as exc:
-            logging.exception("audio classify failed")
-            raise HTTPException(status_code=500, detail="Internal server error.")
 
     @app.post("/audio/valence-arousal", summary="Mood Map",
               description="Map any sound onto the feeling grid — how positive/negative "
                           "and how energetic/calm.")
+    @api_error_handler(log_message="audio valence-arousal failed", detail="Internal server error.")
     async def get_audio_valence_arousal(request: AudioClassifyRequest):
         """
         Get valence/arousal coordinates from audio.
@@ -1749,8 +1748,6 @@ if FASTAPI_AVAILABLE:
                 "emotion": va["emotion"],
                 "confidence": va["confidence"],
             }
-        except HTTPException:
-            raise
         except ImportError as exc:
             raise HTTPException(
                 status_code=503,
@@ -1758,52 +1755,42 @@ if FASTAPI_AVAILABLE:
             ) from exc
         except FileNotFoundError:
             raise HTTPException(status_code=404, detail="Audio file not found.")
-        except Exception as exc:
-            logging.exception("audio valence-arousal failed")
-            raise HTTPException(status_code=500, detail="Internal server error.")
 
     @app.get("/audio/models", summary="Loaded AI Ears",
              description="See which AI listening models are active — emotion classifiers, "
                          "timbre analyzers, and more.")
+    @api_error_handler(log_message="list audio models failed", detail=_HTTP_500_DETAIL)
     async def list_audio_models():
         """List active audio classification models."""
-        try:
-            models_dir = Path(__file__).parent.parent / "models" / "checkpoints"
-            available = []
+        models_dir = Path(__file__).parent.parent / "models" / "checkpoints"
+        available = []
 
-            if models_dir.exists():
-                for model_dir in models_dir.iterdir():
-                    if model_dir.is_dir() and (model_dir / "best.pt").exists():
-                        available.append({
-                            "name": model_dir.name,
-                            "path": str(model_dir / "best.pt"),
-                        })
+        if models_dir.exists():
+            for model_dir in models_dir.iterdir():
+                if model_dir.is_dir() and (model_dir / "best.pt").exists():
+                    available.append({
+                        "name": model_dir.name,
+                        "path": str(model_dir / "best.pt"),
+                    })
 
-            return {
-                "status": "success",
-                "models": available,
-                "supported_types": ["emotion_7", "voice_type"],
-            }
-        except Exception as exc:
-            logging.exception("list audio models failed")
-            raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
+        return {
+            "status": "success",
+            "models": available,
+            "supported_types": ["emotion_7", "voice_type"],
+        }
 
     @app.post("/voice/classify", summary="Voice Range",
               description="Identify a singer's range — soprano, alto, tenor, or bass — "
                           "so the engine can write in their sweet spot.")
+    @api_error_handler(log_message="voice classify failed", detail="Internal server error.")
     async def classify_voice(request: VoiceClassifyRequest):
         """Identify vocal range from audio."""
         try:
             safe_path = _resolve_audio_path_sandbox(request.audio_path)
             result = api.classify_voice_file(str(safe_path), top_k=request.top_k or 3)
             return {"status": "success", "result": result}
-        except HTTPException:
-            raise
         except FileNotFoundError:
             raise HTTPException(status_code=404, detail="Audio file not found.")
-        except Exception as exc:
-            logging.exception("voice classify failed")
-            raise HTTPException(status_code=500, detail="Internal server error.")
 
     @app.get("/ai/jepa/status", summary="JEPA Models Status",
              description="Check the status of Audio-JEPA, Chord-JEPA, and "
@@ -1858,6 +1845,8 @@ def _main():
             file=sys.stderr,
         )
         sys.exit(1)
+
+    import uvicorn
 
     uvicorn.run("music_brain.api:app", host="127.0.0.1", port=8000, reload=False)
 

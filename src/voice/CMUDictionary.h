@@ -1,4 +1,21 @@
 #pragma once
+/*
+ * CMUDictionary.h - CMU Pronouncing Dictionary Integration
+ * ==========================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Voice Layer: PhonemeConverter (word-level G2P via dictionary)
+ * - Voice Layer: VocoderEngine (IPA / ARPABET pipeline)
+ * - Data: External cmudict file or embedded subset
+ *
+ * Purpose: Loads and queries the CMU dictionary for ARPABET pronunciations,
+ *          with conversion to IPA for vocoder and synthesis.
+ *
+ * Features:
+ * - File and embedded dictionary loading
+ * - Case-insensitive word lookup
+ * - ARPABET to IPA mapping
+ */
 
 #include <string>
 #include <vector>

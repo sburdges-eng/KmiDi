@@ -43,6 +43,13 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_KELLY_CORE=ON -D
 cmake --build build --target KellyFFI -j8
 ```
 
+### Sanitizer build (Debug + ASan/UBSan)
+```bash
+cmake -S . -B build-asan -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_KELLY_CORE=ON -DKMIDI_ENABLE_ASAN=ON
+cmake --build build-asan --target KellyCore -j8
+ctest --test-dir build-asan --output-on-failure     # Run with sanitizer instrumentation
+```
+
 ### Testing
 ```bash
 python3 -m pytest tests/                           # All Python tests
@@ -76,6 +83,16 @@ python3 scripts/sync_entities.py    # Sync shared_schemas/ → TS types + Rust t
 | `BUILD_RT_HARNESS` | ON | Headless RT callback harness |
 | `ENABLE_RTNEURAL` / `ENABLE_ONNX_RUNTIME` | OFF | ML inference backends |
 | `KMIDI_OFFLINE_BUILD` | OFF | Disable FetchContent for offline builds |
+| `KMIDI_ENABLE_ASAN` | OFF | AddressSanitizer + UBSan (Debug builds; mutually exclusive with TSan) |
+| `KMIDI_ENABLE_TSAN` | OFF | ThreadSanitizer (Debug builds; mutually exclusive with ASan) |
+
+## Canonical root
+
+The canonical source tree is the repo root (`KmiDi/`). The following paths are legacy and should not receive new feature development:
+
+- `KmiDi_FINAL/` and `.worktrees/integration-finalize/KmiDi_FINAL/` — prior consolidation artifacts. Remaining live code should be migrated into root per `docs/KMIDI_FINAL_MERGE_PLAN.md`.
+- `KmiDi_PROJECT/` — older project copy with its own `DAIW_*` CMake flags. Do not mix with root CMake options.
+- `USE_KMI_DI_FINAL=ON` gates temporary DSP imports from KmiDi_FINAL. Treat it as a migration bridge, not a parallel build system.
 
 ## Architecture notes
 

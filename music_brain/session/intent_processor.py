@@ -11,9 +11,12 @@ The core philosophy: Rules are broken INTENTIONALLY based on
 emotional justification from the intent schema.
 """
 
-from typing import List, Dict
+from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, field
 import random
+
+# Scoped RNG instance — seed with `_rng.seed(N)` for reproducible tests.
+_rng = random.Random()
 
 from music_brain.session.intent_schema import (
     CompleteSongIntent,
@@ -103,14 +106,23 @@ class GeneratedProduction:
 # =================================================================
 
 def _get_note_index(note: str) -> int:
-    """Get chromatic index of a note."""
-    note = note.replace('b', '#').upper()
+    """Get chromatic index of a note.
+
+    Handles sharps (C#, D#, …) and flats (Db, Eb, …) correctly.
+    Returns 0 (C) for unrecognised input.
+    """
+    note = note.strip()
     if note in CHROMATIC:
         return CHROMATIC.index(note)
-    # Handle flats
-    flat_to_sharp = {'DB': 'C#', 'EB': 'D#', 'GB': 'F#', 'AB': 'G#', 'BB': 'A#'}
-    if note in flat_to_sharp:
-        return CHROMATIC.index(flat_to_sharp[note])
+    if note in CHROMATIC_FLAT:
+        return CHROMATIC_FLAT.index(note)
+    # Normalise case: accept 'bb', 'c#', etc.
+    for idx, name in enumerate(CHROMATIC):
+        if name.upper() == note.upper():
+            return idx
+    for idx, name in enumerate(CHROMATIC_FLAT):
+        if name.upper() == note.upper():
+            return idx
     return 0
 
 
@@ -140,7 +152,7 @@ def generate_progression_avoid_tonic(key: str, mode: str = "major") -> Generated
             (['i', 'iv', 'VI', 'iv'], "Cycling minor, never resolves"),
         ]
 
-    choice = random.choice(progressions)
+    choice = _rng.choice(progressions)
     romans, effect = choice
 
     # Convert to actual chords
@@ -178,7 +190,7 @@ def generate_progression_modal_interchange(key: str, mode: str = "major") -> Gen
             (['i', 'bVI', 'III', 'VII'], "Natural minor with major III"),
         ]
 
-    choice = random.choice(progressions)
+    choice = _rng.choice(progressions)
     romans, effect = choice
     chords = _romans_to_chords(romans, key, mode)
 
@@ -207,7 +219,7 @@ def generate_progression_parallel_motion(key: str, mode: str = "major") -> Gener
         (['I5', 'bIII5', 'IV5', 'V5'], "Punk parallel climb"),
     ]
 
-    choice = random.choice(progressions)
+    choice = _rng.choice(progressions)
     romans, effect = choice
     chords = _romans_to_chords(romans, key, mode)
 
@@ -235,7 +247,7 @@ def generate_progression_unresolved_dissonance(
         (['Im7', 'bVImaj7', 'IVm7', 'bVII7'], "Minor 7th chain - perpetual tension"),
     ]
 
-    choice = random.choice(progressions)
+    choice = _rng.choice(progressions)
     romans, effect = choice
     chords = _romans_to_chords(romans, key, mode)
 
@@ -629,8 +641,16 @@ class IntentProcessor:
         production = processor.generate_production()
     """
 
-    def __init__(self, intent: CompleteSongIntent):
+    def __init__(
+        self,
+        intent: CompleteSongIntent,
+        *,
+        music_learning: Any = None,
+        learning_profiles: Optional[Dict[str, str]] = None,
+    ):
         self.intent = intent
+        self.music_learning = music_learning
+        self.learning_profiles = learning_profiles or {}
         self._parse_intent()
 
     def _parse_intent(self):
@@ -644,8 +664,39 @@ class IntentProcessor:
         self.vulnerability = self.intent.song_intent.vulnerability_scale
         self.imagery = self.intent.song_intent.imagery_texture
 
+        if not (self.rule_to_break or "").strip():
+            if self.learning_profiles.get("rulebreak") and self.music_learning is not None:
+                mood = self.intent.song_intent.mood_primary or "neutral"
+                learned = self.music_learning.choose_rulebreak(
+                    mood,
+                    self.learning_profiles["rulebreak"],
+                )
+                if learned:
+                    self.rule_to_break = learned
+
     def generate_harmony(self) -> GeneratedProgression:
         """Generate chord progression based on harmony rule to break."""
+        prof = self.learning_profiles.get("harmony")
+        if prof and self.music_learning is not None:
+            mood = self.intent.song_intent.mood_primary or "neutral"
+            chords = self.music_learning.generate_chords(
+                mood,
+                prof,
+                length=4,
+                key=self.key,
+                mode=self.mode,
+            )
+            return GeneratedProgression(
+                chords=chords,
+                key=self.key,
+                mode=self.mode,
+                roman_numerals=[str(c) for c in chords],
+                rule_broken="learned_profile",
+                rule_effect="Example-based harmony selection",
+                voice_leading_notes=[],
+                emotional_arc=[mood],
+            )
+
         rule = self.rule_to_break
 
         if rule == "HARMONY_AvoidTonicResolution":
@@ -662,6 +713,26 @@ class IntentProcessor:
 
     def generate_groove(self) -> GeneratedGroove:
         """Generate groove pattern based on rhythm rule to break."""
+        prof = self.learning_profiles.get("groove")
+        if prof and self.music_learning is not None:
+            mood = self.intent.song_intent.mood_primary or "neutral"
+            genre = self.intent.technical_constraints.technical_genre or "straight"
+            learned = self.music_learning.generate_groove(
+                mood,
+                prof,
+                tempo=self.tempo,
+                genre=genre,
+            )
+            return GeneratedGroove(
+                pattern_name=str(learned.get("pattern_name", "learned")),
+                tempo_bpm=int(learned.get("tempo_bpm", self.tempo)),
+                swing_factor=float(learned.get("swing_factor", 0.0)),
+                timing_offsets_16th=list(learned.get("timing_offsets_16th", [0.0] * 16)),
+                velocity_curve=[int(v) for v in learned.get("velocity_curve", [80] * 16)],
+                rule_broken="learned_profile",
+                rule_effect="Example-based groove",
+            )
+
         rule = self.rule_to_break
 
         if rule == "RHYTHM_ConstantDisplacement":
@@ -682,6 +753,38 @@ class IntentProcessor:
 
     def generate_arrangement(self) -> GeneratedArrangement:
         """Generate arrangement based on narrative arc."""
+        prof = self.learning_profiles.get("arrangement")
+        if prof and self.music_learning is not None:
+            mood = self.intent.song_intent.mood_primary or "neutral"
+            genre = self.intent.technical_constraints.technical_genre or "general"
+            data = self.music_learning.generate_arrangement(
+                mood,
+                prof,
+                length=6,
+                genre=genre,
+            )
+            labels = data.get("sections", [])
+            sections = []
+            arc: List[float] = []
+            for i, name in enumerate(labels):
+                e = 0.25 + 0.12 * (i % 6)
+                sections.append({
+                    "name": str(name).title(),
+                    "bars": 8,
+                    "energy": e,
+                    "notes": f"Learned section: {name}",
+                })
+                arc.append(e)
+            if not sections:
+                sections = [{"name": "Verse", "bars": 8, "energy": 0.5, "notes": "Learned default"}]
+                arc = [0.5]
+            return GeneratedArrangement(
+                sections=sections,
+                dynamic_arc=arc,
+                rule_broken="learned_profile",
+                rule_effect=", ".join(data.get("instruments", [])) or "Learned arrangement",
+            )
+
         rule = self.rule_to_break
 
         if rule == "ARRANGEMENT_StructuralMismatch":
@@ -693,11 +796,28 @@ class IntentProcessor:
 
     def generate_production(self) -> GeneratedProduction:
         """Generate production guidelines."""
-        return generate_production_guidelines(
+        base = generate_production_guidelines(
             self.rule_to_break,
             self.vulnerability,
             self.imagery
         )
+        prof = self.learning_profiles.get("expression")
+        if prof and self.music_learning is not None:
+            mood = self.intent.song_intent.mood_primary or "neutral"
+            expr = self.music_learning.generate_expression(mood, prof)
+            curve = expr.get("velocity_curve") or []
+            if curve:
+                preview = curve[:8]
+                extra = f"Learned expression curve (sample): {preview}"
+                return GeneratedProduction(
+                    eq_notes=base.eq_notes,
+                    dynamics_notes=base.dynamics_notes + [extra],
+                    space_notes=base.space_notes,
+                    vocal_treatment=base.vocal_treatment,
+                    rule_broken=base.rule_broken,
+                    rule_effect=base.rule_effect,
+                )
+        return base
 
     def generate_all(self) -> Dict:
         """Generate all elements and return as dict."""
@@ -716,7 +836,7 @@ class IntentProcessor:
         }
 
 
-def process_intent(intent: CompleteSongIntent) -> Dict:
+def process_intent(intent: CompleteSongIntent, **kwargs: Any) -> Dict:
     """
     Convenience function to process an intent and return all generated elements.
 
@@ -726,5 +846,5 @@ def process_intent(intent: CompleteSongIntent) -> Dict:
     Returns:
         Dict with harmony, groove, arrangement, production, and summary
     """
-    processor = IntentProcessor(intent)
+    processor = IntentProcessor(intent, **kwargs)
     return processor.generate_all()

@@ -1,22 +1,26 @@
 #pragma once
+/*
+ * HybridCoupling.h - AI vs Human Emotional State Mixing
+ * =======================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: QuantumEmotionalField (QuantumEmotionalState operands)
+ * - ML / Bridge Layers: upstream “AI” affect estimates
+ * - UI / Input: human-reported or biometric-derived states
+ *
+ * Purpose: Blends machine-inferred and human emotional wavefunctions with
+ *          tunable coupling strength.
+ *
+ * Features:
+ * - Normalized α/β mixing coefficients
+ * - Cross-influence energy term
+ */
 
 #include "engine/QuantumEmotionalField.h"
 #include <complex>
 
 namespace kelly {
 
-/**
- * Hybrid AI-Human Emotional Coupling
- * 
- * Implements:
- * - Ψ_hybrid = αΨ_AI + βΨ_human
- * - Cross-influence term: ΔH = κ Re(Ψ_AI* Ψ_human)
- * - Normalization: |α|² + |β|² = 1
- */
-
-/**
- * Hybrid Coupling Calculator
- */
 class HybridCoupling {
 public:
     HybridCoupling(float alpha = 0.5f, float beta = 0.5f, float kappa = 0.3f);

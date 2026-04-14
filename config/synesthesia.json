@@ -1,0 +1,36 @@
+{
+  "emotions": {
+    "happy":        {"chaos": 0.3,  "complexity": 0.4},
+    "sad":          {"chaos": 0.2,  "complexity": 0.6},
+    "angry":        {"chaos": 0.8,  "complexity": 0.7},
+    "calm":         {"chaos": 0.1,  "complexity": 0.3},
+    "excited":      {"chaos": 0.6,  "complexity": 0.5},
+    "melancholic":  {"chaos": 0.25, "complexity": 0.65},
+    "peaceful":     {"chaos": 0.05, "complexity": 0.2},
+    "intense":      {"chaos": 0.7,  "complexity": 0.8}
+  },
+  "musical_descriptors": {
+    "funky":    {"chaos": 0.5,  "complexity": 0.6},
+    "smooth":   {"chaos": 0.15, "complexity": 0.4},
+    "groovy":   {"chaos": 0.4,  "complexity": 0.5},
+    "ambient":  {"chaos": 0.2,  "complexity": 0.3},
+    "punchy":   {"chaos": 0.3,  "complexity": 0.4},
+    "ethereal": {"chaos": 0.35, "complexity": 0.7},
+    "driving":  {"chaos": 0.45, "complexity": 0.55},
+    "dreamy":   {"chaos": 0.3,  "complexity": 0.5}
+  },
+  "textures": {
+    "warm":   {"chaos": 0.2,  "complexity": 0.4},
+    "bright": {"chaos": 0.4,  "complexity": 0.5},
+    "dark":   {"chaos": 0.3,  "complexity": 0.6},
+    "crisp":  {"chaos": 0.25, "complexity": 0.35},
+    "muddy":  {"chaos": 0.5,  "complexity": 0.3},
+    "airy":   {"chaos": 0.2,  "complexity": 0.45}
+  },
+  "dynamics": {
+    "loud":    {"chaos": 0.6,  "complexity": 0.5},
+    "soft":    {"chaos": 0.15, "complexity": 0.35},
+    "dynamic": {"chaos": 0.55, "complexity": 0.6},
+    "static":  {"chaos": 0.1,  "complexity": 0.2}
+  }
+}

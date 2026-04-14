@@ -1,13 +1,19 @@
 #pragma once
-
-/**
- * QuantumVADSystem.h
+/*
+ * QuantumVADSystem.h - Classical VAD + Quantum Field Integration
+ * ===============================================================
  *
- * Integrated system combining:
- * - Classical VAD calculations
- * - Quantum emotional field
- * - Emotion-to-music mapping
- * - Voice synthesis parameters
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: VADSystem (classical pipeline)
+ * - Engine Layer: QuantumEmotionalField (superposition layer)
+ * - Engine Layer: EmotionToMusicMapper (audio/voice targets)
+ * - Engine Layer: EmotionThesaurus (optional lexical grounding)
+ *
+ * Purpose: Single façade that runs quantum processing atop VAD outputs.
+ *
+ * Features:
+ * - QuantumProcessingResult bundling
+ * - Voice parameter extraction hooks
  */
 
 #include "engine/VADSystem.h"
@@ -17,9 +23,6 @@
 
 namespace kelly {
 
-/**
- * Quantum VAD System - Full integration of classical and quantum models
- */
 class QuantumVADSystem {
 public:
     QuantumVADSystem(const EmotionThesaurus* thesaurus = nullptr);

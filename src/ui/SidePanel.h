@@ -1,4 +1,19 @@
 #pragma once
+/*
+ * SidePanel.h - Cassette Side A / Side B Input Strip
+ * ===================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - UI Layer: CassetteView, PluginEditor (Side A “where you are”, Side B goals)
+ * - Common Layer: Types.h (SideA / SideB state structs)
+ * - Engine Layer: Intent and emotion capture from UI
+ *
+ * Purpose: Captures paired emotional/theory states for generative contrast.
+ *
+ * Features:
+ * - Distinct paint/layout per Side enum
+ * - State getters for host logic
+ */
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "../common/Types.h"
@@ -6,12 +21,6 @@
 
 namespace kelly {
 
-/**
- * Side Panel - Represents Side A or Side B of the cassette.
- * 
- * Currently implemented in PluginEditor.cpp.
- * This will be separated in Phase 3 for modular UI.
- */
 class SidePanel : public juce::Component {
 public:
     enum class Side {

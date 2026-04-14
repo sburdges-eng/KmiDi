@@ -1,4 +1,19 @@
 #pragma once
+/*
+ * OSCOutputGenerator.h - VAD and Music Parameter OSC Bundles
+ * =============================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: VADCalculator, EmotionMapper (source state)
+ * - Bridge Layer: OSC clients / Python brain (receives /kelly/* addresses)
+ * - Common Layer: Types.h (musical parameters)
+ *
+ * Purpose: Serializes VAD and derived music parameters to OSC messages.
+ *
+ * Features:
+ * - Standard /kelly/vad/* and /kelly/music/* address layout
+ * - Optional bundled parameter snapshots
+ */
 
 #include "engine/VADCalculator.h"
 #include "engine/EmotionMapper.h"

@@ -1,22 +1,25 @@
 #pragma once
+/*
+ * GeometricTopology.h - VAD Manifold Geometry
+ * =============================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: VADCalculator (VADState trajectories)
+ * - Engine Layer: TemporalMemory, PredictiveTrendAnalyzer (derivatives)
+ *
+ * Purpose: Curvature, distances, and attractors in valence-arousal-dominance space.
+ *
+ * Features:
+ * - Discrete curvature from velocity/acceleration
+ * - Euclidean emotional distance
+ * - Stability / attractor heuristics
+ */
 
 #include "engine/VADCalculator.h"
 #include <vector>
 
 namespace kelly {
 
-/**
- * Geometric and Topological Analysis
- * 
- * Implements:
- * - Emotional manifold curvature
- * - Emotional distance metrics
- * - Emotional attractors (stable states)
- */
-
-/**
- * Geometric Topology Calculator
- */
 class GeometricTopology {
 public:
     /**

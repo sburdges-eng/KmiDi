@@ -5,7 +5,10 @@ import platform
 import tempfile
 
 import pytest
-import torch
+
+torch = pytest.importorskip("torch")
+onnx = pytest.importorskip("onnx")
+
 import numpy as np
 
 from music_brain.jepa.audio_jepa import AudioJEPAEncoder

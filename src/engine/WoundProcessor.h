@@ -1,4 +1,19 @@
 #pragma once
+/*
+ * WoundProcessor.h - Wound Text → EmotionNode (Phase 1)
+ * =======================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: EmotionThesaurus (216-node lookup and VAD)
+ * - Engine Layer: IntentPipeline (invokes processWound)
+ * - Common Layer: Types.h (Wound, EmotionNode)
+ *
+ * Purpose: Keyword and intensity heuristics mapping prose wounds to nodes.
+ *
+ * Features:
+ * - Phrase-aware keyword matching
+ * - Intensity inference from modifiers
+ */
 
 #include "common/Types.h"
 #include "engine/EmotionThesaurus.h"
@@ -9,18 +24,6 @@
 
 namespace kelly {
 
-/**
- * Wound Processor - Processes emotional wounds into structured emotion data.
- * 
- * Analyzes wound descriptions using keyword matching and emotion thesaurus
- * to identify the most appropriate emotional state.
- * 
- * Features:
- * - Keyword matching with phrase support and word boundary detection
- * - Intensity calculation from description text (analyzes intensifiers)
- * - Multi-emotion detection and confidence scoring
- * - Context-aware emotion mapping
- */
 class WoundProcessor {
 public:
     explicit WoundProcessor(EmotionThesaurus& thesaurus) : thesaurus_(thesaurus) {}

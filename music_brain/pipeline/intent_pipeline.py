@@ -13,17 +13,15 @@ from __future__ import annotations
 import time
 from typing import Any, Dict, List
 
+from music_brain.utils.serialization import pydantic_to_dict
+from music_brain.theory.constants import VALID_MUSICAL_MODES
+
 from music_brain.engine_api.schema import CompleteSongIntentRequest
 from music_brain.session.intent_schema import CompleteSongIntent
 
 # -----------------------------------------------------------------------------
 # Stage 1 constants (do not override explicitly provided request values)
 # -----------------------------------------------------------------------------
-
-VALID_MUSICAL_MODES = {
-    "major", "minor", "dorian", "phrygian", "lydian",
-    "mixolydian", "aeolian", "locrian",
-}
 
 # Canonical emotion mapping for inferring mood_primary when not explicitly provided.
 # Used only in Stage 1 (Normalize).
@@ -48,17 +46,29 @@ DEFAULT_INSTRUMENTS = [{"instrument": "piano", "techniques": []}]
 DEFAULT_NARRATIVE_ARC = "Climb-to-Climax"
 DEFAULT_GROOVE_FEEL = "Straight/Driving"
 
+# Keys passed to CompleteSongIntentRequest (extras like energy_curve are stripped).
+_ALLOWED_COMPLETE = frozenset(
+    {
+        "core_desire",
+        "mood_primary",
+        "genre",
+        "tempo",
+        "key_mode",
+        "structure",
+        "instruments",
+        "allow_legacy_fallback",
+        "groove_feel",
+        "narrative_arc",
+        "rule_to_break",
+        "rule_justification",
+    }
+)
+
 
 def _tech_dict(request: Any) -> Dict[str, Any]:
     """Get technical payload as dict. Does not override; only provides access."""
     tech = getattr(request.intent, "technical", None) or {}
-    if hasattr(tech, "model_dump"):
-        return tech.model_dump()
-    if hasattr(tech, "dict"):
-        return tech.dict()
-    if isinstance(tech, dict):
-        return tech
-    return getattr(tech, "__dict__", {}) or {}
+    return pydantic_to_dict(tech)
 
 
 def _get_str(obj: Any, key: str, default: str = "") -> str:
@@ -124,15 +134,12 @@ def _normalize_structure(tech: Dict[str, Any]) -> List[Dict[str, Any]]:
         return DEFAULT_STRUCTURE
     out: List[Dict[str, Any]] = []
     for item in raw:
-        if hasattr(item, "model_dump"):
-            out.append(item.model_dump())
-        elif hasattr(item, "dict"):
-            out.append(item.dict())
-        elif isinstance(item, dict):
+        as_dict = pydantic_to_dict(item)
+        if isinstance(as_dict, dict) and as_dict:
             out.append({
-                "name": item.get("name", "verse"),
-                "bars": int(item.get("bars", 4)),
-                "repetitions": int(item.get("repetitions", 1)),
+                "name": as_dict.get("name", "verse"),
+                "bars": int(as_dict.get("bars", 4)),
+                "repetitions": int(as_dict.get("repetitions", 1)),
             })
         else:
             out.append({"name": "verse", "bars": 4, "repetitions": 1})
@@ -148,16 +155,46 @@ def _normalize_instruments(tech: Dict[str, Any]) -> List[Dict[str, Any]]:
         return DEFAULT_INSTRUMENTS
     out: List[Dict[str, Any]] = []
     for item in raw:
-        if hasattr(item, "model_dump"):
-            out.append(item.model_dump())
-        elif hasattr(item, "dict"):
-            out.append(item.dict())
-        elif isinstance(item, dict):
-            inst = item.get("instrument") or item.get("name") or item.get("type") or "piano"
-            out.append({"instrument": str(inst), "techniques": item.get("techniques", []) or []})
+        as_dict = pydantic_to_dict(item)
+        if isinstance(as_dict, dict) and as_dict:
+            inst = as_dict.get("instrument") or as_dict.get("name") or as_dict.get("type") or "piano"
+            out.append({"instrument": str(inst), "techniques": as_dict.get("techniques", []) or []})
         else:
             out.append({"instrument": str(item), "techniques": []})
     return out if out else DEFAULT_INSTRUMENTS
+
+
+def _timeline_present(tech: Dict[str, Any]) -> bool:
+    raw = tech.get("timeline")
+    if raw is None:
+        return False
+    if isinstance(raw, dict) and not raw:
+        return False
+    return True
+
+
+def _orchestration_present(tech: Dict[str, Any]) -> bool:
+    raw = tech.get("orchestration")
+    if raw is None:
+        return False
+    raw = pydantic_to_dict(raw)
+    if isinstance(raw, dict) and not raw.get("roles"):
+        return False
+    return True
+
+
+def _structure_from_ttg(tech: Dict[str, Any]) -> List[Dict[str, Any]]:
+    from music_brain.api_schemas.ttg_adapter import ttg_dict_to_structure_list
+
+    timeline_raw = pydantic_to_dict(tech.get("timeline"))
+    return ttg_dict_to_structure_list(timeline_raw)
+
+
+def _instruments_from_orchestration(tech: Dict[str, Any]) -> List[Dict[str, Any]]:
+    from music_brain.api_schemas.ttg_adapter import orchestration_dict_to_instruments
+
+    orch = pydantic_to_dict(tech.get("orchestration"))
+    return orchestration_dict_to_instruments(orch)
 
 
 class IntentPipeline:
@@ -207,8 +244,17 @@ class IntentPipeline:
 
         tempo = _infer_tempo(tech)
         key_mode = _infer_key_mode(tech)
-        structure = _normalize_structure(tech)
-        instruments = _normalize_instruments(tech)
+
+        # PRD TTG v1: timeline + orchestration take precedence over flat fields.
+        if _timeline_present(tech):
+            structure = _structure_from_ttg(tech)
+        else:
+            structure = _normalize_structure(tech)
+
+        if _orchestration_present(tech):
+            instruments = _instruments_from_orchestration(tech)
+        else:
+            instruments = _normalize_instruments(tech)
 
         # Optional schema fields; use explicit if provided
         narrative_arc = _get_str(intent, "narrative_arc") or _get_str(tech, "narrative_arc") or DEFAULT_NARRATIVE_ARC
@@ -220,7 +266,7 @@ class IntentPipeline:
         if rule_justification == "":
             rule_justification = None
 
-        return {
+        out = {
             "core_desire": core_desire,
             "mood_primary": mood_primary,
             "genre": genre,
@@ -234,6 +280,10 @@ class IntentPipeline:
             "rule_to_break": rule_to_break,
             "rule_justification": rule_justification,
         }
+        energy = tech.get("energy_curve")
+        if energy is not None:
+            out["energy_curve"] = pydantic_to_dict(energy)
+        return out
 
     # -------------------------------------------------------------------------
     # Stage 2: Validate — normalized dict → CompleteSongIntentRequest
@@ -244,23 +294,16 @@ class IntentPipeline:
         Convert normalized dict to CompleteSongIntentRequest.
         Pydantic handles validation and coercion.
         """
-        # Ensure structure/instruments are valid for Pydantic (list of dicts)
         structure = normalized.get("structure", DEFAULT_STRUCTURE)
         instruments = normalized.get("instruments", DEFAULT_INSTRUMENTS)
+        payload = {k: normalized[k] for k in _ALLOWED_COMPLETE if k in normalized}
+        payload["structure"] = structure
+        payload["instruments"] = instruments
         try:
             if hasattr(CompleteSongIntentRequest, "model_validate"):
-                return CompleteSongIntentRequest.model_validate({
-                    **normalized,
-                    "structure": structure,
-                    "instruments": instruments,
-                })
-            return CompleteSongIntentRequest.parse_obj({
-                **normalized,
-                "structure": structure,
-                "instruments": instruments,
-            })
+                return CompleteSongIntentRequest.model_validate(payload)
+            return CompleteSongIntentRequest.parse_obj(payload)
         except Exception:
-            # Re-raise with context
             raise
 
     # -------------------------------------------------------------------------

@@ -1,18 +1,24 @@
 #pragma once
+/*
+ * CassetteView.h - Cassette Chrome and Content Host
+ * ==================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - UI Layer: SidePanel, EmotionWorkstation (nested content)
+ * - UI Layer: KellyLookAndFeel (shared colors for chrome)
+ *
+ * Purpose: Animated cassette metaphor wrapping the main editor surface.
+ *
+ * Features:
+ * - Reel animation timer
+ * - Optional embedded content component
+ * - Label and window customization
+ */
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace kelly {
 
-/**
- * Cassette View - Main visual container for the cassette tape aesthetic.
- * 
- * Full v2.0 visual design with:
- * - Animated tape reels
- * - Realistic cassette body with texture
- * - Label area with custom text
- * - Tape window showing content
- */
 class CassetteView : public juce::Component,
                      public juce::Timer {
 public:

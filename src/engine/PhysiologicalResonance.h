@@ -1,20 +1,25 @@
 #pragma once
+/*
+ * PhysiologicalResonance.h - Biometric Energy Coupling
+ * ======================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Biometric Layer: BiometricInput (HR, respiration, EDA)
+ * - Engine Layer: VADCalculator (emotion coordinates)
+ * - Engine Layer: UnifiedFieldEnergy (E_bio term)
+ *
+ * Purpose: Maps physiological signals to scalar bio-energy for field equations.
+ *
+ * Features:
+ * - Weighted sum of cardiac and electrodermal components
+ * - Coupling gain k_bio
+ */
 
 #include "engine/VADCalculator.h"
 #include "biometric/BiometricInput.h"
 #include <vector>
 
 namespace kelly {
-
-/**
- * Physiological Resonance System
- * 
- * Implements coupling between emotional energy and biological signals:
- * - E_bio(t) = α_H H(t) + α_R R(t) + α_G G(t)
- * - k_bio = dE/dE_bio
- * - Neural phase synchrony
- * - Biofield feedback loop
- */
 
 struct PhysiologicalEnergy {
     float heartRateComponent;      // α_H H(t)
@@ -27,9 +32,6 @@ struct PhysiologicalEnergy {
           galvanicComponent(0.0f), totalEnergy(0.0f) {}
 };
 
-/**
- * Physiological Resonance Calculator
- */
 class PhysiologicalResonance {
 public:
     PhysiologicalResonance(

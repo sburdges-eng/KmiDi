@@ -1,0 +1,39 @@
+{
+  "genres": {
+    "lofi_hiphop": {
+      "name": "Lofi Hip Hop",
+      "emotional_tags": ["chill", "relaxed", "nostalgic", "calm", "study"],
+      "complexity_range": [0.1, 0.4],
+      "chaos_range":      [0.1, 0.3],
+      "default_bpm": 80
+    },
+    "synthwave": {
+      "name": "Synthwave",
+      "emotional_tags": ["driving", "retro", "energetic", "neon", "night"],
+      "complexity_range": [0.3, 0.6],
+      "chaos_range":      [0.2, 0.4],
+      "default_bpm": 110
+    },
+    "ambient_drone": {
+      "name": "Ambient Drone",
+      "emotional_tags": ["ethereal", "dark", "peaceful", "dreamy", "floating"],
+      "complexity_range": [0.1, 0.3],
+      "chaos_range":      [0.0, 0.2],
+      "default_bpm": 60
+    },
+    "hard_techno": {
+      "name": "Hard Techno",
+      "emotional_tags": ["aggressive", "intense", "driving", "dark", "angry"],
+      "complexity_range": [0.4, 0.7],
+      "chaos_range":      [0.6, 0.9],
+      "default_bpm": 140
+    },
+    "orchestral_cinematic": {
+      "name": "Orchestral Cinematic",
+      "emotional_tags": ["epic", "sad", "triumphant", "grand", "melancholic"],
+      "complexity_range": [0.6, 1.0],
+      "chaos_range":      [0.3, 0.6],
+      "default_bpm": 75
+    }
+  }
+}

@@ -1,4 +1,17 @@
 #pragma once
+/*
+ * emotion_engine.h - Legacy Emotion Engine (Early Sketch)
+ * ========================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Core Layer: Legacy types superseded by common/Types.h + engine/EmotionThesaurus
+ * - Engine Layer: IntentPipeline / EmotionMapper (prefer for new code)
+ *
+ * Purpose: Historical minimal emotion model retained for compatibility or tests.
+ *
+ * Features:
+ * - EmotionCategory, EmotionNode, MusicalAttributes stubs
+ */
 
 #include <string>
 #include <vector>

@@ -1,11 +1,19 @@
 #pragma once
-
-/**
- * AdaptiveNormalizer - Adaptive normalization based on user baseline
- * ===================================================================
+/*
+ * AdaptiveNormalizer.h - Biometric Baseline Normalization
+ * =========================================================
  *
- * Establishes historical baseline and adapts biometric readings
- * to emotion parameters based on individual user patterns.
+ * CONNECTIONS (for Cursor Graph):
+ * - Biometric Layer: BiometricInput::BiometricData (input stream)
+ * - Engine Layer: Emotion / VAD mappers (normalized scalar features)
+ * - Biometric Layer: HealthKitBridge, FitbitBridge (upstream sources)
+ *
+ * Purpose: Maintains rolling history and baselines so raw sensor values map
+ *          consistently to musical and emotional parameters per user.
+ *
+ * Features:
+ * - Rolling windows and baseline statistics
+ * - Normalized outputs for downstream mapping
  */
 
 #include "biometric/BiometricInput.h"

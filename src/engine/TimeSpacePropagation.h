@@ -1,16 +1,24 @@
 #pragma once
+/*
+ * TimeSpacePropagation.h - Emotional Field Wave Propagation
+ * ==========================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: QuantumEmotionalField (Ψ_E evolution)
+ * - Engine Layer: UnifiedFieldEnergy (energy accounting)
+ * - Engine Layer: VADCalculator (VADState sources in FieldSource)
+ *
+ * Purpose: Discrete spatio-temporal stepping of the emotional wave equation.
+ *
+ * Features:
+ * - Configurable speed, damping, and mass term
+ * - External FieldSource injection
+ */
 
 #include "engine/QuantumEmotionalField.h"
 #include <vector>
 
 namespace kelly {
-
-/**
- * Time-Space Propagation System
- * 
- * Implements wave equation for emotional field propagation:
- * ∂²Ψ_E/∂t² = c_E²∇²Ψ_E - γ∂Ψ_E/∂t - μ²Ψ_E + S(x,t)
- */
 
 struct FieldSource {
     float position[3];  // Spatial position
@@ -19,9 +27,6 @@ struct FieldSource {
     VADState emotionalContent;  // Emotional content of source
 };
 
-/**
- * Time-Space Propagation Calculator
- */
 class TimeSpacePropagation {
 public:
     TimeSpacePropagation(

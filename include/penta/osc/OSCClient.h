@@ -1,4 +1,20 @@
 #pragma once
+/*
+ * OSCClient.h - Lightweight OSC UDP Sender
+ * ==========================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - OSC: OSCMessage (penta/osc/OSCMessage.h)
+ * - Bridge Layer: OSCBridge.h (higher-level Kelly plugin bridge)
+ * - Optional: JUCE OSCSender (private implementation on supported builds)
+ *
+ * Purpose: Minimal dependency OSC client for fire-and-forget or simple
+ *          parameter messages to a remote host.
+ *
+ * Features:
+ * - Configurable host/port
+ * - sendFloat, sendInt, sendString helpers
+ */
 
 #include <string>
 #include <vector>

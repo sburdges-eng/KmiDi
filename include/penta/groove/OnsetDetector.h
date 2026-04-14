@@ -70,9 +70,9 @@ namespace penta::groove
         uint64_t onsetPosition_;
         uint64_t lastOnsetPosition_;
         uint64_t sampleCounter_;
-        size_t fluxHistoryIndex_ = 0;
-        size_t fluxHistoryCount_ = 0;
-        float lastFlux_ = 0.0f;
+        [[maybe_unused]] size_t fluxHistoryIndex_ = 0;   // Used by src/ impl (ring-buffer); unused by src_penta-core (rotate)
+        [[maybe_unused]] size_t fluxHistoryCount_ = 0;   // Used by src/ impl
+        [[maybe_unused]] float lastFlux_ = 0.0f;         // Used by src/ impl
     };
 
 } // namespace penta::groove

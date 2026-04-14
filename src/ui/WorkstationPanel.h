@@ -1,4 +1,19 @@
 #pragma once
+/*
+ * WorkstationPanel.h - Multi-Track MIDI Workstation UI
+ * =====================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - UI Layer: EmotionWorkstation / PluginEditor (hosts panel)
+ * - Common Layer: Types.h (EmotionNode, track metadata)
+ * - MIDI Layer: Generated MIDI buffers / editors (visualization)
+ *
+ * Purpose: DAW-like track list with mute/solo/volume for generated parts.
+ *
+ * Features:
+ * - Per-track controls and metering hooks
+ * - Timer-driven refresh for live updates
+ */
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -8,15 +23,6 @@
 
 namespace kelly {
 
-/**
- * WorkstationPanel - Multi-track MIDI workstation interface
- * 
- * Provides a DAW-like view of all generated MIDI tracks with:
- * - Track list with controls (mute, solo, volume, pan)
- * - Track visualization
- * - Individual track editing
- * - Track management
- */
 class WorkstationPanel : public juce::Component,
                          public juce::Timer {
 public:

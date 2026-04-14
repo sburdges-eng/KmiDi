@@ -1,4 +1,20 @@
 #pragma once
+/*
+ * EmotionMusicMapper.h - Formula-Based Emotion → Music Mapping
+ * =============================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Common Layer: Types.h (EmotionNode, musical targets)
+ * - Engine Layer: EmotionMapper, VADCalculator (upstream affect)
+ * - Engine Layer: MidiKompanionBrain / GrooveEngine (downstream tempo/feel)
+ *
+ * Purpose: Deterministic research-style formulas from valence/arousal/dominance
+ *          to tempo, velocity, mode, and therapeutic scoring helpers.
+ *
+ * Features:
+ * - Tempo, dynamics, and mode rules
+ * - Reward and resonance helper metrics
+ */
 
 #include "common/Types.h"
 #include <algorithm>

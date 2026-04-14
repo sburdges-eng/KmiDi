@@ -1,4 +1,19 @@
 #pragma once
+/*
+ * EQPresetManager.h - Emotion/Genre EQ Presets
+ * =============================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - UI Layer: MasterEQComponent, EQBandControls, EQCurveView
+ * - Engine Layer: EmotionMapper (emotion-tagged preset selection)
+ * - Data: JSON preset files on disk (juce::File)
+ *
+ * Purpose: Loads and queries EQ band presets for mixing UI.
+ *
+ * Features:
+ * - Per-emotion and per-genre preset lookup
+ * - JSON-driven band lists
+ */
 
 #include <juce_core/juce_core.h>
 #include <vector>
@@ -7,12 +22,6 @@
 
 namespace kelly {
 
-/**
- * EQ Preset Manager
- * 
- * Manages EQ presets based on emotions and genres.
- * Loads presets from JSON file and provides lookup functionality.
- */
 class EQPresetManager {
 public:
     /**

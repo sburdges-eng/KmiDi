@@ -24,6 +24,9 @@ option(KMIDI_OFFLINE_BUILD "Disallow network dependency resolution at configure/
 option(BUILD_RT_HARNESS "Build headless RT callback harness" ON)
 # MIDI-CI Property Exchange daemon (JSON microformat -> SysEx via libremidi)
 option(BUILD_MIDI_CI_DAEMON "Build MIDI-CI microformat-to-SysEx daemon" OFF)
+# Sanitizers (ASan+UBSan or TSan; Debug builds only; mutually exclusive)
+option(KMIDI_ENABLE_ASAN "Enable AddressSanitizer + UndefinedBehaviorSanitizer" OFF)
+option(KMIDI_ENABLE_TSAN "Enable ThreadSanitizer (mutually exclusive with ASAN)" OFF)
 
 # KmiDi_FINAL integration options
 option(USE_KMI_DI_FINAL "Use existing KmiDi_FINAL components" OFF)
@@ -276,6 +279,19 @@ list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/export/StemExporter\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/project/ProjectFile\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/groove_bindings\\.cpp$")
 
+# ODR Consolidation: Exclude src/ variants where src_penta-core/ is canonical
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/harmony/ChordAnalyzer\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/harmony/ChordAnalyzerSIMD\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/harmony/HarmonyEngine\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/osc/OSCMessage\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/osc/RTMessageQueue\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/groove/RhythmQuantizer\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/groove/TempoEstimator\\.cpp$")
+# Re-evaluating GrooveEngine and OnsetDetector: src_penta-core is actually RT-safe and better, so exlude src/ side here too
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/groove/GrooveEngine\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/groove/OnsetDetector\\.cpp$")
+
+
 if(BUILD_KELLY_CORE)
 add_library(KellyCore STATIC ${KELLY_CORE_SOURCES})
 
@@ -305,6 +321,7 @@ target_link_libraries(KellyCore PUBLIC
     juce::juce_dsp
     juce::juce_osc
     readerwriterqueue
+    penta_core
 )
 # Link Rust Intent IR if available
 if(KMIDI_HAS_INTENT_IR)
@@ -363,6 +380,21 @@ target_compile_options(KellyCore PRIVATE
 )
 # Wno-*: full warning-clean build; many params/vars are interface or reserved. Tidy per-file when touching.
 # -Wno-deprecated-declarations: JUCE Font(height, style) → Font(FontOptions); migrate when editing UI.
+
+# Sanitizer instrumentation (Debug builds; compile after all KellyCore config is settled)
+if(KMIDI_ENABLE_ASAN AND KMIDI_ENABLE_TSAN)
+    message(FATAL_ERROR "KMIDI_ENABLE_ASAN and KMIDI_ENABLE_TSAN are mutually exclusive")
+endif()
+if(KMIDI_ENABLE_ASAN)
+    include(Sanitizers)
+    enable_sanitizers(KellyCore)
+    message(STATUS "KellyCore: ASan + UBSan enabled")
+endif()
+if(KMIDI_ENABLE_TSAN)
+    include(Sanitizers)
+    enable_thread_sanitizer(KellyCore)
+    message(STATUS "KellyCore: ThreadSanitizer enabled")
+endif()
 
 # Kelly GUI Application (Legacy Qt - see legacy/ui/qt_gui/)
 if(BUILD_DESKTOP)
@@ -477,11 +509,13 @@ if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     
-    # Link JUCE and Qt PRIVATE so consumers (e.g. KellyFFIBenchmark) do not get a
-    # second copy of JUCE. Two copies cause allocator mismatch: dylib's static
-    # init (e.g. JuceVersionPrinter) allocates with dylib's JUCE heap, then exe's
-    # JUCE can run release() and abort with "pointer being freed was not allocated".
-    target_link_libraries(KellyFFI PUBLIC KellyCore PRIVATE
+    # Link KellyCore, JUCE and Qt PRIVATE so consumers (e.g. KellyFFIBenchmark,
+    # Python bindings, Tauri) do not transitively inherit KellyCore's PUBLIC JUCE
+    # linkage. Two copies of JUCE cause allocator mismatch: dylib's static init
+    # (e.g. JuceVersionPrinter) allocates with dylib's JUCE heap, then exe's JUCE
+    # can run release() and abort with "pointer being freed was not allocated".
+    # Consumers of KellyFFI must use the C ABI in kelly_ffi.h, not KellyCore symbols.
+    target_link_libraries(KellyFFI PRIVATE KellyCore
         Qt6::Core
         Qt6::Widgets
         juce::juce_audio_basics

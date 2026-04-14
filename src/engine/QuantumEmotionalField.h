@@ -1,4 +1,20 @@
 #pragma once
+/*
+ * QuantumEmotionalField.h - Quantum Superposition Model for Affect
+ * ==================================================================
+ *
+ * CONNECTIONS (for Cursor Graph):
+ * - Engine Layer: VADCalculator (classical coordinates)
+ * - Engine Layer: QuantumEntropy, HybridCoupling, UnifiedFieldEnergy
+ * - Engine Layer: EmotionToMusicMapper (quantum-informed mapping)
+ *
+ * Purpose: Represents emotions as complex superpositions, interference,
+ *          and collapse for experimental affect modeling.
+ *
+ * Features:
+ * - QuantumEmotionalState and basis amplitudes
+ * - Entanglement and measurement helpers
+ */
 
 #include "common/Types.h"
 #include "engine/VADCalculator.h"
@@ -8,17 +24,6 @@
 #include <vector>
 
 namespace kelly {
-
-/**
- * Quantum Emotional Field
- *
- * Implements quantum superposition model for emotions:
- * - Emotion superposition: |Ψ_E⟩ = Σ α_i |e_i⟩
- * - Emotional interference
- * - Emotional entanglement
- * - Collapse functions (observation/interaction)
- * - Quantum emotional energy
- */
 
 // Complex number type for quantum amplitudes
 using Complex = std::complex<float>;
