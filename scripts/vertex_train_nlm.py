@@ -32,7 +32,7 @@ logging.basicConfig(
 logger = logging.getLogger("vertex_train_nlm")
 
 # Vertex AI paths
-AIP_MODEL_DIR = os.environ.get("AIP_MODEL_DIR", "/opt/ml/model") # Fallback to SM path for local testing
+AIP_MODEL_DIR = os.environ.get("AIP_MODEL_DIR", "/tmp/kmidi_model") # Fallback to /tmp for local testing
 
 try:
     import torch
