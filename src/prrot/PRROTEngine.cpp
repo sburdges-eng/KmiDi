@@ -8,6 +8,7 @@
 #include "penta/common/RTLogger.h"
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 
 namespace prrot {
 
@@ -55,36 +56,33 @@ PhonemeControlData PRROTEngine::processAudioSegment(
     control_data.tempo_bpm = tempo_bpm;
     control_data.sample_rate_hz = sample_rate_hz;
 
-    // Comprehensive input validation
+    // Comprehensive input validation. RT-path: log with static context only.
     auto input_validation = validateAudioInput(audio_samples, num_samples, sample_rate_hz);
     if (input_validation.hasErrors()) {
         penta::getLogger().logRT(penta::LogLevel::Error,
-            ("PRROTEngine::processAudioSegment: Input validation failed: " +
-             input_validation.errorMessage()).c_str());
+            "PRROTEngine::processAudioSegment: Input validation failed");
         return control_data;
     }
 
-    // Log warnings if any
     if (input_validation.hasWarnings()) {
         penta::getLogger().logRT(penta::LogLevel::Warning,
-            ("PRROTEngine::processAudioSegment: " +
-             input_validation.warningMessage()).c_str());
+            "PRROTEngine::processAudioSegment: Input validation produced warnings");
     }
 
     // Validate audio quality
     auto validation = audio_validator_->validate(audio_samples, num_samples, sample_rate_hz);
     if (!validation.is_valid) {
         penta::getLogger().logRT(penta::LogLevel::Error,
-            ("PRROTEngine::processAudioSegment: Audio validation failed: " +
-             validation.error_message).c_str());
+            "PRROTEngine::processAudioSegment: Audio validation failed");
         return control_data;
     }
 
-    // Log quality warnings
     if (validation.quality_score() < 0.5f) {
-        penta::getLogger().logRT(penta::LogLevel::Warning,
-            ("PRROTEngine::processAudioSegment: Low audio quality (score: " +
-             std::to_string(validation.quality_score()) + ")").c_str());
+        char msg[128];
+        std::snprintf(msg, sizeof(msg),
+            "PRROTEngine::processAudioSegment: Low audio quality (score: %.3f)",
+            validation.quality_score());
+        penta::getLogger().logRT(penta::LogLevel::Warning, msg);
     }
 
     // Analyze phonemes with error recovery
@@ -125,10 +123,11 @@ PhonemeControlData PRROTEngine::processAudioSegment(
                 } else {
                     // Fallback: Use phoneme-based pitch estimation
                     if (pitch_result.is_valid && pitch_result.confidence <= 0.3f) {
-                        penta::getLogger().logRT(penta::LogLevel::Debug,
-                            ("PRROTEngine: Low pitch confidence (" +
-                             std::to_string(pitch_result.confidence) +
-                             "), using fallback").c_str());
+                        char msg[128];
+                        std::snprintf(msg, sizeof(msg),
+                            "PRROTEngine: Low pitch confidence (%.3f), using fallback",
+                            pitch_result.confidence);
+                        penta::getLogger().logRT(penta::LogLevel::Debug, msg);
                     }
                     PitchTarget target;
                     target.time_ms = phoneme.start_time_ms;
@@ -209,16 +208,14 @@ std::vector<PhonemeTiming> PRROTEngine::analyzePhonemes(
 ) noexcept {
     std::vector<PhonemeTiming> phoneme_timings;
 
-    // Validate inputs
+    // Validate inputs. RT-path: static log context.
     auto validation = validateAudioInput(audio_samples, num_samples, sample_rate_hz);
     if (validation.hasErrors()) {
         penta::getLogger().logRT(penta::LogLevel::Error,
-            ("PRROTEngine::analyzePhonemes: Input validation failed: " +
-             validation.errorMessage()).c_str());
+            "PRROTEngine::analyzePhonemes: Input validation failed");
         return phoneme_timings;
     }
 
-    // Segment phonemes
     auto segment_result = phoneme_segmenter_->segment(audio_samples, num_samples, sample_rate_hz);
 
     if (!segment_result.valid) {
@@ -227,11 +224,12 @@ std::vector<PhonemeTiming> PRROTEngine::analyzePhonemes(
         return phoneme_timings;
     }
 
-    // Log low confidence segmentation
     if (segment_result.confidence < 0.5f) {
-        penta::getLogger().logRT(penta::LogLevel::Debug,
-            ("PRROTEngine::analyzePhonemes: Low segmentation confidence (" +
-             std::to_string(segment_result.confidence) + ")").c_str());
+        char msg[128];
+        std::snprintf(msg, sizeof(msg),
+            "PRROTEngine::analyzePhonemes: Low segmentation confidence (%.3f)",
+            segment_result.confidence);
+        penta::getLogger().logRT(penta::LogLevel::Debug, msg);
     }
 
     // Convert segments to phoneme timings
@@ -275,12 +273,11 @@ std::vector<BreathMarker> PRROTEngine::detectBreathMarkers(
 ) noexcept {
     std::vector<BreathMarker> markers;
 
-    // Validate inputs
+    // Validate inputs. RT-path: static log context.
     auto validation = validateAudioInput(audio_samples, num_samples, sample_rate_hz);
     if (validation.hasErrors()) {
         penta::getLogger().logRT(penta::LogLevel::Error,
-            ("PRROTEngine::detectBreathMarkers: Input validation failed: " +
-             validation.errorMessage()).c_str());
+            "PRROTEngine::detectBreathMarkers: Input validation failed");
         return markers;
     }
 

@@ -3,6 +3,7 @@
 #include "penta/common/RTLogger.h"
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 #include <limits>
 
@@ -19,21 +20,21 @@ BreathDetector::BreathMarker BreathDetector::detectBreath(
 ) const noexcept {
     BreathMarker marker;
 
-    // Validate inputs
+    // Validate inputs. RT-path: log with static context only (no heap alloc).
     auto validation = validateAudioInput(audio_samples, num_samples, sample_rate_hz);
     if (validation.hasErrors()) {
         penta::getLogger().logRT(penta::LogLevel::Error,
-            ("BreathDetector::detectBreath: Input validation failed: " +
-             validation.errorMessage()).c_str());
+            "BreathDetector::detectBreath: Input validation failed");
         return marker;
     }
 
-    // Clamp to max buffer size with bounds checking
+    // Clamp to max buffer size with bounds checking.
     if (num_samples > kMaxBreathAnalysisWindow) {
-        penta::getLogger().logRT(penta::LogLevel::Warning,
-            ("BreathDetector::detectBreath: Clamping samples from " +
-             std::to_string(num_samples) + " to " +
-             std::to_string(kMaxBreathAnalysisWindow)).c_str());
+        char msg[128];
+        std::snprintf(msg, sizeof(msg),
+            "BreathDetector::detectBreath: Clamping samples from %zu to %zu",
+            num_samples, static_cast<size_t>(kMaxBreathAnalysisWindow));
+        penta::getLogger().logRT(penta::LogLevel::Warning, msg);
     }
     size_t samples_to_analyze = std::min(num_samples, kMaxBreathAnalysisWindow);
 
@@ -95,9 +96,11 @@ BreathDetector::BreathMarker BreathDetector::detectBreath(
     } else {
         // No breath detected, but log if we had candidates
         if (max_breath_ratio > 0.0f) {
-            penta::getLogger().logRT(penta::LogLevel::Debug,
-                ("BreathDetector::detectBreath: Breath candidate found but below threshold: " +
-                 std::to_string(max_breath_ratio) + " < " + std::to_string(breath_threshold)).c_str());
+            char msg[160];
+            std::snprintf(msg, sizeof(msg),
+                "BreathDetector::detectBreath: Breath candidate below threshold: %.3f < %.3f",
+                max_breath_ratio, breath_threshold);
+            penta::getLogger().logRT(penta::LogLevel::Debug, msg);
         }
     }
 

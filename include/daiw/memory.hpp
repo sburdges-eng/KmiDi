@@ -44,14 +44,20 @@ public:
     /**
      * @brief Allocate a block from the pool
      * @return Pointer to allocated block, or nullptr if pool exhausted
+     *
+     * @note NOT noexcept: takes std::mutex::lock() which can throw
+     *       std::system_error. NOT RT-safe. For RT-safe allocation,
+     *       use the template MemoryPool in memory_pool.hpp.
      */
-    [[nodiscard]] void* allocate() noexcept;
+    [[nodiscard]] void* allocate();
 
     /**
      * @brief Return a block to the pool
      * @param ptr Pointer previously returned by allocate()
+     *
+     * @note NOT noexcept: takes std::mutex::lock() which can throw.
      */
-    void deallocate(void* ptr) noexcept;
+    void deallocate(void* ptr);
 
     /**
      * @brief Check if a pointer belongs to this pool
