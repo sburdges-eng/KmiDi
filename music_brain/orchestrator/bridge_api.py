@@ -26,6 +26,7 @@ from pathlib import Path
 
 from music_brain.orchestrator import AIOrchestrator, Pipeline, OrchestratorConfig
 from music_brain.orchestrator.processors import IntentProcessor, HarmonyProcessor, GrooveProcessor
+from music_brain.theory.constants import note_to_absolute_midi
 
 
 # =============================================================================
@@ -83,42 +84,35 @@ def resolve_contradictions(params: Dict[str, Any]) -> Dict[str, Any]:
     return resolved
 
 
-# Synesthesia word-to-parameter dictionary
-_synesthesia_dictionary: Dict[str, Dict[str, float]] = {
-    # Emotions
-    "happy": {"chaos": 0.3, "complexity": 0.4},
-    "sad": {"chaos": 0.2, "complexity": 0.6},
-    "angry": {"chaos": 0.8, "complexity": 0.7},
-    "calm": {"chaos": 0.1, "complexity": 0.3},
-    "excited": {"chaos": 0.6, "complexity": 0.5},
-    "melancholic": {"chaos": 0.25, "complexity": 0.65},
-    "peaceful": {"chaos": 0.05, "complexity": 0.2},
-    "intense": {"chaos": 0.7, "complexity": 0.8},
+# Global cache for synesthesia dictionary
+_synesthesia_dictionary: Optional[Dict[str, Dict[str, float]]] = None
 
-    # Musical descriptors
-    "funky": {"chaos": 0.5, "complexity": 0.6},
-    "smooth": {"chaos": 0.15, "complexity": 0.4},
-    "groovy": {"chaos": 0.4, "complexity": 0.5},
-    "ambient": {"chaos": 0.2, "complexity": 0.3},
-    "punchy": {"chaos": 0.3, "complexity": 0.4},
-    "ethereal": {"chaos": 0.35, "complexity": 0.7},
-    "driving": {"chaos": 0.45, "complexity": 0.55},
-    "dreamy": {"chaos": 0.3, "complexity": 0.5},
+def _get_synesthesia_dictionary() -> Dict[str, Dict[str, float]]:
+    global _synesthesia_dictionary
+    if _synesthesia_dictionary is not None:
+        return _synesthesia_dictionary
 
-    # Textures
-    "warm": {"chaos": 0.2, "complexity": 0.4},
-    "bright": {"chaos": 0.4, "complexity": 0.5},
-    "dark": {"chaos": 0.3, "complexity": 0.6},
-    "crisp": {"chaos": 0.25, "complexity": 0.35},
-    "muddy": {"chaos": 0.5, "complexity": 0.3},
-    "airy": {"chaos": 0.2, "complexity": 0.45},
+    import json
+    from pathlib import Path
+    import logging
 
-    # Dynamics
-    "loud": {"chaos": 0.6, "complexity": 0.5},
-    "soft": {"chaos": 0.15, "complexity": 0.35},
-    "dynamic": {"chaos": 0.55, "complexity": 0.6},
-    "static": {"chaos": 0.1, "complexity": 0.2},
-}
+    config_path = Path(__file__).parent.parent.parent / "config" / "synesthesia.json"
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        # Flatten all keys from top-level categories
+        flat_dict: Dict[str, Dict[str, float]] = {}
+        for _, items in data.items():
+            if isinstance(items, dict):
+                flat_dict.update(items)
+
+        _synesthesia_dictionary = flat_dict
+    except Exception as e:
+        logging.error(f"Failed to load synesthesia config: {e}. Falling back to empty dict.")
+        _synesthesia_dictionary = {}
+
+    return _synesthesia_dictionary
 
 
 def get_parameter(word: str, dictionary: Optional[Dict[str, Dict[str, float]]] = None) -> Dict[str, float]:  # noqa: E501
@@ -136,7 +130,7 @@ def get_parameter(word: str, dictionary: Optional[Dict[str, Dict[str, float]]] =
         Dict with 'chaos' and 'complexity' values (0.0-1.0)
     """
     if dictionary is None:
-        dictionary = _synesthesia_dictionary
+        dictionary = _get_synesthesia_dictionary()
 
     word_lower = word.lower().strip()
 
@@ -238,20 +232,20 @@ def load_genre_definitions(path: Optional[str] = None) -> Dict[str, Any]:
         return _genre_definitions
 
     if path is None:
-        # Try default locations
-        possible_paths = [
-            Path(__file__).parent.parent.parent.parent / "iDAW_Core" / "data" /
-            "GenreDefinitions.json", Path("iDAW_Core/data/GenreDefinitions.json"),
-            Path("data/GenreDefinitions.json"),]
-        for p in possible_paths:
-            if p.exists():
-                path = str(p)
-                break
+        path = str(Path(__file__).parent.parent.parent / "config" / "genres.json")
 
     if path and Path(path).exists():
-        with open(path, 'r') as f:
-            data = json.load(f)
-            _genre_definitions = data.get("genres", {})
+        import json
+        import logging
+        try:
+            with open(path, 'r', encoding="utf-8") as f:
+                data = json.load(f)
+                _genre_definitions = data.get("genres", {})
+        except Exception as e:
+            logging.error(f"Failed to load genre config: {e}. Falling back to empty dict.")
+            _genre_definitions = {}
+    else:
+        _genre_definitions = {}
 
     return _genre_definitions
 
@@ -415,14 +409,6 @@ def generate_midi_from_harmony(
         List of MIDI events
     """
     events = []
-
-    # Note mappings for common chord roots
-    root_to_midi = {
-        "C": 60, "C#": 61, "Db": 61, "D": 62, "D#": 63, "Eb": 63,
-        "E": 64, "F": 65, "F#": 66, "Gb": 66, "G": 67, "G#": 68,
-        "Ab": 68, "A": 69, "A#": 70, "Bb": 70, "B": 71,
-    }
-
     # Samples per beat at 44100 Hz
     samples_per_beat = int(44100 * 60 / tempo)
 
@@ -438,7 +424,7 @@ def generate_midi_from_harmony(
         if len(chord) > 1 and chord[1] in ('#', 'b'):
             root = chord[:2]
 
-        base_note = root_to_midi.get(root, 60)
+        base_note = note_to_absolute_midi(root, 4)
 
         # Determine chord tones
         if 'm' in chord.lower() and 'maj' not in chord.lower():

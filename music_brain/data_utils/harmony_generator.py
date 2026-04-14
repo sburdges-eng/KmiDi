@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from music_brain.session.intent_schema import CompleteSongIntent
+from music_brain.theory.constants import NOTE_TO_MIDI
 
 
 class RuleBreakType(Enum):
@@ -53,13 +54,6 @@ class HarmonyGenerator:
     Generates chord progressions and voicings based on emotional intent
     and intentional rule-breaking decisions.
     """
-
-    # MIDI note numbers for reference
-    NOTE_TO_MIDI = {
-        'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
-        'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8,
-        'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11
-    }
 
     # Scale intervals (semitones from root)
     SCALES = {
@@ -216,7 +210,7 @@ class HarmonyGenerator:
             key = key[:-1]
         key = key.upper()
         scale = self.SCALES['major'] if mode == 'major' else self.SCALES['natural_minor']
-        root_midi = self.NOTE_TO_MIDI[key]
+        root_midi = NOTE_TO_MIDI[key]
 
         chord_map_major = {
             'I': (0, 'maj'), 'ii': (1, 'min'), 'iii': (2, 'min'),
@@ -319,7 +313,7 @@ class HarmonyGenerator:
 
         for chord_symbol in chord_symbols:
             root, intervals = self._chord_symbol_to_intervals(chord_symbol)
-            root_midi = self.NOTE_TO_MIDI.get(root, 0) + (self.base_octave * 12)
+            root_midi = NOTE_TO_MIDI.get(root, 0) + (self.base_octave * 12)
 
             # Generate MIDI notes
             midi_notes = [(root_midi + interval) for interval in intervals]
@@ -424,25 +418,25 @@ class HarmonyGenerator:
     def _is_fourth_degree(self, chord: str, key: str, mode: str) -> bool:
         """Check if chord is the IV degree in the key"""
         scale = self.SCALES['major'] if mode == 'major' else self.SCALES['natural_minor']
-        root_midi = self.NOTE_TO_MIDI[key]
+        root_midi = NOTE_TO_MIDI[key]
         fourth_degree_midi = (root_midi + scale[3]) % 12
 
         chord_root = chord.rstrip('m').rstrip('dim').rstrip('aug')
-        chord_midi = self.NOTE_TO_MIDI.get(chord_root, -1)
+        chord_midi = NOTE_TO_MIDI.get(chord_root, -1)
 
         return chord_midi == fourth_degree_midi
 
     def _get_fifth_degree(self, key: str, mode: str) -> str:
         """Get the V chord in the key"""
         scale = self.SCALES['major'] if mode == 'major' else self.SCALES['natural_minor']
-        root_midi = self.NOTE_TO_MIDI[key]
+        root_midi = NOTE_TO_MIDI[key]
         fifth_degree_midi = (root_midi + scale[4]) % 12
         return self._midi_to_note_name(fifth_degree_midi)
 
     def _get_sixth_degree(self, key: str, mode: str) -> str:
         """Get the vi/VI chord in the key"""
         scale = self.SCALES['major'] if mode == 'major' else self.SCALES['natural_minor']
-        root_midi = self.NOTE_TO_MIDI[key]
+        root_midi = NOTE_TO_MIDI[key]
         sixth_degree_midi = (root_midi + scale[5]) % 12
         note = self._midi_to_note_name(sixth_degree_midi)
         return note + 'm' if mode == 'major' else note
