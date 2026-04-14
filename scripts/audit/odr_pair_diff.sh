@@ -115,7 +115,23 @@ for rel in "${PAIRS[@]}"; do
         elif [ "$only_a_count" -gt "$only_b_count" ]; then
             canonical="src/"
         else
-            canonical="either (API-equivalent) — pick by implementation quality"
+            # API-equivalent — check byte equality
+            if cmp -s "$a" "$b"; then
+                canonical="**either (BYTE-IDENTICAL)** — auto-resolvable, pick either, delete other"
+            else
+                # Diverged impl. Compare line counts as a quality hint.
+                a_lines=$(wc -l < "$a" | tr -d ' ')
+                b_lines=$(wc -l < "$b" | tr -d ' ')
+                # Most-recently-touched (excluding lockfile noise)
+                a_mtime=$(stat -f '%m' "$a" 2>/dev/null || stat -c '%Y' "$a")
+                b_mtime=$(stat -f '%m' "$b" 2>/dev/null || stat -c '%Y' "$b")
+                if [ "$a_mtime" -gt "$b_mtime" ]; then
+                    newer="src/ (mtime newer)"
+                else
+                    newer="src_penta-core/ (mtime newer)"
+                fi
+                canonical="**MANUAL REVIEW** — APIs match but bodies differ ($a_lines vs $b_lines lines; $newer)"
+            fi
         fi
     fi
 

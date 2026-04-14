@@ -23,7 +23,7 @@ external callers are flagged explicitly — those MUST be preserved.
 | `src/` | 11 | 11731 B |
 | `src_penta-core/` | 11 | 8691 B |
 
-**Recommended canonical**: either (API-equivalent) — pick by implementation quality
+**Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (293 vs 196 lines; src_penta-core/ (mtime newer))
 
 ### In both (11)
 
@@ -48,7 +48,7 @@ external callers are flagged explicitly — those MUST be preserved.
 | `src/` | 3 | 5433 B |
 | `src_penta-core/` | 3 | 5438 B |
 
-**Recommended canonical**: either (API-equivalent) — pick by implementation quality
+**Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (170 vs 170 lines; src_penta-core/ (mtime newer))
 
 ### In both (3)
 
@@ -65,7 +65,7 @@ external callers are flagged explicitly — those MUST be preserved.
 | `src/` | 10 | 4760 B |
 | `src_penta-core/` | 10 | 5018 B |
 
-**Recommended canonical**: either (API-equivalent) — pick by implementation quality
+**Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (149 vs 160 lines; src/ (mtime newer))
 
 ### In both (10)
 
@@ -89,7 +89,7 @@ external callers are flagged explicitly — those MUST be preserved.
 | `src/` | 10 | 4937 B |
 | `src_penta-core/` | 10 | 4937 B |
 
-**Recommended canonical**: either (API-equivalent) — pick by implementation quality
+**Recommended canonical**: **either (BYTE-IDENTICAL)** — auto-resolvable, pick either, delete other
 
 ### In both (10)
 
@@ -225,7 +225,7 @@ external callers are flagged explicitly — those MUST be preserved.
 | `src/` | 11 | 1988 B |
 | `src_penta-core/` | 11 | 2027 B |
 
-**Recommended canonical**: either (API-equivalent) — pick by implementation quality
+**Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (71 vs 73 lines; src_penta-core/ (mtime newer))
 
 ### In both (11)
 
@@ -250,7 +250,7 @@ external callers are flagged explicitly — those MUST be preserved.
 | `src/` | 8 | 3406 B |
 | `src_penta-core/` | 8 | 2978 B |
 
-**Recommended canonical**: either (API-equivalent) — pick by implementation quality
+**Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (116 vs 104 lines; src_penta-core/ (mtime newer))
 
 ### In both (8)
 
@@ -272,7 +272,7 @@ external callers are flagged explicitly — those MUST be preserved.
 | `src/` | 7 | 1488 B |
 | `src_penta-core/` | 7 | 1422 B |
 
-**Recommended canonical**: either (API-equivalent) — pick by implementation quality
+**Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (74 vs 64 lines; src_penta-core/ (mtime newer))
 
 ### In both (7)
 
@@ -375,7 +375,7 @@ external callers are flagged explicitly — those MUST be preserved.
 | `src/` | 7 | 4695 B |
 | `src_penta-core/` | 7 | 5436 B |
 
-**Recommended canonical**: either (API-equivalent) — pick by implementation quality
+**Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (137 vs 148 lines; src_penta-core/ (mtime newer))
 
 ### In both (7)
 
@@ -396,7 +396,7 @@ external callers are flagged explicitly — those MUST be preserved.
 | `src/` | 13 | 4998 B |
 | `src_penta-core/` | 13 | 5483 B |
 
-**Recommended canonical**: either (API-equivalent) — pick by implementation quality
+**Recommended canonical**: **MANUAL REVIEW** — APIs match but bodies differ (162 vs 168 lines; src_penta-core/ (mtime newer))
 
 ### In both (13)
 
