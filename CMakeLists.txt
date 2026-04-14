@@ -495,11 +495,13 @@ if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     
-    # Link JUCE and Qt PRIVATE so consumers (e.g. KellyFFIBenchmark) do not get a
-    # second copy of JUCE. Two copies cause allocator mismatch: dylib's static
-    # init (e.g. JuceVersionPrinter) allocates with dylib's JUCE heap, then exe's
-    # JUCE can run release() and abort with "pointer being freed was not allocated".
-    target_link_libraries(KellyFFI PUBLIC KellyCore PRIVATE
+    # Link KellyCore, JUCE and Qt PRIVATE so consumers (e.g. KellyFFIBenchmark,
+    # Python bindings, Tauri) do not transitively inherit KellyCore's PUBLIC JUCE
+    # linkage. Two copies of JUCE cause allocator mismatch: dylib's static init
+    # (e.g. JuceVersionPrinter) allocates with dylib's JUCE heap, then exe's JUCE
+    # can run release() and abort with "pointer being freed was not allocated".
+    # Consumers of KellyFFI must use the C ABI in kelly_ffi.h, not KellyCore symbols.
+    target_link_libraries(KellyFFI PRIVATE KellyCore
         Qt6::Core
         Qt6::Widgets
         juce::juce_audio_basics
