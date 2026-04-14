@@ -7,6 +7,7 @@
 #include <cassert>
 #include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 #include <thread>
 
@@ -172,9 +173,17 @@ struct AudioEmotionRunnerImpl {
     }
 
     void workerLoop() {
-        // Flush denormals to zero — prevents 100x slowdown on near-silence
+        // Flush denormals to zero — prevents 100x slowdown on near-silence.
+        // Per-thread state, must be set in each worker thread.
 #if defined(__SSE__)
         _mm_setcsr(_mm_getcsr() | 0x8040);  // FTZ (bit 15) + DAZ (bit 6)
+#elif defined(__aarch64__)
+        // ARMv8 FPCR.FZ (bit 24) = Flush-to-Zero. Read-modify-write FPCR
+        // via inline asm; available in user mode, set per-thread.
+        std::uint64_t fpcr;
+        __asm__ volatile("mrs %0, fpcr" : "=r"(fpcr));
+        fpcr |= (1ull << 24);
+        __asm__ volatile("msr fpcr, %0" : : "r"(fpcr));
 #endif
 
         const size_t requiredSamples = MelSpectrogram::kRequiredSamples;

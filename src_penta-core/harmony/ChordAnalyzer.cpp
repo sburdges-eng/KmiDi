@@ -160,37 +160,11 @@ void ChordAnalyzer::findBestMatch(
 }
 
 // ============================================================================
-// SIMD-optimized implementations
+// NOTE: scoreAgainstTemplateSIMD, findBestMatchSIMD, and analyzeSIMD all
+// live in ChordAnalyzerSIMD.cpp as a single portable implementation
+// (bitmask + __builtin_popcount, valid on every supported ISA). The old
+// `#ifndef __AVX2__` scalar-fallback block that used to live here was
+// silently duplicating those symbols on arm64 — fixed in the same commit.
 // ============================================================================
-// NOTE: AVX2 versions of scoreAgainstTemplateSIMD, findBestMatchSIMD, and
-// analyzeSIMD live exclusively in ChordAnalyzerSIMD.cpp to avoid ODR
-// violations. This file provides only the scalar fallback.
-
-#ifndef __AVX2__
-
-float ChordAnalyzer::scoreAgainstTemplateSIMD(
-    const std::array<bool, 12>& pitchClassSet,
-    const ChordTemplate& template_,
-    uint8_t root
-) const noexcept {
-    // Fall back to scalar implementation
-    return scoreAgainstTemplate(pitchClassSet, template_, root);
-}
-
-void ChordAnalyzer::findBestMatchSIMD(
-    const std::array<bool, 12>& pitchClassSet,
-    Chord& outChord
-) noexcept {
-    // Fall back to scalar implementation
-    findBestMatch(pitchClassSet, outChord);
-}
-
-Chord ChordAnalyzer::analyzeSIMD(const std::array<bool, 12>& pitchClassSet) noexcept {
-    Chord result;
-    findBestMatch(pitchClassSet, result);
-    return result;
-}
-
-#endif // !__AVX2__
 
 } // namespace penta::harmony

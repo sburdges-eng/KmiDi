@@ -2,11 +2,6 @@
 #include <algorithm>
 #include <cmath>
 
-// SIMD intrinsics (AVX2)
-#ifdef __AVX2__
-#include <immintrin.h>
-#endif
-
 namespace penta::harmony {
 
 // Comprehensive chord template database (30+ chord types)
@@ -165,129 +160,11 @@ void ChordAnalyzer::findBestMatch(
 }
 
 // ============================================================================
-// SIMD-optimized implementations
+// NOTE: scoreAgainstTemplateSIMD, findBestMatchSIMD, and analyzeSIMD all
+// live in ChordAnalyzerSIMD.cpp as a single portable implementation
+// (bitmask + __builtin_popcount, valid on every supported ISA). The old
+// `#ifndef __AVX2__` scalar-fallback block that used to live here was
+// silently duplicating those symbols on arm64 — fixed in the same commit.
 // ============================================================================
-
-#ifdef __AVX2__
-
-// AVX2 intrinsics version: Process 8 pitch classes at once
-float ChordAnalyzer::scoreAgainstTemplateSIMD(
-    const std::array<bool, 12>& pitchClassSet,
-    const ChordTemplate& template_,
-    uint8_t root
-) const noexcept {
-    // Pack bool arrays into bitmasks for SIMD
-    alignas(32) uint32_t templateMask[8] = {0};
-    alignas(32) uint32_t inputMask[8] = {0};
-    
-    // First 8 pitch classes
-    for (int i = 0; i < 8; ++i) {
-        int rotated = (i + root) % 12;
-        templateMask[i] = template_.pattern[i] ? 0xFFFFFFFF : 0;
-        inputMask[i] = pitchClassSet[rotated] ? 0xFFFFFFFF : 0;
-    }
-    
-    // Load into AVX2 registers
-    __m256i templateVec = _mm256_load_si256(reinterpret_cast<const __m256i*>(templateMask));
-    __m256i inputVec = _mm256_load_si256(reinterpret_cast<const __m256i*>(inputMask));
-    
-    // Count matches: template AND input
-    __m256i matches = _mm256_and_si256(templateVec, inputVec);
-    
-    // Count required: template bits
-    __m256i required = templateVec;
-    
-    // Count extra: input AND NOT template
-    __m256i notTemplate = _mm256_andnot_si256(templateVec, _mm256_set1_epi32(0xFFFFFFFF));
-    __m256i extra = _mm256_and_si256(inputVec, notTemplate);
-    
-    // Horizontal sum using population count
-    int matchCount = _mm_popcnt_u32(_mm256_movemask_epi8(matches)) / 4;
-    int requiredCount = _mm_popcnt_u32(_mm256_movemask_epi8(required)) / 4;
-    int extraCount = _mm_popcnt_u32(_mm256_movemask_epi8(extra)) / 4;
-    
-    // Process remaining 4 pitch classes (8-11) scalar
-    for (int i = 8; i < 12; ++i) {
-        int rotated = (i + root) % 12;
-        bool inTemplate = template_.pattern[i];
-        bool inInput = pitchClassSet[rotated];
-        
-        if (inTemplate) {
-            ++requiredCount;
-            if (inInput) ++matchCount;
-        } else if (inInput) {
-            ++extraCount;
-        }
-    }
-    
-    // Scoring (same as scalar version)
-    if (requiredCount == 0) return 0.0f;
-    
-    float completeness = static_cast<float>(matchCount) / requiredCount;
-    float extraPenalty = 1.0f / (1.0f + 0.5f * extraCount);
-    
-    return completeness * extraPenalty;
-}
-
-void ChordAnalyzer::findBestMatchSIMD(
-    const std::array<bool, 12>& pitchClassSet,
-    Chord& outChord
-) noexcept {
-    // Use SIMD for template scoring
-    float bestScore = 0.0f;
-    uint8_t bestRoot = 0;
-    uint8_t bestQuality = 0;
-    
-    // Try all templates at all roots
-    for (uint8_t root = 0; root < 12; ++root) {
-        for (const auto& template_ : kChordTemplates) {
-            float score = scoreAgainstTemplateSIMD(pitchClassSet, template_, root);
-            
-            if (score > bestScore) {
-                bestScore = score;
-                bestRoot = root;
-                bestQuality = template_.quality;
-            }
-        }
-    }
-    
-    outChord.root = bestRoot;
-    outChord.quality = bestQuality;
-    outChord.confidence = bestScore;
-    outChord.pitchClass = pitchClassSet;
-}
-
-Chord ChordAnalyzer::analyzeSIMD(const std::array<bool, 12>& pitchClassSet) noexcept {
-    Chord result;
-    findBestMatchSIMD(pitchClassSet, result);
-    return result;
-}
-
-#else // Scalar fallback
-
-float ChordAnalyzer::scoreAgainstTemplateSIMD(
-    const std::array<bool, 12>& pitchClassSet,
-    const ChordTemplate& template_,
-    uint8_t root
-) const noexcept {
-    // Fall back to scalar implementation
-    return scoreAgainstTemplate(pitchClassSet, template_, root);
-}
-
-void ChordAnalyzer::findBestMatchSIMD(
-    const std::array<bool, 12>& pitchClassSet,
-    Chord& outChord
-) noexcept {
-    // Fall back to scalar implementation
-    findBestMatch(pitchClassSet, outChord);
-}
-
-Chord ChordAnalyzer::analyzeSIMD(const std::array<bool, 12>& pitchClassSet) noexcept {
-    Chord result;
-    findBestMatch(pitchClassSet, result);
-    return result;
-}
-
-#endif // __AVX2__
 
 } // namespace penta::harmony
