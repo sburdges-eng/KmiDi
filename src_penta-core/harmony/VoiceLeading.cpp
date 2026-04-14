@@ -14,7 +14,7 @@ std::vector<Note> VoiceLeading::findOptimalVoicing(
     const Chord& targetChord,
     const std::vector<Note>& currentVoices,
     uint8_t targetOctave
-) const noexcept {
+) const  {
     // If no current voices, generate a default voicing
     if (currentVoices.empty()) {
         std::vector<Note> result;
@@ -127,7 +127,7 @@ void VoiceLeading::generateVoicingCandidates(
     const Chord& chord,
     uint8_t octave,
     std::vector<VoicingCandidate>& candidates
-) const noexcept {
+) const  {
     // Extract chord tones
     std::vector<uint8_t> chordTones;
     for (int i = 0; i < 12; ++i) {

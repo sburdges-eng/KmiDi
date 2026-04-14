@@ -222,7 +222,7 @@ namespace penta::groove
         analysis_.tempoConfidence = tempoEstimator_->getConfidence();
     }
 
-    void GrooveEngine::detectTimeSignature() noexcept
+    void GrooveEngine::detectTimeSignature() 
     {
         if (analysis_.onsetPositions.size() < 8 || analysis_.currentTempo <= 0.0f)
         {
@@ -292,7 +292,7 @@ namespace penta::groove
         analysis_.timeSignatureDen = 4; // Focus on simple meters for now
     }
 
-    void GrooveEngine::analyzeSwing() noexcept
+    void GrooveEngine::analyzeSwing() 
     {
         if (analysis_.onsetPositions.size() < 4 || analysis_.currentTempo <= 0.0f)
         {

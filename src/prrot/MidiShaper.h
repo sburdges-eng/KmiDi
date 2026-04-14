@@ -30,7 +30,7 @@ public:
         const std::vector<PitchTarget>& pitch_targets,
         const VoiceProfile& voice_profile,
         float tempo_bpm
-    ) const noexcept;
+    ) const ;
 
     // Compute MIDI velocity from phoneme characteristics
     int computeVelocity(
@@ -48,7 +48,7 @@ public:
     std::vector<NoteProbability> computeNoteProbabilities(
         const PitchTarget& target,
         const VoiceProfile& voice_profile
-    ) const noexcept;
+    ) const ;
 
 private:
     // Helper functions

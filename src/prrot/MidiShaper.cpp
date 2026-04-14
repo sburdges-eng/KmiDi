@@ -14,7 +14,7 @@ std::vector<MidiNote> MidiShaper::shapeMidiNotes(
     const std::vector<PitchTarget>& pitch_targets,
     const VoiceProfile& voice_profile,
     float tempo_bpm
-) const noexcept {
+) const  {
     std::vector<MidiNote> midi_notes;
 
     // Validate inputs
@@ -155,7 +155,7 @@ int MidiShaper::computeVelocity(
 std::vector<MidiShaper::NoteProbability> MidiShaper::computeNoteProbabilities(
     const PitchTarget& target,
     const VoiceProfile& voice_profile
-) const noexcept {
+) const  {
     std::vector<NoteProbability> probabilities;
 
     // Create probability distribution centered on target note

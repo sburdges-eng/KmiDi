@@ -205,7 +205,7 @@ std::vector<PhonemeTiming> PRROTEngine::analyzePhonemes(
     const float* audio_samples,
     size_t num_samples,
     float sample_rate_hz
-) noexcept {
+)  {
     std::vector<PhonemeTiming> phoneme_timings;
 
     // Validate inputs. RT-path: static log context.
@@ -270,7 +270,7 @@ std::vector<BreathMarker> PRROTEngine::detectBreathMarkers(
     const float* audio_samples,
     size_t num_samples,
     float sample_rate_hz
-) noexcept {
+)  {
     std::vector<BreathMarker> markers;
 
     // Validate inputs. RT-path: static log context.

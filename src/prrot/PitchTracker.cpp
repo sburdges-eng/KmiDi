@@ -97,7 +97,7 @@ std::vector<PitchTarget> PitchTracker::trackPitchSequence(
     size_t num_samples,
     float sample_rate_hz,
     float interval_ms
-) const noexcept {
+) const  {
     std::vector<PitchTarget> targets;
 
     if (!audio_samples || num_samples == 0 || sample_rate_hz <= 0.0f || interval_ms <= 0.0f) {

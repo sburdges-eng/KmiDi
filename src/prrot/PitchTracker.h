@@ -80,7 +80,7 @@ public:
         size_t num_samples,
         float sample_rate_hz,
         float interval_ms = 50.0f
-    ) const noexcept;
+    ) const ;
 
 private:
     // Pre-allocated buffers for RT-safety

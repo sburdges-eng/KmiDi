@@ -1,30 +1,12 @@
 # noexcept-lie RT Audit — 2026Q2
 
-Scan produced by `scripts/audit/noexcept_rt_audit.py`. 15 findings across 2 source roots.
+Scan produced by `scripts/audit/noexcept_rt_audit.py`. 0 findings across 2 source roots.
 
 Each entry is a function declared `noexcept` whose body allocates, locks, or throws. In an RT callback context each is one failure away from `std::terminate`. AU/VST3 validation rejects plugins whose `processBlock` reaches any of these.
 
 **Flag legend**:
 - `new` / `lock` / `throw` → CRIT (program will terminate on failure)
 - `string-alloc` / `container-grow` / `to_string` → HIGH (implicit heap alloc via libc++; bad_alloc escapes as terminate)
-
-## HIGH (15)
-
-- `src/groove/GrooveEngine.cpp:165` — `GrooveEngine::detectTimeSignature` [container-grow]
-- `src/groove/GrooveEngine.cpp:242` — `GrooveEngine::analyzeSwing` [container-grow]
-- `src/harmony/VoiceLeading.cpp:12` — `VoiceLeading::findOptimalVoicing` [container-grow]
-- `src/harmony/VoiceLeading.cpp:125` — `VoiceLeading::generateVoicingCandidates` [container-grow]
-- `src/harmony/VoiceLeading.cpp:253` — `VoiceLeading::voiceProgression` [container-grow]
-- `src/prrot/AudioValidator.cpp:14` — `AudioValidator::validate` [to_string, container-grow]
-- `src/prrot/AudioValidator.cpp:166` — `AudioValidator::estimateNoiseFloor` [container-grow]
-- `src/prrot/MidiShaper.cpp:11` — `MidiShaper::shapeMidiNotes` [to_string, container-grow]
-- `src/prrot/MidiShaper.cpp:154` — `MidiShaper::computeNoteProbabilities` [container-grow]
-- `src/prrot/PRROTEngine.cpp:203` — `PRROTEngine::analyzePhonemes` [container-grow]
-- `src/prrot/PRROTEngine.cpp:268` — `PRROTEngine::detectBreathMarkers` [container-grow]
-- `src/prrot/PhonemeSegmenter.cpp:49` — `PhonemeSegmenter::segment` [to_string, container-grow]
-- `src/prrot/PitchTracker.cpp:94` — `PitchTracker::trackPitchSequence` [container-grow]
-- `src_penta-core/harmony/VoiceLeading.cpp:12` — `VoiceLeading::findOptimalVoicing` [container-grow]
-- `src_penta-core/harmony/VoiceLeading.cpp:125` — `VoiceLeading::generateVoicingCandidates` [container-grow]
 
 ## Fix patterns
 

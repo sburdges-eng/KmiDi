@@ -163,7 +163,7 @@ namespace penta::groove
         }
     }
 
-    void GrooveEngine::detectTimeSignature() noexcept
+    void GrooveEngine::detectTimeSignature() 
     {
         // Need at least 8 onsets to detect time signature patterns
         if (onsetHistory_.size() < 8)
@@ -240,7 +240,7 @@ namespace penta::groove
         }
     }
 
-    void GrooveEngine::analyzeSwing() noexcept
+    void GrooveEngine::analyzeSwing() 
     {
         // Need at least 4 onsets to analyze swing
         if (onsetHistory_.size() < 4)

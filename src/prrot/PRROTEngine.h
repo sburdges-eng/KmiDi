@@ -75,7 +75,7 @@ public:
         const float* audio_samples,
         size_t num_samples,
         float sample_rate_hz
-    ) noexcept;
+    ) ;
 
     // Detect breath markers in audio
     // RT-Safe: Uses pre-allocated buffers only
@@ -83,7 +83,7 @@ public:
         const float* audio_samples,
         size_t num_samples,
         float sample_rate_hz
-    ) noexcept;
+    ) ;
 
 private:
     // Voice profile

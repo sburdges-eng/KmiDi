@@ -16,7 +16,7 @@ AudioValidator::ValidationResult AudioValidator::validate(
     const float* audio_samples,
     size_t num_samples,
     float sample_rate_hz
-) const noexcept {
+) const  {
     ValidationResult result;
 
     // Comprehensive input validation
@@ -167,7 +167,7 @@ bool AudioValidator::detectClipping(
 float AudioValidator::estimateNoiseFloor(
     const float* samples,
     size_t num_samples
-) const noexcept {
+) const  {
     if (!samples || num_samples == 0) {
         return 0.0f;
     }

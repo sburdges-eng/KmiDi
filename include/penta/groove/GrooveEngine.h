@@ -73,8 +73,8 @@ public:
 
 private:
     void updateTempoEstimate() noexcept;
-    void detectTimeSignature() noexcept;
-    void analyzeSwing() noexcept;
+    void detectTimeSignature() ;
+    void analyzeSwing() ;
 
     Config config_;
     GrooveAnalysis analysis_;

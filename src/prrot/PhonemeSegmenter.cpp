@@ -51,7 +51,7 @@ PhonemeSegmenter::SegmentResult PhonemeSegmenter::segment(
     const float* audio_samples,
     size_t num_samples,
     float sample_rate_hz
-) noexcept {
+)  {
     SegmentResult result;
     result.valid = false;
     result.confidence = 0.0f;
