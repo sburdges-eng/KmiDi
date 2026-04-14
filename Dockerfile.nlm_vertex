@@ -1,0 +1,23 @@
+# Vertex AI training image for KmiDi NLM/LLM Fine-Tuning.
+# Build from repo root: docker build -f Dockerfile.nlm_vertex -t us-central1-docker.pkg.dev/[PROJECT_ID]/[REPO]/kmidi-nlm-train:v1 .
+
+FROM us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-1.py310:latest
+
+WORKDIR /app
+
+# Install project and dependencies
+COPY pyproject.toml .
+COPY music_brain ./music_brain
+COPY config ./config
+COPY scripts/vertex_train_nlm.py ./scripts/
+
+# Install base dependencies and nlm_train optional dependencies
+RUN pip install --no-cache-dir -e .[nlm_train] \
+    && pip install --no-cache-dir google-cloud-aiplatform
+
+# Vertex AI passes hyperparameters as command-line arguments to the ENTRYPOINT.
+# It also mounts GCS buckets at /gcs/[bucket_name]/ and sets AIP_ env vars.
+ENV PYTHONUNBUFFERED=1
+
+# Log in to huggingface if needed via secrets or pass TOKEN at runtime
+ENTRYPOINT ["python", "/app/scripts/vertex_train_nlm.py"]
