@@ -279,6 +279,19 @@ list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/export/StemExporter\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/project/ProjectFile\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/groove_bindings\\.cpp$")
 
+# ODR Consolidation: Exclude src/ variants where src_penta-core/ is canonical
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/harmony/ChordAnalyzer\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/harmony/ChordAnalyzerSIMD\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/harmony/HarmonyEngine\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/osc/OSCMessage\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/osc/RTMessageQueue\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/groove/RhythmQuantizer\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/groove/TempoEstimator\\.cpp$")
+# Re-evaluating GrooveEngine and OnsetDetector: src_penta-core is actually RT-safe and better, so exlude src/ side here too
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/groove/GrooveEngine\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/groove/OnsetDetector\\.cpp$")
+
+
 if(BUILD_KELLY_CORE)
 add_library(KellyCore STATIC ${KELLY_CORE_SOURCES})
 
@@ -308,6 +321,7 @@ target_link_libraries(KellyCore PUBLIC
     juce::juce_dsp
     juce::juce_osc
     readerwriterqueue
+    penta_core
 )
 # Link Rust Intent IR if available
 if(KMIDI_HAS_INTENT_IR)
