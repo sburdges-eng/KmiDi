@@ -1,7 +1,9 @@
 """Tests for EmotionProbe model."""
 
-import torch
 import pytest
+
+torch = pytest.importorskip("torch")
+
 from music_brain.jepa.emotion_probe import EmotionProbe
 
 

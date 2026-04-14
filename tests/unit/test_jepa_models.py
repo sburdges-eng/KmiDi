@@ -1,7 +1,8 @@
 """Comprehensive tests for JEPA model implementations."""
 
 import pytest
-import torch
+
+torch = pytest.importorskip("torch")
 
 from music_brain.jepa.audio_jepa import (
     AudioJEPAEncoder,

@@ -40,8 +40,10 @@ void bind_diagnostics(py::module_& m) {
         .def(py::init<const DiagnosticsEngine::Config&>(),
             py::arg("config") = DiagnosticsEngine::Config())
         .def("begin_measurement", &DiagnosticsEngine::beginMeasurement,
+            py::call_guard<py::gil_scoped_release>(),
             "Start performance measurement (RT-safe)")
         .def("end_measurement", &DiagnosticsEngine::endMeasurement,
+            py::call_guard<py::gil_scoped_release>(),
             "End performance measurement (RT-safe)")
         .def("analyze_audio", 
             [](DiagnosticsEngine& self, py::array_t<float> buffer, int channels) {
@@ -55,6 +57,7 @@ void bind_diagnostics(py::module_& m) {
             },
             py::arg("buffer"), 
             py::arg("channels") = 2,
+            py::call_guard<py::gil_scoped_release>(),
             "Analyze audio buffer (RT-safe)")
         .def("get_stats", &DiagnosticsEngine::getStats,
             "Get current system statistics")

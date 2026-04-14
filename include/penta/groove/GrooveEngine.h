@@ -47,11 +47,11 @@ public:
     explicit GrooveEngine(const Config& config = Config{});
     ~GrooveEngine();
 
-    // Non-copyable, movable
+    // Non-copyable, non-movable (std::atomic is not movable)
     GrooveEngine(const GrooveEngine&) = delete;
     GrooveEngine& operator=(const GrooveEngine&) = delete;
-    GrooveEngine(GrooveEngine&&) noexcept = default;
-    GrooveEngine& operator=(GrooveEngine&&) noexcept = default;
+    GrooveEngine(GrooveEngine&&) = delete;
+    GrooveEngine& operator=(GrooveEngine&&) = delete;
 
     // RT-safe: Process audio buffer for groove analysis
     void processAudio(const float* buffer, size_t frames) noexcept;
@@ -84,7 +84,7 @@ private:
     std::unique_ptr<RhythmQuantizer> quantizer_;
 
     uint64_t samplePosition_;
-    uint64_t lastAnalysisPosition_;  // Per-instance analysis timing (not static)
+    [[maybe_unused]] uint64_t lastAnalysisPosition_;  // Used by src/ impl; unused by src_penta-core impl
     std::vector<uint64_t> onsetHistory_;
 
     // Guard against concurrent processAudio / updateConfig (H18 fix)

@@ -7,6 +7,9 @@ edition = "2021"
 name = "intent_ir"
 crate-type = ["staticlib"]
 
+[profile.dev]
+panic = "abort"
+
 [profile.release]
 panic = "abort"
 lto = true

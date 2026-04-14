@@ -7,7 +7,7 @@ from __future__ import annotations
 import tempfile
 from typing import Any, Dict, Optional
 
-from data.harmony_generator import (
+from music_brain.harmony_utils.harmony_generator import (
     HarmonyGenerator,
     HarmonyResult,
     generate_midi_from_harmony,

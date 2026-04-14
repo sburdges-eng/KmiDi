@@ -5,9 +5,15 @@ Tracks user parameter adjustments, emotion selections, MIDI acceptance/rejection
 and rule-break modifications to build a personalized user profile.
 
 Stores preferences locally in JSON format at ~/.kelly/user_preferences.json
+
+Example-based music learning (``MusicLearningManager`` under ``music_brain.learning``)
+complements this system: use the manager for pattern profiles and keep
+``UserPreferenceModel`` for scalar parameter habits; wire both in application
+code when you need unified personalization.
 """
 
 import json
+import logging
 import os
 from pathlib import Path
 from dataclasses import dataclass, field, asdict
@@ -160,15 +166,18 @@ class UserPreferenceModel:
     - Genre/style preferences
     """
 
-    def __init__(self, user_id: str = "default", preferences_path: Optional[Path] = None):
+    def __init__(self, user_id: str = "default", preferences_path: Optional[Path] = None,
+                 max_history: int = 1000):
         """
         Initialize user preference model.
 
         Args:
             user_id: Unique identifier for user
             preferences_path: Path to preferences JSON file (defaults to ~/.kelly/user_preferences.json)
+            max_history: Maximum number of entries to keep per history list (oldest evicted).
         """
         self.user_id = user_id
+        self.max_history = max_history
 
         if preferences_path is None:
             # Default to ~/.kelly/user_preferences.json
@@ -195,7 +204,10 @@ class UserPreferenceModel:
                         # Legacy format or first user
                         return UserPreferenceProfile.from_dict(data)
             except (json.JSONDecodeError, KeyError, TypeError) as e:
-                print(f"Error loading preferences: {e}. Starting with fresh profile.")
+                logging.warning(
+                    "Error loading preferences from %s: %s. Starting fresh.",
+                    self.preferences_path, e,
+                )
                 return UserPreferenceProfile(user_id=self.user_id)
         else:
             return UserPreferenceProfile(user_id=self.user_id)
@@ -218,8 +230,10 @@ class UserPreferenceModel:
 
             with open(self.preferences_path, 'w') as f:
                 json.dump(existing_data, f, indent=2)
-        except Exception as e:
-            print(f"Error saving preferences: {e}")
+        except Exception:
+            logging.exception(
+                "Failed to save user preferences to %s", self.preferences_path
+            )
 
     def record_parameter_adjustment(
         self,
@@ -236,7 +250,14 @@ class UserPreferenceModel:
             context=context or {}
         )
         self.profile.parameter_adjustments.append(adjustment)
+        self._trim_history(self.profile.parameter_adjustments)
         self._save_profile()
+
+    def _trim_history(self, collection: list) -> None:
+        """Evict oldest entries when *collection* exceeds *max_history*."""
+        over = len(collection) - self.max_history
+        if over > 0:
+            del collection[:over]
 
     def record_emotion_selection(
         self,
@@ -253,6 +274,7 @@ class UserPreferenceModel:
             context=context or {}
         )
         self.profile.emotion_selections.append(selection)
+        self._trim_history(self.profile.emotion_selections)
         self._save_profile()
 
     def record_midi_generation(
@@ -277,6 +299,7 @@ class UserPreferenceModel:
             rule_breaks=rule_breaks or []
         )
         self.profile.midi_generations.append(event)
+        self._trim_history(self.profile.midi_generations)
         self._save_profile()
         return generation_id
 
@@ -292,7 +315,7 @@ class UserPreferenceModel:
                 self._save_profile()
                 return
         # If not found, create a new event (shouldn't happen, but handle gracefully)
-        print(f"Warning: Generation ID {generation_id} not found for feedback")
+        logging.warning("Generation ID %s not found for feedback", generation_id)
 
     def record_midi_modification(
         self,
@@ -312,7 +335,7 @@ class UserPreferenceModel:
                 event.modifications.append(adjustment)
                 self._save_profile()
                 return
-        print(f"Warning: Generation ID {generation_id} not found for modification")
+        logging.warning("Generation ID %s not found for modification", generation_id)
 
     def record_rule_break_modification(
         self,
@@ -327,6 +350,7 @@ class UserPreferenceModel:
             context=context or {}
         )
         self.profile.rule_break_modifications.append(modification)
+        self._trim_history(self.profile.rule_break_modifications)
         self._save_profile()
 
     def get_parameter_statistics(self) -> Dict[str, Any]:

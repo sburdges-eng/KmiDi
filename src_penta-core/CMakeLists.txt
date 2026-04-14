@@ -57,6 +57,22 @@ file(GLOB_RECURSE PENTA_CORE_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/osc/*.cpp
 )
 
+# CRIT #1 (ODR consolidation 2026-04-13): 6 of 14 duplicate pairs resolved here.
+# These files exist in both src/ and src_penta-core/ under the same `penta::`
+# namespace, causing ODR violations when both libs are linked into
+# bindings/penta_core_native. Per per-file API diff in
+# docs/CODEAUDIT_ODR_PAIR_DIFF_2026Q2.md, src/ is canonical for these:
+#   - src/ has methods called externally that src_penta-core/ lacks (5 files), or
+#   - byte-identical (1 file, ScaleDetector — pick src/ side for consistency)
+# Excluding them from penta_core's glob; symbols still resolve via KellyCore
+# (which globs src/*.cpp recursively). The remaining manual-review
+# group pairs have had their canonical side chosen in root CMakeLists.txt.
+list(FILTER PENTA_CORE_SOURCES EXCLUDE REGEX "/harmony/ScaleDetector\\.cpp$")
+list(FILTER PENTA_CORE_SOURCES EXCLUDE REGEX "/harmony/VoiceLeading\\.cpp$")
+list(FILTER PENTA_CORE_SOURCES EXCLUDE REGEX "/osc/OSCClient\\.cpp$")
+list(FILTER PENTA_CORE_SOURCES EXCLUDE REGEX "/osc/OSCHub\\.cpp$")
+list(FILTER PENTA_CORE_SOURCES EXCLUDE REGEX "/osc/OSCServer\\.cpp$")
+
 # Create the library
 add_library(penta_core STATIC ${PENTA_CORE_SOURCES})
 
