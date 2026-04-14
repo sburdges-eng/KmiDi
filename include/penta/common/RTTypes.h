@@ -64,7 +64,10 @@ struct TimingInfo {
         , samplePosition(0) {}
 };
 
-// Audio buffer (non-RT allocation, RT usage)
+// Audio buffer: ctor/resize allocate on the heap — call only from setup / UI
+// thread, never from the audio callback. After pre-allocation, RT code may
+// read/write through getChannelData() only (libDsp-style separation of I/O
+// setup from sample processing).
 template<typename T>
 struct AudioBuffer {
     std::vector<T> data;

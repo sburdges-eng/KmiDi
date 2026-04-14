@@ -6,5 +6,6 @@ soundfile
 librosa
 numpy
 pyyaml
+einops
 
 # WavJEPA: labhamlet/wavjepa-base (Hugging Face) or official repo for loading

@@ -11,6 +11,7 @@ Usage:
     result = await processor.process(groove_input, context)
 """
 
+from pathlib import Path
 from typing import Any, Dict, Optional, List
 from dataclasses import dataclass, field
 
@@ -148,7 +149,7 @@ class GrooveProcessor(BaseProcessor):
             )
 
             # Generate groove
-            groove_output = await self._generate_groove(groove_input)
+            groove_output = await self._generate_groove(groove_input, context)
 
             # Store in shared context
             context.set_shared("groove", groove_output.to_dict())
@@ -170,7 +171,11 @@ class GrooveProcessor(BaseProcessor):
                 error=f"Groove generation failed: {str(e)}",
             )
 
-    async def _generate_groove(self, input_data: GrooveInput) -> GrooveOutput:
+    async def _generate_groove(
+        self,
+        input_data: GrooveInput,
+        context: Optional[ExecutionContext] = None,
+    ) -> GrooveOutput:
         """
         Generate groove using music_brain's groove tools.
 
@@ -183,6 +188,32 @@ class GrooveProcessor(BaseProcessor):
             generate_groove_metric_modulation,
             generate_groove_dropped_beats,
         )
+        from music_brain.learning.groove_learning import GrooveLearningManager
+
+        profiles = (context.get_shared("learning_profiles") if context else None) or {}
+        storage_root = context.get_shared("learning_storage_root") if context else None
+        learn_profile = (
+            (input_data.params or {}).get("learning_groove_profile")
+            or profiles.get("groove")
+        )
+        if learn_profile:
+            g_dir = Path(storage_root) / "grooves" if storage_root else None
+            gm = GrooveLearningManager(g_dir)
+            learned = gm.generate(
+                input_data.emotion,
+                learn_profile,
+                input_data.tempo,
+                input_data.genre,
+            )
+            return GrooveOutput(
+                pattern_name=str(learned.get("pattern_name", input_data.genre)),
+                tempo_bpm=int(learned.get("tempo_bpm", input_data.tempo)),
+                swing_factor=float(learned.get("swing_factor", input_data.swing_factor)),
+                timing_offsets_16th=list(learned.get("timing_offsets_16th", [0.0] * 16)),
+                velocity_curve=[int(v) for v in learned.get("velocity_curve", [80] * 16)],
+                rule_broken=input_data.rule_to_break,
+                rule_effect="Learned groove profile",
+            )
 
         rule = input_data.rule_to_break
 

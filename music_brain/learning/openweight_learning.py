@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import pickle
 import os
+import torch
 from pathlib import Path
 
 
@@ -233,8 +234,7 @@ class OpenWeightLearner:
 
     def load_weights(self, filepath: str):
         """Load weights from file."""
-        with open(filepath, 'rb') as f:
-            data = pickle.load(f)
+        data = torch.load(filepath, map_location="cpu", weights_only=True)
 
         self.weights = data['weights']
         self.biases = data['biases']
@@ -405,8 +405,7 @@ class OpenWeightLearningManager:
             task_name = filepath.stem.replace('_weights', '')
             if task_name not in self.learners:
                 # Try to infer dimensions from file
-                with open(filepath, 'rb') as f:
-                    data = pickle.load(f)
+                data = torch.load(filepath, map_location="cpu", weights_only=True)
                 self.add_learner(
                     task_name,
                     input_dim=data['input_dim'],

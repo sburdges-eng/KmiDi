@@ -9,6 +9,8 @@ from collections import Counter, defaultdict
 import json
 import numpy as np
 
+from music_brain.learning.harmony_learning import _decode_transition_dict, _encode_transition_dict
+
 DEFAULT_STORAGE = Path.home() / ".parrot" / "music_learning" / "arrangements"
 EXAMPLES_DIR = DEFAULT_STORAGE / "examples"
 PROFILES_DIR = DEFAULT_STORAGE / "profiles"
@@ -51,19 +53,59 @@ class ArrangementProfile:
     example_count: int
 
     def to_dict(self) -> Dict:
+        emotion_out: Dict[str, Dict] = {}
+        for em, stats in self.emotion_patterns.items():
+            s = dict(stats)
+            if s.get("transition_counts") is not None:
+                s["transition_counts"] = _encode_transition_dict(dict(s["transition_counts"]))
+            if s.get("section_counts") is not None:
+                s["section_counts"] = {str(k): int(v) for k, v in dict(s["section_counts"]).items()}
+            if s.get("instrument_counts") is not None:
+                s["instrument_counts"] = {str(k): int(v) for k, v in dict(s["instrument_counts"]).items()}
+            if "avg_length" in s:
+                s["avg_length"] = float(s["avg_length"])
+            emotion_out[em] = s
+        gp = dict(self.global_patterns)
+        if gp.get("transition_counts") is not None:
+            gp["transition_counts"] = _encode_transition_dict(dict(gp["transition_counts"]))
+        if gp.get("section_counts") is not None:
+            gp["section_counts"] = {str(k): int(v) for k, v in dict(gp["section_counts"]).items()}
+        if gp.get("instrument_counts") is not None:
+            gp["instrument_counts"] = {str(k): int(v) for k, v in dict(gp["instrument_counts"]).items()}
         return {
             "name": self.name,
-            "emotion_patterns": self.emotion_patterns,
-            "global_patterns": self.global_patterns,
+            "emotion_patterns": emotion_out,
+            "global_patterns": gp,
             "example_count": self.example_count,
         }
 
     @classmethod
     def from_dict(cls, data: Dict) -> "ArrangementProfile":
+        emotion_in: Dict[str, Dict] = {}
+        for em, stats in (data.get("emotion_patterns") or {}).items():
+            s = dict(stats)
+            if s.get("transition_counts") is not None:
+                s["transition_counts"] = _decode_transition_dict(
+                    {str(k): int(v) for k, v in dict(s["transition_counts"]).items()}
+                )
+            if s.get("section_counts") is not None:
+                s["section_counts"] = {str(k): int(v) for k, v in dict(s["section_counts"]).items()}
+            if s.get("instrument_counts") is not None:
+                s["instrument_counts"] = {str(k): int(v) for k, v in dict(s["instrument_counts"]).items()}
+            emotion_in[em] = s
+        gp = dict(data.get("global_patterns") or {})
+        if gp.get("transition_counts") is not None:
+            gp["transition_counts"] = _decode_transition_dict(
+                {str(k): int(v) for k, v in dict(gp["transition_counts"]).items()}
+            )
+        if gp.get("section_counts") is not None:
+            gp["section_counts"] = {str(k): int(v) for k, v in dict(gp["section_counts"]).items()}
+        if gp.get("instrument_counts") is not None:
+            gp["instrument_counts"] = {str(k): int(v) for k, v in dict(gp["instrument_counts"]).items()}
         return cls(
             name=data.get("name", ""),
-            emotion_patterns=data.get("emotion_patterns", {}),
-            global_patterns=data.get("global_patterns", {}),
+            emotion_patterns=emotion_in,
+            global_patterns=gp,
             example_count=data.get("example_count", 0),
         )
 
@@ -180,6 +222,10 @@ class ArrangementLearner:
 
         section_counts = patterns.get("section_counts") or profile.global_patterns.get("section_counts") or {}
         transition_counts = patterns.get("transition_counts") or profile.global_patterns.get("transition_counts") or {}
+        if transition_counts and all(isinstance(k, str) for k in transition_counts):
+            transition_counts = _decode_transition_dict(
+                {k: int(v) for k, v in transition_counts.items()}
+            )
         instrument_counts = patterns.get("instrument_counts") or profile.global_patterns.get("instrument_counts") or {}
 
         length = length or int(patterns.get("avg_length", 5))

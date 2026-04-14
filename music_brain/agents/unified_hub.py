@@ -29,6 +29,7 @@ Usage:
 
 import asyncio
 import os
+import tempfile
 import json
 import time
 import threading
@@ -256,22 +257,35 @@ class LocalVoiceSynth:
                 ps_rate = int((rate - 175) / 25)  # Roughly maps 100-250 wpm to -3 to 3
                 ps_rate = max(-10, min(10, ps_rate))
 
-                # Escape text for PowerShell (single quotes, escape existing quotes)
-                escaped_text = text.replace("'", "''")
+                # Write text to a temp file so no user content is interpolated into
+                # the PowerShell command string (prevents backtick/$() injection).
+                tmp_path = None
+                try:
+                    with tempfile.NamedTemporaryFile(
+                        mode="w", suffix=".txt", delete=False, encoding="utf-8"
+                    ) as tmp:
+                        tmp.write(text)
+                        tmp_path = tmp.name
 
-                # PowerShell command using System.Speech.Synthesis
-                ps_command = (
-                    f"Add-Type -AssemblyName System.Speech; "
-                    f"$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer; "
-                    f"$synth.Rate = {ps_rate}; "
-                    f"$synth.Speak('{escaped_text}')"
-                )
+                    ps_command = (
+                        f"Add-Type -AssemblyName System.Speech; "
+                        f"$synth = New-Object System.Speech.Synthesis.SpeechSynthesizer; "
+                        f"$synth.Rate = {ps_rate}; "
+                        f"$synth.Speak([System.IO.File]::ReadAllText('{tmp_path}'))"
+                    )
 
-                subprocess.Popen(
-                    ["powershell", "-Command", ps_command],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                    creationflags=subprocess.CREATE_NO_WINDOW
-                    if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0)
+                    subprocess.run(
+                        ["powershell", "-Command", ps_command],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        creationflags=(
+                            subprocess.CREATE_NO_WINDOW
+                            if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
+                        ),
+                    )
+                finally:
+                    if tmp_path and os.path.exists(tmp_path):
+                        os.unlink(tmp_path)
                 return True
             else:
                 print(f"TTS not implemented for {self._platform}")

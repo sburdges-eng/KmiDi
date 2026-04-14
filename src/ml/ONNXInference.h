@@ -146,13 +146,14 @@ private:
     bool validateOutputSize(size_t size);
 
 #ifdef ENABLE_ONNX_RUNTIME
-    // ONNX Runtime types (forward declared, actual types in .cpp)
-    // Using void* to avoid requiring ONNX Runtime headers in header file
-    [[maybe_unused]] void* sessionPtr_;  // Points to Ort::Session
-    [[maybe_unused]] void* envPtr_;      // Points to Ort::Env
-    [[maybe_unused]] void* memoryInfoPtr_;  // Points to Ort::MemoryInfo
+    // ONNX Runtime types — owned via unique_ptr so exceptions during
+    // loadModel() cannot leak partially-constructed objects.
+    // Forward-declare the erasure type; actual Ort:: types resolved in .cpp.
+    std::unique_ptr<struct OrtEnvOwner>     envOwner_;
+    std::unique_ptr<struct OrtSessionOwner> sessionOwner_;
+    std::unique_ptr<struct OrtMemInfoOwner> memInfoOwner_;
 #else
-    // Stub members when ONNX Runtime is not available
+    // Stub pointers when ONNX Runtime is not available
     [[maybe_unused]] void* sessionPtr_ = nullptr;
     [[maybe_unused]] void* envPtr_ = nullptr;
     [[maybe_unused]] void* memoryInfoPtr_ = nullptr;

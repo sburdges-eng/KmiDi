@@ -32,16 +32,18 @@ class AdaptiveGenerator:
         result = generator.generate_adaptive(wound, learned_params=True)
     """
 
-    def __init__(self, intent_pipeline=None, preference_model=None):
+    def __init__(self, intent_pipeline=None, preference_model=None, music_learning_manager=None):
         """
         Initialize adaptive generator.
 
         Args:
             intent_pipeline: IntentPipeline instance (optional, can be set later)
             preference_model: UserPreferenceModel instance (optional)
+            music_learning_manager: Optional ``MusicLearningManager`` for example-based paths
         """
         self.intent_pipeline = intent_pipeline
         self.preference_model = preference_model
+        self.music_learning_manager = music_learning_manager
         self.generation_history: List[GenerationAttempt] = []
 
         # Learned adjustments

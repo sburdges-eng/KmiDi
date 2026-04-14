@@ -2,6 +2,7 @@
 #include "penta/common/RTLogger.h"
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <limits>
 
 namespace prrot {
@@ -30,9 +31,11 @@ void EnvelopeGenerator::generateArticulationEnvelope(
     }
 
     if (sample_rate_hz <= 0.0f) {
-        penta::getLogger().logRT(penta::LogLevel::Error,
-            ("EnvelopeGenerator::generateArticulationEnvelope: Invalid sample rate: " +
-             std::to_string(sample_rate_hz)).c_str());
+        char msg[128];
+        std::snprintf(msg, sizeof(msg),
+            "EnvelopeGenerator::generateArticulationEnvelope: Invalid sample rate: %.1f",
+            sample_rate_hz);
+        penta::getLogger().logRT(penta::LogLevel::Error, msg);
         return;
     }
 
@@ -43,9 +46,11 @@ void EnvelopeGenerator::generateArticulationEnvelope(
     }
 
     if (params.sustain_level < 0.0f || params.sustain_level > 1.0f) {
-        penta::getLogger().logRT(penta::LogLevel::Warning,
-            ("EnvelopeGenerator::generateArticulationEnvelope: Sustain level out of range: " +
-             std::to_string(params.sustain_level) + ", clamping").c_str());
+        char msg[128];
+        std::snprintf(msg, sizeof(msg),
+            "EnvelopeGenerator::generateArticulationEnvelope: Sustain level out of range: %.3f, clamping",
+            params.sustain_level);
+        penta::getLogger().logRT(penta::LogLevel::Warning, msg);
     }
 
     // Clamp and validate envelope times

@@ -82,7 +82,7 @@ public:
      * @param request Inference request
      * @return true if submitted successfully
      */
-    bool submitRequest(const InferenceRequest& request) {
+    bool submitRequest(const InferenceRequest& request) noexcept {
         return requestBuffer_.push(&request, 1);
     }
 
@@ -91,7 +91,7 @@ public:
      * @param result Output result
      * @return true if result available
      */
-    bool getResult(InferenceResult& result) {
+    bool getResult(InferenceResult& result) noexcept {
         return resultBuffer_.pop(&result, 1);
     }
 

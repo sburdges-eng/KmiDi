@@ -8,7 +8,7 @@ ML models (e.g., MelodyTransformer) as a fallback.
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 from collections import Counter, defaultdict
 import json
 import numpy as np
@@ -16,6 +16,29 @@ import numpy as np
 DEFAULT_STORAGE = Path.home() / ".parrot" / "music_learning" / "melodies"
 EXAMPLES_DIR = DEFAULT_STORAGE / "examples"
 PROFILES_DIR = DEFAULT_STORAGE / "profiles"
+
+
+def _pattern_dict_for_json(d: Dict[Union[str, Tuple], int]) -> Dict[str, int]:
+    """JSON object keys must be strings; encode tuple interval keys."""
+    out: Dict[str, int] = {}
+    for k, v in d.items():
+        if isinstance(k, tuple):
+            out[json.dumps([int(x) for x in k])] = int(v)
+        else:
+            out[str(k)] = int(v)
+    return out
+
+
+def _pattern_dict_from_json(d: Dict[str, int]) -> Dict[Tuple, int]:
+    out: Dict[Tuple, int] = {}
+    for k, v in d.items():
+        try:
+            parsed = json.loads(k)
+            if isinstance(parsed, list):
+                out[tuple(int(x) for x in parsed)] = int(v)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            continue
+    return out
 
 
 @dataclass
@@ -58,19 +81,71 @@ class MelodyProfile:
     example_count: int
 
     def to_dict(self) -> Dict:
+        emotion_out: Dict[str, Dict] = {}
+        for em, stats in self.emotion_patterns.items():
+            s = dict(stats)
+            if s.get("interval_patterns") is not None:
+                s["interval_patterns"] = _pattern_dict_for_json(dict(s["interval_patterns"]))
+            if s.get("contour_patterns") is not None:
+                s["contour_patterns"] = _pattern_dict_for_json(dict(s["contour_patterns"]))
+            if s.get("note_frequencies") is not None:
+                s["note_frequencies"] = {
+                    str(int(k)): int(v) for k, v in dict(s["note_frequencies"]).items()
+                }
+            if "avg_length" in s:
+                s["avg_length"] = float(s["avg_length"])
+            emotion_out[em] = s
+        gp = dict(self.global_patterns)
+        if gp.get("interval_patterns") is not None:
+            gp["interval_patterns"] = _pattern_dict_for_json(dict(gp["interval_patterns"]))
+        if gp.get("contour_patterns") is not None:
+            gp["contour_patterns"] = _pattern_dict_for_json(dict(gp["contour_patterns"]))
+        if gp.get("note_frequencies") is not None:
+            gp["note_frequencies"] = {
+                str(int(k)): int(v) for k, v in dict(gp["note_frequencies"]).items()
+            }
         return {
             "name": self.name,
-            "emotion_patterns": self.emotion_patterns,
-            "global_patterns": self.global_patterns,
+            "emotion_patterns": emotion_out,
+            "global_patterns": gp,
             "example_count": self.example_count,
         }
 
     @classmethod
     def from_dict(cls, data: Dict) -> "MelodyProfile":
+        emotion_in: Dict[str, Dict] = {}
+        for em, stats in (data.get("emotion_patterns") or {}).items():
+            s = dict(stats)
+            if s.get("interval_patterns") is not None:
+                s["interval_patterns"] = _pattern_dict_from_json(
+                    {str(k): int(v) for k, v in dict(s["interval_patterns"]).items()}
+                )
+            if s.get("contour_patterns") is not None:
+                s["contour_patterns"] = _pattern_dict_from_json(
+                    {str(k): int(v) for k, v in dict(s["contour_patterns"]).items()}
+                )
+            if s.get("note_frequencies") is not None:
+                s["note_frequencies"] = {
+                    int(k): int(v) for k, v in dict(s["note_frequencies"]).items()
+                }
+            emotion_in[em] = s
+        gp = dict(data.get("global_patterns") or {})
+        if gp.get("interval_patterns") is not None:
+            gp["interval_patterns"] = _pattern_dict_from_json(
+                {str(k): int(v) for k, v in dict(gp["interval_patterns"]).items()}
+            )
+        if gp.get("contour_patterns") is not None:
+            gp["contour_patterns"] = _pattern_dict_from_json(
+                {str(k): int(v) for k, v in dict(gp["contour_patterns"]).items()}
+            )
+        if gp.get("note_frequencies") is not None:
+            gp["note_frequencies"] = {
+                int(k): int(v) for k, v in dict(gp["note_frequencies"]).items()
+            }
         return cls(
             name=data.get("name", ""),
-            emotion_patterns=data.get("emotion_patterns", {}),
-            global_patterns=data.get("global_patterns", {}),
+            emotion_patterns=emotion_in,
+            global_patterns=gp,
             example_count=data.get("example_count", 0),
         )
 
@@ -240,6 +315,10 @@ class MelodyLearner:
         interval_patterns = patterns.get("interval_patterns", {})
         if not interval_patterns and profile.global_patterns.get("interval_patterns"):
             interval_patterns = profile.global_patterns["interval_patterns"]
+        if interval_patterns and all(isinstance(k, str) for k in interval_patterns):
+            interval_patterns = _pattern_dict_from_json(
+                {k: int(v) for k, v in interval_patterns.items()}
+            )
 
         # Flatten interval patterns by frequency
         interval_list = []

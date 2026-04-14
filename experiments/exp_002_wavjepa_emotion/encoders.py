@@ -60,11 +60,11 @@ def load_encoder(name: str, config: Dict[str, Any], device: Optional[str] = None
         checkpoint = config.get("wavjepa_checkpoint", "labhamlet/wavjepa-base")
         try:
             # WavJEPA may be registered as a custom AutoModel or require the official repo.
-            model = transformers.AutoModel.from_pretrained(checkpoint)
+            model = transformers.AutoModel.from_pretrained(checkpoint, trust_remote_code=True)
             processor = getattr(transformers, "AutoProcessor", None)
             if processor is not None:
                 try:
-                    proc = processor.from_pretrained(checkpoint)
+                    proc = processor.from_pretrained(checkpoint, trust_remote_code=True)
                 except Exception:
                     proc = None
             else:
@@ -97,13 +97,13 @@ def extract(
     device = encoder_dict["device"]
     name = encoder_dict.get("name", "")
 
-    if processor is not None and name in ("hubert", "wav2vec2"):
+    if processor is not None:
         if name == "hubert":
             # Feature extractor returns dict with input_values
-            inputs = processor(audio_16k, sampling_rate=sample_rate, return_tensors="pt", padding=True)
+            inputs = processor([audio_16k], sampling_rate=sample_rate, return_tensors="pt", padding=True)
             input_values = inputs.input_values.to(device)
         else:
-            inputs = processor(audio_16k, sampling_rate=sample_rate, return_tensors="pt", padding=True)
+            inputs = processor([audio_16k], sampling_rate=sample_rate, return_tensors="pt", padding=True)
             input_values = inputs.input_values.to(device)
     else:
         # Raw tensor; assume (1, T) or (T,)
@@ -116,8 +116,15 @@ def extract(
 
     with torch.no_grad():
         out = model(input_values)
-    # Wav2Vec2/HuBERT: last_hidden_state (B, T, D); WavJEPA may differ
-    hidden = getattr(out, "last_hidden_state", out.get("last_hidden_state", out[0] if isinstance(out, tuple) else out))
+    if hasattr(out, "last_hidden_state"):
+        hidden = out.last_hidden_state
+    elif hasattr(out, "get") and "last_hidden_state" in out:
+        hidden = out.get("last_hidden_state")
+    elif isinstance(out, tuple):
+        hidden = out[0]
+    else:
+        hidden = out
+        
     if isinstance(hidden, tuple):
         hidden = hidden[0]
     # (1, T, D) -> (T, D)

@@ -44,14 +44,19 @@ struct KellyBrainWrapper {
     }
 };
 
-// Thread-local error storage
-thread_local std::string last_error_message;
+// Thread-local fixed-size error buffer (RT-safe: no heap allocation)
+static thread_local char tl_error_buf[512] = {};
 
 /**
- * Set thread-local error message
+ * Set thread-local error message (RT-safe, no heap alloc)
  */
+static void set_last_error(const char* msg) {
+    std::strncpy(tl_error_buf, msg ? msg : "", sizeof(tl_error_buf) - 1);
+    tl_error_buf[sizeof(tl_error_buf) - 1] = '\0';
+}
+
 static void set_last_error(const std::string& message) {
-    last_error_message = message;
+    set_last_error(message.c_str());
 }
 
 /**
@@ -334,7 +339,7 @@ const char* kelly_get_error_message(KellyErrorCode error_code) {
 }
 
 const char* kelly_get_last_error(void) {
-    return last_error_message.empty() ? nullptr : last_error_message.c_str();
+    return tl_error_buf[0] != '\0' ? tl_error_buf : nullptr;
 }
 
 // =============================================================================
@@ -722,26 +727,39 @@ KellyErrorCode kelly_brain_set_emotion_parameters(KellyBrain* brain, float valen
     
     try {
         auto* wrapper = reinterpret_cast<KellyBrainWrapper*>(brain);
-        std::lock_guard<std::mutex> lock(wrapper->mutex);
-        
-        if (!wrapper->initialized) {
-            set_last_error("KellyBrain not initialized");
-            return KELLY_ERROR_INITIALIZATION_FAILED;
+
+        // Copy callback and build event data under the lock, then invoke outside
+        // to prevent deadlock if the callback re-enters any kelly_brain_* function.
+        decltype(wrapper->callback) cb = nullptr;
+        void* cb_user_data = nullptr;
+        std::string event_data_str;
+
+        {
+            std::lock_guard<std::mutex> lock(wrapper->mutex);
+
+            if (!wrapper->initialized) {
+                set_last_error("KellyBrain not initialized");
+                return KELLY_ERROR_INITIALIZATION_FAILED;
+            }
+
+            // Update emotional parameters
+            // In the actual implementation, this would update the internal state
+
+            cb = wrapper->callback;
+            cb_user_data = wrapper->callback_user_data;
+            if (cb != nullptr) {
+                std::ostringstream event_data;
+                event_data << "{\"valence\": " << valence
+                          << ", \"arousal\": " << arousal
+                          << ", \"dominance\": " << dominance << "}";
+                event_data_str = event_data.str();
+            }
+        } // lock released here
+
+        if (cb != nullptr) {
+            cb("emotion_changed", event_data_str.c_str(), cb_user_data);
         }
-        
-        // Update emotional parameters
-        // In the actual implementation, this would update the internal state
-        
-        // Emit event if callback is registered
-        if (wrapper->callback != nullptr) {
-            std::ostringstream event_data;
-            event_data << "{\"valence\": " << valence 
-                      << ", \"arousal\": " << arousal
-                      << ", \"dominance\": " << dominance << "}";
-            
-            wrapper->callback("emotion_changed", event_data.str().c_str(), wrapper->callback_user_data);
-        }
-        
+
         return KELLY_SUCCESS;
     }
     catch (const std::exception& e) {

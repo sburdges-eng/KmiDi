@@ -9,9 +9,9 @@ wav2vec2_checkpoint: "facebook/wav2vec2-base"
 
 # Data: root = KMIDI_DATASETS_PATH | AUDIO_DATA_ROOT | config dataset_root | ~/Datasets
 # Subpaths: emotions/ravdess, emotions/cremad. Default "data" = this experiment's data/ folder (put or symlink WAVs there).
-dataset_root: "data"
+dataset_root: "/Volumes/Sean's SSD/Datasets/raw"
 dataset_subpaths:
-  crema_d: "emotions/cremad"
+  crema_d: "emotions/crema_d"
   ravdess: "emotions/ravdess"
 datasets:
   - crema_d

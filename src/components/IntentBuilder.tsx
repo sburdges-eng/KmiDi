@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import type { CompleteSongIntentRequest } from '../types/Intent';
-import { useMusicBrain, buildGeneratePayload } from '../hooks/useMusicBrain';
+import { useMusicBrain } from '../hooks/useMusicBrain';
 
 async function safeInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   const { invoke } = await import('@tauri-apps/api/core');
@@ -72,7 +72,7 @@ const DEMO_INTENT: CompleteSongIntentRequest = {
 };
 
 export default function IntentBuilder() {
-  const { generateMusic } = useMusicBrain();
+  const { generateFromIntentAsTtg } = useMusicBrain();
 
   const [intent, setIntent] = useState<CompleteSongIntentRequest>({
     core_desire: '', mood_primary: '', genre: '', tempo: 120,
@@ -215,8 +215,7 @@ export default function IntentBuilder() {
         setJobStatus('GENERATING...');
       } else {
         setJobStatus('GENERATING...');
-        const apiPayload = buildGeneratePayload(intent);
-        await generateMusic(apiPayload);
+        await generateFromIntentAsTtg(intent);
         setIsGenerating(false);
         setJobStatus('COMPLETE');
         setMeterLevel(0);

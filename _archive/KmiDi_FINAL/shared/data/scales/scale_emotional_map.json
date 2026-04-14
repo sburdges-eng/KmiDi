@@ -420,7 +420,7 @@
         "basic": ["diminished", "diminished", "minor", "diminished", "major", "minor", "major"],
         "degrees": {
           "i°": "diminished",
-          "Rarely used functionally - primarily melodic color"
+          "note": "Rarely used functionally - primarily melodic color"
         },
         "common_progressions": [
           "Used as extreme tension over diminished or altered chords",
@@ -696,7 +696,7 @@
       "chords": {
         "basic": ["sus2", "sus4", "power chords"],
         "degrees": {
-          "No clear major/minor - suspended quality throughout"
+          "note": "No clear major/minor - suspended quality throughout"
         },
         "common_progressions": [
           "Isus2 - IVsus - Isus2",

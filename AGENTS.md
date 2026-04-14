@@ -2,6 +2,8 @@
 
 Canonical agent and developer context for KmiDi / iDAW: project structure, build, services, and gotchas.
 
+**Before changing C++, KellyFFI, Tauri FFI, or real-time audio paths:** read and follow **§ [Native safety, FFI ownership, and verification map](#native-safety-ffi-ownership-and-verification-map)** below (file paths, ownership rules, commands). Do not rely on memory of this doc from prior sessions.
+
 ---
 
 ## Project overview
@@ -234,6 +236,57 @@ Minimal working example:
 
 ---
 
+## Native safety, FFI ownership, and verification map
+
+Single place for **memory/FFI/JUCE/RT** concerns. Use this when touching native code, adding FFI entry points, or debugging crashes around the dylib.
+
+Human-oriented copy (same content, readable in docs navigation): [`docs/NATIVE_SAFETY_AND_FFI.md`](docs/NATIVE_SAFETY_AND_FFI.md). **Edit `AGENTS.md` first**, then align that file in the same PR.
+
+### FFI buffer ownership (who allocates / frees)
+
+| What | Where | Agent action |
+|------|--------|----------------|
+| C ABI contract (which `char*` to free) | `src/bridge/kelly_ffi.h` — `kelly_free_string`, comments on static vs heap | Every new FFI return type must be documented (caller frees vs static, e.g. `kelly_get_error_message`). |
+| C++ implementation | `src/bridge/kelly_ffi.cpp` | Pair every heap allocation returned across the boundary with `kelly_free_string` (or document static storage). |
+| Rust consumer | `src-tauri/src/bridge/kelly_ffi.rs` | Match each `extern "C"` result: if the header says the library allocated it, copy then `kelly_free_string`. If the header says static/thread-local, **never** free. Grep `kelly_` calls and verify against `kelly_ffi.h`. |
+| Other Rust FFI | `src-tauri/src/intent_ir/ffi.rs`, `src-tauri/src/intent_ir/ffi_exports.rs` | Same discipline as KellyFFI (lifetimes, null, who owns buffers). |
+| Regression tests | `tests/cpp/test_kelly_ffi.cpp` | Extend when adding FFI; run with `BUILD_TESTS=ON` and C++ tests enabled. |
+
+### Duplicate JUCE / ODR / allocator mismatch
+
+| What | Where | Agent action |
+|------|--------|----------------|
+| CMake policy (PRIVATE JUCE on KellyFFI) | `CMakeLists.txt` (~KellyFFI target: `target_link_libraries(KellyFFI ... PRIVATE juce::...)`, `JUCE_DISABLE_JUCE_VERSION_PRINTING`) | New executables/libs must **not** also link JUCE if they only consume `KellyFFI` the wrong way — see comments in CMake next to `KellyFFIBenchmark`. |
+| Benchmark pattern | `CMakeLists.txt` — `KellyFFIBenchmark` links **only** `KellyFFI` | Do not add `juce::` targets to small harness exes that already link KellyFFI. |
+| Manual verification | Linker / `nm` / `otool -L` (macOS) | If suspicious double-free or JUCE init crashes: confirm a single JUCE inside `libKellyFFI`, not a second copy in the host. |
+
+### RT allocations, locks, audio thread
+
+| What | Where | Agent action |
+|------|--------|----------------|
+| Lock-free RT snapshot type | `include/penta/common/RTState.h` | Atomics only; `static_assert` lock-freedom. No new heap use in RTState hot paths. |
+| Plugin callback | `src/plugin/PluginProcessor.cpp`, `PluginProcessor.h` | Review any change inside `processBlock` for heap alloc, blocking locks, or unbounded work. |
+| Headless harness | `rt_harness/` (enabled by `BUILD_RT_HARNESS` in root `CMakeLists.txt`) | Use for callback regression when changing RT behavior. |
+| Sanitizers | Debug build: `KMIDI_ENABLE_ASAN=ON` (see `CLAUDE.md`) | Run `ctest` (and affected targets) after native changes that might introduce UB or lifetime bugs. |
+
+### Version and contract drift (not the same as HTTP `intent_schema_version`)
+
+| What | Where | Agent action |
+|------|--------|----------------|
+| KellyFFI ABI / dylib | `CMakeLists.txt` — `KellyFFI` `VERSION` / `SOVERSION`; Tauri `src-tauri/build.rs` search paths | Breaking C ABI requires version story + Tauri packaging update. |
+| TS / Rust / Python intent shapes | `shared_schemas/`, `scripts/sync_entities.py`, `src/types/Intent.ts`, `src-tauri/src/generated/` | After schema edits, run sync and commit generated files; run Python schema tests. |
+| HTTP API only | `music_brain/api_schemas/` | REST contract evolution; does not fix C++ memory by itself. |
+
+### Commands to run (when native/FFI touched)
+
+- Configure and build affected targets, e.g. `KellyFFI`, `KellyCore`, plugins: see `BUILD.md` and root `CMakeLists.txt`.
+- C++ tests: `BUILD_TESTS=ON`, then `ctest --test-dir build --output-on-failure` (when enabled).
+- Sanitizer: `KMIDI_ENABLE_ASAN=ON` Debug build + `ctest` per `CLAUDE.md`.
+- Rust: `cd src-tauri && cargo test`.
+- Python (if API/schemas touched): `flake8 music_brain/`, `pytest tests/`.
+
+---
+
 ## Integration gate (merge checklist)
 
 Every PR or feature branch touching native code must satisfy all of the following before merge:
@@ -242,6 +295,7 @@ Every PR or feature branch touching native code must satisfy all of the followin
 - [ ] **Sanitizer clean:** Debug build with `KMIDI_ENABLE_ASAN=ON` passes all tests with zero ASan/UBSan findings. Document any waiver with a tracking ticket.
 - [ ] **No new heap allocations or locks on RT paths.** Audio callbacks must remain `noexcept`, allocation-free, and lock-free. Review any code that runs inside `processBlock` or the RT callback harness.
 - [ ] **No duplicate JUCE linkage / ODR violations.** KellyFFI links JUCE PRIVATE. Any new executable or shared library must not also link JUCE directly — verify with `nm` or linker diagnostics if in doubt.
+- [ ] **FFI ownership.** Any new KellyFFI `extern "C"` pointer contract is documented in `src/bridge/kelly_ffi.h` and mirrored in `kelly_ffi.rs` (free vs static). See **§ Native safety, FFI ownership, and verification map** above.
 - [ ] **Single canonical tree.** New code goes into the repo root, not `KmiDi_FINAL/`, `KmiDi_PROJECT/`, or worktree-only paths. If importing from KmiDi_FINAL, copy into root and delete the worktree copy in the same PR.
 - [ ] **Schema sync.** If `shared_schemas/` changed, `scripts/sync_entities.py` was run and generated files are committed.
 - [ ] **Python lint + tests pass.** `flake8 music_brain/` and `pytest tests/` green.
@@ -252,6 +306,7 @@ Every PR or feature branch touching native code must satisfy all of the followin
 
 | Doc | Content |
 |-----|--------|
+| `docs/prd/KMIDI_PRD.md` | Product requirements: bounded contexts, hybrid modular monolith, TTG, RT hazards, APIs, MVP |
 | `docs/DEVELOPMENT.md` | Full dev guide, workflows, debugging, C++/Rust/React structure |
 | `docs/ENVIRONMENT.md` | Env vars, file layout, loading, validation |
 | `docs/FULL_STACK_BUILD.md` | React ↔ Tauri ↔ KellyFFI ↔ KellyCore, build order, integration tests |
@@ -261,3 +316,5 @@ Every PR or feature branch touching native code must satisfy all of the followin
 | `docs/SAGEMAKER_SETUP.md` | SageMaker AI training (JEPA): IAM, S3, ECR, image build, launch jobs |
 | `docs/LATENT_ARCHITECTURE.md` | Six high-leverage tools (stateful KV-cache, MIDI-CI, canonicalization, APSC, StructXLIP, PID Flow) |
 | `BUILD.md` | C++ / CMake / Tauri build instructions and prerequisites |
+| `AGENTS.md` (this file): Native safety, FFI ownership, and verification map | FFI frees, duplicate JUCE, RT paths, contract drift, commands |
+| `docs/NATIVE_SAFETY_AND_FFI.md` | Human-readable mirror of the map above; keep in sync with this section |

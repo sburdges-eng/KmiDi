@@ -49,10 +49,14 @@ from music_brain.learning.pedagogy import (
     generate_ai_teaching_prompt,
 )
 
-from music_brain.learning.openweight_learning import (
-    OpenWeightLearner,
-    OpenWeightLearningManager,
-)
+try:
+    from music_brain.learning.openweight_learning import (
+        OpenWeightLearner,
+        OpenWeightLearningManager,
+    )
+except ImportError:  # pragma: no cover - optional torch
+    OpenWeightLearner = None  # type: ignore[misc, assignment]
+    OpenWeightLearningManager = None  # type: ignore[misc, assignment]
 
 __all__ = [
     # Curriculum

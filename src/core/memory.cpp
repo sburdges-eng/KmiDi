@@ -31,7 +31,7 @@ MutexMemoryPool::MutexMemoryPool(size_t blockSize, size_t numBlocks)
 
 MutexMemoryPool::~MutexMemoryPool() = default;
 
-void* MutexMemoryPool::allocate() noexcept {
+void* MutexMemoryPool::allocate() {
     std::lock_guard<std::mutex> lock(mutex_);
     size_t available = freeCount_.load(std::memory_order_acquire);
     if (available == 0) {
@@ -42,7 +42,7 @@ void* MutexMemoryPool::allocate() noexcept {
     return ptr;
 }
 
-void MutexMemoryPool::deallocate(void* ptr) noexcept {
+void MutexMemoryPool::deallocate(void* ptr) {
     if (!ptr || !contains(ptr)) {
         return;
     }
@@ -85,6 +85,9 @@ LockFreeQueue<T>::~LockFreeQueue() {
     delete tail_;
 }
 
+// WARNING: Despite the name, this queue heap-allocates nodes in push().
+// NOT safe for real-time audio threads. For RT paths, use
+// moodycamel::ReaderWriterQueue or a pre-allocated ring buffer.
 template<typename T>
 void LockFreeQueue<T>::push(const T& item) {
     std::lock_guard<std::mutex> lock(mutex_);

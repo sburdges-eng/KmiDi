@@ -85,8 +85,8 @@ class AbletonDAWBridge(BaseDAWBridge):
         self.config = config or AbletonConfig()
 
         # Lazy import to avoid circular dependency
-        self._osc_bridge = None
-        self._midi_bridge = None
+        self._osc_bridge: Optional[Any] = None
+        self._midi_bridge: Optional[Any] = None
 
         self._capabilities = DAWCapabilities(
             has_transport=True,
@@ -131,10 +131,10 @@ class AbletonDAWBridge(BaseDAWBridge):
         self._osc_bridge = AbletonOSCBridge(osc_config)
         self._midi_bridge = AbletonMIDIBridge(midi_config)
 
-        osc_ok = self._osc_bridge.connect()
-        midi_ok = self._midi_bridge.connect()
+        osc_ok = self._osc_bridge.connect() if self._osc_bridge else False
+        midi_ok = self._midi_bridge.connect() if self._midi_bridge else False
 
-        return osc_ok or midi_ok
+        return bool(osc_ok or midi_ok)
 
     def _do_disconnect(self) -> None:
         if self._midi_bridge:
@@ -271,7 +271,15 @@ class LogicProBridge(BaseDAWBridge):
     """
     DAW bridge for Logic Pro X.
 
-    Uses AppleScript for transport control and MIDI for notes/CC.
+    Uses AppleScript for Transport & Structural commands and Mackie Control
+    Universal (MCU) over MIDI for track controls (Arm, Mute, Solo, Faders).
+
+    SETUP REQUIREMENT: You MUST map this virtual port to a Mackie Control surface.
+    In Logic Pro:
+        1. Open Control Surfaces -> Setup
+        2. New -> Install -> Mackie Designs -> "Mackie Control" (Do not use Extender)
+        3. Match the Output/Input Ports to "DAiW Voice".
+
     macOS only.
     """
 
@@ -422,20 +430,37 @@ class LogicProBridge(BaseDAWBridge):
         return -1  # Can't get track index via AppleScript
 
     def arm_track(self, index: int, armed: bool = True) -> None:
-        # Would need to select track first, then toggle arm
-        pass
+        # MCU Arm uses Note On 0x00 - 0x07 on Channel 1
+        if index < 8:
+            self.send_note_on(note=0 + index, velocity=127 if armed else 0, channel=0)
 
     def mute_track(self, index: int, muted: bool = True) -> None:
-        pass
+        # MCU Mute uses Note On 0x10 - 0x17 on Channel 1
+        if index < 8:
+            self.send_note_on(note=16 + index, velocity=127 if muted else 0, channel=0)
 
     def solo_track(self, index: int, soloed: bool = True) -> None:
-        pass
+        # MCU Solo uses Note On 0x08 - 0x0f on Channel 1
+        if index < 8:
+            self.send_note_on(note=8 + index, velocity=127 if soloed else 0, channel=0)
 
     def set_track_volume(self, index: int, volume_db: float) -> None:
-        pass
+        # MCU Faders are Pitch Bend strings corresponding to Channel 1..8
+        if index < 8:
+            # Map -60.0 to +6.0 dB naively across 14-bit
+            norm = max(0.0, min(1.0, (volume_db + 60.0) / 66.0))
+            pb_val = int(norm * 16383) - 8192
+            self.send_pitch_bend(pb_val, channel=index)
 
     def set_track_pan(self, index: int, pan: float) -> None:
-        pass
+        # MCU V-Pots (16-23 on Channel 1). Pan > 0 = Right, Pan < 0 = Left (65-127 range shift)
+        if index < 8:
+            value = 0
+            if pan > 0:
+                value = int(pan * 63)
+            elif pan < 0:
+                value = int((pan * -1.0) * 63) + 64
+            self.send_cc(cc=16 + index, value=value, channel=0)
 
     # MIDI
     def send_note_on(self, note: int, velocity: int = 100, channel: int = 0) -> None:

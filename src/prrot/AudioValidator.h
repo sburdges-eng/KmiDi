@@ -103,7 +103,7 @@ public:
         const float* audio_samples,
         size_t num_samples,
         float sample_rate_hz
-    ) const noexcept;
+    ) const ;
 
 private:
     /**
@@ -130,7 +130,7 @@ private:
     float estimateNoiseFloor(
         const float* samples,
         size_t num_samples
-    ) const noexcept;
+    ) const ;
 
     /**
      * Compute signal level

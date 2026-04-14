@@ -11,6 +11,7 @@ Usage:
     result = await processor.process(intent_data, context)
 """
 
+from pathlib import Path
 from typing import Any, Dict, Optional, List
 from dataclasses import dataclass
 
@@ -156,7 +157,7 @@ class HarmonyProcessor(BaseProcessor):
             )
 
             # Generate harmony using existing functionality
-            harmony_output = await self._generate_harmony(harmony_input)
+            harmony_output = await self._generate_harmony(harmony_input, context)
 
             # Store in shared context for other processors
             context.set_shared("harmony", harmony_output.to_dict())
@@ -179,7 +180,11 @@ class HarmonyProcessor(BaseProcessor):
                 error=f"Harmony generation failed: {str(e)}",
             )
 
-    async def _generate_harmony(self, input_data: HarmonyInput) -> HarmonyOutput:
+    async def _generate_harmony(
+        self,
+        input_data: HarmonyInput,
+        context: Optional[ExecutionContext] = None,
+    ) -> HarmonyOutput:
         """
         Generate harmony using music_brain's harmony tools.
 
@@ -192,6 +197,35 @@ class HarmonyProcessor(BaseProcessor):
             generate_progression_parallel_motion,
             generate_progression_unresolved_dissonance,
         )
+        from music_brain.learning.harmony_learning import HarmonyLearningManager
+
+        profiles = (context.get_shared("learning_profiles") if context else None) or {}
+        storage_root = context.get_shared("learning_storage_root") if context else None
+        learn_profile = (
+            (input_data.params or {}).get("learning_harmony_profile")
+            or profiles.get("harmony")
+        )
+        if learn_profile:
+            h_dir = None
+            if storage_root is not None:
+                h_dir = Path(storage_root) / "harmonies"
+            hm = HarmonyLearningManager(h_dir)
+            chords = hm.generate(
+                input_data.emotion,
+                learn_profile,
+                input_data.progression_length,
+                input_data.key,
+                input_data.mode,
+            )
+            return HarmonyOutput(
+                chords=chords,
+                roman_numerals=[str(c) for c in chords],
+                key=input_data.key,
+                mode=input_data.mode,
+                rule_broken=input_data.rule_to_break,
+                emotional_arc=[input_data.emotion],
+                voice_leading_notes=[],
+            )
 
         rule = input_data.rule_to_break
 

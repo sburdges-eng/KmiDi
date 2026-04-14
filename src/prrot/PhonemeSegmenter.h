@@ -68,7 +68,7 @@ public:
         const float* audio_samples,
         size_t num_samples,
         float sample_rate_hz
-    ) noexcept;
+    ) ;
 
     // Get phoneme classification for a segment
     PhonemeType classifyPhoneme(

@@ -197,6 +197,20 @@ inline void copy_with_gain(float* dst, const float* src, size_t n, float gain) {
         dst[i] = src[i] * gain;
     }
 
+#elif defined(DAIW_NEON)
+    const float32x4_t gain_vec = vdupq_n_f32(gain);
+    size_t i = 0;
+
+    for (; i + 4 <= n; i += 4) {
+        float32x4_t samples = vld1q_f32(src + i);
+        samples = vmulq_f32(samples, gain_vec);
+        vst1q_f32(dst + i, samples);
+    }
+
+    for (; i < n; ++i) {
+        dst[i] = src[i] * gain;
+    }
+
 #else
     for (size_t i = 0; i < n; ++i) {
         dst[i] = src[i] * gain;
@@ -243,6 +257,29 @@ inline float find_peak(const float* data, size_t n) {
 
     return peak;
 
+#elif defined(DAIW_NEON)
+    float32x4_t max_vec = vdupq_n_f32(0.0f);
+    size_t i = 0;
+
+    for (; i + 4 <= n; i += 4) {
+        float32x4_t samples = vld1q_f32(data + i);
+        samples = vabsq_f32(samples);  // abs
+        max_vec = vmaxq_f32(max_vec, samples);
+    }
+
+    // Horizontal max
+    float32x2_t lo = vget_low_f32(max_vec);
+    float32x2_t hi = vget_high_f32(max_vec);
+    float32x2_t pair = vpmax_f32(lo, hi);
+    float peak = vget_lane_f32(vpmax_f32(pair, pair), 0);
+
+    for (; i < n; ++i) {
+        float abs_val = data[i] < 0 ? -data[i] : data[i];
+        if (abs_val > peak) peak = abs_val;
+    }
+
+    return peak;
+
 #else
     float peak = 0.0f;
     for (size_t i = 0; i < n; ++i) {
@@ -270,6 +307,20 @@ inline void apply_envelope(float* data, const float* envelope, size_t n) {
         __m256 env = _mm256_loadu_ps(envelope + i);
         samples = _mm256_mul_ps(samples, env);
         _mm256_storeu_ps(data + i, samples);
+    }
+
+    for (; i < n; ++i) {
+        data[i] *= envelope[i];
+    }
+
+#elif defined(DAIW_NEON)
+    size_t i = 0;
+
+    for (; i + 4 <= n; i += 4) {
+        float32x4_t samples = vld1q_f32(data + i);
+        float32x4_t env = vld1q_f32(envelope + i);
+        samples = vmulq_f32(samples, env);
+        vst1q_f32(data + i, samples);
     }
 
     for (; i < n; ++i) {
@@ -386,12 +437,64 @@ inline void mono_to_stereo(float* stereo, const float* mono, size_t n) {
 }
 
 /**
- * Stereo to mono (average).
+ * Stereo to mono (average), interleaved layout:
+ * stereo[2*i] = L, stereo[2*i + 1] = R
  */
 inline void stereo_to_mono(float* mono, const float* stereo, size_t n) {
     for (size_t i = 0; i < n; ++i) {
         mono[i] = (stereo[2*i] + stereo[2*i + 1]) * 0.5f;
     }
+}
+
+/**
+ * Stereo to mono (average), planar layout (e.g. JUCE AudioBuffer):
+ * mono[i] = 0.5f * (left[i] + right[i])
+ *
+ * RT-safe: no allocation; SIMD on AVX2 / SSE4.2 / NEON when compiled for those ISAs.
+ */
+inline void stereo_planar_to_mono(float* mono, const float* left, const float* right,
+                                  size_t n) {
+#if defined(DAIW_AVX2)
+    const __m256 half = _mm256_set1_ps(0.5f);
+    size_t i = 0;
+    for (; i + 8 <= n; i += 8) {
+        __m256 L = _mm256_loadu_ps(left + i);
+        __m256 R = _mm256_loadu_ps(right + i);
+        __m256 sum = _mm256_mul_ps(_mm256_add_ps(L, R), half);
+        _mm256_storeu_ps(mono + i, sum);
+    }
+    for (; i < n; ++i) {
+        mono[i] = 0.5f * (left[i] + right[i]);
+    }
+#elif defined(DAIW_SSE42)
+    const __m128 half = _mm_set1_ps(0.5f);
+    size_t i = 0;
+    for (; i + 4 <= n; i += 4) {
+        __m128 L = _mm_loadu_ps(left + i);
+        __m128 R = _mm_loadu_ps(right + i);
+        __m128 sum = _mm_mul_ps(_mm_add_ps(L, R), half);
+        _mm_storeu_ps(mono + i, sum);
+    }
+    for (; i < n; ++i) {
+        mono[i] = 0.5f * (left[i] + right[i]);
+    }
+#elif defined(DAIW_NEON)
+    const float32x4_t half = vdupq_n_f32(0.5f);
+    size_t i = 0;
+    for (; i + 4 <= n; i += 4) {
+        float32x4_t L = vld1q_f32(left + i);
+        float32x4_t R = vld1q_f32(right + i);
+        float32x4_t sum = vmulq_f32(vaddq_f32(L, R), half);
+        vst1q_f32(mono + i, sum);
+    }
+    for (; i < n; ++i) {
+        mono[i] = 0.5f * (left[i] + right[i]);
+    }
+#else
+    for (size_t i = 0; i < n; ++i) {
+        mono[i] = 0.5f * (left[i] + right[i]);
+    }
+#endif
 }
 
 /**

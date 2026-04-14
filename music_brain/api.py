@@ -1282,16 +1282,162 @@ if FASTAPI_AVAILABLE:
     def _create_output_paths(output_format: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
         if not output_format:
             return None, None
-        import tempfile
-        import time
         output_midi = None
         output_audio = None
+        stamp = int(time.time())
+        tmpdir = Path(tempfile.gettempdir())
         if output_format in ['mid', 'midi']:
-            output_midi = str(Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.mid")
+            output_midi = str(tmpdir / f"generated_{stamp}.mid")
         elif output_format in ['wav', 'mp3']:
-            output_audio = str(Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.{output_format}")
-            output_midi = str(Path(tempfile.gettempdir()) / f"generated_{int(time.time())}.mid")
+            output_audio = str(tmpdir / f"generated_{stamp}.{output_format}")
+            output_midi = str(tmpdir / f"generated_{stamp}.mid")
         return output_midi, output_audio
+
+    def _extract_structure_instruments(
+        tech: Any,
+    ) -> Tuple[Optional[List[Dict[str, Any]]], Optional[List[Dict[str, Any]]]]:
+        """Pull timeline→structure and orchestration→instruments from technical payload.
+
+        Dedupes the two inline TTG-adapter blocks that used to appear both in
+        the MIDI-plan construction and in response assembly.
+        """
+        if not tech:
+            return None, None
+        from music_brain.api_schemas.ttg_adapter import (
+            orchestration_dict_to_instruments,
+            ttg_dict_to_structure_list,
+        )
+        t_dict = pydantic_to_dict(tech)
+        structure = (
+            ttg_dict_to_structure_list(t_dict.get("timeline", {}))
+            if t_dict.get("timeline") else None
+        )
+        instruments = (
+            orchestration_dict_to_instruments(t_dict.get("orchestration", {}))
+            if t_dict.get("orchestration") else None
+        )
+        return structure, instruments
+
+    def _build_harmony_plan(
+        tech: Any,
+        res_output: Dict[str, Any],
+        key_root: str,
+        key_mode: str,
+        base_bpm: int,
+        structure: Optional[List[Dict[str, Any]]],
+        instruments: Optional[List[Dict[str, Any]]],
+    ) -> HarmonyPlan:
+        """Construct HarmonyPlan from orchestrator output + technical payload.
+
+        Handles duration/BPM clamping and structure-bar override so the
+        caller doesn't have to repeat that logic inline.
+        """
+        duration_minutes = tech.duration if tech and tech.duration is not None else 3.0
+        try:
+            duration_minutes = float(duration_minutes)
+            duration_minutes = max(0.1, min(60.0, duration_minutes))
+        except (ValueError, TypeError):
+            duration_minutes = 3.0
+
+        length_bars = int((duration_minutes * base_bpm) / 4)
+        length_bars = max(16, min(128, length_bars))
+
+        if structure:
+            total_structure_bars = sum(
+                section.get("bars", 4) * section.get("repetitions", 1)
+                for section in structure
+            )
+            if total_structure_bars > 0:
+                length_bars = total_structure_bars
+
+        harmony = res_output.get("harmony", {})
+        return HarmonyPlan(
+            root_note=key_root,
+            mode=key_mode,
+            tempo_bpm=base_bpm,
+            time_signature="4/4",
+            length_bars=length_bars,
+            chord_symbols=harmony.get("chords", ["C", "Am", "F", "G"]),
+            harmonic_rhythm="1_chord_per_bar",
+            mood_profile=res_output.get("intent_summary", {}).get("mood", "neutral"),
+            complexity=0.5,
+            structure=structure,
+            instruments=instruments,
+        )
+
+    def _build_generate_response(
+        request: GenerateRequest,
+        res_output: Dict[str, Any],
+        tech: Any,
+        lyric_text: str,
+        lyric_source: str,
+        structure: Optional[List[Dict[str, Any]]],
+        instruments: Optional[List[Dict[str, Any]]],
+        output_midi: Optional[str],
+        output_audio: Optional[str],
+    ) -> Dict[str, Any]:
+        """Assemble the /generate response dict, including structure/instruments
+        summaries and MIDI/audio file paths. Audio rendering from the generated
+        MIDI happens here when output_audio was requested."""
+        response: Dict[str, Any] = {
+            "status": "success",
+            "intent_schema_version": request.intent_schema_version,
+            "result": res_output,
+            "lyrics": {"source": lyric_source, "text": lyric_text},
+        }
+        if tech is not None and getattr(tech, "energy_curve", None) is not None:
+            response["energy_curve"] = pydantic_to_dict(tech.energy_curve)
+
+        if structure:
+            response["structure"] = {
+                "sections": structure,
+                "total_bars": sum(
+                    s.get("bars", 4) * s.get("repetitions", 1) if isinstance(s, dict) else 4
+                    for s in structure
+                ),
+            }
+
+        if instruments:
+            response["instruments"] = {
+                "tracks": [
+                    {
+                        "name": (
+                            inst.get("name", "instrument")
+                            if isinstance(inst, dict) else "instrument"
+                        ),
+                        "type": (
+                            inst.get("type", "chord")
+                            if isinstance(inst, dict) else "chord"
+                        ),
+                        "channel": inst.get("channel") if isinstance(inst, dict) else None,
+                    }
+                    for inst in instruments
+                ],
+            }
+
+        midi_path = res_output.get("midi_path")
+        if output_midi and midi_path:
+            response["midi_path"] = midi_path
+            midi_file = Path(midi_path)
+            if output_audio:
+                audio_path = str(midi_file.with_suffix(".wav"))
+                try:
+                    render_midi_to_audio(str(midi_file), audio_path)
+                except Exception as render_exc:
+                    logging.exception("Audio render failed from MIDI")
+                    raise HTTPException(
+                        status_code=500,
+                        detail=(
+                            f"MIDI generated but audio render failed: "
+                            f"{render_exc}"
+                        ),
+                    )
+                response["audio_path"] = audio_path
+                response["output_path"] = audio_path
+            else:
+                response["output_path"] = midi_path
+
+        return response
 
     @api_error_handler(log_message="generate failed", detail=_HTTP_500_DETAIL)
     async def _handle_generate_music(request: GenerateRequest):
@@ -1351,19 +1497,19 @@ if FASTAPI_AVAILABLE:
                     }
                 }
                 
-                result = await orchestrator.execute(pipeline, input_data)
-                if not result.success:
+                pipeline_result = await orchestrator.execute(pipeline, input_data)
+                if not pipeline_result.success:
                     raise HTTPException(
                         status_code=500,
-                        detail=result.error or "Pipeline execution failed",
+                        detail=pipeline_result.error or "Pipeline execution failed",
                     )
-                
+
                 # Reconstruct the output dictionary expected by the endpoint
-                intent_res = result.context.get_shared("intent") or {}
-                harmony = result.context.get_shared("harmony") or {}
-                groove = result.context.get_shared("groove") or {}
-                
-                res_output = {
+                intent_res = pipeline_result.context.get_shared("intent") or {}
+                harmony = pipeline_result.context.get_shared("harmony") or {}
+                groove = pipeline_result.context.get_shared("groove") or {}
+
+                res_output: Dict[str, Any] = {
                     "intent_summary": {
                         "mood": intent_res.get("intent", {}).get("phase_1", {}).get("mood_primary", ""),
                         "rule_broken": intent_res.get("intent", {}).get("phase_2", {}).get("technical_rule_to_break", ""),
@@ -1383,170 +1529,29 @@ if FASTAPI_AVAILABLE:
                     "production": {"notes": []},
                 }
 
-                # Generate output file if format requested
                 output_midi, output_audio = _create_output_paths(request.output_format)
+                structure, instruments = _extract_structure_instruments(tech)
 
-                # Generate MIDI from harmony result
+                # Build harmony plan and render MIDI when output was requested.
                 if output_midi and res_output.get("harmony"):
                     try:
-                        # Extract harmony info
-                        harmony = res_output["harmony"]
-                        _ = res_output.get("groove", {})  # noqa: F841
-                        # Validate and clamp duration to positive value (0.1 - 60 minutes)
-                        duration_minutes = (
-                            tech.duration
-                            if tech and tech.duration is not None
-                            else 3.0
+                        plan = _build_harmony_plan(
+                            tech, res_output, key_root, key_mode, base_bpm,
+                            structure, instruments,
                         )
-                        try:
-                            duration_minutes = float(duration_minutes)
-                            # Clamp to reasonable range
-                            duration_minutes = max(0.1, min(60.0, duration_minutes))
-                        except (ValueError, TypeError):
-                            duration_minutes = 3.0
-
-                        # Validate and clamp BPM
-                        bpm = base_bpm
-
-                        length_bars = int((duration_minutes * bpm) / 4)
-                        length_bars = max(16, min(128, length_bars))
-
-                        # Extract key and mode with validation
-                        root_note = key_root
-                        mode = key_mode
-
-                        # Extract structure and instruments from request
-                        structure = None
-                        instruments = None
-                        if tech:
-                            t_dict = pydantic_to_dict(tech)
-                            if t_dict.get("timeline"):
-                                from music_brain.api_schemas.ttg_adapter import ttg_dict_to_structure_list
-                                structure = ttg_dict_to_structure_list(t_dict.get("timeline", {}))
-                            if t_dict.get("orchestration"):
-                                from music_brain.api_schemas.ttg_adapter import orchestration_dict_to_instruments
-                                instruments = orchestration_dict_to_instruments(t_dict.get("orchestration", {}))
-
-                        # If structure is provided, calculate total bars from structure
-                        # Otherwise use calculated length_bars
-                        if structure:
-                            total_structure_bars = sum(
-                                section.get("bars", 4) * section.get("repetitions", 1)
-                                for section in structure
-                            )
-                            # Use structure bars if it's reasonable, otherwise keep calculated
-                            if total_structure_bars > 0:
-                                length_bars = total_structure_bars
-
-                        # Create HarmonyPlan from result
-                        plan = HarmonyPlan(
-                            root_note=root_note,
-                            mode=mode,
-                            tempo_bpm=bpm,
-                            time_signature="4/4",
-                            length_bars=length_bars,
-                            chord_symbols=harmony.get("chords", ["C", "Am", "F", "G"]),
-                            harmonic_rhythm="1_chord_per_bar",
-                            mood_profile=res_output.get("intent_summary", {}).get("mood", "neutral"),
-                            complexity=0.5,
-                            structure=structure,
-                            instruments=instruments
-                        )
-
-                        # Render MIDI
-                        midi_path = render_plan_to_midi(plan, output_midi)
-                        res_output["midi_path"] = midi_path
+                        res_output["midi_path"] = render_plan_to_midi(plan, output_midi)
                     except Exception as midi_exc:
-                        logging.exception("Failed to generate MIDI from full intent, falling back")
+                        logging.exception("Failed to generate MIDI from full intent")
                         raise HTTPException(
                             status_code=500,
                             detail="MIDI generation failed",
                         ) from midi_exc
 
                 lyric_text, lyric_source = select_lyric_payload(request.intent)
-
-                # Build response with structure and instruments info
-                response = {
-                    "status": "success",
-                    "intent_schema_version": request.intent_schema_version,
-                    "result": res_output,
-                    "lyrics": {
-                        "source": lyric_source,
-                        "text": lyric_text,
-                    },
-                }
-                if tech and hasattr(tech, "energy_curve") and tech.energy_curve is not None:
-                    response["energy_curve"] = pydantic_to_dict(tech.energy_curve)
-
-                # Add structure and instruments information if provided
-                struct_res = None
-                inst_res = None
-                if tech:
-                    t_dict = pydantic_to_dict(tech)
-                    if t_dict.get("timeline"):
-                        from music_brain.api_schemas.ttg_adapter import ttg_dict_to_structure_list
-                        struct_res = ttg_dict_to_structure_list(t_dict.get("timeline", {}))
-                    if t_dict.get("orchestration"):
-                        from music_brain.api_schemas.ttg_adapter import orchestration_dict_to_instruments
-                        inst_res = orchestration_dict_to_instruments(t_dict.get("orchestration", {}))
-                
-                structure = struct_res
-                instruments = inst_res
-
-                if structure:
-                    response["structure"] = {
-                        "sections": structure,
-                        "total_bars": sum(
-                            s.get("bars", 4) * s.get("repetitions", 1) if isinstance(s, dict) else 4
-                            for s in structure
-                        ),
-                    }
-
-                if instruments:
-                    response["instruments"] = {
-                        "tracks": [
-                            {
-                                "name": (
-                                    inst.get("name", "instrument")
-                                    if isinstance(inst, dict)
-                                    else "instrument"
-                                ),
-                                "type": (
-                                    inst.get("type", "chord")
-                                    if isinstance(inst, dict)
-                                    else "chord"
-                                ),
-                                "channel": inst.get("channel") if isinstance(inst, dict) else None,
-                            }
-                            for inst in instruments
-                        ],
-                    }
-
-                # Add file paths to response
-                if output_midi and result.get("midi_path"):
-                    response["midi_path"] = result["midi_path"]
-                    midi_file = Path(result["midi_path"])
-
-                    if output_audio:
-                        # Render audio from generated MIDI.
-                        audio_path = str(midi_file.with_suffix(".wav"))
-                        try:
-                            render_midi_to_audio(str(midi_file), audio_path)
-                        except Exception as render_exc:
-                            logging.exception("Audio render failed from MIDI")
-                            raise HTTPException(
-                                status_code=500,
-                                detail=(
-                                    f"MIDI generated but audio render failed: "
-                                    f"{render_exc}"
-                                ),
-                            )
-                        response["audio_path"] = audio_path
-                        response["output_path"] = audio_path
-                    else:
-                        response["output_path"] = result["midi_path"]
-
-                return response
+                return _build_generate_response(
+                    request, res_output, tech, lyric_text, lyric_source,
+                    structure, instruments, output_midi, output_audio,
+                )
 
             # Legacy fallback retained for safety if forced externally.
             logging.info("Using legacy therapy_session fallback")
@@ -1560,7 +1565,7 @@ if FASTAPI_AVAILABLE:
                     motivation = max(1, min(10, int(bpm / 20)))
                 except (ValueError, TypeError):
                     motivation = 7  # Default if conversion fails
-            lyric_text, lyric_source = api._select_lyric_payload(request.intent)
+            lyric_text, lyric_source = select_lyric_payload(request.intent)
 
             # Generate output file if format requested
             output_midi, output_audio = _create_output_paths(request.output_format)

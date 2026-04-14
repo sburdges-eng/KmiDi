@@ -121,6 +121,10 @@ class MelodyConfig:
     use_ml_model: bool = True
     ml_model_path: Optional[str] = None
 
+    # Example-based learning (optional): when set, prefer learned patterns then ML/rules
+    learning_profile: Optional[str] = None
+    learning_storage: Optional[Path] = None
+
     def get_root_midi(self) -> int:
         """Get MIDI note number for root note."""
         note_map = {
@@ -236,6 +240,38 @@ class MLMelodyGenerator:
         length = length or self.config.length_notes
         key = key or self.config.key
         mode = mode or self.config.mode
+
+        if self.config.learning_profile:
+            from music_brain.session.melody_generator import AdaptiveMelodyGenerator
+            from music_brain.learning.melody_learning import MelodyLearningManager
+
+            mgr = MelodyLearningManager(self.config.learning_storage)
+            adaptive = AdaptiveMelodyGenerator(learning_manager=mgr)
+            ml_notes: Optional[List[int]] = None
+            if self._ml_available and self._ml_model:
+                try:
+                    ml_notes = self._generate_ml(emotion, length, key, mode, context_notes).notes
+                except Exception:
+                    ml_notes = None
+            notes = adaptive.generate(
+                emotion,
+                length=length,
+                profile_name=self.config.learning_profile,
+                ml_melody=ml_notes,
+            )
+            traits = EMOTION_MELODIC_TRAITS.get(emotion.lower(), DEFAULT_TRAITS)
+            durations = self._generate_durations(len(notes), traits)
+            velocities = self._generate_velocities(len(notes), emotion)
+            return GeneratedMelody(
+                notes=notes,
+                durations=durations,
+                velocities=velocities,
+                key=key,
+                mode=mode,
+                emotion=emotion,
+                method="learned_plus_ml_fallback",
+                confidence=0.8,
+            )
 
         # Try ML model first
         if self._ml_available and self._ml_model:

@@ -6,6 +6,11 @@
 // Include ONNX Runtime headers
 #include <onnxruntime_cxx_api.h>
 using namespace Ort;
+
+// Thin owning wrappers so unique_ptr can work with incomplete types in the header.
+struct OrtEnvOwner     { Ort::Env       value; template<typename... A> OrtEnvOwner(A&&... a)     : value(std::forward<A>(a)...) {} };
+struct OrtSessionOwner { Ort::Session   value; template<typename... A> OrtSessionOwner(A&&... a) : value(std::forward<A>(a)...) {} };
+struct OrtMemInfoOwner { Ort::MemoryInfo value; template<typename... A> OrtMemInfoOwner(A&&... a): value(std::forward<A>(a)...) {} };
 #endif
 
 namespace midikompanion {
@@ -24,20 +29,11 @@ ONNXInference::ONNXInference()
 }
 
 ONNXInference::~ONNXInference() {
+    // unique_ptr members clean up automatically; explicit ordering: session before env.
 #ifdef ENABLE_ONNX_RUNTIME
-    // Cleanup ONNX Runtime objects
-    if (sessionPtr_) {
-        delete static_cast<Session*>(sessionPtr_);
-        sessionPtr_ = nullptr;
-    }
-    if (memoryInfoPtr_) {
-        delete static_cast<MemoryInfo*>(memoryInfoPtr_);
-        memoryInfoPtr_ = nullptr;
-    }
-    if (envPtr_) {
-        delete static_cast<Env*>(envPtr_);
-        envPtr_ = nullptr;
-    }
+    memInfoOwner_.reset();
+    sessionOwner_.reset();
+    envOwner_.reset();
 #endif
 }
 
@@ -85,16 +81,12 @@ bool ONNXInference::loadModel(const std::string& modelPath) {
         using namespace Ort;
 
         // Create ONNX Runtime environment if not already created
-        if (!envPtr_) {
-            envPtr_ = new Env(ORT_LOGGING_LEVEL_WARNING, "MidiKompanion");
+        if (!envOwner_) {
+            envOwner_ = std::make_unique<OrtEnvOwner>(ORT_LOGGING_LEVEL_WARNING, "MidiKompanion");
         }
 
-        // Delete previous session before creating a new one (prevent leak)
-        if (sessionPtr_) {
-            delete static_cast<Session*>(sessionPtr_);
-            sessionPtr_ = nullptr;
-        }
-        Env* env = static_cast<Env*>(envPtr_);
+        // Reset previous session (unique_ptr handles the delete)
+        sessionOwner_.reset();
 
         // Create session options
         SessionOptions sessionOptions;
@@ -106,10 +98,10 @@ bool ONNXInference::loadModel(const std::string& modelPath) {
         // For Apple platforms, could use CoreMLExecutionProvider
         // For NVIDIA, could use CUDAExecutionProvider
 
-        // Create session
-        sessionPtr_ = new Session(*env, modelPath.c_str(), sessionOptions);
+        // Create session — if this throws, envOwner_ is already held safely
+        sessionOwner_ = std::make_unique<OrtSessionOwner>(envOwner_->value, modelPath.c_str(), sessionOptions);
 
-        Session* session = static_cast<Session*>(sessionPtr_);
+        Session* session = &sessionOwner_->value;
 
         // Get input/output information
         size_t numInputNodes = session->GetInputCount();
@@ -162,14 +154,9 @@ bool ONNXInference::loadModel(const std::string& modelPath) {
             }
         }
 
-        // Delete previous memory info before creating a new one (prevent leak)
-        if (memoryInfoPtr_) {
-            delete static_cast<MemoryInfo*>(memoryInfoPtr_);
-            memoryInfoPtr_ = nullptr;
-        }
-
-        // Create memory info
-        memoryInfoPtr_ = new MemoryInfo(MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault));
+        // Reset previous memory info, then create new one
+        memInfoOwner_.reset();
+        memInfoOwner_ = std::make_unique<OrtMemInfoOwner>(MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault));
 
         modelPath_ = juce::String(modelPath);
         isLoaded_ = true;
@@ -227,15 +214,15 @@ bool ONNXInference::infer(const float* input, float* output) {
     try {
         std::lock_guard<std::mutex> lock(mutex_);
 
-        if (!sessionPtr_ || !memoryInfoPtr_) {
+        if (!sessionOwner_ || !memInfoOwner_) {
             setError("ONNX session not initialized");
             return false;
         }
 
         using namespace Ort;
 
-        Session* session = static_cast<Session*>(sessionPtr_);
-        MemoryInfo* memoryInfo = static_cast<MemoryInfo*>(memoryInfoPtr_);
+        Session* session = &sessionOwner_->value;
+        MemoryInfo* memoryInfo = &memInfoOwner_->value;
 
         AllocatorWithDefaultOptions allocator;
 

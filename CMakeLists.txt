@@ -279,17 +279,18 @@ list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/export/StemExporter\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/project/ProjectFile\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/groove_bindings\\.cpp$")
 
-# ODR Consolidation: Exclude src/ variants where src_penta-core/ is canonical
-list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/harmony/ChordAnalyzer\\.cpp$")
-list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/harmony/ChordAnalyzerSIMD\\.cpp$")
-list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/harmony/HarmonyEngine\\.cpp$")
-list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/osc/OSCMessage\\.cpp$")
-list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/osc/RTMessageQueue\\.cpp$")
-list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/groove/RhythmQuantizer\\.cpp$")
-list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/groove/TempoEstimator\\.cpp$")
-# Re-evaluating GrooveEngine and OnsetDetector: src_penta-core is actually RT-safe and better, so exlude src/ side here too
-list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/groove/GrooveEngine\\.cpp$")
-list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/groove/OnsetDetector\\.cpp$")
+# Intra-library ODR fixes 2026-04-14 (caught by scripts/audit/intra_lib_odr_scan.py):
+#   - src/core/emotion_thesaurus.cpp is a self-labeled legacy stub from
+#     'early architecture iterations' that returns nullptr/no-op for
+#     everything. It defines the same kelly::EmotionThesaurus symbols
+#     as the real 216-node implementation in src/engine/EmotionThesaurus.cpp.
+#     Linker silently picks one; if it picks the stub, the engine returns
+#     no-ops in production. Exclude the stub so the real impl wins.
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/core/emotion_thesaurus\\.cpp$")
+#   - src/ui/MidiKompanionLookAndFeel.cpp is a byte-identical copy of
+#     src/ui/KellyLookAndFeel.cpp (cmp -s clean). Both define the same
+#     kelly::KellyLookAndFeel virtual table + thunks. Exclude the copy.
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/ui/MidiKompanionLookAndFeel\\.cpp$")
 
 
 if(BUILD_KELLY_CORE)
@@ -440,7 +441,7 @@ if(BUILD_PLUGINS)
         COMPANY_NAME "Kelly"
         PLUGIN_MANUFACTURER_CODE Klly
         PLUGIN_CODE Klp1
-        FORMATS AU VST3 CLAP
+        FORMATS AU VST3 CLAP Standalone
         PRODUCT_NAME "Kelly Emotion Processor"
         AU_MAIN_TYPE kAudioUnitType_MusicEffect
         VST3_CATEGORIES Fx Synth
@@ -541,18 +542,6 @@ if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE)
         set_target_properties(KellyFFI PROPERTIES
             MACOSX_RPATH TRUE
             INSTALL_NAME_DIR "@rpath"
-        )
-    endif()
-    
-    # Copy FFI library to Tauri resources directory after build
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src-tauri)
-        add_custom_command(TARGET KellyFFI POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory
-                ${CMAKE_CURRENT_SOURCE_DIR}/src-tauri/resources
-            COMMAND ${CMAKE_COMMAND} -E copy
-                $<TARGET_FILE:KellyFFI>
-                ${CMAKE_CURRENT_SOURCE_DIR}/src-tauri/resources/
-            COMMENT "Copying KellyFFI library to Tauri resources"
         )
     endif()
     

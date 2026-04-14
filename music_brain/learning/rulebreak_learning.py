@@ -8,6 +8,8 @@ from typing import Dict, List, Optional
 from collections import Counter, defaultdict
 import json
 
+import numpy as np
+
 DEFAULT_STORAGE = Path.home() / ".parrot" / "music_learning" / "rulebreaks"
 EXAMPLES_DIR = DEFAULT_STORAGE / "examples"
 PROFILES_DIR = DEFAULT_STORAGE / "profiles"

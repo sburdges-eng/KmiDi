@@ -9,7 +9,8 @@ Combines:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional
+from pathlib import Path
+from typing import List, Dict, Optional, Any
 
 from music_brain.arrangement.templates import (
     ArrangementTemplate,
@@ -64,6 +65,7 @@ class GeneratedArrangement:
     instruments: List[InstrumentTrack]
     chord_progression: List[str] = field(default_factory=list)
     ppq: int = 480
+    learning_metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict:
         """Convert to dictionary."""
@@ -73,6 +75,7 @@ class GeneratedArrangement:
             "instruments": [i.to_dict() for i in self.instruments],
             "chord_progression": self.chord_progression,
             "ppq": self.ppq,
+            "learning_metadata": self.learning_metadata,
         }
 
     def get_production_notes(self) -> List[str]:
@@ -139,6 +142,8 @@ class ArrangementGenerator:
         chord_progression: Optional[List[str]] = None,
         narrative_arc: Optional[NarrativeArc] = None,
         base_intensity: float = 0.6,
+        learning_profile: Optional[str] = None,
+        learning_storage: Optional[Path] = None,
     ) -> GeneratedArrangement:
         """
         Generate complete arrangement from parameters.
@@ -180,12 +185,26 @@ class ArrangementGenerator:
             # Simple default progression
             chord_progression = self._generate_default_chords(template)
 
+        learning_metadata: Dict[str, Any] = {}
+        if learning_profile:
+            from music_brain.learning.arrangement_learning import ArrangementLearningManager
+
+            root = Path(learning_storage) / "arrangements" if learning_storage else None
+            mgr = ArrangementLearningManager(root)
+            learning_metadata = mgr.generate(
+                primary_emotion,
+                learning_profile,
+                length=len(template.sections),
+                genre=genre,
+            )
+
         return GeneratedArrangement(
             template=template,
             energy_arc=energy_arc,
             instruments=instruments,
             chord_progression=chord_progression,
             ppq=self.ppq,
+            learning_metadata=learning_metadata,
         )
 
     def _plan_instrumentation(

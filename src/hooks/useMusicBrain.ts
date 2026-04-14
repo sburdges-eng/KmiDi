@@ -1,8 +1,48 @@
-import type { CompleteSongIntentRequest } from '../types/Intent';
+import type { CompleteSongIntentRequest, StructureSection, TrackIntent } from '../types/Intent';
 
 /** External API is deny-by-default; set VITE_KMIDI_USE_API=true to allow (e.g. dev). Unset in freeze/CI. */
 export const USE_EXTERNAL_API = import.meta.env.VITE_KMIDI_USE_API === 'true';
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://127.0.0.1:8000';
+
+/** PRD TTG v1 — matches music_brain.api_schemas.ttg_v1 (docs/prd/KMIDI_PRD.md §8). */
+export type TtgBoundaryEventV1 = 'drum_fill_1bar';
+export type TtgHarmonicRhythmV1 = 'slow' | 'fast' | 'medium';
+
+export interface TTGPhraseV1 {
+  id?: string;
+  bars: number;
+  harmonic_rhythm?: TtgHarmonicRhythmV1;
+  motifs?: string[];
+  boundary_event?: TtgBoundaryEventV1;
+  /** Engine section tag (intro | verse | chorus | …). */
+  section_role?: string;
+}
+
+export interface TTGMovementV1 {
+  type: 'movement';
+  id: string;
+  /** Must equal sum(phrase bars) + count(drum_fill_1bar) when provided. */
+  bars?: number;
+  children: TTGPhraseV1[];
+}
+
+export interface OrchestrationRoleSpecV1 {
+  patch: string;
+  active_threshold: number;
+}
+
+export interface TTGOrchestrationV1 {
+  roles: Record<string, OrchestrationRoleSpecV1>;
+}
+
+export interface EnergyCurvePointV1 {
+  bar: number;
+  value: number;
+}
+
+export interface EnergyCurveV1 {
+  points: EnergyCurvePointV1[];
+}
 
 export interface TechnicalIntent {
   key?: string;
@@ -14,8 +54,14 @@ export interface TechnicalIntent {
   instruments?: Array<{ instrument: string; techniques?: string[] }>;
   techniques?: string[];
   groove_feel?: string;
+  narrative_arc?: string;
   rule_to_break?: string;
   rule_justification?: string;
+  /** TTG root movement; when set, overrides flat `structure` on the server. */
+  timeline?: TTGMovementV1;
+  /** Role → patch + energy threshold; when set, overrides flat `instruments`. */
+  orchestration?: TTGOrchestrationV1;
+  energy_curve?: EnergyCurveV1;
 }
 
 export interface EmotionalIntent {
@@ -25,9 +71,12 @@ export interface EmotionalIntent {
   technical?: TechnicalIntent;
   vulnerability_scale?: number;
   narrative_arc?: string;
+  imagery_texture?: string;
 }
 
 export interface GenerateRequest {
+  /** PRD §7 — only 1 is supported; omit defaults to 1 on the server. */
+  intent_schema_version?: number;
   intent: EmotionalIntent;
   output_format?: string;
 }
@@ -120,6 +169,7 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
 
 export function buildGeneratePayload(intent: CompleteSongIntentRequest): GenerateRequest {
   return {
+    intent_schema_version: 1,
     intent: {
       core_desire: intent.core_desire,
       emotional_intent: intent.mood_primary,
@@ -145,6 +195,78 @@ export function buildGeneratePayload(intent: CompleteSongIntentRequest): Generat
   };
 }
 
+/** Bars per movement including 1 bar per `drum_fill_1bar` boundary event. */
+export function derivedTtgMovementBars(children: TTGPhraseV1[]): number {
+  let total = 0;
+  for (const p of children) {
+    total += p.bars;
+    if (p.boundary_event === 'drum_fill_1bar') total += 1;
+  }
+  return total;
+}
+
+/**
+ * Flat UI sections → single TTG movement (one phrase per section).
+ * Repetitions are folded into phrase bar counts.
+ */
+export function structureToTtgMovement(
+  structure: StructureSection[],
+  opts?: { movementId?: string },
+): TTGMovementV1 {
+  const id = opts?.movementId ?? 'A';
+  const children: TTGPhraseV1[] = structure.map(s => ({
+    bars: s.bars * (s.repetitions ?? 1),
+    section_role: s.name,
+  }));
+  const bars = derivedTtgMovementBars(children);
+  return { type: 'movement', id, bars, children };
+}
+
+/**
+ * Instrument list → orchestration roles (patch = instrument name).
+ * Unique role keys avoid collisions when the same patch appears twice.
+ */
+export function instrumentsToOrchestration(
+  instruments: TrackIntent[],
+  defaultThreshold = 0.5,
+): TTGOrchestrationV1 {
+  const roles: Record<string, OrchestrationRoleSpecV1> = {};
+  instruments.forEach((inst, i) => {
+    const patch = inst.instrument.trim() || `instrument_${i}`;
+    const slug = patch.toLowerCase().replace(/\s+/g, '_').replace(/-/g, '_').replace(/[^a-z0-9_]/g, '_');
+    const role = `${slug || 'role'}_${i}`;
+    roles[role] = { patch, active_threshold: defaultThreshold };
+  });
+  return { roles };
+}
+
+/**
+ * PRD v1 payload: timeline + orchestration; POST to `/v1/generate` in the browser.
+ * Server adapts TTG → flat engine schema.
+ */
+export function buildGeneratePayloadAsTtg(intent: CompleteSongIntentRequest): GenerateRequest {
+  const timeline = structureToTtgMovement(intent.structure);
+  const orchestration = instrumentsToOrchestration(intent.instruments);
+  return {
+    intent_schema_version: 1,
+    intent: {
+      core_desire: intent.core_desire,
+      emotional_intent: intent.mood_primary,
+      narrative_arc: intent.narrative_arc,
+      technical: {
+        key: intent.key_mode,
+        bpm: intent.tempo ?? 120,
+        genre: intent.genre,
+        timeline,
+        orchestration,
+        groove_feel: intent.groove_feel,
+        rule_to_break: intent.rule_to_break ?? undefined,
+        rule_justification: intent.rule_justification ?? undefined,
+      },
+    },
+  };
+}
+
 export const useMusicBrain = () => {
   const getEmotions = async (): Promise<string[]> => {
     return apiCall<string[]>('/emotions');
@@ -157,9 +279,21 @@ export const useMusicBrain = () => {
     });
   };
 
+  /** Versioned PRD path — same handler as `/generate`; prefer with TTG payloads. */
+  const generateMusicV1 = async (request: GenerateRequest) => {
+    return apiCall('/v1/generate', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  };
+
   const generateFromIntent = async (intent: CompleteSongIntentRequest) => {
     const payload = buildGeneratePayload(intent);
     return generateMusic(payload);
+  };
+
+  const generateFromIntentAsTtg = async (intent: CompleteSongIntentRequest) => {
+    return generateMusicV1(buildGeneratePayloadAsTtg(intent));
   };
 
   const interrogate = async (request: InterrogateRequest) => {
@@ -239,7 +373,9 @@ export const useMusicBrain = () => {
   return {
     getEmotions,
     generateMusic,
+    generateMusicV1,
     generateFromIntent,
+    generateFromIntentAsTtg,
     interrogate,
     getHumanizerConfig,
     updateHumanizerConfig,

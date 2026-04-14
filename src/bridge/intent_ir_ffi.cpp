@@ -207,22 +207,32 @@ IntentIRErrorCode intent_ir_update_emotion(
     float valence, float arousal, float dominance,
     int16_t discrete_id, float intensity, float confidence)
 {
-    std::lock_guard<std::mutex> lock(g_state.mutex);
+    // Copy the frame under the lock, release, then validate outside the lock
+    // to avoid holding the mutex across the Rust FFI call (prevents deadlock
+    // if Rust validation ever calls back into intent_ir_* functions).
+    decltype(g_state.currentFrame) frame_copy;
+    {
+        std::lock_guard<std::mutex> lock(g_state.mutex);
 
-    g_state.currentFrame.emotion.valence = valence;
-    g_state.currentFrame.emotion.arousal = arousal;
-    g_state.currentFrame.emotion.dominance = dominance;
-    g_state.currentFrame.emotion.discrete_id = discrete_id;
-    g_state.currentFrame.emotion.intensity = intensity;
-    g_state.currentFrame.emotion.confidence = confidence;
-    g_state.currentFrame.meta.intent_id =
-        g_state.nextIntentId.fetch_add(1, std::memory_order_acq_rel);
+        g_state.currentFrame.emotion.valence = valence;
+        g_state.currentFrame.emotion.arousal = arousal;
+        g_state.currentFrame.emotion.dominance = dominance;
+        g_state.currentFrame.emotion.discrete_id = discrete_id;
+        g_state.currentFrame.emotion.intensity = intensity;
+        g_state.currentFrame.emotion.confidence = confidence;
+        g_state.currentFrame.meta.intent_id =
+            g_state.nextIntentId.fetch_add(1, std::memory_order_acq_rel);
 
-    // Validate via Rust
-    int rustResult = validate_intent_frame_ffi(&g_state.currentFrame);
+        frame_copy = g_state.currentFrame;
+    } // lock released before Rust call
+
+    // Validate via Rust (outside mutex)
+    int rustResult = validate_intent_frame_ffi(&frame_copy);
     if (rustResult != 0) {
-        // Clamp to fix
-        clamp_intent_frame_ffi(&g_state.currentFrame);
+        clamp_intent_frame_ffi(&frame_copy);
+        // Write clamped result back under the lock
+        std::lock_guard<std::mutex> lock(g_state.mutex);
+        g_state.currentFrame.emotion = frame_copy.emotion;
     }
 
     return INTENT_IR_SUCCESS;

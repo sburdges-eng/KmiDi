@@ -96,7 +96,9 @@ The canonical source tree is the repo root (`KmiDi/`). The following paths are l
 
 ## Architecture notes
 
+- **Full architecture context:** `AGENTS.md` — repo layout, build matrix, service topology, API contracts, on-device tools, native safety, and integration gate. Consult it for anything beyond the summary below.
 - **KellyFFI** links JUCE and Qt **PRIVATE**. Executables that link only KellyFFI must not also link JUCE (avoids allocator mismatch / static-init crashes).
+- **FFI / RT / JUCE audit map:** `AGENTS.md` → section *Native safety, FFI ownership, and verification map* (file paths, ownership rules, commands). Use it for any KellyFFI, `kelly_ffi.rs`, or `processBlock` work.
 - **Intent schema source of truth:** `shared_schemas/CompleteSongIntentRequest.json`. Changes must be synced via `sync_entities.py` to `src/types/Intent.ts`, `src-tauri/src/generated/intent.rs`, and Python validation.
 - **`/generate` API** uses `GenerateRequest`/`EmotionalIntent` (defined in `music_brain/api.py`), **not** `CompleteSongIntentRequest`. The `instruments` field takes dicts `{"instrument": "piano"}`, not plain strings. `structure` names must match `^(intro|verse|chorus|bridge|outro|build|drop)$`.
 - **App shell entrypoint:** `AppConsole` (in `main.tsx`). `App.tsx` is legacy/alternate and not imported.
@@ -133,12 +135,13 @@ The canonical source tree is the repo root (`KmiDi/`). The following paths are l
 
 | Doc | Content |
 |-----|---------|
-| `AGENTS.md` | Full agent context: structure, build, services, gotchas |
+| `AGENTS.md` | Full agent context: repo layout, prerequisites, running services, full build matrix (Frontend/Python/C++/Tauri), env & config, `/generate` API contract, gotchas, on-device tools (MIDI-CI, Core ML, PID Flow, canonicalization, APSC, StructXLIP), **§ Native safety, FFI ownership, and verification map** (FFI frees, duplicate JUCE/ODR, RT alloc rules, contract drift — read before native changes), **§ Integration gate** (merge checklist for native PRs) |
 | `BUILD.md` | C++ / CMake / Tauri build reference |
 | `docs/DEVELOPMENT.md` | Dev guide, workflows, debugging |
 | `docs/ENVIRONMENT.md` | Env vars, file layout, validation |
 | `docs/FULL_STACK_BUILD.md` | React ↔ Tauri ↔ KellyFFI ↔ KellyCore integration |
 | `docs/DATASETS_LAYOUT.md` | Dataset volume layout and acquisition |
+| `docs/NATIVE_SAFETY_AND_FFI.md` | FFI ownership, JUCE/ODR, RT safety, verification commands (mirror of `AGENTS.md`) |
 
 ## Shared agentic infrastructure
 

@@ -28,6 +28,7 @@ RTMemoryPool::RTMemoryPool(size_t blockSize, size_t numBlocks)
 RTMemoryPool::~RTMemoryPool() = default;
 
 void* RTMemoryPool::allocate() noexcept {
+    assertSingleProducer();
     Block* head = freeList_.load(std::memory_order_acquire);
     
     while (head != nullptr) {

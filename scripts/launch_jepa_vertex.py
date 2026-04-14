@@ -5,6 +5,7 @@ Launch JEPA training on Google Cloud Vertex AI.
 Usage:
     python scripts/launch_jepa_vertex.py --model audio_jepa
     python scripts/launch_jepa_vertex.py --model chord_jepa
+    python scripts/launch_jepa_vertex.py --model emotion_probe
     python scripts/launch_jepa_vertex.py --model both
 """
 
@@ -48,6 +49,7 @@ def launch_vertex_job(
     location: str,
     staging_bucket: str,
     run_id: str,
+    args: argparse.Namespace = None,
 ) -> str:
     """Submit a Vertex AI training job for the specified JEPA model."""
     if aiplatform is None:
@@ -86,6 +88,9 @@ def launch_vertex_job(
         if midi_gcs:
             worker_args.append(f"--midi_dir={midi_gcs}")
 
+    if hasattr(args, "embeddings_path") and args.embeddings_path and model_type == "emotion_probe":
+        worker_args.append(f"--embeddings_path={args.embeddings_path}")
+
     job = aiplatform.CustomContainerTrainingJob(
         display_name=job_name,
         container_uri=image_uri,
@@ -110,9 +115,14 @@ def main():
     parser = argparse.ArgumentParser(description="Launch JEPA training on Vertex AI")
     parser.add_argument(
         "--model",
-        choices=["audio_jepa", "chord_jepa", "both"],
+        choices=["audio_jepa", "chord_jepa", "emotion_probe", "both"],
         default="audio_jepa",
         help="Which JEPA model to train",
+    )
+    parser.add_argument(
+        "--embeddings-path",
+        default="",
+        help="GCS paths to cached .pt embeddings (e.g., gs://bucket/jepa_emotion_embeddings.pt). Required for emotion_probe.",
     )
     parser.add_argument(
         "--config",
@@ -182,7 +192,8 @@ def main():
             location=args.location,
             staging_bucket=args.staging_bucket,
             run_id=args.run_id,
-        )
+            args=args,
+        ) 
 
 
 if __name__ == "__main__":

@@ -2,6 +2,14 @@
  * DAiW DSP Module Implementation
  *
  * Digital signal processing utilities for audio.
+ *
+ * Engineering alignment (see docs/33350097-MIT.pdf — Gruhl libDsp thesis):
+ * keep core transforms and utilities cohesive and easy to extend; prefer
+ * explicit sample-rate-aware helpers and tight inner loops. For multicore /
+ * SIMD-heavy paths (Kuan et al., J. Signal Process. Syst. 2014), isolate
+ * hot kernels so they can be vectorized or offloaded without entangling
+ * high-level control flow. Real-time paths must not allocate or block; see
+ * PluginProcessor thread-safety notes for the JUCE audio callback.
  */
 
 #include "daiw/simd.hpp"

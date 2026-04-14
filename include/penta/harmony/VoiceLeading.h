@@ -35,7 +35,7 @@ public:
         const Chord& targetChord,
         const std::vector<Note>& currentVoices,
         uint8_t targetOctave = 4
-    ) const noexcept;
+    ) const ;
     
     // RT-safe: Calculate voice leading cost
     float calculateCost(
@@ -74,7 +74,7 @@ public:
         const std::vector<Chord>& chords,
         const std::vector<Note>& startingVoices,
         uint8_t targetOctave = 4
-    ) const noexcept;
+    ) const ;
 
     // Smoothness metric (0.0 = poor, 1.0 = ideal)
     float calculateSmoothness(
@@ -101,7 +101,7 @@ private:
         const Chord& chord,
         uint8_t octave,
         std::vector<VoicingCandidate>& candidates
-    ) const noexcept;
+    ) const ;
     
     float calculateMotionCost(
         uint8_t fromPitch,

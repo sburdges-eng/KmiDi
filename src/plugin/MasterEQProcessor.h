@@ -36,13 +36,13 @@ public:
    * Process audio block through EQ
    * Audio processing is currently stubbed - applies bypass state only
    */
-  void processBlock(juce::AudioBuffer<float> &buffer);
+  void processBlock(juce::AudioBuffer<float> &buffer) noexcept;
 
   /**
    * Update parameter targets from APVTS (called from parameterChanged callback)
    * This sets the target values for smoothed parameters
    */
-  void updateParameters(juce::AudioProcessorValueTreeState &apvts);
+  void updateParameters(juce::AudioProcessorValueTreeState &apvts) noexcept;
 
   /**
    * Get current smoothed parameter values (for UI display)

@@ -1,0 +1,12 @@
+{
+  "encoder": "wavjepa",
+  "n_train": 4,
+  "n_val": 1,
+  "n_classes": 3,
+  "nmi_train": 0.6666666666666666,
+  "ari_train": -0.2,
+  "nmi_val": 1.0,
+  "ari_val": 1.0,
+  "accuracy_train": 1.0,
+  "accuracy_val": 0.0
+}

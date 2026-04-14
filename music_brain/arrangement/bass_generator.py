@@ -9,7 +9,8 @@ Generates bass lines with:
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Tuple
+from pathlib import Path
+from typing import List, Dict, Tuple, Optional
 from enum import Enum
 
 try:
@@ -337,6 +338,9 @@ def generate_bass_line(
     ppq: int = 480,
     time_signature: Tuple[int, int] = (4, 4),
     octave: int = 2,
+    emotion: str = "neutral",
+    learning_profile: Optional[str] = None,
+    learning_storage: Optional[Path] = None,
 ) -> BassLine:
     """
     Generate bass line from chord progression.
@@ -353,6 +357,36 @@ def generate_bass_line(
     """
     if not chord_progression:
         return BassLine(notes=[], pattern=pattern, octave=octave)
+
+    if learning_profile:
+        from music_brain.learning.bass_learning import BassLearningManager
+
+        b_dir = Path(learning_storage) / "bass" if learning_storage else None
+        mgr = BassLearningManager(b_dir)
+        n_notes = max(8, len(chord_progression) * 4)
+        pitches = mgr.generate(
+            emotion,
+            learning_profile,
+            length=n_notes,
+            key="C",
+            mode="major",
+        )
+        quarter = ppq
+        learned_notes: List[BassNote] = []
+        for i, p in enumerate(pitches):
+            learned_notes.append(
+                BassNote(
+                    pitch=int(p),
+                    start_tick=i * quarter,
+                    duration_ticks=quarter,
+                    velocity=82,
+                )
+            )
+        if octave != 2:
+            shift = (octave - 2) * 12
+            for note in learned_notes:
+                note.pitch += shift
+        return BassLine(notes=learned_notes, pattern=BassPattern.ROOT_ONLY, octave=octave)
 
     # Generate notes based on pattern
     if pattern == BassPattern.ROOT_ONLY:

@@ -35,6 +35,11 @@ from music_brain.orchestrator.interfaces import (
     ExecutionContext,
 )
 
+# Convention: orchestrators set these keys on ``ExecutionContext.shared_data``
+# so harmony, groove, and melody processors pick up example-based profiles.
+CONTEXT_LEARNING_PROFILES = "learning_profiles"
+CONTEXT_LEARNING_STORAGE_ROOT = "learning_storage_root"
+
 
 class PipelineStatus(Enum):
     """Status of a pipeline execution."""

@@ -155,3 +155,4 @@ Or from inside an already-created thread (e.g. `std::thread`): call `pthread_set
 
 - JUCE: `AudioWorkgroup`, `Thread::RealtimeOptions`, `juce_Threads_mac.mm` (QoS mapping).
 - Apple: Audio Work Interval API, `pthread_set_qos_class_self_np`, `QOS_CLASS_*`.
+- Module tiers and SIMD entry points: [DSP_MODULE_TIERS_AND_SIMD.md](DSP_MODULE_TIERS_AND_SIMD.md).

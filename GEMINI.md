@@ -114,12 +114,13 @@ python3 scripts/sync_entities.py    # Sync shared_schemas/ → TS types + Rust t
 
 | Doc | Content |
 |-----|---------|
-| `AGENTS.md` | Full agent context: structure, build, services, gotchas |
+| `AGENTS.md` | Full agent context; **§ Native safety, FFI ownership, and verification map** for FFI/JUCE/RT before native edits |
 | `BUILD.md` | C++ / CMake / Tauri build reference |
 | `docs/DEVELOPMENT.md` | Dev guide, workflows, debugging |
 | `docs/ENVIRONMENT.md` | Env vars, file layout, validation |
 | `docs/FULL_STACK_BUILD.md` | React ↔ Tauri ↔ KellyFFI ↔ KellyCore integration |
 | `docs/DATASETS_LAYOUT.md` | Dataset volume layout and acquisition |
+| `docs/NATIVE_SAFETY_AND_FFI.md` | FFI, JUCE/ODR, RT safety, verification (mirror of `AGENTS.md`) |
 
 ## Shared agentic infrastructure
 

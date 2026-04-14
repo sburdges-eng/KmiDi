@@ -15,9 +15,10 @@
 namespace py = pybind11;
 using namespace prrot;
 
-void bind_prrot(py::module_& m) {
-    auto prrot_m = m.def_submodule("prrot", "PRROT/PARROT voice engine bindings");
-
+// Receives an already-scoped submodule from bindings.cpp (pcn.prrot).
+// Matches the pattern of bind_harmony / bind_groove / bind_osc / bind_ml —
+// the caller owns submodule creation so there is exactly one level of nesting.
+void bind_prrot(py::module_& prrot_m) {
     // -------------------------------------------------------------------------
     // PhonemeType enum
     // -------------------------------------------------------------------------

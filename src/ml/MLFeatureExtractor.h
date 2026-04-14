@@ -22,6 +22,14 @@ public:
   ~MLFeatureExtractor() = default;
 
   /**
+   * Pre-allocate memory for RT metrics extraction.
+   * @param maxBlockSize Maximum block size allocated at sample rate
+   */
+  void prepareToPlay(int maxBlockSize) {
+    tempBuffer_.setSize(1, maxBlockSize);
+  }
+
+  /**
    * Extract features from audio buffer.
    * @param buffer Audio buffer
    * @param startSample Start sample index
@@ -30,7 +38,7 @@ public:
    */
   std::array<float, FEATURE_SIZE>
   extractFeatures(const juce::AudioBuffer<float> &buffer, int startSample = 0,
-                  int numSamples = -1) const {
+                  int numSamples = -1) noexcept {
     std::array<float, FEATURE_SIZE> features{};
 
     if (buffer.getNumSamples() == 0) {
@@ -71,14 +79,16 @@ public:
     features[featureIdx++] = static_cast<float>(zeroCrossings) / actualLength;
 
     // 3-5. Use real AudioAnalyzer for spectral features (Phase 3: Audio
-    // Analysis) Create temporary buffer for analysis
-    juce::AudioBuffer<float> tempBuffer(1, actualLength);
-    float *tempData = tempBuffer.getWritePointer(0);
-    std::copy(channelData + startSample, channelData + endSample, tempData);
+    // Analysis)
+    // Write into statically pre-allocated buffer
+    float *tempData = tempBuffer_.getWritePointer(0);
+    // Ensure we don't overflow the pre-allocated buffer
+    const int copyLen = std::min(actualLength, tempBuffer_.getNumSamples());
+    std::copy(channelData + startSample, channelData + startSample + copyLen, tempData);
 
     double sampleRate = 44100.0; // Default sample rate
     auto spectralFeatures =
-        audioAnalyzer_.getSpectralAnalyzer().analyze(tempBuffer, sampleRate);
+        audioAnalyzer_.getSpectralAnalyzer().analyze(tempBuffer_, sampleRate);
 
     features[featureIdx++] = spectralFeatures.centroid / 10000.0f; // Normalize
     features[featureIdx++] = spectralFeatures.rolloff / 10000.0f;  // Normalize
@@ -90,11 +100,11 @@ public:
     featureIdx += 13; // 13 MFCC coefficients
 
     // 7. Spectral features (FFT-based) - Enhanced with real spectral analysis
-    // Use real AudioAnalyzer for spectral envelope (reuse tempBuffer from
+    // Use real AudioAnalyzer for spectral envelope (reuse tempBuffer_ from
     // above)
     auto spectralEnvelope =
         audioAnalyzer_.getSpectralAnalyzer().extractSpectralEnvelope(
-            tempBuffer, sampleRate);
+            tempBuffer_, sampleRate);
 
     // Use spectral envelope for features (up to 64 bins)
     size_t envelopeSize = std::min(spectralEnvelope.size(), size_t(64));
@@ -256,6 +266,7 @@ private:
 
   // Phase 3: Audio Analysis - Use real audio analysis classes
   mutable midikompanion::audio::AudioAnalyzer audioAnalyzer_;
+  juce::AudioBuffer<float> tempBuffer_;
 };
 
 } // namespace kelly

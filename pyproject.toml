@@ -52,6 +52,14 @@ jepa = [
 coreml = [
     "coremltools>=8.0,<10",
 ]
+nlm_train = [
+    "transformers",
+    "peft",
+    "accelerate",
+    "bitsandbytes",
+    "trl",
+    "einops",
+]
 
 [tool.setuptools.packages.find]
 include = ["music_brain*"]

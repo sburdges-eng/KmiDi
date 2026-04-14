@@ -9,6 +9,8 @@ from collections import Counter, defaultdict
 import json
 import numpy as np
 
+from music_brain.learning.melody_learning import _pattern_dict_for_json, _pattern_dict_from_json
+
 DEFAULT_STORAGE = Path.home() / ".parrot" / "music_learning" / "bass"
 EXAMPLES_DIR = DEFAULT_STORAGE / "examples"
 PROFILES_DIR = DEFAULT_STORAGE / "profiles"
@@ -53,19 +55,63 @@ class BassProfile:
     example_count: int
 
     def to_dict(self) -> Dict:
+        emotion_out: Dict[str, Dict] = {}
+        for em, stats in self.emotion_patterns.items():
+            s = dict(stats)
+            if s.get("interval_patterns") is not None:
+                s["interval_patterns"] = _pattern_dict_for_json(dict(s["interval_patterns"]))
+            if s.get("note_frequencies") is not None:
+                s["note_frequencies"] = {
+                    str(int(k)): int(v) for k, v in dict(s["note_frequencies"]).items()
+                }
+            if s.get("pattern_counts") is not None:
+                s["pattern_counts"] = {str(k): int(v) for k, v in dict(s["pattern_counts"]).items()}
+            if "avg_length" in s:
+                s["avg_length"] = float(s["avg_length"])
+            emotion_out[em] = s
+        gp = dict(self.global_patterns)
+        if gp.get("interval_patterns") is not None:
+            gp["interval_patterns"] = _pattern_dict_for_json(dict(gp["interval_patterns"]))
+        if gp.get("note_frequencies") is not None:
+            gp["note_frequencies"] = {
+                str(int(k)): int(v) for k, v in dict(gp["note_frequencies"]).items()
+            }
         return {
             "name": self.name,
-            "emotion_patterns": self.emotion_patterns,
-            "global_patterns": self.global_patterns,
+            "emotion_patterns": emotion_out,
+            "global_patterns": gp,
             "example_count": self.example_count,
         }
 
     @classmethod
     def from_dict(cls, data: Dict) -> "BassProfile":
+        emotion_in: Dict[str, Dict] = {}
+        for em, stats in (data.get("emotion_patterns") or {}).items():
+            s = dict(stats)
+            if s.get("interval_patterns") is not None:
+                s["interval_patterns"] = _pattern_dict_from_json(
+                    {str(k): int(v) for k, v in dict(s["interval_patterns"]).items()}
+                )
+            if s.get("note_frequencies") is not None:
+                s["note_frequencies"] = {
+                    int(k): int(v) for k, v in dict(s["note_frequencies"]).items()
+                }
+            if s.get("pattern_counts") is not None:
+                s["pattern_counts"] = {str(k): int(v) for k, v in dict(s["pattern_counts"]).items()}
+            emotion_in[em] = s
+        gp = dict(data.get("global_patterns") or {})
+        if gp.get("interval_patterns") is not None:
+            gp["interval_patterns"] = _pattern_dict_from_json(
+                {str(k): int(v) for k, v in dict(gp["interval_patterns"]).items()}
+            )
+        if gp.get("note_frequencies") is not None:
+            gp["note_frequencies"] = {
+                int(k): int(v) for k, v in dict(gp["note_frequencies"]).items()
+            }
         return cls(
             name=data.get("name", ""),
-            emotion_patterns=data.get("emotion_patterns", {}),
-            global_patterns=data.get("global_patterns", {}),
+            emotion_patterns=emotion_in,
+            global_patterns=gp,
             example_count=data.get("example_count", 0),
         )
 
@@ -189,6 +235,10 @@ class BassLearner:
 
         note_freqs = patterns.get("note_frequencies", {}) or profile.global_patterns.get("note_frequencies", {})
         interval_patterns = patterns.get("interval_patterns", {}) or profile.global_patterns.get("interval_patterns", {})
+        if interval_patterns and all(isinstance(k, str) for k in interval_patterns):
+            interval_patterns = _pattern_dict_from_json(
+                {k: int(v) for k, v in interval_patterns.items()}
+            )
 
         notes = []
         if note_freqs:

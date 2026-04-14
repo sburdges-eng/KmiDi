@@ -4,9 +4,10 @@
 #include "prrot/SpectralAnalyzer.h"
 #include "penta/common/RTLogger.h"
 #include <algorithm>
-#include <cmath>
-#include <vector>
 #include <array>
+#include <cmath>
+#include <cstdio>
+#include <vector>
 
 namespace prrot {
 
@@ -24,21 +25,22 @@ PitchTracker::PitchResult PitchTracker::trackPitch(
     result.is_valid = false;
     result.confidence = 0.0f;
 
-    // Validate inputs
+    // Validate inputs. RT-path: log with static context only.
     auto validation = validateAudioInput(audio_samples, num_samples, sample_rate_hz);
     if (validation.hasErrors()) {
         penta::getLogger().logRT(penta::LogLevel::Error,
-            ("PitchTracker::trackPitch: Input validation failed: " +
-             validation.errorMessage()).c_str());
+            "PitchTracker::trackPitch: Input validation failed");
         return result;
     }
 
     // Check minimum samples for pitch detection (at least 2 periods of lowest pitch)
     size_t min_samples = static_cast<size_t>((2.0f / kMinPitchHz) * sample_rate_hz);
     if (num_samples < min_samples) {
-        penta::getLogger().logRT(penta::LogLevel::Warning,
-            ("PitchTracker::trackPitch: Too few samples (" +
-             std::to_string(num_samples) + " < " + std::to_string(min_samples) + ")").c_str());
+        char msg[128];
+        std::snprintf(msg, sizeof(msg),
+            "PitchTracker::trackPitch: Too few samples (%zu < %zu)",
+            num_samples, min_samples);
+        penta::getLogger().logRT(penta::LogLevel::Warning, msg);
         return result;
     }
 
@@ -81,9 +83,10 @@ PitchTracker::PitchResult PitchTracker::trackPitch(
             result.confidence = 0.0f;
         }
     } else {
-        penta::getLogger().logRT(penta::LogLevel::Debug,
-            ("PitchTracker::trackPitch: Detected pitch out of range: " +
-             std::to_string(pitch_hz) + " Hz").c_str());
+        char msg[128];
+        std::snprintf(msg, sizeof(msg),
+            "PitchTracker::trackPitch: Detected pitch out of range: %.2f Hz", pitch_hz);
+        penta::getLogger().logRT(penta::LogLevel::Debug, msg);
     }
 
     return result;
@@ -94,7 +97,7 @@ std::vector<PitchTarget> PitchTracker::trackPitchSequence(
     size_t num_samples,
     float sample_rate_hz,
     float interval_ms
-) const noexcept {
+) const  {
     std::vector<PitchTarget> targets;
 
     if (!audio_samples || num_samples == 0 || sample_rate_hz <= 0.0f || interval_ms <= 0.0f) {

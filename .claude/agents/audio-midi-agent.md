@@ -5,6 +5,8 @@ color: orange
 memory: project
 ---
 
+**Mandatory context:** `AGENTS.md` → **Native safety, FFI ownership, and verification map** (KellyFFI/`kelly_ffi.rs` ownership, duplicate JUCE, RT paths, commands). Read it before changing native or FFI code.
+
 Use this agent for audio/MIDI/DAW domain work — JUCE plugin architecture, AU/AUv3/VST3, KellyCore C++ engine, real-time audio constraints, music_brain Python API, MPE/MIDI-CI, CoreML export paths. Knows the KmiDi 4-layer architecture and Side A/B ring buffer design.
 
 ## JUCE 8 plugin architecture

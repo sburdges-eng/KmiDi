@@ -139,7 +139,7 @@ void MasterEQProcessor::releaseResources() {
   dryBuffer_.setSize(0, 0, false, false, true);
 }
 
-void MasterEQProcessor::processBlock(juce::AudioBuffer<float> &buffer) {
+void MasterEQProcessor::processBlock(juce::AudioBuffer<float> &buffer) noexcept {
   const int numSamples = buffer.getNumSamples();
   int numChannels = buffer.getNumChannels();
   numChannels = std::min(numChannels, static_cast<int>(bandFilters_.size()));
@@ -211,7 +211,7 @@ void MasterEQProcessor::processBlock(juce::AudioBuffer<float> &buffer) {
   }
 }
 
-void MasterEQProcessor::updateParameters(juce::AudioProcessorValueTreeState &apvts) {
+void MasterEQProcessor::updateParameters(juce::AudioProcessorValueTreeState &apvts) noexcept {
   // Update EQ bypass target
   auto *bypassParam = apvts.getRawParameterValue(PluginProcessor::PARAM_EQ_BYPASS);
   if (bypassParam) {

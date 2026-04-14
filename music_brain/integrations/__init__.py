@@ -39,6 +39,11 @@ from .dynamics_integration import (
     get_dynamics_for_emotion,
 )
 
+from .ml_music_brain_bridge import (
+    create_adaptive_melody_stack,
+    generate_melody_with_learning,
+)
+
 __all__ = [
     # Comprehensive RT Bridge (Phase 3)
     "ComprehensiveIntegrationManager",
@@ -59,4 +64,6 @@ __all__ = [
     "DynamicsIntegration",
     "create_section_dynamics",
     "get_dynamics_for_emotion",
+    "create_adaptive_melody_stack",
+    "generate_melody_with_learning",
 ]

@@ -79,7 +79,7 @@ public:
 
   bool isBusesLayoutSupported(const BusesLayout &layouts) const override;
 
-  void processBlock(juce::AudioBuffer<float> &, juce::MidiBuffer &) override;
+  void processBlock(juce::AudioBuffer<float> &, juce::MidiBuffer &) noexcept override;
 
   /** Store device workgroup for realtime workers (Apple Silicon low-latency). */
   void audioWorkgroupContextChanged(const juce::AudioWorkgroup &workgroup) override;
@@ -173,10 +173,12 @@ public:
   void generateMidi();
 
   // Get generated MIDI for export/drag
-  // NOTE: Thread-safe - called from UI thread, can safely lock
+  // NOTE: Lock-free. Returns a reference to the currently active buffer slot.
+  // Safe to call from the message/UI thread — the RT thread only reads the same
+  // slot, two concurrent readers are always safe. Do not hold this reference
+  // across a generateMidi() call; take a copy if you need a stable snapshot.
   const GeneratedMidi &getGeneratedMidi() const {
-    std::lock_guard<std::mutex> lock(midiMutex_);
-    return generatedMidi_;
+    return midiBuffers_[activeMidiBuffer_.load(std::memory_order_acquire)];
   }
 
   // Check if new MIDI is ready
@@ -298,10 +300,11 @@ private:
   //==============================================================================
   //
   // Audio Thread (processBlock):
-  //   - MUST NEVER BLOCK - use try_lock, skip if lock unavailable
+  //   - MUST NEVER BLOCK — lock-free and allocation-free
+  //   - No heap allocation (no vector grow, new, etc.); preallocate in prepareToPlay
   //   - Can read APVTS parameters atomically via getRawParameterValue()
   //   - Can read atomic flags (hasPendingMidi_, isGenerating_)
-  //   - Can access generatedMidi_ with try_lock (skip if unavailable)
+  //   - Reads midiBuffers_[activeMidiBuffer_.load(acquire)] — no lock ever
   //
   // Message/UI Thread:
   //   - Can block on locks (std::lock_guard)
@@ -334,7 +337,19 @@ private:
   std::atomic<bool> useMLBridge_{
       false}; // Use MLBridge for audio-driven generation
 
-  GeneratedMidi generatedMidi_;
+  // Lock-free double-buffer for MIDI data shared between the RT audio thread
+  // (reader) and the message thread (writer).
+  //
+  // Protocol:
+  //   Writer (non-RT): write to midiBuffers_[1 - activeMidiBuffer_.load()],
+  //                    then activeMidiBuffer_.store(shadow, release).
+  //   Reader (RT):     read from midiBuffers_[activeMidiBuffer_.load(acquire)].
+  //
+  // The RT thread never blocks, never allocates, and never touches the shadow
+  // slot while the writer is updating it.
+  std::array<GeneratedMidi, 2> midiBuffers_;
+  std::atomic<int> activeMidiBuffer_{0};
+
   juce::MidiBuffer outputBuffer_;
 
   std::atomic<bool> hasPendingMidi_{false};
@@ -359,10 +374,6 @@ private:
   MusicTheorySettings musicTheorySettings_;
   std::optional<EmotionNode>
       lastProcessedEmotion_; // Last emotion processed from wound text
-
-  mutable std::mutex midiMutex_; // Protects generatedMidi_ and outputBuffer_
-                                 // Audio thread: use try_lock (never block)
-                                 // UI thread: use lock_guard (can block)
 
   mutable std::mutex
       intentMutex_; // Protects intentPipeline_, woundDescription_,
@@ -412,8 +423,8 @@ private:
 
   // Feature extraction and emotion application
   std::array<float, 128> extractFeatures(const juce::AudioBuffer<float> &buffer,
-                                         int startPos);
-  void applyEmotionVector(const std::array<float, 64> &emotionVector);
+                                         int startPos) noexcept;
+  void applyEmotionVector(const std::array<float, 64> &emotionVector) noexcept;
 
   // Project management
   juce::String projectError_; // Last error from save/load operations

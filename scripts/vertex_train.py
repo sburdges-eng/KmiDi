@@ -32,7 +32,7 @@ logging.basicConfig(
 logger = logging.getLogger("vertex_train")
 
 # Vertex AI paths
-AIP_MODEL_DIR = os.environ.get("AIP_MODEL_DIR", "/opt/ml/model") # Fallback to SM path for local testing
+AIP_MODEL_DIR = os.environ.get("AIP_MODEL_DIR", "/tmp/kmidi_model") # Fallback to /tmp for local testing
 AIP_DATA_FORMAT = os.environ.get("AIP_DATA_FORMAT", "")
 
 
@@ -134,6 +134,8 @@ def args_to_configs(args: argparse.Namespace):
             dropout=args.model_dropout,
             mask_ratio=args.model_mask_ratio,
         )
+    elif args.model_type == "emotion_probe":
+        model_config = None
     else:
         raise ValueError(f"Unknown model_type: {args.model_type}")
 
@@ -184,6 +186,10 @@ def main() -> None:
     parser.add_argument("--model_seq_len", type=int, default=64)
     parser.add_argument("--model_num_chords", type=int, default=170)
     parser.add_argument("--model_dropout", type=float, default=0.1)
+    
+    # Emotion Probe specific
+    parser.add_argument("--embeddings_path", type=str, default="")
+    parser.add_argument("--probe_hidden_dim", type=int, default=128)
 
     args = parser.parse_args()
 
@@ -226,6 +232,29 @@ def main() -> None:
             training,
             checkpoint_dir=checkpoint_dir,
         )
+    elif args.model_type == "emotion_probe":
+        import subprocess
+        embeddings_path = args.embeddings_path
+        if embeddings_path.startswith("gs://"):
+            bucket = embeddings_path.replace("gs://", "").split("/")[0]
+            rel = "/".join(embeddings_path.replace("gs://", "").split("/")[1:])
+            embeddings_path = f"/gcs/{bucket}/{rel}"
+            
+        out_checkpoint = os.path.join(checkpoint_dir, "best_probe.pt")
+        
+        cmd = [
+            sys.executable,
+            os.path.join(_SCRIPT_DIR, "train_emotion_probe.py"),
+            "--embeddings", embeddings_path,
+            "--output", out_checkpoint,
+            "--epochs", str(args.epochs),
+            "--batch-size", str(args.batch_size),
+            "--lr", str(args.learning_rate),
+            "--hidden-dim", str(args.probe_hidden_dim),
+        ]
+        
+        logger.info("Delegating to train_emotion_probe.py with cmd: %s", " ".join(cmd))
+        subprocess.run(cmd, check=True)
     else:
         raise ValueError(f"Unknown model_type: {args.model_type}")
 

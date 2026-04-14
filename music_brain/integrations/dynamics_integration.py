@@ -32,6 +32,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
@@ -222,6 +223,32 @@ class DynamicsIntegration:
 
         # Callbacks for C++ integration
         self._on_dynamics_change: Optional[Callable[[DynamicsParameters], None]] = None
+
+    def apply_expression_learning(
+        self,
+        emotion: str,
+        *,
+        learning_profile: Optional[str] = None,
+        learning_storage: Optional[Path] = None,
+    ) -> Optional[List[int]]:
+        """
+        Return a learned velocity curve when a profile exists; otherwise None.
+
+        ``learning_storage`` should be the parent ``music_learning`` directory
+        (the same root passed to ``MusicLearningManager``), not the expression
+        subfolder.
+        """
+        if not learning_profile:
+            return None
+        from music_brain.learning.expression_learning import ExpressionLearningManager
+
+        root = Path(learning_storage) / "expression" if learning_storage else None
+        mgr = ExpressionLearningManager(root)
+        data = mgr.generate(emotion, learning_profile)
+        curve = data.get("velocity_curve") or []
+        if not curve:
+            return None
+        return [int(v) for v in curve]
 
     # =========================================================================
     # Section Management

@@ -60,12 +60,14 @@ Wound convertLegacyToKellyTypesWound(const Wound &legacy) {
 }
 } // namespace
 } // namespace kelly
+#include "daiw/simd.hpp"
 #include "common/MusicConstants.h"
 #include "common/PathResolver.h"
 #include "plugin/PluginEditor.h"
 #include "plugin/MasterEQProcessor.h"
 #include "project/ProjectManager.h"
 #if JUCE_MAC
+#include <cstdlib>
 #include <cstring>
 #include <pthread.h>
 #include <sys/qos.h>
@@ -291,6 +293,9 @@ void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
   playheadPosition_ = 0.0;
   sampleCounter_ = 0;
 
+  // Initialize feature extractor buffer
+  featureExtractor_.prepareToPlay(samplesPerBlock);
+
   // Initialize Master EQ processor
   int numChannels = getTotalNumOutputChannels();
   masterEQProcessor_.prepareToPlay(sampleRate, samplesPerBlock, numChannels);
@@ -342,10 +347,15 @@ void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
     if (!modelFile.existsAsFile())
       modelFile = pluginFile.getParentDirectory().getChildFile(
           "models/audio_jepa_v01.onnx");
-    if (!modelFile.existsAsFile())
-      modelFile = juce::File(
-          "/Users/seanburdges/Dev/KmiDi/models/audio_jepa_v01.onnx");
-    emotionConfig.model_path = modelFile.getFullPathName().toStdString();
+    if (!modelFile.existsAsFile()) {
+      const char* modelRoot = std::getenv("KELLY_MODEL_ROOT");
+      if (modelRoot && modelRoot[0] != '\0')
+        modelFile = juce::File(modelRoot).getChildFile("audio_jepa_v01.onnx");
+    }
+    if (modelFile.existsAsFile())
+      emotionConfig.model_path = modelFile.getFullPathName().toStdString();
+    else
+      DBG("KMiDi: audio_jepa_v01.onnx not found; set KELLY_MODEL_ROOT to enable ML inference");
 
     // Resolve emotion probe model path
     auto probeFile = pluginFile.getChildFile(
@@ -353,10 +363,15 @@ void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
     if (!probeFile.existsAsFile())
       probeFile = pluginFile.getParentDirectory().getChildFile(
           "models/emotion_probe_v01.onnx");
-    if (!probeFile.existsAsFile())
-      probeFile = juce::File(
-          "/Users/seanburdges/Dev/KmiDi/models/emotion_probe_v01.onnx");
-    emotionConfig.probe_model_path = probeFile.getFullPathName().toStdString();
+    if (!probeFile.existsAsFile()) {
+      const char* modelRoot = std::getenv("KELLY_MODEL_ROOT");
+      if (modelRoot && modelRoot[0] != '\0')
+        probeFile = juce::File(modelRoot).getChildFile("emotion_probe_v01.onnx");
+    }
+    if (probeFile.existsAsFile())
+      emotionConfig.probe_model_path = probeFile.getFullPathName().toStdString();
+    else
+      DBG("KMiDi: emotion_probe_v01.onnx not found; set KELLY_MODEL_ROOT to enable emotion detection");
 
     emotionConfig.sample_rate = static_cast<size_t>(sampleRate);
     emotionConfig.ring_capacity = 524288;
@@ -399,7 +414,7 @@ bool PluginProcessor::isBusesLayoutSupported(const BusesLayout &layouts) const {
 }
 
 void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
-                                   juce::MidiBuffer &midiMessages) {
+                                   juce::MidiBuffer &midiMessages) noexcept {
   // Per-block latency measurement (RT-safe, no allocations)
   auto latencyScope = latencyInstrument_.measure();
 
@@ -455,9 +470,8 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
           const float *left = buffer.getReadPointer(0);
           const float *right =
               numChannels > 1 ? buffer.getReadPointer(1) : left;
-          for (size_t i = 0; i < n; ++i) {
-            monoMixBuffer_[i] = 0.5f * (left[i] + right[i]);
-          }
+          daiw::simd::stereo_planar_to_mono(monoMixBuffer_.data(), left, right,
+                                            n);
         }
 
         // Push to ring buffer (lock-free, non-blocking)
@@ -527,8 +541,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
   // Update EQ parameters from APVTS (non-blocking, atomic reads)
   masterEQProcessor_.updateParameters(apvts_);
 
-  // Apply EQ processing (currently stubbed - passes through audio)
-  // TODO: When biquad filters are implemented, apply actual EQ here
+  // Master EQ: biquad chain in MasterEQProcessor (RT-safe coefficient updates)
   auto *eqBypassParam = apvts_.getRawParameterValue(PARAM_EQ_BYPASS);
   if (!eqBypassParam || *eqBypassParam <= 0.5f) {
     // EQ not bypassed - process audio through EQ
@@ -572,16 +585,12 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
   // numSamples already defined earlier in function - don't redeclare
 
-  // CRITICAL: Audio thread must NEVER block. Use try_lock instead of
-  // lock_guard. If we can't acquire the lock immediately, skip this block to
-  // avoid audio glitches.
+  // RT-safe: read the active MIDI buffer via acquire-load. No lock, no syscall.
+  // The message thread writes to the shadow slot and then flips activeMidiBuffer_
+  // with a release-store, so any active-slot data we read here is fully visible.
   if (hasPendingMidi_.load() && isPlaying) {
-    std::unique_lock<std::mutex> lock(midiMutex_, std::try_to_lock);
-    if (!lock.owns_lock()) {
-      // Couldn't acquire lock - skip this block to avoid blocking audio thread
-      // The MIDI will be scheduled on the next block
-      return;
-    }
+    const GeneratedMidi &generatedMidi_ =
+        midiBuffers_[activeMidiBuffer_.load(std::memory_order_acquire)];
 
     // Calculate current position in beats (PPQ is quarter notes, so divide by
     // BEATS_PER_QUARTER_NOTE)
@@ -976,11 +985,15 @@ void PluginProcessor::generateMidi() {
     intent.tempo = static_cast<float>(theorySettings.tempoBpm) / baseTempo;
   }
 
-  // Generate MIDI
+  // Generate MIDI — write to shadow slot, then flip the active index.
+  // The RT thread always reads the previously active slot until the store
+  // below becomes visible (acquire/release pair), so there is no window
+  // where it can observe a partially-written buffer.
   {
-    std::lock_guard<std::mutex> lock(midiMutex_);
-    generatedMidi_ = midiGenerator_.generate(intent, bars, complexity, humanize,
-                                             feel, dynamics);
+    int shadow = 1 - activeMidiBuffer_.load(std::memory_order_relaxed);
+    midiBuffers_[shadow] = midiGenerator_.generate(intent, bars, complexity,
+                                                   humanize, feel, dynamics);
+    activeMidiBuffer_.store(shadow, std::memory_order_release);
   }
 
   // Clear parameter change flag after successful generation
@@ -1113,12 +1126,12 @@ void PluginProcessor::enableKellyBrainAPI(bool enable) {
 
 std::array<float, 128>
 PluginProcessor::extractFeatures(const juce::AudioBuffer<float> &buffer,
-                                 int startPos) {
+                                 int startPos) noexcept {
   return featureExtractor_.extractFeatures(buffer, startPos);
 }
 
 void PluginProcessor::applyEmotionVector(
-    const std::array<float, 64> &emotionVector) {
+    const std::array<float, 64> &emotionVector) noexcept {
   // Map emotion vector to valence and arousal
   // The first 32 dimensions could represent valence-related features
   // The last 32 dimensions could represent arousal-related features
@@ -1339,12 +1352,10 @@ bool PluginProcessor::saveCurrentProject(const juce::File &file) {
           apvts_.copyState()) // Get current CassetteState
   );
 
-  // Get generated MIDI (thread-safe)
-  GeneratedMidi generatedMidi;
-  {
-    std::lock_guard<std::mutex> midiLock(midiMutex_);
-    generatedMidi = generatedMidi_;
-  }
+  // Get a snapshot of the current active MIDI buffer (lock-free).
+  // Called from message thread; two concurrent readers are safe.
+  GeneratedMidi generatedMidi =
+      midiBuffers_[activeMidiBuffer_.load(std::memory_order_acquire)];
 
   // For v1.0, vocal notes and lyrics are empty (can be added in v1.1)
   std::vector<MidiNote> vocalNotes;
@@ -1409,10 +1420,11 @@ bool PluginProcessor::loadProject(const juce::File &file) {
     apvts_.replaceState(state);
   }
 
-  // Restore generated MIDI (thread-safe)
+  // Restore generated MIDI — write to shadow slot, then flip (lock-free).
   {
-    std::lock_guard<std::mutex> midiLock(midiMutex_);
-    generatedMidi_ = generatedMidi;
+    int shadow = 1 - activeMidiBuffer_.load(std::memory_order_relaxed);
+    midiBuffers_[shadow] = generatedMidi;
+    activeMidiBuffer_.store(shadow, std::memory_order_release);
     hasPendingMidi_.store(true);
   }
 
