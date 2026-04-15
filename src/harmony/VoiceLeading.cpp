@@ -207,7 +207,7 @@ float VoiceLeading::calculateMotionCost(
 VoiceLeading::VoiceLeadingResult VoiceLeading::analyze(
     const std::vector<Note>& fromVoicing,
     const std::vector<Note>& toVoicing
-) const noexcept {
+) const {
     VoiceLeadingResult result;
     result.fromVoicing = fromVoicing;
     result.toVoicing = toVoicing;
@@ -295,7 +295,7 @@ float VoiceLeading::calculateSmoothness(
 std::vector<Note> VoiceLeading::invertVoicing(
     const std::vector<Note>& voicing,
     int inversion
-) noexcept {
+) {
     if (voicing.empty()) return voicing;
 
     std::vector<Note> result = voicing;

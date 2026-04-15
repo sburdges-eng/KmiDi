@@ -93,11 +93,11 @@ void HarmonyEngine::updateScaleDetection() noexcept {
 std::vector<Note> HarmonyEngine::suggestVoiceLeading(
     const Chord& targetChord,
     const std::vector<Note>& currentVoices
-) const noexcept {
+) const {
     if (!config_.enableVoiceLeading) {
         return {};
     }
-    
+
     return voiceLeading_->findOptimalVoicing(targetChord, currentVoices);
 }
 
