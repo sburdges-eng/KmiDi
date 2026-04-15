@@ -21,15 +21,16 @@ SCHEMA_PATH = SCHEMA_DIR / "CompleteSongIntentRequest.json"
 # Backward-compatible alias for older scripts/workflows (DEPRECATED: do not overwrite).
 LEGACY_SCHEMA_PATH = SCHEMA_DIR / "CompleteSongIntent.json"
 TS_OUT = ROOT / "src" / "types" / "Intent.ts"
-RUST_OUT = ROOT / "src-tauri" / "src" / "generated" / "intent.rs"
+# Rust codegen now targets the engine/intent_ir crate (src-tauri was removed).
+RUST_OUT = ROOT / "engine" / "intent_ir" / "src" / "generated" / "intent.rs"
 
 EMOTION_SCHEMA_PATH = SCHEMA_DIR / "emotion_schema.json"
 EMOTION_TS_OUT = ROOT / "src" / "types" / "EmotionState.ts"
-EMOTION_RUST_OUT = ROOT / "src-tauri" / "src" / "generated" / "emotion.rs"
+EMOTION_RUST_OUT = ROOT / "engine" / "intent_ir" / "src" / "generated" / "emotion.rs"
 
 INTENT_FRAME_SCHEMA_PATH = SCHEMA_DIR / "intent_frame_schema.json"
 INTENT_FRAME_TS_OUT = ROOT / "src" / "types" / "IntentFrame.ts"
-INTENT_FRAME_RUST_OUT = ROOT / "src-tauri" / "src" / "generated" / "intent_frame.rs"
+INTENT_FRAME_RUST_OUT = ROOT / "engine" / "intent_ir" / "src" / "generated" / "intent_frame.rs"
 
 
 def _unwrap_anyof_nullable(node: Dict[str, Any]) -> Dict[str, Any] | None:
@@ -595,27 +596,28 @@ def sync_intent_frame() -> None:
     SCHEMA_DIR.mkdir(parents=True, exist_ok=True)
     INTENT_FRAME_SCHEMA_PATH.write_text(schema_payload, encoding="utf-8")
     INTENT_FRAME_TS_OUT.parent.mkdir(parents=True, exist_ok=True)
-    INTENT_FRAME_RUST_OUT.parent.mkdir(parents=True, exist_ok=True)
     INTENT_FRAME_TS_OUT.write_text(
         _render_intent_frame_typescript(schema), encoding="utf-8"
     )
-    INTENT_FRAME_RUST_OUT.write_text(
-        _render_intent_frame_rust(schema), encoding="utf-8"
-    )
-
-    # Ensure mod.rs includes intent_frame
-    mod_rs = INTENT_FRAME_RUST_OUT.parent / "mod.rs"
-    if mod_rs.exists():
-        content = mod_rs.read_text(encoding="utf-8")
-        if "pub mod intent_frame;" not in content:
-            content = content.rstrip("\n") + "\npub mod intent_frame;\n"
-            mod_rs.write_text(content, encoding="utf-8")
+    if INTENT_FRAME_RUST_OUT.parent.exists():
+        INTENT_FRAME_RUST_OUT.write_text(
+            _render_intent_frame_rust(schema), encoding="utf-8"
+        )
+        # Ensure mod.rs includes intent_frame
+        mod_rs = INTENT_FRAME_RUST_OUT.parent / "mod.rs"
+        if mod_rs.exists():
+            content = mod_rs.read_text(encoding="utf-8")
+            if "pub mod intent_frame;" not in content:
+                content = content.rstrip("\n") + "\npub mod intent_frame;\n"
+                mod_rs.write_text(content, encoding="utf-8")
+        else:
+            mod_rs.write_text("pub mod intent_frame;\n", encoding="utf-8")
+        print("IntentFrame Rust contract written to:", INTENT_FRAME_RUST_OUT)
     else:
-        mod_rs.write_text("pub mod intent_frame;\n", encoding="utf-8")
+        print("IntentFrame Rust output skipped (dir not found):", INTENT_FRAME_RUST_OUT.parent)
 
     print("IntentFrame schema exported to:", INTENT_FRAME_SCHEMA_PATH)
     print("IntentFrame TypeScript contract written to:", INTENT_FRAME_TS_OUT)
-    print("IntentFrame Rust contract written to:", INTENT_FRAME_RUST_OUT)
 
 
 def sync_emotion() -> None:
@@ -623,13 +625,15 @@ def sync_emotion() -> None:
     schema_payload = json.dumps(schema, indent=2) + "\n"
     EMOTION_SCHEMA_PATH.write_text(schema_payload, encoding="utf-8")
     EMOTION_TS_OUT.parent.mkdir(parents=True, exist_ok=True)
-    EMOTION_RUST_OUT.parent.mkdir(parents=True, exist_ok=True)
     EMOTION_TS_OUT.write_text(_render_emotion_typescript(schema), encoding="utf-8")
-    EMOTION_RUST_OUT.write_text(_render_emotion_rust(schema), encoding="utf-8")
+    if EMOTION_RUST_OUT.parent.exists():
+        EMOTION_RUST_OUT.write_text(_render_emotion_rust(schema), encoding="utf-8")
+        print("Emotion Rust contract written to:", EMOTION_RUST_OUT)
+    else:
+        print("Emotion Rust output skipped (dir not found):", EMOTION_RUST_OUT.parent)
 
     print("Emotion schema exported to:", EMOTION_SCHEMA_PATH)
     print("Emotion TypeScript contract written to:", EMOTION_TS_OUT)
-    print("Emotion Rust contract written to:", EMOTION_RUST_OUT)
 
 
 def sync_boundaries() -> None:
@@ -642,11 +646,14 @@ def sync_boundaries() -> None:
     SCHEMA_PATH.write_text(schema_payload, encoding="utf-8")
     # DO NOT OVERWRITE LEGACY_SCHEMA_PATH - it is a distinct internal contract.
     TS_OUT.write_text(_render_typescript(schema), encoding="utf-8")
-    RUST_OUT.write_text(_render_rust(schema), encoding="utf-8")
+    if RUST_OUT.parent.exists():
+        RUST_OUT.write_text(_render_rust(schema), encoding="utf-8")
+        print("Rust contract written to:", RUST_OUT)
+    else:
+        print("Rust output skipped (target dir not found):", RUST_OUT.parent)
 
     print("Schema exported to:", SCHEMA_PATH)
     print("TypeScript contract written to:", TS_OUT)
-    print("Rust contract written to:", RUST_OUT)
     print("Contract sync complete.")
     print("Next steps for CI:")
     print("-> python scripts/sync_entities.py")
