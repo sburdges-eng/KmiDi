@@ -58,6 +58,17 @@ bool AudioFile::read(const std::string& filepath) {
         return false;
     }
 
+    // Determine file length up-front so we can bound untrusted chunk sizes
+    // against a real limit instead of trusting the on-disk value. WAV chunk
+    // sizes are read from the file and could be arbitrary uint32_t values
+    // (including 0xFFFFFFFF) on a malformed or hostile input.
+    file.seekg(0, std::ios::end);
+    const std::streamoff fileLength = file.tellg();
+    file.seekg(0, std::ios::beg);
+    if (fileLength < 12) {
+        return false;  // Too small even for RIFF/WAVE header
+    }
+
     // Read RIFF header
     char riff[4];
     file.read(riff, 4);
@@ -84,15 +95,32 @@ bool AudioFile::read(const std::string& filepath) {
     uint32_t dataChunkSize = 0;
 
     // First pass: find fmt chunk and record data chunk position
-    while (!file.eof() && (!foundFmt || !foundData)) {
+    while (file.good() && !file.eof() && (!foundFmt || !foundData)) {
         char chunkId[4];
         file.read(chunkId, 4);
-        if (file.eof()) break;
+        if (file.eof() || !file.good()) break;
 
         uint32_t chunkSize;
         file.read(reinterpret_cast<char*>(&chunkSize), sizeof(chunkSize));
+        if (!file.good()) break;
+
+        // Clamp untrusted chunkSize to bytes remaining in the file. A
+        // malformed header claiming a chunk larger than the file could
+        // silently extend the stream past EOF on seekg, which on some
+        // libc++ implementations sets failbit quietly; worse, later
+        // allocation steps (resize to dataSize / bytesPerSample) become
+        // an OOM-DoS vector on arbitrary uint32 values.
+        const std::streamoff pos = file.tellg();
+        const std::streamoff remaining =
+            (pos < 0 || pos > fileLength) ? 0 : (fileLength - pos);
+        if (chunkSize > static_cast<uint32_t>(remaining)) {
+            return false;  // Chunk claims more data than the file holds
+        }
 
         if (std::strncmp(chunkId, "fmt ", 4) == 0) {
+            if (chunkSize < 16) {
+                return false;  // PCM fmt chunk must be at least 16 bytes
+            }
             // Read fmt chunk - must be processed first for format info
             // NOTE: chunkSize already contains the fmt chunk size, don't read it again
             header.fmtSize = chunkSize;
@@ -106,6 +134,7 @@ bool AudioFile::read(const std::string& filepath) {
             // Skip any extra fmt data (standard PCM fmt chunk is 16 bytes)
             if (chunkSize > 16) {
                 file.seekg(chunkSize - 16, std::ios::cur);
+                if (!file.good()) return false;
             }
             foundFmt = true;
         } else if (std::strncmp(chunkId, "data", 4) == 0) {
@@ -115,9 +144,11 @@ bool AudioFile::read(const std::string& filepath) {
             foundData = true;
             // Skip past data chunk for now (in case fmt comes after)
             file.seekg(chunkSize, std::ios::cur);
+            if (!file.good()) return false;
         } else {
             // Skip unknown chunks
             file.seekg(chunkSize, std::ios::cur);
+            if (!file.good()) return false;
         }
     }
 
