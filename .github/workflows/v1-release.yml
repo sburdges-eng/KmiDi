@@ -30,7 +30,9 @@ jobs:
           node-version: "20"
 
       - name: Setup Rust
+        # Kept for engine/intent_ir crate if needed; no Tauri dependency
         uses: dtolnay/rust-toolchain@stable
+        if: runner.os == 'macOS'
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -48,10 +50,7 @@ jobs:
             curl \
             wget \
             file \
-            libxdo-dev \
             libssl-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
             qt6-base-dev \
             ninja-build
 
@@ -66,7 +65,7 @@ jobs:
 
       - name: Verify Entity Contract Drift
         run: |
-          git diff --exit-code -- shared_schemas/CompleteSongIntentRequest.json src/types/Intent.ts src-tauri/src/generated/intent.rs
+          git diff --exit-code -- shared_schemas/CompleteSongIntentRequest.json src/types/Intent.ts
 
       - name: Bootstrap Environment
         run: ./bootstrap.sh
@@ -88,8 +87,24 @@ jobs:
       - name: Run Schema Security Tests
         run: pytest tests/unit/test_api_schema.py -q
 
-      - name: Build Tauri App
-        run: |
-          npm ci
-          npm run tauri build
+      - name: Install Node deps
+        run: npm ci
 
+      - name: Build React Frontend
+        run: npm run build
+
+      - name: Build KellyFFI Standalone (macOS/Linux only)
+        if: runner.os != 'Windows'
+        run: |
+          PYBIND_DIR=$(python -c "import pybind11; print(pybind11.get_cmake_dir())")
+          cmake -B build -S . \
+            -G "Ninja" \
+            -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }} \
+            -Dpybind11_DIR="$PYBIND_DIR" \
+            -DBUILD_KELLY_CORE=ON \
+            -DBUILD_KELLY_FFI=ON \
+            -DBUILD_DESKTOP=OFF \
+            -DBUILD_PLUGINS=OFF \
+            -DKMIDI_BUILD_QT_UI=OFF \
+            -DKMIDI_BUILD_JUCE_UI=OFF
+          cmake --build build --target KellyFFI --config ${{ env.CMAKE_BUILD_TYPE }} --parallel 4

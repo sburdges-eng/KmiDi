@@ -92,7 +92,6 @@ def _get_synesthesia_dictionary() -> Dict[str, Dict[str, float]]:
     if _synesthesia_dictionary is not None:
         return _synesthesia_dictionary
 
-    import json
     from pathlib import Path
     import logging
 
@@ -235,7 +234,6 @@ def load_genre_definitions(path: Optional[str] = None) -> Dict[str, Any]:
         path = str(Path(__file__).parent.parent.parent / "config" / "genres.json")
 
     if path and Path(path).exists():
-        import json
         import logging
         try:
             with open(path, 'r', encoding="utf-8") as f:

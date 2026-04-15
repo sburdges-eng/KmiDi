@@ -34,7 +34,6 @@ def extract_onset_envelope(
         onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length, n_fft=n_fft)
         return onset_env.astype(np.float32)
     # Fallback: simple energy derivative (half-wave rectified)
-    frame_len = hop_length
     n_frames = (len(y) - n_fft) // hop_length + 1
     energy = np.zeros(n_frames, dtype=np.float32)
     for i in range(n_frames):

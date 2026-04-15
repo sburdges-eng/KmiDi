@@ -9,7 +9,6 @@ from typing import Annotated, Dict, List, Optional, Any, Tuple
 import os
 import sys
 import logging
-import json
 import asyncio
 import time
 
@@ -1447,7 +1446,6 @@ if FASTAPI_AVAILABLE:
             tech = request.intent.technical
             # Default to the full intent pipeline for all requests.
             use_full_pipeline = True
-            validated = None
 
             if use_full_pipeline:
                 # Use full CompleteSongIntent pipeline (normalize → validate → expand)

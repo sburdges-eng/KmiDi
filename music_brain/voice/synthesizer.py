@@ -7,7 +7,6 @@ spoken prompts, and text-to-speech with emotional character.
 
 from dataclasses import dataclass
 from typing import List, Optional
-from pathlib import Path
 import numpy as np
 
 
@@ -317,7 +316,6 @@ class VoiceSynthesizer:
         # Add vibrato
         if self.config.vibrato_depth > 0:
             vibrato = np.sin(2 * np.pi * self.config.vibrato_rate * t)
-            pitch_mod = 2 ** (vibrato * self.config.vibrato_depth / 12)
             # Simplified vibrato application
             waveform = waveform * (1 + vibrato * self.config.vibrato_depth * 0.1)
 

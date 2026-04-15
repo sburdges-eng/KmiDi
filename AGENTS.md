@@ -27,7 +27,7 @@ KmiDi / iDAW is an **AI-powered music creation platform** (monorepo). Stack:
 ```
 KmiDi/
 ├── src/                    # React app (components, hooks, types)
-├── src-tauri/              # Tauri app (Rust commands, bridge, build.rs)
+├── engine/intent_ir/ (Rust intent crate)              # Tauri app (Rust commands, bridge, build.rs)
 ├── music_brain/            # Python FastAPI app and engine API (prrot, learning, voice)
 ├── shared_schemas/         # Single source of truth for intent (JSON → sync to TS/Rust)
 ├── scripts/                # sync_entities.py, dev-setup, build, env, acquire/ (source_manifest)
@@ -129,7 +129,7 @@ In cloud VMs, JUCE submodule step can be skipped if C++ build is not needed.
 
 - **Key targets:**
   - `KellyCore` — core C++ library
-  - `KellyFFI` — shared library for Tauri (output e.g. `build/libKellyFFI.dylib`; CMake copies to `src-tauri/resources/`)
+  - `KellyFFI` — shared library for Tauri (output e.g. `build/libKellyFFI.dylib`; CMake copies to `engine/intent_ir/ (Rust intent crate)resources/`)
   - `KellyPlugin_VST3` — VST3 plugin (e.g. `build/KellyPlugin_artefacts/Release/VST3/...`)
   - `KellyFFIBenchmark` — FFI benchmark (requires KellyFFI; do not link JUCE in the benchmark exe — KellyFFI links JUCE PRIVATE)
   - `KellyTests` — C++ tests (when `BUILD_TESTS=ON` and Catch2 present)
@@ -142,15 +142,15 @@ Full-stack build and Tauri link paths: `docs/FULL_STACK_BUILD.md`. Optional help
 
 ### Tauri
 
-- **Dev:** `npm run dev:tauri` (after KellyFFI is built if using native backend).
-- **Build:** `npm run tauri build` (or `npm ci && npm run tauri build`).
-- **Rust tests:** `cd src-tauri && cargo test`.
-- `src-tauri/build.rs` looks for `libKellyFFI` in `../build`, `../build/debug`, `../build/release`; for custom build dirs, adjust build.rs or copy the dylib.
+- **Dev:** `npm run dev` (React, Vite) + `npm run dev:python` (API).
+- **Build:** `npm run build` (React frontend); CMake `KellyFFI` for native engine.
+- **Rust tests:** `cd engine/intent_ir && cargo test`.
+- KellyFFI dylib is built via CMake and loaded by the JUCE Standalone plugin at runtime.
 
 ### Schema sync (UI–engine contract)
 
 - **Source of truth:** `shared_schemas/CompleteSongIntentRequest.json`.
-- **Sync:** `python3 scripts/sync_entities.py` — updates `src/types/Intent.ts`, `src-tauri/src/generated/intent.rs`, and Python validation.
+- **Sync:** `python3 scripts/sync_entities.py` — updates `src/types/Intent.ts`, `engine/intent_ir/src/generated/intent.rs`, and Python validation.
 - **CI:** Verifies no drift (e.g. `tests/unit/test_api_schema.py`).
 
 ---
@@ -162,7 +162,7 @@ Full-stack build and Tauri link paths: `docs/FULL_STACK_BUILD.md`. Optional help
 | Frontend | `npx tsc --noEmit` | (Vitest if configured) | `npm run build` |
 | Python | `python3 -m flake8 music_brain/ --max-line-length 100` | `python3 -m pytest tests/` | `pip install -e .` |
 | C++ | — | `ctest --test-dir build --output-on-failure` (if BUILD_TESTS=ON) | `cmake --build build --target <target>` |
-| Rust/Tauri | `cargo clippy` (optional) | `cargo test` in src-tauri | `npm run tauri build` |
+| Rust (intent_ir) | `cargo clippy` | `cd engine/intent_ir && cargo test` | — |
 
 ---
 
@@ -248,8 +248,8 @@ Human-oriented copy (same content, readable in docs navigation): [`docs/NATIVE_S
 |------|--------|----------------|
 | C ABI contract (which `char*` to free) | `src/bridge/kelly_ffi.h` — `kelly_free_string`, comments on static vs heap | Every new FFI return type must be documented (caller frees vs static, e.g. `kelly_get_error_message`). |
 | C++ implementation | `src/bridge/kelly_ffi.cpp` | Pair every heap allocation returned across the boundary with `kelly_free_string` (or document static storage). |
-| Rust consumer | `src-tauri/src/bridge/kelly_ffi.rs` | Match each `extern "C"` result: if the header says the library allocated it, copy then `kelly_free_string`. If the header says static/thread-local, **never** free. Grep `kelly_` calls and verify against `kelly_ffi.h`. |
-| Other Rust FFI | `src-tauri/src/intent_ir/ffi.rs`, `src-tauri/src/intent_ir/ffi_exports.rs` | Same discipline as KellyFFI (lifetimes, null, who owns buffers). |
+| Rust consumer | `engine/intent_ir/ (Rust intent crate)src/bridge/kelly_ffi.rs` | Match each `extern "C"` result: if the header says the library allocated it, copy then `kelly_free_string`. If the header says static/thread-local, **never** free. Grep `kelly_` calls and verify against `kelly_ffi.h`. |
+| Other Rust FFI | `engine/intent_ir/ (Rust intent crate)src/intent_ir/ffi.rs`, `engine/intent_ir/ (Rust intent crate)src/intent_ir/ffi_exports.rs` | Same discipline as KellyFFI (lifetimes, null, who owns buffers). |
 | Regression tests | `tests/cpp/test_kelly_ffi.cpp` | Extend when adding FFI; run with `BUILD_TESTS=ON` and C++ tests enabled. |
 
 ### Duplicate JUCE / ODR / allocator mismatch
@@ -273,8 +273,8 @@ Human-oriented copy (same content, readable in docs navigation): [`docs/NATIVE_S
 
 | What | Where | Agent action |
 |------|--------|----------------|
-| KellyFFI ABI / dylib | `CMakeLists.txt` — `KellyFFI` `VERSION` / `SOVERSION`; Tauri `src-tauri/build.rs` search paths | Breaking C ABI requires version story + Tauri packaging update. |
-| TS / Rust / Python intent shapes | `shared_schemas/`, `scripts/sync_entities.py`, `src/types/Intent.ts`, `src-tauri/src/generated/` | After schema edits, run sync and commit generated files; run Python schema tests. |
+| KellyFFI ABI / dylib | `CMakeLists.txt` — `KellyFFI` `VERSION` / `SOVERSION`; Tauri `engine/intent_ir/ (Rust intent crate)build.rs` search paths | Breaking C ABI requires version story + Tauri packaging update. |
+| TS / Rust / Python intent shapes | `shared_schemas/`, `scripts/sync_entities.py`, `src/types/Intent.ts`, `engine/intent_ir/ (Rust intent crate)src/generated/` | After schema edits, run sync and commit generated files; run Python schema tests. |
 | HTTP API only | `music_brain/api_schemas/` | REST contract evolution; does not fix C++ memory by itself. |
 
 ### Commands to run (when native/FFI touched)
@@ -282,7 +282,7 @@ Human-oriented copy (same content, readable in docs navigation): [`docs/NATIVE_S
 - Configure and build affected targets, e.g. `KellyFFI`, `KellyCore`, plugins: see `BUILD.md` and root `CMakeLists.txt`.
 - C++ tests: `BUILD_TESTS=ON`, then `ctest --test-dir build --output-on-failure` (when enabled).
 - Sanitizer: `KMIDI_ENABLE_ASAN=ON` Debug build + `ctest` per `CLAUDE.md`.
-- Rust: `cd src-tauri && cargo test`.
+- Rust: `cd engine/intent_ir && cargo test`.
 - Python (if API/schemas touched): `flake8 music_brain/`, `pytest tests/`.
 
 ---

@@ -9,7 +9,7 @@ KmiDi / iDAW is an **AI-powered music creation platform** (monorepo). Four layer
 | Layer | Tech | Location |
 |-------|------|----------|
 | Frontend | React 19 + Vite + TypeScript + Tailwind | `src/` |
-| Desktop shell | Tauri 2 + Rust | `src-tauri/` |
+| Desktop shell | Tauri 2 + Rust | `engine/intent_ir/ (Rust intent crate)` |
 | Native engine | C++20 (KellyCore, KellyFFI, JUCE 8) | `engine/`, `src/`, `include/`, `src_penta-core/` |
 | Backend API | Python FastAPI (`music_brain`) | `music_brain/` |
 
@@ -57,7 +57,7 @@ python3 -m pytest tests/unit/test_prrot_bindings.py # Single test file
 python3 -m pytest tests/ -k "test_name"            # Single test by name
 python3 -m pytest tests/ -m unit                   # By marker (unit, integration, slow, cpp)
 ctest --test-dir build --output-on-failure          # C++ tests (BUILD_TESTS=ON)
-cd src-tauri && cargo test                          # Rust/Tauri tests
+cd engine/intent_ir && cargo test                          # Rust/Tauri tests
 ```
 
 ### Linting
@@ -99,7 +99,7 @@ The canonical source tree is the repo root (`KmiDi/`). The following paths are l
 - **Full architecture context:** `AGENTS.md` — repo layout, build matrix, service topology, API contracts, on-device tools, native safety, and integration gate. Consult it for anything beyond the summary below.
 - **KellyFFI** links JUCE and Qt **PRIVATE**. Executables that link only KellyFFI must not also link JUCE (avoids allocator mismatch / static-init crashes).
 - **FFI / RT / JUCE audit map:** `AGENTS.md` → section *Native safety, FFI ownership, and verification map* (file paths, ownership rules, commands). Use it for any KellyFFI, `kelly_ffi.rs`, or `processBlock` work.
-- **Intent schema source of truth:** `shared_schemas/CompleteSongIntentRequest.json`. Changes must be synced via `sync_entities.py` to `src/types/Intent.ts`, `src-tauri/src/generated/intent.rs`, and Python validation.
+- **Intent schema source of truth:** `shared_schemas/CompleteSongIntentRequest.json`. Changes must be synced via `sync_entities.py` to `src/types/Intent.ts`, `engine/intent_ir/src/generated/intent.rs`, and Python validation.
 - **`/generate` API** uses `GenerateRequest`/`EmotionalIntent` (defined in `music_brain/api.py`), **not** `CompleteSongIntentRequest`. The `instruments` field takes dicts `{"instrument": "piano"}`, not plain strings. `structure` names must match `^(intro|verse|chorus|bridge|outro|build|drop)$`.
 - **App shell entrypoint:** `AppConsole` (in `main.tsx`). `App.tsx` is legacy/alternate and not imported.
 - **Two build contexts:** Root CMake uses `BUILD_PLUGINS`, `KMIDI_BUILD_JUCE_UI`, `BUILD_KELLY_FFI`. Legacy DAIW in `KmiDi_FINAL/engine/cpp_music_brain` uses `DAIW_BUILD_VST3` / `DAIW_BUILD_AU` -- do not mix.
