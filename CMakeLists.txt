@@ -439,6 +439,7 @@ if(BUILD_PLUGINS)
     # CMake plugin kinds, so only KellyPlugin_VST3 (and KellyPlugin_All) are created.
     juce_add_plugin(KellyPlugin
         COMPANY_NAME "Kelly"
+        BUNDLE_ID com.kelly.emotion-processor
         PLUGIN_MANUFACTURER_CODE Klly
         PLUGIN_CODE Klp1
         FORMATS AU VST3 CLAP Standalone
@@ -446,6 +447,62 @@ if(BUILD_PLUGINS)
         AU_MAIN_TYPE kAudioUnitType_MusicEffect
         VST3_CATEGORIES Fx Synth
         CLAP_ID com.kelly.emotion-processor
+
+        # ---------------------------------------------------------------------
+        # macOS 14+ permissions for the Standalone target.
+        # JUCE emits matching Info.plist keys + entitlements. Without these the
+        # standalone app silently fails to accept audio input, open BLE-MIDI
+        # peripherals, bind to local-network peers (virtual MIDI session /
+        # mDNS / RTP-MIDI / localhost HTTP), or drive Logic via the Apple
+        # Events fallback. Only the Standalone wrapper prompts the user;
+        # VST3/AU/CLAP inherit the host's entitlements so these keys are no-ops
+        # for the plugin formats.
+        # ---------------------------------------------------------------------
+        MICROPHONE_PERMISSION_ENABLED TRUE
+        MICROPHONE_PERMISSION_TEXT
+            "Kelly Emotion Processor uses the microphone to analyze audio input for emotion and pitch tracking."
+
+        BLUETOOTH_PERMISSION_ENABLED TRUE
+        BLUETOOTH_PERMISSION_TEXT
+            "Kelly Emotion Processor uses Bluetooth to connect to BLE-MIDI controllers and DAW surfaces."
+
+        # AppleScript send-events is required for the Logic Pro bridge's
+        # structural-command fallback path (track create/rename/routing —
+        # things Mackie Control Universal cannot express). Drop this flag
+        # if the bridge is ever restricted to MCU-only.
+        SEND_APPLE_EVENTS_PERMISSION_ENABLED TRUE
+        SEND_APPLE_EVENTS_PERMISSION_TEXT
+            "Kelly Emotion Processor sends Apple Events to Logic Pro for track management operations the Mackie Control protocol cannot perform."
+
+        # macOS 14 introduced explicit Local Network consent. This covers:
+        #   * virtual MIDI peers on the local host,
+        #   * RTP-MIDI (Network MIDI Setup) sessions advertised via Bonjour,
+        #   * the Tauri bridge connecting to the FastAPI backend on 127.0.0.1:8000,
+        #   * any mDNS/Bonjour service discovery.
+        NETWORK_MULTICAST_PERMISSION_ENABLED TRUE
+        NETWORK_MULTICAST_PERMISSION_TEXT
+            "Kelly Emotion Processor uses the local network to discover MIDI peers, DAW control surfaces, and the companion audio engine."
+
+        # Sandbox OFF for the Standalone: plugin hosts already run us sandboxed
+        # when formatted AU/VST3/CLAP, and the standalone needs open access to
+        # the user's model/dataset folders (KELLY_MODEL_ROOT, KELLY_AUDIO_DATA_ROOT)
+        # which are not stable across App Store sandbox containers. Notarization
+        # still applies for distribution.
+        APP_SANDBOX_ENABLED FALSE
+        HARDENED_RUNTIME_ENABLED TRUE
+
+        # Declare the Bonjour service types the app is allowed to browse on
+        # the local network. `_apple-midi._udp` is RTP-MIDI (Network MIDI
+        # Setup sessions); `_kmidi-bridge._tcp` is our own service for the
+        # Tauri <-> KellyFFI companion discovery.
+        PLIST_TO_MERGE "<dict>
+            <key>NSBonjourServices</key>
+            <array>
+                <string>_apple-midi._udp</string>
+                <string>_kmidi-bridge._tcp</string>
+            </array>
+        </dict>"
+
         ${KellyPlugin_ICON_ARGS}
     )
 
