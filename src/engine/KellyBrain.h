@@ -36,7 +36,9 @@ namespace kelly {
 class KellyBrain {
 public:
   KellyBrain();
-  ~KellyBrain() = default;
+  // Destructor defined out-of-line in KellyBrain.cpp so that
+  // unique_ptr<IntentPipeline>::~unique_ptr sees the complete type.
+  ~KellyBrain();
 
   /**
    * Initialize with data directory path

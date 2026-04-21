@@ -530,4 +530,10 @@ GeneratedMidi KellyBrain::generateMidiFromIntentFrame(const IntentFrame &frame, 
   return midiGenerator_->generate(validatedFrame, bars, 0.5f, 0.4f, 0.0f, 0.75f);
 }
 
+// Out-of-line destructor: IntentPipeline and MidiGenerator must be complete
+// types here so that unique_ptr can call their destructors without UB.
+// Defining ~KellyBrain() = default in the header would instantiate the
+// unique_ptr deleter against forward-declared (incomplete) types.
+KellyBrain::~KellyBrain() = default;
+
 } // namespace kelly

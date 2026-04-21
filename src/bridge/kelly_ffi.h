@@ -60,6 +60,18 @@ const char* kelly_get_error_message(KellyErrorCode error_code);
 // Memory Management
 // =============================================================================
 
+/*
+ * FFI string ownership contract:
+ *  - Functions returning `char*` (e.g. kelly_brain_from_text, kelly_brain_from_emotion):
+ *    heap-allocated via `malloc`. Caller MUST pass the returned pointer to
+ *    `kelly_free_string` to avoid a memory leak. Passing the pointer to `free`
+ *    directly is also safe but not recommended (keeps the ABI abstract).
+ *  - Functions returning `const char*` (e.g. kelly_get_last_error,
+ *    intent_ir_get_error_message): point into static storage. Caller MUST NOT
+ *    free or mutate the returned buffer.
+ *  - When in doubt, check the return type's const-qualification.
+ */
+
 /**
  * Free memory allocated by kelly_* functions
  * Use this to free any char* returned by kelly functions
