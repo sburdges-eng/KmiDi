@@ -617,31 +617,34 @@ void EmotionWorkstation::setupProjectMenu() {
 void EmotionWorkstation::showProjectMenu() {
   setupProjectMenu();
 
+  juce::Component::SafePointer<EmotionWorkstation> safe(this);
   projectMenu_.showMenuAsync(juce::PopupMenu::Options()
                                  .withTargetComponent(&projectMenuButton_)
                                  .withParentComponent(getTopLevelComponent()),
-                             [this](int result) {
-                               switch (result) {
-                               case 1: // New Project
-                                 if (onNewProject) {
-                                   onNewProject();
+                             [safe](int result) {
+                               if (auto* self = safe.getComponent()) {
+                                 switch (result) {
+                                 case 1: // New Project
+                                   if (self->onNewProject) {
+                                     self->onNewProject();
+                                   }
+                                   break;
+                                 case 2: // Open Project
+                                   if (self->onOpenProject) {
+                                     self->onOpenProject();
+                                   }
+                                   break;
+                                 case 3: // Save Project
+                                   if (self->onSaveProject) {
+                                     self->onSaveProject();
+                                   }
+                                   break;
+                                 case 4: // Save Project As
+                                   if (self->onSaveProjectAs) {
+                                     self->onSaveProjectAs();
+                                   }
+                                   break;
                                  }
-                                 break;
-                               case 2: // Open Project
-                                 if (onOpenProject) {
-                                   onOpenProject();
-                                 }
-                                 break;
-                               case 3: // Save Project
-                                 if (onSaveProject) {
-                                   onSaveProject();
-                                 }
-                                 break;
-                               case 4: // Save Project As
-                                 if (onSaveProjectAs) {
-                                   onSaveProjectAs();
-                                 }
-                                 break;
                                }
                              });
 }
