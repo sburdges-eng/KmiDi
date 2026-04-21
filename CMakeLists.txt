@@ -301,6 +301,13 @@ list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/core/emotion_thesaurus\\.cpp$
 #     kelly::KellyLookAndFeel virtual table + thunks. Exclude the copy.
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/ui/MidiKompanionLookAndFeel\\.cpp$")
 
+# BiometricInput: .cpp and .mm define overlapping symbols.  Select exactly
+# one per platform so the linker doesn't see duplicates.
+if(APPLE)
+    list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/biometric/BiometricInput\\.cpp$")
+else()
+    list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/biometric/BiometricInput\\.mm$")
+endif()
 
 if(BUILD_KELLY_CORE)
 add_library(KellyCore STATIC ${KELLY_CORE_SOURCES})
