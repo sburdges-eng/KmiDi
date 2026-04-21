@@ -3,7 +3,6 @@
 use crate::types::*;
 use crate::validator::{clamp_intent_frame, validate_intent_frame, ValidationError};
 use crate::builder::IntentFrameBuilder;
-use alloc::boxed::Box;
 use core::ffi::c_int;
 
 /// Validation error codes (C-compatible)

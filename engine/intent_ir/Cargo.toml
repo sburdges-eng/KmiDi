@@ -5,11 +5,11 @@ edition = "2021"
 
 [lib]
 name = "intent_ir"
-crate-type = ["staticlib"]
+crate-type = ["staticlib", "rlib"]
 
-[profile.dev]
-panic = "abort"
-
+# panic = "abort" in release is the FFI safety posture (no unwinding through
+# the C boundary). Dev/test builds keep the default unwind strategy so the
+# test harness can report per-test panics.
 [profile.release]
 panic = "abort"
 lto = true
