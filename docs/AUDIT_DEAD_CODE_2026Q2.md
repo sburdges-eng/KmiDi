@@ -10,7 +10,7 @@
 
 ## Summary
 
-**23 candidates flagged: 12 definite / 7 likely / 4 possible.**
+**24 candidates flagged: 12 definite / 7 likely / 5 possible.**
 
 Note: `include/kelly/` does not exist in-tree (scope item absent). All findings are in `src/` or `include/penta|kmidi|daiw`.
 
@@ -87,8 +87,8 @@ Note: `include/kelly/` does not exist in-tree (scope item absent). All findings 
 - Recommendation: delete both (dependent on L2/L3 also going away to avoid dangling includes).
 
 **L5 — `src/audio/AudioFile.cpp` + `include/daiw/audio/AudioFile.h`**
-- Evidence: CMakeLists.txt:286 — `EXCLUDE REGEX "/src/audio/AudioFile\\.cpp$"`. `grep -rn "#include.*daiw/audio/AudioFile\|daiw::audio::AudioFile" src/ include/ tests/ src_penta-core/` returns 0 hits outside the files themselves.
-- Recommendation: delete both.
+- Evidence: CMakeLists.txt:286 — `EXCLUDE REGEX "/src/audio/AudioFile\\.cpp$"`. `grep -rn "#include.*daiw/audio/AudioFile\|daiw::audio::AudioFile" src/ include/ tests/ src_penta-core/` returns **1 hit**: `include/daiw/export/StemExporter.h:14` — but StemExporter is itself L6 (CMake-excluded + zero external consumers), so the chain is dead-to-dead.
+- Recommendation: delete both together with L6 (order: delete StemExporter.h first so AudioFile.h has zero references, then delete AudioFile.{h,cpp}).
 
 **L6 — `src/export/StemExporter.cpp` + `include/daiw/export/StemExporter.h`**
 - Evidence: CMakeLists.txt:287 — `EXCLUDE REGEX "/src/export/StemExporter\\.cpp$"`. `grep -rn "#include.*daiw/export/StemExporter\|daiw::export::StemExporter" src/ include/ tests/ src_penta-core/` returns 0 hits outside the files themselves.
