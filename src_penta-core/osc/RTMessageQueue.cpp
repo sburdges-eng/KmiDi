@@ -14,7 +14,7 @@ RTMessageQueue::RTMessageQueue(size_t capacity)
 
 RTMessageQueue::~RTMessageQueue() = default;
 
-bool RTMessageQueue::push(const OSCMessage& message) noexcept {
+bool RTMessageQueue::push(const OSCMessage& message) {
     if (!queue_) {
         return false;
     }
@@ -27,7 +27,7 @@ bool RTMessageQueue::push(const OSCMessage& message) noexcept {
     return success;
 }
 
-bool RTMessageQueue::pop(OSCMessage& outMessage) noexcept {
+bool RTMessageQueue::pop(OSCMessage& outMessage) {
     if (!queue_) {
         return false;
     }

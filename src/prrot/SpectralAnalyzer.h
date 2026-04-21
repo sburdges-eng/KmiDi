@@ -79,6 +79,8 @@ private:
     mutable std::array<float, kFFTSize> fft_real_;
     mutable std::array<float, kFFTSize> fft_imag_;
     mutable std::array<float, kMaxSpectralBins> magnitude_buffer_;
+    // Scratch buffer for JUCE interleaved FFT input/output (resized once in constructor)
+    mutable std::vector<float> fft_scratch_;
 
     // JUCE FFT instance (optimized, RT-safe)
     // Using PIMPL pattern to avoid exposing JUCE headers in public API

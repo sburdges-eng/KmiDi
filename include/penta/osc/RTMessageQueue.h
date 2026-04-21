@@ -23,14 +23,14 @@ public:
      * @param message The OSCMessage to push.
      * @return True if the message was pushed, false if the queue was full.
      */
-    bool push(const OSCMessage& message) noexcept;
+    bool push(const OSCMessage& message);
 
     /**
-     * @brief Pops a message from the queue (non-blocking, RT-safe).
+     * @brief Pops a message from the queue (non-blocking).
      * @param outMessage Reference to store the popped message.
      * @return True if a message was popped, false if the queue was empty.
      */
-    bool pop(OSCMessage& outMessage) noexcept;
+    bool pop(OSCMessage& outMessage);
 
     /**
      * @brief Checks if the queue is empty (RT-safe).
