@@ -67,20 +67,20 @@ public:
     ) noexcept;
 
     // Analyze audio segment and extract phoneme information
-    // RT-Safe: Uses pre-allocated buffers only
+    // Returns std::vector (heap allocation); not noexcept.
     std::vector<PhonemeTiming> analyzePhonemes(
         const float* audio_samples,
         size_t num_samples,
         float sample_rate_hz
-    ) noexcept;
+    );
 
     // Detect breath markers in audio
-    // RT-Safe: Uses pre-allocated buffers only
+    // Returns std::vector (heap allocation); not noexcept.
     std::vector<BreathMarker> detectBreathMarkers(
         const float* audio_samples,
         size_t num_samples,
         float sample_rate_hz
-    ) noexcept;
+    );
 
 private:
     // Voice profile
