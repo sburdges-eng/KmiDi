@@ -85,6 +85,16 @@ StemExportResult StemExporter::exportTrack(
         if (track.type == project::TrackType::Audio) {
             // Load audio file
             if (!track.audioFilePath.empty()) {
+                // Require an absolute path - ProjectFile::load() resolves
+                // and validates all audio paths at deserialization time. A
+                // relative path here means the Track was not loaded through
+                // that gate.
+                if (!fs::path(track.audioFilePath).is_absolute()) {
+                    result.success = false;
+                    result.errorMessage =
+                        "Audio file path must be absolute: " + track.audioFilePath;
+                    return result;
+                }
                 if (!audioFile.read(track.audioFilePath)) {
                     result.success = false;
                     result.errorMessage = "Failed to read audio file: " + track.audioFilePath;

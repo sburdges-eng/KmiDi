@@ -10,6 +10,8 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <filesystem>
+#include <algorithm>
 #include <juce_core/juce_core.h>
 
 namespace daiw {
@@ -29,7 +31,32 @@ bool ProjectFile::load(const std::string& filepath) {
 
     std::stringstream buffer;
     buffer << file.rdbuf();
-    return fromJSON(buffer.str());
+    if (!fromJSON(buffer.str())) {
+        return false;
+    }
+
+    namespace fs = std::filesystem;
+    const fs::path projectDir =
+        fs::weakly_canonical(filepath).parent_path();
+    for (auto& track : tracks_) {
+        if (track.audioFilePath.empty()) {
+            continue;
+        }
+        const fs::path raw(track.audioFilePath);
+        const fs::path candidate =
+            raw.is_absolute() ? raw : (projectDir / raw);
+        const fs::path resolved = fs::weakly_canonical(candidate);
+        // Reject paths that escape the project directory.
+        const auto mismatch = std::mismatch(
+            projectDir.begin(), projectDir.end(),
+            resolved.begin(), resolved.end());
+        if (mismatch.first != projectDir.end()) {
+            return false;
+        }
+        track.audioFilePath = resolved.string();
+    }
+
+    return true;
 }
 
 bool ProjectFile::save(const std::string& filepath) const {
