@@ -18,7 +18,7 @@
 
 namespace kelly {
 
-class TooltipComponent : public juce::Component {
+class TooltipComponent : public juce::Component, public juce::DeletedAtShutdown {
 public:
     TooltipComponent();
     ~TooltipComponent() override = default;

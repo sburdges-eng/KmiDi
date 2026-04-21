@@ -5,14 +5,17 @@ namespace kelly {
 
 namespace {
 TooltipComponent& getSharedTooltip() {
-    static TooltipComponent tooltip;
+    // Heap-allocated so juce::DeletedAtShutdown arranges the delete via
+    // juce::MessageManager teardown, preventing a pending callAfterDelay
+    // lambda from accessing a destroyed static-storage object.
+    static TooltipComponent* ptr = new TooltipComponent();
     static bool initialized = false;
     if (!initialized) {
-        tooltip.addToDesktop(juce::ComponentPeer::windowIsTemporary);
-        tooltip.setVisible(false);
+        ptr->addToDesktop(juce::ComponentPeer::windowIsTemporary);
+        ptr->setVisible(false);
         initialized = true;
     }
-    return tooltip;
+    return *ptr;
 }
 } // namespace
 

@@ -103,6 +103,13 @@ private:
   juce::AudioProcessorValueTreeState &apvts_;
 
   // ========================================================================
+  // STYLING — declared first so it outlives all child Components
+  // (C++ destroys members in reverse declaration order; LookAndFeel must be
+  // last to destruct so child repaint callbacks during teardown remain safe).
+  // ========================================================================
+  KellyLookAndFeel lookAndFeel_;
+
+  // ========================================================================
   // WOUND INPUT
   // ========================================================================
   juce::TextEditor woundInput_;
@@ -198,11 +205,6 @@ private:
   GenerateButton generateButton_;
   juce::TextButton previewButton_{"Preview"};
   juce::TextButton exportButton_{"Export to DAW"};
-
-  // ========================================================================
-  // STYLING
-  // ========================================================================
-  KellyLookAndFeel lookAndFeel_;
 
   // ========================================================================
   // HELPER METHODS
