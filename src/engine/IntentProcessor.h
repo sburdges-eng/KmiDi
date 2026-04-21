@@ -24,23 +24,13 @@
 #include <algorithm>
 #include <cctype>
 #include "EmotionMapper.h"
+#include "../common/KellyTypes.h"  // Canonical kelly::Wound definition
 
 namespace kelly {
 
-// =============================================================================
-// WOUND (from Python Wound dataclass)
-// =============================================================================
-
-struct Wound {
-    std::string description;
-    float intensity = 0.7f;     // 0.0-1.0
-    std::string source = "internal";  // "internal" or "external"
-    double timestamp = 0.0;
-    
-    // Optional additional context
-    std::string context;
-    std::vector<std::string> triggers;
-};
+// struct Wound is defined in ../common/KellyTypes.h (canonical, included above).
+// The fields previously unique to this file (timestamp, context, triggers) have
+// been merged into the canonical definition.
 
 // =============================================================================
 // RULE BREAK (from Python RuleBreak dataclass)

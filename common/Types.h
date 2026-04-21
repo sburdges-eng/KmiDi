@@ -25,11 +25,8 @@ struct Emotion {
 // Input types
 //=============================================================================
 
-struct Wound {
-    std::string description;
-    float intensity = 0.0f;
-    std::string source;
-};
+// struct Wound definition moved to src/common/KellyTypes.h (canonical).
+// Consumers that need kelly::Wound must include KellyTypes.h directly.
 
 struct SideA {
     std::string description;

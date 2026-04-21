@@ -218,6 +218,11 @@ struct Wound {
   std::string source; // Source identifier (e.g., "user_input", "text_input")
   float intensity =
       0.5f; // Alias for urgency (for compatibility with existing code)
+
+  // Fields from IntentProcessor.h (previously unique to that definition)
+  double timestamp = 0.0;
+  std::string context;
+  std::vector<std::string> triggers;
 };
 
 struct RuleBreak {
