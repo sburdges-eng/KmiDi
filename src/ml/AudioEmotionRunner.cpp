@@ -1,5 +1,10 @@
 #include "penta/ml/AudioEmotionRunner.h"
+#include "penta/common/Platform.h"     // T6.4: set_denormals_off helper
 #include "ml/MelSpectrogram.h"
+// T6.2: sampleRing switched from moodycamel::ReaderWriterQueue<float> to
+// kelly::LockFreeRingBuffer<float,N> so pushSamples can use the bulk push()
+// path (single memcpy per contiguous region, at most two).
+#include "ml/LockFreeRingBuffer.h"
 
 #include <readerwriterqueue.h>
 
@@ -11,9 +16,7 @@
 #include <cstring>
 #include <thread>
 
-#if defined(__SSE__)
-#include <xmmintrin.h>
-#endif
+// Note: SSE/NEON headers included transitively via penta/common/Platform.h (T6.4)
 
 #ifdef ENABLE_ONNX_RUNTIME
 #include "ml/ONNXInference.h"
@@ -54,11 +57,18 @@ struct SlewLimiter {
 
 // ─── Implementation struct (PIMPL) ─────────────────────────────────────────
 
+// T6.2: Fixed-capacity sample ring.  524288 == 2^19 satisfies the
+// power-of-two requirement of LockFreeRingBuffer and matches the default
+// ring_capacity in AudioEmotionRunnerConfig.
+static constexpr size_t kSampleRingCapacity = 524288u;
+
 struct AudioEmotionRunnerImpl {
     AudioEmotionRunnerConfig config;
 
-    // Sample ring buffer (audio thread → worker thread)
-    std::unique_ptr<moodycamel::ReaderWriterQueue<float>> sampleRing;
+    // T6.2: Sample ring buffer — kelly::LockFreeRingBuffer provides a bulk
+    // push(data, count) that does at most two memcpys (one per contiguous
+    // region), replacing the per-sample loop that existed previously.
+    kelly::LockFreeRingBuffer<float, kSampleRingCapacity> sampleRing;
 
     // Result queue (worker thread → audio thread)
     std::unique_ptr<moodycamel::ReaderWriterQueue<EmotionRunnerResult>> resultQueue;
@@ -107,6 +117,13 @@ struct AudioEmotionRunnerImpl {
     std::atomic<float>    lastInferenceMs{0.0f};
     std::atomic<uint64_t> sequenceCounter{0};
     std::atomic<uint64_t> droppedSamples{0};
+
+    // T6.7: Drop-rate EMA state (non-atomic; read only from non-RT thread
+    // calling dropRate()).  Protected by the caller's non-RT scheduling.
+    mutable uint64_t dropRateLastSamples{0};
+    mutable std::chrono::steady_clock::time_point dropRateLastTime{};
+    mutable float dropRateEma{0.0f};
+    mutable bool dropRateInitialized{false};
 
     // Accumulated sample count for the worker
     size_t samplesAccumulated = 0;
@@ -173,29 +190,35 @@ struct AudioEmotionRunnerImpl {
     }
 
     void workerLoop() {
-        // Flush denormals to zero — prevents 100x slowdown on near-silence.
-        // Per-thread state, must be set in each worker thread.
-#if defined(__SSE__)
-        _mm_setcsr(_mm_getcsr() | 0x8040);  // FTZ (bit 15) + DAZ (bit 6)
-#elif defined(__aarch64__)
-        // ARMv8 FPCR.FZ (bit 24) = Flush-to-Zero. Read-modify-write FPCR
-        // via inline asm; available in user mode, set per-thread.
-        std::uint64_t fpcr;
-        __asm__ volatile("mrs %0, fpcr" : "=r"(fpcr));
-        fpcr |= (1ull << 24);
-        __asm__ volatile("msr fpcr, %0" : : "r"(fpcr));
-#endif
+        // T6.4: Suppress denormals via shared platform helper (replaces inlined
+        // FTZ/DAZ code).  Per-thread state, must be set in each worker thread.
+        penta::set_denormals_off();
 
         const size_t requiredSamples = MelSpectrogram::kRequiredSamples;
         const size_t latentDim = 256;
         const size_t latentFrames = 512;
 
         while (running.load(std::memory_order_relaxed)) {
-            // Drain samples from ring into accumulation buffer
-            float sample;
-            while (sampleRing->try_dequeue(sample)) {
-                if (samplesAccumulated < sampleBuffer.size()) {
-                    sampleBuffer[samplesAccumulated++] = sample;
+            // T6.2: Drain samples from ring into accumulation buffer in bulk.
+            {
+                const size_t avail   = sampleRing.availableToRead();
+                const size_t space   = sampleBuffer.size() - samplesAccumulated;
+                const size_t toPop   = std::min(avail, space);
+                if (toPop > 0) {
+                    sampleRing.pop(sampleBuffer.data() + samplesAccumulated, toPop);
+                    samplesAccumulated += toPop;
+                    // Discard any overflow that didn't fit (ring draining)
+                    if (avail > toPop) {
+                        const size_t overflow = avail - toPop;
+                        // Pop and discard — keep ring from stalling
+                        static float discard[4096];
+                        size_t remaining = overflow;
+                        while (remaining > 0) {
+                            size_t chunk = std::min(remaining, static_cast<size_t>(4096));
+                            sampleRing.pop(discard, chunk);
+                            remaining -= chunk;
+                        }
+                    }
                 }
             }
 
@@ -286,8 +309,9 @@ bool AudioEmotionRunner::initialize(const AudioEmotionRunnerConfig& config) {
 
     impl_->config = config;
 
-    // Allocate queues
-    impl_->sampleRing = std::make_unique<moodycamel::ReaderWriterQueue<float>>(config.ring_capacity);
+    // T6.2: sampleRing is now a statically-sized LockFreeRingBuffer — no heap
+    // allocation here.  Clear it in case initialize() is called more than once.
+    impl_->sampleRing.clear();
     impl_->resultQueue = std::make_unique<moodycamel::ReaderWriterQueue<EmotionRunnerResult>>(16);
 
     // Pre-allocate buffers
@@ -330,11 +354,17 @@ void AudioEmotionRunner::shutdown() {
 }
 
 void AudioEmotionRunner::pushSamples(const float* samples, size_t count) noexcept {
-    for (size_t i = 0; i < count; ++i) {
-        if (!impl_->sampleRing->try_enqueue(samples[i])) {
-            impl_->droppedSamples.fetch_add(count - i, std::memory_order_relaxed);
-            return;
-        }
+    // T6.2: Bulk push — at most two memcpys (one per contiguous region).
+    // On overflow, increment droppedSamples by the unsent delta in one add.
+    const size_t avail = impl_->sampleRing.availableToWrite();
+    if (avail == 0) {
+        impl_->droppedSamples.fetch_add(count, std::memory_order_relaxed);
+        return;
+    }
+    const size_t toWrite = std::min(count, avail);
+    impl_->sampleRing.push(samples, toWrite);
+    if (toWrite < count) {
+        impl_->droppedSamples.fetch_add(count - toWrite, std::memory_order_relaxed);
     }
 }
 
@@ -411,6 +441,33 @@ uint64_t AudioEmotionRunner::lastSequenceId() const {
 
 uint64_t AudioEmotionRunner::droppedSamples() const {
     return impl_->droppedSamples.load(std::memory_order_relaxed);
+}
+
+float AudioEmotionRunner::dropRate() const {
+    // T6.7: EMA of dropped-samples/second.  Called from non-RT thread (UI timer).
+    // alpha = 0.2 → ~5-sample window at 1 Hz polling.
+    const uint64_t current = impl_->droppedSamples.load(std::memory_order_relaxed);
+    const auto now = std::chrono::steady_clock::now();
+
+    if (!impl_->dropRateInitialized) {
+        impl_->dropRateLastSamples  = current;
+        impl_->dropRateLastTime     = now;
+        impl_->dropRateInitialized  = true;
+        return 0.0f;
+    }
+
+    const double dtSec = std::chrono::duration<double>(now - impl_->dropRateLastTime).count();
+    if (dtSec < 0.001) return impl_->dropRateEma;  // avoid divide-by-zero on rapid calls
+
+    const uint64_t delta = current - impl_->dropRateLastSamples;
+    const float instantRate = static_cast<float>(delta) / static_cast<float>(dtSec);
+
+    constexpr float kAlpha = 0.2f;
+    impl_->dropRateEma       = kAlpha * instantRate + (1.0f - kAlpha) * impl_->dropRateEma;
+    impl_->dropRateLastSamples = current;
+    impl_->dropRateLastTime    = now;
+
+    return impl_->dropRateEma;
 }
 
 } // namespace penta::ml

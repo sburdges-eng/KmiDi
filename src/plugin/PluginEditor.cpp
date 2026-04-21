@@ -307,6 +307,29 @@ void PluginEditor::timerCallback() {
         PluginProcessor::PARAM_COMPLEXITY);
     masterEQComponent_->updateEmotionState(emotionState);
   }
+
+  // ========================================================================
+  // T6.7: DROP-RATE TELEMETRY (UI-thread timer — never logged from audio thread)
+  // ========================================================================
+#if JUCE_DEBUG
+  {
+    auto* runner = processor_.getEmotionRunner();
+    if (runner && runner->isRunning()) {
+      const float rate = runner->dropRate();
+      if (rate > 0.0f) {
+        dropRatePendingSeconds_ += (getTimerInterval() / 1000.0f);
+        if (dropRatePendingSeconds_ >= 10.0f) {
+          dropRatePendingSeconds_ = 0.0f;
+          juce::Logger::writeToLog(
+              "KMiDi [T6.7] AudioEmotionRunner drop-rate: " +
+              juce::String(rate, 1) + " samples/sec");
+        }
+      } else {
+        dropRatePendingSeconds_ = 0.0f;
+      }
+    }
+  }
+#endif
 }
 
 void PluginEditor::onGenerateClicked() {

@@ -100,6 +100,13 @@ public:
     uint64_t lastSequenceId() const;
     uint64_t droppedSamples() const;
 
+    /**
+     * T6.7: EMA drop-rate in samples/second.
+     * Safe to call from any non-RT thread (reads two atomics with relaxed order).
+     * Returns 0.0 until at least one call has established the baseline.
+     */
+    float dropRate() const;
+
 private:
     std::unique_ptr<AudioEmotionRunnerImpl> impl_;
 };

@@ -5,6 +5,7 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <semaphore>    // std::counting_semaphore (C++20)
 #include <juce_core/juce_core.h>
 
 namespace kelly {
@@ -79,11 +80,17 @@ public:
 
     /**
      * Submit inference request (called from audio thread - never blocks).
+     * T6.6: After pushing the request, release the semaphore so the inference
+     * thread wakes immediately rather than sleeping 100µs.
      * @param request Inference request
      * @return true if submitted successfully
      */
     bool submitRequest(const InferenceRequest& request) noexcept {
-        return requestBuffer_.push(&request, 1);
+        if (requestBuffer_.push(&request, 1)) {
+            requestSem_.release();  // T6.6: wake inference thread
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -119,22 +126,29 @@ public:
 private:
     /**
      * Inference loop running in separate thread.
+     * T6.6: Blocks on counting_semaphore rather than spinning with 100µs sleep.
+     * try_acquire_for(10ms) bounds latency if a release is missed at shutdown.
      */
     void inferenceLoop() {
         InferenceRequest request;
 
         while (running_.load()) {
-            if (requestBuffer_.pop(&request, 1)) {
+            // T6.6: Wait for a request to be submitted (or timeout after 10ms to
+            // re-check running_ and avoid indefinite blocking on shutdown).
+            requestSem_.try_acquire_for(std::chrono::milliseconds(10));
+
+            // Drain all pending requests — multiple blocks may have piled up
+            // during a heavy inference pass.
+            while (requestBuffer_.pop(&request, 1)) {
                 // Perform inference
                 InferenceResult result;
                 result.emotionVector = processor_.inferEmotion(request.features);
                 result.timestamp = request.timestamp;
 
-                // Push result (may fail if buffer full, but that's OK)
-                resultBuffer_.push(&result, 1);
-            } else {
-                // No requests available, sleep briefly
-                std::this_thread::sleep_for(std::chrono::microseconds(100));
+                // T6.5: Drop-oldest policy — audio thread always sees latest
+                // result; stale results are evicted instead of new ones
+                // being silently discarded.
+                resultBuffer_.pushOverwrite(&result, 1);
             }
         }
     }
@@ -144,6 +158,10 @@ private:
     LockFreeRingBuffer<InferenceResult, BUFFER_SIZE> resultBuffer_;
     std::thread inferenceThread_;
     std::atomic<bool> running_;
+    // T6.6: Counting semaphore — released by submitRequest(), acquired by
+    // inferenceLoop().  Replaces the 100µs spin-sleep.  Max count matches
+    // BUFFER_SIZE so the semaphore counter never overflows.
+    std::counting_semaphore<BUFFER_SIZE> requestSem_{0};
 };
 
 } // namespace kelly

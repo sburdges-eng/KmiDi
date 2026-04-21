@@ -118,6 +118,28 @@ public:
     }
 
     /**
+     * Push data, dropping oldest elements to make room if necessary.
+     * T6.5: Used by inference result queue — audio thread always gets the
+     * freshest result; stale results are discarded rather than blocking.
+     *
+     * Policy: request queue keeps drop-newest (samples are a stream, not
+     * state). Result queue uses drop-oldest (newest inference > stale one).
+     *
+     * @param data   Source data pointer
+     * @param count  Number of elements to write
+     * @return false if count > Capacity (data will never fit); true otherwise.
+     */
+    bool pushOverwrite(const T* data, size_t count) {
+        if (count > Capacity) return false;
+        // Evict oldest elements until there is room.
+        while (availableToWrite() < count) {
+            T discard;
+            pop(&discard, 1);  // drop oldest
+        }
+        return push(data, count);
+    }
+
+    /**
      * Clear buffer (reset positions).
      */
     void clear() {

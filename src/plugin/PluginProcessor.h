@@ -284,6 +284,12 @@ public:
   MasterEQProcessor &getMasterEQProcessor() { return masterEQProcessor_; }
   const MasterEQProcessor &getMasterEQProcessor() const { return masterEQProcessor_; }
 
+  // T6.7: Non-owning access to the emotion runner for UI-thread telemetry.
+  // Returns nullptr if ML inference is not enabled / runner not initialized.
+  penta::ml::AudioEmotionRunner* getEmotionRunner() noexcept {
+    return emotionRunner_.get();
+  }
+
   // AudioProcessorValueTreeState::Listener
   void parameterChanged(const juce::String &parameterID,
                         float newValue) override;
@@ -413,6 +419,15 @@ private:
   int lookaheadWritePos_ = 0;
   int lookaheadReadPos_ = 0;
   int lookaheadSamples_ = 0;
+  size_t lookaheadMask_ = 0;  // T6.1: power-of-two mask for wrap-free modulo
+
+  // T6.3: Cached APVTS parameter pointers — populated once in prepareToPlay,
+  // read every processBlock with memory_order_relaxed (no lock needed).
+  std::atomic<float>* paramMlInfluence_ = nullptr;
+  std::atomic<float>* paramValence_     = nullptr;
+  std::atomic<float>* paramArousal_     = nullptr;
+  std::atomic<float>* paramEqBypass_    = nullptr;
+  std::atomic<float>* paramBypass_      = nullptr;
 
   // Current emotion state from ML inference
   std::atomic<float> mlValence_{0.0f};
