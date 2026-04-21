@@ -154,10 +154,11 @@ struct RTState {
  *
  * `copy_all` is a caller-supplied lambda that performs all the relaxed
  * loads into a caller-owned struct. Returns true on a stable snapshot,
- * false if 8 retries exhausted (writer thrashing). 8 is enough for any
- * realistic RT writer cadence; if we exhaust it, something is wrong and
- * the caller should surface KELLY_ERROR_AGAIN rather than return torn
- * state.
+ * false if 64 retries exhausted (writer thrashing). Each attempt is just
+ * two atomic loads so the budget is negligible; 64 retries eliminates
+ * spurious KELLY_ERROR_AGAIN on loaded systems while still bounding
+ * spin time. If we exhaust it, something is genuinely wrong and the
+ * caller should surface KELLY_ERROR_AGAIN rather than return torn state.
  *
  * Memory ordering:
  *   - seq1 is loaded acquire; pairs with the writer's release bump
@@ -168,7 +169,7 @@ struct RTState {
  */
 template <typename F>
 bool rt_state_snapshot(const RTState& s, F&& copy_all) noexcept(noexcept(copy_all())) {
-    for (int attempt = 0; attempt < 8; ++attempt) {
+    for (int attempt = 0; attempt < 64; ++attempt) {
         uint64_t seq1 = s.sequence.load(std::memory_order_acquire);
         if (seq1 & 1ull) continue;       // writer in progress
         copy_all();

@@ -313,9 +313,20 @@ typedef enum {
  * Get a snapshot of the current real-time engine state.
  * Lock-free read from atomic fields — safe to call at high frequency.
  *
+ * Uses an internal seqlock retry loop (up to 64 attempts) to guarantee a
+ * torn-free snapshot. On the rare occasion the budget is exhausted
+ * (extremely heavy writer thrashing), KELLY_ERROR_AGAIN is returned.
+ *
+ * @note On KELLY_ERROR_AGAIN, the caller SHOULD retry at least once.
+ *   The seqlock will almost certainly be stable on the second attempt
+ *   because the writer cadence is bounded by the audio callback period
+ *   (~5–20 ms at typical buffer sizes). The previous out_state contents
+ *   are undefined when KELLY_ERROR_AGAIN is returned — do not consume them.
+ *
  * @param brain KellyBrain instance
  * @param out_state Pointer to caller-allocated KellyRTState
- * @return KELLY_SUCCESS on success, error code on failure
+ * @return KELLY_SUCCESS on success, KELLY_ERROR_AGAIN on transient
+ *         seqlock contention (retry), or other error code on failure
  */
 KellyErrorCode kelly_brain_get_rt_state(const KellyBrain* brain, KellyRTState* out_state);
 

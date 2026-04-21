@@ -875,10 +875,18 @@ KellyErrorCode kelly_brain_get_rt_state(const KellyBrain* brain, KellyRTState* o
                   "KellyRTState.track_params size must match kMaxTrackParams");
 
     // Seqlock snapshot: if the audio thread is mid-publish (odd sequence) or
-    // bumps the sequence between our two reads (torn window), retry up to 8x.
+    // bumps the sequence between our two reads (torn window), retry up to 64x.
     // On exhaustion, surface KELLY_ERROR_AGAIN so the caller can retry rather
     // than consume half-old / half-new state.
+    //
+    // captured_seq is set inside the lambda to the seq1 value observed for the
+    // successful round. This avoids a race where the writer advances between
+    // the snapshot return and a post-snapshot sequence reload.
+    uint64_t captured_seq = 0;
     const bool ok = penta::rt_state_snapshot(s, [&]() noexcept {
+        // Capture the current (even, stable) sequence inside the window.
+        captured_seq = s.sequence.load(std::memory_order_relaxed);
+
         out_state->bpm              = s.bpm.load(std::memory_order_relaxed);
         out_state->sample_position  = s.samplePosition.load(std::memory_order_relaxed);
         out_state->bar_start        = s.barStart.load(std::memory_order_relaxed);
@@ -913,9 +921,10 @@ KellyErrorCode kelly_brain_get_rt_state(const KellyBrain* brain, KellyRTState* o
         return KELLY_ERROR_AGAIN;
     }
 
-    // Expose the stable sequence the reader observed so callers can detect
-    // "same frame" across successive polls without re-loading.
-    out_state->sequence = s.sequence.load(std::memory_order_relaxed);
+    // Publish the sequence value captured inside the stable window.
+    // Using the value observed during the snapshot (not re-read here)
+    // ensures the sequence matches the payload — no post-snapshot race.
+    out_state->sequence = captured_seq;
 
     return KELLY_SUCCESS;
 }
