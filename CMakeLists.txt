@@ -708,6 +708,23 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
     if(COMMAND add_test)
         add_test(NAME RTStateSeqlockTest COMMAND RTStateSeqlockTest)
     endif()
+
+    # SIMD kernels parity test — no Catch2, no KellyCore, no JUCE.
+    # Verifies that penta::simd free-function primitives (dot_product_f32,
+    # multiply_add_f32, max_element_f32) agree with a scalar reference to
+    # within 1e-5 for edge sizes {0,1,3,4,5,7,8,9,15,16,17,31,32,1024}.
+    # On Apple Silicon the NEON path fires; on x86-64 with -mavx2, the AVX2
+    # path fires; otherwise the portable scalar fallback is tested.
+    add_executable(SIMDKernelsTest
+        tests/cpp/test_simd_kernels.cpp
+    )
+    target_include_directories(SIMDKernelsTest PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_features(SIMDKernelsTest PRIVATE cxx_std_20)
+    if(COMMAND add_test)
+        add_test(NAME SIMDKernelsTest COMMAND SIMDKernelsTest)
+    endif()
 endif()
 
 # DSP core testing (if using KmiDi_FINAL)

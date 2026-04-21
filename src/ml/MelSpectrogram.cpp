@@ -1,4 +1,5 @@
 #include "ml/MelSpectrogram.h"
+#include "penta/common/SIMDKernels.h"
 
 #include <algorithm>
 #include <cmath>
@@ -121,13 +122,10 @@ bool MelSpectrogram::compute(const float* samples, size_t count, float* output) 
         applyWindow(frameStart, windowed_.data());
         computeFFT(windowed_.data(), magnitudes_.data());
 
-        // Apply mel filterbank
+        // Apply mel filterbank — inner dot product accelerated via SIMD.
         for (size_t m = 0; m < kNMels; ++m) {
-            float energy = 0.0f;
             const float* filter = &melFilterbank_[m * nBins];
-            for (size_t k = 0; k < nBins; ++k) {
-                energy += filter[k] * magnitudes_[k];
-            }
+            float energy = penta::simd::dot_product_f32(filter, magnitudes_.data(), nBins);
             // Log-mel
             output[m * kNFrames + frame] = std::log(std::max(energy, kLogFloor));
         }
