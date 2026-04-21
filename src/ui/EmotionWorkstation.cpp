@@ -10,6 +10,11 @@ EmotionWorkstation::EmotionWorkstation(
   setupComponents();
 }
 
+EmotionWorkstation::~EmotionWorkstation() {
+  stopTimer();
+  setLookAndFeel(nullptr);
+}
+
 void EmotionWorkstation::setupComponents() {
   // Apply custom look and feel
   setLookAndFeel(&lookAndFeel_);

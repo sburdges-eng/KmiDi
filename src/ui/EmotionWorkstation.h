@@ -50,7 +50,7 @@ namespace kelly {
 class EmotionWorkstation : public juce::Component, public juce::Timer {
 public:
   explicit EmotionWorkstation(juce::AudioProcessorValueTreeState &apvts);
-  ~EmotionWorkstation() override = default;
+  ~EmotionWorkstation() override;
 
   void paint(juce::Graphics &g) override;
   void resized() override;
