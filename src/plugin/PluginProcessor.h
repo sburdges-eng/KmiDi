@@ -61,7 +61,7 @@ using MLIntentPipeline = kelly::MLIntentPipeline;
 #include <array>
 #include <atomic>
 #include <memory>
-#include <mutex>
+#include <mutex> // std::mutex, std::once_flag
 #include <optional>
 
 namespace kelly {
@@ -398,6 +398,11 @@ private:
 
   /** Device audio workgroup (set by host). Use for realtime worker join on macOS. */
   juce::AudioWorkgroup audioWorkgroup_;
+
+#if JUCE_MAC
+  /** Ensures QoS is promoted to USER_INTERACTIVE only once per audio thread lifetime. */
+  std::once_flag qosSetOnce_;
+#endif
 
   /** Per-block latency instrument — captures P50/P90/P99 processing times. */
   penta::diagnostics::BlockLatencyInstrument latencyInstrument_;

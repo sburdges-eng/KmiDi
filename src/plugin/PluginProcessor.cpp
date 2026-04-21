@@ -420,7 +420,11 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
 #if JUCE_MAC
   // Promote to interactive QoS so we stay off E-cores (Apple Silicon low-latency).
-  pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+  // call_once ensures the syscall runs exactly once per audio-thread lifetime,
+  // not once per block (300-600 Hz overhead avoided).
+  std::call_once(qosSetOnce_, [] {
+    pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+  });
 #endif
   juce::ScopedNoDenormals noDenormals;
 

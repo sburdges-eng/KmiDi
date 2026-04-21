@@ -16,8 +16,12 @@ uint32_t floatToUmp32Value(float value, float minVal, float maxVal) {
     }
     float clamped = std::clamp(value, minVal, maxVal);
     float norm = (clamped - minVal) / (maxVal - minVal);
-    auto v = static_cast<uint32_t>(std::round(norm * 0xFFFFFFFF));
-    return (v <= 0xFFFFFFFF) ? v : 0xFFFFFFFF;
+    // Cast via double and clamp before truncation to uint32_t to avoid UB when
+    // the rounded value equals or exceeds 2^32 (implementation-defined / UB in C++).
+    double scaled = std::round(static_cast<double>(norm) * static_cast<double>(0xFFFFFFFFu));
+    scaled = std::clamp(scaled, 0.0, static_cast<double>(UINT32_MAX));
+    auto v = static_cast<uint32_t>(scaled);
+    return v;
 }
 
 void buildUmpAffectCC(uint8_t group,
