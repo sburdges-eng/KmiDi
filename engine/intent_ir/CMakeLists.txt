@@ -22,7 +22,7 @@ if(INTENT_IR_REBUILD_RUST)
 
     add_custom_command(
         OUTPUT ${PREBUILT_RUST_LIB}
-        COMMAND ${CARGO_EXECUTABLE} build --release --locked --manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml
+        COMMAND ${CMAKE_COMMAND} -E env "MACOSX_DEPLOYMENT_TARGET=$<IF:$<BOOL:${CMAKE_OSX_DEPLOYMENT_TARGET}>,${CMAKE_OSX_DEPLOYMENT_TARGET},14.0>" ${CARGO_EXECUTABLE} build --release --locked --manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Building Intent IR Rust crate"
         VERBATIM

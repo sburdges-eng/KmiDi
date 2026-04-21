@@ -12,14 +12,13 @@ pybind11_add_module(penta_core_native
     prrot_bindings.cpp
 )
 
-target_link_libraries(penta_core_native PRIVATE
-    penta_core
-    # JUCE is linked PRIVATE by penta_core — do NOT re-link here.
-    # Direct juce:: linkage was removed to prevent duplicate JUCE / ODR
-    # violation / allocator mismatch in the Python process.
-    # See AGENTS.md § "Duplicate JUCE / ODR / allocator mismatch".
-    $<$<TARGET_EXISTS:KellyCore>:KellyCore>
-)
+# If KellyCore exists, it already brings in penta_core and JUCE. Re-linking 
+# penta_core causes duplicate libraries warnings in the linker.
+if(TARGET KellyCore)
+    target_link_libraries(penta_core_native PRIVATE KellyCore)
+else()
+    target_link_libraries(penta_core_native PRIVATE penta_core)
+endif()
 
 # PRROT bindings need access to src/ headers (PRROTEngine, VoiceProfile, etc.)
 target_include_directories(penta_core_native PRIVATE

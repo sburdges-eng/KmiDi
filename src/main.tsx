@@ -4,8 +4,6 @@ import AppConsole from './AppConsole';
 import ErrorBoundary from './ErrorBoundary';
 import './index.css';
 
-// Default shell: AppConsole. App.tsx is legacy/alternate and is not mounted here.
-
 const root = document.getElementById('root');
 
 if (!root) {

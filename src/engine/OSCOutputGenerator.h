@@ -5,13 +5,13 @@
  *
  * CONNECTIONS (for Cursor Graph):
  * - Engine Layer: VADCalculator, EmotionMapper (source state)
- * - Bridge Layer: OSC clients / Python brain (receives /kelly/* addresses)
+ * - Bridge Layer: OSC clients / Python brain (receives /kelly/<wildcard> addresses)
  * - Common Layer: Types.h (musical parameters)
  *
  * Purpose: Serializes VAD and derived music parameters to OSC messages.
  *
  * Features:
- * - Standard /kelly/vad/* and /kelly/music/* address layout
+ * - Standard /kelly/vad/<wildcard> and /kelly/music/<wildcard> address layout
  * - Optional bundled parameter snapshots
  */
 

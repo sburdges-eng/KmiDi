@@ -7,7 +7,7 @@ This file provides guidance to Gemini CLI when working with code in this reposit
 KmiDi / iDAW is an **AI-powered music creation platform** (monorepo). Four layers:
 
 | Layer | Tech | Location |
-|-------|------|----------|
+| ------- | ------ | ---------- |
 | Frontend | React 19 + Vite + TypeScript + Tailwind | `src/` |
 | Desktop shell | Tauri 2 + Rust | `engine/intent_ir/ (Rust intent crate)` |
 | Native engine | C++20 (KellyCore, KellyFFI, JUCE 8) | `engine/`, `src/`, `include/`, `src_penta-core/` |
@@ -73,7 +73,7 @@ python3 scripts/sync_entities.py    # Sync shared_schemas/ → TS types + Rust t
 ## Key build options (CMake)
 
 | Option | Default | Notes |
-|--------|---------|-------|
+| -------- | --------- | ------- |
 | `BUILD_KELLY_CORE` | ON | Core C++ library |
 | `BUILD_KELLY_FFI` | ON | Shared lib for Tauri/Rust FFI |
 | `BUILD_PLUGINS` | ON | VST3/CLAP (requires `KMIDI_BUILD_JUCE_UI=ON`) |
@@ -113,7 +113,7 @@ python3 scripts/sync_entities.py    # Sync shared_schemas/ → TS types + Rust t
 ## Reference docs
 
 | Doc | Content |
-|-----|---------|
+| ----- | --------- |
 | `AGENTS.md` | Full agent context; **§ Native safety, FFI ownership, and verification map** for FFI/JUCE/RT before native edits |
 | `BUILD.md` | C++ / CMake / Tauri build reference |
 | `docs/DEVELOPMENT.md` | Dev guide, workflows, debugging |
