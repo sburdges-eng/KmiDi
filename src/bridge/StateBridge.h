@@ -23,7 +23,7 @@
 #include <map>
 #include <memory>
 #include <atomic>
-#include <readerwriterqueue.h>
+#include <concurrentqueue.h>
 
 namespace kelly {
 
@@ -112,13 +112,17 @@ private:
     void* getCurrentStateFunc_;
     void* getEngineStateFunc_;
 
-    // Lock-free queue for state updates (audio thread safe)
+    // Lock-free MPMC queue for state updates.
+    // emitStateUpdate() is called from arbitrary engine threads (RT audio,
+    // ML worker, UI, etc.) — multiple concurrent producers.  The single
+    // StateWorkerThread consumes.  ConcurrentQueue is MPMC so this is safe;
+    // ReaderWriterQueue (SPSC) was a contract violation here.
     struct StateUpdate {
         std::string engineType;
         std::string stateJson;
         std::chrono::steady_clock::time_point timestamp;
     };
-    std::unique_ptr<moodycamel::ReaderWriterQueue<StateUpdate>> stateQueue_;
+    std::unique_ptr<moodycamel::ConcurrentQueue<StateUpdate>> stateQueue_;
     static constexpr size_t MAX_QUEUE_SIZE = 1000;
 
     // Worker thread for processing state updates

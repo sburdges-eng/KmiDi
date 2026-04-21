@@ -51,7 +51,7 @@ StateBridge::StateBridge()
     , emitStateFunc_(nullptr)
     , getCurrentStateFunc_(nullptr)
     , getEngineStateFunc_(nullptr)
-    , stateQueue_(std::make_unique<moodycamel::ReaderWriterQueue<StateUpdate>>(256))
+    , stateQueue_(std::make_unique<moodycamel::ConcurrentQueue<StateUpdate>>(256))
     , workerThread_(nullptr)
 {
 }

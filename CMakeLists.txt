@@ -151,6 +151,15 @@ if(NOT TARGET readerwriterqueue)
     )
 endif()
 
+# ConcurrentQueue (MPMC lock-free queue) for StateBridge
+# Vendored at third_party/concurrentqueue/ (MIT license).
+# Used by StateBridge whose emitStateUpdate is called from multiple engine
+# threads (MPSC pattern) — ReaderWriterQueue is SPSC and violated that contract.
+add_library(concurrentqueue INTERFACE)
+target_include_directories(concurrentqueue INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/concurrentqueue
+)
+
 # ============================================================================
 # KmiDi engine (C ABI for RT harness and plugin/FFI)
 # ============================================================================
@@ -322,6 +331,7 @@ target_link_libraries(KellyCore PUBLIC
     juce::juce_dsp
     juce::juce_osc
     readerwriterqueue
+    concurrentqueue
     penta_core
 )
 # Link Rust Intent IR if available
