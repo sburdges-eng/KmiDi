@@ -16,11 +16,13 @@ using KellyTypesRuleBreakType = RuleBreakType;
 #include "common/Types.h" // Explicit include - this redefines Wound, EmotionNode, etc.
 #include "common/IntentIRAdapter.h"  // IntentFrame support
 #include "engine/IntentPipeline.h" // Full definition needed for std::unique_ptr<IntentPipeline>
+#include "bridge/StateBridge.h"    // For StateBridge emission from generateMidi
 #include "penta/common/RTLogger.h"
 #include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <limits>
+#include <sstream>
 
 namespace kelly {
 
@@ -167,13 +169,20 @@ convertFromLegacyIntentResult(const IntentResult &legacy) {
 
 KellyBrain::KellyBrain()
     : pipeline_(std::make_unique<IntentPipeline>())
-    , midiGenerator_(std::make_unique<MidiGenerator>()) {
-  // IntentPipeline and MidiGenerator are initialized
+    , midiGenerator_(std::make_unique<MidiGenerator>())
+    , stateBridge_(std::make_unique<StateBridge>()) {
+  // IntentPipeline, MidiGenerator, and StateBridge are initialized
 }
 
 bool KellyBrain::initialize(const std::string &dataPath) {
   // The existing IntentPipeline already initializes EmotionThesaurus
   // This could load additional data if needed
+  // Best-effort init for the Python state sync.  If Python isn't available
+  // the bridge disables itself silently; generateMidi() tolerates a nullptr
+  // or disabled bridge.
+  if (stateBridge_) {
+    (void)stateBridge_->initialize();
+  }
   initialized_ = true;
   return true;
 }
@@ -383,6 +392,22 @@ GeneratedMidi KellyBrain::generateMidi(const KellyTypesIntentResult &intent,
   result.mode = intent.mode;
   result.lengthInBeats = static_cast<double>(bars) * 4.0;
   result.bpm = static_cast<float>(intent.tempoBpm);
+
+  // Emit post-generation state to the Python intelligence layer.  Best-effort;
+  // StateBridge::emitStateUpdate is a no-op when Python is unavailable or the
+  // bridge is not initialized.  Not called from the audio thread — generateMidi
+  // is UI/pipeline context, so std::string copies here are fine.
+  if (stateBridge_ && stateBridge_->isAvailable()) {
+    std::ostringstream json;
+    json << "{\"bars\":" << bars
+         << ",\"tempo_bpm\":" << intent.tempoBpm
+         << ",\"key\":\"" << intent.key << "\""
+         << ",\"mode\":\"" << intent.mode << "\""
+         << ",\"num_notes\":" << result.notes.size()
+         << ",\"length_beats\":" << result.lengthInBeats
+         << "}";
+    stateBridge_->emitStateUpdate("midi_generator", json.str());
+  }
 
   return result;
 }

@@ -27,6 +27,7 @@
 namespace kelly {
 class IntentPipeline;
 class EmotionThesaurus;
+class StateBridge;
 } // namespace kelly
 #include <memory>
 #include <string>
@@ -153,6 +154,9 @@ private:
   // include Types.h) This allows us to keep KellyTypes.h types in the interface
   std::unique_ptr<IntentPipeline> pipeline_;
   std::unique_ptr<MidiGenerator> midiGenerator_;
+  // Python state sync.  Best-effort — null / disabled when Python unavailable.
+  // Forward-declared above so StateBridge.h stays out of this header.
+  std::unique_ptr<StateBridge> stateBridge_;
   bool initialized_ = false;
 
   /**
