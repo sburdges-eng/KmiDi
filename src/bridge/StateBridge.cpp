@@ -139,17 +139,24 @@ bool StateBridge::initializePython() {
 
 void StateBridge::shutdownPython() {
 #ifdef PYTHON_AVAILABLE
-    bridge::PyGILGuard gil;  // must hold GIL for all Py_DECREF calls
-    if (emitStateFunc_) {
-        Py_DECREF(static_cast<PyObject*>(emitStateFunc_));
+    if (Py_IsInitialized()) {
+        bridge::PyGILGuard gil;  // safe: interpreter is alive; must hold GIL for Py_DECREF
+        if (emitStateFunc_) {
+            Py_DECREF(static_cast<PyObject*>(emitStateFunc_));
+            emitStateFunc_ = nullptr;
+        }
+        if (getCurrentStateFunc_) {
+            Py_DECREF(static_cast<PyObject*>(getCurrentStateFunc_));
+            getCurrentStateFunc_ = nullptr;
+        }
+        if (getEngineStateFunc_) {
+            Py_DECREF(static_cast<PyObject*>(getEngineStateFunc_));
+            getEngineStateFunc_ = nullptr;
+        }
+    } else {
+        // Interpreter already finalized — just null the pointers; Py_DECREF is UB here.
         emitStateFunc_ = nullptr;
-    }
-    if (getCurrentStateFunc_) {
-        Py_DECREF(static_cast<PyObject*>(getCurrentStateFunc_));
         getCurrentStateFunc_ = nullptr;
-    }
-    if (getEngineStateFunc_) {
-        Py_DECREF(static_cast<PyObject*>(getEngineStateFunc_));
         getEngineStateFunc_ = nullptr;
     }
 #endif

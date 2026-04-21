@@ -148,13 +148,19 @@ bool PreferenceBridge::initializePython() {
 
 void PreferenceBridge::shutdownPython() {
 #ifdef PYTHON_AVAILABLE
-    bridge::PyGILGuard gil;  // must hold GIL for all Py_DECREF calls
-    if (preferenceModel_) {
-        Py_DECREF(static_cast<PyObject*>(preferenceModel_));
+    if (Py_IsInitialized()) {
+        bridge::PyGILGuard gil;  // safe: interpreter is alive; must hold GIL for Py_DECREF
+        if (preferenceModel_) {
+            Py_DECREF(static_cast<PyObject*>(preferenceModel_));
+            preferenceModel_ = nullptr;
+        }
+        if (pythonModule_) {
+            Py_DECREF(static_cast<PyObject*>(pythonModule_));
+            pythonModule_ = nullptr;
+        }
+    } else {
+        // Interpreter already finalized — just null the pointers; Py_DECREF is UB here.
         preferenceModel_ = nullptr;
-    }
-    if (pythonModule_) {
-        Py_DECREF(static_cast<PyObject*>(pythonModule_));
         pythonModule_ = nullptr;
     }
 #endif

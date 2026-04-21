@@ -48,7 +48,6 @@ bool PythonBridgeBase::isPythonInitialized() {
 
 bool PythonBridgeBase::initializePython() {
 #ifdef PYTHON_AVAILABLE
-    // Check if Python is already initialized
     if (!Py_IsInitialized()) {
         Py_Initialize();
         if (!Py_IsInitialized()) {
@@ -56,22 +55,21 @@ bool PythonBridgeBase::initializePython() {
             return false;
         }
         pythonInitializedByThis_ = true;
-    }
 
-    // After Py_Initialize the calling thread holds the GIL.  Release it via
-    // PyEval_SaveThread exactly once across all bridges so that subsequent
-    // threads can acquire it with PyGILState_Ensure.  This must only happen
-    // once globally; further callers already find Python initialized and must
-    // instead use PyGILGuard before touching any Py* API.
-    std::call_once(s_gilReleaseOnce, []() {
-        // PyEval_InitThreads is a no-op in CPython >=3.9 (always called by
-        // Py_Initialize) but harmless to call on older versions.
+        // GIL is held here (Py_Initialize acquires it on this thread).
+        // Release it exactly once so other threads can use PyGILState_Ensure.
+        std::call_once(s_gilReleaseOnce, []() {
+            // PyEval_InitThreads is a no-op in CPython >=3.9 (always called by
+            // Py_Initialize) but harmless to call on older versions.
 #if PY_VERSION_HEX < 0x03090000
-        PyEval_InitThreads();
+            PyEval_InitThreads();
 #endif
-        mainThreadState_ = static_cast<void*>(PyEval_SaveThread());
-    });
-
+            mainThreadState_ = static_cast<void*>(PyEval_SaveThread());
+        });
+    }
+    // If Python was already initialized by someone else, that someone already
+    // released the GIL (via PyEval_SaveThread or equivalent).  Do NOT touch
+    // the thread state machinery here.
     return true;
 #else
     logError("Python not available (compiled without PYTHON_AVAILABLE)");
@@ -81,9 +79,8 @@ bool PythonBridgeBase::initializePython() {
 
 void PythonBridgeBase::shutdownPython() {
 #ifdef PYTHON_AVAILABLE
-    {
-        // Must hold GIL before Py_DECREF on any managed object.
-        PyGILGuard gil;
+    if (!managedObjects_.empty() && Py_IsInitialized()) {
+        PyGILGuard gil;  // safe: interpreter is alive
         for (PyObject* obj : managedObjects_) {
             if (obj) {
                 Py_DECREF(obj);
@@ -231,7 +228,7 @@ std::string PythonBridgeBase::callPythonFunction(PyObject* func, const std::vect
 
 void PythonBridgeBase::safeDecref(PyObject* obj) {
 #ifdef PYTHON_AVAILABLE
-    if (obj) {
+    if (obj && Py_IsInitialized()) {
         PyGILGuard gil;
         Py_DECREF(obj);
     }

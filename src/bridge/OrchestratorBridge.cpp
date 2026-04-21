@@ -91,8 +91,8 @@ void OrchestratorBridge::shutdownPython() {
     }
 
 #ifdef PYTHON_AVAILABLE
-    {
-        bridge::PyGILGuard gil;  // must hold GIL for all Py_DECREF calls
+    if (Py_IsInitialized()) {
+        bridge::PyGILGuard gil;  // safe: interpreter is alive; must hold GIL for Py_DECREF
         if (executePipelineFunc_) {
             Py_DECREF(static_cast<PyObject*>(executePipelineFunc_));
             executePipelineFunc_ = nullptr;
@@ -109,6 +109,12 @@ void OrchestratorBridge::shutdownPython() {
             Py_DECREF(static_cast<PyObject*>(cancelExecutionFunc_));
             cancelExecutionFunc_ = nullptr;
         }
+    } else {
+        // Interpreter already finalized — just null the pointers; Py_DECREF is UB here.
+        executePipelineFunc_ = nullptr;
+        executePipelineAsyncFunc_ = nullptr;
+        getStatusFunc_ = nullptr;
+        cancelExecutionFunc_ = nullptr;
     }
 #endif
     activeExecutions_.clear();
