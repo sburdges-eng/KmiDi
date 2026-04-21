@@ -377,7 +377,14 @@ void AudioEmotionRunner::updateParams(penta::RTState& state, size_t blockSize) n
     impl_->slewReverbWet.updateCoeff(slewMs, sr, blockSize);
     impl_->slewDriveAmount.updateCoeff(slewMs, sr, blockSize);
 
-    // Process slew and write to RTState
+    // Process slew and write to RTState.
+    //
+    // Seqlock: bracket the batch so readers (kelly_brain_get_rt_state,
+    // kmidi_engine_get_state) never observe a half-published snapshot
+    // (e.g. new valence paired with stale arousal). Any early-return
+    // above this point skips the bracket entirely — begin/end must be
+    // matched on this path only.
+    state.begin_publish();
     state.valence.store(impl_->slewValence.process(), std::memory_order_relaxed);
     state.arousal.store(impl_->slewArousal.process(), std::memory_order_relaxed);
     state.dominance.store(impl_->slewDominance.process(), std::memory_order_relaxed);
@@ -387,6 +394,7 @@ void AudioEmotionRunner::updateParams(penta::RTState& state, size_t blockSize) n
     state.trackParams[0].store(impl_->slewFilterCutoff.process(), std::memory_order_relaxed);
     state.trackParams[1].store(impl_->slewReverbWet.process(), std::memory_order_relaxed);
     state.trackParams[2].store(impl_->slewDriveAmount.process(), std::memory_order_relaxed);
+    state.end_publish();
 }
 
 bool AudioEmotionRunner::isRunning() const {

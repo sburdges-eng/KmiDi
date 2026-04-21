@@ -127,8 +127,14 @@ public:
 
 private:
     std::array<T, Capacity> buffer_;
-    std::atomic<size_t> writePos_;
-    std::atomic<size_t> readPos_;
+    // Producer and consumer cursors live on separate cache lines so the
+    // audio (producer) and ML (consumer) threads don't ping-pong a shared
+    // line on every push/pop. 64 bytes is the minimum line size; Apple
+    // Silicon treats pairs as 128 (see penta/common/RTState.h::kCacheLine)
+    // but double-padding here would bloat the struct without measurable
+    // gain — the two atomics are never in the same 64-byte chunk after this.
+    alignas(64) std::atomic<size_t> writePos_{0};
+    alignas(64) std::atomic<size_t> readPos_{0};
 };
 
 } // namespace kelly

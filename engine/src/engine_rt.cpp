@@ -25,16 +25,11 @@ int kmidi_engine_get_state(const kmidi_engine_t* engine,
                            kmidi_engine_state_t* out_state) {
     if (!engine || !out_state) return -1;
 
-    // Seqlock pattern: retry if the writer was mid-update (odd sequence)
-    // or if the sequence changed between our two reads (torn snapshot).
-    // The writer must: seq.fetch_add(1, release) before writes,
-    //                  seq.fetch_add(1, release) after writes.
-    uint64_t seq1, seq2;
-    do {
-        seq1 = g_rtState.sequence.load(std::memory_order_acquire);
+    std::memset(out_state, 0, sizeof(*out_state));
 
-        std::memset(out_state, 0, sizeof(*out_state));
-
+    // Seqlock snapshot (shared helper from RTState.h). Retries up to 8x
+    // on odd sequence or torn window; returns -1 (retry) on exhaustion.
+    const bool ok = penta::rt_state_snapshot(g_rtState, [&]() noexcept {
         out_state->bpm             = g_rtState.bpm.load(std::memory_order_relaxed);
         out_state->sample_position = g_rtState.samplePosition.load(std::memory_order_relaxed);
         out_state->bar             = g_rtState.bar.load(std::memory_order_relaxed);
@@ -52,12 +47,11 @@ int kmidi_engine_get_state(const kmidi_engine_t* engine,
         out_state->harmonic_tension  = g_rtState.harmonicTension.load(std::memory_order_relaxed);
         out_state->rhythmic_density  = g_rtState.rhythmicDensity.load(std::memory_order_relaxed);
         out_state->melodic_activity  = g_rtState.melodicActivity.load(std::memory_order_relaxed);
+    });
 
-        seq2 = g_rtState.sequence.load(std::memory_order_acquire);
-    } while (seq1 != seq2 || (seq1 & 1));
+    if (!ok) return -1;
 
-    out_state->sequence = seq2;
-
+    out_state->sequence = g_rtState.sequence.load(std::memory_order_relaxed);
     return 0;
 }
 

@@ -46,6 +46,11 @@ typedef enum {
     KELLY_ERROR_JSON_PARSE_ERROR = -4,
     KELLY_ERROR_MEMORY_ALLOCATION = -5,
     KELLY_ERROR_FILE_NOT_FOUND = -6,
+    // Transient contention: the call raced with a writer and the snapshot
+    // could not be stabilised within a bounded retry budget. Callers should
+    // retry (or use their last-known state). Returned by seqlock-guarded
+    // readers such as kelly_brain_get_rt_state.
+    KELLY_ERROR_AGAIN = -7,
     KELLY_ERROR_UNKNOWN = -999
 } KellyErrorCode;
 

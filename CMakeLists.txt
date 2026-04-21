@@ -689,6 +689,25 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
     else()
         message(WARNING "Catch2 not found; skipping tests. Set BUILD_TESTS=OFF or add external/Catch2.")
     endif()
+
+    # RTState seqlock torture test — no Catch2, no KellyCore, no JUCE.
+    # Standalone executable that exercises the header-only seqlock protocol
+    # with a writer/reader thread pair over 1M iterations. Runnable even in
+    # worktrees where external/JUCE is absent.
+    add_executable(RTStateSeqlockTest
+        tests/cpp/test_rt_state_seqlock.cpp
+    )
+    target_include_directories(RTStateSeqlockTest PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_features(RTStateSeqlockTest PRIVATE cxx_std_20)
+    if(CMAKE_THREADS_FOUND OR TRUE)
+        find_package(Threads REQUIRED)
+        target_link_libraries(RTStateSeqlockTest PRIVATE Threads::Threads)
+    endif()
+    if(COMMAND add_test)
+        add_test(NAME RTStateSeqlockTest COMMAND RTStateSeqlockTest)
+    endif()
 endif()
 
 # DSP core testing (if using KmiDi_FINAL)

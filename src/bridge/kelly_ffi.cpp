@@ -871,39 +871,51 @@ KellyErrorCode kelly_brain_get_rt_state(const KellyBrain* brain, KellyRTState* o
     auto* wrapper = reinterpret_cast<const KellyBrainWrapper*>(brain);
     const auto& s = wrapper->rtState;
 
-    // Lock-free reads from atomics — safe to call from any thread at high frequency
-    out_state->bpm              = s.bpm.load(std::memory_order_relaxed);
-    out_state->sample_position  = s.samplePosition.load(std::memory_order_relaxed);
-    out_state->bar_start        = s.barStart.load(std::memory_order_relaxed);
-    out_state->bar              = s.bar.load(std::memory_order_relaxed);
-    out_state->beat             = s.beat.load(std::memory_order_relaxed);
-    out_state->numerator        = s.numerator.load(std::memory_order_relaxed);
-    out_state->denominator      = s.denominator.load(std::memory_order_relaxed);
-    out_state->playing          = s.playing.load(std::memory_order_relaxed) ? 1 : 0;
-
-    out_state->valence              = s.valence.load(std::memory_order_relaxed);
-    out_state->arousal              = s.arousal.load(std::memory_order_relaxed);
-    out_state->dominance            = s.dominance.load(std::memory_order_relaxed);
-    out_state->discrete_emotion_id  = s.discreteEmotionId.load(std::memory_order_relaxed);
-    out_state->emotion_intensity    = s.emotionIntensity.load(std::memory_order_relaxed);
-    out_state->emotion_confidence   = s.emotionConfidence.load(std::memory_order_relaxed);
-
-    out_state->tempo_bias        = s.tempoBias.load(std::memory_order_relaxed);
-    out_state->rhythmic_density  = s.rhythmicDensity.load(std::memory_order_relaxed);
-    out_state->groove_strength   = s.grooveStrength.load(std::memory_order_relaxed);
-    out_state->harmonic_tension  = s.harmonicTension.load(std::memory_order_relaxed);
-    out_state->harmonic_motion   = s.harmonicMotion.load(std::memory_order_relaxed);
-    out_state->melodic_activity  = s.melodicActivity.load(std::memory_order_relaxed);
-    out_state->texture_density   = s.textureDensity.load(std::memory_order_relaxed);
-    out_state->dynamic_range     = s.dynamicRange.load(std::memory_order_relaxed);
-
     static_assert(sizeof(out_state->track_params) / sizeof(float) == penta::kMaxTrackParams,
                   "KellyRTState.track_params size must match kMaxTrackParams");
-    for (size_t i = 0; i < penta::kMaxTrackParams; ++i) {
-        out_state->track_params[i] = s.trackParams[i].load(std::memory_order_relaxed);
+
+    // Seqlock snapshot: if the audio thread is mid-publish (odd sequence) or
+    // bumps the sequence between our two reads (torn window), retry up to 8x.
+    // On exhaustion, surface KELLY_ERROR_AGAIN so the caller can retry rather
+    // than consume half-old / half-new state.
+    const bool ok = penta::rt_state_snapshot(s, [&]() noexcept {
+        out_state->bpm              = s.bpm.load(std::memory_order_relaxed);
+        out_state->sample_position  = s.samplePosition.load(std::memory_order_relaxed);
+        out_state->bar_start        = s.barStart.load(std::memory_order_relaxed);
+        out_state->bar              = s.bar.load(std::memory_order_relaxed);
+        out_state->beat             = s.beat.load(std::memory_order_relaxed);
+        out_state->numerator        = s.numerator.load(std::memory_order_relaxed);
+        out_state->denominator      = s.denominator.load(std::memory_order_relaxed);
+        out_state->playing          = s.playing.load(std::memory_order_relaxed) ? 1 : 0;
+
+        out_state->valence              = s.valence.load(std::memory_order_relaxed);
+        out_state->arousal              = s.arousal.load(std::memory_order_relaxed);
+        out_state->dominance            = s.dominance.load(std::memory_order_relaxed);
+        out_state->discrete_emotion_id  = s.discreteEmotionId.load(std::memory_order_relaxed);
+        out_state->emotion_intensity    = s.emotionIntensity.load(std::memory_order_relaxed);
+        out_state->emotion_confidence   = s.emotionConfidence.load(std::memory_order_relaxed);
+
+        out_state->tempo_bias        = s.tempoBias.load(std::memory_order_relaxed);
+        out_state->rhythmic_density  = s.rhythmicDensity.load(std::memory_order_relaxed);
+        out_state->groove_strength   = s.grooveStrength.load(std::memory_order_relaxed);
+        out_state->harmonic_tension  = s.harmonicTension.load(std::memory_order_relaxed);
+        out_state->harmonic_motion   = s.harmonicMotion.load(std::memory_order_relaxed);
+        out_state->melodic_activity  = s.melodicActivity.load(std::memory_order_relaxed);
+        out_state->texture_density   = s.textureDensity.load(std::memory_order_relaxed);
+        out_state->dynamic_range     = s.dynamicRange.load(std::memory_order_relaxed);
+
+        for (size_t i = 0; i < penta::kMaxTrackParams; ++i) {
+            out_state->track_params[i] = s.trackParams[i].load(std::memory_order_relaxed);
+        }
+    });
+
+    if (!ok) {
+        return KELLY_ERROR_AGAIN;
     }
 
-    out_state->sequence = s.sequence.load(std::memory_order_acquire);
+    // Expose the stable sequence the reader observed so callers can detect
+    // "same frame" across successive polls without re-loading.
+    out_state->sequence = s.sequence.load(std::memory_order_relaxed);
 
     return KELLY_SUCCESS;
 }
