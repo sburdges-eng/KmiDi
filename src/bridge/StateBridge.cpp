@@ -1,4 +1,5 @@
 #include "StateBridge.h"
+#include "bridge/PythonBridgeBase.h"
 
 // Python C API - only include if Python is available
 #ifdef PYTHON_AVAILABLE
@@ -83,29 +84,17 @@ void StateBridge::shutdown() {
 
 bool StateBridge::initializePython() {
 #ifdef PYTHON_AVAILABLE
-    // Check if Python is already initialized.
-    // If not, we initialize here (main-thread, no GIL guard needed).
-    bool weInitialized = false;
-    if (!Py_IsInitialized()) {
-        Py_Initialize();
-        if (!Py_IsInitialized()) {
-            std::cerr << "StateBridge: Failed to initialize Python" << std::endl;
-            return false;
-        }
-        weInitialized = true;
-        // Release the GIL so worker threads can acquire it with
-        // PyGILState_Ensure.  PyEval_SaveThread returns the main thread
-        // state; we discard it here because StateBridge is standalone and
-        // does not hold a PythonBridgeBase::mainThreadState_.
-#if PY_VERSION_HEX < 0x03090000
-        PyEval_InitThreads();
-#endif
-        PyEval_SaveThread();  // releases GIL; main-thread state discarded intentionally
+    // Delegate Py_Initialize + PyEval_SaveThread to the shared, thread-safe
+    // helper.  This eliminates the race where two bridges constructed on
+    // different threads both observe !Py_IsInitialized() and both call
+    // PyEval_SaveThread (second call is UB).
+    if (!bridge::PythonBridgeBase::ensurePythonStarted()) {
+        std::cerr << "StateBridge: Python init failed\n";
+        return false;
     }
-    (void)weInitialized;  // used only for documentation
 
     // From this point on any Py* call (including PyImport_ImportModule below)
-    // requires the GIL because PyEval_SaveThread has released it.
+    // requires the GIL because ensurePythonStarted() has released it.
     bridge::PyGILGuard gil;
 
     // Import the state bridge module

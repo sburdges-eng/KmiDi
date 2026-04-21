@@ -46,30 +46,54 @@ bool PythonBridgeBase::isPythonInitialized() {
 #endif
 }
 
-bool PythonBridgeBase::initializePython() {
+// static
+bool PythonBridgeBase::ensurePythonStarted() {
 #ifdef PYTHON_AVAILABLE
     if (!Py_IsInitialized()) {
         Py_Initialize();
         if (!Py_IsInitialized()) {
-            logError("Failed to initialize Python interpreter");
+            // Can't call logError (no instance); write to stderr directly.
+            std::cerr << "PythonBridgeBase: Failed to initialize Python interpreter\n";
             return false;
         }
-        pythonInitializedByThis_ = true;
-
-        // GIL is held here (Py_Initialize acquires it on this thread).
-        // Release it exactly once so other threads can use PyGILState_Ensure.
-        std::call_once(s_gilReleaseOnce, []() {
-            // PyEval_InitThreads is a no-op in CPython >=3.9 (always called by
-            // Py_Initialize) but harmless to call on older versions.
-#if PY_VERSION_HEX < 0x03090000
-            PyEval_InitThreads();
-#endif
-            mainThreadState_ = static_cast<void*>(PyEval_SaveThread());
-        });
     }
-    // If Python was already initialized by someone else, that someone already
-    // released the GIL (via PyEval_SaveThread or equivalent).  Do NOT touch
-    // the thread state machinery here.
+    // GIL is held by this thread after Py_Initialize (or was already held if
+    // Python was initialized by a previous caller who hasn't released yet).
+    // Release it exactly once, globally, so all threads can use
+    // PyGILState_Ensure / PyGILGuard safely.
+    std::call_once(s_gilReleaseOnce, []() {
+        // PyEval_InitThreads is a no-op in CPython >=3.9 (always called by
+        // Py_Initialize) but harmless on older versions.
+#if PY_VERSION_HEX < 0x03090000
+        PyEval_InitThreads();
+#endif
+        mainThreadState_ = static_cast<void*>(PyEval_SaveThread());
+    });
+    return true;
+#else
+    std::cerr << "PythonBridgeBase: Python not available (compiled without PYTHON_AVAILABLE)\n";
+    return false;
+#endif
+}
+
+bool PythonBridgeBase::initializePython() {
+#ifdef PYTHON_AVAILABLE
+    if (!ensurePythonStarted()) {
+        logError("Failed to initialize Python interpreter");
+        return false;
+    }
+    if (!Py_IsInitialized()) {
+        // ensurePythonStarted returned true; this branch is unreachable but
+        // kept for defensive correctness.
+        return false;
+    }
+    // Track whether this instance was the one that first initialized Python
+    // (used by shutdownPython to decide whether to call Py_Finalize).
+    // The once_flag ensures only one bridge ever calls Py_Initialize, so
+    // pythonInitializedByThis_ is only meaningful for ownership tracking.
+    pythonInitializedByThis_ = true;
+    // If Python was already initialized before ensurePythonStarted(), the
+    // GIL has already been released.  Do NOT touch thread-state here.
     return true;
 #else
     logError("Python not available (compiled without PYTHON_AVAILABLE)");

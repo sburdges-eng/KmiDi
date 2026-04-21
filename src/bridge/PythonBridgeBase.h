@@ -37,6 +37,22 @@ public:
     virtual ~PythonBridgeBase();
 
     /**
+     * Initialize the CPython interpreter and release the GIL exactly once
+     * across ALL bridges.  Thread-safe and idempotent: the first caller
+     * performs Py_Initialize + PyEval_SaveThread; subsequent callers return
+     * immediately.
+     *
+     * Standalone bridges (StateBridge, PreferenceBridge, OrchestratorBridge)
+     * that do NOT extend PythonBridgeBase should call this instead of
+     * duplicating Py_Initialize + PyEval_SaveThread locally, which would race
+     * when two bridges are constructed concurrently.
+     *
+     * @return true if Python is initialized and the GIL has been released for
+     *         subsequent PyGILGuard-protected use; false on init failure.
+     */
+    static bool ensurePythonStarted();
+
+    /**
      * Initialize Python interpreter (if not already initialized)
      * @return true if Python is available and initialized
      */

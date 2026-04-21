@@ -118,25 +118,25 @@ public:
     }
 
     /**
-     * Push data, dropping oldest elements to make room if necessary.
-     * T6.5: Used by inference result queue — audio thread always gets the
-     * freshest result; stale results are discarded rather than blocking.
+     * Consumer-only: drain all pending elements and return the latest one.
+     * Call from the CONSUMER thread only; mutates readPos_ like pop() does.
      *
-     * Policy: request queue keeps drop-newest (samples are a stream, not
-     * state). Result queue uses drop-oldest (newest inference > stale one).
+     * Provides drop-oldest semantics without requiring the producer to touch
+     * readPos_.  The audio (consumer) thread calls this instead of pop() when
+     * it only needs the freshest available inference result.
      *
-     * @param data   Source data pointer
-     * @param count  Number of elements to write
-     * @return false if count > Capacity (data will never fit); true otherwise.
+     * @param out  Destination for the most recent element.
+     * @return true if at least one element was available (out is valid);
+     *         false if the buffer was empty (out is unchanged).
      */
-    bool pushOverwrite(const T* data, size_t count) {
-        if (count > Capacity) return false;
-        // Evict oldest elements until there is room.
-        while (availableToWrite() < count) {
-            T discard;
-            pop(&discard, 1);  // drop oldest
+    bool popLatest(T* out) noexcept {
+        T tmp;
+        bool any = false;
+        while (pop(&tmp, 1)) {
+            *out = tmp;
+            any = true;
         }
-        return push(data, count);
+        return any;
     }
 
     /**

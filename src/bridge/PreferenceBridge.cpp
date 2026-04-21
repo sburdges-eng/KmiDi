@@ -1,4 +1,5 @@
 #include "PreferenceBridge.h"
+#include "bridge/PythonBridgeBase.h"
 #include <juce_core/juce_core.h>
 #include <fstream>
 #include <sstream>
@@ -87,17 +88,12 @@ void PreferenceBridge::shutdown() {
 
 bool PreferenceBridge::initializePython() {
 #ifdef PYTHON_AVAILABLE
-    if (!Py_IsInitialized()) {
-        Py_Initialize();
-        if (!Py_IsInitialized()) {
-            return false;
-        }
-        // Release the GIL so worker threads can acquire it with
-        // PyGILState_Ensure / PyGILGuard.
-#if PY_VERSION_HEX < 0x03090000
-        PyEval_InitThreads();
-#endif
-        PyEval_SaveThread();  // releases GIL; main-thread state discarded intentionally
+    // Delegate Py_Initialize + PyEval_SaveThread to the shared, thread-safe
+    // helper.  This eliminates the race where two bridges constructed on
+    // different threads both observe !Py_IsInitialized() and both call
+    // PyEval_SaveThread (second call is UB).
+    if (!bridge::PythonBridgeBase::ensurePythonStarted()) {
+        return false;
     }
 
     // Acquire GIL before any Python C API calls.

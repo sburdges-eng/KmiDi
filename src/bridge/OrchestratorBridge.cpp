@@ -1,4 +1,5 @@
 #include "OrchestratorBridge.h"
+#include "bridge/PythonBridgeBase.h"
 
 // Python C API - only include if Python is available
 #ifdef PYTHON_AVAILABLE
@@ -32,19 +33,13 @@ OrchestratorBridge::~OrchestratorBridge() {
 
 bool OrchestratorBridge::initializePython() {
 #ifdef PYTHON_AVAILABLE
-    // Check if Python is already initialized
-    if (!Py_IsInitialized()) {
-        Py_Initialize();
-        if (!Py_IsInitialized()) {
-            std::cerr << "OrchestratorBridge: Failed to initialize Python" << std::endl;
-            return false;
-        }
-        // Release the GIL so worker threads can acquire it with
-        // PyGILState_Ensure / PyGILGuard.
-#if PY_VERSION_HEX < 0x03090000
-        PyEval_InitThreads();
-#endif
-        PyEval_SaveThread();  // releases GIL; main-thread state discarded intentionally
+    // Delegate Py_Initialize + PyEval_SaveThread to the shared, thread-safe
+    // helper.  This eliminates the race where two bridges constructed on
+    // different threads both observe !Py_IsInitialized() and both call
+    // PyEval_SaveThread (second call is UB).
+    if (!bridge::PythonBridgeBase::ensurePythonStarted()) {
+        std::cerr << "OrchestratorBridge: Python init failed\n";
+        return false;
     }
 
     // Acquire GIL before any Python C API calls.

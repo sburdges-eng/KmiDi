@@ -5,7 +5,7 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
-#include <semaphore>    // std::counting_semaphore (C++20)
+#include <semaphore>    // std::binary_semaphore (C++20)
 #include <juce_core/juce_core.h>
 
 namespace kelly {
@@ -80,26 +80,39 @@ public:
 
     /**
      * Submit inference request (called from audio thread - never blocks).
-     * T6.6: After pushing the request, release the semaphore so the inference
-     * thread wakes immediately rather than sleeping 100µs.
+     * T6.6: Signal the inference thread that work is available.
+     *
+     * Uses binary-semaphore wake semantics: try_acquire resets the counter to
+     * 0 before release sets it to 1, ensuring release() never exceeds max (1).
+     * ([thread.sema.cnt]/6: release(n) requires n <= max() - counter; for
+     * binary_semaphore max()==1 so calling release() with counter==1 is UB.)
+     *
      * @param request Inference request
      * @return true if submitted successfully
      */
     bool submitRequest(const InferenceRequest& request) noexcept {
         if (requestBuffer_.push(&request, 1)) {
-            requestSem_.release();  // T6.6: wake inference thread
+            // Drain the semaphore counter back to 0 before setting it to 1.
+            // try_acquire is non-blocking; if the counter was already 0 this
+            // is a no-op. This ensures release() never violates the max==1
+            // precondition of binary_semaphore.
+            (void)requestWake_.try_acquire();
+            requestWake_.release();  // T6.6: wake inference thread
             return true;
         }
         return false;
     }
 
     /**
-     * Get inference result (called from audio thread - never blocks).
-     * @param result Output result
-     * @return true if result available
+     * Get the latest inference result (called from audio thread - never blocks).
+     * Drains all stale results from the buffer and returns only the freshest one.
+     * This provides the drop-oldest semantics previously attempted by
+     * pushOverwrite, but correctly confined to the CONSUMER thread.
+     * @param result Output result (populated only when return value is true)
+     * @return true if at least one result was available
      */
     bool getResult(InferenceResult& result) noexcept {
-        return resultBuffer_.pop(&result, 1);
+        return resultBuffer_.popLatest(&result);
     }
 
     /**
@@ -126,8 +139,12 @@ public:
 private:
     /**
      * Inference loop running in separate thread.
-     * T6.6: Blocks on counting_semaphore rather than spinning with 100µs sleep.
-     * try_acquire_for(10ms) bounds latency if a release is missed at shutdown.
+     * T6.6: Blocks on binary_semaphore rather than spinning with 100µs sleep.
+     * try_acquire_for(10ms) bounds latency if a wake is missed at shutdown.
+     *
+     * One wake covers N pending requests: the inner while loop drains everything
+     * that accumulated while the worker was busy, so every submitted request is
+     * processed even if only one wake arrived for N submits.
      */
     void inferenceLoop() {
         InferenceRequest request;
@@ -135,7 +152,7 @@ private:
         while (running_.load()) {
             // T6.6: Wait for a request to be submitted (or timeout after 10ms to
             // re-check running_ and avoid indefinite blocking on shutdown).
-            requestSem_.try_acquire_for(std::chrono::milliseconds(10));
+            requestWake_.try_acquire_for(std::chrono::milliseconds(10));
 
             // Drain all pending requests — multiple blocks may have piled up
             // during a heavy inference pass.
@@ -145,10 +162,12 @@ private:
                 result.emotionVector = processor_.inferEmotion(request.features);
                 result.timestamp = request.timestamp;
 
-                // T6.5: Drop-oldest policy — audio thread always sees latest
-                // result; stale results are evicted instead of new ones
-                // being silently discarded.
-                resultBuffer_.pushOverwrite(&result, 1);
+                // T6.5 (revised): plain push with drop-newest on the producer
+                // side.  The audio thread uses resultBuffer_.popLatest() to
+                // drain stale results and obtain only the freshest one.
+                // pushOverwrite was removed because it mutated readPos_ from
+                // the PRODUCER thread, violating SPSC ring invariants.
+                resultBuffer_.push(&result, 1);
             }
         }
     }
@@ -158,10 +177,12 @@ private:
     LockFreeRingBuffer<InferenceResult, BUFFER_SIZE> resultBuffer_;
     std::thread inferenceThread_;
     std::atomic<bool> running_;
-    // T6.6: Counting semaphore — released by submitRequest(), acquired by
-    // inferenceLoop().  Replaces the 100µs spin-sleep.  Max count matches
-    // BUFFER_SIZE so the semaphore counter never overflows.
-    std::counting_semaphore<BUFFER_SIZE> requestSem_{0};
+    // T6.6: Binary semaphore — signalled by submitRequest(), acquired by
+    // inferenceLoop().  Replaces the 100µs spin-sleep.  Binary semantics
+    // (max == 1) prevent the counter from exceeding its maximum regardless
+    // of how many requests arrive between two consecutive wakes; the inner
+    // drain loop in inferenceLoop() handles burst coalescing.
+    std::binary_semaphore requestWake_{0};
 };
 
 } // namespace kelly
