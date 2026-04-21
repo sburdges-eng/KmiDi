@@ -622,10 +622,14 @@ void EmotionWorkstation::setupProjectMenu() {
 void EmotionWorkstation::showProjectMenu() {
   setupProjectMenu();
 
+  // Resolve parent before constructing Options so the getTopLevelComponent()
+  // call happens synchronously on the live `this` and the SafePointer-guarded
+  // lambda below never touches raw `this` again.
+  auto* parent = getTopLevelComponent();
   juce::Component::SafePointer<EmotionWorkstation> safe(this);
   projectMenu_.showMenuAsync(juce::PopupMenu::Options()
                                  .withTargetComponent(&projectMenuButton_)
-                                 .withParentComponent(getTopLevelComponent()),
+                                 .withParentComponent(parent),
                              [safe](int result) {
                                if (auto* self = safe.getComponent()) {
                                  switch (result) {

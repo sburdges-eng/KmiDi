@@ -33,7 +33,9 @@ private:
     juce::String tooltipText_;
     juce::Point<int> targetPosition_;
     
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TooltipComponent)
+    // DeletedAtShutdown base deletes the singleton at MessageManager teardown;
+    // LEAK_DETECTOR would false-positive on that intentional delete, so drop it.
+    JUCE_DECLARE_NON_COPYABLE(TooltipComponent)
 };
 
 /**
