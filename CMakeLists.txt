@@ -271,18 +271,6 @@ if(NOT pybind11_FOUND)
 endif()
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/groove_bindings\\.cpp$")
 
-# Intra-library ODR fixes 2026-04-14 (caught by scripts/audit/intra_lib_odr_scan.py):
-#   - src/core/emotion_thesaurus.cpp is a self-labeled legacy stub from
-#     'early architecture iterations' that returns nullptr/no-op for
-#     everything. It defines the same kelly::EmotionThesaurus symbols
-#     as the real 216-node implementation in src/engine/EmotionThesaurus.cpp.
-#     Linker silently picks one; if it picks the stub, the engine returns
-#     no-ops in production. Exclude the stub so the real impl wins.
-list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/core/emotion_thesaurus\\.cpp$")
-#   - src/ui/MidiKompanionLookAndFeel.cpp is a byte-identical copy of
-#     src/ui/KellyLookAndFeel.cpp (cmp -s clean). Both define the same
-#     kelly::KellyLookAndFeel virtual table + thunks. Exclude the copy.
-list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/ui/MidiKompanionLookAndFeel\\.cpp$")
 
 # BiometricInput: .cpp and .mm define overlapping symbols.  Select exactly
 # one per platform so the linker doesn't see duplicates.
