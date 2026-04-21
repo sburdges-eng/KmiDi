@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <mutex>
 
 // Forward declaration to avoid including Python.h in header
 struct _object;
@@ -103,6 +104,16 @@ private:
     // Managed Python objects (for cleanup)
     std::vector<PyObject*> managedObjects_;
     bool pythonInitializedByThis_ = false;
+
+    // Shared across all PythonBridgeBase instances.
+    // Stored as void* to avoid pulling <Python.h> into this header.
+    // Cast to PyThreadState* inside PythonBridgeBase.cpp.
+    // Set by the first bridge that calls Py_Initialize(); holds the result
+    // of PyEval_SaveThread() so that worker threads can use
+    // PyGILState_Ensure / PyGILState_Release safely.
+    // Protected by a std::once_flag; do NOT access without going through
+    // initializePython().
+    static void* mainThreadState_;
 };
 
 } // namespace bridge

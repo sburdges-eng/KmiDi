@@ -3,13 +3,23 @@
 // Python C API - only include if Python is available
 #ifdef PYTHON_AVAILABLE
 #include <Python.h>
+#include "bridge/PyGILGuard.h"
 #endif
 
 #include <iostream>
+#include <mutex>
 #include <sstream>
 
 namespace kelly {
 namespace bridge {
+
+// Static definition of shared main-thread Python state.
+// nullptr until the first successful Py_Initialize(); after that it holds
+// the PyThreadState* from PyEval_SaveThread() (cast to void*).
+void* PythonBridgeBase::mainThreadState_ = nullptr;
+
+// Guards first-time PyEval_SaveThread so only one bridge calls it.
+static std::once_flag s_gilReleaseOnce;
 
 PythonBridgeBase::PythonBridgeBase(const std::string& bridgeName)
     : BridgeBase(bridgeName)
@@ -47,6 +57,21 @@ bool PythonBridgeBase::initializePython() {
         }
         pythonInitializedByThis_ = true;
     }
+
+    // After Py_Initialize the calling thread holds the GIL.  Release it via
+    // PyEval_SaveThread exactly once across all bridges so that subsequent
+    // threads can acquire it with PyGILState_Ensure.  This must only happen
+    // once globally; further callers already find Python initialized and must
+    // instead use PyGILGuard before touching any Py* API.
+    std::call_once(s_gilReleaseOnce, []() {
+        // PyEval_InitThreads is a no-op in CPython >=3.9 (always called by
+        // Py_Initialize) but harmless to call on older versions.
+#if PY_VERSION_HEX < 0x03090000
+        PyEval_InitThreads();
+#endif
+        mainThreadState_ = static_cast<void*>(PyEval_SaveThread());
+    });
+
     return true;
 #else
     logError("Python not available (compiled without PYTHON_AVAILABLE)");
@@ -56,18 +81,26 @@ bool PythonBridgeBase::initializePython() {
 
 void PythonBridgeBase::shutdownPython() {
 #ifdef PYTHON_AVAILABLE
-    // Clean up all managed objects
-    for (PyObject* obj : managedObjects_) {
-        if (obj) {
-            Py_DECREF(obj);
+    {
+        // Must hold GIL before Py_DECREF on any managed object.
+        PyGILGuard gil;
+        for (PyObject* obj : managedObjects_) {
+            if (obj) {
+                Py_DECREF(obj);
+            }
         }
     }
     managedObjects_.clear();
 
-    // Only finalize if we initialized it
+    // Only finalize if we initialized it.
     // Note: In practice, we usually don't finalize Python as other bridges
     // may still be using it. This is handled at application shutdown.
     // if (pythonInitializedByThis_ && Py_IsInitialized()) {
+    //     // Restore main thread state before finalizing.
+    //     if (mainThreadState_) {
+    //         PyEval_RestoreThread(static_cast<PyThreadState*>(mainThreadState_));
+    //         mainThreadState_ = nullptr;
+    //     }
     //     Py_Finalize();
     //     pythonInitializedByThis_ = false;
     // }
@@ -81,6 +114,7 @@ PyObject* PythonBridgeBase::importModule(const std::string& moduleName) {
         return nullptr;
     }
 
+    PyGILGuard gil;
     PyObject* module = PyImport_ImportModule(moduleName.c_str());
     if (!module) {
         logError("Failed to import Python module: " + moduleName);
@@ -103,6 +137,7 @@ PyObject* PythonBridgeBase::getFunction(PyObject* module, const std::string& fun
         return nullptr;
     }
 
+    PyGILGuard gil;
     PyObject* func = PyObject_GetAttrString(module, funcName.c_str());
     if (!func || !PyCallable_Check(func)) {
         logError("Failed to get callable function: " + funcName);
@@ -131,6 +166,8 @@ std::string PythonBridgeBase::callPythonFunction(PyObject* func, const std::vect
         logError("Cannot call null Python function");
         return "";
     }
+
+    PyGILGuard gil;  // acquire GIL for all Python work in this function
 
     if (!PyCallable_Check(func)) {
         logError("Object is not callable");
@@ -195,6 +232,7 @@ std::string PythonBridgeBase::callPythonFunction(PyObject* func, const std::vect
 void PythonBridgeBase::safeDecref(PyObject* obj) {
 #ifdef PYTHON_AVAILABLE
     if (obj) {
+        PyGILGuard gil;
         Py_DECREF(obj);
     }
 #else

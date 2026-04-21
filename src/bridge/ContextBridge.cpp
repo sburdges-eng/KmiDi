@@ -2,6 +2,7 @@
 
 #ifdef PYTHON_AVAILABLE
 #include <Python.h>
+#include "bridge/PyGILGuard.h"
 #endif
 
 #include <sstream>
@@ -71,6 +72,7 @@ std::string ContextBridge::analyzeContext(const std::string& stateJson) {
         return R"({"emotion_category": "unknown"})";
     }
 
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* args = PyTuple_New(1);
     PyObject* stateStr = PyUnicode_FromString(stateJson.c_str());
     PyTuple_SetItem(args, 0, stateStr);
@@ -107,6 +109,7 @@ std::string ContextBridge::getContextualParameters(const std::string& stateJson)
     }
 
 #ifdef PYTHON_AVAILABLE
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(stateJson.c_str()));
 
@@ -139,6 +142,7 @@ void ContextBridge::updateContext(const std::string& stateJson) {
     }
 
 #ifdef PYTHON_AVAILABLE
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(stateJson.c_str()));
 
@@ -162,6 +166,7 @@ std::string ContextBridge::getContextualSuggestions(const std::string& stateJson
     }
 
 #ifdef PYTHON_AVAILABLE
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(stateJson.c_str()));
 

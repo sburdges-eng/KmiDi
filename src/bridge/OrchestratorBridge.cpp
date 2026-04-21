@@ -3,6 +3,7 @@
 // Python C API - only include if Python is available
 #ifdef PYTHON_AVAILABLE
 #include <Python.h>
+#include "bridge/PyGILGuard.h"
 #endif
 
 #include <algorithm>
@@ -38,7 +39,16 @@ bool OrchestratorBridge::initializePython() {
             std::cerr << "OrchestratorBridge: Failed to initialize Python" << std::endl;
             return false;
         }
+        // Release the GIL so worker threads can acquire it with
+        // PyGILState_Ensure / PyGILGuard.
+#if PY_VERSION_HEX < 0x03090000
+        PyEval_InitThreads();
+#endif
+        PyEval_SaveThread();  // releases GIL; main-thread state discarded intentionally
     }
+
+    // Acquire GIL before any Python C API calls.
+    bridge::PyGILGuard gil;
 
     // Import the orchestrator bridge module
     PyObject* module = PyImport_ImportModule("music_brain.orchestrator.bridge_api");
@@ -81,21 +91,24 @@ void OrchestratorBridge::shutdownPython() {
     }
 
 #ifdef PYTHON_AVAILABLE
-    if (executePipelineFunc_) {
-        Py_DECREF(static_cast<PyObject*>(executePipelineFunc_));
-        executePipelineFunc_ = nullptr;
-    }
-    if (executePipelineAsyncFunc_) {
-        Py_DECREF(static_cast<PyObject*>(executePipelineAsyncFunc_));
-        executePipelineAsyncFunc_ = nullptr;
-    }
-    if (getStatusFunc_) {
-        Py_DECREF(static_cast<PyObject*>(getStatusFunc_));
-        getStatusFunc_ = nullptr;
-    }
-    if (cancelExecutionFunc_) {
-        Py_DECREF(static_cast<PyObject*>(cancelExecutionFunc_));
-        cancelExecutionFunc_ = nullptr;
+    {
+        bridge::PyGILGuard gil;  // must hold GIL for all Py_DECREF calls
+        if (executePipelineFunc_) {
+            Py_DECREF(static_cast<PyObject*>(executePipelineFunc_));
+            executePipelineFunc_ = nullptr;
+        }
+        if (executePipelineAsyncFunc_) {
+            Py_DECREF(static_cast<PyObject*>(executePipelineAsyncFunc_));
+            executePipelineAsyncFunc_ = nullptr;
+        }
+        if (getStatusFunc_) {
+            Py_DECREF(static_cast<PyObject*>(getStatusFunc_));
+            getStatusFunc_ = nullptr;
+        }
+        if (cancelExecutionFunc_) {
+            Py_DECREF(static_cast<PyObject*>(cancelExecutionFunc_));
+            cancelExecutionFunc_ = nullptr;
+        }
     }
 #endif
     activeExecutions_.clear();
@@ -115,6 +128,8 @@ std::string OrchestratorBridge::executePipeline(
     if (!func) {
         return R"({"success": false, "error": "Pipeline execution function not available"})";
     }
+
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
 
     PyObject* args = PyTuple_New(2);
     PyObject* pipelineNameStr = PyUnicode_FromString(pipelineName.c_str());
@@ -176,6 +191,7 @@ std::string OrchestratorBridge::getExecutionStatus(const std::string& executionI
     }
 
 #ifdef PYTHON_AVAILABLE
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* func = static_cast<PyObject*>(getStatusFunc_);
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(executionId.c_str()));
@@ -209,6 +225,7 @@ bool OrchestratorBridge::cancelExecution(const std::string& executionId) {
     }
 
 #ifdef PYTHON_AVAILABLE
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* func = static_cast<PyObject*>(cancelExecutionFunc_);
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(executionId.c_str()));

@@ -2,6 +2,7 @@
 
 #ifdef PYTHON_AVAILABLE
 #include <Python.h>
+#include "bridge/PyGILGuard.h"
 #endif
 
 #include <sstream>
@@ -74,6 +75,7 @@ std::string IntentBridge::processIntent(const std::string& intentJson) {
         return "{}";
     }
 
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* args = PyTuple_New(1);
     PyObject* intentStr = PyUnicode_FromString(intentJson.c_str());
     PyTuple_SetItem(args, 0, intentStr);
@@ -127,6 +129,7 @@ std::string IntentBridge::convertToPythonIntent(const IntentResult& intent) {
                << R"(", "tempoBpm": )" << intent.tempoBpm
                << R"(, "emotion": ")" << intent.sourceWound.primaryEmotion.name << R"("})";
 
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(intentJson.str().c_str()));
 
@@ -160,6 +163,7 @@ bool IntentBridge::validateResult(const std::string& resultJson) {
     }
 
 #ifdef PYTHON_AVAILABLE
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(resultJson.c_str()));
 
@@ -185,6 +189,7 @@ std::string IntentBridge::getSuggestedRuleBreaks(const std::string& emotion) {
     }
 
 #ifdef PYTHON_AVAILABLE
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(emotion.c_str()));
 

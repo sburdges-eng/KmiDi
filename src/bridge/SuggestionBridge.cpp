@@ -2,6 +2,7 @@
 
 #ifdef PYTHON_AVAILABLE
 #include <Python.h>
+#include "bridge/PyGILGuard.h"
 #endif
 
 #include <sstream>
@@ -60,6 +61,7 @@ std::string SuggestionBridge::getSuggestions(
     }
 
 #ifdef PYTHON_AVAILABLE
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* args = PyTuple_New(2);
     PyObject* stateStr = PyUnicode_FromString(currentStateJson.c_str());
     PyObject* maxSuggestionsInt = PyLong_FromLong(maxSuggestions);
@@ -98,6 +100,7 @@ void SuggestionBridge::recordSuggestionShown(
     if (!isAvailable() || !recordShownFunc_) return;
 
 #ifdef PYTHON_AVAILABLE
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* args = PyTuple_New(3);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(suggestionId.c_str()));
     PyTuple_SetItem(args, 1, PyUnicode_FromString(suggestionType.c_str()));
@@ -118,6 +121,7 @@ void SuggestionBridge::recordSuggestionAccepted(const std::string& suggestionId)
     if (!isAvailable() || !recordAcceptedFunc_) return;
 
 #ifdef PYTHON_AVAILABLE
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(suggestionId.c_str()));
 
@@ -136,6 +140,7 @@ void SuggestionBridge::recordSuggestionDismissed(const std::string& suggestionId
     if (!isAvailable() || !recordDismissedFunc_) return;
 
 #ifdef PYTHON_AVAILABLE
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(suggestionId.c_str()));
 

@@ -2,6 +2,7 @@
 
 #ifdef PYTHON_AVAILABLE
 #include <Python.h>
+#include "bridge/PyGILGuard.h"
 #endif
 
 #include <sstream>
@@ -73,6 +74,7 @@ std::string EngineIntelligenceBridge::getEngineSuggestions(
         return R"({"parameter_adjustments": {}, "style_suggestions": [], "rule_breaks": [], "confidence": 0.0})";
     }
 
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* args = PyTuple_New(2);
     PyObject* engineTypeStr = PyUnicode_FromString(engineType.c_str());
     PyObject* stateStr = PyUnicode_FromString(currentStateJson.c_str());
@@ -114,6 +116,7 @@ void EngineIntelligenceBridge::reportEngineState(
     if (!isAvailable() || !reportEngineStateFunc_) return;
 
 #ifdef PYTHON_AVAILABLE
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* args = PyTuple_New(3);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(engineType.c_str()));
     PyTuple_SetItem(args, 1, PyUnicode_FromString(stateJson.c_str()));

@@ -8,6 +8,7 @@
 // Python C API - only include if Python is available
 #ifdef PYTHON_AVAILABLE
 #include <Python.h>
+#include "bridge/PyGILGuard.h"
 #endif
 
 namespace kelly {
@@ -86,14 +87,21 @@ void PreferenceBridge::shutdown() {
 
 bool PreferenceBridge::initializePython() {
 #ifdef PYTHON_AVAILABLE
-    if (Py_IsInitialized()) {
-        // Python already initialized
-    } else {
+    if (!Py_IsInitialized()) {
         Py_Initialize();
         if (!Py_IsInitialized()) {
             return false;
         }
+        // Release the GIL so worker threads can acquire it with
+        // PyGILState_Ensure / PyGILGuard.
+#if PY_VERSION_HEX < 0x03090000
+        PyEval_InitThreads();
+#endif
+        PyEval_SaveThread();  // releases GIL; main-thread state discarded intentionally
     }
+
+    // Acquire GIL before any Python C API calls.
+    bridge::PyGILGuard gil;
 
     // Import music_brain.learning.user_preferences
     PyObject* moduleName = PyUnicode_FromString("music_brain.learning.user_preferences");
@@ -140,6 +148,7 @@ bool PreferenceBridge::initializePython() {
 
 void PreferenceBridge::shutdownPython() {
 #ifdef PYTHON_AVAILABLE
+    bridge::PyGILGuard gil;  // must hold GIL for all Py_DECREF calls
     if (preferenceModel_) {
         Py_DECREF(static_cast<PyObject*>(preferenceModel_));
         preferenceModel_ = nullptr;
@@ -321,7 +330,8 @@ void PreferenceBridge::processPendingOperations() {
 
 #ifdef PYTHON_AVAILABLE
     if (preferenceModel_) {
-        // Process with Python
+        // Process with Python - each call requires the GIL.
+        bridge::PyGILGuard gil;
         for (const auto& op : ops) {
             switch (op.type) {
                 case PendingOperation::ParameterAdjustment: {
@@ -329,6 +339,7 @@ void PreferenceBridge::processPendingOperations() {
                     float newVal = std::stof(op.data.at("new_value"));
                     // Call: preferenceModel.record_parameter_adjustment(...)
                     // Implementation would use PyObject_CallMethod
+                    (void)oldVal; (void)newVal;
                     break;
                 }
                 // ... other cases
@@ -430,6 +441,8 @@ bool PreferenceBridge::callPythonMethod(
 ) {
 #ifdef PYTHON_AVAILABLE
     if (!preferenceModel_) return false;
+
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
 
     PyObject* method = PyObject_GetAttrString(static_cast<PyObject*>(preferenceModel_), methodName);
     if (!method) {
