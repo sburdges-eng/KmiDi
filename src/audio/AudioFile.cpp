@@ -58,6 +58,16 @@ bool AudioFile::read(const std::string& filepath) {
         return false;
     }
 
+    // Determine actual file length once so we can bound-check hostile
+    // chunk-size headers below.  A malformed .wav can claim a multi-GB
+    // chunk and trigger OOM when we resize std::vector to totalSamples.
+    file.seekg(0, std::ios::end);
+    const std::streamoff actualFileBytes = file.tellg();
+    file.seekg(0, std::ios::beg);
+    if (actualFileBytes < 44) {
+        return false;  // Smaller than minimum WAV header size
+    }
+
     // Read RIFF header
     char riff[4];
     file.read(riff, 4);
@@ -91,6 +101,13 @@ bool AudioFile::read(const std::string& filepath) {
 
         uint32_t chunkSize;
         file.read(reinterpret_cast<char*>(&chunkSize), sizeof(chunkSize));
+
+        // Bound-check the chunk size against the actual file length before
+        // trusting any seekg(chunkSize, ios::cur) below.  Defeats malformed
+        // files that claim a 4 GB chunk to either OOM us or seek past EOF.
+        if (chunkSize > actualFileBytes) {
+            return false;
+        }
 
         if (std::strncmp(chunkId, "fmt ", 4) == 0) {
             // Read fmt chunk - must be processed first for format info
@@ -134,6 +151,17 @@ bool AudioFile::read(const std::string& filepath) {
     // Now read the data chunk with valid format information
     file.seekg(dataChunkPos);
     header.dataSize = dataChunkSize;
+
+    // Defense against hostile dataSize: cap at the remaining bytes on disk
+    // (dataChunkPos..EOF).  A .wav claiming dataSize = UINT32_MAX would
+    // otherwise allocate ~8 GB (Float32) or ~4 GB (Int16) below.
+    {
+        const std::streamoff remainingBytes = actualFileBytes - static_cast<std::streamoff>(dataChunkPos);
+        if (remainingBytes < 0 ||
+            static_cast<uint64_t>(header.dataSize) > static_cast<uint64_t>(remainingBytes)) {
+            return false;
+        }
+    }
 
     // Set file info using validated format data
     info_.format = AudioFormat::WAV;

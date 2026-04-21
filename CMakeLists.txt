@@ -657,19 +657,14 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/external/Catch2/CMakeLists.txt)
         enable_testing()
         add_subdirectory(external/Catch2 EXCLUDE_FROM_ALL)
-        add_executable(KellyTests
-            tests/cpp/test_emotion_engine.cpp
-            tests/cpp/test_midi_pipeline.cpp
-            tests/cpp/test_chord_diagnostics.cpp
-            tests/cpp/test_ml_pipeline.cpp
-        )
-        target_link_libraries(KellyTests PRIVATE
-            KellyCore
-            Catch2::Catch2WithMain
-        )
         include(CTest)
         include(Catch2)
-        catch_discover_tests(KellyTests)
+        # The previous `KellyTests` target referenced four test files that do
+        # not exist in the tree (test_emotion_engine.cpp, test_midi_pipeline.cpp,
+        # test_chord_diagnostics.cpp, test_ml_pipeline.cpp), silently breaking
+        # `-DBUILD_TESTS=ON`.  Targets below are the tests that actually exist
+        # and compile.  Add a replacement `KellyTests` target here only when
+        # there are real source files to put in it.
         # AudioEmotionRunner tests
         add_executable(AudioEmotionRunnerTests
             tests/cpp/test_audio_emotion_runner.cpp
