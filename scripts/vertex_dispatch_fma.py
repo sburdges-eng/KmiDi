@@ -123,17 +123,14 @@ def upload_tarball(tar_path: Path, bucket: str) -> str:
 
 
 def submit_job(args: argparse.Namespace, package_uri: str, run_name: str) -> None:
-    from google.cloud import aiplatform
-
+    """Submit via `gcloud ai custom-jobs create` with a YAML config — the
+    CLI accepts spot/preemptible GPUs (which the high-level aiplatform SDK
+    doesn't expose cleanly) and supports baseOutputDirectory via --config."""
+    import yaml
     cfg = TASK_CONFIGS[args.task]
-    aiplatform.init(
-        project=args.project, location=args.region,
-        staging_bucket=f"gs://{args.bucket}",
-    )
 
-    # Remap /Volumes paths to /gcs/<bucket>/fma/audio/
     gcs_audio_prefix = f"/gcs/{args.bucket}/fma/audio/fma_medium"
-    manifest_gcs = f"/gcs/{args.bucket}/fma/manifest/fma_medium_manifest.csv"
+    manifest_gcs = f"/gcs/{args.bucket}/fma/manifest/{args.manifest_name}"
 
     script_args = [
         "--manifest", manifest_gcs,
@@ -142,50 +139,60 @@ def submit_job(args: argparse.Namespace, package_uri: str, run_name: str) -> Non
         "--num-workers", "4",
     ] + cfg["extra_args"]
 
-    # Output dir: AIP_MODEL_DIR is auto-set by Vertex when
-    # base_output_dir is provided. Put it under gs://bucket/runs/<run>/model/
     base_output_dir = f"gs://{args.bucket}/runs/{run_name}"
-
-    # "python_package_spec" expects a packaged .tar.gz uploaded to GCS.
-    # module name is the dotted path to the train script without .py.
     module_name = cfg["script"].replace("/", ".").replace(".py", "")
 
-    job = aiplatform.CustomJob(
-        display_name=run_name,
-        worker_pool_specs=[{
-            "machine_spec": {
-                "machine_type": cfg["machine_type"],
-                "accelerator_type": cfg["accelerator_type"],
-                "accelerator_count": cfg["accelerator_count"],
+    # Spec structure matches CustomJobSpec proto — camelCase keys.
+    spec = {
+        "workerPoolSpecs": [{
+            "machineSpec": {
+                "machineType": cfg["machine_type"],
+                "acceleratorType": cfg["accelerator_type"],
+                "acceleratorCount": cfg["accelerator_count"],
             },
-            "replica_count": 1,
-            "python_package_spec": {
-                "executor_image_uri":
+            "replicaCount": 1,
+            "pythonPackageSpec": {
+                "executorImageUri":
                     "us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-3.py310:latest",
-                "package_uris": [package_uri],
-                "python_module": module_name,
+                "packageUris": [package_uri],
+                "pythonModule": module_name,
                 "args": script_args,
             },
         }],
-        base_output_dir=base_output_dir,
-    )
+        "baseOutputDirectory": {"outputUriPrefix": base_output_dir},
+    }
+    if args.spot:
+        spec["scheduling"] = {"strategy": "SPOT"}
 
-    logger.info("Submitting %s | machine=%s+%s×%d | module=%s",
+    cfg_path = Path(tempfile.mkdtemp(prefix="kmidi-vertex-cfg-")) / "custom_job.yaml"
+    cfg_path.write_text(yaml.safe_dump(spec, sort_keys=False))
+
+    cmd = [
+        "gcloud", "ai", "custom-jobs", "create",
+        f"--project={args.project}",
+        f"--region={args.region}",
+        f"--display-name={run_name}",
+        f"--config={cfg_path}",
+    ]
+    if args.service_account:
+        cmd.append(f"--service-account={args.service_account}")
+
+    logger.info("Submitting %s | machine=%s+%s×%d | spot=%s",
                 run_name, cfg["machine_type"], cfg["accelerator_type"],
-                cfg["accelerator_count"], module_name)
+                cfg["accelerator_count"], args.spot)
     logger.info("Output dir: %s", base_output_dir)
+    logger.info("Config: %s", cfg_path)
 
     if args.dry_run:
         logger.info("--dry-run: skipping submit.")
+        logger.info("YAML config:\n%s", cfg_path.read_text())
         return
 
-    job.submit(
-        service_account=args.service_account,
-        enable_web_access=True,
-    )
-    logger.info("Submitted. Vertex console:")
-    logger.info("  https://console.cloud.google.com/vertex-ai/locations/%s/training/%s?project=%s",
-                args.region, job.resource_name.split("/")[-1], args.project)
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        logger.error("Submit failed:\n%s", result.stderr)
+        raise SystemExit(result.returncode)
+    logger.info("Submit output:\n%s", result.stdout)
 
 
 def main() -> int:
@@ -196,6 +203,11 @@ def main() -> int:
     ap.add_argument("--bucket", default="kmidi-train-us-central1")
     ap.add_argument("--service-account", default=None,
                     help="Optional SA email. Default uses Compute Engine default SA.")
+    ap.add_argument("--manifest-name", default="fma_medium_manifest.csv",
+                    help="Filename under gs://<bucket>/fma/manifest/")
+    ap.add_argument("--spot", action="store_true", default=True,
+                    help="Use spot/preemptible VMs (default, required for T4 on free quota)")
+    ap.add_argument("--no-spot", dest="spot", action="store_false")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--name", default=None,
                     help="Run name. Default: <task>-YYYYMMDD-HHMMSS")
