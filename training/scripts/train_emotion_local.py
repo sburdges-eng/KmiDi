@@ -58,6 +58,7 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn as nn
+import torchaudio.transforms as T
 from torch.utils.data import DataLoader, Subset
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -166,12 +167,15 @@ def build_loaders(
 # ── training loop ────────────────────────────────────────────────
 
 
-def train_one_epoch(model, loader, optimizer, criterion, device, desc: str):
+def train_one_epoch(model, loader, optimizer, criterion, device, desc: str,
+                    spec_aug=None):
     model.train()
     running = 0.0
     n = 0
     for batch in tqdm(loader, desc=desc, leave=False):
         feats, labels = batch[0].to(device), batch[1].to(device)
+        if spec_aug is not None:
+            feats = spec_aug(feats)
         optimizer.zero_grad()
         logits = model(feats)
         loss = criterion(logits, labels)
@@ -231,6 +235,16 @@ def main() -> int:
                     help="Run slug. Default: emotion-local-YYYYMMDD-HHMMSS.")
     ap.add_argument("--models-root", type=str,
                     default=os.environ.get("KELLY_MODEL_ROOT", str(Path.home() / "Models")))
+    ap.add_argument("--weight-decay", type=float, default=0.05,
+                    help="AdamW weight decay (default 0.05).")
+    ap.add_argument("--patience", type=int, default=5,
+                    help="Early stop after N epochs without val_acc improvement. 0 disables.")
+    ap.add_argument("--no-spec-aug", action="store_true",
+                    help="Disable SpecAugment (frequency + time masking).")
+    ap.add_argument("--freq-mask", type=int, default=12,
+                    help="Max frequency-mask width (mel bins). Default 12 of n_mels.")
+    ap.add_argument("--time-mask", type=int, default=20,
+                    help="Max time-mask width (frames). Default 20.")
     ap.add_argument("--smoke", action="store_true",
                     help="Verify plumbing: 1 epoch, batch-size 4, stop after ~20 batches.")
     args = ap.parse_args()
@@ -285,8 +299,18 @@ def main() -> int:
 
     # Model / optim / loss
     model = AudioClassifier(num_classes=num_classes, n_mels=args.n_mels).to(device)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr,
+                                  weight_decay=args.weight_decay)
     criterion = nn.CrossEntropyLoss()
+
+    # SpecAugment: chained frequency + time masking applied per-batch on
+    # the device. Disabled in smoke runs (no value, just adds variance).
+    spec_aug = None
+    if not args.no_spec_aug and not args.smoke:
+        spec_aug = nn.Sequential(
+            T.FrequencyMasking(freq_mask_param=args.freq_mask),
+            T.TimeMasking(time_mask_param=args.time_mask),
+        ).to(device)
 
     # Governance-required run manifest (§4)
     manifest = {
@@ -309,6 +333,11 @@ def main() -> int:
         },
         "torch_version": str(torch.__version__),
         "smoke": args.smoke,
+        "weight_decay": args.weight_decay,
+        "patience": args.patience,
+        "spec_aug": spec_aug is not None,
+        "freq_mask": args.freq_mask if spec_aug is not None else None,
+        "time_mask": args.time_mask if spec_aug is not None else None,
     }
     write_manifest(ckpt_dir / "run_manifest.yaml", manifest)
 
@@ -317,9 +346,12 @@ def main() -> int:
 
     # Train
     best_acc = 0.0
+    best_epoch = -1
+    epochs_since_best = 0
     for epoch in range(args.epochs):
         desc = f"epoch {epoch + 1}/{args.epochs}"
-        train_loss = train_one_epoch(model, train_loader, optimizer, criterion, device, desc)
+        train_loss = train_one_epoch(model, train_loader, optimizer, criterion,
+                                     device, desc, spec_aug=spec_aug)
         val_loss, val_acc = validate(model, val_loader, criterion, device)
 
         logger.info(
@@ -332,6 +364,8 @@ def main() -> int:
 
         if val_acc > best_acc:
             best_acc = val_acc
+            best_epoch = epoch
+            epochs_since_best = 0
             torch.save(
                 {
                     "epoch": epoch,
@@ -344,10 +378,16 @@ def main() -> int:
                 ckpt_dir / "best.pt",
             )
             logger.info("  ↳ new best: %.2f%% → %s", val_acc * 100, ckpt_dir / "best.pt")
+        else:
+            epochs_since_best += 1
+            if args.patience > 0 and epochs_since_best >= args.patience:
+                logger.info("Early stop: no val_acc improvement in %d epochs (best=%.2f%% @ epoch %d).",
+                            args.patience, best_acc * 100, best_epoch + 1)
+                break
 
     writer.close()
-    logger.info("Training complete. Best val acc: %.2f%%  ckpt dir: %s",
-                best_acc * 100, ckpt_dir)
+    logger.info("Training complete. Best val acc: %.2f%% @ epoch %d  ckpt dir: %s",
+                best_acc * 100, best_epoch + 1, ckpt_dir)
     return 0
 
 
