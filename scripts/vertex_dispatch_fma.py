@@ -56,19 +56,19 @@ from setuptools import setup, find_packages
 
 setup(
     name="kmidi_vertex_trainer",
-    version="0.1.1",
+    version="0.1.2",
     packages=find_packages(),
     install_requires=[
-        # Match the container's torch 2.3.x (pytorch-gpu.2-3.py310 image).
-        "torchaudio==2.3.1",
-        "librosa",      # mp3 decode via audioread fallbacks (broader than torchaudio.load)
+        # torchaudio deliberately omitted — caused an NCCL ABI mismatch
+        # when pip reinstalled torch. We use librosa for mel spec and a
+        # tiny pure-torch SpecAugment instead.
+        "librosa",
         "soundfile",
         "audioread",
         "pandas",
         "tqdm",
         "tensorboard",
         "PyYAML",
-        "numpy",
     ],
 )
 '''

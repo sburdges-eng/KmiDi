@@ -44,7 +44,6 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-import torchaudio.transforms as T
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
@@ -64,7 +63,8 @@ logger = logging.getLogger("train_fma_genre")
 
 
 class FMADataset(Dataset):
-    """Loads mp3s, computes mel spectrogram, returns (features, label)."""
+    """Loads mp3s, computes mel spectrogram (librosa, CPU), returns
+    (features [1, n_mels, T], label)."""
 
     def __init__(self, manifest_df: pd.DataFrame, label_to_id: dict[str, int],
                  sample_rate: int = 16000, n_mels: int = 64,
@@ -73,22 +73,16 @@ class FMADataset(Dataset):
         self.label_to_id = label_to_id
         self.sample_rate = sample_rate
         self.n_mels = n_mels
+        self.n_fft = 1024
+        self.hop_length = 512
         self.max_samples = int(sample_rate * max_duration)
         self.gcs_prefix = gcs_prefix
-
-        self.mel = T.MelSpectrogram(
-            sample_rate=sample_rate, n_fft=1024, hop_length=512,
-            n_mels=n_mels, power=2.0,
-        )
-        self.db = T.AmplitudeToDB(top_db=80.0)
 
     def __len__(self) -> int:
         return len(self.df)
 
     def _resolve(self, raw_path: str) -> str:
         if self.gcs_prefix and raw_path.startswith("/Volumes/"):
-            # Map original /Volumes/.../audio/fma_medium/<sub>/<file>.mp3
-            # to <gcs_prefix>/<sub>/<file>.mp3
             tail = raw_path.split("/audio/fma_medium/", 1)
             if len(tail) == 2:
                 return f"{self.gcs_prefix.rstrip('/')}/{tail[1]}"
@@ -98,23 +92,21 @@ class FMADataset(Dataset):
         row = self.df.iloc[idx]
         path = self._resolve(row["file_path"])
         try:
-            # librosa wraps audioread which falls back across ffmpeg /
-            # gstreamer / coreaudio for mp3 — broader than torchaudio.load.
             import librosa
             y, _ = librosa.load(path, sr=self.sample_rate, mono=True,
                                 duration=self.max_samples / self.sample_rate)
-            wav = torch.from_numpy(y).float().unsqueeze(0)  # [1, T]
-            if wav.shape[1] < self.max_samples // 2:
-                pad = self.max_samples // 2 - wav.shape[1]
-                wav = torch.nn.functional.pad(wav, (0, pad))
-            mel = self.db(self.mel(wav))  # [1, n_mels, T]
+            if len(y) < self.max_samples // 2:
+                y = np.pad(y, (0, self.max_samples // 2 - len(y)))
+            mel = librosa.feature.melspectrogram(
+                y=y, sr=self.sample_rate, n_fft=self.n_fft,
+                hop_length=self.hop_length, n_mels=self.n_mels, power=2.0)
+            mel_db = librosa.power_to_db(mel, ref=np.max, top_db=80.0)
+            feat = torch.from_numpy(mel_db).float().unsqueeze(0)  # [1, n_mels, T]
             label = self.label_to_id[row["genre_top"]]
-            return mel, torch.tensor(label, dtype=torch.long)
+            return feat, torch.tensor(label, dtype=torch.long)
         except Exception as e:
-            # Bad file → return a zero spectrogram. Won't crash the batch;
-            # if EVERY file fails, balanced_acc stays at chance and we know.
             logger.debug("decode fail %s: %s", path, e)
-            return (torch.zeros(1, self.n_mels, max(self.max_samples // 512, 8)),
+            return (torch.zeros(1, self.n_mels, max(self.max_samples // self.hop_length, 8)),
                     torch.tensor(self.label_to_id[row["genre_top"]], dtype=torch.long))
 
 
@@ -128,6 +120,41 @@ def collate_pad(batch):
             f = torch.nn.functional.pad(f, (0, pad))
         padded.append(f)
     return torch.stack(padded, dim=0), torch.stack(labels, dim=0)
+
+
+# ── SpecAugment (pure torch) ─────────────────────────────────────
+
+
+class _SpecAugment(nn.Module):
+    """Minimal torchaudio-free SpecAugment: one frequency mask and one
+    time mask per item, widths uniformly random in [0, max]."""
+
+    def __init__(self, freq_mask: int = 12, time_mask: int = 24):
+        super().__init__()
+        self.freq_mask = freq_mask
+        self.time_mask = time_mask
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # x: [B, 1, n_mels, T] or [B, n_mels, T]
+        if x.dim() == 4:
+            B, C, F, T = x.shape
+        else:
+            B, F, T = x.shape
+            C = 1
+            x = x.unsqueeze(1)
+        if self.freq_mask > 0:
+            f = torch.randint(0, self.freq_mask + 1, (B,), device=x.device)
+            f_start = (torch.rand(B, device=x.device) * (F - f).clamp(min=1)).long()
+            for i in range(B):
+                if f[i] > 0:
+                    x[i, :, f_start[i]:f_start[i] + f[i], :] = 0
+        if self.time_mask > 0:
+            t = torch.randint(0, self.time_mask + 1, (B,), device=x.device)
+            t_start = (torch.rand(B, device=x.device) * (T - t).clamp(min=1)).long()
+            for i in range(B):
+                if t[i] > 0:
+                    x[i, :, :, t_start[i]:t_start[i] + t[i]] = 0
+        return x if C > 1 or x.dim() == 4 else x.squeeze(1)
 
 
 # ── training ─────────────────────────────────────────────────────
@@ -285,10 +312,8 @@ def main() -> int:
 
     spec_aug = None
     if not args.no_spec_aug and not args.smoke:
-        spec_aug = nn.Sequential(
-            T.FrequencyMasking(freq_mask_param=args.freq_mask),
-            T.TimeMasking(time_mask_param=args.time_mask),
-        ).to(device)
+        spec_aug = _SpecAugment(
+            freq_mask=args.freq_mask, time_mask=args.time_mask).to(device)
 
     run_name = args.name or f"fma-genre-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
     if args.vertex and "AIP_MODEL_DIR" in os.environ:
