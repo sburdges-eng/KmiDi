@@ -98,23 +98,21 @@ class FMADataset(Dataset):
         row = self.df.iloc[idx]
         path = self._resolve(row["file_path"])
         try:
-            import torchaudio
-            wav, sr = torchaudio.load(path)
-            if wav.shape[0] > 1:
-                wav = wav.mean(dim=0, keepdim=True)
-            if sr != self.sample_rate:
-                wav = torchaudio.functional.resample(wav, sr, self.sample_rate)
-            wav = wav[:, : self.max_samples]
+            # librosa wraps audioread which falls back across ffmpeg /
+            # gstreamer / coreaudio for mp3 — broader than torchaudio.load.
+            import librosa
+            y, _ = librosa.load(path, sr=self.sample_rate, mono=True,
+                                duration=self.max_samples / self.sample_rate)
+            wav = torch.from_numpy(y).float().unsqueeze(0)  # [1, T]
             if wav.shape[1] < self.max_samples // 2:
-                # Pad short clips up to half-window so we don't yield empty mels
                 pad = self.max_samples // 2 - wav.shape[1]
                 wav = torch.nn.functional.pad(wav, (0, pad))
             mel = self.db(self.mel(wav))  # [1, n_mels, T]
             label = self.label_to_id[row["genre_top"]]
             return mel, torch.tensor(label, dtype=torch.long)
         except Exception as e:
-            # Bad file → return a zero spectrogram with class 0 so the batch
-            # doesn't crash. Logged once.
+            # Bad file → return a zero spectrogram. Won't crash the batch;
+            # if EVERY file fails, balanced_acc stays at chance and we know.
             logger.debug("decode fail %s: %s", path, e)
             return (torch.zeros(1, self.n_mels, max(self.max_samples // 512, 8)),
                     torch.tensor(self.label_to_id[row["genre_top"]], dtype=torch.long))

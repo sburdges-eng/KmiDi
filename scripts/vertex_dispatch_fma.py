@@ -56,15 +56,18 @@ from setuptools import setup, find_packages
 
 setup(
     name="kmidi_vertex_trainer",
-    version="0.1.0",
+    version="0.1.1",
     packages=find_packages(),
     install_requires=[
+        # Match the container's torch 2.3.x (pytorch-gpu.2-3.py310 image).
+        "torchaudio==2.3.1",
+        "librosa",      # mp3 decode via audioread fallbacks (broader than torchaudio.load)
+        "soundfile",
+        "audioread",
         "pandas",
         "tqdm",
         "tensorboard",
         "PyYAML",
-        "librosa",
-        "soundfile",
         "numpy",
     ],
 )
@@ -86,10 +89,6 @@ def build_source_tarball() -> Path:
         "training/src/__init__.py",
         "training/src/models/__init__.py",
         "training/src/models/audio_classifier.py",
-        "music_brain/__init__.py",
-        "music_brain/penta_core/__init__.py",
-        "music_brain/penta_core/ml/__init__.py",
-        "music_brain/penta_core/ml/audio_dataset.py",
     ]
     for inc in includes:
         src = REPO_ROOT / inc
