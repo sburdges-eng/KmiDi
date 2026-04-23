@@ -170,11 +170,16 @@ def pick_device(force: str | None) -> torch.device:
     return torch.device("cpu")
 
 
-def train_one_epoch(model, loader, optimizer, criterion, device, desc, spec_aug=None):
+def train_one_epoch(model, loader, optimizer, criterion, device, desc, spec_aug=None,
+                    lr_at=None, step_ref=None):
     model.train()
     running = 0.0
     n = 0
     for feats, labels in tqdm(loader, desc=desc, leave=False):
+        if lr_at is not None and step_ref is not None:
+            for g in optimizer.param_groups:
+                g["lr"] = lr_at(step_ref[0])
+            step_ref[0] += 1
         feats, labels = feats.to(device), labels.to(device)
         if spec_aug is not None:
             feats = spec_aug(feats)
@@ -182,6 +187,7 @@ def train_one_epoch(model, loader, optimizer, criterion, device, desc, spec_aug=
         logits = model(feats)
         loss = criterion(logits, labels)
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
         running += loss.item() * feats.size(0)
         n += feats.size(0)
@@ -226,8 +232,10 @@ def main() -> int:
                     help="all = small+medium, medium = medium-only, small = small-only")
     ap.add_argument("--epochs", type=int, default=30)
     ap.add_argument("--batch-size", type=int, default=32)
-    ap.add_argument("--lr", type=float, default=1e-3)
+    ap.add_argument("--lr", type=float, default=3e-4)
     ap.add_argument("--weight-decay", type=float, default=0.05)
+    ap.add_argument("--warmup-steps", type=int, default=200,
+                    help="Linear LR warmup steps. 0 disables.")
     ap.add_argument("--patience", type=int, default=6)
     ap.add_argument("--sample-rate", type=int, default=16000)
     ap.add_argument("--max-duration", type=float, default=6.0)
@@ -310,6 +318,17 @@ def main() -> int:
                                   weight_decay=args.weight_decay)
     criterion = nn.CrossEntropyLoss()
 
+    # LR schedule: linear warmup → cosine decay to 10% of peak.
+    total_steps = max(args.epochs * len(train_loader), 1)
+    warmup = min(args.warmup_steps, max(total_steps // 10, 1))
+    import math as _math
+    def lr_at(step: int) -> float:
+        if step < warmup:
+            return args.lr * (step + 1) / warmup
+        progress = (step - warmup) / max(total_steps - warmup, 1)
+        return args.lr * (0.1 + 0.9 * 0.5 * (1.0 + _math.cos(_math.pi * progress)))
+    global_step = 0
+
     spec_aug = None
     if not args.no_spec_aug and not args.smoke:
         spec_aug = _SpecAugment(
@@ -317,7 +336,15 @@ def main() -> int:
 
     run_name = args.name or f"fma-genre-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
     if args.vertex and "AIP_MODEL_DIR" in os.environ:
-        ckpt_dir = Path(os.environ["AIP_MODEL_DIR"])
+        # Vertex sets this as a gs:// URI; rewrite to a /gcs/ Fuse path so
+        # Path()-based mkdir + write actually persists to the bucket. Without
+        # this rewrite, Path() collapses gs:// → gs:/ and the script writes
+        # to a useless local directory that gets nuked on worker shutdown.
+        raw = os.environ["AIP_MODEL_DIR"]
+        if raw.startswith("gs://"):
+            ckpt_dir = Path("/gcs") / raw[len("gs://"):]
+        else:
+            ckpt_dir = Path(raw)
     else:
         ckpt_dir = Path(args.models_root).expanduser() / "checkpoints" / run_name
     ckpt_dir.mkdir(parents=True, exist_ok=True)
@@ -372,10 +399,12 @@ def main() -> int:
     epochs_since_best = 0
     t_start = time.perf_counter()
 
+    step_ref = [global_step]
     for epoch in range(args.epochs):
         desc = f"epoch {epoch + 1}/{args.epochs}"
         train_loss = train_one_epoch(model, train_loader, optimizer, criterion,
-                                     device, desc, spec_aug=spec_aug)
+                                     device, desc, spec_aug=spec_aug,
+                                     lr_at=lr_at, step_ref=step_ref)
         val_loss, val_acc, val_bal, per_class = validate(
             model, val_loader, criterion, device, num_classes)
         logger.info(
