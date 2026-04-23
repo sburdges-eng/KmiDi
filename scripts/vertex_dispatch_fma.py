@@ -42,10 +42,19 @@ TASK_CONFIGS = {
     "genre": {
         "script": "training/scripts/train_fma_genre.py",
         "extra_args": ["--epochs", "30", "--batch-size", "32",
-                       "--patience", "6", "--vertex"],
+                       "--patience", "6", "--vertex",
+                       "--no-balanced-sampler", "--num-workers", "0"],
         "machine_type": "n1-standard-4",
         "accelerator_type": "NVIDIA_TESLA_T4",
         "accelerator_count": 1,
+    },
+    "probe": {
+        # Diagnostic only — no GPU, just decode-rate probe.
+        "script": "training/scripts/probe_gcs_decode.py",
+        "extra_args": ["--per-genre", "20", "--vertex"],
+        "machine_type": "n1-standard-4",
+        "accelerator_type": "ACCELERATOR_TYPE_UNSPECIFIED",
+        "accelerator_count": 0,
     },
     # Sub / tags / jepa wired when their trainers land.
 }
@@ -56,7 +65,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="kmidi_vertex_trainer",
-    version="0.1.2",
+    version="0.1.3",
     packages=find_packages(),
     install_requires=[
         # torchaudio deliberately omitted — caused an NCCL ABI mismatch
@@ -86,6 +95,7 @@ def build_source_tarball() -> Path:
         "training/__init__.py",
         "training/scripts/__init__.py",
         "training/scripts/train_fma_genre.py",
+        "training/scripts/probe_gcs_decode.py",
         "training/src/__init__.py",
         "training/src/models/__init__.py",
         "training/src/models/audio_classifier.py",
@@ -128,7 +138,10 @@ def submit_job(args: argparse.Namespace, package_uri: str, run_name: str) -> Non
     import yaml
     cfg = TASK_CONFIGS[args.task]
 
-    gcs_audio_prefix = f"/gcs/{args.bucket}/fma/audio/fma_medium"
+    # Manifest paths contain /fma_medium/fma_medium/ (FMA tarball nests a
+    # fma_medium/ subdir). The _resolve() split keeps the second
+    # fma_medium/ segment in tail[1], so the prefix must stop at .../audio/.
+    gcs_audio_prefix = f"/gcs/{args.bucket}/fma/audio"
     manifest_gcs = f"/gcs/{args.bucket}/fma/manifest/{args.manifest_name}"
 
     script_args = [
@@ -142,17 +155,22 @@ def submit_job(args: argparse.Namespace, package_uri: str, run_name: str) -> Non
     module_name = cfg["script"].replace("/", ".").replace(".py", "")
 
     # Spec structure matches CustomJobSpec proto — camelCase keys.
+    machine_spec = {"machineType": cfg["machine_type"]}
+    if cfg["accelerator_count"] > 0:
+        machine_spec["acceleratorType"] = cfg["accelerator_type"]
+        machine_spec["acceleratorCount"] = cfg["accelerator_count"]
+        executor_image = "us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-3.py310:latest"
+    else:
+        # Vertex's pytorch image requires GPU. Use sklearn-cpu for CPU
+        # workloads (Python + numpy + pandas; pip resolves librosa etc.).
+        executor_image = "us-docker.pkg.dev/vertex-ai/training/sklearn-cpu.1-0:latest"
+
     spec = {
         "workerPoolSpecs": [{
-            "machineSpec": {
-                "machineType": cfg["machine_type"],
-                "acceleratorType": cfg["accelerator_type"],
-                "acceleratorCount": cfg["accelerator_count"],
-            },
+            "machineSpec": machine_spec,
             "replicaCount": 1,
             "pythonPackageSpec": {
-                "executorImageUri":
-                    "us-docker.pkg.dev/vertex-ai/training/pytorch-gpu.2-3.py310:latest",
+                "executorImageUri": executor_image,
                 "packageUris": [package_uri],
                 "pythonModule": module_name,
                 "args": script_args,

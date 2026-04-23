@@ -249,6 +249,11 @@ def main() -> int:
     ap.add_argument("--models-root", type=str,
                     default=os.environ.get("KELLY_MODEL_ROOT", str(Path.home() / "Models")))
     ap.add_argument("--num-workers", type=int, default=2)
+    ap.add_argument("--no-balanced-sampler", action="store_true",
+                    help="Disable WeightedRandomSampler; use class-weighted "
+                         "CrossEntropyLoss instead. Better for tail classes "
+                         "with small file counts to avoid pathological "
+                         "oversampling on lossy data sources.")
     ap.add_argument("--vertex", action="store_true",
                     help="Vertex AI mode: use AIP_MODEL_DIR for output, log to stderr")
     ap.add_argument("--smoke", action="store_true",
@@ -294,11 +299,7 @@ def main() -> int:
     train_df = df.iloc[train_idx].reset_index(drop=True)
     val_df = df.iloc[val_idx].reset_index(drop=True)
 
-    # Inverse-frequency sampler weights for the imbalanced training set
     cls_count = train_df["genre_top"].value_counts().to_dict()
-    sample_weights = train_df["genre_top"].map(lambda c: 1.0 / cls_count[c]).to_numpy()
-    sampler = WeightedRandomSampler(
-        weights=sample_weights, num_samples=len(train_df), replacement=True)
 
     ds_kwargs = dict(label_to_id=label_to_id, sample_rate=args.sample_rate,
                      n_mels=args.n_mels, max_duration=args.max_duration,
@@ -306,8 +307,18 @@ def main() -> int:
     train_set = FMADataset(train_df, **ds_kwargs)
     val_set = FMADataset(val_df, **ds_kwargs)
 
+    if args.no_balanced_sampler:
+        sampler = None
+        shuffle = True
+    else:
+        sample_weights = train_df["genre_top"].map(lambda c: 1.0 / cls_count[c]).to_numpy()
+        sampler = WeightedRandomSampler(
+            weights=sample_weights, num_samples=len(train_df), replacement=True)
+        shuffle = False
+
     train_loader = DataLoader(train_set, batch_size=args.batch_size,
-                              sampler=sampler, num_workers=args.num_workers,
+                              sampler=sampler, shuffle=shuffle,
+                              num_workers=args.num_workers,
                               collate_fn=collate_pad, pin_memory=False)
     val_loader = DataLoader(val_set, batch_size=args.batch_size, shuffle=False,
                             num_workers=args.num_workers, collate_fn=collate_pad,
@@ -316,7 +327,15 @@ def main() -> int:
     model = AudioClassifier(num_classes=num_classes, n_mels=args.n_mels).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr,
                                   weight_decay=args.weight_decay)
-    criterion = nn.CrossEntropyLoss()
+    if args.no_balanced_sampler:
+        # Compensate for skew via class weights in the loss instead.
+        max_cnt = max(cls_count.values())
+        weights = torch.tensor(
+            [max_cnt / cls_count[c] for c in classes],
+            dtype=torch.float32, device=device)
+        criterion = nn.CrossEntropyLoss(weight=weights)
+    else:
+        criterion = nn.CrossEntropyLoss()
 
     # LR schedule: linear warmup → cosine decay to 10% of peak.
     total_steps = max(args.epochs * len(train_loader), 1)
