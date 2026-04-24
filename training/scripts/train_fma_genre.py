@@ -68,7 +68,8 @@ class FMADataset(Dataset):
 
     def __init__(self, manifest_df: pd.DataFrame, label_to_id: dict[str, int],
                  sample_rate: int = 16000, n_mels: int = 64,
-                 max_duration: float = 6.0, gcs_prefix: str | None = None):
+                 max_duration: float = 6.0, gcs_prefix: str | None = None,
+                 mel_cache_root: str | None = None):
         self.df = manifest_df.reset_index(drop=True)
         self.label_to_id = label_to_id
         self.sample_rate = sample_rate
@@ -77,6 +78,7 @@ class FMADataset(Dataset):
         self.hop_length = 512
         self.max_samples = int(sample_rate * max_duration)
         self.gcs_prefix = gcs_prefix
+        self.mel_cache_root = mel_cache_root
 
     def __len__(self) -> int:
         return len(self.df)
@@ -88,8 +90,24 @@ class FMADataset(Dataset):
                 return f"{self.gcs_prefix.rstrip('/')}/{tail[1]}"
         return raw_path
 
+    def _try_cache(self, track_id: int):
+        if not self.mel_cache_root:
+            return None
+        sub = f"{int(track_id):06d}"[:3]
+        p = Path(self.mel_cache_root) / "fma_medium" / sub / f"{int(track_id):06d}.npy"
+        if p.exists():
+            try:
+                arr = np.load(str(p)).astype(np.float32)
+                return torch.from_numpy(arr).unsqueeze(0)
+            except Exception:
+                return None
+        return None
+
     def __getitem__(self, idx: int):
         row = self.df.iloc[idx]
+        cached = self._try_cache(row["track_id"]) if "track_id" in row else None
+        if cached is not None:
+            return cached, torch.tensor(self.label_to_id[row["genre_top"]], dtype=torch.long)
         path = self._resolve(row["file_path"])
         try:
             import librosa
@@ -101,7 +119,7 @@ class FMADataset(Dataset):
                 y=y, sr=self.sample_rate, n_fft=self.n_fft,
                 hop_length=self.hop_length, n_mels=self.n_mels, power=2.0)
             mel_db = librosa.power_to_db(mel, ref=np.max, top_db=80.0)
-            feat = torch.from_numpy(mel_db).float().unsqueeze(0)  # [1, n_mels, T]
+            feat = torch.from_numpy(mel_db).float().unsqueeze(0)
             label = self.label_to_id[row["genre_top"]]
             return feat, torch.tensor(label, dtype=torch.long)
         except Exception as e:
@@ -228,6 +246,11 @@ def main() -> int:
                     default=str(Path.home() / "Datasets" / "fma_metadata" / "fma_medium_manifest.csv"))
     ap.add_argument("--gcs-audio-prefix", type=str, default=None,
                     help="If set, rewrite manifest /Volumes/... paths to <prefix>/<sub>/<file>.mp3")
+    ap.add_argument("--mel-cache-root", type=str, default=None,
+                    help="If set, load pre-computed mel spectrograms from "
+                         "<root>/fma_medium/<sub>/<track_id>.npy. Skips audio decode "
+                         "when the file exists; falls back to mp3 decode otherwise. "
+                         "Produced by training/scripts/build_mel_cache.py.")
     ap.add_argument("--subset-filter", choices=["all", "small", "medium"], default="all",
                     help="all = small+medium, medium = medium-only, small = small-only")
     ap.add_argument("--epochs", type=int, default=30)
@@ -303,7 +326,8 @@ def main() -> int:
 
     ds_kwargs = dict(label_to_id=label_to_id, sample_rate=args.sample_rate,
                      n_mels=args.n_mels, max_duration=args.max_duration,
-                     gcs_prefix=args.gcs_audio_prefix)
+                     gcs_prefix=args.gcs_audio_prefix,
+                     mel_cache_root=args.mel_cache_root)
     train_set = FMADataset(train_df, **ds_kwargs)
     val_set = FMADataset(val_df, **ds_kwargs)
 

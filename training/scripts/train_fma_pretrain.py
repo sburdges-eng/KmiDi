@@ -60,7 +60,8 @@ logger = logging.getLogger("train_fma_pretrain")
 class MelOnlyDataset(Dataset):
     def __init__(self, df: pd.DataFrame, sample_rate: int = 16000,
                  n_mels: int = 64, max_duration: float = 6.0,
-                 gcs_prefix: str | None = None):
+                 gcs_prefix: str | None = None,
+                 mel_cache_root: str | None = None):
         self.df = df.reset_index(drop=True)
         self.sr = sample_rate
         self.n_mels = n_mels
@@ -68,6 +69,7 @@ class MelOnlyDataset(Dataset):
         self.hop_length = 512
         self.max_samples = int(sample_rate * max_duration)
         self.gcs_prefix = gcs_prefix
+        self.mel_cache_root = mel_cache_root
 
     def __len__(self) -> int:
         return len(self.df)
@@ -79,8 +81,25 @@ class MelOnlyDataset(Dataset):
                 return f"{self.gcs_prefix.rstrip('/')}/{tail[1]}"
         return raw
 
+    def _try_cache(self, track_id):
+        if not self.mel_cache_root:
+            return None
+        sub = f"{int(track_id):06d}"[:3]
+        p = Path(self.mel_cache_root) / "fma_medium" / sub / f"{int(track_id):06d}.npy"
+        if p.exists():
+            try:
+                arr = np.load(str(p)).astype(np.float32)
+                return torch.from_numpy(arr).unsqueeze(0)
+            except Exception:
+                return None
+        return None
+
     def __getitem__(self, idx: int):
         row = self.df.iloc[idx]
+        if "track_id" in row:
+            cached = self._try_cache(row["track_id"])
+            if cached is not None:
+                return cached
         path = self._resolve(row["file_path"])
         try:
             import librosa
@@ -238,6 +257,7 @@ def main() -> int:
     ap.add_argument("--manifest", type=str, required=True,
                     help="CSV with at least a 'file_path' column. Labels ignored.")
     ap.add_argument("--gcs-audio-prefix", type=str, default=None)
+    ap.add_argument("--mel-cache-root", type=str, default=None)
     ap.add_argument("--subset-filter", choices=["all","small","medium"], default="all")
     ap.add_argument("--epochs", type=int, default=30)
     ap.add_argument("--batch-size", type=int, default=64)
@@ -286,7 +306,8 @@ def main() -> int:
 
     ds_kwargs = dict(sample_rate=args.sample_rate, n_mels=args.n_mels,
                      max_duration=args.max_duration,
-                     gcs_prefix=args.gcs_audio_prefix)
+                     gcs_prefix=args.gcs_audio_prefix,
+                     mel_cache_root=args.mel_cache_root)
     train_set = MelOnlyDataset(train_df, **ds_kwargs)
     val_set = MelOnlyDataset(val_df, **ds_kwargs)
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True,

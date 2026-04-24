@@ -64,7 +64,8 @@ class FMADataset(Dataset):
 
     def __init__(self, manifest_df: pd.DataFrame, label_to_id: dict[int, int],
                  sample_rate: int = 16000, n_mels: int = 64,
-                 max_duration: float = 6.0, gcs_prefix: str | None = None):
+                 max_duration: float = 6.0, gcs_prefix: str | None = None,
+                 mel_cache_root: str | None = None):
         self.df = manifest_df.reset_index(drop=True)
         self.label_to_id = label_to_id  # genre_id (int) → index
         self.num_classes = len(label_to_id)
@@ -74,6 +75,7 @@ class FMADataset(Dataset):
         self.hop_length = 512
         self.max_samples = int(sample_rate * max_duration)
         self.gcs_prefix = gcs_prefix
+        self.mel_cache_root = mel_cache_root
 
     def __len__(self) -> int:
         return len(self.df)
@@ -96,10 +98,27 @@ class FMADataset(Dataset):
                 y[self.label_to_id[gid]] = 1.0
         return y
 
+
+    def _try_cache(self, track_id):
+        if not self.mel_cache_root:
+            return None
+        sub = f"{int(track_id):06d}"[:3]
+        p = Path(self.mel_cache_root) / "fma_medium" / sub / f"{int(track_id):06d}.npy"
+        if p.exists():
+            try:
+                arr = np.load(str(p)).astype(np.float32)
+                return torch.from_numpy(arr).unsqueeze(0)
+            except Exception:
+                return None
+        return None
+
     def __getitem__(self, idx: int):
         row = self.df.iloc[idx]
-        path = self._resolve(row["file_path"])
         target = self._multi_hot(row[LABEL_COL])
+        cached = self._try_cache(row["track_id"]) if "track_id" in row else None
+        if cached is not None:
+            return cached, target
+        path = self._resolve(row["file_path"])
         try:
             import librosa
             y, _ = librosa.load(path, sr=self.sample_rate, mono=True,
@@ -267,6 +286,8 @@ def main() -> int:
                     default=str(Path.home() / "Datasets" / "fma_metadata" / "fma_medium_manifest.csv"))
     ap.add_argument("--gcs-audio-prefix", type=str, default=None,
                     help="If set, rewrite manifest /Volumes/... paths to <prefix>/<sub>/<file>.mp3")
+    ap.add_argument("--mel-cache-root", type=str, default=None,
+                    help="Pre-computed mel .npy cache root (produced by build_mel_cache.py).")
     ap.add_argument("--subset-filter", choices=["all", "small", "medium"], default="all",
                     help="all = small+medium, medium = medium-only, small = small-only")
     ap.add_argument("--epochs", type=int, default=30)
@@ -352,7 +373,8 @@ def main() -> int:
 
     ds_kwargs = dict(label_to_id=label_to_id, sample_rate=args.sample_rate,
                      n_mels=args.n_mels, max_duration=args.max_duration,
-                     gcs_prefix=args.gcs_audio_prefix)
+                     gcs_prefix=args.gcs_audio_prefix,
+                     mel_cache_root=args.mel_cache_root)
     train_set = FMADataset(train_df, **ds_kwargs)
     val_set = FMADataset(val_df, **ds_kwargs)
 

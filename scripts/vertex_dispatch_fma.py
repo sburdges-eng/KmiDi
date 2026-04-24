@@ -39,51 +39,61 @@ logger = logging.getLogger("vertex_dispatch_fma")
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 TASK_CONFIGS = {
+    # All FMA audio trainers share the same bottleneck — per-file
+    # librosa+audioread mp3 decode (~180 ms each). Pin machine=c2-standard-8
+    # (8 vCPUs) and num-workers=8 so decode fills 8 parallel subprocesses
+    # and keeps the T4 fed. c2 > n1 on single-core for compute-bound work
+    # (audioread's ffmpeg subprocess is CPU-heavy).
     "genre": {
         "script": "training/scripts/train_fma_genre.py",
         "extra_args": ["--epochs", "30", "--batch-size", "32",
                        "--patience", "6", "--vertex",
-                       "--no-balanced-sampler", "--num-workers", "0"],
-        "machine_type": "n1-standard-4",
+                       "--no-balanced-sampler"],
+        "machine_type": "c2-standard-8",
         "accelerator_type": "NVIDIA_TESLA_T4",
         "accelerator_count": 1,
+        "num_workers": 8,
     },
     "subgenre": {
         "script": "training/scripts/train_fma_subgenre.py",
-        # Bigger output head + 106-class softmax converges slower → more
-        # epochs but same patience. Class-weighted CE since the tail goes
-        # to single-digit-sample subgenres.
         "extra_args": ["--epochs", "40", "--batch-size", "32",
                        "--patience", "8", "--vertex",
-                       "--no-balanced-sampler", "--num-workers", "0",
+                       "--no-balanced-sampler",
                        "--init-from",
                        "/gcs/kmidi-train-us-central1/runs/fma-genre-20260423-094604/model/best.pt"],
-        "machine_type": "n1-standard-4",
+        "machine_type": "c2-standard-8",
         "accelerator_type": "NVIDIA_TESLA_T4",
         "accelerator_count": 1,
+        "num_workers": 8,
     },
     "tags": {
         "script": "training/scripts/train_fma_tags.py",
-        # Multi-label over the same 106 subgenres. AUROC-selected, BCE with
-        # pos_weight. Init from genre backbone — same trick as subgenre.
         "extra_args": ["--epochs", "40", "--batch-size", "32",
-                       "--patience", "8", "--vertex", "--num-workers", "0",
+                       "--patience", "8", "--vertex",
                        "--init-from",
                        "/gcs/kmidi-train-us-central1/runs/fma-genre-20260423-094604/model/best.pt"],
-        "machine_type": "n1-standard-4",
+        "machine_type": "c2-standard-8",
         "accelerator_type": "NVIDIA_TESLA_T4",
         "accelerator_count": 1,
+        "num_workers": 8,
     },
     "pretrain": {
         "script": "training/scripts/train_fma_pretrain.py",
-        # Self-supervised SimSiam — no labels needed. Trains the conv
-        # backbone via augmented-view consistency. Output saved with
-        # encoder_conv_state_dict for downstream warm-start.
-        "extra_args": ["--epochs", "30", "--batch-size", "64",
-                       "--vertex", "--num-workers", "0"],
-        "machine_type": "n1-standard-4",
+        "extra_args": ["--epochs", "30", "--batch-size", "64", "--vertex"],
+        "machine_type": "c2-standard-8",
         "accelerator_type": "NVIDIA_TESLA_T4",
         "accelerator_count": 1,
+        "num_workers": 8,
+    },
+    # Dataset prep job — pre-decode mp3s to .npy mel caches in GCS.
+    # Eliminates audio decode at train time entirely. Run once, reuse.
+    "build_mel_cache": {
+        "script": "training/scripts/build_mel_cache.py",
+        "extra_args": ["--vertex"],
+        "machine_type": "c2-standard-16",  # 16 vCPUs, decode-bound
+        "accelerator_type": "ACCELERATOR_TYPE_UNSPECIFIED",
+        "accelerator_count": 0,
+        "num_workers": 16,
     },
     "probe": {
         # Diagnostic only — no GPU, just decode-rate probe.
@@ -135,6 +145,7 @@ def build_source_tarball() -> Path:
         "training/scripts/train_fma_subgenre.py",
         "training/scripts/train_fma_tags.py",
         "training/scripts/train_fma_pretrain.py",
+        "training/scripts/build_mel_cache.py",
         "training/scripts/probe_gcs_decode.py",
         "training/src/__init__.py",
         "training/src/models/__init__.py",
@@ -184,12 +195,20 @@ def submit_job(args: argparse.Namespace, package_uri: str, run_name: str) -> Non
     gcs_audio_prefix = f"/gcs/{args.bucket}/fma/audio"
     manifest_gcs = f"/gcs/{args.bucket}/fma/manifest/{args.manifest_name}"
 
+    mel_cache_gcs = f"/gcs/{args.bucket}/fma/mel_cache"
     script_args = [
         "--manifest", manifest_gcs,
         "--gcs-audio-prefix", gcs_audio_prefix,
         "--name", run_name,
-        "--num-workers", "4",
+        "--num-workers", str(cfg.get("num_workers", 4)),
     ] + cfg["extra_args"]
+    # Pass mel cache to training jobs (skip for the cache-builder itself
+    # and the probe, which don't need or want it).
+    if args.task not in ("build_mel_cache", "probe") and args.use_mel_cache:
+        script_args.extend(["--mel-cache-root", mel_cache_gcs])
+    # build_mel_cache needs --output-root, not --mel-cache-root.
+    if args.task == "build_mel_cache":
+        script_args.extend(["--output-root", mel_cache_gcs])
 
     base_output_dir = f"gs://{args.bucket}/runs/{run_name}"
     module_name = cfg["script"].replace("/", ".").replace(".py", "")
@@ -265,6 +284,10 @@ def main() -> int:
     ap.add_argument("--spot", action="store_true", default=True,
                     help="Use spot/preemptible VMs (default, required for T4 on free quota)")
     ap.add_argument("--no-spot", dest="spot", action="store_false")
+    ap.add_argument("--use-mel-cache", action="store_true", default=True,
+                    help="Pass --mel-cache-root=/gcs/<bucket>/fma/mel_cache to "
+                         "training jobs (skip audio decode when cache exists).")
+    ap.add_argument("--no-mel-cache", dest="use_mel_cache", action="store_false")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--name", default=None,
                     help="Run name. Default: <task>-YYYYMMDD-HHMMSS")
