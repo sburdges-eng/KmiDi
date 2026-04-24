@@ -163,7 +163,10 @@ def main() -> int:
         },
         "fail_samples": fail_samples,
     }, indent=2))
-    return 0 if failed == 0 else 1
+    # Allow up to 1% decode failures (corrupt mp3s in the wild). Real
+    # corpus-level breakage shows up as >>1% and fails loudly.
+    fail_ratio = failed / max(len(tasks), 1)
+    return 0 if fail_ratio < 0.01 else 1
 
 
 if __name__ == "__main__":
