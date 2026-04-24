@@ -62,6 +62,18 @@ TASK_CONFIGS = {
         "accelerator_type": "NVIDIA_TESLA_T4",
         "accelerator_count": 1,
     },
+    "tags": {
+        "script": "training/scripts/train_fma_tags.py",
+        # Multi-label over the same 106 subgenres. AUROC-selected, BCE with
+        # pos_weight. Init from genre backbone — same trick as subgenre.
+        "extra_args": ["--epochs", "40", "--batch-size", "32",
+                       "--patience", "8", "--vertex", "--num-workers", "0",
+                       "--init-from",
+                       "/gcs/kmidi-train-us-central1/runs/fma-genre-20260423-094604/model/best.pt"],
+        "machine_type": "n1-standard-4",
+        "accelerator_type": "NVIDIA_TESLA_T4",
+        "accelerator_count": 1,
+    },
     "probe": {
         # Diagnostic only — no GPU, just decode-rate probe.
         "script": "training/scripts/probe_gcs_decode.py",
@@ -110,6 +122,7 @@ def build_source_tarball() -> Path:
         "training/scripts/__init__.py",
         "training/scripts/train_fma_genre.py",
         "training/scripts/train_fma_subgenre.py",
+        "training/scripts/train_fma_tags.py",
         "training/scripts/probe_gcs_decode.py",
         "training/src/__init__.py",
         "training/src/models/__init__.py",
