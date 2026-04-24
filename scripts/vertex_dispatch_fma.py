@@ -74,6 +74,17 @@ TASK_CONFIGS = {
         "accelerator_type": "NVIDIA_TESLA_T4",
         "accelerator_count": 1,
     },
+    "pretrain": {
+        "script": "training/scripts/train_fma_pretrain.py",
+        # Self-supervised SimSiam — no labels needed. Trains the conv
+        # backbone via augmented-view consistency. Output saved with
+        # encoder_conv_state_dict for downstream warm-start.
+        "extra_args": ["--epochs", "30", "--batch-size", "64",
+                       "--vertex", "--num-workers", "0"],
+        "machine_type": "n1-standard-4",
+        "accelerator_type": "NVIDIA_TESLA_T4",
+        "accelerator_count": 1,
+    },
     "probe": {
         # Diagnostic only — no GPU, just decode-rate probe.
         "script": "training/scripts/probe_gcs_decode.py",
@@ -123,6 +134,7 @@ def build_source_tarball() -> Path:
         "training/scripts/train_fma_genre.py",
         "training/scripts/train_fma_subgenre.py",
         "training/scripts/train_fma_tags.py",
+        "training/scripts/train_fma_pretrain.py",
         "training/scripts/probe_gcs_decode.py",
         "training/src/__init__.py",
         "training/src/models/__init__.py",
