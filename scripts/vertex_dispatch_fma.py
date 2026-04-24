@@ -48,6 +48,20 @@ TASK_CONFIGS = {
         "accelerator_type": "NVIDIA_TESLA_T4",
         "accelerator_count": 1,
     },
+    "subgenre": {
+        "script": "training/scripts/train_fma_subgenre.py",
+        # Bigger output head + 106-class softmax converges slower → more
+        # epochs but same patience. Class-weighted CE since the tail goes
+        # to single-digit-sample subgenres.
+        "extra_args": ["--epochs", "40", "--batch-size", "32",
+                       "--patience", "8", "--vertex",
+                       "--no-balanced-sampler", "--num-workers", "0",
+                       "--init-from",
+                       "/gcs/kmidi-train-us-central1/runs/fma-genre-20260423-094604/model/best.pt"],
+        "machine_type": "n1-standard-4",
+        "accelerator_type": "NVIDIA_TESLA_T4",
+        "accelerator_count": 1,
+    },
     "probe": {
         # Diagnostic only — no GPU, just decode-rate probe.
         "script": "training/scripts/probe_gcs_decode.py",
@@ -95,6 +109,7 @@ def build_source_tarball() -> Path:
         "training/__init__.py",
         "training/scripts/__init__.py",
         "training/scripts/train_fma_genre.py",
+        "training/scripts/train_fma_subgenre.py",
         "training/scripts/probe_gcs_decode.py",
         "training/src/__init__.py",
         "training/src/models/__init__.py",
