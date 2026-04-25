@@ -27,9 +27,16 @@ int kmidi_engine_get_state(const kmidi_engine_t* engine,
 
     std::memset(out_state, 0, sizeof(*out_state));
 
-    // Seqlock snapshot (shared helper from RTState.h). Retries up to 8x
-    // on odd sequence or torn window; returns -1 (retry) on exhaustion.
+    // Seqlock snapshot (shared helper from RTState.h). Default retry budget
+    // is 64x; the helper returns false on torn-window exhaustion.
+    //
+    // captured_seq is read inside the lambda so the sequence value matches
+    // the payload — re-reading after the snapshot would race the writer.
+    // (Mirrors src/bridge/kelly_ffi.cpp::kelly_brain_get_rt_state.)
+    uint64_t captured_seq = 0;
     const bool ok = penta::rt_state_snapshot(g_rtState, [&]() noexcept {
+        captured_seq = g_rtState.sequence.load(std::memory_order_relaxed);
+
         out_state->bpm             = g_rtState.bpm.load(std::memory_order_relaxed);
         out_state->sample_position = g_rtState.samplePosition.load(std::memory_order_relaxed);
         out_state->bar             = g_rtState.bar.load(std::memory_order_relaxed);
@@ -51,7 +58,8 @@ int kmidi_engine_get_state(const kmidi_engine_t* engine,
 
     if (!ok) return -1;
 
-    out_state->sequence = g_rtState.sequence.load(std::memory_order_relaxed);
+    // Sequence value captured inside the stable window — coherent with payload.
+    out_state->sequence = captured_seq;
     return 0;
 }
 

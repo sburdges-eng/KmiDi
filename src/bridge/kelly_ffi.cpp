@@ -332,6 +332,8 @@ const char* kelly_get_error_message(KellyErrorCode error_code) {
             return "Memory allocation failed";
         case KELLY_ERROR_FILE_NOT_FOUND:
             return "File not found";
+        case KELLY_ERROR_AGAIN:
+            return "Transient seqlock contention; retry the call";
         case KELLY_ERROR_UNKNOWN:
         default:
             return "Unknown error";

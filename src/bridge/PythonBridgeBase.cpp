@@ -18,8 +18,12 @@ namespace bridge {
 // the PyThreadState* from PyEval_SaveThread() (cast to void*).
 void* PythonBridgeBase::mainThreadState_ = nullptr;
 
-// Guards first-time PyEval_SaveThread so only one bridge calls it.
-static std::once_flag s_gilReleaseOnce;
+// Single once_flag that wraps Py_Initialize + PyEval_SaveThread together so
+// that the same thread that acquires the GIL via Py_Initialize is also the
+// one that releases it via PyEval_SaveThread. Splitting these across two
+// synchronization points lets thread A initialize (acquiring the GIL) while
+// thread B then races into PyEval_SaveThread without holding it — UB.
+static std::once_flag s_pyStartupOnce;
 
 PythonBridgeBase::PythonBridgeBase(const std::string& bridgeName)
     : BridgeBase(bridgeName)
@@ -49,27 +53,31 @@ bool PythonBridgeBase::isPythonInitialized() {
 // static
 bool PythonBridgeBase::ensurePythonStarted() {
 #ifdef PYTHON_AVAILABLE
-    if (!Py_IsInitialized()) {
-        Py_Initialize();
+    // Both Py_Initialize and PyEval_SaveThread must run on the same thread
+    // and run together — the first half acquires the GIL, the second half
+    // releases it. Wrapping both inside one call_once means exactly one
+    // thread races to do the whole startup; every other thread blocks until
+    // it completes, then sees mainThreadState_ already populated.
+    static std::atomic<bool> startupOk{false};
+    std::call_once(s_pyStartupOnce, []() {
         if (!Py_IsInitialized()) {
-            // Can't call logError (no instance); write to stderr directly.
-            std::cerr << "PythonBridgeBase: Failed to initialize Python interpreter\n";
-            return false;
+            Py_Initialize();
         }
-    }
-    // GIL is held by this thread after Py_Initialize (or was already held if
-    // Python was initialized by a previous caller who hasn't released yet).
-    // Release it exactly once, globally, so all threads can use
-    // PyGILState_Ensure / PyGILGuard safely.
-    std::call_once(s_gilReleaseOnce, []() {
-        // PyEval_InitThreads is a no-op in CPython >=3.9 (always called by
-        // Py_Initialize) but harmless on older versions.
+        if (!Py_IsInitialized()) {
+            std::cerr << "PythonBridgeBase: Failed to initialize Python interpreter\n";
+            return;
+        }
+        // PyEval_InitThreads is a no-op in CPython >=3.9 (Py_Initialize calls
+        // it implicitly) but harmless on older versions.
 #if PY_VERSION_HEX < 0x03090000
         PyEval_InitThreads();
 #endif
+        // Releasing the GIL here is paired with the Py_Initialize above on
+        // the same thread — required by CPython.
         mainThreadState_ = static_cast<void*>(PyEval_SaveThread());
+        startupOk.store(true, std::memory_order_release);
     });
-    return true;
+    return startupOk.load(std::memory_order_acquire);
 #else
     std::cerr << "PythonBridgeBase: Python not available (compiled without PYTHON_AVAILABLE)\n";
     return false;
