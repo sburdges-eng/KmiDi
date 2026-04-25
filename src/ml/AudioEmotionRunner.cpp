@@ -207,14 +207,17 @@ struct AudioEmotionRunnerImpl {
                 if (toPop > 0) {
                     sampleRing.pop(sampleBuffer.data() + samplesAccumulated, toPop);
                     samplesAccumulated += toPop;
-                    // Discard any overflow that didn't fit (ring draining)
+                    // Discard any overflow that didn't fit (ring draining).
+                    // Buffer is local — `static` here would race across
+                    // workerLoop instances when multiple plugins coexist
+                    // in the same process (DAW with multiple inserts).
                     if (avail > toPop) {
                         const size_t overflow = avail - toPop;
-                        // Pop and discard — keep ring from stalling
-                        static float discard[4096];
+                        constexpr size_t kDiscardChunk = 4096;
+                        float discard[kDiscardChunk];
                         size_t remaining = overflow;
                         while (remaining > 0) {
-                            size_t chunk = std::min(remaining, static_cast<size_t>(4096));
+                            const size_t chunk = std::min(remaining, kDiscardChunk);
                             sampleRing.pop(discard, chunk);
                             remaining -= chunk;
                         }
