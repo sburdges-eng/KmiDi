@@ -589,7 +589,22 @@ if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE)
             INSTALL_NAME_DIR "@rpath"
         )
     endif()
-    
+
+    # Sanitizer flag propagation: KellyCore's .o files are ASan/UBSan/TSan
+    # instrumented when those options are set, but the dylib link step must
+    # also link the sanitizer runtime — otherwise the link fails with
+    # ___asan_*/__ubsan_*/__tsan_* undefined symbols. This block has to live
+    # AFTER add_library(KellyFFI ...) because the earlier ASan/TSan block
+    # (~line 396) runs before the KellyFFI target exists.
+    if(KMIDI_ENABLE_ASAN)
+        enable_sanitizers(KellyFFI)
+        message(STATUS "KellyFFI: ASan + UBSan enabled")
+    endif()
+    if(KMIDI_ENABLE_TSAN)
+        enable_thread_sanitizer(KellyFFI)
+        message(STATUS "KellyFFI: ThreadSanitizer enabled")
+    endif()
+
     # Install FFI library
     install(TARGETS KellyFFI
         RUNTIME DESTINATION bin
@@ -632,8 +647,11 @@ endif()
 
 # Tests
 if(BUILD_TESTS AND BUILD_KELLY_CORE)
+    # enable_testing() must run unconditionally so that the standalone
+    # RTStateSeqlockTest and SIMDKernelsTest add_test() calls below
+    # register with ctest even when Catch2 isn't present.
+    enable_testing()
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/external/Catch2/CMakeLists.txt)
-        enable_testing()
         add_subdirectory(external/Catch2 EXCLUDE_FROM_ALL)
         add_executable(KellyTests
             tests/cpp/test_emotion_engine.cpp
