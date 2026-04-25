@@ -25,11 +25,13 @@ struct Emotion {
 // Input types
 //=============================================================================
 
-struct Wound {
-    std::string description;
-    float intensity = 0.0f;
-    std::string source;
-};
+// struct Wound was moved to src/common/KellyTypes.h (canonical) as part of
+// the 2026 Q2 ODR consolidation. Consumers that need kelly::Wound must
+// include "common/KellyTypes.h" directly. We do NOT forward-include the
+// canonical header here because KellyTypes.h redefines several types
+// already declared below (RuleBreak, IntentResult, MidiNote, Chord,
+// GeneratedMidi, SideA, SideB) — including it would re-introduce the
+// ODR violation PR #150 is trying to eliminate.
 
 struct SideA {
     std::string description;
