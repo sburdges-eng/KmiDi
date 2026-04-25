@@ -3,18 +3,20 @@
 
 namespace kelly {
 
-namespace {
-TooltipComponent& getSharedTooltip() {
-    static TooltipComponent tooltip;
-    static bool initialized = false;
-    if (!initialized) {
-        tooltip.addToDesktop(juce::ComponentPeer::windowIsTemporary);
-        tooltip.setVisible(false);
-        initialized = true;
+TooltipComponent* TooltipComponent::sharedInstance_ = nullptr;
+
+TooltipComponent* TooltipComponent::getOrCreateShared() {
+    // Heap-allocated so juce::DeletedAtShutdown arranges the delete via
+    // juce::MessageManager teardown. The destructor clears sharedInstance_
+    // so any pending callAfterDelay lambda that fires after shutdown can
+    // null-check the pointer instead of dereferencing freed memory.
+    if (sharedInstance_ == nullptr) {
+        sharedInstance_ = new TooltipComponent();
+        sharedInstance_->addToDesktop(juce::ComponentPeer::windowIsTemporary);
+        sharedInstance_->setVisible(false);
     }
-    return tooltip;
+    return sharedInstance_;
 }
-} // namespace
 
 TooltipComponent::TooltipComponent() {
     setOpaque(false);
@@ -22,12 +24,22 @@ TooltipComponent::TooltipComponent() {
     setInterceptsMouseClicks(false, false);
 }
 
+TooltipComponent::~TooltipComponent() {
+    if (sharedInstance_ == this) {
+        sharedInstance_ = nullptr;
+    }
+}
+
 void TooltipComponent::showTooltip(juce::Component* target, const juce::String& text, int timeoutMs) {
     if (text.isEmpty()) {
         return;
     }
 
-    auto& tooltip = getSharedTooltip();
+    auto* tip = getOrCreateShared();
+    if (tip == nullptr) {
+        return;
+    }
+    auto& tooltip = *tip;
     tooltip.tooltipText_ = text;
 
     const juce::Font font(11.0f);
@@ -55,9 +67,14 @@ void TooltipComponent::showTooltip(juce::Component* target, const juce::String& 
 }
 
 void TooltipComponent::hideTooltip() {
-    auto& tooltip = getSharedTooltip();
-    tooltip.tooltipText_.clear();
-    tooltip.setVisible(false);
+    // After juce::DeletedAtShutdown reaps the singleton (e.g. on app
+    // teardown) any pending callAfterDelay lambda that lands here would
+    // otherwise UAF the freed instance — null-check, do not recreate.
+    if (sharedInstance_ == nullptr) {
+        return;
+    }
+    sharedInstance_->tooltipText_.clear();
+    sharedInstance_->setVisible(false);
 }
 
 void TooltipComponent::paint(juce::Graphics& g) {

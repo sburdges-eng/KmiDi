@@ -12,6 +12,10 @@ LyricDisplay::LyricDisplay()
     startTimer(50); // Update at ~20 FPS for smooth highlighting
 }
 
+LyricDisplay::~LyricDisplay() {
+    stopTimer();
+}
+
 void LyricDisplay::paint(juce::Graphics& g) {
     g.fillAll(juce::Colour(0xff1a1a1a)); // Dark background
 

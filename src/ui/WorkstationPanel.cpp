@@ -22,7 +22,9 @@ WorkstationPanel::WorkstationPanel()
     startTimer(30);  // ~30fps
 }
 
-WorkstationPanel::~WorkstationPanel() = default;
+WorkstationPanel::~WorkstationPanel() {
+    stopTimer();
+}
 
 void WorkstationPanel::initializeTracks() {
     tracks_.clear();
