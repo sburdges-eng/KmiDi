@@ -35,35 +35,59 @@ REPO = Path(__file__).resolve().parents[2]
 
 TREES = [REPO / "src", REPO / "src_penta-core"]
 
-# Allowed overlap: explicit namespace separation documented per file.
-# Add entries with a one-line justification. Each value is the reason
-# both copies can coexist without ODR conflict.
-ALLOWLIST: dict[str, str] = {
-    # Same basename but one is midikompanion::audio::AudioAnalyzer, the
-    # other is penta::diagnostics::AudioAnalyzer — distinct classes.
-    # The duplicate-in-`penta::diagnostics` was deleted in PR #156.
-    # "AudioAnalyzer.cpp": "midikompanion::audio vs penta::diagnostics",
-    # Same basename but different kelly-namespace classes:
-    #   src/midi/GrooveEngine.cpp       → kelly::GrooveEngine
-    #   src/engines/GrooveEngine.cpp    → kelly::GroovePatternEngine (renamed)
-    #   src_penta-core/groove/...       → penta::groove::GrooveEngine
-    "GrooveEngine.cpp": "kelly::GrooveEngine vs kelly::GroovePatternEngine vs penta::groove::GrooveEngine",
+# Allowed overlap: explicit (basename, namespace) pair documented per file.
+# Keying on the *pair* (not just the basename) prevents a future regression
+# where someone adds a third copy in a different namespace under an existing
+# allowlisted basename — that case must still be flagged.
+#
+# To suppress a known-good (basename, ns) collision, add an entry with a
+# one-line justification.
+ALLOWLIST: dict[tuple[str, str], str] = {
+    # Distinct classes that share a basename inside the kelly namespace:
+    #   src/midi/GrooveEngine.cpp       → class kelly::GrooveEngine
+    #   src/engines/GrooveEngine.cpp    → class kelly::GroovePatternEngine (renamed)
+    # Both live in `namespace kelly`, but expose distinct symbols.
+    # A third copy under (`GrooveEngine.cpp`, `penta::groove`) is intentional
+    # and lives in a different namespace, so the scanner reports it as 1 path,
+    # not a collision.
+    ("GrooveEngine.cpp", "kelly"):
+        "kelly::GrooveEngine vs kelly::GroovePatternEngine — distinct classes",
 }
 
-NAMESPACE_RE = re.compile(r"^namespace\s+([\w:]+)(?:\s*::\s*(\w+))?\s*\{?", re.MULTILINE)
+# Match a `namespace <X>{::<Y>}* {` opener, optionally with the C++17
+# nested-name `namespace foo::bar` form.  Anchoring at column 0 keeps us
+# from matching `using namespace ...;` inside function bodies.
+NS_OPEN_RE = re.compile(r"^\s*namespace\s+([A-Za-z_][\w:]*)\s*\{", re.MULTILINE)
 
 
 def extract_top_namespace(cpp: Path) -> str:
-    """Return the top-level namespace as a string ('penta::diagnostics', 'kelly', etc.)."""
+    """Return the file's top-level namespace path as a `::`-joined string.
+
+    Handles both forms equivalently so they collide as expected:
+        namespace penta::diagnostics { ... }
+        namespace penta { namespace diagnostics { ... } }
+    """
     try:
-        head = cpp.read_text(errors="ignore")[:2048]
+        text = cpp.read_text(errors="ignore")[:4096]
     except Exception:
         return ""
-    match = NAMESPACE_RE.search(head)
-    if not match:
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    text = re.sub(r"//[^\n]*", "", text)
+
+    first = NS_OPEN_RE.search(text)
+    if not first:
         return ""
-    first, second = match.group(1), match.group(2)
-    return f"{first}::{second}" if second else first
+    components = [first.group(1)]
+    rest = text[first.end():]
+
+    while True:
+        m = re.match(r"\s*namespace\s+([A-Za-z_][\w:]*)\s*\{", rest)
+        if not m:
+            break
+        components.append(m.group(1))
+        rest = rest[m.end():]
+
+    return "::".join(components)
 
 
 def scan() -> dict[str, list[tuple[str, str]]]:
@@ -84,18 +108,24 @@ def main(argv: list[str]) -> int:
     real: list[dict[str, object]] = []
 
     for basename, entries in collisions.items():
-        # Split by top-level namespace; same-namespace duplicates are ODR bugs.
         by_ns: dict[str, list[str]] = defaultdict(list)
         for rel, ns in entries:
             by_ns[ns].append(rel)
-        dupe_in_ns = {ns: paths for ns, paths in by_ns.items() if len(paths) >= 2}
+        dupe_in_ns = {
+            ns: paths for ns, paths in by_ns.items() if len(paths) >= 2
+        }
         if not dupe_in_ns:
             continue
-        if basename in ALLOWLIST:
+        unallowed = {
+            ns: paths
+            for ns, paths in dupe_in_ns.items()
+            if (basename, ns) not in ALLOWLIST
+        }
+        if not unallowed:
             continue
         real.append({
             "basename": basename,
-            "duplicates_by_namespace": dupe_in_ns,
+            "duplicates_by_namespace": unallowed,
         })
 
     if "--json" in argv:
