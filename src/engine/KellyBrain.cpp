@@ -16,13 +16,60 @@ using KellyTypesRuleBreakType = RuleBreakType;
 #include "common/Types.h" // Explicit include - this redefines Wound, EmotionNode, etc.
 #include "common/IntentIRAdapter.h"  // IntentFrame support
 #include "engine/IntentPipeline.h" // Full definition needed for std::unique_ptr<IntentPipeline>
+#include "bridge/StateBridge.h"    // For StateBridge emission from generateMidi
 #include "penta/common/RTLogger.h"
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstdio>
 #include <limits>
+#include <sstream>
 
 namespace kelly {
+
+// Escape a string for embedding inside a JSON double-quoted scalar.
+// Handles \" \\ and the C0 control range (\b \f \n \r \t plus \u00XX).
+// Used by emitStateUpdate JSON construction below — values like
+// IntentResult::key/mode are caller-supplied and could contain quotes.
+static std::string jsonEscape(const std::string &s) {
+  std::string out;
+  out.reserve(s.size() + 2);
+  for (unsigned char c : s) {
+    switch (c) {
+    case '"':
+      out += "\\\"";
+      break;
+    case '\\':
+      out += "\\\\";
+      break;
+    case '\b':
+      out += "\\b";
+      break;
+    case '\f':
+      out += "\\f";
+      break;
+    case '\n':
+      out += "\\n";
+      break;
+    case '\r':
+      out += "\\r";
+      break;
+    case '\t':
+      out += "\\t";
+      break;
+    default:
+      if (c < 0x20) {
+        char buf[8];
+        std::snprintf(buf, sizeof(buf), "\\u%04x", c);
+        out += buf;
+      } else {
+        out += static_cast<char>(c);
+      }
+      break;
+    }
+  }
+  return out;
+}
 
 // Helper function to convert EmotionCategory enum to string
 static std::string categoryEnumToString(EmotionCategory cat) {
@@ -167,13 +214,20 @@ convertFromLegacyIntentResult(const IntentResult &legacy) {
 
 KellyBrain::KellyBrain()
     : pipeline_(std::make_unique<IntentPipeline>())
-    , midiGenerator_(std::make_unique<MidiGenerator>()) {
-  // IntentPipeline and MidiGenerator are initialized
+    , midiGenerator_(std::make_unique<MidiGenerator>())
+    , stateBridge_(std::make_unique<StateBridge>()) {
+  // IntentPipeline, MidiGenerator, and StateBridge are initialized
 }
 
 bool KellyBrain::initialize(const std::string &dataPath) {
   // The existing IntentPipeline already initializes EmotionThesaurus
   // This could load additional data if needed
+  // Best-effort init for the Python state sync.  If Python isn't available
+  // the bridge disables itself silently; generateMidi() tolerates a nullptr
+  // or disabled bridge.
+  if (stateBridge_) {
+    (void)stateBridge_->initialize();
+  }
   initialized_ = true;
   return true;
 }
@@ -383,6 +437,22 @@ GeneratedMidi KellyBrain::generateMidi(const KellyTypesIntentResult &intent,
   result.mode = intent.mode;
   result.lengthInBeats = static_cast<double>(bars) * 4.0;
   result.bpm = static_cast<float>(intent.tempoBpm);
+
+  // Emit post-generation state to the Python intelligence layer.  Best-effort;
+  // StateBridge::emitStateUpdate is a no-op when Python is unavailable or the
+  // bridge is not initialized.  Not called from the audio thread — generateMidi
+  // is UI/pipeline context, so std::string copies here are fine.
+  if (stateBridge_ && stateBridge_->isAvailable()) {
+    std::ostringstream json;
+    json << "{\"bars\":" << bars
+         << ",\"tempo_bpm\":" << intent.tempoBpm
+         << ",\"key\":\"" << jsonEscape(intent.key) << "\""
+         << ",\"mode\":\"" << jsonEscape(intent.mode) << "\""
+         << ",\"num_notes\":" << result.notes.size()
+         << ",\"length_beats\":" << result.lengthInBeats
+         << "}";
+    stateBridge_->emitStateUpdate("midi_generator", json.str());
+  }
 
   return result;
 }
