@@ -3,6 +3,7 @@
 #include "common/DecisionTrace.h"
 #include "common/GuardrailValidator.h"
 #include "common/Types.h"
+#include "common/KellyTypes.h"  // canonical kelly::Wound (PR #150 consolidation)
 #include "engine/IntentPipeline.h"
 #include "midi/ChordGenerator.h"
 
@@ -347,9 +348,17 @@ inline StateMachineConductor::SubmitResult StateMachineConductor::submitInputFor
         intent = IntentResult::abstain(AbstainReason::UNDERSPECIFIED);
         intent.requestedGroupsMask = 0;
     } else {
-        Wound wound{input.text, 0.7f, "conductor"};
+        // Use designated initializers — the canonical kelly::Wound (KellyTypes.h)
+        // has different field order than the original 3-field common/Types.h
+        // layout, so positional aggregate-init would silently mis-map fields.
+        Wound wound{};
+        wound.description = input.text;
+        wound.intensity = 0.7f;
+        wound.urgency = 0.7f;  // canonical-name alias for intensity
+        wound.source = "conductor";
         if (input.parameterDelta.has_value() && input.parameterDelta->id == "intensity") {
             wound.intensity = std::clamp(input.parameterDelta->value, 0.0f, 1.0f);
+            wound.urgency = wound.intensity;
         }
         intent = intentPipeline_.process(wound);
         intent.requestedGroupsMask = inferRequestedGroupsMask(normalizedLower);
