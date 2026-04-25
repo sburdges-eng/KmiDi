@@ -309,24 +309,29 @@ std::string MusicTheoryBridge::createLessonPlan(
     }
 
     // Fallback to C++ MusicTheoryBrain
-    // FIXME: Temporarily disabled due to struct member mismatches
-    /*
     if (brain_) {
+        // Build a minimal UserProfile for the path query. Extended profile
+        // fields (masteredConcepts, userLevel, etc.) default-initialise to
+        // sensible values so the call is always safe.
         midikompanion::theory::UserProfile profile;
+
         auto curriculum = brain_->getCustomLearningPath(conceptName, profile);
 
-        // Convert to JSON
+        // Serialize curriculum to JSON
         std::ostringstream json;
         json << "{\"concept\":\"" << conceptName << "\",\"lessons\":[";
         for (size_t i = 0; i < curriculum.lessons.size(); ++i) {
             if (i > 0) json << ",";
-            json << "{\"step\":" << (i + 1) << ",\"concept\":\""
-                 << curriculum.lessons[i].conceptName << "\"}";
+            json << "{\"step\":" << (i + 1)
+                 << ",\"concept\":\"" << curriculum.lessons[i].conceptName << "\"}";
         }
-        json << "]}";
+        json << "]";
+        if (!curriculum.description.empty()) {
+            json << ",\"description\":\"" << curriculum.description << "\"";
+        }
+        json << ",\"totalEstimatedHours\":" << curriculum.totalEstimatedHours << "}";
         return json.str();
     }
-    */
 
     return "{\"error\":\"Lesson plan not available\"}";
 }
