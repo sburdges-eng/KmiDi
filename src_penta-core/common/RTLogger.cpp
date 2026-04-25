@@ -2,6 +2,10 @@
 #include <iostream>
 #include <cstring>
 #include <mutex>
+#if defined(__APPLE__)
+#include <pthread.h>
+#include <sys/qos.h>
+#endif
 
 namespace penta {
 
@@ -62,6 +66,10 @@ void RTLogger::stop() {
 }
 
 void RTLogger::processingThread() {
+#if defined(__APPLE__)
+    // Pin to utility QoS so this thread does not steal realtime audio headroom.
+    pthread_set_qos_class_self_np(QOS_CLASS_UTILITY, 0);
+#endif
     while (running_.load(std::memory_order_relaxed)) {
         size_t readIdx = readIndex_.load(std::memory_order_relaxed);
         

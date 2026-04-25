@@ -16,8 +16,13 @@ BiometricInput::~BiometricInput() {
     stopStreaming();
   }
 
-  // Clean up bridge instances
-#if HEALTHKIT_AVAILABLE
+  // Clean up bridge instances.
+  // HealthKitBridge.h unconditionally forces HEALTHKIT_AVAILABLE=0 on macOS,
+  // so a `#if HEALTHKIT_AVAILABLE` gate here never fires — even though
+  // initializeHealthKit() below is gated on `JUCE_MAC || JUCE_IOS` and does
+  // allocate a HealthKitBridge.  Align the destructor's gate to the
+  // allocation gate so we release the memory we actually allocate.
+#if JUCE_MAC || JUCE_IOS
   if (healthKitBridge_) {
     delete static_cast<biometric::HealthKitBridge *>(healthKitBridge_);
   }
