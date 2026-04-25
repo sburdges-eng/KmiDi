@@ -38,7 +38,7 @@ class MusicianCommandPanel : public juce::Component
 {
 public:
     MusicianCommandPanel();
-    ~MusicianCommandPanel() override = default;
+    ~MusicianCommandPanel() override;
 
     //==========================================================================
     // Component Overrides

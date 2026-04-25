@@ -92,6 +92,10 @@ MusicianCommandPanel::MusicianCommandPanel()
     setSize(800, 600);
 }
 
+MusicianCommandPanel::~MusicianCommandPanel() {
+    if (commandInput_) commandInput_->removeListener(this);
+}
+
 //==============================================================================
 // Component Overrides
 //==============================================================================

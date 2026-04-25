@@ -10,6 +10,11 @@ EmotionWorkstation::EmotionWorkstation(
   setupComponents();
 }
 
+EmotionWorkstation::~EmotionWorkstation() {
+  stopTimer();
+  setLookAndFeel(nullptr);
+}
+
 void EmotionWorkstation::setupComponents() {
   // Apply custom look and feel
   setLookAndFeel(&lookAndFeel_);
@@ -617,31 +622,38 @@ void EmotionWorkstation::setupProjectMenu() {
 void EmotionWorkstation::showProjectMenu() {
   setupProjectMenu();
 
+  // Resolve parent before constructing Options so the getTopLevelComponent()
+  // call happens synchronously on the live `this` and the SafePointer-guarded
+  // lambda below never touches raw `this` again.
+  auto* parent = getTopLevelComponent();
+  juce::Component::SafePointer<EmotionWorkstation> safe(this);
   projectMenu_.showMenuAsync(juce::PopupMenu::Options()
                                  .withTargetComponent(&projectMenuButton_)
-                                 .withParentComponent(getTopLevelComponent()),
-                             [this](int result) {
-                               switch (result) {
-                               case 1: // New Project
-                                 if (onNewProject) {
-                                   onNewProject();
+                                 .withParentComponent(parent),
+                             [safe](int result) {
+                               if (auto* self = safe.getComponent()) {
+                                 switch (result) {
+                                 case 1: // New Project
+                                   if (self->onNewProject) {
+                                     self->onNewProject();
+                                   }
+                                   break;
+                                 case 2: // Open Project
+                                   if (self->onOpenProject) {
+                                     self->onOpenProject();
+                                   }
+                                   break;
+                                 case 3: // Save Project
+                                   if (self->onSaveProject) {
+                                     self->onSaveProject();
+                                   }
+                                   break;
+                                 case 4: // Save Project As
+                                   if (self->onSaveProjectAs) {
+                                     self->onSaveProjectAs();
+                                   }
+                                   break;
                                  }
-                                 break;
-                               case 2: // Open Project
-                                 if (onOpenProject) {
-                                   onOpenProject();
-                                 }
-                                 break;
-                               case 3: // Save Project
-                                 if (onSaveProject) {
-                                   onSaveProject();
-                                 }
-                                 break;
-                               case 4: // Save Project As
-                                 if (onSaveProjectAs) {
-                                   onSaveProjectAs();
-                                 }
-                                 break;
                                }
                              });
 }

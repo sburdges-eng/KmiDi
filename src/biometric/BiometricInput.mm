@@ -9,6 +9,24 @@
 
 namespace kelly {
 
+BiometricInput::~BiometricInput() {
+  // Stop streaming before releasing bridges so that any in-flight callback
+  // cannot fire on a deleted bridge object.
+  if (streamingActive_) {
+    stopStreaming();
+  }
+
+  // Clean up bridge instances
+#if HEALTHKIT_AVAILABLE
+  if (healthKitBridge_) {
+    delete static_cast<biometric::HealthKitBridge *>(healthKitBridge_);
+  }
+#endif
+  if (fitbitBridge_) {
+    delete static_cast<biometric::FitbitBridge *>(fitbitBridge_);
+  }
+}
+
 BiometricInput::BiometricInput()
     : adaptiveNormalization_(false)
     , enabled_(false)
