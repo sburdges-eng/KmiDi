@@ -3,6 +3,7 @@
 #include "engine/WoundProcessor.h"
 #include "engine/RuleBreakEngine.h"
 #include "common/Types.h"
+#include "common/KellyTypes.h"  // canonical kelly::Wound (PR #150 consolidation)
 
 TEST_CASE("EmotionThesaurus - Find by ID", "[emotion]") {
     kelly::EmotionThesaurus thesaurus;
@@ -15,7 +16,13 @@ TEST_CASE("WoundProcessor - Process wound description", "[wound]") {
     kelly::EmotionThesaurus thesaurus;
     kelly::WoundProcessor processor(thesaurus);
     
-    kelly::Wound wound{"I feel sad and lonely", 0.7f, "test"};
+    // Designated init — kelly::Wound (KellyTypes.h) has different field order
+    // than the original 3-field common/Types.h layout used here historically.
+    kelly::Wound wound{};
+    wound.description = "I feel sad and lonely";
+    wound.intensity = 0.7f;
+    wound.urgency = 0.7f;
+    wound.source = "test";
     auto emotion = processor.processWound(wound);
     
     REQUIRE(emotion.intensity == 0.7f);

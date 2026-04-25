@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common/Types.h"
+#include "common/KellyTypes.h"  // canonical kelly::Wound (PR #150 consolidation)
 #include <string>
 
 namespace kelly {
