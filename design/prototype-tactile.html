@@ -1,0 +1,1653 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>KmiDi · Tactile Instrument Prototype</title>
+<!--
+  KmiDi navigation prototype — "Tactile Instrument" direction.
+  Anti-AI-stereotype: no purple gradients, no chatbot bubbles, no spark icons.
+  Design moves:
+    1. Rotary mode selector (replaces nav rail tabs) — twist through modes.
+    2. Polar emotion disc (real wheel) — angle = family, radius = intensity.
+    3. Illuminated transport strip (LED segments, not buttons-with-icons).
+    4. Dot-matrix BPM readout, drag to scrub.
+    5. Signal-flow footer — your intent path drawn as a signal chain.
+    6. Monochrome amber accent. Single noise grain. Studio chassis depth.
+
+  Keyboard:  ↑/↓ MODE · 1–5 EMOTION FAMILY · SPACE PLAY · R REC · T TAP TEMPO
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Mono:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --bg-deep: #060607;
+  --surface-inset: #0a0a0c;
+  --surface: #0f0f12;
+  --surface-raised: #16161a;
+  --surface-overlay: #1e1e23;
+
+  --border: rgba(255,255,255,0.08);
+  --border-hover: rgba(255,255,255,0.14);
+  --border-strong: rgba(255,255,255,0.22);
+
+  --accent: #c9a227;
+  --accent-hot: #d4b03d;
+  --accent-muted: rgba(201,162,39,0.18);
+  --accent-glow: rgba(201,162,39,0.45);
+
+  --text-hi: #f2f2f1;
+  --text-med: #9c9c9a;
+  --text-lo: #5e5e5c;
+
+  --rec: #d64545;
+  --ok: #2d8a5e;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --radius-pill: 999px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg-deep);
+  color: var(--text-hi);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+
+button { font-family: inherit; color: inherit; cursor: pointer; }
+
+/* ─── chassis ─────────────────────────────────────────── */
+.chassis {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: 86px 1fr 56px;
+  background:
+    radial-gradient(ellipse at 30% -10%, rgba(255,255,255,0.04), transparent 60%),
+    radial-gradient(ellipse at 90% 110%, rgba(201,162,39,0.04), transparent 55%),
+    linear-gradient(180deg, #0c0c0e 0%, #060607 100%);
+  overflow: hidden;
+}
+
+/* film grain */
+.chassis::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 220px 220px;
+  opacity: 0.55;
+  mix-blend-mode: overlay;
+  z-index: 50;
+}
+
+/* corner screws — small dots, instrument feel */
+.screw {
+  position: absolute;
+  width: 4px; height: 4px;
+  background: radial-gradient(circle at 30% 30%, #2a2a2e, #0a0a0c);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.05);
+  z-index: 40;
+}
+.screw.tl { top: 10px; left: 10px; }
+.screw.tr { top: 10px; right: 10px; }
+.screw.bl { bottom: 10px; left: 10px; }
+.screw.br { bottom: 10px; right: 10px; }
+
+/* ─── upper deck: brushed-metal strip ─────────────────── */
+.deck-top {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 220px 1fr 380px;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 0 var(--space-5);
+  border-bottom: 1px solid var(--border-strong);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 8%, transparent 92%, rgba(0,0,0,0.4) 100%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px),
+    linear-gradient(180deg, #18181b 0%, #101013 100%);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.6);
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 30px;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--text-hi);
+}
+.wordmark .dot { color: var(--accent); }
+.tagline {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-lo);
+}
+
+/* transport: illuminated LED strip + hardware keys */
+.transport {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-4);
+}
+.hw-keys {
+  display: flex;
+  gap: var(--space-2);
+}
+.hw-key {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255,255,255,0.06), transparent 55%),
+    linear-gradient(180deg, #1c1c20, #101012);
+  color: var(--text-med);
+  display: grid;
+  place-items: center;
+  transition: transform 80ms ease, box-shadow 120ms ease, color 120ms ease, border-color 120ms ease;
+  position: relative;
+}
+.hw-key:hover { color: var(--text-hi); border-color: var(--border-hover); }
+.hw-key:active { transform: translateY(1px); }
+.hw-key.lit {
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 0 18px var(--accent-glow), inset 0 0 8px rgba(201,162,39,0.15);
+}
+.hw-key.rec.lit {
+  color: var(--rec);
+  border-color: var(--rec);
+  box-shadow: 0 0 0 1px var(--rec), 0 0 18px rgba(214,69,69,0.45);
+}
+.hw-key svg { width: 16px; height: 16px; }
+.hw-key::after {
+  content: '';
+  position: absolute;
+  bottom: -10px; left: 50%;
+  transform: translateX(-50%);
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.35;
+}
+
+/* segment timeline */
+.segments {
+  display: flex;
+  gap: 2px;
+  height: 28px;
+  align-items: stretch;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.2)),
+    var(--surface-inset);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+}
+.seg {
+  flex: 1;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: background 80ms ease, box-shadow 80ms ease;
+  cursor: pointer;
+}
+.seg.major { background: rgba(255,255,255,0.06); }
+.seg.head {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+.seg.played { background: rgba(201,162,39,0.25); }
+
+/* BPM display + mixer */
+.right-cluster {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--space-4);
+}
+.bpm-disp {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 2px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(201,162,39,0.06), transparent 60%),
+    #08080a;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.7);
+  cursor: ns-resize;
+  min-width: 110px;
+  text-align: center;
+}
+.bpm-num {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 26px;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  text-shadow: 0 0 6px rgba(201,162,39,0.55);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.bpm-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.32em;
+  color: var(--text-lo);
+  text-transform: uppercase;
+}
+
+.mixer-strip {
+  display: flex;
+  gap: 6px;
+  align-items: end;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, #131316, #0c0c0f);
+  height: 60px;
+}
+.fader {
+  position: relative;
+  width: 18px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.fader .track {
+  position: relative;
+  width: 4px;
+  flex: 1;
+  background: #08080a;
+  border-radius: 2px;
+  border: 1px solid rgba(255,255,255,0.05);
+  overflow: hidden;
+}
+.fader .track::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(180deg, transparent 0 4px, rgba(255,255,255,0.05) 4px 5px);
+}
+.fader .fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(180deg, var(--accent) 0%, #5a4a18 100%);
+}
+.fader .cap {
+  position: absolute;
+  left: -5px;
+  width: 14px;
+  height: 6px;
+  background: linear-gradient(180deg, #2a2a2f, #18181b);
+  border: 1px solid var(--border-strong);
+  border-radius: 1px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+}
+.fader .cap::after {
+  content: '';
+  position: absolute;
+  left: 1px; right: 1px; top: 50%;
+  height: 1px;
+  background: var(--accent);
+  transform: translateY(-50%);
+  opacity: 0.85;
+}
+.fader .lbl {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--text-lo);
+  letter-spacing: 0.1em;
+}
+
+/* ─── lower deck: rotary + workspace ─────────────────── */
+.deck-lower {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  height: 100%;
+  min-height: 0;
+}
+
+/* rotary mode selector */
+.rotary-rail {
+  position: relative;
+  border-right: 1px solid var(--border-strong);
+  background: linear-gradient(180deg, #0c0c0f 0%, #060607 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-5) 0 var(--space-4);
+  gap: var(--space-5);
+}
+.rotary {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.06), transparent 55%),
+    conic-gradient(from -90deg, #1c1c20, #131316, #1c1c20, #131316, #1c1c20);
+  border: 1px solid var(--border-strong);
+  box-shadow:
+    0 4px 14px rgba(0,0,0,0.6),
+    inset 0 -2px 6px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+  cursor: grab;
+  transition: transform 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.rotary:active { cursor: grabbing; }
+.rotary .indicator {
+  position: absolute;
+  top: 6px; left: 50%;
+  width: 3px; height: 16px;
+  margin-left: -1.5px;
+  background: var(--accent);
+  border-radius: 1.5px;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+.rotary .hub {
+  position: absolute;
+  inset: 24px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #18181b, #0c0c0e);
+  border: 1px solid var(--border-strong);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.rotary .ticks {
+  position: absolute;
+  inset: -10px;
+  pointer-events: none;
+}
+.rotary .tick-label {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--text-lo);
+  text-transform: uppercase;
+  width: 64px;
+  text-align: center;
+  transition: color 180ms ease;
+  cursor: pointer;
+}
+.rotary .tick-label.active { color: var(--accent); }
+.rotary .tick-dot {
+  position: absolute;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--text-lo);
+  transition: background 180ms ease, box-shadow 180ms ease;
+}
+.rotary .tick-dot.active {
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent-glow);
+}
+
+/* mode counter */
+.mode-counter {
+  margin-top: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-lo);
+  letter-spacing: 0.18em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.mode-counter strong { color: var(--accent); font-weight: 700; }
+
+/* workspace */
+.stage {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: var(--space-5);
+  padding: var(--space-5);
+}
+
+/* atmospheric per-mode wash */
+.stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: background 300ms ease;
+  z-index: 0;
+}
+.stage[data-mode="inspire"]::before {
+  background: radial-gradient(ellipse at 25% 70%, rgba(201,162,39,0.06) 0%, transparent 55%);
+}
+.stage[data-mode="create"]::before {
+  background: radial-gradient(ellipse at 75% 30%, rgba(45,138,94,0.05) 0%, transparent 55%);
+}
+.stage[data-mode="compose"]::before {
+  background: radial-gradient(ellipse at 50% 100%, rgba(255,255,255,0.03) 0%, transparent 55%);
+}
+.stage[data-mode="mix"]::before {
+  background: radial-gradient(ellipse at 50% 0%, rgba(214,69,69,0.04) 0%, transparent 55%);
+}
+
+.panel {
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025), transparent 30%),
+    var(--surface-raised);
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 8px 24px rgba(0,0,0,0.35);
+}
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+.panel-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-lo);
+}
+.panel-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-med);
+  letter-spacing: 0.1em;
+}
+
+/* ── EMOTION DISC (polar) ── */
+.disc-wrap {
+  flex: 1;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-items: center;
+  justify-items: center;
+  gap: var(--space-3);
+  min-height: 0;
+}
+.disc {
+  width: min(100%, 380px);
+  aspect-ratio: 1 / 1;
+  position: relative;
+}
+.disc svg { width: 100%; height: 100%; display: block; }
+.puck {
+  position: absolute;
+  width: 22px; height: 22px;
+  margin-left: -11px; margin-top: -11px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, #fffbe7, var(--accent) 55%, #6b520f 100%);
+  border: 1px solid #fff8d0;
+  box-shadow: 0 0 16px var(--accent-glow), 0 1px 3px rgba(0,0,0,0.6);
+  pointer-events: none;
+  transition: left 180ms cubic-bezier(0.34, 1.56, 0.64, 1), top 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* dot-matrix readout */
+.dot-readout {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(201,162,39,0.06), transparent 60%),
+    #08080a;
+  box-shadow: inset 0 1px 4px rgba(0,0,0,0.7);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-shadow: 0 0 6px rgba(201,162,39,0.45);
+  text-transform: uppercase;
+}
+.dot-readout .sep { opacity: 0.4; }
+
+/* ── right column: stack of contextual readouts ── */
+.col-right {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--space-4);
+  min-height: 0;
+}
+
+.starter-rack {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+.starter {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  background: var(--surface-inset);
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, transform 80ms ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.starter:hover { border-color: var(--border-hover); background: var(--surface-overlay); }
+.starter.active {
+  border-color: var(--accent);
+  background: var(--accent-muted);
+  box-shadow: 0 0 0 1px var(--accent-muted);
+}
+.starter:active { transform: translateY(1px); }
+.starter .name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-hi);
+}
+.starter .meta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--text-lo);
+  text-transform: uppercase;
+}
+
+/* lyric ribbon — typographic, no chatbot bubble */
+.ribbon {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025), transparent 40%),
+    var(--surface-inset);
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  overflow: hidden;
+}
+.ribbon .quote {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1.32;
+  letter-spacing: -0.01em;
+  color: var(--text-hi);
+  font-style: italic;
+}
+.ribbon .quote::before {
+  content: '“';
+  font-size: 36px;
+  color: var(--accent);
+  margin-right: 4px;
+  line-height: 0.6;
+  vertical-align: -0.14em;
+}
+.ribbon .meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  gap: var(--space-2);
+}
+.ribbon .stat {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-lo);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.ribbon .pill-row { display: flex; gap: 6px; }
+.pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text-med);
+  text-transform: uppercase;
+  background: rgba(255,255,255,0.02);
+}
+.pill.lit {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-muted);
+}
+
+/* compose grid (stacked instrument lanes) */
+.lanes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-height: 0;
+}
+.lane {
+  display: grid;
+  grid-template-columns: 80px 1fr 60px;
+  gap: var(--space-3);
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.02);
+  border-left: 2px solid transparent;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.lane:hover { background: rgba(255,255,255,0.04); border-left-color: var(--accent); }
+.lane .lane-name {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-med);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.lane .lane-strip {
+  display: flex;
+  gap: 1px;
+  height: 18px;
+}
+.lane .lane-cell {
+  flex: 1;
+  border-radius: 1px;
+  background: rgba(255,255,255,0.03);
+}
+.lane .lane-cell.on { background: var(--accent); opacity: 0.85; box-shadow: 0 0 4px var(--accent-glow); }
+.lane .lane-cell.dim { background: var(--accent-muted); }
+.lane .lane-meta {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-lo);
+  letter-spacing: 0.1em;
+  text-align: right;
+}
+
+/* mix-detail: real channel strips */
+.channels {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  flex: 1;
+  min-height: 0;
+}
+.channel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-3) 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--surface-overlay), var(--surface-raised));
+  gap: var(--space-2);
+}
+.channel .knob-mini {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #1f1f23, #0d0d10);
+  border: 1px solid var(--border-strong);
+  position: relative;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 1px 4px rgba(0,0,0,0.5);
+}
+.channel .knob-mini::after {
+  content: '';
+  position: absolute;
+  top: 4px; left: 50%;
+  width: 2px; height: 8px;
+  margin-left: -1px;
+  background: var(--accent);
+  border-radius: 1px;
+}
+.channel .ch-fader {
+  position: relative;
+  width: 22px;
+  flex: 1;
+  background: #08080a;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  cursor: ns-resize;
+  background-image: repeating-linear-gradient(180deg, transparent 0 6px, rgba(255,255,255,0.04) 6px 7px);
+}
+.channel .ch-fill {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 100%;
+  background: linear-gradient(180deg, #5a8a7a 0%, var(--accent) 60%, var(--rec) 100%);
+}
+.channel .ch-cap {
+  position: absolute;
+  left: -3px;
+  width: 28px;
+  height: 8px;
+  background: linear-gradient(180deg, #2a2a2f, #16161a);
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+}
+.channel .ch-cap::after {
+  content: '';
+  position: absolute;
+  left: 2px; right: 2px; top: 50%;
+  height: 1px;
+  background: var(--accent);
+  transform: translateY(-50%);
+}
+.channel .ch-name {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--text-med);
+  text-transform: uppercase;
+}
+.channel .ch-db {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── footer: signal flow + key affordances ─────────── */
+.deck-bottom {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-5);
+  padding: 0 var(--space-5);
+  border-top: 1px solid var(--border-strong);
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 8%, transparent 92%, rgba(0,0,0,0.4) 100%),
+    linear-gradient(180deg, #0c0c0e 0%, #060607 100%);
+}
+
+.signal-flow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.signal-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  cursor: pointer;
+}
+.signal-node .lamp {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--text-lo);
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: background 200ms ease, box-shadow 200ms ease;
+}
+.signal-node.lit .lamp {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+.signal-node .lbl {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--text-lo);
+  text-transform: uppercase;
+  transition: color 200ms ease;
+}
+.signal-node.lit .lbl { color: var(--text-hi); }
+
+.signal-wire {
+  width: 56px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--text-lo), transparent 50%, var(--text-lo));
+  position: relative;
+  opacity: 0.5;
+}
+.signal-wire.lit {
+  background: linear-gradient(90deg, var(--accent), var(--accent));
+  opacity: 1;
+  box-shadow: 0 0 6px var(--accent-glow);
+}
+
+.key-hints {
+  display: flex;
+  gap: var(--space-3);
+}
+.kh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--text-lo);
+  text-transform: uppercase;
+}
+.kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  background: linear-gradient(180deg, #1a1a1d, #0e0e10);
+  color: var(--text-med);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04), inset 0 -1px 0 rgba(0,0,0,0.4);
+}
+
+/* haptic pulse on mode change */
+@keyframes haptic {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+.haptic { animation: haptic 220ms ease-out; }
+
+/* hidden when not active */
+.mode-view { display: none; height: 100%; flex-direction: column; min-height: 0; }
+.mode-view.active { display: flex; }
+
+/* responsive shrink */
+@media (max-height: 720px) {
+  .chassis { grid-template-rows: 76px 1fr 48px; }
+  .disc { width: min(100%, 320px); }
+  .ribbon .quote { font-size: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="chassis">
+  <span class="screw tl"></span>
+  <span class="screw tr"></span>
+  <span class="screw bl"></span>
+  <span class="screw br"></span>
+
+  <!-- ───────── upper deck ───────── -->
+  <header class="deck-top">
+    <div class="brand">
+      <div class="wordmark">KmiDi<span class="dot">.</span></div>
+      <div class="tagline">Tactile · Lab Series</div>
+    </div>
+
+    <div class="transport">
+      <div class="hw-keys">
+        <button class="hw-key" id="key-stop" title="Stop">
+          <svg viewBox="0 0 16 16"><rect x="4" y="4" width="8" height="8" fill="currentColor"/></svg>
+        </button>
+        <button class="hw-key" id="key-play" title="Play / Pause [Space]">
+          <svg viewBox="0 0 16 16"><polygon points="4,3 4,13 13,8" fill="currentColor"/></svg>
+        </button>
+        <button class="hw-key rec" id="key-rec" title="Record [R]">
+          <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="4.5" fill="currentColor"/></svg>
+        </button>
+      </div>
+      <div class="segments" id="segments"></div>
+      <div class="hw-keys">
+        <button class="hw-key" id="key-tap" title="Tap tempo [T]">
+          <svg viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="right-cluster">
+      <div class="bpm-disp" id="bpm-disp" title="Drag vertically to adjust">
+        <div class="bpm-num" id="bpm-num">120</div>
+        <div class="bpm-label">BPM · 4/4</div>
+      </div>
+      <div class="mixer-strip" aria-label="Master mix preview">
+        <div class="fader"><div class="track"><div class="fill" style="height:65%"></div></div><div class="cap" style="bottom:60%"></div><div class="lbl">K</div></div>
+        <div class="fader"><div class="track"><div class="fill" style="height:55%"></div></div><div class="cap" style="bottom:50%"></div><div class="lbl">S</div></div>
+        <div class="fader"><div class="track"><div class="fill" style="height:72%"></div></div><div class="cap" style="bottom:67%"></div><div class="lbl">B</div></div>
+        <div class="fader"><div class="track"><div class="fill" style="height:42%"></div></div><div class="cap" style="bottom:37%"></div><div class="lbl">P</div></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ───────── lower deck ───────── -->
+  <main class="deck-lower">
+
+    <!-- rotary mode rail -->
+    <aside class="rotary-rail">
+      <div class="rotary" id="rotary">
+        <div class="indicator"></div>
+        <div class="hub"></div>
+        <div class="ticks" id="ticks"></div>
+      </div>
+      <div class="mode-counter">MODE <strong id="mode-num">02</strong> / 04</div>
+    </aside>
+
+    <!-- workspace stage -->
+    <section class="stage" id="stage" data-mode="inspire">
+
+      <!-- LEFT: emotion disc + dot-matrix readout (always visible, this is the "ground truth") -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Emotion · Polar Surface</div>
+          <div class="panel-meta" id="emo-meta">∠ 18° · r 0.62</div>
+        </div>
+        <div class="disc-wrap">
+          <div class="disc" id="disc">
+            <svg viewBox="0 0 400 400" id="disc-svg" aria-label="Emotion polar surface">
+              <!-- background grid -->
+              <defs>
+                <radialGradient id="ringGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#c9a227" stop-opacity="0.04"/>
+                  <stop offset="70%" stop-color="#c9a227" stop-opacity="0.02"/>
+                  <stop offset="100%" stop-color="#c9a227" stop-opacity="0"/>
+                </radialGradient>
+              </defs>
+              <circle cx="200" cy="200" r="190" fill="url(#ringGlow)"/>
+              <!-- intensity rings -->
+              <g stroke="rgba(255,255,255,0.06)" fill="none" stroke-width="1">
+                <circle cx="200" cy="200" r="60"/>
+                <circle cx="200" cy="200" r="115"/>
+                <circle cx="200" cy="200" r="170"/>
+              </g>
+              <!-- radial spokes (sectors) -->
+              <g id="spokes" stroke="rgba(255,255,255,0.05)" stroke-width="1"></g>
+              <!-- live highlighted sector (drawn on selection) -->
+              <path id="sector-hl" fill="rgba(201,162,39,0.10)" stroke="rgba(201,162,39,0.35)" stroke-width="1" d=""/>
+              <!-- center dead-zone -->
+              <circle cx="200" cy="200" r="22" fill="#0c0c0e" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+              <text x="200" y="204" text-anchor="middle" fill="#6b6b69" font-family="IBM Plex Mono, monospace" font-size="8" letter-spacing="2">FEEL</text>
+              <!-- sector labels -->
+              <g id="labels"></g>
+              <!-- intensity tick labels on a single spoke -->
+              <g font-family="IBM Plex Mono, monospace" font-size="7" fill="#5e5e5c" letter-spacing="1">
+                <text x="206" y="146" text-anchor="start">HI</text>
+                <text x="206" y="91" text-anchor="start">MAX</text>
+                <text x="206" y="201" text-anchor="start">LO</text>
+              </g>
+            </svg>
+            <div class="puck" id="puck" style="left:50%; top:50%"></div>
+          </div>
+
+          <div class="dot-readout" id="dot-readout">
+            <span id="r-family">CALM</span>
+            <span class="sep">·</span>
+            <span id="r-intensity">MEDIUM</span>
+            <span class="sep">·</span>
+            <span id="r-shade">SERENE</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: mode-dependent contextual stack -->
+      <div class="col-right">
+
+        <!-- INSPIRE view -->
+        <div class="mode-view active" data-view="inspire">
+          <div class="panel" style="margin-bottom: var(--space-4)">
+            <div class="panel-head">
+              <div class="panel-title">Starters · drawn from your feel</div>
+              <div class="panel-meta">3 of 12</div>
+            </div>
+            <div class="starter-rack">
+              <button class="starter active">
+                <div class="name">Late Train</div>
+                <div class="meta">Lo-Fi · 78 BPM · Cm</div>
+              </button>
+              <button class="starter">
+                <div class="name">Long Wire</div>
+                <div class="meta">Ambient · 62 BPM · F</div>
+              </button>
+              <button class="starter">
+                <div class="name">Rainfade</div>
+                <div class="meta">Folk · 90 BPM · Am</div>
+              </button>
+            </div>
+          </div>
+          <div class="ribbon" style="flex:1">
+            <div class="panel-head">
+              <div class="panel-title">Lyric Spark</div>
+              <div class="panel-meta" id="lyric-meta">draft · 14s ago</div>
+            </div>
+            <p class="quote" id="lyric-quote">the platform clears, the train arrives early — i wave at no one and step on.</p>
+            <div class="meta-row">
+              <div class="pill-row">
+                <span class="pill lit">Calm</span>
+                <span class="pill">Wistful</span>
+                <span class="pill">Pre-Chorus</span>
+              </div>
+              <span class="stat">42 chars · 12 syllables</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CREATE view -->
+        <div class="mode-view" data-view="create">
+          <div class="panel" style="margin-bottom: var(--space-4)">
+            <div class="panel-head">
+              <div class="panel-title">Sound Palette</div>
+              <div class="panel-meta">7 selected</div>
+            </div>
+            <div class="starter-rack" style="grid-template-columns: repeat(4, 1fr); gap: 6px;">
+              <button class="starter active"><div class="name" style="font-size:13px">Tape</div><div class="meta">Sat 0.4</div></button>
+              <button class="starter active"><div class="name" style="font-size:13px">Felt Pno</div><div class="meta">Tone -2</div></button>
+              <button class="starter"><div class="name" style="font-size:13px">Plate</div><div class="meta">2.4 s</div></button>
+              <button class="starter active"><div class="name" style="font-size:13px">Brush</div><div class="meta">Soft</div></button>
+              <button class="starter"><div class="name" style="font-size:13px">Bow Bass</div><div class="meta">+12</div></button>
+              <button class="starter active"><div class="name" style="font-size:13px">Air Pad</div><div class="meta">7th</div></button>
+              <button class="starter"><div class="name" style="font-size:13px">Glass</div><div class="meta">High</div></button>
+              <button class="starter active"><div class="name" style="font-size:13px">Drum8</div><div class="meta">Sw 14</div></button>
+            </div>
+          </div>
+          <div class="ribbon" style="flex:1">
+            <div class="panel-head">
+              <div class="panel-title">Composition Notes</div>
+              <div class="panel-meta">live</div>
+            </div>
+            <p class="quote">a slow piano, brushed drums, one tape hiss bed — let the bass enter only at bar 9.</p>
+            <div class="meta-row">
+              <div class="pill-row">
+                <span class="pill lit">Lo-Fi</span>
+                <span class="pill lit">78 BPM</span>
+                <span class="pill">C minor</span>
+              </div>
+              <span class="stat">draft · 3 fragments</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- COMPOSE view -->
+        <div class="mode-view" data-view="compose">
+          <div class="panel" style="flex:1">
+            <div class="panel-head">
+              <div class="panel-title">Arrangement Lanes · 16 cells</div>
+              <div class="panel-meta">bar 1 — 16</div>
+            </div>
+            <div class="lanes" id="lanes"></div>
+          </div>
+        </div>
+
+        <!-- MIX view -->
+        <div class="mode-view" data-view="mix">
+          <div class="panel" style="flex:1">
+            <div class="panel-head">
+              <div class="panel-title">Channel Strips</div>
+              <div class="panel-meta">post-fader</div>
+            </div>
+            <div class="channels">
+              <div class="channel">
+                <div class="knob-mini" style="transform:rotate(-30deg)"></div>
+                <div class="ch-fader"><div class="ch-fill" style="height:65%"></div><div class="ch-cap" style="bottom:60%"></div></div>
+                <div class="ch-name">Kick</div>
+                <div class="ch-db">-3.7</div>
+              </div>
+              <div class="channel">
+                <div class="knob-mini" style="transform:rotate(10deg)"></div>
+                <div class="ch-fader"><div class="ch-fill" style="height:55%"></div><div class="ch-cap" style="bottom:50%"></div></div>
+                <div class="ch-name">Snare</div>
+                <div class="ch-db">-5.2</div>
+              </div>
+              <div class="channel">
+                <div class="knob-mini" style="transform:rotate(-50deg)"></div>
+                <div class="ch-fader"><div class="ch-fill" style="height:72%"></div><div class="ch-cap" style="bottom:67%"></div></div>
+                <div class="ch-name">Bass</div>
+                <div class="ch-db">-2.1</div>
+              </div>
+              <div class="channel">
+                <div class="knob-mini" style="transform:rotate(40deg)"></div>
+                <div class="ch-fader"><div class="ch-fill" style="height:42%"></div><div class="ch-cap" style="bottom:37%"></div></div>
+                <div class="ch-name">Pad</div>
+                <div class="ch-db">-7.8</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- ───────── footer: signal flow + key hints ───────── -->
+  <footer class="deck-bottom">
+    <div class="signal-flow" id="signal-flow">
+      <div class="signal-node lit" data-step="feel"><span class="lamp"></span><span class="lbl">Feel</span></div>
+      <div class="signal-wire lit"></div>
+      <div class="signal-node lit" data-step="starter"><span class="lamp"></span><span class="lbl">Starter</span></div>
+      <div class="signal-wire"></div>
+      <div class="signal-node" data-step="sound"><span class="lamp"></span><span class="lbl">Sound</span></div>
+      <div class="signal-wire"></div>
+      <div class="signal-node" data-step="compose"><span class="lamp"></span><span class="lbl">Compose</span></div>
+      <div class="signal-wire"></div>
+      <div class="signal-node" data-step="mix"><span class="lamp"></span><span class="lbl">Mix</span></div>
+    </div>
+
+    <div class="key-hints">
+      <span class="kh"><span class="kbd">↑</span><span class="kbd">↓</span> Mode</span>
+      <span class="kh"><span class="kbd">1</span><span class="kbd">5</span> Feel</span>
+      <span class="kh"><span class="kbd">␣</span> Play</span>
+      <span class="kh"><span class="kbd">R</span> Rec</span>
+      <span class="kh"><span class="kbd">T</span> Tap</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────────────────
+   State + constants
+   ───────────────────────────────────────────────────────── */
+const MODES = ['mix', 'inspire', 'create', 'compose'];
+const MODE_LABELS = { mix: 'MIX', inspire: 'INSPIRE', create: 'CREATE', compose: 'COMPOSE' };
+
+// 5 emotion families on the polar disc (12 o'clock = 0°, going clockwise)
+const FAMILIES = [
+  { key: 'calm',       label: 'CALM',       shades: ['muted', 'hopeful', 'serene'] },
+  { key: 'bright',     label: 'BRIGHT',     shades: ['bright', 'playful', 'energetic'] },
+  { key: 'intense',    label: 'INTENSE',    shades: ['pensive', 'urgent', 'fierce'] },
+  { key: 'reflective', label: 'REFLECTIVE', shades: ['nostalgic', 'grateful', 'wistful'] },
+  { key: 'mystical',   label: 'MYSTICAL',   shades: ['ethereal', 'dreamy', 'haunting'] },
+];
+
+const state = {
+  mode: 'inspire',           // mix | inspire | create | compose
+  playing: false,
+  recording: false,
+  bpm: 120,
+  playhead: 0,
+  emotion: { familyIdx: 0, intensity: 0.55, shadeIdx: 1 },
+  lastTap: 0,
+  tapTimes: [],
+};
+
+/* ─────────────────────────────────────────────────────────
+   Rotary mode selector — twist through modes
+   ───────────────────────────────────────────────────────── */
+const rotary = document.getElementById('rotary');
+const ticks = document.getElementById('ticks');
+const modeNum = document.getElementById('mode-num');
+const stage = document.getElementById('stage');
+
+// place tick labels around the rotary
+function buildTicks() {
+  ticks.innerHTML = '';
+  // 4 modes evenly distributed across 270° (start at -135°, end at 135°)
+  // i=0 → -135°, i=3 → 135°
+  MODES.forEach((m, i) => {
+    const a = (-135 + (i / (MODES.length - 1)) * 270) * Math.PI / 180;
+    // tick dot at radius ~46 (just outside the 36px-radius rotary)
+    const dx = Math.cos(a + Math.PI / 2) * 0; // rotary centered, so we use offsets relative to it
+    const dy = Math.sin(a + Math.PI / 2) * 0;
+
+    // rotary is 72×72, ticks container is inset:-10px → 92×92, center at 46,46
+    const r = 50;
+    const x = 46 + Math.sin(a + Math.PI) * r;
+    const y = 46 - Math.cos(a + Math.PI) * r;
+
+    const dot = document.createElement('span');
+    dot.className = 'tick-dot' + (m === state.mode ? ' active' : '');
+    dot.style.left = `${x - 2}px`;
+    dot.style.top  = `${y - 2}px`;
+    ticks.appendChild(dot);
+
+    // label further out
+    const r2 = 78;
+    const lx = 46 + Math.sin(a + Math.PI) * r2;
+    const ly = 46 - Math.cos(a + Math.PI) * r2;
+    const lbl = document.createElement('span');
+    lbl.className = 'tick-label' + (m === state.mode ? ' active' : '');
+    lbl.textContent = MODE_LABELS[m];
+    lbl.style.left = `${lx - 32}px`;
+    lbl.style.top  = `${ly - 6}px`;
+    lbl.dataset.mode = m;
+    lbl.addEventListener('click', () => setMode(m));
+    ticks.appendChild(lbl);
+  });
+}
+
+function setMode(next) {
+  if (!MODES.includes(next) || next === state.mode) return;
+  state.mode = next;
+  const idx = MODES.indexOf(next);
+  // rotate rotary so indicator points at the tick of the active mode.
+  // tick angle: (-135 + i/3 * 270)°, indicator points to top by default,
+  // so rotation = tick angle.
+  const angle = -135 + (idx / (MODES.length - 1)) * 270;
+  rotary.style.transform = `rotate(${angle}deg)`;
+  rotary.classList.remove('haptic');
+  // force reflow to restart animation
+  void rotary.offsetWidth;
+  rotary.classList.add('haptic');
+
+  modeNum.textContent = String(idx + 1).padStart(2, '0');
+  stage.dataset.mode = next;
+
+  // swap mode views
+  document.querySelectorAll('.mode-view').forEach(v => {
+    v.classList.toggle('active', v.dataset.view === next);
+  });
+
+  // light up the rotary tick dots
+  buildTicks();
+
+  // signal-flow lamp: light each step we've passed through
+  syncSignalFlow();
+}
+
+function cycleMode(dir) {
+  const i = MODES.indexOf(state.mode);
+  const next = MODES[(i + dir + MODES.length) % MODES.length];
+  setMode(next);
+}
+
+// scroll wheel over rotary
+rotary.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  cycleMode(e.deltaY > 0 ? 1 : -1);
+}, { passive: false });
+
+// click rotary cycles forward
+rotary.addEventListener('click', () => cycleMode(1));
+
+buildTicks();
+
+/* ─────────────────────────────────────────────────────────
+   Polar emotion disc — angle = family, radius = intensity
+   ───────────────────────────────────────────────────────── */
+const disc = document.getElementById('disc');
+const puck = document.getElementById('puck');
+const sectorHL = document.getElementById('sector-hl');
+const spokes = document.getElementById('spokes');
+const labelsG = document.getElementById('labels');
+const emoMeta = document.getElementById('emo-meta');
+const rFamily = document.getElementById('r-family');
+const rIntensity = document.getElementById('r-intensity');
+const rShade = document.getElementById('r-shade');
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const C = 200, MAX_R = 175, INNER_R = 24;
+
+// build spokes between sectors and family labels
+function buildDisc() {
+  // 5 sectors — each spans 360/5 = 72°
+  spokes.innerHTML = '';
+  labelsG.innerHTML = '';
+  FAMILIES.forEach((f, i) => {
+    // Spoke at boundary between sector i-1 and i
+    const a = ((i / FAMILIES.length) * 360 - 90) * Math.PI / 180;
+    const x1 = C + Math.cos(a) * INNER_R;
+    const y1 = C + Math.sin(a) * INNER_R;
+    const x2 = C + Math.cos(a) * MAX_R;
+    const y2 = C + Math.sin(a) * MAX_R;
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+    spokes.appendChild(line);
+
+    // label at center of sector (i + 0.5)
+    const aMid = (((i + 0.5) / FAMILIES.length) * 360 - 90) * Math.PI / 180;
+    const lr = 188;
+    const lx = C + Math.cos(aMid) * lr;
+    const ly = C + Math.sin(aMid) * lr;
+    const t = document.createElementNS(SVG_NS, 'text');
+    t.setAttribute('x', lx);
+    t.setAttribute('y', ly);
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('dominant-baseline', 'middle');
+    t.setAttribute('font-family', 'IBM Plex Mono, monospace');
+    t.setAttribute('font-size', '9');
+    t.setAttribute('letter-spacing', '1.5');
+    t.setAttribute('fill', '#5e5e5c');
+    t.textContent = f.label;
+    t.dataset.familyIdx = i;
+    t.style.cursor = 'pointer';
+    labelsG.appendChild(t);
+  });
+}
+buildDisc();
+
+function setEmotion(familyIdx, intensity, shadeIdx) {
+  state.emotion.familyIdx = ((familyIdx % FAMILIES.length) + FAMILIES.length) % FAMILIES.length;
+  state.emotion.intensity = Math.max(0.05, Math.min(1, intensity));
+  if (shadeIdx !== undefined) state.emotion.shadeIdx = shadeIdx;
+  else {
+    // derive shade from intensity bucket
+    const shades = FAMILIES[state.emotion.familyIdx].shades;
+    state.emotion.shadeIdx = Math.min(shades.length - 1,
+      Math.floor(state.emotion.intensity * shades.length));
+  }
+  renderEmotion();
+}
+
+function renderEmotion() {
+  const { familyIdx, intensity, shadeIdx } = state.emotion;
+  const fam = FAMILIES[familyIdx];
+
+  // angle at center of family sector
+  const aMid = (((familyIdx + 0.5) / FAMILIES.length) * 360 - 90) * Math.PI / 180;
+  const r = INNER_R + (MAX_R - INNER_R) * intensity;
+
+  // puck position in SVG coords → convert to disc % position
+  const px = C + Math.cos(aMid) * r;
+  const py = C + Math.sin(aMid) * r;
+  puck.style.left = `${(px / 400) * 100}%`;
+  puck.style.top  = `${(py / 400) * 100}%`;
+
+  // highlight the sector
+  const aStart = ((familyIdx / FAMILIES.length) * 360 - 90) * Math.PI / 180;
+  const aEnd   = (((familyIdx + 1) / FAMILIES.length) * 360 - 90) * Math.PI / 180;
+  const x1i = C + Math.cos(aStart) * INNER_R;
+  const y1i = C + Math.sin(aStart) * INNER_R;
+  const x2i = C + Math.cos(aEnd) * INNER_R;
+  const y2i = C + Math.sin(aEnd) * INNER_R;
+  const x1o = C + Math.cos(aStart) * MAX_R;
+  const y1o = C + Math.sin(aStart) * MAX_R;
+  const x2o = C + Math.cos(aEnd) * MAX_R;
+  const y2o = C + Math.sin(aEnd) * MAX_R;
+  const d = `M ${x1i} ${y1i} L ${x1o} ${y1o} A ${MAX_R} ${MAX_R} 0 0 1 ${x2o} ${y2o} L ${x2i} ${y2i} A ${INNER_R} ${INNER_R} 0 0 0 ${x1i} ${y1i} Z`;
+  sectorHL.setAttribute('d', d);
+
+  // dot-matrix readout
+  const intensityLabel = intensity < 0.34 ? 'LOW' : intensity < 0.67 ? 'MEDIUM' : 'HIGH';
+  rFamily.textContent = fam.label;
+  rIntensity.textContent = intensityLabel;
+  rShade.textContent = fam.shades[shadeIdx].toUpperCase();
+  emoMeta.textContent = `∠ ${Math.round(aMid * 180 / Math.PI + 90)}° · r ${intensity.toFixed(2)}`;
+
+  // signal-flow first lamp
+  syncSignalFlow();
+}
+
+// click/drag on disc to set emotion
+function pointerToPolar(e) {
+  const rect = disc.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  // map to 400×400 SVG space
+  const svgX = (x / rect.width) * 400 - C;
+  const svgY = (y / rect.height) * 400 - C;
+  const distFromCenter = Math.sqrt(svgX * svgX + svgY * svgY);
+  // angle: atan2 returns -PI..PI. We want 0 = straight up (12 o'clock), clockwise.
+  let angle = Math.atan2(svgY, svgX) + Math.PI / 2;
+  if (angle < 0) angle += Math.PI * 2;
+  const familyIdx = Math.floor((angle / (Math.PI * 2)) * FAMILIES.length);
+  const intensity = Math.max(0.05, Math.min(1, (distFromCenter - INNER_R) / (MAX_R - INNER_R)));
+  return { familyIdx, intensity };
+}
+
+let dragging = false;
+disc.addEventListener('pointerdown', (e) => {
+  dragging = true;
+  disc.setPointerCapture(e.pointerId);
+  const p = pointerToPolar(e);
+  setEmotion(p.familyIdx, p.intensity);
+});
+disc.addEventListener('pointermove', (e) => {
+  if (!dragging) return;
+  const p = pointerToPolar(e);
+  setEmotion(p.familyIdx, p.intensity);
+});
+disc.addEventListener('pointerup', (e) => {
+  dragging = false;
+  try { disc.releasePointerCapture(e.pointerId); } catch (_) {}
+});
+
+// click family labels in SVG
+labelsG.addEventListener('click', (e) => {
+  if (e.target.dataset.familyIdx !== undefined) {
+    setEmotion(parseInt(e.target.dataset.familyIdx, 10), state.emotion.intensity);
+  }
+});
+
+setEmotion(0, 0.55);
+
+/* ─────────────────────────────────────────────────────────
+   Transport / segment timeline / BPM
+   ───────────────────────────────────────────────────────── */
+const segments = document.getElementById('segments');
+const SEG_COUNT = 32;
+function buildSegments() {
+  segments.innerHTML = '';
+  for (let i = 0; i < SEG_COUNT; i++) {
+    const s = document.createElement('div');
+    s.className = 'seg' + (i % 4 === 0 ? ' major' : '');
+    s.dataset.idx = i;
+    s.addEventListener('click', () => { state.playhead = i; renderSegments(); });
+    segments.appendChild(s);
+  }
+}
+function renderSegments() {
+  [...segments.children].forEach((s, i) => {
+    s.classList.toggle('played', i < state.playhead);
+    s.classList.toggle('head', i === state.playhead);
+  });
+}
+buildSegments();
+renderSegments();
+
+const playKey = document.getElementById('key-play');
+const stopKey = document.getElementById('key-stop');
+const recKey  = document.getElementById('key-rec');
+const tapKey  = document.getElementById('key-tap');
+
+let playTimer = null;
+function setPlaying(p) {
+  state.playing = p;
+  playKey.classList.toggle('lit', p);
+  if (p) {
+    if (playTimer) clearInterval(playTimer);
+    const beatMs = (60 / state.bpm) * 1000 / 2; // each segment = 1/8 note
+    playTimer = setInterval(() => {
+      state.playhead = (state.playhead + 1) % SEG_COUNT;
+      renderSegments();
+    }, beatMs);
+  } else if (playTimer) {
+    clearInterval(playTimer);
+    playTimer = null;
+  }
+}
+function setRecording(r) {
+  state.recording = r;
+  recKey.classList.toggle('lit', r);
+}
+
+playKey.addEventListener('click', () => setPlaying(!state.playing));
+stopKey.addEventListener('click', () => { setPlaying(false); state.playhead = 0; renderSegments(); });
+recKey.addEventListener('click', () => setRecording(!state.recording));
+
+// BPM: drag vertically
+const bpmDisp = document.getElementById('bpm-disp');
+const bpmNum = document.getElementById('bpm-num');
+let bpmDragging = false;
+let bpmStartY = 0;
+let bpmStartVal = 120;
+bpmDisp.addEventListener('pointerdown', (e) => {
+  bpmDragging = true;
+  bpmStartY = e.clientY;
+  bpmStartVal = state.bpm;
+  bpmDisp.setPointerCapture(e.pointerId);
+});
+window.addEventListener('pointermove', (e) => {
+  if (!bpmDragging) return;
+  const dy = bpmStartY - e.clientY;
+  state.bpm = Math.max(40, Math.min(220, Math.round(bpmStartVal + dy / 2)));
+  bpmNum.textContent = state.bpm;
+  if (state.playing) setPlaying(true); // restart with new tempo
+});
+window.addEventListener('pointerup', () => bpmDragging = false);
+
+// Tap tempo
+tapKey.addEventListener('click', tapTempo);
+function tapTempo() {
+  const now = performance.now();
+  state.tapTimes.push(now);
+  if (state.tapTimes.length > 4) state.tapTimes.shift();
+  if (state.tapTimes.length >= 2) {
+    const intervals = [];
+    for (let i = 1; i < state.tapTimes.length; i++) {
+      intervals.push(state.tapTimes[i] - state.tapTimes[i - 1]);
+    }
+    const avg = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+    state.bpm = Math.max(40, Math.min(220, Math.round(60000 / avg)));
+    bpmNum.textContent = state.bpm;
+  }
+  tapKey.classList.add('lit');
+  setTimeout(() => tapKey.classList.remove('lit'), 100);
+}
+
+/* ─────────────────────────────────────────────────────────
+   Compose lanes — 5 instruments × 16 cells
+   ───────────────────────────────────────────────────────── */
+const lanes = document.getElementById('lanes');
+const LANES = [
+  { name: 'Drums',  pattern: [1,0,0,0, 1,0,1,0, 1,0,0,0, 1,0,1,0] },
+  { name: 'Bass',   pattern: [1,0,0,0, 0,0,0,0, 1,0,0,0, 0,0,0,0] },
+  { name: 'Piano',  pattern: [0,0,2,0, 1,0,2,0, 0,0,2,0, 1,0,2,0] },
+  { name: 'Pad',    pattern: [1,1,1,1, 1,1,1,1, 2,2,2,2, 2,2,2,2] },
+  { name: 'Vox',    pattern: [0,0,0,0, 1,0,0,1, 0,0,0,0, 1,1,0,0] },
+];
+function buildLanes() {
+  lanes.innerHTML = '';
+  LANES.forEach(l => {
+    const row = document.createElement('div');
+    row.className = 'lane';
+    row.innerHTML = `
+      <div class="lane-name">${l.name}</div>
+      <div class="lane-strip"></div>
+      <div class="lane-meta">${l.pattern.filter(x => x === 1).length} hits</div>
+    `;
+    const strip = row.querySelector('.lane-strip');
+    l.pattern.forEach((v, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'lane-cell' + (v === 1 ? ' on' : v === 2 ? ' dim' : '');
+      strip.appendChild(cell);
+    });
+    lanes.appendChild(row);
+  });
+}
+buildLanes();
+
+/* ─────────────────────────────────────────────────────────
+   Signal flow footer
+   ───────────────────────────────────────────────────────── */
+function syncSignalFlow() {
+  const nodes = document.querySelectorAll('.signal-node');
+  const wires = document.querySelectorAll('.signal-wire');
+  // light "feel" always (we always have an emotion now)
+  // light "starter" if a starter is selected
+  // light "sound" if create mode has been visited or has selections
+  // light "compose" if compose has been opened
+  // light "mix" if mix has been opened
+  const hasStarter = !!document.querySelector('[data-view="inspire"] .starter.active');
+  const hasSound = !!document.querySelector('[data-view="create"] .starter.active');
+  const visitedCompose = state.mode === 'compose' || (state._visited && state._visited.has('compose'));
+  const visitedMix = state.mode === 'mix' || (state._visited && state._visited.has('mix'));
+
+  if (!state._visited) state._visited = new Set();
+  state._visited.add(state.mode);
+
+  const flags = [
+    true,
+    hasStarter,
+    hasSound || state._visited.has('create'),
+    state._visited.has('compose'),
+    state._visited.has('mix'),
+  ];
+  nodes.forEach((n, i) => n.classList.toggle('lit', flags[i]));
+  wires.forEach((w, i) => w.classList.toggle('lit', flags[i] && flags[i + 1]));
+}
+
+// click signal node = jump mode
+document.querySelectorAll('.signal-node').forEach(n => {
+  n.addEventListener('click', () => {
+    const map = { feel: 'inspire', starter: 'inspire', sound: 'create', compose: 'compose', mix: 'mix' };
+    const target = map[n.dataset.step];
+    if (target) setMode(target);
+  });
+});
+
+// starter clicks: toggle active
+document.addEventListener('click', (e) => {
+  const s = e.target.closest('.starter');
+  if (!s) return;
+  const rack = s.parentElement;
+  // single-select for inspire rack, multi-select for sound palette
+  const isPalette = rack.style.gridTemplateColumns?.includes('repeat(4');
+  if (!isPalette) {
+    rack.querySelectorAll('.starter').forEach(x => x.classList.remove('active'));
+  }
+  s.classList.toggle('active');
+  syncSignalFlow();
+});
+
+/* ─────────────────────────────────────────────────────────
+   Keyboard
+   ───────────────────────────────────────────────────────── */
+window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'ArrowDown') { e.preventDefault(); cycleMode(1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); cycleMode(-1); }
+  else if (e.key === ' ') { e.preventDefault(); setPlaying(!state.playing); }
+  else if (e.key === 'r' || e.key === 'R') { setRecording(!state.recording); }
+  else if (e.key === 't' || e.key === 'T') { tapTempo(); }
+  else if (['1','2','3','4','5'].includes(e.key)) {
+    setEmotion(parseInt(e.key, 10) - 1, state.emotion.intensity);
+  }
+});
+
+// init
+setMode('inspire');
+</script>
+
+</body>
+</html>
