@@ -14,9 +14,9 @@ already in the stack.
 
 | Disposition | Count | Action |
 |---|---|---|
-| Superseded by PR #149–#167 | 11 | Close branch + delete after parent PR merges. |
+| Superseded by PR #149–#167, #169 | 12 | Close branch + delete after parent PR merges. |
 | Likely subsumed (verify diff) | 3 | Diff against post-stack `main`, then close. |
-| Independent — needs decision | 3 | Keep open, scope to a real PR or close. |
+| Independent — needs decision | 2 | Keep open, scope to a real PR or close. |
 
 ## Detail
 
@@ -36,16 +36,16 @@ already in the stack.
 | `cursor/repository-configuration-and-build-bba6` | 2026-04-07 | 5 | **Superseded** by `feat/workflow-gates-sanitizers` (already merged via #146) | "Fix 5 bugs: portable paths, sanitizer scope/guards, remove scratch dir". Same theme as the merged sanitizer-config PR. Verify before closing. |
 | `cursor/tsan-preset-frame-pointer-6074` | 2026-04-07 | 5 | **Subsumed** by PR #146 | `-fno-omit-frame-pointer` for TSan; T3 of #149 already pulls in the seqlock TSan harness with frame pointers via `KMIDI_ENABLE_TSAN`. |
 | `cursor/workflow-gates-sanitizers` | 2026-04-07 | 4 | **Already-merged ancestor** | This is the ancestor branch of merged PR #146. Just delete the remote ref. |
-| `cursor/daiw-core-cmake-sources-465f` | 2026-04-21 | 36 | **Independent — needs decision** | Removes the `daiw_core` CMake target referencing files deleted in PR #159/#160. If the audit-stack already does this, supersede; if not, salvage just the CMake hunk and close the rest. |
+| `cursor/daiw-core-cmake-sources-465f` | 2026-04-21 | 36 | **Superseded** by [PR #169](https://github.com/sburdges-eng/KmiDi/pull/169) | PR #169 fixes the same `libs/daiw/CMakeLists.txt`-references-deleted-sources issue (the only real bug in this orphan branch's 36-commit churn) by converting `daiw_core` to an INTERFACE library, plus also fixes two adjacent CMake bugs (sanitizer wiring, ctest registration). Verified locally on macOS arm64 with full ASan + UBSan + TSan + ctest run. |
 | `feature/ai-integration-and-readiness` | 2026-03-19 | 4 | **Independent — needs decision** | Stale (5 weeks old). Last commit is a `main` merge; no real diff. Either rebase + scope a PR, or close as superseded by the audit work. |
 | `feature/universal-music-input` | 2026-03-22 | 5 | **Independent — needs decision** | Substantive feature ("probabilistic interpretation engine") in 130 files. Either rebase against the post-stack `main`, scope a PR, or close if the work has moved elsewhere. |
 
 ## Recommended bulk-close commands (after audit stack lands)
 
-After PRs #149–#167 are merged, the following branches can be removed:
+After PRs #149–#167 + #169 are merged, the following branches can be removed:
 
 ```bash
-# Definitively superseded (8 branches):
+# Definitively superseded (9 branches):
 for b in \
   cursor/healthkit-bridge-memory-leak-e7cc \
   cursor/dangling-tooltip-singleton-pointer-df13 \
@@ -55,6 +55,7 @@ for b in \
   cursor/runtime-synchronization-bugs-c15b \
   cursor/workflow-gates-sanitizers \
   cursor/tsan-preset-frame-pointer-6074 \
+  cursor/daiw-core-cmake-sources-465f \
 ; do
   git push origin --delete "$b"
 done

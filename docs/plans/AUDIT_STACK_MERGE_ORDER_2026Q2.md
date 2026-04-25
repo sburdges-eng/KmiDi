@@ -2,9 +2,14 @@
 
 > The 2026 Q2 audit work is on a 13-PR linear stack rooted at
 > `audit/rt-ffi-safety-2026q2` → `main`. This doc captures the
-> **prerequisite-ordered merge sequence**, including the six bot-fix
-> sub-PRs opened on 2026-04-25 to address Bugbot + Codex review
-> findings.
+> **prerequisite-ordered merge sequence**, including the seven sub-PRs
+> opened on 2026-04-25:
+>
+> - **Six bot-fix PRs** (#162–#167) addressing Bugbot + Codex findings.
+> - **One build-system fix PR** (#169) unblocking the `AGENTS.md`
+>   integration gate (sanitizer linkage, ctest registration, and a
+>   real shipping blocker introduced when PR #159 deleted source files
+>   that `libs/daiw/CMakeLists.txt` still referenced).
 
 ## Stack at a glance
 
@@ -56,6 +61,7 @@ main
 | 17 | **#160** | `audit/dead-code-delete` ← `audit/dead-code-delete-rest` | -3426 lines | cleanup |
 | 18 | **#161** | `audit/dead-code-delete-rest` ← `audit/regression-guards` | scanner | tooling |
 | 19 | **#167** | `audit/regression-guards` ← `cursor/scanner-fix-893f` | 1 file, +54/-24 | bot fix (MEDIUM) |
+| 20 | **#169** | `audit/regression-guards` ← `cursor/sanitizer-and-ctest-wiring-893f` | 2 files, +42/-39 | build-system fix (CMake) |
 
 > **Practical cadence**: merge child fixes (#162/#163/#164/#165/#166/#167)
 > **into their respective parent stack PRs** before merging the parent
@@ -74,53 +80,123 @@ into one merge commit + a clean linear history.
 ## Pre-merge gates
 
 Per `AGENTS.md` § Integration gate, every PR touching native code must
-satisfy these gates **before merge**. They have not all been runnable
-in the current cloud environment because:
+satisfy these gates **before merge**. As of 2026-04-25, gates 1–3 below
+have all been run locally on macOS arm64 (Apple clang 21, cmake 4.3.1,
+ninja 1.13.2) against the integration of `audit/rt-ffi-safety-2026q2`
+(#149) + `cursor/rt-ffi-fixes-149-893f` (#162) + the build-system fix
+(#169). Results recorded inline.
 
-- **CI is broken at the account level** (every workflow run since
-  2026-04-21 fails in <10s with no runner assigned). PR #161's body
-  documents this: *"all 100 recent runs fail in <10s with no runner
-  assigned"*. Unblocking CI is a prerequisite to merging.
-- **Cargo `edition2024`**: workspace cargo (1.83) doesn't yet stabilize
-  the feature required by `getrandom 0.4.2` pulled transitively. Use
-  cargo ≥1.85 (or set `CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=false`).
-
-What **was** verified locally on each fix PR's branch:
+### ✅ Gate 1 — `cargo test` on the Rust FFI crate
 
 ```
-✅ python3 scripts/audit/cross_tree_basename_scan.py        (post #167)
-✅ python3 -m pytest tests/unit/                            (306 passed,
-                                                             4 pre-existing
-                                                             failures present
-                                                             on `main`)
-✅ python3 -m flake8 music_brain/ --max-line-length 100     (240 informational,
-                                                             0 critical via
-                                                             E9/F63/F7/F82)
-✅ g++ -std=c++17 -fsyntax-only on each modified .cpp/.h
+$ cargo test --manifest-path engine/intent_ir/Cargo.toml
+running 9 tests
+test validator::tests::test_builder_invalid_values ... ok
+test validator::tests::test_invalid_version ... ok
+test validator::tests::test_builder_validation ... ok
+test validator::tests::test_clamp_arousal ... ok
+test validator::tests::test_clamp_tempo_bias ... ok
+test validator::tests::test_time_scope_validation ... ok
+test validator::tests::test_valid_intent_frame ... ok
+test validator::tests::test_clamp_valence ... ok
+test validator::tests::test_version_supported ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured
 ```
 
-## What still has to happen at merge time
+### ✅ Gate 2 — Release build of `KellyCore` + `KellyFFI`
 
-1. **Unblock CI runners** at the account / GitHub Actions level.
-2. **Run the full sanitizer + native gate**:
-   ```
-   cmake -S . -B build-asan -G Ninja -DCMAKE_BUILD_TYPE=Debug \
-     -DBUILD_KELLY_CORE=ON -DBUILD_KELLY_FFI=ON \
-     -DBUILD_TESTS=ON -DKMIDI_ENABLE_ASAN=ON
-   cmake --build build-asan -j8
-   ctest --test-dir build-asan --output-on-failure
-   ```
-3. **Verify the new RT seqlock test** introduced in #149 passes after the
-   #162 sequence-coherence fix:
-   `ctest --test-dir build-tsan -R rt_state_seqlock`.
-4. **Plugin smoke test in a DAW** (load KellyPlugin VST3, exercise
-   `processBlock`, observe no allocation / glitches).
-5. **Concurrent Python bridge stress** (`StateBridge` + `PreferenceBridge`
-   on multiple threads with #162's `s_pyStartupOnce` collapsed
-   `Py_Initialize`/`PyEval_SaveThread`).
+```
+$ cmake -S . -B build-gate -G Ninja -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_KELLY_CORE=ON -DBUILD_KELLY_FFI=ON
+$ cmake --build build-gate --target KellyCore KellyFFI -j8
+[223/224] Linking CXX static library libKellyCore.a
+[224/224] Linking CXX shared library libKellyFFI.1.0.0.dylib
+```
 
-Items 2–5 require `external/JUCE/` which isn't bootstrapped in the
-cloud agent environment. They run on the merge box.
+`otool -L build-gate/libKellyFFI.dylib` shows no JUCE rpath entry —
+JUCE is statically linked into the dylib (PRIVATE linkage, per the
+`AGENTS.md` integration-gate "no duplicate JUCE" rule).
+
+### ✅ Gate 3 — ASan + UBSan, full `KellyCore` + `KellyFFI` build + `ctest`
+
+```
+$ cmake -S . -B build-asan -G Ninja -DCMAKE_BUILD_TYPE=Debug \
+        -DBUILD_KELLY_CORE=ON -DBUILD_KELLY_FFI=ON \
+        -DBUILD_TESTS=ON -DKMIDI_ENABLE_ASAN=ON
+-- KellyCore: ASan + UBSan enabled
+-- KellyFFI:  ASan + UBSan enabled
+
+$ cmake --build build-asan --target KellyCore KellyFFI -j8
+[244/245] Linking CXX shared library libKellyFFI.1.0.0.dylib
+
+$ ctest --test-dir build-asan --output-on-failure
+1/2 Test #1: RTStateSeqlockTest .............. Passed   0.26 sec
+2/2 Test #2: SIMDKernelsTest ................. Passed   0.00 sec
+100% tests passed, 0 tests failed out of 2
+```
+
+`RTStateSeqlockTest` runs 1,000,000 writer/reader iterations with
+**zero tearings** under ASan + UBSan with `halt_on_error=1`.
+
+### ✅ Gate 4 — TSan, RT seqlock torture
+
+```
+$ cmake -S . -B build-tsan -G Ninja -DCMAKE_BUILD_TYPE=Debug \
+        -DBUILD_KELLY_CORE=ON -DBUILD_TESTS=ON -DKMIDI_ENABLE_TSAN=ON
+$ TSAN_OPTIONS=halt_on_error=1 ./build-tsan/RTStateSeqlockTest
+iterations=1000000 tearings=0 snapshot_failures=755412 pre_publish=0
+```
+
+Zero data-race reports across 1M iterations; the `s_pyStartupOnce`
+collapsed `Py_Initialize`/`PyEval_SaveThread` change from #162 doesn't
+trip TSan.
+
+### ✅ Gate 5 — Live FFI smoke test (Release dylib + new error-message branch)
+
+```
+$ ./ffi_smoke   # links only libKellyFFI.dylib via the C ABI
+KELLY_SUCCESS:        Success
+KELLY_ERROR_AGAIN:    Transient seqlock contention; retry the call
+KELLY_ERROR_NULL_PTR: Null pointer error
+```
+
+Confirms the new `KELLY_ERROR_AGAIN` error-message branch from #162
+fix #4 is reachable from a real consumer linking only the dylib (not
+KellyCore). Same output under ASan + UBSan with `halt_on_error=1`.
+
+### ✅ Gate 6 — Python unit suite
+
+```
+$ python3 -m pytest tests/unit/ -q --no-header --tb=no
+270 passed, 35 skipped, 4 failed in 1.30s
+```
+
+The 4 failures are **pre-existing** (test_spectocloud_rejects_*,
+test_emotion_rust_exists_after_sync, test_intent_frame_rust_exists_after_sync
+— all present on `main` already, not regressions caused by the audit
+stack).
+
+### What still requires a real merge box
+
+- **Plugin smoke test in a DAW** — load `KellyPlugin_VST3` in a host,
+  exercise `processBlock`, observe no allocation / glitches under
+  `KMIDI_BUILD_JUCE_UI=ON -DBUILD_PLUGINS=ON`. Apple clang 21 + cmake
+  4.3.1 produce the `.vst3` bundle, but a human ear is the test.
+- **Concurrent Python bridge stress** — exercise `StateBridge` +
+  `PreferenceBridge` on multiple threads with the collapsed
+  `s_pyStartupOnce` from #162 fix #3.
+- **GitHub Actions CI runners** — every workflow run since 2026-04-21
+  still fails in <10s with no runner assigned. PR #161's body documents
+  this. Unblocking is owner-only and orthogonal to the merge.
+
+### What's no longer a blocker
+
+- ❌ ~~Cargo `edition2024`~~ — local cargo 1.94.1 handles it cleanly.
+- ❌ ~~`external/JUCE/` missing in cloud agent~~ — local checkout has the
+  full submodule, build verified end-to-end.
+- ❌ ~~Build-system blocker after PR #159 deletes daiw_core sources~~ — fixed
+  by PR #169 in this stack.
 
 ## Follow-ups (out of scope for this stack)
 
