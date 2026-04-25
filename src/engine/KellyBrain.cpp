@@ -21,10 +21,55 @@ using KellyTypesRuleBreakType = RuleBreakType;
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <cstdio>
 #include <limits>
 #include <sstream>
 
 namespace kelly {
+
+// Escape a string for embedding inside a JSON double-quoted scalar.
+// Handles \" \\ and the C0 control range (\b \f \n \r \t plus \u00XX).
+// Used by emitStateUpdate JSON construction below — values like
+// IntentResult::key/mode are caller-supplied and could contain quotes.
+static std::string jsonEscape(const std::string &s) {
+  std::string out;
+  out.reserve(s.size() + 2);
+  for (unsigned char c : s) {
+    switch (c) {
+    case '"':
+      out += "\\\"";
+      break;
+    case '\\':
+      out += "\\\\";
+      break;
+    case '\b':
+      out += "\\b";
+      break;
+    case '\f':
+      out += "\\f";
+      break;
+    case '\n':
+      out += "\\n";
+      break;
+    case '\r':
+      out += "\\r";
+      break;
+    case '\t':
+      out += "\\t";
+      break;
+    default:
+      if (c < 0x20) {
+        char buf[8];
+        std::snprintf(buf, sizeof(buf), "\\u%04x", c);
+        out += buf;
+      } else {
+        out += static_cast<char>(c);
+      }
+      break;
+    }
+  }
+  return out;
+}
 
 // Helper function to convert EmotionCategory enum to string
 static std::string categoryEnumToString(EmotionCategory cat) {
@@ -401,8 +446,8 @@ GeneratedMidi KellyBrain::generateMidi(const KellyTypesIntentResult &intent,
     std::ostringstream json;
     json << "{\"bars\":" << bars
          << ",\"tempo_bpm\":" << intent.tempoBpm
-         << ",\"key\":\"" << intent.key << "\""
-         << ",\"mode\":\"" << intent.mode << "\""
+         << ",\"key\":\"" << jsonEscape(intent.key) << "\""
+         << ",\"mode\":\"" << jsonEscape(intent.mode) << "\""
          << ",\"num_notes\":" << result.notes.size()
          << ",\"length_beats\":" << result.lengthInBeats
          << "}";
