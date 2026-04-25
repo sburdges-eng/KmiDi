@@ -13,9 +13,15 @@
  *          Engines emit state updates, Python can query current state.
  *
  * Thread Safety:
- * - State emission is lock-free (uses lock-free queue)
- * - Safe to call from audio thread
- * - State updates are batched and processed asynchronously
+ * - State emission uses a lock-free MPMC queue (multiple producer threads,
+ *   one consumer).
+ * - NOT safe from the audio thread: StateUpdate carries two std::string
+ *   payloads whose copy ctor allocates past SSO, and ConcurrentQueue's
+ *   first touch from a new producer thread heap-allocates an implicit
+ *   producer slot.  Call from engine/worker threads only; use a bounded
+ *   fixed-size RT channel if you need audio-thread emission.
+ * - State updates are batched and processed asynchronously by a single
+ *   StateWorkerThread.
  */
 
 #include <string>
@@ -23,7 +29,8 @@
 #include <map>
 #include <memory>
 #include <atomic>
-#include <readerwriterqueue.h>
+#include <chrono>
+#include <concurrentqueue.h>
 
 namespace kelly {
 
@@ -33,10 +40,11 @@ namespace kelly {
  * Provides methods to emit state updates from C++ engines to Python intelligence
  * modules, and to query current state from Python.
  *
- * Thread Safety:
- * - State emission is lock-free (uses lock-free queue)
- * - Safe to call from audio thread
- * - State updates are batched and processed asynchronously
+ * Thread Safety (see file-level comment for details):
+ * - State emission goes through an MPMC lock-free queue.
+ * - NOT audio-thread safe — std::string copy + ConcurrentQueue first-touch
+ *   can allocate.  Engine/worker threads only.
+ * - State updates are batched and processed asynchronously.
  */
 class StateBridge {
 public:
@@ -46,7 +54,9 @@ public:
     /**
      * Emit state update from C++ engine.
      *
-     * This is safe to call from audio thread.
+     * NOT audio-thread safe — copies two std::string into the queue payload
+     * and ConcurrentQueue's first-touch from a new producer thread allocates.
+     * Call from engine/worker threads only.
      *
      * @param engineType Engine type: "melody", "bass", "drum", "midi_generator", etc.
      * @param stateJson JSON string with state update:
@@ -112,13 +122,17 @@ private:
     void* getCurrentStateFunc_;
     void* getEngineStateFunc_;
 
-    // Lock-free queue for state updates (audio thread safe)
+    // Lock-free MPMC queue for state updates.
+    // emitStateUpdate() is called from arbitrary engine threads (RT audio,
+    // ML worker, UI, etc.) — multiple concurrent producers.  The single
+    // StateWorkerThread consumes.  ConcurrentQueue is MPMC so this is safe;
+    // ReaderWriterQueue (SPSC) was a contract violation here.
     struct StateUpdate {
         std::string engineType;
         std::string stateJson;
         std::chrono::steady_clock::time_point timestamp;
     };
-    std::unique_ptr<moodycamel::ReaderWriterQueue<StateUpdate>> stateQueue_;
+    std::unique_ptr<moodycamel::ConcurrentQueue<StateUpdate>> stateQueue_;
     static constexpr size_t MAX_QUEUE_SIZE = 1000;
 
     // Worker thread for processing state updates

@@ -306,8 +306,12 @@ void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
       PluginLatencyManager::msToSamples(ML_LOOKAHEAD_MS, sampleRate);
   latencyManager_.setLookaheadLatency(lookaheadSamples_);
 
-  // Allocate lookahead buffer (stereo, with extra space for safety)
-  lookaheadBuffer_.setSize(2, lookaheadSamples_ + samplesPerBlock);
+  // T6.1: Round up to power-of-two so processBlock can use & mask instead of %.
+  const int lookaheadPow2 = juce::nextPowerOfTwo(lookaheadSamples_ + samplesPerBlock);
+  lookaheadMask_ = static_cast<size_t>(lookaheadPow2) - 1u;
+
+  // Allocate lookahead buffer (stereo, power-of-two capacity)
+  lookaheadBuffer_.setSize(2, lookaheadPow2);
   lookaheadBuffer_.clear();
   lookaheadWritePos_ = 0;
   lookaheadReadPos_ = 0;
@@ -384,6 +388,18 @@ void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
 
   // Pre-allocate mono mix buffer (no heap alloc in processBlock)
   monoMixBuffer_.resize(static_cast<size_t>(samplesPerBlock));
+
+  // T6.3: Cache APVTS raw pointers once — processBlock reads them with
+  // memory_order_relaxed rather than calling getRawParameterValue each block.
+  paramMlInfluence_ = apvts_.getRawParameterValue(PARAM_ML_INFLUENCE);
+  paramValence_     = apvts_.getRawParameterValue(PARAM_VALENCE);
+  paramArousal_     = apvts_.getRawParameterValue(PARAM_AROUSAL);
+  paramEqBypass_    = apvts_.getRawParameterValue(PARAM_EQ_BYPASS);
+  paramBypass_      = apvts_.getRawParameterValue(PARAM_BYPASS);
+  if (!paramMlInfluence_ || !paramValence_ || !paramArousal_ ||
+      !paramEqBypass_ || !paramBypass_) {
+    DBG("PluginProcessor::prepareToPlay — getRawParameterValue returned null for one or more parameters; check parameter IDs");
+  }
 }
 
 void PluginProcessor::releaseResources() {
@@ -420,7 +436,11 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
 #if JUCE_MAC
   // Promote to interactive QoS so we stay off E-cores (Apple Silicon low-latency).
-  pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+  // call_once ensures the syscall runs exactly once per audio-thread lifetime,
+  // not once per block (300-600 Hz overhead avoided).
+  std::call_once(qosSetOnce_, [] {
+    pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+  });
 #endif
   juce::ScopedNoDenormals noDenormals;
 
@@ -429,16 +449,18 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 
   // ML Inference processing (if enabled and we have audio input)
   if (mlInferenceEnabled_.load() && numChannels > 0) {
-    // Write input to lookahead buffer
+    // T6.1: Write input to lookahead buffer — two memcpys with power-of-two mask
     for (int ch = 0; ch < numChannels && ch < lookaheadBuffer_.getNumChannels();
          ++ch) {
       const float *src = buffer.getReadPointer(ch);
       float *dst = lookaheadBuffer_.getWritePointer(ch);
 
-      for (int i = 0; i < numSamples; ++i) {
-        int writeIdx =
-            (lookaheadWritePos_ + i) % lookaheadBuffer_.getNumSamples();
-        dst[writeIdx] = src[i];
+      const size_t wIdx = static_cast<size_t>(lookaheadWritePos_) & lookaheadMask_;
+      const size_t bufSize = static_cast<size_t>(lookaheadBuffer_.getNumSamples());
+      const size_t first = std::min(static_cast<size_t>(numSamples), bufSize - wIdx);
+      std::memcpy(dst + wIdx, src, first * sizeof(float));
+      if (static_cast<size_t>(numSamples) > first) {
+        std::memcpy(dst, src + first, (static_cast<size_t>(numSamples) - first) * sizeof(float));
       }
     }
 
@@ -481,9 +503,9 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
         emotionRunner_->updateParams(emotionRTState_,
                                      static_cast<size_t>(numSamples));
 
-        // Blend detected emotion with manual slider values
+        // T6.3: Blend detected emotion with manual slider values (cached ptrs)
         const float blend =
-            apvts_.getRawParameterValue(PARAM_ML_INFLUENCE)->load();
+            paramMlInfluence_->load(std::memory_order_relaxed);
 
         if (blend > 0.0f) {
           const float detectedV =
@@ -491,9 +513,9 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
           const float detectedA =
               emotionRTState_.arousal.load(std::memory_order_relaxed);
           const float manualV =
-              apvts_.getRawParameterValue(PARAM_VALENCE)->load();
+              paramValence_->load(std::memory_order_relaxed);
           const float manualA =
-              apvts_.getRawParameterValue(PARAM_AROUSAL)->load();
+              paramArousal_->load(std::memory_order_relaxed);
 
           // Linear blend: 0=fully manual, 1=fully detected
           mlValence_.store((1.0f - blend) * manualV + blend * detectedV,
@@ -501,35 +523,37 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
           mlArousal_.store((1.0f - blend) * manualA + blend * detectedA,
                           std::memory_order_relaxed);
         } else {
-          // Pure manual mode — use slider values directly
+          // Pure manual mode — use slider values directly (T6.3: cached ptr)
           mlValence_.store(
-              apvts_.getRawParameterValue(PARAM_VALENCE)->load(),
+              paramValence_->load(std::memory_order_relaxed),
               std::memory_order_relaxed);
           mlArousal_.store(
-              apvts_.getRawParameterValue(PARAM_AROUSAL)->load(),
+              paramArousal_->load(std::memory_order_relaxed),
               std::memory_order_relaxed);
         }
       }
     }
 
-    // Read delayed audio from lookahead buffer
+    // T6.1: Read delayed audio from lookahead buffer — two memcpys with mask
     for (int ch = 0; ch < numChannels && ch < lookaheadBuffer_.getNumChannels();
          ++ch) {
       const float *src = lookaheadBuffer_.getReadPointer(ch);
       float *dst = buffer.getWritePointer(ch);
 
-      for (int i = 0; i < numSamples; ++i) {
-        int readIdx =
-            (lookaheadReadPos_ + i) % lookaheadBuffer_.getNumSamples();
-        dst[i] = src[readIdx];
+      const size_t rIdx = static_cast<size_t>(lookaheadReadPos_) & lookaheadMask_;
+      const size_t bufSize = static_cast<size_t>(lookaheadBuffer_.getNumSamples());
+      const size_t first = std::min(static_cast<size_t>(numSamples), bufSize - rIdx);
+      std::memcpy(dst, src + rIdx, first * sizeof(float));
+      if (static_cast<size_t>(numSamples) > first) {
+        std::memcpy(dst + first, src, (static_cast<size_t>(numSamples) - first) * sizeof(float));
       }
     }
 
-    // Update positions
+    // Update positions (mask keeps them in bounds; write pos advanced in write loop above)
     lookaheadWritePos_ =
-        (lookaheadWritePos_ + numSamples) % lookaheadBuffer_.getNumSamples();
+        static_cast<int>((static_cast<size_t>(lookaheadWritePos_) + static_cast<size_t>(numSamples)) & lookaheadMask_);
     lookaheadReadPos_ =
-        (lookaheadReadPos_ + numSamples) % lookaheadBuffer_.getNumSamples();
+        static_cast<int>((static_cast<size_t>(lookaheadReadPos_) + static_cast<size_t>(numSamples)) & lookaheadMask_);
   } else {
     // Clear audio (we're a MIDI effect, no ML processing)
     buffer.clear();
@@ -542,16 +566,15 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
   masterEQProcessor_.updateParameters(apvts_);
 
   // Master EQ: biquad chain in MasterEQProcessor (RT-safe coefficient updates)
-  auto *eqBypassParam = apvts_.getRawParameterValue(PARAM_EQ_BYPASS);
-  if (!eqBypassParam || *eqBypassParam <= 0.5f) {
+  // T6.3: Use cached pointer; null-check guarded in prepareToPlay
+  if (!paramEqBypass_ || paramEqBypass_->load(std::memory_order_relaxed) <= 0.5f) {
     // EQ not bypassed - process audio through EQ
     masterEQProcessor_.processBlock(buffer);
   }
   // If EQ is bypassed, audio passes through unchanged
 
-  // Check bypass - use atomic-safe parameter read
-  auto *bypassParam = apvts_.getRawParameterValue(PARAM_BYPASS);
-  if (bypassParam && *bypassParam > MusicConstants::RULE_BREAK_MODERATE) {
+  // Check bypass - T6.3: use cached pointer
+  if (paramBypass_ && paramBypass_->load(std::memory_order_relaxed) > MusicConstants::RULE_BREAK_MODERATE) {
     return;
   }
 

@@ -57,17 +57,18 @@ file(GLOB_RECURSE PENTA_CORE_SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/osc/*.cpp
 )
 
-# CRIT #1 (ODR consolidation 2026-04-13): 6 of 14 duplicate pairs resolved here.
-# These files exist in both src/ and src_penta-core/ under the same `penta::`
-# namespace, causing ODR violations when both libs are linked into
-# bindings/penta_core_native. Per per-file API diff in
-# docs/CODEAUDIT_ODR_PAIR_DIFF_2026Q2.md, src/ is canonical for these:
-#   - src/ has methods called externally that src_penta-core/ lacks (5 files), or
-#   - byte-identical (1 file, ScaleDetector — pick src/ side for consistency)
-# Excluding them from penta_core's glob; symbols still resolve via KellyCore
-# (which globs src/*.cpp recursively). The remaining manual-review
-# group pairs have had their canonical side chosen in root CMakeLists.txt.
-list(FILTER PENTA_CORE_SOURCES EXCLUDE REGEX "/harmony/ScaleDetector\\.cpp$")
+# ODR consolidation (T1 audit-rt-ffi-safety-2026q2, 2026-04-21):
+# Resolved 7 of 14 duplicate pairs. src_penta-core/ is canonical for all
+# penta:: namespace symbols. Remaining files excluded to prevent double-definition:
+#
+#   VoiceLeading.cpp: src/ canonical (4 methods present only in src/; confirmed
+#     by docs/CODEAUDIT_ODR_PAIR_DIFF_2026Q2.md — src_penta-core/ copy removed
+#     in audit/crit-fixes-2026-04-13). src/ version compiled into KellyCore.
+#   OSCClient/Hub/Server: src_penta-core/ copies removed in audit/crit-fixes-2026-04-13;
+#     src/ versions with RT-safe callback model (loopback check, RealtimeCallback)
+#     compile into KellyCore.
+#   ScaleDetector: moved to src_penta-core/ (byte-identical; penta_core/ is canonical
+#     per T1 consolidation). KellyCore exclusion added in root CMakeLists.txt.
 list(FILTER PENTA_CORE_SOURCES EXCLUDE REGEX "/harmony/VoiceLeading\\.cpp$")
 list(FILTER PENTA_CORE_SOURCES EXCLUDE REGEX "/osc/OSCClient\\.cpp$")
 list(FILTER PENTA_CORE_SOURCES EXCLUDE REGEX "/osc/OSCHub\\.cpp$")

@@ -151,6 +151,15 @@ if(NOT TARGET readerwriterqueue)
     )
 endif()
 
+# ConcurrentQueue (MPMC lock-free queue) for StateBridge
+# Vendored at third_party/concurrentqueue/ (MIT license).
+# Used by StateBridge whose emitStateUpdate is called from multiple engine
+# threads (MPSC pattern) — ReaderWriterQueue is SPSC and violated that contract.
+add_library(concurrentqueue INTERFACE)
+target_include_directories(concurrentqueue INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/concurrentqueue
+)
+
 # ============================================================================
 # KmiDi engine (C ABI for RT harness and plugin/FFI)
 # ============================================================================
@@ -292,6 +301,13 @@ list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/core/emotion_thesaurus\\.cpp$
 #     kelly::KellyLookAndFeel virtual table + thunks. Exclude the copy.
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/ui/MidiKompanionLookAndFeel\\.cpp$")
 
+# BiometricInput: .cpp and .mm define overlapping symbols.  Select exactly
+# one per platform so the linker doesn't see duplicates.
+if(APPLE)
+    list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/biometric/BiometricInput\\.cpp$")
+else()
+    list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/biometric/BiometricInput\\.mm$")
+endif()
 
 if(BUILD_KELLY_CORE)
 add_library(KellyCore STATIC ${KELLY_CORE_SOURCES})
@@ -322,6 +338,7 @@ target_link_libraries(KellyCore PUBLIC
     juce::juce_dsp
     juce::juce_osc
     readerwriterqueue
+    concurrentqueue
     penta_core
 )
 # Link Rust Intent IR if available
@@ -647,19 +664,14 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/external/Catch2/CMakeLists.txt)
         enable_testing()
         add_subdirectory(external/Catch2 EXCLUDE_FROM_ALL)
-        add_executable(KellyTests
-            tests/cpp/test_emotion_engine.cpp
-            tests/cpp/test_midi_pipeline.cpp
-            tests/cpp/test_chord_diagnostics.cpp
-            tests/cpp/test_ml_pipeline.cpp
-        )
-        target_link_libraries(KellyTests PRIVATE
-            KellyCore
-            Catch2::Catch2WithMain
-        )
         include(CTest)
         include(Catch2)
-        catch_discover_tests(KellyTests)
+        # The previous `KellyTests` target referenced four test files that do
+        # not exist in the tree (test_emotion_engine.cpp, test_midi_pipeline.cpp,
+        # test_chord_diagnostics.cpp, test_ml_pipeline.cpp), silently breaking
+        # `-DBUILD_TESTS=ON`.  Targets below are the tests that actually exist
+        # and compile.  Add a replacement `KellyTests` target here only when
+        # there are real source files to put in it.
         # AudioEmotionRunner tests
         add_executable(AudioEmotionRunnerTests
             tests/cpp/test_audio_emotion_runner.cpp
@@ -688,6 +700,42 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
         catch_discover_tests(EmotionSchemaTests)
     else()
         message(WARNING "Catch2 not found; skipping tests. Set BUILD_TESTS=OFF or add external/Catch2.")
+    endif()
+
+    # RTState seqlock torture test — no Catch2, no KellyCore, no JUCE.
+    # Standalone executable that exercises the header-only seqlock protocol
+    # with a writer/reader thread pair over 1M iterations. Runnable even in
+    # worktrees where external/JUCE is absent.
+    add_executable(RTStateSeqlockTest
+        tests/cpp/test_rt_state_seqlock.cpp
+    )
+    target_include_directories(RTStateSeqlockTest PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_features(RTStateSeqlockTest PRIVATE cxx_std_20)
+    if(CMAKE_THREADS_FOUND OR TRUE)
+        find_package(Threads REQUIRED)
+        target_link_libraries(RTStateSeqlockTest PRIVATE Threads::Threads)
+    endif()
+    if(COMMAND add_test)
+        add_test(NAME RTStateSeqlockTest COMMAND RTStateSeqlockTest)
+    endif()
+
+    # SIMD kernels parity test — no Catch2, no KellyCore, no JUCE.
+    # Verifies that penta::simd free-function primitives (dot_product_f32,
+    # multiply_add_f32, max_element_f32) agree with a scalar reference to
+    # within 1e-5 for edge sizes {0,1,3,4,5,7,8,9,15,16,17,31,32,1024}.
+    # On Apple Silicon the NEON path fires; on x86-64 with -mavx2, the AVX2
+    # path fires; otherwise the portable scalar fallback is tested.
+    add_executable(SIMDKernelsTest
+        tests/cpp/test_simd_kernels.cpp
+    )
+    target_include_directories(SIMDKernelsTest PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_features(SIMDKernelsTest PRIVATE cxx_std_20)
+    if(COMMAND add_test)
+        add_test(NAME SIMDKernelsTest COMMAND SIMDKernelsTest)
     endif()
 endif()
 

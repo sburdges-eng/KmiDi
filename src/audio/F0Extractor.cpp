@@ -115,6 +115,11 @@ int F0Extractor::yinAlgorithm(const float* samples, int numSamples, double sampl
     if (period > 0) {
         // Refine with parabolic interpolation
         float refinedPeriod = parabolicInterpolation(cmndfBuffer_, period);
+        // Guard NaN/inf before cast — parabolic interpolation can produce
+        // NaN when (2*y1 - y0 - y2) is zero (flat or degenerate CMNDF).
+        if (std::isnan(refinedPeriod) || std::isinf(refinedPeriod)) {
+            refinedPeriod = static_cast<float>(period);
+        }
         return static_cast<int>(std::round(refinedPeriod));
     }
 
@@ -205,10 +210,14 @@ float F0Extractor::parabolicInterpolation(const std::vector<float>& cmndf, int l
     float y1 = cmndf[lag];
     float y2 = cmndf[lag + 1];
 
-    // Calculate offset from integer lag
-    float offset = (y2 - y0) / (2.0f * (2.0f * y1 - y0 - y2));
+    // Calculate offset from integer lag.
+    // Denominator is zero when the three CMNDF values are collinear;
+    // fall back to the integer lag to avoid NaN propagating to the int cast.
+    float denom = 2.0f * (2.0f * y1 - y0 - y2);
+    float offset = (denom != 0.0f) ? (y2 - y0) / denom : 0.0f;
 
-    // Clamp offset to reasonable range
+    // Clamp offset to reasonable range (also guards stray NaN from FP edge cases)
+    if (std::isnan(offset) || std::isinf(offset)) { offset = 0.0f; }
     offset = std::clamp(offset, -0.5f, 0.5f);
 
     return static_cast<float>(lag) + offset;

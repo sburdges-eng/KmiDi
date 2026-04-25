@@ -37,7 +37,9 @@ juce::MidiFile MidiBuilder::buildMidiFile(const GeneratedMidi& midi) {
 
     // Tempo: microseconds per quarter note
     // Formula: 60,000,000 microseconds / BPM = microseconds per beat
-    int microsecondsPerBeat = MIDI_MICROSECONDS_PER_MINUTE / static_cast<int>(midi.bpm);
+    // Guard divide-by-zero: mirror the guard already in buildMidiBuffer/beatsToSamples.
+    const float safeBpm = (midi.bpm > 0.0f) ? midi.bpm : 120.0f;
+    int microsecondsPerBeat = MIDI_MICROSECONDS_PER_MINUTE / static_cast<int>(safeBpm);
     metaTrack.addEvent(juce::MidiMessage::tempoMetaEvent(microsecondsPerBeat));
 
     file.addTrack(metaTrack);

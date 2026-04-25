@@ -74,7 +74,7 @@ pub struct IntentProvenance {
     pub user_override_weight: f32, // 0.0 → 1.0
 }
 
-#[repr(C, packed)]
+#[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct IntentFrame {
     pub meta: IntentMeta,

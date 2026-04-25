@@ -46,6 +46,11 @@ typedef enum {
     KELLY_ERROR_JSON_PARSE_ERROR = -4,
     KELLY_ERROR_MEMORY_ALLOCATION = -5,
     KELLY_ERROR_FILE_NOT_FOUND = -6,
+    // Transient contention: the call raced with a writer and the snapshot
+    // could not be stabilised within a bounded retry budget. Callers should
+    // retry (or use their last-known state). Returned by seqlock-guarded
+    // readers such as kelly_brain_get_rt_state.
+    KELLY_ERROR_AGAIN = -7,
     KELLY_ERROR_UNKNOWN = -999
 } KellyErrorCode;
 
@@ -59,6 +64,18 @@ const char* kelly_get_error_message(KellyErrorCode error_code);
 // =============================================================================
 // Memory Management
 // =============================================================================
+
+/*
+ * FFI string ownership contract:
+ *  - Functions returning `char*` (e.g. kelly_brain_from_text, kelly_brain_from_emotion):
+ *    heap-allocated via `malloc`. Caller MUST pass the returned pointer to
+ *    `kelly_free_string` to avoid a memory leak. Passing the pointer to `free`
+ *    directly is also safe but not recommended (keeps the ABI abstract).
+ *  - Functions returning `const char*` (e.g. kelly_get_last_error,
+ *    intent_ir_get_error_message): point into static storage. Caller MUST NOT
+ *    free or mutate the returned buffer.
+ *  - When in doubt, check the return type's const-qualification.
+ */
 
 /**
  * Free memory allocated by kelly_* functions
@@ -296,9 +313,20 @@ typedef enum {
  * Get a snapshot of the current real-time engine state.
  * Lock-free read from atomic fields — safe to call at high frequency.
  *
+ * Uses an internal seqlock retry loop (up to 64 attempts) to guarantee a
+ * torn-free snapshot. On the rare occasion the budget is exhausted
+ * (extremely heavy writer thrashing), KELLY_ERROR_AGAIN is returned.
+ *
+ * @note On KELLY_ERROR_AGAIN, the caller SHOULD retry at least once.
+ *   The seqlock will almost certainly be stable on the second attempt
+ *   because the writer cadence is bounded by the audio callback period
+ *   (~5–20 ms at typical buffer sizes). The previous out_state contents
+ *   are undefined when KELLY_ERROR_AGAIN is returned — do not consume them.
+ *
  * @param brain KellyBrain instance
  * @param out_state Pointer to caller-allocated KellyRTState
- * @return KELLY_SUCCESS on success, error code on failure
+ * @return KELLY_SUCCESS on success, KELLY_ERROR_AGAIN on transient
+ *         seqlock contention (retry), or other error code on failure
  */
 KellyErrorCode kelly_brain_get_rt_state(const KellyBrain* brain, KellyRTState* out_state);
 

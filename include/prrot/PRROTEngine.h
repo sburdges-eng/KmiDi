@@ -51,13 +51,12 @@ public:
     const VoiceProfile& getVoiceProfile() const { return voice_profile_; }
 
     // Process audio segment to generate control data
-    // RT-Safe: Uses pre-allocated buffers only
     PhonemeControlData processAudioSegment(
         const float* audio_samples,
         size_t num_samples,
         float sample_rate_hz,
         float tempo_bpm = 120.0f
-    ) noexcept;
+    );
 
     // Generate control data from phoneme sequence and pitch targets
     // RT-Safe: Uses pre-allocated buffers only
@@ -68,20 +67,20 @@ public:
     ) noexcept;
 
     // Analyze audio segment and extract phoneme information
-    // RT-Safe: Uses pre-allocated buffers only
+    // Returns std::vector (heap allocation); not noexcept.
     std::vector<PhonemeTiming> analyzePhonemes(
         const float* audio_samples,
         size_t num_samples,
         float sample_rate_hz
-    ) noexcept;
+    );
 
     // Detect breath markers in audio
-    // RT-Safe: Uses pre-allocated buffers only
+    // Returns std::vector (heap allocation); not noexcept.
     std::vector<BreathMarker> detectBreathMarkers(
         const float* audio_samples,
         size_t num_samples,
         float sample_rate_hz
-    ) noexcept;
+    );
 
 private:
     // Voice profile

@@ -45,27 +45,18 @@ GeneratedMidi MidiGenerator::generate(const IntentResult &intent, int bars,
 
   // Generate arrangement structure (section metadata)
   // This informs the generation process with section types and energy levels
+  // Generate arrangement structure (section metadata, used locally for layer
+  // selection only — not exposed to callers to avoid lifetime issues).
   std::optional<ArrangementOutput> arrangementOpt;
-  ArrangementOutput *arrangementPtr = nullptr;
   if (bars >= 8) { // Only generate arrangement for longer pieces
-    ArrangementOutput arrangement = generateArrangement(intent, bars);
-    arrangementOpt = arrangement;
-    // Store in result (as pointer for optional/nullable)
-    // Note: This assumes the arrangement will be used during generation
-    // For proper lifetime management, consider storing in a member variable or
-    // changing GeneratedMidi to use std::optional instead of pointer
-    static thread_local ArrangementOutput
-        storedArrangement; // Thread-local storage for pointer
-    storedArrangement = arrangement;
-    arrangementPtr = &storedArrangement;
+    arrangementOpt = generateArrangement(intent, bars);
   }
 
   // Determine which layers to generate based on complexity and emotion
   // If arrangement exists, we can use it to inform layer selection per section
   LayerFlags layers = determineLayers(intent, complexity, bars, arrangementOpt);
 
-  // Store pointer in result after layers are determined
-  result.arrangement = arrangementPtr;
+  // result.arrangement is left nullptr — arrangement is consumed locally above.
 
   // ========================================================================
   // PHASE 1: Generate harmonic foundation

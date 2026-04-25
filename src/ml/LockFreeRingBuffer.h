@@ -118,6 +118,28 @@ public:
     }
 
     /**
+     * Consumer-only: drain all pending elements and return the latest one.
+     * Call from the CONSUMER thread only; mutates readPos_ like pop() does.
+     *
+     * Provides drop-oldest semantics without requiring the producer to touch
+     * readPos_.  The audio (consumer) thread calls this instead of pop() when
+     * it only needs the freshest available inference result.
+     *
+     * @param out  Destination for the most recent element.
+     * @return true if at least one element was available (out is valid);
+     *         false if the buffer was empty (out is unchanged).
+     */
+    bool popLatest(T* out) noexcept {
+        T tmp;
+        bool any = false;
+        while (pop(&tmp, 1)) {
+            *out = tmp;
+            any = true;
+        }
+        return any;
+    }
+
+    /**
      * Clear buffer (reset positions).
      */
     void clear() {
@@ -127,8 +149,14 @@ public:
 
 private:
     std::array<T, Capacity> buffer_;
-    std::atomic<size_t> writePos_;
-    std::atomic<size_t> readPos_;
+    // Producer and consumer cursors live on separate cache lines so the
+    // audio (producer) and ML (consumer) threads don't ping-pong a shared
+    // line on every push/pop. 64 bytes is the minimum line size; Apple
+    // Silicon treats pairs as 128 (see penta/common/RTState.h::kCacheLine)
+    // but double-padding here would bloat the struct without measurable
+    // gain — the two atomics are never in the same 64-byte chunk after this.
+    alignas(64) std::atomic<size_t> writePos_{0};
+    alignas(64) std::atomic<size_t> readPos_{0};
 };
 
 } // namespace kelly

@@ -135,3 +135,86 @@ pub fn validate_intent_frame(frame: &IntentFrame) -> ValidationResult {
 pub fn version_supported(version: u16) -> bool {
     version == INTENT_IR_VERSION
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::builder::IntentFrameBuilder;
+    use crate::types::IntentFrame;
+    use crate::validator::{clamp_intent_frame, validate_intent_frame, version_supported};
+
+    #[test]
+    fn test_valid_intent_frame() {
+        let frame = IntentFrame::default();
+        assert!(validate_intent_frame(&frame).is_ok());
+    }
+
+    #[test]
+    fn test_invalid_version() {
+        let mut frame = IntentFrame::default();
+        frame.meta.ir_version = 999;
+        assert!(validate_intent_frame(&frame).is_err());
+    }
+
+    #[test]
+    fn test_clamp_valence() {
+        let mut frame = IntentFrame::default();
+        frame.emotion.valence = 2.0;
+        clamp_intent_frame(&mut frame);
+        assert!(frame.emotion.valence <= 1.0);
+        assert!(frame.emotion.valence >= -1.0);
+    }
+
+    #[test]
+    fn test_clamp_arousal() {
+        let mut frame = IntentFrame::default();
+        frame.emotion.arousal = -0.5;
+        clamp_intent_frame(&mut frame);
+        assert!(frame.emotion.arousal >= 0.0);
+        assert!(frame.emotion.arousal <= 1.0);
+    }
+
+    #[test]
+    fn test_clamp_tempo_bias() {
+        let mut frame = IntentFrame::default();
+        frame.music.tempo_bias = 5.0;
+        clamp_intent_frame(&mut frame);
+        assert!(frame.music.tempo_bias >= -1.0);
+        assert!(frame.music.tempo_bias <= 1.0);
+    }
+
+    #[test]
+    fn test_builder_validation() {
+        let builder = IntentFrameBuilder::new()
+            .with_emotion(0.5, 0.7, 0.6, -1, 0.8, 0.9)
+            .with_musical_intent(0.3, 0.6, 0.5, 0.4, 0.5, 1, 0.7, 0.6, 0.5, 0.6);
+        assert!(builder.build().is_ok());
+    }
+
+    #[test]
+    fn test_builder_invalid_values() {
+        let builder = IntentFrameBuilder::new().with_emotion(2.0, 0.7, 0.6, -1, 0.8, 0.9);
+        let result = builder.build();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_version_supported() {
+        assert!(version_supported(1));
+        assert!(!version_supported(0));
+        assert!(!version_supported(2));
+    }
+
+    #[test]
+    fn test_time_scope_validation() {
+        let mut frame = IntentFrame::default();
+        frame.time.start_bar = 5;
+        frame.time.end_bar = 3;
+        assert!(validate_intent_frame(&frame).is_err());
+
+        frame.time.end_bar = 10;
+        assert!(validate_intent_frame(&frame).is_ok());
+
+        frame.time.end_bar = -1;
+        assert!(validate_intent_frame(&frame).is_ok());
+    }
+}

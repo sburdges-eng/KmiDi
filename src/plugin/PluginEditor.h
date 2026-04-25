@@ -93,6 +93,9 @@ private:
   juce::uint32 lastIdleChangeMs_ = 0;
   static constexpr juce::uint32 IDLE_DEBOUNCE_MS = 700;
 
+  // T6.7: Accumulated seconds since last drop-rate log (UI thread only).
+  float dropRatePendingSeconds_ = 0.0f;
+
   // ========================================================================
   // USER ACTION CALLBACKS
   // ========================================================================

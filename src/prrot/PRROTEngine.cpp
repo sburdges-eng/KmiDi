@@ -51,7 +51,7 @@ PhonemeControlData PRROTEngine::processAudioSegment(
     size_t num_samples,
     float sample_rate_hz,
     float tempo_bpm
-) noexcept {
+) {
     PhonemeControlData control_data;
     control_data.tempo_bpm = tempo_bpm;
     control_data.sample_rate_hz = sample_rate_hz;

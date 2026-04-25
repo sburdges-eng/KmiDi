@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <mutex>
 
 // Forward declaration to avoid including Python.h in header
 struct _object;
@@ -34,6 +35,22 @@ class PythonBridgeBase : public BridgeBase {
 public:
     PythonBridgeBase(const std::string& bridgeName);
     virtual ~PythonBridgeBase();
+
+    /**
+     * Initialize the CPython interpreter and release the GIL exactly once
+     * across ALL bridges.  Thread-safe and idempotent: the first caller
+     * performs Py_Initialize + PyEval_SaveThread; subsequent callers return
+     * immediately.
+     *
+     * Standalone bridges (StateBridge, PreferenceBridge, OrchestratorBridge)
+     * that do NOT extend PythonBridgeBase should call this instead of
+     * duplicating Py_Initialize + PyEval_SaveThread locally, which would race
+     * when two bridges are constructed concurrently.
+     *
+     * @return true if Python is initialized and the GIL has been released for
+     *         subsequent PyGILGuard-protected use; false on init failure.
+     */
+    static bool ensurePythonStarted();
 
     /**
      * Initialize Python interpreter (if not already initialized)
@@ -103,6 +120,16 @@ private:
     // Managed Python objects (for cleanup)
     std::vector<PyObject*> managedObjects_;
     bool pythonInitializedByThis_ = false;
+
+    // Shared across all PythonBridgeBase instances.
+    // Stored as void* to avoid pulling <Python.h> into this header.
+    // Cast to PyThreadState* inside PythonBridgeBase.cpp.
+    // Set by the first bridge that calls Py_Initialize(); holds the result
+    // of PyEval_SaveThread() so that worker threads can use
+    // PyGILState_Ensure / PyGILState_Release safely.
+    // Protected by a std::once_flag; do NOT access without going through
+    // initializePython().
+    static void* mainThreadState_;
 };
 
 } // namespace bridge

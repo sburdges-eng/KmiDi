@@ -53,13 +53,12 @@ public:
     const VoiceProfile& getVoiceProfile() const { return voice_profile_; }
 
     // Process audio segment to generate control data
-    // RT-Safe: Uses pre-allocated buffers only
     PhonemeControlData processAudioSegment(
         const float* audio_samples,
         size_t num_samples,
         float sample_rate_hz,
         float tempo_bpm = 120.0f
-    ) noexcept;
+    );
 
     // Generate control data from phoneme sequence and pitch targets
     // RT-Safe: Uses pre-allocated buffers only
@@ -75,7 +74,7 @@ public:
         const float* audio_samples,
         size_t num_samples,
         float sample_rate_hz
-    ) ;
+    );
 
     // Detect breath markers in audio
     // RT-Safe: Uses pre-allocated buffers only
@@ -83,7 +82,7 @@ public:
         const float* audio_samples,
         size_t num_samples,
         float sample_rate_hz
-    ) ;
+    );
 
 private:
     // Voice profile

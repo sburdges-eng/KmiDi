@@ -1,10 +1,17 @@
 #pragma once
 
+// SIMD primitives for audio DSP kernels.
+// Dispatch at compile time:
+//   - AVX2   (x86_64 Intel/AMD)
+//   - NEON   (AArch64, including Apple Silicon)
+//   - scalar (fallback, correctness only)
+
 #include "penta/common/Platform.h"
 
 #include <array>
 #include <cstddef>
 #include <cmath>
+#include <algorithm>
 
 // SIMD intrinsics - detect availability
 #if defined(__AVX2__)
@@ -600,5 +607,120 @@ private:
     }
 #endif // PENTA_HAS_NEON
 };
+
+// =============================================================================
+// penta::simd — free-function primitives with AVX2 / NEON / scalar dispatch
+//
+// These are the preferred call sites for new DSP code. The SIMDKernels class
+// above remains for backwards compatibility with existing callers.
+// =============================================================================
+
+namespace simd {
+
+/// Dot product: sum(a[i] * b[i]) for i in [0, n).
+inline float dot_product_f32(const float* a, const float* b, size_t n) noexcept {
+#if defined(PENTA_HAS_AVX2)
+    __m256 acc = _mm256_setzero_ps();
+    size_t i = 0;
+    for (; i + 8 <= n; i += 8) {
+        __m256 va = _mm256_loadu_ps(a + i);
+        __m256 vb = _mm256_loadu_ps(b + i);
+        acc = _mm256_fmadd_ps(va, vb, acc);
+    }
+    // Horizontal sum via 128-bit halves
+    __m128 lo = _mm256_castps256_ps128(acc);
+    __m128 hi = _mm256_extractf128_ps(acc, 1);
+    lo = _mm_add_ps(lo, hi);
+    __m128 shuf = _mm_shuffle_ps(lo, lo, _MM_SHUFFLE(2, 3, 0, 1));
+    __m128 sums = _mm_add_ps(lo, shuf);
+    shuf = _mm_movehl_ps(shuf, sums);
+    sums = _mm_add_ss(sums, shuf);
+    float s = _mm_cvtss_f32(sums);
+    for (; i < n; ++i) s += a[i] * b[i];
+    return s;
+#elif defined(PENTA_HAS_NEON)
+    float32x4_t acc = vdupq_n_f32(0.0f);
+    size_t i = 0;
+    for (; i + 4 <= n; i += 4) {
+        float32x4_t va = vld1q_f32(a + i);
+        float32x4_t vb = vld1q_f32(b + i);
+        acc = vfmaq_f32(acc, va, vb);
+    }
+    float s = vaddvq_f32(acc);
+    for (; i < n; ++i) s += a[i] * b[i];
+    return s;
+#else
+    float s = 0.0f;
+    for (size_t i = 0; i < n; ++i) s += a[i] * b[i];
+    return s;
+#endif
+}
+
+/// Fused multiply-add: dst[i] += a[i] * b[i] for i in [0, n).
+inline void multiply_add_f32(float* dst, const float* a, const float* b, size_t n) noexcept {
+#if defined(PENTA_HAS_AVX2)
+    size_t i = 0;
+    for (; i + 8 <= n; i += 8) {
+        __m256 vd  = _mm256_loadu_ps(dst + i);
+        __m256 va  = _mm256_loadu_ps(a   + i);
+        __m256 vb  = _mm256_loadu_ps(b   + i);
+        vd = _mm256_fmadd_ps(va, vb, vd);
+        _mm256_storeu_ps(dst + i, vd);
+    }
+    for (; i < n; ++i) dst[i] += a[i] * b[i];
+#elif defined(PENTA_HAS_NEON)
+    size_t i = 0;
+    for (; i + 4 <= n; i += 4) {
+        float32x4_t vd = vld1q_f32(dst + i);
+        float32x4_t va = vld1q_f32(a   + i);
+        float32x4_t vb = vld1q_f32(b   + i);
+        vd = vfmaq_f32(vd, va, vb);
+        vst1q_f32(dst + i, vd);
+    }
+    for (; i < n; ++i) dst[i] += a[i] * b[i];
+#else
+    for (size_t i = 0; i < n; ++i) dst[i] += a[i] * b[i];
+#endif
+}
+
+/// Maximum element: max(a[0..n)).  Returns -infinity for n==0.
+inline float max_element_f32(const float* a, size_t n) noexcept {
+    if (n == 0) return -__builtin_inff();
+#if defined(PENTA_HAS_AVX2)
+    __m256 vmax = _mm256_set1_ps(-__builtin_inff());
+    size_t i = 0;
+    for (; i + 8 <= n; i += 8) {
+        __m256 v = _mm256_loadu_ps(a + i);
+        vmax = _mm256_max_ps(vmax, v);
+    }
+    // Reduce 8-wide to scalar
+    __m128 lo = _mm256_castps256_ps128(vmax);
+    __m128 hi = _mm256_extractf128_ps(vmax, 1);
+    __m128 m4 = _mm_max_ps(lo, hi);
+    __m128 shuf = _mm_shuffle_ps(m4, m4, _MM_SHUFFLE(2, 3, 0, 1));
+    m4 = _mm_max_ps(m4, shuf);
+    shuf = _mm_movehl_ps(shuf, m4);
+    m4 = _mm_max_ss(m4, shuf);
+    float result = _mm_cvtss_f32(m4);
+    for (; i < n; ++i) result = result > a[i] ? result : a[i];
+    return result;
+#elif defined(PENTA_HAS_NEON)
+    float32x4_t vmax = vdupq_n_f32(-__builtin_inff());
+    size_t i = 0;
+    for (; i + 4 <= n; i += 4) {
+        float32x4_t v = vld1q_f32(a + i);
+        vmax = vmaxq_f32(vmax, v);
+    }
+    float result = vmaxvq_f32(vmax);
+    for (; i < n; ++i) result = result > a[i] ? result : a[i];
+    return result;
+#else
+    float result = a[0];
+    for (size_t i = 1; i < n; ++i) result = result > a[i] ? result : a[i];
+    return result;
+#endif
+}
+
+} // namespace simd
 
 } // namespace penta

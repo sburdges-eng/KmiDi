@@ -50,7 +50,7 @@ namespace kelly {
 class EmotionWorkstation : public juce::Component, public juce::Timer {
 public:
   explicit EmotionWorkstation(juce::AudioProcessorValueTreeState &apvts);
-  ~EmotionWorkstation() override = default;
+  ~EmotionWorkstation() override;
 
   void paint(juce::Graphics &g) override;
   void resized() override;
@@ -101,6 +101,13 @@ public:
 
 private:
   juce::AudioProcessorValueTreeState &apvts_;
+
+  // ========================================================================
+  // STYLING — declared first so it outlives all child Components
+  // (C++ destroys members in reverse declaration order; LookAndFeel must be
+  // last to destruct so child repaint callbacks during teardown remain safe).
+  // ========================================================================
+  KellyLookAndFeel lookAndFeel_;
 
   // ========================================================================
   // WOUND INPUT
@@ -198,11 +205,6 @@ private:
   GenerateButton generateButton_;
   juce::TextButton previewButton_{"Preview"};
   juce::TextButton exportButton_{"Export to DAW"};
-
-  // ========================================================================
-  // STYLING
-  // ========================================================================
-  KellyLookAndFeel lookAndFeel_;
 
   // ========================================================================
   // HELPER METHODS

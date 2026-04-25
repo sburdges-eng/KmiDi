@@ -21,6 +21,7 @@ SpectralAnalyzer::SpectralAnalyzer() {
     fft_real_.fill(0.0f);
     fft_imag_.fill(0.0f);
     magnitude_buffer_.fill(0.0f);
+    fft_scratch_.assign(kFFTSize * 2, 0.0f);
 
     // Initialize JUCE FFT via PIMPL
     fft_ = std::make_unique<FFTImpl>();
@@ -328,9 +329,10 @@ void SpectralAnalyzer::computeFFT(const float* input, float* real, float* imag, 
     std::memset(imag, 0, kFFTSize * sizeof(float));
 
     // JUCE FFT uses interleaved complex format for real-only input
-    // Allocate buffer: size must be 2 * getSize() for real-only forward transform
-    // First half contains input, second half will contain output
-    std::vector<float> fft_data(kFFTSize * 2, 0.0f);
+    // Use pre-allocated scratch buffer (resized once in constructor) to avoid
+    // per-call heap allocation on the hot path and keep noexcept honest.
+    std::fill(fft_scratch_.begin(), fft_scratch_.end(), 0.0f);
+    std::vector<float>& fft_data = fft_scratch_;
 
     // Copy real input to first half of buffer
     std::copy(real, real + kFFTSize, fft_data.data());

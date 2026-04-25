@@ -21,7 +21,7 @@ class LyricDisplay : public juce::Component,
                      public juce::Timer {
 public:
     LyricDisplay();
-    ~LyricDisplay() override = default;
+    ~LyricDisplay() override;
 
     void paint(juce::Graphics& g) override;
     void resized() override;

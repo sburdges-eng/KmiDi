@@ -1,4 +1,5 @@
 #include "PreferenceBridge.h"
+#include "bridge/PythonBridgeBase.h"
 #include <juce_core/juce_core.h>
 #include <fstream>
 #include <sstream>
@@ -8,6 +9,7 @@
 // Python C API - only include if Python is available
 #ifdef PYTHON_AVAILABLE
 #include <Python.h>
+#include "bridge/PyGILGuard.h"
 #endif
 
 namespace kelly {
@@ -86,14 +88,16 @@ void PreferenceBridge::shutdown() {
 
 bool PreferenceBridge::initializePython() {
 #ifdef PYTHON_AVAILABLE
-    if (Py_IsInitialized()) {
-        // Python already initialized
-    } else {
-        Py_Initialize();
-        if (!Py_IsInitialized()) {
-            return false;
-        }
+    // Delegate Py_Initialize + PyEval_SaveThread to the shared, thread-safe
+    // helper.  This eliminates the race where two bridges constructed on
+    // different threads both observe !Py_IsInitialized() and both call
+    // PyEval_SaveThread (second call is UB).
+    if (!bridge::PythonBridgeBase::ensurePythonStarted()) {
+        return false;
     }
+
+    // Acquire GIL before any Python C API calls.
+    bridge::PyGILGuard gil;
 
     // Import music_brain.learning.user_preferences
     PyObject* moduleName = PyUnicode_FromString("music_brain.learning.user_preferences");
@@ -140,12 +144,19 @@ bool PreferenceBridge::initializePython() {
 
 void PreferenceBridge::shutdownPython() {
 #ifdef PYTHON_AVAILABLE
-    if (preferenceModel_) {
-        Py_DECREF(static_cast<PyObject*>(preferenceModel_));
+    if (Py_IsInitialized()) {
+        bridge::PyGILGuard gil;  // safe: interpreter is alive; must hold GIL for Py_DECREF
+        if (preferenceModel_) {
+            Py_DECREF(static_cast<PyObject*>(preferenceModel_));
+            preferenceModel_ = nullptr;
+        }
+        if (pythonModule_) {
+            Py_DECREF(static_cast<PyObject*>(pythonModule_));
+            pythonModule_ = nullptr;
+        }
+    } else {
+        // Interpreter already finalized — just null the pointers; Py_DECREF is UB here.
         preferenceModel_ = nullptr;
-    }
-    if (pythonModule_) {
-        Py_DECREF(static_cast<PyObject*>(pythonModule_));
         pythonModule_ = nullptr;
     }
 #endif
@@ -321,7 +332,8 @@ void PreferenceBridge::processPendingOperations() {
 
 #ifdef PYTHON_AVAILABLE
     if (preferenceModel_) {
-        // Process with Python
+        // Process with Python - each call requires the GIL.
+        bridge::PyGILGuard gil;
         for (const auto& op : ops) {
             switch (op.type) {
                 case PendingOperation::ParameterAdjustment: {
@@ -329,6 +341,7 @@ void PreferenceBridge::processPendingOperations() {
                     float newVal = std::stof(op.data.at("new_value"));
                     // Call: preferenceModel.record_parameter_adjustment(...)
                     // Implementation would use PyObject_CallMethod
+                    (void)oldVal; (void)newVal;
                     break;
                 }
                 // ... other cases
@@ -430,6 +443,8 @@ bool PreferenceBridge::callPythonMethod(
 ) {
 #ifdef PYTHON_AVAILABLE
     if (!preferenceModel_) return false;
+
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
 
     PyObject* method = PyObject_GetAttrString(static_cast<PyObject*>(preferenceModel_), methodName);
     if (!method) {

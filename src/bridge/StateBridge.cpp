@@ -1,8 +1,10 @@
 #include "StateBridge.h"
+#include "bridge/PythonBridgeBase.h"
 
 // Python C API - only include if Python is available
 #ifdef PYTHON_AVAILABLE
 #include <Python.h>
+#include "bridge/PyGILGuard.h"
 #endif
 
 #include <iostream>
@@ -49,7 +51,7 @@ StateBridge::StateBridge()
     , emitStateFunc_(nullptr)
     , getCurrentStateFunc_(nullptr)
     , getEngineStateFunc_(nullptr)
-    , stateQueue_(std::make_unique<moodycamel::ReaderWriterQueue<StateUpdate>>(256))
+    , stateQueue_(std::make_unique<moodycamel::ConcurrentQueue<StateUpdate>>(256))
     , workerThread_(nullptr)
 {
 }
@@ -82,14 +84,18 @@ void StateBridge::shutdown() {
 
 bool StateBridge::initializePython() {
 #ifdef PYTHON_AVAILABLE
-    // Check if Python is already initialized
-    if (!Py_IsInitialized()) {
-        Py_Initialize();
-        if (!Py_IsInitialized()) {
-            std::cerr << "StateBridge: Failed to initialize Python" << std::endl;
-            return false;
-        }
+    // Delegate Py_Initialize + PyEval_SaveThread to the shared, thread-safe
+    // helper.  This eliminates the race where two bridges constructed on
+    // different threads both observe !Py_IsInitialized() and both call
+    // PyEval_SaveThread (second call is UB).
+    if (!bridge::PythonBridgeBase::ensurePythonStarted()) {
+        std::cerr << "StateBridge: Python init failed\n";
+        return false;
     }
+
+    // From this point on any Py* call (including PyImport_ImportModule below)
+    // requires the GIL because ensurePythonStarted() has released it.
+    bridge::PyGILGuard gil;
 
     // Import the state bridge module
     PyObject* module = PyImport_ImportModule("music_brain.intelligence.state_bridge");
@@ -122,16 +128,24 @@ bool StateBridge::initializePython() {
 
 void StateBridge::shutdownPython() {
 #ifdef PYTHON_AVAILABLE
-    if (emitStateFunc_) {
-        Py_DECREF(static_cast<PyObject*>(emitStateFunc_));
+    if (Py_IsInitialized()) {
+        bridge::PyGILGuard gil;  // safe: interpreter is alive; must hold GIL for Py_DECREF
+        if (emitStateFunc_) {
+            Py_DECREF(static_cast<PyObject*>(emitStateFunc_));
+            emitStateFunc_ = nullptr;
+        }
+        if (getCurrentStateFunc_) {
+            Py_DECREF(static_cast<PyObject*>(getCurrentStateFunc_));
+            getCurrentStateFunc_ = nullptr;
+        }
+        if (getEngineStateFunc_) {
+            Py_DECREF(static_cast<PyObject*>(getEngineStateFunc_));
+            getEngineStateFunc_ = nullptr;
+        }
+    } else {
+        // Interpreter already finalized — just null the pointers; Py_DECREF is UB here.
         emitStateFunc_ = nullptr;
-    }
-    if (getCurrentStateFunc_) {
-        Py_DECREF(static_cast<PyObject*>(getCurrentStateFunc_));
         getCurrentStateFunc_ = nullptr;
-    }
-    if (getEngineStateFunc_) {
-        Py_DECREF(static_cast<PyObject*>(getEngineStateFunc_));
         getEngineStateFunc_ = nullptr;
     }
 #endif
@@ -159,6 +173,7 @@ std::string StateBridge::getCurrentState() {
     }
 
 #ifdef PYTHON_AVAILABLE
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* func = static_cast<PyObject*>(getCurrentStateFunc_);
     PyObject* result = PyObject_CallObject(func, nullptr);
 
@@ -188,6 +203,7 @@ std::string StateBridge::getEngineState(const std::string& engineType) {
     }
 
 #ifdef PYTHON_AVAILABLE
+    bridge::PyGILGuard gil;  // must hold GIL for all Py* calls
     PyObject* func = static_cast<PyObject*>(getEngineStateFunc_);
     PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, PyUnicode_FromString(engineType.c_str()));
@@ -235,18 +251,21 @@ void StateBridge::processStateQueue() {
         }
 
 #ifdef PYTHON_AVAILABLE
-        PyObject* func = static_cast<PyObject*>(emitStateFunc_);
-        PyObject* args = PyTuple_New(2);
-        PyTuple_SetItem(args, 0, PyUnicode_FromString(update.engineType.c_str()));
-        PyTuple_SetItem(args, 1, PyUnicode_FromString(update.stateJson.c_str()));
+        {
+            bridge::PyGILGuard gil;  // acquire GIL for this Python call only
+            PyObject* func = static_cast<PyObject*>(emitStateFunc_);
+            PyObject* args = PyTuple_New(2);
+            PyTuple_SetItem(args, 0, PyUnicode_FromString(update.engineType.c_str()));
+            PyTuple_SetItem(args, 1, PyUnicode_FromString(update.stateJson.c_str()));
 
-        PyObject* result = PyObject_CallObject(func, args);
-        Py_DECREF(args);
+            PyObject* result = PyObject_CallObject(func, args);
+            Py_DECREF(args);
 
-        if (result) {
-            Py_DECREF(result);
-        } else {
-            PyErr_Clear();  // Clear error - state updates are not critical
+            if (result) {
+                Py_DECREF(result);
+            } else {
+                PyErr_Clear();  // Clear error - state updates are not critical
+            }
         }
 #endif
 

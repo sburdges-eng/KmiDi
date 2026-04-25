@@ -20,6 +20,10 @@ void HarmonyEngine::processNotes(const Note* notes, size_t count) noexcept {
     for (size_t i = 0; i < count; ++i) {
         const auto& note = notes[i];
         
+        if (static_cast<unsigned>(note.pitch) >= 128) {
+            continue; // OOB pitch — skip silently
+        }
+
         if (note.velocity > 0) {
             activeNotes_[note.pitch] = note.velocity;
             pitchClassSet_[note.pitch % 12] = true;
