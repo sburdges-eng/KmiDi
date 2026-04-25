@@ -21,20 +21,25 @@ namespace kelly {
 class TooltipComponent : public juce::Component, public juce::DeletedAtShutdown {
 public:
     TooltipComponent();
-    ~TooltipComponent() override = default;
-    
+    ~TooltipComponent() override;
+
     static void showTooltip(juce::Component* target, const juce::String& text, int timeoutMs = 3000);
     static void hideTooltip();
-    
+
     void paint(juce::Graphics& g) override;
     void resized() override;
-    
+
 private:
     juce::String tooltipText_;
     juce::Point<int> targetPosition_;
-    
-    // DeletedAtShutdown base deletes the singleton at MessageManager teardown;
-    // LEAK_DETECTOR would false-positive on that intentional delete, so drop it.
+
+    // The singleton instance is heap-allocated via getOrCreateShared() and
+    // freed by juce::DeletedAtShutdown at MessageManager teardown. The dtor
+    // clears this pointer so any pending callAfterDelay lambda that fires
+    // during shutdown can null-check before dereferencing.
+    static TooltipComponent* sharedInstance_;
+    static TooltipComponent* getOrCreateShared();
+
     JUCE_DECLARE_NON_COPYABLE(TooltipComponent)
 };
 
