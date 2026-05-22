@@ -64,10 +64,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Init JUCE submodule
+        # Selective init — only external/JUCE, not all submodules. Avoids
+        # tying cpp-ctest to the health of .worktrees/integration-finalize
+        # (the local-worktree gitlink) which is not a build dependency.
+        run: git submodule update --init --depth 1 external/JUCE
       - name: Install build deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build g++
+          sudo apt-get install -y cmake ninja-build g++ qt6-base-dev
       - name: Configure
         run: |
           cmake -S . -B build -G Ninja
@@ -92,14 +97,14 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20"
       - name: Install web deps
-        working-directory: web
         run: npm install --ignore-scripts
-      - name: Lint/Smoke
-        working-directory: web
-        run: |
-          npm test -- --watch=false || true
+      - name: Smoke (typecheck + build)
+        # Root package.json has no `test` script — `npm test || true` would
+        # silently pass without exercising anything. `npm run build` runs
+        # `tsc && vite build`, which catches TS regressions and bundle errors.
+        run: npm run build
 
 # Notes:
 # - This is a staging-friendly template anchored to the KMIDI_STRUCTURE_PLAN.md layout.
