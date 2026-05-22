@@ -15,8 +15,8 @@
 
 set -euo pipefail
 
-if [[ "${RUNNER_OS:-Linux}" != "Linux" ]] && [[ "$(uname -s)" != "Linux" ]]; then
-    echo "install_juce_linux_deps: not Linux, skipping"
+if [[ -n "${RUNNER_OS:-}" && "${RUNNER_OS}" != "Linux" ]] || [[ "$(uname -s)" != "Linux" ]]; then
+    echo "install_juce_linux_deps: not Linux (RUNNER_OS=${RUNNER_OS:-unset}, uname=$(uname -s)), skipping"
     exit 0
 fi
 
