@@ -743,6 +743,70 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
         add_test(NAME RTStateSeqlockTest COMMAND RTStateSeqlockTest)
     endif()
 
+    # RT event scheduler test — no Catch2, no KellyCore, no JUCE.
+    # Verifies sample-accurate dispatch ordering, cross-block scheduling,
+    # transport-jump AllNotesOff, transaction commit/abort, rollback via
+    # cancel events, and a 4-producer / 1-consumer stress smoke test.
+    add_executable(RTEventSchedulerTest
+        tests/cpp/test_rt_event_scheduler.cpp
+    )
+    target_include_directories(RTEventSchedulerTest PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_features(RTEventSchedulerTest PRIVATE cxx_std_20)
+    find_package(Threads REQUIRED)
+    target_link_libraries(RTEventSchedulerTest PRIVATE Threads::Threads)
+    if(COMMAND add_test)
+        add_test(NAME RTEventSchedulerTest COMMAND RTEventSchedulerTest)
+    endif()
+
+    # DSP graph DAG test — no Catch2, no KellyCore, no JUCE.
+    # Verifies topological sort, fan-out buffer sharing, cycle rejection,
+    # capacity guards, and oversize-block safety on daiw::rt::DSPGraph.
+    add_executable(DSPGraphTest
+        tests/cpp/test_dsp_graph.cpp
+    )
+    target_include_directories(DSPGraphTest PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_features(DSPGraphTest PRIVATE cxx_std_20)
+    if(COMMAND add_test)
+        add_test(NAME DSPGraphTest COMMAND DSPGraphTest)
+    endif()
+
+    # GPU scheduler test — no Catch2, no KellyCore, no JUCE.
+    # Verifies CpuGpuScheduler runs submitted jobs, RT polling pattern,
+    # MetalGpuScheduler stub reports correctly, and select_default picks
+    # the right backend.
+    add_executable(GpuSchedulerTest
+        tests/cpp/test_gpu_scheduler.cpp
+    )
+    target_include_directories(GpuSchedulerTest PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_compile_features(GpuSchedulerTest PRIVATE cxx_std_20)
+    target_link_libraries(GpuSchedulerTest PRIVATE Threads::Threads)
+    if(COMMAND add_test)
+        add_test(NAME GpuSchedulerTest COMMAND GpuSchedulerTest)
+    endif()
+
+    # Cross-process shared-memory IPC test — POSIX only.
+    # fork()s a child that attaches to a parent-created SHM region. Verifies
+    # bidirectional MPSC command + event rings and RTState mirror.
+    if(UNIX)
+        add_executable(SharedIpcTest
+            tests/cpp/test_shared_ipc.cpp
+        )
+        target_include_directories(SharedIpcTest PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        target_compile_features(SharedIpcTest PRIVATE cxx_std_20)
+        target_link_libraries(SharedIpcTest PRIVATE Threads::Threads)
+        if(COMMAND add_test)
+            add_test(NAME SharedIpcTest COMMAND SharedIpcTest)
+        endif()
+    endif()
+
     # SIMD kernels parity test — no Catch2, no KellyCore, no JUCE.
     # Verifies that penta::simd free-function primitives (dot_product_f32,
     # multiply_add_f32, max_element_f32) agree with a scalar reference to
