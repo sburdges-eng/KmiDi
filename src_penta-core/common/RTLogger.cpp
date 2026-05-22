@@ -91,6 +91,11 @@ void RTLogger::processingThread() {
     }
 }
 
+// WARNING: First call from any thread (including audio thread) triggers
+// lazy thread spawn via std::call_once -> std::thread(). Thread creation is
+// non-RT-safe (page-table mutation, allocator, scheduler call). Do not call
+// from audio callback without first warming up from prepareToPlay().
+// See docs/CODEAUDIT_CXX_DEEP_2026Q2.md finding C-35.
 RTLogger& getLogger() {
     static RTLogger instance;
     static std::once_flag startFlag;
