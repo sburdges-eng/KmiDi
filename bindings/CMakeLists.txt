@@ -19,6 +19,12 @@ target_link_libraries(penta_core_native PRIVATE
     # violation / allocator mismatch in the Python process.
     # See AGENTS.md § "Duplicate JUCE / ODR / allocator mismatch".
     $<$<TARGET_EXISTS:KellyCore>:KellyCore>
+    # KellyCore (static) contains PythonBridgeBase.cpp / StateBridge.cpp which
+    # reference the Python C API (_Py_Initialize, _PyUnicode_FromString,
+    # __Py_Dealloc, etc.). pybind11_add_module only links Python::Module
+    # (headers + dynamic-lookup); the full interpreter symbols must be
+    # explicitly linked here so the .so loads cleanly when Python imports it.
+    Python3::Python
 )
 
 # PRROT bindings need access to src/ headers (PRROTEngine, VoiceProfile, etc.)
