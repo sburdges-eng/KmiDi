@@ -2,7 +2,7 @@
 
 **Date:** January 18, 2026
 **Purpose:** Reference existing pure DSP core interface from KmiDi_FINAL
-**Source:** KmiDi-1/KmiDi_FINAL/engine/src/dsp/
+**Source:** engine/src/dsp/
 **Reference:** Architectural Boundary Compliance Report
 
 ## Overview
@@ -49,7 +49,7 @@ If the answer is **NO**, the file does not belong in the DSP core.
 ## Directory Structure (KmiDi_FINAL)
 
 ```
-KmiDi-1/KmiDi_FINAL/engine/src/dsp/
+engine/src/dsp/
 ├── audio_buffer.cpp     // Audio buffer implementation
 ├── filters.cpp          // Filter implementations
 └── simd_ops.cpp         // SIMD operations

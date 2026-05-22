@@ -22,7 +22,7 @@ Compared local vs canonical (`sburdges-eng/KMIDI`) for core enforcement files:
 
 - `pyproject.toml` local hash `400f898...` == canonical SHA `400f898...`
 - `music_brain/session/intent_schema.py` local hash `0bbee34...` == canonical SHA `0bbee34...`
-- `src-tauri/build.rs` local hash `9976bd9...` == canonical SHA `9976bd9...`
+- `engine/intent_ir/build.rs` local hash `9976bd9...` == canonical SHA `9976bd9...`
 - `python/penta_core/ml/model_registry.py` local hash `38a1ef7...` == canonical SHA `38a1ef7...`
 
 Conclusion: no divergence in those audited controls; hardening should be applied in both staging and canonical if policy is shared.
@@ -38,13 +38,13 @@ Conclusion: no divergence in those audited controls; hardening should be applied
    - Impact: violates offline compile/replay requirement and introduces mutable upstream risk.
 
 2. **Build can proceed with missing FFI artifact**
-   - `src-tauri/build.rs:95-99` logs warnings instead of failing hard.
+   - `engine/intent_ir/build.rs:95-99` logs warnings instead of failing hard.
    - Impact: deferred runtime failure and nondeterministic packaging outcomes.
 
 ### High
 
 3. **Unsafe C string exposure in Intent IR FFI error API**
-   - `src-tauri/src/intent_ir/ffi_exports.rs:234,238,247` returns `str.as_ptr()` as `*const c_char` without guaranteed NUL-termination contract.
+   - `engine/intent_ir/src/intent_ir/ffi_exports.rs:234,238,247` returns `str.as_ptr()` as `*const c_char` without guaranteed NUL-termination contract.
    - Impact: UB risk at FFI boundary; undefined reads by C consumers.
 
 4. **Model path resolution escapes base directory**
@@ -76,7 +76,7 @@ Conclusion: no divergence in those audited controls; hardening should be applied
      - Cargo (`Cargo.lock`): none in repo root tree
    - Floating constraints:
      - `pyproject.toml:15-21` (`torch>=2.0`, `librosa>=0.10`, etc.)
-     - `src-tauri/Cargo.toml:13-14` (`reqwest = "0.11"`, `tokio = "1"`)
+     - `engine/intent_ir/Cargo.toml:13-14` (`reqwest = "0.11"`, `tokio = "1"`)
 
 3. **Build-time mutable network sources**
    - CMake `FetchContent` tags/branches are external moving dependencies (especially `RTNeural` on `main` at `CMakeLists.txt:148`).
@@ -112,7 +112,7 @@ Required condition | Status | Evidence
 Compile without network dependency | **FAIL** | `CMakeLists.txt` `FetchContent_*` blocks
 Compile without external runtime model calls | **PARTIAL** | local model support exists, but UI path assumes live API endpoint (`useMusicBrain.ts`)
 No remote dataset pulls required | **PARTIAL** | no explicit pull in audited runtime path, but training orchestration lacks strict local-artifact gate
-Fail fast on missing local artifacts | **FAIL** | `src-tauri/build.rs:95-99` warning-only behavior
+Fail fast on missing local artifacts | **FAIL** | `engine/intent_ir/build.rs:95-99` warning-only behavior
 Deterministic build replay | **FAIL** | floating dependencies, no lockfiles, mutable network fetches
 
 ## Freeze readiness assessment
@@ -142,11 +142,11 @@ Scoring basis:
    - Action: introduce `KMIDI_OFFLINE_BUILD` option; when ON, disallow `FetchContent` and require vendored/existing deps.
 
 2. **Fail-fast when KellyFFI artifact is missing**
-   - Files: `src-tauri/build.rs`
+   - Files: `engine/intent_ir/build.rs`
    - Action: turn warning path into hard failure under freeze/CI profile (feature flag allowed for dev).
 
 3. **Pin dependency resolution**
-   - Files: `pyproject.toml`, `src-tauri/Cargo.toml`, root npm project metadata
+   - Files: `pyproject.toml`, `engine/intent_ir/Cargo.toml`, root npm project metadata
    - Action: add lockfile strategy and CI enforcement (`--frozen`/`--locked` modes).
 
 4. **Deterministic training controls**
@@ -154,7 +154,7 @@ Scoring basis:
    - Action: add global seed path (Python/Torch/CUDA), deterministic backend switch, seeded DataLoader generator.
 
 5. **FFI error string safety**
-   - Files: `src-tauri/src/intent_ir/ffi_exports.rs`
+   - Files: `engine/intent_ir/src/intent_ir/ffi_exports.rs`
    - Action: return static NUL-terminated C strings; avoid raw Rust `str.as_ptr()` conversion.
 
 ## Strong recommendations
@@ -197,7 +197,7 @@ File: `CMakeLists.txt`
 
 ### Patch B (required): fail fast for missing FFI artifact
 
-File: `src-tauri/build.rs`
+File: `engine/intent_ir/build.rs`
 
 ```diff
  if !ffi_lib_found {
@@ -233,7 +233,7 @@ File: `python/penta_core/ml/training_orchestrator.py`
 
 ### Patch D (required): safe FFI error strings
 
-File: `src-tauri/src/intent_ir/ffi_exports.rs`
+File: `engine/intent_ir/src/intent_ir/ffi_exports.rs`
 
 ```diff
 +const ERR_SUCCESS: &[u8] = b"Success\0";

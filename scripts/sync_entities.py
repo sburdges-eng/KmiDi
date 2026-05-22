@@ -21,7 +21,7 @@ SCHEMA_PATH = SCHEMA_DIR / "CompleteSongIntentRequest.json"
 # Backward-compatible alias for older scripts/workflows (DEPRECATED: do not overwrite).
 LEGACY_SCHEMA_PATH = SCHEMA_DIR / "CompleteSongIntent.json"
 TS_OUT = ROOT / "src" / "types" / "Intent.ts"
-# Rust codegen now targets the engine/intent_ir crate (src-tauri was removed).
+# Rust codegen now targets the engine/intent_ir crate (engine/intent_ir was removed).
 RUST_OUT = ROOT / "engine" / "intent_ir" / "src" / "generated" / "intent.rs"
 
 EMOTION_SCHEMA_PATH = SCHEMA_DIR / "emotion_schema.json"

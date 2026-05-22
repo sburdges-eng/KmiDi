@@ -754,7 +754,7 @@ useKellyBrainEvents().startListening();
 cd build/debug && ./KellyTests
 
 # Test Rust integration
-cd src-tauri && cargo test
+cd engine/intent_ir && cargo test
 
 # Test Tauri commands
 npm run test:integration

@@ -1,0 +1,6 @@
+[project]
+name = "kmidi-jepa"
+version = "0.1.0"
+description = "KmiDi JEPA models — self-supervised music understanding (workspace entry)"
+requires-python = ">=3.11"
+dependencies = []

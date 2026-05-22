@@ -9,7 +9,7 @@ KmiDi / iDAW is an **AI-powered music creation platform** (monorepo). Four layer
 | Layer | Tech | Location |
 |-------|------|----------|
 | Frontend | React 19 + Vite + TypeScript + Tailwind | `src/` |
-| Desktop shell | Tauri 2 + Rust | `engine/intent_ir/ (Rust intent crate)` |
+| Desktop shell | Tauri 2 + Rust | `engine/intent_ir/` |
 | Native engine | C++20 (KellyCore, KellyFFI, JUCE 8) | `engine/`, `src/`, `include/`, `src_penta-core/` |
 | Backend API | Python FastAPI (`music_brain`) | `music_brain/` |
 
@@ -17,6 +17,39 @@ Data flow: **React** → `invoke()` → **Tauri/Rust** → FFI → **KellyFFI (C
 API flow: **React** → HTTP → **Music Brain API** (port 8000, `/generate`, `/docs`).
 
 Architecture principle: Side A (C++ real-time, lock-free, no allocs) ↔ ring buffer ↔ Side B (Python AI + UI). Emotional intent feeds production rules. Human imperfection (timing/pitch drift) is a feature.
+
+## Repository layout
+
+```
+KmiDi/
+├── apps/kmidi/             # CLI app stub (pyproject.toml placeholder)
+├── libs/
+│   ├── ai_core/            # ML core library stub (pyproject.toml)
+│   ├── daiw/               # C++ RT-safe primitives (daiw_core static lib, JUCE)
+│   └── jepa/               # Workspace entry → music_brain/jepa/ (README + pyproject.toml)
+├── src/                    # React app (components, hooks, types)
+├── engine/intent_ir/       # Rust intent crate (commands, bridge, build.rs)
+├── music_brain/            # Python FastAPI app + engine API
+│   ├── jepa/               #   JEPA models (Audio-JEPA, Chord-JEPA, Stem-JEPA, trainer)
+│   ├── penta_core/         #   Penta-core ML (emotion runners, diagnostics, PID Flow, etc.)
+│   └── ...                 #   50+ submodules (see music_brain/ listing)
+├── python/mcp/             # MCP servers (daiw_mcp, penta_swarm, mcp_todo, mcp_workstation)
+├── .claude/                # Multi-agent orchestration (agents, commands, skills, verify)
+├── shared_schemas/         # Single source of truth for intent (JSON → sync to TS/Rust)
+├── scripts/                # sync_entities.py, dev-setup, build, env, acquire/
+├── training/scripts/       # JEPA training entrypoints (train_jepa.py)
+├── tests/                  # Python tests (pytest)
+├── engine/, include/, src/ # C++ (engine, bridge, plugin, DSP)
+├── include/prrot, include/penta  # PRROT/penta headers
+├── src_penta-core/         # Penta-core C++ (harmony, groove, diagnostics)
+├── external/JUCE/          # JUCE 8 (required for C++/plugins/FFI)
+├── cmake/                  # CMake helpers
+├── config/                 # Training/config YAML, source_manifest.yaml
+├── docs/                   # DEVELOPMENT.md, ENVIRONMENT.md, FULL_STACK_BUILD.md, etc.
+├── BUILD.md                # C++ / CMake / Tauri build reference
+├── pyproject.toml          # Python deps (music_brain, fastapi, uvicorn, pydantic)
+└── package.json            # npm scripts (dev, build, tauri)
+```
 
 ## Common commands
 

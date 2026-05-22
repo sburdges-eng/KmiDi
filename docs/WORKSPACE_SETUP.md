@@ -1,11 +1,11 @@
-# KmiDi-1 Workspace Setup
+# KmiDi Workspace Setup
 
 **Date:** 2026-01-21
 **Status:** ✅ Workspace Configuration Complete
 
 ## Workspace Files Created
 
-### 1. KmiDi-1.code-workspace
+### 1. KmiDi.code-workspace
 Multi-root workspace configuration with organized folder structure:
 - Source Code (`src/`)
 - Headers (`include/`)
@@ -14,7 +14,7 @@ Multi-root workspace configuration with organized folder structure:
 - Documentation (`docs/`)
 - Scripts (`scripts/`)
 - Tests (`tests/`)
-- Tauri Backend (`src-tauri/`)
+- Tauri Backend (`engine/intent_ir/`)
 - Frontend (`src/`)
 - Config (`config/`)
 - Experiments (`experiments/`)
@@ -57,7 +57,7 @@ Recommended extensions:
 ### Opening the Workspace
 1. Open Cursor/VS Code
 2. File → Open Workspace from File...
-3. Select `KmiDi-1.code-workspace`
+3. Select `KmiDi.code-workspace`
 
 ### Building the Project
 - **Keyboard:** `Cmd+Shift+B` (macOS) or `Ctrl+Shift+B` (Windows/Linux)
@@ -75,7 +75,7 @@ Recommended extensions:
 ## Project Structure
 
 ```
-KmiDi-1/
+KmiDi/
 ├── src/                    # Source code (436 files)
 │   ├── plugin/            # VST3/CLAP plugins
 │   ├── gui/               # Desktop GUI
@@ -102,7 +102,7 @@ KmiDi-1/
 ├── tests/                 # Test suite
 ├── docs/                  # Documentation
 ├── config/                # Configuration files
-├── src-tauri/             # Tauri backend (Rust)
+├── engine/intent_ir/             # Tauri backend (Rust)
 └── experiments/           # Experimental code
 ```
 

@@ -26,11 +26,11 @@ After comprehensive analysis, it was discovered that the "three critical improve
 
 ### Solution: Use Existing Pure DSP
 
-**Existing Pure DSP Location:** `KmiDi-1/KmiDi_FINAL/engine/src/dsp/`
+**Existing Pure DSP Location:** `KmiDi/KmiDi_FINAL/engine/src/dsp/`
 
 #### Files Available:
 ```
-KmiDi-1/KmiDi_FINAL/engine/src/dsp/
+KmiDi/KmiDi_FINAL/engine/src/dsp/
 ├── audio_buffer.cpp     // Framework-independent audio buffer
 ├── filters.cpp          // Pure filter implementations
 └── simd_ops.cpp         // SIMD operations
@@ -80,7 +80,7 @@ daiw::filters::Biquad filter;
 
 ### Solution: Use Existing Native App
 
-**Existing Native App Location:** `KmiDi-1/KmiDi_FINAL/apps/macOS/`
+**Existing Native App Location:** `KmiDi/KmiDi_FINAL/apps/macOS/`
 
 #### Architecture:
 - **AppKit + Swift:** Native macOS UI framework
@@ -90,7 +90,7 @@ daiw::filters::Biquad filter;
 
 #### Key Components:
 ```
-KmiDi-1/KmiDi_FINAL/apps/macOS/AppKitShell/Sources/KmiDiApp/
+KmiDi/KmiDi_FINAL/apps/macOS/AppKitShell/Sources/KmiDiApp/
 ├── MainSplitViewController.swift      # Three-panel layout
 ├── TimelinePanelController.swift      # JUCE timeline wrapper
 ├── InspectorPanelController.swift     # Emotion/intent display
@@ -112,7 +112,7 @@ KmiDi-1/KmiDi_FINAL/apps/macOS/AppKitShell/Sources/KmiDiApp/
 1. **Set up build target** for native app:
 ```bash
 # Add to build system
-cd KmiDi-1/KmiDi_FINAL/apps/macOS
+cd KmiDi/KmiDi_FINAL/apps/macOS
 ./build_macos_app.sh
 ```
 
@@ -163,7 +163,7 @@ npm run build                           # Should pass with no CSS errors
 1. **Add KmiDi_FINAL paths**:
 ```cmake
 # Set KmiDi_FINAL root
-set(KMI_DI_FINAL_ROOT "${CMAKE_SOURCE_DIR}/../KmiDi-1/KmiDi_FINAL"
+set(KMI_DI_FINAL_ROOT "${CMAKE_SOURCE_DIR}/../KmiDi/KmiDi_FINAL"
     CACHE PATH "Path to KmiDi_FINAL")
 
 # Include existing components

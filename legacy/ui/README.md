@@ -17,7 +17,7 @@ Legacy Qt6 UI surface. Originally at `src/gui/`.
 ## Primary UI Surface (V1)
 
 The only supported V1 desktop shell is **Tauri + React**, located at:
-- `src-tauri/` - Rust Tauri host bindings
+- `engine/intent_ir/` - Rust Tauri host bindings
 - React frontend (web layer)
 
 ## JUCE Audio/MIDI Rendering

@@ -10,7 +10,7 @@ Evidence-bound code review: React/Vite frontend, FastAPI Music Brain API, Tauri/
 | Area | Path | Purpose |
 |------|------|---------|
 | Frontend | `src/` | React app (AppConsole entry, IntentBuilder, SideA/SideB, hooks, types) |
-| Tauri shell | `src-tauri/` | Rust app (commands, bridge/kelly_ffi, main.rs worker, capabilities) |
+| Tauri shell | `engine/intent_ir/` | Rust app (commands, bridge/kelly_ffi, main.rs worker, capabilities) |
 | Music Brain API | `music_brain/` | FastAPI app (api.py, engine_api, session, harmony, groove, etc.) |
 | Shared contract | `shared_schemas/` | CompleteSongIntentRequest.json → sync to TS/Rust |
 | Scripts | `scripts/` | sync_entities.py, dev-setup.sh, load-env.sh, acquire/, build-full-stack.sh |
@@ -29,7 +29,7 @@ Evidence-bound code review: React/Vite frontend, FastAPI Music Brain API, Tauri/
 |------------|------|-----|
 | Frontend | `src/main.tsx` | Mounts AppConsole (not App.tsx) |
 | API | `music_brain/api.py` | `uvicorn music_brain.api:app` or `python -m music_brain.api` (host 127.0.0.1 in _main()) |
-| Tauri | `src-tauri/src/lib.rs` (run) / `main.rs` (binary) | `npm run dev:tauri` / `npm run tauri build` |
+| Tauri | `engine/intent_ir/src/lib.rs` (run) / `main.rs` (binary) | `npm run dev:tauri` / `npm run tauri build` |
 | Schema sync | `scripts/sync_entities.py` | Updates Intent.ts, intent.rs, Python from shared_schemas |
 
 ### Important data flows
@@ -45,8 +45,8 @@ Evidence-bound code review: React/Vite frontend, FastAPI Music Brain API, Tauri/
 
 ### Highest-risk areas
 1. **music_brain/api.py** — path handling (audio serve, spectocloud, humanizer config), request validation, 500 detail.
-2. **src-tauri** — Tauri commands (kelly_brain_initialize(data_path)), fs/dialog/opener capabilities, invoke surface.
-3. **Rust ↔ C++ FFI** — src-tauri/bridge/kelly_ffi.rs, C strings, error propagation.
+2. **engine/intent_ir** — Tauri commands (kelly_brain_initialize(data_path)), fs/dialog/opener capabilities, invoke surface.
+3. **Rust ↔ C++ FFI** — engine/intent_ir/bridge/kelly_ffi.rs, C strings, error propagation.
 4. **Config writes** — PUT /config/humanizer (config/humanizer.json), atomic write via tempfile+replace.
 
 ---
@@ -60,8 +60,8 @@ Evidence-bound code review: React/Vite frontend, FastAPI Music Brain API, Tauri/
 - `music_brain/engine_api/schema.py`, `shared_schemas/CompleteSongIntentRequest.json`
 - `scripts/sync_entities.py` (partial)
 - `src/main.tsx`, `src/AppConsole.tsx`, `src/components/IntentBuilder.tsx`, `src/hooks/useMusicBrain.ts`
-- `src-tauri/src/lib.rs`, `src-tauri/src/main.rs`, `src-tauri/src/commands.rs`, `src-tauri/src/bridge/kelly_ffi.rs` (partial)
-- `src-tauri/capabilities/default.json`, `src-tauri/tauri.conf.json`
+- `engine/intent_ir/src/lib.rs`, `engine/intent_ir/src/main.rs`, `engine/intent_ir/src/commands.rs`, `engine/intent_ir/src/bridge/kelly_ffi.rs` (partial)
+- `engine/intent_ir/capabilities/default.json`, `engine/intent_ir/tauri.conf.json`
 - `CMakeLists.txt` (root, limit 80)
 - `tests/unit/test_api_schema.py`, `tests/unit/test_api_audit_fixes.py`
 - `docs/CROSS_CUTTING_AUDIT_REPORT.md` (reference), `docs/ENVIRONMENT.md` (limit)
@@ -222,7 +222,7 @@ Evidence-bound code review: React/Vite frontend, FastAPI Music Brain API, Tauri/
   - Any code path that runs in audio callback or realtime thread (heap, locks, I/O).
 
 - **Full-repo review**
-  - Full *directory* listing and contract/entrypoint review was done for the primary stack (src/, src-tauri/, music_brain/api.py, shared_schemas, scripts/sync_entities, CI, config). Not every file in music_brain, engine, or legacy trees was read line-by-line. Findings are evidence-based from inspected code; “no evidence found” is stated where checked; “skipped” and “not reviewed” are explicit above.
+  - Full *directory* listing and contract/entrypoint review was done for the primary stack (src/, engine/intent_ir/, music_brain/api.py, shared_schemas, scripts/sync_entities, CI, config). Not every file in music_brain, engine, or legacy trees was read line-by-line. Findings are evidence-based from inspected code; “no evidence found” is stated where checked; “skipped” and “not reviewed” are explicit above.
 
 ---
 

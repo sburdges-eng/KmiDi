@@ -34,7 +34,7 @@ class PipelineDetector:
                 },
                 "standalone": {
                     "file_patterns": [r"main\.swift", r"AppDelegate", r"Tauri", r"Electron", r"App\.tsx", r"App\.jsx"],
-                    "path_patterns": [r"tauri", r"electron", r"src-tauri", r"macOS", r"iOS", r"mobile"],
+                    "path_patterns": [r"tauri", r"electron", r"engine/intent_ir", r"macOS", r"iOS", r"mobile"],
                     "keywords": ["tauri", "electron", "desktop", "mobile", "app"]
                 }
             }

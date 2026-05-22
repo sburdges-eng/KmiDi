@@ -29,9 +29,9 @@ python3 -m pip install -e "${ROOT_DIR}" --quiet
 python3 -m pip install pyinstaller --quiet
 pyinstaller --noconfirm --clean --name kmidi_brain --onefile "${ROOT_DIR}/music_brain/api.py"
 
-mkdir -p "${ROOT_DIR}/src-tauri/binaries"
-cp "${ROOT_DIR}/dist/kmidi_brain" "${ROOT_DIR}/src-tauri/binaries/kmidi_brain-${TARGET_TRIPLE}"
-chmod +x "${ROOT_DIR}/src-tauri/binaries/kmidi_brain-${TARGET_TRIPLE}"
+mkdir -p "${ROOT_DIR}/engine/intent_ir/binaries"
+cp "${ROOT_DIR}/dist/kmidi_brain" "${ROOT_DIR}/engine/intent_ir/binaries/kmidi_brain-${TARGET_TRIPLE}"
+chmod +x "${ROOT_DIR}/engine/intent_ir/binaries/kmidi_brain-${TARGET_TRIPLE}"
 
 echo "==> 3. Building Tauri UI shell"
 cd "${ROOT_DIR}"

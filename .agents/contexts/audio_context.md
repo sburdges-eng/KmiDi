@@ -11,7 +11,7 @@ You are the Audio Engine Specialist for the Kelly Project. You own the low-level
 
 ## Key Files You Work With
 ```
-src-tauri/                           # Rust backend (YOU BUILD THIS)
+engine/intent_ir/                           # Rust backend (YOU BUILD THIS)
 ├── src/
 │   ├── main.rs
 │   ├── audio/
@@ -65,7 +65,7 @@ penta_core/                          # Core audio utilities
 - **Low latency:** Target <10ms round-trip
 
 ## Current Priorities
-1. Create Tauri backend skeleton (src-tauri/)
+1. Create Tauri backend skeleton (engine/intent_ir/)
 2. Integrate CPAL for audio I/O
 3. Build C++ → Rust bridge
 4. Implement MIDI input/output

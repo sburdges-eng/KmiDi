@@ -95,7 +95,7 @@ This starts:
 
 **Python API only:** `npm run dev:python` — Music Brain API at http://localhost:8000, Swagger at /docs
 
-**C++ (Kelly FFI):** Build from repo root: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_KELLY_CORE=ON -DKMIDI_BUILD_JUCE_UI=ON -DBUILD_PLUGINS=ON` then `cmake --build build --target KellyFFI`. Re-run after C++ changes; Tauri picks up the library from `build/`, `build/debug/`, or `build/release/` per `src-tauri/build.rs`.
+**C++ (Kelly FFI):** Build from repo root: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBUILD_KELLY_CORE=ON -DKMIDI_BUILD_JUCE_UI=ON -DBUILD_PLUGINS=ON` then `cmake --build build --target KellyFFI`. Re-run after C++ changes; Tauri picks up the library from `build/`, `build/debug/`, or `build/release/` per `engine/intent_ir/build.rs`.
 
 **Plugin notes:** Root project uses `BUILD_PLUGINS`/`KMIDI_BUILD_JUCE_UI` (Kelly VST3 path). Legacy `DAIW_BUILD_VST3`/`DAIW_BUILD_AU` options belong to `KmiDi_FINAL/engine/cpp_music_brain` only.
 
@@ -116,7 +116,7 @@ npm ci && npm run tauri build
 - CMake: `cmake --build build --target KellyFFI` — FFI library for Tauri (pipeline B)
 - `./scripts/build-all.sh` — Full multi-technology stack (see script for options)
 
-**API/schema (UI–engine contract):** The single source of truth is `shared_schemas/CompleteSongIntentRequest.json`. Run `python3 scripts/sync_entities.py` after schema changes; CI verifies no drift between JSON, `src/types/Intent.ts`, and `src-tauri/src/generated/intent.rs`. Python validation: `pytest tests/unit/test_api_schema.py`.
+**API/schema (UI–engine contract):** The single source of truth is `shared_schemas/CompleteSongIntentRequest.json`. Run `python3 scripts/sync_entities.py` after schema changes; CI verifies no drift between JSON, `src/types/Intent.ts`, and `engine/intent_ir/src/generated/intent.rs`. Python validation: `pytest tests/unit/test_api_schema.py`.
 
 ## Code Organization
 
@@ -155,15 +155,13 @@ src/
 
 **Directory Structure:**
 ```
-src-tauri/src/
-├── commands.rs      # Tauri command definitions
-├── bridge/          # FFI bindings
-│   ├── mod.rs
-│   ├── kelly_ffi.rs
-│   └── musicbrain.rs
-├── state.rs         # State management
-├── events.rs        # Event system
-└── main.rs          # Application entry
+engine/intent_ir/src/
+├── lib.rs           # Library entry
+├── ffi.rs           # FFI exports
+├── builder.rs       # Intent builder
+├── types.rs         # Core types
+├── validator.rs     # Validation
+└── generated/       # Auto-generated intent types
 ```
 
 **Coding Standards:**
@@ -174,9 +172,9 @@ src-tauri/src/
 - Async/await for non-blocking operations
 
 **Key Files:**
-- `src-tauri/src/commands.rs` - Command interface
-- `src-tauri/src/bridge/kelly_ffi.rs` - Safe FFI wrappers
-- `src-tauri/build.rs` - Build configuration
+- `engine/intent_ir/src/ffi.rs` - FFI exports
+- `engine/intent_ir/src/bridge/kelly_ffi.rs` - Safe FFI wrappers
+- `engine/intent_ir/build.rs` - Build configuration
 
 ### React Development
 
@@ -229,7 +227,7 @@ gdb ./KellyTests   # Linux
 
 **Common Issues:**
 - **Null pointer crashes:** Check FFI parameter validation
-- **Memory leaks:** Run with AddressSanitizer (`DAIW_ENABLE_ASAN=ON`)
+- **Memory leaks:** Run with AddressSanitizer (`KMIDI_ENABLE_ASAN=ON`)
 - **Audio glitches:** Profile with Tracy (`ENABLE_TRACY=ON`)
 
 ### Rust Debugging
@@ -279,12 +277,12 @@ console.log('KellyBrain state:', state);
 **FFI Boundary:**
 ```bash
 # Check library loading
-otool -L src-tauri/resources/libKellyFFI.dylib  # macOS
-ldd src-tauri/resources/libKellyFFI.so          # Linux
+otool -L engine/intent_ir/resources/libKellyFFI.dylib  # macOS
+ldd engine/intent_ir/resources/libKellyFFI.so          # Linux
 
 # Test FFI directly
 cd build/debug && ./KellyTests                  # C++ side
-cd src-tauri && cargo test kelly_ffi           # Rust side
+cd engine/intent_ir && cargo test kelly_ffi           # Rust side
 ```
 
 **Event System:**
@@ -333,7 +331,7 @@ valgrind --tool=massif ./target/release/idaw
 ### Optimization Strategies
 
 **C++ Optimizations:**
-- Enable SIMD: `DAIW_ENABLE_SIMD=ON`
+- Enable AVX2 SIMD (default on supported platforms; see DSP code in `libs/daiw/` and `include/penta/`)
 - Release builds: `CMAKE_BUILD_TYPE=Release`
 - Profile-guided optimization (PGO)
 - Cache-friendly data structures
@@ -364,7 +362,7 @@ python3 -m pytest tests/
 python3 -m pytest tests/unit/test_api_schema.py
 ```
 
-**Rust/Tauri:** from repo root, `cd src-tauri && cargo test`.
+**Rust/Tauri:** from repo root, `cd engine/intent_ir && cargo test`.
 
 **C++ (when BUILD_TESTS=ON):** `ctest --test-dir build --output-on-failure`.
 
@@ -462,11 +460,11 @@ npm install
 **Library Loading Errors:**
 ```bash
 # Check library paths (macOS)
-otool -L src-tauri/resources/libKellyFFI.dylib
+otool -L engine/intent_ir/resources/libKellyFFI.dylib
 export DYLD_LIBRARY_PATH=./build/debug:$DYLD_LIBRARY_PATH
 
 # Check library paths (Linux)
-ldd src-tauri/resources/libKellyFFI.so
+ldd engine/intent_ir/resources/libKellyFFI.so
 export LD_LIBRARY_PATH=./build/debug:$LD_LIBRARY_PATH
 ```
 
@@ -551,7 +549,7 @@ perf record ./target/release/idaw
    
    # Test your changes (Python)
    python3 -m pytest tests/
-   # Optional: cd src-tauri && cargo test
+   # Optional: cd engine/intent_ir && cargo test
    ```
 
 4. **Build Verification:**
@@ -616,7 +614,7 @@ perf record ./target/release/idaw
 
 3. **Add Rust Binding:**
    ```rust
-   // src-tauri/src/bridge/kelly_ffi.rs
+   // engine/intent_ir/src/bridge/kelly_ffi.rs
    extern "C" {
        fn your_new_feature_process(brain: *mut KellyBrainHandle, data: *mut f32, size: c_int) -> c_int;
    }
@@ -630,7 +628,7 @@ perf record ./target/release/idaw
 
 4. **Add Tauri Command:**
    ```rust
-   // src-tauri/src/commands.rs
+   // engine/intent_ir/src/commands.rs
    #[command]
    pub async fn process_new_feature(data: Vec<f32>) -> Result<Vec<f32>, String> {
        // Implementation

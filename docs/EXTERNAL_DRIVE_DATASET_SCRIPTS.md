@@ -63,7 +63,7 @@ Found under **`$KMIDI_DATA_ROOT`** (set in `.env` when the external drive is mou
 | `KmiDi_MASTER_VAULTEXTERNAL/KmiDi/scripts/downloads` |
 | `COLD_STORAGEEXTERNAL/audio/kelly-audio-data/downloads` |
 | `KmiDi/RECOVERY_OPS/AUDIO_MIDI_DATA/kelly-audio-data/downloads` |
-| `KmiDi/KmiDi-1/scripts/downloads` |
+| `KmiDi/KmiDi/scripts/downloads` |
 | `KmiDi/KmiDi/scripts/downloads` |
 | `Datasets` (root-level; contains 20_audio_music, 60_staging_unclassified, etc.) |
 

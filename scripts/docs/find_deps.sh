@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Find references to a symbol across KmiDi repo (for "what depends on X" discovery).
 # Usage: ./scripts/docs/find_deps.sh <symbol> [scope]
-#   scope: music_brain | src | src-tauri | cpp | all (default: all)
+#   scope: music_brain | src | engine/intent_ir | cpp | all (default: all)
 # Requires: rg (ripgrep) on PATH.
 # Output: file:line matches, then a markdown table row template (Name | What it does | What calls it | What it calls) for 10_Dependency_Map.md.
 
@@ -37,18 +37,18 @@ case "$SCOPE" in
   src)
     run_rg src/
     ;;
-  src-tauri)
-    run_rg src-tauri/
+  engine/intent_ir)
+    run_rg engine/intent_ir/
     ;;
   cpp)
     run_rg src_penta-core/ include/ src/bridge/
     ;;
   all)
-    run_rg music_brain/ src/ src-tauri/ src_penta-core/ include/ src/bridge/
+    run_rg music_brain/ src/ engine/intent_ir/ src_penta-core/ include/ src/bridge/
     ;;
   *)
     echo "Unknown scope: $SCOPE" >&2
-    echo "Use: music_brain | src | src-tauri | cpp | all" >&2
+    echo "Use: music_brain | src | engine/intent_ir | cpp | all" >&2
     exit 1
     ;;
 esac

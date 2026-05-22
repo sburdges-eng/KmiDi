@@ -77,7 +77,7 @@ This document consolidates the comprehensive structure cross-examination analysi
 
 **Resolution:**
 - ✅ **KmiDi/macOS/**: macOS development directory with native components
-- ✅ **KmiDi-1/KmiDi_FINAL/apps/macOS/AppKitShell/**: Complete AppKit implementation
+- ✅ **KmiDi/KmiDi_FINAL/apps/macOS/AppKitShell/**: Complete AppKit implementation
   - MainWindowController.swift with split view
   - TimelinePanelController with JUCE embedding
   - InspectorPanelController with tabs (Emotion, Intent Schema, ML Debug)
@@ -85,13 +85,13 @@ This document consolidates the comprehensive structure cross-examination analysi
 - ✅ Both implementations exist and follow spec requirements
 - **Compliance: 30% → 95%** ✅
 
-**Reference:** [macOS/](macOS/) directory, [KmiDi-1/KmiDi_FINAL/apps/macOS/AppKitShell/](KmiDi-1/KmiDi_FINAL/apps/macOS/AppKitShell/)
+**Reference:** [macOS/](macOS/) directory, [KmiDi/KmiDi_FINAL/apps/macOS/AppKitShell/](KmiDi/KmiDi_FINAL/apps/macOS/AppKitShell/)
 
 #### 🟡 Missing Core Components - **IN PROGRESS**
 
 **Status:**
-- Timeline component: macOS development components in progress, full implementation exists in KmiDi-1 AppKit version
-- Inspector panels: macOS development components in progress, complete implementation exists in KmiDi-1 AppKit version
+- Timeline component: macOS development components in progress, full implementation exists in KmiDi AppKit version
+- Inspector panels: macOS development components in progress, complete implementation exists in KmiDi AppKit version
 - **Action Needed**: Verify integration between SwiftUI and AppKit implementations
 
 **Reference:** [macOS/](macOS/) directory
@@ -102,7 +102,7 @@ This document consolidates the comprehensive structure cross-examination analysi
 
 **Original Issue:**
 - No formal spec compliance tracking
-- KmiDi-1 specs not referenced in project docs
+- KmiDi specs not referenced in project docs
 - Missing spec-to-implementation mapping
 
 **Resolution:**
@@ -241,7 +241,7 @@ Current implementation uses React + Tauri for entire application, but architectu
   - Native macOS development components
   - Inspector/Timeline/Browser layout per spec
   - Uses semantic color tokens
-- ✅ **KmiDi-1/KmiDi_FINAL/apps/macOS/AppKitShell/**: Complete AppKit implementation
+- ✅ **KmiDi/KmiDi_FINAL/apps/macOS/AppKitShell/**: Complete AppKit implementation
   - MainWindowController.swift with split view
   - TimelinePanelController with JUCE embedding (TimelineComponent.cpp/h)
   - InspectorPanelController with tabs (Emotion, Intent Schema, ML Debug)
@@ -250,9 +250,9 @@ Current implementation uses React + Tauri for entire application, but architectu
 
 **Files:**
 - [macOS/](macOS/) - macOS app development directory
-- [KmiDi-1/KmiDi_FINAL/apps/macOS/AppKitShell/Sources/KmiDiApp/MainWindowController.swift] - AppKit implementation
-- [KmiDi-1/KmiDi_FINAL/apps/macOS/AppKitShell/Sources/KmiDiApp/Panels/TimelinePanelController.swift] - Timeline with JUCE
-- [KmiDi-1/KmiDi_FINAL/apps/macOS/AppKitShell/Sources/KmiDiApp/Panels/InspectorPanelController.swift] - Inspector tabs
+- [KmiDi/KmiDi_FINAL/apps/macOS/AppKitShell/Sources/KmiDiApp/MainWindowController.swift] - AppKit implementation
+- [KmiDi/KmiDi_FINAL/apps/macOS/AppKitShell/Sources/KmiDiApp/Panels/TimelinePanelController.swift] - Timeline with JUCE
+- [KmiDi/KmiDi_FINAL/apps/macOS/AppKitShell/Sources/KmiDiApp/Panels/InspectorPanelController.swift] - Inspector tabs
 
 **Success Criteria:**
 - [x] Native macOS app shell implemented (both SwiftUI and AppKit)
@@ -465,7 +465,7 @@ host/
 
 **Considerations:**
 - KmiDi/apps/macOS/ - SwiftUI approach (simpler, references components)
-- KmiDi-1/KmiDi_FINAL/apps/macOS/AppKitShell/ - AppKit approach (complete with Timeline/Inspector/Browser)
+- KmiDi/KmiDi_FINAL/apps/macOS/AppKitShell/ - AppKit approach (complete with Timeline/Inspector/Browser)
 
 **Decision Needed:**
 - Which implementation is primary?
@@ -517,10 +517,10 @@ host/
 - [THREE_CRITICAL_IMPROVEMENTS.md](THREE_CRITICAL_IMPROVEMENTS.md) - Detailed implementation plans
 
 **Specifications:**
-- [KmiDi-1/docs/specs/01_FOUNDATION_SYSTEM_UI.md](KmiDi-1/docs/specs/01_FOUNDATION_SYSTEM_UI.md) - System-level UI compliance
-- [KmiDi-1/docs/specs/02_LAYOUT_NAVIGATION.md](KmiDi-1/docs/specs/02_LAYOUT_NAVIGATION.md) - Layout and navigation rules
-- [KmiDi-1/docs/specs/03_VISUAL_SYSTEM.md](KmiDi-1/docs/specs/03_VISUAL_SYSTEM.md) - Color tokens, typography, spacing
-- [KmiDi-1/docs/specs/04_CORE_MUSICAL_UI.md](KmiDi-1/docs/specs/04_CORE_MUSICAL_UI.md) - Timeline, plugin editor, JUCE embedding
+- [KmiDi/docs/specs/01_FOUNDATION_SYSTEM_UI.md](KmiDi/docs/specs/01_FOUNDATION_SYSTEM_UI.md) - System-level UI compliance
+- [KmiDi/docs/specs/02_LAYOUT_NAVIGATION.md](KmiDi/docs/specs/02_LAYOUT_NAVIGATION.md) - Layout and navigation rules
+- [KmiDi/docs/specs/03_VISUAL_SYSTEM.md](KmiDi/docs/specs/03_VISUAL_SYSTEM.md) - Color tokens, typography, spacing
+- [KmiDi/docs/specs/04_CORE_MUSICAL_UI.md](KmiDi/docs/specs/04_CORE_MUSICAL_UI.md) - Timeline, plugin editor, JUCE embedding
 
 **Existing Documentation:**
 - [docs/cpp_audio_architecture.md](docs/cpp_audio_architecture.md) - Brain/Body architecture

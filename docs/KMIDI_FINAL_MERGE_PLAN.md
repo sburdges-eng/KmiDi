@@ -10,7 +10,7 @@
 |------|------------------------|--------|
 | **PRROT** (memory safety / realtime) | `python/prrot/`, engine PRROT usage | Copy or subtree-merge into `music_brain/` or `engine/`; wire into CMake/build. |
 | **Engine / DSP** | `engine/src/dsp`, `engine/src/voice`, `engine/cpp_music_brain` (non-UI) | Merge into repo `engine/`, `include/`, `src/` (or `src_penta-core`). Prefer same C ABI and rt_harness compatibility. |
-| **Intent IR v1** (if not already in main) | Intent IR build, schema, plugin processor updates | Main repo already has `src-tauri/src/intent_ir/`; align schema and any C++ Intent IR usage. |
+| **Intent IR v1** (if not already in main) | Intent IR build, schema, plugin processor updates | Main repo already has `engine/intent_ir/`; align schema and any C++ Intent IR usage. |
 | **Music Brain / learning** | `python/music_brain/learning/`, `voice/`, pipeline docs | Merge into `music_brain/`; keep one API surface (`music_brain.api`). |
 | **Config / models** | Training configs, model references (no large binaries) | Copy into `config/`, `experiments/` as needed. |
 | **Scripts** | Build, robustness, verification scripts | Merge into `scripts/`; avoid duplicate entrypoints. |
@@ -72,7 +72,7 @@
    - Keep single entrypoint: `pip install -e .` and `music_brain.api`.
 
 3. **Intent IR**  
-   - Align `engine/intent_ir` (if copied) with `src-tauri/src/intent_ir/` and `shared_schemas/`; one schema contract.
+   - Align `engine/intent_ir` (if copied) with `engine/intent_ir/src/intent_ir/` and `shared_schemas/`; one schema contract.
 
 4. **Config / scripts**  
    - Review copied configs in `config/` and scripts in `scripts/`; retire or rename duplicates.

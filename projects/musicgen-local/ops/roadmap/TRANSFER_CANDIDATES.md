@@ -79,8 +79,8 @@ Scope scanned: `/Volumes/KmiDi-external`
 
 ### 6) Tauri-generated desktop schemas
 - Source examples:
-  - `/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/src-tauri/gen/schemas/desktop-schema.json`
-  - `/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/src-tauri/gen/schemas/macOS-schema.json`
+  - `/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/engine/intent_ir/gen/schemas/desktop-schema.json`
+  - `/Volumes/KmiDi-external/KmiDi_MASTER_VAULTEXTERNAL/KmiDi/engine/intent_ir/gen/schemas/macOS-schema.json`
 - Why:
   - Good reference for desktop app config schema patterns.
 - Suggested destination:

@@ -7,7 +7,7 @@
 ## Purpose
 
 Legacy Qt6 desktop GUI application source files for the standalone Kelly application.
-**Deprecated in favor of Tauri/React shell (`src-tauri/`).**
+**Deprecated in favor of Tauri/React shell (`engine/intent_ir/`).**
 
 ## Files
 
@@ -28,5 +28,5 @@ Legacy Qt6 desktop GUI application source files for the standalone Kelly applica
 
 ## Primary V1 UI
 
-The supported V1 desktop shell is **Tauri + React** at `src-tauri/`.
+The supported V1 desktop shell is **Tauri + React** at `engine/intent_ir/`.
 See `docs/adr/001-one-ui-path.md` for details.

@@ -142,7 +142,7 @@ if [ "${CLEAN_BUILD:-false}" == "true" ]; then
     log_step "Cleaning previous builds..."
     rm -rf "$BUILD_DIR"
     rm -rf "$DIST_DIR"
-    rm -rf "$PROJECT_ROOT/src-tauri/target"
+    rm -rf "$PROJECT_ROOT/engine/intent_ir/target"
     rm -rf "$PROJECT_ROOT/node_modules"
     log_success "Clean completed"
 fi
@@ -230,7 +230,7 @@ log_success "React frontend built"
 if [ "$BUILD_TAURI" == "ON" ]; then
     log_step "Configuring Tauri build..."
 
-    cd "$PROJECT_ROOT/src-tauri"
+    cd "$PROJECT_ROOT/engine/intent_ir"
 
     # Ensure FFI library is available for linking
     if [ -f "$BUILD_DIR/libKellyFFI.dylib" ]; then
@@ -268,9 +268,9 @@ if [ "$BUILD_TAURI" == "ON" ]; then
     fi
 
     # Verify Tauri build output
-    TAURI_BUILD_DIR="$PROJECT_ROOT/src-tauri/target/release"
+    TAURI_BUILD_DIR="$PROJECT_ROOT/engine/intent_ir/target/release"
     if [ "$BUILD_TYPE" == "Debug" ]; then
-        TAURI_BUILD_DIR="$PROJECT_ROOT/src-tauri/target/debug"
+        TAURI_BUILD_DIR="$PROJECT_ROOT/engine/intent_ir/target/debug"
     fi
 
     if [[ "$PLATFORM" == "macos" ]]; then
@@ -325,9 +325,9 @@ mkdir -p "$DIST_DIR"/{app,plugins,docs,resources}
 
 # Copy built applications
 if [ "$BUILD_TAURI" == "ON" ]; then
-    TAURI_BUILD_DIR="$PROJECT_ROOT/src-tauri/target/release"
+    TAURI_BUILD_DIR="$PROJECT_ROOT/engine/intent_ir/target/release"
     if [ "$BUILD_TYPE" == "Debug" ]; then
-        TAURI_BUILD_DIR="$PROJECT_ROOT/src-tauri/target/debug"
+        TAURI_BUILD_DIR="$PROJECT_ROOT/engine/intent_ir/target/debug"
     fi
 
     if [[ "$PLATFORM" == "macos" ]]; then
@@ -408,7 +408,7 @@ if [ "$BUILD_TESTS" == "ON" ]; then
     # Run Rust tests
     if [ "$BUILD_TAURI" == "ON" ]; then
         echo "Running Rust tests..."
-        cd "$PROJECT_ROOT/src-tauri"
+        cd "$PROJECT_ROOT/engine/intent_ir"
         cargo test || log_error "Rust tests failed"
     fi
 

@@ -17,7 +17,7 @@ Examples: `exp_001_ump_jepa/`, `exp_002_wavjepa_emotion/`
 
 ## Rules
 
-1. **Isolation** — no imports between experiments and core: experimental code must not be imported by anything in `music_brain/`, `src/`, `src-tauri/`, or any other core path, and experiments must not import from those core paths either.
+1. **Isolation** — no imports between experiments and core: experimental code must not be imported by anything in `music_brain/`, `src/`, `engine/intent_ir/`, or any other core path, and experiments must not import from those core paths either.
 2. **Self-contained** — each experiment folder must have its own `README.md` explaining the hypothesis, datasets, and how to run.
 3. **Promotion gate** — to move code into core, open a PR marked `[promote]` and get at least one review confirming the experiment passed its stated acceptance criteria.
 4. **No secrets / no large binaries** — use `.gitignore` inside the experiment folder for any data, model weights, or generated outputs.

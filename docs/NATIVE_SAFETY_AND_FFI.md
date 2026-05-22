@@ -14,8 +14,8 @@ Human-readable reference for **memory safety across the KellyFFI boundary**, **d
 |------|--------|------------|
 | C ABI contract (which `char*` to free) | `src/bridge/kelly_ffi.h` — `kelly_free_string`, comments on static vs heap | Document every new FFI return: caller frees vs static (e.g. `kelly_get_error_message`). |
 | C++ implementation | `src/bridge/kelly_ffi.cpp` | Pair heap allocations returned across the boundary with `kelly_free_string` (or document static storage). |
-| Rust consumer | `src-tauri/src/bridge/kelly_ffi.rs` | Match each `extern "C"` result to the header: allocated → copy then `kelly_free_string`; static/thread-local → **never** free. Grep `kelly_` and verify against `kelly_ffi.h`. |
-| Other Rust FFI | `src-tauri/src/intent_ir/ffi.rs`, `src-tauri/src/intent_ir/ffi_exports.rs` | Same ownership discipline (lifetimes, null, buffer owner). |
+| Rust consumer | `engine/intent_ir/src/bridge/kelly_ffi.rs` | Match each `extern "C"` result to the header: allocated → copy then `kelly_free_string`; static/thread-local → **never** free. Grep `kelly_` and verify against `kelly_ffi.h`. |
+| Other Rust FFI | `engine/intent_ir/src/intent_ir/ffi.rs`, `engine/intent_ir/src/intent_ir/ffi_exports.rs` | Same ownership discipline (lifetimes, null, buffer owner). |
 | Regression tests | `tests/cpp/test_kelly_ffi.cpp` | Extend when adding FFI; run with `BUILD_TESTS=ON` and C++ tests enabled. |
 
 ---
@@ -45,8 +45,8 @@ Human-readable reference for **memory safety across the KellyFFI boundary**, **d
 
 | What | Where | What to do |
 |------|--------|------------|
-| KellyFFI ABI / dylib | `CMakeLists.txt` — `KellyFFI` `VERSION` / `SOVERSION`; `src-tauri/build.rs` | Breaking C ABI needs a version story and Tauri packaging update. |
-| TS / Rust / Python intent | `shared_schemas/`, `scripts/sync_entities.py`, `src/types/Intent.ts`, `src-tauri/src/generated/` | After schema edits: run sync, commit generated files, run Python schema tests. |
+| KellyFFI ABI / dylib | `CMakeLists.txt` — `KellyFFI` `VERSION` / `SOVERSION`; `engine/intent_ir/build.rs` | Breaking C ABI needs a version story and Tauri packaging update. |
+| TS / Rust / Python intent | `shared_schemas/`, `scripts/sync_entities.py`, `src/types/Intent.ts`, `engine/intent_ir/src/generated/` | After schema edits: run sync, commit generated files, run Python schema tests. |
 | HTTP API only | `music_brain/api_schemas/` | REST evolution; does **not** substitute for native memory safety. |
 
 *(HTTP `intent_schema_version` is API contract versioning, not C++ toolchain versioning.)*
@@ -58,7 +58,7 @@ Human-readable reference for **memory safety across the KellyFFI boundary**, **d
 - Configure/build: `KellyFFI`, `KellyCore`, plugins — see `BUILD.md` and root `CMakeLists.txt`.
 - C++ tests: `BUILD_TESTS=ON`, then `ctest --test-dir build --output-on-failure` (when enabled).
 - Sanitizer: `KMIDI_ENABLE_ASAN=ON` Debug + `ctest` per `CLAUDE.md`.
-- Rust: `cd src-tauri && cargo test`.
+- Rust: `cd engine/intent_ir && cargo test`.
 - Python (if API/schemas touched): `flake8 music_brain/`, `pytest tests/`.
 
 ---

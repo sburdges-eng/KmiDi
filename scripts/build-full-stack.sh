@@ -75,7 +75,7 @@ fi
 
 if [[ "$RUN_TAURI_CHECK" == "ON" ]]; then
   echo "[4/4] Validating Tauri Rust build"
-  cargo build --manifest-path "$ROOT_DIR/src-tauri/Cargo.toml"
+  cargo build --manifest-path "$ROOT_DIR/engine/intent_ir/Cargo.toml"
 else
   echo "[4/4] Skipping Tauri cargo validation (--no-tauri)"
 fi

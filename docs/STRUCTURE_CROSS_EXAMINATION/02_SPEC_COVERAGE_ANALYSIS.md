@@ -6,11 +6,11 @@
 
 ## Overview
 
-This document analyzes coverage of specification requirements from `KmiDi-1/docs/specs/` in the current KmiDi project documentation and implementation.
+This document analyzes coverage of specification requirements from `KmiDi/docs/specs/` in the current KmiDi project documentation and implementation.
 
 ## Specification Files Reference
 
-### Primary Specifications (KmiDi-1/docs/specs/)
+### Primary Specifications (KmiDi/docs/specs/)
 
 | Spec File | Title | Status | Documentation Reference |
 |-----------|-------|--------|------------------------|
@@ -60,7 +60,7 @@ This document analyzes coverage of specification requirements from `KmiDi-1/docs
 - Editor open time (< 100ms requirement)
 
 **Implementation Status:**
-- ✅ Tauri window configured in `src-tauri/tauri.conf.json`
+- ✅ Tauri window configured in `engine/intent_ir/tauri.conf.json`
 - ⚠️ Need to verify input/interaction patterns
 - ⚠️ Need to verify performance compliance
 - ⚠️ Need to verify editor open time

@@ -95,7 +95,7 @@ graph TB
 
 ### Tauri/Rust Desktop Layer
 
-**Location:** `src-tauri/`
+**Location:** `engine/intent_ir/`
 
 **Responsibilities:**
 - Desktop application framework
@@ -135,7 +135,7 @@ graph TB
 
 **Technologies:**
 - C++20 with modern features
-- JUCE 7.0.9 audio framework
+- JUCE 8 audio framework
 - CMake 3.27 build system
 - SIMD optimizations (AVX2/FMA)
 
@@ -515,7 +515,7 @@ extern "C" {
 
 **Rust Side:**
 ```rust
-// src-tauri/src/bridge/kelly_ffi.rs
+// engine/intent_ir/src/bridge/kelly_ffi.rs
 #[link(name = "KellyFFI")]
 extern "C" {
     fn kelly_brain_create() -> *mut KellyBrainHandle;
@@ -598,11 +598,11 @@ graph TD
 # System dependencies
 cmake >= 3.27
 rustc >= 1.70
-node >= 18.0
+node >= 20.0
 python >= 3.9
 
 # C++ dependencies (via CMake FetchContent)
-JUCE 7.0.9
+JUCE 8
 Qt6 Core/Widgets
 readerwriterqueue
 fmt, spdlog, Catch2
@@ -633,7 +633,7 @@ KmiDi/
 │   ├── components/               # React components
 │   └── hooks/                    # React hooks
 │
-├── src-tauri/                    # Rust desktop integration
+├── engine/intent_ir/              # Rust desktop integration
 │   ├── src/
 │   │   ├── commands.rs           # Tauri command definitions
 │   │   ├── bridge/               # Rust FFI bindings

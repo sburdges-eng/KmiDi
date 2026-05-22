@@ -5,7 +5,7 @@
 ## Canonical UI Surface (V1)
 
 The only supported V1 desktop shell is **Tauri + React**:
-- `src-tauri/` — Rust Tauri host bindings
+- `engine/intent_ir/` — Rust intent crate (FFI bridge, types, validator)
 - React frontend (web layer)
 
 ## Supporting Layers

@@ -196,7 +196,7 @@ The specifications appear to be designed for a native macOS application, while t
 ## Files Requiring Changes
 
 ### Complete Replacement
-- `source/frontend/src-tauri/` (remove)
+- `source/frontend/engine/intent_ir/` (remove)
 - `source/cpp/src/App.tsx` (replace)
 - `source/cpp/src/components/` (replace)
 

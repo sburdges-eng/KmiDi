@@ -6,13 +6,13 @@
 
 ## Overview
 
-This report analyzes UI/UX implementation against specification requirements from `KmiDi-1/docs/specs/01-04_*.md` and modern standards (React 19.1.0, Tauri 2.x, Tailwind 4.x, TypeScript 5.8, WCAG AA).
+This report analyzes UI/UX implementation against specification requirements from `KmiDi/docs/specs/01-04_*.md` and modern standards (React 19.1.0, Tauri 2.x, Tailwind 4.x, TypeScript 5.8, WCAG AA).
 
 ## Spec 01: Foundation System UI Compliance
 
 ### Windowing Compliance
 
-**Tauri Window Configuration (`src-tauri/tauri.conf.json`):**
+**Tauri Window Configuration (`engine/intent_ir/tauri.conf.json`):**
 ```json
 {
   "app": {

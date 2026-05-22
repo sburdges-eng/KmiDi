@@ -274,7 +274,7 @@ This document provides detailed cross-examination of selected files from the pla
 
 **Score:** 90% - Excellent configuration
 
-#### 9. `src-tauri/tauri.conf.json` - Tauri Configuration
+#### 9. `engine/intent_ir/tauri.conf.json` - Tauri Configuration
 
 **Spec Compliance:**
 - ✅ Window configuration (Spec 01)
@@ -305,7 +305,7 @@ This document provides detailed cross-examination of selected files from the pla
 
 **Score:** 85% - Good configuration
 
-#### 10. `src-tauri/src/commands.rs` - Bridge Commands
+#### 10. `engine/intent_ir/src/commands.rs` - Bridge Commands
 
 **Spec Compliance:**
 - ✅ Command-based architecture
@@ -371,7 +371,7 @@ This document provides detailed cross-examination of selected files from the pla
 
 **Score:** 90% - Excellent implementation
 
-#### 12. `src-tauri/src/bridge/musicbrain.rs` - Rust Bridge
+#### 12. `engine/intent_ir/src/bridge/musicbrain.rs` - Rust Bridge
 
 **Spec Compliance:**
 - ✅ Non-blocking HTTP calls

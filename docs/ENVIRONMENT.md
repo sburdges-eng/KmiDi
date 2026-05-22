@@ -58,7 +58,7 @@ source scripts/load-env.sh tauri ml
 ## File Structure
 
 ```
-KmiDi-1/
+KmiDi/
 ├── .env                    # Base environment (git-ignored)
 ├── .env.example            # Template (committed)
 ├── .env.local              # User overrides (git-ignored)
@@ -157,7 +157,7 @@ Variables are loaded in this order (later files override earlier ones):
 1. **Clone the repository**
    ```bash
    git clone <repo-url>
-   cd KmiDi-1
+   cd KmiDi
    ```
 
 2. **Run setup wizard**
@@ -209,7 +209,7 @@ fn main() {
 }
 ```
 
-Or load in `src-tauri/src/main.rs`:
+Or load in `engine/intent_ir/src/main.rs`:
 
 ```rust
 #[cfg(not(target_os = "android"))]

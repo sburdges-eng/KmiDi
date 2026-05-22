@@ -51,7 +51,7 @@ import races and missing-model errors:
    └─ music_brain.emotion      – production + emotion mapping
    └─ music_brain.groove_kmidi – humanization / groove engine
 
-2. mcp_workstation          – multi-AI orchestration (optional, tools/mcp/)
+2. mcp_workstation          – multi-AI orchestration (optional, python/mcp/)
    └─ Requires music_brain to be importable first.
 
 3. kmidi_gui (Tauri + React)
@@ -127,9 +127,9 @@ python run_brain.py check || { echo "Brain pre-flight failed. Aborting push."; e
 
 ### `mcp_workstation` (optional)
 
-- Located at `tools/mcp/mcp_workstation/`.
-- Multi-AI orchestration workspace (Claude, ChatGPT, Gemini, GitHub Copilot).
-- Start with: `python -m mcp_workstation status` (from `tools/mcp/`).
+- Located at `python/mcp/mcp_workstation/`.
+- Part of the MCP servers collection at `python/mcp/` (daiw_mcp, mcp_penta_swarm, mcp_todo, mcp_workstation).
+- Start with: `python -m mcp_workstation status` (from `python/mcp/`).
 
 ---
 

@@ -328,7 +328,7 @@ npm run lint:ts
 
 **Rust:**
 ```bash
-cd src-tauri && cargo check
+cd engine/intent_ir && cargo check
 # ⚠️ Need to verify
 ```
 

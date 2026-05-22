@@ -5,7 +5,7 @@
 
 ## Summary
 
-Reviewed missing utility scripts from `/Users/seanburdges/MISC CODE` and `/Users/seanburdges/My Mac/Desktop/kelly-midi-companion` to determine if they should be integrated into KmiDi-1.
+Reviewed missing utility scripts from `/Users/seanburdges/MISC CODE` and `/Users/seanburdges/My Mac/Desktop/kelly-midi-companion` to determine if they should be integrated into KmiDi.
 
 ## Files Reviewed
 
@@ -22,7 +22,7 @@ Reviewed missing utility scripts from `/Users/seanburdges/MISC CODE` and `/Users
 **Purpose:** Phase 2 quick start - basic tempo, key detection, frequency analysis (8-band), dynamic range
 **Status:** ⚠️ **OBSOLETE/STARTER VERSION**
 - **Similar to:** `KmiDi_FINAL/python/music_brain/audio/analyzer.py` (full implementation)
-- **Difference:** This is a minimal "starter" version for Phase 2. The full `analyzer.py` in KmiDi-1 is more complete.
+- **Difference:** This is a minimal "starter" version for Phase 2. The full `analyzer.py` in KmiDi is more complete.
 - **Recommendation:** **DO NOT MIGRATE** - This is an older/starter version superseded by the full analyzer.
 
 ### 3. `theory_analyzer.py` (MISC CODE)
@@ -38,9 +38,9 @@ Reviewed missing utility scripts from `/Users/seanburdges/MISC CODE` and `/Users
 - Harmonic complexity scoring
 - Audio file analysis via librosa
 **Status:** ✅ **UNIQUE - SHOULD MIGRATE**
-- **Similar to:** No direct equivalent found in KmiDi-1
+- **Similar to:** No direct equivalent found in KmiDi
 - **Difference:** This is a comprehensive standalone theory analyzer
-- **Recommendation:** **MIGRATE** - This appears to be a sophisticated theory analysis module that doesn't exist in KmiDi-1. Should go in `music_brain/theory/` or similar.
+- **Recommendation:** **MIGRATE** - This appears to be a sophisticated theory analysis module that doesn't exist in KmiDi. Should go in `music_brain/theory/` or similar.
 
 ### 4. `harmony_system.py` (Desktop/kelly-midi-companion)
 **Type:** Intelligent Harmony System - unified integration module
@@ -68,7 +68,7 @@ Reviewed missing utility scripts from `/Users/seanburdges/MISC CODE` and `/Users
 - `effects.py` - Individual effect implementations (distortion, delay, reverb, filters, etc.)
 - Other files: `modulator.py`, `auto_tune.py`, `synthesizer.py`, `neural_voice.py`, `guitar_fx.py`
 
-**Recommendation:** These appear to be utility modules. Need to check if similar functionality exists in KmiDi-1's `music_brain/effects/` or other locations.
+**Recommendation:** These appear to be utility modules. Need to check if similar functionality exists in KmiDi's `music_brain/effects/` or other locations.
 
 ## Recommendations
 

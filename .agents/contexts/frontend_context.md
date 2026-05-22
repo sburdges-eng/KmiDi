@@ -38,7 +38,7 @@ src/
 - Mixer and Timeline are placeholders
 
 ## What You DON'T Touch
-- Rust/Tauri backend (src-tauri/) - Agent 2's domain
+- Rust/Tauri backend (engine/intent_ir/) - Agent 2's domain
 - Python music generation (music_brain/) - Agent 3's domain
 - C++ audio engine (cpp_music_brain/, penta_core/) - Agent 2's domain
 

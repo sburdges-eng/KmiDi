@@ -2,7 +2,7 @@
 
 > **Auditor**: Antigravity (automated, code-verified)
 > **Date**: 2026-04-14
-> **Scope**: `/Users/seanburdges/Dev/KmiDi` — `src/`, `src_penta-core/`, `include/penta/`, `engine/intent_ir/`, `src-tauri/src/intent_ir/`, `src/bridge/`
+> **Scope**: `/Users/seanburdges/Dev/KmiDi` — `src/`, `src_penta-core/`, `include/penta/`, `engine/intent_ir/`, `src/bridge/`
 > **Method**: Every finding below cites `file:line`, includes extracted evidence, an explanation, and a concrete diff-level fix. Stale audit data from the prior document was re-verified against the disk; items that no longer match were dropped or corrected.
 
 ---
@@ -408,7 +408,7 @@ int midiNote = static_cast<int>(pitch);
 
 **Tag**: `FFI/MEM` | **Severity**: `MED`
 
-**File**: `src-tauri/src/intent_ir/ffi_exports.rs:231`
+**File**: `engine/intent_ir/src/intent_ir/ffi_exports.rs:231`
 
 **Evidence**:
 ```rust
@@ -534,8 +534,7 @@ ctest --test-dir build-asan --output-on-failure
 nm -U build-asan/libKellyFFI.dylib | grep -c JuceVersion  # should be 0 or 1
 
 # 5. Rust tests
-cd src-tauri && cargo test
-cd ../engine/intent_ir && cargo test
+cd engine/intent_ir && cargo test
 
 # 6. Python lint + tests
 python3 -m flake8 music_brain/ --max-line-length 100

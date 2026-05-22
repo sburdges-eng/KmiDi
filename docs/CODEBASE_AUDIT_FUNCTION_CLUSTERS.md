@@ -146,7 +146,7 @@ This audit is not “clean code.” It aims to:
 - `music_brain/session/intent_schema.py` — `CompleteSongIntent` (dataclass with song_root, song_intent, technical_constraints, flat __init__ kwargs)
 - `music_brain/engine_api/schema.py` — `CompleteSongIntentRequest` (Pydantic: core_desire, mood_primary, genre, tempo, key_mode, structure, instruments, allow_legacy_fallback, groove_feel, narrative_arc, rule_to_break, rule_justification)
 - `src/types/Intent.ts` — `CompleteSongIntentRequest` (synced from shared_schemas via `scripts/sync_entities.py`)
-- `src-tauri/src/generated/intent.rs` — generated from same schema
+- `engine/intent_ir/src/generated/intent.rs` — generated from same schema
 
 ### Runtime Classes
 
@@ -183,7 +183,7 @@ This audit is not “clean code.” It aims to:
 
 ## Optional: Multi-Language Note
 
-The repo includes Python (music_brain, scripts), TypeScript (src), Rust (src-tauri), and C++ (engine, src/midi, plugins). Clusters that span languages (e.g. Affect UMP) are classified by runtime and not merged across REALTIME_SAFE / NON_REALTIME. Shared intent is documented so each language keeps behavioral parity without violating constraints.
+The repo includes Python (music_brain, scripts), TypeScript (src), Rust (engine/intent_ir), and C++ (engine, src/midi, plugins). Clusters that span languages (e.g. Affect UMP) are classified by runtime and not merged across REALTIME_SAFE / NON_REALTIME. Shared intent is documented so each language keeps behavioral parity without violating constraints.
 
 ---
 

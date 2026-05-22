@@ -10,7 +10,7 @@ Run the script:
 ## Manual Method (If Script Doesn't Work)
 
 ### Step 1: Open Finder
-Navigate to: `/Users/seanburdges/KmiDi-1/`
+Navigate to: `/Users/seanburdges/Dev/KmiDi/`
 
 ### Step 2: Apply Yellow/Gold Labels
 

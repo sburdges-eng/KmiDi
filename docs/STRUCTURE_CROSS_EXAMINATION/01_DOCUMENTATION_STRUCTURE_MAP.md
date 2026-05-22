@@ -6,7 +6,7 @@
 
 ## Overview
 
-This document maps the complete documentation hierarchy in the KmiDi project and cross-references it with specification requirements from `KmiDi-1/docs/specs/09_DOCUMENTATION_REPO.md`.
+This document maps the complete documentation hierarchy in the KmiDi project and cross-references it with specification requirements from `KmiDi/docs/specs/09_DOCUMENTATION_REPO.md`.
 
 ## Current Documentation Structure
 
@@ -44,7 +44,7 @@ docs/
 
 ### Specification Cross-Reference
 
-**Required Specs from KmiDi-1/docs/specs/:**
+**Required Specs from KmiDi/docs/specs/:**
 - ✅ `01_FOUNDATION_SYSTEM_UI.md` - Referenced in UI_BOUNDARY_RULES.md
 - ✅ `02_LAYOUT_NAVIGATION.md` - Referenced in ARCHITECTURE.md
 - ✅ `03_VISUAL_SYSTEM.md` - Referenced in visual system compliance reports

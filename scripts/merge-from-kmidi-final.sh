@@ -49,7 +49,7 @@ if [[ -d "$FINAL/engine/src/dsp" ]]; then
   echo "Copied engine/src/dsp -> engine/src/dsp"
 fi
 
-# Intent IR C++ (for alignment; main has src-tauri intent_ir)
+# Intent IR C++ (for alignment; main has engine/intent_ir intent_ir)
 if [[ -d "$FINAL/engine/intent_ir/src" ]]; then
   mkdir -p engine/intent_ir
   rsync -a --exclude='.DS_Store' "$FINAL/engine/intent_ir/" engine/intent_ir/

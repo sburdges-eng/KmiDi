@@ -203,7 +203,7 @@ class IntegrationValidator:
         """Validate that compliance improvements are achievable"""
         # Check that all required components are available
         # Note: Native macOS App (AppKitShell) is deprecated per ADR 001.
-        # The primary UI is now Tauri/React at src-tauri/
+        # The primary UI is now Tauri/React at engine/intent_ir/
         components = {
             "Pure DSP": self.kmidi_final_root / "engine" / "src" / "dsp" / "audio_buffer.cpp",
             "Legacy macOS App": self.kmidi_root / "legacy" / "ui" / "appkit_shell",

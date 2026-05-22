@@ -3,7 +3,7 @@
 # Build Kelly - iDAW (Tauri) and create a macOS DMG installer
 # =============================================================================
 # Runs: npm run tauri build (with dmg bundle).
-# Output: src-tauri/target/release/bundle/dmg/*.dmg
+# Output: engine/intent_ir/target/release/bundle/dmg/*.dmg
 #
 # Usage:
 #   ./scripts/create_app_dmg.sh
@@ -40,15 +40,15 @@ if ! command -v cargo &>/dev/null; then
   exit 1
 fi
 
-if [ ! -f "package.json" ] || [ ! -d "src-tauri" ]; then
-  echo -e "${RED}Not in KmiDi-compile root (package.json / src-tauri missing).${NC}"
+if [ ! -f "package.json" ] || [ ! -d "engine/intent_ir" ]; then
+  echo -e "${RED}Not in KmiDi-compile root (package.json / engine/intent_ir missing).${NC}"
   exit 1
 fi
 
 echo -e "${YELLOW}Building Tauri app (frontend + Rust) and DMG...${NC}"
 npm run tauri build -- --bundles dmg
 
-BUNDLE_DIR="src-tauri/target/release/bundle"
+BUNDLE_DIR="engine/intent_ir/target/release/bundle"
 DMG_DIR="$BUNDLE_DIR/dmg"
 DMG_FILE=""
 

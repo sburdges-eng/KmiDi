@@ -11,7 +11,7 @@
   },
   "standalone": {
     "file_patterns": ["main\\.swift", "AppDelegate", "Tauri", "Electron", "App\\.tsx", "App\\.jsx", "main\\.rs"],
-    "path_patterns": ["tauri", "electron", "src-tauri", "macOS", "iOS", "mobile", "desktop"],
+    "path_patterns": ["tauri", "electron", "engine/intent_ir", "macOS", "iOS", "mobile", "desktop"],
     "keywords": ["tauri", "electron", "desktop", "mobile", "app", "application"]
   }
 }

@@ -1,12 +1,12 @@
 # Naming Conventions
 
 **Date:** 2026-01-23  
-**Project:** KmiDi-1  
+**Project:** KmiDi  
 **Phase:** 2.1.2 - Code Organization
 
 ## Overview
 
-This document defines the naming conventions used throughout the KmiDi-1 codebase. Consistent naming improves code readability, maintainability, and reduces cognitive load when working with the codebase.
+This document defines the naming conventions used throughout the KmiDi codebase. Consistent naming improves code readability, maintainability, and reduces cognitive load when working with the codebase.
 
 ## Python Naming Conventions
 

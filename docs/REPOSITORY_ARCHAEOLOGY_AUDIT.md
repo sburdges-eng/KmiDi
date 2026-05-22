@@ -19,7 +19,7 @@
 | `.py` (excl. .tools, KmiDi/external) | ~250+ | music_brain, scripts, tests |
 | `.cpp` / `.h` (excl. JUCE, .tools) | 400+ | engine, KmiDi_FINAL, src, include |
 | `.ts` / `.tsx` | — | src/ (React) |
-| `.rs` | — | src-tauri |
+| `.rs` | — | engine/intent_ir |
 
 ### A.2 Deleted source files (from history; project code only)
 
@@ -100,7 +100,7 @@ Clusters of “same intent” functions (by name, signature, or behavior). From 
 
 | Shape | File | Role |
 |-------|------|------|
-| CompleteSongIntentRequest | music_brain/engine_api/schema.py, src/types/Intent.ts, src-tauri/.../intent.rs | Boundary contract |
+| CompleteSongIntentRequest | music_brain/engine_api/schema.py, src/types/Intent.ts, engine/intent_ir/.../intent.rs | Boundary contract |
 | CompleteSongIntent | music_brain/session/intent_schema.py | Internal processing shape |
 
 ---

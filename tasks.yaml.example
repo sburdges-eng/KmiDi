@@ -1,0 +1,83 @@
+# tasks.yaml — orchestrator manifest for KMiDi
+#
+# Used by .claude/agents/coordinator.md when invoked via /orchestrate.
+# Copy to tasks.yaml, fill in real tasks, then run: /orchestrate tasks.yaml
+#
+# Schema:
+#   id              — short identifier; used as branch/worktree name (orch/<id>, .claude/worktrees/<id>)
+#   description     — one paragraph for the implementer
+#   stack           — ts | python | cpp | rust | mixed
+#   acceptance_tests — list of shell commands that must exit 0 for the task to be green
+#   dependencies    — task ids that must finish green before this one starts (default: [])
+#   paths_touched   — rough list — coordinator uses these to detect collisions and serialize overlapping tasks
+#   domain_helpers  — optional: ["cpp-safety-guardian", "audio-midi-agent"] — implementer may dispatch
+#
+# Coordinator caps parallelism at 3 (JUCE submodule makes concurrent C++ builds heavy).
+# If shared_schemas/ is in paths_touched, it serializes (regen affects all stacks).
+# If external/JUCE/ or KmiDi_FINAL/ or KmiDi_PROJECT/ is in paths_touched, it BLOCKS (legacy/vendored).
+
+tasks:
+  - id: T1
+    description: |
+      Replace heap allocation on KellyCore audio callback with a std::pmr::monotonic_buffer_resource
+      arena scoped to the block. Add a unit test that runs N callbacks under ASan and asserts no
+      heap growth on the audio thread. Failing test must exist before fix.
+    stack: cpp
+    acceptance_tests:
+      - "cmake --build build-asan --target KellyCore -j8"
+      - "ctest --test-dir build-asan -R kelly_core_pmr --output-on-failure"
+    dependencies: []
+    paths_touched:
+      - src_penta-core/process.cpp
+      - include/penta/arena.hpp
+      - tests/cpp/test_kelly_core_pmr.cpp
+    domain_helpers: ["cpp-safety-guardian"]
+
+  - id: T2
+    description: |
+      Document FFI ownership for kelly_ffi_render_block_*. Add a comment line above each C-ABI
+      function stating "caller frees" or "callee frees" with the matching destroy function. Add a
+      Rust-side test that round-trips a buffer and free, verified under ASan.
+    stack: cpp
+    acceptance_tests:
+      - "cmake --build build-asan --target KellyFFI -j8"
+      - "cd engine/intent_ir && cargo test --release ffi_round_trip"
+    dependencies: []
+    paths_touched:
+      - engine/kelly_ffi.cpp
+      - engine/include/kelly_ffi.h
+      - engine/intent_ir/src/kelly_ffi.rs
+      - engine/intent_ir/tests/ffi_round_trip.rs
+    domain_helpers: ["cpp-safety-guardian", "audio-midi-agent"]
+
+  - id: T3
+    description: |
+      Add a "build" structure to /generate API. Update shared_schemas/CompleteSongIntentRequest.json
+      to include "build" in the structure enum, run sync_entities.py, and add a Python test that
+      validates a request with structure="build" succeeds. Note: T3 serializes against any other
+      schema-touching task because regen affects all layers.
+    stack: mixed
+    acceptance_tests:
+      - "python3 scripts/sync_entities.py --check"
+      - "npx tsc --noEmit"
+      - "cd engine/intent_ir && cargo build"
+      - "python3 -m pytest tests/unit/test_intent_pipeline_regression.py -k build"
+    dependencies: []
+    paths_touched:
+      - shared_schemas/CompleteSongIntentRequest.json
+      - tests/unit/test_intent_pipeline_regression.py
+
+  - id: T4
+    description: |
+      Wire the existing playback guardrail (python/ui_gate/playback_guardrails.py) into the
+      Music Brain /generate route so out-of-range intent values return 422 with a corrective
+      message rather than 500. Pure-Python; no C++ changes.
+    stack: python
+    acceptance_tests:
+      - "python3 -m flake8 music_brain/ --max-line-length 100"
+      - "python3 -m pytest tests/unit/test_intent_pipeline_regression.py"
+    dependencies: []
+    paths_touched:
+      - music_brain/api.py
+      - music_brain/validators.py
+      - tests/unit/test_intent_pipeline_regression.py

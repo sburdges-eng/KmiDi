@@ -7,8 +7,8 @@ This guide describes how the React frontend connects to the native C++ backend, 
 ```mermaid
 flowchart LR
   ReactFrontend["React frontend (src/, frontend/)"]
-  TauriHost["Tauri host (src-tauri/)"]
-  RustBridge["Rust FFI bridge (src-tauri/src/bridge/kelly_ffi.rs)"]
+  TauriHost["Tauri host (engine/intent_ir/)"]
+  RustBridge["Rust FFI bridge (engine/intent_ir/src/bridge/kelly_ffi.rs)"]
   KellyFFI["KellyFFI shared lib (C ABI)"]
   KellyCore["KellyCore C++ engine"]
   ReactFrontend -->|"invoke()/listen() via @tauri-apps/api"| TauriHost
@@ -20,10 +20,10 @@ flowchart LR
 Reference files:
 
 - `src/components/IntentBuilder.tsx` (`safeInvoke`, `safeListen`)
-- `src-tauri/src/main.rs` (command registration + async queue)
-- `src-tauri/src/bridge/kelly_ffi.rs` (Rust side FFI)
+- `engine/intent_ir/src/main.rs` (command registration + async queue)
+- `engine/intent_ir/src/bridge/kelly_ffi.rs` (Rust side FFI)
 - `src/bridge/kelly_ffi.h` and `src/bridge/kelly_ffi.cpp` (C ABI surface)
-- `src-tauri/build.rs` (native link paths and runtime staging)
+- `engine/intent_ir/build.rs` (native link paths and runtime staging)
 
 ## Build Contexts (Important)
 
@@ -66,7 +66,7 @@ cmake --build build --target KellyFFI -j8
 Expected output:
 
 - `build/libKellyFFI.dylib` (macOS)
-- copied into `src-tauri/resources/` by CMake post-build step
+- copied into `engine/intent_ir/resources/` by CMake post-build step
 
 ### Build plugin target (root)
 
@@ -86,8 +86,8 @@ npm run dev:tauri
 
 Notes:
 
-- `src-tauri/build.rs` searches `../build`, `../build/debug`, and `../build/release`.
-- If you use a custom out-of-tree build directory, add link-search entries in `src-tauri/build.rs` or copy `libKellyFFI*` into one of the expected paths.
+- `engine/intent_ir/build.rs` searches `../build`, `../build/debug`, and `../build/release`.
+- If you use a custom out-of-tree build directory, add link-search entries in `engine/intent_ir/build.rs` or copy `libKellyFFI*` into one of the expected paths.
 
 ## Optional One-Shot Build Helper
 
@@ -141,13 +141,13 @@ Stateful prediction requires **macOS 15+ / iOS 18+**. See `tools/coreml_llm_runn
 These tests exercise the Rust bridge and FFI-facing behavior.
 
 ```bash
-cd src-tauri
+cd engine/intent_ir
 cargo test
 ```
 
 Reference:
 
-- `src-tauri/tests/integration_test.rs`
+- `engine/intent_ir/tests/integration_test.rs`
 
 Requirement:
 

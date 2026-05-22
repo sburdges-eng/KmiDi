@@ -36,7 +36,7 @@ src/
 
 ### Current Status - ALREADY IMPLEMENTED
 
-**Pure DSP Core Exists:** `KmiDi-1/KmiDi_FINAL/engine/src/dsp/`
+**Pure DSP Core Exists:** `KmiDi/KmiDi_FINAL/engine/src/dsp/`
 - ✅ `audio_buffer.cpp` - Framework-independent audio buffer
 - ✅ `filters.cpp` - Pure filter implementations
 - ✅ `simd_ops.cpp` - SIMD operations
@@ -44,10 +44,10 @@ src/
 
 **Framework Contamination in Current Project:**
 - Current `src/audio/`, `src/engine/`, `src/ml/` contain JUCE dependencies
-- Need migration path to use existing pure DSP from `KmiDi-1/KmiDi_FINAL/engine/src/dsp/`
+- Need migration path to use existing pure DSP from `KmiDi/KmiDi_FINAL/engine/src/dsp/`
 
 **Build System:**
-- Existing build system in `KmiDi-1/KmiDi_FINAL/` properly separates concerns
+- Existing build system in `KmiDi/KmiDi_FINAL/` properly separates concerns
 - Current project needs to reference existing DSP core
 
 ### Integration Solution
@@ -77,7 +77,7 @@ src/
 
 ### Success Criteria
 
-- [ ] Current project references pure DSP from `KmiDi-1/KmiDi_FINAL/engine/src/dsp/`
+- [ ] Current project references pure DSP from `KmiDi/KmiDi_FINAL/engine/src/dsp/`
 - [ ] JUCE dependencies removed from current DSP code
 - [ ] Build system includes existing DSP core
 - [ ] Documentation updated to reference existing DSP architecture
@@ -135,7 +135,7 @@ style={{ background: preset === p ? "#444" : "#eee" }}
 - ✅ Minimum 44pt touch targets enforced
 
 **Visual System Compliance:** ✅ Achieved
-- ✅ Meets all requirements from `KmiDi-1/docs/specs/03_VISUAL_SYSTEM.md`
+- ✅ Meets all requirements from `KmiDi/docs/specs/03_VISUAL_SYSTEM.md`
 - ✅ Dark-first design with proper contrast ratios
 - ✅ System fonts and spacing alignment
 - ✅ Semantic color tokens prevent hardcoded colors
@@ -222,7 +222,7 @@ React + Tauri App (Web-based UI)
 
 ### Current Status - ALREADY IMPLEMENTED
 
-**Native macOS App Exists:** `KmiDi-1/KmiDi_FINAL/apps/macOS/`
+**Native macOS App Exists:** `KmiDi/KmiDi_FINAL/apps/macOS/`
 - ✅ Complete AppKit-based native macOS application
 - ✅ Inspector, Timeline, Browser panel layout (per spec)
 - ✅ JUCE timeline integration
@@ -325,7 +325,7 @@ React + Tauri App (Web-based UI)
 
 ### Success Criteria
 
-- [ ] Current project uses existing native macOS app from `KmiDi-1/KmiDi_FINAL/apps/macOS/`
+- [ ] Current project uses existing native macOS app from `KmiDi/KmiDi_FINAL/apps/macOS/`
 - [ ] React + Tauri maintained for plugin/web interfaces
 - [ ] Integration path documented for using existing macOS app
 - [ ] Architectural compliance achieved through existing implementation
@@ -352,7 +352,7 @@ React + Tauri App (Web-based UI)
 ### Integration Order
 
 1. **DSP Integration** - Week 1
-   - Reference existing pure DSP from `KmiDi-1/KmiDi_FINAL/engine/src/dsp/`
+   - Reference existing pure DSP from `KmiDi/KmiDi_FINAL/engine/src/dsp/`
    - Remove conflicting implementations
    - Update build system
 

@@ -7,7 +7,7 @@
 
 1. **`USE_KMI_DI_FINAL`** - Enable KmiDi_FINAL component integration
 2. **`BUILD_NATIVE_MACOS_APP`** - Build native macOS app from KmiDi_FINAL
-3. **`KMI_DI_FINAL_ROOT`** - Path to KmiDi_FINAL directory (default: `../KmiDi-1/KmiDi_FINAL`)
+3. **`KMI_DI_FINAL_ROOT`** - Path to KmiDi_FINAL directory (default: `../KmiDi/KmiDi_FINAL`)
 
 ## Integration Points
 
@@ -61,7 +61,7 @@ cmake -S . -B build_final \
   -DBUILD_KELLY_CORE=ON \
   -DBUILD_KELLY_FFI=ON \
   -DUSE_KMI_DI_FINAL=ON \
-  -DKMI_DI_FINAL_ROOT=../KmiDi-1/KmiDi_FINAL
+  -DKMI_DI_FINAL_ROOT=../KmiDi/KmiDi_FINAL
 ```
 **Expected:** KellyFFI builds with JUCE from KmiDi_FINAL (if available)
 

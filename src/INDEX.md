@@ -21,7 +21,7 @@ legacy/ui/            [DEPRECATED] Legacy UI surfaces (per ADR 001)
 
 ## Primary UI Surface (V1)
 
-The only supported V1 desktop shell is **Tauri + React** at `src-tauri/`.
+The only supported V1 desktop shell is **Tauri + React** at `engine/intent_ir/`.
 The Qt GUI has been moved to `legacy/ui/qt_gui/` per ADR 001.
 
 ## Plugin Files (`src/plugin/`)
@@ -61,7 +61,7 @@ FFI bridge allowing other languages (Python, Rust, etc.) to interact with the Ke
 ## Quick Reference
 
 ### For V1 Desktop UI Development
-- Work with Tauri/React at `src-tauri/` and React frontend
+- Work with Tauri/React at `engine/intent_ir/` and React frontend
 - See docs/DEVELOPMENT.md for setup
 
 ### For Plugin Development

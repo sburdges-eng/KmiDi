@@ -149,7 +149,7 @@ git stash list
 git stash show -p stash@{N}
 
 # Apply a specific stash (use the worktree name from above)
-cd /Users/seanburdges/.cursor/worktrees/KmiDi-1/<worktree_name>
+cd /Users/seanburdges/.cursor/worktrees/KmiDi/<worktree_name>
 git stash apply stash@{N}
 
 # Or restore to a branch

@@ -2,6 +2,15 @@
 
 Canonical agent and developer context for KmiDi / iDAW: project structure, build, services, and gotchas.
 
+## Dev-root boundary
+
+This file is project-local. `~/Dev` is only the workspace container; once a session is inside this repo, use this file plus `CLAUDE.md` and project docs as the active rules.
+
+- Scope searches, build commands, tests, schema syncs, and model/runtime checks to this repository unless a sibling repo is explicitly named.
+- Load project-specific code intelligence, schema checks, audio/runtime AI tooling, and CI checks from this repo's docs only.
+- If work touches another folder inside `~/Dev`, switch to that folder's own `AGENTS.md` before editing there.
+- Do not refresh or rely on a `~/Dev`-wide index as the source of truth for this project.
+
 **Before changing C++, KellyFFI, Tauri FFI, or real-time audio paths:** read and follow **§ [Native safety, FFI ownership, and verification map](#native-safety-ffi-ownership-and-verification-map)** below (file paths, ownership rules, commands). Do not rely on memory of this doc from prior sessions.
 
 ---
@@ -26,11 +35,22 @@ KmiDi / iDAW is an **AI-powered music creation platform** (monorepo). Stack:
 
 ```
 KmiDi/
+├── apps/kmidi/             # CLI app stub (pyproject.toml placeholder)
+├── libs/
+│   ├── ai_core/            # ML core library stub (pyproject.toml)
+│   ├── daiw/               # C++ RT-safe primitives (daiw_core static lib, JUCE)
+│   └── jepa/               # Workspace entry → music_brain/jepa/ (README + pyproject.toml)
 ├── src/                    # React app (components, hooks, types)
-├── engine/intent_ir/ (Rust intent crate)              # Tauri app (Rust commands, bridge, build.rs)
-├── music_brain/            # Python FastAPI app and engine API (prrot, learning, voice)
+├── engine/intent_ir/       # Rust intent crate (commands, bridge, build.rs)
+├── music_brain/            # Python FastAPI app + engine API
+│   ├── jepa/               #   JEPA models (Audio-JEPA, Chord-JEPA, Stem-JEPA, trainer)
+│   ├── penta_core/         #   Penta-core ML (emotion runners, diagnostics, PID Flow, etc.)
+│   └── ...                 #   50+ submodules (see music_brain/ listing)
+├── python/mcp/             # MCP servers (daiw_mcp, penta_swarm, mcp_todo, mcp_workstation)
+├── .claude/                # Multi-agent orchestration (agents, commands, skills, verify)
 ├── shared_schemas/         # Single source of truth for intent (JSON → sync to TS/Rust)
 ├── scripts/                # sync_entities.py, dev-setup, build, env, acquire/ (source_manifest)
+├── training/scripts/       # JEPA training entrypoints (train_jepa.py)
 ├── tests/                  # Python tests (pytest)
 ├── engine/, include/, src/ # C++ (engine, bridge, plugin); engine/src/dsp, engine/intent_ir (merged)
 ├── include/prrot, include/penta  # PRROT/penta headers (merged from KmiDi_FINAL)
@@ -129,7 +149,7 @@ In cloud VMs, JUCE submodule step can be skipped if C++ build is not needed.
 
 - **Key targets:**
   - `KellyCore` — core C++ library
-  - `KellyFFI` — shared library for Tauri (output e.g. `build/libKellyFFI.dylib`; CMake copies to `engine/intent_ir/ (Rust intent crate)resources/`)
+  - `KellyFFI` — shared library for Tauri (output e.g. `build/libKellyFFI.dylib`; CMake copies to `engine/intent_ir/resources/`)
   - `KellyPlugin_VST3` — VST3 plugin (e.g. `build/KellyPlugin_artefacts/Release/VST3/...`)
   - `KellyFFIBenchmark` — FFI benchmark (requires KellyFFI; do not link JUCE in the benchmark exe — KellyFFI links JUCE PRIVATE)
   - `KellyTests` — C++ tests (when `BUILD_TESTS=ON` and Catch2 present)
@@ -248,8 +268,8 @@ Human-oriented copy (same content, readable in docs navigation): [`docs/NATIVE_S
 |------|--------|----------------|
 | C ABI contract (which `char*` to free) | `src/bridge/kelly_ffi.h` — `kelly_free_string`, comments on static vs heap | Every new FFI return type must be documented (caller frees vs static, e.g. `kelly_get_error_message`). |
 | C++ implementation | `src/bridge/kelly_ffi.cpp` | Pair every heap allocation returned across the boundary with `kelly_free_string` (or document static storage). |
-| Rust consumer | `engine/intent_ir/ (Rust intent crate)src/bridge/kelly_ffi.rs` | Match each `extern "C"` result: if the header says the library allocated it, copy then `kelly_free_string`. If the header says static/thread-local, **never** free. Grep `kelly_` calls and verify against `kelly_ffi.h`. |
-| Other Rust FFI | `engine/intent_ir/ (Rust intent crate)src/intent_ir/ffi.rs`, `engine/intent_ir/ (Rust intent crate)src/intent_ir/ffi_exports.rs` | Same discipline as KellyFFI (lifetimes, null, who owns buffers). |
+| Rust consumer | `engine/intent_ir/src/bridge/kelly_ffi.rs` | Match each `extern "C"` result: if the header says the library allocated it, copy then `kelly_free_string`. If the header says static/thread-local, **never** free. Grep `kelly_` calls and verify against `kelly_ffi.h`. |
+| Other Rust FFI | `engine/intent_ir/src/intent_ir/ffi.rs`, `engine/intent_ir/src/intent_ir/ffi_exports.rs` | Same discipline as KellyFFI (lifetimes, null, who owns buffers). |
 | Regression tests | `tests/cpp/test_kelly_ffi.cpp` | Extend when adding FFI; run with `BUILD_TESTS=ON` and C++ tests enabled. |
 
 ### Duplicate JUCE / ODR / allocator mismatch
@@ -273,8 +293,8 @@ Human-oriented copy (same content, readable in docs navigation): [`docs/NATIVE_S
 
 | What | Where | Agent action |
 |------|--------|----------------|
-| KellyFFI ABI / dylib | `CMakeLists.txt` — `KellyFFI` `VERSION` / `SOVERSION`; Tauri `engine/intent_ir/ (Rust intent crate)build.rs` search paths | Breaking C ABI requires version story + Tauri packaging update. |
-| TS / Rust / Python intent shapes | `shared_schemas/`, `scripts/sync_entities.py`, `src/types/Intent.ts`, `engine/intent_ir/ (Rust intent crate)src/generated/` | After schema edits, run sync and commit generated files; run Python schema tests. |
+| KellyFFI ABI / dylib | `CMakeLists.txt` — `KellyFFI` `VERSION` / `SOVERSION`; `engine/intent_ir/build.rs` search paths | Breaking C ABI requires version story + Tauri packaging update. |
+| TS / Rust / Python intent shapes | `shared_schemas/`, `scripts/sync_entities.py`, `src/types/Intent.ts`, `engine/intent_ir/src/generated/` | After schema edits, run sync and commit generated files; run Python schema tests. |
 | HTTP API only | `music_brain/api_schemas/` | REST contract evolution; does not fix C++ memory by itself. |
 
 ### Commands to run (when native/FFI touched)

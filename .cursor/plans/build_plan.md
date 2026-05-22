@@ -2,7 +2,7 @@
 # Build & Smoke Plan (All Components)
 
 ## Scope
-- Workspace: /Users/seanburdges/.cursor/worktrees/KmiDi-1/tmb
+- Workspace: /Users/seanburdges/.cursor/worktrees/KmiDi/tmb
 - Targets: Python (mcp_workstation, music_brain, penta_core), C++ (iDAW_Core/penta_core JUCE build), Training pipelines (KmiDi_TRAINING).
 
 ## Plan

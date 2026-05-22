@@ -36,7 +36,7 @@ Each context has an **anti-corruption layer** at its boundary (schema validation
 | Context | Responsibility | Primary artifacts |
 |---------|----------------|-------------------|
 | **Composition & Intent** | Song Intent, **Temporal Tension Graph (TTG)**, curves, roles | [`shared_schemas/`](../../shared_schemas/), synced TS / Rust / Python |
-| **Shell & Platform** | Windowing, lifecycle, packaging, secure IPC | [`src-tauri/`](../../src-tauri/) |
+| **Shell & Platform** | Windowing, lifecycle, packaging, secure IPC | [`engine/intent_ir/`](../../engine/intent_ir/) |
 | **FFI & Engine control** | KellyFFI C ABI, buffer lifetimes, versioned calls | Rust ↔ `libKellyFFI` |
 | **Real-Time Audio Engine** | `processBlock`, DSP, plugins, **RTState** (lock-free) | `engine/`, `include/`, KellyCore |
 | **ML & Inference** | `/generate`, training, JEPA, probes, PRROT, StructXLIP | [`music_brain/`](../../music_brain/) |

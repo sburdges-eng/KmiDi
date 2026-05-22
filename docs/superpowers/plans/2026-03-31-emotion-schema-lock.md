@@ -4,7 +4,7 @@
 
 **Goal:** Establish `shared_schemas/emotion_schema.json` as the single source-of-truth emotion contract, with codegen to TS/Rust and parity tests across Python, Rust, and C++.
 
-**Architecture:** Pydantic model → JSON Schema → sync_entities.py generates TypeScript interface and Rust serde struct. Golden fixtures validate all languages agree. The `intent_ir` Rust crate is `no_std`/`repr(C)` so generated Rust targets `src-tauri/` instead.
+**Architecture:** Pydantic model → JSON Schema → sync_entities.py generates TypeScript interface and Rust serde struct. Golden fixtures validate all languages agree. The `intent_ir` Rust crate is `no_std`/`repr(C)` so generated Rust targets `engine/intent_ir/` instead.
 
 **Tech Stack:** Pydantic v2, JSON Schema draft 2020-12, sync_entities.py codegen, pytest, Catch2, cargo test
 
@@ -139,7 +139,7 @@ git commit -m "feat: add EmotionStateSchema Pydantic model with validation"
 - Modify: `scripts/sync_entities.py`
 - Create: `shared_schemas/emotion_schema.json` (generated)
 - Create: `src/types/EmotionState.ts` (generated)
-- Create: `src-tauri/src/generated/emotion.rs` (generated)
+- Create: `engine/intent_ir/src/generated/emotion.rs` (generated)
 
 - [ ] **Step 1: Write the failing test**
 
@@ -182,7 +182,7 @@ def test_emotion_ts_exists_after_sync():
 
 
 def test_emotion_rust_exists_after_sync():
-    rs_path = ROOT / "src-tauri" / "src" / "generated" / "emotion.rs"
+    rs_path = ROOT / "engine/intent_ir" / "src" / "generated" / "emotion.rs"
     assert rs_path.exists(), "emotion.rs not generated"
     content = rs_path.read_text()
     assert "valence" in content
@@ -209,7 +209,7 @@ After the existing path definitions (line 22), add:
 ```python
 EMOTION_SCHEMA_PATH = SCHEMA_DIR / "emotion_schema.json"
 EMOTION_TS_OUT = ROOT / "src" / "types" / "EmotionState.ts"
-EMOTION_RUST_OUT = ROOT / "src-tauri" / "src" / "generated" / "emotion.rs"
+EMOTION_RUST_OUT = ROOT / "engine/intent_ir" / "src" / "generated" / "emotion.rs"
 ```
 
 After the existing `_render_rust` function (line 156), add:
@@ -332,13 +332,13 @@ Expected: All 3 tests PASS
 Manually inspect:
 - `shared_schemas/emotion_schema.json` — should have all 5 fields with correct ranges
 - `src/types/EmotionState.ts` — should export `EmotionState` interface and `EmotionTag` type
-- `src-tauri/src/generated/emotion.rs` — should have `EmotionState` struct and `EmotionTag` enum
+- `engine/intent_ir/src/generated/emotion.rs` — should have `EmotionState` struct and `EmotionTag` enum
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add scripts/sync_entities.py shared_schemas/emotion_schema.json \
-    src/types/EmotionState.ts src-tauri/src/generated/emotion.rs \
+    src/types/EmotionState.ts engine/intent_ir/src/generated/emotion.rs \
     tests/unit/test_sync_emotion.py
 git commit -m "feat: extend sync_entities.py to generate emotion schema, TS, and Rust"
 ```
@@ -482,12 +482,12 @@ git commit -m "test: add fixture-based parity tests for emotion schema (Python)"
 ### Task 5: Rust Parity Tests
 
 **Files:**
-- Modify: `src-tauri/src/generated/mod.rs` (add `pub mod emotion;`)
-- Create: `src-tauri/tests/test_emotion_schema.rs`
+- Modify: `engine/intent_ir/src/generated/mod.rs` (add `pub mod emotion;`)
+- Create: `engine/intent_ir/tests/test_emotion_schema.rs`
 
 - [ ] **Step 1: Wire up the generated module**
 
-Read `src-tauri/src/generated/mod.rs` and add:
+Read `engine/intent_ir/src/generated/mod.rs` and add:
 
 ```rust
 pub mod emotion;
@@ -495,7 +495,7 @@ pub mod emotion;
 
 - [ ] **Step 2: Write the Rust parity test**
 
-Create `src-tauri/tests/test_emotion_schema.rs`:
+Create `engine/intent_ir/tests/test_emotion_schema.rs`:
 
 ```rust
 use serde_json;
@@ -507,7 +507,7 @@ use kmidi_app::generated::emotion::{EmotionState, EmotionTag};
 
 fn fixture_dir() -> PathBuf {
     let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    p.pop(); // src-tauri -> project root
+    p.pop(); // engine/intent_ir -> project root
     p.push("tests/fixtures/intent");
     p
 }
@@ -581,7 +581,7 @@ Note: The generated Rust struct needs `#[serde(deny_unknown_fields)]` to reject 
 
 - [ ] **Step 3: Run the Rust tests**
 
-Run: `cd src-tauri && cargo test test_emotion_schema -- --nocapture`
+Run: `cd engine/intent_ir && cargo test test_emotion_schema -- --nocapture`
 Expected: All 7 tests PASS (5 valid + 2 invalid that serde catches)
 
 Note: `emotion_invalid_valence_oob.json` and `emotion_invalid_too_many_tags.json` will parse successfully via serde because serde doesn't enforce JSON Schema range constraints. These are documented gaps — range validation happens at the application layer (Rust `validate()` function), not at deserialization. The Python Pydantic model catches these at parse time. This is an acceptable divergence: serde parses, then `validate()` rejects.
@@ -632,14 +632,14 @@ fn invalid_too_many_tags_rejected_by_validate() {
 - [ ] **Step 5: Re-run sync and Rust tests**
 
 Run: `python3 scripts/sync_entities.py`
-Run: `cd src-tauri && cargo test test_emotion_schema -- --nocapture`
+Run: `cd engine/intent_ir && cargo test test_emotion_schema -- --nocapture`
 Expected: All 9 tests PASS
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src-tauri/src/generated/mod.rs src-tauri/src/generated/emotion.rs \
-    src-tauri/tests/test_emotion_schema.rs scripts/sync_entities.py
+git add engine/intent_ir/src/generated/mod.rs engine/intent_ir/src/generated/emotion.rs \
+    engine/intent_ir/tests/test_emotion_schema.rs scripts/sync_entities.py
 git commit -m "test: add Rust parity tests for emotion schema fixtures"
 ```
 
@@ -882,7 +882,7 @@ Tags maxItems: 3
 
 - [ ] **Step 3: Run Rust tests**
 
-Run: `cd src-tauri && cargo test test_emotion_schema -v`
+Run: `cd engine/intent_ir && cargo test test_emotion_schema -v`
 Expected: All tests PASS
 
 - [ ] **Step 4: Verify fixture count**

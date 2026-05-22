@@ -119,7 +119,7 @@ Same pattern as EmotionState:
 2. `sync_entities.py` generates:
    - `shared_schemas/intent_frame_schema.json`
    - `src/types/IntentFrame.ts`
-   - `src-tauri/src/generated/intent_frame.rs`
+   - `engine/intent_ir/src/generated/intent_frame.rs`
 
 Existing `intent_ir` FFI types untouched. New fields (music_hints, dsp_targets, timestamp_ms, latency_budget_ms) exist only in the schema contract for now — they'll be added to the C struct when the AU plugin needs them.
 
@@ -138,7 +138,7 @@ Existing `intent_ir` FFI types untouched. New fields (music_hints, dsp_targets, 
 ## Parity Tests
 
 - Python: `tests/unit/test_intent_frame_schema.py` — Pydantic validates all 7
-- Rust: `src-tauri/tests/test_intent_frame_schema.rs` — serde + validate() on all 7
+- Rust: `engine/intent_ir/tests/test_intent_frame_schema.rs` — serde + validate() on all 7
 
 ## Acceptance Criteria
 

@@ -14,7 +14,7 @@ KmiDi vocabulary preserved: KmiDi, KellyBrain, Brain–Body, kellyharness, Archi
 | Directory | Role |
 |-----------|------|
 | **src/** | React (Vite) UI; intent builder, emotion wheel. No direct external-research refs. |
-| **src-tauri/** | Tauri 2 + Rust; FFI to KellyFFI/KellyCore. |
+| **engine/intent_ir/** | Tauri 2 + Rust; FFI to KellyFFI/KellyCore. |
 | **music_brain/** | FastAPI, `/generate`, session, generative; **music_brain/jepa/** (audio_jepa, chord_jepa, trainer); emotion, groove, harmony, penta_core, engine_api. |
 | **shared_schemas/** | CompleteSongIntentRequest.json → sync_entities.py → TS/Rust/Python. |
 | **config/** | jepa_training.yaml, models.yaml, emotion/harmony/groove/dynamics, dataset_manifest_schema.json (DatasetManifest 2.0). |

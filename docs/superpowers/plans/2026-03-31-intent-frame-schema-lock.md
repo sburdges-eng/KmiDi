@@ -285,8 +285,8 @@ Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
 - Modify: `scripts/sync_entities.py`
 - Create: `shared_schemas/intent_frame_schema.json` (generated)
 - Create: `src/types/IntentFrame.ts` (generated)
-- Create: `src-tauri/src/generated/intent_frame.rs` (generated)
-- Modify: `src-tauri/src/generated/mod.rs`
+- Create: `engine/intent_ir/src/generated/intent_frame.rs` (generated)
+- Modify: `engine/intent_ir/src/generated/mod.rs`
 - Create: `tests/unit/test_sync_intent_frame.py`
 
 - [ ] **Step 1: Write the failing test**
@@ -338,7 +338,7 @@ def test_intent_frame_ts_exists_after_sync():
 
 
 def test_intent_frame_rust_exists_after_sync():
-    rs_path = ROOT / "src-tauri" / "src" / "generated" / "intent_frame.rs"
+    rs_path = ROOT / "engine/intent_ir" / "src" / "generated" / "intent_frame.rs"
     assert rs_path.exists(), "intent_frame.rs not generated"
     content = rs_path.read_text()
     assert "IntentFrame" in content
@@ -362,7 +362,7 @@ Read `scripts/sync_entities.py` fully first. Add import, paths, rendering functi
 4. Add `#[serde(deny_unknown_fields)]` to all Rust structs
 5. Add `validate()` impl to the root `IntentFrame` struct checking: schema_version==1, tempo_bias range, source range, user_override_weight range, time scope ordering
 6. Handle `SectionRole` enum generation
-7. Add `pub mod intent_frame;` to `src-tauri/src/generated/mod.rs`
+7. Add `pub mod intent_frame;` to `engine/intent_ir/src/generated/mod.rs`
 8. Call `sync_intent_frame()` from `__main__`
 
 For the TypeScript output, import `EmotionState` and `EmotionTag` from `"./EmotionState"`.
@@ -379,8 +379,8 @@ Expected: All 3 tests PASS
 ```bash
 cd /Users/seanburdges/Dev/KmiDi
 git add scripts/sync_entities.py shared_schemas/intent_frame_schema.json \
-    src/types/IntentFrame.ts src-tauri/src/generated/intent_frame.rs \
-    src-tauri/src/generated/mod.rs tests/unit/test_sync_intent_frame.py
+    src/types/IntentFrame.ts engine/intent_ir/src/generated/intent_frame.rs \
+    engine/intent_ir/src/generated/mod.rs tests/unit/test_sync_intent_frame.py
 git commit -m "feat: extend sync_entities.py for IntentFrame codegen (JSON, TS, Rust)
 
 Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
@@ -532,11 +532,11 @@ Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
 ### Task 5: Rust Parity Tests
 
 **Files:**
-- Create: `src-tauri/tests/test_intent_frame_schema.rs`
+- Create: `engine/intent_ir/tests/test_intent_frame_schema.rs`
 
 - [ ] **Step 1: Write the Rust parity test**
 
-Create `src-tauri/tests/test_intent_frame_schema.rs`:
+Create `engine/intent_ir/tests/test_intent_frame_schema.rs`:
 
 ```rust
 use std::fs;
@@ -614,14 +614,14 @@ fn invalid_extra_field() {
 
 - [ ] **Step 2: Run the Rust tests**
 
-Run: `cd /Users/seanburdges/Dev/KmiDi/src-tauri && cargo test --test test_intent_frame_schema -- --nocapture`
+Run: `cd /Users/seanburdges/Dev/KmiDi/engine/intent_ir && cargo test --test test_intent_frame_schema -- --nocapture`
 Expected: All 7 tests PASS
 
 - [ ] **Step 3: Commit**
 
 ```bash
 cd /Users/seanburdges/Dev/KmiDi
-git add src-tauri/tests/test_intent_frame_schema.rs
+git add engine/intent_ir/tests/test_intent_frame_schema.rs
 git commit -m "test: add Rust parity tests for IntentFrame schema fixtures
 
 Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>"
@@ -640,7 +640,7 @@ Expected: All tests PASS
 
 - [ ] **Step 2: Run Rust tests**
 
-Run: `cd /Users/seanburdges/Dev/KmiDi/src-tauri && cargo test --test test_intent_frame_schema --test test_emotion_schema -- --nocapture`
+Run: `cd /Users/seanburdges/Dev/KmiDi/engine/intent_ir && cargo test --test test_intent_frame_schema --test test_emotion_schema -- --nocapture`
 Expected: All PASS
 
 - [ ] **Step 3: Verify fixture count and schema**

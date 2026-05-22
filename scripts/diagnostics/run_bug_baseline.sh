@@ -26,7 +26,7 @@ run_cmd cmake_build cmake --build build/diag-debug --target KellyCore
 run_cmd ctest ctest --test-dir build/diag-debug --output-on-failure
 run_cmd pytest pytest tests -q
 run_cmd npm_build npm run build
-run_cmd cargo_check cargo check --manifest-path src-tauri/Cargo.toml --offline --frozen
+run_cmd cargo_check cargo check --manifest-path engine/intent_ir/Cargo.toml --offline --frozen
 
 python3 scripts/diagnostics/bug_taxonomy_parser.py --logs-dir "${LOG_DIR}" --out "${LOG_DIR}/bug_taxonomy_report.md"
 echo "Done. Report: ${LOG_DIR}/bug_taxonomy_report.md"

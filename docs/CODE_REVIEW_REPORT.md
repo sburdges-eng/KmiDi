@@ -13,12 +13,12 @@ Evidence-bound code review. Zero tolerance for hallucinated findings. Every find
 | Area | Path | Purpose |
 |------|------|---------|
 | Frontend | `src/` | React (Vite) — AppConsole (default entry in main.tsx), IntentBuilder, SideA (Transport, Mixer, Timeline, VUMeter), SideB (EmotionWheel, GhostWriter, Interrogator), LyricPanel, SpectoCloudPanel, MusicCustomizer |
-| Tauri shell | `src-tauri/` | Rust app: commands (Kelly FFI + Music Brain HTTP fallback), bridge (kelly_ffi.rs, musicbrain.rs), state, events, generated intent, intent_ir |
+| Tauri shell | `engine/intent_ir/` | Rust app: commands (Kelly FFI + Music Brain HTTP fallback), bridge (kelly_ffi.rs, musicbrain.rs), state, events, generated intent, intent_ir |
 | Music Brain API | `music_brain/` | FastAPI app in `api.py`; engine_api/schema (CompleteSongIntentRequest); session, structure, voice, groove, visualization, etc. |
 | C++ engine | `src/` (C++), `engine/`, `include/` | KellyCore, KellyBrain, IntentPipeline, Wound/IntentResult; plugin (VST3/CLAP) in `src/plugin/` |
 | FFI bridge | `src/bridge/kelly_ffi.cpp`, `kelly_ffi.h` | C ABI for Rust; KellyBrainWrapper, serialize_intent_result, parse_wound_json |
 | Shared contract | `shared_schemas/` | CompleteSongIntentRequest.json, CompleteSongIntent.json |
-| Sync | `scripts/sync_entities.py` | Generates `src/types/Intent.ts`, `src-tauri/src/generated/intent.rs` from schema + Pydantic |
+| Sync | `scripts/sync_entities.py` | Generates `src/types/Intent.ts`, `engine/intent_ir/src/generated/intent.rs` from schema + Pydantic |
 | Tests | `tests/` | unit/ (api_schema, api_audit_fixes, intent_processor, …), integration/, cpp/, rust/, e2e/, performance/ |
 | Scripts | `scripts/` | load-env.sh, sync_entities.py, dev-setup.sh, build-full-stack.sh, acquire/, mcp/, training/ |
 
@@ -73,8 +73,8 @@ Evidence-bound code review. Zero tolerance for hallucinated findings. Every find
 | music_brain/api.py (full file) | Inspected |
 | music_brain/engine_api/schema.py | Inspected |
 | shared_schemas/*.json, scripts/sync_entities.py | Inspected |
-| src-tauri/Cargo.toml, build.rs, lib.rs, main.rs, commands.rs, bridge/musicbrain.rs, bridge/kelly_ffi.rs | Inspected |
-| src-tauri/tauri.conf.json | Inspected |
+| engine/intent_ir/Cargo.toml, build.rs, lib.rs, main.rs, commands.rs, bridge/musicbrain.rs, bridge/kelly_ffi.rs | Inspected |
+| engine/intent_ir/tauri.conf.json | Inspected |
 | src/bridge/kelly_ffi.cpp, kelly_ffi.h (repo root C++ bridge) | Inspected |
 | CMakeLists.txt, pyproject.toml | Inspected |
 | .github/workflows/ci.yml, ci-python.yml | Inspected |
@@ -165,7 +165,7 @@ Evidence-bound code review. Zero tolerance for hallucinated findings. Every find
 - **ID:** F4  
 - **Severity:** Low  
 - **Category:** Config / env drift  
-- **File:** `src-tauri/src/bridge/musicbrain.rs`  
+- **File:** `engine/intent_ir/src/bridge/musicbrain.rs`  
 - **Lines:** 9–14  
 - **Problem:** API base URL is read from `MUSIC_BRAIN_API_URL`. `.env.example` and docs use `KMIDI_API_URL`. If only KMIDI_API_URL is set, Tauri’s HTTP fallback to Music Brain will use default 127.0.0.1:8000, not the user’s URL.  
 - **Evidence:** musicbrain.rs: `env::var("MUSIC_BRAIN_API_URL")`; .env.example: `KMIDI_API_URL=http://127.0.0.1:8000`.  
@@ -208,7 +208,7 @@ Evidence-bound code review. Zero tolerance for hallucinated findings. Every find
 | VITE_KMIDI_USE_API | Build-time (Vite) | src/hooks/useMusicBrain.ts | No | Unset → external API disabled | Doc in ENVIRONMENT.md; .env.example could add |
 | VITE_API_BASE | Build-time | useMusicBrain.ts | No | http://127.0.0.1:8000 | Safe |
 | KMIDI_API_URL | .env.example | Docs / scripts | No | 127.0.0.1:8000 | — |
-| MUSIC_BRAIN_API_URL | Not in .env.example | src-tauri/bridge/musicbrain.rs | No | 127.0.0.1:8000 | F4: name mismatch with KMIDI_API_URL |
+| MUSIC_BRAIN_API_URL | Not in .env.example | engine/intent_ir/bridge/musicbrain.rs | No | 127.0.0.1:8000 | F4: name mismatch with KMIDI_API_URL |
 | KMIDI_AUDIO_SERVE_ROOT | Not in .env.example | music_brain/api.py | No | tempfile.gettempdir() | Document; narrow dir recommended |
 | TAURI_DEV_HOST, TAURI_PLATFORM | .env.example | vite.config.ts | No | localhost / macos | Safe |
 
@@ -245,7 +245,7 @@ Evidence-bound code review. Zero tolerance for hallucinated findings. Every find
 
 ### Safe automated fixes
 
-- **F4:** In src-tauri/src/bridge/musicbrain.rs, read KMIDI_API_URL if MUSIC_BRAIN_API_URL unset; update .env.example and ENVIRONMENT.md to document both.  
+- **F4:** In engine/intent_ir/src/bridge/musicbrain.rs, read KMIDI_API_URL if MUSIC_BRAIN_API_URL unset; update .env.example and ENVIRONMENT.md to document both.  
   - Affected files: musicbrain.rs, .env.example, docs/ENVIRONMENT.md.  
   - Risk: Low.  
   - Validation: Run Tauri with only KMIDI_API_URL set; confirm fallback hits correct host.

@@ -65,7 +65,7 @@ Use this agent for audio/MIDI/DAW domain work — JUCE plugin architecture, AU/A
 - **Source of truth:** `shared_schemas/CompleteSongIntentRequest.json`
 - Sync command: `python3 scripts/sync_entities.py` — propagates changes to:
   - `src/types/Intent.ts` (TypeScript)
-  - `src-tauri/src/generated/intent.rs` (Rust)
+  - `engine/intent_ir/src/generated/intent.rs` (Rust)
   - Python validation models
 - Never hand-edit generated files; always edit the JSON schema and re-sync.
 

@@ -294,7 +294,7 @@ Expected: All greps return matches at the expected locations.
 ```bash
 cd /Users/seanburdges/Dev/KmiDi
 /Library/Frameworks/Python.framework/Versions/3.13/bin/python3.13 -m pytest tests/unit/ -q --ignore=tests/unit/test_export_audio_jepa.py 2>&1 | tail -5
-cd src-tauri && cargo test 2>&1 | grep "test result"
+cd engine/intent_ir && cargo test 2>&1 | grep "test result"
 ```
 
 Expected: No new failures.

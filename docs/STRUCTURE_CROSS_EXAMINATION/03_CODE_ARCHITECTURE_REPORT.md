@@ -25,7 +25,7 @@ KmiDi/
 │   ├── bridge/              # Bridge code ✅
 │   ├── dsp/                 # Pure DSP (minimal) ✅
 │   └── App.tsx              # Main React app ✅
-├── src-tauri/               # Tauri Rust bridge ✅
+├── engine/intent_ir/        # Tauri Rust bridge ✅
 ├── docs/                    # Documentation ✅
 ├── package.json             # Node.js config ✅
 ├── tsconfig.json            # TypeScript config ✅
@@ -38,7 +38,7 @@ KmiDi/
 **✅ Well-Separated:**
 - React UI components (`src/components/`)
 - React hooks (`src/hooks/`)
-- Tauri bridge (`src-tauri/`)
+- Tauri bridge (`engine/intent_ir/`)
 - Plugin code (`src/plugin/`)
 
 **⚠️ Mixed Concerns:**
@@ -47,7 +47,7 @@ KmiDi/
 - Framework contamination in audio processing code
 
 **Recommendation:**
-- Reference pure DSP from `KmiDi-1/KmiDi_FINAL/engine/src/dsp/`
+- Reference pure DSP from `KmiDi/KmiDi_FINAL/engine/src/dsp/`
 - Separate framework-dependent code from pure DSP
 - Create clear boundaries per architectural guidance
 
@@ -115,7 +115,7 @@ KmiDi/
 
 ### TypeScript ↔ Rust Bridge
 
-**Rust Commands (`src-tauri/src/commands.rs`):**
+**Rust Commands (`engine/intent_ir/src/commands.rs`):**
 ```rust
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EmotionalIntent {
@@ -179,7 +179,7 @@ export interface EmotionalIntent {
 ```
 React UI (src/)
   ↓ uses
-Tauri Commands (src-tauri/)
+Tauri Commands (engine/intent_ir/)
   ↓ calls
 Music Brain API (Python)
   ↓ or
