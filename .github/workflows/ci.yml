@@ -75,6 +75,8 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y cmake ninja-build build-essential qt6-base-dev
+    - name: Install JUCE Linux deps
+      run: scripts/ci/install_juce_linux_deps.sh
     - name: Configure CMake
       run: |
         mkdir build && cd build
@@ -128,6 +130,8 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y cmake ninja-build build-essential qt6-base-dev valgrind
+    - name: Install JUCE Linux deps
+      run: scripts/ci/install_juce_linux_deps.sh
     - name: Configure CMake (Debug)
       run: |
         mkdir build && cd build
@@ -164,6 +168,8 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y cmake ninja-build build-essential qt6-base-dev
+    - name: Install JUCE Linux deps
+      run: scripts/ci/install_juce_linux_deps.sh
     - name: Configure CMake (Release)
       run: |
         mkdir build && cd build
@@ -193,6 +199,8 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y cmake ninja-build build-essential qt6-base-dev lcov
+    - name: Install JUCE Linux deps
+      run: scripts/ci/install_juce_linux_deps.sh
     - name: Configure CMake (Coverage)
       run: |
         mkdir build && cd build

@@ -53,6 +53,10 @@ jobs:
             libsndfile1-dev \
             libfftw3-dev \
             ccache
+
+      - name: Install JUCE Linux deps
+        if: runner.os == 'Linux'
+        run: scripts/ci/install_juce_linux_deps.sh
       
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
