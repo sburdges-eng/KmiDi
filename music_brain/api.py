@@ -1181,102 +1181,106 @@ if FASTAPI_AVAILABLE:
             logging.exception("Failed to import Spectocloud")
             raise HTTPException(status_code=500, detail=_HTTP_500_DETAIL)
 
-            events: Optional[List[Dict[str, Any]]] = payload.midi_events
-            duration = payload.duration
+        events: Optional[List[Dict[str, Any]]] = payload.midi_events
+        duration = payload.duration
 
-            # Handle audio file input (convert to MIDI events if needed)
-            if payload.audio_file_path:
-                audio_path = Path(payload.audio_file_path)
-                if not audio_path.exists():
-                    raise HTTPException(
-                        status_code=400, detail=f"Audio file not found: {payload.audio_file_path}")
-                # For now, if audio file provided, we'd need to extract MIDI from it
-                # This is a placeholder - actual implementation would analyze audio and extract MIDI
-                # For now, raise an error suggesting MIDI file instead
-                raise HTTPException(
-                    status_code=400,
-                    detail=(
-                        "Audio file analysis not yet implemented. "
-                        "Please provide midi_file_path or midi_events instead."
-                    )
+        # Handle audio file input (convert to MIDI events if needed)
+        if payload.audio_file_path:
+            # Sandbox-check FIRST so we don't expose a filesystem probe oracle
+            # (different 400 details for existing vs missing /etc/... paths).
+            # _resolve_audio_path_sandbox() raises 400 "not allowed" for any
+            # path outside KMIDI_AUDIO_SERVE_ROOT.
+            safe_audio_path = _resolve_audio_path_sandbox(payload.audio_file_path)
+            if not safe_audio_path.exists():
+                # Don't leak the resolved absolute path in the detail.
+                raise HTTPException(status_code=400, detail="Audio file not found")
+            # For now, if audio file provided, we'd need to extract MIDI from it
+            # This is a placeholder - actual implementation would analyze audio and extract MIDI
+            # For now, raise an error suggesting MIDI file instead
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Audio file analysis not yet implemented. "
+                    "Please provide midi_file_path or midi_events instead."
                 )
-
-            if payload.midi_file_path:
-                safe_midi_path = _resolve_audio_path_sandbox(payload.midi_file_path)
-                parsed_events, parsed_duration = _parse_midi_file(safe_midi_path)
-                events = parsed_events
-                duration = duration or parsed_duration
-
-            if not events:
-                raise HTTPException(
-                    status_code=400,
-                    detail="provide audio_file_path, midi_file_path, or midi_events")
-            if duration is None or duration <= 0:
-                # try to infer from events time
-                max_time = max((e.get("time", 0) or 0) for e in events)
-                if max_time > 0:
-                    duration = max_time
-                else:
-                    raise HTTPException(status_code=400, detail="duration must be > 0")
-            if payload.n_particles <= 0:
-                raise HTTPException(status_code=400, detail="n_particles must be > 0")
-            if payload.fps <= 0:
-                raise HTTPException(status_code=400, detail="fps must be > 0")
-
-            specto = Spectocloud(
-                anchor_density=payload.anchor_density,
-                n_particles=payload.n_particles,
             )
-            specto.process_midi(
-                midi_events=events,
-                duration=duration,
-                emotion_trajectory=payload.emotion_trajectory,
-            )
-            if not specto.frames:
-                raise HTTPException(
-                    status_code=400, detail="No frames generated; check duration/window_size")
-            mode = payload.mode.lower()
-            if mode not in {"static", "animation"}:
-                raise HTTPException(status_code=400, detail="mode must be 'static' or 'animation'")
 
-            if mode == "static":
-                if payload.frame_idx < 0:
-                    raise HTTPException(status_code=400, detail="frame_idx must be >= 0")
-                if payload.output_path:
-                    out_path = str(_resolve_audio_path_sandbox(payload.output_path))
-                else:
-                    out_path = str(
-                        Path(tempfile.gettempdir()) / "spectocloud_frame.png")
-                specto.render_static_frame(
-                    frame_idx=min(payload.frame_idx, max(0, len(specto.frames) - 1)),
-                    output_path=out_path,
-                    show=False,
-                    use_textured=False,
-                )
-                return {
-                    "status": "success",
-                    "mode": "static",
-                    "output_path": out_path,
-                    "frames": len(specto.frames),
-                }
+        if payload.midi_file_path:
+            safe_midi_path = _resolve_audio_path_sandbox(payload.midi_file_path)
+            parsed_events, parsed_duration = _parse_midi_file(safe_midi_path)
+            events = parsed_events
+            duration = duration or parsed_duration
 
+        if not events:
+            raise HTTPException(
+                status_code=400,
+                detail="provide audio_file_path, midi_file_path, or midi_events")
+        if duration is None or duration <= 0:
+            # try to infer from events time
+            max_time = max((e.get("time", 0) or 0) for e in events)
+            if max_time > 0:
+                duration = max_time
+            else:
+                raise HTTPException(status_code=400, detail="duration must be > 0")
+        if payload.n_particles <= 0:
+            raise HTTPException(status_code=400, detail="n_particles must be > 0")
+        if payload.fps <= 0:
+            raise HTTPException(status_code=400, detail="fps must be > 0")
+
+        specto = Spectocloud(
+            anchor_density=payload.anchor_density,
+            n_particles=payload.n_particles,
+        )
+        specto.process_midi(
+            midi_events=events,
+            duration=duration,
+            emotion_trajectory=payload.emotion_trajectory,
+        )
+        if not specto.frames:
+            raise HTTPException(
+                status_code=400, detail="No frames generated; check duration/window_size")
+        mode = payload.mode.lower()
+        if mode not in {"static", "animation"}:
+            raise HTTPException(status_code=400, detail="mode must be 'static' or 'animation'")
+
+        if mode == "static":
+            if payload.frame_idx < 0:
+                raise HTTPException(status_code=400, detail="frame_idx must be >= 0")
             if payload.output_path:
                 out_path = str(_resolve_audio_path_sandbox(payload.output_path))
             else:
                 out_path = str(
-                    Path(tempfile.gettempdir()) / "spectocloud_anim.gif")
-            specto.render_animation(
+                    Path(tempfile.gettempdir()) / "spectocloud_frame.png")
+            specto.render_static_frame(
+                frame_idx=min(payload.frame_idx, max(0, len(specto.frames) - 1)),
                 output_path=out_path,
-                fps=payload.fps,
-                duration=None,
-                rotate=payload.rotate,
+                show=False,
+                use_textured=False,
             )
             return {
                 "status": "success",
-                "mode": "animation",
+                "mode": "static",
                 "output_path": out_path,
                 "frames": len(specto.frames),
             }
+
+        if payload.output_path:
+            out_path = str(_resolve_audio_path_sandbox(payload.output_path))
+        else:
+            out_path = str(
+                Path(tempfile.gettempdir()) / "spectocloud_anim.gif")
+        specto.render_animation(
+            output_path=out_path,
+            fps=payload.fps,
+            duration=None,
+            rotate=payload.rotate,
+        )
+        return {
+            "status": "success",
+            "mode": "animation",
+            "output_path": out_path,
+            "frames": len(specto.frames),
+        }
 
     def _create_output_paths(output_format: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
         if not output_format:
