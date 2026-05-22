@@ -5,6 +5,8 @@ Assert that emotion_map, imagery_texture, and BPM/tempo are preserved
 through normalize → validate → expand. No partial intent fallback.
 """
 
+from __future__ import annotations
+
 import pytest
 
 pytest.importorskip("fastapi", reason="FastAPI required for request models")
