@@ -209,6 +209,50 @@ def motif_inventory_from_dict(timeline: Dict[str, Any]) -> Dict[str, List[Dict[s
 
 
 # ---------------------------------------------------------------------------
+# Phrase-boundary prediction (PRD §8.3 boundary_event).
+# ---------------------------------------------------------------------------
+
+
+def extract_phrase_boundaries(movement: TTGMovementV1) -> List[Dict[str, Any]]:
+    """Return a list of inter-phrase boundaries with absolute bar offsets.
+
+    Each boundary entry: ``{"bar_offset": float, "event": Optional[str],
+    "from_section": str, "to_section": str}``. The ``bar_offset`` is where
+    the previous phrase ends (and any fill begins); the next phrase begins
+    one bar later when ``event == "drum_fill_1bar"``. Section names use
+    ``phrase.section_role`` or fall back to ``infer_section_role()``.
+    """
+    children = movement.children
+    total = len(children)
+    if total < 2:
+        return []
+    out: List[Dict[str, Any]] = []
+    cursor = 0.0
+    for i in range(total - 1):
+        cur = children[i]
+        nxt = children[i + 1]
+        cursor += float(cur.bars)
+        from_section = cur.section_role or infer_section_role(i, total)
+        to_section = nxt.section_role or infer_section_role(i + 1, total)
+        out.append(
+            {
+                "bar_offset": cursor,
+                "event": cur.boundary_event,
+                "from_section": from_section,
+                "to_section": to_section,
+            }
+        )
+        if cur.boundary_event == "drum_fill_1bar":
+            cursor += 1.0
+    return out
+
+
+def phrase_boundaries_from_dict(timeline: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Convenience: parse a raw timeline dict and return phrase boundaries."""
+    return extract_phrase_boundaries(TTGMovementV1.model_validate(timeline))
+
+
+# ---------------------------------------------------------------------------
 # Schema-expansion validation.
 # ---------------------------------------------------------------------------
 

@@ -300,12 +300,18 @@ class IntentPipeline:
             out["energy_curve"] = pydantic_to_dict(energy)
 
         if _timeline_present(tech):
-            from music_brain.api_schemas.ttg_adapter import motif_inventory_from_dict
+            from music_brain.api_schemas.ttg_adapter import (
+                motif_inventory_from_dict,
+                phrase_boundaries_from_dict,
+            )
 
             timeline_raw = pydantic_to_dict(tech.get("timeline"))
             inventory = motif_inventory_from_dict(timeline_raw)
             if inventory:
                 out["motif_inventory"] = inventory
+            boundaries = phrase_boundaries_from_dict(timeline_raw)
+            if boundaries:
+                out["phrase_boundaries"] = boundaries
         return out
 
     # -------------------------------------------------------------------------
