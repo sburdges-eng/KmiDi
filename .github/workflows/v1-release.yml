@@ -30,9 +30,10 @@ jobs:
           node-version: "20"
 
       - name: Setup Rust
-        # Kept for engine/intent_ir crate if needed; no Tauri dependency
+        # Required on every platform: engine/intent_ir crate is built when CMake
+        # configures the tree (auto-enabled by intent_ir/CMakeLists.txt when no
+        # prebuilt libintent_ir.a is present).
         uses: dtolnay/rust-toolchain@stable
-        if: runner.os == 'macOS'
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -75,6 +76,7 @@ jobs:
         run: ./bootstrap.sh
 
       - name: Build Headless Core
+        shell: bash
         run: |
           PYBIND_DIR=$(python -c "import pybind11; print(pybind11.get_cmake_dir())")
           cmake -B build -S . \

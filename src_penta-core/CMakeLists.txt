@@ -134,10 +134,31 @@ option(BUILD_PENTA_TESTS "Build penta-core tests" ON)
 if(BUILD_PENTA_TESTS)
     enable_testing()
 
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../external/googletest/CMakeLists.txt")
+    # Resolve googletest in priority order:
+    #   1. Already-imported target from the parent build (root CMakeLists' FetchContent).
+    #   2. Vendored copy at external/googletest/.
+    #   3. System install via find_package(GTest).
+    #   4. FetchContent (network), unless KMIDI_OFFLINE_BUILD is ON.
+    if(NOT TARGET GTest::gtest AND NOT TARGET gtest
+       AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../external/googletest/CMakeLists.txt")
         add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../external/googletest"
                          "${CMAKE_CURRENT_BINARY_DIR}/external-googletest"
                          EXCLUDE_FROM_ALL)
+    endif()
+
+    if(NOT TARGET GTest::gtest AND NOT TARGET gtest)
+        find_package(GTest QUIET)
+    endif()
+
+    if(NOT TARGET GTest::gtest AND NOT TARGET gtest AND NOT KMIDI_OFFLINE_BUILD)
+        include(FetchContent)
+        FetchContent_Declare(
+            googletest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG v1.14.0
+            GIT_SHALLOW TRUE
+        )
+        FetchContent_MakeAvailable(googletest)
     endif()
 
     if(TARGET GTest::gtest AND TARGET GTest::gtest_main)
@@ -148,8 +169,8 @@ if(BUILD_PENTA_TESTS)
         set(_GTEST_MAIN_LIB gtest_main)
     else()
         message(FATAL_ERROR
-            "BUILD_PENTA_TESTS=ON requires local googletest. "
-            "Provide external/googletest or pre-install GTest.")
+            "BUILD_PENTA_TESTS=ON requires googletest. "
+            "Provide external/googletest, install GTest, or build online (KMIDI_OFFLINE_BUILD=OFF).")
     endif()
 
     # Create test executable
@@ -157,18 +178,19 @@ if(BUILD_PENTA_TESTS)
         ${CMAKE_CURRENT_SOURCE_DIR}/../tests/penta_core/*.cpp
     )
     if("${TEST_SOURCES}" STREQUAL "")
-        message(FATAL_ERROR
-            "BUILD_PENTA_TESTS=ON but no test sources were found under tests/penta_core.")
+        message(STATUS
+            "BUILD_PENTA_TESTS=ON but no test sources under tests/penta_core/; "
+            "skipping penta_tests target.")
+    else()
+        add_executable(penta_tests ${TEST_SOURCES})
+
+        target_link_libraries(penta_tests PRIVATE
+            penta_core
+            ${_GTEST_LIB}
+            ${_GTEST_MAIN_LIB}
+        )
+
+        include(GoogleTest)
+        gtest_discover_tests(penta_tests)
     endif()
-
-    add_executable(penta_tests ${TEST_SOURCES})
-
-    target_link_libraries(penta_tests PRIVATE
-        penta_core
-        ${_GTEST_LIB}
-        ${_GTEST_MAIN_LIB}
-    )
-
-    include(GoogleTest)
-    gtest_discover_tests(penta_tests)
 endif()

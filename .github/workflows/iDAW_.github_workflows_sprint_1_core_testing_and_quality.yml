@@ -26,11 +26,16 @@ jobs:
         # the health of .worktrees/integration-finalize (the local-worktree
         # gitlink), which is not a build dependency.
         run: git submodule update --init --depth 1 external/JUCE
-      - name: C++ Build & Test
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake g++ qt6-base-dev
+          sudo apt-get install -y cmake ninja-build g++ qt6-base-dev
+      - name: Install JUCE Linux deps
+        run: scripts/ci/install_juce_linux_deps.sh
+      - name: C++ Build & Test
+        run: |
           mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
           cmake --build . -j
           ctest --output-on-failure

@@ -15,6 +15,14 @@ set(SOURCE_FFI_HEADER "${CMAKE_SOURCE_DIR}/src/bridge/intent_ir_ffi.h")
 
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
+# Auto-enable rebuild on fresh checkouts (e.g. CI) when no prebuilt library
+# exists and cargo is available. Keeps the prebuilt path fast for repeat local
+# builds while letting fresh trees configure without a manual cargo step.
+if(NOT INTENT_IR_REBUILD_RUST AND NOT EXISTS ${PREBUILT_RUST_LIB} AND CARGO_EXECUTABLE)
+    message(STATUS "intent_ir: no prebuilt ${PREBUILT_RUST_LIB}; auto-enabling INTENT_IR_REBUILD_RUST")
+    set(INTENT_IR_REBUILD_RUST ON)
+endif()
+
 if(INTENT_IR_REBUILD_RUST)
     if(NOT CARGO_EXECUTABLE)
         message(FATAL_ERROR "cargo is required when INTENT_IR_REBUILD_RUST=ON")
@@ -22,7 +30,7 @@ if(INTENT_IR_REBUILD_RUST)
 
     add_custom_command(
         OUTPUT ${PREBUILT_RUST_LIB}
-        COMMAND ${CARGO_EXECUTABLE} build --release --locked --manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml
+        COMMAND ${CARGO_EXECUTABLE} build --release --manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Building Intent IR Rust crate"
         VERBATIM
