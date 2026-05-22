@@ -97,7 +97,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20"
       - name: Install web deps
         run: npm install --ignore-scripts
       - name: Smoke (typecheck + build)
