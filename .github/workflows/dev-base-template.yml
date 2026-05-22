@@ -64,10 +64,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Install build deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build g++
+          sudo apt-get install -y cmake ninja-build g++ qt6-base-dev
       - name: Configure
         run: |
           cmake -S . -B build -G Ninja
@@ -94,10 +96,8 @@ jobs:
         with:
           node-version: "18"
       - name: Install web deps
-        working-directory: web
         run: npm install --ignore-scripts
       - name: Lint/Smoke
-        working-directory: web
         run: |
           npm test -- --watch=false || true
 
