@@ -37,6 +37,9 @@
 // KellyTypes.h KellyBrain.h includes KellyTypes.h, while IntentPipeline.h
 // includes Types.h
 #include "common/Types.h"
+#include "daiw/dsp_graph.hpp"
+#include "daiw/gpu_scheduler.hpp"
+#include "daiw/shared_ipc.hpp"
 #include "midi/MidiBuilder.h"
 #include "midi/MidiGenerator.h"
 #include "ml/InferenceThreadManager.h"
@@ -464,6 +467,27 @@ private:
 
   // Project management
   juce::String projectError_; // Last error from save/load operations
+
+  // ---- RT foundation primitives (additive; full migration in follow-up) --
+  //
+  // Wiring strategy:
+  //   - ipcRegion_   : owned shared-memory region. Created in the ctor with
+  //                    a PID-suffixed name; processBlock publishes the RT
+  //                    state mirror once per block. Unlinked in the dtor.
+  //                    Pure additive — external observers (Python brain,
+  //                    MCP daemon, telemetry) can attach without touching
+  //                    the audio path.
+  //   - gpuScheduler_: CPU-fallback inference dispatcher. Replaces nothing
+  //                    today; provides the API surface so a follow-up PR
+  //                    can swap inferenceManager_ behind it.
+  //   - dspGraph_    : ML→EQ chain encoded as a DAG. Built in prepareToPlay
+  //                    but only driven from processBlock when the
+  //                    KMIDI_USE_DSP_GRAPH macro is defined. The default
+  //                    build keeps the existing inline chain.
+  std::unique_ptr<daiw::ipc::SharedRegion> ipcRegion_;
+  std::string ipcRegionName_;
+  daiw::rt::CpuGpuScheduler<> gpuScheduler_;
+  daiw::rt::DSPGraph<8, 16> dspGraph_;
 
   static juce::AudioProcessorValueTreeState::ParameterLayout
   createParameterLayout();

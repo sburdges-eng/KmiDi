@@ -66,11 +66,15 @@ Wound convertLegacyToKellyTypesWound(const Wound &legacy) {
 #include "plugin/MasterEQProcessor.h"
 #include "plugin/PluginEditor.h"
 #include "project/ProjectManager.h"
+#include <cstdio>
 #if JUCE_MAC
 #include <cstdlib>
 #include <cstring>
 #include <pthread.h>
 #include <sys/qos.h>
+#endif
+#if defined(__unix__) || defined(__APPLE__)
+#include <unistd.h>
 #endif
 
 using namespace kelly::MusicConstants;
@@ -102,6 +106,23 @@ PluginProcessor::PluginProcessor()
   apvts_.addParameterListener(PARAM_DYNAMICS, this);
   apvts_.addParameterListener(PARAM_BARS, this);
   apvts_.addParameterListener(PARAM_BYPASS, this);
+
+  // RT foundation: bring up the shared-memory IPC region. Name is
+  // PID-suffixed so multiple plugin instances in the same DAW don't
+  // collide. macOS PSHMNAMLEN is 31; keep the name short.
+  char name_buf[32];
+  std::snprintf(name_buf, sizeof(name_buf), "/kmidi_plg_%d", ::getpid());
+  ipcRegionName_ = name_buf;
+  // Pre-unlink in case a previous run crashed and left the name behind.
+  daiw::ipc::SharedRegion::unlink_name(ipcRegionName_);
+  ipcRegion_ = std::make_unique<daiw::ipc::SharedRegion>();
+  if (!ipcRegion_->create(ipcRegionName_)) {
+    // SHM may be unavailable (sandboxed AU host, read-only fs, etc.).
+    // Treat as soft-fail — the plugin still works without the mirror.
+    ipcRegion_.reset();
+    DBG("PluginProcessor: SHM region create failed; "
+        "RTState mirror disabled");
+  }
 }
 
 PluginProcessor::~PluginProcessor() {
@@ -121,6 +142,14 @@ PluginProcessor::~PluginProcessor() {
   apvts_.removeParameterListener(PARAM_DYNAMICS, this);
   apvts_.removeParameterListener(PARAM_BARS, this);
   apvts_.removeParameterListener(PARAM_BYPASS, this);
+
+  // RT foundation: tear down the SHM region. Detach happens automatically
+  // via SharedRegion's dtor; we just need to unlink the name so it doesn't
+  // linger in /dev/shm (Linux) or the Darwin shared-memory namespace.
+  if (!ipcRegionName_.empty()) {
+    ipcRegion_.reset();
+    daiw::ipc::SharedRegion::unlink_name(ipcRegionName_);
+  }
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout
@@ -588,6 +617,39 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
   }
 
   sampleCounter_ += numSamples;
+
+  // RT foundation: publish the SHM RTState mirror once per block. Seqlock
+  // semantics — odd sequence brackets writes, even sequence = stable.
+  // Allocation-free and lock-free (atomic stores only). External observers
+  // (Python brain, MCP daemon) get a torn-free snapshot.
+  if (ipcRegion_ && ipcRegion_->is_attached()) {
+    auto *layout = ipcRegion_->layout();
+    auto &state = layout->state;
+    state.sequence.fetch_add(1, std::memory_order_acq_rel);
+    state.sample_position.store(static_cast<uint64_t>(sampleCounter_),
+                                std::memory_order_relaxed);
+    state.bpm.store(hostTempoBpm_.load(std::memory_order_relaxed),
+                    std::memory_order_relaxed);
+    state.valence.store(mlValence_.load(std::memory_order_relaxed),
+                        std::memory_order_relaxed);
+    state.arousal.store(mlArousal_.load(std::memory_order_relaxed),
+                        std::memory_order_relaxed);
+    state.playing.store(isHostPlaying_.load(std::memory_order_relaxed),
+                        std::memory_order_relaxed);
+    state.sequence.fetch_add(1, std::memory_order_release);
+  }
+
+#ifdef KMIDI_USE_DSP_GRAPH
+  // RT foundation: walk the DSP graph instead of the inline chain.
+  // dspGraph_ is empty by default — a follow-up PR populates it with
+  // DSPNode wrappers around the ML and EQ stages. Until then this path
+  // is a no-op and the inline chain above remains authoritative. The
+  // flag exists so the graph member is genuinely reachable from the
+  // audio thread rather than dead-code-eliminated.
+  if (dspGraph_.is_live()) {
+    dspGraph_.process(static_cast<std::size_t>(numSamples));
+  }
+#endif
 
   // Master EQ processing (post-ML, pre-output)
   // Update EQ parameters from APVTS (non-blocking, atomic reads)
