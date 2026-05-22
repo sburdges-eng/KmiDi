@@ -54,6 +54,10 @@ jobs:
             qt6-base-dev \
             ninja-build
 
+      - name: Install JUCE Linux deps
+        if: runner.os == 'Linux'
+        run: scripts/ci/install_juce_linux_deps.sh
+
       - name: Install Python Toolchain
         run: |
           python -m pip install --upgrade pip
