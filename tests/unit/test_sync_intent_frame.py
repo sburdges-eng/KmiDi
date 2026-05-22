@@ -39,7 +39,7 @@ def test_intent_frame_ts_exists_after_sync():
 
 
 def test_intent_frame_rust_exists_after_sync():
-    rs_path = ROOT / "src-tauri" / "src" / "generated" / "intent_frame.rs"
+    rs_path = ROOT / "engine" / "intent_ir" / "src" / "generated" / "intent_frame.rs"
     assert rs_path.exists(), "intent_frame.rs not generated"
     content = rs_path.read_text()
     assert "IntentFrame" in content

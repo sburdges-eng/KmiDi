@@ -35,7 +35,7 @@ def test_emotion_ts_exists_after_sync():
 
 
 def test_emotion_rust_exists_after_sync():
-    rs_path = ROOT / "src-tauri" / "src" / "generated" / "emotion.rs"
+    rs_path = ROOT / "engine" / "intent_ir" / "src" / "generated" / "emotion.rs"
     assert rs_path.exists(), "emotion.rs not generated"
     content = rs_path.read_text()
     assert "valence" in content
