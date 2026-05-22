@@ -1,8 +1,11 @@
 name: Copilot-Claude Sync Status
 
+# Manual-only trigger — scripts/copilot-claude-sync.sh is not present in this
+# repo (was never committed or has been removed), so the push trigger has
+# been failing every push to main since whenever the script disappeared.
+# Revive by committing the script and restoring the `push:` trigger below.
+
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:

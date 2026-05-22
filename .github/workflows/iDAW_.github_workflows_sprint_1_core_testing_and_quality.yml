@@ -14,17 +14,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-      - run: pip install -e .
+      - run: pip install -e ".[dev]"
       - run: pytest tests/unit/ -v
       - run: pytest tests/integration/ -v || true
   test-cpp:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Init JUCE submodule
+        # Selective init — only external/JUCE. Avoids tying this job to
+        # the health of .worktrees/integration-finalize (the local-worktree
+        # gitlink), which is not a build dependency.
+        run: git submodule update --init --depth 1 external/JUCE
       - name: C++ Build & Test
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake g++
+          sudo apt-get install -y cmake g++ qt6-base-dev
           mkdir build && cd build
           cmake .. -DCMAKE_BUILD_TYPE=Release
           cmake --build . -j
