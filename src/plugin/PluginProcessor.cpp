@@ -66,11 +66,15 @@ Wound convertLegacyToKellyTypesWound(const Wound &legacy) {
 #include "plugin/MasterEQProcessor.h"
 #include "plugin/PluginEditor.h"
 #include "project/ProjectManager.h"
+#include <cstdio>
 #if JUCE_MAC
 #include <cstdlib>
 #include <cstring>
 #include <pthread.h>
 #include <sys/qos.h>
+#endif
+#if defined(__unix__) || defined(__APPLE__)
+#include <unistd.h>
 #endif
 
 using namespace kelly::MusicConstants;
@@ -102,6 +106,28 @@ PluginProcessor::PluginProcessor()
   apvts_.addParameterListener(PARAM_DYNAMICS, this);
   apvts_.addParameterListener(PARAM_BARS, this);
   apvts_.addParameterListener(PARAM_BYPASS, this);
+
+  // RT foundation: bring up the shared-memory IPC region. Name is
+  // PID-suffixed so multiple plugin instances in the same DAW don't
+  // collide. macOS PSHMNAMLEN is 31; keep the name short.
+  char name_buf[32];
+  std::snprintf(name_buf, sizeof(name_buf), "/kmidi_plg_%d", ::getpid());
+  ipcRegionName_ = name_buf;
+  // Pre-unlink in case a previous run crashed and left the name behind.
+  daiw::ipc::SharedRegion::unlink_name(ipcRegionName_);
+  ipcRegion_ = std::make_unique<daiw::ipc::SharedRegion>();
+  if (!ipcRegion_->create(ipcRegionName_)) {
+    // SHM may be unavailable (sandboxed AU host, read-only fs, etc.).
+    // Treat as soft-fail — the plugin still works without the mirror.
+    ipcRegion_.reset();
+    DBG("PluginProcessor: SHM region create failed; "
+        "RTState mirror disabled");
+  }
+
+  // Bind the graph nodes to this processor so their process() methods can
+  // call back into the private DSP helpers.
+  mlPipelineNode_.setOwner(this);
+  eqPipelineNode_.setOwner(this);
 }
 
 PluginProcessor::~PluginProcessor() {
@@ -121,6 +147,14 @@ PluginProcessor::~PluginProcessor() {
   apvts_.removeParameterListener(PARAM_DYNAMICS, this);
   apvts_.removeParameterListener(PARAM_BARS, this);
   apvts_.removeParameterListener(PARAM_BYPASS, this);
+
+  // RT foundation: tear down the SHM region. Detach happens automatically
+  // via SharedRegion's dtor; we just need to unlink the name so it doesn't
+  // linger in /dev/shm (Linux) or the Darwin shared-memory namespace.
+  if (!ipcRegionName_.empty()) {
+    ipcRegion_.reset();
+    daiw::ipc::SharedRegion::unlink_name(ipcRegionName_);
+  }
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout
@@ -419,6 +453,23 @@ void PluginProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
     DBG("PluginProcessor::prepareToPlay — getRawParameterValue returned null "
         "for one or more parameters; check parameter IDs");
   }
+
+  // Build the DSP graph: ML lookahead chain → master EQ. A fresh graph is
+  // constructed every prepareToPlay so sample-rate / block-size changes
+  // re-emit a clean Kahn-sorted execution plan.
+  dspGraph_ = std::make_unique<daiw::rt::DSPGraph<8, 16>>();
+  mlNodeId_ = dspGraph_->add_node(&mlPipelineNode_);
+  eqNodeId_ = dspGraph_->add_node(&eqPipelineNode_);
+  const bool wired =
+      mlNodeId_ != daiw::rt::kInvalidNodeId &&
+      eqNodeId_ != daiw::rt::kInvalidNodeId &&
+      dspGraph_->connect(mlNodeId_, 0, eqNodeId_, 0) &&
+      dspGraph_->prepare(sampleRate, static_cast<std::size_t>(samplesPerBlock));
+  if (!wired) {
+    DBG("PluginProcessor::prepareToPlay — DSP graph build failed; "
+        "audio path will be silent");
+    dspGraph_.reset();
+  }
 }
 
 void PluginProcessor::releaseResources() {
@@ -464,143 +515,45 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
   juce::ScopedNoDenormals noDenormals;
 
   const int numSamples = buffer.getNumSamples();
-  const int numChannels = buffer.getNumChannels();
 
-  // ML Inference processing (if enabled and we have audio input)
-  if (mlInferenceEnabled_.load() && numChannels > 0) {
-    // T6.1: Write input to lookahead buffer — two memcpys with power-of-two
-    // mask
-    for (int ch = 0; ch < numChannels && ch < lookaheadBuffer_.getNumChannels();
-         ++ch) {
-      const float *src = buffer.getReadPointer(ch);
-      float *dst = lookaheadBuffer_.getWritePointer(ch);
-
-      const size_t wIdx =
-          static_cast<size_t>(lookaheadWritePos_) & lookaheadMask_;
-      const size_t bufSize =
-          static_cast<size_t>(lookaheadBuffer_.getNumSamples());
-      const size_t first =
-          std::min(static_cast<size_t>(numSamples), bufSize - wIdx);
-      std::memcpy(dst + wIdx, src, first * sizeof(float));
-      if (static_cast<size_t>(numSamples) > first) {
-        std::memcpy(dst, src + first,
-                    (static_cast<size_t>(numSamples) - first) * sizeof(float));
-      }
-    }
-
-    // Extract features from lookahead buffer for ML inference
-    std::array<float, 128> features =
-        extractFeatures(lookaheadBuffer_, lookaheadReadPos_);
-
-    // Submit inference request (non-blocking)
-    InferenceRequest request;
-    request.features = features;
-    request.timestamp = sampleCounter_;
-    inferenceManager_.submitRequest(request);
-
-    // Get completed results (non-blocking)
-    InferenceResult result;
-    while (inferenceManager_.getResult(result)) {
-      applyEmotionVector(result.emotionVector);
-    }
-
-    // --- AudioEmotionRunner: push mono-mixed audio and blend ---
-    if (emotionRunner_ && emotionRunner_->isRunning()) {
-      // Mono downmix into pre-allocated buffer
-      const size_t n = static_cast<size_t>(numSamples);
-      if (n <= monoMixBuffer_.size()) {
-        if (numChannels == 1) {
-          std::memcpy(monoMixBuffer_.data(), buffer.getReadPointer(0),
-                      n * sizeof(float));
-        } else {
-          const float *left = buffer.getReadPointer(0);
-          const float *right =
-              numChannels > 1 ? buffer.getReadPointer(1) : left;
-          daiw::simd::stereo_planar_to_mono(monoMixBuffer_.data(), left, right,
-                                            n);
-        }
-
-        // Push to ring buffer (lock-free, non-blocking)
-        emotionRunner_->pushSamples(monoMixBuffer_.data(), n);
-
-        // Read latest inference results into RTState (lock-free)
-        emotionRunner_->updateParams(emotionRTState_,
-                                     static_cast<size_t>(numSamples));
-
-        // T6.3: Blend detected emotion with manual slider values (cached ptrs)
-        const float blend = paramMlInfluence_->load(std::memory_order_relaxed);
-
-        if (blend > 0.0f) {
-          const float detectedV =
-              emotionRTState_.valence.load(std::memory_order_relaxed);
-          const float detectedA =
-              emotionRTState_.arousal.load(std::memory_order_relaxed);
-          const float manualV = paramValence_->load(std::memory_order_relaxed);
-          const float manualA = paramArousal_->load(std::memory_order_relaxed);
-
-          // Linear blend: 0=fully manual, 1=fully detected
-          mlValence_.store((1.0f - blend) * manualV + blend * detectedV,
-                           std::memory_order_relaxed);
-          mlArousal_.store((1.0f - blend) * manualA + blend * detectedA,
-                           std::memory_order_relaxed);
-        } else {
-          // Pure manual mode — use slider values directly (T6.3: cached ptr)
-          mlValence_.store(paramValence_->load(std::memory_order_relaxed),
-                           std::memory_order_relaxed);
-          mlArousal_.store(paramArousal_->load(std::memory_order_relaxed),
-                           std::memory_order_relaxed);
-        }
-      }
-    }
-
-    // T6.1: Read delayed audio from lookahead buffer — two memcpys with mask
-    for (int ch = 0; ch < numChannels && ch < lookaheadBuffer_.getNumChannels();
-         ++ch) {
-      const float *src = lookaheadBuffer_.getReadPointer(ch);
-      float *dst = buffer.getWritePointer(ch);
-
-      const size_t rIdx =
-          static_cast<size_t>(lookaheadReadPos_) & lookaheadMask_;
-      const size_t bufSize =
-          static_cast<size_t>(lookaheadBuffer_.getNumSamples());
-      const size_t first =
-          std::min(static_cast<size_t>(numSamples), bufSize - rIdx);
-      std::memcpy(dst, src + rIdx, first * sizeof(float));
-      if (static_cast<size_t>(numSamples) > first) {
-        std::memcpy(dst + first, src,
-                    (static_cast<size_t>(numSamples) - first) * sizeof(float));
-      }
-    }
-
-    // Update positions (mask keeps them in bounds; write pos advanced in write
-    // loop above)
-    lookaheadWritePos_ =
-        static_cast<int>((static_cast<size_t>(lookaheadWritePos_) +
-                          static_cast<size_t>(numSamples)) &
-                         lookaheadMask_);
-    lookaheadReadPos_ =
-        static_cast<int>((static_cast<size_t>(lookaheadReadPos_) +
-                          static_cast<size_t>(numSamples)) &
-                         lookaheadMask_);
+  // Drive the DSP graph: ML lookahead chain → master EQ. The two pipeline
+  // nodes call back into processMLChain_() and processEQChain_() with the
+  // current AudioBuffer; the graph orchestrates topological order.
+  if (dspGraph_ && dspGraph_->is_live()) {
+    mlPipelineNode_.setBuffer(&buffer);
+    eqPipelineNode_.setBuffer(&buffer);
+    dspGraph_->process(static_cast<std::size_t>(numSamples));
   } else {
-    // Clear audio (we're a MIDI effect, no ML processing)
+    // Graph wasn't successfully built — silence the output rather than
+    // forward potentially uninitialised audio.
     buffer.clear();
   }
 
   sampleCounter_ += numSamples;
 
-  // Master EQ processing (post-ML, pre-output)
-  // Update EQ parameters from APVTS (non-blocking, atomic reads)
-  masterEQProcessor_.updateParameters(apvts_);
-
-  // Master EQ: biquad chain in MasterEQProcessor (RT-safe coefficient updates)
-  // T6.3: Use cached pointer; null-check guarded in prepareToPlay
-  if (!paramEqBypass_ ||
-      paramEqBypass_->load(std::memory_order_relaxed) <= 0.5f) {
-    // EQ not bypassed - process audio through EQ
-    masterEQProcessor_.processBlock(buffer);
+  // RT foundation: publish the SHM RTState mirror once per block. Seqlock
+  // semantics — odd sequence brackets writes, even sequence = stable.
+  // Allocation-free and lock-free (atomic stores only). External observers
+  // (Python brain, MCP daemon) get a torn-free snapshot.
+  if (ipcRegion_ && ipcRegion_->is_attached()) {
+    auto *layout = ipcRegion_->layout();
+    auto &state = layout->state;
+    state.sequence.fetch_add(1, std::memory_order_acq_rel);
+    state.sample_position.store(static_cast<uint64_t>(sampleCounter_),
+                                std::memory_order_relaxed);
+    state.bpm.store(hostTempoBpm_.load(std::memory_order_relaxed),
+                    std::memory_order_relaxed);
+    state.valence.store(mlValence_.load(std::memory_order_relaxed),
+                        std::memory_order_relaxed);
+    state.arousal.store(mlArousal_.load(std::memory_order_relaxed),
+                        std::memory_order_relaxed);
+    state.playing.store(isHostPlaying_.load(std::memory_order_relaxed),
+                        std::memory_order_relaxed);
+    state.sequence.fetch_add(1, std::memory_order_release);
   }
-  // If EQ is bypassed, audio passes through unchanged
+
+  // ML + EQ have already run via the DSP graph above. The KMIDI_USE_DSP_GRAPH
+  // ifdef and the inline EQ chunk that used to live here have been retired.
 
   // Check bypass - T6.3: use cached pointer
   if (paramBypass_ && paramBypass_->load(std::memory_order_relaxed) >
@@ -1496,6 +1449,162 @@ bool PluginProcessor::loadProject(const juce::File &file) {
   triggerAsyncUpdate();
 
   return true;
+}
+
+//==============================================================================
+// DSP graph node implementations
+//==============================================================================
+
+void PluginProcessor::MLPipelineNode::process(const float *const *,
+                                              float *const *,
+                                              std::size_t) noexcept {
+  // The per-port float buffers are unused — the audio flows through the
+  // side-channel juce::AudioBuffer set by processBlock(). The graph's
+  // contribution is purely scheduling: it guarantees this node runs before
+  // EQPipelineNode.
+  if (owner_ && buffer_) {
+    owner_->processMLChain_(*buffer_);
+  }
+}
+
+void PluginProcessor::EQPipelineNode::process(const float *const *,
+                                              float *const *,
+                                              std::size_t) noexcept {
+  if (owner_ && buffer_) {
+    owner_->processEQChain_(*buffer_);
+  }
+}
+
+//==============================================================================
+// RT-safe chain helpers — invoked by the graph nodes from the audio thread.
+// Identity-preserving extraction from the prior inline processBlock layout.
+//==============================================================================
+
+void PluginProcessor::processMLChain_(
+    juce::AudioBuffer<float> &buffer) noexcept {
+  const int numSamples = buffer.getNumSamples();
+  const int numChannels = buffer.getNumChannels();
+
+  if (!mlInferenceEnabled_.load() || numChannels <= 0) {
+    // Clear audio (we're a MIDI effect, no ML processing) — matches the
+    // pre-graph behaviour.
+    buffer.clear();
+    return;
+  }
+
+  // T6.1: Write input to lookahead buffer — two memcpys with power-of-two
+  // mask.
+  for (int ch = 0; ch < numChannels && ch < lookaheadBuffer_.getNumChannels();
+       ++ch) {
+    const float *src = buffer.getReadPointer(ch);
+    float *dst = lookaheadBuffer_.getWritePointer(ch);
+
+    const size_t wIdx =
+        static_cast<size_t>(lookaheadWritePos_) & lookaheadMask_;
+    const size_t bufSize =
+        static_cast<size_t>(lookaheadBuffer_.getNumSamples());
+    const size_t first =
+        std::min(static_cast<size_t>(numSamples), bufSize - wIdx);
+    std::memcpy(dst + wIdx, src, first * sizeof(float));
+    if (static_cast<size_t>(numSamples) > first) {
+      std::memcpy(dst, src + first,
+                  (static_cast<size_t>(numSamples) - first) * sizeof(float));
+    }
+  }
+
+  // Extract features from lookahead buffer for ML inference.
+  std::array<float, 128> features =
+      extractFeatures(lookaheadBuffer_, lookaheadReadPos_);
+
+  // Submit inference request (non-blocking).
+  InferenceRequest request;
+  request.features = features;
+  request.timestamp = sampleCounter_;
+  inferenceManager_.submitRequest(request);
+
+  // Get completed results (non-blocking).
+  InferenceResult result;
+  while (inferenceManager_.getResult(result)) {
+    applyEmotionVector(result.emotionVector);
+  }
+
+  // AudioEmotionRunner: push mono-mixed audio and blend.
+  if (emotionRunner_ && emotionRunner_->isRunning()) {
+    const size_t n = static_cast<size_t>(numSamples);
+    if (n <= monoMixBuffer_.size()) {
+      if (numChannels == 1) {
+        std::memcpy(monoMixBuffer_.data(), buffer.getReadPointer(0),
+                    n * sizeof(float));
+      } else {
+        const float *left = buffer.getReadPointer(0);
+        const float *right = numChannels > 1 ? buffer.getReadPointer(1) : left;
+        daiw::simd::stereo_planar_to_mono(monoMixBuffer_.data(), left, right,
+                                          n);
+      }
+
+      emotionRunner_->pushSamples(monoMixBuffer_.data(), n);
+      emotionRunner_->updateParams(emotionRTState_,
+                                   static_cast<size_t>(numSamples));
+
+      const float blend = paramMlInfluence_->load(std::memory_order_relaxed);
+      if (blend > 0.0f) {
+        const float detectedV =
+            emotionRTState_.valence.load(std::memory_order_relaxed);
+        const float detectedA =
+            emotionRTState_.arousal.load(std::memory_order_relaxed);
+        const float manualV = paramValence_->load(std::memory_order_relaxed);
+        const float manualA = paramArousal_->load(std::memory_order_relaxed);
+        mlValence_.store((1.0f - blend) * manualV + blend * detectedV,
+                         std::memory_order_relaxed);
+        mlArousal_.store((1.0f - blend) * manualA + blend * detectedA,
+                         std::memory_order_relaxed);
+      } else {
+        mlValence_.store(paramValence_->load(std::memory_order_relaxed),
+                         std::memory_order_relaxed);
+        mlArousal_.store(paramArousal_->load(std::memory_order_relaxed),
+                         std::memory_order_relaxed);
+      }
+    }
+  }
+
+  // T6.1: Read delayed audio from lookahead buffer — two memcpys with mask.
+  for (int ch = 0; ch < numChannels && ch < lookaheadBuffer_.getNumChannels();
+       ++ch) {
+    const float *src = lookaheadBuffer_.getReadPointer(ch);
+    float *dst = buffer.getWritePointer(ch);
+
+    const size_t rIdx = static_cast<size_t>(lookaheadReadPos_) & lookaheadMask_;
+    const size_t bufSize =
+        static_cast<size_t>(lookaheadBuffer_.getNumSamples());
+    const size_t first =
+        std::min(static_cast<size_t>(numSamples), bufSize - rIdx);
+    std::memcpy(dst, src + rIdx, first * sizeof(float));
+    if (static_cast<size_t>(numSamples) > first) {
+      std::memcpy(dst + first, src,
+                  (static_cast<size_t>(numSamples) - first) * sizeof(float));
+    }
+  }
+
+  // Update ring-buffer positions (power-of-two mask wraps automatically).
+  lookaheadWritePos_ =
+      static_cast<int>((static_cast<size_t>(lookaheadWritePos_) +
+                        static_cast<size_t>(numSamples)) &
+                       lookaheadMask_);
+  lookaheadReadPos_ = static_cast<int>((static_cast<size_t>(lookaheadReadPos_) +
+                                        static_cast<size_t>(numSamples)) &
+                                       lookaheadMask_);
+}
+
+void PluginProcessor::processEQChain_(
+    juce::AudioBuffer<float> &buffer) noexcept {
+  // Master EQ: biquad chain in MasterEQProcessor (RT-safe coefficient
+  // updates). Identity-preserving extraction from the prior inline path.
+  masterEQProcessor_.updateParameters(apvts_);
+  if (!paramEqBypass_ ||
+      paramEqBypass_->load(std::memory_order_relaxed) <= 0.5f) {
+    masterEQProcessor_.processBlock(buffer);
+  }
+  // If EQ is bypassed, audio passes through unchanged.
 }
 
 } // namespace kelly
