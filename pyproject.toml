@@ -44,6 +44,7 @@ dev = [
 audio = [
     "soundfile>=0.12",
     "pydub>=0.25",
+    "librosa>=0.10,<1",
 ]
 jepa = [
     "lhotse>=1.20",
