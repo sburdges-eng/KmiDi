@@ -318,3 +318,116 @@ def test_pipeline_normalize_emits_energy_gated_instruments():
     assert "square" in by_patch
     assert "active_in:intro" not in by_patch["square"]
     assert "active_in:chorus" in by_patch["square"]
+
+
+# ---------------------------------------------------------------------------
+# Pipeline validate_with_warnings — wires validate_ttg_expansion through.
+# ---------------------------------------------------------------------------
+
+
+def test_validate_with_warnings_returns_unreachable_threshold_warning():
+    """End-to-end: pipeline.validate_with_warnings surfaces threshold warnings."""
+    from music_brain.api_schemas.generate_v1 import (
+        EmotionalIntent,
+        GenerateRequest,
+        TechnicalIntent,
+    )
+    from music_brain.api_schemas.ttg_v1 import TTGMovementV1, TTGPhraseV1
+    from music_brain.pipeline import IntentPipeline
+
+    tech = TechnicalIntent(
+        key="C major",
+        bpm=120,
+        genre="pop",
+        structure=[{"name": "verse", "bars": 8}],
+        instruments=[{"instrument": "piano", "techniques": []}],
+        timeline=TTGMovementV1(
+            id="A",
+            bars=8,
+            children=[TTGPhraseV1(bars=8, section_role="verse")],
+        ),
+        orchestration=TTGOrchestrationV1(
+            roles={
+                "bass": OrchestrationRoleSpecV1(patch="808", active_threshold=0.5),
+                "unreachable": OrchestrationRoleSpecV1(patch="x", active_threshold=0.99),
+            }
+        ),
+        energy_curve={
+            "points": [{"bar": 0.0, "value": 0.4}, {"bar": 8.0, "value": 0.6}],
+        },
+    )
+    req = GenerateRequest(intent=EmotionalIntent(emotional_intent="hope", technical=tech))
+    pipeline = IntentPipeline()
+    normalized = pipeline.normalize(req)
+    validated, warnings = pipeline.validate_with_warnings(normalized)
+    # The unreachable role should be flagged.
+    assert any("unreachable" in w and "0.99" in w for w in warnings), warnings
+    # The achievable bass role should not be in warnings.
+    assert not any("bass" in w for w in warnings)
+    # validate_with_warnings still returns a valid CompleteSongIntentRequest.
+    assert validated.key_mode == "C major"
+
+
+def test_validate_with_warnings_clean_payload_returns_empty_list():
+    """When all validators pass, warnings list is empty."""
+    from music_brain.api_schemas.generate_v1 import (
+        EmotionalIntent,
+        GenerateRequest,
+        TechnicalIntent,
+    )
+    from music_brain.pipeline import IntentPipeline
+
+    tech = TechnicalIntent(
+        key="C major",
+        bpm=120,
+        genre="pop",
+        structure=[{"name": "verse", "bars": 8}],
+        instruments=[{"instrument": "piano", "techniques": []}],
+    )
+    req = GenerateRequest(intent=EmotionalIntent(emotional_intent="hope", technical=tech))
+    pipeline = IntentPipeline()
+    normalized = pipeline.normalize(req)
+    validated, warnings = pipeline.validate_with_warnings(normalized)
+    assert warnings == []
+    assert validated.key_mode == "C major"
+
+
+def test_run_with_warnings_returns_full_intent_and_warnings():
+    """run_with_warnings drives normalize → validate_with_warnings → expand
+    and returns (CompleteSongIntent, warnings)."""
+    from music_brain.api_schemas.generate_v1 import (
+        EmotionalIntent,
+        GenerateRequest,
+        TechnicalIntent,
+    )
+    from music_brain.api_schemas.ttg_v1 import TTGMovementV1, TTGPhraseV1
+    from music_brain.pipeline import IntentPipeline
+    from music_brain.session.intent_schema import CompleteSongIntent
+
+    tech = TechnicalIntent(
+        key="D minor",
+        bpm=100,
+        genre="electronic",
+        structure=[{"name": "verse", "bars": 8}],
+        instruments=[{"instrument": "piano", "techniques": []}],
+        timeline=TTGMovementV1(
+            id="A",
+            bars=8,
+            children=[TTGPhraseV1(bars=8, section_role="verse")],
+        ),
+        orchestration=TTGOrchestrationV1(
+            roles={
+                "bass": OrchestrationRoleSpecV1(patch="808", active_threshold=0.2),
+                "unreachable": OrchestrationRoleSpecV1(patch="x", active_threshold=0.99),
+            },
+        ),
+        energy_curve={
+            "points": [{"bar": 0.0, "value": 0.1}, {"bar": 8.0, "value": 0.3}],
+        },
+    )
+    req = GenerateRequest(intent=EmotionalIntent(emotional_intent="tension", technical=tech))
+    intent, warnings = IntentPipeline().run_with_warnings(req)
+    assert isinstance(intent, CompleteSongIntent)
+    assert intent.technical_constraints.technical_key == "D"
+    assert intent.technical_constraints.technical_mode == "minor"
+    assert any("unreachable" in w and "0.99" in w for w in warnings), warnings

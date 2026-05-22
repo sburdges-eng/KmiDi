@@ -224,6 +224,19 @@ class IntentPipeline:
         validated = self.validate(normalized)
         return self.expand(request, validated, normalized)
 
+    def run_with_warnings(
+        self, request: Any
+    ) -> tuple[CompleteSongIntent, List[str]]:
+        """Run the full pipeline and surface schema-expansion warnings.
+
+        Equivalent to ``run()`` but returns ``(intent, warnings)``. Warnings
+        come from :func:`validate_ttg_expansion` (and future validators) — they
+        are advisory, not fatal; hard errors still raise.
+        """
+        normalized = self.normalize(request)
+        validated, warnings = self.validate_with_warnings(normalized)
+        return self.expand(request, validated, normalized), warnings
+
     # -------------------------------------------------------------------------
     # Stage 1: Normalize — only infer missing values; do not override explicit
     # -------------------------------------------------------------------------
@@ -299,6 +312,13 @@ class IntentPipeline:
         if energy is not None:
             out["energy_curve"] = pydantic_to_dict(energy)
 
+        # Preserve raw orchestration alongside derived instruments so downstream
+        # validators (validate_ttg_expansion) can compare role thresholds to the
+        # energy_curve. Stripped before CompleteSongIntentRequest construction
+        # (orchestration is not in _ALLOWED_COMPLETE).
+        if _orchestration_present(tech):
+            out["orchestration"] = pydantic_to_dict(tech.get("orchestration"))
+
         if _timeline_present(tech):
             from music_brain.api_schemas.ttg_adapter import (
                 motif_inventory_from_dict,
@@ -334,6 +354,22 @@ class IntentPipeline:
             return CompleteSongIntentRequest.parse_obj(payload)
         except Exception:
             raise
+
+    def validate_with_warnings(
+        self, normalized: Dict[str, Any]
+    ) -> tuple[CompleteSongIntentRequest, List[str]]:
+        """Same as ``validate`` but also returns soft-warning strings.
+
+        Soft warnings are collected from schema-expansion validators
+        (currently :func:`validate_ttg_expansion`) — they don't raise; they
+        indicate likely misconfiguration. Hard validation errors still raise
+        from the underlying Pydantic ``validate`` call.
+        """
+        from music_brain.api_schemas.ttg_adapter import validate_ttg_expansion
+
+        validated = self.validate(normalized)
+        warnings = validate_ttg_expansion(normalized)
+        return validated, warnings
 
     # -------------------------------------------------------------------------
     # Stage 3: Expand — build CompleteSongIntent; imagery_texture ONLY here
