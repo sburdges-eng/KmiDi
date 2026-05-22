@@ -884,7 +884,13 @@ if(BUILD_PENTA_TESTS)
         GIT_SHALLOW TRUE
     )
     FetchContent_MakeAvailable(googletest)
-    add_subdirectory(tests/penta_core)
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/penta_core/CMakeLists.txt)
+        add_subdirectory(tests/penta_core)
+    else()
+        message(STATUS
+            "BUILD_PENTA_TESTS=ON but tests/penta_core/ is absent; "
+            "googletest is fetched but no top-level penta_core test target is added.")
+    endif()
 endif()
 
 # Tracy profiling
