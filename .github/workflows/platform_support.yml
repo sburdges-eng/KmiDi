@@ -68,7 +68,10 @@ jobs:
       
       - name: Install test dependencies
         run: |
-          pip install pytest pytest-mock pytest-cov pydantic
+          # httpx is required by fastapi.testclient.TestClient (via starlette);
+          # without it test_api_audit_fixes.py errors out at setup with
+          # "RuntimeError: The starlette.testclient module requires httpx".
+          pip install pytest pytest-mock pytest-cov pydantic httpx
       
       - name: Run unit tests
         run: |
