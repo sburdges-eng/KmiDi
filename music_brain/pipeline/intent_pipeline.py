@@ -197,6 +197,18 @@ def _instruments_from_orchestration(tech: Dict[str, Any]) -> List[Dict[str, Any]
     return orchestration_dict_to_instruments(orch)
 
 
+def _instruments_from_orchestration_gated(
+    tech: Dict[str, Any], structure: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Energy-gated orchestration: per-section ``active_in:`` techniques (PRD §8.2)."""
+    from music_brain.api_schemas.ttg_adapter import orchestration_with_energy_gating
+    from music_brain.api_schemas.ttg_v1 import EnergyCurveV1, TTGOrchestrationV1
+
+    orch = TTGOrchestrationV1.model_validate(pydantic_to_dict(tech.get("orchestration")))
+    curve = EnergyCurveV1.model_validate(pydantic_to_dict(tech.get("energy_curve")))
+    return orchestration_with_energy_gating(orch, energy_curve=curve, structure=structure)
+
+
 class IntentPipeline:
     """
     Deterministic 3-stage pipeline: Normalize → Validate → Expand.
@@ -252,7 +264,10 @@ class IntentPipeline:
             structure = _normalize_structure(tech)
 
         if _orchestration_present(tech):
-            instruments = _instruments_from_orchestration(tech)
+            if tech.get("energy_curve") is not None and structure:
+                instruments = _instruments_from_orchestration_gated(tech, structure)
+            else:
+                instruments = _instruments_from_orchestration(tech)
         else:
             instruments = _normalize_instruments(tech)
 
