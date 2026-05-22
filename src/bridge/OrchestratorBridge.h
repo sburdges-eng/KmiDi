@@ -157,6 +157,11 @@ private:
     // Async thread storage (H1 fix: avoid detached threads)
     std::vector<std::thread> asyncThreads_;
     std::mutex asyncThreadsMutex_;
+
+    // Live worker counter for dtor drain — guards the race where a worker
+    // has incremented but not yet been pushed into asyncThreads_, so
+    // shutdownPython()'s join loop would miss it.
+    std::atomic<int> activeWorkers_{0};
 };
 
 } // namespace kelly

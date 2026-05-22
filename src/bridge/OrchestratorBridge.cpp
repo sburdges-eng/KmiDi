@@ -28,6 +28,12 @@ OrchestratorBridge::OrchestratorBridge()
 }
 
 OrchestratorBridge::~OrchestratorBridge() {
+    // Drain any in-flight workers that may not yet be in asyncThreads_.
+    // shutdownPython() joins what's been pushed; this guards the race where
+    // a worker incremented activeWorkers_ but hasn't been emplaced yet.
+    while (activeWorkers_.load() > 0) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
     shutdownPython();
 }
 
@@ -179,9 +185,11 @@ void OrchestratorBridge::executePipelineAsync(
             std::remove_if(asyncThreads_.begin(), asyncThreads_.end(),
                 [](std::thread& t) { return !t.joinable(); }),
             asyncThreads_.end());
+        ++activeWorkers_;
         asyncThreads_.emplace_back([this, pipelineName, inputDataJson, callback]() {
             std::string result = executePipeline(pipelineName, inputDataJson);
             callback(result);
+            --activeWorkers_;
         });
     }
 }
