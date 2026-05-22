@@ -21,8 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      - name: Init JUCE submodule
+        # Selective init — only external/JUCE. Avoids tying this job to
+        # the health of .worktrees/integration-finalize (the local-worktree
+        # gitlink), which is not a build dependency.
+        run: git submodule update --init --depth 1 external/JUCE
       - name: C++ Build & Test
         run: |
           sudo apt-get update
