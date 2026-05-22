@@ -38,9 +38,18 @@ jobs:
     - name: Sync canonical entity contracts
       run: |
         python3 scripts/sync_entities.py
-    - name: Verify generated contracts are committed
+    - name: Verify generated contracts are committed (all 7 targets)
       run: |
-        git diff --exit-code -- shared_schemas/CompleteSongIntentRequest.json src/types/Intent.ts
+        git diff --exit-code -- \
+          shared_schemas/CompleteSongIntentRequest.json \
+          shared_schemas/emotion_schema.json \
+          shared_schemas/intent_frame_schema.json \
+          src/types/Intent.ts \
+          src/types/EmotionState.ts \
+          src/types/IntentFrame.ts \
+          engine/intent_ir/src/generated/intent.rs \
+          engine/intent_ir/src/generated/emotion.rs \
+          engine/intent_ir/src/generated/intent_frame.rs
     - name: Run schema security tests
       run: pytest tests/unit/test_api_schema.py -q
     - name: Run Python tests
@@ -247,9 +256,18 @@ jobs:
       run: npm ci
     - name: Sync canonical entities
       run: python3 scripts/sync_entities.py
-    - name: Verify entity contract drift (TS only)
+    - name: Verify entity contract drift (all generated targets)
       run: |
-        git diff --exit-code -- shared_schemas/CompleteSongIntentRequest.json src/types/Intent.ts
+        git diff --exit-code -- \
+          shared_schemas/CompleteSongIntentRequest.json \
+          shared_schemas/emotion_schema.json \
+          shared_schemas/intent_frame_schema.json \
+          src/types/Intent.ts \
+          src/types/EmotionState.ts \
+          src/types/IntentFrame.ts \
+          engine/intent_ir/src/generated/intent.rs \
+          engine/intent_ir/src/generated/emotion.rs \
+          engine/intent_ir/src/generated/intent_frame.rs
     - name: TypeScript check
       run: npx tsc --noEmit
     - name: Build React frontend

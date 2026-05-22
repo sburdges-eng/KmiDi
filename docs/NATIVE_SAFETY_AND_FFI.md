@@ -12,11 +12,21 @@ Human-readable reference for **memory safety across the KellyFFI boundary**, **d
 
 | What | Where | What to do |
 |------|--------|------------|
-| C ABI contract (which `char*` to free) | `src/bridge/kelly_ffi.h` — `kelly_free_string`, comments on static vs heap | Document every new FFI return: caller frees vs static (e.g. `kelly_get_error_message`). |
-| C++ implementation | `src/bridge/kelly_ffi.cpp` | Pair heap allocations returned across the boundary with `kelly_free_string` (or document static storage). |
-| Rust consumer | `engine/intent_ir/src/bridge/kelly_ffi.rs` | Match each `extern "C"` result to the header: allocated → copy then `kelly_free_string`; static/thread-local → **never** free. Grep `kelly_` and verify against `kelly_ffi.h`. |
-| Other Rust FFI | `engine/intent_ir/src/intent_ir/ffi.rs`, `engine/intent_ir/src/intent_ir/ffi_exports.rs` | Same ownership discipline (lifetimes, null, buffer owner). |
-| Regression tests | `tests/cpp/test_kelly_ffi.cpp` | Extend when adding FFI; run with `BUILD_TESTS=ON` and C++ tests enabled. |
+The KellyFFI dylib exposes **one combined C ABI** with two halves:
+
+- **`kelly_*` half** — implemented in C++ (`src/bridge/kelly_ffi.cpp`), declared in `src/bridge/kelly_ffi.h`. Owns `kelly_free_string` for caller-frees returns.
+- **`IntentFrameBuilder_*` / `validate_intent_frame_ffi` half** — implemented in Rust (`engine/intent_ir/src/ffi.rs`) and linked **into** KellyFFI as a staticlib. Header is generated via cbindgen (`engine/intent_ir/cbindgen.toml`).
+
+There is no separate Rust crate that consumes KellyFFI — Rust lives inside the dylib, not above it.
+
+| What | Where | What to do |
+|------|--------|------------|
+| C++ ABI contract (which `char*` to free) | `src/bridge/kelly_ffi.h` — `kelly_free_string`, comments on static vs heap | Document every new `kelly_*` return: caller frees vs static (e.g. `kelly_get_error_message`). |
+| C++ ABI implementation | `src/bridge/kelly_ffi.cpp` | Pair heap allocations returned across the boundary with `kelly_free_string` (or document static storage). |
+| Rust ABI implementation | `engine/intent_ir/src/ffi.rs` | All `extern "C"` symbols use `Box::into_raw` / `Box::from_raw` for opaque handles, wrap bodies in `catch_unwind` (release `panic = "abort"` backstop), document out-pointer ownership. |
+| Rust ABI header generation | `engine/intent_ir/cbindgen.toml` | When adding/changing an `extern "C"` symbol in `ffi.rs`, regenerate the C header so C++ callers see the same prototype. |
+| External callers (C++ tests, Python bindings, plugin code) | `tests/cpp/`, `bindings/`, `src/plugin/` | Match the header: heap → callee documents the free fn; static/thread-local → **never** free. |
+| Regression tests | `tests/cpp/test_kelly_ffi.cpp` (C++ side); `engine/intent_ir` `cargo test` (Rust side) | Extend when adding FFI; run with `BUILD_TESTS=ON` and C++ tests enabled. |
 
 ---
 
@@ -45,7 +55,7 @@ Human-readable reference for **memory safety across the KellyFFI boundary**, **d
 
 | What | Where | What to do |
 |------|--------|------------|
-| KellyFFI ABI / dylib | `CMakeLists.txt` — `KellyFFI` `VERSION` / `SOVERSION`; `engine/intent_ir/build.rs` | Breaking C ABI needs a version story and Tauri packaging update. |
+| KellyFFI ABI / dylib | `CMakeLists.txt` — `KellyFFI` `VERSION` / `SOVERSION`; `engine/intent_ir/Cargo.toml`; cbindgen-generated header | Breaking the C ABI (either half) requires a version bump and a coordinated update of all C++/Python consumers. |
 | TS / Rust / Python intent | `shared_schemas/`, `scripts/sync_entities.py`, `src/types/Intent.ts`, `engine/intent_ir/src/generated/` | After schema edits: run sync, commit generated files, run Python schema tests. |
 | HTTP API only | `music_brain/api_schemas/` | REST evolution; does **not** substitute for native memory safety. |
 
@@ -80,5 +90,5 @@ Full checklist (Python, schema, canonical tree, etc.) is in [`AGENTS.md`](../AGE
 | Doc | Role |
 |-----|------|
 | [`AGENTS.md`](../AGENTS.md) | Canonical agent context + same map (keep in sync) |
-| [`docs/FULL_STACK_BUILD.md`](FULL_STACK_BUILD.md) | React ↔ Tauri ↔ KellyFFI ↔ KellyCore build order |
+| [`docs/FULL_STACK_BUILD.md`](FULL_STACK_BUILD.md) | React ↔ Music Brain API ↔ KellyFFI ↔ KellyCore build order |
 | [`docs/DEVELOPMENT.md`](DEVELOPMENT.md) | Dev workflows and debugging |

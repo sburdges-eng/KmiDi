@@ -24,9 +24,10 @@ option(KMIDI_OFFLINE_BUILD "Disallow network dependency resolution at configure/
 option(BUILD_RT_HARNESS "Build headless RT callback harness" ON)
 # MIDI-CI Property Exchange daemon (JSON microformat -> SysEx via libremidi)
 option(BUILD_MIDI_CI_DAEMON "Build MIDI-CI microformat-to-SysEx daemon" OFF)
-# Sanitizers (ASan+UBSan or TSan; Debug builds only; mutually exclusive)
+# Sanitizers (ASan+UBSan, TSan, or RTSan; Debug builds only; mutually exclusive)
 option(KMIDI_ENABLE_ASAN "Enable AddressSanitizer + UndefinedBehaviorSanitizer" OFF)
 option(KMIDI_ENABLE_TSAN "Enable ThreadSanitizer (mutually exclusive with ASAN)" OFF)
+option(KMIDI_ENABLE_RTSAN "Enable LLVM RealtimeSanitizer (mutually exclusive with ASAN/TSAN; requires Clang 20+)" OFF)
 
 # KmiDi_FINAL integration options
 option(USE_KMI_DI_FINAL "Use existing KmiDi_FINAL components" OFF)
@@ -400,8 +401,16 @@ target_compile_options(KellyCore PRIVATE
 # -Wno-deprecated-declarations: JUCE Font(height, style) → Font(FontOptions); migrate when editing UI.
 
 # Sanitizer instrumentation (Debug builds; compile after all KellyCore config is settled)
-if(KMIDI_ENABLE_ASAN AND KMIDI_ENABLE_TSAN)
-    message(FATAL_ERROR "KMIDI_ENABLE_ASAN and KMIDI_ENABLE_TSAN are mutually exclusive")
+# ASan, TSan, and RTSan share runtime symbols and are mutually exclusive.
+set(_KMIDI_SAN_COUNT 0)
+foreach(_san KMIDI_ENABLE_ASAN KMIDI_ENABLE_TSAN KMIDI_ENABLE_RTSAN)
+    if(${_san})
+        math(EXPR _KMIDI_SAN_COUNT "${_KMIDI_SAN_COUNT} + 1")
+    endif()
+endforeach()
+if(_KMIDI_SAN_COUNT GREATER 1)
+    message(FATAL_ERROR
+        "KMIDI_ENABLE_ASAN, KMIDI_ENABLE_TSAN, and KMIDI_ENABLE_RTSAN are mutually exclusive (pick one)")
 endif()
 if(KMIDI_ENABLE_ASAN)
     include(Sanitizers)
@@ -412,6 +421,11 @@ if(KMIDI_ENABLE_TSAN)
     include(Sanitizers)
     enable_thread_sanitizer(KellyCore)
     message(STATUS "KellyCore: ThreadSanitizer enabled")
+endif()
+if(KMIDI_ENABLE_RTSAN)
+    include(Sanitizers)
+    enable_realtime_sanitizer(KellyCore)
+    message(STATUS "KellyCore: RealtimeSanitizer enabled — processBlock must be [[clang::nonblocking]]")
 endif()
 
 # Kelly GUI Application (Legacy Qt - see legacy/ui/qt_gui/)
@@ -590,11 +604,19 @@ if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE)
     # (e.g. JuceVersionPrinter) allocates with dylib's JUCE heap, then exe's JUCE
     # can run release() and abort with "pointer being freed was not allocated".
     # Consumers of KellyFFI must use the C ABI in kelly_ffi.h, not KellyCore symbols.
+    # Python3::Python: KellyCore embeds PythonBridgeBase.cpp / StateBridge.cpp
+    # which call the Python C API (_Py_Initialize, _PyUnicode_FromString,
+    # __Py_Dealloc, etc.). The KellyFFI dylib must link libpython explicitly
+    # so those symbols resolve at link time on macOS. find_package(Python3)
+    # is already invoked by bindings/CMakeLists.txt; we re-find it here for
+    # the top-level scope. PRIVATE keeps it out of the C ABI consumer surface.
+    find_package(Python3 COMPONENTS Development QUIET)
     target_link_libraries(KellyFFI PRIVATE KellyCore
         Qt6::Core
         Qt6::Widgets
         juce::juce_audio_basics
         juce::juce_core
+        $<$<TARGET_EXISTS:Python3::Python>:Python3::Python>
     )
     
     # Avoid JUCE debug static initializer (JuceVersionPrinter) in the dylib to

@@ -4,17 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-KmiDi / iDAW is an **AI-powered music creation platform** (monorepo). Four layers:
+KmiDi / iDAW is an **AI-powered music creation platform** (monorepo). Layers:
 
 | Layer | Tech | Location |
 |-------|------|----------|
 | Frontend | React 19 + Vite + TypeScript + Tailwind | `src/` |
-| Desktop shell | Tauri 2 + Rust | `engine/intent_ir/` |
-| Native engine | C++20 (KellyCore, KellyFFI, JUCE 8) | `engine/`, `src/`, `include/`, `src_penta-core/` |
+| Intent IR | Rust staticlib (C ABI), linked **into** KellyFFI dylib | `engine/intent_ir/` |
+| Native engine | C++20 (KellyCore, KellyFFI dylib, JUCE 8); AU/VST3/CLAP plugins | `engine/`, `src/`, `include/`, `src_penta-core/` |
 | Backend API | Python FastAPI (`music_brain`) | `music_brain/` |
 
-Data flow: **React** → `invoke()` → **Tauri/Rust** → FFI → **KellyFFI (C ABI)** → **KellyCore (C++)**.
 API flow: **React** → HTTP → **Music Brain API** (port 8000, `/generate`, `/docs`).
+Native flow: KellyFFI dylib exposes a C ABI (`kelly_*` from C++ + `IntentFrameBuilder_*` / `validate_intent_frame_ffi` from the embedded Rust `intent_ir` staticlib). Consumers: Python bindings, C++ tests/benchmarks, plugin hosts. There is **no Tauri desktop shell** in the canonical tree.
 
 Architecture principle: Side A (C++ real-time, lock-free, no allocs) ↔ ring buffer ↔ Side B (Python AI + UI). Emotional intent feeds production rules. Human imperfection (timing/pitch drift) is a feature.
 
@@ -28,7 +28,7 @@ KmiDi/
 │   ├── daiw/               # C++ RT-safe primitives (daiw_core static lib, JUCE)
 │   └── jepa/               # Workspace entry → music_brain/jepa/ (README + pyproject.toml)
 ├── src/                    # React app (components, hooks, types)
-├── engine/intent_ir/       # Rust intent crate (commands, bridge, build.rs)
+├── engine/intent_ir/       # Rust staticlib: IntentFrame C ABI (validator, builder, types) linked into KellyFFI
 ├── music_brain/            # Python FastAPI app + engine API
 │   ├── jepa/               #   JEPA models (Audio-JEPA, Chord-JEPA, Stem-JEPA, trainer)
 │   ├── penta_core/         #   Penta-core ML (emotion runners, diagnostics, PID Flow, etc.)
@@ -46,9 +46,9 @@ KmiDi/
 ├── cmake/                  # CMake helpers
 ├── config/                 # Training/config YAML, source_manifest.yaml
 ├── docs/                   # DEVELOPMENT.md, ENVIRONMENT.md, FULL_STACK_BUILD.md, etc.
-├── BUILD.md                # C++ / CMake / Tauri build reference
+├── BUILD.md                # C++ / CMake build reference
 ├── pyproject.toml          # Python deps (music_brain, fastapi, uvicorn, pydantic)
-└── package.json            # npm scripts (dev, build, tauri)
+└── package.json            # npm scripts (dev, build, preview)
 ```
 
 ## Common commands
@@ -63,7 +63,6 @@ KmiDi/
 npm run dev:all                  # React (localhost:1420) + Music Brain API (localhost:8000)
 npm run dev                      # React only (Vite, localhost:1420)
 npm run dev:python               # Music Brain API only (uvicorn, localhost:8000)
-npm run dev:tauri                # Tauri desktop app (run dev:python separately for API)
 ```
 
 ### Building
@@ -90,7 +89,7 @@ python3 -m pytest tests/unit/test_prrot_bindings.py # Single test file
 python3 -m pytest tests/ -k "test_name"            # Single test by name
 python3 -m pytest tests/ -m unit                   # By marker (unit, integration, slow, cpp)
 ctest --test-dir build --output-on-failure          # C++ tests (BUILD_TESTS=ON)
-cd engine/intent_ir && cargo test                          # Rust/Tauri tests
+cd engine/intent_ir && cargo test                          # Rust intent_ir tests
 ```
 
 ### Linting
@@ -109,7 +108,7 @@ python3 scripts/sync_entities.py    # Sync shared_schemas/ → TS types + Rust t
 | Option | Default | Notes |
 |--------|---------|-------|
 | `BUILD_KELLY_CORE` | ON | Core C++ library |
-| `BUILD_KELLY_FFI` | ON | Shared lib for Tauri/Rust FFI |
+| `BUILD_KELLY_FFI` | ON | KellyFFI dylib (C ABI; embeds Rust `intent_ir` staticlib) |
 | `BUILD_PLUGINS` | ON | VST3/CLAP (requires `KMIDI_BUILD_JUCE_UI=ON`) |
 | `KMIDI_BUILD_JUCE_UI` | OFF | Must enable for plugin builds |
 | `BUILD_TESTS` | OFF | C++ test suite |
@@ -168,11 +167,11 @@ The canonical source tree is the repo root (`KmiDi/`). The following paths are l
 
 | Doc | Content |
 |-----|---------|
-| `AGENTS.md` | Full agent context: repo layout, prerequisites, running services, full build matrix (Frontend/Python/C++/Tauri), env & config, `/generate` API contract, gotchas, on-device tools (MIDI-CI, Core ML, PID Flow, canonicalization, APSC, StructXLIP), **§ Native safety, FFI ownership, and verification map** (FFI frees, duplicate JUCE/ODR, RT alloc rules, contract drift — read before native changes), **§ Integration gate** (merge checklist for native PRs) |
-| `BUILD.md` | C++ / CMake / Tauri build reference |
+| `AGENTS.md` | Full agent context: repo layout, prerequisites, running services, full build matrix (Frontend/Python/C++), env & config, `/generate` API contract, gotchas, on-device tools (MIDI-CI, Core ML, PID Flow, canonicalization, APSC, StructXLIP), **§ Native safety, FFI ownership, and verification map** (FFI frees, duplicate JUCE/ODR, RT alloc rules, contract drift — read before native changes), **§ Integration gate** (merge checklist for native PRs) |
+| `BUILD.md` | C++ / CMake build reference |
 | `docs/DEVELOPMENT.md` | Dev guide, workflows, debugging |
 | `docs/ENVIRONMENT.md` | Env vars, file layout, validation |
-| `docs/FULL_STACK_BUILD.md` | React ↔ Tauri ↔ KellyFFI ↔ KellyCore integration |
+| `docs/FULL_STACK_BUILD.md` | React ↔ Music Brain API ↔ KellyFFI ↔ KellyCore integration |
 | `docs/DATASETS_LAYOUT.md` | Dataset volume layout and acquisition |
 | `docs/NATIVE_SAFETY_AND_FFI.md` | FFI ownership, JUCE/ODR, RT safety, verification commands (mirror of `AGENTS.md`) |
 

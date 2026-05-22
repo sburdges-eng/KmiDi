@@ -11,7 +11,7 @@ This file is project-local. `~/Dev` is only the workspace container; once a sess
 - If work touches another folder inside `~/Dev`, switch to that folder's own `AGENTS.md` before editing there.
 - Do not refresh or rely on a `~/Dev`-wide index as the source of truth for this project.
 
-**Before changing C++, KellyFFI, Tauri FFI, or real-time audio paths:** read and follow **§ [Native safety, FFI ownership, and verification map](#native-safety-ffi-ownership-and-verification-map)** below (file paths, ownership rules, commands). Do not rely on memory of this doc from prior sessions.
+**Before changing C++, KellyFFI, Rust intent_ir FFI, or real-time audio paths:** read and follow **§ [Native safety, FFI ownership, and verification map](#native-safety-ffi-ownership-and-verification-map)** below (file paths, ownership rules, commands). Do not rely on memory of this doc from prior sessions.
 
 ---
 
@@ -22,12 +22,14 @@ KmiDi / iDAW is an **AI-powered music creation platform** (monorepo). Stack:
 | Layer | Tech | Purpose |
 |-------|------|---------|
 | Frontend | React (Vite) + TypeScript | UI, intent builder, emotion wheel |
-| Desktop shell | Tauri 2 + Rust | Native host, FFI to C++ |
-| Native engine | C++20 (KellyCore, KellyFFI) | AI/emotion engine, audio, plugins |
+| Intent IR | Rust staticlib (C ABI) `engine/intent_ir/` | `IntentFrame` validator/builder/types; linked **into** KellyFFI dylib |
+| Native engine | C++20 (KellyCore, KellyFFI dylib) | AI/emotion engine, audio, plugins (VST3/CLAP/AU) |
 | Backend API | Python (FastAPI, music_brain) | Generate endpoint, engine API |
 
+KellyFFI dylib exposes one combined C ABI: `kelly_*` (from C++) plus `IntentFrameBuilder_*` / `validate_intent_frame_ffi` (from the embedded Rust `intent_ir` staticlib). Consumers are Python bindings, C++ tests/benchmarks, and plugin hosts. **There is no Tauri desktop shell in the canonical tree.**
+
 **Required for development (e.g. Cursor Cloud):** React + Music Brain API.  
-**Optional (need native toolchains):** Tauri desktop app, C++ KellyCore/KellyFFI, VST3/CLAP plugins, Streamlit mixer, Android.
+**Optional (need native toolchains):** C++ KellyCore/KellyFFI, VST3/CLAP/AU plugins, Streamlit mixer, Android.
 
 ---
 
@@ -41,7 +43,7 @@ KmiDi/
 │   ├── daiw/               # C++ RT-safe primitives (daiw_core static lib, JUCE)
 │   └── jepa/               # Workspace entry → music_brain/jepa/ (README + pyproject.toml)
 ├── src/                    # React app (components, hooks, types)
-├── engine/intent_ir/       # Rust intent crate (commands, bridge, build.rs)
+├── engine/intent_ir/       # Rust staticlib: IntentFrame C ABI (src/ffi.rs, validator, builder, types, cbindgen.toml) linked into KellyFFI
 ├── music_brain/            # Python FastAPI app + engine API
 │   ├── jepa/               #   JEPA models (Audio-JEPA, Chord-JEPA, Stem-JEPA, trainer)
 │   ├── penta_core/         #   Penta-core ML (emotion runners, diagnostics, PID Flow, etc.)
@@ -59,13 +61,13 @@ KmiDi/
 ├── cmake/                  # CMake helpers
 ├── config/                 # Training/config YAML, source_manifest.yaml (external sources)
 ├── docs/                   # DEVELOPMENT.md, ENVIRONMENT.md, FULL_STACK_BUILD.md, DATASETS_LAYOUT.md
-├── BUILD.md                # C++ / CMake / Tauri build reference
+├── BUILD.md                # C++ / CMake build reference
 ├── pyproject.toml          # Python deps (music_brain, fastapi, uvicorn, pydantic)
-└── package.json            # npm scripts (dev, build, tauri)
+└── package.json            # npm scripts (dev, build, preview)
 ```
 
-Data flow: **React** → `invoke()` / events → **Tauri** → **Rust FFI** → **KellyFFI (C ABI)** → **KellyCore (C++)**.  
-API flow: **React** → HTTP → **Music Brain API** (`/generate`, `/docs`).
+API flow: **React** → HTTP → **Music Brain API** (`/generate`, `/docs`).  
+Native flow: a process loads the **KellyFFI** dylib and calls its C ABI (`kelly_*` for engine state/generation; `IntentFrameBuilder_*` / `validate_intent_frame_ffi` for intent IR). Inside the dylib, the C++ side links **KellyCore**; the embedded Rust **intent_ir** staticlib provides the intent ABI half. There is no Tauri shell in the canonical tree.
 
 ---
 
@@ -73,7 +75,7 @@ API flow: **React** → HTTP → **Music Brain API** (`/generate`, `/docs`).
 
 - **CMake** 3.27+, **Ninja**, **Node** 20+, **Python** 3.11+ (3.9+ in pyproject), **Rust** (stable)
 - **macOS:** Xcode Command Line Tools; **Linux:** GCC 9+ / Clang 10+, ALSA/JACK, X11
-- **C++/Tauri/plugins:** JUCE in `external/JUCE`, Qt6 (if building desktop/plugins)
+- **C++/plugins:** JUCE in `external/JUCE`, Qt6 (if building desktop UI or plugins)
 
 One-command setup from repo root:
 
@@ -91,13 +93,11 @@ In cloud VMs, JUCE submodule step can be skipped if C++ build is not needed.
 | Context | Command | Notes |
 |---------|---------|--------|
 | **Any (React + API)** | `npm run dev:all` | React (Vite) + Music Brain API only; no port collision |
-| **Desktop (Tauri)** | `npm run dev:tauri` | Run **separately**; Tauri starts its own Vite. For API, run `npm run dev:python` in another terminal |
 
 | Service | Command | URL |
 |---------|---------|-----|
 | React (Vite) | `npm run dev` (or `npm run dev:react`) | http://localhost:1420 |
 | Music Brain API | `npm run dev:python` or `python3 -m uvicorn music_brain.api:app --reload --port 8000 --host 0.0.0.0` | http://localhost:8000, docs at /docs |
-| Tauri desktop | `npm run dev:tauri` | Starts Vite then opens http://localhost:1420 in the native window |
 
 - Python API needs `fastapi`, `uvicorn`, `pydantic` (and `pip install -e .`). Ensure `$HOME/.local/bin` is on `PATH` if uvicorn is installed with `--user`.
 - Vite is bound to `0.0.0.0` (see `vite.config.ts`) so the frontend is reachable outside the host.
@@ -131,7 +131,7 @@ In cloud VMs, JUCE submodule step can be skipped if C++ build is not needed.
   | Option | Default | Effect |
   |--------|---------|--------|
   | `BUILD_KELLY_CORE` | ON | Kelly core library, app, plugins |
-  | `BUILD_KELLY_FFI` | ON | KellyFFI shared lib for Tauri/Rust |
+  | `BUILD_KELLY_FFI` | ON | KellyFFI dylib (C ABI; embeds Rust `intent_ir` staticlib) |
   | `BUILD_PLUGINS` | ON | VST3/CLAP (requires `KMIDI_BUILD_JUCE_UI=ON`) |
   | `BUILD_DESKTOP` | OFF* | Desktop GUI (set ON if `KMIDI_BUILD_QT_UI=ON`) |
   | `BUILD_TESTS` | OFF | Native/unit tests |
@@ -149,7 +149,7 @@ In cloud VMs, JUCE submodule step can be skipped if C++ build is not needed.
 
 - **Key targets:**
   - `KellyCore` — core C++ library
-  - `KellyFFI` — shared library for Tauri (output e.g. `build/libKellyFFI.dylib`; CMake copies to `engine/intent_ir/resources/`)
+  - `KellyFFI` — shared library exposing the combined C ABI (output e.g. `build/libKellyFFI.dylib`); embeds the Rust `intent_ir` staticlib
   - `KellyPlugin_VST3` — VST3 plugin (e.g. `build/KellyPlugin_artefacts/Release/VST3/...`)
   - `KellyFFIBenchmark` — FFI benchmark (requires KellyFFI; do not link JUCE in the benchmark exe — KellyFFI links JUCE PRIVATE)
   - `KellyTests` — C++ tests (when `BUILD_TESTS=ON` and Catch2 present)
@@ -158,14 +158,14 @@ In cloud VMs, JUCE submodule step can be skipped if C++ build is not needed.
 - **JUCE:** Must be present at `external/JUCE/CMakeLists.txt` (full clone with extras/Build/CMake). JUCE 8–aligned.
 - **KellyFFI:** Links JUCE and Qt **PRIVATE** so executables that link only KellyFFI do not get a second JUCE (avoids allocator mismatch / "pointer being freed was not allocated" in static init).
 
-Full-stack build and Tauri link paths: `docs/FULL_STACK_BUILD.md`. Optional helper: `./scripts/build-full-stack.sh` (e.g. `--debug`, `--no-plugins`, `--build-dir`, `--no-tauri`).
+Full-stack build paths: `docs/FULL_STACK_BUILD.md`. Optional helper: `./scripts/build-full-stack.sh` (e.g. `--debug`, `--no-plugins`, `--build-dir`).
 
-### Tauri
+### Rust intent_ir
 
-- **Dev:** `npm run dev` (React, Vite) + `npm run dev:python` (API).
-- **Build:** `npm run build` (React frontend); CMake `KellyFFI` for native engine.
-- **Rust tests:** `cd engine/intent_ir && cargo test`.
-- KellyFFI dylib is built via CMake and loaded by the JUCE Standalone plugin at runtime.
+- **Crate:** `engine/intent_ir/` (staticlib + rlib; `panic = "abort"` in release for FFI safety).
+- **Build:** linked into KellyFFI by the root CMake when `BUILD_KELLY_FFI=ON`.
+- **Tests:** `cd engine/intent_ir && cargo test`.
+- **Header generation:** `cbindgen.toml` produces the C header for the Rust-side ABI consumed by C++ and external callers.
 
 ### Schema sync (UI–engine contract)
 
@@ -188,9 +188,9 @@ Full-stack build and Tauri link paths: `docs/FULL_STACK_BUILD.md`. Optional help
 
 ## Environment and config
 
-- **Env files:** `.env`, `.env.development`, `.env.production`; feature-specific under `env/`; user overrides in `.env.local` (git-ignored). Load: `source scripts/load-env.sh` (or `scripts/load-env.sh tauri ml`).
+- **Env files:** `.env`, `.env.development`, `.env.production`; feature-specific under `env/`; user overrides in `.env.local` (git-ignored). Load: `source scripts/load-env.sh` (or `scripts/load-env.sh ml`).
 - **Validation:** `./scripts/validate-env.sh`.
-- **Important vars (see `docs/ENVIRONMENT.md`):** `KELLY_MODELS_PATH`, `KMIDI_API_URL` (default `http://127.0.0.1:8000`), `TAURI_DEV_HOST`, `RUST_LOG`, `VITE_*` for frontend.
+- **Important vars (see `docs/ENVIRONMENT.md`):** `KELLY_MODELS_PATH`, `KMIDI_API_URL` (default `http://127.0.0.1:8000`), `RUST_LOG`, `VITE_*` for frontend.
 - **Build options** are CMake flags, not env vars; set via `-D` on the `cmake` command.
 
 ---
@@ -237,7 +237,7 @@ Minimal working example:
 
 - **Lockfile:** `package-lock.json` is committed; use `npm ci` in CI and `npm install` for local dev.
 - **App shell:** Default entrypoint is `AppConsole` (main.tsx). `App.tsx` is legacy/alternate and not imported.
-- **Cloud vs local:** `npm run dev:all` runs React + API only (safe everywhere). For desktop, run `npm run dev:tauri` separately.
+- **Cloud vs local:** `npm run dev:all` runs React + API only (safe everywhere). Native plugin/engine work requires a local C++ toolchain (CMake + JUCE submodule).
 - **JUCE:** Large submodule; in cloud-only workflows bootstrap can skip `git submodule update` for JUCE if C++ is not built.
 - **Two build contexts:** Root CMake uses `BUILD_PLUGINS`, `KMIDI_BUILD_JUCE_UI`, `BUILD_KELLY_FFI`. Legacy DAIW in `KmiDi_FINAL/engine/cpp_music_brain` uses `DAIW_BUILD_VST3` / `DAIW_BUILD_AU` — do not mix.
 - **KellyFFI and JUCE:** KellyFFI is built with JUCE linked **PRIVATE** and `JUCE_DISABLE_JUCE_VERSION_PRINTING=1` to avoid two copies of JUCE and static-init crashes when the benchmark (or any exe that only links the dylib) runs.
@@ -264,13 +264,21 @@ Human-oriented copy (same content, readable in docs navigation): [`docs/NATIVE_S
 
 ### FFI buffer ownership (who allocates / frees)
 
+The KellyFFI dylib exposes **one combined C ABI** with two halves:
+
+- **`kelly_*` half** — implemented in C++ (`src/bridge/kelly_ffi.cpp`), declared in `src/bridge/kelly_ffi.h`. Owns `kelly_free_string` for caller-frees returns.
+- **`IntentFrameBuilder_*` / `validate_intent_frame_ffi` half** — implemented in Rust (`engine/intent_ir/src/ffi.rs`) and linked **into** KellyFFI as a staticlib. Header generated via cbindgen.
+
+Both halves must follow the same ownership discipline. There is **no separate "Rust consumer of KellyFFI"** in the canonical tree — Rust is inside the dylib, not above it.
+
 | What | Where | Agent action |
 |------|--------|----------------|
-| C ABI contract (which `char*` to free) | `src/bridge/kelly_ffi.h` — `kelly_free_string`, comments on static vs heap | Every new FFI return type must be documented (caller frees vs static, e.g. `kelly_get_error_message`). |
-| C++ implementation | `src/bridge/kelly_ffi.cpp` | Pair every heap allocation returned across the boundary with `kelly_free_string` (or document static storage). |
-| Rust consumer | `engine/intent_ir/src/bridge/kelly_ffi.rs` | Match each `extern "C"` result: if the header says the library allocated it, copy then `kelly_free_string`. If the header says static/thread-local, **never** free. Grep `kelly_` calls and verify against `kelly_ffi.h`. |
-| Other Rust FFI | `engine/intent_ir/src/intent_ir/ffi.rs`, `engine/intent_ir/src/intent_ir/ffi_exports.rs` | Same discipline as KellyFFI (lifetimes, null, who owns buffers). |
-| Regression tests | `tests/cpp/test_kelly_ffi.cpp` | Extend when adding FFI; run with `BUILD_TESTS=ON` and C++ tests enabled. |
+| C++ ABI contract (which `char*` to free) | `src/bridge/kelly_ffi.h` — `kelly_free_string`, comments on static vs heap | Every new `kelly_*` return type must be documented (caller frees vs static, e.g. `kelly_get_error_message`). |
+| C++ ABI implementation | `src/bridge/kelly_ffi.cpp` | Pair every heap allocation returned across the boundary with `kelly_free_string` (or document static storage). |
+| Rust ABI implementation | `engine/intent_ir/src/ffi.rs` | All `extern "C"` symbols use `Box::into_raw` / `Box::from_raw` for handles, wrap bodies in `catch_unwind` (release builds use `panic = "abort"` as backstop), and document who owns out-pointers. |
+| Rust ABI header generation | `engine/intent_ir/cbindgen.toml` | When adding/changing an `extern "C"` symbol in `ffi.rs`, regenerate the C header so C++ callers see the same prototype. |
+| External callers of either half | C++ tests/benchmarks, Python bindings (`bindings/`), plugin code | Match the header: heap → callee documents the free fn; static/thread-local → **never** free. |
+| Regression tests | `tests/cpp/test_kelly_ffi.cpp` (C++ side); `engine/intent_ir` `cargo test` (Rust side) | Extend when adding FFI; run with `BUILD_TESTS=ON` and C++ tests enabled. |
 
 ### Duplicate JUCE / ODR / allocator mismatch
 
@@ -293,7 +301,7 @@ Human-oriented copy (same content, readable in docs navigation): [`docs/NATIVE_S
 
 | What | Where | Agent action |
 |------|--------|----------------|
-| KellyFFI ABI / dylib | `CMakeLists.txt` — `KellyFFI` `VERSION` / `SOVERSION`; `engine/intent_ir/build.rs` search paths | Breaking C ABI requires version story + Tauri packaging update. |
+| KellyFFI ABI / dylib | `CMakeLists.txt` — `KellyFFI` `VERSION` / `SOVERSION`; `engine/intent_ir/Cargo.toml`; cbindgen-generated header | Breaking the C ABI (either `kelly_*` half or Rust `IntentFrameBuilder_*` / `validate_intent_frame_ffi` half) requires a version bump and a coordinated update of all C++/Python consumers. |
 | TS / Rust / Python intent shapes | `shared_schemas/`, `scripts/sync_entities.py`, `src/types/Intent.ts`, `engine/intent_ir/src/generated/` | After schema edits, run sync and commit generated files; run Python schema tests. |
 | HTTP API only | `music_brain/api_schemas/` | REST contract evolution; does not fix C++ memory by itself. |
 
@@ -315,7 +323,7 @@ Every PR or feature branch touching native code must satisfy all of the followin
 - [ ] **Sanitizer clean:** Debug build with `KMIDI_ENABLE_ASAN=ON` passes all tests with zero ASan/UBSan findings. Document any waiver with a tracking ticket.
 - [ ] **No new heap allocations or locks on RT paths.** Audio callbacks must remain `noexcept`, allocation-free, and lock-free. Review any code that runs inside `processBlock` or the RT callback harness.
 - [ ] **No duplicate JUCE linkage / ODR violations.** KellyFFI links JUCE PRIVATE. Any new executable or shared library must not also link JUCE directly — verify with `nm` or linker diagnostics if in doubt.
-- [ ] **FFI ownership.** Any new KellyFFI `extern "C"` pointer contract is documented in `src/bridge/kelly_ffi.h` and mirrored in `kelly_ffi.rs` (free vs static). See **§ Native safety, FFI ownership, and verification map** above.
+- [ ] **FFI ownership.** Any new `extern "C"` pointer contract on the C++ half is documented in `src/bridge/kelly_ffi.h`; on the Rust half it lives in `engine/intent_ir/src/ffi.rs` with the cbindgen header regenerated. Free vs static must be explicit. See **§ Native safety, FFI ownership, and verification map** above.
 - [ ] **Single canonical tree.** New code goes into the repo root, not `KmiDi_FINAL/`, `KmiDi_PROJECT/`, or worktree-only paths. If importing from KmiDi_FINAL, copy into root and delete the worktree copy in the same PR.
 - [ ] **Schema sync.** If `shared_schemas/` changed, `scripts/sync_entities.py` was run and generated files are committed.
 - [ ] **Python lint + tests pass.** `flake8 music_brain/` and `pytest tests/` green.
@@ -329,12 +337,12 @@ Every PR or feature branch touching native code must satisfy all of the followin
 | `docs/prd/KMIDI_PRD.md` | Product requirements: bounded contexts, hybrid modular monolith, TTG, RT hazards, APIs, MVP |
 | `docs/DEVELOPMENT.md` | Full dev guide, workflows, debugging, C++/Rust/React structure |
 | `docs/ENVIRONMENT.md` | Env vars, file layout, loading, validation |
-| `docs/FULL_STACK_BUILD.md` | React ↔ Tauri ↔ KellyFFI ↔ KellyCore, build order, integration tests |
+| `docs/FULL_STACK_BUILD.md` | React ↔ Music Brain API ↔ KellyFFI ↔ KellyCore, build order, integration tests |
 | `docs/DATASETS_LAYOUT.md` | Canonical dataset volume layout (by_source, by_domain), KMIDI_DATASETS_PATH, acquisition paths |
 | `docs/SOURCE_INTEGRATION_PLAN.md` | Source integration and download plan; external briefings in `docs/research/sources/` |
 | `docs/AU_PLUGIN_ARCHITECTURE.md` | Audio Unit (AU) plugin architecture: macOS, iOS AUv3, build contexts |
 | `docs/SAGEMAKER_SETUP.md` | SageMaker AI training (JEPA): IAM, S3, ECR, image build, launch jobs |
 | `docs/LATENT_ARCHITECTURE.md` | Six high-leverage tools (stateful KV-cache, MIDI-CI, canonicalization, APSC, StructXLIP, PID Flow) |
-| `BUILD.md` | C++ / CMake / Tauri build instructions and prerequisites |
+| `BUILD.md` | C++ / CMake build instructions and prerequisites |
 | `AGENTS.md` (this file): Native safety, FFI ownership, and verification map | FFI frees, duplicate JUCE, RT paths, contract drift, commands |
 | `docs/NATIVE_SAFETY_AND_FFI.md` | Human-readable mirror of the map above; keep in sync with this section |
