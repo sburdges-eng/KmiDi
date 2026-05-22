@@ -137,6 +137,12 @@ The DAW host owns the transport clock; the AI never asserts BPM, time signature,
 
 **Contract.** Planning (`music_brain/structure/`, `music_brain/penta_core/ml/`) produces symbolic intent (notes, chords, sections, dynamics). Realization (`src/plugin/PluginProcessor.cpp::processBlock`) converts symbolic intent to audio samples + MIDI events at host-driven sample positions. These are separated by the GeneratedMidi contract — no code path collapses planning and realization into a single function.
 
+## 17a. Plugin format coverage (decided)
+
+**Contract.** v1 ships **VST3 + AU + CLAP** for plugin host support. This covers Logic, Ableton, Reaper, FL Studio, Cubase, Bitwig, Studio One, Cakewalk, and GarageBand — effectively the entire creator/indie DAW market.
+
+**AAX is explicitly deferred.** It is the only plugin format Avid Pro Tools requires, and distribution additionally mandates PACE iLok wrapping (proprietary copy-protection middleware with high CI/CD friction and vendor lock-in). AAX is a "court Pro Tools studios" decision appropriate for vN once product-market fit is established. It is **not** a v1 gap.
+
 ## 17. Clear deterministic vs probabilistic systems
 
 **Contract.** Deterministic subsystems (must produce identical output for identical input):

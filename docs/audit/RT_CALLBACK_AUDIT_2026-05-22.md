@@ -91,11 +91,16 @@ Beyond the RT-callback path itself, the following spec items have working code i
 | Update infrastructure / Update delivery | `.github/workflows/release.yml`, `release-monorepo.yml`, `v1-release.yml` | Three release workflows present |
 | Schema expansion and validation (emotion + intent_frame, not just intent) | `shared_schemas/emotion_schema.json`, `intent_frame_schema.json`, plus generated targets | All three sources guarded by expanded CI drift check this turn |
 
+## Deferred-by-decision (not gaps)
+
+| Spec item | Decision |
+|-----------|----------|
+| AAX plugin support | **Deferred to vN; not a v1 feature.** Avid Pro Tools is the only DAW requiring AAX. Distribution additionally requires PACE iLok wrapping — proprietary copy-protection middleware that introduces vendor lock-in and significant CI/CD friction. KMiDi v1 ships VST3 + AU + CLAP, which covers Logic, Ableton, Reaper, FL Studio, Cubase, Bitwig, Studio One, Cakewalk, GarageBand — i.e., the entire creator/indie market. AAX is a "court Pro Tools studios" decision that warrants revisiting after product-market fit. |
+
 ## Genuine gaps (not present in canonical tree)
 
 | Spec item | Status |
 |-----------|--------|
-| AAX plugin support | No `BUILD_AAX` / `AAX_SDK` references in root CMake (consistent with spec wording "AAX compatibility *consideration*"). |
 | Audio cache management | No `audio_cache` / cache-manager module found. Confirmed via GitNexus query (zero processes match). |
 | Watchdog recovery | No `Watchdog` class or watchdog process found. Confirmed via GitNexus query (zero processes match). |
 | Process sandboxing | No sandbox / process-isolation wrapper found at plugin layer (separate from `tests/spectocloud_sandbox_*` test infra). Confirmed via GitNexus query. |
