@@ -64,8 +64,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
+      - name: Init JUCE submodule
+        # Selective init — only external/JUCE, not all submodules. Avoids
+        # tying cpp-ctest to the health of .worktrees/integration-finalize
+        # (the local-worktree gitlink) which is not a build dependency.
+        run: git submodule update --init --depth 1 external/JUCE
       - name: Install build deps
         run: |
           sudo apt-get update
@@ -97,9 +100,11 @@ jobs:
           node-version: "18"
       - name: Install web deps
         run: npm install --ignore-scripts
-      - name: Lint/Smoke
-        run: |
-          npm test -- --watch=false || true
+      - name: Smoke (typecheck + build)
+        # Root package.json has no `test` script — `npm test || true` would
+        # silently pass without exercising anything. `npm run build` runs
+        # `tsc && vite build`, which catches TS regressions and bundle errors.
+        run: npm run build
 
 # Notes:
 # - This is a staging-friendly template anchored to the KMIDI_STRUCTURE_PLAN.md layout.
