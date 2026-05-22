@@ -466,6 +466,17 @@ if(BUILD_PLUGINS)
     else()
         message(WARNING "KmiDi plugin icons not found at ${KMIDI_ICON_ROOT}; building without plugin icons.")
     endif()
+
+    # KellyCore's PythonBridgeBase.cpp / StateBridge.cpp call the CPython
+    # C API directly. Plugin variants (KellyPlugin_VST3, KellyPlugin_AU,
+    # KellyPlugin_Standalone, KellyPlugin_CLAP) all link KellyCore.a in
+    # their final link step, so each one needs libpython on its link line
+    # — otherwise the static linker reports _Py_Initialize / __Py_Dealloc
+    # as undefined. find_package is repeated here (it's also inside the
+    # BUILD_KELLY_FFI block) because the Python3::Python imported target
+    # is scope-local.
+    find_package(Python3 COMPONENTS Development QUIET)
+
     # VST3/CLAP plugin. Note: current JUCE (external/JUCE) does not include CLAP in its
     # CMake plugin kinds, so only KellyPlugin_VST3 (and KellyPlugin_All) are created.
     juce_add_plugin(KellyPlugin
@@ -547,6 +558,17 @@ if(BUILD_PLUGINS)
     target_link_libraries(KellyPlugin PRIVATE
         KellyCore
         juce::juce_audio_plugin_client
+        # juce_audio_utils + juce_audio_devices are required by the JUCE
+        # Standalone wrapper (juce_audio_plugin_client_Standalone.cpp #errors
+        # without them). The AU/VST3/CLAP formats build fine without these,
+        # but linking them is a no-op for the plugin formats.
+        juce::juce_audio_utils
+        juce::juce_audio_devices
+        # KellyCore embeds PythonBridgeBase.cpp / StateBridge.cpp which use
+        # the CPython C API. Plugin variants must link libpython at link
+        # time or the linker reports unresolved _Py_Initialize / __Py_Dealloc
+        # symbols. Matches the same pattern used for KellyFFI above.
+        $<$<TARGET_EXISTS:Python3::Python>:Python3::Python>
     )
     # VST3-only build: no VST2 SDK available, so disable VST2 state replacement code.
     target_compile_definitions(KellyPlugin PRIVATE
@@ -559,6 +581,19 @@ if(BUILD_PLUGINS)
             JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1
         )
     endif()
+
+    # Propagate libpython to every plugin variant juce_add_plugin produces.
+    # PRIVATE on KellyPlugin (the SharedCode static lib) does not transit
+    # through to the variants' final link step, so we apply it directly.
+    foreach(_kelly_plugin_variant
+            KellyPlugin_VST3 KellyPlugin_AU KellyPlugin_AUv3
+            KellyPlugin_CLAP KellyPlugin_LV2 KellyPlugin_Standalone
+            KellyPlugin_Unity KellyPlugin_AAX KellyPlugin_VST)
+        if(TARGET ${_kelly_plugin_variant} AND TARGET Python3::Python)
+            target_link_libraries(${_kelly_plugin_variant} PRIVATE
+                Python3::Python)
+        endif()
+    endforeach()
 endif()
 
 endif() # BUILD_KELLY_CORE
