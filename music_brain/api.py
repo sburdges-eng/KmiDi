@@ -1186,10 +1186,14 @@ if FASTAPI_AVAILABLE:
 
         # Handle audio file input (convert to MIDI events if needed)
         if payload.audio_file_path:
-            audio_path = Path(payload.audio_file_path)
-            if not audio_path.exists():
-                raise HTTPException(
-                    status_code=400, detail=f"Audio file not found: {payload.audio_file_path}")
+            # Sandbox-check FIRST so we don't expose a filesystem probe oracle
+            # (different 400 details for existing vs missing /etc/... paths).
+            # _resolve_audio_path_sandbox() raises 400 "not allowed" for any
+            # path outside KMIDI_AUDIO_SERVE_ROOT.
+            safe_audio_path = _resolve_audio_path_sandbox(payload.audio_file_path)
+            if not safe_audio_path.exists():
+                # Don't leak the resolved absolute path in the detail.
+                raise HTTPException(status_code=400, detail="Audio file not found")
             # For now, if audio file provided, we'd need to extract MIDI from it
             # This is a placeholder - actual implementation would analyze audio and extract MIDI
             # For now, raise an error suggesting MIDI file instead
