@@ -158,6 +158,57 @@ def orchestration_with_energy_gating(
 
 
 # ---------------------------------------------------------------------------
+# Motif recurrence tracking (PRD §8.3 motifs).
+# ---------------------------------------------------------------------------
+
+
+def extract_motif_inventory(movement: TTGMovementV1) -> Dict[str, List[Dict[str, Any]]]:
+    """Map each motif id to the list of phrases it appears in.
+
+    Each occurrence is ``{"phrase_index": int, "section": str, "bars": int}``;
+    ``section`` uses ``phrase.section_role`` when set, otherwise
+    ``infer_section_role(index, total)``.
+    """
+    children = movement.children
+    total = len(children)
+    inv: Dict[str, List[Dict[str, Any]]] = {}
+    for i, phrase in enumerate(children):
+        if not phrase.motifs:
+            continue
+        section = phrase.section_role or infer_section_role(i, total)
+        for motif in phrase.motifs:
+            inv.setdefault(motif, []).append(
+                {"phrase_index": i, "section": section, "bars": phrase.bars}
+            )
+    return inv
+
+
+def summarize_motif_recurrence(movement: TTGMovementV1) -> Dict[str, Dict[str, Any]]:
+    """Per-motif summary: occurrences, first/last section, recurrence_factor, is_recurring.
+
+    ``recurrence_factor`` = occurrences / total_phrases ∈ [0, 1]; ``is_recurring``
+    is True when occurrences > 1.
+    """
+    inv = extract_motif_inventory(movement)
+    total_phrases = len(movement.children) or 1
+    out: Dict[str, Dict[str, Any]] = {}
+    for motif, occurrences in inv.items():
+        out[motif] = {
+            "occurrences": len(occurrences),
+            "is_recurring": len(occurrences) > 1,
+            "first_section": occurrences[0]["section"],
+            "last_section": occurrences[-1]["section"],
+            "recurrence_factor": len(occurrences) / total_phrases,
+        }
+    return out
+
+
+def motif_inventory_from_dict(timeline: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
+    """Convenience: parse a raw timeline dict and return the motif inventory."""
+    return extract_motif_inventory(TTGMovementV1.model_validate(timeline))
+
+
+# ---------------------------------------------------------------------------
 # Schema-expansion validation.
 # ---------------------------------------------------------------------------
 
