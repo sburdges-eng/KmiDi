@@ -317,6 +317,54 @@ public:
   void timerCallback() override;
 
 private:
+  // ---- DSP graph node wrappers ------------------------------------------
+  //
+  // The audio pipeline (ML lookahead → master EQ) is encoded as a DAG:
+  //   mlPipelineNode_ → eqPipelineNode_
+  //
+  // Both nodes share access to the outer PluginProcessor (via setOwner) and
+  // a side-channel pointer to the current juce::AudioBuffer (via setBuffer,
+  // called every block). The DSPGraph orchestrates evaluation order; the
+  // nodes invoke private helpers that own the actual DSP logic.
+  //
+  // Port shape: each node declares 1 input and 1 output port so the graph
+  // can connect them with a control edge. The per-port float buffers go
+  // unused — real audio flows through the side-channel AudioBuffer.
+
+  class MLPipelineNode : public daiw::rt::DSPNode {
+  public:
+    void setOwner(PluginProcessor *owner) noexcept { owner_ = owner; }
+    void setBuffer(juce::AudioBuffer<float> *buf) noexcept { buffer_ = buf; }
+    void prepare(double, std::size_t) override {}
+    void process(const float *const *, float *const *,
+                 std::size_t numSamples) noexcept override;
+    std::size_t num_inputs() const override { return 1; }
+    std::size_t num_outputs() const override { return 1; }
+
+  private:
+    PluginProcessor *owner_ = nullptr;
+    juce::AudioBuffer<float> *buffer_ = nullptr;
+  };
+
+  class EQPipelineNode : public daiw::rt::DSPNode {
+  public:
+    void setOwner(PluginProcessor *owner) noexcept { owner_ = owner; }
+    void setBuffer(juce::AudioBuffer<float> *buf) noexcept { buffer_ = buf; }
+    void prepare(double, std::size_t) override {}
+    void process(const float *const *, float *const *,
+                 std::size_t numSamples) noexcept override;
+    std::size_t num_inputs() const override { return 1; }
+    std::size_t num_outputs() const override { return 1; }
+
+  private:
+    PluginProcessor *owner_ = nullptr;
+    juce::AudioBuffer<float> *buffer_ = nullptr;
+  };
+
+  // RT-safe helpers executed by the graph nodes.
+  void processMLChain_(juce::AudioBuffer<float> &buffer) noexcept;
+  void processEQChain_(juce::AudioBuffer<float> &buffer) noexcept;
+
   //==============================================================================
   // Thread Safety Architecture
   //==============================================================================
@@ -468,26 +516,30 @@ private:
   // Project management
   juce::String projectError_; // Last error from save/load operations
 
-  // ---- RT foundation primitives (additive; full migration in follow-up) --
+  // ---- RT foundation primitives ----------------------------------------
   //
   // Wiring strategy:
   //   - ipcRegion_   : owned shared-memory region. Created in the ctor with
   //                    a PID-suffixed name; processBlock publishes the RT
   //                    state mirror once per block. Unlinked in the dtor.
-  //                    Pure additive — external observers (Python brain,
-  //                    MCP daemon, telemetry) can attach without touching
-  //                    the audio path.
+  //                    External observers (Python brain, MCP daemon,
+  //                    telemetry) can attach without touching the audio
+  //                    path.
   //   - gpuScheduler_: CPU-fallback inference dispatcher. Replaces nothing
   //                    today; provides the API surface so a follow-up PR
   //                    can swap inferenceManager_ behind it.
-  //   - dspGraph_    : ML→EQ chain encoded as a DAG. Built in prepareToPlay
-  //                    but only driven from processBlock when the
-  //                    KMIDI_USE_DSP_GRAPH macro is defined. The default
-  //                    build keeps the existing inline chain.
+  //   - dspGraph_    : ML→EQ chain encoded as a DAG with two nodes
+  //                    (mlPipelineNode_ → eqPipelineNode_). The graph is
+  //                    built in prepareToPlay and driven every block from
+  //                    processBlock; the inline chain has been retired.
   std::unique_ptr<daiw::ipc::SharedRegion> ipcRegion_;
   std::string ipcRegionName_;
   daiw::rt::CpuGpuScheduler<> gpuScheduler_;
-  daiw::rt::DSPGraph<8, 16> dspGraph_;
+  std::unique_ptr<daiw::rt::DSPGraph<8, 16>> dspGraph_;
+  MLPipelineNode mlPipelineNode_;
+  EQPipelineNode eqPipelineNode_;
+  daiw::rt::NodeId mlNodeId_ = daiw::rt::kInvalidNodeId;
+  daiw::rt::NodeId eqNodeId_ = daiw::rt::kInvalidNodeId;
 
   static juce::AudioProcessorValueTreeState::ParameterLayout
   createParameterLayout();
