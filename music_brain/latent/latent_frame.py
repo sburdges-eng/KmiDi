@@ -147,7 +147,7 @@ class LatentFrame:
         return replace(
             self,
             audio_z=audio_z,
-            chord_z=chord_z,
+            chord_z=chord_z if chord_z is not None else self.chord_z,
             emotion_va=emotion_va if emotion_va is not None else self.emotion_va,
             time_index=time_index,
             metadata=metadata if metadata is not None else dict(self.metadata),

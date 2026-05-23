@@ -64,7 +64,7 @@ class MultimodalFusion:
         chord = frame.chord_z
         if chord is None:
             chord = torch.zeros(audio.shape[0], self._chord_dim,
-                                dtype=audio.dtype)
+                                dtype=audio.dtype, device=audio.device)
         if chord.shape[0] != audio.shape[0]:
             raise ValueError(
                 f"audio time-steps {audio.shape[0]} != chord time-steps {chord.shape[0]}")
