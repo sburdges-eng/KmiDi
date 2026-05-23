@@ -87,6 +87,12 @@ class KVCache:
         """
         if k_new.shape != v_new.shape:
             raise ValueError(f"k/v shape mismatch: {tuple(k_new.shape)} vs {tuple(v_new.shape)}")
+        if k_new.shape[0] != self._batch_size:
+            # Reject mismatched batch dims rather than silently broadcasting.
+            # A (1, H, T, D) update into a batch_size=2 cache would otherwise
+            # write the same data into both streams via assignment broadcast,
+            # corrupting per-stream decoding state.
+            raise ValueError(f"batch_size mismatch: cache={self._batch_size}, got {k_new.shape[0]}")
         if k_new.shape[1] != self._num_heads:
             raise ValueError(f"num_heads mismatch: cache={self._num_heads}, got {k_new.shape[1]}")
         if k_new.shape[3] != self._head_dim:

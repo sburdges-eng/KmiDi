@@ -129,16 +129,27 @@ class LatentMemory:
         if len(self._store) == 0:
             return []
         pooled = pool_audio_z(query_frame.audio_z).detach().cpu().numpy()
-        # Over-fetch when filtering by user so we still have ``top_k``
-        # eligible hits after the filter.
-        fetch_k = top_k
+
         if user_id is not None:
-            fetch_k = max(top_k * 4, top_k)
-        raw_hits = self._store.search(pooled.astype(np.float32), top_k=fetch_k)
+            # User-scoped path: score *only* this user's vectors directly.
+            # The previous "over-fetch top_k*4 globally then post-filter"
+            # approach silently returned zero hits when other users
+            # dominated the nearest neighbors. Direct scoring of the
+            # user's own index is O(M_user) and always returns top_k as
+            # long as the user has that many vectors.
+            candidate_ids = self._user_index.get(user_id, set())
+            return self._recall_within(
+                pooled.astype(np.float32),
+                candidate_ids,
+                query_va=query_frame.emotion_va,
+                top_k=top_k,
+                emotion_weight=emotion_weight,
+            )
+
+        # Unscoped path: existing fast global top-k search.
+        raw_hits = self._store.search(pooled.astype(np.float32), top_k=top_k)
         hits: list[RecallHit] = []
         for hid, score, meta in raw_hits:
-            if user_id is not None and (not meta or meta.get("user_id") != user_id):
-                continue
             stored_va = tuple(meta.get("emotion_va", [0.0, 0.0])) if meta else (0.0, 0.0)
             if emotion_weight > 0.0:
                 emo_prox = _emotion_proximity_score(
@@ -148,6 +159,47 @@ class LatentMemory:
             else:
                 blended = score
             hits.append(RecallHit(id=hid, score=float(blended), metadata=meta or {}))
+        hits.sort(key=lambda h: -h.score)
+        return hits[:top_k]
+
+    def _recall_within(
+        self,
+        query_vec: np.ndarray,
+        candidate_ids,
+        *,
+        query_va,
+        top_k: int,
+        emotion_weight: float,
+    ) -> list[RecallHit]:
+        """Score a fixed candidate-id set against ``query_vec``.
+
+        Used by ``recall(user_id=...)`` so the search domain is the
+        user's own indexed vectors rather than the global top-k tail.
+        """
+        if not candidate_ids:
+            return []
+        # Normalise the query once so dot product == cosine sim against
+        # the L2-normalised vectors the store holds.
+        q = query_vec.reshape(-1).astype(np.float32)
+        qn = float(np.linalg.norm(q))
+        if qn >= 1e-12:
+            q = q / qn
+        hits: list[RecallHit] = []
+        for cid in candidate_ids:
+            got = self._store.get(cid)
+            if got is None:
+                continue
+            vec, meta = got
+            score = float(np.dot(vec, q))
+            stored_va = tuple(meta.get("emotion_va", [0.0, 0.0])) if meta else (0.0, 0.0)
+            if emotion_weight > 0.0:
+                emo_prox = _emotion_proximity_score(
+                    query_va, (float(stored_va[0]), float(stored_va[1]))
+                )
+                blended = (1.0 - emotion_weight) * score + emotion_weight * emo_prox
+            else:
+                blended = score
+            hits.append(RecallHit(id=cid, score=float(blended), metadata=meta or {}))
         hits.sort(key=lambda h: -h.score)
         return hits[:top_k]
 
@@ -163,15 +215,14 @@ class LatentMemory:
         store = VectorStore.load(path)
         mem = cls(dim=store.dim)
         mem._store = store
-        # Rebuild user index from metadata.
-        for i in range(len(store)):
-            row_id, _, meta = next(
-                (
-                    (rid, s, m) for rid, s, m in store.search(store._vectors[i], top_k=1)
-                ),  # type: ignore[attr-defined]
-                (None, None, None),
-            )
-            if row_id is None or not meta:
+        # Rebuild user index by reading rows directly from the store.
+        # The previous implementation rebuilt via ``store.search(row, top_k=1)``,
+        # which returns *some* row whose embedding matches — when several
+        # rows share the same normalised embedding (a frequent case for
+        # duplicated motif frames), top-1 hops to a different row's id and
+        # the original row never joins the index.
+        for row_id, meta in zip(store._ids, store._meta):  # type: ignore[attr-defined]
+            if not meta:
                 continue
             user_id = meta.get("user_id")
             if isinstance(user_id, str):

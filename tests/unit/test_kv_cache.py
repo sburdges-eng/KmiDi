@@ -102,6 +102,20 @@ def test_k_and_v_shape_must_agree() -> None:
         c.append(torch.zeros(1, 2, 3, 4), torch.zeros(1, 2, 5, 4))
 
 
+def test_append_rejects_mismatched_batch_size() -> None:
+    """Regression: cache with batch_size=2 must NOT silently broadcast a
+    (1, H, T, D) update into both streams. Reported by Codex on PR #196."""
+    c = KVCache(num_heads=2, head_dim=4, max_len=8, batch_size=2)
+    with pytest.raises(ValueError, match="batch_size"):
+        c.append(torch.zeros(1, 2, 1, 4), torch.zeros(1, 2, 1, 4))
+
+
+def test_append_accepts_matching_batch_size() -> None:
+    c = KVCache(num_heads=2, head_dim=4, max_len=8, batch_size=2)
+    c.append(torch.zeros(2, 2, 3, 4), torch.zeros(2, 2, 3, 4))
+    assert c.length == 3
+
+
 def test_snapshot_returns_a_copy_not_a_view() -> None:
     c = _cache()
     k = torch.randn(1, 2, 2, 4)

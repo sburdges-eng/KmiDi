@@ -96,6 +96,44 @@ def test_propose_horizon_validated() -> None:
         list(s.propose(_frame(t=0), horizon=0))
 
 
+def test_rejected_frames_never_land_in_latent_memory() -> None:
+    """Regression: CompanionSession.reject must record the feedback into
+    the user model EMA (so the model learns from the negative) but must
+    NOT write the rejected frame into LatentMemory — otherwise
+    emotion-conditioned recall later surfaces auditions the user
+    explicitly rejected. Reported by Cursor Bugbot on PR #196."""
+    from music_brain.latent.retrieval import LatentMemory  # noqa: PLC0415
+
+    mem = LatentMemory(dim=4)
+    s = CompanionSession(user_id="u1")
+    # Wire the memory in via the session's user_model (which holds the
+    # memory reference). We replace the user_model with one that has
+    # the memory attached so reject's plumbing reaches it.
+    from music_brain.latent.feedback import UserModel  # noqa: PLC0415
+
+    s._user_model = UserModel(user_id="u1", memory=mem)
+
+    out = list(s.propose(_frame(t=0), horizon=1))
+    s.checkpoint(_frame(t=0))
+    s.reject(out[-1], HumanFeedback(accepted=False, satisfaction=0.1))
+    assert s.user_model.event_count == 1  # EMA still updated
+    assert len(mem) == 0  # memory NOT polluted
+
+
+def test_accepted_frames_do_land_in_latent_memory() -> None:
+    """Symmetric coverage to the reject test: accept must write."""
+    from music_brain.latent.feedback import UserModel  # noqa: PLC0415
+    from music_brain.latent.retrieval import LatentMemory  # noqa: PLC0415
+
+    mem = LatentMemory(dim=4)
+    s = CompanionSession(user_id="u1")
+    s._user_model = UserModel(user_id="u1", memory=mem)
+
+    out = list(s.propose(_frame(t=0), horizon=1))
+    s.accept(out[-1], HumanFeedback(accepted=True, satisfaction=0.9))
+    assert len(mem) == 1
+
+
 def test_propose_uses_user_calibrated_va_when_blend_set() -> None:
     s = CompanionSession(user_id="u1", calibration_blend=0.5)
     # Teach the user model that the user really likes (0.8, 0.8).

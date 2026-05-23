@@ -170,10 +170,13 @@ class CompanionSession:
         self._rollback.checkpoint(frame)
 
     def accept(self, frame: LatentFrame, feedback: HumanFeedback) -> None:
-        self._observe(frame, feedback)
+        self._observe(frame, feedback, accepted=True)
 
     def reject(self, frame: LatentFrame, feedback: HumanFeedback) -> LatentFrame:
-        self._observe(frame, feedback)
+        # accepted=False prevents the rejected frame from being written
+        # into LatentMemory; the EMA bias still updates so the model
+        # learns from the negative.
+        self._observe(frame, feedback, accepted=False)
         # Roll back to the most recent checkpoint, if any.
         if len(self._rollback) == 0:
             return frame  # nothing to revert to
@@ -184,13 +187,14 @@ class CompanionSession:
     # Internals
     # ------------------------------------------------------------------
 
-    def _observe(self, frame: LatentFrame, feedback: HumanFeedback) -> None:
+    def _observe(self, frame: LatentFrame, feedback: HumanFeedback, *, accepted: bool) -> None:
         self._user_model.observe(
             FeedbackEvent(
                 emotion_va=frame.emotion_va,
                 satisfaction=float(feedback.satisfaction),
                 frame=frame,
                 frame_id=f"{self._user_id}-{frame.time_index}",
+                accepted=accepted,
             )
         )
 

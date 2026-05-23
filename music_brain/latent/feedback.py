@@ -36,6 +36,11 @@ class FeedbackEvent:
         frame_id: when ``frame`` is set, the id under which it is
             stored. Required if ``frame`` is given.
         intent_id: optional cross-reference to the source IntentFrame.
+        accepted: whether the user accepted (True) or rejected (False)
+            this generation. Rejected events still update the EMA bias
+            (so the model learns from negatives) but are **not** written
+            to retrieval memory, since emotion-conditioned recall would
+            otherwise surface auditions the user explicitly rejected.
     """
 
     emotion_va: Tuple[float, float]
@@ -43,6 +48,7 @@ class FeedbackEvent:
     frame: Optional[LatentFrame] = None
     frame_id: Optional[str] = None
     intent_id: Optional[int] = None
+    accepted: bool = True
 
 
 def _validate_event(event: FeedbackEvent) -> None:
@@ -107,7 +113,12 @@ class UserModel:
         self._event_count += 1
         self._satisfaction_sum += event.satisfaction
 
-        if self._memory is not None and event.frame is not None and event.frame_id:
+        if (
+            event.accepted
+            and self._memory is not None
+            and event.frame is not None
+            and event.frame_id
+        ):
             self._memory.remember(
                 event.frame_id,
                 event.frame,

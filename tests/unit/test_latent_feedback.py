@@ -117,6 +117,46 @@ def test_event_count_and_average_satisfaction_track_history() -> None:
     assert um.average_satisfaction == pytest.approx(0.6)
 
 
+def test_observe_with_accepted_false_skips_memory_write() -> None:
+    """Regression: a FeedbackEvent with accepted=False must NOT write
+    the frame into LatentMemory, only update the EMA. Reported by
+    Cursor Bugbot on PR #196."""
+    from music_brain.latent.retrieval import LatentMemory  # noqa: PLC0415
+
+    mem = LatentMemory(dim=4)
+    um = UserModel("u1", memory=mem)
+    frame = _frame(torch.tensor([[1.0, 0.0, 0.0, 0.0]]))
+    um.observe(
+        FeedbackEvent(
+            emotion_va=(0.5, 0.5),
+            satisfaction=0.1,
+            frame=frame,
+            frame_id="rejected-1",
+            accepted=False,
+        )
+    )
+    assert um.event_count == 1
+    assert len(mem) == 0
+
+
+def test_observe_with_accepted_true_writes_to_memory() -> None:
+    from music_brain.latent.retrieval import LatentMemory  # noqa: PLC0415
+
+    mem = LatentMemory(dim=4)
+    um = UserModel("u1", memory=mem)
+    frame = _frame(torch.tensor([[1.0, 0.0, 0.0, 0.0]]))
+    um.observe(
+        FeedbackEvent(
+            emotion_va=(0.5, 0.5),
+            satisfaction=0.9,
+            frame=frame,
+            frame_id="accepted-1",
+            accepted=True,
+        )
+    )
+    assert len(mem) == 1
+
+
 def test_invalid_ema_alpha_rejected() -> None:
     with pytest.raises(ValueError, match="ema_alpha"):
         UserModel("u1", ema_alpha=0.0)
