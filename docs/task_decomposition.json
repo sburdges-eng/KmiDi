@@ -1,0 +1,305 @@
+{
+  "meta": {
+    "project": "KmiDi",
+    "date": "2026-05-23",
+    "main_head": "abf90773",
+    "merge_base": "676581c5",
+    "total_branches": 11,
+    "total_new_lines": 4691,
+    "stacks_affected": ["python"],
+    "stacks_unaffected": ["cpp", "rust", "bindings", "react"]
+  },
+  "pre_merge": {
+    "id": "T0",
+    "name": "Rebase all branches onto main",
+    "description": "Rebase all 11 branches onto abf90773 to pick up latent control core (#196). Eliminates shared deletion pattern.",
+    "command": "for b in feat/constrained-decoding feat/context-window feat/dual-representation feat/generation-scope feat/linear-projection feat/multimodal-fusion feat/stem-bus feat/symbolic-realization feat/transition-model feat/ttg-energy-gating feat/world-state; do git checkout $b && git rebase main; done",
+    "risk": "low",
+    "depends_on": []
+  },
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Independent branches",
+      "description": "No file conflicts, create new modules, can merge in any order or in parallel.",
+      "tasks": [
+        {
+          "id": "T1",
+          "order": 1,
+          "branch": "feat/dual-representation",
+          "new_files": [
+            "music_brain/audio/dual_clip.py",
+            "tests/unit/test_dual_clip.py"
+          ],
+          "modified_files": [],
+          "conflicts": [],
+          "lines_added": 290,
+          "risk": "minimal",
+          "ci": "python3 -m pytest tests/unit/test_dual_clip.py -x",
+          "depends_on": ["T0"]
+        },
+        {
+          "id": "T2",
+          "order": 2,
+          "branch": "feat/stem-bus",
+          "new_files": [
+            "music_brain/audio/stems.py",
+            "tests/unit/test_stem_bus.py"
+          ],
+          "modified_files": [],
+          "conflicts": [],
+          "lines_added": 242,
+          "risk": "minimal",
+          "ci": "python3 -m pytest tests/unit/test_stem_bus.py -x",
+          "depends_on": ["T0"]
+        },
+        {
+          "id": "T3",
+          "order": 3,
+          "branch": "feat/symbolic-realization",
+          "new_files": [
+            "music_brain/symbolic/__init__.py",
+            "music_brain/symbolic/realize.py",
+            "tests/unit/test_symbolic_realize.py"
+          ],
+          "modified_files": [],
+          "conflicts": [],
+          "lines_added": 319,
+          "risk": "minimal",
+          "ci": "python3 -m pytest tests/unit/test_symbolic_realize.py -x",
+          "depends_on": ["T0"]
+        },
+        {
+          "id": "T4",
+          "order": 4,
+          "branch": "feat/transition-model",
+          "new_files": [
+            "music_brain/prediction/__init__.py",
+            "music_brain/prediction/transition.py",
+            "tests/unit/test_transition_model.py"
+          ],
+          "modified_files": [],
+          "conflicts": [],
+          "lines_added": 288,
+          "risk": "minimal",
+          "ci": "python3 -m pytest tests/unit/test_transition_model.py -x",
+          "depends_on": ["T0"]
+        },
+        {
+          "id": "T5",
+          "order": 5,
+          "branch": "feat/world-state",
+          "new_files": [
+            "music_brain/session/world_state.py",
+            "tests/unit/test_world_state.py"
+          ],
+          "modified_files": [],
+          "conflicts": [],
+          "lines_added": 242,
+          "risk": "minimal",
+          "ci": "python3 -m pytest tests/unit/test_world_state.py -x",
+          "depends_on": ["T0"]
+        }
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "generation/ cluster",
+      "description": "Two branches create music_brain/generation/ with conflicting __init__.py. Merge sequentially, fix __init__.py after second merge.",
+      "tasks": [
+        {
+          "id": "T6",
+          "order": 6,
+          "branch": "feat/context-window",
+          "new_files": [
+            "music_brain/generation/__init__.py",
+            "music_brain/generation/context_window.py",
+            "tests/unit/test_context_window.py"
+          ],
+          "modified_files": [],
+          "conflicts": [],
+          "lines_added": 285,
+          "risk": "low",
+          "ci": "python3 -m pytest tests/unit/test_context_window.py -x",
+          "depends_on": ["T0", "T1", "T2", "T3", "T4", "T5"]
+        },
+        {
+          "id": "T7",
+          "order": 7,
+          "branch": "feat/generation-scope",
+          "new_files": [
+            "music_brain/generation/latency_budget.py",
+            "music_brain/generation/scope.py",
+            "tests/unit/test_generation_scope.py",
+            "tests/unit/test_latency_budget.py"
+          ],
+          "modified_files": [
+            "music_brain/generation/__init__.py"
+          ],
+          "conflicts": [
+            {
+              "file": "music_brain/generation/__init__.py",
+              "conflicting_branch": "feat/context-window",
+              "resolution": "Merge exports from both branches: ContextEntry, ContextWindow, LatencyBudget, GenerationScope, RollbackError"
+            }
+          ],
+          "lines_added": 510,
+          "risk": "medium",
+          "manual_fix_required": true,
+          "ci": "python3 -m pytest tests/unit/test_context_window.py tests/unit/test_generation_scope.py tests/unit/test_latency_budget.py -x",
+          "depends_on": ["T6"]
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "latent/ cluster",
+      "description": "Three branches rewrite latent/__init__.py with incompatible exports. Merge sequentially, fix __init__.py after each merge to accumulate exports.",
+      "tasks": [
+        {
+          "id": "T8",
+          "order": 8,
+          "branch": "feat/constrained-decoding",
+          "new_files": [
+            "music_brain/audio/chunking.py",
+            "music_brain/decoding/__init__.py",
+            "music_brain/decoding/constrained.py",
+            "music_brain/latent/normalization.py",
+            "tests/unit/test_audio_chunking.py",
+            "tests/unit/test_constrained_decoding.py",
+            "tests/unit/test_latent_normalization.py"
+          ],
+          "modified_files": [
+            "music_brain/latent/__init__.py"
+          ],
+          "conflicts": [
+            {
+              "file": "music_brain/latent/__init__.py",
+              "conflicting_branches": ["feat/linear-projection", "feat/multimodal-fusion"],
+              "resolution": "After merge, restore existing latent control core exports AND add normalization exports"
+            }
+          ],
+          "lines_added": 639,
+          "risk": "high",
+          "manual_fix_required": true,
+          "ci": "python3 -m pytest tests/unit/test_audio_chunking.py tests/unit/test_constrained_decoding.py tests/unit/test_latent_normalization.py -x",
+          "depends_on": ["T7"]
+        },
+        {
+          "id": "T9",
+          "order": 9,
+          "branch": "feat/linear-projection",
+          "new_files": [
+            "music_brain/latent/projection.py",
+            "tests/unit/test_linear_projection.py"
+          ],
+          "modified_files": [
+            "music_brain/latent/__init__.py"
+          ],
+          "conflicts": [
+            {
+              "file": "music_brain/latent/__init__.py",
+              "conflicting_branches": ["feat/constrained-decoding", "feat/multimodal-fusion"],
+              "resolution": "After merge, keep accumulated exports (core + normalization) AND add LinearProjection"
+            }
+          ],
+          "lines_added": 241,
+          "risk": "high",
+          "manual_fix_required": true,
+          "ci": "python3 -m pytest tests/unit/test_linear_projection.py -x",
+          "depends_on": ["T8"]
+        },
+        {
+          "id": "T10",
+          "order": 10,
+          "branch": "feat/multimodal-fusion",
+          "new_files": [
+            "tests/unit/test_fusion.py"
+          ],
+          "modified_files": [
+            "music_brain/latent/fusion.py",
+            "music_brain/latent/__init__.py"
+          ],
+          "conflicts": [
+            {
+              "file": "music_brain/latent/__init__.py",
+              "conflicting_branches": ["feat/constrained-decoding", "feat/linear-projection"],
+              "resolution": "After merge, keep ALL accumulated exports (core + normalization + projection) AND add fusion exports"
+            },
+            {
+              "file": "music_brain/latent/fusion.py",
+              "conflicting_branches": [],
+              "resolution": "Complete rewrite of fusion.py; no other branch touches it. Accept the rewrite."
+            }
+          ],
+          "lines_added": 253,
+          "risk": "high",
+          "manual_fix_required": true,
+          "ci": "python3 -m pytest tests/unit/test_fusion.py -x && python3 -m flake8 music_brain/latent/ --max-line-length 100",
+          "depends_on": ["T9"]
+        }
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Highest-risk branch",
+      "description": "Modifies existing production files. Merge last after all other branches are integrated and validated.",
+      "tasks": [
+        {
+          "id": "T11",
+          "order": 11,
+          "branch": "feat/ttg-energy-gating",
+          "new_files": [
+            "tests/unit/test_ttg_energy_gating.py",
+            "tests/unit/test_ttg_motif_tracking.py",
+            "tests/unit/test_ttg_phrase_boundaries.py"
+          ],
+          "modified_files": [
+            "music_brain/api_schemas/ttg_adapter.py",
+            "music_brain/pipeline/intent_pipeline.py"
+          ],
+          "conflicts": [],
+          "lines_added": 1137,
+          "commits": 4,
+          "risk": "highest",
+          "manual_fix_required": false,
+          "ci": "python3 -m pytest tests/ -v && python3 -m flake8 music_brain/ --max-line-length 100",
+          "depends_on": ["T10"]
+        }
+      ]
+    }
+  ],
+  "conflict_clusters": {
+    "A": {
+      "file": "music_brain/latent/__init__.py",
+      "branches": ["feat/constrained-decoding", "feat/linear-projection", "feat/multimodal-fusion"],
+      "description": "3-way conflict: each branch rewrites with incompatible exports (normalization vs projection vs fusion). Must accumulate all exports.",
+      "phase": 3
+    },
+    "B": {
+      "file": "music_brain/generation/__init__.py",
+      "branches": ["feat/context-window", "feat/generation-scope"],
+      "description": "2-way conflict: different docstrings and exports. Must merge to include all exports.",
+      "phase": 2
+    },
+    "C": {
+      "file": "music_brain/latent/fusion.py",
+      "branches": ["feat/multimodal-fusion"],
+      "description": "Complete rewrite (115->116 lines). Only one branch involved; accept the rewrite.",
+      "phase": 3
+    }
+  },
+  "ci_strategy": {
+    "required": {
+      "all_phases": ["python3 -m pytest tests/ -x"],
+      "phase_3_extra": ["python3 -m flake8 music_brain/latent/ --max-line-length 100"],
+      "phase_4_extra": ["python3 -m pytest tests/ -v", "python3 -m flake8 music_brain/ --max-line-length 100"]
+    },
+    "skipped": {
+      "cpp": "No branches touch engine/ or include/",
+      "rust": "No branches touch engine/intent_ir/",
+      "react": "No branches touch src/",
+      "bindings": "No branches touch bindings/"
+    }
+  }
+}
