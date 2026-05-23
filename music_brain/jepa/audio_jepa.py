@@ -72,12 +72,49 @@ class AudioJEPAEncoder(nn.Module):
         Returns:
             ``(B, T, latent_dim)`` latent sequence
         """
-        h = self.conv(x)               # (B, C, freq_out, T)
+        h = self.conv(x)  # (B, C, freq_out, T)
         B, C, F_, T = h.shape
-        h = h.permute(0, 3, 1, 2)      # (B, T, C, F_)
-        h = h.reshape(B, T, C * F_)    # (B, T, C*F_)
-        h = self.proj(h)               # (B, T, latent_dim)
+        h = h.permute(0, 3, 1, 2)  # (B, T, C, F_)
+        h = h.reshape(B, T, C * F_)  # (B, T, C*F_)
+        h = self.proj(h)  # (B, T, latent_dim)
         return self.layer_norm(h)
+
+    def encode_to_frame(self, mel, *, time_index, provenance, emotion_va=(0.0, 0.0), metadata=None):
+        """Encode a single mel-spectrogram into a ``LatentFrame``.
+
+        Args:
+            mel: ``(1, n_mels, T)`` or ``(n_mels, T)`` mel-spectrogram.
+                Batched inputs of size > 1 are not supported — call
+                ``forward`` directly and pack frames yourself.
+            time_index: monotonic chunk index for the returned frame.
+            provenance: ``IntentProvenance`` carried through downstream.
+            emotion_va: optional (valence, arousal) tag pooled elsewhere.
+            metadata: diagnostics bag merged into the frame.
+        """
+        from music_brain.latent.latent_frame import LatentFrame  # noqa: PLC0415
+
+        if mel.dim() == 3:
+            x = mel.unsqueeze(1)  # (1, 1, n_mels, T)
+        elif mel.dim() == 4:
+            x = mel
+        else:
+            x = mel.unsqueeze(0).unsqueeze(0)  # (1, 1, n_mels, T)
+        if x.shape[0] != 1:
+            raise ValueError(
+                "encode_to_frame expects a single sample; " f"got batch dim {x.shape[0]}"
+            )
+        z = self.forward(x)  # (1, T', latent_dim)
+        meta = {"source": "audio_jepa"}
+        if metadata:
+            meta.update(metadata)
+        return LatentFrame(
+            audio_z=z.squeeze(0).contiguous(),
+            chord_z=None,
+            emotion_va=emotion_va,
+            time_index=int(time_index),
+            provenance=provenance,
+            metadata=meta,
+        )
 
 
 class LatentPredictor(nn.Module):
@@ -136,16 +173,13 @@ class EMATargetEncoder(nn.Module):
     @staticmethod
     def _copy(model: nn.Module) -> nn.Module:
         import copy
+
         return copy.deepcopy(model)
 
     @torch.no_grad()
     def update(self, online_encoder: AudioJEPAEncoder) -> None:
-        for p_ema, p_online in zip(
-            self.encoder.parameters(), online_encoder.parameters()
-        ):
-            p_ema.data.mul_(self.momentum).add_(
-                p_online.data, alpha=1.0 - self.momentum
-            )
+        for p_ema, p_online in zip(self.encoder.parameters(), online_encoder.parameters()):
+            p_ema.data.mul_(self.momentum).add_(p_online.data, alpha=1.0 - self.momentum)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.encoder(x)

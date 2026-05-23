@@ -49,9 +49,7 @@ class ChordJEPA(nn.Module):
 
         self.d_model = d_model
         self.num_classes = num_classes
-        self.pos_embed = nn.Parameter(
-            torch.randn(1, seq_len, d_model) * 0.02
-        )
+        self.pos_embed = nn.Parameter(torch.randn(1, seq_len, d_model) * 0.02)
 
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model,
@@ -100,3 +98,58 @@ class ChordEmbedding(nn.Module):
             ``(B, T, d_model)`` embedded representations.
         """
         return self.embedding(chord_ids)
+
+
+def encode_chord_to_frame(
+    embedded_chords: torch.Tensor,
+    *,
+    audio_z: torch.Tensor,
+    time_index: int,
+    provenance,
+    emotion_va=(0.0, 0.0),
+    metadata=None,
+):
+    """Pack an embedded chord sequence + paired audio latents into a LatentFrame.
+
+    The Chord-JEPA stack operates in ``d_model``-space (already embedded
+    by ``ChordEmbedding``), so this helper packages the embedded
+    sequence directly. ``audio_z`` is required because ``LatentFrame``
+    treats audio as the primary modality; pass a zero placeholder of
+    shape ``(1, D_audio)`` for chord-only flows.
+
+    Args:
+        embedded_chords: ``(1, T_c, d_model)`` or ``(T_c, d_model)``
+            chord embeddings (single sample).
+        audio_z: paired audio latents ``(T, D_audio)`` for the same
+            window.
+        time_index: monotonic chunk index.
+        provenance: ``IntentProvenance``.
+        emotion_va: optional pooled VA tag.
+        metadata: diagnostics bag.
+    """
+    from music_brain.latent.latent_frame import LatentFrame  # noqa: PLC0415
+
+    if embedded_chords.dim() == 3:
+        if embedded_chords.shape[0] != 1:
+            raise ValueError(
+                "encode_chord_to_frame expects a single sample; "
+                f"got batch dim {embedded_chords.shape[0]}"
+            )
+        chord_z = embedded_chords.squeeze(0).contiguous()
+    elif embedded_chords.dim() == 2:
+        chord_z = embedded_chords.contiguous()
+    else:
+        raise ValueError(
+            f"embedded_chords must be 2-D or 3-D; got shape {tuple(embedded_chords.shape)}"
+        )
+    meta = {"source": "chord_jepa"}
+    if metadata:
+        meta.update(metadata)
+    return LatentFrame(
+        audio_z=audio_z,
+        chord_z=chord_z,
+        emotion_va=emotion_va,
+        time_index=int(time_index),
+        provenance=provenance,
+        metadata=meta,
+    )
