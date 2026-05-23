@@ -110,7 +110,9 @@ CODE_STACKS = ["rust", "cpp", "bindings", "python", "react"]
 
 # Hermes Agent (backbone). Headless one-shot, auto-approve, suppresses prompts.
 # Provider/model/credential routing is handled by the user's `hermes` config.
-HERMES_CMD = ["hermes", "-z", "--yolo", "--accept-hooks"]
+# `-z PROMPT` must be last so run_cli's appended prompt becomes its argument
+# (hermes argparse refuses to consume the next token if it looks like a flag).
+HERMES_CMD = ["hermes", "--yolo", "--accept-hooks", "-z"]
 HERMES_TIMEOUT_SEC = 240
 
 # Build poll: how long we wait for `cd && cmake/cargo/...` to finish before
