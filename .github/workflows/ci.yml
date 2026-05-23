@@ -34,7 +34,7 @@ jobs:
       run: |
         pip install -e .
         pip install numpy scipy torch librosa pyyaml
-        pip install pytest pytest-cov coverage
+        pip install pytest pytest-cov coverage httpx
     - name: Sync canonical entity contracts
       run: |
         python3 scripts/sync_entities.py
