@@ -78,6 +78,14 @@ BUILD_CMDS = {
 }
 
 # [primary, fallback]. Prompt is appended as final positional argv.
+#
+# cursor-agent caveat: in non-interactive (`-p`) mode it can fail with
+# `CURSOR_API_KEY not set` even when a valid Cursor session exists on disk.
+# Observed cause is subscription quota exhaustion in the parent Cursor
+# session; the CLI's error message conflates "quota burned" with "no auth".
+# `cursor-agent status` confirms; `cursor-agent login` does not fix quota.
+# When a swarm run sees this, treat the failure as a quota event rather than
+# a config bug.
 ROSTER = {
     "rust": [
         ["codex", "exec", "--skip-git-repo-check"],
@@ -100,7 +108,10 @@ ROSTER = {
         ["claude", "-p", "--permission-mode", "acceptEdits", "--output-format", "text"],
     ],
     "schemas": [
-        ["gemini", "-p", "--yolo", "--output-format", "text"],
+        # `-p PROMPT` must be last so run_cli's appended prompt becomes its
+        # argument. Same argparse-value-flag bug pattern as `hermes -z`:
+        # `gemini -p --yolo ...` would consume `--yolo` as the prompt value.
+        ["gemini", "--yolo", "--output-format", "text", "-p"],
     ],
 }
 
@@ -124,6 +135,12 @@ BUILD_POLL_MAX_SEC = 900      # 15 min cap per attempt
 ANSI_RE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 ERROR_RE = re.compile(r'(?i)(error:|FAILED|panic|fatal error|undefined reference)')
 JSON_OBJ_RE = re.compile(r'\{[\s\S]*\}')
+
+# Set in main() before any phase work. When True, compile_and_heal treats
+# CLI exit 0 as success and skips the build/tmux-pane verification step.
+# Use for analysis-only swarm runs where `cmake build` / `cargo check` etc.
+# are not meaningful (e.g. an empty worktree, doc-writing prompts).
+SKIP_BUILD = False
 
 
 # ---------------------------------------------------------------------------
@@ -205,6 +222,21 @@ def _agent_env() -> dict[str, str]:
         "GIT_PAGER": "cat",
         "PAGER": "cat",
     }
+
+
+def _cli_argv(argv: list[str], worktree: str) -> list[str]:
+    """Inject runtime flags into ROSTER argv just before invocation.
+
+    cursor-agent: pass `--workspace <worktree>` explicitly so the agent
+    cannot resolve file paths against the host repo and write outside
+    the sandbox. (Observed in real-world swarm run 2026-05-23: cursor-agent
+    spawned with cwd=worktree still wrote `docs/MERGE_ANALYSIS_react.md`
+    into the main checkout.) Other CLIs honor cwd via their own workspace
+    detection; no injection needed.
+    """
+    if argv and argv[0] == "cursor-agent" and "--workspace" not in argv:
+        return argv[:1] + ["--workspace", worktree] + argv[1:]
+    return list(argv)
 
 
 async def run_cli(argv: list[str], prompt: str, cwd: str,
@@ -297,7 +329,7 @@ async def compile_and_heal(stack: str, base_subprompt: str,
     history: list[str] = []  # (cli, error_tail) pairs as text — the "memory"
 
     for attempt in range(4):
-        argv = ROSTER[stack][cli_idx]
+        argv = _cli_argv(ROSTER[stack][cli_idx], worktree)
         cli_name = argv[0]
 
         # Build the prompt. First attempt uses Hermes's decomposed subprompt
@@ -309,6 +341,11 @@ async def compile_and_heal(stack: str, base_subprompt: str,
                 f"branch '{WORKTREE_BRANCH}'. You own the {stack.upper()} stack "
                 f"only — do not touch other stacks.\n\n"
                 f"TASK:\n{base_subprompt}\n\n"
+                f"File-naming rule: any new files you create that are named "
+                f"after a stack must use the lowercase form exactly. Valid "
+                f"stack tokens are: rust, cpp, bindings, python, react. "
+                f"Never write '{stack.upper()}' or 'Bindings'-style mixed case "
+                f"in filenames.\n\n"
                 f"Use your edit tools to write files directly to disk. Do not "
                 f"paste file contents into chat. Exit when complete; the build "
                 f"is run separately."
@@ -344,19 +381,34 @@ async def compile_and_heal(stack: str, base_subprompt: str,
             tail = (err or out).strip().splitlines()[-1:] or ["(no output)"]
             transcript.append(f"  cli rc={rc}: {tail[0][:200]}")
 
-        # Run the build in the assigned tmux pane (visible to the human),
-        # then wait until the pane buffer stops changing so we don't sample
-        # mid-compile and report a false "build CLEAN".
-        tmux_send(window, pane, build_cmd)
-        pane_buf = await wait_for_pane_idle(window, pane)
+        if SKIP_BUILD:
+            # Analysis-only mode: trust the CLI's exit code. No tmux build,
+            # no error-regex scan. Useful when the worktree has no build
+            # artifacts (cmake/cargo/npm not bootstrapped) or when the prompt
+            # writes docs/markdown only.
+            if rc == 0:
+                transcript.append("  cli rc=0 (build skipped)")
+                return stack, "success", transcript
+            error_tail = (
+                f"cli rc={rc}: "
+                + (((err or out).strip().splitlines() or ["(no output)"])[-1])[:500]
+            )
+            transcript.append("  cli FAILED (build skipped)")
+        else:
+            # Run the build in the assigned tmux pane (visible to the human),
+            # then wait until the pane buffer stops changing so we don't sample
+            # mid-compile and report a false "build CLEAN".
+            tmux_send(window, pane, build_cmd)
+            pane_buf = await wait_for_pane_idle(window, pane)
 
-        if not ERROR_RE.search(pane_buf):
-            transcript.append("  build CLEAN")
-            return stack, "success", transcript
+            if not ERROR_RE.search(pane_buf):
+                transcript.append("  build CLEAN")
+                return stack, "success", transcript
 
-        error_tail = "\n".join(pane_buf.splitlines()[-40:])
+            error_tail = "\n".join(pane_buf.splitlines()[-40:])
+            transcript.append("  build FAILED")
+
         history.append(f"[attempt {attempt + 1} via {cli_name}]\n{error_tail}")
-        transcript.append("  build FAILED")
 
         # 3rd failure -> AMNESIA RESET
         if attempt == 2:
@@ -453,21 +505,34 @@ def _which(cmd: str) -> bool:
     ).returncode == 0
 
 
-def _parse_args(argv: list[str]) -> tuple[bool, str]:
-    """Returns (dry_run, user_prompt). Accepts `--dry-run` anywhere before
-    the prompt. Skip-tmux check is implied by --dry-run."""
+def _parse_args(argv: list[str]) -> tuple[bool, bool, str]:
+    """Returns (dry_run, skip_build, user_prompt). Accepts `--dry-run` and
+    `--skip-build` anywhere before the prompt. Skip-tmux check is implied
+    by --dry-run."""
     args = list(argv[1:])
     dry_run = False
+    skip_build = False
     if "--dry-run" in args:
         args.remove("--dry-run")
         dry_run = True
+    if "--skip-build" in args:
+        args.remove("--skip-build")
+        skip_build = True
     if not args:
         print(
-            'Usage: python3 scripts/kmidi_swarm.py [--dry-run] "<feature request>"',
+            'Usage: python3 scripts/kmidi_swarm.py '
+            '[--dry-run] [--skip-build] "<feature request>"\n'
+            '\n'
+            '  --dry-run     Run only Hermes decompose phase, print plan, exit.\n'
+            '  --skip-build  Treat each stack-CLI rc=0 as success (no cmake/'
+            'cargo/npm).\n'
+            '                Use for analysis-only prompts where build gates '
+            'are not\n'
+            '                meaningful in a fresh worktree.',
             file=sys.stderr,
         )
         sys.exit(1)
-    return dry_run, args[0]
+    return dry_run, skip_build, args[0]
 
 
 def preflight(*, require_tmux: bool = True) -> None:
@@ -509,12 +574,19 @@ def preflight(*, require_tmux: bool = True) -> None:
 # ---------------------------------------------------------------------------
 
 async def main() -> None:
-    dry_run, user_prompt = _parse_args(sys.argv)
+    global SKIP_BUILD
+    dry_run, skip_build, user_prompt = _parse_args(sys.argv)
+    SKIP_BUILD = skip_build
     preflight(require_tmux=not dry_run)
     worktree = REPO_ROOT if dry_run else ensure_worktree()
 
+    mode_tag = ""
+    if dry_run:
+        mode_tag += "  (dry-run)"
+    if skip_build:
+        mode_tag += "  (skip-build)"
     print(f"feature : {user_prompt}", flush=True)
-    print(f"worktree: {worktree}{'  (dry-run)' if dry_run else ''}", flush=True)
+    print(f"worktree: {worktree}{mode_tag}", flush=True)
 
     # ---- Phase 1: DECOMPOSE -----------------------------------------------
     if not dry_run:
@@ -536,6 +608,9 @@ async def main() -> None:
         f"explicit file paths, function signatures, or component names where "
         f"possible. Scope rules: `python` must not edit bindings/*.cpp; "
         f"`bindings` must not edit music_brain/ unless cross-cutting. "
+        f"Filename rule: when an instruction creates files named after a "
+        f"stack (e.g. analysis or report files), use lowercase only — "
+        f"`docs/MERGE_ANALYSIS_bindings.md` not `..._BINDINGS.md`. "
         f"If a stack has nothing to do for this feature, return the empty "
         f'string "" for that key. No markdown fences. No commentary. Only '
         f"the JSON object.\n\n"
