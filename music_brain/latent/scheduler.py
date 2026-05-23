@@ -61,16 +61,20 @@ class JitterBoundedScheduler:
             normal-distribution 95% one-tail value.
     """
 
-    def __init__(self, *, budget_ms: float = 16.0, window: int = 32,
-                 greedy_threshold_ms: float = 2.0,
-                 p95_factor: float = 1.65) -> None:
+    def __init__(
+        self,
+        *,
+        budget_ms: float = 16.0,
+        window: int = 32,
+        greedy_threshold_ms: float = 2.0,
+        p95_factor: float = 1.65,
+    ) -> None:
         if not (budget_ms > 0.0):
             raise ValueError(f"budget_ms must be > 0, got {budget_ms}")
         if window <= 0:
             raise ValueError(f"window must be > 0, got {window}")
         if greedy_threshold_ms < 0.0:
-            raise ValueError(
-                f"greedy_threshold_ms must be >= 0, got {greedy_threshold_ms}")
+            raise ValueError(f"greedy_threshold_ms must be >= 0, got {greedy_threshold_ms}")
         self._budget = float(budget_ms)
         self._window: deque[float] = deque(maxlen=int(window))
         self._greedy_threshold = float(greedy_threshold_ms)
@@ -118,18 +122,20 @@ class JitterBoundedScheduler:
     def next_step(self) -> StepDecision:
         # Cold start: optimistic — full headroom, full quality.
         if not self._window:
-            return StepDecision(within_budget=True, recommend_greedy=False,
-                                headroom_ms=self._budget,
-                                observed_p95_ms=0.0)
+            return StepDecision(
+                within_budget=True,
+                recommend_greedy=False,
+                headroom_ms=self._budget,
+                observed_p95_ms=0.0,
+            )
         mean = self.mean_ms
         p95 = self.observed_p95_ms
         headroom = self._budget - mean
         within = p95 <= self._budget
         greedy = (not within) or (headroom < self._greedy_threshold)
-        return StepDecision(within_budget=within,
-                            recommend_greedy=greedy,
-                            headroom_ms=headroom,
-                            observed_p95_ms=p95)
+        return StepDecision(
+            within_budget=within, recommend_greedy=greedy, headroom_ms=headroom, observed_p95_ms=p95
+        )
 
     def reset(self) -> None:
         self._window.clear()

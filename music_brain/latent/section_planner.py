@@ -67,18 +67,15 @@ class BarPosition:
         if self.beats_per_bar <= 0:
             raise ValueError("beats_per_bar must be > 0")
         if not (0 <= self.beat < self.beats_per_bar):
-            raise ValueError(
-                f"beat must be in [0, {self.beats_per_bar}), got {self.beat}")
+            raise ValueError(f"beat must be in [0, {self.beats_per_bar}), got {self.beat}")
         if self.bar < 0:
             raise ValueError(f"bar must be >= 0, got {self.bar}")
 
     def step(self) -> "BarPosition":
         nb = self.beat + 1
         if nb >= self.beats_per_bar:
-            return BarPosition(bar=self.bar + 1, beat=0,
-                               beats_per_bar=self.beats_per_bar)
-        return BarPosition(bar=self.bar, beat=nb,
-                           beats_per_bar=self.beats_per_bar)
+            return BarPosition(bar=self.bar + 1, beat=0, beats_per_bar=self.beats_per_bar)
+        return BarPosition(bar=self.bar, beat=nb, beats_per_bar=self.beats_per_bar)
 
 
 @dataclass(frozen=True)
@@ -94,11 +91,9 @@ class SectionPlan:
         expected = self.sections[0].start_bar
         for s in self.sections:
             if s.start_bar > expected:
-                raise ValueError(
-                    f"gap between sections at bar {expected}")
+                raise ValueError(f"gap between sections at bar {expected}")
             if s.start_bar < expected:
-                raise ValueError(
-                    f"overlap at bar {s.start_bar} (next expected {expected})")
+                raise ValueError(f"overlap at bar {s.start_bar} (next expected {expected})")
             expected = s.end_bar
 
     @property
@@ -123,8 +118,7 @@ class SectionPlan:
                     out.append(mid)
         return tuple(sorted(set(out)))
 
-    def bars_until_next_boundary(self, bar: int, *,
-                                 emit_internal: bool = False) -> int:
+    def bars_until_next_boundary(self, bar: int, *, emit_internal: bool = False) -> int:
         bounds = self.phrase_boundary_bars(emit_internal=emit_internal)
         for b in bounds:
             if b >= bar:

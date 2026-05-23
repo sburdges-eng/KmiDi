@@ -22,8 +22,7 @@ def _frame(**overrides):
         chord_z=None,
         emotion_va=(0.0, 0.0),
         time_index=0,
-        provenance=IntentProvenance(source=IntentSource.ML_AUDIO,
-                                    user_override_weight=0.0),
+        provenance=IntentProvenance(source=IntentSource.ML_AUDIO, user_override_weight=0.0),
         metadata={"chunk_ms": 32},
     )
     defaults.update(overrides)
@@ -33,6 +32,7 @@ def _frame(**overrides):
 # ----------------------------------------------------------------------
 # Construction / validation
 # ----------------------------------------------------------------------
+
 
 def test_construction_minimal_smoke() -> None:
     frame = _frame()
@@ -84,6 +84,7 @@ def test_metadata_is_immutable_view() -> None:
 # Immutability
 # ----------------------------------------------------------------------
 
+
 def test_frame_is_frozen() -> None:
     frame = _frame()
     with pytest.raises(Exception):  # FrozenInstanceError or AttributeError
@@ -94,12 +95,15 @@ def test_frame_is_frozen() -> None:
 # Serialization round-trip
 # ----------------------------------------------------------------------
 
+
 def test_dict_round_trip_audio_only() -> None:
     torch.manual_seed(0)
-    src = _frame(audio_z=torch.randn(3, 4, dtype=torch.float32),
-                 emotion_va=(0.5, -0.25),
-                 time_index=7,
-                 metadata={"chunk_ms": 32, "engine": "audio_jepa"})
+    src = _frame(
+        audio_z=torch.randn(3, 4, dtype=torch.float32),
+        emotion_va=(0.5, -0.25),
+        time_index=7,
+        metadata={"chunk_ms": 32, "engine": "audio_jepa"},
+    )
     payload = src.to_dict()
     restored = LatentFrame.from_dict(payload)
     assert torch.equal(src.audio_z, restored.audio_z)
@@ -112,8 +116,10 @@ def test_dict_round_trip_audio_only() -> None:
 
 def test_dict_round_trip_with_chord() -> None:
     torch.manual_seed(0)
-    src = _frame(audio_z=torch.randn(2, 8, dtype=torch.float32),
-                 chord_z=torch.randn(5, 16, dtype=torch.float32))
+    src = _frame(
+        audio_z=torch.randn(2, 8, dtype=torch.float32),
+        chord_z=torch.randn(5, 16, dtype=torch.float32),
+    )
     restored = LatentFrame.from_dict(src.to_dict())
     assert torch.equal(src.audio_z, restored.audio_z)
     assert torch.equal(src.chord_z, restored.chord_z)
@@ -122,6 +128,7 @@ def test_dict_round_trip_with_chord() -> None:
 # ----------------------------------------------------------------------
 # Time-index helpers
 # ----------------------------------------------------------------------
+
 
 def test_advance_returns_new_frame_with_incremented_index() -> None:
     src = _frame(time_index=3)
@@ -140,5 +147,16 @@ def test_advance_rejects_non_monotonic_step() -> None:
 def test_advance_rejects_dim_mismatch() -> None:
     src = _frame(audio_z=torch.zeros(4, 8, dtype=torch.float32))
     with pytest.raises(ValueError, match="feature dim"):
-        src.advance(time_index=4,
-                    audio_z=torch.zeros(4, 16, dtype=torch.float32))
+        src.advance(time_index=4, audio_z=torch.zeros(4, 16, dtype=torch.float32))
+
+
+def test_advance_preserves_existing_chord_z_when_unspecified() -> None:
+    """Regression: advance() must fall back to self.chord_z when the
+    caller omits chord_z, the same way it falls back to emotion_va /
+    metadata. Otherwise chord latents silently disappear on every step
+    of a world-model rollout. Reported by Cursor Bugbot on PR #196."""
+    chord = torch.arange(12, dtype=torch.float32).reshape(3, 4)
+    src = _frame(audio_z=torch.zeros(4, 8, dtype=torch.float32), chord_z=chord)
+    later = src.advance(time_index=4, audio_z=torch.zeros(4, 8, dtype=torch.float32))
+    assert later.chord_z is not None
+    assert torch.equal(later.chord_z, chord)

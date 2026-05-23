@@ -52,8 +52,7 @@ def test_pack_midi1_validates_ranges() -> None:
 
 
 def test_pack_midi2_note_on_returns_two_words() -> None:
-    w1, w2 = pack_midi2_note_on(
-        group=0, channel=0, note=60, velocity_16=0x4000, attribute=0)
+    w1, w2 = pack_midi2_note_on(group=0, channel=0, note=60, velocity_16=0x4000, attribute=0)
     # MT=0x4 in top nibble.
     assert (w1 >> 28) & 0xF == 0x4
     # Word 2: high 16 bits = velocity_16, low 16 bits = attribute.
@@ -63,8 +62,7 @@ def test_pack_midi2_note_on_returns_two_words() -> None:
 
 def test_pack_midi2_validates_16bit_velocity() -> None:
     with pytest.raises(ValueError, match="velocity_16"):
-        pack_midi2_note_on(group=0, channel=0, note=60,
-                           velocity_16=0x10000, attribute=0)
+        pack_midi2_note_on(group=0, channel=0, note=60, velocity_16=0x10000, attribute=0)
 
 
 def test_validate_ump_accepts_known_message_types() -> None:
@@ -76,16 +74,14 @@ def test_validate_ump_accepts_known_message_types() -> None:
 
 
 def test_validate_ump_two_word_midi2_message() -> None:
-    w1, w2 = pack_midi2_note_on(
-        group=0, channel=0, note=60, velocity_16=0x4000, attribute=0)
+    w1, w2 = pack_midi2_note_on(group=0, channel=0, note=60, velocity_16=0x4000, attribute=0)
     msg = validate_ump([w1, w2])
     assert msg.message_type == UMPMessageType.MIDI_2
     assert msg.word_count == 2
 
 
 def test_validate_ump_rejects_truncated_midi2_message() -> None:
-    w1, _ = pack_midi2_note_on(
-        group=0, channel=0, note=60, velocity_16=0x4000, attribute=0)
+    w1, _ = pack_midi2_note_on(group=0, channel=0, note=60, velocity_16=0x4000, attribute=0)
     with pytest.raises(ValueError, match="word count"):
         validate_ump([w1])
 

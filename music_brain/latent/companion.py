@@ -79,10 +79,14 @@ def _validate_va(valence: float, arousal: float) -> None:
 class CompanionSession:
     """One user / session orchestrator around the latent core."""
 
-    def __init__(self, *, user_id: str,
-                 world_model: Optional[WorldModel] = None,
-                 memory: Optional[LatentMemory] = None,
-                 calibration_blend: float = 0.0) -> None:
+    def __init__(
+        self,
+        *,
+        user_id: str,
+        world_model: Optional[WorldModel] = None,
+        memory: Optional[LatentMemory] = None,
+        calibration_blend: float = 0.0,
+    ) -> None:
         if not user_id:
             raise ValueError("user_id must be a non-empty string")
         self._user_id = user_id
@@ -109,8 +113,9 @@ class CompanionSession:
     # Intent normalization
     # ------------------------------------------------------------------
 
-    def normalize_intent(self, *, valence: float, arousal: float,
-                         mood: Optional[str] = None) -> IntentFrame:
+    def normalize_intent(
+        self, *, valence: float, arousal: float, mood: Optional[str] = None
+    ) -> IntentFrame:
         _validate_va(valence, arousal)
         intent_id = self._next_intent_id
         self._next_intent_id += 1
@@ -126,23 +131,20 @@ class CompanionSession:
                 )
         return IntentFrame(
             meta=IntentMeta(intent_id=intent_id),
-            emotion=EmotionState(valence=float(valence),
-                                 arousal=float(arousal),
-                                 dominance=0.5,
-                                 confidence=1.0),
+            emotion=EmotionState(
+                valence=float(valence), arousal=float(arousal), dominance=0.5, confidence=1.0
+            ),
             music=music,
             time=TimeScope(),
             constraints=IntentConstraints(),
-            provenance=IntentProvenance(source=IntentSource.UI_DIRECT,
-                                        user_override_weight=1.0),
+            provenance=IntentProvenance(source=IntentSource.UI_DIRECT, user_override_weight=1.0),
         )
 
     # ------------------------------------------------------------------
     # Propose / checkpoint / accept / reject
     # ------------------------------------------------------------------
 
-    def propose(self, frame: LatentFrame, *, horizon: int
-                ) -> Iterator[LatentFrame]:
+    def propose(self, frame: LatentFrame, *, horizon: int) -> Iterator[LatentFrame]:
         if horizon <= 0:
             raise ValueError(f"horizon must be > 0, got {horizon}")
         if self._world_model is None:
@@ -156,7 +158,8 @@ class CompanionSession:
                 yield f
             else:
                 yield LatentFrame(
-                    audio_z=f.audio_z, chord_z=f.chord_z,
+                    audio_z=f.audio_z,
+                    chord_z=f.chord_z,
                     emotion_va=calibrated_va,
                     time_index=f.time_index,
                     provenance=f.provenance,
@@ -169,8 +172,7 @@ class CompanionSession:
     def accept(self, frame: LatentFrame, feedback: HumanFeedback) -> None:
         self._observe(frame, feedback)
 
-    def reject(self, frame: LatentFrame, feedback: HumanFeedback
-               ) -> LatentFrame:
+    def reject(self, frame: LatentFrame, feedback: HumanFeedback) -> LatentFrame:
         self._observe(frame, feedback)
         # Roll back to the most recent checkpoint, if any.
         if len(self._rollback) == 0:
@@ -183,19 +185,19 @@ class CompanionSession:
     # ------------------------------------------------------------------
 
     def _observe(self, frame: LatentFrame, feedback: HumanFeedback) -> None:
-        self._user_model.observe(FeedbackEvent(
-            emotion_va=frame.emotion_va,
-            satisfaction=float(feedback.satisfaction),
-            frame=frame,
-            frame_id=f"{self._user_id}-{frame.time_index}",
-        ))
+        self._user_model.observe(
+            FeedbackEvent(
+                emotion_va=frame.emotion_va,
+                satisfaction=float(feedback.satisfaction),
+                frame=frame,
+                frame_id=f"{self._user_id}-{frame.time_index}",
+            )
+        )
 
-    def _calibrate_va(self, requested: Tuple[float, float]
-                      ) -> Tuple[float, float]:
+    def _calibrate_va(self, requested: Tuple[float, float]) -> Tuple[float, float]:
         if self._calibration_blend <= 0.0:
             return requested
-        return self._user_model.calibrate_emotion_va(
-            requested, blend=self._calibration_blend)
+        return self._user_model.calibrate_emotion_va(requested, blend=self._calibration_blend)
 
 
 __all__ = ["CompanionSession", "HumanFeedback"]

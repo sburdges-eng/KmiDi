@@ -26,8 +26,7 @@ from music_brain.world_model import WorldModel  # noqa: E402
 
 
 def _prov() -> IntentProvenance:
-    return IntentProvenance(source=IntentSource.UI_DIRECT,
-                            user_override_weight=1.0)
+    return IntentProvenance(source=IntentSource.UI_DIRECT, user_override_weight=1.0)
 
 
 def _frame(D: int = 8, T: int = 4, t: int = 0) -> LatentFrame:
@@ -100,8 +99,8 @@ def test_predict_is_deterministic_with_fixed_seed() -> None:
     def run():
         torch.manual_seed(0)
         wm = WorldModel(state_dim=4)
-        return PredictionEngine(world_model=wm).predict(
-            _frame(D=4, T=2), horizon=3)
+        return PredictionEngine(world_model=wm).predict(_frame(D=4, T=2), horizon=3)
+
     a = run()
     b = run()
     for fa, fb in zip(a, b):
@@ -113,8 +112,11 @@ def test_predict_propagates_provenance_and_emotion() -> None:
     wm = WorldModel(state_dim=4)
     src = LatentFrame(
         audio_z=torch.zeros(2, 4, dtype=torch.float32),
-        chord_z=None, emotion_va=(0.5, -0.5), time_index=10,
-        provenance=_prov(), metadata={"k": 1},
+        chord_z=None,
+        emotion_va=(0.5, -0.5),
+        time_index=10,
+        provenance=_prov(),
+        metadata={"k": 1},
     )
     out = PredictionEngine(world_model=wm).predict(src, horizon=2)
     for f in out:

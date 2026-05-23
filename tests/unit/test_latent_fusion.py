@@ -20,22 +20,25 @@ from music_brain.latent.latent_frame import LatentFrame  # noqa: E402
 
 
 def _prov() -> IntentProvenance:
-    return IntentProvenance(source=IntentSource.UI_DIRECT,
-                            user_override_weight=1.0)
+    return IntentProvenance(source=IntentSource.UI_DIRECT, user_override_weight=1.0)
 
 
 def _frame_with(audio: torch.Tensor, chord=None, t: int = 0) -> LatentFrame:
     return LatentFrame(
-        audio_z=audio, chord_z=chord, emotion_va=(0.0, 0.0),
-        time_index=t, provenance=_prov(), metadata={},
+        audio_z=audio,
+        chord_z=chord,
+        emotion_va=(0.0, 0.0),
+        time_index=t,
+        provenance=_prov(),
+        metadata={},
     )
 
 
 def test_fusion_concatenates_audio_and_chord_dims() -> None:
     fuse = MultimodalFusion()
     f = _frame_with(
-        audio=torch.zeros(2, 4, dtype=torch.float32),
-        chord=torch.zeros(2, 8, dtype=torch.float32))
+        audio=torch.zeros(2, 4, dtype=torch.float32), chord=torch.zeros(2, 8, dtype=torch.float32)
+    )
     out = fuse(f)
     assert out.shape == (2, 12)
 
@@ -52,8 +55,8 @@ def test_fusion_handles_missing_chord_with_zero_pad() -> None:
 def test_fusion_requires_matching_time_steps() -> None:
     fuse = MultimodalFusion()
     f = _frame_with(
-        audio=torch.zeros(2, 4, dtype=torch.float32),
-        chord=torch.zeros(3, 8, dtype=torch.float32))
+        audio=torch.zeros(2, 4, dtype=torch.float32), chord=torch.zeros(3, 8, dtype=torch.float32)
+    )
     with pytest.raises(ValueError, match="time"):
         fuse(f)
 

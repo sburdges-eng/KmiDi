@@ -67,20 +67,20 @@ def incremental_decode(
         t0 = time.perf_counter()
         logits = logit_fn(step_idx, previous_token)
         if force_greedy:
-            token = int(greedy_argmax(
-                logits, forbidden_tokens=forbidden_tokens).item())
+            token = int(greedy_argmax(logits, forbidden_tokens=forbidden_tokens).item())
             mode = "greedy"
         else:
-            token = int(sample_with_constraints(
-                logits, cfg, forbidden_tokens=forbidden_tokens,
-                generator=generator).item())
+            token = int(
+                sample_with_constraints(
+                    logits, cfg, forbidden_tokens=forbidden_tokens, generator=generator
+                ).item()
+            )
             mode = "sampled"
         dt_ms = (time.perf_counter() - t0) * 1000.0
         if scheduler is not None:
             scheduler.record_step_ms(dt_ms)
 
-        yield DecodeStep(step_index=step_idx, token_id=token, mode=mode,
-                         elapsed_ms=dt_ms)
+        yield DecodeStep(step_index=step_idx, token_id=token, mode=mode, elapsed_ms=dt_ms)
         previous_token = token
         if eos_token is not None and token == eos_token:
             return

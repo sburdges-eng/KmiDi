@@ -49,9 +49,7 @@ class ChordJEPA(nn.Module):
 
         self.d_model = d_model
         self.num_classes = num_classes
-        self.pos_embed = nn.Parameter(
-            torch.randn(1, seq_len, d_model) * 0.02
-        )
+        self.pos_embed = nn.Parameter(torch.randn(1, seq_len, d_model) * 0.02)
 
         encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model,
@@ -102,12 +100,15 @@ class ChordEmbedding(nn.Module):
         return self.embedding(chord_ids)
 
 
-def encode_chord_to_frame(embedded_chords: torch.Tensor, *,
-                          audio_z: torch.Tensor,
-                          time_index: int,
-                          provenance,
-                          emotion_va=(0.0, 0.0),
-                          metadata=None):
+def encode_chord_to_frame(
+    embedded_chords: torch.Tensor,
+    *,
+    audio_z: torch.Tensor,
+    time_index: int,
+    provenance,
+    emotion_va=(0.0, 0.0),
+    metadata=None,
+):
     """Pack an embedded chord sequence + paired audio latents into a LatentFrame.
 
     The Chord-JEPA stack operates in ``d_model``-space (already embedded
@@ -127,17 +128,20 @@ def encode_chord_to_frame(embedded_chords: torch.Tensor, *,
         metadata: diagnostics bag.
     """
     from music_brain.latent.latent_frame import LatentFrame  # noqa: PLC0415
+
     if embedded_chords.dim() == 3:
         if embedded_chords.shape[0] != 1:
             raise ValueError(
                 "encode_chord_to_frame expects a single sample; "
-                f"got batch dim {embedded_chords.shape[0]}")
+                f"got batch dim {embedded_chords.shape[0]}"
+            )
         chord_z = embedded_chords.squeeze(0).contiguous()
     elif embedded_chords.dim() == 2:
         chord_z = embedded_chords.contiguous()
     else:
         raise ValueError(
-            f"embedded_chords must be 2-D or 3-D; got shape {tuple(embedded_chords.shape)}")
+            f"embedded_chords must be 2-D or 3-D; got shape {tuple(embedded_chords.shape)}"
+        )
     meta = {"source": "chord_jepa"}
     if metadata:
         meta.update(metadata)

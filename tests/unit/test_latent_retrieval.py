@@ -23,15 +23,17 @@ from music_brain.latent.retrieval import (  # noqa: E402
 
 
 def _prov() -> IntentProvenance:
-    return IntentProvenance(source=IntentSource.UI_DIRECT,
-                            user_override_weight=1.0)
+    return IntentProvenance(source=IntentSource.UI_DIRECT, user_override_weight=1.0)
 
 
-def _frame(audio: torch.Tensor, *, time_index: int = 0,
-           emotion_va=(0.0, 0.0)) -> LatentFrame:
+def _frame(audio: torch.Tensor, *, time_index: int = 0, emotion_va=(0.0, 0.0)) -> LatentFrame:
     return LatentFrame(
-        audio_z=audio, chord_z=None, emotion_va=emotion_va,
-        time_index=time_index, provenance=_prov(), metadata={},
+        audio_z=audio,
+        chord_z=None,
+        emotion_va=emotion_va,
+        time_index=time_index,
+        provenance=_prov(),
+        metadata={},
     )
 
 
@@ -113,10 +115,8 @@ def test_empty_memory_recall_returns_empty() -> None:
 
 def test_filter_by_user_id() -> None:
     mem = LatentMemory(dim=4)
-    mem.remember("u1-a", _frame(torch.tensor([[1.0, 0.0, 0.0, 0.0]])),
-                 metadata={"user_id": "u1"})
-    mem.remember("u2-a", _frame(torch.tensor([[1.0, 0.0, 0.0, 0.0]])),
-                 metadata={"user_id": "u2"})
+    mem.remember("u1-a", _frame(torch.tensor([[1.0, 0.0, 0.0, 0.0]])), metadata={"user_id": "u1"})
+    mem.remember("u2-a", _frame(torch.tensor([[1.0, 0.0, 0.0, 0.0]])), metadata={"user_id": "u2"})
     q = _frame(torch.tensor([[1.0, 0.0, 0.0, 0.0]]))
     hits = mem.recall(q, top_k=2, user_id="u1")
     assert [h.id for h in hits] == ["u1-a"]

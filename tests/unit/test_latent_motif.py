@@ -20,10 +20,11 @@ from music_brain.latent.motif import (  # noqa: E402
 
 def _frame(audio, *, t: int = 0) -> LatentFrame:
     return LatentFrame(
-        audio_z=audio, chord_z=None, emotion_va=(0.0, 0.0),
+        audio_z=audio,
+        chord_z=None,
+        emotion_va=(0.0, 0.0),
         time_index=t,
-        provenance=IntentProvenance(source=IntentSource.UI_DIRECT,
-                                    user_override_weight=1.0),
+        provenance=IntentProvenance(source=IntentSource.UI_DIRECT, user_override_weight=1.0),
         metadata={},
     )
 

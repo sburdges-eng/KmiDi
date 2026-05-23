@@ -36,6 +36,7 @@ from music_brain.latent.latent_frame import LatentFrame
 
 def _torch():
     import torch
+
     return torch
 
 
@@ -63,17 +64,20 @@ class MultimodalFusion:
         self._validate_audio_dim(audio.shape[1])
         chord = frame.chord_z
         if chord is None:
-            chord = torch.zeros(audio.shape[0], self._chord_dim,
-                                dtype=audio.dtype)
+            chord = torch.zeros(
+                audio.shape[0], self._chord_dim, dtype=audio.dtype, device=audio.device
+            )
         if chord.shape[0] != audio.shape[0]:
             raise ValueError(
-                f"audio time-steps {audio.shape[0]} != chord time-steps {chord.shape[0]}")
+                f"audio time-steps {audio.shape[0]} != chord time-steps {chord.shape[0]}"
+            )
         return torch.cat([audio, chord], dim=-1)
 
 
 @dataclass(frozen=True)
 class StemBundle:
     """A bag of per-instrument LatentFrames at a single time_index."""
+
     stems: Mapping[str, LatentFrame]
 
     def __post_init__(self) -> None:
@@ -85,7 +89,8 @@ class StemBundle:
                 t = f.time_index
             elif f.time_index != t:
                 raise ValueError(
-                    f"stem '{name}' time_index {f.time_index} != bundle time_index {t}")
+                    f"stem '{name}' time_index {f.time_index} != bundle time_index {t}"
+                )
 
     def __len__(self) -> int:
         return len(self.stems)

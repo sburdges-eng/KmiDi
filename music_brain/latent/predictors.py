@@ -37,8 +37,7 @@ class PredictionEngine:
             by the orchestrator to route concurrent predictions.
     """
 
-    def __init__(self, world_model: WorldModel, *,
-                 name: Optional[str] = None) -> None:
+    def __init__(self, world_model: WorldModel, *, name: Optional[str] = None) -> None:
         self._world_model = world_model
         self._name = name
 
@@ -52,7 +51,8 @@ class PredictionEngine:
         if frame.audio_feature_dim != self._world_model.state_dim:
             raise ValueError(
                 f"frame audio_feature_dim {frame.audio_feature_dim} "
-                f"!= WorldModel.state_dim {self._world_model.state_dim}")
+                f"!= WorldModel.state_dim {self._world_model.state_dim}"
+            )
         traj = self._world_model.rollout_frames(frame, steps=horizon)
         # Re-stamp the metadata bag with this predictor's name.
         out: list[LatentFrame] = []
@@ -60,11 +60,16 @@ class PredictionEngine:
             meta = dict(f.metadata)
             if self._name:
                 meta["predictor"] = self._name
-            out.append(LatentFrame(
-                audio_z=f.audio_z, chord_z=f.chord_z,
-                emotion_va=f.emotion_va, time_index=f.time_index,
-                provenance=f.provenance, metadata=meta,
-            ))
+            out.append(
+                LatentFrame(
+                    audio_z=f.audio_z,
+                    chord_z=f.chord_z,
+                    emotion_va=f.emotion_va,
+                    time_index=f.time_index,
+                    provenance=f.provenance,
+                    metadata=meta,
+                )
+            )
         return out
 
 

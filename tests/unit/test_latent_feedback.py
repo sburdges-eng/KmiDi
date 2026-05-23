@@ -23,15 +23,17 @@ from music_brain.latent.retrieval import LatentMemory  # noqa: E402
 
 
 def _prov() -> IntentProvenance:
-    return IntentProvenance(source=IntentSource.UI_DIRECT,
-                            user_override_weight=1.0)
+    return IntentProvenance(source=IntentSource.UI_DIRECT, user_override_weight=1.0)
 
 
-def _frame(audio: torch.Tensor, *, time_index: int = 0,
-           emotion_va=(0.0, 0.0)) -> LatentFrame:
+def _frame(audio: torch.Tensor, *, time_index: int = 0, emotion_va=(0.0, 0.0)) -> LatentFrame:
     return LatentFrame(
-        audio_z=audio, chord_z=None, emotion_va=emotion_va,
-        time_index=time_index, provenance=_prov(), metadata={},
+        audio_z=audio,
+        chord_z=None,
+        emotion_va=emotion_va,
+        time_index=time_index,
+        provenance=_prov(),
+        metadata={},
     )
 
 
@@ -98,9 +100,9 @@ def test_observe_emits_to_memory_when_attached() -> None:
     mem = LatentMemory(dim=4)
     um = UserModel("u1", memory=mem)
     frame = _frame(torch.tensor([[1.0, 0.0, 0.0, 0.0]]))
-    um.observe(FeedbackEvent(
-        emotion_va=(0.5, 0.5), satisfaction=0.9, frame=frame,
-        frame_id="gen-1"))
+    um.observe(
+        FeedbackEvent(emotion_va=(0.5, 0.5), satisfaction=0.9, frame=frame, frame_id="gen-1")
+    )
     hits = mem.recall(frame, top_k=1, user_id="u1")
     assert hits and hits[0].id == "gen-1"
     assert hits[0].metadata["satisfaction"] == pytest.approx(0.9)

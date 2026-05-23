@@ -35,6 +35,7 @@ from typing import Optional
 
 def _torch():
     import torch
+
     return torch
 
 
@@ -48,8 +49,9 @@ class WorldModel:
         hidden_dim: GRU hidden size. Defaults to ``state_dim``.
     """
 
-    def __init__(self, state_dim: int, action_dim: int = 0,
-                 hidden_dim: Optional[int] = None) -> None:
+    def __init__(
+        self, state_dim: int, action_dim: int = 0, hidden_dim: Optional[int] = None
+    ) -> None:
         torch = _torch()
         if state_dim <= 0:
             raise ValueError("state_dim must be positive")
@@ -93,8 +95,7 @@ class WorldModel:
         else:
             x = state
         if hidden is None:
-            hidden = torch.zeros(b, self.hidden_dim, device=state.device,
-                                 dtype=state.dtype)
+            hidden = torch.zeros(b, self.hidden_dim, device=state.device, dtype=state.dtype)
         new_hidden = self.gru(x, hidden)
         next_state = self.out_proj(new_hidden)
         return next_state, new_hidden
@@ -160,10 +161,12 @@ class WorldModel:
         # imports IntentProvenance from intent_ir, which in turn does
         # not depend on world_model.
         from music_brain.latent.latent_frame import LatentFrame  # noqa: PLC0415
+
         if initial.audio_feature_dim != self.state_dim:
             raise ValueError(
                 f"LatentFrame audio_feature_dim {initial.audio_feature_dim} "
-                f"!= WorldModel.state_dim {self.state_dim}")
+                f"!= WorldModel.state_dim {self.state_dim}"
+            )
         # Pool the initial frame's time axis to a single state vector,
         # then add the batch dim WorldModel.rollout expects.
         state0 = initial.audio_z.mean(dim=0, keepdim=True)  # (1, D)
@@ -177,16 +180,17 @@ class WorldModel:
         out = []
         t = traj.shape[1]
         for i in range(t):
-            step_z = traj[0, i:i + 1, :].contiguous()  # (1, D)
-            out.append(LatentFrame(
-                audio_z=step_z,
-                chord_z=None,
-                emotion_va=initial.emotion_va,
-                time_index=initial.time_index + 1 + i,
-                provenance=initial.provenance,
-                metadata={"source": "world_model.rollout_frames",
-                          "step": i},
-            ))
+            step_z = traj[0, i : i + 1, :].contiguous()  # (1, D)
+            out.append(
+                LatentFrame(
+                    audio_z=step_z,
+                    chord_z=None,
+                    emotion_va=initial.emotion_va,
+                    time_index=initial.time_index + 1 + i,
+                    provenance=initial.provenance,
+                    metadata={"source": "world_model.rollout_frames", "step": i},
+                )
+            )
         return out
 
     # ------------------------------------------------------------------

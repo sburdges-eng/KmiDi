@@ -24,6 +24,7 @@ from music_brain.latent.regularization import (  # noqa: E402
 # L2NormProjection
 # ----------------------------------------------------------------------
 
+
 def test_l2_norm_projects_above_radius_back_to_radius() -> None:
     proj = L2NormProjection(radius=1.0)
     torch.manual_seed(0)
@@ -78,6 +79,7 @@ def test_l2_norm_is_differentiable_at_boundary() -> None:
 # VarianceFloor
 # ----------------------------------------------------------------------
 
+
 def test_variance_floor_zero_loss_when_variance_above_floor() -> None:
     floor = VarianceFloor(min_var=1e-3)
     torch.manual_seed(0)
@@ -131,6 +133,7 @@ def test_variance_floor_is_differentiable() -> None:
 # ----------------------------------------------------------------------
 # Determinism
 # ----------------------------------------------------------------------
+
 
 def test_l2_norm_deterministic_across_calls() -> None:
     proj = L2NormProjection(radius=2.5)

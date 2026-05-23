@@ -24,6 +24,7 @@ from typing import Tuple
 
 def _torch():
     import torch
+
     return torch
 
 
@@ -38,8 +39,7 @@ class KVCache:
             single-stream realtime decoding.
     """
 
-    def __init__(self, num_heads: int, head_dim: int, max_len: int,
-                 batch_size: int = 1) -> None:
+    def __init__(self, num_heads: int, head_dim: int, max_len: int, batch_size: int = 1) -> None:
         torch = _torch()
         if num_heads <= 0 or head_dim <= 0 or max_len <= 0 or batch_size <= 0:
             raise ValueError("num_heads, head_dim, max_len, batch_size must be positive")
@@ -47,8 +47,9 @@ class KVCache:
         self._head_dim = int(head_dim)
         self._max_len = int(max_len)
         self._batch_size = int(batch_size)
-        self._k = torch.zeros(self._batch_size, self._num_heads,
-                              self._max_len, self._head_dim, dtype=torch.float32)
+        self._k = torch.zeros(
+            self._batch_size, self._num_heads, self._max_len, self._head_dim, dtype=torch.float32
+        )
         self._v = torch.zeros_like(self._k)
         self._length = 0
 
@@ -85,30 +86,26 @@ class KVCache:
             ``snapshot`` instead if you need an owned copy.
         """
         if k_new.shape != v_new.shape:
-            raise ValueError(
-                f"k/v shape mismatch: {tuple(k_new.shape)} vs {tuple(v_new.shape)}")
+            raise ValueError(f"k/v shape mismatch: {tuple(k_new.shape)} vs {tuple(v_new.shape)}")
         if k_new.shape[1] != self._num_heads:
-            raise ValueError(
-                f"num_heads mismatch: cache={self._num_heads}, got {k_new.shape[1]}")
+            raise ValueError(f"num_heads mismatch: cache={self._num_heads}, got {k_new.shape[1]}")
         if k_new.shape[3] != self._head_dim:
-            raise ValueError(
-                f"head_dim mismatch: cache={self._head_dim}, got {k_new.shape[3]}")
+            raise ValueError(f"head_dim mismatch: cache={self._head_dim}, got {k_new.shape[3]}")
         t_new = int(k_new.shape[2])
         if self._length + t_new > self._max_len:
             raise ValueError(
                 f"capacity exceeded: length={self._length} + new={t_new} > "
-                f"max_len={self._max_len}")
-        self._k[:, :, self._length:self._length + t_new, :] = k_new
-        self._v[:, :, self._length:self._length + t_new, :] = v_new
+                f"max_len={self._max_len}"
+            )
+        self._k[:, :, self._length : self._length + t_new, :] = k_new
+        self._v[:, :, self._length : self._length + t_new, :] = v_new
         self._length += t_new
-        return (self._k[:, :, :self._length, :],
-                self._v[:, :, :self._length, :])
+        return (self._k[:, :, : self._length, :], self._v[:, :, : self._length, :])
 
     def truncate(self, new_length: int) -> None:
         """Rewind the write head to ``new_length`` (O(1))."""
         if new_length < 0 or new_length > self._length:
-            raise ValueError(
-                f"truncate: target {new_length} not in [0, current={self._length}]")
+            raise ValueError(f"truncate: target {new_length} not in [0, current={self._length}]")
         self._length = int(new_length)
 
     # ------------------------------------------------------------------
@@ -117,8 +114,8 @@ class KVCache:
 
     def snapshot(self):
         """Return an owned copy of the populated prefix."""
-        k = self._k[:, :, :self._length, :].clone()
-        v = self._v[:, :, :self._length, :].clone()
+        k = self._k[:, :, : self._length, :].clone()
+        v = self._v[:, :, : self._length, :].clone()
         return k, v
 
 

@@ -30,6 +30,7 @@ from typing import Iterable, Optional
 
 def _torch():
     import torch
+
     return torch
 
 
@@ -45,6 +46,7 @@ class DecodeConfig:
         top_k: keep only the top-k logits; 0 disables.
         top_p: nucleus threshold in (0, 1]; 1.0 disables.
     """
+
     temperature: float = 1.0
     top_k: int = 0
     top_p: float = 1.0
@@ -62,8 +64,7 @@ def _mask_forbidden(logits, forbidden_tokens: Optional[Iterable[int]]):
     if not forbidden_tokens:
         return logits
     torch = _torch()
-    idx = torch.as_tensor(list(forbidden_tokens), dtype=torch.long,
-                          device=logits.device)
+    idx = torch.as_tensor(list(forbidden_tokens), dtype=torch.long, device=logits.device)
     out = logits.clone()
     out[..., idx] = NEG_INF
     return out
@@ -79,9 +80,9 @@ def greedy_argmax(logits, *, forbidden_tokens: Optional[Iterable[int]] = None):
     return masked.argmax(dim=-1)
 
 
-def sample_with_constraints(logits, cfg: DecodeConfig, *,
-                            forbidden_tokens: Optional[Iterable[int]] = None,
-                            generator=None):
+def sample_with_constraints(
+    logits, cfg: DecodeConfig, *, forbidden_tokens: Optional[Iterable[int]] = None, generator=None
+):
     """Sample one token per row from ``logits`` under the given constraints.
 
     Args:
@@ -113,9 +114,7 @@ def sample_with_constraints(logits, cfg: DecodeConfig, *,
         k = min(cfg.top_k, scaled.shape[-1])
         topk_vals, _ = torch.topk(scaled, k=k, dim=-1)
         threshold = topk_vals[..., -1:].clone()
-        scaled = torch.where(scaled < threshold,
-                             torch.full_like(scaled, NEG_INF),
-                             scaled)
+        scaled = torch.where(scaled < threshold, torch.full_like(scaled, NEG_INF), scaled)
 
     # top-p: keep the smallest set of tokens whose cumulative softmax
     # mass first crosses the threshold.

@@ -26,8 +26,7 @@ def _frame(t: int = 0) -> LatentFrame:
         chord_z=None,
         emotion_va=(0.0, 0.0),
         time_index=t,
-        provenance=IntentProvenance(source=IntentSource.UI_DIRECT,
-                                    user_override_weight=1.0),
+        provenance=IntentProvenance(source=IntentSource.UI_DIRECT, user_override_weight=1.0),
         metadata={},
     )
 
@@ -59,8 +58,7 @@ def test_session_propose_emits_latent_frames() -> None:
 def test_session_accept_records_feedback() -> None:
     s = CompanionSession(user_id="u1")
     out = list(s.propose(_frame(t=0), horizon=2))
-    feedback = HumanFeedback(accepted=True, satisfaction=0.9,
-                             notes="nice motif")
+    feedback = HumanFeedback(accepted=True, satisfaction=0.9, notes="nice motif")
     s.accept(out[-1], feedback)
     # User model now reflects the accepted event.
     assert s.user_model.event_count == 1
@@ -102,10 +100,11 @@ def test_propose_uses_user_calibrated_va_when_blend_set() -> None:
     s = CompanionSession(user_id="u1", calibration_blend=0.5)
     # Teach the user model that the user really likes (0.8, 0.8).
     liked = LatentFrame(
-        audio_z=torch.zeros(1, 4, dtype=torch.float32), chord_z=None,
-        emotion_va=(0.8, 0.8), time_index=0,
-        provenance=IntentProvenance(source=IntentSource.UI_DIRECT,
-                                    user_override_weight=1.0),
+        audio_z=torch.zeros(1, 4, dtype=torch.float32),
+        chord_z=None,
+        emotion_va=(0.8, 0.8),
+        time_index=0,
+        provenance=IntentProvenance(source=IntentSource.UI_DIRECT, user_override_weight=1.0),
         metadata={},
     )
     s.accept(liked, HumanFeedback(accepted=True, satisfaction=1.0))

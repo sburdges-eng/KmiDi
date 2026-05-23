@@ -24,7 +24,8 @@ class ScopeViolation(Exception):
     def __init__(self, scope: "GenerationScope", attempted_bar: int) -> None:
         super().__init__(
             f"attempted to write bar {attempted_bar} "
-            f"outside scope [{scope.start_bar}, {scope.end_bar})")
+            f"outside scope [{scope.start_bar}, {scope.end_bar})"
+        )
         self.scope = scope
         self.attempted_bar = attempted_bar
         self.intent_id = scope.intent_id
@@ -33,6 +34,7 @@ class ScopeViolation(Exception):
 @dataclass(frozen=True)
 class GenerationScope:
     """Half-open bar range with optional intent_id provenance."""
+
     start_bar: int
     end_bar: int
     intent_id: Optional[int] = None
@@ -41,8 +43,7 @@ class GenerationScope:
         if self.start_bar < 0:
             raise ValueError(f"start_bar must be >= 0, got {self.start_bar}")
         if self.end_bar <= self.start_bar:
-            raise ValueError(
-                f"end_bar ({self.end_bar}) must be > start_bar ({self.start_bar})")
+            raise ValueError(f"end_bar ({self.end_bar}) must be > start_bar ({self.start_bar})")
 
     @property
     def length_bars(self) -> int:
@@ -55,8 +56,7 @@ class GenerationScope:
         if not self.contains_bar(bar):
             raise ScopeViolation(self, bar)
 
-    def collect(self, items: Iterable[T], *,
-                bar_of: Callable[[T], int]) -> List[T]:
+    def collect(self, items: Iterable[T], *, bar_of: Callable[[T], int]) -> List[T]:
         """Return only the items whose bar falls inside the scope."""
         return [x for x in items if self.contains_bar(bar_of(x))]
 
@@ -65,8 +65,7 @@ class GenerationScope:
         hi = min(self.end_bar, other.end_bar)
         if hi <= lo:
             return None
-        return GenerationScope(start_bar=lo, end_bar=hi,
-                               intent_id=self.intent_id)
+        return GenerationScope(start_bar=lo, end_bar=hi, intent_id=self.intent_id)
 
 
 __all__ = ["GenerationScope", "ScopeViolation"]

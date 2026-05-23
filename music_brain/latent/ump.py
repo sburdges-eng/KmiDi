@@ -78,8 +78,7 @@ def _check_range(name: str, v: int, lo: int, hi: int) -> None:
 # ----------------------------------------------------------------------
 
 
-def pack_midi1_note_on(*, group: int, channel: int, note: int,
-                       velocity: int) -> int:
+def pack_midi1_note_on(*, group: int, channel: int, note: int, velocity: int) -> int:
     """Pack a MIDI 1.0 note-on into one 32-bit UMP word (MT=2)."""
     _check_range("group", group, 0, 15)
     _check_range("channel", channel, 0, 15)
@@ -87,12 +86,18 @@ def pack_midi1_note_on(*, group: int, channel: int, note: int,
     _check_range("velocity", velocity, 0, 127)
     mt = UMP_MESSAGE_TYPE_MIDI_1
     status = 0x90 | (channel & 0xF)  # note-on opcode
-    return ((mt & 0xF) << 28) | ((group & 0xF) << 24) | (status << 16) \
-        | ((note & 0x7F) << 8) | (velocity & 0x7F)
+    return (
+        ((mt & 0xF) << 28)
+        | ((group & 0xF) << 24)
+        | (status << 16)
+        | ((note & 0x7F) << 8)
+        | (velocity & 0x7F)
+    )
 
 
-def pack_midi2_note_on(*, group: int, channel: int, note: int,
-                       velocity_16: int, attribute: int) -> tuple[int, int]:
+def pack_midi2_note_on(
+    *, group: int, channel: int, note: int, velocity_16: int, attribute: int
+) -> tuple[int, int]:
     """Pack a MIDI 2.0 note-on into two 32-bit UMP words (MT=4)."""
     _check_range("group", group, 0, 15)
     _check_range("channel", channel, 0, 15)
@@ -101,8 +106,7 @@ def pack_midi2_note_on(*, group: int, channel: int, note: int,
     _check_range("attribute", attribute, 0, 0xFFFF)
     mt = UMP_MESSAGE_TYPE_MIDI_2
     status = 0x90 | (channel & 0xF)
-    word1 = ((mt & 0xF) << 28) | ((group & 0xF) << 24) | (status << 16) \
-        | ((note & 0x7F) << 8)
+    word1 = ((mt & 0xF) << 28) | ((group & 0xF) << 24) | (status << 16) | ((note & 0x7F) << 8)
     word2 = ((velocity_16 & 0xFFFF) << 16) | (attribute & 0xFFFF)
     return word1, word2
 
@@ -123,8 +127,8 @@ def validate_ump(words: list[int]) -> UMPMessage:
     expected_words = _MT_TO_WORD_COUNT[mt]
     if len(words) < expected_words:
         raise ValueError(
-            f"UMP word count for MT=0x{mt:X} must be {expected_words}, "
-            f"got {len(words)}")
+            f"UMP word count for MT=0x{mt:X} must be {expected_words}, " f"got {len(words)}"
+        )
     group = (head >> 24) & 0xF
     channel = -1
     note = -1

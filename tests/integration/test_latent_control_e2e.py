@@ -53,9 +53,7 @@ def _build_chain(seed: int = 0):
     encoder = AudioJEPAEncoder(tier="small", n_mels=32)  # latent_dim=128
     norm = L2NormProjection(radius=1.0)
     bridge = ConditioningProjection(kv_dim=encoder.latent_dim)
-    attn = CrossAttention(query_dim=encoder.latent_dim,
-                          kv_dim=encoder.latent_dim,
-                          num_heads=4)
+    attn = CrossAttention(query_dim=encoder.latent_dim, kv_dim=encoder.latent_dim, num_heads=4)
     world = WorldModel(state_dim=encoder.latent_dim, action_dim=0)
     return encoder, norm, bridge, attn, world
 
@@ -63,12 +61,10 @@ def _build_chain(seed: int = 0):
 def _build_intent() -> IntentFrame:
     return IntentFrame(
         meta=IntentMeta(intent_id=42, session_id=7),
-        emotion=EmotionState(valence=0.4, arousal=0.6, dominance=0.5,
-                             confidence=0.95),
+        emotion=EmotionState(valence=0.4, arousal=0.6, dominance=0.5, confidence=0.95),
         music=MusicalIntent(tempo_bias=0.1, rhythmic_density=0.7),
         time=TimeScope(start_bar=0, end_bar=8),
-        provenance=IntentProvenance(source=IntentSource.UI_DIRECT,
-                                    user_override_weight=1.0),
+        provenance=IntentProvenance(source=IntentSource.UI_DIRECT, user_override_weight=1.0),
     )
 
 
@@ -82,15 +78,12 @@ def _run_chain(*, seed: int = 0, mel_seed: int = 1, horizon: int = 4):
     # has shape (T, latent_dim).
     mel = torch.randn(1, 1, 32, 16, dtype=torch.float32)
 
-    prov = IntentProvenance(source=IntentSource.UI_DIRECT,
-                            user_override_weight=1.0)
-    initial = encoder.encode_to_frame(
-        mel, time_index=0, provenance=prov, emotion_va=(0.4, 0.6))
+    prov = IntentProvenance(source=IntentSource.UI_DIRECT, user_override_weight=1.0)
+    initial = encoder.encode_to_frame(mel, time_index=0, provenance=prov, emotion_va=(0.4, 0.6))
 
     # Project encoder output back into the unit ball.
     norm_z = norm(initial.audio_z)
-    bounded = initial.advance(
-        time_index=initial.time_index + 1, audio_z=norm_z)  # time_index=1
+    bounded = initial.advance(time_index=initial.time_index + 1, audio_z=norm_z)  # time_index=1
 
     # Build conditioning context from the intent frame.
     kv = bridge(_build_intent())  # (1, INTENT_SLOTS, latent_dim)
@@ -101,8 +94,8 @@ def _run_chain(*, seed: int = 0, mel_seed: int = 1, horizon: int = 4):
     # model rollout (still wrapped in a LatentFrame so the contract
     # propagates).
     conditioned_frame = bounded.advance(
-        time_index=bounded.time_index + 1,
-        audio_z=conditioned.squeeze(0).contiguous())  # time_index=2
+        time_index=bounded.time_index + 1, audio_z=conditioned.squeeze(0).contiguous()
+    )  # time_index=2
 
     trajectory = world.rollout_frames(conditioned_frame, steps=horizon)
 
@@ -119,6 +112,7 @@ def _run_chain(*, seed: int = 0, mel_seed: int = 1, horizon: int = 4):
 # Shape / contract assertions through the full chain
 # ----------------------------------------------------------------------
 
+
 def test_full_chain_shapes_align() -> None:
     result = _run_chain()
     latent_dim = result["initial"].audio_feature_dim
@@ -130,7 +124,8 @@ def test_full_chain_shapes_align() -> None:
     assert torch.allclose(
         result["attn_weights"].sum(dim=-1),
         torch.ones_like(result["attn_weights"].sum(dim=-1)),
-        atol=1e-5)
+        atol=1e-5,
+    )
     # Trajectory is 4 successive LatentFrames with monotonic time_index
     # starting at conditioned.time_index + 1.
     traj = result["trajectory"]
@@ -164,6 +159,7 @@ def test_l2_projection_bounded_state_stays_bounded() -> None:
 # Vector-store retrieval round-trip
 # ----------------------------------------------------------------------
 
+
 def test_trajectory_self_retrieval_via_vector_store() -> None:
     result = _run_chain()
     traj = result["trajectory"]
@@ -187,12 +183,14 @@ def test_trajectory_self_retrieval_via_vector_store() -> None:
 # Determinism
 # ----------------------------------------------------------------------
 
+
 def test_full_chain_is_byte_identical_under_fixed_seed() -> None:
     a = _run_chain(seed=0, mel_seed=1)
     b = _run_chain(seed=0, mel_seed=1)
     for key in ("bounded", "conditioned"):
-        assert torch.equal(a[key].audio_z, b[key].audio_z), \
-            f"{key}.audio_z drifted under fixed seed"
+        assert torch.equal(
+            a[key].audio_z, b[key].audio_z
+        ), f"{key}.audio_z drifted under fixed seed"
     assert torch.equal(a["attn_weights"], b["attn_weights"])
     for fa, fb in zip(a["trajectory"], b["trajectory"]):
         assert torch.equal(fa.audio_z, fb.audio_z)
@@ -200,5 +198,4 @@ def test_full_chain_is_byte_identical_under_fixed_seed() -> None:
     # And the dict round-trip is byte-stable too.
     a_dict = a["trajectory"][0].to_dict()
     b_dict = b["trajectory"][0].to_dict()
-    assert np.array_equal(np.array(a_dict["audio_z"]),
-                          np.array(b_dict["audio_z"]))
+    assert np.array_equal(np.array(a_dict["audio_z"]), np.array(b_dict["audio_z"]))

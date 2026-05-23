@@ -43,6 +43,7 @@ from music_brain.intent_ir import IntentProvenance, IntentSource
 
 def _torch():
     import torch
+
     return torch
 
 
@@ -54,14 +55,11 @@ def _check_latent_tensor(name: str, t, *, expected_feature_dim: Optional[int] = 
     if not isinstance(t, torch.Tensor):
         raise TypeError(f"{name} must be a torch.Tensor, got {type(t).__name__}")
     if t.dim() != 2:
-        raise ValueError(
-            f"{name} must be a 2-D (T, D) tensor; got shape {tuple(t.shape)}")
+        raise ValueError(f"{name} must be a 2-D (T, D) tensor; got shape {tuple(t.shape)}")
     if t.dtype != torch.float32:
-        raise ValueError(
-            f"{name} dtype must be torch.float32; got {t.dtype}")
+        raise ValueError(f"{name} dtype must be torch.float32; got {t.dtype}")
     if expected_feature_dim is not None and t.shape[1] != expected_feature_dim:
-        raise ValueError(
-            f"{name} feature dim {t.shape[1]} != expected {expected_feature_dim}")
+        raise ValueError(f"{name} feature dim {t.shape[1]} != expected {expected_feature_dim}")
 
 
 def _freeze_metadata(metadata: Optional[Mapping[str, Any]]) -> Mapping[str, Any]:
@@ -105,7 +103,8 @@ class LatentFrame:
         object.__setattr__(self, "metadata", _freeze_metadata(self.metadata))
         # Coerce emotion_va components to plain floats for byte-stable serialization.
         object.__setattr__(
-            self, "emotion_va", (float(self.emotion_va[0]), float(self.emotion_va[1])))
+            self, "emotion_va", (float(self.emotion_va[0]), float(self.emotion_va[1]))
+        )
 
     # ------------------------------------------------------------------
     # Shape helpers
@@ -123,10 +122,15 @@ class LatentFrame:
     # Chained successor
     # ------------------------------------------------------------------
 
-    def advance(self, *, time_index: int, audio_z,
-                chord_z=None,
-                emotion_va: Optional[Tuple[float, float]] = None,
-                metadata: Optional[Mapping[str, Any]] = None) -> "LatentFrame":
+    def advance(
+        self,
+        *,
+        time_index: int,
+        audio_z,
+        chord_z=None,
+        emotion_va: Optional[Tuple[float, float]] = None,
+        metadata: Optional[Mapping[str, Any]] = None,
+    ) -> "LatentFrame":
         """Return a successor frame at ``time_index``.
 
         Enforces strict-monotonic time and feature-dim continuity.
@@ -136,18 +140,17 @@ class LatentFrame:
         if time_index <= self.time_index:
             raise ValueError(
                 f"time_index must be strictly monotonic; "
-                f"got {time_index} <= current {self.time_index}")
-        _check_latent_tensor(
-            "audio_z", audio_z,
-            expected_feature_dim=self.audio_feature_dim)
+                f"got {time_index} <= current {self.time_index}"
+            )
+        _check_latent_tensor("audio_z", audio_z, expected_feature_dim=self.audio_feature_dim)
         if chord_z is not None and self.chord_z is not None:
             _check_latent_tensor(
-                "chord_z", chord_z,
-                expected_feature_dim=int(self.chord_z.shape[1]))
+                "chord_z", chord_z, expected_feature_dim=int(self.chord_z.shape[1])
+            )
         return replace(
             self,
             audio_z=audio_z,
-            chord_z=chord_z,
+            chord_z=chord_z if chord_z is not None else self.chord_z,
             emotion_va=emotion_va if emotion_va is not None else self.emotion_va,
             time_index=time_index,
             metadata=metadata if metadata is not None else dict(self.metadata),
@@ -168,8 +171,7 @@ class LatentFrame:
         return {
             "audio_z": self.audio_z.detach().cpu().tolist(),
             "audio_dtype": _FLOAT32_DTYPE_NAME,
-            "chord_z": (self.chord_z.detach().cpu().tolist()
-                        if self.chord_z is not None else None),
+            "chord_z": (self.chord_z.detach().cpu().tolist() if self.chord_z is not None else None),
             "emotion_va": list(self.emotion_va),
             "time_index": int(self.time_index),
             "provenance": {
@@ -184,8 +186,9 @@ class LatentFrame:
         torch = _torch()
         audio_z = torch.tensor(payload["audio_z"], dtype=torch.float32)
         chord_payload = payload.get("chord_z")
-        chord_z = (torch.tensor(chord_payload, dtype=torch.float32)
-                   if chord_payload is not None else None)
+        chord_z = (
+            torch.tensor(chord_payload, dtype=torch.float32) if chord_payload is not None else None
+        )
         prov_payload = payload["provenance"]
         provenance = IntentProvenance(
             source=IntentSource(int(prov_payload["source"])),

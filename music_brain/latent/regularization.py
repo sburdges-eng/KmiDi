@@ -33,6 +33,7 @@ from __future__ import annotations
 
 def _torch():
     import torch
+
     return torch
 
 
@@ -80,8 +81,7 @@ class VarianceFloor:
         if z.dim() < 2:
             raise ValueError("input must have at least a batch dim and a feature dim")
         if z.shape[0] < 2:
-            raise ValueError(
-                "VarianceFloor requires batch size >= 2 to estimate variance")
+            raise ValueError("VarianceFloor requires batch size >= 2 to estimate variance")
         # unbiased=False matches the JEPA collapse-prevention literature.
         var = z.var(dim=0, unbiased=False)
         deficit = torch.relu(self.min_var - var)

@@ -46,7 +46,8 @@ class EmotionTrajectory:
             if wp.bar <= last:
                 raise ValueError(
                     f"waypoints must be strictly monotonic by bar; "
-                    f"got bar {wp.bar} after {last}")
+                    f"got bar {wp.bar} after {last}"
+                )
             last = wp.bar
 
     def _va_at_bar(self, bar: int) -> Tuple[float, float]:
@@ -70,12 +71,16 @@ class EmotionTrajectory:
         # Unreachable given the monotonic check.
         return (float(wps[-1].valence), float(wps[-1].arousal))
 
-    def sample_bars(self, *, start_bar: int, end_bar: int,
-                    blend_with: Optional[Tuple[float, float]] = None,
-                    blend: float = 0.0) -> Iterator[Tuple[int, float, float]]:
+    def sample_bars(
+        self,
+        *,
+        start_bar: int,
+        end_bar: int,
+        blend_with: Optional[Tuple[float, float]] = None,
+        blend: float = 0.0,
+    ) -> Iterator[Tuple[int, float, float]]:
         if end_bar < start_bar:
-            raise ValueError(
-                f"end_bar ({end_bar}) must be >= start_bar ({start_bar})")
+            raise ValueError(f"end_bar ({end_bar}) must be >= start_bar ({start_bar})")
         if not (0.0 <= blend <= 1.0):
             raise ValueError(f"blend must be in [0, 1], got {blend}")
         for bar in range(start_bar, end_bar):

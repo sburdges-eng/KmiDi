@@ -34,24 +34,29 @@ from music_brain.latent.conditioning_bridge import (  # noqa: E402
 def _intent(*, valence: float = 0.5, arousal: float = 0.4) -> IntentFrame:
     return IntentFrame(
         meta=IntentMeta(intent_id=1, session_id=99),
-        emotion=EmotionState(valence=valence, arousal=arousal, dominance=0.5,
-                             confidence=0.9),
-        music=MusicalIntent(tempo_bias=0.2, rhythmic_density=0.7,
-                            groove_strength=0.6, harmonic_tension=0.3,
-                            harmonic_motion=0.5, mode_preference=1,
-                            melodic_activity=0.4, contour_variance=0.5,
-                            dynamic_range=0.5, texture_density=0.5),
-        time=TimeScope(start_bar=0, end_bar=8, fade_in_beats=0.0,
-                       fade_out_beats=2.0),
+        emotion=EmotionState(valence=valence, arousal=arousal, dominance=0.5, confidence=0.9),
+        music=MusicalIntent(
+            tempo_bias=0.2,
+            rhythmic_density=0.7,
+            groove_strength=0.6,
+            harmonic_tension=0.3,
+            harmonic_motion=0.5,
+            mode_preference=1,
+            melodic_activity=0.4,
+            contour_variance=0.5,
+            dynamic_range=0.5,
+            texture_density=0.5,
+        ),
+        time=TimeScope(start_bar=0, end_bar=8, fade_in_beats=0.0, fade_out_beats=2.0),
         constraints=IntentConstraints(),
-        provenance=IntentProvenance(source=IntentSource.UI_DIRECT,
-                                    user_override_weight=1.0),
+        provenance=IntentProvenance(source=IntentSource.UI_DIRECT, user_override_weight=1.0),
     )
 
 
 # ----------------------------------------------------------------------
 # Construction / validation
 # ----------------------------------------------------------------------
+
 
 def test_construction_requires_positive_kv_dim() -> None:
     with pytest.raises(ValueError, match="kv_dim"):
@@ -67,6 +72,7 @@ def test_slot_count_is_documented_constant() -> None:
 # Shape contract
 # ----------------------------------------------------------------------
 
+
 def test_emits_kv_tensor_of_expected_shape() -> None:
     torch.manual_seed(0)
     bridge = ConditioningProjection(kv_dim=32)
@@ -79,14 +85,14 @@ def test_emits_kv_tensor_of_expected_shape() -> None:
 def test_supports_batch_input() -> None:
     torch.manual_seed(0)
     bridge = ConditioningProjection(kv_dim=16)
-    kv = bridge([_intent(valence=0.0), _intent(valence=-0.5),
-                 _intent(valence=0.9)])
+    kv = bridge([_intent(valence=0.0), _intent(valence=-0.5), _intent(valence=0.9)])
     assert kv.shape == (3, INTENT_SLOTS, 16)
 
 
 # ----------------------------------------------------------------------
 # Plugs into existing CrossAttention
 # ----------------------------------------------------------------------
+
 
 def test_output_is_consumable_by_cross_attention() -> None:
     torch.manual_seed(0)
@@ -101,14 +107,13 @@ def test_output_is_consumable_by_cross_attention() -> None:
     assert out.shape == (1, 6, 32)
     assert weights.shape == (1, 6, INTENT_SLOTS)
     # Attention weights are a valid distribution over kv slots.
-    assert torch.allclose(weights.sum(dim=-1),
-                          torch.ones(1, 6, dtype=torch.float32),
-                          atol=1e-5)
+    assert torch.allclose(weights.sum(dim=-1), torch.ones(1, 6, dtype=torch.float32), atol=1e-5)
 
 
 # ----------------------------------------------------------------------
 # Determinism / featurizer stability
 # ----------------------------------------------------------------------
+
 
 def test_same_intent_yields_same_kv() -> None:
     torch.manual_seed(0)
@@ -131,6 +136,7 @@ def test_different_intents_yield_different_kv() -> None:
 # ----------------------------------------------------------------------
 # Featurizer is total over IntentFrame
 # ----------------------------------------------------------------------
+
 
 def test_featurizer_does_not_raise_on_default_intent() -> None:
     torch.manual_seed(0)

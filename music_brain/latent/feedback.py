@@ -37,6 +37,7 @@ class FeedbackEvent:
             stored. Required if ``frame`` is given.
         intent_id: optional cross-reference to the source IntentFrame.
     """
+
     emotion_va: Tuple[float, float]
     satisfaction: float
     frame: Optional[LatentFrame] = None
@@ -46,12 +47,10 @@ class FeedbackEvent:
 
 def _validate_event(event: FeedbackEvent) -> None:
     if not (0.0 <= event.satisfaction <= 1.0):
-        raise ValueError(
-            f"satisfaction must be in [0, 1], got {event.satisfaction}")
+        raise ValueError(f"satisfaction must be in [0, 1], got {event.satisfaction}")
     v, a = event.emotion_va
     if not (-1.0 <= float(v) <= 1.0) or not (-1.0 <= float(a) <= 1.0):
-        raise ValueError(
-            f"emotion_va components must be in [-1, 1], got {event.emotion_va}")
+        raise ValueError(f"emotion_va components must be in [-1, 1], got {event.emotion_va}")
     if event.frame is not None and event.frame_id is None:
         raise ValueError("frame_id is required when frame is provided")
 
@@ -67,11 +66,11 @@ class UserModel:
             re-embedded for retrieval-augmented generation.
     """
 
-    def __init__(self, user_id: str, *, ema_alpha: float = 0.25,
-                 memory: Optional[LatentMemory] = None) -> None:
+    def __init__(
+        self, user_id: str, *, ema_alpha: float = 0.25, memory: Optional[LatentMemory] = None
+    ) -> None:
         if not (0.0 < ema_alpha <= 1.0):
-            raise ValueError(
-                f"ema_alpha must be in (0, 1], got {ema_alpha}")
+            raise ValueError(f"ema_alpha must be in (0, 1], got {ema_alpha}")
         self.user_id = user_id
         self._alpha = float(ema_alpha)
         self._bias_v = 0.0
@@ -110,17 +109,22 @@ class UserModel:
 
         if self._memory is not None and event.frame is not None and event.frame_id:
             self._memory.remember(
-                event.frame_id, event.frame,
-                metadata={"user_id": self.user_id,
-                          "satisfaction": float(event.satisfaction),
-                          "intent_id": event.intent_id})
+                event.frame_id,
+                event.frame,
+                metadata={
+                    "user_id": self.user_id,
+                    "satisfaction": float(event.satisfaction),
+                    "intent_id": event.intent_id,
+                },
+            )
 
     # ------------------------------------------------------------------
     # Inference
     # ------------------------------------------------------------------
 
-    def calibrate_emotion_va(self, requested: Tuple[float, float],
-                             *, blend: float = 0.25) -> Tuple[float, float]:
+    def calibrate_emotion_va(
+        self, requested: Tuple[float, float], *, blend: float = 0.25
+    ) -> Tuple[float, float]:
         """Mix the requested VA with the learned bias.
 
         Args:

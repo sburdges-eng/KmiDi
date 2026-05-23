@@ -37,6 +37,7 @@ from music_brain.intent_ir import IntentFrame
 
 def _torch():
     import torch
+
     return torch
 
 
@@ -52,8 +53,7 @@ _PROVENANCE_DIM = 4
 def _featurize_emotion(frame: IntentFrame) -> list[float]:
     e = frame.emotion
     # All four are already documented in [-1, 1] or [0, 1] in IR v1.
-    return [float(e.valence), float(e.arousal), float(e.dominance),
-            float(e.confidence)]
+    return [float(e.valence), float(e.arousal), float(e.dominance), float(e.confidence)]
 
 
 def _featurize_music(frame: IntentFrame) -> list[float]:
@@ -103,6 +103,7 @@ def _featurize_provenance(frame: IntentFrame) -> list[float]:
     # Linear sees a unit-scale input. max_event_rate defaults to +inf;
     # squash through a bounded transform.
     import math
+
     max_evt = float(c.max_event_rate)
     if math.isinf(max_evt) or math.isnan(max_evt):
         max_evt_norm = 1.0
@@ -142,21 +143,16 @@ class ConditioningProjection:
     # Forward
     # ------------------------------------------------------------------
 
-    def __call__(self, intent: Union[IntentFrame, Sequence[IntentFrame],
-                                     Iterable[IntentFrame]]):
+    def __call__(self, intent: Union[IntentFrame, Sequence[IntentFrame], Iterable[IntentFrame]]):
         return self.forward(intent)
 
     def forward(self, intent):
         torch = _torch()
         frames = self._coerce_to_list(intent)
-        emo_feats = torch.tensor(
-            [_featurize_emotion(f) for f in frames], dtype=torch.float32)
-        mus_feats = torch.tensor(
-            [_featurize_music(f) for f in frames], dtype=torch.float32)
-        tim_feats = torch.tensor(
-            [_featurize_time(f) for f in frames], dtype=torch.float32)
-        prv_feats = torch.tensor(
-            [_featurize_provenance(f) for f in frames], dtype=torch.float32)
+        emo_feats = torch.tensor([_featurize_emotion(f) for f in frames], dtype=torch.float32)
+        mus_feats = torch.tensor([_featurize_music(f) for f in frames], dtype=torch.float32)
+        tim_feats = torch.tensor([_featurize_time(f) for f in frames], dtype=torch.float32)
+        prv_feats = torch.tensor([_featurize_provenance(f) for f in frames], dtype=torch.float32)
         slots = [
             self.emotion_proj(emo_feats),
             self.music_proj(mus_feats),
@@ -175,8 +171,7 @@ class ConditioningProjection:
             raise ValueError("intent iterable is empty")
         for i, frame in enumerate(out):
             if not isinstance(frame, IntentFrame):
-                raise TypeError(
-                    f"intent[{i}] must be an IntentFrame, got {type(frame).__name__}")
+                raise TypeError(f"intent[{i}] must be an IntentFrame, got {type(frame).__name__}")
         return out
 
     # ------------------------------------------------------------------

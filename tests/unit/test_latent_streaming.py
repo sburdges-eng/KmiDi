@@ -87,5 +87,6 @@ def test_empty_iterable_yields_nothing() -> None:
 def test_yields_a_generator() -> None:
     """stream_decode is a generator so consumers can interleave with I/O."""
     import types
+
     gen = stream_decode([_frame(0)])
     assert isinstance(gen, types.GeneratorType)

@@ -33,10 +33,13 @@ def _toy_logit_fn(vocab_size: int):
 
 def test_emits_max_steps_tokens_in_order() -> None:
     logit_fn = _toy_logit_fn(vocab_size=8)
-    out = list(incremental_decode(
-        logit_fn, max_steps=4,
-        cfg=DecodeConfig(temperature=1e-6),  # greedy
-    ))
+    out = list(
+        incremental_decode(
+            logit_fn,
+            max_steps=4,
+            cfg=DecodeConfig(temperature=1e-6),  # greedy
+        )
+    )
     assert len(out) == 4
     assert all(isinstance(s, DecodeStep) for s in out)
     assert [s.step_index for s in out] == [0, 1, 2, 3]
@@ -63,10 +66,14 @@ def test_eos_token_terminates_loop_early() -> None:
             logits[0, step_idx] = 100.0
         return logits
 
-    out = list(incremental_decode(
-        logit_fn, max_steps=10, eos_token=7,
-        cfg=DecodeConfig(temperature=1e-6),
-    ))
+    out = list(
+        incremental_decode(
+            logit_fn,
+            max_steps=10,
+            eos_token=7,
+            cfg=DecodeConfig(temperature=1e-6),
+        )
+    )
     assert [s.token_id for s in out] == [0, 1, 7]
 
 
@@ -79,17 +86,18 @@ def test_kv_cache_grows_with_each_step() -> None:
         cache.append(torch.zeros(1, 1, 1, 4), torch.zeros(1, 1, 1, 4))
         return logit_fn(step_idx, previous_token)
 
-    list(incremental_decode(attach, max_steps=5,
-                            cfg=DecodeConfig(temperature=1e-6)))
+    list(incremental_decode(attach, max_steps=5, cfg=DecodeConfig(temperature=1e-6)))
     assert cache.length == 5
 
 
 def test_scheduler_records_step_latencies() -> None:
     logit_fn = _toy_logit_fn(vocab_size=8)
     sched = JitterBoundedScheduler(budget_ms=16.0)
-    list(incremental_decode(logit_fn, max_steps=3,
-                            cfg=DecodeConfig(temperature=1e-6),
-                            scheduler=sched))
+    list(
+        incremental_decode(
+            logit_fn, max_steps=3, cfg=DecodeConfig(temperature=1e-6), scheduler=sched
+        )
+    )
     assert sched.history_len == 3
     assert sched.mean_ms >= 0.0
 
@@ -108,8 +116,7 @@ def test_scheduler_under_pressure_forces_greedy_step() -> None:
         return torch.tensor([[10.0, -5.0, 0.0, 3.0]])
 
     cfg = DecodeConfig(temperature=2.0, top_k=4, top_p=1.0)
-    out = list(incremental_decode(
-        logit_fn, max_steps=1, cfg=cfg, scheduler=sched))
+    out = list(incremental_decode(logit_fn, max_steps=1, cfg=cfg, scheduler=sched))
     # Greedy must pick the absolute argmax = token 0.
     assert out[0].token_id == 0
     assert out[0].mode == "greedy"
@@ -120,8 +127,9 @@ def test_forbidden_tokens_propagate() -> None:
         # Argmax would normally be 0; with 0 forbidden, we get 3.
         return torch.tensor([[10.0, 1.0, 1.0, 5.0]])
 
-    out = list(incremental_decode(
-        logit_fn, max_steps=1,
-        cfg=DecodeConfig(temperature=1e-6),
-        forbidden_tokens=[0]))
+    out = list(
+        incremental_decode(
+            logit_fn, max_steps=1, cfg=DecodeConfig(temperature=1e-6), forbidden_tokens=[0]
+        )
+    )
     assert out[0].token_id == 3

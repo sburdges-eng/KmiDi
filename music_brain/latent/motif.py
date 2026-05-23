@@ -28,6 +28,7 @@ from music_brain.latent.latent_frame import LatentFrame
 
 def _torch():
     import torch
+
     return torch
 
 
@@ -60,8 +61,7 @@ class MotifTracker:
 
     def __init__(self, similarity_threshold: float = 0.92) -> None:
         if not (0.0 <= similarity_threshold <= 1.0):
-            raise ValueError(
-                f"similarity_threshold must be in [0, 1], got {similarity_threshold}")
+            raise ValueError(f"similarity_threshold must be in [0, 1], got {similarity_threshold}")
         self._threshold = float(similarity_threshold)
         self._motifs: list[_MotifEntry] = []
         self._dim: Optional[int] = None
@@ -97,8 +97,7 @@ class MotifTracker:
         if self._dim is None:
             self._dim = int(pooled.shape[0])
         elif pooled.shape[0] != self._dim:
-            raise ValueError(
-                f"motif dim {pooled.shape[0]} != tracker dim {self._dim}")
+            raise ValueError(f"motif dim {pooled.shape[0]} != tracker dim {self._dim}")
         norm = float(pooled.norm())
         if norm < 1e-12:
             unit = pooled
@@ -111,8 +110,7 @@ class MotifTracker:
             rep_norm = float(motif.representative.norm())
             if rep_norm < 1e-12:
                 continue
-            sim = float(torch.dot(unit,
-                                  motif.representative / rep_norm))
+            sim = float(torch.dot(unit, motif.representative / rep_norm))
             if sim > best_score:
                 best_score = sim
                 best_idx = i
@@ -131,8 +129,7 @@ class MotifTracker:
         # New motif.
         new_id = self._next_id
         self._next_id += 1
-        entry = _MotifEntry(motif_id=new_id, representative=pooled,
-                            time_index=frame.time_index)
+        entry = _MotifEntry(motif_id=new_id, representative=pooled, time_index=frame.time_index)
         self._motifs.append(entry)
         return MotifRecurrence(
             motif_id=new_id,

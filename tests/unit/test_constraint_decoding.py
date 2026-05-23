@@ -22,6 +22,7 @@ from music_brain.latent.decoding import (  # noqa: E402
 # Greedy low-jitter decoder
 # ----------------------------------------------------------------------
 
+
 def test_greedy_picks_argmax() -> None:
     logits = torch.tensor([[1.0, 5.0, 2.0, 3.0]])
     out = greedy_argmax(logits)
@@ -51,6 +52,7 @@ def test_greedy_is_deterministic_under_repeated_calls() -> None:
 # DecodeConfig validation
 # ----------------------------------------------------------------------
 
+
 def test_decode_config_rejects_invalid_temperature() -> None:
     with pytest.raises(ValueError, match="temperature"):
         DecodeConfig(temperature=0.0)
@@ -73,6 +75,7 @@ def test_decode_config_rejects_invalid_top_p() -> None:
 # ----------------------------------------------------------------------
 # Constraint sampler
 # ----------------------------------------------------------------------
+
 
 def test_sample_with_no_constraints_is_softmax_distribution() -> None:
     """With temperature=1.0, top_k=0 (off), top_p=1.0 (off), and a
@@ -122,8 +125,9 @@ def test_forbidden_tokens_never_sampled() -> None:
     rng = torch.Generator().manual_seed(0)
     seen = set()
     for _ in range(50):
-        seen.add(int(sample_with_constraints(
-            logits, cfg, forbidden_tokens=[0, 2], generator=rng).item()))
+        seen.add(
+            int(sample_with_constraints(logits, cfg, forbidden_tokens=[0, 2], generator=rng).item())
+        )
     assert seen.isdisjoint({0, 2})
     assert seen.issubset({1, 3})
 
@@ -131,8 +135,7 @@ def test_forbidden_tokens_never_sampled() -> None:
 def test_temperature_zero_falls_back_to_greedy() -> None:
     logits = torch.tensor([[1.0, 5.0, 2.0]])
     cfg = DecodeConfig(temperature=1e-6)  # effectively greedy
-    out = sample_with_constraints(logits, cfg,
-                                  generator=torch.Generator().manual_seed(0))
+    out = sample_with_constraints(logits, cfg, generator=torch.Generator().manual_seed(0))
     assert int(out.item()) == 1
 
 

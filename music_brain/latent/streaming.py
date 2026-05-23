@@ -65,16 +65,14 @@ def stream_decode(
 
     for frame in frames:
         if not isinstance(frame, LatentFrame):
-            raise TypeError(
-                f"stream_decode expects LatentFrame, got {type(frame).__name__}")
+            raise TypeError(f"stream_decode expects LatentFrame, got {type(frame).__name__}")
         if frame.time_index in seen:
-            raise ValueError(
-                f"duplicate time_index {frame.time_index} in stream")
+            raise ValueError(f"duplicate time_index {frame.time_index} in stream")
         seen.add(frame.time_index)
         if streaming and frame.time_index < expected:  # type: ignore[operator]
             raise ValueError(
-                f"frame time_index {frame.time_index} is below "
-                f"start_index {expected}")
+                f"frame time_index {frame.time_index} is below " f"start_index {expected}"
+            )
         heapq.heappush(pending, (frame.time_index, seq, frame))
         seq += 1
         if streaming:
@@ -97,7 +95,8 @@ def stream_decode(
         raise ValueError(
             f"stream_decode: gap at time_index {expected}; "
             f"{len(pending)} frame(s) buffered above the gap "
-            f"(first stuck at index {pending[0][0]})")
+            f"(first stuck at index {pending[0][0]})"
+        )
 
 
 __all__ = ["stream_decode"]

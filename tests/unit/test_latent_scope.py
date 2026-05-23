@@ -20,8 +20,7 @@ from music_brain.latent.scope import (  # noqa: E402
 
 
 def _prov() -> IntentProvenance:
-    return IntentProvenance(source=IntentSource.UI_DIRECT,
-                            user_override_weight=1.0)
+    return IntentProvenance(source=IntentSource.UI_DIRECT, user_override_weight=1.0)
 
 
 def _frame(t: int) -> LatentFrame:

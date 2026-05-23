@@ -44,8 +44,7 @@ from music_brain.vector_store import VectorStore
 def pool_audio_z(audio_z) -> Any:
     """Mean-pool an unbatched ``(T, D)`` latent tensor down to ``(D,)``."""
     if audio_z.dim() != 2:
-        raise ValueError(
-            f"pool_audio_z expects 2-D (T, D); got shape {tuple(audio_z.shape)}")
+        raise ValueError(f"pool_audio_z expects 2-D (T, D); got shape {tuple(audio_z.shape)}")
     return audio_z.mean(dim=0)
 
 
@@ -93,13 +92,13 @@ class LatentMemory:
     # Mutation
     # ------------------------------------------------------------------
 
-    def remember(self, id_: str, frame: LatentFrame,
-                 *, metadata: Optional[Mapping[str, Any]] = None) -> None:
+    def remember(
+        self, id_: str, frame: LatentFrame, *, metadata: Optional[Mapping[str, Any]] = None
+    ) -> None:
         """Insert (or replace) one frame's pooled embedding."""
         pooled = pool_audio_z(frame.audio_z).detach().cpu().numpy()
         if pooled.shape[0] != self._dim:
-            raise ValueError(
-                f"frame audio_feature_dim {pooled.shape[0]} != memory dim {self._dim}")
+            raise ValueError(f"frame audio_feature_dim {pooled.shape[0]} != memory dim {self._dim}")
         meta = {
             "time_index": frame.time_index,
             "emotion_va": list(frame.emotion_va),
@@ -117,12 +116,16 @@ class LatentMemory:
     # Recall
     # ------------------------------------------------------------------
 
-    def recall(self, query_frame: LatentFrame, *, top_k: int = 5,
-               emotion_weight: float = 0.0,
-               user_id: Optional[str] = None) -> list[RecallHit]:
+    def recall(
+        self,
+        query_frame: LatentFrame,
+        *,
+        top_k: int = 5,
+        emotion_weight: float = 0.0,
+        user_id: Optional[str] = None,
+    ) -> list[RecallHit]:
         if not (0.0 <= emotion_weight <= 1.0):
-            raise ValueError(
-                f"emotion_weight must be in [0, 1], got {emotion_weight}")
+            raise ValueError(f"emotion_weight must be in [0, 1], got {emotion_weight}")
         if len(self._store) == 0:
             return []
         pooled = pool_audio_z(query_frame.audio_z).detach().cpu().numpy()
@@ -138,14 +141,13 @@ class LatentMemory:
                 continue
             stored_va = tuple(meta.get("emotion_va", [0.0, 0.0])) if meta else (0.0, 0.0)
             if emotion_weight > 0.0:
-                emo_prox = _emotion_proximity_score(query_frame.emotion_va,
-                                                    (float(stored_va[0]),
-                                                     float(stored_va[1])))
+                emo_prox = _emotion_proximity_score(
+                    query_frame.emotion_va, (float(stored_va[0]), float(stored_va[1]))
+                )
                 blended = (1.0 - emotion_weight) * score + emotion_weight * emo_prox
             else:
                 blended = score
-            hits.append(RecallHit(id=hid, score=float(blended),
-                                  metadata=meta or {}))
+            hits.append(RecallHit(id=hid, score=float(blended), metadata=meta or {}))
         hits.sort(key=lambda h: -h.score)
         return hits[:top_k]
 
@@ -164,9 +166,11 @@ class LatentMemory:
         # Rebuild user index from metadata.
         for i in range(len(store)):
             row_id, _, meta = next(
-                ((rid, s, m) for rid, s, m in store.search(
-                    store._vectors[i], top_k=1)),  # type: ignore[attr-defined]
-                (None, None, None))
+                (
+                    (rid, s, m) for rid, s, m in store.search(store._vectors[i], top_k=1)
+                ),  # type: ignore[attr-defined]
+                (None, None, None),
+            )
             if row_id is None or not meta:
                 continue
             user_id = meta.get("user_id")

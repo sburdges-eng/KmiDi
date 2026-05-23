@@ -6,7 +6,17 @@ to IntentFrame, with provenance tracking and emission to Rust validator.
 """
 
 from typing import Optional, Dict, Any
-from . import IntentFrame, IntentMeta, EmotionState, MusicalIntent, TimeScope, IntentConstraints, IntentProvenance, IntentSource, INTENT_IR_VERSION  # noqa: E501
+from . import (
+    IntentFrame,
+    IntentMeta,
+    EmotionState,
+    MusicalIntent,
+    TimeScope,
+    IntentConstraints,
+    IntentProvenance,
+    IntentSource,
+    INTENT_IR_VERSION,
+)  # noqa: E501
 
 import hashlib
 import time
@@ -25,7 +35,7 @@ class IntentIREmitter:
         # Create hash from key fields
         hash_input = f"{data.get('emotion', {})}{data.get('music', {})}{data.get('time', {})}"
         hash_bytes = hashlib.sha256(hash_input.encode()).digest()
-        return int.from_bytes(hash_bytes[:8], byteorder='big')
+        return int.from_bytes(hash_bytes[:8], byteorder="big")
 
     def emit_from_emotion(
         self,
@@ -52,11 +62,13 @@ class IntentIREmitter:
         music = MusicalIntent()
 
         # Generate intent ID
-        intent_id = self._generate_intent_id({
-            'emotion': {'valence': valence, 'arousal': arousal, 'dominance': dominance},
-            'music': {},
-            'time': {},
-        })
+        intent_id = self._generate_intent_id(
+            {
+                "emotion": {"valence": valence, "arousal": arousal, "dominance": dominance},
+                "music": {},
+                "time": {},
+            }
+        )
 
         frame = IntentFrame(
             meta=IntentMeta(
@@ -107,15 +119,17 @@ class IntentIREmitter:
         )
 
         # Generate intent ID
-        intent_id = self._generate_intent_id({
-            'emotion': {},
-            'music': {
-                'tempo_bias': tempo_bias,
-                'rhythmic_density': rhythmic_density,
-                'groove_strength': groove_strength,
-            },
-            'time': {},
-        })
+        intent_id = self._generate_intent_id(
+            {
+                "emotion": {},
+                "music": {
+                    "tempo_bias": tempo_bias,
+                    "rhythmic_density": rhythmic_density,
+                    "groove_strength": groove_strength,
+                },
+                "time": {},
+            }
+        )
 
         frame = IntentFrame(
             meta=IntentMeta(
@@ -146,21 +160,23 @@ class IntentIREmitter:
     ) -> IntentFrame:
         """Emit IntentFrame from full state"""
         # Generate intent ID
-        intent_id = self._generate_intent_id({
-            'emotion': {
-                'valence': emotion.valence,
-                'arousal': emotion.arousal,
-                'dominance': emotion.dominance,
-            },
-            'music': {
-                'tempo_bias': music.tempo_bias,
-                'rhythmic_density': music.rhythmic_density,
-            },
-            'time': {
-                'start_bar': time.start_bar if time else -1,
-                'end_bar': time.end_bar if time else -1,
-            },
-        })
+        intent_id = self._generate_intent_id(
+            {
+                "emotion": {
+                    "valence": emotion.valence,
+                    "arousal": emotion.arousal,
+                    "dominance": emotion.dominance,
+                },
+                "music": {
+                    "tempo_bias": music.tempo_bias,
+                    "rhythmic_density": music.rhythmic_density,
+                },
+                "time": {
+                    "start_bar": time.start_bar if time else -1,
+                    "end_bar": time.end_bar if time else -1,
+                },
+            }
+        )
 
         frame = IntentFrame(
             meta=IntentMeta(
@@ -198,31 +214,32 @@ class IntentIREmitter:
         from music_brain.latent.conditioning_bridge import (  # noqa: PLC0415
             ConditioningProjection,
         )
+
         if not isinstance(bridge, ConditioningProjection):
             raise TypeError(
-                "bridge must be a ConditioningProjection, "
-                f"got {type(bridge).__name__}")
+                "bridge must be a ConditioningProjection, " f"got {type(bridge).__name__}"
+            )
         return bridge(intent)
 
     def emit_from_dict(
-            self, data: Dict[str, Any],
-            source: IntentSource = IntentSource.ML_TEXT) -> IntentFrame:
+        self, data: Dict[str, Any], source: IntentSource = IntentSource.ML_TEXT
+    ) -> IntentFrame:
         """Emit IntentFrame from dictionary (for JSON deserialization)"""
         # This is a convenience method for creating frames from external data
         # The data should match the IntentFrame structure
-        emotion_data = data.get('emotion', {})
-        music_data = data.get('music', {})
-        time_data = data.get('time', {})
-        constraints_data = data.get('constraints', {})
-        provenance_data = data.get('provenance', {})
+        emotion_data = data.get("emotion", {})
+        music_data = data.get("music", {})
+        time_data = data.get("time", {})
+        constraints_data = data.get("constraints", {})
+        provenance_data = data.get("provenance", {})
 
         emotion = EmotionState(**emotion_data)
         music = MusicalIntent(**music_data)
         time = TimeScope(**time_data)
         constraints = IntentConstraints(**constraints_data)
         provenance = IntentProvenance(
-            source=IntentSource(provenance_data.get('source', source)),
-            user_override_weight=provenance_data.get('user_override_weight', 0.0),
+            source=IntentSource(provenance_data.get("source", source)),
+            user_override_weight=provenance_data.get("user_override_weight", 0.0),
         )
 
         return self.emit_from_full_state(
