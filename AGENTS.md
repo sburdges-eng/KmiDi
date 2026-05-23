@@ -346,3 +346,4 @@ Every PR or feature branch touching native code must satisfy all of the followin
 | `BUILD.md` | C++ / CMake build instructions and prerequisites |
 | `AGENTS.md` (this file): Native safety, FFI ownership, and verification map | FFI frees, duplicate JUCE, RT paths, contract drift, commands |
 | `docs/NATIVE_SAFETY_AND_FFI.md` | Human-readable mirror of the map above; keep in sync with this section |
+| `docs/SWARM_MATRIX.md` | Hermes Tmux Matrix operator guide: `init_matrix.sh` + `kmidi_swarm.py`, six-stack parallel execution, dry-run, troubleshooting |

@@ -66,6 +66,15 @@ Have these available (install via OS package manager or official installers). `d
 
 ## Development Workflows
 
+### Multi-Stack Swarm (Hermes Tmux Matrix)
+
+For features that span Rust intent_ir + C++ engine + Python bindings + music_brain + React in one shot, see [`docs/SWARM_MATRIX.md`](SWARM_MATRIX.md). The two-command workflow:
+
+```bash
+./scripts/init_matrix.sh                                  # start tmux session kmidi-pipeline
+python3 scripts/kmidi_swarm.py "your multi-stack feature" # Hermes decomposes + 5 CLIs execute
+```
+
 ### Full-Stack Development
 
 Detailed integration/build matrix (React -> Tauri -> KellyFFI -> KellyCore) lives in [`docs/FULL_STACK_BUILD.md`](FULL_STACK_BUILD.md).
