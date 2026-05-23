@@ -439,7 +439,8 @@ def ensure_worktree() -> str:
         check=False,
     )
     if res.returncode != 0:
-        print(f"git worktree add failed: {res.stderr}", flush=True)
+        print(f"FATAL: git worktree add failed: {res.stderr}", file=sys.stderr)
+        sys.exit(1)
     return WORKTREE_PATH
 
 
@@ -558,14 +559,17 @@ async def main() -> None:
 
     # ---- Phase 2: PARALLEL EXECUTE ---------------------------------------
     hermes_status("phase 2/3: parallel execute")
-    schema_subprompt = plan.get("schemas") or user_prompt
+    schema_subprompt = plan.get("schemas")
+    if schema_subprompt is None:
+        schema_subprompt = user_prompt
 
-    schemas_task = asyncio.create_task(map_schemas(schema_subprompt, worktree))
+    schemas_task = asyncio.create_task(map_schemas(schema_subprompt, worktree)) if schema_subprompt else None
     code_results = await asyncio.gather(*[
-        compile_and_heal(stack, plan.get(stack) or user_prompt, worktree)
+        compile_and_heal(stack, plan.get(stack, user_prompt), worktree)
         for stack in CODE_STACKS
+        if plan.get(stack) is None or plan.get(stack) != ""
     ])
-    schemas_ok = await schemas_task
+    schemas_ok = (await schemas_task) if schemas_task else True
 
     # ---- Phase 3: SYNTHESIZE ---------------------------------------------
     hermes_status("phase 3/3: synthesize Active_Plan.md")
