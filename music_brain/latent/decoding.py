@@ -74,9 +74,17 @@ def greedy_argmax(logits, *, forbidden_tokens: Optional[Iterable[int]] = None):
     """Return the deterministic argmax token id.
 
     Zero allocations on the hot path beyond the forbidden-mask clone
-    (which is a no-op when no constraints are set).
+    (which is a no-op when no constraints are set). When every token
+    is forbidden the function raises ``ValueError`` to match the
+    behavior of ``sample_with_constraints`` — silently returning a
+    masked token's index would otherwise let the incremental decode
+    loop emit a forbidden token through the jitter-scheduler's
+    greedy-fallback path.
     """
+    torch = _torch()
     masked = _mask_forbidden(logits, forbidden_tokens)
+    if torch.all(masked == NEG_INF):
+        raise ValueError("all tokens forbidden — vocabulary mask is empty")
     return masked.argmax(dim=-1)
 
 

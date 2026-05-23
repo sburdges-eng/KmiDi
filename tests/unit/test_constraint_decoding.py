@@ -144,3 +144,13 @@ def test_all_tokens_forbidden_raises() -> None:
     cfg = DecodeConfig()
     with pytest.raises(ValueError, match="forbidden"):
         sample_with_constraints(logits, cfg, forbidden_tokens=[0, 1, 2])
+
+
+def test_greedy_all_tokens_forbidden_raises() -> None:
+    """Regression: greedy_argmax must mirror sample_with_constraints
+    and reject an all-forbidden mask. Otherwise the
+    incremental-decode jitter-fallback path can emit a forbidden
+    token. Reported by Cursor Bugbot on PR #196 (round 3)."""
+    logits = torch.tensor([[1.0, 1.0, 1.0]])
+    with pytest.raises(ValueError, match="forbidden"):
+        greedy_argmax(logits, forbidden_tokens=[0, 1, 2])

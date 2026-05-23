@@ -173,6 +173,32 @@ def test_user_scoped_recall_empty_for_unknown_user() -> None:
     assert mem.recall(q, top_k=3, user_id="ghost") == []
 
 
+def test_remember_replace_moves_id_between_user_buckets() -> None:
+    """Regression: re-keying an id from user A to user B must remove
+    the id from A's _user_index entry. Otherwise A's user-scoped recall
+    surfaces a vector now owned by B. Reported by Cursor Bugbot on
+    PR #196 (round 3)."""
+    mem = LatentMemory(dim=4)
+    f = _frame(torch.tensor([[1.0, 0.0, 0.0, 0.0]]))
+    mem.remember("shared-id", f, metadata={"user_id": "alice"})
+    mem.remember("shared-id", f, metadata={"user_id": "bob"})
+
+    alice_hits = mem.recall(f, top_k=2, user_id="alice")
+    bob_hits = mem.recall(f, top_k=2, user_id="bob")
+    assert alice_hits == []  # no longer Alice's
+    assert [h.id for h in bob_hits] == ["shared-id"]
+
+
+def test_remember_replace_drops_empty_user_bucket() -> None:
+    """When the last id of a user is reassigned, the empty bucket
+    shouldn't linger in _user_index."""
+    mem = LatentMemory(dim=4)
+    f = _frame(torch.tensor([[1.0, 0.0, 0.0, 0.0]]))
+    mem.remember("x", f, metadata={"user_id": "ghost"})
+    mem.remember("x", f, metadata={"user_id": "alive"})
+    assert "ghost" not in mem._user_index  # noqa: SLF001 - regression check
+
+
 def test_load_rebuilds_user_index_for_duplicate_embeddings(tmp_path) -> None:
     """Regression: two users with identical pooled embeddings must both
     appear in the rebuilt _user_index after load. The old top-1-search

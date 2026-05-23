@@ -107,6 +107,18 @@ class LatentMemory:
         }
         if metadata:
             meta.update(dict(metadata))
+        # On replace, drop the id from any *prior* user_id set so a re-keyed
+        # frame can't appear in the previous owner's user-scoped recall.
+        prior = self._store.get(id_)
+        if prior is not None:
+            prior_meta = prior[1] or {}
+            prior_user = prior_meta.get("user_id")
+            if isinstance(prior_user, str):
+                bucket = self._user_index.get(prior_user)
+                if bucket is not None:
+                    bucket.discard(id_)
+                    if not bucket:
+                        del self._user_index[prior_user]
         self._store.add(id_, pooled.astype(np.float32), metadata=meta)
         user_id = meta.get("user_id")
         if isinstance(user_id, str):
