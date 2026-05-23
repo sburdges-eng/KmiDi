@@ -180,6 +180,30 @@ class IntentIREmitter:
 
         return frame
 
+    @staticmethod
+    def emit_conditioning_for(intent: IntentFrame, bridge):
+        """Project ``intent`` through a ``ConditioningProjection`` bridge.
+
+        Convenience colocated with the other ``emit_*`` helpers so a
+        caller that already has an ``IntentFrame`` can reach for one
+        module to get cross-attention-ready key/value tensors. The
+        returned tensor has shape ``(1, INTENT_SLOTS, kv_dim)`` and is
+        consumable by ``music_brain.cross_attention.CrossAttention``
+        as the ``kv`` argument.
+
+        ``bridge`` must be a ``music_brain.latent.ConditioningProjection``
+        instance; imported lazily to avoid a top-level cycle with the
+        latent package.
+        """
+        from music_brain.latent.conditioning_bridge import (  # noqa: PLC0415
+            ConditioningProjection,
+        )
+        if not isinstance(bridge, ConditioningProjection):
+            raise TypeError(
+                "bridge must be a ConditioningProjection, "
+                f"got {type(bridge).__name__}")
+        return bridge(intent)
+
     def emit_from_dict(
             self, data: Dict[str, Any],
             source: IntentSource = IntentSource.ML_TEXT) -> IntentFrame:

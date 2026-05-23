@@ -79,6 +79,43 @@ class AudioJEPAEncoder(nn.Module):
         h = self.proj(h)               # (B, T, latent_dim)
         return self.layer_norm(h)
 
+    def encode_to_frame(self, mel, *, time_index, provenance,
+                        emotion_va=(0.0, 0.0), metadata=None):
+        """Encode a single mel-spectrogram into a ``LatentFrame``.
+
+        Args:
+            mel: ``(1, n_mels, T)`` or ``(n_mels, T)`` mel-spectrogram.
+                Batched inputs of size > 1 are not supported — call
+                ``forward`` directly and pack frames yourself.
+            time_index: monotonic chunk index for the returned frame.
+            provenance: ``IntentProvenance`` carried through downstream.
+            emotion_va: optional (valence, arousal) tag pooled elsewhere.
+            metadata: diagnostics bag merged into the frame.
+        """
+        from music_brain.latent.latent_frame import LatentFrame  # noqa: PLC0415
+        if mel.dim() == 3:
+            x = mel.unsqueeze(1)       # (1, 1, n_mels, T)
+        elif mel.dim() == 4:
+            x = mel
+        else:
+            x = mel.unsqueeze(0).unsqueeze(0)  # (1, 1, n_mels, T)
+        if x.shape[0] != 1:
+            raise ValueError(
+                "encode_to_frame expects a single sample; "
+                f"got batch dim {x.shape[0]}")
+        z = self.forward(x)            # (1, T', latent_dim)
+        meta = {"source": "audio_jepa"}
+        if metadata:
+            meta.update(metadata)
+        return LatentFrame(
+            audio_z=z.squeeze(0).contiguous(),
+            chord_z=None,
+            emotion_va=emotion_va,
+            time_index=int(time_index),
+            provenance=provenance,
+            metadata=meta,
+        )
+
 
 class LatentPredictor(nn.Module):
     """
