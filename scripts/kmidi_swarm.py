@@ -113,7 +113,7 @@ CODE_STACKS = ["rust", "cpp", "bindings", "python", "react"]
 # `-z PROMPT` must be last so run_cli's appended prompt becomes its argument
 # (hermes argparse refuses to consume the next token if it looks like a flag).
 HERMES_CMD = ["hermes", "--yolo", "--accept-hooks", "-z"]
-HERMES_TIMEOUT_SEC = 240
+HERMES_TIMEOUT_SEC = 3000
 
 # Build poll: how long we wait for `cd && cmake/cargo/...` to finish before
 # scanning the pane for errors. Tuned so slow C++/npm builds aren't truncated.
