@@ -114,6 +114,6 @@ def test_check_tests_skips_when_no_targets():
 
 def test_main_returns_int(monkeypatch):
     # Drive main() with a base that yields no diff -> all SKIP -> exit 0.
-    monkeypatch.setattr(xf, "changed_files", lambda base, include_dirty: [])
+    monkeypatch.setattr(xf, "changed_files", lambda base, include_dirty: ([], True))
     monkeypatch.setattr(xf, "check_gitnexus", lambda: xf.Result("gitnexus", xf.SKIP))
     assert xf.main(["--base", "HEAD"]) == 0

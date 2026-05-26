@@ -56,6 +56,10 @@ SCHEMA_GENERATED_PATHS = (
     "engine/intent_ir/src/generated/intent.rs",
     "engine/intent_ir/src/generated/emotion.rs",
     "engine/intent_ir/src/generated/intent_frame.rs",
+    "shared_schemas/CompleteSongIntentRequest.json",
+    "shared_schemas/emotion_schema.json",
+    "shared_schemas/intent_frame_schema.json",
+    "engine/intent_ir/src/generated/mod.rs",
 )
 
 PASS, FAIL, SKIP, WARN = "PASS", "FAIL", "SKIP", "WARN"
@@ -121,34 +125,50 @@ def classify(files: Sequence[str]) -> Classification:
         for f in py
         if f.startswith("tests/") and Path(f).name.startswith("test_")
     ]
-    # Map a changed module music_brain/x/y.py -> tests/unit/test_y.py when it exists.
+    # Map a changed module to its likely test file(s) when they exist.
+    # Try both the underscore-joined relative path (e.g. music_brain/latent/fusion.py
+    # -> tests/unit/test_latent_fusion.py) and the bare stem fallback
+    # (-> tests/unit/test_fusion.py).
     affected: List[str] = []
     for f in py:
         if f in test_files or not f.startswith("music_brain/"):
             continue
-        candidate = f"tests/unit/test_{Path(f).stem}.py"
-        if (REPO_ROOT / candidate).exists() and candidate not in affected:
-            affected.append(candidate)
+        rel = f[len("music_brain/"):]
+        joined = "_".join(Path(rel).with_suffix("").parts)
+        stem = Path(f).stem
+        candidates = [f"tests/unit/test_{joined}.py"]
+        if joined != stem:
+            candidates.append(f"tests/unit/test_{stem}.py")
+        for candidate in candidates:
+            if (REPO_ROOT / candidate).exists() and candidate not in affected:
+                affected.append(candidate)
     return Classification(py, ts, rust, cpp, schema, test_files, affected)
 
 
 # --------------------------------------------------------------------------- #
 # Git plumbing
 # --------------------------------------------------------------------------- #
-def changed_files(base: str, include_dirty: bool) -> List[str]:
+def changed_files(base: str, include_dirty: bool) -> tuple[List[str], bool]:
     """Files changed relative to *base* (merge-base diff), plus optionally the
-    uncommitted working-tree + untracked files."""
+    uncommitted working-tree + untracked files.
+
+    Returns ``(sorted_files, base_ok)`` where *base_ok* is ``False`` when the
+    diff against *base* failed (e.g. ref not fetched).
+    """
     files: set[str] = set()
+    base_ok = True
     cp = _run(["git", "diff", "--name-only", f"{base}...HEAD"])
     if cp.returncode == 0:
         files.update(line for line in cp.stdout.splitlines() if line.strip())
+    else:
+        base_ok = False
     if include_dirty:
         for args in (["git", "diff", "--name-only"], ["git", "diff", "--name-only", "--cached"]):
             cp = _run(args)
             files.update(line for line in cp.stdout.splitlines() if line.strip())
         cp = _run(["git", "ls-files", "--others", "--exclude-standard"])
         files.update(line for line in cp.stdout.splitlines() if line.strip())
-    return sorted(files)
+    return sorted(files), base_ok
 
 
 # --------------------------------------------------------------------------- #
@@ -266,9 +286,15 @@ def render(results: Sequence[Result]) -> str:
 
 
 def run_gate(base: str, scope: Sequence[str], include_dirty: bool, full: bool) -> int:
-    files = changed_files(base, include_dirty)
+    files, base_ok = changed_files(base, include_dirty)
     cls = classify(files)
-    results = [
+    results: list[Result] = []
+    if not base_ok:
+        results.append(Result(
+            "base", FAIL,
+            f"git diff against '{base}' failed — is the ref fetched?",
+        ))
+    results += [
         check_scope(files, scope),
         check_lint(cls),
         check_typecheck(cls),
