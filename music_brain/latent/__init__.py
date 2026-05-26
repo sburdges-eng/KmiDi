@@ -19,9 +19,11 @@ the four waves:
     emotion-trajectory planner, ``CompanionSession`` human-in-the-loop
     orchestrator.
 
-Also re-exports stateless latent-space utilities (normalization helpers,
-the linear projection bridge) and the low-level fusion strategy functions
-(see ``fusion_ops``).
+Also re-exports stateless latent-space utilities: normalization helpers,
+the linear projection bridge, and the low-level fusion strategy functions
+in ``fusion_ops`` (``concat_fuse`` / ``weighted_sum`` / ``gated_fuse`` /
+``normalized_average``) — the raw-vector complement to the ``LatentFrame``-
+aware ``MultimodalFusion`` / ``StemBundle`` in ``fusion``.
 """
 
 from music_brain.latent.companion import CompanionSession, HumanFeedback
@@ -40,6 +42,12 @@ from music_brain.latent.emotion_trajectory import (
 )
 from music_brain.latent.feedback import FeedbackEvent, UserModel
 from music_brain.latent.fusion import MultimodalFusion, StemBundle
+from music_brain.latent.fusion_ops import (
+    concat_fuse,
+    gated_fuse,
+    normalized_average,
+    weighted_sum,
+)
 from music_brain.latent.incremental_decode import (
     DecodeStep,
     incremental_decode,
@@ -147,4 +155,9 @@ __all__ = [
     "standardize",
     # Latent-space utilities (projection)
     "LinearProjection",
+    # Latent-space utilities (fusion strategies)
+    "concat_fuse",
+    "gated_fuse",
+    "normalized_average",
+    "weighted_sum",
 ]
