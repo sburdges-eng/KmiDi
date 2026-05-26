@@ -19,8 +19,9 @@ the four waves:
     emotion-trajectory planner, ``CompanionSession`` human-in-the-loop
     orchestrator.
 
-Also re-exports stateless latent-space utilities (normalization helpers)
-and the low-level fusion strategy functions (see ``fusion_ops``).
+Also re-exports stateless latent-space utilities (normalization helpers,
+the linear projection bridge) and the low-level fusion strategy functions
+(see ``fusion_ops``).
 """
 
 from music_brain.latent.companion import CompanionSession, HumanFeedback
@@ -60,6 +61,7 @@ from music_brain.latent.predictors import (
     HarmonyPredictor,
     PredictionEngine,
 )
+from music_brain.latent.projection import LinearProjection
 from music_brain.latent.regularization import L2NormProjection, VarianceFloor
 from music_brain.latent.retrieval import LatentMemory, RecallHit, pool_audio_z
 from music_brain.latent.rollback import RollbackRing
@@ -143,4 +145,6 @@ __all__ = [
     "layer_norm",
     "min_max_scale",
     "standardize",
+    # Latent-space utilities (projection)
+    "LinearProjection",
 ]
