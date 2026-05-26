@@ -6,21 +6,22 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
-import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 PYTHON = sys.executable
 
 
-def _run_script(module: str, extra_args: list[str], env_override: dict[str, str] | None = None) -> dict:
+def _run_script(
+    module: str, extra_args: list[str], env_override: dict[str, str] | None = None
+) -> dict:
     """Run a script module with --dry-run and return parsed JSON output."""
     cmd = [PYTHON, "-m", module, "--dry-run"] + extra_args
     env = None
     if env_override:
         import os
+
         env = {**os.environ, **env_override}
     result = subprocess.run(
         cmd,
@@ -109,8 +110,10 @@ class TestPackageDatasetDryRun:
         payload = _run_script(
             "scripts.package_dataset",
             [
-                "--package-id", "test-pkg-dry",
-                "--run-contract", str(contract_path),
+                "--package-id",
+                "test-pkg-dry",
+                "--run-contract",
+                str(contract_path),
             ],
         )
         assert payload["mode"] == "dry-run"
@@ -139,8 +142,10 @@ class TestSyncPackageDryRun:
         payload = _run_script(
             "scripts.sync_package_to_s3",
             [
-                "--package-dir", str(pkg_dir),
-                "--run-contract", str(contract_path),
+                "--package-dir",
+                str(pkg_dir),
+                "--run-contract",
+                str(contract_path),
             ],
         )
         assert payload["mode"] == "dry-run"
@@ -155,12 +160,18 @@ class TestLaunchAwsTrainDryRun:
         payload = _run_script(
             "scripts.launch_aws_train",
             [
-                "--package-id", "test-pkg-001",
-                "--ami-id", "ami-placeholder",
-                "--subnet-id", "subnet-placeholder",
-                "--security-group-id", "sg-placeholder",
-                "--iam-instance-profile", "placeholder-role",
-                "--run-contract", str(contract_path),
+                "--package-id",
+                "test-pkg-001",
+                "--ami-id",
+                "ami-placeholder",
+                "--subnet-id",
+                "subnet-placeholder",
+                "--security-group-id",
+                "sg-placeholder",
+                "--iam-instance-profile",
+                "placeholder-role",
+                "--run-contract",
+                str(contract_path),
                 "--skip-preflight",
             ],
         )
@@ -176,10 +187,14 @@ class TestAwsTrainEntrypointDryRun:
         payload = _run_script(
             "scripts.aws_train_entrypoint",
             [
-                "--package-s3-uri", "s3://test-bucket/training/packages/test-pkg-001",
-                "--output-s3-uri", "s3://test-bucket/training/runs",
-                "--run-id", "test-dry-run",
-                "--run-contract", str(contract_path),
+                "--package-s3-uri",
+                "s3://test-bucket/training/packages/test-pkg-001",
+                "--output-s3-uri",
+                "s3://test-bucket/training/runs",
+                "--run-id",
+                "test-dry-run",
+                "--run-contract",
+                str(contract_path),
             ],
         )
         assert payload["mode"] == "dry-run"
@@ -193,9 +208,12 @@ class TestFetchAwsArtifactsDryRun:
         payload = _run_script(
             "scripts.fetch_aws_artifacts",
             [
-                "--s3-uri", "s3://test-bucket/training/runs/test-run",
-                "--scope", "student",
-                "--run-contract", str(contract_path),
+                "--s3-uri",
+                "s3://test-bucket/training/runs/test-run",
+                "--scope",
+                "student",
+                "--run-contract",
+                str(contract_path),
             ],
         )
         assert payload["mode"] == "dry-run"
@@ -207,19 +225,31 @@ class TestAllowNonAwsGate:
     def test_allow_non_aws_without_env_var_fails(self, tmp_path: Path) -> None:
         contract_path = _make_test_contract(tmp_path)
         cmd = [
-            PYTHON, "-m", "scripts.aws_train_entrypoint",
+            PYTHON,
+            "-m",
+            "scripts.aws_train_entrypoint",
             "--allow-non-aws",
             "--dry-run",
-            "--package-s3-uri", "s3://test-bucket/training/packages/test-pkg",
-            "--output-s3-uri", "s3://test-bucket/training/runs",
-            "--run-id", "test-gate",
-            "--run-contract", str(contract_path),
+            "--package-s3-uri",
+            "s3://test-bucket/training/packages/test-pkg",
+            "--output-s3-uri",
+            "s3://test-bucket/training/runs",
+            "--run-id",
+            "test-gate",
+            "--run-contract",
+            str(contract_path),
         ]
         import os
+
         env = {k: v for k, v in os.environ.items() if k != "KELLY_ALLOW_NON_AWS_DEBUG"}
-        result = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, timeout=30, env=env)
+        result = subprocess.run(
+            cmd, cwd=str(ROOT), capture_output=True, text=True, timeout=30, env=env
+        )
         assert result.returncode != 0
-        assert "KELLY_ALLOW_NON_AWS_DEBUG" in result.stderr or "KELLY_ALLOW_NON_AWS_DEBUG" in result.stdout
+        assert (
+            "KELLY_ALLOW_NON_AWS_DEBUG" in result.stderr
+            or "KELLY_ALLOW_NON_AWS_DEBUG" in result.stdout
+        )
 
 
 class TestTeacherFetchRoleArnRequired:
@@ -233,7 +263,11 @@ class TestTeacherFetchRoleArnRequired:
                 "runBucket": "test-bucket",
                 "runPrefix": "training/runs",
             },
-            "aws": {"region": "us-east-1", "profile": "default", "breakGlassProfile": "teacher-breakglass"},
+            "aws": {
+                "region": "us-east-1",
+                "profile": "default",
+                "breakGlassProfile": "teacher-breakglass",
+            },
             "training": {
                 "defaultRunIdPrefix": "unit",
                 "defaultInstanceType": "ml.g5.2xlarge",
@@ -277,14 +311,21 @@ class TestTeacherFetchRoleArnRequired:
         contract_path.write_text(json.dumps(contract), encoding="utf-8")
 
         cmd = [
-            PYTHON, "-m", "scripts.fetch_aws_artifacts",
+            PYTHON,
+            "-m",
+            "scripts.fetch_aws_artifacts",
             "--dry-run",
-            "--scope", "teacher",
+            "--scope",
+            "teacher",
             "--break-glass",
-            "--profile", "teacher-breakglass",
-            "--break-glass-role-arn", "arn:aws:iam::123456789012:role/some-role",
-            "--s3-uri", "s3://test-bucket/training/runs/test-run",
-            "--run-contract", str(contract_path),
+            "--profile",
+            "teacher-breakglass",
+            "--break-glass-role-arn",
+            "arn:aws:iam::123456789012:role/some-role",
+            "--s3-uri",
+            "s3://test-bucket/training/runs/test-run",
+            "--run-contract",
+            str(contract_path),
         ]
         result = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True, timeout=30)
         assert result.returncode != 0

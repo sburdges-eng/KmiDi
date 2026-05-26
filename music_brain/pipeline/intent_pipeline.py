@@ -3,7 +3,7 @@ Deterministic 3-stage intent pipeline.
 
 Stage 1: Normalize — raw/unstructured input → intermediate dict (emotion_map, fallbacks).
 Stage 2: Validate — intermediate dict → CompleteSongIntentRequest (Pydantic).
-Stage 3: Expand — request + validated → CompleteSongIntent (full internal fields; imagery_texture only here).
+Stage 3: Expand — request + validated → CompleteSongIntent (full internal fields; imagery_texture only here).  # noqa: E501
 
 Precedence: validated > normalized > raw request.
 """
@@ -136,11 +136,13 @@ def _normalize_structure(tech: Dict[str, Any]) -> List[Dict[str, Any]]:
     for item in raw:
         as_dict = pydantic_to_dict(item)
         if isinstance(as_dict, dict) and as_dict:
-            out.append({
-                "name": as_dict.get("name", "verse"),
-                "bars": int(as_dict.get("bars", 4)),
-                "repetitions": int(as_dict.get("repetitions", 1)),
-            })
+            out.append(
+                {
+                    "name": as_dict.get("name", "verse"),
+                    "bars": int(as_dict.get("bars", 4)),
+                    "repetitions": int(as_dict.get("repetitions", 1)),
+                }
+            )
         else:
             out.append({"name": "verse", "bars": 4, "repetitions": 1})
     return out if out else DEFAULT_STRUCTURE
@@ -157,7 +159,9 @@ def _normalize_instruments(tech: Dict[str, Any]) -> List[Dict[str, Any]]:
     for item in raw:
         as_dict = pydantic_to_dict(item)
         if isinstance(as_dict, dict) and as_dict:
-            inst = as_dict.get("instrument") or as_dict.get("name") or as_dict.get("type") or "piano"
+            inst = (
+                as_dict.get("instrument") or as_dict.get("name") or as_dict.get("type") or "piano"
+            )
             out.append({"instrument": str(inst), "techniques": as_dict.get("techniques", []) or []})
         else:
             out.append({"instrument": str(item), "techniques": []})
@@ -220,7 +224,7 @@ class IntentPipeline:
         """
         Build intermediate dict from request for validation.
 
-        - Applies emotion_map to emotional_intent to infer mood_primary (only when not explicitly provided).
+        - Applies emotion_map to emotional_intent to infer mood_primary (only when not explicitly provided).  # noqa: E501
         - Parses emotional string (e.g. strip parenthetical).
         - Derives key_mode, tempo, structure, instruments with fallbacks.
         - Does NOT set imagery_texture (Stage 3 only).
@@ -257,7 +261,11 @@ class IntentPipeline:
             instruments = _normalize_instruments(tech)
 
         # Optional schema fields; use explicit if provided
-        narrative_arc = _get_str(intent, "narrative_arc") or _get_str(tech, "narrative_arc") or DEFAULT_NARRATIVE_ARC
+        narrative_arc = (
+            _get_str(intent, "narrative_arc")
+            or _get_str(tech, "narrative_arc")
+            or DEFAULT_NARRATIVE_ARC
+        )
         groove_feel = _get_str(tech, "groove_feel") or DEFAULT_GROOVE_FEEL
         rule_to_break = _get_str(tech, "rule_to_break") or None
         rule_justification = _get_str(tech, "rule_justification") or None
@@ -329,7 +337,12 @@ class IntentPipeline:
         intent = request.intent
 
         # key_mode, tempo: validated is source of truth (schema always provides after validate)
-        key_mode = getattr(validated, "key_mode", "") or norm.get("key_mode") or _get_str(_tech_dict(request), "key") or DEFAULT_KEY_MODE
+        key_mode = (
+            getattr(validated, "key_mode", "")
+            or norm.get("key_mode")
+            or _get_str(_tech_dict(request), "key")
+            or DEFAULT_KEY_MODE
+        )
         key_parts = key_mode.split()
         technical_key = key_parts[0] if key_parts else "C"
         technical_mode = key_parts[1].lower() if len(key_parts) > 1 else "major"
@@ -348,13 +361,28 @@ class IntentPipeline:
         # core_event: request core_wound > validated.core_desire > normalized > request emotional
         core_event = _get_str(intent, "core_wound")
         if not core_event:
-            core_event = getattr(validated, "core_desire", None) or norm.get("core_desire") or _get_str(intent, "emotional_intent") or ""
+            core_event = (
+                getattr(validated, "core_desire", None)
+                or norm.get("core_desire")
+                or _get_str(intent, "emotional_intent")
+                or ""
+            )
 
         # core_longing: validated > normalized > request
-        core_longing = getattr(validated, "core_desire", None) or norm.get("core_desire") or _get_str(intent, "core_desire") or ""
+        core_longing = (
+            getattr(validated, "core_desire", None)
+            or norm.get("core_desire")
+            or _get_str(intent, "core_desire")
+            or ""
+        )
 
         # mood_primary: validated > normalized > request emotional
-        mood_primary = getattr(validated, "mood_primary", None) or norm.get("mood_primary") or _get_str(intent, "emotional_intent") or ""
+        mood_primary = (
+            getattr(validated, "mood_primary", None)
+            or norm.get("mood_primary")
+            or _get_str(intent, "emotional_intent")
+            or ""
+        )
 
         vulnerability_scale = getattr(intent, "vulnerability_scale", None)
         if vulnerability_scale is None:
@@ -370,13 +398,38 @@ class IntentPipeline:
         imagery_texture = getattr(intent, "imagery_texture", "") or ""
 
         # narrative_arc: validated > normalized > request
-        narrative_arc = getattr(validated, "narrative_arc", None) or norm.get("narrative_arc") or _get_str(intent, "narrative_arc") or ""
+        narrative_arc = (
+            getattr(validated, "narrative_arc", None)
+            or norm.get("narrative_arc")
+            or _get_str(intent, "narrative_arc")
+            or ""
+        )
 
         # technical_*: validated first, then normalized, then request
-        technical_genre = getattr(validated, "genre", None) or norm.get("genre") or _get_str(_tech_dict(request), "genre") or ""
-        technical_groove_feel = getattr(validated, "groove_feel", None) or norm.get("groove_feel") or _get_str(_tech_dict(request), "groove_feel") or ""
-        technical_rule_to_break = getattr(validated, "rule_to_break", None) or norm.get("rule_to_break") or _get_str(_tech_dict(request), "rule_to_break") or ""
-        rule_breaking_justification = getattr(validated, "rule_justification", None) or norm.get("rule_justification") or _get_str(_tech_dict(request), "rule_justification") or ""
+        technical_genre = (
+            getattr(validated, "genre", None)
+            or norm.get("genre")
+            or _get_str(_tech_dict(request), "genre")
+            or ""
+        )
+        technical_groove_feel = (
+            getattr(validated, "groove_feel", None)
+            or norm.get("groove_feel")
+            or _get_str(_tech_dict(request), "groove_feel")
+            or ""
+        )
+        technical_rule_to_break = (
+            getattr(validated, "rule_to_break", None)
+            or norm.get("rule_to_break")
+            or _get_str(_tech_dict(request), "rule_to_break")
+            or ""
+        )
+        rule_breaking_justification = (
+            getattr(validated, "rule_justification", None)
+            or norm.get("rule_justification")
+            or _get_str(_tech_dict(request), "rule_justification")
+            or ""
+        )
 
         return CompleteSongIntent(
             core_event=core_event,

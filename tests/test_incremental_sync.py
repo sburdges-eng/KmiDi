@@ -53,7 +53,10 @@ class IncrementalSyncTest(unittest.TestCase):
             package_dir = self._create_package(Path(tmpdir))
             targets = collect_upload_targets(package_dir)
 
-            local_by_key = {f"intent_router/{target.local_path.name}": sha256_file(target.local_path) for target in targets}
+            local_by_key = {
+                f"intent_router/{target.local_path.name}": sha256_file(target.local_path)
+                for target in targets
+            }
 
             def lookup(key: str) -> str | None:
                 return local_by_key.get(key)

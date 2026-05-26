@@ -9,13 +9,14 @@ import pytest
 torch = pytest.importorskip("torch")
 onnx = pytest.importorskip("onnx")
 
-import numpy as np
+import numpy as np  # noqa: E402
 
-from music_brain.jepa.audio_jepa import AudioJEPAEncoder
-from music_brain.jepa.config import AudioJEPAConfig
+from music_brain.jepa.audio_jepa import AudioJEPAEncoder  # noqa: E402
+from music_brain.jepa.config import AudioJEPAConfig  # noqa: E402
 
 try:
     import coremltools as ct
+
     HAS_COREML = True
 except ImportError:
     HAS_COREML = False

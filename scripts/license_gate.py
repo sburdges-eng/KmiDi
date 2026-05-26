@@ -77,7 +77,9 @@ def ensure_allowlisted_license(
     return license_id
 
 
-def fetch_hf_model_metadata(model_id: str, token: str = "", timeout_sec: int = 30) -> dict[str, Any]:
+def fetch_hf_model_metadata(
+    model_id: str, token: str = "", timeout_sec: int = 30
+) -> dict[str, Any]:
     url = f"https://huggingface.co/api/models/{model_id}"
     req = request.Request(url)
     if token:
@@ -97,7 +99,9 @@ def validate_hf_model_license(
     allowlist: frozenset[str] | set[str] = ALLOWED_LICENSES,
 ) -> tuple[str, dict[str, Any]]:
     metadata = fetch_hf_model_metadata(model_id=model_id, token=token)
-    license_id = ensure_allowlisted_license(model_id=model_id, metadata=metadata, allowlist=allowlist)
+    license_id = ensure_allowlisted_license(
+        model_id=model_id, metadata=metadata, allowlist=allowlist
+    )
     return license_id, metadata
 
 

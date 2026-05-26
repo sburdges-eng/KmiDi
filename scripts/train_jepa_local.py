@@ -34,6 +34,7 @@ def load_config(path: str) -> dict:
         if yaml:
             return yaml.safe_load(f)
         import json
+
         return json.load(f)
 
 
@@ -43,6 +44,7 @@ def build_training_config(raw: dict):
         ChordJEPAConfig,
         TrainingConfig,
     )
+
     t = raw.get("training", {})
     training = TrainingConfig(
         epochs=int(t.get("epochs", 120)),
@@ -131,7 +133,10 @@ def main():
     for model_type in models_to_run:
         if model_type == "audio_jepa":
             if not os.path.isdir(audio_dir):
-                print(f"WARNING: Audio dir not found: {audio_dir}. Create it and add WAV/MP3/FLAC, or set JEPA_AUDIO_DIR.", file=sys.stderr)
+                print(
+                    f"WARNING: Audio dir not found: {audio_dir}. Create it and add WAV/MP3/FLAC, or set JEPA_AUDIO_DIR.",  # noqa: E501
+                    file=sys.stderr,
+                )
             try:
                 dataset = AudioMelDataset.from_directory(
                     audio_dir,
@@ -146,16 +151,28 @@ def main():
                     continue
                 sys.exit(1)
             if len(dataset) == 0:
-                print(f"ERROR: No audio files in {audio_dir}. Add WAV/MP3/FLAC or set JEPA_AUDIO_DIR.", file=sys.stderr)
+                print(
+                    f"ERROR: No audio files in {audio_dir}. Add WAV/MP3/FLAC or set JEPA_AUDIO_DIR.",  # noqa: E501
+                    file=sys.stderr,
+                )
                 if args.model != "both":
                     sys.exit(1)
                 continue
-            loader = DataLoader(dataset, batch_size=training.batch_size, shuffle=True, num_workers=0)
+            loader = DataLoader(
+                dataset, batch_size=training.batch_size, shuffle=True, num_workers=0
+            )
             ckpt_dir = os.path.join(checkpoint_root, "audio_jepa")
-            export_path = os.path.join(checkpoint_root, "audio_jepa.onnx") if raw.get("checkpoints", {}).get("export_onnx", True) else None
+            export_path = (
+                os.path.join(checkpoint_root, "audio_jepa.onnx")
+                if raw.get("checkpoints", {}).get("export_onnx", True)
+                else None
+            )
             print("Training Audio-JEPA ...")
             from music_brain.jepa.trainer import train_audio_jepa
-            train_audio_jepa(loader, audio_config, training, checkpoint_dir=ckpt_dir, export_path=export_path)
+
+            train_audio_jepa(
+                loader, audio_config, training, checkpoint_dir=ckpt_dir, export_path=export_path
+            )
         else:
             midi_files = _midi_files(midi_dir) if os.path.isdir(midi_dir) else []
             dataset = ChordSequenceDataset(
@@ -164,10 +181,13 @@ def main():
                 num_chords=chord_config.num_chords,
                 num_samples=256 if not midi_files else None,
             )
-            loader = DataLoader(dataset, batch_size=training.batch_size, shuffle=True, num_workers=0)
+            loader = DataLoader(
+                dataset, batch_size=training.batch_size, shuffle=True, num_workers=0
+            )
             ckpt_dir = os.path.join(checkpoint_root, "chord_jepa")
             print("Training Chord-JEPA ...")
             from music_brain.jepa.trainer import train_chord_jepa
+
             train_chord_jepa(loader, chord_config, training, checkpoint_dir=ckpt_dir)
     print("Done.")
 

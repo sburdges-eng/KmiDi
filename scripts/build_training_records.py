@@ -8,7 +8,14 @@ import json
 from pathlib import Path
 from typing import Any
 
-from scripts.training_common import INTENT_LABELS, int_or_zero, iter_jsonl, normalize_boolish, utc_now_iso, write_json
+from scripts.training_common import (
+    INTENT_LABELS,
+    int_or_zero,
+    iter_jsonl,
+    normalize_boolish,
+    utc_now_iso,
+    write_json,
+)
 
 
 def load_axes_config(path: Path) -> tuple[list[str], list[str]]:
@@ -110,7 +117,9 @@ def _dict_get_case_insensitive(payload: dict[str, Any], key: str) -> Any:
     return None
 
 
-def extract_axes(record: dict[str, Any], axis_names: list[str], field_candidates: list[str]) -> tuple[dict[str, float], list[str]]:
+def extract_axes(
+    record: dict[str, Any], axis_names: list[str], field_candidates: list[str]
+) -> tuple[dict[str, float], list[str]]:
     axis_blob: dict[str, Any] = {}
 
     for field in field_candidates:

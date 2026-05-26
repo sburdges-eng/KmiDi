@@ -50,7 +50,9 @@ def compute_transcript(records: list[dict], session_id: Optional[int]) -> dict:
 
     return {
         "kind": "SessionTranscript",
-        "sessionId": session_id if session_id is not None else (records[0].get("sessionId") if records else 0),
+        "sessionId": session_id
+        if session_id is not None
+        else (records[0].get("sessionId") if records else 0),
         "stateSequence": state_sequence,
         "terminalState": terminal_state,
         "recordCount": len(records),
@@ -60,7 +62,11 @@ def compute_transcript(records: list[dict], session_id: Optional[int]) -> dict:
 def write_jsonl(records: list[dict], output_path: Path, session_id: Optional[int]) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8") as handle:
-        handle.write(json.dumps(compute_transcript(records, session_id), separators=(",", ":"), sort_keys=True))
+        handle.write(
+            json.dumps(
+                compute_transcript(records, session_id), separators=(",", ":"), sort_keys=True
+            )
+        )
         handle.write("\n")
         for record in records:
             handle.write(json.dumps(record, separators=(",", ":"), sort_keys=True))

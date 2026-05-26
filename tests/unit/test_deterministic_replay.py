@@ -19,6 +19,7 @@ from music_brain.deterministic_replay import (
 # DeterministicContext
 # ----------------------------------------------------------------------
 
+
 def test_same_seed_same_sequence() -> None:
     with DeterministicContext(42):
         a = [random.random() for _ in range(8)]
@@ -37,7 +38,7 @@ def test_different_seed_different_sequence() -> None:
 
 def test_exit_restores_prior_random_state() -> None:
     random.seed(12345)
-    before = random.random()
+    random.random()
     # Burn the next value to advance state.
     _ = random.random()
     snapshot = random.getstate()
@@ -72,6 +73,7 @@ def test_numpy_seeded_when_available() -> None:
 # _hash_payload
 # ----------------------------------------------------------------------
 
+
 def test_hash_is_stable_across_dict_ordering() -> None:
     a = {"x": 1, "y": 2, "z": 3}
     b = {"z": 3, "y": 2, "x": 1}
@@ -91,6 +93,7 @@ def test_hash_str_bytes_equivalent() -> None:
 # ReplayRecord
 # ----------------------------------------------------------------------
 
+
 def test_record_json_roundtrip() -> None:
     r = ReplayRecord(
         run_id="run-1",
@@ -108,6 +111,7 @@ def test_record_json_roundtrip() -> None:
 # ----------------------------------------------------------------------
 # ReplayLog
 # ----------------------------------------------------------------------
+
 
 def _record(**overrides) -> ReplayRecord:
     defaults = dict(
@@ -138,11 +142,9 @@ def test_iter_empty_when_file_missing(tmp_path: Path) -> None:
 def test_find_conflicts_detects_determinism_regression(tmp_path: Path) -> None:
     log = ReplayLog(tmp_path / "replay.jsonl")
     # Historical record.
-    log.append(_record(run_id="r1", input_hash="X", seed=42,
-                       model_hash="M", output_hash="OUT-A"))
+    log.append(_record(run_id="r1", input_hash="X", seed=42, model_hash="M", output_hash="OUT-A"))
     # A new record with same triplet but different output is a conflict.
-    new = _record(run_id="r2", input_hash="X", seed=42,
-                   model_hash="M", output_hash="OUT-B")
+    new = _record(run_id="r2", input_hash="X", seed=42, model_hash="M", output_hash="OUT-B")
     conflicts = log.find_conflicts(new)
     assert len(conflicts) == 1
     assert conflicts[0].output_hash == "OUT-A"

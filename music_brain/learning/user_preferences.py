@@ -25,6 +25,7 @@ import statistics
 @dataclass
 class ParameterAdjustment:
     """Record of a single parameter adjustment."""
+
     parameter_name: str  # e.g., "valence", "arousal", "intensity"
     old_value: float
     new_value: float
@@ -35,6 +36,7 @@ class ParameterAdjustment:
 @dataclass
 class EmotionSelection:
     """Record of emotion wheel selection."""
+
     emotion_name: str
     valence: float
     arousal: float
@@ -45,6 +47,7 @@ class EmotionSelection:
 @dataclass
 class MidiGenerationEvent:
     """Record of MIDI generation and user response."""
+
     generation_id: str
     intent_text: str
     parameters: Dict[str, float]  # All parameter values at generation time
@@ -59,6 +62,7 @@ class MidiGenerationEvent:
 @dataclass
 class RuleBreakModification:
     """Record of rule-break additions/removals."""
+
     rule_break: str
     action: str  # "added" or "removed"
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -68,6 +72,7 @@ class RuleBreakModification:
 @dataclass
 class SuggestionEvent:
     """Record of suggestion interaction."""
+
     suggestion_id: str  # Unique identifier for the suggestion
     suggestion_type: str  # "parameter", "emotion", "rule_break", "style"
     action: str  # "shown", "accepted", "dismissed"
@@ -78,6 +83,7 @@ class SuggestionEvent:
 @dataclass
 class UserPreferenceProfile:
     """Complete user preference profile."""
+
     user_id: str = "default"
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     last_updated: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -138,8 +144,7 @@ class UserPreferenceProfile:
             gen = MidiGenerationEvent(**gen_data)
             # Reconstruct modifications
             gen.modifications = [
-                ParameterAdjustment(**mod_data)
-                for mod_data in gen_data.get("modifications", [])
+                ParameterAdjustment(**mod_data) for mod_data in gen_data.get("modifications", [])
             ]
             profile.midi_generations.append(gen)
 
@@ -164,14 +169,18 @@ class UserPreferenceModel:
     - Genre/style preferences
     """
 
-    def __init__(self, user_id: str = "default", preferences_path: Optional[Path] = None,
-                 max_history: int = 1000):
+    def __init__(
+        self,
+        user_id: str = "default",
+        preferences_path: Optional[Path] = None,
+        max_history: int = 1000,
+    ):
         """
         Initialize user preference model.
 
         Args:
             user_id: Unique identifier for user
-            preferences_path: Path to preferences JSON file (defaults to ~/.kelly/user_preferences.json)
+            preferences_path: Path to preferences JSON file (defaults to ~/.kelly/user_preferences.json)  # noqa: E501
             max_history: Maximum number of entries to keep per history list (oldest evicted).
         """
         self.user_id = user_id
@@ -191,7 +200,7 @@ class UserPreferenceModel:
         """Load user profile from disk."""
         if self.preferences_path.exists():
             try:
-                with open(self.preferences_path, 'r') as f:
+                with open(self.preferences_path, "r") as f:
                     data = json.load(f)
                     # Support both single user and multi-user formats
                     if "user_id" in data:
@@ -204,7 +213,8 @@ class UserPreferenceModel:
             except (json.JSONDecodeError, KeyError, TypeError) as e:
                 logging.warning(
                     "Error loading preferences from %s: %s. Starting fresh.",
-                    self.preferences_path, e,
+                    self.preferences_path,
+                    e,
                 )
                 return UserPreferenceProfile(user_id=self.user_id)
         else:
@@ -218,7 +228,7 @@ class UserPreferenceModel:
             existing_data = {}
             if self.preferences_path.exists():
                 try:
-                    with open(self.preferences_path, 'r') as f:
+                    with open(self.preferences_path, "r") as f:
                         existing_data = json.load(f)
                 except (json.JSONDecodeError, KeyError):
                     pass
@@ -226,26 +236,24 @@ class UserPreferenceModel:
             # Update or add this user's data
             existing_data[self.user_id] = self.profile.to_dict()
 
-            with open(self.preferences_path, 'w') as f:
+            with open(self.preferences_path, "w") as f:
                 json.dump(existing_data, f, indent=2)
         except Exception:
-            logging.exception(
-                "Failed to save user preferences to %s", self.preferences_path
-            )
+            logging.exception("Failed to save user preferences to %s", self.preferences_path)
 
     def record_parameter_adjustment(
         self,
         parameter_name: str,
         old_value: float,
         new_value: float,
-        context: Optional[Dict[str, Any]] = None
+        context: Optional[Dict[str, Any]] = None,
     ):
         """Record a parameter adjustment."""
         adjustment = ParameterAdjustment(
             parameter_name=parameter_name,
             old_value=old_value,
             new_value=new_value,
-            context=context or {}
+            context=context or {},
         )
         self.profile.parameter_adjustments.append(adjustment)
         self._trim_history(self.profile.parameter_adjustments)
@@ -262,14 +270,11 @@ class UserPreferenceModel:
         emotion_name: str,
         valence: float,
         arousal: float,
-        context: Optional[Dict[str, Any]] = None
+        context: Optional[Dict[str, Any]] = None,
     ):
         """Record an emotion wheel selection."""
         selection = EmotionSelection(
-            emotion_name=emotion_name,
-            valence=valence,
-            arousal=arousal,
-            context=context or {}
+            emotion_name=emotion_name, valence=valence, arousal=arousal, context=context or {}
         )
         self.profile.emotion_selections.append(selection)
         self._trim_history(self.profile.emotion_selections)
@@ -281,7 +286,7 @@ class UserPreferenceModel:
         intent_text: str,
         parameters: Dict[str, float],
         emotion: Optional[str] = None,
-        rule_breaks: Optional[List[str]] = None
+        rule_breaks: Optional[List[str]] = None,
     ) -> str:
         """
         Record a MIDI generation event.
@@ -294,18 +299,14 @@ class UserPreferenceModel:
             intent_text=intent_text,
             parameters=parameters.copy(),
             emotion=emotion,
-            rule_breaks=rule_breaks or []
+            rule_breaks=rule_breaks or [],
         )
         self.profile.midi_generations.append(event)
         self._trim_history(self.profile.midi_generations)
         self._save_profile()
         return generation_id
 
-    def record_midi_feedback(
-        self,
-        generation_id: str,
-        accepted: bool
-    ):
+    def record_midi_feedback(self, generation_id: str, accepted: bool):
         """Record explicit user feedback (thumbs up/down) on generated MIDI."""
         for event in self.profile.midi_generations:
             if event.generation_id == generation_id:
@@ -316,19 +317,13 @@ class UserPreferenceModel:
         logging.warning("Generation ID %s not found for feedback", generation_id)
 
     def record_midi_modification(
-        self,
-        generation_id: str,
-        parameter_name: str,
-        old_value: float,
-        new_value: float
+        self, generation_id: str, parameter_name: str, old_value: float, new_value: float
     ):
         """Record a parameter modification after MIDI generation."""
         for event in self.profile.midi_generations:
             if event.generation_id == generation_id:
                 adjustment = ParameterAdjustment(
-                    parameter_name=parameter_name,
-                    old_value=old_value,
-                    new_value=new_value
+                    parameter_name=parameter_name, old_value=old_value, new_value=new_value
                 )
                 event.modifications.append(adjustment)
                 self._save_profile()
@@ -339,13 +334,11 @@ class UserPreferenceModel:
         self,
         rule_break: str,
         action: str,  # "added" or "removed"
-        context: Optional[Dict[str, Any]] = None
+        context: Optional[Dict[str, Any]] = None,
     ):
         """Record a rule-break addition or removal."""
         modification = RuleBreakModification(
-            rule_break=rule_break,
-            action=action,
-            context=context or {}
+            rule_break=rule_break, action=action, context=context or {}
         )
         self.profile.rule_break_modifications.append(modification)
         self._trim_history(self.profile.rule_break_modifications)
@@ -404,9 +397,7 @@ class UserPreferenceModel:
     def get_acceptance_rate(self) -> float:
         """Get MIDI generation acceptance rate (0.0 to 1.0)."""
         feedbacks = [
-            event.accepted
-            for event in self.profile.midi_generations
-            if event.accepted is not None
+            event.accepted for event in self.profile.midi_generations if event.accepted is not None
         ]
         if not feedbacks:
             return 0.5  # Default to neutral if no feedback yet

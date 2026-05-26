@@ -60,7 +60,7 @@ def main() -> int:
         "paths",
         nargs="+",
         type=Path,
-        help="Files or directories containing tokenized JSON (one seq per line or 'ids'/'token_ids' key).",
+        help="Files or directories containing tokenized JSON (one seq per line or 'ids'/'token_ids' key).",  # noqa: E501
     )
     parser.add_argument(
         "--output",

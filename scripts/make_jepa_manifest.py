@@ -225,7 +225,7 @@ def build_cuts(
 
 
 def list_adopted_jepa_sources(manifest_path: Path) -> int:
-    """List source_manifest entries with adoption_decision=adopted that are JEPA/dataset-relevant."""
+    """List source_manifest entries with adoption_decision=adopted that are JEPA/dataset-relevant."""  # noqa: E501
     if yaml is None:
         print("yaml required for --list-from-manifest; pip install pyyaml", file=sys.stderr)
         return 1
@@ -247,7 +247,10 @@ def list_adopted_jepa_sources(manifest_path: Path) -> int:
     ]
     if not adopted:
         print("No adopted JEPA/dataset sources in manifest.", file=sys.stderr)
-        print("Set adoption_decision: adopted and add proposed_storage_path for dataset-like items.", file=sys.stderr)
+        print(
+            "Set adoption_decision: adopted and add proposed_storage_path for dataset-like items.",
+            file=sys.stderr,
+        )
         return 0
     for s in adopted:
         path = s.get("proposed_storage_path") or "(none)"
@@ -258,11 +261,7 @@ def list_adopted_jepa_sources(manifest_path: Path) -> int:
 
 def write_manifest_args(out_dir: Path, args: argparse.Namespace) -> None:
     """Write manifest_args.json for reproducibility."""
-    d = {
-        k: getattr(args, k)
-        for k in dir(args)
-        if not k.startswith("_") and k != "config"
-    }
+    d = {k: getattr(args, k) for k in dir(args) if not k.startswith("_") and k != "config"}
     for key in ("audio_root", "midi_root", "out_dir", "config"):
         if key in d and d[key] is not None:
             d[key] = str(Path(d[key]).resolve()) if d[key] else None
@@ -279,61 +278,88 @@ def main() -> int:
         ),
     )
     parser.add_argument(
-        "--audio-root", type=Path, default=None,
-        help="Root directory of audio files (e.g. MAESTRO WAV); required unless --list-from-manifest",
+        "--audio-root",
+        type=Path,
+        default=None,
+        help="Root directory of audio files (e.g. MAESTRO WAV); required unless --list-from-manifest",  # noqa: E501
     )
     parser.add_argument(
-        "--midi-root", type=Path, default=None,
+        "--midi-root",
+        type=Path,
+        default=None,
         help="Root directory of MIDI sidecars; required unless --list-from-manifest",
     )
     parser.add_argument(
-        "--out-dir", type=Path, default=Path("manifests"),
+        "--out-dir",
+        type=Path,
+        default=Path("manifests"),
         help="Output directory for JSONL manifests",
     )
     parser.add_argument(
-        "--pattern", default="**/*.wav",
+        "--pattern",
+        default="**/*.wav",
         help="Glob pattern for audio under audio-root",
     )
     parser.add_argument(
-        "--midi-suffix", default=".mid",
+        "--midi-suffix",
+        default=".mid",
         help="MIDI file extension (default: .mid; use .midi for MAESTRO v3)",
     )
     parser.add_argument(
-        "--window-seconds", type=float, default=8.0,
+        "--window-seconds",
+        type=float,
+        default=8.0,
         help="JEPA window length in seconds",
     )
     parser.add_argument(
-        "--stride-seconds", type=float, default=4.0,
+        "--stride-seconds",
+        type=float,
+        default=4.0,
         help="Stride between windows in seconds",
     )
     parser.add_argument(
-        "--min-duration", type=float, default=None,
+        "--min-duration",
+        type=float,
+        default=None,
         help="Skip recordings shorter than this (seconds)",
     )
     parser.add_argument(
-        "--max-duration", type=float, default=None,
+        "--max-duration",
+        type=float,
+        default=None,
         help="Skip recordings longer than this (seconds)",
     )
     parser.add_argument(
-        "--config", type=Path, default=None,
+        "--config",
+        type=Path,
+        default=None,
         help="Optional YAML config (CLI overrides)",
     )
     parser.add_argument(
-        "--source-manifest", type=Path, default=None,
+        "--source-manifest",
+        type=Path,
+        default=None,
         help="Path to source_manifest.yaml (used with --list-from-manifest)",
     )
     parser.add_argument(
-        "--list-from-manifest", action="store_true",
+        "--list-from-manifest",
+        action="store_true",
         help="List adopted JEPA/dataset sources from source_manifest and exit",
     )
     args = parser.parse_args()
 
     if args.list_from_manifest:
-        manifest = args.source_manifest or Path(__file__).resolve().parent.parent / "config" / "source_manifest.yaml"
+        manifest = (
+            args.source_manifest
+            or Path(__file__).resolve().parent.parent / "config" / "source_manifest.yaml"
+        )
         return list_adopted_jepa_sources(manifest)
 
     if args.audio_root is None or args.midi_root is None:
-        print("Error: --audio-root and --midi-root are required (or use --list-from-manifest).", file=sys.stderr)
+        print(
+            "Error: --audio-root and --midi-root are required (or use --list-from-manifest).",
+            file=sys.stderr,
+        )
         return 1
     audio_root = args.audio_root.resolve()
     midi_root = args.midi_root.resolve()
@@ -346,7 +372,8 @@ def main() -> int:
         return 1
 
     pairs = _discover_pairs(
-        audio_root, midi_root,
+        audio_root,
+        midi_root,
         pattern=args.pattern,
         midi_suffix=args.midi_suffix,
     )

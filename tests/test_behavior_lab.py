@@ -2,9 +2,10 @@
 
 import asyncio
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 from dataclasses import dataclass
-from typing import Any, Callable, List
+from typing import Any, Callable
+
 
 # Mock EventBus for testing without full music_brain import chain
 class MockEventBus:
@@ -14,18 +15,22 @@ class MockEventBus:
 
     def on(self, event_type: str, handler: Callable = None, **kwargs):
         if handler is None:
+
             def decorator(fn):
                 self._handlers.setdefault(event_type, []).append(fn)
                 return fn
+
             return decorator
         self._handlers.setdefault(event_type, []).append(handler)
 
     async def emit(self, event_type: str, data: Any = None):
         self._emitted.append((event_type, data))
+
         @dataclass
         class FakeEvent:
             type: str
             data: Any
+
         event = FakeEvent(type=event_type, data=data)
         for handler in self._handlers.get(event_type, []):
             if asyncio.iscoroutinefunction(handler):
@@ -43,11 +48,16 @@ class MockBridge:
         self.pushed_intents.append((param_name, value))
         return True
 
-    def push_emotion(self, valence: float, arousal: float, dominance: float,
-                     intensity: float = 1.0) -> bool:
-        self.pushed_emotions.append({
-            "valence": valence, "arousal": arousal, "dominance": dominance,
-        })
+    def push_emotion(
+        self, valence: float, arousal: float, dominance: float, intensity: float = 1.0
+    ) -> bool:
+        self.pushed_emotions.append(
+            {
+                "valence": valence,
+                "arousal": arousal,
+                "dominance": dominance,
+            }
+        )
         return True
 
 
@@ -64,6 +74,7 @@ def bridge():
 class TestClosedLoopController:
     def test_import(self):
         from music_brain.behavior_lab import ClosedLoopController
+
         assert ClosedLoopController is not None
 
     @pytest.mark.anyio
@@ -82,9 +93,7 @@ class TestClosedLoopController:
         await controller.start()
 
         # Simulate a state update with low arousal
-        await controller._on_state_update(
-            MagicMock(data={"arousal": 0.1, "bar": 1})
-        )
+        await controller._on_state_update(MagicMock(data={"arousal": 0.1, "bar": 1}))
 
         assert len(bridge.pushed_intents) == 1
         assert bridge.pushed_intents[0][0] == "harmonic_tension"
@@ -123,7 +132,8 @@ class TestClosedLoopController:
 
 class TestScenarios:
     def test_import(self):
-        from music_brain.behavior_lab import Scenario, Rule, run_scenario
+        from music_brain.behavior_lab import Scenario
+
         assert Scenario is not None
 
     def test_rule_to_parameter_rule(self):
@@ -144,6 +154,7 @@ class TestScenarios:
             emotional_buildup_scenario,
             call_and_response_scenario,
         )
+
         s1 = emotional_buildup_scenario()
         s2 = call_and_response_scenario()
         assert len(s1.rules) == 2
@@ -153,6 +164,7 @@ class TestScenarios:
 class TestRTSnapshot:
     def test_import(self):
         from music_brain.integrations.comprehensive_bridge import RTSnapshot
+
         snap = RTSnapshot()
         assert snap.bpm == 120.0
         assert snap.bar == 0
@@ -164,5 +176,6 @@ class TestCKellyRTState:
         """Verify ctypes struct has a reasonable size (sanity check)."""
         from music_brain.integrations.comprehensive_bridge import CKellyRTState
         import ctypes
+
         # Should be > 100 bytes (lots of fields)
         assert ctypes.sizeof(CKellyRTState) > 100

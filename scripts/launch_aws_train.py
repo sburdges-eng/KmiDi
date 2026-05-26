@@ -35,7 +35,9 @@ ON_DEMAND_GPU_PRICES_USD: dict[str, float] = {
 def _prefix_is_under(prefix: str, root: str) -> bool:
     normalized_prefix = prefix.strip("/")
     normalized_root = root.strip("/")
-    return normalized_prefix == normalized_root or normalized_prefix.startswith(f"{normalized_root}/")
+    return normalized_prefix == normalized_root or normalized_prefix.startswith(
+        f"{normalized_root}/"
+    )
 
 
 def is_gpu_instance_type(instance_type: str) -> bool:
@@ -60,26 +62,32 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--package-s3-uri",
         default="",
-        help="S3 URI to packaged dataset root. Defaults to run-contract package bucket/prefix + package id.",
+        help="S3 URI to packaged dataset root. Defaults to run-contract package bucket/prefix + package id.",  # noqa: E501
     )
     parser.add_argument(
         "--output-s3-uri",
         default="",
         help="S3 URI where artifacts are written. Defaults to run-contract run bucket/prefix.",
     )
-    parser.add_argument("--package-id", default="", help="Package ID used when --package-s3-uri is omitted")
+    parser.add_argument(
+        "--package-id", default="", help="Package ID used when --package-s3-uri is omitted"
+    )
     parser.add_argument("--instance-type", default="", help="GPU EC2 instance type")
     parser.add_argument("--ami-id", required=True, help="AMI ID for the training host")
     parser.add_argument("--subnet-id", required=True, help="Subnet ID")
     parser.add_argument("--security-group-id", required=True, help="Security Group ID")
-    parser.add_argument("--iam-instance-profile", required=True, help="IAM instance profile name or ARN")
+    parser.add_argument(
+        "--iam-instance-profile", required=True, help="IAM instance profile name or ARN"
+    )
     parser.add_argument("--key-name", default="", help="Optional EC2 key pair")
     parser.add_argument("--region", default="", help="Optional AWS region")
     parser.add_argument("--profile", default="", help="Optional AWS profile")
     parser.add_argument("--run-id", default="", help="Run identifier")
     parser.add_argument("--tmux-session-name", default="", help="Remote tmux session name")
     parser.add_argument("--max-runtime-hours", type=float, default=0.0)
-    parser.add_argument("--hourly-usd", type=float, default=0.0, help="Override on-demand hourly cost")
+    parser.add_argument(
+        "--hourly-usd", type=float, default=0.0, help="Override on-demand hourly cost"
+    )
     parser.add_argument("--budget-cap-usd", type=float, default=0.0)
     parser.add_argument("--runner-s3-uri", default="", help="S3 URI for uploaded runner scripts")
     parser.add_argument("--teacher-hf-model", default="", help="Optional HF teacher model ID")
@@ -129,8 +137,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ssh-host", default="", help="SSH host fallback for local attach")
     parser.add_argument("--ssh-user", default="ec2-user", help="SSH user fallback for local attach")
     parser.add_argument("--ssh-key-path", default="", help="SSH private key for local attach")
-    parser.add_argument("--no-open-workbench", action="store_true", help="Do not open local TRAIN/OPUS/CODEX/SPARK terminals")
-    parser.add_argument("--skip-preflight", action="store_true", help="Skip preflight gate (not recommended)")
+    parser.add_argument(
+        "--no-open-workbench",
+        action="store_true",
+        help="Do not open local TRAIN/OPUS/CODEX/SPARK terminals",
+    )
+    parser.add_argument(
+        "--skip-preflight", action="store_true", help="Skip preflight gate (not recommended)"
+    )
     parser.add_argument("--preflight-command", default="", help="Override preflight command")
     parser.add_argument(
         "--run-contract",
@@ -205,7 +219,7 @@ mkdir -p /opt/listening-train/work/logs
 python3 -m pip install --upgrade pip
 python3 -m pip install numpy boto3 huggingface_hub zstandard
 
-aws s3 cp {q_runner_uri}/scripts/aws_train_entrypoint.py /opt/listening-train/scripts/aws_train_entrypoint.py
+aws s3 cp {q_runner_uri}/scripts/aws_train_entrypoint.py /opt/listening-train/scripts/aws_train_entrypoint.py  # noqa: E501
 aws s3 cp {q_runner_uri}/scripts/training_common.py /opt/listening-train/scripts/training_common.py
 aws s3 cp {q_runner_uri}/scripts/license_gate.py /opt/listening-train/scripts/license_gate.py
 aws s3 cp {q_runner_uri}/config/run_contract.yaml /opt/listening-train/config/run_contract.yaml
@@ -236,7 +250,7 @@ else:
 PY
 )"
 
-TRAIN_CMD="PYTHONPATH=/opt/listening-train timeout {timeout_sec} python3 /opt/listening-train/scripts/aws_train_entrypoint.py --run-contract /opt/listening-train/config/run_contract.yaml --workdir /opt/listening-train/work --output-s3-uri {q_output_s3_uri} --run-id {q_run_id} --checkpoint-cadence-steps {checkpoint_cadence_steps} --max-checkpoints {max_checkpoints} --max-total-checkpoints {max_total_checkpoints}{early_stop_args}{teacher_args}"
+TRAIN_CMD="PYTHONPATH=/opt/listening-train timeout {timeout_sec} python3 /opt/listening-train/scripts/aws_train_entrypoint.py --run-contract /opt/listening-train/config/run_contract.yaml --workdir /opt/listening-train/work --output-s3-uri {q_output_s3_uri} --run-id {q_run_id} --checkpoint-cadence-steps {checkpoint_cadence_steps} --max-checkpoints {max_checkpoints} --max-total-checkpoints {max_total_checkpoints}{early_stop_args}{teacher_args}"  # noqa: E501
 if [[ -n "$PACKAGE_LOCAL_DIR" ]]; then
   TRAIN_CMD="$TRAIN_CMD --package-local-dir $PACKAGE_LOCAL_DIR"
 else
@@ -244,8 +258,8 @@ else
 fi
 
 COMPLETE_SIGNAL=/opt/listening-train/work/train_complete.signal
-WATCHDOG_CMD="/opt/listening-train/tools/watchdog.sh --eval-summary /opt/listening-train/work/upload_bundle/artifacts/student/eval_summary.json --metric-path {q_metric_path} --poll-seconds 15 --complete-signal $COMPLETE_SIGNAL --patience {int(early_stop.get('patience', 0))} --min-delta {float(early_stop.get('minDelta', 0.0))} --status-file /opt/listening-train/work/logs/watchdog.status"
-COST_CMD="/opt/listening-train/tools/cost_estimate.sh --hourly-usd {hourly_usd} --budget-cap-usd {budget_cap_usd} --start-epoch $(date +%s) --poll-seconds 30 --complete-signal $COMPLETE_SIGNAL"
+WATCHDOG_CMD="/opt/listening-train/tools/watchdog.sh --eval-summary /opt/listening-train/work/upload_bundle/artifacts/student/eval_summary.json --metric-path {q_metric_path} --poll-seconds 15 --complete-signal $COMPLETE_SIGNAL --patience {int(early_stop.get("patience", 0))} --min-delta {float(early_stop.get("minDelta", 0.0))} --status-file /opt/listening-train/work/logs/watchdog.status"  # noqa: E501
+COST_CMD="/opt/listening-train/tools/cost_estimate.sh --hourly-usd {hourly_usd} --budget-cap-usd {budget_cap_usd} --start-epoch $(date +%s) --poll-seconds 30 --complete-signal $COMPLETE_SIGNAL"  # noqa: E501
 
 /opt/listening-train/tools/tmux_train_layout.sh \
   --session-name {q_session_name} \
@@ -311,7 +325,7 @@ def validate_s3_prefixes(package_s3_uri: str, output_s3_uri: str, runner_s3_uri:
             )
         if not _prefix_is_under(runner_prefix, output_prefix.strip("/")):
             raise ValueError(
-                f"--runner-s3-uri prefix {runner_s3_uri} must stay under --output-s3-uri {output_s3_uri}"
+                f"--runner-s3-uri prefix {runner_s3_uri} must stay under --output-s3-uri {output_s3_uri}"  # noqa: E501
             )
 
 
@@ -327,24 +341,33 @@ def resolve_training_uris(
 ) -> tuple[str, str]:
     package_uri = args.package_s3_uri.strip()
     if not package_uri:
-        package_id = args.package_id.strip() or str(
-            run_contract_get(contract, "training", "activePackageId", default="")
-        ).strip()
+        package_id = (
+            args.package_id.strip()
+            or str(run_contract_get(contract, "training", "activePackageId", default="")).strip()
+        )
         package_bucket = str(run_contract_get(contract, "s3", "packageBucket", default="")).strip()
         package_prefix_root = str(
             run_contract_get(contract, "s3", "packagePrefix", default="training/packages")
         ).strip("/")
         if not package_id:
-            raise ValueError("Missing package id: provide --package-s3-uri, --package-id, or training.activePackageId")
+            raise ValueError(
+                "Missing package id: provide --package-s3-uri, --package-id, or training.activePackageId"  # noqa: E501
+            )
         if not package_bucket:
-            raise ValueError("Missing package bucket: provide --package-s3-uri or set s3.packageBucket")
-        package_prefix = f"{package_prefix_root}/{package_id}" if package_prefix_root else package_id
+            raise ValueError(
+                "Missing package bucket: provide --package-s3-uri or set s3.packageBucket"
+            )
+        package_prefix = (
+            f"{package_prefix_root}/{package_id}" if package_prefix_root else package_id
+        )
         package_uri = build_s3_uri(package_bucket, package_prefix)
 
     output_uri = args.output_s3_uri.strip()
     if not output_uri:
         run_bucket = str(run_contract_get(contract, "s3", "runBucket", default="")).strip()
-        run_prefix = str(run_contract_get(contract, "s3", "runPrefix", default="training/runs")).strip("/")
+        run_prefix = str(
+            run_contract_get(contract, "s3", "runPrefix", default="training/runs")
+        ).strip("/")
         if not run_bucket:
             raise ValueError("Missing run bucket: provide --output-s3-uri or set s3.runBucket")
         output_uri = build_s3_uri(run_bucket, run_prefix)
@@ -352,20 +375,32 @@ def resolve_training_uris(
     return package_uri, output_uri
 
 
-def resolve_early_stop_settings(args: argparse.Namespace, contract: dict[str, Any]) -> dict[str, Any]:
+def resolve_early_stop_settings(
+    args: argparse.Namespace, contract: dict[str, Any]
+) -> dict[str, Any]:
     policy = run_contract_get(contract, "training", "earlyStop", default={})
     if not isinstance(policy, dict):
         policy = {}
 
     enabled = args.early_stop_enabled or normalize_boolish(policy.get("enabled", False))
-    patience = args.early_stop_patience if args.early_stop_patience > 0 else int(policy.get("patience", 0) or 0)
+    patience = (
+        args.early_stop_patience
+        if args.early_stop_patience > 0
+        else int(policy.get("patience", 0) or 0)
+    )
     min_delta = (
         args.early_stop_min_delta
         if args.early_stop_min_delta >= 0
         else float(policy.get("minDelta", 0.0) or 0.0)
     )
-    min_epochs = args.early_stop_min_epochs if args.early_stop_min_epochs > 0 else int(policy.get("minEpochs", 0) or 0)
-    metric_path = args.early_stop_metric.strip() or str(policy.get("metricPath", "student.intent.val_macro_f1"))
+    min_epochs = (
+        args.early_stop_min_epochs
+        if args.early_stop_min_epochs > 0
+        else int(policy.get("minEpochs", 0) or 0)
+    )
+    metric_path = args.early_stop_metric.strip() or str(
+        policy.get("metricPath", "student.intent.val_macro_f1")
+    )
     auto_shutdown = bool(args.auto_shutdown_on_complete)
 
     if enabled and patience <= 0:
@@ -383,7 +418,9 @@ def resolve_early_stop_settings(args: argparse.Namespace, contract: dict[str, An
     }
 
 
-def resolve_cache_settings(args: argparse.Namespace, contract: dict[str, Any]) -> tuple[str, str, bool]:
+def resolve_cache_settings(
+    args: argparse.Namespace, contract: dict[str, Any]
+) -> tuple[str, str, bool]:
     policy = run_contract_get(contract, "training", "ops", "datasetCache", default={})
     if not isinstance(policy, dict):
         policy = {}
@@ -401,26 +438,35 @@ def resolve_cache_settings(args: argparse.Namespace, contract: dict[str, Any]) -
     return mode, root, allow_streaming
 
 
-def resolve_max_total_checkpoints(args: argparse.Namespace, contract: dict[str, Any], max_checkpoints: int) -> int:
+def resolve_max_total_checkpoints(
+    args: argparse.Namespace, contract: dict[str, Any], max_checkpoints: int
+) -> int:
     checkpoint_policy = run_contract_get(contract, "training", "checkpoints", default={})
     if not isinstance(checkpoint_policy, dict):
         checkpoint_policy = {}
 
-    resolved = args.max_total_checkpoints if args.max_total_checkpoints > 0 else int(
-        checkpoint_policy.get("maxTotalCheckpoints", max_checkpoints + 1) or (max_checkpoints + 1)
+    resolved = (
+        args.max_total_checkpoints
+        if args.max_total_checkpoints > 0
+        else int(
+            checkpoint_policy.get("maxTotalCheckpoints", max_checkpoints + 1)
+            or (max_checkpoints + 1)
+        )
     )
     if resolved <= 0:
         raise ValueError("max total checkpoints must be > 0")
     if resolved < max_checkpoints + 1:
         raise ValueError(
-            f"max total checkpoints {resolved} is too small for keep-last-N + best policy ({max_checkpoints + 1})"
+            f"max total checkpoints {resolved} is too small for keep-last-N + best policy ({max_checkpoints + 1})"  # noqa: E501
         )
     return resolved
 
 
 def run_preflight_gate(preflight_command: str, dry_run: bool) -> None:
     if not preflight_command:
-        raise ValueError("Missing preflight command; set training.ops.preflightCommand or pass --preflight-command")
+        raise ValueError(
+            "Missing preflight command; set training.ops.preflightCommand or pass --preflight-command"  # noqa: E501
+        )
     if dry_run:
         return
 
@@ -475,14 +521,22 @@ def main() -> int:
     args.instance_type = args.instance_type or str(
         run_contract_get(contract, "training", "defaultInstanceType", default="g5.xlarge")
     )
-    args.max_runtime_hours = args.max_runtime_hours if args.max_runtime_hours > 0 else float(
-        run_contract_get(contract, "training", "defaultMaxRuntimeHours", default=4.0)
+    args.max_runtime_hours = (
+        args.max_runtime_hours
+        if args.max_runtime_hours > 0
+        else float(run_contract_get(contract, "training", "defaultMaxRuntimeHours", default=4.0))
     )
-    args.budget_cap_usd = args.budget_cap_usd if args.budget_cap_usd > 0 else float(
-        run_contract_get(contract, "training", "budgetCapUsd", default=100.0)
+    args.budget_cap_usd = (
+        args.budget_cap_usd
+        if args.budget_cap_usd > 0
+        else float(run_contract_get(contract, "training", "budgetCapUsd", default=100.0))
     )
-    args.profile = args.profile or str(run_contract_get(contract, "aws", "profile", default="")).strip()
-    args.region = args.region or str(run_contract_get(contract, "aws", "region", default="")).strip()
+    args.profile = (
+        args.profile or str(run_contract_get(contract, "aws", "profile", default="")).strip()
+    )
+    args.region = (
+        args.region or str(run_contract_get(contract, "aws", "region", default="")).strip()
+    )
 
     package_s3_uri, output_s3_uri = resolve_training_uris(args, contract)
     args.package_s3_uri = package_s3_uri
@@ -500,16 +554,26 @@ def main() -> int:
     early_stop_settings = resolve_early_stop_settings(args, contract)
     cache_mode, cache_root, allow_streaming_fallback = resolve_cache_settings(args, contract)
 
-    run_id_prefix = str(run_contract_get(contract, "training", "defaultRunIdPrefix", default="run")).strip() or "run"
-    run_id = args.run_id or f"{run_id_prefix}-{utc_now_iso().replace(':', '').replace('-', '')}".lower()
+    run_id_prefix = (
+        str(run_contract_get(contract, "training", "defaultRunIdPrefix", default="run")).strip()
+        or "run"
+    )
+    run_id = (
+        args.run_id or f"{run_id_prefix}-{utc_now_iso().replace(':', '').replace('-', '')}".lower()
+    )
 
-    tmux_prefix = str(run_contract_get(contract, "training", "ops", "tmuxSessionPrefix", default="train")).strip()
+    tmux_prefix = str(
+        run_contract_get(contract, "training", "ops", "tmuxSessionPrefix", default="train")
+    ).strip()
     tmux_prefix = tmux_prefix or "train"
     session_name = args.tmux_session_name.strip() or f"{tmux_prefix}-{run_id}"
 
-    preflight_command = args.preflight_command.strip() or str(
-        run_contract_get(contract, "training", "ops", "preflightCommand", default="")
-    ).strip()
+    preflight_command = (
+        args.preflight_command.strip()
+        or str(
+            run_contract_get(contract, "training", "ops", "preflightCommand", default="")
+        ).strip()
+    )
     if not args.skip_preflight:
         run_preflight_gate(preflight_command=preflight_command, dry_run=args.dry_run)
 
@@ -555,8 +619,16 @@ def main() -> int:
             "estimatedCostUsd": round(estimated_cost, 2),
             "budgetCapUsd": args.budget_cap_usd,
             "resolved": {
-                "package": {"bucket": package_bucket, "prefix": package_prefix, "uri": args.package_s3_uri},
-                "output": {"bucket": output_bucket, "prefix": output_prefix, "uri": args.output_s3_uri},
+                "package": {
+                    "bucket": package_bucket,
+                    "prefix": package_prefix,
+                    "uri": args.package_s3_uri,
+                },
+                "output": {
+                    "bucket": output_bucket,
+                    "prefix": output_prefix,
+                    "uri": args.output_s3_uri,
+                },
                 "runner": {"bucket": runner_bucket, "prefix": runner_prefix, "uri": runner_s3_uri},
                 "profile": args.profile,
                 "region": args.region,

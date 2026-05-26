@@ -3,7 +3,6 @@
 import sys
 from pathlib import Path
 
-import pytest
 
 # Prefer penta_core on path (e.g. PYTHONPATH=music_brain); else load apsc_wrapper as submodule
 _root = Path(__file__).resolve().parents[2]
@@ -18,6 +17,7 @@ try:
     )
 except ImportError:
     from music_brain.penta_core.ml import apsc_wrapper
+
     permute_stem_orders = apsc_wrapper.permute_stem_orders
     aggregate_json_majority = apsc_wrapper.aggregate_json_majority
     run_apsc = apsc_wrapper.run_apsc
@@ -36,7 +36,12 @@ class TestPermuteStemOrders:
         orders = permute_stem_orders(3)
         assert len(orders) == 6
         assert set(orders) == {
-            (0, 1, 2), (0, 2, 1), (1, 0, 2), (1, 2, 0), (2, 0, 1), (2, 1, 0),
+            (0, 1, 2),
+            (0, 2, 1),
+            (1, 0, 2),
+            (1, 2, 0),
+            (2, 0, 1),
+            (2, 1, 0),
         }
 
     def test_four_stems_24_permutations(self):
@@ -94,12 +99,14 @@ class TestRunApsc:
     def test_empty_stems(self):
         def invoke(prompt, stems):
             return []
+
         assert run_apsc("prompt", [], invoke) == []
 
     def test_single_stem_one_permutation(self):
         def invoke(prompt, stems):
             assert len(stems) == 1
             return [{"track_id": "bass", "action": "eq", "params": {}}]
+
         stems = [("bass", "ref1")]
         out = run_apsc("prompt", stems, invoke, num_permutations=1)
         assert len(out) == 1
@@ -111,9 +118,9 @@ class TestRunApsc:
         def invoke(prompt, stems):
             calls.append(stems)
             return [
-                {"track_id": stems[i][0], "action": "eq", "params": {}}
-                for i in range(len(stems))
+                {"track_id": stems[i][0], "action": "eq", "params": {}} for i in range(len(stems))
             ]
+
         stems = [("bass", 1), ("drums", 2), ("synth", 3)]
         out = run_apsc("prompt", stems, invoke, num_permutations=3)
         assert len(calls) == 3

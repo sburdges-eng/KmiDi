@@ -7,7 +7,6 @@ and process_intent accept CompleteSongIntent only.
 
 import inspect
 
-import pytest
 
 from music_brain.session.intent_schema import CompleteSongIntent
 

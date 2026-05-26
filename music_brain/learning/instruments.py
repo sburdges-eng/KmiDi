@@ -17,27 +17,29 @@ from typing import List, Dict, Optional, Any
 
 class InstrumentFamily(Enum):
     """Families of musical instruments."""
+
     # Standard orchestral families
-    STRINGS = auto()           # Violin, viola, cello, bass, guitar
-    WOODWINDS = auto()         # Flute, clarinet, oboe, saxophone
-    BRASS = auto()             # Trumpet, trombone, horn, tuba
-    PERCUSSION = auto()        # Drums, timpani, mallets, auxiliary
-    KEYBOARD = auto()          # Piano, organ, synthesizer
+    STRINGS = auto()  # Violin, viola, cello, bass, guitar
+    WOODWINDS = auto()  # Flute, clarinet, oboe, saxophone
+    BRASS = auto()  # Trumpet, trombone, horn, tuba
+    PERCUSSION = auto()  # Drums, timpani, mallets, auxiliary
+    KEYBOARD = auto()  # Piano, organ, synthesizer
 
     # Modern categories
-    ELECTRONIC = auto()        # Synthesizers, drum machines, DAWs
-    VOICE = auto()             # Singing, vocal techniques
-    FRETTED = auto()           # Guitar, bass, ukulele, banjo
+    ELECTRONIC = auto()  # Synthesizers, drum machines, DAWs
+    VOICE = auto()  # Singing, vocal techniques
+    FRETTED = auto()  # Guitar, bass, ukulele, banjo
 
     # World instruments
-    WORLD_STRINGS = auto()     # Sitar, koto, oud, erhu
-    WORLD_WINDS = auto()       # Shakuhachi, bansuri, didgeridoo
+    WORLD_STRINGS = auto()  # Sitar, koto, oud, erhu
+    WORLD_WINDS = auto()  # Shakuhachi, bansuri, didgeridoo
     WORLD_PERCUSSION = auto()  # Tabla, djembe, cajon
 
 
 @dataclass
 class Instrument:
     """Comprehensive instrument definition for teaching."""
+
     id: str
     name: str
     family: InstrumentFamily
@@ -56,9 +58,9 @@ class Instrument:
     requires_breath: bool = False
 
     # Learning curve
-    days_to_first_song: int = 7      # Approximate with practice
+    days_to_first_song: int = 7  # Approximate with practice
     months_to_intermediate: int = 12
-    skill_ceiling: str = "high"      # low, medium, high, very_high
+    skill_ceiling: str = "high"  # low, medium, high, very_high
 
     # Equipment
     starter_cost_usd: tuple = (100, 500)  # Min, max for beginner instrument
@@ -148,7 +150,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["classical", "jazz", "pop", "rock", "blues", "gospel"],
         related_instruments=["organ", "synthesizer", "electric_piano"],
     ),
-
     "synthesizer": Instrument(
         id="synthesizer",
         name="Synthesizer",
@@ -187,7 +188,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["electronic", "pop", "film_score", "ambient", "experimental"],
         related_instruments=["piano", "organ", "drum_machine"],
     ),
-
     # =========================================================================
     # GUITAR FAMILY
     # =========================================================================
@@ -229,7 +229,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["folk", "country", "rock", "pop", "singer-songwriter"],
         related_instruments=["electric_guitar", "ukulele", "bass"],
     ),
-
     "electric_guitar": Instrument(
         id="electric_guitar",
         name="Electric Guitar",
@@ -267,7 +266,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["rock", "blues", "metal", "jazz", "funk", "pop"],
         related_instruments=["acoustic_guitar", "bass", "ukulele"],
     ),
-
     "bass": Instrument(
         id="bass",
         name="Bass Guitar",
@@ -307,7 +305,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["rock", "funk", "jazz", "r&b", "metal", "pop"],
         related_instruments=["electric_guitar", "upright_bass"],
     ),
-
     "ukulele": Instrument(
         id="ukulele",
         name="Ukulele",
@@ -345,7 +342,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["hawaiian", "folk", "pop", "indie"],
         related_instruments=["acoustic_guitar", "mandolin"],
     ),
-
     # =========================================================================
     # DRUMS & PERCUSSION
     # =========================================================================
@@ -388,7 +384,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["rock", "jazz", "pop", "funk", "metal", "hip-hop"],
         related_instruments=["percussion", "cajon", "electronic_drums"],
     ),
-
     "cajon": Instrument(
         id="cajon",
         name="Cajón",
@@ -424,7 +419,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["flamenco", "folk", "acoustic", "world"],
         related_instruments=["drums", "djembe", "bongos"],
     ),
-
     # =========================================================================
     # VOICE
     # =========================================================================
@@ -468,7 +462,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["pop", "rock", "classical", "jazz", "r&b", "musical_theater"],
         related_instruments=["piano", "guitar"],
     ),
-
     # =========================================================================
     # WOODWINDS
     # =========================================================================
@@ -509,7 +502,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["classical", "jazz", "folk", "world"],
         related_instruments=["piccolo", "clarinet", "recorder"],
     ),
-
     "clarinet": Instrument(
         id="clarinet",
         name="Clarinet",
@@ -547,7 +539,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["classical", "jazz", "klezmer", "band"],
         related_instruments=["saxophone", "bass_clarinet", "oboe"],
     ),
-
     "saxophone": Instrument(
         id="saxophone",
         name="Saxophone",
@@ -585,7 +576,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["jazz", "rock", "funk", "classical", "pop"],
         related_instruments=["clarinet", "flute"],
     ),
-
     # =========================================================================
     # BRASS
     # =========================================================================
@@ -626,7 +616,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["jazz", "classical", "latin", "mariachi", "brass_band"],
         related_instruments=["cornet", "flugelhorn", "trombone"],
     ),
-
     "trombone": Instrument(
         id="trombone",
         name="Trombone",
@@ -664,7 +653,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["jazz", "classical", "ska", "brass_band", "marching_band"],
         related_instruments=["trumpet", "euphonium", "tuba"],
     ),
-
     # =========================================================================
     # STRINGS (ORCHESTRAL)
     # =========================================================================
@@ -704,7 +692,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["classical", "folk", "irish", "country", "jazz"],
         related_instruments=["viola", "cello", "upright_bass"],
     ),
-
     "cello": Instrument(
         id="cello",
         name="Cello",
@@ -742,7 +729,6 @@ INSTRUMENTS: Dict[str, Instrument] = {
         primary_genres=["classical", "film_score", "folk", "rock_cello"],
         related_instruments=["violin", "viola", "upright_bass"],
     ),
-
     # =========================================================================
     # PRODUCTION
     # =========================================================================
@@ -820,10 +806,7 @@ def get_beginner_instruments() -> List[Instrument]:
 def get_instruments_by_genre(genre: str) -> List[Instrument]:
     """Get instruments commonly used in a genre."""
     genre_lower = genre.lower()
-    return [
-        i for i in INSTRUMENTS.values()
-        if genre_lower in [g.lower() for g in i.primary_genres]
-    ]
+    return [i for i in INSTRUMENTS.values() if genre_lower in [g.lower() for g in i.primary_genres]]
 
 
 def suggest_instrument(
@@ -888,11 +871,13 @@ def suggest_instrument(
             reasons.append("Quick path to first song")
 
         if score > 0:
-            suggestions.append({
-                "instrument": inst,
-                "score": score,
-                "reasons": reasons,
-            })
+            suggestions.append(
+                {
+                    "instrument": inst,
+                    "score": score,
+                    "reasons": reasons,
+                }
+            )
 
     return sorted(suggestions, key=lambda x: x["score"], reverse=True)[:5]
 
@@ -901,13 +886,25 @@ def suggest_instrument(
 INSTRUMENT_LEARNING_PATHS = {
     "piano": {
         "starter_path": ["posture", "note_reading", "basic_chords", "scales", "simple_songs"],
-        "intermediate_path": ["arpeggios", "hand_independence", "pedaling", "dynamics", "repertoire"],
+        "intermediate_path": [
+            "arpeggios",
+            "hand_independence",
+            "pedaling",
+            "dynamics",
+            "repertoire",
+        ],
         "advanced_path": ["advanced_technique", "improvisation", "sight_reading", "performance"],
         "recommended_order": ["technique", "theory", "repertoire", "ear_training"],
     },
     "guitar": {
         "starter_path": ["tuning", "posture", "open_chords", "strumming", "simple_songs"],
-        "intermediate_path": ["barre_chords", "fingerpicking", "scales", "music_theory", "lead_playing"],
+        "intermediate_path": [
+            "barre_chords",
+            "fingerpicking",
+            "scales",
+            "music_theory",
+            "lead_playing",
+        ],
         "advanced_path": ["advanced_technique", "improvisation", "songwriting", "performance"],
         "recommended_order": ["rhythm", "chords", "scales", "theory"],
     },
@@ -919,7 +916,13 @@ INSTRUMENT_LEARNING_PATHS = {
     },
     "voice": {
         "starter_path": ["breathing", "posture", "pitch_matching", "range_finding", "simple_songs"],
-        "intermediate_path": ["breath_support", "registration", "dynamics", "phrasing", "repertoire"],
+        "intermediate_path": [
+            "breath_support",
+            "registration",
+            "dynamics",
+            "phrasing",
+            "repertoire",
+        ],
         "advanced_path": ["advanced_technique", "styles", "performance", "improvisation"],
         "recommended_order": ["breathing", "technique", "repertoire", "performance"],
     },

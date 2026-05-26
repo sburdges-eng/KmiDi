@@ -24,17 +24,22 @@ class EmotionTag(str, Enum):
 
 class EmotionStateSchema(BaseModel):
     """Canonical emotion contract v1. Source of truth for all language bindings."""
+
     model_config = {"extra": "forbid"}
 
     valence: float = Field(default=0.0, ge=-1.0, le=1.0, description="Negative to positive [-1, 1]")
     arousal: float = Field(default=0.5, ge=0.0, le=1.0, description="Calm to excited [0, 1]")
-    dominance: float = Field(default=0.5, ge=0.0, le=1.0, description="Submissive to dominant [0, 1]")
+    dominance: float = Field(
+        default=0.5, ge=0.0, le=1.0, description="Submissive to dominant [0, 1]"
+    )
     tags: List[EmotionTag] = Field(
         default_factory=list,
         max_length=3,
         description="Max 3 tags from controlled vocabulary",
     )
-    confidence: float = Field(default=0.0, ge=0.0, le=1.0, description="Inference quality gate [0, 1]")
+    confidence: float = Field(
+        default=0.0, ge=0.0, le=1.0, description="Inference quality gate [0, 1]"
+    )
 
     @field_validator("tags")
     @classmethod
@@ -46,6 +51,7 @@ class EmotionStateSchema(BaseModel):
 
 class IntentMetaSchema(BaseModel):
     """Intent metadata — version and routing IDs."""
+
     model_config = {"extra": "forbid"}
     schema_version: int = Field(default=1, description="Schema version")
     intent_id: int = Field(default=0, ge=0, description="Monotonic intent ID")
@@ -61,6 +67,7 @@ class IntentMetaSchema(BaseModel):
 
 class MusicalIntentSchema(BaseModel):
     """Musical intent — biases and tendencies."""
+
     model_config = {"extra": "forbid"}
     tempo_bias: float = Field(default=0.0, ge=-1.0, le=1.0)
     rhythmic_density: float = Field(default=0.5, ge=0.0, le=1.0)
@@ -87,19 +94,19 @@ class SectionRole(str, Enum):
 
 class MusicHintsSchema(BaseModel):
     """Music hints — key, tempo, chord bias, section role."""
+
     model_config = {"extra": "forbid"}
     key: str = Field(default="", max_length=3, description="Key (e.g. 'C', 'F#')")
     tempo_bpm: float = Field(default=0.0, ge=0.0, description="Tempo BPM (0 = unspecified)")
     chord_bias: str = Field(default="", max_length=32, description="Chord bias")
-    section_role: SectionRole = Field(
-        default=SectionRole.UNSPECIFIED, description="Section role"
-    )
+    section_role: SectionRole = Field(default=SectionRole.UNSPECIFIED, description="Section role")
 
 
 class DSPTargetsSchema(BaseModel):
     """DSP targets with per-parameter confidence and stale flag.
     Safe defaults: filter mid-open, reverb subtle, drive off, stale=True.
     """
+
     model_config = {"extra": "forbid"}
     filter_cutoff: float = Field(default=0.5, ge=0.0, le=1.0)
     filter_cutoff_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
@@ -112,6 +119,7 @@ class DSPTargetsSchema(BaseModel):
 
 class TimeScopeSchema(BaseModel):
     """Time scope — intent without time is noise."""
+
     model_config = {"extra": "forbid"}
     start_bar: int = Field(default=-1, description="Start bar (-1 = immediate)")
     end_bar: int = Field(default=-1, description="End bar (-1 = open-ended)")
@@ -123,14 +131,13 @@ class TimeScopeSchema(BaseModel):
     def validate_time_scope(cls, end_bar: int, info) -> int:
         start_bar = info.data.get("start_bar", -1)
         if end_bar != -1 and start_bar != -1 and end_bar <= start_bar:
-            raise ValueError(
-                f"end_bar ({end_bar}) must be > start_bar ({start_bar})"
-            )
+            raise ValueError(f"end_bar ({end_bar}) must be > start_bar ({start_bar})")
         return end_bar
 
 
 class IntentConstraintsSchema(BaseModel):
     """Intent constraints — limit generation, not force it."""
+
     model_config = {"extra": "forbid"}
     allowed_engines_mask: int = Field(default=0xFFFFFFFF, ge=0)
     forbidden_engines_mask: int = Field(default=0, ge=0)
@@ -140,6 +147,7 @@ class IntentConstraintsSchema(BaseModel):
 
 class IntentProvenanceSchema(BaseModel):
     """Intent provenance — debugging and trust."""
+
     model_config = {"extra": "forbid"}
     source: int = Field(default=0, ge=0, le=5)
     user_override_weight: float = Field(default=0.5, ge=0.0, le=1.0)
@@ -147,25 +155,18 @@ class IntentProvenanceSchema(BaseModel):
 
 class IntentFrameSchema(BaseModel):
     """IntentFrame — top-level unit representing one musical intention."""
+
     model_config = {"extra": "forbid"}
     meta: IntentMetaSchema = Field(default_factory=IntentMetaSchema)
-    timestamp_ms: int = Field(
-        default=0, ge=0, description="Monotonic ms since session start"
-    )
+    timestamp_ms: int = Field(default=0, ge=0, description="Monotonic ms since session start")
     emotion: EmotionStateSchema = Field(default_factory=EmotionStateSchema)
     music: MusicalIntentSchema = Field(default_factory=MusicalIntentSchema)
     music_hints: MusicHintsSchema = Field(default_factory=MusicHintsSchema)
     dsp_targets: DSPTargetsSchema = Field(default_factory=DSPTargetsSchema)
     time: TimeScopeSchema = Field(default_factory=TimeScopeSchema)
-    constraints: IntentConstraintsSchema = Field(
-        default_factory=IntentConstraintsSchema
-    )
-    provenance: IntentProvenanceSchema = Field(
-        default_factory=IntentProvenanceSchema
-    )
-    latency_budget_ms: float = Field(
-        default=10.0, ge=0.0, description="Max ms for RT engine"
-    )
+    constraints: IntentConstraintsSchema = Field(default_factory=IntentConstraintsSchema)
+    provenance: IntentProvenanceSchema = Field(default_factory=IntentProvenanceSchema)
+    latency_budget_ms: float = Field(default=10.0, ge=0.0, description="Max ms for RT engine")
 
 
 class TrackIntent(BaseModel):

@@ -60,6 +60,7 @@ class AuditResult:
 # Contract checks (from LISTENING_SPEC, INVARIANT_FILE_MAPPING)
 # ---------------------------------------------------------------------------
 
+
 def check_plugin_processor(path: Path, content: str, result: AuditResult) -> None:
     """P-1: No auto-playback from generation path."""
     lines = content.splitlines()
@@ -82,7 +83,7 @@ def check_plugin_processor(path: Path, content: str, result: AuditResult) -> Non
                         file=str(path),
                         line=i,
                         snippet=snippet,
-                        expected="startPlayback must not be called from generateFromWound/generateFromJourney",
+                        expected="startPlayback must not be called from generateFromWound/generateFromJourney",  # noqa: E501
                     )
                 )
             if generate_end_pattern.match(line.strip()) and i > (search_start or 0) + 5:
@@ -175,7 +176,7 @@ def check_chord_generator(path: Path, content: str, result: AuditResult) -> None
         if "push_back(6)" in line or "scaleDegrees.push_back" in line:
             # Check context: must be guarded by escalationTokenPresent
             context_start = max(0, i - 8)
-            context = "\n".join(lines[context_start:i + 2])
+            context = "\n".join(lines[context_start : i + 2])
             if "escalationTokenPresent" not in context:
                 result.add(
                     Violation(

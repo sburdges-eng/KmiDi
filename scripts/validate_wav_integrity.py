@@ -2,7 +2,7 @@
 """
 Validate WAV files under a directory: read with soundfile, check duration > 0 and no NaN/Inf.
 Exit 0 if all OK, 1 if any corrupt or unreadable.
-Usage: python scripts/validate_wav_integrity.py --root /path/to/maestro-v3.0.0 [--pattern "**/*.wav"]
+Usage: python scripts/validate_wav_integrity.py --root /path/to/maestro-v3.0.0 [--pattern "**/*.wav"]  # noqa: E501
 """
 
 from __future__ import annotations

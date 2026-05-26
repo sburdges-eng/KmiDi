@@ -1,4 +1,4 @@
-# SAFE_TO_DELETE: Canonical intent processor is music_brain.session.intent_processor. Not imported elsewhere.
+# SAFE_TO_DELETE: Canonical intent processor is music_brain.session.intent_processor. Not imported elsewhere.  # noqa: E501
 """
 Intent Processor - Executes song intent to generate musical elements.
 
@@ -27,36 +27,42 @@ from kellymidicompanion.kellymidicompanion_session.kellymidicompanion_intent_sch
 # =================================================================
 
 # Notes in chromatic order
-CHROMATIC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-CHROMATIC_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+CHROMATIC_FLAT = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
 
 # Diatonic chords in major key (roman numerals)
 MAJOR_DIATONIC = {
-    'I': 'maj', 'ii': 'min', 'iii': 'min', 'IV': 'maj',
-    'V': 'maj', 'vi': 'min', 'vii°': 'dim'
+    "I": "maj",
+    "ii": "min",
+    "iii": "min",
+    "IV": "maj",
+    "V": "maj",
+    "vi": "min",
+    "vii°": "dim",
 }
 
 # Borrowed chords from parallel minor
 BORROWED_FROM_MINOR = {
-    'iv': 'min',      # Sad IV
-    'bVI': 'maj',     # Epic chord
-    'bVII': 'maj',    # Rock swagger
-    'bIII': 'maj',    # Brightness from minor
-    'ii°': 'dim',     # Tension
+    "iv": "min",  # Sad IV
+    "bVI": "maj",  # Epic chord
+    "bVII": "maj",  # Rock swagger
+    "bIII": "maj",  # Brightness from minor
+    "ii°": "dim",  # Tension
 }
 
 # Modal interchange options
 MODAL_INTERCHANGE = {
-    'lydian': {'#IV': 'maj'},      # Raised 4th, dreamy
-    'mixolydian': {'bVII': 'maj'},  # Flat 7, rock
-    'dorian': {'IV': 'maj'},       # Major IV in minor context
-    'phrygian': {'bII': 'maj'},    # Flat 2, Spanish/tension
+    "lydian": {"#IV": "maj"},  # Raised 4th, dreamy
+    "mixolydian": {"bVII": "maj"},  # Flat 7, rock
+    "dorian": {"IV": "maj"},  # Major IV in minor context
+    "phrygian": {"bII": "maj"},  # Flat 2, Spanish/tension
 }
 
 
 @dataclass
 class GeneratedProgression:
     """A generated chord progression with metadata."""
+
     chords: List[str]
     key: str
     mode: str
@@ -70,6 +76,7 @@ class GeneratedProgression:
 @dataclass
 class GeneratedGroove:
     """A generated groove pattern with timing offsets."""
+
     pattern_name: str
     tempo_bpm: int
     swing_factor: float
@@ -82,6 +89,7 @@ class GeneratedGroove:
 @dataclass
 class GeneratedArrangement:
     """Arrangement structure with sections."""
+
     sections: List[Dict]  # [{name, bars, energy, chords}]
     dynamic_arc: List[float]  # Energy per section
     rule_broken: str
@@ -91,6 +99,7 @@ class GeneratedArrangement:
 @dataclass
 class GeneratedProduction:
     """Production guidelines based on intent."""
+
     eq_notes: List[str]
     dynamics_notes: List[str]
     space_notes: List[str]
@@ -103,13 +112,14 @@ class GeneratedProduction:
 # HARMONY PROCESSORS
 # =================================================================
 
+
 def _get_note_index(note: str) -> int:
     """Get chromatic index of a note."""
-    note = note.replace('b', '#').upper()
+    note = note.replace("b", "#").upper()
     if note in CHROMATIC:
         return CHROMATIC.index(note)
     # Handle flats
-    flat_to_sharp = {'DB': 'C#', 'EB': 'D#', 'GB': 'F#', 'AB': 'G#', 'BB': 'A#'}
+    flat_to_sharp = {"DB": "C#", "EB": "D#", "GB": "F#", "AB": "G#", "BB": "A#"}
     if note in flat_to_sharp:
         return CHROMATIC.index(flat_to_sharp[note])
     return 0
@@ -130,15 +140,15 @@ def generate_progression_avoid_tonic(key: str, mode: str = "major") -> Generated
     if mode == "major":
         # End on IV instead of I
         progressions = [
-            (['I', 'V', 'vi', 'IV'], "Axis progression ending on IV - unresolved yearning"),
-            (['I', 'IV', 'V', 'IV'], "Classic with IV ending - perpetual motion"),
-            (['vi', 'IV', 'I', 'vi'], "Start and end on vi - melancholy cycle"),
-            (['I', 'V', 'IV', 'vi'], "Deceptive to vi - the hope never lands"),
+            (["I", "V", "vi", "IV"], "Axis progression ending on IV - unresolved yearning"),
+            (["I", "IV", "V", "IV"], "Classic with IV ending - perpetual motion"),
+            (["vi", "IV", "I", "vi"], "Start and end on vi - melancholy cycle"),
+            (["I", "V", "IV", "vi"], "Deceptive to vi - the hope never lands"),
         ]
     else:
         progressions = [
-            (['i', 'VI', 'III', 'VII'], "Minor with bVII ending"),
-            (['i', 'iv', 'VI', 'iv'], "Cycling minor, never resolves"),
+            (["i", "VI", "III", "VII"], "Minor with bVII ending"),
+            (["i", "iv", "VI", "iv"], "Cycling minor, never resolves"),
         ]
 
     choice = random.choice(progressions)
@@ -166,17 +176,17 @@ def generate_progression_modal_interchange(key: str, mode: str = "major") -> Gen
     if mode == "major":
         # Borrow from parallel minor
         progressions = [
-            (['I', 'V', 'iv', 'I'], "iv borrowed from minor - instant melancholy"),
-            (['I', 'bVI', 'IV', 'I'], "bVI epic chord - cinematic arrival"),
-            (['I', 'IV', 'bVII', 'I'], "bVII rock swagger - avoids cliché V"),
-            (['I', 'bIII', 'IV', 'V'], "bIII brightness from minor - unexpected color"),
-            (['I', 'V', 'bVI', 'bVII'], "Double borrowed - emotional journey"),
+            (["I", "V", "iv", "I"], "iv borrowed from minor - instant melancholy"),
+            (["I", "bVI", "IV", "I"], "bVI epic chord - cinematic arrival"),
+            (["I", "IV", "bVII", "I"], "bVII rock swagger - avoids cliché V"),
+            (["I", "bIII", "IV", "V"], "bIII brightness from minor - unexpected color"),
+            (["I", "V", "bVI", "bVII"], "Double borrowed - emotional journey"),
         ]
     else:
         # In minor, borrow from major
         progressions = [
-            (['i', 'IV', 'V', 'i'], "Major IV (Dorian) - hope in darkness"),
-            (['i', 'bVI', 'III', 'VII'], "Natural minor with major III"),
+            (["i", "IV", "V", "i"], "Major IV (Dorian) - hope in darkness"),
+            (["i", "bVI", "III", "VII"], "Natural minor with major III"),
         ]
 
     choice = random.choice(progressions)
@@ -202,10 +212,10 @@ def generate_progression_parallel_motion(key: str, mode: str = "major") -> Gener
     """
     # Power chord progressions
     progressions = [
-        (['I5', 'bVII5', 'IV5', 'I5'], "Classic rock parallel 5ths"),
-        (['I5', 'IV5', 'V5', 'IV5'], "Power ballad motion"),
-        (['i5', 'bVII5', 'bVI5', 'V5'], "Metal descent"),
-        (['I5', 'bIII5', 'IV5', 'V5'], "Punk parallel climb"),
+        (["I5", "bVII5", "IV5", "I5"], "Classic rock parallel 5ths"),
+        (["I5", "IV5", "V5", "IV5"], "Power ballad motion"),
+        (["i5", "bVII5", "bVI5", "V5"], "Metal descent"),
+        (["I5", "bIII5", "IV5", "V5"], "Punk parallel climb"),
     ]
 
     choice = random.choice(progressions)
@@ -225,15 +235,16 @@ def generate_progression_parallel_motion(key: str, mode: str = "major") -> Gener
 
 
 def generate_progression_unresolved_dissonance(
-        key: str, mode: str = "major") -> GeneratedProgression:
+    key: str, mode: str = "major"
+) -> GeneratedProgression:
     """
     HARMONY_UnresolvedDissonance
     Leave 7ths, 9ths, tritones hanging.
     """
     progressions = [
-        (['Imaj7', 'IVmaj7', 'viim7b5', 'IVmaj7'], "All 7ths, ends on IV7"),
-        (['Imaj9', 'vim7', 'IVadd9', 'Vsus4'], "Extensions and sus - nothing fully resolves"),
-        (['Im7', 'bVImaj7', 'IVm7', 'bVII7'], "Minor 7th chain - perpetual tension"),
+        (["Imaj7", "IVmaj7", "viim7b5", "IVmaj7"], "All 7ths, ends on IV7"),
+        (["Imaj9", "vim7", "IVadd9", "Vsus4"], "Extensions and sus - nothing fully resolves"),
+        (["Im7", "bVImaj7", "IVm7", "bVII7"], "Minor 7th chain - perpetual tension"),
     ]
 
     choice = random.choice(progressions)
@@ -275,23 +286,23 @@ def _roman_to_chord(roman: str, key: str, intervals: List[int]) -> str:
     key_idx = _get_note_index(key)
 
     # Parse the roman numeral
-    roman_clean = roman.upper().replace('5', '').replace('°', '')
+    roman_clean = roman.upper().replace("5", "").replace("°", "")
 
     # Handle flats
     flat_offset = 0
-    if roman_clean.startswith('B'):
+    if roman_clean.startswith("B"):
         flat_offset = -1
         roman_clean = roman_clean[1:]
 
     # Map to scale degree
-    degree_map = {'I': 0, 'II': 1, 'III': 2, 'IV': 3, 'V': 4, 'VI': 5, 'VII': 6}
+    degree_map = {"I": 0, "II": 1, "III": 2, "IV": 3, "V": 4, "VI": 5, "VII": 6}
 
     # Handle extensions
-    suffix = ''
-    for ext in ['MAJ7', 'MAJ9', 'M7', 'M9', 'ADD9', 'SUS4', 'SUS2', '7', '9', '11', '13']:
+    suffix = ""
+    for ext in ["MAJ7", "MAJ9", "M7", "M9", "ADD9", "SUS4", "SUS2", "7", "9", "11", "13"]:
         if ext in roman.upper():
-            suffix = ext.lower().replace('maj', 'maj').replace('add', 'add').replace('sus', 'sus')
-            roman_clean = roman_clean.replace(ext, '')
+            suffix = ext.lower().replace("maj", "maj").replace("add", "add").replace("sus", "sus")
+            roman_clean = roman_clean.replace(ext, "")
             break
 
     # Get base roman
@@ -303,13 +314,13 @@ def _roman_to_chord(roman: str, key: str, intervals: List[int]) -> str:
             root = CHROMATIC_FLAT[root_idx] if flat_offset < 0 else CHROMATIC[root_idx]
 
             # Determine quality from original roman
-            if roman.islower() or 'm' in roman.lower():
-                quality = 'm' if '°' not in roman else 'dim'
+            if roman.islower() or "m" in roman.lower():
+                quality = "m" if "°" not in roman else "dim"
             else:
-                quality = ''
+                quality = ""
 
             # Handle power chords
-            if '5' in roman:
+            if "5" in roman:
                 return f"{root}5"
 
             return f"{root}{quality}{suffix}"
@@ -320,6 +331,7 @@ def _roman_to_chord(roman: str, key: str, intervals: List[int]) -> str:
 # =================================================================
 # RHYTHM PROCESSORS
 # =================================================================
+
 
 def generate_groove_constant_displacement(tempo: int) -> GeneratedGroove:
     """
@@ -395,10 +407,22 @@ def generate_groove_metric_modulation(tempo: int) -> GeneratedGroove:
     # Bars 1-3: normal 4/4
     # Bar 4: implies 3/4 (accents every 3 instead of 4)
     velocity = [
-        100, 60, 80, 60,  # Bar 1: 4/4
-        100, 60, 80, 60,  # Bar 2: 4/4
-        100, 60, 80, 60,  # Bar 3: 4/4
-        100, 70, 80, 100,  # Bar 4: shifted accents imply 3/4
+        100,
+        60,
+        80,
+        60,  # Bar 1: 4/4
+        100,
+        60,
+        80,
+        60,  # Bar 2: 4/4
+        100,
+        60,
+        80,
+        60,  # Bar 3: 4/4
+        100,
+        70,
+        80,
+        100,  # Bar 4: shifted accents imply 3/4
     ]
 
     return GeneratedGroove(
@@ -419,10 +443,22 @@ def generate_groove_dropped_beats(tempo: int) -> GeneratedGroove:
     """
     # Create gaps - velocity 0 = silence
     velocity = [
-        100, 70, 85, 70,  # Bar 1: normal
-        100, 70, 85, 0,   # Bar 2: drop the "and" of 4
-        100, 0, 85, 70,   # Bar 3: drop the 2
-        100, 70, 0, 70,   # Bar 4: drop the 3
+        100,
+        70,
+        85,
+        70,  # Bar 1: normal
+        100,
+        70,
+        85,
+        0,  # Bar 2: drop the "and" of 4
+        100,
+        0,
+        85,
+        70,  # Bar 3: drop the 2
+        100,
+        70,
+        0,
+        70,  # Bar 4: drop the 3
     ]
 
     timing = [0] * 16
@@ -441,6 +477,7 @@ def generate_groove_dropped_beats(tempo: int) -> GeneratedGroove:
 # =================================================================
 # ARRANGEMENT PROCESSORS
 # =================================================================
+
 
 def generate_arrangement_structural_mismatch(narrative_arc: str) -> GeneratedArrangement:
     """
@@ -511,8 +548,13 @@ def generate_arrangement_extreme_dynamics() -> GeneratedArrangement:
         {"name": "Build", "bars": 8, "energy": 0.4, "notes": "Gradual increase"},
         {"name": "EXPLOSION", "bars": 4, "energy": 1.0, "notes": "Maximum possible volume"},
         {"name": "Silence", "bars": 2, "energy": 0.0, "notes": "Complete stop"},
-        {"name": "Resolution", "bars": 16, "energy": 0.5,
-         "notes": "Normal level feels loud after silence"},]
+        {
+            "name": "Resolution",
+            "bars": 16,
+            "energy": 0.5,
+            "notes": "Normal level feels loud after silence",
+        },
+    ]
 
     return GeneratedArrangement(
         sections=sections,
@@ -526,10 +568,9 @@ def generate_arrangement_extreme_dynamics() -> GeneratedArrangement:
 # PRODUCTION PROCESSORS
 # =================================================================
 
+
 def generate_production_guidelines(
-    rule_to_break: str,
-    vulnerability: str,
-    imagery: str
+    rule_to_break: str, vulnerability: str, imagery: str
 ) -> GeneratedProduction:
     """Generate production guidelines based on intent."""
 
@@ -618,6 +659,7 @@ def generate_production_guidelines(
 # MAIN PROCESSOR
 # =================================================================
 
+
 class IntentProcessor:
     """
     Processes a CompleteSongIntent to generate musical elements.
@@ -694,11 +736,7 @@ class IntentProcessor:
 
     def generate_production(self) -> GeneratedProduction:
         """Generate production guidelines."""
-        return generate_production_guidelines(
-            self.rule_to_break,
-            self.vulnerability,
-            self.imagery
-        )
+        return generate_production_guidelines(self.rule_to_break, self.vulnerability, self.imagery)
 
     def generate_all(self) -> Dict:
         """Generate all elements and return as dict."""

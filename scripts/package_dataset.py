@@ -49,7 +49,12 @@ def deterministic_timestamp(enabled: bool) -> str:
         epoch = int(source_epoch)
     except ValueError:
         epoch = 0
-    return datetime.fromtimestamp(epoch, tz=timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return (
+        datetime.fromtimestamp(epoch, tz=timezone.utc)
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z")
+    )
 
 
 def package_task(
@@ -97,7 +102,9 @@ def package_task(
         records.sort(key=record_sort_key)
 
         split_info: dict[str, Any] = {"recordCount": len(records), "shards": []}
-        for shard_index, chunk_records in enumerate(chunked(records, records_per_shard) if records else []):
+        for shard_index, chunk_records in enumerate(
+            chunked(records, records_per_shard) if records else []
+        ):
             payload, compression = compress_jsonl_records(chunk_records)
             shard_suffix = shard_suffix_for_compression(compression)
             shard_name = f"{split_name}-{shard_index:04d}{shard_suffix}"
@@ -151,13 +158,11 @@ def package_task(
 
     if len(all_compressions) > 1:
         raise ValueError(
-            f"{task}: mixed shard compression is not allowed in pre-training freeze mode: {sorted(all_compressions)}"
+            f"{task}: mixed shard compression is not allowed in pre-training freeze mode: {sorted(all_compressions)}"  # noqa: E501
         )
     manifest["compression"] = next(iter(all_compressions)) if all_compressions else "identity"
     manifest["compressionFormat"] = manifest["compression"]
-    manifest["shardChecksums"] = sorted(
-        shard_checksums, key=lambda entry: entry["file"]
-    )
+    manifest["shardChecksums"] = sorted(shard_checksums, key=lambda entry: entry["file"])
     manifest["hashManifest"]["entries"] = sorted(
         hash_manifest_entries, key=lambda entry: entry["file"]
     )
@@ -249,7 +254,9 @@ def main() -> int:
         contract = load_run_contract(args.run_contract)
 
     package_bucket = str(run_contract_get(contract, "s3", "packageBucket", default="")).strip()
-    package_prefix_root = str(run_contract_get(contract, "s3", "packagePrefix", default="training/packages")).strip("/")
+    package_prefix_root = str(
+        run_contract_get(contract, "s3", "packagePrefix", default="training/packages")
+    ).strip("/")
     package_prefix = f"{package_prefix_root}/{package_id}" if package_prefix_root else package_id
     package_s3_uri = build_s3_uri(package_bucket, package_prefix) if package_bucket else ""
 

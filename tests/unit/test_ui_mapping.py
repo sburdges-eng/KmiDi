@@ -5,6 +5,7 @@ pytest.importorskip("fastapi", reason="FastAPI is required for UI mapping models
 from music_brain.api import TechnicalIntent, EmotionalIntent, GenerateRequest, DAiWAPI  # noqa: E402
 from music_brain.session.intent_schema import CompleteSongIntent  # noqa: E402
 
+
 def test_ui_mapping_completeness():
     # 1. Setup mock UI request with all fields
     tech = TechnicalIntent(
@@ -16,7 +17,7 @@ def test_ui_mapping_completeness():
         rule_to_break="HARMONY_AvoidTonicResolution",
         rule_justification="To create a sense of longing",
         structure=[{"name": "verse", "bars": 8}],
-        instruments=[{"instrument": "piano", "techniques": ["legato"]}]
+        instruments=[{"instrument": "piano", "techniques": ["legato"]}],
     )
 
     emo = EmotionalIntent(
@@ -25,7 +26,7 @@ def test_ui_mapping_completeness():
         emotional_intent="melancholy",
         imagery_texture="foggy and cold",
         vulnerability_scale=0.8,
-        technical=tech
+        technical=tech,
     )
 
     req = GenerateRequest(intent=emo)
@@ -47,9 +48,12 @@ def test_ui_mapping_completeness():
     assert intent.technical_constraints.technical_genre == "cinematic"
     assert intent.technical_constraints.technical_groove_feel == "Laid Back"
     assert intent.technical_constraints.technical_rule_to_break == "HARMONY_AvoidTonicResolution"
-    assert intent.technical_constraints.rule_breaking_justification == "To create a sense of longing"
+    assert (
+        intent.technical_constraints.rule_breaking_justification == "To create a sense of longing"
+    )
 
     print("UI mapping verification PASSED")
+
 
 if __name__ == "__main__":
     test_ui_mapping_completeness()

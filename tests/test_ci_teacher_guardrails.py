@@ -6,6 +6,7 @@ Validates:
   - key_is_local_safe enforces per-scope filtering
   - main() always calls enforce_teacher_fetch_policy before listing/download
 """
+
 from __future__ import annotations
 
 import ast
@@ -43,7 +44,7 @@ class TeacherFetchGuardrailTest(unittest.TestCase):
                                 self.assertEqual(
                                     values,
                                     ["student", "teacher", "all"],
-                                    "fetch_aws_artifacts --scope choices must be ['student','teacher','all']",
+                                    "fetch_aws_artifacts --scope choices must be ['student','teacher','all']",  # noqa: E501
                                 )
                                 found_choices = True
         self.assertTrue(found_choices, "--scope choices not found in argparse definition")

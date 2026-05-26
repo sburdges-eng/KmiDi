@@ -32,7 +32,11 @@ class LicenseGateTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "THIRD_PARTY_NOTICES.md"
             notices = [
-                ThirdPartyNotice(name="org/model-a", source="https://huggingface.co/org/model-a", license_id="mit")
+                ThirdPartyNotice(
+                    name="org/model-a",
+                    source="https://huggingface.co/org/model-a",
+                    license_id="mit",
+                )
             ]
             generate_third_party_notices(notices, path)
             content = path.read_text(encoding="utf-8")

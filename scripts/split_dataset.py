@@ -45,7 +45,9 @@ def split_task_records(
     return split_map
 
 
-def write_task_splits(task: str, split_map: dict[str, list[dict[str, Any]]], output_root: Path) -> dict[str, int]:
+def write_task_splits(
+    task: str, split_map: dict[str, list[dict[str, Any]]], output_root: Path
+) -> dict[str, int]:
     task_dir = output_root / task
     task_dir.mkdir(parents=True, exist_ok=True)
 

@@ -33,10 +33,11 @@ IMPORT_TESTS = [
     ("music_brain.learning", "Learning module"),
 ]
 
+
 def test_import(module_name, description):
     """Test if a module can be imported."""
     try:
-        module = importlib.import_module(module_name)
+        importlib.import_module(module_name)
         print(f"✅ {description:50} ({module_name})")
         return True
     except ImportError as e:
@@ -48,28 +49,29 @@ def test_import(module_name, description):
         print(f"   Warning: {e}")
         return False
 
+
 def main():
     """Run all import tests."""
     print("=" * 80)
     print("KmiDi-1 Import Verification")
     print("=" * 80)
     print()
-    
+
     results = []
     for module_name, description in IMPORT_TESTS:
         success = test_import(module_name, description)
         results.append((module_name, success))
-    
+
     print()
     print("=" * 80)
     print("Summary")
     print("=" * 80)
-    
+
     passed = sum(1 for _, success in results if success)
     total = len(results)
-    
+
     print(f"Passed: {passed}/{total}")
-    
+
     if passed == total:
         print("✅ All imports successful!")
         return 0
@@ -80,6 +82,7 @@ def main():
             if not success:
                 print(f"  - {module_name}")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

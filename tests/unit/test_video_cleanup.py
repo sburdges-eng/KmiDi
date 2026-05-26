@@ -1,8 +1,5 @@
 """Unit tests for VideoGenerator.cleanup() temp dir removal and safety."""
 
-import pytest
-from pathlib import Path
-
 from music_brain.video.video_generator import (
     VideoGenerator,
     TEMP_SUBDIR_PREFIX,
@@ -50,6 +47,7 @@ class TestVideoGeneratorCleanup:
         temp_dir = gen._ensure_temp_dir()
         assert temp_dir.exists()
         import shutil
+
         shutil.rmtree(temp_dir)
         gen.cleanup()
         assert gen._initialized is False

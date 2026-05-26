@@ -112,7 +112,9 @@ class RuleBreakLearner:
     def __init__(self):
         pass
 
-    def learn_profile(self, examples: List[RuleBreakExample], name: str = "default") -> RuleBreakProfile:
+    def learn_profile(
+        self, examples: List[RuleBreakExample], name: str = "default"
+    ) -> RuleBreakProfile:
         if not examples:
             raise ValueError("No rule-break examples provided")
 
@@ -155,11 +157,15 @@ class RuleBreakLearner:
         profile: RuleBreakProfile,
     ) -> Optional[str]:
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get(
+            "neutral"
+        )
         if not patterns:
             patterns = profile.global_patterns
 
-        rule_counts = patterns.get("rule_counts") or profile.global_patterns.get("rule_counts") or {}
+        rule_counts = (
+            patterns.get("rule_counts") or profile.global_patterns.get("rule_counts") or {}
+        )
         if not rule_counts:
             return None
 

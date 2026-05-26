@@ -17,6 +17,7 @@ import pytest
 # Helper: import crewai module directly to bypass pre-existing async_hub issue
 # ---------------------------------------------------------------------------
 
+
 def _load_crewai():
     spec = importlib.util.spec_from_file_location(
         "crewai_music_agents",
@@ -39,16 +40,15 @@ OnnxLLMConfig = _crewai.OnnxLLMConfig
 # Orchestrator imports (no pre-existing issues)
 # ---------------------------------------------------------------------------
 
-from music_brain.orchestrator.orchestrator import (
+from music_brain.orchestrator.orchestrator import (  # noqa: E402
     AIOrchestrator,
     OrchestratorConfig,
 )
-from music_brain.orchestrator.interfaces import (
+from music_brain.orchestrator.interfaces import (  # noqa: E402
     ProcessorInterface,
     ProcessorResult,
-    ExecutionContext,
 )
-from music_brain.orchestrator.pipeline import Pipeline
+from music_brain.orchestrator.pipeline import Pipeline  # noqa: E402
 
 
 # ============================================================================
@@ -124,6 +124,7 @@ class TestLRUResponseCache:
     def test_thread_safety(self):
         """Verify concurrent put/get operations don't corrupt the cache."""
         import threading
+
         cache = _LRUResponseCache(max_size=1000)
         errors = []
 
@@ -165,6 +166,7 @@ class TestLocalLLMLatency:
     def test_uses_requests_session(self):
         """Verify LocalLLM uses a requests.Session for connection pooling."""
         import requests
+
         llm = LocalLLM()
         assert isinstance(llm._session, requests.Session)
         llm.close()
@@ -177,7 +179,7 @@ class TestLocalLLMLatency:
         assert initial_time > 0
 
         # Access is_available again - should NOT re-check (TTL not expired)
-        with patch.object(llm._session, 'get') as mock_get:
+        with patch.object(llm._session, "get") as mock_get:
             _ = llm.is_available
             mock_get.assert_not_called()
 
@@ -188,7 +190,7 @@ class TestLocalLLMLatency:
         config = LocalLLMConfig(health_check_ttl=0.0)  # Always re-check
         llm = LocalLLM(config)
 
-        with patch.object(llm._session, 'get') as mock_get:
+        with patch.object(llm._session, "get") as mock_get:
             mock_get.return_value = MagicMock(status_code=200)
             _ = llm.is_available
             mock_get.assert_called_once()
@@ -204,7 +206,7 @@ class TestLocalLLMLatency:
         mock_resp.status_code = 200
         mock_resp.json.return_value = {"response": "C Am F G"}
 
-        with patch.object(llm._session, 'post', return_value=mock_resp) as mock_post:
+        with patch.object(llm._session, "post", return_value=mock_resp) as mock_post:
             result1 = llm.generate("Write a progression")
             result2 = llm.generate("Write a progression")
 
@@ -226,7 +228,7 @@ class TestLocalLLMLatency:
 
         messages = [{"role": "user", "content": "Suggest a jazz progression"}]
 
-        with patch.object(llm._session, 'post', return_value=mock_resp) as mock_post:
+        with patch.object(llm._session, "post", return_value=mock_resp) as mock_post:
             result1 = llm.chat(messages)
             result2 = llm.chat(messages)
 
@@ -248,14 +250,14 @@ class TestLocalLLMLatency:
     def test_close_session(self):
         """Verify close() cleans up the HTTP session."""
         llm = LocalLLM()
-        with patch.object(llm._session, 'close') as mock_close:
+        with patch.object(llm._session, "close") as mock_close:
             llm.close()
             mock_close.assert_called_once()
 
     def test_context_manager(self):
         """Verify LocalLLM supports the with-statement pattern and closes session."""
         llm = LocalLLM()
-        with patch.object(llm, 'close') as mock_close:
+        with patch.object(llm, "close") as mock_close:
             with llm:
                 assert isinstance(llm, LocalLLM)
             mock_close.assert_called_once()
@@ -269,7 +271,7 @@ class TestLocalLLMLatency:
         mock_resp.status_code = 200
         mock_resp.json.return_value = {"response": "result"}
 
-        with patch.object(llm._session, 'post', return_value=mock_resp) as mock_post:
+        with patch.object(llm._session, "post", return_value=mock_resp) as mock_post:
             llm.generate("same prompt", temperature=0.1)
             llm.generate("same prompt", temperature=0.9)
             # Both should hit the server (different temperatures)
@@ -288,7 +290,7 @@ class TestLocalLLMLatency:
 
         messages = [{"role": "user", "content": "Hello"}]
 
-        with patch.object(llm._session, 'post', return_value=mock_resp) as mock_post:
+        with patch.object(llm._session, "post", return_value=mock_resp) as mock_post:
             llm.chat(messages, temperature=0.1)
             llm.chat(messages, temperature=0.9)
             assert mock_post.call_count == 2
@@ -303,6 +305,7 @@ class TestOnnxLLMLatency:
     def test_uses_requests_session(self):
         """Verify OnnxLLM uses a requests.Session for connection pooling."""
         import requests
+
         llm = OnnxLLM()
         assert isinstance(llm._session, requests.Session)
         llm.close()
@@ -316,7 +319,7 @@ class TestOnnxLLMLatency:
         mock_resp.status_code = 200
         mock_resp.json.return_value = {"output": "Am Em F G"}
 
-        with patch.object(llm._session, 'post', return_value=mock_resp) as mock_post:
+        with patch.object(llm._session, "post", return_value=mock_resp) as mock_post:
             r1 = llm.generate("Write a progression")
             r2 = llm.generate("Write a progression")
             assert r1 == "Am Em F G"
@@ -336,7 +339,7 @@ class TestOnnxLLMLatency:
 
         messages = [{"role": "user", "content": "Suggest jazz chords"}]
 
-        with patch.object(llm._session, 'post', return_value=mock_resp) as mock_post:
+        with patch.object(llm._session, "post", return_value=mock_resp) as mock_post:
             r1 = llm.chat(messages)
             r2 = llm.chat(messages)
             assert r1 == "Dm7 G7 Cmaj7"
@@ -352,7 +355,7 @@ class TestOnnxLLMLatency:
         initial_time = llm._health_checked_at
         assert initial_time > 0
 
-        with patch.object(llm._session, 'get') as mock_get:
+        with patch.object(llm._session, "get") as mock_get:
             _ = llm.is_available
             mock_get.assert_not_called()
 
@@ -361,7 +364,7 @@ class TestOnnxLLMLatency:
     def test_context_manager(self):
         """Verify OnnxLLM supports the with-statement pattern and closes session."""
         llm = OnnxLLM()
-        with patch.object(llm, 'close') as mock_close:
+        with patch.object(llm, "close") as mock_close:
             with llm:
                 assert isinstance(llm, OnnxLLM)
             mock_close.assert_called_once()
@@ -375,7 +378,7 @@ class TestOnnxLLMLatency:
         mock_resp.status_code = 200
         mock_resp.json.return_value = {"output": "result"}
 
-        with patch.object(llm._session, 'post', return_value=mock_resp) as mock_post:
+        with patch.object(llm._session, "post", return_value=mock_resp) as mock_post:
             llm.generate("same prompt", temperature=0.1)
             llm.generate("same prompt", temperature=0.9)
             assert mock_post.call_count == 2
@@ -393,7 +396,7 @@ class TestOnnxLLMLatency:
 
         messages = [{"role": "user", "content": "Hello"}]
 
-        with patch.object(llm._session, 'post', return_value=mock_resp) as mock_post:
+        with patch.object(llm._session, "post", return_value=mock_resp) as mock_post:
             llm.chat(messages, temperature=0.1)
             llm.chat(messages, temperature=0.9)
             assert mock_post.call_count == 2

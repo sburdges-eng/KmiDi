@@ -10,6 +10,7 @@ assertions, and conditional checks that reference teacher paths are fine.
 
 Exit code 0 = pass, 1 = fail.
 """
+
 from __future__ import annotations
 
 import re
@@ -30,7 +31,10 @@ TEACHER_LOCAL_PATTERNS = [
     re.compile(r"""default\s*=\s*["'].*artifacts/teacher""", re.IGNORECASE),
     re.compile(r"""default\s*=\s*Path\(["'].*artifacts/teacher""", re.IGNORECASE),
     # YAML/JSON config values that set a *local directory* to teacher
-    re.compile(r"""(outputDir|output_dir|downloadDir|download_dir|localDir|local_dir)\s*:\s*["'].*artifacts/teacher""", re.IGNORECASE),
+    re.compile(
+        r"""(outputDir|output_dir|downloadDir|download_dir|localDir|local_dir)\s*:\s*["'].*artifacts/teacher""",  # noqa: E501
+        re.IGNORECASE,
+    ),
     # Variable assignment of a local path to teacher
     re.compile(r"""output_dir\s*=.*artifacts/teacher""", re.IGNORECASE),
     re.compile(r"""download_dir\s*=.*artifacts/teacher""", re.IGNORECASE),
@@ -39,13 +43,13 @@ TEACHER_LOCAL_PATTERNS = [
 
 # Lines to always skip
 SKIP_PATTERNS = [
-    re.compile(r"^\s*#"),                  # comments
-    re.compile(r'^\s*"""'),                # docstrings
-    re.compile(r"^\s*'"),                  # single-quote docstrings
-    re.compile(r"raise\s"),               # error raising
-    re.compile(r"assert"),                 # assertions
-    re.compile(r"if\s.*teacher"),          # conditional guards
-    re.compile(r"startswith\("),           # prefix checks
+    re.compile(r"^\s*#"),  # comments
+    re.compile(r'^\s*"""'),  # docstrings
+    re.compile(r"^\s*'"),  # single-quote docstrings
+    re.compile(r"raise\s"),  # error raising
+    re.compile(r"assert"),  # assertions
+    re.compile(r"if\s.*teacher"),  # conditional guards
+    re.compile(r"startswith\("),  # prefix checks
     re.compile(r"prohibit", re.IGNORECASE),
 ]
 

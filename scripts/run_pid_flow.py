@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Run PID Flow diagnostic and print a layer-wise report (Redundant / Text Unique / Audio Unique / Synergy).
+Run PID Flow diagnostic and print a layer-wise report (Redundant / Text Unique / Audio Unique / Synergy).  # noqa: E501
 
 Use after fine-tuning to check for modality collapse: if late layers show 0% Audio/MIDI Unique,
 the model is effectively deaf to the music.
@@ -26,20 +26,25 @@ import sys
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="PID Flow diagnostic (dummy run or with custom get_activations).")
-    parser.add_argument("--dummy", action="store_true", help="Run on random activations to validate report shape.")
+    parser = argparse.ArgumentParser(
+        description="PID Flow diagnostic (dummy run or with custom get_activations)."
+    )
+    parser.add_argument(
+        "--dummy", action="store_true", help="Run on random activations to validate report shape."
+    )
     parser.add_argument("--json", action="store_true", help="Output report as JSON.")
     args = parser.parse_args()
 
     if not args.dummy:
         print(
-            "Provide --dummy to run a quick validation, or call run_pid_flow_report from your code. "
+            "Provide --dummy to run a quick validation, or call run_pid_flow_report from your code. "  # noqa: E501
             "See script docstring for usage.",
             file=sys.stderr,
         )
         return 0
 
     import numpy as np
+
     try:
         from penta_core.ml.diagnostics.pid_flow import (
             check_modality_collapse,
@@ -72,9 +77,12 @@ def main() -> int:
 
     if args.json:
         import json as _json
+
         out = {
             "report": pid_report_to_dict(report),
-            "collapse_warnings": [{"layer": l, "message": m} for l, m in collapse_warnings],
+            "collapse_warnings": [
+                {"layer": lyr, "message": m} for lyr, m in collapse_warnings
+            ],
         }
         print(_json.dumps(out, indent=2))
     else:

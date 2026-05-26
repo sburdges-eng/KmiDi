@@ -26,11 +26,11 @@ _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader, TensorDataset
+import torch  # noqa: E402
+import torch.nn as nn  # noqa: E402
+from torch.utils.data import DataLoader, TensorDataset  # noqa: E402
 
-from music_brain.jepa.emotion_probe import EmotionProbe
+from music_brain.jepa.emotion_probe import EmotionProbe  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -85,9 +85,7 @@ def evaluate(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Train EmotionProbe on cached JEPA embeddings."
-    )
+    parser = argparse.ArgumentParser(description="Train EmotionProbe on cached JEPA embeddings.")
     parser.add_argument(
         "--embeddings",
         type=Path,
@@ -106,7 +104,10 @@ def main() -> int:
     parser.add_argument("--weight-decay", type=float, default=0.01, help="AdamW weight decay")
     parser.add_argument("--batch-size", type=int, default=64, help="Batch size (default: 64)")
     parser.add_argument(
-        "--hidden-dim", type=int, default=128, help="Probe hidden dim (default: 128)",
+        "--hidden-dim",
+        type=int,
+        default=128,
+        help="Probe hidden dim (default: 128)",
     )
     args = parser.parse_args()
 
@@ -116,9 +117,7 @@ def main() -> int:
     emb_path = (
         args.embeddings if args.embeddings.is_absolute() else Path(_PROJECT_ROOT) / args.embeddings
     )
-    out_path = (
-        args.output if args.output.is_absolute() else Path(_PROJECT_ROOT) / args.output
-    )
+    out_path = args.output if args.output.is_absolute() else Path(_PROJECT_ROOT) / args.output
 
     if not emb_path.exists():
         logger.error("Embeddings file not found: %s", emb_path)
@@ -127,13 +126,13 @@ def main() -> int:
     # Load cached embeddings
     logger.info("Loading embeddings from %s", emb_path)
     cache = torch.load(str(emb_path), map_location="cpu", weights_only=False)
-    embeddings: torch.Tensor = cache["embeddings"]    # (N, latent_dim)
-    valence: torch.Tensor = cache["valence"]           # (N,)
-    arousal: torch.Tensor = cache["arousal"]           # (N,)
+    embeddings: torch.Tensor = cache["embeddings"]  # (N, latent_dim)
+    valence: torch.Tensor = cache["valence"]  # (N,)
+    arousal: torch.Tensor = cache["arousal"]  # (N,)
     splits: list[str] = cache["splits"]
 
     latent_dim = embeddings.shape[1]
-    targets = torch.stack([valence, arousal], dim=1)   # (N, 2)
+    targets = torch.stack([valence, arousal], dim=1)  # (N, 2)
 
     # Build split masks
     split_arr = [s for s in splits]
@@ -147,7 +146,9 @@ def main() -> int:
 
     logger.info(
         "Split sizes — train: %d, val: %d, test: %d",
-        X_train.shape[0], X_val.shape[0], X_test.shape[0],
+        X_train.shape[0],
+        X_val.shape[0],
+        X_test.shape[0],
     )
 
     train_loader = DataLoader(
@@ -201,7 +202,10 @@ def main() -> int:
 
         logger.info(
             "Epoch %d/%d  train_loss=%.6f  val_loss=%.6f",
-            epoch, args.epochs, train_loss, val_loss,
+            epoch,
+            args.epochs,
+            train_loss,
+            val_loss,
         )
 
         if val_loss < best_val_loss:
@@ -224,7 +228,9 @@ def main() -> int:
             if patience_counter >= args.patience:
                 logger.info(
                     "Early stopping at epoch %d (patience=%d, best epoch=%d)",
-                    epoch, args.patience, best_epoch,
+                    epoch,
+                    args.patience,
+                    best_epoch,
                 )
                 break
 
@@ -239,12 +245,10 @@ def main() -> int:
     print(f"\n=== Test Set Results (best epoch {best_epoch}) ===")
     print(f"  MSE (combined):  {test_metrics['mse']:.6f}")
     print(
-        f"  Valence — MSE: {test_metrics['valence_mse']:.6f}"
-        f"   r: {test_metrics['valence_r']:.4f}"
+        f"  Valence — MSE: {test_metrics['valence_mse']:.6f}   r: {test_metrics['valence_r']:.4f}"
     )
     print(
-        f"  Arousal — MSE: {test_metrics['arousal_mse']:.6f}"
-        f"   r: {test_metrics['arousal_r']:.4f}"
+        f"  Arousal — MSE: {test_metrics['arousal_mse']:.6f}   r: {test_metrics['arousal_r']:.4f}"
     )
     print(f"  Checkpoint: {out_path}")
     return 0

@@ -17,6 +17,7 @@ PROFILES_DIR = DEFAULT_STORAGE / "profiles"
 @dataclass
 class GrooveExample:
     """Groove example with timing and velocity patterns."""
+
     pattern_name: str = "default"
     emotion: str = "neutral"
     genre: str = "straight"
@@ -48,6 +49,7 @@ class GrooveExample:
 @dataclass
 class GrooveProfile:
     """Learned groove profile."""
+
     name: str
     emotion_patterns: Dict[str, Dict]
     global_patterns: Dict
@@ -163,7 +165,9 @@ class GrooveLearner:
 
         global_patterns = {
             "avg_timing": list(np.mean(np.array(global_timing), axis=0)) if global_timing else [],
-            "avg_velocity": list(np.mean(np.array(global_velocity), axis=0)) if global_velocity else [],
+            "avg_velocity": list(np.mean(np.array(global_velocity), axis=0))
+            if global_velocity
+            else [],
         }
 
         return GrooveProfile(
@@ -178,15 +182,21 @@ class GrooveLearner:
         emotion: str,
         profile: GrooveProfile,
         tempo: Optional[int] = None,
-        genre: str = "straight"
+        genre: str = "straight",
     ) -> Dict:
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get(
+            "neutral"
+        )
         if not patterns:
             patterns = profile.global_patterns
 
-        timing = patterns.get("avg_timing") or profile.global_patterns.get("avg_timing") or [0.0] * 16
-        velocity = patterns.get("avg_velocity") or profile.global_patterns.get("avg_velocity") or [80] * 16
+        timing = (
+            patterns.get("avg_timing") or profile.global_patterns.get("avg_timing") or [0.0] * 16
+        )
+        velocity = (
+            patterns.get("avg_velocity") or profile.global_patterns.get("avg_velocity") or [80] * 16
+        )
         swing = patterns.get("avg_swing", 0.0)
         tempo = tempo or int(patterns.get("avg_tempo", 120))
 
@@ -229,7 +239,7 @@ class GrooveLearningManager:
         emotion: str,
         profile_name: Optional[str] = None,
         tempo: Optional[int] = None,
-        genre: str = "straight"
+        genre: str = "straight",
     ) -> Dict:
         profile: Optional[GrooveProfile] = None
         if profile_name:

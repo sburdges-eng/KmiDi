@@ -1,7 +1,6 @@
 """Tests for Phase 5 — Training infrastructure consolidation."""
 
 import json
-import sys
 import pytest
 import importlib.util
 from pathlib import Path
@@ -58,7 +57,9 @@ class TestModelRegistry:
         registry = ModelRegistry()
         registry.register(ModelInfo("a", ModelTask.AUDIO_JEPA, ModelBackend.PYTORCH, "/a.pt"))
         registry.register(ModelInfo("b", ModelTask.CHORD_JEPA, ModelBackend.PYTORCH, "/b.pt"))
-        registry.register(ModelInfo("c", ModelTask.EMOTION_CLASSIFICATION, ModelBackend.ONNX, "/c.onnx"))
+        registry.register(
+            ModelInfo("c", ModelTask.EMOTION_CLASSIFICATION, ModelBackend.ONNX, "/c.onnx")
+        )
 
         jepa = registry.list(ModelTask.AUDIO_JEPA)
         assert len(jepa) == 1
@@ -68,7 +69,10 @@ class TestModelRegistry:
         registry = ModelRegistry()
         assert registry._infer_task(Path("/checkpoints/audio_jepa/best.pt")) == ModelTask.AUDIO_JEPA
         assert registry._infer_task(Path("/checkpoints/chord_jepa/best.pt")) == ModelTask.CHORD_JEPA
-        assert registry._infer_task(Path("/models/emotion_v2.onnx")) == ModelTask.EMOTION_CLASSIFICATION
+        assert (
+            registry._infer_task(Path("/models/emotion_v2.onnx"))
+            == ModelTask.EMOTION_CLASSIFICATION
+        )
 
     def test_project_checkpoints_in_default_dirs(self):
         registry = ModelRegistry()

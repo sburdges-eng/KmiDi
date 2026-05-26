@@ -37,6 +37,7 @@ from typing import Optional
 
 def _torch():
     import torch  # imported lazily so the module loads without torch
+
     return torch
 
 
@@ -55,10 +56,14 @@ class LoRAAdapter:
         in_features / out_features: override base shape detection.
     """
 
-    def __init__(self, base, rank: int,
-                 alpha: Optional[float] = None,
-                 in_features: Optional[int] = None,
-                 out_features: Optional[int] = None) -> None:
+    def __init__(
+        self,
+        base,
+        rank: int,
+        alpha: Optional[float] = None,
+        in_features: Optional[int] = None,
+        out_features: Optional[int] = None,
+    ) -> None:
         torch = _torch()
         if rank < 0:
             raise ValueError(f"rank must be >= 0, got {rank}")
@@ -75,7 +80,7 @@ class LoRAAdapter:
         if self.rank > 0:
             self.A = torch.nn.Parameter(torch.empty(self.rank, self.in_features))
             self.B = torch.nn.Parameter(torch.zeros(self.out_features, self.rank))
-            torch.nn.init.kaiming_uniform_(self.A, a=5 ** 0.5)
+            torch.nn.init.kaiming_uniform_(self.A, a=5**0.5)
         else:
             self.A = None
             self.B = None
@@ -113,7 +118,7 @@ class LoRAAdapter:
         return self.forward(x)
 
     def forward(self, x):
-        torch = _torch()
+        _torch()
         y = self.base(x)
         if self.rank == 0:
             return y

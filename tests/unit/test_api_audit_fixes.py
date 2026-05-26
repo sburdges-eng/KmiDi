@@ -1,7 +1,6 @@
 """Tests for cross-cutting audit fixes: classify path sandbox, max length, 500 sanitization."""
 
 import os
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -9,7 +8,7 @@ import pytest
 
 @pytest.fixture(scope="module")
 def audio_sandbox_root(tmp_path_factory):
-    """A directory under which classify endpoints allow audio paths (module-scoped so app import sees it)."""
+    """A directory under which classify endpoints allow audio paths (module-scoped so app import sees it)."""  # noqa: E501
     return tmp_path_factory.mktemp("audio_sandbox")
 
 
@@ -19,6 +18,7 @@ def app_with_sandbox(audio_sandbox_root):
     os.environ["KMIDI_AUDIO_SERVE_ROOT"] = str(audio_sandbox_root)
     try:
         from music_brain.api import app
+
         yield app
     finally:
         os.environ.pop("KMIDI_AUDIO_SERVE_ROOT", None)
@@ -28,6 +28,7 @@ def app_with_sandbox(audio_sandbox_root):
 def client(app_with_sandbox):
     """TestClient for the app with sandbox."""
     from fastapi.testclient import TestClient
+
     return TestClient(app_with_sandbox)
 
 
@@ -61,7 +62,7 @@ def test_classify_audio_accepts_path_inside_sandbox(client, audio_sandbox_root):
     in_root = audio_sandbox_root / "valid.wav"
     in_root.touch()
     r = client.post("/audio/classify", json={"audio_path": str(in_root)})
-    # 200 if classifier works, 503 if model not available, 404 if file not found - but not 400 path rejected
+    # 200 if classifier works, 503 if model not available, 404 if file not found - but not 400 path rejected  # noqa: E501
     assert r.status_code in (200, 404, 503), r.json()
 
 

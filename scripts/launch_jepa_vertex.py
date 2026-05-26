@@ -53,7 +53,9 @@ def launch_vertex_job(
 ) -> str:
     """Submit a Vertex AI training job for the specified JEPA model."""
     if aiplatform is None:
-        print("ERROR: google-cloud-aiplatform not installed. Install with: pip install google-cloud-aiplatform")
+        print(
+            "ERROR: google-cloud-aiplatform not installed. Install with: pip install google-cloud-aiplatform"  # noqa: E501
+        )
         sys.exit(1)
 
     aiplatform.init(project=project, location=location, staging_bucket=staging_bucket)
@@ -104,7 +106,7 @@ def launch_vertex_job(
         machine_type=vertex_cfg.get("machine_type", "n1-standard-8"),
         accelerator_type=vertex_cfg.get("accelerator_type", "NVIDIA_TESLA_V100"),
         accelerator_count=vertex_cfg.get("accelerator_count", 1),
-        sync=False, # Launch and return
+        sync=False,  # Launch and return
     )
 
     print(f"Launched Vertex AI job: {job_name}")
@@ -122,7 +124,7 @@ def main():
     parser.add_argument(
         "--embeddings-path",
         default="",
-        help="GCS paths to cached .pt embeddings (e.g., gs://bucket/jepa_emotion_embeddings.pt). Required for emotion_probe.",
+        help="GCS paths to cached .pt embeddings (e.g., gs://bucket/jepa_emotion_embeddings.pt). Required for emotion_probe.",  # noqa: E501
     )
     parser.add_argument(
         "--config",
@@ -177,11 +179,7 @@ def main():
         print("ERROR: --staging-bucket or GCP_STAGING_BUCKET required")
         sys.exit(1)
 
-    models = (
-        ["audio_jepa", "chord_jepa"]
-        if args.model == "both"
-        else [args.model]
-    )
+    models = ["audio_jepa", "chord_jepa"] if args.model == "both" else [args.model]
 
     for model_type in models:
         launch_vertex_job(
@@ -193,7 +191,7 @@ def main():
             staging_bucket=args.staging_bucket,
             run_id=args.run_id,
             args=args,
-        ) 
+        )
 
 
 if __name__ == "__main__":

@@ -32,10 +32,10 @@ _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-import torch
+import torch  # noqa: E402
 
-from music_brain.jepa.audio_jepa import AudioJEPAEncoder
-from music_brain.jepa.config import AudioJEPAConfig
+from music_brain.jepa.audio_jepa import AudioJEPAEncoder  # noqa: E402
+from music_brain.jepa.config import AudioJEPAConfig  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,10 @@ def load_encoder(checkpoint_path: Path, device: torch.device) -> AudioJEPAEncode
         param.requires_grad_(False)
     logger.info(
         "Loaded encoder: tier=%s, latent_dim=%d, epoch=%d, loss=%.6f",
-        config.tier, config.latent_dim, ckpt["epoch"], ckpt["loss"],
+        config.tier,
+        config.latent_dim,
+        ckpt["epoch"],
+        ckpt["loss"],
     )
     return encoder
 
@@ -83,14 +86,12 @@ def audio_to_mel(audio_path: str, device: torch.device) -> torch.Tensor:
     import numpy as np
 
     y, _ = librosa.load(audio_path, sr=SAMPLE_RATE, mono=True)
-    mel = librosa.feature.melspectrogram(
-        y=y, sr=SAMPLE_RATE, n_mels=N_MELS, hop_length=HOP_LENGTH
-    )
+    mel = librosa.feature.melspectrogram(y=y, sr=SAMPLE_RATE, n_mels=N_MELS, hop_length=HOP_LENGTH)
     # Convert to dB, then normalise to [0, 1]
-    mel_db = librosa.power_to_db(mel, ref=np.max)   # shape: (N_MELS, T)
+    mel_db = librosa.power_to_db(mel, ref=np.max)  # shape: (N_MELS, T)
     mel_min, mel_max = mel_db.min(), mel_db.max()
     denom = mel_max - mel_min if mel_max > mel_min else 1.0
-    mel_norm = (mel_db - mel_min) / denom            # [0, 1]
+    mel_norm = (mel_db - mel_min) / denom  # [0, 1]
 
     # Pad or truncate to MAX_FRAMES
     n_frames = mel_norm.shape[1]
@@ -108,9 +109,9 @@ def audio_to_mel(audio_path: str, device: torch.device) -> torch.Tensor:
 @torch.no_grad()
 def encode_file(audio_path: str, encoder: AudioJEPAEncoder, device: torch.device) -> torch.Tensor:
     """Encode a single audio file to a (LATENT_DIM,) embedding via mean-pooling."""
-    mel = audio_to_mel(audio_path, device)            # (1, 1, N_MELS, MAX_FRAMES)
-    latent = encoder(mel)                              # (1, T, latent_dim)
-    embedding = latent.mean(dim=1).squeeze(0)          # (latent_dim,)
+    mel = audio_to_mel(audio_path, device)  # (1, 1, N_MELS, MAX_FRAMES)
+    latent = encoder(mel)  # (1, T, latent_dim)
+    embedding = latent.mean(dim=1).squeeze(0)  # (latent_dim,)
     return embedding.cpu()
 
 
@@ -147,9 +148,7 @@ def main() -> int:
     checkpoint_path = (
         args.checkpoint if args.checkpoint.is_absolute() else Path(_PROJECT_ROOT) / args.checkpoint
     )
-    output_path = (
-        args.output if args.output.is_absolute() else Path(_PROJECT_ROOT) / args.output
-    )
+    output_path = args.output if args.output.is_absolute() else Path(_PROJECT_ROOT) / args.output
 
     if not manifest_path.exists():
         logger.error("Manifest not found: %s", manifest_path)
@@ -192,14 +191,15 @@ def main() -> int:
 
     logger.info(
         "Encoding complete: %d successful, %d errors",
-        len(embeddings_list), error_count,
+        len(embeddings_list),
+        error_count,
     )
 
     if not embeddings_list:
         logger.error("No embeddings extracted — aborting.")
         return 1
 
-    embeddings = torch.stack(embeddings_list)          # (N, latent_dim)
+    embeddings = torch.stack(embeddings_list)  # (N, latent_dim)
     valence_tensor = torch.tensor(valences)
     arousal_tensor = torch.tensor(arousals)
 
