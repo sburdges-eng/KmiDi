@@ -18,6 +18,9 @@ the four waves:
     (groove/harmony/dynamics), multimodal fusion + stem bundles, smooth
     emotion-trajectory planner, ``CompanionSession`` human-in-the-loop
     orchestrator.
+
+Also re-exports stateless latent-space utilities (normalization helpers)
+and the low-level fusion strategy functions (see ``fusion_ops``).
 """
 
 from music_brain.latent.companion import CompanionSession, HumanFeedback
@@ -43,6 +46,14 @@ from music_brain.latent.incremental_decode import (
 from music_brain.latent.kv_cache import KVCache
 from music_brain.latent.latent_frame import LatentFrame
 from music_brain.latent.motif import MotifRecurrence, MotifTracker
+from music_brain.latent.normalization import (
+    center,
+    clip_norm,
+    l2_normalize,
+    layer_norm,
+    min_max_scale,
+    standardize,
+)
 from music_brain.latent.predictors import (
     DynamicsPredictor,
     GroovePredictor,
@@ -125,4 +136,11 @@ __all__ = [
     "EmotionWaypoint",
     "CompanionSession",
     "HumanFeedback",
+    # Latent-space utilities (normalization)
+    "center",
+    "clip_norm",
+    "l2_normalize",
+    "layer_norm",
+    "min_max_scale",
+    "standardize",
 ]
