@@ -15,7 +15,8 @@ Validated rescue commits so far:
 - 68d2eecf rescue(biometric-voice): replace manual bridge/JSON heap ownership with RAII
 - 923b507f rescue(core-queue): wrap transient queue-node allocation in RAII before ownership handoff
 - 7cc4648f rescue(ui-tooltip): guard singleton creation with RAII before shutdown-managed handoff
-- pending-next: penta RTLogger lifecycle hardening commit and next src_penta-core/native hotspot triage
+- 8172fa28 rescue(penta-rtlogger): make worker lifecycle idempotent across secondary native core
+- pending-next: penta AudioWorkerThread lifecycle hardening commit and continued penta/native sweep
 
 Validated builds/tests so far:
 - engine/intent_ir: cargo test passing
@@ -26,6 +27,7 @@ Validated builds/tests so far:
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after core/memory queue RAII hardening
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after tooltip singleton RAII hardening
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after src_penta-core RTLogger lifecycle hardening
+- build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after penta AudioWorkerThread lifecycle hardening
 
 FFI boundaries already secured:
 - Rust intent_ir FFI handle now stores IntentFrameBuilder inline, using core::mem::take ownership transitions
@@ -35,7 +37,7 @@ FFI boundaries already secured:
 Current scan mode:
 - broad regex sweeps exhausted easy allocation hits
 - pivoted to file-by-file inspection in small batches
-- widened sweep into src_penta-core after main src/ hot paths cooled
+- widened sweep into src_penta-core and adjacent penta-backed src/ support code after main src/ hot paths cooled
 
 Target file inventory:
 - src/project: ProjectFile.cpp, ProjectManager.cpp, ProjectManager.h
@@ -71,8 +73,14 @@ Current position in file-by-file scan:
 24. ScoreEntryPanel.cpp/.h inspected; widespread reset(new) patterns are already unique_ptr-owned synchronous widget setup, no immediate lifetime fix applied in this pass
 25. src_penta-core/common/RTLogger.cpp inspected and hardened: start/stop are now idempotent and protected against double-start/restart hazards, mirroring the main RTLogger rescue
 26. src_penta-core/ml/MLInterface.cpp inspected; worker lifecycle already uses running_.exchange guards and join-on-stop in this pass
-27. Latest validation: KellyCore rebuilt successfully after src_penta-core RTLogger hardening; incidental warnings remain in OSCOutputGenerator.h comments only
-28. Next batch: continue src_penta-core/native sweep for remaining real ownership hazards, then widen further only if still justified
+27. include/penta/rt/AudioWorkerThread.h inspected and hardened: inline start/stop now use compare_exchange/exchange guards plus joinable cleanup to prevent duplicate-start or stale-thread ownership hazards
+28. src_penta-core/osc/RTMessageQueue.cpp inspected; unique_ptr-backed queue ownership already clean in this pass
+29. src_penta-core/osc/OSCMessage.cpp inspected; value semantics only, no ownership fix needed in this pass
+30. src_penta-core/diagnostics/PerformanceMonitor.cpp and AudioAnalyzer.cpp inspected; atomics/preallocated buffers already look ownership-safe in this pass
+31. src/osc/OSCServer.cpp, OSCClient.cpp, OSCHub.cpp inspected as penta-backed support code; ownership is primarily unique_ptr-based, no memory-safety fix applied in this pass
+32. src/common/RTMemoryPool.cpp and include/penta/common/RTMemoryPool.h inspected; placement-new pool contract remains intentional for RT allocation, no ownership rewrite applied in this pass
+33. Latest validation: KellyCore rebuild remains clean after penta AudioWorkerThread hardening; incidental warnings remain in OSCOutputGenerator.h comments only
+34. Next batch: continue scanning remaining penta/native support modules for true ownership hazards rather than semantic/logic bugs
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods
