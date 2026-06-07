@@ -52,7 +52,8 @@ Current position in file-by-file scan:
 13. kelly_bridge.cpp inspected; pybind11 ownership appears declarative and clean in this pass
 14. kelly_ffi.cpp inspected and hardened: wrapper initialization state is now atomic for cross-thread FFI reads; rebuilt KellyFFI successfully
 15. intent_ir_ffi.cpp inspected and hardened: music update validation/clamp now occurs outside the state mutex, mirroring emotion update and reducing cross-FFI deadlock risk while preserving Intent IR semantics
-16. Next batch: wider native sweep for remaining project/plugin ownership edges outside the bridge cluster
+16. ProjectManager.cpp inspected and hardened: JSON builders now funnel DynamicObject allocation through a local helper across project, MIDI, note, chord, and vocal-note serialization paths
+17. Current search frontier: residual plugin/project ownership patterns after ProjectManager cleanup (createPluginFilter API exception still expected)
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods
