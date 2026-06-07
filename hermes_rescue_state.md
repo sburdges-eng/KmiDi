@@ -47,7 +47,10 @@ Current position in file-by-file scan:
 8. ContextBridge.cpp and IntentBridge.cpp inspected and hardened with local PyObject RAII around tuple/result construction and Python call return paths
 9. StateBridge.cpp and SuggestionBridge.cpp inspected and hardened with local PyObject RAII around tuple/result construction and worker-thread Python dispatch
 10. PreferenceBridge.cpp and EngineIntelligenceBridge.cpp inspected and hardened with local PyObject RAII around module/class/method acquisition, tuple construction, and Python call return paths
-11. Next batch: OrchestratorBridge, OSCBridge, kelly_bridge
+11. OrchestratorBridge.cpp inspected and hardened with local PyObject RAII around module import, execute/status/cancel tuple construction, and return-path cleanup
+12. OSCBridge.cpp inspected and hardened by funneling DynamicObject allocation through a local helper for request/error payload construction
+13. kelly_bridge.cpp inspected; pybind11 ownership appears declarative and clean in this pass
+14. Next batch: FFI-facing bridge headers and source pair review (kelly_ffi.h plus any remaining ownership-sensitive bridge source)
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods
