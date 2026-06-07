@@ -53,7 +53,9 @@ Current position in file-by-file scan:
 14. kelly_ffi.cpp inspected and hardened: wrapper initialization state is now atomic for cross-thread FFI reads; rebuilt KellyFFI successfully
 15. intent_ir_ffi.cpp inspected and hardened: music update validation/clamp now occurs outside the state mutex, mirroring emotion update and reducing cross-FFI deadlock risk while preserving Intent IR semantics
 16. ProjectManager.cpp inspected and hardened: JSON builders now funnel DynamicObject allocation through a local helper across project, MIDI, note, chord, and vocal-note serialization paths
-17. Current search frontier: residual plugin/project ownership patterns after ProjectManager cleanup (createPluginFilter API exception still expected)
+17. RTLogger.cpp inspected and hardened: start/stop are now idempotent and protected against double-start thread ownership hazards
+18. AudioEmotionRunner.cpp inspected in the worker-thread region; thread lifecycle appears paired (initialize/shutdown join correctly) in this pass
+19. Next batch: continue wider native scan outside bridge/project/plugin/common hotspots, starting from remaining thread-owning and serialization-heavy modules if any surface
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods
