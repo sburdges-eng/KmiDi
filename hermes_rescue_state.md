@@ -10,6 +10,9 @@ Validated rescue commits so far:
 - 03b10efc rescue(kelly-ffi): normalize wrapper access through helper casts
 - 0525c2ec rescue(plugin-state): encapsulate DynamicObject allocation in preset JSON serialization
 - 656b5757 rescue(plugin-ui): make editor ownership transfer explicit
+- 972d294c rescue(bridge-project): wrap JSON and PyObject lifetimes with local RAII helpers
+- 86f9eb4d rescue(plugin-ir): guard async inspector callbacks against dangling component lifetime
+- pending-next: bridge Python subclass RAII hardening (ContextBridge, IntentBridge)
 
 Validated builds/tests so far:
 - engine/intent_ir: cargo test passing
@@ -36,7 +39,13 @@ Target file inventory:
 Current position in file-by-file scan:
 1. PluginProcessor.cpp inspected and hardened at createEditor boundary
 2. PluginState.cpp inspected and hardened around DynamicObject creation helper
-3. Next batch: project files, then bridge support files (BridgeBase/CacheManager/PythonBridgeBase/PyGILGuard), then remaining bridge subclasses
+3. ProjectFile.cpp inspected and hardened around DynamicObject creation helper
+4. PythonBridgeBase.cpp inspected and hardened with local PyObject RAII in callPythonFunction
+5. PluginIRInspector.cpp inspected and hardened: SafePointer replaces raw this in async UI callback; syntax-checked with plugin compile flags after fixing JUCE FontOptions usage
+6. HostDebugger.cpp and PluginLogger.cpp inspected; no new ownership fixes required in this pass
+7. PluginTestHarness.cpp and MasterEQProcessor.cpp inspected; no ownership fixes required in this pass
+8. ContextBridge.cpp and IntentBridge.cpp inspected and hardened with local PyObject RAII around tuple/result construction and Python call return paths
+9. Next batch: StateBridge, SuggestionBridge, PreferenceBridge, EngineIntelligenceBridge, OrchestratorBridge, OSCBridge, kelly_bridge
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods
