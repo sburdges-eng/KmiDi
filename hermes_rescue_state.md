@@ -45,7 +45,8 @@ Current position in file-by-file scan:
 6. HostDebugger.cpp and PluginLogger.cpp inspected; no new ownership fixes required in this pass
 7. PluginTestHarness.cpp and MasterEQProcessor.cpp inspected; no ownership fixes required in this pass
 8. ContextBridge.cpp and IntentBridge.cpp inspected and hardened with local PyObject RAII around tuple/result construction and Python call return paths
-9. Next batch: StateBridge, SuggestionBridge, PreferenceBridge, EngineIntelligenceBridge, OrchestratorBridge, OSCBridge, kelly_bridge
+9. StateBridge.cpp and SuggestionBridge.cpp inspected and hardened with local PyObject RAII around tuple/result construction and worker-thread Python dispatch
+10. Next batch: PreferenceBridge, EngineIntelligenceBridge, OrchestratorBridge, OSCBridge, kelly_bridge
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods
