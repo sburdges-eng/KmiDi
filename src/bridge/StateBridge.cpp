@@ -42,7 +42,7 @@ public:
         thread_(&StateWorkerThread::run, this) {}
 
   ~StateWorkerThread() {
-    running_ = false;
+    running_.store(false, std::memory_order_release);
     if (thread_.joinable()) {
       thread_.join();
     }
@@ -71,6 +71,11 @@ StateBridge::StateBridge()
 StateBridge::~StateBridge() { shutdown(); }
 
 bool StateBridge::initialize() {
+  if (workerThread_ && available_.load()) {
+    return true;
+  }
+
+  shutdownRequested_.store(false);
   available_ = initializePython();
   if (available_) {
     workerThread_ = std::make_unique<StateWorkerThread>(this);
@@ -79,14 +84,16 @@ bool StateBridge::initialize() {
 }
 
 void StateBridge::shutdown() {
-  shutdownRequested_ = true;
+  const bool wasRequested = shutdownRequested_.exchange(true);
 
   if (workerThread_) {
     workerThread_.reset();
   }
 
-  // Flush remaining updates
-  flush();
+  // Flush remaining updates exactly once on the active shutdown path.
+  if (!wasRequested) {
+    flush();
+  }
 
   shutdownPython();
   available_ = false;

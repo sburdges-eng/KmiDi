@@ -18,7 +18,8 @@ Validated rescue commits so far:
 - 8172fa28 rescue(penta-rtlogger): make worker lifecycle idempotent across secondary native core
 - 4ebbabe2 rescue(penta-worker): make audio worker lifecycle idempotent before thread handoff
 - acb92b30 rescue(penta-ml): make inference worker lifecycle restart-safe
-- pending-next: AudioEmotionRunner lifecycle hardening commit and continued residual native sweep
+- 365dd5b1 rescue(audio-emotion): make primary inference runner lifecycle restart-safe
+- pending-next: raw-boundary cleanup commit for LockFreeQueue/RTMemoryPool/StateBridge and any final residual-thread notes
 
 Validated builds/tests so far:
 - engine/intent_ir: cargo test passing
@@ -32,16 +33,19 @@ Validated builds/tests so far:
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after penta AudioWorkerThread lifecycle hardening
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after penta MLInterface lifecycle hardening
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after AudioEmotionRunner lifecycle hardening
+- build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after LockFreeQueue/RTMemoryPool/StateBridge raw-boundary hardening
 
 FFI boundaries already secured:
 - Rust intent_ir FFI handle now stores IntentFrameBuilder inline, using core::mem::take ownership transitions
 - src/bridge/intent_ir_ffi.cpp no longer defines local rust_eh_personality stub; staticlib relink is clean
 - src/bridge/kelly_ffi.cpp now uses RAII for malloc-owned strings and explicit wrapper helper casts
+- kelly_ffi malloc/free contract rechecked this pass: header docs match implementation; returned char* paths funnel through string_to_c_str() and are released by kelly_free_string()
 
 Current scan mode:
 - broad regex sweeps exhausted easy allocation hits
 - pivoted to file-by-file inspection in small batches
 - widened sweep into src_penta-core and adjacent penta-backed src/ support code after main src/ hot paths cooled
+- now working through intentional raw-boundary sites one by one, only changing them when lifetime safety improves without changing ABI or RT semantics
 
 Target file inventory:
 - src/project: ProjectFile.cpp, ProjectManager.cpp, ProjectManager.h
@@ -86,8 +90,13 @@ Current position in file-by-file scan:
 33. TempoEstimator.cpp, RhythmQuantizer.cpp, ScaleDetector.cpp, ChordAnalyzer.cpp inspected; no new ownership/lifetime hazards surfaced in this pass
 34. src_penta-core/ml/MLInterface.cpp second pass hardened: start/stop now use compare_exchange/exchange guards and join any stale joinable worker before relaunch, aligning with the other rescued worker-thread modules
 35. src/ml/AudioEmotionRunner.cpp second pass hardened: initialize/shutdown now use compare_exchange/exchange guards and join any stale joinable worker before relaunch, aligning the primary audio-side inference runner with the rescued worker-thread pattern
-36. Latest validation: KellyCore rebuild remains clean after AudioEmotionRunner hardening; only pre-existing non-ONNX unused-parameter warning in src_penta-core/ml/MLInterface.cpp::loadModel stub observed under non-ONNX build
-37. Next batch: continue scanning residual native support modules and remaining raw-delete sites, but bias toward true ownership hazards rather than semantic/logic bugs
+36. Intentional raw-boundary sweep: kelly_ffi.h/.cpp re-read; malloc/free contract is internally consistent and intentionally ABI-facing, so no semantic change applied
+37. core/memory.cpp third pass hardened: sentinel destruction and pop tail handoff now route through local std::unique_ptr guards, preserving the raw queue shape while making final-node release more explicit
+38. src/common/RTMemoryPool.cpp + include/penta/common/RTMemoryPool.h hardened: deallocate() now rejects out-of-pool or misaligned pointers via contains()/isBlockAligned() before pushing back onto the free list, preventing accidental free-list corruption without changing RT allocation semantics
+39. src/bridge/StateBridge.cpp hardened for lifecycle idempotence: initialize() now short-circuits if already live, resets shutdownRequested_ on re-entry, worker teardown uses explicit atomic store, and shutdown() flushes once on the active shutdown path only
+40. Leftover thread-owner sweep status: MLBridge.cpp and OrchestratorBridge.cpp still own vectors of std::thread for async fan-out; current behavior is more of a task-retention / cleanup policy issue than an immediate raw-lifetime bug, so no invasive rewrite applied in this pass
+41. Latest validation: KellyCore rebuild remains clean after the raw-boundary hardening pass
+42. Next batch: if continuing, inspect MLBridge/OrchestratorBridge async-thread retention with a narrower lens for safe low-blast-radius cleanup, otherwise pivot to final audit summary
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods

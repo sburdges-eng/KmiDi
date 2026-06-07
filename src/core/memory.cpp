@@ -78,8 +78,9 @@ template <typename T> LockFreeQueue<T>::~LockFreeQueue() {
   while (pop(item)) {
   }
 
-  // Delete sentinel
-  delete tail_;
+  // Delete the final sentinel via RAII in case future teardown grows.
+  std::unique_ptr<QueueNode<T>> sentinel(tail_);
+  tail_ = nullptr;
 }
 
 // WARNING: Despite the name, this queue heap-allocates nodes in push().
@@ -106,7 +107,7 @@ template <typename T> bool LockFreeQueue<T>::pop(T &item) {
 
   item = next->data;
 
-  delete tail_;
+  std::unique_ptr<QueueNode<T>> oldTail(tail_);
   tail_ = next;
   return true;
 }
