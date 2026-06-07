@@ -19,7 +19,8 @@ Validated rescue commits so far:
 - 4ebbabe2 rescue(penta-worker): make audio worker lifecycle idempotent before thread handoff
 - acb92b30 rescue(penta-ml): make inference worker lifecycle restart-safe
 - 365dd5b1 rescue(audio-emotion): make primary inference runner lifecycle restart-safe
-- pending-next: raw-boundary cleanup commit for LockFreeQueue/RTMemoryPool/StateBridge and any final residual-thread notes
+- 331c8651 rescue(raw-boundaries): harden queue teardown, pool pointer validation, and state worker lifecycle
+- pending-next: async-thread retention cleanup commit for MLBridge/OrchestratorBridge
 
 Validated builds/tests so far:
 - engine/intent_ir: cargo test passing
@@ -94,9 +95,9 @@ Current position in file-by-file scan:
 37. core/memory.cpp third pass hardened: sentinel destruction and pop tail handoff now route through local std::unique_ptr guards, preserving the raw queue shape while making final-node release more explicit
 38. src/common/RTMemoryPool.cpp + include/penta/common/RTMemoryPool.h hardened: deallocate() now rejects out-of-pool or misaligned pointers via contains()/isBlockAligned() before pushing back onto the free list, preventing accidental free-list corruption without changing RT allocation semantics
 39. src/bridge/StateBridge.cpp hardened for lifecycle idempotence: initialize() now short-circuits if already live, resets shutdownRequested_ on re-entry, worker teardown uses explicit atomic store, and shutdown() flushes once on the active shutdown path only
-40. Leftover thread-owner sweep status: MLBridge.cpp and OrchestratorBridge.cpp still own vectors of std::thread for async fan-out; current behavior is more of a task-retention / cleanup policy issue than an immediate raw-lifetime bug, so no invasive rewrite applied in this pass
-41. Latest validation: KellyCore rebuild remains clean after the raw-boundary hardening pass
-42. Next batch: if continuing, inspect MLBridge/OrchestratorBridge async-thread retention with a narrower lens for safe low-blast-radius cleanup, otherwise pivot to final audit summary
+40. src/ml/MLBridge.cpp and src/bridge/OrchestratorBridge.cpp narrowed async-thread sweep: replaced ineffective !joinable()-based pruning with completion-aware AsyncWorker tracking so finished threads get joined and erased without blocking on still-running work at each spawn
+41. Latest validation: KellyCore rebuild remains clean after the async-thread retention cleanup pass
+42. Next batch: if continuing, audit whether any remaining thread-owning helpers outside these bridges still use stale retention patterns; otherwise pivot to final audit summary
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods

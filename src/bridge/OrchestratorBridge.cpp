@@ -103,9 +103,9 @@ void OrchestratorBridge::shutdownPython() {
   // Join all async threads before tearing down Python state
   {
     std::lock_guard<std::mutex> lock(asyncThreadsMutex_);
-    for (auto &t : asyncThreads_) {
-      if (t.joinable())
-        t.join();
+    for (auto &worker : asyncThreads_) {
+      if (worker.thread.joinable())
+        worker.thread.join();
     }
     asyncThreads_.clear();
   }
@@ -203,18 +203,18 @@ void OrchestratorBridge::executePipelineAsync(
 
   // Execute in background thread (stored, joined in destructor)
   {
+    auto done = std::make_shared<std::atomic<bool>>(false);
     std::lock_guard<std::mutex> lock(asyncThreadsMutex_);
-    // Prune completed threads
-    asyncThreads_.erase(
-        std::remove_if(asyncThreads_.begin(), asyncThreads_.end(),
-                       [](std::thread &t) { return !t.joinable(); }),
-        asyncThreads_.end());
+    reapCompletedAsyncTasksLocked();
     ++activeWorkers_;
-    asyncThreads_.emplace_back([this, pipelineName, inputDataJson, callback]() {
-      std::string result = executePipeline(pipelineName, inputDataJson);
-      callback(result);
-      --activeWorkers_;
-    });
+    asyncThreads_.push_back(AsyncWorker{
+        std::thread([this, pipelineName, inputDataJson, callback, done]() {
+          std::string result = executePipeline(pipelineName, inputDataJson);
+          callback(result);
+          done->store(true, std::memory_order_release);
+          --activeWorkers_;
+        }),
+        std::move(done)});
   }
 }
 
@@ -325,6 +325,24 @@ std::string OrchestratorBridge::generateExecutionId() {
   }
 
   return ss.str();
+}
+
+void OrchestratorBridge::reapCompletedAsyncTasksLocked() {
+  auto out = asyncThreads_.begin();
+  for (auto it = asyncThreads_.begin(); it != asyncThreads_.end(); ++it) {
+    if (it->done && it->done->load(std::memory_order_acquire)) {
+      if (it->thread.joinable()) {
+        it->thread.join();
+      }
+      continue;
+    }
+
+    if (out != it) {
+      *out = std::move(*it);
+    }
+    ++out;
+  }
+  asyncThreads_.erase(out, asyncThreads_.end());
 }
 
 } // namespace kelly
