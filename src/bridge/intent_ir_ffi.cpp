@@ -247,25 +247,31 @@ intent_ir_update_music(float tempo_bias, float rhythmic_density,
                        float harmonic_motion, int8_t mode_preference,
                        float melodic_activity, float contour_variance,
                        float dynamic_range, float texture_density) {
-  std::lock_guard<std::mutex> lock(g_state.mutex);
+  decltype(g_state.currentFrame) frame_copy;
+  {
+    std::lock_guard<std::mutex> lock(g_state.mutex);
 
-  g_state.currentFrame.music.tempo_bias = tempo_bias;
-  g_state.currentFrame.music.rhythmic_density = rhythmic_density;
-  g_state.currentFrame.music.groove_strength = groove_strength;
-  g_state.currentFrame.music.harmonic_tension = harmonic_tension;
-  g_state.currentFrame.music.harmonic_motion = harmonic_motion;
-  g_state.currentFrame.music.mode_preference = mode_preference;
-  g_state.currentFrame.music.melodic_activity = melodic_activity;
-  g_state.currentFrame.music.contour_variance = contour_variance;
-  g_state.currentFrame.music.dynamic_range = dynamic_range;
-  g_state.currentFrame.music.texture_density = texture_density;
-  g_state.currentFrame.meta.intent_id =
-      g_state.nextIntentId.fetch_add(1, std::memory_order_acq_rel);
+    g_state.currentFrame.music.tempo_bias = tempo_bias;
+    g_state.currentFrame.music.rhythmic_density = rhythmic_density;
+    g_state.currentFrame.music.groove_strength = groove_strength;
+    g_state.currentFrame.music.harmonic_tension = harmonic_tension;
+    g_state.currentFrame.music.harmonic_motion = harmonic_motion;
+    g_state.currentFrame.music.mode_preference = mode_preference;
+    g_state.currentFrame.music.melodic_activity = melodic_activity;
+    g_state.currentFrame.music.contour_variance = contour_variance;
+    g_state.currentFrame.music.dynamic_range = dynamic_range;
+    g_state.currentFrame.music.texture_density = texture_density;
+    g_state.currentFrame.meta.intent_id =
+        g_state.nextIntentId.fetch_add(1, std::memory_order_acq_rel);
 
-  // Validate via Rust
-  int rustResult = validate_intent_frame_ffi(&g_state.currentFrame);
+    frame_copy = g_state.currentFrame;
+  }
+
+  int rustResult = validate_intent_frame_ffi(&frame_copy);
   if (rustResult != 0) {
-    clamp_intent_frame_ffi(&g_state.currentFrame);
+    clamp_intent_frame_ffi(&frame_copy);
+    std::lock_guard<std::mutex> lock(g_state.mutex);
+    g_state.currentFrame.music = frame_copy.music;
   }
 
   return INTENT_IR_SUCCESS;

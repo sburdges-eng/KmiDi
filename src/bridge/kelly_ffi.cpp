@@ -4,6 +4,7 @@
 #include "engine/KellyBrain.h"
 #include "penta/common/RTState.h"
 #include "readerwriterqueue.h"
+#include <atomic>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
@@ -28,7 +29,7 @@ struct KellyBrainWrapper {
   KellyEventCallback callback;
   void *callback_user_data;
   std::mutex mutex; // Thread safety for state access
-  bool initialized;
+  std::atomic<bool> initialized;
 
   // Phase 3: Real-time state and parameter queue
   penta::RTState rtState;

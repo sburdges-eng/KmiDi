@@ -50,7 +50,9 @@ Current position in file-by-file scan:
 11. OrchestratorBridge.cpp inspected and hardened with local PyObject RAII around module import, execute/status/cancel tuple construction, and return-path cleanup
 12. OSCBridge.cpp inspected and hardened by funneling DynamicObject allocation through a local helper for request/error payload construction
 13. kelly_bridge.cpp inspected; pybind11 ownership appears declarative and clean in this pass
-14. Next batch: FFI-facing bridge headers and source pair review (kelly_ffi.h plus any remaining ownership-sensitive bridge source)
+14. kelly_ffi.cpp inspected and hardened: wrapper initialization state is now atomic for cross-thread FFI reads; rebuilt KellyFFI successfully
+15. intent_ir_ffi.cpp inspected and hardened: music update validation/clamp now occurs outside the state mutex, mirroring emotion update and reducing cross-FFI deadlock risk while preserving Intent IR semantics
+16. Next batch: wider native sweep for remaining project/plugin ownership edges outside the bridge cluster
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods
