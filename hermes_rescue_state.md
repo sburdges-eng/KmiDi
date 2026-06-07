@@ -14,7 +14,8 @@ Validated rescue commits so far:
 - 86f9eb4d rescue(plugin-ir): guard async inspector callbacks against dangling component lifetime
 - 68d2eecf rescue(biometric-voice): replace manual bridge/JSON heap ownership with RAII
 - 923b507f rescue(core-queue): wrap transient queue-node allocation in RAII before ownership handoff
-- pending-next: tooltip singleton RAII handoff and next non-bridge hotspot triage
+- 7cc4648f rescue(ui-tooltip): guard singleton creation with RAII before shutdown-managed handoff
+- pending-next: penta RTLogger lifecycle hardening commit and next src_penta-core/native hotspot triage
 
 Validated builds/tests so far:
 - engine/intent_ir: cargo test passing
@@ -24,6 +25,7 @@ Validated builds/tests so far:
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after biometric/voice refactor
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after core/memory queue RAII hardening
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after tooltip singleton RAII hardening
+- build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after src_penta-core RTLogger lifecycle hardening
 
 FFI boundaries already secured:
 - Rust intent_ir FFI handle now stores IntentFrameBuilder inline, using core::mem::take ownership transitions
@@ -33,6 +35,7 @@ FFI boundaries already secured:
 Current scan mode:
 - broad regex sweeps exhausted easy allocation hits
 - pivoted to file-by-file inspection in small batches
+- widened sweep into src_penta-core after main src/ hot paths cooled
 
 Target file inventory:
 - src/project: ProjectFile.cpp, ProjectManager.cpp, ProjectManager.h
@@ -66,8 +69,10 @@ Current position in file-by-file scan:
 22. TooltipComponent.cpp inspected and hardened: singleton creation now uses local std::unique_ptr before DeletedAtShutdown ownership handoff
 23. ONNXInference.cpp/.h inspected; existing unique_ptr-based owner wrappers and reset ordering already look clean in this pass
 24. ScoreEntryPanel.cpp/.h inspected; widespread reset(new) patterns are already unique_ptr-owned synchronous widget setup, no immediate lifetime fix applied in this pass
-25. Latest validation: KellyCore rebuilt successfully after tooltip singleton hardening; incidental warnings remain in OSCOutputGenerator.h comments only
-26. Next batch: continue non-bridge native sweep for remaining real ownership hazards, prioritizing raw-allocation or async/thread callsites that are not already protected by unique_ptr, SafePointer, or DeletedAtShutdown patterns
+25. src_penta-core/common/RTLogger.cpp inspected and hardened: start/stop are now idempotent and protected against double-start/restart hazards, mirroring the main RTLogger rescue
+26. src_penta-core/ml/MLInterface.cpp inspected; worker lifecycle already uses running_.exchange guards and join-on-stop in this pass
+27. Latest validation: KellyCore rebuilt successfully after src_penta-core RTLogger hardening; incidental warnings remain in OSCOutputGenerator.h comments only
+28. Next batch: continue src_penta-core/native sweep for remaining real ownership hazards, then widen further only if still justified
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods
