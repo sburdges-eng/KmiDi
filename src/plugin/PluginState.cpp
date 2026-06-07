@@ -3,6 +3,13 @@
 #include <juce_core/juce_core.h>
 
 namespace kelly {
+namespace {
+
+juce::DynamicObject::Ptr makeDynamicObject() {
+  return juce::DynamicObject::Ptr(new juce::DynamicObject());
+}
+
+} // namespace
 
 PluginState::PluginState() {
   // Ensure presets directory exists
@@ -535,9 +542,7 @@ PluginState::Preset::fromValueTree(const juce::ValueTree &tree) {
 }
 
 juce::var PluginState::Preset::toJson() const {
-  // Note: JUCE's DynamicObject::Ptr is a reference-counted smart pointer,
-  // so using 'new' is correct and the Ptr manages lifetime automatically
-  juce::DynamicObject::Ptr obj = new juce::DynamicObject();
+  auto obj = makeDynamicObject();
 
   obj->setProperty("name", name);
   obj->setProperty("description", juce::String(description));
@@ -563,9 +568,9 @@ juce::var PluginState::Preset::toJson() const {
   }
 
   // Cassette state
-  juce::DynamicObject::Ptr cassetteObj = new juce::DynamicObject();
+  auto cassetteObj = makeDynamicObject();
 
-  juce::DynamicObject::Ptr sideAObj = new juce::DynamicObject();
+  auto sideAObj = makeDynamicObject();
   sideAObj->setProperty("description",
                         juce::String(cassetteState.sideA.description));
   sideAObj->setProperty("intensity", cassetteState.sideA.intensity);
@@ -574,7 +579,7 @@ juce::var PluginState::Preset::toJson() const {
   }
   cassetteObj->setProperty("sideA", juce::var(sideAObj.get()));
 
-  juce::DynamicObject::Ptr sideBObj = new juce::DynamicObject();
+  auto sideBObj = makeDynamicObject();
   sideBObj->setProperty("description",
                         juce::String(cassetteState.sideB.description));
   sideBObj->setProperty("intensity", cassetteState.sideB.intensity);
