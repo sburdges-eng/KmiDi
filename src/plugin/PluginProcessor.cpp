@@ -765,7 +765,8 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer,
 }
 
 juce::AudioProcessorEditor *PluginProcessor::createEditor() {
-  return new kelly::PluginEditor(*this);
+  auto editor = std::make_unique<kelly::PluginEditor>(*this);
+  return editor.release();
 }
 
 void PluginProcessor::getStateInformation(juce::MemoryBlock &destData) {
