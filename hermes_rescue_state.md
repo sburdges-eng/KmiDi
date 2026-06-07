@@ -17,7 +17,8 @@ Validated rescue commits so far:
 - 7cc4648f rescue(ui-tooltip): guard singleton creation with RAII before shutdown-managed handoff
 - 8172fa28 rescue(penta-rtlogger): make worker lifecycle idempotent across secondary native core
 - 4ebbabe2 rescue(penta-worker): make audio worker lifecycle idempotent before thread handoff
-- pending-next: penta MLInterface lifecycle hardening commit and continued residual native sweep
+- acb92b30 rescue(penta-ml): make inference worker lifecycle restart-safe
+- pending-next: AudioEmotionRunner lifecycle hardening commit and continued residual native sweep
 
 Validated builds/tests so far:
 - engine/intent_ir: cargo test passing
@@ -30,6 +31,7 @@ Validated builds/tests so far:
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after src_penta-core RTLogger lifecycle hardening
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after penta AudioWorkerThread lifecycle hardening
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after penta MLInterface lifecycle hardening
+- build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after AudioEmotionRunner lifecycle hardening
 
 FFI boundaries already secured:
 - Rust intent_ir FFI handle now stores IntentFrameBuilder inline, using core::mem::take ownership transitions
@@ -66,7 +68,7 @@ Current position in file-by-file scan:
 15. intent_ir_ffi.cpp inspected and hardened: music update validation/clamp now occurs outside the state mutex, mirroring emotion update and reducing cross-FFI deadlock risk while preserving Intent IR semantics
 16. ProjectManager.cpp inspected and hardened: JSON builders now funnel DynamicObject allocation through a local helper across project, MIDI, note, chord, and vocal-note serialization paths
 17. RTLogger.cpp inspected and hardened: start/stop are now idempotent and protected against double-start thread ownership hazards
-18. AudioEmotionRunner.cpp inspected in the worker-thread region; thread lifecycle appears paired (initialize/shutdown join correctly) in this pass
+18. AudioEmotionRunner.cpp first pass inspected; worker lifecycle looked paired
 19. BiometricInput.h/.cpp/.mm inspected and hardened: bridge ownership moved from void* + manual delete to std::unique_ptr across both C++ and Objective-C++ implementations
 20. VoiceCloner.cpp inspected and hardened: saveProfile now uses stack-based JUCE arrays plus a local DynamicObject helper instead of manual heap allocation/deletion
 21. core/memory.cpp inspected and hardened: LockFreeQueue sentinel and pushed nodes now use local std::unique_ptr during allocation/ownership handoff before raw atomic linkage
@@ -83,8 +85,9 @@ Current position in file-by-file scan:
 32. src/common/RTMemoryPool.cpp and include/penta/common/RTMemoryPool.h inspected; placement-new pool contract remains intentional for RT allocation, no ownership rewrite applied in this pass
 33. TempoEstimator.cpp, RhythmQuantizer.cpp, ScaleDetector.cpp, ChordAnalyzer.cpp inspected; no new ownership/lifetime hazards surfaced in this pass
 34. src_penta-core/ml/MLInterface.cpp second pass hardened: start/stop now use compare_exchange/exchange guards and join any stale joinable worker before relaunch, aligning with the other rescued worker-thread modules
-35. Latest validation: KellyCore rebuild remains clean after MLInterface hardening; only pre-existing unused-parameter warning in src_penta-core/ml/MLInterface.cpp::loadModel stub observed under non-ONNX build
-36. Next batch: continue scanning residual native support modules and remaining raw-delete sites, but bias toward true ownership hazards rather than semantic/logic bugs
+35. src/ml/AudioEmotionRunner.cpp second pass hardened: initialize/shutdown now use compare_exchange/exchange guards and join any stale joinable worker before relaunch, aligning the primary audio-side inference runner with the rescued worker-thread pattern
+36. Latest validation: KellyCore rebuild remains clean after AudioEmotionRunner hardening; only pre-existing non-ONNX unused-parameter warning in src_penta-core/ml/MLInterface.cpp::loadModel stub observed under non-ONNX build
+37. Next batch: continue scanning residual native support modules and remaining raw-delete sites, but bias toward true ownership hazards rather than semantic/logic bugs
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods
