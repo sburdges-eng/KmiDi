@@ -1,8 +1,8 @@
 //! FFI exports for C compatibility
 
+use crate::builder::IntentFrameBuilder;
 use crate::types::*;
 use crate::validator::{clamp_intent_frame, validate_intent_frame, ValidationError};
-use crate::builder::IntentFrameBuilder;
 use core::ffi::c_int;
 
 /// Validation error codes (C-compatible)
@@ -34,7 +34,9 @@ fn error_to_code(err: ValidationError) -> ValidationErrorCode {
         ValidationError::InvalidDensity => ValidationErrorCode::InvalidDensity,
         ValidationError::InvalidModePreference => ValidationErrorCode::InvalidModePreference,
         ValidationError::InvalidTimeScope => ValidationErrorCode::InvalidTimeScope,
-        ValidationError::InvalidUserOverrideWeight => ValidationErrorCode::InvalidUserOverrideWeight,
+        ValidationError::InvalidUserOverrideWeight => {
+            ValidationErrorCode::InvalidUserOverrideWeight
+        }
     }
 }
 
@@ -82,16 +84,15 @@ pub extern "C" fn intent_frame_version_supported_ffi(version: u16) -> bool {
 /// Opaque builder handle
 #[repr(C)]
 pub struct IntentFrameBuilderHandle {
-    builder: Box<IntentFrameBuilder>,
+    builder: IntentFrameBuilder,
 }
 
 /// Create a new IntentFrameBuilder
 #[no_mangle]
 pub extern "C" fn create_intent_frame_builder() -> *mut IntentFrameBuilderHandle {
     std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let builder = IntentFrameBuilder::new();
         let handle = Box::new(IntentFrameBuilderHandle {
-            builder: Box::new(builder),
+            builder: IntentFrameBuilder::new(),
         });
         Box::into_raw(handle)
     }))
@@ -128,9 +129,15 @@ pub extern "C" fn IntentFrameBuilder_set_emotion(
 
         unsafe {
             let handle_ref = &mut *handle;
-            let builder = core::ptr::replace(&mut handle_ref.builder, Box::new(IntentFrameBuilder::new()));
-            let new_builder = (*builder).with_emotion(valence, arousal, dominance, discrete_id, intensity, confidence);
-            handle_ref.builder = Box::new(new_builder);
+            let builder = core::mem::take(&mut handle_ref.builder);
+            handle_ref.builder = builder.with_emotion(
+                valence,
+                arousal,
+                dominance,
+                discrete_id,
+                intensity,
+                confidence,
+            );
         }
     }));
 }
@@ -157,13 +164,19 @@ pub extern "C" fn IntentFrameBuilder_set_musical_intent(
 
         unsafe {
             let handle_ref = &mut *handle;
-            let builder = core::ptr::replace(&mut handle_ref.builder, Box::new(IntentFrameBuilder::new()));
-            let new_builder = (*builder).with_musical_intent(
-                tempo_bias, rhythmic_density, groove_strength,
-                harmonic_tension, harmonic_motion, mode_preference,
-                melodic_activity, contour_variance, dynamic_range, texture_density,
+            let builder = core::mem::take(&mut handle_ref.builder);
+            handle_ref.builder = builder.with_musical_intent(
+                tempo_bias,
+                rhythmic_density,
+                groove_strength,
+                harmonic_tension,
+                harmonic_motion,
+                mode_preference,
+                melodic_activity,
+                contour_variance,
+                dynamic_range,
+                texture_density,
             );
-            handle_ref.builder = Box::new(new_builder);
         }
     }));
 }
@@ -184,9 +197,9 @@ pub extern "C" fn IntentFrameBuilder_set_time_scope(
 
         unsafe {
             let handle_ref = &mut *handle;
-            let builder = core::ptr::replace(&mut handle_ref.builder, Box::new(IntentFrameBuilder::new()));
-            let new_builder = (*builder).with_time_scope(start_bar, end_bar, fade_in_beats, fade_out_beats);
-            handle_ref.builder = Box::new(new_builder);
+            let builder = core::mem::take(&mut handle_ref.builder);
+            handle_ref.builder =
+                builder.with_time_scope(start_bar, end_bar, fade_in_beats, fade_out_beats);
         }
     }));
 }
@@ -207,9 +220,13 @@ pub extern "C" fn IntentFrameBuilder_set_constraints(
 
         unsafe {
             let handle_ref = &mut *handle;
-            let builder = core::ptr::replace(&mut handle_ref.builder, Box::new(IntentFrameBuilder::new()));
-            let new_builder = (*builder).with_constraints(allowed_engines_mask, forbidden_engines_mask, max_cpu_cost, max_event_rate);
-            handle_ref.builder = Box::new(new_builder);
+            let builder = core::mem::take(&mut handle_ref.builder);
+            handle_ref.builder = builder.with_constraints(
+                allowed_engines_mask,
+                forbidden_engines_mask,
+                max_cpu_cost,
+                max_event_rate,
+            );
         }
     }));
 }
@@ -228,9 +245,8 @@ pub extern "C" fn IntentFrameBuilder_set_provenance(
 
         unsafe {
             let handle_ref = &mut *handle;
-            let builder = core::ptr::replace(&mut handle_ref.builder, Box::new(IntentFrameBuilder::new()));
-            let new_builder = (*builder).with_provenance(source, user_override_weight);
-            handle_ref.builder = Box::new(new_builder);
+            let builder = core::mem::take(&mut handle_ref.builder);
+            handle_ref.builder = builder.with_provenance(source, user_override_weight);
         }
     }));
 }
@@ -251,11 +267,11 @@ pub extern "C" fn IntentFrameBuilder_build(
 
         unsafe {
             let handle_ref = &mut *handle;
-            // Take ownership of builder (replace with new empty one)
-            let builder = core::ptr::replace(&mut handle_ref.builder, Box::new(IntentFrameBuilder::new()));
+            // Take ownership of builder without transient heap churn.
+            let builder = core::mem::take(&mut handle_ref.builder);
 
             // Build frame (clamps values) - consumes builder
-            let frame = (*builder).build_unchecked();
+            let frame = builder.build_unchecked();
 
             // Validate the frame
             match validate_intent_frame(&frame) {
