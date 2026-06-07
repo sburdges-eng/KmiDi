@@ -390,7 +390,7 @@ const char *kelly_get_last_error(void) {
 
 void kelly_free_string(char *ptr) {
   if (ptr != nullptr) {
-    free(ptr);
+    std::free(ptr);
   }
 }
 
@@ -416,7 +416,7 @@ KellyErrorCode kelly_brain_initialize(KellyBrain *brain,
   }
 
   try {
-    auto *wrapper = reinterpret_cast<KellyBrainWrapper *>(brain);
+    auto *wrapper = as_wrapper(brain);
     std::lock_guard<std::mutex> lock(wrapper->mutex);
 
     bool success = wrapper->brain->initialize(std::string(data_path));
@@ -460,7 +460,7 @@ char *kelly_brain_from_text(KellyBrain *brain, const char *text) {
   }
 
   try {
-    auto *wrapper = reinterpret_cast<KellyBrainWrapper *>(brain);
+    auto *wrapper = as_wrapper(brain);
     std::lock_guard<std::mutex> lock(wrapper->mutex);
 
     if (!wrapper->initialized) {
@@ -492,7 +492,7 @@ char *kelly_brain_from_emotion(KellyBrain *brain, const char *emotion_name,
   }
 
   try {
-    auto *wrapper = reinterpret_cast<KellyBrainWrapper *>(brain);
+    auto *wrapper = as_wrapper(brain);
     std::lock_guard<std::mutex> lock(wrapper->mutex);
 
     if (!wrapper->initialized) {
@@ -522,7 +522,7 @@ char *kelly_brain_from_journey(KellyBrain *brain,
   }
 
   try {
-    auto *wrapper = reinterpret_cast<KellyBrainWrapper *>(brain);
+    auto *wrapper = as_wrapper(brain);
     std::lock_guard<std::mutex> lock(wrapper->mutex);
 
     if (!wrapper->initialized) {
@@ -558,7 +558,7 @@ char *kelly_brain_from_wound(KellyBrain *brain, const char *wound_json) {
   }
 
   try {
-    auto *wrapper = reinterpret_cast<KellyBrainWrapper *>(brain);
+    auto *wrapper = as_wrapper(brain);
     std::lock_guard<std::mutex> lock(wrapper->mutex);
 
     if (!wrapper->initialized) {
@@ -595,7 +595,7 @@ char *kelly_brain_generate_midi(KellyBrain *brain, const char *intent_json,
   }
 
   try {
-    auto *wrapper = reinterpret_cast<KellyBrainWrapper *>(brain);
+    auto *wrapper = as_wrapper(brain);
     std::lock_guard<std::mutex> lock(wrapper->mutex);
 
     if (!wrapper->initialized) {
@@ -633,7 +633,7 @@ char *kelly_brain_generate_midi_with_params(KellyBrain *brain,
   }
 
   try {
-    auto *wrapper = reinterpret_cast<KellyBrainWrapper *>(brain);
+    auto *wrapper = as_wrapper(brain);
     std::lock_guard<std::mutex> lock(wrapper->mutex);
 
     if (!wrapper->initialized) {
@@ -670,7 +670,7 @@ char *kelly_brain_get_emotion_state(const KellyBrain *brain) {
   }
 
   try {
-    auto *wrapper = reinterpret_cast<const KellyBrainWrapper *>(brain);
+    auto *wrapper = as_wrapper(brain);
 
     if (!wrapper->initialized) {
       set_last_error("KellyBrain not initialized");
@@ -725,7 +725,7 @@ char *kelly_brain_get_available_emotions(const KellyBrain *brain) {
   }
 
   try {
-    auto *wrapper = reinterpret_cast<const KellyBrainWrapper *>(brain);
+    auto *wrapper = as_wrapper(brain);
 
     if (!wrapper->initialized) {
       set_last_error("KellyBrain not initialized");
@@ -773,7 +773,7 @@ KellyErrorCode kelly_brain_set_emotion_parameters(KellyBrain *brain,
   }
 
   try {
-    auto *wrapper = reinterpret_cast<KellyBrainWrapper *>(brain);
+    auto *wrapper = as_wrapper(brain);
 
     // Copy callback and build event data under the lock, then invoke outside
     // to prevent deadlock if the callback re-enters any kelly_brain_* function.
@@ -824,7 +824,7 @@ KellyErrorCode kelly_brain_update_parameters(KellyBrain *brain,
   }
 
   try {
-    auto *wrapper = reinterpret_cast<KellyBrainWrapper *>(brain);
+    auto *wrapper = as_wrapper(brain);
     std::lock_guard<std::mutex> lock(wrapper->mutex);
 
     if (!wrapper->initialized) {
@@ -856,7 +856,7 @@ KellyErrorCode kelly_brain_register_callback(KellyBrain *brain,
   }
 
   try {
-    auto *wrapper = reinterpret_cast<KellyBrainWrapper *>(brain);
+    auto *wrapper = as_wrapper(brain);
     std::lock_guard<std::mutex> lock(wrapper->mutex);
 
     wrapper->callback = callback;
@@ -877,7 +877,7 @@ KellyErrorCode kelly_brain_unregister_callback(KellyBrain *brain) {
   }
 
   try {
-    auto *wrapper = reinterpret_cast<KellyBrainWrapper *>(brain);
+    auto *wrapper = as_wrapper(brain);
     std::lock_guard<std::mutex> lock(wrapper->mutex);
 
     wrapper->callback = nullptr;
@@ -919,7 +919,7 @@ KellyErrorCode kelly_brain_get_rt_state(const KellyBrain *brain,
     return KELLY_ERROR_NULL_POINTER;
   }
 
-  auto *wrapper = reinterpret_cast<const KellyBrainWrapper *>(brain);
+  auto *wrapper = as_wrapper(brain);
   const auto &s = wrapper->rtState;
 
   static_assert(sizeof(out_state->track_params) / sizeof(float) ==
@@ -1010,7 +1010,7 @@ KellyErrorCode kelly_brain_push_rt_param(KellyBrain *brain,
     return KELLY_ERROR_INVALID_PARAMETER;
   }
 
-  auto *wrapper = reinterpret_cast<KellyBrainWrapper *>(brain);
+  auto *wrapper = as_wrapper(brain);
 
   penta::RTParameterUpdate update(
       static_cast<penta::RTParameterUpdate::Target>(target), param_index, value,
