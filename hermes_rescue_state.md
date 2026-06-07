@@ -12,13 +12,18 @@ Validated rescue commits so far:
 - 656b5757 rescue(plugin-ui): make editor ownership transfer explicit
 - 972d294c rescue(bridge-project): wrap JSON and PyObject lifetimes with local RAII helpers
 - 86f9eb4d rescue(plugin-ir): guard async inspector callbacks against dangling component lifetime
-- pending-next: bridge Python subclass RAII hardening (ContextBridge, IntentBridge)
+- 68d2eecf rescue(biometric-voice): replace manual bridge/JSON heap ownership with RAII
+- 923b507f rescue(core-queue): wrap transient queue-node allocation in RAII before ownership handoff
+- pending-next: tooltip singleton RAII handoff and next non-bridge hotspot triage
 
 Validated builds/tests so far:
 - engine/intent_ir: cargo test passing
 - build-rescue: cmake --build build-rescue --target KellyFFI -j4 passing
 - build: cmake --build build --target KellyCore -j4 passing
 - build: cmake --build build --target KellyPlugin -j4 passing
+- build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after biometric/voice refactor
+- build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after core/memory queue RAII hardening
+- build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after tooltip singleton RAII hardening
 
 FFI boundaries already secured:
 - Rust intent_ir FFI handle now stores IntentFrameBuilder inline, using core::mem::take ownership transitions
@@ -57,12 +62,12 @@ Current position in file-by-file scan:
 18. AudioEmotionRunner.cpp inspected in the worker-thread region; thread lifecycle appears paired (initialize/shutdown join correctly) in this pass
 19. BiometricInput.h/.cpp/.mm inspected and hardened: bridge ownership moved from void* + manual delete to std::unique_ptr across both C++ and Objective-C++ implementations
 20. VoiceCloner.cpp inspected and hardened: saveProfile now uses stack-based JUCE arrays plus a local DynamicObject helper instead of manual heap allocation/deletion
-21. Latest validation: KellyCore rebuilt successfully after biometric/voice refactor; incidental warnings remain in OSCOutputGenerator.h comments only
-22. Next batch: continue non-bridge native sweep for remaining real ownership hazards, ignoring expected API-required raw returns and benign unique_ptr::reset(new ...) patterns
-
-
-18. AudioEmotionRunner.cpp inspected in the worker-thread region; thread lifecycle appears paired (initialize/shutdown join correctly) in this pass
-19. Next batch: continue wider native scan outside bridge/project/plugin/common hotspots, starting from remaining thread-owning and serialization-heavy modules if any surface
+21. core/memory.cpp inspected and hardened: LockFreeQueue sentinel and pushed nodes now use local std::unique_ptr during allocation/ownership handoff before raw atomic linkage
+22. TooltipComponent.cpp inspected and hardened: singleton creation now uses local std::unique_ptr before DeletedAtShutdown ownership handoff
+23. ONNXInference.cpp/.h inspected; existing unique_ptr-based owner wrappers and reset ordering already look clean in this pass
+24. ScoreEntryPanel.cpp/.h inspected; widespread reset(new) patterns are already unique_ptr-owned synchronous widget setup, no immediate lifetime fix applied in this pass
+25. Latest validation: KellyCore rebuilt successfully after tooltip singleton hardening; incidental warnings remain in OSCOutputGenerator.h comments only
+26. Next batch: continue non-bridge native sweep for remaining real ownership hazards, prioritizing raw-allocation or async/thread callsites that are not already protected by unique_ptr, SafePointer, or DeletedAtShutdown patterns
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods
