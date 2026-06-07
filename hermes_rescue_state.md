@@ -16,7 +16,8 @@ Validated rescue commits so far:
 - 923b507f rescue(core-queue): wrap transient queue-node allocation in RAII before ownership handoff
 - 7cc4648f rescue(ui-tooltip): guard singleton creation with RAII before shutdown-managed handoff
 - 8172fa28 rescue(penta-rtlogger): make worker lifecycle idempotent across secondary native core
-- pending-next: penta AudioWorkerThread lifecycle hardening commit and continued penta/native sweep
+- 4ebbabe2 rescue(penta-worker): make audio worker lifecycle idempotent before thread handoff
+- pending-next: penta MLInterface lifecycle hardening commit and continued residual native sweep
 
 Validated builds/tests so far:
 - engine/intent_ir: cargo test passing
@@ -28,6 +29,7 @@ Validated builds/tests so far:
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after tooltip singleton RAII hardening
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after src_penta-core RTLogger lifecycle hardening
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after penta AudioWorkerThread lifecycle hardening
+- build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after penta MLInterface lifecycle hardening
 
 FFI boundaries already secured:
 - Rust intent_ir FFI handle now stores IntentFrameBuilder inline, using core::mem::take ownership transitions
@@ -72,15 +74,17 @@ Current position in file-by-file scan:
 23. ONNXInference.cpp/.h inspected; existing unique_ptr-based owner wrappers and reset ordering already look clean in this pass
 24. ScoreEntryPanel.cpp/.h inspected; widespread reset(new) patterns are already unique_ptr-owned synchronous widget setup, no immediate lifetime fix applied in this pass
 25. src_penta-core/common/RTLogger.cpp inspected and hardened: start/stop are now idempotent and protected against double-start/restart hazards, mirroring the main RTLogger rescue
-26. src_penta-core/ml/MLInterface.cpp inspected; worker lifecycle already uses running_.exchange guards and join-on-stop in this pass
+26. src_penta-core/ml/MLInterface.cpp first pass inspected; worker lifecycle looked mostly paired
 27. include/penta/rt/AudioWorkerThread.h inspected and hardened: inline start/stop now use compare_exchange/exchange guards plus joinable cleanup to prevent duplicate-start or stale-thread ownership hazards
 28. src_penta-core/osc/RTMessageQueue.cpp inspected; unique_ptr-backed queue ownership already clean in this pass
 29. src_penta-core/osc/OSCMessage.cpp inspected; value semantics only, no ownership fix needed in this pass
 30. src_penta-core/diagnostics/PerformanceMonitor.cpp and AudioAnalyzer.cpp inspected; atomics/preallocated buffers already look ownership-safe in this pass
 31. src/osc/OSCServer.cpp, OSCClient.cpp, OSCHub.cpp inspected as penta-backed support code; ownership is primarily unique_ptr-based, no memory-safety fix applied in this pass
 32. src/common/RTMemoryPool.cpp and include/penta/common/RTMemoryPool.h inspected; placement-new pool contract remains intentional for RT allocation, no ownership rewrite applied in this pass
-33. Latest validation: KellyCore rebuild remains clean after penta AudioWorkerThread hardening; incidental warnings remain in OSCOutputGenerator.h comments only
-34. Next batch: continue scanning remaining penta/native support modules for true ownership hazards rather than semantic/logic bugs
+33. TempoEstimator.cpp, RhythmQuantizer.cpp, ScaleDetector.cpp, ChordAnalyzer.cpp inspected; no new ownership/lifetime hazards surfaced in this pass
+34. src_penta-core/ml/MLInterface.cpp second pass hardened: start/stop now use compare_exchange/exchange guards and join any stale joinable worker before relaunch, aligning with the other rescued worker-thread modules
+35. Latest validation: KellyCore rebuild remains clean after MLInterface hardening; only pre-existing unused-parameter warning in src_penta-core/ml/MLInterface.cpp::loadModel stub observed under non-ONNX build
+36. Next batch: continue scanning residual native support modules and remaining raw-delete sites, but bias toward true ownership hazards rather than semantic/logic bugs
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods
