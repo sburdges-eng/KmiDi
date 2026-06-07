@@ -20,16 +20,6 @@ BiometricInput::~BiometricInput() {
   if (streamingActive_) {
     stopStreaming();
   }
-
-  // Clean up bridge instances
-#if HEALTHKIT_AVAILABLE
-  if (healthKitBridge_) {
-    delete static_cast<biometric::HealthKitBridge *>(healthKitBridge_);
-  }
-#endif
-  if (fitbitBridge_) {
-    delete static_cast<biometric::FitbitBridge *>(fitbitBridge_);
-  }
 }
 
 BiometricInput::BiometricInput()
@@ -268,10 +258,10 @@ void BiometricInput::setBaseline(const BiometricData &baseline) {
 bool BiometricInput::initializeHealthKit() {
 #if HEALTHKIT_AVAILABLE && (JUCE_MAC || JUCE_IOS)
   if (!healthKitBridge_) {
-    healthKitBridge_ = new biometric::HealthKitBridge();
+    healthKitBridge_ = std::make_unique<biometric::HealthKitBridge>();
   }
 
-  auto *bridge = static_cast<biometric::HealthKitBridge *>(healthKitBridge_);
+  auto *bridge = healthKitBridge_.get();
   if (!bridge->isAvailable()) {
     healthKitInitialized_ = false;
     return false;

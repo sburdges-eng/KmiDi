@@ -55,6 +55,13 @@ Current position in file-by-file scan:
 16. ProjectManager.cpp inspected and hardened: JSON builders now funnel DynamicObject allocation through a local helper across project, MIDI, note, chord, and vocal-note serialization paths
 17. RTLogger.cpp inspected and hardened: start/stop are now idempotent and protected against double-start thread ownership hazards
 18. AudioEmotionRunner.cpp inspected in the worker-thread region; thread lifecycle appears paired (initialize/shutdown join correctly) in this pass
+19. BiometricInput.h/.cpp/.mm inspected and hardened: bridge ownership moved from void* + manual delete to std::unique_ptr across both C++ and Objective-C++ implementations
+20. VoiceCloner.cpp inspected and hardened: saveProfile now uses stack-based JUCE arrays plus a local DynamicObject helper instead of manual heap allocation/deletion
+21. Latest validation: KellyCore rebuilt successfully after biometric/voice refactor; incidental warnings remain in OSCOutputGenerator.h comments only
+22. Next batch: continue non-bridge native sweep for remaining real ownership hazards, ignoring expected API-required raw returns and benign unique_ptr::reset(new ...) patterns
+
+
+18. AudioEmotionRunner.cpp inspected in the worker-thread region; thread lifecycle appears paired (initialize/shutdown join correctly) in this pass
 19. Next batch: continue wider native scan outside bridge/project/plugin/common hotspots, starting from remaining thread-owning and serialization-heavy modules if any surface
 
 Inspection heuristics for next batches:
