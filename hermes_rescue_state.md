@@ -24,7 +24,8 @@ Validated rescue commits so far:
 - 4c40f764 rescue(thread-helpers): normalize inference-thread restart and drop dead biometric thread state
 - 18bf2c88 rescue(rt-ffi-boundaries): keep Intent IR session state coherent and clean OSC send failures
 - a1076153 rescue(osc-dispatch): match msgid-less fallback responses by request type
-- pending-next: PreferenceBridge fallback queue integrity or next grounded RT/bridge contract drift
+- 089c1040 rescue(preference-fallback): preserve valid queue JSON across repeated flushes
+- pending-next: final bounded audit / handoff only unless a new grounded low-blast-radius defect appears
 
 Validated builds/tests so far:
 - engine/intent_ir: cargo test passing
@@ -44,6 +45,7 @@ Validated builds/tests so far:
 - build-rescue: cmake --build build-rescue --target KellyCore KellyFFI -j4 passing after Intent IR session coherence and OSC send-failure cleanup
 - build-rescue: cmake --build build-rescue --target KellyCore KellyFFI -j4 passing after OSC fallback response-type matching hardening
 - build-rescue: cmake --build build-rescue --target KellyCore KellyFFI -j4 passing after PreferenceBridge fallback queue JSON-integrity repair
+- engine/intent_ir: cargo test passing after final residual hazard sweep
 
 FFI boundaries already secured:
 - Rust intent_ir FFI handle now stores IntentFrameBuilder inline, using core::mem::take ownership transitions
@@ -112,7 +114,9 @@ Current position in file-by-file scan:
 45. OSCBridge fallback dispatch was then tightened further: each pending request now records its expected response address, so msgId-less responses no longer attach to the first arbitrary pending callback class when multiple request types are in flight
 46. PreferenceBridge.cpp residual subsystem-logic pass found a concrete fallback persistence bug: each flush read the existing preference_queue.json but ignored it, then appended a brand-new JSON array in std::ios::app mode, corrupting the file into concatenated arrays after the second flush. The fallback path now serializes only the new entries, merges them into any existing top-level array when valid, recovers by starting a fresh array when old content is already malformed, and rewrites the file with std::ios::trunc so repeated flushes preserve valid JSON
 47. Latest validation: KellyCore and KellyFFI rebuilds remain clean after the Intent IR/OSC/PreferenceBridge boundary coherence pass
-48. Next batch: continue residual subsystem-logic audit on other intentional boundary code only if a similarly concrete contract-drift or cleanup bug is grounded by file inspection
+48. Final residual sweep across src/, src_penta-core/, and libs did not surface another equally grounded low-blast-radius ownership or contract fix. Reviewed remaining high-signal support candidates (EmotionThesaurusLoader, penta MLInterface, repo-wide append-mode / join / parse hits); the surviving findings were either already-rescued patterns, ordinary subsystem logic, or intentional boundary code not safe to rewrite without wider semantic risk.
+49. Repo coordination check at close: current rescue branch is clean except for pre-existing unrelated working-tree noise outside this rescue timeline (notably src/plugin/PluginEditor.cpp mode/formatting/safepointer edits and .claude/worktrees artifact files). Those were not touched further to avoid overlap/collision.
+50. Rescue close condition: bounded overnight hardening pass is complete; further progress should move from broad lifetime rescue to targeted feature or subsystem work with explicit scope.
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods
