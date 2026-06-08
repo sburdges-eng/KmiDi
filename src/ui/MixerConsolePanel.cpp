@@ -244,7 +244,7 @@ MixerConsolePanel::MixerConsolePanel()
     // Initialize UI components for the mixer console
     channelContainer_.reset(new juce::Component("Channel Container"));
     channelViewport_.reset(new juce::Viewport("Channel Viewport"));
-    channelViewport_->setViewedComponent(channelContainer_.get());
+    channelViewport_->setViewedComponent(channelContainer_.get(), false);
     addAndMakeVisible(*channelViewport_);
 
     masterChannel_.reset(new ChannelStrip("Master"));

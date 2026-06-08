@@ -25,7 +25,8 @@ Validated rescue commits so far:
 - 18bf2c88 rescue(rt-ffi-boundaries): keep Intent IR session state coherent and clean OSC send failures
 - a1076153 rescue(osc-dispatch): match msgid-less fallback responses by request type
 - 089c1040 rescue(preference-fallback): preserve valid queue JSON across repeated flushes
-- pending-next: final bounded audit / handoff only unless a new grounded low-blast-radius defect appears
+- b4449677 rescue(final-audit): close bounded overnight hardening pass
+- pending-next: targeted post-close native sweep on untouched surfaces only when a fresh grounded hazard appears
 
 Validated builds/tests so far:
 - engine/intent_ir: cargo test passing
@@ -46,6 +47,7 @@ Validated builds/tests so far:
 - build-rescue: cmake --build build-rescue --target KellyCore KellyFFI -j4 passing after OSC fallback response-type matching hardening
 - build-rescue: cmake --build build-rescue --target KellyCore KellyFFI -j4 passing after PreferenceBridge fallback queue JSON-integrity repair
 - engine/intent_ir: cargo test passing after final residual hazard sweep
+- build-rescue: cmake --build build-rescue --target KellyCore KellyFFI -j4 passing after Viewport ownership hardening in ScoreEntryPanel/MixerConsolePanel
 
 FFI boundaries already secured:
 - Rust intent_ir FFI handle now stores IntentFrameBuilder inline, using core::mem::take ownership transitions
@@ -116,7 +118,10 @@ Current position in file-by-file scan:
 47. Latest validation: KellyCore and KellyFFI rebuilds remain clean after the Intent IR/OSC/PreferenceBridge boundary coherence pass
 48. Final residual sweep across src/, src_penta-core/, and libs did not surface another equally grounded low-blast-radius ownership or contract fix. Reviewed remaining high-signal support candidates (EmotionThesaurusLoader, penta MLInterface, repo-wide append-mode / join / parse hits); the surviving findings were either already-rescued patterns, ordinary subsystem logic, or intentional boundary code not safe to rewrite without wider semantic risk.
 49. Repo coordination check at close: current rescue branch is clean except for pre-existing unrelated working-tree noise outside this rescue timeline (notably src/plugin/PluginEditor.cpp mode/formatting/safepointer edits and .claude/worktrees artifact files). Those were not touched further to avoid overlap/collision.
-50. Rescue close condition: bounded overnight hardening pass is complete; further progress should move from broad lifetime rescue to targeted feature or subsystem work with explicit scope.
+50. Rescue close condition was reopened only for a fresh grounded post-close finding, not a speculative broad sweep.
+51. Post-close targeted UI ownership pass found a concrete JUCE Viewport contract bug in untouched panels: ScoreEntryPanel and MixerConsolePanel each kept their viewed child in std::unique_ptr while also calling setViewedComponent(child) with JUCE's default deleteWhenNoLongerNeeded=true. That creates a double-ownership / double-delete hazard at teardown. Both sites now pass false, matching the already-correct WorkstationPanel pattern and preserving single ownership in the unique_ptr.
+52. Latest validation: KellyCore and KellyFFI rebuilds remain clean after the Viewport ownership hardening pass.
+53. Remaining setViewedComponent sites were rechecked: WorkstationPanel already passes false, so the known repo-local double-delete pattern is closed for the inspected panels.
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods
