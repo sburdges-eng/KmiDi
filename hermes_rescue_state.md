@@ -21,7 +21,8 @@ Validated rescue commits so far:
 - 365dd5b1 rescue(audio-emotion): make primary inference runner lifecycle restart-safe
 - 331c8651 rescue(raw-boundaries): harden queue teardown, pool pointer validation, and state worker lifecycle
 - e7d7e4d9 rescue(async-retention): make ML and orchestrator worker pruning completion-aware
-- pending-next: remaining thread-owner cleanup pass (InferenceThreadManager / BiometricInput dead thread state)
+- 4c40f764 rescue(thread-helpers): normalize inference-thread restart and drop dead biometric thread state
+- pending-next: RT/FFI boundary coherence cleanup (Intent IR session sync + OSC pending-request send-failure hygiene)
 
 Validated builds/tests so far:
 - engine/intent_ir: cargo test passing
@@ -38,6 +39,7 @@ Validated builds/tests so far:
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after LockFreeQueue/RTMemoryPool/StateBridge raw-boundary hardening
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after async-thread retention cleanup in MLBridge/OrchestratorBridge
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after remaining thread-owner cleanup in InferenceThreadManager/BiometricInput
+- build-rescue: cmake --build build-rescue --target KellyCore KellyFFI -j4 passing after Intent IR session coherence and OSC send-failure cleanup
 
 FFI boundaries already secured:
 - Rust intent_ir FFI handle now stores IntentFrameBuilder inline, using core::mem::take ownership transitions
@@ -101,8 +103,10 @@ Current position in file-by-file scan:
 40. src/ml/MLBridge.cpp and src/bridge/OrchestratorBridge.cpp narrowed async-thread sweep: replaced ineffective !joinable()-based pruning with completion-aware AsyncWorker tracking so finished threads get joined and erased without blocking on still-running work at each spawn
 41. src/ml/InferenceThreadManager.h hardened: start() now always normalizes prior thread state through stop(), stop() uses exchange(false) with joinable guarding, and relaunch semantics now match the other rescued worker-thread modules
 42. src/biometric/BiometricInput.h/.cpp/.mm cleanup: removed dead unused streamingThread_/shouldStream_/streamingLoop declarations and ctor init from both C++ and Objective-C++ twins, eliminating stale thread-owner state that was no longer implemented
-43. Latest validation: KellyCore rebuild remains clean after the remaining thread-owner cleanup pass
-44. Next batch: if continuing, pivot from thread-retention cleanup to final audit summary or a targeted pass on non-thread lifetime contracts only if a new grounded hotspot appears
+43. intent_ir_ffi.cpp residual FFI-contract pass hardened session-id coherence: validate_and_store(), clamp_and_store(), and intent_ir_new_session_id() now keep the atomic/session snapshot aligned, and get_current_session_id() reads from the frame snapshot under the mutex so plugin/UI inspection cannot drift from the live Intent IR frame
+44. OSCBridge.cpp/.h residual bridge-logic pass hardened pending-request cleanup: introduced takePendingRequest(), erased pending entries before external error callbacks, and cleaned up silent leak paths when send() fails for chord/process/suggest/ping requests
+45. Latest validation: KellyCore and KellyFFI rebuilds remain clean after the Intent IR/OSC boundary coherence pass
+46. Next batch: continue residual subsystem-logic audit on other intentional boundary code only if a similarly concrete contract-drift or cleanup bug is grounded by file inspection
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods

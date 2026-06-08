@@ -104,8 +104,7 @@ void OSCBridge::requestGenerate(const std::string &text,
 
   if (!sender_->send(msg)) {
     logError("Failed to send generate request");
-    std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
-    pendingRequests_.erase(msgId);
+    takePendingRequest(msgId);
   }
 }
 
@@ -145,11 +144,10 @@ void OSCBridge::requestGenerate(const std::string &text, float motivation,
 
   if (!sender_->send(msg)) {
     logError("Failed to send generate request");
+    takePendingRequest(msgId);
     if (callback) {
       callback(R"({"status":"error","message":"Send failed"})");
     }
-    std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
-    pendingRequests_.erase(msgId);
   }
 }
 
@@ -171,7 +169,10 @@ void OSCBridge::requestAnalyzeChords(const std::string &progression,
   msg.addString(progression);
   msg.addInt32(static_cast<int32_t>(msgId));
 
-  sender_->send(msg);
+  if (!sender_->send(msg)) {
+    logError("Failed to send chord analysis request");
+    takePendingRequest(msgId);
+  }
 }
 
 void OSCBridge::requestAnalyzeChords(const std::string &progression,
@@ -197,11 +198,11 @@ void OSCBridge::requestAnalyzeChords(const std::string &progression,
   msg.addInt32(static_cast<int32_t>(msgId));
 
   if (!sender_->send(msg)) {
+    logError("Failed to send chord analysis request");
+    takePendingRequest(msgId);
     if (callback) {
       callback(R"({"status":"error","message":"Send failed"})");
     }
-    std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
-    pendingRequests_.erase(msgId);
   }
 }
 
@@ -223,7 +224,10 @@ void OSCBridge::requestIntentProcess(const std::string &intentFile,
   msg.addString(intentFile);
   msg.addInt32(static_cast<int32_t>(msgId));
 
-  sender_->send(msg);
+  if (!sender_->send(msg)) {
+    logError("Failed to send intent process request");
+    takePendingRequest(msgId);
+  }
 }
 
 void OSCBridge::requestIntentProcess(const std::string &intentFile,
@@ -249,11 +253,11 @@ void OSCBridge::requestIntentProcess(const std::string &intentFile,
   msg.addInt32(static_cast<int32_t>(msgId));
 
   if (!sender_->send(msg)) {
+    logError("Failed to send intent process request");
+    takePendingRequest(msgId);
     if (callback) {
       callback(R"({"status":"error","message":"Send failed"})");
     }
-    std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
-    pendingRequests_.erase(msgId);
   }
 }
 
@@ -275,7 +279,10 @@ void OSCBridge::requestIntentSuggest(const std::string &emotion,
   msg.addString(emotion);
   msg.addInt32(static_cast<int32_t>(msgId));
 
-  sender_->send(msg);
+  if (!sender_->send(msg)) {
+    logError("Failed to send intent suggest request");
+    takePendingRequest(msgId);
+  }
 }
 
 void OSCBridge::requestIntentSuggest(const std::string &emotion,
@@ -301,11 +308,11 @@ void OSCBridge::requestIntentSuggest(const std::string &emotion,
   msg.addInt32(static_cast<int32_t>(msgId));
 
   if (!sender_->send(msg)) {
+    logError("Failed to send intent suggest request");
+    takePendingRequest(msgId);
     if (callback) {
       callback(R"({"status":"error","message":"Send failed"})");
     }
-    std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
-    pendingRequests_.erase(msgId);
   }
 }
 
@@ -325,7 +332,10 @@ void OSCBridge::ping(OSCResponseHandler callback) {
   juce::OSCMessage msg("/daiw/ping");
   msg.addInt32(static_cast<int32_t>(msgId));
 
-  sender_->send(msg);
+  if (!sender_->send(msg)) {
+    logError("Failed to send ping request");
+    takePendingRequest(msgId);
+  }
 }
 
 void OSCBridge::ping(OSCStringResponseHandler callback) {
@@ -349,12 +359,25 @@ void OSCBridge::ping(OSCStringResponseHandler callback) {
   msg.addInt32(static_cast<int32_t>(msgId));
 
   if (!sender_->send(msg)) {
+    takePendingRequest(msgId);
     if (callback) {
       callback(R"({"status":"error","message":"Send failed"})");
     }
-    std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
-    pendingRequests_.erase(msgId);
   }
+}
+
+bool OSCBridge::takePendingRequest(uint32_t msgId, PendingRequest *requestOut) {
+  std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
+  auto it = pendingRequests_.find(msgId);
+  if (it == pendingRequests_.end()) {
+    return false;
+  }
+
+  if (requestOut != nullptr) {
+    *requestOut = it->second;
+  }
+  pendingRequests_.erase(it);
+  return true;
 }
 
 void OSCBridge::shutdown() {
@@ -425,14 +448,8 @@ void OSCBridge::oscBundleReceived(const juce::OSCBundle &bundle) {
 void OSCBridge::handleResponseMessage(const juce::OSCMessage &message,
                                       uint32_t msgId) {
   PendingRequest request;
-  {
-    std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
-    auto it = pendingRequests_.find(msgId);
-    if (it == pendingRequests_.end()) {
-      return;
-    }
-    request = it->second;
-    pendingRequests_.erase(it);
+  if (!takePendingRequest(msgId, &request)) {
+    return;
   }
 
   // Extract response JSON string

@@ -151,6 +151,7 @@ IntentIRErrorCode intent_ir_validate_and_store(const CIntentFrame *frame) {
 
   std::lock_guard<std::mutex> lock(g_state.mutex);
   g_state.currentFrame = *frame;
+  g_state.sessionId.store(frame->meta.session_id, std::memory_order_release);
   g_state.lastError = nullptr;
   return INTENT_IR_SUCCESS;
 }
@@ -165,6 +166,8 @@ void intent_ir_clamp_and_store(const CIntentFrame *frame) {
 
   std::lock_guard<std::mutex> lock(g_state.mutex);
   g_state.currentFrame = clamped;
+  g_state.sessionId.store(clamped.meta.session_id, std::memory_order_release);
+  g_state.lastError = nullptr;
 }
 
 IntentIRErrorCode intent_ir_get_snapshot(CIntentFrame *frame_out) {
@@ -193,13 +196,17 @@ uint64_t intent_ir_get_current_intent_id(void) {
 }
 
 uint64_t intent_ir_get_current_session_id(void) {
-  return g_state.sessionId.load(std::memory_order_acquire);
+  std::lock_guard<std::mutex> lock(g_state.mutex);
+  return g_state.currentFrame.meta.session_id;
 }
 
 uint64_t intent_ir_new_session_id(void) {
   uint64_t id = static_cast<uint64_t>(arc4random()) << 32 |
                 static_cast<uint64_t>(arc4random());
+  std::lock_guard<std::mutex> lock(g_state.mutex);
   g_state.sessionId.store(id, std::memory_order_release);
+  g_state.currentFrame.meta.session_id = id;
+  g_state.lastError = nullptr;
   return id;
 }
 
