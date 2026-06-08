@@ -375,41 +375,71 @@ void PreferenceBridge::processPendingOperations() {
 
     queueFile.getParentDirectory().createDirectory();
 
-    // Read existing queue
-    juce::String existingContent;
+    // Read existing queue so we can preserve a valid JSON array on disk.
+    std::string existingContent;
     if (queueFile.existsAsFile()) {
-      existingContent = queueFile.loadFileAsString();
+      existingContent = queueFile.loadFileAsString().toStdString();
     }
 
-    // Append new operations (simplified JSON format)
-    std::ostringstream jsonStream;
-    jsonStream << "[\n";
+    // Serialize just the new entries first.
+    std::ostringstream entriesStream;
     bool first = true;
     for (const auto &op : ops) {
       if (!first)
-        jsonStream << ",\n";
-      jsonStream << "  {\n";
-      jsonStream << "    \"type\": " << static_cast<int>(op.type) << ",\n";
-      jsonStream << "    \"data\": {\n";
+        entriesStream << ",\n";
+      entriesStream << "  {\n";
+      entriesStream << "    \"type\": " << static_cast<int>(op.type) << ",\n";
+      entriesStream << "    \"data\": {\n";
       bool firstData = true;
       for (const auto &[key, value] : op.data) {
         if (!firstData)
-          jsonStream << ",\n";
-        jsonStream << "      \"" << escapeJsonString(key).toStdString()
-                   << "\": \"" << escapeJsonString(value).toStdString() << "\"";
+          entriesStream << ",\n";
+        entriesStream << "      \"" << escapeJsonString(key).toStdString()
+                      << "\": \"" << escapeJsonString(value).toStdString()
+                      << "\"";
         firstData = false;
       }
-      jsonStream << "\n    }\n";
-      jsonStream << "  }";
+      entriesStream << "\n    }\n";
+      entriesStream << "  }";
       first = false;
     }
-    jsonStream << "\n]";
 
-    // Write to file (append mode for simplicity)
+    auto trimWhitespace = [](std::string text) {
+      const auto firstNonWs = text.find_first_not_of(" \t\r\n");
+      if (firstNonWs == std::string::npos) {
+        return std::string{};
+      }
+      const auto lastNonWs = text.find_last_not_of(" \t\r\n");
+      return text.substr(firstNonWs, lastNonWs - firstNonWs + 1);
+    };
+
+    const std::string trimmedExisting = trimWhitespace(existingContent);
+    const std::string newEntries = entriesStream.str();
+
+    std::string mergedJson;
+    if (trimmedExisting.empty() || trimmedExisting == "[]") {
+      mergedJson = "[\n" + newEntries + "\n]";
+    } else if (trimmedExisting.front() == '[' &&
+               trimmedExisting.back() == ']') {
+      mergedJson = trimmedExisting;
+      mergedJson.pop_back();
+      if (mergedJson.size() > 1) {
+        mergedJson += ",\n";
+      } else {
+        mergedJson += "\n";
+      }
+      mergedJson += newEntries;
+      mergedJson += "\n]";
+    } else {
+      // Recover from earlier invalid append-mode output by starting a fresh
+      // array.
+      mergedJson = "[\n" + newEntries + "\n]";
+    }
+
     std::ofstream file(queueFile.getFullPathName().toStdString(),
-                       std::ios::app);
+                       std::ios::trunc);
     if (file.is_open()) {
-      file << jsonStream.str();
+      file << mergedJson;
       file.close();
     }
   }

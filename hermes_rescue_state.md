@@ -23,7 +23,8 @@ Validated rescue commits so far:
 - e7d7e4d9 rescue(async-retention): make ML and orchestrator worker pruning completion-aware
 - 4c40f764 rescue(thread-helpers): normalize inference-thread restart and drop dead biometric thread state
 - 18bf2c88 rescue(rt-ffi-boundaries): keep Intent IR session state coherent and clean OSC send failures
-- pending-next: OSC fallback request-type matching or next grounded RT/bridge contract drift
+- a1076153 rescue(osc-dispatch): match msgid-less fallback responses by request type
+- pending-next: PreferenceBridge fallback queue integrity or next grounded RT/bridge contract drift
 
 Validated builds/tests so far:
 - engine/intent_ir: cargo test passing
@@ -42,6 +43,7 @@ Validated builds/tests so far:
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after remaining thread-owner cleanup in InferenceThreadManager/BiometricInput
 - build-rescue: cmake --build build-rescue --target KellyCore KellyFFI -j4 passing after Intent IR session coherence and OSC send-failure cleanup
 - build-rescue: cmake --build build-rescue --target KellyCore KellyFFI -j4 passing after OSC fallback response-type matching hardening
+- build-rescue: cmake --build build-rescue --target KellyCore KellyFFI -j4 passing after PreferenceBridge fallback queue JSON-integrity repair
 
 FFI boundaries already secured:
 - Rust intent_ir FFI handle now stores IntentFrameBuilder inline, using core::mem::take ownership transitions
@@ -108,8 +110,9 @@ Current position in file-by-file scan:
 43. intent_ir_ffi.cpp residual FFI-contract pass hardened session-id coherence: validate_and_store(), clamp_and_store(), and intent_ir_new_session_id() now keep the atomic/session snapshot aligned, and get_current_session_id() reads from the frame snapshot under the mutex so plugin/UI inspection cannot drift from the live Intent IR frame
 44. OSCBridge.cpp/.h residual bridge-logic pass hardened pending-request cleanup: introduced takePendingRequest(), erased pending entries before external error callbacks, and cleaned up silent leak paths when send() fails for chord/process/suggest/ping requests
 45. OSCBridge fallback dispatch was then tightened further: each pending request now records its expected response address, so msgId-less responses no longer attach to the first arbitrary pending callback class when multiple request types are in flight
-46. Latest validation: KellyCore and KellyFFI rebuilds remain clean after the Intent IR/OSC boundary coherence pass
-47. Next batch: continue residual subsystem-logic audit on other intentional boundary code only if a similarly concrete contract-drift or cleanup bug is grounded by file inspection
+46. PreferenceBridge.cpp residual subsystem-logic pass found a concrete fallback persistence bug: each flush read the existing preference_queue.json but ignored it, then appended a brand-new JSON array in std::ios::app mode, corrupting the file into concatenated arrays after the second flush. The fallback path now serializes only the new entries, merges them into any existing top-level array when valid, recovers by starting a fresh array when old content is already malformed, and rewrites the file with std::ios::trunc so repeated flushes preserve valid JSON
+47. Latest validation: KellyCore and KellyFFI rebuilds remain clean after the Intent IR/OSC/PreferenceBridge boundary coherence pass
+48. Next batch: continue residual subsystem-logic audit on other intentional boundary code only if a similarly concrete contract-drift or cleanup bug is grounded by file inspection
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods
