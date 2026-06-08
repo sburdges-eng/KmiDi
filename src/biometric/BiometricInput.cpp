@@ -26,7 +26,7 @@ BiometricInput::BiometricInput()
     : adaptiveNormalization_(false), enabled_(false), streamingActive_(false),
       lastReadingTime_(0.0), healthKitInitialized_(false),
       fitbitInitialized_(false), healthKitBridge_(nullptr),
-      fitbitBridge_(nullptr), shouldStream_(false) {
+      fitbitBridge_(nullptr) {
   dataHistory_.reserve(HISTORY_SIZE);
 
   // Initialize default baseline

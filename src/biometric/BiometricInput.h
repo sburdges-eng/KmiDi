@@ -152,11 +152,6 @@ private:
   std::unique_ptr<biometric::HealthKitBridge> healthKitBridge_;
   std::unique_ptr<biometric::FitbitBridge> fitbitBridge_;
 
-  // Streaming thread
-  std::thread streamingThread_;
-  std::atomic<bool> shouldStream_;
-  void streamingLoop();
-
   void addToHistory(const BiometricData &data);
 
   /** Convert heart rate to arousal */
