@@ -91,6 +91,7 @@ void OSCBridge::requestGenerate(const std::string &text,
   PendingRequest request;
   request.varCallback = callback;
   request.timestamp = juce::Time::getCurrentTime();
+  request.responseAddress = "/daiw/generate/response";
   {
     std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
     pendingRequests_[msgId] = request;
@@ -132,6 +133,7 @@ void OSCBridge::requestGenerate(const std::string &text, float motivation,
   PendingRequest request;
   request.stringCallback = callback;
   request.timestamp = juce::Time::getCurrentTime();
+  request.responseAddress = "/daiw/generate/response";
   {
     std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
     pendingRequests_[msgId] = request;
@@ -160,6 +162,7 @@ void OSCBridge::requestAnalyzeChords(const std::string &progression,
   PendingRequest request;
   request.varCallback = callback;
   request.timestamp = juce::Time::getCurrentTime();
+  request.responseAddress = "/daiw/analyze/chords/response";
   {
     std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
     pendingRequests_[msgId] = request;
@@ -188,6 +191,7 @@ void OSCBridge::requestAnalyzeChords(const std::string &progression,
   PendingRequest request;
   request.stringCallback = callback;
   request.timestamp = juce::Time::getCurrentTime();
+  request.responseAddress = "/daiw/analyze/chords/response";
   {
     std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
     pendingRequests_[msgId] = request;
@@ -215,6 +219,7 @@ void OSCBridge::requestIntentProcess(const std::string &intentFile,
   PendingRequest request;
   request.varCallback = callback;
   request.timestamp = juce::Time::getCurrentTime();
+  request.responseAddress = "/daiw/intent/process/response";
   {
     std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
     pendingRequests_[msgId] = request;
@@ -243,6 +248,7 @@ void OSCBridge::requestIntentProcess(const std::string &intentFile,
   PendingRequest request;
   request.stringCallback = callback;
   request.timestamp = juce::Time::getCurrentTime();
+  request.responseAddress = "/daiw/intent/process/response";
   {
     std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
     pendingRequests_[msgId] = request;
@@ -270,6 +276,7 @@ void OSCBridge::requestIntentSuggest(const std::string &emotion,
   PendingRequest request;
   request.varCallback = callback;
   request.timestamp = juce::Time::getCurrentTime();
+  request.responseAddress = "/daiw/intent/suggest/response";
   {
     std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
     pendingRequests_[msgId] = request;
@@ -298,6 +305,7 @@ void OSCBridge::requestIntentSuggest(const std::string &emotion,
   PendingRequest request;
   request.stringCallback = callback;
   request.timestamp = juce::Time::getCurrentTime();
+  request.responseAddress = "/daiw/intent/suggest/response";
   {
     std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
     pendingRequests_[msgId] = request;
@@ -324,6 +332,7 @@ void OSCBridge::ping(OSCResponseHandler callback) {
   PendingRequest request;
   request.varCallback = callback;
   request.timestamp = juce::Time::getCurrentTime();
+  request.responseAddress = "/daiw/ping/response";
   {
     std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
     pendingRequests_[msgId] = request;
@@ -350,6 +359,7 @@ void OSCBridge::ping(OSCStringResponseHandler callback) {
   PendingRequest request;
   request.stringCallback = callback;
   request.timestamp = juce::Time::getCurrentTime();
+  request.responseAddress = "/daiw/ping/response";
   {
     std::lock_guard<std::mutex> lock(pendingRequestsMutex_);
     pendingRequests_[msgId] = request;
@@ -422,7 +432,8 @@ void OSCBridge::oscMessageReceived(const juce::OSCMessage &message) {
                address == "/daiw/ping/response") {
       // Try to find matching request by address (fallback)
       for (auto &[id, request] : pendingRequests_) {
-        if (request.stringCallback || request.varCallback) {
+        if ((request.stringCallback || request.varCallback) &&
+            request.responseAddress == address.toStdString()) {
           dispatchId = id;
           break;
         }

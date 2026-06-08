@@ -22,7 +22,8 @@ Validated rescue commits so far:
 - 331c8651 rescue(raw-boundaries): harden queue teardown, pool pointer validation, and state worker lifecycle
 - e7d7e4d9 rescue(async-retention): make ML and orchestrator worker pruning completion-aware
 - 4c40f764 rescue(thread-helpers): normalize inference-thread restart and drop dead biometric thread state
-- pending-next: RT/FFI boundary coherence cleanup (Intent IR session sync + OSC pending-request send-failure hygiene)
+- 18bf2c88 rescue(rt-ffi-boundaries): keep Intent IR session state coherent and clean OSC send failures
+- pending-next: OSC fallback request-type matching or next grounded RT/bridge contract drift
 
 Validated builds/tests so far:
 - engine/intent_ir: cargo test passing
@@ -40,6 +41,7 @@ Validated builds/tests so far:
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after async-thread retention cleanup in MLBridge/OrchestratorBridge
 - build-rescue: cmake --build build-rescue --target KellyCore -j4 passing after remaining thread-owner cleanup in InferenceThreadManager/BiometricInput
 - build-rescue: cmake --build build-rescue --target KellyCore KellyFFI -j4 passing after Intent IR session coherence and OSC send-failure cleanup
+- build-rescue: cmake --build build-rescue --target KellyCore KellyFFI -j4 passing after OSC fallback response-type matching hardening
 
 FFI boundaries already secured:
 - Rust intent_ir FFI handle now stores IntentFrameBuilder inline, using core::mem::take ownership transitions
@@ -105,8 +107,9 @@ Current position in file-by-file scan:
 42. src/biometric/BiometricInput.h/.cpp/.mm cleanup: removed dead unused streamingThread_/shouldStream_/streamingLoop declarations and ctor init from both C++ and Objective-C++ twins, eliminating stale thread-owner state that was no longer implemented
 43. intent_ir_ffi.cpp residual FFI-contract pass hardened session-id coherence: validate_and_store(), clamp_and_store(), and intent_ir_new_session_id() now keep the atomic/session snapshot aligned, and get_current_session_id() reads from the frame snapshot under the mutex so plugin/UI inspection cannot drift from the live Intent IR frame
 44. OSCBridge.cpp/.h residual bridge-logic pass hardened pending-request cleanup: introduced takePendingRequest(), erased pending entries before external error callbacks, and cleaned up silent leak paths when send() fails for chord/process/suggest/ping requests
-45. Latest validation: KellyCore and KellyFFI rebuilds remain clean after the Intent IR/OSC boundary coherence pass
-46. Next batch: continue residual subsystem-logic audit on other intentional boundary code only if a similarly concrete contract-drift or cleanup bug is grounded by file inspection
+45. OSCBridge fallback dispatch was then tightened further: each pending request now records its expected response address, so msgId-less responses no longer attach to the first arbitrary pending callback class when multiple request types are in flight
+46. Latest validation: KellyCore and KellyFFI rebuilds remain clean after the Intent IR/OSC boundary coherence pass
+47. Next batch: continue residual subsystem-logic audit on other intentional boundary code only if a similarly concrete contract-drift or cleanup bug is grounded by file inspection
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods

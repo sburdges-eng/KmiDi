@@ -172,6 +172,7 @@ private:
     OSCResponseHandler varCallback;
     OSCStringResponseHandler stringCallback;
     juce::Time timestamp;
+    std::string responseAddress;
   };
   std::map<uint32_t, PendingRequest> pendingRequests_;
   mutable std::mutex pendingRequestsMutex_;
