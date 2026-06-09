@@ -42,11 +42,12 @@ export default defineConfig(async () => ({
   // Public assets are in the root public folder
   publicDir: path.resolve(__dirname, "public"),
 
-  // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
-  //
-  // 1. prevent Vite from obscuring rust errors
+// Vite options kept for latent/historical Tauri compatibility surfaces.
+// They matter only if a Tauri dev/build path is deliberately restored.
+//
+// 1. prevent Vite from obscuring rust errors on that historical path
   clearScreen: false,
-  // 2. tauri expects a fixed port, fail if that port is not available
+  // 2. the historical Tauri path expects a fixed port, fail if that port is not available
   server: {
     port: 1420,
     strictPort: true,
@@ -63,7 +64,7 @@ export default defineConfig(async () => ({
         port: 1421,
       },
     watch: {
-      // 3. tell Vite to ignore watching `src-tauri`
+      // 3. tell Vite to ignore watching `src-tauri` for that compatibility path
       ignored: ["**/src-tauri/**"],
     },
   },

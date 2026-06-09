@@ -1,392 +1,306 @@
-# Environment Configuration Guide
+# KmiDi Environment Configuration
 
-Complete reference for KmiDi development environment variables and configuration.
+Status: current environment loading and variable reference aligned to repo scripts
+Last updated: 2026-06-08
 
-## Table of Contents
+This file documents the environment behavior that is actually implemented by:
+- `scripts/load-env.sh`
+- `scripts/validate-env.sh`
+- `.env*` files at repo root
+- optional feature env files under `env/`
 
-- [Overview](#overview)
-- [Quick Start](#quick-start)
-- [File Structure](#file-structure)
-- [Variable Categories](#variable-categories)
-- [Setup Instructions](#setup-instructions)
-- [Usage Examples](#usage-examples)
-- [Troubleshooting](#troubleshooting)
+For architecture boundaries, do not use this file as authority. Use `docs/ARCHITECTURE.md` and its companion authority docs.
 
-## Overview
+## 1. What environment loading actually does
 
-KmiDi uses a hybrid environment structure that combines:
-- **Base configuration** (`.env`, `.env.development`, `.env.production`)
-- **Feature-specific configs** (`env/.env.*`)
-- **User overrides** (`.env.local` - git-ignored)
-
-This structure provides:
-- ✅ Isolation between features
-- ✅ Security (secrets in git-ignored files)
-- ✅ Flexibility (override any variable)
-- ✅ Documentation (all variables in one place)
-- ✅ Validation (automated checks)
-
-## Quick Start
-
-### 1. Initial Setup
+The canonical loader is:
 
 ```bash
-# Run interactive setup wizard
-./scripts/setup-env.sh
-
-# Or manually copy template
-cp .env.example .env
-# Edit .env with your values
-```
-
-### 2. Load Environment
-
-```bash
-# Source the environment loader
 source scripts/load-env.sh
-
-# Or load specific features
-source scripts/load-env.sh tauri ml
 ```
 
-### 3. Validate Configuration
+Optional feature selection:
+
+```bash
+source scripts/load-env.sh tauri ml training mcp
+```
+
+If you pass no feature list, the loader defaults to:
+- `tauri`
+- `ml`
+- `training`
+- `mcp`
+
+## 2. Load order
+
+`scripts/load-env.sh` loads files in this order, with later files overriding earlier ones:
+
+1. `.env`
+2. `.env.production` if `NODE_ENV=production` or `KMIDI_ENV=production`
+3. otherwise `.env.development` when environment mode resolves to development
+4. feature files under `env/` based on selected features:
+   - `env/.env.tauri`
+   - `env/.env.ml`
+   - `env/.env.training`
+   - `env/.env.mcp`
+5. `.env.local`
+
+Operational notes:
+- `.env.local` is the highest-priority override layer.
+- Feature files are optional; the loader skips missing files.
+- The loader parses simple `KEY=VALUE` lines and ignores blank lines and comment lines.
+
+## 3. Environment mode selection
+
+The loader chooses mode with:
+- `NODE_ENV` first
+- then `KMIDI_ENV`
+- default: `development`
+
+That means these are equivalent examples:
+
+```bash
+NODE_ENV=production source scripts/load-env.sh
+KMIDI_ENV=production source scripts/load-env.sh
+```
+
+## 4. Fast validation
+
+Validate current environment resolution with:
 
 ```bash
 ./scripts/validate-env.sh
 ```
 
-## File Structure
+The validator currently:
+- sources `scripts/load-env.sh`
+- checks required and optional variables
+- checks whether configured paths exist
+- flags placeholder-looking API keys
 
-```
-KmiDi/
-├── .env                    # Base environment (git-ignored)
-├── .env.example            # Template (committed)
-├── .env.local              # User overrides (git-ignored)
-├── .env.development        # Development defaults (committed)
-├── .env.production         # Production template (committed)
-├── env/
-│   ├── .env.tauri.example  # Tauri/Frontend config
-│   ├── .env.ml.example     # ML/Python services
-│   ├── .env.training.example # Training pipeline
-│   ├── .env.mcp.example    # MCP server credentials
-│   └── .env.build.example  # Build config reference
-└── scripts/
-    ├── load-env.sh         # Environment loader
-    ├── setup-env.sh        # Interactive setup
-    └── validate-env.sh     # Validation script
-```
+Current hard requirement enforced by the validator:
+- `KELLY_MODELS_PATH` must be set
 
-### Priority Order
+Important nuance:
+- the validator requires `KELLY_MODELS_PATH` to be set
+- it does not currently require that path to exist; missing paths are warnings, not hard failures
 
-Variables are loaded in this order (later files override earlier ones):
+## 5. Files you should care about
 
-1. `.env` (base configuration)
-2. Feature-specific files (`env/.env.tauri`, etc.)
-3. `.env.local` (highest priority, user overrides)
+Repo-root files:
+- `.env.example` — committed template
+- `.env` — local base config
+- `.env.development` — committed dev defaults
+- `.env.production` — committed production-style defaults/template
+- `.env.local` — git-ignored local override layer
 
-## Variable Categories
+Feature files referenced by the loader:
+- `env/.env.tauri`
+- `env/.env.ml`
+- `env/.env.training`
+- `env/.env.mcp`
 
-### 1. API Keys & Secrets
+Caveat:
+- this repo currently documents feature env files more heavily than it commits them. Missing feature files are acceptable because the loader treats them as optional.
 
-| Variable | Required | Description | Example |
-|----------|----------|-------------|---------|
-| `OPENAI_API_KEY` | No | OpenAI API key | `sk-...` |
-| `ANTHROPIC_API_KEY` | No | Anthropic API key | `sk-ant-...` |
-| `GOOGLE_API_KEY` | No | Google API key | `AIza...` |
-| `XAI_API_KEY` | No | xAI API key | `xai-...` |
-| `GITHUB_TOKEN` | No | GitHub personal access token | `ghp_...` |
+## 6. Important variables in the current repo
 
-**Security**: These should be set in `.env.local` (git-ignored) or via your shell environment.
+## Core paths
 
-### 2. Paths & Directories
+### `KELLY_MODELS_PATH`
+- required by the validator
+- default in templates/dev config: `./models`
+- used as the native/C++ model path reference
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `KELLY_MODELS_PATH` | Yes | `./models` | C++ model file location |
-| `PYTHON_MODEL_PATH` | No | `./models` | Python model location |
-| `TRAINING_DATA_PATH` | No | `./data/training` | Training dataset path |
-| `CHECKPOINT_PATH` | No | `./checkpoints` | Model checkpoint directory |
-| `LOG_PATH` | No | `./logs` | Log file directory |
+### `PYTHON_MODEL_PATH`
+- Python-side model path
+- defaults to `./models` in templates/dev config
 
-**Note**: Paths can be absolute or relative to project root.
+### `TRAINING_DATA_PATH`
+- training data location
+- default in template: `./data/training`
 
-### 3. Service URLs & Ports
+### `CHECKPOINT_PATH`
+- training checkpoint location
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `TAURI_DEV_HOST` | No | `localhost` | Tauri dev server host |
-| `TAURI_PLATFORM` | No | `macos` | Target platform (macos/windows/linux) |
-| `KMIDI_API_URL` | No | `http://127.0.0.1:8000` | Backend API URL; used by Python, frontend, and Tauri (when `MUSIC_BRAIN_API_URL` is unset) |
-| `MUSIC_BRAIN_API_URL` | No | (fallback: `KMIDI_API_URL`) | Music Brain API URL; Tauri uses this first, then `KMIDI_API_URL`. Set either—e.g. only `KMIDI_API_URL`—to configure the stack. |
-| `ML_INFERENCE_URL` | No | `http://127.0.0.1:8001` | ML inference service |
-| `MCP_SERVER_PORT` | No | `3000` | MCP server port |
+### `LOG_PATH`
+- log directory
 
-### 4. Feature Flags
+### `KMIDI_DATA_ROOT`, `KMIDI_DATASETS_PATH`, `KMIDI_CACHE_ROOT`
+- optional external-drive/data-root style variables from `.env.example`
+- useful when datasets or caches live off-repo
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `KMIDI_USE_API` | `false` | Use FastAPI service (Streamlit) |
-| `ENABLE_ML_INFERENCE` | `true` | Enable ML inference features |
-| `ENABLE_MCP_SERVERS` | `true` | Enable MCP server features |
+## Service URLs and ports
 
-### 5. Debugging & Logging
+### `KMIDI_API_URL`
+- default dev value: `http://127.0.0.1:8000`
+- should point at the Music Brain API for integrated frontend/backend work
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `RUST_LOG` | `info` | Rust log level (error/warn/info/debug/trace) |
-| `RUST_BACKTRACE` | `0` | Rust backtrace (0=off, 1=on) |
-| `CXX_LOG_LEVEL` | `INFO` | C++ log level |
-| `PYTHON_LOG_LEVEL` | `INFO` | Python log level |
+### `MUSIC_BRAIN_API_URL`
+- optional override in templates
+- template comment says consumers should prefer this first, then fall back to `KMIDI_API_URL`
 
-**Development**: Set `RUST_LOG=debug` and `RUST_BACKTRACE=1` for detailed debugging.
+### `TAURI_DEV_HOST`
+- present in templates/dev config
+- historical Tauri-related variable still used as part of env layering
 
-### 6. Training Configuration
+### `TAURI_PLATFORM`
+- used by the Vite config to decide whether `@tauri-apps/api/*` imports should be stubbed
+- when unset, the React web build uses stubs so development can proceed without a Tauri shell
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LOCAL_RANK` | `0` | Local rank for distributed training |
-| `RANK` | `0` | Global rank (used by AWS entrypoint for shard-aware loading) |
-| `WORLD_SIZE` | `1` | Total number of processes; when > 1, each rank downloads/loads only its train shards |
-| `CUDA_VISIBLE_DEVICES` | `0` | GPU device IDs |
-| `TRAINING_BATCH_SIZE` | `32` | Training batch size |
+### `ML_INFERENCE_URL`
+- optional ML inference service base URL
 
-## Setup Instructions
+### `MCP_SERVER_PORT`
+- optional MCP service port
 
-### For New Developers
+## Frontend build-time variables
 
-1. **Clone the repository**
-   ```bash
-   git clone <repo-url>
-   cd KmiDi
-   ```
+These are inlined by Vite at build time rather than read dynamically at runtime:
+- `VITE_KMIDI_USE_API`
+- `VITE_API_BASE`
+- any other `VITE_*` variables you introduce
 
-2. **Run setup wizard**
-   ```bash
-   ./scripts/setup-env.sh
-   ```
-   This will prompt for API keys and paths, creating `.env.local`.
+Rule:
+- only variables prefixed with `VITE_` are exposed to frontend code via `import.meta.env`
 
-3. **Validate setup**
-   ```bash
-   ./scripts/validate-env.sh
-   ```
+## Feature flags and logging
 
-4. **Load environment** (in your shell)
-   ```bash
-   source scripts/load-env.sh
-   ```
+Common flags in templates:
+- `KMIDI_USE_API`
+- `ENABLE_ML_INFERENCE`
+- `ENABLE_MCP_SERVERS`
 
-### For Python Development
+Common logging vars:
+- `RUST_LOG`
+- `RUST_BACKTRACE`
+- `CXX_LOG_LEVEL`
+- `PYTHON_LOG_LEVEL`
 
-Python code should use `python-dotenv` to load environment variables:
+## Training-related vars
 
-```python
-from dotenv import load_dotenv
-import os
+Current templates/validator mention:
+- `LOCAL_RANK`
+- `WORLD_SIZE`
+- `CUDA_VISIBLE_DEVICES`
+- `TRAINING_BATCH_SIZE`
 
-# Load .env files
-load_dotenv()  # Loads .env
-load_dotenv('.env.local', override=True)  # Override with local
+## 7. Recommended local setup patterns
 
-# Access variables
-api_key = os.getenv('OPENAI_API_KEY')
-models_path = os.getenv('KELLY_MODELS_PATH')
-```
+### Minimal frontend + API development
 
-### For Rust/Tauri Development
-
-Rust code can use the `dotenv` crate:
-
-```rust
-use dotenv::dotenv;
-use std::env;
-
-fn main() {
-    dotenv().ok();  // Load .env
-    
-    let api_key = env::var("OPENAI_API_KEY")
-        .expect("OPENAI_API_KEY not set");
-}
-```
-
-Or load in `engine/intent_ir/src/main.rs`:
-
-```rust
-#[cfg(not(target_os = "android"))]
-fn main() {
-    tauri::Builder::default()
-        .setup(|app| {
-            // Load environment variables
-            dotenv::dotenv().ok();
-            Ok(())
-        })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-}
-```
-
-### For C++ Development
-
-C++ code reads environment variables directly:
-
-```cpp
-#include <cstdlib>
-
-const char* models_path = std::getenv("KELLY_MODELS_PATH");
-if (!models_path) {
-    // Use default or error
-}
-```
-
-### For Frontend Development
-
-Vite automatically loads variables prefixed with `VITE_`:
-
-```typescript
-// vite.config.ts
-const apiUrl = import.meta.env.VITE_API_URL;
-
-// In components
-const apiUrl = import.meta.env.VITE_API_URL;
-```
-
-## Usage Examples
-
-### Loading Environment in Scripts
+Usually enough:
 
 ```bash
-#!/bin/bash
-# Load environment before running script
+cp .env.example .env
+printf '\nKELLY_MODELS_PATH=./models\n' >> .env.local
 source scripts/load-env.sh
-
-# Now variables are available
-echo "Models path: $KELLY_MODELS_PATH"
-python train.py
+npm run dev:all
 ```
 
-### Feature-Specific Loading
+If `./models` does not exist yet, the validator will warn but not fail.
+
+### Keep secrets out of committed files
+
+Put secrets in `.env.local`, for example:
 
 ```bash
-# Load only Tauri and ML features
-source scripts/load-env.sh tauri ml
+OPENAI_API_KEY=...
+ANTHROPIC_API_KEY=...
+GITHUB_TOKEN=...
+```
 
-# Load all features (default)
+## 8. Access patterns by layer
+
+### Shell scripts
+
+```bash
 source scripts/load-env.sh
 ```
 
-### Development vs Production
+### Python
 
-```bash
-# Development (verbose logging)
-export RUST_LOG=debug
-export RUST_BACKTRACE=1
-source scripts/load-env.sh
+The repo does not enforce a single dotenv loader pattern inside every Python entrypoint.
+If a Python script needs env file loading outside the shell wrapper, load explicitly in that script or launch it from a shell where `scripts/load-env.sh` was sourced.
 
-# Production (minimal logging)
-export RUST_LOG=warn
-source scripts/load-env.sh
-```
+### C++
 
-## Troubleshooting
-
-### Variables Not Loading
-
-**Problem**: Environment variables not available after sourcing.
-
-**Solution**:
-1. Check file exists: `ls -la .env .env.local`
-2. Verify syntax: `scripts/validate-env.sh`
-3. Ensure you're sourcing (not executing): `source scripts/load-env.sh`
-
-### API Keys Not Working
-
-**Problem**: API calls failing with authentication errors.
-
-**Solution**:
-1. Verify keys are set: `echo $OPENAI_API_KEY`
-2. Check for placeholder values: `scripts/validate-env.sh`
-3. Ensure keys are in `.env.local` (not committed to git)
-
-### Path Not Found
-
-**Problem**: `KELLY_MODELS_PATH` directory doesn't exist.
-
-**Solution**:
-1. Create directory: `mkdir -p models`
-2. Or update path in `.env.local`:
-   ```bash
-   KELLY_MODELS_PATH=/path/to/your/models
-   ```
-
-### Conflicting Variables
-
-**Problem**: Variable has unexpected value.
-
-**Solution**: Check priority order. `.env.local` overrides everything. Use:
-```bash
-# Check what's set
-env | grep VARIABLE_NAME
-
-# See loading order
-source scripts/load-env.sh
-```
-
-### Build Configuration
-
-**Problem**: CMake options not working.
-
-**Solution**: Build options are NOT environment variables. Set via CMake:
-```bash
-cmake -DBUILD_DESKTOP=ON -DBUILD_PLUGINS=ON ..
-```
-
-See `env/.env.build.example` for reference.
-
-## Integration Points
-
-### Python Services
-
-Update Python entry points to load environment:
-
-```python
-# At the top of main scripts
-from dotenv import load_dotenv
-load_dotenv()
-load_dotenv('.env.local', override=True)
-```
-
-### Rust/Tauri
-
-Add to `Cargo.toml`:
-```toml
-[dependencies]
-dotenv = "0.15"
-```
-
-Load in `main.rs` (see examples above).
-
-### CMake
-
-Document build options in `env/.env.build.example` but set via command line.
+Use normal process environment access such as `std::getenv(...)` where required.
+Do not invent a second configuration authority for build options.
 
 ### Frontend
 
-Use `VITE_` prefix for variables exposed to frontend:
+Read only `VITE_*` variables through `import.meta.env`.
+Do not assume arbitrary shell variables are available in browser code.
+
+## 9. Build options are not environment variables
+
+This is one of the most important distinctions in the repo.
+CMake build configuration belongs on the `cmake` command line or in CMake presets, not in `.env` files.
+
+Examples:
+
 ```bash
-VITE_API_URL=http://127.0.0.1:8000
+cmake -S . -B build -G Ninja -DBUILD_KELLY_FFI=ON -DBUILD_PLUGINS=ON
+cmake --preset ninja-debug
 ```
 
-## Best Practices
+Do not treat these as env-controlled runtime settings:
+- `BUILD_KELLY_CORE`
+- `BUILD_KELLY_FFI`
+- `BUILD_PLUGINS`
+- `KMIDI_BUILD_JUCE_UI`
+- `KMIDI_ENABLE_ASAN`
+- `KMIDI_ENABLE_TSAN`
 
-1. **Never commit secrets**: Use `.env.local` for API keys
-2. **Use examples**: Keep `.env.example` up to date
-3. **Validate regularly**: Run `validate-env.sh` before important tasks
-4. **Document changes**: Update this file when adding new variables
-5. **Test locally**: Verify changes work in `.env.local` before committing templates
+## 10. Common problems
 
-## Additional Resources
+### Variables seem missing
+Use:
 
-- [Python dotenv documentation](https://pypi.org/project/python-dotenv/)
-- [Rust dotenv crate](https://docs.rs/dotenv/)
-- [Tauri environment variables](https://tauri.app/v1/guides/development/development-cycle)
-- [Vite environment variables](https://vitejs.dev/guide/env-and-mode.html)
+```bash
+source scripts/load-env.sh
+./scripts/validate-env.sh
+```
+
+Common causes:
+- you executed the loader instead of sourcing it
+- `.env.local` overrides a value you forgot about
+- you expected a missing optional feature env file to exist
+
+### Frontend cannot reach backend
+Check:
+- `npm run dev:python` is running
+- `KMIDI_API_URL` or `VITE_API_BASE` points to the expected host/port
+- API docs respond at `http://127.0.0.1:8000/docs`
+
+### Tauri-specific behavior is inconsistent
+Current repo state is mixed:
+- environment templates still include Tauri-era variables
+- Vite still knows how to stub Tauri imports
+- but the canonical product handoff is no longer “Tauri is the product center”
+
+Treat Tauri-related env as compatibility/configuration residue unless an actively supported shell restores those paths.
+
+### Validator fails immediately
+The most likely reason is:
+- `KELLY_MODELS_PATH` is unset
+
+Set it in `.env` or `.env.local`, then re-run validation.
+
+## 11. Durable facts worth preserving
+
+These facts should stop future re-derivation:
+- `.env.local` is the highest-priority override layer.
+- `scripts/load-env.sh` defaults to loading all four feature buckets: `tauri ml training mcp`.
+- `TAURI_PLATFORM` affects Vite stubbing behavior.
+- build flags belong to CMake, not `.env`.
+- the validator enforces presence of `KELLY_MODELS_PATH`, but path existence is only a warning today.
+
+## 12. Related docs
+
+- `docs/DEVELOPMENT.md`
+- `docs/BOOT.md`
+- `docs/FULL_STACK_BUILD.md`
+- `docs/DATASETS_LAYOUT.md`
+- `AGENTS.md`

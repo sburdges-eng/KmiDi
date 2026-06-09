@@ -1,5 +1,10 @@
 # KmiDi API Reference
 
+Historical note
+- This document preserves Tauri-era interface documentation and is not architectural authority.
+- When this file conflicts with the current repo architecture, follow: `docs/ARCHITECTURE.md`, `docs/REPO_MODULE_MAP.md`, `docs/INTENT_IR_AUTHORITY.md`, `docs/NATIVE_RUNTIME_OWNERSHIP.md`, `docs/JUCE_RT_RULES.md`, `docs/FFI_OWNERSHIP_AND_ABI.md`, and `docs/PERSISTENCE_AND_MIGRATION.md`.
+- Read any Tauri-shell references here as historical or latent unless they are explicitly revalidated against the current canonical tree.
+
 **Version:** 1.0  
 **Updated:** 2026-01-18  
 **Purpose:** Complete API reference for all KmiDi interfaces

@@ -1,6 +1,7 @@
 #!/bin/bash
-# Setup Tauri icon files
+# Historical helper in legacy/alternate tree: setup Tauri icon files
 # Creates placeholder PNG icons from existing ICNS file or generates simple placeholders
+# Not current runnable-command authority for the canonical repo root.
 
 set -e
 

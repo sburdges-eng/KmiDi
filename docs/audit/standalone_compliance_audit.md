@@ -1,5 +1,10 @@
 # Standalone App Compliance Audit
 
+Historical note
+- This audit reflects a Tauri-era standalone-app assumption and is kept as historical analysis.
+- It is not authoritative for the current plugin-first architecture handoff.
+- When it conflicts with current architecture, follow the 2026 authority set beginning with `docs/ARCHITECTURE.md`.
+
 ## Overview
 
 Audit of standalone application against specifications in `docs/specs/01-09/`.

@@ -3,6 +3,11 @@
 Status: read-only drift audit against approved workbook passes A, B, C, D, E, F, and G
 Date: 2026-06-08
 
+Historical handling note
+- This audit is preserved as evidence of repo drift observed on 2026-06-08.
+- Quoted stale Tauri-era lines below are audit evidence, not current runnable-command or architecture authority.
+- When quoted examples conflict with the current repo state, follow the 2026 authority set and checked-in root scripts.
+
 Purpose
 - Compare current repository surfaces against the newly approved architecture handoff.
 - Identify the highest-signal places where implementation layout, build mechanics, or older docs may confuse future work.
@@ -42,6 +47,7 @@ Assessment
 
 Recommended follow-through
 - Reclassify or annotate these docs as historical/non-authoritative, or update them to match the current handoff.
+- Preserve quoted stale lines only as evidence, not as restated runnable guidance.
 
 ### 2. Native support surfaces are first-class build inputs
 

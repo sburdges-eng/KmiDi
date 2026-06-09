@@ -1,83 +1,192 @@
 # KmiDi / Kelly — Build Instructions
 
-This document is the canonical build reference for the KmiDi monorepo (Kelly C++ engine, KellyFFI, Tauri shell).
+Status: current build reference aligned to checked-in scripts and architecture authority
+Last updated: 2026-06-08
 
-## Prerequisites
+This document is the operational build reference for the current repo.
+For architecture authority, use `docs/ARCHITECTURE.md` and companion authority docs.
 
-- CMake `>= 3.27`
-- Ninja build system
-- Python `>= 3.10`
-- Node.js `>= 20`
-- Xcode Command Line Tools (macOS)
+## 1. Toolchain prerequisites
 
-## Quick Start
+Expected tools:
+- CMake 3.27+
+- Ninja
+- Python 3.10+
+- Node 20+
+- Rust stable
+- Xcode Command Line Tools on macOS
+
+Native/plugin builds additionally expect:
+- JUCE at `external/JUCE/`
+
+## 2. Quick setup
 
 ```bash
-git clone <your-kmidi-repo-url>
-cd KmiDi
-pip install -e .
 ./scripts/dev-setup.sh
 ```
 
-## Configure (canonical build dir: `build`)
+That currently runs:
+- bootstrap helper
+- `npm install`
+- `python3 -m pip install -e .`
 
-For the V1 native path (KellyFFI + optional plugin), from repo root:
+## 3. Frontend and API build/run surfaces
+
+Frontend build:
+
+```bash
+npx tsc --noEmit
+npm run build
+```
+
+API run:
+
+```bash
+npm run dev:python
+```
+
+Combined dev run:
+
+```bash
+npm run dev:all
+```
+
+Important clarification:
+- `package.json` does not currently define `npm run dev:tauri`.
+- Treat older references to that command as historical/legacy drift, not current runnable truth.
+
+## 4. Root CMake native build
+
+For KellyFFI and plugin/runtime work, build from repo root.
+Example configure:
 
 ```bash
 cmake -S . -B build -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_KELLY_CORE=ON \
+  -DBUILD_KELLY_FFI=ON \
   -DKMIDI_BUILD_JUCE_UI=ON \
-  -DBUILD_PLUGINS=ON \
-  -DBUILD_KELLY_FFI=ON
+  -DBUILD_PLUGINS=ON
 ```
 
-To also enable desktop app or native tests: `-DBUILD_DESKTOP=ON` / `-DBUILD_TESTS=ON` (require Qt/JUCE UI).
-
-## Build Targets (V1-relevant)
+Example targets:
 
 ```bash
-cmake --build build --target KellyCore
-cmake --build build --target KellyFFI
-cmake --build build --target KellyPlugin_VST3
+cmake --build build --target KellyCore -j8
+cmake --build build --target KellyFFI -j8
+cmake --build build --target KellyPlugin_VST3 -j8
 ```
 
-Optional: `KellyApp` (desktop host), `KellyTests` (when `BUILD_TESTS=ON`). In-repo DSP (merged from KmiDi_FINAL): `kmidi_dsp_core` (built when `engine/src/dsp/CMakeLists.txt` exists); link into KellyCore if needed.
+Other useful options include:
+- `BUILD_TESTS=ON`
+- `BUILD_DESKTOP=ON` when desktop host targets are intentionally enabled
+- `KMIDI_ENABLE_ASAN=ON`
+- `KMIDI_ENABLE_TSAN=ON`
 
-## Run Tests
+## 5. Preset-based native workflows
+
+The repo also provides `CMakePresets.json`.
+Current configure presets:
+- `xcode-debug`
+- `xcode-release`
+- `ninja-debug`
+- `ninja-asan`
+- `ninja-tsan`
+
+Current build presets:
+- `xcode-debug`
+- `xcode-release`
+- `ninja-debug-rt-harness`
+- `ninja-asan-rt-harness`
+- `ninja-tsan-rt-harness`
+
+Examples:
+
+```bash
+cmake --preset ninja-debug
+cmake --build --preset ninja-debug-rt-harness
+
+cmake --preset ninja-asan
+cmake --build --preset ninja-asan-rt-harness
+```
+
+## 6. Intent/schema sync build rule
+
+If you change engine-facing or persisted intent schema surfaces:
+
+```bash
+python3 scripts/sync_entities.py
+python3 -m pytest tests/unit/test_api_schema.py
+cd engine/intent_ir && cargo test
+```
+
+Generated files are not hand-edited.
+
+## 7. Test commands
+
+Python:
+
+```bash
+python3 -m pytest tests/
+```
+
+Rust Intent IR:
+
+```bash
+cd engine/intent_ir && cargo test
+```
+
+Native tests when enabled:
 
 ```bash
 ctest --test-dir build --output-on-failure
-pytest tests -q
 ```
 
-## Frontend / Tauri (if enabled)
+Lint/check examples:
 
 ```bash
-npm install
-npm run build
+python3 -m flake8 music_brain/ --max-line-length 100
+npx tsc --noEmit
 ```
 
-For desktop development:
+## 8. Native safety reminders
 
-```bash
-npm run dev:tauri
-```
+Before changing C++/FFI/RT-sensitive code, read:
+- `AGENTS.md`
+- `docs/NATIVE_RUNTIME_OWNERSHIP.md`
+- `docs/JUCE_RT_RULES.md`
+- `docs/FFI_OWNERSHIP_AND_ABI.md`
 
-## Common Build Flags
+Key constraints:
+- no exceptions across FFI
+- no exceptions, locks, or allocations on RT paths
+- KellyFFI must not create duplicate JUCE linkage situations
+- exported ABI changes require human review
 
-- `BUILD_KELLY_FFI=ON` - Shared library for Tauri (V1 native path).
-- `BUILD_PLUGINS=ON` / `KMIDI_BUILD_JUCE_UI=ON` - JUCE plugin targets (e.g. KellyPlugin_VST3).
-- `BUILD_DESKTOP=ON|OFF` - Desktop host app targets.
-- `BUILD_TESTS=ON|OFF` - Native/unit test targets.
-- `USE_KMI_DI_FINAL=OFF` - Do not enable KmiDi_FINAL UI or duplicate entrypoints; canonical UI is Tauri + React. In-repo merged content (include/prrot, engine/src/dsp, music_brain/prrot, etc.) is built without that option.
+## 9. Troubleshooting
 
-## JUCE 8 Note
+### CMake configure fails
+- remove or inspect the build directory and reconfigure
+- verify JUCE exists at `external/JUCE/`
+- verify required toolchains are installed
 
-This project is aligned to JUCE 8. If you encounter SDK issues, confirm the JUCE subtree in `external/JUCE` resolves to a JUCE 8 tag or a JUCE 8-compatible commit. For the legacy DAIW build (KmiDi_FINAL/engine/cpp_music_brain) on macOS 15+, the project uses repo `external/JUCE` or JUCE 8.x; see [FULL_STACK_BUILD.md](docs/FULL_STACK_BUILD.md) (Legacy DAIW VST3/AU Notes).
+### Python module/import issues
+- rerun `python3 -m pip install -e .`
+- confirm the active Python interpreter is the one you installed into
 
-## Troubleshooting
+### Frontend build issues
+- rerun `npm install`
+- check Node version
 
-- **CMake configure fails:** remove `build` and reconfigure.
-- **Missing Python modules:** re-run `pip install -e .`.
-- **Node/Tauri errors:** remove `node_modules` and reinstall.
-- **Plugin host issues:** rebuild `KellyPlugin_VST3` and verify artifact under `build/KellyPlugin_artefacts/`.
+### Plugin build issues
+- verify `KMIDI_BUILD_JUCE_UI=ON` and `BUILD_PLUGINS=ON`
+- rebuild `KellyPlugin_VST3`
+- inspect artifacts under `build/KellyPlugin_artefacts/`
+
+## 10. Related docs
+
+- `docs/DEVELOPMENT.md`
+- `docs/FULL_STACK_BUILD.md`
+- `docs/BOOT.md`
+- `docs/ENVIRONMENT.md`
+- `AGENTS.md`

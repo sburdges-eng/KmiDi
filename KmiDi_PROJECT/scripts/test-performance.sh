@@ -3,6 +3,9 @@
 # =============================================================================
 # KmiDi Performance Testing Suite
 # =============================================================================
+# Historical note:
+# - This script belongs to the KmiDi_PROJECT legacy/alternate tree.
+# - Any Tauri startup or command-latency paths below are historical unless revalidated in the canonical repo root.
 # Comprehensive performance testing across all integration layers
 # =============================================================================
 
@@ -294,7 +297,7 @@ fi
 
 log_step "Testing integration latency..."
 
-# Test Tauri command latency (if Tauri is available)
+# Historical Tauri command latency probe (alternate-tree only, if Tauri is available)
 if command -v npm >/dev/null 2>&1; then
     log_info "Measuring Tauri command latency..."
     

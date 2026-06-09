@@ -1,5 +1,10 @@
 # KmiDi_FINAL + KmiDi merge plan (worktree / single repo)
 
+Historical note
+- This merge plan was written under an older Tauri-centered UI assumption and is kept as repository history.
+- It is not authoritative for the current product shell or architecture center-of-gravity.
+- When this plan conflicts with current architecture, follow the 2026 authority set headed by `docs/ARCHITECTURE.md` and `docs/REPO_MODULE_MAP.md`.
+
 **Goal:** Merge KmiDi_FINAL (and any nested KmiDi) into the main KmiDi monorepo as a unified worktree: bring in **PRROT**, engine/DSP, and other non-UI features; **exclude** UI implementations (React components, plugin UIs, standalone app UIs) so the canonical UI remains Tauri + React in this repo.
 
 ---

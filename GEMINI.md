@@ -4,17 +4,24 @@ This file provides guidance to Gemini CLI when working with code in this reposit
 
 ## Project overview
 
-KmiDi / iDAW is an **AI-powered music creation platform** (monorepo). Four layers:
+KmiDi / iDAW is an AI-powered music creation platform (monorepo).
+Current operational/authority framing:
 
 | Layer | Tech | Location |
 |-------|------|----------|
 | Frontend | React 19 + Vite + TypeScript + Tailwind | `src/` |
-| Desktop shell | Tauri 2 + Rust | `engine/intent_ir/` |
+| Intent IR contract layer | Rust staticlib + C ABI | `engine/intent_ir/` |
 | Native engine | C++20 (KellyCore, KellyFFI, JUCE 8) | `engine/`, `src/`, `include/`, `src_penta-core/` |
 | Backend API | Python FastAPI (`music_brain`) | `music_brain/` |
 
-Data flow: **React** → `invoke()` → **Tauri/Rust** → FFI → **KellyFFI (C ABI)** → **KellyCore (C++)**.
-API flow: **React** → HTTP → **Music Brain API** (port 8000, `/generate`, `/docs`).
+Important clarification:
+- `package.json` does not currently define `npm run dev:tauri`.
+- Treat older references to that command as historical/legacy drift, not current runnable truth.
+- Tauri-coupled code paths may still exist as latent compatibility surfaces, but they are not the current operational center of gravity.
+- The reliable combined dev path today is `npm run dev:all`.
+
+Data flow: React → HTTP → Music Brain API for the active dev stack.
+Native flow: a process loads KellyFFI and calls the combined C ABI, which includes the embedded Rust Intent IR half.
 
 Architecture principle: Side A (C++ real-time, lock-free, no allocs) ↔ ring buffer ↔ Side B (Python AI + UI). Emotional intent feeds production rules. Human imperfection (timing/pitch drift) is a feature.
 
@@ -46,9 +53,9 @@ KmiDi/
 ├── cmake/                  # CMake helpers
 ├── config/                 # Training/config YAML, source_manifest.yaml
 ├── docs/                   # DEVELOPMENT.md, ENVIRONMENT.md, FULL_STACK_BUILD.md, etc.
-├── BUILD.md                # C++ / CMake / Tauri build reference
+├── BUILD.md                # current build reference for frontend + root CMake native/plugin flows
 ├── pyproject.toml          # Python deps (music_brain, fastapi, uvicorn, pydantic)
-└── package.json            # npm scripts (dev, build, tauri)
+└── package.json            # npm scripts (dev, dev:python, dev:all, build, preview)
 ```
 
 ## Common commands
@@ -65,8 +72,9 @@ KmiDi/
 npm run dev:all                  # React (localhost:1420) + Music Brain API (localhost:8000)
 npm run dev                      # React only (Vite, localhost:1420)
 npm run dev:python               # Music Brain API only (uvicorn, localhost:8000)
-npm run dev:tauri                # Tauri desktop app (run dev:python separately for API)
 ```
+
+Do not assume `npm run dev:tauri` exists unless the root `package.json` is deliberately updated to add it.
 
 ### Building
 
@@ -87,7 +95,7 @@ python3 -m pytest tests/unit/test_prrot_bindings.py # Single test file
 python3 -m pytest tests/ -k "test_name"             # Single test by name
 python3 -m pytest tests/ -m unit                    # By marker (unit, integration, slow, cpp)
 ctest --test-dir build --output-on-failure           # C++ tests (BUILD_TESTS=ON)
-cd engine/intent_ir && cargo test                           # Rust/Tauri tests
+cd engine/intent_ir && cargo test                           # Rust Intent IR tests
 ```
 
 ### Linting
@@ -108,7 +116,7 @@ python3 scripts/sync_entities.py    # Sync shared_schemas/ → TS types + Rust t
 | Option | Default | Notes |
 |--------|---------|-------|
 | `BUILD_KELLY_CORE` | ON | Core C++ library |
-| `BUILD_KELLY_FFI` | ON | Shared lib for Tauri/Rust FFI |
+| `BUILD_KELLY_FFI` | ON | Shared lib exposing the combined KellyFFI + embedded Intent IR C ABI |
 | `BUILD_PLUGINS` | ON | VST3/CLAP (requires `KMIDI_BUILD_JUCE_UI=ON`) |
 | `KMIDI_BUILD_JUCE_UI` | OFF | Must enable for plugin builds |
 | `BUILD_TESTS` | OFF | C++ test suite |
