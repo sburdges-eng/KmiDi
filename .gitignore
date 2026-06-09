@@ -18,6 +18,10 @@ venv/
 # Archive (e.g. nested KmiDi tree after merge)
 _archive/
 
+# Local agent/session artifacts
+.agent-sessions/
+.claude/worktrees/
+
 # Android/Gradle
 iDAW-Android/app/.gradle/
 
