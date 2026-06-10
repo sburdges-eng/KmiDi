@@ -74,6 +74,12 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y qt6-base-dev
       - name: Install JUCE Linux deps
         run: scripts/ci/install_juce_linux_deps.sh
+      # engine/intent_ir auto-enables its cargo rebuild when the prebuilt
+      # staticlib is absent (always true on CI). The runner image currently
+      # ships cargo, but pin the toolchain explicitly rather than depending
+      # on image contents.
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
       - name: Configure and build runtime contract tests
         run: |
           cmake -S . -B build-ci-runtime -DKMIDI_OFFLINE_BUILD=OFF -DBUILD_TESTS=ON
