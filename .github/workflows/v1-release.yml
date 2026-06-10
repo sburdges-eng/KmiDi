@@ -75,6 +75,12 @@ jobs:
       - name: Bootstrap Environment
         run: ./bootstrap.sh
 
+      - name: Set up MSVC environment (Windows)
+        if: runner.os == 'Windows'
+        # cmake+Ninja would otherwise resolve cc to MinGW gcc from PATH,
+        # which JUCE hard-rejects (#error "MinGW is not supported").
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Build Headless Core
         shell: bash
         run: |

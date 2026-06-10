@@ -787,6 +787,43 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
         message(WARNING "Catch2 not found; skipping tests. Set BUILD_TESTS=OFF or add external/Catch2.")
     endif()
 
+    # Runtime contract tests — Catch2 executable exercising the kelly_* C ABI
+    # through KellyFFI ONLY. Executables linking KellyFFI must not also link
+    # JUCE or KellyCore: KellyFFI links both PRIVATE, and a second JUCE copy
+    # in the exe causes allocator mismatch (see KellyFFI target comment).
+    # Catch2 comes from vendored external/Catch2 when present (block above),
+    # otherwise it is fetched — mirroring the googletest FetchContent in the
+    # BUILD_PENTA_TESTS block.
+    if(TARGET KellyFFI)
+        if(NOT TARGET Catch2::Catch2WithMain AND NOT KMIDI_OFFLINE_BUILD)
+            include(FetchContent)
+            FetchContent_Declare(
+                Catch2
+                GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+                GIT_TAG v3.5.2
+                GIT_SHALLOW TRUE
+            )
+            FetchContent_MakeAvailable(Catch2)
+        endif()
+        if(TARGET Catch2::Catch2WithMain)
+            add_executable(runtime_contract_tests
+                tests/cpp/test_kelly_ffi.cpp
+            )
+            target_compile_features(runtime_contract_tests PRIVATE cxx_std_20)
+            find_package(Threads REQUIRED)
+            target_link_libraries(runtime_contract_tests PRIVATE
+                KellyFFI
+                Catch2::Catch2WithMain
+                Threads::Threads
+            )
+            if(COMMAND add_test)
+                add_test(NAME runtime_contract_tests COMMAND runtime_contract_tests)
+            endif()
+        else()
+            message(WARNING "runtime_contract_tests skipped: Catch2 unavailable (vendor external/Catch2 or allow FetchContent)")
+        endif()
+    endif()
+
     # RTState seqlock torture test — no Catch2, no KellyCore, no JUCE.
     # Standalone executable that exercises the header-only seqlock protocol
     # with a writer/reader thread pair over 1M iterations. Runnable even in
@@ -912,6 +949,7 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
         include(Sanitizers)
         foreach(_kmidi_test_tgt
                 AudioEmotionRunnerTests EmotionSchemaTests
+                runtime_contract_tests
                 RTStateSeqlockTest RTEventSchedulerTest DSPGraphTest
                 GpuSchedulerTest SharedIpcTest SIMDKernelsTest
                 MultiModelProcessorTest)
