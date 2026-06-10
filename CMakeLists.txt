@@ -28,6 +28,12 @@ option(BUILD_MIDI_CI_DAEMON "Build MIDI-CI microformat-to-SysEx daemon" OFF)
 option(KMIDI_ENABLE_ASAN "Enable AddressSanitizer + UndefinedBehaviorSanitizer" OFF)
 option(KMIDI_ENABLE_TSAN "Enable ThreadSanitizer (mutually exclusive with ASAN)" OFF)
 option(KMIDI_ENABLE_RTSAN "Enable LLVM RealtimeSanitizer (mutually exclusive with ASAN/TSAN; requires Clang 20+)" OFF)
+# Rust Intent IR staticlib. OFF exists for TSan certification builds: the
+# prebuilt archive leaks compiler_builtins symbols (__divdc3 etc.), so the
+# linker drags in Rust std and rust_eh_personality, overflowing the arm64
+# compact-unwind personality limit once TSan's runtime joins the link.
+# FFI builds require this ON (KellyFFI embeds the staticlib).
+option(KMIDI_ENABLE_INTENT_IR "Link the Rust Intent IR staticlib into KellyCore" ON)
 
 # KmiDi_FINAL integration options
 option(USE_KMI_DI_FINAL "Use existing KmiDi_FINAL components" OFF)
@@ -181,10 +187,12 @@ add_subdirectory(src_penta-core)
 # ============================================================================
 # Intent IR Rust crate (validation, clamping, builder)
 # ============================================================================
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/engine/intent_ir/CMakeLists.txt)
+if(KMIDI_ENABLE_INTENT_IR AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/engine/intent_ir/CMakeLists.txt)
     add_subdirectory(engine/intent_ir)
     set(KMIDI_HAS_INTENT_IR ON)
     message(STATUS "Intent IR Rust crate enabled")
+elseif(NOT KMIDI_ENABLE_INTENT_IR)
+    message(STATUS "Intent IR Rust crate disabled (KMIDI_ENABLE_INTENT_IR=OFF)")
 endif()
 
 # ============================================================================
@@ -622,6 +630,9 @@ endif()
 # Kelly FFI Library (for Tauri integration)
 # ============================================================================
 option(BUILD_KELLY_FFI "Build Kelly FFI library for external language bindings" ON)
+if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE AND NOT KMIDI_ENABLE_INTENT_IR)
+    message(FATAL_ERROR "BUILD_KELLY_FFI requires KMIDI_ENABLE_INTENT_IR=ON (KellyFFI embeds the Rust intent_ir staticlib)")
+endif()
 
 if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE)
     add_library(KellyFFI SHARED

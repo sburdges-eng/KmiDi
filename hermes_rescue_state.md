@@ -52,6 +52,8 @@ Validated builds/tests so far:
 - build-rescue: cmake --build build-rescue --target KellyCore KellyFFI -j4 passing after Viewport ownership hardening in ScoreEntryPanel/MixerConsolePanel
 - build-asan: full ctest 7/7 passing under ASan+UBSan (Debug) including new MultiModelProcessorTest, 10/10 repeat runs of the lifecycle torture
 - build-debug: cmake --build build-debug --target KellyCore KellyFFI -j8 passing after MultiModelProcessor module pass
+- build-tsan: MultiModelProcessorTest 5/5 clean under ThreadSanitizer (zero reports); full standalone ctest 7/7 passing under TSan
+- build-asan: reconfigure after KMIDI_ENABLE_INTENT_IR landed — Intent IR remains enabled by default, no behavior change
 
 FFI boundaries already secured:
 - Rust intent_ir FFI handle now stores IntentFrameBuilder inline, using core::mem::take ownership transitions
@@ -131,6 +133,7 @@ Current position in file-by-file scan:
 56. New tests/cpp/test_multi_model_processor.cpp (standalone main, links KellyCore, sanitizer-instrumented, 120s ctest timeout): 11 cases including a concurrent start/stop torture that reproduced a 100%-deterministic pure-virtual-call crash in the old lifecycle (thread_ unique_ptr reassigned while a concurrent start had an OS thread mid-startup) — red before the refactor, green after, 10/10 repeat runs.
 57. cpp-safety-guardian review: APPROVE. Verified JUCE auto-reset/latched-notify semantics in-tree (no lost wakeup with self.wait(1)), no UAF window in dtor ordering, RT submit/result paths still lock- and allocation-free. Actionable finding (silent startThread failure) fixed in item 55; reviewer's proposed snippet had a publish-after-start ordering bug that was corrected during adoption. Depth-2 double-buffer caveat now documented inline in the header; no-arg getResult() remains the weaker-guarantee path (pre-existing, MLBridge hot path uses the id'd overload).
 58. Working-tree note: the repo format-on-write hook reindented both module files wholesale (4->2 space) and dropped the stray executable bit on MultiModelProcessor.h; semantic diff is the item-55/56 content (verify with git diff -w).
+59. TSan certification of the new MultiModelProcessor protocol (reviewer-recommended follow-up): stood up build-tsan (KMIDI_ENABLE_TSAN=ON, Debug). First link failed — the prebuilt Rust intent_ir staticlib exports compiler_builtins symbols (__divdc3 etc.), so ld resolves JUCE DSP's complex-math builtins from it, chains in Rust std + rust_eh_personality, and overflows the arm64 compact-unwind personality-routine limit (max 3) once TSan's runtime joins the link; ASan tolerated the same object set. Added KMIDI_ENABLE_INTENT_IR (default ON; FATAL_ERROR if disabled while BUILD_KELLY_FFI is ON) so sanitizer-certification trees can link KellyCore-based test executables without the Rust archive. Default builds verified unchanged (build-asan reconfigure still enables Intent IR). Results: MultiModelProcessorTest 5/5 runs clean under TSan (zero reports, torture included); full standalone suite 7/7 under TSan. Residual Pass F hygiene item for a human-approved slice: scrub non-ABI symbols from libintent_ir.a (ld -r + exported_symbols_list localization) so the staticlib stops exporting compiler_builtins into consumer links.
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods
