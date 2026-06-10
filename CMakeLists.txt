@@ -11,7 +11,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # macOS is always PIC, so this only changes ELF builds.
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # MSVC hides M_PI and friends behind this; harmless on glibc/libc++.
-add_compile_definitions(_USE_MATH_DEFINES)
+# NOMINMAX stops windows.h from defining min/max macros that mangle
+# std::min/std::max and std::numeric_limits<>::max() in any TU that pulls
+# in Windows headers through JUCE.
+add_compile_definitions(_USE_MATH_DEFINES NOMINMAX)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # Options
