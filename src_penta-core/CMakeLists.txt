@@ -94,10 +94,15 @@ if(TARGET juce::juce_dsp)
     )
     # penta_core does no HTTP, but juce_core on Linux otherwise emits libcurl
     # calls that fail the link of any consumer (penta_tests hit this on CI;
-    # macOS is unaffected because JUCE uses native streams there). PUBLIC so
-    # every target that transitively compiles JUCE module sources through
-    # penta_core sees a consistent JUCE_USE_CURL value.
-    target_compile_definitions(penta_core PUBLIC JUCE_USE_CURL=0)
+    # macOS is unaffected because JUCE uses native streams there). Likewise
+    # nothing in the repo uses WebBrowserComponent, and with it enabled
+    # juce_gui_extra needs gtk/webkit2gtk headers at compile time on Linux.
+    # PUBLIC so every target that transitively compiles JUCE module sources
+    # through penta_core sees consistent values.
+    target_compile_definitions(penta_core PUBLIC
+        JUCE_USE_CURL=0
+        JUCE_WEB_BROWSER=0
+    )
 else()
     # Build without JUCE if not available
     message(WARNING "JUCE not available, building penta_core without juce_dsp")
