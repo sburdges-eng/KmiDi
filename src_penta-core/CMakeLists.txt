@@ -92,6 +92,12 @@ if(TARGET juce::juce_dsp)
         readerwriterqueue
         juce::juce_dsp
     )
+    # penta_core does no HTTP, but juce_core on Linux otherwise emits libcurl
+    # calls that fail the link of any consumer (penta_tests hit this on CI;
+    # macOS is unaffected because JUCE uses native streams there). PUBLIC so
+    # every target that transitively compiles JUCE module sources through
+    # penta_core sees a consistent JUCE_USE_CURL value.
+    target_compile_definitions(penta_core PUBLIC JUCE_USE_CURL=0)
 else()
     # Build without JUCE if not available
     message(WARNING "JUCE not available, building penta_core without juce_dsp")
