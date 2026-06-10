@@ -112,7 +112,7 @@ Top-level high-signal paths:
 
 Supporting/legacy-adjacent surfaces still present in-tree:
 - `libs/daiw/`
-- `include/penta/`, `include/prrot/`
+- `include/penta/`
 - `src_penta-core/`
 - `legacy/ui/`
 - older review/audit docs that may preserve historical Tauri-era assumptions

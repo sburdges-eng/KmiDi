@@ -49,7 +49,7 @@ If any answer is yes or unclear, escalate review depth.
 - [ ] `src/ui/` remains presentation under plugin/runtime authority, not a truth-owning layer.
 - [ ] `src/project/` remains project/session/persistence authority under plugin/runtime.
 - [ ] `src/ml/` only grows on the native side when runtime-needed; broader experimentation belongs in backend/orchestration.
-- [ ] Support surfaces (`src_penta-core/`, `include/penta/`, `include/prrot/`, `libs/daiw/`) did not become accidental architecture authority.
+- [ ] Support surfaces (`src_penta-core/`, `include/penta/`, `libs/daiw/`) did not become accidental architecture authority.
 - [ ] Engine-separable extraction seams were preserved.
 
 ## Pass C — Intent IR / data contracts

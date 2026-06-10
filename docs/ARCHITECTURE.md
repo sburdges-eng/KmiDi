@@ -148,7 +148,7 @@ Current canonical module map and relevant surfaces
 - `docs/`, `AGENTS.md`: docs/governance
 
 Support and classification notes
-- `src_penta-core/`, `include/penta/`, `include/prrot/`, and `libs/daiw/` are native support/code-organization surfaces, not independent semantic or persistence authority layers
+- `src_penta-core/`, `include/penta/`, and `libs/daiw/` are native support/code-organization surfaces, not independent semantic or persistence authority layers
 - build outputs, caches, and rescue artifacts are never authority
 - older docs that assume Tauri as the desktop/runtime center are historical, not architectural authority
 

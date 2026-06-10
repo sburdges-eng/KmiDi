@@ -47,7 +47,7 @@ KmiDi/
 ├── training/scripts/       # JEPA training entrypoints (train_jepa.py)
 ├── tests/                  # Python tests (pytest)
 ├── engine/, include/, src/ # C++ (engine, bridge, plugin, DSP)
-├── include/prrot, include/penta  # PRROT/penta headers
+├── include/penta           # penta headers
 ├── src_penta-core/         # Penta-core C++ (harmony, groove, diagnostics)
 ├── external/JUCE/          # JUCE 8 (required for C++/plugins/FFI)
 ├── cmake/                  # CMake helpers

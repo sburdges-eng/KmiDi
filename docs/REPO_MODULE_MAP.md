@@ -219,7 +219,6 @@ Canonical native support surfaces
 - `include/penta/` as native support/public header surface for penta-related code
 - `src_penta-core/` as a canonical native support surface for `penta::` namespace code where current build rules designate it canonical
 - `libs/daiw/` as canonical low-level native support/toolchain surface for internal RT-safe primitives
-- `include/prrot/` as specialized native support/public header surface, not a separate architecture authority layer
 
 Migration / legacy-compatible surfaces
 - any older duplicate or partially overlapping native implementations that exist only for compatibility, staged consolidation, or transition
@@ -235,7 +234,7 @@ Artifact / non-authority surfaces
 - compiled objects, local logs, and other transient build outputs
 
 Important classification note
-- `src_penta-core/`, `include/penta/`, `include/prrot/`, and `libs/daiw/` are not independent semantic, persistence, or product-authority layers.
+- `src_penta-core/`, `include/penta/`, and `libs/daiw/` are not independent semantic, persistence, or product-authority layers.
 - They are support/code organization surfaces inside the broader native architecture and must not accumulate conflicting authority with the canonical docs and module rules.
 
 ## Canonical vs historical docs
