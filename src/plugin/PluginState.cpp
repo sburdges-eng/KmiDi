@@ -1,6 +1,7 @@
 #include "plugin/PluginState.h"
 #include "plugin/PluginProcessor.h"
 #include <juce_core/juce_core.h>
+#include <optional>
 
 namespace kelly {
 namespace {

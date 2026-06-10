@@ -3,6 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include <numeric>
+#include <optional>
 
 namespace midikompanion {
 namespace ml {

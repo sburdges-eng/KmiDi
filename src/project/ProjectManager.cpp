@@ -2,6 +2,7 @@
 #include "common/Types.h"
 #include "plugin/PluginState.h" // Include PluginState for Preset type
 #include <juce_core/juce_core.h>
+#include <optional>
 
 namespace midikompanion {
 namespace {

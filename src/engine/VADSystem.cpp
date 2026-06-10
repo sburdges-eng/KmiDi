@@ -5,6 +5,7 @@
 #include <ctime>
 #include <numeric>
 #include <cmath>
+#include <optional>
 
 namespace kelly {
 

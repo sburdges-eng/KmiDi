@@ -9,6 +9,7 @@
 #ifndef KELLY_BRIDGE_NO_JUCE
 #include "engine/EmotionThesaurusLoader.h"
 #include <juce_core/juce_core.h>
+#include <optional>
 #endif
 
 namespace kelly {

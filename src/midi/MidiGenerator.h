@@ -22,6 +22,7 @@
 #include <vector>
 #include <cstdint>
 #include <random>
+#include <optional>
 
 namespace kelly {
 

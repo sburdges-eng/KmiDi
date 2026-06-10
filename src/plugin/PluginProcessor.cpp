@@ -75,6 +75,7 @@ Wound convertLegacyToKellyTypesWound(const Wound &legacy) {
 #endif
 #if defined(__unix__) || defined(__APPLE__)
 #include <unistd.h>
+#include <optional>
 #endif
 
 using namespace kelly::MusicConstants;
