@@ -21,7 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install numpy scipy torch librosa pyyaml
-        pip install pytest pytest-cov
+        pip install pytest pytest-cov httpx2
         pip install -e .
     - run: pytest tests/unit/ -v --cov=music_brain
 
@@ -41,10 +41,11 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y cmake ninja-build build-essential qt6-base-dev
+        bash scripts/ci/install_juce_linux_deps.sh
     - name: Install Python dependencies
       run: |
         pip install numpy scipy torch librosa pyyaml
-        pip install pytest pytest-cov
+        pip install pytest pytest-cov httpx2
         pip install -e .
     - name: Run baseline diagnostics
       run: |
