@@ -416,6 +416,16 @@ target_link_libraries(KellyCore PUBLIC
 # Link Rust Intent IR if available
 if(KMIDI_HAS_INTENT_IR)
     target_link_libraries(KellyCore PUBLIC ${INTENT_IR_RUST_ARCHIVE})
+    if(WIN32)
+        # Rust std's Windows runtime imports (ntdll Nt*, userenv
+        # GetUserProfileDirectoryW, bcrypt randomness, winsock, WaitOnAddress).
+        # cargo adds these automatically when rustc drives the final link;
+        # MSVC drives ours, so the import libs must be explicit. PUBLIC so
+        # every consumer of the archive (KellyFFI.dll, test exes) inherits.
+        target_link_libraries(KellyCore PUBLIC
+            ntdll userenv bcrypt ws2_32 synchronization
+        )
+    endif()
     add_dependencies(KellyCore intent_ir_rust_lib)
     target_compile_definitions(KellyCore PRIVATE INTENT_IR_RUST_AVAILABLE)
     message(STATUS "KellyCore: Intent IR Rust linkage enabled (${INTENT_IR_RUST_ARCHIVE})")
