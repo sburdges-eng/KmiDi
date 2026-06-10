@@ -92,6 +92,12 @@ jobs:
           echo "CC=${{ matrix.cc }}" >> $GITHUB_ENV
           echo "CXX=${{ matrix.cxx }}" >> $GITHUB_ENV
 
+      - name: Set up MSVC environment (Windows)
+        if: runner.os == 'Windows'
+        # cmake+Ninja would otherwise pick up Strawberry Perl's MinGW gcc
+        # from PATH, which miscompiles JUCE during configure.
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Configure CMake
         # bash explicitly: the default shell on windows-latest is pwsh, which
         # does not understand backslash line continuations.

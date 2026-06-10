@@ -88,6 +88,13 @@ jobs:
         shell: bash
         run: ./scripts/juce/apply_patches.sh
       
+      - name: Set up MSVC environment (Windows)
+        if: runner.os == 'Windows'
+        # Without this, cmake+Ninja under bash resolves cc to Strawberry
+        # Perl's MinGW gcc from PATH, which miscompiles JUCE (pointer_sized_int
+        # becomes 32-bit int and juceaide fails during configure).
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Configure CMake
         run: |
           cmake -B build -G Ninja \
