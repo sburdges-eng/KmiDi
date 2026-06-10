@@ -108,9 +108,12 @@ if(NOT KMIDI_BUILD_JUCE_UI)
     set(BUILD_PLUGINS OFF CACHE BOOL "Build VST3 and CLAP plugins" FORCE)
 endif()
 
-# Qt is only required when Qt-backed targets are being built.
+# Qt is only required when Qt-backed targets are being built. KellyCore and
+# the JUCE plugins include no Qt headers — the only Qt consumer is the legacy
+# desktop app (legacy/ui/qt_gui/, gated by KMIDI_BUILD_QT_UI) — so a missing
+# Qt6 must not fail configure for core/test/CI builds.
 set(KMIDI_REQUIRE_QT OFF)
-if(BUILD_KELLY_CORE OR BUILD_DESKTOP OR BUILD_PLUGINS)
+if(KMIDI_BUILD_QT_UI OR BUILD_DESKTOP)
     set(KMIDI_REQUIRE_QT ON)
 endif()
 
@@ -665,12 +668,15 @@ if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE)
     # the top-level scope. PRIVATE keeps it out of the C ABI consumer surface.
     find_package(Python3 COMPONENTS Development QUIET)
     target_link_libraries(KellyFFI PRIVATE KellyCore
-        Qt6::Core
-        Qt6::Widgets
         juce::juce_audio_basics
         juce::juce_core
         $<$<TARGET_EXISTS:Python3::Python>:Python3::Python>
     )
+    # Qt is linked only when Qt-backed targets are enabled; no KellyFFI or
+    # KellyCore source includes Qt headers, so this stays PRIVATE-and-optional.
+    if(KMIDI_REQUIRE_QT)
+        target_link_libraries(KellyFFI PRIVATE Qt6::Core Qt6::Widgets)
+    endif()
     
     # Avoid JUCE debug static initializer (JuceVersionPrinter) in the dylib to
     # prevent any cross-boundary string ops during load.
