@@ -26,7 +26,9 @@ Validated rescue commits so far:
 - a1076153 rescue(osc-dispatch): match msgid-less fallback responses by request type
 - 089c1040 rescue(preference-fallback): preserve valid queue JSON across repeated flushes
 - b4449677 rescue(final-audit): close bounded overnight hardening pass
-- pending-next: targeted post-close native sweep on untouched surfaces only when a fresh grounded hazard appears
+- 1938ecb8 rescue(viewport-ownership): prevent double-delete in score and mixer panels
+- pending-uncommitted: rescue(ml-pipeline): module-scoped RAII/ownership pass on src/ml/MultiModelProcessor under the approved Pass D/E handoff (awaiting commit approval)
+- pending-next: next single-module Pass D/E ownership pass, or a TSan certification run of MultiModelProcessorTest (separate build; ASan/TSan mutually exclusive)
 
 Validated builds/tests so far:
 - engine/intent_ir: cargo test passing
@@ -48,6 +50,8 @@ Validated builds/tests so far:
 - build-rescue: cmake --build build-rescue --target KellyCore KellyFFI -j4 passing after PreferenceBridge fallback queue JSON-integrity repair
 - engine/intent_ir: cargo test passing after final residual hazard sweep
 - build-rescue: cmake --build build-rescue --target KellyCore KellyFFI -j4 passing after Viewport ownership hardening in ScoreEntryPanel/MixerConsolePanel
+- build-asan: full ctest 7/7 passing under ASan+UBSan (Debug) including new MultiModelProcessorTest, 10/10 repeat runs of the lifecycle torture
+- build-debug: cmake --build build-debug --target KellyCore KellyFFI -j8 passing after MultiModelProcessor module pass
 
 FFI boundaries already secured:
 - Rust intent_ir FFI handle now stores IntentFrameBuilder inline, using core::mem::take ownership transitions
@@ -122,6 +126,11 @@ Current position in file-by-file scan:
 51. Post-close targeted UI ownership pass found a concrete JUCE Viewport contract bug in untouched panels: ScoreEntryPanel and MixerConsolePanel each kept their viewed child in std::unique_ptr while also calling setViewedComponent(child) with JUCE's default deleteWhenNoLongerNeeded=true. That creates a double-ownership / double-delete hazard at teardown. Both sites now pass false, matching the already-correct WorkstationPanel pattern and preserving single ownership in the unique_ptr.
 52. Latest validation: KellyCore and KellyFFI rebuilds remain clean after the Viewport ownership hardening pass.
 53. Remaining setViewedComponent sites were rechecked: WorkstationPanel already passes false, so the known repo-local double-delete pattern is closed for the inspected panels.
+54. Session reopened under the approved architecture handoff (docs/handoffs/20260609_034047_caca5b.md): Pass D/E now authorizes module-scoped RAII modernization inside contained subsystems (one-module blast radius), beyond the earlier hazard-driven point fixes.
+55. src/ml/MultiModelProcessor.h/.cpp module pass (first under the new rules): AsyncMLPipeline worker is now a concrete std::unique_ptr<InferenceThread> (no static_cast downcasts); start()/stop() serialized by lifecycleMutex_ and idempotent; stop() joins cooperatively via signalThreadShouldExit+notify+waitForThreadToExit(-1) instead of stopThread(1000), whose force-kill could orphan the processor mutex mid-inference and poison later infer calls; the worker snapshots pendingFeatures_/pendingRequestId_ before releasing hasRequest_, closing a torn-feature read when a new submit landed mid-inference; ModelWrapper loaded_/enabled_ and MultiModelProcessor initialized_ are now atomic for their off-lock readers; startThread() failure rolls back running_/thread_ (publish-before-start preserved) so a later start() can retry. Public API unchanged; consumers (PluginProcessor, MLBridge) untouched.
+56. New tests/cpp/test_multi_model_processor.cpp (standalone main, links KellyCore, sanitizer-instrumented, 120s ctest timeout): 11 cases including a concurrent start/stop torture that reproduced a 100%-deterministic pure-virtual-call crash in the old lifecycle (thread_ unique_ptr reassigned while a concurrent start had an OS thread mid-startup) — red before the refactor, green after, 10/10 repeat runs.
+57. cpp-safety-guardian review: APPROVE. Verified JUCE auto-reset/latched-notify semantics in-tree (no lost wakeup with self.wait(1)), no UAF window in dtor ordering, RT submit/result paths still lock- and allocation-free. Actionable finding (silent startThread failure) fixed in item 55; reviewer's proposed snippet had a publish-after-start ordering bug that was corrected during adoption. Depth-2 double-buffer caveat now documented inline in the header; no-arg getResult() remains the weaker-guarantee path (pre-existing, MLBridge hot path uses the id'd overload).
+58. Working-tree note: the repo format-on-write hook reindented both module files wholesale (4->2 space) and dropped the stray executable bit on MultiModelProcessor.h; semantic diff is the item-55/56 content (verify with git diff -w).
 
 Inspection heuristics for next batches:
 - raw pointer ownership hidden behind typedefs or factory methods

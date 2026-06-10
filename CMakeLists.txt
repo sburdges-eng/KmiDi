@@ -863,6 +863,24 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
         add_test(NAME SIMDKernelsTest COMMAND SIMDKernelsTest)
     endif()
 
+    # MultiModelProcessor lifecycle/ownership test — standalone main, links
+    # KellyCore (juce_core arrives transitively via KellyCore's PUBLIC links,
+    # so the executable must not link JUCE modules directly).
+    add_executable(MultiModelProcessorTest
+        tests/cpp/test_multi_model_processor.cpp
+    )
+    target_link_libraries(MultiModelProcessorTest PRIVATE KellyCore)
+    target_include_directories(MultiModelProcessorTest PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+    target_compile_features(MultiModelProcessorTest PRIVATE cxx_std_20)
+    if(COMMAND add_test)
+        add_test(NAME MultiModelProcessorTest COMMAND MultiModelProcessorTest)
+        # Lifecycle torture must never wedge an overnight ctest run.
+        set_tests_properties(MultiModelProcessorTest PROPERTIES TIMEOUT 120)
+    endif()
+
     # Instrument the test executables with whichever sanitizer is active so the
     # ctest gate runs under the same ASan/UBSan/TSan/RTSan as the KellyCore
     # build. Guarded by TARGET so Catch2-only targets are skipped when absent.
@@ -871,7 +889,8 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
         foreach(_kmidi_test_tgt
                 AudioEmotionRunnerTests EmotionSchemaTests
                 RTStateSeqlockTest RTEventSchedulerTest DSPGraphTest
-                GpuSchedulerTest SharedIpcTest SIMDKernelsTest)
+                GpuSchedulerTest SharedIpcTest SIMDKernelsTest
+                MultiModelProcessorTest)
             if(TARGET ${_kmidi_test_tgt})
                 if(KMIDI_ENABLE_ASAN)
                     enable_sanitizers(${_kmidi_test_tgt})
