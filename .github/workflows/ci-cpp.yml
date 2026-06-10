@@ -27,6 +27,11 @@ jobs:
   build:
     name: ${{ matrix.build_type }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    # bash everywhere: windows-latest defaults to pwsh, which cannot parse the
+    # backslash line continuations in the cmake configure step below.
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
