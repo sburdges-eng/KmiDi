@@ -30,6 +30,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        # external/JUCE is a submodule; configure dies at the JUCE-not-found
+        # guard without it (same fix as the coverage and plugin jobs).
+        submodules: recursive
     - uses: actions/setup-python@v5
       with:
         python-version: '3.11'
@@ -40,13 +44,15 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake ninja-build build-essential qt6-base-dev
+        sudo apt-get install -y cmake ninja-build build-essential
         bash scripts/ci/install_juce_linux_deps.sh
     - name: Install Python dependencies
       run: |
         pip install numpy scipy torch librosa pyyaml
         pip install pytest pytest-cov httpx2
         pip install -e .
+    - name: Install Node dependencies
+      run: npm ci
     - name: Run baseline diagnostics
       run: |
         scripts/diagnostics/run_bug_baseline.sh artifacts/debug_baseline_ci
@@ -61,4 +67,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: bug-taxonomy-report
-        path: artifacts/debug_baseline_ci/bug_taxonomy_report.md
+        # Whole directory: per-command logs for triage, plus
+        # bug_taxonomy_baseline_candidate.txt — commit that file as
+        # scripts/diagnostics/bug_taxonomy_baseline.txt to re-baseline.
+        path: artifacts/debug_baseline_ci/
