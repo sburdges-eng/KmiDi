@@ -198,6 +198,27 @@ endif()
 add_subdirectory(src_penta-core)
 
 # ============================================================================
+# PRROT subsystem library (prrot:: voice analysis / control data)
+# ============================================================================
+# Standalone static lib (2026-06-10): prrot_bindings.cpp binds prrot::PRROTEngine,
+# so the symbols must link without KellyCore — the BUILD_KELLY_CORE=OFF headless
+# CI job hit LNK1120 on windows-latest (12 prrot::* externals). KellyCore links
+# this target below and its glob excludes src/prrot/, so the subsystem has
+# exactly one owning archive. PhonemeSegmenter/SpectralAnalyzer use
+# juce::dsp::FFT and PRROTEngine logs via penta/common/RTLogger.h; the
+# penta_core link provides both (juce_dsp is PUBLIC there). The PUBLIC src/
+# include dir resolves "prrot/*.h" to the co-located headers, matching how
+# these TUs compiled under KellyCore (src/ ahead of include/ on the path).
+file(GLOB PRROT_CORE_SOURCES CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/prrot/*.cpp
+)
+add_library(prrot_core STATIC ${PRROT_CORE_SOURCES})
+target_include_directories(prrot_core PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+target_link_libraries(prrot_core PUBLIC penta_core)
+
+# ============================================================================
 # Intent IR Rust crate (validation, clamping, builder)
 # ============================================================================
 if(KMIDI_ENABLE_INTENT_IR AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/engine/intent_ir/CMakeLists.txt)
@@ -317,6 +338,27 @@ list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/export/StemExporter\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/project/ProjectFile\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/groove_bindings\\.cpp$")
 
+# penta::osc ownership (2026-06-10): OSCHub/OSCServer/OSCClient implement
+# penta::osc:: classes declared in include/penta/osc/ and are compiled into
+# penta_core (src_penta-core/CMakeLists.txt appends them) so penta_core_native
+# links without KellyCore — BUILD_KELLY_CORE=OFF headless CI hit LNK1120 on
+# windows-latest. KellyCore keeps the symbols via its penta_core link;
+# excluding here prevents duplicate definitions across the two archives.
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/osc/OSCClient\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/osc/OSCHub\\.cpp$")
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/osc/OSCServer\\.cpp$")
+
+# prrot:: ownership (2026-06-10): src/prrot/ builds as the standalone
+# prrot_core static lib (defined above) so penta_core_native links without
+# KellyCore. KellyCore keeps the symbols via its prrot_core link below.
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/prrot/.*\\.cpp$")
+
+# penta::harmony::VoiceLeading (2026-06-10): referenced by penta_core's own
+# HarmonyEngine.cpp — the remaining 2 LNK2001 externals in the same headless
+# job. The impl now compiles into penta_core (src_penta-core/CMakeLists.txt
+# appends it); KellyCore keeps the symbols via its penta_core link.
+list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/harmony/VoiceLeading\\.cpp$")
+
 # Intra-library ODR fixes 2026-04-14 (caught by scripts/audit/intra_lib_odr_scan.py):
 #   - src/core/emotion_thesaurus.cpp is a self-labeled legacy stub from
 #     'early architecture iterations' that returns nullptr/no-op for
@@ -369,6 +411,7 @@ target_link_libraries(KellyCore PUBLIC
     readerwriterqueue
     concurrentqueue
     penta_core
+    prrot_core
 )
 # Link Rust Intent IR if available
 if(KMIDI_HAS_INTENT_IR)
@@ -709,7 +752,19 @@ if(BUILD_KELLY_FFI AND BUILD_KELLY_CORE)
             INSTALL_NAME_DIR "@rpath"
         )
     endif()
-    
+
+    # Windows: the C ABI headers rely on unix default visibility, so MSVC
+    # exports nothing — and with zero exports link.exe emits no KellyFFI.lib
+    # import library, failing every consumer with LNK1181. The curated .def
+    # is the export mechanism AND the machine-enforced narrow ABI (Pass F):
+    # only listed symbols leave the DLL. CMake passes .def sources to the
+    # linker (/DEF:) automatically. Do NOT use WINDOWS_EXPORT_ALL_SYMBOLS —
+    # the statically embedded JUCE+KellyCore+penta would exceed the 64K
+    # export limit and shatter the narrow-ABI rule.
+    if(WIN32)
+        target_sources(KellyFFI PRIVATE src/bridge/KellyFFI.def)
+    endif()
+
     # Install FFI library
     install(TARGETS KellyFFI
         RUNTIME DESTINATION bin
