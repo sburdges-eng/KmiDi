@@ -26,6 +26,7 @@ from music_brain.orchestrator.interfaces import (
 @dataclass
 class GrooveInput:
     """Input data for groove processing."""
+
     tempo: int = 120
     genre: str = "straight"
     emotion: str = "neutral"
@@ -37,6 +38,7 @@ class GrooveInput:
 @dataclass
 class GrooveOutput:
     """Output from groove processing."""
+
     pattern_name: str
     tempo_bpm: int
     swing_factor: float
@@ -97,7 +99,7 @@ class GrooveProcessor(BaseProcessor):
         if isinstance(input_data, dict):
             return input_data.get("tempo", 120) > 0
         # Accept HarmonyOutput from previous stage - we'll get params from context
-        if hasattr(input_data, 'chords'):
+        if hasattr(input_data, "chords"):
             return True
         return False
 
@@ -129,7 +131,7 @@ class GrooveProcessor(BaseProcessor):
                 )
             elif isinstance(input_data, GrooveInput):
                 groove_input = input_data
-            elif hasattr(input_data, 'chords'):
+            elif hasattr(input_data, "chords"):
                 # Input is from HarmonyProcessor - get params from context
                 groove_input = GrooveInput(
                     tempo=context.get_shared("tempo", 120),
@@ -192,9 +194,8 @@ class GrooveProcessor(BaseProcessor):
 
         profiles = (context.get_shared("learning_profiles") if context else None) or {}
         storage_root = context.get_shared("learning_storage_root") if context else None
-        learn_profile = (
-            (input_data.params or {}).get("learning_groove_profile")
-            or profiles.get("groove")
+        learn_profile = (input_data.params or {}).get("learning_groove_profile") or profiles.get(
+            "groove"
         )
         if learn_profile:
             g_dir = Path(storage_root) / "grooves" if storage_root else None

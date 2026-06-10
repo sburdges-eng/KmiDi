@@ -105,9 +105,10 @@ class Event:
         return cls(
             type=d["type"],
             data=d.get("data"),
-            id=d.get("id", str(uuid.uuid4())[: 8]),
-            timestamp=datetime.fromisoformat(d["timestamp"])
-            if "timestamp" in d else datetime.now(),
+            id=d.get("id", str(uuid.uuid4())[:8]),
+            timestamp=(
+                datetime.fromisoformat(d["timestamp"]) if "timestamp" in d else datetime.now()
+            ),
             source=d.get("source"),
             priority=EventPriority(d.get("priority", EventPriority.NORMAL)),
         )
@@ -383,9 +384,7 @@ class EventBus:
             # No event loop - create one temporarily
             asyncio.run(self.emit(event_type, data, source, wait=False))
 
-    def _get_matching_handlers(
-        self, event_type: str
-    ) -> List[tuple]:
+    def _get_matching_handlers(self, event_type: str) -> List[tuple]:
         """Get all handlers matching an event type, including wildcards."""
         result: List[tuple] = []
 
@@ -522,7 +521,7 @@ class EventBus:
 
     def __repr__(self) -> str:
         hc = self.get_handler_count()
-        ee = self._stats['events_emitted']
+        ee = self._stats["events_emitted"]
         return f"EventBus(handlers={hc}, events={ee})"
 
 

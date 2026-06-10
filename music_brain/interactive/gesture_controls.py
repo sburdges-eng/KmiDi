@@ -13,6 +13,7 @@ from collections import defaultdict
 
 class GestureType(Enum):
     """Types of gestures."""
+
     DRAG = "drag"
     PINCH = "pinch"
     ROTATE = "rotate"
@@ -24,6 +25,7 @@ class GestureType(Enum):
 @dataclass
 class Gesture:
     """Represents a gesture."""
+
     gesture_type: GestureType
     start_position: Tuple[float, float]
     current_position: Tuple[float, float]
@@ -40,7 +42,7 @@ class Gesture:
         """Get position delta from start to current."""
         return (
             self.current_position[0] - self.start_position[0],
-            self.current_position[1] - self.start_position[1]
+            self.current_position[1] - self.start_position[1],
         )
 
     def get_distance(self) -> float:
@@ -52,6 +54,7 @@ class Gesture:
         """Get angle from start to current position (in radians)."""
         dx, dy = self.get_delta()
         import math
+
         return math.atan2(dy, dx)
 
 
@@ -70,10 +73,7 @@ class GestureMapper:
         self.handlers: Dict[str, List[Callable]] = defaultdict(list)
 
     def register_handler(
-        self,
-        target: str,
-        gesture_type: GestureType,
-        handler: Callable[[Gesture], Dict[str, float]]
+        self, target: str, gesture_type: GestureType, handler: Callable[[Gesture], Dict[str, float]]
     ):
         """
         Register a handler for a gesture on a target.
@@ -86,11 +86,7 @@ class GestureMapper:
         key = f"{target}:{gesture_type.value}"
         self.handlers[key].append(handler)
 
-    def process_gesture(
-        self,
-        target: str,
-        gesture: Gesture
-    ) -> Dict[str, float]:
+    def process_gesture(self, target: str, gesture: Gesture) -> Dict[str, float]:
         """
         Process a gesture and return parameter changes.
 
@@ -157,7 +153,7 @@ class EmotionWheelGestureHandler:
         return {
             "valence": valence,
             "arousal": max(0.0, min(1.0, arousal)),
-            "intensity": max(0.0, min(1.0, intensity))
+            "intensity": max(0.0, min(1.0, intensity)),
         }
 
 
@@ -187,7 +183,7 @@ def main():
     gesture = Gesture(
         gesture_type=GestureType.DRAG,
         start_position=(0.0, 0.0),
-        current_position=(50.0, -30.0)  # Right and up
+        current_position=(50.0, -30.0),  # Right and up
     )
 
     # Process gesture

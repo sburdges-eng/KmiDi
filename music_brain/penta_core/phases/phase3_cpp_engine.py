@@ -18,11 +18,11 @@ class CPPEnginePhase:
 
     def build_engine(self):
         """Build and link C++ core modules using CMake."""
-        build_dir = os.path.join(self.root_dir, 'build')
+        build_dir = os.path.join(self.root_dir, "build")
         print(f"[Phase3] Building C++ engine in {build_dir}...")
         result = subprocess.run(
-            ['cmake', '--build', '.', '-j4'],
-            cwd=build_dir, capture_output=True, text=True)
+            ["cmake", "--build", ".", "-j4"], cwd=build_dir, capture_output=True, text=True
+        )
         print(result.stdout)
         if result.returncode != 0:
             print(result.stderr)

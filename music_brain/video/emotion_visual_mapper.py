@@ -16,6 +16,7 @@ try:
         FastEmbeddingPredictor,
         create_regularized_mapper,
     )
+
     HAS_REGULARIZATION = True
 except ImportError:
     HAS_REGULARIZATION = False
@@ -23,6 +24,7 @@ except ImportError:
 
 class VisualStyle(Enum):
     """Overall visual style categories."""
+
     CINEMATIC = "cinematic"
     ABSTRACT = "abstract"
     MINIMALIST = "minimalist"
@@ -47,28 +49,28 @@ class VisualParams:
 
     # Lighting
     brightness: float = 1.0  # 0.0 (dark) to 2.0 (very bright)
-    contrast: float = 1.0    # 0.0 (flat) to 2.0 (high contrast)
-    warmth: float = 0.0      # -1.0 (cool) to 1.0 (warm)
+    contrast: float = 1.0  # 0.0 (flat) to 2.0 (high contrast)
+    warmth: float = 0.0  # -1.0 (cool) to 1.0 (warm)
 
     # Motion
-    motion_speed: float = 1.0        # 0.0 (still) to 2.0 (fast)
-    motion_fluidity: float = 1.0     # 0.0 (jerky) to 1.0 (smooth)
-    camera_dynamism: float = 0.5     # 0.0 (static) to 1.0 (very dynamic)
+    motion_speed: float = 1.0  # 0.0 (still) to 2.0 (fast)
+    motion_fluidity: float = 1.0  # 0.0 (jerky) to 1.0 (smooth)
+    camera_dynamism: float = 0.5  # 0.0 (static) to 1.0 (very dynamic)
 
     # Space and composition
-    depth: float = 0.5              # 0.0 (flat) to 1.0 (deep 3D)
-    complexity: float = 0.5         # 0.0 (simple) to 1.0 (complex)
-    symmetry: float = 0.5           # 0.0 (asymmetric) to 1.0 (symmetric)
+    depth: float = 0.5  # 0.0 (flat) to 1.0 (deep 3D)
+    complexity: float = 0.5  # 0.0 (simple) to 1.0 (complex)
+    symmetry: float = 0.5  # 0.0 (asymmetric) to 1.0 (symmetric)
 
     # Effects
     particle_intensity: float = 0.5  # 0.0 (none) to 1.0 (intense)
-    blur_amount: float = 0.0         # 0.0 (sharp) to 1.0 (very blurred)
-    glow_intensity: float = 0.5      # 0.0 (none) to 1.0 (intense)
-    distortion: float = 0.0          # 0.0 (none) to 1.0 (heavy)
+    blur_amount: float = 0.0  # 0.0 (sharp) to 1.0 (very blurred)
+    glow_intensity: float = 0.5  # 0.0 (none) to 1.0 (intense)
+    distortion: float = 0.0  # 0.0 (none) to 1.0 (heavy)
 
     # Atmosphere
-    fog_density: float = 0.1         # 0.0 (clear) to 1.0 (dense)
-    atmosphere: str = "neutral"      # "neutral", "dreamy", "harsh", "ethereal"
+    fog_density: float = 0.1  # 0.0 (clear) to 1.0 (dense)
+    atmosphere: str = "neutral"  # "neutral", "dreamy", "harsh", "ethereal"
 
     # Style
     visual_style: VisualStyle = VisualStyle.CINEMATIC
@@ -101,25 +103,21 @@ class EmotionVisualMapper:
 
     # Emotion to color mappings (RGB, 0-1 scale)
     _EMOTION_COLORS = {
-        "joy": (1.0, 0.9, 0.3),        # Bright yellow
-        "sadness": (0.3, 0.4, 0.6),    # Muted blue
-        "grief": (0.2, 0.2, 0.3),      # Deep blue-grey
-        "anger": (0.9, 0.2, 0.1),      # Intense red
-        "fear": (0.3, 0.2, 0.4),       # Dark purple
-        "surprise": (1.0, 0.6, 0.2),   # Orange
-        "disgust": (0.5, 0.6, 0.2),    # Yellow-green
-        "trust": (0.3, 0.6, 0.8),      # Sky blue
+        "joy": (1.0, 0.9, 0.3),  # Bright yellow
+        "sadness": (0.3, 0.4, 0.6),  # Muted blue
+        "grief": (0.2, 0.2, 0.3),  # Deep blue-grey
+        "anger": (0.9, 0.2, 0.1),  # Intense red
+        "fear": (0.3, 0.2, 0.4),  # Dark purple
+        "surprise": (1.0, 0.6, 0.2),  # Orange
+        "disgust": (0.5, 0.6, 0.2),  # Yellow-green
+        "trust": (0.3, 0.6, 0.8),  # Sky blue
         "anticipation": (0.9, 0.7, 0.3),  # Gold
-        "love": (0.9, 0.3, 0.5),       # Rose/pink
-        "peace": (0.6, 0.8, 0.7),      # Mint/aqua
-        "anxiety": (0.6, 0.5, 0.4),    # Brown/grey
+        "love": (0.9, 0.3, 0.5),  # Rose/pink
+        "peace": (0.6, 0.8, 0.7),  # Mint/aqua
+        "anxiety": (0.6, 0.5, 0.4),  # Brown/grey
     }
 
-    def __init__(
-        self,
-        use_regularization: bool = False,
-        regularization_strength: float = 0.001
-    ):
+    def __init__(self, use_regularization: bool = False, regularization_strength: float = 0.001):
         """
         Initialize the emotion-visual mapper.
 
@@ -136,15 +134,12 @@ class EmotionVisualMapper:
             config, _ = create_regularized_mapper(
                 regularization_strength=regularization_strength,
                 use_dropout=False,  # Inference only
-                use_fast_inference=True
+                use_fast_inference=True,
             )
             self._embedding_predictor = FastEmbeddingPredictor(config)
 
     def map_emotion(
-        self,
-        emotion: str,
-        intensity: float = 0.5,
-        style: Optional[VisualStyle] = None
+        self, emotion: str, intensity: float = 0.5, style: Optional[VisualStyle] = None
     ) -> VisualParams:
         """
         Map an emotion to visual parameters.
@@ -171,10 +166,7 @@ class EmotionVisualMapper:
         return self._map_rule_based(emotion_lower, intensity, style)
 
     def _map_rule_based(
-        self,
-        emotion: str,
-        intensity: float,
-        style: Optional[VisualStyle]
+        self, emotion: str, intensity: float, style: Optional[VisualStyle]
     ) -> VisualParams:
         """
         Rule-based emotion mapping (original implementation).
@@ -188,16 +180,11 @@ class EmotionVisualMapper:
             VisualParams from rule-based mapping
         """
         # Get base color for emotion
-        primary_color = self._EMOTION_COLORS.get(
-            emotion,
-            (0.5, 0.5, 0.5)  # Default neutral grey
-        )
+        primary_color = self._EMOTION_COLORS.get(emotion, (0.5, 0.5, 0.5))  # Default neutral grey
 
         # Create visual parameters
         params = VisualParams(
-            primary_color=primary_color,
-            emotion_source=emotion,
-            intensity=intensity
+            primary_color=primary_color, emotion_source=emotion, intensity=intensity
         )
 
         # Apply intensity to parameters
@@ -210,10 +197,7 @@ class EmotionVisualMapper:
         return params
 
     def _map_with_regularization(
-        self,
-        emotion: str,
-        intensity: float,
-        style: Optional[VisualStyle]
+        self, emotion: str, intensity: float, style: Optional[VisualStyle]
     ) -> VisualParams:
         """
         Regularized embedding-based emotion mapping.
@@ -232,9 +216,7 @@ class EmotionVisualMapper:
         """
         # Get embedding prediction (with caching for speed)
         _embedding = self._embedding_predictor.predict(  # noqa: F841
-            emotion=emotion,
-            intensity=intensity,
-            use_cache=True  # Fast path
+            emotion=emotion, intensity=intensity, use_cache=True  # Fast path
         )
 
         # TODO: Convert embedding to VisualParams
@@ -243,16 +225,12 @@ class EmotionVisualMapper:
 
         # Add embedding data to metadata for future use
         params.notes["embedding_used"] = True
-        params.notes["embedding_cache_stats"] = (
-            self._embedding_predictor.get_performance_stats()
-        )
+        params.notes["embedding_cache_stats"] = self._embedding_predictor.get_performance_stats()
 
         return params
 
     def map_emotion_trajectory(
-        self,
-        emotions: List[Tuple[str, float, float]],
-        style: Optional[VisualStyle] = None
+        self, emotions: List[Tuple[str, float, float]], style: Optional[VisualStyle] = None
     ) -> List[VisualParams]:
         """
         Map an emotion trajectory over time to visual parameters.
@@ -270,17 +248,10 @@ class EmotionVisualMapper:
             - Handle emotion blending
             - Create coherent visual narrative
         """
-        return [
-            self.map_emotion(emotion, intensity, style)
-            for emotion, intensity, _ in emotions
-        ]
+        return [self.map_emotion(emotion, intensity, style) for emotion, intensity, _ in emotions]
 
     def blend_emotions(
-        self,
-        emotion_a: str,
-        emotion_b: str,
-        blend_factor: float = 0.5,
-        intensity: float = 0.5
+        self, emotion_a: str, emotion_b: str, blend_factor: float = 0.5, intensity: float = 0.5
     ) -> VisualParams:
         """
         Blend two emotions to create mixed visual parameters.
@@ -310,11 +281,7 @@ class EmotionVisualMapper:
         # Simple linear blend for now
         return self._blend_params(params_a, params_b, blend_factor)
 
-    def add_custom_mapping(
-        self,
-        emotion: str,
-        params: VisualParams
-    ) -> None:
+    def add_custom_mapping(self, emotion: str, params: VisualParams) -> None:
         """
         Add a custom emotion-to-visual mapping.
 
@@ -324,11 +291,7 @@ class EmotionVisualMapper:
         """
         self._custom_mappings[emotion.lower()] = params
 
-    def _apply_intensity(
-        self,
-        params: VisualParams,
-        intensity: float
-    ) -> VisualParams:
+    def _apply_intensity(self, params: VisualParams, intensity: float) -> VisualParams:
         """
         Apply intensity scaling to visual parameters.
 
@@ -350,15 +313,12 @@ class EmotionVisualMapper:
         # Basic scaling for now
         params.particle_intensity *= intensity
         params.glow_intensity *= intensity
-        params.motion_speed *= (0.5 + intensity * 0.5)
+        params.motion_speed *= 0.5 + intensity * 0.5
 
         return params
 
     def _blend_params(
-        self,
-        params_a: VisualParams,
-        params_b: VisualParams,
-        factor: float
+        self, params_a: VisualParams, params_b: VisualParams, factor: float
     ) -> VisualParams:
         """
         Blend two VisualParams linearly.
@@ -380,17 +340,10 @@ class EmotionVisualMapper:
 
         # Simple linear blend for colors
         def blend_color(c1, c2, f):
-            return tuple(
-                c1[i] * (1 - f) + c2[i] * f
-                for i in range(3)
-            )
+            return tuple(c1[i] * (1 - f) + c2[i] * f for i in range(3))
 
         return VisualParams(
-            primary_color=blend_color(
-                params_a.primary_color,
-                params_b.primary_color,
-                factor
-            ),
+            primary_color=blend_color(params_a.primary_color, params_b.primary_color, factor),
             brightness=params_a.brightness * (1 - factor) + params_b.brightness * factor,
             motion_speed=params_a.motion_speed * (1 - factor) + params_b.motion_speed * factor,
             emotion_source=f"{params_a.emotion_source}+{params_b.emotion_source}",
@@ -430,10 +383,7 @@ class EmotionVisualMapper:
             return self._embedding_predictor.get_performance_stats()
         return None
 
-    def enable_regularization(
-        self,
-        regularization_strength: float = 0.001
-    ) -> bool:
+    def enable_regularization(self, regularization_strength: float = 0.001) -> bool:
         """
         Enable regularized embedding prediction.
 
@@ -449,7 +399,7 @@ class EmotionVisualMapper:
         config, _ = create_regularized_mapper(
             regularization_strength=regularization_strength,
             use_dropout=False,
-            use_fast_inference=True
+            use_fast_inference=True,
         )
         self._embedding_predictor = FastEmbeddingPredictor(config)
         self._use_regularization = True

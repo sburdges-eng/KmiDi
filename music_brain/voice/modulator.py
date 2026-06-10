@@ -185,10 +185,12 @@ class VoiceModulator:
         # Load audio
         try:
             import soundfile as sf
+
             samples, sample_rate = sf.read(str(input_path))
         except ImportError:
             try:
                 import librosa
+
                 samples, sample_rate = librosa.load(str(input_path), sr=None, mono=True)
             except ImportError:
                 raise ImportError("Requires 'soundfile' or 'librosa': pip install soundfile")
@@ -203,9 +205,11 @@ class VoiceModulator:
         # Save
         try:
             import soundfile as sf
+
             sf.write(output_path, processed, sample_rate)
         except ImportError:
             from scipy.io import wavfile
+
             wavfile.write(output_path, sample_rate, (processed * 32767).astype(np.int16))
 
         return output_path
@@ -335,9 +339,7 @@ class VoiceModulator:
 
         return samples + shaped_noise
 
-    def _apply_whisper(
-        self, samples: np.ndarray, sample_rate: int, amount: float
-    ) -> np.ndarray:
+    def _apply_whisper(self, samples: np.ndarray, sample_rate: int, amount: float) -> np.ndarray:
         """Apply whisper effect (remove voiced component, add noise)."""
         # Generate whisper from noise shaped by spectral envelope
         noise = np.random.randn(len(samples))
@@ -365,9 +367,7 @@ class VoiceModulator:
         # Mix original and whisper
         return samples * (1 - amount) + whisper * amount
 
-    def _apply_robotic(
-        self, samples: np.ndarray, sample_rate: int, amount: float
-    ) -> np.ndarray:
+    def _apply_robotic(self, samples: np.ndarray, sample_rate: int, amount: float) -> np.ndarray:
         """Apply robotic/vocoder effect."""
         # Simple vocoder-like effect using ring modulation
         carrier_freq = 100  # Hz
@@ -437,9 +437,7 @@ class VoiceModulator:
 
         return output
 
-    def _apply_reverb(
-        self, samples: np.ndarray, sample_rate: int, amount: float
-    ) -> np.ndarray:
+    def _apply_reverb(self, samples: np.ndarray, sample_rate: int, amount: float) -> np.ndarray:
         """Apply simple reverb effect."""
         # Simple comb filter reverb
         delay_ms = 30

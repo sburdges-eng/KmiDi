@@ -40,16 +40,16 @@ logger = logging.getLogger(__name__)
 # Consonance/dissonance scores for intervals (semitones)
 # Higher score = more consonant
 INTERVAL_CONSONANCE = {
-    0: 1.0,   # Unison (perfect)
-    1: 0.1,   # Minor 2nd (very dissonant)
-    2: 0.3,   # Major 2nd (dissonant)
-    3: 0.5,   # Minor 3rd (consonant)
-    4: 0.7,   # Major 3rd (consonant)
-    5: 0.6,   # Perfect 4th (consonant)
-    6: 0.2,   # Tritone (very dissonant)
-    7: 0.9,   # Perfect 5th (very consonant)
-    8: 0.7,   # Minor 6th (consonant)
-    9: 0.7,   # Major 6th (consonant)
+    0: 1.0,  # Unison (perfect)
+    1: 0.1,  # Minor 2nd (very dissonant)
+    2: 0.3,  # Major 2nd (dissonant)
+    3: 0.5,  # Minor 3rd (consonant)
+    4: 0.7,  # Major 3rd (consonant)
+    5: 0.6,  # Perfect 4th (consonant)
+    6: 0.2,  # Tritone (very dissonant)
+    7: 0.9,  # Perfect 5th (very consonant)
+    8: 0.7,  # Minor 6th (consonant)
+    9: 0.7,  # Major 6th (consonant)
     10: 0.4,  # Minor 7th (dissonant)
     11: 0.3,  # Major 7th (dissonant)
     12: 1.0,  # Octave (perfect)
@@ -58,16 +58,16 @@ INTERVAL_CONSONANCE = {
 # Voice leading penalties (semitones)
 # Lower is better for smooth voice leading
 VOICE_LEADING_PENALTY = {
-    0: 0.0,   # No movement (good)
-    1: 0.2,   # Semitone (good)
-    2: 0.3,   # Whole tone (good)
-    3: 0.5,   # Minor 3rd (ok)
-    4: 0.6,   # Major 3rd (ok)
-    5: 0.8,   # Perfect 4th (larger leap)
-    6: 1.0,   # Tritone (awkward)
-    7: 0.9,   # Perfect 5th (larger leap)
-    8: 1.1,   # Minor 6th (large leap)
-    9: 1.2,   # Major 6th (large leap)
+    0: 0.0,  # No movement (good)
+    1: 0.2,  # Semitone (good)
+    2: 0.3,  # Whole tone (good)
+    3: 0.5,  # Minor 3rd (ok)
+    4: 0.6,  # Major 3rd (ok)
+    5: 0.8,  # Perfect 4th (larger leap)
+    6: 1.0,  # Tritone (awkward)
+    7: 0.9,  # Perfect 5th (larger leap)
+    8: 1.1,  # Minor 6th (large leap)
+    9: 1.2,  # Major 6th (large leap)
     10: 1.3,  # Minor 7th (very large)
     11: 1.4,  # Major 7th (very large)
     12: 1.5,  # Octave (very large)
@@ -531,7 +531,7 @@ class ContrastiveLoss(MusicTheoryLoss):
 
                 # Same class: minimize distance
                 if labels[i] == labels[j]:
-                    loss = dist ** 2
+                    loss = dist**2
                 # Different class: maximize distance up to margin
                 else:
                     loss = max(0, self.margin - dist) ** 2
@@ -604,11 +604,11 @@ class TemporalCoherenceLoss(MusicTheoryLoss):
 
             # Compute first-order differences (velocity)
             first_diff = np.diff(sequence, axis=0)
-            velocity_penalty = np.mean(first_diff ** 2)
+            velocity_penalty = np.mean(first_diff**2)
 
             # Compute second-order differences (acceleration)
             second_diff = np.diff(first_diff, axis=0)
-            acceleration_penalty = np.mean(second_diff ** 2)
+            acceleration_penalty = np.mean(second_diff**2)
 
             # Combined loss
             loss = velocity_penalty + self.smoothness_weight * acceleration_penalty
@@ -835,7 +835,9 @@ try:
     class TorchEmotionAwareLoss(nn.Module):
         """PyTorch wrapper for EmotionAwareLoss."""
 
-        def __init__(self, weight: float = 1.0, valence_weight: float = 0.5, arousal_weight: float = 0.5):  # noqa: E501
+        def __init__(
+            self, weight: float = 1.0, valence_weight: float = 0.5, arousal_weight: float = 0.5
+        ):  # noqa: E501
 
             super().__init__()
             self.loss_fn = EmotionAwareLoss(weight, valence_weight, arousal_weight)

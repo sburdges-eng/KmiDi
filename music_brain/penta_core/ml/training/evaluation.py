@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 try:
     import torch
     import torch.nn as nn
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -39,9 +40,11 @@ except ImportError:
 # Metric Classes
 # =============================================================================
 
+
 @dataclass
 class MetricResult:
     """Container for metric results."""
+
     name: str
     value: float
     std: Optional[float] = None
@@ -296,8 +299,7 @@ class EmotionMetrics(MusicMetrics):
             target_coord = self.EMOTION_COORDS.get(target_name, (0, 0))
 
             distance = np.sqrt(
-                (pred_coord[0] - target_coord[0]) ** 2 +
-                (pred_coord[1] - target_coord[1]) ** 2
+                (pred_coord[0] - target_coord[0]) ** 2 + (pred_coord[1] - target_coord[1]) ** 2
             )
             total_distance += distance
 
@@ -320,8 +322,7 @@ class EmotionMetrics(MusicMetrics):
             target_coord = self.EMOTION_COORDS.get(target_name, (0, 0))
 
             distance = np.sqrt(
-                (pred_coord[0] - target_coord[0]) ** 2 +
-                (pred_coord[1] - target_coord[1]) ** 2
+                (pred_coord[0] - target_coord[0]) ** 2 + (pred_coord[1] - target_coord[1]) ** 2
             )
 
             if distance <= threshold:
@@ -341,10 +342,26 @@ class GenreMetrics(MusicMetrics):
     """
 
     DEFAULT_GENRES = [
-        "blues", "classical", "country", "disco", "hiphop",
-        "jazz", "metal", "pop", "reggae", "rock",
-        "electronic", "folk", "rnb", "soul", "punk",
-        "alternative", "indie", "latin", "world", "other"
+        "blues",
+        "classical",
+        "country",
+        "disco",
+        "hiphop",
+        "jazz",
+        "metal",
+        "pop",
+        "reggae",
+        "rock",
+        "electronic",
+        "folk",
+        "rnb",
+        "soul",
+        "punk",
+        "alternative",
+        "indie",
+        "latin",
+        "world",
+        "other",
     ]
 
     def __init__(self, class_names: Optional[List[str]] = None):
@@ -518,6 +535,7 @@ class GrooveMetrics(MusicMetrics):
 # =============================================================================
 # Evaluation Functions
 # =============================================================================
+
 
 def evaluate_model(
     model: "nn.Module",
@@ -748,6 +766,7 @@ def plot_confusion_matrix(
 # =============================================================================
 # Validation Utilities
 # =============================================================================
+
 
 class ModelValidator:
     """

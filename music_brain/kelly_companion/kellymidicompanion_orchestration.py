@@ -17,6 +17,7 @@ from datetime import datetime
 
 try:
     import mido
+
     MIDO_AVAILABLE = True
 except ImportError:
     MIDO_AVAILABLE = False
@@ -26,38 +27,42 @@ except ImportError:
 # ENUMS & CONSTANTS
 # =============================================================================
 
+
 class TrackRole(Enum):
     """Musical role a track plays in arrangement."""
-    LEAD_MELODY = auto()      # Primary melodic line
-    COUNTER_MELODY = auto()   # Secondary melodic line
-    HARMONY_PAD = auto()      # Sustained harmonic support
-    CHORD_RHYTHM = auto()     # Rhythmic chord pattern
-    BASS = auto()             # Low-frequency foundation
-    DRUMS = auto()            # Percussion (Channel 9)
-    TEXTURE = auto()          # Ambient/fill elements
-    ACCENT = auto()           # Punctuation hits
-    ARPEGGIATED = auto()      # Broken chord patterns
-    DRONE = auto()            # Sustained single note
+
+    LEAD_MELODY = auto()  # Primary melodic line
+    COUNTER_MELODY = auto()  # Secondary melodic line
+    HARMONY_PAD = auto()  # Sustained harmonic support
+    CHORD_RHYTHM = auto()  # Rhythmic chord pattern
+    BASS = auto()  # Low-frequency foundation
+    DRUMS = auto()  # Percussion (Channel 9)
+    TEXTURE = auto()  # Ambient/fill elements
+    ACCENT = auto()  # Punctuation hits
+    ARPEGGIATED = auto()  # Broken chord patterns
+    DRONE = auto()  # Sustained single note
 
 
 class FrequencyRange(Enum):
     """Frequency bands for collision avoidance."""
-    SUB_BASS = (20, 60)       # 20-60 Hz
-    BASS = (60, 250)          # 60-250 Hz
-    LOW_MID = (250, 500)      # 250-500 Hz
-    MID = (500, 2000)         # 500-2000 Hz
-    HIGH_MID = (2000, 4000)   # 2-4 kHz
-    PRESENCE = (4000, 8000)   # 4-8 kHz
+
+    SUB_BASS = (20, 60)  # 20-60 Hz
+    BASS = (60, 250)  # 60-250 Hz
+    LOW_MID = (250, 500)  # 250-500 Hz
+    MID = (500, 2000)  # 500-2000 Hz
+    HIGH_MID = (2000, 4000)  # 2-4 kHz
+    PRESENCE = (4000, 8000)  # 4-8 kHz
     BRILLIANCE = (8000, 20000)  # 8-20 kHz
 
 
 class ChannelMode(Enum):
     """How to handle same-channel conflicts."""
-    LAYER = auto()      # Both tracks play simultaneously
-    REPLACE = auto()    # New track replaces old in overlap
+
+    LAYER = auto()  # Both tracks play simultaneously
+    REPLACE = auto()  # New track replaces old in overlap
     ALTERNATE = auto()  # Tracks take turns
-    DUCK = auto()       # One ducks under the other
-    MERGE = auto()      # Combine into single track
+    DUCK = auto()  # One ducks under the other
+    MERGE = auto()  # Combine into single track
 
 
 # Role-to-frequency mappings
@@ -90,20 +95,22 @@ COMPLEMENTARY_ROLES = {
 # DATA CLASSES
 # =============================================================================
 
+
 @dataclass
 class TimeInterval:
     """Represents a time range in the arrangement."""
-    start_beat: float         # Start position in beats
-    end_beat: float           # End position in beats
-    start_bar: int = 0        # Bar number (derived)
-    end_bar: int = 0          # Bar number (derived)
-    beats_per_bar: int = 4    # Time signature
+
+    start_beat: float  # Start position in beats
+    end_beat: float  # End position in beats
+    start_bar: int = 0  # Bar number (derived)
+    end_bar: int = 0  # Bar number (derived)
+    beats_per_bar: int = 4  # Time signature
 
     def __post_init__(self):
         self.start_bar = int(self.start_beat // self.beats_per_bar) + 1
         self.end_bar = int(self.end_beat // self.beats_per_bar) + 1
 
-    def overlaps(self, other: 'TimeInterval') -> bool:
+    def overlaps(self, other: "TimeInterval") -> bool:
         """Check if intervals overlap."""
         return not (self.end_beat <= other.start_beat or other.end_beat <= self.start_beat)
 
@@ -117,21 +124,23 @@ class TimeInterval:
 @dataclass
 class TrackAnnotation:
     """Annotation for a specific time interval on a track."""
+
     interval: TimeInterval
-    annotation_type: str      # "section", "dynamic", "technique", "emotion"
-    value: str                # e.g., "verse", "crescendo", "palm_mute", "grief"
-    intensity: float = 0.5    # 0.0-1.0 intensity modifier
-    notes: str = ""           # Additional notes
+    annotation_type: str  # "section", "dynamic", "technique", "emotion"
+    value: str  # e.g., "verse", "crescendo", "palm_mute", "grief"
+    intensity: float = 0.5  # 0.0-1.0 intensity modifier
+    notes: str = ""  # Additional notes
 
 
 @dataclass
 class KellyTrack:
     """A single track managed by Kelly."""
+
     track_id: str
     name: str
     midi_channel: int
     role: TrackRole
-    instrument_program: int   # MIDI program 0-127
+    instrument_program: int  # MIDI program 0-127
     emotion: str
     vulnerability: float
 
@@ -146,7 +155,7 @@ class KellyTrack:
 
     # Flags
     is_active: bool = True
-    is_leader: bool = False   # Leader track others follow
+    is_leader: bool = False  # Leader track others follow
 
     def __post_init__(self):
         if not self.track_id:
@@ -156,8 +165,7 @@ class KellyTrack:
 
     def get_annotations_at(self, beat: float) -> List[TrackAnnotation]:
         """Get all annotations active at a specific beat."""
-        return [a for a in self.annotations
-                if a.interval.start_beat <= beat < a.interval.end_beat]
+        return [a for a in self.annotations if a.interval.start_beat <= beat < a.interval.end_beat]
 
     def to_dict(self) -> Dict:
         return {
@@ -177,10 +185,11 @@ class KellyTrack:
 @dataclass
 class OrchestrationSession:
     """A session containing multiple coordinated Kelly tracks."""
+
     session_id: str
     name: str
     tempo_bpm: int
-    time_signature: Tuple[int, int]   # (numerator, denominator)
+    time_signature: Tuple[int, int]  # (numerator, denominator)
     key: str
     mode: str
 
@@ -216,7 +225,7 @@ class OrchestrationSession:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> 'OrchestrationSession':
+    def from_dict(cls, data: Dict) -> "OrchestrationSession":
         session = cls(
             session_id=data["session_id"],
             name=data["name"],
@@ -234,6 +243,7 @@ class OrchestrationSession:
 # =============================================================================
 # ORCHESTRATION ENGINE
 # =============================================================================
+
 
 class OrchestrationEngine:
     """
@@ -411,7 +421,10 @@ class OrchestrationEngine:
             return {"error": "Track not found"}
 
         if track_a.midi_channel != track_b.midi_channel:
-            return {"status": "no_conflict", "channels": [track_a.midi_channel, track_b.midi_channel]}  # noqa: E501
+            return {
+                "status": "no_conflict",
+                "channels": [track_a.midi_channel, track_b.midi_channel],
+            }  # noqa: E501
 
         result = {
             "mode": mode.name,
@@ -586,25 +599,25 @@ class OrchestrationEngine:
         # Instrument groups that complement each other
         COMPLEMENTARY_INSTRUMENTS = {
             # Piano leads
-            0: [40, 48, 32, 73],    # Piano -> Violin, Strings, Acoustic Bass, Flute
+            0: [40, 48, 32, 73],  # Piano -> Violin, Strings, Acoustic Bass, Flute
             # Guitar leads
-            24: [40, 48, 33, 73],   # Nylon Guitar -> Violin, Strings, Electric Bass, Flute
-            25: [33, 48, 38],       # Steel Guitar -> Electric Bass, Strings, Synth Bass
+            24: [40, 48, 33, 73],  # Nylon Guitar -> Violin, Strings, Electric Bass, Flute
+            25: [33, 48, 38],  # Steel Guitar -> Electric Bass, Strings, Synth Bass
             # String leads
-            40: [0, 24, 32],        # Violin -> Piano, Guitar, Acoustic Bass
+            40: [0, 24, 32],  # Violin -> Piano, Guitar, Acoustic Bass
             # Flute leads
-            73: [0, 40, 48],        # Flute -> Piano, Violin, Strings
+            73: [0, 40, 48],  # Flute -> Piano, Violin, Strings
         }
 
         suggestions = COMPLEMENTARY_INSTRUMENTS.get(existing_program, [0, 48, 33])
 
         # Filter by role
         role_preferred = {
-            TrackRole.BASS: [32, 33, 38, 39],      # Acoustic/Electric/Synth Bass
-            TrackRole.HARMONY_PAD: [48, 49, 89],   # Strings, Pad
-            TrackRole.LEAD_MELODY: [73, 40, 68],   # Flute, Violin, Oboe
-            TrackRole.CHORD_RHYTHM: [24, 25, 4],   # Guitars, E.Piano
-            TrackRole.TEXTURE: [89, 91, 95],       # Pads, Atmosphere
+            TrackRole.BASS: [32, 33, 38, 39],  # Acoustic/Electric/Synth Bass
+            TrackRole.HARMONY_PAD: [48, 49, 89],  # Strings, Pad
+            TrackRole.LEAD_MELODY: [73, 40, 68],  # Flute, Violin, Oboe
+            TrackRole.CHORD_RHYTHM: [24, 25, 4],  # Guitars, E.Piano
+            TrackRole.TEXTURE: [89, 91, 95],  # Pads, Atmosphere
         }
 
         preferred = role_preferred.get(target_role, suggestions)
@@ -621,12 +634,12 @@ class OrchestrationEngine:
 
     def save_session(self, filepath: str):
         """Save session to JSON file."""
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(self.session.to_dict(), f, indent=2)
 
     def load_session(self, filepath: str):
         """Load session from JSON file."""
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             data = json.load(f)
         self.session = OrchestrationSession.from_dict(data)
 
@@ -648,6 +661,7 @@ class OrchestrationEngine:
 # =============================================================================
 # MIDI OUTPUT COORDINATION
 # =============================================================================
+
 
 class MultiTrackMIDIWriter:
     """Write coordinated multi-track MIDI output."""
@@ -680,13 +694,15 @@ class MultiTrackMIDIWriter:
         mid.tracks.append(meta_track)
 
         tempo = mido.bpm2tempo(session.tempo_bpm)
-        meta_track.append(mido.MetaMessage('set_tempo', tempo=tempo, time=0))
-        meta_track.append(mido.MetaMessage(
-            'time_signature',
-            numerator=session.time_signature[0],
-            denominator=session.time_signature[1],
-            time=0
-        ))
+        meta_track.append(mido.MetaMessage("set_tempo", tempo=tempo, time=0))
+        meta_track.append(
+            mido.MetaMessage(
+                "time_signature",
+                numerator=session.time_signature[0],
+                denominator=session.time_signature[1],
+                time=0,
+            )
+        )
 
         # Create track for each registered Kelly track
         for track_id, notes in track_data.items():
@@ -698,15 +714,17 @@ class MultiTrackMIDIWriter:
             mid.tracks.append(midi_track)
 
             # Track name
-            midi_track.append(mido.MetaMessage('track_name', name=kelly_track.name, time=0))
+            midi_track.append(mido.MetaMessage("track_name", name=kelly_track.name, time=0))
 
             # Program change
-            midi_track.append(mido.Message(
-                'program_change',
-                channel=kelly_track.midi_channel,
-                program=kelly_track.instrument_program,
-                time=0
-            ))
+            midi_track.append(
+                mido.Message(
+                    "program_change",
+                    channel=kelly_track.midi_channel,
+                    program=kelly_track.instrument_program,
+                    time=0,
+                )
+            )
 
             # Build note events
             events = []
@@ -715,8 +733,8 @@ class MultiTrackMIDIWriter:
                 v_min, v_max = kelly_track.velocity_range
                 velocity = max(v_min, min(v_max, velocity))
 
-                events.append((start_tick, 'note_on', note, velocity))
-                events.append((start_tick + duration, 'note_off', note, 0))
+                events.append((start_tick, "note_on", note, velocity))
+                events.append((start_tick + duration, "note_off", note, 0))
 
             # Sort by time
             events.sort(key=lambda x: x[0])
@@ -725,13 +743,15 @@ class MultiTrackMIDIWriter:
             current_time = 0
             for abs_time, msg_type, note, vel in events:
                 delta = abs_time - current_time
-                midi_track.append(mido.Message(
-                    msg_type,
-                    channel=kelly_track.midi_channel,
-                    note=note,
-                    velocity=vel,
-                    time=delta
-                ))
+                midi_track.append(
+                    mido.Message(
+                        msg_type,
+                        channel=kelly_track.midi_channel,
+                        note=note,
+                        velocity=vel,
+                        time=delta,
+                    )
+                )
                 current_time = abs_time
 
         mid.save(output_path)
@@ -741,6 +761,7 @@ class MultiTrackMIDIWriter:
 # =============================================================================
 # CONVENIENCE FUNCTIONS
 # =============================================================================
+
 
 def create_session(
     name: str,
@@ -805,50 +826,55 @@ if __name__ == "__main__":
     )
 
     # Register multiple tracks
-    tracks = quick_register_tracks(engine, [
-        {
-            "name": "Piano (Grief)",
-            "role": "LEAD_MELODY",
-            "emotion": "grief",
-            "program": 0,  # Acoustic Grand Piano
-            "vulnerability": 0.9,
-            "intervals": [(0, 64)],  # 16 bars
-        },
-        {
-            "name": "Strings (Swell)",
-            "role": "HARMONY_PAD",
-            "emotion": "grief",
-            "program": 48,  # String Ensemble
-            "vulnerability": 0.85,
-            "intervals": [(16, 64)],  # Enter at bar 5
-        },
-        {
-            "name": "Bass (Foundation)",
-            "role": "BASS",
-            "emotion": "grief",
-            "program": 33,  # Electric Bass Finger
-            "vulnerability": 0.6,
-            "intervals": [(0, 64)],
-        },
-    ])
+    tracks = quick_register_tracks(
+        engine,
+        [
+            {
+                "name": "Piano (Grief)",
+                "role": "LEAD_MELODY",
+                "emotion": "grief",
+                "program": 0,  # Acoustic Grand Piano
+                "vulnerability": 0.9,
+                "intervals": [(0, 64)],  # 16 bars
+            },
+            {
+                "name": "Strings (Swell)",
+                "role": "HARMONY_PAD",
+                "emotion": "grief",
+                "program": 48,  # String Ensemble
+                "vulnerability": 0.85,
+                "intervals": [(16, 64)],  # Enter at bar 5
+            },
+            {
+                "name": "Bass (Foundation)",
+                "role": "BASS",
+                "emotion": "grief",
+                "program": 33,  # Electric Bass Finger
+                "vulnerability": 0.6,
+                "intervals": [(0, 64)],
+            },
+        ],
+    )
 
     # Add annotations
     engine.annotate_interval(
         tracks[0].track_id,
-        start_beat=0, end_beat=16,
+        start_beat=0,
+        end_beat=16,
         annotation_type="section",
         value="verse_1",
         intensity=0.5,
-        notes="Misdirection setup - sounds like falling in love"
+        notes="Misdirection setup - sounds like falling in love",
     )
 
     engine.annotate_interval(
         tracks[0].track_id,
-        start_beat=48, end_beat=64,
+        start_beat=48,
+        end_beat=64,
         annotation_type="dynamic",
         value="crescendo",
         intensity=0.9,
-        notes="Build to reveal"
+        notes="Build to reveal",
     )
 
     # Analyze
@@ -871,5 +897,5 @@ if __name__ == "__main__":
         mode=ChannelMode.LAYER,
     )
     print(f"\nChannel conflict resolution: {conflict['mode']}")
-    for instruction in conflict['instructions']:
+    for instruction in conflict["instructions"]:
         print(f"  - {instruction}")

@@ -4,6 +4,7 @@ This module provides a 216-node emotion thesaurus for mapping emotions to
 musical properties. Emotions are organized using VAD (Valence-Arousal-Dominance)
 dimensions and intensity levels.
 """
+
 import math
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass
@@ -12,6 +13,7 @@ from enum import Enum
 
 class EmotionCategory(Enum):
     """Primary emotion categories based on Plutchik's emotion wheel."""
+
     JOY = "joy"
     SADNESS = "sadness"
     ANGER = "anger"
@@ -36,6 +38,7 @@ class EmotionNode:
         related_emotions: List of related emotion IDs
         musical_attributes: Dictionary of musical properties derived from emotion
     """
+
     id: int
     name: str
     category: EmotionCategory
@@ -81,28 +84,23 @@ class EmotionThesaurus:
             (2, "grief", EmotionCategory.SADNESS, 1.0, -0.9, 0.7),
             (3, "cheerful", EmotionCategory.JOY, 0.6, 0.8, 0.6),
             (4, "blissful", EmotionCategory.JOY, 0.9, 0.95, 0.8),
-
             # Sadness category
             (10, "melancholy", EmotionCategory.SADNESS, 0.6, -0.6, 0.3),
             (11, "sorrow", EmotionCategory.SADNESS, 0.8, -0.8, 0.5),
             (12, "despair", EmotionCategory.SADNESS, 0.95, -0.95, 0.6),
-
             # Anger category
             (20, "rage", EmotionCategory.ANGER, 1.0, -0.8, 1.0),
             (21, "annoyance", EmotionCategory.ANGER, 0.4, -0.4, 0.5),
             (22, "fury", EmotionCategory.ANGER, 0.95, -0.85, 0.95),
             (23, "resentment", EmotionCategory.ANGER, 0.7, -0.7, 0.6),
-
             # Fear category
             (30, "terror", EmotionCategory.FEAR, 1.0, -0.9, 1.0),
             (31, "anxiety", EmotionCategory.FEAR, 0.6, -0.5, 0.8),
             (32, "dread", EmotionCategory.FEAR, 0.85, -0.85, 0.9),
             (33, "worry", EmotionCategory.FEAR, 0.5, -0.4, 0.6),
-
             # Surprise category
             (40, "astonishment", EmotionCategory.SURPRISE, 0.8, 0.3, 0.9),
             (41, "amazement", EmotionCategory.SURPRISE, 0.7, 0.5, 0.8),
-
             # Disgust category
             (50, "revulsion", EmotionCategory.DISGUST, 0.8, -0.7, 0.5),
             (51, "contempt", EmotionCategory.DISGUST, 0.6, -0.6, 0.4),
@@ -119,16 +117,12 @@ class EmotionThesaurus:
                 related_emotions=[],
                 musical_attributes=self._calculate_musical_attributes(
                     valence, arousal, intensity, category
-                )
+                ),
             )
             self._name_to_id[name.lower()] = node_id
 
     def _calculate_musical_attributes(
-        self,
-        valence: float,
-        arousal: float,
-        intensity: float,
-        category: EmotionCategory
+        self, valence: float, arousal: float, intensity: float, category: EmotionCategory
     ) -> Dict[str, Any]:
         """Calculate musical attributes from emotion dimensions.
 
@@ -204,8 +198,7 @@ class EmotionThesaurus:
         for node in self.nodes.values():
             # Find emotions in the same category
             for other_node in self.nodes.values():
-                if (other_node.id != node.id and
-                        other_node.category == node.category):
+                if other_node.id != node.id and other_node.category == node.category:
                     node.related_emotions.append(other_node.id)
 
             # Limit related emotions to prevent excessive connections
@@ -237,9 +230,7 @@ class EmotionThesaurus:
             return self.nodes.get(emotion_id)
         return None
 
-    def get_emotions_by_category(
-        self, category: EmotionCategory
-    ) -> List[EmotionNode]:
+    def get_emotions_by_category(self, category: EmotionCategory) -> List[EmotionNode]:
         """Get all emotions in a specific category.
 
         Args:
@@ -248,14 +239,9 @@ class EmotionThesaurus:
         Returns:
             List of EmotionNodes in the specified category
         """
-        return [
-            node for node in self.nodes.values()
-            if node.category == category
-        ]
+        return [node for node in self.nodes.values() if node.category == category]
 
-    def calculate_distance(
-        self, emotion1_id: int, emotion2_id: int
-    ) -> Optional[float]:
+    def calculate_distance(self, emotion1_id: int, emotion2_id: int) -> Optional[float]:
         """Calculate emotional distance between two emotions.
 
         Uses normalized Euclidean distance in VAD space.
@@ -280,9 +266,9 @@ class EmotionThesaurus:
 
         # Arousal and intensity are already 0-1
         distance = math.sqrt(
-            (v1 - v2) ** 2 +
-            (emotion1.arousal - emotion2.arousal) ** 2 +
-            (emotion1.intensity - emotion2.intensity) ** 2
+            (v1 - v2) ** 2
+            + (emotion1.arousal - emotion2.arousal) ** 2
+            + (emotion1.intensity - emotion2.intensity) ** 2
         )
 
         return distance
@@ -352,9 +338,7 @@ class EmotionThesaurus:
         category = emotion1.category if t < 0.5 else emotion2.category
 
         # Calculate musical attributes for interpolated emotion
-        musical_attrs = self._calculate_musical_attributes(
-            valence, arousal, intensity, category
-        )
+        musical_attrs = self._calculate_musical_attributes(valence, arousal, intensity, category)
 
         return {
             "valence": round(valence, 3),
@@ -382,8 +366,10 @@ def main() -> None:
         if emotions:
             print(f"\n  {category.value.upper()}:")
             for node in emotions:
-                print(f"    [{node.id:2d}] {node.name:15s} "
-                      f"V:{node.valence:5.2f} A:{node.arousal:.2f} I:{node.intensity:.2f}")
+                print(
+                    f"    [{node.id:2d}] {node.name:15s} "
+                    f"V:{node.valence:5.2f} A:{node.arousal:.2f} I:{node.intensity:.2f}"
+                )
 
     # Demo: Find emotion by name
     print("\n" + "=" * 70)
@@ -408,8 +394,10 @@ def main() -> None:
         nearby = thesaurus.get_nearby_emotions(grief.id, threshold=0.8, max_results=5)
         print(f"Found {len(nearby)} nearby emotions:")
         for node, distance in nearby:
-            print(f"  - {node.name:15s} (distance: {distance:.3f}, "
-                  f"category: {node.category.value})")
+            print(
+                f"  - {node.name:15s} (distance: {distance:.3f}, "
+                f"category: {node.category.value})"
+            )
 
     # Demo: Interpolation
     if grief:
@@ -422,10 +410,14 @@ def main() -> None:
                 result = thesaurus.interpolate_emotions(grief.id, euphoria.id, t)
                 if result:
                     print(f"\n  t={t:.2f}:")
-                    print(f"    VAD: V={result['valence']:.2f}, "
-                          f"A={result['arousal']:.2f}, I={result['intensity']:.2f}")
-                    print(f"    Mode: {result['musical_attributes']['mode']}, "
-                          f"Tempo: {result['musical_attributes']['tempo_modifier']}x")
+                    print(
+                        f"    VAD: V={result['valence']:.2f}, "
+                        f"A={result['arousal']:.2f}, I={result['intensity']:.2f}"
+                    )
+                    print(
+                        f"    Mode: {result['musical_attributes']['mode']}, "
+                        f"Tempo: {result['musical_attributes']['tempo_modifier']}x"
+                    )
 
     # Demo: Distance calculation
     if grief and euphoria:

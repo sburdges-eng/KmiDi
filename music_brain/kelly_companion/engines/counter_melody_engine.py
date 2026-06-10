@@ -35,12 +35,11 @@ from typing import List, Dict, Optional, Tuple
 from enum import Enum
 import random
 
-
 # =============================================================================
 # CONSTANTS
 # =============================================================================
 
-CHROMATIC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 TICKS_PER_BEAT = 480
 
@@ -88,46 +87,51 @@ GM_COUNTER_INSTRUMENTS = {
 # ENUMS
 # =============================================================================
 
+
 class CounterMotion(Enum):
     """Relationship to main melody."""
-    PARALLEL = "parallel"           # Same direction, fixed interval
-    CONTRARY = "contrary"           # Opposite direction
-    OBLIQUE = "oblique"             # One voice held, other moves
-    SIMILAR = "similar"             # Same direction, varying interval
-    FREE = "free"                   # Independent motion
+
+    PARALLEL = "parallel"  # Same direction, fixed interval
+    CONTRARY = "contrary"  # Opposite direction
+    OBLIQUE = "oblique"  # One voice held, other moves
+    SIMILAR = "similar"  # Same direction, varying interval
+    FREE = "free"  # Independent motion
 
 
 class CounterTechnique(Enum):
     """Compositional technique."""
-    THIRDS = "thirds"               # Parallel thirds
-    SIXTHS = "sixths"               # Parallel sixths
-    TENTHS = "tenths"               # Parallel tenths (3rd + octave)
+
+    THIRDS = "thirds"  # Parallel thirds
+    SIXTHS = "sixths"  # Parallel sixths
+    TENTHS = "tenths"  # Parallel tenths (3rd + octave)
     CALL_RESPONSE = "call_response"  # Echo/answer
-    CANON = "canon"                 # Delayed imitation
-    PEDAL = "pedal"                 # Sustained note
-    FILL = "fill"                   # Fill spaces in melody
-    SHADOW = "shadow"               # Slightly delayed shadow
-    INVERSION = "inversion"         # Mirror image
-    COUNTERPOINT = "counterpoint"   # Traditional counterpoint
+    CANON = "canon"  # Delayed imitation
+    PEDAL = "pedal"  # Sustained note
+    FILL = "fill"  # Fill spaces in melody
+    SHADOW = "shadow"  # Slightly delayed shadow
+    INVERSION = "inversion"  # Mirror image
+    COUNTERPOINT = "counterpoint"  # Traditional counterpoint
 
 
 class CounterRhythm(Enum):
     """Rhythmic relationship."""
-    SYNC = "sync"                   # Same rhythm as melody
-    OFFSET = "offset"               # Slightly delayed
-    DOUBLE = "double"               # Twice as fast
-    HALF = "half"                   # Half as fast
-    COMPLEMENT = "complement"       # Fills gaps
-    INDEPENDENT = "independent"     # Own rhythm
+
+    SYNC = "sync"  # Same rhythm as melody
+    OFFSET = "offset"  # Slightly delayed
+    DOUBLE = "double"  # Twice as fast
+    HALF = "half"  # Half as fast
+    COMPLEMENT = "complement"  # Fills gaps
+    INDEPENDENT = "independent"  # Own rhythm
 
 
 class CounterRegister(Enum):
     """Pitch relationship to melody."""
-    ABOVE = "above"                 # Higher than melody
-    BELOW = "below"                 # Lower than melody
-    WEAVING = "weaving"             # Crosses above and below
-    OCTAVE_ABOVE = "octave_above"   # Full octave higher
-    OCTAVE_BELOW = "octave_below"   # Full octave lower
+
+    ABOVE = "above"  # Higher than melody
+    BELOW = "below"  # Lower than melody
+    WEAVING = "weaving"  # Crosses above and below
+    OCTAVE_ABOVE = "octave_above"  # Full octave higher
+    OCTAVE_BELOW = "octave_below"  # Full octave lower
 
 
 # =============================================================================
@@ -141,15 +145,14 @@ EMOTION_PROFILES = {
         "rhythm": CounterRhythm.SYNC,
         "register": CounterRegister.BELOW,
         "interval_preference": [-8, -5, -3],  # Minor 6th, 4th, 3rd below
-        "velocity_ratio": 0.7,       # Softer than main
-        "density": 0.6,              # Not every note
+        "velocity_ratio": 0.7,  # Softer than main
+        "density": 0.6,  # Not every note
         "delay_ticks": 0,
         "humanize_timing": 20,
         "humanize_velocity": 10,
         "sustain_ratio": 0.9,
         "gm_instrument": GM_COUNTER_INSTRUMENTS["cello"],
     },
-
     "sadness": {
         "motion": CounterMotion.SIMILAR,
         "technique": CounterTechnique.SHADOW,
@@ -164,7 +167,6 @@ EMOTION_PROFILES = {
         "sustain_ratio": 0.85,
         "gm_instrument": GM_COUNTER_INSTRUMENTS["viola"],
     },
-
     "hope": {
         "motion": CounterMotion.PARALLEL,
         "technique": CounterTechnique.THIRDS,
@@ -179,7 +181,6 @@ EMOTION_PROFILES = {
         "sustain_ratio": 0.9,
         "gm_instrument": GM_COUNTER_INSTRUMENTS["flute"],
     },
-
     "joy": {
         "motion": CounterMotion.PARALLEL,
         "technique": CounterTechnique.THIRDS,
@@ -194,7 +195,6 @@ EMOTION_PROFILES = {
         "sustain_ratio": 0.8,
         "gm_instrument": GM_COUNTER_INSTRUMENTS["oboe"],
     },
-
     "rage": {
         "motion": CounterMotion.PARALLEL,
         "technique": CounterTechnique.TENTHS,
@@ -209,7 +209,6 @@ EMOTION_PROFILES = {
         "sustain_ratio": 0.7,
         "gm_instrument": GM_COUNTER_INSTRUMENTS["french_horn"],
     },
-
     "anger": {
         "motion": CounterMotion.CONTRARY,
         "technique": CounterTechnique.COUNTERPOINT,
@@ -224,7 +223,6 @@ EMOTION_PROFILES = {
         "sustain_ratio": 0.6,
         "gm_instrument": GM_COUNTER_INSTRUMENTS["bassoon"],
     },
-
     "fear": {
         "motion": CounterMotion.OBLIQUE,
         "technique": CounterTechnique.PEDAL,
@@ -239,7 +237,6 @@ EMOTION_PROFILES = {
         "sustain_ratio": 1.0,
         "gm_instrument": GM_COUNTER_INSTRUMENTS["strings"],
     },
-
     "anxiety": {
         "motion": CounterMotion.FREE,
         "technique": CounterTechnique.FILL,
@@ -254,7 +251,6 @@ EMOTION_PROFILES = {
         "sustain_ratio": 0.5,
         "gm_instrument": GM_COUNTER_INSTRUMENTS["clarinet"],
     },
-
     "tension": {
         "motion": CounterMotion.CONTRARY,
         "technique": CounterTechnique.COUNTERPOINT,
@@ -269,7 +265,6 @@ EMOTION_PROFILES = {
         "sustain_ratio": 0.95,
         "gm_instrument": GM_COUNTER_INSTRUMENTS["english_horn"],
     },
-
     "longing": {
         "motion": CounterMotion.SIMILAR,
         "technique": CounterTechnique.CALL_RESPONSE,
@@ -284,7 +279,6 @@ EMOTION_PROFILES = {
         "sustain_ratio": 0.9,
         "gm_instrument": GM_COUNTER_INSTRUMENTS["cello"],
     },
-
     "nostalgia": {
         "motion": CounterMotion.PARALLEL,
         "technique": CounterTechnique.CANON,
@@ -299,7 +293,6 @@ EMOTION_PROFILES = {
         "sustain_ratio": 0.85,
         "gm_instrument": GM_COUNTER_INSTRUMENTS["violin"],
     },
-
     "peace": {
         "motion": CounterMotion.OBLIQUE,
         "technique": CounterTechnique.PEDAL,
@@ -314,7 +307,6 @@ EMOTION_PROFILES = {
         "sustain_ratio": 1.0,
         "gm_instrument": GM_COUNTER_INSTRUMENTS["voice_oohs"],
     },
-
     "euphoria": {
         "motion": CounterMotion.PARALLEL,
         "technique": CounterTechnique.SIXTHS,
@@ -329,7 +321,6 @@ EMOTION_PROFILES = {
         "sustain_ratio": 0.9,
         "gm_instrument": GM_COUNTER_INSTRUMENTS["flute"],
     },
-
     "wonder": {
         "motion": CounterMotion.FREE,
         "technique": CounterTechnique.FILL,
@@ -344,7 +335,6 @@ EMOTION_PROFILES = {
         "sustain_ratio": 0.75,
         "gm_instrument": GM_COUNTER_INSTRUMENTS["oboe"],
     },
-
     "determination": {
         "motion": CounterMotion.PARALLEL,
         "technique": CounterTechnique.TENTHS,
@@ -359,7 +349,6 @@ EMOTION_PROFILES = {
         "sustain_ratio": 0.85,
         "gm_instrument": GM_COUNTER_INSTRUMENTS["french_horn"],
     },
-
     "neutral": {
         "motion": CounterMotion.PARALLEL,
         "technique": CounterTechnique.THIRDS,
@@ -381,9 +370,11 @@ EMOTION_PROFILES = {
 # DATA CLASSES
 # =============================================================================
 
+
 @dataclass
 class MelodyNote:
     """Input melody note (from MelodyEngine or similar)."""
+
     pitch: int
     start_tick: int
     duration_ticks: int
@@ -393,18 +384,20 @@ class MelodyNote:
 @dataclass
 class CounterNote:
     """A single counter-melody note."""
+
     pitch: int
     start_tick: int
     duration_ticks: int
     velocity: int
-    source_note_idx: int         # Which melody note this relates to
-    interval_from_source: int    # Semitones from source note
+    source_note_idx: int  # Which melody note this relates to
+    interval_from_source: int  # Semitones from source note
     technique_applied: CounterTechnique
 
 
 @dataclass
 class CounterMelodyConfig:
     """Configuration for counter-melody generation."""
+
     emotion: str = "neutral"
     bars: int = 4
     tempo_bpm: int = 120
@@ -417,6 +410,7 @@ class CounterMelodyConfig:
 @dataclass
 class CounterMelodyOutput:
     """Complete counter-melody output."""
+
     notes: List[CounterNote]
     emotion: str
     motion_used: CounterMotion
@@ -432,21 +426,22 @@ class CounterMelodyOutput:
 # HELPER FUNCTIONS
 # =============================================================================
 
+
 def note_name_to_midi(note: str, octave: int = 4) -> int:
     """Convert note name to MIDI number."""
     note = note.strip()
-    if len(note) > 1 and note[1] in ['#', 'b']:
+    if len(note) > 1 and note[1] in ["#", "b"]:
         base = note[0].upper()
         modifier = note[1]
     else:
         base = note[0].upper()
-        modifier = ''
+        modifier = ""
 
     base_idx = CHROMATIC.index(base) if base in CHROMATIC else 0
 
-    if modifier == '#':
+    if modifier == "#":
         base_idx += 1
-    elif modifier == 'b':
+    elif modifier == "b":
         base_idx -= 1
 
     base_idx = base_idx % 12
@@ -517,6 +512,7 @@ def generate_pedal_pitch(scale_pitches: List[int], register: CounterRegister) ->
 # MAIN ENGINE CLASS
 # =============================================================================
 
+
 class CounterMelodyEngine:
     """
     Generates counter-melodies that complement a main melody.
@@ -571,10 +567,16 @@ class CounterMelodyEngine:
             # Generate pedal tone
             pedal_pitch = generate_pedal_pitch(scale_pitches, register)
             pedal_note = CounterNote(
-                pitch=pedal_pitch, start_tick=0, duration_ticks=total_ticks,
-                velocity=int(main_melody[0].velocity * profile["velocity_ratio"])
-                if main_melody else 60, source_note_idx=-1, interval_from_source=0,
-                technique_applied=technique,)
+                pitch=pedal_pitch,
+                start_tick=0,
+                duration_ticks=total_ticks,
+                velocity=(
+                    int(main_melody[0].velocity * profile["velocity_ratio"]) if main_melody else 60
+                ),
+                source_note_idx=-1,
+                interval_from_source=0,
+                technique_applied=technique,
+            )
             counter_notes.append(pedal_note)
 
         elif technique == CounterTechnique.CANON:
@@ -591,18 +593,21 @@ class CounterMelodyEngine:
                 new_tick = note.start_tick + delay
                 if new_tick < total_ticks:
                     velocity = int(note.velocity * profile["velocity_ratio"])
-                    velocity += random.randint(-profile["humanize_velocity"],
-                                               profile["humanize_velocity"])
+                    velocity += random.randint(
+                        -profile["humanize_velocity"], profile["humanize_velocity"]
+                    )
 
-                    counter_notes.append(CounterNote(
-                        pitch=target_pitch,
-                        start_tick=new_tick,
-                        duration_ticks=int(note.duration_ticks * profile["sustain_ratio"]),
-                        velocity=max(1, min(127, velocity)),
-                        source_note_idx=i,
-                        interval_from_source=interval,
-                        technique_applied=technique,
-                    ))
+                    counter_notes.append(
+                        CounterNote(
+                            pitch=target_pitch,
+                            start_tick=new_tick,
+                            duration_ticks=int(note.duration_ticks * profile["sustain_ratio"]),
+                            velocity=max(1, min(127, velocity)),
+                            source_note_idx=i,
+                            interval_from_source=interval,
+                            technique_applied=technique,
+                        )
+                    )
 
         elif technique == CounterTechnique.CALL_RESPONSE:
             # Echo with response modification
@@ -620,24 +625,28 @@ class CounterMelodyEngine:
                 target_pitch = snap_to_scale(target_pitch, scale_pitches)
 
                 new_tick = note.start_tick + delay
-                timing_offset = random.randint(-profile["humanize_timing"],
-                                               profile["humanize_timing"])
+                timing_offset = random.randint(
+                    -profile["humanize_timing"], profile["humanize_timing"]
+                )
                 new_tick = max(0, new_tick + timing_offset)
 
                 if new_tick < total_ticks:
                     velocity = int(note.velocity * profile["velocity_ratio"])
-                    velocity += random.randint(-profile["humanize_velocity"],
-                                               profile["humanize_velocity"])
+                    velocity += random.randint(
+                        -profile["humanize_velocity"], profile["humanize_velocity"]
+                    )
 
-                    counter_notes.append(CounterNote(
-                        pitch=target_pitch,
-                        start_tick=new_tick,
-                        duration_ticks=int(note.duration_ticks * profile["sustain_ratio"]),
-                        velocity=max(1, min(127, velocity)),
-                        source_note_idx=i,
-                        interval_from_source=interval,
-                        technique_applied=technique,
-                    ))
+                    counter_notes.append(
+                        CounterNote(
+                            pitch=target_pitch,
+                            start_tick=new_tick,
+                            duration_ticks=int(note.duration_ticks * profile["sustain_ratio"]),
+                            velocity=max(1, min(127, velocity)),
+                            source_note_idx=i,
+                            interval_from_source=interval,
+                            technique_applied=technique,
+                        )
+                    )
 
         elif technique == CounterTechnique.FILL:
             # Fill gaps between melody notes
@@ -655,20 +664,24 @@ class CounterMelodyEngine:
                     target_pitch = snap_to_scale(target_pitch, scale_pitches)
 
                     fill_start = gap_start + random.randint(0, gap_duration // 4)
-                    fill_duration = min(gap_duration - TICKS_PER_BEAT // 8,
-                                        int(TICKS_PER_BEAT * profile["sustain_ratio"]))
+                    fill_duration = min(
+                        gap_duration - TICKS_PER_BEAT // 8,
+                        int(TICKS_PER_BEAT * profile["sustain_ratio"]),
+                    )
 
                     velocity = int(note.velocity * profile["velocity_ratio"])
 
-                    counter_notes.append(CounterNote(
-                        pitch=target_pitch,
-                        start_tick=fill_start,
-                        duration_ticks=max(60, fill_duration),
-                        velocity=max(1, min(127, velocity)),
-                        source_note_idx=i,
-                        interval_from_source=interval,
-                        technique_applied=technique,
-                    ))
+                    counter_notes.append(
+                        CounterNote(
+                            pitch=target_pitch,
+                            start_tick=fill_start,
+                            duration_ticks=max(60, fill_duration),
+                            velocity=max(1, min(127, velocity)),
+                            source_note_idx=i,
+                            interval_from_source=interval,
+                            technique_applied=technique,
+                        )
+                    )
 
         else:
             # Standard parallel/contrary/similar motion techniques
@@ -693,8 +706,9 @@ class CounterMelodyEngine:
 
                 # Apply rhythm modifications
                 new_tick = note.start_tick + profile["delay_ticks"]
-                timing_offset = random.randint(-profile["humanize_timing"],
-                                               profile["humanize_timing"])
+                timing_offset = random.randint(
+                    -profile["humanize_timing"], profile["humanize_timing"]
+                )
                 new_tick = max(0, new_tick + timing_offset)
 
                 if rhythm == CounterRhythm.DOUBLE:
@@ -707,19 +721,22 @@ class CounterMelodyEngine:
                 duration = int(duration * profile["sustain_ratio"])
 
                 velocity = int(note.velocity * profile["velocity_ratio"])
-                velocity += random.randint(-profile["humanize_velocity"],
-                                           profile["humanize_velocity"])
+                velocity += random.randint(
+                    -profile["humanize_velocity"], profile["humanize_velocity"]
+                )
 
                 if new_tick < total_ticks:
-                    counter_notes.append(CounterNote(
-                        pitch=target_pitch,
-                        start_tick=new_tick,
-                        duration_ticks=max(60, duration),
-                        velocity=max(1, min(127, velocity)),
-                        source_note_idx=i,
-                        interval_from_source=interval,
-                        technique_applied=technique,
-                    ))
+                    counter_notes.append(
+                        CounterNote(
+                            pitch=target_pitch,
+                            start_tick=new_tick,
+                            duration_ticks=max(60, duration),
+                            velocity=max(1, min(127, velocity)),
+                            source_note_idx=i,
+                            interval_from_source=interval,
+                            technique_applied=technique,
+                        )
+                    )
 
         # Sort by start time
         counter_notes.sort(key=lambda n: n.start_tick)
@@ -739,7 +756,7 @@ class CounterMelodyEngine:
                 "key": key,
                 "mode": mode,
                 "main_melody_notes": len(main_melody),
-            }
+            },
         )
 
     def generate_from_pitches(
@@ -756,12 +773,14 @@ class CounterMelodyEngine:
         ticks_per_note = (TICKS_PER_BEAT * 4 * bars) // len(pitches)
         melody_notes = []
         for i, pitch in enumerate(pitches):
-            melody_notes.append(MelodyNote(
-                pitch=pitch,
-                start_tick=i * ticks_per_note,
-                duration_ticks=int(ticks_per_note * 0.9),
-                velocity=70,
-            ))
+            melody_notes.append(
+                MelodyNote(
+                    pitch=pitch,
+                    start_tick=i * ticks_per_note,
+                    duration_ticks=int(ticks_per_note * 0.9),
+                    velocity=70,
+                )
+            )
 
         return self.generate(
             emotion=emotion,
@@ -782,11 +801,15 @@ class CounterMelodyEngine:
 # CONVENIENCE FUNCTIONS
 # =============================================================================
 
+
 def generate_harmony_thirds(pitches: List[int], key: str = "C") -> CounterMelodyOutput:
     """Quick parallel thirds harmonization."""
     engine = CounterMelodyEngine()
     return engine.generate_from_pitches(
-        "joy", pitches, key, "major",
+        "joy",
+        pitches,
+        key,
+        "major",
     )
 
 
@@ -794,28 +817,34 @@ def counter_to_midi_events(counter_output: CounterMelodyOutput, channel: int = 2
     """Convert CounterMelodyOutput to MIDI event list."""
     events = []
 
-    events.append({
-        "type": "program_change",
-        "tick": 0,
-        "channel": channel,
-        "program": counter_output.gm_instrument,
-    })
+    events.append(
+        {
+            "type": "program_change",
+            "tick": 0,
+            "channel": channel,
+            "program": counter_output.gm_instrument,
+        }
+    )
 
     for note in counter_output.notes:
-        events.append({
-            "type": "note_on",
-            "tick": note.start_tick,
-            "channel": channel,
-            "pitch": note.pitch,
-            "velocity": note.velocity,
-        })
-        events.append({
-            "type": "note_off",
-            "tick": note.start_tick + note.duration_ticks,
-            "channel": channel,
-            "pitch": note.pitch,
-            "velocity": 0,
-        })
+        events.append(
+            {
+                "type": "note_on",
+                "tick": note.start_tick,
+                "channel": channel,
+                "pitch": note.pitch,
+                "velocity": note.velocity,
+            }
+        )
+        events.append(
+            {
+                "type": "note_off",
+                "tick": note.start_tick + note.duration_ticks,
+                "channel": channel,
+                "pitch": note.pitch,
+                "velocity": 0,
+            }
+        )
 
     events.sort(key=lambda e: (e["tick"], 0 if e["type"] == "note_on" else 1))
     return events

@@ -21,9 +21,10 @@ from enum import Enum
 
 class NNIBackend(Enum):
     """NNI inference backends."""
-    CPU = "cpu"              # CPU inference (all platforms)
-    DX12 = "directx12"       # DirectX 12 GPU (Windows only)
-    AUTO = "auto"            # Automatic selection
+
+    CPU = "cpu"  # CPU inference (all platforms)
+    DX12 = "directx12"  # DirectX 12 GPU (Windows only)
+    AUTO = "auto"  # Automatic selection
 
 
 @dataclass
@@ -40,7 +41,7 @@ class NNIPluginConfig:
 
     # Performance
     num_threads: int = 4  # CPU threads for inference
-    batch_size: int = 1   # Batch size for inference
+    batch_size: int = 1  # Batch size for inference
 
     # Model paths (relative to Content/ directory)
     models_directory: str = "Models"
@@ -100,9 +101,7 @@ class UnrealNNIIntegration:
     """
 
     def __init__(
-        self,
-        project_path: Optional[Path] = None,
-        config: Optional[NNIPluginConfig] = None
+        self, project_path: Optional[Path] = None, config: Optional[NNIPluginConfig] = None
     ):
         """
         Initialize Unreal NNI integration.
@@ -116,10 +115,7 @@ class UnrealNNIIntegration:
         self._deployed_models: Dict[str, UnrealNNIModelConfig] = {}
 
     def deploy_model(
-        self,
-        onnx_path: Path,
-        model_name: str,
-        model_config: Optional[UnrealNNIModelConfig] = None
+        self, onnx_path: Path, model_name: str, model_config: Optional[UnrealNNIModelConfig] = None
     ) -> bool:
         """
         Deploy an ONNX model to Unreal Engine project.
@@ -157,7 +153,7 @@ class UnrealNNIIntegration:
         if model_config is None:
             model_config = UnrealNNIModelConfig(
                 model_name=model_name,
-                model_asset_path=f"/Game/{self.config.models_directory}/{model_name}"
+                model_asset_path=f"/Game/{self.config.models_directory}/{model_name}",
             )
 
         self._deployed_models[model_name] = model_config
@@ -166,9 +162,7 @@ class UnrealNNIIntegration:
         return False
 
     def generate_blueprint_wrapper(
-        self,
-        model_name: str,
-        output_path: Optional[Path] = None
+        self, model_name: str, output_path: Optional[Path] = None
     ) -> bool:
         """
         Generate Blueprint wrapper for ONNX model.
@@ -195,11 +189,7 @@ class UnrealNNIIntegration:
         print(f"Blueprint generation for {model_name} - stub implementation")
         return False
 
-    def generate_cpp_wrapper(
-        self,
-        model_name: str,
-        output_path: Optional[Path] = None
-    ) -> bool:
+    def generate_cpp_wrapper(self, model_name: str, output_path: Optional[Path] = None) -> bool:
         """
         Generate C++ wrapper class for ONNX model.
 
@@ -246,10 +236,7 @@ class UnrealNNIIntegration:
         print("NNI plugin validation - stub implementation")
         return False
 
-    def get_model_info(
-        self,
-        model_name: str
-    ) -> Optional[UnrealNNIModelConfig]:
+    def get_model_info(self, model_name: str) -> Optional[UnrealNNIModelConfig]:
         """
         Get configuration for a deployed model.
 
@@ -270,10 +257,7 @@ class UnrealNNIIntegration:
         """
         return list(self._deployed_models.keys())
 
-    def remove_model(
-        self,
-        model_name: str
-    ) -> bool:
+    def remove_model(self, model_name: str) -> bool:
         """
         Remove a deployed model from Unreal project.
 
@@ -296,10 +280,7 @@ class UnrealNNIIntegration:
         return True
 
 
-def create_nni_project_structure(
-    project_path: Path,
-    project_name: str = "VideoGeneration"
-) -> bool:
+def create_nni_project_structure(project_path: Path, project_name: str = "VideoGeneration") -> bool:
     """
     Create directory structure for NNI integration.
 
@@ -336,10 +317,7 @@ def create_nni_project_structure(
     return False
 
 
-def setup_nni_plugin(
-    project_path: Path,
-    enable_gpu: bool = True
-) -> bool:
+def setup_nni_plugin(project_path: Path, enable_gpu: bool = True) -> bool:
     """
     Set up NNI plugin in Unreal Engine project.
 

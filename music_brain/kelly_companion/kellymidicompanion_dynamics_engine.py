@@ -16,122 +16,132 @@ from typing import Optional, List, Dict
 import random
 import math
 
-
 # =============================================================================
 # ENUMS & CONSTANTS
 # =============================================================================
 
+
 class DynamicMarking(Enum):
     """Traditional dynamic markings."""
-    NIENTE = 0          # Nothing (silence)
-    PPPP = 10           # As quiet as possible
-    PPP = 20            # Pianississimo
-    PP = 35             # Pianissimo
-    P = 50              # Piano
-    MP = 65             # Mezzo-piano
-    MF = 80             # Mezzo-forte
-    F = 95              # Forte
-    FF = 110            # Fortissimo
-    FFF = 120           # Fortississimo
-    FFFF = 127          # As loud as possible
+
+    NIENTE = 0  # Nothing (silence)
+    PPPP = 10  # As quiet as possible
+    PPP = 20  # Pianississimo
+    PP = 35  # Pianissimo
+    P = 50  # Piano
+    MP = 65  # Mezzo-piano
+    MF = 80  # Mezzo-forte
+    F = 95  # Forte
+    FF = 110  # Fortissimo
+    FFF = 120  # Fortississimo
+    FFFF = 127  # As loud as possible
 
 
 class DynamicShape(Enum):
     """Shapes for dynamic curves."""
-    FLAT = "flat"                       # Constant level
-    CRESCENDO = "crescendo"             # Gradual increase
-    DECRESCENDO = "decrescendo"         # Gradual decrease (diminuendo)
-    SWELL = "swell"                     # Crescendo then decrescendo
-    INVERSE_SWELL = "inverse_swell"     # Decrescendo then crescendo
-    ACCENT = "accent"                   # Sharp attack, quick decay
-    SFORZANDO = "sforzando"             # Sudden loud then soft
-    SUBITO = "subito"                   # Sudden change
-    TERRACED = "terraced"               # Step changes
-    WAVE = "wave"                       # Multiple swells
-    BREATH = "breath"                   # Natural breathing pattern
-    HEARTBEAT = "heartbeat"             # Rhythmic pulses
-    STUTTER = "stutter"                 # Irregular bursts
-    FADE_IN = "fade_in"                 # From nothing
-    FADE_OUT = "fade_out"               # To nothing
+
+    FLAT = "flat"  # Constant level
+    CRESCENDO = "crescendo"  # Gradual increase
+    DECRESCENDO = "decrescendo"  # Gradual decrease (diminuendo)
+    SWELL = "swell"  # Crescendo then decrescendo
+    INVERSE_SWELL = "inverse_swell"  # Decrescendo then crescendo
+    ACCENT = "accent"  # Sharp attack, quick decay
+    SFORZANDO = "sforzando"  # Sudden loud then soft
+    SUBITO = "subito"  # Sudden change
+    TERRACED = "terraced"  # Step changes
+    WAVE = "wave"  # Multiple swells
+    BREATH = "breath"  # Natural breathing pattern
+    HEARTBEAT = "heartbeat"  # Rhythmic pulses
+    STUTTER = "stutter"  # Irregular bursts
+    FADE_IN = "fade_in"  # From nothing
+    FADE_OUT = "fade_out"  # To nothing
 
 
 class ExpressionType(Enum):
     """Types of dynamic expression."""
-    VELOCITY = "velocity"               # Note attack strength
-    VOLUME = "volume"                   # Overall level (CC7)
-    EXPRESSION = "expression"           # Musical expression (CC11)
-    BREATH = "breath_controller"        # Breath control (CC2)
-    MODULATION = "modulation"           # Vibrato/movement (CC1)
-    AFTERTOUCH = "aftertouch"           # Pressure after attack
+
+    VELOCITY = "velocity"  # Note attack strength
+    VOLUME = "volume"  # Overall level (CC7)
+    EXPRESSION = "expression"  # Musical expression (CC11)
+    BREATH = "breath_controller"  # Breath control (CC2)
+    MODULATION = "modulation"  # Vibrato/movement (CC1)
+    AFTERTOUCH = "aftertouch"  # Pressure after attack
 
 
 class SilenceType(Enum):
     """Types of musical silence."""
-    REST = "rest"                       # Standard rest
-    BREATH = "breath"                   # Quick breath
-    PAUSE = "pause"                     # Fermata-like hold
-    DRAMATIC = "dramatic"               # Tension-building silence
-    DECAY = "decay"                     # Let ring and fade
-    CUT = "cut"                         # Abrupt stop
+
+    REST = "rest"  # Standard rest
+    BREATH = "breath"  # Quick breath
+    PAUSE = "pause"  # Fermata-like hold
+    DRAMATIC = "dramatic"  # Tension-building silence
+    DECAY = "decay"  # Let ring and fade
+    CUT = "cut"  # Abrupt stop
 
 
 # =============================================================================
 # DATA CLASSES
 # =============================================================================
 
+
 @dataclass
 class DynamicPoint:
     """A point on the dynamics curve."""
-    position: float          # 0.0 - 1.0 through section/song
-    velocity: int            # 0-127
-    expression: int = 100    # CC11 value
-    volume: int = 100        # CC7 value
+
+    position: float  # 0.0 - 1.0 through section/song
+    velocity: int  # 0-127
+    expression: int = 100  # CC11 value
+    volume: int = 100  # CC7 value
     marking: Optional[DynamicMarking] = None
 
 
 @dataclass
 class DynamicCurve:
     """A complete dynamics curve for a section or song."""
+
     points: List[DynamicPoint]
     shape: DynamicShape
     start_marking: DynamicMarking
     end_marking: DynamicMarking
-    peak_position: float = 0.5      # Where the peak occurs (0.0-1.0)
+    peak_position: float = 0.5  # Where the peak occurs (0.0-1.0)
     peak_marking: Optional[DynamicMarking] = None
 
     # Expression parameters
     has_accents: bool = False
     accent_positions: List[float] = field(default_factory=list)
-    accent_strength: float = 0.2    # How much louder accents are
+    accent_strength: float = 0.2  # How much louder accents are
 
     # Humanization
-    velocity_variance: int = 5      # Random variance in velocity
-    timing_variance: float = 0.02   # Random variance in timing
+    velocity_variance: int = 5  # Random variance in velocity
+    timing_variance: float = 0.02  # Random variance in timing
 
 
 @dataclass
 class BreathingPattern:
     """Defines natural breathing dynamics for a section."""
-    inhale_bars: float              # Duration of "inhale" (building)
-    hold_bars: float                # Duration at peak
-    exhale_bars: float              # Duration of "exhale" (releasing)
-    rest_bars: float                # Rest before next breath
-    depth: float                    # 0.0-1.0, how deep the breath
+
+    inhale_bars: float  # Duration of "inhale" (building)
+    hold_bars: float  # Duration at peak
+    exhale_bars: float  # Duration of "exhale" (releasing)
+    rest_bars: float  # Rest before next breath
+    depth: float  # 0.0-1.0, how deep the breath
 
 
 @dataclass
 class SilenceEvent:
     """A deliberate silence in the music."""
-    position: float                 # When it occurs
-    duration_beats: float           # How long
+
+    position: float  # When it occurs
+    duration_beats: float  # How long
     silence_type: SilenceType
     instruments_affected: List[str] = field(default_factory=list)  # Empty = all
-    has_reverb_tail: bool = True    # Let previous sound decay
+    has_reverb_tail: bool = True  # Let previous sound decay
 
 
 @dataclass
 class DynamicsProfile:
     """Complete dynamics specification for a section."""
+
     curve: DynamicCurve
     breathing: Optional[BreathingPattern]
     silences: List[SilenceEvent]
@@ -141,7 +151,7 @@ class DynamicsProfile:
 
     # Expression
     use_expression_cc: bool = True
-    use_volume_cc: bool = False     # Usually expression is preferred
+    use_volume_cc: bool = False  # Usually expression is preferred
 
     # Metadata
     emotion: str = ""
@@ -160,7 +170,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "preferred_shapes": [DynamicShape.BREATH, DynamicShape.SWELL, DynamicShape.WAVE],
         "breathing_depth": 0.6,
         "breath_cycle_bars": 8,
-        "silence_frequency": 0.3,       # High - grief needs space
+        "silence_frequency": 0.3,  # High - grief needs space
         "silence_types": [SilenceType.BREATH, SilenceType.PAUSE, SilenceType.DECAY],
         "accent_probability": 0.1,
         "velocity_variance": 8,
@@ -168,7 +178,6 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "out",
     },
-
     "sadness": {
         "base_dynamic": DynamicMarking.MP,
         "max_dynamic": DynamicMarking.F,
@@ -184,7 +193,6 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "out",
     },
-
     "melancholy": {
         "base_dynamic": DynamicMarking.P,
         "max_dynamic": DynamicMarking.MF,
@@ -200,7 +208,6 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "out",
     },
-
     "rage": {
         "base_dynamic": DynamicMarking.FF,
         "max_dynamic": DynamicMarking.FFFF,
@@ -208,7 +215,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "preferred_shapes": [DynamicShape.ACCENT, DynamicShape.SFORZANDO, DynamicShape.CRESCENDO],
         "breathing_depth": 0.3,
         "breath_cycle_bars": 2,
-        "silence_frequency": 0.15,      # Strategic silence before explosion
+        "silence_frequency": 0.15,  # Strategic silence before explosion
         "silence_types": [SilenceType.DRAMATIC, SilenceType.CUT],
         "accent_probability": 0.5,
         "velocity_variance": 10,
@@ -216,7 +223,6 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": True,
         "fade_tendency": "none",
     },
-
     "anger": {
         "base_dynamic": DynamicMarking.F,
         "max_dynamic": DynamicMarking.FFF,
@@ -232,7 +238,6 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": True,
         "fade_tendency": "none",
     },
-
     "fear": {
         "base_dynamic": DynamicMarking.PP,
         "max_dynamic": DynamicMarking.FF,
@@ -240,23 +245,22 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "preferred_shapes": [DynamicShape.CRESCENDO, DynamicShape.STUTTER, DynamicShape.SUBITO],
         "breathing_depth": 0.7,
         "breath_cycle_bars": 4,
-        "silence_frequency": 0.35,      # Fear uses silence effectively
+        "silence_frequency": 0.35,  # Fear uses silence effectively
         "silence_types": [SilenceType.DRAMATIC, SilenceType.PAUSE, SilenceType.BREATH],
         "accent_probability": 0.3,
         "velocity_variance": 15,
         "expression_range": (20, 110),
         "uses_subito": True,
-        "fade_tendency": "in",          # Fear builds
+        "fade_tendency": "in",  # Fear builds
     },
-
     "anxiety": {
         "base_dynamic": DynamicMarking.MP,
         "max_dynamic": DynamicMarking.F,
         "min_dynamic": DynamicMarking.P,
         "preferred_shapes": [DynamicShape.STUTTER, DynamicShape.WAVE, DynamicShape.HEARTBEAT],
         "breathing_depth": 0.5,
-        "breath_cycle_bars": 2,         # Quick, shallow breaths
-        "silence_frequency": 0.1,       # Anxiety doesn't rest
+        "breath_cycle_bars": 2,  # Quick, shallow breaths
+        "silence_frequency": 0.1,  # Anxiety doesn't rest
         "silence_types": [SilenceType.BREATH],
         "accent_probability": 0.25,
         "velocity_variance": 10,
@@ -264,7 +268,6 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": True,
         "fade_tendency": "none",
     },
-
     "hope": {
         "base_dynamic": DynamicMarking.MF,
         "max_dynamic": DynamicMarking.FF,
@@ -278,9 +281,8 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "velocity_variance": 6,
         "expression_range": (50, 110),
         "uses_subito": False,
-        "fade_tendency": "in",          # Hope builds
+        "fade_tendency": "in",  # Hope builds
     },
-
     "joy": {
         "base_dynamic": DynamicMarking.F,
         "max_dynamic": DynamicMarking.FFF,
@@ -296,14 +298,13 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "none",
     },
-
     "peace": {
         "base_dynamic": DynamicMarking.PP,
         "max_dynamic": DynamicMarking.MP,
         "min_dynamic": DynamicMarking.PPP,
         "preferred_shapes": [DynamicShape.FLAT, DynamicShape.BREATH, DynamicShape.WAVE],
         "breathing_depth": 0.3,
-        "breath_cycle_bars": 8,         # Slow, deep breaths
+        "breath_cycle_bars": 8,  # Slow, deep breaths
         "silence_frequency": 0.2,
         "silence_types": [SilenceType.DECAY, SilenceType.REST],
         "accent_probability": 0.05,
@@ -312,7 +313,6 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "out",
     },
-
     "nostalgia": {
         "base_dynamic": DynamicMarking.MP,
         "max_dynamic": DynamicMarking.MF,
@@ -328,13 +328,15 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "out",
     },
-
     "longing": {
         "base_dynamic": DynamicMarking.MP,
         "max_dynamic": DynamicMarking.F,
         "min_dynamic": DynamicMarking.P,
-        "preferred_shapes": [DynamicShape.CRESCENDO, DynamicShape.SWELL, DynamicShape.INVERSE_SWELL],  # noqa: E501
-
+        "preferred_shapes": [
+            DynamicShape.CRESCENDO,
+            DynamicShape.SWELL,
+            DynamicShape.INVERSE_SWELL,
+        ],  # noqa: E501
         "breathing_depth": 0.6,
         "breath_cycle_bars": 4,
         "silence_frequency": 0.2,
@@ -345,7 +347,6 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "in",
     },
-
     "tension": {
         "base_dynamic": DynamicMarking.MF,
         "max_dynamic": DynamicMarking.FF,
@@ -361,7 +362,6 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": True,
         "fade_tendency": "in",
     },
-
     "defiance": {
         "base_dynamic": DynamicMarking.F,
         "max_dynamic": DynamicMarking.FFFF,
@@ -377,7 +377,6 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": True,
         "fade_tendency": "none",
     },
-
     "vulnerability": {
         "base_dynamic": DynamicMarking.PP,
         "max_dynamic": DynamicMarking.MP,
@@ -393,7 +392,6 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "out",
     },
-
     "euphoria": {
         "base_dynamic": DynamicMarking.FF,
         "max_dynamic": DynamicMarking.FFFF,
@@ -409,7 +407,6 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "uses_subito": False,
         "fade_tendency": "none",
     },
-
     "emptiness": {
         "base_dynamic": DynamicMarking.PPP,
         "max_dynamic": DynamicMarking.P,
@@ -417,7 +414,7 @@ EMOTION_DYNAMICS_PROFILES: Dict[str, Dict] = {
         "preferred_shapes": [DynamicShape.FLAT, DynamicShape.FADE_OUT, DynamicShape.DECRESCENDO],
         "breathing_depth": 0.2,
         "breath_cycle_bars": 16,
-        "silence_frequency": 0.4,       # Emptiness is mostly silence
+        "silence_frequency": 0.4,  # Emptiness is mostly silence
         "silence_types": [SilenceType.DECAY, SilenceType.REST, SilenceType.PAUSE],
         "accent_probability": 0.02,
         "velocity_variance": 3,
@@ -436,23 +433,19 @@ INSTRUMENT_DEFAULT_OFFSETS: Dict[str, int] = {
     # Rhythm section - foundation
     "drums": 5,
     "bass": 0,
-
     # Harmonic
     "piano": 0,
     "keys": 0,
     "guitar": -3,
     "chords": -5,
-
     # Melodic
     "melody": 10,
     "lead": 10,
     "vocal": 15,
-
     # Textural
     "pad": -10,
     "strings": -5,
     "synth": -5,
-
     # Decorative
     "arpeggio": -8,
     "counter_melody": 5,
@@ -463,6 +456,7 @@ INSTRUMENT_DEFAULT_OFFSETS: Dict[str, int] = {
 # =============================================================================
 # CURVE GENERATORS
 # =============================================================================
+
 
 def generate_dynamic_curve(
     shape: DynamicShape,
@@ -487,13 +481,13 @@ def generate_dynamic_curve(
         for i in range(num_points):
             t = i / (num_points - 1) if num_points > 1 else 0
             # Exponential curve for more natural crescendo
-            t_exp = t ** 1.5
+            t_exp = t**1.5
             points.append(int(start_velocity + t_exp * (end_velocity - start_velocity)))
 
     elif shape == DynamicShape.DECRESCENDO:
         for i in range(num_points):
             t = i / (num_points - 1) if num_points > 1 else 0
-            t_exp = t ** 0.7  # Inverse curve
+            t_exp = t**0.7  # Inverse curve
             points.append(int(start_velocity - t_exp * (start_velocity - end_velocity)))
 
     elif shape == DynamicShape.SWELL:
@@ -653,6 +647,7 @@ def generate_dynamic_curve(
 # DYNAMICS ENGINE
 # =============================================================================
 
+
 class DynamicsEngine:
     """
     Generates dynamic curves and breathing patterns for emotional expression.
@@ -687,21 +682,18 @@ class DynamicsEngine:
             DynamicsProfile with curves and silences
         """
         emotion_lower = emotion.lower()
-        profile = EMOTION_DYNAMICS_PROFILES.get(
-            emotion_lower,
-            EMOTION_DYNAMICS_PROFILES["sadness"]
-        )
+        profile = EMOTION_DYNAMICS_PROFILES.get(emotion_lower, EMOTION_DYNAMICS_PROFILES["sadness"])
 
         # Determine dynamic range based on section type
         section_modifiers = {
-            "intro": (-10, 0.7),      # Quieter, less range
+            "intro": (-10, 0.7),  # Quieter, less range
             "verse": (0, 0.8),
             "pre_chorus": (5, 0.9),
-            "chorus": (10, 1.0),      # Loudest
+            "chorus": (10, 1.0),  # Loudest
             "post_chorus": (5, 0.9),
             "bridge": (-5, 0.8),
             "breakdown": (-15, 0.6),
-            "build": (0, 1.0),        # Full range for builds
+            "build": (0, 1.0),  # Full range for builds
             "drop": (15, 1.0),
             "outro": (-10, 0.7),
             "interlude": (-10, 0.7),
@@ -717,8 +709,9 @@ class DynamicsEngine:
             max_vel = profile["max_dynamic"].value
         else:
             max_vel = int(
-                profile["base_dynamic"].value +
-                (profile["max_dynamic"].value - profile["base_dynamic"].value) * range_mult)
+                profile["base_dynamic"].value
+                + (profile["max_dynamic"].value - profile["base_dynamic"].value) * range_mult
+            )
         min_vel = int(profile["min_dynamic"].value + offset * 0.5)
 
         # Clamp
@@ -766,8 +759,7 @@ class DynamicsEngine:
 
             # Add variance
             vel_with_variance = vel + self.rng.randint(
-                -profile["velocity_variance"],
-                profile["velocity_variance"]
+                -profile["velocity_variance"], profile["velocity_variance"]
             )
             vel_with_variance = max(1, min(127, vel_with_variance))
 
@@ -775,12 +767,14 @@ class DynamicsEngine:
             expr_min, expr_max = profile["expression_range"]
             expr = int(expr_min + (vel / 127) * (expr_max - expr_min))
 
-            curve_points.append(DynamicPoint(
-                position=pos,
-                velocity=vel_with_variance,
-                expression=expr,
-                volume=100,
-            ))
+            curve_points.append(
+                DynamicPoint(
+                    position=pos,
+                    velocity=vel_with_variance,
+                    expression=expr,
+                    volume=100,
+                )
+            )
 
         # Generate accents
         accent_positions = []
@@ -838,12 +832,14 @@ class DynamicsEngine:
                     else:
                         duration = 0.25
 
-                    silences.append(SilenceEvent(
-                        position=self.rng.random(),
-                        duration_beats=duration,
-                        silence_type=silence_type,
-                        has_reverb_tail=silence_type in [SilenceType.DECAY, SilenceType.PAUSE],
-                    ))
+                    silences.append(
+                        SilenceEvent(
+                            position=self.rng.random(),
+                            duration_beats=duration,
+                            silence_type=silence_type,
+                            has_reverb_tail=silence_type in [SilenceType.DECAY, SilenceType.PAUSE],
+                        )
+                    )
 
         return DynamicsProfile(
             curve=curve,
@@ -971,10 +967,12 @@ class DynamicsEngine:
 
         lines = []
         lines.append(
-            f"═══ DYNAMICS: {profile.emotion.upper()} / {profile.section_type.upper()} ═══")
+            f"═══ DYNAMICS: {profile.emotion.upper()} / {profile.section_type.upper()} ═══"
+        )
         lines.append(f"Shape: {profile.curve.shape.value}")
         lines.append(
-            f"Range: {profile.curve.start_marking.name} → {profile.curve.end_marking.name}")
+            f"Range: {profile.curve.start_marking.name} → {profile.curve.end_marking.name}"
+        )
         lines.append("")
 
         # Visual curve
@@ -999,13 +997,18 @@ class DynamicsEngine:
             lines.append(f"Silences: {len(profile.silences)}")
             for s in profile.silences[:3]:
                 lines.append(
-                    f"  @{s.position:.2f}: {s.silence_type.value} ({s.duration_beats} beats)")
+                    f"  @{s.position:.2f}: {s.silence_type.value} ({s.duration_beats} beats)"
+                )
 
         if profile.breathing:
             lines.append("")
             lines.append(f"Breathing: depth={profile.breathing.depth:.1f}")
             lines.append(
-                f"  Cycle: inhale {profile.breathing.inhale_bars:.1f}b → hold {profile.breathing.hold_bars:.1f}b → exhale {profile.breathing.exhale_bars:.1f}b → rest {profile.breathing.rest_bars:.1f}b")  # noqa: E501
+                f"  Cycle: inhale {profile.breathing.inhale_bars:.1f}b "
+                f"→ hold {profile.breathing.hold_bars:.1f}b "
+                f"→ exhale {profile.breathing.exhale_bars:.1f}b "
+                f"→ rest {profile.breathing.rest_bars:.1f}b"
+            )
 
         return "\n".join(lines)
 
@@ -1013,6 +1016,7 @@ class DynamicsEngine:
 # =============================================================================
 # CONVENIENCE FUNCTIONS
 # =============================================================================
+
 
 def create_dynamics(
     emotion: str,

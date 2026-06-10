@@ -16,6 +16,7 @@ import uuid
 @dataclass
 class IntentDiff:
     """Represents changes between two intent versions."""
+
     added: Dict[str, Any] = field(default_factory=dict)
     removed: Dict[str, Any] = field(default_factory=dict)
     modified: Dict[str, tuple] = field(default_factory=dict)  # (old, new)
@@ -59,6 +60,7 @@ class IntentDiff:
 @dataclass
 class IntentVersion:
     """A versioned snapshot of a song intent."""
+
     version_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     parent_id: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
@@ -121,6 +123,7 @@ class IntentVersion:
 @dataclass
 class IntentBranch:
     """A branch in the version history."""
+
     name: str
     head_id: str  # Latest version ID on this branch
     created_at: datetime = field(default_factory=datetime.utcnow)
@@ -364,7 +367,7 @@ class IntentVersionControl:
             "head_id": self._head_id,
         }
 
-        with open(self._storage_path / "versions.json", 'w') as f:
+        with open(self._storage_path / "versions.json", "w") as f:
             json.dump(data, f, indent=2)
 
     def _load(self) -> None:
@@ -415,9 +418,7 @@ def create_version(
     author_name: str = "",
 ) -> IntentVersion:
     """Create a new version (commit)."""
-    return get_version_control().commit(
-        intent_data, message, author_id, author_name
-    )
+    return get_version_control().commit(intent_data, message, author_id, author_name)
 
 
 def get_history(limit: int = 100) -> List[IntentVersion]:

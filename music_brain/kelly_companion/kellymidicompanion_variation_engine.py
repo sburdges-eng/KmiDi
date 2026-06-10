@@ -16,95 +16,101 @@ from typing import Optional, List, Dict, Tuple, Any
 import random
 import copy
 
-
 # =============================================================================
 # ENUMS & CONSTANTS
 # =============================================================================
 
+
 class VariationType(Enum):
     """Types of musical variation."""
+
     # Melodic
-    TRANSPOSITION = "transposition"           # Move to different pitch
-    INVERSION = "inversion"                   # Flip melodic contour
-    RETROGRADE = "retrograde"                 # Reverse direction
-    AUGMENTATION = "augmentation"             # Stretch durations
-    DIMINUTION = "diminution"                 # Compress durations
-    ORNAMENTATION = "ornamentation"           # Add decorations
-    SIMPLIFICATION = "simplification"         # Strip to essentials
-    SEQUENCE = "sequence"                     # Repeat at different pitch
-    FRAGMENTATION = "fragmentation"           # Use partial motif
-    EXTENSION = "extension"                   # Lengthen phrase
+    TRANSPOSITION = "transposition"  # Move to different pitch
+    INVERSION = "inversion"  # Flip melodic contour
+    RETROGRADE = "retrograde"  # Reverse direction
+    AUGMENTATION = "augmentation"  # Stretch durations
+    DIMINUTION = "diminution"  # Compress durations
+    ORNAMENTATION = "ornamentation"  # Add decorations
+    SIMPLIFICATION = "simplification"  # Strip to essentials
+    SEQUENCE = "sequence"  # Repeat at different pitch
+    FRAGMENTATION = "fragmentation"  # Use partial motif
+    EXTENSION = "extension"  # Lengthen phrase
 
     # Rhythmic
-    SYNCOPATION = "syncopation"               # Shift accents
-    DISPLACEMENT = "displacement"             # Move in time
-    SUBDIVISION = "subdivision"               # Double note density
-    CONSOLIDATION = "consolidation"           # Half note density
-    SWING = "swing"                           # Add swing feel
-    STRAIGHT = "straight"                     # Remove swing
+    SYNCOPATION = "syncopation"  # Shift accents
+    DISPLACEMENT = "displacement"  # Move in time
+    SUBDIVISION = "subdivision"  # Double note density
+    CONSOLIDATION = "consolidation"  # Half note density
+    SWING = "swing"  # Add swing feel
+    STRAIGHT = "straight"  # Remove swing
 
     # Harmonic
-    REHARMONIZATION = "reharmonization"       # Change chords
-    MODE_CHANGE = "mode_change"               # Major/minor shift
-    MODAL_INTERCHANGE = "modal_interchange"   # Borrow from parallel
+    REHARMONIZATION = "reharmonization"  # Change chords
+    MODE_CHANGE = "mode_change"  # Major/minor shift
+    MODAL_INTERCHANGE = "modal_interchange"  # Borrow from parallel
     CHROMATIC_ALTERATION = "chromatic_alteration"  # Add chromaticism
 
     # Textural
-    REGISTER_SHIFT = "register_shift"         # Move octave
-    DOUBLING = "doubling"                     # Add parallel voice
-    THINNING = "thinning"                     # Remove voices
-    INSTRUMENTATION = "instrumentation"       # Change timbre
-    ARTICULATION = "articulation"             # Change attack/release
+    REGISTER_SHIFT = "register_shift"  # Move octave
+    DOUBLING = "doubling"  # Add parallel voice
+    THINNING = "thinning"  # Remove voices
+    INSTRUMENTATION = "instrumentation"  # Change timbre
+    ARTICULATION = "articulation"  # Change attack/release
 
     # Structural
-    TRUNCATION = "truncation"                 # Cut short
-    REPETITION = "repetition"                 # Exact repeat
-    DEVELOPMENT = "development"               # Complex transformation
-    RECOMBINATION = "recombination"           # Mix motif elements
+    TRUNCATION = "truncation"  # Cut short
+    REPETITION = "repetition"  # Exact repeat
+    DEVELOPMENT = "development"  # Complex transformation
+    RECOMBINATION = "recombination"  # Mix motif elements
 
 
 class VariationIntensity(Enum):
     """How much variation to apply."""
-    NONE = 0            # Exact repeat
-    SUBTLE = 1          # Nearly identical
-    LIGHT = 2           # Small changes
-    MODERATE = 3        # Noticeable changes
-    SIGNIFICANT = 4     # Major changes
-    DRAMATIC = 5        # Barely recognizable
-    TOTAL = 6           # Complete transformation
+
+    NONE = 0  # Exact repeat
+    SUBTLE = 1  # Nearly identical
+    LIGHT = 2  # Small changes
+    MODERATE = 3  # Noticeable changes
+    SIGNIFICANT = 4  # Major changes
+    DRAMATIC = 5  # Barely recognizable
+    TOTAL = 6  # Complete transformation
 
 
 class MotifType(Enum):
     """Types of musical motifs."""
-    MELODIC = "melodic"           # Pitch sequence
-    RHYTHMIC = "rhythmic"         # Rhythm pattern
-    HARMONIC = "harmonic"         # Chord progression
-    TEXTURAL = "textural"         # Density/timbre pattern
-    CONTOUR = "contour"           # Shape (up/down/static)
-    INTERVAL = "interval"         # Interval sequence
+
+    MELODIC = "melodic"  # Pitch sequence
+    RHYTHMIC = "rhythmic"  # Rhythm pattern
+    HARMONIC = "harmonic"  # Chord progression
+    TEXTURAL = "textural"  # Density/timbre pattern
+    CONTOUR = "contour"  # Shape (up/down/static)
+    INTERVAL = "interval"  # Interval sequence
 
 
 class DevelopmentStrategy(Enum):
     """Strategies for developing material across a song."""
-    ADDITIVE = "additive"             # Gradually add elements
-    SUBTRACTIVE = "subtractive"       # Gradually remove elements
+
+    ADDITIVE = "additive"  # Gradually add elements
+    SUBTRACTIVE = "subtractive"  # Gradually remove elements
     TRANSFORMATIVE = "transformative"  # Continuous evolution
-    CYCLICAL = "cyclical"             # Return to origins
-    SPIRAL = "spiral"                 # Return but elevated
-    LINEAR = "linear"                 # One direction
-    ARCH = "arch"                     # Build then return
+    CYCLICAL = "cyclical"  # Return to origins
+    SPIRAL = "spiral"  # Return but elevated
+    LINEAR = "linear"  # One direction
+    ARCH = "arch"  # Build then return
 
 
 # =============================================================================
 # DATA CLASSES
 # =============================================================================
 
+
 @dataclass
 class Motif:
     """A musical motif that can be varied."""
+
     id: str
     motif_type: MotifType
-    content: Any                      # Pitch list, rhythm list, chord list, etc.
+    content: Any  # Pitch list, rhythm list, chord list, etc.
     length_beats: float
 
     # Analysis
@@ -115,15 +121,16 @@ class Motif:
     # Metadata
     source_section: str = ""
     emotional_character: str = ""
-    importance: float = 1.0           # 0.0-1.0, how central this motif is
+    importance: float = 1.0  # 0.0-1.0, how central this motif is
 
 
 @dataclass
 class VariationRule:
     """A rule for how to vary a motif."""
+
     variation_type: VariationType
     intensity: VariationIntensity
-    probability: float = 1.0          # Chance this variation is applied
+    probability: float = 1.0  # Chance this variation is applied
     parameters: Dict[str, Any] = field(default_factory=dict)
 
     # Constraints
@@ -135,15 +142,16 @@ class VariationRule:
 @dataclass
 class VariationInstance:
     """A specific variation of a motif."""
+
     original_motif_id: str
     variation_types: List[VariationType]
     intensity: VariationIntensity
     result_content: Any
 
     # How it differs
-    pitch_delta: int = 0              # Transposition amount
-    duration_scale: float = 1.0       # Time stretch factor
-    density_change: float = 0.0       # Note density change
+    pitch_delta: int = 0  # Transposition amount
+    duration_scale: float = 1.0  # Time stretch factor
+    density_change: float = 0.0  # Note density change
 
     # Position
     section_index: int = 0
@@ -153,6 +161,7 @@ class VariationInstance:
 @dataclass
 class VariationPlan:
     """Plan for variations across a song section or entire song."""
+
     motifs: List[Motif]
     variations: List[VariationInstance]
     strategy: DevelopmentStrategy
@@ -188,12 +197,11 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
             VariationType.SYNCOPATION,
             VariationType.SUBDIVISION,
         ],
-        "variation_rate": 0.3,          # Low - grief repeats
+        "variation_rate": 0.3,  # Low - grief repeats
         "preserve_contour": True,
         "preserve_rhythm": True,
         "development_arc": [1, 1, 2, 1, 1],  # Barely changes
     },
-
     "sadness": {
         "base_intensity": VariationIntensity.LIGHT,
         "max_intensity": VariationIntensity.MODERATE,
@@ -213,7 +221,6 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
         "preserve_rhythm": False,
         "development_arc": [1, 2, 3, 2, 1],
     },
-
     "melancholy": {
         "base_intensity": VariationIntensity.SUBTLE,
         "max_intensity": VariationIntensity.LIGHT,
@@ -232,7 +239,6 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
         "preserve_rhythm": True,
         "development_arc": [1, 1, 2, 2, 1],
     },
-
     "rage": {
         "base_intensity": VariationIntensity.MODERATE,
         "max_intensity": VariationIntensity.DRAMATIC,
@@ -253,7 +259,6 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
         "preserve_rhythm": False,
         "development_arc": [2, 3, 4, 5, 5],
     },
-
     "anger": {
         "base_intensity": VariationIntensity.LIGHT,
         "max_intensity": VariationIntensity.SIGNIFICANT,
@@ -273,7 +278,6 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
         "preserve_rhythm": False,
         "development_arc": [2, 3, 3, 4, 4],
     },
-
     "fear": {
         "base_intensity": VariationIntensity.LIGHT,
         "max_intensity": VariationIntensity.SIGNIFICANT,
@@ -293,7 +297,6 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
         "preserve_rhythm": True,
         "development_arc": [1, 2, 3, 4, 3],
     },
-
     "anxiety": {
         "base_intensity": VariationIntensity.MODERATE,
         "max_intensity": VariationIntensity.SIGNIFICANT,
@@ -313,7 +316,6 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
         "preserve_rhythm": False,
         "development_arc": [3, 3, 4, 4, 3],
     },
-
     "hope": {
         "base_intensity": VariationIntensity.LIGHT,
         "max_intensity": VariationIntensity.MODERATE,
@@ -334,7 +336,6 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
         "preserve_rhythm": False,
         "development_arc": [1, 2, 3, 4, 3],
     },
-
     "joy": {
         "base_intensity": VariationIntensity.MODERATE,
         "max_intensity": VariationIntensity.SIGNIFICANT,
@@ -355,7 +356,6 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
         "preserve_rhythm": False,
         "development_arc": [2, 3, 4, 4, 3],
     },
-
     "peace": {
         "base_intensity": VariationIntensity.SUBTLE,
         "max_intensity": VariationIntensity.LIGHT,
@@ -375,7 +375,6 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
         "preserve_rhythm": True,
         "development_arc": [1, 1, 1, 1, 1],
     },
-
     "nostalgia": {
         "base_intensity": VariationIntensity.LIGHT,
         "max_intensity": VariationIntensity.MODERATE,
@@ -395,7 +394,6 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
         "preserve_rhythm": True,
         "development_arc": [1, 2, 3, 2, 1],
     },
-
     "longing": {
         "base_intensity": VariationIntensity.LIGHT,
         "max_intensity": VariationIntensity.MODERATE,
@@ -414,7 +412,6 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
         "preserve_rhythm": False,
         "development_arc": [1, 2, 2, 3, 3],
     },
-
     "tension": {
         "base_intensity": VariationIntensity.MODERATE,
         "max_intensity": VariationIntensity.DRAMATIC,
@@ -434,7 +431,6 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
         "preserve_rhythm": False,
         "development_arc": [2, 3, 4, 5, 5],
     },
-
     "defiance": {
         "base_intensity": VariationIntensity.MODERATE,
         "max_intensity": VariationIntensity.SIGNIFICANT,
@@ -454,7 +450,6 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
         "preserve_rhythm": False,
         "development_arc": [2, 3, 4, 4, 4],
     },
-
     "vulnerability": {
         "base_intensity": VariationIntensity.SUBTLE,
         "max_intensity": VariationIntensity.LIGHT,
@@ -474,7 +469,6 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
         "preserve_rhythm": True,
         "development_arc": [1, 1, 2, 1, 1],
     },
-
     "euphoria": {
         "base_intensity": VariationIntensity.MODERATE,
         "max_intensity": VariationIntensity.DRAMATIC,
@@ -495,7 +489,6 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
         "preserve_rhythm": False,
         "development_arc": [2, 4, 5, 5, 4],
     },
-
     "emptiness": {
         "base_intensity": VariationIntensity.NONE,
         "max_intensity": VariationIntensity.SUBTLE,
@@ -522,6 +515,7 @@ EMOTION_VARIATION_PROFILES: Dict[str, Dict] = {
 # =============================================================================
 # VARIATION TRANSFORMATIONS
 # =============================================================================
+
 
 class VariationTransforms:
     """Collection of transformation functions."""
@@ -605,14 +599,14 @@ class VariationTransforms:
 
     @staticmethod
     def fragment(
-            sequence: List[Any],
-            start_ratio: float = 0.0, end_ratio: float = 0.5) -> List[Any]:
+        sequence: List[Any], start_ratio: float = 0.0, end_ratio: float = 0.5
+    ) -> List[Any]:
         """Extract a fragment."""
         if not sequence:
             return sequence
         start = int(len(sequence) * start_ratio)
         end = int(len(sequence) * end_ratio)
-        return sequence[start:max(start + 1, end)]
+        return sequence[start : max(start + 1, end)]
 
     @staticmethod
     def extend(sequence: List[Any], extension_ratio: float = 0.5) -> List[Any]:
@@ -667,6 +661,7 @@ class VariationTransforms:
 # VARIATION ENGINE
 # =============================================================================
 
+
 class VariationEngine:
     """
     Generates variations and developments of musical material.
@@ -705,7 +700,7 @@ class VariationEngine:
         contour = []
         if pitches and len(pitches) > 1:
             for i in range(1, len(pitches)):
-                diff = pitches[i] - pitches[i-1]
+                diff = pitches[i] - pitches[i - 1]
                 if diff > 0:
                     contour.append(1)
                 elif diff < 0:
@@ -717,7 +712,7 @@ class VariationEngine:
         intervals = []
         if pitches and len(pitches) > 1:
             for i in range(1, len(pitches)):
-                intervals.append(pitches[i] - pitches[i-1])
+                intervals.append(pitches[i] - pitches[i - 1])
 
         # Calculate length
         length_beats = sum(durations) if durations else 4.0
@@ -753,8 +748,7 @@ class VariationEngine:
         """
         emotion_lower = emotion.lower()
         profile = EMOTION_VARIATION_PROFILES.get(
-            emotion_lower,
-            EMOTION_VARIATION_PROFILES["sadness"]
+            emotion_lower, EMOTION_VARIATION_PROFILES["sadness"]
         )
 
         # Create default motifs if none provided
@@ -763,7 +757,7 @@ class VariationEngine:
                 self.create_motif(
                     pitches=[60, 62, 64, 65, 67],
                     durations=[1.0, 1.0, 0.5, 0.5, 2.0],
-                    motif_id="main_motif"
+                    motif_id="main_motif",
                 )
             ]
 
@@ -801,7 +795,7 @@ class VariationEngine:
                     num_variations = min(intensity.value, len(profile["preferred_variations"]))
                     selected_types = self.rng.sample(
                         profile["preferred_variations"],
-                        k=min(num_variations, len(profile["preferred_variations"]))
+                        k=min(num_variations, len(profile["preferred_variations"])),
                     )
 
                     # Create variation
@@ -894,7 +888,7 @@ class VariationEngine:
             elif var_type == VariationType.SIMPLIFICATION:
                 keep_ratio = max(0.3, 1.0 - (intensity.value * 0.15))
                 pitches = self.transforms.simplify(pitches, keep_ratio)
-                durations = durations[:len(pitches)]
+                durations = durations[: len(pitches)]
 
             elif var_type == VariationType.SEQUENCE:
                 interval = self.rng.choice([2, 3, 4, 5, -2, -3, -4, -5])
@@ -968,7 +962,7 @@ class VariationEngine:
 
             elif var_type == VariationType.SIMPLIFICATION:
                 pitches = self.transforms.simplify(pitches, 0.5)
-                durations = durations[:len(pitches)]
+                durations = durations[: len(pitches)]
 
             elif var_type == VariationType.REGISTER_SHIFT:
                 octaves = self.rng.choice([-1, 1])
@@ -1049,8 +1043,11 @@ class VariationEngine:
 
         for section_idx in sorted(section_vars.keys()):
             vars_in_section = section_vars[section_idx]
-            intensity = plan.section_intensities[section_idx] if section_idx < len(
-                plan.section_intensities) else VariationIntensity.NONE
+            intensity = (
+                plan.section_intensities[section_idx]
+                if section_idx < len(plan.section_intensities)
+                else VariationIntensity.NONE
+            )
             lines.append(f"  Section {section_idx + 1} ({intensity.name}):")
             for var in vars_in_section:
                 var_types = ", ".join(vt.value[:6] for vt in var.variation_types[:3])
@@ -1062,6 +1059,7 @@ class VariationEngine:
 # =============================================================================
 # CONVENIENCE FUNCTIONS
 # =============================================================================
+
 
 def create_variation_plan(
     emotion: str,
@@ -1107,7 +1105,7 @@ if __name__ == "__main__":
         motif = engine.create_motif(
             pitches=[60, 62, 64, 65, 67, 65, 64],
             durations=[0.5, 0.5, 1.0, 0.5, 0.5, 1.0, 1.0],
-            motif_id="test_melody"
+            motif_id="test_melody",
         )
 
         plan = engine.generate_variation_plan(
@@ -1121,7 +1119,7 @@ if __name__ == "__main__":
     # Demo specific variations
     print(f"\n{'='*60}")
     print("TRANSFORMATION EXAMPLES")
-    print('='*60)
+    print("=" * 60)
 
     original = [60, 62, 64, 65, 67]
     print(f"\nOriginal pitches: {original}")

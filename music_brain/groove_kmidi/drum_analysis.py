@@ -46,12 +46,13 @@ class AnalysisConfig:
 @dataclass
 class SnareBounceSignature:
     """Snare technique analysis."""
-    flam_count: int = 0              # Two-note flams
+
+    flam_count: int = 0  # Two-note flams
     buzz_roll_regions: List[Tuple[int, int]] = field(default_factory=list)  # (start_tick, end_tick)
-    drag_count: int = 0              # Drag rudiments (grace notes before main hit)
-    avg_flam_gap_ms: float = 0.0     # Average time between flam notes
+    drag_count: int = 0  # Drag rudiments (grace notes before main hit)
+    avg_flam_gap_ms: float = 0.0  # Average time between flam notes
     avg_flam_velocity_ratio: float = 0.0  # Grace note velocity / main note velocity
-    bounce_decay_rate: float = 0.0   # How fast velocity decays in bounces
+    bounce_decay_rate: float = 0.0  # How fast velocity decays in bounces
     total_bounces: int = 0
 
     # Technique indicators
@@ -63,9 +64,10 @@ class SnareBounceSignature:
 @dataclass
 class HiHatAlternation:
     """Hi-hat handedness analysis."""
+
     is_alternating: bool = False
     confidence: float = 0.0
-    dominant_hand: str = "unknown"   # right, left, unknown
+    dominant_hand: str = "unknown"  # right, left, unknown
 
     # Velocity patterns
     downbeat_avg_velocity: float = 0.0
@@ -84,14 +86,15 @@ class HiHatAlternation:
 @dataclass
 class DrumTechniqueProfile:
     """Complete drum technique analysis."""
+
     snare: SnareBounceSignature = field(default_factory=SnareBounceSignature)
     hihat: HiHatAlternation = field(default_factory=HiHatAlternation)
 
     # Overall characteristics
-    tightness: float = 0.0       # How tight/loose the playing is (0-1)
+    tightness: float = 0.0  # How tight/loose the playing is (0-1)
     dynamics_range: float = 0.0  # Velocity range used
     ghost_note_density: float = 0.0  # Proportion of ghost notes
-    fill_density: float = 0.0    # How often fills occur
+    fill_density: float = 0.0  # How often fills occur
 
 
 class DrumAnalyzer:
@@ -153,21 +156,15 @@ class DrumAnalyzer:
             return DrumTechniqueProfile()
 
         # Separate by instrument
-        snare_notes = [n for n in drum_notes if get_drum_category(n.pitch) == 'snare']
-        hihat_notes = [
-            n for n in drum_notes
-            if get_drum_category(n.pitch).startswith('hihat')
-        ]
+        snare_notes = [n for n in drum_notes if get_drum_category(n.pitch) == "snare"]
+        hihat_notes = [n for n in drum_notes if get_drum_category(n.pitch).startswith("hihat")]
 
         # Analyze each
         snare_sig = self._analyze_snare_bounces(snare_notes)
         hihat_alt = self._analyze_hihat_alternation(hihat_notes)
 
         # Overall profile
-        profile = DrumTechniqueProfile(
-            snare=snare_sig,
-            hihat=hihat_alt
-        )
+        profile = DrumTechniqueProfile(snare=snare_sig, hihat=hihat_alt)
 
         # Calculate overall characteristics
         profile.tightness = self._calculate_tightness(drum_notes)
@@ -186,10 +183,10 @@ class DrumAnalyzer:
         # Sort by time
         snare_notes = sorted(snare_notes, key=lambda n: n.onset_ticks)
 
-        flams = []           # (grace_note, main_note) pairs
-        buzz_regions = []    # (start, end) tick ranges
-        drags = []           # (grace_notes, main_note) tuples
-        bounces = []         # All detected bounces
+        flams = []  # (grace_note, main_note) pairs
+        buzz_regions = []  # (start, end) tick ranges
+        drags = []  # (grace_notes, main_note) tuples
+        bounces = []  # All detected bounces
 
         i = 0
         while i < len(snare_notes) - 1:
@@ -216,18 +213,22 @@ class DrumAnalyzer:
                     # FLAM: two notes, grace note quieter
                     if cluster[0].velocity < cluster[1].velocity:
                         flams.append((cluster[0], cluster[1]))
-                        bounces.append({
-                            'type': 'flam',
-                            'gap_ms': gap_ms,
-                            'velocity_ratio': cluster[0].velocity / cluster[1].velocity
-                        })
+                        bounces.append(
+                            {
+                                "type": "flam",
+                                "gap_ms": gap_ms,
+                                "velocity_ratio": cluster[0].velocity / cluster[1].velocity,
+                            }
+                        )
                     elif cluster[1].velocity < cluster[0].velocity:
                         flams.append((cluster[1], cluster[0]))
-                        bounces.append({
-                            'type': 'flam',
-                            'gap_ms': gap_ms,
-                            'velocity_ratio': cluster[1].velocity / cluster[0].velocity
-                        })
+                        bounces.append(
+                            {
+                                "type": "flam",
+                                "gap_ms": gap_ms,
+                                "velocity_ratio": cluster[1].velocity / cluster[0].velocity,
+                            }
+                        )
 
                 elif len(cluster) >= 3:
                     # Could be buzz roll or drag
@@ -237,17 +238,20 @@ class DrumAnalyzer:
                     vel_std = self._std(velocities)
                     if vel_std < 20:
                         buzz_regions.append((cluster[0].onset_ticks, cluster[-1].onset_ticks))
-                        bounces.append({'type': 'buzz', 'length': len(cluster)})
+                        bounces.append({"type": "buzz", "length": len(cluster)})
 
                     # Drag: grace notes (quieter) before main hit (louder)
                     elif velocities[-1] > max(velocities[:-1]):
                         drags.append((cluster[:-1], cluster[-1]))
-                        bounces.append({
-                            'type': 'drag',
-                            'grace_count': len(cluster) - 1,
-                            'velocity_ratio': sum(velocities[:-1]) / len(velocities[:-1]) / velocities[-1]  # noqa: E501
-
-                        })
+                        bounces.append(
+                            {
+                                "type": "drag",
+                                "grace_count": len(cluster) - 1,
+                                "velocity_ratio": sum(velocities[:-1])
+                                / len(velocities[:-1])
+                                / velocities[-1],  # noqa: E501
+                            }
+                        )
 
                 i = j  # Skip past cluster
             else:
@@ -260,7 +264,7 @@ class DrumAnalyzer:
             drag_count=len(drags),
             total_bounces=len(bounces),
             has_buzz_rolls=len(buzz_regions) > 0,
-            has_ghost_drags=len(drags) > 0
+            has_ghost_drags=len(drags) > 0,
         )
 
         # Calculate averages
@@ -274,9 +278,9 @@ class DrumAnalyzer:
         if len(buzz_regions) >= 1:
             sig.primary_technique = "technical"  # Uses buzz rolls
         elif len(drags) > len(flams) and len(drags) > 0:
-            sig.primary_technique = "jazzy"      # Drag-heavy
+            sig.primary_technique = "jazzy"  # Drag-heavy
         elif len(flams) > len(snare_notes) * 0.1:
-            sig.primary_technique = "heavy"      # Lots of flams
+            sig.primary_technique = "heavy"  # Lots of flams
         else:
             sig.primary_technique = "standard"
 
@@ -299,7 +303,7 @@ class DrumAnalyzer:
         eighth_ticks = self.ppq // 2
 
         downbeat_notes = []  # Even 8th positions (0, 2, 4, 6)
-        upbeat_notes = []    # Odd 8th positions (1, 3, 5, 7)
+        upbeat_notes = []  # Odd 8th positions (1, 3, 5, 7)
 
         for note in hihat_notes:
             # Position within beat
@@ -338,7 +342,7 @@ class DrumAnalyzer:
         if vel_ratio > 1.1:
             dominant = "right"  # Stronger on downbeats = right-hand lead
         elif vel_ratio < 0.9:
-            dominant = "left"   # Stronger on upbeats = left-hand lead (or cross-stick)
+            dominant = "left"  # Stronger on upbeats = left-hand lead (or cross-stick)
         else:
             dominant = "unknown"
 
@@ -381,7 +385,7 @@ class DrumAnalyzer:
             downbeat_avg_offset=sum(down_offsets) / len(down_offsets) if down_offsets else 0,
             upbeat_avg_offset=sum(up_offsets) / len(up_offsets) if up_offsets else 0,
             alternation_consistency=consistency,
-            accent_positions=list(set(accent_positions))
+            accent_positions=list(set(accent_positions)),
         )
 
     def _calculate_tightness(self, notes: List) -> float:

@@ -25,11 +25,13 @@ import time
 # rtmidi (MidiOut.send_raw) or rtmidi2 (MidiOut.send_raw)
 try:
     import rtmidi2
+
     HAS_RTMIDI2 = True
 except ImportError:
     HAS_RTMIDI2 = False
 try:
     import rtmidi
+
     HAS_RTMIDI = True
 except ImportError:
     HAS_RTMIDI = False
@@ -99,7 +101,9 @@ def run_harness(
 
     midi_out.open_port(port_index)
     port_name = ports[port_index] if isinstance(ports[port_index], str) else str(port_index)
-    print(f"Sending UMP affect to '{port_name}' for {duration}s, curve={curve} @ {CONTROL_RATE_HZ} Hz")
+    print(
+        f"Sending UMP affect to '{port_name}' for {duration}s, curve={curve} @ {CONTROL_RATE_HZ} Hz"
+    )
 
     dt = 1.0 / CONTROL_RATE_HZ
     t0 = time.monotonic()
@@ -140,7 +144,10 @@ def run_harness(
 
             n += 1
             if verbose and n % 100 == 0:
-                print(f"  t={t:.2f} valence={valence:.3f} arousal={arousal:.3f} dynamics={dynamics:.3f}")
+                print(
+                    f"  t={t:.2f} valence={valence:.3f} arousal={arousal:.3f} "
+                    f"dynamics={dynamics:.3f}"
+                )
             time.sleep(max(0, dt - (time.monotonic() - t0 - t)))
     finally:
         midi_out.close_port()
@@ -150,14 +157,30 @@ def run_harness(
 
 def main() -> None:
     ap = argparse.ArgumentParser(
-        description="Stream synthetic affect curves as UMP 32-bit CC to a MIDI port (see midi/README.md)."
+        description="Stream synthetic affect curves as UMP 32-bit CC to a MIDI port "
+        "(see midi/README.md)."
     )
-    ap.add_argument("--port", type=str, default=None, help="Output port name or index (required unless --list-ports)")
-    ap.add_argument("--duration", type=float, default=30.0, help="Run duration in seconds (default 30)")
-    ap.add_argument("--curve", type=str, choices=["sine", "ramp", "step"], default="sine", help="Curve type (default sine)")
+    ap.add_argument(
+        "--port",
+        type=str,
+        default=None,
+        help="Output port name or index (required unless --list-ports)",
+    )
+    ap.add_argument(
+        "--duration", type=float, default=30.0, help="Run duration in seconds (default 30)"
+    )
+    ap.add_argument(
+        "--curve",
+        type=str,
+        choices=["sine", "ramp", "step"],
+        default="sine",
+        help="Curve type (default sine)",
+    )
     ap.add_argument("--group", type=int, default=0, help="UMP group 0..15 (default 0)")
     ap.add_argument("--channel", type=int, default=0, help="UMP channel 0..15 (default 0)")
-    ap.add_argument("-v", "--verbose", action="store_true", help="Print sample values every 100 frames")
+    ap.add_argument(
+        "-v", "--verbose", action="store_true", help="Print sample values every 100 frames"
+    )
     ap.add_argument("--list-ports", action="store_true", help="List output ports and exit")
     args = ap.parse_args()
 

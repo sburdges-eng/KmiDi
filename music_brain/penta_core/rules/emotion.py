@@ -15,6 +15,7 @@ class Emotion(Enum):
 
     Based on Meyer's "Emotion and Meaning in Music" and Huron's "Sweet Anticipation".
     """
+
     # Core emotions (Plutchik's wheel)
     JOY = auto()
     SADNESS = auto()
@@ -54,6 +55,7 @@ class EmotionalMapping:
         context_dependencies: Musical contexts where this mapping is strongest
         explanation: Why this technique evokes this emotion
     """
+
     rule_name: str
     emotion: Emotion
     intensity: int  # 1-10
@@ -70,7 +72,6 @@ EMOTION_TO_TECHNIQUES: Dict[Emotion, List[str]] = {
         "descending_chromatic_bass",  # Lament bass
         "avoid_perfect_cadences",  # Lack of closure
     ],
-
     Emotion.POWER: [
         "parallel_fifths",  # Medieval organum, rock power chords
         "parallel_octaves",  # Unison doubling
@@ -78,7 +79,6 @@ EMOTION_TO_TECHNIQUES: Dict[Emotion, List[str]] = {
         "strong_downbeats",  # Metric emphasis
         "wide_spacing",  # Orchestral doubling
     ],
-
     Emotion.TENSION: [
         "unprepared_dissonance",  # Sudden harmonic clash
         "augmented_intervals",  # Tritones, aug 2nds
@@ -86,7 +86,6 @@ EMOTION_TO_TECHNIQUES: Dict[Emotion, List[str]] = {
         "metric_displacement",  # Syncopation against pulse
         "dense_voicing",  # Cluster chords
     ],
-
     Emotion.RESOLUTION: [
         "stepwise_contrary_motion",  # V→I voice leading
         "prepared_suspensions",  # 4-3, 7-6 resolutions
@@ -94,7 +93,6 @@ EMOTION_TO_TECHNIQUES: Dict[Emotion, List[str]] = {
         "tonic_pedal",  # Harmonic stability
         "consonant_intervals",  # 3rds, 6ths
     ],
-
     Emotion.YEARNING: [
         "dominant_prolongation",  # Extended V chords
         "secondary_dominants",  # Tonicization of non-tonic
@@ -102,7 +100,6 @@ EMOTION_TO_TECHNIQUES: Dict[Emotion, List[str]] = {
         "suspension_chains",  # 7-6, 6-5, 5-4 sequences
         "raised_scale_degrees",  # Leading tones, alterations
     ],
-
     Emotion.MYSTERY: [
         "whole_tone_scale",  # Ambiguous tonality
         "diminished_seventh",  # Symmetrical, directionless
@@ -110,7 +107,6 @@ EMOTION_TO_TECHNIQUES: Dict[Emotion, List[str]] = {
         "parallel_quartal_harmony",  # Modal ambiguity
         "avoid_cadences",  # No tonal center establishment
     ],
-
     Emotion.PEACEFULNESS: [
         "consonant_intervals",  # Pure 3rds, 6ths
         "stepwise_motion",  # Smooth melodic contour
@@ -118,7 +114,6 @@ EMOTION_TO_TECHNIQUES: Dict[Emotion, List[str]] = {
         "regular_phrase_lengths",  # Metric predictability
         "slow_harmonic_rhythm",  # Infrequent chord changes
     ],
-
     Emotion.TRIUMPH: [
         "parallel_octaves",  # Orchestral unison
         "perfect_authentic_cadence",  # V→I with scale degrees 7→1
@@ -144,7 +139,7 @@ for emotion, techniques in EMOTION_TO_TECHNIQUES.items():
             emotion=emotion,
             intensity=7,  # Default intensity
             context_dependencies={"classical", "romantic", "film"},
-            explanation=f"{technique} commonly evokes {emotion.name.lower()} in tonal music"
+            explanation=f"{technique} commonly evokes {emotion.name.lower()} in tonal music",
         )
         TECHNIQUE_TO_EMOTIONS[technique].append(mapping)
 

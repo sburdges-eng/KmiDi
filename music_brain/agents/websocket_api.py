@@ -139,9 +139,7 @@ class HubWebSocketServer:
         auth_token: Optional[str] = None,
     ):
         if not HAS_WEBSOCKETS:
-            raise ImportError(
-                "websockets library required. Install with: pip install websockets"
-            )
+            raise ImportError("websockets library required. Install with: pip install websockets")
 
         self.hub = hub
         self.host = host
@@ -294,9 +292,7 @@ class HubWebSocketServer:
         """Schedule a state broadcast on the event loop."""
         if self._loop and self._running:
             self._loop.call_soon_threadsafe(
-                lambda: asyncio.create_task(
-                    self._broadcast_state(channel, key, value)
-                )
+                lambda: asyncio.create_task(self._broadcast_state(channel, key, value))
             )
 
     # =========================================================================

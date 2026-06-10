@@ -55,6 +55,7 @@ def fit_orthogonal_map(
     # Orthogonal Procrustes: min ||A @ R - B||_F s.t. R^T R = I  =>  A @ R ≈ B (new @ R ≈ old)
     try:
         from scipy.linalg import orthogonal_procrustes
+
         R, _ = orthogonal_procrustes(A, B)
         # So (anchor_new_centered) @ R ≈ (anchor_old_centered); R maps new -> old
     except ImportError:
@@ -97,7 +98,9 @@ def apply_map(
     return out.squeeze() if embedding_new.ndim == 1 else out
 
 
-def save_map(path: str, R: np.ndarray, center_old: Optional[np.ndarray], center_new: Optional[np.ndarray]) -> None:
+def save_map(
+    path: str, R: np.ndarray, center_old: Optional[np.ndarray], center_new: Optional[np.ndarray]
+) -> None:
     """Save R and centers to .npz for later use."""
     np.savez(
         path,

@@ -17,12 +17,14 @@ from enum import Enum
 try:
     # Try to import PyObjC for direct macOS API access
     from AppKit import NSSpeechSynthesizer
+
     PYOBJC_AVAILABLE = True
 except ImportError:
     PYOBJC_AVAILABLE = False
 
 try:
     import soundfile as sf
+
     AUDIO_AVAILABLE = True
 except ImportError:
     AUDIO_AVAILABLE = False
@@ -30,6 +32,7 @@ except ImportError:
 
 class MacOSVoice(Enum):
     """Common macOS system voices"""
+
     # Premium voices (macOS 10.14+)
     SAMANTHA = "com.apple.speech.synthesis.voice.samantha"
     ALEX = "com.apple.speech.synthesis.voice.Alex"
@@ -49,10 +52,11 @@ class MacOSVoice(Enum):
 @dataclass
 class SpeechConfig:
     """Configuration for macOS speech synthesis"""
-    voice: str = ""                    # Voice identifier (empty = system default)
-    rate: float = 175.0                # Words per minute (90-720)
-    pitch: float = 1.0                 # Pitch multiplier (0.5-2.0)
-    volume: float = 1.0                # Volume (0.0-1.0)
+
+    voice: str = ""  # Voice identifier (empty = system default)
+    rate: float = 175.0  # Words per minute (90-720)
+    pitch: float = 1.0  # Pitch multiplier (0.5-2.0)
+    volume: float = 1.0  # Volume (0.0-1.0)
     output_file: Optional[str] = None  # If set, save audio to file
 
 
@@ -99,9 +103,7 @@ class MacOSSpeechSynthesizer:
         """Initialize native NSSpeechSynthesizer."""
         try:
             if self.config.voice:
-                self._synthesizer = NSSpeechSynthesizer.alloc().initWithVoice_(
-                    self.config.voice
-                )
+                self._synthesizer = NSSpeechSynthesizer.alloc().initWithVoice_(self.config.voice)
             else:
                 self._synthesizer = NSSpeechSynthesizer.alloc().init()
 
@@ -132,6 +134,7 @@ class MacOSSpeechSynthesizer:
         if blocking:
             # Wait for speech to complete
             import time
+
             while self._synthesizer.isSpeaking():
                 time.sleep(0.1)
 
@@ -174,11 +177,13 @@ class MacOSSpeechSynthesizer:
         """Save speech to file using native API."""
         try:
             from Foundation import NSURL
+
             url = NSURL.fileURLWithPath_(output_path)
             self._synthesizer.startSpeakingString_toURL_(text, url)
 
             # Wait for completion
             import time
+
             while self._synthesizer.isSpeaking():
                 time.sleep(0.1)
 
@@ -218,8 +223,8 @@ class MacOSSpeechSynthesizer:
         # Find voice identifier from name
         voices = self.list_voices()
         for voice in voices:
-            if voice.get('name', '').lower() == voice_name.lower():
-                self.config.voice = voice.get('identifier', '')
+            if voice.get("name", "").lower() == voice_name.lower():
+                self.config.voice = voice.get("identifier", "")
                 if self._synthesizer:
                     self._synthesizer.setVoice_(self.config.voice)
                 return True
@@ -268,13 +273,15 @@ class MacOSSpeechSynthesizer:
 
             for voice_id in voices:
                 attrs = NSSpeechSynthesizer.attributesForVoice_(voice_id)
-                result.append({
-                    'identifier': str(voice_id),
-                    'name': str(attrs.get('VoiceName', '')),
-                    'language': str(attrs.get('VoiceLocaleIdentifier', '')),
-                    'gender': str(attrs.get('VoiceGender', '')),
-                    'age': int(attrs.get('VoiceAge', 0)),
-                })
+                result.append(
+                    {
+                        "identifier": str(voice_id),
+                        "name": str(attrs.get("VoiceName", "")),
+                        "language": str(attrs.get("VoiceLocaleIdentifier", "")),
+                        "gender": str(attrs.get("VoiceGender", "")),
+                        "age": int(attrs.get("VoiceAge", 0)),
+                    }
+                )
 
             return result
         except Exception as e:
@@ -284,26 +291,23 @@ class MacOSSpeechSynthesizer:
     def _list_voices_say(self) -> List[Dict[str, Any]]:
         """List voices using 'say -v ?' command."""
         try:
-            result = subprocess.run(
-                ["say", "-v", "?"],
-                capture_output=True,
-                text=True,
-                check=True
-            )
+            result = subprocess.run(["say", "-v", "?"], capture_output=True, text=True, check=True)
 
             voices = []
-            for line in result.stdout.strip().split('\n'):
+            for line in result.stdout.strip().split("\n"):
                 if line:
                     # Parse: "Voice Name    language_code    # Description"
                     parts = line.split()
                     if len(parts) >= 2:
                         name = parts[0]
                         lang = parts[1] if len(parts) > 1 else ""
-                        voices.append({
-                            'name': name,
-                            'identifier': f"com.apple.speech.synthesis.voice.{name.lower()}",
-                            'language': lang,
-                        })
+                        voices.append(
+                            {
+                                "name": name,
+                                "identifier": f"com.apple.speech.synthesis.voice.{name.lower()}",
+                                "language": lang,
+                            }
+                        )
 
             return voices
         except subprocess.CalledProcessError:
@@ -322,10 +326,7 @@ class MacOSVoiceCloner:
         self.synth = MacOSSpeechSynthesizer()
 
     def generate_training_samples(
-        self,
-        voice: MacOSVoice,
-        output_dir: str,
-        texts: Optional[List[str]] = None
+        self, voice: MacOSVoice, output_dir: str, texts: Optional[List[str]] = None
     ) -> List[str]:
         """
         Generate training audio samples from a macOS voice.
@@ -362,25 +363,21 @@ class MacOSVoiceCloner:
             "How now brown cow, out on the town.",
             "Peter Piper picked a peck of pickled peppers.",
             "She sells seashells by the seashore.",
-
             # All vowels
             "Father bought hot coffee in the shop.",
             "The eagle sees the trees and leaves.",
             "I like to ride my bike at night.",
             "Go home and throw the stone alone.",
             "The moon illuminates the blue lagoon.",
-
             # Consonant variety
             "The quick brown fox jumps over the lazy dog.",
             "Pack my box with five dozen liquor jugs.",
             "Sphinx of black quartz, judge my vow.",
-
             # Emotional range
             "What wonderful weather we're having today!",
             "Oh no, I can't believe this happened.",
             "Hmm, let me think about that for a moment.",
             "Yes! That's exactly what I was looking for!",
-
             # Numbers and technical
             "The temperature is seventy-two degrees Fahrenheit.",
             "Please call the number eight hundred five five five one two three four.",
@@ -403,7 +400,7 @@ class MacOSVoiceCloner:
             return None
 
         if wav_path is None:
-            wav_path = aiff_path.replace('.aiff', '.wav')
+            wav_path = aiff_path.replace(".aiff", ".wav")
 
         try:
             # Read AIFF
@@ -474,7 +471,7 @@ def list_macos_voices() -> List[str]:
     """List available macOS voice names."""
     synth = MacOSSpeechSynthesizer()
     voices = synth.list_voices()
-    return [v.get('name', '') for v in voices]
+    return [v.get("name", "") for v in voices]
 
 
 def generate_voice_samples(voice_name: str, output_dir: str) -> List[str]:
@@ -494,8 +491,8 @@ def generate_voice_samples(voice_name: str, output_dir: str) -> List[str]:
     voices = cloner.synth.list_voices()
     voice = MacOSVoice.DEFAULT
     for v in voices:
-        if v.get('name', '').lower() == voice_name.lower():
-            voice = MacOSVoice(v.get('identifier', ''))
+        if v.get("name", "").lower() == voice_name.lower():
+            voice = MacOSVoice(v.get("identifier", ""))
             break
 
     # Generate AIFF samples

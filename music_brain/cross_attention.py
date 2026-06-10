@@ -33,6 +33,7 @@ from typing import Optional
 
 def _torch():
     import torch
+
     return torch
 
 
@@ -51,17 +52,21 @@ class CrossAttention:
             choose to set ``training=True``).
     """
 
-    def __init__(self, query_dim: int, *,
-                 kv_dim: Optional[int] = None,
-                 num_heads: int = 4,
-                 dropout: float = 0.0) -> None:
+    def __init__(
+        self,
+        query_dim: int,
+        *,
+        kv_dim: Optional[int] = None,
+        num_heads: int = 4,
+        dropout: float = 0.0,
+    ) -> None:
         torch = _torch()
         if query_dim <= 0:
             raise ValueError("query_dim must be positive")
         if num_heads <= 0 or query_dim % num_heads != 0:
             raise ValueError(
-                f"num_heads ({num_heads}) must evenly divide query_dim "
-                f"({query_dim})")
+                f"num_heads ({num_heads}) must evenly divide query_dim " f"({query_dim})"
+            )
         if not (0.0 <= dropout < 1.0):
             raise ValueError("dropout must be in [0, 1)")
         kvd = query_dim if kv_dim is None else int(kv_dim)
@@ -82,19 +87,12 @@ class CrossAttention:
     # Forward
     # ------------------------------------------------------------------
 
-    def __call__(self, query, kv,
-                 key_padding_mask=None,
-                 attn_mask=None,
-                 training: bool = False):
-        return self.forward(query, kv,
-                            key_padding_mask=key_padding_mask,
-                            attn_mask=attn_mask,
-                            training=training)
+    def __call__(self, query, kv, key_padding_mask=None, attn_mask=None, training: bool = False):
+        return self.forward(
+            query, kv, key_padding_mask=key_padding_mask, attn_mask=attn_mask, training=training
+        )
 
-    def forward(self, query, kv,
-                key_padding_mask=None,
-                attn_mask=None,
-                training: bool = False):
+    def forward(self, query, kv, key_padding_mask=None, attn_mask=None, training: bool = False):
         """Compute cross-attention.
 
         Shapes:

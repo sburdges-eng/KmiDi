@@ -42,8 +42,10 @@ logger = logging.getLogger(__name__)
 # SHARED TYPES (Mirror C++ types for Python use)
 # =============================================================================
 
+
 class SectionType(Enum):
     """Song section types - mirrors penta::dynamics::SectionType."""
+
     UNKNOWN = "unknown"
     INTRO = "intro"
     VERSE = "verse"
@@ -63,10 +65,11 @@ class SectionType(Enum):
 @dataclass
 class EmotionState:
     """Emotion state using PAD model - mirrors penta::dynamics::EmotionState."""
-    valence: float = 0.0       # -1.0 (negative) to +1.0 (positive)
-    arousal: float = 0.5       # 0.0 (calm) to 1.0 (excited)
-    dominance: float = 0.5     # 0.0 (submissive) to 1.0 (dominant)
-    intensity: float = 0.5     # 0.0 (subtle) to 1.0 (intense)
+
+    valence: float = 0.0  # -1.0 (negative) to +1.0 (positive)
+    arousal: float = 0.5  # 0.0 (calm) to 1.0 (excited)
+    dominance: float = 0.5  # 0.0 (submissive) to 1.0 (dominant)
+    intensity: float = 0.5  # 0.0 (subtle) to 1.0 (intense)
 
     def lerp(self, other: "EmotionState", t: float) -> "EmotionState":
         """Interpolate between two emotion states."""
@@ -81,6 +84,7 @@ class EmotionState:
 @dataclass
 class DynamicsParameters:
     """Dynamics parameters for a section or moment."""
+
     # Loudness targets
     target_lufs: float = -14.0
     target_crest_factor: float = 12.0
@@ -104,6 +108,7 @@ class DynamicsParameters:
 @dataclass
 class SectionContext:
     """Context for a song section - bridges arrangement to dynamics."""
+
     section_id: str = ""
     section_type: SectionType = SectionType.UNKNOWN
     start_bar: int = 0
@@ -115,6 +120,7 @@ class SectionContext:
 # =============================================================================
 # EMOTION TO DYNAMICS MAPPER
 # =============================================================================
+
 
 class EmotionToDynamicsMapper:
     """
@@ -200,6 +206,7 @@ class EmotionToDynamicsMapper:
 # =============================================================================
 # DYNAMICS INTEGRATION
 # =============================================================================
+
 
 class DynamicsIntegration:
     """
@@ -369,20 +376,11 @@ class DynamicsIntegration:
             next_section = self._get_next_section(current)
             if next_section:
                 t = self._calculate_transition_factor(current, bar, beat)
-                return self._interpolate_dynamics(
-                    current.dynamics,
-                    next_section.dynamics,
-                    t
-                )
+                return self._interpolate_dynamics(current.dynamics, next_section.dynamics, t)
 
         return current.dynamics
 
-    def _is_near_section_end(
-        self,
-        section: SectionContext,
-        bar: int,
-        beat: float
-    ) -> bool:
+    def _is_near_section_end(self, section: SectionContext, bar: int, beat: float) -> bool:
         """Check if position is near section end (within 2 bars)."""
         return bar >= section.end_bar - 2
 
@@ -393,38 +391,31 @@ class DynamicsIntegration:
             return self.sections[idx + 1]
         return None
 
-    def _calculate_transition_factor(
-        self,
-        section: SectionContext,
-        bar: int,
-        beat: float
-    ) -> float:
+    def _calculate_transition_factor(self, section: SectionContext, bar: int, beat: float) -> float:
         """Calculate transition factor (0-1) for section boundary."""
         bars_remaining = section.end_bar - bar
         # 2-bar transition window
         return 1.0 - (bars_remaining / 2.0)
 
     def _interpolate_dynamics(
-        self,
-        a: DynamicsParameters,
-        b: DynamicsParameters,
-        t: float
+        self, a: DynamicsParameters, b: DynamicsParameters, t: float
     ) -> DynamicsParameters:
         """Interpolate between two dynamics states."""
         t = max(0.0, min(1.0, t))
 
         return DynamicsParameters(
             target_lufs=a.target_lufs + (b.target_lufs - a.target_lufs) * t,
-            target_crest_factor=a.target_crest_factor +
-            (b.target_crest_factor - a.target_crest_factor) * t,
-            target_dynamic_range=a.target_dynamic_range +
-            (b.target_dynamic_range - a.target_dynamic_range) * t,
+            target_crest_factor=a.target_crest_factor
+            + (b.target_crest_factor - a.target_crest_factor) * t,
+            target_dynamic_range=a.target_dynamic_range
+            + (b.target_dynamic_range - a.target_dynamic_range) * t,
             velocity_mean=int(a.velocity_mean + (b.velocity_mean - a.velocity_mean) * t),
             velocity_min=int(a.velocity_min + (b.velocity_min - a.velocity_min) * t),
             velocity_max=int(a.velocity_max + (b.velocity_max - a.velocity_max) * t),
             note_density=a.note_density + (b.note_density - a.note_density) * t,
             voice_count=int(a.voice_count + (b.voice_count - a.voice_count) * t),
-            emotion=a.emotion.lerp(b.emotion, t),)
+            emotion=a.emotion.lerp(b.emotion, t),
+        )
 
     # =========================================================================
     # User Preference Integration
@@ -466,9 +457,7 @@ class DynamicsIntegration:
             # Get prediction based on current emotion
             if params.emotion:
                 emotion_name = self._emotion_to_name(params.emotion)
-                predicted = self._user_preferences.predict_parameters(
-                    emotion=emotion_name
-                )
+                predicted = self._user_preferences.predict_parameters(emotion=emotion_name)
 
                 # Apply predicted intensity
                 if "intensity" in predicted:
@@ -538,9 +527,7 @@ class DynamicsIntegration:
         return None
 
     def _create_dynamics_request(
-        self,
-        emotion: EmotionState,
-        section_type: SectionType
+        self, emotion: EmotionState, section_type: SectionType
     ) -> Dict[str, Any]:
         """Create ML inference request."""
         return {
@@ -551,7 +538,7 @@ class DynamicsIntegration:
                 "dominance": emotion.dominance,
                 "intensity": emotion.intensity,
                 "section_type": section_type.value,
-            }
+            },
         }
 
     def _parse_dynamics_result(self, result) -> DynamicsParameters:
@@ -608,7 +595,7 @@ class DynamicsIntegration:
                     "velocity_mean": section.dynamics.velocity_mean,
                     "velocity_range": (
                         section.dynamics.velocity_min,
-                        section.dynamics.velocity_max
+                        section.dynamics.velocity_max,
                     ),
                     "note_density": section.dynamics.note_density,
                     "crest_factor": section.dynamics.target_crest_factor,
@@ -622,6 +609,7 @@ class DynamicsIntegration:
 # =============================================================================
 # CONVENIENCE FUNCTIONS
 # =============================================================================
+
 
 def create_section_dynamics(
     sections: List[Tuple[str, int, int]],
@@ -688,10 +676,7 @@ def get_dynamics_for_emotion(
         "hopeful": EmotionState(0.5, 0.5, 0.5, 0.6),
     }
 
-    emotion = emotion_map.get(
-        emotion_name.lower(),
-        EmotionState()
-    )
+    emotion = emotion_map.get(emotion_name.lower(), EmotionState())
 
     params = EmotionToDynamicsMapper.map_emotion_to_dynamics(emotion)
 

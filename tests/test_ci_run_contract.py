@@ -7,6 +7,7 @@ scripts in `scripts/`:
   - checkpoint and early-stop policy bounds
   - fail-closed teacher artifact fetch policy
 """
+
 from __future__ import annotations
 
 import copy
@@ -89,7 +90,9 @@ class RunContractRequiredKeysTest(unittest.TestCase):
         max_total = int(checkpoints.get("maxTotalCheckpoints", 0) or 0)
         self.assertGreaterEqual(default_max, 1)
         self.assertGreaterEqual(max_keep, default_max)
-        self.assertGreaterEqual(max_total, max_keep + 1, "maxTotalCheckpoints must allow keep-last-N + best")
+        self.assertGreaterEqual(
+            max_total, max_keep + 1, "maxTotalCheckpoints must allow keep-last-N + best"
+        )
 
     def test_preflight_is_configured(self) -> None:
         """Launch should be gated by a preflight command (fail-closed)."""
@@ -107,13 +110,21 @@ class RunContractRequiredKeysTest(unittest.TestCase):
         teacher_fetch = security.get("teacherFetch", {})
         self.assertIsInstance(teacher_fetch, dict, "security.teacherFetch must be a dict")
 
-        self.assertIs(teacher_fetch.get("allowByDefault"), False, "security.teacherFetch.allowByDefault must be false")
+        self.assertIs(
+            teacher_fetch.get("allowByDefault"),
+            False,
+            "security.teacherFetch.allowByDefault must be false",
+        )
         required_profile = teacher_fetch.get("requiredProfile", "")
         self.assertIsInstance(required_profile, str)
-        self.assertTrue(required_profile.strip(), "security.teacherFetch.requiredProfile must be non-empty")
+        self.assertTrue(
+            required_profile.strip(), "security.teacherFetch.requiredProfile must be non-empty"
+        )
 
         role_arn = teacher_fetch.get("requiredRoleArn", "")
-        self.assertIsInstance(role_arn, str, "security.teacherFetch.requiredRoleArn must be a string (may be empty)")
+        self.assertIsInstance(
+            role_arn, str, "security.teacherFetch.requiredRoleArn must be a string (may be empty)"
+        )
 
         aws = self.contract.get("aws", {})
         self.assertIsInstance(aws, dict, "aws section must be a dict")

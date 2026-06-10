@@ -39,12 +39,11 @@ from enum import Enum
 import random
 import math
 
-
 # =============================================================================
 # CONSTANTS
 # =============================================================================
 
-CHROMATIC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 TICKS_PER_BEAT = 480
 
@@ -82,11 +81,11 @@ GM_STRINGS = {
 
 # String ranges (MIDI note numbers)
 STRING_RANGES = {
-    "violin": (55, 96),      # G3 to C7
-    "viola": (48, 84),       # C3 to C6
-    "cello": (36, 72),       # C2 to C5
+    "violin": (55, 96),  # G3 to C7
+    "viola": (48, 84),  # C3 to C6
+    "cello": (36, 72),  # C2 to C5
     "contrabass": (28, 60),  # E1 to C4
-    "ensemble": (36, 84),    # Full range
+    "ensemble": (36, 84),  # Full range
 }
 
 
@@ -94,58 +93,64 @@ STRING_RANGES = {
 # ENUMS
 # =============================================================================
 
+
 class StringArticulation(Enum):
     """String playing techniques."""
-    LEGATO = "legato"               # Smooth, connected
-    STACCATO = "staccato"           # Short, detached
-    SPICCATO = "spiccato"           # Bouncing bow
-    PIZZICATO = "pizzicato"         # Plucked
-    TREMOLO = "tremolo"             # Rapid bow trembling
+
+    LEGATO = "legato"  # Smooth, connected
+    STACCATO = "staccato"  # Short, detached
+    SPICCATO = "spiccato"  # Bouncing bow
+    PIZZICATO = "pizzicato"  # Plucked
+    TREMOLO = "tremolo"  # Rapid bow trembling
     TREMOLO_MEASURED = "tremolo_measured"  # Rhythmic tremolo
-    MARCATO = "marcato"             # Accented
-    TENUTO = "tenuto"               # Full value, slight accent
-    COL_LEGNO = "col_legno"         # Wood of bow
-    SUL_PONT = "sul_pont"           # Near bridge (glassy)
-    SUL_TASTO = "sul_tasto"         # Over fingerboard (soft)
-    HARMONIC = "harmonic"           # Flageolet tones
+    MARCATO = "marcato"  # Accented
+    TENUTO = "tenuto"  # Full value, slight accent
+    COL_LEGNO = "col_legno"  # Wood of bow
+    SUL_PONT = "sul_pont"  # Near bridge (glassy)
+    SUL_TASTO = "sul_tasto"  # Over fingerboard (soft)
+    HARMONIC = "harmonic"  # Flageolet tones
 
 
 class StringDynamic(Enum):
     """Dynamic expression patterns."""
-    FLAT = "flat"                   # Constant level
-    SWELL = "swell"                 # Crescendo then diminuendo
-    CRESCENDO = "crescendo"         # Building
-    DIMINUENDO = "diminuendo"       # Fading
-    SFORZANDO = "sforzando"         # Sudden accent
-    FP = "fp"                       # Forte-piano (loud then soft)
-    HAIRPIN = "hairpin"             # Quick swell
-    PULSING = "pulsing"             # Rhythmic dynamics
+
+    FLAT = "flat"  # Constant level
+    SWELL = "swell"  # Crescendo then diminuendo
+    CRESCENDO = "crescendo"  # Building
+    DIMINUENDO = "diminuendo"  # Fading
+    SFORZANDO = "sforzando"  # Sudden accent
+    FP = "fp"  # Forte-piano (loud then soft)
+    HAIRPIN = "hairpin"  # Quick swell
+    PULSING = "pulsing"  # Rhythmic dynamics
 
 
 class StringVoicing(Enum):
     """How string parts are arranged."""
-    UNISON = "unison"               # All same notes
-    OCTAVES = "octaves"             # Doubled at octave
-    DIVISI = "divisi"               # Split into parts
-    FULL_SECTION = "full_section"   # 4-part harmony
-    SOLO = "solo"                   # Single voice
-    CLUSTER = "cluster"             # Close dissonant voicing
-    OPEN = "open"                   # Wide spread
+
+    UNISON = "unison"  # All same notes
+    OCTAVES = "octaves"  # Doubled at octave
+    DIVISI = "divisi"  # Split into parts
+    FULL_SECTION = "full_section"  # 4-part harmony
+    SOLO = "solo"  # Single voice
+    CLUSTER = "cluster"  # Close dissonant voicing
+    OPEN = "open"  # Wide spread
 
 
 class StringRole(Enum):
     """Function in arrangement."""
-    PAD = "pad"                     # Sustained background
-    MELODY = "melody"               # Lead line
-    COUNTER = "counter"             # Countermelody
-    OSTINATO = "ostinato"           # Repeating figure
-    PUNCTUATION = "punctuation"     # Rhythmic hits
-    SWELL = "swell"                 # Dynamic builds
-    TEXTURE = "texture"             # Atmospheric
+
+    PAD = "pad"  # Sustained background
+    MELODY = "melody"  # Lead line
+    COUNTER = "counter"  # Countermelody
+    OSTINATO = "ostinato"  # Repeating figure
+    PUNCTUATION = "punctuation"  # Rhythmic hits
+    SWELL = "swell"  # Dynamic builds
+    TEXTURE = "texture"  # Atmospheric
 
 
 class StringSection(Enum):
     """Which string section."""
+
     VIOLIN_1 = "violin_1"
     VIOLIN_2 = "violin_2"
     VIOLA = "viola"
@@ -165,8 +170,8 @@ EMOTION_PROFILES = {
         "voicing": StringVoicing.DIVISI,
         "role": StringRole.PAD,
         "velocity_range": (40, 75),
-        "attack_time": 0.3,         # Slow attack (0-1)
-        "release_time": 0.8,        # Long release
+        "attack_time": 0.3,  # Slow attack (0-1)
+        "release_time": 0.8,  # Long release
         "vibrato_intensity": 0.6,
         "expression_depth": 0.8,
         "sustain_ratio": 0.95,
@@ -175,7 +180,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.CELLO,
         "gm_instrument": GM_STRINGS["ensemble_1"],
     },
-
     "sadness": {
         "articulation": StringArticulation.LEGATO,
         "dynamic": StringDynamic.DIMINUENDO,
@@ -192,7 +196,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.VIOLIN_1,
         "gm_instrument": GM_STRINGS["violin"],
     },
-
     "hope": {
         "articulation": StringArticulation.LEGATO,
         "dynamic": StringDynamic.CRESCENDO,
@@ -209,7 +212,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["ensemble_1"],
     },
-
     "joy": {
         "articulation": StringArticulation.SPICCATO,
         "dynamic": StringDynamic.PULSING,
@@ -226,7 +228,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["ensemble_1"],
     },
-
     "rage": {
         "articulation": StringArticulation.MARCATO,
         "dynamic": StringDynamic.SFORZANDO,
@@ -243,7 +244,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["ensemble_1"],
     },
-
     "anger": {
         "articulation": StringArticulation.TREMOLO,
         "dynamic": StringDynamic.CRESCENDO,
@@ -260,7 +260,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["tremolo"],
     },
-
     "fear": {
         "articulation": StringArticulation.TREMOLO,
         "dynamic": StringDynamic.HAIRPIN,
@@ -277,7 +276,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.VIOLA,
         "gm_instrument": GM_STRINGS["tremolo"],
     },
-
     "anxiety": {
         "articulation": StringArticulation.SUL_PONT,
         "dynamic": StringDynamic.PULSING,
@@ -294,7 +292,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.VIOLIN_1,
         "gm_instrument": GM_STRINGS["ensemble_2"],
     },
-
     "tension": {
         "articulation": StringArticulation.TREMOLO,
         "dynamic": StringDynamic.CRESCENDO,
@@ -311,7 +308,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["tremolo"],
     },
-
     "longing": {
         "articulation": StringArticulation.LEGATO,
         "dynamic": StringDynamic.SWELL,
@@ -328,7 +324,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.CELLO,
         "gm_instrument": GM_STRINGS["cello"],
     },
-
     "nostalgia": {
         "articulation": StringArticulation.SUL_TASTO,
         "dynamic": StringDynamic.SWELL,
@@ -345,7 +340,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.VIOLA,
         "gm_instrument": GM_STRINGS["ensemble_2"],
     },
-
     "peace": {
         "articulation": StringArticulation.LEGATO,
         "dynamic": StringDynamic.FLAT,
@@ -362,7 +356,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["ensemble_2"],
     },
-
     "euphoria": {
         "articulation": StringArticulation.LEGATO,
         "dynamic": StringDynamic.CRESCENDO,
@@ -379,7 +372,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["ensemble_1"],
     },
-
     "wonder": {
         "articulation": StringArticulation.HARMONIC,
         "dynamic": StringDynamic.SWELL,
@@ -396,7 +388,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.VIOLIN_1,
         "gm_instrument": GM_STRINGS["ensemble_2"],
     },
-
     "playful": {
         "articulation": StringArticulation.PIZZICATO,
         "dynamic": StringDynamic.PULSING,
@@ -413,7 +404,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.FULL,
         "gm_instrument": GM_STRINGS["pizzicato"],
     },
-
     "mystery": {
         "articulation": StringArticulation.SUL_PONT,
         "dynamic": StringDynamic.HAIRPIN,
@@ -430,7 +420,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.VIOLA,
         "gm_instrument": GM_STRINGS["ensemble_2"],
     },
-
     "dread": {
         "articulation": StringArticulation.COL_LEGNO,
         "dynamic": StringDynamic.CRESCENDO,
@@ -447,7 +436,6 @@ EMOTION_PROFILES = {
         "preferred_section": StringSection.CELLO,
         "gm_instrument": GM_STRINGS["ensemble_2"],
     },
-
     "neutral": {
         "articulation": StringArticulation.LEGATO,
         "dynamic": StringDynamic.FLAT,
@@ -471,22 +459,25 @@ EMOTION_PROFILES = {
 # DATA CLASSES
 # =============================================================================
 
+
 @dataclass
 class StringNote:
     """A single string note."""
+
     pitch: int
     start_tick: int
     duration_ticks: int
     velocity: int
     section: StringSection
     articulation: StringArticulation
-    voice_function: str          # "root", "third", "fifth", etc.
+    voice_function: str  # "root", "third", "fifth", etc.
     velocity_curve: List[int] = field(default_factory=list)
 
 
 @dataclass
 class StringVoice:
     """A complete string voice/part."""
+
     section: StringSection
     notes: List[StringNote]
     gm_instrument: int
@@ -496,6 +487,7 @@ class StringVoice:
 @dataclass
 class StringConfig:
     """Configuration for string generation."""
+
     emotion: str = "neutral"
     bars: int = 4
     tempo_bpm: int = 120
@@ -508,8 +500,9 @@ class StringConfig:
 @dataclass
 class StringOutput:
     """Complete string output."""
+
     voices: List[StringVoice]
-    notes: List[StringNote]          # All notes flattened
+    notes: List[StringNote]  # All notes flattened
     emotion: str
     articulation_used: StringArticulation
     dynamic_used: StringDynamic
@@ -524,21 +517,22 @@ class StringOutput:
 # HELPER FUNCTIONS
 # =============================================================================
 
+
 def note_name_to_midi(note: str, octave: int = 4) -> int:
     """Convert note name to MIDI number."""
     note = note.strip()
-    if len(note) > 1 and note[1] in ['#', 'b']:
+    if len(note) > 1 and note[1] in ["#", "b"]:
         base = note[0].upper()
         modifier = note[1]
     else:
         base = note[0].upper()
-        modifier = ''
+        modifier = ""
 
     base_idx = CHROMATIC.index(base) if base in CHROMATIC else 0
 
-    if modifier == '#':
+    if modifier == "#":
         base_idx += 1
-    elif modifier == 'b':
+    elif modifier == "b":
         base_idx -= 1
 
     base_idx = base_idx % 12
@@ -550,10 +544,10 @@ def parse_chord(chord_symbol: str) -> Tuple[str, str, Optional[str]]:
     chord_symbol = chord_symbol.strip()
 
     bass_note = None
-    if '/' in chord_symbol:
-        chord_symbol, bass_note = chord_symbol.split('/')
+    if "/" in chord_symbol:
+        chord_symbol, bass_note = chord_symbol.split("/")
 
-    if len(chord_symbol) > 1 and chord_symbol[1] in ['#', 'b']:
+    if len(chord_symbol) > 1 and chord_symbol[1] in ["#", "b"]:
         root = chord_symbol[:2]
         quality = chord_symbol[2:] or "maj"
     else:
@@ -561,10 +555,10 @@ def parse_chord(chord_symbol: str) -> Tuple[str, str, Optional[str]]:
         quality = chord_symbol[1:] or "maj"
 
     quality = quality.lower()
-    if quality == '':
-        quality = 'maj'
-    elif quality in ['m', '-']:
-        quality = 'min'
+    if quality == "":
+        quality = "maj"
+    elif quality in ["m", "-"]:
+        quality = "min"
 
     return root, quality, bass_note
 
@@ -606,9 +600,7 @@ def get_section_instrument(section: StringSection) -> int:
 
 
 def apply_voicing_to_pitches(
-    pitches: List[int],
-    voicing: StringVoicing,
-    profile: Dict
+    pitches: List[int], voicing: StringVoicing, profile: Dict
 ) -> List[Tuple[int, str, StringSection]]:
     """Apply voicing style. Returns (pitch, function, section) tuples."""
     if not pitches:
@@ -671,10 +663,7 @@ def apply_voicing_to_pitches(
 
 
 def generate_velocity_curve(
-    base_velocity: int,
-    duration_ticks: int,
-    dynamic: StringDynamic,
-    expression_depth: float
+    base_velocity: int, duration_ticks: int, dynamic: StringDynamic, expression_depth: float
 ) -> List[int]:
     """Generate expression curve for string note."""
     num_points = max(4, duration_ticks // (TICKS_PER_BEAT // 2))
@@ -765,6 +754,7 @@ def get_articulation_duration_modifier(articulation: StringArticulation) -> floa
 # MAIN ENGINE CLASS
 # =============================================================================
 
+
 class StringEngine:
     """
     Generates emotion-driven orchestral string arrangements.
@@ -844,15 +834,13 @@ class StringEngine:
 
                 # Humanize timing
                 timing_offset = random.randint(
-                    -profile["humanize_timing"],
-                    profile["humanize_timing"]
+                    -profile["humanize_timing"], profile["humanize_timing"]
                 )
                 final_tick = max(0, current_tick + timing_offset)
 
                 # Humanize velocity
                 base_vel += random.randint(
-                    -profile["humanize_velocity"],
-                    profile["humanize_velocity"]
+                    -profile["humanize_velocity"], profile["humanize_velocity"]
                 )
                 base_vel = max(1, min(127, base_vel))
 
@@ -905,7 +893,7 @@ class StringEngine:
                 "time_signature": time_signature,
                 "key": key,
                 "chord_progression": chord_progression,
-            }
+            },
         )
 
     def generate_for_section(
@@ -961,6 +949,7 @@ class StringEngine:
 # CONVENIENCE FUNCTIONS
 # =============================================================================
 
+
 def generate_grief_strings(chords: List[str], key: str = "F", bars: int = 4) -> StringOutput:
     """Quick grief strings generation."""
     return StringEngine().generate("grief", chords, key, bars, 72)
@@ -984,28 +973,34 @@ def strings_to_midi_events(string_output: StringOutput) -> List[Dict]:
     events = []
 
     for voice in string_output.voices:
-        events.append({
-            "type": "program_change",
-            "tick": 0,
-            "channel": voice.channel,
-            "program": voice.gm_instrument,
-        })
+        events.append(
+            {
+                "type": "program_change",
+                "tick": 0,
+                "channel": voice.channel,
+                "program": voice.gm_instrument,
+            }
+        )
 
         for note in voice.notes:
-            events.append({
-                "type": "note_on",
-                "tick": note.start_tick,
-                "channel": voice.channel,
-                "pitch": note.pitch,
-                "velocity": note.velocity,
-            })
-            events.append({
-                "type": "note_off",
-                "tick": note.start_tick + note.duration_ticks,
-                "channel": voice.channel,
-                "pitch": note.pitch,
-                "velocity": 0,
-            })
+            events.append(
+                {
+                    "type": "note_on",
+                    "tick": note.start_tick,
+                    "channel": voice.channel,
+                    "pitch": note.pitch,
+                    "velocity": note.velocity,
+                }
+            )
+            events.append(
+                {
+                    "type": "note_off",
+                    "tick": note.start_tick + note.duration_ticks,
+                    "channel": voice.channel,
+                    "pitch": note.pitch,
+                    "velocity": 0,
+                }
+            )
 
     events.sort(key=lambda e: (e["tick"], 0 if e["type"] == "note_on" else 1))
     return events

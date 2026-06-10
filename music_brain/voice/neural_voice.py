@@ -28,18 +28,21 @@ TORCH_AVAILABLE = False
 
 try:
     import torch
+
     TORCH_AVAILABLE = True
 except ImportError:
     pass
 
 try:
     from TTS.api import TTS
+
     COQUI_AVAILABLE = True
 except ImportError:
     pass
 
 try:
     from bark import generate_audio, preload_models, SAMPLE_RATE as BARK_SAMPLE_RATE
+
     BARK_AVAILABLE = True
 except ImportError:
     pass
@@ -48,12 +51,14 @@ try:
     # OpenVoice import (requires manual installation)
     from openvoice import se_extractor
     from openvoice.api import ToneColorConverter
+
     OPENVOICE_AVAILABLE = True
 except ImportError:
     pass
 
 try:
     import soundfile as sf
+
     SOUNDFILE_AVAILABLE = True
 except ImportError:
     SOUNDFILE_AVAILABLE = False
@@ -61,6 +66,7 @@ except ImportError:
 
 class NeuralVoiceBackend(Enum):
     """Available neural voice backends"""
+
     COQUI = "coqui"
     BARK = "bark"
     OPENVOICE = "openvoice"
@@ -71,11 +77,12 @@ class NeuralVoiceBackend(Enum):
 @dataclass
 class NeuralVoiceConfig:
     """Configuration for neural voice synthesis"""
+
     backend: NeuralVoiceBackend = NeuralVoiceBackend.AUTO
-    model_name: str = ""                    # Model identifier
-    language: str = "en"                    # Language code
-    speaker_wav: Optional[str] = None       # Reference audio for cloning
-    device: str = "auto"                    # cuda/cpu/mps/auto
+    model_name: str = ""  # Model identifier
+    language: str = "en"  # Language code
+    speaker_wav: Optional[str] = None  # Reference audio for cloning
+    device: str = "auto"  # cuda/cpu/mps/auto
     use_gpu: bool = True
     sample_rate: int = 24000
 
@@ -86,9 +93,9 @@ class NeuralVoiceConfig:
     coqui_model: str = "tts_models/multilingual/multi-dataset/xtts_v2"
 
     # Voice style
-    emotion: str = "neutral"                # happy, sad, angry, neutral
-    speed: float = 1.0                      # Speech speed multiplier
-    pitch_shift: float = 0.0               # Semitones
+    emotion: str = "neutral"  # happy, sad, angry, neutral
+    speed: float = 1.0  # Speech speed multiplier
+    pitch_shift: float = 0.0  # Semitones
 
 
 class NeuralVoiceSynthesizer(ABC):
@@ -119,9 +126,7 @@ class CoquiVoiceSynthesizer(NeuralVoiceSynthesizer):
 
     def __init__(self, config: Optional[NeuralVoiceConfig] = None):
         if not COQUI_AVAILABLE:
-            raise ImportError(
-                "Coqui TTS not available. Install with: pip install TTS"
-            )
+            raise ImportError("Coqui TTS not available. Install with: pip install TTS")
 
         self.config = config or NeuralVoiceConfig()
 
@@ -129,7 +134,11 @@ class CoquiVoiceSynthesizer(NeuralVoiceSynthesizer):
         if self.config.device == "auto":
             if TORCH_AVAILABLE and torch.cuda.is_available():
                 self.device = "cuda"
-            elif TORCH_AVAILABLE and hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():  # noqa: E501
+            elif (
+                TORCH_AVAILABLE
+                and hasattr(torch.backends, "mps")
+                and torch.backends.mps.is_available()
+            ):  # noqa: E501
 
                 self.device = "mps"
             else:
@@ -162,14 +171,11 @@ class CoquiVoiceSynthesizer(NeuralVoiceSynthesizer):
                     text=text,
                     speaker_wav=self.speaker_wav,
                     language=self.config.language,
-                    file_path=temp_path
+                    file_path=temp_path,
                 )
             else:
                 # Default voice
-                self.tts.tts_to_file(
-                    text=text,
-                    file_path=temp_path
-                )
+                self.tts.tts_to_file(text=text, file_path=temp_path)
 
             # Load audio
             audio, sr = sf.read(temp_path)
@@ -206,7 +212,7 @@ class CoquiVoiceSynthesizer(NeuralVoiceSynthesizer):
 
     def list_languages(self) -> List[str]:
         """List supported languages for current model"""
-        if hasattr(self.tts, 'languages'):
+        if hasattr(self.tts, "languages"):
             return self.tts.languages
         return ["en"]
 
@@ -226,7 +232,6 @@ class BarkVoiceSynthesizer(NeuralVoiceSynthesizer):
         if not BARK_AVAILABLE:
             raise ImportError(
                 "Bark not available. Install with: pip install git+https://github.com/suno-ai/bark.git"  # noqa: E501
-
             )
 
         self.config = config or NeuralVoiceConfig()
@@ -252,10 +257,7 @@ class BarkVoiceSynthesizer(NeuralVoiceSynthesizer):
         Returns:
             Audio as numpy array
         """
-        audio_array = generate_audio(
-            text,
-            history_prompt=self.speaker_preset
-        )
+        audio_array = generate_audio(text, history_prompt=self.speaker_preset)
 
         return audio_array.astype(np.float32)
 
@@ -309,8 +311,7 @@ class OpenVoiceSynthesizer(NeuralVoiceSynthesizer):
     def __init__(self, config: Optional[NeuralVoiceConfig] = None):
         if not OPENVOICE_AVAILABLE:
             raise ImportError(
-                "OpenVoice not available. Install from: "
-                "https://github.com/myshell-ai/OpenVoice"
+                "OpenVoice not available. Install from: " "https://github.com/myshell-ai/OpenVoice"
             )
 
         self.config = config or NeuralVoiceConfig()
@@ -331,9 +332,7 @@ class OpenVoiceSynthesizer(NeuralVoiceSynthesizer):
 
     def _initialize(self, checkpoint_path: str):
         """Initialize with checkpoint path"""
-        self.tone_color_converter = ToneColorConverter(
-            f"{checkpoint_path}/converter"
-        )
+        self.tone_color_converter = ToneColorConverter(f"{checkpoint_path}/converter")
         self.tone_color_converter.to(self.device)
         self._initialized = True
 
@@ -374,10 +373,7 @@ class OpenVoiceSynthesizer(NeuralVoiceSynthesizer):
         try:
             # Extract speaker embedding
             self.target_se = se_extractor.get_se(
-                reference_audio,
-                self.tone_color_converter,
-                target_dir="processed",
-                vad=True
+                reference_audio, self.tone_color_converter, target_dir="processed", vad=True
             )
             return True
         except Exception as e:
@@ -528,6 +524,7 @@ class DAiWNeuralVoiceIntegration:
         # Try to import Parrot
         try:
             from music_brain.vocal.parrot import ParrotVocalSynthesizer, ParrotConfig
+
             self.parrot = ParrotVocalSynthesizer(ParrotConfig())
         except ImportError:
             pass
@@ -610,7 +607,8 @@ def quick_neural_speak(text: str, output_path: Optional[str] = None) -> np.ndarr
 
 
 def quick_voice_clone(
-        reference_audio: str, text: str, output_path: Optional[str] = None) -> np.ndarray:
+    reference_audio: str, text: str, output_path: Optional[str] = None
+) -> np.ndarray:
     """
     Quick function to clone a voice and synthesize.
 

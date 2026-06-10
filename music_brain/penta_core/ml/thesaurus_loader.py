@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class IntensityTier:
     """A single intensity tier within a sub-sub-emotion."""
+
     level: int  # 1-6
     label: str  # "subtle", "mild", etc.
     synonyms: List[str] = field(default_factory=list)
@@ -33,6 +34,7 @@ class IntensityTier:
 @dataclass
 class SubSubEmotion:
     """A sub-sub-emotion (leaf node in 6×6×6 hierarchy)."""
+
     id: str  # e.g., "Iia"
     name: str  # e.g., "satisfied"
     description: str
@@ -52,6 +54,7 @@ class SubSubEmotion:
 @dataclass
 class SubEmotion:
     """A sub-emotion (middle level in 6×6×6 hierarchy)."""
+
     id: str  # e.g., "Ii"
     name: str  # e.g., "CONTENTMENT"
     description: str
@@ -67,6 +70,7 @@ class SubEmotion:
 @dataclass
 class BaseEmotion:
     """A base emotion (top level in 6×6×6 hierarchy)."""
+
     id: str  # e.g., "I"
     name: str  # e.g., "HAPPY"
     description: str
@@ -79,6 +83,7 @@ class BaseEmotion:
 @dataclass
 class EmotionNode:
     """Flattened representation of a single emotion node for ML training."""
+
     node_id: int  # 0-215
     full_id: str  # e.g., "Iia"
     name: str  # e.g., "satisfied"
@@ -106,6 +111,7 @@ class EmotionNode:
 @dataclass
 class ThesaurusLabels:
     """Multi-head training labels for a sample."""
+
     node_id: int  # 216-class
     base_idx: int  # 6-class
     sub_global_idx: int  # 36-class
@@ -141,12 +147,30 @@ class ThesaurusLoader:
 
     # Key labels (12 major + 12 minor)
     KEY_LABELS = [
-        "C_major", "C_minor", "Db_major", "Db_minor",
-        "D_major", "D_minor", "Eb_major", "Eb_minor",
-        "E_major", "E_minor", "F_major", "F_minor",
-        "Gb_major", "Gb_minor", "G_major", "G_minor",
-        "Ab_major", "Ab_minor", "A_major", "A_minor",
-        "Bb_major", "Bb_minor", "B_major", "B_minor",
+        "C_major",
+        "C_minor",
+        "Db_major",
+        "Db_minor",
+        "D_major",
+        "D_minor",
+        "Eb_major",
+        "Eb_minor",
+        "E_major",
+        "E_minor",
+        "F_major",
+        "F_minor",
+        "Gb_major",
+        "Gb_minor",
+        "G_major",
+        "G_minor",
+        "Ab_major",
+        "Ab_minor",
+        "A_major",
+        "A_minor",
+        "Bb_major",
+        "Bb_minor",
+        "B_major",
+        "B_minor",
     ]
 
     def __init__(self, thesaurus_dir: Path):
@@ -359,9 +383,7 @@ class ThesaurusLoader:
         subsub_idx = node_id % 6
         return base_idx, sub_idx, subsub_idx
 
-    def hierarchy_to_node_id(
-        self, base_idx: int, sub_idx: int, subsub_idx: int
-    ) -> int:
+    def hierarchy_to_node_id(self, base_idx: int, sub_idx: int, subsub_idx: int) -> int:
         """Convert (base_idx, sub_idx, subsub_idx) to node ID."""
         return base_idx * 36 + sub_idx * 6 + subsub_idx
 
@@ -484,10 +506,12 @@ def validate_thesaurus_completeness(thesaurus_dir: Path) -> Dict[str, Any]:
     for node_id in range(216):
         if node_id not in loader.nodes:
             base_idx, sub_idx, subsub_idx = loader.node_id_to_hierarchy(node_id)
-            missing_nodes.append({
-                "node_id": node_id,
-                "expected_location": f"base[{base_idx}]/sub[{sub_idx}]/subsub[{subsub_idx}]",
-            })
+            missing_nodes.append(
+                {
+                    "node_id": node_id,
+                    "expected_location": f"base[{base_idx}]/sub[{sub_idx}]/subsub[{subsub_idx}]",
+                }
+            )
 
     return {
         "total_expected": 216,

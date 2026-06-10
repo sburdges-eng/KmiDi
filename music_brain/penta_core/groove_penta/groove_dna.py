@@ -22,6 +22,7 @@ class GrooveDNA:
     The DNA captures micro-timing deviations and velocity patterns
     that give a groove its characteristic "feel".
     """
+
     # Timing deviations from grid (in ms, per beat position)
     timing_deviations: List[float] = field(default_factory=list)
 
@@ -153,7 +154,7 @@ def extract_groove_dna(
         nearest_grid_time = grid_pos * grid_duration
 
         # Calculate deviation in ms
-        actual_time_in_beat = (time % beat_duration)
+        actual_time_in_beat = time % beat_duration
         deviation_ms = (actual_time_in_beat - nearest_grid_time) * 1000
 
         grid_pos = grid_pos % grid_resolution
@@ -168,12 +169,8 @@ def extract_groove_dna(
         devs = deviations_per_pos[i]
         vels = velocities_per_pos[i]
 
-        timing_deviations.append(
-            sum(devs) / len(devs) if devs else 0.0
-        )
-        velocity_pattern.append(
-            sum(vels) / len(vels) if vels else 0.8
-        )
+        timing_deviations.append(sum(devs) / len(devs) if devs else 0.0)
+        velocity_pattern.append(sum(vels) / len(vels) if vels else 0.8)
 
     # Detect swing
     swing_amount = _detect_swing(timing_deviations, grid_resolution)
@@ -373,10 +370,25 @@ def get_artist_groove_dna(artist: str) -> Optional[GrooveDNA]:
     artist_grooves = {
         "james_brown": GrooveDNA(
             name="James Brown Funk",
-            timing_deviations=[0, -3, 2, -2, 0, 4, -1, 3,
-                               0, -2, 3, -1, 0, 5, -2, 2],
-            velocity_pattern=[1.0, 0.5, 0.7, 0.5, 0.9, 0.5, 0.6, 0.5,
-                              0.95, 0.5, 0.7, 0.5, 0.85, 0.5, 0.65, 0.5],
+            timing_deviations=[0, -3, 2, -2, 0, 4, -1, 3, 0, -2, 3, -1, 0, 5, -2, 2],
+            velocity_pattern=[
+                1.0,
+                0.5,
+                0.7,
+                0.5,
+                0.9,
+                0.5,
+                0.6,
+                0.5,
+                0.95,
+                0.5,
+                0.7,
+                0.5,
+                0.85,
+                0.5,
+                0.65,
+                0.5,
+            ],
             grid_resolution=16,
             swing_amount=0.1,
             genre="funk",
@@ -384,10 +396,25 @@ def get_artist_groove_dna(artist: str) -> Optional[GrooveDNA]:
         ),
         "john_bonham": GrooveDNA(
             name="John Bonham Rock",
-            timing_deviations=[0, 0, -5, 0, 0, 0, 8, 0,
-                               0, 0, -3, 0, 0, 0, 10, 0],
-            velocity_pattern=[1.0, 0.6, 0.8, 0.6, 1.0, 0.6, 0.75, 0.6,
-                              0.95, 0.6, 0.8, 0.6, 0.9, 0.6, 0.7, 0.6],
+            timing_deviations=[0, 0, -5, 0, 0, 0, 8, 0, 0, 0, -3, 0, 0, 0, 10, 0],
+            velocity_pattern=[
+                1.0,
+                0.6,
+                0.8,
+                0.6,
+                1.0,
+                0.6,
+                0.75,
+                0.6,
+                0.95,
+                0.6,
+                0.8,
+                0.6,
+                0.9,
+                0.6,
+                0.7,
+                0.6,
+            ],
             grid_resolution=16,
             swing_amount=0.15,
             genre="rock",
@@ -395,10 +422,25 @@ def get_artist_groove_dna(artist: str) -> Optional[GrooveDNA]:
         ),
         "questlove": GrooveDNA(
             name="Questlove Neo-Soul",
-            timing_deviations=[0, 5, -2, 6, 0, 8, -3, 5,
-                               0, 6, -1, 7, 0, 9, -2, 4],
-            velocity_pattern=[0.9, 0.55, 0.7, 0.5, 0.85, 0.5, 0.65, 0.55,
-                              0.9, 0.5, 0.7, 0.55, 0.85, 0.55, 0.6, 0.5],
+            timing_deviations=[0, 5, -2, 6, 0, 8, -3, 5, 0, 6, -1, 7, 0, 9, -2, 4],
+            velocity_pattern=[
+                0.9,
+                0.55,
+                0.7,
+                0.5,
+                0.85,
+                0.5,
+                0.65,
+                0.55,
+                0.9,
+                0.5,
+                0.7,
+                0.55,
+                0.85,
+                0.55,
+                0.6,
+                0.5,
+            ],
             grid_resolution=16,
             swing_amount=0.25,
             genre="neo-soul",
@@ -406,10 +448,25 @@ def get_artist_groove_dna(artist: str) -> Optional[GrooveDNA]:
         ),
         "steve_gadd": GrooveDNA(
             name="Steve Gadd Studio",
-            timing_deviations=[0, 0, 0, 0, 0, 2, 0, 1,
-                               0, 0, 0, 0, 0, 3, 0, 1],
-            velocity_pattern=[1.0, 0.65, 0.8, 0.6, 0.95, 0.6, 0.75, 0.6,
-                              0.95, 0.6, 0.8, 0.65, 0.9, 0.6, 0.7, 0.6],
+            timing_deviations=[0, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 3, 0, 1],
+            velocity_pattern=[
+                1.0,
+                0.65,
+                0.8,
+                0.6,
+                0.95,
+                0.6,
+                0.75,
+                0.6,
+                0.95,
+                0.6,
+                0.8,
+                0.65,
+                0.9,
+                0.6,
+                0.7,
+                0.6,
+            ],
             grid_resolution=16,
             swing_amount=0.08,
             genre="studio",
@@ -417,10 +474,25 @@ def get_artist_groove_dna(artist: str) -> Optional[GrooveDNA]:
         ),
         "clyde_stubblefield": GrooveDNA(
             name="Clyde Stubblefield Funky Drummer",
-            timing_deviations=[0, -2, 4, -3, 0, 6, -2, 5,
-                               0, -1, 5, -2, 0, 7, -3, 4],
-            velocity_pattern=[1.0, 0.45, 0.75, 0.5, 0.9, 0.5, 0.7, 0.45,
-                              0.95, 0.5, 0.75, 0.45, 0.85, 0.5, 0.65, 0.5],
+            timing_deviations=[0, -2, 4, -3, 0, 6, -2, 5, 0, -1, 5, -2, 0, 7, -3, 4],
+            velocity_pattern=[
+                1.0,
+                0.45,
+                0.75,
+                0.5,
+                0.9,
+                0.5,
+                0.7,
+                0.45,
+                0.95,
+                0.5,
+                0.75,
+                0.45,
+                0.85,
+                0.5,
+                0.65,
+                0.5,
+            ],
             grid_resolution=16,
             swing_amount=0.12,
             genre="funk",
@@ -428,10 +500,25 @@ def get_artist_groove_dna(artist: str) -> Optional[GrooveDNA]:
         ),
         "bernard_purdie": GrooveDNA(
             name="Bernard Purdie Shuffle",
-            timing_deviations=[0, 8, 2, 10, 0, 12, 3, 9,
-                               0, 7, 2, 11, 0, 13, 2, 8],
-            velocity_pattern=[1.0, 0.5, 0.7, 0.55, 0.9, 0.5, 0.65, 0.5,
-                              0.95, 0.5, 0.7, 0.5, 0.85, 0.55, 0.6, 0.5],
+            timing_deviations=[0, 8, 2, 10, 0, 12, 3, 9, 0, 7, 2, 11, 0, 13, 2, 8],
+            velocity_pattern=[
+                1.0,
+                0.5,
+                0.7,
+                0.55,
+                0.9,
+                0.5,
+                0.65,
+                0.5,
+                0.95,
+                0.5,
+                0.7,
+                0.5,
+                0.85,
+                0.55,
+                0.6,
+                0.5,
+            ],
             grid_resolution=16,
             swing_amount=0.35,
             genre="soul",
@@ -439,10 +526,25 @@ def get_artist_groove_dna(artist: str) -> Optional[GrooveDNA]:
         ),
         "j_dilla": GrooveDNA(
             name="J Dilla Drunk Beat",
-            timing_deviations=[0, 15, -8, 20, 5, 18, -5, 12,
-                               3, 22, -10, 15, 8, 25, -3, 10],
-            velocity_pattern=[0.85, 0.5, 0.7, 0.55, 0.8, 0.45, 0.65, 0.5,
-                              0.9, 0.5, 0.6, 0.5, 0.75, 0.55, 0.7, 0.45],
+            timing_deviations=[0, 15, -8, 20, 5, 18, -5, 12, 3, 22, -10, 15, 8, 25, -3, 10],
+            velocity_pattern=[
+                0.85,
+                0.5,
+                0.7,
+                0.55,
+                0.8,
+                0.45,
+                0.65,
+                0.5,
+                0.9,
+                0.5,
+                0.6,
+                0.5,
+                0.75,
+                0.55,
+                0.7,
+                0.45,
+            ],
             grid_resolution=16,
             swing_amount=0.0,  # Not swing, just loose
             genre="hip-hop",
@@ -480,12 +582,10 @@ def blend_grooves(
 
     # Blend patterns
     timing_deviations = [
-        devs_a[i] * (1 - blend_amount) + devs_b[i] * blend_amount
-        for i in range(res)
+        devs_a[i] * (1 - blend_amount) + devs_b[i] * blend_amount for i in range(res)
     ]
     velocity_pattern = [
-        vels_a[i] * (1 - blend_amount) + vels_b[i] * blend_amount
-        for i in range(res)
+        vels_a[i] * (1 - blend_amount) + vels_b[i] * blend_amount for i in range(res)
     ]
 
     swing = groove_a.swing_amount * (1 - blend_amount) + groove_b.swing_amount * blend_amount

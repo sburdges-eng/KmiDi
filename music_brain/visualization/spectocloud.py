@@ -34,10 +34,10 @@ from enum import Enum
 import json
 import time
 
-
 # =============================================================================
 # Performance Monitoring
 # =============================================================================
+
 
 @dataclass
 class PerformanceMetrics:
@@ -46,6 +46,7 @@ class PerformanceMetrics:
 
     Used to measure and optimize rendering pipeline performance.
     """
+
     frame_times: List[float] = field(default_factory=list)
     particle_gen_times: List[float] = field(default_factory=list)
     anchor_similarity_times: List[float] = field(default_factory=list)
@@ -69,15 +70,16 @@ class PerformanceMetrics:
 
     def get_summary(self) -> Dict[str, float]:
         """Get performance summary with averages."""
+
         def safe_avg(lst):
             return sum(lst) / len(lst) if lst else 0.0
 
         return {
-            'avg_frame_time_ms': safe_avg(self.frame_times) * 1000,
-            'avg_particle_gen_ms': safe_avg(self.particle_gen_times) * 1000,
-            'avg_anchor_similarity_ms': safe_avg(self.anchor_similarity_times) * 1000,
-            'avg_render_time_ms': safe_avg(self.render_times) * 1000,
-            'total_frames_processed': len(self.frame_times),
+            "avg_frame_time_ms": safe_avg(self.frame_times) * 1000,
+            "avg_particle_gen_ms": safe_avg(self.particle_gen_times) * 1000,
+            "avg_anchor_similarity_ms": safe_avg(self.anchor_similarity_times) * 1000,
+            "avg_render_time_ms": safe_avg(self.render_times) * 1000,
+            "total_frames_processed": len(self.frame_times),
         }
 
     def reset(self):
@@ -90,44 +92,52 @@ class PerformanceMetrics:
 
 class LODLevel(Enum):
     """Level of Detail settings for performance scaling."""
-    ULTRA = "ultra"        # Maximum quality, 3000+ particles
-    HIGH = "high"          # High quality, 2000 particles
-    MEDIUM = "medium"      # Balanced, 1200 particles
-    LOW = "low"            # Performance mode, 600 particles
-    MINIMAL = "minimal"    # Fastest, 200 particles
+
+    ULTRA = "ultra"  # Maximum quality, 3000+ particles
+    HIGH = "high"  # High quality, 2000 particles
+    MEDIUM = "medium"  # Balanced, 1200 particles
+    LOW = "low"  # Performance mode, 600 particles
+    MINIMAL = "minimal"  # Fastest, 200 particles
 
 
 @dataclass
 class LODConfig:
     """Configuration for Level of Detail rendering."""
+
     level: LODLevel = LODLevel.MEDIUM
 
     # Particle counts per LOD level
-    particle_counts: Dict[LODLevel, int] = field(default_factory=lambda: {
-        LODLevel.ULTRA: 3000,
-        LODLevel.HIGH: 2000,
-        LODLevel.MEDIUM: 1200,
-        LODLevel.LOW: 600,
-        LODLevel.MINIMAL: 200,
-    })
+    particle_counts: Dict[LODLevel, int] = field(
+        default_factory=lambda: {
+            LODLevel.ULTRA: 3000,
+            LODLevel.HIGH: 2000,
+            LODLevel.MEDIUM: 1200,
+            LODLevel.LOW: 600,
+            LODLevel.MINIMAL: 200,
+        }
+    )
 
     # Anchor density scaling
-    anchor_density_scale: Dict[LODLevel, float] = field(default_factory=lambda: {
-        LODLevel.ULTRA: 1.5,
-        LODLevel.HIGH: 1.0,
-        LODLevel.MEDIUM: 0.8,
-        LODLevel.LOW: 0.5,
-        LODLevel.MINIMAL: 0.3,
-    })
+    anchor_density_scale: Dict[LODLevel, float] = field(
+        default_factory=lambda: {
+            LODLevel.ULTRA: 1.5,
+            LODLevel.HIGH: 1.0,
+            LODLevel.MEDIUM: 0.8,
+            LODLevel.LOW: 0.5,
+            LODLevel.MINIMAL: 0.3,
+        }
+    )
 
     # Texture quality (affects fog/gradient resolution)
-    texture_resolution: Dict[LODLevel, int] = field(default_factory=lambda: {
-        LODLevel.ULTRA: 256,
-        LODLevel.HIGH: 128,
-        LODLevel.MEDIUM: 64,
-        LODLevel.LOW: 32,
-        LODLevel.MINIMAL: 16,
-    })
+    texture_resolution: Dict[LODLevel, int] = field(
+        default_factory=lambda: {
+            LODLevel.ULTRA: 256,
+            LODLevel.HIGH: 128,
+            LODLevel.MEDIUM: 64,
+            LODLevel.LOW: 32,
+            LODLevel.MINIMAL: 16,
+        }
+    )
 
     def get_particle_count(self) -> int:
         """Get particle count for current LOD level."""
@@ -146,28 +156,29 @@ class LODConfig:
 # Texturization and Visual Effects
 # =============================================================================
 
+
 @dataclass
 class TextureConfig:
     """Configuration for cloud texturization effects."""
 
     # Fog effect parameters
     fog_enabled: bool = True
-    fog_density: float = 0.15           # 0.0 = no fog, 1.0 = heavy fog
-    fog_start_distance: float = 0.2     # Distance where fog starts
+    fog_density: float = 0.15  # 0.0 = no fog, 1.0 = heavy fog
+    fog_start_distance: float = 0.2  # Distance where fog starts
     fog_color: Tuple[float, float, float] = (0.95, 0.95, 0.98)  # Light bluish white
 
     # Depth-based opacity
     depth_fade_enabled: bool = True
-    depth_fade_power: float = 1.5       # Higher = steeper falloff
+    depth_fade_power: float = 1.5  # Higher = steeper falloff
 
     # Noise texture for organic appearance
     noise_enabled: bool = True
-    noise_scale: float = 0.08           # Scale of noise variation
-    noise_seed: int = 42                # Reproducible noise
+    noise_scale: float = 0.08  # Scale of noise variation
+    noise_seed: int = 42  # Reproducible noise
 
     # Gradient blending
-    gradient_layers: int = 3            # Number of gradient blend layers
-    gradient_softness: float = 0.4      # Edge softness (0=sharp, 1=soft)
+    gradient_layers: int = 3  # Number of gradient blend layers
+    gradient_softness: float = 0.4  # Edge softness (0=sharp, 1=soft)
 
     # Glow effect for active anchors
     glow_enabled: bool = True
@@ -175,7 +186,7 @@ class TextureConfig:
     glow_radius: float = 1.8
 
     # Particle size variation
-    size_variation: float = 0.3         # Random size variation factor
+    size_variation: float = 0.3  # Random size variation factor
 
 
 class TextureGenerator:
@@ -221,8 +232,7 @@ class TextureGenerator:
 
         # Compute fog factor (0 = no fog, 1 = full fog)
         fog_factor = np.clip(
-            (norm_distances - self.config.fog_start_distance) * self.config.fog_density,
-            0.0, 1.0
+            (norm_distances - self.config.fog_start_distance) * self.config.fog_density, 0.0, 1.0
         )
 
         # Blend colors with fog color
@@ -333,9 +343,7 @@ class TextureGenerator:
         n = len(base_sizes)
         if noise_values is None:
             variation = self.rng.uniform(
-                1 - self.config.size_variation,
-                1 + self.config.size_variation,
-                n
+                1 - self.config.size_variation, 1 + self.config.size_variation, n
             )
         else:
             variation = 1 + noise_values * self.config.size_variation
@@ -369,13 +377,13 @@ class TextureGenerator:
                 continue
 
             # Distance from particles to this anchor
-            distances = np.linalg.norm(
-                particle_positions - anchor_pos, axis=1
-            )
+            distances = np.linalg.norm(particle_positions - anchor_pos, axis=1)
 
             # Glow falloff (inverse square-ish)
-            glow_contribution = activation * self.config.glow_intensity / (
-                1 + (distances / self.config.glow_radius) ** 2
+            glow_contribution = (
+                activation
+                * self.config.glow_intensity
+                / (1 + (distances / self.config.glow_radius) ** 2)
             )
             glow += glow_contribution
 
@@ -388,11 +396,12 @@ class TextureGenerator:
 
 class AnchorFamily(Enum):
     """Musical parameter families for anchors."""
-    HARMONY = "harmony"           # Key, mode, chord complexity, tension
-    RHYTHM = "rhythm"             # Note density, syncopation, swing
-    DYNAMICS = "dynamics"         # RMS energy, crest factor, velocity
-    TIMBRE = "timbre"            # Spectral centroid, flux, roll-off
-    TEXTURE = "texture"          # Polyphony, layer count, repetition
+
+    HARMONY = "harmony"  # Key, mode, chord complexity, tension
+    RHYTHM = "rhythm"  # Note density, syncopation, swing
+    DYNAMICS = "dynamics"  # RMS energy, crest factor, velocity
+    TIMBRE = "timbre"  # Spectral centroid, flux, roll-off
+    TEXTURE = "texture"  # Polyphony, layer count, repetition
 
 
 @dataclass
@@ -405,6 +414,7 @@ class Anchor:
     - Attractors for emotional adhesion
     - Stable backdrop for interpretable song paths
     """
+
     id: str
     name: str
     family: AnchorFamily
@@ -417,9 +427,9 @@ class Anchor:
     constraints: Dict[str, Any] = field(default_factory=dict)
 
     # Electrostatic properties
-    base_charge: float = 1.0      # Static influence strength
-    polarity: float = 1.0         # -1.0 (repel) to +1.0 (attract)
-    radius: float = 0.35          # Influence falloff distance
+    base_charge: float = 1.0  # Static influence strength
+    polarity: float = 1.0  # -1.0 (repel) to +1.0 (attract)
+    radius: float = 0.35  # Influence falloff distance
 
     # Visual properties
     color: Tuple[float, float, float] = (0.7, 0.7, 0.7)
@@ -427,7 +437,7 @@ class Anchor:
     base_size: float = 5.0
 
     # Runtime state
-    activation: float = 0.0       # Current activation level (0-1)
+    activation: float = 0.0  # Current activation level (0-1)
     accumulated_glow: float = 0.0  # Memory of past activations
 
 
@@ -438,7 +448,8 @@ class Frame:
 
     Represents the musical state at a specific moment in time.
     """
-    time: float                   # Time in seconds or beats
+
+    time: float  # Time in seconds or beats
 
     # 3D position
     x: float  # Time (matches self.time)
@@ -452,14 +463,14 @@ class Frame:
     top_anchors: List[Tuple[str, float]] = field(default_factory=list)
 
     # Emotional state
-    valence: float = 0.0          # -1.0 to 1.0
-    arousal: float = 0.5          # 0.0 to 1.0
-    intensity: float = 0.5        # 0.0 to 1.0
+    valence: float = 0.0  # -1.0 to 1.0
+    arousal: float = 0.5  # 0.0 to 1.0
+    intensity: float = 0.5  # 0.0 to 1.0
     emotion_label: Optional[str] = None
 
     # Conical expansion
-    spread: float = 0.16          # Cloud spread radius
-    opacity: float = 0.02         # Base particle opacity
+    spread: float = 0.16  # Cloud spread radius
+    opacity: float = 0.02  # Base particle opacity
 
 
 @dataclass
@@ -469,9 +480,10 @@ class EmotionParticle:
 
     Implements the "snowball effect" where emotions accumulate and gain inertia.
     """
-    position: np.ndarray          # Current (x, y, z) position
-    velocity: np.ndarray          # Motion vector
-    mass: float = 1.0             # Increases with attachment strength (snowball)
+
+    position: np.ndarray  # Current (x, y, z) position
+    velocity: np.ndarray  # Motion vector
+    mass: float = 1.0  # Increases with attachment strength (snowball)
 
     # Attachment state
     attached_anchors: Dict[str, float] = field(default_factory=dict)  # anchor_id -> strength
@@ -496,16 +508,17 @@ class StormState:
     Models the capacitor-like behavior where charge accumulates until
     discharge threshold is reached, triggering lightning events.
     """
-    charge: float = 0.0           # Accumulated charge
-    energy: float = 0.0           # Current storm energy
+
+    charge: float = 0.0  # Accumulated charge
+    energy: float = 0.0  # Current storm energy
 
     # Arc/lightning state
     active_arcs: List[Tuple[int, str]] = field(default_factory=list)  # (ttl, anchor_id)
 
     # Parameters
-    leak: float = 0.06            # Charge decay rate
-    gain: float = 1.2             # Energy to charge conversion
-    threshold: float = 14.0       # Discharge threshold
+    leak: float = 0.06  # Charge decay rate
+    gain: float = 1.2  # Energy to charge conversion
+    threshold: float = 14.0  # Discharge threshold
     discharge_factor: float = 0.45  # Charge retention after discharge
 
 
@@ -521,10 +534,7 @@ class MusicalParameterExtractor:
         pass
 
     def extract_from_midi_window(
-        self,
-        midi_events: List[Dict],
-        window_start: float,
-        window_end: float
+        self, midi_events: List[Dict], window_start: float, window_end: float
     ) -> Dict[str, float]:
         """
         Extract features from MIDI events in a time window.
@@ -540,55 +550,53 @@ class MusicalParameterExtractor:
         features = {}
 
         # Filter events in window
-        notes = [e for e in midi_events
-                 if e.get('type') == 'note_on'
-                 and window_start <= e.get('time', 0) < window_end]
+        notes = [
+            e
+            for e in midi_events
+            if e.get("type") == "note_on" and window_start <= e.get("time", 0) < window_end
+        ]
 
         if not notes:
             # Return neutral features for empty window
             return {
-                'note_density': 0.0,
-                'pitch_centroid': 0.5,
-                'velocity_centroid': 0.5,
-                'pitch_range': 0.0,
-                'tension': 0.0,
-                'rhythmic_regularity': 0.5,
+                "note_density": 0.0,
+                "pitch_centroid": 0.5,
+                "velocity_centroid": 0.5,
+                "pitch_range": 0.0,
+                "tension": 0.0,
+                "rhythmic_regularity": 0.5,
             }
 
         # Rhythm features
-        features['note_density'] = min(1.0, len(notes) / 20.0)  # Normalize to ~20 notes
+        features["note_density"] = min(1.0, len(notes) / 20.0)  # Normalize to ~20 notes
 
         # Pitch features
-        pitches = [n['note'] for n in notes]
-        features['pitch_centroid'] = (np.mean(pitches) - 36) / 72  # MIDI 36-108 -> 0-1
-        features['pitch_range'] = (np.max(pitches) - np.min(pitches)) / 48.0
+        pitches = [n["note"] for n in notes]
+        features["pitch_centroid"] = (np.mean(pitches) - 36) / 72  # MIDI 36-108 -> 0-1
+        features["pitch_range"] = (np.max(pitches) - np.min(pitches)) / 48.0
 
         # Dynamics
-        velocities = [n.get('velocity', 64) for n in notes]
-        features['velocity_centroid'] = np.mean(velocities) / 127.0
+        velocities = [n.get("velocity", 64) for n in notes]
+        features["velocity_centroid"] = np.mean(velocities) / 127.0
 
         # Tension (simplified - based on pitch variance)
-        features['tension'] = min(1.0, np.std(pitches) / 12.0)
+        features["tension"] = min(1.0, np.std(pitches) / 12.0)
 
         # Rhythmic regularity (simplified - inverse of timing variance)
         if len(notes) > 1:
-            timings = [n['time'] for n in notes]
+            timings = [n["time"] for n in notes]
             intervals = np.diff(timings)
             if len(intervals) > 0:
-                features['rhythmic_regularity'] = 1.0 - min(1.0, np.std(intervals))
+                features["rhythmic_regularity"] = 1.0 - min(1.0, np.std(intervals))
             else:
-                features['rhythmic_regularity'] = 0.5
+                features["rhythmic_regularity"] = 0.5
         else:
-            features['rhythmic_regularity'] = 0.5
+            features["rhythmic_regularity"] = 0.5
 
         return features
 
     def extract_from_audio_window(
-        self,
-        audio_data: np.ndarray,
-        sample_rate: int,
-        window_start: float,
-        window_end: float
+        self, audio_data: np.ndarray, sample_rate: int, window_start: float, window_end: float
     ) -> Dict[str, float]:
         """
         Extract spectral features from audio in a time window.
@@ -608,9 +616,9 @@ class MusicalParameterExtractor:
 
         if len(window) == 0:
             return {
-                'spectral_centroid': 0.5,
-                'spectral_flux': 0.0,
-                'rms_energy': 0.0,
+                "spectral_centroid": 0.5,
+                "spectral_flux": 0.0,
+                "rms_energy": 0.0,
             }
 
         # Compute spectrum
@@ -620,16 +628,16 @@ class MusicalParameterExtractor:
         # Spectral centroid (normalized to 0-1, assuming 0-8kHz range)
         if np.sum(spectrum) > 0:
             centroid = np.sum(freqs * spectrum) / np.sum(spectrum)
-            features = {'spectral_centroid': min(1.0, centroid / 8000.0)}
+            features = {"spectral_centroid": min(1.0, centroid / 8000.0)}
         else:
-            features = {'spectral_centroid': 0.5}
+            features = {"spectral_centroid": 0.5}
 
         # RMS energy
-        rms = np.sqrt(np.mean(window ** 2))
-        features['rms_energy'] = min(1.0, rms * 10.0)  # Assuming normalized audio
+        rms = np.sqrt(np.mean(window**2))
+        features["rms_energy"] = min(1.0, rms * 10.0)  # Assuming normalized audio
 
         # Spectral flux (change over time - needs previous frame, simplified here)
-        features['spectral_flux'] = min(1.0, np.std(spectrum) / np.mean(spectrum + 1e-10))
+        features["spectral_flux"] = min(1.0, np.std(spectrum) / np.mean(spectrum + 1e-10))
 
         return features
 
@@ -681,16 +689,18 @@ class AnchorLibrary:
                 y = tension * 0.6 + 0.2  # Map to 0.2-0.8 range
                 z = complexity * 0.4 + 0.3  # Map to 0.3-0.7 range
 
-                self.anchors.append(Anchor(
-                    id=f"HARM_{anchor_id}",
-                    name=f"Harmony T{tension:.2f} C{complexity:.2f}",
-                    family=AnchorFamily.HARMONY,
-                    position_y=y,
-                    position_z=z,
-                    constraints={'tension': tension, 'complexity': complexity},
-                    base_charge=1.2,
-                    polarity=1.0 if tension < 0.5 else -0.5,
-                ))
+                self.anchors.append(
+                    Anchor(
+                        id=f"HARM_{anchor_id}",
+                        name=f"Harmony T{tension:.2f} C{complexity:.2f}",
+                        family=AnchorFamily.HARMONY,
+                        position_y=y,
+                        position_z=z,
+                        constraints={"tension": tension, "complexity": complexity},
+                        base_charge=1.2,
+                        polarity=1.0 if tension < 0.5 else -0.5,
+                    )
+                )
                 anchor_id += 1
 
         # Rhythm anchors (density × regularity grid)
@@ -699,15 +709,17 @@ class AnchorLibrary:
                 y = 0.3 + density * 0.4
                 z = 0.6 + regularity * 0.3
 
-                self.anchors.append(Anchor(
-                    id=f"RHYT_{anchor_id}",
-                    name=f"Rhythm D{density:.2f} R{regularity:.2f}",
-                    family=AnchorFamily.RHYTHM,
-                    position_y=y,
-                    position_z=z,
-                    constraints={'density': density, 'regularity': regularity},
-                    base_charge=1.0,
-                ))
+                self.anchors.append(
+                    Anchor(
+                        id=f"RHYT_{anchor_id}",
+                        name=f"Rhythm D{density:.2f} R{regularity:.2f}",
+                        family=AnchorFamily.RHYTHM,
+                        position_y=y,
+                        position_z=z,
+                        constraints={"density": density, "regularity": regularity},
+                        base_charge=1.0,
+                    )
+                )
                 anchor_id += 1
 
         # Dynamics anchors (energy levels)
@@ -715,15 +727,17 @@ class AnchorLibrary:
             y = 0.5
             z = energy
 
-            self.anchors.append(Anchor(
-                id=f"DYN_{anchor_id}",
-                name=f"Dynamics E{energy:.2f}",
-                family=AnchorFamily.DYNAMICS,
-                position_y=y,
-                position_z=z,
-                constraints={'energy': energy},
-                base_charge=0.8,
-            ))
+            self.anchors.append(
+                Anchor(
+                    id=f"DYN_{anchor_id}",
+                    name=f"Dynamics E{energy:.2f}",
+                    family=AnchorFamily.DYNAMICS,
+                    position_y=y,
+                    position_z=z,
+                    constraints={"energy": energy},
+                    base_charge=0.8,
+                )
+            )
             anchor_id += 1
 
         # Timbre anchors (spectral brightness)
@@ -731,15 +745,17 @@ class AnchorLibrary:
             y = brightness
             z = 0.5
 
-            self.anchors.append(Anchor(
-                id=f"TIMB_{anchor_id}",
-                name=f"Timbre B{brightness:.2f}",
-                family=AnchorFamily.TIMBRE,
-                position_y=y,
-                position_z=z,
-                constraints={'brightness': brightness},
-                base_charge=0.9,
-            ))
+            self.anchors.append(
+                Anchor(
+                    id=f"TIMB_{anchor_id}",
+                    name=f"Timbre B{brightness:.2f}",
+                    family=AnchorFamily.TIMBRE,
+                    position_y=y,
+                    position_z=z,
+                    constraints={"brightness": brightness},
+                    base_charge=0.9,
+                )
+            )
             anchor_id += 1
 
         # Texture anchors (complexity)
@@ -747,21 +763,21 @@ class AnchorLibrary:
             y = 0.7 + complexity * 0.2
             z = 0.7 + complexity * 0.2
 
-            self.anchors.append(Anchor(
-                id=f"TEXT_{anchor_id}",
-                name=f"Texture C{complexity:.2f}",
-                family=AnchorFamily.TEXTURE,
-                position_y=y,
-                position_z=z,
-                constraints={'complexity': complexity},
-                base_charge=0.7,
-            ))
+            self.anchors.append(
+                Anchor(
+                    id=f"TEXT_{anchor_id}",
+                    name=f"Texture C{complexity:.2f}",
+                    family=AnchorFamily.TEXTURE,
+                    position_y=y,
+                    position_z=z,
+                    constraints={"complexity": complexity},
+                    base_charge=0.7,
+                )
+            )
             anchor_id += 1
 
     def compute_anchor_similarities(
-        self,
-        features: Dict[str, float],
-        top_k: int = 5
+        self, features: Dict[str, float], top_k: int = 5
     ) -> List[Tuple[str, float]]:
         """
         Compute similarity between features and all anchors.
@@ -784,7 +800,7 @@ class AnchorLibrary:
                 if param in features:
                     # Gaussian kernel
                     diff = features[param] - value
-                    sim += np.exp(-(diff ** 2) / (2 * 0.1 ** 2))
+                    sim += np.exp(-(diff**2) / (2 * 0.1**2))
                     count += 1
 
             if count > 0:
@@ -796,10 +812,7 @@ class AnchorLibrary:
         return similarities[:top_k]
 
     def compute_anchor_similarities_vectorized(
-        self,
-        features: Dict[str, float],
-        top_k: int = 5,
-        sigma: float = 0.1
+        self, features: Dict[str, float], top_k: int = 5, sigma: float = 0.1
     ) -> List[Tuple[str, float]]:
         """
         Vectorized computation of anchor similarities for improved latency.
@@ -816,7 +829,7 @@ class AnchorLibrary:
             List of (anchor_id, similarity) tuples, sorted by similarity
         """
         # Build constraint matrix lazily
-        if not hasattr(self, '_constraint_matrix'):
+        if not hasattr(self, "_constraint_matrix"):
             self._build_constraint_matrix()
 
         # Get all unique parameter names
@@ -836,7 +849,7 @@ class AnchorLibrary:
         valid_mask = ~np.isnan(diff)
 
         # Compute Gaussian kernel per anchor
-        gaussian = np.exp(-(diff ** 2) / (2 * sigma ** 2))
+        gaussian = np.exp(-(diff**2) / (2 * sigma**2))
         gaussian = np.where(valid_mask, gaussian, 0.0)
 
         # Compute average similarity per anchor
@@ -904,6 +917,7 @@ class SpectocloudRenderer:
         """
         try:
             import matplotlib.pyplot as plt
+
             self.plt = plt
             self.has_mpl = True
         except ImportError:
@@ -956,12 +970,7 @@ class SpectocloudRenderer:
         """
         if not self.has_mpl:
             n = len(valences)
-            return np.column_stack([
-                np.full(n, 0.7),
-                np.full(n, 0.7),
-                np.full(n, 0.7),
-                alphas
-            ])
+            return np.column_stack([np.full(n, 0.7), np.full(n, 0.7), np.full(n, 0.7), alphas])
 
         # Map valences to 0-1 range
         u = (valences + 1.0) * 0.5
@@ -1007,9 +1016,7 @@ class SpectocloudRenderer:
 
         # Apply depth-based opacity fade
         alphas = colors[:, 3]
-        alphas = self.texture_generator.apply_depth_fade(
-            particle_positions, alphas
-        )
+        alphas = self.texture_generator.apply_depth_fade(particle_positions, alphas)
         colors[:, 3] = alphas
 
         # Generate noise for organic variation
@@ -1070,7 +1077,7 @@ class SpectocloudRenderer:
             return None
 
         fig = self.plt.figure(figsize=self.figsize, dpi=self.dpi)
-        ax = fig.add_subplot(111, projection='3d')
+        ax = fig.add_subplot(111, projection="3d")
 
         # Set up axes
         if frames:
@@ -1096,9 +1103,9 @@ class SpectocloudRenderer:
             anchor_sizes = np.zeros(len(anchors))
 
             for i, anchor in enumerate(anchors):
-                alpha = anchor.base_opacity + 0.22 * (anchor.activation ** 2)
+                alpha = anchor.base_opacity + 0.22 * (anchor.activation**2)
                 anchor_colors[i] = (*anchor.color, min(0.3, alpha))
-                anchor_sizes[i] = anchor.base_size + 16 * (anchor.activation ** 3)
+                anchor_sizes[i] = anchor.base_size + 16 * (anchor.activation**3)
 
             ax.scatter(
                 anchor_positions[:, 0],
@@ -1111,13 +1118,12 @@ class SpectocloudRenderer:
 
         # Render lifeline trail
         if frames and current_frame_idx > 0:
-            trail_frames = frames[:current_frame_idx + 1]
+            trail_frames = frames[: current_frame_idx + 1]
             trail_x = [f.x for f in trail_frames]
             trail_y = [f.y for f in trail_frames]
             trail_z = [f.z for f in trail_frames]
 
-            ax.plot(trail_x, trail_y, trail_z,
-                    linewidth=1.5, alpha=0.4, color='gray')
+            ax.plot(trail_x, trail_y, trail_z, linewidth=1.5, alpha=0.4, color="gray")
 
         # Render current cloud particles
         if particles and frames:
@@ -1125,13 +1131,15 @@ class SpectocloudRenderer:
             particle_positions = np.array([p.position for p in particles])
 
             # Color particles by valence
-            particle_colors = np.array([
-                self.rgba_for_valence(
-                    current_frame.valence,
-                    alpha=current_frame.opacity * (1.0 + current_frame.arousal)
-                )
-                for _ in particles
-            ])
+            particle_colors = np.array(
+                [
+                    self.rgba_for_valence(
+                        current_frame.valence,
+                        alpha=current_frame.opacity * (1.0 + current_frame.arousal),
+                    )
+                    for _ in particles
+                ]
+            )
 
             ax.scatter(
                 particle_positions[:, 0],
@@ -1152,7 +1160,7 @@ class SpectocloudRenderer:
                 [current_frame.z],
                 s=40,
                 c=[center_color],
-                edgecolors='black',
+                edgecolors="black",
                 linewidths=0.5,
             )
 
@@ -1163,7 +1171,7 @@ class SpectocloudRenderer:
                 f"{title} | t={current_frame.time:.1f} | "
                 f"v={current_frame.valence:+.2f} a={current_frame.arousal:.2f} | "
                 f"charge={storm.charge:.1f}",
-                fontsize=10
+                fontsize=10,
             )
         else:
             ax.set_title(title, fontsize=10)
@@ -1222,7 +1230,7 @@ class SpectocloudRenderer:
             return self._frame_cache[cache_key]
 
         fig = self.plt.figure(figsize=self.figsize, dpi=self.dpi)
-        ax = fig.add_subplot(111, projection='3d')
+        ax = fig.add_subplot(111, projection="3d")
 
         # Set up axes
         if frames:
@@ -1244,11 +1252,13 @@ class SpectocloudRenderer:
         # Compute camera position for fog calculations
         # Approximate from elev/azim angles
         camera_distance = 3.0
-        camera_position = np.array([
-            camera_distance * np.cos(np.radians(elev)) * np.cos(np.radians(azim)),
-            camera_distance * np.cos(np.radians(elev)) * np.sin(np.radians(azim)),
-            camera_distance * np.sin(np.radians(elev))
-        ])
+        camera_position = np.array(
+            [
+                camera_distance * np.cos(np.radians(elev)) * np.cos(np.radians(azim)),
+                camera_distance * np.cos(np.radians(elev)) * np.sin(np.radians(azim)),
+                camera_distance * np.sin(np.radians(elev)),
+            ]
+        )
 
         # Render anchors with enhanced glow
         anchor_positions = None
@@ -1263,7 +1273,7 @@ class SpectocloudRenderer:
             for i, anchor in enumerate(anchors):
                 # Enhanced activation-based opacity
                 base_alpha = anchor.base_opacity
-                activation_boost = 0.35 * (anchor.activation ** 1.5)
+                activation_boost = 0.35 * (anchor.activation**1.5)
                 alpha = min(0.5, base_alpha + activation_boost)
 
                 # Glow effect on highly active anchors
@@ -1274,7 +1284,7 @@ class SpectocloudRenderer:
                     color = anchor.color
 
                 anchor_colors[i] = (*color, alpha)
-                anchor_sizes[i] = anchor.base_size + 20 * (anchor.activation ** 2)
+                anchor_sizes[i] = anchor.base_size + 20 * (anchor.activation**2)
 
             ax.scatter(
                 anchor_positions[:, 0],
@@ -1287,7 +1297,7 @@ class SpectocloudRenderer:
 
         # Render lifeline trail with gradient opacity
         if frames and current_frame_idx > 0:
-            trail_frames = frames[:current_frame_idx + 1]
+            trail_frames = frames[: current_frame_idx + 1]
             n_trail = len(trail_frames)
 
             # Create trail with fading opacity
@@ -1296,12 +1306,12 @@ class SpectocloudRenderer:
                 alpha = 0.15 + 0.35 * t_ratio  # Older = more transparent
 
                 ax.plot(
-                    [trail_frames[i-1].x, trail_frames[i].x],
-                    [trail_frames[i-1].y, trail_frames[i].y],
-                    [trail_frames[i-1].z, trail_frames[i].z],
+                    [trail_frames[i - 1].x, trail_frames[i].x],
+                    [trail_frames[i - 1].y, trail_frames[i].y],
+                    [trail_frames[i - 1].z, trail_frames[i].z],
                     linewidth=1.0 + 1.0 * t_ratio,
                     alpha=alpha,
-                    color='gray'
+                    color="gray",
                 )
 
         # Render current cloud particles with texturization
@@ -1353,7 +1363,7 @@ class SpectocloudRenderer:
                 [current_frame.z],
                 s=50,
                 c=[center_color],
-                edgecolors='black',
+                edgecolors="black",
                 linewidths=0.8,
                 zorder=10,
             )
@@ -1378,7 +1388,7 @@ class SpectocloudRenderer:
                 f"{title} | t={current_frame.time:.1f} | "
                 f"v={current_frame.valence:+.2f} a={current_frame.arousal:.2f} | "
                 f"charge={storm.charge:.1f} | LOD:{lod_label}",
-                fontsize=10
+                fontsize=10,
             )
         else:
             ax.set_title(title, fontsize=10)
@@ -1471,10 +1481,10 @@ class Spectocloud:
         self.storm = StormState()
 
         # Storm parameters
-        self.sigma = 0.35           # Anchor influence radius
-        self.leak = 0.06            # Charge leak rate
-        self.gain = 1.2             # Storm energy to charge gain
-        self.threshold = 14.0       # Lightning threshold
+        self.sigma = 0.35  # Anchor influence radius
+        self.leak = 0.06  # Charge leak rate
+        self.gain = 1.2  # Storm energy to charge gain
+        self.threshold = 14.0  # Lightning threshold
         self.discharge_factor = 0.45
 
         # Conical expansion parameters
@@ -1488,7 +1498,7 @@ class Spectocloud:
         self,
         midi_events: List[Dict],
         duration: float,
-        emotion_trajectory: Optional[List[Dict]] = None
+        emotion_trajectory: Optional[List[Dict]] = None,
     ):
         """
         Process MIDI events to generate frames along the lifeline.
@@ -1518,9 +1528,9 @@ class Spectocloud:
             valence, arousal, intensity = 0.0, 0.5, 0.5
             if emotion_trajectory and i < len(emotion_trajectory):
                 emo = emotion_trajectory[i]
-                valence = emo.get('valence', 0.0)
-                arousal = emo.get('arousal', 0.5)
-                intensity = emo.get('intensity', 0.5)
+                valence = emo.get("valence", 0.0)
+                arousal = emo.get("arousal", 0.5)
+                intensity = emo.get("intensity", 0.5)
 
             # Compute anchor similarities (use vectorized for better latency)
             similarity_start = time.time()
@@ -1534,20 +1544,22 @@ class Spectocloud:
 
             # Compute frame position
             x = window_start
-            y = features.get('pitch_centroid', 0.5)
+            y = features.get("pitch_centroid", 0.5)
             z = self._compute_composite_z(features)
 
             # Conical spread based on time and emotion
             t_normalized = i / max(1, n_windows - 1)
             spread = self.base_spread + self.spread_growth * t_normalized
-            spread *= (1.0 + 0.5 * arousal)  # Arousal increases spread
+            spread *= 1.0 + 0.5 * arousal  # Arousal increases spread
 
             # Base opacity grows with accumulated charge
             opacity = 0.02 + 0.03 * min(1.0, self.storm.charge / self.threshold)
 
             frame = Frame(
                 time=window_start,
-                x=x, y=y, z=z,
+                x=x,
+                y=y,
+                z=z,
                 features=features,
                 top_anchors=top_anchors,
                 valence=valence,
@@ -1572,10 +1584,10 @@ class Spectocloud:
         Higher Z = more intense/complex/bright/dense
         """
         z = 0.0
-        z += 0.35 * features.get('tension', 0.0)
-        z += 0.25 * features.get('note_density', 0.0)
-        z += 0.20 * features.get('velocity_centroid', 0.5)
-        z += 0.20 * features.get('pitch_range', 0.0)
+        z += 0.35 * features.get("tension", 0.0)
+        z += 0.25 * features.get("note_density", 0.0)
+        z += 0.20 * features.get("velocity_centroid", 0.5)
+        z += 0.20 * features.get("pitch_range", 0.0)
         return min(1.0, max(0.0, z))
 
     def _update_storm(self, frame: Frame):
@@ -1727,7 +1739,7 @@ class Spectocloud:
             )
 
         if fig and output_path:
-            fig.savefig(output_path, dpi=self.renderer.dpi, bbox_inches='tight')
+            fig.savefig(output_path, dpi=self.renderer.dpi, bbox_inches="tight")
             print(f"Saved frame to {output_path}")
 
         if fig and show:
@@ -1789,7 +1801,7 @@ class Spectocloud:
 
         # Create figure
         fig = self.renderer.plt.figure(figsize=self.renderer.figsize, dpi=self.renderer.dpi)
-        ax = fig.add_subplot(111, projection='3d')
+        ax = fig.add_subplot(111, projection="3d")
 
         # Set up axes
         max_time = max(f.time for f in self.frames[:max_frame_idx])
@@ -1803,12 +1815,13 @@ class Spectocloud:
         fig.patch.set_facecolor("white")
 
         # Initialize plot elements
-        anchor_positions = np.array([[0, a.position_y, a.position_z]
-                                     for a in self.anchor_library.anchors])
+        anchor_positions = np.array(
+            [[0, a.position_y, a.position_z] for a in self.anchor_library.anchors]
+        )
         anchor_sc = ax.scatter([], [], [], s=5, alpha=0.6)
         particle_sc = ax.scatter([], [], [], s=8, alpha=0.5)
-        trail_line, = ax.plot([], [], [], linewidth=1.5, alpha=0.4, color='gray')
-        center_sc = ax.scatter([], [], [], s=40, edgecolors='black', linewidths=0.5)
+        (trail_line,) = ax.plot([], [], [], linewidth=1.5, alpha=0.4, color="gray")
+        center_sc = ax.scatter([], [], [], s=40, edgecolors="black", linewidths=0.5)
 
         def update(frame_idx):
             """Update function for animation."""
@@ -1821,13 +1834,15 @@ class Spectocloud:
             anchor_colors = np.zeros((len(self.anchor_library.anchors), 4))
             anchor_sizes = np.zeros(len(self.anchor_library.anchors))
             for i, anchor in enumerate(self.anchor_library.anchors):
-                alpha = anchor.base_opacity + 0.22 * (anchor.activation ** 2)
+                alpha = anchor.base_opacity + 0.22 * (anchor.activation**2)
                 anchor_colors[i] = (*anchor.color, min(0.3, alpha))
-                anchor_sizes[i] = anchor.base_size + 16 * (anchor.activation ** 3)
+                anchor_sizes[i] = anchor.base_size + 16 * (anchor.activation**3)
 
-            anchor_sc._offsets3d = (anchor_positions[:, 0],
-                                    anchor_positions[:, 1],
-                                    anchor_positions[:, 2])
+            anchor_sc._offsets3d = (
+                anchor_positions[:, 0],
+                anchor_positions[:, 1],
+                anchor_positions[:, 2],
+            )
             anchor_sc._facecolor3d = anchor_colors
             anchor_sc._edgecolor3d = anchor_colors
             anchor_sc.set_sizes(anchor_sizes)
@@ -1836,22 +1851,25 @@ class Spectocloud:
             particles = self.generate_particles_for_frame(frame_idx)
             if particles:
                 particle_positions = np.array([p.position for p in particles])
-                particle_colors = np.array([
-                    self.renderer.rgba_for_valence(
-                        frame.valence,
-                        alpha=frame.opacity * (1.0 + frame.arousal)
-                    )
-                    for _ in particles
-                ])
-                particle_sc._offsets3d = (particle_positions[:, 0],
-                                          particle_positions[:, 1],
-                                          particle_positions[:, 2])
+                particle_colors = np.array(
+                    [
+                        self.renderer.rgba_for_valence(
+                            frame.valence, alpha=frame.opacity * (1.0 + frame.arousal)
+                        )
+                        for _ in particles
+                    ]
+                )
+                particle_sc._offsets3d = (
+                    particle_positions[:, 0],
+                    particle_positions[:, 1],
+                    particle_positions[:, 2],
+                )
                 particle_sc._facecolor3d = particle_colors
                 particle_sc._edgecolor3d = particle_colors
 
             # Update trail
             if frame_idx > 0:
-                trail_frames = self.frames[:frame_idx + 1]
+                trail_frames = self.frames[: frame_idx + 1]
                 trail_x = [f.x for f in trail_frames]
                 trail_y = [f.y for f in trail_frames]
                 trail_z = [f.z for f in trail_frames]
@@ -1869,7 +1887,7 @@ class Spectocloud:
                 f"Spectocloud | t={frame.time:.1f} | "
                 f"v={frame.valence:+.2f} a={frame.arousal:.2f} | "
                 f"charge={self.storm.charge:.1f}",
-                fontsize=10
+                fontsize=10,
             )
 
             # Rotate camera if enabled
@@ -1883,11 +1901,7 @@ class Spectocloud:
 
         # Create animation
         anim = FuncAnimation(
-            fig,
-            update,
-            frames=max_frame_idx,
-            interval=int(1000 / fps),
-            blit=False
+            fig, update, frames=max_frame_idx, interval=int(1000 / fps), blit=False
         )
 
         # Save as GIF
@@ -1900,31 +1914,31 @@ class Spectocloud:
     def export_data(self, output_path: str):
         """Export visualization data to JSON."""
         data = {
-            'anchors': [
+            "anchors": [
                 {
-                    'id': a.id,
-                    'name': a.name,
-                    'family': a.family.value,
-                    'position': [a.position_y, a.position_z],
-                    'base_charge': a.base_charge,
+                    "id": a.id,
+                    "name": a.name,
+                    "family": a.family.value,
+                    "position": [a.position_y, a.position_z],
+                    "base_charge": a.base_charge,
                 }
                 for a in self.anchor_library.anchors
             ],
-            'frames': [
+            "frames": [
                 {
-                    'time': f.time,
-                    'position': [f.x, f.y, f.z],
-                    'valence': f.valence,
-                    'arousal': f.arousal,
-                    'intensity': f.intensity,
-                    'spread': f.spread,
-                    'features': f.features,
+                    "time": f.time,
+                    "position": [f.x, f.y, f.z],
+                    "valence": f.valence,
+                    "arousal": f.arousal,
+                    "intensity": f.intensity,
+                    "spread": f.spread,
+                    "features": f.features,
                 }
                 for f in self.frames
             ],
         }
 
-        with open(output_path, 'w') as fp:
+        with open(output_path, "w") as fp:
             json.dump(data, fp, indent=2)
 
         print(f"Exported data to {output_path}")

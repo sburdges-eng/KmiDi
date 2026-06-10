@@ -31,12 +31,11 @@ from typing import List, Dict, Optional, Tuple
 from enum import Enum
 import random
 
-
 # =============================================================================
 # CONSTANTS
 # =============================================================================
 
-CHROMATIC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 TICKS_PER_BEAT = 480
 
@@ -76,58 +75,64 @@ SCALE_INTERVALS = {
 # ENUMS
 # =============================================================================
 
+
 class FillType(Enum):
     """Type of fill."""
-    DRUM = "drum"                   # Drum kit fill
-    MELODIC = "melodic"             # Melodic run/ornament
-    HARMONIC = "harmonic"           # Chord-based fill
-    TEXTURAL = "textural"           # Riser/impact/swell
-    PERCUSSION = "percussion"       # Non-kit percussion
+
+    DRUM = "drum"  # Drum kit fill
+    MELODIC = "melodic"  # Melodic run/ornament
+    HARMONIC = "harmonic"  # Chord-based fill
+    TEXTURAL = "textural"  # Riser/impact/swell
+    PERCUSSION = "percussion"  # Non-kit percussion
 
 
 class DrumFillStyle(Enum):
     """Drum fill approach."""
-    TOM_ROLL = "tom_roll"           # Classic tom descent
-    SNARE_BUILD = "snare_build"     # Snare roll crescendo
-    KICK_SNARE = "kick_snare"       # Alternating kick/snare
-    LINEAR = "linear"               # Single hits, no overlaps
-    BLAST = "blast"                 # All drums fast
-    SPARSE = "sparse"               # Minimal, space
-    CYMBAL_SWELL = "cymbal_swell"   # Building cymbal roll
-    BROKEN = "broken"               # Irregular, hesitant
-    FLAM = "flam"                   # Flammed notes
-    GHOST = "ghost"                 # Ghost notes and touches
+
+    TOM_ROLL = "tom_roll"  # Classic tom descent
+    SNARE_BUILD = "snare_build"  # Snare roll crescendo
+    KICK_SNARE = "kick_snare"  # Alternating kick/snare
+    LINEAR = "linear"  # Single hits, no overlaps
+    BLAST = "blast"  # All drums fast
+    SPARSE = "sparse"  # Minimal, space
+    CYMBAL_SWELL = "cymbal_swell"  # Building cymbal roll
+    BROKEN = "broken"  # Irregular, hesitant
+    FLAM = "flam"  # Flammed notes
+    GHOST = "ghost"  # Ghost notes and touches
 
 
 class MelodicFillStyle(Enum):
     """Melodic fill approach."""
-    RUN_UP = "run_up"               # Ascending scale run
-    RUN_DOWN = "run_down"           # Descending scale run
-    ARPEGGIO = "arpeggio"           # Chord arpeggio
-    TURN = "turn"                   # Ornamental turn
-    TRILL = "trill"                 # Rapid alternation
-    GRACE = "grace"                 # Grace notes
-    CHROMATIC = "chromatic"         # Chromatic approach
-    PENTATONIC = "pentatonic"       # Pentatonic lick
+
+    RUN_UP = "run_up"  # Ascending scale run
+    RUN_DOWN = "run_down"  # Descending scale run
+    ARPEGGIO = "arpeggio"  # Chord arpeggio
+    TURN = "turn"  # Ornamental turn
+    TRILL = "trill"  # Rapid alternation
+    GRACE = "grace"  # Grace notes
+    CHROMATIC = "chromatic"  # Chromatic approach
+    PENTATONIC = "pentatonic"  # Pentatonic lick
 
 
 class FillPosition(Enum):
     """Where in the phrase the fill occurs."""
-    START = "start"                 # Beginning of section
-    MIDDLE = "middle"               # Mid-phrase
-    END = "end"                     # End of phrase
-    TURNAROUND = "turnaround"       # Before repeat
-    TRANSITION = "transition"       # Between sections
-    PICKUP = "pickup"               # Lead-in
+
+    START = "start"  # Beginning of section
+    MIDDLE = "middle"  # Mid-phrase
+    END = "end"  # End of phrase
+    TURNAROUND = "turnaround"  # Before repeat
+    TRANSITION = "transition"  # Between sections
+    PICKUP = "pickup"  # Lead-in
 
 
 class FillIntensity(Enum):
     """Energy level of fill."""
-    WHISPER = "whisper"             # Very subtle
-    SOFT = "soft"                   # Gentle
-    MODERATE = "moderate"           # Standard
-    STRONG = "strong"               # Powerful
-    EXPLOSIVE = "explosive"         # Maximum impact
+
+    WHISPER = "whisper"  # Very subtle
+    SOFT = "soft"  # Gentle
+    MODERATE = "moderate"  # Standard
+    STRONG = "strong"  # Powerful
+    EXPLOSIVE = "explosive"  # Maximum impact
 
 
 # =============================================================================
@@ -140,8 +145,8 @@ EMOTION_PROFILES = {
         "melodic_style": MelodicFillStyle.RUN_DOWN,
         "intensity": FillIntensity.SOFT,
         "velocity_range": (35, 65),
-        "density": 0.4,              # How many notes
-        "duration_beats": 2,         # Typical fill length
+        "density": 0.4,  # How many notes
+        "duration_beats": 2,  # Typical fill length
         "crescendo": False,
         "decrescendo": True,
         "humanize_timing": 25,
@@ -149,7 +154,6 @@ EMOTION_PROFILES = {
         "preferred_drums": ["snare", "floor_tom", "ride"],
         "cymbal_crash": False,
     },
-
     "sadness": {
         "drum_style": DrumFillStyle.GHOST,
         "melodic_style": MelodicFillStyle.RUN_DOWN,
@@ -164,7 +168,6 @@ EMOTION_PROFILES = {
         "preferred_drums": ["sidestick", "closed_hat", "ride"],
         "cymbal_crash": False,
     },
-
     "hope": {
         "drum_style": DrumFillStyle.TOM_ROLL,
         "melodic_style": MelodicFillStyle.RUN_UP,
@@ -179,7 +182,6 @@ EMOTION_PROFILES = {
         "preferred_drums": ["snare", "high_tom", "mid_tom", "crash"],
         "cymbal_crash": True,
     },
-
     "joy": {
         "drum_style": DrumFillStyle.LINEAR,
         "melodic_style": MelodicFillStyle.ARPEGGIO,
@@ -194,7 +196,6 @@ EMOTION_PROFILES = {
         "preferred_drums": ["snare", "high_tom", "mid_tom", "low_tom", "crash"],
         "cymbal_crash": True,
     },
-
     "rage": {
         "drum_style": DrumFillStyle.BLAST,
         "melodic_style": MelodicFillStyle.CHROMATIC,
@@ -209,7 +210,6 @@ EMOTION_PROFILES = {
         "preferred_drums": ["kick", "snare", "crash", "china"],
         "cymbal_crash": True,
     },
-
     "anger": {
         "drum_style": DrumFillStyle.KICK_SNARE,
         "melodic_style": MelodicFillStyle.CHROMATIC,
@@ -224,7 +224,6 @@ EMOTION_PROFILES = {
         "preferred_drums": ["kick", "snare", "floor_tom", "crash"],
         "cymbal_crash": True,
     },
-
     "fear": {
         "drum_style": DrumFillStyle.BROKEN,
         "melodic_style": MelodicFillStyle.GRACE,
@@ -239,7 +238,6 @@ EMOTION_PROFILES = {
         "preferred_drums": ["sidestick", "closed_hat", "splash"],
         "cymbal_crash": False,
     },
-
     "anxiety": {
         "drum_style": DrumFillStyle.BROKEN,
         "melodic_style": MelodicFillStyle.TRILL,
@@ -254,7 +252,6 @@ EMOTION_PROFILES = {
         "preferred_drums": ["snare", "closed_hat", "open_hat"],
         "cymbal_crash": False,
     },
-
     "tension": {
         "drum_style": DrumFillStyle.SNARE_BUILD,
         "melodic_style": MelodicFillStyle.CHROMATIC,
@@ -269,7 +266,6 @@ EMOTION_PROFILES = {
         "preferred_drums": ["snare", "kick"],
         "cymbal_crash": True,
     },
-
     "longing": {
         "drum_style": DrumFillStyle.CYMBAL_SWELL,
         "melodic_style": MelodicFillStyle.RUN_UP,
@@ -284,7 +280,6 @@ EMOTION_PROFILES = {
         "preferred_drums": ["ride", "crash", "floor_tom"],
         "cymbal_crash": False,
     },
-
     "nostalgia": {
         "drum_style": DrumFillStyle.FLAM,
         "melodic_style": MelodicFillStyle.TURN,
@@ -299,7 +294,6 @@ EMOTION_PROFILES = {
         "preferred_drums": ["snare", "mid_tom", "ride"],
         "cymbal_crash": False,
     },
-
     "peace": {
         "drum_style": DrumFillStyle.GHOST,
         "melodic_style": MelodicFillStyle.GRACE,
@@ -314,7 +308,6 @@ EMOTION_PROFILES = {
         "preferred_drums": ["ride", "closed_hat"],
         "cymbal_crash": False,
     },
-
     "euphoria": {
         "drum_style": DrumFillStyle.TOM_ROLL,
         "melodic_style": MelodicFillStyle.ARPEGGIO,
@@ -329,7 +322,6 @@ EMOTION_PROFILES = {
         "preferred_drums": ["high_tom", "mid_tom", "low_tom", "floor_tom", "crash", "crash_2"],
         "cymbal_crash": True,
     },
-
     "determination": {
         "drum_style": DrumFillStyle.LINEAR,
         "melodic_style": MelodicFillStyle.RUN_UP,
@@ -344,7 +336,6 @@ EMOTION_PROFILES = {
         "preferred_drums": ["snare", "kick", "crash"],
         "cymbal_crash": True,
     },
-
     "neutral": {
         "drum_style": DrumFillStyle.TOM_ROLL,
         "melodic_style": MelodicFillStyle.RUN_DOWN,
@@ -366,20 +357,23 @@ EMOTION_PROFILES = {
 # DATA CLASSES
 # =============================================================================
 
+
 @dataclass
 class FillNote:
     """A single note in a fill."""
-    pitch: int                  # MIDI pitch (or drum note)
+
+    pitch: int  # MIDI pitch (or drum note)
     start_tick: int
     duration_ticks: int
     velocity: int
-    instrument_type: str        # "drum", "melodic", "harmonic"
-    articulation: str           # "normal", "flam", "ghost", "accent"
+    instrument_type: str  # "drum", "melodic", "harmonic"
+    articulation: str  # "normal", "flam", "ghost", "accent"
 
 
 @dataclass
 class FillConfig:
     """Configuration for fill generation."""
+
     emotion: str = "neutral"
     position: FillPosition = FillPosition.END
     duration_beats: Optional[int] = None
@@ -389,10 +383,11 @@ class FillConfig:
 @dataclass
 class FillOutput:
     """Complete fill output."""
+
     notes: List[FillNote]
     fill_type: FillType
     emotion: str
-    style_used: str             # DrumFillStyle or MelodicFillStyle value
+    style_used: str  # DrumFillStyle or MelodicFillStyle value
     intensity_used: FillIntensity
     position: FillPosition
     total_ticks: int
@@ -404,21 +399,22 @@ class FillOutput:
 # HELPER FUNCTIONS
 # =============================================================================
 
+
 def note_name_to_midi(note: str, octave: int = 4) -> int:
     """Convert note name to MIDI number."""
     note = note.strip()
-    if len(note) > 1 and note[1] in ['#', 'b']:
+    if len(note) > 1 and note[1] in ["#", "b"]:
         base = note[0].upper()
         modifier = note[1]
     else:
         base = note[0].upper()
-        modifier = ''
+        modifier = ""
 
     base_idx = CHROMATIC.index(base) if base in CHROMATIC else 0
 
-    if modifier == '#':
+    if modifier == "#":
         base_idx += 1
-    elif modifier == 'b':
+    elif modifier == "b":
         base_idx -= 1
 
     base_idx = base_idx % 12
@@ -437,7 +433,7 @@ def calculate_velocity_envelope(
     num_notes: int,
     crescendo: bool,
     decrescendo: bool,
-    velocity_range: Tuple[int, int]
+    velocity_range: Tuple[int, int],
 ) -> List[int]:
     """Calculate velocity envelope for fill notes."""
     vel_min, vel_max = velocity_range
@@ -469,26 +465,25 @@ def calculate_velocity_envelope(
 # DRUM FILL GENERATORS
 # =============================================================================
 
+
 def generate_tom_roll(
-    profile: Dict,
-    total_ticks: int,
-    time_signature: Tuple[int, int]
+    profile: Dict, total_ticks: int, time_signature: Tuple[int, int]
 ) -> List[FillNote]:
     """Classic descending tom fill."""
     notes = []
 
     toms = ["high_tom", "mid_tom", "low_tom", "floor_tom"]
-    toms = [t for t in toms if t in profile["preferred_drums"]
-            or t in ["high_tom", "mid_tom", "low_tom"]]
+    toms = [
+        t
+        for t in toms
+        if t in profile["preferred_drums"] or t in ["high_tom", "mid_tom", "low_tom"]
+    ]
 
     subdivision = TICKS_PER_BEAT // 4  # 16ths
     num_hits = int(total_ticks / subdivision * profile["density"])
 
     velocities = calculate_velocity_envelope(
-        70, num_hits,
-        profile["crescendo"],
-        profile["decrescendo"],
-        profile["velocity_range"]
+        70, num_hits, profile["crescendo"], profile["decrescendo"], profile["velocity_range"]
     )
 
     current_tick = 0
@@ -503,14 +498,16 @@ def generate_tom_roll(
         timing_offset = random.randint(-profile["humanize_timing"], profile["humanize_timing"])
         vel_offset = random.randint(-profile["humanize_velocity"], profile["humanize_velocity"])
 
-        notes.append(FillNote(
-            pitch=GM_DRUMS[drum],
-            start_tick=max(0, current_tick + timing_offset),
-            duration_ticks=subdivision - 20,
-            velocity=max(1, min(127, velocities[i] + vel_offset)),
-            instrument_type="drum",
-            articulation="normal",
-        ))
+        notes.append(
+            FillNote(
+                pitch=GM_DRUMS[drum],
+                start_tick=max(0, current_tick + timing_offset),
+                duration_ticks=subdivision - 20,
+                velocity=max(1, min(127, velocities[i] + vel_offset)),
+                instrument_type="drum",
+                articulation="normal",
+            )
+        )
 
         current_tick += subdivision
         if i % 2 == 1:
@@ -520,18 +517,16 @@ def generate_tom_roll(
 
 
 def generate_snare_build(
-    profile: Dict,
-    total_ticks: int,
-    time_signature: Tuple[int, int]
+    profile: Dict, total_ticks: int, time_signature: Tuple[int, int]
 ) -> List[FillNote]:
     """Building snare roll."""
     notes = []
 
     # Start with 8ths, move to 16ths, then 32nds
     phases = [
-        (TICKS_PER_BEAT // 2, 0.3),   # 8ths
-        (TICKS_PER_BEAT // 4, 0.5),   # 16ths
-        (TICKS_PER_BEAT // 8, 0.2),   # 32nds
+        (TICKS_PER_BEAT // 2, 0.3),  # 8ths
+        (TICKS_PER_BEAT // 4, 0.5),  # 16ths
+        (TICKS_PER_BEAT // 8, 0.2),  # 32nds
     ]
 
     current_tick = 0
@@ -540,43 +535,46 @@ def generate_snare_build(
     for subdivision, phase_ratio in phases:
         _phase_ticks = int(total_ticks * phase_ratio)  # noqa: F841
         while current_tick < sum(
-                int(total_ticks * r) for s, r in phases
-                [: phases.index((subdivision, phase_ratio)) + 1]):
+            int(total_ticks * r) for s, r in phases[: phases.index((subdivision, phase_ratio)) + 1]
+        ):
             all_positions.append((current_tick, subdivision))
             current_tick += subdivision
             if current_tick >= total_ticks:
                 break
 
     velocities = calculate_velocity_envelope(
-        60, len(all_positions),
-        True, False,  # Always crescendo for snare build
-        profile["velocity_range"]
+        60,
+        len(all_positions),
+        True,
+        False,  # Always crescendo for snare build
+        profile["velocity_range"],
     )
 
     for i, (tick, subdiv) in enumerate(all_positions):
         if tick >= total_ticks:
             break
 
-        timing_offset = random.randint(-profile["humanize_timing"] //
-                                       2, profile["humanize_timing"] // 2)
+        timing_offset = random.randint(
+            -profile["humanize_timing"] // 2, profile["humanize_timing"] // 2
+        )
         vel_offset = random.randint(-profile["humanize_velocity"], profile["humanize_velocity"])
 
-        notes.append(FillNote(
-            pitch=GM_DRUMS["snare"],
-            start_tick=max(0, tick + timing_offset),
-            duration_ticks=subdiv - 10,
-            velocity=max(1, min(127, velocities[i] + vel_offset)),
-            instrument_type="drum",
-            articulation="normal" if i % 4 != 0 else "accent",
-        ))
+        notes.append(
+            FillNote(
+                pitch=GM_DRUMS["snare"],
+                start_tick=max(0, tick + timing_offset),
+                duration_ticks=subdiv - 10,
+                velocity=max(1, min(127, velocities[i] + vel_offset)),
+                instrument_type="drum",
+                articulation="normal" if i % 4 != 0 else "accent",
+            )
+        )
 
     return notes
 
 
 def generate_linear_fill(
-    profile: Dict,
-    total_ticks: int,
-    time_signature: Tuple[int, int]
+    profile: Dict, total_ticks: int, time_signature: Tuple[int, int]
 ) -> List[FillNote]:
     """Linear fill - no overlapping hits."""
     notes = []
@@ -586,10 +584,7 @@ def generate_linear_fill(
     num_hits = int(total_ticks / subdivision * profile["density"])
 
     velocities = calculate_velocity_envelope(
-        70, num_hits,
-        profile["crescendo"],
-        profile["decrescendo"],
-        profile["velocity_range"]
+        70, num_hits, profile["crescendo"], profile["decrescendo"], profile["velocity_range"]
     )
 
     current_tick = 0
@@ -603,14 +598,16 @@ def generate_linear_fill(
         timing_offset = random.randint(-profile["humanize_timing"], profile["humanize_timing"])
         vel_offset = random.randint(-profile["humanize_velocity"], profile["humanize_velocity"])
 
-        notes.append(FillNote(
-            pitch=GM_DRUMS.get(drum, 38),
-            start_tick=max(0, current_tick + timing_offset),
-            duration_ticks=subdivision - 20,
-            velocity=max(1, min(127, velocities[i] + vel_offset)),
-            instrument_type="drum",
-            articulation="normal",
-        ))
+        notes.append(
+            FillNote(
+                pitch=GM_DRUMS.get(drum, 38),
+                start_tick=max(0, current_tick + timing_offset),
+                duration_ticks=subdivision - 20,
+                velocity=max(1, min(127, velocities[i] + vel_offset)),
+                instrument_type="drum",
+                articulation="normal",
+            )
+        )
 
         current_tick += subdivision
 
@@ -618,9 +615,7 @@ def generate_linear_fill(
 
 
 def generate_broken_fill(
-    profile: Dict,
-    total_ticks: int,
-    time_signature: Tuple[int, int]
+    profile: Dict, total_ticks: int, time_signature: Tuple[int, int]
 ) -> List[FillNote]:
     """Irregular, hesitant fill."""
     notes = []
@@ -643,14 +638,16 @@ def generate_broken_fill(
         timing_offset = random.randint(-profile["humanize_timing"], profile["humanize_timing"])
         vel = random.randint(*profile["velocity_range"])
 
-        notes.append(FillNote(
-            pitch=GM_DRUMS.get(drum, 38),
-            start_tick=max(0, current_tick + timing_offset),
-            duration_ticks=subdiv // 2,
-            velocity=vel,
-            instrument_type="drum",
-            articulation="ghost" if vel < 50 else "normal",
-        ))
+        notes.append(
+            FillNote(
+                pitch=GM_DRUMS.get(drum, 38),
+                start_tick=max(0, current_tick + timing_offset),
+                duration_ticks=subdiv // 2,
+                velocity=vel,
+                instrument_type="drum",
+                articulation="ghost" if vel < 50 else "normal",
+            )
+        )
 
         current_tick += subdiv
         note_count += 1
@@ -659,9 +656,7 @@ def generate_broken_fill(
 
 
 def generate_ghost_fill(
-    profile: Dict,
-    total_ticks: int,
-    time_signature: Tuple[int, int]
+    profile: Dict, total_ticks: int, time_signature: Tuple[int, int]
 ) -> List[FillNote]:
     """Ghost notes and touches."""
     notes = []
@@ -681,22 +676,22 @@ def generate_ghost_fill(
         # Mostly snare ghosts
         drum = "snare" if random.random() < 0.7 else random.choice(profile["preferred_drums"])
 
-        notes.append(FillNote(
-            pitch=GM_DRUMS.get(drum, 38),
-            start_tick=max(0, tick + timing_offset),
-            duration_ticks=subdivision // 3,
-            velocity=vel,
-            instrument_type="drum",
-            articulation="ghost",
-        ))
+        notes.append(
+            FillNote(
+                pitch=GM_DRUMS.get(drum, 38),
+                start_tick=max(0, tick + timing_offset),
+                duration_ticks=subdivision // 3,
+                velocity=vel,
+                instrument_type="drum",
+                articulation="ghost",
+            )
+        )
 
     return notes
 
 
 def generate_blast_fill(
-    profile: Dict,
-    total_ticks: int,
-    time_signature: Tuple[int, int]
+    profile: Dict, total_ticks: int, time_signature: Tuple[int, int]
 ) -> List[FillNote]:
     """Maximum intensity blast."""
     notes = []
@@ -710,14 +705,16 @@ def generate_blast_fill(
         # Kick and snare together
         for drum in ["kick", "snare"]:
             timing_offset = random.randint(-3, 3)
-            notes.append(FillNote(
-                pitch=GM_DRUMS[drum],
-                start_tick=max(0, current_tick + timing_offset),
-                duration_ticks=subdivision - 5,
-                velocity=random.randint(vel_min, vel_max),
-                instrument_type="drum",
-                articulation="accent",
-            ))
+            notes.append(
+                FillNote(
+                    pitch=GM_DRUMS[drum],
+                    start_tick=max(0, current_tick + timing_offset),
+                    duration_ticks=subdivision - 5,
+                    velocity=random.randint(vel_min, vel_max),
+                    instrument_type="drum",
+                    articulation="accent",
+                )
+            )
 
         current_tick += subdivision
 
@@ -728,12 +725,9 @@ def generate_blast_fill(
 # MELODIC FILL GENERATORS
 # =============================================================================
 
+
 def generate_run_up(
-    profile: Dict,
-    total_ticks: int,
-    key: str,
-    scale: str,
-    start_octave: int
+    profile: Dict, total_ticks: int, key: str, scale: str, start_octave: int
 ) -> List[FillNote]:
     """Ascending scale run."""
     notes = []
@@ -745,10 +739,7 @@ def generate_run_up(
     subdivision = total_ticks // num_notes if num_notes > 0 else TICKS_PER_BEAT // 4
 
     velocities = calculate_velocity_envelope(
-        70, num_notes,
-        profile["crescendo"],
-        profile["decrescendo"],
-        profile["velocity_range"]
+        70, num_notes, profile["crescendo"], profile["decrescendo"], profile["velocity_range"]
     )
 
     for i in range(num_notes):
@@ -759,24 +750,22 @@ def generate_run_up(
         timing_offset = random.randint(-profile["humanize_timing"], profile["humanize_timing"])
         vel_offset = random.randint(-profile["humanize_velocity"], profile["humanize_velocity"])
 
-        notes.append(FillNote(
-            pitch=pitches[i % len(pitches)],
-            start_tick=max(0, tick + timing_offset),
-            duration_ticks=int(subdivision * 0.8),
-            velocity=max(1, min(127, velocities[i] + vel_offset)),
-            instrument_type="melodic",
-            articulation="normal",
-        ))
+        notes.append(
+            FillNote(
+                pitch=pitches[i % len(pitches)],
+                start_tick=max(0, tick + timing_offset),
+                duration_ticks=int(subdivision * 0.8),
+                velocity=max(1, min(127, velocities[i] + vel_offset)),
+                instrument_type="melodic",
+                articulation="normal",
+            )
+        )
 
     return notes
 
 
 def generate_run_down(
-    profile: Dict,
-    total_ticks: int,
-    key: str,
-    scale: str,
-    start_octave: int
+    profile: Dict, total_ticks: int, key: str, scale: str, start_octave: int
 ) -> List[FillNote]:
     """Descending scale run."""
     notes = []
@@ -789,10 +778,7 @@ def generate_run_down(
     subdivision = total_ticks // num_notes if num_notes > 0 else TICKS_PER_BEAT // 4
 
     velocities = calculate_velocity_envelope(
-        70, num_notes,
-        profile["crescendo"],
-        profile["decrescendo"],
-        profile["velocity_range"]
+        70, num_notes, profile["crescendo"], profile["decrescendo"], profile["velocity_range"]
     )
 
     for i in range(num_notes):
@@ -803,23 +789,22 @@ def generate_run_down(
         timing_offset = random.randint(-profile["humanize_timing"], profile["humanize_timing"])
         vel_offset = random.randint(-profile["humanize_velocity"], profile["humanize_velocity"])
 
-        notes.append(FillNote(
-            pitch=pitches[i % len(pitches)],
-            start_tick=max(0, tick + timing_offset),
-            duration_ticks=int(subdivision * 0.8),
-            velocity=max(1, min(127, velocities[i] + vel_offset)),
-            instrument_type="melodic",
-            articulation="normal",
-        ))
+        notes.append(
+            FillNote(
+                pitch=pitches[i % len(pitches)],
+                start_tick=max(0, tick + timing_offset),
+                duration_ticks=int(subdivision * 0.8),
+                velocity=max(1, min(127, velocities[i] + vel_offset)),
+                instrument_type="melodic",
+                articulation="normal",
+            )
+        )
 
     return notes
 
 
 def generate_chromatic_run(
-    profile: Dict,
-    total_ticks: int,
-    target_pitch: int,
-    ascending: bool = True
+    profile: Dict, total_ticks: int, target_pitch: int, ascending: bool = True
 ) -> List[FillNote]:
     """Chromatic approach to target."""
     notes = []
@@ -833,10 +818,7 @@ def generate_chromatic_run(
         pitches = list(range(target_pitch + num_notes, target_pitch - 1, -1))
 
     velocities = calculate_velocity_envelope(
-        70, len(pitches),
-        profile["crescendo"],
-        profile["decrescendo"],
-        profile["velocity_range"]
+        70, len(pitches), profile["crescendo"], profile["decrescendo"], profile["velocity_range"]
     )
 
     for i, pitch in enumerate(pitches):
@@ -847,14 +829,16 @@ def generate_chromatic_run(
         timing_offset = random.randint(-profile["humanize_timing"], profile["humanize_timing"])
         vel_offset = random.randint(-profile["humanize_velocity"], profile["humanize_velocity"])
 
-        notes.append(FillNote(
-            pitch=pitch,
-            start_tick=max(0, tick + timing_offset),
-            duration_ticks=int(subdivision * 0.7),
-            velocity=max(1, min(127, velocities[i] + vel_offset)),
-            instrument_type="melodic",
-            articulation="normal",
-        ))
+        notes.append(
+            FillNote(
+                pitch=pitch,
+                start_tick=max(0, tick + timing_offset),
+                duration_ticks=int(subdivision * 0.7),
+                velocity=max(1, min(127, velocities[i] + vel_offset)),
+                instrument_type="melodic",
+                articulation="normal",
+            )
+        )
 
     return notes
 
@@ -862,6 +846,7 @@ def generate_chromatic_run(
 # =============================================================================
 # MAIN ENGINE CLASS
 # =============================================================================
+
 
 class FillEngine:
     """
@@ -918,14 +903,16 @@ class FillEngine:
         has_crash = profile["cymbal_crash"]
         if has_crash and notes:
             crash_tick = total_ticks - 10
-            notes.append(FillNote(
-                pitch=GM_DRUMS["crash"],
-                start_tick=crash_tick,
-                duration_ticks=TICKS_PER_BEAT * 2,
-                velocity=profile["velocity_range"][1],
-                instrument_type="drum",
-                articulation="accent",
-            ))
+            notes.append(
+                FillNote(
+                    pitch=GM_DRUMS["crash"],
+                    start_tick=crash_tick,
+                    duration_ticks=TICKS_PER_BEAT * 2,
+                    velocity=profile["velocity_range"][1],
+                    instrument_type="drum",
+                    articulation="accent",
+                )
+            )
 
         notes.sort(key=lambda n: n.start_tick)
 
@@ -942,7 +929,7 @@ class FillEngine:
                 "tempo_bpm": tempo_bpm,
                 "time_signature": time_signature,
                 "bars": bars,
-            }
+            },
         )
 
     def generate_melodic_fill(
@@ -999,7 +986,7 @@ class FillEngine:
                 "key": key,
                 "scale": scale,
                 "target_pitch": target_pitch,
-            }
+            },
         )
 
     def get_available_emotions(self) -> List[str]:
@@ -1010,6 +997,7 @@ class FillEngine:
 # =============================================================================
 # CONVENIENCE FUNCTIONS
 # =============================================================================
+
 
 def generate_grief_fill(bars: float = 0.5, tempo: int = 72) -> FillOutput:
     """Quick grief drum fill."""
@@ -1026,20 +1014,24 @@ def fill_to_midi_events(fill_output: FillOutput, channel: int = 9) -> List[Dict]
     events = []
 
     for note in fill_output.notes:
-        events.append({
-            "type": "note_on",
-            "tick": note.start_tick,
-            "channel": channel,
-            "pitch": note.pitch,
-            "velocity": note.velocity,
-        })
-        events.append({
-            "type": "note_off",
-            "tick": note.start_tick + note.duration_ticks,
-            "channel": channel,
-            "pitch": note.pitch,
-            "velocity": 0,
-        })
+        events.append(
+            {
+                "type": "note_on",
+                "tick": note.start_tick,
+                "channel": channel,
+                "pitch": note.pitch,
+                "velocity": note.velocity,
+            }
+        )
+        events.append(
+            {
+                "type": "note_off",
+                "tick": note.start_tick + note.duration_ticks,
+                "channel": channel,
+                "pitch": note.pitch,
+                "velocity": 0,
+            }
+        )
 
     events.sort(key=lambda e: (e["tick"], 0 if e["type"] == "note_on" else 1))
     return events

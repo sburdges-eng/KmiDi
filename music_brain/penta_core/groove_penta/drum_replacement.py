@@ -16,6 +16,7 @@ from enum import Enum
 
 class DrumType(Enum):
     """Standard drum kit pieces."""
+
     KICK = "kick"
     SNARE = "snare"
     HIHAT_CLOSED = "hihat_closed"
@@ -35,30 +36,30 @@ class DrumType(Enum):
 
 # Standard General MIDI drum mapping
 GM_DRUM_MAP: Dict[int, DrumType] = {
-    35: DrumType.KICK,        # Acoustic Bass Drum
-    36: DrumType.KICK,        # Bass Drum 1
-    37: DrumType.RIM,         # Side Stick
-    38: DrumType.SNARE,       # Acoustic Snare
-    39: DrumType.CLAP,        # Hand Clap
-    40: DrumType.SNARE,       # Electric Snare
-    41: DrumType.TOM_LOW,     # Low Floor Tom
+    35: DrumType.KICK,  # Acoustic Bass Drum
+    36: DrumType.KICK,  # Bass Drum 1
+    37: DrumType.RIM,  # Side Stick
+    38: DrumType.SNARE,  # Acoustic Snare
+    39: DrumType.CLAP,  # Hand Clap
+    40: DrumType.SNARE,  # Electric Snare
+    41: DrumType.TOM_LOW,  # Low Floor Tom
     42: DrumType.HIHAT_CLOSED,  # Closed Hi-Hat
-    43: DrumType.TOM_LOW,     # High Floor Tom
-    44: DrumType.HIHAT_PEDAL,   # Pedal Hi-Hat
-    45: DrumType.TOM_MID,     # Low Tom
-    46: DrumType.HIHAT_OPEN,    # Open Hi-Hat
-    47: DrumType.TOM_MID,     # Low-Mid Tom
-    48: DrumType.TOM_HIGH,    # Hi-Mid Tom
-    49: DrumType.CRASH,       # Crash Cymbal 1
-    50: DrumType.TOM_HIGH,    # High Tom
-    51: DrumType.RIDE,        # Ride Cymbal 1
-    52: DrumType.CRASH,       # Chinese Cymbal
-    53: DrumType.RIDE_BELL,   # Ride Bell
+    43: DrumType.TOM_LOW,  # High Floor Tom
+    44: DrumType.HIHAT_PEDAL,  # Pedal Hi-Hat
+    45: DrumType.TOM_MID,  # Low Tom
+    46: DrumType.HIHAT_OPEN,  # Open Hi-Hat
+    47: DrumType.TOM_MID,  # Low-Mid Tom
+    48: DrumType.TOM_HIGH,  # Hi-Mid Tom
+    49: DrumType.CRASH,  # Crash Cymbal 1
+    50: DrumType.TOM_HIGH,  # High Tom
+    51: DrumType.RIDE,  # Ride Cymbal 1
+    52: DrumType.CRASH,  # Chinese Cymbal
+    53: DrumType.RIDE_BELL,  # Ride Bell
     54: DrumType.PERCUSSION,  # Tambourine
-    55: DrumType.CRASH,       # Splash Cymbal
-    56: DrumType.COWBELL,     # Cowbell
-    57: DrumType.CRASH,       # Crash Cymbal 2
-    59: DrumType.RIDE,        # Ride Cymbal 2
+    55: DrumType.CRASH,  # Splash Cymbal
+    56: DrumType.COWBELL,  # Cowbell
+    57: DrumType.CRASH,  # Crash Cymbal 2
+    59: DrumType.RIDE,  # Ride Cymbal 2
 }
 
 
@@ -67,15 +68,16 @@ class DrumSample:
     """
     A drum sample with metadata.
     """
+
     path: str
     drum_type: DrumType
-    velocity_min: int = 1    # Minimum velocity to trigger
+    velocity_min: int = 1  # Minimum velocity to trigger
     velocity_max: int = 127  # Maximum velocity to trigger
 
     # Audio properties
-    pitch: float = 0.0       # Pitch offset in semitones
-    gain_db: float = 0.0     # Volume adjustment
-    pan: float = 0.0         # Stereo position (-1 to 1)
+    pitch: float = 0.0  # Pitch offset in semitones
+    gain_db: float = 0.0  # Volume adjustment
+    pan: float = 0.0  # Stereo position (-1 to 1)
 
     # Articulation
     articulation: str = "normal"  # normal, rimshot, sidestick, etc.
@@ -90,6 +92,7 @@ class DrumKit:
     """
     A collection of drum samples forming a kit.
     """
+
     name: str
     samples: Dict[DrumType, List[DrumSample]] = field(default_factory=dict)
     description: str = ""
@@ -122,6 +125,7 @@ class DrumKit:
         if matching:
             # Return random sample from matching velocity layer
             import random
+
             return random.choice(matching)
 
         # Fallback to any sample
@@ -133,6 +137,7 @@ class DrumHit:
     """
     A detected drum hit.
     """
+
     time: float
     drum_type: DrumType
     velocity: int
@@ -149,6 +154,7 @@ class DrumReplacement:
     """
     Result of a drum replacement operation.
     """
+
     original_hits: List[DrumHit]
     replaced_hits: List[Dict]
     source_kit: Optional[str] = None
@@ -193,13 +199,15 @@ def map_drum_hits(
             drum_type = _infer_drum_type(note)
 
         if drum_type:
-            hits.append(DrumHit(
-                time=time,
-                drum_type=drum_type,
-                velocity=velocity,
-                original_note=note,
-                duration=duration,
-            ))
+            hits.append(
+                DrumHit(
+                    time=time,
+                    drum_type=drum_type,
+                    velocity=velocity,
+                    original_note=note,
+                    duration=duration,
+                )
+            )
 
     return sorted(hits, key=lambda h: h.time)
 
@@ -261,13 +269,15 @@ def replace_drums(
 
         if sample is None:
             # No replacement available, skip or use original
-            replaced_hits.append({
-                "time": hit.time,
-                "note": hit.original_note,
-                "velocity": hit.velocity,
-                "duration": hit.duration,
-                "sample_path": None,
-            })
+            replaced_hits.append(
+                {
+                    "time": hit.time,
+                    "note": hit.original_note,
+                    "velocity": hit.velocity,
+                    "duration": hit.duration,
+                    "sample_path": None,
+                }
+            )
             continue
 
         # Calculate velocity
@@ -283,17 +293,19 @@ def replace_drums(
 
         velocity = max(1, min(127, velocity))
 
-        replaced_hits.append({
-            "time": hit.time,
-            "note": hit.original_note,
-            "velocity": velocity,
-            "duration": hit.duration,
-            "sample_path": sample.path,
-            "drum_type": hit.drum_type.value,
-            "pitch": sample.pitch,
-            "gain_db": sample.gain_db,
-            "pan": sample.pan,
-        })
+        replaced_hits.append(
+            {
+                "time": hit.time,
+                "note": hit.original_note,
+                "velocity": velocity,
+                "duration": hit.duration,
+                "sample_path": sample.path,
+                "drum_type": hit.drum_type.value,
+                "pitch": sample.pitch,
+                "gain_db": sample.gain_db,
+                "pan": sample.pan,
+            }
+        )
 
     return DrumReplacement(
         original_hits=original_hits,
@@ -516,10 +528,12 @@ def create_custom_kit(
             continue
 
         for path in paths:
-            kit.add_sample(DrumSample(
-                path=path,
-                drum_type=drum_type,
-            ))
+            kit.add_sample(
+                DrumSample(
+                    path=path,
+                    drum_type=drum_type,
+                )
+            )
 
     return kit
 

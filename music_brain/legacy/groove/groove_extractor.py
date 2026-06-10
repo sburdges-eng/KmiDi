@@ -18,6 +18,7 @@ import statistics
 # MIDI parsing
 try:
     import mido
+
     MIDO_AVAILABLE = True
 except ImportError:
     MIDO_AVAILABLE = False
@@ -35,28 +36,39 @@ STANDARD_PPQ = 480
 
 # GM Drum Map (channel 10)
 GM_DRUM_MAP = {
-    35: 'kick', 36: 'kick',
-    38: 'snare', 40: 'snare',
-    37: 'sidestick',
-    42: 'hihat_closed', 44: 'hihat_pedal', 46: 'hihat_open',
-    41: 'tom_low', 43: 'tom_low', 45: 'tom_mid', 47: 'tom_mid', 48: 'tom_high', 50: 'tom_high',
-    49: 'crash', 57: 'crash',
-    51: 'ride', 59: 'ride',
-    39: 'clap',
-    56: 'cowbell',
-    54: 'tambourine',
+    35: "kick",
+    36: "kick",
+    38: "snare",
+    40: "snare",
+    37: "sidestick",
+    42: "hihat_closed",
+    44: "hihat_pedal",
+    46: "hihat_open",
+    41: "tom_low",
+    43: "tom_low",
+    45: "tom_mid",
+    47: "tom_mid",
+    48: "tom_high",
+    50: "tom_high",
+    49: "crash",
+    57: "crash",
+    51: "ride",
+    59: "ride",
+    39: "clap",
+    56: "cowbell",
+    54: "tambourine",
 }
 
 # Instrument classification by channel/program
 INSTRUMENT_CLASSES = {
-    'drums': 'drums',
-    'bass': 'bass',
-    'keys': 'keys',
-    'guitar': 'guitar',
-    'strings': 'strings',
-    'brass': 'brass',
-    'lead': 'lead',
-    'pad': 'pad',
+    "drums": "drums",
+    "bass": "bass",
+    "keys": "keys",
+    "guitar": "guitar",
+    "strings": "strings",
+    "brass": "brass",
+    "lead": "lead",
+    "pad": "pad",
 }
 
 # ============================================================================
@@ -73,7 +85,7 @@ def init_database():
     cursor = conn.cursor()
 
     # Main groove templates table
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS groove_templates (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -87,10 +99,10 @@ def init_database():
             date_extracted TEXT,
             notes TEXT
         )
-    ''')
+    """)
 
     # Push/pull signatures per instrument
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS push_pull_signatures (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             template_id INTEGER,
@@ -103,10 +115,10 @@ def init_database():
             sample_count INTEGER,
             FOREIGN KEY (template_id) REFERENCES groove_templates(id)
         )
-    ''')
+    """)
 
     # Swing curves (per beat subdivision)
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS swing_curves (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             template_id INTEGER,
@@ -117,10 +129,10 @@ def init_database():
             sample_count INTEGER,
             FOREIGN KEY (template_id) REFERENCES groove_templates(id)
         )
-    ''')
+    """)
 
     # Cross-instrument stagger (timing relationships)
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS instrument_stagger (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             template_id INTEGER,
@@ -133,10 +145,10 @@ def init_database():
             sample_count INTEGER,
             FOREIGN KEY (template_id) REFERENCES groove_templates(id)
         )
-    ''')
+    """)
 
     # Velocity curves
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS velocity_curves (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             template_id INTEGER,
@@ -149,13 +161,14 @@ def init_database():
             sample_count INTEGER,
             FOREIGN KEY (template_id) REFERENCES groove_templates(id)
         )
-    ''')
+    """)
 
     # Indexes
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_template_genre ON groove_templates(genre)')
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_template_genre ON groove_templates(genre)")
     cursor.execute(
-        'CREATE INDEX IF NOT EXISTS idx_pushpull_template ON push_pull_signatures(template_id)')
-    cursor.execute('CREATE INDEX IF NOT EXISTS idx_swing_template ON swing_curves(template_id)')
+        "CREATE INDEX IF NOT EXISTS idx_pushpull_template ON push_pull_signatures(template_id)"
+    )
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_swing_template ON swing_curves(template_id)")
 
     conn.commit()
     conn.close()
@@ -167,6 +180,7 @@ def get_connection():
     if not DB_PATH.exists():
         init_database()
     return sqlite3.connect(DB_PATH)
+
 
 # ============================================================================
 # MIDI Parsing
@@ -196,7 +210,7 @@ def get_tempo_from_midi(mid):
     """Extract tempo from MIDI file."""
     for track in mid.tracks:
         for msg in track:
-            if msg.type == 'set_tempo':
+            if msg.type == "set_tempo":
                 return mido.tempo2bpm(msg.tempo)
     return 120.0  # Default
 
@@ -204,38 +218,38 @@ def get_tempo_from_midi(mid):
 def classify_instrument(channel, program=None):
     """Classify instrument by channel and program number."""
     if channel == 9:  # Channel 10 in 1-indexed (drums)
-        return 'drums'
+        return "drums"
 
     if program is None:
-        return 'unknown'
+        return "unknown"
 
     # GM program classification
     if 0 <= program <= 7:
-        return 'keys'  # Piano
+        return "keys"  # Piano
     elif 8 <= program <= 15:
-        return 'keys'  # Chromatic percussion
+        return "keys"  # Chromatic percussion
     elif 16 <= program <= 23:
-        return 'keys'  # Organ
+        return "keys"  # Organ
     elif 24 <= program <= 31:
-        return 'guitar'
+        return "guitar"
     elif 32 <= program <= 39:
-        return 'bass'
+        return "bass"
     elif 40 <= program <= 47:
-        return 'strings'
+        return "strings"
     elif 48 <= program <= 55:
-        return 'strings'  # Ensemble
+        return "strings"  # Ensemble
     elif 56 <= program <= 63:
-        return 'brass'
+        return "brass"
     elif 64 <= program <= 71:
-        return 'brass'  # Reed
+        return "brass"  # Reed
     elif 72 <= program <= 79:
-        return 'lead'  # Pipe
+        return "lead"  # Pipe
     elif 80 <= program <= 87:
-        return 'lead'  # Synth lead
+        return "lead"  # Synth lead
     elif 88 <= program <= 95:
-        return 'pad'
+        return "pad"
     else:
-        return 'other'
+        return "other"
 
 
 def extract_notes_by_instrument(mid):
@@ -254,14 +268,14 @@ def extract_notes_by_instrument(mid):
         for msg in track:
             current_tick += msg.time
 
-            if msg.type == 'program_change':
+            if msg.type == "program_change":
                 current_program[msg.channel] = msg.program
 
-            elif msg.type == 'note_on' and msg.velocity > 0:
+            elif msg.type == "note_on" and msg.velocity > 0:
                 key = (msg.channel, msg.note)
                 active_notes[key] = (current_tick, msg.velocity)
 
-            elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+            elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
                 key = (msg.channel, msg.note)
                 if key in active_notes:
                     start_tick, velocity = active_notes.pop(key)
@@ -272,25 +286,30 @@ def extract_notes_by_instrument(mid):
                     inst_class = classify_instrument(msg.channel, program)
 
                     # For drums, also classify by note
-                    if inst_class == 'drums' and msg.note in GM_DRUM_MAP:
+                    if inst_class == "drums" and msg.note in GM_DRUM_MAP:
                         drum_type = GM_DRUM_MAP[msg.note]
-                        instruments[f'drums_{drum_type}'].append({
-                            'tick': start_tick,
-                            'note': msg.note,
-                            'velocity': velocity,
-                            'duration': duration,
-                            'channel': msg.channel
-                        })
+                        instruments[f"drums_{drum_type}"].append(
+                            {
+                                "tick": start_tick,
+                                "note": msg.note,
+                                "velocity": velocity,
+                                "duration": duration,
+                                "channel": msg.channel,
+                            }
+                        )
 
-                    instruments[inst_class].append({
-                        'tick': start_tick,
-                        'note': msg.note,
-                        'velocity': velocity,
-                        'duration': duration,
-                        'channel': msg.channel
-                    })
+                    instruments[inst_class].append(
+                        {
+                            "tick": start_tick,
+                            "note": msg.note,
+                            "velocity": velocity,
+                            "duration": duration,
+                            "channel": msg.channel,
+                        }
+                    )
 
     return dict(instruments), ppq
+
 
 # ============================================================================
 # Groove Analysis
@@ -340,31 +359,28 @@ def extract_push_pull_signature(notes, ppq, grid_division=16):
     grid_positions = defaultdict(list)
 
     for note in notes:
-        tick = note['tick']
+        tick = note["tick"]
         nearest_grid, offset = quantize_to_grid(tick, ppq, grid_division)
 
         # Normalize grid position to within one bar (0-15 for 16th notes in 4/4)
         bar_length = ppq * 4  # Ticks per bar in 4/4
         grid_in_bar = (nearest_grid % bar_length) / ticks_per_grid
 
-        grid_positions[grid_in_bar].append({
-            'offset_ticks': offset,
-            'velocity': note['velocity']
-        })
+        grid_positions[grid_in_bar].append({"offset_ticks": offset, "velocity": note["velocity"]})
 
     # Calculate statistics for each grid position
     signature = {}
     for grid_pos, hits in grid_positions.items():
         if len(hits) >= 2:  # Need multiple samples
-            offsets = [h['offset_ticks'] for h in hits]
-            velocities = [h['velocity'] for h in hits]
+            offsets = [h["offset_ticks"] for h in hits]
+            velocities = [h["velocity"] for h in hits]
 
             signature[grid_pos] = {
-                'offset_mean': statistics.mean(offsets),
-                'offset_std': statistics.stdev(offsets) if len(offsets) > 1 else 0,
-                'velocity_mean': statistics.mean(velocities),
-                'velocity_std': statistics.stdev(velocities) if len(velocities) > 1 else 0,
-                'count': len(hits)
+                "offset_mean": statistics.mean(offsets),
+                "offset_std": statistics.stdev(offsets) if len(offsets) > 1 else 0,
+                "velocity_mean": statistics.mean(velocities),
+                "velocity_std": statistics.stdev(velocities) if len(velocities) > 1 else 0,
+                "count": len(hits),
             }
 
     return signature
@@ -381,7 +397,7 @@ def extract_swing_curve(notes, ppq):
     eighth_positions = defaultdict(list)
 
     for note in notes:
-        tick = note['tick']
+        tick = note["tick"]
         bar_length = ppq * 4
         tick_in_bar = tick % bar_length
 
@@ -399,9 +415,9 @@ def extract_swing_curve(notes, ppq):
         if pos in eighth_positions and len(eighth_positions[pos]) >= 2:
             offsets = eighth_positions[pos]
             swing_data[pos] = {
-                'mean_offset': statistics.mean(offsets),
-                'std_offset': statistics.stdev(offsets) if len(offsets) > 1 else 0,
-                'count': len(offsets)
+                "mean_offset": statistics.mean(offsets),
+                "std_offset": statistics.stdev(offsets) if len(offsets) > 1 else 0,
+                "count": len(offsets),
             }
 
     # Calculate swing ratio (off-beats vs on-beats)
@@ -411,9 +427,9 @@ def extract_swing_curve(notes, ppq):
 
     for pos, data in swing_data.items():
         if pos % 2 == 0:  # On-beat (0, 2, 4, 6)
-            on_beat_offsets.append(data['mean_offset'])
+            on_beat_offsets.append(data["mean_offset"])
         else:  # Off-beat (1, 3, 5, 7)
-            off_beat_offsets.append(data['mean_offset'])
+            off_beat_offsets.append(data["mean_offset"])
 
     swing_ratio = None
     if on_beat_offsets and off_beat_offsets:
@@ -426,10 +442,7 @@ def extract_swing_curve(notes, ppq):
         offset_diff = off_mean - on_mean
         swing_ratio = 50 + (offset_diff / ticks_per_eighth) * 50
 
-    return {
-        'positions': swing_data,
-        'swing_ratio': swing_ratio
-    }
+    return {"positions": swing_data, "swing_ratio": swing_ratio}
 
 
 def extract_instrument_stagger(instruments_data, ppq, grid_division=16):
@@ -446,7 +459,7 @@ def extract_instrument_stagger(instruments_data, ppq, grid_division=16):
     for inst, notes in instruments_data.items():
         grid_map = defaultdict(list)
         for note in notes:
-            tick = note['tick']
+            tick = note["tick"]
             nearest_grid, offset = quantize_to_grid(tick, ppq, grid_division)
             grid_in_bar = int((nearest_grid % bar_length) / ticks_per_grid)
             grid_map[grid_in_bar].append(offset)
@@ -457,14 +470,14 @@ def extract_instrument_stagger(instruments_data, ppq, grid_division=16):
     instruments = list(instrument_grids.keys())
 
     for i, inst_a in enumerate(instruments):
-        for inst_b in instruments[i+1:]:
+        for inst_b in instruments[i + 1 :]:
             pair_key = f"{inst_a}_vs_{inst_b}"
             pair_staggers = []
 
             # Find grid positions where both instruments play
-            common_grids = set(
-                instrument_grids[inst_a].keys()) & set(
-                instrument_grids[inst_b].keys())
+            common_grids = set(instrument_grids[inst_a].keys()) & set(
+                instrument_grids[inst_b].keys()
+            )
 
             for grid in common_grids:
                 offsets_a = instrument_grids[inst_a][grid]
@@ -475,19 +488,21 @@ def extract_instrument_stagger(instruments_data, ppq, grid_division=16):
                 mean_b = statistics.mean(offsets_b)
                 stagger = mean_b - mean_a  # Positive = B is later
 
-                pair_staggers.append({
-                    'grid': grid,
-                    'stagger': stagger,
-                    'count_a': len(offsets_a),
-                    'count_b': len(offsets_b)
-                })
+                pair_staggers.append(
+                    {
+                        "grid": grid,
+                        "stagger": stagger,
+                        "count_a": len(offsets_a),
+                        "count_b": len(offsets_b),
+                    }
+                )
 
             if pair_staggers:
-                staggers = [p['stagger'] for p in pair_staggers]
+                staggers = [p["stagger"] for p in pair_staggers]
                 stagger_data[pair_key] = {
-                    'mean_stagger': statistics.mean(staggers),
-                    'std_stagger': statistics.stdev(staggers) if len(staggers) > 1 else 0,
-                    'by_grid': pair_staggers
+                    "mean_stagger": statistics.mean(staggers),
+                    "std_stagger": statistics.stdev(staggers) if len(staggers) > 1 else 0,
+                    "by_grid": pair_staggers,
                 }
 
     return stagger_data
@@ -503,23 +518,24 @@ def extract_velocity_curve(notes, ppq):
     position_velocities = defaultdict(list)
 
     for note in notes:
-        tick = note['tick']
+        tick = note["tick"]
         tick_in_bar = tick % bar_length
         position = int(tick_in_bar / ticks_per_sixteenth)  # 0-15 for 16ths
-        position_velocities[position].append(note['velocity'])
+        position_velocities[position].append(note["velocity"])
 
     velocity_curve = {}
     for pos, velocities in position_velocities.items():
         if velocities:
             velocity_curve[pos] = {
-                'mean': statistics.mean(velocities),
-                'std': statistics.stdev(velocities) if len(velocities) > 1 else 0,
-                'min': min(velocities),
-                'max': max(velocities),
-                'count': len(velocities)
+                "mean": statistics.mean(velocities),
+                "std": statistics.stdev(velocities) if len(velocities) > 1 else 0,
+                "min": min(velocities),
+                "max": max(velocities),
+                "count": len(velocities),
             }
 
     return velocity_curve
+
 
 # ============================================================================
 # Full Extraction Pipeline
@@ -551,26 +567,26 @@ def extract_groove_template(filepath, name=None, genre=None, subgenre=None):
     max_tick = 0
     for notes in instruments_data.values():
         if notes:
-            max_tick = max(max_tick, max(n['tick'] for n in notes))
+            max_tick = max(max_tick, max(n["tick"] for n in notes))
     total_bars = (max_tick // (ppq * 4)) + 1
 
     # Extract groove data for each instrument
     groove_data = {
-        'metadata': {
-            'name': name or filepath.stem,
-            'source_file': str(filepath),
-            'genre': genre,
-            'subgenre': subgenre,
-            'bpm': bpm,
-            'ppq': ppq,
-            'bars': total_bars,
-            'time_signature': '4/4',
-            'date_extracted': datetime.now().isoformat()
+        "metadata": {
+            "name": name or filepath.stem,
+            "source_file": str(filepath),
+            "genre": genre,
+            "subgenre": subgenre,
+            "bpm": bpm,
+            "ppq": ppq,
+            "bars": total_bars,
+            "time_signature": "4/4",
+            "date_extracted": datetime.now().isoformat(),
         },
-        'push_pull': {},
-        'swing': {},
-        'velocity_curves': {},
-        'instrument_stagger': {}
+        "push_pull": {},
+        "swing": {},
+        "velocity_curves": {},
+        "instrument_stagger": {},
     }
 
     # Extract per-instrument data
@@ -581,16 +597,16 @@ def extract_groove_template(filepath, name=None, genre=None, subgenre=None):
         print(f"  Analyzing: {inst} ({len(notes)} notes)")
 
         # Push/pull signature
-        groove_data['push_pull'][inst] = extract_push_pull_signature(notes, ppq)
+        groove_data["push_pull"][inst] = extract_push_pull_signature(notes, ppq)
 
         # Swing curve
-        groove_data['swing'][inst] = extract_swing_curve(notes, ppq)
+        groove_data["swing"][inst] = extract_swing_curve(notes, ppq)
 
         # Velocity curve
-        groove_data['velocity_curves'][inst] = extract_velocity_curve(notes, ppq)
+        groove_data["velocity_curves"][inst] = extract_velocity_curve(notes, ppq)
 
     # Cross-instrument stagger
-    groove_data['instrument_stagger'] = extract_instrument_stagger(instruments_data, ppq)
+    groove_data["instrument_stagger"] = extract_instrument_stagger(instruments_data, ppq)
 
     return groove_data
 
@@ -598,14 +614,14 @@ def extract_groove_template(filepath, name=None, genre=None, subgenre=None):
 def save_groove_template(groove_data, output_path=None):
     """Save groove template to JSON file."""
     if output_path is None:
-        name = groove_data['metadata']['name']
+        name = groove_data["metadata"]["name"]
         output_path = TEMPLATES_PATH / f"{name}.json"
     else:
         output_path = Path(output_path)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(groove_data, f, indent=2)
 
     print(f"Saved template: {output_path}")
@@ -617,86 +633,121 @@ def save_to_database(groove_data):
     conn = get_connection()
     cursor = conn.cursor()
 
-    meta = groove_data['metadata']
+    meta = groove_data["metadata"]
 
     # Insert main template record
-    cursor.execute('''
+    cursor.execute(
+        """
         INSERT INTO groove_templates
         (name, source_file, genre, subgenre, bpm_original, time_signature, bars, ppq, date_extracted)  # noqa: E501
 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        meta['name'],
-        meta['source_file'],
-        meta['genre'],
-        meta['subgenre'],
-        meta['bpm'],
-        meta['time_signature'],
-        meta['bars'],
-        meta['ppq'],
-        meta['date_extracted']
-    ))
+    """,
+        (
+            meta["name"],
+            meta["source_file"],
+            meta["genre"],
+            meta["subgenre"],
+            meta["bpm"],
+            meta["time_signature"],
+            meta["bars"],
+            meta["ppq"],
+            meta["date_extracted"],
+        ),
+    )
 
     template_id = cursor.lastrowid
 
     # Insert push/pull signatures
-    for inst, signature in groove_data['push_pull'].items():
+    for inst, signature in groove_data["push_pull"].items():
         for beat_pos, data in signature.items():
-            cursor.execute('''
+            cursor.execute(
+                """
                 INSERT INTO push_pull_signatures
                 (template_id, instrument, beat_position, offset_ticks, velocity_mean, velocity_std, sample_count)  # noqa: E501
 
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                template_id, inst, float(beat_pos),
-                data['offset_mean'], data['velocity_mean'], data['velocity_std'], data['count']
-            ))
+            """,
+                (
+                    template_id,
+                    inst,
+                    float(beat_pos),
+                    data["offset_mean"],
+                    data["velocity_mean"],
+                    data["velocity_std"],
+                    data["count"],
+                ),
+            )
 
     # Insert swing curves
-    for inst, swing_data in groove_data['swing'].items():
-        if swing_data['swing_ratio']:
-            for pos, data in swing_data['positions'].items():
-                cursor.execute('''
+    for inst, swing_data in groove_data["swing"].items():
+        if swing_data["swing_ratio"]:
+            for pos, data in swing_data["positions"].items():
+                cursor.execute(
+                    """
                     INSERT INTO swing_curves
                     (template_id, instrument, subdivision, swing_ratio, swing_std, sample_count)
                     VALUES (?, ?, ?, ?, ?, ?)
-                ''', (
-                    template_id, inst, pos,
-                    swing_data['swing_ratio'], data['std_offset'], data['count']
-                ))
+                """,
+                    (
+                        template_id,
+                        inst,
+                        pos,
+                        swing_data["swing_ratio"],
+                        data["std_offset"],
+                        data["count"],
+                    ),
+                )
 
     # Insert velocity curves
-    for inst, vel_curve in groove_data['velocity_curves'].items():
+    for inst, vel_curve in groove_data["velocity_curves"].items():
         for beat_pos, data in vel_curve.items():
-            cursor.execute('''
+            cursor.execute(
+                """
                 INSERT INTO velocity_curves
                 (template_id, instrument, beat_position, velocity_mean, velocity_std, velocity_min, velocity_max, sample_count)  # noqa: E501
 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                template_id, inst, float(beat_pos),
-                data['mean'], data['std'], data['min'], data['max'], data['count']
-            ))
+            """,
+                (
+                    template_id,
+                    inst,
+                    float(beat_pos),
+                    data["mean"],
+                    data["std"],
+                    data["min"],
+                    data["max"],
+                    data["count"],
+                ),
+            )
 
     # Insert instrument stagger
-    for pair, data in groove_data['instrument_stagger'].items():
-        parts = pair.split('_vs_')
+    for pair, data in groove_data["instrument_stagger"].items():
+        parts = pair.split("_vs_")
         if len(parts) == 2:
-            cursor.execute('''
+            cursor.execute(
+                """
                 INSERT INTO instrument_stagger
                 (template_id, instrument_a, instrument_b, mean_offset_ticks, std_offset_ticks, sample_count)  # noqa: E501
 
                 VALUES (?, ?, ?, ?, ?, ?)
-            ''', (
-                template_id, parts[0], parts[1],
-                data['mean_stagger'], data['std_stagger'], len(data['by_grid'])
-            ))
+            """,
+                (
+                    template_id,
+                    parts[0],
+                    parts[1],
+                    data["mean_stagger"],
+                    data["std_stagger"],
+                    len(data["by_grid"]),
+                ),
+            )
 
     conn.commit()
     conn.close()
 
     print(f"Saved to database with ID: {template_id}")
     return template_id
+
 
 # ============================================================================
 # Batch Processing
@@ -712,9 +763,9 @@ def scan_folder(folder_path, genre=None, recursive=True):
         return
 
     # Find MIDI files
-    pattern = '**/*.mid' if recursive else '*.mid'
+    pattern = "**/*.mid" if recursive else "*.mid"
     midi_files = list(folder.glob(pattern))
-    midi_files.extend(folder.glob(pattern.replace('.mid', '.midi')))
+    midi_files.extend(folder.glob(pattern.replace(".mid", ".midi")))
 
     print(f"Found {len(midi_files)} MIDI files in {folder}")
     print("-" * 50)
@@ -727,7 +778,7 @@ def scan_folder(folder_path, genre=None, recursive=True):
             groove_data = extract_groove_template(
                 filepath,
                 genre=genre,
-                subgenre=filepath.parent.name if filepath.parent != folder else None
+                subgenre=filepath.parent.name if filepath.parent != folder else None,
             )
 
             save_groove_template(groove_data)
@@ -742,6 +793,7 @@ def scan_folder(folder_path, genre=None, recursive=True):
     print(f"Extracted: {extracted}")
     print(f"Errors: {errors}")
 
+
 # ============================================================================
 # Query Functions
 # ============================================================================
@@ -753,20 +805,26 @@ def list_templates(genre=None, limit=50):
     cursor = conn.cursor()
 
     if genre:
-        cursor.execute('''
+        cursor.execute(
+            """
             SELECT id, name, genre, subgenre, bpm_original, bars
             FROM groove_templates
             WHERE genre LIKE ?
             ORDER BY name
             LIMIT ?
-        ''', (f'%{genre}%', limit))
+        """,
+            (f"%{genre}%", limit),
+        )
     else:
-        cursor.execute('''
+        cursor.execute(
+            """
             SELECT id, name, genre, subgenre, bpm_original, bars
             FROM groove_templates
             ORDER BY name
             LIMIT ?
-        ''', (limit,))
+        """,
+            (limit,),
+        )
 
     results = cursor.fetchall()
     conn.close()
@@ -776,7 +834,7 @@ def list_templates(genre=None, limit=50):
 
     for row in results:
         id_, name, genre, subgenre, bpm, bars = row
-        name_display = name[:28] + '..' if len(name) > 30 else name
+        name_display = name[:28] + ".." if len(name) > 30 else name
         genre_display = f"{genre or ''}/{subgenre or ''}"[:13]
         print(f"{id_:<6} {name_display:<30} {genre_display:<15} {bpm or '?':<8} {bars or '?':<6}")
 
@@ -787,7 +845,7 @@ def get_template_detail(template_id):
     cursor = conn.cursor()
 
     # Get main template info
-    cursor.execute('SELECT * FROM groove_templates WHERE id = ?', (template_id,))
+    cursor.execute("SELECT * FROM groove_templates WHERE id = ?", (template_id,))
     template = cursor.fetchone()
 
     if not template:
@@ -801,12 +859,15 @@ def get_template_detail(template_id):
     print(f"{'='*60}")
 
     # Get push/pull signatures
-    cursor.execute('''
+    cursor.execute(
+        """
         SELECT instrument, beat_position, offset_ticks, velocity_mean
         FROM push_pull_signatures
         WHERE template_id = ?
         ORDER BY instrument, beat_position
-    ''', (template_id,))
+    """,
+        (template_id,),
+    )
 
     push_pull = cursor.fetchall()
 
@@ -818,12 +879,15 @@ def get_template_detail(template_id):
         print(f"{inst:<20} {beat:<8.2f} {offset:+.1f} ticks  {vel:.0f}")
 
     # Get swing data
-    cursor.execute('''
+    cursor.execute(
+        """
         SELECT instrument, swing_ratio
         FROM swing_curves
         WHERE template_id = ?
         GROUP BY instrument
-    ''', (template_id,))
+    """,
+        (template_id,),
+    )
 
     swing = cursor.fetchall()
 
@@ -832,11 +896,14 @@ def get_template_detail(template_id):
         print(f"  {inst}: {ratio:.1f}%")
 
     # Get instrument stagger
-    cursor.execute('''
+    cursor.execute(
+        """
         SELECT instrument_a, instrument_b, mean_offset_ticks
         FROM instrument_stagger
         WHERE template_id = ?
-    ''', (template_id,))
+    """,
+        (template_id,),
+    )
 
     stagger = cursor.fetchall()
 
@@ -854,7 +921,7 @@ def export_template(template_id, output_path):
     cursor = conn.cursor()
 
     # Fetch all data and rebuild JSON structure
-    cursor.execute('SELECT * FROM groove_templates WHERE id = ?', (template_id,))
+    cursor.execute("SELECT * FROM groove_templates WHERE id = ?", (template_id,))
     template = cursor.fetchone()
 
     if not template:
@@ -863,48 +930,52 @@ def export_template(template_id, output_path):
 
     # Build export structure
     export_data = {
-        'metadata': {
-            'id': template[0],
-            'name': template[1],
-            'source_file': template[2],
-            'genre': template[3],
-            'subgenre': template[4],
-            'bpm': template[5],
-            'time_signature': template[6],
-            'bars': template[7],
-            'ppq': template[8],
-            'date_extracted': template[9]
+        "metadata": {
+            "id": template[0],
+            "name": template[1],
+            "source_file": template[2],
+            "genre": template[3],
+            "subgenre": template[4],
+            "bpm": template[5],
+            "time_signature": template[6],
+            "bars": template[7],
+            "ppq": template[8],
+            "date_extracted": template[9],
         },
-        'push_pull': {},
-        'swing': {},
-        'velocity_curves': {},
-        'instrument_stagger': {}
+        "push_pull": {},
+        "swing": {},
+        "velocity_curves": {},
+        "instrument_stagger": {},
     }
 
     # Add push/pull data
-    cursor.execute('''
+    cursor.execute(
+        """
         SELECT instrument, beat_position, offset_ticks, velocity_mean, velocity_std, sample_count
         FROM push_pull_signatures WHERE template_id = ?
-    ''', (template_id,))
+    """,
+        (template_id,),
+    )
 
     for row in cursor.fetchall():
         inst = row[0]
-        if inst not in export_data['push_pull']:
-            export_data['push_pull'][inst] = {}
-        export_data['push_pull'][inst][row[1]] = {
-            'offset_mean': row[2],
-            'velocity_mean': row[3],
-            'velocity_std': row[4],
-            'count': row[5]
+        if inst not in export_data["push_pull"]:
+            export_data["push_pull"][inst] = {}
+        export_data["push_pull"][inst][row[1]] = {
+            "offset_mean": row[2],
+            "velocity_mean": row[3],
+            "velocity_std": row[4],
+            "count": row[5],
         }
 
     conn.close()
 
     output_path = Path(output_path)
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(export_data, f, indent=2)
 
     print(f"Exported to: {output_path}")
+
 
 # ============================================================================
 # CLI
@@ -913,59 +984,56 @@ def export_template(template_id, output_path):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Groove Template Extractor - Extract timing and feel from MIDI',
+        description="Groove Template Extractor - Extract timing and feel from MIDI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='''
+        epilog="""
 Examples:
   %(prog)s extract song.mid --genre jazz
   %(prog)s scan ~/MIDI/DrumLoops --genre hiphop
   %(prog)s list --genre rock
   %(prog)s detail 5
   %(prog)s export 5 --output groove.json
-        '''
+        """,
     )
 
-    subparsers = parser.add_subparsers(dest='command', help='Commands')
+    subparsers = parser.add_subparsers(dest="command", help="Commands")
 
     # Extract command
-    extract_parser = subparsers.add_parser('extract', help='Extract groove from MIDI file')
-    extract_parser.add_argument('file', help='MIDI file path')
-    extract_parser.add_argument('--name', help='Template name')
-    extract_parser.add_argument('--genre', help='Genre tag')
-    extract_parser.add_argument('--subgenre', help='Subgenre tag')
-    extract_parser.add_argument('--output', help='Output JSON path')
+    extract_parser = subparsers.add_parser("extract", help="Extract groove from MIDI file")
+    extract_parser.add_argument("file", help="MIDI file path")
+    extract_parser.add_argument("--name", help="Template name")
+    extract_parser.add_argument("--genre", help="Genre tag")
+    extract_parser.add_argument("--subgenre", help="Subgenre tag")
+    extract_parser.add_argument("--output", help="Output JSON path")
 
     # Scan command
-    scan_parser = subparsers.add_parser('scan', help='Scan folder for MIDI files')
-    scan_parser.add_argument('folder', help='Folder path')
-    scan_parser.add_argument('--genre', help='Genre tag for all files')
-    scan_parser.add_argument('--no-recursive', action='store_true')
+    scan_parser = subparsers.add_parser("scan", help="Scan folder for MIDI files")
+    scan_parser.add_argument("folder", help="Folder path")
+    scan_parser.add_argument("--genre", help="Genre tag for all files")
+    scan_parser.add_argument("--no-recursive", action="store_true")
 
     # List command
-    list_parser = subparsers.add_parser('list', help='List templates')
-    list_parser.add_argument('--genre', help='Filter by genre')
-    list_parser.add_argument('--limit', type=int, default=50)
+    list_parser = subparsers.add_parser("list", help="List templates")
+    list_parser.add_argument("--genre", help="Filter by genre")
+    list_parser.add_argument("--limit", type=int, default=50)
 
     # Detail command
-    detail_parser = subparsers.add_parser('detail', help='Show template details')
-    detail_parser.add_argument('id', type=int, help='Template ID')
+    detail_parser = subparsers.add_parser("detail", help="Show template details")
+    detail_parser.add_argument("id", type=int, help="Template ID")
 
     # Export command
-    export_parser = subparsers.add_parser('export', help='Export template to JSON')
-    export_parser.add_argument('id', type=int, help='Template ID')
-    export_parser.add_argument('--output', required=True, help='Output file path')
+    export_parser = subparsers.add_parser("export", help="Export template to JSON")
+    export_parser.add_argument("id", type=int, help="Template ID")
+    export_parser.add_argument("--output", required=True, help="Output file path")
 
     # Init command
-    subparsers.add_parser('init', help='Initialize database')
+    subparsers.add_parser("init", help="Initialize database")
 
     args = parser.parse_args()
 
-    if args.command == 'extract':
+    if args.command == "extract":
         groove_data = extract_groove_template(
-            args.file,
-            name=args.name,
-            genre=args.genre,
-            subgenre=args.subgenre
+            args.file, name=args.name, genre=args.genre, subgenre=args.subgenre
         )
         if args.output:
             save_groove_template(groove_data, args.output)
@@ -973,24 +1041,24 @@ Examples:
             save_groove_template(groove_data)
         save_to_database(groove_data)
 
-    elif args.command == 'scan':
+    elif args.command == "scan":
         scan_folder(args.folder, genre=args.genre, recursive=not args.no_recursive)
 
-    elif args.command == 'list':
+    elif args.command == "list":
         list_templates(genre=args.genre, limit=args.limit)
 
-    elif args.command == 'detail':
+    elif args.command == "detail":
         get_template_detail(args.id)
 
-    elif args.command == 'export':
+    elif args.command == "export":
         export_template(args.id, args.output)
 
-    elif args.command == 'init':
+    elif args.command == "init":
         init_database()
 
     else:
         parser.print_help()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

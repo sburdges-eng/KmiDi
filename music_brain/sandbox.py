@@ -50,6 +50,7 @@ class SandboxViolation(Exception):
 @dataclass(frozen=True)
 class SandboxResult:
     """Outcome of a sandboxed run."""
+
     returncode: int
     stdout: bytes
     stderr: bytes
@@ -78,6 +79,7 @@ class SandboxPolicy:
         env_passthrough: Iterable of environment variable names that may
             be forwarded from the parent. Everything else is stripped.
     """
+
     allowed_executables: frozenset[str]
     allowed_cwds: frozenset[str]
     wall_timeout_s: float
@@ -86,13 +88,15 @@ class SandboxPolicy:
     env_passthrough: frozenset[str] = frozenset()
 
 
-def make_policy(*,
-                allowed_executables: Sequence[Path],
-                allowed_cwds: Sequence[Path],
-                wall_timeout_s: float,
-                memory_limit_bytes: Optional[int] = None,
-                cpu_seconds: Optional[int] = None,
-                env_passthrough: Sequence[str] = ()) -> SandboxPolicy:
+def make_policy(
+    *,
+    allowed_executables: Sequence[Path],
+    allowed_cwds: Sequence[Path],
+    wall_timeout_s: float,
+    memory_limit_bytes: Optional[int] = None,
+    cpu_seconds: Optional[int] = None,
+    env_passthrough: Sequence[str] = (),
+) -> SandboxPolicy:
     """Build a normalised ``SandboxPolicy``.
 
     Paths are resolved via ``Path.resolve(strict=False)`` so the policy
@@ -107,9 +111,9 @@ def make_policy(*,
         raise ValueError("cpu_seconds must be positive when set")
     return SandboxPolicy(
         allowed_executables=frozenset(
-            str(Path(p).resolve(strict=False)) for p in allowed_executables),
-        allowed_cwds=frozenset(
-            str(Path(p).resolve(strict=False)) for p in allowed_cwds),
+            str(Path(p).resolve(strict=False)) for p in allowed_executables
+        ),
+        allowed_cwds=frozenset(str(Path(p).resolve(strict=False)) for p in allowed_cwds),
         wall_timeout_s=float(wall_timeout_s),
         memory_limit_bytes=memory_limit_bytes,
         cpu_seconds=cpu_seconds,
@@ -147,9 +151,14 @@ def _build_preexec(policy: SandboxPolicy):
     return _apply
 
 
-def run_sandboxed(executable: Path, args: Sequence[str], *,
-                   cwd: Path, policy: SandboxPolicy,
-                   stdin: Optional[bytes] = None) -> SandboxResult:
+def run_sandboxed(
+    executable: Path,
+    args: Sequence[str],
+    *,
+    cwd: Path,
+    policy: SandboxPolicy,
+    stdin: Optional[bytes] = None,
+) -> SandboxResult:
     """Execute ``executable`` under ``policy`` and return the result.
 
     Raises:
@@ -161,8 +170,7 @@ def run_sandboxed(executable: Path, args: Sequence[str], *,
     cwd_resolved = str(Path(cwd).resolve(strict=False))
 
     if exe_resolved not in policy.allowed_executables:
-        raise SandboxViolation(
-            f"executable not in allowlist: {exe_resolved}")
+        raise SandboxViolation(f"executable not in allowlist: {exe_resolved}")
     if cwd_resolved not in policy.allowed_cwds:
         raise SandboxViolation(f"cwd not in allowlist: {cwd_resolved}")
     if not Path(exe_resolved).exists():

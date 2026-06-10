@@ -62,10 +62,8 @@ class OllamaBridge:
 
         try:
             import requests
-            response = requests.get(
-                f"{self.config.host}/api/tags",
-                timeout=5
-            )
+
+            response = requests.get(f"{self.config.host}/api/tags", timeout=5)
             if response.status_code == 200:
                 models = response.json().get("models", [])
                 model_names = [m.get("name", "").split(":")[0] for m in models]
@@ -108,7 +106,7 @@ class OllamaBridge:
                     "options": {
                         "temperature": temperature or self.config.temperature,
                         "num_predict": max_tokens or self.config.max_tokens,
-                    }
+                    },
                 },
                 timeout=self.config.timeout_seconds,
             )

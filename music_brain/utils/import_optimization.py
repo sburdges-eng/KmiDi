@@ -22,7 +22,7 @@ def cached_import(module_name: str, attribute: Optional[str] = None) -> Any:
     if module_name in _import_cache:
         module = _import_cache[module_name]
     else:
-        module = __import__(module_name, fromlist=[''])
+        module = __import__(module_name, fromlist=[""])
         _import_cache[module_name] = module
 
     if attribute:
@@ -38,6 +38,7 @@ def lazy_import(module_name: str, attribute: str) -> Callable:
         BassEngine = lazy_import('music_brain.kelly_companion.engines', 'BassEngine')
         engine = BassEngine()  # Import happens here
     """
+
     def _lazy_getter():
         module = __import__(module_name, fromlist=[attribute])
         return getattr(module, attribute)

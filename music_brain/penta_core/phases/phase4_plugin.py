@@ -17,11 +17,14 @@ class PluginPhase:
 
     def build_plugin(self):
         """Build JUCE plugin targets using CMake."""
-        build_dir = os.path.join(self.root_dir, 'build')
+        build_dir = os.path.join(self.root_dir, "build")
         print(f"[Phase4] Building JUCE plugin in {build_dir}...")
         result = subprocess.run(
-            ['cmake', '--build', '.', '--target', 'PluginEditor', '-j4'],
-            cwd=build_dir, capture_output=True, text=True)
+            ["cmake", "--build", ".", "--target", "PluginEditor", "-j4"],
+            cwd=build_dir,
+            capture_output=True,
+            text=True,
+        )
         print(result.stdout)
         if result.returncode != 0:
             print(result.stderr)

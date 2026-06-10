@@ -10,12 +10,15 @@ from typing import Optional
 
 try:
     import mido
+
     MIDO_AVAILABLE = True
 except ImportError:
     MIDO_AVAILABLE = False
 
 from kellymidicompanion.kellymidicompanion_groove.kellymidicompanion_extractor import GrooveTemplate
-from kellymidicompanion.kellymidicompanion_groove.kellymidicompanion_templates import get_genre_template  # noqa: E501
+from kellymidicompanion.kellymidicompanion_groove.kellymidicompanion_templates import (
+    get_genre_template,
+)  # noqa: E501
 
 
 def apply_groove(
@@ -76,7 +79,7 @@ def apply_groove(
         for msg in track:
             new_msg = msg.copy()
 
-            if msg.type in ['note_on', 'note_off']:
+            if msg.type in ["note_on", "note_off"]:
                 current_tick += msg.time
 
                 if humanize_timing and groove.timing_deviations:
@@ -91,7 +94,7 @@ def apply_groove(
                     new_time = max(0, msg.time + time_adjustment)
                     new_msg = msg.copy(time=new_time)
 
-                if humanize_velocity and msg.type == 'note_on' and msg.velocity > 0:
+                if humanize_velocity and msg.type == "note_on" and msg.velocity > 0:
                     # Get velocity curve value
                     if groove.velocity_curve:
                         beat = current_tick // mid.ticks_per_beat
@@ -107,7 +110,7 @@ def apply_groove(
                         new_vel = max(1, min(127, new_vel))
                         new_msg = new_msg.copy(velocity=new_vel)
 
-                if msg.type == 'note_on' and msg.velocity > 0:
+                if msg.type == "note_on" and msg.velocity > 0:
                     note_index += 1
 
             new_track.append(new_msg)
@@ -149,6 +152,7 @@ def humanize(
         raise ImportError("mido package required. Install with: pip install mido")
 
     import random
+
     if seed is not None:
         random.seed(seed)
 
@@ -160,7 +164,7 @@ def humanize(
     tempo_bpm = 120.0
     for track in mid.tracks:
         for msg in track:
-            if msg.type == 'set_tempo':
+            if msg.type == "set_tempo":
                 tempo_bpm = mido.tempo2bpm(msg.tempo)
                 break
 
@@ -176,7 +180,7 @@ def humanize(
         for msg in track:
             new_msg = msg.copy()
 
-            if msg.type in ['note_on', 'note_off']:
+            if msg.type in ["note_on", "note_off"]:
                 # Random timing deviation
                 timing_offset = random.randint(-timing_range_ticks, timing_range_ticks)
 
@@ -186,7 +190,7 @@ def humanize(
                 new_msg = new_msg.copy(time=new_time)
 
                 # Random velocity deviation for note_on
-                if msg.type == 'note_on' and msg.velocity > 0:
+                if msg.type == "note_on" and msg.velocity > 0:
                     vel_offset = random.randint(-velocity_range, velocity_range)
                     new_vel = max(1, min(127, msg.velocity + vel_offset))
                     new_msg = new_msg.copy(velocity=new_vel)

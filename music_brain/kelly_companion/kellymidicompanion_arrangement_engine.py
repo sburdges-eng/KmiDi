@@ -15,13 +15,14 @@ from enum import Enum
 from typing import Optional, List, Dict, Tuple
 import random
 
-
 # =============================================================================
 # ENUMS & CONSTANTS
 # =============================================================================
 
+
 class SectionType(Enum):
     """Song section types."""
+
     INTRO = "intro"
     VERSE = "verse"
     PRE_CHORUS = "pre_chorus"
@@ -41,40 +42,43 @@ class SectionType(Enum):
 
 class ArcShape(Enum):
     """Emotional arc shapes across the song."""
-    LINEAR_RISE = "linear_rise"           # Steady climb
-    LINEAR_FALL = "linear_fall"           # Steady descent
-    WAVE = "wave"                         # Up and down cycles
-    PLATEAU = "plateau"                   # Rise then sustain
-    VALLEY = "valley"                     # Fall then rise
-    PEAK = "peak"                         # Rise, peak, fall
-    DOUBLE_PEAK = "double_peak"           # Two climaxes
-    FLAT = "flat"                         # Consistent intensity
-    SPIRAL = "spiral"                     # Each cycle higher
-    COLLAPSE = "collapse"                 # Sudden drop
-    EXPLOSION = "explosion"               # Sudden rise
-    TENSION_RELEASE = "tension_release"   # Build then release cycles
+
+    LINEAR_RISE = "linear_rise"  # Steady climb
+    LINEAR_FALL = "linear_fall"  # Steady descent
+    WAVE = "wave"  # Up and down cycles
+    PLATEAU = "plateau"  # Rise then sustain
+    VALLEY = "valley"  # Fall then rise
+    PEAK = "peak"  # Rise, peak, fall
+    DOUBLE_PEAK = "double_peak"  # Two climaxes
+    FLAT = "flat"  # Consistent intensity
+    SPIRAL = "spiral"  # Each cycle higher
+    COLLAPSE = "collapse"  # Sudden drop
+    EXPLOSION = "explosion"  # Sudden rise
+    TENSION_RELEASE = "tension_release"  # Build then release cycles
 
 
 class StructureTemplate(Enum):
     """Common song structure templates."""
-    VERSE_CHORUS = "verse_chorus"                    # V-C-V-C
-    VERSE_CHORUS_BRIDGE = "verse_chorus_bridge"     # V-C-V-C-B-C
-    AABA = "aaba"                                    # Classic 32-bar
-    ABABCB = "ababcb"                               # Pop standard
-    THROUGH_COMPOSED = "through_composed"           # No repeats
-    RONDO = "rondo"                                 # A-B-A-C-A
-    BINARY = "binary"                              # A-B
-    TERNARY = "ternary"                            # A-B-A
-    EDM_BUILD_DROP = "edm_build_drop"              # Build-Drop cycles
-    AMBIENT_DRIFT = "ambient_drift"                # Gradual evolution
-    MINIMAL = "minimal"                            # Single section exploration
-    GRIEF_ARC = "grief_arc"                        # Custom: denial-anger-bargaining-depression-acceptance  # noqa: E501
 
-    RAGE_SPIRAL = "rage_spiral"                    # Custom: escalating intensity
+    VERSE_CHORUS = "verse_chorus"  # V-C-V-C
+    VERSE_CHORUS_BRIDGE = "verse_chorus_bridge"  # V-C-V-C-B-C
+    AABA = "aaba"  # Classic 32-bar
+    ABABCB = "ababcb"  # Pop standard
+    THROUGH_COMPOSED = "through_composed"  # No repeats
+    RONDO = "rondo"  # A-B-A-C-A
+    BINARY = "binary"  # A-B
+    TERNARY = "ternary"  # A-B-A
+    EDM_BUILD_DROP = "edm_build_drop"  # Build-Drop cycles
+    AMBIENT_DRIFT = "ambient_drift"  # Gradual evolution
+    MINIMAL = "minimal"  # Single section exploration
+    GRIEF_ARC = "grief_arc"  # Custom: denial-anger-bargaining-depression-acceptance  # noqa: E501
+
+    RAGE_SPIRAL = "rage_spiral"  # Custom: escalating intensity
 
 
 class EnergyLevel(Enum):
     """Section energy levels."""
+
     SILENT = 0
     MINIMAL = 1
     LOW = 2
@@ -88,22 +92,25 @@ class EnergyLevel(Enum):
 
 class InstrumentDensity(Enum):
     """How many instruments active in section."""
-    SOLO = "solo"           # 1 instrument
-    DUO = "duo"             # 2 instruments
-    TRIO = "trio"           # 3 instruments
-    SMALL = "small"         # 4-5 instruments
-    MEDIUM = "medium"       # 6-8 instruments
-    FULL = "full"           # All instruments
-    MASSIVE = "massive"     # All + layers
+
+    SOLO = "solo"  # 1 instrument
+    DUO = "duo"  # 2 instruments
+    TRIO = "trio"  # 3 instruments
+    SMALL = "small"  # 4-5 instruments
+    MEDIUM = "medium"  # 6-8 instruments
+    FULL = "full"  # All instruments
+    MASSIVE = "massive"  # All + layers
 
 
 # =============================================================================
 # DATA CLASSES
 # =============================================================================
 
+
 @dataclass
 class SectionProfile:
     """Defines characteristics of a song section."""
+
     section_type: SectionType
     bars: int
     energy: EnergyLevel
@@ -121,34 +128,36 @@ class SectionProfile:
     counter_melody_active: bool = False
 
     # Section-specific modifiers
-    tempo_modifier: float = 1.0      # Relative to base tempo
-    velocity_modifier: float = 1.0   # Relative to base velocity
-    humanization: float = 0.5        # 0.0 = rigid, 1.0 = loose
+    tempo_modifier: float = 1.0  # Relative to base tempo
+    velocity_modifier: float = 1.0  # Relative to base velocity
+    humanization: float = 0.5  # 0.0 = rigid, 1.0 = loose
 
     # Transitions
-    has_fill_in: bool = False        # Fill leading into this section
-    has_fill_out: bool = False       # Fill leading out of this section
+    has_fill_in: bool = False  # Fill leading into this section
+    has_fill_out: bool = False  # Fill leading out of this section
     fade_in_bars: int = 0
     fade_out_bars: int = 0
 
     # Variation
-    variation_index: int = 0         # For repeated sections (Verse 1, Verse 2)
+    variation_index: int = 0  # For repeated sections (Verse 1, Verse 2)
     variation_intensity: float = 0.0  # How different from base (0.0 = identical)
 
 
 @dataclass
 class EmotionArcPoint:
     """A point on the emotional arc."""
-    position: float          # 0.0 - 1.0 through song
+
+    position: float  # 0.0 - 1.0 through song
     primary_emotion: str
-    intensity: float         # 0.0 - 1.0
+    intensity: float  # 0.0 - 1.0
     secondary_emotion: Optional[str] = None
-    tension: float = 0.5     # 0.0 - 1.0
+    tension: float = 0.5  # 0.0 - 1.0
 
 
 @dataclass
 class ArrangementPlan:
     """Complete arrangement plan for a song."""
+
     sections: List[SectionProfile]
     emotional_arc: List[EmotionArcPoint]
     total_bars: int
@@ -170,6 +179,7 @@ class ArrangementPlan:
 @dataclass
 class SectionTransition:
     """Defines how to transition between sections."""
+
     from_section: SectionType
     to_section: SectionType
     transition_type: str  # "cut", "fill", "fade", "build", "breakdown"
@@ -201,7 +211,6 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": False,
         "preferred_ending": "fade",
     },
-
     "sadness": {
         "preferred_structures": [StructureTemplate.VERSE_CHORUS, StructureTemplate.TERNARY],
         "preferred_arcs": [ArcShape.VALLEY, ArcShape.WAVE],
@@ -219,7 +228,6 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": True,
         "preferred_ending": "fade",
     },
-
     "melancholy": {
         "preferred_structures": [StructureTemplate.AABA, StructureTemplate.AMBIENT_DRIFT],
         "preferred_arcs": [ArcShape.WAVE, ArcShape.PLATEAU],
@@ -236,7 +244,6 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": False,
         "preferred_ending": "fade",
     },
-
     "rage": {
         "preferred_structures": [StructureTemplate.RAGE_SPIRAL, StructureTemplate.EDM_BUILD_DROP],
         "preferred_arcs": [ArcShape.SPIRAL, ArcShape.EXPLOSION, ArcShape.LINEAR_RISE],
@@ -255,7 +262,6 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": True,
         "preferred_ending": "sudden",
     },
-
     "anger": {
         "preferred_structures": [StructureTemplate.VERSE_CHORUS, StructureTemplate.BINARY],
         "preferred_arcs": [ArcShape.PEAK, ArcShape.LINEAR_RISE],
@@ -272,10 +278,11 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": True,
         "preferred_ending": "hard",
     },
-
     "fear": {
-        "preferred_structures": [StructureTemplate.THROUGH_COMPOSED, StructureTemplate.AMBIENT_DRIFT],  # noqa: E501
-
+        "preferred_structures": [
+            StructureTemplate.THROUGH_COMPOSED,
+            StructureTemplate.AMBIENT_DRIFT,
+        ],  # noqa: E501
         "preferred_arcs": [ArcShape.TENSION_RELEASE, ArcShape.SPIRAL],
         "max_energy": EnergyLevel.HIGH,
         "typical_density": InstrumentDensity.MEDIUM,
@@ -291,7 +298,6 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": True,
         "preferred_ending": "unresolved",
     },
-
     "anxiety": {
         "preferred_structures": [StructureTemplate.RONDO, StructureTemplate.THROUGH_COMPOSED],
         "preferred_arcs": [ArcShape.WAVE, ArcShape.SPIRAL],
@@ -307,7 +313,6 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": False,
         "preferred_ending": "unresolved",
     },
-
     "hope": {
         "preferred_structures": [StructureTemplate.VERSE_CHORUS_BRIDGE, StructureTemplate.ABABCB],
         "preferred_arcs": [ArcShape.LINEAR_RISE, ArcShape.PEAK, ArcShape.SPIRAL],
@@ -326,7 +331,6 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": True,
         "preferred_ending": "triumphant",
     },
-
     "joy": {
         "preferred_structures": [StructureTemplate.VERSE_CHORUS, StructureTemplate.ABABCB],
         "preferred_arcs": [ArcShape.PLATEAU, ArcShape.WAVE],
@@ -345,7 +349,6 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": True,
         "preferred_ending": "big",
     },
-
     "peace": {
         "preferred_structures": [StructureTemplate.AMBIENT_DRIFT, StructureTemplate.MINIMAL],
         "preferred_arcs": [ArcShape.FLAT, ArcShape.WAVE],
@@ -362,7 +365,6 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": False,
         "preferred_ending": "fade",
     },
-
     "nostalgia": {
         "preferred_structures": [StructureTemplate.AABA, StructureTemplate.VERSE_CHORUS],
         "preferred_arcs": [ArcShape.WAVE, ArcShape.VALLEY],
@@ -380,7 +382,6 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": True,
         "preferred_ending": "fade",
     },
-
     "longing": {
         "preferred_structures": [StructureTemplate.VERSE_CHORUS_BRIDGE, StructureTemplate.TERNARY],
         "preferred_arcs": [ArcShape.PEAK, ArcShape.TENSION_RELEASE],
@@ -399,10 +400,11 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": True,
         "preferred_ending": "unresolved",
     },
-
     "tension": {
-        "preferred_structures": [StructureTemplate.THROUGH_COMPOSED, StructureTemplate.EDM_BUILD_DROP],  # noqa: E501
-
+        "preferred_structures": [
+            StructureTemplate.THROUGH_COMPOSED,
+            StructureTemplate.EDM_BUILD_DROP,
+        ],  # noqa: E501
         "preferred_arcs": [ArcShape.TENSION_RELEASE, ArcShape.SPIRAL],
         "max_energy": EnergyLevel.INTENSE,
         "typical_density": InstrumentDensity.MEDIUM,
@@ -417,7 +419,6 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": True,
         "preferred_ending": "sudden",
     },
-
     "defiance": {
         "preferred_structures": [StructureTemplate.VERSE_CHORUS, StructureTemplate.RAGE_SPIRAL],
         "preferred_arcs": [ArcShape.LINEAR_RISE, ArcShape.DOUBLE_PEAK],
@@ -435,7 +436,6 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": True,
         "preferred_ending": "triumphant",
     },
-
     "vulnerability": {
         "preferred_structures": [StructureTemplate.MINIMAL, StructureTemplate.TERNARY],
         "preferred_arcs": [ArcShape.VALLEY, ArcShape.FLAT],
@@ -453,7 +453,6 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": False,
         "preferred_ending": "fade",
     },
-
     "euphoria": {
         "preferred_structures": [StructureTemplate.EDM_BUILD_DROP, StructureTemplate.ABABCB],
         "preferred_arcs": [ArcShape.EXPLOSION, ArcShape.DOUBLE_PEAK],
@@ -471,7 +470,6 @@ EMOTION_ARRANGEMENT_PROFILES: Dict[str, Dict] = {
         "allows_climax": True,
         "preferred_ending": "big",
     },
-
     "emptiness": {
         "preferred_structures": [StructureTemplate.AMBIENT_DRIFT, StructureTemplate.MINIMAL],
         "preferred_arcs": [ArcShape.FLAT, ArcShape.LINEAR_FALL],
@@ -504,7 +502,6 @@ STRUCTURE_DEFINITIONS: Dict[StructureTemplate, List[Tuple[SectionType, int]]] = 
         (SectionType.CHORUS, 8),
         (SectionType.OUTRO, 4),
     ],
-
     StructureTemplate.VERSE_CHORUS_BRIDGE: [
         (SectionType.INTRO, 4),
         (SectionType.VERSE, 8),
@@ -515,14 +512,12 @@ STRUCTURE_DEFINITIONS: Dict[StructureTemplate, List[Tuple[SectionType, int]]] = 
         (SectionType.CHORUS, 8),
         (SectionType.OUTRO, 4),
     ],
-
     StructureTemplate.AABA: [
         (SectionType.VERSE, 8),
         (SectionType.VERSE, 8),
         (SectionType.BRIDGE, 8),
         (SectionType.VERSE, 8),
     ],
-
     StructureTemplate.ABABCB: [
         (SectionType.VERSE, 8),
         (SectionType.CHORUS, 8),
@@ -531,7 +526,6 @@ STRUCTURE_DEFINITIONS: Dict[StructureTemplate, List[Tuple[SectionType, int]]] = 
         (SectionType.BRIDGE, 8),
         (SectionType.CHORUS, 8),
     ],
-
     StructureTemplate.THROUGH_COMPOSED: [
         (SectionType.INTRO, 4),
         (SectionType.VERSE, 8),
@@ -541,7 +535,6 @@ STRUCTURE_DEFINITIONS: Dict[StructureTemplate, List[Tuple[SectionType, int]]] = 
         (SectionType.BUILD, 4),
         (SectionType.OUTRO, 8),
     ],
-
     StructureTemplate.RONDO: [
         (SectionType.VERSE, 8),
         (SectionType.INTERLUDE, 4),
@@ -549,18 +542,15 @@ STRUCTURE_DEFINITIONS: Dict[StructureTemplate, List[Tuple[SectionType, int]]] = 
         (SectionType.BRIDGE, 8),
         (SectionType.VERSE, 8),
     ],
-
     StructureTemplate.BINARY: [
         (SectionType.VERSE, 16),
         (SectionType.CHORUS, 16),
     ],
-
     StructureTemplate.TERNARY: [
         (SectionType.VERSE, 8),
         (SectionType.BRIDGE, 8),
         (SectionType.VERSE, 8),
     ],
-
     StructureTemplate.EDM_BUILD_DROP: [
         (SectionType.INTRO, 8),
         (SectionType.BUILD, 8),
@@ -570,7 +560,6 @@ STRUCTURE_DEFINITIONS: Dict[StructureTemplate, List[Tuple[SectionType, int]]] = 
         (SectionType.DROP, 8),
         (SectionType.OUTRO, 4),
     ],
-
     StructureTemplate.AMBIENT_DRIFT: [
         (SectionType.INTRO, 8),
         (SectionType.VERSE, 16),
@@ -578,25 +567,22 @@ STRUCTURE_DEFINITIONS: Dict[StructureTemplate, List[Tuple[SectionType, int]]] = 
         (SectionType.VERSE, 16),
         (SectionType.OUTRO, 8),
     ],
-
     StructureTemplate.MINIMAL: [
         (SectionType.INTRO, 4),
         (SectionType.VERSE, 16),
         (SectionType.OUTRO, 4),
     ],
-
     StructureTemplate.GRIEF_ARC: [
-        (SectionType.INTRO, 4),          # Shock/numbness
-        (SectionType.VERSE, 8),          # Denial
+        (SectionType.INTRO, 4),  # Shock/numbness
+        (SectionType.VERSE, 8),  # Denial
         (SectionType.INTERLUDE, 4),
-        (SectionType.VERSE, 8),          # Anger
-        (SectionType.BREAKDOWN, 8),      # Bargaining
+        (SectionType.VERSE, 8),  # Anger
+        (SectionType.BREAKDOWN, 8),  # Bargaining
         (SectionType.SILENCE, 2),
-        (SectionType.VERSE, 8),          # Depression
+        (SectionType.VERSE, 8),  # Depression
         (SectionType.BUILD, 4),
-        (SectionType.OUTRO, 8),          # Acceptance (tentative)
+        (SectionType.OUTRO, 8),  # Acceptance (tentative)
     ],
-
     StructureTemplate.RAGE_SPIRAL: [
         (SectionType.INTRO, 2),
         (SectionType.BUILD, 4),
@@ -625,7 +611,6 @@ SECTION_DEFAULTS: Dict[SectionType, Dict] = {
         "pads_active": True,
         "has_fill_out": True,
     },
-
     SectionType.VERSE: {
         "energy_range": (EnergyLevel.LOW, EnergyLevel.MEDIUM_HIGH),
         "density": InstrumentDensity.MEDIUM,
@@ -635,7 +620,6 @@ SECTION_DEFAULTS: Dict[SectionType, Dict] = {
         "melody_active": True,
         "pads_active": False,
     },
-
     SectionType.PRE_CHORUS: {
         "energy_range": (EnergyLevel.MEDIUM, EnergyLevel.HIGH),
         "density": InstrumentDensity.MEDIUM,
@@ -646,7 +630,6 @@ SECTION_DEFAULTS: Dict[SectionType, Dict] = {
         "arpeggio_active": True,
         "has_fill_out": True,
     },
-
     SectionType.CHORUS: {
         "energy_range": (EnergyLevel.MEDIUM_HIGH, EnergyLevel.EXPLOSIVE),
         "density": InstrumentDensity.FULL,
@@ -658,7 +641,6 @@ SECTION_DEFAULTS: Dict[SectionType, Dict] = {
         "counter_melody_active": True,
         "has_fill_in": True,
     },
-
     SectionType.POST_CHORUS: {
         "energy_range": (EnergyLevel.MEDIUM, EnergyLevel.HIGH),
         "density": InstrumentDensity.MEDIUM,
@@ -667,7 +649,6 @@ SECTION_DEFAULTS: Dict[SectionType, Dict] = {
         "chords_active": True,
         "arpeggio_active": True,
     },
-
     SectionType.BRIDGE: {
         "energy_range": (EnergyLevel.LOW, EnergyLevel.HIGH),
         "density": InstrumentDensity.SMALL,
@@ -678,7 +659,6 @@ SECTION_DEFAULTS: Dict[SectionType, Dict] = {
         "pads_active": True,
         "has_fill_out": True,
     },
-
     SectionType.BREAKDOWN: {
         "energy_range": (EnergyLevel.MINIMAL, EnergyLevel.MEDIUM),
         "density": InstrumentDensity.DUO,
@@ -688,7 +668,6 @@ SECTION_DEFAULTS: Dict[SectionType, Dict] = {
         "melody_active": True,
         "pads_active": True,
     },
-
     SectionType.BUILD: {
         "energy_range": (EnergyLevel.LOW, EnergyLevel.INTENSE),
         "density": InstrumentDensity.MEDIUM,
@@ -698,7 +677,6 @@ SECTION_DEFAULTS: Dict[SectionType, Dict] = {
         "arpeggio_active": True,
         "has_fill_out": True,
     },
-
     SectionType.DROP: {
         "energy_range": (EnergyLevel.HIGH, EnergyLevel.EXPLOSIVE),
         "density": InstrumentDensity.MASSIVE,
@@ -710,7 +688,6 @@ SECTION_DEFAULTS: Dict[SectionType, Dict] = {
         "arpeggio_active": True,
         "has_fill_in": True,
     },
-
     SectionType.OUTRO: {
         "energy_range": (EnergyLevel.MINIMAL, EnergyLevel.MEDIUM),
         "density": InstrumentDensity.SMALL,
@@ -720,7 +697,6 @@ SECTION_DEFAULTS: Dict[SectionType, Dict] = {
         "pads_active": True,
         "fade_out_bars": 4,
     },
-
     SectionType.INTERLUDE: {
         "energy_range": (EnergyLevel.LOW, EnergyLevel.MEDIUM),
         "density": InstrumentDensity.TRIO,
@@ -729,7 +705,6 @@ SECTION_DEFAULTS: Dict[SectionType, Dict] = {
         "chords_active": True,
         "pads_active": True,
     },
-
     SectionType.SOLO: {
         "energy_range": (EnergyLevel.MEDIUM, EnergyLevel.HIGH),
         "density": InstrumentDensity.MEDIUM,
@@ -738,7 +713,6 @@ SECTION_DEFAULTS: Dict[SectionType, Dict] = {
         "chords_active": True,
         "melody_active": True,  # Solo instrument
     },
-
     SectionType.REFRAIN: {
         "energy_range": (EnergyLevel.MEDIUM, EnergyLevel.HIGH),
         "density": InstrumentDensity.MEDIUM,
@@ -747,7 +721,6 @@ SECTION_DEFAULTS: Dict[SectionType, Dict] = {
         "chords_active": True,
         "melody_active": True,
     },
-
     SectionType.CODA: {
         "energy_range": (EnergyLevel.LOW, EnergyLevel.MEDIUM),
         "density": InstrumentDensity.SMALL,
@@ -757,7 +730,6 @@ SECTION_DEFAULTS: Dict[SectionType, Dict] = {
         "pads_active": True,
         "fade_out_bars": 2,
     },
-
     SectionType.SILENCE: {
         "energy_range": (EnergyLevel.SILENT, EnergyLevel.MINIMAL),
         "density": InstrumentDensity.SOLO,
@@ -773,6 +745,7 @@ SECTION_DEFAULTS: Dict[SectionType, Dict] = {
 # =============================================================================
 # ARC GENERATORS
 # =============================================================================
+
 
 def generate_arc_curve(
     shape: ArcShape,
@@ -796,6 +769,7 @@ def generate_arc_curve(
 
     elif shape == ArcShape.WAVE:
         import math
+
         for i in range(num_points):
             t = i / (num_points - 1) if num_points > 1 else 0
             wave = math.sin(t * math.pi * 2) * 0.5 + 0.5
@@ -808,8 +782,9 @@ def generate_arc_curve(
         for i in range(num_points):
             t = i / (num_points - 1) if num_points > 1 else 0
             if t < rise_portion:
-                points.append(start_intensity + (t / rise_portion)
-                              * (peak_intensity - start_intensity))
+                points.append(
+                    start_intensity + (t / rise_portion) * (peak_intensity - start_intensity)
+                )
             else:
                 points.append(peak_intensity)
 
@@ -827,22 +802,25 @@ def generate_arc_curve(
             if t < 0.6:
                 points.append(start_intensity + (t / 0.6) * (peak_intensity - start_intensity))
             else:
-                points.append(peak_intensity - ((t - 0.6) / 0.4)
-                              * (peak_intensity - start_intensity))
+                points.append(
+                    peak_intensity - ((t - 0.6) / 0.4) * (peak_intensity - start_intensity)
+                )
 
     elif shape == ArcShape.DOUBLE_PEAK:
         for i in range(num_points):
             t = i / (num_points - 1) if num_points > 1 else 0
             if t < 0.3:
-                points.append(start_intensity + (t / 0.3) *
-                              (peak_intensity * 0.8 - start_intensity))
+                points.append(
+                    start_intensity + (t / 0.3) * (peak_intensity * 0.8 - start_intensity)
+                )
             elif t < 0.5:
                 points.append(peak_intensity * 0.8 - ((t - 0.3) / 0.2) * (peak_intensity * 0.3))
             elif t < 0.8:
                 points.append(peak_intensity * 0.5 + ((t - 0.5) / 0.3) * (peak_intensity * 0.5))
             else:
-                points.append(peak_intensity - ((t - 0.8) / 0.2)
-                              * (peak_intensity - start_intensity))
+                points.append(
+                    peak_intensity - ((t - 0.8) / 0.2) * (peak_intensity - start_intensity)
+                )
 
     elif shape == ArcShape.FLAT:
         mid = (start_intensity + peak_intensity) / 2
@@ -853,6 +831,7 @@ def generate_arc_curve(
             t = i / (num_points - 1) if num_points > 1 else 0
             # Each cycle goes higher
             import math
+
             cycle = math.sin(t * math.pi * 3) * 0.2
             base = start_intensity + t * (peak_intensity - start_intensity)
             points.append(max(0.1, min(1.0, base + cycle)))
@@ -882,11 +861,14 @@ def generate_arc_curve(
             t = i / (num_points - 1) if num_points > 1 else 0
             # Multiple tension-release cycles
             import math
+
             cycle_pos = (t * 3) % 1.0
             if cycle_pos < 0.7:
                 # Building tension
-                points.append(start_intensity + (cycle_pos / 0.7) *
-                              (peak_intensity - start_intensity) * (0.5 + t * 0.5))
+                points.append(
+                    start_intensity
+                    + (cycle_pos / 0.7) * (peak_intensity - start_intensity) * (0.5 + t * 0.5)
+                )
             else:
                 # Release
                 points.append(start_intensity + 0.2)
@@ -901,6 +883,7 @@ def generate_arc_curve(
 # =============================================================================
 # ARRANGEMENT ENGINE
 # =============================================================================
+
 
 class ArrangementEngine:
     """
@@ -946,8 +929,7 @@ class ArrangementEngine:
         """
         emotion_lower = emotion.lower()
         profile = EMOTION_ARRANGEMENT_PROFILES.get(
-            emotion_lower,
-            EMOTION_ARRANGEMENT_PROFILES["sadness"]  # Default
+            emotion_lower, EMOTION_ARRANGEMENT_PROFILES["sadness"]  # Default
         )
 
         # Select structure
@@ -964,8 +946,7 @@ class ArrangementEngine:
 
         # Get structure template
         structure_sections = STRUCTURE_DEFINITIONS.get(
-            structure,
-            STRUCTURE_DEFINITIONS[StructureTemplate.VERSE_CHORUS]
+            structure, STRUCTURE_DEFINITIONS[StructureTemplate.VERSE_CHORUS]
         )
 
         # Calculate timing
@@ -1166,13 +1147,15 @@ class ArrangementEngine:
             tension = 0.3 + abs(position - 0.5) * 0.4 + intensity * 0.3
             tension = min(1.0, tension)
 
-            arc_points.append(EmotionArcPoint(
-                position=position,
-                primary_emotion=emotion,
-                intensity=intensity,
-                secondary_emotion=secondary if secondary != emotion else None,
-                tension=tension,
-            ))
+            arc_points.append(
+                EmotionArcPoint(
+                    position=position,
+                    primary_emotion=emotion,
+                    intensity=intensity,
+                    secondary_emotion=secondary if secondary != emotion else None,
+                    tension=tension,
+                )
+            )
 
         return arc_points
 
@@ -1226,11 +1209,14 @@ class ArrangementEngine:
         t = (position - prev_point.position) / (next_point.position - prev_point.position)
 
         return EmotionArcPoint(
-            position=position, primary_emotion=prev_point.primary_emotion,
+            position=position,
+            primary_emotion=prev_point.primary_emotion,
             intensity=prev_point.intensity + t * (next_point.intensity - prev_point.intensity),
-            secondary_emotion=prev_point.secondary_emotion
-            if t < 0.5 else next_point.secondary_emotion, tension=prev_point.tension + t *
-            (next_point.tension - prev_point.tension),)
+            secondary_emotion=(
+                prev_point.secondary_emotion if t < 0.5 else next_point.secondary_emotion
+            ),
+            tension=prev_point.tension + t * (next_point.tension - prev_point.tension),
+        )
 
     def suggest_transitions(
         self,
@@ -1268,13 +1254,15 @@ class ArrangementEngine:
                 bars = 0
                 curve = "sudden"
 
-            transitions.append(SectionTransition(
-                from_section=current.section_type,
-                to_section=next_section.section_type,
-                transition_type=trans_type,
-                bars=bars,
-                energy_curve=curve,
-            ))
+            transitions.append(
+                SectionTransition(
+                    from_section=current.section_type,
+                    to_section=next_section.section_type,
+                    transition_type=trans_type,
+                    bars=bars,
+                    energy_curve=curve,
+                )
+            )
 
         return transitions
 
@@ -1284,9 +1272,12 @@ class ArrangementEngine:
         lines = []
         lines.append(f"═══ ARRANGEMENT: {arrangement.structure_template.value.upper()} ═══")
         lines.append(
-            f"Key: {arrangement.key} {arrangement.mode} | Tempo: {arrangement.base_tempo} BPM")
+            f"Key: {arrangement.key} {arrangement.mode} | Tempo: {arrangement.base_tempo} BPM"
+        )
         lines.append(
-            f"Duration: {arrangement.estimated_duration_seconds / 60:.1f} min | Bars: {arrangement.total_bars}")  # noqa: E501
+            f"Duration: {arrangement.estimated_duration_seconds / 60:.1f} min | Bars: "
+            f"{arrangement.total_bars}"
+        )  # noqa: E501
 
         lines.append(f"Arc: {arrangement.arc_shape.value}")
         lines.append("")
@@ -1344,6 +1335,7 @@ class ArrangementEngine:
 # CONVENIENCE FUNCTIONS
 # =============================================================================
 
+
 def create_arrangement(
     emotion: str,
     duration_minutes: float = 3.5,
@@ -1395,7 +1387,7 @@ if __name__ == "__main__":
     for emotion in test_emotions:
         print(f"\n{'='*60}")
         print(f"EMOTION: {emotion.upper()}")
-        print('='*60)
+        print("=" * 60)
 
         arrangement = engine.generate_arrangement(
             emotion=emotion,
@@ -1411,4 +1403,6 @@ if __name__ == "__main__":
         print("\nTransitions:")
         for trans in engine.suggest_transitions(arrangement):
             print(
-                f"  {trans.from_section.value} → {trans.to_section.value}: {trans.transition_type} ({trans.bars} bars)")  # noqa: E501
+                f"  {trans.from_section.value} → {trans.to_section.value}: {trans.transition_type} "
+                f"({trans.bars} bars)"
+            )  # noqa: E501

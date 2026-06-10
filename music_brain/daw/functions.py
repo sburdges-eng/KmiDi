@@ -9,13 +9,14 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Tuple, Any
 from enum import Enum
 
-
 # =============================================================================
 # ENUMS & CONSTANTS
 # =============================================================================
 
+
 class TransportState(Enum):
     """Transport control states."""
+
     STOPPED = "stopped"
     PLAYING = "playing"
     RECORDING = "recording"
@@ -25,6 +26,7 @@ class TransportState(Enum):
 
 class TrackType(Enum):
     """Track types."""
+
     AUDIO = "audio"
     MIDI = "midi"
     INSTRUMENT = "instrument"
@@ -35,6 +37,7 @@ class TrackType(Enum):
 
 class QuantizeValue(Enum):
     """Quantization values."""
+
     WHOLE = 1
     HALF = 2
     QUARTER = 4
@@ -53,9 +56,11 @@ class QuantizeValue(Enum):
 # TRANSPORT CONTROLS
 # =============================================================================
 
+
 @dataclass
 class Transport:
     """Transport control reference implementation."""
+
     state: TransportState = TransportState.STOPPED
     position: float = 0.0  # Position in bars
     tempo: float = 120.0
@@ -99,9 +104,11 @@ class Transport:
 # TRACK MANAGEMENT
 # =============================================================================
 
+
 @dataclass
 class Track:
     """Track reference implementation."""
+
     name: str
     track_type: TrackType
     channel: int = 1
@@ -156,9 +163,11 @@ class Track:
 # MIDI EDITING
 # =============================================================================
 
+
 @dataclass
 class MIDINote:
     """MIDI note reference."""
+
     pitch: int  # 0-127
     velocity: int  # 0-127
     start_time: float  # Bars
@@ -295,9 +304,11 @@ class MIDIEditor:
 # MIXING FUNCTIONS
 # =============================================================================
 
+
 @dataclass
 class MixerChannel:
     """Mixer channel reference."""
+
     track_name: str
     volume: float = 0.0  # dB
     pan: float = 0.0
@@ -323,9 +334,11 @@ class MixerChannel:
 # PROJECT MANAGEMENT
 # =============================================================================
 
+
 @dataclass
 class DAWProject:
     """DAW project reference structure."""
+
     name: str
     tempo: float = 120.0
     time_signature: Tuple[int, int] = (4, 4)
@@ -355,10 +368,12 @@ class DAWProject:
 
     def add_marker(self, name: str, position: float) -> None:
         """Add timeline marker."""
-        self.markers.append({
-            "name": name,
-            "position": position,  # Bars
-        })
+        self.markers.append(
+            {
+                "name": name,
+                "position": position,  # Bars
+            }
+        )
 
 
 # =============================================================================

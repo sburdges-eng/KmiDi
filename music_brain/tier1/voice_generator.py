@@ -22,5 +22,6 @@ class VoiceGenerator:
     ) -> Dict[str, Any]:
         synth = VoiceSynthesizer(get_voice_profile(self.profile))
         audio_path = synth.synthesize_guide(
-            lyrics, melody_midi, tempo_bpm=tempo_bpm, output_path=output_path)
+            lyrics, melody_midi, tempo_bpm=tempo_bpm, output_path=output_path
+        )
         return {"audio_path": audio_path, "profile": self.profile}

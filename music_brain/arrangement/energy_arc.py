@@ -15,6 +15,7 @@ import math
 
 class NarrativeArc(Enum):
     """Narrative progression types from intent schema."""
+
     CLIMB_TO_CLIMAX = "climb-to-climax"  # Gradual build to peak
     SLOW_REVEAL = "slow-reveal"  # Subtle, delayed intensity
     REPETITIVE_DESPAIR = "repetitive-despair"  # Circular, no resolution
@@ -27,6 +28,7 @@ class NarrativeArc(Enum):
 @dataclass
 class EnergyArc:
     """Energy curve over the course of a song."""
+
     narrative_arc: NarrativeArc
     energy_curve: List[float]  # Energy value per section (0.0-1.0)
     peak_position: float = 0.7  # Where peak occurs (0.0-1.0)
@@ -134,6 +136,7 @@ def calculate_energy_curve(
 # ARC SHAPE FUNCTIONS
 # =================================================================
 
+
 def _get_default_peak_position(arc: NarrativeArc) -> float:
     """Get default peak position for each arc type."""
     defaults = {
@@ -163,7 +166,7 @@ def _climb_to_climax(
             # Build to peak
             progress = i / max(peak_idx, 1)
             # Use exponential curve for more dramatic build
-            energy = min_energy + (max_energy - min_energy) * (progress ** 1.5)
+            energy = min_energy + (max_energy - min_energy) * (progress**1.5)
         else:
             # Slight decline after peak
             progress = (i - peak_idx) / max(num_sections - peak_idx, 1)
@@ -187,7 +190,7 @@ def _slow_reveal(num_sections: int, min_energy: float, max_energy: float) -> Lis
         else:
             # Rapid rise to full intensity
             progress = (i - reveal_point) / max(num_sections - reveal_point, 1)
-            energy = min_energy + (max_energy - min_energy) * (0.2 + 0.8 * (progress ** 0.5))
+            energy = min_energy + (max_energy - min_energy) * (0.2 + 0.8 * (progress**0.5))
 
         curve.append(energy)
 
@@ -244,7 +247,7 @@ def _explosive_start(num_sections: int, min_energy: float, max_energy: float) ->
     for i in range(num_sections):
         progress = i / max(num_sections - 1, 1)
         # Exponential decay
-        energy = max_energy - (max_energy - min_energy) * (progress ** 0.7)
+        energy = max_energy - (max_energy - min_energy) * (progress**0.7)
         curve.append(energy)
 
     return curve
@@ -284,6 +287,7 @@ def _linear_growth(num_sections: int, min_energy: float, max_energy: float) -> L
 # UTILITY FUNCTIONS
 # =================================================================
 
+
 def smooth_energy_curve(curve: List[float], smoothing: float = 0.3) -> List[float]:
     """
     Smooth energy curve to avoid sudden jumps.
@@ -302,7 +306,7 @@ def smooth_energy_curve(curve: List[float], smoothing: float = 0.3) -> List[floa
 
     for i in range(1, len(curve) - 1):
         # Simple moving average
-        avg = (curve[i-1] + curve[i] + curve[i+1]) / 3
+        avg = (curve[i - 1] + curve[i] + curve[i + 1]) / 3
         # Blend original and averaged
         smoothed_val = curve[i] * (1 - smoothing) + avg * smoothing
         smoothed.append(smoothed_val)

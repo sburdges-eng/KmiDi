@@ -169,6 +169,7 @@ def main() -> int:
 
     if args.dry_run:
         import json
+
         print(json.dumps(payload, indent=2))
         return 0
 

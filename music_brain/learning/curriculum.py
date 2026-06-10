@@ -24,23 +24,24 @@ class DifficultyLevel(Enum):
 
     Each level represents approximately 50-100 hours of practice.
     """
+
     # Beginner Tier (0-300 hours)
-    ABSOLUTE_BEGINNER = 1      # Never touched the instrument
-    EARLY_BEGINNER = 2         # Learning to hold/position correctly
-    BEGINNER = 3               # Basic notes/chords, simple rhythms
+    ABSOLUTE_BEGINNER = 1  # Never touched the instrument
+    EARLY_BEGINNER = 2  # Learning to hold/position correctly
+    BEGINNER = 3  # Basic notes/chords, simple rhythms
 
     # Intermediate Tier (300-1000 hours)
-    EARLY_INTERMEDIATE = 4     # Simple songs, basic technique
-    INTERMEDIATE = 5           # Full songs, developing style
-    LATE_INTERMEDIATE = 6      # Complex pieces, theory understanding
+    EARLY_INTERMEDIATE = 4  # Simple songs, basic technique
+    INTERMEDIATE = 5  # Full songs, developing style
+    LATE_INTERMEDIATE = 6  # Complex pieces, theory understanding
 
     # Advanced Tier (1000-3000 hours)
-    EARLY_ADVANCED = 7         # Improvisation, composition basics
-    ADVANCED = 8               # Complex improvisation, arranging
-    LATE_ADVANCED = 9          # Professional-level execution
+    EARLY_ADVANCED = 7  # Improvisation, composition basics
+    ADVANCED = 8  # Complex improvisation, arranging
+    LATE_ADVANCED = 9  # Professional-level execution
 
     # Mastery Tier (3000+ hours)
-    EXPERT = 10                # Teaching-level mastery
+    EXPERT = 10  # Teaching-level mastery
 
     @property
     def name_friendly(self) -> str:
@@ -87,7 +88,7 @@ class DifficultyLevel(Enum):
             return "Advanced"
         return "Expert"
 
-    def can_attempt(self, target_level: 'DifficultyLevel') -> bool:
+    def can_attempt(self, target_level: "DifficultyLevel") -> bool:
         """Check if student at this level can attempt target level content."""
         # Allow attempting content up to 2 levels above current
         return target_level.value <= self.value + 2
@@ -95,49 +96,51 @@ class DifficultyLevel(Enum):
 
 class SkillCategory(Enum):
     """Categories of musical skills."""
+
     # Technical Skills
-    TECHNIQUE = auto()          # Physical execution, dexterity
-    POSTURE = auto()            # Body position, ergonomics
-    TONE = auto()               # Sound production quality
-    ARTICULATION = auto()       # Note attacks, releases
-    DYNAMICS = auto()           # Volume control, expression
+    TECHNIQUE = auto()  # Physical execution, dexterity
+    POSTURE = auto()  # Body position, ergonomics
+    TONE = auto()  # Sound production quality
+    ARTICULATION = auto()  # Note attacks, releases
+    DYNAMICS = auto()  # Volume control, expression
 
     # Rhythmic Skills
-    RHYTHM = auto()             # Basic timing, pulse
-    GROOVE = auto()             # Feel, pocket, swing
-    TEMPO = auto()              # Speed control, consistency
-    SUBDIVISION = auto()        # Note value precision
-    POLYRHYTHM = auto()         # Multiple rhythms simultaneously
+    RHYTHM = auto()  # Basic timing, pulse
+    GROOVE = auto()  # Feel, pocket, swing
+    TEMPO = auto()  # Speed control, consistency
+    SUBDIVISION = auto()  # Note value precision
+    POLYRHYTHM = auto()  # Multiple rhythms simultaneously
 
     # Melodic/Harmonic Skills
-    MELODY = auto()             # Single-line playing
-    HARMONY = auto()            # Chords, voice leading
-    SCALES = auto()             # Scale knowledge and execution
-    ARPEGGIOS = auto()          # Broken chords
-    INTERVALS = auto()          # Distance between notes
+    MELODY = auto()  # Single-line playing
+    HARMONY = auto()  # Chords, voice leading
+    SCALES = auto()  # Scale knowledge and execution
+    ARPEGGIOS = auto()  # Broken chords
+    INTERVALS = auto()  # Distance between notes
 
     # Musical Understanding
-    THEORY = auto()             # Music theory knowledge
-    EAR_TRAINING = auto()       # Listening and identification
-    SIGHT_READING = auto()      # Reading notation
-    IMPROVISATION = auto()      # Spontaneous creation
-    COMPOSITION = auto()        # Structured creation
+    THEORY = auto()  # Music theory knowledge
+    EAR_TRAINING = auto()  # Listening and identification
+    SIGHT_READING = auto()  # Reading notation
+    IMPROVISATION = auto()  # Spontaneous creation
+    COMPOSITION = auto()  # Structured creation
 
     # Performance Skills
-    REPERTOIRE = auto()         # Song knowledge
-    MEMORIZATION = auto()       # Playing without notation
-    STAGE_PRESENCE = auto()     # Performance confidence
-    ENSEMBLE = auto()           # Playing with others
+    REPERTOIRE = auto()  # Song knowledge
+    MEMORIZATION = auto()  # Playing without notation
+    STAGE_PRESENCE = auto()  # Performance confidence
+    ENSEMBLE = auto()  # Playing with others
 
     # Meta Skills
-    PRACTICE_HABITS = auto()    # Effective practice techniques
-    SELF_ASSESSMENT = auto()    # Identifying weaknesses
-    GOAL_SETTING = auto()       # Progress planning
+    PRACTICE_HABITS = auto()  # Effective practice techniques
+    SELF_ASSESSMENT = auto()  # Identifying weaknesses
+    GOAL_SETTING = auto()  # Progress planning
 
 
 @dataclass
 class LearningObjective:
     """A specific, measurable learning goal."""
+
     id: str
     title: str
     description: str
@@ -174,7 +177,7 @@ class LearningObjective:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'LearningObjective':
+    def from_dict(cls, data: Dict[str, Any]) -> "LearningObjective":
         return cls(
             id=data["id"],
             title=data["title"],
@@ -193,6 +196,7 @@ class LearningObjective:
 @dataclass
 class Lesson:
     """A single lesson within a module."""
+
     id: str
     title: str
     description: str
@@ -241,7 +245,7 @@ class Lesson:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Lesson':
+    def from_dict(cls, data: Dict[str, Any]) -> "Lesson":
         return cls(
             id=data["id"],
             title=data["title"],
@@ -265,6 +269,7 @@ class Lesson:
 @dataclass
 class Module:
     """A collection of related lessons forming a unit of study."""
+
     id: str
     title: str
     description: str
@@ -307,13 +312,13 @@ class Module:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Module':
+    def from_dict(cls, data: Dict[str, Any]) -> "Module":
         return cls(
             id=data["id"],
             title=data["title"],
             description=data["description"],
             difficulty_range=tuple(data["difficulty_range"]),
-            lessons=[Lesson.from_dict(l) for l in data.get("lessons", [])],
+            lessons=[Lesson.from_dict(lesson) for lesson in data.get("lessons", [])],
             skill_focus=[SkillCategory[s] for s in data.get("skill_focus", [])],
             prerequisite_module_ids=data.get("prerequisite_module_ids", []),
             required_lesson_ids=data.get("required_lesson_ids", []),
@@ -325,6 +330,7 @@ class Module:
 @dataclass
 class Curriculum:
     """A complete curriculum for an instrument or skill area."""
+
     id: str
     title: str
     description: str
@@ -356,8 +362,7 @@ class Curriculum:
     def get_modules_for_level(self, level: DifficultyLevel) -> List[Module]:
         """Get modules appropriate for a given difficulty level."""
         return [
-            m for m in self.modules
-            if m.difficulty_range[0] <= level.value <= m.difficulty_range[1]
+            m for m in self.modules if m.difficulty_range[0] <= level.value <= m.difficulty_range[1]
         ]
 
     def get_next_modules(self, completed_module_ids: Set[str]) -> List[Module]:
@@ -366,10 +371,7 @@ class Curriculum:
         for module in self.modules:
             if module.id in completed_module_ids:
                 continue
-            prereqs_met = all(
-                pid in completed_module_ids
-                for pid in module.prerequisite_module_ids
-            )
+            prereqs_met = all(pid in completed_module_ids for pid in module.prerequisite_module_ids)
             if prereqs_met:
                 available.append(module)
         return available
@@ -391,7 +393,7 @@ class Curriculum:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Curriculum':
+    def from_dict(cls, data: Dict[str, Any]) -> "Curriculum":
         return cls(
             id=data["id"],
             title=data["title"],
@@ -409,19 +411,20 @@ class Curriculum:
 
     def save(self, filepath: str) -> None:
         """Save curriculum to JSON file."""
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
-    def load(cls, filepath: str) -> 'Curriculum':
+    def load(cls, filepath: str) -> "Curriculum":
         """Load curriculum from JSON file."""
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             return cls.from_dict(json.load(f))
 
 
 @dataclass
 class LearningPath:
     """A personalized learning journey for a student."""
+
     id: str
     student_id: str
     curriculum_id: str
@@ -528,7 +531,7 @@ class LearningPath:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'LearningPath':
+    def from_dict(cls, data: Dict[str, Any]) -> "LearningPath":
         path = cls(
             id=data["id"],
             student_id=data["student_id"],
@@ -566,7 +569,7 @@ class CurriculumBuilder:
         description: str,
         difficulty_range: tuple,
         skill_focus: Optional[List[SkillCategory]] = None,
-    ) -> 'CurriculumBuilder':
+    ) -> "CurriculumBuilder":
         """Start building a new module."""
         self.current_module = Module(
             id=module_id,
@@ -584,7 +587,7 @@ class CurriculumBuilder:
         description: str,
         difficulty: DifficultyLevel,
         duration_minutes: int = 30,
-    ) -> 'CurriculumBuilder':
+    ) -> "CurriculumBuilder":
         """Add a lesson to the current module."""
         if not self.current_module:
             raise ValueError("Must start a module before adding lessons")
@@ -606,7 +609,7 @@ class CurriculumBuilder:
         description: str,
         skill_category: SkillCategory,
         success_criteria: Optional[List[str]] = None,
-    ) -> 'CurriculumBuilder':
+    ) -> "CurriculumBuilder":
         """Add an objective to the current lesson."""
         if not self.current_lesson:
             raise ValueError("Must add a lesson before adding objectives")
@@ -629,7 +632,7 @@ class CurriculumBuilder:
         duration_minutes: int = 5,
         repetitions: Optional[int] = None,
         tempo_bpm: Optional[int] = None,
-    ) -> 'CurriculumBuilder':
+    ) -> "CurriculumBuilder":
         """Add an exercise to the current lesson."""
         if not self.current_lesson:
             raise ValueError("Must add a lesson before adding exercises")
@@ -652,19 +655,21 @@ class CurriculumBuilder:
         url: str,
         title: str,
         resource_type: str = "article",
-    ) -> 'CurriculumBuilder':
+    ) -> "CurriculumBuilder":
         """Add an external resource to the current lesson."""
         if not self.current_lesson:
             raise ValueError("Must add a lesson before adding resources")
 
-        self.current_lesson.external_resources.append({
-            "url": url,
-            "title": title,
-            "type": resource_type,
-        })
+        self.current_lesson.external_resources.append(
+            {
+                "url": url,
+                "title": title,
+                "type": resource_type,
+            }
+        )
         return self
 
-    def finish_module(self) -> 'CurriculumBuilder':
+    def finish_module(self) -> "CurriculumBuilder":
         """Finish the current module and add it to the list."""
         if self.current_module:
             self.modules.append(self.current_module)

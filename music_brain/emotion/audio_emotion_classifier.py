@@ -19,7 +19,6 @@ from pathlib import Path
 from typing import Dict, List, Optional
 from dataclasses import dataclass
 
-
 # Emotion to Valence/Arousal mapping (Russell's circumplex model)
 EMOTION_VA_MAP = {
     # 7-class emotions
@@ -41,6 +40,7 @@ EMOTION_VA_MAP = {
 @dataclass
 class AudioEmotionResult:
     """Result from audio emotion classification."""
+
     emotion: str
     confidence: float
     valence: float
@@ -65,13 +65,9 @@ class ResidualBlock(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, stride: int = 1):
         super().__init__()
 
-        self.conv1 = nn.Conv2d(
-            in_channels, out_channels, kernel_size=3, stride=stride, padding=1
-        )
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=stride, padding=1)
         self.bn1 = nn.BatchNorm2d(out_channels)
-        self.conv2 = nn.Conv2d(
-            out_channels, out_channels, kernel_size=3, stride=1, padding=1
-        )
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1)
         self.bn2 = nn.BatchNorm2d(out_channels)
 
         # Skip connection (named 'skip' to match training checkpoint)
@@ -212,16 +208,14 @@ class AudioEmotionClassifier:
         # Search in common locations
         # Path from emotion/audio_emotion_classifier.py -> music_brain -> KmiDi -> models
         search_paths = [
-            Path(__file__).parent.parent.parent / "models" / "checkpoints",  # KmiDi/models/checkpoints  # noqa: E501
-
+            Path(__file__).parent.parent.parent
+            / "models"
+            / "checkpoints",  # KmiDi/models/checkpoints  # noqa: E501
             # parent/models/checkpoints
             Path(__file__).parent.parent.parent.parent / "models" / "checkpoints",
             Path.home() / "models" / "audio_classifiers",
             # ML Training Suite
-            Path(
-                "/Users/seanburdges/RECOVERY_OPS/sbdrive/"
-                "ml-training-suite/models/checkpoints"
-            ),
+            Path("/Users/seanburdges/RECOVERY_OPS/sbdrive/" "ml-training-suite/models/checkpoints"),
         ]
 
         model_dirs = {
@@ -287,6 +281,7 @@ class AudioEmotionClassifier:
         # Try librosa first (best compatibility)
         try:
             import librosa
+
             y, sr = librosa.load(audio_path, sr=22050, mono=True, duration=5.0)
             waveform = torch.from_numpy(y).float().unsqueeze(0)
         except Exception:
@@ -366,10 +361,12 @@ class AudioEmotionClassifier:
         predictions = []
         for prob, idx in zip(top_probs, top_indices):
             class_name = self.class_names[idx] if idx < len(self.class_names) else f"class_{idx}"
-            predictions.append({
-                "emotion": class_name,
-                "confidence": float(prob),
-            })
+            predictions.append(
+                {
+                    "emotion": class_name,
+                    "confidence": float(prob),
+                }
+            )
 
         # Get top prediction
         top_emotion = predictions[0]["emotion"]
@@ -397,14 +394,16 @@ class AudioEmotionClassifier:
                 results.append(result)
             except Exception as e:
                 # Return a neutral result on error
-                results.append(AudioEmotionResult(
-                    emotion="neutral",
-                    confidence=0.0,
-                    valence=0.0,
-                    arousal=0.3,
-                    top_predictions=[{"emotion": "error", "confidence": 0.0, "error": str(e)}],
-                    model_type=self.model_type,
-                ))
+                results.append(
+                    AudioEmotionResult(
+                        emotion="neutral",
+                        confidence=0.0,
+                        valence=0.0,
+                        arousal=0.3,
+                        top_predictions=[{"emotion": "error", "confidence": 0.0, "error": str(e)}],
+                        model_type=self.model_type,
+                    )
+                )
         return results
 
     def get_valence_arousal(self, audio_path: str) -> Dict[str, float]:

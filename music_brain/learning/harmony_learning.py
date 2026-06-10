@@ -64,6 +64,7 @@ def _decode_transition_dict(d: Dict[str, int]) -> Dict[Tuple, int]:
 @dataclass
 class ChordExample:
     """Single chord progression example with context."""
+
     progression: List[str]
     roman_numerals: List[str]
     emotion: str = "neutral"
@@ -95,6 +96,7 @@ class ChordExample:
 @dataclass
 class HarmonyProfile:
     """Learned harmony profile with progression statistics."""
+
     name: str
     emotion_patterns: Dict[str, Dict]
     global_patterns: Dict
@@ -228,7 +230,9 @@ class HarmonyLearner:
             lengths = []
 
             for ex in group:
-                progression = tuple(ex.roman_numerals) if ex.roman_numerals else tuple(ex.progression)
+                progression = (
+                    tuple(ex.roman_numerals) if ex.roman_numerals else tuple(ex.progression)
+                )
                 progression_counter[progression] += 1
                 transitions = self._progression_to_transitions(ex.roman_numerals or ex.progression)
                 transition_counter.update(transitions)
@@ -261,10 +265,12 @@ class HarmonyLearner:
         profile: HarmonyProfile,
         length: Optional[int] = None,
         key: str = "C",
-        mode: str = "major"
+        mode: str = "major",
     ) -> List[str]:
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get(
+            "neutral"
+        )
         if not patterns:
             patterns = profile.global_patterns
 
@@ -275,9 +281,7 @@ class HarmonyLearner:
         if not progressions and profile.global_patterns.get("progressions"):
             progressions = profile.global_patterns["progressions"]
         if progressions and all(isinstance(k, str) for k in progressions):
-            progressions = _decode_progression_dict(
-                {k: int(v) for k, v in progressions.items()}
-            )
+            progressions = _decode_progression_dict({k: int(v) for k, v in progressions.items()})
 
         if progressions:
             # Choose a progression weighted by frequency
@@ -292,10 +296,8 @@ class HarmonyLearner:
 
         # Convert roman numerals to chords in the requested key.
         # Build the diatonic mapping dynamically instead of hardcoding C.
-        CHROMATIC = ['C', 'C#', 'D', 'D#', 'E', 'F',
-                     'F#', 'G', 'G#', 'A', 'A#', 'B']
-        CHROMATIC_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F',
-                         'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+        CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+        CHROMATIC_FLAT = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
 
         # Resolve key root index
         key_clean = key.strip()
@@ -319,15 +321,23 @@ class HarmonyLearner:
             intervals = major_intervals
             # Roman → (degree_index, quality_suffix)
             numeral_map = {
-                "I": (0, ""), "ii": (1, "m"), "iii": (2, "m"),
-                "IV": (3, ""), "V": (4, ""), "vi": (5, "m"),
+                "I": (0, ""),
+                "ii": (1, "m"),
+                "iii": (2, "m"),
+                "IV": (3, ""),
+                "V": (4, ""),
+                "vi": (5, "m"),
                 "vii°": (6, "dim"),
             }
         else:
             intervals = minor_intervals
             numeral_map = {
-                "i": (0, "m"), "ii°": (1, "dim"), "III": (2, ""),
-                "iv": (3, "m"), "v": (4, "m"), "VI": (5, ""),
+                "i": (0, "m"),
+                "ii°": (1, "dim"),
+                "III": (2, ""),
+                "iv": (3, "m"),
+                "v": (4, "m"),
+                "VI": (5, ""),
                 "VII": (6, ""),
             }
 
@@ -376,7 +386,7 @@ class HarmonyLearningManager:
         profile_name: Optional[str] = None,
         length: Optional[int] = None,
         key: str = "C",
-        mode: str = "major"
+        mode: str = "major",
     ) -> List[str]:
         profile: Optional[HarmonyProfile] = None
         if profile_name:

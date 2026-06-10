@@ -1,14 +1,12 @@
 """Tests for Phase 4b — DAW bridge routing and PRROT voice integration."""
 
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
-from dataclasses import dataclass
 from typing import Any
-
 
 # ---------------------------------------------------------------------------
 # Mock EventBus (reused from test_behavior_lab.py pattern)
 # ---------------------------------------------------------------------------
+
 
 class MockEventBus:
     def __init__(self):
@@ -25,17 +23,20 @@ class MockEventBus:
 # send_to_daw tests
 # ---------------------------------------------------------------------------
 
+
 class TestSendToDAW:
     def test_import(self):
         from music_brain.integrations.comprehensive_bridge import (
             ComprehensiveIntegrationManager,
         )
+
         assert hasattr(ComprehensiveIntegrationManager, "send_to_daw")
 
     def test_unknown_daw_returns_false(self):
         from music_brain.integrations.comprehensive_bridge import (
             ComprehensiveIntegrationManager,
         )
+
         bus = MockEventBus()
         mgr = ComprehensiveIntegrationManager(
             lib_path="/nonexistent/lib.dylib",
@@ -53,6 +54,7 @@ class TestSendToDAW:
     def test_valid_daw_name_accepted(self):
         """Test that valid DAW type names don't raise on enum lookup."""
         from music_brain.agents.daw_protocol import DAWType
+
         for name in ["ableton", "logic_pro", "reaper", "bitwig"]:
             assert DAWType(name) is not None
 
@@ -61,6 +63,7 @@ class TestSendToDAW:
         from music_brain.integrations.comprehensive_bridge import (
             ComprehensiveIntegrationManager,
         )
+
         bus = MockEventBus()
         mgr = ComprehensiveIntegrationManager(
             lib_path="/nonexistent/lib.dylib",
@@ -83,19 +86,23 @@ class TestSendToDAW:
 # PRROT Bridge tests
 # ---------------------------------------------------------------------------
 
+
 class TestPRROTBridge:
     def test_import(self):
         from music_brain.integrations.prrot_bridge import PRROTBridge
+
         assert PRROTBridge is not None
 
     def test_bridge_creation(self):
         from music_brain.integrations.prrot_bridge import PRROTBridge
+
         bus = MockEventBus()
         bridge = PRROTBridge(event_bus=bus)
         assert bridge.initialized is False
 
     def test_available_property(self):
         from music_brain.integrations.prrot_bridge import PRROTBridge
+
         bridge = PRROTBridge()
         # available depends on whether bindings are compiled
         assert isinstance(bridge.available, bool)
@@ -103,6 +110,7 @@ class TestPRROTBridge:
     def test_init_without_bindings(self):
         """If bindings aren't compiled, initialize should return False gracefully."""
         from music_brain.integrations.prrot_bridge import PRROTBridge, _prrot_available
+
         bridge = PRROTBridge()
         if not _prrot_available:
             assert bridge.initialize() is False
@@ -110,6 +118,7 @@ class TestPRROTBridge:
 
     def test_voice_analysis_result(self):
         from music_brain.integrations.prrot_bridge import VoiceAnalysisResult
+
         result = VoiceAnalysisResult(
             phonemes=[{"phoneme": "AA", "start_ms": 0}],
             pitch_targets=[],
@@ -121,10 +130,9 @@ class TestPRROTBridge:
 
     def test_sync_phoneme_analysis_without_init(self):
         from music_brain.integrations.prrot_bridge import PRROTBridge
+
         bridge = PRROTBridge()
-        result = bridge.analyze_phonemes_sync(
-            __import__("numpy").zeros(1024, dtype="float32")
-        )
+        result = bridge.analyze_phonemes_sync(__import__("numpy").zeros(1024, dtype="float32"))
         assert result == []
 
 
@@ -132,16 +140,20 @@ class TestPRROTBridge:
 # Integration __init__ exports
 # ---------------------------------------------------------------------------
 
+
 class TestIntegrationExports:
     def test_comprehensive_bridge_exported(self):
         from music_brain.integrations import ComprehensiveIntegrationManager
+
         assert ComprehensiveIntegrationManager is not None
 
     def test_prrot_bridge_exported(self):
         from music_brain.integrations import PRROTBridge, VoiceAnalysisResult
+
         assert PRROTBridge is not None
         assert VoiceAnalysisResult is not None
 
     def test_rt_snapshot_exported(self):
         from music_brain.integrations import RTSnapshot
+
         assert RTSnapshot is not None

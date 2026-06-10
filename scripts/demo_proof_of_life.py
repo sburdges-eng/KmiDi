@@ -22,15 +22,14 @@ _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-import argparse
-import platform
-import time
+import argparse  # noqa: E402
+import time  # noqa: E402
 
-import numpy as np
-import torch
+import numpy as np  # noqa: E402
+import torch  # noqa: E402
 
-from music_brain.jepa.audio_jepa import AudioJEPAEncoder
-from music_brain.jepa.config import AudioJEPAConfig
+from music_brain.jepa.audio_jepa import AudioJEPAEncoder  # noqa: E402
+from music_brain.jepa.config import AudioJEPAConfig  # noqa: E402
 
 
 def load_emotion_probe(checkpoint_path: str = "checkpoints/emotion_probe/best_probe.pt"):
@@ -38,6 +37,7 @@ def load_emotion_probe(checkpoint_path: str = "checkpoints/emotion_probe/best_pr
     if not Path(checkpoint_path).exists():
         return None
     from music_brain.jepa.emotion_probe import EmotionProbe
+
     ckpt = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
     probe = EmotionProbe(
         latent_dim=ckpt.get("latent_dim", 256),
@@ -66,7 +66,9 @@ def generate_test_audio(duration_s: float = 6.0, sr: int = 22050) -> np.ndarray:
     # Phase 2 (2-4s): rising energy — higher freq + harmonics
     energy = 0.5 * np.sin(2 * np.pi * 440 * t) + 0.3 * np.sin(2 * np.pi * 880 * t)
     # Phase 3 (4-6s): intense — distorted + noise
-    intense = 0.7 * np.tanh(3 * np.sin(2 * np.pi * 330 * t)) + 0.2 * np.random.randn(len(t)).astype(np.float32)
+    intense = 0.7 * np.tanh(3 * np.sin(2 * np.pi * 330 * t)) + 0.2 * np.random.randn(len(t)).astype(
+        np.float32
+    )
 
     # Crossfade between phases
     audio = np.zeros_like(t)
@@ -85,15 +87,22 @@ def generate_test_audio(duration_s: float = 6.0, sr: int = 22050) -> np.ndarray:
 
 def load_audio_file(path: str, sr: int = 22050) -> np.ndarray:
     import librosa
+
     audio, _ = librosa.load(path, sr=sr, mono=True)
     return audio
 
 
-def audio_to_mel(audio: np.ndarray, sr: int = 22050, n_mels: int = 128,
-                 hop_length: int = 512, n_fft: int = 2048) -> np.ndarray:
+def audio_to_mel(
+    audio: np.ndarray, sr: int = 22050, n_mels: int = 128, hop_length: int = 512, n_fft: int = 2048
+) -> np.ndarray:
     import librosa
+
     mel = librosa.feature.melspectrogram(
-        y=audio, sr=sr, n_mels=n_mels, hop_length=hop_length, n_fft=n_fft,
+        y=audio,
+        sr=sr,
+        n_mels=n_mels,
+        hop_length=hop_length,
+        n_fft=n_fft,
     )
     mel_db = librosa.power_to_db(mel, ref=np.max)
     # Normalize to [0, 1]
@@ -116,7 +125,7 @@ def latent_to_emotion(latent: np.ndarray, probe=None) -> dict:
         mean_val = float(pooled.mean())
         std_val = float(pooled.std())
         energy = float(np.abs(pooled).mean())
-        skew = float(np.mean((pooled - mean_val) ** 3) / (std_val ** 3 + 1e-8))
+        skew = float(np.mean((pooled - mean_val) ** 3) / (std_val**3 + 1e-8))
         valence = float(np.tanh(skew * 2))
         arousal = float(np.clip(energy * 3, 0, 1))
 
@@ -133,19 +142,22 @@ def latent_to_emotion(latent: np.ndarray, probe=None) -> dict:
 
 def run_onnx_inference(mel_input: np.ndarray, model_path: str) -> np.ndarray:
     import onnxruntime as ort
+
     sess = ort.InferenceSession(model_path)
     return sess.run(None, {"mel": mel_input})[0]
 
 
 def run_coreml_inference(mel_input: np.ndarray, model_path: str) -> np.ndarray:
     import coremltools as ct
+
     model = ct.models.MLModel(model_path)
     pred = model.predict({"mel": mel_input})
     return list(pred.values())[0]
 
 
-def emotion_bar(label: str, value: float, lo: float = -1.0, hi: float = 1.0,
-                width: int = 30) -> str:
+def emotion_bar(
+    label: str, value: float, lo: float = -1.0, hi: float = 1.0, width: int = 30
+) -> str:
     """Render a simple ASCII bar for an emotion value."""
     norm = (value - lo) / (hi - lo)
     norm = max(0.0, min(1.0, norm))
@@ -156,7 +168,9 @@ def emotion_bar(label: str, value: float, lo: float = -1.0, hi: float = 1.0,
 
 def main():
     parser = argparse.ArgumentParser(description="Proof-of-life: audio → emotion → display")
-    parser.add_argument("--audio", type=str, default=None, help="Path to audio file (default: generate test signal)")
+    parser.add_argument(
+        "--audio", type=str, default=None, help="Path to audio file (default: generate test signal)"
+    )
     parser.add_argument("--backend", choices=["onnx", "coreml", "pytorch"], default="onnx")
     parser.add_argument("--checkpoint", default="checkpoints/audio_jepa/best_model.pt")
     parser.add_argument("--window-sec", type=float, default=1.0, help="Analysis window in seconds")
@@ -193,15 +207,23 @@ def main():
     if args.backend == "pytorch":
         print(f"Backend: PyTorch (checkpoint: {args.checkpoint})")
         encoder = load_encoder(args.checkpoint)
-        infer = lambda mel: encoder(torch.from_numpy(mel)).detach().numpy()
+
+        def infer(mel):
+            return encoder(torch.from_numpy(mel)).detach().numpy()
+
     elif args.backend == "coreml":
         model_path = "models/audio_jepa_v01.mlpackage"
         print(f"Backend: Core ML (ANE-preferred) — {model_path}")
-        infer = lambda mel: run_coreml_inference(mel, model_path)
+
+        def infer(mel):
+            return run_coreml_inference(mel, model_path)
+
     else:
         model_path = "models/audio_jepa_v01.onnx"
         print(f"Backend: ONNX Runtime — {model_path}")
-        infer = lambda mel: run_onnx_inference(mel, model_path)
+
+        def infer(mel):
+            return run_onnx_inference(mel, model_path)
 
     print()
     print("Processing audio windows...")

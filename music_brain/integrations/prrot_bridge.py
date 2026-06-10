@@ -33,11 +33,13 @@ _prrot = None
 try:
     # The pybind11 module is built as part of the penta_core_native package
     from penta_core_native import prrot as _prrot
+
     _prrot_available = True
 except ImportError:
     try:
         # Fallback: try direct import if built as standalone module
         import prrot as _prrot  # type: ignore
+
         _prrot_available = True
     except ImportError:
         logger.info("PRROT bindings not available (not built yet)")
@@ -139,9 +141,7 @@ class PRROTBridge:
 
         try:
             # This releases the GIL internally
-            control_data = self._engine.process_audio_segment(
-                audio, sample_rate, tempo_bpm
-            )
+            control_data = self._engine.process_audio_segment(audio, sample_rate, tempo_bpm)
 
             # Convert to Python-friendly format
             phonemes = [
@@ -186,20 +186,29 @@ class PRROTBridge:
             # Emit events
             if self._bus is not None:
                 if phonemes:
-                    await self._bus.emit("voice.phonemes_detected", {
-                        "phonemes": phonemes,
-                        "count": len(phonemes),
-                    })
+                    await self._bus.emit(
+                        "voice.phonemes_detected",
+                        {
+                            "phonemes": phonemes,
+                            "count": len(phonemes),
+                        },
+                    )
                 if breath_markers:
-                    await self._bus.emit("voice.breath_detected", {
-                        "markers": breath_markers,
-                        "count": len(breath_markers),
-                    })
-                await self._bus.emit("voice.control_data", {
-                    "phoneme_count": len(phonemes),
-                    "pitch_target_count": len(pitch_targets),
-                    "breath_count": len(breath_markers),
-                })
+                    await self._bus.emit(
+                        "voice.breath_detected",
+                        {
+                            "markers": breath_markers,
+                            "count": len(breath_markers),
+                        },
+                    )
+                await self._bus.emit(
+                    "voice.control_data",
+                    {
+                        "phoneme_count": len(phonemes),
+                        "pitch_target_count": len(pitch_targets),
+                        "breath_count": len(breath_markers),
+                    },
+                )
 
             return result
 

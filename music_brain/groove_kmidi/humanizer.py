@@ -62,9 +62,7 @@ class TimingHumanizer:
         swung: List[float] = []
         for idx, t in enumerate(times):
             offset = (
-                base_step * swing_factor * 0.5
-                if idx % 2 == 1
-                else -base_step * swing_factor * 0.25
+                base_step * swing_factor * 0.5 if idx % 2 == 1 else -base_step * swing_factor * 0.25
             )
             swung.append(max(0.0, float(t + offset)))
         return swung
@@ -98,10 +96,7 @@ class VelocityHumanizer:
 
         if curve_type == "exponential":
             max_v = max(velocities) or 1
-            return [
-                max(0, min(127, int((v / max_v) ** 1.2 * 127)))
-                for v in velocities
-            ]
+            return [max(0, min(127, int((v / max_v) ** 1.2 * 127))) for v in velocities]
 
         # Linear fallback that preserves ordering.
         if len(velocities) == 1:
@@ -109,10 +104,7 @@ class VelocityHumanizer:
 
         min_v, max_v = min(velocities), max(velocities)
         span = max(max_v - min_v, 1)
-        return [
-            max(0, min(127, int(((v - min_v) / span) * 127)))
-            for v in velocities
-        ]
+        return [max(0, min(127, int(((v - min_v) / span) * 127))) for v in velocities]
 
 
 class GrooveHumanizer:
@@ -138,9 +130,7 @@ class GrooveHumanizer:
         times = self.timing_humanizer.apply_timing_variation(
             times, profile.timing_variation * intensity
         )
-        times = self.timing_humanizer.apply_swing(
-            times, profile.swing_factor * intensity
-        )
+        times = self.timing_humanizer.apply_swing(times, profile.swing_factor * intensity)
         velocities = self.velocity_humanizer.apply_velocity_variation(
             velocities, profile.velocity_variation * intensity
         )
@@ -175,9 +165,7 @@ class GrooveHumanizer:
             times.append(base_time)
 
         if getattr(template, "swing_factor", 0.0):
-            times = self.timing_humanizer.apply_swing(
-                times, template.swing_factor * intensity
-            )
+            times = self.timing_humanizer.apply_swing(times, template.swing_factor * intensity)
 
         velocities = []
         for idx, note in enumerate(notes):

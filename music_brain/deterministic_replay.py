@@ -136,6 +136,7 @@ class DeterministicContext:
 @dataclass(frozen=True)
 class ReplayRecord:
     """A single deterministic-replay log entry."""
+
     run_id: str
     seed: int
     input_hash: str
@@ -145,15 +146,18 @@ class ReplayRecord:
     extra: dict[str, Any] = field(default_factory=dict)
 
     def to_json(self) -> str:
-        return json.dumps({
-            "run_id": self.run_id,
-            "seed": self.seed,
-            "input_hash": self.input_hash,
-            "model_hash": self.model_hash,
-            "output_hash": self.output_hash,
-            "timestamp": self.timestamp,
-            "extra": self.extra,
-        }, sort_keys=True)
+        return json.dumps(
+            {
+                "run_id": self.run_id,
+                "seed": self.seed,
+                "input_hash": self.input_hash,
+                "model_hash": self.model_hash,
+                "output_hash": self.output_hash,
+                "timestamp": self.timestamp,
+                "extra": self.extra,
+            },
+            sort_keys=True,
+        )
 
     @classmethod
     def from_json(cls, line: str) -> "ReplayRecord":
@@ -209,10 +213,12 @@ class ReplayLog:
         """Return prior records with same (input, seed, model) but different output."""
         out: list[ReplayRecord] = []
         for prior in self:
-            if (prior.input_hash == record.input_hash
-                    and prior.seed == record.seed
-                    and prior.model_hash == record.model_hash
-                    and prior.output_hash != record.output_hash):
+            if (
+                prior.input_hash == record.input_hash
+                and prior.seed == record.seed
+                and prior.model_hash == record.model_hash
+                and prior.output_hash != record.output_hash
+            ):
                 out.append(prior)
         return out
 

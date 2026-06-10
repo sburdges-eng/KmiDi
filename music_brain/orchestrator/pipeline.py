@@ -43,6 +43,7 @@ CONTEXT_LEARNING_STORAGE_ROOT = "learning_storage_root"
 
 class PipelineStatus(Enum):
     """Status of a pipeline execution."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -62,6 +63,7 @@ class StageResult:
         completed_at: Stage completion time
         duration_ms: Stage execution time in milliseconds
     """
+
     stage_name: str
     processor_result: ProcessorResult
     started_at: str = ""
@@ -107,13 +109,15 @@ class PipelineStage:
         transform_input: Optional function to transform input before processing
         transform_output: Optional function to transform output after processing
     """
+
     name: str
     processor: ProcessorInterface
     config: ProcessorConfig = field(default_factory=lambda: ProcessorConfig(name=""))
     condition: Optional[Callable[[ExecutionContext], bool]] = None
     transform_input: Optional[Callable[[Any, ExecutionContext], Any]] = None
-    transform_output: Optional[Callable[[ProcessorResult, ExecutionContext],
-                                        ProcessorResult]] = None
+    transform_output: Optional[Callable[[ProcessorResult, ExecutionContext], ProcessorResult]] = (
+        None
+    )
 
     def __post_init__(self):
         if not self.config.name:
@@ -139,6 +143,7 @@ class PipelineDefinition:
         created_at: Creation timestamp
         metadata: Pipeline metadata
     """
+
     id: str
     name: str
     description: str = ""
@@ -250,9 +255,9 @@ class Pipeline:
         config: Optional[ProcessorConfig] = None,
         condition: Optional[Callable[[ExecutionContext], bool]] = None,
         transform_input: Optional[Callable[[Any, ExecutionContext], Any]] = None,
-        transform_output: Optional[Callable[
-            [ProcessorResult, ExecutionContext], ProcessorResult
-        ]] = None,
+        transform_output: Optional[
+            Callable[[ProcessorResult, ExecutionContext], ProcessorResult]
+        ] = None,
     ) -> "Pipeline":
         """
         Add a processing stage to the pipeline.
@@ -415,12 +420,14 @@ class PipelineBuilder:
         config: Optional[ProcessorConfig] = None,
     ) -> "PipelineBuilder":
         """Add a stage."""
-        self._stages.append({
-            "name": name,
-            "processor": processor,
-            "config": config,
-            "condition": None,
-        })
+        self._stages.append(
+            {
+                "name": name,
+                "processor": processor,
+                "config": config,
+                "condition": None,
+            }
+        )
         return self
 
     def conditional_stage(
@@ -431,12 +438,14 @@ class PipelineBuilder:
         config: Optional[ProcessorConfig] = None,
     ) -> "PipelineBuilder":
         """Add a conditional stage."""
-        self._stages.append({
-            "name": name,
-            "processor": processor,
-            "config": config,
-            "condition": condition,
-        })
+        self._stages.append(
+            {
+                "name": name,
+                "processor": processor,
+                "config": config,
+                "condition": condition,
+            }
+        )
         return self
 
     def metadata(self, key: str, value: Any) -> "PipelineBuilder":

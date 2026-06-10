@@ -14,13 +14,15 @@ from pathlib import Path
 
 class UnrealRenderMode(Enum):
     """Unreal Engine rendering modes."""
-    REALTIME = "realtime"          # Real-time preview quality
-    PATH_TRACED = "path_traced"    # High quality path tracing
+
+    REALTIME = "realtime"  # Real-time preview quality
+    PATH_TRACED = "path_traced"  # High quality path tracing
     MOVIE_RENDER = "movie_render"  # Cinematic quality with Movie Render Queue
 
 
 class CameraMovement(Enum):
     """Camera movement patterns."""
+
     STATIC = "static"
     DOLLY = "dolly"
     PAN = "pan"
@@ -50,7 +52,7 @@ class UnrealConfig:
     # ONNX/NNI Integration (NEW)
     enable_nni: bool = True
     onnx_models_dir: str = "Models"  # Relative to Content/
-    use_gpu_inference: bool = True   # Use DirectX 12 GPU inference
+    use_gpu_inference: bool = True  # Use DirectX 12 GPU inference
 
     # Asset paths
     default_scene: str = "/Game/Scenes/EmotionDriven/Default"
@@ -203,12 +205,7 @@ class UnrealBridge:
 
         return False
 
-    def render_frame(
-        self,
-        output_path: Path,
-        width: int = 1920,
-        height: int = 1080
-    ) -> bool:
+    def render_frame(self, output_path: Path, width: int = 1920, height: int = 1080) -> bool:
         """
         Render a single frame at current scene state.
 
@@ -231,12 +228,7 @@ class UnrealBridge:
 
         return False
 
-    def render_sequence(
-        self,
-        output_dir: Path,
-        frame_count: int,
-        fps: int = 30
-    ) -> bool:
+    def render_sequence(self, output_dir: Path, frame_count: int, fps: int = 30) -> bool:
         """
         Render a sequence of frames.
 
@@ -320,11 +312,7 @@ class UnrealBridge:
 
         return False
 
-    def load_onnx_model(
-        self,
-        model_name: str,
-        model_asset_path: str
-    ) -> bool:
+    def load_onnx_model(self, model_name: str, model_asset_path: str) -> bool:
         """
         Load an ONNX model via NNI plugin.
 
@@ -356,9 +344,7 @@ class UnrealBridge:
         return False
 
     def run_onnx_inference(
-        self,
-        model_name: str,
-        inputs: Dict[str, Any]
+        self, model_name: str, inputs: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
         """
         Run inference on a loaded ONNX model.

@@ -22,6 +22,7 @@ import random
 
 class SongPhase(Enum):
     """Phases of songwriting interrogation."""
+
     INTENT = "intent"
     EMOTION = "emotion"
     STORY = "story"
@@ -38,6 +39,7 @@ class SongContext:
 
     Built up through interrogation, used to guide generation.
     """
+
     # Core intent
     title: str = ""
     core_emotion: str = ""
@@ -86,16 +88,13 @@ INTERROGATION_QUESTIONS = {
         "What's the one thing this song absolutely must accomplish?",
         "If this song was a message in a bottle, what would it say?",
     ],
-
     SongPhase.EMOTION: [
         "What's the dominant emotion? (Be specific - not just 'sad', but 'grief mixed with relief')",  # noqa: E501
-
         "Does the emotion change through the song? How?",
         "Where's the most vulnerable moment?",
         "What emotion do you want to END on?",
         "Is there anger hiding under the sadness, or sadness under the anger?",
     ],
-
     SongPhase.STORY: [
         "Who is the 'I' in this song? You? A character?",
         "Is this addressed to someone specific? Who?",
@@ -103,7 +102,6 @@ INTERROGATION_QUESTIONS = {
         "What's the specific moment or image at the core?",
         "What's the thing you're afraid to actually say?",
     ],
-
     SongPhase.SOUND: [
         "Close your eyes. What does this song SOUND like? Describe the texture.",
         "Is it dense or sparse? Why?",
@@ -111,7 +109,6 @@ INTERROGATION_QUESTIONS = {
         "What instrument or sound defines this song?",
         "Reference track: What song captures the FEEL you want?",
     ],
-
     SongPhase.STRUCTURE: [
         "Does this song build to something, or cycle?",
         "Where's the peak? Beginning, middle, or end?",
@@ -119,7 +116,6 @@ INTERROGATION_QUESTIONS = {
         "What section carries the most weight?",
         "How does it end? Resolved or hanging?",
     ],
-
     SongPhase.LYRICS: [
         "What's the one line you already know belongs in this song?",
         "What's the metaphor or image that keeps coming back?",
@@ -127,7 +123,6 @@ INTERROGATION_QUESTIONS = {
         "What word are you avoiding? Maybe that's the title.",
         "If you had to write the whole song in one sentence, what is it?",
     ],
-
     SongPhase.PRODUCTION: [
         "Should this sound polished or raw? Why?",
         "What production rule do you want to break?",
@@ -208,9 +203,9 @@ class SongInterrogator:
             # Check if they want to continue
             try:
                 cont = input("\nContinue to next phase? (y/n/skip): ").strip().lower()
-                if cont == 'n':
+                if cont == "n":
                     break
-                elif cont == 'skip':
+                elif cont == "skip":
                     continue
             except EOFError:
                 break
@@ -308,8 +303,16 @@ class SongInterrogator:
         elif phase == SongPhase.STRUCTURE:
             if "build" in question.lower() or "cycle" in question.lower():
                 if "build" in answer_lower:
-                    self.context.structure = ["intro", "verse", "chorus",
-                                              "verse", "chorus", "bridge", "chorus", "outro"]
+                    self.context.structure = [
+                        "intro",
+                        "verse",
+                        "chorus",
+                        "verse",
+                        "chorus",
+                        "bridge",
+                        "chorus",
+                        "outro",
+                    ]
                 else:
                     self.context.structure = ["verse", "verse", "verse", "verse"]
             elif "peak" in question.lower():

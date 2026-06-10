@@ -11,6 +11,7 @@ from enum import Enum
 
 class MobilePlatform(Enum):
     """Mobile development platforms."""
+
     REACT_NATIVE = "react_native"
     FLUTTER = "flutter"
     NATIVE_IOS = "native_ios"
@@ -21,6 +22,7 @@ class MobilePlatform(Enum):
 
 class FeatureSupport(Enum):
     """Feature support level."""
+
     FULL = "full"
     PARTIAL = "partial"
     PLUGIN = "plugin"
@@ -30,6 +32,7 @@ class FeatureSupport(Enum):
 @dataclass
 class PlatformCapabilities:
     """Capabilities of a mobile platform."""
+
     platform: MobilePlatform
     name: str
 

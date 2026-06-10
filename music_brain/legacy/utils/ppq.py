@@ -23,17 +23,17 @@ STANDARD_PPQ = 480
 
 # Known PPQ values by source
 KNOWN_PPQ = {
-    'logic_pro': 960,
-    'logic_internal': 9600,
-    'pro_tools': 960,
-    'ableton': 96,
-    'fl_studio': 96,
-    'cubase': 480,
-    'reaper': 960,
-    'mpc': 480,
-    'maschine': 480,
-    'garageband': 480,
-    'mido_default': 480,
+    "logic_pro": 960,
+    "logic_internal": 9600,
+    "pro_tools": 960,
+    "ableton": 96,
+    "fl_studio": 96,
+    "cubase": 480,
+    "reaper": 960,
+    "mpc": 480,
+    "maschine": 480,
+    "garageband": 480,
+    "mido_default": 480,
 }
 
 
@@ -130,40 +130,42 @@ def scale_template(template: Dict[str, Any], source_ppq: int, target_ppq: int) -
     scaled = {}
 
     for key, value in template.items():
-        if key == 'ppq':
-            scaled['ppq'] = target_ppq
-        elif key == 'push_pull':
+        if key == "ppq":
+            scaled["ppq"] = target_ppq
+        elif key == "push_pull":
             # Scale timing offsets per instrument per position
-            scaled['push_pull'] = {}
+            scaled["push_pull"] = {}
             for inst, positions in value.items():
                 if isinstance(positions, dict):
-                    scaled['push_pull'][inst] = {
-                        pos: int(round(offset * scale))
-                        for pos, offset in positions.items()
+                    scaled["push_pull"][inst] = {
+                        pos: int(round(offset * scale)) for pos, offset in positions.items()
                     }
                 else:
                     # Single offset per instrument
-                    scaled['push_pull'][inst] = int(round(positions * scale))
-        elif key == 'stagger':
-            scaled['stagger'] = {
-                pair: int(round(offset * scale))
-                for pair, offset in value.items()
+                    scaled["push_pull"][inst] = int(round(positions * scale))
+        elif key == "stagger":
+            scaled["stagger"] = {pair: int(round(offset * scale)) for pair, offset in value.items()}
+        elif key == "swing_offsets":
+            scaled["swing_offsets"] = {
+                pos: int(round(offset * scale)) for pos, offset in value.items()
             }
-        elif key == 'swing_offsets':
-            scaled['swing_offsets'] = {
-                pos: int(round(offset * scale))
-                for pos, offset in value.items()
-            }
-        elif key == 'ghost_timing':
+        elif key == "ghost_timing":
             if isinstance(value, dict):
-                scaled['ghost_timing'] = {
+                scaled["ghost_timing"] = {
                     k: int(round(v * scale)) if isinstance(v, (int, float)) else v
                     for k, v in value.items()
                 }
             else:
                 scaled[key] = value
-        elif key in ('timing_map', 'velocity_map', 'histogram', 'swing',
-                     'swing_consistency', 'ghost_ratio', 'per_instrument_swing'):
+        elif key in (
+            "timing_map",
+            "velocity_map",
+            "histogram",
+            "swing",
+            "swing_consistency",
+            "ghost_ratio",
+            "per_instrument_swing",
+        ):
             # Normalized values, no scaling needed
             scaled[key] = value
         else:
@@ -184,16 +186,12 @@ def scale_pocket_rules(pocket: Dict[str, Any], source_ppq: int, target_ppq: int)
     scaled = {}
 
     for key, value in pocket.items():
-        if key == 'push_pull':
-            scaled['push_pull'] = {
-                inst: int(round(offset * scale))
-                for inst, offset in value.items()
+        if key == "push_pull":
+            scaled["push_pull"] = {
+                inst: int(round(offset * scale)) for inst, offset in value.items()
             }
-        elif key == 'stagger':
-            scaled['stagger'] = {
-                pair: int(round(offset * scale))
-                for pair, offset in value.items()
-            }
+        elif key == "stagger":
+            scaled["stagger"] = {pair: int(round(offset * scale)) for pair, offset in value.items()}
         else:
             scaled[key] = value
 

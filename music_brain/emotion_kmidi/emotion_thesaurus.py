@@ -32,6 +32,7 @@ from dataclasses import dataclass
 @dataclass
 class EmotionMatch:
     """Represents a matched emotion from the thesaurus."""
+
     base_emotion: str
     sub_emotion: str
     sub_sub_emotion: str
@@ -45,6 +46,7 @@ class EmotionMatch:
 @dataclass
 class BlendMatch:
     """Represents a matched emotional blend."""
+
     blend_id: str
     name: str
     components: list[str]
@@ -64,8 +66,14 @@ class EmotionThesaurus:
     """
 
     BASE_EMOTIONS = ["happy", "sad", "angry", "fear", "surprise", "disgust"]
-    INTENSITY_TIERS = ["1_subtle", "2_mild", "3_moderate",
-                       "4_strong", "5_intense", "6_overwhelming"]
+    INTENSITY_TIERS = [
+        "1_subtle",
+        "2_mild",
+        "3_moderate",
+        "4_strong",
+        "5_intense",
+        "6_overwhelming",
+    ]
 
     def __init__(self, data_dir: Optional[Union[str, Path]] = None):
         """
@@ -138,19 +146,26 @@ class EmotionThesaurus:
                             key = syn.lower().strip()
                             if key not in self._synonym_index:
                                 self._synonym_index[key] = []
-                            self._synonym_index[key].append({
-                                "base": base_name,
-                                "sub": sub_name,
-                                "subsub": subsub_name,
-                                "tier": tier,
-                                "id": subsub_data.get("id", ""),
-                                "description": subsub_data.get("description", ""),
-                                "all_synonyms": synonyms
-                            })
+                            self._synonym_index[key].append(
+                                {
+                                    "base": base_name,
+                                    "sub": sub_name,
+                                    "subsub": subsub_name,
+                                    "tier": tier,
+                                    "id": subsub_data.get("id", ""),
+                                    "description": subsub_data.get("description", ""),
+                                    "all_synonyms": synonyms,
+                                }
+                            )
 
         # Index blends
-        for category in ["dyadic_blends", "triadic_blends", "therapeutic_blends",
-                         "musical_blends", "situational_blends"]:
+        for category in [
+            "dyadic_blends",
+            "triadic_blends",
+            "therapeutic_blends",
+            "musical_blends",
+            "situational_blends",
+        ]:
             if category not in self.blends:
                 continue
 
@@ -164,11 +179,9 @@ class EmotionThesaurus:
                         key = syn.lower().strip()
                         if key not in self._blend_synonym_index:
                             self._blend_synonym_index[key] = []
-                        self._blend_synonym_index[key].append({
-                            "blend": blend,
-                            "tier": tier,
-                            "all_synonyms": synonyms
-                        })
+                        self._blend_synonym_index[key].append(
+                            {"blend": blend, "tier": tier, "all_synonyms": synonyms}
+                        )
 
     def find_by_synonym(self, word: str, fuzzy: bool = False) -> list[EmotionMatch]:
         """
@@ -188,16 +201,18 @@ class EmotionThesaurus:
         if word in self._synonym_index:
             for entry in self._synonym_index[word]:
                 tier_num = int(entry["tier"].split("_")[0])
-                matches.append(EmotionMatch(
-                    base_emotion=entry["base"],
-                    sub_emotion=entry["sub"],
-                    sub_sub_emotion=entry["subsub"],
-                    intensity_tier=tier_num,
-                    matched_synonym=word,
-                    all_tier_synonyms=entry["all_synonyms"],
-                    emotion_id=entry["id"],
-                    description=entry["description"]
-                ))
+                matches.append(
+                    EmotionMatch(
+                        base_emotion=entry["base"],
+                        sub_emotion=entry["sub"],
+                        sub_sub_emotion=entry["subsub"],
+                        intensity_tier=tier_num,
+                        matched_synonym=word,
+                        all_tier_synonyms=entry["all_synonyms"],
+                        emotion_id=entry["id"],
+                        description=entry["description"],
+                    )
+                )
 
         # Fuzzy matching
         if fuzzy and not matches:
@@ -205,16 +220,18 @@ class EmotionThesaurus:
                 if word in key or key in word:
                     for entry in self._synonym_index[key]:
                         tier_num = int(entry["tier"].split("_")[0])
-                        matches.append(EmotionMatch(
-                            base_emotion=entry["base"],
-                            sub_emotion=entry["sub"],
-                            sub_sub_emotion=entry["subsub"],
-                            intensity_tier=tier_num,
-                            matched_synonym=key,
-                            all_tier_synonyms=entry["all_synonyms"],
-                            emotion_id=entry["id"],
-                            description=entry["description"]
-                        ))
+                        matches.append(
+                            EmotionMatch(
+                                base_emotion=entry["base"],
+                                sub_emotion=entry["sub"],
+                                sub_sub_emotion=entry["subsub"],
+                                intensity_tier=tier_num,
+                                matched_synonym=key,
+                                all_tier_synonyms=entry["all_synonyms"],
+                                emotion_id=entry["id"],
+                                description=entry["description"],
+                            )
+                        )
 
         return matches
 
@@ -233,8 +250,13 @@ class EmotionThesaurus:
         matches = []
 
         # Also check blend names directly
-        for category in ["dyadic_blends", "triadic_blends", "therapeutic_blends",
-                         "musical_blends", "situational_blends"]:
+        for category in [
+            "dyadic_blends",
+            "triadic_blends",
+            "therapeutic_blends",
+            "musical_blends",
+            "situational_blends",
+        ]:
             if category not in self.blends:
                 continue
 
@@ -247,41 +269,41 @@ class EmotionThesaurus:
                     # Return moderate tier by default
                     tier = "3_moderate"
                     synonyms = blend.get("synonyms", {}).get(tier, [])
-                    matches.append(BlendMatch(
-                        blend_id=blend.get("id", ""),
-                        name=blend.get("name", ""),
-                        components=blend.get("components", []),
-                        ratio=blend.get("ratio", []),
-                        description=blend.get("description", ""),
-                        intensity_tier=3,
-                        matched_synonym=word,
-                        all_tier_synonyms=synonyms
-                    ))
+                    matches.append(
+                        BlendMatch(
+                            blend_id=blend.get("id", ""),
+                            name=blend.get("name", ""),
+                            components=blend.get("components", []),
+                            ratio=blend.get("ratio", []),
+                            description=blend.get("description", ""),
+                            intensity_tier=3,
+                            matched_synonym=word,
+                            all_tier_synonyms=synonyms,
+                        )
+                    )
 
         # Check synonym index
         if word in self._blend_synonym_index:
             for entry in self._blend_synonym_index[word]:
                 blend = entry["blend"]
                 tier_num = int(entry["tier"].split("_")[0])
-                matches.append(BlendMatch(
-                    blend_id=blend.get("id", ""),
-                    name=blend.get("name", ""),
-                    components=blend.get("components", []),
-                    ratio=blend.get("ratio", []),
-                    description=blend.get("description", ""),
-                    intensity_tier=tier_num,
-                    matched_synonym=word,
-                    all_tier_synonyms=entry["all_synonyms"]
-                ))
+                matches.append(
+                    BlendMatch(
+                        blend_id=blend.get("id", ""),
+                        name=blend.get("name", ""),
+                        components=blend.get("components", []),
+                        ratio=blend.get("ratio", []),
+                        description=blend.get("description", ""),
+                        intensity_tier=tier_num,
+                        matched_synonym=word,
+                        all_tier_synonyms=entry["all_synonyms"],
+                    )
+                )
 
         return matches
 
     def get_intensity_synonyms(
-        self,
-        base_emotion: str,
-        sub_emotion: str,
-        sub_sub_emotion: str,
-        tier: int = 3
+        self, base_emotion: str, sub_emotion: str, sub_sub_emotion: str, tier: int = 3
     ) -> list[str]:
         """
         Get synonyms for a specific emotion at a given intensity tier.
@@ -316,17 +338,18 @@ class EmotionThesaurus:
             Dict with base, sub, subsub data or None if not found
         """
         for base_name, base_data in self.emotions.items():
-            if base_data.get("id") == emotion_id[0:len(base_data.get("id", ""))]:
+            if base_data.get("id") == emotion_id[0 : len(base_data.get("id", ""))]:
                 for sub_name, sub_data in base_data.get("sub_emotions", {}).items():
                     sub_id = sub_data.get("id", "")
                     if emotion_id.startswith(sub_id):
                         for subsub_name, subsub_data in sub_data.get(
-                                "sub_sub_emotions", {}).items():
+                            "sub_sub_emotions", {}
+                        ).items():
                             if subsub_data.get("id") == emotion_id:
                                 return {
                                     "base": {"name": base_name, **base_data},
                                     "sub": {"name": sub_name, **sub_data},
-                                    "subsub": {"name": subsub_name, **subsub_data}
+                                    "subsub": {"name": subsub_name, **subsub_data},
                                 }
         return None
 
@@ -418,8 +441,13 @@ class EmotionThesaurus:
             emotion_counts[base_name] = {"sub": sub_count, "subsub": subsub_count}
 
         blend_count = 0
-        for category in ["dyadic_blends", "triadic_blends", "therapeutic_blends",
-                         "musical_blends", "situational_blends"]:
+        for category in [
+            "dyadic_blends",
+            "triadic_blends",
+            "therapeutic_blends",
+            "musical_blends",
+            "situational_blends",
+        ]:
             if category in self.blends:
                 blends_list = self.blends[category]
                 if isinstance(blends_list, dict):
@@ -433,7 +461,7 @@ class EmotionThesaurus:
             "total_unique_synonyms": total_synonyms,
             "total_blend_synonyms": total_blend_synonyms,
             "blend_count": blend_count,
-            "data_directory": str(self.data_dir)
+            "data_directory": str(self.data_dir),
         }
 
 

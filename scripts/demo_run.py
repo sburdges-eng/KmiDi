@@ -12,6 +12,7 @@ Run from repo root:
   # or
   micromamba run -n kmidi-core python scripts/demo_run.py
 """
+
 from __future__ import annotations
 
 import logging
@@ -113,7 +114,9 @@ def main():
 
     harmony = result.get("harmony")
     if not harmony:
-        logger.error("No harmony in result; cannot render MIDI. Result keys: %s", list(result.keys()))
+        logger.error(
+            "No harmony in result; cannot render MIDI. Result keys: %s", list(result.keys())
+        )
         return 1
 
     key_parts = validated.key_mode.split()
@@ -154,7 +157,9 @@ def main():
         render_midi_to_audio(str(mid_path), str(wav_path))
     except Exception as e:
         logger.warning("Audio render failed: %s", e)
-    logger.info("Done. MIDI: %s  WAV: %s", mid_path, wav_path if wav_path.exists() else "(not generated)")
+    logger.info(
+        "Done. MIDI: %s  WAV: %s", mid_path, wav_path if wav_path.exists() else "(not generated)"
+    )
     return 0
 
 

@@ -27,7 +27,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, List, Optional
 
 from .controller import ClosedLoopController, ParameterRule
 
@@ -154,11 +154,13 @@ async def run_scenario(
 # Built-in scenarios
 # ---------------------------------------------------------------------------
 
+
 def emotional_buildup_scenario() -> Scenario:
     """Gradually increase tension and density when arousal is low."""
     return Scenario(
         name="emotional-buildup",
-        description="Builds tension when energy drops — increases harmonic tension and rhythmic density",
+        description="Builds tension when energy drops — increases harmonic tension and rhythmic "
+        "density",
         rules=[
             Rule(
                 name="tension-on-low-arousal",

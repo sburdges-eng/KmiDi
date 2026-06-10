@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 class StemType(Enum):
     """Types of musical stems that can be analyzed."""
+
     BASS = "bass"
     DRUMS = "drums"
     MELODY = "melody"
@@ -51,6 +52,7 @@ class StemCompatibilityScore:
         confidence: Model confidence in the prediction
         metadata: Additional information about the prediction
     """
+
     score: float
     stem_pairs: Dict[Tuple[StemType, StemType], float]
     confidence: float
@@ -82,10 +84,7 @@ class StemJEPACompatibility:
     """
 
     def __init__(
-        self,
-        model_path: Optional[Path] = None,
-        device: str = "cpu",
-        use_cache: bool = True
+        self, model_path: Optional[Path] = None, device: str = "cpu", use_cache: bool = True
     ):
         """
         Initialize JEPA compatibility checker.
@@ -102,8 +101,7 @@ class StemJEPACompatibility:
         self._model = None
 
         logger.info(
-            f"Initialized StemJEPACompatibility (stub implementation) "
-            f"on device: {device}"
+            f"Initialized StemJEPACompatibility (stub implementation) " f"on device: {device}"
         )
 
     def load_model(self, model_path: Path) -> None:
@@ -116,15 +114,12 @@ class StemJEPACompatibility:
         TODO: Implement actual model loading when integrating Stem-JEPA
         """
         logger.warning(
-            "Model loading not yet implemented. "
-            "This is a stub for future JEPA integration."
+            "Model loading not yet implemented. " "This is a stub for future JEPA integration."
         )
         self._model = None
 
     def compute_compatibility(
-        self,
-        stems: Dict[str, Any],
-        normalize: bool = True
+        self, stems: Dict[str, Any], normalize: bool = True
     ) -> StemCompatibilityScore:
         """
         Compute compatibility score between multiple stems.
@@ -139,8 +134,7 @@ class StemJEPACompatibility:
         TODO: Replace with actual JEPA inference
         """
         logger.warning(
-            "Using placeholder compatibility computation. "
-            "Actual JEPA model not yet integrated."
+            "Using placeholder compatibility computation. " "Actual JEPA model not yet integrated."
         )
 
         # Placeholder: return neutral score
@@ -154,7 +148,7 @@ class StemJEPACompatibility:
         stem_list = list(stems.keys())
 
         for i, stem1 in enumerate(stem_list):
-            for stem2 in stem_list[i+1:]:
+            for stem2 in stem_list[i + 1 :]:
                 # Placeholder score
                 stem_pairs[(stem1, stem2)] = 0.5
 
@@ -162,17 +156,14 @@ class StemJEPACompatibility:
             score=0.5,  # Neutral placeholder
             stem_pairs=stem_pairs,
             confidence=0.0,  # No confidence without real model
-            metadata={
-                "note": "Placeholder implementation",
-                "num_stems": len(stems)
-            }
+            metadata={"note": "Placeholder implementation", "num_stems": len(stems)},
         )
 
     def predict_missing_stem(
         self,
         existing_stems: Dict[str, Any],
         target_stem_type: StemType,
-        candidates: Optional[List[Any]] = None
+        candidates: Optional[List[Any]] = None,
     ) -> Tuple[Optional[Any], float]:
         """
         Predict which stem would best complete the arrangement.
@@ -190,11 +181,7 @@ class StemJEPACompatibility:
         logger.warning("Stem prediction not yet implemented.")
         return None, 0.0
 
-    def validate_arrangement(
-        self,
-        stems: Dict[str, Any],
-        min_compatibility: float = 0.7
-    ) -> bool:
+    def validate_arrangement(self, stems: Dict[str, Any], min_compatibility: float = 0.7) -> bool:
         """
         Validate if an arrangement meets minimum compatibility threshold.
 
@@ -240,10 +227,7 @@ class SelfSupervisedLearner:
         logger.info("Initialized SelfSupervisedLearner (stub implementation)")
 
     def train_on_directory(
-        self,
-        path: Path,
-        epochs: int = 10,
-        save_model: Optional[Path] = None
+        self, path: Path, epochs: int = 10, save_model: Optional[Path] = None
     ) -> Dict:
         """
         Train on unlabeled audio files in a directory.
@@ -261,10 +245,7 @@ class SelfSupervisedLearner:
         logger.warning("Self-supervised training not yet implemented.")
         return {"loss": 0.0, "epochs": 0}
 
-    def learn_from_stems(
-        self,
-        stem_collection: List[Dict[str, Any]]
-    ) -> None:
+    def learn_from_stems(self, stem_collection: List[Dict[str, Any]]) -> None:
         """
         Learn compatibility patterns from a collection of stems.
 
@@ -275,10 +256,7 @@ class SelfSupervisedLearner:
         """
         logger.warning("Stem pattern learning not yet implemented.")
 
-    def predict_compatibility(
-        self,
-        stems: Dict[str, Any]
-    ) -> float:
+    def predict_compatibility(self, stems: Dict[str, Any]) -> float:
         """
         Predict compatibility using learned model.
 
@@ -309,7 +287,7 @@ def get_jepa_integration_status() -> Dict[str, str]:
         "documentation": "docs/research/STEM_JEPA_INTEGRATION.md",
         "reference_repo": "https://github.com/SonyCSLParis/Stem-JEPA",
         "reference_paper": "https://arxiv.org/abs/2408.02514",
-        "next_steps": "Create proof-of-concept with actual Stem-JEPA model"
+        "next_steps": "Create proof-of-concept with actual Stem-JEPA model",
     }
 
 

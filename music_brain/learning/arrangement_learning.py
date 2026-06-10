@@ -19,6 +19,7 @@ PROFILES_DIR = DEFAULT_STORAGE / "profiles"
 @dataclass
 class ArrangementExample:
     """Arrangement example capturing sections and instrumentation."""
+
     sections: List[str]  # e.g., ["verse", "chorus", "verse", "bridge", "chorus"]
     energy_curve: List[float] = field(default_factory=list)
     instruments: List[str] = field(default_factory=list)
@@ -61,7 +62,9 @@ class ArrangementProfile:
             if s.get("section_counts") is not None:
                 s["section_counts"] = {str(k): int(v) for k, v in dict(s["section_counts"]).items()}
             if s.get("instrument_counts") is not None:
-                s["instrument_counts"] = {str(k): int(v) for k, v in dict(s["instrument_counts"]).items()}
+                s["instrument_counts"] = {
+                    str(k): int(v) for k, v in dict(s["instrument_counts"]).items()
+                }
             if "avg_length" in s:
                 s["avg_length"] = float(s["avg_length"])
             emotion_out[em] = s
@@ -71,7 +74,9 @@ class ArrangementProfile:
         if gp.get("section_counts") is not None:
             gp["section_counts"] = {str(k): int(v) for k, v in dict(gp["section_counts"]).items()}
         if gp.get("instrument_counts") is not None:
-            gp["instrument_counts"] = {str(k): int(v) for k, v in dict(gp["instrument_counts"]).items()}
+            gp["instrument_counts"] = {
+                str(k): int(v) for k, v in dict(gp["instrument_counts"]).items()
+            }
         return {
             "name": self.name,
             "emotion_patterns": emotion_out,
@@ -91,7 +96,9 @@ class ArrangementProfile:
             if s.get("section_counts") is not None:
                 s["section_counts"] = {str(k): int(v) for k, v in dict(s["section_counts"]).items()}
             if s.get("instrument_counts") is not None:
-                s["instrument_counts"] = {str(k): int(v) for k, v in dict(s["instrument_counts"]).items()}
+                s["instrument_counts"] = {
+                    str(k): int(v) for k, v in dict(s["instrument_counts"]).items()
+                }
             emotion_in[em] = s
         gp = dict(data.get("global_patterns") or {})
         if gp.get("transition_counts") is not None:
@@ -101,7 +108,9 @@ class ArrangementProfile:
         if gp.get("section_counts") is not None:
             gp["section_counts"] = {str(k): int(v) for k, v in dict(gp["section_counts"]).items()}
         if gp.get("instrument_counts") is not None:
-            gp["instrument_counts"] = {str(k): int(v) for k, v in dict(gp["instrument_counts"]).items()}
+            gp["instrument_counts"] = {
+                str(k): int(v) for k, v in dict(gp["instrument_counts"]).items()
+            }
         return cls(
             name=data.get("name", ""),
             emotion_patterns=emotion_in,
@@ -158,7 +167,9 @@ class ArrangementLearner:
     def __init__(self):
         pass
 
-    def learn_profile(self, examples: List[ArrangementExample], name: str = "default") -> ArrangementProfile:
+    def learn_profile(
+        self, examples: List[ArrangementExample], name: str = "default"
+    ) -> ArrangementProfile:
         if not examples:
             raise ValueError("No arrangement examples provided")
 
@@ -179,7 +190,9 @@ class ArrangementLearner:
 
             for ex in group:
                 section_counter.update(ex.sections)
-                transitions = [(ex.sections[i], ex.sections[i + 1]) for i in range(len(ex.sections) - 1)]
+                transitions = [
+                    (ex.sections[i], ex.sections[i + 1]) for i in range(len(ex.sections) - 1)
+                ]
                 transition_counter.update(transitions)
                 instrument_counter.update(ex.instruments)
                 lengths.append(len(ex.sections))
@@ -213,20 +226,32 @@ class ArrangementLearner:
         emotion: str,
         profile: ArrangementProfile,
         length: Optional[int] = None,
-        genre: str = "general"
+        genre: str = "general",
     ) -> Dict:
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get(
+            "neutral"
+        )
         if not patterns:
             patterns = profile.global_patterns
 
-        section_counts = patterns.get("section_counts") or profile.global_patterns.get("section_counts") or {}
-        transition_counts = patterns.get("transition_counts") or profile.global_patterns.get("transition_counts") or {}
+        section_counts = (
+            patterns.get("section_counts") or profile.global_patterns.get("section_counts") or {}
+        )
+        transition_counts = (
+            patterns.get("transition_counts")
+            or profile.global_patterns.get("transition_counts")
+            or {}
+        )
         if transition_counts and all(isinstance(k, str) for k in transition_counts):
             transition_counts = _decode_transition_dict(
                 {k: int(v) for k, v in transition_counts.items()}
             )
-        instrument_counts = patterns.get("instrument_counts") or profile.global_patterns.get("instrument_counts") or {}
+        instrument_counts = (
+            patterns.get("instrument_counts")
+            or profile.global_patterns.get("instrument_counts")
+            or {}
+        )
 
         length = length or int(patterns.get("avg_length", 5))
 
@@ -275,7 +300,9 @@ class ArrangementLearningManager:
     def add_example(self, example: ArrangementExample, name: Optional[str] = None) -> str:
         return self.store.add_example(example, name)
 
-    def learn_profile(self, name: str, example_ids: Optional[List[str]] = None) -> ArrangementProfile:
+    def learn_profile(
+        self, name: str, example_ids: Optional[List[str]] = None
+    ) -> ArrangementProfile:
         if example_ids is None:
             example_ids = self.store.list_examples()
         examples = []
@@ -297,7 +324,7 @@ class ArrangementLearningManager:
         emotion: str,
         profile_name: Optional[str] = None,
         length: Optional[int] = None,
-        genre: str = "general"
+        genre: str = "general",
     ) -> Dict:
         profile: Optional[ArrangementProfile] = None
         if profile_name:

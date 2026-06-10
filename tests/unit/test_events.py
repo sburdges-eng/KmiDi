@@ -1,4 +1,5 @@
 """Unit tests for music_brain.agents.events."""
+
 import importlib.util
 import sys
 import pytest

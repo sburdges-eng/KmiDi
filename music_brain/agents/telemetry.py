@@ -669,9 +669,7 @@ class HealthDashboard:
         self._checkers[ComponentType.AUDIO] = AudioHealthChecker()
         self._checkers[ComponentType.PLUGIN] = PluginHealthChecker()
 
-    def register_checker(
-        self, component_type: ComponentType, checker: HealthChecker
-    ) -> None:
+    def register_checker(self, component_type: ComponentType, checker: HealthChecker) -> None:
         """Register a custom health checker."""
         self._checkers[component_type] = checker
 
@@ -768,9 +766,7 @@ class HealthDashboard:
 
         self._check_interval = interval
         self._running = True
-        self._monitor_thread = threading.Thread(
-            target=self._monitor_loop, daemon=True
-        )
+        self._monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
         self._monitor_thread.start()
         logger.info(f"Health monitoring started (interval: {interval}s)")
 
@@ -796,9 +792,7 @@ class HealthDashboard:
                     break
                 time.sleep(0.1)
 
-    def on_status_change(
-        self, callback: Callable[[ComponentType, HealthStatus], None]
-    ) -> None:
+    def on_status_change(self, callback: Callable[[ComponentType, HealthStatus], None]) -> None:
         """Register callback for component status changes."""
         self._status_callbacks.append(callback)
 
@@ -806,9 +800,7 @@ class HealthDashboard:
         """Register callback for new health reports."""
         self._report_callbacks.append(callback)
 
-    def _notify_status_change(
-        self, component: ComponentType, status: HealthStatus
-    ) -> None:
+    def _notify_status_change(self, component: ComponentType, status: HealthStatus) -> None:
         """Notify listeners of status change."""
         for cb in self._status_callbacks:
             try:

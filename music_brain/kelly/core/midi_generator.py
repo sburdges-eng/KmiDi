@@ -3,6 +3,7 @@
 This module provides MIDI file generation capabilities including chord progressions,
 groove templates, and musical pattern generation for therapeutic music creation.
 """
+
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,6 +11,7 @@ from pathlib import Path
 try:
     import mido  # type: ignore
 except ImportError:
+
     class _DummyTrack(list):
         """Lightweight stand-in for mido.MidiTrack that behaves like a list."""
 
@@ -63,6 +65,7 @@ class GrooveTemplate:
         swing: Swing factor (0.0 = straight, 1.0 = maximum swing)
         description: Optional description of the groove style
     """
+
     name: str
     time_signature: Tuple[int, int]
     pattern: List[Tuple[float, int]]  # (time, velocity)
@@ -79,6 +82,7 @@ class Chord:
         intervals: List of intervals in semitones from root
         name: Optional chord name (e.g., "Am", "C7")
     """
+
     root: int
     intervals: List[int]
     name: str = ""
@@ -149,40 +153,48 @@ class MidiGenerator:
                 name="Straight",
                 time_signature=(4, 4),
                 pattern=[(0.0, 100), (0.25, 80), (0.5, 100), (0.75, 80)],
-                description="Straight 4/4 time with even beats"
+                description="Straight 4/4 time with even beats",
             ),
             "swing": GrooveTemplate(
                 name="Swing",
                 time_signature=(4, 4),
                 pattern=[(0.0, 100), (0.33, 80), (0.5, 100), (0.83, 80)],
                 swing=0.66,
-                description="Swing feel with triplet subdivision"
+                description="Swing feel with triplet subdivision",
             ),
             "syncopated": GrooveTemplate(
                 name="Syncopated",
                 time_signature=(4, 4),
                 pattern=[(0.0, 100), (0.125, 60), (0.375, 90), (0.625, 85), (0.875, 70)],
-                description="Syncopated pattern with off-beat accents"
+                description="Syncopated pattern with off-beat accents",
             ),
             "shuffle": GrooveTemplate(
                 name="Shuffle",
                 time_signature=(4, 4),
                 pattern=[(0.0, 100), (0.33, 70), (0.5, 90), (0.83, 60)],
                 swing=0.75,
-                description="Shuffle groove with strong swing feel"
+                description="Shuffle groove with strong swing feel",
             ),
             "ballad": GrooveTemplate(
                 name="Ballad",
                 time_signature=(4, 4),
                 pattern=[(0.0, 90), (0.5, 85)],
-                description="Slow ballad with sparse hits"
+                description="Slow ballad with sparse hits",
             ),
             "driving": GrooveTemplate(
                 name="Driving",
                 time_signature=(4, 4),
-                pattern=[(0.0, 110), (0.125, 70), (0.25, 90), (0.375, 80),
-                         (0.5, 110), (0.625, 70), (0.75, 90), (0.875, 80)],
-                description="Driving rhythm with constant motion"
+                pattern=[
+                    (0.0, 110),
+                    (0.125, 70),
+                    (0.25, 90),
+                    (0.375, 80),
+                    (0.5, 110),
+                    (0.625, 70),
+                    (0.75, 90),
+                    (0.875, 80),
+                ],
+                description="Driving rhythm with constant motion",
             ),
         }
 
@@ -192,7 +204,7 @@ class MidiGenerator:
         root: int = 57,  # A (for minor) or 60 (C for major)
         length: int = 4,
         allow_dissonance: bool = False,
-        progression_type: Optional[str] = None
+        progression_type: Optional[str] = None,
     ) -> List[List[int]]:
         """
         Generate a chord progression based on emotional parameters.
@@ -276,7 +288,7 @@ class MidiGenerator:
         notes: List[int],
         groove_template: GrooveTemplate,
         duration_bars: int = 1,
-        channel: int = 0
+        channel: int = 0,
     ) -> List[mido.Message]:
         """
         Apply groove template to notes.
@@ -318,11 +330,11 @@ class MidiGenerator:
                     if 0 <= note <= 127:  # Valid MIDI note range
                         messages.append(
                             mido.Message(
-                                'note_on',
+                                "note_on",
                                 channel=channel,
                                 note=note,
                                 velocity=velocity,
-                                time=absolute_time - current_time
+                                time=absolute_time - current_time,
                             )
                         )
                         current_time = absolute_time
@@ -333,11 +345,11 @@ class MidiGenerator:
                     if 0 <= note <= 127:
                         messages.append(
                             mido.Message(
-                                'note_off',
+                                "note_off",
                                 channel=channel,
                                 note=note,
                                 velocity=0,
-                                time=off_time - current_time
+                                time=off_time - current_time,
                             )
                         )
                         current_time = off_time
@@ -349,7 +361,7 @@ class MidiGenerator:
         chord_progression: List[List[int]],
         groove: str = "straight",
         output_path: Optional[str] = None,
-        channel: int = 0
+        channel: int = 0,
     ) -> mido.MidiFile:
         """
         Create a MIDI file from chord progression.
@@ -372,23 +384,21 @@ class MidiGenerator:
         groove_template = self.groove_templates.get(groove)
         if not groove_template:
             available = ", ".join(self.groove_templates.keys())
-            raise ValueError(
-                f"Groove template '{groove}' not found. Available: {available}"
-            )
+            raise ValueError(f"Groove template '{groove}' not found. Available: {available}")
 
         mid = mido.MidiFile(ticks_per_beat=self.ticks_per_beat)
         track = mido.MidiTrack()
         mid.tracks.append(track)
 
         # Set tempo
-        tempo_msg = mido.MetaMessage('set_tempo', tempo=mido.bpm2tempo(self.tempo))
+        tempo_msg = mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(self.tempo))
         track.append(tempo_msg)
 
         # Set time signature
         time_sig = mido.MetaMessage(
-            'time_signature',
+            "time_signature",
             numerator=groove_template.time_signature[0],
-            denominator=groove_template.time_signature[1]
+            denominator=groove_template.time_signature[1],
         )
         track.append(time_sig)
 
@@ -399,7 +409,7 @@ class MidiGenerator:
 
             # Adjust message times to be relative
             for msg in messages:
-                if msg.type in ['note_on', 'note_off']:
+                if msg.type in ["note_on", "note_off"]:
                     track.append(msg)
 
         # Save if output path provided

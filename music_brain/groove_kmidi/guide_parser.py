@@ -40,12 +40,7 @@ class DrumGuideParser(BaseGuideParser):
 
     def __init__(self, guide_path: Path):
         super().__init__(guide_path)
-        self.rules = {
-            "hihat": {},
-            "snare": {},
-            "kick": {},
-            "genres": {}
-        }
+        self.rules = {"hihat": {}, "snare": {}, "kick": {}, "genres": {}}
 
     def _parse_content(self, content: str):
         self._parse_hihat_rules(content)
@@ -58,64 +53,86 @@ class DrumGuideParser(BaseGuideParser):
         # Look for "Randomness" section
         # "Random variation ±5-10 velocity"
         vel_match = re.search(
-            r"Random variation [±\+\-](\d+)-(\d+) velocity", content, re.IGNORECASE)
+            r"Random variation [±\+\-](\d+)-(\d+) velocity", content, re.IGNORECASE
+        )
         if vel_match:
             self.rules["hihat"]["velocity_variation"] = (
-                int(vel_match.group(1)), int(vel_match.group(2)))
+                int(vel_match.group(1)),
+                int(vel_match.group(2)),
+            )
 
         # "Random timing variation: ±10-20ms"
         time_match = re.search(
-            r"Random timing variation: [±\+\-](\d+)-(\d+)ms", content, re.IGNORECASE)
+            r"Random timing variation: [±\+\-](\d+)-(\d+)ms", content, re.IGNORECASE
+        )
         if time_match:
             self.rules["hihat"]["timing_variation_ms"] = (
-                int(time_match.group(1)), int(time_match.group(2)))
+                int(time_match.group(1)),
+                int(time_match.group(2)),
+            )
 
     def _parse_snare_rules(self, content: str):
         """Extracts snare ghost note and main hit rules."""
         # Ghost notes: "Velocity: 25-45"
         ghost_match = re.search(
-            r"Ghost Note Rules.*?Velocity: (\d+)-(\d+)", content, re.DOTALL | re.IGNORECASE)
+            r"Ghost Note Rules.*?Velocity: (\d+)-(\d+)", content, re.DOTALL | re.IGNORECASE
+        )
         if ghost_match:
             self.rules["snare"]["ghost_velocity"] = (
-                int(ghost_match.group(1)), int(ghost_match.group(2)))
+                int(ghost_match.group(1)),
+                int(ghost_match.group(2)),
+            )
 
         # Main hits: "Velocity range: 95-115"
         main_match = re.search(
-            r"Main Snare Variation.*?Velocity range: (\d+)-(\d+)", content, re.DOTALL | re.IGNORECASE)  # noqa: E501
+            r"Main Snare Variation.*?Velocity range: (\d+)-(\d+)",
+            content,
+            re.DOTALL | re.IGNORECASE,
+        )  # noqa: E501
 
         if main_match:
             self.rules["snare"]["main_velocity"] = (
-                int(main_match.group(1)), int(main_match.group(2)))
+                int(main_match.group(1)),
+                int(main_match.group(2)),
+            )
 
         # Timing: "Slight timing drift: ±5-10ms"
         time_match = re.search(
-            r"Main Snare Variation.*?timing drift: [±\+\-](\d+)-(\d+)ms", content, re.DOTALL | re.IGNORECASE)  # noqa: E501
+            r"Main Snare Variation.*?timing drift: [±\+\-](\d+)-(\d+)ms",
+            content,
+            re.DOTALL | re.IGNORECASE,
+        )  # noqa: E501
 
         if time_match:
             self.rules["snare"]["timing_variation_ms"] = (
-                int(time_match.group(1)), int(time_match.group(2)))
+                int(time_match.group(1)),
+                int(time_match.group(2)),
+            )
 
     def _parse_kick_rules(self, content: str):
         """Extracts kick rules."""
         # Timing: "Timing: ±5ms"
         time_match = re.search(
-            r"Kick Drum.*?Timing: [±\+\-](\d+)ms", content, re.DOTALL | re.IGNORECASE)
+            r"Kick Drum.*?Timing: [±\+\-](\d+)ms", content, re.DOTALL | re.IGNORECASE
+        )
         if time_match:
             val = int(time_match.group(1))
             self.rules["kick"]["timing_variation_ms"] = (0, val)  # 0 to val
 
         # Velocity: "Velocity: Range of 85-110"
         vel_match = re.search(
-            r"Kick Drum.*?Velocity: Range of (\d+)-(\d+)", content, re.DOTALL | re.IGNORECASE)
+            r"Kick Drum.*?Velocity: Range of (\d+)-(\d+)", content, re.DOTALL | re.IGNORECASE
+        )
         if vel_match:
             self.rules["kick"]["velocity_range"] = (
-                int(vel_match.group(1)), int(vel_match.group(2)))
+                int(vel_match.group(1)),
+                int(vel_match.group(2)),
+            )
 
     def _parse_genre_guidelines(self, content: str):
         """Extracts per-genre guidelines."""
         # Find the "Per-Genre Guidelines" section
-        section_match = re.search(
-            r"## Per-Genre Guidelines\n\n(.*?)$", content, re.DOTALL)
+        section_match = re.search(r"## Per-Genre Guidelines\n\n(.*?)$", content, re.DOTALL)
         if not section_match:
             return
 
@@ -126,41 +143,33 @@ class DrumGuideParser(BaseGuideParser):
         for g in genres:
             if not g.strip():
                 continue
-            lines = g.strip().split('\n')
+            lines = g.strip().split("\n")
             name = lines[0].strip().lower()
 
-            genre_rules = {
-                "swing": 0.0,
-                "timing_shift": 0.0,
-                "notes": []
-            }
+            genre_rules = {"swing": 0.0, "timing_shift": 0.0, "notes": []}
 
             for line in lines[1:]:
-                line = line.strip().lstrip('- ').strip()
+                line = line.strip().lstrip("- ").strip()
                 if not line:
                     continue
                 genre_rules["notes"].append(line)
 
                 # Parse specific keywords
                 # "Heavy swing (55-62%)"
-                swing_match = re.search(
-                    r"swing.*?(\d+)-(\d+)%", line, re.IGNORECASE)
+                swing_match = re.search(r"swing.*?(\d+)-(\d+)%", line, re.IGNORECASE)
                 if swing_match:
                     # Average the range and normalize to 0-1 (assuming 50% is 0.0, 75% is 1.0?
                     # Usually swing 50% = straight, 66% = triplet.
                     # Let's store raw percentage for now or normalize 50->0, 100->1)
                     # Standard DAW swing: 50% is straight.
-                    avg_swing = (int(swing_match.group(1)) +
-                                 int(swing_match.group(2))) / 2
+                    avg_swing = (int(swing_match.group(1)) + int(swing_match.group(2))) / 2
                     # Normalize 50-100 to 0-1
                     genre_rules["swing"] = (avg_swing - 50) / 50.0
 
                 # "snare slightly late (10-30ms)"
-                late_match = re.search(
-                    r"late.*?(\d+)-(\d+)ms", line, re.IGNORECASE)
+                late_match = re.search(r"late.*?(\d+)-(\d+)ms", line, re.IGNORECASE)
                 if late_match:
-                    avg_late = (int(late_match.group(1)) +
-                                int(late_match.group(2))) / 2
+                    avg_late = (int(late_match.group(1)) + int(late_match.group(2))) / 2
                     genre_rules["timing_shift"] = float(avg_late)
 
             self.rules["genres"][name] = genre_rules
@@ -169,13 +178,16 @@ class DrumGuideParser(BaseGuideParser):
         """Hardcoded fallback if file is missing."""
         return {
             "hihat": {"velocity_variation": (5, 10), "timing_variation_ms": (10, 20)},
-            "snare": {"ghost_velocity": (25, 45), "main_velocity": (95, 115), "timing_variation_ms": (5, 10)},  # noqa: E501
-
+            "snare": {
+                "ghost_velocity": (25, 45),
+                "main_velocity": (95, 115),
+                "timing_variation_ms": (5, 10),
+            },  # noqa: E501
             "kick": {"velocity_range": (85, 110), "timing_variation_ms": (0, 5)},
             "genres": {
                 "rock": {"swing": 0.0, "timing_shift": 0.0},
-                "hip-hop": {"swing": 0.17, "timing_shift": 20.0}  # ~58% swing
-            }
+                "hip-hop": {"swing": 0.17, "timing_shift": 20.0},  # ~58% swing
+            },
         }
 
 
@@ -184,11 +196,7 @@ class BassGuideParser(BaseGuideParser):
 
     def __init__(self, guide_path: Path):
         super().__init__(guide_path)
-        self.rules = {
-            "timing": {},
-            "velocity": {},
-            "humanize": {}
-        }
+        self.rules = {"timing": {}, "velocity": {}, "humanize": {}}
 
     def _parse_content(self, content: str):
         self._parse_timing(content)
@@ -197,47 +205,43 @@ class BassGuideParser(BaseGuideParser):
 
     def _parse_timing(self, content: str):
         # "Behind the beat | 10-30ms late"
-        behind_match = re.search(
-            r"Behind the beat.*?(\d+)-(\d+)ms late", content, re.IGNORECASE)
+        behind_match = re.search(r"Behind the beat.*?(\d+)-(\d+)ms late", content, re.IGNORECASE)
         if behind_match:
             self.rules["timing"]["behind"] = (
-                int(behind_match.group(1)), int(behind_match.group(2)))
+                int(behind_match.group(1)),
+                int(behind_match.group(2)),
+            )
 
         # "Ahead of the beat | 5-15ms early"
-        ahead_match = re.search(
-            r"Ahead of the beat.*?(\d+)-(\d+)ms early", content, re.IGNORECASE)
+        ahead_match = re.search(r"Ahead of the beat.*?(\d+)-(\d+)ms early", content, re.IGNORECASE)
         if ahead_match:
-            self.rules["timing"]["ahead"] = (
-                int(ahead_match.group(1)), int(ahead_match.group(2)))
+            self.rules["timing"]["ahead"] = (int(ahead_match.group(1)), int(ahead_match.group(2)))
 
     def _parse_velocity(self, content: str):
         # "Root notes: Stronger (velocity 95-110)"
-        root_match = re.search(
-            r"Root notes.*?velocity (\d+)-(\d+)", content, re.IGNORECASE)
+        root_match = re.search(r"Root notes.*?velocity (\d+)-(\d+)", content, re.IGNORECASE)
         if root_match:
-            self.rules["velocity"]["root"] = (
-                int(root_match.group(1)), int(root_match.group(2)))
+            self.rules["velocity"]["root"] = (int(root_match.group(1)), int(root_match.group(2)))
 
         # "Ghost notes: Very soft (velocity 40-60)"
-        ghost_match = re.search(
-            r"Ghost notes.*?velocity (\d+)-(\d+)", content, re.IGNORECASE)
+        ghost_match = re.search(r"Ghost notes.*?velocity (\d+)-(\d+)", content, re.IGNORECASE)
         if ghost_match:
-            self.rules["velocity"]["ghost"] = (
-                int(ghost_match.group(1)), int(ghost_match.group(2)))
+            self.rules["velocity"]["ghost"] = (int(ghost_match.group(1)), int(ghost_match.group(2)))
 
     def _parse_humanize(self, content: str):
         # "Velocity: ±8 to ±12"
-        vel_match = re.search(
-            r"Velocity: [±\+\-](\d+) to [±\+\-](\d+)", content, re.IGNORECASE)
+        vel_match = re.search(r"Velocity: [±\+\-](\d+) to [±\+\-](\d+)", content, re.IGNORECASE)
         if vel_match:
             self.rules["humanize"]["velocity_range"] = (
-                int(vel_match.group(1)), int(vel_match.group(2)))
+                int(vel_match.group(1)),
+                int(vel_match.group(2)),
+            )
 
     def _get_fallback_rules(self) -> Dict[str, Any]:
         return {
             "timing": {"behind": (10, 30), "ahead": (5, 15)},
             "velocity": {"root": (95, 110), "ghost": (40, 60)},
-            "humanize": {"velocity_range": (8, 12)}
+            "humanize": {"velocity_range": (8, 12)},
         }
 
 
@@ -246,10 +250,7 @@ class GuitarGuideParser(BaseGuideParser):
 
     def __init__(self, guide_path: Path):
         super().__init__(guide_path)
-        self.rules = {
-            "strumming": {},
-            "velocity": {}
-        }
+        self.rules = {"strumming": {}, "velocity": {}}
 
     def _parse_content(self, content: str):
         self._parse_strumming(content)
@@ -257,18 +258,20 @@ class GuitarGuideParser(BaseGuideParser):
 
     def _parse_strumming(self, content: str):
         # "Down strum | Low to high | 20-50ms total"
-        strum_match = re.search(
-            r"Down strum.*?(\d+)-(\d+)ms total", content, re.IGNORECASE)
+        strum_match = re.search(r"Down strum.*?(\d+)-(\d+)ms total", content, re.IGNORECASE)
         if strum_match:
             self.rules["strumming"]["total_duration"] = (
-                int(strum_match.group(1)), int(strum_match.group(2)))
+                int(strum_match.group(1)),
+                int(strum_match.group(2)),
+            )
 
         # "Stagger notes by 5-10ms each"
-        stagger_match = re.search(
-            r"Stagger notes by (\d+)-(\d+)ms", content, re.IGNORECASE)
+        stagger_match = re.search(r"Stagger notes by (\d+)-(\d+)ms", content, re.IGNORECASE)
         if stagger_match:
             self.rules["strumming"]["note_stagger"] = (
-                int(stagger_match.group(1)), int(stagger_match.group(2)))
+                int(stagger_match.group(1)),
+                int(stagger_match.group(2)),
+            )
 
     def _parse_velocity(self, content: str):
         # "Accents: 100 vs 70" - heuristic search for accent patterns
@@ -276,10 +279,7 @@ class GuitarGuideParser(BaseGuideParser):
         pass  # Complex to parse table, maybe just look for ranges if available
 
     def _get_fallback_rules(self) -> Dict[str, Any]:
-        return {
-            "strumming": {"total_duration": (20, 50), "note_stagger": (5, 10)},
-            "velocity": {}
-        }
+        return {"strumming": {"total_duration": (20, 50), "note_stagger": (5, 10)}, "velocity": {}}
 
 
 class EQGuideParser(BaseGuideParser):
@@ -287,9 +287,7 @@ class EQGuideParser(BaseGuideParser):
 
     def __init__(self, guide_path: Path):
         super().__init__(guide_path)
-        self.rules = {
-            "instruments": {}
-        }
+        self.rules = {"instruments": {}}
 
     def _parse_content(self, content: str):
         # Parse "What Lives Where" table
@@ -299,12 +297,12 @@ class EQGuideParser(BaseGuideParser):
         table_match = re.search(r"## What Lives Where\n\n(.*?)\n\n", content, re.DOTALL)
         if table_match:
             table_text = table_match.group(1)
-            rows = table_text.strip().split('\n')
+            rows = table_text.strip().split("\n")
             for row in rows:
                 if "|" not in row or "Instrument" in row or "---" in row:
                     continue
 
-                parts = [p.strip() for p in row.split('|') if p.strip()]
+                parts = [p.strip() for p in row.split("|") if p.strip()]
                 if len(parts) >= 2:
                     inst = parts[0].lower()
                     desc = parts[1]
@@ -321,14 +319,14 @@ class EQGuideParser(BaseGuideParser):
 
                         # Convert to Hz
                         try:
-                            if '-' in val_str:
-                                low, high = val_str.split('-')
+                            if "-" in val_str:
+                                low, high = val_str.split("-")
                                 low = float(low)
                                 high = float(high)
                             else:
                                 low = high = float(val_str)
 
-                            if unit == 'kHz':
+                            if unit == "kHz":
                                 low *= 1000
                                 high *= 1000
 
@@ -342,7 +340,7 @@ class EQGuideParser(BaseGuideParser):
         return {
             "instruments": {
                 "kick drum": {"sub": (50, 60), "click": (3000, 5000)},
-                "snare": {"body": (150, 200), "crack": (1000, 2000)}
+                "snare": {"body": (150, 200), "crack": (1000, 2000)},
             }
         }
 
@@ -352,10 +350,7 @@ class CompressionGuideParser(BaseGuideParser):
 
     def __init__(self, guide_path: Path):
         super().__init__(guide_path)
-        self.rules = {
-            "ratios": {},
-            "attack": {}
-        }
+        self.rules = {"ratios": {}, "attack": {}}
 
     def _parse_content(self, content: str):
         self._parse_ratios(content)
@@ -390,5 +385,5 @@ class CompressionGuideParser(BaseGuideParser):
     def _get_fallback_rules(self) -> Dict[str, Any]:
         return {
             "ratios": {"drums": 6, "vocals": 3, "guitars": 3},
-            "attack": {"fast": (0, 10), "slow": (30, 100)}
+            "attack": {"fast": (0, 10), "slow": (30, 100)},
         }

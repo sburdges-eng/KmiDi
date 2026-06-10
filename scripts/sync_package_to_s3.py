@@ -179,14 +179,21 @@ def upload_actions(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Incrementally sync packaged shards/manifests to S3.")
-    parser.add_argument("--package-dir", required=True, type=Path, help="Path to PACKAGES/<package_id>")
+    parser = argparse.ArgumentParser(
+        description="Incrementally sync packaged shards/manifests to S3."
+    )
+    parser.add_argument(
+        "--package-dir", required=True, type=Path, help="Path to PACKAGES/<package_id>"
+    )
     parser.add_argument(
         "--s3-uri",
         default="",
-        help="Destination S3 URI (s3://bucket/prefix). Defaults to run-contract package bucket/prefix + package id.",
+        help="Destination S3 URI (s3://bucket/prefix). "
+        "Defaults to run-contract package bucket/prefix + package id.",
     )
-    parser.add_argument("--dry-run", action="store_true", help="Print resolved destination details and exit")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Print resolved destination details and exit"
+    )
     parser.add_argument(
         "--resume",
         action="store_true",
@@ -203,15 +210,21 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def resolve_destination_s3_uri(args: argparse.Namespace, contract: dict[str, object], package_id: str) -> str:
+def resolve_destination_s3_uri(
+    args: argparse.Namespace, contract: dict[str, object], package_id: str
+) -> str:
     explicit = args.s3_uri.strip()
     if explicit:
         return explicit
 
     bucket = str(run_contract_get(contract, "s3", "packageBucket", default="")).strip()
-    prefix_root = str(run_contract_get(contract, "s3", "packagePrefix", default="training/packages")).strip("/")
+    prefix_root = str(
+        run_contract_get(contract, "s3", "packagePrefix", default="training/packages")
+    ).strip("/")
     if not bucket:
-        raise ValueError("Missing destination bucket: provide --s3-uri or set s3.packageBucket in run contract")
+        raise ValueError(
+            "Missing destination bucket: provide --s3-uri or set s3.packageBucket in run contract"
+        )
     prefix = f"{prefix_root}/{package_id}" if prefix_root else package_id
     return build_s3_uri(bucket, prefix)
 
@@ -228,8 +241,12 @@ def main() -> int:
     package_id = args.package_dir.name
     resolved_s3_uri = resolve_destination_s3_uri(args, contract, package_id)
     bucket, prefix = parse_s3_uri(resolved_s3_uri)
-    resolved_profile = args.profile or str(run_contract_get(contract, "aws", "profile", default="")).strip()
-    resolved_region = args.region or str(run_contract_get(contract, "aws", "region", default="")).strip()
+    resolved_profile = (
+        args.profile or str(run_contract_get(contract, "aws", "profile", default="")).strip()
+    )
+    resolved_region = (
+        args.region or str(run_contract_get(contract, "aws", "region", default="")).strip()
+    )
 
     if args.dry_run:
         payload = {

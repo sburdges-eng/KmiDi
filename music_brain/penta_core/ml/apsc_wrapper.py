@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import itertools
 from collections import Counter
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 # Minimal schema: per-track decision for aggregation.
 # Each model response can be List[Dict] with keys track_id, action, params.
@@ -81,6 +81,7 @@ def aggregate_json_majority(
     result: List[Dict[str, Any]] = []
     for track_id in sorted(by_track.keys()):
         pairs = by_track[track_id]
+
         # Make (action, frozenset of params items) hashable for Counter
         def _key(act: str, prm: Dict[str, Any]) -> Tuple[str, Tuple[Tuple[str, Any], ...]]:
             return (act, tuple(sorted((k, prm[k]) for k in sorted(prm.keys()))))
@@ -90,11 +91,13 @@ def aggregate_json_majority(
             counter[_key(act, prm)] += 1
         (action, params_t), _ = counter.most_common(1)[0]
         params = dict(params_t)
-        result.append({
-            track_id_key: track_id,
-            action_key: action,
-            params_key: params,
-        })
+        result.append(
+            {
+                track_id_key: track_id,
+                action_key: action,
+                params_key: params,
+            }
+        )
     return result
 
 

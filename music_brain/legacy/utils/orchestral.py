@@ -18,37 +18,37 @@ from collections import defaultdict
 
 from .midi_io import MidiData, TrackData
 
-
 # Common orchestral CC numbers
-CC_MODWHEEL = 1       # Modulation / dynamics / expression
-CC_BREATH = 2         # Breath controller
-CC_VOLUME = 7         # Channel volume
-CC_PAN = 10           # Pan position
-CC_EXPRESSION = 11    # Expression
-CC_SUSTAIN = 64       # Sustain pedal
+CC_MODWHEEL = 1  # Modulation / dynamics / expression
+CC_BREATH = 2  # Breath controller
+CC_VOLUME = 7  # Channel volume
+CC_PAN = 10  # Pan position
+CC_EXPRESSION = 11  # Expression
+CC_SUSTAIN = 64  # Sustain pedal
 
 
 # Keyswitch ranges (common ranges for sample libraries)
 KEYSWITCH_RANGES = {
-    'low': (0, 23),       # C-2 to B-1 (common)
-    'high': (108, 127),   # C7 to G9 (less common)
+    "low": (0, 23),  # C-2 to B-1 (common)
+    "high": (108, 127),  # C7 to G9 (less common)
 }
 
 # Orchestral instrument families
 ORCHESTRAL_FAMILIES = {
-    'strings': ['violin', 'viola', 'cello', 'bass', 'contrabass'],
-    'woodwinds': ['flute', 'oboe', 'clarinet', 'bassoon', 'piccolo', 'english horn'],
-    'brass': ['trumpet', 'horn', 'trombone', 'tuba', 'french horn'],
-    'percussion': ['timpani', 'snare', 'bass drum', 'cymbals', 'triangle', 'glockenspiel'],
-    'keyboards': ['piano', 'harp', 'celesta'],
+    "strings": ["violin", "viola", "cello", "bass", "contrabass"],
+    "woodwinds": ["flute", "oboe", "clarinet", "bassoon", "piccolo", "english horn"],
+    "brass": ["trumpet", "horn", "trombone", "tuba", "french horn"],
+    "percussion": ["timpani", "snare", "bass drum", "cymbals", "triangle", "glockenspiel"],
+    "keyboards": ["piano", "harp", "celesta"],
 }
 
 
 @dataclass
 class ArticulationTrack:
     """Represents an articulation within an instrument."""
+
     instrument: str
-    articulation: str        # legato, staccato, pizzicato, etc.
+    articulation: str  # legato, staccato, pizzicato, etc.
     track_index: int
     keyswitch_note: Optional[int] = None
     cc_controller: Optional[int] = None
@@ -58,6 +58,7 @@ class ArticulationTrack:
 @dataclass
 class ExpressionData:
     """Expression controller data for a track."""
+
     track_index: int
     cc_number: int
     values: List[Tuple[int, int]] = field(default_factory=list)  # (tick, value)
@@ -69,6 +70,7 @@ class ExpressionData:
 @dataclass
 class OrchestralValidation:
     """Results of orchestral template validation."""
+
     is_valid: bool = True
     warnings: List[str] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
@@ -104,8 +106,8 @@ class OrchestralAnalyzer:
     """
 
     def __init__(self):
-        self.keyswitch_low = KEYSWITCH_RANGES['low']
-        self.keyswitch_high = KEYSWITCH_RANGES['high']
+        self.keyswitch_low = KEYSWITCH_RANGES["low"]
+        self.keyswitch_high = KEYSWITCH_RANGES["high"]
 
     def validate(self, data: MidiData) -> OrchestralValidation:
         """
@@ -153,13 +155,15 @@ class OrchestralAnalyzer:
                 # Check for articulation in track name
                 articulation = self._detect_articulation(track.name)
                 if articulation:
-                    result.articulation_tracks.append(ArticulationTrack(
-                        instrument=inst_name,
-                        articulation=articulation,
-                        track_index=track.index,
-                        keyswitch_note=keyswitch_notes[0] if keyswitch_notes else None,
-                        note_count=len(track.notes)
-                    ))
+                    result.articulation_tracks.append(
+                        ArticulationTrack(
+                            instrument=inst_name,
+                            articulation=articulation,
+                            track_index=track.index,
+                            keyswitch_note=keyswitch_notes[0] if keyswitch_notes else None,
+                            note_count=len(track.notes),
+                        )
+                    )
 
         result.unique_instruments = len(instruments_seen)
 
@@ -181,19 +185,19 @@ class OrchestralAnalyzer:
     def _analyze_track(self, track: TrackData, ppq: int) -> Dict:
         """Analyze a single track."""
         analysis = {
-            'note_count': len(track.notes),
-            'cc_count': 0,
-            'pitch_bend_count': 0,
-            'has_keyswitches': False,
+            "note_count": len(track.notes),
+            "cc_count": 0,
+            "pitch_bend_count": 0,
+            "has_keyswitches": False,
         }
 
         for event in track.events:
             msg = event.message
-            if hasattr(msg, 'type'):
-                if msg.type == 'control_change':
-                    analysis['cc_count'] += 1
-                elif msg.type == 'pitchwheel':
-                    analysis['pitch_bend_count'] += 1
+            if hasattr(msg, "type"):
+                if msg.type == "control_change":
+                    analysis["cc_count"] += 1
+                elif msg.type == "pitchwheel":
+                    analysis["pitch_bend_count"] += 1
 
         return analysis
 
@@ -203,8 +207,10 @@ class OrchestralAnalyzer:
 
         for note in track.notes:
             # Check if in keyswitch range
-            if (self.keyswitch_low[0] <= note.pitch <= self.keyswitch_low[1] or
-                    self.keyswitch_high[0] <= note.pitch <= self.keyswitch_high[1]):
+            if (
+                self.keyswitch_low[0] <= note.pitch <= self.keyswitch_low[1]
+                or self.keyswitch_high[0] <= note.pitch <= self.keyswitch_high[1]
+            ):
 
                 # Keyswitches typically have:
                 # - Very short duration (just triggers)
@@ -221,7 +227,7 @@ class OrchestralAnalyzer:
 
         for event in track.events:
             msg = event.message
-            if hasattr(msg, 'type') and msg.type == 'control_change':
+            if hasattr(msg, "type") and msg.type == "control_change":
                 if msg.control in (CC_MODWHEEL, CC_EXPRESSION, CC_VOLUME, CC_BREATH):
                     cc_data[msg.control].append((event.abs_time, msg.value))
 
@@ -234,7 +240,7 @@ class OrchestralAnalyzer:
                     values=sorted(values),
                     min_value=min(v[1] for v in values),
                     max_value=max(v[1] for v in values),
-                    has_automation=True
+                    has_automation=True,
                 )
                 result.append(ed)
 
@@ -251,11 +257,21 @@ class OrchestralAnalyzer:
 
         # Common abbreviations
         abbrevs = {
-            'vln': 'violin', 'vla': 'viola', 'vcl': 'cello', 'vc': 'cello',
-            'cb': 'contrabass', 'db': 'contrabass',
-            'fl': 'flute', 'ob': 'oboe', 'cl': 'clarinet', 'bn': 'bassoon',
-            'hn': 'horn', 'tp': 'trumpet', 'tb': 'trombone',
-            'timp': 'timpani', 'perc': 'percussion',
+            "vln": "violin",
+            "vla": "viola",
+            "vcl": "cello",
+            "vc": "cello",
+            "cb": "contrabass",
+            "db": "contrabass",
+            "fl": "flute",
+            "ob": "oboe",
+            "cl": "clarinet",
+            "bn": "bassoon",
+            "hn": "horn",
+            "tp": "trumpet",
+            "tb": "trombone",
+            "timp": "timpani",
+            "perc": "percussion",
         }
 
         for abbrev, inst in abbrevs.items():
@@ -269,10 +285,25 @@ class OrchestralAnalyzer:
         name_lower = track_name.lower()
 
         articulations = [
-            'legato', 'staccato', 'pizzicato', 'tremolo', 'trills',
-            'spiccato', 'marcato', 'tenuto', 'sustain', 'short',
-            'long', 'con sord', 'muted', 'harmonics', 'col legno',
-            'sul pont', 'sul tasto', 'arco', 'detache',
+            "legato",
+            "staccato",
+            "pizzicato",
+            "tremolo",
+            "trills",
+            "spiccato",
+            "marcato",
+            "tenuto",
+            "sustain",
+            "short",
+            "long",
+            "con sord",
+            "muted",
+            "harmonics",
+            "col legno",
+            "sul pont",
+            "sul tasto",
+            "arco",
+            "detache",
         ]
 
         for art in articulations:
@@ -294,7 +325,8 @@ class OrchestralAnalyzer:
             overlaps = self._check_overlapping_notes(track)
             if overlaps > 0:
                 result.warnings.append(
-                    f"Track {track.index} ({track.name}): {overlaps} overlapping notes")
+                    f"Track {track.index} ({track.name}): {overlaps} overlapping notes"
+                )
 
         # Check for extreme CC density (might cause playback issues)
         for track_idx, expr_list in result.expression_data.items():
@@ -302,7 +334,6 @@ class OrchestralAnalyzer:
                 if len(expr.values) > 1000:
                     result.warnings.append(
                         f"Track {track_idx}: High CC{expr.cc_number} density ({len(expr.values)} events)"  # noqa: E501
-
                     )
 
         # Check for potential channel conflicts
@@ -313,9 +344,7 @@ class OrchestralAnalyzer:
 
         for channel, track_names in channels_used.items():
             if len(track_names) > 1:
-                result.warnings.append(
-                    f"Channel {channel + 1} shared by: {', '.join(track_names)}"
-                )
+                result.warnings.append(f"Channel {channel + 1} shared by: {', '.join(track_names)}")
 
     def _check_overlapping_notes(self, track: TrackData) -> int:
         """Count overlapping notes of same pitch."""
@@ -328,7 +357,7 @@ class OrchestralAnalyzer:
         for pitch, notes in notes_by_pitch.items():
             notes = sorted(notes, key=lambda n: n.onset_ticks)
             for i in range(1, len(notes)):
-                prev_end = notes[i-1].onset_ticks + notes[i-1].duration_ticks
+                prev_end = notes[i - 1].onset_ticks + notes[i - 1].duration_ticks
                 if notes[i].onset_ticks < prev_end:
                     overlaps += 1
 
@@ -351,9 +380,24 @@ def is_orchestral_template(data: MidiData) -> bool:
 
     # Check for orchestral instrument names
     orchestral_keywords = [
-        'violin', 'viola', 'cello', 'bass', 'flute', 'oboe', 'clarinet',
-        'bassoon', 'horn', 'trumpet', 'trombone', 'tuba', 'timpani',
-        'strings', 'brass', 'woodwind', 'orchestra', 'ensemble'
+        "violin",
+        "viola",
+        "cello",
+        "bass",
+        "flute",
+        "oboe",
+        "clarinet",
+        "bassoon",
+        "horn",
+        "trumpet",
+        "trombone",
+        "tuba",
+        "timpani",
+        "strings",
+        "brass",
+        "woodwind",
+        "orchestra",
+        "ensemble",
     ]
 
     matches = 0

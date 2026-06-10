@@ -16,13 +16,13 @@ from music_brain.emotion.emotion_thesaurus import EmotionMatch
 class ProductionPreset:
     """Container for production decisions derived from an emotion."""
 
-    drum_style: str = "standard"          # e.g., rock, hip-hop, jazzy
-    dynamics_level: str = "mf"            # pp → fff
-    arrangement_density: float = 0.5      # 0–1, sparse to dense
+    drum_style: str = "standard"  # e.g., rock, hip-hop, jazzy
+    dynamics_level: str = "mf"  # pp → fff
+    arrangement_density: float = 0.5  # 0–1, sparse to dense
     intensity_tier: Optional[int] = None  # 1–6 from EmotionMatch
     tempo_range: Tuple[int, int] = (100, 120)
-    feel: str = "straight"                # straight or swing
-    swing: float = 0.0                    # 0–0.25
+    feel: str = "straight"  # straight or swing
+    swing: float = 0.0  # 0–0.25
     groove_motif: str = "backbeat"
     kit_hint: str = "standard kit"
     section_dynamics: Dict[str, str] = field(default_factory=dict)
@@ -255,14 +255,10 @@ class EmotionProductionMapper:
         dynamics_level = self.get_dynamics_level(emotion)
         arrangement_density = self.get_arrangement_density(emotion)
         swing = self._get_swing(profile, genre_hint)
-        genre_info = (
-            self._GENRE_TO_DRUM_STYLE.get(genre_hint.lower())
-            if genre_hint
-            else None
+        genre_info = self._GENRE_TO_DRUM_STYLE.get(genre_hint.lower()) if genre_hint else None
+        groove_val: str = (genre_info[2] if genre_info else None) or str(
+            profile.get("groove", "backbeat")
         )
-        groove_val: str = (
-            genre_info[2] if genre_info else None
-        ) or str(profile.get("groove", "backbeat"))
         tempo_range = self.get_tempo_range(emotion)
         section_dynamics = self._build_section_dynamics(dynamics_level)
         section_density = self._build_section_density(arrangement_density)
@@ -292,8 +288,7 @@ class EmotionProductionMapper:
             arrangement_density=arrangement_density,
             intensity_tier=emotion.intensity_tier,
             tempo_range=tempo_range,
-            feel="swing" if swing > 0.05 or profile.get(
-                "feel") == "swing" else "straight",
+            feel="swing" if swing > 0.05 or profile.get("feel") == "swing" else "straight",
             swing=swing,
             groove_motif=groove_val,
             kit_hint=str(kit_hint),
@@ -347,9 +342,7 @@ class EmotionProductionMapper:
         """
         profile = self._resolve_profile(emotion)
         tier = emotion.intensity_tier or 3
-        base_density = float(
-            profile.get("density", self._NEUTRAL_PROFILE["density"])
-        )
+        base_density = float(profile.get("density", self._NEUTRAL_PROFILE["density"]))
         density = base_density + 0.07 * (tier - 3)
         return self._clamp(density, 0.2, 1.0)
 
@@ -368,9 +361,7 @@ class EmotionProductionMapper:
         base_key = (emotion.base_emotion or "").lower()
         sub_key = (emotion.sub_emotion or "").lower()
 
-        profile: Dict[str, Any] = self._BASE_PROFILES.get(
-            base_key, self._NEUTRAL_PROFILE
-        ).copy()
+        profile: Dict[str, Any] = self._BASE_PROFILES.get(base_key, self._NEUTRAL_PROFILE).copy()
         overrides = self._SUB_OVERRIDES.get(base_key, {}).get(sub_key)
         if overrides:
             profile.update(overrides)
@@ -390,11 +381,7 @@ class EmotionProductionMapper:
 
     def _build_section_dynamics(self, base_level: str) -> Dict[str, str]:
         levels = ["pp", "p", "mp", "mf", "f", "ff", "fff"]
-        base_idx = (
-            levels.index(base_level)
-            if base_level in levels
-            else levels.index("mf")
-        )
+        base_idx = levels.index(base_level) if base_level in levels else levels.index("mf")
         result = {}
         for section, shift in self._SECTION_DYNAMICS_SHIFT.items():
             idx = self._clamp_index(base_idx + shift, len(levels))
@@ -403,11 +390,7 @@ class EmotionProductionMapper:
 
     def _section_adjusted_dynamic(self, base_level: str, section: str) -> str:
         levels = ["pp", "p", "mp", "mf", "f", "ff", "fff"]
-        base_idx = (
-            levels.index(base_level)
-            if base_level in levels
-            else levels.index("mf")
-        )
+        base_idx = levels.index(base_level) if base_level in levels else levels.index("mf")
         shift = self._SECTION_DYNAMICS_SHIFT.get(section.lower(), 0)
         idx = self._clamp_index(base_idx + shift, len(levels))
         return levels[idx]
@@ -456,9 +439,7 @@ class EmotionProductionMapper:
         return max(0, min(length - 1, idx))
 
     @staticmethod
-    def _merge_dicts(
-        base: Dict[str, Any], overrides: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _merge_dicts(base: Dict[str, Any], overrides: Dict[str, Any]) -> Dict[str, Any]:
         merged = dict(base)
         merged.update(overrides)
         return merged

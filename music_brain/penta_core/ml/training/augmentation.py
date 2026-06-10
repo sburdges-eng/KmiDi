@@ -142,6 +142,7 @@ class AudioAugmentor:
             return y[indices]
 
         import librosa
+
         return librosa.effects.time_stretch(y, rate=rate)
 
     def pitch_shift(
@@ -169,6 +170,7 @@ class AudioAugmentor:
             return y
 
         import librosa
+
         return librosa.effects.pitch_shift(y, sr=sr, n_steps=n_steps)
 
     def add_noise(
@@ -202,8 +204,8 @@ class AudioAugmentor:
             noise = np.random.randn(len(y))
 
         # Scale noise to achieve target SNR
-        signal_power = np.mean(y ** 2)
-        noise_power = np.mean(noise ** 2)
+        signal_power = np.mean(y**2)
+        noise_power = np.mean(noise**2)
 
         target_noise_power = signal_power / (10 ** (snr_db / 10))
         noise_scale = np.sqrt(target_noise_power / (noise_power + 1e-10))
@@ -219,6 +221,7 @@ class AudioAugmentor:
         a = [1, -2.494956002, 2.017265875, -0.522189400]
 
         from scipy.signal import lfilter
+
         return lfilter(b, a, white)
 
     def _generate_brown_noise(self, length: int) -> np.ndarray:
@@ -278,7 +281,7 @@ class AudioAugmentor:
         # Calculate gain reduction
         over_threshold = y_db - threshold_db
         over_threshold = np.maximum(over_threshold, 0)
-        gain_reduction = over_threshold * (1 - 1/ratio)
+        gain_reduction = over_threshold * (1 - 1 / ratio)
 
         # Apply smoothing (simple exponential)
         attack_samples = int(attack_ms * sr / 1000)
@@ -286,13 +289,13 @@ class AudioAugmentor:
 
         smoothed_gain = np.zeros_like(gain_reduction)
         for i in range(1, len(gain_reduction)):
-            if gain_reduction[i] > smoothed_gain[i-1]:
+            if gain_reduction[i] > smoothed_gain[i - 1]:
                 # Attack
                 alpha = 1 - np.exp(-1 / attack_samples)
             else:
                 # Release
                 alpha = 1 - np.exp(-1 / release_samples)
-            smoothed_gain[i] = alpha * gain_reduction[i] + (1 - alpha) * smoothed_gain[i-1]
+            smoothed_gain[i] = alpha * gain_reduction[i] + (1 - alpha) * smoothed_gain[i - 1]
 
         # Apply gain reduction
         gain_linear = 10 ** (-smoothed_gain / 20)
@@ -338,6 +341,7 @@ class AudioAugmentor:
         # Apply damping (low-pass filter)
         if damping > 0:
             from scipy.ndimage import uniform_filter1d
+
             kernel_size = int(1 + damping * 10)
             noise = uniform_filter1d(noise, kernel_size)
 
@@ -346,7 +350,8 @@ class AudioAugmentor:
 
         # Convolve
         from scipy.signal import fftconvolve
-        wet = fftconvolve(y, ir, mode='same')
+
+        wet = fftconvolve(y, ir, mode="same")
 
         # Mix
         return (1 - wet_level) * y + wet_level * wet
@@ -385,13 +390,13 @@ class AudioAugmentor:
         for _ in range(num_masks):
             f = random.randint(0, min(freq_mask_param, n_freq))
             f0 = random.randint(0, n_freq - f)
-            spec[f0:f0 + f, :] = 0
+            spec[f0 : f0 + f, :] = 0
 
         # Time masking
         for _ in range(num_masks):
             t = random.randint(0, min(time_mask_param, n_time))
             t0 = random.randint(0, n_time - t)
-            spec[:, t0:t0 + t] = 0
+            spec[:, t0 : t0 + t] = 0
 
         return spec
 
@@ -414,11 +419,12 @@ class AudioAugmentor:
 
         # Create warped frequency indices
         orig_indices = np.arange(n_freq)
-        warped_indices = orig_indices ** warp_factor
+        warped_indices = orig_indices**warp_factor
         warped_indices = warped_indices / warped_indices[-1] * (n_freq - 1)
 
         # Interpolate
         from scipy.interpolate import interp1d
+
         warped_spec = np.zeros_like(spec)
 
         for t in range(n_time):
@@ -500,7 +506,9 @@ class AudioAugmentor:
 
         # Apply cut
         mixed_spec = spec1.copy()
-        mixed_spec[f0:f0+cut_freq, t0:t0+cut_time] = spec2[f0:f0+cut_freq, t0:t0+cut_time]
+        mixed_spec[f0 : f0 + cut_freq, t0 : t0 + cut_time] = spec2[
+            f0 : f0 + cut_freq, t0 : t0 + cut_time
+        ]
 
         # Adjust lambda based on actual area
         lam = 1 - (cut_freq * cut_time) / (n_freq * n_time)
@@ -587,16 +595,17 @@ class AudioAugmentor:
         """
         # Cross-correlation to find optimal shift
         from scipy.signal import correlate
+
         # Use a subset for speed if long
         win_size = min(len(y1), 16000)
-        corr = correlate(y1[:win_size], y2[:win_size], mode='full')
+        corr = correlate(y1[:win_size], y2[:win_size], mode="full")
         shift = np.argmax(corr) - (win_size - 1)
 
         if shift > 0:
-            y2_aligned = np.pad(y2, (shift, 0))[:len(y2)]
+            y2_aligned = np.pad(y2, (shift, 0))[: len(y2)]
         elif shift < 0:
             y2_aligned = y2[-shift:]
-            y2_aligned = np.pad(y2_aligned, (0, -shift))[:len(y2)]
+            y2_aligned = np.pad(y2_aligned, (0, -shift))[: len(y2)]
         else:
             y2_aligned = y2
 

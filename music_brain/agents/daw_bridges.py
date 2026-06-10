@@ -27,7 +27,6 @@ from .daw_protocol import (
     DAWType,
 )
 
-
 # =============================================================================
 # Voice Control CC Mappings (shared across bridges)
 # =============================================================================
@@ -324,9 +323,7 @@ class LogicProBridge(BaseDAWBridge):
             import mido
 
             if self.config.virtual_midi:
-                self._midi_output = mido.open_output(
-                    self.config.midi_port, virtual=True
-                )
+                self._midi_output = mido.open_output(self.config.midi_port, virtual=True)
             else:
                 ports = mido.get_output_names()
                 matching = [p for p in ports if self.config.midi_port in p]
@@ -385,25 +382,19 @@ class LogicProBridge(BaseDAWBridge):
 
     # Transport (AppleScript)
     def play(self) -> None:
-        self._run_applescript(
-            'tell application "Logic Pro" to set playhead state to playing'
-        )
+        self._run_applescript('tell application "Logic Pro" to set playhead state to playing')
 
     def stop(self) -> None:
-        self._run_applescript(
-            'tell application "Logic Pro" to set playhead state to stopped'
-        )
+        self._run_applescript('tell application "Logic Pro" to set playhead state to stopped')
 
     def record(self) -> None:
         # Logic uses key commands for record
-        self._run_applescript(
-            '''
+        self._run_applescript("""
             tell application "Logic Pro" to activate
             tell application "System Events"
                 key code 15 -- "R" key
             end tell
-            '''
-        )
+            """)
 
     def set_tempo(self, bpm: float) -> None:
         self._run_applescript(f'tell application "Logic Pro" to set tempo to {bpm}')
@@ -411,22 +402,18 @@ class LogicProBridge(BaseDAWBridge):
     def set_position(self, bars: float, beats: float = 0.0) -> None:
         # Logic uses locator in beats
         position = (bars - 1) * 4 + beats  # Assuming 4/4
-        self._run_applescript(
-            f'tell application "Logic Pro" to set locator position to {position}'
-        )
+        self._run_applescript(f'tell application "Logic Pro" to set locator position to {position}')
 
     # Track control (limited via AppleScript)
     def create_track(self, track_type: str = "midi", name: str = "") -> int:
         # Use keyboard shortcut
         key = "36" if track_type == "midi" else "36"  # Option+Cmd+N for new track
-        self._run_applescript(
-            f'''
+        self._run_applescript(f"""
             tell application "Logic Pro" to activate
             tell application "System Events"
                 key code {key} using {{option down, command down}}
             end tell
-            '''
-        )
+            """)
         return -1  # Can't get track index via AppleScript
 
     def arm_track(self, index: int, armed: bool = True) -> None:
@@ -614,9 +601,7 @@ class ReaperBridge(BaseDAWBridge):
             import mido
 
             if self.config.virtual_midi:
-                self._midi_output = mido.open_output(
-                    self.config.midi_port, virtual=True
-                )
+                self._midi_output = mido.open_output(self.config.midi_port, virtual=True)
             else:
                 ports = mido.get_output_names()
                 matching = [p for p in ports if self.config.midi_port in p]
@@ -833,9 +818,7 @@ class BitwigBridge(BaseDAWBridge):
             import mido
 
             if self.config.virtual_midi:
-                self._midi_output = mido.open_output(
-                    self.config.midi_port, virtual=True
-                )
+                self._midi_output = mido.open_output(self.config.midi_port, virtual=True)
             else:
                 ports = mido.get_output_names()
                 matching = [p for p in ports if self.config.midi_port in p]

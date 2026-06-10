@@ -41,7 +41,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO, Optional
 
-
 _RIFF_HEADER_SIZE = 44
 
 
@@ -58,6 +57,7 @@ class WavSpec:
             remains a valid WAVE (extra header bytes describe space that
             is not written), but most readers will report EOF early.
     """
+
     sample_rate: int
     num_channels: int
     bits_per_sample: int
@@ -92,8 +92,8 @@ def _pack_riff_header(spec: WavSpec) -> bytes:
         + struct.pack("<I", riff_size)
         + b"WAVE"
         + b"fmt "
-        + struct.pack("<I", 16)                  # subchunk1 size
-        + struct.pack("<H", 1)                   # audio format = PCM
+        + struct.pack("<I", 16)  # subchunk1 size
+        + struct.pack("<H", 1)  # audio format = PCM
         + struct.pack("<H", spec.num_channels)
         + struct.pack("<I", spec.sample_rate)
         + struct.pack("<I", byte_rate)
@@ -107,8 +107,8 @@ def _pack_riff_header(spec: WavSpec) -> bytes:
 def _check_pcm_chunk(spec: WavSpec, samples: bytes) -> None:
     if len(samples) % spec.bytes_per_frame != 0:
         raise ValueError(
-            f"chunk size {len(samples)} not aligned to frame size "
-            f"{spec.bytes_per_frame}")
+            f"chunk size {len(samples)} not aligned to frame size " f"{spec.bytes_per_frame}"
+        )
 
 
 class StreamingWavWriter:
@@ -120,8 +120,9 @@ class StreamingWavWriter:
     writer still emits a byte-stable file.
     """
 
-    def __init__(self, spec: WavSpec, sink: Optional[BinaryIO] = None,
-                 *, owns_sink: bool = False) -> None:
+    def __init__(
+        self, spec: WavSpec, sink: Optional[BinaryIO] = None, *, owns_sink: bool = False
+    ) -> None:
         self._spec = spec
         self._sink = sink or io.BytesIO()
         self._owns_sink = owns_sink
@@ -154,7 +155,8 @@ class StreamingWavWriter:
         if chunk_index < self._next_index:
             raise ValueError(
                 f"chunk_index {chunk_index} already emitted "
-                f"(next expected = {self._next_index})")
+                f"(next expected = {self._next_index})"
+            )
         _check_pcm_chunk(self._spec, samples)
         if not self._started:
             self.begin()

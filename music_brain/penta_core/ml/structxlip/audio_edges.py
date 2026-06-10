@@ -8,12 +8,13 @@ StructXLIP training to reduce temporal blur and ground instructions like "drop a
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Union
+from typing import Dict, Optional
 
 import numpy as np
 
 try:
     import librosa
+
     _HAS_LIBROSA = True
 except ImportError:
     _HAS_LIBROSA = False
@@ -81,7 +82,7 @@ def extract_spectral_flux(
             fft = np.fft.rfft(windowed)
             mag[:, i] = np.abs(fft)
     diff = np.diff(mag, axis=1)
-    flux = np.sqrt(np.sum(diff ** 2, axis=0))
+    flux = np.sqrt(np.sum(diff**2, axis=0))
     flux = np.concatenate([[0.0], flux]).astype(np.float32)
     return flux
 

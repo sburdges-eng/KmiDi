@@ -38,7 +38,6 @@ from enum import Enum
 # leaving the client wrongly marked unavailable until uptime exceeded the TTL.
 _NEVER_CHECKED: float = float("-inf")
 
-
 # =============================================================================
 # Response Cache for LLM calls
 # =============================================================================
@@ -66,8 +65,7 @@ class _LRUResponseCache:
             return None
 
     def put(
-        self, model: str, prompt: str, response: str,
-        system: str = "", extra: str = ""
+        self, model: str, prompt: str, response: str, system: str = "", extra: str = ""
     ) -> None:
         key = self._make_key(model, prompt, system, extra)
         with self._lock:
@@ -90,23 +88,26 @@ class _LRUResponseCache:
 # Local LLM Configuration
 # =============================================================================
 
+
 @dataclass
 class LocalLLMConfig:
     """Configuration for local LLM (Ollama)."""
-    model: str = "llama3"           # Default model
+
+    model: str = "llama3"  # Default model
     base_url: str = "http://localhost:11434"
     temperature: float = 0.7
     context_length: int = 4096
     # Specialized models for different tasks
-    code_model: str = "codellama"   # For code generation
-    music_model: str = "llama3"     # For music/creative tasks
+    code_model: str = "codellama"  # For code generation
+    music_model: str = "llama3"  # For music/creative tasks
     # Performance tuning
-    cache_max_size: int = 128       # Max cached LLM responses
+    cache_max_size: int = 128  # Max cached LLM responses
     health_check_ttl: float = 30.0  # Seconds to cache health check result
 
 
 class LLMBackend(Enum):
     """Available LLM backends."""
+
     OLLAMA = "ollama"
     LLAMA_CPP = "llama_cpp"
     LOCAL_AI = "local_ai"
@@ -122,13 +123,14 @@ class OnnxLLMConfig:
     temperature: float = 0.7
     top_p: float = 0.9
     # Performance tuning
-    cache_max_size: int = 128       # Max cached LLM responses
+    cache_max_size: int = 128  # Max cached LLM responses
     health_check_ttl: float = 30.0  # Seconds to cache health check result
 
 
 # =============================================================================
 # Local LLM Client
 # =============================================================================
+
 
 class LocalLLM:
     """
@@ -153,6 +155,7 @@ class LocalLLM:
         self._cache = _LRUResponseCache(max_size=self.config.cache_max_size)
         # Connection-pooled HTTP session (TCP keep-alive)
         import requests
+
         self._session = requests.Session()
         self._check_availability()
 
@@ -162,10 +165,7 @@ class LocalLLM:
         if now - self._health_checked_at < self.config.health_check_ttl:
             return
         try:
-            response = self._session.get(
-                f"{self.config.base_url}/api/tags",
-                timeout=2
-            )
+            response = self._session.get(f"{self.config.base_url}/api/tags", timeout=2)
             self._available = response.status_code == 200
         except Exception:
             self._available = False
@@ -182,7 +182,7 @@ class LocalLLM:
         model: Optional[str] = None,
         system: Optional[str] = None,
         temperature: Optional[float] = None,
-        max_tokens: int = 1024
+        max_tokens: int = 1024,
     ) -> str:
         """
         Generate text using local LLM.
@@ -219,16 +219,14 @@ class LocalLLM:
                 "options": {
                     "temperature": use_temp,
                     "num_predict": max_tokens,
-                }
+                },
             }
 
             if system:
                 data["system"] = system
 
             response = self._session.post(
-                f"{self.config.base_url}/api/generate",
-                json=data,
-                timeout=60
+                f"{self.config.base_url}/api/generate", json=data, timeout=60
             )
 
             if response.status_code == 200:
@@ -246,7 +244,7 @@ class LocalLLM:
         self,
         messages: List[Dict[str, str]],
         model: Optional[str] = None,
-        temperature: Optional[float] = None
+        temperature: Optional[float] = None,
     ) -> str:
         """
         Chat with local LLM.
@@ -284,9 +282,9 @@ class LocalLLM:
                     "stream": False,
                     "options": {
                         "temperature": use_temp,
-                    }
+                    },
                 },
-                timeout=60
+                timeout=60,
             )
 
             if response.status_code == 200:
@@ -342,6 +340,7 @@ class OnnxLLM:
         self._cache = _LRUResponseCache(max_size=self.config.cache_max_size)
         # Connection-pooled HTTP session (TCP keep-alive)
         import requests
+
         self._session = requests.Session()
         self._check_availability()
 
@@ -466,9 +465,11 @@ class OnnxLLM:
 # Tool Definitions
 # =============================================================================
 
+
 @dataclass
 class Tool:
     """A tool that agents can use."""
+
     name: str
     description: str
     func: Callable
@@ -534,11 +535,7 @@ class ToolManager:
         self.register("daw_play", "Start DAW playback", self._bridge.play)
         self.register("daw_stop", "Stop DAW playback", self._bridge.stop)
         self.register("daw_record", "Start DAW recording", self._bridge.record)
-        self.register(
-            "daw_tempo",
-            "Set DAW tempo",
-            lambda bpm: self._bridge.set_tempo(bpm)
-        )
+        self.register("daw_tempo", "Set DAW tempo", lambda bpm: self._bridge.set_tempo(bpm))
 
         # MIDI tools
         self.register(
@@ -546,26 +543,24 @@ class ToolManager:
             "Send MIDI note",
             lambda note, velocity=100, duration=500: self._bridge.send_note(
                 note, velocity, duration
-            )
+            ),
         )
         self.register(
             "send_chord",
             "Send MIDI chord",
             lambda notes, velocity=100, duration=500: self._bridge.send_chord(
                 notes, velocity, duration
-            )
+            ),
         )
 
         # Voice tools
         self.register(
-            "voice_vowel",
-            "Set voice vowel (A/E/I/O/U)",
-            lambda v: self._bridge.set_vowel(v)
+            "voice_vowel", "Set voice vowel (A/E/I/O/U)", lambda v: self._bridge.set_vowel(v)
         )
         self.register(
             "voice_breathiness",
             "Set voice breathiness (0-1)",
-            lambda a: self._bridge.set_breathiness(a)
+            lambda a: self._bridge.set_breathiness(a),
         )
 
     def shutdown(self):
@@ -588,9 +583,11 @@ class ToolManager:
 # Agent Definitions
 # =============================================================================
 
+
 @dataclass
 class AgentRole:
     """Definition of an agent role."""
+
     name: str
     description: str
     system_prompt: str
@@ -617,9 +614,8 @@ When analyzing lyrics, consider:
 - Breath marks and phrasing
 
 Always provide specific, actionable vocal direction.""",
-        tools=["voice_vowel", "voice_breathiness"]
+        tools=["voice_vowel", "voice_breathiness"],
     ),
-
     "composer": AgentRole(
         name="Composer",
         description="Creates chord progressions, harmonies, and melodies based on emotional intent",
@@ -639,9 +635,8 @@ Key emotional mappings:
 - Calm: 60-80 BPM, major/lydian, behind beat
 
 Always justify rule-breaking with emotional reasoning.""",
-        tools=["send_chord", "send_note", "daw_tempo"]
+        tools=["send_chord", "send_note", "daw_tempo"],
     ),
-
     "mix_engineer": AgentRole(
         name="Mix Engineer",
         description="Handles levels, EQ, effects, and sonic balance",
@@ -655,9 +650,8 @@ Your expertise includes:
 
 Remember: "Human imperfection is valued" - pitch drift, timing variation, room noise
 can be features, not bugs. The lo-fi bedroom emo aesthetic embraces vulnerability.""",
-        tools=[]  # Mix tools would be added when available
+        tools=[],  # Mix tools would be added when available
     ),
-
     "daw_controller": AgentRole(
         name="DAW Controller",
         description="Manages transport, tracks, clips, and DAW operations",
@@ -672,9 +666,8 @@ You can:
 - Set positions and loop points
 
 Always confirm operations completed successfully.""",
-        tools=["daw_play", "daw_stop", "daw_record", "daw_tempo"]
+        tools=["daw_play", "daw_stop", "daw_record", "daw_tempo"],
     ),
-
     "producer": AgentRole(
         name="Producer",
         description="Coordinates all agents, makes creative decisions, maintains vision",
@@ -691,9 +684,8 @@ Remember the core philosophy:
 "The audience doesn't hear 'borrowed from Dorian.' They hear 'that part made me cry.'"
 
 Always ask "why" before "how". Emotional intent drives everything.""",
-        tools=[]  # Producer coordinates, doesn't directly use tools
+        tools=[],  # Producer coordinates, doesn't directly use tools
     ),
-
     "lyricist": AgentRole(
         name="Lyricist",
         description="Writes lyrics, analyzes phrasing, identifies syllable stress",
@@ -712,7 +704,7 @@ When writing or analyzing lyrics, mark:
 - Breath marks (//)
 
 Remember: the best lyrics leave space for the music to speak.""",
-        tools=[]
+        tools=[],
     ),
 }
 
@@ -721,6 +713,7 @@ Remember: the best lyrics leave space for the music to speak.""",
 # Agent Class
 # =============================================================================
 
+
 class MusicAgent:
     """
     A music production agent powered by local LLM.
@@ -728,12 +721,7 @@ class MusicAgent:
     LOCAL SYSTEM - Uses Ollama, no cloud APIs.
     """
 
-    def __init__(
-        self,
-        role: AgentRole,
-        llm,
-        tool_manager: ToolManager
-    ):
+    def __init__(self, role: AgentRole, llm, tool_manager: ToolManager):
         self.role = role
         self.llm = llm
         self.tools = tool_manager
@@ -775,10 +763,7 @@ class MusicAgent:
         messages.append({"role": "user", "content": task})
 
         # Get response from local LLM
-        response = self.llm.chat(
-            messages,
-            model=self.role.model
-        )
+        response = self.llm.chat(messages, model=self.role.model)
 
         # Store in conversation history
         self._conversation.append({"role": "user", "content": task})
@@ -803,6 +788,7 @@ class MusicAgent:
 # =============================================================================
 # Agent Crew
 # =============================================================================
+
 
 class MusicCrew:
     """
@@ -853,8 +839,10 @@ class MusicCrew:
         if not self.llm.is_available:
             if self.llm_backend == LLMBackend.ONNX_HTTP:
                 print("WARNING: ONNX LLM service not available.")
-                print("Start service: docker compose -f deployment/docker/docker-compose.yml "
-                      "up daiw-llm-onnx")
+                print(
+                    "Start service: docker compose -f deployment/docker/docker-compose.yml "
+                    "up daiw-llm-onnx"
+                )
                 print("Or set LLM backend to Ollama.")
             else:
                 print("WARNING: Local LLM (Ollama) not available.")
@@ -957,7 +945,7 @@ class MusicCrew:
             agent.clear_history()
         self._agents.clear()
         self.tools.shutdown()
-        if hasattr(self.llm, 'close'):
+        if hasattr(self.llm, "close"):
             self.llm.close()
 
     def __enter__(self):
@@ -974,6 +962,7 @@ class MusicCrew:
 # =============================================================================
 # Pre-defined Tasks
 # =============================================================================
+
 
 def voice_production_task(crew: MusicCrew, lyrics: str) -> Dict[str, Any]:
     """
@@ -1001,9 +990,7 @@ def voice_production_task(crew: MusicCrew, lyrics: str) -> Dict[str, Any]:
 
 
 def song_production_task(
-    crew: MusicCrew,
-    emotion: str,
-    genre: str = "lo-fi bedroom emo"
+    crew: MusicCrew, emotion: str, genre: str = "lo-fi bedroom emo"
 ) -> Dict[str, Any]:
     """
     Complete song production guidance.
@@ -1113,8 +1100,10 @@ if __name__ == "__main__":
         if llm.is_available:
             print("ONNX LLM service is reachable")
         else:
-            print("ONNX LLM service not available. Start daiw-llm-onnx "
-                  "or set DAiW_LLM_BACKEND=ollama")
+            print(
+                "ONNX LLM service not available. Start daiw-llm-onnx "
+                "or set DAiW_LLM_BACKEND=ollama"
+            )
             exit(1)
 
     # Create crew
@@ -1129,6 +1118,6 @@ if __name__ == "__main__":
         response = crew.ask(
             "composer",
             "Write a chord progression for a song about grief and loss. "
-            "Use modal interchange to create bittersweet moments."
+            "Use modal interchange to create bittersweet moments.",
         )
         print(response)

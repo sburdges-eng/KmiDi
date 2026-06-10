@@ -30,6 +30,7 @@ try:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -77,7 +78,7 @@ if TORCH_AVAILABLE:
                 inputs: Logits (N, C)
                 targets: Class indices (N,)
             """
-            ce_loss = F.cross_entropy(inputs, targets, reduction='none')
+            ce_loss = F.cross_entropy(inputs, targets, reduction="none")
             pt = torch.exp(-ce_loss)
 
             focal_weight = (1 - pt) ** self.gamma
@@ -186,8 +187,7 @@ if TORCH_AVAILABLE:
 
             self.emotion_labels = emotion_labels
             self.register_buffer(
-                "emotion_distances",
-                self._compute_emotion_distances(emotion_labels)
+                "emotion_distances", self._compute_emotion_distances(emotion_labels)
             )
 
         def _compute_emotion_distances(self, labels: List[str]) -> torch.Tensor:
@@ -200,10 +200,7 @@ if TORCH_AVAILABLE:
                 for j, label_j in enumerate(labels):
                     coord_j = self.EMOTION_COORDS.get(label_j, (0, 0))
                     # Euclidean distance in VA space
-                    dist = np.sqrt(
-                        (coord_i[0] - coord_j[0])**2 +
-                        (coord_i[1] - coord_j[1])**2
-                    )
+                    dist = np.sqrt((coord_i[0] - coord_j[0]) ** 2 + (coord_i[1] - coord_j[1]) ** 2)
                     distances[i, j] = dist
 
             # Normalize to [0, 1]
@@ -271,13 +268,13 @@ if TORCH_AVAILABLE:
         # Chord relationships (simplified)
         CHORD_RELATIONS = {
             # (root_interval, quality_match) -> weight
-            (0, True): 0.0,   # Same chord
+            (0, True): 0.0,  # Same chord
             (0, False): 0.3,  # Same root, different quality
-            (7, True): 0.2,   # Fifth above (dominant)
-            (5, True): 0.2,   # Fourth above (subdominant)
-            (9, True): 0.3,   # Relative minor/major
-            (3, True): 0.3,   # Minor third
-            (4, True): 0.3,   # Major third
+            (7, True): 0.2,  # Fifth above (dominant)
+            (5, True): 0.2,  # Fourth above (subdominant)
+            (9, True): 0.3,  # Relative minor/major
+            (3, True): 0.3,  # Minor third
+            (4, True): 0.3,  # Major third
         }
 
         def __init__(
@@ -290,10 +287,7 @@ if TORCH_AVAILABLE:
             self.use_circle_of_fifths = use_circle_of_fifths
 
             # Build chord distance matrix
-            self.register_buffer(
-                "chord_distances",
-                self._build_chord_distance_matrix()
-            )
+            self.register_buffer("chord_distances", self._build_chord_distance_matrix())
 
         def _build_chord_distance_matrix(self) -> torch.Tensor:
             """Build matrix of harmonic distances between chords."""
@@ -312,7 +306,7 @@ if TORCH_AVAILABLE:
 
                     # Root interval
                     interval = (root_j - root_i) % 12
-                    quality_match = (qual_i == qual_j)
+                    quality_match = qual_i == qual_j
 
                     # Check known relationships
                     key = (interval, quality_match)
@@ -338,7 +332,7 @@ if TORCH_AVAILABLE:
                 targets: Target chord indices (N,)
             """
             # Standard cross-entropy
-            ce_loss = F.cross_entropy(logits, targets, reduction='none')
+            ce_loss = F.cross_entropy(logits, targets, reduction="none")
 
             # Get predicted chord
             predicted = logits.argmax(dim=1)
@@ -396,7 +390,7 @@ if TORCH_AVAILABLE:
             # Smoothness loss: penalize large differences between consecutive steps
             if predictions.dim() == 3:
                 diff = predictions[:, 1:, :] - predictions[:, :-1, :]
-                smoothness_loss = (diff ** 2).mean()
+                smoothness_loss = (diff**2).mean()
             else:
                 smoothness_loss = torch.tensor(0.0, device=predictions.device)
 
@@ -409,9 +403,7 @@ if TORCH_AVAILABLE:
                 style_loss = torch.tensor(0.0, device=predictions.device)
 
             total_loss = (
-                mse_loss +
-                self.smoothness_weight * smoothness_loss +
-                self.style_weight * style_loss
+                mse_loss + self.smoothness_weight * smoothness_loss + self.style_weight * style_loss
             )
 
             return total_loss
@@ -451,10 +443,9 @@ if TORCH_AVAILABLE:
 
             if learn_weights:
                 # Learnable log-variance for uncertainty weighting
-                self.log_vars = nn.ParameterDict({
-                    name: nn.Parameter(torch.zeros(1))
-                    for name in self.task_names
-                })
+                self.log_vars = nn.ParameterDict(
+                    {name: nn.Parameter(torch.zeros(1)) for name in self.task_names}
+                )
             else:
                 self.log_vars = None
                 self.task_weights = task_weights
@@ -796,9 +787,7 @@ if TORCH_AVAILABLE:
 
         if model_name not in loss_configs:
             # Default to CrossEntropyLoss for unknown models
-            logger.warning(
-                f"No specific loss for {model_name}, using CrossEntropyLoss"
-            )
+            logger.warning(f"No specific loss for {model_name}, using CrossEntropyLoss")
             return nn.CrossEntropyLoss()
 
         config = loss_configs[model_name]
@@ -806,7 +795,6 @@ if TORCH_AVAILABLE:
         loss_kwargs.update(kwargs)
 
         return config["class"](**loss_kwargs)
-
 
 else:
     # Placeholder classes when PyTorch is not available

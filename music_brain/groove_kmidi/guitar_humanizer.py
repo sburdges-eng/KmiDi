@@ -16,6 +16,7 @@ from music_brain.groove.fan_feedback import FanProfile
 @dataclass
 class GuitarHumanizerConfig:
     """Configuration for guitar humanization."""
+
     strum_speed: str = "medium"  # fast, medium, slow
     strum_direction: str = "down"  # down, up, alternate
 
@@ -41,8 +42,7 @@ class GuitarHumanizer:
     def get_strum_parameters(self, fan_profile: Optional[FanProfile] = None) -> Dict[str, Any]:
         """Returns strumming duration and note stagger."""
         # "Down strum | Low to high | 20-50ms total"
-        total_dur = self.rules.get("strumming", {}).get(
-            "total_duration", (20, 50))
+        total_dur = self.rules.get("strumming", {}).get("total_duration", (20, 50))
         stagger = self.rules.get("strumming", {}).get("note_stagger", (5, 10))
 
         if fan_profile:
@@ -54,14 +54,14 @@ class GuitarHumanizer:
             total_dur = (int(total_dur[0] * mult), int(total_dur[1] * mult))
             stagger = (int(stagger[0] * mult), int(stagger[1] * mult))
 
-        return {
-            "total_duration_ms": total_dur,
-            "note_stagger_ms": stagger
-        }
+        return {"total_duration_ms": total_dur, "note_stagger_ms": stagger}
 
     def apply_strum(
-            self, chord_notes: List[Any],
-            direction: str = "down", fan_profile: Optional[FanProfile] = None) -> List[Any]:
+        self,
+        chord_notes: List[Any],
+        direction: str = "down",
+        fan_profile: Optional[FanProfile] = None,
+    ) -> List[Any]:
         """
         Applies strumming delays to a chord (list of simultaneous notes).
         """

@@ -27,7 +27,6 @@ class RhythmRules:
             Rule(
                 name="downbeat_emphasis",
                 description="Strongest notes should fall on metric strong beats (1 in 4/4, 1&4 in 6/8)",  # noqa: E501
-
                 severity=RuleSeverity.GUIDELINE,
                 contexts=CONTEXT_GROUPS["common_practice"],
                 reason="Metric hierarchy reinforces listener's sense of pulse and phrase structure",
@@ -38,7 +37,6 @@ class RhythmRules:
                 ],
                 category="metric_hierarchy",
             ),
-
             Rule(
                 name="avoid_metric_ambiguity",
                 description="Avoid patterns that obscure the meter (unless intentional polymeter)",
@@ -52,7 +50,6 @@ class RhythmRules:
                 ],
                 category="metric_hierarchy",
             ),
-
             # Syncopation
             Rule(
                 name="prepare_suspensions",
@@ -66,7 +63,6 @@ class RhythmRules:
                 ],
                 category="syncopation",
             ),
-
             Rule(
                 name="resolve_suspensions_downward",
                 description="Suspensions resolve by stepwise descent (4-3, 9-8, 7-6)",
@@ -79,7 +75,6 @@ class RhythmRules:
                 ],
                 category="syncopation",
             ),
-
             # Phrase Structure
             Rule(
                 name="balanced_phrase_lengths",
@@ -94,11 +89,9 @@ class RhythmRules:
                 ],
                 category="phrase_structure",
             ),
-
             Rule(
                 name="antecedent_consequent",
                 description="Antecedent phrase ends with half cadence, consequent with authentic cadence",  # noqa: E501
-
                 severity=RuleSeverity.GUIDELINE,
                 contexts=CONTEXT_GROUPS["common_practice"],
                 reason="Question-answer structure creates narrative arc and closure",
@@ -108,7 +101,6 @@ class RhythmRules:
                 ],
                 category="phrase_structure",
             ),
-
             # Polyrhythm
             Rule(
                 name="simple_polyrhythm_ratios",
@@ -122,7 +114,6 @@ class RhythmRules:
                 ],
                 category="polyrhythm",
             ),
-
             # Tempo and Rubato
             Rule(
                 name="gradual_tempo_changes",

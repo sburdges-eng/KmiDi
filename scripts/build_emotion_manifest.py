@@ -33,21 +33,21 @@ logger = logging.getLogger(__name__)
 # Categorical emotion → (valence, arousal) mapping
 # "calm" is a RAVDESS-specific label; mapped to a low-arousal, near-neutral position.
 EMOTION_VA_MAP = {
-    "angry":    {"valence": -0.6, "arousal":  0.8},
-    "calm":     {"valence":  0.2, "arousal": -0.3},
-    "disgust":  {"valence": -0.7, "arousal":  0.3},
-    "fear":     {"valence": -0.6, "arousal":  0.7},
-    "happy":    {"valence":  0.8, "arousal":  0.6},
-    "neutral":  {"valence":  0.0, "arousal":  0.3},
-    "sad":      {"valence": -0.7, "arousal": -0.3},
-    "surprise": {"valence":  0.3, "arousal":  0.8},
+    "angry": {"valence": -0.6, "arousal": 0.8},
+    "calm": {"valence": 0.2, "arousal": -0.3},
+    "disgust": {"valence": -0.7, "arousal": 0.3},
+    "fear": {"valence": -0.6, "arousal": 0.7},
+    "happy": {"valence": 0.8, "arousal": 0.6},
+    "neutral": {"valence": 0.0, "arousal": 0.3},
+    "sad": {"valence": -0.7, "arousal": -0.3},
+    "surprise": {"valence": 0.3, "arousal": 0.8},
 }
 
 # TESS prefix patterns to strip, with special-case normalisation
 # "pleasant_surprise" and "pleasant_surprised" both map to "surprise"
 _TESS_PREFIX_RE = re.compile(r"^(?:yaf|oaf)_(.+)$", re.IGNORECASE)
 _TESS_ALIAS = {
-    "pleasant_surprise":  "surprise",
+    "pleasant_surprise": "surprise",
     "pleasant_surprised": "surprise",
 }
 
@@ -132,15 +132,17 @@ def load_dataset(
             va = EMOTION_VA_MAP[emotion]
             entry_id = f"{dataset_name.lower()}_{Path(rel_file).stem}"
 
-            entries.append({
-                "id": entry_id,
-                "dataset": dataset_name,
-                "audio_path": str(audio_path),
-                "valence": va["valence"],
-                "arousal": va["arousal"],
-                "emotion": emotion,
-                "split": None,  # assigned later
-            })
+            entries.append(
+                {
+                    "id": entry_id,
+                    "dataset": dataset_name,
+                    "audio_path": str(audio_path),
+                    "valence": va["valence"],
+                    "arousal": va["arousal"],
+                    "emotion": emotion,
+                    "split": None,  # assigned later
+                }
+            )
 
     total_skipped = skipped_missing + skipped_unknown
     if skipped_missing:
@@ -184,10 +186,14 @@ def print_summary(entries: list[dict], total_skipped: int) -> None:
     if entries:
         valences = [e["valence"] for e in entries]
         arousals = [e["arousal"] for e in entries]
-        print(f"\nValence: min={min(valences):.3f}  max={max(valences):.3f}"
-              f"  mean={sum(valences)/len(valences):.3f}")
-        print(f"Arousal: min={min(arousals):.3f}  max={max(arousals):.3f}"
-              f"  mean={sum(arousals)/len(arousals):.3f}")
+        print(
+            f"\nValence: min={min(valences):.3f}  max={max(valences):.3f}"
+            f"  mean={sum(valences)/len(valences):.3f}"
+        )
+        print(
+            f"Arousal: min={min(arousals):.3f}  max={max(arousals):.3f}"
+            f"  mean={sum(arousals)/len(arousals):.3f}"
+        )
 
 
 def main() -> int:

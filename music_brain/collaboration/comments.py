@@ -13,6 +13,7 @@ import uuid
 
 class AnnotationType(Enum):
     """Types of annotations."""
+
     COMMENT = "comment"
     SUGGESTION = "suggestion"
     QUESTION = "question"
@@ -22,6 +23,7 @@ class AnnotationType(Enum):
 
 class AnnotationTarget(Enum):
     """What the annotation targets."""
+
     MEASURE = "measure"
     NOTE = "note"
     CHORD = "chord"
@@ -34,6 +36,7 @@ class AnnotationTarget(Enum):
 @dataclass
 class Comment:
     """A comment in a thread."""
+
     comment_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     text: str = ""
     author_id: str = ""
@@ -104,6 +107,7 @@ class Annotation:
 
     Can reference measures, notes, chords, or other elements.
     """
+
     annotation_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     annotation_type: AnnotationType = AnnotationType.COMMENT
     target_type: AnnotationTarget = AnnotationTarget.GENERAL
@@ -175,6 +179,7 @@ class CommentThread:
 
     Threads can be resolved or reopened.
     """
+
     thread_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     annotation: Annotation = field(default_factory=Annotation)
     comments: List[Comment] = field(default_factory=list)
@@ -377,9 +382,7 @@ class CommentManager:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert all threads to dictionary."""
-        return {
-            "threads": [t.to_dict() for t in self._threads.values()]
-        }
+        return {"threads": [t.to_dict() for t in self._threads.values()]}
 
     def from_dict(self, data: Dict[str, Any]) -> None:
         """Load threads from dictionary."""

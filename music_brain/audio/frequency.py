@@ -13,12 +13,14 @@ try:
     import numpy as np
     from scipy import signal
     from scipy.fft import fft, fftfreq
+
     SCIPY_AVAILABLE = True
 except ImportError:
     SCIPY_AVAILABLE = False
 
 try:
     import librosa
+
     LIBROSA_AVAILABLE = True
 except ImportError:
     LIBROSA_AVAILABLE = False
@@ -28,9 +30,11 @@ except ImportError:
 # DATA CLASSES
 # =================================================================
 
+
 @dataclass
 class PitchDetection:
     """Result of pitch detection."""
+
     frequency_hz: float
     midi_note: int
     note_name: str
@@ -50,6 +54,7 @@ class PitchDetection:
 @dataclass
 class HarmonicContent:
     """Analysis of harmonic content."""
+
     fundamental_freq: float
     harmonics: List[Tuple[float, float]]  # List of (frequency, amplitude) pairs
     harmonic_ratio: float  # Ratio of harmonic to inharmonic content
@@ -69,6 +74,7 @@ class HarmonicContent:
 @dataclass
 class FFTAnalysis:
     """Result of FFT analysis."""
+
     frequencies: List[float]
     magnitudes: List[float]
     peak_frequencies: List[float]
@@ -88,7 +94,7 @@ class FFTAnalysis:
 # PITCH UTILITIES
 # =================================================================
 
-NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 A4_FREQ = 440.0
 A4_MIDI = 69
 
@@ -116,7 +122,8 @@ def note_name_to_midi(note_name: str) -> int:
     """Convert note name to MIDI note number."""
     # Parse note name (e.g., 'C4', 'A#5')
     import re
-    match = re.match(r'([A-G]#?)(-?\d+)', note_name)
+
+    match = re.match(r"([A-G]#?)(-?\d+)", note_name)
     if not match:
         raise ValueError(f"Invalid note name: {note_name}")
 
@@ -139,6 +146,7 @@ def cents_from_freq(freq: float, target_midi: int) -> float:
 # FREQUENCY ANALYZER CLASS
 # =================================================================
 
+
 class FrequencyAnalyzer:
     """
     Frequency domain analysis utilities.
@@ -155,8 +163,7 @@ class FrequencyAnalyzer:
         """
         if not SCIPY_AVAILABLE:
             raise ImportError(
-                "scipy required for FrequencyAnalyzer. "
-                "Install with: pip install scipy numpy"
+                "scipy required for FrequencyAnalyzer. " "Install with: pip install scipy numpy"
             )
         self.default_sr = default_sr
 
@@ -164,7 +171,7 @@ class FrequencyAnalyzer:
         self,
         audio_data: np.ndarray,
         sr: Optional[int] = None,
-        window: str = 'hann',
+        window: str = "hann",
         min_freq: float = 20.0,
         max_freq: float = 20000.0,
     ) -> FFTAnalysis:
@@ -190,7 +197,7 @@ class FrequencyAnalyzer:
 
         # FFT
         spectrum = fft(windowed)
-        frequencies = fftfreq(n, 1/sr)
+        frequencies = fftfreq(n, 1 / sr)
 
         # Take positive frequencies only
         pos_mask = frequencies >= 0
@@ -230,7 +237,7 @@ class FrequencyAnalyzer:
         self,
         audio_data: np.ndarray,
         sr: Optional[int] = None,
-        method: str = 'yin',
+        method: str = "yin",
         min_freq: float = 50.0,
         max_freq: float = 2000.0,
     ) -> Optional[PitchDetection]:
@@ -249,9 +256,9 @@ class FrequencyAnalyzer:
         """
         sr = sr or self.default_sr
 
-        if method == 'yin' and LIBROSA_AVAILABLE:
+        if method == "yin" and LIBROSA_AVAILABLE:
             return self._pitch_yin(audio_data, sr, min_freq, max_freq)
-        elif method == 'autocorrelation':
+        elif method == "autocorrelation":
             return self._pitch_autocorrelation(audio_data, sr, min_freq, max_freq)
         else:
             return self._pitch_fft(audio_data, sr, min_freq, max_freq)
@@ -264,9 +271,7 @@ class FrequencyAnalyzer:
         max_freq: float,
     ) -> Optional[PitchDetection]:
         """Pitch detection using YIN algorithm (librosa)."""
-        f0 = librosa.yin(
-            audio_data, fmin=min_freq, fmax=max_freq, sr=sr
-        )
+        f0 = librosa.yin(audio_data, fmin=min_freq, fmax=max_freq, sr=sr)
 
         # Get median frequency (most stable estimate)
         f0_valid = f0[f0 > 0]
@@ -301,8 +306,8 @@ class FrequencyAnalyzer:
     ) -> Optional[PitchDetection]:
         """Pitch detection using autocorrelation."""
         # Compute autocorrelation
-        corr = np.correlate(audio_data, audio_data, mode='full')
-        corr = corr[len(corr)//2:]  # Take positive lags only
+        corr = np.correlate(audio_data, audio_data, mode="full")
+        corr = corr[len(corr) // 2 :]  # Take positive lags only
 
         # Find first peak (after initial maximum)
         min_lag = int(sr / max_freq)
@@ -347,9 +352,7 @@ class FrequencyAnalyzer:
         max_freq: float,
     ) -> Optional[PitchDetection]:
         """Pitch detection using FFT peak finding."""
-        fft_result = self.fft_analysis(
-            audio_data, sr, min_freq=min_freq, max_freq=max_freq
-        )
+        fft_result = self.fft_analysis(audio_data, sr, min_freq=min_freq, max_freq=max_freq)
 
         if not fft_result.peak_frequencies:
             return None
@@ -433,10 +436,14 @@ class FrequencyAnalyzer:
         harmonic_ratio = harmonic_energy / total_energy if total_energy > 0 else 0.0
 
         # Spectral centroid and spread
-        centroid = np.sum(
-            frequencies * magnitudes) / np.sum(magnitudes) if np.sum(magnitudes) > 0 else 0.0
-        spread = np.sqrt(np.sum(magnitudes * (frequencies - centroid) **
-                         2) / np.sum(magnitudes)) if np.sum(magnitudes) > 0 else 0.0
+        centroid = (
+            np.sum(frequencies * magnitudes) / np.sum(magnitudes) if np.sum(magnitudes) > 0 else 0.0
+        )
+        spread = (
+            np.sqrt(np.sum(magnitudes * (frequencies - centroid) ** 2) / np.sum(magnitudes))
+            if np.sum(magnitudes) > 0
+            else 0.0
+        )
 
         return HarmonicContent(
             fundamental_freq=fundamental_freq,
@@ -450,6 +457,7 @@ class FrequencyAnalyzer:
 # =================================================================
 # CONVENIENCE FUNCTIONS
 # =================================================================
+
 
 def analyze_frequency_spectrum(
     filepath: str,
@@ -483,7 +491,7 @@ def analyze_frequency_spectrum(
 
 def detect_pitch_from_audio(
     filepath: str,
-    method: str = 'yin',
+    method: str = "yin",
     max_duration: float = 5.0,
 ) -> Optional[PitchDetection]:
     """
