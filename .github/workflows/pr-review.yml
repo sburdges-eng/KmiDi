@@ -44,9 +44,9 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          pip install -e .
-          pip install pytest pytest-cov
+        # Test deps (pytest, httpx2 for starlette's TestClient) come from the dev extra
+        # so this job can't drift from pyproject.toml again.
+        run: pip install -e ".[dev]"
 
       - name: Run unit tests
         run: pytest tests/unit/ -v --tb=short
