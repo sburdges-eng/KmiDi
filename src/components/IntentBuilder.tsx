@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import type { CompleteSongIntentRequest } from '../types/Intent';
 import { useMusicBrain } from '../hooks/useMusicBrain';
+import { emotionColor, SECTION_COLORS } from '../constants/emotions';
 
 async function safeInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   const { invoke } = await import('@tauri-apps/api/core');
@@ -26,24 +27,21 @@ const SECTION_NAMES = ["intro", "verse", "chorus", "bridge", "outro", "build", "
 const KEYS = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
 const MODES = ["major", "minor", "dorian", "mixolydian", "lydian", "phrygian", "aeolian", "locrian"];
 
-const SECTION_COLORS: Record<string, string> = {
-  intro: '#6366f1', verse: '#22c55e', chorus: '#ec4899',
-  bridge: '#f59e0b', outro: '#8b5cf6', build: '#06b6d4', drop: '#ef4444',
-};
-
+// Colors come from the shared design-system palette so the mood ring
+// matches the Sound Palette and structure timeline (src/constants/emotions.ts).
 const MOODS = [
-  { id: 'nostalgic', label: 'Nostalgic', color: '#a78bfa' },
-  { id: 'melancholic', label: 'Melancholic', color: '#818cf8' },
-  { id: 'grief', label: 'Grief', color: '#6366f1' },
-  { id: 'tender', label: 'Tender', color: '#f9a8d4' },
-  { id: 'romantic', label: 'Romantic', color: '#fb7185' },
-  { id: 'hopeful', label: 'Hopeful', color: '#fb923c' },
-  { id: 'joyful', label: 'Joyful', color: '#fbbf24' },
-  { id: 'energetic', label: 'Energetic', color: '#34d399' },
-  { id: 'fierce', label: 'Fierce', color: '#f87171' },
-  { id: 'mysterious', label: 'Mysterious', color: '#7c3aed' },
-  { id: 'ethereal', label: 'Ethereal', color: '#22d3ee' },
-  { id: 'calm', label: 'Calm', color: '#5eead4' },
+  { id: 'nostalgic', label: 'Nostalgic', color: emotionColor('nostalgic') },
+  { id: 'melancholic', label: 'Melancholic', color: emotionColor('melancholic') },
+  { id: 'grief', label: 'Grief', color: emotionColor('grief') },
+  { id: 'tender', label: 'Tender', color: emotionColor('tender') },
+  { id: 'romantic', label: 'Romantic', color: emotionColor('romantic') },
+  { id: 'hopeful', label: 'Hopeful', color: emotionColor('hopeful') },
+  { id: 'joyful', label: 'Joyful', color: emotionColor('joyful') },
+  { id: 'energetic', label: 'Energetic', color: emotionColor('energetic') },
+  { id: 'fierce', label: 'Fierce', color: emotionColor('fierce') },
+  { id: 'mysterious', label: 'Mysterious', color: emotionColor('mysterious') },
+  { id: 'ethereal', label: 'Ethereal', color: emotionColor('ethereal') },
+  { id: 'calm', label: 'Calm', color: emotionColor('calm') },
 ];
 
 const DEMO_INTENT: CompleteSongIntentRequest = {
@@ -94,6 +92,8 @@ export default function IntentBuilder() {
   const unlistenRef = useRef<{ progress?: () => void; result?: () => void }>({});
   const tempoWheelRef = useRef<HTMLDivElement>(null);
   const tempoValueRef = useRef(120);
+  const moodRingRef = useRef<HTMLDivElement>(null);
+  const moodDragRef = useRef(false);
 
   useEffect(() => {
     let mounted = true;
@@ -253,9 +253,21 @@ export default function IntentBuilder() {
   };
 
   const addSection = () => set('structure', [...intent.structure, { name: 'verse', bars: 8, repetitions: 1 }]);
+  // Removal is recoverable via an inline Undo chip — a blocking confirm dialog
+  // would add friction to every edit, but accidental deletes still lose work.
+  const [lastRemoved, setLastRemoved] =
+    useState<{ section: CompleteSongIntentRequest['structure'][number]; idx: number } | null>(null);
   const removeSection = (idx: number) => {
+    setLastRemoved({ section: intent.structure[idx], idx });
     set('structure', intent.structure.filter((_, i) => i !== idx));
     setSelectedSection(null);
+  };
+  const undoRemoveSection = () => {
+    if (!lastRemoved) return;
+    const next = [...intent.structure];
+    next.splice(Math.min(lastRemoved.idx, next.length), 0, lastRemoved.section);
+    set('structure', next);
+    setLastRemoved(null);
   };
 
   const updateInstrument = (idx: number, field: string, value: unknown) => {
@@ -275,6 +287,23 @@ export default function IntentBuilder() {
   };
 
   const activeMoodColor = MOODS.find(m => m.label.toLowerCase() === intent.mood_primary.toLowerCase())?.color;
+
+  // Drag-to-sweep mood selection: the ring reads as a rotary control, so let
+  // it behave like one — dragging around the ring sweeps through moods.
+  // Button clicks still work; a sweep just selects the nearest node live.
+  const selectMoodFromPoint = useCallback((clientX: number, clientY: number) => {
+    const el = moodRingRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const dx = clientX - (rect.left + rect.width / 2);
+    const dy = clientY - (rect.top + rect.height / 2);
+    if (Math.hypot(dx, dy) < 36) return; // dead zone over the vinyl center
+    // Nodes are laid out from the top, clockwise — mirror that mapping.
+    const deg = (Math.atan2(dy, dx) * 180 / Math.PI + 90 + 360) % 360;
+    const idx = Math.round(deg / (360 / MOODS.length)) % MOODS.length;
+    const label = MOODS[idx].label;
+    setIntent(prev => (prev.mood_primary === label ? prev : { ...prev, mood_primary: label }));
+  }, []);
 
   return (
     <div className="gen-workspace">
@@ -315,7 +344,21 @@ export default function IntentBuilder() {
                 <span className="vinyl-center-text">{intent.mood_primary || 'Select'}</span>
               </div>
             </div>
-            <div className="mood-ring">
+            <div
+              className="mood-ring"
+              ref={moodRingRef}
+              style={{ touchAction: 'none' }}
+              onPointerDown={(e) => {
+                moodDragRef.current = true;
+                e.currentTarget.setPointerCapture(e.pointerId);
+                selectMoodFromPoint(e.clientX, e.clientY);
+              }}
+              onPointerMove={(e) => {
+                if (moodDragRef.current) selectMoodFromPoint(e.clientX, e.clientY);
+              }}
+              onPointerUp={() => { moodDragRef.current = false; }}
+              onPointerCancel={() => { moodDragRef.current = false; }}
+            >
               {MOODS.map((m, i) => {
                 const angle = (i * 360 / MOODS.length) - 90;
                 const rad = angle * Math.PI / 180;
@@ -405,7 +448,7 @@ export default function IntentBuilder() {
                 <button
                   key={i} type="button"
                   className={`stl-block ${selectedSection === i ? 'stl-block-sel' : ''}`}
-                  style={{ flex: `${pct} 0 0%`, '--bc': SECTION_COLORS[sec.name] || '#6366f1' } as React.CSSProperties}
+                  style={{ flex: `${pct} 0 0%`, '--bc': SECTION_COLORS[sec.name] || '#5c7c8a' } as React.CSSProperties}
                   onClick={() => setSelectedSection(selectedSection === i ? null : i)}
                 >
                   <span className="stl-name">{sec.name}</span>
@@ -429,6 +472,29 @@ export default function IntentBuilder() {
                 <input type="number" className="stl-ed-num" min={1} max={16} value={intent.structure[selectedSection].repetitions ?? 1} onChange={e => updateSection(selectedSection, 'repetitions', parseInt(e.target.value) || 1)} />
               </label>
               <button type="button" className="stl-remove" onClick={() => removeSection(selectedSection)} disabled={intent.structure.length <= 1}>Remove</button>
+            </div>
+          )}
+
+          {/* Undo chip for the last removed section */}
+          {lastRemoved && (
+            <div
+              role="status"
+              style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, fontSize: 12, opacity: 0.85 }}
+            >
+              <span>
+                Removed {lastRemoved.section.name} ({lastRemoved.section.bars} bars)
+              </span>
+              <button type="button" className="gf-toggle-link" onClick={undoRemoveSection}>
+                Undo
+              </button>
+              <button
+                type="button"
+                className="gf-toggle-link"
+                onClick={() => setLastRemoved(null)}
+                aria-label="Dismiss undo"
+              >
+                ×
+              </button>
             </div>
           )}
 
@@ -470,10 +536,20 @@ export default function IntentBuilder() {
 
       {/* ── Length warning modal ── */}
       {showLengthWarning && (
-        <div className="gen-modal-overlay" onClick={() => setShowLengthWarning(false)}>
-          <div className="gen-modal" onClick={e => e.stopPropagation()}>
-            <p>Song length exceeded. Please shorten the structure.</p>
-            <button type="button" onClick={() => setShowLengthWarning(false)}>OK</button>
+        <div
+          className="gen-modal-overlay"
+          onClick={() => setShowLengthWarning(false)}
+          onKeyDown={e => { if (e.key === 'Escape') setShowLengthWarning(false); }}
+        >
+          <div
+            className="gen-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Song length warning"
+            onClick={e => e.stopPropagation()}
+          >
+            <p>Song length exceeded ({totalBars} bars — the limit is 1000). Shorten the structure to generate.</p>
+            <button type="button" autoFocus onClick={() => setShowLengthWarning(false)}>OK</button>
           </div>
         </div>
       )}

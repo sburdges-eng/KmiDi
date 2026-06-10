@@ -19,16 +19,24 @@ export function Transport({ isPlaying, isRecording, tempo, onPlayPause, onStop, 
   return (
     <div className="transport-grid">
       <div className="control-row">
-        <button type="button" className="cta" onClick={onPlayPause}>
+        <button
+          type="button"
+          className="cta"
+          onClick={onPlayPause}
+          aria-pressed={isPlaying}
+          title="Play/Pause (Space)"
+        >
           {isPlaying ? 'Pause' : 'Play'}
         </button>
-        <button type="button" className="outline" onClick={onStop}>
+        <button type="button" className="outline" onClick={onStop} title="Stop">
           Stop
         </button>
         <button
           type="button"
           className={isRecording ? 'recording' : 'outline'}
           onClick={onRecord}
+          aria-pressed={isRecording}
+          title="Record (Shift+Space)"
         >
           {isRecording ? 'Stop Record' : 'Record'}
         </button>
