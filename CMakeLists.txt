@@ -5,6 +5,13 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+# The static archives (KellyCore, penta_core, daiw_core) link into the
+# KellyFFI shared library; on Linux that requires -fPIC objects (TLS in
+# moodycamel otherwise emits local-exec relocations ld rejects for .so).
+# macOS is always PIC, so this only changes ELF builds.
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# MSVC hides M_PI and friends behind this; harmless on glibc/libc++.
+add_compile_definitions(_USE_MATH_DEFINES)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # Options

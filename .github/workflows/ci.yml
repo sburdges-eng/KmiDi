@@ -216,7 +216,7 @@ jobs:
         ./penta_tests
         # --ignore-errors negative: lcov 2.x aborts on negative counters from
         # non-atomic profile updates in third-party headers (_deps atomics).
-        lcov --capture --directory . --ignore-errors negative,gcov --output-file coverage.info
+        lcov --capture --directory . --ignore-errors negative,gcov,mismatch --output-file coverage.info
         lcov --remove coverage.info '/usr/*' '/opt/*' '*/external/*' '*/tests/*' '*/_deps/*' --output-file coverage.info
         lcov --list coverage.info
     - name: Upload C++ coverage
