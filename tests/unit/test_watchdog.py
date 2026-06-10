@@ -122,7 +122,12 @@ def test_context_manager_lifecycle() -> None:
     fired: List[str] = []
     with Watchdog(poll_interval_s=0.01) as wd:
         wd.register("ctx", 0.005, lambda n: fired.append(n))
-        time.sleep(0.05)
+        # Poll until the callback lands rather than sleeping a fixed 50ms:
+        # on loaded CI runners the poll thread can be starved past any
+        # fixed margin. Generous deadline, exits immediately on success.
+        deadline = time.perf_counter() + 2.0
+        while "ctx" not in fired and time.perf_counter() < deadline:
+            time.sleep(0.005)
     # After exit, the thread is joined. The callback should have fired at
     # least once during the with-block.
     assert "ctx" in fired
