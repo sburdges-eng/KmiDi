@@ -31,9 +31,13 @@ executable, denied cwd) raise ``SandboxViolation``.
 from __future__ import annotations
 
 import os
-import resource
 import shutil
 import subprocess
+
+try:
+    import resource  # POSIX-only: rlimit-based caps are unavailable on Windows
+except ImportError:  # pragma: no cover — Windows
+    resource = None  # type: ignore[assignment]
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Sequence
@@ -122,8 +126,13 @@ def _build_preexec(policy: SandboxPolicy):
 
     On systems without the relevant rlimit constants (e.g. some Linux
     sandboxes), the call is skipped silently — the wall-clock timeout
-    still bounds the run.
+    still bounds the run. On Windows there is no ``resource`` module and
+    ``preexec_fn`` is unsupported, so ``None`` is returned and the
+    wall-clock timeout is the only enforced bound.
     """
+    if resource is None:
+        return None
+
     mem = policy.memory_limit_bytes
     cpu = policy.cpu_seconds
 
