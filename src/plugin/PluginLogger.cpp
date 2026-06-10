@@ -76,7 +76,11 @@ bool PluginLogger::exportToFile(const juce::File& file) const {
         ).count() % 1000;
         
         std::tm local_time_buf;
+#if defined(_WIN32)
+        localtime_s(&local_time_buf, &time_t);  // MSVC spelling, args swapped
+#else
         localtime_r(&time_t, &local_time_buf);
+#endif
         oss << std::put_time(&local_time_buf, "%Y-%m-%d %H:%M:%S");
         oss << "." << std::setfill('0') << std::setw(3) << ms << " ";
         oss << "[" << entry.thread_name << "] ";

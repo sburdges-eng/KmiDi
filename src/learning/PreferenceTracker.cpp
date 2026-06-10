@@ -193,7 +193,11 @@ std::string PreferenceTracker::getCurrentTimestamp() const {
     auto now = std::chrono::system_clock::now();
     auto time = std::chrono::system_clock::to_time_t(now);
     std::tm buf;
+#if defined(_WIN32)
+    localtime_s(&buf, &time);  // MSVC spelling, args swapped
+#else
     localtime_r(&time, &buf);
+#endif
     std::stringstream ss;
     ss << std::put_time(&buf, "%Y-%m-%dT%H:%M:%S");
     return ss.str();
