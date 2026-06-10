@@ -7,6 +7,7 @@
 #include <juce_core/juce_core.h>
 #include <semaphore> // std::binary_semaphore (C++20)
 #include <thread>
+#include <cstddef>
 
 namespace kelly {
 

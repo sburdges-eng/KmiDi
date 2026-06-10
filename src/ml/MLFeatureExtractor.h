@@ -5,6 +5,7 @@
 #include <array>
 #include <cmath>
 #include <juce_audio_basics/juce_audio_basics.h>
+#include <cstddef>
 
 namespace kelly {
 
