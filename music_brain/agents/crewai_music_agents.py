@@ -30,7 +30,6 @@ from dataclasses import dataclass, field
 from typing import Optional, Dict, List, Any, Callable
 from enum import Enum
 
-
 # Sentinel for "health check has never run". Compared as infinitely stale so the
 # first _check_availability() always executes, even on a freshly booted host whose
 # time.monotonic() (seconds since boot) is still below health_check_ttl. Initializing
