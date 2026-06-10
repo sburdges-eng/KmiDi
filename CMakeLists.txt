@@ -279,6 +279,13 @@ if(NOT pybind11_FOUND)
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/cpp_music_brain/python/.*\\.cpp$")
     list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/python/.*\\.cpp$")
 endif()
+# intent_ir_ffi.cpp references Rust FFI symbols unconditionally; without the
+# staticlib those references would dangle in libKellyCore.a and any consumer
+# that pulls the object fails at link. Keep the object out of the archive
+# entirely when Intent IR is disabled.
+if(NOT KMIDI_ENABLE_INTENT_IR)
+    list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/bridge/intent_ir_ffi\\.cpp$")
+endif()
 # Exclude daiw-namespace files (built separately as daiw_core static lib)
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/dsp/audio_buffer\\.cpp$")
 list(FILTER KELLY_CORE_SOURCES EXCLUDE REGEX "/src/dsp/simd_ops\\.cpp$")
