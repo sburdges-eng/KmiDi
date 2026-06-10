@@ -1,6 +1,24 @@
 # Baseline category counts for CI gate.
 # Format: <Category>=<Count>
-# Updated from artifacts/debug_baseline/bug_taxonomy_report.md on 2026-02-22.
+# Regenerated on 2026-06-10 from GitHub Actions run 27288956089 (PR #207),
+# after run_bug_baseline.sh was made CI-satisfiable (npm ci, cargo without
+# --offline --frozen, BUILD_DESKTOP omitted).
+#
+# Pipeline status at regen time:
+#   cmake_config=1  cmake_build=1  ctest=0  pytest=1
+#   npm_install=0   npm_build=0    cargo_check=0
+#
+# Carried-forward debt to triage (planned follow-up, separate change):
+#   - Build/compile errors=2: cmake_config / cmake_build still fail in the
+#     gate runner despite qt6-base-dev being installed. Per-step log lives
+#     inside the bug-taxonomy-report artifact (cmake_config.log,
+#     cmake_build.log). Needs root-cause analysis — likely missing JUCE
+#     submodule init in the gate job's actions/checkout step, or a Qt6
+#     CMAKE_PREFIX_PATH issue, neither of which the parser can diagnose
+#     from category counts alone.
+#   - pytest rc=1 (was rc=0 in the Feb-22 baseline run) but produced no
+#     classified findings — the failure mode doesn't match any taxonomy
+#     regex. Needs separate inspection of pytest.log inside the artifact.
 
 Logical bugs=0
 Syntax bugs=0
@@ -27,9 +45,9 @@ Data corruption bugs=0
 Encoding/decoding bugs=0
 State machine bugs=0
 Initialization bugs=0
-Configuration bugs=4
-Dependency bugs=2
-Build/compile errors=0
+Configuration bugs=2
+Dependency bugs=0
+Build/compile errors=2
 Regression bugs=0
 Edge case bugs=0
 Boundary condition bugs=0
