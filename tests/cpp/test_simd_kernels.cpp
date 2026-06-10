@@ -21,6 +21,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
+#include <limits>
 
 // ---------------------------------------------------------------------------
 // Tiny deterministic pseudorandom float generator (LCG, period 2^32).
@@ -55,7 +56,7 @@ static void ref_multiply_add(float* dst, const float* a, const float* b, size_t 
 }
 
 static float ref_max_element(const float* a, size_t n) {
-    if (n == 0) return -__builtin_inff();
+    if (n == 0) return -std::numeric_limits<float>::infinity();
     float m = a[0];
     for (size_t i = 1; i < n; ++i) if (a[i] > m) m = a[i];
     return m;
@@ -165,7 +166,7 @@ static void test_max_element() {
     {
         float simd_result = penta::simd::max_element_f32(a, 0);
         // Only check it's not a finite number bigger than our data
-        if (simd_result != -__builtin_inff() && !(simd_result < -1e30f)) {
+        if (simd_result != -std::numeric_limits<float>::infinity() && !(simd_result < -1e30f)) {
             std::printf("FAIL  max_element_f32  n=0  expected -inf, got %.8f\n",
                         (double)simd_result);
             ++failures;
