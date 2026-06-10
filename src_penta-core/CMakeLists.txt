@@ -184,6 +184,11 @@ if(BUILD_PENTA_TESTS)
     else()
         add_executable(penta_tests ${TEST_SOURCES})
 
+        # CI jobs (ci.yml, test.yml) invoke ./penta_tests from the build root.
+        set_target_properties(penta_tests PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+        )
+
         target_link_libraries(penta_tests PRIVATE
             penta_core
             ${_GTEST_LIB}

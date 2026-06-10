@@ -956,8 +956,9 @@ if(BUILD_PENTA_TESTS)
         add_subdirectory(tests/penta_core)
     else()
         message(STATUS
-            "BUILD_PENTA_TESTS=ON but tests/penta_core/ is absent; "
-            "googletest is fetched but no top-level penta_core test target is added.")
+            "tests/penta_core/ has no standalone CMakeLists.txt; the "
+            "penta_tests target is built from tests/penta_core/*.cpp by "
+            "src_penta-core/CMakeLists.txt instead.")
     endif()
 endif()
 

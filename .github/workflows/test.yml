@@ -97,7 +97,7 @@ jobs:
           cmake -B build \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=${{ env.CMAKE_BUILD_TYPE }} \
-            -DPENTA_BUILD_TESTS=ON \
+            -DBUILD_PENTA_TESTS=ON \
             -DPENTA_BUILD_PYTHON_BINDINGS=OFF \
             -DPENTA_BUILD_JUCE_PLUGIN=OFF \
             -DPENTA_ENABLE_SIMD=ON
@@ -156,7 +156,7 @@ jobs:
           cmake -B build \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DPENTA_BUILD_TESTS=ON \
+            -DBUILD_PENTA_TESTS=ON \
             -DPENTA_BUILD_PYTHON_BINDINGS=OFF \
             -DPENTA_BUILD_JUCE_PLUGIN=OFF \
             -DPENTA_ENABLE_SIMD=OFF
@@ -216,7 +216,7 @@ jobs:
           cmake -B build \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DPENTA_BUILD_TESTS=ON \
+            -DBUILD_PENTA_TESTS=ON \
             -DPENTA_BUILD_PYTHON_BINDINGS=OFF \
             -DPENTA_BUILD_JUCE_PLUGIN=OFF \
             -DPENTA_ENABLE_SIMD=ON \
@@ -267,7 +267,7 @@ jobs:
           cmake -B build \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DPENTA_BUILD_TESTS=ON \
+            -DBUILD_PENTA_TESTS=ON \
             -DPENTA_BUILD_PYTHON_BINDINGS=OFF \
             -DPENTA_BUILD_JUCE_PLUGIN=OFF
 
@@ -319,7 +319,7 @@ jobs:
           cmake -B build \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DPENTA_BUILD_TESTS=ON \
+            -DBUILD_PENTA_TESTS=ON \
             -DPENTA_BUILD_PYTHON_BINDINGS=OFF \
             -DPENTA_BUILD_JUCE_PLUGIN=OFF
 
@@ -369,7 +369,7 @@ jobs:
           cmake -B build \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DPENTA_BUILD_TESTS=ON \
+            -DBUILD_PENTA_TESTS=ON \
             -DPENTA_BUILD_PYTHON_BINDINGS=OFF \
             -DPENTA_BUILD_JUCE_PLUGIN=OFF \
             -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage"
