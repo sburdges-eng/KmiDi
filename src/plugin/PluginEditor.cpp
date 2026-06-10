@@ -6,6 +6,7 @@
 #include "ui/MasterEQComponent.h"
 #include <cmath>
 #include <juce_audio_basics/juce_audio_basics.h>
+#include <algorithm>
 
 namespace kelly {
 using namespace MusicConstants;

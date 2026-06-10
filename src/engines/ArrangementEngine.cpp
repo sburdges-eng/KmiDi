@@ -1,6 +1,7 @@
 #include "ArrangementEngine.h"
 #include <random>
 #include <algorithm>
+#include <numeric>
 
 namespace kelly {
 

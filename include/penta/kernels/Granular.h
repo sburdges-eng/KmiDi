@@ -3,6 +3,7 @@
 #include "penta/kernels/Constants.h"
 #include <array>
 #include <cmath>
+#include <algorithm>
 
 namespace penta::kernels {
 
