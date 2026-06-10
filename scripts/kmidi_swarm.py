@@ -31,6 +31,7 @@ Usage:
     python3 scripts/kmidi_swarm.py "<feature request>"
     python3 scripts/kmidi_swarm.py --dry-run "<feature request>"   # phase 1 only
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -57,24 +58,26 @@ WORKTREE_BRANCH = "feature/agent-swarm"
 # without updating that script in lockstep.
 PANES = {
     "overview": (0, 0),  # Hermes status echoes here so the human sees phase progress
-    "schemas":  (1, 0),
-    "rust":     (2, 0),
-    "cpp":      (3, 0),
+    "schemas": (1, 0),
+    "rust": (2, 0),
+    "cpp": (3, 0),
     "bindings": (4, 0),
-    "python":   (5, 0),  # top music_brain pane (5.1 is reserved for uvicorn)
-    "react":    (6, 1),  # bottom pane of vertically-split window 6
+    "python": (5, 0),  # top music_brain pane (5.1 is reserved for uvicorn)
+    "react": (6, 1),  # bottom pane of vertically-split window 6
 }
 
 # Build gates run *inside* the worktree (cd $WORKTREE) so that compile/lint
 # sees the code the executors just wrote. The Phoenix poll waits for these
 # commands to finish before scanning the buffer for errors.
 BUILD_CMDS = {
-    "rust":     "cd $WORKTREE/engine/intent_ir && cargo check --quiet 2>&1 | tail -120",
-    "cpp":      "cd $WORKTREE && cmake --build build --target KellyCore 2>&1 | tail -120",
+    "rust": "cd $WORKTREE/engine/intent_ir && cargo check --quiet 2>&1 | tail -120",
+    "cpp": "cd $WORKTREE && cmake --build build --target KellyCore 2>&1 | tail -120",
     "bindings": "cd $WORKTREE && cmake --build build --target penta_core_native 2>&1 | tail -120",
-    "python":   ("cd $WORKTREE && python3 -m flake8 music_brain/ --max-line-length 100 "
-                 "&& python3 -m pytest tests/unit -q --maxfail=3 2>&1 | tail -120"),
-    "react":    "cd $WORKTREE && npm run build 2>&1 | tail -120",
+    "python": (
+        "cd $WORKTREE && python3 -m flake8 music_brain/ --max-line-length 100 "
+        "&& python3 -m pytest tests/unit -q --maxfail=3 2>&1 | tail -120"
+    ),
+    "react": "cd $WORKTREE && npm run build 2>&1 | tail -120",
 }
 
 # [primary, fallback]. Prompt is appended as final positional argv.
@@ -129,12 +132,12 @@ HERMES_TIMEOUT_SEC = 3000
 # Build poll: how long we wait for `cd && cmake/cargo/...` to finish before
 # scanning the pane for errors. Tuned so slow C++/npm builds aren't truncated.
 BUILD_POLL_INTERVAL_SEC = 2
-BUILD_POLL_STABLE_SEC = 6     # buffer must be unchanged for this long
-BUILD_POLL_MAX_SEC = 900      # 15 min cap per attempt
+BUILD_POLL_STABLE_SEC = 6  # buffer must be unchanged for this long
+BUILD_POLL_MAX_SEC = 900  # 15 min cap per attempt
 
-ANSI_RE = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-ERROR_RE = re.compile(r'(?i)(error:|FAILED|panic|fatal error|undefined reference)')
-JSON_OBJ_RE = re.compile(r'\{[\s\S]*\}')
+ANSI_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+ERROR_RE = re.compile(r"(?i)(error:|FAILED|panic|fatal error|undefined reference)")
+JSON_OBJ_RE = re.compile(r"\{[\s\S]*\}")
 
 # Set in main() before any phase work. When True, compile_and_heal treats
 # CLI exit 0 as success and skips the build/tmux-pane verification step.
@@ -146,6 +149,7 @@ SKIP_BUILD = False
 # ---------------------------------------------------------------------------
 # Tmux interop
 # ---------------------------------------------------------------------------
+
 
 def tmux_send(window: int, pane: int, cmd: str) -> None:
     target = f"{SESSION}:{window}.{pane}"
@@ -163,21 +167,28 @@ def tmux_capture_and_clean(window: int, pane: int) -> str:
         text=True,
         check=False,
     )
-    return ANSI_RE.sub('', result.stdout)
+    return ANSI_RE.sub("", result.stdout)
 
 
 def tmux_session_alive() -> bool:
-    return subprocess.run(
-        ["tmux", "has-session", "-t", SESSION],
-        capture_output=True,
-        check=False,
-    ).returncode == 0
+    return (
+        subprocess.run(
+            ["tmux", "has-session", "-t", SESSION],
+            capture_output=True,
+            check=False,
+        ).returncode
+        == 0
+    )
 
 
-async def wait_for_pane_idle(window: int, pane: int,
-                             *, max_wait: int = BUILD_POLL_MAX_SEC,
-                             stable_for: int = BUILD_POLL_STABLE_SEC,
-                             interval: int = BUILD_POLL_INTERVAL_SEC) -> str:
+async def wait_for_pane_idle(
+    window: int,
+    pane: int,
+    *,
+    max_wait: int = BUILD_POLL_MAX_SEC,
+    stable_for: int = BUILD_POLL_STABLE_SEC,
+    interval: int = BUILD_POLL_INTERVAL_SEC,
+) -> str:
     """Poll the pane buffer until it has been unchanged for `stable_for`
     seconds, or until `max_wait` elapses. Returns the final captured buffer.
 
@@ -212,6 +223,7 @@ def hermes_status(msg: str) -> None:
 # Subprocess driver (shared by Hermes and CLI executors)
 # ---------------------------------------------------------------------------
 
+
 def _agent_env() -> dict[str, str]:
     return {
         **os.environ,
@@ -239,12 +251,14 @@ def _cli_argv(argv: list[str], worktree: str) -> list[str]:
     return list(argv)
 
 
-async def run_cli(argv: list[str], prompt: str, cwd: str,
-                  timeout: int = 300) -> tuple[int, str, str]:
+async def run_cli(
+    argv: list[str], prompt: str, cwd: str, timeout: int = 300
+) -> tuple[int, str, str]:
     """Spawn a CLI with `prompt` appended as the final positional argument."""
     try:
         proc = await asyncio.create_subprocess_exec(
-            *argv, prompt,
+            *argv,
+            prompt,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=cwd,
@@ -255,21 +269,23 @@ async def run_cli(argv: list[str], prompt: str, cwd: str,
 
     try:
         stdout_b, stderr_b = await asyncio.wait_for(
-            proc.communicate(), timeout=timeout,
+            proc.communicate(),
+            timeout=timeout,
         )
     except asyncio.TimeoutError:
         proc.kill()
         await proc.wait()
         return 124, "", f"timeout after {timeout}s"
 
-    out = ANSI_RE.sub('', stdout_b.decode('utf-8', errors='replace'))
-    err = ANSI_RE.sub('', stderr_b.decode('utf-8', errors='replace'))
+    out = ANSI_RE.sub("", stdout_b.decode("utf-8", errors="replace"))
+    err = ANSI_RE.sub("", stderr_b.decode("utf-8", errors="replace"))
     return proc.returncode or 0, out, err
 
 
 # ---------------------------------------------------------------------------
 # Hermes — backbone memory brain
 # ---------------------------------------------------------------------------
+
 
 def _extract_json_block(text: str) -> str:
     """Hermes's -z mode returns 'ONLY the final response text', but models
@@ -289,7 +305,10 @@ async def hermes_think(prompt: str, cwd: str, *, expect_json: bool = False):
     """Send a one-shot prompt to Hermes Agent. Returns str (text mode) or
     dict (json mode). Raises RuntimeError on Hermes failure."""
     rc, out, err = await run_cli(
-        HERMES_CMD, prompt, cwd, timeout=HERMES_TIMEOUT_SEC,
+        HERMES_CMD,
+        prompt,
+        cwd,
+        timeout=HERMES_TIMEOUT_SEC,
     )
     if rc != 0:
         tail = (err or out).strip().splitlines()[-3:]
@@ -304,8 +323,7 @@ async def hermes_think(prompt: str, cwd: str, *, expect_json: bool = False):
         return json.loads(raw)
     except json.JSONDecodeError as exc:
         raise RuntimeError(
-            f"hermes returned non-JSON (parse: {exc}); first 400 chars:\n"
-            f"{text[:400]}"
+            f"hermes returned non-JSON (parse: {exc}); first 400 chars:\n" f"{text[:400]}"
         ) from exc
 
 
@@ -313,8 +331,10 @@ async def hermes_think(prompt: str, cwd: str, *, expect_json: bool = False):
 # Phoenix Protocol (CLI executor with Hermes-driven heal)
 # ---------------------------------------------------------------------------
 
-async def compile_and_heal(stack: str, base_subprompt: str,
-                           worktree: str) -> tuple[str, str, list[str]]:
+
+async def compile_and_heal(
+    stack: str, base_subprompt: str, worktree: str
+) -> tuple[str, str, list[str]]:
     """Drive a stack-specific CLI, run the build in its tmux pane, and self-heal.
 
     `base_subprompt` is the per-stack instruction Hermes generated during the
@@ -359,18 +379,14 @@ async def compile_and_heal(stack: str, base_subprompt: str,
                 f"stack. Output ONLY the prompt text — no preamble, no fences, "
                 f"no commentary.\n\n"
                 f"ORIGINAL TASK:\n{base_subprompt}\n\n"
-                f"ATTEMPT HISTORY ({len(history)} prior failures):\n"
-                + "\n---\n".join(history)
+                f"ATTEMPT HISTORY ({len(history)} prior failures):\n" + "\n---\n".join(history)
             )
             try:
                 prompt = await hermes_think(heal_query, worktree)
                 transcript.append(f"  hermes regenerated fix prompt ({len(prompt)} chars)")
             except Exception as exc:
                 transcript.append(f"  hermes heal failed: {exc} — using raw error context")
-                prompt = (
-                    f"Retry: {base_subprompt}\n\n"
-                    f"PREVIOUS BUILD ERROR:\n{history[-1]}"
-                )
+                prompt = f"Retry: {base_subprompt}\n\n" f"PREVIOUS BUILD ERROR:\n{history[-1]}"
 
         print(f"[{stack}] attempt {attempt + 1}/4 via {cli_name}", flush=True)
         transcript.append(f"attempt {attempt + 1}: {cli_name}")
@@ -420,7 +436,8 @@ async def compile_and_heal(stack: str, base_subprompt: str,
             hermes_status(f"{stack}: AMNESIA RESET, swap to {ROSTER[stack][new_idx][0]}")
             cli_idx = new_idx
             tmux_send(
-                window, pane,
+                window,
+                pane,
                 f"cd {worktree} && git restore --staged . && git checkout -- .",
             )
             await asyncio.sleep(1)
@@ -432,6 +449,7 @@ async def compile_and_heal(stack: str, base_subprompt: str,
 # ---------------------------------------------------------------------------
 # Schema mapping (one-shot via gemini, prompt comes from Hermes decompose)
 # ---------------------------------------------------------------------------
+
 
 async def map_schemas(schemas_subprompt: str, worktree: str) -> bool:
     print("[schemas] mapping with gemini ...", flush=True)
@@ -459,6 +477,7 @@ async def map_schemas(schemas_subprompt: str, worktree: str) -> bool:
 # ---------------------------------------------------------------------------
 # Worktree management
 # ---------------------------------------------------------------------------
+
 
 def ensure_worktree() -> str:
     """Create or reuse the sibling worktree on WORKTREE_BRANCH.
@@ -499,10 +518,16 @@ def ensure_worktree() -> str:
 # Preflight
 # ---------------------------------------------------------------------------
 
+
 def _which(cmd: str) -> bool:
-    return subprocess.run(
-        ["which", cmd], capture_output=True, check=False,
-    ).returncode == 0
+    return (
+        subprocess.run(
+            ["which", cmd],
+            capture_output=True,
+            check=False,
+        ).returncode
+        == 0
+    )
 
 
 def _parse_args(argv: list[str]) -> tuple[bool, bool, str]:
@@ -520,15 +545,15 @@ def _parse_args(argv: list[str]) -> tuple[bool, bool, str]:
         skip_build = True
     if not args:
         print(
-            'Usage: python3 scripts/kmidi_swarm.py '
+            "Usage: python3 scripts/kmidi_swarm.py "
             '[--dry-run] [--skip-build] "<feature request>"\n'
-            '\n'
-            '  --dry-run     Run only Hermes decompose phase, print plan, exit.\n'
-            '  --skip-build  Treat each stack-CLI rc=0 as success (no cmake/'
-            'cargo/npm).\n'
-            '                Use for analysis-only prompts where build gates '
-            'are not\n'
-            '                meaningful in a fresh worktree.',
+            "\n"
+            "  --dry-run     Run only Hermes decompose phase, print plan, exit.\n"
+            "  --skip-build  Treat each stack-CLI rc=0 as success (no cmake/"
+            "cargo/npm).\n"
+            "                Use for analysis-only prompts where build gates "
+            "are not\n"
+            "                meaningful in a fresh worktree.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -572,6 +597,7 @@ def preflight(*, require_tmux: bool = True) -> None:
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+
 
 async def main() -> None:
     global SKIP_BUILD
@@ -636,10 +662,12 @@ async def main() -> None:
     schema_subprompt = plan.get("schemas") or user_prompt
 
     schemas_task = asyncio.create_task(map_schemas(schema_subprompt, worktree))
-    code_results = await asyncio.gather(*[
-        compile_and_heal(stack, plan.get(stack) or user_prompt, worktree)
-        for stack in CODE_STACKS
-    ])
+    code_results = await asyncio.gather(
+        *[
+            compile_and_heal(stack, plan.get(stack) or user_prompt, worktree)
+            for stack in CODE_STACKS
+        ]
+    )
     schemas_ok = await schemas_task
 
     # ---- Phase 3: SYNTHESIZE ---------------------------------------------
@@ -670,8 +698,7 @@ async def main() -> None:
     try:
         plan_md = await hermes_think(synthesize_prompt, worktree)
     except Exception as exc:
-        print(f"hermes synthesize failed: {exc} — falling back to raw transcript",
-              flush=True)
+        print(f"hermes synthesize failed: {exc} — falling back to raw transcript", flush=True)
         plan_md = (
             f"# Active Plan: {user_prompt}\n\n"
             f"_Generated by Hermes Tmux Matrix swarm at "
@@ -688,9 +715,7 @@ async def main() -> None:
     with open(plan_path, "w") as f:
         f.write(plan_md)
 
-    summary = ", ".join(
-        f"{stack}={status}" for stack, status, _ in code_results
-    )
+    summary = ", ".join(f"{stack}={status}" for stack, status, _ in code_results)
     print(f"\nswarm complete. plan: {plan_path}", flush=True)
     print(f"results: {summary}", flush=True)
     hermes_status(f"complete: {summary}")
