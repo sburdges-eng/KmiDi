@@ -60,4 +60,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: bug-taxonomy-report
-        path: artifacts/debug_baseline_ci/bug_taxonomy_report.md
+        path: |
+          artifacts/debug_baseline_ci/bug_taxonomy_report.md
+          artifacts/debug_baseline_ci/status.txt
+          artifacts/debug_baseline_ci/*.log
