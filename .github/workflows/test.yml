@@ -397,7 +397,7 @@ jobs:
           # profile updates in _deps atomics) and gcov line-mapping mismatches
           # (gtest constructors) as fatal; same flags as ci.yml's coverage job.
           lcov --capture --directory . --ignore-errors negative,gcov,mismatch --output-file coverage.info
-          lcov --remove coverage.info '/usr/*' '*/tests/*' '*/external/*' '*/_deps/*' --output-file coverage.info
+          lcov --remove coverage.info '/usr/*' '*/tests/*' '*/external/*' '*/_deps/*' --ignore-errors unused --output-file coverage.info
           lcov --list coverage.info
 
       - name: Upload coverage to Codecov
