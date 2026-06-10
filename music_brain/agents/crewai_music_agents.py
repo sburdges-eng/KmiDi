@@ -31,6 +31,14 @@ from typing import Optional, Dict, List, Any, Callable
 from enum import Enum
 
 
+# Sentinel for "health check has never run". Compared as infinitely stale so the
+# first _check_availability() always executes, even on a freshly booted host whose
+# time.monotonic() (seconds since boot) is still below health_check_ttl. Initializing
+# to 0.0 caused the initial check to be skipped on fresh CI runners (uptime < ttl),
+# leaving the client wrongly marked unavailable until uptime exceeded the TTL.
+_NEVER_CHECKED: float = float("-inf")
+
+
 # =============================================================================
 # Response Cache for LLM calls
 # =============================================================================
@@ -141,7 +149,7 @@ class LocalLLM:
     def __init__(self, config: Optional[LocalLLMConfig] = None):
         self.config = config or LocalLLMConfig()
         self._available = False
-        self._health_checked_at: float = 0.0
+        self._health_checked_at: float = _NEVER_CHECKED
         self._cache = _LRUResponseCache(max_size=self.config.cache_max_size)
         # Connection-pooled HTTP session (TCP keep-alive)
         import requests
@@ -330,7 +338,7 @@ class OnnxLLM:
     def __init__(self, config: Optional[OnnxLLMConfig] = None):
         self.config = config or OnnxLLMConfig()
         self._available = False
-        self._health_checked_at: float = 0.0
+        self._health_checked_at: float = _NEVER_CHECKED
         self._cache = _LRUResponseCache(max_size=self.config.cache_max_size)
         # Connection-pooled HTTP session (TCP keep-alive)
         import requests
