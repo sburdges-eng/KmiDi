@@ -59,7 +59,7 @@ VoiceCloner::analyzeVoice(const std::vector<float> &audioSamples,
             [](const std::pair<float, float> &a,
                const std::pair<float, float> &b) { return a.first < b.first; });
 
-  for (size_t i = 0; i < std::min(4UL, formants.size()); ++i) {
+  for (size_t i = 0; i < std::min<size_t>(4, formants.size()); ++i) {
     profile.frequencies[i] = formants[i].first;
     profile.bandwidths[i] = formants[i].second;
   }
