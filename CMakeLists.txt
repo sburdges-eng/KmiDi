@@ -718,8 +718,12 @@ endif()
 
 # Tests
 if(BUILD_TESTS AND BUILD_KELLY_CORE)
+    # Register tests with CTest unconditionally. The standalone RT/DSP tests
+    # below are designed to run without Catch2 (and even without JUCE), so
+    # enable_testing() must run before their add_test() calls regardless of
+    # whether the optional Catch2-based tests are present.
+    enable_testing()
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/external/Catch2/CMakeLists.txt)
-        enable_testing()
         add_subdirectory(external/Catch2 EXCLUDE_FROM_ALL)
         include(CTest)
         include(Catch2)
@@ -857,6 +861,27 @@ if(BUILD_TESTS AND BUILD_KELLY_CORE)
     target_compile_features(SIMDKernelsTest PRIVATE cxx_std_20)
     if(COMMAND add_test)
         add_test(NAME SIMDKernelsTest COMMAND SIMDKernelsTest)
+    endif()
+
+    # Instrument the test executables with whichever sanitizer is active so the
+    # ctest gate runs under the same ASan/UBSan/TSan/RTSan as the KellyCore
+    # build. Guarded by TARGET so Catch2-only targets are skipped when absent.
+    if(KMIDI_ENABLE_ASAN OR KMIDI_ENABLE_TSAN OR KMIDI_ENABLE_RTSAN)
+        include(Sanitizers)
+        foreach(_kmidi_test_tgt
+                AudioEmotionRunnerTests EmotionSchemaTests
+                RTStateSeqlockTest RTEventSchedulerTest DSPGraphTest
+                GpuSchedulerTest SharedIpcTest SIMDKernelsTest)
+            if(TARGET ${_kmidi_test_tgt})
+                if(KMIDI_ENABLE_ASAN)
+                    enable_sanitizers(${_kmidi_test_tgt})
+                elseif(KMIDI_ENABLE_TSAN)
+                    enable_thread_sanitizer(${_kmidi_test_tgt})
+                else()
+                    enable_realtime_sanitizer(${_kmidi_test_tgt})
+                endif()
+            endif()
+        endforeach()
     endif()
 endif()
 
