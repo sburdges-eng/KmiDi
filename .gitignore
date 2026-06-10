@@ -558,3 +558,6 @@ experiments/MERGE_CONFLICT_REPORT.txt
 
 # npm cache committed by mistake — removed during repo cleanup 2026-06
 /npm-cache/
+
+# GitNexus / graphify analysis outputs — generated, can be hundreds of MB
+/graphify-out*/
