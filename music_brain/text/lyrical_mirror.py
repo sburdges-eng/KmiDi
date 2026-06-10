@@ -13,6 +13,7 @@ from typing import List, Optional
 
 try:
     import markovify
+
     MARKOVIFY_AVAILABLE = True
 except ImportError:
     markovify = None
@@ -166,11 +167,7 @@ def generate_lyrical_fragments(
             attempts += 1
 
             # Try to make a short sentence (more lyric-like)
-            sentence = model.make_short_sentence(
-                max_chars=80,
-                min_chars=10,
-                tries=10
-            )
+            sentence = model.make_short_sentence(max_chars=80, min_chars=10, tries=10)
 
             # Fall back to regular sentence if short fails
             if not sentence:

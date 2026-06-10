@@ -15,31 +15,32 @@ from enum import Enum
 
 try:
     import mido
+
     MIDO_AVAILABLE = True
 except ImportError:
     MIDO_AVAILABLE = False
 
 
 # Note name mappings
-NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-FLAT_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+FLAT_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
 
 # Chord quality definitions (intervals from root)
 CHORD_QUALITIES = {
-    'maj': (0, 4, 7),
-    'min': (0, 3, 7),
-    'dim': (0, 3, 6),
-    'aug': (0, 4, 8),
-    'maj7': (0, 4, 7, 11),
-    'min7': (0, 3, 7, 10),
-    '7': (0, 4, 7, 10),  # Dominant 7
-    'dim7': (0, 3, 6, 9),
-    'hdim7': (0, 3, 6, 10),  # Half-diminished
-    'sus2': (0, 2, 7),
-    'sus4': (0, 5, 7),
-    'add9': (0, 4, 7, 14),
-    '6': (0, 4, 7, 9),
-    'min6': (0, 3, 7, 9),
+    "maj": (0, 4, 7),
+    "min": (0, 3, 7),
+    "dim": (0, 3, 6),
+    "aug": (0, 4, 8),
+    "maj7": (0, 4, 7, 11),
+    "min7": (0, 3, 7, 10),
+    "7": (0, 4, 7, 10),  # Dominant 7
+    "dim7": (0, 3, 6, 9),
+    "hdim7": (0, 3, 6, 10),  # Half-diminished
+    "sus2": (0, 2, 7),
+    "sus4": (0, 5, 7),
+    "add9": (0, 4, 7, 14),
+    "6": (0, 4, 7, 9),
+    "min6": (0, 3, 7, 9),
 }
 
 # Major scale degrees for Roman numeral analysis
@@ -48,22 +49,22 @@ MINOR_SCALE = [0, 2, 3, 5, 7, 8, 10]  # Natural minor
 
 # Diatonic chords in major key
 MAJOR_KEY_CHORDS = {
-    0: ('I', 'maj'),
-    2: ('ii', 'min'),
-    4: ('iii', 'min'),
-    5: ('IV', 'maj'),
-    7: ('V', 'maj'),
-    9: ('vi', 'min'),
-    11: ('vii°', 'dim'),
+    0: ("I", "maj"),
+    2: ("ii", "min"),
+    4: ("iii", "min"),
+    5: ("IV", "maj"),
+    7: ("V", "maj"),
+    9: ("vi", "min"),
+    11: ("vii°", "dim"),
 }
 
 # Common borrowed chords (from parallel minor in major key)
 BORROWED_CHORDS = {
-    'bIII': {'source': 'parallel minor', 'interval': 3},
-    'bVI': {'source': 'parallel minor', 'interval': 8},
-    'bVII': {'source': 'parallel minor/mixolydian', 'interval': 10},
-    'iv': {'source': 'parallel minor', 'interval': 5},
-    '#IV°': {'source': 'melodic minor', 'interval': 6},
+    "bIII": {"source": "parallel minor", "interval": 3},
+    "bVI": {"source": "parallel minor", "interval": 8},
+    "bVII": {"source": "parallel minor/mixolydian", "interval": 10},
+    "iv": {"source": "parallel minor", "interval": 5},
+    "#IV°": {"source": "melodic minor", "interval": 6},
 }
 
 
@@ -84,6 +85,7 @@ class ChordQuality(Enum):
 @dataclass
 class Chord:
     """Represents a single chord with root and quality."""
+
     root: int  # MIDI note number (0-11) or note name when created from string
     quality: str  # 'maj', 'min', 'dim', etc.
     bass: Optional[int] = None  # For slash chords
@@ -119,19 +121,19 @@ class Chord:
         root_name = self.root if isinstance(self.root, str) else NOTE_NAMES[self.root % 12]
 
         quality_str = ""
-        if self.quality == 'maj':
+        if self.quality == "maj":
             quality_str = ""  # Implicit
-        elif self.quality == 'min':
+        elif self.quality == "min":
             quality_str = "m"
-        elif self.quality == 'dim':
+        elif self.quality == "dim":
             quality_str = "dim"
-        elif self.quality == 'aug':
+        elif self.quality == "aug":
             quality_str = "+"
-        elif self.quality == '7':
+        elif self.quality == "7":
             quality_str = "7"
-        elif self.quality == 'maj7':
+        elif self.quality == "maj7":
             quality_str = "maj7"
-        elif self.quality == 'min7':
+        elif self.quality == "min7":
             quality_str = "m7"
         else:
             quality_str = self.quality
@@ -159,32 +161,32 @@ class Chord:
 
         quality = (self.quality or "").lower()
         intervals = [0, 4, 7]  # default major triad
-        if 'dim' in quality:
+        if "dim" in quality:
             intervals = [0, 3, 6]
-        elif 'aug' in quality or quality == '+':
+        elif "aug" in quality or quality == "+":
             intervals = [0, 4, 8]
-        elif quality.startswith('min'):
+        elif quality.startswith("min"):
             intervals = [0, 3, 7]
-        elif quality.startswith('sus2'):
+        elif quality.startswith("sus2"):
             intervals = [0, 2, 7]
-        elif quality.startswith('sus4') or quality.startswith('sus'):
+        elif quality.startswith("sus4") or quality.startswith("sus"):
             intervals = [0, 5, 7]
 
         # Seventh quality
-        if 'maj7' in quality:
+        if "maj7" in quality:
             intervals.append(11)
-        elif 'min7' in quality or quality.endswith('m7'):
+        elif "min7" in quality or quality.endswith("m7"):
             intervals.append(10)
-        elif quality == '7':
+        elif quality == "7":
             intervals.append(10)
 
         # Basic handling for common extensions
         for ext in self.extensions:
-            if ext in ('9', 'add9'):
+            if ext in ("9", "add9"):
                 intervals.append(14)
-            elif ext == '11':
+            elif ext == "11":
                 intervals.append(17)
-            elif ext == '13':
+            elif ext == "13":
                 intervals.append(21)
 
         notes = sorted(base_midi + i for i in intervals)
@@ -243,16 +245,16 @@ class Chord:
             raise ValueError("pitch_classes must be non-empty")
 
         root_pc = pitch_classes[0] % 12
-        quality = 'maj'
+        quality = "maj"
         intervals = {(pc - root_pc) % 12 for pc in pitch_classes}
         if 3 in intervals and 4 not in intervals:
-            quality = 'min'
+            quality = "min"
         elif 4 in intervals and 3 not in intervals:
-            quality = 'maj'
+            quality = "maj"
         elif 3 in intervals and 4 in intervals:
-            quality = 'min7' if 10 in intervals else 'min'
+            quality = "min7" if 10 in intervals else "min"
         elif 6 in intervals:
-            quality = 'dim'
+            quality = "dim"
 
         return cls(
             root=NOTE_NAMES[root_pc],
@@ -265,6 +267,7 @@ class Chord:
 @dataclass
 class ChordProgression:
     """Complete chord progression with analysis."""
+
     chords: List[str]  # Chord names
     chord_objects: List[Chord] = field(default_factory=list)
     key: str = "C"
@@ -331,11 +334,11 @@ def detect_chord_from_notes(notes: List[int]) -> Optional[Chord]:
         intervals = [(pc - root) % 12 for pc in pitch_classes]
 
         if 3 in intervals:
-            quality = 'min'
+            quality = "min"
         elif 4 in intervals:
-            quality = 'maj'
+            quality = "maj"
         else:
-            quality = 'maj'  # Default
+            quality = "maj"  # Default
 
         best_match = Chord(root=root, quality=quality, notes=notes)
 
@@ -430,31 +433,40 @@ def get_roman_numeral(chord: Chord, key: int, mode: str = "major") -> str:
             numeral, expected_quality = MAJOR_KEY_CHORDS[interval]
             if chord.quality != expected_quality:
                 # Quality differs from diatonic - indicate with quality
-                if chord.quality == 'min':
+                if chord.quality == "min":
                     numeral = numeral.lower()
-                elif chord.quality == 'maj' and numeral.islower():
+                elif chord.quality == "maj" and numeral.islower():
                     numeral = numeral.upper()
             return numeral
 
     # Non-diatonic - use flat/sharp notation
     numeral_map = {
-        0: 'I', 1: 'bII', 2: 'II', 3: 'bIII', 4: 'III',
-        5: 'IV', 6: '#IV', 7: 'V', 8: 'bVI', 9: 'VI',
-        10: 'bVII', 11: 'VII'
+        0: "I",
+        1: "bII",
+        2: "II",
+        3: "bIII",
+        4: "III",
+        5: "IV",
+        6: "#IV",
+        7: "V",
+        8: "bVI",
+        9: "VI",
+        10: "bVII",
+        11: "VII",
     }
 
-    numeral = numeral_map.get(interval, '?')
-    if chord.quality in ['min', 'min7', 'dim']:
+    numeral = numeral_map.get(interval, "?")
+    if chord.quality in ["min", "min7", "dim"]:
         numeral = numeral.lower()
 
-    if chord.quality == 'dim':
-        numeral += '°'
-    elif chord.quality == '7':
-        numeral += '7'
-    elif chord.quality == 'maj7':
-        numeral += 'M7'
-    elif chord.quality == 'min7':
-        numeral += '7'
+    if chord.quality == "dim":
+        numeral += "°"
+    elif chord.quality == "7":
+        numeral += "7"
+    elif chord.quality == "maj7":
+        numeral += "M7"
+    elif chord.quality == "min7":
+        numeral += "7"
 
     return numeral
 
@@ -478,13 +490,13 @@ def identify_borrowed_chords(chords: List[Chord], key: int, mode: str = "major")
         interval = (root_val - key) % 12
 
         # Check common borrowed chord patterns
-        if interval == 3 and chord.quality == 'maj':
+        if interval == 3 and chord.quality == "maj":
             borrowed[chord.name] = "parallel minor (bIII)"
-        elif interval == 8 and chord.quality == 'maj':
+        elif interval == 8 and chord.quality == "maj":
             borrowed[chord.name] = "parallel minor (bVI)"
-        elif interval == 10 and chord.quality == 'maj':
+        elif interval == 10 and chord.quality == "maj":
             borrowed[chord.name] = "mixolydian/parallel minor (bVII)"
-        elif interval == 5 and chord.quality == 'min':
+        elif interval == 5 and chord.quality == "min":
             borrowed[chord.name] = "parallel minor (iv)"
 
     return borrowed
@@ -515,7 +527,7 @@ def analyze_chords(midi_path: str, quantize_beats: float = 0.5) -> ChordProgress
     tempo_bpm = 120.0
     for track in mid.tracks:
         for msg in track:
-            if msg.type == 'set_tempo':
+            if msg.type == "set_tempo":
                 tempo_bpm = mido.tempo2bpm(msg.tempo)
                 break
 
@@ -525,7 +537,7 @@ def analyze_chords(midi_path: str, quantize_beats: float = 0.5) -> ChordProgress
         current_tick = 0
         for msg in track:
             current_tick += msg.time
-            if msg.type == 'note_on' and msg.velocity > 0:
+            if msg.type == "note_on" and msg.velocity > 0:
                 all_notes.append((current_tick, msg.note))
 
     if not all_notes:

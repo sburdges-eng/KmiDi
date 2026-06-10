@@ -128,9 +128,23 @@ class MelodyConfig:
     def get_root_midi(self) -> int:
         """Get MIDI note number for root note."""
         note_map = {
-            "C": 0, "C#": 1, "Db": 1, "D": 2, "D#": 3, "Eb": 3,
-            "E": 4, "F": 5, "F#": 6, "Gb": 6, "G": 7, "G#": 8,
-            "Ab": 8, "A": 9, "A#": 10, "Bb": 10, "B": 11
+            "C": 0,
+            "C#": 1,
+            "Db": 1,
+            "D": 2,
+            "D#": 3,
+            "Eb": 3,
+            "E": 4,
+            "F": 5,
+            "F#": 6,
+            "Gb": 6,
+            "G": 7,
+            "G#": 8,
+            "Ab": 8,
+            "A": 9,
+            "A#": 10,
+            "Bb": 10,
+            "B": 11,
         }
         return 12 * (self.octave + 1) + note_map.get(self.key, 0)
 
@@ -359,9 +373,7 @@ class MLMelodyGenerator:
                 current_note = root + scale[degree % len(scale)]
             else:
                 # Choose next note
-                current_note = self._choose_next_note(
-                    current_note, root, scale, traits, i, length
-                )
+                current_note = self._choose_next_note(current_note, root, scale, traits, i, length)
 
             notes.append(current_note)
 
@@ -429,13 +441,13 @@ class MLMelodyGenerator:
             if interval > 4:  # Leap
                 prob *= traits["leap_probability"]
             else:  # Step
-                prob *= (1 - traits["leap_probability"])
+                prob *= 1 - traits["leap_probability"]
 
             # Ascending vs descending bias
             if note > current:
                 prob *= traits["ascending_bias"]
             elif note < current:
-                prob *= (1 - traits["ascending_bias"])
+                prob *= 1 - traits["ascending_bias"]
 
             probs.append(max(prob, 0.1))
 
@@ -522,12 +534,18 @@ class MLMelodyGenerator:
 
         # Simple encoding based on emotion
         emotion_indices = {
-            "joy": 0, "grief": 1, "anger": 2, "fear": 3,
-            "hope": 4, "longing": 5, "nostalgia": 6, "defiance": 7,
+            "joy": 0,
+            "grief": 1,
+            "anger": 2,
+            "fear": 3,
+            "hope": 4,
+            "longing": 5,
+            "nostalgia": 6,
+            "defiance": 7,
         }
 
         idx = emotion_indices.get(emotion.lower(), 0)
-        embedding[idx * 8:(idx + 1) * 8] = 1.0
+        embedding[idx * 8 : (idx + 1) * 8] = 1.0
 
         return embedding.reshape(1, -1)
 

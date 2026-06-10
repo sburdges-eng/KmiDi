@@ -15,13 +15,16 @@ from music_brain.model_versioning import (
 )
 
 
-def _manifest(*, name: str = "AudioJEPA-tiny",
-              schema: tuple[int, int] = (1, 0),
-              arch: str = "a" * 12,
-              params: str = "p" * 12,
-              data: str = "d" * 12,
-              created: str = "2026-01-01T00:00:00Z",
-              notes: str = "") -> ModelManifest:
+def _manifest(
+    *,
+    name: str = "AudioJEPA-tiny",
+    schema: tuple[int, int] = (1, 0),
+    arch: str = "a" * 12,
+    params: str = "p" * 12,
+    data: str = "d" * 12,
+    created: str = "2026-01-01T00:00:00Z",
+    notes: str = "",
+) -> ModelManifest:
     return ModelManifest(
         name=name,
         schema_version=schema,
@@ -36,6 +39,7 @@ def _manifest(*, name: str = "AudioJEPA-tiny",
 # ----------------------------------------------------------------------
 # short_hash
 # ----------------------------------------------------------------------
+
 
 def test_short_hash_is_12_hex_chars() -> None:
     h = short_hash("hello")
@@ -53,6 +57,7 @@ def test_short_hash_is_deterministic_and_input_sensitive() -> None:
 # Manifest serialisation
 # ----------------------------------------------------------------------
 
+
 def test_manifest_json_roundtrip() -> None:
     m = _manifest(notes="initial release")
     decoded = ModelManifest.from_json(m.to_json())
@@ -68,8 +73,10 @@ def test_manifest_file_roundtrip(tmp_path: Path) -> None:
 
 
 def test_manifest_rejects_malformed_schema_version() -> None:
-    bad = '{"name": "X", "schema_version": "1.0", "arch_hash": "x", ' \
-          '"params_hash": "x", "data_hash": "x", "created_at": "now"}'
+    bad = (
+        '{"name": "X", "schema_version": "1.0", "arch_hash": "x", '
+        '"params_hash": "x", "data_hash": "x", "created_at": "now"}'
+    )
     with pytest.raises(ValueError, match="schema_version"):
         ModelManifest.from_json(bad)
 
@@ -77,6 +84,7 @@ def test_manifest_rejects_malformed_schema_version() -> None:
 # ----------------------------------------------------------------------
 # Compatibility policy
 # ----------------------------------------------------------------------
+
 
 def test_identical_manifests_are_compatible() -> None:
     m = _manifest()
@@ -134,6 +142,7 @@ def test_params_and_data_hash_differences_are_not_blocking() -> None:
 # ----------------------------------------------------------------------
 # Rollback selection
 # ----------------------------------------------------------------------
+
 
 def test_pick_rollback_target_returns_newest_compatible() -> None:
     consumer = _manifest(schema=(1, 1))

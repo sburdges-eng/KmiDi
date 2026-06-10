@@ -25,9 +25,7 @@ class AudioJEPAConfig(JEPAConfig):
     max_frames: int = 512
     sample_rate: int = 22050
     hop_length: int = 512
-    encoder_channels: List[int] = field(
-        default_factory=lambda: [32, 64, 128, 256]
-    )
+    encoder_channels: List[int] = field(default_factory=lambda: [32, 64, 128, 256])
     tier: str = "medium"  # small | medium | large
 
 

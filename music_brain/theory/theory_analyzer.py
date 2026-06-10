@@ -17,12 +17,14 @@ from pathlib import Path
 
 try:
     import numpy as np
+
     NUMPY_AVAILABLE = True
 except ImportError:
     NUMPY_AVAILABLE = False
 
 try:
     import librosa
+
     LIBROSA_AVAILABLE = True
 except ImportError:
     LIBROSA_AVAILABLE = False
@@ -32,114 +34,108 @@ except ImportError:
 # CONSTANTS AND DEFINITIONS
 # =================================================================
 
-NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-NOTE_NAMES_FLAT = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+NOTE_NAMES_FLAT = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
 
 # Scale definitions as intervals from root (semitones)
 SCALES = {
     # Major and Natural Minor
-    'major': [0, 2, 4, 5, 7, 9, 11],
-    'natural_minor': [0, 2, 3, 5, 7, 8, 10],
-    'harmonic_minor': [0, 2, 3, 5, 7, 8, 11],
-    'melodic_minor': [0, 2, 3, 5, 7, 9, 11],
-
+    "major": [0, 2, 4, 5, 7, 9, 11],
+    "natural_minor": [0, 2, 3, 5, 7, 8, 10],
+    "harmonic_minor": [0, 2, 3, 5, 7, 8, 11],
+    "melodic_minor": [0, 2, 3, 5, 7, 9, 11],
     # Modes (built on major scale degrees)
-    'ionian': [0, 2, 4, 5, 7, 9, 11],        # Same as major
-    'dorian': [0, 2, 3, 5, 7, 9, 10],        # Minor with raised 6th
-    'phrygian': [0, 1, 3, 5, 7, 8, 10],      # Minor with flat 2nd
-    'lydian': [0, 2, 4, 6, 7, 9, 11],        # Major with raised 4th
-    'mixolydian': [0, 2, 4, 5, 7, 9, 10],    # Major with flat 7th
-    'aeolian': [0, 2, 3, 5, 7, 8, 10],       # Same as natural minor
-    'locrian': [0, 1, 3, 5, 6, 8, 10],       # Diminished scale
-
+    "ionian": [0, 2, 4, 5, 7, 9, 11],  # Same as major
+    "dorian": [0, 2, 3, 5, 7, 9, 10],  # Minor with raised 6th
+    "phrygian": [0, 1, 3, 5, 7, 8, 10],  # Minor with flat 2nd
+    "lydian": [0, 2, 4, 6, 7, 9, 11],  # Major with raised 4th
+    "mixolydian": [0, 2, 4, 5, 7, 9, 10],  # Major with flat 7th
+    "aeolian": [0, 2, 3, 5, 7, 8, 10],  # Same as natural minor
+    "locrian": [0, 1, 3, 5, 6, 8, 10],  # Diminished scale
     # Pentatonic scales
-    'major_pentatonic': [0, 2, 4, 7, 9],
-    'minor_pentatonic': [0, 3, 5, 7, 10],
-
+    "major_pentatonic": [0, 2, 4, 7, 9],
+    "minor_pentatonic": [0, 3, 5, 7, 10],
     # Blues scales
-    'blues': [0, 3, 5, 6, 7, 10],            # Minor pentatonic + blue note
-    'major_blues': [0, 2, 3, 4, 7, 9],       # Major pentatonic + blue note
-
+    "blues": [0, 3, 5, 6, 7, 10],  # Minor pentatonic + blue note
+    "major_blues": [0, 2, 3, 4, 7, 9],  # Major pentatonic + blue note
     # Exotic scales
-    'whole_tone': [0, 2, 4, 6, 8, 10],
-    'diminished': [0, 2, 3, 5, 6, 8, 9, 11],  # Half-whole
-    'diminished_half_whole': [0, 1, 3, 4, 6, 7, 9, 10],
-    'chromatic': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-
+    "whole_tone": [0, 2, 4, 6, 8, 10],
+    "diminished": [0, 2, 3, 5, 6, 8, 9, 11],  # Half-whole
+    "diminished_half_whole": [0, 1, 3, 4, 6, 7, 9, 10],
+    "chromatic": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
     # World scales
-    'hungarian_minor': [0, 2, 3, 6, 7, 8, 11],
-    'phrygian_dominant': [0, 1, 4, 5, 7, 8, 10],  # Spanish/Jewish
-    'double_harmonic': [0, 1, 4, 5, 7, 8, 11],    # Byzantine/Arabic
-    'japanese': [0, 1, 5, 7, 8],                   # In scale
-    'hirajoshi': [0, 2, 3, 7, 8],
-    'persian': [0, 1, 4, 5, 6, 8, 11],
-
+    "hungarian_minor": [0, 2, 3, 6, 7, 8, 11],
+    "phrygian_dominant": [0, 1, 4, 5, 7, 8, 10],  # Spanish/Jewish
+    "double_harmonic": [0, 1, 4, 5, 7, 8, 11],  # Byzantine/Arabic
+    "japanese": [0, 1, 5, 7, 8],  # In scale
+    "hirajoshi": [0, 2, 3, 7, 8],
+    "persian": [0, 1, 4, 5, 6, 8, 11],
     # Jazz scales
-    'bebop_dominant': [0, 2, 4, 5, 7, 9, 10, 11],
-    'bebop_major': [0, 2, 4, 5, 7, 8, 9, 11],
-    'altered': [0, 1, 3, 4, 6, 8, 10],           # Super Locrian
-    'lydian_dominant': [0, 2, 4, 6, 7, 9, 10],   # Lydian b7
+    "bebop_dominant": [0, 2, 4, 5, 7, 9, 10, 11],
+    "bebop_major": [0, 2, 4, 5, 7, 8, 9, 11],
+    "altered": [0, 1, 3, 4, 6, 8, 10],  # Super Locrian
+    "lydian_dominant": [0, 2, 4, 6, 7, 9, 10],  # Lydian b7
 }
 
 # Mode characteristics for emotional mapping
 MODE_CHARACTERISTICS = {
-    'ionian': {'brightness': 1.0, 'tension': 0.0, 'mood': 'happy, bright, stable'},
-    'dorian': {'brightness': 0.6, 'tension': 0.2, 'mood': 'jazzy, soulful, melancholic hope'},
-    'phrygian': {'brightness': 0.2, 'tension': 0.6, 'mood': 'dark, Spanish, exotic, tense'},
-    'lydian': {'brightness': 1.0, 'tension': 0.3, 'mood': 'dreamy, ethereal, floating'},
-    'mixolydian': {'brightness': 0.8, 'tension': 0.2, 'mood': 'bluesy, rock, dominant'},
-    'aeolian': {'brightness': 0.3, 'tension': 0.4, 'mood': 'sad, minor, natural'},
-    'locrian': {'brightness': 0.1, 'tension': 0.9, 'mood': 'unstable, dissonant, dark'},
+    "ionian": {"brightness": 1.0, "tension": 0.0, "mood": "happy, bright, stable"},
+    "dorian": {"brightness": 0.6, "tension": 0.2, "mood": "jazzy, soulful, melancholic hope"},
+    "phrygian": {"brightness": 0.2, "tension": 0.6, "mood": "dark, Spanish, exotic, tense"},
+    "lydian": {"brightness": 1.0, "tension": 0.3, "mood": "dreamy, ethereal, floating"},
+    "mixolydian": {"brightness": 0.8, "tension": 0.2, "mood": "bluesy, rock, dominant"},
+    "aeolian": {"brightness": 0.3, "tension": 0.4, "mood": "sad, minor, natural"},
+    "locrian": {"brightness": 0.1, "tension": 0.9, "mood": "unstable, dissonant, dark"},
 }
 
 # Chord/Triad definitions (intervals from root)
 TRIADS = {
-    'major': [0, 4, 7],
-    'minor': [0, 3, 7],
-    'diminished': [0, 3, 6],
-    'augmented': [0, 4, 8],
-    'sus2': [0, 2, 7],
-    'sus4': [0, 5, 7],
+    "major": [0, 4, 7],
+    "minor": [0, 3, 7],
+    "diminished": [0, 3, 6],
+    "augmented": [0, 4, 8],
+    "sus2": [0, 2, 7],
+    "sus4": [0, 5, 7],
 }
 
 SEVENTH_CHORDS = {
-    'major7': [0, 4, 7, 11],
-    'minor7': [0, 3, 7, 10],
-    'dominant7': [0, 4, 7, 10],
-    'diminished7': [0, 3, 6, 9],
-    'half_diminished7': [0, 3, 6, 10],
-    'minor_major7': [0, 3, 7, 11],
-    'augmented7': [0, 4, 8, 10],
-    'augmented_major7': [0, 4, 8, 11],
+    "major7": [0, 4, 7, 11],
+    "minor7": [0, 3, 7, 10],
+    "dominant7": [0, 4, 7, 10],
+    "diminished7": [0, 3, 6, 9],
+    "half_diminished7": [0, 3, 6, 10],
+    "minor_major7": [0, 3, 7, 11],
+    "augmented7": [0, 4, 8, 10],
+    "augmented_major7": [0, 4, 8, 11],
 }
 
 EXTENDED_CHORDS = {
-    'add9': [0, 4, 7, 14],
-    'add11': [0, 4, 7, 17],
-    '6': [0, 4, 7, 9],
-    '6/9': [0, 4, 7, 9, 14],
-    '9': [0, 4, 7, 10, 14],
-    'major9': [0, 4, 7, 11, 14],
-    'minor9': [0, 3, 7, 10, 14],
-    '11': [0, 4, 7, 10, 14, 17],
-    '13': [0, 4, 7, 10, 14, 17, 21],
+    "add9": [0, 4, 7, 14],
+    "add11": [0, 4, 7, 17],
+    "6": [0, 4, 7, 9],
+    "6/9": [0, 4, 7, 9, 14],
+    "9": [0, 4, 7, 10, 14],
+    "major9": [0, 4, 7, 11, 14],
+    "minor9": [0, 3, 7, 10, 14],
+    "11": [0, 4, 7, 10, 14, 17],
+    "13": [0, 4, 7, 10, 14, 17, 21],
 }
 
 # Interval names
 INTERVALS = {
-    0: 'unison',
-    1: 'minor_2nd',
-    2: 'major_2nd',
-    3: 'minor_3rd',
-    4: 'major_3rd',
-    5: 'perfect_4th',
-    6: 'tritone',
-    7: 'perfect_5th',
-    8: 'minor_6th',
-    9: 'major_6th',
-    10: 'minor_7th',
-    11: 'major_7th',
-    12: 'octave',
+    0: "unison",
+    1: "minor_2nd",
+    2: "major_2nd",
+    3: "minor_3rd",
+    4: "major_3rd",
+    5: "perfect_4th",
+    6: "tritone",
+    7: "perfect_5th",
+    8: "minor_6th",
+    9: "major_6th",
+    10: "minor_7th",
+    11: "major_7th",
+    12: "octave",
 }
 
 
@@ -147,9 +143,11 @@ INTERVALS = {
 # DATA CLASSES
 # =================================================================
 
+
 @dataclass
 class ScaleDetection:
     """Result of scale detection."""
+
     scale_name: str
     root: str
     intervals: List[int]
@@ -179,6 +177,7 @@ class ScaleDetection:
 @dataclass
 class TriadDetection:
     """Result of triad/chord detection."""
+
     chord_name: str
     root: str
     quality: str
@@ -207,6 +206,7 @@ class TriadDetection:
 @dataclass
 class ArpeggioDetection:
     """Result of arpeggio pattern detection."""
+
     chord_base: str  # e.g., "Cmaj", "Am7"
     pattern: str  # e.g., "ascending", "descending", "broken"
     notes: List[int]  # MIDI notes in order
@@ -227,6 +227,7 @@ class ArpeggioDetection:
 @dataclass
 class IntervalAnalysis:
     """Analysis of melodic intervals."""
+
     intervals: List[Tuple[int, str]]  # (semitones, name) pairs
     interval_histogram: Dict[str, int]
     consonant_ratio: float  # Ratio of consonant intervals
@@ -245,6 +246,7 @@ class IntervalAnalysis:
 @dataclass
 class TheoryAnalysis:
     """Complete music theory analysis result."""
+
     # Scale/Mode
     detected_scales: List[ScaleDetection] = field(default_factory=list)
     primary_scale: Optional[ScaleDetection] = None
@@ -273,14 +275,16 @@ class TheoryAnalysis:
             "detected_chords": [t.to_dict() for t in self.detected_triads[:10]],
             "detected_arpeggios": [a.to_dict() for a in self.detected_arpeggios[:5]],
             "harmonic_complexity": self.harmonic_complexity,
-            "interval_analysis": self.interval_analysis.to_dict() if self.interval_analysis else None,  # noqa: E501
-
+            "interval_analysis": (
+                self.interval_analysis.to_dict() if self.interval_analysis else None
+            ),  # noqa: E501
         }
 
 
 # =================================================================
 # UTILITY FUNCTIONS
 # =================================================================
+
 
 def midi_to_pitch_class(midi_note: int) -> int:
     """Convert MIDI note to pitch class (0-11)."""
@@ -347,7 +351,7 @@ def detect_melodic_contour(notes: List[int]) -> str:
     # Calculate direction changes
     directions = []
     for i in range(1, len(notes)):
-        diff = notes[i] - notes[i-1]
+        diff = notes[i] - notes[i - 1]
         if diff > 0:
             directions.append(1)
         elif diff < 0:
@@ -392,6 +396,7 @@ def detect_melodic_contour(notes: List[int]) -> str:
 # =================================================================
 # THEORY ANALYZER CLASS
 # =================================================================
+
 
 class TheoryAnalyzer:
     """
@@ -457,9 +462,7 @@ class TheoryAnalyzer:
             mode = primary_scale.scale_name
 
         # Calculate harmonic complexity
-        complexity = self._calculate_complexity(
-            pitch_classes, detected_triads, detected_sevenths
-        )
+        complexity = self._calculate_complexity(pitch_classes, detected_triads, detected_sevenths)
 
         return TheoryAnalysis(
             detected_scales=detected_scales,
@@ -504,16 +507,18 @@ class TheoryAnalyzer:
                     is_mode = scale_name in MODE_CHARACTERISTICS
                     characteristics = MODE_CHARACTERISTICS.get(scale_name, {})
 
-                    detections.append(ScaleDetection(
-                        scale_name=scale_name,
-                        root=NOTE_NAMES[root],
-                        intervals=intervals,
-                        confidence=confidence,
-                        pitch_classes_present=present,
-                        pitch_classes_missing=missing,
-                        is_mode=is_mode,
-                        characteristics=characteristics,
-                    ))
+                    detections.append(
+                        ScaleDetection(
+                            scale_name=scale_name,
+                            root=NOTE_NAMES[root],
+                            intervals=intervals,
+                            confidence=confidence,
+                            pitch_classes_present=present,
+                            pitch_classes_missing=missing,
+                            is_mode=is_mode,
+                            characteristics=characteristics,
+                        )
+                    )
 
         # Sort by confidence
         detections.sort(key=lambda x: x.confidence, reverse=True)
@@ -538,7 +543,7 @@ class TheoryAnalyzer:
         detections = []
 
         for i in range(len(notes) - window_size + 1):
-            window = notes[i:i + window_size]
+            window = notes[i : i + window_size]
 
             # Try to identify as triad
             triad = self._identify_triad(window)
@@ -558,7 +563,7 @@ class TheoryAnalyzer:
         detections = []
 
         for i in range(len(notes) - window_size + 1):
-            window = notes[i:i + window_size]
+            window = notes[i : i + window_size]
 
             # Try to identify as seventh chord
             chord = self._identify_seventh_chord(window)
@@ -686,7 +691,7 @@ class TheoryAnalyzer:
         # Sliding window analysis
         for window_size in range(min_notes, min(8, len(notes) + 1)):
             for i in range(len(notes) - window_size + 1):
-                window = notes[i:i + window_size]
+                window = notes[i : i + window_size]
 
                 # Check if notes form a chord arpeggio
                 arpeggio = self._identify_arpeggio(window, durations)
@@ -721,7 +726,7 @@ class TheoryAnalyzer:
                         pattern = "ascending"
                     elif notes == sorted(notes, reverse=True):
                         pattern = "descending"
-                    elif notes[:len(notes)//2] == sorted(notes[:len(notes)//2]):
+                    elif notes[: len(notes) // 2] == sorted(notes[: len(notes) // 2]):
                         pattern = "ascending_then_descending"
                     else:
                         pattern = "broken"
@@ -739,10 +744,7 @@ class TheoryAnalyzer:
                         speed = "unknown"
 
                     # Calculate intervals
-                    melodic_intervals = [
-                        notes[i+1] - notes[i]
-                        for i in range(len(notes) - 1)
-                    ]
+                    melodic_intervals = [notes[i + 1] - notes[i] for i in range(len(notes) - 1)]
 
                     return ArpeggioDetection(
                         chord_base=f"{NOTE_NAMES[root_idx]}{quality}",
@@ -821,17 +823,14 @@ class TheoryAnalyzer:
         pc_score = min(1.0, len(pitch_classes) / 7.0)  # 7 notes = full scale
 
         # Check for chromatic content
-        chromatic_pairs = sum(
-            1 for pc in pitch_classes
-            if (pc + 1) % 12 in pitch_classes
-        )
+        chromatic_pairs = sum(1 for pc in pitch_classes if (pc + 1) % 12 in pitch_classes)
         chromatic_score = min(1.0, chromatic_pairs / 3.0)
 
         # Seventh chord presence
         seventh_score = min(1.0, len(sevenths) / 3.0) if sevenths else 0.0
 
         # Combine scores
-        complexity = (pc_score * 0.3 + chromatic_score * 0.3 + seventh_score * 0.4)
+        complexity = pc_score * 0.3 + chromatic_score * 0.3 + seventh_score * 0.4
 
         return complexity
 
@@ -867,10 +866,7 @@ class TheoryAnalyzer:
         chroma_mean = np.mean(chroma, axis=1)
         threshold = np.mean(chroma_mean) + np.std(chroma_mean) * 0.5
 
-        pitch_classes = set(
-            i for i in range(12)
-            if chroma_mean[i] > threshold
-        )
+        pitch_classes = set(i for i in range(12) if chroma_mean[i] > threshold)
 
         # Detect scales
         detected_scales = self.detect_scales(pitch_classes)
@@ -894,6 +890,7 @@ class TheoryAnalyzer:
 # =================================================================
 # CONVENIENCE FUNCTIONS
 # =================================================================
+
 
 def detect_scale(notes: List[int]) -> Optional[ScaleDetection]:
     """

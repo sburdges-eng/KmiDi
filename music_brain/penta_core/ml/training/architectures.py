@@ -27,6 +27,7 @@ try:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -145,7 +146,7 @@ if TORCH_AVAILABLE:
             self.proj = nn.Linear(dim, dim)
 
             self.dropout = nn.Dropout(dropout)
-            self.scale = self.head_dim ** -0.5
+            self.scale = self.head_dim**-0.5
 
         def forward(
             self,
@@ -171,7 +172,7 @@ if TORCH_AVAILABLE:
             attn = (q @ k.transpose(-2, -1)) * self.scale
 
             if mask is not None:
-                attn = attn.masked_fill(mask == 0, float('-inf'))
+                attn = attn.masked_fill(mask == 0, float("-inf"))
 
             attn = F.softmax(attn, dim=-1)
             attn = self.dropout(attn)
@@ -240,7 +241,7 @@ if TORCH_AVAILABLE:
             """
             # Add positional encoding
             if self.use_positional:
-                x = x + self.positional[:, :x.size(1), :]
+                x = x + self.positional[:, : x.size(1), :]
 
             # Self-attention with residual
             attn_out, _ = self.attention(x, x, x, attn_mask=mask)
@@ -643,14 +644,16 @@ if TORCH_AVAILABLE:
         Designed to be pre-trained on the full 3 TB unlabeled dataset.
         """
 
-        def __init__(self, backbone: nn.Module, embedding_dim: int = 512, projection_dim: int = 128):  # noqa: E501
+        def __init__(
+            self, backbone: nn.Module, embedding_dim: int = 512, projection_dim: int = 128
+        ):  # noqa: E501
 
             super().__init__()
             self.encoder = backbone
             self.projector = nn.Sequential(
                 nn.Linear(embedding_dim, embedding_dim),
                 nn.ReLU(),
-                nn.Linear(embedding_dim, projection_dim)
+                nn.Linear(embedding_dim, projection_dim),
             )
 
         def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -739,8 +742,7 @@ if TORCH_AVAILABLE:
 
         if model_name not in model_configs:
             raise ValueError(
-                f"Unknown model: {model_name}. "
-                f"Available: {list(model_configs.keys())}"
+                f"Unknown model: {model_name}. " f"Available: {list(model_configs.keys())}"
             )
 
         config = model_configs[model_name]
@@ -802,7 +804,6 @@ if TORCH_AVAILABLE:
             # Use last hidden state
             out = self.fc(h_n[-1])
             return out
-
 
 else:
     # Placeholder classes when PyTorch is not available

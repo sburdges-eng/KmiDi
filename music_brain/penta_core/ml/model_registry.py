@@ -18,6 +18,7 @@ except ImportError:
 
 class ModelBackend(Enum):
     """Supported ML backends."""
+
     ONNX = "onnx"
     TENSORFLOW_LITE = "tflite"
     COREML = "coreml"
@@ -28,6 +29,7 @@ class ModelBackend(Enum):
 
 class ModelTask(Enum):
     """Supported ML tasks."""
+
     EMOTION_EMBEDDING = "emotion_embedding"
     MELODY_GENERATION = "melody_generation"
     HARMONY_PREDICTION = "harmony_prediction"
@@ -55,6 +57,7 @@ class ModelTask(Enum):
 @dataclass
 class ModelInfo:
     """Information about a registered model."""
+
     name: str
     task: ModelTask
     backend: ModelBackend
@@ -285,7 +288,7 @@ class ModelRegistry:
             "models": [m.to_dict() for m in self._models.values()],
             "model_dirs": [str(d) for d in self._model_dirs],
         }
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(data, f, indent=2)
 
     def load_registry(self, path: str) -> None:
@@ -326,9 +329,7 @@ class ModelRegistry:
 
         if validate and jsonschema is not None:
             schema_file = (
-                Path(schema_path)
-                if schema_path
-                else manifest_path.parent / "registry.schema.json"
+                Path(schema_path) if schema_path else manifest_path.parent / "registry.schema.json"
             )
             if schema_file.exists():
                 with open(schema_file, "r", encoding="utf-8") as sf:
@@ -378,12 +379,7 @@ class ModelRegistry:
         return str((base_dir / p).resolve())
 
     def _modelinfo_from_manifest_entry(self, entry: Dict[str, Any], base_dir: Path) -> ModelInfo:
-        file_path = (
-            entry.get("onnx_path")
-            or entry.get("coreml_path")
-            or entry.get("file")
-            or ""
-        )
+        file_path = entry.get("onnx_path") or entry.get("coreml_path") or entry.get("file") or ""
         resolved_path = self._resolve_path(base_dir, file_path) if file_path else ""
 
         input_size = entry.get("input_size")

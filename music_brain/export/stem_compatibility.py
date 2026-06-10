@@ -16,6 +16,7 @@ from typing import Dict, Tuple, Union
 
 class StemType(str, Enum):
     """Canonical stem role. Use for stem_pairs keys and lookups."""
+
     BASS = "bass"
     DRUMS = "drums"
     VOCALS = "vocals"
@@ -41,6 +42,7 @@ class StemCompatibilityScore:
     stem_pairs: (StemType, StemType) -> score in [0, 1].
     Callers should use StemType for lookups, e.g. stem_pairs[(StemType.BASS, StemType.DRUMS)].
     """
+
     stem_pairs: Dict[Tuple[StemType, StemType], float] = field(default_factory=dict)
 
     def get_score(self, a: Union[StemType, str], b: Union[StemType, str]) -> float:

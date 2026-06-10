@@ -17,14 +17,16 @@ import math
 
 class EnvelopeMode(Enum):
     """Envelope detection modes."""
-    PEAK = "peak"           # Peak detection
-    RMS = "rms"             # RMS (average power)
-    PEAK_RMS = "peak_rms"   # Hybrid peak/RMS
+
+    PEAK = "peak"  # Peak detection
+    RMS = "rms"  # RMS (average power)
+    PEAK_RMS = "peak_rms"  # Hybrid peak/RMS
     TRUE_PEAK = "true_peak"  # Oversampled peak detection
 
 
 class AutomationCurve(Enum):
     """Automation curve shapes."""
+
     LINEAR = "linear"
     EXPONENTIAL = "exponential"
     LOGARITHMIC = "logarithmic"
@@ -34,6 +36,7 @@ class AutomationCurve(Enum):
 
 class LFOShape(Enum):
     """LFO waveform shapes."""
+
     SINE = "sine"
     TRIANGLE = "triangle"
     SQUARE = "square"
@@ -48,6 +51,7 @@ class EnvelopeFollower:
     """
     Envelope follower for extracting amplitude contours.
     """
+
     mode: EnvelopeMode = EnvelopeMode.RMS
     attack_ms: float = 10.0
     release_ms: float = 100.0
@@ -138,6 +142,7 @@ class PatternAutomation:
     """
     Pattern-based automation generator.
     """
+
     pattern: List[float] = field(default_factory=list)  # 0.0-1.0 values
     pattern_length_beats: float = 4.0
     tempo_bpm: float = 120.0
@@ -145,8 +150,8 @@ class PatternAutomation:
     sample_rate: float = 44100.0
 
     # Modulation
-    depth: float = 1.0       # Modulation depth (0.0-1.0)
-    offset: float = 0.0      # DC offset (-1.0 to 1.0)
+    depth: float = 1.0  # Modulation depth (0.0-1.0)
+    offset: float = 0.0  # DC offset (-1.0 to 1.0)
     phase_offset: float = 0.0  # Phase offset (0.0-1.0)
 
     # State
@@ -224,6 +229,7 @@ class SidechainDucker:
     """
     Sidechain-style ducking/pumping effect.
     """
+
     threshold_db: float = -20.0
     ratio: float = 4.0
     attack_ms: float = 1.0
@@ -405,7 +411,7 @@ def generate_lfo_pattern(
             value = random.random()
         elif shape == "sample_hold":
             # Change value at frequency rate
-            if i == 0 or int(t * 4) != int(((i-1) / length * frequency + phase) % 1.0 * 4):
+            if i == 0 or int(t * 4) != int(((i - 1) / length * frequency + phase) % 1.0 * 4):
                 value = random.random()
             else:
                 value = pattern[-1] if pattern else 0.5
@@ -482,12 +488,14 @@ def envelope_to_midi_cc(
         cc_value = max(min_value, min(max_value, cc_value))
 
         if last_value < 0 or abs(cc_value - last_value) >= threshold * 127:
-            events.append({
-                "type": "cc",
-                "time": i,
-                "cc": cc_number,
-                "value": cc_value,
-            })
+            events.append(
+                {
+                    "type": "cc",
+                    "time": i,
+                    "cc": cc_number,
+                    "value": cc_value,
+                }
+            )
             last_value = cc_value
 
     return events

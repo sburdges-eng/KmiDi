@@ -71,6 +71,7 @@ class ModelManifest:
         notes: free-form text. Useful for "do not roll back past this
             point" markers.
     """
+
     name: str
     schema_version: tuple[int, int]
     arch_hash: str
@@ -98,8 +99,7 @@ class ModelManifest:
         sv = obj.get("schema_version", [0, 0])
         if isinstance(sv, list):
             sv = tuple(sv)
-        if not (isinstance(sv, tuple) and len(sv) == 2
-                and all(isinstance(x, int) for x in sv)):
+        if not (isinstance(sv, tuple) and len(sv) == 2 and all(isinstance(x, int) for x in sv)):
             raise ValueError(f"invalid schema_version: {obj.get('schema_version')}")
         return cls(
             name=str(obj["name"]),
@@ -121,6 +121,7 @@ class ModelManifest:
 # Compatibility policy
 # ----------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class CompatibilityVerdict:
     compatible: bool
@@ -130,8 +131,7 @@ class CompatibilityVerdict:
         return self.compatible
 
 
-def is_compatible(consumer: ModelManifest,
-                  candidate: ModelManifest) -> CompatibilityVerdict:
+def is_compatible(consumer: ModelManifest, candidate: ModelManifest) -> CompatibilityVerdict:
     """Decide whether ``candidate`` is loadable by code expecting ``consumer``.
 
     Rules (in order):
@@ -145,25 +145,28 @@ def is_compatible(consumer: ModelManifest,
     """
     if consumer.name != candidate.name:
         return CompatibilityVerdict(
-            False, f"name mismatch: {consumer.name!r} vs {candidate.name!r}")
+            False, f"name mismatch: {consumer.name!r} vs {candidate.name!r}"
+        )
     if consumer.arch_hash != candidate.arch_hash:
         return CompatibilityVerdict(
-            False, f"arch_hash mismatch: {consumer.arch_hash} vs {candidate.arch_hash}")
+            False, f"arch_hash mismatch: {consumer.arch_hash} vs {candidate.arch_hash}"
+        )
     c_major, c_minor = consumer.schema_version
     k_major, k_minor = candidate.schema_version
     if c_major != k_major:
-        return CompatibilityVerdict(
-            False, f"schema_version major mismatch: {c_major} vs {k_major}")
+        return CompatibilityVerdict(False, f"schema_version major mismatch: {c_major} vs {k_major}")
     if k_minor < c_minor:
         return CompatibilityVerdict(
             False,
             f"candidate minor {k_minor} < consumer minor {c_minor} "
-            "(would miss fields the consumer expects)")
+            "(would miss fields the consumer expects)",
+        )
     return CompatibilityVerdict(True, "compatible")
 
 
-def pick_rollback_target(consumer: ModelManifest,
-                         candidates: list[ModelManifest]) -> Optional[ModelManifest]:
+def pick_rollback_target(
+    consumer: ModelManifest, candidates: list[ModelManifest]
+) -> Optional[ModelManifest]:
     """Pick the most-recent ``candidate`` compatible with ``consumer``.
 
     "Most recent" is determined by ``created_at`` string order, which is

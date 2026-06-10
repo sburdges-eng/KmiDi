@@ -22,6 +22,7 @@ from music_brain.integrations.ml_music_brain_bridge import generate_melody_with_
 @dataclass
 class MelodyInput:
     """Input for melody generation."""
+
     emotion: str = "neutral"
     key: str = "C"
     mode: str = "major"
@@ -32,6 +33,7 @@ class MelodyInput:
 @dataclass
 class MelodyOutput:
     """Serializable melody stage output."""
+
     notes: List[int]
     durations: List[float]
     velocities: List[int]
@@ -96,13 +98,11 @@ class MelodyProcessor(BaseProcessor):
 
             profiles = context.get_shared("learning_profiles") or {}
             storage = context.get_shared("learning_storage_root")
-            profile = (
-                inp.params.get("learning_melody_profile")
-                or profiles.get("melody")
-            )
+            profile = inp.params.get("learning_melody_profile") or profiles.get("melody")
             path_storage = None
             if storage is not None:
                 from pathlib import Path
+
                 path_storage = Path(storage) / "melodies"
 
             out = generate_melody_with_learning(

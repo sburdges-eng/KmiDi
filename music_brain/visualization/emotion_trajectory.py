@@ -14,6 +14,7 @@ import json
 try:
     import matplotlib.pyplot as plt
     import numpy as np
+
     MATPLOTLIB_AVAILABLE = True
     NUMPY_AVAILABLE = True
 except ImportError:
@@ -25,9 +26,10 @@ except ImportError:
 @dataclass
 class EmotionSnapshot:
     """Emotion state at a specific time point."""
+
     timestamp: float  # Time in seconds
-    valence: float    # -1.0 to 1.0 (negative to positive)
-    arousal: float   # 0.0 to 1.0 (calm to excited)
+    valence: float  # -1.0 to 1.0 (negative to positive)
+    arousal: float  # 0.0 to 1.0 (calm to excited)
     intensity: float  # 0.0 to 1.0 (weak to intense)
     emotion_label: Optional[str] = None  # Primary emotion name
     metadata: Optional[Dict] = None
@@ -36,6 +38,7 @@ class EmotionSnapshot:
 @dataclass
 class EmotionTrajectory:
     """Complete emotion trajectory over time."""
+
     snapshots: List[EmotionSnapshot]
     title: str = "Emotion Trajectory"
     duration_seconds: float = 0.0
@@ -75,13 +78,13 @@ class EmotionTrajectoryVisualizer:
 
     def __init__(self):
         self.color_map = {
-            "grief": "#1f77b4",      # Blue
-            "longing": "#9467bd",    # Purple
-            "hope": "#2ca02c",       # Green
-            "rage": "#d62728",       # Red
+            "grief": "#1f77b4",  # Blue
+            "longing": "#9467bd",  # Purple
+            "hope": "#2ca02c",  # Green
+            "rage": "#d62728",  # Red
             "tenderness": "#ff7f0e",  # Orange
-            "anxiety": "#bcbd22",    # Yellow-green
-            "euphoria": "#17becf",   # Cyan
+            "anxiety": "#bcbd22",  # Yellow-green
+            "euphoria": "#17becf",  # Cyan
             "melancholy": "#7f7f7f",  # Gray
             "nostalgia": "#e377c2",  # Pink
             "catharsis": "#8c564b",  # Brown
@@ -91,22 +94,14 @@ class EmotionTrajectoryVisualizer:
         }
 
     def create_trajectory_from_snapshots(
-        self,
-        snapshots: List[EmotionSnapshot],
-        title: str = "Emotion Trajectory"
+        self, snapshots: List[EmotionSnapshot], title: str = "Emotion Trajectory"
     ) -> EmotionTrajectory:
         """Create trajectory from list of snapshots."""
         duration = max(s.timestamp for s in snapshots) if snapshots else 0.0
-        return EmotionTrajectory(
-            snapshots=snapshots,
-            title=title,
-            duration_seconds=duration
-        )
+        return EmotionTrajectory(snapshots=snapshots, title=title, duration_seconds=duration)
 
     def create_trajectory_from_intent(
-        self,
-        intent_data: Dict,
-        time_resolution: float = 1.0  # Sample every N seconds
+        self, intent_data: Dict, time_resolution: float = 1.0  # Sample every N seconds
     ) -> EmotionTrajectory:
         """
         Create trajectory from song intent data.
@@ -148,6 +143,7 @@ class EmotionTrajectoryVisualizer:
             # Simple modulation: add slight variation to create trajectory
             # In production, this would use actual composition analysis
             import math
+
             if num_snapshots > 1:
                 variation = 0.1 * math.sin(2 * math.pi * t / (duration / 3))
             else:
@@ -158,14 +154,14 @@ class EmotionTrajectoryVisualizer:
                 valence=base_valence + variation * 0.3,
                 arousal=base_arousal + variation * 0.2,
                 intensity=base_intensity + abs(variation) * 0.3,
-                emotion_label=emotion_label
+                emotion_label=emotion_label,
             )
             snapshots.append(snapshot)
 
         return EmotionTrajectory(
             snapshots=snapshots,
             title=intent_data.get("title", "Untitled"),
-            duration_seconds=duration
+            duration_seconds=duration,
         )
 
     def _get_emotion_vad_map(self) -> Dict[str, Tuple[float, float, float]]:
@@ -191,7 +187,7 @@ class EmotionTrajectoryVisualizer:
         trajectory: EmotionTrajectory,
         output_path: Optional[str] = None,
         show_plot: bool = True,
-        style: str = "comprehensive"  # "simple", "comprehensive", "3d"
+        style: str = "comprehensive",  # "simple", "comprehensive", "3d"
     ):
         """
         Plot emotion trajectory.
@@ -216,38 +212,35 @@ class EmotionTrajectoryVisualizer:
             self._plot_comprehensive(trajectory, output_path, show_plot)
 
     def _plot_simple(
-        self,
-        trajectory: EmotionTrajectory,
-        output_path: Optional[str],
-        show_plot: bool
+        self, trajectory: EmotionTrajectory, output_path: Optional[str], show_plot: bool
     ):
         """Simple line plot of valence, arousal, intensity over time."""
         fig, axes = plt.subplots(3, 1, figsize=(12, 8), sharex=True)
-        fig.suptitle(trajectory.title, fontsize=14, fontweight='bold')
+        fig.suptitle(trajectory.title, fontsize=14, fontweight="bold")
 
         timestamps, valence = trajectory.get_valence_over_time()
         timestamps, arousal = trajectory.get_arousal_over_time()
         timestamps, intensity = trajectory.get_intensity_over_time()
 
         # Valence plot
-        axes[0].plot(timestamps, valence, 'b-', linewidth=2, label='Valence')
-        axes[0].axhline(y=0, color='k', linestyle='--', alpha=0.3)
-        axes[0].set_ylabel('Valence', fontsize=10)
+        axes[0].plot(timestamps, valence, "b-", linewidth=2, label="Valence")
+        axes[0].axhline(y=0, color="k", linestyle="--", alpha=0.3)
+        axes[0].set_ylabel("Valence", fontsize=10)
         axes[0].set_ylim(-1.1, 1.1)
         axes[0].grid(True, alpha=0.3)
         axes[0].legend()
 
         # Arousal plot
-        axes[1].plot(timestamps, arousal, 'r-', linewidth=2, label='Arousal')
-        axes[1].set_ylabel('Arousal', fontsize=10)
+        axes[1].plot(timestamps, arousal, "r-", linewidth=2, label="Arousal")
+        axes[1].set_ylabel("Arousal", fontsize=10)
         axes[1].set_ylim(0, 1.1)
         axes[1].grid(True, alpha=0.3)
         axes[1].legend()
 
         # Intensity plot
-        axes[2].plot(timestamps, intensity, 'g-', linewidth=2, label='Intensity')
-        axes[2].set_ylabel('Intensity', fontsize=10)
-        axes[2].set_xlabel('Time (seconds)', fontsize=10)
+        axes[2].plot(timestamps, intensity, "g-", linewidth=2, label="Intensity")
+        axes[2].set_ylabel("Intensity", fontsize=10)
+        axes[2].set_xlabel("Time (seconds)", fontsize=10)
         axes[2].set_ylim(0, 1.1)
         axes[2].grid(True, alpha=0.3)
         axes[2].legend()
@@ -255,7 +248,7 @@ class EmotionTrajectoryVisualizer:
         plt.tight_layout()
 
         if output_path:
-            plt.savefig(output_path, dpi=300, bbox_inches='tight')
+            plt.savefig(output_path, dpi=300, bbox_inches="tight")
             print(f"Saved emotion trajectory to {output_path}")
 
         if show_plot:
@@ -264,10 +257,7 @@ class EmotionTrajectoryVisualizer:
             plt.close()
 
     def _plot_comprehensive(
-        self,
-        trajectory: EmotionTrajectory,
-        output_path: Optional[str],
-        show_plot: bool
+        self, trajectory: EmotionTrajectory, output_path: Optional[str], show_plot: bool
     ):
         """Comprehensive plot with VAD dimensions and emotion regions."""
         if not NUMPY_AVAILABLE:
@@ -282,53 +272,75 @@ class EmotionTrajectoryVisualizer:
         labels = trajectory.get_emotion_labels()
 
         # Main title
-        fig.suptitle(trajectory.title, fontsize=16, fontweight='bold', y=0.98)
+        fig.suptitle(trajectory.title, fontsize=16, fontweight="bold", y=0.98)
 
         # Valence plot
         ax1 = fig.add_subplot(gs[0, 0])
-        ax1.plot(timestamps, valence, 'b-', linewidth=2.5, label='Valence')
-        ax1.fill_between(timestamps, 0, valence, where=np.array(valence) >= 0,
-                         alpha=0.3, color='green', label='Positive')
-        ax1.fill_between(timestamps, 0, valence, where=np.array(valence) < 0,
-                         alpha=0.3, color='red', label='Negative')
-        ax1.axhline(y=0, color='k', linestyle='--', alpha=0.5)
-        ax1.set_ylabel('Valence\n(Negative ↔ Positive)', fontsize=10, fontweight='bold')
+        ax1.plot(timestamps, valence, "b-", linewidth=2.5, label="Valence")
+        ax1.fill_between(
+            timestamps,
+            0,
+            valence,
+            where=np.array(valence) >= 0,
+            alpha=0.3,
+            color="green",
+            label="Positive",
+        )
+        ax1.fill_between(
+            timestamps,
+            0,
+            valence,
+            where=np.array(valence) < 0,
+            alpha=0.3,
+            color="red",
+            label="Negative",
+        )
+        ax1.axhline(y=0, color="k", linestyle="--", alpha=0.5)
+        ax1.set_ylabel("Valence\n(Negative ↔ Positive)", fontsize=10, fontweight="bold")
         ax1.set_ylim(-1.1, 1.1)
         ax1.grid(True, alpha=0.3)
-        ax1.legend(loc='upper right')
+        ax1.legend(loc="upper right")
 
         # Arousal plot
         ax2 = fig.add_subplot(gs[0, 1])
-        ax2.plot(timestamps, arousal, 'r-', linewidth=2.5, label='Arousal')
-        ax2.fill_between(timestamps, arousal, alpha=0.3, color='orange')
-        ax2.set_ylabel('Arousal\n(Calm ↔ Excited)', fontsize=10, fontweight='bold')
+        ax2.plot(timestamps, arousal, "r-", linewidth=2.5, label="Arousal")
+        ax2.fill_between(timestamps, arousal, alpha=0.3, color="orange")
+        ax2.set_ylabel("Arousal\n(Calm ↔ Excited)", fontsize=10, fontweight="bold")
         ax2.set_ylim(0, 1.1)
         ax2.grid(True, alpha=0.3)
         ax2.legend()
 
         # Intensity plot
         ax3 = fig.add_subplot(gs[1, :])
-        ax3.plot(timestamps, intensity, 'g-', linewidth=2.5, label='Intensity')
-        ax3.fill_between(timestamps, intensity, alpha=0.3, color='green')
-        ax3.set_ylabel('Intensity\n(Weak ↔ Intense)', fontsize=10, fontweight='bold')
-        ax3.set_xlabel('Time (seconds)', fontsize=11, fontweight='bold')
+        ax3.plot(timestamps, intensity, "g-", linewidth=2.5, label="Intensity")
+        ax3.fill_between(timestamps, intensity, alpha=0.3, color="green")
+        ax3.set_ylabel("Intensity\n(Weak ↔ Intense)", fontsize=10, fontweight="bold")
+        ax3.set_xlabel("Time (seconds)", fontsize=11, fontweight="bold")
         ax3.set_ylim(0, 1.1)
         ax3.grid(True, alpha=0.3)
         ax3.legend()
 
         # 2D Valence-Arousal scatter over time (colored by intensity)
         ax4 = fig.add_subplot(gs[2, 0])
-        scatter = ax4.scatter(valence, arousal, c=intensity, cmap='viridis',
-                              s=50, alpha=0.7, edgecolors='black', linewidth=0.5)
-        ax4.set_xlabel('Valence', fontsize=10, fontweight='bold')
-        ax4.set_ylabel('Arousal', fontsize=10, fontweight='bold')
+        scatter = ax4.scatter(
+            valence,
+            arousal,
+            c=intensity,
+            cmap="viridis",
+            s=50,
+            alpha=0.7,
+            edgecolors="black",
+            linewidth=0.5,
+        )
+        ax4.set_xlabel("Valence", fontsize=10, fontweight="bold")
+        ax4.set_ylabel("Arousal", fontsize=10, fontweight="bold")
         ax4.set_xlim(-1.1, 1.1)
         ax4.set_ylim(0, 1.1)
         ax4.grid(True, alpha=0.3)
-        ax4.axhline(y=0.5, color='k', linestyle='--', alpha=0.3)
-        ax4.axvline(x=0, color='k', linestyle='--', alpha=0.3)
-        plt.colorbar(scatter, ax=ax4, label='Intensity')
-        ax4.set_title('Emotional Space Trajectory', fontsize=11, fontweight='bold')
+        ax4.axhline(y=0.5, color="k", linestyle="--", alpha=0.3)
+        ax4.axvline(x=0, color="k", linestyle="--", alpha=0.3)
+        plt.colorbar(scatter, ax=ax4, label="Intensity")
+        ax4.set_title("Emotional Space Trajectory", fontsize=11, fontweight="bold")
 
         # Emotion labels timeline
         ax5 = fig.add_subplot(gs[2, 1])
@@ -336,22 +348,28 @@ class EmotionTrajectoryVisualizer:
             unique_labels = list(set(filter(None, labels)))
             if unique_labels:
                 for i, label in enumerate(unique_labels):
-                    label_indices = [j for j, l in enumerate(labels) if l == label]
+                    label_indices = [j for j, lbl in enumerate(labels) if lbl == label]
                     if label_indices:
                         label_times = [timestamps[j] for j in label_indices]
-                        color = self.color_map.get(label.lower(), '#7f7f7f')
-                        ax5.scatter(label_times, [i] * len(label_times),
-                                    c=color, s=100, label=label, alpha=0.7)
+                        color = self.color_map.get(label.lower(), "#7f7f7f")
+                        ax5.scatter(
+                            label_times,
+                            [i] * len(label_times),
+                            c=color,
+                            s=100,
+                            label=label,
+                            alpha=0.7,
+                        )
                 ax5.set_yticks(range(len(unique_labels)))
                 ax5.set_yticklabels(unique_labels)
-                ax5.set_xlabel('Time (seconds)', fontsize=10, fontweight='bold')
-                ax5.set_title('Emotion Labels Over Time', fontsize=11, fontweight='bold')
-                ax5.grid(True, alpha=0.3, axis='x')
+                ax5.set_xlabel("Time (seconds)", fontsize=10, fontweight="bold")
+                ax5.set_title("Emotion Labels Over Time", fontsize=11, fontweight="bold")
+                ax5.grid(True, alpha=0.3, axis="x")
 
         plt.tight_layout()
 
         if output_path:
-            plt.savefig(output_path, dpi=300, bbox_inches='tight')
+            plt.savefig(output_path, dpi=300, bbox_inches="tight")
             print(f"Saved emotion trajectory to {output_path}")
 
         if show_plot:
@@ -359,39 +377,43 @@ class EmotionTrajectoryVisualizer:
         else:
             plt.close()
 
-    def _plot_3d(
-        self,
-        trajectory: EmotionTrajectory,
-        output_path: Optional[str],
-        show_plot: bool
-    ):
+    def _plot_3d(self, trajectory: EmotionTrajectory, output_path: Optional[str], show_plot: bool):
         """3D plot of VAD space."""
 
         fig = plt.figure(figsize=(12, 10))
-        ax = fig.add_subplot(111, projection='3d')
+        ax = fig.add_subplot(111, projection="3d")
 
         timestamps, valence = trajectory.get_valence_over_time()
         timestamps, arousal = trajectory.get_arousal_over_time()
         timestamps, intensity = trajectory.get_intensity_over_time()
 
         # Color by time
-        scatter = ax.scatter(valence, arousal, intensity, c=timestamps,
-                             cmap='viridis', s=50, alpha=0.7, edgecolors='black', linewidth=0.5)
+        scatter = ax.scatter(
+            valence,
+            arousal,
+            intensity,
+            c=timestamps,
+            cmap="viridis",
+            s=50,
+            alpha=0.7,
+            edgecolors="black",
+            linewidth=0.5,
+        )
 
         # Plot trajectory line
-        ax.plot(valence, arousal, intensity, 'k-', linewidth=1, alpha=0.3)
+        ax.plot(valence, arousal, intensity, "k-", linewidth=1, alpha=0.3)
 
-        ax.set_xlabel('Valence', fontsize=10, fontweight='bold')
-        ax.set_ylabel('Arousal', fontsize=10, fontweight='bold')
-        ax.set_zlabel('Intensity', fontsize=10, fontweight='bold')
-        ax.set_title(trajectory.title, fontsize=12, fontweight='bold', pad=20)
+        ax.set_xlabel("Valence", fontsize=10, fontweight="bold")
+        ax.set_ylabel("Arousal", fontsize=10, fontweight="bold")
+        ax.set_zlabel("Intensity", fontsize=10, fontweight="bold")
+        ax.set_title(trajectory.title, fontsize=12, fontweight="bold", pad=20)
 
-        plt.colorbar(scatter, ax=ax, label='Time (seconds)', shrink=0.8)
+        plt.colorbar(scatter, ax=ax, label="Time (seconds)", shrink=0.8)
 
         plt.tight_layout()
 
         if output_path:
-            plt.savefig(output_path, dpi=300, bbox_inches='tight')
+            plt.savefig(output_path, dpi=300, bbox_inches="tight")
             print(f"Saved 3D emotion trajectory to {output_path}")
 
         if show_plot:
@@ -399,11 +421,7 @@ class EmotionTrajectoryVisualizer:
         else:
             plt.close()
 
-    def export_trajectory_json(
-        self,
-        trajectory: EmotionTrajectory,
-        output_path: str
-    ):
+    def export_trajectory_json(self, trajectory: EmotionTrajectory, output_path: str):
         """Export trajectory data to JSON for external use."""
         data = {
             "title": trajectory.title,
@@ -415,13 +433,13 @@ class EmotionTrajectoryVisualizer:
                     "arousal": s.arousal,
                     "intensity": s.intensity,
                     "emotion_label": s.emotion_label,
-                    "metadata": s.metadata
+                    "metadata": s.metadata,
                 }
                 for s in trajectory.snapshots
-            ]
+            ],
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(data, f, indent=2)
 
         print(f"Exported trajectory data to {output_path}")
@@ -441,8 +459,7 @@ def main():
     ]
 
     trajectory = visualizer.create_trajectory_from_snapshots(
-        snapshots,
-        title="Sample Emotional Journey"
+        snapshots, title="Sample Emotional Journey"
     )
 
     # Plot and export

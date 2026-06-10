@@ -14,6 +14,7 @@ import copy
 
 class OperationType(Enum):
     """Types of edit operations."""
+
     INSERT = "insert"
     DELETE = "delete"
     UPDATE = "update"
@@ -38,6 +39,7 @@ class Operation:
 
     Operations can be transformed and applied to resolve conflicts.
     """
+
     op_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     type: OperationType = OperationType.UPDATE
     path: str = ""  # JSON path to the modified field
@@ -358,7 +360,7 @@ class CollaborativeDocument:
         elif isinstance(target, str):
             pos = position or 0
             ln = length or 1
-            new_val = target[:pos] + target[pos + ln:]
+            new_val = target[:pos] + target[pos + ln :]
             self._set_value(path, new_val)
 
     def undo(self) -> bool:

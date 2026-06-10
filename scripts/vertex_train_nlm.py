@@ -17,7 +17,6 @@ import argparse
 import logging
 import os
 import sys
-from pathlib import Path
 
 # Repo root on host; in Vertex container we rely on installed package
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -32,7 +31,9 @@ logging.basicConfig(
 logger = logging.getLogger("vertex_train_nlm")
 
 # Vertex AI paths
-AIP_MODEL_DIR = os.environ.get("AIP_MODEL_DIR", "/tmp/kmidi_model") # Fallback to /tmp for local testing
+AIP_MODEL_DIR = os.environ.get(
+    "AIP_MODEL_DIR", "/tmp/kmidi_model"
+)  # Fallback to /tmp for local testing
 
 try:
     import torch
@@ -57,7 +58,7 @@ def resolve_gcs_path(path_str: str) -> str:
 def load_dataset(dataset_path: str):
     """Load dataset from huggingface or jsonl files on GCS."""
     resolved_path = resolve_gcs_path(dataset_path)
-    
+
     if os.path.isdir(resolved_path) or os.path.isfile(resolved_path):
         # Local or GCS fuse file
         if resolved_path.endswith(".jsonl"):
@@ -71,21 +72,28 @@ def load_dataset(dataset_path: str):
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Vertex AI NLM/LLM training")
-    
+
     # Generic training args
-    parser.add_argument("--base_model", type=str, required=True, help="HuggingFace Model ID or GCS Path")
+    parser.add_argument(
+        "--base_model", type=str, required=True, help="HuggingFace Model ID or GCS Path"
+    )
     parser.add_argument("--dataset_path", type=str, required=True, help="GCS path or HF dataset ID")
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--batch_size", type=int, default=4)
     parser.add_argument("--learning_rate", type=float, default=2e-4)
     parser.add_argument("--max_seq_length", type=int, default=2048)
-    parser.add_argument("--hf_token", type=str, default=os.environ.get("HF_TOKEN", ""), help="HF token for gated models")
-    
+    parser.add_argument(
+        "--hf_token",
+        type=str,
+        default=os.environ.get("HF_TOKEN", ""),
+        help="HF token for gated models",
+    )
+
     # LoRA specific
     parser.add_argument("--lora_rank", type=int, default=16)
     parser.add_argument("--lora_alpha", type=float, default=32)
     parser.add_argument("--lora_dropout", type=float, default=0.05)
-    
+
     args = parser.parse_args()
 
     logger.info(f"Vertex AI NLM training starting for model: {args.base_model}")
@@ -93,16 +101,14 @@ def main() -> None:
     # Resolve output dir
     model_dir = resolve_gcs_path(AIP_MODEL_DIR)
     os.makedirs(model_dir, exist_ok=True)
-    
-    # Resolving Base Model GCS Path if specified via gs:// 
+
+    # Resolving Base Model GCS Path if specified via gs://
     # (if you staged it to GCS or are pointing to HF)
     model_loaded_path = resolve_gcs_path(args.base_model)
-    
+
     logger.info("Loading Tokenizer...")
     tokenizer = AutoTokenizer.from_pretrained(
-        model_loaded_path, 
-        token=args.hf_token,
-        trust_remote_code=True
+        model_loaded_path, token=args.hf_token, trust_remote_code=True
     )
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -112,11 +118,12 @@ def main() -> None:
     bnb_config = None
     try:
         from transformers import BitsAndBytesConfig
+
         bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_use_double_quant=True,
             bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.bfloat16
+            bnb_4bit_compute_dtype=torch.bfloat16,
         )
     except Exception as e:
         logger.warning(f"Failed to setup 4-bit quantization, proceeding without: {e}")
@@ -128,7 +135,7 @@ def main() -> None:
         token=args.hf_token,
         trust_remote_code=True,
     )
-    model.config.use_cache = False # Required for gradient checkpointing
+    model.config.use_cache = False  # Required for gradient checkpointing
     if bnb_config is not None:
         model = prepare_model_for_kbit_training(model)
 
@@ -140,7 +147,15 @@ def main() -> None:
         r=args.lora_rank,
         bias="none",
         task_type="CAUSAL_LM",
-        target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"] 
+        target_modules=[
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
+        ],
     )
     model = get_peft_model(model, peft_config)
     model.print_trainable_parameters()
@@ -167,11 +182,11 @@ def main() -> None:
         warmup_ratio=0.03,
         group_by_length=True,
         lr_scheduler_type="cosine",
-        report_to="tensorboard"
+        report_to="tensorboard",
     )
 
     logger.info("Initializing SFTTrainer...")
-    # Assumes dataset has a 'text' column for standard causal LM objective 
+    # Assumes dataset has a 'text' column for standard causal LM objective
     # Or format instruction using dataset_text_field
     trainer = SFTTrainer(
         model=model,

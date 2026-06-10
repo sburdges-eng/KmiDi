@@ -11,7 +11,8 @@ import numpy as np
 
 
 def _load_audio_mel(
-        audio_path: str, duration: float = 3.0, sr: int = 22050, n_mels: int = 128) -> np.ndarray:
+    audio_path: str, duration: float = 3.0, sr: int = 22050, n_mels: int = 128
+) -> np.ndarray:
     try:
         import librosa  # type: ignore
     except ImportError as exc:  # pragma: no cover
@@ -90,8 +91,10 @@ class VoiceClassifier:
         probs = probs / (np.sum(probs) + 1e-8)
         idx = np.argsort(probs)[::-1][: max(1, top_k)]
         ranked = [
-            {"label": self.class_names[i] if i < len(self.class_names) else str(i), "score": float(probs[i])}  # noqa: E501
-
+            {
+                "label": self.class_names[i] if i < len(self.class_names) else str(i),
+                "score": float(probs[i]),
+            }  # noqa: E501
             for i in idx
         ]
         return {"top": ranked[0], "ranked": ranked, "latency_ms": result.latency_ms}

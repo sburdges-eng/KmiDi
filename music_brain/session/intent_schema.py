@@ -27,8 +27,10 @@ def _coerce_text(value, default: str = "") -> str:
 # ENUMS: Rule Breaking Categories
 # =================================================================
 
+
 class HarmonyRuleBreak(Enum):
     """Harmony rules to intentionally break."""
+
     AVOID_TONIC_RESOLUTION = "HARMONY_AvoidTonicResolution"
     PARALLEL_MOTION = "HARMONY_ParallelMotion"
     MODAL_INTERCHANGE = "HARMONY_ModalInterchange"
@@ -39,6 +41,7 @@ class HarmonyRuleBreak(Enum):
 
 class RhythmRuleBreak(Enum):
     """Rhythm rules to intentionally break."""
+
     CONSTANT_DISPLACEMENT = "RHYTHM_ConstantDisplacement"
     TEMPO_FLUCTUATION = "RHYTHM_TempoFluctuation"
     METRIC_MODULATION = "RHYTHM_MetricModulation"
@@ -48,6 +51,7 @@ class RhythmRuleBreak(Enum):
 
 class ArrangementRuleBreak(Enum):
     """Arrangement rules to intentionally break."""
+
     UNBALANCED_DYNAMICS = "ARRANGEMENT_UnbalancedDynamics"
     STRUCTURAL_MISMATCH = "ARRANGEMENT_StructuralMismatch"
     BURIED_VOCALS = "ARRANGEMENT_BuriedVocals"
@@ -57,6 +61,7 @@ class ArrangementRuleBreak(Enum):
 
 class ProductionRuleBreak(Enum):
     """Production rules to intentionally break."""
+
     EXCESSIVE_MUD = "PRODUCTION_ExcessiveMud"
     PITCH_IMPERFECTION = "PRODUCTION_PitchImperfection"
     ROOM_NOISE = "PRODUCTION_RoomNoise"
@@ -66,13 +71,15 @@ class ProductionRuleBreak(Enum):
 
 class VulnerabilityScale(Enum):
     """Vulnerability level for emotional exposure."""
-    LOW = "Low"       # Guarded, protective
+
+    LOW = "Low"  # Guarded, protective
     MEDIUM = "Medium"  # Honest but controlled
-    HIGH = "High"     # Raw, exposed
+    HIGH = "High"  # Raw, exposed
 
 
 class NarrativeArc(Enum):
     """Structural emotional arc."""
+
     CLIMB_TO_CLIMAX = "Climb-to-Climax"
     SLOW_REVEAL = "Slow Reveal"
     REPETITIVE_DESPAIR = "Repetitive Despair"
@@ -85,16 +92,18 @@ class NarrativeArc(Enum):
 
 class CoreStakes(Enum):
     """What's at stake in the song."""
-    PERSONAL = "Personal"         # Individual identity
-    RELATIONAL = "Relational"     # Connections
-    EXISTENTIAL = "Existential"   # Meaning/purpose
-    SURVIVAL = "Survival"         # Life/safety
-    CREATIVE = "Creative"         # Expression
-    MORAL = "Moral"               # Right/wrong
+
+    PERSONAL = "Personal"  # Individual identity
+    RELATIONAL = "Relational"  # Connections
+    EXISTENTIAL = "Existential"  # Meaning/purpose
+    SURVIVAL = "Survival"  # Life/safety
+    CREATIVE = "Creative"  # Expression
+    MORAL = "Moral"  # Right/wrong
 
 
 class GrooveFeel(Enum):
     """Rhythmic feel."""
+
     STRAIGHT_DRIVING = "Straight/Driving"
     LAID_BACK = "Laid Back"
     SWUNG = "Swung"
@@ -147,7 +156,6 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Grief, longing, or open questions",
         "example_emotions": ["grief", "longing", "uncertainty"],
     },
-
     # Rhythm
     "RHYTHM_ConstantDisplacement": {
         "description": "Shift pattern one 16th note late/early",
@@ -179,7 +187,6 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Creating impact through absence",
         "example_emotions": ["shock", "emphasis", "breath"],
     },
-
     # Arrangement
     "ARRANGEMENT_UnbalancedDynamics": {
         "description": "Keep element too loud/quiet for standard",
@@ -211,7 +218,6 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Aftermath is the point",
         "example_emotions": ["aftermath", "reflection"],
     },
-
     # Production
     "PRODUCTION_ExcessiveMud": {
         "description": "Leave 200-400Hz buildup",
@@ -250,6 +256,7 @@ RULE_BREAKING_EFFECTS = {
 # DATA CLASSES: Song Intent Structure
 # =================================================================
 
+
 @dataclass
 class SongRoot:
     """
@@ -257,10 +264,11 @@ class SongRoot:
 
     Deep interrogation to find what the song NEEDS to express.
     """
-    core_event: str = ""           # The inciting moment/realization
-    core_resistance: str = ""      # What's holding you back
-    core_longing: str = ""         # What you ultimately want to feel
-    core_stakes: str = ""          # What's at risk
+
+    core_event: str = ""  # The inciting moment/realization
+    core_resistance: str = ""  # What's holding you back
+    core_longing: str = ""  # What you ultimately want to feel
+    core_stakes: str = ""  # What's at risk
     core_transformation: str = ""  # How you want to feel when done
 
 
@@ -271,11 +279,12 @@ class SongIntent:
 
     Validated by Phase 0, guides all technical decisions.
     """
-    mood_primary: str = ""                  # Primary emotion
-    mood_secondary_tension: float = 0.5     # Tension level 0.0-1.0
-    imagery_texture: str = ""               # Visual/tactile quality
-    vulnerability_scale: str = "Medium"     # Low/Medium/High
-    narrative_arc: str = ""                 # Structural emotion
+
+    mood_primary: str = ""  # Primary emotion
+    mood_secondary_tension: float = 0.5  # Tension level 0.0-1.0
+    imagery_texture: str = ""  # Visual/tactile quality
+    vulnerability_scale: str = "Medium"  # Low/Medium/High
+    narrative_arc: str = ""  # Structural emotion
 
 
 @dataclass
@@ -285,6 +294,7 @@ class TechnicalConstraints:
 
     Implementation of intent into concrete musical decisions.
     """
+
     technical_genre: str = ""
     technical_tempo_range: Tuple[int, int] = (80, 120)
     technical_key: str = ""
@@ -297,8 +307,9 @@ class TechnicalConstraints:
 @dataclass
 class SystemDirective:
     """What DAiW should generate."""
-    output_target: str = ""           # What to generate
-    output_feedback_loop: str = ""    # Which modules to iterate
+
+    output_target: str = ""  # What to generate
+    output_feedback_loop: str = ""  # Which modules to iterate
 
 
 @dataclass
@@ -309,6 +320,7 @@ class CompleteSongIntent:
     This is the full specification for a song that DAiW
     uses to generate meaningful, emotionally-aligned output.
     """
+
     # Phase 0
     song_root: SongRoot = field(default_factory=SongRoot)
 
@@ -432,7 +444,6 @@ class CompleteSongIntent:
                 "technical_groove_feel": self.technical_constraints.technical_groove_feel,
                 "technical_rule_to_break": self.technical_constraints.technical_rule_to_break,
                 "rule_breaking_justification": self.technical_constraints.rule_breaking_justification,  # noqa: E501
-
             },
             "system_directive": {
                 "output_target": self.system_directive.output_target,
@@ -511,19 +522,20 @@ class CompleteSongIntent:
 
     def save(self, path: str):
         """Save to JSON file."""
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
     def load(cls, path: str) -> "CompleteSongIntent":
         """Load from JSON file."""
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             return cls.from_dict(json.load(f))
 
 
 # =================================================================
 # HELPER FUNCTIONS
 # =================================================================
+
 
 def suggest_rule_break(emotion: str) -> List[Dict]:
     """
@@ -540,12 +552,14 @@ def suggest_rule_break(emotion: str) -> List[Dict]:
 
     for rule_key, rule_data in RULE_BREAKING_EFFECTS.items():
         if any(e in emotion_lower for e in rule_data.get("example_emotions", [])):
-            suggestions.append({
-                "rule": rule_key,
-                "description": rule_data["description"],
-                "effect": rule_data["effect"],
-                "use_when": rule_data["use_when"],
-            })
+            suggestions.append(
+                {
+                    "rule": rule_key,
+                    "description": rule_data["description"],
+                    "effect": rule_data["effect"],
+                    "use_when": rule_data["use_when"],
+                }
+            )
 
     return suggestions
 
@@ -572,7 +586,10 @@ def validate_intent(intent: CompleteSongIntent) -> List[str]:
     # Phase 1 checks
     if not intent.song_intent.mood_primary:
         issues.append("Phase 1: Missing mood_primary - what's the main emotion?")
-    if intent.song_intent.mood_secondary_tension < 0 or intent.song_intent.mood_secondary_tension > 1:  # noqa: E501
+    if (
+        intent.song_intent.mood_secondary_tension < 0
+        or intent.song_intent.mood_secondary_tension > 1
+    ):  # noqa: E501
 
         issues.append("Phase 1: mood_secondary_tension should be 0.0-1.0")
 
@@ -580,13 +597,15 @@ def validate_intent(intent: CompleteSongIntent) -> List[str]:
     if intent.technical_constraints.technical_rule_to_break:
         if not intent.technical_constraints.rule_breaking_justification:
             issues.append(
-                "Phase 2: Rule to break specified without justification - WHY break this rule?")
+                "Phase 2: Rule to break specified without justification - WHY break this rule?"
+            )
 
     # Consistency checks
     if intent.song_intent.vulnerability_scale == "High":
         if intent.song_intent.mood_secondary_tension < 0.3:
             issues.append(
-                "Consistency: High vulnerability usually implies some tension (tension is very low)")  # noqa: E501
+                "Consistency: High vulnerability usually implies some tension (tension is very low)"
+            )  # noqa: E501
 
     return issues
 

@@ -27,7 +27,7 @@ import ctypes
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # ctypes mirror of KellyRTState (must match kelly_ffi.h exactly)
 # ---------------------------------------------------------------------------
+
 
 class CKellyRTState(ctypes.Structure):
     _fields_ = [
@@ -258,32 +259,41 @@ class ComprehensiveIntegrationManager:
 
         # New bar
         if snap.bar != self._prev.bar:
-            await self._bus.emit("engine.new_bar", {
-                "bar": snap.bar,
-                "beat": snap.beat,
-                "bpm": snap.bpm,
-            })
+            await self._bus.emit(
+                "engine.new_bar",
+                {
+                    "bar": snap.bar,
+                    "beat": snap.beat,
+                    "bpm": snap.bpm,
+                },
+            )
 
         # Emotion change (VAD delta exceeds threshold)
         dv = abs(snap.valence - self._prev.valence)
         da = abs(snap.arousal - self._prev.arousal)
         dd = abs(snap.dominance - self._prev.dominance)
         if max(dv, da, dd) > self._emotion_threshold:
-            await self._bus.emit("engine.emotion_change", {
-                "valence": snap.valence,
-                "arousal": snap.arousal,
-                "dominance": snap.dominance,
-                "intensity": snap.emotion_intensity,
-                "delta": {"valence": dv, "arousal": da, "dominance": dd},
-            })
+            await self._bus.emit(
+                "engine.emotion_change",
+                {
+                    "valence": snap.valence,
+                    "arousal": snap.arousal,
+                    "dominance": snap.dominance,
+                    "intensity": snap.emotion_intensity,
+                    "delta": {"valence": dv, "arousal": da, "dominance": dd},
+                },
+            )
 
         # Transport change
         if snap.playing != self._prev.playing:
-            await self._bus.emit("engine.transport", {
-                "playing": snap.playing,
-                "bpm": snap.bpm,
-                "bar": snap.bar,
-            })
+            await self._bus.emit(
+                "engine.transport",
+                {
+                    "playing": snap.playing,
+                    "bpm": snap.bpm,
+                    "bar": snap.bar,
+                },
+            )
 
     # ------------------------------------------------------------------
     # Parameter push (Python → C++)
@@ -292,8 +302,9 @@ class ComprehensiveIntegrationManager:
     def push_bpm(self, bpm: float) -> bool:
         return self._push_param(RT_TARGET_BPM, 0, bpm)
 
-    def push_emotion(self, valence: float, arousal: float, dominance: float,
-                     intensity: float = 1.0) -> bool:
+    def push_emotion(
+        self, valence: float, arousal: float, dominance: float, intensity: float = 1.0
+    ) -> bool:
         ok = True
         ok &= self._push_param(RT_TARGET_EMOTION, 0, valence)
         ok &= self._push_param(RT_TARGET_EMOTION, 1, arousal)
@@ -330,9 +341,7 @@ class ComprehensiveIntegrationManager:
         if self._lib is None:
             logger.warning("Library not loaded, cannot push param")
             return False
-        rc = self._lib.kelly_brain_push_rt_param(
-            self._brain, target, index, ctypes.c_float(value)
-        )
+        rc = self._lib.kelly_brain_push_rt_param(self._brain, target, index, ctypes.c_float(value))
         if rc != 0:
             logger.warning("push_rt_param failed: target=%d idx=%d rc=%d", target, index, rc)
             return False

@@ -32,12 +32,14 @@ logger = logging.getLogger(__name__)
 try:
     import urllib.request
     import urllib.error
+
     HAS_URLLIB = True
 except ImportError:
     HAS_URLLIB = False
 
 try:
     import requests
+
     HAS_REQUESTS = True
 except ImportError:
     HAS_REQUESTS = False
@@ -254,9 +256,13 @@ class PentaCoreIntegration:
         """Disconnect from penta-core service."""
         if self._connected and self._session_id:
             try:
-                self._make_request("/api/session/close", method="POST", data={
-                    "session_id": self._session_id,
-                })
+                self._make_request(
+                    "/api/session/close",
+                    method="POST",
+                    data={
+                        "session_id": self._session_id,
+                    },
+                )
             except ConnectionError:
                 pass  # Ignore errors during disconnect
 
@@ -471,6 +477,7 @@ class PentaCoreIntegration:
 # ENHANCED: Local Penta-Core Integration
 # =============================================================================
 
+
 class LocalPentaCoreIntegration:
     """
     Local integration with Penta-Core Python bindings.
@@ -515,6 +522,7 @@ class LocalPentaCoreIntegration:
         # Try to import local dynamics integration
         try:
             from .dynamics_integration import DynamicsIntegration
+
             self._dynamics_integration = DynamicsIntegration()
         except ImportError:
             pass
@@ -522,6 +530,7 @@ class LocalPentaCoreIntegration:
         # Try to import C++ bindings
         try:
             from penta_core import HarmonyEngine, GrooveEngine
+
             self._harmony_engine = HarmonyEngine(self.sample_rate)
             self._groove_engine = GrooveEngine(self.sample_rate)
         except ImportError:
@@ -530,6 +539,7 @@ class LocalPentaCoreIntegration:
         # Try to import ML interface
         try:
             from penta_core.ml import get_registry
+
             self._ml_interface = get_registry()
         except ImportError:
             pass
@@ -571,8 +581,10 @@ class LocalPentaCoreIntegration:
 
             return {
                 "chord": {"root": max_pc, "quality": quality},
-                "scale": {"root": max_pc, "type": "natural_minor" if quality == "minor" else "major"},  # noqa: E501
-
+                "scale": {
+                    "root": max_pc,
+                    "type": "natural_minor" if quality == "minor" else "major",
+                },  # noqa: E501
             }
 
     def get_chord_suggestions(
@@ -632,7 +644,7 @@ class LocalPentaCoreIntegration:
             return {"tempo": 120.0, "swing": 0.0}
 
         # Calculate inter-onset intervals
-        iois = [onset_times[i+1] - onset_times[i] for i in range(len(onset_times) - 1)]
+        iois = [onset_times[i + 1] - onset_times[i] for i in range(len(onset_times) - 1)]
         avg_ioi = sum(iois) / len(iois)
 
         # Estimate tempo (assuming 8th notes)
@@ -714,6 +726,7 @@ class LocalPentaCoreIntegration:
         """
         if self._dynamics_integration:
             from .dynamics_integration import get_dynamics_for_emotion
+
             params = get_dynamics_for_emotion(emotion_name, section)
             return {
                 "target_lufs": params.target_lufs,
@@ -801,8 +814,20 @@ class LocalPentaCoreIntegration:
                     for chord in context[-8:]:  # Last 8 chords
                         root = chord.get("root", 0)
                         quality = chord.get("quality", "major")
-                        note_names = ["C", "Db", "D", "Eb", "E",
-                                      "F", "Gb", "G", "Ab", "A", "Bb", "B"]
+                        note_names = [
+                            "C",
+                            "Db",
+                            "D",
+                            "Eb",
+                            "E",
+                            "F",
+                            "Gb",
+                            "G",
+                            "Ab",
+                            "A",
+                            "Bb",
+                            "B",
+                        ]
                         symbol = note_names[root % 12]
                         if quality == "minor":
                             symbol += "m"
@@ -815,6 +840,7 @@ class LocalPentaCoreIntegration:
                     # Try using chord_predictor module
                     try:
                         from penta_core.ml.chord_predictor import ChordPredictor
+
                         predictor = ChordPredictor(use_fallback=True)
                         prediction = predictor.predict(
                             chord_symbols,
@@ -881,9 +907,23 @@ class LocalPentaCoreIntegration:
     def _chord_to_root(self, chord_symbol: str) -> int:
         """Convert chord symbol to root pitch class."""
         note_map = {
-            "C": 0, "C#": 1, "Db": 1, "D": 2, "D#": 3, "Eb": 3,
-            "E": 4, "F": 5, "F#": 6, "Gb": 6, "G": 7, "G#": 8,
-            "Ab": 8, "A": 9, "A#": 10, "Bb": 10, "B": 11,
+            "C": 0,
+            "C#": 1,
+            "Db": 1,
+            "D": 2,
+            "D#": 3,
+            "Eb": 3,
+            "E": 4,
+            "F": 5,
+            "F#": 6,
+            "Gb": 6,
+            "G": 7,
+            "G#": 8,
+            "Ab": 8,
+            "A": 9,
+            "A#": 10,
+            "Bb": 10,
+            "B": 11,
         }
 
         # Extract root from chord symbol
@@ -980,9 +1020,18 @@ class LocalPentaCoreIntegration:
     def _build_emotion_dynamics_map(self) -> List[Dict[str, Any]]:
         """Build emotion-to-dynamics mapping samples for training."""
         emotions = [
-            "melancholy", "sad", "grief", "angry", "anxious",
-            "happy", "joyful", "excited", "peaceful", "content",
-            "nostalgic", "hopeful",
+            "melancholy",
+            "sad",
+            "grief",
+            "angry",
+            "anxious",
+            "happy",
+            "joyful",
+            "excited",
+            "peaceful",
+            "content",
+            "nostalgic",
+            "hopeful",
         ]
         sections = ["intro", "verse", "chorus", "bridge", "outro"]
 
@@ -990,11 +1039,13 @@ class LocalPentaCoreIntegration:
         for emotion in emotions:
             for section in sections:
                 dynamics = self.get_dynamics_for_emotion(emotion, section)
-                samples.append({
-                    "emotion": emotion,
-                    "section": section,
-                    "dynamics": dynamics,
-                })
+                samples.append(
+                    {
+                        "emotion": emotion,
+                        "section": section,
+                        "dynamics": dynamics,
+                    }
+                )
 
         return samples
 
@@ -1002,19 +1053,23 @@ class LocalPentaCoreIntegration:
         """Record harmony analysis for training data export."""
         if not hasattr(self, "_harmony_history"):
             self._harmony_history = []
-        self._harmony_history.append({
-            "timestamp": __import__("datetime").datetime.now().isoformat(),
-            "analysis": analysis,
-        })
+        self._harmony_history.append(
+            {
+                "timestamp": __import__("datetime").datetime.now().isoformat(),
+                "analysis": analysis,
+            }
+        )
 
     def record_groove_analysis(self, analysis: Dict[str, Any]):
         """Record groove analysis for training data export."""
         if not hasattr(self, "_groove_history"):
             self._groove_history = []
-        self._groove_history.append({
-            "timestamp": __import__("datetime").datetime.now().isoformat(),
-            "analysis": analysis,
-        })
+        self._groove_history.append(
+            {
+                "timestamp": __import__("datetime").datetime.now().isoformat(),
+                "analysis": analysis,
+            }
+        )
 
     # =========================================================================
     # Unified Processing
@@ -1052,8 +1107,7 @@ class LocalPentaCoreIntegration:
         # Add suggestions
         if "harmony" in result:
             result["chord_suggestions"] = self.get_chord_suggestions(
-                result["harmony"].get("chord", {}),
-                emotion
+                result["harmony"].get("chord", {}), emotion
             )
 
         return result

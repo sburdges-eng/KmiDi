@@ -18,6 +18,7 @@ def _attn(query_dim: int = 16, kv_dim: int = None, heads: int = 4) -> CrossAtten
 # Construction / validation
 # ----------------------------------------------------------------------
 
+
 def test_query_dim_positive() -> None:
     with pytest.raises(ValueError, match="query_dim"):
         CrossAttention(0)
@@ -47,6 +48,7 @@ def test_explicit_kv_dim_used() -> None:
 # Forward shape
 # ----------------------------------------------------------------------
 
+
 def test_output_and_attn_shapes() -> None:
     attn = _attn(query_dim=16, kv_dim=8, heads=4)
     q = torch.randn(2, 5, 16)
@@ -69,6 +71,7 @@ def test_attn_weights_sum_to_one_per_query_position() -> None:
 # ----------------------------------------------------------------------
 # Masking
 # ----------------------------------------------------------------------
+
 
 def test_key_padding_mask_zeros_out_masked_positions() -> None:
     attn = _attn(query_dim=8, heads=2)
@@ -100,6 +103,7 @@ def test_attn_mask_additive_blocks_specific_positions() -> None:
 # ----------------------------------------------------------------------
 # Determinism / gradient flow
 # ----------------------------------------------------------------------
+
 
 def test_forward_is_deterministic_with_fixed_seed() -> None:
     attn = _attn()

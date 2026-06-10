@@ -14,13 +14,14 @@ from typing import List, Dict, Optional, Tuple
 from enum import Enum
 import json
 
-
 # =================================================================
 # ENUMS: Rule Breaking Categories
 # =================================================================
 
+
 class HarmonyRuleBreak(Enum):
     """Harmony rules to intentionally break."""
+
     AVOID_TONIC_RESOLUTION = "HARMONY_AvoidTonicResolution"
     PARALLEL_MOTION = "HARMONY_ParallelMotion"
     MODAL_INTERCHANGE = "HARMONY_ModalInterchange"
@@ -31,6 +32,7 @@ class HarmonyRuleBreak(Enum):
 
 class RhythmRuleBreak(Enum):
     """Rhythm rules to intentionally break."""
+
     CONSTANT_DISPLACEMENT = "RHYTHM_ConstantDisplacement"
     TEMPO_FLUCTUATION = "RHYTHM_TempoFluctuation"
     METRIC_MODULATION = "RHYTHM_MetricModulation"
@@ -40,6 +42,7 @@ class RhythmRuleBreak(Enum):
 
 class ArrangementRuleBreak(Enum):
     """Arrangement rules to intentionally break."""
+
     UNBALANCED_DYNAMICS = "ARRANGEMENT_UnbalancedDynamics"
     STRUCTURAL_MISMATCH = "ARRANGEMENT_StructuralMismatch"
     BURIED_VOCALS = "ARRANGEMENT_BuriedVocals"
@@ -49,6 +52,7 @@ class ArrangementRuleBreak(Enum):
 
 class ProductionRuleBreak(Enum):
     """Production rules to intentionally break."""
+
     EXCESSIVE_MUD = "PRODUCTION_ExcessiveMud"
     PITCH_IMPERFECTION = "PRODUCTION_PitchImperfection"
     ROOM_NOISE = "PRODUCTION_RoomNoise"
@@ -61,6 +65,7 @@ class ProductionRuleBreak(Enum):
 
 class MelodyRuleBreak(Enum):
     """Melody rules to intentionally break."""
+
     AVOID_RESOLUTION = "MELODY_AvoidResolution"
     EXCESSIVE_REPETITION = "MELODY_ExcessiveRepetition"
     ANGULAR_INTERVALS = "MELODY_AngularIntervals"
@@ -71,6 +76,7 @@ class MelodyRuleBreak(Enum):
 
 class TextureRuleBreak(Enum):
     """Texture rules to intentionally break."""
+
     FREQUENCY_MASKING = "TEXTURE_FrequencyMasking"
     SPARSE_EMPTINESS = "TEXTURE_SparseEmptiness"
     DENSE_WALL = "TEXTURE_DenseWall"
@@ -81,6 +87,7 @@ class TextureRuleBreak(Enum):
 
 class TemporalRuleBreak(Enum):
     """Temporal/time rules to intentionally break."""
+
     EXTENDED_INTRO = "TEMPORAL_ExtendedIntro"
     ABRUPT_ENDING = "TEMPORAL_AbruptEnding"
     TIME_STRETCH = "TEMPORAL_TimeStretch"
@@ -93,8 +100,10 @@ class TemporalRuleBreak(Enum):
 # ENUMS: Musical Concept Mappings
 # =================================================================
 
+
 class AffectState(Enum):
     """Emotional states with musical parameter mappings."""
+
     GRIEF = "grief"
     LONGING = "longing"
     DEFIANCE = "defiance"
@@ -113,59 +122,65 @@ class AffectState(Enum):
 
 class TextureType(Enum):
     """Sonic texture categories."""
-    ETHEREAL = "Ethereal"           # Airy, spacious, reverberant
-    INTIMATE = "Intimate"           # Close, dry, personal
-    MASSIVE = "Massive"             # Full, layered, powerful
-    SKELETAL = "Skeletal"           # Minimal, exposed, fragile
-    LUSH = "Lush"                   # Rich, warm, enveloping
-    HARSH = "Harsh"                 # Aggressive, abrasive, cutting
-    MURKY = "Murky"                 # Dark, unclear, submerged
-    CRYSTALLINE = "Crystalline"     # Clear, precise, bright
+
+    ETHEREAL = "Ethereal"  # Airy, spacious, reverberant
+    INTIMATE = "Intimate"  # Close, dry, personal
+    MASSIVE = "Massive"  # Full, layered, powerful
+    SKELETAL = "Skeletal"  # Minimal, exposed, fragile
+    LUSH = "Lush"  # Rich, warm, enveloping
+    HARSH = "Harsh"  # Aggressive, abrasive, cutting
+    MURKY = "Murky"  # Dark, unclear, submerged
+    CRYSTALLINE = "Crystalline"  # Clear, precise, bright
 
 
 class TensionProfile(Enum):
     """How tension evolves over the song."""
-    CONSTANT_HIGH = "Constant High"         # Relentless intensity
-    CONSTANT_LOW = "Constant Low"           # Meditative calm
-    BUILD_RELEASE = "Build and Release"     # Classic arc
-    SAWTOOTH = "Sawtooth"                   # Repeated build-drops
-    INVERSE = "Inverse"                     # Start high, end low
-    PLATEAU = "Plateau"                     # Build to sustained level
-    CHAOTIC = "Chaotic"                     # Unpredictable shifts
-    SLOW_BURN = "Slow Burn"                 # Gradual accumulation
+
+    CONSTANT_HIGH = "Constant High"  # Relentless intensity
+    CONSTANT_LOW = "Constant Low"  # Meditative calm
+    BUILD_RELEASE = "Build and Release"  # Classic arc
+    SAWTOOTH = "Sawtooth"  # Repeated build-drops
+    INVERSE = "Inverse"  # Start high, end low
+    PLATEAU = "Plateau"  # Build to sustained level
+    CHAOTIC = "Chaotic"  # Unpredictable shifts
+    SLOW_BURN = "Slow Burn"  # Gradual accumulation
 
 
 class DensityLevel(Enum):
     """Arrangement density."""
-    SOLO = "Solo"               # Single voice/instrument
-    DUO = "Duo"                 # Two elements in conversation
-    SPARSE = "Sparse"           # Few elements, lots of space
-    MODERATE = "Moderate"       # Balanced arrangement
-    FULL = "Full"               # Complete band/ensemble
-    DENSE = "Dense"             # Layered, complex
+
+    SOLO = "Solo"  # Single voice/instrument
+    DUO = "Duo"  # Two elements in conversation
+    SPARSE = "Sparse"  # Few elements, lots of space
+    MODERATE = "Moderate"  # Balanced arrangement
+    FULL = "Full"  # Complete band/ensemble
+    DENSE = "Dense"  # Layered, complex
     OVERWHELMING = "Overwhelming"  # Intentionally too much
 
 
 class ModalColor(Enum):
     """Mode with emotional associations."""
-    IONIAN = "Ionian"           # Bright, happy, resolved
-    DORIAN = "Dorian"           # Minor but hopeful, jazzy
-    PHRYGIAN = "Phrygian"       # Dark, Spanish, exotic
-    LYDIAN = "Lydian"           # Dreamy, floating, ethereal
-    MIXOLYDIAN = "Mixolydian"   # Bluesy, earthy, unresolved
-    AEOLIAN = "Aeolian"         # Natural minor, sad, serious
-    LOCRIAN = "Locrian"         # Unstable, tense, rare
+
+    IONIAN = "Ionian"  # Bright, happy, resolved
+    DORIAN = "Dorian"  # Minor but hopeful, jazzy
+    PHRYGIAN = "Phrygian"  # Dark, Spanish, exotic
+    LYDIAN = "Lydian"  # Dreamy, floating, ethereal
+    MIXOLYDIAN = "Mixolydian"  # Bluesy, earthy, unresolved
+    AEOLIAN = "Aeolian"  # Natural minor, sad, serious
+    LOCRIAN = "Locrian"  # Unstable, tense, rare
 
 
 class VulnerabilityScale(Enum):
     """Vulnerability level for emotional exposure."""
-    LOW = "Low"       # Guarded, protective
+
+    LOW = "Low"  # Guarded, protective
     MEDIUM = "Medium"  # Honest but controlled
-    HIGH = "High"     # Raw, exposed
+    HIGH = "High"  # Raw, exposed
 
 
 class NarrativeArc(Enum):
     """Structural emotional arc."""
+
     CLIMB_TO_CLIMAX = "Climb-to-Climax"
     SLOW_REVEAL = "Slow Reveal"
     REPETITIVE_DESPAIR = "Repetitive Despair"
@@ -178,16 +193,18 @@ class NarrativeArc(Enum):
 
 class CoreStakes(Enum):
     """What's at stake in the song."""
-    PERSONAL = "Personal"         # Individual identity
-    RELATIONAL = "Relational"     # Connections
-    EXISTENTIAL = "Existential"   # Meaning/purpose
-    SURVIVAL = "Survival"         # Life/safety
-    CREATIVE = "Creative"         # Expression
-    MORAL = "Moral"               # Right/wrong
+
+    PERSONAL = "Personal"  # Individual identity
+    RELATIONAL = "Relational"  # Connections
+    EXISTENTIAL = "Existential"  # Meaning/purpose
+    SURVIVAL = "Survival"  # Life/safety
+    CREATIVE = "Creative"  # Expression
+    MORAL = "Moral"  # Right/wrong
 
 
 class GrooveFeel(Enum):
     """Rhythmic feel."""
+
     STRAIGHT_DRIVING = "Straight/Driving"
     LAID_BACK = "Laid Back"
     SWUNG = "Swung"
@@ -240,7 +257,6 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Grief, longing, or open questions",
         "example_emotions": ["grief", "longing", "uncertainty"],
     },
-
     # Rhythm
     "RHYTHM_ConstantDisplacement": {
         "description": "Shift pattern one 16th note late/early",
@@ -272,7 +288,6 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Creating impact through absence",
         "example_emotions": ["shock", "emphasis", "breath"],
     },
-
     # Arrangement
     "ARRANGEMENT_UnbalancedDynamics": {
         "description": "Keep element too loud/quiet for standard",
@@ -304,7 +319,6 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Aftermath is the point",
         "example_emotions": ["aftermath", "reflection"],
     },
-
     # Production
     "PRODUCTION_ExcessiveMud": {
         "description": "Leave 200-400Hz buildup",
@@ -354,7 +368,6 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Anger, desperation, breaking point",
         "example_emotions": ["rage", "desperation", "breaking"],
     },
-
     # Melody
     "MELODY_AvoidResolution": {
         "description": "End phrases on non-tonic tones",
@@ -392,7 +405,6 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Difficulty expressing, trauma",
         "example_emotions": ["trauma", "confusion", "fragmentation"],
     },
-
     # Texture
     "TEXTURE_FrequencyMasking": {
         "description": "Let elements fight for same frequencies",
@@ -430,7 +442,6 @@ RULE_BREAKING_EFFECTS = {
         "use_when": "Change, metamorphosis",
         "example_emotions": ["transformation", "unease", "evolution"],
     },
-
     # Temporal
     "TEMPORAL_ExtendedIntro": {
         "description": "Unusually long intro before main content",
@@ -486,12 +497,18 @@ AFFECT_MODE_MAP = {
     "anxiety": {"modes": ["Locrian", "Phrygian"], "tempo_range": (90, 130), "density": "Moderate"},
     "euphoria": {"modes": ["Ionian", "Lydian"], "tempo_range": (120, 150), "density": "Full"},
     "melancholy": {"modes": ["Aeolian", "Dorian"], "tempo_range": (60, 90), "density": "Sparse"},
-    "nostalgia": {"modes": ["Mixolydian", "Dorian"], "tempo_range": (70, 100), "density": "Moderate"},  # noqa: E501
-
+    "nostalgia": {
+        "modes": ["Mixolydian", "Dorian"],
+        "tempo_range": (70, 100),
+        "density": "Moderate",
+    },  # noqa: E501
     "catharsis": {"modes": ["Aeolian", "Phrygian"], "tempo_range": (80, 130), "density": "Dense"},
     "dissociation": {"modes": ["Lydian", "Locrian"], "tempo_range": (60, 90), "density": "Sparse"},
-    "determination": {"modes": ["Ionian", "Mixolydian"], "tempo_range": (100, 130), "density": "Full"},  # noqa: E501
-
+    "determination": {
+        "modes": ["Ionian", "Mixolydian"],
+        "tempo_range": (100, 130),
+        "density": "Full",
+    },  # noqa: E501
     "surrender": {"modes": ["Aeolian", "Dorian"], "tempo_range": (50, 75), "density": "Sparse"},
 }
 
@@ -565,6 +582,7 @@ TEXTURE_PRODUCTION_MAP = {
 # DATA CLASSES: Song Intent Structure
 # =================================================================
 
+
 @dataclass
 class SongRoot:
     """
@@ -572,10 +590,11 @@ class SongRoot:
 
     Deep interrogation to find what the song NEEDS to express.
     """
-    core_event: str = ""           # The inciting moment/realization
-    core_resistance: str = ""      # What's holding you back
-    core_longing: str = ""         # What you ultimately want to feel
-    core_stakes: str = ""          # What's at risk
+
+    core_event: str = ""  # The inciting moment/realization
+    core_resistance: str = ""  # What's holding you back
+    core_longing: str = ""  # What you ultimately want to feel
+    core_stakes: str = ""  # What's at risk
     core_transformation: str = ""  # How you want to feel when done
 
 
@@ -586,11 +605,12 @@ class SongIntent:
 
     Validated by Phase 0, guides all technical decisions.
     """
-    mood_primary: str = ""                  # Primary emotion
-    mood_secondary_tension: float = 0.5     # Tension level 0.0-1.0
-    imagery_texture: str = ""               # Visual/tactile quality
-    vulnerability_scale: str = "Medium"     # Low/Medium/High
-    narrative_arc: str = ""                 # Structural emotion
+
+    mood_primary: str = ""  # Primary emotion
+    mood_secondary_tension: float = 0.5  # Tension level 0.0-1.0
+    imagery_texture: str = ""  # Visual/tactile quality
+    vulnerability_scale: str = "Medium"  # Low/Medium/High
+    narrative_arc: str = ""  # Structural emotion
 
 
 @dataclass
@@ -600,6 +620,7 @@ class TechnicalConstraints:
 
     Implementation of intent into concrete musical decisions.
     """
+
     technical_genre: str = ""
     technical_tempo_range: Tuple[int, int] = (80, 120)
     technical_key: str = ""
@@ -612,8 +633,9 @@ class TechnicalConstraints:
 @dataclass
 class SystemDirective:
     """What Kelly MIDI Companion should generate."""
-    output_target: str = ""           # What to generate
-    output_feedback_loop: str = ""    # Which modules to iterate
+
+    output_target: str = ""  # What to generate
+    output_feedback_loop: str = ""  # Which modules to iterate
 
 
 @dataclass
@@ -624,6 +646,7 @@ class CompleteSongIntent:
     This is the full specification for a song that Kelly MIDI Companion
     uses to generate meaningful, emotionally-aligned output.
     """
+
     # Phase 0
     song_root: SongRoot = field(default_factory=SongRoot)
 
@@ -667,7 +690,6 @@ class CompleteSongIntent:
                 "technical_groove_feel": self.technical_constraints.technical_groove_feel,
                 "technical_rule_to_break": self.technical_constraints.technical_rule_to_break,
                 "rule_breaking_justification": self.technical_constraints.rule_breaking_justification,  # noqa: E501
-
             },
             "system_directive": {
                 "output_target": self.system_directive.output_target,
@@ -726,19 +748,20 @@ class CompleteSongIntent:
 
     def save(self, path: str):
         """Save to JSON file."""
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
     def load(cls, path: str) -> "CompleteSongIntent":
         """Load from JSON file."""
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             return cls.from_dict(json.load(f))
 
 
 # =================================================================
 # HELPER FUNCTIONS
 # =================================================================
+
 
 def suggest_rule_break(emotion: str) -> List[Dict]:
     """
@@ -755,12 +778,14 @@ def suggest_rule_break(emotion: str) -> List[Dict]:
 
     for rule_key, rule_data in RULE_BREAKING_EFFECTS.items():
         if any(e in emotion_lower for e in rule_data.get("example_emotions", [])):
-            suggestions.append({
-                "rule": rule_key,
-                "description": rule_data["description"],
-                "effect": rule_data["effect"],
-                "use_when": rule_data["use_when"],
-            })
+            suggestions.append(
+                {
+                    "rule": rule_key,
+                    "description": rule_data["description"],
+                    "effect": rule_data["effect"],
+                    "use_when": rule_data["use_when"],
+                }
+            )
 
     return suggestions
 
@@ -787,7 +812,10 @@ def validate_intent(intent: CompleteSongIntent) -> List[str]:
     # Phase 1 checks
     if not intent.song_intent.mood_primary:
         issues.append("Phase 1: Missing mood_primary - what's the main emotion?")
-    if intent.song_intent.mood_secondary_tension < 0 or intent.song_intent.mood_secondary_tension > 1:  # noqa: E501
+    if (
+        intent.song_intent.mood_secondary_tension < 0
+        or intent.song_intent.mood_secondary_tension > 1
+    ):  # noqa: E501
 
         issues.append("Phase 1: mood_secondary_tension should be 0.0-1.0")
 
@@ -795,13 +823,15 @@ def validate_intent(intent: CompleteSongIntent) -> List[str]:
     if intent.technical_constraints.technical_rule_to_break:
         if not intent.technical_constraints.rule_breaking_justification:
             issues.append(
-                "Phase 2: Rule to break specified without justification - WHY break this rule?")
+                "Phase 2: Rule to break specified without justification - WHY break this rule?"
+            )
 
     # Consistency checks
     if intent.song_intent.vulnerability_scale == "High":
         if intent.song_intent.mood_secondary_tension < 0.3:
             issues.append(
-                "Consistency: High vulnerability usually implies some tension (tension is very low)")  # noqa: E501
+                "Consistency: High vulnerability usually implies some tension (tension is very low)"
+            )  # noqa: E501
 
     return issues
 
@@ -886,9 +916,11 @@ def suggest_full_palette(emotion: str) -> Dict:
     for tex in textures:
         prod = get_texture_production(tex)
         if prod:
-            result["texture_options"].append({
-                "texture": tex,
-                "production": prod,
-            })
+            result["texture_options"].append(
+                {
+                    "texture": tex,
+                    "production": prod,
+                }
+            )
 
     return result

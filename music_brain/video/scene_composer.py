@@ -14,6 +14,7 @@ from pathlib import Path
 
 class SceneType(Enum):
     """Types of musical/video scenes."""
+
     INTRO = "intro"
     VERSE = "verse"
     CHORUS = "chorus"
@@ -27,14 +28,15 @@ class SceneType(Enum):
 
 class TransitionStyle(Enum):
     """Visual transition styles between scenes."""
-    CUT = "cut"                          # Hard cut
-    CROSSFADE = "crossfade"              # Smooth fade
-    DISSOLVE = "dissolve"                # Dissolve transition
-    WIPE = "wipe"                        # Wipe effect
-    ZOOM = "zoom"                        # Zoom transition
-    MORPH = "morph"                      # Morph between scenes
-    GLITCH = "glitch"                    # Glitch effect
-    BEAT_SYNC = "beat_sync"              # Sync to music beat
+
+    CUT = "cut"  # Hard cut
+    CROSSFADE = "crossfade"  # Smooth fade
+    DISSOLVE = "dissolve"  # Dissolve transition
+    WIPE = "wipe"  # Wipe effect
+    ZOOM = "zoom"  # Zoom transition
+    MORPH = "morph"  # Morph between scenes
+    GLITCH = "glitch"  # Glitch effect
+    BEAT_SYNC = "beat_sync"  # Sync to music beat
     EMOTIONAL_SHIFT = "emotional_shift"  # Based on emotion change
 
 
@@ -49,7 +51,7 @@ class SceneDefinition:
 
     # Timing
     start_time: float  # seconds
-    duration: float    # seconds
+    duration: float  # seconds
 
     # Scene identity
     scene_type: SceneType
@@ -91,7 +93,7 @@ class SceneTransition:
 
     # Timing
     start_time: float  # seconds (when transition starts)
-    duration: float    # seconds (how long transition lasts)
+    duration: float  # seconds (how long transition lasts)
 
     # Transition configuration
     style: TransitionStyle
@@ -147,7 +149,7 @@ class SceneComposer:
         structure: List[Tuple[str, float, float]],
         emotion: str = "neutral",
         intensity: float = 0.5,
-        style: str = "cinematic"
+        style: str = "cinematic",
     ) -> List[SceneDefinition]:
         """
         Compose scenes from musical structure.
@@ -200,7 +202,7 @@ class SceneComposer:
     def generate_transitions(
         self,
         scenes: Optional[List[SceneDefinition]] = None,
-        default_style: TransitionStyle = TransitionStyle.CROSSFADE
+        default_style: TransitionStyle = TransitionStyle.CROSSFADE,
     ) -> List[SceneTransition]:
         """
         Generate transitions between scenes.
@@ -252,11 +254,7 @@ class SceneComposer:
         self._transitions = transitions
         return transitions
 
-    def add_beat_emphasis(
-        self,
-        beats: List[float],
-        emphasis_style: str = "flash"
-    ) -> None:
+    def add_beat_emphasis(self, beats: List[float], emphasis_style: str = "flash") -> None:
         """
         Add visual emphasis at specific beats.
 
@@ -275,8 +273,7 @@ class SceneComposer:
 
         for scene in self._scenes:
             scene_beats = [
-                b for b in beats
-                if scene.start_time <= b < scene.start_time + scene.duration
+                b for b in beats if scene.start_time <= b < scene.start_time + scene.duration
             ]
             scene.emphasis_beats = scene_beats
 

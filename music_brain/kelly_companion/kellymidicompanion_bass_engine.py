@@ -25,12 +25,11 @@ from typing import List, Dict, Optional, Tuple
 from enum import Enum
 import random
 
-
 # =============================================================================
 # CONSTANTS
 # =============================================================================
 
-CHROMATIC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 TICKS_PER_BEAT = 480
 
@@ -54,36 +53,40 @@ CHORD_INTERVALS = {
 # ENUMS
 # =============================================================================
 
+
 class BassPattern(Enum):
     """Bass line pattern archetypes."""
-    ROOT_ONLY = "root_only"             # Just roots on beat 1
-    ROOT_FIFTH = "root_fifth"           # Root and 5th
-    WALKING = "walking"                 # Chromatic/stepwise motion
-    PEDAL = "pedal"                     # Sustained single note
-    ARPEGGIATED = "arpeggiated"         # Chord tones broken up
-    SYNCOPATED = "syncopated"           # Off-beat emphasis
-    DRIVING = "driving"                 # Steady 8ths
-    PULSING = "pulsing"                 # Repeated note patterns
-    BREATHING = "breathing"             # Long notes with rests
-    DESCENDING = "descending"           # Chromatic descent
-    CLIMBING = "climbing"               # Ascending motion
-    GHOST = "ghost"                     # Sparse, barely there
+
+    ROOT_ONLY = "root_only"  # Just roots on beat 1
+    ROOT_FIFTH = "root_fifth"  # Root and 5th
+    WALKING = "walking"  # Chromatic/stepwise motion
+    PEDAL = "pedal"  # Sustained single note
+    ARPEGGIATED = "arpeggiated"  # Chord tones broken up
+    SYNCOPATED = "syncopated"  # Off-beat emphasis
+    DRIVING = "driving"  # Steady 8ths
+    PULSING = "pulsing"  # Repeated note patterns
+    BREATHING = "breathing"  # Long notes with rests
+    DESCENDING = "descending"  # Chromatic descent
+    CLIMBING = "climbing"  # Ascending motion
+    GHOST = "ghost"  # Sparse, barely there
 
 
 class BassArticulation(Enum):
     """Bass note articulation."""
-    SUSTAINED = "sustained"     # Full length, legato
-    STACCATO = "staccato"       # Short, punchy
-    MUTED = "muted"             # Dampened
-    SLIDE = "slide"             # Glide between notes
-    DEAD = "dead"               # Ghost notes, no pitch
+
+    SUSTAINED = "sustained"  # Full length, legato
+    STACCATO = "staccato"  # Short, punchy
+    MUTED = "muted"  # Dampened
+    SLIDE = "slide"  # Glide between notes
+    DEAD = "dead"  # Ghost notes, no pitch
 
 
 class BassRegister(Enum):
     """Bass register/octave preference."""
-    SUB = "sub"         # Very low (octave 1)
-    LOW = "low"         # Standard bass (octave 2)
-    MID = "mid"         # Higher bass (octave 3)
+
+    SUB = "sub"  # Very low (octave 1)
+    LOW = "low"  # Standard bass (octave 2)
+    MID = "mid"  # Higher bass (octave 3)
     FLEXIBLE = "flexible"  # Moves between registers
 
 
@@ -96,18 +99,17 @@ EMOTION_BASS_PROFILES = {
         "patterns": [BassPattern.BREATHING, BassPattern.PEDAL, BassPattern.DESCENDING],
         "articulation": BassArticulation.SUSTAINED,
         "register": BassRegister.LOW,
-        "note_density": 0.3,          # Notes per beat average
+        "note_density": 0.3,  # Notes per beat average
         "syncopation": 0.1,
         "chromatic_tendency": 0.2,
-        "approach_notes": True,       # Use leading tones
+        "approach_notes": True,  # Use leading tones
         "velocity_range": (40, 70),
         "swing": 0.0,
-        "push_pull": -0.05,           # Slightly behind beat
+        "push_pull": -0.05,  # Slightly behind beat
         "fifth_probability": 0.3,
         "octave_jump_prob": 0.1,
         "rest_probability": 0.3,
     },
-
     "hope": {
         "patterns": [BassPattern.ROOT_FIFTH, BassPattern.CLIMBING, BassPattern.ARPEGGIATED],
         "articulation": BassArticulation.SUSTAINED,
@@ -118,28 +120,26 @@ EMOTION_BASS_PROFILES = {
         "approach_notes": True,
         "velocity_range": (55, 85),
         "swing": 0.1,
-        "push_pull": 0.02,            # Slightly ahead
+        "push_pull": 0.02,  # Slightly ahead
         "fifth_probability": 0.5,
         "octave_jump_prob": 0.2,
         "rest_probability": 0.15,
     },
-
     "rage": {
         "patterns": [BassPattern.DRIVING, BassPattern.SYNCOPATED, BassPattern.PULSING],
         "articulation": BassArticulation.STACCATO,
         "register": BassRegister.LOW,
-        "note_density": 1.0,          # Busy
+        "note_density": 1.0,  # Busy
         "syncopation": 0.4,
         "chromatic_tendency": 0.3,
         "approach_notes": False,
         "velocity_range": (90, 127),
         "swing": 0.0,
-        "push_pull": 0.03,            # Pushing hard
+        "push_pull": 0.03,  # Pushing hard
         "fifth_probability": 0.3,
         "octave_jump_prob": 0.3,
         "rest_probability": 0.05,
     },
-
     "fear": {
         "patterns": [BassPattern.GHOST, BassPattern.PEDAL, BassPattern.SYNCOPATED],
         "articulation": BassArticulation.MUTED,
@@ -152,10 +152,9 @@ EMOTION_BASS_PROFILES = {
         "swing": 0.0,
         "push_pull": -0.02,
         "fifth_probability": 0.2,
-        "octave_jump_prob": 0.4,       # Startling jumps
+        "octave_jump_prob": 0.4,  # Startling jumps
         "rest_probability": 0.4,
     },
-
     "joy": {
         "patterns": [BassPattern.WALKING, BassPattern.ARPEGGIATED, BassPattern.DRIVING],
         "articulation": BassArticulation.STACCATO,
@@ -171,7 +170,6 @@ EMOTION_BASS_PROFILES = {
         "octave_jump_prob": 0.2,
         "rest_probability": 0.1,
     },
-
     "longing": {
         "patterns": [BassPattern.BREATHING, BassPattern.CLIMBING, BassPattern.PEDAL],
         "articulation": BassArticulation.SUSTAINED,
@@ -182,12 +180,11 @@ EMOTION_BASS_PROFILES = {
         "approach_notes": True,
         "velocity_range": (45, 75),
         "swing": 0.05,
-        "push_pull": -0.03,           # Behind, yearning
+        "push_pull": -0.03,  # Behind, yearning
         "fifth_probability": 0.4,
         "octave_jump_prob": 0.25,
         "rest_probability": 0.25,
     },
-
     "anxiety": {
         "patterns": [BassPattern.PULSING, BassPattern.SYNCOPATED, BassPattern.DRIVING],
         "articulation": BassArticulation.STACCATO,
@@ -203,7 +200,6 @@ EMOTION_BASS_PROFILES = {
         "octave_jump_prob": 0.3,
         "rest_probability": 0.1,
     },
-
     "tenderness": {
         "patterns": [BassPattern.ROOT_ONLY, BassPattern.BREATHING, BassPattern.PEDAL],
         "articulation": BassArticulation.SUSTAINED,
@@ -219,7 +215,6 @@ EMOTION_BASS_PROFILES = {
         "octave_jump_prob": 0.05,
         "rest_probability": 0.35,
     },
-
     "defiance": {
         "patterns": [BassPattern.SYNCOPATED, BassPattern.DRIVING, BassPattern.CLIMBING],
         "articulation": BassArticulation.STACCATO,
@@ -230,12 +225,11 @@ EMOTION_BASS_PROFILES = {
         "approach_notes": True,
         "velocity_range": (75, 110),
         "swing": 0.0,
-        "push_pull": 0.04,            # Pushing against the beat
+        "push_pull": 0.04,  # Pushing against the beat
         "fifth_probability": 0.4,
         "octave_jump_prob": 0.25,
         "rest_probability": 0.1,
     },
-
     "melancholy": {
         "patterns": [BassPattern.DESCENDING, BassPattern.BREATHING, BassPattern.WALKING],
         "articulation": BassArticulation.SUSTAINED,
@@ -251,7 +245,6 @@ EMOTION_BASS_PROFILES = {
         "octave_jump_prob": 0.1,
         "rest_probability": 0.25,
     },
-
     "nostalgia": {
         "patterns": [BassPattern.ROOT_FIFTH, BassPattern.WALKING, BassPattern.ARPEGGIATED],
         "articulation": BassArticulation.SUSTAINED,
@@ -267,7 +260,6 @@ EMOTION_BASS_PROFILES = {
         "octave_jump_prob": 0.15,
         "rest_probability": 0.2,
     },
-
     "euphoria": {
         "patterns": [BassPattern.ARPEGGIATED, BassPattern.CLIMBING, BassPattern.DRIVING],
         "articulation": BassArticulation.SUSTAINED,
@@ -283,7 +275,6 @@ EMOTION_BASS_PROFILES = {
         "octave_jump_prob": 0.3,
         "rest_probability": 0.05,
     },
-
     "dissociation": {
         "patterns": [BassPattern.GHOST, BassPattern.PEDAL, BassPattern.ROOT_ONLY],
         "articulation": BassArticulation.MUTED,
@@ -299,7 +290,6 @@ EMOTION_BASS_PROFILES = {
         "octave_jump_prob": 0.5,
         "rest_probability": 0.5,
     },
-
     "neutral": {
         "patterns": [BassPattern.ROOT_FIFTH, BassPattern.WALKING, BassPattern.ARPEGGIATED],
         "articulation": BassArticulation.SUSTAINED,
@@ -322,21 +312,24 @@ EMOTION_BASS_PROFILES = {
 # DATA CLASSES
 # =============================================================================
 
+
 @dataclass
 class BassNote:
     """A single bass note."""
-    pitch: int              # MIDI pitch
-    start_tick: int         # Start time in ticks
-    duration_ticks: int     # Duration
-    velocity: int           # MIDI velocity
-    chord_function: str     # "root", "third", "fifth", "seventh", "approach", "chromatic"
+
+    pitch: int  # MIDI pitch
+    start_tick: int  # Start time in ticks
+    duration_ticks: int  # Duration
+    velocity: int  # MIDI velocity
+    chord_function: str  # "root", "third", "fifth", "seventh", "approach", "chromatic"
     articulation: BassArticulation
-    timing_offset: int      # Ticks offset from grid (push/pull)
+    timing_offset: int  # Ticks offset from grid (push/pull)
 
 
 @dataclass
 class BassConfig:
     """Configuration for bass generation."""
+
     emotion: str = "neutral"
     chord_progression: List[str] = field(default_factory=lambda: ["C"])
     chord_durations: Optional[List[int]] = None  # Bars per chord, defaults to equal
@@ -353,6 +346,7 @@ class BassConfig:
 @dataclass
 class BassOutput:
     """Output from bass generation."""
+
     notes: List[BassNote]
     config: BassConfig
     pattern_used: BassPattern
@@ -363,18 +357,22 @@ class BassOutput:
         """Convert to MIDI event list."""
         events = []
         for note in self.notes:
-            events.append({
-                "type": "note_on",
-                "note": note.pitch,
-                "velocity": note.velocity,
-                "time": note.start_tick + note.timing_offset,
-            })
-            events.append({
-                "type": "note_off",
-                "note": note.pitch,
-                "velocity": 0,
-                "time": note.start_tick + note.timing_offset + note.duration_ticks,
-            })
+            events.append(
+                {
+                    "type": "note_on",
+                    "note": note.pitch,
+                    "velocity": note.velocity,
+                    "time": note.start_tick + note.timing_offset,
+                }
+            )
+            events.append(
+                {
+                    "type": "note_off",
+                    "note": note.pitch,
+                    "velocity": 0,
+                    "time": note.start_tick + note.timing_offset + note.duration_ticks,
+                }
+            )
         return sorted(events, key=lambda e: (e["time"], e["type"] == "note_off"))
 
     def to_note_list(self) -> List[Tuple[int, int, int, int]]:
@@ -388,6 +386,7 @@ class BassOutput:
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
+
 
 def note_name_to_midi(note: str, octave: int = 2) -> int:
     """Convert note name to MIDI pitch."""
@@ -491,11 +490,9 @@ def get_register_octave(register: BassRegister) -> int:
 # PATTERN GENERATORS
 # =============================================================================
 
+
 def generate_root_only(
-    chord_tones: Dict[str, int],
-    bar_ticks: int,
-    profile: Dict,
-    time_sig: Tuple[int, int]
+    chord_tones: Dict[str, int], bar_ticks: int, profile: Dict, time_sig: Tuple[int, int]
 ) -> List[Tuple[int, int, int, str]]:
     """Generate root-only pattern: (start_tick, duration, pitch, function)"""
     notes = []
@@ -509,10 +506,7 @@ def generate_root_only(
 
 
 def generate_root_fifth(
-    chord_tones: Dict[str, int],
-    bar_ticks: int,
-    profile: Dict,
-    time_sig: Tuple[int, int]
+    chord_tones: Dict[str, int], bar_ticks: int, profile: Dict, time_sig: Tuple[int, int]
 ) -> List[Tuple[int, int, int, str]]:
     """Root on 1, fifth on 3."""
     notes = []
@@ -531,10 +525,7 @@ def generate_root_fifth(
 
 
 def generate_walking(
-    chord_tones: Dict[str, int],
-    bar_ticks: int,
-    profile: Dict,
-    time_sig: Tuple[int, int]
+    chord_tones: Dict[str, int], bar_ticks: int, profile: Dict, time_sig: Tuple[int, int]
 ) -> List[Tuple[int, int, int, str]]:
     """Walking bass - stepwise motion through chord and approach tones."""
     notes = []
@@ -566,10 +557,7 @@ def generate_walking(
 
 
 def generate_pedal(
-    chord_tones: Dict[str, int],
-    bar_ticks: int,
-    profile: Dict,
-    time_sig: Tuple[int, int]
+    chord_tones: Dict[str, int], bar_ticks: int, profile: Dict, time_sig: Tuple[int, int]
 ) -> List[Tuple[int, int, int, str]]:
     """Sustained pedal tone."""
     root = chord_tones["root"]
@@ -578,10 +566,7 @@ def generate_pedal(
 
 
 def generate_arpeggiated(
-    chord_tones: Dict[str, int],
-    bar_ticks: int,
-    profile: Dict,
-    time_sig: Tuple[int, int]
+    chord_tones: Dict[str, int], bar_ticks: int, profile: Dict, time_sig: Tuple[int, int]
 ) -> List[Tuple[int, int, int, str]]:
     """Arpeggiate through chord tones."""
     notes = []
@@ -589,7 +574,7 @@ def generate_arpeggiated(
 
     eighth = TICKS_PER_BEAT // 2
     _beat_ticks = TICKS_PER_BEAT  # noqa: F841
-    total_eighths = (bar_ticks // eighth)
+    total_eighths = bar_ticks // eighth
 
     for i in range(total_eighths):
         func, pitch = tones[i % len(tones)]
@@ -601,10 +586,7 @@ def generate_arpeggiated(
 
 
 def generate_syncopated(
-    chord_tones: Dict[str, int],
-    bar_ticks: int,
-    profile: Dict,
-    time_sig: Tuple[int, int]
+    chord_tones: Dict[str, int], bar_ticks: int, profile: Dict, time_sig: Tuple[int, int]
 ) -> List[Tuple[int, int, int, str]]:
     """Off-beat emphasis."""
     notes = []
@@ -615,7 +597,7 @@ def generate_syncopated(
 
     # Syncopated positions: and-of-1, beat-2, and-of-3, beat-4
     positions = [
-        (eighth, root, "root"),           # And of 1
+        (eighth, root, "root"),  # And of 1
         (TICKS_PER_BEAT * 2, fifth, "fifth"),  # Beat 3
         (TICKS_PER_BEAT * 2 + eighth, root, "root"),  # And of 3
         (TICKS_PER_BEAT * 3 + eighth, fifth, "fifth"),  # And of 4
@@ -629,10 +611,7 @@ def generate_syncopated(
 
 
 def generate_driving(
-    chord_tones: Dict[str, int],
-    bar_ticks: int,
-    profile: Dict,
-    time_sig: Tuple[int, int]
+    chord_tones: Dict[str, int], bar_ticks: int, profile: Dict, time_sig: Tuple[int, int]
 ) -> List[Tuple[int, int, int, str]]:
     """Steady eighth notes."""
     notes = []
@@ -652,10 +631,7 @@ def generate_driving(
 
 
 def generate_pulsing(
-    chord_tones: Dict[str, int],
-    bar_ticks: int,
-    profile: Dict,
-    time_sig: Tuple[int, int]
+    chord_tones: Dict[str, int], bar_ticks: int, profile: Dict, time_sig: Tuple[int, int]
 ) -> List[Tuple[int, int, int, str]]:
     """Repeated note pattern."""
     notes = []
@@ -674,10 +650,7 @@ def generate_pulsing(
 
 
 def generate_breathing(
-    chord_tones: Dict[str, int],
-    bar_ticks: int,
-    profile: Dict,
-    time_sig: Tuple[int, int]
+    chord_tones: Dict[str, int], bar_ticks: int, profile: Dict, time_sig: Tuple[int, int]
 ) -> List[Tuple[int, int, int, str]]:
     """Long notes with natural pauses."""
     notes = []
@@ -696,10 +669,7 @@ def generate_breathing(
 
 
 def generate_descending(
-    chord_tones: Dict[str, int],
-    bar_ticks: int,
-    profile: Dict,
-    time_sig: Tuple[int, int]
+    chord_tones: Dict[str, int], bar_ticks: int, profile: Dict, time_sig: Tuple[int, int]
 ) -> List[Tuple[int, int, int, str]]:
     """Chromatic descent."""
     notes = []
@@ -718,10 +688,7 @@ def generate_descending(
 
 
 def generate_climbing(
-    chord_tones: Dict[str, int],
-    bar_ticks: int,
-    profile: Dict,
-    time_sig: Tuple[int, int]
+    chord_tones: Dict[str, int], bar_ticks: int, profile: Dict, time_sig: Tuple[int, int]
 ) -> List[Tuple[int, int, int, str]]:
     """Ascending motion."""
     notes = []
@@ -740,10 +707,7 @@ def generate_climbing(
 
 
 def generate_ghost(
-    chord_tones: Dict[str, int],
-    bar_ticks: int,
-    profile: Dict,
-    time_sig: Tuple[int, int]
+    chord_tones: Dict[str, int], bar_ticks: int, profile: Dict, time_sig: Tuple[int, int]
 ) -> List[Tuple[int, int, int, str]]:
     """Sparse, barely-there notes."""
     notes = []
@@ -781,6 +745,7 @@ PATTERN_GENERATORS = {
 # MAIN ENGINE
 # =============================================================================
 
+
 class BassEngine:
     """
     Generates emotion-driven bass lines.
@@ -808,7 +773,7 @@ class BassEngine:
         key: str = "C",
         bars: int = 4,
         tempo_bpm: int = 120,
-        **kwargs
+        **kwargs,
     ) -> BassOutput:
         """
         Generate bass line.
@@ -829,7 +794,7 @@ class BassEngine:
             key=key,
             bars=bars,
             tempo_bpm=tempo_bpm,
-            **kwargs
+            **kwargs,
         )
 
         return self._generate_from_config(config)
@@ -868,7 +833,8 @@ class BassEngine:
         current_tick = 0
 
         for chord_idx, (chord_str, chord_dur) in enumerate(
-                zip(config.chord_progression, chord_bars)):
+            zip(config.chord_progression, chord_bars)
+        ):
             root, quality = parse_chord(chord_str)
             chord_tones = get_chord_tones(root, quality, base_octave)
 
@@ -878,12 +844,7 @@ class BassEngine:
             generator = PATTERN_GENERATORS.get(pattern, generate_root_fifth)
 
             # Generate pattern for this chord
-            pattern_notes = generator(
-                chord_tones,
-                chord_ticks,
-                profile,
-                config.time_signature
-            )
+            pattern_notes = generator(chord_tones, chord_ticks, profile, config.time_signature)
 
             # Convert to BassNote objects
             for start, duration, pitch, func in pattern_notes:
@@ -1004,6 +965,7 @@ class BassEngine:
 # CONVENIENCE FUNCTIONS
 # =============================================================================
 
+
 def generate_grief_bass(chords: List[str], key: str = "F", bars: int = 4) -> BassOutput:
     """Quick grief bass generation."""
     return BassEngine().generate("grief", chords, key, bars, 72)
@@ -1012,8 +974,7 @@ def generate_grief_bass(chords: List[str], key: str = "F", bars: int = 4) -> Bas
 def generate_driving_bass(chords: List[str], key: str = "E", bars: int = 4) -> BassOutput:
     """Quick driving bass for energy."""
     engine = BassEngine()
-    return engine.generate("rage", chords, key, bars, 140,
-                           pattern_override=BassPattern.DRIVING)
+    return engine.generate("rage", chords, key, bars, 140, pattern_override=BassPattern.DRIVING)
 
 
 # =============================================================================

@@ -26,6 +26,7 @@ from typing import Any, Dict, Optional, TypeVar, Generic
 
 class ProcessorStatus(Enum):
     """Status of a processor execution."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -45,6 +46,7 @@ class ProcessorConfig:
         retry_count: Number of retries on failure
         params: Processor-specific parameters
     """
+
     name: str
     enabled: bool = True
     timeout_seconds: float = 30.0
@@ -85,6 +87,7 @@ class ProcessorResult:
         metadata: Additional execution metadata
         duration_ms: Execution time in milliseconds
     """
+
     success: bool
     data: Any = None
     error: Optional[str] = None
@@ -261,6 +264,7 @@ class ExecutionContext:
         metadata: Execution metadata
         started_at: Execution start time
     """
+
     execution_id: str
     pipeline_id: str
     stage_name: str = ""
@@ -295,8 +299,7 @@ class ExecutionContext:
             "stage_name": self.stage_name,
             "stage_index": self.stage_index,
             "stage_results": {
-                name: result.to_dict()
-                for name, result in self.stage_results.items()
+                name: result.to_dict() for name, result in self.stage_results.items()
             },
             "shared_data": self.shared_data,
             "metadata": self.metadata,

@@ -18,6 +18,7 @@ from collections import defaultdict
 @dataclass
 class MidiNote:
     """Single MIDI note with timing and velocity"""
+
     note: int  # MIDI note number (36 = kick, 38 = snare, etc.)
     time: int  # Time in ticks from start
     velocity: int  # 0-127
@@ -27,19 +28,33 @@ class MidiNote:
     def note_name(self) -> str:
         """Get drum name from MIDI note number"""
         drum_map = {
-            35: 'kick_acoustic', 36: 'kick', 37: 'rim', 38: 'snare',
-            39: 'clap', 40: 'snare_electric', 41: 'tom_low',
-            42: 'hihat_closed', 43: 'tom_low_mid', 44: 'hihat_pedal',
-            45: 'tom_mid', 46: 'hihat_open', 47: 'tom_mid_high',
-            48: 'tom_high', 49: 'crash', 50: 'tom_higher',
-            51: 'ride', 52: 'crash_chinese', 53: 'ride_bell',
+            35: "kick_acoustic",
+            36: "kick",
+            37: "rim",
+            38: "snare",
+            39: "clap",
+            40: "snare_electric",
+            41: "tom_low",
+            42: "hihat_closed",
+            43: "tom_low_mid",
+            44: "hihat_pedal",
+            45: "tom_mid",
+            46: "hihat_open",
+            47: "tom_mid_high",
+            48: "tom_high",
+            49: "crash",
+            50: "tom_higher",
+            51: "ride",
+            52: "crash_chinese",
+            53: "ride_bell",
         }
-        return drum_map.get(self.note, f'note_{self.note}')
+        return drum_map.get(self.note, f"note_{self.note}")
 
 
 @dataclass
 class TimingDeviation:
     """Timing deviation from perfect grid"""
+
     beat_position: float  # Position in beats (0.0 = downbeat, 0.5 = offbeat, etc.)
     expected_time: int  # Where it "should" be (ticks)
     actual_time: int  # Where it actually is (ticks)
@@ -51,6 +66,7 @@ class TimingDeviation:
 @dataclass
 class VelocityPattern:
     """Velocity pattern over time"""
+
     beat_position: float
     velocity: int
     note_type: str
@@ -60,6 +76,7 @@ class VelocityPattern:
 @dataclass
 class GrooveProfile:
     """Complete groove analysis of a MIDI pattern"""
+
     name: str = ""
     tempo_bpm: float = 120.0
     ppq: int = 480  # Pulses per quarter note
@@ -121,7 +138,7 @@ class GrooveExtractor:
         tempo_bpm = 120.0
         for track in mid.tracks:
             for msg in track:
-                if msg.type == 'set_tempo':
+                if msg.type == "set_tempo":
                     tempo_bpm = mido.tempo2bpm(msg.tempo)
                     break
 
@@ -156,7 +173,7 @@ class GrooveExtractor:
             velocity_range=vel_range,
             accent_threshold=accent_thresh,
             genre_hints=genre_hints,
-            pocket_description=pocket_desc
+            pocket_description=pocket_desc,
         )
 
     def _extract_notes_from_midi(self, mid) -> List[MidiNote]:
@@ -170,20 +187,19 @@ class GrooveExtractor:
             for msg in track:
                 current_time += msg.time
 
-                if msg.type == 'note_on' and msg.velocity > 0:
+                if msg.type == "note_on" and msg.velocity > 0:
                     active_notes[msg.note] = (current_time, msg.velocity)
 
-                elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+                elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
                     if msg.note in active_notes:
                         start_time, velocity = active_notes[msg.note]
                         duration = current_time - start_time
 
-                        notes.append(MidiNote(
-                            note=msg.note,
-                            time=start_time,
-                            velocity=velocity,
-                            duration=duration
-                        ))
+                        notes.append(
+                            MidiNote(
+                                note=msg.note, time=start_time, velocity=velocity, duration=duration
+                            )
+                        )
 
                         del active_notes[msg.note]
 
@@ -194,17 +210,17 @@ class GrooveExtractor:
     def _get_note_category(self, note_number: int) -> str:
         """Categorize drum note"""
         if note_number in self.KICK_NOTES:
-            return 'kick'
+            return "kick"
         elif note_number in self.SNARE_NOTES:
-            return 'snare'
+            return "snare"
         elif note_number in self.HIHAT_NOTES:
-            return 'hihat'
+            return "hihat"
         elif note_number in self.TOM_NOTES:
-            return 'tom'
+            return "tom"
         elif note_number in self.CYMBAL_NOTES:
-            return 'cymbal'
+            return "cymbal"
         else:
-            return 'other'
+            return "other"
 
     def _analyze_timing(self, notes: List[MidiNote], ppq: int) -> List[TimingDeviation]:
         """
@@ -228,14 +244,16 @@ class GrooveExtractor:
             else:
                 deviation_percent = 0.0
 
-            deviations.append(TimingDeviation(
-                beat_position=beat_position,
-                expected_time=nearest_sixteenth,
-                actual_time=note.time,
-                deviation_ticks=deviation_ticks,
-                deviation_percent=deviation_percent,
-                note_type=self._get_note_category(note.note)
-            ))
+            deviations.append(
+                TimingDeviation(
+                    beat_position=beat_position,
+                    expected_time=nearest_sixteenth,
+                    actual_time=note.time,
+                    deviation_ticks=deviation_ticks,
+                    deviation_percent=deviation_percent,
+                    note_type=self._get_note_category(note.note),
+                )
+            )
 
         return deviations
 
@@ -250,8 +268,7 @@ class GrooveExtractor:
 
         # Find offbeat (2nd and 4th 16th notes) deviations
         offbeat_deviations = [
-            d for d in deviations
-            if 0.25 < (d.beat_position % 0.5) < 0.75  # Offbeats
+            d for d in deviations if 0.25 < (d.beat_position % 0.5) < 0.75  # Offbeats
         ]
 
         if not offbeat_deviations:
@@ -302,12 +319,14 @@ class GrooveExtractor:
             beat_position = note.time / ppq
             is_accent = note.velocity >= accent_threshold
 
-            patterns.append(VelocityPattern(
-                beat_position=beat_position,
-                velocity=note.velocity,
-                note_type=self._get_note_category(note.note),
-                is_accent=is_accent
-            ))
+            patterns.append(
+                VelocityPattern(
+                    beat_position=beat_position,
+                    velocity=note.velocity,
+                    note_type=self._get_note_category(note.note),
+                    is_accent=is_accent,
+                )
+            )
 
         return patterns
 
@@ -328,10 +347,7 @@ class GrooveExtractor:
         return int(avg_velocity * 1.25)
 
     def _classify_genre(
-        self,
-        timing: List[TimingDeviation],
-        velocity: List[VelocityPattern],
-        tempo: float
+        self, timing: List[TimingDeviation], velocity: List[VelocityPattern], tempo: float
     ) -> List[str]:
         """Attempt to classify groove into genre categories"""
         hints = []
@@ -372,10 +388,7 @@ class GrooveExtractor:
         return hints
 
     def _describe_pocket(
-        self,
-        swing_pct: float,
-        push_pull: Dict[str, float],
-        genre_hints: List[str]
+        self, swing_pct: float, push_pull: Dict[str, float], genre_hints: List[str]
     ) -> str:
         """Generate human-readable pocket description"""
         descriptions = []
@@ -393,15 +406,15 @@ class GrooveExtractor:
             descriptions.append("reverse swing (rare)")
 
         # Push/pull description
-        if 'kick' in push_pull:
-            kick_ms = push_pull['kick']
+        if "kick" in push_pull:
+            kick_ms = push_pull["kick"]
             if kick_ms > 5:
                 descriptions.append(f"kick pushes {kick_ms:.1f}ms")
             elif kick_ms < -5:
                 descriptions.append(f"kick pulls {abs(kick_ms):.1f}ms")
 
-        if 'snare' in push_pull:
-            snare_ms = push_pull['snare']
+        if "snare" in push_pull:
+            snare_ms = push_pull["snare"]
             if snare_ms > 5:
                 descriptions.append(f"snare lays back {snare_ms:.1f}ms")
             elif snare_ms < -5:
@@ -478,7 +491,7 @@ if __name__ == "__main__":
 
     # Set tempo to 95 BPM (funk tempo)
     tempo = mido.bpm2tempo(95)
-    track.append(mido.MetaMessage('set_tempo', tempo=tempo))
+    track.append(mido.MetaMessage("set_tempo", tempo=tempo))
 
     ppq = mid.ticks_per_beat
     sixteenth = ppq // 4
@@ -487,44 +500,37 @@ if __name__ == "__main__":
     # Bar 1: K-h-K-H-s-h-K-h-K-h-K-H-s-h-K-h
     pattern = [
         # Beat 1
-        (0, 36, 100),           # Kick (downbeat)
-        (sixteenth, 42, 60),    # Hihat (ghost note)
-
+        (0, 36, 100),  # Kick (downbeat)
+        (sixteenth, 42, 60),  # Hihat (ghost note)
         # Beat 1.5 (swung - push by 10 ticks)
         (sixteenth + 10, 36, 85),  # Kick (swung, slightly softer)
-        (sixteenth, 42, 65),    # Hihat
-
+        (sixteenth, 42, 65),  # Hihat
         # Beat 2
-        (sixteenth, 38, 110),   # Snare (accent)
-        (sixteenth, 42, 60),    # Hihat (ghost)
-
+        (sixteenth, 38, 110),  # Snare (accent)
+        (sixteenth, 42, 60),  # Hihat (ghost)
         # Beat 2.5 (swung)
         (sixteenth + 10, 36, 80),  # Kick
-        (sixteenth, 42, 65),    # Hihat
-
+        (sixteenth, 42, 65),  # Hihat
         # Beat 3
-        (sixteenth, 36, 95),    # Kick
-        (sixteenth, 42, 70),    # Hihat (slightly louder)
-
+        (sixteenth, 36, 95),  # Kick
+        (sixteenth, 42, 70),  # Hihat (slightly louder)
         # Beat 3.5 (swung)
         (sixteenth + 10, 36, 85),  # Kick
-        (sixteenth, 42, 65),    # Hihat
-
+        (sixteenth, 42, 65),  # Hihat
         # Beat 4
-        (sixteenth, 38, 115),   # Snare (strong accent)
-        (sixteenth, 42, 60),    # Hihat
-
+        (sixteenth, 38, 115),  # Snare (strong accent)
+        (sixteenth, 42, 60),  # Hihat
         # Beat 4.5 (swung)
         (sixteenth + 10, 36, 80),  # Kick
-        (sixteenth, 42, 65),    # Hihat
+        (sixteenth, 42, 65),  # Hihat
     ]
 
     # Add notes to track
     current_time = 0
     for delta, note, velocity in pattern:
-        track.append(mido.Message('note_on', note=note, velocity=velocity, time=delta))
-        track.append(mido.Message('note_off', note=note, velocity=0, time=sixteenth//2))
-        current_time += delta + sixteenth//2
+        track.append(mido.Message("note_on", note=note, velocity=velocity, time=delta))
+        track.append(mido.Message("note_off", note=note, velocity=0, time=sixteenth // 2))
+        current_time += delta + sixteenth // 2
 
     # Save test file
     test_file = "/home/claude/funk_groove_test.mid"
@@ -542,18 +548,18 @@ if __name__ == "__main__":
     import json
 
     analysis_data = {
-        'name': groove.name,
-        'tempo_bpm': groove.tempo_bpm,
-        'swing_percentage': groove.swing_percentage,
-        'pocket_description': groove.pocket_description,
-        'average_push_pull': groove.average_push_pull,
-        'velocity_range': groove.velocity_range,
-        'accent_threshold': groove.accent_threshold,
-        'genre_hints': groove.genre_hints
+        "name": groove.name,
+        "tempo_bpm": groove.tempo_bpm,
+        "swing_percentage": groove.swing_percentage,
+        "pocket_description": groove.pocket_description,
+        "average_push_pull": groove.average_push_pull,
+        "velocity_range": groove.velocity_range,
+        "accent_threshold": groove.accent_threshold,
+        "genre_hints": groove.genre_hints,
     }
 
     json_file = "/mnt/user-data/outputs/funk_groove_analysis.json"
-    with open(json_file, 'w') as f:
+    with open(json_file, "w") as f:
         json.dump(analysis_data, f, indent=2)
 
     print(f"\n✓ Analysis saved: {json_file}")

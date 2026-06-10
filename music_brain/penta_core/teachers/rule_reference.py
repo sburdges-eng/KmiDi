@@ -12,13 +12,7 @@ Usage:
 import argparse
 from typing import Dict, Any
 
-from . import (
-    VoiceLeadingRules,
-    HarmonyRules,
-    CounterpointRules,
-    RuleSeverity,
-    Species
-)
+from . import VoiceLeadingRules, HarmonyRules, CounterpointRules, RuleSeverity, Species
 
 
 def search_rules(query: str) -> Dict[str, Any]:
@@ -30,9 +24,11 @@ def search_rules(query: str) -> Dict[str, Any]:
     vl_rules = VoiceLeadingRules.get_all_rules()
     for category, rules in vl_rules.items():
         for rule_name, rule_data in rules.items():
-            if (query_lower in rule_name.lower() or
-                query_lower in rule_data.get('name', '').lower() or
-                    query_lower in rule_data.get('description', '').lower()):
+            if (
+                query_lower in rule_name.lower()
+                or query_lower in rule_data.get("name", "").lower()
+                or query_lower in rule_data.get("description", "").lower()
+            ):
                 results[f"voice_leading.{category}.{rule_name}"] = rule_data
 
     # Search harmony rules
@@ -47,9 +43,11 @@ def search_rules(query: str) -> Dict[str, Any]:
     cp_rules = CounterpointRules.get_all_rules()
     for category, rules in cp_rules.items():
         for rule_name, rule_data in rules.items():
-            if (query_lower in rule_name.lower() or
-                query_lower in rule_data.get('name', '').lower() or
-                    query_lower in rule_data.get('description', '').lower()):
+            if (
+                query_lower in rule_name.lower()
+                or query_lower in rule_data.get("name", "").lower()
+                or query_lower in rule_data.get("description", "").lower()
+            ):
                 results[f"counterpoint.{category}.{rule_name}"] = rule_data
 
     return results
@@ -63,43 +61,51 @@ def format_rule(rule_path: str, rule_data: Dict[str, Any]) -> str:
     output.append("=" * 70)
 
     if isinstance(rule_data, dict):
-        if 'name' in rule_data:
+        if "name" in rule_data:
             output.append(f"\nName: {rule_data['name']}")
 
-        if 'description' in rule_data:
+        if "description" in rule_data:
             output.append(f"Description: {rule_data['description']}")
 
-        if 'severity' in rule_data:
-            severity = rule_data['severity']
-            if hasattr(severity, 'value'):
+        if "severity" in rule_data:
+            severity = rule_data["severity"]
+            if hasattr(severity, "value"):
                 output.append(f"Severity: {severity.value.upper()}")
             else:
                 output.append(f"Severity: {severity}")
 
-        if 'context' in rule_data:
+        if "context" in rule_data:
             output.append(f"Context: {rule_data['context']}")
 
-        if 'reason' in rule_data:
+        if "reason" in rule_data:
             output.append(f"\nReason: {rule_data['reason']}")
 
-        if 'exception' in rule_data:
+        if "exception" in rule_data:
             output.append(f"\nExceptions: {rule_data['exception']}")
 
-        if 'example_violation' in rule_data:
+        if "example_violation" in rule_data:
             output.append("\nViolation Example:")
-            for key, value in rule_data['example_violation'].items():
+            for key, value in rule_data["example_violation"].items():
                 output.append(f"  {key}: {value}")
 
-        if 'example_correct' in rule_data:
+        if "example_correct" in rule_data:
             output.append("\nCorrect Example:")
-            for key, value in rule_data['example_correct'].items():
+            for key, value in rule_data["example_correct"].items():
                 output.append(f"  {key}: {value}")
 
         # Add any other relevant fields
-        skip_keys = {'name', 'description', 'severity', 'context', 'reason',
-                     'exception', 'example_violation', 'example_correct'}
+        skip_keys = {
+            "name",
+            "description",
+            "severity",
+            "context",
+            "reason",
+            "exception",
+            "example_violation",
+            "example_correct",
+        }
         for key, value in rule_data.items():
-            if key not in skip_keys and not key.startswith('_'):
+            if key not in skip_keys and not key.startswith("_"):
                 if isinstance(value, (str, int, float, bool)):
                     output.append(f"{key.replace('_', ' ').title()}: {value}")
 
@@ -109,7 +115,7 @@ def format_rule(rule_path: str, rule_data: Dict[str, Any]) -> str:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Quick reference for music theory rules',
+        description="Quick reference for music theory rules",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -119,20 +125,26 @@ Examples:
   %(prog)s --severity strict
   %(prog)s --species second
   %(prog)s --list-all
-        """
+        """,
     )
 
-    parser.add_argument('query', nargs='?', help='Search query for rules')
-    parser.add_argument('--context', choices=['classical', 'jazz', 'contemporary', 'all'],
-                        help='Filter by musical context')
-    parser.add_argument('--severity',
-                        choices=['strict', 'high', 'medium', 'low', 'guideline'],
-                        help='Filter by minimum severity')
-    parser.add_argument('--species',
-                        choices=['first', 'second', 'third', 'fourth', 'fifth'],
-                        help='Show specific species counterpoint rules')
-    parser.add_argument('--list-all', action='store_true',
-                        help='List all rule categories')
+    parser.add_argument("query", nargs="?", help="Search query for rules")
+    parser.add_argument(
+        "--context",
+        choices=["classical", "jazz", "contemporary", "all"],
+        help="Filter by musical context",
+    )
+    parser.add_argument(
+        "--severity",
+        choices=["strict", "high", "medium", "low", "guideline"],
+        help="Filter by minimum severity",
+    )
+    parser.add_argument(
+        "--species",
+        choices=["first", "second", "third", "fourth", "fifth"],
+        help="Show specific species counterpoint rules",
+    )
+    parser.add_argument("--list-all", action="store_true", help="List all rule categories")
 
     args = parser.parse_args()
 
@@ -176,11 +188,11 @@ Examples:
     # Filter by severity
     if args.severity:
         severity_map = {
-            'strict': RuleSeverity.STRICT,
-            'high': RuleSeverity.HIGH,
-            'medium': RuleSeverity.MEDIUM,
-            'low': RuleSeverity.LOW,
-            'guideline': RuleSeverity.GUIDELINE,
+            "strict": RuleSeverity.STRICT,
+            "high": RuleSeverity.HIGH,
+            "medium": RuleSeverity.MEDIUM,
+            "low": RuleSeverity.LOW,
+            "guideline": RuleSeverity.GUIDELINE,
         }
 
         print(f"\nRules with {args.severity.upper()} severity or higher:\n")
@@ -190,8 +202,8 @@ Examples:
             if category_rules:
                 print(f"\n{category.replace('_', ' ').title()}:")
                 for rule_name, rule_data in category_rules.items():
-                    severity = rule_data.get('severity', '')
-                    if hasattr(severity, 'value'):
+                    severity = rule_data.get("severity", "")
+                    if hasattr(severity, "value"):
                         severity = severity.value
                     print(f"  • {rule_data.get('name', rule_name)} [{severity}]")
         return
@@ -199,11 +211,11 @@ Examples:
     # Show species counterpoint rules
     if args.species:
         species_map = {
-            'first': Species.FIRST,
-            'second': Species.SECOND,
-            'third': Species.THIRD,
-            'fourth': Species.FOURTH,
-            'fifth': Species.FIFTH,
+            "first": Species.FIRST,
+            "second": Species.SECOND,
+            "third": Species.THIRD,
+            "fourth": Species.FOURTH,
+            "fifth": Species.FIFTH,
         }
 
         print(f"\n{args.species.upper()} SPECIES COUNTERPOINT RULES")

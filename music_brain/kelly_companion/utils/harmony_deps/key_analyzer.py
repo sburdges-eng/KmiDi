@@ -14,24 +14,25 @@ from typing import List, Optional, Tuple, Dict
 from dataclasses import dataclass
 from enum import Enum
 
-
-NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 
 class Mode(Enum):
     """Musical modes."""
-    IONIAN = "ionian"      # Major
+
+    IONIAN = "ionian"  # Major
     DORIAN = "dorian"
     PHRYGIAN = "phrygian"
     LYDIAN = "lydian"
     MIXOLYDIAN = "mixolydian"
-    AEOLIAN = "aeolian"    # Natural minor
+    AEOLIAN = "aeolian"  # Natural minor
     LOCRIAN = "locrian"
 
 
 @dataclass
 class KeyEstimate:
     """Key detection result."""
+
     root: str
     mode: Mode
     confidence: float
@@ -74,20 +75,24 @@ class KeyAnalyzer:
             minor_score = sum(pc_counts.get(pc, 0) for pc in minor_pcs) / len(pitch_classes)
 
             if major_score > 0.3:
-                estimates.append(KeyEstimate(
-                    root=root_name,
-                    mode=Mode.IONIAN,
-                    confidence=major_score,
-                    pitch_class=root_idx
-                ))
+                estimates.append(
+                    KeyEstimate(
+                        root=root_name,
+                        mode=Mode.IONIAN,
+                        confidence=major_score,
+                        pitch_class=root_idx,
+                    )
+                )
 
             if minor_score > 0.3:
-                estimates.append(KeyEstimate(
-                    root=root_name,
-                    mode=Mode.AEOLIAN,
-                    confidence=minor_score,
-                    pitch_class=root_idx
-                ))
+                estimates.append(
+                    KeyEstimate(
+                        root=root_name,
+                        mode=Mode.AEOLIAN,
+                        confidence=minor_score,
+                        pitch_class=root_idx,
+                    )
+                )
 
         # Sort by confidence
         estimates.sort(key=lambda e: e.confidence, reverse=True)
@@ -98,14 +103,10 @@ class KeyScaleAnalyzer:
     """Analyze chords in key context."""
 
     # Roman numeral mapping for major key
-    MAJOR_ROMAN = {
-        0: 'I', 2: 'ii', 4: 'iii', 5: 'IV', 7: 'V', 9: 'vi', 11: 'vii°'
-    }
+    MAJOR_ROMAN = {0: "I", 2: "ii", 4: "iii", 5: "IV", 7: "V", 9: "vi", 11: "vii°"}
 
     # Roman numeral mapping for minor key
-    MINOR_ROMAN = {
-        0: 'i', 2: 'ii°', 3: 'III', 5: 'iv', 7: 'v', 8: 'VI', 10: 'VII'
-    }
+    MINOR_ROMAN = {0: "i", 2: "ii°", 3: "III", 5: "iv", 7: "v", 8: "VI", 10: "VII"}
 
     def analyze_chord_in_key(
         self,
@@ -113,7 +114,7 @@ class KeyScaleAnalyzer:
         quality: str,
         key: KeyEstimate,
         prev_chord: Optional[Tuple[int, str]] = None,
-        next_chord: Optional[Tuple[int, str]] = None
+        next_chord: Optional[Tuple[int, str]] = None,
     ) -> Dict:
         """Analyze chord in key context."""
         # Calculate relative position
@@ -121,26 +122,28 @@ class KeyScaleAnalyzer:
 
         # Get roman numeral
         if key.mode == Mode.IONIAN:
-            roman = self.MAJOR_ROMAN.get(relative_pc, '?')
+            roman = self.MAJOR_ROMAN.get(relative_pc, "?")
         else:
-            roman = self.MINOR_ROMAN.get(relative_pc, '?')
+            roman = self.MINOR_ROMAN.get(relative_pc, "?")
 
         # Determine function
         function_map = {
-            'I': 'tonic', 'i': 'tonic',
-            'V': 'dominant', 'v': 'dominant',
-            'IV': 'subdominant', 'iv': 'subdominant',
-            'ii': 'subdominant', 'ii°': 'subdominant',
-            'vi': 'submediant', 'VI': 'submediant',
-            'iii': 'mediant', 'III': 'mediant',
+            "I": "tonic",
+            "i": "tonic",
+            "V": "dominant",
+            "v": "dominant",
+            "IV": "subdominant",
+            "iv": "subdominant",
+            "ii": "subdominant",
+            "ii°": "subdominant",
+            "vi": "submediant",
+            "VI": "submediant",
+            "iii": "mediant",
+            "III": "mediant",
         }
-        function = function_map.get(roman, 'unknown')
+        function = function_map.get(roman, "unknown")
 
-        return {
-            'roman_numeral': roman,
-            'function': function,
-            'in_key': True
-        }
+        return {"roman_numeral": roman, "function": function, "in_key": True}
 
 
 class ModalInterchangeDetector:
@@ -149,25 +152,21 @@ class ModalInterchangeDetector:
     def detect(self, chord_pc: int, key: KeyEstimate) -> Optional[Dict]:
         """Detect if chord is borrowed from parallel mode."""
         # Simple implementation - check if chord is in parallel mode but not current mode
-        parallel_major_pcs = {(key.pitch_class + interval) % 12
-                              for interval in KeyAnalyzer.MAJOR_SCALE}
-        parallel_minor_pcs = {(key.pitch_class + interval) % 12
-                              for interval in KeyAnalyzer.MINOR_SCALE}
+        parallel_major_pcs = {
+            (key.pitch_class + interval) % 12 for interval in KeyAnalyzer.MAJOR_SCALE
+        }
+        parallel_minor_pcs = {
+            (key.pitch_class + interval) % 12 for interval in KeyAnalyzer.MINOR_SCALE
+        }
 
         if key.mode == Mode.IONIAN:
             # Check if chord is from parallel minor
             if chord_pc in parallel_minor_pcs and chord_pc not in parallel_major_pcs:
-                return {
-                    'borrowed_from': 'minor',
-                    'chord_pc': chord_pc
-                }
+                return {"borrowed_from": "minor", "chord_pc": chord_pc}
         else:
             # Check if chord is from parallel major
             if chord_pc in parallel_major_pcs and chord_pc not in parallel_minor_pcs:
-                return {
-                    'borrowed_from': 'major',
-                    'chord_pc': chord_pc
-                }
+                return {"borrowed_from": "major", "chord_pc": chord_pc}
 
         return None
 

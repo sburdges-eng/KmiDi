@@ -188,6 +188,7 @@ class EmotionConditionedGenerator(GenerativeModel):
         """Load audio decoder model."""
         try:
             from .audio_diffusion import AudioDiffusion
+
             self._decoder = AudioDiffusion(
                 model_type="audioldm",
                 device=self.config.get_device(),
@@ -256,7 +257,7 @@ class EmotionConditionedGenerator(GenerativeModel):
                 "tempo": params.get("tempo"),
                 "key": params.get("key"),
                 "output_type": output_type,
-            }
+            },
         )
 
     def generate_from_embedding(
@@ -279,9 +280,9 @@ class EmotionConditionedGenerator(GenerativeModel):
         # Infer emotion from embedding (simplified - uses max component)
         emotion_names = list(EMOTION_MAPPINGS.keys())
         if len(embedding) >= len(emotion_names):
-            emotion_idx = int(np.argmax(embedding[:len(emotion_names)]))
+            emotion_idx = int(np.argmax(embedding[: len(emotion_names)]))
             emotion = emotion_names[emotion_idx]
-            intensity = float(np.max(embedding[:len(emotion_names)]))
+            intensity = float(np.max(embedding[: len(emotion_names)]))
         else:
             emotion = "peace"
             intensity = 0.5
@@ -421,6 +422,7 @@ class EmotionConditionedGenerator(GenerativeModel):
         # Generate chord progression
         try:
             from .chord_generator import ChordProgressionGenerator
+
             chord_gen = ChordProgressionGenerator(device=self.config.get_device())
             chords = chord_gen.generate(
                 emotion=params.get("emotion", "peace"),
@@ -434,6 +436,7 @@ class EmotionConditionedGenerator(GenerativeModel):
         # Generate melody
         try:
             from music_brain.session.ml_melody_generator import MLMelodyGenerator
+
             melody_gen = MLMelodyGenerator(device=self.config.get_device())
             melody = melody_gen.generate(
                 emotion=params.get("emotion", "peace"),

@@ -16,6 +16,7 @@ from enum import Enum
 
 class VoicingStyle(Enum):
     """Jazz voicing styles."""
+
     CLOSE = "close"
     DROP_2 = "drop_2"
     DROP_3 = "drop_3"
@@ -57,9 +58,9 @@ def note_to_midi(note: str, octave: int = 4) -> int:
     """Convert note name to MIDI number."""
     note_upper = note[0].upper()
     if len(note) > 1:
-        if note[1] == '#':
+        if note[1] == "#":
             offset = 1
-        elif note[1] == 'b':
+        elif note[1] == "b":
             offset = -1
         else:
             offset = 0
@@ -80,6 +81,7 @@ def midi_to_note(midi: int) -> Tuple[str, int]:
 @dataclass
 class JazzVoicing:
     """A jazz chord voicing."""
+
     root: str
     quality: str
     style: VoicingStyle
@@ -340,8 +342,9 @@ def _minimize_voice_movement(
 
     # Try different inversions/octave shifts
     best_notes = curr_notes
-    best_movement = sum(abs(c - p) for c, p in zip(curr_notes, prev_notes)
-                        if len(prev_notes) >= len(curr_notes))
+    best_movement = sum(
+        abs(c - p) for c, p in zip(curr_notes, prev_notes) if len(prev_notes) >= len(curr_notes)
+    )
 
     for octave_shift in range(-12, 13, 12):
         for inversion, _ in enumerate(curr_notes):
@@ -354,7 +357,9 @@ def _minimize_voice_movement(
 
             # Calculate movement
             if len(test_notes) <= len(prev_notes):
-                movement = sum(abs(c - p) for c, p in zip(test_notes, prev_notes[:len(test_notes)]))
+                movement = sum(
+                    abs(c - p) for c, p in zip(test_notes, prev_notes[: len(test_notes)])
+                )
                 if movement < best_movement:
                     best_movement = movement
                     best_notes = test_notes
@@ -375,10 +380,27 @@ def get_common_progressions() -> Dict[str, List[Tuple[str, str]]]:
         "ii-V-I minor": [("D", "min7b5"), ("G", "7b9"), ("C", "min7")],
         "I-VI-ii-V": [("C", "maj7"), ("A", "min7"), ("D", "min7"), ("G", "dom7")],
         "iii-VI-ii-V": [("E", "min7"), ("A", "dom7"), ("D", "min7"), ("G", "dom7")],
-        "Coltrane changes": [("C", "maj7"), ("Eb", "dom7"), ("Ab", "maj7"), ("B", "dom7"), ("E", "maj7"), ("G", "dom7")],  # noqa: E501
-
+        "Coltrane changes": [
+            ("C", "maj7"),
+            ("Eb", "dom7"),
+            ("Ab", "maj7"),
+            ("B", "dom7"),
+            ("E", "maj7"),
+            ("G", "dom7"),
+        ],  # noqa: E501
         "rhythm changes A": [("Bb", "maj7"), ("G", "min7"), ("C", "min7"), ("F", "dom7")],
-        "blues": [("C", "dom7"), ("F", "dom7"), ("C", "dom7"), ("C", "dom7"),
-                  ("F", "dom7"), ("F", "dom7"), ("C", "dom7"), ("A", "dom7"),
-                  ("D", "min7"), ("G", "dom7"), ("C", "dom7"), ("G", "dom7")],
+        "blues": [
+            ("C", "dom7"),
+            ("F", "dom7"),
+            ("C", "dom7"),
+            ("C", "dom7"),
+            ("F", "dom7"),
+            ("F", "dom7"),
+            ("C", "dom7"),
+            ("A", "dom7"),
+            ("D", "min7"),
+            ("G", "dom7"),
+            ("C", "dom7"),
+            ("G", "dom7"),
+        ],
     }

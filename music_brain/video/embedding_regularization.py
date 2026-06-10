@@ -20,8 +20,9 @@ from pathlib import Path
 
 class RegularizationType(Enum):
     """Types of regularization."""
-    L1 = "l1"           # Lasso regularization (sparse weights)
-    L2 = "l2"           # Ridge regularization (small weights)
+
+    L1 = "l1"  # Lasso regularization (sparse weights)
+    L2 = "l2"  # Ridge regularization (small weights)
     ELASTIC = "elastic"  # Combination of L1 and L2
     DROPOUT = "dropout"  # Random dropout during training
     NONE = "none"
@@ -36,11 +37,11 @@ class RegularizationConfig:
 
     # Regularization strength
     l1_lambda: float = 0.0001  # L1 regularization strength
-    l2_lambda: float = 0.001   # L2 regularization strength
+    l2_lambda: float = 0.001  # L2 regularization strength
     elastic_ratio: float = 0.5  # Mix of L1/L2 for elastic net (0=L2, 1=L1)
 
     # Dropout (for training robustness)
-    dropout_rate: float = 0.1   # Probability of dropping units
+    dropout_rate: float = 0.1  # Probability of dropping units
     use_dropout_inference: bool = False  # Usually False for inference
 
     # Gradient clipping (prevents exploding gradients)
@@ -61,8 +62,8 @@ class RegularizationConfig:
 
     # Performance optimization
     use_fast_inference: bool = True  # Disable regularization during inference
-    cache_embeddings: bool = True    # Cache computed embeddings
-    use_quantization: bool = False   # 8-bit quantization for speed
+    cache_embeddings: bool = True  # Cache computed embeddings
+    use_quantization: bool = False  # 8-bit quantization for speed
 
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -72,8 +73,8 @@ class EmbeddingConfig:
     """Configuration for emotion-visual embeddings."""
 
     # Embedding dimensions
-    emotion_embedding_dim: int = 128    # Emotion embedding size
-    visual_embedding_dim: int = 256     # Visual parameter embedding size
+    emotion_embedding_dim: int = 128  # Emotion embedding size
+    visual_embedding_dim: int = 256  # Visual parameter embedding size
     hidden_dims: List[int] = field(default_factory=lambda: [512, 384, 256])
 
     # Embedding initialization
@@ -87,9 +88,9 @@ class EmbeddingConfig:
 
     # Optimization
     optimizer: str = "adam"  # adam, sgd, rmsprop
-    beta1: float = 0.9       # Adam beta1
-    beta2: float = 0.999     # Adam beta2
-    epsilon: float = 1e-8    # Adam epsilon
+    beta1: float = 0.9  # Adam beta1
+    beta2: float = 0.999  # Adam beta2
+    epsilon: float = 1e-8  # Adam epsilon
 
     # Learning rate schedule
     use_lr_schedule: bool = True
@@ -138,11 +139,7 @@ class EmbeddingRegularizer:
         self._training_mode = True
         self._embedding_cache: Dict[str, np.ndarray] = {}
 
-    def compute_regularization_loss(
-        self,
-        weights: np.ndarray,
-        training: bool = True
-    ) -> float:
+    def compute_regularization_loss(self, weights: np.ndarray, training: bool = True) -> float:
         """
         Compute regularization loss for given weights.
 
@@ -168,26 +165,22 @@ class EmbeddingRegularizer:
 
         elif self.config.regularization_type == RegularizationType.L2:
             # L2 regularization: sum of squares
-            loss = self.config.l2_lambda * np.sum(weights ** 2)
+            loss = self.config.l2_lambda * np.sum(weights**2)
 
         elif self.config.regularization_type == RegularizationType.ELASTIC:
             # Elastic Net: combination of L1 and L2
             l1_component = np.sum(np.abs(weights))
-            l2_component = np.sum(weights ** 2)
+            l2_component = np.sum(weights**2)
 
             ratio = self.config.elastic_ratio
             loss = (
-                ratio * self.config.l1_lambda * l1_component +
-                (1 - ratio) * self.config.l2_lambda * l2_component
+                ratio * self.config.l1_lambda * l1_component
+                + (1 - ratio) * self.config.l2_lambda * l2_component
             )
 
         return loss
 
-    def apply_dropout(
-        self,
-        embeddings: np.ndarray,
-        training: bool = True
-    ) -> np.ndarray:
+    def apply_dropout(self, embeddings: np.ndarray, training: bool = True) -> np.ndarray:
         """
         Apply dropout to embeddings.
 
@@ -208,21 +201,14 @@ class EmbeddingRegularizer:
             return embeddings
 
         # Create dropout mask
-        mask = np.random.binomial(
-            1,
-            1 - self.config.dropout_rate,
-            size=embeddings.shape
-        )
+        mask = np.random.binomial(1, 1 - self.config.dropout_rate, size=embeddings.shape)
 
         # Scale to maintain expected value
         scale = 1.0 / (1.0 - self.config.dropout_rate)
 
         return embeddings * mask * scale
 
-    def clip_gradients(
-        self,
-        gradients: np.ndarray
-    ) -> np.ndarray:
+    def clip_gradients(self, gradients: np.ndarray) -> np.ndarray:
         """
         Clip gradients to prevent exploding gradients.
 
@@ -257,11 +243,7 @@ class EmbeddingRegularizer:
         if training:
             self._embedding_cache.clear()
 
-    def cache_embedding(
-        self,
-        key: str,
-        embedding: np.ndarray
-    ) -> None:
+    def cache_embedding(self, key: str, embedding: np.ndarray) -> None:
         """
         Cache an embedding for fast retrieval.
 
@@ -272,10 +254,7 @@ class EmbeddingRegularizer:
         if self.config.cache_embeddings:
             self._embedding_cache[key] = embedding.copy()
 
-    def get_cached_embedding(
-        self,
-        key: str
-    ) -> Optional[np.ndarray]:
+    def get_cached_embedding(self, key: str) -> Optional[np.ndarray]:
         """
         Retrieve a cached embedding.
 
@@ -310,10 +289,7 @@ class FastEmbeddingPredictor:
         ... )
     """
 
-    def __init__(
-        self,
-        embedding_config: Optional[EmbeddingConfig] = None
-    ):
+    def __init__(self, embedding_config: Optional[EmbeddingConfig] = None):
         """
         Initialize the fast embedding predictor.
 
@@ -331,12 +307,7 @@ class FastEmbeddingPredictor:
         self._inference_count = 0
         self._cache_hits = 0
 
-    def predict(
-        self,
-        emotion: str,
-        intensity: float = 1.0,
-        use_cache: bool = True
-    ) -> np.ndarray:
+    def predict(self, emotion: str, intensity: float = 1.0, use_cache: bool = True) -> np.ndarray:
         """
         Predict visual embedding from emotion.
 
@@ -435,7 +406,7 @@ class FastEmbeddingPredictor:
 def create_regularized_mapper(
     regularization_strength: float = 0.001,
     use_dropout: bool = True,
-    use_fast_inference: bool = True
+    use_fast_inference: bool = True,
 ) -> Tuple[EmbeddingConfig, EmbeddingRegularizer]:
     """
     Create a regularized emotion-visual mapper configuration.

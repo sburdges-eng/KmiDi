@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 try:
     import mido
+
     MIDO_AVAILABLE = True
 except ImportError:
     MIDO_AVAILABLE = False
@@ -16,6 +17,7 @@ except ImportError:
 @dataclass
 class MidiInfo:
     """Basic info about a MIDI file."""
+
     filename: str
     format_type: int  # 0, 1, or 2
     num_tracks: int
@@ -86,11 +88,11 @@ def get_midi_info(path: str) -> MidiInfo:
 
     for track in mid.tracks:
         for msg in track:
-            if msg.type == 'set_tempo':
+            if msg.type == "set_tempo":
                 tempo_bpm = mido.tempo2bpm(msg.tempo)
-            elif msg.type == 'time_signature':
+            elif msg.type == "time_signature":
                 time_sig = (msg.numerator, msg.denominator)
-            elif msg.type == 'track_name':
+            elif msg.type == "track_name":
                 track_names.append(msg.name)
 
     # Calculate duration and note count
@@ -101,7 +103,7 @@ def get_midi_info(path: str) -> MidiInfo:
         track_ticks = 0
         for msg in track:
             track_ticks += msg.time
-            if msg.type == 'note_on' and msg.velocity > 0:
+            if msg.type == "note_on" and msg.velocity > 0:
                 note_count += 1
         total_ticks = max(total_ticks, track_ticks)
 
@@ -156,7 +158,7 @@ def split_by_channel(midi_file: "mido.MidiFile") -> Dict[int, List]:
         current_tick = 0
         for msg in track:
             current_tick += msg.time
-            if hasattr(msg, 'channel'):
+            if hasattr(msg, "channel"):
                 if msg.channel not in channels:
                     channels[msg.channel] = []
                 channels[msg.channel].append((current_tick, msg))
@@ -180,23 +182,25 @@ def extract_notes(midi_file: "mido.MidiFile") -> List[Dict]:
         for msg in track:
             current_tick += msg.time
 
-            if msg.type == 'note_on' and msg.velocity > 0:
+            if msg.type == "note_on" and msg.velocity > 0:
                 key = (msg.channel, msg.note)
                 active_notes[key] = (current_tick, msg.velocity)
 
-            elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+            elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
                 key = (msg.channel, msg.note)
                 if key in active_notes:
                     start_tick, velocity = active_notes.pop(key)
-                    notes.append({
-                        'pitch': msg.note,
-                        'velocity': velocity,
-                        'start_tick': start_tick,
-                        'duration_ticks': current_tick - start_tick,
-                        'channel': msg.channel,
-                        'track': track_idx,
-                    })
+                    notes.append(
+                        {
+                            "pitch": msg.note,
+                            "velocity": velocity,
+                            "start_tick": start_tick,
+                            "duration_ticks": current_tick - start_tick,
+                            "channel": msg.channel,
+                            "track": track_idx,
+                        }
+                    )
 
     # Sort by start time
-    notes.sort(key=lambda n: n['start_tick'])
+    notes.sort(key=lambda n: n["start_tick"])
     return notes

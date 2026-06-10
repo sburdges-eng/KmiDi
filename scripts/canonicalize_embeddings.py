@@ -23,8 +23,12 @@ import sys
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Fit orthogonal map between two embedding spaces.")
-    parser.add_argument("--old-embeddings", type=str, required=True, help="Path to (N, D) old-space anchors.")
-    parser.add_argument("--new-embeddings", type=str, required=True, help="Path to (N, D) new-space anchors.")
+    parser.add_argument(
+        "--old-embeddings", type=str, required=True, help="Path to (N, D) old-space anchors."
+    )
+    parser.add_argument(
+        "--new-embeddings", type=str, required=True, help="Path to (N, D) new-space anchors."
+    )
     parser.add_argument("--output", type=str, required=True, help="Output path for .npz map.")
     parser.add_argument("--no-center", action="store_true", help="Disable mean centering.")
     args = parser.parse_args()
@@ -43,7 +47,10 @@ def main() -> int:
     )
     save_map(args.output, R, center_old, center_new)
     print(f"Saved map to {args.output}")
-    print("At query time: apply_map(query_new, R, center_old, center_new, normalize=True) for retrieval.")
+    print(
+        "At query time: apply_map(query_new, R, center_old, center_new, normalize=True) for "
+        "retrieval."
+    )
     return 0
 
 

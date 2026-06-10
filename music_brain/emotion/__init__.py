@@ -17,12 +17,14 @@ from music_brain.emotion.emotion_production import (
 def get_audio_classifier():
     """Get the audio emotion classifier (lazy import)."""
     from music_brain.emotion.audio_emotion_classifier import AudioEmotionClassifier
+
     return AudioEmotionClassifier
 
 
 def classify_audio_emotion(audio_path: str):
     """Quick audio emotion classification."""
     from music_brain.emotion.audio_emotion_classifier import classify_audio_emotion as _classify
+
     return _classify(audio_path)
 
 

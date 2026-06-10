@@ -6,10 +6,10 @@ import pytest
 
 from music_brain.gpu_recovery import gpu_recoverable, looks_like_gpu_failure
 
-
 # ----------------------------------------------------------------------
 # looks_like_gpu_failure
 # ----------------------------------------------------------------------
+
 
 def test_cuda_oom_message_matches() -> None:
     exc = RuntimeError("CUDA out of memory. Tried to allocate 2.00 GiB")
@@ -39,6 +39,7 @@ def test_match_is_case_insensitive() -> None:
 # ----------------------------------------------------------------------
 # gpu_recoverable
 # ----------------------------------------------------------------------
+
 
 def test_clean_call_returns_value() -> None:
     @gpu_recoverable()
@@ -109,8 +110,7 @@ def test_on_recover_hook_fires_with_exception_and_attempt() -> None:
 
     attempt = {"n": 0}
 
-    @gpu_recoverable(max_retries=2,
-                     on_recover=recover)
+    @gpu_recoverable(max_retries=2, on_recover=recover)
     def f() -> str:
         attempt["n"] += 1
         if attempt["n"] < 3:

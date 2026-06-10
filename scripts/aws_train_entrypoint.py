@@ -660,9 +660,7 @@ def load_manifest_and_shards(
                 if not isinstance(shard_name, str) or not shard_name:
                     continue
                 shard_path = task_dir / shard_name
-                shard_key = (
-                    f"{prefix}/{task}/{shard_name}" if prefix else f"{task}/{shard_name}"
-                )
+                shard_key = f"{prefix}/{task}/{shard_name}" if prefix else f"{task}/{shard_name}"
                 s3_client.download_file(bucket, shard_key, str(shard_path))
 
     return manifests
@@ -697,9 +695,7 @@ def load_manifest_from_local_package(package_root: Path) -> dict[str, dict[str, 
                     continue
                 shard_path = task_dir / shard_name
                 if not shard_path.exists():
-                    raise FileNotFoundError(
-                        f"Local package shard missing: {shard_path}"
-                    )
+                    raise FileNotFoundError(f"Local package shard missing: {shard_path}")
 
     return manifests
 

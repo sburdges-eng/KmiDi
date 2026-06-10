@@ -67,16 +67,18 @@ class AudioFeatures:
         """Convert to dict (without large spectrograms)."""
         d = asdict(self)
         # Truncate large arrays for JSON serialization
-        if len(d['mel_spectrogram']) > 0:
-            d['mel_spectrogram_shape'] = [len(d['mel_spectrogram']), len(
-                d['mel_spectrogram'][0]) if d['mel_spectrogram'] else 0]
-            d['mel_spectrogram'] = []  # Too large for JSON
-        if len(d['mfcc']) > 0:
-            d['mfcc_shape'] = [len(d['mfcc']), len(d['mfcc'][0]) if d['mfcc'] else 0]
-            d['mfcc'] = []
-        if len(d['chroma']) > 0:
-            d['chroma_shape'] = [len(d['chroma']), len(d['chroma'][0]) if d['chroma'] else 0]
-            d['chroma'] = []
+        if len(d["mel_spectrogram"]) > 0:
+            d["mel_spectrogram_shape"] = [
+                len(d["mel_spectrogram"]),
+                len(d["mel_spectrogram"][0]) if d["mel_spectrogram"] else 0,
+            ]
+            d["mel_spectrogram"] = []  # Too large for JSON
+        if len(d["mfcc"]) > 0:
+            d["mfcc_shape"] = [len(d["mfcc"]), len(d["mfcc"][0]) if d["mfcc"] else 0]
+            d["mfcc"] = []
+        if len(d["chroma"]) > 0:
+            d["chroma_shape"] = [len(d["chroma"]), len(d["chroma"][0]) if d["chroma"] else 0]
+            d["chroma"] = []
         return d
 
     def save(self, path: Path, include_spectrograms: bool = False):
@@ -85,7 +87,7 @@ class AudioFeatures:
             # Save as npz for large arrays
             np.savez(path, **asdict(self))
         else:
-            with open(path, 'w') as f:
+            with open(path, "w") as f:
                 json.dump(self.to_dict(), f, indent=2)
 
     def save_npz(self, path: Path):
@@ -169,7 +171,8 @@ class AudioFeatureExtractor:
 
         # Mel spectrogram
         mel_spec = librosa.feature.melspectrogram(
-            y=y, sr=sr,
+            y=y,
+            sr=sr,
             n_mels=self.n_mels,
             n_fft=self.n_fft,
             hop_length=self.hop_length,
@@ -179,7 +182,8 @@ class AudioFeatureExtractor:
 
         # MFCCs
         mfcc = librosa.feature.mfcc(
-            y=y, sr=sr,
+            y=y,
+            sr=sr,
             n_mfcc=self.n_mfcc,
             n_fft=self.n_fft,
             hop_length=self.hop_length,
@@ -190,7 +194,8 @@ class AudioFeatureExtractor:
 
         # Chroma
         chroma = librosa.feature.chroma_stft(
-            y=y, sr=sr,
+            y=y,
+            sr=sr,
             n_fft=self.n_fft,
             hop_length=self.hop_length,
         )
@@ -216,9 +221,7 @@ class AudioFeatureExtractor:
         )[0].tolist()
 
         # Temporal features
-        features.rms_energy = librosa.feature.rms(
-            y=y, hop_length=self.hop_length
-        )[0].tolist()
+        features.rms_energy = librosa.feature.rms(y=y, hop_length=self.hop_length)[0].tolist()
         features.rms_mean = float(np.mean(features.rms_energy))
         features.rms_std = float(np.std(features.rms_energy))
 
@@ -228,9 +231,7 @@ class AudioFeatureExtractor:
         ).tolist()
 
         # Tempo and beats
-        tempo, beat_frames = librosa.beat.beat_track(
-            y=y, sr=sr, hop_length=self.hop_length
-        )
+        tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr, hop_length=self.hop_length)
         features.tempo_bpm = float(tempo) if np.isscalar(tempo) else float(tempo[0])
         features.beat_frames = beat_frames.tolist()
 
@@ -275,8 +276,9 @@ class AudioFeatureExtractor:
         vec.append(features.spectral_centroid_mean / 5000)
         vec.append(features.spectral_centroid_std / 2000)
         vec.append(np.mean(features.spectral_rolloff) / 10000 if features.spectral_rolloff else 0)
-        vec.append(np.mean(features.spectral_bandwidth) / 3000
-                   if features.spectral_bandwidth else 0)
+        vec.append(
+            np.mean(features.spectral_bandwidth) / 3000 if features.spectral_bandwidth else 0
+        )
         vec.append(np.mean(features.zero_crossing_rate) * 10 if features.zero_crossing_rate else 0)
         vec.append(features.rms_mean * 10)
         vec.append(features.rms_std * 10)
@@ -287,8 +289,11 @@ class AudioFeatureExtractor:
             vec.append(np.mean(features.onset_strength))
             vec.append(np.std(features.onset_strength))
             vec.append(np.max(features.onset_strength))
-            vec.append(len(features.beat_frames) / features.duration_sec
-                       if features.duration_sec > 0 else 0)
+            vec.append(
+                len(features.beat_frames) / features.duration_sec
+                if features.duration_sec > 0
+                else 0
+            )
         else:
             vec.extend([0] * 4)
 
@@ -311,8 +316,9 @@ class AudioFeatureExtractor:
             indices = np.linspace(0, len(mel_mean) - 1, 32).astype(int)
             mel_resampled = mel_mean[indices]
             # Normalize
-            mel_norm = (mel_resampled - np.min(mel_resampled)
-                        ) / (np.max(mel_resampled) - np.min(mel_resampled) + 1e-6)
+            mel_norm = (mel_resampled - np.min(mel_resampled)) / (
+                np.max(mel_resampled) - np.min(mel_resampled) + 1e-6
+            )
             vec.extend(mel_norm.tolist())
         else:
             vec.extend([0] * 32)
@@ -324,14 +330,15 @@ class AudioFeatureExtractor:
         return vec[:128]
 
     def extract_batch(
-            self, audio_paths: List[Path],
-            show_progress: bool = True) -> List[AudioFeatures]:
+        self, audio_paths: List[Path], show_progress: bool = True
+    ) -> List[AudioFeatures]:
         """Extract features from multiple audio files."""
         results = []
 
         if show_progress:
             try:
                 from tqdm import tqdm
+
                 paths = tqdm(audio_paths, desc="Extracting audio features")
             except ImportError:
                 paths = audio_paths
@@ -364,14 +371,14 @@ def extract_emotion_features(audio_path: Path) -> Dict[str, Any]:
     """Extract emotion-specific features for EmotionRecognizer."""
     features = extract_audio_features(audio_path)
     return {
-        'mfcc_mean': features.mfcc_mean,
-        'mfcc_std': features.mfcc_std,
-        'spectral_centroid_mean': features.spectral_centroid_mean,
-        'rms_mean': features.rms_mean,
-        'tempo_bpm': features.tempo_bpm,
-        'valence_estimate': features.valence_estimate,
-        'arousal_estimate': features.arousal_estimate,
-        'feature_vector': features.feature_vector,
+        "mfcc_mean": features.mfcc_mean,
+        "mfcc_std": features.mfcc_std,
+        "spectral_centroid_mean": features.spectral_centroid_mean,
+        "rms_mean": features.rms_mean,
+        "tempo_bpm": features.tempo_bpm,
+        "valence_estimate": features.valence_estimate,
+        "arousal_estimate": features.arousal_estimate,
+        "feature_vector": features.feature_vector,
     }
 
 
@@ -379,8 +386,8 @@ def extract_spectral_features(audio_path: Path) -> Dict[str, Any]:
     """Extract spectral features."""
     features = extract_audio_features(audio_path)
     return {
-        'spectral_centroid': features.spectral_centroid,
-        'spectral_rolloff': features.spectral_rolloff,
-        'spectral_bandwidth': features.spectral_bandwidth,
-        'zero_crossing_rate': features.zero_crossing_rate,
+        "spectral_centroid": features.spectral_centroid,
+        "spectral_rolloff": features.spectral_rolloff,
+        "spectral_bandwidth": features.spectral_bandwidth,
+        "zero_crossing_rate": features.zero_crossing_rate,
     }

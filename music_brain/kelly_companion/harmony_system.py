@@ -11,23 +11,22 @@ from typing import List, Dict, Optional, Tuple, Set
 from dataclasses import dataclass
 
 from .chord_detector import ChordDetector, PolyphonicScorer, JazzChordAnalyzer
-from .key_analyzer import (
-    KeyScaleAnalyzer, KeyAnalyzer, KeyEstimate, Mode
-)
+from .key_analyzer import KeyScaleAnalyzer, KeyAnalyzer, KeyEstimate, Mode
 from .harmony_engine import (
-    ProbabilisticHarmonyEngine, Genre, VoiceLeadingAnalyzer,
-    TensionResolutionAnalyzer
+    ProbabilisticHarmonyEngine,
+    Genre,
+    VoiceLeadingAnalyzer,
+    TensionResolutionAnalyzer,
 )
-from .chord_memory import (
-    ChordMemorySystem, SectionType
-)
+from .chord_memory import ChordMemorySystem, SectionType
 
-NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 
 @dataclass
 class HarmonyAnalysis:
     """Complete analysis result"""
+
     # Chord identification
     chord_name: str
     root: str
@@ -104,7 +103,7 @@ class IntelligentHarmonySystem:
 
     def set_key(self, root: str, mode: str = "major"):
         """Manually set key"""
-        mode_enum = Mode.IONIAN if mode.lower() in ['major', 'ionian'] else Mode.AEOLIAN
+        mode_enum = Mode.IONIAN if mode.lower() in ["major", "ionian"] else Mode.AEOLIAN
         pc = NOTE_NAMES.index(root) if root in NOTE_NAMES else 0
         self.current_key = KeyEstimate(root, mode_enum, 1.0, pc)
         self.memory.set_key(f"{root} {mode}")
@@ -112,14 +111,14 @@ class IntelligentHarmonySystem:
     def set_section(self, section: str):
         """Set current song section"""
         section_map = {
-            'intro': SectionType.INTRO,
-            'verse': SectionType.VERSE,
-            'prechorus': SectionType.PRECHORUS,
-            'chorus': SectionType.CHORUS,
-            'bridge': SectionType.BRIDGE,
-            'breakdown': SectionType.BREAKDOWN,
-            'outro': SectionType.OUTRO,
-            'solo': SectionType.SOLO,
+            "intro": SectionType.INTRO,
+            "verse": SectionType.VERSE,
+            "prechorus": SectionType.PRECHORUS,
+            "chorus": SectionType.CHORUS,
+            "bridge": SectionType.BRIDGE,
+            "breakdown": SectionType.BREAKDOWN,
+            "outro": SectionType.OUTRO,
+            "solo": SectionType.SOLO,
         }
         self.memory.set_section(section_map.get(section.lower(), SectionType.UNKNOWN))
 
@@ -151,14 +150,15 @@ class IntelligentHarmonySystem:
 
         if self.current_key:
             chord_analysis = self.key_analyzer.analyze_chord_in_key(
-                root_pc, best_match.quality.value,
+                root_pc,
+                best_match.quality.value,
                 self.current_key,
                 prev_chord=self._get_prev_chord_tuple(),
-                next_chord=None  # We don't know the future
+                next_chord=None,  # We don't know the future
             )
 
         # Get Roman numeral
-        roman = chord_analysis.get('roman_numeral', '?')
+        roman = chord_analysis.get("roman_numeral", "?")
 
         # Step 4: Update memory
         event = self.memory.process_chord(
@@ -168,7 +168,7 @@ class IntelligentHarmonySystem:
             roman_numeral=roman,
             duration=duration,
             notes=pitch_classes,
-            tension=self.tension_analyzer.chord_tension(set(best_match.intervals_matched))
+            tension=self.tension_analyzer.chord_tension(set(best_match.intervals_matched)),
         )
 
         # Update progression history
@@ -179,7 +179,9 @@ class IntelligentHarmonySystem:
         # Step 5: Get predictions
         predictions = self.harmony_engine.suggest_next_chord(
             self.progression_history[-4:]
-            if len(self.progression_history) >= 4 else self.progression_history)
+            if len(self.progression_history) >= 4
+            else self.progression_history
+        )
 
         # Step 6: Cadence detection
         cadence = self.harmony_engine.cadence.detect_cadence(self.progression_history)
@@ -194,25 +196,32 @@ class IntelligentHarmonySystem:
         # Build result
         return HarmonyAnalysis(
             chord_name=self.chord_detector.get_slash_chord(best_match),
-            root=best_match.root, quality=best_match.quality.value, bass_note=best_match.bass_note,
-            confidence=best_match.confidence, alternatives=[m.name for m in matches[1: 4]],
-            detected_key=f"{self.current_key.root}  {self.current_key.mode.value} "
-            if self.current_key else "unknown", roman_numeral=roman,
-            harmonic_function=chord_analysis.get('function', '?'),
-            is_borrowed='borrowed_chord' in chord_analysis, borrowed_from=chord_analysis.get(
-                'borrowed_chord', {}).get('borrowed_from'),
-            is_secondary_dominant='secondary_function' in chord_analysis,
-            secondary_target=chord_analysis.get('secondary_function', {}).get('target'),
+            root=best_match.root,
+            quality=best_match.quality.value,
+            bass_note=best_match.bass_note,
+            confidence=best_match.confidence,
+            alternatives=[m.name for m in matches[1:4]],
+            detected_key=(
+                f"{self.current_key.root}  {self.current_key.mode.value} "
+                if self.current_key
+                else "unknown"
+            ),
+            roman_numeral=roman,
+            harmonic_function=chord_analysis.get("function", "?"),
+            is_borrowed="borrowed_chord" in chord_analysis,
+            borrowed_from=chord_analysis.get("borrowed_chord", {}).get("borrowed_from"),
+            is_secondary_dominant="secondary_function" in chord_analysis,
+            secondary_target=chord_analysis.get("secondary_function", {}).get("target"),
             tension_level=event.tension_level,
-            next_chord_predictions=[(p['chord'],
-                                     p['score']) for p in predictions[: 3]],
-            cadence=cadence, position_in_phrase=len(
-                self.memory.phrase_memory.current_phrase_chords),
-            emotional_context=self._get_emotional_context())
+            next_chord_predictions=[(p["chord"], p["score"]) for p in predictions[:3]],
+            cadence=cadence,
+            position_in_phrase=len(self.memory.phrase_memory.current_phrase_chords),
+            emotional_context=self._get_emotional_context(),
+        )
 
     def analyze_midi_pitches(
-            self, midi_pitches: List[int],
-            duration: float = 1.0) -> HarmonyAnalysis:
+        self, midi_pitches: List[int], duration: float = 1.0
+    ) -> HarmonyAnalysis:
         """Analyze from MIDI pitch numbers"""
         notes = [NOTE_NAMES[p % 12] for p in midi_pitches]
         return self.analyze_notes(notes, duration)
@@ -220,8 +229,7 @@ class IntelligentHarmonySystem:
     def predict_next(self, prefer_resolution: bool = False) -> List[Dict]:
         """Get predictions for next chord"""
         return self.harmony_engine.suggest_next_chord(
-            self.progression_history[-4:],
-            prefer_resolution=prefer_resolution
+            self.progression_history[-4:], prefer_resolution=prefer_resolution
         )
 
     def get_harmonic_context(self) -> Dict:
@@ -232,26 +240,31 @@ class IntelligentHarmonySystem:
         return {
             **memory_context,
             **predictions,
-            'genre': self.genre.value,
-            'detected_key': f"{self.current_key.root} {self.current_key.mode.value}" if self.current_key else None,  # noqa: E501
-
-            'key_confidence': self.current_key.confidence if self.current_key else 0,
-            'progression_history': self.progression_history[-8:],
-            'recurring_patterns': [
+            "genre": self.genre.value,
+            "detected_key": (
+                f"{self.current_key.root} {self.current_key.mode.value}"
+                if self.current_key
+                else None
+            ),  # noqa: E501
+            "key_confidence": self.current_key.confidence if self.current_key else 0,
+            "progression_history": self.progression_history[-8:],
+            "recurring_patterns": [
                 m.pattern for m in self.memory.motif_tracker.get_signature_motifs()
-            ]
+            ],
         }
 
     def get_emotional_arc(self) -> List[Dict]:
         """Get emotional arc of the piece so far"""
         arcs = []
         for phrase in self.memory.phrase_memory.phrases:
-            arcs.append({
-                'section': phrase.section.value,
-                'progression': phrase.progression,
-                'emotion': phrase.emotional_arc.value,
-                'cadential': phrase.is_cadential
-            })
+            arcs.append(
+                {
+                    "section": phrase.section.value,
+                    "progression": phrase.progression,
+                    "emotion": phrase.emotional_arc.value,
+                    "cadential": phrase.is_cadential,
+                }
+            )
         return arcs
 
     def suggest_voice_leading(self, target_chord_pcs: Set[int]) -> List[int]:
@@ -279,7 +292,7 @@ class IntelligentHarmonySystem:
     def _get_prev_chord_tuple(self) -> Optional[Tuple[int, str]]:
         """Get previous chord as (pitch_class, quality) tuple"""
         context = self.memory.get_context()
-        last = context.get('last_chord')
+        last = context.get("last_chord")
         if last:
             pc = NOTE_NAMES.index(last.root) if last.root in NOTE_NAMES else 0
             return (pc, last.quality)
@@ -289,73 +302,86 @@ class IntelligentHarmonySystem:
         """Get current emotional context string"""
         predictions = self.memory.predict_context()
 
-        if predictions.get('building_to_climax'):
-            return 'building_to_climax'
+        if predictions.get("building_to_climax"):
+            return "building_to_climax"
 
         # Check recent phrase arcs
         if self.memory.phrase_memory.phrases:
             last_arc = self.memory.phrase_memory.phrases[-1].emotional_arc
             return last_arc.value
 
-        return 'stable'
+        return "stable"
 
     def _empty_analysis(self) -> HarmonyAnalysis:
         """Return empty analysis when no chord detected"""
         return HarmonyAnalysis(
-            chord_name='?', root='?', quality='?', bass_note=None,
-            confidence=0, alternatives=[],
-            detected_key='unknown', roman_numeral='?', harmonic_function='?',
-            is_borrowed=False, borrowed_from=None,
-            is_secondary_dominant=False, secondary_target=None,
-            tension_level=0, next_chord_predictions=[],
-            cadence=None, position_in_phrase=0, emotional_context='unknown'
+            chord_name="?",
+            root="?",
+            quality="?",
+            bass_note=None,
+            confidence=0,
+            alternatives=[],
+            detected_key="unknown",
+            roman_numeral="?",
+            harmonic_function="?",
+            is_borrowed=False,
+            borrowed_from=None,
+            is_secondary_dominant=False,
+            secondary_target=None,
+            tension_level=0,
+            next_chord_predictions=[],
+            cadence=None,
+            position_in_phrase=0,
+            emotional_context="unknown",
         )
 
 
 # Convenience functions
-def quick_analyze(notes: List[str], key: str = None, genre: str = 'pop') -> Dict:
+def quick_analyze(notes: List[str], key: str = None, genre: str = "pop") -> Dict:
     """Quick one-shot chord analysis"""
     system = IntelligentHarmonySystem(Genre[genre.upper()])
     if key:
         parts = key.split()
-        system.set_key(parts[0], parts[1] if len(parts) > 1 else 'major')
+        system.set_key(parts[0], parts[1] if len(parts) > 1 else "major")
 
     result = system.analyze_notes(notes)
     return {
-        'chord': result.chord_name,
-        'confidence': f"{result.confidence:.0%}",
-        'key': result.detected_key,
-        'function': result.harmonic_function,
-        'roman': result.roman_numeral,
-        'tension': f"{result.tension_level:.2f}",
-        'next_likely': result.next_chord_predictions
+        "chord": result.chord_name,
+        "confidence": f"{result.confidence:.0%}",
+        "key": result.detected_key,
+        "function": result.harmonic_function,
+        "roman": result.roman_numeral,
+        "tension": f"{result.tension_level:.2f}",
+        "next_likely": result.next_chord_predictions,
     }
 
 
-def analyze_progression(chords: List[List[str]], key: str = None, genre: str = 'pop') -> Dict:
+def analyze_progression(chords: List[List[str]], key: str = None, genre: str = "pop") -> Dict:
     """Analyze a full chord progression"""
     system = IntelligentHarmonySystem(Genre[genre.upper()])
     if key:
         parts = key.split()
-        system.set_key(parts[0], parts[1] if len(parts) > 1 else 'major')
+        system.set_key(parts[0], parts[1] if len(parts) > 1 else "major")
 
     results = []
     for notes in chords:
         r = system.analyze_notes(notes)
-        results.append({
-            'chord': r.chord_name,
-            'roman': r.roman_numeral,
-            'function': r.harmonic_function,
-            'tension': r.tension_level
-        })
+        results.append(
+            {
+                "chord": r.chord_name,
+                "roman": r.roman_numeral,
+                "function": r.harmonic_function,
+                "tension": r.tension_level,
+            }
+        )
 
     context = system.get_harmonic_context()
 
     return {
-        'chords': results,
-        'key': context.get('detected_key'),
-        'recurring_patterns': context.get('recurring_patterns', []),
-        'emotional_arc': system.get_emotional_arc()
+        "chords": results,
+        "key": context.get("detected_key"),
+        "recurring_patterns": context.get("recurring_patterns", []),
+        "emotional_arc": system.get_emotional_arc(),
     }
 
 
@@ -364,14 +390,14 @@ if __name__ == "__main__":
     print("=== INTELLIGENT HARMONY SYSTEM DEMO ===\n")
 
     system = IntelligentHarmonySystem(Genre.POP)
-    system.set_key('C', 'major')
+    system.set_key("C", "major")
 
     # Process a progression
     progression = [
-        ['C', 'E', 'G'],        # C
-        ['G', 'B', 'D', 'F'],   # G7
-        ['A', 'C', 'E'],        # Am
-        ['F', 'A', 'C'],        # F
+        ["C", "E", "G"],  # C
+        ["G", "B", "D", "F"],  # G7
+        ["A", "C", "E"],  # Am
+        ["F", "A", "C"],  # F
     ]
 
     print("Analyzing: C → G7 → Am → F\n")

@@ -30,10 +30,15 @@ except ImportError:
 def launch_nlm_vertex_job(args: argparse.Namespace) -> str:
     """Submit a Vertex AI training job for the NLM LLM."""
     if aiplatform is None:
-        print("ERROR: google-cloud-aiplatform not installed. Install with: pip install google-cloud-aiplatform")
+        print(
+            "ERROR: google-cloud-aiplatform not installed. Install with: pip install "
+            "google-cloud-aiplatform"
+        )
         sys.exit(1)
 
-    aiplatform.init(project=args.project, location=args.location, staging_bucket=args.staging_bucket)
+    aiplatform.init(
+        project=args.project, location=args.location, staging_bucket=args.staging_bucket
+    )
 
     job_name = f"kmidi-nlm-{args.run_id}"
 
@@ -60,7 +65,8 @@ def launch_nlm_vertex_job(args: argparse.Namespace) -> str:
         display_name=job_name,
         container_uri=args.image_uri,
         staging_bucket=args.staging_bucket,
-        model_serving_container_image_uri=None,  # We are just exporting the adapters, not serving directly here
+        # We are just exporting the adapters, not serving directly here
+        model_serving_container_image_uri=None,
     )
 
     # Launch the job - mapping output to AIP_MODEL_DIR via Vertex AI base_output_dir parameter
@@ -71,7 +77,7 @@ def launch_nlm_vertex_job(args: argparse.Namespace) -> str:
         machine_type=args.machine_type,
         accelerator_type=args.accelerator_type,
         accelerator_count=args.accelerator_count,
-        sync=args.sync, 
+        sync=args.sync,
     )
 
     print(f"Launched Vertex AI NLM job: {job_name}")
@@ -83,21 +89,43 @@ def main():
     parser = argparse.ArgumentParser(description="Launch NLM fine-tuning on Vertex AI")
 
     # Required job args
-    parser.add_argument("--base-model", required=True, help="HF model ID or GCS gs:// path to base weights")
-    parser.add_argument("--dataset-path", required=True, help="HF dataset ID or GCS gs:// path to JSONL")
-    
+    parser.add_argument(
+        "--base-model", required=True, help="HF model ID or GCS gs:// path to base weights"
+    )
+    parser.add_argument(
+        "--dataset-path", required=True, help="HF dataset ID or GCS gs:// path to JSONL"
+    )
+
     # GCP Infrastructure args
-    parser.add_argument("--image-uri", default=os.environ.get("KMIDI_NLM_VERTEX_IMAGE_URI", ""), help="Artifact Registry image URI for training container")
-    parser.add_argument("--project", default=os.environ.get("GCP_PROJECT_ID", ""), help="Google Cloud Project ID")
+    parser.add_argument(
+        "--image-uri",
+        default=os.environ.get("KMIDI_NLM_VERTEX_IMAGE_URI", ""),
+        help="Artifact Registry image URI for training container",
+    )
+    parser.add_argument(
+        "--project", default=os.environ.get("GCP_PROJECT_ID", ""), help="Google Cloud Project ID"
+    )
     parser.add_argument("--location", default="us-central1", help="Vertex AI location")
-    parser.add_argument("--staging-bucket", default=os.environ.get("GCP_STAGING_BUCKET", ""), help="GCS bucket for staging artifacts (must start with gs://)")
-    parser.add_argument("--run-id", default=f"finetune-{int(time.time())}", help="Unique run identifier")
-    
+    parser.add_argument(
+        "--staging-bucket",
+        default=os.environ.get("GCP_STAGING_BUCKET", ""),
+        help="GCS bucket for staging artifacts (must start with gs://)",
+    )
+    parser.add_argument(
+        "--run-id", default=f"finetune-{int(time.time())}", help="Unique run identifier"
+    )
+
     # Hardware args
-    parser.add_argument("--machine-type", default="g2-standard-4", help="GCP Machine type (default: g2-standard-4 for L4)")
-    parser.add_argument("--accelerator-type", default="NVIDIA_L4", help="GCP Accelerator type (default: NVIDIA_L4)")
+    parser.add_argument(
+        "--machine-type",
+        default="g2-standard-4",
+        help="GCP Machine type (default: g2-standard-4 for L4)",
+    )
+    parser.add_argument(
+        "--accelerator-type", default="NVIDIA_L4", help="GCP Accelerator type (default: NVIDIA_L4)"
+    )
     parser.add_argument("--accelerator-count", type=int, default=1, help="Number of GPUs")
-    
+
     # Training hyperparams
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=4)
@@ -105,12 +133,16 @@ def main():
     parser.add_argument("--lora-rank", type=int, default=16)
     parser.add_argument("--lora-alpha", type=float, default=32.0)
     parser.add_argument("--max-seq-length", type=int, default=2048)
-    
+
     # Credentials
-    parser.add_argument("--hf-token", default=os.environ.get("HF_TOKEN", ""), help="Hugging Face Token")
-    
+    parser.add_argument(
+        "--hf-token", default=os.environ.get("HF_TOKEN", ""), help="Hugging Face Token"
+    )
+
     parser.add_argument("--dry-run", action="store_true", help="Print config without launching")
-    parser.add_argument("--sync", action="store_true", help="Wait for job to finish before exiting script")
+    parser.add_argument(
+        "--sync", action="store_true", help="Wait for job to finish before exiting script"
+    )
 
     args = parser.parse_args()
 

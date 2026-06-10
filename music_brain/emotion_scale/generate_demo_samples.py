@@ -12,6 +12,7 @@ import numpy as np
 
 try:
     import soundfile as sf
+
     HAS_SF = True
 except ImportError:
     HAS_SF = False

@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import sys
 from pathlib import Path
@@ -33,7 +32,10 @@ EXTERNAL_PATTERNS = [
     (r"KELLY_AUDIO_DATA_ROOT\s*[=:]\s*[^\s\n]+", "env_kelly_audio"),
     (r"AUDIO_DATA_ROOT\s*[=:]\s*[^\s\n]+", "env_audio_data"),
     (r"RECOVERY_OPS|/Users/seanburdges/RECOVERY_OPS", "recovery_ops"),
-    (r"AUDIO_MIDI_DATA|CANONICAL_REBUILD|FINAL_KMIDI|kelly-project|/KmiDi[^-]|sbdrive", "sibling_or_drive"),
+    (
+        r"AUDIO_MIDI_DATA|CANONICAL_REBUILD|FINAL_KMIDI|kelly-project|/KmiDi[^-]|sbdrive",
+        "sibling_or_drive",
+    ),
 ]
 
 
@@ -53,7 +55,9 @@ def scan_file(path: Path) -> List[Tuple[str, int, str, str]]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Check for external path dependencies")
-    ap.add_argument("--fix-env", action="store_true", help="Print suggested env vars for .env.example")
+    ap.add_argument(
+        "--fix-env", action="store_true", help="Print suggested env vars for .env.example"
+    )
     ap.add_argument("--json", action="store_true", help="Emit JSON report")
     args = ap.parse_args()
 
@@ -66,7 +70,15 @@ def main() -> int:
         for path in kept_root.rglob(f"*.{ext}"):
             if any(
                 p in path.parts
-                for p in (".git", "node_modules", "__pycache__", "build", ".venv", "venv", "external")
+                for p in (
+                    ".git",
+                    "node_modules",
+                    "__pycache__",
+                    "build",
+                    ".venv",
+                    "venv",
+                    "external",
+                )
             ):
                 continue
             for kind, line, snippet, rel in scan_file(path):

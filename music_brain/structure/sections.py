@@ -15,6 +15,7 @@ from enum import Enum
 
 try:
     import mido
+
     MIDO_AVAILABLE = True
 except ImportError:
     MIDO_AVAILABLE = False
@@ -37,6 +38,7 @@ class SectionType(Enum):
 @dataclass
 class Section:
     """Represents a detected song section."""
+
     name: str
     section_type: SectionType
     start_bar: int
@@ -62,6 +64,7 @@ class Section:
 @dataclass
 class SectionAnalysis:
     """Complete section analysis for a track."""
+
     sections: List[Section]
     total_bars: int
     ppq: int
@@ -114,7 +117,7 @@ def calculate_energy(
     velocity_factor = avg_velocity / 127.0
     range_factor = (pitch_range[1] - pitch_range[0]) / 48.0  # Normalize to 4 octaves
 
-    energy = (density_factor * 0.4 + velocity_factor * 0.4 + range_factor * 0.2)
+    energy = density_factor * 0.4 + velocity_factor * 0.4 + range_factor * 0.2
 
     return {
         "energy": min(energy, 1.0),
@@ -139,7 +142,7 @@ def detect_section_boundaries(
     boundaries = [0]
 
     for i in range(1, len(energy_curve)):
-        diff = abs(energy_curve[i] - energy_curve[i-1])
+        diff = abs(energy_curve[i] - energy_curve[i - 1])
         if diff > threshold:
             boundaries.append(i)
 
@@ -214,9 +217,9 @@ def detect_sections(
     time_sig = (4, 4)
     for track in mid.tracks:
         for msg in track:
-            if msg.type == 'set_tempo':
+            if msg.type == "set_tempo":
                 _tempo_bpm = mido.tempo2bpm(msg.tempo)  # noqa: F841
-            elif msg.type == 'time_signature':
+            elif msg.type == "time_signature":
                 time_sig = (msg.numerator, msg.denominator)
 
     ticks_per_bar = ppq * time_sig[0]
@@ -227,7 +230,7 @@ def detect_sections(
         current_tick = 0
         for msg in track:
             current_tick += msg.time
-            if msg.type == 'note_on' and msg.velocity > 0:
+            if msg.type == "note_on" and msg.velocity > 0:
                 all_notes.append((current_tick, msg.note, msg.velocity))
 
     if not all_notes:

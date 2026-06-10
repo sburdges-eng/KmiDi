@@ -58,13 +58,10 @@ def download_pack_by_tags(queries, output_dir, limit=10):
 
 if __name__ == "__main__":
     import sys
+
     if len(sys.argv) >= 2:
         query = sys.argv[1]
     else:
         query = "glitch industrial"
 
-    download_pack_by_tags(
-        [query],
-        "./audio_vault/raw/Downloaded_Samples",
-        limit=8
-    )
+    download_pack_by_tags([query], "./audio_vault/raw/Downloaded_Samples", limit=8)

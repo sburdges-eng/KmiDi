@@ -39,6 +39,7 @@ class TokenizerFingerprint:
             even when the other fields look identical, useful for
             "we patched something subtle, force a re-check" cases.
     """
+
     name: str
     vocab_size: int
     vocab_hash: str
@@ -100,6 +101,7 @@ def hash_merges(merges: list[tuple[str, str]]) -> str:
 @dataclass(frozen=True)
 class ConsistencyReport:
     """Outcome of comparing two fingerprints."""
+
     consistent: bool
     mismatches: tuple[str, ...]
 
@@ -107,8 +109,7 @@ class ConsistencyReport:
         return self.consistent
 
 
-def compare(expected: TokenizerFingerprint,
-            actual: TokenizerFingerprint) -> ConsistencyReport:
+def compare(expected: TokenizerFingerprint, actual: TokenizerFingerprint) -> ConsistencyReport:
     """Diff two fingerprints field-by-field. Returns a ConsistencyReport."""
     diffs: list[str] = []
     if expected.name != actual.name:

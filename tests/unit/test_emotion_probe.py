@@ -4,7 +4,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from music_brain.jepa.emotion_probe import EmotionProbe
+from music_brain.jepa.emotion_probe import EmotionProbe  # noqa: E402
 
 
 class TestEmotionProbe:

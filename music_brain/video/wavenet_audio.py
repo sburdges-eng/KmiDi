@@ -17,9 +17,10 @@ import numpy as np
 
 class WaveNetMode(Enum):
     """WaveNet generation modes."""
-    MUSIC = "music"          # Music generation from MIDI conditioning
-    EMOTION = "emotion"      # Direct emotion conditioning
-    HYBRID = "hybrid"        # Combine MIDI + emotion
+
+    MUSIC = "music"  # Music generation from MIDI conditioning
+    EMOTION = "emotion"  # Direct emotion conditioning
+    HYBRID = "hybrid"  # Combine MIDI + emotion
 
 
 @dataclass
@@ -27,12 +28,12 @@ class WaveNetConfig:
     """Configuration for WaveNet audio generation."""
 
     # Model architecture
-    num_layers: int = 30          # Number of dilated convolution layers
-    num_stages: int = 10          # Number of dilation stages
-    filter_width: int = 2         # Convolution filter width
+    num_layers: int = 30  # Number of dilated convolution layers
+    num_stages: int = 10  # Number of dilation stages
+    filter_width: int = 2  # Convolution filter width
     residual_channels: int = 512  # Residual block channels
     dilation_channels: int = 512  # Dilation convolution channels
-    skip_channels: int = 256      # Skip connection channels
+    skip_channels: int = 256  # Skip connection channels
     quantization_channels: int = 256  # Audio quantization levels
 
     # Local conditioning
@@ -55,7 +56,7 @@ class WaveNetConfig:
 
     # Generation
     generate_samples: int = 16000  # 1 second at 16kHz
-    temperature: float = 1.0       # Sampling temperature
+    temperature: float = 1.0  # Sampling temperature
 
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -108,7 +109,7 @@ class WaveNetGenerator:
     def __init__(
         self,
         wavenet_config: Optional[WaveNetConfig] = None,
-        audio_config: Optional[AudioGenerationConfig] = None
+        audio_config: Optional[AudioGenerationConfig] = None,
     ):
         """
         Initialize WaveNet generator.
@@ -148,7 +149,7 @@ class WaveNetGenerator:
         emotion: str,
         intensity: float = 0.5,
         duration: float = 5.0,
-        emotion_embedding: Optional[np.ndarray] = None
+        emotion_embedding: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """
         Generate audio from emotion.
@@ -185,9 +186,7 @@ class WaveNetGenerator:
         return np.zeros(num_samples, dtype=np.float32)
 
     def generate_from_midi(
-        self,
-        midi_path: Path,
-        emotion_embedding: Optional[np.ndarray] = None
+        self, midi_path: Path, emotion_embedding: Optional[np.ndarray] = None
     ) -> np.ndarray:
         """
         Generate audio from MIDI file with emotion conditioning.
@@ -213,9 +212,7 @@ class WaveNetGenerator:
         return np.zeros(16000, dtype=np.float32)
 
     def generate_with_trajectory(
-        self,
-        emotion_trajectory: List[Tuple[str, float, float]],
-        duration: float = 10.0
+        self, emotion_trajectory: List[Tuple[str, float, float]], duration: float = 10.0
     ) -> np.ndarray:
         """
         Generate audio with time-varying emotions.
@@ -238,11 +235,7 @@ class WaveNetGenerator:
         num_samples = int(duration * self.wavenet_config.sample_rate)
         return np.zeros(num_samples, dtype=np.float32)
 
-    def export_to_onnx(
-        self,
-        output_path: Path,
-        optimize: bool = True
-    ) -> bool:
+    def export_to_onnx(self, output_path: Path, optimize: bool = True) -> bool:
         """
         Export WaveNet model to ONNX format.
 
@@ -264,10 +257,7 @@ class WaveNetGenerator:
         print(f"WaveNet ONNX export to {output_path} - stub implementation")
         return False
 
-    def load_pretrained(
-        self,
-        checkpoint_path: Path
-    ) -> bool:
+    def load_pretrained(self, checkpoint_path: Path) -> bool:
         """
         Load pre-trained WaveNet weights.
 
@@ -285,10 +275,7 @@ class WaveNetGenerator:
         print(f"Loading pre-trained model from {checkpoint_path} - stub")
         return False
 
-    def save_checkpoint(
-        self,
-        checkpoint_path: Path
-    ) -> bool:
+    def save_checkpoint(self, checkpoint_path: Path) -> bool:
         """
         Save WaveNet checkpoint.
 
@@ -327,11 +314,7 @@ class EmotionWaveNetBridge:
         self._emotion_mapper = None
 
     def generate_synchronized(
-        self,
-        emotion: str,
-        intensity: float = 0.5,
-        duration: float = 10.0,
-        video_fps: int = 30
+        self, emotion: str, intensity: float = 0.5, duration: float = 10.0, video_fps: int = 30
     ) -> Tuple[np.ndarray, List[Dict[str, Any]]]:
         """
         Generate synchronized audio and video parameters.
@@ -350,9 +333,7 @@ class EmotionWaveNetBridge:
         """
         # Generate audio
         audio = self.wavenet.generate_from_emotion(
-            emotion=emotion,
-            intensity=intensity,
-            duration=duration
+            emotion=emotion, intensity=intensity, duration=duration
         )
 
         # Generate video parameters for each frame
@@ -367,19 +348,18 @@ class EmotionWaveNetBridge:
             # - Map to lighting intensity
             # - Map to camera movement
 
-            video_params.append({
-                "timestamp": timestamp,
-                "emotion": emotion,
-                "intensity": intensity,
-                # Visual parameters would go here
-            })
+            video_params.append(
+                {
+                    "timestamp": timestamp,
+                    "emotion": emotion,
+                    "intensity": intensity,
+                    # Visual parameters would go here
+                }
+            )
 
         return audio, video_params
 
-    def extract_musical_features(
-        self,
-        audio: np.ndarray
-    ) -> Dict[str, Any]:
+    def extract_musical_features(self, audio: np.ndarray) -> Dict[str, Any]:
         """
         Extract musical features from generated audio.
 
@@ -406,8 +386,7 @@ class EmotionWaveNetBridge:
 
 
 def create_emotion_conditioned_wavenet(
-    emotion_embedding_dim: int = 128,
-    sample_rate: int = 16000
+    emotion_embedding_dim: int = 128, sample_rate: int = 16000
 ) -> WaveNetGenerator:
     """
     Create a WaveNet generator configured for emotion conditioning.

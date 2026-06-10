@@ -5,7 +5,7 @@ Provides functions to process intents using Python intent_processor and convert
 between Python CompleteSongIntent and C++ IntentResult formats.
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 import json
 
 from music_brain.session.intent_processor import process_intent as process_intent_canonical
@@ -113,10 +113,12 @@ def convert_to_python_intent(cpp_intent_json: str) -> str:
         return json.dumps(python_intent)
 
     except Exception:  # noqa: F841
-        return json.dumps({
-            "phase_1": {"mood_primary": "neutral"},
-            "phase_2": {"technical_key": "C", "technical_mode": "major"},
-        })
+        return json.dumps(
+            {
+                "phase_1": {"mood_primary": "neutral"},
+                "phase_2": {"technical_key": "C", "technical_mode": "major"},
+            }
+        )
 
 
 def validate_result(result_json: str) -> bool:
@@ -182,14 +184,14 @@ def get_suggested_rule_breaks(emotion: str) -> str:
     for rule_break in rule_breaks:
         if rule_break in RULE_BREAKING_EFFECTS:
             suggested_breaks.append(rule_break)
-            justifications[rule_break] = RULE_BREAKING_EFFECTS[rule_break].get(
-                "justification", ""
-            )
+            justifications[rule_break] = RULE_BREAKING_EFFECTS[rule_break].get("justification", "")
 
-    return json.dumps({
-        "rule_breaks": suggested_breaks,
-        "justifications": justifications,
-    })
+    return json.dumps(
+        {
+            "rule_breaks": suggested_breaks,
+            "justifications": justifications,
+        }
+    )
 
 
 def _convert_to_cpp_format(result: Dict[str, Any]) -> Dict[str, Any]:

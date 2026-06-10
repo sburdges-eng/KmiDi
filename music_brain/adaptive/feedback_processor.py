@@ -20,23 +20,18 @@ class FeedbackProcessor:
         self.generator = adaptive_generator
 
     def process_explicit_feedback(
-        self,
-        parameters: Dict[str, float],
-        emotion: Optional[str],
-        thumbs_up: bool
+        self, parameters: Dict[str, float], emotion: Optional[str], thumbs_up: bool
     ):
         """Process explicit thumbs up/down feedback."""
         self.generator.record_generation_feedback(
-            parameters=parameters,
-            emotion=emotion,
-            accepted=thumbs_up
+            parameters=parameters, emotion=emotion, accepted=thumbs_up
         )
 
     def process_implicit_feedback(
         self,
         original_parameters: Dict[str, float],
         modified_parameters: Dict[str, float],
-        emotion: Optional[str] = None
+        emotion: Optional[str] = None,
     ):
         """Process implicit feedback (parameter adjustments after generation)."""
         # Calculate changes
@@ -54,12 +49,11 @@ class FeedbackProcessor:
                 parameters=modified_parameters,
                 emotion=emotion,
                 accepted=True,
-                modifications=changes
+                modifications=changes,
             )
 
     def detect_pattern_based_feedback(
-        self,
-        generation_history: Optional[List[GenerationAttempt]] = None
+        self, generation_history: Optional[List[GenerationAttempt]] = None
     ) -> Dict[str, Any]:
         """
         Detect patterns in feedback to infer preferences.
@@ -103,8 +97,7 @@ class FeedbackProcessor:
         for attempt in generation_history:
             # Create combination key from parameter values (rounded)
             param_key = tuple(
-                (name, round(value, 1))
-                for name, value in sorted(attempt.parameters.items())
+                (name, round(value, 1)) for name, value in sorted(attempt.parameters.items())
             )
 
             if attempt.accepted:
@@ -129,15 +122,13 @@ def main():
 
     # Process some feedback
     processor.process_explicit_feedback(
-        parameters={"valence": 0.5, "arousal": 0.6},
-        emotion="grief",
-        thumbs_up=True
+        parameters={"valence": 0.5, "arousal": 0.6}, emotion="grief", thumbs_up=True
     )
 
     processor.process_implicit_feedback(
         original_parameters={"valence": 0.5, "arousal": 0.6},
         modified_parameters={"valence": 0.7, "arousal": 0.6},
-        emotion="grief"
+        emotion="grief",
     )
 
     # Detect patterns

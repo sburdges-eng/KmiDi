@@ -218,7 +218,7 @@ class AsyncUnifiedHub:
 
         # Initialize voice (needs MIDI bridge for formant control)
         midi_bridge = None
-        if self._bridge and hasattr(self._bridge, 'midi'):
+        if self._bridge and hasattr(self._bridge, "midi"):
             midi_bridge = self._bridge.midi
         self._voice = LocalVoiceSynth(midi_bridge)
 
@@ -254,7 +254,7 @@ class AsyncUnifiedHub:
         # Determine DAW type
         if self._daw_type:
             daw_type = self._daw_type
-        elif hasattr(self.config, 'daw_type') and self.config.daw_type:
+        elif hasattr(self.config, "daw_type") and self.config.daw_type:
             # Map string to DAWType enum
             daw_type_map = {
                 "ableton": DAWType.ABLETON,
@@ -286,6 +286,7 @@ class AsyncUnifiedHub:
             # For Ableton, also keep legacy bridge reference for voice synth
             if self._daw.daw_type == DAWType.ABLETON:
                 from .daw_bridges import AbletonDAWBridge
+
                 if isinstance(self._daw, AbletonDAWBridge):
                     self._bridge = self._daw._osc_bridge  # type: ignore
 
@@ -384,7 +385,7 @@ class AsyncUnifiedHub:
             daw.connect,
         )
 
-        daw_name = daw.daw_type.value if hasattr(daw, 'daw_type') else "ableton"
+        daw_name = daw.daw_type.value if hasattr(daw, "daw_type") else "ableton"
         self._daw_state.update(connected=success)
         await self.events.emit("daw.connected", {"success": success, "daw": daw_name})
         return success

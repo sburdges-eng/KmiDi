@@ -22,6 +22,7 @@ TEMP_SUBDIR_PREFIX = "kmidi_video_gen_"
 
 class VideoFormat(Enum):
     """Supported video output formats."""
+
     MP4 = "mp4"
     MOV = "mov"
     AVI = "avi"
@@ -30,10 +31,11 @@ class VideoFormat(Enum):
 
 class VideoQuality(Enum):
     """Video quality presets."""
-    LOW = "low"           # 720p, lower bitrate
-    MEDIUM = "medium"     # 1080p, standard bitrate
-    HIGH = "high"         # 1080p, high bitrate
-    ULTRA = "ultra"       # 4K, very high bitrate
+
+    LOW = "low"  # 720p, lower bitrate
+    MEDIUM = "medium"  # 1080p, standard bitrate
+    HIGH = "high"  # 1080p, high bitrate
+    ULTRA = "ultra"  # 4K, very high bitrate
 
 
 @dataclass
@@ -141,7 +143,7 @@ class VideoGenerator:
         emotion: str,
         music_path: Optional[Path] = None,
         intensity: float = 0.5,
-        config: Optional[VideoConfig] = None
+        config: Optional[VideoConfig] = None,
     ) -> VideoGenerationResult:
         """
         Generate a music video from an emotion and optional music file.
@@ -175,15 +177,14 @@ class VideoGenerator:
         # 6. Export final video
 
         return VideoGenerationResult(
-            success=False,
-            error_message="Video generation not yet implemented - this is a stub"
+            success=False, error_message="Video generation not yet implemented - this is a stub"
         )
 
     def generate_from_intent(
         self,
         intent: Dict[str, Any],
         music_path: Optional[Path] = None,
-        config: Optional[VideoConfig] = None
+        config: Optional[VideoConfig] = None,
     ) -> VideoGenerationResult:
         """
         Generate a music video from a complete song intent.
@@ -210,14 +211,11 @@ class VideoGenerator:
 
         return VideoGenerationResult(
             success=False,
-            error_message="Intent-based video generation not yet implemented - this is a stub"
+            error_message="Intent-based video generation not yet implemented - this is a stub",
         )
 
     def preview_scene(
-        self,
-        emotion: str,
-        timestamp: float = 0.0,
-        intensity: float = 0.5
+        self, emotion: str, timestamp: float = 0.0, intensity: float = 0.5
     ) -> Optional[bytes]:
         """
         Generate a single preview frame for a given emotion and time.
@@ -314,8 +312,6 @@ class VideoGenerator:
                         exc_info=True,
                     )
             elif path.exists():
-                logger.debug(
-                    "Skipped deletion of temp dir (safety check failed): %s", path
-                )
+                logger.debug("Skipped deletion of temp dir (safety check failed): %s", path)
 
         self._initialized = False

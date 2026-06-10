@@ -53,6 +53,7 @@ class AudioMelDataset(Dataset):
     def _load_mel(self, path: str) -> torch.Tensor:
         try:
             import librosa
+
             y, _ = librosa.load(path, sr=self.sr, mono=True)
             mel = librosa.feature.melspectrogram(
                 y=y,
@@ -62,19 +63,15 @@ class AudioMelDataset(Dataset):
             )
             mel_db = librosa.power_to_db(mel, ref=np.max)
         except Exception:
-            mel_db = np.random.randn(self.n_mels, self.max_frames).astype(
-                np.float32
-            )
+            mel_db = np.random.randn(self.n_mels, self.max_frames).astype(np.float32)
 
         mel_db = mel_db.astype(np.float32)
         t = mel_db.shape[1]
         if t >= self.max_frames:
             start = np.random.randint(0, t - self.max_frames + 1)
-            mel_db = mel_db[:, start: start + self.max_frames]
+            mel_db = mel_db[:, start : start + self.max_frames]
         else:
-            pad = np.zeros(
-                (self.n_mels, self.max_frames - t), dtype=np.float32
-            )
+            pad = np.zeros((self.n_mels, self.max_frames - t), dtype=np.float32)
             mel_db = np.concatenate([mel_db, pad], axis=1)
 
         return torch.from_numpy(mel_db)
@@ -114,14 +111,10 @@ class ChordSequenceDataset(Dataset):
         self.num_chords = num_chords
 
         if files and any(f is not None for f in files):
-            self._sequences = self._parse_files(
-                [f for f in files if f is not None]
-            )
+            self._sequences = self._parse_files([f for f in files if f is not None])
         else:
             self._sequences = [
-                np.random.randint(0, num_chords, size=seq_len).astype(
-                    np.int64
-                )
+                np.random.randint(0, num_chords, size=seq_len).astype(np.int64)
                 for _ in range(num_samples)
             ]
 
@@ -140,15 +133,13 @@ class ChordSequenceDataset(Dataset):
                 sequences.append(seq)
             except Exception:
                 sequences.append(
-                    np.random.randint(
-                        0, self.num_chords, size=self.seq_len
-                    ).astype(np.int64)
+                    np.random.randint(0, self.num_chords, size=self.seq_len).astype(np.int64)
                 )
-        return sequences if sequences else [
-            np.random.randint(
-                0, self.num_chords, size=self.seq_len
-            ).astype(np.int64)
-        ]
+        return (
+            sequences
+            if sequences
+            else [np.random.randint(0, self.num_chords, size=self.seq_len).astype(np.int64)]
+        )
 
     def _midi_to_chords(self, path: str) -> np.ndarray:
         """
@@ -158,11 +149,10 @@ class ChordSequenceDataset(Dataset):
         """
         try:
             import mido
+
             mid = mido.MidiFile(path)
         except Exception:
-            return np.random.randint(
-                0, self.num_chords, size=self.seq_len
-            ).astype(np.int64)
+            return np.random.randint(0, self.num_chords, size=self.seq_len).astype(np.int64)
 
         notes = []
         tick = 0
@@ -172,9 +162,7 @@ class ChordSequenceDataset(Dataset):
                 notes.append((tick, msg.note % 12))
 
         if not notes:
-            return np.random.randint(
-                0, self.num_chords, size=self.seq_len
-            ).astype(np.int64)
+            return np.random.randint(0, self.num_chords, size=self.seq_len).astype(np.int64)
 
         total_time = max(t for t, _ in notes) + 1e-6
         bin_size = total_time / self.seq_len

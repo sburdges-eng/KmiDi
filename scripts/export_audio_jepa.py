@@ -22,24 +22,24 @@ _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
 if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
-import argparse
-import logging
-import platform
-import time
-from dataclasses import dataclass
-from typing import Optional
+import argparse  # noqa: E402
+import logging  # noqa: E402
+import platform  # noqa: E402
+import time  # noqa: E402
+from dataclasses import dataclass  # noqa: E402
+from typing import Optional  # noqa: E402
 
-import numpy as np
-import torch
+import numpy as np  # noqa: E402
+import torch  # noqa: E402
 
-from music_brain.jepa.audio_jepa import AudioJEPAEncoder
-from music_brain.jepa.config import AudioJEPAConfig
+from music_brain.jepa.audio_jepa import AudioJEPAEncoder  # noqa: E402
+from music_brain.jepa.config import AudioJEPAConfig  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
 # Fixed input/output shapes for the medium-tier encoder
 INPUT_SHAPE = (1, 1, 128, 512)  # (batch, channels, n_mels, max_frames)
-OUTPUT_SHAPE = (1, 512, 256)    # (batch, time, latent_dim)
+OUTPUT_SHAPE = (1, 512, 256)  # (batch, time, latent_dim)
 
 
 @dataclass
@@ -59,7 +59,10 @@ def load_encoder(checkpoint_path: str) -> AudioJEPAEncoder:
     encoder.eval()
     logger.info(
         "Loaded encoder: tier=%s, latent_dim=%d, epoch=%d, loss=%.6f",
-        config.tier, config.latent_dim, ckpt["epoch"], ckpt["loss"],
+        config.tier,
+        config.latent_dim,
+        ckpt["epoch"],
+        ckpt["loss"],
     )
     return encoder
 
@@ -117,10 +120,10 @@ class _CoreMLEncoderWrapper(torch.nn.Module):
         self.layer_norm = encoder.layer_norm
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        h = self.conv(x)                      # (B, C, F, T)
-        h = h.permute(0, 3, 1, 2)             # (B, T, C, F)
-        h = h.flatten(2)                       # (B, T, C*F)
-        h = self.proj(h)                       # (B, T, latent_dim)
+        h = self.conv(x)  # (B, C, F, T)
+        h = h.permute(0, 3, 1, 2)  # (B, T, C, F)
+        h = h.flatten(2)  # (B, T, C*F)
+        h = self.proj(h)  # (B, T, latent_dim)
         return self.layer_norm(h)
 
 
@@ -153,8 +156,6 @@ def export_coreml(encoder: AudioJEPAEncoder, output_path: Path) -> Optional[Path
     mlmodel.save(str(output_path))
     logger.info("Core ML exported: %s", output_path)
     return output_path
-
-
 
 
 def verify_coreml(encoder: AudioJEPAEncoder, coreml_path: Path) -> bool:
@@ -267,7 +268,8 @@ def write_latency_report(
         "| Format | Path | Verified |",
         "|--------|------|----------|",
         f"| ONNX | `{result.onnx_path}` | {'PASS' if result.onnx_verified else 'FAIL'} |",
-        f"| Core ML | `{result.coreml_path or 'N/A'}` | {'PASS' if result.coreml_verified else 'N/A'} |",
+        f"| Core ML | `{result.coreml_path or 'N/A'}` | "
+        f"{'PASS' if result.coreml_verified else 'N/A'} |",
         "",
         "## Latency (warm-started, batch=1)",
         "",
@@ -288,8 +290,10 @@ def write_latency_report(
     lines.append("")
     lines.append("## Notes")
     lines.append("")
-    lines.append(f"- Exported with coremltools, Python {platform.python_version()}, "
-                 f"compute_units=ALL (ANE-preferred)")
+    lines.append(
+        f"- Exported with coremltools, Python {platform.python_version()}, "
+        f"compute_units=ALL (ANE-preferred)"
+    )
     lines.append("- mlProgram format uses fp16 weights by default (macOS13+ deployment target)")
     lines.append("")
 
@@ -304,6 +308,7 @@ def _coreml_available() -> bool:
         return False
     try:
         import coremltools  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -312,7 +317,8 @@ def _coreml_available() -> bool:
 def main():
     parser = argparse.ArgumentParser(description="Export Audio JEPA to ONNX + Core ML")
     parser.add_argument(
-        "--checkpoint", default="checkpoints/audio_jepa/best_model.pt",
+        "--checkpoint",
+        default="checkpoints/audio_jepa/best_model.pt",
         help="Path to .pt checkpoint",
     )
     parser.add_argument("--output-dir", default="models", help="Output directory for artifacts")
@@ -320,7 +326,8 @@ def main():
     parser.add_argument("--warmup", type=int, default=50, help="Benchmark warmup iterations")
     parser.add_argument("--iterations", type=int, default=200, help="Benchmark timed iterations")
     parser.add_argument(
-        "--skip-coreml", action="store_true",
+        "--skip-coreml",
+        action="store_true",
         help="Skip Core ML export (default: export when coremltools is available)",
     )
     args = parser.parse_args()
@@ -357,18 +364,27 @@ def main():
         logger.info("Benchmarking (%d warmup, %d iterations)...", args.warmup, args.iterations)
         onnx_bench = benchmark_onnx(onnx_path, args.warmup, args.iterations)
         benchmarks.append(onnx_bench)
-        logger.info("ONNX: p50=%.1fms p95=%.1fms p99=%.1fms",
-                     onnx_bench["p50_ms"], onnx_bench["p95_ms"], onnx_bench["p99_ms"])
+        logger.info(
+            "ONNX: p50=%.1fms p95=%.1fms p99=%.1fms",
+            onnx_bench["p50_ms"],
+            onnx_bench["p95_ms"],
+            onnx_bench["p99_ms"],
+        )
 
         if result.coreml_path:
             coreml_bench = benchmark_coreml(
-                result.coreml_path, args.warmup, args.iterations,
+                result.coreml_path,
+                args.warmup,
+                args.iterations,
             )
             if coreml_bench:
                 benchmarks.append(coreml_bench)
-                logger.info("Core ML f32: p50=%.1fms p95=%.1fms p99=%.1fms",
-                             coreml_bench["p50_ms"], coreml_bench["p95_ms"],
-                             coreml_bench["p99_ms"])
+                logger.info(
+                    "Core ML f32: p50=%.1fms p95=%.1fms p99=%.1fms",
+                    coreml_bench["p50_ms"],
+                    coreml_bench["p95_ms"],
+                    coreml_bench["p99_ms"],
+                )
 
     # Report
     if args.benchmark:

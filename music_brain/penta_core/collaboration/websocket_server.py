@@ -17,6 +17,7 @@ from typing import Any, Callable, Optional
 try:
     import websockets
     from websockets.server import WebSocketServerProtocol
+
     HAS_WEBSOCKETS = True
 except ImportError:
     HAS_WEBSOCKETS = False
@@ -27,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 class MessageType(str, Enum):
     """Protocol message types."""
+
     SESSION_JOIN = "session.join"
     SESSION_LEAVE = "session.leave"
     SESSION_SYNC = "session.sync"
@@ -50,6 +52,7 @@ class MessageType(str, Enum):
 @dataclass
 class Participant:
     """A participant in a collaboration session."""
+
     client_id: str
     name: str
     color: str
@@ -58,19 +61,22 @@ class Participant:
     last_heartbeat: datetime = field(default_factory=datetime.utcnow)
     cursor: Optional[dict] = None
     active_locks: list = field(default_factory=list)
-    permissions: dict = field(default_factory=lambda: {
-        "can_edit_intent": True,
-        "can_edit_arrangement": True,
-        "can_record_midi": True,
-        "can_invite": False,
-        "can_kick": False,
-        "is_owner": False,
-    })
+    permissions: dict = field(
+        default_factory=lambda: {
+            "can_edit_intent": True,
+            "can_edit_arrangement": True,
+            "can_record_midi": True,
+            "can_invite": False,
+            "can_kick": False,
+            "is_owner": False,
+        }
+    )
 
 
 @dataclass
 class Lock:
     """A lock on an intent field."""
+
     path: str
     holder: str
     expires_at: datetime
@@ -79,38 +85,41 @@ class Lock:
 @dataclass
 class Session:
     """A collaboration session."""
+
     session_id: str
     created_at: datetime = field(default_factory=datetime.utcnow)
     participants: dict = field(default_factory=dict)  # client_id -> Participant
-    state: dict = field(default_factory=lambda: {
-        "intent": {
-            "core": {"event": "", "resistance": "", "longing": ""},
-            "emotional": {
-                "moodPrimary": "",
-                "moodSecondary": [],
-                "vulnerabilityScale": 5,
-                "narrativeArc": "standard",
+    state: dict = field(
+        default_factory=lambda: {
+            "intent": {
+                "core": {"event": "", "resistance": "", "longing": ""},
+                "emotional": {
+                    "moodPrimary": "",
+                    "moodSecondary": [],
+                    "vulnerabilityScale": 5,
+                    "narrativeArc": "standard",
+                },
+                "technical": {
+                    "genre": "",
+                    "key": "C",
+                    "tempo": 120,
+                    "timeSignature": "4/4",
+                    "rulesToBreak": [],
+                },
+                "_meta": {
+                    "lastModified": 0,
+                    "modifiedBy": "",
+                    "version": 1,
+                },
             },
-            "technical": {
-                "genre": "",
-                "key": "C",
-                "tempo": 120,
-                "timeSignature": "4/4",
-                "rulesToBreak": [],
+            "arrangement": {
+                "tracks": [],
+                "sections": [],
+                "markers": [],
             },
-            "_meta": {
-                "lastModified": 0,
-                "modifiedBy": "",
-                "version": 1,
-            },
-        },
-        "arrangement": {
-            "tracks": [],
-            "sections": [],
-            "markers": [],
-        },
-        "chat": [],
-    })
+            "chat": [],
+        }
+    )
     locks: dict = field(default_factory=dict)  # path -> Lock
     vector_clock: dict = field(default_factory=dict)  # client_id -> logical time
     message_history: list = field(default_factory=list)
@@ -223,10 +232,7 @@ class CollaborationServer:
             await self._handle_disconnect(client_id)
 
     async def _process_message(
-        self,
-        websocket: WebSocketServerProtocol,
-        client_id: str,
-        raw_message: str
+        self, websocket: WebSocketServerProtocol, client_id: str, raw_message: str
     ):
         """Process an incoming message."""
         try:
@@ -235,9 +241,7 @@ class CollaborationServer:
 
             if msg_type not in self._handlers:
                 await self._send_error(
-                    websocket,
-                    "INVALID_OPERATION",
-                    f"Unknown message type: {msg_type}"
+                    websocket, "INVALID_OPERATION", f"Unknown message type: {msg_type}"
                 )
                 return
 
@@ -250,12 +254,7 @@ class CollaborationServer:
             logger.exception(f"Error processing message: {e}")
             await self._send_error(websocket, "SERVER_ERROR", str(e))
 
-    async def _handle_join(
-        self,
-        websocket: WebSocketServerProtocol,
-        client_id: str,
-        message: dict
-    ):
+    async def _handle_join(self, websocket: WebSocketServerProtocol, client_id: str, message: dict):
         """Handle session join request."""
         payload = message.get("payload", {})
         session_id = payload.get("sessionId")
@@ -292,53 +291,57 @@ class CollaborationServer:
         logger.info(f"Client {client_id} ({client_name}) joined session {session_id}")
 
         # Send sync to joining client
-        await self._send(websocket, {
-            "v": self.PROTOCOL_VERSION,
-            "type": MessageType.SESSION_SYNC,
-            "id": str(uuid.uuid4()),
-            "session": session_id,
-            "sender": "server",
-            "ts": self._get_timestamp(),
-            "payload": {
-                "sessionId": session_id,
-                "clientId": client_id,
-                "participants": [
-                    {
-                        "clientId": p.client_id,
-                        "name": p.name,
-                        "color": p.color,
-                        "joinedAt": p.joined_at.isoformat(),
-                        "cursor": p.cursor,
-                        "activeLocks": p.active_locks,
-                    }
-                    for p in session.participants.values()
-                ],
-                "state": session.state,
-                "version": session.version,
+        await self._send(
+            websocket,
+            {
+                "v": self.PROTOCOL_VERSION,
+                "type": MessageType.SESSION_SYNC,
+                "id": str(uuid.uuid4()),
+                "session": session_id,
+                "sender": "server",
+                "ts": self._get_timestamp(),
+                "payload": {
+                    "sessionId": session_id,
+                    "clientId": client_id,
+                    "participants": [
+                        {
+                            "clientId": p.client_id,
+                            "name": p.name,
+                            "color": p.color,
+                            "joinedAt": p.joined_at.isoformat(),
+                            "cursor": p.cursor,
+                            "activeLocks": p.active_locks,
+                        }
+                        for p in session.participants.values()
+                    ],
+                    "state": session.state,
+                    "version": session.version,
+                },
             },
-        })
+        )
 
         # Notify other participants
-        await self._broadcast(session, {
-            "v": self.PROTOCOL_VERSION,
-            "type": MessageType.PRESENCE_UPDATE,
-            "id": str(uuid.uuid4()),
-            "session": session_id,
-            "sender": "server",
-            "ts": self._get_timestamp(),
-            "payload": {
-                "event": "join",
-                "clientId": client_id,
-                "name": client_name,
-                "color": client_color,
+        await self._broadcast(
+            session,
+            {
+                "v": self.PROTOCOL_VERSION,
+                "type": MessageType.PRESENCE_UPDATE,
+                "id": str(uuid.uuid4()),
+                "session": session_id,
+                "sender": "server",
+                "ts": self._get_timestamp(),
+                "payload": {
+                    "event": "join",
+                    "clientId": client_id,
+                    "name": client_name,
+                    "color": client_color,
+                },
             },
-        }, exclude=client_id)
+            exclude=client_id,
+        )
 
     async def _handle_leave(
-        self,
-        websocket: WebSocketServerProtocol,
-        client_id: str,
-        message: dict
+        self, websocket: WebSocketServerProtocol, client_id: str, message: dict
     ):
         """Handle session leave request."""
         await self._handle_disconnect(client_id, reason="user")
@@ -354,8 +357,7 @@ class CollaborationServer:
         if client_id in session.participants:
             # Release all locks held by this client
             locks_to_remove = [
-                path for path, lock in session.locks.items()
-                if lock.holder == client_id
+                path for path, lock in session.locks.items() if lock.holder == client_id
             ]
             for path in locks_to_remove:
                 del session.locks[path]
@@ -367,19 +369,22 @@ class CollaborationServer:
             logger.info(f"Client {client_id} left session {session_id}")
 
             # Notify others
-            await self._broadcast(session, {
-                "v": self.PROTOCOL_VERSION,
-                "type": MessageType.PRESENCE_UPDATE,
-                "id": str(uuid.uuid4()),
-                "session": session_id,
-                "sender": "server",
-                "ts": self._get_timestamp(),
-                "payload": {
-                    "event": "leave",
-                    "clientId": client_id,
-                    "reason": reason,
+            await self._broadcast(
+                session,
+                {
+                    "v": self.PROTOCOL_VERSION,
+                    "type": MessageType.PRESENCE_UPDATE,
+                    "id": str(uuid.uuid4()),
+                    "session": session_id,
+                    "sender": "server",
+                    "ts": self._get_timestamp(),
+                    "payload": {
+                        "event": "leave",
+                        "clientId": client_id,
+                        "reason": reason,
+                    },
                 },
-            })
+            )
 
             # Clean up empty sessions
             if not session.participants:
@@ -387,10 +392,7 @@ class CollaborationServer:
                 logger.info(f"Session {session_id} closed (no participants)")
 
     async def _handle_cursor(
-        self,
-        websocket: WebSocketServerProtocol,
-        client_id: str,
-        message: dict
+        self, websocket: WebSocketServerProtocol, client_id: str, message: dict
     ):
         """Handle cursor position update."""
         session_id = self.client_sessions.get(client_id)
@@ -406,10 +408,7 @@ class CollaborationServer:
         await self._broadcast(session, message, exclude=client_id)
 
     async def _handle_presence(
-        self,
-        websocket: WebSocketServerProtocol,
-        client_id: str,
-        message: dict
+        self, websocket: WebSocketServerProtocol, client_id: str, message: dict
     ):
         """Handle presence status update."""
         session_id = self.client_sessions.get(client_id)
@@ -420,10 +419,7 @@ class CollaborationServer:
         await self._broadcast(session, message, exclude=client_id)
 
     async def _handle_intent_update(
-        self,
-        websocket: WebSocketServerProtocol,
-        client_id: str,
-        message: dict
+        self, websocket: WebSocketServerProtocol, client_id: str, message: dict
     ):
         """Handle intent field update with CRDT merge."""
         session_id = self.client_sessions.get(client_id)
@@ -441,9 +437,7 @@ class CollaborationServer:
             lock = session.locks[path]
             if lock.holder != client_id and lock.expires_at > datetime.utcnow():
                 await self._send_error(
-                    websocket,
-                    "LOCK_CONFLICT",
-                    f"Field {path} is locked by another user"
+                    websocket, "LOCK_CONFLICT", f"Field {path} is locked by another user"
                 )
                 return
 
@@ -461,12 +455,7 @@ class CollaborationServer:
         await self._broadcast(session, message)
 
     def _apply_intent_update(
-        self,
-        session: Session,
-        path: str,
-        value: Any,
-        vclock: dict,
-        client_id: str
+        self, session: Session, path: str, value: Any, vclock: dict, client_id: str
     ):
         """Apply an intent update to the session state."""
         parts = path.split(".")
@@ -487,10 +476,7 @@ class CollaborationServer:
         session.state["intent"]["_meta"]["version"] = session.version
 
     async def _handle_intent_lock(
-        self,
-        websocket: WebSocketServerProtocol,
-        client_id: str,
-        message: dict
+        self, websocket: WebSocketServerProtocol, client_id: str, message: dict
     ):
         """Handle intent lock request."""
         session_id = self.client_sessions.get(client_id)
@@ -506,20 +492,23 @@ class CollaborationServer:
         if path in session.locks:
             lock = session.locks[path]
             if lock.holder != client_id and lock.expires_at > datetime.utcnow():
-                await self._send(websocket, {
-                    "v": self.PROTOCOL_VERSION,
-                    "type": MessageType.INTENT_LOCK,
-                    "id": str(uuid.uuid4()),
-                    "session": session_id,
-                    "sender": "server",
-                    "ts": self._get_timestamp(),
-                    "payload": {
-                        "path": path,
-                        "granted": False,
-                        "holder": lock.holder,
-                        "expiresAt": lock.expires_at.isoformat(),
+                await self._send(
+                    websocket,
+                    {
+                        "v": self.PROTOCOL_VERSION,
+                        "type": MessageType.INTENT_LOCK,
+                        "id": str(uuid.uuid4()),
+                        "session": session_id,
+                        "sender": "server",
+                        "ts": self._get_timestamp(),
+                        "payload": {
+                            "path": path,
+                            "granted": False,
+                            "holder": lock.holder,
+                            "expiresAt": lock.expires_at.isoformat(),
+                        },
                     },
-                })
+                )
                 return
 
         # Grant lock
@@ -530,40 +519,44 @@ class CollaborationServer:
         if participant:
             participant.active_locks.append(path)
 
-        await self._send(websocket, {
-            "v": self.PROTOCOL_VERSION,
-            "type": MessageType.INTENT_LOCK,
-            "id": str(uuid.uuid4()),
-            "session": session_id,
-            "sender": "server",
-            "ts": self._get_timestamp(),
-            "payload": {
-                "path": path,
-                "granted": True,
-                "expiresAt": expires_at.isoformat(),
+        await self._send(
+            websocket,
+            {
+                "v": self.PROTOCOL_VERSION,
+                "type": MessageType.INTENT_LOCK,
+                "id": str(uuid.uuid4()),
+                "session": session_id,
+                "sender": "server",
+                "ts": self._get_timestamp(),
+                "payload": {
+                    "path": path,
+                    "granted": True,
+                    "expiresAt": expires_at.isoformat(),
+                },
             },
-        })
+        )
 
         # Notify others
-        await self._broadcast(session, {
-            "v": self.PROTOCOL_VERSION,
-            "type": MessageType.INTENT_LOCK,
-            "id": str(uuid.uuid4()),
-            "session": session_id,
-            "sender": client_id,
-            "ts": self._get_timestamp(),
-            "payload": {
-                "path": path,
-                "holder": client_id,
-                "expiresAt": expires_at.isoformat(),
+        await self._broadcast(
+            session,
+            {
+                "v": self.PROTOCOL_VERSION,
+                "type": MessageType.INTENT_LOCK,
+                "id": str(uuid.uuid4()),
+                "session": session_id,
+                "sender": client_id,
+                "ts": self._get_timestamp(),
+                "payload": {
+                    "path": path,
+                    "holder": client_id,
+                    "expiresAt": expires_at.isoformat(),
+                },
             },
-        }, exclude=client_id)
+            exclude=client_id,
+        )
 
     async def _handle_intent_unlock(
-        self,
-        websocket: WebSocketServerProtocol,
-        client_id: str,
-        message: dict
+        self, websocket: WebSocketServerProtocol, client_id: str, message: dict
     ):
         """Handle intent unlock request."""
         session_id = self.client_sessions.get(client_id)
@@ -582,21 +575,21 @@ class CollaborationServer:
                 participant.active_locks.remove(path)
 
             # Notify others
-            await self._broadcast(session, {
-                "v": self.PROTOCOL_VERSION,
-                "type": MessageType.INTENT_UNLOCK,
-                "id": str(uuid.uuid4()),
-                "session": session_id,
-                "sender": client_id,
-                "ts": self._get_timestamp(),
-                "payload": {"path": path},
-            })
+            await self._broadcast(
+                session,
+                {
+                    "v": self.PROTOCOL_VERSION,
+                    "type": MessageType.INTENT_UNLOCK,
+                    "id": str(uuid.uuid4()),
+                    "session": session_id,
+                    "sender": client_id,
+                    "ts": self._get_timestamp(),
+                    "payload": {"path": path},
+                },
+            )
 
     async def _handle_midi_note(
-        self,
-        websocket: WebSocketServerProtocol,
-        client_id: str,
-        message: dict
+        self, websocket: WebSocketServerProtocol, client_id: str, message: dict
     ):
         """Handle MIDI note event."""
         session_id = self.client_sessions.get(client_id)
@@ -609,10 +602,7 @@ class CollaborationServer:
         await self._broadcast(session, message)
 
     async def _handle_midi_cc(
-        self,
-        websocket: WebSocketServerProtocol,
-        client_id: str,
-        message: dict
+        self, websocket: WebSocketServerProtocol, client_id: str, message: dict
     ):
         """Handle MIDI CC event."""
         session_id = self.client_sessions.get(client_id)
@@ -623,10 +613,7 @@ class CollaborationServer:
         await self._broadcast(session, message)
 
     async def _handle_arrangement_op(
-        self,
-        websocket: WebSocketServerProtocol,
-        client_id: str,
-        message: dict
+        self, websocket: WebSocketServerProtocol, client_id: str, message: dict
     ):
         """Handle arrangement operation."""
         session_id = self.client_sessions.get(client_id)
@@ -691,12 +678,7 @@ class CollaborationServer:
                 markers[:] = [m for m in markers if m.get("id") != marker_id]
             arrangement["markers"] = markers
 
-    async def _handle_chat(
-        self,
-        websocket: WebSocketServerProtocol,
-        client_id: str,
-        message: dict
-    ):
+    async def _handle_chat(self, websocket: WebSocketServerProtocol, client_id: str, message: dict):
         """Handle chat message."""
         session_id = self.client_sessions.get(client_id)
         if not session_id:
@@ -720,12 +702,7 @@ class CollaborationServer:
         # Broadcast to all
         await self._broadcast(session, message)
 
-    async def _handle_undo(
-        self,
-        websocket: WebSocketServerProtocol,
-        client_id: str,
-        message: dict
-    ):
+    async def _handle_undo(self, websocket: WebSocketServerProtocol, client_id: str, message: dict):
         """Handle undo request."""
         session_id = self.client_sessions.get(client_id)
         if not session_id:
@@ -740,9 +717,7 @@ class CollaborationServer:
             if hist_msg.get("id") == operation_id:
                 if hist_msg.get("sender") != client_id:
                     await self._send_error(
-                        websocket,
-                        "PERMISSION_DENIED",
-                        "Can only undo your own operations"
+                        websocket, "PERMISSION_DENIED", "Can only undo your own operations"
                     )
                     return
 
@@ -750,19 +725,22 @@ class CollaborationServer:
                 inverse_op = self._create_inverse_op(hist_msg)
 
                 if inverse_op:
-                    await self._broadcast(session, {
-                        "v": self.PROTOCOL_VERSION,
-                        "type": MessageType.UNDO_ACK,
-                        "id": str(uuid.uuid4()),
-                        "session": session_id,
-                        "sender": "server",
-                        "ts": self._get_timestamp(),
-                        "payload": {
-                            "operationId": operation_id,
-                            "inverseOp": inverse_op,
-                            "success": True,
+                    await self._broadcast(
+                        session,
+                        {
+                            "v": self.PROTOCOL_VERSION,
+                            "type": MessageType.UNDO_ACK,
+                            "id": str(uuid.uuid4()),
+                            "session": session_id,
+                            "sender": "server",
+                            "ts": self._get_timestamp(),
+                            "payload": {
+                                "operationId": operation_id,
+                                "inverseOp": inverse_op,
+                                "success": True,
+                            },
                         },
-                    })
+                    )
                 return
 
         await self._send_error(websocket, "INVALID_OPERATION", "Operation not found")
@@ -799,10 +777,7 @@ class CollaborationServer:
         return None
 
     async def _handle_heartbeat(
-        self,
-        websocket: WebSocketServerProtocol,
-        client_id: str,
-        message: dict
+        self, websocket: WebSocketServerProtocol, client_id: str, message: dict
     ):
         """Handle heartbeat."""
         session_id = self.client_sessions.get(client_id)
@@ -814,25 +789,23 @@ class CollaborationServer:
         if participant:
             participant.last_heartbeat = datetime.utcnow()
 
-        await self._send(websocket, {
-            "v": self.PROTOCOL_VERSION,
-            "type": MessageType.HEARTBEAT_ACK,
-            "id": str(uuid.uuid4()),
-            "session": session_id,
-            "sender": "server",
-            "ts": self._get_timestamp(),
-            "payload": {
-                "serverTime": self._get_timestamp(),
-                "queueDepth": len(session.message_history),
+        await self._send(
+            websocket,
+            {
+                "v": self.PROTOCOL_VERSION,
+                "type": MessageType.HEARTBEAT_ACK,
+                "id": str(uuid.uuid4()),
+                "session": session_id,
+                "sender": "server",
+                "ts": self._get_timestamp(),
+                "payload": {
+                    "serverTime": self._get_timestamp(),
+                    "queueDepth": len(session.message_history),
+                },
             },
-        })
+        )
 
-    async def _broadcast(
-        self,
-        session: Session,
-        message: dict,
-        exclude: Optional[str] = None
-    ):
+    async def _broadcast(self, session: Session, message: dict, exclude: Optional[str] = None):
         """Broadcast a message to all participants in a session."""
         for client_id, participant in session.participants.items():
             if exclude and client_id == exclude:
@@ -847,32 +820,31 @@ class CollaborationServer:
         await websocket.send(json.dumps(message))
 
     async def _send_error(
-        self,
-        websocket: WebSocketServerProtocol,
-        code: str,
-        message: str,
-        recoverable: bool = True
+        self, websocket: WebSocketServerProtocol, code: str, message: str, recoverable: bool = True
     ):
         """Send an error message."""
-        await self._send(websocket, {
-            "v": self.PROTOCOL_VERSION,
-            "type": MessageType.ERROR,
-            "id": str(uuid.uuid4()),
-            "session": "",
-            "sender": "server",
-            "ts": self._get_timestamp(),
-            "payload": {
-                "code": code,
-                "message": message,
-                "recoverable": recoverable,
+        await self._send(
+            websocket,
+            {
+                "v": self.PROTOCOL_VERSION,
+                "type": MessageType.ERROR,
+                "id": str(uuid.uuid4()),
+                "session": "",
+                "sender": "server",
+                "ts": self._get_timestamp(),
+                "payload": {
+                    "code": code,
+                    "message": message,
+                    "recoverable": recoverable,
+                },
             },
-        })
+        )
 
     def _add_to_history(self, session: Session, message: dict):
         """Add a message to the session history."""
         session.message_history.append(message)
         if len(session.message_history) > self.MAX_MESSAGE_HISTORY:
-            session.message_history = session.message_history[-self.MAX_MESSAGE_HISTORY:]
+            session.message_history = session.message_history[-self.MAX_MESSAGE_HISTORY :]
 
     def _get_timestamp(self) -> int:
         """Get current timestamp in milliseconds."""
@@ -888,8 +860,7 @@ class CollaborationServer:
             for session in list(self.sessions.values()):
                 # Clean up expired locks
                 expired_locks = [
-                    path for path, lock in session.locks.items()
-                    if lock.expires_at < now
+                    path for path, lock in session.locks.items() if lock.expires_at < now
                 ]
                 for path in expired_locks:
                     del session.locks[path]
@@ -898,7 +869,8 @@ class CollaborationServer:
                 # Check for stale participants
                 stale_timeout = now - timedelta(seconds=self.HEARTBEAT_TIMEOUT)
                 stale_clients = [
-                    client_id for client_id, p in session.participants.items()
+                    client_id
+                    for client_id, p in session.participants.items()
                     if p.last_heartbeat < stale_timeout
                 ]
                 for client_id in stale_clients:
@@ -908,8 +880,7 @@ class CollaborationServer:
 async def main():
     """Run the collaboration server."""
     logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+        level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
     )
 
     server = CollaborationServer(host="0.0.0.0", port=8765)

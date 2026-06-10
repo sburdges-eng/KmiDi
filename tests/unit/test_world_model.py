@@ -18,6 +18,7 @@ def _wm(state_dim: int = 8, action_dim: int = 0, hidden_dim: int = None) -> Worl
 # Construction / validation
 # ----------------------------------------------------------------------
 
+
 def test_state_dim_positive() -> None:
     with pytest.raises(ValueError, match="state_dim"):
         WorldModel(state_dim=0)
@@ -41,6 +42,7 @@ def test_explicit_hidden_dim_used() -> None:
 # ----------------------------------------------------------------------
 # step()
 # ----------------------------------------------------------------------
+
 
 def test_step_unconditioned_shape() -> None:
     wm = _wm(state_dim=8)
@@ -97,6 +99,7 @@ def test_step_is_deterministic_with_same_inputs() -> None:
 # rollout()
 # ----------------------------------------------------------------------
 
+
 def test_rollout_unconditioned_requires_steps() -> None:
     wm = _wm(state_dim=8)
     with pytest.raises(ValueError, match="steps is required"):
@@ -145,6 +148,7 @@ def test_rollout_states_carry_through_time() -> None:
 # ----------------------------------------------------------------------
 # Backprop
 # ----------------------------------------------------------------------
+
 
 def test_gradients_flow_to_gru_and_out_proj() -> None:
     wm = _wm(state_dim=8, action_dim=4)

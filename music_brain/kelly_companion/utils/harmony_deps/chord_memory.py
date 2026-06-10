@@ -16,6 +16,7 @@ from collections import deque
 
 class SectionType(Enum):
     """Song section types."""
+
     UNKNOWN = "unknown"
     INTRO = "intro"
     VERSE = "verse"
@@ -29,6 +30,7 @@ class SectionType(Enum):
 
 class EmotionalArc(Enum):
     """Emotional progression types."""
+
     STABLE = "stable"
     BUILDING = "building"
     CLIMAX = "climax"
@@ -39,6 +41,7 @@ class EmotionalArc(Enum):
 @dataclass
 class ChordEvent:
     """Individual chord event with metadata."""
+
     root: str
     quality: str
     bass: Optional[str]
@@ -52,6 +55,7 @@ class ChordEvent:
 @dataclass
 class Phrase:
     """Musical phrase with emotional arc."""
+
     section: SectionType
     progression: List[str]
     emotional_arc: EmotionalArc
@@ -82,7 +86,7 @@ class PhraseMemory:
                 section=section,
                 progression=self.current_phrase_chords.copy(),
                 emotional_arc=arc,
-                is_cadential=is_cadential
+                is_cadential=is_cadential,
             )
             self.phrases.append(phrase)
             self.current_phrase_chords = []
@@ -93,9 +97,9 @@ class PhraseMemory:
             return EmotionalArc.STABLE
 
         # Simple heuristic: check for tension/resolution patterns
-        if progression[-1] == 'I':
+        if progression[-1] == "I":
             return EmotionalArc.RELEASING
-        elif 'V' in progression:
+        elif "V" in progression:
             return EmotionalArc.BUILDING
         else:
             return EmotionalArc.STABLE
@@ -115,7 +119,7 @@ class MotifTracker:
 
         # Extract sliding windows
         for i in range(len(progression) - self.window_size + 1):
-            window = tuple(progression[i:i+self.window_size])
+            window = tuple(progression[i : i + self.window_size])
             self.patterns[window] = self.patterns.get(window, 0) + 1
 
     def get_signature_motifs(self, min_count: int = 2) -> List[Dict]:
@@ -123,11 +127,8 @@ class MotifTracker:
         motifs = []
         for pattern, count in self.patterns.items():
             if count >= min_count:
-                motifs.append({
-                    'pattern': list(pattern),
-                    'count': count
-                })
-        return sorted(motifs, key=lambda m: m['count'], reverse=True)
+                motifs.append({"pattern": list(pattern), "count": count})
+        return sorted(motifs, key=lambda m: m["count"], reverse=True)
 
 
 class ChordMemorySystem:
@@ -157,7 +158,7 @@ class ChordMemorySystem:
         roman_numeral: str,
         duration: float,
         notes: List[int],
-        tension: float
+        tension: float,
     ) -> ChordEvent:
         """Process and store chord event."""
         event = ChordEvent(
@@ -167,7 +168,7 @@ class ChordMemorySystem:
             roman_numeral=roman_numeral,
             duration=duration,
             notes=notes,
-            tension_level=tension
+            tension_level=tension,
         )
 
         self.chord_history.append(event)
@@ -181,26 +182,26 @@ class ChordMemorySystem:
         last_chord = self.chord_history[-1] if self.chord_history else None
 
         return {
-            'last_chord': last_chord,
-            'key': self.current_key,
-            'section': self.current_section.value,
-            'recent_chords': [c.roman_numeral for c in list(self.chord_history)[-8:]],
-            'phrase_count': len(self.phrase_memory.phrases)
+            "last_chord": last_chord,
+            "key": self.current_key,
+            "section": self.current_section.value,
+            "recent_chords": [c.roman_numeral for c in list(self.chord_history)[-8:]],
+            "phrase_count": len(self.phrase_memory.phrases),
         }
 
     def predict_context(self) -> Dict:
         """Predict upcoming harmonic context."""
         # Simple predictions based on current state
         predictions = {
-            'building_to_climax': False,
-            'likely_resolution': None,
-            'section_transition_likely': False
+            "building_to_climax": False,
+            "likely_resolution": None,
+            "section_transition_likely": False,
         }
 
         if self.chord_history:
             last = self.chord_history[-1]
-            if last.roman_numeral == 'V':
-                predictions['likely_resolution'] = 'I'
-                predictions['building_to_climax'] = True
+            if last.roman_numeral == "V":
+                predictions["likely_resolution"] = "I"
+                predictions["building_to_climax"] = True
 
         return predictions

@@ -19,8 +19,11 @@ from ..utils.ppq import STANDARD_PPQ, scale_template
 from ..utils.midi_io import load_midi, save_midi, modify_notes_safe, MidiData
 from ..utils.instruments import classify_note, get_drum_category, is_drum_channel
 from .feel_matching import (
-    TemplateMatcher, FeelProfile, TemplateScore,
-    SectionGrooveMap, INSTRUMENT_VELOCITY_PATTERNS
+    TemplateMatcher,
+    FeelProfile,
+    TemplateScore,
+    SectionGrooveMap,
+    INSTRUMENT_VELOCITY_PATTERNS,
 )
 from .genre_templates import GENRE_TEMPLATES
 
@@ -31,19 +34,19 @@ class AutoApplicationConfig:
 
     # Template selection
     genre_override: Optional[str] = None  # Force specific genre
-    min_match_score: float = 40.0         # Minimum acceptable score
+    min_match_score: float = 40.0  # Minimum acceptable score
 
     # Application intensity
-    timing_intensity: float = 0.7         # How much timing to apply (0-1)
-    velocity_intensity: float = 0.8       # How much velocity to apply (0-1)
-    swing_intensity: float = 0.6          # How much swing to apply (0-1)
+    timing_intensity: float = 0.7  # How much timing to apply (0-1)
+    velocity_intensity: float = 0.8  # How much velocity to apply (0-1)
+    swing_intensity: float = 0.6  # How much swing to apply (0-1)
 
     # Humanization
-    randomness: float = 0.2               # Random variation (0-1)
+    randomness: float = 0.2  # Random variation (0-1)
 
     # Section handling
-    section_aware: bool = True            # Use section-specific grooves
-    fill_enabled: bool = True             # Add fills at section boundaries
+    section_aware: bool = True  # Use section-specific grooves
+    fill_enabled: bool = True  # Add fills at section boundaries
 
     # Per-instrument handling
     per_instrument_velocity: bool = True  # Use per-instrument patterns
@@ -53,6 +56,7 @@ class AutoApplicationConfig:
 @dataclass
 class SectionApplication:
     """Application results for a single section."""
+
     section_name: str
     start_bar: int
     end_bar: int
@@ -107,11 +111,7 @@ class AutoGrooveApplicator:
         self.matcher = TemplateMatcher()
 
     def apply_from_audio(
-        self,
-        audio_path: str,
-        midi_path: str,
-        output_path: str,
-        audio_feel: Dict[str, Any] = None
+        self, audio_path: str, midi_path: str, output_path: str, audio_feel: Dict[str, Any] = None
     ) -> AutoApplicationResult:
         """
         Apply groove from audio reference to MIDI.
@@ -129,9 +129,11 @@ class AutoGrooveApplicator:
         if audio_feel is None:
             try:
                 from ..audio.analyzer import analyze_audio_feel
+
                 audio_feel = analyze_audio_feel(audio_path)
             except ImportError:
                 from ..audio.feel import analyze_audio_feel as legacy_analyze
+
                 audio_feel = legacy_analyze(audio_path)
 
         # Step 2: Create feel profile
@@ -142,10 +144,7 @@ class AutoGrooveApplicator:
         return self._apply_with_profile(profile, midi_path, output_path, audio_path)
 
     def apply_from_midi_reference(
-        self,
-        reference_midi: str,
-        target_midi: str,
-        output_path: str
+        self, reference_midi: str, target_midi: str, output_path: str
     ) -> AutoApplicationResult:
         """
         Transfer groove from one MIDI to another.
@@ -171,12 +170,7 @@ class AutoGrooveApplicator:
 
         return self._apply_with_profile(profile, target_midi, output_path, None)
 
-    def apply_genre(
-        self,
-        genre: str,
-        midi_path: str,
-        output_path: str
-    ) -> AutoApplicationResult:
+    def apply_genre(self, genre: str, midi_path: str, output_path: str) -> AutoApplicationResult:
         """
         Apply a specific genre's groove to MIDI.
 
@@ -189,10 +183,7 @@ class AutoGrooveApplicator:
             AutoApplicationResult
         """
         # Create a "neutral" profile that will match the requested genre
-        profile = FeelProfile(
-            tempo_bpm=120,
-            source_type="genre_override"
-        )
+        profile = FeelProfile(tempo_bpm=120, source_type="genre_override")
 
         # Override genre selection
         original_override = self.config.genre_override
@@ -206,11 +197,7 @@ class AutoGrooveApplicator:
         return result
 
     def _apply_with_profile(
-        self,
-        profile: FeelProfile,
-        midi_path: str,
-        output_path: str,
-        audio_source: Optional[str]
+        self, profile: FeelProfile, midi_path: str, output_path: str, audio_source: Optional[str]
     ) -> AutoApplicationResult:
         """
         Core application logic with a feel profile.
@@ -223,10 +210,13 @@ class AutoGrooveApplicator:
             score = TemplateScore(
                 genre=genre,
                 total_score=100,
-                tempo_score=20, energy_score=25, swing_score=25,
-                density_score=15, brightness_score=15,
+                tempo_score=20,
+                energy_score=25,
+                swing_score=25,
+                density_score=15,
+                brightness_score=15,
                 match_reasons=["Genre manually selected"],
-                mismatch_reasons=[]
+                mismatch_reasons=[],
             )
             alternatives = []
         else:
@@ -235,8 +225,10 @@ class AutoGrooveApplicator:
                 warnings.append(f"No good template match (best: {all_scores[0].total_score:.0f})")
                 # Fall back to most neutral template
                 genre = "rock"
-                score = all_scores[0] if all_scores else TemplateScore(
-                    "rock", 50, 10, 10, 10, 10, 10, [], ["Fallback"]
+                score = (
+                    all_scores[0]
+                    if all_scores
+                    else TemplateScore("rock", 50, 10, 10, 10, 10, 10, [], ["Fallback"])
                 )
             else:
                 genre = all_scores[0].genre
@@ -251,26 +243,30 @@ class AutoGrooveApplicator:
         # Step 3: Detect sections (if enabled)
         if self.config.section_aware:
             from ..structure.sections import SectionDetector
+
             detector = SectionDetector(ppq=data.ppq)
             sections = detector.detect_sections(data)
         else:
             # Treat entire file as one section
             from ..structure.sections import Section
+
             total_bars = int(max(n.onset_ticks for n in data.all_notes) / data.ticks_per_bar) + 1
-            sections = [Section(
-                name="full",
-                start_bar=0,
-                end_bar=total_bars,
-                length_bars=total_bars,
-                energy=0.5,
-                density=0.5,
-                characteristics={},
-                confidence=1.0
-            )]
+            sections = [
+                Section(
+                    name="full",
+                    start_bar=0,
+                    end_bar=total_bars,
+                    length_bars=total_bars,
+                    energy=0.5,
+                    density=0.5,
+                    characteristics={},
+                    confidence=1.0,
+                )
+            ]
 
         # Step 4: Scale template to target PPQ if needed
-        if template.get('ppq', STANDARD_PPQ) != data.ppq:
-            template = scale_template(template, template['ppq'], data.ppq)
+        if template.get("ppq", STANDARD_PPQ) != data.ppq:
+            template = scale_template(template, template["ppq"], data.ppq)
 
         # Step 5: Apply section by section
         section_results = []
@@ -281,9 +277,7 @@ class AutoGrooveApplicator:
         instrument_stats = {}
 
         for section in sections:
-            section_result = self._apply_to_section(
-                data, template, genre, section
-            )
+            section_result = self._apply_to_section(data, template, genre, section)
             section_results.append(section_result)
             total_modified += section_result.notes_modified
 
@@ -311,15 +305,11 @@ class AutoGrooveApplicator:
             swing_adjustments=total_swing,
             sections_processed=section_results,
             instrument_stats=instrument_stats,
-            warnings=warnings
+            warnings=warnings,
         )
 
     def _apply_to_section(
-        self,
-        data: MidiData,
-        template: Dict,
-        genre: str,
-        section
+        self, data: MidiData, template: Dict, genre: str, section
     ) -> SectionApplication:
         """
         Apply groove to a specific section.
@@ -417,21 +407,21 @@ class AutoGrooveApplicator:
                 # Blend with existing velocity
                 blend = self.config.respect_existing_dynamics
                 new_velocity = int(
-                    note.velocity * blend +
-                    target_vel * (1 - blend) * self.config.velocity_intensity +
-                    note.velocity * (1 - self.config.velocity_intensity) * (1 - blend)
+                    note.velocity * blend
+                    + target_vel * (1 - blend) * self.config.velocity_intensity
+                    + note.velocity * (1 - self.config.velocity_intensity) * (1 - blend)
                 )
                 new_velocity = max(1, min(127, new_velocity))
             else:
                 # Use template velocity curve
-                vel_curve = template.get('velocity_curve', [90]*16)
+                vel_curve = template.get("velocity_curve", [90] * 16)
                 if grid_idx < len(vel_curve):
                     target_vel = vel_curve[grid_idx]
                     blend = self.config.respect_existing_dynamics
                     new_velocity = int(
-                        note.velocity * blend +
-                        target_vel * self.config.velocity_intensity * (1 - blend) +
-                        note.velocity * (1 - self.config.velocity_intensity) * (1 - blend)
+                        note.velocity * blend
+                        + target_vel * self.config.velocity_intensity * (1 - blend)
+                        + note.velocity * (1 - self.config.velocity_intensity) * (1 - blend)
                     )
                     new_velocity = max(1, min(127, new_velocity))
 
@@ -454,7 +444,7 @@ class AutoGrooveApplicator:
                 track_index=note.track_index,
                 onset_beats=note.onset_beats,
                 onset_bars=note.onset_bars,
-                grid_position=note.grid_position
+                grid_position=note.grid_position,
             )
 
         # Apply modifications
@@ -465,17 +455,15 @@ class AutoGrooveApplicator:
             start_bar=section.start_bar,
             end_bar=section.end_bar,
             notes_modified=notes_modified,
-            groove_map=groove_map
+            groove_map=groove_map,
         )
 
 
 # === High-Level Convenience Functions ===
 
+
 def auto_apply_groove(
-    source: str,
-    target_midi: str,
-    output_path: str,
-    **config_kwargs
+    source: str, target_midi: str, output_path: str, **config_kwargs
 ) -> AutoApplicationResult:
     """
     Auto-apply groove from source to target MIDI.
@@ -500,9 +488,9 @@ def auto_apply_groove(
     source_path = Path(source)
 
     # Determine source type
-    if source_path.suffix.lower() in ('.wav', '.mp3', '.aiff', '.flac', '.ogg'):
+    if source_path.suffix.lower() in (".wav", ".mp3", ".aiff", ".flac", ".ogg"):
         return applicator.apply_from_audio(source, target_midi, output_path)
-    elif source_path.suffix.lower() in ('.mid', '.midi'):
+    elif source_path.suffix.lower() in (".mid", ".midi"):
         return applicator.apply_from_midi_reference(source, target_midi, output_path)
     elif source.lower() in GENRE_TEMPLATES:
         return applicator.apply_genre(source, target_midi, output_path)
@@ -515,10 +503,7 @@ def auto_apply_groove(
         )
 
 
-def preview_template_match(
-    audio_path: str,
-    top_n: int = 5
-) -> List[Dict[str, Any]]:
+def preview_template_match(audio_path: str, top_n: int = 5) -> List[Dict[str, Any]]:
     """
     Preview which templates would match an audio file.
 
@@ -532,9 +517,11 @@ def preview_template_match(
     # Analyze audio
     try:
         from ..audio.analyzer import analyze_audio_feel
+
         audio_feel = analyze_audio_feel(audio_path)
     except ImportError:
         from ..audio.feel import analyze_audio_feel as legacy_analyze
+
         audio_feel = legacy_analyze(audio_path)
 
     # Get matches
@@ -553,16 +540,13 @@ def preview_template_match(
                 "energy": s.energy_score,
                 "swing": s.swing_score,
                 "density": s.density_score,
-            }
+            },
         }
         for s in scores
     ]
 
 
-def get_section_grooves(
-    genre: str,
-    sections: List[str] = None
-) -> Dict[str, Dict[str, Any]]:
+def get_section_grooves(genre: str, sections: List[str] = None) -> Dict[str, Dict[str, Any]]:
     """
     Get groove parameters for each section type.
 

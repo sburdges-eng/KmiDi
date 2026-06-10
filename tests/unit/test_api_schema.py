@@ -89,4 +89,3 @@ def test_schema_defaults_optional_ui_fields():
     assert model.narrative_arc == "Climb-to-Climax"
     assert model.rule_to_break is None
     assert model.rule_justification is None
-

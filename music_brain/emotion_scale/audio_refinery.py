@@ -33,6 +33,7 @@ try:
         Trim,
         Resample,
     )
+
     HAS_AUDIO_LIBS = True
 except ImportError:
     HAS_AUDIO_LIBS = False
@@ -47,31 +48,37 @@ def _get_pipelines():
     if not HAS_AUDIO_LIBS:
         return {}, None, None, None
 
-    pipe_clean = Compose([
-        Trim(top_db=20, p=1.0),
-        Normalize(p=1.0),
-    ])
+    pipe_clean = Compose(
+        [
+            Trim(top_db=20, p=1.0),
+            Normalize(p=1.0),
+        ]
+    )
 
-    pipe_industrial = Compose([
-        Trim(top_db=20, p=1.0),
-        Resample(min_sample_rate=8000, max_sample_rate=22050, p=0.5),
-        ClippingDistortion(
-            min_percentile_threshold=0,
-            max_percentile_threshold=20,
-            p=0.8,
-        ),
-        HighPassFilter(min_cutoff_freq=200, max_cutoff_freq=800, p=1.0),
-        Normalize(p=1.0),
-    ])
+    pipe_industrial = Compose(
+        [
+            Trim(top_db=20, p=1.0),
+            Resample(min_sample_rate=8000, max_sample_rate=22050, p=0.5),
+            ClippingDistortion(
+                min_percentile_threshold=0,
+                max_percentile_threshold=20,
+                p=0.8,
+            ),
+            HighPassFilter(min_cutoff_freq=200, max_cutoff_freq=800, p=1.0),
+            Normalize(p=1.0),
+        ]
+    )
 
-    pipe_tape_rot = Compose([
-        Trim(top_db=30, p=1.0),
-        AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.015, p=1.0),
-        PitchShift(min_semitones=-0.5, max_semitones=0.5, p=1.0),
-        TimeStretch(min_rate=0.9, max_rate=1.1, p=0.5),
-        LowPassFilter(min_cutoff_freq=2000, max_cutoff_freq=6000, p=1.0),
-        Normalize(p=1.0),
-    ])
+    pipe_tape_rot = Compose(
+        [
+            Trim(top_db=30, p=1.0),
+            AddGaussianNoise(min_amplitude=0.001, max_amplitude=0.015, p=1.0),
+            PitchShift(min_semitones=-0.5, max_semitones=0.5, p=1.0),
+            TimeStretch(min_rate=0.9, max_rate=1.1, p=0.5),
+            LowPassFilter(min_cutoff_freq=2000, max_cutoff_freq=6000, p=1.0),
+            Normalize(p=1.0),
+        ]
+    )
 
     pipeline_map = {
         "01_Foundation_Bass": pipe_clean,

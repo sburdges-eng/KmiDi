@@ -27,12 +27,11 @@ from enum import Enum
 import random
 import math
 
-
 # =============================================================================
 # CONSTANTS
 # =============================================================================
 
-CHROMATIC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 TICKS_PER_BEAT = 480
 
@@ -69,7 +68,7 @@ GM_PADS = {
 
 # Extended pad-like instruments
 EXTENDED_PADS = {
-    "strings": 48,      # String Ensemble 1
+    "strings": 48,  # String Ensemble 1
     "slow_strings": 49,  # String Ensemble 2
     "synth_strings": 50,
     "choir_aahs": 52,
@@ -83,70 +82,77 @@ EXTENDED_PADS = {
 # ENUMS
 # =============================================================================
 
+
 class PadTexture(Enum):
     """Pad timbral character."""
-    WARM = "warm"               # Soft, rounded, comforting
-    BRIGHT = "bright"           # Airy, open, hopeful
-    DARK = "dark"               # Heavy, somber, thick
-    GLASSY = "glassy"           # Crystalline, fragile, distant
-    GRITTY = "gritty"           # Distorted, aggressive, textured
-    AIRY = "airy"               # Thin, ethereal, spacious
-    THICK = "thick"             # Dense, full, enveloping
-    HOLLOW = "hollow"           # Empty, haunted, sparse
-    SHIMMERING = "shimmering"   # Movement, modulation, alive
-    FROZEN = "frozen"           # Static, cold, still
+
+    WARM = "warm"  # Soft, rounded, comforting
+    BRIGHT = "bright"  # Airy, open, hopeful
+    DARK = "dark"  # Heavy, somber, thick
+    GLASSY = "glassy"  # Crystalline, fragile, distant
+    GRITTY = "gritty"  # Distorted, aggressive, textured
+    AIRY = "airy"  # Thin, ethereal, spacious
+    THICK = "thick"  # Dense, full, enveloping
+    HOLLOW = "hollow"  # Empty, haunted, sparse
+    SHIMMERING = "shimmering"  # Movement, modulation, alive
+    FROZEN = "frozen"  # Static, cold, still
 
 
 class PadMovement(Enum):
     """How the pad evolves over time."""
-    STATIC = "static"           # No movement, sustained
-    BREATHING = "breathing"     # Slow swell in/out
-    SWELLING = "swelling"       # Building intensity
-    FADING = "fading"           # Dying away
-    PULSING = "pulsing"         # Rhythmic undulation
-    DRIFTING = "drifting"       # Slow pitch/filter movement
-    TREMOLO = "tremolo"         # Fast amplitude modulation
-    EVOLVING = "evolving"       # Continuous transformation
-    UNSTABLE = "unstable"       # Erratic, nervous movement
+
+    STATIC = "static"  # No movement, sustained
+    BREATHING = "breathing"  # Slow swell in/out
+    SWELLING = "swelling"  # Building intensity
+    FADING = "fading"  # Dying away
+    PULSING = "pulsing"  # Rhythmic undulation
+    DRIFTING = "drifting"  # Slow pitch/filter movement
+    TREMOLO = "tremolo"  # Fast amplitude modulation
+    EVOLVING = "evolving"  # Continuous transformation
+    UNSTABLE = "unstable"  # Erratic, nervous movement
 
 
 class PadVoicing(Enum):
     """How pad notes are spread."""
-    CLOSE = "close"             # Tight cluster
-    OPEN = "open"               # Spread voicing
-    OCTAVES = "octaves"         # Root + octave doubling
-    FIFTHS = "fifths"           # Power chord style
-    FULL = "full"               # All chord tones
-    SPARSE = "sparse"           # Just root + one other
-    CLUSTER = "cluster"         # Dissonant close voicing
-    SHELL = "shell"             # Root + 3rd + 7th only
+
+    CLOSE = "close"  # Tight cluster
+    OPEN = "open"  # Spread voicing
+    OCTAVES = "octaves"  # Root + octave doubling
+    FIFTHS = "fifths"  # Power chord style
+    FULL = "full"  # All chord tones
+    SPARSE = "sparse"  # Just root + one other
+    CLUSTER = "cluster"  # Dissonant close voicing
+    SHELL = "shell"  # Root + 3rd + 7th only
 
 
 class PadRegister(Enum):
     """Pitch range for pad."""
-    SUB = "sub"                 # Very low, felt more than heard
-    LOW = "low"                 # Foundation
-    MID = "mid"                 # Standard pad range
-    HIGH = "high"               # Bright, airy
-    WIDE = "wide"               # Spanning multiple octaves
+
+    SUB = "sub"  # Very low, felt more than heard
+    LOW = "low"  # Foundation
+    MID = "mid"  # Standard pad range
+    HIGH = "high"  # Bright, airy
+    WIDE = "wide"  # Spanning multiple octaves
 
 
 class AttackType(Enum):
     """How the pad begins."""
-    INSTANT = "instant"         # Immediate full volume
-    SOFT = "soft"               # Gentle fade in
-    SLOW = "slow"               # Very gradual entry
-    SWELL = "swell"             # Dramatic build
-    STAB = "stab"               # Sharp attack, quick decay
+
+    INSTANT = "instant"  # Immediate full volume
+    SOFT = "soft"  # Gentle fade in
+    SLOW = "slow"  # Very gradual entry
+    SWELL = "swell"  # Dramatic build
+    STAB = "stab"  # Sharp attack, quick decay
 
 
 class ReleaseType(Enum):
     """How the pad ends."""
-    SUSTAIN = "sustain"         # Hold until next chord
-    FADE = "fade"               # Gentle release
-    CUT = "cut"                 # Abrupt stop
-    TRAIL = "trail"             # Long reverb tail (implied)
-    OVERLAP = "overlap"         # Bleed into next chord
+
+    SUSTAIN = "sustain"  # Hold until next chord
+    FADE = "fade"  # Gentle release
+    CUT = "cut"  # Abrupt stop
+    TRAIL = "trail"  # Long reverb tail (implied)
+    OVERLAP = "overlap"  # Bleed into next chord
 
 
 # =============================================================================
@@ -162,15 +168,14 @@ EMOTION_PROFILES = {
         "attack": AttackType.SLOW,
         "release": ReleaseType.TRAIL,
         "velocity_range": (40, 70),
-        "density": 0.7,              # How full the voicing
-        "sustain_ratio": 0.95,       # How much of bar to sustain
-        "breathing_rate": 0.5,       # Slow breath
-        "add_extensions": True,      # Add 7ths, 9ths
+        "density": 0.7,  # How full the voicing
+        "sustain_ratio": 0.95,  # How much of bar to sustain
+        "breathing_rate": 0.5,  # Slow breath
+        "add_extensions": True,  # Add 7ths, 9ths
         "extension_probability": 0.4,
         "octave_doubling": 0.3,
         "gm_instrument": GM_PADS["warm"],
     },
-
     "sadness": {
         "texture": PadTexture.HOLLOW,
         "movement": PadMovement.FADING,
@@ -187,7 +192,6 @@ EMOTION_PROFILES = {
         "octave_doubling": 0.2,
         "gm_instrument": GM_PADS["choir"],
     },
-
     "hope": {
         "texture": PadTexture.BRIGHT,
         "movement": PadMovement.SWELLING,
@@ -204,7 +208,6 @@ EMOTION_PROFILES = {
         "octave_doubling": 0.4,
         "gm_instrument": GM_PADS["new_age"],
     },
-
     "joy": {
         "texture": PadTexture.SHIMMERING,
         "movement": PadMovement.PULSING,
@@ -221,7 +224,6 @@ EMOTION_PROFILES = {
         "octave_doubling": 0.5,
         "gm_instrument": GM_PADS["polysynth"],
     },
-
     "rage": {
         "texture": PadTexture.GRITTY,
         "movement": PadMovement.STATIC,
@@ -238,7 +240,6 @@ EMOTION_PROFILES = {
         "octave_doubling": 0.7,
         "gm_instrument": GM_PADS["metallic"],
     },
-
     "anger": {
         "texture": PadTexture.DARK,
         "movement": PadMovement.PULSING,
@@ -255,7 +256,6 @@ EMOTION_PROFILES = {
         "octave_doubling": 0.6,
         "gm_instrument": GM_PADS["bowed"],
     },
-
     "fear": {
         "texture": PadTexture.HOLLOW,
         "movement": PadMovement.UNSTABLE,
@@ -272,7 +272,6 @@ EMOTION_PROFILES = {
         "octave_doubling": 0.1,
         "gm_instrument": GM_PADS["sweep"],
     },
-
     "anxiety": {
         "texture": PadTexture.GLASSY,
         "movement": PadMovement.UNSTABLE,
@@ -289,7 +288,6 @@ EMOTION_PROFILES = {
         "octave_doubling": 0.2,
         "gm_instrument": GM_PADS["halo"],
     },
-
     "tension": {
         "texture": PadTexture.DARK,
         "movement": PadMovement.SWELLING,
@@ -306,7 +304,6 @@ EMOTION_PROFILES = {
         "octave_doubling": 0.3,
         "gm_instrument": GM_PADS["bowed"],
     },
-
     "longing": {
         "texture": PadTexture.WARM,
         "movement": PadMovement.BREATHING,
@@ -323,7 +320,6 @@ EMOTION_PROFILES = {
         "octave_doubling": 0.25,
         "gm_instrument": GM_PADS["choir"],
     },
-
     "nostalgia": {
         "texture": PadTexture.WARM,
         "movement": PadMovement.DRIFTING,
@@ -340,7 +336,6 @@ EMOTION_PROFILES = {
         "octave_doubling": 0.3,
         "gm_instrument": GM_PADS["warm"],
     },
-
     "peace": {
         "texture": PadTexture.AIRY,
         "movement": PadMovement.STATIC,
@@ -357,7 +352,6 @@ EMOTION_PROFILES = {
         "octave_doubling": 0.2,
         "gm_instrument": GM_PADS["new_age"],
     },
-
     "euphoria": {
         "texture": PadTexture.SHIMMERING,
         "movement": PadMovement.SWELLING,
@@ -374,7 +368,6 @@ EMOTION_PROFILES = {
         "octave_doubling": 0.6,
         "gm_instrument": GM_PADS["polysynth"],
     },
-
     "dissociation": {
         "texture": PadTexture.FROZEN,
         "movement": PadMovement.STATIC,
@@ -391,7 +384,6 @@ EMOTION_PROFILES = {
         "octave_doubling": 0.5,
         "gm_instrument": GM_PADS["halo"],
     },
-
     "dread": {
         "texture": PadTexture.DARK,
         "movement": PadMovement.EVOLVING,
@@ -408,7 +400,6 @@ EMOTION_PROFILES = {
         "octave_doubling": 0.4,
         "gm_instrument": GM_PADS["sweep"],
     },
-
     "wonder": {
         "texture": PadTexture.GLASSY,
         "movement": PadMovement.BREATHING,
@@ -425,7 +416,6 @@ EMOTION_PROFILES = {
         "octave_doubling": 0.35,
         "gm_instrument": GM_PADS["halo"],
     },
-
     "neutral": {
         "texture": PadTexture.WARM,
         "movement": PadMovement.STATIC,
@@ -449,20 +439,23 @@ EMOTION_PROFILES = {
 # DATA CLASSES
 # =============================================================================
 
+
 @dataclass
 class PadNote:
     """A single note in the pad voicing."""
-    pitch: int                  # MIDI pitch
-    start_tick: int             # Start time in ticks
-    duration_ticks: int         # Duration
-    velocity: int               # MIDI velocity
-    voice_function: str         # "root", "third", "fifth", "seventh", "extension", "octave"
+
+    pitch: int  # MIDI pitch
+    start_tick: int  # Start time in ticks
+    duration_ticks: int  # Duration
+    velocity: int  # MIDI velocity
+    voice_function: str  # "root", "third", "fifth", "seventh", "extension", "octave"
     velocity_curve: List[int] = field(default_factory=list)  # For breathing/swell
 
 
 @dataclass
 class PadChord:
     """A complete pad voicing for one chord."""
+
     chord_symbol: str
     notes: List[PadNote]
     start_tick: int
@@ -474,6 +467,7 @@ class PadChord:
 @dataclass
 class PadConfig:
     """Configuration for pad generation."""
+
     emotion: str = "neutral"
     bars: int = 4
     tempo_bpm: int = 120
@@ -494,8 +488,9 @@ class PadConfig:
 @dataclass
 class PadOutput:
     """Complete pad output."""
+
     chords: List[PadChord]
-    notes: List[PadNote]         # Flattened for MIDI export
+    notes: List[PadNote]  # Flattened for MIDI export
     emotion: str
     texture_used: PadTexture
     movement_used: PadMovement
@@ -510,23 +505,24 @@ class PadOutput:
 # HELPER FUNCTIONS
 # =============================================================================
 
+
 def note_name_to_midi(note: str, octave: int = 4) -> int:
     """Convert note name to MIDI number."""
-    note = note.replace('b', '#')  # Normalize flats
+    note = note.replace("b", "#")  # Normalize flats
 
     # Handle double sharps/flats
     base = note[0].upper()
-    modifier = note[1:] if len(note) > 1 else ''
+    modifier = note[1:] if len(note) > 1 else ""
 
     base_idx = CHROMATIC.index(base) if base in CHROMATIC else 0
 
-    if modifier == '#':
+    if modifier == "#":
         base_idx += 1
-    elif modifier == 'b':
+    elif modifier == "b":
         base_idx -= 1
-    elif modifier == '##':
+    elif modifier == "##":
         base_idx += 2
-    elif modifier == 'bb':
+    elif modifier == "bb":
         base_idx -= 2
 
     base_idx = base_idx % 12
@@ -539,11 +535,11 @@ def parse_chord(chord_symbol: str) -> Tuple[str, str, Optional[str]]:
 
     # Handle slash chords
     bass_note = None
-    if '/' in chord_symbol:
-        chord_symbol, bass_note = chord_symbol.split('/')
+    if "/" in chord_symbol:
+        chord_symbol, bass_note = chord_symbol.split("/")
 
     # Extract root
-    if len(chord_symbol) > 1 and chord_symbol[1] in ['#', 'b']:
+    if len(chord_symbol) > 1 and chord_symbol[1] in ["#", "b"]:
         root = chord_symbol[:2]
         quality = chord_symbol[2:] or "maj"
     else:
@@ -552,12 +548,12 @@ def parse_chord(chord_symbol: str) -> Tuple[str, str, Optional[str]]:
 
     # Normalize quality
     quality = quality.lower()
-    if quality == '':
-        quality = 'maj'
-    elif quality == 'm':
-        quality = 'min'
-    elif quality == '-':
-        quality = 'min'
+    if quality == "":
+        quality = "maj"
+    elif quality == "m":
+        quality = "min"
+    elif quality == "-":
+        quality = "min"
 
     return root, quality, bass_note
 
@@ -582,10 +578,7 @@ def get_register_octave(register: PadRegister) -> int:
 
 
 def apply_voicing(
-    pitches: List[int],
-    voicing: PadVoicing,
-    register: PadRegister,
-    density: float
+    pitches: List[int], voicing: PadVoicing, register: PadRegister, density: float
 ) -> List[Tuple[int, str]]:
     """Apply voicing style to chord pitches. Returns (pitch, function) tuples."""
     if not pitches:
@@ -687,10 +680,7 @@ def apply_voicing(
 
 
 def generate_velocity_curve(
-    base_velocity: int,
-    duration_ticks: int,
-    movement: PadMovement,
-    breathing_rate: float
+    base_velocity: int, duration_ticks: int, movement: PadMovement, breathing_rate: float
 ) -> List[int]:
     """Generate velocity curve for a pad note."""
     # Number of CC points (roughly one per beat)
@@ -731,7 +721,7 @@ def generate_velocity_curve(
         # Rhythmic pulses
         curve = []
         for i in range(num_points):
-            pulse = (i % 2 == 0)
+            pulse = i % 2 == 0
             v = base_velocity if pulse else int(base_velocity * 0.7)
             curve.append(max(1, min(127, v)))
         return curve
@@ -780,11 +770,7 @@ def generate_velocity_curve(
     return [base_velocity] * num_points
 
 
-def add_extensions(
-    pitches: List[int],
-    root_midi: int,
-    extension_prob: float
-) -> List[int]:
+def add_extensions(pitches: List[int], root_midi: int, extension_prob: float) -> List[int]:
     """Potentially add 7ths, 9ths, etc."""
     extended = pitches.copy()
 
@@ -811,6 +797,7 @@ def add_extensions(
 # =============================================================================
 # MAIN ENGINE CLASS
 # =============================================================================
+
 
 class PadEngine:
     """
@@ -890,12 +877,7 @@ class PadEngine:
                 pitches = add_extensions(pitches, root_midi, profile["extension_probability"])
 
             # Apply voicing
-            voiced = apply_voicing(
-                pitches,
-                voicing,
-                register,
-                profile["density"]
-            )
+            voiced = apply_voicing(pitches, voicing, register, profile["density"])
 
             # Add octave doubling
             if random.random() < profile["octave_doubling"]:
@@ -927,10 +909,7 @@ class PadEngine:
 
                 # Velocity curve for movement
                 vel_curve = generate_velocity_curve(
-                    base_vel,
-                    duration,
-                    movement,
-                    profile["breathing_rate"]
+                    base_vel, duration, movement, profile["breathing_rate"]
                 )
 
                 note = PadNote(
@@ -972,7 +951,7 @@ class PadEngine:
                 "key": key,
                 "chord_progression": chord_progression,
                 "profile_used": emotion,
-            }
+            },
         )
 
     def generate_for_section(
@@ -1043,6 +1022,7 @@ class PadEngine:
 # CONVENIENCE FUNCTIONS
 # =============================================================================
 
+
 def generate_grief_pad(chords: List[str], key: str = "F", bars: int = 4) -> PadOutput:
     """Quick grief pad generation."""
     return PadEngine().generate("grief", chords, key, bars, 72)
@@ -1080,6 +1060,7 @@ def generate_tension_pad(chords: List[str], key: str = "Am", bars: int = 4) -> P
 # MIDI EXPORT HELPER
 # =============================================================================
 
+
 def pad_to_midi_events(pad_output: PadOutput, channel: int = 3) -> List[Dict]:
     """
     Convert PadOutput to MIDI event list.
@@ -1095,32 +1076,38 @@ def pad_to_midi_events(pad_output: PadOutput, channel: int = 3) -> List[Dict]:
     events = []
 
     # Program change at start
-    events.append({
-        "type": "program_change",
-        "tick": 0,
-        "channel": channel,
-        "program": pad_output.gm_instrument,
-    })
+    events.append(
+        {
+            "type": "program_change",
+            "tick": 0,
+            "channel": channel,
+            "program": pad_output.gm_instrument,
+        }
+    )
 
     # Note events
     for note in pad_output.notes:
         # Note on
-        events.append({
-            "type": "note_on",
-            "tick": note.start_tick,
-            "channel": channel,
-            "pitch": note.pitch,
-            "velocity": note.velocity,
-        })
+        events.append(
+            {
+                "type": "note_on",
+                "tick": note.start_tick,
+                "channel": channel,
+                "pitch": note.pitch,
+                "velocity": note.velocity,
+            }
+        )
 
         # Note off
-        events.append({
-            "type": "note_off",
-            "tick": note.start_tick + note.duration_ticks,
-            "channel": channel,
-            "pitch": note.pitch,
-            "velocity": 0,
-        })
+        events.append(
+            {
+                "type": "note_off",
+                "tick": note.start_tick + note.duration_ticks,
+                "channel": channel,
+                "pitch": note.pitch,
+                "velocity": 0,
+            }
+        )
 
     # Sort by tick
     events.sort(key=lambda e: (e["tick"], 0 if e["type"] == "note_on" else 1))

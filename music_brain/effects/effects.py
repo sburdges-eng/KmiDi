@@ -18,10 +18,10 @@ from music_brain.effects.base import (
     CabinetType,
 )
 
-
 # =============================================================================
 # DISTORTION / OVERDRIVE / FUZZ
 # =============================================================================
+
 
 class DistortionEffect(BaseEffect):
     """
@@ -90,7 +90,7 @@ class DistortionEffect(BaseEffect):
             elif self.circuit_type == DistortionType.BITCRUSH:
                 # Bit reduction
                 bits = max(2, int(16 - drive * 14))
-                steps = 2 ** bits
+                steps = 2**bits
                 y = round(x * steps) / steps
 
             elif self.circuit_type == DistortionType.WAVEFOLD:
@@ -149,7 +149,7 @@ class OverdriveEffect(BaseEffect):
             x = sample * self.input_gain
 
             # Apply mid boost (simplified)
-            x *= (1 + mid_boost * 0.5)
+            x *= 1 + mid_boost * 0.5
 
             # Soft clipping with drive
             gain = 1 + drive * 10
@@ -217,6 +217,7 @@ class FuzzEffect(BaseEffect):
 # =============================================================================
 # MODULATION EFFECTS
 # =============================================================================
+
 
 class ChorusEffect(BaseEffect):
     """
@@ -514,6 +515,7 @@ class UnivibeEffect(BaseEffect):
 # TIME-BASED EFFECTS
 # =============================================================================
 
+
 class DelayEffect(BaseEffect):
     """
     Multi-mode delay with 12+ algorithms.
@@ -637,6 +639,7 @@ class ReverbEffect(BaseEffect):
 # DYNAMICS
 # =============================================================================
 
+
 class CompressorEffect(BaseEffect):
     """
     Full-featured compressor with multiple modes.
@@ -757,6 +760,7 @@ class NoiseGateEffect(BaseEffect):
 # FILTER / EQ
 # =============================================================================
 
+
 class EQEffect(BaseEffect):
     """
     Multi-band parametric EQ.
@@ -838,8 +842,9 @@ class FilterEffect(BaseEffect):
         self.filter_type = FilterType.LOWPASS
 
     def _init_parameters(self):
-        self.add_parameter("cutoff", 1000.0, 20.0, 20000.0, "Hz",
-                           "Cutoff frequency", curve="logarithmic")
+        self.add_parameter(
+            "cutoff", 1000.0, 20.0, 20000.0, "Hz", "Cutoff frequency", curve="logarithmic"
+        )
         self.add_parameter("resonance", 0.5, 0.0, 1.0, "", "Resonance")
         self.add_parameter("drive", 0.0, 0.0, 1.0, "", "Filter drive")
         self.add_parameter("env_amount", 0.0, -1.0, 1.0, "", "Envelope amount")
@@ -859,6 +864,7 @@ class FilterEffect(BaseEffect):
 # =============================================================================
 # PITCH
 # =============================================================================
+
 
 class PitchShiftEffect(BaseEffect):
     """
@@ -939,6 +945,7 @@ class OctaverEffect(BaseEffect):
 # AMP/CABINET
 # =============================================================================
 
+
 class AmpSimEffect(BaseEffect):
     """
     Amp simulation with 15 amp models.
@@ -979,7 +986,7 @@ class AmpSimEffect(BaseEffect):
             y = math.tanh(x * (1 + gain * 2))
 
             # Power amp sag simulation
-            y *= (1 - sag * 0.3 * abs(y))
+            y *= 1 - sag * 0.3 * abs(y)
 
             y *= master * self.output_gain
             output.append(y)
@@ -1017,6 +1024,7 @@ class CabinetSimEffect(BaseEffect):
 # =============================================================================
 # SPECIAL EFFECTS
 # =============================================================================
+
 
 class LooperEffect(BaseEffect):
     """
@@ -1166,7 +1174,7 @@ class BitcrusherEffect(BaseEffect):
         target_sr = self.get_param("sample_rate")
         mix = self.get_param("mix")
 
-        steps = 2 ** bits
+        steps = 2**bits
         downsample_factor = max(1, int(sample_rate / target_sr))
 
         output = []

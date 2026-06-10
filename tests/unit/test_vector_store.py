@@ -76,7 +76,7 @@ def test_search_respects_min_score_threshold() -> None:
     ids = [r[0] for r in out]
     assert "near" in ids
     assert "orthogonal" not in ids  # score = 0.0
-    assert "opposite" not in ids    # score = -1.0
+    assert "opposite" not in ids  # score = -1.0
 
 
 def test_search_on_empty_store_returns_empty() -> None:

@@ -90,24 +90,19 @@ from .ableton_bridge import (
     AbletonBridge,
     AbletonOSCBridge,
     AbletonMIDIBridge,
-
     # Configuration
     OSCConfig,
     MIDIConfig,
-
     # State classes
     TransportState,
     TrackInfo,
-
     # Voice control
     VoiceCC,
     VOWEL_FORMANTS,
-
     # Convenience functions
     get_bridge,
     connect_daw,
     disconnect_daw,
-
     # MCP tools
     get_mcp_tools as get_bridge_mcp_tools,
 )
@@ -123,23 +118,18 @@ from .crewai_music_agents import (
     OnnxLLM,
     OnnxLLMConfig,
     LLMBackend,
-
     # Tools
     Tool,
     ToolManager,
-
     # Agents
     AgentRole,
     MusicAgent,
     AGENT_ROLES,
-
     # Crew
     MusicCrew,
-
     # Pre-defined tasks
     voice_production_task,
     song_production_task,
-
     # Convenience functions
     get_crew,
     get_llm_status,
@@ -154,12 +144,10 @@ from .voice_profiles import (
     # Main classes
     VoiceProfileManager,
     VoiceProfile,
-
     # Enums
     Gender,
     AccentRegion,
     SpeechPattern,
-
     # Convenience functions
     get_voice_manager,
     apply_voice_profile,
@@ -175,25 +163,20 @@ from .voice_profiles import (
 from .unified_hub import (
     # Main class
     UnifiedHub,
-
     # Configuration
     HubConfig,
     SessionConfig,
-
     # State classes
     VoiceState,
     DAWState,
-
     # Voice synthesis
     LocalVoiceSynth,
-
     # Global functions
     get_hub,
     start_hub,
     stop_hub,
     force_stop_hub,
     shutdown_all,
-
     # MCP tools
     get_hub_mcp_tools,
 )
@@ -301,11 +284,9 @@ from .reactive import (
     StateAggregator,
     ComputedState,
     BatchContext,
-
     # Types
     StateCallback,
     AsyncStateCallback,
-
     # Decorators
     reactive_dataclass,
     observe,
@@ -332,9 +313,7 @@ from .websocket_api import (
 shutdown_tools = shutdown_crew
 
 # Keep lambda-style convenience to preserve truthiness expectations
-get_tool_manager = (
-    lambda: (get_crew().tools if get_crew() else None)
-)  # noqa: E731
+get_tool_manager = lambda: (get_crew().tools if get_crew() else None)  # noqa: E731
 
 # =============================================================================
 # Module Info
@@ -355,18 +334,15 @@ __all__ = [
     "connect_daw",
     "disconnect_daw",
     "get_bridge_mcp_tools",
-
     # Local LLM
     "LocalLLM",
     "LocalLLMConfig",
     "OnnxLLM",
     "OnnxLLMConfig",
     "LLMBackend",
-
     # Tools
     "Tool",
     "ToolManager",
-
     # Agents
     "AgentRole",
     "MusicAgent",
@@ -377,7 +353,6 @@ __all__ = [
     "get_crew",
     "get_llm_status",
     "shutdown_crew",
-
     # Voice Profiles
     "VoiceProfileManager",
     "VoiceProfile",
@@ -389,7 +364,6 @@ __all__ = [
     "learn_word",
     "list_accents",
     "list_speech_patterns",
-
     # Unified Hub (Sync)
     "UnifiedHub",
     "HubConfig",
@@ -399,7 +373,6 @@ __all__ = [
     "LocalVoiceSynth",
     "get_hub",
     "start_hub",
-
     # ML Pipeline
     "MLPipeline",
     "EmotionFeatures",
@@ -413,7 +386,6 @@ __all__ = [
     "force_stop_hub",
     "shutdown_all",
     "get_hub_mcp_tools",
-
     # Command History (Undo/Redo)
     "Command",
     "CommandCategory",
@@ -422,7 +394,6 @@ __all__ = [
     "CommandResult",
     "HistoryStats",
     "CompoundCommand",
-
     # Health Dashboard & Telemetry
     "ComponentType",
     "HealthChecker",
@@ -431,12 +402,10 @@ __all__ = [
     "HealthStatus",
     "LatencyStats",
     "ThroughputStats",
-
     # Async Hub (Event-Driven)
     "AsyncUnifiedHub",
     "get_async_hub",
     "stop_async_hub",
-
     # Reactive State
     "Observable",
     "BatchContext",
@@ -447,7 +416,6 @@ __all__ = [
     "AsyncStateCallback",
     "reactive_dataclass",
     "observe",
-
     # Event Bus
     "Event",
     "EventResult",
@@ -456,7 +424,6 @@ __all__ = [
     "EventBus",
     "EventChannel",
     "EventQueue",
-
     # WebSocket API
     "HubWebSocketServer",
     "WSMessage",
@@ -464,7 +431,6 @@ __all__ = [
     "MessageType",
     "create_websocket_server",
     "HAS_WEBSOCKETS",
-
     # DAW Protocol (Multi-DAW)
     "DAWType",
     "DAWCapabilities",
@@ -481,7 +447,6 @@ __all__ = [
     "LogicProConfig",
     "ReaperConfig",
     "BitwigConfig",
-
     # Aliases
     "shutdown_tools",
     "get_tool_manager",
@@ -494,6 +459,7 @@ __author__ = "DAiW"
 # =============================================================================
 # Quick Test
 # =============================================================================
+
 
 def _test() -> None:
     """Quick test of the agent system."""

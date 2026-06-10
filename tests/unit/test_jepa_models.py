@@ -4,20 +4,20 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from music_brain.jepa.audio_jepa import (
+from music_brain.jepa.audio_jepa import (  # noqa: E402
     AudioJEPAEncoder,
     EMATargetEncoder,
     LatentPredictor,
 )
-from music_brain.jepa.chord_jepa import ChordEmbedding, ChordJEPA
-from music_brain.jepa.masking import MultiBlockMasking, mask_latents
-from music_brain.jepa.config import (
+from music_brain.jepa.chord_jepa import ChordEmbedding, ChordJEPA  # noqa: E402
+from music_brain.jepa.masking import MultiBlockMasking, mask_latents  # noqa: E402
+from music_brain.jepa.config import (  # noqa: E402
     AudioJEPAConfig,
     ChordJEPAConfig,
     StemJEPAConfig,
     TrainingConfig,
 )
-from music_brain.jepa.datasets import AudioMelDataset, ChordSequenceDataset
+from music_brain.jepa.datasets import AudioMelDataset, ChordSequenceDataset  # noqa: E402
 
 
 class TestAudioJEPAEncoder:
@@ -125,15 +125,13 @@ class TestChordJEPA:
     """Chord-JEPA tests."""
 
     def test_chord_jepa_forward(self):
-        model = ChordJEPA(d_model=128, num_classes=170, num_heads=4,
-                          num_layers=2, seq_len=64)
+        model = ChordJEPA(d_model=128, num_classes=170, num_heads=4, num_layers=2, seq_len=64)
         z = torch.randn(2, 64, 128)
         out = model(z)
         assert out.shape == (2, 64, 170)
 
     def test_chord_jepa_from_config(self):
-        cfg = ChordJEPAConfig(d_model=64, num_heads=4, num_layers=2,
-                              seq_len=32, num_chords=100)
+        cfg = ChordJEPAConfig(d_model=64, num_heads=4, num_layers=2, seq_len=32, num_chords=100)
         model = ChordJEPA(config=cfg)
         z = torch.randn(1, 32, 64)
         out = model(z)
@@ -146,8 +144,7 @@ class TestChordJEPA:
         assert out.shape == (2, 64, 256)
 
     def test_chord_jepa_gradient_flow(self):
-        model = ChordJEPA(d_model=64, num_classes=50, num_heads=4,
-                          num_layers=1, seq_len=16)
+        model = ChordJEPA(d_model=64, num_classes=50, num_heads=4, num_layers=1, seq_len=16)
         z = torch.randn(1, 16, 64, requires_grad=True)
         out = model(z)
         loss = out.sum()
@@ -257,15 +254,12 @@ class TestEndToEndJEPA:
 
     def test_chord_jepa_training_step(self):
         emb = ChordEmbedding(num_chords=170, d_model=128)
-        model = ChordJEPA(d_model=128, num_classes=170, num_heads=4,
-                          num_layers=2, seq_len=32)
+        model = ChordJEPA(d_model=128, num_classes=170, num_heads=4, num_layers=2, seq_len=32)
         chords = torch.randint(0, 170, (2, 32))
         z = emb(chords)
         masked, _ = mask_latents(z)
         out = model(masked)
-        loss = torch.nn.functional.cross_entropy(
-            out.reshape(-1, 170), chords.reshape(-1)
-        )
+        loss = torch.nn.functional.cross_entropy(out.reshape(-1, 170), chords.reshape(-1))
         loss.backward()
         assert loss.item() > 0
 
@@ -283,9 +277,7 @@ class TestEndToEndJEPA:
         loss = ((out - z_target) ** 2).mean()
         loss.backward()
 
-        opt = torch.optim.AdamW(
-            list(enc.parameters()) + list(pred.parameters()), lr=1e-4
-        )
+        opt = torch.optim.AdamW(list(enc.parameters()) + list(pred.parameters()), lr=1e-4)
         opt.step()
         teacher.update(enc)
         assert loss.item() > 0

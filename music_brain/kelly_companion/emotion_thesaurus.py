@@ -14,13 +14,14 @@ from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, field
 from enum import Enum
 
-
 # =============================================================================
 # ENUMS & CONSTANTS
 # =============================================================================
 
+
 class EmotionCategory(Enum):
     """Primary emotion categories (Plutchik's wheel)."""
+
     JOY = "joy"
     SADNESS = "sad"
     ANGER = "anger"
@@ -33,6 +34,7 @@ class EmotionCategory(Enum):
 
 class Mode(Enum):
     """Musical modes ordered by brightness (dark → bright)."""
+
     LOCRIAN = "locrian"
     PHRYGIAN = "phrygian"
     AEOLIAN = "aeolian"
@@ -80,9 +82,11 @@ INTENSITY_VALUES = {
 # MUSICAL PARAMETER MAPPINGS
 # =============================================================================
 
+
 @dataclass
 class MusicalAttributes:
     """Musical parameters derived from emotional state."""
+
     # Tempo
     tempo_base: int = 100
     tempo_range: Tuple[int, int] = (90, 110)
@@ -223,9 +227,11 @@ CATEGORY_MUSICAL_DNA: Dict[EmotionCategory, Dict[str, Any]] = {
 # EMOTION NODE
 # =============================================================================
 
+
 @dataclass
 class EmotionNode:
     """A single emotion in the thesaurus with full musical mapping."""
+
     # Identity
     id: int
     name: str
@@ -254,18 +260,19 @@ class EmotionNode:
     related_ids: List[int] = field(default_factory=list)
     opposite_ids: List[int] = field(default_factory=list)
 
-    def distance_to(self, other: 'EmotionNode') -> float:
+    def distance_to(self, other: "EmotionNode") -> float:
         """Calculate emotional distance to another node."""
         return (
-            (self.valence - other.valence) ** 2 +
-            (self.arousal - other.arousal) ** 2 +
-            (self.intensity - other.intensity) ** 2
+            (self.valence - other.valence) ** 2
+            + (self.arousal - other.arousal) ** 2
+            + (self.intensity - other.intensity) ** 2
         ) ** 0.5
 
 
 # =============================================================================
 # MAIN THESAURUS CLASS
 # =============================================================================
+
 
 class EmotionThesaurus:
     """
@@ -318,7 +325,7 @@ class EmotionThesaurus:
 
     def _parse_emotion_file(self, filepath: Path, category: EmotionCategory) -> None:
         """Parse a single emotion JSON file."""
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             data = json.load(f)
 
         base_valence = CATEGORY_VALENCE[category]
@@ -555,15 +562,15 @@ class EmotionThesaurus:
 
             # Find closest node to interpolated point
             best_node = None
-            best_dist = float('inf')
+            best_dist = float("inf")
 
             for node in self.nodes.values():
                 if node.id in [n.id for n in path]:
                     continue
                 dist = (
-                    (node.valence - target_valence) ** 2 +
-                    (node.arousal - target_arousal) ** 2 +
-                    (node.intensity - target_intensity) ** 2
+                    (node.valence - target_valence) ** 2
+                    + (node.arousal - target_arousal) ** 2
+                    + (node.intensity - target_intensity) ** 2
                 ) ** 0.5
                 if dist < best_dist:
                     best_dist = dist
@@ -616,9 +623,7 @@ class EmotionThesaurus:
         # Use highest-weight node's category for DNA
         primary_node = max(nodes_weights, key=lambda x: x[1])[0]
 
-        return self._generate_musical_attributes(
-            primary_node.category, intensity, valence, arousal
-        )
+        return self._generate_musical_attributes(primary_node.category, intensity, valence, arousal)
 
     def search(self, query: str, limit: int = 10) -> List[EmotionNode]:
         """
@@ -658,10 +663,7 @@ class EmotionThesaurus:
         return {
             "total_nodes": len(self.nodes),
             "total_words": len(self.word_index),
-            "categories": {
-                cat.value: len(ids)
-                for cat, ids in self.category_index.items()
-            },
+            "categories": {cat.value: len(ids) for cat, ids in self.category_index.items()},
             "valence_range": (
                 min(n.valence for n in self.nodes.values()),
                 max(n.valence for n in self.nodes.values()),
@@ -732,7 +734,9 @@ if __name__ == "__main__":
             print(f"\n'{word}' → {node.name}")
             print(f"  Category: {node.category.value}")
             print(
-                f"  Valence: {node.valence:.2f}, Arousal: {node.arousal:.2f}, Intensity: {node.intensity:.2f}")  # noqa: E501
+                f"  Valence: {node.valence:.2f}, Arousal: {node.arousal:.2f}, Intensity: "
+                f"{node.intensity:.2f}"
+            )  # noqa: E501
 
             print(f"  Tempo: {node.musical.tempo_base} BPM ({node.musical.tempo_range})")
             print(f"  Mode: {node.musical.mode.value}")

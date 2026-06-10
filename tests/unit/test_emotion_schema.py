@@ -16,8 +16,7 @@ def test_valid_neutral():
 
 def test_valid_with_tags():
     e = EmotionStateSchema(
-        valence=0.8, arousal=0.9, dominance=0.7,
-        tags=["bright", "drive"], confidence=0.9
+        valence=0.8, arousal=0.9, dominance=0.7, tags=["bright", "drive"], confidence=0.9
     )
     assert len(e.tags) == 2
 
@@ -29,26 +28,23 @@ def test_invalid_valence_out_of_range():
 
 def test_invalid_unknown_tag():
     with pytest.raises(Exception):
-        EmotionStateSchema(
-            valence=0.0, arousal=0.5, dominance=0.5,
-            tags=["angry"], confidence=0.5
-        )
+        EmotionStateSchema(valence=0.0, arousal=0.5, dominance=0.5, tags=["angry"], confidence=0.5)
 
 
 def test_invalid_too_many_tags():
     with pytest.raises(Exception):
         EmotionStateSchema(
-            valence=0.0, arousal=0.5, dominance=0.5,
-            tags=["tension", "release", "warm", "cold"], confidence=0.5
+            valence=0.0,
+            arousal=0.5,
+            dominance=0.5,
+            tags=["tension", "release", "warm", "cold"],
+            confidence=0.5,
         )
 
 
 def test_invalid_extra_field():
     with pytest.raises(Exception):
-        EmotionStateSchema(
-            valence=0.0, arousal=0.5, dominance=0.5,
-            confidence=0.5, intensity=0.5
-        )
+        EmotionStateSchema(valence=0.0, arousal=0.5, dominance=0.5, confidence=0.5, intensity=0.5)
 
 
 FIXTURE_DIR = Path(__file__).resolve().parents[1] / "fixtures" / "intent"

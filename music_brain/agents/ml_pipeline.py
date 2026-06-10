@@ -189,13 +189,24 @@ class EmotionEmbedding:
     @classmethod
     def from_output(cls, output: List[float], confidence: float = 0.0) -> EmotionEmbedding:
         """Parse ML output into structured result."""
-        embedding = np.array(output[:64], dtype=np.float32) if len(
-            output) >= 64 else np.zeros(64, dtype=np.float32)
+        embedding = (
+            np.array(output[:64], dtype=np.float32)
+            if len(output) >= 64
+            else np.zeros(64, dtype=np.float32)
+        )
 
         # Determine primary emotion from embedding (simplified)
         # In production, this would use a classifier head
-        emotion_map = ["neutral", "grief", "anxiety",
-                       "anger", "calm", "hope", "nostalgia", "tension"]
+        emotion_map = [
+            "neutral",
+            "grief",
+            "anxiety",
+            "anger",
+            "calm",
+            "hope",
+            "nostalgia",
+            "tension",
+        ]
         if len(output) > 0:
             idx = int(np.argmax(embedding[:8])) % len(emotion_map)
             primary = emotion_map[idx]
@@ -416,8 +427,11 @@ class MLPipeline:
             Request ID if queued, None if failed
         """
         # DynamicsEngine expects 32-dim input (we use first 32 of embedding)
-        features = emotion_embedding[:32] if len(
-            emotion_embedding) >= 32 else np.zeros(32, dtype=np.float32)
+        features = (
+            emotion_embedding[:32]
+            if len(emotion_embedding) >= 32
+            else np.zeros(32, dtype=np.float32)
+        )
         return self._submit_features(ModelType.DynamicsEngine, features, timestamp)
 
     def submit_groove(
@@ -436,8 +450,9 @@ class MLPipeline:
             Request ID if queued, None if failed
         """
         # GroovePredictor expects 64-dim input
-        features = emotion_embedding if len(
-            emotion_embedding) >= 64 else np.zeros(64, dtype=np.float32)
+        features = (
+            emotion_embedding if len(emotion_embedding) >= 64 else np.zeros(64, dtype=np.float32)
+        )
         return self._submit_features(ModelType.GroovePredictor, features, timestamp)
 
     def submit_harmony(
@@ -497,30 +512,53 @@ class MLPipeline:
         # Simple heuristic fallbacks
         if model_type == ModelType.EmotionRecognizer:
             # Echo first 64 features as "embedding"
-            output = list(features[:64]) if len(features) >= 64 else list(
-                features) + [0.0] * (64 - len(features))
-            result = {"model_type": model_type, "output": output,
-                      "confidence": 0.5, "success": True}
+            output = (
+                list(features[:64])
+                if len(features) >= 64
+                else list(features) + [0.0] * (64 - len(features))
+            )
+            result = {
+                "model_type": model_type,
+                "output": output,
+                "confidence": 0.5,
+                "success": True,
+            }
         elif model_type == ModelType.DynamicsEngine:
             # Generate default dynamics
             output = [0.5] * 16
             output[10] = 0.6  # dynamic_range
-            result = {"model_type": model_type, "output": output,
-                      "confidence": 0.3, "success": True}
+            result = {
+                "model_type": model_type,
+                "output": output,
+                "confidence": 0.3,
+                "success": True,
+            }
         elif model_type == ModelType.GroovePredictor:
             # Generate default groove
             output = [0.52, 5.0 / 20.0, 0.15, 0.05] + [0.5] * 28
-            result = {"model_type": model_type, "output": output,
-                      "confidence": 0.3, "success": True}
+            result = {
+                "model_type": model_type,
+                "output": output,
+                "confidence": 0.3,
+                "success": True,
+            }
         elif model_type == ModelType.HarmonyPredictor:
             # Generate default harmony (C major)
             output = [1.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, 0.8, 0.0, 0.3, 0.0, 0.0] + [0.0] * 52
-            result = {"model_type": model_type, "output": output,
-                      "confidence": 0.3, "success": True}
+            result = {
+                "model_type": model_type,
+                "output": output,
+                "confidence": 0.3,
+                "success": True,
+            }
         else:
             output = [0.0] * 128
-            result = {"model_type": model_type, "output": output,
-                      "confidence": 0.0, "success": False}
+            result = {
+                "model_type": model_type,
+                "output": output,
+                "confidence": 0.0,
+                "success": False,
+            }
 
         result["request_id"] = request_id
         result["latency_ms"] = 0.0

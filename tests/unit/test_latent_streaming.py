@@ -16,7 +16,6 @@ from music_brain.intent_ir import IntentProvenance, IntentSource  # noqa: E402
 from music_brain.latent.latent_frame import LatentFrame  # noqa: E402
 from music_brain.latent.streaming import stream_decode  # noqa: E402
 
-
 _PROV = IntentProvenance(source=IntentSource.ML_AUDIO, user_override_weight=0.0)
 
 

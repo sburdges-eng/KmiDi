@@ -25,6 +25,7 @@ def _linear(in_f: int = 8, out_f: int = 4) -> torch.nn.Linear:
 # Construction / validation
 # ----------------------------------------------------------------------
 
+
 def test_rank_must_be_non_negative() -> None:
     base = _linear()
     with pytest.raises(ValueError, match="rank"):
@@ -53,13 +54,14 @@ def test_in_out_features_override() -> None:
 # Forward correctness
 # ----------------------------------------------------------------------
 
+
 def test_b_initialised_to_zero_so_initial_forward_equals_base() -> None:
     base = _linear()
     adapter = LoRAAdapter(base, rank=4)
     x = torch.randn(2, 8)
-    assert torch.allclose(adapter(x), base(x)), (
-        "Standard LoRA init has B=0 so the initial output equals base"
-    )
+    assert torch.allclose(
+        adapter(x), base(x)
+    ), "Standard LoRA init has B=0 so the initial output equals base"
 
 
 def test_forward_changes_after_nonzero_b() -> None:
@@ -100,6 +102,7 @@ def test_alpha_can_be_overridden() -> None:
 # Training ergonomics
 # ----------------------------------------------------------------------
 
+
 def test_freeze_base_disables_grad_on_base_only() -> None:
     base = _linear()
     adapter = LoRAAdapter(base, rank=4)
@@ -129,6 +132,7 @@ def test_freeze_is_idempotent() -> None:
 # Backprop sanity
 # ----------------------------------------------------------------------
 
+
 def test_gradients_flow_to_adapter_but_not_to_frozen_base() -> None:
     base = _linear()
     adapter = LoRAAdapter(base, rank=4)
@@ -142,9 +146,7 @@ def test_gradients_flow_to_adapter_but_not_to_frozen_base() -> None:
     loss.backward()
     # Base layer params: gradient should be None (no autograd attached).
     for p in base.parameters():
-        assert p.grad is None or torch.all(p.grad == 0), (
-            "frozen base must not accumulate gradient"
-        )
+        assert p.grad is None or torch.all(p.grad == 0), "frozen base must not accumulate gradient"
     # Adapter params: gradient must be non-zero somewhere.
     assert adapter.A.grad is not None
     assert adapter.B.grad is not None

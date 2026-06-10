@@ -29,7 +29,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import IntEnum
 
-
 UMP_MESSAGE_TYPE_UTILITY = 0x0
 UMP_MESSAGE_TYPE_SYSTEM = 0x1
 UMP_MESSAGE_TYPE_MIDI_1 = 0x2

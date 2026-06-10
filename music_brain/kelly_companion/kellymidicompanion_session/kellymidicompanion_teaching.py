@@ -14,7 +14,6 @@ Philosophy: "The wrong note played with conviction is the right note."
 import random
 from typing import List, Dict, Optional
 
-
 # Teaching content database
 LESSONS = {
     "borrowed_chords": {
@@ -53,9 +52,7 @@ The most common borrowed chords:
             },
         ],
         "exercise": "Take your progression and replace ONE major chord with its minor borrowed equivalent. Listen to how the mood shifts.",  # noqa: E501
-
     },
-
     "modal_mixture": {
         "title": "Modal Mixture Deep Dive",
         "intro": """
@@ -86,9 +83,7 @@ The key: Use borrowed chords at moments of emotional shift.
             },
         ],
         "exercise": "Write a 4-chord progression. Insert a chord from a different mode at the emotional peak.",  # noqa: E501
-
     },
-
     "emotional_substitutions": {
         "title": "Emotional Chord Substitutions",
         "intro": """
@@ -133,9 +128,7 @@ Substitute based on emotion, not just theory.
             },
         ],
         "exercise": "Pick an emotion. Find a stock progression. Substitute one chord to make it actually feel that way.",  # noqa: E501
-
     },
-
     "rhythmic_misdirection": {
         "title": "Rhythmic Misdirection",
         "intro": """
@@ -176,9 +169,7 @@ The goal: Make listeners FEEL something in their body, not just their ears.
             },
         ],
         "exercise": "Take a quantized MIDI drum pattern. Move the snare 10-20ms late. Move hi-hats slightly early. Notice how the feel changes completely.",  # noqa: E501
-
     },
-
     "production_philosophy": {
         "title": "Production Rule-Breaking Philosophy",
         "intro": """
@@ -218,7 +209,6 @@ Imperfection is a feature, not a bug.
             },
         ],
         "exercise": "Pick one 'rule' you always follow. Break it intentionally in your next mix. Document what emotion it creates.",  # noqa: E501
-
     },
 }
 
@@ -289,16 +279,16 @@ class RuleBreakingTeacher:
         print("\n" + "=" * 60)
         print(f"📚 {lesson['title']}")
         print("=" * 60)
-        print(lesson['intro'])
+        print(lesson["intro"])
 
         print("\n" + "-" * 40)
         print("EXAMPLES:")
         print("-" * 40)
 
-        for i, example in enumerate(lesson['examples'][:3], 1):
+        for i, example in enumerate(lesson["examples"][:3], 1):
             name_key = next(
-                (k for k in ['name', 'technique', 'emotion', 'rule'] if k in example),
-                'Example')
+                (k for k in ["name", "technique", "emotion", "rule"] if k in example), "Example"
+            )
             print(f"\n{i}. {example.get(name_key, 'Example')}")
             for key, value in example.items():
                 if key != name_key:
@@ -307,10 +297,10 @@ class RuleBreakingTeacher:
         print("\n" + "-" * 40)
         print("💡 EXERCISE:")
         print("-" * 40)
-        print(lesson['exercise'])
+        print(lesson["exercise"])
 
         print("\n" + "=" * 60)
-        print(f"🎵 Wisdom: \"{self.get_wisdom()}\"")
+        print(f'🎵 Wisdom: "{self.get_wisdom()}"')
         print("=" * 60 + "\n")
 
         self.history.append(topic)
@@ -342,7 +332,7 @@ class RuleBreakingTeacher:
 
                 choice = int(choice)
                 if choice == len(self.lessons) + 1:
-                    print(f"\n🎵 \"{self.get_wisdom()}\"\n")
+                    print(f'\n🎵 "{self.get_wisdom()}"\n')
                     return
                 elif choice == len(self.lessons) + 2:
                     print("\nKeep breaking rules! 🎸\n")
@@ -359,7 +349,7 @@ class RuleBreakingTeacher:
 
         try:
             another = input("Learn another topic? (y/n): ").strip().lower()
-            if another == 'y':
+            if another == "y":
                 self.interactive_session()
         except EOFError:
             pass

@@ -5,6 +5,7 @@ This module provides a simplified, consistent API surface for all music_brain
 functionality, making it easier to integrate with desktop apps, web services,
 or other interfaces.
 """
+
 from typing import Annotated, Dict, List, Optional, Any, Tuple
 import os
 import sys
@@ -13,11 +14,11 @@ import asyncio
 import time
 
 try:
-    from fastapi import APIRouter, Body, FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
+    from fastapi import APIRouter, Body, FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.responses import FileResponse, StreamingResponse
-    from fastapi.concurrency import run_in_threadpool
-    from pydantic import BaseModel, Field, ValidationError
+    from fastapi.responses import FileResponse
+    from pydantic import BaseModel
+
     FASTAPI_AVAILABLE = True
 except ImportError:  # pragma: no cover - optional dependency
     FASTAPI_AVAILABLE = False
@@ -36,6 +37,7 @@ from music_brain.audio import (  # noqa: E402
     AudioAnalyzer,
     render_midi_to_audio,
 )
+
 try:
     from music_brain.harmony_utils import (
         HarmonyGenerator,
@@ -45,6 +47,7 @@ try:
         generate_midi_from_harmony,
     )
 except ImportError:  # pragma: no cover - compatibility shim for partial installs
+
     class HarmonyResult(dict):
         """Fallback harmony result container."""
 
@@ -59,6 +62,8 @@ except ImportError:  # pragma: no cover - compatibility shim for partial install
 
     def generate_midi_from_harmony(*args, **kwargs):
         return None
+
+
 try:
     from music_brain.groove import (
         extract_groove,
@@ -71,6 +76,7 @@ try:
         get_preset,
     )
 except ImportError:  # pragma: no cover - compatibility shim for partial installs
+
     class GrooveTemplate(dict):
         pass
 
@@ -94,6 +100,8 @@ except ImportError:  # pragma: no cover - compatibility shim for partial install
 
     def get_preset(*args, **kwargs):
         return {}
+
+
 from music_brain.structure import (  # noqa: E402
     analyze_chords,
     detect_sections,
@@ -114,7 +122,6 @@ from music_brain.session.intent_schema import (  # noqa: E402
     list_all_rules,
 )
 from music_brain.session.intent_processor import process_intent  # noqa: E402
-from music_brain.engine_api.schema import CompleteSongIntentRequest  # noqa: E402
 from music_brain.api_schemas.generate_v1 import (  # noqa: E402
     EmotionalIntent,
     GENERATE_REQUEST_OPENAPI_EXAMPLES,
@@ -124,6 +131,7 @@ from music_brain.api_schemas.generate_v1 import (  # noqa: E402
     TechnicalIntent,
 )
 from music_brain.pipeline import IntentPipeline  # noqa: E402
+
 try:
     from music_brain.data_utils.emotional_mapping import EMOTIONAL_PRESETS
 except ImportError:  # pragma: no cover - compatibility shim for partial installs
@@ -137,9 +145,11 @@ from music_brain.voice import (  # noqa: E402
     get_voice_profile,
     VoiceClassifier,
 )
+
 try:
     from music_brain.groove_kmidi.drum_humanizer import DrumHumanizer
 except ImportError:  # pragma: no cover - compatibility shim for partial installs
+
     class DrumHumanizer:  # type: ignore[override]
         def __init__(self, *args, **kwargs):
             pass
@@ -191,10 +201,7 @@ class DAiWAPI:
     # ========== Harmony Generation ==========
 
     def generate_harmony_from_intent(
-        self,
-        intent: CompleteSongIntent,
-        output_midi: Optional[str] = None,
-        tempo_bpm: int = 82
+        self, intent: CompleteSongIntent, output_midi: Optional[str] = None, tempo_bpm: int = 82
     ) -> Dict[str, Any]:
         """
         Generate harmony from a CompleteSongIntent.
@@ -240,7 +247,7 @@ class DAiWAPI:
         mode: str = "major",
         pattern: str = "I-V-vi-IV",
         output_midi: Optional[str] = None,
-        tempo_bpm: int = 82
+        tempo_bpm: int = 82,
     ) -> Dict[str, Any]:
         """
         Generate a basic chord progression.
@@ -256,9 +263,7 @@ class DAiWAPI:
             Dict with harmony result
         """
         harmony = self.harmony_generator.generate_basic_progression(
-            key=key,
-            mode=mode,
-            pattern=pattern
+            key=key, mode=mode, pattern=pattern
         )
 
         result = {
@@ -279,10 +284,7 @@ class DAiWAPI:
 
     # ========== Groove Operations ==========
 
-    def extract_groove_from_midi(
-        self,
-        midi_path: str
-    ) -> Dict[str, Any]:
+    def extract_groove_from_midi(self, midi_path: str) -> Dict[str, Any]:
         """
         Extract groove pattern from a MIDI file.
 
@@ -300,7 +302,7 @@ class DAiWAPI:
         midi_path: str,
         genre: str = "funk",
         intensity: float = 0.5,
-        output_path: Optional[str] = None
+        output_path: Optional[str] = None,
     ) -> str:
         """
         Apply a genre groove template to a MIDI file.
@@ -315,7 +317,7 @@ class DAiWAPI:
             Path to output MIDI file
         """
         if output_path is None:
-            output_path = str(Path(midi_path).with_suffix('.grooved.mid'))
+            output_path = str(Path(midi_path).with_suffix(".grooved.mid"))
 
         apply_groove(midi_path, genre=genre, output=output_path, intensity=intensity)
         return output_path
@@ -328,7 +330,7 @@ class DAiWAPI:
         preset: Optional[str] = None,
         drum_channel: int = 9,
         enable_ghost_notes: bool = True,
-        output_path: Optional[str] = None
+        output_path: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Apply humanization to drum track in MIDI file.
@@ -353,11 +355,11 @@ class DAiWAPI:
             settings = GrooveSettings(
                 complexity=complexity,
                 vulnerability=vulnerability,
-                enable_ghost_notes=enable_ghost_notes
+                enable_ghost_notes=enable_ghost_notes,
             )
 
         if output_path is None:
-            output_path = str(Path(midi_path).with_suffix('.humanized.mid'))
+            output_path = str(Path(midi_path).with_suffix(".humanized.mid"))
 
         result_path = humanize_midi_file(
             input_path=midi_path,
@@ -377,11 +379,7 @@ class DAiWAPI:
 
     # ========== Chord Analysis ==========
 
-    def analyze_midi_chords(
-        self,
-        midi_path: str,
-        include_sections: bool = False
-    ) -> Dict[str, Any]:
+    def analyze_midi_chords(self, midi_path: str, include_sections: bool = False) -> Dict[str, Any]:
         """
         Analyze chord progression in a MIDI file.
 
@@ -415,10 +413,7 @@ class DAiWAPI:
 
         return result
 
-    def diagnose_progression(
-        self,
-        progression: str
-    ) -> Dict[str, Any]:
+    def diagnose_progression(self, progression: str) -> Dict[str, Any]:
         """
         Diagnose issues in a chord progression string.
 
@@ -431,10 +426,7 @@ class DAiWAPI:
         return diagnose_progression(progression)
 
     def suggest_reharmonizations(
-        self,
-        progression: str,
-        style: str = "jazz",
-        count: int = 3
+        self, progression: str, style: str = "jazz", count: int = 3
     ) -> List[Dict[str, str]]:
         """
         Generate reharmonization suggestions.
@@ -463,10 +455,11 @@ class DAiWAPI:
 
     def analyze_audio_waveform(self, samples: np.ndarray, sample_rate: int) -> Dict[str, Any]:
         analyzer = getattr(self, "audio_analyzer", AudioAnalyzer(sample_rate=sample_rate))
-        result = analyzer.analyze_audio(
-            samples, sample_rate) if hasattr(
-            analyzer, "analyze_audio") else analyzer.analyze_waveform(
-            samples, sample_rate)
+        result = (
+            analyzer.analyze_audio(samples, sample_rate)
+            if hasattr(analyzer, "analyze_audio")
+            else analyzer.analyze_waveform(samples, sample_rate)
+        )
         return result.to_dict() if hasattr(result, "to_dict") else result
 
     def detect_audio_bpm(self, samples: np.ndarray, sample_rate: int) -> float:
@@ -555,7 +548,7 @@ class DAiWAPI:
         text: str,
         motivation: int = 7,
         chaos_tolerance: float = 0.5,
-        output_midi: Optional[str] = None
+        output_midi: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Process emotional text through therapy session and generate MIDI.
@@ -578,12 +571,10 @@ class DAiWAPI:
             "affect": {
                 "primary": affect,
                 "secondary": (
-                    session.state.affect_result.secondary
-                    if session.state.affect_result else None
+                    session.state.affect_result.secondary if session.state.affect_result else None
                 ),
                 "intensity": (
-                    session.state.affect_result.intensity
-                    if session.state.affect_result else 0.0
+                    session.state.affect_result.intensity if session.state.affect_result else 0.0
                 ),
             },
             "plan": {
@@ -605,9 +596,7 @@ class DAiWAPI:
     # ========== Intent Processing ==========
 
     def process_song_intent(
-        self,
-        intent: CompleteSongIntent,
-        output_json: Optional[str] = None
+        self, intent: CompleteSongIntent, output_json: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Process a CompleteSongIntent and generate all musical elements.
@@ -624,17 +613,17 @@ class DAiWAPI:
         # Convert to serializable format with safe dict access
         # Provide defaults for all keys in case process_intent returns incomplete data
         output = {
-            "intent_summary": result.get('intent_summary', {}),
+            "intent_summary": result.get("intent_summary", {}),
         }
 
         # Safely extract harmony data
-        harmony = result.get('harmony')
+        harmony = result.get("harmony")
         if harmony:
             output["harmony"] = {
-                "chords": getattr(harmony, 'chords', []),
-                "roman_numerals": getattr(harmony, 'roman_numerals', []),
-                "rule_broken": getattr(harmony, 'rule_broken', ""),
-                "rule_effect": getattr(harmony, 'rule_effect', ""),
+                "chords": getattr(harmony, "chords", []),
+                "roman_numerals": getattr(harmony, "roman_numerals", []),
+                "rule_broken": getattr(harmony, "rule_broken", ""),
+                "rule_effect": getattr(harmony, "rule_effect", ""),
             }
         else:
             output["harmony"] = {
@@ -645,14 +634,14 @@ class DAiWAPI:
             }
 
         # Safely extract groove data
-        groove = result.get('groove')
+        groove = result.get("groove")
         if groove:
             output["groove"] = {
-                "pattern_name": getattr(groove, 'pattern_name', ""),
-                "tempo_bpm": getattr(groove, 'tempo_bpm', 120),
-                "swing_factor": getattr(groove, 'swing_factor', 0.0),
-                "rule_broken": getattr(groove, 'rule_broken', ""),
-                "rule_effect": getattr(groove, 'rule_effect', ""),
+                "pattern_name": getattr(groove, "pattern_name", ""),
+                "tempo_bpm": getattr(groove, "tempo_bpm", 120),
+                "swing_factor": getattr(groove, "swing_factor", 0.0),
+                "rule_broken": getattr(groove, "rule_broken", ""),
+                "rule_effect": getattr(groove, "rule_effect", ""),
             }
         else:
             output["groove"] = {
@@ -664,12 +653,12 @@ class DAiWAPI:
             }
 
         # Safely extract arrangement data
-        arrangement = result.get('arrangement')
+        arrangement = result.get("arrangement")
         if arrangement:
             output["arrangement"] = {
-                "sections": getattr(arrangement, 'sections', []),
-                "dynamic_arc": getattr(arrangement, 'dynamic_arc', []),
-                "rule_broken": getattr(arrangement, 'rule_broken', ""),
+                "sections": getattr(arrangement, "sections", []),
+                "dynamic_arc": getattr(arrangement, "dynamic_arc", []),
+                "rule_broken": getattr(arrangement, "rule_broken", ""),
             }
         else:
             output["arrangement"] = {
@@ -679,13 +668,13 @@ class DAiWAPI:
             }
 
         # Safely extract production data
-        production = result.get('production')
+        production = result.get("production")
         if production:
             output["production"] = {
-                "vocal_treatment": getattr(production, 'vocal_treatment', ""),
-                "eq_notes": getattr(production, 'eq_notes', ""),
-                "dynamics_notes": getattr(production, 'dynamics_notes', ""),
-                "rule_broken": getattr(production, 'rule_broken', ""),
+                "vocal_treatment": getattr(production, "vocal_treatment", ""),
+                "eq_notes": getattr(production, "eq_notes", ""),
+                "dynamics_notes": getattr(production, "dynamics_notes", ""),
+                "rule_broken": getattr(production, "rule_broken", ""),
             }
         else:
             output["production"] = {
@@ -700,10 +689,7 @@ class DAiWAPI:
 
         return output
 
-    def suggest_rule_breaks(
-        self,
-        emotion: str
-    ) -> List[Dict[str, str]]:
+    def suggest_rule_breaks(self, emotion: str) -> List[Dict[str, str]]:
         """
         Get rule-breaking suggestions for an emotion.
 
@@ -724,10 +710,7 @@ class DAiWAPI:
         """
         return list_all_rules()
 
-    def validate_song_intent(
-        self,
-        intent: CompleteSongIntent
-    ) -> List[str]:
+    def validate_song_intent(self, intent: CompleteSongIntent) -> List[str]:
         """
         Validate a CompleteSongIntent.
 
@@ -836,9 +819,12 @@ def generate_structured_lyrics(intent: Any) -> str:
     ]
 
     generated = "\n".join(
-        ["[Verse 1]"] + verse1
-        + ["", "[Chorus]"] + chorus
-        + ["", "[Verse 2]"] + verse2
+        ["[Verse 1]"]
+        + verse1
+        + ["", "[Chorus]"]
+        + chorus
+        + ["", "[Verse 2]"]
+        + verse2
         + ["", "[Chorus]", *chorus]
     )
     _SESSION_STATE["last_generated_lyrics"] = generated
@@ -903,10 +889,10 @@ if FASTAPI_AVAILABLE:
     # Add CORS middleware to allow requests from frontend.
     # Override with KMIDI_CORS_ORIGINS env var (comma-separated) in production.
     _default_cors_origins = [
-        "http://localhost:1420",   # Vite dev server
+        "http://localhost:1420",  # Vite dev server
         "http://127.0.0.1:1420",  # Vite dev server (alternative)
-        "tauri://localhost",       # Tauri app
-        "http://localhost:5173",   # Alternative Vite port
+        "tauri://localhost",  # Tauri app
+        "http://localhost:5173",  # Alternative Vite port
     ]
     _cors_env = os.environ.get("KMIDI_CORS_ORIGINS", "")
     _cors_origins = (
@@ -932,18 +918,25 @@ if FASTAPI_AVAILABLE:
             content="<h1>KmiDi Sound Engine</h1><p>Visit <a href='/docs'>/docs</a></p>"
         )
 
-    @app.get("/health", summary="Pulse Check",
-             description="Quick heartbeat — is the sound engine running?")
+    @app.get(
+        "/health",
+        summary="Pulse Check",
+        description="Quick heartbeat — is the sound engine running?",
+    )
     async def health():
         return {"status": "ok", "version": "0.2.0"}
 
-    # Sandbox for /audio/ serving: only files under this directory are allowed (prevents path traversal).
+    # Sandbox for /audio/ serving: only files under this directory are allowed
+    # (prevents path traversal).
     _audio_serve_root = Path(
         os.environ.get("KMIDI_AUDIO_SERVE_ROOT", str(tempfile.gettempdir()))
     ).resolve()
 
     def _resolve_audio_path_sandbox(audio_path: str) -> Path:
-        """Resolve audio_path and ensure it is under _audio_serve_root. Raises HTTPException 400 if outside."""
+        """Resolve audio_path and ensure it is under _audio_serve_root.
+
+        Raises HTTPException 400 if outside.
+        """
         resolved = Path(audio_path).resolve()
         try:
             resolved.relative_to(_audio_serve_root)
@@ -955,11 +948,18 @@ if FASTAPI_AVAILABLE:
             ) from None
         return resolved
 
-    @app.get("/audio/{file_path:path}", summary="Stream Audio",
-             description="Stream any generated audio file — WAV, MP3, FLAC, OGG.")
+    @app.get(
+        "/audio/{file_path:path}",
+        summary="Stream Audio",
+        description="Stream any generated audio file — WAV, MP3, FLAC, OGG.",
+    )
     async def serve_audio(file_path: str):
-        """Stream generated audio files for playback. Paths are restricted to KMIDI_AUDIO_SERVE_ROOT (default: temp)."""
+        """Stream generated audio files for playback.
+
+        Paths are restricted to KMIDI_AUDIO_SERVE_ROOT (default: temp).
+        """
         import urllib.parse
+
         decoded_path = urllib.parse.unquote(file_path)
         audio_file = Path(decoded_path).resolve()
 
@@ -982,8 +982,8 @@ if FASTAPI_AVAILABLE:
         if not audio_file.exists():
             logging.error(f"Audio file not found: {decoded_path}")
             # Try to find alternative paths (maybe MIDI file exists but audio doesn't)
-            if decoded_path.endswith(('.wav', '.mp3', '.ogg')):
-                midi_path = decoded_path.rsplit('.', 1)[0] + '.mid'
+            if decoded_path.endswith((".wav", ".mp3", ".ogg")):
+                midi_path = decoded_path.rsplit(".", 1)[0] + ".mid"
                 if Path(midi_path).exists():
                     logging.warning(
                         f"Audio file not found, but MIDI exists: {midi_path}. "
@@ -994,7 +994,7 @@ if FASTAPI_AVAILABLE:
                 detail=(
                     f"Audio file not found: {decoded_path}. "
                     "The file may not have been generated yet or may have been cleaned up."
-                )
+                ),
             )
 
         if not audio_file.is_file():
@@ -1023,15 +1023,15 @@ if FASTAPI_AVAILABLE:
             path=str(audio_file),
             media_type=media_type,
             filename=audio_file.name,
-            headers={
-                "Accept-Ranges": "bytes",
-                "Content-Length": str(audio_file.stat().st_size)
-            }
+            headers={"Accept-Ranges": "bytes", "Content-Length": str(audio_file.stat().st_size)},
         )
 
-    @app.get("/emotions", summary="Read the Room",
-             description="Get the list of emotions the AI currently understands — "
-                         "from tender intimacy to fierce energy.")
+    @app.get(
+        "/emotions",
+        summary="Read the Room",
+        description="Get the list of emotions the AI currently understands — "
+        "from tender intimacy to fierce energy.",
+    )
     @api_error_handler(log_message="Failed to list emotions", detail=_HTTP_500_DETAIL)
     async def list_emotions():
         return sorted(EMOTIONAL_PRESETS.keys())
@@ -1089,9 +1089,12 @@ if FASTAPI_AVAILABLE:
                 )
         return events, current_time
 
-    @app.get("/config/humanizer", summary="Feel Settings",
-             description="Check the humanizer — timing drift, velocity curves, "
-                         "and micro-groove that make MIDI feel like a real player.")
+    @app.get(
+        "/config/humanizer",
+        summary="Feel Settings",
+        description="Check the humanizer — timing drift, velocity curves, "
+        "and micro-groove that make MIDI feel like a real player.",
+    )
     async def humanizer_config():
         """
         Return current humanizer/analysis config.
@@ -1110,16 +1113,22 @@ if FASTAPI_AVAILABLE:
         "high": {"anchor_density": "dense", "n_particles": 1800, "fps": 24},
     }
 
-    @app.get("/spectocloud/presets", summary="Visual Presets",
-             description="Browse Spectocloud particle presets — colors, shapes, "
-                         "and motion styles that paint your sound.")
+    @app.get(
+        "/spectocloud/presets",
+        summary="Visual Presets",
+        description="Browse Spectocloud particle presets — colors, shapes, "
+        "and motion styles that paint your sound.",
+    )
     async def spectocloud_presets():
         """List Spectocloud rendering presets (anchor density, particle count, fps)."""
         return SPECTO_PRESETS
 
-    @app.put("/config/humanizer", summary="Adjust Feel",
-             description="Dial in the human feel — timing drift, velocity curves, "
-                         "micro-groove. Like tweaking a compressor, but for soul.")
+    @app.put(
+        "/config/humanizer",
+        summary="Adjust Feel",
+        description="Dial in the human feel — timing drift, velocity curves, "
+        "micro-groove. Like tweaking a compressor, but for soul.",
+    )
     async def update_humanizer_config(payload: Dict[str, Any]):
         """
         Persist humanizer/analysis configuration.
@@ -1132,7 +1141,7 @@ if FASTAPI_AVAILABLE:
         cfg_dir.mkdir(parents=True, exist_ok=True)
         normalized = _normalize_humanizer_config(payload)
         cfg_path = cfg_dir / "humanizer.json"
-        
+
         success = save_json_config(cfg_path, normalized)
         if not success:
             raise HTTPException(status_code=500, detail="Failed to save humanizer config")
@@ -1142,9 +1151,12 @@ if FASTAPI_AVAILABLE:
             logging.exception("Failed to reload humanizer after config update")
         return normalized
 
-    @app.post("/config/humanizer/reload", summary="Recall Feel Preset",
-              description="Reset the humanizer to its saved state — like hitting "
-                          "'recall' on a mixer channel strip.")
+    @app.post(
+        "/config/humanizer/reload",
+        summary="Recall Feel Preset",
+        description="Reset the humanizer to its saved state — like hitting "
+        "'recall' on a mixer channel strip.",
+    )
     @api_error_handler(log_message="Failed to reload humanizer", detail=_HTTP_500_DETAIL)
     async def reload_humanizer():
         """Force reload of the in-memory humanizer/analyzer from config/humanizer.json."""
@@ -1165,9 +1177,12 @@ if FASTAPI_AVAILABLE:
         anchor_density: str = "normal"
         n_particles: int = 1200
 
-    @app.post("/spectocloud/render", summary="Paint Your Sound",
-              description="Render a Spectocloud visualization — see your music "
-                          "as a living particle cloud of light and color.")
+    @app.post(
+        "/spectocloud/render",
+        summary="Paint Your Sound",
+        description="Render a Spectocloud visualization — see your music "
+        "as a living particle cloud of light and color.",
+    )
     @api_error_handler(log_message="spectocloud render failed", detail=_HTTP_500_DETAIL)
     async def render_spectocloud(payload: SpectocloudRenderRequest):
         """
@@ -1202,7 +1217,7 @@ if FASTAPI_AVAILABLE:
                 detail=(
                     "Audio file analysis not yet implemented. "
                     "Please provide midi_file_path or midi_events instead."
-                )
+                ),
             )
 
         if payload.midi_file_path:
@@ -1213,8 +1228,8 @@ if FASTAPI_AVAILABLE:
 
         if not events:
             raise HTTPException(
-                status_code=400,
-                detail="provide audio_file_path, midi_file_path, or midi_events")
+                status_code=400, detail="provide audio_file_path, midi_file_path, or midi_events"
+            )
         if duration is None or duration <= 0:
             # try to infer from events time
             max_time = max((e.get("time", 0) or 0) for e in events)
@@ -1238,7 +1253,8 @@ if FASTAPI_AVAILABLE:
         )
         if not specto.frames:
             raise HTTPException(
-                status_code=400, detail="No frames generated; check duration/window_size")
+                status_code=400, detail="No frames generated; check duration/window_size"
+            )
         mode = payload.mode.lower()
         if mode not in {"static", "animation"}:
             raise HTTPException(status_code=400, detail="mode must be 'static' or 'animation'")
@@ -1249,8 +1265,7 @@ if FASTAPI_AVAILABLE:
             if payload.output_path:
                 out_path = str(_resolve_audio_path_sandbox(payload.output_path))
             else:
-                out_path = str(
-                    Path(tempfile.gettempdir()) / "spectocloud_frame.png")
+                out_path = str(Path(tempfile.gettempdir()) / "spectocloud_frame.png")
             specto.render_static_frame(
                 frame_idx=min(payload.frame_idx, max(0, len(specto.frames) - 1)),
                 output_path=out_path,
@@ -1267,8 +1282,7 @@ if FASTAPI_AVAILABLE:
         if payload.output_path:
             out_path = str(_resolve_audio_path_sandbox(payload.output_path))
         else:
-            out_path = str(
-                Path(tempfile.gettempdir()) / "spectocloud_anim.gif")
+            out_path = str(Path(tempfile.gettempdir()) / "spectocloud_anim.gif")
         specto.render_animation(
             output_path=out_path,
             fps=payload.fps,
@@ -1289,9 +1303,9 @@ if FASTAPI_AVAILABLE:
         output_audio = None
         stamp = int(time.time())
         tmpdir = Path(tempfile.gettempdir())
-        if output_format in ['mid', 'midi']:
+        if output_format in ["mid", "midi"]:
             output_midi = str(tmpdir / f"generated_{stamp}.mid")
-        elif output_format in ['wav', 'mp3']:
+        elif output_format in ["wav", "mp3"]:
             output_audio = str(tmpdir / f"generated_{stamp}.{output_format}")
             output_midi = str(tmpdir / f"generated_{stamp}.mid")
         return output_midi, output_audio
@@ -1310,14 +1324,17 @@ if FASTAPI_AVAILABLE:
             orchestration_dict_to_instruments,
             ttg_dict_to_structure_list,
         )
+
         t_dict = pydantic_to_dict(tech)
         structure = (
             ttg_dict_to_structure_list(t_dict.get("timeline", {}))
-            if t_dict.get("timeline") else None
+            if t_dict.get("timeline")
+            else None
         )
         instruments = (
             orchestration_dict_to_instruments(t_dict.get("orchestration", {}))
-            if t_dict.get("orchestration") else None
+            if t_dict.get("orchestration")
+            else None
         )
         return structure, instruments
 
@@ -1347,8 +1364,7 @@ if FASTAPI_AVAILABLE:
 
         if structure:
             total_structure_bars = sum(
-                section.get("bars", 4) * section.get("repetitions", 1)
-                for section in structure
+                section.get("bars", 4) * section.get("repetitions", 1) for section in structure
             )
             if total_structure_bars > 0:
                 length_bars = total_structure_bars
@@ -1406,12 +1422,10 @@ if FASTAPI_AVAILABLE:
                     {
                         "name": (
                             inst.get("name", "instrument")
-                            if isinstance(inst, dict) else "instrument"
+                            if isinstance(inst, dict)
+                            else "instrument"
                         ),
-                        "type": (
-                            inst.get("type", "chord")
-                            if isinstance(inst, dict) else "chord"
-                        ),
+                        "type": (inst.get("type", "chord") if isinstance(inst, dict) else "chord"),
                         "channel": inst.get("channel") if isinstance(inst, dict) else None,
                     }
                     for inst in instruments
@@ -1430,10 +1444,7 @@ if FASTAPI_AVAILABLE:
                     logging.exception("Audio render failed from MIDI")
                     raise HTTPException(
                         status_code=500,
-                        detail=(
-                            f"MIDI generated but audio render failed: "
-                            f"{render_exc}"
-                        ),
+                        detail=(f"MIDI generated but audio render failed: " f"{render_exc}"),
                     )
                 response["audio_path"] = audio_path
                 response["output_path"] = audio_path
@@ -1461,19 +1472,29 @@ if FASTAPI_AVAILABLE:
                         detail="technical payload is required for complete intent generation",
                     )
 
-                from music_brain.orchestrator.orchestrator import AIOrchestrator, OrchestratorConfig, Pipeline
-                from music_brain.orchestrator.processors.intent import IntentProcessor as OrchestratorIntentProcessor
-                from music_brain.orchestrator.processors.harmony import HarmonyProcessor as OrchestratorHarmonyProcessor
-                from music_brain.orchestrator.processors.groove import GrooveProcessor as OrchestratorGrooveProcessor
-                
+                from music_brain.orchestrator.orchestrator import (
+                    AIOrchestrator,
+                    OrchestratorConfig,
+                    Pipeline,
+                )
+                from music_brain.orchestrator.processors.intent import (
+                    IntentProcessor as OrchestratorIntentProcessor,
+                )
+                from music_brain.orchestrator.processors.harmony import (
+                    HarmonyProcessor as OrchestratorHarmonyProcessor,
+                )
+                from music_brain.orchestrator.processors.groove import (
+                    GrooveProcessor as OrchestratorGrooveProcessor,
+                )
+
                 config = OrchestratorConfig(enable_logging=True)
                 orchestrator = AIOrchestrator(config)
-                
+
                 pipeline = Pipeline("http_generate")
                 pipeline.add_stage("intent", OrchestratorIntentProcessor())
                 pipeline.add_stage("harmony", OrchestratorHarmonyProcessor())
                 pipeline.add_stage("groove", OrchestratorGrooveProcessor())
-                
+
                 key_raw = getattr(tech, "key", "C major") if tech else "C major"
                 key_parts = key_raw.split(maxsplit=1)
                 key_root = key_parts[0] if key_parts else "C"
@@ -1481,7 +1502,7 @@ if FASTAPI_AVAILABLE:
                 base_bpm = getattr(tech, "bpm", 120) if tech else 120
                 if base_bpm is None:
                     base_bpm = 120
-                
+
                 input_data = {
                     "title": "Generated Song",
                     "phase_0": {
@@ -1496,9 +1517,9 @@ if FASTAPI_AVAILABLE:
                         "technical_key": key_root,
                         "technical_mode": key_mode,
                         "technical_tempo_range": [base_bpm, base_bpm],
-                    }
+                    },
                 }
-                
+
                 pipeline_result = await orchestrator.execute(pipeline, input_data)
                 if not pipeline_result.success:
                     raise HTTPException(
@@ -1513,8 +1534,12 @@ if FASTAPI_AVAILABLE:
 
                 res_output: Dict[str, Any] = {
                     "intent_summary": {
-                        "mood": intent_res.get("intent", {}).get("phase_1", {}).get("mood_primary", ""),
-                        "rule_broken": intent_res.get("intent", {}).get("phase_2", {}).get("technical_rule_to_break", ""),
+                        "mood": intent_res.get("intent", {})
+                        .get("phase_1", {})
+                        .get("mood_primary", ""),
+                        "rule_broken": intent_res.get("intent", {})
+                        .get("phase_2", {})
+                        .get("technical_rule_to_break", ""),
                     },
                     "harmony": {
                         "chords": harmony.get("chords", []),
@@ -1538,8 +1563,13 @@ if FASTAPI_AVAILABLE:
                 if output_midi and res_output.get("harmony"):
                     try:
                         plan = _build_harmony_plan(
-                            tech, res_output, key_root, key_mode, base_bpm,
-                            structure, instruments,
+                            tech,
+                            res_output,
+                            key_root,
+                            key_mode,
+                            base_bpm,
+                            structure,
+                            instruments,
                         )
                         res_output["midi_path"] = render_plan_to_midi(plan, output_midi)
                     except Exception as midi_exc:
@@ -1551,8 +1581,15 @@ if FASTAPI_AVAILABLE:
 
                 lyric_text, lyric_source = select_lyric_payload(request.intent)
                 return _build_generate_response(
-                    request, res_output, tech, lyric_text, lyric_source,
-                    structure, instruments, output_midi, output_audio,
+                    request,
+                    res_output,
+                    tech,
+                    lyric_text,
+                    lyric_source,
+                    structure,
+                    instruments,
+                    output_midi,
+                    output_audio,
                 )
 
             # Legacy fallback retained for safety if forced externally.
@@ -1598,7 +1635,8 @@ if FASTAPI_AVAILABLE:
                 response["midi_path"] = result["midi_path"]
                 if output_audio:
                     response["audio_path"] = result["midi_path"].replace(
-                        ".mid", f".{request.output_format}")
+                        ".mid", f".{request.output_format}"
+                    )
                     response["output_path"] = response["audio_path"]
                 else:
                     response["output_path"] = result["midi_path"]
@@ -1613,10 +1651,13 @@ if FASTAPI_AVAILABLE:
                 detail="Generation timed out (30s). Try simpler parameters.",
             )
 
-    @app.post("/generate", summary="Compose Music",
-              description="Bring your musical vision to life — describe a mood, "
-                          "pick instruments, set the groove, and let the engine "
-                          "compose harmony, melody, and full arrangement.")
+    @app.post(
+        "/generate",
+        summary="Compose Music",
+        description="Bring your musical vision to life — describe a mood, "
+        "pick instruments, set the groove, and let the engine "
+        "compose harmony, melody, and full arrangement.",
+    )
     async def generate_music(
         request: Annotated[
             GenerateRequest,
@@ -1634,7 +1675,7 @@ if FASTAPI_AVAILABLE:
         "/generate",
         summary="Compose Music (PRD v1)",
         description="Versioned generate — intent_schema_version, TTG timeline, "
-                    "orchestration (docs/prd/KMIDI_PRD.md). Same handler as /generate.",
+        "orchestration (docs/prd/KMIDI_PRD.md). Same handler as /generate.",
     )
     async def generate_music_v1(
         request: Annotated[
@@ -1646,24 +1687,29 @@ if FASTAPI_AVAILABLE:
 
     app.include_router(v1_router)
 
-    @app.post("/interrogate", summary="Consult the Muse",
-              description="Ask the engine exactly how it interpreted your intent — "
-                          "see the invisible connections it made.")
+    @app.post(
+        "/interrogate",
+        summary="Consult the Muse",
+        description="Ask the engine exactly how it interpreted your intent — "
+        "see the invisible connections it made.",
+    )
     @api_error_handler(log_message="interrogate failed", detail=_HTTP_500_DETAIL)
     async def interrogate(request: InterrogateRequest):
         """Query the current state, logic, or meaning of the session."""
         return {
             "status": "success",
             "reply": (
-                f"Noted: {request.message}. "
-                "Consider clarifying the desired mood or groove."
+                f"Noted: {request.message}. " "Consider clarifying the desired mood or groove."
             ),
             "session_id": request.session_id,
         }
 
-    @app.post("/lyrics", summary="Write Lyrics",
-              description="Paste or write your lyrics so the engine can weave them "
-                          "into the musical fabric.")
+    @app.post(
+        "/lyrics",
+        summary="Write Lyrics",
+        description="Paste or write your lyrics so the engine can weave them "
+        "into the musical fabric.",
+    )
     @api_error_handler(log_message="Failed to set lyrics", detail=_HTTP_500_DETAIL)
     async def set_lyrics_endpoint(payload: LyricsRequest):
         """
@@ -1671,8 +1717,11 @@ if FASTAPI_AVAILABLE:
         """
         return set_lyrics(payload.lyrics, source=payload.source or "user")
 
-    @app.get("/lyrics", summary="Read Lyrics",
-             description="Retrieve the current lyrics — your words, your story.")
+    @app.get(
+        "/lyrics",
+        summary="Read Lyrics",
+        description="Retrieve the current lyrics — your words, your story.",
+    )
     @api_error_handler(log_message="Failed to fetch lyrics", detail=_HTTP_500_DETAIL)
     async def get_lyrics_endpoint():
         """
@@ -1691,9 +1740,12 @@ if FASTAPI_AVAILABLE:
         audio_path: str
         top_k: Optional[int] = 3
 
-    @app.post("/audio/classify", summary="Hear the Feeling",
-              description="Drop in an audio clip and discover its emotional signature — "
-                          "what feelings does this sound carry?")
+    @app.post(
+        "/audio/classify",
+        summary="Hear the Feeling",
+        description="Drop in an audio clip and discover its emotional signature — "
+        "what feelings does this sound carry?",
+    )
     @api_error_handler(log_message="audio classify failed", detail="Internal server error.")
     async def classify_audio(request: AudioClassifyRequest):
         """
@@ -1710,7 +1762,7 @@ if FASTAPI_AVAILABLE:
             if not classifier.is_available():
                 raise HTTPException(
                     status_code=503,
-                    detail="Audio classifier model not available. Check model checkpoints."
+                    detail="Audio classifier model not available. Check model checkpoints.",
                 )
 
             result = classifier.classify(str(safe_path), top_k=request.top_k)
@@ -1726,9 +1778,12 @@ if FASTAPI_AVAILABLE:
         except FileNotFoundError:
             raise HTTPException(status_code=404, detail="Audio file not found.")
 
-    @app.post("/audio/valence-arousal", summary="Mood Map",
-              description="Map any sound onto the feeling grid — how positive/negative "
-                          "and how energetic/calm.")
+    @app.post(
+        "/audio/valence-arousal",
+        summary="Mood Map",
+        description="Map any sound onto the feeling grid — how positive/negative "
+        "and how energetic/calm.",
+    )
     @api_error_handler(log_message="audio valence-arousal failed", detail="Internal server error.")
     async def get_audio_valence_arousal(request: AudioClassifyRequest):
         """
@@ -1742,10 +1797,7 @@ if FASTAPI_AVAILABLE:
 
             classifier = AudioEmotionClassifier(model_type=request.model_type)
             if not classifier.is_available():
-                raise HTTPException(
-                    status_code=503,
-                    detail="Audio classifier model not available."
-                )
+                raise HTTPException(status_code=503, detail="Audio classifier model not available.")
 
             va = classifier.get_valence_arousal(str(safe_path))
             return {
@@ -1763,9 +1815,12 @@ if FASTAPI_AVAILABLE:
         except FileNotFoundError:
             raise HTTPException(status_code=404, detail="Audio file not found.")
 
-    @app.get("/audio/models", summary="Loaded AI Ears",
-             description="See which AI listening models are active — emotion classifiers, "
-                         "timbre analyzers, and more.")
+    @app.get(
+        "/audio/models",
+        summary="Loaded AI Ears",
+        description="See which AI listening models are active — emotion classifiers, "
+        "timbre analyzers, and more.",
+    )
     @api_error_handler(log_message="list audio models failed", detail=_HTTP_500_DETAIL)
     async def list_audio_models():
         """List active audio classification models."""
@@ -1775,10 +1830,12 @@ if FASTAPI_AVAILABLE:
         if models_dir.exists():
             for model_dir in models_dir.iterdir():
                 if model_dir.is_dir() and (model_dir / "best.pt").exists():
-                    available.append({
-                        "name": model_dir.name,
-                        "path": str(model_dir / "best.pt"),
-                    })
+                    available.append(
+                        {
+                            "name": model_dir.name,
+                            "path": str(model_dir / "best.pt"),
+                        }
+                    )
 
         return {
             "status": "success",
@@ -1786,9 +1843,12 @@ if FASTAPI_AVAILABLE:
             "supported_types": ["emotion_7", "voice_type"],
         }
 
-    @app.post("/voice/classify", summary="Voice Range",
-              description="Identify a singer's range — soprano, alto, tenor, or bass — "
-                          "so the engine can write in their sweet spot.")
+    @app.post(
+        "/voice/classify",
+        summary="Voice Range",
+        description="Identify a singer's range — soprano, alto, tenor, or bass — "
+        "so the engine can write in their sweet spot.",
+    )
     @api_error_handler(log_message="voice classify failed", detail="Internal server error.")
     async def classify_voice(request: VoiceClassifyRequest):
         """Identify vocal range from audio."""
@@ -1799,10 +1859,13 @@ if FASTAPI_AVAILABLE:
         except FileNotFoundError:
             raise HTTPException(status_code=404, detail="Audio file not found.")
 
-    @app.get("/ai/jepa/status", summary="JEPA Models Status",
-             description="Check the status of Audio-JEPA, Chord-JEPA, and "
-                         "Stem-JEPA models — the AI ears that understand "
-                         "musical structure and compatibility.")
+    @app.get(
+        "/ai/jepa/status",
+        summary="JEPA Models Status",
+        description="Check the status of Audio-JEPA, Chord-JEPA, and "
+        "Stem-JEPA models — the AI ears that understand "
+        "musical structure and compatibility.",
+    )
     async def jepa_status():
         """Report JEPA model integration status."""
         try:
@@ -1810,6 +1873,7 @@ if FASTAPI_AVAILABLE:
                 AudioJEPAConfig,
                 ChordJEPAConfig,
             )
+
             audio_cfg = AudioJEPAConfig()
             chord_cfg = ChordJEPAConfig()
             return {

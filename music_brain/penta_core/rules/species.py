@@ -16,6 +16,7 @@ class Species(Enum):
         FOURTH: Syncopated suspensions, dissonance preparation/resolution
         FIFTH: Florid counterpoint, combining all prior species
     """
+
     FIRST = auto()
     SECOND = auto()
     THIRD = auto()

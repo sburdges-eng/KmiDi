@@ -15,6 +15,7 @@ from enum import Enum
 
 class NeoRiemannianTransform(Enum):
     """Basic Neo-Riemannian transformations."""
+
     P = "P"  # Parallel: major <-> minor (same root)
     R = "R"  # Relative: major <-> relative minor
     L = "L"  # Leading-tone exchange
@@ -30,6 +31,7 @@ NOTES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
 @dataclass
 class Triad:
     """A musical triad (3-note chord)."""
+
     root: str
     quality: str  # "major" or "minor"
 
@@ -205,8 +207,11 @@ def get_transform_path(
         if len(path) >= max_length:
             continue
 
-        for transform in [NeoRiemannianTransform.P, NeoRiemannianTransform.R,
-                          NeoRiemannianTransform.L]:
+        for transform in [
+            NeoRiemannianTransform.P,
+            NeoRiemannianTransform.R,
+            NeoRiemannianTransform.L,
+        ]:
             next_triad = apply_transform(current, transform)
             next_str = str(next_triad)
 
@@ -280,10 +285,13 @@ def analyze_progression_transforms(
     transforms = []
 
     for i in range(len(chords) - 1):
-        current = Triad(chords[i][0], "major" if "maj" in chords[i]
-                        [1] or chords[i][1] == "" else "minor")
-        next_chord = Triad(chords[i + 1][0], "major" if "maj" in chords[i + 1]
-                           [1] or chords[i + 1][1] == "" else "minor")
+        current = Triad(
+            chords[i][0], "major" if "maj" in chords[i][1] or chords[i][1] == "" else "minor"
+        )
+        next_chord = Triad(
+            chords[i + 1][0],
+            "major" if "maj" in chords[i + 1][1] or chords[i + 1][1] == "" else "minor",
+        )
 
         # Find single transform
         found = None

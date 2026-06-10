@@ -13,6 +13,7 @@ from pathlib import Path
 
 class JespaEffectType(Enum):
     """Types of Jespa video effects."""
+
     COLOR_GRADE = "color_grade"
     BLUR = "blur"
     GLOW = "glow"
@@ -27,6 +28,7 @@ class JespaEffectType(Enum):
 
 class TransitionType(Enum):
     """Video transition types."""
+
     CUT = "cut"
     CROSSFADE = "crossfade"
     DISSOLVE = "dissolve"
@@ -200,10 +202,7 @@ class JespaConnector:
         self._effects.clear()
 
     def process_video(
-        self,
-        input_path: Path,
-        output_path: Path,
-        progress_callback: Optional[callable] = None
+        self, input_path: Path, output_path: Path, progress_callback: Optional[callable] = None
     ) -> bool:
         """
         Process a video file with all configured effects.
@@ -233,11 +232,7 @@ class JespaConnector:
 
         return False
 
-    def process_frame(
-        self,
-        frame_data: bytes,
-        frame_format: str = "png"
-    ) -> Optional[bytes]:
+    def process_frame(self, frame_data: bytes, frame_format: str = "png") -> Optional[bytes]:
         """
         Process a single frame with effects.
 
@@ -265,7 +260,7 @@ class JespaConnector:
         transition_type: TransitionType,
         start_time: float,
         duration: float,
-        parameters: Optional[Dict[str, Any]] = None
+        parameters: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """
         Add a transition effect at a specific time.
@@ -288,11 +283,7 @@ class JespaConnector:
 
         return False
 
-    def create_emotion_preset(
-        self,
-        emotion: str,
-        intensity: float = 1.0
-    ) -> List[JespaEffect]:
+    def create_emotion_preset(self, emotion: str, intensity: float = 1.0) -> List[JespaEffect]:
         """
         Create a preset effect stack for an emotion.
 

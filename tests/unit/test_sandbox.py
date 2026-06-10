@@ -33,11 +33,13 @@ def test_make_policy_validates_inputs(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
         make_policy(allowed_executables=[], allowed_cwds=[tmp_path], wall_timeout_s=0)
     with pytest.raises(ValueError):
-        make_policy(allowed_executables=[], allowed_cwds=[tmp_path],
-                    wall_timeout_s=1, memory_limit_bytes=0)
+        make_policy(
+            allowed_executables=[], allowed_cwds=[tmp_path], wall_timeout_s=1, memory_limit_bytes=0
+        )
     with pytest.raises(ValueError):
-        make_policy(allowed_executables=[], allowed_cwds=[tmp_path],
-                    wall_timeout_s=1, cpu_seconds=0)
+        make_policy(
+            allowed_executables=[], allowed_cwds=[tmp_path], wall_timeout_s=1, cpu_seconds=0
+        )
 
 
 def test_run_returns_stdout_on_success(tmp_path: Path) -> None:
@@ -110,6 +112,7 @@ def test_env_is_scrubbed_unless_passthrough(tmp_path: Path) -> None:
     env_bin = _binary("env")
     # Without passthrough — KMIDI_TEST_SECRET should not appear.
     import os
+
     os.environ["KMIDI_TEST_SECRET"] = "must-not-leak"
     try:
         policy = make_policy(
@@ -156,8 +159,7 @@ def test_stdin_is_forwarded(tmp_path: Path) -> None:
         allowed_cwds=[tmp_path],
         wall_timeout_s=2.0,
     )
-    result = run_sandboxed(cat, [], cwd=tmp_path, policy=policy,
-                            stdin=b"hello\nfrom stdin\n")
+    result = run_sandboxed(cat, [], cwd=tmp_path, policy=policy, stdin=b"hello\nfrom stdin\n")
     assert result.ok
     assert b"hello" in result.stdout
     assert b"from stdin" in result.stdout

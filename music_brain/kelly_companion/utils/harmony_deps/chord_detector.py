@@ -12,12 +12,12 @@ from typing import List, Optional, Set
 from dataclasses import dataclass
 from enum import Enum
 
-
-NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 
 class ChordQuality(Enum):
     """Chord quality types."""
+
     MAJOR = "maj"
     MINOR = "min"
     DIMINISHED = "dim"
@@ -34,6 +34,7 @@ class ChordQuality(Enum):
 @dataclass
 class ChordMatch:
     """Result of chord matching."""
+
     name: str
     root: str
     quality: ChordQuality
@@ -85,14 +86,16 @@ class ChordDetector:
 
                 if confidence > 0.3:  # Minimum threshold
                     chord_name = self._format_chord_name(root_name, quality)
-                    matches.append(ChordMatch(
-                        name=chord_name,
-                        root=root_name,
-                        quality=quality,
-                        bass_note=notes[0] if notes else None,
-                        confidence=confidence,
-                        intervals_matched=intersection
-                    ))
+                    matches.append(
+                        ChordMatch(
+                            name=chord_name,
+                            root=root_name,
+                            quality=quality,
+                            bass_note=notes[0] if notes else None,
+                            confidence=confidence,
+                            intervals_matched=intersection,
+                        )
+                    )
 
         # Sort by confidence
         matches.sort(key=lambda m: m.confidence, reverse=True)
@@ -176,5 +179,5 @@ class JazzChordAnalyzer:
             "has_9th": has_9th,
             "has_11th": has_11th,
             "has_13th": has_13th,
-            "complexity": len(pitch_classes)
+            "complexity": len(pitch_classes),
         }

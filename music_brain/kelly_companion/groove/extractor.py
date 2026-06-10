@@ -16,12 +16,14 @@ from pathlib import Path
 
 try:
     import mido
+
     MIDO_AVAILABLE = True
 except ImportError:
     MIDO_AVAILABLE = False
 
 try:
     import numpy as np
+
     NUMPY_AVAILABLE = True
 except ImportError:
     NUMPY_AVAILABLE = False
@@ -30,6 +32,7 @@ except ImportError:
 @dataclass
 class NoteEvent:
     """Single note event with timing and velocity info."""
+
     pitch: int
     velocity: int
     start_tick: int
@@ -50,6 +53,7 @@ class GrooveTemplate:
     Contains timing deviations, velocity curves, and statistical measures
     that define the "feel" of the original performance.
     """
+
     name: str = "Untitled Groove"
     source_file: str = ""
     ppq: int = 480  # Pulses per quarter note
@@ -103,13 +107,13 @@ class GrooveTemplate:
 
     def save(self, path: str):
         """Save groove template to JSON file."""
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
     def load(cls, path: str) -> "GrooveTemplate":
         """Load groove template from JSON file."""
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             return cls.from_dict(json.load(f))
 
 
@@ -133,7 +137,8 @@ def extract_groove(
     """
     if not MIDO_AVAILABLE:
         raise ImportError(
-            "mido package required for MIDI processing. Install with: pip install mido")
+            "mido package required for MIDI processing. Install with: pip install mido"
+        )
 
     midi_path = Path(midi_path)
     if not midi_path.exists():
@@ -149,9 +154,9 @@ def extract_groove(
     # Find tempo and time signature
     for track in mid.tracks:
         for msg in track:
-            if msg.type == 'set_tempo':
+            if msg.type == "set_tempo":
                 tempo_bpm = mido.tempo2bpm(msg.tempo)
-            elif msg.type == 'time_signature':
+            elif msg.type == "time_signature":
                 time_sig = (msg.numerator, msg.denominator)
 
     # Collect all note events
@@ -163,10 +168,10 @@ def extract_groove(
         for msg in track:
             current_tick += msg.time
 
-            if msg.type == 'note_on' and msg.velocity > 0:
+            if msg.type == "note_on" and msg.velocity > 0:
                 active_notes[msg.note] = (current_tick, msg.velocity, msg.channel)
 
-            elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+            elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
                 if msg.note in active_notes:
                     start_tick, velocity, channel = active_notes.pop(msg.note)
                     duration = current_tick - start_tick

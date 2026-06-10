@@ -23,6 +23,7 @@ from enum import Enum
 
 class TimingFeel(Enum):
     """Timing feel relative to beat"""
+
     BEHIND = "behind"  # Laid back, reflective (lo-fi, bedroom emo)
     ON = "on"  # Precise, focused (pop, electronic)
     AHEAD = "ahead"  # Urgent, anxious (punk, thrash)
@@ -30,6 +31,7 @@ class TimingFeel(Enum):
 
 class Register(Enum):
     """Pitch register"""
+
     LOW = "low"  # Below middle C
     MID = "mid"  # Around middle C
     HIGH = "high"  # Above middle C
@@ -37,6 +39,7 @@ class Register(Enum):
 
 class HarmonicRhythm(Enum):
     """Rate of chord changes"""
+
     SLOW = "slow"  # 1-2 chords per bar
     MEDIUM = "medium"  # 2-4 chords per bar
     FAST = "fast"  # 4+ chords per bar
@@ -44,6 +47,7 @@ class HarmonicRhythm(Enum):
 
 class Density(Enum):
     """Note density"""
+
     SPARSE = "sparse"  # Minimalist, lots of space
     MEDIUM = "medium"  # Balanced
     DENSE = "dense"  # Busy, complex
@@ -62,6 +66,7 @@ class EmotionalState:
         has_intrusions: PTSD/trauma intrusions present
         intrusion_probability: Likelihood of intrusion events (0-1)
     """
+
     valence: float  # -1 (negative) to +1 (positive)
     arousal: float  # 0 (calm) to 1 (energetic)
     primary_emotion: str
@@ -84,6 +89,7 @@ class MusicalParameters:
     Tempo, mode, register, dissonance, timing feel, etc.
     Used to guide composition and performance.
     """
+
     tempo_min: int
     tempo_max: int
     tempo_suggested: int
@@ -104,10 +110,7 @@ class MusicalParameters:
         # Normalize mode weights to sum to 1.0
         total = sum(self.mode_weights.values())
         if total > 0:
-            self.mode_weights = {
-                mode: weight / total
-                for mode, weight in self.mode_weights.items()
-            }
+            self.mode_weights = {mode: weight / total for mode, weight in self.mode_weights.items()}
 
 
 # Emotional presets: Common emotional states → musical parameters
@@ -433,20 +436,14 @@ def get_interrogation_prompts(params: MusicalParameters) -> List[str]:
 
     # Register questions
     if params.register == Register.LOW:
-        prompts.append(
-            "This sits low in register—is it grounded and heavy, or ominous?"
-        )
+        prompts.append("This sits low in register—is it grounded and heavy, or ominous?")
     elif params.register == Register.HIGH:
-        prompts.append(
-            "This reaches high in register—is it yearning, fragile, or ecstatic?"
-        )
+        prompts.append("This reaches high in register—is it yearning, fragile, or ecstatic?")
 
     return prompts
 
 
-def get_misdirection_technique(
-    surface_emotion: str, true_emotion: str
-) -> Optional[Dict]:
+def get_misdirection_technique(surface_emotion: str, true_emotion: str) -> Optional[Dict]:
     """
     Create misdirection technique: Surface emotion → true emotion reveal.
 
@@ -543,8 +540,7 @@ if __name__ == "__main__":
 
     params = get_parameters_for_state(state)
     print("\n🎵 Musical Parameters:")
-    print(f"   Tempo: {params.tempo_suggested} BPM "
-          f"({params.tempo_min}-{params.tempo_max})")
+    print(f"   Tempo: {params.tempo_suggested} BPM " f"({params.tempo_min}-{params.tempo_max})")
     print(f"   Mode: {max(params.mode_weights, key=params.mode_weights.get)}")
     print(f"   Dissonance: {params.dissonance:.1%}")
     print(f"   Timing: {params.timing_feel.value}")

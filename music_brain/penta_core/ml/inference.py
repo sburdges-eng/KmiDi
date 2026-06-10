@@ -24,6 +24,7 @@ from .model_registry import (
 @dataclass
 class InferenceResult:
     """Result from model inference."""
+
     outputs: Dict[str, np.ndarray]
     latency_ms: float
     model_name: str

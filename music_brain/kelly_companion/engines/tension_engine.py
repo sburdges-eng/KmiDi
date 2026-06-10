@@ -16,82 +16,88 @@ from typing import Optional, List, Dict, Tuple
 import random
 import math
 
-
 # =============================================================================
 # ENUMS & CONSTANTS
 # =============================================================================
 
+
 class TensionLevel(Enum):
     """Tension levels from complete resolution to maximum dissonance."""
-    RESOLVED = 0            # Complete rest (tonic, stable)
-    LOW = 1                 # Slight movement
-    MILD = 2                # Some tension
-    MODERATE = 3            # Noticeable tension
-    ELEVATED = 4            # Building
-    HIGH = 5                # Significant tension
-    INTENSE = 6             # Strong pull
-    EXTREME = 7             # Maximum before resolution
-    UNRESOLVED = 8          # Deliberately unresolved (suspense)
+
+    RESOLVED = 0  # Complete rest (tonic, stable)
+    LOW = 1  # Slight movement
+    MILD = 2  # Some tension
+    MODERATE = 3  # Noticeable tension
+    ELEVATED = 4  # Building
+    HIGH = 5  # Significant tension
+    INTENSE = 6  # Strong pull
+    EXTREME = 7  # Maximum before resolution
+    UNRESOLVED = 8  # Deliberately unresolved (suspense)
 
 
 class TensionTechnique(Enum):
     """Musical techniques that create tension."""
-    DOMINANT = "dominant"                   # V chord, strongest pull to I
+
+    DOMINANT = "dominant"  # V chord, strongest pull to I
     SECONDARY_DOMINANT = "secondary_dominant"  # V/x, temporary tonicization
-    DIMINISHED = "diminished"               # Diminished chords
-    AUGMENTED = "augmented"                 # Augmented chords
-    SUSPENSION = "suspension"               # Sus2, Sus4
-    TRITONE = "tritone"                     # The devil's interval
-    CHROMATIC = "chromatic"                 # Chromatic approach
-    PEDAL = "pedal"                         # Pedal tone against moving harmony
-    SEQUENCE = "sequence"                   # Repeated pattern building
-    DECEPTIVE = "deceptive"                 # Deceptive cadence
-    HALF_CADENCE = "half_cadence"           # Ending on V
-    MODAL_MIXTURE = "modal_mixture"         # Borrowing from parallel mode
-    NEAPOLITAN = "neapolitan"               # bII chord
-    AUGMENTED_SIXTH = "augmented_sixth"     # +6 chords
-    SILENCE = "silence"                     # Dramatic pause
-    REGISTER_SHIFT = "register_shift"       # Moving to extreme register
-    DENSITY = "density"                     # Note density buildup
-    RHYTHM = "rhythm"                       # Rhythmic acceleration
-    ANTICIPATION = "anticipation"           # Early arrival of next chord
+    DIMINISHED = "diminished"  # Diminished chords
+    AUGMENTED = "augmented"  # Augmented chords
+    SUSPENSION = "suspension"  # Sus2, Sus4
+    TRITONE = "tritone"  # The devil's interval
+    CHROMATIC = "chromatic"  # Chromatic approach
+    PEDAL = "pedal"  # Pedal tone against moving harmony
+    SEQUENCE = "sequence"  # Repeated pattern building
+    DECEPTIVE = "deceptive"  # Deceptive cadence
+    HALF_CADENCE = "half_cadence"  # Ending on V
+    MODAL_MIXTURE = "modal_mixture"  # Borrowing from parallel mode
+    NEAPOLITAN = "neapolitan"  # bII chord
+    AUGMENTED_SIXTH = "augmented_sixth"  # +6 chords
+    SILENCE = "silence"  # Dramatic pause
+    REGISTER_SHIFT = "register_shift"  # Moving to extreme register
+    DENSITY = "density"  # Note density buildup
+    RHYTHM = "rhythm"  # Rhythmic acceleration
+    ANTICIPATION = "anticipation"  # Early arrival of next chord
 
 
 class ReleaseType(Enum):
     """Types of tension release."""
-    AUTHENTIC = "authentic"         # V-I, strongest
-    PLAGAL = "plagal"              # IV-I, softer (amen cadence)
-    DECEPTIVE = "deceptive"        # V-vi, surprise
-    HALF = "half"                  # Ending on V, incomplete
-    MODAL = "modal"                # Mode-specific resolution
-    STEPWISE = "stepwise"          # Chromatic/stepwise resolution
-    AVOIDED = "avoided"            # Tension sustained
-    INTERRUPTED = "interrupted"    # Resolution interrupted by new tension
+
+    AUTHENTIC = "authentic"  # V-I, strongest
+    PLAGAL = "plagal"  # IV-I, softer (amen cadence)
+    DECEPTIVE = "deceptive"  # V-vi, surprise
+    HALF = "half"  # Ending on V, incomplete
+    MODAL = "modal"  # Mode-specific resolution
+    STEPWISE = "stepwise"  # Chromatic/stepwise resolution
+    AVOIDED = "avoided"  # Tension sustained
+    INTERRUPTED = "interrupted"  # Resolution interrupted by new tension
 
 
 class TensionCurveShape(Enum):
     """Shapes for tension over time."""
-    LINEAR_BUILD = "linear_build"           # Steady increase
-    LINEAR_RELEASE = "linear_release"       # Steady decrease
-    SPIKE = "spike"                         # Quick peak and release
-    PLATEAU = "plateau"                     # Build, sustain, release
-    SAWTOOTH = "sawtooth"                   # Build-release cycles
-    INVERSE_SAWTOOTH = "inverse_sawtooth"   # Release-build cycles (unusual)
-    WAVE = "wave"                           # Oscillating
-    SUSTAINED = "sustained"                 # Constant tension level
-    CLIMAX = "climax"                       # Build to single peak
+
+    LINEAR_BUILD = "linear_build"  # Steady increase
+    LINEAR_RELEASE = "linear_release"  # Steady decrease
+    SPIKE = "spike"  # Quick peak and release
+    PLATEAU = "plateau"  # Build, sustain, release
+    SAWTOOTH = "sawtooth"  # Build-release cycles
+    INVERSE_SAWTOOTH = "inverse_sawtooth"  # Release-build cycles (unusual)
+    WAVE = "wave"  # Oscillating
+    SUSTAINED = "sustained"  # Constant tension level
+    CLIMAX = "climax"  # Build to single peak
     DELAYED_RESOLUTION = "delayed_resolution"  # Build, sustain, late release
-    NO_RESOLUTION = "no_resolution"         # Build without release
+    NO_RESOLUTION = "no_resolution"  # Build without release
 
 
 # =============================================================================
 # DATA CLASSES
 # =============================================================================
 
+
 @dataclass
 class TensionPoint:
     """A point on the tension curve."""
-    position: float              # 0.0 - 1.0 through section
+
+    position: float  # 0.0 - 1.0 through section
     tension_level: TensionLevel
     technique: Optional[TensionTechnique] = None
     target_chord_function: Optional[str] = None  # e.g., "V", "ii", "bVI"
@@ -101,6 +107,7 @@ class TensionPoint:
 @dataclass
 class TensionCurve:
     """Complete tension curve for a section."""
+
     points: List[TensionPoint]
     shape: TensionCurveShape
     peak_position: float = 0.5
@@ -118,8 +125,9 @@ class TensionCurve:
 @dataclass
 class HarmonicTension:
     """Tension information for a specific chord/moment."""
-    chord_symbol: str           # e.g., "G7", "Dm", "Bbmaj7"
-    function: str               # e.g., "V7", "ii", "bVI"
+
+    chord_symbol: str  # e.g., "G7", "Dm", "Bbmaj7"
+    function: str  # e.g., "V7", "ii", "bVI"
     tension_level: TensionLevel
     resolution_target: Optional[str] = None  # What it wants to resolve to
     techniques_active: List[TensionTechnique] = field(default_factory=list)
@@ -130,13 +138,14 @@ class HarmonicTension:
     has_suspension: bool = False
 
     # Contextual
-    is_borrowed: bool = False           # From parallel mode
+    is_borrowed: bool = False  # From parallel mode
     is_secondary_function: bool = False  # V/x, etc.
 
 
 @dataclass
 class TensionProfile:
     """Complete tension specification for a section."""
+
     curve: TensionCurve
     harmonic_tensions: List[HarmonicTension]
 
@@ -167,48 +176,42 @@ CHORD_TYPE_TENSION: Dict[str, int] = {
     "maj7": 2,
     "maj9": 2,
     "add9": 1,
-
     # Minor chords
     "m": 1,
     "min": 1,
     "m7": 2,
     "m9": 2,
     "m6": 2,
-    "mMaj7": 4,      # Minor-major 7, high tension
-
+    "mMaj7": 4,  # Minor-major 7, high tension
     # Dominant
-    "7": 4,          # Dominant 7 - wants to resolve
+    "7": 4,  # Dominant 7 - wants to resolve
     "9": 4,
     "11": 4,
     "13": 4,
-    "7#9": 6,        # Hendrix chord
+    "7#9": 6,  # Hendrix chord
     "7b9": 6,
     "7#11": 5,
-    "7alt": 7,       # Altered dominant
-
+    "7alt": 7,  # Altered dominant
     # Diminished
     "dim": 6,
     "dim7": 7,
-    "m7b5": 5,       # Half-diminished
-
+    "m7b5": 5,  # Half-diminished
     # Augmented
     "aug": 5,
     "+": 5,
     "+7": 6,
-
     # Suspended
     "sus2": 3,
     "sus4": 3,
     "7sus4": 4,
-
     # Other
-    "5": 0,          # Power chord - neutral
+    "5": 0,  # Power chord - neutral
 }
 
 # Function-based tension (Roman numerals)
 FUNCTION_TENSION: Dict[str, int] = {
     # Diatonic
-    "I": 0,          # Tonic - home
+    "I": 0,  # Tonic - home
     "i": 0,
     "ii": 2,
     "II": 2,
@@ -216,28 +219,24 @@ FUNCTION_TENSION: Dict[str, int] = {
     "III": 2,
     "IV": 2,
     "iv": 3,
-    "V": 4,          # Dominant - strong pull
+    "V": 4,  # Dominant - strong pull
     "v": 3,
     "vi": 1,
     "VI": 1,
     "vii°": 6,
     "VII": 3,
-
     # Secondary dominants
     "V/V": 5,
     "V/ii": 4,
     "V/iii": 4,
     "V/IV": 4,
     "V/vi": 4,
-
     # Borrowed chords
-    "bII": 5,        # Neapolitan
+    "bII": 5,  # Neapolitan
     "bIII": 3,
     "bVI": 3,
     "bVII": 3,
-    "iv": 3,         # Minor iv in major
     "#iv°": 5,
-
     # Augmented sixths
     "It+6": 6,
     "Fr+6": 6,
@@ -261,11 +260,10 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
             TensionTechnique.PEDAL,
         ],
         "release_type": ReleaseType.AVOIDED,
-        "allows_resolution": False,         # Grief doesn't resolve
+        "allows_resolution": False,  # Grief doesn't resolve
         "tension_cycles_per_section": 1,
         "cycle_amplitude": 0.3,
     },
-
     "sadness": {
         "base_tension": TensionLevel.MILD,
         "max_tension": TensionLevel.ELEVATED,
@@ -281,7 +279,6 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
         "tension_cycles_per_section": 2,
         "cycle_amplitude": 0.4,
     },
-
     "melancholy": {
         "base_tension": TensionLevel.MILD,
         "max_tension": TensionLevel.MODERATE,
@@ -297,7 +294,6 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
         "tension_cycles_per_section": 2,
         "cycle_amplitude": 0.3,
     },
-
     "rage": {
         "base_tension": TensionLevel.HIGH,
         "max_tension": TensionLevel.EXTREME,
@@ -310,11 +306,10 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
             TensionTechnique.RHYTHM,
         ],
         "release_type": ReleaseType.INTERRUPTED,
-        "allows_resolution": True,          # Brief releases before more rage
+        "allows_resolution": True,  # Brief releases before more rage
         "tension_cycles_per_section": 4,
         "cycle_amplitude": 0.6,
     },
-
     "anger": {
         "base_tension": TensionLevel.ELEVATED,
         "max_tension": TensionLevel.INTENSE,
@@ -330,7 +325,6 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
         "tension_cycles_per_section": 3,
         "cycle_amplitude": 0.5,
     },
-
     "fear": {
         "base_tension": TensionLevel.MODERATE,
         "max_tension": TensionLevel.EXTREME,
@@ -343,11 +337,10 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
             TensionTechnique.REGISTER_SHIFT,
         ],
         "release_type": ReleaseType.DECEPTIVE,
-        "allows_resolution": False,         # Fear doesn't resolve fully
+        "allows_resolution": False,  # Fear doesn't resolve fully
         "tension_cycles_per_section": 2,
         "cycle_amplitude": 0.7,
     },
-
     "anxiety": {
         "base_tension": TensionLevel.ELEVATED,
         "max_tension": TensionLevel.HIGH,
@@ -360,11 +353,10 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
             TensionTechnique.ANTICIPATION,
         ],
         "release_type": ReleaseType.AVOIDED,
-        "allows_resolution": False,         # Anxiety is unresolved by nature
+        "allows_resolution": False,  # Anxiety is unresolved by nature
         "tension_cycles_per_section": 4,
         "cycle_amplitude": 0.3,
     },
-
     "hope": {
         "base_tension": TensionLevel.MILD,
         "max_tension": TensionLevel.ELEVATED,
@@ -380,7 +372,6 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
         "tension_cycles_per_section": 2,
         "cycle_amplitude": 0.5,
     },
-
     "joy": {
         "base_tension": TensionLevel.LOW,
         "max_tension": TensionLevel.MODERATE,
@@ -395,7 +386,6 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
         "tension_cycles_per_section": 4,
         "cycle_amplitude": 0.4,
     },
-
     "peace": {
         "base_tension": TensionLevel.RESOLVED,
         "max_tension": TensionLevel.MILD,
@@ -410,7 +400,6 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
         "tension_cycles_per_section": 1,
         "cycle_amplitude": 0.2,
     },
-
     "nostalgia": {
         "base_tension": TensionLevel.MILD,
         "max_tension": TensionLevel.MODERATE,
@@ -426,7 +415,6 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
         "tension_cycles_per_section": 2,
         "cycle_amplitude": 0.4,
     },
-
     "longing": {
         "base_tension": TensionLevel.MODERATE,
         "max_tension": TensionLevel.HIGH,
@@ -438,11 +426,10 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
             TensionTechnique.CHROMATIC,
         ],
         "release_type": ReleaseType.HALF,
-        "allows_resolution": False,         # Longing is unfulfilled
+        "allows_resolution": False,  # Longing is unfulfilled
         "tension_cycles_per_section": 2,
         "cycle_amplitude": 0.5,
     },
-
     "tension": {
         "base_tension": TensionLevel.ELEVATED,
         "max_tension": TensionLevel.EXTREME,
@@ -459,7 +446,6 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
         "tension_cycles_per_section": 1,
         "cycle_amplitude": 0.8,
     },
-
     "defiance": {
         "base_tension": TensionLevel.HIGH,
         "max_tension": TensionLevel.EXTREME,
@@ -475,7 +461,6 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
         "tension_cycles_per_section": 3,
         "cycle_amplitude": 0.6,
     },
-
     "vulnerability": {
         "base_tension": TensionLevel.MILD,
         "max_tension": TensionLevel.MODERATE,
@@ -491,7 +476,6 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
         "tension_cycles_per_section": 2,
         "cycle_amplitude": 0.3,
     },
-
     "euphoria": {
         "base_tension": TensionLevel.MODERATE,
         "max_tension": TensionLevel.INTENSE,
@@ -507,7 +491,6 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
         "tension_cycles_per_section": 4,
         "cycle_amplitude": 0.6,
     },
-
     "emptiness": {
         "base_tension": TensionLevel.LOW,
         "max_tension": TensionLevel.MILD,
@@ -528,6 +511,7 @@ EMOTION_TENSION_PROFILES: Dict[str, Dict] = {
 # =============================================================================
 # CURVE GENERATORS
 # =============================================================================
+
 
 def generate_tension_curve(
     shape: TensionCurveShape,
@@ -596,7 +580,9 @@ def generate_tension_curve(
                 points.append(peak_level)
             else:
                 # Slow fall
-                points.append(int(peak_level - ((cycle_pos - 0.2) / 0.8) * (peak_level - base_level)))  # noqa: E501
+                points.append(
+                    int(peak_level - ((cycle_pos - 0.2) / 0.8) * (peak_level - base_level))
+                )  # noqa: E501
 
     elif shape == TensionCurveShape.WAVE:
         for i in range(num_points):
@@ -656,6 +642,7 @@ def generate_tension_curve(
 # TENSION ENGINE
 # =============================================================================
 
+
 class TensionEngine:
     """
     Generates harmonic tension/release curves for emotional expression.
@@ -693,10 +680,7 @@ class TensionEngine:
             TensionProfile with curve and harmonic tensions
         """
         emotion_lower = emotion.lower()
-        profile = EMOTION_TENSION_PROFILES.get(
-            emotion_lower,
-            EMOTION_TENSION_PROFILES["sadness"]
-        )
+        profile = EMOTION_TENSION_PROFILES.get(emotion_lower, EMOTION_TENSION_PROFILES["sadness"])
 
         # Adjust for section type
         section_modifiers = {
@@ -747,11 +731,13 @@ class TensionEngine:
             # Assign technique based on tension level
             technique = None
             if level >= 6:
-                technique = self.rng.choice([
-                    TensionTechnique.TRITONE,
-                    TensionTechnique.DIMINISHED,
-                    TensionTechnique.DOMINANT,
-                ])
+                technique = self.rng.choice(
+                    [
+                        TensionTechnique.TRITONE,
+                        TensionTechnique.DIMINISHED,
+                        TensionTechnique.DOMINANT,
+                    ]
+                )
             elif level >= 4:
                 technique = self.rng.choice(profile["preferred_techniques"])
             elif level <= 1:
@@ -760,15 +746,17 @@ class TensionEngine:
 
             # Is this a release point?
             is_release = False
-            if i > 0 and tension_values[i] < tension_values[i-1] - 2:
+            if i > 0 and tension_values[i] < tension_values[i - 1] - 2:
                 is_release = True
 
-            curve_points.append(TensionPoint(
-                position=pos,
-                tension_level=TensionLevel(level),
-                technique=technique,
-                is_release_point=is_release,
-            ))
+            curve_points.append(
+                TensionPoint(
+                    position=pos,
+                    tension_level=TensionLevel(level),
+                    technique=technique,
+                    is_release_point=is_release,
+                )
+            )
 
         # Determine release type
         release_type = profile["release_type"]
@@ -846,12 +834,15 @@ class TensionEngine:
         # Detect techniques
         techniques = []
         has_tritone = "7" in chord_symbol and (
-            "dim" in chord_symbol or function == "V" or "V/" in function)
+            "dim" in chord_symbol or function == "V" or "V/" in function
+        )
         has_leading_tone = function in ["V", "vii°"] or "V/" in function
         has_suspension = "sus" in chord_symbol
         is_borrowed = function.startswith("b") or (
-            context_mode == "major" and "m" in chord_symbol.lower()
-            and function not in ["ii", "iii", "vi"])
+            context_mode == "major"
+            and "m" in chord_symbol.lower()
+            and function not in ["ii", "iii", "vi"]
+        )
         is_secondary = "/" in function
 
         if has_tritone:
@@ -919,8 +910,9 @@ class TensionEngine:
 
         t = (position - prev_point.position) / (next_point.position - prev_point.position)
         level = int(
-            prev_point.tension_level.value + t *
-            (next_point.tension_level.value - prev_point.tension_level.value))
+            prev_point.tension_level.value
+            + t * (next_point.tension_level.value - prev_point.tension_level.value)
+        )
 
         return TensionLevel(max(0, min(8, level)))
 
@@ -966,26 +958,34 @@ class TensionEngine:
         roots = key_roots.get(key, key_roots["C"])
 
         function_to_degree = {
-            "I": 0, "i": 0,
-            "ii": 1, "II": 1,
-            "iii": 2, "III": 2,
-            "IV": 3, "iv": 3,
-            "V": 4, "v": 4,
-            "vi": 5, "VI": 5,
-            "vii°": 6, "VII": 6,
+            "I": 0,
+            "i": 0,
+            "ii": 1,
+            "II": 1,
+            "iii": 2,
+            "III": 2,
+            "IV": 3,
+            "iv": 3,
+            "V": 4,
+            "v": 4,
+            "vi": 5,
+            "VI": 5,
+            "vii°": 6,
+            "VII": 6,
             "bII": 1,  # Neapolitan (flat)
             "bVI": 5,  # Flat VI
             "bVII": 6,  # Flat VII
         }
 
         for func, quality in base_suggestions:
-            base_func = func.replace(
-                "7", "").replace(
-                "sus4", "").replace(
-                "dim", "").replace(
-                "°", "").replace(
-                "alt", "").replace(
-                "b9", "")
+            base_func = (
+                func.replace("7", "")
+                .replace("sus4", "")
+                .replace("dim", "")
+                .replace("°", "")
+                .replace("alt", "")
+                .replace("b9", "")
+            )
             if base_func.startswith("V/"):
                 # Secondary dominant
                 degree = 4  # V
@@ -1010,7 +1010,9 @@ class TensionEngine:
         lines.append(f"Shape: {profile.curve.shape.value}")
         lines.append(f"Range: {profile.curve.base_level.name} → {profile.curve.peak_level.name}")
         lines.append(
-            f"Release: {profile.curve.release_type.value} | Final: {'Yes' if profile.curve.has_final_release else 'No'}")  # noqa: E501
+            f"Release: {profile.curve.release_type.value} | Final: "
+            f"{'Yes' if profile.curve.has_final_release else 'No'}"
+        )  # noqa: E501
 
         lines.append("")
 
@@ -1029,7 +1031,8 @@ class TensionEngine:
             tech_mark = f"[{point.technique.value[:3]}]" if point.technique else "     "
 
             lines.append(
-                f"  {point.position:.2f} [{bar}] {tension_labels[level]} {release_mark} {tech_mark}")  # noqa: E501
+                f"  {point.position:.2f} [{bar}] {tension_labels[level]} {release_mark} {tech_mark}"
+            )  # noqa: E501
 
         lines.append("")
         lines.append(f"Techniques: {', '.join(t.value for t in profile.curve.primary_techniques)}")
@@ -1037,8 +1040,11 @@ class TensionEngine:
         if profile.rhythmic_density_curve:
             lines.append("")
             lines.append("Rhythmic Density:")
-            for i in range(0, len(profile.rhythmic_density_curve),
-                           max(1, len(profile.rhythmic_density_curve) // 10)):
+            for i in range(
+                0,
+                len(profile.rhythmic_density_curve),
+                max(1, len(profile.rhythmic_density_curve) // 10),
+            ):
                 density = profile.rhythmic_density_curve[i]
                 bar_len = int(density * 20)
                 bar = "▓" * bar_len + "░" * (20 - bar_len)
@@ -1050,6 +1056,7 @@ class TensionEngine:
 # =============================================================================
 # CONVENIENCE FUNCTIONS
 # =============================================================================
+
 
 def create_tension_profile(
     emotion: str,
@@ -1116,7 +1123,7 @@ if __name__ == "__main__":
     # Test chord analysis
     print(f"\n{'='*60}")
     print("CHORD TENSION ANALYSIS")
-    print('='*60)
+    print("=" * 60)
 
     test_chords = [
         ("C", "I"),

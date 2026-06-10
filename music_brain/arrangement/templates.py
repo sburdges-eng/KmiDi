@@ -14,6 +14,7 @@ from enum import Enum
 
 class SectionType(Enum):
     """Standard song section types."""
+
     INTRO = "intro"
     VERSE = "verse"
     PRECHORUS = "pre-chorus"
@@ -29,6 +30,7 @@ class SectionType(Enum):
 @dataclass
 class SectionTemplate:
     """Template defining characteristics of a song section."""
+
     section_type: SectionType
     length_bars: int = 8
 
@@ -69,6 +71,7 @@ class SectionTemplate:
 @dataclass
 class ArrangementTemplate:
     """Complete arrangement template with section sequence."""
+
     name: str
     genre: str
     sections: List[SectionTemplate]
@@ -96,6 +99,7 @@ class ArrangementTemplate:
 # =================================================================
 # STANDARD SECTION DEFINITIONS
 # =================================================================
+
 
 def create_intro(length_bars: int = 4) -> SectionTemplate:
     """Create standard intro section."""
@@ -261,6 +265,7 @@ def create_outro(length_bars: int = 4) -> SectionTemplate:
 # GENRE-SPECIFIC TEMPLATES
 # =================================================================
 
+
 def get_pop_structure() -> ArrangementTemplate:
     """Standard pop song structure."""
     return ArrangementTemplate(
@@ -396,9 +401,7 @@ def get_genre_template(genre: str) -> ArrangementTemplate:
 
     if genre_lower not in GENRE_TEMPLATES:
         available = ", ".join(GENRE_TEMPLATES.keys())
-        raise ValueError(
-            f"Genre '{genre}' not found. Available: {available}"
-        )
+        raise ValueError(f"Genre '{genre}' not found. Available: {available}")
 
     return GENRE_TEMPLATES[genre_lower]()
 

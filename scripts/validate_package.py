@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 from typing import Any
 
@@ -91,7 +90,9 @@ def validate_against_schema(
         if isinstance(properties, dict):
             for key, subschema in properties.items():
                 if key in instance and isinstance(subschema, dict):
-                    errors.extend(validate_against_schema(instance[key], subschema, f"{path}.{key}", root))
+                    errors.extend(
+                        validate_against_schema(instance[key], subschema, f"{path}.{key}", root)
+                    )
 
         additional_allowed = schema.get("additionalProperties", True)
         if additional_allowed is False and isinstance(properties, dict):
@@ -166,7 +167,8 @@ def validate_task_package(task_dir: Path, schema: dict[str, Any]) -> list[str]:
     checksum_hash = checksums.get("manifest.json")
     if checksum_hash and checksum_hash != manifest_hash:
         errors.append(
-            f"{manifest_path}: checksum mismatch (manifest={manifest_hash}, checksums.txt={checksum_hash})"
+            f"{manifest_path}: checksum mismatch (manifest={manifest_hash}, "
+            f"checksums.txt={checksum_hash})"
         )
 
     splits = manifest.get("splits", {})
@@ -257,7 +259,9 @@ def discover_task_dirs(package_dir: Path) -> list[Path]:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Validate packaged dataset shards and manifest integrity.")
+    parser = argparse.ArgumentParser(
+        description="Validate packaged dataset shards and manifest integrity."
+    )
     parser.add_argument(
         "--package-dir",
         required=True,

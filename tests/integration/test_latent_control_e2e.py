@@ -43,7 +43,6 @@ from music_brain.latent import (  # noqa: E402
 from music_brain.vector_store import VectorStore  # noqa: E402
 from music_brain.world_model import WorldModel  # noqa: E402
 
-
 pytestmark = pytest.mark.integration
 
 

@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ValidationIssue:
     """A single validation issue."""
+
     severity: str = "warning"  # info, warning, error
     category: str = ""  # balance, diversity, quality, structure
     message: str = ""
@@ -90,12 +91,14 @@ class ValidationReport:
         details: Optional[Dict[str, Any]] = None,
     ):
         """Add a validation issue."""
-        self.issues.append(ValidationIssue(
-            severity=severity,
-            category=category,
-            message=message,
-            details=details or {},
-        ))
+        self.issues.append(
+            ValidationIssue(
+                severity=severity,
+                category=category,
+                message=message,
+                details=details or {},
+            )
+        )
         self.issues_count = len(self.issues)
 
         if severity == "error":
@@ -104,12 +107,12 @@ class ValidationReport:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dict."""
         d = asdict(self)
-        d['issues'] = [asdict(i) for i in self.issues]
+        d["issues"] = [asdict(i) for i in self.issues]
         return d
 
     def save(self, path: Path):
         """Save report to JSON."""
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
     def print_summary(self):
@@ -204,6 +207,7 @@ class DatasetValidator:
         manifest_path = dataset_path / "manifest.json"
         if manifest_path.exists():
             from .datasets.base import load_manifest
+
             manifest = load_manifest(manifest_path)
 
             # Validate samples
@@ -228,8 +232,8 @@ class DatasetValidator:
 
     def _check_structure(self, dataset_path: Path, report: ValidationReport):
         """Check dataset directory structure."""
-        required_dirs = ['raw', 'annotations']
-        _optional_dirs = ['processed', 'splits']  # noqa: F841
+        required_dirs = ["raw", "annotations"]
+        _optional_dirs = ["processed", "splits"]  # noqa: F841
 
         for dir_name in required_dirs:
             if not (dataset_path / dir_name).exists():
@@ -273,11 +277,11 @@ class DatasetValidator:
                 report.missing_annotations.append(sample.sample_id)
 
             # Track splits
-            if sample.split == 'train':
+            if sample.split == "train":
                 report.train_count += 1
-            elif sample.split == 'val':
+            elif sample.split == "val":
                 report.val_count += 1
-            elif sample.split == 'test':
+            elif sample.split == "test":
                 report.test_count += 1
 
             # Duration
@@ -333,7 +337,6 @@ class DatasetValidator:
                     "warning",
                     "balance",
                     f"Category '{cat}' has only {count} samples (min: {self.min_samples_per_category})",  # noqa: E501
-
                 )
 
     def _check_diversity(self, manifest, report: ValidationReport):
@@ -438,9 +441,9 @@ class DatasetValidator:
             if file_path.exists():
                 # Try to verify file integrity
                 try:
-                    if sample.file_type == 'midi':
+                    if sample.file_type == "midi":
                         self._verify_midi(file_path)
-                    elif sample.file_type == 'audio':
+                    elif sample.file_type == "audio":
                         self._verify_audio(file_path)
                     valid_count += 1
                 except Exception as e:
@@ -459,6 +462,7 @@ class DatasetValidator:
         """Verify MIDI file is readable."""
         try:
             import mido
+
             mid = mido.MidiFile(str(path))
             return len(mid.tracks) > 0
         except ImportError:
@@ -470,6 +474,7 @@ class DatasetValidator:
         """Verify audio file is readable."""
         try:
             import librosa
+
             y, sr = librosa.load(str(path), duration=1)
             return len(y) > 0
         except ImportError:
@@ -500,7 +505,6 @@ class DatasetValidator:
                 "warning",
                 "quality",
                 f"Missing annotations: {report.total_samples} samples but only {len(annotation_files)} annotation files",  # noqa: E501
-
             )
 
         # Try to infer categories from directory structure
@@ -514,15 +518,14 @@ class DatasetValidator:
         """Generate recommendations based on validation results."""
         # Balance recommendations
         if report.balance_score < 0.5:
-            low_cats = [c for c, n in report.category_counts.items()
-                        if n < report.max_category_size * 0.5]
+            low_cats = [
+                c for c, n in report.category_counts.items() if n < report.max_category_size * 0.5
+            ]
             if low_cats:
                 report.recommendations.append(
                     f"Add more samples to underrepresented categories: {', '.join(low_cats)}"
                 )
-            report.recommendations.append(
-                "Consider using data augmentation to balance categories"
-            )
+            report.recommendations.append("Consider using data augmentation to balance categories")
 
         # Diversity recommendations
         if report.diversity_score < 0.3:
@@ -531,9 +534,7 @@ class DatasetValidator:
                     "Add samples in more keys (transpose existing samples)"
                 )
             if len(report.tempo_distribution) < 5:
-                report.recommendations.append(
-                    "Add samples at varied tempos"
-                )
+                report.recommendations.append("Add samples at varied tempos")
 
         # Quality recommendations
         if report.quality_score < 0.95:
@@ -552,7 +553,6 @@ class DatasetValidator:
             if count < 100:
                 report.recommendations.append(
                     f"Category '{cat}' needs at least {100 - count} more samples for reliable training"  # noqa: E501
-
                 )
 
         # Split recommendations
@@ -586,10 +586,10 @@ def check_diversity(dataset_path: Path) -> Dict[str, Any]:
     """Quick check of dataset diversity."""
     report = validate_dataset(dataset_path)
     return {
-        'diversity_score': report.diversity_score,
-        'keys': report.key_distribution,
-        'modes': report.mode_distribution,
-        'tempos': report.tempo_distribution,
+        "diversity_score": report.diversity_score,
+        "keys": report.key_distribution,
+        "modes": report.mode_distribution,
+        "tempos": report.tempo_distribution,
     }
 
 

@@ -9,7 +9,6 @@ from typing import Any
 
 from scripts.training_common import choose_split, iter_jsonl, utc_now_iso, write_json, write_jsonl
 
-
 TASK_INPUTS = {
     "intent_router": "intent_router_records.jsonl",
     "axis_proposer": "axis_proposer_records.jsonl",
@@ -45,7 +44,9 @@ def split_task_records(
     return split_map
 
 
-def write_task_splits(task: str, split_map: dict[str, list[dict[str, Any]]], output_root: Path) -> dict[str, int]:
+def write_task_splits(
+    task: str, split_map: dict[str, list[dict[str, Any]]], output_root: Path
+) -> dict[str, int]:
     task_dir = output_root / task
     task_dir.mkdir(parents=True, exist_ok=True)
 

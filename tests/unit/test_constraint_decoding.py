@@ -17,7 +17,6 @@ from music_brain.latent.decoding import (  # noqa: E402
     sample_with_constraints,
 )
 
-
 # ----------------------------------------------------------------------
 # Greedy low-jitter decoder
 # ----------------------------------------------------------------------

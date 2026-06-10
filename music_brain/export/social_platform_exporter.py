@@ -15,6 +15,7 @@ import json
 
 class SocialPlatform(Enum):
     """Supported social media platforms."""
+
     TIKTOK = "tiktok"
     INSTAGRAM_REELS = "instagram_reels"
     INSTAGRAM_STORIES = "instagram_stories"
@@ -27,6 +28,7 @@ class SocialPlatform(Enum):
 @dataclass
 class PlatformSpec:
     """Specifications for a social media platform."""
+
     name: str
     max_duration_seconds: int
     preferred_duration_seconds: Optional[int] = None  # Optimal length
@@ -55,9 +57,8 @@ PLATFORM_SPECS = {
         supports_transitions=True,
         requires_visual=True,
         aspect_ratio="9:16",
-        description_template="#music #originalmusic #fyp #viral"
+        description_template="#music #originalmusic #fyp #viral",
     ),
-
     SocialPlatform.INSTAGRAM_REELS: PlatformSpec(
         name="Instagram Reels",
         max_duration_seconds=90,
@@ -70,9 +71,8 @@ PLATFORM_SPECS = {
         supports_transitions=True,
         requires_visual=True,
         aspect_ratio="9:16",
-        description_template="#music #reels #originalmusic #musicproducer"
+        description_template="#music #reels #originalmusic #musicproducer",
     ),
-
     SocialPlatform.INSTAGRAM_STORIES: PlatformSpec(
         name="Instagram Stories",
         max_duration_seconds=15,
@@ -85,9 +85,8 @@ PLATFORM_SPECS = {
         supports_transitions=False,
         requires_visual=True,
         aspect_ratio="9:16",
-        description_template="#music #story"
+        description_template="#music #story",
     ),
-
     SocialPlatform.YOUTUBE_SHORTS: PlatformSpec(
         name="YouTube Shorts",
         max_duration_seconds=60,
@@ -100,9 +99,8 @@ PLATFORM_SPECS = {
         supports_transitions=True,
         requires_visual=True,
         aspect_ratio="9:16",
-        description_template="#shorts #music #originalmusic"
+        description_template="#shorts #music #originalmusic",
     ),
-
     SocialPlatform.TWITTER: PlatformSpec(
         name="Twitter/X",
         max_duration_seconds=140,  # 2:20
@@ -115,9 +113,8 @@ PLATFORM_SPECS = {
         supports_transitions=True,
         requires_visual=True,
         aspect_ratio="16:9",
-        description_template="#music #newmusic"
+        description_template="#music #newmusic",
     ),
-
     SocialPlatform.FACEBOOK: PlatformSpec(
         name="Facebook",
         max_duration_seconds=240,  # 4 minutes
@@ -130,7 +127,7 @@ PLATFORM_SPECS = {
         supports_transitions=True,
         requires_visual=True,
         aspect_ratio="16:9",
-        description_template=""
+        description_template="",
     ),
 }
 
@@ -160,9 +157,7 @@ class SocialPlatformExporter:
         return self.platform_specs[platform]
 
     def validate_audio_for_platform(
-        self,
-        audio_file: str,
-        platform: SocialPlatform
+        self, audio_file: str, platform: SocialPlatform
     ) -> Tuple[bool, List[str]]:
         """
         Validate if audio file meets platform requirements.
@@ -199,7 +194,7 @@ class SocialPlatformExporter:
         fade_in: float = 0.1,
         fade_out: float = 0.1,
         normalize: bool = True,
-        target_lufs: float = -14.0  # TikTok/Instagram standard
+        target_lufs: float = -14.0,  # TikTok/Instagram standard
     ) -> Dict:
         """
         Create export configuration for a platform.
@@ -254,7 +249,7 @@ class SocialPlatformExporter:
         duration: Optional[float] = None,
         create_video: bool = False,
         visual_file: Optional[str] = None,  # Image or video for visual
-        **kwargs
+        **kwargs,
     ) -> Dict:
         """
         Export audio optimized for a social media platform.
@@ -291,8 +286,8 @@ class SocialPlatformExporter:
         # - pyloudnorm for loudness normalization
 
         # For now, create a configuration file
-        config_path = output_path.with_suffix('.json')
-        with open(config_path, 'w') as f:
+        config_path = output_path.with_suffix(".json")
+        with open(config_path, "w") as f:
             json.dump(config, f, indent=2)
 
         result = {
@@ -331,7 +326,7 @@ class SocialPlatformExporter:
         base_name: str = "export",
         start_time: float = 0.0,
         duration: Optional[float] = None,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Dict]:
         """
         Export audio for multiple platforms at once.
@@ -355,14 +350,11 @@ class SocialPlatformExporter:
                     output_path=str(output_path),
                     start_time=start_time,
                     duration=duration,
-                    **kwargs
+                    **kwargs,
                 )
                 results[platform.value] = result
             except Exception as e:
-                results[platform.value] = {
-                    "success": False,
-                    "error": str(e)
-                }
+                results[platform.value] = {"success": False, "error": str(e)}
 
         return results
 
@@ -371,7 +363,7 @@ class SocialPlatformExporter:
         platform: SocialPlatform,
         title: Optional[str] = None,
         artist: Optional[str] = None,
-        custom_tags: Optional[List[str]] = None
+        custom_tags: Optional[List[str]] = None,
     ) -> str:
         """
         Generate platform-optimized description with hashtags.
@@ -406,10 +398,7 @@ class SocialPlatformExporter:
         return " ".join(parts)
 
     def suggest_clip_segment(
-        self,
-        audio_file: str,
-        platform: SocialPlatform,
-        total_duration: Optional[float] = None
+        self, audio_file: str, platform: SocialPlatform, total_duration: Optional[float] = None
     ) -> Tuple[float, float]:
         """
         Suggest the best segment to clip from a longer audio file.
@@ -440,7 +429,7 @@ def main():
         audio_file="song.wav",
         platform=SocialPlatform.TIKTOK,
         output_path="tiktok_export.mp3",
-        duration=15
+        duration=15,
     )
 
     print("\nExport result:")
@@ -451,7 +440,7 @@ def main():
         platform=SocialPlatform.TIKTOK,
         title="My Song",
         artist="Artist Name",
-        custom_tags=["original", "indie", "music"]
+        custom_tags=["original", "indie", "music"],
     )
     print(f"\nDescription: {description}")
 

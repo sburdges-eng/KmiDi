@@ -43,7 +43,6 @@ from typing import (
     runtime_checkable,
 )
 
-
 # =============================================================================
 # DAW Types
 # =============================================================================
@@ -361,11 +360,9 @@ class DAWProtocol(Protocol):
     # Context Manager
     # =========================================================================
 
-    def __enter__(self) -> "DAWProtocol":
-        ...
+    def __enter__(self) -> "DAWProtocol": ...
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        ...
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None: ...
 
 
 # =============================================================================
@@ -594,9 +591,15 @@ class DAWRegistry:
         if system == "Darwin":  # macOS
             try:
                 result = subprocess.run(
-                    ["osascript", "-e",
-                     'tell application "System Events" to get name of every process'],
-                    capture_output=True, text=True, timeout=5,)
+                    [
+                        "osascript",
+                        "-e",
+                        'tell application "System Events" to get name of every process',
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
                 running = result.stdout.lower()
 
                 for daw_type, names in daw_processes.items():

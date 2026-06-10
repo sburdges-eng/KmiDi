@@ -157,6 +157,7 @@ class TimeStretch(BaseAugmentation):
 
         try:
             import librosa
+
             return librosa.effects.time_stretch(audio, rate=rate)
         except ImportError:
             # Simple resampling fallback (not phase-coherent)
@@ -249,7 +250,7 @@ class NoiseInjection(BaseAugmentation):
         noise = noise / (np.max(np.abs(noise)) + 1e-8)
 
         # Scale by audio RMS
-        audio_rms = np.sqrt(np.mean(audio ** 2))
+        audio_rms = np.sqrt(np.mean(audio**2))
         noise = noise * audio_rms * noise_level
 
         return audio + noise
@@ -455,13 +456,13 @@ class SpecAugment(BaseAugmentation):
         for _ in range(self.num_time_masks):
             t = random.randint(0, min(self.time_mask_param, n_times))
             t0 = random.randint(0, n_times - t)
-            spec[:, t0:t0 + t] = self.mask_value
+            spec[:, t0 : t0 + t] = self.mask_value
 
         # Frequency masking
         for _ in range(self.num_freq_masks):
             f = random.randint(0, min(self.freq_mask_param, n_freqs))
             f0 = random.randint(0, n_freqs - f)
-            spec[f0:f0 + f, :] = self.mask_value
+            spec[f0 : f0 + f, :] = self.mask_value
 
         return spec
 
@@ -481,7 +482,7 @@ class TimeMask(BaseAugmentation):
         for _ in range(self.num_masks):
             t = random.randint(0, min(self.max_mask_size, n_times))
             t0 = random.randint(0, n_times - t)
-            spec[:, t0:t0 + t] = 0.0
+            spec[:, t0 : t0 + t] = 0.0
 
         return spec
 
@@ -501,7 +502,7 @@ class FrequencyMask(BaseAugmentation):
         for _ in range(self.num_masks):
             f = random.randint(0, min(self.max_mask_size, n_freqs))
             f0 = random.randint(0, n_freqs - f)
-            spec[f0:f0 + f, :] = 0.0
+            spec[f0 : f0 + f, :] = 0.0
 
         return spec
 
@@ -646,8 +647,9 @@ class ChainedAugmentation:
 class RandomChoice:
     """Randomly choose one augmentation from a list."""
 
-    def __init__(self, augmentations: List[BaseAugmentation],
-                 weights: Optional[List[float]] = None):
+    def __init__(
+        self, augmentations: List[BaseAugmentation], weights: Optional[List[float]] = None
+    ):
         """
         Initialize random choice augmentation.
 

@@ -28,10 +28,10 @@ from music_brain.orchestrator import AIOrchestrator, Pipeline, OrchestratorConfi
 from music_brain.orchestrator.processors import IntentProcessor, HarmonyProcessor, GrooveProcessor
 from music_brain.theory.constants import note_to_absolute_midi
 
-
 # =============================================================================
 # SAFETY & ROBUSTNESS FUNCTIONS
 # =============================================================================
+
 
 def resolve_contradictions(params: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -51,41 +51,42 @@ def resolve_contradictions(params: Dict[str, Any]) -> Dict[str, Any]:
     resolved = params.copy()
 
     # Handle gain contradictions
-    if 'gain' in resolved and 'gain_mod' in resolved:
-        if resolved['gain'] == -math.inf and resolved['gain_mod'] > 0:
-            resolved['gain'] = -6.0  # Default to safe volume if contradiction
+    if "gain" in resolved and "gain_mod" in resolved:
+        if resolved["gain"] == -math.inf and resolved["gain_mod"] > 0:
+            resolved["gain"] = -6.0  # Default to safe volume if contradiction
 
     # Handle velocity range contradictions
-    if 'velocity_min' in resolved and 'velocity_max' in resolved:
-        if resolved['velocity_min'] > resolved['velocity_max']:
-            avg = (resolved['velocity_min'] + resolved['velocity_max']) / 2
-            resolved['velocity_min'] = avg
-            resolved['velocity_max'] = avg
+    if "velocity_min" in resolved and "velocity_max" in resolved:
+        if resolved["velocity_min"] > resolved["velocity_max"]:
+            avg = (resolved["velocity_min"] + resolved["velocity_max"]) / 2
+            resolved["velocity_min"] = avg
+            resolved["velocity_max"] = avg
 
     # Handle chaos/complexity range clipping
-    for key in ['chaos', 'complexity', 'swing', 'gate']:
+    for key in ["chaos", "complexity", "swing", "gate"]:
         if key in resolved:
             resolved[key] = max(0.0, min(1.0, resolved[key]))
 
     # Handle tempo contradictions (too slow or too fast)
-    if 'tempo' in resolved:
-        resolved['tempo'] = max(20, min(300, resolved['tempo']))
+    if "tempo" in resolved:
+        resolved["tempo"] = max(20, min(300, resolved["tempo"]))
 
     # Handle grid resolution contradictions
-    if 'grid' in resolved:
-        resolved['grid'] = max(1, min(64, resolved['grid']))
+    if "grid" in resolved:
+        resolved["grid"] = max(1, min(64, resolved["grid"]))
 
     # Handle attack/release time contradictions (attack > release)
-    if 'attack' in resolved and 'release' in resolved:
-        if resolved['attack'] > resolved['release']:
+    if "attack" in resolved and "release" in resolved:
+        if resolved["attack"] > resolved["release"]:
             # Swap them if attack is longer than release
-            resolved['attack'], resolved['release'] = resolved['release'], resolved['attack']
+            resolved["attack"], resolved["release"] = resolved["release"], resolved["attack"]
 
     return resolved
 
 
 # Global cache for synesthesia dictionary
 _synesthesia_dictionary: Optional[Dict[str, Dict[str, float]]] = None
+
 
 def _get_synesthesia_dictionary() -> Dict[str, Dict[str, float]]:
     global _synesthesia_dictionary
@@ -114,7 +115,9 @@ def _get_synesthesia_dictionary() -> Dict[str, Dict[str, float]]:
     return _synesthesia_dictionary
 
 
-def get_parameter(word: str, dictionary: Optional[Dict[str, Dict[str, float]]] = None) -> Dict[str, float]:  # noqa: E501
+def get_parameter(
+    word: str, dictionary: Optional[Dict[str, Dict[str, float]]] = None
+) -> Dict[str, float]:  # noqa: E501
     """
     Get parameters for a word from dictionary, with Synesthesia fallback.
 
@@ -138,7 +141,7 @@ def get_parameter(word: str, dictionary: Optional[Dict[str, Dict[str, float]]] =
     else:
         # The "Synesthesia" Fallback
         # Turn unknown words into deterministic random values
-        word_hash = hashlib.sha256(word_lower.encode('utf-8')).hexdigest()
+        word_hash = hashlib.sha256(word_lower.encode("utf-8")).hexdigest()
         seed = int(word_hash, 16) % 100
 
         # Generate chaos from first part of hash
@@ -154,10 +157,11 @@ def get_parameter(word: str, dictionary: Optional[Dict[str, Dict[str, float]]] =
 @dataclass
 class MidiEvent:
     """MIDI event matching C++ MidiEvent struct."""
-    status: int      # MIDI status byte
-    data1: int       # First data byte (note/CC number)
-    data2: int       # Second data byte (velocity/value)
-    timestamp: int   # Sample offset within buffer
+
+    status: int  # MIDI status byte
+    data1: int  # First data byte (note/CC number)
+    data2: int  # Second data byte (velocity/value)
+    timestamp: int  # Sample offset within buffer
 
     def to_dict(self) -> Dict[str, int]:
         return {
@@ -171,10 +175,11 @@ class MidiEvent:
 @dataclass
 class KnobState:
     """Current state of Side B UI knobs."""
-    grid: float = 16.0       # Grid resolution (4-32)
-    gate: float = 0.75       # Note gate (0.1-1.0)
-    swing: float = 0.5       # Swing amount (0.5-0.75)
-    chaos: float = 0.5       # Chaos/randomization (0-1)
+
+    grid: float = 16.0  # Grid resolution (4-32)
+    gate: float = 0.75  # Note gate (0.1-1.0)
+    swing: float = 0.5  # Swing amount (0.5-0.75)
+    chaos: float = 0.5  # Chaos/randomization (0-1)
     complexity: float = 0.5  # Harmonic/rhythmic complexity (0-1)
 
     @classmethod
@@ -191,6 +196,7 @@ class KnobState:
 @dataclass
 class BridgeResult:
     """Result from the Python bridge processing."""
+
     success: bool
     midi_events: List[MidiEvent] = field(default_factory=list)
     suggested_chaos: float = 0.5
@@ -235,8 +241,9 @@ def load_genre_definitions(path: Optional[str] = None) -> Dict[str, Any]:
 
     if path and Path(path).exists():
         import logging
+
         try:
-            with open(path, 'r', encoding="utf-8") as f:
+            with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 _genre_definitions = data.get("genres", {})
         except Exception as e:
@@ -419,19 +426,19 @@ def generate_midi_from_harmony(
     for i, chord in enumerate(chords):
         # Parse chord root
         root = chord[0]
-        if len(chord) > 1 and chord[1] in ('#', 'b'):
+        if len(chord) > 1 and chord[1] in ("#", "b"):
             root = chord[:2]
 
         base_note = note_to_absolute_midi(root, 4)
 
         # Determine chord tones
-        if 'm' in chord.lower() and 'maj' not in chord.lower():
+        if "m" in chord.lower() and "maj" not in chord.lower():
             # Minor chord
             intervals = [0, 3, 7]
-        elif 'dim' in chord.lower():
+        elif "dim" in chord.lower():
             # Diminished
             intervals = [0, 3, 6]
-        elif 'aug' in chord.lower():
+        elif "aug" in chord.lower():
             # Augmented
             intervals = [0, 4, 8]
         else:
@@ -440,11 +447,12 @@ def generate_midi_from_harmony(
 
         # Add 7th based on complexity
         if knobs.complexity > 0.5:
-            if '7' in chord or 'maj7' in chord.lower():
-                intervals.append(11 if 'maj7' in chord.lower() else 10)
+            if "7" in chord or "maj7" in chord.lower():
+                intervals.append(11 if "maj7" in chord.lower() else 10)
 
         # Calculate velocity with humanization
         import random
+
         velocity = int(base_velocity + random.uniform(-humanization, humanization))
         velocity = max(1, min(127, velocity))
 
@@ -453,12 +461,14 @@ def generate_midi_from_harmony(
             note = base_note + interval
 
             # Note On
-            events.append(MidiEvent(
-                status=0x90,  # Note On, channel 1
-                data1=note,
-                data2=velocity,
-                timestamp=timestamp,
-            ))
+            events.append(
+                MidiEvent(
+                    status=0x90,  # Note On, channel 1
+                    data1=note,
+                    data2=velocity,
+                    timestamp=timestamp,
+                )
+            )
 
         # Calculate note duration based on gate
         duration_samples = int(samples_per_beat * knobs.gate)
@@ -466,12 +476,14 @@ def generate_midi_from_harmony(
         # Note Offs
         for interval in intervals:
             note = base_note + interval
-            events.append(MidiEvent(
-                status=0x80,  # Note Off, channel 1
-                data1=note,
-                data2=0,
-                timestamp=timestamp + duration_samples,
-            ))
+            events.append(
+                MidiEvent(
+                    status=0x80,  # Note Off, channel 1
+                    data1=note,
+                    data2=0,
+                    timestamp=timestamp + duration_samples,
+                )
+            )
 
         # Move to next beat
         timestamp += samples_per_beat
@@ -614,9 +626,7 @@ async def process_prompt(
         tempo = int(resolved_params["tempo"])
 
         # Generate MIDI events
-        midi_events = generate_midi_from_harmony(
-            chords, key, tempo, knob_state, genre_data
-        )
+        midi_events = generate_midi_from_harmony(chords, key, tempo, knob_state, genre_data)
 
         return BridgeResult(
             success=True,

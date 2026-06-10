@@ -54,7 +54,14 @@ def parse_rows(path: Path) -> tuple[list[Row], int]:
             channel = "unspecified"
         abstained = bool(obj.get("abstained", False))
         violation = bool(obj.get("violation", False))
-        rows.append(Row(channel=channel, exact_match=obj["exact_match"], abstained=abstained, violation=violation))
+        rows.append(
+            Row(
+                channel=channel,
+                exact_match=obj["exact_match"],
+                abstained=abstained,
+                violation=violation,
+            )
+        )
     return rows, skipped
 
 
@@ -78,7 +85,9 @@ def build_report(rows: list[Row], skipped: int, min_sample: int, window_label: s
     lines.append("")
     lines.append(f"- Generated (UTC): {ts}")
     lines.append(f"- Window: {window_label}")
-    lines.append("- KPI: % interactions where output matched request exactly, with no unrequested changes")
+    lines.append(
+        "- KPI: % interactions where output matched request exactly, with no unrequested changes"
+    )
     lines.append("")
     lines.append("## Summary")
     lines.append("")
@@ -122,7 +131,9 @@ def build_report(rows: list[Row], skipped: int, min_sample: int, window_label: s
     if total == 0:
         lines.append("- Provide an interaction assertion dataset before release sign-off.")
     else:
-        lines.append("- Use this KPI with guardrail/runtime evidence; do not sign off on KPI alone.")
+        lines.append(
+            "- Use this KPI with guardrail/runtime evidence; do not sign off on KPI alone."
+        )
         lines.append("- Investigate any violation > 0 before final release tag.")
         if total < min_sample:
             lines.append("- Increase sample size for stronger confidence before RC tag.")
@@ -131,22 +142,34 @@ def build_report(rows: list[Row], skipped: int, min_sample: int, window_label: s
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate trust KPI markdown report from JSONL interactions.")
-    parser.add_argument("--input", required=True, type=Path, help="Path to interaction assertions JSONL")
+    parser = argparse.ArgumentParser(
+        description="Generate trust KPI markdown report from JSONL interactions."
+    )
+    parser.add_argument(
+        "--input", required=True, type=Path, help="Path to interaction assertions JSONL"
+    )
     parser.add_argument("--output", required=True, type=Path, help="Path to markdown report output")
-    parser.add_argument("--min-sample", type=int, default=20, help="Minimum sample size for confidence")
-    parser.add_argument("--window-label", default="release-window", help="Window label shown in report")
+    parser.add_argument(
+        "--min-sample", type=int, default=20, help="Minimum sample size for confidence"
+    )
+    parser.add_argument(
+        "--window-label", default="release-window", help="Window label shown in report"
+    )
     args = parser.parse_args()
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     if not args.input.exists():
-        report = build_report([], skipped=0, min_sample=args.min_sample, window_label=args.window_label)
+        report = build_report(
+            [], skipped=0, min_sample=args.min_sample, window_label=args.window_label
+        )
         report += "\nInput file not found: " + str(args.input) + "\n"
         args.output.write_text(report)
         return
 
     rows, skipped = parse_rows(args.input)
-    report = build_report(rows, skipped=skipped, min_sample=args.min_sample, window_label=args.window_label)
+    report = build_report(
+        rows, skipped=skipped, min_sample=args.min_sample, window_label=args.window_label
+    )
     args.output.write_text(report)
 
 

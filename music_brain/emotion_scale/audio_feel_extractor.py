@@ -22,10 +22,11 @@ from collections import defaultdict
 import warnings
 
 # Suppress librosa warnings
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 
 try:
     import numpy as np
+
     NUMPY_AVAILABLE = True
 except ImportError:
     NUMPY_AVAILABLE = False
@@ -34,6 +35,7 @@ except ImportError:
 try:
     import librosa
     import librosa.display
+
     LIBROSA_AVAILABLE = True
 except ImportError:
     LIBROSA_AVAILABLE = False
@@ -54,68 +56,128 @@ FINGERPRINTS_PATH = Path.home() / "Music-Brain" / "audio-feel" / "fingerprints"
 
 # Frequency bands for analysis
 FREQ_BANDS = {
-    'sub': (20, 60),
-    'bass': (60, 250),
-    'low_mid': (250, 500),
-    'mid': (500, 2000),
-    'high_mid': (2000, 4000),
-    'presence': (4000, 6000),
-    'brilliance': (6000, 12000),
-    'air': (12000, 20000)
+    "sub": (20, 60),
+    "bass": (60, 250),
+    "low_mid": (250, 500),
+    "mid": (500, 2000),
+    "high_mid": (2000, 4000),
+    "presence": (4000, 6000),
+    "brilliance": (6000, 12000),
+    "air": (12000, 20000),
 }
 
 # Genre reference fingerprints (typical frequency balance in dB relative to mid)
 GENRE_FINGERPRINTS = {
-    'hiphop': {
-        'sub': 6, 'bass': 4, 'low_mid': -2, 'mid': 0,
-        'high_mid': -1, 'presence': 1, 'brilliance': -2, 'air': -4,
-        'description': 'Heavy sub, scooped low-mids, crisp highs'
+    "hiphop": {
+        "sub": 6,
+        "bass": 4,
+        "low_mid": -2,
+        "mid": 0,
+        "high_mid": -1,
+        "presence": 1,
+        "brilliance": -2,
+        "air": -4,
+        "description": "Heavy sub, scooped low-mids, crisp highs",
     },
-    'rock': {
-        'sub': -2, 'bass': 2, 'low_mid': 1, 'mid': 0,
-        'high_mid': 2, 'presence': 3, 'brilliance': 1, 'air': -1,
-        'description': 'Guitar presence, punchy mids'
+    "rock": {
+        "sub": -2,
+        "bass": 2,
+        "low_mid": 1,
+        "mid": 0,
+        "high_mid": 2,
+        "presence": 3,
+        "brilliance": 1,
+        "air": -1,
+        "description": "Guitar presence, punchy mids",
     },
-    'pop': {
-        'sub': 0, 'bass': 1, 'low_mid': -1, 'mid': 0,
-        'high_mid': 2, 'presence': 3, 'brilliance': 2, 'air': 1,
-        'description': 'Bright, polished, vocal-forward'
+    "pop": {
+        "sub": 0,
+        "bass": 1,
+        "low_mid": -1,
+        "mid": 0,
+        "high_mid": 2,
+        "presence": 3,
+        "brilliance": 2,
+        "air": 1,
+        "description": "Bright, polished, vocal-forward",
     },
-    'jazz': {
-        'sub': -3, 'bass': 1, 'low_mid': 2, 'mid': 0,
-        'high_mid': 0, 'presence': -1, 'brilliance': -2, 'air': -3,
-        'description': 'Warm, natural, less hyped'
+    "jazz": {
+        "sub": -3,
+        "bass": 1,
+        "low_mid": 2,
+        "mid": 0,
+        "high_mid": 0,
+        "presence": -1,
+        "brilliance": -2,
+        "air": -3,
+        "description": "Warm, natural, less hyped",
     },
-    'electronic': {
-        'sub': 8, 'bass': 5, 'low_mid': -3, 'mid': 0,
-        'high_mid': 2, 'presence': 3, 'brilliance': 4, 'air': 2,
-        'description': 'Heavy sub, scooped mids, bright tops'
+    "electronic": {
+        "sub": 8,
+        "bass": 5,
+        "low_mid": -3,
+        "mid": 0,
+        "high_mid": 2,
+        "presence": 3,
+        "brilliance": 4,
+        "air": 2,
+        "description": "Heavy sub, scooped mids, bright tops",
     },
-    'classical': {
-        'sub': -4, 'bass': 0, 'low_mid': 1, 'mid': 0,
-        'high_mid': 0, 'presence': 0, 'brilliance': -1, 'air': 1,
-        'description': 'Natural, balanced, room sound'
+    "classical": {
+        "sub": -4,
+        "bass": 0,
+        "low_mid": 1,
+        "mid": 0,
+        "high_mid": 0,
+        "presence": 0,
+        "brilliance": -1,
+        "air": 1,
+        "description": "Natural, balanced, room sound",
     },
-    'metal': {
-        'sub': 2, 'bass': 3, 'low_mid': -2, 'mid': 0,
-        'high_mid': 4, 'presence': 5, 'brilliance': 2, 'air': 0,
-        'description': 'Scooped mids, aggressive presence'
+    "metal": {
+        "sub": 2,
+        "bass": 3,
+        "low_mid": -2,
+        "mid": 0,
+        "high_mid": 4,
+        "presence": 5,
+        "brilliance": 2,
+        "air": 0,
+        "description": "Scooped mids, aggressive presence",
     },
-    'rnb': {
-        'sub': 5, 'bass': 3, 'low_mid': 0, 'mid': 0,
-        'high_mid': 1, 'presence': 2, 'brilliance': 1, 'air': 0,
-        'description': 'Warm low end, smooth highs'
+    "rnb": {
+        "sub": 5,
+        "bass": 3,
+        "low_mid": 0,
+        "mid": 0,
+        "high_mid": 1,
+        "presence": 2,
+        "brilliance": 1,
+        "air": 0,
+        "description": "Warm low end, smooth highs",
     },
-    'lofi': {
-        'sub': -2, 'bass': 2, 'low_mid': 3, 'mid': 0,
-        'high_mid': -3, 'presence': -4, 'brilliance': -6, 'air': -8,
-        'description': 'Muffled, warm, rolled-off highs'
+    "lofi": {
+        "sub": -2,
+        "bass": 2,
+        "low_mid": 3,
+        "mid": 0,
+        "high_mid": -3,
+        "presence": -4,
+        "brilliance": -6,
+        "air": -8,
+        "description": "Muffled, warm, rolled-off highs",
     },
-    'country': {
-        'sub': -3, 'bass': 1, 'low_mid': 0, 'mid': 0,
-        'high_mid': 2, 'presence': 3, 'brilliance': 2, 'air': 0,
-        'description': 'Acoustic clarity, bright guitars'
-    }
+    "country": {
+        "sub": -3,
+        "bass": 1,
+        "low_mid": 0,
+        "mid": 0,
+        "high_mid": 2,
+        "presence": 3,
+        "brilliance": 2,
+        "air": 0,
+        "description": "Acoustic clarity, bright guitars",
+    },
 }
 
 # ============================================================================
@@ -132,7 +194,7 @@ def init_database():
     cursor = conn.cursor()
 
     # Main analysis table
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS audio_analyses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -145,10 +207,10 @@ def init_database():
             estimated_key TEXT,
             date_analyzed TEXT
         )
-    ''')
+    """)
 
     # Transient analysis
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS transient_analysis (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             analysis_id INTEGER,
@@ -159,10 +221,10 @@ def init_database():
             attack_sharpness REAL,
             FOREIGN KEY (analysis_id) REFERENCES audio_analyses(id)
         )
-    ''')
+    """)
 
     # RMS/dynamics analysis
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS dynamics_analysis (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             analysis_id INTEGER,
@@ -174,10 +236,10 @@ def init_database():
             loudness_lufs REAL,
             FOREIGN KEY (analysis_id) REFERENCES audio_analyses(id)
         )
-    ''')
+    """)
 
     # Spectral analysis
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS spectral_analysis (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             analysis_id INTEGER,
@@ -189,10 +251,10 @@ def init_database():
             brightness REAL,
             FOREIGN KEY (analysis_id) REFERENCES audio_analyses(id)
         )
-    ''')
+    """)
 
     # Frequency balance (mix fingerprint)
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS frequency_balance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             analysis_id INTEGER,
@@ -201,10 +263,10 @@ def init_database():
             relative_to_mid_db REAL,
             FOREIGN KEY (analysis_id) REFERENCES audio_analyses(id)
         )
-    ''')
+    """)
 
     # Stereo analysis
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS stereo_analysis (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             analysis_id INTEGER,
@@ -213,10 +275,10 @@ def init_database():
             correlation REAL,
             FOREIGN KEY (analysis_id) REFERENCES audio_analyses(id)
         )
-    ''')
+    """)
 
     # Genre match scores
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS genre_matches (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             analysis_id INTEGER,
@@ -224,7 +286,7 @@ def init_database():
             match_score REAL,
             FOREIGN KEY (analysis_id) REFERENCES audio_analyses(id)
         )
-    ''')
+    """)
 
     conn.commit()
     conn.close()
@@ -235,6 +297,7 @@ def get_connection():
     if not DB_PATH.exists():
         init_database()
     return sqlite3.connect(DB_PATH)
+
 
 # ============================================================================
 # Audio Loading
@@ -258,6 +321,7 @@ def load_audio_stereo(filepath, sr=22050, duration=None):
     y, sr = librosa.load(filepath, sr=sr, mono=False, duration=duration)
     return y, sr
 
+
 # ============================================================================
 # Transient Analysis
 # ============================================================================
@@ -269,16 +333,16 @@ def analyze_transients(y, sr):
     Returns timing drift, attack sharpness, onset patterns.
     """
     # Detect onsets
-    onset_frames = librosa.onset.onset_detect(y=y, sr=sr, units='frames')
+    onset_frames = librosa.onset.onset_detect(y=y, sr=sr, units="frames")
     onset_times = librosa.frames_to_time(onset_frames, sr=sr)
 
     if len(onset_times) < 2:
         return {
-            'onset_count': len(onset_times),
-            'avg_interval_ms': 0,
-            'interval_std_ms': 0,
-            'transient_drift_ms': 0,
-            'attack_sharpness': 0
+            "onset_count": len(onset_times),
+            "avg_interval_ms": 0,
+            "interval_std_ms": 0,
+            "transient_drift_ms": 0,
+            "attack_sharpness": 0,
         }
 
     # Calculate inter-onset intervals
@@ -302,13 +366,13 @@ def analyze_transients(y, sr):
     attack_sharpness = np.mean(onset_peaks)
 
     return {
-        'onset_count': len(onset_times),
-        'avg_interval_ms': float(avg_interval),
-        'interval_std_ms': float(interval_std),
-        'transient_drift_ms': float(transient_drift),
-        'drift_ratio': float(drift_ratio),
-        'attack_sharpness': float(attack_sharpness),
-        'onset_times': onset_times.tolist()[:100]  # First 100 for reference
+        "onset_count": len(onset_times),
+        "avg_interval_ms": float(avg_interval),
+        "interval_std_ms": float(interval_std),
+        "transient_drift_ms": float(transient_drift),
+        "drift_ratio": float(drift_ratio),
+        "attack_sharpness": float(attack_sharpness),
+        "onset_times": onset_times.tolist()[:100],  # First 100 for reference
     }
 
 
@@ -330,7 +394,7 @@ def analyze_transient_drift_by_beat(y, sr, bpm=None):
     onset_times = librosa.frames_to_time(onset_frames, sr=sr)
 
     if len(beat_times) < 2 or len(onset_times) < 2:
-        return {'beat_drift_ms': 0, 'on_beat_ratio': 0}
+        return {"beat_drift_ms": 0, "on_beat_ratio": 0}
 
     # Calculate drift from nearest beat for each onset
     beat_interval = 60000 / bpm  # ms per beat
@@ -349,11 +413,12 @@ def analyze_transient_drift_by_beat(y, sr, bpm=None):
             on_beat_count += 1
 
     return {
-        'beat_drift_mean_ms': float(np.mean(drifts)),
-        'beat_drift_std_ms': float(np.std(drifts)),
-        'on_beat_ratio': on_beat_count / len(onset_times) if onset_times.size > 0 else 0,
-        'bpm_used': bpm
+        "beat_drift_mean_ms": float(np.mean(drifts)),
+        "beat_drift_std_ms": float(np.std(drifts)),
+        "on_beat_ratio": on_beat_count / len(onset_times) if onset_times.size > 0 else 0,
+        "bpm_used": bpm,
     }
+
 
 # ============================================================================
 # RMS / Dynamics Analysis
@@ -397,13 +462,13 @@ def analyze_dynamics(y, sr, frame_length=2048, hop_length=512):
     approx_lufs = rms_db - 0.691  # Rough approximation
 
     return {
-        'rms_mean': float(rms_mean),
-        'rms_std': float(rms_std),
-        'rms_swing_ratio': float(rms_swing),
-        'dynamic_range_db': float(dynamic_range),
-        'crest_factor_db': float(crest_factor),
-        'approx_lufs': float(approx_lufs),
-        'rms_curve': rms.tolist()[:500]  # First 500 frames
+        "rms_mean": float(rms_mean),
+        "rms_std": float(rms_std),
+        "rms_swing_ratio": float(rms_swing),
+        "dynamic_range_db": float(dynamic_range),
+        "crest_factor_db": float(crest_factor),
+        "approx_lufs": float(approx_lufs),
+        "rms_curve": rms.tolist()[:500],  # First 500 frames
     }
 
 
@@ -426,7 +491,7 @@ def analyze_rms_swing_pattern(y, sr, bpm=None):
     beat_times = librosa.frames_to_time(beat_frames, sr=sr)
 
     if len(beat_times) < 4:
-        return {'rms_by_beat_position': {}}
+        return {"rms_by_beat_position": {}}
 
     # Analyze RMS at each beat subdivision (16th notes)
     beat_interval = 60 / bpm
@@ -454,15 +519,12 @@ def analyze_rms_swing_pattern(y, sr, bpm=None):
     for pos in range(subdivisions):
         if rms_by_position[pos]:
             rms_pattern[pos] = {
-                'mean': float(np.mean(rms_by_position[pos])),
-                'std': float(np.std(rms_by_position[pos]))
+                "mean": float(np.mean(rms_by_position[pos])),
+                "std": float(np.std(rms_by_position[pos])),
             }
 
-    return {
-        'rms_by_beat_position': rms_pattern,
-        'subdivisions': subdivisions,
-        'bpm': bpm
-    }
+    return {"rms_by_beat_position": rms_pattern, "subdivisions": subdivisions, "bpm": bpm}
+
 
 # ============================================================================
 # Spectral Analysis
@@ -484,25 +546,24 @@ def analyze_spectrum(y, sr):
 
     # Spectral flux (rate of spectral change)
     spec = np.abs(librosa.stft(y))
-    flux = np.sqrt(np.sum(np.diff(spec, axis=1)**2, axis=0))
+    flux = np.sqrt(np.sum(np.diff(spec, axis=1) ** 2, axis=0))
 
     # Brightness: ratio of high freq to total energy
     # Using spectral centroid relative to Nyquist
     brightness = np.mean(centroid) / (sr / 2)
 
     return {
-        'centroid_mean': float(np.mean(centroid)),
-        'centroid_std': float(np.std(centroid)),
-        'bandwidth_mean': float(np.mean(bandwidth)),
-        'bandwidth_std': float(np.std(bandwidth)),
-        'rolloff_mean': float(np.mean(rolloff)),
-        'flux_mean': float(np.mean(flux)),
-        'flux_std': float(np.std(flux)),
-        'brightness': float(brightness),
-        'spectral_movement': (
-            float(np.std(centroid) / np.mean(centroid))
-            if np.mean(centroid) > 0 else 0
-        )
+        "centroid_mean": float(np.mean(centroid)),
+        "centroid_std": float(np.std(centroid)),
+        "bandwidth_mean": float(np.mean(bandwidth)),
+        "bandwidth_std": float(np.std(bandwidth)),
+        "rolloff_mean": float(np.mean(rolloff)),
+        "flux_mean": float(np.mean(flux)),
+        "flux_std": float(np.std(flux)),
+        "brightness": float(brightness),
+        "spectral_movement": (
+            float(np.std(centroid) / np.mean(centroid)) if np.mean(centroid) > 0 else 0
+        ),
     }
 
 
@@ -529,18 +590,19 @@ def analyze_spectral_movement(y, sr, n_segments=16):
             bandwidths.append(np.mean(b))
 
     if len(centroids) < 2:
-        return {'centroid_movement': 0, 'bandwidth_movement': 0}
+        return {"centroid_movement": 0, "bandwidth_movement": 0}
 
     # Calculate movement as coefficient of variation
     centroid_movement = np.std(centroids) / np.mean(centroids) if np.mean(centroids) > 0 else 0
     bandwidth_movement = np.std(bandwidths) / np.mean(bandwidths) if np.mean(bandwidths) > 0 else 0
 
     return {
-        'centroid_movement': float(centroid_movement),
-        'bandwidth_movement': float(bandwidth_movement),
-        'centroids_over_time': centroids,
-        'bandwidths_over_time': bandwidths
+        "centroid_movement": float(centroid_movement),
+        "bandwidth_movement": float(bandwidth_movement),
+        "centroids_over_time": centroids,
+        "bandwidths_over_time": bandwidths,
     }
+
 
 # ============================================================================
 # Frequency Balance (Mix Fingerprint)
@@ -553,7 +615,7 @@ def analyze_frequency_balance(y, sr):
     Returns mix fingerprint.
     """
     # Compute power spectrum
-    D = np.abs(librosa.stft(y))**2
+    D = np.abs(librosa.stft(y)) ** 2
     freqs = librosa.fft_frequencies(sr=sr)
 
     band_energies = {}
@@ -577,15 +639,12 @@ def analyze_frequency_balance(y, sr):
             band_db[band] = -100
 
     # Calculate relative to mid band
-    mid_db = band_db.get('mid', 0)
+    mid_db = band_db.get("mid", 0)
     relative_db = {}
     for band, db in band_db.items():
         relative_db[band] = db - mid_db
 
-    return {
-        'absolute_db': band_db,
-        'relative_to_mid_db': relative_db
-    }
+    return {"absolute_db": band_db, "relative_to_mid_db": relative_db}
 
 
 def match_genre_fingerprint(frequency_balance):
@@ -593,7 +652,7 @@ def match_genre_fingerprint(frequency_balance):
     Match frequency balance against genre fingerprints.
     Returns similarity scores.
     """
-    relative_db = frequency_balance.get('relative_to_mid_db', {})
+    relative_db = frequency_balance.get("relative_to_mid_db", {})
 
     if not relative_db:
         return {}
@@ -615,12 +674,13 @@ def match_genre_fingerprint(frequency_balance):
             # Convert to similarity score (0-1, higher = better match)
             similarity = max(0, 1 - (avg_diff / 10))
             matches[genre] = {
-                'score': float(similarity),
-                'avg_diff_db': float(avg_diff),
-                'description': fingerprint.get('description', '')
+                "score": float(similarity),
+                "avg_diff_db": float(avg_diff),
+                "description": fingerprint.get("description", ""),
             }
 
-    return dict(sorted(matches.items(), key=lambda x: x[1]['score'], reverse=True))
+    return dict(sorted(matches.items(), key=lambda x: x[1]["score"], reverse=True))
+
 
 # ============================================================================
 # Stereo Analysis
@@ -632,7 +692,7 @@ def analyze_stereo(y_stereo, sr):
     Analyze stereo characteristics.
     """
     if y_stereo.ndim != 2 or y_stereo.shape[0] != 2:
-        return {'stereo': False}
+        return {"stereo": False}
 
     left = y_stereo[0]
     right = y_stereo[1]
@@ -663,14 +723,15 @@ def analyze_stereo(y_stereo, sr):
         ms_ratio_db = 100  # Essentially mono
 
     return {
-        'stereo': True,
-        'stereo_width': float(stereo_width),
-        'mid_side_ratio_db': float(ms_ratio_db),
-        'correlation': float(correlation),
-        'is_mono': correlation > 0.99,
-        'is_wide': stereo_width > 0.5,
-        'phase_issues': correlation < 0.3
+        "stereo": True,
+        "stereo_width": float(stereo_width),
+        "mid_side_ratio_db": float(ms_ratio_db),
+        "correlation": float(correlation),
+        "is_mono": correlation > 0.99,
+        "is_wide": stereo_width > 0.5,
+        "phase_issues": correlation < 0.3,
     }
+
 
 # ============================================================================
 # Full Analysis Pipeline
@@ -708,74 +769,77 @@ def analyze_audio_feel(filepath, name=None, genre=None, duration=60):
     # Key estimation via chroma
     chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     key_idx = int(np.argmax(np.mean(chroma, axis=1)))
-    key_names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+    key_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     estimated_key = key_names[key_idx]
 
     print(f"  Duration: {full_duration:.1f}s, BPM: {bpm:.1f}, Key: {estimated_key}")
 
     # Build analysis result
     analysis = {
-        'metadata': {
-            'name': name or filepath.stem,
-            'source_file': str(filepath),
-            'genre': genre,
-            'duration_seconds': full_duration,
-            'sample_rate': sr,
-            'channels': 2 if has_stereo else 1,
-            'estimated_bpm': bpm,
-            'estimated_key': estimated_key,
-            'date_analyzed': datetime.now().isoformat()
+        "metadata": {
+            "name": name or filepath.stem,
+            "source_file": str(filepath),
+            "genre": genre,
+            "duration_seconds": full_duration,
+            "sample_rate": sr,
+            "channels": 2 if has_stereo else 1,
+            "estimated_bpm": bpm,
+            "estimated_key": estimated_key,
+            "date_analyzed": datetime.now().isoformat(),
         }
     }
 
     # Transient analysis
     print("  Analyzing transients...")
-    analysis['transients'] = analyze_transients(y, sr)
-    analysis['beat_drift'] = analyze_transient_drift_by_beat(y, sr, bpm)
+    analysis["transients"] = analyze_transients(y, sr)
+    analysis["beat_drift"] = analyze_transient_drift_by_beat(y, sr, bpm)
     print(f"    Drift: {analysis['transients']['transient_drift_ms']:.1f}ms")
 
     # Dynamics analysis
     print("  Analyzing dynamics...")
-    analysis['dynamics'] = analyze_dynamics(y, sr)
-    analysis['rms_pattern'] = analyze_rms_swing_pattern(y, sr, bpm)
+    analysis["dynamics"] = analyze_dynamics(y, sr)
+    analysis["rms_pattern"] = analyze_rms_swing_pattern(y, sr, bpm)
     print(f"    RMS swing: {analysis['dynamics']['rms_swing_ratio']:.3f}")
     print(f"    Dynamic range: {analysis['dynamics']['dynamic_range_db']:.1f}dB")
 
     # Spectral analysis
     print("  Analyzing spectrum...")
-    analysis['spectrum'] = analyze_spectrum(y, sr)
-    analysis['spectral_movement'] = analyze_spectral_movement(y, sr)
+    analysis["spectrum"] = analyze_spectrum(y, sr)
+    analysis["spectral_movement"] = analyze_spectral_movement(y, sr)
     print(f"    Brightness: {analysis['spectrum']['brightness']:.3f}")
     print(f"    Spectral movement: {analysis['spectrum']['spectral_movement']:.3f}")
 
     # Frequency balance
     print("  Analyzing frequency balance...")
-    analysis['frequency_balance'] = analyze_frequency_balance(y, sr)
-    analysis['genre_matches'] = match_genre_fingerprint(analysis['frequency_balance'])
+    analysis["frequency_balance"] = analyze_frequency_balance(y, sr)
+    analysis["genre_matches"] = match_genre_fingerprint(analysis["frequency_balance"])
 
-    top_match = list(analysis['genre_matches'].items())[
-                     0] if analysis['genre_matches'] else ('unknown', {'score': 0})
+    top_match = (
+        list(analysis["genre_matches"].items())[0]
+        if analysis["genre_matches"]
+        else ("unknown", {"score": 0})
+    )
     print(f"    Best genre match: {top_match[0]} ({top_match[1]['score']:.2f})")
 
     # Stereo analysis
     if has_stereo:
         print("  Analyzing stereo field...")
-        analysis['stereo'] = analyze_stereo(y_stereo, sr)
+        analysis["stereo"] = analyze_stereo(y_stereo, sr)
         print(f"    Stereo width: {analysis['stereo']['stereo_width']:.3f}")
         print(f"    Correlation: {analysis['stereo']['correlation']:.3f}")
     else:
-        analysis['stereo'] = {'stereo': False}
+        analysis["stereo"] = {"stereo": False}
 
     # Summary
-    analysis['summary'] = {
-        'transient_drift_ms': analysis['transients']['transient_drift_ms'],
-        'rms_swing_ratio': analysis['dynamics']['rms_swing_ratio'],
-        'dynamic_range_db': analysis['dynamics']['dynamic_range_db'],
-        'spectral_movement': analysis['spectrum']['spectral_movement'],
-        'brightness': analysis['spectrum']['brightness'],
-        'top_genre_match': top_match[0],
-        'genre_match_score': top_match[1]['score'],
-        'stereo_width': analysis['stereo'].get('stereo_width', 0)
+    analysis["summary"] = {
+        "transient_drift_ms": analysis["transients"]["transient_drift_ms"],
+        "rms_swing_ratio": analysis["dynamics"]["rms_swing_ratio"],
+        "dynamic_range_db": analysis["dynamics"]["dynamic_range_db"],
+        "spectral_movement": analysis["spectrum"]["spectral_movement"],
+        "brightness": analysis["spectrum"]["brightness"],
+        "top_genre_match": top_match[0],
+        "genre_match_score": top_match[1]["score"],
+        "stereo_width": analysis["stereo"].get("stereo_width", 0),
     }
 
     return analysis
@@ -784,7 +848,7 @@ def analyze_audio_feel(filepath, name=None, genre=None, duration=60):
 def save_analysis(analysis, output_path=None):
     """Save analysis to JSON."""
     if output_path is None:
-        name = analysis['metadata']['name']
+        name = analysis["metadata"]["name"]
         output_path = FINGERPRINTS_PATH / f"{name}_feel.json"
     else:
         output_path = Path(output_path)
@@ -804,7 +868,7 @@ def save_analysis(analysis, output_path=None):
         else:
             clean_analysis[key] = value
 
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(clean_analysis, f, indent=2)
 
     print(f"Saved: {output_path}")
@@ -816,99 +880,140 @@ def save_to_database(analysis):
     conn = get_connection()
     cursor = conn.cursor()
 
-    meta = analysis['metadata']
+    meta = analysis["metadata"]
 
     # Main record
-    cursor.execute('''
+    cursor.execute(
+        """
         INSERT INTO audio_analyses
         (name, source_file, genre, duration_seconds, sample_rate, channels,
          estimated_bpm, estimated_key, date_analyzed)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        meta['name'], meta['source_file'], meta['genre'],
-        meta['duration_seconds'], meta['sample_rate'], meta['channels'],
-        meta['estimated_bpm'], meta['estimated_key'], meta['date_analyzed']
-    ))
+    """,
+        (
+            meta["name"],
+            meta["source_file"],
+            meta["genre"],
+            meta["duration_seconds"],
+            meta["sample_rate"],
+            meta["channels"],
+            meta["estimated_bpm"],
+            meta["estimated_key"],
+            meta["date_analyzed"],
+        ),
+    )
 
     analysis_id = cursor.lastrowid
 
     # Transient data
-    trans = analysis.get('transients', {})
-    cursor.execute('''
+    trans = analysis.get("transients", {})
+    cursor.execute(
+        """
         INSERT INTO transient_analysis
         (analysis_id, onset_count, avg_onset_interval_ms, onset_interval_std_ms,
          transient_drift_ms, attack_sharpness)
         VALUES (?, ?, ?, ?, ?, ?)
-    ''', (
-        analysis_id, trans.get('onset_count', 0), trans.get('avg_interval_ms', 0),
-        trans.get('interval_std_ms', 0), trans.get('transient_drift_ms', 0),
-        trans.get('attack_sharpness', 0)
-    ))
+    """,
+        (
+            analysis_id,
+            trans.get("onset_count", 0),
+            trans.get("avg_interval_ms", 0),
+            trans.get("interval_std_ms", 0),
+            trans.get("transient_drift_ms", 0),
+            trans.get("attack_sharpness", 0),
+        ),
+    )
 
     # Dynamics data
-    dyn = analysis.get('dynamics', {})
-    cursor.execute('''
+    dyn = analysis.get("dynamics", {})
+    cursor.execute(
+        """
         INSERT INTO dynamics_analysis
         (analysis_id, rms_mean, rms_std, rms_swing_ratio, dynamic_range_db,
          crest_factor_db, loudness_lufs)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        analysis_id, dyn.get('rms_mean', 0), dyn.get('rms_std', 0),
-        dyn.get('rms_swing_ratio', 0), dyn.get('dynamic_range_db', 0),
-        dyn.get('crest_factor_db', 0), dyn.get('approx_lufs', 0)
-    ))
+    """,
+        (
+            analysis_id,
+            dyn.get("rms_mean", 0),
+            dyn.get("rms_std", 0),
+            dyn.get("rms_swing_ratio", 0),
+            dyn.get("dynamic_range_db", 0),
+            dyn.get("crest_factor_db", 0),
+            dyn.get("approx_lufs", 0),
+        ),
+    )
 
     # Spectral data
-    spec = analysis.get('spectrum', {})
-    cursor.execute('''
+    spec = analysis.get("spectrum", {})
+    cursor.execute(
+        """
         INSERT INTO spectral_analysis
         (analysis_id, spectral_centroid_mean, spectral_centroid_std,
          spectral_bandwidth_mean, spectral_rolloff_mean, spectral_flux_mean,
          brightness)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        analysis_id, spec.get('centroid_mean', 0), spec.get('centroid_std', 0),
-        spec.get('bandwidth_mean', 0), spec.get('rolloff_mean', 0),
-        spec.get('flux_mean', 0), spec.get('brightness', 0)
-    ))
+    """,
+        (
+            analysis_id,
+            spec.get("centroid_mean", 0),
+            spec.get("centroid_std", 0),
+            spec.get("bandwidth_mean", 0),
+            spec.get("rolloff_mean", 0),
+            spec.get("flux_mean", 0),
+            spec.get("brightness", 0),
+        ),
+    )
 
     # Frequency balance
-    freq = analysis.get('frequency_balance', {})
-    relative = freq.get('relative_to_mid_db', {})
-    absolute = freq.get('absolute_db', {})
+    freq = analysis.get("frequency_balance", {})
+    relative = freq.get("relative_to_mid_db", {})
+    absolute = freq.get("absolute_db", {})
     for band in FREQ_BANDS.keys():
         if band in relative:
-            cursor.execute('''
+            cursor.execute(
+                """
                 INSERT INTO frequency_balance
                 (analysis_id, band_name, energy_db, relative_to_mid_db)
                 VALUES (?, ?, ?, ?)
-            ''', (analysis_id, band, absolute.get(band, 0), relative.get(band, 0)))
+            """,
+                (analysis_id, band, absolute.get(band, 0), relative.get(band, 0)),
+            )
 
     # Stereo
-    stereo = analysis.get('stereo', {})
-    if stereo.get('stereo'):
-        cursor.execute('''
+    stereo = analysis.get("stereo", {})
+    if stereo.get("stereo"):
+        cursor.execute(
+            """
             INSERT INTO stereo_analysis
             (analysis_id, stereo_width, mid_side_ratio, correlation)
             VALUES (?, ?, ?, ?)
-        ''', (
-            analysis_id, stereo.get('stereo_width', 0),
-            stereo.get('mid_side_ratio_db', 0), stereo.get('correlation', 0)
-        ))
+        """,
+            (
+                analysis_id,
+                stereo.get("stereo_width", 0),
+                stereo.get("mid_side_ratio_db", 0),
+                stereo.get("correlation", 0),
+            ),
+        )
 
     # Genre matches
-    for genre, match_data in analysis.get('genre_matches', {}).items():
-        cursor.execute('''
+    for genre, match_data in analysis.get("genre_matches", {}).items():
+        cursor.execute(
+            """
             INSERT INTO genre_matches
             (analysis_id, genre, match_score)
             VALUES (?, ?, ?)
-        ''', (analysis_id, genre, match_data['score']))
+        """,
+            (analysis_id, genre, match_data["score"]),
+        )
 
     conn.commit()
     conn.close()
 
     print(f"Saved to database with ID: {analysis_id}")
     return analysis_id
+
 
 # ============================================================================
 # Batch Processing
@@ -923,12 +1028,12 @@ def scan_folder(folder_path, genre=None, recursive=True):
         print(f"Error: Folder not found: {folder}")
         return
 
-    extensions = ['*.wav', '*.mp3', '*.flac', '*.aiff', '*.aif', '*.m4a', '*.ogg']
+    extensions = ["*.wav", "*.mp3", "*.flac", "*.aiff", "*.aif", "*.m4a", "*.ogg"]
     audio_files = []
 
     for ext in extensions:
         if recursive:
-            audio_files.extend(folder.glob(f'**/{ext}'))
+            audio_files.extend(folder.glob(f"**/{ext}"))
         else:
             audio_files.extend(folder.glob(ext))
 
@@ -952,6 +1057,7 @@ def scan_folder(folder_path, genre=None, recursive=True):
     print(f"Analyzed: {analyzed}")
     print(f"Errors: {errors}")
 
+
 # ============================================================================
 # Query Functions
 # ============================================================================
@@ -963,35 +1069,40 @@ def list_analyses(genre=None, limit=50):
     cursor = conn.cursor()
 
     if genre:
-        cursor.execute('''
+        cursor.execute(
+            """
             SELECT a.id, a.name, a.genre, a.estimated_bpm, d.rms_swing_ratio, t.transient_drift_ms
             FROM audio_analyses a
             LEFT JOIN dynamics_analysis d ON a.id = d.analysis_id
             LEFT JOIN transient_analysis t ON a.id = t.analysis_id
             WHERE a.genre LIKE ?
             ORDER BY a.name LIMIT ?
-        ''', (f'%{genre}%', limit))
+        """,
+            (f"%{genre}%", limit),
+        )
     else:
-        cursor.execute('''
+        cursor.execute(
+            """
             SELECT a.id, a.name, a.genre, a.estimated_bpm, d.rms_swing_ratio, t.transient_drift_ms
             FROM audio_analyses a
             LEFT JOIN dynamics_analysis d ON a.id = d.analysis_id
             LEFT JOIN transient_analysis t ON a.id = t.analysis_id
             ORDER BY a.name LIMIT ?
-        ''', (limit,))
+        """,
+            (limit,),
+        )
 
     results = cursor.fetchall()
     conn.close()
 
     print(
-        f"\n{'ID':<6} {'Name':<30} {'Genre':<10} {'BPM':<6} "
-        f"{'RMS Swing':<10} {'Drift(ms)':<10}"
+        f"\n{'ID':<6} {'Name':<30} {'Genre':<10} {'BPM':<6} " f"{'RMS Swing':<10} {'Drift(ms)':<10}"
     )
     print("-" * 80)
 
     for row in results:
         id_, name, genre, bpm, rms_swing, drift = row
-        name_display = name[:28] + '..' if len(name) > 30 else name
+        name_display = name[:28] + ".." if len(name) > 30 else name
         print(
             f"{id_:<6} {name_display:<30} {genre or '':<10} "
             f"{bpm or 0:.0f}  {rms_swing or 0:.3f}     {drift or 0:.1f}"
@@ -1003,7 +1114,7 @@ def get_analysis_detail(analysis_id):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute('SELECT * FROM audio_analyses WHERE id = ?', (analysis_id,))
+    cursor.execute("SELECT * FROM audio_analyses WHERE id = ?", (analysis_id,))
     analysis = cursor.fetchone()
 
     if not analysis:
@@ -1019,7 +1130,7 @@ def get_analysis_detail(analysis_id):
     print(f"{'='*60}")
 
     # Transients
-    cursor.execute('SELECT * FROM transient_analysis WHERE analysis_id = ?', (analysis_id,))
+    cursor.execute("SELECT * FROM transient_analysis WHERE analysis_id = ?", (analysis_id,))
     trans = cursor.fetchone()
     if trans:
         print("\nTransients:")
@@ -1028,7 +1139,7 @@ def get_analysis_detail(analysis_id):
         print(f"  Attack sharpness: {trans[6]:.3f}")
 
     # Dynamics
-    cursor.execute('SELECT * FROM dynamics_analysis WHERE analysis_id = ?', (analysis_id,))
+    cursor.execute("SELECT * FROM dynamics_analysis WHERE analysis_id = ?", (analysis_id,))
     dyn = cursor.fetchone()
     if dyn:
         print("\nDynamics:")
@@ -1037,7 +1148,7 @@ def get_analysis_detail(analysis_id):
         print(f"  Crest factor: {dyn[6]:.1f}dB")
 
     # Spectral
-    cursor.execute('SELECT * FROM spectral_analysis WHERE analysis_id = ?', (analysis_id,))
+    cursor.execute("SELECT * FROM spectral_analysis WHERE analysis_id = ?", (analysis_id,))
     spec = cursor.fetchone()
     if spec:
         print("\nSpectral:")
@@ -1046,29 +1157,31 @@ def get_analysis_detail(analysis_id):
 
     # Frequency balance
     cursor.execute(
-        'SELECT band_name, relative_to_mid_db FROM frequency_balance WHERE analysis_id = ?',
-        (analysis_id,))
+        "SELECT band_name, relative_to_mid_db FROM frequency_balance WHERE analysis_id = ?",
+        (analysis_id,),
+    )
     bands = cursor.fetchall()
     if bands:
         print("\nFrequency Balance (relative to mid):")
         for band, rel_db in bands:
-            bar = '+' * int(max(0, rel_db + 5)) + '-' * int(max(0, -rel_db + 5))
+            bar = "+" * int(max(0, rel_db + 5)) + "-" * int(max(0, -rel_db + 5))
             print(f"  {band:<12} {rel_db:+.1f}dB")
 
     # Genre matches
     cursor.execute(
-        'SELECT genre, match_score FROM genre_matches WHERE analysis_id = ? '
-        'ORDER BY match_score DESC LIMIT 5',
-        (analysis_id,))
+        "SELECT genre, match_score FROM genre_matches WHERE analysis_id = ? "
+        "ORDER BY match_score DESC LIMIT 5",
+        (analysis_id,),
+    )
     matches = cursor.fetchall()
     if matches:
         print("\nGenre Matches:")
         for genre, score in matches:
-            bar = '█' * int(score * 20)
+            bar = "█" * int(score * 20)
             print(f"  {genre:<12} {score:.2f} {bar}")
 
     # Stereo
-    cursor.execute('SELECT * FROM stereo_analysis WHERE analysis_id = ?', (analysis_id,))
+    cursor.execute("SELECT * FROM stereo_analysis WHERE analysis_id = ?", (analysis_id,))
     stereo = cursor.fetchone()
     if stereo:
         print("\nStereo:")
@@ -1084,14 +1197,17 @@ def compare_analyses(id1, id2):
     cursor = conn.cursor()
 
     # Get both analyses
-    cursor.execute('''
+    cursor.execute(
+        """
         SELECT a.name, d.rms_swing_ratio, d.dynamic_range_db, t.transient_drift_ms, s.brightness
         FROM audio_analyses a
         LEFT JOIN dynamics_analysis d ON a.id = d.analysis_id
         LEFT JOIN transient_analysis t ON a.id = t.analysis_id
         LEFT JOIN spectral_analysis s ON a.id = s.analysis_id
         WHERE a.id IN (?, ?)
-    ''', (id1, id2))
+    """,
+        (id1, id2),
+    )
 
     results = cursor.fetchall()
     conn.close()
@@ -1102,14 +1218,9 @@ def compare_analyses(id1, id2):
 
     a1, a2 = results
 
-    print(
-        f"\n{'Metric':<20} {a1[0][:15]:<18} {a2[0][:15]:<18} {'Diff':<10}"
-    )
+    print(f"\n{'Metric':<20} {a1[0][:15]:<18} {a2[0][:15]:<18} {'Diff':<10}")
     print("-" * 70)
-    print(
-        f"{'RMS Swing':<20} {a1[1]:.3f}            {a2[1]:.3f}            "
-        f"{a2[1]-a1[1]:+.3f}"
-    )
+    print(f"{'RMS Swing':<20} {a1[1]:.3f}            {a2[1]:.3f}            " f"{a2[1]-a1[1]:+.3f}")
     print(
         f"{'Dynamic Range':<20} {a1[2]:.1f}dB           {a2[2]:.1f}dB           "
         f"{a2[2]-a1[2]:+.1f}dB"
@@ -1119,9 +1230,9 @@ def compare_analyses(id1, id2):
         f"{a2[3]-a1[3]:+.1f}ms"
     )
     print(
-        f"{'Brightness':<20} {a1[4]:.3f}            {a2[4]:.3f}            "
-        f"{a2[4]-a1[4]:+.3f}"
+        f"{'Brightness':<20} {a1[4]:.3f}            {a2[4]:.3f}            " f"{a2[4]-a1[4]:+.3f}"
     )
+
 
 # ============================================================================
 # CLI
@@ -1130,82 +1241,84 @@ def compare_analyses(id1, id2):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Audio Feel Extractor - Analyze production characteristics',
+        description="Audio Feel Extractor - Analyze production characteristics",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='''
+        epilog="""
 Examples:
   %(prog)s analyze song.wav --genre hiphop
   %(prog)s scan ~/Music/References --genre pop
   %(prog)s list --genre rock
   %(prog)s detail 5
   %(prog)s compare 3 7
-        '''
+        """,
     )
 
-    subparsers = parser.add_subparsers(dest='command', help='Commands')
+    subparsers = parser.add_subparsers(dest="command", help="Commands")
 
     # Analyze command
-    analyze_parser = subparsers.add_parser('analyze', help='Analyze audio file')
-    analyze_parser.add_argument('file', help='Audio file path')
-    analyze_parser.add_argument('--name', help='Analysis name')
-    analyze_parser.add_argument('--genre', help='Genre tag')
-    analyze_parser.add_argument('--duration', type=int, default=60,
-                                help='Max duration to analyze (seconds)')
-    analyze_parser.add_argument('--output', help='Output JSON path')
+    analyze_parser = subparsers.add_parser("analyze", help="Analyze audio file")
+    analyze_parser.add_argument("file", help="Audio file path")
+    analyze_parser.add_argument("--name", help="Analysis name")
+    analyze_parser.add_argument("--genre", help="Genre tag")
+    analyze_parser.add_argument(
+        "--duration", type=int, default=60, help="Max duration to analyze (seconds)"
+    )
+    analyze_parser.add_argument("--output", help="Output JSON path")
 
     # Scan command
-    scan_parser = subparsers.add_parser('scan', help='Scan folder')
-    scan_parser.add_argument('folder', help='Folder path')
-    scan_parser.add_argument('--genre', help='Genre tag')
-    scan_parser.add_argument('--no-recursive', action='store_true')
+    scan_parser = subparsers.add_parser("scan", help="Scan folder")
+    scan_parser.add_argument("folder", help="Folder path")
+    scan_parser.add_argument("--genre", help="Genre tag")
+    scan_parser.add_argument("--no-recursive", action="store_true")
 
     # List command
-    list_parser = subparsers.add_parser('list', help='List analyses')
-    list_parser.add_argument('--genre', help='Filter by genre')
-    list_parser.add_argument('--limit', type=int, default=50)
+    list_parser = subparsers.add_parser("list", help="List analyses")
+    list_parser.add_argument("--genre", help="Filter by genre")
+    list_parser.add_argument("--limit", type=int, default=50)
 
     # Detail command
-    detail_parser = subparsers.add_parser('detail', help='Show analysis detail')
-    detail_parser.add_argument('id', type=int, help='Analysis ID')
+    detail_parser = subparsers.add_parser("detail", help="Show analysis detail")
+    detail_parser.add_argument("id", type=int, help="Analysis ID")
 
     # Compare command
-    compare_parser = subparsers.add_parser('compare', help='Compare two analyses')
-    compare_parser.add_argument('id1', type=int, help='First analysis ID')
-    compare_parser.add_argument('id2', type=int, help='Second analysis ID')
+    compare_parser = subparsers.add_parser("compare", help="Compare two analyses")
+    compare_parser.add_argument("id1", type=int, help="First analysis ID")
+    compare_parser.add_argument("id2", type=int, help="Second analysis ID")
 
     # Init command
-    subparsers.add_parser('init', help='Initialize database')
+    subparsers.add_parser("init", help="Initialize database")
 
     # Genres command
-    subparsers.add_parser('genres', help='List genre fingerprints')
+    subparsers.add_parser("genres", help="List genre fingerprints")
 
     args = parser.parse_args()
 
-    if args.command == 'analyze':
-        analysis = analyze_audio_feel(args.file, name=args.name,
-                                      genre=args.genre, duration=args.duration)
+    if args.command == "analyze":
+        analysis = analyze_audio_feel(
+            args.file, name=args.name, genre=args.genre, duration=args.duration
+        )
         if args.output:
             save_analysis(analysis, args.output)
         else:
             save_analysis(analysis)
         save_to_database(analysis)
 
-    elif args.command == 'scan':
+    elif args.command == "scan":
         scan_folder(args.folder, genre=args.genre, recursive=not args.no_recursive)
 
-    elif args.command == 'list':
+    elif args.command == "list":
         list_analyses(genre=args.genre, limit=args.limit)
 
-    elif args.command == 'detail':
+    elif args.command == "detail":
         get_analysis_detail(args.id)
 
-    elif args.command == 'compare':
+    elif args.command == "compare":
         compare_analyses(args.id1, args.id2)
 
-    elif args.command == 'init':
+    elif args.command == "init":
         init_database()
 
-    elif args.command == 'genres':
+    elif args.command == "genres":
         print("\nGenre Fingerprints:")
         print("-" * 50)
         for genre, data in GENRE_FINGERPRINTS.items():
@@ -1216,5 +1329,5 @@ Examples:
         parser.print_help()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
