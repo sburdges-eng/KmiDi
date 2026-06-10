@@ -30,6 +30,7 @@ def _fp(**overrides) -> TokenizerFingerprint:
 # Hash helpers
 # ----------------------------------------------------------------------
 
+
 def test_hash_vocab_is_order_independent() -> None:
     a = hash_vocab({"x": 0, "y": 1, "z": 2})
     b = hash_vocab({"z": 2, "y": 1, "x": 0})
@@ -52,6 +53,7 @@ def test_hash_merges_order_is_significant() -> None:
 # ----------------------------------------------------------------------
 # Fingerprint serialisation
 # ----------------------------------------------------------------------
+
 
 def test_fingerprint_json_roundtrip() -> None:
     fp = _fp()
@@ -77,6 +79,7 @@ def test_fingerprint_summary_is_short_hex() -> None:
 # ----------------------------------------------------------------------
 # compare()
 # ----------------------------------------------------------------------
+
 
 def test_identical_fingerprints_are_consistent() -> None:
     report = compare(_fp(), _fp())

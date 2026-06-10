@@ -20,6 +20,10 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from torch.utils.data import DataLoader
 
 # Repo root on host; in SageMaker container we rely on installed package
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))

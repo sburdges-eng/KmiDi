@@ -11,6 +11,7 @@ from enum import Enum
 
 class TimingFeel(Enum):
     """Rhythmic timing feel."""
+
     STRAIGHT = "straight"
     SWUNG = "swung"
     LAID_BACK = "laid_back"
@@ -29,6 +30,7 @@ class EmotionalState:
         primary_emotion: The main emotion identified
         secondary_emotions: Additional emotions present
     """
+
     valence: float = 0.0
     arousal: float = 0.5
     primary_emotion: str = "neutral"
@@ -45,6 +47,7 @@ class MusicalParameters:
     """
     Musical parameters derived from emotional state.
     """
+
     tempo_suggested: int = 100
     key_suggested: str = "C"
     mode_suggested: str = "major"
@@ -167,31 +170,26 @@ def emotion_to_valence_arousal(emotion: str) -> tuple:
         "serenity": (0.6, 0.2),
         "contentment": (0.5, 0.3),
         "hope": (0.6, 0.5),
-
         # Negative emotions
         "sad": (-0.7, 0.3),
         "grief": (-0.8, 0.4),
         "melancholy": (-0.5, 0.2),
         "despair": (-0.9, 0.3),
         "loneliness": (-0.6, 0.2),
-
         # High arousal negative
         "anger": (-0.6, 0.9),
         "rage": (-0.8, 1.0),
         "frustration": (-0.5, 0.7),
         "hostility": (-0.7, 0.8),
-
         # Fear family
         "fear": (-0.7, 0.8),
         "terror": (-0.9, 0.9),
         "anxiety": (-0.5, 0.7),
         "dread": (-0.6, 0.6),
-
         # Surprise (neutral valence)
         "surprise": (0.2, 0.8),
         "shock": (-0.1, 0.9),
         "amazement": (0.4, 0.8),
-
         # Disgust
         "disgust": (-0.5, 0.5),
         "revulsion": (-0.7, 0.6),

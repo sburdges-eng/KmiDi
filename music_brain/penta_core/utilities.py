@@ -69,7 +69,7 @@ class ChordProgressionAnalyzer:
             return {"pattern": "insufficient_data", "matches": []}
 
         recent = self.history[-length:]
-        roots = tuple(c['root'] for c in recent)
+        roots = tuple(c["root"] for c in recent)
 
         # Normalize to start from 0
         normalized = tuple((r - roots[0]) % 12 for r in roots)
@@ -83,7 +83,7 @@ class ChordProgressionAnalyzer:
             "pattern": normalized,
             "matches": matches if matches else ["Custom progression"],
             "length": length,
-            "chords": [c['name'] for c in recent]
+            "chords": [c["name"] for c in recent],
         }
 
     def suggest_next_chord(self, current_chord: dict) -> List[dict]:
@@ -91,37 +91,29 @@ class ChordProgressionAnalyzer:
         suggestions = []
 
         # Common resolutions
-        root = current_chord['root']
-        quality = current_chord.get('quality', 0)
+        root = current_chord["root"]
+        quality = current_chord.get("quality", 0)
 
         # Dominant to tonic
         if quality == 4:  # Dominant 7th
-            suggestions.append({
-                "root": (root - 7) % 12,
-                "quality": 0,
-                "reason": "V7 -> I resolution"
-            })
+            suggestions.append(
+                {"root": (root - 7) % 12, "quality": 0, "reason": "V7 -> I resolution"}
+            )
 
         # Tonic to subdominant or dominant
         if quality == 0:  # Major
-            suggestions.append({
-                "root": (root + 5) % 12,
-                "quality": 0,
-                "reason": "I -> IV progression"
-            })
-            suggestions.append({
-                "root": (root + 7) % 12,
-                "quality": 0,
-                "reason": "I -> V progression"
-            })
+            suggestions.append(
+                {"root": (root + 5) % 12, "quality": 0, "reason": "I -> IV progression"}
+            )
+            suggestions.append(
+                {"root": (root + 7) % 12, "quality": 0, "reason": "I -> V progression"}
+            )
 
         # Subdominant to dominant
         if quality == 0 and root == 5:
-            suggestions.append({
-                "root": (root + 2) % 12,
-                "quality": 4,
-                "reason": "IV -> V progression"
-            })
+            suggestions.append(
+                {"root": (root + 2) % 12, "quality": 4, "reason": "IV -> V progression"}
+            )
 
         return suggestions
 
@@ -136,13 +128,10 @@ class KeyModulationDetector:
 
     def add_scale(self, scale: dict):
         """Add scale to history."""
-        self.scale_history.append({
-            **scale,
-            "timestamp": datetime.now()
-        })
+        self.scale_history.append({**scale, "timestamp": datetime.now()})
 
         if len(self.scale_history) > self.window_size:
-            self.scale_history = self.scale_history[-self.window_size:]
+            self.scale_history = self.scale_history[-self.window_size :]
             self._check_modulation()
 
     def _check_modulation(self):
@@ -155,18 +144,24 @@ class KeyModulationDetector:
         early_scales = self.scale_history[:mid_point]
         recent_scales = self.scale_history[mid_point:]
 
-        early_tonic = max(set(s['tonic'] for s in early_scales),
-                          key=lambda x: sum(1 for s in early_scales if s['tonic'] == x))
-        recent_tonic = max(set(s['tonic'] for s in recent_scales),
-                           key=lambda x: sum(1 for s in recent_scales if s['tonic'] == x))
+        early_tonic = max(
+            set(s["tonic"] for s in early_scales),
+            key=lambda x: sum(1 for s in early_scales if s["tonic"] == x),
+        )
+        recent_tonic = max(
+            set(s["tonic"] for s in recent_scales),
+            key=lambda x: sum(1 for s in recent_scales if s["tonic"] == x),
+        )
 
         if early_tonic != recent_tonic:
-            self.modulations.append({
-                "from_key": early_tonic,
-                "to_key": recent_tonic,
-                "timestamp": datetime.now(),
-                "relation": self._get_key_relation(early_tonic, recent_tonic)
-            })
+            self.modulations.append(
+                {
+                    "from_key": early_tonic,
+                    "to_key": recent_tonic,
+                    "timestamp": datetime.now(),
+                    "relation": self._get_key_relation(early_tonic, recent_tonic),
+                }
+            )
 
     def _get_key_relation(self, from_key: int, to_key: int) -> str:
         """Determine the relationship between keys."""
@@ -183,7 +178,7 @@ class KeyModulationDetector:
             8: "submediant",
             9: "leading tone",
             10: "subtonic",
-            11: "semitone"
+            11: "semitone",
         }
         return relations.get(interval, "unknown")
 
@@ -203,7 +198,7 @@ class RhythmicPatternLibrary:
         "shuffle": [0, 0.67, 1.0, 1.67, 2.0, 2.67, 3.0, 3.67],
         "bossa_nova": [0, 0.5, 1.5, 2.0, 3.0, 3.5],
         "rumba": [0, 0.5, 1.0, 2.0, 2.5, 3.0],
-        "son_clave": [0, 0.5, 1.5, 2.0, 3.0]
+        "son_clave": [0, 0.5, 1.5, 2.0, 3.0],
     }
 
     @classmethod
@@ -215,7 +210,7 @@ class RhythmicPatternLibrary:
     def match_pattern(cls, onsets: List[float], tolerance: float = 0.1) -> str:
         """Match onsets to known pattern."""
         best_match = "unknown"
-        best_score = float('inf')
+        best_score = float("inf")
 
         for name, pattern in cls.PATTERNS.items():
             if len(onsets) != len(pattern):
@@ -235,7 +230,7 @@ class MIDIUtilities:
     @staticmethod
     def note_number_to_name(note: int) -> str:
         """Convert MIDI note number to name."""
-        notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
         octave = (note // 12) - 1
         note_name = notes[note % 12]
         return f"{note_name}{octave}"
@@ -243,8 +238,20 @@ class MIDIUtilities:
     @staticmethod
     def note_name_to_number(name: str) -> int:
         """Convert note name to MIDI note number."""
-        notes = {'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
-                 'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11}
+        notes = {
+            "C": 0,
+            "C#": 1,
+            "D": 2,
+            "D#": 3,
+            "E": 4,
+            "F": 5,
+            "F#": 6,
+            "G": 7,
+            "G#": 8,
+            "A": 9,
+            "A#": 10,
+            "B": 11,
+        }
 
         note_part = name[:-1]
         octave = int(name[-1])
@@ -274,15 +281,17 @@ class VisualizationData:
     def chord_circle_positions(chord: dict) -> List[dict]:
         """Generate positions for chord circle visualization."""
         positions = []
-        for i, pc in enumerate(chord.get('pitch_classes', [])):
+        for i, pc in enumerate(chord.get("pitch_classes", [])):
             angle = (pc / 12.0) * 360
-            positions.append({
-                "pitch_class": pc,
-                "angle": angle,
-                "x": np.cos(np.radians(angle)),
-                "y": np.sin(np.radians(angle)),
-                "index": i
-            })
+            positions.append(
+                {
+                    "pitch_class": pc,
+                    "angle": angle,
+                    "x": np.cos(np.radians(angle)),
+                    "y": np.sin(np.radians(angle)),
+                    "index": i,
+                }
+            )
         return positions
 
     @staticmethod
@@ -293,7 +302,7 @@ class VisualizationData:
 
         smoothed = []
         for i in range(len(tempo_history) - window + 1):
-            avg = sum(tempo_history[i:i+window]) / window
+            avg = sum(tempo_history[i : i + window]) / window
             smoothed.append(avg)
         return smoothed
 
@@ -334,7 +343,7 @@ class PerformanceBenchmark:
             "min_ms": min(times),
             "max_ms": max(times),
             "avg_ms": sum(times) / len(times),
-            "median_ms": sorted(times)[len(times) // 2]
+            "median_ms": sorted(times)[len(times) // 2],
         }
 
     def get_all_stats(self) -> dict:
@@ -343,7 +352,7 @@ class PerformanceBenchmark:
 
     def export_to_file(self, filepath: str):
         """Export benchmark data to file."""
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(self.get_all_stats(), f, indent=2)
 
 
@@ -370,11 +379,13 @@ class SessionRecorder:
         if not self.is_recording:
             return
 
-        self.events.append({
-            "type": event_type,
-            "data": data,
-            "timestamp": (datetime.now() - self.start_time).total_seconds()
-        })
+        self.events.append(
+            {
+                "type": event_type,
+                "data": data,
+                "timestamp": (datetime.now() - self.start_time).total_seconds(),
+            }
+        )
 
     def save_to_file(self, filepath: str):
         """Save recorded session to file."""
@@ -382,16 +393,16 @@ class SessionRecorder:
             "start_time": self.start_time.isoformat() if self.start_time else None,
             "duration": self.events[-1]["timestamp"] if self.events else 0,
             "event_count": len(self.events),
-            "events": self.events
+            "events": self.events,
         }
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(session_data, f, indent=2)
 
     @classmethod
-    def load_from_file(cls, filepath: str) -> 'SessionRecorder':
+    def load_from_file(cls, filepath: str) -> "SessionRecorder":
         """Load session from file."""
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             session_data = json.load(f)
 
         recorder = cls()
@@ -401,12 +412,12 @@ class SessionRecorder:
 
 # Export all utilities
 __all__ = [
-    'ChordCache',
-    'ChordProgressionAnalyzer',
-    'KeyModulationDetector',
-    'RhythmicPatternLibrary',
-    'MIDIUtilities',
-    'VisualizationData',
-    'PerformanceBenchmark',
-    'SessionRecorder'
+    "ChordCache",
+    "ChordProgressionAnalyzer",
+    "KeyModulationDetector",
+    "RhythmicPatternLibrary",
+    "MIDIUtilities",
+    "VisualizationData",
+    "PerformanceBenchmark",
+    "SessionRecorder",
 ]

@@ -37,7 +37,6 @@ from typing import List, Dict, Optional, Tuple, Set
 from enum import Enum
 import random
 
-
 # =============================================================================
 # CONSTANTS
 # =============================================================================
@@ -80,36 +79,40 @@ DRUM_GROUPS = {
 # ENUMS
 # =============================================================================
 
+
 class GrooveType(Enum):
     """Core groove feel."""
-    STRAIGHT = "straight"           # Even 8ths/16ths
-    SWING = "swing"                 # Triplet feel
-    SHUFFLE = "shuffle"             # Heavy shuffle
-    HALF_TIME = "half_time"         # Snare on 3
-    DOUBLE_TIME = "double_time"     # Fast feel
-    BROKEN = "broken"               # Fragmented
+
+    STRAIGHT = "straight"  # Even 8ths/16ths
+    SWING = "swing"  # Triplet feel
+    SHUFFLE = "shuffle"  # Heavy shuffle
+    HALF_TIME = "half_time"  # Snare on 3
+    DOUBLE_TIME = "double_time"  # Fast feel
+    BROKEN = "broken"  # Fragmented
     FOUR_ON_FLOOR = "four_on_floor"  # Dance kick
-    BOOM_BAP = "boom_bap"           # Hip-hop
-    TRAP = "trap"                   # Hi-hat rolls
-    HUMAN = "human"                 # Imperfect, organic
+    BOOM_BAP = "boom_bap"  # Hip-hop
+    TRAP = "trap"  # Hi-hat rolls
+    HUMAN = "human"  # Imperfect, organic
 
 
 class PatternDensity(Enum):
     """How busy the pattern is."""
-    MINIMAL = "minimal"     # Kick and snare only
-    SPARSE = "sparse"       # Light hats
-    MODERATE = "moderate"   # Standard kit
-    BUSY = "busy"           # Full kit, fills
-    CHAOTIC = "chaotic"     # Overloaded
+
+    MINIMAL = "minimal"  # Kick and snare only
+    SPARSE = "sparse"  # Light hats
+    MODERATE = "moderate"  # Standard kit
+    BUSY = "busy"  # Full kit, fills
+    CHAOTIC = "chaotic"  # Overloaded
 
 
 class AccentPattern(Enum):
     """Where accents fall."""
-    DOWNBEAT = "downbeat"       # 1 and 3
-    BACKBEAT = "backbeat"       # 2 and 4
-    OFFBEAT = "offbeat"         # And's
-    RANDOM = "random"           # Unpredictable
-    NONE = "none"               # Even dynamics
+
+    DOWNBEAT = "downbeat"  # 1 and 3
+    BACKBEAT = "backbeat"  # 2 and 4
+    OFFBEAT = "offbeat"  # And's
+    RANDOM = "random"  # Unpredictable
+    NONE = "none"  # Even dynamics
 
 
 # =============================================================================
@@ -128,11 +131,10 @@ EMOTION_RHYTHM_PROFILES = {
         "fill_probability": 0.1,
         "swing_amount": 0.0,
         "velocity_range": (35, 70),
-        "timing_humanize": 0.03,      # Percentage of beat
-        "drop_probability": 0.2,       # Chance to skip a hit
+        "timing_humanize": 0.03,  # Percentage of beat
+        "drop_probability": 0.2,  # Chance to skip a hit
         "instrument_preference": ["kick", "snare", "sidestick", "closed_hat"],
     },
-
     "hope": {
         "grooves": [GrooveType.STRAIGHT, GrooveType.HUMAN, GrooveType.SWING],
         "density": PatternDensity.MODERATE,
@@ -148,7 +150,6 @@ EMOTION_RHYTHM_PROFILES = {
         "drop_probability": 0.05,
         "instrument_preference": ["kick", "snare", "closed_hat", "ride", "tambourine"],
     },
-
     "rage": {
         "grooves": [GrooveType.STRAIGHT, GrooveType.DOUBLE_TIME, GrooveType.FOUR_ON_FLOOR],
         "density": PatternDensity.BUSY,
@@ -160,11 +161,10 @@ EMOTION_RHYTHM_PROFILES = {
         "fill_probability": 0.4,
         "swing_amount": 0.0,
         "velocity_range": (90, 127),
-        "timing_humanize": 0.01,       # Tight
+        "timing_humanize": 0.01,  # Tight
         "drop_probability": 0.0,
         "instrument_preference": ["kick", "snare", "crash", "closed_hat", "low_tom"],
     },
-
     "fear": {
         "grooves": [GrooveType.BROKEN, GrooveType.TRAP, GrooveType.HUMAN],
         "density": PatternDensity.SPARSE,
@@ -180,7 +180,6 @@ EMOTION_RHYTHM_PROFILES = {
         "drop_probability": 0.3,
         "instrument_preference": ["kick", "sidestick", "closed_hat", "shaker"],
     },
-
     "joy": {
         "grooves": [GrooveType.SWING, GrooveType.SHUFFLE, GrooveType.STRAIGHT],
         "density": PatternDensity.MODERATE,
@@ -196,7 +195,6 @@ EMOTION_RHYTHM_PROFILES = {
         "drop_probability": 0.0,
         "instrument_preference": ["kick", "snare", "open_hat", "closed_hat", "tambourine"],
     },
-
     "longing": {
         "grooves": [GrooveType.HALF_TIME, GrooveType.HUMAN, GrooveType.SWING],
         "density": PatternDensity.SPARSE,
@@ -212,7 +210,6 @@ EMOTION_RHYTHM_PROFILES = {
         "drop_probability": 0.15,
         "instrument_preference": ["kick", "snare", "ride", "closed_hat"],
     },
-
     "anxiety": {
         "grooves": [GrooveType.TRAP, GrooveType.BROKEN, GrooveType.STRAIGHT],
         "density": PatternDensity.BUSY,
@@ -228,7 +225,6 @@ EMOTION_RHYTHM_PROFILES = {
         "drop_probability": 0.1,
         "instrument_preference": ["kick", "snare", "closed_hat", "shaker", "clap"],
     },
-
     "tenderness": {
         "grooves": [GrooveType.HUMAN, GrooveType.SWING, GrooveType.HALF_TIME],
         "density": PatternDensity.MINIMAL,
@@ -244,7 +240,6 @@ EMOTION_RHYTHM_PROFILES = {
         "drop_probability": 0.25,
         "instrument_preference": ["kick", "sidestick", "shaker"],
     },
-
     "defiance": {
         "grooves": [GrooveType.STRAIGHT, GrooveType.BOOM_BAP, GrooveType.DOUBLE_TIME],
         "density": PatternDensity.MODERATE,
@@ -260,7 +255,6 @@ EMOTION_RHYTHM_PROFILES = {
         "drop_probability": 0.0,
         "instrument_preference": ["kick", "snare", "crash", "closed_hat", "clap"],
     },
-
     "melancholy": {
         "grooves": [GrooveType.HALF_TIME, GrooveType.SWING, GrooveType.HUMAN],
         "density": PatternDensity.SPARSE,
@@ -276,7 +270,6 @@ EMOTION_RHYTHM_PROFILES = {
         "drop_probability": 0.2,
         "instrument_preference": ["kick", "snare", "ride", "sidestick"],
     },
-
     "nostalgia": {
         "grooves": [GrooveType.SHUFFLE, GrooveType.SWING, GrooveType.HUMAN],
         "density": PatternDensity.MODERATE,
@@ -292,7 +285,6 @@ EMOTION_RHYTHM_PROFILES = {
         "drop_probability": 0.1,
         "instrument_preference": ["kick", "snare", "closed_hat", "tambourine", "ride"],
     },
-
     "euphoria": {
         "grooves": [GrooveType.FOUR_ON_FLOOR, GrooveType.STRAIGHT, GrooveType.DOUBLE_TIME],
         "density": PatternDensity.BUSY,
@@ -308,7 +300,6 @@ EMOTION_RHYTHM_PROFILES = {
         "drop_probability": 0.0,
         "instrument_preference": ["kick", "snare", "open_hat", "closed_hat", "crash"],
     },
-
     "dissociation": {
         "grooves": [GrooveType.BROKEN, GrooveType.HALF_TIME, GrooveType.HUMAN],
         "density": PatternDensity.MINIMAL,
@@ -324,7 +315,6 @@ EMOTION_RHYTHM_PROFILES = {
         "drop_probability": 0.5,
         "instrument_preference": ["kick", "sidestick", "shaker"],
     },
-
     "neutral": {
         "grooves": [GrooveType.STRAIGHT, GrooveType.HUMAN],
         "density": PatternDensity.MODERATE,
@@ -388,21 +378,24 @@ GENRE_MODIFIERS = {
 # DATA CLASSES
 # =============================================================================
 
+
 @dataclass
 class DrumHit:
     """A single drum hit."""
-    instrument: str         # "kick", "snare", etc.
-    midi_note: int          # GM drum note
-    start_tick: int         # Position
-    duration_ticks: int     # Length
-    velocity: int           # 0-127
-    is_ghost: bool          # Ghost note
-    timing_offset: int      # Humanization offset
+
+    instrument: str  # "kick", "snare", etc.
+    midi_note: int  # GM drum note
+    start_tick: int  # Position
+    duration_ticks: int  # Length
+    velocity: int  # 0-127
+    is_ghost: bool  # Ghost note
+    timing_offset: int  # Humanization offset
 
 
 @dataclass
 class RhythmConfig:
     """Configuration for rhythm generation."""
+
     emotion: str = "neutral"
     bars: int = 4
     tempo_bpm: int = 120
@@ -418,6 +411,7 @@ class RhythmConfig:
 @dataclass
 class RhythmOutput:
     """Output from rhythm generation."""
+
     hits: List[DrumHit]
     config: RhythmConfig
     groove_used: GrooveType
@@ -429,20 +423,24 @@ class RhythmOutput:
         """Convert to MIDI events (channel 9 for drums)."""
         events = []
         for hit in self.hits:
-            events.append({
-                "type": "note_on",
-                "channel": 9,
-                "note": hit.midi_note,
-                "velocity": hit.velocity,
-                "time": hit.start_tick + hit.timing_offset,
-            })
-            events.append({
-                "type": "note_off",
-                "channel": 9,
-                "note": hit.midi_note,
-                "velocity": 0,
-                "time": hit.start_tick + hit.timing_offset + hit.duration_ticks,
-            })
+            events.append(
+                {
+                    "type": "note_on",
+                    "channel": 9,
+                    "note": hit.midi_note,
+                    "velocity": hit.velocity,
+                    "time": hit.start_tick + hit.timing_offset,
+                }
+            )
+            events.append(
+                {
+                    "type": "note_off",
+                    "channel": 9,
+                    "note": hit.midi_note,
+                    "velocity": 0,
+                    "time": hit.start_tick + hit.timing_offset + hit.duration_ticks,
+                }
+            )
         return sorted(events, key=lambda e: (e["time"], e["type"] == "note_off"))
 
     def to_hit_list(self) -> List[Tuple[str, int, int, int]]:
@@ -456,6 +454,7 @@ class RhythmOutput:
 # =============================================================================
 # PATTERN GENERATORS
 # =============================================================================
+
 
 def apply_swing(tick: int, beat_ticks: int, swing_amount: float) -> int:
     """Apply swing to a tick position."""
@@ -475,10 +474,7 @@ def apply_swing(tick: int, beat_ticks: int, swing_amount: float) -> int:
 
 
 def generate_hat_pattern(
-    bar_ticks: int,
-    profile: Dict,
-    groove: GrooveType,
-    time_sig: Tuple[int, int]
+    bar_ticks: int, profile: Dict, groove: GrooveType, time_sig: Tuple[int, int]
 ) -> List[Tuple[int, str]]:
     """Generate hi-hat pattern: (tick, "closed_hat"/"open_hat")"""
     hits = []
@@ -506,9 +502,7 @@ def generate_hat_pattern(
 
 
 def generate_trap_hats(
-    bar_ticks: int,
-    profile: Dict,
-    time_sig: Tuple[int, int]
+    bar_ticks: int, profile: Dict, time_sig: Tuple[int, int]
 ) -> List[Tuple[int, str, int]]:
     """Generate trap-style hi-hat rolls: (tick, instrument, velocity)"""
     hits = []
@@ -534,9 +528,7 @@ def generate_trap_hats(
 
 
 def generate_fill(
-    start_tick: int,
-    duration_ticks: int,
-    profile: Dict
+    start_tick: int, duration_ticks: int, profile: Dict
 ) -> List[Tuple[int, str, int]]:
     """Generate a drum fill: (tick, instrument, velocity)"""
     hits = []
@@ -567,6 +559,7 @@ def generate_fill(
 # MAIN ENGINE
 # =============================================================================
 
+
 class RhythmEngine:
     """
     Generates emotion-driven drum patterns.
@@ -592,7 +585,7 @@ class RhythmEngine:
         bars: int = 4,
         tempo_bpm: int = 120,
         genre: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> RhythmOutput:
         """
         Generate drum pattern.
@@ -604,11 +597,7 @@ class RhythmEngine:
             genre: Optional genre modifier
         """
         config = RhythmConfig(
-            emotion=emotion.lower(),
-            bars=bars,
-            tempo_bpm=tempo_bpm,
-            genre=genre,
-            **kwargs
+            emotion=emotion.lower(), bars=bars, tempo_bpm=tempo_bpm, genre=genre, **kwargs
         )
 
         return self._generate_from_config(config)
@@ -627,7 +616,7 @@ class RhythmEngine:
             profile = profile.copy()
             profile["velocity_range"] = (
                 int(profile["velocity_range"][0] * modifier["velocity_mult"]),
-                int(profile["velocity_range"][1] * modifier["velocity_mult"])
+                int(profile["velocity_range"][1] * modifier["velocity_mult"]),
             )
             profile["timing_humanize"] *= modifier["timing_humanize_mult"]
             profile["hat_probability"] *= modifier["hat_probability_mult"]
@@ -652,9 +641,9 @@ class RhythmEngine:
 
             # Check for fill
             is_fill_bar = (
-                config.include_fills and
-                random.random() < profile["fill_probability"] and
-                (config.fill_on_bar is None or bar in config.fill_on_bar)
+                config.include_fills
+                and random.random() < profile["fill_probability"]
+                and (config.fill_on_bar is None or bar in config.fill_on_bar)
             )
 
             if is_fill_bar and bar == config.bars - 1:
@@ -763,7 +752,8 @@ class RhythmEngine:
                     instruments_used.add(instrument)
             else:
                 hat_hits = generate_hat_pattern(
-                    ticks_per_bar, profile, groove, config.time_signature)
+                    ticks_per_bar, profile, groove, config.time_signature
+                )
                 for tick, instrument in hat_hits:
                     actual_tick = bar_start + tick
                     actual_tick = apply_swing(actual_tick, TICKS_PER_BEAT, profile["swing_amount"])
@@ -857,6 +847,7 @@ class RhythmEngine:
 # =============================================================================
 # CONVENIENCE FUNCTIONS
 # =============================================================================
+
 
 def generate_grief_drums(bars: int = 4, tempo: int = 72) -> RhythmOutput:
     """Quick grief pattern."""

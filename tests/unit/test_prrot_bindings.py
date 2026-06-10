@@ -13,13 +13,13 @@ import math
 import pytest
 import numpy as np
 
-
 # ---------------------------------------------------------------------------
 # Skip if native module unavailable
 # ---------------------------------------------------------------------------
 
 try:
     import penta_core_native
+
     prrot = penta_core_native.prrot
     HAS_NATIVE = True
 except ImportError:
@@ -27,7 +27,7 @@ except ImportError:
 
 pytestmark = pytest.mark.skipif(
     not HAS_NATIVE,
-    reason="penta_core_native not built (run cmake --build build --target penta_core_native)"
+    reason="penta_core_native not built (run cmake --build build --target penta_core_native)",
 )
 
 
@@ -61,6 +61,7 @@ def make_silence(duration_s: float = DURATION_S) -> np.ndarray:
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def engine():
     """Shared PRROTEngine instance."""
@@ -82,6 +83,7 @@ def silence():
 # ---------------------------------------------------------------------------
 # Test: PhonemeType enum
 # ---------------------------------------------------------------------------
+
 
 class TestPhonemeType:
     def test_vowels_exist(self):
@@ -123,6 +125,7 @@ class TestPhonemeType:
 # ---------------------------------------------------------------------------
 # Test: Data types
 # ---------------------------------------------------------------------------
+
 
 class TestDataTypes:
     def test_phoneme_timing_construction(self):
@@ -173,6 +176,7 @@ class TestDataTypes:
 # Test: PRROTEngine instantiation
 # ---------------------------------------------------------------------------
 
+
 class TestEngineInstantiation:
     def test_construction(self):
         e = prrot.PRROTEngine()
@@ -194,22 +198,20 @@ class TestEngineInstantiation:
 # Test: process_audio_segment
 # ---------------------------------------------------------------------------
 
+
 class TestProcessAudio:
 
     def test_sine_wave(self, engine, sine_wave):
         result = engine.process_audio_segment(sine_wave, SAMPLE_RATE, 120.0)
         assert isinstance(result, prrot.PhonemeControlData)
 
-
     def test_silence(self, engine, silence):
         result = engine.process_audio_segment(silence, SAMPLE_RATE, 120.0)
         assert isinstance(result, prrot.PhonemeControlData)
 
-
     def test_default_args(self, engine, sine_wave):
         result = engine.process_audio_segment(sine_wave)
         assert isinstance(result, prrot.PhonemeControlData)
-
 
     def test_short_audio(self, engine):
         short = np.zeros(100, dtype=np.float32)
@@ -225,6 +227,7 @@ class TestProcessAudio:
 # ---------------------------------------------------------------------------
 # Test: analyze_phonemes
 # ---------------------------------------------------------------------------
+
 
 class TestAnalyzePhonemes:
     def test_sine_wave(self, engine, sine_wave):
@@ -248,17 +251,16 @@ class TestAnalyzePhonemes:
 # Test: detect_breath_markers
 # ---------------------------------------------------------------------------
 
+
 class TestDetectBreathMarkers:
 
     def test_sine_wave(self, engine, sine_wave):
         markers = engine.detect_breath_markers(sine_wave, SAMPLE_RATE)
         assert isinstance(markers, list)
 
-
     def test_silence(self, engine, silence):
         markers = engine.detect_breath_markers(silence, SAMPLE_RATE)
         assert isinstance(markers, list)
-
 
     def test_marker_fields(self, engine, sine_wave):
         markers = engine.detect_breath_markers(sine_wave, SAMPLE_RATE)
@@ -272,6 +274,7 @@ class TestDetectBreathMarkers:
 # ---------------------------------------------------------------------------
 # Test: VoiceProfile
 # ---------------------------------------------------------------------------
+
 
 class TestVoiceProfile:
     def test_default_profile(self, engine):

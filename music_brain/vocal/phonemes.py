@@ -11,6 +11,7 @@ from enum import Enum
 
 class PhonemeType(Enum):
     """Phoneme classification types."""
+
     VOWEL = "vowel"
     CONSONANT = "consonant"
     SILENCE = "silence"
@@ -19,6 +20,7 @@ class PhonemeType(Enum):
 @dataclass
 class Phoneme:
     """Represents a single phoneme."""
+
     phoneme_type: PhonemeType
     symbol: str  # IPA or phoneme symbol
     duration: float  # Duration in seconds
@@ -42,11 +44,13 @@ def text_to_phonemes(text: str) -> List[Phoneme]:
     for word in words:
         # Create a simple vowel phoneme for each word
         # In a full implementation, this would use a proper phoneme converter
-        phonemes.append(Phoneme(
-            phoneme_type=PhonemeType.VOWEL,
-            symbol="ah",  # Default vowel
-            duration=0.3,
-        ))
+        phonemes.append(
+            Phoneme(
+                phoneme_type=PhonemeType.VOWEL,
+                symbol="ah",  # Default vowel
+                duration=0.3,
+            )
+        )
 
     return phonemes
 
@@ -67,15 +71,15 @@ def phoneme_to_vowel_type(phoneme: Phoneme) -> Optional[str]:
     # Simple mapping - in full implementation would use proper vowel classification
     symbol_lower = phoneme.symbol.lower()
 
-    if 'a' in symbol_lower or 'ah' in symbol_lower:
-        return 'A'
-    elif 'e' in symbol_lower or 'eh' in symbol_lower:
-        return 'E'
-    elif 'i' in symbol_lower or 'ee' in symbol_lower:
-        return 'I'
-    elif 'o' in symbol_lower or 'oh' in symbol_lower:
-        return 'O'
-    elif 'u' in symbol_lower or 'oo' in symbol_lower:
-        return 'U'
+    if "a" in symbol_lower or "ah" in symbol_lower:
+        return "A"
+    elif "e" in symbol_lower or "eh" in symbol_lower:
+        return "E"
+    elif "i" in symbol_lower or "ee" in symbol_lower:
+        return "I"
+    elif "o" in symbol_lower or "oh" in symbol_lower:
+        return "O"
+    elif "u" in symbol_lower or "oo" in symbol_lower:
+        return "U"
 
-    return 'A'  # Default
+    return "A"  # Default

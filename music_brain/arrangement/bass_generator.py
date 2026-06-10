@@ -15,6 +15,7 @@ from enum import Enum
 
 try:
     import mido
+
     MIDO_AVAILABLE = True
 except ImportError:
     MIDO_AVAILABLE = False
@@ -22,6 +23,7 @@ except ImportError:
 
 class BassPattern(Enum):
     """Bass line pattern types."""
+
     ROOT_ONLY = "root_only"  # Just root notes
     ROOT_FIFTH = "root_fifth"  # Root and fifth
     WALKING = "walking"  # Walking bass (chromatic approach)
@@ -35,6 +37,7 @@ class BassPattern(Enum):
 @dataclass
 class BassNote:
     """Single bass note."""
+
     pitch: int  # MIDI note number
     start_tick: int
     duration_ticks: int
@@ -53,6 +56,7 @@ class BassNote:
 @dataclass
 class BassLine:
     """Complete bass line."""
+
     notes: List[BassNote]
     pattern: BassPattern
     octave: int = 2  # Bass typically in octave 2-3
@@ -70,6 +74,7 @@ class BassLine:
 # CHORD PARSING
 # =================================================================
 
+
 def parse_chord_root(chord_name: str) -> int:
     """
     Parse chord name to get MIDI root note.
@@ -82,16 +87,22 @@ def parse_chord_root(chord_name: str) -> int:
     """
     # Note name to pitch class
     note_map = {
-        'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11,
+        "C": 0,
+        "D": 2,
+        "E": 4,
+        "F": 5,
+        "G": 7,
+        "A": 9,
+        "B": 11,
     }
 
     # Handle enharmonics
-    chord_name = chord_name.replace('Db', 'C#').replace('Eb', 'D#')
-    chord_name = chord_name.replace('Gb', 'F#').replace('Ab', 'G#')
-    chord_name = chord_name.replace('Bb', 'A#')
+    chord_name = chord_name.replace("Db", "C#").replace("Eb", "D#")
+    chord_name = chord_name.replace("Gb", "F#").replace("Ab", "G#")
+    chord_name = chord_name.replace("Bb", "A#")
 
     # Extract root note
-    if len(chord_name) >= 2 and chord_name[1] in ['#', 'b']:
+    if len(chord_name) >= 2 and chord_name[1] in ["#", "b"]:
         root = chord_name[0]
         modifier = chord_name[1]
     else:
@@ -104,9 +115,9 @@ def parse_chord_root(chord_name: str) -> int:
 
     pitch_class = note_map[root]
 
-    if modifier == '#':
+    if modifier == "#":
         pitch_class += 1
-    elif modifier == 'b':
+    elif modifier == "b":
         pitch_class -= 1
 
     # Map to octave 2 (standard bass range)
@@ -126,19 +137,19 @@ def get_chord_tones(chord_name: str) -> List[int]:
     # Determine quality from chord name
     name_lower = chord_name.lower()
 
-    if 'dim' in name_lower:
+    if "dim" in name_lower:
         intervals = [0, 3, 6]  # Diminished
-    elif 'm7b5' in name_lower:
+    elif "m7b5" in name_lower:
         intervals = [0, 3, 6, 10]  # Half-diminished
-    elif 'aug' in name_lower:
+    elif "aug" in name_lower:
         intervals = [0, 4, 8]  # Augmented
-    elif 'maj7' in name_lower:
+    elif "maj7" in name_lower:
         intervals = [0, 4, 7, 11]  # Major 7th
-    elif 'm7' in name_lower or 'min7' in name_lower:
+    elif "m7" in name_lower or "min7" in name_lower:
         intervals = [0, 3, 7, 10]  # Minor 7th
-    elif '7' in name_lower:
+    elif "7" in name_lower:
         intervals = [0, 4, 7, 10]  # Dominant 7th
-    elif 'm' in name_lower or 'min' in name_lower:
+    elif "m" in name_lower or "min" in name_lower:
         intervals = [0, 3, 7]  # Minor triad
     else:
         intervals = [0, 4, 7]  # Major triad (default)
@@ -150,6 +161,7 @@ def get_chord_tones(chord_name: str) -> List[int]:
 # =================================================================
 # PATTERN GENERATORS
 # =================================================================
+
 
 def generate_root_only(
     chord_name: str,
@@ -168,12 +180,14 @@ def generate_root_only(
     for bar in range(bars):
         for beat in range(beats_per_bar):
             start = bar * ticks_per_bar + beat * ppq
-            notes.append(BassNote(
-                pitch=root,
-                start_tick=start,
-                duration_ticks=ppq,  # Quarter note
-                velocity=85,
-            ))
+            notes.append(
+                BassNote(
+                    pitch=root,
+                    start_tick=start,
+                    duration_ticks=ppq,  # Quarter note
+                    velocity=85,
+                )
+            )
 
     return notes
 
@@ -197,12 +211,14 @@ def generate_root_fifth(
             start = bar * ticks_per_bar + beat * ppq
             # Alternate root and fifth
             pitch = root if beat % 2 == 0 else fifth
-            notes.append(BassNote(
-                pitch=pitch,
-                start_tick=start,
-                duration_ticks=ppq,
-                velocity=80,
-            ))
+            notes.append(
+                BassNote(
+                    pitch=pitch,
+                    start_tick=start,
+                    duration_ticks=ppq,
+                    velocity=80,
+                )
+            )
 
     return notes
 
@@ -241,12 +257,14 @@ def generate_walking_bass(
                 # Use chord tones
                 pitch = chord_tones[beat % len(chord_tones)]
 
-            notes.append(BassNote(
-                pitch=pitch,
-                start_tick=start,
-                duration_ticks=ppq,
-                velocity=75,
-            ))
+            notes.append(
+                BassNote(
+                    pitch=pitch,
+                    start_tick=start,
+                    duration_ticks=ppq,
+                    velocity=75,
+                )
+            )
 
     return notes
 
@@ -265,12 +283,14 @@ def generate_pedal_tone(
     total_duration = len(chord_names) * ticks_per_bar
 
     # Single long note
-    notes.append(BassNote(
-        pitch=root,
-        start_tick=0,
-        duration_ticks=total_duration,
-        velocity=70,
-    ))
+    notes.append(
+        BassNote(
+            pitch=root,
+            start_tick=0,
+            duration_ticks=total_duration,
+            velocity=70,
+        )
+    )
 
     return notes
 
@@ -294,36 +314,44 @@ def generate_funk_bass(
         bar_start = bar * ticks_per_bar
 
         # Beat 1 (downbeat)
-        notes.append(BassNote(
-            pitch=root,
-            start_tick=bar_start,
-            duration_ticks=sixteenth * 2,
-            velocity=95,
-        ))
+        notes.append(
+            BassNote(
+                pitch=root,
+                start_tick=bar_start,
+                duration_ticks=sixteenth * 2,
+                velocity=95,
+            )
+        )
 
         # And of 2
-        notes.append(BassNote(
-            pitch=fifth,
-            start_tick=bar_start + ppq * 2 + sixteenth * 2,
-            duration_ticks=sixteenth,
-            velocity=75,
-        ))
+        notes.append(
+            BassNote(
+                pitch=fifth,
+                start_tick=bar_start + ppq * 2 + sixteenth * 2,
+                duration_ticks=sixteenth,
+                velocity=75,
+            )
+        )
 
         # Beat 4
-        notes.append(BassNote(
-            pitch=root,
-            start_tick=bar_start + ppq * 3,
-            duration_ticks=sixteenth,
-            velocity=85,
-        ))
+        notes.append(
+            BassNote(
+                pitch=root,
+                start_tick=bar_start + ppq * 3,
+                duration_ticks=sixteenth,
+                velocity=85,
+            )
+        )
 
         # And of 4
-        notes.append(BassNote(
-            pitch=fifth,
-            start_tick=bar_start + ppq * 3 + sixteenth * 2,
-            duration_ticks=sixteenth,
-            velocity=80,
-        ))
+        notes.append(
+            BassNote(
+                pitch=fifth,
+                start_tick=bar_start + ppq * 3 + sixteenth * 2,
+                duration_ticks=sixteenth,
+                velocity=80,
+            )
+        )
 
     return notes
 
@@ -331,6 +359,7 @@ def generate_funk_bass(
 # =================================================================
 # MAIN GENERATOR
 # =================================================================
+
 
 def generate_bass_line(
     chord_progression: List[str],
@@ -449,16 +478,16 @@ def bass_line_to_midi(
 
     # Add tempo
     tempo_microseconds = int(60_000_000 / tempo_bpm)
-    track.append(mido.MetaMessage('set_tempo', tempo=tempo_microseconds, time=0))
+    track.append(mido.MetaMessage("set_tempo", tempo=tempo_microseconds, time=0))
 
     # Add track name
-    track.append(mido.MetaMessage('track_name', name='Bass', time=0))
+    track.append(mido.MetaMessage("track_name", name="Bass", time=0))
 
     # Convert notes to MIDI messages
     events = []
     for note in bass_line.notes:
-        events.append((note.start_tick, 'note_on', note.pitch, note.velocity))
-        events.append((note.start_tick + note.duration_ticks, 'note_off', note.pitch, 0))
+        events.append((note.start_tick, "note_on", note.pitch, note.velocity))
+        events.append((note.start_tick + note.duration_ticks, "note_off", note.pitch, 0))
 
     # Sort by time
     events.sort(key=lambda x: x[0])
@@ -468,10 +497,10 @@ def bass_line_to_midi(
     for tick, msg_type, pitch, velocity in events:
         delta = tick - current_tick
 
-        if msg_type == 'note_on':
-            track.append(mido.Message('note_on', note=pitch, velocity=velocity, time=delta))
+        if msg_type == "note_on":
+            track.append(mido.Message("note_on", note=pitch, velocity=velocity, time=delta))
         else:
-            track.append(mido.Message('note_off', note=pitch, velocity=0, time=delta))
+            track.append(mido.Message("note_off", note=pitch, velocity=0, time=delta))
 
         current_tick = tick
 
@@ -492,25 +521,25 @@ def suggest_bass_pattern(genre: str, energy_level: float = 0.5) -> BassPattern:
     """
     genre_lower = genre.lower()
 
-    if 'funk' in genre_lower or 'disco' in genre_lower:
+    if "funk" in genre_lower or "disco" in genre_lower:
         return BassPattern.FUNK
 
-    elif 'jazz' in genre_lower or 'swing' in genre_lower:
+    elif "jazz" in genre_lower or "swing" in genre_lower:
         return BassPattern.WALKING
 
-    elif 'rock' in genre_lower or 'punk' in genre_lower:
+    elif "rock" in genre_lower or "punk" in genre_lower:
         if energy_level > 0.7:
             return BassPattern.ROOT_ONLY
         else:
             return BassPattern.ROOT_FIFTH
 
-    elif 'edm' in genre_lower or 'electronic' in genre_lower:
+    elif "edm" in genre_lower or "electronic" in genre_lower:
         if energy_level > 0.7:
             return BassPattern.ROOT_ONLY
         else:
             return BassPattern.SYNCOPATED
 
-    elif 'ambient' in genre_lower or 'drone' in genre_lower:
+    elif "ambient" in genre_lower or "drone" in genre_lower:
         return BassPattern.PEDAL
 
     else:

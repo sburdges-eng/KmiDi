@@ -57,88 +57,88 @@ class InstrumentFeatures:
     spectral_flatness_std: float = 0.0
     spectral_contrast: List[float] = field(default_factory=list)  # 7 bands
     mfcc_mean: List[float] = field(default_factory=list)  # 20 coefficients
-    mfcc_std: List[float] = field(default_factory=list)   # 20 coefficients
+    mfcc_std: List[float] = field(default_factory=list)  # 20 coefficients
 
     # Harmonic structure - 16 dims
-    harmonic_ratio: float = 0.0           # Harmonic vs noise
-    fundamental_freq: float = 0.0         # Detected pitch
-    pitch_confidence: float = 0.0         # How clear is the pitch
-    inharmonicity: float = 0.0            # Deviation from pure harmonics
-    odd_even_ratio: float = 0.0           # Odd vs even harmonics
+    harmonic_ratio: float = 0.0  # Harmonic vs noise
+    fundamental_freq: float = 0.0  # Detected pitch
+    pitch_confidence: float = 0.0  # How clear is the pitch
+    inharmonicity: float = 0.0  # Deviation from pure harmonics
+    odd_even_ratio: float = 0.0  # Odd vs even harmonics
     spectral_peaks: List[float] = field(default_factory=list)  # Top 10 peaks
 
     # Attack/decay characteristics - 12 dims
-    attack_time_ms: float = 0.0           # Time to reach peak
-    decay_time_ms: float = 0.0            # Time to decay
-    attack_slope: float = 0.0             # Steepness of attack
-    release_slope: float = 0.0            # Steepness of release
+    attack_time_ms: float = 0.0  # Time to reach peak
+    decay_time_ms: float = 0.0  # Time to decay
+    attack_slope: float = 0.0  # Steepness of attack
+    release_slope: float = 0.0  # Steepness of release
     onset_strength_mean: float = 0.0
     onset_strength_std: float = 0.0
-    onset_count: int = 0                  # Number of note onsets
-    onset_regularity: float = 0.0         # How regular are onsets
-    transient_sharpness: float = 0.0      # How sharp are transients
-    sustain_level: float = 0.0            # Average sustain level
+    onset_count: int = 0  # Number of note onsets
+    onset_regularity: float = 0.0  # How regular are onsets
+    transient_sharpness: float = 0.0  # How sharp are transients
+    sustain_level: float = 0.0  # Average sustain level
     adsr_envelope: List[float] = field(default_factory=list)  # 4-point ADSR
 
     # Technique indicators - 12 dims
-    vibrato_rate: float = 0.0             # Vibrato frequency (Hz)
-    vibrato_depth: float = 0.0            # Vibrato amount (cents)
-    tremolo_rate: float = 0.0             # Amplitude modulation rate
-    tremolo_depth: float = 0.0            # Amplitude modulation depth
-    pitch_bend_range: float = 0.0         # Range of pitch bending
-    legato_score: float = 0.0             # How connected are notes
-    staccato_score: float = 0.0           # How detached are notes
+    vibrato_rate: float = 0.0  # Vibrato frequency (Hz)
+    vibrato_depth: float = 0.0  # Vibrato amount (cents)
+    tremolo_rate: float = 0.0  # Amplitude modulation rate
+    tremolo_depth: float = 0.0  # Amplitude modulation depth
+    pitch_bend_range: float = 0.0  # Range of pitch bending
+    legato_score: float = 0.0  # How connected are notes
+    staccato_score: float = 0.0  # How detached are notes
     articulation_vector: List[float] = field(default_factory=list)  # 4 dims
 
     # Register/range - 4 dims
-    pitch_mean: float = 0.0               # Average pitch (MIDI note)
-    pitch_std: float = 0.0                # Pitch variation
-    pitch_range: float = 0.0              # Max - min pitch
-    register_class: int = 0               # 0=bass, 1=mid, 2=treble
+    pitch_mean: float = 0.0  # Average pitch (MIDI note)
+    pitch_std: float = 0.0  # Pitch variation
+    pitch_range: float = 0.0  # Max - min pitch
+    register_class: int = 0  # 0=bass, 1=mid, 2=treble
 
     # ==========================================================================
     # EMOTIONAL FEATURES (How it feels)
     # ==========================================================================
 
     # Expression dynamics - 16 dims
-    velocity_mean: float = 0.0            # Average loudness
-    velocity_std: float = 0.0             # Dynamic variation
-    velocity_range: float = 0.0           # Dynamic range
-    crescendo_count: int = 0              # Number of crescendos
-    decrescendo_count: int = 0            # Number of decrescendos
+    velocity_mean: float = 0.0  # Average loudness
+    velocity_std: float = 0.0  # Dynamic variation
+    velocity_range: float = 0.0  # Dynamic range
+    crescendo_count: int = 0  # Number of crescendos
+    decrescendo_count: int = 0  # Number of decrescendos
     dynamic_curve: List[float] = field(default_factory=list)  # 8 points
-    accent_frequency: float = 0.0         # How often accents occur
-    accent_strength: float = 0.0          # How strong are accents
+    accent_frequency: float = 0.0  # How often accents occur
+    accent_strength: float = 0.0  # How strong are accents
 
     # Energy contour - 12 dims
     rms_mean: float = 0.0
     rms_std: float = 0.0
     energy_curve: List[float] = field(default_factory=list)  # 8 points
-    energy_buildup: float = 0.0           # Increasing energy trend
-    energy_release: float = 0.0           # Decreasing energy trend
+    energy_buildup: float = 0.0  # Increasing energy trend
+    energy_release: float = 0.0  # Decreasing energy trend
 
     # Sentiment indicators - 12 dims
-    brightness_score: float = 0.0         # Spectral brightness → mood
-    warmth_score: float = 0.0             # Low-frequency presence
-    tension_score: float = 0.0            # Dissonance/instability
-    resolution_score: float = 0.0         # Consonance/stability
-    major_minor_score: float = 0.0        # Major (+) vs minor (-) feel
+    brightness_score: float = 0.0  # Spectral brightness → mood
+    warmth_score: float = 0.0  # Low-frequency presence
+    tension_score: float = 0.0  # Dissonance/instability
+    resolution_score: float = 0.0  # Consonance/stability
+    major_minor_score: float = 0.0  # Major (+) vs minor (-) feel
 
     # Human feel - 8 dims
-    timing_humanization: float = 0.0      # Deviation from grid
-    velocity_humanization: float = 0.0    # Velocity variation pattern
-    micro_timing_variance: float = 0.0    # Sub-beat timing variation
-    groove_consistency: float = 0.0       # Pattern regularity
-    expressiveness_score: float = 0.0     # Overall human expression
+    timing_humanization: float = 0.0  # Deviation from grid
+    velocity_humanization: float = 0.0  # Velocity variation pattern
+    micro_timing_variance: float = 0.0  # Sub-beat timing variation
+    groove_consistency: float = 0.0  # Pattern regularity
+    expressiveness_score: float = 0.0  # Overall human expression
 
     # Composite scores (derived)
-    technical_confidence: float = 0.0     # How confident in technical classification
-    emotional_confidence: float = 0.0     # How confident in emotional classification
+    technical_confidence: float = 0.0  # How confident in technical classification
+    emotional_confidence: float = 0.0  # How confident in emotional classification
 
     # Full feature vectors for ML
     technical_vector: List[float] = field(default_factory=list)  # 80 dims
     emotional_vector: List[float] = field(default_factory=list)  # 80 dims
-    combined_vector: List[float] = field(default_factory=list)   # 160 dims
+    combined_vector: List[float] = field(default_factory=list)  # 160 dims
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dict."""
@@ -146,7 +146,7 @@ class InstrumentFeatures:
 
     def save(self, path: Path):
         """Save features to JSON."""
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
     def save_npz(self, path: Path):
@@ -279,8 +279,8 @@ class InstrumentFeatureExtractor:
 
         # Harmonic-percussive separation
         y_harmonic, y_percussive = librosa.effects.hpss(y)
-        harmonic_energy = np.sum(y_harmonic ** 2)
-        total_energy = np.sum(y ** 2)
+        harmonic_energy = np.sum(y_harmonic**2)
+        total_energy = np.sum(y**2)
         features.harmonic_ratio = float(harmonic_energy / (total_energy + 1e-8))
 
         # Pitch detection
@@ -350,9 +350,7 @@ class InstrumentFeatureExtractor:
         features.onset_strength_mean = float(np.mean(onset_env))
         features.onset_strength_std = float(np.std(onset_env))
 
-        onsets = librosa.onset.onset_detect(
-            y=y, sr=sr, hop_length=self.hop_length, units='time'
-        )
+        onsets = librosa.onset.onset_detect(y=y, sr=sr, hop_length=self.hop_length, units="time")
         features.onset_count = len(onsets)
 
         # Onset regularity
@@ -396,13 +394,13 @@ class InstrumentFeatureExtractor:
             rms_detrended = rms - np.mean(rms)
 
             # Tremolo rate via autocorrelation
-            autocorr = np.correlate(rms_detrended, rms_detrended, mode='full')
-            autocorr = autocorr[len(autocorr)//2:]
+            autocorr = np.correlate(rms_detrended, rms_detrended, mode="full")
+            autocorr = autocorr[len(autocorr) // 2 :]
 
             # Find first peak after zero lag
             peaks = []
             for i in range(1, len(autocorr) - 1):
-                if autocorr[i] > autocorr[i-1] and autocorr[i] > autocorr[i+1]:
+                if autocorr[i] > autocorr[i - 1] and autocorr[i] > autocorr[i + 1]:
                     peaks.append(i)
                     break
 
@@ -465,19 +463,21 @@ class InstrumentFeatureExtractor:
         features.velocity_range = float(np.max(rms) - np.min(rms))
 
         # Detect crescendos/decrescendos
-        smoothed_rms = np.convolve(rms, np.ones(5)/5, mode='valid')
+        smoothed_rms = np.convolve(rms, np.ones(5) / 5, mode="valid")
         if len(smoothed_rms) > 10:
             diff = np.diff(smoothed_rms)
 
             # Crescendo: sustained increase
             crescendo_regions = np.where(diff > np.std(diff))[0]
             features.crescendo_count = len(
-                np.split(crescendo_regions, np.where(np.diff(crescendo_regions) > 3)[0] + 1))
+                np.split(crescendo_regions, np.where(np.diff(crescendo_regions) > 3)[0] + 1)
+            )
 
             # Decrescendo: sustained decrease
             decrescendo_regions = np.where(diff < -np.std(diff))[0]
             features.decrescendo_count = len(
-                np.split(decrescendo_regions, np.where(np.diff(decrescendo_regions) > 3)[0] + 1))
+                np.split(decrescendo_regions, np.where(np.diff(decrescendo_regions) > 3)[0] + 1)
+            )
 
         # Dynamic curve (8 points)
         if len(rms) >= 8:
@@ -511,11 +511,13 @@ class InstrumentFeatureExtractor:
             second_half_energy = np.mean(rms[half:])
 
             if first_half_energy < second_half_energy:
-                features.energy_buildup = float((second_half_energy - first_half_energy) /
-                                                (first_half_energy + 1e-8))
+                features.energy_buildup = float(
+                    (second_half_energy - first_half_energy) / (first_half_energy + 1e-8)
+                )
             else:
-                features.energy_release = float((first_half_energy - second_half_energy) /
-                                                (first_half_energy + 1e-8))
+                features.energy_release = float(
+                    (first_half_energy - second_half_energy) / (first_half_energy + 1e-8)
+                )
 
     def _extract_sentiment_features(self, y: np.ndarray, sr: int, features: InstrumentFeatures):
         """Extract sentiment/mood indicators."""
@@ -542,11 +544,15 @@ class InstrumentFeatureExtractor:
         # Major/minor feel (very simplified - based on spectral characteristics)
         # Brighter, more regular harmonics → major feel
         # Darker, less regular → minor feel
-        features.major_minor_score = float(
-            features.brightness_score * 0.5 +
-            features.harmonic_ratio * 0.3 +
-            (1.0 - features.tension_score) * 0.2
-        ) * 2 - 1  # Scale to -1 (minor) to +1 (major)
+        features.major_minor_score = (
+            float(
+                features.brightness_score * 0.5
+                + features.harmonic_ratio * 0.3
+                + (1.0 - features.tension_score) * 0.2
+            )
+            * 2
+            - 1
+        )  # Scale to -1 (minor) to +1 (major)
 
     def _extract_human_feel_features(self, y: np.ndarray, sr: int, features: InstrumentFeatures):
         """Extract human feel vs mechanical indicators."""
@@ -554,7 +560,8 @@ class InstrumentFeatureExtractor:
 
         # Timing humanization (micro-timing variations)
         onset_times = librosa.onset.onset_detect(
-            y=y, sr=sr, units='time', hop_length=self.hop_length)
+            y=y, sr=sr, units="time", hop_length=self.hop_length
+        )
 
         if len(onset_times) > 2:
             intervals = np.diff(onset_times)
@@ -574,29 +581,31 @@ class InstrumentFeatureExtractor:
         # Velocity humanization
         rms = librosa.feature.rms(y=y, hop_length=self.hop_length)[0]
         onset_frames = librosa.onset.onset_detect(
-            y=y, sr=sr, units='frames', hop_length=self.hop_length)
+            y=y, sr=sr, units="frames", hop_length=self.hop_length
+        )
 
         if len(onset_frames) > 1:
             onset_velocities = rms[np.clip(onset_frames, 0, len(rms) - 1)]
             features.velocity_humanization = float(
-                np.std(onset_velocities) / (np.mean(onset_velocities) + 1e-8))
+                np.std(onset_velocities) / (np.mean(onset_velocities) + 1e-8)
+            )
 
         # Groove consistency
         if len(onset_times) > 4:
             # Look for repeating patterns
             intervals = np.diff(onset_times)
-            autocorr = np.correlate(intervals, intervals, mode='full')
-            autocorr = autocorr[len(autocorr)//2:]
+            autocorr = np.correlate(intervals, intervals, mode="full")
+            autocorr = autocorr[len(autocorr) // 2 :]
             if len(autocorr) > 1:
                 features.groove_consistency = float(np.max(autocorr[1:]) / (autocorr[0] + 1e-8))
 
         # Overall expressiveness score
         features.expressiveness_score = float(
-            features.timing_humanization * 0.2 +
-            features.velocity_humanization * 0.2 +
-            features.vibrato_depth * 0.002 +  # Scale down vibrato
-            features.velocity_range * 5 +      # Scale up dynamic range
-            features.tremolo_depth * 0.3
+            features.timing_humanization * 0.2
+            + features.velocity_humanization * 0.2
+            + features.vibrato_depth * 0.002  # Scale down vibrato
+            + features.velocity_range * 5  # Scale up dynamic range
+            + features.tremolo_depth * 0.3
         )
 
     def _build_feature_vectors(self, features: InstrumentFeatures):
@@ -613,10 +622,13 @@ class InstrumentFeatureExtractor:
         technical.append(features.spectral_rolloff_std / 3000)
         technical.append(features.spectral_flatness_mean)
         technical.append(features.spectral_flatness_std)
-        technical.extend(features.spectral_contrast[:7] if features.spectral_contrast else [0]*7)
-        technical.extend([m / 100
-                          for m in (features.mfcc_mean[: 13] if features.mfcc_mean else [0] * 13)])
-        technical.extend([s / 50 for s in (features.mfcc_std[:7] if features.mfcc_std else [0]*7)])
+        technical.extend(features.spectral_contrast[:7] if features.spectral_contrast else [0] * 7)
+        technical.extend(
+            [m / 100 for m in (features.mfcc_mean[:13] if features.mfcc_mean else [0] * 13)]
+        )
+        technical.extend(
+            [s / 50 for s in (features.mfcc_std[:7] if features.mfcc_std else [0] * 7)]
+        )
 
         # Harmonic (12 dims)
         technical.append(features.harmonic_ratio)
@@ -624,10 +636,12 @@ class InstrumentFeatureExtractor:
         technical.append(features.pitch_confidence)
         technical.append(features.inharmonicity)
         technical.append(features.odd_even_ratio)
-        technical.extend([p / 5000
-                          for p
-                          in (features.spectral_peaks[: 7]
-                              if features.spectral_peaks else [0] * 7)])
+        technical.extend(
+            [
+                p / 5000
+                for p in (features.spectral_peaks[:7] if features.spectral_peaks else [0] * 7)
+            ]
+        )
 
         # Attack/decay (12 dims)
         technical.append(features.attack_time_ms / 500)
@@ -638,7 +652,7 @@ class InstrumentFeatureExtractor:
         technical.append(features.onset_strength_std)
         technical.append(features.onset_count / 20)
         technical.append(features.onset_regularity)
-        technical.extend(features.adsr_envelope[:4] if features.adsr_envelope else [0]*4)
+        technical.extend(features.adsr_envelope[:4] if features.adsr_envelope else [0] * 4)
 
         # Technique (8 dims)
         technical.append(features.vibrato_rate / 10)
@@ -647,8 +661,9 @@ class InstrumentFeatureExtractor:
         technical.append(features.tremolo_depth)
         technical.append(features.legato_score)
         technical.append(features.staccato_score)
-        technical.extend(features.articulation_vector[:2]
-                         if features.articulation_vector else [0]*2)
+        technical.extend(
+            features.articulation_vector[:2] if features.articulation_vector else [0] * 2
+        )
 
         # Register (4 dims)
         technical.append(features.pitch_mean / 127)
@@ -670,14 +685,14 @@ class InstrumentFeatureExtractor:
         emotional.append(features.velocity_range * 5)
         emotional.append(features.crescendo_count / 5)
         emotional.append(features.decrescendo_count / 5)
-        emotional.extend(features.dynamic_curve[:8] if features.dynamic_curve else [0]*8)
+        emotional.extend(features.dynamic_curve[:8] if features.dynamic_curve else [0] * 8)
         emotional.append(features.accent_frequency)
         emotional.append(features.accent_strength)
 
         # Energy (12 dims)
         emotional.append(features.rms_mean * 10)
         emotional.append(features.rms_std * 10)
-        emotional.extend(features.energy_curve[:8] if features.energy_curve else [0]*8)
+        emotional.extend(features.energy_curve[:8] if features.energy_curve else [0] * 8)
         emotional.append(features.energy_buildup)
         emotional.append(features.energy_release)
 
@@ -730,12 +745,12 @@ def extract_technical_features(audio_path: Path) -> Dict[str, Any]:
     """Extract only technical features."""
     features = extract_instrument_features(audio_path)
     return {
-        'spectral_centroid': features.spectral_centroid_mean,
-        'harmonic_ratio': features.harmonic_ratio,
-        'attack_time_ms': features.attack_time_ms,
-        'vibrato_rate': features.vibrato_rate,
-        'register': features.register_class,
-        'technical_vector': features.technical_vector,
+        "spectral_centroid": features.spectral_centroid_mean,
+        "harmonic_ratio": features.harmonic_ratio,
+        "attack_time_ms": features.attack_time_ms,
+        "vibrato_rate": features.vibrato_rate,
+        "register": features.register_class,
+        "technical_vector": features.technical_vector,
     }
 
 
@@ -743,10 +758,10 @@ def extract_emotional_features(audio_path: Path) -> Dict[str, Any]:
     """Extract only emotional features."""
     features = extract_instrument_features(audio_path)
     return {
-        'expressiveness': features.expressiveness_score,
-        'energy_mean': features.rms_mean,
-        'brightness': features.brightness_score,
-        'tension': features.tension_score,
-        'humanization': features.timing_humanization,
-        'emotional_vector': features.emotional_vector,
+        "expressiveness": features.expressiveness_score,
+        "energy_mean": features.rms_mean,
+        "brightness": features.brightness_score,
+        "tension": features.tension_score,
+        "humanization": features.timing_humanization,
+        "emotional_vector": features.emotional_vector,
     }

@@ -18,6 +18,7 @@ import math
 
 try:
     import mido
+
     MIDO_AVAILABLE = True
 except ImportError:
     MIDO_AVAILABLE = False
@@ -33,52 +34,52 @@ OUTPUT_PATH = Path.home() / "Music-Brain" / "structure-library" / "analyses"
 STANDARD_PPQ = 480
 
 # Note names
-NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 # Chord templates (intervals from root)
 CHORD_TEMPLATES = {
-    'maj': [0, 4, 7],
-    'min': [0, 3, 7],
-    'dim': [0, 3, 6],
-    'aug': [0, 4, 8],
-    'maj7': [0, 4, 7, 11],
-    'min7': [0, 3, 7, 10],
-    'dom7': [0, 4, 7, 10],
-    'dim7': [0, 3, 6, 9],
-    'hdim7': [0, 3, 6, 10],  # half-diminished
-    'maj9': [0, 4, 7, 11, 14],
-    'min9': [0, 3, 7, 10, 14],
-    'dom9': [0, 4, 7, 10, 14],
-    'sus2': [0, 2, 7],
-    'sus4': [0, 5, 7],
-    'add9': [0, 4, 7, 14],
-    '6': [0, 4, 7, 9],
-    'min6': [0, 3, 7, 9],
+    "maj": [0, 4, 7],
+    "min": [0, 3, 7],
+    "dim": [0, 3, 6],
+    "aug": [0, 4, 8],
+    "maj7": [0, 4, 7, 11],
+    "min7": [0, 3, 7, 10],
+    "dom7": [0, 4, 7, 10],
+    "dim7": [0, 3, 6, 9],
+    "hdim7": [0, 3, 6, 10],  # half-diminished
+    "maj9": [0, 4, 7, 11, 14],
+    "min9": [0, 3, 7, 10, 14],
+    "dom9": [0, 4, 7, 10, 14],
+    "sus2": [0, 2, 7],
+    "sus4": [0, 5, 7],
+    "add9": [0, 4, 7, 14],
+    "6": [0, 4, 7, 9],
+    "min6": [0, 3, 7, 9],
 }
 
 # Chord families
 CHORD_FAMILIES = {
-    'major': ['maj', 'maj7', 'maj9', '6', 'add9'],
-    'minor': ['min', 'min7', 'min9', 'min6'],
-    'dominant': ['dom7', 'dom9'],
-    'diminished': ['dim', 'dim7', 'hdim7'],
-    'augmented': ['aug'],
-    'suspended': ['sus2', 'sus4'],
+    "major": ["maj", "maj7", "maj9", "6", "add9"],
+    "minor": ["min", "min7", "min9", "min6"],
+    "dominant": ["dom7", "dom9"],
+    "diminished": ["dim", "dim7", "hdim7"],
+    "augmented": ["aug"],
+    "suspended": ["sus2", "sus4"],
 }
 
 # Common progressions to detect
 COMMON_PROGRESSIONS = {
-    'I-IV-V-I': [(0, 'maj'), (5, 'maj'), (7, 'maj'), (0, 'maj')],
-    'I-V-vi-IV': [(0, 'maj'), (7, 'maj'), (9, 'min'), (5, 'maj')],
-    'ii-V-I': [(2, 'min7'), (7, 'dom7'), (0, 'maj7')],
-    'I-vi-IV-V': [(0, 'maj'), (9, 'min'), (5, 'maj'), (7, 'maj')],
-    'vi-IV-I-V': [(9, 'min'), (5, 'maj'), (0, 'maj'), (7, 'maj')],
-    'I-IV-vi-V': [(0, 'maj'), (5, 'maj'), (9, 'min'), (7, 'maj')],
-    'i-VI-III-VII': [(0, 'min'), (8, 'maj'), (3, 'maj'), (10, 'maj')],  # Andalusian
-    'I-V-IV-I': [(0, 'maj'), (7, 'maj'), (5, 'maj'), (0, 'maj')],
-    'I-bVII-IV-I': [(0, 'maj'), (10, 'maj'), (5, 'maj'), (0, 'maj')],  # Rock
-    'i-iv-v-i': [(0, 'min'), (5, 'min'), (7, 'min'), (0, 'min')],  # Natural minor
-    'i-VII-VI-V': [(0, 'min'), (10, 'maj'), (8, 'maj'), (7, 'maj')],  # Descending
+    "I-IV-V-I": [(0, "maj"), (5, "maj"), (7, "maj"), (0, "maj")],
+    "I-V-vi-IV": [(0, "maj"), (7, "maj"), (9, "min"), (5, "maj")],
+    "ii-V-I": [(2, "min7"), (7, "dom7"), (0, "maj7")],
+    "I-vi-IV-V": [(0, "maj"), (9, "min"), (5, "maj"), (7, "maj")],
+    "vi-IV-I-V": [(9, "min"), (5, "maj"), (0, "maj"), (7, "maj")],
+    "I-IV-vi-V": [(0, "maj"), (5, "maj"), (9, "min"), (7, "maj")],
+    "i-VI-III-VII": [(0, "min"), (8, "maj"), (3, "maj"), (10, "maj")],  # Andalusian
+    "I-V-IV-I": [(0, "maj"), (7, "maj"), (5, "maj"), (0, "maj")],
+    "I-bVII-IV-I": [(0, "maj"), (10, "maj"), (5, "maj"), (0, "maj")],  # Rock
+    "i-iv-v-i": [(0, "min"), (5, "min"), (7, "min"), (0, "min")],  # Natural minor
+    "i-VII-VI-V": [(0, "min"), (10, "maj"), (8, "maj"), (7, "maj")],  # Descending
 }
 
 # ============================================================================
@@ -95,7 +96,7 @@ def init_database():
     cursor = conn.cursor()
 
     # Main analysis table
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS structure_analyses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -108,10 +109,10 @@ def init_database():
             total_bars INTEGER,
             date_analyzed TEXT
         )
-    ''')
+    """)
 
     # Chord progressions
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS chord_progressions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             analysis_id INTEGER,
@@ -124,10 +125,10 @@ def init_database():
             confidence REAL,
             FOREIGN KEY (analysis_id) REFERENCES structure_analyses(id)
         )
-    ''')
+    """)
 
     # Detected patterns
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS detected_patterns (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             analysis_id INTEGER,
@@ -139,10 +140,10 @@ def init_database():
             confidence REAL,
             FOREIGN KEY (analysis_id) REFERENCES structure_analyses(id)
         )
-    ''')
+    """)
 
     # Melody contours
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS melody_contours (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             analysis_id INTEGER,
@@ -156,10 +157,10 @@ def init_database():
             leap_count INTEGER,
             FOREIGN KEY (analysis_id) REFERENCES structure_analyses(id)
         )
-    ''')
+    """)
 
     # Phrase structure
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS phrase_structure (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             analysis_id INTEGER,
@@ -171,10 +172,10 @@ def init_database():
             pitch_center INTEGER,
             FOREIGN KEY (analysis_id) REFERENCES structure_analyses(id)
         )
-    ''')
+    """)
 
     # Harmonic rhythm
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS harmonic_rhythm (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             analysis_id INTEGER,
@@ -184,7 +185,7 @@ def init_database():
             consistency REAL,
             FOREIGN KEY (analysis_id) REFERENCES structure_analyses(id)
         )
-    ''')
+    """)
 
     conn.commit()
     conn.close()
@@ -195,6 +196,7 @@ def get_connection():
     if not DB_PATH.exists():
         init_database()
     return sqlite3.connect(DB_PATH)
+
 
 # ============================================================================
 # MIDI Loading
@@ -212,7 +214,7 @@ def get_tempo(mid):
     """Extract tempo from MIDI."""
     for track in mid.tracks:
         for msg in track:
-            if msg.type == 'set_tempo':
+            if msg.type == "set_tempo":
                 return mido.tempo2bpm(msg.tempo)
     return 120.0
 
@@ -232,25 +234,27 @@ def extract_notes(mid):
         for msg in track:
             current_tick += msg.time
 
-            if msg.type == 'note_on' and msg.velocity > 0:
+            if msg.type == "note_on" and msg.velocity > 0:
                 key = (msg.channel, msg.note)
                 active_notes[key] = (current_tick, msg.velocity)
 
-            elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+            elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
                 key = (msg.channel, msg.note)
                 if key in active_notes:
                     start_tick, velocity = active_notes.pop(key)
                     duration = current_tick - start_tick
 
-                    all_notes.append({
-                        'tick': start_tick,
-                        'note': msg.note,
-                        'velocity': velocity,
-                        'duration': duration,
-                        'channel': msg.channel
-                    })
+                    all_notes.append(
+                        {
+                            "tick": start_tick,
+                            "note": msg.note,
+                            "velocity": velocity,
+                            "duration": duration,
+                            "channel": msg.channel,
+                        }
+                    )
 
-    all_notes.sort(key=lambda x: x['tick'])
+    all_notes.sort(key=lambda x: x["tick"])
     return all_notes, ppq
 
 
@@ -260,7 +264,7 @@ def separate_melody_harmony(notes, ppq):
     Simple heuristic: notes on channel 9 = drums, highest non-drum = melody
     """
     # Remove drums
-    non_drum = [n for n in notes if n['channel'] != 9]
+    non_drum = [n for n in notes if n["channel"] != 9]
 
     if not non_drum:
         return [], []
@@ -274,7 +278,7 @@ def separate_melody_harmony(notes, ppq):
     # Group notes by start time
     time_groups = defaultdict(list)
     for note in non_drum:
-        window = note['tick'] // window_size
+        window = note["tick"] // window_size
         time_groups[window].append(note)
 
     for window, group in time_groups.items():
@@ -282,11 +286,12 @@ def separate_melody_harmony(notes, ppq):
             melody_notes.append(group[0])
         else:
             # Highest note is melody
-            sorted_group = sorted(group, key=lambda x: x['note'], reverse=True)
+            sorted_group = sorted(group, key=lambda x: x["note"], reverse=True)
             melody_notes.append(sorted_group[0])
             harmony_notes.extend(sorted_group[1:])
 
     return melody_notes, harmony_notes
+
 
 # ============================================================================
 # Chord Detection
@@ -348,7 +353,7 @@ def get_chord_family(chord_type):
     for family, types in CHORD_FAMILIES.items():
         if chord_type in types:
             return family
-    return 'other'
+    return "other"
 
 
 def analyze_chords(notes, ppq, beats_per_bar=4):
@@ -366,7 +371,7 @@ def analyze_chords(notes, ppq, beats_per_bar=4):
     beat_groups = defaultdict(list)
 
     for note in notes:
-        beat = note['tick'] // ticks_per_beat
+        beat = note["tick"] // ticks_per_beat
         beat_groups[beat].append(note)
 
     chords = []
@@ -375,7 +380,7 @@ def analyze_chords(notes, ppq, beats_per_bar=4):
 
     for beat in sorted(beat_groups):
         notes_in_beat = beat_groups[beat]
-        pitch_classes = [note_to_pitch_class(n['note']) for n in notes_in_beat]
+        pitch_classes = [note_to_pitch_class(n["note"]) for n in notes_in_beat]
 
         root, chord_type, confidence = detect_chord(pitch_classes)
 
@@ -386,16 +391,18 @@ def analyze_chords(notes, ppq, beats_per_bar=4):
                 # Save previous chord
                 if current_chord is not None:
                     prev_root, prev_type = current_chord
-                    chords.append({
-                        'bar': current_start // beats_per_bar,
-                        'beat': current_start % beats_per_bar,
-                        'root': pitch_class_to_name(prev_root),
-                        'root_pc': prev_root,
-                        'type': prev_type,
-                        'family': get_chord_family(prev_type),
-                        'duration_beats': beat - current_start,
-                        'confidence': confidence
-                    })
+                    chords.append(
+                        {
+                            "bar": current_start // beats_per_bar,
+                            "beat": current_start % beats_per_bar,
+                            "root": pitch_class_to_name(prev_root),
+                            "root_pc": prev_root,
+                            "type": prev_type,
+                            "family": get_chord_family(prev_type),
+                            "duration_beats": beat - current_start,
+                            "confidence": confidence,
+                        }
+                    )
 
                 current_chord = chord_key
                 current_start = beat
@@ -404,18 +411,21 @@ def analyze_chords(notes, ppq, beats_per_bar=4):
     if current_chord is not None:
         prev_root, prev_type = current_chord
         final_beat = max(beat_groups.keys()) + 1
-        chords.append({
-            'bar': current_start // beats_per_bar,
-            'beat': current_start % beats_per_bar,
-            'root': pitch_class_to_name(prev_root),
-            'root_pc': prev_root,
-            'type': prev_type,
-            'family': get_chord_family(prev_type),
-            'duration_beats': final_beat - current_start,
-            'confidence': confidence
-        })
+        chords.append(
+            {
+                "bar": current_start // beats_per_bar,
+                "beat": current_start % beats_per_bar,
+                "root": pitch_class_to_name(prev_root),
+                "root_pc": prev_root,
+                "type": prev_type,
+                "family": get_chord_family(prev_type),
+                "duration_beats": final_beat - current_start,
+                "confidence": confidence,
+            }
+        )
 
     return chords
+
 
 # ============================================================================
 # Progression Detection
@@ -433,18 +443,18 @@ def detect_progression_patterns(chords):
     detected = []
 
     # Extract chord sequence as (root_pc, type) tuples
-    chord_seq = [(c['root_pc'], c['type'].split('7')[0].split('9')[0]) for c in chords]
+    chord_seq = [(c["root_pc"], c["type"].split("7")[0].split("9")[0]) for c in chords]
 
     # Simplify chord types
     def simplify_type(t):
-        if t in ['maj', 'maj7', 'maj9', '6', 'add9']:
-            return 'maj'
-        elif t in ['min', 'min7', 'min9', 'min6']:
-            return 'min'
-        elif t in ['dom7', 'dom9']:
-            return 'dom7'
-        elif t in ['dim', 'dim7', 'hdim7']:
-            return 'dim'
+        if t in ["maj", "maj7", "maj9", "6", "add9"]:
+            return "maj"
+        elif t in ["min", "min7", "min9", "min6"]:
+            return "min"
+        elif t in ["dom7", "dom9"]:
+            return "dom7"
+        elif t in ["dim", "dim7", "hdim7"]:
+            return "dim"
         return t
 
     chord_seq_simple = [(c[0], simplify_type(c[1])) for c in chord_seq]
@@ -458,33 +468,38 @@ def detect_progression_patterns(chords):
 
         # Slide window through chord sequence
         for i in range(len(chord_seq_simple) - pattern_len + 1):
-            window = chord_seq_simple[i:i + pattern_len]
+            window = chord_seq_simple[i : i + pattern_len]
 
             # Try each transposition
             for trans in range(12):
                 transposed_template = [((t[0] + trans) % 12, t[1]) for t in template_simple]
 
                 # Check match
-                matches = sum(1 for w, t in zip(window, transposed_template) if w[0] == t[0] and (
-                    w[1] == t[1] or t[1] == 'maj' and w[1] in ['maj', 'dom7']))
+                matches = sum(
+                    1
+                    for w, t in zip(window, transposed_template)
+                    if w[0] == t[0] and (w[1] == t[1] or t[1] == "maj" and w[1] in ["maj", "dom7"])
+                )
 
                 confidence = matches / pattern_len
 
                 if confidence >= 0.75:  # 75% match threshold
-                    detected.append({
-                        'pattern': pattern_name,
-                        'start_index': i,
-                        'start_bar': chords[i]['bar'],
-                        'transposition': trans,
-                        'key': NOTE_NAMES[trans],
-                        'confidence': confidence
-                    })
+                    detected.append(
+                        {
+                            "pattern": pattern_name,
+                            "start_index": i,
+                            "start_bar": chords[i]["bar"],
+                            "transposition": trans,
+                            "key": NOTE_NAMES[trans],
+                            "confidence": confidence,
+                        }
+                    )
 
     # Remove duplicates, keep highest confidence
     unique = {}
     for d in detected:
-        key = (d['pattern'], d['start_bar'])
-        if key not in unique or d['confidence'] > unique[key]['confidence']:
+        key = (d["pattern"], d["start_bar"])
+        if key not in unique or d["confidence"] > unique[key]["confidence"]:
             unique[key] = d
 
     return list(unique.values())
@@ -492,15 +507,15 @@ def detect_progression_patterns(chords):
 
 def analyze_chord_families(chords):
     """Analyze distribution of chord families."""
-    family_counts = Counter(c['family'] for c in chords)
+    family_counts = Counter(c["family"] for c in chords)
     total = sum(family_counts.values())
 
     distribution = {
-        family: count / total if total > 0 else 0
-        for family, count in family_counts.items()
+        family: count / total if total > 0 else 0 for family, count in family_counts.items()
     }
 
     return distribution
+
 
 # ============================================================================
 # Melody Analysis
@@ -523,7 +538,9 @@ def analyze_melody_contour(melody_notes, ppq, beats_per_bar=4):
     gap_threshold = ppq * 2  # Half bar gap = new phrase
 
     for i in range(1, len(melody_notes)):
-        gap = melody_notes[i]['tick'] - (melody_notes[i-1]['tick'] + melody_notes[i-1]['duration'])
+        gap = melody_notes[i]["tick"] - (
+            melody_notes[i - 1]["tick"] + melody_notes[i - 1]["duration"]
+        )
 
         if gap > gap_threshold:
             if len(current_phrase) >= 2:
@@ -538,49 +555,55 @@ def analyze_melody_contour(melody_notes, ppq, beats_per_bar=4):
     # Analyze each phrase
     contours = []
     for i, phrase in enumerate(phrases):
-        pitches = [n['note'] for n in phrase]
+        pitches = [n["note"] for n in phrase]
 
         # Calculate intervals
-        intervals = [pitches[j+1] - pitches[j] for j in range(len(pitches)-1)]
+        intervals = [pitches[j + 1] - pitches[j] for j in range(len(pitches) - 1)]
 
         # Classify intervals
         steps = sum(1 for iv in intervals if abs(iv) <= 2)
         leaps = sum(1 for iv in intervals if abs(iv) > 2)
 
         # Overall direction
-        direction = 'ascending' if pitches[-1] > pitches[0] else 'descending' if pitches[-1] < pitches[0] else 'static'  # noqa: E501
+        direction = (
+            "ascending"
+            if pitches[-1] > pitches[0]
+            else "descending" if pitches[-1] < pitches[0] else "static"
+        )  # noqa: E501
 
         # Contour type
         max_idx = pitches.index(max(pitches))
         min_idx = pitches.index(min(pitches))
 
         if max_idx < len(pitches) // 3:
-            contour_type = 'descending_arch'
+            contour_type = "descending_arch"
         elif max_idx > 2 * len(pitches) // 3:
-            contour_type = 'ascending_arch'
+            contour_type = "ascending_arch"
         elif min_idx < len(pitches) // 3:
-            contour_type = 'ascending_arch'
+            contour_type = "ascending_arch"
         elif min_idx > 2 * len(pitches) // 3:
-            contour_type = 'descending_arch'
+            contour_type = "descending_arch"
         else:
-            contour_type = 'arch' if max_idx < min_idx else 'inverse_arch'
+            contour_type = "arch" if max_idx < min_idx else "inverse_arch"
 
-        start_bar = phrase[0]['tick'] / ticks_per_bar
-        end_bar = (phrase[-1]['tick'] + phrase[-1]['duration']) / ticks_per_bar
+        start_bar = phrase[0]["tick"] / ticks_per_bar
+        end_bar = (phrase[-1]["tick"] + phrase[-1]["duration"]) / ticks_per_bar
 
-        contours.append({
-            'phrase_number': i + 1,
-            'start_bar': round(start_bar, 2),
-            'end_bar': round(end_bar, 2),
-            'length_bars': round(end_bar - start_bar, 2),
-            'note_count': len(phrase),
-            'pitch_range': max(pitches) - min(pitches),
-            'contour_type': contour_type,
-            'direction': direction,
-            'step_count': steps,
-            'leap_count': leaps,
-            'step_ratio': steps / max(1, steps + leaps)
-        })
+        contours.append(
+            {
+                "phrase_number": i + 1,
+                "start_bar": round(start_bar, 2),
+                "end_bar": round(end_bar, 2),
+                "length_bars": round(end_bar - start_bar, 2),
+                "note_count": len(phrase),
+                "pitch_range": max(pitches) - min(pitches),
+                "contour_type": contour_type,
+                "direction": direction,
+                "step_count": steps,
+                "leap_count": leaps,
+                "step_ratio": steps / max(1, steps + leaps),
+            }
+        )
 
     return contours
 
@@ -590,25 +613,26 @@ def calculate_melody_statistics(melody_notes):
     if not melody_notes:
         return {}
 
-    pitches = [n['note'] for n in melody_notes]
-    velocities = [n['velocity'] for n in melody_notes]
-    _durations = [n['duration'] for n in melody_notes]  # noqa: F841
+    pitches = [n["note"] for n in melody_notes]
+    velocities = [n["velocity"] for n in melody_notes]
+    _durations = [n["duration"] for n in melody_notes]  # noqa: F841
 
     # Interval statistics
-    intervals = [abs(pitches[i+1] - pitches[i]) for i in range(len(pitches)-1)]
+    intervals = [abs(pitches[i + 1] - pitches[i]) for i in range(len(pitches) - 1)]
 
     return {
-        'pitch_mean': statistics.mean(pitches),
-        'pitch_std': statistics.stdev(pitches) if len(pitches) > 1 else 0,
-        'pitch_range': max(pitches) - min(pitches),
-        'pitch_min': min(pitches),
-        'pitch_max': max(pitches),
-        'velocity_mean': statistics.mean(velocities),
-        'velocity_std': statistics.stdev(velocities) if len(velocities) > 1 else 0,
-        'avg_interval': statistics.mean(intervals) if intervals else 0,
-        'max_interval': max(intervals) if intervals else 0,
-        'note_count': len(melody_notes)
+        "pitch_mean": statistics.mean(pitches),
+        "pitch_std": statistics.stdev(pitches) if len(pitches) > 1 else 0,
+        "pitch_range": max(pitches) - min(pitches),
+        "pitch_min": min(pitches),
+        "pitch_max": max(pitches),
+        "velocity_mean": statistics.mean(velocities),
+        "velocity_std": statistics.stdev(velocities) if len(velocities) > 1 else 0,
+        "avg_interval": statistics.mean(intervals) if intervals else 0,
+        "max_interval": max(intervals) if intervals else 0,
+        "note_count": len(melody_notes),
     }
+
 
 # ============================================================================
 # Phrase Structure
@@ -621,57 +645,61 @@ def analyze_phrase_lengths(melody_notes, ppq, beats_per_bar=4):
 
     # Detect phrases
     phrases = []
-    current_phrase_start = melody_notes[0]['tick'] if melody_notes else 0
+    current_phrase_start = melody_notes[0]["tick"] if melody_notes else 0
     current_phrase_notes = []
     gap_threshold = ppq * 2
 
     for i, note in enumerate(melody_notes):
         if i > 0:
-            gap = note['tick'] - (melody_notes[i-1]['tick'] + melody_notes[i-1]['duration'])
+            gap = note["tick"] - (melody_notes[i - 1]["tick"] + melody_notes[i - 1]["duration"])
             if gap > gap_threshold:
                 if current_phrase_notes:
-                    phrase_end = current_phrase_notes[-1]['tick'] + \
-                        current_phrase_notes[-1]['duration']
-                    phrases.append({
-                        'start': current_phrase_start,
-                        'end': phrase_end,
-                        'notes': current_phrase_notes
-                    })
-                current_phrase_start = note['tick']
+                    phrase_end = (
+                        current_phrase_notes[-1]["tick"] + current_phrase_notes[-1]["duration"]
+                    )
+                    phrases.append(
+                        {
+                            "start": current_phrase_start,
+                            "end": phrase_end,
+                            "notes": current_phrase_notes,
+                        }
+                    )
+                current_phrase_start = note["tick"]
                 current_phrase_notes = []
 
         current_phrase_notes.append(note)
 
     # Add final phrase
     if current_phrase_notes:
-        phrase_end = current_phrase_notes[-1]['tick'] + current_phrase_notes[-1]['duration']
-        phrases.append({
-            'start': current_phrase_start,
-            'end': phrase_end,
-            'notes': current_phrase_notes
-        })
+        phrase_end = current_phrase_notes[-1]["tick"] + current_phrase_notes[-1]["duration"]
+        phrases.append(
+            {"start": current_phrase_start, "end": phrase_end, "notes": current_phrase_notes}
+        )
 
     # Calculate phrase lengths in bars
     phrase_lengths = []
     for phrase in phrases:
-        length_bars = (phrase['end'] - phrase['start']) / ticks_per_bar
-        phrase_lengths.append({
-            'start_bar': phrase['start'] / ticks_per_bar,
-            'length_bars': round(length_bars, 2),
-            'note_count': len(phrase['notes']),
-            'note_density': len(phrase['notes']) / max(0.1, length_bars)
-        })
+        length_bars = (phrase["end"] - phrase["start"]) / ticks_per_bar
+        phrase_lengths.append(
+            {
+                "start_bar": phrase["start"] / ticks_per_bar,
+                "length_bars": round(length_bars, 2),
+                "note_count": len(phrase["notes"]),
+                "note_density": len(phrase["notes"]) / max(0.1, length_bars),
+            }
+        )
 
     # Statistics
-    lengths = [p['length_bars'] for p in phrase_lengths]
+    lengths = [p["length_bars"] for p in phrase_lengths]
 
     return {
-        'phrases': phrase_lengths,
-        'count': len(phrase_lengths),
-        'avg_length': statistics.mean(lengths) if lengths else 0,
-        'std_length': statistics.stdev(lengths) if len(lengths) > 1 else 0,
-        'common_lengths': Counter(round(length, 0) for length in lengths).most_common(3)
+        "phrases": phrase_lengths,
+        "count": len(phrase_lengths),
+        "avg_length": statistics.mean(lengths) if lengths else 0,
+        "std_length": statistics.stdev(lengths) if len(lengths) > 1 else 0,
+        "common_lengths": Counter(round(length, 0) for length in lengths).most_common(3),
     }
+
 
 # ============================================================================
 # Harmonic Rhythm
@@ -683,7 +711,7 @@ def analyze_harmonic_rhythm(chords, beats_per_bar=4):
     if not chords:
         return {}
 
-    durations = [c['duration_beats'] for c in chords]
+    durations = [c["duration_beats"] for c in chords]
 
     # Calculate changes per bar
     total_beats = sum(durations)
@@ -699,15 +727,15 @@ def analyze_harmonic_rhythm(chords, beats_per_bar=4):
     if most_common:
         dominant_duration = most_common[0][0]
         if dominant_duration >= 4:
-            rhythm_pattern = 'whole_note'
+            rhythm_pattern = "whole_note"
         elif dominant_duration >= 2:
-            rhythm_pattern = 'half_note'
+            rhythm_pattern = "half_note"
         elif dominant_duration >= 1:
-            rhythm_pattern = 'quarter_note'
+            rhythm_pattern = "quarter_note"
         else:
-            rhythm_pattern = 'eighth_note'
+            rhythm_pattern = "eighth_note"
     else:
-        rhythm_pattern = 'irregular'
+        rhythm_pattern = "irregular"
 
     # Consistency (how regular are the changes)
     if len(durations) > 1:
@@ -717,12 +745,13 @@ def analyze_harmonic_rhythm(chords, beats_per_bar=4):
         consistency = 1
 
     return {
-        'avg_chord_duration': statistics.mean(durations),
-        'changes_per_bar': round(changes_per_bar, 2),
-        'rhythm_pattern': rhythm_pattern,
-        'consistency': round(consistency, 2),
-        'duration_distribution': dict(pattern_counter)
+        "avg_chord_duration": statistics.mean(durations),
+        "changes_per_bar": round(changes_per_bar, 2),
+        "rhythm_pattern": rhythm_pattern,
+        "consistency": round(consistency, 2),
+        "duration_distribution": dict(pattern_counter),
     }
+
 
 # ============================================================================
 # Key Detection
@@ -744,7 +773,7 @@ def detect_key(notes):
     # Count pitch classes
     pc_counts = [0] * 12
     for note in notes:
-        pc = note['note'] % 12
+        pc = note["note"] % 12
         pc_counts[pc] += 1
 
     # Normalize
@@ -767,19 +796,20 @@ def detect_key(notes):
         if major_corr > best_corr:
             best_corr = major_corr
             best_key = root
-            best_mode = 'major'
+            best_mode = "major"
 
         # Correlate with minor
         minor_corr = sum(r * m for r, m in zip(rotated, minor_profile))
         if minor_corr > best_corr:
             best_corr = minor_corr
             best_key = root
-            best_mode = 'minor'
+            best_mode = "minor"
 
     # Normalize confidence to 0-1 range
     confidence = min(1, max(0, best_corr / 30))
 
     return NOTE_NAMES[best_key], best_mode, confidence
+
 
 # ============================================================================
 # Full Analysis Pipeline
@@ -804,10 +834,12 @@ def analyze_structure(filepath, name=None, genre=None):
 
     print(f"  PPQ: {ppq}, BPM: {bpm:.1f}")
     print(
-        f"  Total notes: {len(all_notes)}, Melody: {len(melody_notes)}, Harmony: {len(harmony_notes)}")  # noqa: E501
+        f"  Total notes: {len(all_notes)}, Melody: {len(melody_notes)}, Harmony: "
+        f"{len(harmony_notes)}"
+    )  # noqa: E501
 
     # Calculate total bars
-    max_tick = max(n['tick'] + n['duration'] for n in all_notes) if all_notes else 0
+    max_tick = max(n["tick"] + n["duration"] for n in all_notes) if all_notes else 0
     total_bars = math.ceil(max_tick / (ppq * 4))
 
     # Detect key
@@ -838,30 +870,27 @@ def analyze_structure(filepath, name=None, genre=None):
 
     # Compile results
     analysis = {
-        'metadata': {
-            'name': name or filepath.stem,
-            'source_file': str(filepath),
-            'genre': genre,
-            'key': key,
-            'mode': mode,
-            'key_confidence': key_confidence,
-            'bpm': bpm,
-            'ppq': ppq,
-            'time_signature': '4/4',
-            'total_bars': total_bars,
-            'date_analyzed': datetime.now().isoformat()
+        "metadata": {
+            "name": name or filepath.stem,
+            "source_file": str(filepath),
+            "genre": genre,
+            "key": key,
+            "mode": mode,
+            "key_confidence": key_confidence,
+            "bpm": bpm,
+            "ppq": ppq,
+            "time_signature": "4/4",
+            "total_bars": total_bars,
+            "date_analyzed": datetime.now().isoformat(),
         },
-        'chords': {
-            'progression': chords,
-            'family_distribution': chord_families,
-            'detected_patterns': progressions
+        "chords": {
+            "progression": chords,
+            "family_distribution": chord_families,
+            "detected_patterns": progressions,
         },
-        'melody': {
-            'statistics': melody_stats,
-            'contours': melody_contours
-        },
-        'phrases': phrase_analysis,
-        'harmonic_rhythm': harmonic_rhythm
+        "melody": {"statistics": melody_stats, "contours": melody_contours},
+        "phrases": phrase_analysis,
+        "harmonic_rhythm": harmonic_rhythm,
     }
 
     return analysis
@@ -870,14 +899,14 @@ def analyze_structure(filepath, name=None, genre=None):
 def save_analysis(analysis, output_path=None):
     """Save analysis to JSON."""
     if output_path is None:
-        name = analysis['metadata']['name']
+        name = analysis["metadata"]["name"]
         output_path = OUTPUT_PATH / f"{name}_structure.json"
     else:
         output_path = Path(output_path)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(analysis, f, indent=2)
 
     print(f"Saved analysis: {output_path}")
@@ -889,91 +918,133 @@ def save_to_database(analysis):
     conn = get_connection()
     cursor = conn.cursor()
 
-    meta = analysis['metadata']
+    meta = analysis["metadata"]
 
     # Insert main record
-    cursor.execute('''
+    cursor.execute(
+        """
         INSERT INTO structure_analyses
         (name, source_file, genre, key_detected, mode_detected, bpm, time_signature, total_bars, date_analyzed)  # noqa: E501
 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        meta['name'], meta['source_file'], meta['genre'],
-        meta['key'], meta['mode'], meta['bpm'],
-        meta['time_signature'], meta['total_bars'], meta['date_analyzed']
-    ))
+    """,
+        (
+            meta["name"],
+            meta["source_file"],
+            meta["genre"],
+            meta["key"],
+            meta["mode"],
+            meta["bpm"],
+            meta["time_signature"],
+            meta["total_bars"],
+            meta["date_analyzed"],
+        ),
+    )
 
     analysis_id = cursor.lastrowid
 
     # Insert chords
-    for chord in analysis['chords']['progression']:
-        cursor.execute('''
+    for chord in analysis["chords"]["progression"]:
+        cursor.execute(
+            """
             INSERT INTO chord_progressions
             (analysis_id, bar_number, beat, root_note, chord_type, chord_family, duration_beats, confidence)  # noqa: E501
 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            analysis_id, chord['bar'], chord['beat'],
-            chord['root'], chord['type'], chord['family'],
-            chord['duration_beats'], chord['confidence']
-        ))
+        """,
+            (
+                analysis_id,
+                chord["bar"],
+                chord["beat"],
+                chord["root"],
+                chord["type"],
+                chord["family"],
+                chord["duration_beats"],
+                chord["confidence"],
+            ),
+        )
 
     # Insert detected patterns
-    for pattern in analysis['chords']['detected_patterns']:
-        cursor.execute('''
+    for pattern in analysis["chords"]["detected_patterns"]:
+        cursor.execute(
+            """
             INSERT INTO detected_patterns
             (analysis_id, pattern_name, pattern_type, start_bar, transposition, confidence)
             VALUES (?, ?, ?, ?, ?, ?)
-        ''', (
-            analysis_id, pattern['pattern'], 'chord_progression',
-            pattern['start_bar'], pattern['transposition'], pattern['confidence']
-        ))
+        """,
+            (
+                analysis_id,
+                pattern["pattern"],
+                "chord_progression",
+                pattern["start_bar"],
+                pattern["transposition"],
+                pattern["confidence"],
+            ),
+        )
 
     # Insert melody contours
-    for contour in analysis['melody']['contours']:
-        cursor.execute('''
+    for contour in analysis["melody"]["contours"]:
+        cursor.execute(
+            """
             INSERT INTO melody_contours
             (analysis_id, phrase_number, start_bar, end_bar, contour_type, pitch_range, direction, step_count, leap_count)  # noqa: E501
 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            analysis_id, contour['phrase_number'],
-            contour['start_bar'], contour['end_bar'],
-            contour['contour_type'], contour['pitch_range'],
-            contour['direction'], contour['step_count'], contour['leap_count']
-        ))
+        """,
+            (
+                analysis_id,
+                contour["phrase_number"],
+                contour["start_bar"],
+                contour["end_bar"],
+                contour["contour_type"],
+                contour["pitch_range"],
+                contour["direction"],
+                contour["step_count"],
+                contour["leap_count"],
+            ),
+        )
 
     # Insert phrase structure
-    for i, phrase in enumerate(analysis['phrases']['phrases']):
-        cursor.execute('''
+    for i, phrase in enumerate(analysis["phrases"]["phrases"]):
+        cursor.execute(
+            """
             INSERT INTO phrase_structure
             (analysis_id, phrase_number, start_bar, length_bars, note_density)
             VALUES (?, ?, ?, ?, ?)
-        ''', (
-            analysis_id, i + 1,
-            phrase['start_bar'], phrase['length_bars'], phrase['note_density']
-        ))
+        """,
+            (
+                analysis_id,
+                i + 1,
+                phrase["start_bar"],
+                phrase["length_bars"],
+                phrase["note_density"],
+            ),
+        )
 
     # Insert harmonic rhythm
-    hr = analysis['harmonic_rhythm']
+    hr = analysis["harmonic_rhythm"]
     if hr:
-        cursor.execute('''
+        cursor.execute(
+            """
             INSERT INTO harmonic_rhythm
             (analysis_id, avg_chord_duration, changes_per_bar, rhythm_pattern, consistency)
             VALUES (?, ?, ?, ?, ?)
-        ''', (
-            analysis_id,
-            hr.get('avg_chord_duration', 0),
-            hr.get('changes_per_bar', 0),
-            hr.get('rhythm_pattern', ''),
-            hr.get('consistency', 0)
-        ))
+        """,
+            (
+                analysis_id,
+                hr.get("avg_chord_duration", 0),
+                hr.get("changes_per_bar", 0),
+                hr.get("rhythm_pattern", ""),
+                hr.get("consistency", 0),
+            ),
+        )
 
     conn.commit()
     conn.close()
 
     print(f"Saved to database with ID: {analysis_id}")
     return analysis_id
+
 
 # ============================================================================
 # Query Functions
@@ -990,7 +1061,7 @@ def list_analyses(genre=None, key=None, limit=50):
 
     if genre:
         conditions.append("genre LIKE ?")
-        params.append(f'%{genre}%')
+        params.append(f"%{genre}%")
 
     if key:
         conditions.append("key_detected = ?")
@@ -998,13 +1069,16 @@ def list_analyses(genre=None, key=None, limit=50):
 
     where_clause = " AND ".join(conditions) if conditions else "1=1"
 
-    cursor.execute(f'''
+    cursor.execute(
+        f"""
         SELECT id, name, genre, key_detected, mode_detected, bpm, total_bars
         FROM structure_analyses
         WHERE {where_clause}
         ORDER BY date_analyzed DESC
         LIMIT ?
-    ''', params + [limit])
+    """,
+        params + [limit],
+    )
 
     results = cursor.fetchall()
     conn.close()
@@ -1014,9 +1088,12 @@ def list_analyses(genre=None, key=None, limit=50):
 
     for row in results:
         id_, name, genre, key, mode, bpm, bars = row
-        name_display = name[:28] + '..' if len(name) > 30 else name
+        name_display = name[:28] + ".." if len(name) > 30 else name
         key_display = f"{key or '?'} {mode or ''}"[:8]
-        print(f"{id_:<6} {name_display:<30} {genre or '':<12} {key_display:<8} {bpm or '?':<8} {bars or '?':<6}")  # noqa: E501
+        print(
+            f"{id_:<6} {name_display:<30} {genre or '':<12} {key_display:<8} {bpm or '?':<8} "
+            f"{bars or '?':<6}"
+        )  # noqa: E501
 
 
 def show_detail(analysis_id):
@@ -1024,7 +1101,7 @@ def show_detail(analysis_id):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute('SELECT * FROM structure_analyses WHERE id = ?', (analysis_id,))
+    cursor.execute("SELECT * FROM structure_analyses WHERE id = ?", (analysis_id,))
     analysis = cursor.fetchone()
 
     if not analysis:
@@ -1038,13 +1115,16 @@ def show_detail(analysis_id):
     print(f"{'='*60}")
 
     # Show chord progression
-    cursor.execute('''
+    cursor.execute(
+        """
         SELECT bar_number, root_note, chord_type, duration_beats
         FROM chord_progressions
         WHERE analysis_id = ?
         ORDER BY bar_number, beat
         LIMIT 20
-    ''', (analysis_id,))
+    """,
+        (analysis_id,),
+    )
 
     print("\nChord Progression (first 20):")
     print(f"{'Bar':<6} {'Chord':<12} {'Duration':<10}")
@@ -1054,11 +1134,14 @@ def show_detail(analysis_id):
         print(f"{bar:<6} {root}{ctype:<10} {dur:.1f} beats")
 
     # Show detected patterns
-    cursor.execute('''
+    cursor.execute(
+        """
         SELECT pattern_name, start_bar, transposition, confidence
         FROM detected_patterns
         WHERE analysis_id = ?
-    ''', (analysis_id,))
+    """,
+        (analysis_id,),
+    )
 
     patterns = cursor.fetchall()
     if patterns:
@@ -1067,11 +1150,14 @@ def show_detail(analysis_id):
             print(f"  {name} in {NOTE_NAMES[trans]} (bar {bar}, confidence {conf:.0%})")
 
     # Show harmonic rhythm
-    cursor.execute('''
+    cursor.execute(
+        """
         SELECT avg_chord_duration, changes_per_bar, rhythm_pattern, consistency
         FROM harmonic_rhythm
         WHERE analysis_id = ?
-    ''', (analysis_id,))
+    """,
+        (analysis_id,),
+    )
 
     hr = cursor.fetchone()
     if hr:
@@ -1088,9 +1174,9 @@ def scan_folder(folder_path, genre=None, recursive=True):
     """Scan folder for MIDI files."""
     folder = Path(folder_path).expanduser().resolve()
 
-    pattern = '**/*.mid' if recursive else '*.mid'
+    pattern = "**/*.mid" if recursive else "*.mid"
     midi_files = list(folder.glob(pattern))
-    midi_files.extend(folder.glob(pattern.replace('.mid', '.midi')))
+    midi_files.extend(folder.glob(pattern.replace(".mid", ".midi")))
 
     print(f"Found {len(midi_files)} MIDI files")
     print("-" * 50)
@@ -1104,6 +1190,7 @@ def scan_folder(folder_path, genre=None, recursive=True):
         except Exception as e:
             print(f"  Error: {e}\n")
 
+
 # ============================================================================
 # CLI
 # ============================================================================
@@ -1111,48 +1198,48 @@ def scan_folder(folder_path, genre=None, recursive=True):
 
 def main():
     parser = argparse.ArgumentParser(
-        description='MIDI Structure Analyzer - Extract chord progressions, melody shapes, and more',
+        description="MIDI Structure Analyzer - Extract chord progressions, melody shapes, and more",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='''
+        epilog="""
 Examples:
   %(prog)s analyze song.mid --genre pop
   %(prog)s scan ~/MIDI/Songs --genre jazz
   %(prog)s list --key C
   %(prog)s detail 5
-        '''
+        """,
     )
 
-    subparsers = parser.add_subparsers(dest='command', help='Commands')
+    subparsers = parser.add_subparsers(dest="command", help="Commands")
 
     # Analyze command
-    analyze_parser = subparsers.add_parser('analyze', help='Analyze MIDI file')
-    analyze_parser.add_argument('file', help='MIDI file path')
-    analyze_parser.add_argument('--name', help='Analysis name')
-    analyze_parser.add_argument('--genre', help='Genre tag')
-    analyze_parser.add_argument('--output', help='Output JSON path')
+    analyze_parser = subparsers.add_parser("analyze", help="Analyze MIDI file")
+    analyze_parser.add_argument("file", help="MIDI file path")
+    analyze_parser.add_argument("--name", help="Analysis name")
+    analyze_parser.add_argument("--genre", help="Genre tag")
+    analyze_parser.add_argument("--output", help="Output JSON path")
 
     # Scan command
-    scan_parser = subparsers.add_parser('scan', help='Scan folder')
-    scan_parser.add_argument('folder', help='Folder path')
-    scan_parser.add_argument('--genre', help='Genre tag')
-    scan_parser.add_argument('--no-recursive', action='store_true')
+    scan_parser = subparsers.add_parser("scan", help="Scan folder")
+    scan_parser.add_argument("folder", help="Folder path")
+    scan_parser.add_argument("--genre", help="Genre tag")
+    scan_parser.add_argument("--no-recursive", action="store_true")
 
     # List command
-    list_parser = subparsers.add_parser('list', help='List analyses')
-    list_parser.add_argument('--genre', help='Filter by genre')
-    list_parser.add_argument('--key', help='Filter by key')
-    list_parser.add_argument('--limit', type=int, default=50)
+    list_parser = subparsers.add_parser("list", help="List analyses")
+    list_parser.add_argument("--genre", help="Filter by genre")
+    list_parser.add_argument("--key", help="Filter by key")
+    list_parser.add_argument("--limit", type=int, default=50)
 
     # Detail command
-    detail_parser = subparsers.add_parser('detail', help='Show analysis details')
-    detail_parser.add_argument('id', type=int, help='Analysis ID')
+    detail_parser = subparsers.add_parser("detail", help="Show analysis details")
+    detail_parser.add_argument("id", type=int, help="Analysis ID")
 
     # Init command
-    subparsers.add_parser('init', help='Initialize database')
+    subparsers.add_parser("init", help="Initialize database")
 
     args = parser.parse_args()
 
-    if args.command == 'analyze':
+    if args.command == "analyze":
         analysis = analyze_structure(args.file, name=args.name, genre=args.genre)
         if args.output:
             save_analysis(analysis, args.output)
@@ -1160,21 +1247,21 @@ Examples:
             save_analysis(analysis)
         save_to_database(analysis)
 
-    elif args.command == 'scan':
+    elif args.command == "scan":
         scan_folder(args.folder, genre=args.genre, recursive=not args.no_recursive)
 
-    elif args.command == 'list':
+    elif args.command == "list":
         list_analyses(genre=args.genre, key=args.key, limit=args.limit)
 
-    elif args.command == 'detail':
+    elif args.command == "detail":
         show_detail(args.id)
 
-    elif args.command == 'init':
+    elif args.command == "init":
         init_database()
 
     else:
         parser.print_help()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -11,7 +11,6 @@ import random
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass, field
 
-
 # Progression templates by mood
 PROGRESSION_TEMPLATES = {
     "hopeful": [
@@ -104,29 +103,52 @@ STRUCTURE_TEMPLATES = {
     "verse_heavy": ["intro", "verse", "verse", "chorus", "verse", "chorus", "outro"],
     "minimal": ["intro", "verse", "chorus", "verse", "chorus"],
     "progressive": ["intro", "verse", "bridge", "verse", "chorus", "bridge", "outro"],
-    "building": ["intro", "verse", "verse", "prechorus", "chorus", "verse", "prechorus", "chorus", "chorus", "outro"],  # noqa: E501
-
+    "building": [
+        "intro",
+        "verse",
+        "verse",
+        "prechorus",
+        "chorus",
+        "verse",
+        "prechorus",
+        "chorus",
+        "chorus",
+        "outro",
+    ],  # noqa: E501
     "storytelling": ["verse", "verse", "verse", "chorus", "verse", "chorus", "outro"],
 }
 
 # Roman numeral to semitone offset from tonic
 NUMERAL_TO_SEMITONE = {
-    "I": 0, "i": 0,
-    "bII": 1, "II": 2, "ii": 2,
-    "bIII": 3, "III": 4, "iii": 4,
-    "IV": 5, "iv": 5,
-    "#IV": 6, "bV": 6,
-    "V": 7, "v": 7,
-    "bVI": 8, "VI": 9, "vi": 9,
-    "bVII": 10, "VII": 11, "vii": 11,
+    "I": 0,
+    "i": 0,
+    "bII": 1,
+    "II": 2,
+    "ii": 2,
+    "bIII": 3,
+    "III": 4,
+    "iii": 4,
+    "IV": 5,
+    "iv": 5,
+    "#IV": 6,
+    "bV": 6,
+    "V": 7,
+    "v": 7,
+    "bVI": 8,
+    "VI": 9,
+    "vi": 9,
+    "bVII": 10,
+    "VII": 11,
+    "vii": 11,
 }
 
-NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 
 @dataclass
 class GeneratedSection:
     """A generated song section."""
+
     name: str
     bars: int
     progression: List[str]  # Roman numerals
@@ -138,6 +160,7 @@ class GeneratedSection:
 @dataclass
 class GeneratedSong:
     """A complete generated song structure."""
+
     title: str = "Untitled"
     key: str = "C"
     mode: str = "major"
@@ -194,7 +217,8 @@ class GeneratedSong:
 
         for section in self.sections:
             lines.append(
-                f"[{section.name.upper()}] ({section.bars} bars, energy: {section.energy:.1f})")
+                f"[{section.name.upper()}] ({section.bars} bars, energy: {section.energy:.1f})"
+            )
             lines.append(f"  {' | '.join(section.chords)}")
             if section.notes:
                 lines.append(f"  → {section.notes}")
@@ -254,17 +278,18 @@ class SongGenerator:
             structure = random.choice(list(self.structure_templates.keys()))
 
         structure_sections = self.structure_templates.get(
-            structure, self.structure_templates["standard"])
+            structure, self.structure_templates["standard"]
+        )
 
         # Get base progression for mood
         base_progression = self._get_progression_for_mood(mood)
 
         # Generate sections
         sections = []
-        key_num = NOTE_NAMES.index(key.replace('b', '').replace('#', ''))
-        if 'b' in key:
+        key_num = NOTE_NAMES.index(key.replace("b", "").replace("#", ""))
+        if "b" in key:
             key_num = (key_num - 1) % 12
-        elif '#' in key:
+        elif "#" in key:
             key_num = (key_num + 1) % 12
 
         section_counts = {}
@@ -285,14 +310,16 @@ class SongGenerator:
 
             display_name = section_name if count == 1 else f"{section_name} {count}"
 
-            sections.append(GeneratedSection(
-                name=display_name,
-                bars=bars,
-                progression=progression,
-                chords=chords,
-                energy=energy,
-                notes=notes,
-            ))
+            sections.append(
+                GeneratedSection(
+                    name=display_name,
+                    bars=bars,
+                    progression=progression,
+                    chords=chords,
+                    energy=energy,
+                    notes=notes,
+                )
+            )
 
         # Calculate totals
         total_bars = sum(s.bars for s in sections)

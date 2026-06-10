@@ -16,6 +16,7 @@ from music_brain.groove.fan_feedback import FanProfile
 @dataclass
 class BassHumanizerConfig:
     """Configuration for bass humanization."""
+
     style: str = "standard"
     timing_feel: str = "on_grid"  # on_grid, behind, ahead
 
@@ -39,7 +40,8 @@ class BassHumanizer:
         self.rules = self.parser.parse()
 
     def get_timing_offset(
-            self, feel: Optional[str] = None, fan_profile: Optional[FanProfile] = None) -> float:
+        self, feel: Optional[str] = None, fan_profile: Optional[FanProfile] = None
+    ) -> float:
         """Returns timing offset in ms based on feel (behind/ahead)."""
         feel = feel or self.config.timing_feel
 
@@ -58,7 +60,9 @@ class BassHumanizer:
 
         return base_offset
 
-    def get_velocity_range(self, note_type: str = "root", fan_profile: Optional[FanProfile] = None) -> Tuple[int, int]:  # noqa: E501
+    def get_velocity_range(
+        self, note_type: str = "root", fan_profile: Optional[FanProfile] = None
+    ) -> Tuple[int, int]:  # noqa: E501
         """Returns velocity range for a given note type."""
         # root, ghost, passing
         base_range = self.rules.get("velocity", {}).get(note_type, (80, 100))
@@ -69,8 +73,11 @@ class BassHumanizer:
         return base_range
 
     def apply(
-            self, midi_events: List[Any],
-            feel: Optional[str] = None, fan_profile: Optional[FanProfile] = None) -> List[Any]:
+        self,
+        midi_events: List[Any],
+        feel: Optional[str] = None,
+        fan_profile: Optional[FanProfile] = None,
+    ) -> List[Any]:
         """
         Apply humanization to a list of MIDI events.
         (Stub implementation - would modify timing/velocity in place)

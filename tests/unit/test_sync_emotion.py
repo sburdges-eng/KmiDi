@@ -8,9 +8,9 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_emotion_schema_json_exists_after_sync():
     """After sync, emotion_schema.json must exist and be valid JSON Schema."""
     import subprocess
+
     result = subprocess.run(
-        [sys.executable, "scripts/sync_entities.py"],
-        cwd=str(ROOT), capture_output=True, text=True
+        [sys.executable, "scripts/sync_entities.py"], cwd=str(ROOT), capture_output=True, text=True
     )
     assert result.returncode == 0, f"sync_entities.py failed: {result.stderr}"
 

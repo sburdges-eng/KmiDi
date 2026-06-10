@@ -273,6 +273,7 @@ class ModelExporter:
         if optimize_for_mobile:
             try:
                 from torch.utils.mobile_optimizer import optimize_for_mobile
+
                 traced_model = optimize_for_mobile(traced_model)
                 logger.info("Applied mobile optimizations")
             except ImportError:
@@ -387,20 +388,33 @@ class ModelExporter:
                     torch.nn.Tanh: "tanh",
                     torch.nn.Sigmoid: "sigmoid",
                 }
-                layers.append({
-                    "type": "activation",
-                    "activation": activation_map.get(type(module), "relu"),
-                })
+                layers.append(
+                    {
+                        "type": "activation",
+                        "activation": activation_map.get(type(module), "relu"),
+                    }
+                )
 
             elif isinstance(module, torch.nn.BatchNorm2d):
-                layers.append({"type": "batchnorm2d", "name": name,
-                               "num_features": module.num_features,
-                               "running_mean": module.running_mean.numpy().tolist(),
-                               "running_var": module.running_var.numpy().tolist(),
-                               "weight": module.weight.detach().numpy().tolist()
-                               if module.weight is not None else None,
-                               "bias": module.bias.detach().numpy().tolist()
-                               if module.bias is not None else None, })
+                layers.append(
+                    {
+                        "type": "batchnorm2d",
+                        "name": name,
+                        "num_features": module.num_features,
+                        "running_mean": module.running_mean.numpy().tolist(),
+                        "running_var": module.running_var.numpy().tolist(),
+                        "weight": (
+                            module.weight.detach().numpy().tolist()
+                            if module.weight is not None
+                            else None
+                        ),
+                        "bias": (
+                            module.bias.detach().numpy().tolist()
+                            if module.bias is not None
+                            else None
+                        ),
+                    }
+                )
 
         # Build model data
         model_data = {
@@ -507,7 +521,8 @@ def verify_onnx_model(model_path: Union[str, Path]) -> bool:
 
         # Create dummy input
         dummy_input = np.random.randn(
-            *[s if isinstance(s, int) else 1 for s in input_shape]).astype(np.float32)
+            *[s if isinstance(s, int) else 1 for s in input_shape]
+        ).astype(np.float32)
 
         # Run inference
         output = session.run(None, {input_name: dummy_input})

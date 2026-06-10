@@ -87,8 +87,12 @@ def validate_run_contract(contract: dict[str, Any]) -> dict[str, Any]:
         _expect_dict(contract.get("s3"), "s3"),
         "s3",
         allowed={
-            "packageBucket", "packagePrefix", "runBucket", "runPrefix",
-            "teacherPrefix", "studentPrefix",
+            "packageBucket",
+            "packagePrefix",
+            "runBucket",
+            "runPrefix",
+            "teacherPrefix",
+            "studentPrefix",
         },
         required={"packageBucket", "packagePrefix", "runBucket", "runPrefix"},
     )
@@ -218,11 +222,19 @@ def validate_run_contract(contract: dict[str, Any]) -> dict[str, Any]:
         _expect_dict(training.get("earlyStop"), "training.earlyStop"),
         "training.earlyStop",
         allowed={
-            "enabled", "metricPath", "patience", "minDelta", "minEpochs",
+            "enabled",
+            "metricPath",
+            "patience",
+            "minDelta",
+            "minEpochs",
             "autoShutdownDefault",
         },
         required={
-            "enabled", "metricPath", "patience", "minDelta", "minEpochs",
+            "enabled",
+            "metricPath",
+            "patience",
+            "minDelta",
+            "minEpochs",
             "autoShutdownDefault",
         },
     )
@@ -232,9 +244,7 @@ def validate_run_contract(contract: dict[str, Any]) -> dict[str, Any]:
     _expect_non_negative_number(early_stop.get("minDelta"), "training.earlyStop.minDelta")
     min_epochs = early_stop.get("minEpochs")
     if isinstance(min_epochs, bool) or not isinstance(min_epochs, int) or min_epochs < 0:
-        raise ValueError(
-            "training.earlyStop.minEpochs must be a non-negative integer"
-        )
+        raise ValueError("training.earlyStop.minEpochs must be a non-negative integer")
     _expect_bool(
         early_stop.get("autoShutdownDefault"),
         "training.earlyStop.autoShutdownDefault",
@@ -252,10 +262,14 @@ def validate_run_contract(contract: dict[str, Any]) -> dict[str, Any]:
         _expect_dict(ops.get("datasetCache"), "training.ops.datasetCache"),
         "training.ops.datasetCache",
         allowed={
-            "defaultMode", "ebsFallbackRoot", "allowStreamingFallback",
+            "defaultMode",
+            "ebsFallbackRoot",
+            "allowStreamingFallback",
         },
         required={
-            "defaultMode", "ebsFallbackRoot", "allowStreamingFallback",
+            "defaultMode",
+            "ebsFallbackRoot",
+            "allowStreamingFallback",
         },
     )
     cache_mode = _expect_non_empty_string(
@@ -263,8 +277,7 @@ def validate_run_contract(contract: dict[str, Any]) -> dict[str, Any]:
     )
     if cache_mode not in {"auto", "nvme", "ebs", "stream"}:
         raise ValueError(
-            "training.ops.datasetCache.defaultMode must be one of "
-            "auto|nvme|ebs|stream"
+            "training.ops.datasetCache.defaultMode must be one of " "auto|nvme|ebs|stream"
         )
     _expect_non_empty_string(
         dataset_cache.get("ebsFallbackRoot"),
@@ -297,8 +310,7 @@ def validate_run_contract(contract: dict[str, Any]) -> dict[str, Any]:
     if break_glass_profile:
         if break_glass_profile != required_profile:
             raise ValueError(
-                "aws.breakGlassProfile must match "
-                "security.teacherFetch.requiredProfile"
+                "aws.breakGlassProfile must match " "security.teacherFetch.requiredProfile"
             )
 
     return contract
@@ -357,9 +369,7 @@ def validate_manifest_semantics(manifest: dict[str, Any]) -> list[str]:
             continue
         shards = split_payload.get("shards")
         if not isinstance(shards, list):
-            _manifest_error(
-                f"splits.{split_name}.shards", "must be a list", errors
-            )
+            _manifest_error(f"splits.{split_name}.shards", "must be a list", errors)
             continue
 
         split_sum = 0
@@ -522,8 +532,7 @@ def resolve_checkpoint_settings(
     default_max_checkpoints = int(policy.get("defaultMaxCheckpoints", 3) or 3)
     max_checkpoints_limit = int(policy.get("maxCheckpoints", 20) or 20)
     max_total_checkpoints = int(
-        policy.get("maxTotalCheckpoints", max_checkpoints_limit + 1)
-        or (max_checkpoints_limit + 1)
+        policy.get("maxTotalCheckpoints", max_checkpoints_limit + 1) or (max_checkpoints_limit + 1)
     )
 
     resolved_cadence = cadence_steps if cadence_steps > 0 else default_cadence

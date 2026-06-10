@@ -6,9 +6,13 @@ Interrogation-first songwriting assistance.
 Intent-based generation with rule-breaking support.
 """
 
-from kellymidicompanion.kellymidicompanion_session.kellymidicompanion_teaching import RuleBreakingTeacher  # noqa: E501
+from kellymidicompanion.kellymidicompanion_session.kellymidicompanion_teaching import (
+    RuleBreakingTeacher,
+)  # noqa: E501
 
-from kellymidicompanion.kellymidicompanion_session.kellymidicompanion_interrogator import SongInterrogator  # noqa: E501
+from kellymidicompanion.kellymidicompanion_session.kellymidicompanion_interrogator import (
+    SongInterrogator,
+)  # noqa: E501
 
 from kellymidicompanion.kellymidicompanion_session.kellymidicompanion_intent_schema import (
     CompleteSongIntent,

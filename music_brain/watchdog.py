@@ -58,8 +58,7 @@ class Watchdog:
     # Worker registration
     # ------------------------------------------------------------------
 
-    def register(self, name: str, stale_timeout_s: float,
-                 on_stale: Callable[[str], None]) -> None:
+    def register(self, name: str, stale_timeout_s: float, on_stale: Callable[[str], None]) -> None:
         """Track ``name`` with a ``stale_timeout_s`` budget.
 
         ``on_stale`` is invoked from the watchdog thread when
@@ -112,8 +111,7 @@ class Watchdog:
         if self._thread is not None and self._thread.is_alive():
             return
         self._stop_event.clear()
-        self._thread = threading.Thread(
-            target=self._run, name="kmidi-watchdog", daemon=True)
+        self._thread = threading.Thread(target=self._run, name="kmidi-watchdog", daemon=True)
         self._thread.start()
 
     def stop(self, timeout: float = 2.0) -> None:

@@ -26,6 +26,7 @@ from music_brain.orchestrator.interfaces import (
 @dataclass
 class HarmonyInput:
     """Input data for harmony processing."""
+
     emotion: str
     key: str = "C"
     mode: str = "major"
@@ -41,6 +42,7 @@ class HarmonyInput:
 @dataclass
 class HarmonyOutput:
     """Output from harmony processing."""
+
     chords: List[str]
     roman_numerals: List[str]
     key: str
@@ -101,7 +103,7 @@ class HarmonyProcessor(BaseProcessor):
         if isinstance(input_data, dict):
             return "emotion" in input_data
         # Accept IntentOutput from previous stage - we'll get emotion from context
-        if hasattr(input_data, 'intent'):
+        if hasattr(input_data, "intent"):
             return True
         return False
 
@@ -133,7 +135,7 @@ class HarmonyProcessor(BaseProcessor):
                 )
             elif isinstance(input_data, HarmonyInput):
                 harmony_input = input_data
-            elif hasattr(input_data, 'intent'):
+            elif hasattr(input_data, "intent"):
                 # Input is from IntentProcessor - get params from context
                 harmony_input = HarmonyInput(
                     emotion=context.get_shared("emotion", "neutral"),
@@ -201,9 +203,8 @@ class HarmonyProcessor(BaseProcessor):
 
         profiles = (context.get_shared("learning_profiles") if context else None) or {}
         storage_root = context.get_shared("learning_storage_root") if context else None
-        learn_profile = (
-            (input_data.params or {}).get("learning_harmony_profile")
-            or profiles.get("harmony")
+        learn_profile = (input_data.params or {}).get("learning_harmony_profile") or profiles.get(
+            "harmony"
         )
         if learn_profile:
             h_dir = None
@@ -231,36 +232,22 @@ class HarmonyProcessor(BaseProcessor):
 
         # Select generator based on rule
         if rule == "HARMONY_ModalInterchange":
-            prog = generate_progression_modal_interchange(
-                input_data.key, input_data.mode
-            )
+            prog = generate_progression_modal_interchange(input_data.key, input_data.mode)
         elif rule == "HARMONY_AvoidTonicResolution":
-            prog = generate_progression_avoid_tonic(
-                input_data.key, input_data.mode
-            )
+            prog = generate_progression_avoid_tonic(input_data.key, input_data.mode)
         elif rule == "HARMONY_ParallelMotion":
-            prog = generate_progression_parallel_motion(
-                input_data.key, input_data.mode
-            )
+            prog = generate_progression_parallel_motion(input_data.key, input_data.mode)
         elif rule == "HARMONY_UnresolvedDissonance":
-            prog = generate_progression_unresolved_dissonance(
-                input_data.key, input_data.mode
-            )
+            prog = generate_progression_unresolved_dissonance(input_data.key, input_data.mode)
         else:
             # Default based on emotion
             emotion = input_data.emotion.lower()
             if emotion in ("grief", "longing", "nostalgia"):
-                prog = generate_progression_modal_interchange(
-                    input_data.key, input_data.mode
-                )
+                prog = generate_progression_modal_interchange(input_data.key, input_data.mode)
             elif emotion in ("defiance", "anger", "rage"):
-                prog = generate_progression_parallel_motion(
-                    input_data.key, input_data.mode
-                )
+                prog = generate_progression_parallel_motion(input_data.key, input_data.mode)
             else:
-                prog = generate_progression_modal_interchange(
-                    input_data.key, input_data.mode
-                )
+                prog = generate_progression_modal_interchange(input_data.key, input_data.mode)
 
         return HarmonyOutput(
             chords=prog.chords,

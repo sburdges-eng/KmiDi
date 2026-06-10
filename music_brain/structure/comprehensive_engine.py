@@ -17,6 +17,7 @@ import random
 from pathlib import Path
 from dataclasses import dataclass
 from typing import List, Dict, Optional, Any
+
 MIDO_AVAILABLE = False
 
 # ==============================================================================
@@ -27,6 +28,7 @@ MIDO_AVAILABLE = False
 @dataclass
 class AffectResult:
     """Result of emotional content analysis."""
+
     primary: str
     secondary: Optional[str]
     scores: Dict[str, float]
@@ -38,20 +40,54 @@ class AffectAnalyzer:
     Analyzes text for emotional content using weighted keywords.
     Exposes raw scores for tie-breaking and nuance.
     """
+
     KEYWORDS = {
-        "grief": {"loss", "gone", "miss", "dead", "died", "funeral", "mourning", "never again", "empty"},  # noqa: E501
-
-        "rage": {"angry", "furious", "hate", "betrayed", "unfair", "revenge", "burn", "fight", "destroy"},  # noqa: E501
-
+        "grief": {
+            "loss",
+            "gone",
+            "miss",
+            "dead",
+            "died",
+            "funeral",
+            "mourning",
+            "never again",
+            "empty",
+        },  # noqa: E501
+        "rage": {
+            "angry",
+            "furious",
+            "hate",
+            "betrayed",
+            "unfair",
+            "revenge",
+            "burn",
+            "fight",
+            "destroy",
+        },  # noqa: E501
         "awe": {"wonder", "beautiful", "infinite", "god", "universe", "transcend", "light", "vast"},
-        "nostalgia": {"remember", "used to", "childhood", "back when", "old days", "memory", "home"},  # noqa: E501
-
+        "nostalgia": {
+            "remember",
+            "used to",
+            "childhood",
+            "back when",
+            "old days",
+            "memory",
+            "home",
+        },  # noqa: E501
         "fear": {"scared", "terrified", "panic", "can't breathe", "trapped", "anxious", "dread"},
-        "dissociation": {"numb", "nothing", "floating", "unreal", "detached", "fog", "grey", "wall"},  # noqa: E501
-
+        "dissociation": {
+            "numb",
+            "nothing",
+            "floating",
+            "unreal",
+            "detached",
+            "fog",
+            "grey",
+            "wall",
+        },  # noqa: E501
         "defiance": {"won't", "refuse", "stand", "strong", "break", "free", "my own", "no more"},
         "tenderness": {"soft", "gentle", "hold", "love", "kind", "care", "fragile", "warm"},
-        "confusion": {"why", "lost", "don't know", "spinning", "chaos", "strange", "question"}
+        "confusion": {"why", "lost", "don't know", "spinning", "chaos", "strange", "question"},
     }
 
     def analyze(self, text: str) -> AffectResult:
@@ -79,17 +115,15 @@ class AffectAnalyzer:
         sorted_affects = sorted(scores.items(), key=lambda x: x[1], reverse=True)
 
         primary = sorted_affects[0][0] if sorted_affects[0][1] > 0 else "neutral"
-        secondary = sorted_affects[1][0] if len(
-            sorted_affects) > 1 and sorted_affects[1][1] > 0 else None
+        secondary = (
+            sorted_affects[1][0] if len(sorted_affects) > 1 and sorted_affects[1][1] > 0 else None
+        )
 
         # Calculate intensity (simple saturation at 3 keywords)
         intensity = min(1.0, sorted_affects[0][1] / 3.0) if sorted_affects[0][1] > 0 else 0.0
 
         return AffectResult(
-            primary=primary,
-            secondary=secondary,
-            scores=scores,
-            intensity=intensity
+            primary=primary, secondary=secondary, scores=scores, intensity=intensity
         )
 
 
@@ -97,19 +131,21 @@ class AffectAnalyzer:
 # 2. DATA MODELS (Source of Truth)
 # ==============================================================================
 
+
 @dataclass
 class TherapyState:
     """
     Single Source of Truth for the session state.
     Replaces the deprecated CoreWoundModel with a unified schema.
     """
+
     # Narrative
     core_wound_name: str = ""
     narrative_entity_name: str = ""  # For externalization: "The Shadow", "Mr. Fog"
 
     # Quantifiable (from Motivational Interviewing techniques)
-    motivation_scale: int = 5        # 1-10: "How much do you need this song to exist?"
-    chaos_tolerance: float = 0.3     # 0.0 to 1.0: "How much control do you need?"
+    motivation_scale: int = 5  # 1-10: "How much do you need this song to exist?"
+    chaos_tolerance: float = 0.3  # 0.0 to 1.0: "How much control do you need?"
 
     # Inferred from analysis
     affect_result: Optional[AffectResult] = None
@@ -123,15 +159,16 @@ class HarmonyPlan:
     Can be passed to music_brain.structure.progression functions
     and rendered to MIDI via music_brain.daw.logic.
     """
-    root_note: str         # "C", "F#"
-    mode: str              # "minor", "dorian", "phrygian", etc.
+
+    root_note: str  # "C", "F#"
+    mode: str  # "minor", "dorian", "phrygian", etc.
     tempo_bpm: int
-    time_signature: str    # "4/4", "6/8"
-    length_bars: int       # Derived from motivation_scale
+    time_signature: str  # "4/4", "6/8"
+    length_bars: int  # Derived from motivation_scale
     chord_symbols: List[str]  # ["Cm7", "Fm9"]
-    harmonic_rhythm: str      # "1_chord_per_bar", "syncopated"
-    mood_profile: str         # "rage", "grief", etc.
-    complexity: float         # 0.0 - 1.0, influences generation chaos
+    harmonic_rhythm: str  # "1_chord_per_bar", "syncopated"
+    mood_profile: str  # "rage", "grief", etc.
+    complexity: float  # 0.0 - 1.0, influences generation chaos
     vulnerability: float = 0.0  # Optional vulnerability scale (0-1) for therapy contexts
     structure: Optional[List[Dict[str, Any]]] = None  # Song sections with bars and chords
     # Instrument definitions with channels and types
@@ -147,7 +184,7 @@ STRATEGIES_MILD = [
     "Work at a different speed.",
     "Use fewer notes.",
     "Repetition is a form of change.",
-    "What would your closest friend do?"
+    "What would your closest friend do?",
 ]
 
 STRATEGIES_WILD = [
@@ -156,7 +193,7 @@ STRATEGIES_WILD = [
     "Make a sudden, destructive unpredictable action.",
     "Turn it upside down.",
     "Disconnect from desire.",
-    "Abandon normal instruments."
+    "Abandon normal instruments.",
 ]
 
 
@@ -187,6 +224,7 @@ def get_strategy(tolerance: float) -> str:
 # 4. THERAPY SESSION (Pure Logic Layer - No I/O)
 # ==============================================================================
 
+
 class TherapySession:
     """
     Core logic for the therapy/interrogation workflow.
@@ -202,16 +240,16 @@ class TherapySession:
 
         # Affect-to-Mode mapping (music theory meets psychology)
         self.AFFECT_TO_MODE = {
-            "awe": "lydian",           # Bright, floaty
-            "nostalgia": "dorian",     # Sentimental minor
-            "rage": "phrygian",        # Aggressive minor (flamenco)
-            "fear": "phrygian",        # Tension
+            "awe": "lydian",  # Bright, floaty
+            "nostalgia": "dorian",  # Sentimental minor
+            "rage": "phrygian",  # Aggressive minor (flamenco)
+            "fear": "phrygian",  # Tension
             "dissociation": "locrian",  # Unstable, diminished
-            "grief": "aeolian",        # Sad natural minor
+            "grief": "aeolian",  # Sad natural minor
             "defiance": "mixolydian",  # Major with flat 7 (rock/rebellion)
-            "tenderness": "ionian",    # Gentle major
-            "confusion": "locrian",    # Disoriented
-            "neutral": "ionian"
+            "tenderness": "ionian",  # Gentle major
+            "confusion": "locrian",  # Disoriented
+            "neutral": "ionian",
         }
 
     def process_core_input(self, text: str) -> str:
@@ -324,7 +362,7 @@ class TherapySession:
             chord_symbols=chords,
             harmonic_rhythm="1_chord_per_bar",
             mood_profile=primary,
-            complexity=eff_complexity
+            complexity=eff_complexity,
         )
 
 
@@ -332,7 +370,10 @@ class TherapySession:
 # 5. INSTRUMENT PATTERN GENERATORS
 # ==============================================================================
 
-def generate_bass_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, beats_per_bar: int) -> List[Dict[str, Any]]:  # noqa: E501
+
+def generate_bass_pattern(
+    chords: List[Any], bars: int, tempo: int, ppq: int, beats_per_bar: int
+) -> List[Dict[str, Any]]:  # noqa: E501
     """
     Generate bass pattern (root notes) from chord progression.
 
@@ -360,21 +401,25 @@ def generate_bass_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, be
             duration_ticks = bar_ticks
 
             # Simple root note on beat 1, optional 8th note on beat 3
-            notes.append({
-                "pitch": root_midi,
-                "velocity": 100,
-                "start_tick": start_tick,
-                "duration_ticks": duration_ticks // 2,
-            })
+            notes.append(
+                {
+                    "pitch": root_midi,
+                    "velocity": 100,
+                    "start_tick": start_tick,
+                    "duration_ticks": duration_ticks // 2,
+                }
+            )
 
             # Optional 8th note on beat 3
             if current_bar % 2 == 0:  # Every other bar
-                notes.append({
-                    "pitch": root_midi,
-                    "velocity": 80,
-                    "start_tick": start_tick + (bar_ticks // 2),
-                    "duration_ticks": duration_ticks // 4,
-                })
+                notes.append(
+                    {
+                        "pitch": root_midi,
+                        "velocity": 80,
+                        "start_tick": start_tick + (bar_ticks // 2),
+                        "duration_ticks": duration_ticks // 4,
+                    }
+                )
 
             start_tick += duration_ticks
             current_bar += 1
@@ -383,8 +428,8 @@ def generate_bass_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, be
 
 
 def generate_drum_pattern(
-        bars: int, tempo: int, ppq: int, beats_per_bar: int, style: str = "pop") -> List[
-        Dict[str, Any]]:
+    bars: int, tempo: int, ppq: int, beats_per_bar: int, style: str = "pop"
+) -> List[Dict[str, Any]]:
     """
     Generate drum pattern (kick, snare, hi-hat).
 
@@ -403,7 +448,7 @@ def generate_drum_pattern(
     sixteenth_ticks = ppq // 4
 
     # GM drum notes
-    KICK = 36   # C1
+    KICK = 36  # C1
     SNARE = 38  # D1
     HIHAT = 42  # F#1
 
@@ -412,60 +457,76 @@ def generate_drum_pattern(
 
         if style == "pop" or style == "rock":
             # Kick on 1 and 3
-            notes.append({
-                "pitch": KICK,
-                "velocity": 100,
-                "start_tick": bar_start,
-                "duration_ticks": sixteenth_ticks * 2,
-            })
-            notes.append({
-                "pitch": KICK,
-                "velocity": 100,
-                "start_tick": bar_start + (bar_ticks // 2),
-                "duration_ticks": sixteenth_ticks * 2,
-            })
+            notes.append(
+                {
+                    "pitch": KICK,
+                    "velocity": 100,
+                    "start_tick": bar_start,
+                    "duration_ticks": sixteenth_ticks * 2,
+                }
+            )
+            notes.append(
+                {
+                    "pitch": KICK,
+                    "velocity": 100,
+                    "start_tick": bar_start + (bar_ticks // 2),
+                    "duration_ticks": sixteenth_ticks * 2,
+                }
+            )
 
             # Snare on 2 and 4
-            notes.append({
-                "pitch": SNARE,
-                "velocity": 100,
-                "start_tick": bar_start + (bar_ticks // 4),
-                "duration_ticks": sixteenth_ticks * 2,
-            })
-            notes.append({
-                "pitch": SNARE,
-                "velocity": 100,
-                "start_tick": bar_start + (3 * bar_ticks // 4),
-                "duration_ticks": sixteenth_ticks * 2,
-            })
+            notes.append(
+                {
+                    "pitch": SNARE,
+                    "velocity": 100,
+                    "start_tick": bar_start + (bar_ticks // 4),
+                    "duration_ticks": sixteenth_ticks * 2,
+                }
+            )
+            notes.append(
+                {
+                    "pitch": SNARE,
+                    "velocity": 100,
+                    "start_tick": bar_start + (3 * bar_ticks // 4),
+                    "duration_ticks": sixteenth_ticks * 2,
+                }
+            )
 
             # Hi-hat on 8th notes
             for i in range(8):
-                notes.append({
-                    "pitch": HIHAT,
-                    "velocity": 70,
-                    "start_tick": bar_start + (i * sixteenth_ticks * 2),
-                    "duration_ticks": sixteenth_ticks,
-                })
+                notes.append(
+                    {
+                        "pitch": HIHAT,
+                        "velocity": 70,
+                        "start_tick": bar_start + (i * sixteenth_ticks * 2),
+                        "duration_ticks": sixteenth_ticks,
+                    }
+                )
         else:  # jazz or other
             # Simpler pattern
-            notes.append({
-                "pitch": KICK,
-                "velocity": 90,
-                "start_tick": bar_start,
-                "duration_ticks": sixteenth_ticks * 2,
-            })
-            notes.append({
-                "pitch": SNARE,
-                "velocity": 90,
-                "start_tick": bar_start + (bar_ticks // 2),
-                "duration_ticks": sixteenth_ticks * 2,
-            })
+            notes.append(
+                {
+                    "pitch": KICK,
+                    "velocity": 90,
+                    "start_tick": bar_start,
+                    "duration_ticks": sixteenth_ticks * 2,
+                }
+            )
+            notes.append(
+                {
+                    "pitch": SNARE,
+                    "velocity": 90,
+                    "start_tick": bar_start + (bar_ticks // 2),
+                    "duration_ticks": sixteenth_ticks * 2,
+                }
+            )
 
     return notes
 
 
-def generate_arpeggio_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, beats_per_bar: int) -> List[Dict[str, Any]]:  # noqa: E501
+def generate_arpeggio_pattern(
+    chords: List[Any], bars: int, tempo: int, ppq: int, beats_per_bar: int
+) -> List[Dict[str, Any]]:  # noqa: E501
     """
     Generate arpeggiated chord pattern.
 
@@ -505,12 +566,14 @@ def generate_arpeggio_pattern(chords: List[Any], bars: int, tempo: int, ppq: int
 
             # Arpeggiate chord notes in sequence
             for i, interval in enumerate(intervals):
-                notes.append({
-                    "pitch": root_midi + interval,
-                    "velocity": 80,
-                    "start_tick": start_tick + (i * eighth_ticks),
-                    "duration_ticks": eighth_ticks,
-                })
+                notes.append(
+                    {
+                        "pitch": root_midi + interval,
+                        "velocity": 80,
+                        "start_tick": start_tick + (i * eighth_ticks),
+                        "duration_ticks": eighth_ticks,
+                    }
+                )
 
             start_tick += bar_ticks
             current_bar += 1
@@ -518,7 +581,9 @@ def generate_arpeggio_pattern(chords: List[Any], bars: int, tempo: int, ppq: int
     return notes
 
 
-def generate_melody_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, beats_per_bar: int, mode: str = "major") -> List[Dict[str, Any]]:  # noqa: E501
+def generate_melody_pattern(
+    chords: List[Any], bars: int, tempo: int, ppq: int, beats_per_bar: int, mode: str = "major"
+) -> List[Dict[str, Any]]:  # noqa: E501
     """
     Generate simple melody pattern from chord progression.
 
@@ -561,12 +626,14 @@ def generate_melody_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, 
             note_index = current_bar % len(intervals)
             pitch = root_midi + intervals[note_index]
 
-            notes.append({
-                "pitch": pitch,
-                "velocity": 90,
-                "start_tick": start_tick,
-                "duration_ticks": quarter_ticks * 2,  # Half note
-            })
+            notes.append(
+                {
+                    "pitch": pitch,
+                    "velocity": 90,
+                    "start_tick": start_tick,
+                    "duration_ticks": quarter_ticks * 2,  # Half note
+                }
+            )
 
             start_tick += bar_ticks
             current_bar += 1
@@ -578,8 +645,10 @@ def generate_melody_pattern(chords: List[Any], bars: int, tempo: int, ppq: int, 
 # 6. HARMONY -> MIDI BRIDGE (REAL INTEGRATION)
 # ==============================================================================
 
+
 def render_plan_to_midi(
-        plan: HarmonyPlan, output_path: str, include_guide_tones: bool = True) -> str:
+    plan: HarmonyPlan, output_path: str, include_guide_tones: bool = True
+) -> str:
     """
     Render a HarmonyPlan to a MIDI file using existing music_brain components:
     - music_brain.structure.progression.parse_progression_string
@@ -648,24 +717,28 @@ def render_plan_to_midi(
             parsed_chords = parse_progression_string(progression_str)
 
             for rep in range(repetitions):
-                sections_data.append({
-                    "name": f"{section_name}_{rep+1}" if repetitions > 1 else section_name,
-                    "bars": section_bars,
-                    "chords": parsed_chords,
-                    "start_bar": total_bars,
-                })
+                sections_data.append(
+                    {
+                        "name": f"{section_name}_{rep+1}" if repetitions > 1 else section_name,
+                        "bars": section_bars,
+                        "chords": parsed_chords,
+                        "start_bar": total_bars,
+                    }
+                )
                 total_bars += section_bars
     else:
         # Fall back to simple looping (backward compatibility)
         progression_str = "-".join(plan.chord_symbols)
         parsed_chords = parse_progression_string(progression_str)
         total_bars = plan.length_bars
-        sections_data = [{
-            "name": "main",
-            "bars": total_bars,
-            "chords": parsed_chords,
-            "start_bar": 0,
-        }]
+        sections_data = [
+            {
+                "name": "main",
+                "bars": total_bars,
+                "chords": parsed_chords,
+                "start_bar": 0,
+            }
+        ]
 
     # 4. Generate tracks based on instruments or default
     if plan.instruments:
@@ -705,7 +778,9 @@ def render_plan_to_midi(
                     section_notes = generate_drum_pattern(
                         section_bars, plan.tempo_bpm, ppq, beats_per_bar, inst_style
                     )
-                elif inst_type == "arpeggio" or (inst_type == "chord" and inst_technique == "arpeggio"):  # noqa: E501
+                elif inst_type == "arpeggio" or (
+                    inst_type == "chord" and inst_technique == "arpeggio"
+                ):  # noqa: E501
 
                     section_notes = generate_arpeggio_pattern(
                         section_chords, section_bars, plan.tempo_bpm, ppq, beats_per_bar
@@ -734,12 +809,14 @@ def render_plan_to_midi(
                             duration_ticks = bar_ticks
 
                             for interval in intervals:
-                                section_notes.append({
-                                    "pitch": root_midi + interval,
-                                    "velocity": 80,
-                                    "start_tick": section_start_tick,
-                                    "duration_ticks": duration_ticks,
-                                })
+                                section_notes.append(
+                                    {
+                                        "pitch": root_midi + interval,
+                                        "velocity": 80,
+                                        "start_tick": section_start_tick,
+                                        "duration_ticks": duration_ticks,
+                                    }
+                                )
 
                             section_start_tick += duration_ticks
                             section_current_bar += 1
@@ -784,12 +861,14 @@ def render_plan_to_midi(
                     duration_ticks = bar_ticks
 
                     for interval in intervals:
-                        all_notes.append({
-                            "pitch": root_midi + interval,
-                            "velocity": 80,
-                            "start_tick": section_start_tick,
-                            "duration_ticks": duration_ticks,
-                        })
+                        all_notes.append(
+                            {
+                                "pitch": root_midi + interval,
+                                "velocity": 80,
+                                "start_tick": section_start_tick,
+                                "duration_ticks": duration_ticks,
+                            }
+                        )
 
                     section_start_tick += duration_ticks
                     section_current_bar += 1
@@ -826,6 +905,7 @@ def render_plan_to_midi(
 # 6. CLI HANDLER (The "View" Layer)
 # ==============================================================================
 
+
 def run_cli():
     """
     Interactive command-line interface for the Therapy Engine.
@@ -855,7 +935,9 @@ def run_cli():
     # 3. Reflect (Mirroring)
     if session.state.affect_result:
         print(
-            f"\n[ANALYSIS]: Detected affect '{affect}' with intensity {session.state.affect_result.intensity:.2f}")  # noqa: E501
+            f"\n[ANALYSIS]: Detected affect '{affect}' with intensity "
+            f"{session.state.affect_result.intensity:.2f}"
+        )  # noqa: E501
 
         if session.state.affect_result.secondary:
             print(f"[ANALYSIS]: Underlying undertone: '{session.state.affect_result.secondary}'")

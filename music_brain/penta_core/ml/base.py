@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class SampleType(Enum):
     """Type of training sample."""
+
     MIDI = "midi"
     AUDIO = "audio"
     FEATURES = "features"  # Pre-extracted features
@@ -37,6 +38,7 @@ class SampleType(Enum):
 
 class EmotionCategory(Enum):
     """Standard emotion categories."""
+
     HAPPY = "happy"
     SAD = "sad"
     ANGRY = "angry"
@@ -49,6 +51,7 @@ class EmotionCategory(Enum):
 
 class GrooveType(Enum):
     """Standard groove/feel types."""
+
     STRAIGHT = "straight"
     SWING = "swing"
     SHUFFLE = "shuffle"
@@ -60,6 +63,7 @@ class GrooveType(Enum):
 
 class ArticulationType(Enum):
     """Standard articulation types."""
+
     LEGATO = "legato"
     STACCATO = "staccato"
     ACCENT = "accent"
@@ -70,6 +74,7 @@ class ArticulationType(Enum):
 
 class DatasetSplit(Enum):
     """Dataset split type."""
+
     TRAIN = "train"
     VALIDATION = "val"
     TEST = "test"
@@ -116,12 +121,21 @@ class DatasetConfig:
     hop_length: int = 512
 
     # Labels
-    emotion_labels: List[str] = field(default_factory=lambda: [
-        "happy", "sad", "angry", "peaceful", "tense", "melancholic", "energetic", "neutral"
-    ])
-    groove_labels: List[str] = field(default_factory=lambda: [
-        "straight", "swing", "shuffle", "laid_back", "rushed"
-    ])
+    emotion_labels: List[str] = field(
+        default_factory=lambda: [
+            "happy",
+            "sad",
+            "angry",
+            "peaceful",
+            "tense",
+            "melancholic",
+            "energetic",
+            "neutral",
+        ]
+    )
+    groove_labels: List[str] = field(
+        default_factory=lambda: ["straight", "swing", "shuffle", "laid_back", "rushed"]
+    )
 
     # Metadata
     license: str = ""
@@ -146,7 +160,7 @@ class DatasetConfig:
 
     def save(self, path: Union[str, Path]):
         """Save to JSON file."""
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
 
@@ -247,32 +261,32 @@ class Sample:
         """Convert to dict."""
         d = asdict(self)
         if self.annotations:
-            d['annotations'] = self.annotations.to_dict()
+            d["annotations"] = self.annotations.to_dict()
         return d
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Sample":
         """Create from dict."""
         annotations = None
-        if data.get('annotations'):
-            annotations = SampleAnnotation.from_dict(data['annotations'])
+        if data.get("annotations"):
+            annotations = SampleAnnotation.from_dict(data["annotations"])
 
         return cls(
-            sample_id=data.get('sample_id', ''),
-            file_path=data.get('file_path', ''),
-            file_type=data.get('file_type', 'midi'),
-            sha256=data.get('sha256', ''),
-            file_size_bytes=data.get('file_size_bytes', 0),
-            duration_sec=data.get('duration_sec', 0.0),
-            created_at=data.get('created_at', ''),
-            modified_at=data.get('modified_at', ''),
-            split=data.get('split', 'train'),
+            sample_id=data.get("sample_id", ""),
+            file_path=data.get("file_path", ""),
+            file_type=data.get("file_type", "midi"),
+            sha256=data.get("sha256", ""),
+            file_size_bytes=data.get("file_size_bytes", 0),
+            duration_sec=data.get("duration_sec", 0.0),
+            created_at=data.get("created_at", ""),
+            modified_at=data.get("modified_at", ""),
+            split=data.get("split", "train"),
             annotations=annotations,
-            features_path=data.get('features_path', ''),
-            source=data.get('source', ''),
-            is_synthetic=data.get('is_synthetic', False),
-            parent_id=data.get('parent_id', ''),
-            augmentation_type=data.get('augmentation_type', ''),
+            features_path=data.get("features_path", ""),
+            source=data.get("source", ""),
+            is_synthetic=data.get("is_synthetic", False),
+            parent_id=data.get("parent_id", ""),
+            augmentation_type=data.get("augmentation_type", ""),
         )
 
     def compute_hash(self, dataset_root: Path) -> str:
@@ -282,8 +296,8 @@ class Sample:
             return ""
 
         sha256 = hashlib.sha256()
-        with open(full_path, 'rb') as f:
-            for chunk in iter(lambda: f.read(8192), b''):
+        with open(full_path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
                 sha256.update(chunk)
         return sha256.hexdigest()
 
@@ -296,6 +310,7 @@ class Sample:
 @dataclass
 class DatasetStats:
     """Statistics about a dataset."""
+
     total_samples: int = 0
     train_samples: int = 0
     val_samples: int = 0
@@ -413,13 +428,13 @@ class DatasetManifest:
     def from_dict(cls, data: Dict[str, Any]) -> "DatasetManifest":
         """Create from dict."""
         manifest = cls()
-        manifest.config = DatasetConfig.from_dict(data.get('config', {}))
-        manifest.created_at = data.get('created_at', '')
-        manifest.updated_at = data.get('updated_at', '')
-        manifest.samples = [Sample.from_dict(s) for s in data.get('samples', [])]
+        manifest.config = DatasetConfig.from_dict(data.get("config", {}))
+        manifest.created_at = data.get("created_at", "")
+        manifest.updated_at = data.get("updated_at", "")
+        manifest.samples = [Sample.from_dict(s) for s in data.get("samples", [])]
 
-        if data.get('stats'):
-            manifest.stats = DatasetStats(**data['stats'])
+        if data.get("stats"):
+            manifest.stats = DatasetStats(**data["stats"])
         else:
             manifest._update_stats()
 
@@ -502,7 +517,7 @@ def load_manifest(path: Union[str, Path]) -> DatasetManifest:
 
 def save_manifest(manifest: DatasetManifest, path: Union[str, Path]):
     """Save manifest to JSON file."""
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         json.dump(manifest.to_dict(), f, indent=2)
 
 
@@ -519,14 +534,14 @@ def create_sample_from_file(
 
     # Determine file type
     suffix = file_path.suffix.lower()
-    if suffix in ['.mid', '.midi']:
-        file_type = 'midi'
-    elif suffix in ['.wav', '.mp3', '.flac', '.ogg']:
-        file_type = 'audio'
-    elif suffix in ['.npz', '.npy']:
-        file_type = 'features'
+    if suffix in [".mid", ".midi"]:
+        file_type = "midi"
+    elif suffix in [".wav", ".mp3", ".flac", ".ogg"]:
+        file_type = "audio"
+    elif suffix in [".npz", ".npy"]:
+        file_type = "features"
     else:
-        file_type = 'unknown'
+        file_type = "unknown"
 
     # Get file info
     stat = file_path.stat()
@@ -551,6 +566,7 @@ def create_sample_from_file(
 def generate_sample_id(prefix: str = "") -> str:
     """Generate a unique sample ID."""
     import uuid
+
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     uid = str(uuid.uuid4())[:6]
     if prefix:

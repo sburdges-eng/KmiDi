@@ -10,7 +10,8 @@ from scripts.training_common import DATASET_SPLITS, choose_split
 
 
 def get_work_id_from_path(path: Path, depth: int = 2) -> str:
-    """Derive a stable work ID from path. Default: parent names up to depth (e.g. composer/piece)."""
+    """Derive a stable work ID from path. Default: parent names up to depth
+    (e.g. composer/piece)."""
     parts = path.resolve().parts
     if len(parts) <= depth:
         return str(path)
@@ -28,7 +29,7 @@ def split_midi_paths_by_work(
     """Assign each path to train/val/test by work ID (deterministic)."""
     work_to_paths: dict[str, list[Path]] = {}
     for p in midi_paths:
-        if not p.suffix.lower() in (".mid", ".midi"):
+        if p.suffix.lower() not in (".mid", ".midi"):
             continue
         wid = get_work_id_from_path(p, depth=work_id_depth)
         work_to_paths.setdefault(wid, []).append(p)

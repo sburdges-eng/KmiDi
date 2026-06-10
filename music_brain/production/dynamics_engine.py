@@ -15,14 +15,15 @@ from music_brain.emotion.emotion_thesaurus import EmotionMatch
 
 class DynamicLevel(Enum):
     """Musical dynamics levels from quietest to loudest."""
+
     PPP = ("ppp", 0.10, -24.0)  # pianississimo
-    PP = ("pp", 0.20, -18.0)    # pianissimo
-    P = ("p", 0.35, -12.0)      # piano
-    MP = ("mp", 0.45, -9.0)     # mezzo-piano
-    MF = ("mf", 0.60, -6.0)     # mezzo-forte
-    F = ("f", 0.75, -3.0)       # forte
-    FF = ("ff", 0.90, -1.0)     # fortissimo
-    FFF = ("fff", 1.00, 0.0)    # fortississimo
+    PP = ("pp", 0.20, -18.0)  # pianissimo
+    P = ("p", 0.35, -12.0)  # piano
+    MP = ("mp", 0.45, -9.0)  # mezzo-piano
+    MF = ("mf", 0.60, -6.0)  # mezzo-forte
+    F = ("f", 0.75, -3.0)  # forte
+    FF = ("ff", 0.90, -1.0)  # fortissimo
+    FFF = ("fff", 1.00, 0.0)  # fortississimo
 
     def __init__(self, name: str, scalar: float, db: float):
         self._name = name
@@ -40,6 +41,7 @@ class DynamicLevel(Enum):
 @dataclass
 class SongStructure:
     """Ordered list of song sections with optional timing info."""
+
     sections: List[str] = field(default_factory=list)
     section_bars: Optional[List[int]] = None  # bars per section
 
@@ -47,12 +49,14 @@ class SongStructure:
 @dataclass
 class AutomationCurve:
     """Automation points as (bar_position, level) tuples."""
+
     points: List[Tuple[float, float]] = field(default_factory=list)
 
 
 @dataclass
 class SectionDynamics:
     """Comprehensive section dynamics profile."""
+
     level: str = "mf"
     target_db: float = -6.0
     scalar: float = 0.6
@@ -70,6 +74,7 @@ class SectionDynamics:
 @dataclass
 class ArrangementProfile:
     """Complete arrangement dynamics for a song."""
+
     sections: Dict[str, SectionDynamics] = field(default_factory=dict)
     automation: AutomationCurve = field(default_factory=AutomationCurve)
     peak_section: str = ""
@@ -91,100 +96,171 @@ class DynamicsEngine:
     # Guide-based section defaults (from "The Pop/Rock Version" table)
     SECTION_DEFAULTS = {
         "intro": {
-            "level": "pp", "to_level": "mp",
-            "density": 0.2, "drums": "none", "bass": "simple",
-            "guitar": "arpeggios", "keys": "pads", "vocals": "none",
-            "note": "Draw listener in, set the tone"
+            "level": "pp",
+            "to_level": "mp",
+            "density": 0.2,
+            "drums": "none",
+            "bass": "simple",
+            "guitar": "arpeggios",
+            "keys": "pads",
+            "vocals": "none",
+            "note": "Draw listener in, set the tone",
         },
         "verse": {
             "level": "mp",
-            "density": 0.4, "drums": "light", "bass": "simple",
-            "guitar": "clean", "keys": "sparse", "vocals": "solo",
-            "note": "Tell the story, leave room for vocals"
+            "density": 0.4,
+            "drums": "light",
+            "bass": "simple",
+            "guitar": "clean",
+            "keys": "sparse",
+            "vocals": "solo",
+            "note": "Tell the story, leave room for vocals",
         },
         "verse1": {
             "level": "mp",
-            "density": 0.35, "drums": "light", "bass": "simple",
-            "guitar": "arpeggios", "keys": "sparse", "vocals": "intimate",
-            "note": "Establishes story, quieter than V2"
+            "density": 0.35,
+            "drums": "light",
+            "bass": "simple",
+            "guitar": "arpeggios",
+            "keys": "sparse",
+            "vocals": "intimate",
+            "note": "Establishes story, quieter than V2",
         },
         "verse2": {
-            "level": "mp", "to_level": "mf",
-            "density": 0.45, "drums": "light", "bass": "simple",
-            "guitar": "clean", "keys": "sparse", "vocals": "solo",
-            "note": "Slightly fuller than V1"
+            "level": "mp",
+            "to_level": "mf",
+            "density": 0.45,
+            "drums": "light",
+            "bass": "simple",
+            "guitar": "clean",
+            "keys": "sparse",
+            "vocals": "solo",
+            "note": "Slightly fuller than V1",
         },
         "pre-chorus": {
             "level": "mf",
-            "density": 0.55, "drums": "building", "bass": "active",
-            "guitar": "grit", "keys": "sustained", "vocals": "building",
-            "note": "Build anticipation, crescendo toward chorus"
+            "density": 0.55,
+            "drums": "building",
+            "bass": "active",
+            "guitar": "grit",
+            "keys": "sustained",
+            "vocals": "building",
+            "note": "Build anticipation, crescendo toward chorus",
         },
         "prechorus": {
-            "level": "mf", "to_level": "f",
-            "density": 0.6, "drums": "building", "bass": "active",
-            "guitar": "grit", "keys": "sustained", "vocals": "building",
-            "note": "Add risers, build energy"
+            "level": "mf",
+            "to_level": "f",
+            "density": 0.6,
+            "drums": "building",
+            "bass": "active",
+            "guitar": "grit",
+            "keys": "sustained",
+            "vocals": "building",
+            "note": "Add risers, build energy",
         },
         "chorus": {
             "level": "f",
-            "density": 0.75, "drums": "full", "bass": "driving",
-            "guitar": "strumming", "keys": "full", "vocals": "doubled",
-            "note": "Payoff, loudest section, memorable hook"
+            "density": 0.75,
+            "drums": "full",
+            "bass": "driving",
+            "guitar": "strumming",
+            "keys": "full",
+            "vocals": "doubled",
+            "note": "Payoff, loudest section, memorable hook",
         },
         "chorus1": {
             "level": "f",
-            "density": 0.7, "drums": "full", "bass": "driving",
-            "guitar": "strumming", "keys": "full", "vocals": "doubled",
-            "note": "First payoff"
+            "density": 0.7,
+            "drums": "full",
+            "bass": "driving",
+            "guitar": "strumming",
+            "keys": "full",
+            "vocals": "doubled",
+            "note": "First payoff",
         },
         "chorus2": {
-            "level": "f", "to_level": "ff",
-            "density": 0.8, "drums": "full", "bass": "driving",
-            "guitar": "full", "keys": "full", "vocals": "harmonies",
-            "note": "Bigger than chorus 1"
+            "level": "f",
+            "to_level": "ff",
+            "density": 0.8,
+            "drums": "full",
+            "bass": "driving",
+            "guitar": "full",
+            "keys": "full",
+            "vocals": "harmonies",
+            "note": "Bigger than chorus 1",
         },
         "bridge": {
-            "level": "p", "to_level": "mf",
-            "density": 0.3, "drums": "minimal", "bass": "sustained",
-            "guitar": "clean", "keys": "pads", "vocals": "intimate",
-            "note": "Contrast, break the pattern, different vibe"
+            "level": "p",
+            "to_level": "mf",
+            "density": 0.3,
+            "drums": "minimal",
+            "bass": "sustained",
+            "guitar": "clean",
+            "keys": "pads",
+            "vocals": "intimate",
+            "note": "Contrast, break the pattern, different vibe",
         },
         "breakdown": {
             "level": "p",
-            "density": 0.2, "drums": "none", "bass": "none",
-            "guitar": "none", "keys": "pads", "vocals": "solo",
-            "note": "Strip down for impact"
+            "density": 0.2,
+            "drums": "none",
+            "bass": "none",
+            "guitar": "none",
+            "keys": "pads",
+            "vocals": "solo",
+            "note": "Strip down for impact",
         },
         "build": {
-            "level": "mf", "to_level": "ff",
-            "density": 0.5, "drums": "building", "bass": "active",
-            "guitar": "grit", "keys": "sustained", "vocals": "none",
-            "note": "Rising energy, adding elements"
+            "level": "mf",
+            "to_level": "ff",
+            "density": 0.5,
+            "drums": "building",
+            "bass": "active",
+            "guitar": "grit",
+            "keys": "sustained",
+            "vocals": "none",
+            "note": "Rising energy, adding elements",
         },
         "drop": {
             "level": "ff",
-            "density": 0.9, "drums": "full", "bass": "driving",
-            "guitar": "full", "keys": "full", "vocals": "none",
-            "note": "Maximum impact, all elements hit"
+            "density": 0.9,
+            "drums": "full",
+            "bass": "driving",
+            "guitar": "full",
+            "keys": "full",
+            "vocals": "none",
+            "note": "Maximum impact, all elements hit",
         },
         "final-chorus": {
             "level": "ff",
-            "density": 0.9, "drums": "full", "bass": "driving",
-            "guitar": "full", "keys": "full", "vocals": "harmonies",
-            "note": "Biggest moment, add layers, consider key lift"
+            "density": 0.9,
+            "drums": "full",
+            "bass": "driving",
+            "guitar": "full",
+            "keys": "full",
+            "vocals": "harmonies",
+            "note": "Biggest moment, add layers, consider key lift",
         },
         "finalchorus": {
-            "level": "ff", "to_level": "fff",
-            "density": 0.95, "drums": "full", "bass": "driving",
-            "guitar": "full", "keys": "full", "vocals": "harmonies",
-            "note": "Ultimate payoff, everything"
+            "level": "ff",
+            "to_level": "fff",
+            "density": 0.95,
+            "drums": "full",
+            "bass": "driving",
+            "guitar": "full",
+            "keys": "full",
+            "vocals": "harmonies",
+            "note": "Ultimate payoff, everything",
         },
         "outro": {
             "level": "mp",
-            "density": 0.3, "drums": "light", "bass": "simple",
-            "guitar": "arpeggios", "keys": "pads", "vocals": "fading",
-            "note": "Fade or strong ending"
+            "density": 0.3,
+            "drums": "light",
+            "bass": "simple",
+            "guitar": "arpeggios",
+            "keys": "pads",
+            "vocals": "fading",
+            "note": "Fade or strong ending",
         },
     }
 

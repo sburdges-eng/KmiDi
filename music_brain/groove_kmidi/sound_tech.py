@@ -17,6 +17,7 @@ from music_brain.groove.fan_feedback import FanProfile
 @dataclass
 class Venue:
     """Represents an acoustic environment."""
+
     name: str
     reverb_size: float  # 0.0 - 1.0
     reverb_decay: float  # seconds
@@ -36,8 +37,7 @@ class SoundTech:
             vault_path = root / "vault" / "Production_Guides"
 
         self.eq_parser = EQGuideParser(vault_path / "EQ Deep Dive Guide.md")
-        self.comp_parser = CompressionGuideParser(
-            vault_path / "Compression Deep Dive Guide.md")
+        self.comp_parser = CompressionGuideParser(vault_path / "Compression Deep Dive Guide.md")
 
         self.eq_rules = self.eq_parser.parse()
         self.comp_rules = self.comp_parser.parse()
@@ -47,7 +47,7 @@ class SoundTech:
             "club": Venue("Small Club", 0.5, 1.2, 120.0, 0.2, "Intimate, sweaty, energetic."),
             "arena": Venue("Arena", 0.9, 3.5, 350.0, 0.4, "Huge, epic, booming."),
             "outdoor": Venue("Outdoor Festival", 0.1, 0.2, 250.0, 0.1, "Open air, slapback delay."),
-            "basement": Venue("Basement", 0.3, 0.8, 40.0, 0.6, "Muddy, resonant, raw.")
+            "basement": Venue("Basement", 0.3, 0.8, 40.0, 0.6, "Muddy, resonant, raw."),
         }
 
     def get_venue_for_fan(self, fan_profile: FanProfile) -> Venue:
@@ -71,7 +71,9 @@ class SoundTech:
         # Default
         return self.venues["studio"]
 
-    def get_mix_settings(self, instrument: str, fan_profile: Optional[FanProfile] = None) -> Dict[str, Any]:  # noqa: E501
+    def get_mix_settings(
+        self, instrument: str, fan_profile: Optional[FanProfile] = None
+    ) -> Dict[str, Any]:  # noqa: E501
         """
         Returns EQ and Compression settings for an instrument, adapted to the fan.
         """
@@ -96,8 +98,8 @@ class SoundTech:
             "eq": eq_ranges,
             "compression": {
                 "ratio": f"{ratio}:1",
-                "attack": "fast" if inst_key == "drums" else "medium"  # Simplified
-            }
+                "attack": "fast" if inst_key == "drums" else "medium",  # Simplified
+            },
         }
 
     def set_stage(self, fan_profile: FanProfile) -> Dict[str, Any]:
@@ -109,8 +111,5 @@ class SoundTech:
         return {
             "venue": venue,
             "mix_notes": f"Setting up {venue.name} for {fan_profile.name}.",
-            "global_reverb": {
-                "size": venue.reverb_size,
-                "decay": venue.reverb_decay
-            }
+            "global_reverb": {"size": venue.reverb_size, "decay": venue.reverb_decay},
         }

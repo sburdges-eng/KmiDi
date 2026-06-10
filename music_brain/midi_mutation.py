@@ -36,20 +36,21 @@ import copy
 from dataclasses import dataclass, field
 from typing import Optional
 
-
 # ----------------------------------------------------------------------
 # Domain model
 # ----------------------------------------------------------------------
 
+
 @dataclass
 class MidiNote:
     """A single note in the canonical buffer."""
+
     id: str
-    pitch: int          # MIDI note number [0..127]
-    velocity: int       # [0..127]
-    start_tick: int     # >= 0
+    pitch: int  # MIDI note number [0..127]
+    velocity: int  # [0..127]
+    start_tick: int  # >= 0
     duration_ticks: int  # > 0
-    channel: int = 0    # [0..15]
+    channel: int = 0  # [0..15]
 
 
 class MutationError(Exception):
@@ -59,6 +60,7 @@ class MutationError(Exception):
 # ----------------------------------------------------------------------
 # Mutations (typed records — serialisable in future PRs)
 # ----------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class AddNote:
@@ -94,6 +96,7 @@ Mutation = AddNote | RemoveNote | SetPitch | SetVelocity | MoveNote
 # ----------------------------------------------------------------------
 # Engine
 # ----------------------------------------------------------------------
+
 
 class MidiMutationEngine:
     """Holds a canonical list of notes and applies transactional edits."""
@@ -235,6 +238,7 @@ class MidiMutationEngine:
 # Validation helpers
 # ----------------------------------------------------------------------
 
+
 def _validate_pitch(pitch: int) -> None:
     if not (0 <= pitch <= 127):
         raise MutationError(f"pitch out of range [0..127]: {pitch}")
@@ -248,6 +252,7 @@ def _validate_velocity(velocity: int) -> None:
 # ----------------------------------------------------------------------
 # Context manager
 # ----------------------------------------------------------------------
+
 
 @dataclass
 class _TransactionGuard:

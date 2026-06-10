@@ -14,11 +14,13 @@ import time
 
 try:
     import rtmidi2
+
     HAS_RTMIDI2 = True
 except ImportError:
     HAS_RTMIDI2 = False
 try:
     import rtmidi
+
     HAS_RTMIDI = True
 except ImportError:
     HAS_RTMIDI = False

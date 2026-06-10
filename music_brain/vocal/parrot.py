@@ -16,6 +16,7 @@ from enum import Enum
 try:
     import librosa
     import soundfile as sf
+
     LIBROSA_AVAILABLE = True
 except ImportError:
     LIBROSA_AVAILABLE = False
@@ -28,6 +29,7 @@ NP_AVAILABLE = LIBROSA_AVAILABLE
 
 class VowelType(Enum):
     """Vowel classification"""
+
     A = "a"  # "ah" as in "father"
     E = "e"  # "eh" as in "bed"
     I_VOWEL = "i"  # "ee" as in "see" (E741: avoid ambiguous 'I')
@@ -40,6 +42,7 @@ class VowelType(Enum):
 @dataclass
 class FormantData:
     """Formant frequencies (F1, F2, F3) for vowel analysis"""
+
     f1: float  # First formant (vowel height)
     f2: float  # Second formant (vowel frontness)
     f3: float  # Third formant (vowel rounding)
@@ -49,6 +52,7 @@ class FormantData:
 @dataclass
 class VowelSample:
     """Individual vowel sample with formant data"""
+
     vowel_type: VowelType
     formants: FormantData
     duration: float  # Duration in seconds
@@ -60,6 +64,7 @@ class VowelSample:
 @dataclass
 class AccentCharacteristics:
     """Learned accent characteristics"""
+
     vowel_shifts: Dict[str, FormantData] = field(default_factory=dict)  # Vowel formant shifts
     pitch_range: Tuple[float, float] = (0.0, 0.0)  # Typical pitch range (Hz)
     intonation_pattern: List[float] = field(default_factory=list)  # Typical intonation curve
@@ -70,6 +75,7 @@ class AccentCharacteristics:
 @dataclass
 class VoiceCharacteristics:
     """Complete voice characteristics learned from audio"""
+
     # Formant data
     vowel_formants: Dict[VowelType, List[FormantData]] = field(default_factory=dict)
 
@@ -118,6 +124,7 @@ class VoiceCharacteristics:
 @dataclass
 class VoiceModel:
     """Complete voice model for synthesis"""
+
     name: str
     characteristics: VoiceCharacteristics
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -126,31 +133,30 @@ class VoiceModel:
         """Serialize to dictionary"""
         data = asdict(self)
         # Convert enums to strings
-        if 'vowel_formants' in data['characteristics']:
+        if "vowel_formants" in data["characteristics"]:
             vowel_data = {}
-            for vowel, formants in data['characteristics']['vowel_formants'].items():
-                vowel_data[vowel.value if hasattr(vowel, 'value') else str(vowel)] = [
+            for vowel, formants in data["characteristics"]["vowel_formants"].items():
+                vowel_data[vowel.value if hasattr(vowel, "value") else str(vowel)] = [
                     asdict(f) for f in formants
                 ]
-            data['characteristics']['vowel_formants'] = vowel_data
+            data["characteristics"]["vowel_formants"] = vowel_data
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict) -> 'VoiceModel':
+    def from_dict(cls, data: Dict) -> "VoiceModel":
         """Deserialize from dictionary"""
         # Convert string keys back to VowelType enums
-        if 'characteristics' in data and 'vowel_formants' in data['characteristics']:
+        if "characteristics" in data and "vowel_formants" in data["characteristics"]:
             vowel_data = {}
-            for vowel_str, formants in data['characteristics']['vowel_formants'].items():
+            for vowel_str, formants in data["characteristics"]["vowel_formants"].items():
                 try:
                     vowel = VowelType(vowel_str)
                     vowel_data[vowel] = [
-                        FormantData(**f) if isinstance(f, dict) else f
-                        for f in formants
+                        FormantData(**f) if isinstance(f, dict) else f for f in formants
                     ]
                 except ValueError:
                     continue
-            data['characteristics']['vowel_formants'] = vowel_data
+            data["characteristics"]["vowel_formants"] = vowel_data
 
         return cls(**data)
 
@@ -158,6 +164,7 @@ class VoiceModel:
 @dataclass
 class ParrotConfig:
     """Configuration for Parrot vocal synthesizer"""
+
     # Learning parameters
     min_exposure_time: float = 30.0  # Minimum seconds of audio to learn from
     learning_rate: float = 0.1  # How quickly to adapt (0.0-1.0)
@@ -230,10 +237,7 @@ class ParrotVocalSynthesizer:
             )
 
     def analyze_voice(
-        self,
-        audio_file: str,
-        voice_name: Optional[str] = None,
-        update_existing: bool = True
+        self, audio_file: str, voice_name: Optional[str] = None, update_existing: bool = True
     ) -> VoiceCharacteristics:
         """
         Analyze voice characteristics from audio file.
@@ -288,45 +292,41 @@ class ParrotVocalSynthesizer:
         # Update pitch characteristics
         if pitch_data:
             if characteristics.average_pitch == 0.0:
-                characteristics.average_pitch = pitch_data['mean']
+                characteristics.average_pitch = pitch_data["mean"]
             else:
                 characteristics.average_pitch = (
-                    (1 - learning_weight) * characteristics.average_pitch +
-                    learning_weight * pitch_data['mean']
-                )
+                    1 - learning_weight
+                ) * characteristics.average_pitch + learning_weight * pitch_data["mean"]
 
             if characteristics.pitch_range == (0.0, 0.0):
-                characteristics.pitch_range = (pitch_data['min'], pitch_data['max'])
+                characteristics.pitch_range = (pitch_data["min"], pitch_data["max"])
             else:
                 old_min, old_max = characteristics.pitch_range
                 characteristics.pitch_range = (
-                    (1 - learning_weight) * old_min + learning_weight * pitch_data['min'],
-                    (1 - learning_weight) * old_max + learning_weight * pitch_data['max']
+                    (1 - learning_weight) * old_min + learning_weight * pitch_data["min"],
+                    (1 - learning_weight) * old_max + learning_weight * pitch_data["max"],
                 )
 
             characteristics.vibrato_rate = (
-                (1 - learning_weight) * characteristics.vibrato_rate +
-                learning_weight * pitch_data.get('vibrato_rate', 0.0)
-            )
+                1 - learning_weight
+            ) * characteristics.vibrato_rate + learning_weight * pitch_data.get("vibrato_rate", 0.0)
             characteristics.vibrato_depth = (
-                (1 - learning_weight) * characteristics.vibrato_depth +
-                learning_weight * pitch_data.get('vibrato_depth', 0.0)
+                1 - learning_weight
+            ) * characteristics.vibrato_depth + learning_weight * pitch_data.get(
+                "vibrato_depth", 0.0
             )
 
         # Update timbre
         if timbre_data:
             characteristics.spectral_centroid_mean = (
-                (1 - learning_weight) * characteristics.spectral_centroid_mean +
-                learning_weight * timbre_data['centroid']
-            )
+                1 - learning_weight
+            ) * characteristics.spectral_centroid_mean + learning_weight * timbre_data["centroid"]
             characteristics.spectral_rolloff_mean = (
-                (1 - learning_weight) * characteristics.spectral_rolloff_mean +
-                learning_weight * timbre_data['rolloff']
-            )
+                1 - learning_weight
+            ) * characteristics.spectral_rolloff_mean + learning_weight * timbre_data["rolloff"]
             characteristics.spectral_bandwidth_mean = (
-                (1 - learning_weight) * characteristics.spectral_bandwidth_mean +
-                learning_weight * timbre_data['bandwidth']
-            )
+                1 - learning_weight
+            ) * characteristics.spectral_bandwidth_mean + learning_weight * timbre_data["bandwidth"]
 
         # Update accent
         if accent_data:
@@ -340,17 +340,14 @@ class ParrotVocalSynthesizer:
         min_exposure = self.config.min_exposure_time
         if characteristics.exposure_time >= min_exposure:
             characteristics.confidence = min(
-                1.0, characteristics.exposure_time / (min_exposure * 2))
+                1.0, characteristics.exposure_time / (min_exposure * 2)
+            )
         else:
             characteristics.confidence = characteristics.exposure_time / min_exposure
 
         return characteristics
 
-    def _detect_vowels(
-        self,
-        audio_data: np.ndarray,
-        sr: int
-    ) -> List[VowelSample]:
+    def _detect_vowels(self, audio_data: np.ndarray, sr: int) -> List[VowelSample]:
         """Detect vowels and extract formant data."""
         vowel_samples = []
 
@@ -374,10 +371,7 @@ class ParrotVocalSynthesizer:
                 f1, f2, f3 = peaks[0], peaks[1], peaks[2] if len(peaks) > 2 else peaks[1] * 1.5
 
                 formant_data = FormantData(
-                    f1=f1,
-                    f2=f2,
-                    f3=f3,
-                    confidence=self._calculate_formant_confidence(frame, peaks)
+                    f1=f1, f2=f2, f3=f3, confidence=self._calculate_formant_confidence(frame, peaks)
                 )
 
                 # Classify vowel based on formant positions
@@ -388,33 +382,36 @@ class ParrotVocalSynthesizer:
                     pitch = self._get_pitch_at_time(audio_data, sr, time)
 
                     # Get spectral characteristics
-                    centroid = librosa.feature.spectral_centroid(
-                        y=audio_data[int(time*sr):int((time+0.025)*sr)],
-                        sr=sr
-                    )[0, 0] if int((time+0.025)*sr) < len(audio_data) else 0.0
+                    centroid = (
+                        librosa.feature.spectral_centroid(
+                            y=audio_data[int(time * sr) : int((time + 0.025) * sr)], sr=sr
+                        )[0, 0]
+                        if int((time + 0.025) * sr) < len(audio_data)
+                        else 0.0
+                    )
 
-                    rolloff = librosa.feature.spectral_rolloff(
-                        y=audio_data[int(time*sr):int((time+0.025)*sr)],
-                        sr=sr
-                    )[0, 0] if int((time+0.025)*sr) < len(audio_data) else 0.0
+                    rolloff = (
+                        librosa.feature.spectral_rolloff(
+                            y=audio_data[int(time * sr) : int((time + 0.025) * sr)], sr=sr
+                        )[0, 0]
+                        if int((time + 0.025) * sr) < len(audio_data)
+                        else 0.0
+                    )
 
-                    vowel_samples.append(VowelSample(
-                        vowel_type=vowel_type,
-                        formants=formant_data,
-                        duration=0.025,  # Frame duration
-                        pitch_contour=[pitch] if pitch > 0 else [],
-                        spectral_centroid=centroid,
-                        spectral_rolloff=rolloff
-                    ))
+                    vowel_samples.append(
+                        VowelSample(
+                            vowel_type=vowel_type,
+                            formants=formant_data,
+                            duration=0.025,  # Frame duration
+                            pitch_contour=[pitch] if pitch > 0 else [],
+                            spectral_centroid=centroid,
+                            spectral_rolloff=rolloff,
+                        )
+                    )
 
         return vowel_samples
 
-    def _find_formant_peaks(
-        self,
-        spectrum: np.ndarray,
-        sr: int,
-        n_fft: int
-    ) -> List[float]:
+    def _find_formant_peaks(self, spectrum: np.ndarray, sr: int, n_fft: int) -> List[float]:
         """Find formant peaks in spectrum."""
         # Convert bin indices to frequencies
         freqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
@@ -427,9 +424,11 @@ class ParrotVocalSynthesizer:
         # Find peaks
         peaks = []
         for i in range(1, len(speech_spectrum) - 1):
-            if (speech_spectrum[i] > speech_spectrum[i-1] and
-                speech_spectrum[i] > speech_spectrum[i+1] and
-                    speech_spectrum[i] > np.max(speech_spectrum) * 0.3):  # Threshold
+            if (
+                speech_spectrum[i] > speech_spectrum[i - 1]
+                and speech_spectrum[i] > speech_spectrum[i + 1]
+                and speech_spectrum[i] > np.max(speech_spectrum) * 0.3
+            ):  # Threshold
                 peaks.append(speech_freqs[i])
 
         # Sort by magnitude and take top 3
@@ -463,17 +462,11 @@ class ParrotVocalSynthesizer:
         else:
             return VowelType.UNKNOWN
 
-    def _analyze_pitch(
-        self,
-        audio_data: np.ndarray,
-        sr: int
-    ) -> Optional[Dict[str, float]]:
+    def _analyze_pitch(self, audio_data: np.ndarray, sr: int) -> Optional[Dict[str, float]]:
         """Analyze pitch characteristics."""
         # Extract pitch using librosa
         pitches, magnitudes = librosa.piptrack(
-            y=audio_data,
-            sr=sr,
-            hop_length=self.config.pitch_hop_length
+            y=audio_data, sr=sr, hop_length=self.config.pitch_hop_length
         )
 
         # Get pitch values (non-zero)
@@ -505,19 +498,15 @@ class ParrotVocalSynthesizer:
             vibrato_depth = 0.0
 
         return {
-            'mean': float(np.mean(pitch_array)),
-            'min': float(np.min(pitch_array)),
-            'max': float(np.max(pitch_array)),
-            'std': float(np.std(pitch_array)),
-            'vibrato_rate': vibrato_rate,
-            'vibrato_depth': vibrato_depth
+            "mean": float(np.mean(pitch_array)),
+            "min": float(np.min(pitch_array)),
+            "max": float(np.max(pitch_array)),
+            "std": float(np.std(pitch_array)),
+            "vibrato_rate": vibrato_rate,
+            "vibrato_depth": vibrato_depth,
         }
 
-    def _analyze_timbre(
-        self,
-        audio_data: np.ndarray,
-        sr: int
-    ) -> Optional[Dict[str, float]]:
+    def _analyze_timbre(self, audio_data: np.ndarray, sr: int) -> Optional[Dict[str, float]]:
         """Analyze timbre characteristics."""
         # Spectral centroid (brightness)
         centroid = librosa.feature.spectral_centroid(y=audio_data, sr=sr)[0]
@@ -529,16 +518,13 @@ class ParrotVocalSynthesizer:
         bandwidth = librosa.feature.spectral_bandwidth(y=audio_data, sr=sr)[0]
 
         return {
-            'centroid': float(np.mean(centroid)),
-            'rolloff': float(np.mean(rolloff)),
-            'bandwidth': float(np.mean(bandwidth))
+            "centroid": float(np.mean(centroid)),
+            "rolloff": float(np.mean(rolloff)),
+            "bandwidth": float(np.mean(bandwidth)),
         }
 
     def _analyze_accent(
-        self,
-        audio_data: np.ndarray,
-        sr: int,
-        vowel_samples: List[VowelSample]
+        self, audio_data: np.ndarray, sr: int, vowel_samples: List[VowelSample]
     ) -> AccentCharacteristics:
         """Analyze accent characteristics."""
         accent = AccentCharacteristics()
@@ -561,31 +547,26 @@ class ParrotVocalSynthesizer:
 
                 # Calculate shift from standard
                 shift = FormantData(
-                    f1=avg_f1 - standard.f1,
-                    f2=avg_f2 - standard.f2,
-                    f3=avg_f3 - standard.f3
+                    f1=avg_f1 - standard.f1, f2=avg_f2 - standard.f2, f3=avg_f3 - standard.f3
                 )
                 accent.vowel_shifts[vowel_type.value] = shift
 
         # Analyze pitch range and intonation
         pitch_data = self._analyze_pitch(audio_data, sr)
         if pitch_data:
-            accent.pitch_range = (pitch_data['min'], pitch_data['max'])
+            accent.pitch_range = (pitch_data["min"], pitch_data["max"])
 
         return accent
 
     def _analyze_jitter_shimmer(
-        self,
-        audio_data: np.ndarray,
-        sr: int,
-        pitch_data: Optional[Dict[str, float]]
+        self, audio_data: np.ndarray, sr: int, pitch_data: Optional[Dict[str, float]]
     ) -> Optional[Dict[str, float]]:
         """Analyze jitter (pitch period variation) and shimmer (amplitude variation)."""
-        if not pitch_data or pitch_data['mean'] == 0:
+        if not pitch_data or pitch_data["mean"] == 0:
             return None
 
         # Extract pitch periods
-        fundamental_freq = pitch_data['mean']
+        fundamental_freq = pitch_data["mean"]
         period_samples = int(sr / fundamental_freq)
 
         if period_samples < 10 or period_samples > len(audio_data) // 2:
@@ -597,7 +578,7 @@ class ParrotVocalSynthesizer:
 
         # Simple period detection
         for i in range(0, len(audio_data) - period_samples * 2, period_samples):
-            segment = audio_data[i:i + period_samples]
+            segment = audio_data[i : i + period_samples]
             if len(segment) == period_samples:
                 # Find period length (zero crossings)
                 zero_crossings = np.where(np.diff(np.signbit(segment)))[0]
@@ -625,17 +606,10 @@ class ParrotVocalSynthesizer:
         # Calculate HNR (harmonic-to-noise ratio) - simplified
         hnr = 20.0  # Placeholder
 
-        return {
-            'jitter': float(jitter),
-            'shimmer': float(shimmer),
-            'hnr': float(hnr)
-        }
+        return {"jitter": float(jitter), "shimmer": float(shimmer), "hnr": float(hnr)}
 
     def _analyze_prosody(
-        self,
-        audio_data: np.ndarray,
-        sr: int,
-        pitch_data: Optional[Dict[str, float]]
+        self, audio_data: np.ndarray, sr: int, pitch_data: Optional[Dict[str, float]]
     ) -> Optional[Dict[str, Any]]:
         """Analyze prosody (rhythm and intonation)."""
         duration = len(audio_data) / sr
@@ -644,12 +618,15 @@ class ParrotVocalSynthesizer:
         hop_length = 512
         frame_length = 2048
         energy = librosa.feature.rms(
-            y=audio_data, frame_length=frame_length, hop_length=hop_length)[0]
+            y=audio_data, frame_length=frame_length, hop_length=hop_length
+        )[0]
 
         # Find energy peaks (potential syllables)
         from scipy.signal import find_peaks
-        peaks, _ = find_peaks(energy, height=np.mean(energy) * 1.2,
-                              distance=int(sr / hop_length / 4))
+
+        peaks, _ = find_peaks(
+            energy, height=np.mean(energy) * 1.2, distance=int(sr / hop_length / 4)
+        )
         syllable_count = len(peaks)
         speaking_rate = syllable_count / duration if duration > 0 else 0.0
 
@@ -677,34 +654,30 @@ class ParrotVocalSynthesizer:
 
         # Analyze intonation
         if pitch_data:
-            intonation_range = (pitch_data['max'] - pitch_data['min']) / pitch_data['mean'] * 12
+            intonation_range = (pitch_data["max"] - pitch_data["min"]) / pitch_data["mean"] * 12
             pitches, magnitudes = librosa.piptrack(y=audio_data, sr=sr, hop_length=hop_length)
             pitch_contour = []
             for t in range(min(20, pitches.shape[1])):
                 index = magnitudes[:, t].argmax()
                 pitch = pitches[index, t]
                 if pitch > 0:
-                    semitones = 12 * np.log2(pitch / pitch_data['mean']
-                                             ) if pitch_data['mean'] > 0 else 0.0
+                    semitones = (
+                        12 * np.log2(pitch / pitch_data["mean"]) if pitch_data["mean"] > 0 else 0.0
+                    )
                     pitch_contour.append(float(semitones))
         else:
             intonation_range = 0.0
             pitch_contour = []
 
         return {
-            'speaking_rate': float(speaking_rate),
-            'pause_frequency': float(pause_frequency),
-            'average_pause_duration': float(average_pause_duration),
-            'intonation_range': float(intonation_range),
-            'pitch_contour': pitch_contour
+            "speaking_rate": float(speaking_rate),
+            "pause_frequency": float(pause_frequency),
+            "average_pause_duration": float(average_pause_duration),
+            "intonation_range": float(intonation_range),
+            "pitch_contour": pitch_contour,
         }
 
-    def _get_pitch_at_time(
-        self,
-        audio_data: np.ndarray,
-        sr: int,
-        time: float
-    ) -> float:
+    def _get_pitch_at_time(self, audio_data: np.ndarray, sr: int, time: float) -> float:
         """Get pitch at specific time."""
         start_idx = int(time * sr)
         end_idx = min(start_idx + self.config.pitch_hop_length, len(audio_data))
@@ -722,11 +695,7 @@ class ParrotVocalSynthesizer:
 
         return 0.0
 
-    def _calculate_formant_confidence(
-        self,
-        spectrum: np.ndarray,
-        peaks: List[float]
-    ) -> float:
+    def _calculate_formant_confidence(self, spectrum: np.ndarray, peaks: List[float]) -> float:
         """Calculate confidence in formant detection."""
         if not peaks:
             return 0.0
@@ -734,7 +703,9 @@ class ParrotVocalSynthesizer:
         # Confidence based on peak prominence
         peak_magnitudes = [
             spectrum[np.argmin(np.abs(np.arange(len(spectrum)) * 22050 / len(spectrum) - p))]
-            for p in peaks if p > 0]
+            for p in peaks
+            if p > 0
+        ]
 
         if peak_magnitudes:
             max_mag = np.max(spectrum)
@@ -745,10 +716,7 @@ class ParrotVocalSynthesizer:
         return 0.0
 
     def train_parrot_batch(
-        self,
-        audio_files: List[str],
-        voice_name: str,
-        update_existing: bool = True
+        self, audio_files: List[str], voice_name: str, update_existing: bool = True
     ) -> VoiceModel:
         """
         Train Parrot on multiple audio files (batch learning).
@@ -784,10 +752,7 @@ class ParrotVocalSynthesizer:
         return model
 
     def train_parrot(
-        self,
-        audio_file: str,
-        voice_name: str,
-        update_existing: bool = True
+        self, audio_file: str, voice_name: str, update_existing: bool = True
     ) -> VoiceModel:
         """
         Train Parrot on a voice from audio file.
@@ -808,19 +773,21 @@ class ParrotVocalSynthesizer:
             model.characteristics = characteristics
         else:
             model = VoiceModel(
-                name=voice_name, characteristics=characteristics,
-                metadata={'source_file': audio_file,
-                          'trained_at': str(Path(audio_file).stat().st_mtime)
-                          if Path(audio_file).exists() else None})
+                name=voice_name,
+                characteristics=characteristics,
+                metadata={
+                    "source_file": audio_file,
+                    "trained_at": (
+                        str(Path(audio_file).stat().st_mtime) if Path(audio_file).exists() else None
+                    ),
+                },
+            )
 
         self.voice_models[voice_name] = model
         return model
 
     def synthesize_vocal(
-        self,
-        text: str,
-        voice_name: Optional[str] = None,
-        output_file: Optional[str] = None
+        self, text: str, voice_name: Optional[str] = None, output_file: Optional[str] = None
     ) -> np.ndarray:
         """
         Synthesize vocal audio using learned voice model.
@@ -867,7 +834,7 @@ class ParrotVocalSynthesizer:
                 model,
                 sample_rate=self.config.synthesis_sample_rate,
                 emotion=self.config.emotion,
-                expression_intensity=self.config.expression_intensity
+                expression_intensity=self.config.expression_intensity,
             )
         else:
             # Fallback to simple synthesis
@@ -878,17 +845,17 @@ class ParrotVocalSynthesizer:
 
         return audio
 
-    def _simple_synthesize(
-        self,
-        phonemes: List,
-        model: VoiceModel
-    ) -> np.ndarray:
+    def _simple_synthesize(self, phonemes: List, model: VoiceModel) -> np.ndarray:
         """Simple synthesis fallback."""
         sample_rate = self.config.synthesis_sample_rate
         total_duration = sum(p.duration for p in phonemes)
         t = np.linspace(0, total_duration, int(sample_rate * total_duration))
 
-        base_freq = model.characteristics.average_pitch if model.characteristics.average_pitch > 0 else 200.0  # noqa: E501
+        base_freq = (
+            model.characteristics.average_pitch
+            if model.characteristics.average_pitch > 0
+            else 200.0
+        )  # noqa: E501
 
         # Generate with vibrato
         vibrato = model.characteristics.vibrato_rate
@@ -903,18 +870,15 @@ class ParrotVocalSynthesizer:
         audio = np.sin(2 * np.pi * freq_contour * t) * 0.3
         return audio
 
-    def _apply_prosody(
-        self,
-        phonemes: List,
-        char: VoiceCharacteristics
-    ) -> List:
+    def _apply_prosody(self, phonemes: List, char: VoiceCharacteristics) -> List:
         """Apply prosody (rhythm and intonation) to phonemes."""
 
         # Adjust durations based on speaking rate
         if char.speaking_rate > 0:
             target_rate = char.speaking_rate
-            current_rate = len([p for p in phonemes if p.phoneme_type.value ==
-                               'vowel']) / sum(p.duration for p in phonemes)
+            current_rate = len([p for p in phonemes if p.phoneme_type.value == "vowel"]) / sum(
+                p.duration for p in phonemes
+            )
             if current_rate > 0:
                 duration_scale = target_rate / current_rate
                 for phoneme in phonemes:
@@ -923,7 +887,7 @@ class ParrotVocalSynthesizer:
         # Apply intonation (pitch contour)
         if char.intonation_range > 0 and char.pitch_contour_template:
             # Map template to phonemes
-            vowel_indices = [i for i, p in enumerate(phonemes) if p.phoneme_type.value == 'vowel']
+            vowel_indices = [i for i, p in enumerate(phonemes) if p.phoneme_type.value == "vowel"]
             if vowel_indices and char.pitch_contour_template:
                 for idx, vowel_idx in enumerate(vowel_indices):
                     if idx < len(char.pitch_contour_template):
@@ -951,24 +915,25 @@ class ParrotVocalSynthesizer:
         model = self.voice_models[voice_name]
         char = model.characteristics
         return {
-            'name': model.name,
-            'exposure_time': char.exposure_time,
-            'sample_count': char.sample_count,
-            'confidence': char.confidence,
-            'average_pitch': char.average_pitch,
-            'pitch_range': char.pitch_range,
-            'vibrato_rate': char.vibrato_rate,
-            'vibrato_depth': char.vibrato_depth,
-            'vowels_learned': [v.value if hasattr(v, 'value') else str(v) for v in char.vowel_formants.keys()],  # noqa: E501
-
-            'jitter': char.jitter,
-            'shimmer': char.shimmer,
-            'hnr': char.hnr,
-            'speaking_rate': char.speaking_rate,
-            'breathiness': char.breathiness,
-            'nasality': char.nasality,
-            'training_files': char.training_files,
-            'metadata': model.metadata
+            "name": model.name,
+            "exposure_time": char.exposure_time,
+            "sample_count": char.sample_count,
+            "confidence": char.confidence,
+            "average_pitch": char.average_pitch,
+            "pitch_range": char.pitch_range,
+            "vibrato_rate": char.vibrato_rate,
+            "vibrato_depth": char.vibrato_depth,
+            "vowels_learned": [
+                v.value if hasattr(v, "value") else str(v) for v in char.vowel_formants.keys()
+            ],  # noqa: E501
+            "jitter": char.jitter,
+            "shimmer": char.shimmer,
+            "hnr": char.hnr,
+            "speaking_rate": char.speaking_rate,
+            "breathiness": char.breathiness,
+            "nasality": char.nasality,
+            "training_files": char.training_files,
+            "metadata": model.metadata,
         }
 
     def blend_voices(
@@ -976,7 +941,7 @@ class ParrotVocalSynthesizer:
         voice1_name: str,
         voice2_name: str,
         blend_ratio: float = 0.5,
-        output_name: Optional[str] = None
+        output_name: Optional[str] = None,
     ) -> VoiceModel:
         """
         Blend two voice models together.
@@ -1018,7 +983,7 @@ class ParrotVocalSynthesizer:
                     f1=avg1.f1 * (1 - blend_ratio) + avg2.f1 * blend_ratio,
                     f2=avg1.f2 * (1 - blend_ratio) + avg2.f2 * blend_ratio,
                     f3=avg1.f3 * (1 - blend_ratio) + avg2.f3 * blend_ratio,
-                    confidence=(avg1.confidence + avg2.confidence) / 2
+                    confidence=(avg1.confidence + avg2.confidence) / 2,
                 )
                 blended.vowel_formants[vowel] = [blended_formant]
             elif formants1:
@@ -1027,33 +992,44 @@ class ParrotVocalSynthesizer:
                 blended.vowel_formants[vowel] = formants2
 
         # Blend pitch
-        blended.average_pitch = char1.average_pitch * (
-            1 - blend_ratio) + char2.average_pitch * blend_ratio
+        blended.average_pitch = (
+            char1.average_pitch * (1 - blend_ratio) + char2.average_pitch * blend_ratio
+        )
         blended.pitch_range = (
             char1.pitch_range[0] * (1 - blend_ratio) + char2.pitch_range[0] * blend_ratio,
-            char1.pitch_range[1] * (1 - blend_ratio) + char2.pitch_range[1] * blend_ratio
+            char1.pitch_range[1] * (1 - blend_ratio) + char2.pitch_range[1] * blend_ratio,
         )
-        blended.vibrato_rate = char1.vibrato_rate * (
-            1 - blend_ratio) + char2.vibrato_rate * blend_ratio
-        blended.vibrato_depth = char1.vibrato_depth * (
-            1 - blend_ratio) + char2.vibrato_depth * blend_ratio
+        blended.vibrato_rate = (
+            char1.vibrato_rate * (1 - blend_ratio) + char2.vibrato_rate * blend_ratio
+        )
+        blended.vibrato_depth = (
+            char1.vibrato_depth * (1 - blend_ratio) + char2.vibrato_depth * blend_ratio
+        )
 
         # Blend timbre
-        blended.spectral_centroid_mean = char1.spectral_centroid_mean * (
-            1 - blend_ratio) + char2.spectral_centroid_mean * blend_ratio
-        blended.spectral_rolloff_mean = char1.spectral_rolloff_mean * (
-            1 - blend_ratio) + char2.spectral_rolloff_mean * blend_ratio
-        blended.spectral_bandwidth_mean = char1.spectral_bandwidth_mean * \
-            (1 - blend_ratio) + char2.spectral_bandwidth_mean * blend_ratio
+        blended.spectral_centroid_mean = (
+            char1.spectral_centroid_mean * (1 - blend_ratio)
+            + char2.spectral_centroid_mean * blend_ratio
+        )
+        blended.spectral_rolloff_mean = (
+            char1.spectral_rolloff_mean * (1 - blend_ratio)
+            + char2.spectral_rolloff_mean * blend_ratio
+        )
+        blended.spectral_bandwidth_mean = (
+            char1.spectral_bandwidth_mean * (1 - blend_ratio)
+            + char2.spectral_bandwidth_mean * blend_ratio
+        )
 
         # Blend other characteristics
-        blended.breathiness = char1.breathiness * (
-            1 - blend_ratio) + char2.breathiness * blend_ratio
+        blended.breathiness = (
+            char1.breathiness * (1 - blend_ratio) + char2.breathiness * blend_ratio
+        )
         blended.nasality = char1.nasality * (1 - blend_ratio) + char2.nasality * blend_ratio
         blended.jitter = char1.jitter * (1 - blend_ratio) + char2.jitter * blend_ratio
         blended.shimmer = char1.shimmer * (1 - blend_ratio) + char2.shimmer * blend_ratio
-        blended.speaking_rate = char1.speaking_rate * (
-            1 - blend_ratio) + char2.speaking_rate * blend_ratio
+        blended.speaking_rate = (
+            char1.speaking_rate * (1 - blend_ratio) + char2.speaking_rate * blend_ratio
+        )
 
         # Blend confidence
         blended.confidence = (char1.confidence + char2.confidence) / 2
@@ -1066,10 +1042,7 @@ class ParrotVocalSynthesizer:
         blended_model = VoiceModel(
             name=output_name,
             characteristics=blended,
-            metadata={
-                'blended_from': [voice1_name, voice2_name],
-                'blend_ratio': blend_ratio
-            }
+            metadata={"blended_from": [voice1_name, voice2_name], "blend_ratio": blend_ratio},
         )
 
         self.voice_models[output_name] = blended_model
@@ -1087,10 +1060,7 @@ def _average_formants(formants_list: List[FormantData]) -> FormantData:
     avg_conf = np.mean([f.confidence for f in formants_list])
 
     return FormantData(
-        f1=float(avg_f1),
-        f2=float(avg_f2),
-        f3=float(avg_f3),
-        confidence=float(avg_conf)
+        f1=float(avg_f1), f2=float(avg_f2), f3=float(avg_f3), confidence=float(avg_conf)
     )
 
 
@@ -1107,11 +1077,7 @@ def train_parrot(audio_file: str, voice_name: str) -> VoiceModel:
     return parrot.train_parrot(audio_file, voice_name)
 
 
-def synthesize_vocal(
-    text: str,
-    voice_name: str,
-    output_file: Optional[str] = None
-) -> np.ndarray:
+def synthesize_vocal(text: str, voice_name: str, output_file: Optional[str] = None) -> np.ndarray:
     """Synthesize vocal audio using learned voice model."""
     parrot = ParrotVocalSynthesizer()
     return parrot.synthesize_vocal(text, voice_name, output_file)
@@ -1119,12 +1085,12 @@ def synthesize_vocal(
 
 def load_voice_model(file_path: str) -> VoiceModel:
     """Load a voice model from JSON file."""
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         data = json.load(f)
     return VoiceModel.from_dict(data)
 
 
 def save_voice_model(model: VoiceModel, file_path: str):
     """Save a voice model to JSON file."""
-    with open(file_path, 'w') as f:
+    with open(file_path, "w") as f:
         json.dump(model.to_dict(), f, indent=2)

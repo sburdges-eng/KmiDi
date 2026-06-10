@@ -47,6 +47,7 @@ def test_make_jepa_manifest_produces_valid_manifests(synthetic_dataset, tmp_path
         pytest.skip("lhotse required for JEPA manifest tests")
     import scripts.make_jepa_manifest as mod
     import argparse
+
     ns = argparse.Namespace(
         audio_root=audio_root,
         midi_root=midi_root,
@@ -65,7 +66,9 @@ def test_make_jepa_manifest_produces_valid_manifests(synthetic_dataset, tmp_path
     recordings, rec_custom_map = mod.build_recordings(pairs, audio_root, midi_root, cache)
     supervisions = mod.build_supervisions(pairs, audio_root, midi_root, recordings)
     cuts = mod.build_cuts(
-        recordings, supervisions, rec_custom_map,
+        recordings,
+        supervisions,
+        rec_custom_map,
         window_seconds=ns.window_seconds,
         stride_seconds=ns.stride_seconds,
         min_duration=ns.min_duration,
@@ -113,15 +116,21 @@ def test_make_jepa_manifest_cli(synthetic_dataset, tmp_path):
     out_dir = tmp_path / "manifests"
     # Run script
     import subprocess
+
     result = subprocess.run(
         [
             sys.executable,
             str(SCRIPTS / "make_jepa_manifest.py"),
-            "--audio-root", str(audio_root),
-            "--midi-root", str(midi_root),
-            "--out-dir", str(out_dir),
-            "--window-seconds", "2",
-            "--stride-seconds", "1",
+            "--audio-root",
+            str(audio_root),
+            "--midi-root",
+            str(midi_root),
+            "--out-dir",
+            str(out_dir),
+            "--window-seconds",
+            "2",
+            "--stride-seconds",
+            "1",
         ],
         cwd=str(PROJECT_ROOT),
         capture_output=True,
@@ -129,8 +138,7 @@ def test_make_jepa_manifest_cli(synthetic_dataset, tmp_path):
     )
     if result.returncode != 0:
         pytest.skip(
-            f"make_jepa_manifest.py failed (lhotse/soundfile not installed?): "
-            f"{result.stderr}",
+            f"make_jepa_manifest.py failed (lhotse/soundfile not installed?): " f"{result.stderr}",
         )
     assert result.returncode == 0
     assert (out_dir / "recordings.jsonl").exists()

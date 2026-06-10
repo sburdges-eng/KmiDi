@@ -16,6 +16,7 @@ from music_brain.theory.constants import NOTE_TO_MIDI
 
 class ChordQuality(Enum):
     """Chord quality types"""
+
     MAJOR = "major"
     MINOR = "minor"
     DIMINISHED = "diminished"
@@ -28,6 +29,7 @@ class ChordQuality(Enum):
 @dataclass
 class ChordAnalysis:
     """Analysis result for a single chord"""
+
     symbol: str  # Original chord symbol (e.g., "Bbm")
     root: str  # Root note (e.g., "Bb")
     quality: ChordQuality
@@ -41,6 +43,7 @@ class ChordAnalysis:
 @dataclass
 class ProgressionDiagnostic:
     """Complete diagnostic of a chord progression"""
+
     progression_string: str  # Original input
     chords: List[str]  # Chord symbols
     key: str
@@ -64,37 +67,34 @@ class ChordDiagnostics:
 
     # Scale intervals
     SCALES = {
-        'major': [0, 2, 4, 5, 7, 9, 11],
-        'natural_minor': [0, 2, 3, 5, 7, 8, 10],
-        'harmonic_minor': [0, 2, 3, 5, 7, 8, 11],
+        "major": [0, 2, 4, 5, 7, 9, 11],
+        "natural_minor": [0, 2, 3, 5, 7, 8, 10],
+        "harmonic_minor": [0, 2, 3, 5, 7, 8, 11],
     }
 
     # Diatonic chord qualities in major and minor
-    MAJOR_DIATONIC_QUALITIES = ['maj', 'min', 'min', 'maj', 'maj', 'min', 'dim']
-    MINOR_DIATONIC_QUALITIES = ['min', 'dim', 'maj', 'min', 'min', 'maj', 'maj']
+    MAJOR_DIATONIC_QUALITIES = ["maj", "min", "min", "maj", "maj", "min", "dim"]
+    MINOR_DIATONIC_QUALITIES = ["min", "dim", "maj", "min", "min", "maj", "maj"]
 
     # Roman numerals
-    MAJOR_ROMAN = ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii°']
-    MINOR_ROMAN = ['i', 'ii°', 'III', 'iv', 'v', 'VI', 'VII']
+    MAJOR_ROMAN = ["I", "ii", "iii", "IV", "V", "vi", "vii°"]
+    MINOR_ROMAN = ["i", "ii°", "III", "iv", "v", "VI", "VII"]
 
     # Emotional associations for common progressions
     EMOTIONAL_PATTERNS = {
-        'I-V-vi-IV': 'hopeful, pop ballad energy',
-        'I-IV-V-IV': 'triumphant, anthemic',
-        'i-VI-III-VII': 'dark, descending tragedy',
-        'I-V-vi-iii-IV-I-IV-V': 'Axis of Awesome, everything sounds like this',
-        'I-vi-IV-V': '50s progression, nostalgic doo-wop',
-        'i-VII-VI-V': 'Andalusian cadence, mysterious descent',
+        "I-V-vi-IV": "hopeful, pop ballad energy",
+        "I-IV-V-IV": "triumphant, anthemic",
+        "i-VI-III-VII": "dark, descending tragedy",
+        "I-V-vi-iii-IV-I-IV-V": "Axis of Awesome, everything sounds like this",
+        "I-vi-IV-V": "50s progression, nostalgic doo-wop",
+        "i-VII-VI-V": "Andalusian cadence, mysterious descent",
     }
 
     def __init__(self):
         """Initialize chord diagnostics"""
 
     def diagnose(
-        self,
-        progression_string: str,
-        key: str = "C",
-        mode: str = "major"
+        self, progression_string: str, key: str = "C", mode: str = "major"
     ) -> ProgressionDiagnostic:
         """
         Main diagnostic function - analyzes a chord progression.
@@ -113,13 +113,13 @@ class ChordDiagnostics:
             >>> print(result.roman_progression)  # "I-V-iv-I"
         """
         # Clean key notation (strip 'm' if present, e.g., "Am" -> "A")
-        clean_key = key.rstrip('m')
+        clean_key = key.rstrip("m")
 
         # Parse chord progression
         if self._is_roman_numeral_progression(progression_string):
             chords = self._roman_to_chords(progression_string, clean_key, mode)
         else:
-            chords = [c.strip() for c in progression_string.split('-')]
+            chords = [c.strip() for c in progression_string.split("-")]
 
         # Analyze each chord
         analyses = []
@@ -128,15 +128,13 @@ class ChordDiagnostics:
             analyses.append(analysis)
 
         # Build Roman numeral progression string
-        roman_progression = '-'.join([a.roman_numeral for a in analyses])
+        roman_progression = "-".join([a.roman_numeral for a in analyses])
 
         # Detect rule breaks
         rule_breaks = self._detect_rule_breaks(analyses, chords)
 
         # Determine emotional character
-        emotional_character = self._determine_emotional_character(
-            analyses, roman_progression
-        )
+        emotional_character = self._determine_emotional_character(analyses, roman_progression)
 
         # Generate suggestions
         suggestions = self._generate_suggestions(analyses, clean_key, mode, rule_breaks)
@@ -150,23 +148,25 @@ class ChordDiagnostics:
             roman_progression=roman_progression,
             rule_breaks=rule_breaks,
             emotional_character=emotional_character,
-            suggestions=suggestions
+            suggestions=suggestions,
         )
 
     def _is_roman_numeral_progression(self, prog: str) -> bool:
         """Check if string is Roman numerals vs chord symbols"""
         # Simple check: if it contains 'I', 'V', 'i', 'v', it's probably Roman
-        return any(numeral in prog
-                   for numeral in ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'i', 'v'])
+        return any(
+            numeral in prog for numeral in ["I", "II", "III", "IV", "V", "VI", "VII", "i", "v"]
+        )
 
     def _roman_to_chords(self, roman_prog: str, key: str, mode: str) -> List[str]:
         """Convert Roman numeral progression to chord symbols"""
         # Use the harmony generator's logic
         from music_brain.harmony_utils.harmony_generator import HarmonyGenerator
+
         gen = HarmonyGenerator()
-        roman_list = roman_prog.split('-')
+        roman_list = roman_prog.split("-")
         # Strip 'm' from key if present (e.g., "Am" -> "A")
-        clean_key = key.rstrip('m')
+        clean_key = key.rstrip("m")
         return gen._roman_to_chord_symbols(roman_list, clean_key, mode)
 
     def _parse_chord_symbol(self, chord: str) -> Tuple[str, ChordQuality]:
@@ -179,7 +179,7 @@ class ChordDiagnostics:
         chord = chord.strip()
 
         # Extract root (handle sharps/flats)
-        if len(chord) > 1 and chord[1] in ['#', 'b']:
+        if len(chord) > 1 and chord[1] in ["#", "b"]:
             root = chord[:2]
             quality_str = chord[2:]
         else:
@@ -187,31 +187,26 @@ class ChordDiagnostics:
             quality_str = chord[1:]
 
         # Determine quality
-        if quality_str == '' or quality_str.upper() == 'MAJ':
+        if quality_str == "" or quality_str.upper() == "MAJ":
             quality = ChordQuality.MAJOR
-        elif quality_str == 'm' or quality_str.upper() == 'MIN':
+        elif quality_str == "m" or quality_str.upper() == "MIN":
             quality = ChordQuality.MINOR
-        elif quality_str == 'dim' or quality_str == '°':
+        elif quality_str == "dim" or quality_str == "°":
             quality = ChordQuality.DIMINISHED
-        elif quality_str == 'aug' or quality_str == '+':
+        elif quality_str == "aug" or quality_str == "+":
             quality = ChordQuality.AUGMENTED
-        elif quality_str == '7':
+        elif quality_str == "7":
             quality = ChordQuality.DOMINANT7
-        elif quality_str == 'maj7' or quality_str == 'M7':
+        elif quality_str == "maj7" or quality_str == "M7":
             quality = ChordQuality.MAJOR7
-        elif quality_str == 'm7':
+        elif quality_str == "m7":
             quality = ChordQuality.MINOR7
         else:
             quality = ChordQuality.MAJOR  # Default
 
         return root, quality
 
-    def _analyze_chord(
-        self,
-        chord_symbol: str,
-        key: str,
-        mode: str
-    ) -> ChordAnalysis:
+    def _analyze_chord(self, chord_symbol: str, key: str, mode: str) -> ChordAnalysis:
         """Analyze a single chord in context of key"""
         root, quality = self._parse_chord_symbol(chord_symbol)
 
@@ -221,7 +216,7 @@ class ChordDiagnostics:
         semitones_from_root = (root_midi - key_midi) % 12
 
         # Find which scale degree this is
-        scale = self.SCALES['major'] if mode == 'major' else self.SCALES['natural_minor']
+        scale = self.SCALES["major"] if mode == "major" else self.SCALES["natural_minor"]
 
         try:
             scale_degree = scale.index(semitones_from_root)
@@ -230,13 +225,11 @@ class ChordDiagnostics:
             scale_degree = -1
 
         # Determine if diatonic
-        is_diatonic, borrowed_from = self._check_diatonic(
-            scale_degree, quality, mode
-        )
+        is_diatonic, borrowed_from = self._check_diatonic(scale_degree, quality, mode)
 
         # Get Roman numeral
         if scale_degree >= 0:
-            if mode == 'major':
+            if mode == "major":
                 roman_numeral = self.MAJOR_ROMAN[scale_degree]
                 expected_quality = self.MAJOR_DIATONIC_QUALITIES[scale_degree]
             else:
@@ -255,9 +248,7 @@ class ChordDiagnostics:
             borrowed_from = "chromatic"
 
         # Determine emotional function
-        emotional_function = self._get_emotional_function(
-            scale_degree, quality, is_diatonic, mode
-        )
+        emotional_function = self._get_emotional_function(scale_degree, quality, is_diatonic, mode)
 
         return ChordAnalysis(
             symbol=chord_symbol,
@@ -267,14 +258,11 @@ class ChordDiagnostics:
             scale_degree=scale_degree,
             is_diatonic=is_diatonic,
             borrowed_from=borrowed_from,
-            emotional_function=emotional_function
+            emotional_function=emotional_function,
         )
 
     def _check_diatonic(
-        self,
-        scale_degree: int,
-        quality: ChordQuality,
-        mode: str
+        self, scale_degree: int, quality: ChordQuality, mode: str
     ) -> Tuple[bool, Optional[str]]:
         """
         Check if chord quality matches diatonic expectation.
@@ -285,7 +273,7 @@ class ChordDiagnostics:
         if scale_degree < 0 or scale_degree >= 7:
             return False, "chromatic"
 
-        if mode == 'major':
+        if mode == "major":
             expected = self.MAJOR_DIATONIC_QUALITIES[scale_degree]
         else:
             expected = self.MINOR_DIATONIC_QUALITIES[scale_degree]
@@ -297,7 +285,7 @@ class ChordDiagnostics:
             return True, None
         else:
             # It's borrowed
-            if mode == 'major':
+            if mode == "major":
                 return False, "parallel minor (modal interchange)"
             else:
                 return False, "parallel major (modal interchange)"
@@ -305,21 +293,18 @@ class ChordDiagnostics:
     def _quality_to_string(self, quality: ChordQuality) -> str:
         """Convert ChordQuality enum to expected string"""
         if quality == ChordQuality.MAJOR:
-            return 'maj'
+            return "maj"
         elif quality == ChordQuality.MINOR:
-            return 'min'
+            return "min"
         elif quality == ChordQuality.DIMINISHED:
-            return 'dim'
+            return "dim"
         elif quality == ChordQuality.AUGMENTED:
-            return 'aug'
+            return "aug"
         else:
-            return 'maj'  # Default for 7ths
+            return "maj"  # Default for 7ths
 
     def _adjust_roman_for_borrowed(
-        self,
-        roman: str,
-        actual_quality: ChordQuality,
-        expected_quality: str
+        self, roman: str, actual_quality: ChordQuality, expected_quality: str
     ) -> str:
         """
         Adjust Roman numeral notation for borrowed chords.
@@ -327,25 +312,21 @@ class ChordDiagnostics:
         Example: iv in major key (borrowed from minor) stays as 'iv'
         """
         # If minor when should be major, use lowercase
-        if actual_quality == ChordQuality.MINOR and expected_quality == 'maj':
+        if actual_quality == ChordQuality.MINOR and expected_quality == "maj":
             return roman.lower()
         # If major when should be minor, use uppercase
-        elif actual_quality == ChordQuality.MAJOR and expected_quality == 'min':
+        elif actual_quality == ChordQuality.MAJOR and expected_quality == "min":
             return roman.upper()
         else:
             return roman
 
     def _semitones_to_degree(self, semitones: int) -> str:
         """Convert semitones to scale degree notation"""
-        degrees = ['I', '♭II', 'II', '♭III', 'III', 'IV', '♭V', 'V', '♭VI', 'VI', '♭VII', 'VII']
+        degrees = ["I", "♭II", "II", "♭III", "III", "IV", "♭V", "V", "♭VI", "VI", "♭VII", "VII"]
         return degrees[semitones % 12]
 
     def _get_emotional_function(
-        self,
-        scale_degree: int,
-        quality: ChordQuality,
-        is_diatonic: bool,
-        mode: str
+        self, scale_degree: int, quality: ChordQuality, is_diatonic: bool, mode: str
     ) -> str:
         """Determine emotional function of chord in context"""
         if not is_diatonic:
@@ -355,25 +336,25 @@ class ChordDiagnostics:
                 return "unexpected light, borrowed brightness"
 
         # Diatonic functions
-        if mode == 'major':
+        if mode == "major":
             functions = [
-                'home, resolution',  # I
-                'preparation, subdominant minor feel',  # ii
-                'mediant, bridge to relative minor',  # iii
-                'subdominant, away from home',  # IV
-                'dominant, tension seeking resolution',  # V
-                'relative minor, melancholy',  # vi
-                'leading tone diminished, unstable'  # vii°
+                "home, resolution",  # I
+                "preparation, subdominant minor feel",  # ii
+                "mediant, bridge to relative minor",  # iii
+                "subdominant, away from home",  # IV
+                "dominant, tension seeking resolution",  # V
+                "relative minor, melancholy",  # vi
+                "leading tone diminished, unstable",  # vii°
             ]
         else:
             functions = [
-                'home, minor tonic',  # i
-                'diminished supertonic, tension',  # ii°
-                'relative major, hopeful',  # III
-                'subdominant, darker preparation',  # iv
-                'minor dominant, softer tension',  # v
-                'submediant major, brighter color',  # VI
-                'subtonic major, modal flavor'  # VII
+                "home, minor tonic",  # i
+                "diminished supertonic, tension",  # ii°
+                "relative major, hopeful",  # III
+                "subdominant, darker preparation",  # iv
+                "minor dominant, softer tension",  # v
+                "submediant major, brighter color",  # VI
+                "subtonic major, modal flavor",  # VII
             ]
 
         if 0 <= scale_degree < len(functions):
@@ -381,20 +362,14 @@ class ChordDiagnostics:
 
         return "chromatic, unexpected"
 
-    def _detect_rule_breaks(
-        self,
-        analyses: List[ChordAnalysis],
-        chords: List[str]
-    ) -> List[str]:
+    def _detect_rule_breaks(self, analyses: List[ChordAnalysis], chords: List[str]) -> List[str]:
         """Detect rule-breaking patterns in the progression"""
         rule_breaks = []
 
         # Check for borrowed chords (modal interchange)
         borrowed_chords = [a for a in analyses if not a.is_diatonic and a.borrowed_from]
         if borrowed_chords:
-            borrowed_info = ', '.join([
-                f"{a.symbol} ({a.roman_numeral})" for a in borrowed_chords
-            ])
+            borrowed_info = ", ".join([f"{a.symbol} ({a.roman_numeral})" for a in borrowed_chords])
             rule_breaks.append(
                 f"HARMONY_ModalInterchange: {borrowed_info} - {borrowed_chords[0].borrowed_from}"
             )
@@ -410,17 +385,13 @@ class ChordDiagnostics:
 
         # Check for parallel motion (would need voice-leading analysis)
         # For now, detect power chord indicators
-        if all('5' in c or len(c) <= 2 for c in chords):
-            rule_breaks.append(
-                "HARMONY_ParallelMotion: Power chords (parallel fifths)"
-            )
+        if all("5" in c or len(c) <= 2 for c in chords):
+            rule_breaks.append("HARMONY_ParallelMotion: Power chords (parallel fifths)")
 
         return rule_breaks
 
     def _determine_emotional_character(
-        self,
-        analyses: List[ChordAnalysis],
-        roman_progression: str
+        self, analyses: List[ChordAnalysis], roman_progression: str
     ) -> str:
         """Determine overall emotional character of progression"""
         # Check for known emotional patterns
@@ -439,40 +410,31 @@ class ChordDiagnostics:
             return "chromatic, adventurous harmony"
 
     def _generate_suggestions(
-        self,
-        analyses: List[ChordAnalysis],
-        key: str,
-        mode: str,
-        rule_breaks: List[str]
+        self, analyses: List[ChordAnalysis], key: str, mode: str, rule_breaks: List[str]
     ) -> List[str]:
         """Generate suggestions for variations or improvements"""
         suggestions = []
 
         # Suggest modal interchange if not present
-        if not any('ModalInterchange' in rb for rb in rule_breaks):
-            if mode == 'major':
+        if not any("ModalInterchange" in rb for rb in rule_breaks):
+            if mode == "major":
                 suggestions.append(
-                    "Try modal interchange: Replace IV with iv "
-                    "for bittersweet color"
+                    "Try modal interchange: Replace IV with iv " "for bittersweet color"
                 )
             else:
                 suggestions.append(
-                    "Try modal interchange: Replace VI with ♭VI "
-                    "for darker descent"
+                    "Try modal interchange: Replace VI with ♭VI " "for darker descent"
                 )
 
         # Suggest resolution alternatives
         if analyses and analyses[-1].scale_degree == 0:
-            suggestions.append(
-                "Try avoiding resolution: End on V or vi for unresolved yearning"
-            )
+            suggestions.append("Try avoiding resolution: End on V or vi for unresolved yearning")
 
         # Suggest reharmonizations
-        roman_prog = '-'.join([a.roman_numeral for a in analyses])
-        if roman_prog == 'I-V-vi-IV':
+        roman_prog = "-".join([a.roman_numeral for a in analyses])
+        if roman_prog == "I-V-vi-IV":
             suggestions.append(
-                "Classic pop progression. Try: "
-                "I-V-vi-iii-IV-I-IV-V (Axis of Awesome)"
+                "Classic pop progression. Try: " "I-V-vi-iii-IV-I-IV-V (Axis of Awesome)"
             )
 
         return suggestions
@@ -488,10 +450,7 @@ def print_diagnostic_report(diagnostic: ProgressionDiagnostic):
     print(f"Roman Numerals: {diagnostic.roman_progression}")
     print(f"\nEmotional Character: {diagnostic.emotional_character}")
 
-    print(
-        f"\n{'CHORD':<10} {'ROMAN':<10} {'DIATONIC':<10} "
-        f"{'EMOTIONAL FUNCTION'}"
-    )
+    print(f"\n{'CHORD':<10} {'ROMAN':<10} {'DIATONIC':<10} " f"{'EMOTIONAL FUNCTION'}")
     print("-" * 70)
 
     for analysis in diagnostic.analyses:

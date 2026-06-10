@@ -33,6 +33,7 @@ from typing import Dict, List, Optional, Any
 @dataclass
 class TrainingResult:
     """Result from a training run."""
+
     model_name: str
     success: bool
     accuracy: float = 0.0
@@ -200,8 +201,10 @@ class M4TrainingOrchestrator:
             self.results[model_name] = result
 
             if result.success:
-                print(f"✅ {model_name}: Accuracy={result.accuracy:.2%}, "
-                      f"Time={result.training_time_seconds:.1f}s")
+                print(
+                    f"✅ {model_name}: Accuracy={result.accuracy:.2%}, "
+                    f"Time={result.training_time_seconds:.1f}s"
+                )
             else:
                 print(f"❌ {model_name}: {result.error_message}")
 
@@ -408,8 +411,9 @@ class M4TrainingOrchestrator:
 
             # Progress
             if (epoch + 1) % 10 == 0:
-                print(f"  Epoch {epoch + 1}/{epochs}: "
-                      f"loss={avg_val_loss:.4f}, acc={accuracy:.2%}")
+                print(
+                    f"  Epoch {epoch + 1}/{epochs}: " f"loss={avg_val_loss:.4f}, acc={accuracy:.2%}"
+                )
 
         checkpoint_path = Path(self.config.output_dir) / model_name / "best_model.pt"
 
@@ -503,9 +507,7 @@ class M4TrainingOrchestrator:
 
 def main():
     """CLI entry point."""
-    parser = argparse.ArgumentParser(
-        description="M4 Training Orchestrator for KmiDi ML Pipeline"
-    )
+    parser = argparse.ArgumentParser(description="M4 Training Orchestrator for KmiDi ML Pipeline")
 
     parser.add_argument(
         "--all",

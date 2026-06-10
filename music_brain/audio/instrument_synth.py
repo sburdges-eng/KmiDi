@@ -13,4 +13,5 @@ def synthesize_instruments_from_midi(
     sample_rate: int = 44100,
 ) -> str:
     return render_midi_to_audio(
-        midi_path=midi_path, output_path=output_wav_path, sample_rate=sample_rate)
+        midi_path=midi_path, output_path=output_wav_path, sample_rate=sample_rate
+    )

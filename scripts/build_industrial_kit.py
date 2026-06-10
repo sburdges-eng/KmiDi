@@ -9,6 +9,7 @@ from pathlib import Path
 
 try:
     from music_brain.audio.refinery import pipe_industrial, process_file
+
     HAS_REFINERY = True
 except ImportError:
     HAS_REFINERY = False
@@ -24,7 +25,7 @@ def refine_folder(input_dir: Path, output_dir: Path):
     if not HAS_REFINERY:
         print("❌ Audio refinery not available (missing dependencies)")
         return
-        
+
     if not input_dir.exists():
         print(f"❌ Raw directory missing: {input_dir}")
         print("   Drop your glitch/industrial samples there first.")
@@ -45,11 +46,11 @@ def refine_folder(input_dir: Path, output_dir: Path):
 
 def build_kit():
     print(f"🔨 Forging {KIT_NAME}...")
-    
+
     if not RAW_DIR.exists():
         print(f"❌ Create {RAW_DIR} and add your source samples first.")
         return
-    
+
     REFINED_DIR.mkdir(parents=True, exist_ok=True)
     refine_folder(RAW_DIR, REFINED_DIR)
 

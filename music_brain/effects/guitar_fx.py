@@ -55,7 +55,6 @@ from music_brain.effects.effects import (
     BitcrusherEffect,
 )
 
-
 # =============================================================================
 # CONSTANTS
 # =============================================================================
@@ -63,8 +62,14 @@ from music_brain.effects.effects import (
 EFFECT_CATEGORIES = {
     EffectCategory.DISTORTION: ["Distortion", "Overdrive", "Fuzz"],
     EffectCategory.MODULATION: [
-        "Chorus", "Flanger", "Phaser", "Tremolo", "Vibrato",
-        "Rotary", "Ring Mod", "Univibe",
+        "Chorus",
+        "Flanger",
+        "Phaser",
+        "Tremolo",
+        "Vibrato",
+        "Rotary",
+        "Ring Mod",
+        "Univibe",
     ],
     EffectCategory.TIME: ["Delay", "Reverb"],
     EffectCategory.DYNAMICS: ["Compressor", "Noise Gate"],
@@ -175,9 +180,11 @@ EMOTION_EFFECT_MAP = {
 # SIGNAL ROUTING
 # =============================================================================
 
+
 @dataclass
 class SignalPath:
     """A single signal path in the routing matrix."""
+
     source: str  # "input", effect name, or "aux_N"
     destination: str  # Effect name or "output"
     gain: float = 1.0
@@ -204,8 +211,9 @@ class SignalRouter:
 
     def remove_path(self, source: str, destination: str):
         """Remove a signal path."""
-        self.paths = [p for p in self.paths if not (
-            p.source == source and p.destination == destination)]
+        self.paths = [
+            p for p in self.paths if not (p.source == source and p.destination == destination)
+        ]
 
     def create_serial_chain(self, effects: List[str]):
         """Create a simple serial effect chain."""
@@ -263,9 +271,11 @@ class SignalRouter:
 # MODULATION MATRIX
 # =============================================================================
 
+
 @dataclass
 class ModulationRoute:
     """A single modulation routing."""
+
     source_name: str  # Name of ModulationSource
     target_effect: str  # Effect name
     target_param: str  # Parameter name
@@ -326,11 +336,7 @@ class ModulationMatrix:
             self.routes = [r for r in self.routes if r.source_name != name]
 
     def add_route(
-        self,
-        source_name: str,
-        target_effect: str,
-        target_param: str,
-        amount: float = 0.5
+        self, source_name: str, target_effect: str, target_param: str, amount: float = 0.5
     ) -> ModulationRoute:
         """Add a modulation route."""
         route = ModulationRoute(
@@ -345,7 +351,8 @@ class ModulationMatrix:
     def remove_route(self, source_name: str, target_effect: str, target_param: str):
         """Remove a modulation route."""
         self.routes = [
-            r for r in self.routes
+            r
+            for r in self.routes
             if not (
                 r.source_name == source_name
                 and r.target_effect == target_effect
@@ -395,6 +402,7 @@ class ModulationMatrix:
 # EFFECT CHAIN
 # =============================================================================
 
+
 class EffectChain:
     """
     A chain of effects with ordering and bypass.
@@ -439,8 +447,8 @@ class EffectChain:
             self.effects[effect_name].set_param(param_name, value)
 
     def process(
-            self, samples: List[float],
-            sample_rate: int, modulation: Optional[ModulationMatrix] = None) -> List[float]:
+        self, samples: List[float], sample_rate: int, modulation: Optional[ModulationMatrix] = None
+    ) -> List[float]:
         """Process audio through the chain."""
         if self.global_bypass:
             return samples
@@ -501,11 +509,13 @@ class EffectChain:
 # PRESET SYSTEM
 # =============================================================================
 
+
 @dataclass
 class EffectPreset:
     """
     A complete effect preset including chain, modulation, and routing.
     """
+
     name: str
     description: str = ""
     author: str = ""
@@ -553,6 +563,7 @@ class EffectPreset:
 # =============================================================================
 # MAIN ENGINE
 # =============================================================================
+
 
 class GuitarFXEngine:
     """
@@ -610,11 +621,7 @@ class GuitarFXEngine:
         self.chain.set_param(effect_name, param_name, value)
 
     def add_modulation(
-        self,
-        source_name: str,
-        effect_name: str,
-        param_name: str,
-        amount: float = 0.5
+        self, source_name: str, effect_name: str, param_name: str, amount: float = 0.5
     ):
         """Add a modulation route."""
         self.modulation.add_route(source_name, effect_name, param_name, amount)
@@ -748,6 +755,7 @@ class GuitarFXEngine:
 # UTILITY FUNCTIONS
 # =============================================================================
 
+
 def create_preset_from_emotion(emotion: str, intensity: float = 1.0) -> EffectPreset:
     """
     Create a complete preset based on emotion.
@@ -775,10 +783,12 @@ def get_effect_suggestions(emotion: str) -> List[Dict[str, Any]]:
 
     result = []
     for effect_type, params in suggestions.items():
-        result.append({
-            "effect": effect_type,
-            "params": params,
-            "reason": f"Complements {emotion} emotional quality",
-        })
+        result.append(
+            {
+                "effect": effect_type,
+                "params": params,
+                "reason": f"Complements {emotion} emotional quality",
+            }
+        )
 
     return result

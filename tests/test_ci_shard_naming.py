@@ -2,6 +2,7 @@
 
 Validates against the fixture package in tests/fixtures/ci_package/.
 """
+
 from __future__ import annotations
 
 import json
@@ -66,7 +67,8 @@ class ShardNamingTest(unittest.TestCase):
                     )
                     self.assertTrue(
                         filename.endswith(EXPECTED_SUFFIX[compression]),
-                        f"{task_dir.name}/{filename}: extension must match compression '{compression}'",
+                        f"{task_dir.name}/{filename}: extension must match compression "
+                        f"'{compression}'",
                     )
 
     def test_checksums_covers_all_shards(self) -> None:

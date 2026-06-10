@@ -38,8 +38,8 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 # Fixed I/O shapes (batch=1 for C++ plugin)
-INPUT_SHAPE = (1, 256)   # (batch, latent_dim)
-OUTPUT_SHAPE = (1, 2)    # (batch, [valence, arousal])
+INPUT_SHAPE = (1, 256)  # (batch, latent_dim)
+OUTPUT_SHAPE = (1, 2)  # (batch, [valence, arousal])
 
 
 @dataclass
@@ -60,7 +60,10 @@ def load_probe(checkpoint_path: Path) -> tuple[EmotionProbe, dict]:
     probe.eval()
     logger.info(
         "Loaded probe: epoch=%d, val_loss=%.6f, latent_dim=%d, hidden_dim=%d",
-        ckpt.get("epoch", -1), ckpt.get("val_loss", float("nan")), latent_dim, hidden_dim,
+        ckpt.get("epoch", -1),
+        ckpt.get("val_loss", float("nan")),
+        latent_dim,
+        hidden_dim,
     )
     return probe, ckpt
 
@@ -160,6 +163,7 @@ def benchmark_model(model_path: Path, is_coreml: bool = False, iterations: int =
 
     if is_coreml:
         import coremltools as ct
+
         model = ct.models.MLModel(str(model_path))
         # Warmup
         for _ in range(20):
@@ -172,6 +176,7 @@ def benchmark_model(model_path: Path, is_coreml: bool = False, iterations: int =
         runtime_name = "Core ML"
     else:
         import onnxruntime as ort
+
         sess = ort.InferenceSession(str(model_path))
         # Warmup
         for _ in range(20):
@@ -192,9 +197,7 @@ def benchmark_model(model_path: Path, is_coreml: bool = False, iterations: int =
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Export trained EmotionProbe to ONNX and Core ML."
-    )
+    parser = argparse.ArgumentParser(description="Export trained EmotionProbe to ONNX and Core ML.")
     parser.add_argument(
         "--checkpoint",
         type=Path,

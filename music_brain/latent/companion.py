@@ -49,7 +49,6 @@ from music_brain.latent.retrieval import LatentMemory
 from music_brain.latent.rollback import RollbackRing
 from music_brain.world_model import WorldModel
 
-
 _MOOD_TABLE: dict[str, tuple[float, float, float]] = {
     # mood -> (tempo_bias, rhythmic_density, dynamic_range)
     "energetic": (0.4, 0.8, 0.7),

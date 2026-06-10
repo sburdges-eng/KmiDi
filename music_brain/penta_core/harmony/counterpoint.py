@@ -16,15 +16,17 @@ from enum import Enum
 
 class Species(Enum):
     """Counterpoint species."""
-    FIRST = 1   # Note against note
+
+    FIRST = 1  # Note against note
     SECOND = 2  # 2:1 ratio
-    THIRD = 3   # 4:1 ratio
+    THIRD = 3  # 4:1 ratio
     FOURTH = 4  # Syncopation/suspensions
-    FIFTH = 5   # Florid (mixed)
+    FIFTH = 5  # Florid (mixed)
 
 
 class Motion(Enum):
     """Types of melodic motion."""
+
     CONTRARY = "contrary"
     SIMILAR = "similar"
     PARALLEL = "parallel"
@@ -33,9 +35,10 @@ class Motion(Enum):
 
 class Interval(Enum):
     """Interval classifications."""
-    PERFECT_CONSONANCE = "perfect"    # Unison, 5th, octave
+
+    PERFECT_CONSONANCE = "perfect"  # Unison, 5th, octave
     IMPERFECT_CONSONANCE = "imperfect"  # 3rd, 6th
-    DISSONANCE = "dissonance"         # 2nd, 4th, 7th, tritone
+    DISSONANCE = "dissonance"  # 2nd, 4th, 7th, tritone
 
 
 # Interval mappings (in semitones)
@@ -47,6 +50,7 @@ DISSONANCES = {1, 2, 5, 6, 10, 11}  # m2, M2, P4, tritone, m7, M7
 @dataclass
 class CounterpointVoice:
     """A voice in counterpoint."""
+
     notes: List[int]  # MIDI note numbers
     durations: List[float] = field(default_factory=list)  # In beats
     is_cantus_firmus: bool = False
@@ -80,6 +84,7 @@ class CounterpointVoice:
 @dataclass
 class CounterpointRule:
     """A counterpoint rule."""
+
     name: str
     description: str
     applies_to: List[Species]
@@ -175,40 +180,48 @@ def check_counterpoint_rules(
 
         # Parallel fifths
         if curr_interval == 7 and next_interval == 7 and motion == Motion.PARALLEL:
-            violations.append({
-                "rule": "no_parallel_fifths",
-                "position": i,
-                "severity": "error",
-                "description": f"Parallel fifths at position {i}",
-            })
+            violations.append(
+                {
+                    "rule": "no_parallel_fifths",
+                    "position": i,
+                    "severity": "error",
+                    "description": f"Parallel fifths at position {i}",
+                }
+            )
 
         # Parallel octaves
         if curr_interval in [0, 12] and next_interval in [0, 12] and motion == Motion.PARALLEL:
-            violations.append({
-                "rule": "no_parallel_octaves",
-                "position": i,
-                "severity": "error",
-                "description": f"Parallel octaves at position {i}",
-            })
+            violations.append(
+                {
+                    "rule": "no_parallel_octaves",
+                    "position": i,
+                    "severity": "error",
+                    "description": f"Parallel octaves at position {i}",
+                }
+            )
 
         # Direct fifths
         if next_interval == 7 and motion == Motion.SIMILAR:
-            violations.append({
-                "rule": "no_direct_fifths",
-                "position": i,
-                "severity": "warning",
-                "description": f"Direct fifth at position {i}",
-            })
+            violations.append(
+                {
+                    "rule": "no_direct_fifths",
+                    "position": i,
+                    "severity": "warning",
+                    "description": f"Direct fifth at position {i}",
+                }
+            )
 
         # Check for large leaps
         cp_leap = abs(counterpoint.notes[i + 1] - counterpoint.notes[i])
         if cp_leap > 5:  # More than a 4th
-            violations.append({
-                "rule": "stepwise_motion",
-                "position": i,
-                "severity": "warning",
-                "description": f"Large leap ({cp_leap} semitones) at position {i}",
-            })
+            violations.append(
+                {
+                    "rule": "stepwise_motion",
+                    "position": i,
+                    "severity": "warning",
+                    "description": f"Large leap ({cp_leap} semitones) at position {i}",
+                }
+            )
 
     # Check consonance on downbeats
     for i in range(min_len):
@@ -218,12 +231,14 @@ def check_counterpoint_rules(
         # First and last notes should be perfect consonances
         if i == 0 or i == min_len - 1:
             if interval_type != Interval.PERFECT_CONSONANCE:
-                violations.append({
-                    "rule": "perfect_cadence",
-                    "position": i,
-                    "severity": "error",
-                    "description": "First/last interval should be perfect consonance",
-                })
+                violations.append(
+                    {
+                        "rule": "perfect_cadence",
+                        "position": i,
+                        "severity": "error",
+                        "description": "First/last interval should be perfect consonance",
+                    }
+                )
 
     return violations
 
@@ -390,6 +405,9 @@ def analyze_counterpoint(
         "motion_counts": motion_counts,
         "interval_counts": interval_counts,
         "consonance_ratio": (
-            interval_counts.get("perfect", 0) + interval_counts.get("imperfect", 0)
-        ) / len(interval_types) if interval_types else 0,
+            (interval_counts.get("perfect", 0) + interval_counts.get("imperfect", 0))
+            / len(interval_types)
+            if interval_types
+            else 0
+        ),
     }

@@ -16,6 +16,7 @@ from enum import Enum
 
 class Genre(Enum):
     """Musical genres."""
+
     POP = "pop"
     ROCK = "rock"
     JAZZ = "jazz"
@@ -29,6 +30,7 @@ class Genre(Enum):
 @dataclass
 class ChordPrediction:
     """Predicted next chord."""
+
     chord: str
     score: float
     reasons: List[str]
@@ -40,19 +42,19 @@ class ProbabilisticHarmonyEngine:
     # Common progressions by genre
     PROGRESSIONS = {
         Genre.POP: [
-            ['I', 'V', 'vi', 'IV'],  # 50s progression
-            ['vi', 'IV', 'I', 'V'],  # Pop punk
-            ['I', 'vi', 'IV', 'V'],  # Classic pop
+            ["I", "V", "vi", "IV"],  # 50s progression
+            ["vi", "IV", "I", "V"],  # Pop punk
+            ["I", "vi", "IV", "V"],  # Classic pop
         ],
         Genre.ROCK: [
-            ['I', 'IV', 'V', 'I'],
-            ['I', 'bVII', 'IV', 'I'],
-            ['i', 'bVII', 'bVI', 'bVII'],
+            ["I", "IV", "V", "I"],
+            ["I", "bVII", "IV", "I"],
+            ["i", "bVII", "bVI", "bVII"],
         ],
         Genre.JAZZ: [
-            ['ii', 'V', 'I'],
-            ['iii', 'vi', 'ii', 'V'],
-            ['I', 'vi', 'ii', 'V'],
+            ["ii", "V", "I"],
+            ["iii", "vi", "ii", "V"],
+            ["I", "vi", "ii", "V"],
         ],
     }
 
@@ -61,13 +63,11 @@ class ProbabilisticHarmonyEngine:
         self.cadence = CadenceDetector()
 
     def suggest_next_chord(
-        self,
-        progression: List[str],
-        prefer_resolution: bool = False
+        self, progression: List[str], prefer_resolution: bool = False
     ) -> List[Dict]:
         """Suggest next chord based on progression."""
         if not progression:
-            return [{'chord': 'I', 'score': 1.0, 'reasons': ['start']}]
+            return [{"chord": "I", "score": 1.0, "reasons": ["start"]}]
 
         # Get genre-specific progressions
         genre_progs = self.PROGRESSIONS.get(self.genre, self.PROGRESSIONS[Genre.POP])
@@ -77,36 +77,36 @@ class ProbabilisticHarmonyEngine:
         # Find matching progressions
         for prog in genre_progs:
             for i in range(len(prog)):
-                if progression == prog[:i+1]:
+                if progression == prog[: i + 1]:
                     if i + 1 < len(prog):
                         next_chord = prog[i + 1]
-                        suggestions.append({
-                            'chord': next_chord,
-                            'score': 0.8,
-                            'reasons': [f'follows {self.genre.value} pattern']
-                        })
+                        suggestions.append(
+                            {
+                                "chord": next_chord,
+                                "score": 0.8,
+                                "reasons": [f"follows {self.genre.value} pattern"],
+                            }
+                        )
 
         # Default suggestions if no match
         if not suggestions:
-            last = progression[-1] if progression else 'I'
+            last = progression[-1] if progression else "I"
 
             # Common resolutions
             resolutions = {
-                'V': ['I', 'vi'],
-                'vi': ['IV', 'V'],
-                'IV': ['I', 'V'],
-                'ii': ['V', 'vi'],
+                "V": ["I", "vi"],
+                "vi": ["IV", "V"],
+                "IV": ["I", "V"],
+                "ii": ["V", "vi"],
             }
 
-            for chord, score in resolutions.get(last, [('I', 0.5)]):
-                suggestions.append({
-                    'chord': chord,
-                    'score': score,
-                    'reasons': ['common resolution']
-                })
+            for chord, score in resolutions.get(last, [("I", 0.5)]):
+                suggestions.append(
+                    {"chord": chord, "score": score, "reasons": ["common resolution"]}
+                )
 
         # Sort by score
-        suggestions.sort(key=lambda x: x['score'], reverse=True)
+        suggestions.sort(key=lambda x: x["score"], reverse=True)
         return suggestions[:5]
 
 
@@ -114,10 +114,10 @@ class CadenceDetector:
     """Detect cadences in chord progressions."""
 
     CADENCE_PATTERNS = {
-        'authentic': ['V', 'I'],
-        'plagal': ['IV', 'I'],
-        'deceptive': ['V', 'vi'],
-        'half': ['I', 'V'],
+        "authentic": ["V", "I"],
+        "plagal": ["IV", "I"],
+        "deceptive": ["V", "vi"],
+        "half": ["I", "V"],
     }
 
     def detect_cadence(self, progression: List[str]) -> Optional[Dict]:
@@ -129,11 +129,7 @@ class CadenceDetector:
 
         for name, pattern in self.CADENCE_PATTERNS.items():
             if last_two == pattern:
-                return {
-                    'name': name,
-                    'chords': last_two,
-                    'strength': 1.0
-                }
+                return {"name": name, "chords": last_two, "strength": 1.0}
 
         return None
 
@@ -152,8 +148,7 @@ class VoiceLeadingAnalyzer:
         count = 0
 
         for prev_pc in prev_voicing:
-            min_distance = min(abs((curr_pc - prev_pc) % 12)
-                               for curr_pc in curr_voicing)
+            min_distance = min(abs((curr_pc - prev_pc) % 12) for curr_pc in curr_voicing)
             total_distance += min_distance
             count += 1
 
@@ -176,8 +171,7 @@ class VoiceLeadingAnalyzer:
             result = []
             for prev_pc in prev_voicing:
                 # Find closest target PC
-                closest = min(target_list,
-                              key=lambda pc: abs((pc - prev_pc) % 12))
+                closest = min(target_list, key=lambda pc: abs((pc - prev_pc) % 12))
                 result.append(closest)
             return result
 
@@ -187,8 +181,8 @@ class VoiceLeadingAnalyzer:
 class TensionResolutionAnalyzer:
     """Analyze tension and resolution in harmony."""
 
-    TENSION_CHORDS = {'V', 'vii°', 'ii', 'iv'}
-    RESOLUTION_CHORDS = {'I', 'i', 'vi', 'VI'}
+    TENSION_CHORDS = {"V", "vii°", "ii", "iv"}
+    RESOLUTION_CHORDS = {"I", "i", "vi", "VI"}
 
     def chord_tension(self, intervals: Set[int]) -> float:
         """Calculate tension level of chord (0-1)."""
@@ -200,5 +194,4 @@ class TensionResolutionAnalyzer:
 
     def is_resolution(self, prev_chord: str, curr_chord: str) -> bool:
         """Check if progression is a resolution."""
-        return (prev_chord in self.TENSION_CHORDS and
-                curr_chord in self.RESOLUTION_CHORDS)
+        return prev_chord in self.TENSION_CHORDS and curr_chord in self.RESOLUTION_CHORDS

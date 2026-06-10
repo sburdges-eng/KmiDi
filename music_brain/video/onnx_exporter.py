@@ -75,7 +75,7 @@ class ONNXModelExporter:
         self,
         model: Any,  # torch.nn.Module
         output_path: Path,
-        sample_input: Optional[np.ndarray] = None
+        sample_input: Optional[np.ndarray] = None,
     ) -> bool:
         """
         Export a PyTorch model to ONNX format.
@@ -120,11 +120,7 @@ class ONNXModelExporter:
         print(f"PyTorch export to {output_path} - stub implementation")
         return False
 
-    def export_tensorflow_model(
-        self,
-        model: Any,  # tf.keras.Model
-        output_path: Path
-    ) -> bool:
+    def export_tensorflow_model(self, model: Any, output_path: Path) -> bool:  # tf.keras.Model
         """
         Export a TensorFlow/Keras model to ONNX format.
 
@@ -162,11 +158,7 @@ class ONNXModelExporter:
         print(f"TensorFlow export to {output_path} - stub implementation")
         return False
 
-    def export_numpy_weights(
-        self,
-        weights: Dict[str, np.ndarray],
-        output_path: Path
-    ) -> bool:
+    def export_numpy_weights(self, weights: Dict[str, np.ndarray], output_path: Path) -> bool:
         """
         Export NumPy weight matrices to ONNX format.
 
@@ -192,11 +184,7 @@ class ONNXModelExporter:
         print(f"NumPy weights export to {output_path} - stub implementation")
         return False
 
-    def optimize_onnx_model(
-        self,
-        input_path: Path,
-        output_path: Path
-    ) -> bool:
+    def optimize_onnx_model(self, input_path: Path, output_path: Path) -> bool:
         """
         Optimize an ONNX model for inference.
 
@@ -233,11 +221,7 @@ class ONNXModelExporter:
         print(f"Optimization {input_path} → {output_path} - stub implementation")
         return False
 
-    def quantize_onnx_model(
-        self,
-        input_path: Path,
-        output_path: Path
-    ) -> bool:
+    def quantize_onnx_model(self, input_path: Path, output_path: Path) -> bool:
         """
         Quantize an ONNX model for faster inference.
 
@@ -268,10 +252,7 @@ class ONNXModelExporter:
         print(f"Quantization {input_path} → {output_path} - stub implementation")
         return False
 
-    def validate_onnx_model(
-        self,
-        model_path: Path
-    ) -> Tuple[bool, str]:
+    def validate_onnx_model(self, model_path: Path) -> Tuple[bool, str]:
         """
         Validate an ONNX model.
 
@@ -293,10 +274,7 @@ class ONNXModelExporter:
         except Exception as e:
             return False, str(e)
 
-    def get_model_info(
-        self,
-        model_path: Path
-    ) -> Optional[Dict[str, Any]]:
+    def get_model_info(self, model_path: Path) -> Optional[Dict[str, Any]]:
         """
         Get information about an ONNX model.
 
@@ -317,19 +295,23 @@ class ONNXModelExporter:
             # Extract input/output info
             inputs = []
             for inp in model.graph.input:
-                inputs.append({
-                    "name": inp.name,
-                    "shape": [dim.dim_value for dim in inp.type.tensor_type.shape.dim],
-                    "dtype": inp.type.tensor_type.elem_type
-                })
+                inputs.append(
+                    {
+                        "name": inp.name,
+                        "shape": [dim.dim_value for dim in inp.type.tensor_type.shape.dim],
+                        "dtype": inp.type.tensor_type.elem_type,
+                    }
+                )
 
             outputs = []
             for out in model.graph.output:
-                outputs.append({
-                    "name": out.name,
-                    "shape": [dim.dim_value for dim in out.type.tensor_type.shape.dim],
-                    "dtype": out.type.tensor_type.elem_type
-                })
+                outputs.append(
+                    {
+                        "name": out.name,
+                        "shape": [dim.dim_value for dim in out.type.tensor_type.shape.dim],
+                        "dtype": out.type.tensor_type.elem_type,
+                    }
+                )
 
             return {
                 "inputs": inputs,
@@ -343,9 +325,7 @@ class ONNXModelExporter:
 
 
 def export_emotion_visual_model(
-    model: Any,
-    output_dir: Path,
-    model_name: str = "emotion_visual_mapper"
+    model: Any, output_dir: Path, model_name: str = "emotion_visual_mapper"
 ) -> bool:
     """
     Convenience function to export emotion-visual model to ONNX.
@@ -371,7 +351,7 @@ def export_emotion_visual_model(
         output_dim=256,
         opset_version=17,  # Compatible with UE5
         optimize=True,
-        output_dir=output_dir
+        output_dir=output_dir,
     )
 
     exporter = ONNXModelExporter(config)
@@ -382,6 +362,7 @@ def export_emotion_visual_model(
     # Try PyTorch first
     try:
         import torch
+
         if isinstance(model, torch.nn.Module):
             return exporter.export_pytorch_model(model, output_path)
     except ImportError:
@@ -390,6 +371,7 @@ def export_emotion_visual_model(
     # Try TensorFlow
     try:
         import tensorflow as tf
+
         if isinstance(model, tf.keras.Model):
             return exporter.export_tensorflow_model(model, output_path)
     except ImportError:

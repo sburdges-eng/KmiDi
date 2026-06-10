@@ -15,6 +15,7 @@ import json
 @dataclass
 class GrooveTemplate:
     """Simplified groove template for storage and application"""
+
     name: str
     tempo_bpm: float
     swing_percentage: float
@@ -25,28 +26,28 @@ class GrooveTemplate:
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON storage"""
         return {
-            'name': self.name,
-            'tempo_bpm': self.tempo_bpm,
-            'swing_percentage': self.swing_percentage,
-            'push_pull': self.push_pull,
-            'velocity_map': self.velocity_map,
-            'accent_pattern': self.accent_pattern
+            "name": self.name,
+            "tempo_bpm": self.tempo_bpm,
+            "swing_percentage": self.swing_percentage,
+            "push_pull": self.push_pull,
+            "velocity_map": self.velocity_map,
+            "accent_pattern": self.accent_pattern,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'GrooveTemplate':
+    def from_dict(cls, data: dict) -> "GrooveTemplate":
         """Load from dictionary"""
         return cls(**data)
 
     def save(self, path: str):
         """Save template to JSON file"""
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
-    def load(cls, path: str) -> 'GrooveTemplate':
+    def load(cls, path: str) -> "GrooveTemplate":
         """Load template from JSON file"""
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             data = json.load(f)
         return cls.from_dict(data)
 
@@ -64,45 +65,45 @@ class GrooveApplicator:
 
     # Genre groove templates (built-in)
     GENRE_TEMPLATES = {
-        'funk': GrooveTemplate(
-            name='funk_pocket',
+        "funk": GrooveTemplate(
+            name="funk_pocket",
             tempo_bpm=95,
             swing_percentage=58,
-            push_pull={'kick': 15, 'snare': -5, 'hihat': -10},
-            velocity_map={'kick': 100, 'snare': 110, 'hihat': 70},
-            accent_pattern=[0, 8]  # Beats 1 and 3
+            push_pull={"kick": 15, "snare": -5, "hihat": -10},
+            velocity_map={"kick": 100, "snare": 110, "hihat": 70},
+            accent_pattern=[0, 8],  # Beats 1 and 3
         ),
-        'boom_bap': GrooveTemplate(
-            name='boom_bap_pocket',
+        "boom_bap": GrooveTemplate(
+            name="boom_bap_pocket",
             tempo_bpm=92,
             swing_percentage=54,
-            push_pull={'kick': 10, 'snare': 5, 'hihat': -8},
-            velocity_map={'kick': 110, 'snare': 115, 'hihat': 60},
-            accent_pattern=[4, 12]  # Snare hits (beats 2 and 4)
+            push_pull={"kick": 10, "snare": 5, "hihat": -8},
+            velocity_map={"kick": 110, "snare": 115, "hihat": 60},
+            accent_pattern=[4, 12],  # Snare hits (beats 2 and 4)
         ),
-        'dilla': GrooveTemplate(
-            name='dilla_swing',
+        "dilla": GrooveTemplate(
+            name="dilla_swing",
             tempo_bpm=88,
             swing_percentage=62,
-            push_pull={'kick': 20, 'snare': -10, 'hihat': -15},
-            velocity_map={'kick': 105, 'snare': 100, 'hihat': 55},
-            accent_pattern=[0, 6, 12]  # Uneven accents
+            push_pull={"kick": 20, "snare": -10, "hihat": -15},
+            velocity_map={"kick": 105, "snare": 100, "hihat": 55},
+            accent_pattern=[0, 6, 12],  # Uneven accents
         ),
-        'straight': GrooveTemplate(
-            name='straight_quantized',
+        "straight": GrooveTemplate(
+            name="straight_quantized",
             tempo_bpm=120,
             swing_percentage=50,
-            push_pull={'kick': 0, 'snare': 0, 'hihat': 0},
-            velocity_map={'kick': 100, 'snare': 100, 'hihat': 80},
-            accent_pattern=[0, 4, 8, 12]  # Every beat
+            push_pull={"kick": 0, "snare": 0, "hihat": 0},
+            velocity_map={"kick": 100, "snare": 100, "hihat": 80},
+            accent_pattern=[0, 4, 8, 12],  # Every beat
         ),
-        'trap': GrooveTemplate(
-            name='trap_rolls',
+        "trap": GrooveTemplate(
+            name="trap_rolls",
             tempo_bpm=140,
             swing_percentage=51,
-            push_pull={'kick': 0, 'snare': 0, 'hihat': 2},
-            velocity_map={'kick': 110, 'snare': 105, 'hihat': 75},
-            accent_pattern=[0, 8]  # Kicks on 1 and 3
+            push_pull={"kick": 0, "snare": 0, "hihat": 2},
+            velocity_map={"kick": 110, "snare": 105, "hihat": 75},
+            accent_pattern=[0, 8],  # Kicks on 1 and 3
         ),
     }
 
@@ -120,7 +121,7 @@ class GrooveApplicator:
         input_midi_path: str,
         output_midi_path: str,
         groove: GrooveTemplate,
-        intensity: float = 1.0
+        intensity: float = 1.0,
     ):
         """
         Apply groove template to MIDI file.
@@ -150,11 +151,9 @@ class GrooveApplicator:
             for msg in track:
                 current_time += msg.time
 
-                if msg.type in ['note_on', 'note_off']:
+                if msg.type in ["note_on", "note_off"]:
                     # Apply groove transformations
-                    new_msg = self._apply_groove_to_note(
-                        msg, current_time, groove, intensity
-                    )
+                    new_msg = self._apply_groove_to_note(msg, current_time, groove, intensity)
                     pending_notes.append((current_time, new_msg))
                 else:
                     # Copy non-note messages as-is
@@ -177,33 +176,23 @@ class GrooveApplicator:
         print(f"  Swing: {groove.swing_percentage:.1f}%")
         print(f"  Intensity: {intensity * 100:.0f}%")
 
-    def _apply_groove_to_note(
-        self,
-        msg,
-        time: int,
-        groove: GrooveTemplate,
-        intensity: float
-    ):
+    def _apply_groove_to_note(self, msg, time: int, groove: GrooveTemplate, intensity: float):
         """Apply groove transformations to a single note"""
         new_msg = msg.copy()
 
         # Only process note_on with velocity > 0
-        if msg.type != 'note_on' or msg.velocity == 0:
+        if msg.type != "note_on" or msg.velocity == 0:
             return new_msg
 
         # Get note category
         note_cat = self._categorize_note(msg.note)
 
         # Apply timing adjustment (swing + push/pull)
-        _ = self._apply_timing(  # noqa: F841
-            time, note_cat, groove, intensity
-        )
+        _ = self._apply_timing(time, note_cat, groove, intensity)  # noqa: F841
 
         # Apply velocity adjustment
-        if msg.type == 'note_on' and msg.velocity > 0:
-            new_msg.velocity = self._apply_velocity(
-                msg.velocity, time, note_cat, groove, intensity
-            )
+        if msg.type == "note_on" and msg.velocity > 0:
+            new_msg.velocity = self._apply_velocity(msg.velocity, time, note_cat, groove, intensity)
 
         return new_msg
 
@@ -214,20 +203,16 @@ class GrooveApplicator:
         HIHAT_NOTES = [42, 44, 46]
 
         if note in KICK_NOTES:
-            return 'kick'
+            return "kick"
         elif note in SNARE_NOTES:
-            return 'snare'
+            return "snare"
         elif note in HIHAT_NOTES:
-            return 'hihat'
+            return "hihat"
         else:
-            return 'other'
+            return "other"
 
     def _apply_timing(
-        self,
-        time: int,
-        note_category: str,
-        groove: GrooveTemplate,
-        intensity: float
+        self, time: int, note_category: str, groove: GrooveTemplate, intensity: float
     ) -> int:
         """
         Apply timing adjustments (swing + push/pull).
@@ -261,12 +246,7 @@ class GrooveApplicator:
         return time + adjustment_ticks
 
     def _apply_velocity(
-        self,
-        velocity: int,
-        time: int,
-        note_category: str,
-        groove: GrooveTemplate,
-        intensity: float
+        self, velocity: int, time: int, note_category: str, groove: GrooveTemplate, intensity: float
     ) -> int:
         """Apply velocity adjustments (humanization + accents)"""
         # Start with base velocity for this note type
@@ -276,9 +256,7 @@ class GrooveApplicator:
             base_velocity = velocity
 
         # Blend original with groove velocity based on intensity
-        blended_velocity = int(
-            velocity * (1 - intensity) + base_velocity * intensity
-        )
+        blended_velocity = int(velocity * (1 - intensity) + base_velocity * intensity)
 
         # Check if this beat should be accented
         beat_position = (time / self.ppq) % 4
@@ -290,6 +268,7 @@ class GrooveApplicator:
 
         # Apply slight random humanization (±5 velocity)
         import random
+
         humanization = random.randint(-5, 5)
         blended_velocity += int(humanization * intensity)
 
@@ -309,9 +288,11 @@ class GrooveApplicator:
 # GENRE TEMPLATE LIBRARY
 # ============================================================================
 
+
 def create_genre_library(output_dir: str = "/mnt/user-data/outputs/groove_templates"):
     """Create a library of genre groove templates"""
     import os
+
     os.makedirs(output_dir, exist_ok=True)
 
     applicator = GrooveApplicator()
@@ -350,7 +331,7 @@ if __name__ == "__main__":
     mid.tracks.append(track)
 
     tempo = mido.bpm2tempo(95)
-    track.append(mido.MetaMessage('set_tempo', tempo=tempo))
+    track.append(mido.MetaMessage("set_tempo", tempo=tempo))
 
     ppq = mid.ticks_per_beat
     sixteenth = ppq // 4
@@ -359,19 +340,19 @@ if __name__ == "__main__":
     # K-h-K-h-S-h-K-h (repeat)
     pattern = [
         (36, 100),  # Kick
-        (42, 80),   # Hihat
+        (42, 80),  # Hihat
         (36, 100),  # Kick
-        (42, 80),   # Hihat
+        (42, 80),  # Hihat
         (38, 100),  # Snare
-        (42, 80),   # Hihat
+        (42, 80),  # Hihat
         (36, 100),  # Kick
-        (42, 80),   # Hihat
+        (42, 80),  # Hihat
     ]
 
     # Add notes (perfectly quantized)
     for note, velocity in pattern * 4:  # 4 bars
-        track.append(mido.Message('note_on', note=note, velocity=velocity, time=0))
-        track.append(mido.Message('note_off', note=note, velocity=0, time=sixteenth))
+        track.append(mido.Message("note_on", note=note, velocity=velocity, time=0))
+        track.append(mido.Message("note_off", note=note, velocity=0, time=sixteenth))
 
     # Save quantized version
     quantized_path = "/home/claude/quantized_pattern.mid"
@@ -381,18 +362,13 @@ if __name__ == "__main__":
     # Apply different grooves
     applicator = GrooveApplicator()
 
-    grooves_to_test = ['funk', 'boom_bap', 'dilla', 'straight']
+    grooves_to_test = ["funk", "boom_bap", "dilla", "straight"]
 
     for genre in grooves_to_test:
         groove = applicator.get_genre_template(genre)
         output_path = f"/mnt/user-data/outputs/groove_applied_{genre}.mid"
 
-        applicator.apply_groove(
-            quantized_path,
-            output_path,
-            groove,
-            intensity=1.0
-        )
+        applicator.apply_groove(quantized_path, output_path, groove, intensity=1.0)
         print()
 
     print("=" * 70)

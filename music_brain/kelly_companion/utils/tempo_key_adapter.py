@@ -10,6 +10,7 @@ from enum import Enum
 
 class TempoClass(Enum):
     """Tempo classification affecting emotional expression."""
+
     GLACIAL = "glacial"  # <50 BPM - Doom, despair, funeral
     SLOW = "slow"  # 50-80 BPM - Grief, introspection
     MODERATE = "moderate"  # 80-120 BPM - Neutral, conversational
@@ -19,6 +20,7 @@ class TempoClass(Enum):
 
 class KeyBrightness(Enum):
     """Key signature brightness affecting emotional color."""
+
     VERY_DARK = "very_dark"  # 5+ flats/naturals in minor
     DARK = "dark"  # 3-4 flats in minor
     NEUTRAL = "neutral"  # C major, A minor
@@ -29,6 +31,7 @@ class KeyBrightness(Enum):
 @dataclass
 class AdaptiveParameters:
     """Parameters that change based on tempo/key context."""
+
     note_density: float  # Notes per bar
     articulation_length: float  # Note duration as % of beat
     velocity_variance: float  # Dynamic range
@@ -40,18 +43,31 @@ class AdaptiveParameters:
 
 KEY_BRIGHTNESS_MAP = {
     # Major keys
-    "C": KeyBrightness.NEUTRAL, "G": KeyBrightness.BRIGHT, "D": KeyBrightness.BRIGHT,
-    "A": KeyBrightness.VERY_BRIGHT, "E": KeyBrightness.VERY_BRIGHT,
-    "B": KeyBrightness.VERY_BRIGHT, "F#": KeyBrightness.VERY_BRIGHT,
-    "Db": KeyBrightness.DARK, "Ab": KeyBrightness.DARK,
-    "Eb": KeyBrightness.DARK, "Bb": KeyBrightness.NEUTRAL, "F": KeyBrightness.NEUTRAL,
-
+    "C": KeyBrightness.NEUTRAL,
+    "G": KeyBrightness.BRIGHT,
+    "D": KeyBrightness.BRIGHT,
+    "A": KeyBrightness.VERY_BRIGHT,
+    "E": KeyBrightness.VERY_BRIGHT,
+    "B": KeyBrightness.VERY_BRIGHT,
+    "F#": KeyBrightness.VERY_BRIGHT,
+    "Db": KeyBrightness.DARK,
+    "Ab": KeyBrightness.DARK,
+    "Eb": KeyBrightness.DARK,
+    "Bb": KeyBrightness.NEUTRAL,
+    "F": KeyBrightness.NEUTRAL,
     # Minor keys
-    "Am": KeyBrightness.NEUTRAL, "Em": KeyBrightness.DARK, "Bm": KeyBrightness.DARK,
-    "F#m": KeyBrightness.DARK, "C#m": KeyBrightness.DARK,
-    "G#m": KeyBrightness.VERY_DARK, "D#m": KeyBrightness.VERY_DARK,
-    "Bbm": KeyBrightness.VERY_DARK, "Fm": KeyBrightness.VERY_DARK,
-    "Cm": KeyBrightness.DARK, "Gm": KeyBrightness.DARK, "Dm": KeyBrightness.DARK,
+    "Am": KeyBrightness.NEUTRAL,
+    "Em": KeyBrightness.DARK,
+    "Bm": KeyBrightness.DARK,
+    "F#m": KeyBrightness.DARK,
+    "C#m": KeyBrightness.DARK,
+    "G#m": KeyBrightness.VERY_DARK,
+    "D#m": KeyBrightness.VERY_DARK,
+    "Bbm": KeyBrightness.VERY_DARK,
+    "Fm": KeyBrightness.VERY_DARK,
+    "Cm": KeyBrightness.DARK,
+    "Gm": KeyBrightness.DARK,
+    "Dm": KeyBrightness.DARK,
 }
 
 
@@ -75,11 +91,7 @@ def get_key_brightness(key: str, mode: str = "major") -> KeyBrightness:
     return KEY_BRIGHTNESS_MAP.get(lookup_key, KeyBrightness.NEUTRAL)
 
 
-def adapt_emotion_to_tempo(
-    emotion: str,
-    bpm: int,
-    original_bpm: int
-) -> Dict[str, float]:
+def adapt_emotion_to_tempo(emotion: str, bpm: int, original_bpm: int) -> Dict[str, float]:
     """
     Adjust emotional expression based on tempo change.
 
@@ -130,7 +142,7 @@ def adapt_emotion_to_tempo(
             "velocity_variance": 1.5,
             "syncopation": 1.6,
             "harmonic_complexity": 0.6,  # Very simple
-        }
+        },
     }
 
     # Emotion-specific tempo sensitivities
@@ -161,11 +173,7 @@ def adapt_emotion_to_tempo(
 
 
 def adapt_emotion_to_key(
-    emotion: str,
-    key: str,
-    mode: str,
-    original_key: str,
-    original_mode: str
+    emotion: str, key: str, mode: str, original_key: str, original_mode: str
 ) -> Dict[str, float]:
     """
     Adjust emotional expression based on key change.
@@ -214,7 +222,7 @@ def adapt_emotion_to_key(
             "chord_voicing_spread": 8,  # Tighter voicings
             "harmonic_complexity": 0.8,
             "velocity_variance": 1.3,
-        }
+        },
     }
 
     # Emotion-specific key sensitivities
@@ -242,7 +250,7 @@ def generate_adaptive_parameters(
     locked_mode: Optional[str],
     suggested_bpm: int,
     suggested_key: str,
-    suggested_mode: str
+    suggested_mode: str,
 ) -> AdaptiveParameters:
     """
     Generate adapted parameters when user locks tempo/key.
@@ -267,7 +275,7 @@ def generate_adaptive_parameters(
         harmonic_complexity=7,  # 7th chords default
         syncopation_amount=1.0,
         register_shift=0,
-        chord_voicing_spread=12
+        chord_voicing_spread=12,
     )
 
     # Apply tempo adaptations if locked
@@ -284,11 +292,7 @@ def generate_adaptive_parameters(
     # Apply key adaptations if locked
     if locked_key and (locked_key != suggested_key or locked_mode != suggested_mode):
         key_adj = adapt_emotion_to_key(
-            emotion,
-            locked_key,
-            locked_mode or suggested_mode,
-            suggested_key,
-            suggested_mode
+            emotion, locked_key, locked_mode or suggested_mode, suggested_key, suggested_mode
         )
         base_params.register_shift += key_adj["register_shift"]
         base_params.chord_voicing_spread = int(
@@ -308,7 +312,7 @@ def should_regenerate_midi(
     current_mode: str,
     new_bpm: Optional[int],
     new_key: Optional[str],
-    new_mode: Optional[str]
+    new_mode: Optional[str],
 ) -> bool:
     """
     Determine if MIDI needs regeneration based on parameter changes.
@@ -336,7 +340,7 @@ def regenerate_with_locked_params(
     emotion: str,
     locked_bpm: Optional[int] = None,
     locked_key: Optional[str] = None,
-    locked_mode: Optional[str] = None
+    locked_mode: Optional[str] = None,
 ) -> Dict:
     """
     Example: Regenerate MIDI with locked user parameters.
@@ -349,11 +353,7 @@ def regenerate_with_locked_params(
     from kellymidicompanion_emotion_api import emotion_to_valence_arousal
 
     valence, arousal = emotion_to_valence_arousal(emotion)
-    state = EmotionalState(
-        valence=valence,
-        arousal=arousal,
-        primary_emotion=emotion
-    )
+    state = EmotionalState(valence=valence, arousal=arousal, primary_emotion=emotion)
     suggested_params = get_parameters_for_state(state)
 
     # Generate adaptive parameters
@@ -364,7 +364,7 @@ def regenerate_with_locked_params(
         locked_mode=locked_mode,
         suggested_bpm=suggested_params.tempo_suggested,
         suggested_key=suggested_params.key_suggested,
-        suggested_mode=suggested_params.mode_suggested
+        suggested_mode=suggested_params.mode_suggested,
     )
 
     return {
@@ -376,6 +376,6 @@ def regenerate_with_locked_params(
         "original_suggestions": {
             "bpm": suggested_params.tempo_suggested,
             "key": suggested_params.key_suggested,
-            "mode": suggested_params.mode_suggested
-        }
+            "mode": suggested_params.mode_suggested,
+        },
     }

@@ -33,6 +33,7 @@ def _note(id_: str = "n1", **overrides) -> MidiNote:
 # Single-mutation behaviour
 # ----------------------------------------------------------------------
 
+
 def test_add_note_inserts() -> None:
     eng = MidiMutationEngine()
     eng.apply(AddNote(_note()))
@@ -112,6 +113,7 @@ def test_add_validates_each_field() -> None:
 # ----------------------------------------------------------------------
 # Transaction semantics
 # ----------------------------------------------------------------------
+
 
 def test_explicit_commit_keeps_changes() -> None:
     eng = MidiMutationEngine()

@@ -15,12 +15,14 @@ from pathlib import Path
 # Optional imports for audio processing
 try:
     import librosa
+
     LIBROSA_AVAILABLE = True
 except ImportError:
     LIBROSA_AVAILABLE = False
 
 try:
     import numpy as np
+
     NUMPY_AVAILABLE = True
 except ImportError:
     NUMPY_AVAILABLE = False
@@ -31,6 +33,7 @@ class AudioFeatures:
     """
     Extracted audio features and feel characteristics.
     """
+
     # Basic info
     filename: str = ""
     duration_seconds: float = 0.0
@@ -93,8 +96,7 @@ def analyze_feel(
     """
     if not LIBROSA_AVAILABLE:
         raise ImportError(
-            "librosa package required for audio analysis. "
-            "Install with: pip install librosa"
+            "librosa package required for audio analysis. " "Install with: pip install librosa"
         )
 
     if not NUMPY_AVAILABLE:
@@ -172,8 +174,8 @@ def _estimate_tempo_confidence(
     Based on autocorrelation peak strength.
     """
     # Calculate autocorrelation
-    autocorr = np.correlate(onset_env, onset_env, mode='full')
-    autocorr = autocorr[len(autocorr)//2:]
+    autocorr = np.correlate(onset_env, onset_env, mode="full")
+    autocorr = autocorr[len(autocorr) // 2 :]
 
     # Find lag corresponding to detected tempo
     frames_per_beat = (60.0 / tempo) * sr / hop_length
@@ -278,9 +280,9 @@ def compare_feel(audio_path1: str, audio_path2: str) -> Dict:
     swing_diff = abs(features1.swing_estimate - features2.swing_estimate)
     swing_similarity = 1 - swing_diff
 
-    energy_similarity = 1 - abs(
-        features1.rms_mean - features2.rms_mean
-    ) / max(features1.rms_mean, features2.rms_mean, 0.001)
+    energy_similarity = 1 - abs(features1.rms_mean - features2.rms_mean) / max(
+        features1.rms_mean, features2.rms_mean, 0.001
+    )
 
     brightness_diff = abs(features1.spectral_centroid_mean - features2.spectral_centroid_mean)
     brightness_similarity = max(0, 1 - brightness_diff / 2000)

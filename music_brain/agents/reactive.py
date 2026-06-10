@@ -99,7 +99,8 @@ class Observable:
             with self._lock:
                 if is_async:
                     self._async_observers = [
-                        r for r in self._async_observers if r() is not callback]
+                        r for r in self._async_observers if r() is not callback
+                    ]
                 else:
                     self._observers = [r for r in self._observers if r() is not callback]
 
@@ -405,9 +406,7 @@ def observe(state_name: str):
             if isinstance(result, dict):
                 for key, value in result.items():
                     _old_value = (  # noqa: F841
-                        state.get(key)
-                        if hasattr(state, "get")
-                        else getattr(state, key, None)
+                        state.get(key) if hasattr(state, "get") else getattr(state, key, None)
                     )
                     if hasattr(state, "update"):
                         state.update({key: value})

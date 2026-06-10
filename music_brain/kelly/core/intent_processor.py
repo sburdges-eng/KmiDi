@@ -3,6 +3,7 @@
 This module implements the therapeutic intent processing pipeline that translates
 emotional wounds into musical expression through intentional rule-breaking.
 """
+
 import re
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
@@ -14,6 +15,7 @@ from kelly.core.emotion_thesaurus import EmotionThesaurus, EmotionNode
 
 class IntentPhase(Enum):
     """Three phases of intent processing."""
+
     WOUND = "wound"  # Initial trauma or trigger
     EMOTION = "emotion"  # Emotional response
     RULE_BREAK = "rule_break"  # Musical rule violations
@@ -30,6 +32,7 @@ class Wound:
         timestamp: Optional timestamp when wound occurred
         keywords: Extracted keywords from description
     """
+
     description: str
     intensity: float  # 0.0 to 1.0
     source: str  # Internal or external
@@ -41,7 +44,7 @@ class Wound:
         if not self.keywords:
             # Extract meaningful words (3+ characters, not common stop words)
             stop_words = {"the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for"}
-            words = re.findall(r'\b\w{3,}\b', self.description.lower())
+            words = re.findall(r"\b\w{3,}\b", self.description.lower())
             self.keywords = [w for w in words if w not in stop_words]
 
         if self.timestamp is None:
@@ -59,6 +62,7 @@ class RuleBreak:
         musical_impact: Dictionary of musical parameters affected
         justification: Why this rule break is needed for expression
     """
+
     rule_type: str  # e.g., "harmony", "rhythm", "dynamics", "melody", "timbre"
     severity: float  # 0.0 to 1.0
     description: str
@@ -195,7 +199,7 @@ class IntentProcessor:
 
         # Find emotions matching intensity and valence
         best_match: Optional[Tuple[EmotionNode, float]] = None
-        min_distance = float('inf')
+        min_distance = float("inf")
 
         for node in self.thesaurus.nodes.values():
             # Calculate distance considering intensity and valence
@@ -228,81 +232,92 @@ class IntentProcessor:
 
         # High intensity emotions break more rules
         if emotion.intensity > 0.8:
-            rule_breaks.append(RuleBreak(
-                rule_type="dynamics",
-                severity=emotion.intensity,
-                description="Extreme dynamic contrasts and sudden changes",
-                justification=f"High intensity ({emotion.intensity:.2f}) requires dramatic expression",  # noqa: E501
-
-                musical_impact={
-                    "velocity_range": (int(10 + emotion.intensity * 20), 127),
-                    "sudden_changes": True,
-                    "crescendo_rate": emotion.intensity,
-                    "diminuendo_rate": emotion.intensity * 0.8,
-                }
-            ))
+            rule_breaks.append(
+                RuleBreak(
+                    rule_type="dynamics",
+                    severity=emotion.intensity,
+                    description="Extreme dynamic contrasts and sudden changes",
+                    justification=f"High intensity ({emotion.intensity:.2f}) requires dramatic expression",  # noqa: E501
+                    musical_impact={
+                        "velocity_range": (int(10 + emotion.intensity * 20), 127),
+                        "sudden_changes": True,
+                        "crescendo_rate": emotion.intensity,
+                        "diminuendo_rate": emotion.intensity * 0.8,
+                    },
+                )
+            )
 
         # Negative valence introduces dissonance and tension
         if emotion.valence < -0.5:
             dissonance_severity = abs(emotion.valence)
-            rule_breaks.append(RuleBreak(
-                rule_type="harmony",
-                severity=dissonance_severity,
-                description="Dissonant intervals, clusters, and unresolved tensions",
-                justification=f"Negative valence ({emotion.valence:.2f}) requires harmonic tension",
-                musical_impact={
-                    "allow_dissonance": True,
-                    "cluster_probability": dissonance_severity,
-                    "avoid_resolution": True,
-                    "prefer_minor_intervals": True,
-                    "tritone_probability": dissonance_severity * 0.5,
-                }
-            ))
+            rule_breaks.append(
+                RuleBreak(
+                    rule_type="harmony",
+                    severity=dissonance_severity,
+                    description="Dissonant intervals, clusters, and unresolved tensions",
+                    justification=f"Negative valence ({emotion.valence:.2f}) requires harmonic "
+                    f"tension",
+                    musical_impact={
+                        "allow_dissonance": True,
+                        "cluster_probability": dissonance_severity,
+                        "avoid_resolution": True,
+                        "prefer_minor_intervals": True,
+                        "tritone_probability": dissonance_severity * 0.5,
+                    },
+                )
+            )
 
         # High arousal breaks rhythmic conventions
         if emotion.arousal > 0.7:
-            rule_breaks.append(RuleBreak(
-                rule_type="rhythm",
-                severity=emotion.arousal,
-                description="Irregular rhythms, syncopation, and metric displacement",
-                justification=f"High arousal ({emotion.arousal:.2f}) requires rhythmic complexity",
-                musical_impact={
-                    "syncopation_level": emotion.arousal,
-                    "irregular_meters": True,
-                    "polyrhythm_probability": emotion.arousal * 0.6,
-                    "tempo_variation": emotion.arousal * 0.3,
-                }
-            ))
+            rule_breaks.append(
+                RuleBreak(
+                    rule_type="rhythm",
+                    severity=emotion.arousal,
+                    description="Irregular rhythms, syncopation, and metric displacement",
+                    justification=f"High arousal ({emotion.arousal:.2f}) requires rhythmic "
+                    f"complexity",
+                    musical_impact={
+                        "syncopation_level": emotion.arousal,
+                        "irregular_meters": True,
+                        "polyrhythm_probability": emotion.arousal * 0.6,
+                        "tempo_variation": emotion.arousal * 0.3,
+                    },
+                )
+            )
 
         # Low arousal (calm emotions) can break rules through minimalism
         if emotion.arousal < 0.3 and emotion.intensity < 0.5:
-            rule_breaks.append(RuleBreak(
-                rule_type="arrangement",
-                severity=1.0 - emotion.arousal,
-                description="Sparse arrangement, extended silences, minimal texture",
-                justification=f"Low arousal ({emotion.arousal:.2f}) benefits from space",
-                musical_impact={
-                    "sparse_arrangement": True,
-                    "silence_probability": 0.3,
-                    "minimal_voices": True,
-                    "extended_durations": True,
-                }
-            ))
+            rule_breaks.append(
+                RuleBreak(
+                    rule_type="arrangement",
+                    severity=1.0 - emotion.arousal,
+                    description="Sparse arrangement, extended silences, minimal texture",
+                    justification=f"Low arousal ({emotion.arousal:.2f}) benefits from space",
+                    musical_impact={
+                        "sparse_arrangement": True,
+                        "silence_probability": 0.3,
+                        "minimal_voices": True,
+                        "extended_durations": True,
+                    },
+                )
+            )
 
         # Extreme emotions (very high or very low) break melodic conventions
         if emotion.intensity > 0.9 or (emotion.valence < -0.8 and emotion.intensity > 0.7):
-            rule_breaks.append(RuleBreak(
-                rule_type="melody",
-                severity=emotion.intensity,
-                description="Unconventional melodic contours, wide leaps, chromaticism",
-                justification="Extreme emotion requires unconventional melodic expression",
-                musical_impact={
-                    "allow_wide_leaps": True,
-                    "chromatic_probability": emotion.intensity * 0.4,
-                    "unconventional_contour": True,
-                    "range_extension": emotion.intensity * 0.5,
-                }
-            ))
+            rule_breaks.append(
+                RuleBreak(
+                    rule_type="melody",
+                    severity=emotion.intensity,
+                    description="Unconventional melodic contours, wide leaps, chromaticism",
+                    justification="Extreme emotion requires unconventional melodic expression",
+                    musical_impact={
+                        "allow_wide_leaps": True,
+                        "chromatic_probability": emotion.intensity * 0.4,
+                        "unconventional_contour": True,
+                        "range_extension": emotion.intensity * 0.5,
+                    },
+                )
+            )
 
         self.rule_breaks.extend(rule_breaks)
         return rule_breaks

@@ -9,6 +9,7 @@ mido ImportError fallback, logging instead of print).
 New code should import from ``music_brain.harmony_utils.harmony_generator``.
 This shim is retained so external callers do not break during the transition.
 """
+
 from __future__ import annotations
 
 import warnings

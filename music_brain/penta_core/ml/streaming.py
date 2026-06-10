@@ -35,7 +35,7 @@ class StreamingAudioDataset(Dataset):
         audio_key: str = "audio",
         label_key: str = "label",
         transform: Optional[torch.nn.Module] = None,
-        cache_index: bool = True
+        cache_index: bool = True,
     ):
         self.manifest_path = Path(manifest_path)
         self.sample_rate = sample_rate
@@ -109,6 +109,7 @@ class StreamingAudioDataset(Dataset):
         try:
             try:
                 import soundfile as sf
+
                 wav, sr = sf.read(str(audio_path), always_2d=True)
                 wav = torch.from_numpy(wav).float().T  # [C, T]
             except Exception:
@@ -117,6 +118,7 @@ class StreamingAudioDataset(Dataset):
 
             if sr != self.sample_rate:
                 import torchaudio.transforms as T
+
                 wav = T.Resample(sr, self.sample_rate)(wav)
 
             # Mono conversion

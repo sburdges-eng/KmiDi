@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 
@@ -32,10 +32,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class LayerPID:
     """PID breakdown for one layer (percentages)."""
+
     layer_name: str
     redundant_pct: float
-    unique_a_pct: float   # e.g. text-unique
-    unique_b_pct: float   # e.g. audio/MIDI-unique
+    unique_a_pct: float  # e.g. text-unique
+    unique_b_pct: float  # e.g. audio/MIDI-unique
     synergy_pct: float
 
 
@@ -70,6 +71,7 @@ def _rank_gaussianize(x: np.ndarray) -> np.ndarray:
         ranks[order] = np.linspace(0.5, len(col) - 0.5, len(col))
         # Normal quantiles
         from scipy import stats
+
         out[:, j] = stats.norm.ppf(ranks / (len(col) + 1))
     return out
 
@@ -163,17 +165,21 @@ def run_pid_flow_report(
             break
         t, a, b = activations[i]
         red, ua, ub, syn = compute_layer_pid(
-            t, a, b,
+            t,
+            a,
+            b,
             n_components=n_components,
             use_rank_gaussianize=use_rank_gaussianize,
         )
-        report.append(LayerPID(
-            layer_name=name,
-            redundant_pct=red * 100.0,
-            unique_a_pct=ua * 100.0,
-            unique_b_pct=ub * 100.0,
-            synergy_pct=syn * 100.0,
-        ))
+        report.append(
+            LayerPID(
+                layer_name=name,
+                redundant_pct=red * 100.0,
+                unique_a_pct=ua * 100.0,
+                unique_b_pct=ub * 100.0,
+                synergy_pct=syn * 100.0,
+            )
+        )
     return report
 
 
@@ -182,7 +188,8 @@ def pid_report_to_string(
     name_a: str = "Text",
     name_b: str = "Audio/MIDI",
 ) -> str:
-    """Format PID report for terminal (e.g. 'Layer 12: 95% Text Unique, 2% MIDI Unique, 3% Synergy')."""
+    """Format PID report for terminal
+    (e.g. 'Layer 12: 95% Text Unique, 2% MIDI Unique, 3% Synergy')."""
     lines = []
     for r in report:
         lines.append(

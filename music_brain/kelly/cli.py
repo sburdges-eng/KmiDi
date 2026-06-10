@@ -4,6 +4,7 @@ Kelly is a therapeutic iDAW (Intelligent Digital Audio Workstation) that
 translates emotional wounds into musical expression through intentional
 rule-breaking and authentic emotional mapping.
 """
+
 from typing import Optional
 from pathlib import Path
 
@@ -20,7 +21,7 @@ from kelly.core.midi_generator import MidiGenerator
 app = typer.Typer(
     name="kelly",
     help="Kelly - Therapeutic iDAW translating emotions to music",
-    add_completion=False
+    add_completion=False,
 )
 console = Console()
 
@@ -41,7 +42,8 @@ def list_emotions(
         except KeyError:
             console.print(f"[red]Error:[/red] Invalid category '{category}'")
             console.print(
-                f"Available categories: {', '.join(c.name.lower() for c in EmotionCategory)}")
+                f"Available categories: {', '.join(c.name.lower() for c in EmotionCategory)}"
+            )
             raise typer.Exit(1)
 
     if not nodes:
@@ -63,16 +65,14 @@ def list_emotions(
             node.category.value,
             f"{node.intensity:.2f}",
             f"{node.valence:+.2f}",
-            f"{node.arousal:.2f}"
+            f"{node.arousal:.2f}",
         )
 
     console.print(table)
 
 
 @app.command()
-def show_emotion(
-    name: str = typer.Argument(..., help="Name of the emotion to show")
-) -> None:
+def show_emotion(name: str = typer.Argument(..., help="Name of the emotion to show")) -> None:
     """Show detailed information about a specific emotion."""
     thesaurus = EmotionThesaurus()
     emotion = thesaurus.find_emotion_by_name(name)
@@ -109,17 +109,16 @@ def show_emotion(
 
 
 @app.command()
-def process(wound: str = typer.Argument(..., help="Description of the wound/trigger"),
-            intensity: float = typer.Option(
-                0.7, "--intensity", "-i", help="Intensity of the wound (0.0-1.0)", min=0.0,
-    max=1.0),
-            output: Optional[Path] = typer.Option(
-                None, "--output", "-o", help="Output MIDI file path"),
-            tempo: int = typer.Option(
-                120, "--tempo", "-t", help="Tempo in BPM", min=20, max=300),
-            groove: str = typer.Option("straight", "--groove", "-g", help="Groove template"),
-            source: str = typer.Option(
-                "user_input", "--source", "-s", help="Source of the wound")) -> None:
+def process(
+    wound: str = typer.Argument(..., help="Description of the wound/trigger"),
+    intensity: float = typer.Option(
+        0.7, "--intensity", "-i", help="Intensity of the wound (0.0-1.0)", min=0.0, max=1.0
+    ),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output MIDI file path"),
+    tempo: int = typer.Option(120, "--tempo", "-t", help="Tempo in BPM", min=20, max=300),
+    groove: str = typer.Option("straight", "--groove", "-g", help="Groove template"),
+    source: str = typer.Option("user_input", "--source", "-s", help="Source of the wound"),
+) -> None:
     """
     Process a therapeutic wound and generate music.
 
@@ -138,31 +137,30 @@ def process(wound: str = typer.Argument(..., help="Description of the wound/trig
 
         # Process intent
         processor = IntentProcessor()
-        wound_obj = Wound(
-            description=wound,
-            intensity=intensity,
-            source=source
-        )
+        wound_obj = Wound(description=wound, intensity=intensity, source=source)
 
         result = processor.process_intent(wound_obj)
 
         # Display results
         emotion = result["emotion"]
-        console.print(Panel(
-            f"[bold]Mapped Emotion:[/bold] {emotion.name}\n"
-            f"Category: {emotion.category.value}\n"
-            f"Valence: {emotion.valence:+.2f}\n"
-            f"Arousal: {emotion.arousal:.2f}\n"
-            f"Intensity: {emotion.intensity:.2f}",
-            title="Phase 1: Emotion Mapping",
-            border_style="green"
-        ))
+        console.print(
+            Panel(
+                f"[bold]Mapped Emotion:[/bold] {emotion.name}\n"
+                f"Category: {emotion.category.value}\n"
+                f"Valence: {emotion.valence:+.2f}\n"
+                f"Arousal: {emotion.arousal:.2f}\n"
+                f"Intensity: {emotion.intensity:.2f}",
+                title="Phase 1: Emotion Mapping",
+                border_style="green",
+            )
+        )
 
         # Show rule breaks
         rule_breaks = result["rule_breaks"]
         if rule_breaks:
             console.print(
-                f"\n[bold yellow]Phase 2-3: Rule Breaks ({len(rule_breaks)})[/bold yellow]")
+                f"\n[bold yellow]Phase 2-3: Rule Breaks ({len(rule_breaks)})[/bold yellow]"
+            )
             for rb in rule_breaks:
                 console.print(f"  • [cyan]{rb.rule_type}[/cyan]: {rb.description}")
                 console.print(f"    Severity: {rb.severity:.2f}")
@@ -179,18 +177,13 @@ def process(wound: str = typer.Argument(..., help="Description of the wound/trig
         allow_dissonance = params.get("allow_dissonance", False)
 
         chord_progression = generator.generate_chord_progression(
-            mode=mode,
-            allow_dissonance=allow_dissonance,
-            length=4
+            mode=mode, allow_dissonance=allow_dissonance, length=4
         )
 
         # Save or display
         if output:
             midi_file = generator.create_midi_file(
-                chord_progression,
-                groove=groove,
-                output_path=str(output),
-                channel=0
+                chord_progression, groove=groove, output_path=str(output), channel=0
             )
             console.print(f"\n[bold green]✓[/bold green] MIDI file saved to: {output}")
             console.print(f"  Tracks: {len(midi_file.tracks)}")
@@ -211,7 +204,8 @@ def process(wound: str = typer.Argument(..., help="Description of the wound/trig
         metadata = result.get("processing_metadata", {})
         if metadata:
             console.print(
-                f"\n[dim]Processing method: {metadata.get('emotion_match_method', 'unknown')}[/dim]")  # noqa: E501
+                f"\n[dim]Processing method: {metadata.get('emotion_match_method', 'unknown')}[/dim]"
+            )  # noqa: E501
 
             if metadata.get("wound_keywords"):
                 console.print(f"[dim]Keywords: {', '.join(metadata['wound_keywords'])}[/dim]")
@@ -246,7 +240,7 @@ def list_grooves() -> None:
             f"{template.time_signature[0]}/{template.time_signature[1]}",
             str(len(template.pattern)),
             f"{template.swing:.2f}" if template.swing > 0 else "0.00",
-            template.description or "No description"
+            template.description or "No description",
         )
 
     console.print(table)
@@ -254,10 +248,12 @@ def list_grooves() -> None:
 
 @app.command()
 def interpolate(
-        emotion1: str = typer.Argument(..., help="First emotion name"),
-        emotion2: str = typer.Argument(..., help="Second emotion name"),
-        steps: int = typer.Option(
-            5, "--steps", "-s", help="Number of interpolation steps", min=2, max=20)) -> None:
+    emotion1: str = typer.Argument(..., help="First emotion name"),
+    emotion2: str = typer.Argument(..., help="Second emotion name"),
+    steps: int = typer.Option(
+        5, "--steps", "-s", help="Number of interpolation steps", min=2, max=20
+    ),
+) -> None:
     """Interpolate between two emotions."""
     thesaurus = EmotionThesaurus()
 
@@ -290,7 +286,7 @@ def interpolate(
                 f"{result['valence']:+.2f}",
                 f"{result['arousal']:.2f}",
                 f"{result['intensity']:.2f}",
-                result['musical_attributes']['mode']
+                result["musical_attributes"]["mode"],
             )
 
     console.print(table)
@@ -301,6 +297,7 @@ def version() -> None:
     """Show Kelly version and information."""
     try:
         from kelly import __version__, __author__
+
         rprint(f"[bold cyan]Kelly[/bold cyan] version [green]{__version__}[/green]")
         rprint(f"Author: {__author__}")
     except ImportError:

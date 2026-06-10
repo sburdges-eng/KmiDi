@@ -23,6 +23,7 @@ class PolyrhythmPattern:
         duration_beats: Duration in beats
         accents: Accent patterns for each layer
     """
+
     ratios: List[int]
     duration_beats: float = 1.0
     accents: List[List[float]] = field(default_factory=list)
@@ -31,10 +32,7 @@ class PolyrhythmPattern:
     def __post_init__(self):
         # Generate default accents if not provided
         if not self.accents:
-            self.accents = [
-                [1.0 if i == 0 else 0.7 for i in range(r)]
-                for r in self.ratios
-            ]
+            self.accents = [[1.0 if i == 0 else 0.7 for i in range(r)] for r in self.ratios]
 
     @property
     def lcm_subdivisions(self) -> int:
@@ -60,10 +58,7 @@ class PolyrhythmPattern:
 
     def get_all_positions(self) -> Dict[int, List[float]]:
         """Get beat positions for all layers."""
-        return {
-            i: self.get_beat_positions(i)
-            for i, _ in enumerate(self.ratios)
-        }
+        return {i: self.get_beat_positions(i) for i, _ in enumerate(self.ratios)}
 
     def get_coincident_points(self) -> List[float]:
         """Find positions where multiple layers align."""
@@ -77,10 +72,7 @@ class PolyrhythmPattern:
             rounded = round(pos, 6)
             position_counts[rounded] = position_counts.get(rounded, 0) + 1
 
-        return sorted([
-            pos for pos, count in position_counts.items()
-            if count > 1
-        ])
+        return sorted([pos for pos, count in position_counts.items() if count > 1])
 
 
 @dataclass
@@ -88,6 +80,7 @@ class Polyrhythm:
     """
     Represents a polyrhythm with timing and note information.
     """
+
     pattern: PolyrhythmPattern
     tempo_bpm: float = 120.0
     start_time: float = 0.0
@@ -113,24 +106,29 @@ class Polyrhythm:
 
         for layer_idx, positions in self.pattern.get_all_positions().items():
             layer_notes = self.notes[layer_idx] if layer_idx < len(self.notes) else [60]
-            layer_velocities = self.velocities[layer_idx] if layer_idx < len(self.velocities) else [
-                                                                             100]
-            layer_accents = self.pattern.accents[layer_idx] if layer_idx < len(self.pattern.accents) else [  # noqa: E501
-
-                                                                               1.0]
+            layer_velocities = (
+                self.velocities[layer_idx] if layer_idx < len(self.velocities) else [100]
+            )
+            layer_accents = (
+                self.pattern.accents[layer_idx]
+                if layer_idx < len(self.pattern.accents)
+                else [1.0]  # noqa: E501
+            )
 
             for i, pos in enumerate(positions):
                 note = layer_notes[i % len(layer_notes)]
                 base_velocity = layer_velocities[i % len(layer_velocities)]
                 accent = layer_accents[i % len(layer_accents)]
 
-                events.append({
-                    "time": self.start_time + (pos * beat_duration),
-                    "note": note,
-                    "velocity": int(base_velocity * accent),
-                    "duration": beat_duration * 0.5,  # Default to half beat
-                    "layer": layer_idx,
-                })
+                events.append(
+                    {
+                        "time": self.start_time + (pos * beat_duration),
+                        "note": note,
+                        "velocity": int(base_velocity * accent),
+                        "duration": beat_duration * 0.5,  # Default to half beat
+                        "layer": layer_idx,
+                    }
+                )
 
         # Sort by time
         events.sort(key=lambda e: e["time"])
@@ -218,17 +216,14 @@ def detect_polyrhythm(
 
     # Filter clusters by minimum count
     valid_clusters = {
-        k: v for k, v in interval_clusters.items()
-        if len(v) >= min_events_per_layer - 1
+        k: v for k, v in interval_clusters.items() if len(v) >= min_events_per_layer - 1
     }
 
     if len(valid_clusters) < 2:
         return None  # No polyrhythm detected
 
     # Calculate average intervals
-    avg_intervals = sorted([
-        sum(v) / len(v) for v in valid_clusters.values()
-    ])
+    avg_intervals = sorted([sum(v) / len(v) for v in valid_clusters.values()])
 
     # Try to find integer ratios
     base_interval = avg_intervals[0]
@@ -323,14 +318,12 @@ def get_common_polyrhythms() -> Dict[str, PolyrhythmPattern]:
             ratios=[7, 4],
             name="7 against 4",
         ),
-
         # African/Cuban rhythms
         "6:4 (afro-cuban)": PolyrhythmPattern(
             ratios=[6, 4],
             name="Afro-Cuban 6/4",
             accents=[[1.0, 0.5, 0.7, 0.5, 0.7, 0.5], [1.0, 0.5, 0.8, 0.5]],
         ),
-
         # Complex polyrhythms
         "3:4:5": PolyrhythmPattern(
             ratios=[3, 4, 5],
@@ -340,7 +333,6 @@ def get_common_polyrhythms() -> Dict[str, PolyrhythmPattern]:
             ratios=[2, 3, 4],
             name="2-3-4 layers",
         ),
-
         # Indian classical
         "7:3 (tisra-misra)": PolyrhythmPattern(
             ratios=[7, 3],

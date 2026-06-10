@@ -76,19 +76,19 @@ class MIDIFeatures:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dict."""
         d = asdict(self)
-        d['time_signature'] = list(self.time_signature)
+        d["time_signature"] = list(self.time_signature)
         return d
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "MIDIFeatures":
         """Create from dict."""
-        if 'time_signature' in data and isinstance(data['time_signature'], list):
-            data['time_signature'] = tuple(data['time_signature'])
+        if "time_signature" in data and isinstance(data["time_signature"], list):
+            data["time_signature"] = tuple(data["time_signature"])
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
     def save(self, path: Path):
         """Save features to JSON."""
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
 
     @classmethod
@@ -150,10 +150,10 @@ class MIDIFeatureExtractor:
         features.note_count = len(notes)
 
         # Extract sequences
-        features.pitch_sequence = [n['pitch'] for n in notes]
-        features.velocity_sequence = [n['velocity'] for n in notes]
-        features.duration_sequence = [n['duration'] for n in notes]
-        features.onset_times = [n['onset'] for n in notes]
+        features.pitch_sequence = [n["pitch"] for n in notes]
+        features.velocity_sequence = [n["velocity"] for n in notes]
+        features.duration_sequence = [n["duration"] for n in notes]
+        features.onset_times = [n["onset"] for n in notes]
 
         # Melodic features
         self._extract_melodic_features(features, notes)
@@ -184,21 +184,23 @@ class MIDIFeatureExtractor:
         for msg in mido.merge_tracks(mid.tracks):
             current_time += msg.time
 
-            if msg.type == 'note_on' and msg.velocity > 0:
+            if msg.type == "note_on" and msg.velocity > 0:
                 active_notes[msg.note] = (current_time, msg.velocity)
-            elif msg.type == 'note_off' or (msg.type == 'note_on' and msg.velocity == 0):
+            elif msg.type == "note_off" or (msg.type == "note_on" and msg.velocity == 0):
                 if msg.note in active_notes:
                     onset, velocity = active_notes.pop(msg.note)
-                    notes.append({
-                        'pitch': msg.note,
-                        'velocity': velocity,
-                        'onset': onset,
-                        'duration': current_time - onset,
-                        'channel': msg.channel,
-                    })
+                    notes.append(
+                        {
+                            "pitch": msg.note,
+                            "velocity": velocity,
+                            "onset": onset,
+                            "duration": current_time - onset,
+                            "channel": msg.channel,
+                        }
+                    )
 
         # Sort by onset time
-        notes.sort(key=lambda n: n['onset'])
+        notes.sort(key=lambda n: n["onset"])
         return notes
 
     def _get_tempo(self, mid) -> float:
@@ -207,7 +209,7 @@ class MIDIFeatureExtractor:
 
         for track in mid.tracks:
             for msg in track:
-                if msg.type == 'set_tempo':
+                if msg.type == "set_tempo":
                     return mido.tempo2bpm(msg.tempo)
         return 120.0  # Default
 
@@ -215,13 +217,13 @@ class MIDIFeatureExtractor:
         """Extract time signature from MIDI."""
         for track in mid.tracks:
             for msg in track:
-                if msg.type == 'time_signature':
+                if msg.type == "time_signature":
                     return (msg.numerator, msg.denominator)
         return (4, 4)  # Default
 
     def _extract_melodic_features(self, features: MIDIFeatures, notes: List[Dict]):
         """Extract melodic features."""
-        pitches = np.array([n['pitch'] for n in notes])
+        pitches = np.array([n["pitch"] for n in notes])
 
         if len(pitches) == 0:
             return
@@ -243,23 +245,24 @@ class MIDIFeatureExtractor:
             intervals = np.diff(pitches)
             # Bin intervals from -12 to +12 (25 bins)
             interval_bins = np.clip(intervals, -12, 12) + 12
-            features.interval_histogram = np.bincount(
-                interval_bins.astype(int),
-                minlength=25).astype(float).tolist()
+            features.interval_histogram = (
+                np.bincount(interval_bins.astype(int), minlength=25).astype(float).tolist()
+            )
             total = sum(features.interval_histogram)
             if total > 0:
                 features.interval_histogram = [i / total for i in features.interval_histogram]
 
         # Melodic contour (smoothed pitch over time)
         if len(notes) > 10:
-            onsets = np.array([n['onset'] for n in notes])
+            onsets = np.array([n["onset"] for n in notes])
             # Normalize to 0-1
             if onsets[-1] > 0:
                 onsets = onsets / onsets[-1]
             # Resample to 32 points
             from scipy import interpolate
+
             try:
-                f = interpolate.interp1d(onsets, pitches, kind='linear', fill_value='extrapolate')
+                f = interpolate.interp1d(onsets, pitches, kind="linear", fill_value="extrapolate")
                 x_new = np.linspace(0, 1, 32)
                 features.melodic_contour = f(x_new).tolist()
             except Exception:
@@ -280,10 +283,10 @@ class MIDIFeatureExtractor:
         # Collect pitch classes per beat
         beat_notes: Dict[int, List[int]] = {}
         for note in notes:
-            beat_idx = int(note['onset'] / beat_duration)
+            beat_idx = int(note["onset"] / beat_duration)
             if beat_idx not in beat_notes:
                 beat_notes[beat_idx] = []
-            beat_notes[beat_idx].append(note['pitch'] % 12)
+            beat_notes[beat_idx].append(note["pitch"] % 12)
 
         # Detect chords
         for beat_idx in sorted(beat_notes.keys()):
@@ -302,7 +305,7 @@ class MIDIFeatureExtractor:
         if len(pitch_classes) < 3:
             return ""
 
-        note_names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        note_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
         # Major chord patterns
         major_pattern = {0, 4, 7}
@@ -329,7 +332,7 @@ class MIDIFeatureExtractor:
         if not pitch_histogram or sum(pitch_histogram) == 0:
             return "", ""
 
-        note_names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        note_names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
         # Krumhansl-Schmuckler key profiles
         major_profile = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88]
@@ -380,8 +383,8 @@ class MIDIFeatureExtractor:
         offsets = []
         for note in notes:
             # Quantize to 16th notes
-            grid_position = round(note['onset'] / (beat_duration / 4)) * (beat_duration / 4)
-            offset_ms = (note['onset'] - grid_position) * 1000
+            grid_position = round(note["onset"] / (beat_duration / 4)) * (beat_duration / 4)
+            offset_ms = (note["onset"] - grid_position) * 1000
             offsets.append(offset_ms)
 
         features.timing_offsets_ms = offsets
@@ -392,11 +395,11 @@ class MIDIFeatureExtractor:
         upbeat_offsets = []
 
         for note in notes:
-            beat_pos = (note['onset'] / beat_duration) % 1
+            beat_pos = (note["onset"] / beat_duration) % 1
             if beat_pos < 0.1 or beat_pos > 0.9:
-                downbeat_offsets.append(note['onset'])
+                downbeat_offsets.append(note["onset"])
             elif 0.4 < beat_pos < 0.6:
-                upbeat_offsets.append(note['onset'])
+                upbeat_offsets.append(note["onset"])
 
         # Estimate swing from upbeat timing
         if len(downbeat_offsets) > 2 and len(upbeat_offsets) > 2:
@@ -416,13 +419,14 @@ class MIDIFeatureExtractor:
                 features.groove_type = "straight"
 
         # Note density (notes per beat)
-        features.note_density = len(
-            notes) / (features.duration_sec / beat_duration) if features.duration_sec > 0 else 0
+        features.note_density = (
+            len(notes) / (features.duration_sec / beat_duration) if features.duration_sec > 0 else 0
+        )
 
         # Syncopation score (notes on off-beats)
         offbeat_count = 0
         for note in notes:
-            beat_pos = (note['onset'] / beat_duration) % 1
+            beat_pos = (note["onset"] / beat_duration) % 1
             if 0.2 < beat_pos < 0.4 or 0.7 < beat_pos < 0.9:
                 offbeat_count += 1
         features.syncopation_score = offbeat_count / len(notes) if notes else 0
@@ -432,8 +436,8 @@ class MIDIFeatureExtractor:
         if not notes:
             return
 
-        velocities = np.array([n['velocity'] for n in notes])
-        _durations = np.array([n['duration'] for n in notes])  # noqa: F841
+        velocities = np.array([n["velocity"] for n in notes])
+        _durations = np.array([n["duration"] for n in notes])  # noqa: F841
 
         # Velocity statistics
         features.avg_velocity = float(np.mean(velocities))
@@ -442,7 +446,7 @@ class MIDIFeatureExtractor:
 
         # Velocity curve over time (smoothed)
         if len(notes) > 10:
-            onsets = np.array([n['onset'] for n in notes])
+            onsets = np.array([n["onset"] for n in notes])
             # Normalize time to 0-1
             if onsets[-1] > 0:
                 norm_onsets = onsets / onsets[-1]
@@ -452,8 +456,10 @@ class MIDIFeatureExtractor:
             # Resample to 32 points
             try:
                 from scipy import interpolate
-                f = interpolate.interp1d(norm_onsets, velocities,
-                                         kind='linear', fill_value='extrapolate')
+
+                f = interpolate.interp1d(
+                    norm_onsets, velocities, kind="linear", fill_value="extrapolate"
+                )
                 x_new = np.linspace(0, 1, 32)
                 features.velocity_curve = f(x_new).tolist()
             except Exception:
@@ -470,9 +476,9 @@ class MIDIFeatureExtractor:
             # Legato: duration > 80% of inter-note interval
             # Staccato: duration < 30% of expected duration
             if i < len(notes) - 1:
-                inter_note = notes[i + 1]['onset'] - note['onset']
+                inter_note = notes[i + 1]["onset"] - note["onset"]
                 if inter_note > 0:
-                    ratio = note['duration'] / inter_note
+                    ratio = note["duration"] / inter_note
                     if ratio > 0.8:
                         legato_count += 1
                     elif ratio < 0.3:
@@ -483,9 +489,9 @@ class MIDIFeatureExtractor:
         total = legato_count + staccato_count + normal_count
         if total > 0:
             features.articulation_ratios = {
-                'legato': legato_count / total,
-                'staccato': staccato_count / total,
-                'normal': normal_count / total,
+                "legato": legato_count / total,
+                "staccato": staccato_count / total,
+                "normal": normal_count / total,
             }
 
     def _build_feature_vector(self, features: MIDIFeatures) -> List[float]:
@@ -508,19 +514,20 @@ class MIDIFeatureExtractor:
         # Groove features (6)
         vec.append(features.swing_ratio)
         vec.append(features.syncopation_score)
-        vec.append(1.0 if features.groove_type == 'swing' else 0.0)
-        vec.append(1.0 if features.groove_type == 'straight' else 0.0)
+        vec.append(1.0 if features.groove_type == "swing" else 0.0)
+        vec.append(1.0 if features.groove_type == "straight" else 0.0)
         vec.append(features.tempo_bpm / 200 if features.tempo_bpm else 0.5)
-        vec.append(np.mean(np.abs(features.timing_offsets_ms)) / 50
-                   if features.timing_offsets_ms else 0)
+        vec.append(
+            np.mean(np.abs(features.timing_offsets_ms)) / 50 if features.timing_offsets_ms else 0
+        )
 
         # Dynamics features (6)
         vec.append(features.avg_velocity / 127)
         vec.append(features.velocity_std / 40)
         vec.append(features.dynamic_range / 127)
-        vec.append(features.articulation_ratios.get('legato', 0))
-        vec.append(features.articulation_ratios.get('staccato', 0))
-        vec.append(features.articulation_ratios.get('normal', 0))
+        vec.append(features.articulation_ratios.get("legato", 0))
+        vec.append(features.articulation_ratios.get("staccato", 0))
+        vec.append(features.articulation_ratios.get("normal", 0))
 
         # Melodic contour (32) - normalized
         if features.melodic_contour:
@@ -562,12 +569,12 @@ def extract_melody_features(midi_path: Path) -> Dict[str, Any]:
     """Extract melody-specific features for MelodyTransformer."""
     features = extract_midi_features(midi_path)
     return {
-        'pitch_sequence': features.pitch_sequence,
-        'pitch_histogram': features.pitch_histogram,
-        'melodic_contour': features.melodic_contour,
-        'interval_histogram': features.interval_histogram,
-        'avg_pitch': features.avg_pitch,
-        'pitch_range': features.pitch_range,
+        "pitch_sequence": features.pitch_sequence,
+        "pitch_histogram": features.pitch_histogram,
+        "melodic_contour": features.melodic_contour,
+        "interval_histogram": features.interval_histogram,
+        "avg_pitch": features.avg_pitch,
+        "pitch_range": features.pitch_range,
     }
 
 
@@ -575,12 +582,12 @@ def extract_groove_features(midi_path: Path) -> Dict[str, Any]:
     """Extract groove-specific features for GroovePredictor."""
     features = extract_midi_features(midi_path)
     return {
-        'timing_offsets_ms': features.timing_offsets_ms,
-        'swing_ratio': features.swing_ratio,
-        'groove_type': features.groove_type,
-        'syncopation_score': features.syncopation_score,
-        'note_density': features.note_density,
-        'tempo_bpm': features.tempo_bpm,
+        "timing_offsets_ms": features.timing_offsets_ms,
+        "swing_ratio": features.swing_ratio,
+        "groove_type": features.groove_type,
+        "syncopation_score": features.syncopation_score,
+        "note_density": features.note_density,
+        "tempo_bpm": features.tempo_bpm,
     }
 
 
@@ -588,9 +595,9 @@ def extract_harmony_features(midi_path: Path) -> Dict[str, Any]:
     """Extract harmony-specific features for HarmonyPredictor."""
     features = extract_midi_features(midi_path)
     return {
-        'chord_sequence': features.chord_sequence,
-        'chord_times': features.chord_times,
-        'key_signature': features.key_signature,
-        'mode': features.mode,
-        'pitch_histogram': features.pitch_histogram,
+        "chord_sequence": features.chord_sequence,
+        "chord_times": features.chord_times,
+        "key_signature": features.key_signature,
+        "mode": features.mode,
+        "pitch_histogram": features.pitch_histogram,
     }

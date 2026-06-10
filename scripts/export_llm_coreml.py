@@ -66,7 +66,8 @@ def main() -> int:
         "--max-context-length",
         type=int,
         default=2048,
-        help="Max context length for static shapes (default 2048). Required for Core ML stateful backend.",
+        help="Max context length for static shapes (default 2048). Required for Core ML stateful "
+        "backend.",
     )
     parser.add_argument(
         "--dry-run",
@@ -121,7 +122,8 @@ def main() -> int:
         "--output_dir",
         str(args.output_dir.resolve()),
     ]
-    # Static context length required for Core ML stateful backend (ExecuTorch may accept one or both)
+    # Static context length required for Core ML stateful backend
+    # (ExecuTorch may accept one or both)
     cmd.extend(["--max_context_length", str(args.max_context_length)])
     cmd.extend(["--max_seq_length", str(args.max_context_length)])
     if args.tokenizer_path is not None:

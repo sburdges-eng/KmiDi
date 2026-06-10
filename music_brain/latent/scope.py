@@ -14,7 +14,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Iterable, List, Optional, TypeVar
 
-
 T = TypeVar("T")
 
 

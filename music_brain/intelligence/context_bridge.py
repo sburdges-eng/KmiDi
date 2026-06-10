@@ -10,7 +10,6 @@ import json
 
 from music_brain.intelligence.context_analyzer import ContextAnalyzer, MusicalContext
 
-
 # Global instance (singleton pattern)
 _context_analyzer: Optional[ContextAnalyzer] = None
 
@@ -77,14 +76,16 @@ def analyze_context(state_json: str) -> str:
 
     except Exception:  # noqa: F841
         # Return default context on error
-        return json.dumps({
-            "emotion_category": "unknown",
-            "complexity_level": "moderate",
-            "parameter_ranges": {},
-            "harmonic_state": None,
-            "rhythmic_state": None,
-            "suggestions": [],
-        })
+        return json.dumps(
+            {
+                "emotion_category": "unknown",
+                "complexity_level": "moderate",
+                "parameter_ranges": {},
+                "harmonic_state": None,
+                "rhythmic_state": None,
+                "suggestions": [],
+            }
+        )
 
 
 def get_contextual_parameters(state_json: str) -> str:
@@ -161,8 +162,7 @@ def get_contextual_suggestions(state_json: str) -> str:
 
 
 def _generate_parameter_adjustments(
-    context: MusicalContext,
-    state: Dict[str, Any]
+    context: MusicalContext, state: Dict[str, Any]
 ) -> Dict[str, Any]:
     """
     Generate parameter adjustments based on context.
@@ -187,7 +187,8 @@ def _generate_parameter_adjustments(
     elif context.emotion_category == "positive_high_energy":
         adjustments["tempo"] = 120
         justification_parts.append(
-            "Positive high energy emotions benefit from moderate-fast tempos")
+            "Positive high energy emotions benefit from moderate-fast tempos"
+        )
     else:
         adjustments["tempo"] = 100
         justification_parts.append("Neutral emotions work well with moderate tempos")

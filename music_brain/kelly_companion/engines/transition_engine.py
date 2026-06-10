@@ -16,91 +16,97 @@ from typing import Optional, List, Dict, Tuple
 import random
 import math
 
-
 # =============================================================================
 # ENUMS & CONSTANTS
 # =============================================================================
 
+
 class TransitionType(Enum):
     """Types of transitions between sections."""
+
     # Energy-based
-    HARD_CUT = "hard_cut"                 # Immediate switch
-    SOFT_CUT = "soft_cut"                 # Brief gap then new section
-    CROSSFADE = "crossfade"               # Overlap outgoing/incoming
-    FADE_OUT = "fade_out"                 # Gradual decrease
-    FADE_IN = "fade_in"                   # Gradual increase
+    HARD_CUT = "hard_cut"  # Immediate switch
+    SOFT_CUT = "soft_cut"  # Brief gap then new section
+    CROSSFADE = "crossfade"  # Overlap outgoing/incoming
+    FADE_OUT = "fade_out"  # Gradual decrease
+    FADE_IN = "fade_in"  # Gradual increase
 
     # Rhythmic
-    FILL = "fill"                         # Drum/melodic fill
-    BREAK = "break"                       # Stop then restart
-    STOP_TIME = "stop_time"               # Rhythmic hits
-    ACCELERANDO = "accelerando"           # Speed up
-    RITARDANDO = "ritardando"             # Slow down
+    FILL = "fill"  # Drum/melodic fill
+    BREAK = "break"  # Stop then restart
+    STOP_TIME = "stop_time"  # Rhythmic hits
+    ACCELERANDO = "accelerando"  # Speed up
+    RITARDANDO = "ritardando"  # Slow down
 
     # Harmonic
-    PIVOT = "pivot"                       # Pivot chord
-    TURNAROUND = "turnaround"             # Harmonic turnaround
-    MODULATION = "modulation"             # Key change
-    CADENCE = "cadence"                   # Strong cadential motion
-    DECEPTIVE = "deceptive"               # Deceptive resolution
+    PIVOT = "pivot"  # Pivot chord
+    TURNAROUND = "turnaround"  # Harmonic turnaround
+    MODULATION = "modulation"  # Key change
+    CADENCE = "cadence"  # Strong cadential motion
+    DECEPTIVE = "deceptive"  # Deceptive resolution
 
     # Textural
-    BUILD = "build"                       # Add layers progressively
-    STRIP = "strip"                       # Remove layers progressively
-    SWELL = "swell"                       # Crescendo then release
-    COLLAPSE = "collapse"                 # Sudden thinning
+    BUILD = "build"  # Add layers progressively
+    STRIP = "strip"  # Remove layers progressively
+    SWELL = "swell"  # Crescendo then release
+    COLLAPSE = "collapse"  # Sudden thinning
 
     # Structural
-    RISER = "riser"                       # Synth/noise riser
-    REVERSE = "reverse"                   # Reversed sound effect
-    IMPACT = "impact"                     # Crash/hit
-    SWEEP = "sweep"                       # Filter sweep
-    SILENCE = "silence"                   # Dramatic pause
+    RISER = "riser"  # Synth/noise riser
+    REVERSE = "reverse"  # Reversed sound effect
+    IMPACT = "impact"  # Crash/hit
+    SWEEP = "sweep"  # Filter sweep
+    SILENCE = "silence"  # Dramatic pause
 
     # Organic
-    BREATH = "breath"                     # Natural breathing space
-    ANTICIPATION = "anticipation"         # Early elements of next section
-    OVERLAP = "overlap"                   # Elements from both sections
+    BREATH = "breath"  # Natural breathing space
+    ANTICIPATION = "anticipation"  # Early elements of next section
+    OVERLAP = "overlap"  # Elements from both sections
 
 
 class TransitionLength(Enum):
     """Duration of transition."""
-    INSTANT = 0         # No transition time
-    BRIEF = 1           # 1 beat
-    SHORT = 2           # 2 beats / half bar
-    MEDIUM = 4          # 1 bar
-    LONG = 8            # 2 bars
-    EXTENDED = 16       # 4 bars
+
+    INSTANT = 0  # No transition time
+    BRIEF = 1  # 1 beat
+    SHORT = 2  # 2 beats / half bar
+    MEDIUM = 4  # 1 bar
+    LONG = 8  # 2 bars
+    EXTENDED = 16  # 4 bars
 
 
 class EnergyDirection(Enum):
     """Direction of energy change."""
-    UP = "up"                   # Building energy
-    DOWN = "down"               # Releasing energy
-    SAME = "same"               # Maintaining level
-    SPIKE_UP = "spike_up"       # Sudden increase
-    SPIKE_DOWN = "spike_down"   # Sudden decrease
+
+    UP = "up"  # Building energy
+    DOWN = "down"  # Releasing energy
+    SAME = "same"  # Maintaining level
+    SPIKE_UP = "spike_up"  # Sudden increase
+    SPIKE_DOWN = "spike_down"  # Sudden decrease
 
 
 class MoodShift(Enum):
     """Type of mood change."""
-    SAME = "same"               # No mood change
-    GRADUAL = "gradual"         # Smooth transition
-    CONTRAST = "contrast"       # Clear change
-    SURPRISE = "surprise"       # Unexpected shift
+
+    SAME = "same"  # No mood change
+    GRADUAL = "gradual"  # Smooth transition
+    CONTRAST = "contrast"  # Clear change
+    SURPRISE = "surprise"  # Unexpected shift
 
 
 # =============================================================================
 # DATA CLASSES
 # =============================================================================
 
+
 @dataclass
 class TransitionPoint:
     """A point within a transition."""
-    position: float              # 0.0 - 1.0 through transition
-    energy_level: float          # 0.0 - 1.0
-    density: float               # 0.0 - 1.0 instrument density
-    tension: float               # 0.0 - 1.0 harmonic tension
+
+    position: float  # 0.0 - 1.0 through transition
+    energy_level: float  # 0.0 - 1.0
+    density: float  # 0.0 - 1.0 instrument density
+    tension: float  # 0.0 - 1.0 harmonic tension
 
     # Active elements
     drums_active: bool = True
@@ -113,6 +119,7 @@ class TransitionPoint:
 @dataclass
 class TransitionSpec:
     """Complete specification for a transition."""
+
     transition_type: TransitionType
     length: TransitionLength
     energy_direction: EnergyDirection
@@ -129,7 +136,7 @@ class TransitionSpec:
 
     # Musical elements
     has_fill: bool = False
-    fill_type: str = ""           # "drum", "melodic", "bass", etc.
+    fill_type: str = ""  # "drum", "melodic", "bass", etc.
     has_riser: bool = False
     has_impact: bool = False
     has_reverse: bool = False
@@ -139,8 +146,8 @@ class TransitionSpec:
     uses_turnaround: bool = False
 
     # Timing
-    beat_offset: float = 0.0      # Where transition starts relative to bar
-    tempo_change: float = 1.0     # Tempo ratio
+    beat_offset: float = 0.0  # Where transition starts relative to bar
+    tempo_change: float = 1.0  # Tempo ratio
 
     # Metadata
     emotion: str = ""
@@ -149,6 +156,7 @@ class TransitionSpec:
 @dataclass
 class TransitionPlan:
     """Plan for all transitions in a song."""
+
     transitions: List[TransitionSpec]
     section_names: List[str]
 
@@ -171,31 +179,31 @@ SECTION_TRANSITION_PREFERENCES: Dict[Tuple[str, str], List[TransitionType]] = {
     ("intro", "verse"): [TransitionType.FILL, TransitionType.BUILD, TransitionType.SOFT_CUT],
     ("chorus", "verse"): [TransitionType.STRIP, TransitionType.FILL, TransitionType.BREATH],
     ("bridge", "verse"): [TransitionType.FILL, TransitionType.SOFT_CUT, TransitionType.BREATH],
-
     # Into chorus
     ("verse", "chorus"): [TransitionType.BUILD, TransitionType.FILL, TransitionType.SWELL],
     ("pre_chorus", "chorus"): [TransitionType.RISER, TransitionType.BUILD, TransitionType.IMPACT],
     ("bridge", "chorus"): [TransitionType.BUILD, TransitionType.SWELL, TransitionType.IMPACT],
-
     # Into bridge
     ("chorus", "bridge"): [TransitionType.STRIP, TransitionType.COLLAPSE, TransitionType.BREATH],
     ("verse", "bridge"): [TransitionType.FILL, TransitionType.PIVOT, TransitionType.BREATH],
-
     # Into breakdown
-    ("chorus", "breakdown"): [TransitionType.COLLAPSE, TransitionType.SILENCE, TransitionType.STRIP],  # noqa: E501
-
+    ("chorus", "breakdown"): [
+        TransitionType.COLLAPSE,
+        TransitionType.SILENCE,
+        TransitionType.STRIP,
+    ],  # noqa: E501
     ("verse", "breakdown"): [TransitionType.STRIP, TransitionType.SILENCE, TransitionType.BREATH],
     ("drop", "breakdown"): [TransitionType.COLLAPSE, TransitionType.SILENCE, TransitionType.STRIP],
-
     # Into build
-    ("breakdown", "build"): [TransitionType.BUILD, TransitionType.RISER, TransitionType.ANTICIPATION],  # noqa: E501
-
+    ("breakdown", "build"): [
+        TransitionType.BUILD,
+        TransitionType.RISER,
+        TransitionType.ANTICIPATION,
+    ],  # noqa: E501
     ("verse", "build"): [TransitionType.BUILD, TransitionType.FILL, TransitionType.SWELL],
-
     # Into drop
     ("build", "drop"): [TransitionType.IMPACT, TransitionType.HARD_CUT, TransitionType.SILENCE],
     ("breakdown", "drop"): [TransitionType.BUILD, TransitionType.RISER, TransitionType.IMPACT],
-
     # Into outro
     ("chorus", "outro"): [TransitionType.FADE_OUT, TransitionType.STRIP, TransitionType.BREATH],
     ("verse", "outro"): [TransitionType.FADE_OUT, TransitionType.SOFT_CUT, TransitionType.BREATH],
@@ -261,7 +269,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.0,
         "riser_probability": 0.0,
     },
-
     "sadness": {
         "preferred_types": [
             TransitionType.BREATH,
@@ -280,7 +287,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.1,
         "riser_probability": 0.1,
     },
-
     "melancholy": {
         "preferred_types": [
             TransitionType.CROSSFADE,
@@ -299,7 +305,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.05,
         "riser_probability": 0.05,
     },
-
     "rage": {
         "preferred_types": [
             TransitionType.HARD_CUT,
@@ -319,7 +324,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.6,
         "riser_probability": 0.4,
     },
-
     "anger": {
         "preferred_types": [
             TransitionType.HARD_CUT,
@@ -338,7 +342,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.5,
         "riser_probability": 0.3,
     },
-
     "fear": {
         "preferred_types": [
             TransitionType.BUILD,
@@ -356,7 +359,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.4,
         "riser_probability": 0.6,
     },
-
     "anxiety": {
         "preferred_types": [
             TransitionType.BUILD,
@@ -375,7 +377,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.3,
         "riser_probability": 0.5,
     },
-
     "hope": {
         "preferred_types": [
             TransitionType.BUILD,
@@ -394,7 +395,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.4,
         "riser_probability": 0.5,
     },
-
     "joy": {
         "preferred_types": [
             TransitionType.FILL,
@@ -413,7 +413,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.5,
         "riser_probability": 0.4,
     },
-
     "peace": {
         "preferred_types": [
             TransitionType.CROSSFADE,
@@ -433,7 +432,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.0,
         "riser_probability": 0.0,
     },
-
     "nostalgia": {
         "preferred_types": [
             TransitionType.CROSSFADE,
@@ -452,7 +450,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.1,
         "riser_probability": 0.1,
     },
-
     "longing": {
         "preferred_types": [
             TransitionType.SWELL,
@@ -471,7 +468,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.2,
         "riser_probability": 0.4,
     },
-
     "tension": {
         "preferred_types": [
             TransitionType.BUILD,
@@ -490,7 +486,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.5,
         "riser_probability": 0.7,
     },
-
     "defiance": {
         "preferred_types": [
             TransitionType.IMPACT,
@@ -509,7 +504,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.6,
         "riser_probability": 0.4,
     },
-
     "vulnerability": {
         "preferred_types": [
             TransitionType.BREATH,
@@ -529,7 +523,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.0,
         "riser_probability": 0.0,
     },
-
     "euphoria": {
         "preferred_types": [
             TransitionType.BUILD,
@@ -548,7 +541,6 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
         "impact_probability": 0.7,
         "riser_probability": 0.7,
     },
-
     "emptiness": {
         "preferred_types": [
             TransitionType.FADE_OUT,
@@ -574,6 +566,7 @@ EMOTION_TRANSITION_PROFILES: Dict[str, Dict] = {
 # =============================================================================
 # CURVE GENERATORS
 # =============================================================================
+
 
 def generate_transition_curve(
     transition_type: TransitionType,
@@ -615,7 +608,7 @@ def generate_transition_curve(
 
         elif transition_type in [TransitionType.BUILD, TransitionType.RISER]:
             # Exponential build
-            energy = from_energy + (pos ** 2) * (to_energy - from_energy)
+            energy = from_energy + (pos**2) * (to_energy - from_energy)
 
         elif transition_type in [TransitionType.STRIP, TransitionType.COLLAPSE]:
             # Inverse exponential
@@ -624,8 +617,9 @@ def generate_transition_curve(
         elif transition_type == TransitionType.SWELL:
             # Up then down
             if pos < 0.7:
-                energy = from_energy + (pos / 0.7) * (max(from_energy,
-                                                          to_energy) * 1.2 - from_energy)
+                energy = from_energy + (pos / 0.7) * (
+                    max(from_energy, to_energy) * 1.2 - from_energy
+                )
             else:
                 peak = max(from_energy, to_energy) * 1.2
                 energy = peak - ((pos - 0.7) / 0.3) * (peak - to_energy)
@@ -666,7 +660,10 @@ def generate_transition_curve(
         tension_curve = math.sin(pos * math.pi)
         base_tension = 0.3
         if transition_type in [
-                TransitionType.BUILD, TransitionType.RISER, TransitionType.ANTICIPATION]:
+            TransitionType.BUILD,
+            TransitionType.RISER,
+            TransitionType.ANTICIPATION,
+        ]:
             base_tension = 0.5
         tension = base_tension + tension_curve * 0.4
 
@@ -676,21 +673,25 @@ def generate_transition_curve(
         chords_active = energy > 0.1
         melody_active = energy > 0.3
         effects_active = transition_type in [
-            TransitionType.RISER, TransitionType.IMPACT,
-            TransitionType.REVERSE, TransitionType.SWEEP
+            TransitionType.RISER,
+            TransitionType.IMPACT,
+            TransitionType.REVERSE,
+            TransitionType.SWEEP,
         ]
 
-        points.append(TransitionPoint(
-            position=pos,
-            energy_level=energy,
-            density=density,
-            tension=tension,
-            drums_active=drums_active,
-            bass_active=bass_active,
-            chords_active=chords_active,
-            melody_active=melody_active,
-            effects_active=effects_active,
-        ))
+        points.append(
+            TransitionPoint(
+                position=pos,
+                energy_level=energy,
+                density=density,
+                tension=tension,
+                drums_active=drums_active,
+                bass_active=bass_active,
+                chords_active=chords_active,
+                melody_active=melody_active,
+                effects_active=effects_active,
+            )
+        )
 
     return points
 
@@ -698,6 +699,7 @@ def generate_transition_curve(
 # =============================================================================
 # TRANSITION ENGINE
 # =============================================================================
+
 
 class TransitionEngine:
     """
@@ -737,8 +739,7 @@ class TransitionEngine:
         """
         emotion_lower = emotion.lower()
         profile = EMOTION_TRANSITION_PROFILES.get(
-            emotion_lower,
-            EMOTION_TRANSITION_PROFILES["sadness"]
+            emotion_lower, EMOTION_TRANSITION_PROFILES["sadness"]
         )
 
         # Determine energy direction
@@ -785,8 +786,9 @@ class TransitionEngine:
 
         # Avoid disallowed types
         if trans_type in profile["avoid_types"]:
-            alternatives = [t for t in profile["preferred_types"]
-                            if t not in profile["avoid_types"]]
+            alternatives = [
+                t for t in profile["preferred_types"] if t not in profile["avoid_types"]
+            ]
             if alternatives:
                 trans_type = self.rng.choice(alternatives)
 
@@ -823,19 +825,20 @@ class TransitionEngine:
         # Determine production elements
         has_fill = self.rng.random() < profile["fill_probability"]
         has_riser = (
-            profile["use_production_elements"] and
-            self.rng.random() < profile["riser_probability"] and
-            trans_type in [TransitionType.BUILD, TransitionType.RISER, TransitionType.ANTICIPATION]
+            profile["use_production_elements"]
+            and self.rng.random() < profile["riser_probability"]
+            and trans_type
+            in [TransitionType.BUILD, TransitionType.RISER, TransitionType.ANTICIPATION]
         )
         has_impact = (
-            profile["use_production_elements"] and
-            self.rng.random() < profile["impact_probability"] and
-            trans_type in [TransitionType.IMPACT, TransitionType.HARD_CUT, TransitionType.BUILD]
+            profile["use_production_elements"]
+            and self.rng.random() < profile["impact_probability"]
+            and trans_type in [TransitionType.IMPACT, TransitionType.HARD_CUT, TransitionType.BUILD]
         )
         has_reverse = (
-            profile["use_production_elements"] and
-            self.rng.random() < 0.2 and
-            trans_type == TransitionType.REVERSE
+            profile["use_production_elements"]
+            and self.rng.random() < 0.2
+            and trans_type == TransitionType.REVERSE
         )
 
         # Fill type
@@ -936,15 +939,17 @@ class TransitionEngine:
         t = (position - prev_point.position) / (next_point.position - prev_point.position)
 
         return TransitionPoint(
-            position=position, energy_level=prev_point.energy_level + t *
-            (next_point.energy_level - prev_point.energy_level),
+            position=position,
+            energy_level=prev_point.energy_level
+            + t * (next_point.energy_level - prev_point.energy_level),
             density=prev_point.density + t * (next_point.density - prev_point.density),
             tension=prev_point.tension + t * (next_point.tension - prev_point.tension),
             drums_active=prev_point.drums_active if t < 0.5 else next_point.drums_active,
             bass_active=prev_point.bass_active if t < 0.5 else next_point.bass_active,
             chords_active=prev_point.chords_active if t < 0.5 else next_point.chords_active,
             melody_active=prev_point.melody_active if t < 0.5 else next_point.melody_active,
-            effects_active=prev_point.effects_active or next_point.effects_active,)
+            effects_active=prev_point.effects_active or next_point.effects_active,
+        )
 
     def print_transition(self, spec: TransitionSpec) -> str:
         """Generate visual representation of transition."""
@@ -953,7 +958,8 @@ class TransitionEngine:
         lines.append(f"═══ TRANSITION: {spec.from_section} → {spec.to_section} ═══")
         lines.append(f"Type: {spec.transition_type.value} | Length: {spec.length.name}")
         lines.append(
-            f"Energy: {spec.from_energy:.2f} → {spec.to_energy:.2f} ({spec.energy_direction.value})")  # noqa: E501
+            f"Energy: {spec.from_energy:.2f} → {spec.to_energy:.2f} ({spec.energy_direction.value})"
+        )  # noqa: E501
 
         lines.append(f"Mood: {spec.mood_shift.value}")
         lines.append("")
@@ -1029,8 +1035,11 @@ class TransitionEngine:
                 TransitionType.SWELL: "◆",
             }.get(trans.transition_type, "·")
 
-            energy_arrow = "→" if abs(
-                trans.to_energy - trans.from_energy) < 0.1 else "↑" if trans.to_energy > trans.from_energy else "↓"  # noqa: E501
+            energy_arrow = (
+                "→"
+                if abs(trans.to_energy - trans.from_energy) < 0.1
+                else "↑" if trans.to_energy > trans.from_energy else "↓"
+            )  # noqa: E501
 
             elements = []
             if trans.has_fill:
@@ -1054,6 +1063,7 @@ class TransitionEngine:
 # =============================================================================
 # CONVENIENCE FUNCTIONS
 # =============================================================================
+
 
 def create_transition(
     emotion: str,
@@ -1125,7 +1135,7 @@ if __name__ == "__main__":
     # Test full plan
     print(f"\n{'='*60}")
     print("FULL TRANSITION PLAN")
-    print('='*60)
+    print("=" * 60)
 
     sections = [
         ("intro", 0.3),

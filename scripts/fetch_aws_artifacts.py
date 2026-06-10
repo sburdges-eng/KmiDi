@@ -23,7 +23,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--s3-uri",
         default="",
-        help="S3 URI to run root (s3://bucket/prefix/run-id) or output root when --run-id is provided",
+        help="S3 URI to run root (s3://bucket/prefix/run-id) or output root when --run-id is "
+        "provided",
     )
     parser.add_argument("--run-id", default="", help="Run ID to append to --s3-uri when needed")
     parser.add_argument(
@@ -38,9 +39,15 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_RUN_CONTRACT_PATH,
         help="Run contract config path (YAML/JSON).",
     )
-    parser.add_argument("--break-glass", action="store_true", help="Required for teacher artifact fetch")
-    parser.add_argument("--break-glass-role-arn", default="", help="Break-glass role ARN for teacher fetch")
-    parser.add_argument("--dry-run", action="store_true", help="Print resolved S3/run details and exit")
+    parser.add_argument(
+        "--break-glass", action="store_true", help="Required for teacher artifact fetch"
+    )
+    parser.add_argument(
+        "--break-glass-role-arn", default="", help="Break-glass role ARN for teacher fetch"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Print resolved S3/run details and exit"
+    )
     parser.add_argument("--output-dir", type=Path, default=Path("artifacts/download"))
     parser.add_argument("--profile", default="")
     parser.add_argument("--region", default="")
@@ -57,7 +64,9 @@ def validate_runs_prefix(uri: str) -> None:
 
 
 def key_is_local_safe(relative_key: str, scope: str = "student") -> bool:
-    student_allowed = relative_key.startswith("artifacts/student/") or relative_key == "metrics.json"
+    student_allowed = (
+        relative_key.startswith("artifacts/student/") or relative_key == "metrics.json"
+    )
     teacher_allowed = relative_key.startswith("artifacts/teacher/")
     if scope == "student":
         return student_allowed
@@ -76,9 +85,13 @@ def resolve_fetch_uri(args: argparse.Namespace, contract: dict[str, Any]) -> str
     base_uri = args.s3_uri.strip()
     if not base_uri:
         run_bucket = str(run_contract_get(contract, "s3", "runBucket", default="")).strip()
-        run_prefix = str(run_contract_get(contract, "s3", "runPrefix", default="training/runs")).strip("/")
+        run_prefix = str(
+            run_contract_get(contract, "s3", "runPrefix", default="training/runs")
+        ).strip("/")
         if not run_bucket:
-            raise ValueError("Missing run bucket: provide --s3-uri or set s3.runBucket in run contract")
+            raise ValueError(
+                "Missing run bucket: provide --s3-uri or set s3.runBucket in run contract"
+            )
         base_uri = build_s3_uri(run_bucket, run_prefix)
     full_uri = base_uri.rstrip("/")
     if args.run_id:
@@ -86,7 +99,9 @@ def resolve_fetch_uri(args: argparse.Namespace, contract: dict[str, Any]) -> str
     return full_uri
 
 
-def enforce_teacher_fetch_policy(args: argparse.Namespace, contract: dict[str, Any], default_profile: str) -> None:
+def enforce_teacher_fetch_policy(
+    args: argparse.Namespace, contract: dict[str, Any], default_profile: str
+) -> None:
     teacher_requested = args.scope in {"teacher", "all"}
     if not teacher_requested:
         if args.break_glass or args.break_glass_role_arn:
@@ -102,11 +117,16 @@ def enforce_teacher_fetch_policy(args: argparse.Namespace, contract: dict[str, A
     if not args.break_glass_role_arn:
         raise ValueError("Teacher artifact fetch requires --break-glass-role-arn")
 
-    required_profile = str(run_contract_get(contract, "security", "teacherFetch", "requiredProfile", default="")).strip()
-    required_role = str(run_contract_get(contract, "security", "teacherFetch", "requiredRoleArn", default="")).strip()
+    required_profile = str(
+        run_contract_get(contract, "security", "teacherFetch", "requiredProfile", default="")
+    ).strip()
+    required_role = str(
+        run_contract_get(contract, "security", "teacherFetch", "requiredRoleArn", default="")
+    ).strip()
     if required_profile and args.profile != required_profile:
         raise ValueError(
-            f"Teacher artifact fetch requires profile '{required_profile}' from run contract; got '{args.profile}'"
+            f"Teacher artifact fetch requires profile '{required_profile}' from run contract; got "
+            f"'{args.profile}'"
         )
     if not required_role:
         raise ValueError(
@@ -114,7 +134,8 @@ def enforce_teacher_fetch_policy(args: argparse.Namespace, contract: dict[str, A
         )
     if args.break_glass_role_arn != required_role:
         raise ValueError(
-            "Teacher artifact fetch role mismatch: provided role does not match security.teacherFetch.requiredRoleArn"
+            "Teacher artifact fetch role mismatch: provided role does not match "
+            "security.teacherFetch.requiredRoleArn"
         )
 
 
@@ -164,7 +185,9 @@ def main() -> int:
     if args.scope in {"teacher", "all"}:
         sts_client = session.client("sts", region_name=args.region or None)
         role_session_name = f"fetch-teacher-{utc_now_iso().replace(':', '').replace('-', '')}"
-        assumed = sts_client.assume_role(RoleArn=args.break_glass_role_arn, RoleSessionName=role_session_name)
+        assumed = sts_client.assume_role(
+            RoleArn=args.break_glass_role_arn, RoleSessionName=role_session_name
+        )
         creds = assumed["Credentials"]
         role_session = boto3.Session(
             aws_access_key_id=creds["AccessKeyId"],

@@ -36,43 +36,43 @@ class RuleBreakingTeacher:
             "parallel_fifths": {
                 "description": "Avoid parallel perfect fifths between voices",
                 "reason": "Reduces harmonic independence and creates hollow sound",
-                "severity": "high"
+                "severity": "high",
             },
             "parallel_octaves": {
                 "description": "Avoid parallel perfect octaves between voices",
                 "reason": "Reduces voice independence and texture",
-                "severity": "high"
+                "severity": "high",
             },
             "voice_crossing": {
                 "description": "Avoid voices crossing their normal ranges",
                 "reason": "Can muddy the texture and confuse harmonic clarity",
-                "severity": "medium"
+                "severity": "medium",
             },
             "voice_overlap": {
                 "description": "Avoid a voice moving beyond the previous note of an adjacent voice",
                 "reason": "Can create confusion in voice leading clarity",
-                "severity": "medium"
+                "severity": "medium",
             },
             "spacing": {
                 "description": "Keep upper three voices within an octave of each other",
                 "reason": "Maintains balanced sonority and clarity",
-                "severity": "low"
+                "severity": "low",
             },
             "range": {
                 "description": "Keep voices within their comfortable singing ranges",
                 "reason": "Ensures performability and natural sound",
-                "severity": "medium"
+                "severity": "medium",
             },
             "doubled_leading_tone": {
                 "description": "Don't double the leading tone",
                 "reason": "Creates awkward resolution with both notes wanting to rise",
-                "severity": "medium"
+                "severity": "medium",
             },
             "augmented_second": {
                 "description": "Avoid melodic augmented seconds",
                 "reason": "Difficult to sing and sounds unnatural in tonal music",
-                "severity": "medium"
-            }
+                "severity": "medium",
+            },
         }
 
         self.current_rule = None
@@ -135,7 +135,7 @@ class RuleBreakingTeacher:
         if rule_name not in self.rules:
             return {
                 "error": f"Unknown rule: {rule_name}",
-                "available_rules": list(self.rules.keys())
+                "available_rules": list(self.rules.keys()),
             }
 
         self.current_rule = rule_name
@@ -146,7 +146,7 @@ class RuleBreakingTeacher:
             "description": rule["description"],
             "reason": rule["reason"],
             "severity": rule["severity"],
-            "lesson": self._generate_lesson(rule_name)
+            "lesson": self._generate_lesson(rule_name),
         }
 
     def _generate_lesson(self, rule_name: str) -> Dict[str, Any]:
@@ -166,26 +166,28 @@ class RuleBreakingTeacher:
             "parallel_fifths": {
                 "violation_example": "C-G moving to D-A (parallel perfect fifths)",
                 "correct_example": "C-G moving to D-F (contrary motion avoids parallels)",
-                "listening_tip": "Listen for the hollow, organum-like quality in the violation"
+                "listening_tip": "Listen for the hollow, organum-like quality in the violation",
             },
             "parallel_octaves": {
                 "violation_example": "C4-C5 moving to D4-D5 (parallel octaves)",
                 "correct_example": "C4-C5 moving to D4-C5 (oblique motion)",
-                "listening_tip": "Parallel octaves make the texture sound thinner"
+                "listening_tip": "Parallel octaves make the texture sound thinner",
             },
             "voice_crossing": {
                 "violation_example": "Alto moves below tenor line",
                 "correct_example": "Alto stays within its range above tenor",
-                "listening_tip": "Voice crossing creates momentary confusion about which voice is which"  # noqa: E501
-
-            }
+                "listening_tip": "Voice crossing creates momentary confusion about which voice is which",  # noqa: E501
+            },
         }
 
-        return lessons.get(rule_name, {
-            "violation_example": "Example violation to be implemented",
-            "correct_example": "Example correction to be implemented",
-            "listening_tip": "Listen for the difference in sound quality"
-        })
+        return lessons.get(
+            rule_name,
+            {
+                "violation_example": "Example violation to be implemented",
+                "correct_example": "Example correction to be implemented",
+                "listening_tip": "Listen for the difference in sound quality",
+            },
+        )
 
     def break_rule(self, rule_name: str, progression: List[List[int]]) -> Tuple[bool, str]:
         """
@@ -222,13 +224,15 @@ class RuleBreakingTeacher:
             rule = random.choice(rule_names)
             has_violation = random.choice([True, False])
 
-            questions.append({
-                "question_num": i + 1,
-                "rule_tested": rule,
-                "has_violation": has_violation,
-                "example": f"Example progression {i+1} (to be generated)",
-                "hint": self.rules[rule]["description"]
-            })
+            questions.append(
+                {
+                    "question_num": i + 1,
+                    "rule_tested": rule,
+                    "has_violation": has_violation,
+                    "example": f"Example progression {i+1} (to be generated)",
+                    "hint": self.rules[rule]["description"],
+                }
+            )
 
         return questions
 
@@ -252,20 +256,9 @@ class RuleBreakingTeacher:
             Suggested practice sequence and exercises
         """
         progressions = {
-            "beginner": [
-                "parallel_fifths",
-                "parallel_octaves",
-                "range"
-            ],
-            "intermediate": [
-                "voice_crossing",
-                "spacing",
-                "doubled_leading_tone"
-            ],
-            "advanced": [
-                "voice_overlap",
-                "augmented_second"
-            ]
+            "beginner": ["parallel_fifths", "parallel_octaves", "range"],
+            "intermediate": ["voice_crossing", "spacing", "doubled_leading_tone"],
+            "advanced": ["voice_overlap", "augmented_second"],
         }
 
         sequence = progressions.get(difficulty, progressions["beginner"])
@@ -274,5 +267,5 @@ class RuleBreakingTeacher:
             "difficulty": difficulty,
             "rule_sequence": sequence,
             "estimated_time": f"{len(sequence) * 15} minutes",
-            "description": f"Practice sequence for {difficulty} level"
+            "description": f"Practice sequence for {difficulty} level",
         }

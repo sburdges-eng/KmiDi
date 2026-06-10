@@ -28,6 +28,7 @@ from pathlib import Path
 
 class LogLevel(Enum):
     """Log levels for orchestrator logging."""
+
     DEBUG = logging.DEBUG
     INFO = logging.INFO
     WARNING = logging.WARNING
@@ -38,6 +39,7 @@ class LogLevel(Enum):
 @dataclass
 class LogEntry:
     """Structured log entry for pipeline execution."""
+
     timestamp: str
     level: str
     message: str
@@ -77,10 +79,10 @@ class LogFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         """Format log record with pipeline context."""
         # Add default values for custom fields if not present
-        if not hasattr(record, 'pipeline_id'):
-            record.pipeline_id = '-'
-        if not hasattr(record, 'stage_name'):
-            record.stage_name = '-'
+        if not hasattr(record, "pipeline_id"):
+            record.pipeline_id = "-"
+        if not hasattr(record, "stage_name"):
+            record.stage_name = "-"
 
         return super().format(record)
 
@@ -95,11 +97,11 @@ class JsonLogFormatter(logging.Formatter):
             level=record.levelname,
             message=record.getMessage(),
             logger_name=record.name,
-            pipeline_id=getattr(record, 'pipeline_id', None),
-            stage_name=getattr(record, 'stage_name', None),
-            execution_id=getattr(record, 'execution_id', None),
-            duration_ms=getattr(record, 'duration_ms', None),
-            extra=getattr(record, 'extra_data', {}),
+            pipeline_id=getattr(record, "pipeline_id", None),
+            stage_name=getattr(record, "stage_name", None),
+            execution_id=getattr(record, "execution_id", None),
+            duration_ms=getattr(record, "duration_ms", None),
+            extra=getattr(record, "extra_data", {}),
         )
         return entry.to_json()
 
@@ -195,15 +197,16 @@ class OrchestratorLogger:
 
         # Create log record extras
         extra_fields = {
-            k: v for k, v in extra.items()
-            if k not in ('pipeline_id', 'stage_name', 'execution_id', 'duration_ms')
+            k: v
+            for k, v in extra.items()
+            if k not in ("pipeline_id", "stage_name", "execution_id", "duration_ms")
         }
         record_extras = {
-            'pipeline_id': extra.get('pipeline_id', '-'),
-            'stage_name': extra.get('stage_name', '-'),
-            'execution_id': extra.get('execution_id'),
-            'duration_ms': extra.get('duration_ms'),
-            'extra_data': extra_fields,
+            "pipeline_id": extra.get("pipeline_id", "-"),
+            "stage_name": extra.get("stage_name", "-"),
+            "execution_id": extra.get("execution_id"),
+            "duration_ms": extra.get("duration_ms"),
+            "extra_data": extra_fields,
         }
 
         # Log the message
@@ -215,10 +218,10 @@ class OrchestratorLogger:
             level=logging.getLevelName(level),
             message=message % args if args else message,
             logger_name=self.name,
-            pipeline_id=record_extras.get('pipeline_id'),
-            stage_name=record_extras.get('stage_name'),
-            execution_id=record_extras.get('execution_id'),
-            duration_ms=record_extras.get('duration_ms'),
+            pipeline_id=record_extras.get("pipeline_id"),
+            stage_name=record_extras.get("stage_name"),
+            execution_id=record_extras.get("execution_id"),
+            duration_ms=record_extras.get("duration_ms"),
             extra=extra_fields,
         )
         self._history.append(entry)
@@ -254,7 +257,8 @@ class OrchestratorLogger:
         """Log the completion of a pipeline stage."""
         self.info(
             "Stage completed: %s (%.2f ms)",
-            stage_name, duration_ms,
+            stage_name,
+            duration_ms,
             duration_ms=duration_ms,
             **kwargs,
         )
@@ -263,7 +267,8 @@ class OrchestratorLogger:
         """Log a stage failure."""
         self.error(
             "Stage failed: %s - %s",
-            stage_name, str(error),
+            stage_name,
+            str(error),
             stage_name=stage_name,
             exc_info=True,
             **kwargs,
@@ -278,7 +283,8 @@ class OrchestratorLogger:
         """Log the completion of a pipeline."""
         self.info(
             "Pipeline completed: %s (%.2f ms)",
-            pipeline_id, duration_ms,
+            pipeline_id,
+            duration_ms,
             duration_ms=duration_ms,
             **kwargs,
         )
@@ -287,7 +293,8 @@ class OrchestratorLogger:
         """Log a pipeline failure."""
         self.error(
             "Pipeline failed: %s - %s",
-            pipeline_id, str(error),
+            pipeline_id,
+            str(error),
             exc_info=True,
             **kwargs,
         )
@@ -295,7 +302,7 @@ class OrchestratorLogger:
     class TimedOperation:
         """Context manager for timing operations."""
 
-        def __init__(self, logger: 'OrchestratorLogger', operation_name: str):
+        def __init__(self, logger: "OrchestratorLogger", operation_name: str):
             self.logger = logger
             self.operation_name = operation_name
             self.start_time: float = 0
@@ -311,13 +318,16 @@ class OrchestratorLogger:
             if exc_type is None:
                 self.logger.debug(
                     "Completed operation: %s (%.2f ms)",
-                    self.operation_name, self.duration_ms,
+                    self.operation_name,
+                    self.duration_ms,
                     duration_ms=self.duration_ms,
                 )
             else:
                 self.logger.error(
                     "Failed operation: %s (%.2f ms) - %s",
-                    self.operation_name, self.duration_ms, exc_val,
+                    self.operation_name,
+                    self.duration_ms,
+                    exc_val,
                     duration_ms=self.duration_ms,
                 )
             return False  # Don't suppress exceptions
@@ -334,15 +344,12 @@ class OrchestratorLogger:
         """Get log history, optionally filtered by level."""
         history = self._history[-limit:]
         if level:
-            history = [
-                entry for entry in history
-                if entry.level == level.name
-            ]
+            history = [entry for entry in history if entry.level == level.name]
         return history
 
     def export_history(self, filepath: Path):
         """Export log history to JSON file."""
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump([entry.to_dict() for entry in self._history], f, indent=2)
 
 

@@ -77,16 +77,18 @@ def launch_sagemaker_job(
         channel = datasets_cfg.get(channel_name, {})
         s3_uri = channel.get("s3_prefix")
         if s3_uri:
-            input_channels.append({
-                "ChannelName": channel_name,
-                "DataSource": {
-                    "S3DataSource": {
-                        "S3DataType": "S3Prefix",
-                        "S3Uri": s3_uri,
-                        "S3DataDistributionType": "FullyReplicated",
-                    }
-                },
-            })
+            input_channels.append(
+                {
+                    "ChannelName": channel_name,
+                    "DataSource": {
+                        "S3DataSource": {
+                            "S3DataType": "S3Prefix",
+                            "S3Uri": s3_uri,
+                            "S3DataDistributionType": "FullyReplicated",
+                        }
+                    },
+                }
+            )
 
     checkpoint_s3 = config.get("checkpoints", {}).get("s3_prefix", "")
     output_s3 = f"{checkpoint_s3}{run_id}/" if checkpoint_s3 else None
@@ -120,9 +122,7 @@ def launch_sagemaker_job(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Launch JEPA training on SageMaker"
-    )
+    parser = argparse.ArgumentParser(description="Launch JEPA training on SageMaker")
     parser.add_argument(
         "--model",
         choices=["audio_jepa", "chord_jepa", "both"],
@@ -169,11 +169,7 @@ def main():
         print("ERROR: --role-arn or SAGEMAKER_EXECUTION_ROLE_ARN required")
         sys.exit(1)
 
-    models = (
-        ["audio_jepa", "chord_jepa"]
-        if args.model == "both"
-        else [args.model]
-    )
+    models = ["audio_jepa", "chord_jepa"] if args.model == "both" else [args.model]
 
     for model_type in models:
         launch_sagemaker_job(

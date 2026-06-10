@@ -169,9 +169,8 @@ class BaseProcessor(ProcessorInterface):
             "name": self.name,
             "processed_count": self._processed_count,
             "error_count": self._error_count,
-            "success_rate": (
-                self._processed_count - self._error_count
-            ) / max(self._processed_count, 1),
+            "success_rate": (self._processed_count - self._error_count)
+            / max(self._processed_count, 1),
             "status": self._status.value,
         }
 

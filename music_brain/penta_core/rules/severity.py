@@ -15,6 +15,7 @@ class RuleSeverity(Enum):
         STYLISTIC: Context-dependent preference (e.g., jazz voice leading differs from classical)
         MODERN: Classical prohibition, acceptable in contemporary music
     """
+
     STRICT = auto()
     GUIDELINE = auto()
     STYLISTIC = auto()

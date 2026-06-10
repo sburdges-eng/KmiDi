@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DownloadResult:
     """Result of a download operation."""
+
     success: bool
     path: Optional[Path] = None
     files_count: int = 0
@@ -109,8 +110,7 @@ class AudioDownloader:
             import requests
         except ImportError:
             return DownloadResult(
-                success=False,
-                error="requests not installed: pip install requests"
+                success=False, error="requests not installed: pip install requests"
             )
 
         try:
@@ -185,15 +185,14 @@ class AudioDownloader:
         if not self.freesound_api_key:
             return DownloadResult(
                 success=False,
-                error="FREESOUND_API_KEY not set. Get one at https://freesound.org/apiv2/apply/"
+                error="FREESOUND_API_KEY not set. Get one at https://freesound.org/apiv2/apply/",
             )
 
         try:
             import requests
         except ImportError:
             return DownloadResult(
-                success=False,
-                error="requests not installed: pip install requests"
+                success=False, error="requests not installed: pip install requests"
             )
 
         try:
@@ -276,8 +275,7 @@ class AudioDownloader:
             from datasets import load_dataset
         except ImportError:
             return DownloadResult(
-                success=False,
-                error="datasets not installed: pip install datasets"
+                success=False, error="datasets not installed: pip install datasets"
             )
 
         try:
@@ -354,10 +352,7 @@ class AudioDownloader:
         """
         source_path = Path(source_dir)
         if not source_path.exists():
-            return DownloadResult(
-                success=False,
-                error=f"Source directory not found: {source_path}"
-            )
+            return DownloadResult(success=False, error=f"Source directory not found: {source_path}")
 
         try:
             output_path = self.output_dir / (output_subdir or source_path.name)
@@ -416,6 +411,7 @@ class AudioDownloader:
         elif archive_path.suffix == ".gz":
             # Plain gzip file (single file)
             import gzip
+
             output_file = extract_to / archive_path.stem
             with gzip.open(archive_path, "rb") as f_in:
                 with open(output_file, "wb") as f_out:

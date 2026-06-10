@@ -31,7 +31,6 @@ from music_brain.latent.decoding import (
 )
 from music_brain.latent.scheduler import JitterBoundedScheduler
 
-
 LogitFn = Callable[[int, Optional[int]], "object"]
 # `LogitFn(step_idx, previous_token) -> logits: torch.Tensor of shape (1, V)`
 

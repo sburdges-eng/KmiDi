@@ -75,8 +75,7 @@ class VectorStore:
     def __contains__(self, key: object) -> bool:
         return isinstance(key, str) and key in self._index
 
-    def add(self, id_: str, vector: np.ndarray,
-            metadata: Optional[dict] = None) -> None:
+    def add(self, id_: str, vector: np.ndarray, metadata: Optional[dict] = None) -> None:
         """Insert or replace a vector under ``id_``.
 
         Replacing an existing id preserves the row index so external
@@ -86,8 +85,7 @@ class VectorStore:
             raise ValueError("id_ must be a non-empty string")
         vec = np.asarray(vector, dtype=np.float32).reshape(-1)
         if vec.shape[0] != self._dim:
-            raise ValueError(
-                f"vector dim {vec.shape[0]} != store dim {self._dim}")
+            raise ValueError(f"vector dim {vec.shape[0]} != store dim {self._dim}")
         normed = _normalise(vec)
         if id_ in self._index:
             row = self._index[id_]
@@ -118,8 +116,9 @@ class VectorStore:
         self._index = {k: i for i, k in enumerate(self._ids)}
         return True
 
-    def search(self, query: np.ndarray, top_k: int = 5,
-               min_score: float = -1.0) -> list[tuple[str, float, Optional[dict]]]:
+    def search(
+        self, query: np.ndarray, top_k: int = 5, min_score: float = -1.0
+    ) -> list[tuple[str, float, Optional[dict]]]:
         """Return up to ``top_k`` nearest neighbours by cosine similarity.
 
         Args:
@@ -135,8 +134,7 @@ class VectorStore:
             return []
         q = np.asarray(query, dtype=np.float32).reshape(-1)
         if q.shape[0] != self._dim:
-            raise ValueError(
-                f"query dim {q.shape[0]} != store dim {self._dim}")
+            raise ValueError(f"query dim {q.shape[0]} != store dim {self._dim}")
         q = _normalise(q)
         # Cosine sim = dot product because both sides are unit-length.
         scores = self._vectors @ q
@@ -162,8 +160,8 @@ class VectorStore:
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         meta_blobs = np.asarray(
-            [json.dumps(m) if m is not None else "" for m in self._meta],
-            dtype=object)
+            [json.dumps(m) if m is not None else "" for m in self._meta], dtype=object
+        )
         np.savez_compressed(
             path,
             vectors=self._vectors.astype(np.float32),
@@ -184,8 +182,7 @@ class VectorStore:
         store = cls(dim)
         if vectors.shape[0] > 0:
             if vectors.shape[1] != dim:
-                raise ValueError(
-                    f"saved vectors dim {vectors.shape[1]} != saved dim {dim}")
+                raise ValueError(f"saved vectors dim {vectors.shape[1]} != saved dim {dim}")
             store._vectors = vectors
             store._ids = ids
             store._meta = [json.loads(m) if m else None for m in meta_raw]

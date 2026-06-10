@@ -22,6 +22,7 @@ class Rule:
         exceptions: Known cases where the rule can be broken
         category: Organizational grouping (e.g., "parallel_motion", "chord_construction")
     """
+
     name: str
     description: str
     severity: RuleSeverity | Dict[MusicalContext, RuleSeverity]
@@ -94,6 +95,7 @@ class RuleViolation:
         explanation: Specific description of how the rule was broken
         severity_override: Optional context-specific severity adjustment
     """
+
     rule: Rule
     location: str
     pitches: List[int]
@@ -124,6 +126,7 @@ class RuleBreakSuggestion:
         explanation: Why this break works musically
         difficulty: 1-5 scale of how advanced this technique is
     """
+
     rule: Rule
     context: MusicalContext
     musical_example: List[int]  # MIDI notes

@@ -32,6 +32,7 @@ from music_brain.arrangement.bass_generator import (
 
 try:
     import mido
+
     MIDO_AVAILABLE = True
 except ImportError:
     MIDO_AVAILABLE = False
@@ -40,6 +41,7 @@ except ImportError:
 @dataclass
 class InstrumentTrack:
     """Single instrument track in arrangement."""
+
     name: str
     midi_channel: int = 0
     entry_section: int = 0  # Section index where instrument enters
@@ -60,6 +62,7 @@ class InstrumentTrack:
 @dataclass
 class GeneratedArrangement:
     """Complete generated arrangement."""
+
     template: ArrangementTemplate
     energy_arc: EnergyArc
     instruments: List[InstrumentTrack]
@@ -89,11 +92,9 @@ class GeneratedArrangement:
         notes.append(f"Total bars: {self.template.total_bars}")
 
         # Energy arc notes
-        arc_name = self.energy_arc.narrative_arc.value.replace('-', ' ').title()
+        arc_name = self.energy_arc.narrative_arc.value.replace("-", " ").title()
         notes.append(f"Narrative arc: {arc_name}")
-        notes.append(
-            f"Peak energy at {self.energy_arc.peak_position*100:.0f}% through song"
-        )
+        notes.append(f"Peak energy at {self.energy_arc.peak_position*100:.0f}% through song")
 
         # Section breakdown
         notes.append("\n## Section Breakdown:")
@@ -216,44 +217,53 @@ class ArrangementGenerator:
         instruments = []
 
         # Core instruments (always present or nearly always)
-        instruments.append(InstrumentTrack(
-            name="drums",
-            midi_channel=9,  # Standard drum channel
-            entry_section=0 if template.sections[0].section_type != SectionType.INTRO else 1,
-        ))
+        instruments.append(
+            InstrumentTrack(
+                name="drums",
+                midi_channel=9,  # Standard drum channel
+                entry_section=0 if template.sections[0].section_type != SectionType.INTRO else 1,
+            )
+        )
 
-        instruments.append(InstrumentTrack(
-            name="bass",
-            midi_channel=1,
-            entry_section=0 if template.sections[0].section_type != SectionType.INTRO else 1,
-        ))
+        instruments.append(
+            InstrumentTrack(
+                name="bass",
+                midi_channel=1,
+                entry_section=0 if template.sections[0].section_type != SectionType.INTRO else 1,
+            )
+        )
 
         # Harmonic instruments - enter based on energy
         # Find first medium-energy section
         first_chorus_idx = next(
-            (i for i, s in enumerate(template.sections)
-             if s.section_type == SectionType.CHORUS),
-            1  # Default to second section
+            (i for i, s in enumerate(template.sections) if s.section_type == SectionType.CHORUS),
+            1,  # Default to second section
         )
 
-        instruments.append(InstrumentTrack(
-            name="guitar",
-            midi_channel=2,
-            entry_section=1,  # Usually enters after intro
-        ))
+        instruments.append(
+            InstrumentTrack(
+                name="guitar",
+                midi_channel=2,
+                entry_section=1,  # Usually enters after intro
+            )
+        )
 
-        instruments.append(InstrumentTrack(
-            name="keys",
-            midi_channel=3,
-            entry_section=0,  # Often in from start
-        ))
+        instruments.append(
+            InstrumentTrack(
+                name="keys",
+                midi_channel=3,
+                entry_section=0,  # Often in from start
+            )
+        )
 
         # Lead instruments for high-energy sections
-        instruments.append(InstrumentTrack(
-            name="lead_synth",
-            midi_channel=4,
-            entry_section=first_chorus_idx,
-        ))
+        instruments.append(
+            InstrumentTrack(
+                name="lead_synth",
+                midi_channel=4,
+                entry_section=first_chorus_idx,
+            )
+        )
 
         # Calculate velocity curves based on energy arc
         for inst in instruments:
@@ -264,9 +274,7 @@ class ArrangementGenerator:
                 ):
                     velocity_curve.append(0)
                 else:
-                    energy = energy_arc.get_energy_at_position(
-                        i / len(template.sections)
-                    )
+                    energy = energy_arc.get_energy_at_position(i / len(template.sections))
                     # Map energy to velocity (40-110 range)
                     velocity = int(40 + energy * 70)
                     velocity_curve.append(velocity)
@@ -285,10 +293,7 @@ class ArrangementGenerator:
             "indie": ["C", "Em", "F", "G"],
         }
 
-        base_prog = genre_progressions.get(
-            template.genre.lower(),
-            ["C", "G", "Am", "F"]
-        )
+        base_prog = genre_progressions.get(template.genre.lower(), ["C", "G", "Am", "F"])
 
         # Repeat progression to match number of sections
         num_sections = len(template.sections)
@@ -315,16 +320,18 @@ class ArrangementGenerator:
 
         # Add tempo
         tempo_microseconds = int(60_000_000 / arrangement.template.tempo_bpm)
-        track.append(mido.MetaMessage('set_tempo', tempo=tempo_microseconds, time=0))
+        track.append(mido.MetaMessage("set_tempo", tempo=tempo_microseconds, time=0))
 
         # Add time signature
         num, denom = arrangement.template.time_signature
-        track.append(mido.MetaMessage(
-            'time_signature',
-            numerator=num,
-            denominator=denom,
-            time=0,
-        ))
+        track.append(
+            mido.MetaMessage(
+                "time_signature",
+                numerator=num,
+                denominator=denom,
+                time=0,
+            )
+        )
 
         # Add section markers
         ticks_per_bar = self.ppq * num
@@ -335,14 +342,14 @@ class ArrangementGenerator:
             # Add marker at section start
             marker_name = f"{section.section_type.value.title()} {i+1}"
             delta = current_bar * ticks_per_bar - current_tick
-            track.append(mido.MetaMessage('marker', text=marker_name, time=delta))
+            track.append(mido.MetaMessage("marker", text=marker_name, time=delta))
             current_tick = current_bar * ticks_per_bar
 
             current_bar += section.length_bars
 
         # Add end marker
         delta = current_bar * ticks_per_bar - current_tick
-        track.append(mido.MetaMessage('marker', text='End', time=delta))
+        track.append(mido.MetaMessage("marker", text="End", time=delta))
 
         mid.save(output_path)
 
@@ -387,6 +394,7 @@ class ArrangementGenerator:
 # =================================================================
 # CONVENIENCE FUNCTION
 # =================================================================
+
 
 def generate_arrangement(
     genre: str = "pop",

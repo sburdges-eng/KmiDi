@@ -44,6 +44,7 @@ def _pattern_dict_from_json(d: Dict[str, int]) -> Dict[Tuple, int]:
 @dataclass
 class MelodyExample:
     """Single melody example with context and feedback."""
+
     melody: List[int]  # MIDI notes
     emotion: str = "neutral"
     valence: float = 0.0
@@ -75,6 +76,7 @@ class MelodyExample:
 @dataclass
 class MelodyProfile:
     """Learned melody profile containing pattern statistics."""
+
     name: str
     emotion_patterns: Dict[str, Dict]  # emotion -> stats
     global_patterns: Dict
@@ -283,11 +285,13 @@ class MelodyLearner:
         profile: MelodyProfile,
         length: Optional[int] = None,
         key: str = "C",
-        mode: str = "major"
+        mode: str = "major",
     ) -> List[int]:
         """Generate a melody using learned patterns (basic statistical sampling)."""
         emotion_key = emotion.lower()
-        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get("neutral")
+        patterns = profile.emotion_patterns.get(emotion_key) or profile.emotion_patterns.get(
+            "neutral"
+        )
         if not patterns:
             patterns = profile.global_patterns
 
@@ -374,7 +378,7 @@ class MelodyLearningManager:
         profile_name: Optional[str] = None,
         length: Optional[int] = None,
         key: str = "C",
-        mode: str = "major"
+        mode: str = "major",
     ) -> List[int]:
         profile: Optional[MelodyProfile] = None
         if profile_name:

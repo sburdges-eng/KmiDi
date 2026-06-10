@@ -7,7 +7,7 @@ Provides preview and confirmation workflow for natural language editing.
 from music_brain.editing.natural_language_processor import (
     NaturalLanguageProcessor,
     InterpretedFeedback,
-    FeedbackInterpreter as BaseFeedbackInterpreter
+    FeedbackInterpreter as BaseFeedbackInterpreter,
 )
 
 # Re-export for convenience

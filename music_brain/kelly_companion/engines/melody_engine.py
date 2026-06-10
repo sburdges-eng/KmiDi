@@ -29,12 +29,11 @@ from enum import Enum
 import random
 import math
 
-
 # =============================================================================
 # CONSTANTS
 # =============================================================================
 
-CHROMATIC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+CHROMATIC = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 
 SCALE_INTERVALS = {
     "major": [0, 2, 4, 5, 7, 9, 11],
@@ -61,35 +60,39 @@ TICKS_PER_BEAT = 480
 # ENUMS
 # =============================================================================
 
+
 class ContourType(Enum):
     """Melodic contour shapes."""
-    ASCENDING = "ascending"           # Climbing upward
-    DESCENDING = "descending"         # Falling downward
-    ARCH = "arch"                     # Up then down
-    INVERSE_ARCH = "inverse_arch"     # Down then up
-    STATIC = "static"                 # Hovering around center
-    WAVE = "wave"                     # Oscillating
-    SPIRAL_DOWN = "spiral_down"       # Gradual descent with oscillation
-    SPIRAL_UP = "spiral_up"           # Gradual ascent with oscillation
-    JAGGED = "jagged"                 # Angular, unpredictable
-    COLLAPSE = "collapse"             # Sudden fall
+
+    ASCENDING = "ascending"  # Climbing upward
+    DESCENDING = "descending"  # Falling downward
+    ARCH = "arch"  # Up then down
+    INVERSE_ARCH = "inverse_arch"  # Down then up
+    STATIC = "static"  # Hovering around center
+    WAVE = "wave"  # Oscillating
+    SPIRAL_DOWN = "spiral_down"  # Gradual descent with oscillation
+    SPIRAL_UP = "spiral_up"  # Gradual ascent with oscillation
+    JAGGED = "jagged"  # Angular, unpredictable
+    COLLAPSE = "collapse"  # Sudden fall
 
 
 class RhythmDensity(Enum):
     """How many notes per bar."""
-    SPARSE = "sparse"       # 2-4 notes/bar
-    MODERATE = "moderate"   # 4-8 notes/bar
-    DENSE = "dense"         # 8-16 notes/bar
-    FRANTIC = "frantic"     # 16+ notes/bar
+
+    SPARSE = "sparse"  # 2-4 notes/bar
+    MODERATE = "moderate"  # 4-8 notes/bar
+    DENSE = "dense"  # 8-16 notes/bar
+    FRANTIC = "frantic"  # 16+ notes/bar
 
 
 class ArticulationType(Enum):
     """Note articulation style."""
-    LEGATO = "legato"           # Connected, flowing
-    STACCATO = "staccato"       # Short, detached
-    TENUTO = "tenuto"           # Held full value
-    MARCATO = "marcato"         # Accented
-    BREATH = "breath"           # Natural pauses
+
+    LEGATO = "legato"  # Connected, flowing
+    STACCATO = "staccato"  # Short, detached
+    TENUTO = "tenuto"  # Held full value
+    MARCATO = "marcato"  # Accented
+    BREATH = "breath"  # Natural pauses
 
 
 # =============================================================================
@@ -110,7 +113,6 @@ EMOTION_MELODY_PROFILES = {
         "chromatic_tendency": 0.2,
         "repetition_tendency": 0.4,  # Stuck in loops
     },
-
     # Hope: ascending with hesitation, moderate density
     "hope": {
         "contours": [ContourType.ASCENDING, ContourType.SPIRAL_UP, ContourType.ARCH],
@@ -124,7 +126,6 @@ EMOTION_MELODY_PROFILES = {
         "chromatic_tendency": 0.1,
         "repetition_tendency": 0.2,
     },
-
     # Rage: angular, dense, marcato, wide leaps
     "rage": {
         "contours": [ContourType.JAGGED, ContourType.ASCENDING, ContourType.ARCH],
@@ -138,7 +139,6 @@ EMOTION_MELODY_PROFILES = {
         "chromatic_tendency": 0.3,
         "repetition_tendency": 0.5,  # Obsessive
     },
-
     # Fear: erratic, chromatic, staccato
     "fear": {
         "contours": [ContourType.JAGGED, ContourType.COLLAPSE, ContourType.WAVE],
@@ -152,7 +152,6 @@ EMOTION_MELODY_PROFILES = {
         "chromatic_tendency": 0.4,
         "repetition_tendency": 0.3,
     },
-
     # Joy: bouncy, bright, leaping 3rds and 5ths
     "joy": {
         "contours": [ContourType.ARCH, ContourType.WAVE, ContourType.ASCENDING],
@@ -166,7 +165,6 @@ EMOTION_MELODY_PROFILES = {
         "chromatic_tendency": 0.05,
         "repetition_tendency": 0.2,
     },
-
     # Longing: reaching upward, falling back, suspended
     "longing": {
         "contours": [ContourType.SPIRAL_UP, ContourType.ARCH, ContourType.INVERSE_ARCH],
@@ -180,7 +178,6 @@ EMOTION_MELODY_PROFILES = {
         "chromatic_tendency": 0.15,
         "repetition_tendency": 0.35,
     },
-
     # Anxiety: restless, repetitive, chromatic neighbor tones
     "anxiety": {
         "contours": [ContourType.WAVE, ContourType.STATIC, ContourType.JAGGED],
@@ -194,7 +191,6 @@ EMOTION_MELODY_PROFILES = {
         "chromatic_tendency": 0.5,
         "repetition_tendency": 0.6,
     },
-
     # Tenderness: gentle, stepwise, breathing
     "tenderness": {
         "contours": [ContourType.WAVE, ContourType.ARCH, ContourType.STATIC],
@@ -208,7 +204,6 @@ EMOTION_MELODY_PROFILES = {
         "chromatic_tendency": 0.1,
         "repetition_tendency": 0.25,
     },
-
     # Defiance: strong, angular, syncopated feel
     "defiance": {
         "contours": [ContourType.ASCENDING, ContourType.JAGGED, ContourType.ARCH],
@@ -222,7 +217,6 @@ EMOTION_MELODY_PROFILES = {
         "chromatic_tendency": 0.15,
         "repetition_tendency": 0.3,
     },
-
     # Melancholy: wandering, minor 2nds, unresolved
     "melancholy": {
         "contours": [ContourType.WAVE, ContourType.DESCENDING, ContourType.SPIRAL_DOWN],
@@ -236,7 +230,6 @@ EMOTION_MELODY_PROFILES = {
         "chromatic_tendency": 0.25,
         "repetition_tendency": 0.35,
     },
-
     # Nostalgia: familiar patterns, gentle, bittersweet
     "nostalgia": {
         "contours": [ContourType.ARCH, ContourType.WAVE, ContourType.INVERSE_ARCH],
@@ -250,7 +243,6 @@ EMOTION_MELODY_PROFILES = {
         "chromatic_tendency": 0.1,
         "repetition_tendency": 0.4,  # Callbacks
     },
-
     # Euphoria: soaring, wide range, triumphant
     "euphoria": {
         "contours": [ContourType.ASCENDING, ContourType.SPIRAL_UP, ContourType.ARCH],
@@ -264,7 +256,6 @@ EMOTION_MELODY_PROFILES = {
         "chromatic_tendency": 0.05,
         "repetition_tendency": 0.15,
     },
-
     # Dissociation: fragmented, disconnected, gaps
     "dissociation": {
         "contours": [ContourType.STATIC, ContourType.JAGGED, ContourType.COLLAPSE],
@@ -278,7 +269,6 @@ EMOTION_MELODY_PROFILES = {
         "chromatic_tendency": 0.3,
         "repetition_tendency": 0.2,
     },
-
     # Neutral/default
     "neutral": {
         "contours": [ContourType.WAVE, ContourType.ARCH, ContourType.STATIC],
@@ -299,42 +289,46 @@ EMOTION_MELODY_PROFILES = {
 # DATA CLASSES
 # =============================================================================
 
+
 @dataclass
 class MelodyNote:
     """A single note in a melody."""
-    pitch: int              # MIDI pitch (0-127)
-    start_tick: int         # Start time in ticks
-    duration_ticks: int     # Duration in ticks
-    velocity: int           # MIDI velocity (0-127)
-    scale_degree: int       # Scale degree (1-7, 0 for chromatic)
+
+    pitch: int  # MIDI pitch (0-127)
+    start_tick: int  # Start time in ticks
+    duration_ticks: int  # Duration in ticks
+    velocity: int  # MIDI velocity (0-127)
+    scale_degree: int  # Scale degree (1-7, 0 for chromatic)
     interval_from_prev: int  # Semitones from previous note
-    is_chromatic: bool      # Outside the scale
+    is_chromatic: bool  # Outside the scale
     articulation: ArticulationType
 
 
 @dataclass
 class MelodyConfig:
     """Configuration for melody generation."""
+
     emotion: str = "neutral"
     key: str = "C"
     mode: str = "major"
     bars: int = 4
     tempo_bpm: int = 120
     time_signature: Tuple[int, int] = (4, 4)
-    octave_base: int = 4          # Middle C octave
-    seed: Optional[int] = None    # For reproducibility
+    octave_base: int = 4  # Middle C octave
+    seed: Optional[int] = None  # For reproducibility
     contour_override: Optional[ContourType] = None
     density_override: Optional[RhythmDensity] = None
     starting_pitch: Optional[int] = None
     ending_pitch: Optional[int] = None
     chord_tones: Optional[List[int]] = None  # Emphasize these
     avoid_pitches: Optional[List[int]] = None
-    phrase_length_bars: int = 2   # How long before natural break
+    phrase_length_bars: int = 2  # How long before natural break
 
 
 @dataclass
 class MelodyOutput:
     """Output from melody generation."""
+
     notes: List[MelodyNote]
     config: MelodyConfig
     contour_used: ContourType
@@ -347,31 +341,33 @@ class MelodyOutput:
         """Convert to MIDI event list for mido."""
         events = []
         for note in self.notes:
-            events.append({
-                "type": "note_on",
-                "note": note.pitch,
-                "velocity": note.velocity,
-                "time": note.start_tick,
-            })
-            events.append({
-                "type": "note_off",
-                "note": note.pitch,
-                "velocity": 0,
-                "time": note.start_tick + note.duration_ticks,
-            })
+            events.append(
+                {
+                    "type": "note_on",
+                    "note": note.pitch,
+                    "velocity": note.velocity,
+                    "time": note.start_tick,
+                }
+            )
+            events.append(
+                {
+                    "type": "note_off",
+                    "note": note.pitch,
+                    "velocity": 0,
+                    "time": note.start_tick + note.duration_ticks,
+                }
+            )
         return sorted(events, key=lambda e: e["time"])
 
     def to_note_list(self) -> List[Tuple[int, int, int, int]]:
         """Return as list of (pitch, start_tick, duration, velocity)."""
-        return [
-            (n.pitch, n.start_tick, n.duration_ticks, n.velocity)
-            for n in self.notes
-        ]
+        return [(n.pitch, n.start_tick, n.duration_ticks, n.velocity) for n in self.notes]
 
 
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
+
 
 def note_to_midi(note: str, octave: int = 4) -> int:
     """Convert note name to MIDI number."""
@@ -387,7 +383,8 @@ def note_to_midi(note: str, octave: int = 4) -> int:
 
 
 def get_scale_pitches(
-        key: str, mode: str, octave_base: int, octave_range: Tuple[int, int]) -> List[int]:
+    key: str, mode: str, octave_base: int, octave_range: Tuple[int, int]
+) -> List[int]:
     """Get all pitches in scale across octave range."""
     intervals = SCALE_INTERVALS.get(mode.lower(), SCALE_INTERVALS["major"])
     root = note_to_midi(key, 0) % 12
@@ -420,9 +417,7 @@ def weighted_choice(weights: Dict[int, float]) -> int:
 
 
 def generate_contour_targets(
-    contour: ContourType,
-    num_points: int,
-    octave_range: Tuple[int, int]
+    contour: ContourType, num_points: int, octave_range: Tuple[int, int]
 ) -> List[float]:
     """
     Generate target positions (0.0 to 1.0) for each point in melody.
@@ -483,10 +478,7 @@ def generate_contour_targets(
 
 
 def get_rhythm_pattern(
-    density: RhythmDensity,
-    bars: int,
-    time_sig: Tuple[int, int],
-    rest_probability: float
+    density: RhythmDensity, bars: int, time_sig: Tuple[int, int], rest_probability: float
 ) -> List[Tuple[int, int]]:
     """
     Generate rhythm pattern as list of (start_tick, duration_ticks).
@@ -513,20 +505,22 @@ def get_rhythm_pattern(
         # Decide if rest
         if random.random() < rest_probability and len(rhythm) > 0:
             # Skip ahead
-            skip = random.choice([
-                TICKS_PER_BEAT // 4,
-                TICKS_PER_BEAT // 2,
-                TICKS_PER_BEAT,
-            ])
+            skip = random.choice(
+                [
+                    TICKS_PER_BEAT // 4,
+                    TICKS_PER_BEAT // 2,
+                    TICKS_PER_BEAT,
+                ]
+            )
             current_tick += skip
             continue
 
         # Duration options
         duration_options = [
-            TICKS_PER_BEAT // 4,   # 16th
-            TICKS_PER_BEAT // 2,   # 8th
-            TICKS_PER_BEAT,        # Quarter
-            TICKS_PER_BEAT * 2,    # Half
+            TICKS_PER_BEAT // 4,  # 16th
+            TICKS_PER_BEAT // 2,  # 8th
+            TICKS_PER_BEAT,  # Quarter
+            TICKS_PER_BEAT * 2,  # Half
         ]
 
         # Weight by density
@@ -553,10 +547,7 @@ def get_rhythm_pattern(
     return rhythm
 
 
-def apply_articulation(
-    duration: int,
-    articulation: ArticulationType
-) -> int:
+def apply_articulation(duration: int, articulation: ArticulationType) -> int:
     """Modify duration based on articulation."""
     if articulation == ArticulationType.STACCATO:
         return max(TICKS_PER_BEAT // 8, int(duration * 0.4))
@@ -574,6 +565,7 @@ def apply_articulation(
 # =============================================================================
 # MAIN ENGINE CLASS
 # =============================================================================
+
 
 class MelodyEngine:
     """
@@ -608,7 +600,7 @@ class MelodyEngine:
         mode: str = "major",
         bars: int = 4,
         tempo_bpm: int = 120,
-        **kwargs
+        **kwargs,
     ) -> MelodyOutput:
         """
         Generate a melody based on emotional parameters.
@@ -630,7 +622,7 @@ class MelodyEngine:
             mode=mode.lower(),
             bars=bars,
             tempo_bpm=tempo_bpm,
-            **kwargs
+            **kwargs,
         )
 
         return self._generate_from_config(config)
@@ -656,10 +648,7 @@ class MelodyEngine:
 
         # Get scale pitches
         scale_pitches = get_scale_pitches(
-            config.key,
-            config.mode,
-            config.octave_base,
-            profile["octave_range"]
+            config.key, config.mode, config.octave_base, profile["octave_range"]
         )
 
         if not scale_pitches:
@@ -668,10 +657,7 @@ class MelodyEngine:
 
         # Generate rhythm pattern
         rhythm = get_rhythm_pattern(
-            density,
-            config.bars,
-            config.time_signature,
-            profile["rest_probability"]
+            density, config.bars, config.time_signature, profile["rest_probability"]
         )
 
         if not rhythm:
@@ -679,11 +665,7 @@ class MelodyEngine:
             rhythm = [(0, TICKS_PER_BEAT)]
 
         # Generate contour targets
-        contour_targets = generate_contour_targets(
-            contour,
-            len(rhythm),
-            profile["octave_range"]
-        )
+        contour_targets = generate_contour_targets(contour, len(rhythm), profile["octave_range"])
 
         # Generate notes
         notes = []
@@ -739,8 +721,11 @@ class MelodyEngine:
                     pass  # Already a chord tone
                 else:
                     # Try to land on chord tone
-                    chord_matches = [p for p in scale_pitches
-                                     if any(ct % 12 == p % 12 for ct in config.chord_tones)]
+                    chord_matches = [
+                        p
+                        for p in scale_pitches
+                        if any(ct % 12 == p % 12 for ct in config.chord_tones)
+                    ]
                     if chord_matches:
                         new_pitch = min(chord_matches, key=lambda p: abs(p - prev_pitch))
 
@@ -783,10 +768,7 @@ class MelodyEngine:
         # Handle ending pitch preference
         if config.ending_pitch is not None and notes:
             # Adjust last note
-            interval = (
-                abs(config.ending_pitch - notes[-2].pitch)
-                if len(notes) > 1 else 0
-            )
+            interval = abs(config.ending_pitch - notes[-2].pitch) if len(notes) > 1 else 0
             notes[-1] = MelodyNote(
                 pitch=config.ending_pitch,
                 start_tick=notes[-1].start_tick,
@@ -794,9 +776,7 @@ class MelodyEngine:
                 velocity=notes[-1].velocity,
                 scale_degree=notes[-1].scale_degree,
                 interval_from_prev=interval,
-                is_chromatic=(
-                    config.ending_pitch not in scale_pitches
-                ),
+                is_chromatic=(config.ending_pitch not in scale_pitches),
                 articulation=notes[-1].articulation,
             )
 
@@ -844,7 +824,7 @@ class MelodyEngine:
         mode: str,
         phrase_bars: int = 2,
         tempo_bpm: int = 120,
-        ending: str = "open"  # "open", "closed", "suspended"
+        ending: str = "open",  # "open", "closed", "suspended"
     ) -> MelodyOutput:
         """
         Generate a single musical phrase.
@@ -898,7 +878,7 @@ class MelodyEngine:
             mode=mode,
             phrase_bars=call_bars,
             tempo_bpm=tempo_bpm,
-            ending="open"
+            ending="open",
         )
 
         # Response ends closed
@@ -919,6 +899,7 @@ class MelodyEngine:
 # =============================================================================
 # CONVENIENCE FUNCTIONS
 # =============================================================================
+
 
 def generate_grief_melody(key: str = "F", bars: int = 4, tempo: int = 72) -> MelodyOutput:
     """Quick grief melody generation."""

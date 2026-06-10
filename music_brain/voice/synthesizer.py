@@ -143,12 +143,37 @@ class VoiceSynthesizer:
 
     # Phoneme durations (relative)
     PHONEME_DURATIONS = {
-        "a": 1.0, "e": 0.9, "i": 0.8, "o": 1.0, "u": 0.9,
-        "b": 0.3, "c": 0.3, "d": 0.3, "f": 0.4, "g": 0.3,
-        "h": 0.3, "j": 0.4, "k": 0.3, "l": 0.4, "m": 0.4,
-        "n": 0.4, "p": 0.3, "q": 0.3, "r": 0.4, "s": 0.5,
-        "t": 0.3, "v": 0.4, "w": 0.4, "x": 0.4, "y": 0.4, "z": 0.4,
-        " ": 0.5, ".": 1.0, ",": 0.6, "!": 1.0, "?": 1.0,
+        "a": 1.0,
+        "e": 0.9,
+        "i": 0.8,
+        "o": 1.0,
+        "u": 0.9,
+        "b": 0.3,
+        "c": 0.3,
+        "d": 0.3,
+        "f": 0.4,
+        "g": 0.3,
+        "h": 0.3,
+        "j": 0.4,
+        "k": 0.3,
+        "l": 0.4,
+        "m": 0.4,
+        "n": 0.4,
+        "p": 0.3,
+        "q": 0.3,
+        "r": 0.4,
+        "s": 0.5,
+        "t": 0.3,
+        "v": 0.4,
+        "w": 0.4,
+        "x": 0.4,
+        "y": 0.4,
+        "z": 0.4,
+        " ": 0.5,
+        ".": 1.0,
+        ",": 0.6,
+        "!": 1.0,
+        "?": 1.0,
     }
 
     # Formant frequencies for vowels (F1, F2, F3 in Hz)
@@ -292,9 +317,7 @@ class VoiceSynthesizer:
 
         return syllables if syllables else [text]
 
-    def _synthesize_syllable(
-        self, syllable: str, frequency: float, duration: float
-    ) -> List[float]:
+    def _synthesize_syllable(self, syllable: str, frequency: float, duration: float) -> List[float]:
         """Synthesize a single syllable."""
         num_samples = int(duration * self.sample_rate)
         t = np.arange(num_samples) / self.sample_rate
@@ -365,7 +388,7 @@ class VoiceSynthesizer:
 
         for formant_freq in [f1, f2, f3]:
             # Gaussian bump at each formant
-            envelope = envelope + np.exp(-((freqs - formant_freq) ** 2) / (2 * bandwidth ** 2))
+            envelope = envelope + np.exp(-((freqs - formant_freq) ** 2) / (2 * bandwidth**2))
 
         # Apply envelope
         spectrum = spectrum * envelope * self.config.formant_emphasis
@@ -407,10 +430,12 @@ class VoiceSynthesizer:
         """Save audio to file."""
         try:
             import soundfile as sf
+
             sf.write(output_path, audio, self.sample_rate)
         except ImportError:
             try:
                 from scipy.io import wavfile
+
                 wavfile.write(output_path, self.sample_rate, (audio * 32767).astype(np.int16))
             except ImportError:
                 # Manual WAV writing
@@ -432,11 +457,11 @@ class VoiceSynthesizer:
             # fmt chunk
             f.write(b"fmt ")
             f.write(struct.pack("<I", 16))  # Chunk size
-            f.write(struct.pack("<H", 1))   # Audio format (PCM)
-            f.write(struct.pack("<H", 1))   # Channels
+            f.write(struct.pack("<H", 1))  # Audio format (PCM)
+            f.write(struct.pack("<H", 1))  # Channels
             f.write(struct.pack("<I", self.sample_rate))  # Sample rate
             f.write(struct.pack("<I", self.sample_rate * 2))  # Byte rate
-            f.write(struct.pack("<H", 2))   # Block align
+            f.write(struct.pack("<H", 2))  # Block align
             f.write(struct.pack("<H", 16))  # Bits per sample
 
             # data chunk

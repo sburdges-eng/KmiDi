@@ -18,6 +18,7 @@ class MusicalContext(Enum):
         JAZZ: Bebop, modal jazz, altered dominants (1920-present)
         CONTEMPORARY: Post-tonal, quartal harmony, polychords (1900-present)
     """
+
     RENAISSANCE = auto()
     BAROQUE = auto()
     CLASSICAL = auto()

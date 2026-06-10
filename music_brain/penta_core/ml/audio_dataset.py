@@ -233,6 +233,7 @@ class AudioDataset:
         sf = None
         try:
             import soundfile as _sf  # type: ignore
+
             sf = _sf
         except ImportError:
             sf = None
@@ -316,6 +317,7 @@ class AudioDataset:
         and sad/audio_001.wav).
         """
         import hashlib
+
         # Use full path to ensure uniqueness
         path_hash = hashlib.md5(str(sample.path).encode()).hexdigest()[:12]
         return f"{sample.path.stem}_{path_hash}.npy"
@@ -492,8 +494,8 @@ def create_dataloaders(
         val_size = int(n_samples * split_ratios[1])
 
         train_indices = indices[:train_size].tolist()
-        val_indices = indices[train_size:train_size + val_size].tolist()
-        test_indices = indices[train_size + val_size:].tolist()
+        val_indices = indices[train_size : train_size + val_size].tolist()
+        test_indices = indices[train_size + val_size :].tolist()
 
     train_dataset = Subset(torch_dataset, train_indices)
     val_dataset = Subset(torch_dataset, val_indices)
@@ -554,18 +556,14 @@ def create_metadata_template(
 
     with open(output_path, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow([
-            "file", "label", "duration", "emotion", "genre", "tempo", "key", "tags"
-        ])
+        writer.writerow(["file", "label", "duration", "emotion", "genre", "tempo", "key", "tags"])
 
         for audio_path in sorted(data_dir.rglob("*")):
             if audio_path.suffix.lower() in audio_extensions:
                 rel_path = audio_path.relative_to(data_dir)
                 label = audio_path.parent.name if audio_path.parent != data_dir else ""
 
-                writer.writerow([
-                    str(rel_path), label, "", "", "", "", "", ""
-                ])
+                writer.writerow([str(rel_path), label, "", "", "", "", "", ""])
 
     logger.info(f"Created metadata template: {output_path}")
     return output_path

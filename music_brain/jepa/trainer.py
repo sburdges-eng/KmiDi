@@ -103,8 +103,10 @@ def train_audio_jepa(
     emotion_probe = None
     if training.emotion_loss_weight > 0 and training.emotion_probe_checkpoint:
         from music_brain.jepa.emotion_probe import EmotionProbe
-        probe_ckpt = torch.load(training.emotion_probe_checkpoint,
-                                map_location="cpu", weights_only=False)
+
+        probe_ckpt = torch.load(
+            training.emotion_probe_checkpoint, map_location="cpu", weights_only=False
+        )
         emotion_probe = EmotionProbe(
             latent_dim=probe_ckpt.get("latent_dim", 256),
             hidden_dim=probe_ckpt.get("hidden_dim", 128),
@@ -237,9 +239,7 @@ def train_chord_jepa(
     device = get_device()
     logger.info("Chord-JEPA training on %s (%d batches)", device, len(dataloader))
 
-    embedding = ChordEmbedding(
-        num_chords=config.num_chords, d_model=config.d_model
-    ).to(device)
+    embedding = ChordEmbedding(num_chords=config.num_chords, d_model=config.d_model).to(device)
     model = ChordJEPA(config=config).to(device)
 
     optimizer = torch.optim.AdamW(

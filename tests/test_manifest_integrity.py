@@ -27,7 +27,9 @@ class ManifestIntegrityTest(unittest.TestCase):
                         "sourceLine": 1,
                         "text": "minimal request",
                         "label": "VALID",
-                        "axes": {"valence": 0.1, "energy": 0.2} if task == "axis_proposer" else None,
+                        "axes": (
+                            {"valence": 0.1, "energy": 0.2} if task == "axis_proposer" else None
+                        ),
                     }
                 ]
                 if task != "axis_proposer":
@@ -45,8 +47,22 @@ class ManifestIntegrityTest(unittest.TestCase):
             package_dir = package_root / "pkg-unit"
             package_dir.mkdir(parents=True, exist_ok=True)
 
-            package_task("intent_router", "pkg-unit", split_root, package_dir, records_per_shard=2, deterministic=False)
-            package_task("axis_proposer", "pkg-unit", split_root, package_dir, records_per_shard=2, deterministic=False)
+            package_task(
+                "intent_router",
+                "pkg-unit",
+                split_root,
+                package_dir,
+                records_per_shard=2,
+                deterministic=False,
+            )
+            package_task(
+                "axis_proposer",
+                "pkg-unit",
+                split_root,
+                package_dir,
+                records_per_shard=2,
+                deterministic=False,
+            )
 
             schema = json.loads(schema_path.read_text(encoding="utf-8"))
             for task in ("intent_router", "axis_proposer"):
@@ -58,14 +74,25 @@ class ManifestIntegrityTest(unittest.TestCase):
             root = Path(tmpdir)
             split_root = root / "splits"
             package_root = root / "PACKAGES"
-            schema = json.loads(Path("config/dataset_manifest_schema.json").read_text(encoding="utf-8"))
+            schema = json.loads(
+                Path("config/dataset_manifest_schema.json").read_text(encoding="utf-8")
+            )
 
             self._prepare_splits(split_root)
             package_dir = package_root / "pkg-unit"
             package_dir.mkdir(parents=True, exist_ok=True)
-            package_task("intent_router", "pkg-unit", split_root, package_dir, records_per_shard=2, deterministic=False)
+            package_task(
+                "intent_router",
+                "pkg-unit",
+                split_root,
+                package_dir,
+                records_per_shard=2,
+                deterministic=False,
+            )
 
-            manifest = json.loads((package_dir / "intent_router" / "manifest.json").read_text(encoding="utf-8"))
+            manifest = json.loads(
+                (package_dir / "intent_router" / "manifest.json").read_text(encoding="utf-8")
+            )
             shard_name = manifest["splits"]["train"]["shards"][0]["file"]
             shard_path = package_dir / "intent_router" / shard_name
             shard_path.write_bytes(shard_path.read_bytes() + b"tamper")
