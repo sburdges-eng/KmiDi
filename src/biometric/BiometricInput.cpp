@@ -1,11 +1,10 @@
 #include "biometric/BiometricInput.h"
-// Include bridge headers to provide complete types for unique_ptr
-// Note: HealthKitBridge is disabled (requires Objective-C++)
-// FitbitBridge should be available
+// Bridge headers must be included unconditionally: the unique_ptr members
+// need complete types in this TU, and HealthKitBridge.h self-stubs on
+// non-Apple platforms. Guarding the include on HEALTHKIT_AVAILABLE can
+// never work — that macro is defined inside HealthKitBridge.h itself.
 #include "biometric/FitbitBridge.h"
-#if HEALTHKIT_AVAILABLE
 #include "biometric/HealthKitBridge.h"
-#endif
 #include <algorithm>
 #include <chrono>
 #include <cmath>
