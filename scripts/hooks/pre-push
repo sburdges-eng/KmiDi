@@ -1,0 +1,36 @@
+#!/bin/sh
+# xformat pre-push hook — chains Git LFS (preserved) then the xformat gate.
+#
+# Install (opt-in), from the repo root:
+#     git config core.hooksPath scripts/hooks
+# Uninstall:
+#     git config --unset core.hooksPath
+#
+# Bypass for a single push (e.g. WIP branch):  git push --no-verify
+#
+# Setting core.hooksPath redirects ALL hooks here, so this script must keep
+# running the LFS hooks the repo relies on. Only pre-push gates on xformat;
+# the rest just forward to LFS.
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# --- Git LFS (matches the stock .git/hooks/pre-push) ---
+if command -v git-lfs >/dev/null 2>&1; then
+    git lfs pre-push "$@" || exit $?
+fi
+
+# --- xformat gate ---
+if [ "${XFORMAT_SKIP:-}" = "1" ]; then
+    echo "xformat: skipped (XFORMAT_SKIP=1)" >&2
+    exit 0
+fi
+
+python3 "$REPO_ROOT/scripts/xformat.py" --base origin/main
+status=$?
+if [ "$status" -ne 0 ]; then
+    echo "" >&2
+    echo "xformat gate failed — push blocked. Fix the items above, or bypass with:" >&2
+    echo "    XFORMAT_SKIP=1 git push        (or: git push --no-verify)" >&2
+    exit "$status"
+fi
+exit 0
