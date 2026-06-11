@@ -101,8 +101,10 @@ def test_summary_persists_across_multiple_overflows():
 
 
 def test_render_concatenates_summary_then_entries():
+    # max_tokens leaves room for the 1-token summary plus two live entries:
+    # the budget now counts the summary, so 20 would evict beta as well.
     win = ContextWindow(
-        max_tokens=20,
+        max_tokens=21,
         summarizer=lambda dropped, current: " ".join(e.text for e in dropped),
     )
     win.append(ContextEntry(role="user", text="alpha", tokens=10))
@@ -151,3 +153,43 @@ def test_oversized_single_entry_replaces_window_and_summary():
     win.append(ContextEntry(role="user", text="huge", tokens=50))
     # Single entry survives — we don't pre-emptively drop a too-big entry.
     assert win.entries[0].text == "huge"
+
+
+# ---------------------------------------------------------------------------
+# summary token accounting (review fixes)
+# ---------------------------------------------------------------------------
+
+
+def test_summary_tokens_use_caller_token_counter():
+    calls = []
+
+    def counter(text):
+        calls.append(text)
+        return 7
+
+    win = ContextWindow(
+        max_tokens=10,
+        summarizer=lambda dropped, prev: "summary-text",
+        token_counter=counter,
+    )
+    win.append(ContextEntry(role="user", text="a", tokens=6))
+    win.append(ContextEntry(role="user", text="b", tokens=6))  # overflow → summarise
+    assert calls == ["summary-text"]
+    # 7 (summary via counter, not word count of 1) + 6 (surviving entry).
+    assert win.total_tokens == 13
+
+
+def test_budget_re_enforced_after_summary_growth():
+    """Growing the summary can re-overflow the window; eviction must re-run."""
+    win = ContextWindow(
+        max_tokens=10,
+        summarizer=lambda dropped, prev: "one two three four five six",  # 6 words → 6 tokens
+    )
+    win.append(ContextEntry(role="user", text="a", tokens=4))
+    win.append(ContextEntry(role="user", text="b", tokens=4))
+    win.append(ContextEntry(role="user", text="c", tokens=4))
+    # One eviction round alone would leave 4 + 4 + 6 = 14 > 10; the re-check
+    # folds another entry into the summary, converging to newest + summary.
+    assert [e.text for e in win.entries] == ["c"]
+    assert win.total_tokens == 10
+    assert win.total_tokens <= win.max_tokens

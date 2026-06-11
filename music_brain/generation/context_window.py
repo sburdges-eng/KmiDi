@@ -24,6 +24,7 @@ _VALID_ROLES = frozenset({"system", "user", "assistant", "tool"})
 
 # A summarizer takes (dropped_entries, current_summary) and returns the new summary.
 SummarizerFn = Callable[[Sequence["ContextEntry"], str], str]
+TokenCounterFn = Callable[[str], int]
 
 
 @dataclass
@@ -59,11 +60,16 @@ class ContextWindow:
         self,
         max_tokens: int,
         summarizer: Optional[SummarizerFn] = None,
+        token_counter: Optional[TokenCounterFn] = None,
     ) -> None:
         if max_tokens <= 0:
             raise ValueError("max_tokens must be > 0")
         self._max_tokens = int(max_tokens)
         self._summarizer = summarizer
+        # Measures the summary in the same units as ContextEntry.tokens.
+        # Without one, a whitespace word count is used — fine for tests and
+        # rough budgeting, wrong for BPE-style tokenizers.
+        self._token_counter = token_counter
         self._entries: List[ContextEntry] = []
         self._summary = ""
         self._summary_tokens = 0
@@ -95,21 +101,35 @@ class ContextWindow:
         self._entries.append(entry)
         self._evict_until_fits()
 
+    def _count_summary_tokens(self, text: str) -> int:
+        if not text:
+            return 0
+        if self._token_counter is not None:
+            return int(self._token_counter(text))
+        return len(text.split())
+
     def _evict_until_fits(self) -> None:
         """Pop oldest entries until the window fits ``max_tokens``.
 
         A single oversized entry is kept (no entries → would re-evict to
-        empty; we don't drop the just-appended data either).
+        empty; we don't drop the just-appended data either). The budget is
+        re-checked after every summarisation round: the summary itself
+        consumes tokens, so growing it can push the window back over the
+        cap. If the summary alone exceeds ``max_tokens`` the window
+        converges to summary + newest entry — entries are never silently
+        discarded once the summarizer has folded them in.
         """
-        dropped: List[ContextEntry] = []
-        while (
-            len(self._entries) > 1
-            and self._summary_tokens + sum(e.tokens for e in self._entries) > self._max_tokens
-        ):
-            dropped.append(self._entries.pop(0))
-        if dropped and self._summarizer is not None:
+        while True:
+            dropped: List[ContextEntry] = []
+            while (
+                len(self._entries) > 1
+                and self._summary_tokens + sum(e.tokens for e in self._entries) > self._max_tokens
+            ):
+                dropped.append(self._entries.pop(0))
+            if not dropped or self._summarizer is None:
+                return
             self._summary = self._summarizer(dropped, self._summary)
-            self._summary_tokens = len(self._summary.split()) if self._summary else 0
+            self._summary_tokens = self._count_summary_tokens(self._summary)
 
     # -------------------------------------------------------------- render
     def render(self) -> str:

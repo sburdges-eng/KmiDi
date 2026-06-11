@@ -139,24 +139,36 @@ def orchestration_with_energy_gating(
     if energy_curve is None or not structure:
         return orchestration_to_instruments(orch)
 
-    gating_structure = [s for s in structure if s.get("name") != "build"]
-    section_starts = _structure_section_starts(gating_structure)
+    # Starts are computed over the FULL structure: build entries occupy real
+    # bars (TTG inserts one-bar builds after drum fills), so dropping them
+    # first would shift every later section onto the wrong stretch of the
+    # energy curve. Builds are skipped only when emitting active_in: markers.
+    section_starts = _structure_section_starts(structure)
 
     out: List[Dict[str, Any]] = []
     for role, spec in sorted(orch.roles.items()):
         active_sections: List[str] = []
-        for section, start in zip(gating_structure, section_starts):
+        for section, start in zip(structure, section_starts):
+            name = str(section.get("name", ""))
+            if name == "build":
+                continue
             bars = int(section.get("bars", 0))
             reps = int(section.get("repetitions", 1)) or 1
             section_energy = compute_section_energy(energy_curve, start, bars * reps)
             if section_energy["peak"] >= spec.active_threshold:
-                name = str(section.get("name", ""))
                 if name not in active_sections:
                     active_sections.append(name)
         if not active_sections:
             continue
         techniques = [f"role:{role}"] + [f"active_in:{name}" for name in active_sections]
         out.append({"instrument": spec.patch, "techniques": techniques})
+
+    # An over-aggressive curve/threshold combination can gate out every role,
+    # and an empty instrument list is invalid downstream
+    # (CompleteSongIntentRequest requires at least one). Treat gating as
+    # advisory in that case and fall back to the ungated mapping.
+    if not out:
+        return orchestration_to_instruments(orch)
     return out
 
 

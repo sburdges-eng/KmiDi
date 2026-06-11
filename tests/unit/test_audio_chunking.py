@@ -137,3 +137,20 @@ def test_windowed_overlap_add_flush_emits_remaining_tail():
     # After 2 pushes and 2 emits of hop_size, there are chunk_size - hop_size
     # = 2 samples of overlap left in buffer.
     assert len(tail) == chunk_size - hop_size
+
+
+def test_pad_to_chunk_boundary_zero_pads_multichannel():
+    stereo = np.ones((5, 2), dtype=np.float32)
+    padded = pad_to_chunk_boundary(stereo, chunk_size=4, mode="zero")
+    assert padded.shape == (8, 2)
+    assert np.all(padded[:5] == 1.0)
+    assert np.all(padded[5:] == 0.0)
+
+
+def test_pad_to_chunk_boundary_reflect_pads_multichannel():
+    stereo = np.arange(12, dtype=np.float32).reshape(6, 2)
+    padded = pad_to_chunk_boundary(stereo, chunk_size=4, mode="reflect")
+    assert padded.shape == (8, 2)
+    # Mirror of the two rows before the last: rows 4, 3.
+    assert np.array_equal(padded[6], stereo[4])
+    assert np.array_equal(padded[7], stereo[3])

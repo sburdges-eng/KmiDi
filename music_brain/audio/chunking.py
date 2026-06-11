@@ -70,7 +70,8 @@ def pad_to_chunk_boundary(
         return signal
     pad_len = chunk_size - remainder
     if mode == "zero":
-        pad = np.zeros(pad_len, dtype=signal.dtype)
+        # Match trailing dims so (samples, channels) signals stay concatenable.
+        pad = np.zeros((pad_len, *signal.shape[1:]), dtype=signal.dtype)
     elif mode == "reflect":
         # Mirror the last `pad_len` samples (excluding the last to avoid duplicates).
         # Example: [1,2,3,4,5,6] pad 2 → [5, 4]

@@ -430,3 +430,60 @@ def test_run_with_warnings_returns_full_intent_and_warnings():
     assert intent.technical_constraints.technical_key == "D"
     assert intent.technical_constraints.technical_mode == "minor"
     assert any("unreachable" in w and "0.99" in w for w in warnings), warnings
+
+
+# ---------------------------------------------------------------------------
+# build sections: skipped for markers, but still occupy bars (review fix)
+# ---------------------------------------------------------------------------
+
+
+def test_build_sections_do_not_skew_later_section_offsets():
+    """A spike confined to the build bar must not leak into the chorus window.
+
+    Structure is verse(4) + build(1) + chorus(4); the energy spike lives
+    strictly inside bars 4-5. If build bars were dropped before computing
+    offsets, the chorus window would shift to [4, 8] and see the spike.
+    """
+    orch = TTGOrchestrationV1(
+        roles={
+            "bass": OrchestrationRoleSpecV1(patch="808_clean", active_threshold=0.05),
+            "lead": OrchestrationRoleSpecV1(patch="square_lead", active_threshold=0.8),
+        }
+    )
+    curve = EnergyCurveV1(
+        points=[
+            EnergyCurvePointV1(bar=0.0, value=0.1),
+            EnergyCurvePointV1(bar=4.2, value=0.1),
+            EnergyCurvePointV1(bar=4.5, value=0.9),
+            EnergyCurvePointV1(bar=4.8, value=0.1),
+            EnergyCurvePointV1(bar=9.0, value=0.1),
+        ]
+    )
+    structure = [
+        {"name": "verse", "bars": 4},
+        {"name": "build", "bars": 1},
+        {"name": "chorus", "bars": 4},
+    ]
+    instruments = orchestration_with_energy_gating(orch, curve, structure)
+    by_patch = {i["instrument"]: i["techniques"] for i in instruments}
+
+    # lead's 0.8 threshold is only met inside the build bar → never active.
+    assert "square_lead" not in by_patch
+    # bass is active in the real sections, and build never appears as a marker.
+    assert by_patch["808_clean"] == ["role:bass", "active_in:verse", "active_in:chorus"]
+
+
+def test_all_roles_gated_out_falls_back_to_ungated_mapping():
+    """An over-aggressive curve must not yield an empty (invalid) instrument list."""
+    orch = TTGOrchestrationV1(
+        roles={"bass": OrchestrationRoleSpecV1(patch="808_clean", active_threshold=0.99)}
+    )
+    curve = EnergyCurveV1(
+        points=[
+            EnergyCurvePointV1(bar=0.0, value=0.1),
+            EnergyCurvePointV1(bar=8.0, value=0.2),
+        ]
+    )
+    structure = [{"name": "verse", "bars": 8}]
+    instruments = orchestration_with_energy_gating(orch, curve, structure)
+    assert instruments == [{"instrument": "808_clean", "techniques": ["role:bass"]}]
