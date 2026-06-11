@@ -7,7 +7,6 @@ from pathlib import Path
 
 from music_brain.session.world_state import WorldState
 
-
 # ---------------------------------------------------------------------------
 # Construction & defaults
 # ---------------------------------------------------------------------------

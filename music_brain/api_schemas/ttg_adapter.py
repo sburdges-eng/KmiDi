@@ -278,9 +278,7 @@ def validate_ttg_expansion(normalized: Dict[str, Any]) -> List[str]:
     if not points or not roles:
         return issues
 
-    max_energy = max(
-        float(p.get("value", 0.0)) for p in points if isinstance(p, dict)
-    )
+    max_energy = max(float(p.get("value", 0.0)) for p in points if isinstance(p, dict))
     for role_name, spec in roles.items():
         if not isinstance(spec, dict):
             continue

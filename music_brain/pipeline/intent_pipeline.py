@@ -229,9 +229,7 @@ class IntentPipeline:
         validated = self.validate(normalized)
         return self.expand(request, validated, normalized)
 
-    def run_with_warnings(
-        self, request: Any
-    ) -> tuple[CompleteSongIntent, List[str]]:
+    def run_with_warnings(self, request: Any) -> tuple[CompleteSongIntent, List[str]]:
         """Run the full pipeline and surface schema-expansion warnings.
 
         Equivalent to ``run()`` but returns ``(intent, warnings)``. Warnings

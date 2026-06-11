@@ -7,7 +7,6 @@ import pytest
 
 from music_brain.generation.latency_budget import BudgetExceeded, LatencyBudget
 
-
 # ---------------------------------------------------------------------------
 # Basic timing
 # ---------------------------------------------------------------------------

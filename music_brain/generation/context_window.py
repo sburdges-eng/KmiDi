@@ -90,9 +90,7 @@ class ContextWindow:
     # -------------------------------------------------------------- mutate
     def append(self, entry: ContextEntry) -> None:
         if entry.role not in _VALID_ROLES:
-            raise ValueError(
-                f"role {entry.role!r} not in {sorted(_VALID_ROLES)}"
-            )
+            raise ValueError(f"role {entry.role!r} not in {sorted(_VALID_ROLES)}")
         self._entries.append(entry)
         self._evict_until_fits()
 
@@ -103,10 +101,7 @@ class ContextWindow:
         empty; we don't drop the just-appended data either).
         """
         dropped: List[ContextEntry] = []
-        while (
-            len(self._entries) > 1
-            and sum(e.tokens for e in self._entries) > self._max_tokens
-        ):
+        while len(self._entries) > 1 and sum(e.tokens for e in self._entries) > self._max_tokens:
             dropped.append(self._entries.pop(0))
         if dropped and self._summarizer is not None:
             self._summary = self._summarizer(dropped, self._summary)

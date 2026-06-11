@@ -8,7 +8,6 @@ import pytest
 
 from music_brain.audio.dual_clip import DualClip, MidiEvent
 
-
 # ---------------------------------------------------------------------------
 # Construction
 # ---------------------------------------------------------------------------

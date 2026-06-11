@@ -74,15 +74,11 @@ class LinearProjection:
         x = np.asarray(x, dtype=np.float32)
         if x.ndim == 1:
             if x.shape[0] != self._in_dim:
-                raise ValueError(
-                    f"input dim {x.shape[0]} != expected {self._in_dim}"
-                )
+                raise ValueError(f"input dim {x.shape[0]} != expected {self._in_dim}")
             return (x @ self.weight + self.bias).astype(np.float32)
         if x.ndim == 2:
             if x.shape[1] != self._in_dim:
-                raise ValueError(
-                    f"input dim {x.shape[1]} != expected {self._in_dim}"
-                )
+                raise ValueError(f"input dim {x.shape[1]} != expected {self._in_dim}")
             return (x @ self.weight + self.bias).astype(np.float32)
         raise ValueError(f"expected 1-D or 2-D input; got shape {x.shape}")
 

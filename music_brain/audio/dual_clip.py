@@ -63,9 +63,7 @@ class DualClip:
         duration = self.duration_sec
         for ev in events:
             if not 0 <= ev.time_sec < max(duration, 1e-9):
-                raise ValueError(
-                    f"event time_sec={ev.time_sec} outside clip duration {duration}"
-                )
+                raise ValueError(f"event time_sec={ev.time_sec} outside clip duration {duration}")
         self.events: List[MidiEvent] = list(events)
 
     # ----------------------------------------------------------------- meta
@@ -108,9 +106,7 @@ class DualClip:
     def concat(self, other: "DualClip") -> "DualClip":
         """Concatenate two clips. ``other``'s events are offset by self's duration."""
         if self.sample_rate != other.sample_rate:
-            raise ValueError(
-                f"sample_rate mismatch: {self.sample_rate} vs {other.sample_rate}"
-            )
+            raise ValueError(f"sample_rate mismatch: {self.sample_rate} vs {other.sample_rate}")
         offset = self.duration_sec
         offset_events = [
             MidiEvent(
@@ -127,9 +123,7 @@ class DualClip:
             events=self.events + offset_events,
         )
 
-    def iter_events_in_range(
-        self, start_sec: float, end_sec: float
-    ) -> Iterator[MidiEvent]:
+    def iter_events_in_range(self, start_sec: float, end_sec: float) -> Iterator[MidiEvent]:
         """Yield events whose ``time_sec`` lies in ``[start_sec, end_sec)``."""
         for ev in self.events:
             if start_sec <= ev.time_sec < end_sec:

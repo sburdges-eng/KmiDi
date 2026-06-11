@@ -33,23 +33,17 @@ def concat_fuse(*vectors: np.ndarray) -> np.ndarray:
     """Concatenate vectors along the last axis."""
     if not vectors:
         raise ValueError("concat_fuse requires at least one vector")
-    return np.concatenate([np.asarray(v, dtype=np.float32) for v in vectors]).astype(
-        np.float32
-    )
+    return np.concatenate([np.asarray(v, dtype=np.float32) for v in vectors]).astype(np.float32)
 
 
-def weighted_sum(
-    vectors: Sequence[np.ndarray], weights: Sequence[float]
-) -> np.ndarray:
+def weighted_sum(vectors: Sequence[np.ndarray], weights: Sequence[float]) -> np.ndarray:
     """Weighted linear blend. Weights are normalised to sum to 1.
 
     Raises if ``vectors`` and ``weights`` differ in length, if any vector
     has a different shape, or if all weights sum to zero.
     """
     if len(vectors) != len(weights):
-        raise ValueError(
-            f"length mismatch: {len(vectors)} vectors vs {len(weights)} weights"
-        )
+        raise ValueError(f"length mismatch: {len(vectors)} vectors vs {len(weights)} weights")
     if not vectors:
         raise ValueError("weighted_sum requires at least one vector")
     arrs = [np.asarray(v, dtype=np.float32) for v in vectors]

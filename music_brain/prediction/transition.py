@@ -90,10 +90,7 @@ class TransitionModel:
         total = sum(outgoing.values()) + self._alpha * len(candidates)
         if total == 0:
             return {}
-        return {
-            s: (outgoing.get(s, 0) + self._alpha) / total
-            for s in candidates
-        }
+        return {s: (outgoing.get(s, 0) + self._alpha) / total for s in candidates}
 
     def sample_next(self, state: str, rng: np.random.Generator) -> str:
         """Sample one next-state from ``predict_next(state)``.

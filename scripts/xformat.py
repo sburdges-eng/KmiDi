@@ -74,9 +74,7 @@ class Result:
 
 def _run(cmd: Sequence[str], cwd: Path = REPO_ROOT) -> subprocess.CompletedProcess:
     """Run *cmd*, capturing output. Never raises on non-zero exit."""
-    return subprocess.run(
-        list(cmd), cwd=str(cwd), capture_output=True, text=True, check=False
-    )
+    return subprocess.run(list(cmd), cwd=str(cwd), capture_output=True, text=True, check=False)
 
 
 # --------------------------------------------------------------------------- #
@@ -120,11 +118,7 @@ def classify(files: Sequence[str]) -> Classification:
     cpp = [f for f in files if f.endswith((".cpp", ".cc", ".cxx", ".h", ".hpp", ".inl"))]
     schema = [f for f in files if _matches_any(f, SCHEMA_SOURCE_GLOBS)]
 
-    test_files = [
-        f
-        for f in py
-        if f.startswith("tests/") and Path(f).name.startswith("test_")
-    ]
+    test_files = [f for f in py if f.startswith("tests/") and Path(f).name.startswith("test_")]
     # Map a changed module to its likely test file(s) when they exist.
     # Try both the underscore-joined relative path (e.g. music_brain/latent/fusion.py
     # -> tests/unit/test_latent_fusion.py) and the bare stem fallback
@@ -133,7 +127,7 @@ def classify(files: Sequence[str]) -> Classification:
     for f in py:
         if f in test_files or not f.startswith("music_brain/"):
             continue
-        rel = f[len("music_brain/"):]
+        rel = f[len("music_brain/") :]
         joined = "_".join(Path(rel).with_suffix("").parts)
         stem = Path(f).stem
         candidates = [f"tests/unit/test_{joined}.py"]
@@ -256,11 +250,15 @@ def check_gitnexus() -> Result:
     if cp.returncode != 0:
         return Result("gitnexus", WARN, "gitnexus status unavailable (index/CLI missing)")
     if "stale" in out or "out of date" in out or "out-of-date" in out:
-        return Result("gitnexus", WARN,
-                      "index STALE — run `npx gitnexus analyze`; "
-                      "agent impact analysis unreliable until then")
-    return Result("gitnexus", PASS,
-                  "index fresh (run gitnexus_impact/detect_changes as agent-time steps)")
+        return Result(
+            "gitnexus",
+            WARN,
+            "index STALE — run `npx gitnexus analyze`; "
+            "agent impact analysis unreliable until then",
+        )
+    return Result(
+        "gitnexus", PASS, "index fresh (run gitnexus_impact/detect_changes as agent-time steps)"
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -290,10 +288,13 @@ def run_gate(base: str, scope: Sequence[str], include_dirty: bool, full: bool) -
     cls = classify(files)
     results: list[Result] = []
     if not base_ok:
-        results.append(Result(
-            "base", FAIL,
-            f"git diff against '{base}' failed — is the ref fetched?",
-        ))
+        results.append(
+            Result(
+                "base",
+                FAIL,
+                f"git diff against '{base}' failed — is the ref fetched?",
+            )
+        )
     results += [
         check_scope(files, scope),
         check_lint(cls),
@@ -308,16 +309,29 @@ def run_gate(base: str, scope: Sequence[str], include_dirty: bool, full: bool) -
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="xformat", description=__doc__,
-                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--base", default="origin/main",
-                    help="ref to diff against (default: origin/main)")
-    ap.add_argument("--scope", action="append", default=[], metavar="GLOB",
-                    help="allowed path glob; repeatable. Files outside all globs FAIL scope.")
-    ap.add_argument("--include-dirty", action="store_true",
-                    help="also check uncommitted + untracked files, not just base...HEAD")
-    ap.add_argument("--full", action="store_true",
-                    help="run the whole pytest suite / cargo test instead of only affected targets")
+    ap = argparse.ArgumentParser(
+        prog="xformat", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    ap.add_argument(
+        "--base", default="origin/main", help="ref to diff against (default: origin/main)"
+    )
+    ap.add_argument(
+        "--scope",
+        action="append",
+        default=[],
+        metavar="GLOB",
+        help="allowed path glob; repeatable. Files outside all globs FAIL scope.",
+    )
+    ap.add_argument(
+        "--include-dirty",
+        action="store_true",
+        help="also check uncommitted + untracked files, not just base...HEAD",
+    )
+    ap.add_argument(
+        "--full",
+        action="store_true",
+        help="run the whole pytest suite / cargo test instead of only affected targets",
+    )
     args = ap.parse_args(argv)
     return run_gate(args.base, args.scope, args.include_dirty, args.full)
 

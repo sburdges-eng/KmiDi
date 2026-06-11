@@ -9,7 +9,6 @@ import pytest
 
 from music_brain.prediction.transition import TransitionModel
 
-
 # ---------------------------------------------------------------------------
 # fit
 # ---------------------------------------------------------------------------
@@ -23,10 +22,12 @@ def test_fit_records_observed_states():
 
 def test_fit_multiple_sequences_aggregates_counts():
     model = TransitionModel()
-    model.fit([
-        ["verse", "chorus", "verse", "chorus"],
-        ["intro", "verse", "outro"],
-    ])
+    model.fit(
+        [
+            ["verse", "chorus", "verse", "chorus"],
+            ["intro", "verse", "outro"],
+        ]
+    )
     # Sequences should both contribute to the transition counts.
     next_dist = model.predict_next("verse")
     assert next_dist["chorus"] == pytest.approx(2 / 3)
@@ -90,12 +91,8 @@ def test_sample_next_returns_observed_successor():
 def test_sample_next_is_deterministic_with_same_seed():
     model = TransitionModel()
     model.fit([["a", "b", "a", "c", "a", "d", "a", "b", "a", "c"]])
-    seq1 = [
-        model.sample_next("a", np.random.default_rng(42)) for _ in range(5)
-    ]
-    seq2 = [
-        model.sample_next("a", np.random.default_rng(42)) for _ in range(5)
-    ]
+    seq1 = [model.sample_next("a", np.random.default_rng(42)) for _ in range(5)]
+    seq2 = [model.sample_next("a", np.random.default_rng(42)) for _ in range(5)]
     assert seq1 == seq2
 
 

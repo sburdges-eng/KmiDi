@@ -8,7 +8,6 @@ from music_brain.api_schemas.ttg_adapter import (
 )
 from music_brain.api_schemas.ttg_v1 import TTGMovementV1, TTGPhraseV1
 
-
 # ---------------------------------------------------------------------------
 # extract_motif_inventory
 # ---------------------------------------------------------------------------

@@ -6,7 +6,6 @@ import pytest
 
 from music_brain.generation.context_window import ContextEntry, ContextWindow
 
-
 # ---------------------------------------------------------------------------
 # Construction & basic append
 # ---------------------------------------------------------------------------

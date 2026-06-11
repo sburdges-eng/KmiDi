@@ -5,7 +5,6 @@ import pytest
 
 from music_brain.generation.scope import GenerationTransaction, RollbackError
 
-
 # ---------------------------------------------------------------------------
 # Basic snapshot / commit / rollback
 # ---------------------------------------------------------------------------

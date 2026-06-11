@@ -48,9 +48,7 @@ class StemBus:
     def set(self, name: str, buffer: np.ndarray) -> None:
         buf = np.asarray(buffer, dtype=np.float32)
         if buf.shape != (self._n,):
-            raise ValueError(
-                f"buffer length {buf.shape} != bus length ({self._n},)"
-            )
+            raise ValueError(f"buffer length {buf.shape} != bus length ({self._n},)")
         if name not in self._stems:
             self._gain[name] = 1.0
             self._mute[name] = False

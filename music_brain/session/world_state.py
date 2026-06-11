@@ -42,18 +42,14 @@ class WorldState:
         """Set current section; appends to history unless unchanged."""
         if section == self.current_section:
             return
-        self.history.append(
-            {"kind": "section", "from": self.current_section, "to": section}
-        )
+        self.history.append({"kind": "section", "from": self.current_section, "to": section})
         self.current_section = section
 
     def update_emotion(self, emotion: Optional[str]) -> None:
         """Set current emotion; appends to history unless unchanged."""
         if emotion == self.current_emotion:
             return
-        self.history.append(
-            {"kind": "emotion", "from": self.current_emotion, "to": emotion}
-        )
+        self.history.append({"kind": "emotion", "from": self.current_emotion, "to": emotion})
         self.current_emotion = emotion
 
     def reset_history(self) -> None:

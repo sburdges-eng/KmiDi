@@ -10,7 +10,6 @@ import pytest
 
 from music_brain.latent.projection import LinearProjection
 
-
 # ---------------------------------------------------------------------------
 # Construction & shape
 # ---------------------------------------------------------------------------

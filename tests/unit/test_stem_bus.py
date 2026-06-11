@@ -7,7 +7,6 @@ import pytest
 
 from music_brain.audio.stems import StemBus
 
-
 # ---------------------------------------------------------------------------
 # Construction and assignment
 # ---------------------------------------------------------------------------
