@@ -8,10 +8,13 @@
  */
 
 #include "daiw/project/ProjectFile.h"
+#include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <juce_core/juce_core.h>
 #include <sstream>
+#include <system_error>
 
 namespace daiw {
 namespace project {
@@ -37,7 +40,41 @@ bool ProjectFile::load(const std::string &filepath) {
 
   std::stringstream buffer;
   buffer << file.rdbuf();
-  return fromJSON(buffer.str());
+
+  ProjectFile tmp;
+  if (!tmp.fromJSON(buffer.str())) {
+    return false;
+  }
+
+  // Track audio paths come from untrusted project JSON ("audioFile"); confine
+  // them to the project directory so a crafted file cannot reach outside it.
+  namespace fs = std::filesystem;
+  std::error_code ec;
+  const fs::path projectDir =
+      fs::weakly_canonical(fs::path(filepath), ec).parent_path();
+  if (ec) {
+    return false;
+  }
+  for (auto &track : tmp.tracks_) {
+    if (track.audioFilePath.empty()) {
+      continue;
+    }
+    const fs::path raw(track.audioFilePath);
+    const fs::path candidate = raw.is_absolute() ? raw : (projectDir / raw);
+    const fs::path resolved = fs::weakly_canonical(candidate, ec);
+    if (ec) {
+      return false;
+    }
+    const auto mismatch = std::mismatch(projectDir.begin(), projectDir.end(),
+                                        resolved.begin(), resolved.end());
+    if (mismatch.first != projectDir.end()) {
+      return false;
+    }
+    track.audioFilePath = resolved.string();
+  }
+
+  *this = std::move(tmp);
+  return true;
 }
 
 bool ProjectFile::save(const std::string &filepath) const {
