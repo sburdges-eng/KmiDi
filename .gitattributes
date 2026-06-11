@@ -13,3 +13,9 @@ src/bridge/*.h linguist-language=C++
 src/**/*.cpp diff=cpp
 src/**/*.h diff=cpp
 src/**/*.hpp diff=cpp
+
+# Patch files must be stored byte-exact: their hunk context must match the
+# target files' line endings (JUCE's juce_Windowing_mac.mm carries CRLF in
+# patched regions). text=auto normalization strips the CRs at commit time
+# and makes the checked-out patch unappliable on CI.
+third_party/patches/** -text

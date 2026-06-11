@@ -24,6 +24,7 @@
 #include <deque>
 #include <chrono>
 #include <optional>
+#include <algorithm>
 
 namespace kelly {
 

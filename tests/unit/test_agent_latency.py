@@ -7,6 +7,7 @@ and exponential backoff retry logic.
 
 import asyncio
 import importlib.util
+import math
 import time
 from unittest.mock import MagicMock, patch
 
@@ -173,8 +174,12 @@ class TestLocalLLMLatency:
         """Verify health check result is cached for the TTL period."""
         config = LocalLLMConfig(health_check_ttl=60.0)
         llm = LocalLLM(config)
+        # The constructor must perform the initial health check and record a real
+        # monotonic timestamp (not the "never checked" sentinel). isfinite() holds
+        # regardless of the host clock value -- e.g. on a freshly booted CI runner
+        # where time.monotonic() is still below the TTL.
         initial_time = llm._health_checked_at
-        assert initial_time > 0
+        assert math.isfinite(initial_time)
 
         # Access is_available again - should NOT re-check (TTL not expired)
         with patch.object(llm._session, "get") as mock_get:
@@ -350,8 +355,12 @@ class TestOnnxLLMLatency:
         """Verify OnnxLLM caches health check for TTL period."""
         config = OnnxLLMConfig(health_check_ttl=60.0)
         llm = OnnxLLM(config)
+        # The constructor must perform the initial health check and record a real
+        # monotonic timestamp (not the "never checked" sentinel). isfinite() holds
+        # regardless of the host clock value -- e.g. on a freshly booted CI runner
+        # where time.monotonic() is still below the TTL.
         initial_time = llm._health_checked_at
-        assert initial_time > 0
+        assert math.isfinite(initial_time)
 
         with patch.object(llm._session, "get") as mock_get:
             _ = llm.is_available

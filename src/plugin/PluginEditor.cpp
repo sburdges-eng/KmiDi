@@ -1,11 +1,12 @@
 #include "plugin/PluginEditor.h"
+#include "KellyML/EmotionState.h"
 #include "common/MusicConstants.h"
 #include "midi/MidiExporter.h"
 #include "project/ProjectManager.h"
 #include "ui/MasterEQComponent.h"
-#include "KellyML/EmotionState.h"
 #include <cmath>
 #include <juce_audio_basics/juce_audio_basics.h>
+#include <algorithm>
 
 namespace kelly {
 using namespace MusicConstants;
@@ -42,10 +43,12 @@ PluginEditor::PluginEditor(PluginProcessor &p)
   workstation_->onEmotionSelected = [this](const EmotionNode &emotion) {
     onEmotionSelected(emotion);
   };
-  workstation_->onEmotionTextCommitted =
-      [this](const juce::String &text) { onEmotionTextCommitted(text); };
-  workstation_->onWoundTextChanged =
-      [this](const juce::String &text) { onWoundTextChanged(text); };
+  workstation_->onEmotionTextCommitted = [this](const juce::String &text) {
+    onEmotionTextCommitted(text);
+  };
+  workstation_->onWoundTextChanged = [this](const juce::String &text) {
+    onWoundTextChanged(text);
+  };
   workstation_->onAutoGenerateToggled = [this](bool enabled) {
     idleAutoGenerateEnabled_ = enabled;
     if (!enabled) {
@@ -78,7 +81,7 @@ PluginEditor::PluginEditor(PluginProcessor &p)
   // Make window resizable with constraints
   // Increased height to accommodate EQ component
   setResizable(true, true);
-  setResizeLimits(600, 1000,    // Minimum: 600x1000 (includes EQ)
+  setResizeLimits(600, 1000,   // Minimum: 600x1000 (includes EQ)
                   1200, 1600); // Maximum: 1200x1600
 
   // ========================================================================
@@ -198,7 +201,8 @@ void PluginEditor::resized() {
   // Split area: workstation on top, EQ component at bottom
   if (workstation_ != nullptr && masterEQComponent_ != nullptr) {
     const int eqHeight = 300; // EQ component height
-    workstation_->setBounds(bounds.removeFromTop(bounds.getHeight() - eqHeight));
+    workstation_->setBounds(
+        bounds.removeFromTop(bounds.getHeight() - eqHeight));
     masterEQComponent_->setBounds(bounds);
   } else if (workstation_ != nullptr) {
     // Fallback if EQ component not created
@@ -309,11 +313,12 @@ void PluginEditor::timerCallback() {
   }
 
   // ========================================================================
-  // T6.7: DROP-RATE TELEMETRY (UI-thread timer — never logged from audio thread)
+  // T6.7: DROP-RATE TELEMETRY (UI-thread timer — never logged from audio
+  // thread)
   // ========================================================================
 #if JUCE_DEBUG
   {
-    auto* runner = processor_.getEmotionRunner();
+    auto *runner = processor_.getEmotionRunner();
     if (runner && runner->isRunning()) {
       const float rate = runner->dropRate();
       if (rate > 0.0f) {
@@ -573,10 +578,15 @@ void PluginEditor::onExportClicked() {
         "*.mid");
 
     // Launch async file chooser
+    juce::Component::SafePointer<PluginEditor> safeThis(this);
     chooser->launchAsync(
         juce::FileBrowserComponent::saveMode |
             juce::FileBrowserComponent::canSelectFiles,
-        [this, chooser](const juce::FileChooser &fc) {
+        [safeThis, chooser](const juce::FileChooser &fc) {
+          if (safeThis == nullptr) {
+            return;
+          }
+
           auto file = fc.getResult();
           if (file != juce::File{}) {
             // Ensure file has .mid extension
@@ -599,7 +609,7 @@ void PluginEditor::onExportClicked() {
 
             // Export MIDI file
             bool success = exporter.exportToFile(
-                file, processor_.getGeneratedMidi(), options);
+                file, safeThis->processor_.getGeneratedMidi(), options);
 
             if (success) {
               juce::AlertWindow::showMessageBoxAsync(
@@ -716,7 +726,8 @@ void PluginEditor::onWoundTextChanged(const juce::String &text) {
 
 void PluginEditor::onEmotionTextCommitted(const juce::String &text) {
   (void)text;
-  // Optional: update emotion parameters from committed text (e.g. parse and set valence/arousal)
+  // Optional: update emotion parameters from committed text (e.g. parse and set
+  // valence/arousal)
 }
 
 //==============================================================================
@@ -745,23 +756,28 @@ void PluginEditor::onOpenProject() {
       juce::File::getSpecialLocation(juce::File::userDocumentsDirectory),
       midikompanion::ProjectManager::getProjectFilePattern());
 
+  juce::Component::SafePointer<PluginEditor> safeThis(this);
   chooser->launchAsync(
       juce::FileBrowserComponent::openMode |
           juce::FileBrowserComponent::canSelectFiles,
-      [this, chooser](const juce::FileChooser &fc) {
+      [safeThis, chooser](const juce::FileChooser &fc) {
+        if (safeThis == nullptr) {
+          return;
+        }
+
         auto file = fc.getResult();
         if (file != juce::File{}) {
-          bool success = processor_.loadProject(file);
+          bool success = safeThis->processor_.loadProject(file);
           if (success) {
-            currentProjectFile_ = file;
+            safeThis->currentProjectFile_ = file;
 
             // Update UI with loaded state
-            workstation_->setWoundText(
-                processor_.getPluginState()
-                    .saveState(processor_.getAPVTS(),
-                               processor_.getPluginState()
-                                   .saveState(processor_.getAPVTS(), "",
-                                              std::nullopt, {})
+            safeThis->workstation_->setWoundText(
+                safeThis->processor_.getPluginState()
+                    .saveState(safeThis->processor_.getAPVTS(),
+                               safeThis->processor_.getPluginState()
+                                   .saveState(safeThis->processor_.getAPVTS(),
+                                              "", std::nullopt, {})
                                    .getProperty("woundDescription")
                                    .toString(),
                                std::nullopt, {})
@@ -769,16 +785,18 @@ void PluginEditor::onOpenProject() {
                     .toString());
 
             // Refresh displays
-            if (processor_.hasPendingMidi()) {
-              const auto &generatedMidi = processor_.getGeneratedMidi();
-              workstation_->getPianoRollPreview().setMidiData(generatedMidi);
+            if (safeThis->processor_.hasPendingMidi()) {
+              const auto &generatedMidi =
+                  safeThis->processor_.getGeneratedMidi();
+              safeThis->workstation_->getPianoRollPreview().setMidiData(
+                  generatedMidi);
             }
 
             juce::AlertWindow::showMessageBoxAsync(
                 juce::AlertWindow::InfoIcon, "Project Loaded",
                 "Project loaded successfully:\n" + file.getFileName(), "OK");
           } else {
-            juce::String errorMsg = processor_.getProjectError();
+            juce::String errorMsg = safeThis->processor_.getProjectError();
             if (errorMsg.isEmpty()) {
               errorMsg = "Unknown error occurred";
             }
@@ -826,10 +844,15 @@ void PluginEditor::onSaveProjectAs() {
       juce::File::getSpecialLocation(juce::File::userDocumentsDirectory),
       midikompanion::ProjectManager::getProjectFilePattern());
 
+  juce::Component::SafePointer<PluginEditor> safeThis(this);
   chooser->launchAsync(
       juce::FileBrowserComponent::saveMode |
           juce::FileBrowserComponent::canSelectFiles,
-      [this, chooser](const juce::FileChooser &fc) {
+      [safeThis, chooser](const juce::FileChooser &fc) {
+        if (safeThis == nullptr) {
+          return;
+        }
+
         auto file = fc.getResult();
         if (file != juce::File{}) {
           // Ensure file has correct extension
@@ -840,14 +863,14 @@ void PluginEditor::onSaveProjectAs() {
                 midikompanion::ProjectManager::getProjectFileExtension());
           }
 
-          bool success = processor_.saveCurrentProject(file);
+          bool success = safeThis->processor_.saveCurrentProject(file);
           if (success) {
-            currentProjectFile_ = file;
+            safeThis->currentProjectFile_ = file;
             juce::AlertWindow::showMessageBoxAsync(
                 juce::AlertWindow::InfoIcon, "Project Saved",
                 "Project saved successfully:\n" + file.getFullPathName(), "OK");
           } else {
-            juce::String errorMsg = processor_.getProjectError();
+            juce::String errorMsg = safeThis->processor_.getProjectError();
             if (errorMsg.isEmpty()) {
               errorMsg = "Unknown error occurred";
             }

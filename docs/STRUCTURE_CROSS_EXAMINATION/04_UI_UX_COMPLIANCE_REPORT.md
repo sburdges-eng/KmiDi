@@ -1,5 +1,11 @@
 # UI/UX Structure Compliance Report
 
+Historical note
+- This cross-examination report was produced under Tauri-era assumptions.
+- It is preserved as historical analysis and is not part of the current architecture authority set.
+- When this report conflicts with current architecture, follow `docs/ARCHITECTURE.md` and companion 2026 authority docs.
+
+
 **Date:** January 18, 2026  
 **Phase:** 3 - UI/UX Structure Review  
 **Status:** Complete

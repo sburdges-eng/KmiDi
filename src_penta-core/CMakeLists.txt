@@ -69,10 +69,23 @@ file(GLOB_RECURSE PENTA_CORE_SOURCES CONFIGURE_DEPENDS
 #     compile into KellyCore.
 #   ScaleDetector: moved to src_penta-core/ (byte-identical; penta_core/ is canonical
 #     per T1 consolidation). KellyCore exclusion added in root CMakeLists.txt.
-list(FILTER PENTA_CORE_SOURCES EXCLUDE REGEX "/harmony/VoiceLeading\\.cpp$")
-list(FILTER PENTA_CORE_SOURCES EXCLUDE REGEX "/osc/OSCClient\\.cpp$")
-list(FILTER PENTA_CORE_SOURCES EXCLUDE REGEX "/osc/OSCHub\\.cpp$")
-list(FILTER PENTA_CORE_SOURCES EXCLUDE REGEX "/osc/OSCServer\\.cpp$")
+# The canonical implementations live in src/ (VoiceLeading has 4 methods the
+# removed src_penta-core/ copy lacked; the OSC trio carries the RT-safe
+# callback model). Root CMakeLists.txt excludes them from KELLY_CORE_SOURCES,
+# so penta_core must compile them or the symbols exist in no library
+# (the 2026-06-10 cross-platform link collapse).
+list(APPEND PENTA_CORE_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/../src/harmony/VoiceLeading.cpp
+)
+# OSC transport needs juce_osc; standalone no-JUCE builds keep the JUCE-free
+# subset (OSCMessage, RTMessageQueue), matching the pre-consolidation shape.
+if(TARGET juce::juce_osc)
+    list(APPEND PENTA_CORE_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/../src/osc/OSCClient.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../src/osc/OSCHub.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/../src/osc/OSCServer.cpp
+    )
+endif()
 
 # Create the library
 add_library(penta_core STATIC ${PENTA_CORE_SOURCES})
@@ -92,12 +105,29 @@ if(TARGET juce::juce_dsp)
         readerwriterqueue
         juce::juce_dsp
     )
+    # penta_core does no HTTP, but juce_core on Linux otherwise emits libcurl
+    # calls that fail the link of any consumer (penta_tests hit this on CI;
+    # macOS is unaffected because JUCE uses native streams there). Likewise
+    # nothing in the repo uses WebBrowserComponent, and with it enabled
+    # juce_gui_extra needs gtk/webkit2gtk headers at compile time on Linux.
+    # PUBLIC so every target that transitively compiles JUCE module sources
+    # through penta_core sees consistent values.
+    target_compile_definitions(penta_core PUBLIC
+        JUCE_USE_CURL=0
+        JUCE_WEB_BROWSER=0
+    )
 else()
     # Build without JUCE if not available
     message(WARNING "JUCE not available, building penta_core without juce_dsp")
     target_link_libraries(penta_core PUBLIC
         readerwriterqueue
     )
+endif()
+
+# src/osc/ transport uses juce::OSCSender/OSCReceiver; juce_osc pulls
+# juce_core/juce_events transitively. PUBLIC for static-archive consumers.
+if(TARGET juce::juce_osc)
+    target_link_libraries(penta_core PUBLIC juce::juce_osc)
 endif()
 
 # Platform-specific settings
@@ -183,6 +213,11 @@ if(BUILD_PENTA_TESTS)
             "skipping penta_tests target.")
     else()
         add_executable(penta_tests ${TEST_SOURCES})
+
+        # CI jobs (ci.yml, test.yml) invoke ./penta_tests from the build root.
+        set_target_properties(penta_tests PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+        )
 
         target_link_libraries(penta_tests PRIVATE
             penta_core

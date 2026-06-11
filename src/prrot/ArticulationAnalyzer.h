@@ -14,6 +14,7 @@
 #include "prrot/PhonemeSegmenter.h"
 #include <array>
 #include <cstdint>
+#include <cstddef>
 
 namespace prrot {
 

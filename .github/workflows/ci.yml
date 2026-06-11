@@ -195,6 +195,8 @@ jobs:
     needs: [python_tests, cpp_tests]
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: recursive
     - name: Install C++ coverage tools
       run: |
         sudo apt-get update
@@ -214,8 +216,10 @@ jobs:
         cd build
         ninja penta_tests
         ./penta_tests
-        lcov --capture --directory . --output-file coverage.info
-        lcov --remove coverage.info '/usr/*' '/opt/*' '*/external/*' '*/tests/*' --output-file coverage.info
+        # --ignore-errors negative: lcov 2.x aborts on negative counters from
+        # non-atomic profile updates in third-party headers (_deps atomics).
+        lcov --capture --directory . --ignore-errors negative,gcov,mismatch --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' '/opt/*' '*/external/*' '*/tests/*' '*/_deps/*' --ignore-errors unused --output-file coverage.info
         lcov --list coverage.info
     - name: Upload C++ coverage
       uses: codecov/codecov-action@v3
@@ -228,6 +232,8 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: recursive
     - name: Install dependencies
       run: |
         brew install cmake ninja qt@6

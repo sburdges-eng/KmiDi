@@ -1,5 +1,10 @@
 # Find All – Workspace & Volumes
 
+Historical note
+- This document records an older workspace/volume survey and is not current repository authority.
+- Paths and counts here may no longer match the active canonical repo location.
+- When it conflicts with the current repo architecture or layout, follow `README.md`, `docs/ARCHITECTURE.md`, and `docs/REPO_MODULE_MAP.md`.
+
 Summary of locations and file counts for the KmiDi MIDI Companion project, including the workspace and the **KmiDi-DONE** volume.
 
 ---

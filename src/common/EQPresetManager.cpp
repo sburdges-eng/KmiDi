@@ -1,6 +1,7 @@
 #include "EQPresetManager.h"
 #include "common/PathResolver.h"
 #include <juce_core/juce_core.h>
+#include <optional>
 
 namespace kelly {
 

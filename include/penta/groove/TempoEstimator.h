@@ -3,6 +3,7 @@
 #include "penta/common/Platform.h"
 #include <array>
 #include <atomic>
+#include <cstddef>
 
 namespace penta::groove {
 

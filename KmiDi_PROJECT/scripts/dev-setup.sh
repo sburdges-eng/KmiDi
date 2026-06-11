@@ -3,6 +3,11 @@
 # =============================================================================
 # KmiDi Development Environment Setup Script
 # =============================================================================
+# Historical note:
+# - This file lives under KmiDi_PROJECT/, a legacy/alternate tree that is not the canonical repo root.
+# - Its Tauri-oriented setup and runnable-command guidance is historical unless revalidated against the root package.json and docs/DEVELOPMENT.md.
+# - Do not treat this script as current authority for the main repository.
+# =============================================================================
 # This script sets up a complete development environment for KmiDi:
 # - Installs system dependencies (CMake, Rust, Node.js, Python)
 # - Configures build environment
@@ -580,6 +585,7 @@ cat > DEV_ENVIRONMENT.md << EOF
 
 ### Start Development Servers
 \`\`\`bash
+# Historical/legacy stack example from the alternate tree (not current root authority)
 # All services (React + Tauri + Python + C++ watcher)
 npm run dev:all
 
@@ -597,7 +603,7 @@ npm run dev          # React frontend only
 # Individual builds
 npm run build:cpp    # C++ only
 npm run build        # React only  
-npm run tauri build  # Tauri only
+npm run tauri build  # historical/legacy path in this alternate tree; revalidate against root package.json before use
 \`\`\`
 
 ### Testing

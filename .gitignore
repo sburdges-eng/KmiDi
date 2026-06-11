@@ -18,6 +18,10 @@ venv/
 # Archive (e.g. nested KmiDi tree after merge)
 _archive/
 
+# Local agent/session artifacts
+.agent-sessions/
+.claude/worktrees/
+
 # Android/Gradle
 iDAW-Android/app/.gradle/
 
@@ -553,3 +557,9 @@ experiments/MERGE_CONFLICT_REPORT.txt
 # Local PR description draft (use with gh pr create --body-file)
 .pr-body.md
 .gitnexus
+
+# npm cache committed by mistake — removed during repo cleanup 2026-06
+/npm-cache/
+
+# GitNexus / graphify analysis outputs — generated, can be hundreds of MB
+/graphify-out*/

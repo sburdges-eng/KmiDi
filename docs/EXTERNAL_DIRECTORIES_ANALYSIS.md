@@ -1,5 +1,10 @@
 # External Directories Code Analysis
 
+Historical note
+- This document records a point-in-time external-directory survey and is not current repository architecture authority.
+- References here to Tauri application directories or migration targets should be read as historical findings only.
+- When it conflicts with the current repo structure, follow `README.md`, `docs/ARCHITECTURE.md`, and `docs/REPO_MODULE_MAP.md`.
+
 **Date:** 2026-01-21
 **Status:** ✅ COMPLETE - All relevant code verified
 

@@ -1,5 +1,10 @@
 # Xcode Import Playbook
 
+Historical note
+- This playbook contains Tauri-era framing for some native targets.
+- It remains useful for Xcode project generation, but it is not architecture authority.
+- When target descriptions conflict with the current repo architecture, follow `docs/ARCHITECTURE.md`, `docs/REPO_MODULE_MAP.md`, and `AGENTS.md`.
+
 Date: 2026-02-21  
 Purpose: Generate an `.xcodeproj` for KmiDi with KmiDi_FINAL integration so it opens cleanly in Xcode.
 

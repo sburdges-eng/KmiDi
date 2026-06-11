@@ -17,12 +17,12 @@
 #include "engine/KellyBrain.h"
 #include "ml/MLFeatureExtractor.h"
 #include "ml/MultiModelProcessor.h"
-#include <functional>
+#include <array>
 #include <atomic>
+#include <functional>
+#include <memory>
 #include <mutex>
 #include <vector>
-#include <array>
-#include <memory>
 
 namespace kelly {
 
@@ -156,8 +156,15 @@ private:
 
   bool mlEnabled_ = true;
   bool initialized_ = false;
+  struct AsyncWorker {
+    std::thread thread;
+    std::shared_ptr<std::atomic<bool>> done;
+  };
+
+  void reapCompletedAsyncTasksLocked();
+
   std::atomic<bool> shuttingDown_{false};
-  std::vector<std::thread> asyncThreads_;
+  std::vector<AsyncWorker> asyncThreads_;
   std::mutex asyncThreadsMutex_;
 
   // Feature extraction settings

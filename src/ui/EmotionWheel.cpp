@@ -2,6 +2,7 @@
 #include "KellyLookAndFeel.h"
 #include <cmath>
 #include <algorithm>
+#include <optional>
 
 namespace kelly {
 

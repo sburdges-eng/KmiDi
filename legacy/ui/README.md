@@ -14,11 +14,15 @@ Native macOS AppKit shell. Originally at `KmiDi_FINAL/apps/macOS/AppKitShell/`.
 ### `qt_gui/`
 Legacy Qt6 UI surface. Originally at `src/gui/`.
 
-## Primary UI Surface (V1)
+## Historical note on primary UI wording
 
-The only supported V1 desktop shell is **Tauri + React**, located at:
-- `engine/intent_ir/` - Rust Tauri host bindings
-- React frontend (web layer)
+The wording below reflects an older Tauri-centered interpretation and is no longer architecture authority.
+Follow the 2026 authority set beginning with `docs/ARCHITECTURE.md` and `docs/REPO_MODULE_MAP.md`.
+
+Current safe interpretation:
+- this directory is legacy only
+- it is not part of the active product shell/runtime authority
+- React frontend, Music Brain API, Intent IR, and native/plugin surfaces are described by the current authority docs and operational guides
 
 ## JUCE Audio/MIDI Rendering
 

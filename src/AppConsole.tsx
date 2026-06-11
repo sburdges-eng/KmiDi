@@ -182,11 +182,43 @@ export default function AppConsole() {
       .catch(() => setApiStatus('offline'));
   }, []);
 
+  // DAW-standard transport shortcuts: Space = play/pause, Shift+Space = record.
+  // Skipped while typing or when a button has focus (its native Space click
+  // already fires the action — handling it here too would double-toggle).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== 'Space') return;
+      const t = e.target as HTMLElement | null;
+      if (
+        t &&
+        (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' ||
+          t.tagName === 'BUTTON' || t.isContentEditable)
+      ) return;
+      e.preventDefault();
+      if (e.shiftKey) {
+        setIsRecording((v) => !v);
+      } else {
+        setIsPlaying((v) => !v);
+        setIsRecording(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   const timelineBars = useMemo(() => Math.max(8, tempo > 140 ? 24 : tempo > 95 ? 16 : 12), [tempo]);
 
   useEffect(() => {
     if (!isPlaying) return undefined;
-    const timer = window.setInterval(() => {
+    // rAF instead of setInterval so meter updates land on frame boundaries —
+    // a 120ms interval beats against the 60Hz refresh and reads as stutter.
+    let raf = 0;
+    let last = 0;
+    const METER_MS = 100;
+    const loop = (t: number) => {
+      raf = window.requestAnimationFrame(loop);
+      if (t - last < METER_MS) return;
+      last = t;
       playTickRef.current += 1;
       setMasterVu(() => {
         const wave = Math.sin(playTickRef.current * 0.35) * 0.4 + Math.cos(playTickRef.current * 0.18) * 0.2;
@@ -199,8 +231,9 @@ export default function AppConsole() {
           return { ...channel, level: Number((0.35 + Math.max(-0.18, Math.min(0.58, wave * 0.28))).toFixed(3)) };
         }),
       );
-    }, 120);
-    return () => window.clearInterval(timer);
+    };
+    raf = window.requestAnimationFrame(loop);
+    return () => window.cancelAnimationFrame(raf);
   }, [isPlaying]);
 
   const handleGhostGenerate = useCallback(async (localText: string) => {
@@ -210,7 +243,12 @@ export default function AppConsole() {
         const lyrics = await brain.getUserLyrics();
         setGhostText(lyrics.lyrics ?? lyrics.generated ?? localText);
         return;
-      } catch { /* fall through */ }
+      } catch {
+        // The session bar is the app's feedback channel — flip the status dot
+        // and say what happened instead of silently using the local draft.
+        setApiStatus('offline');
+        setInteractions((prev) => [...prev, 'KmiDi: Studio offline — kept your draft as-is.']);
+      }
     }
     setGhostText(localText);
   }, [apiStatus, brain]);
@@ -222,7 +260,9 @@ export default function AppConsole() {
         const response = await brain.interrogate({ message: question });
         setInteractions((prev) => [...prev, `KmiDi: ${response.reply}`]);
         return;
-      } catch { /* fall through */ }
+      } catch {
+        setApiStatus('offline');
+      }
     }
     setInteractions((prev) => [
       ...prev,
@@ -318,7 +358,7 @@ export default function AppConsole() {
               <article className="console-panel">
                 <h2 className="console-panel__title">Ask</h2>
                 <Interrogator
-                  starter={selectedEmotion ? `How should this feel: ${selectedEmotion.base}` : 'Ask something'}
+                  starter={selectedEmotion ? `How should this feel: ${selectedEmotion.base}` : ''}
                   onAsk={handleInterrogatorAsk}
                 />
               </article>

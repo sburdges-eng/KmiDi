@@ -10,6 +10,7 @@
 #include "penta/harmony/VoiceLeading.h"
 #include <vector>
 #include <cstdint>
+#include <algorithm>
 
 namespace kelly {
 

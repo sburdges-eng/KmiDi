@@ -1,5 +1,11 @@
 # Specification Coverage Analysis
 
+Historical note
+- This cross-examination report was produced under Tauri-era assumptions.
+- It is preserved as historical analysis and is not part of the current architecture authority set.
+- When this report conflicts with current architecture, follow `docs/ARCHITECTURE.md` and companion 2026 authority docs.
+
+
 **Date:** January 18, 2026  
 **Phase:** 1 - Documentation Structure Review  
 **Status:** Complete

@@ -47,15 +47,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Verify offline gate fails without local JUCE
+      # Configure builds juceaide before reaching the offline FATAL check,
+      # so the JUCE Linux deps must exist or the gate fails for the wrong
+      # reason (X11/Xlib.h missing instead of the fail-closed message).
+      - name: Install JUCE Linux deps
+        run: scripts/ci/install_juce_linux_deps.sh
+      - name: Verify configure fails closed with KMIDI_OFFLINE_BUILD=ON
         shell: bash
         run: |
           set -euo pipefail
-          if cmake -S . -B build-offline-gate -DOFFLINE_BUILD=ON -DJUCE_EXTERNAL_ROOT= -DKELLY_ENABLE_TESTS=OFF; then
-            echo "Expected OFFLINE_BUILD gate failure, but configure succeeded."
+          if cmake -S . -B build-offline-gate -DKMIDI_OFFLINE_BUILD=ON 2>offline-gate-stderr.log; then
+            echo "Expected KMIDI_OFFLINE_BUILD=ON to fail configure, but it succeeded."
             exit 1
           fi
-          grep -q "OFFLINE_BUILD is ON and no local JUCE source is configured" build-offline-gate/CMakeFiles/CMakeOutput.log || true
+          cat offline-gate-stderr.log
+          grep -q "KMIDI_OFFLINE_BUILD=ON forbids FetchContent network pulls" offline-gate-stderr.log
 
   runtime-contract-cpp:
     name: Runtime Contract C++ Tests
@@ -68,10 +74,16 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y qt6-base-dev
       - name: Install JUCE Linux deps
         run: scripts/ci/install_juce_linux_deps.sh
+      # engine/intent_ir auto-enables its cargo rebuild when the prebuilt
+      # staticlib is absent (always true on CI). The runner image currently
+      # ships cargo, but pin the toolchain explicitly rather than depending
+      # on image contents.
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
       - name: Configure and build runtime contract tests
         run: |
-          cmake -S . -B build-ci-runtime -DOFFLINE_BUILD=OFF -DJUCE_EXTERNAL_ROOT= -DKELLY_ENABLE_TESTS=ON
+          cmake -S . -B build-ci-runtime -DKMIDI_OFFLINE_BUILD=OFF -DBUILD_TESTS=ON
           cmake --build build-ci-runtime --target runtime_contract_tests -j2
       - name: Run runtime contract tests
         run: |
-          ctest --test-dir build-ci-runtime --output-on-failure -R runtime_contract_tests
+          ctest --test-dir build-ci-runtime --output-on-failure -R '^runtime_contract_tests$' --no-tests=error

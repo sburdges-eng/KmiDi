@@ -27,6 +27,7 @@
 #include <mutex>
 #include <atomic>
 #include <functional>
+#include <optional>
 
 namespace kelly {
 

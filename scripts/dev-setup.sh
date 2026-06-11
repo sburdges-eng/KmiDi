@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# One-command dev environment setup for KmiDi v1.
-# Run from repo root. After this, use: npm run dev:all (or npm run dev / npm run tauri dev).
+# One-command dev environment setup for KmiDi.
+# Run from repo root. After this, use: npm run dev:all (or npm run dev / npm run dev:python).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -12,7 +12,7 @@ echo "=> KmiDi v1 dev setup (bootstrap + npm + pip)..."
 # 1) Bootstrap (JUCE submodule, CMake/Node checks, pybind11 hint)
 "$SCRIPT_DIR/bootstrap.sh"
 
-# 2) Node deps (Tauri + React)
+# 2) Node deps (React frontend tooling)
 if command -v npm >/dev/null 2>&1; then
   echo "-> npm install..."
   npm install
@@ -31,4 +31,5 @@ fi
 
 echo "=> Dev setup complete."
 echo "   React + API: npm run dev:all"
-echo "   Or: npm run dev (React) | npm run dev:tauri (Tauri) | npm run dev:python (API on :8000)"
+echo "   Or: npm run dev (React) | npm run dev:python (API on :8000)"
+echo "   Note: package.json does not currently define npm run dev:tauri."

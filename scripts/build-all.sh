@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # =============================================================================
-# KmiDi Multi-Technology Build Script
+# KmiDi Historical Multi-Technology Build Script
 # =============================================================================
-# This script builds the complete KmiDi application stack:
+# This script builds the historical multi-technology KmiDi application stack:
 # 1. C++/JUCE KellyCore and FFI library
 # 2. React frontend
-# 3. Tauri desktop application
+# 3. Optional guarded historical Tauri desktop application
 # 4. Plugin formats (VST3/AU)
 # =============================================================================
 
@@ -31,7 +31,7 @@ INSTALL_PREFIX="$BUILD_DIR/install"
 BUILD_TYPE="${BUILD_TYPE:-Release}"
 BUILD_PLUGINS="${BUILD_PLUGINS:-ON}"
 BUILD_TESTS="${BUILD_TESTS:-OFF}"
-BUILD_TAURI="${BUILD_TAURI:-ON}"
+BUILD_TAURI="${BUILD_TAURI:-OFF}"
 PARALLEL_JOBS="${PARALLEL_JOBS:-$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)}"
 
 # Platform detection
@@ -64,6 +64,7 @@ echo -e "${BLUE}Platform: ${PLATFORM}${NC}"
 echo -e "${BLUE}Build Type: ${BUILD_TYPE}${NC}"
 echo -e "${BLUE}Parallel Jobs: ${PARALLEL_JOBS}${NC}"
 echo -e "${BLUE}Build Plugins: ${BUILD_PLUGINS}${NC}"
+echo -e "${BLUE}Build Historical Tauri Shell: ${BUILD_TAURI}${NC}"
 echo ""
 
 # =============================================================================
@@ -105,6 +106,16 @@ check_command "cargo"
 # Check for Rust/Tauri
 if [ "$BUILD_TAURI" == "ON" ]; then
     check_command "cargo"
+    if ! python3 - <<'PY'
+import json, pathlib, sys
+scripts = json.loads(pathlib.Path('package.json').read_text()).get('scripts', {})
+sys.exit(0 if 'tauri' in scripts else 1)
+PY
+    then
+        log_error "BUILD_TAURI=ON requested, but package.json does not define a tauri build script"
+        echo "Current supported build surfaces are npm run build for the frontend and root CMake targets for native/plugin builds."
+        exit 1
+    fi
     if ! cargo list | grep -q "tauri-cli"; then
         log_error "Tauri CLI not installed"
         echo "Install with: cargo install tauri-cli"
@@ -228,7 +239,7 @@ log_success "React frontend built"
 # =============================================================================
 
 if [ "$BUILD_TAURI" == "ON" ]; then
-    log_step "Configuring Tauri build..."
+    log_step "Configuring historical Tauri build path..."
 
     cd "$PROJECT_ROOT/engine/intent_ir"
 
@@ -252,11 +263,11 @@ if [ "$BUILD_TAURI" == "ON" ]; then
 fi
 
 # =============================================================================
-# Step 5: Build Tauri Desktop Application
+# Step 5: Build Historical Tauri Desktop Application
 # =============================================================================
 
 if [ "$BUILD_TAURI" == "ON" ]; then
-    log_step "Building Tauri desktop application..."
+    log_step "Building historical Tauri desktop application..."
 
     cd "$PROJECT_ROOT"
 

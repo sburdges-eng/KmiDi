@@ -48,14 +48,23 @@ public:
      *                   Pass nullptr for standalone/non-AU contexts.
      */
     void start(void* workgroup = nullptr) {
-        if (running_.exchange(true)) return;
+        bool expected = false;
+        if (!running_.compare_exchange_strong(expected, true, std::memory_order_acq_rel))
+            return;
+
         workgroup_ = workgroup;
+        if (thread_.joinable())
+            thread_.join();
+
         thread_ = std::thread([this]() { run(); });
     }
 
     void stop() {
-        running_.store(false);
-        if (thread_.joinable()) thread_.join();
+        if (!running_.exchange(false, std::memory_order_acq_rel))
+            return;
+
+        if (thread_.joinable())
+            thread_.join();
     }
 
     bool isRunning() const { return running_.load(); }

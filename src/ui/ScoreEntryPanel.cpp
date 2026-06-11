@@ -51,7 +51,7 @@ void ScoreEntryPanel::initializeComponents()
     // --- Score Display Area ---
     scoreDisplay_.reset(new juce::Component());
     scoreViewport_.reset(new juce::Viewport("Score Viewport"));
-    scoreViewport_->setViewedComponent(scoreDisplay_.get());
+    scoreViewport_->setViewedComponent(scoreDisplay_.get(), false);
     addAndMakeVisible(*scoreViewport_);
 
     // --- Note Value Buttons ---

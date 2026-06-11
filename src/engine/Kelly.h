@@ -22,6 +22,7 @@
 #include "../midi/MidiGenerator.h"  // Use the correct MidiGenerator from midi/ directory
 #include "VADSystem.h"
 #include "EmotionThesaurus.h"
+#include <cstddef>
 
 namespace kelly {
 

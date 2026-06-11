@@ -42,7 +42,7 @@
   /* Text hierarchy */
   --text-primary: #f2f2f1;
   --text-secondary: #9c9c9a;
-  --text-muted: #5e5e5c;
+  --text-muted: #7b7b79; /* ≥4.5:1 on --surface — #5e5e5c failed WCAG AA at small sizes */
   /* Studio-minimal aliases (≥3:1 readouts, ≥4.5:1 critical) */
   --text-hi: #f2f2f1;
   --text-med: #9c9c9a;

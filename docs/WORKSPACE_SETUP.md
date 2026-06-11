@@ -1,152 +1,166 @@
 # KmiDi Workspace Setup
 
-**Date:** 2026-01-21
-**Status:** ✅ Workspace Configuration Complete
+Status: current editor/workspace guide aligned to checked-in workspace files
+Last updated: 2026-06-08
 
-## Workspace Files Created
+This document explains the workspace/editor assets that actually exist in the repo today.
+It is not architecture authority.
 
-### 1. KmiDi.code-workspace
-Multi-root workspace configuration with organized folder structure:
-- Source Code (`src/`)
-- Headers (`include/`)
-- Penta-Core (`src_penta-core/`)
-- Build System (`cmake/`)
-- Documentation (`docs/`)
-- Scripts (`scripts/`)
-- Tests (`tests/`)
-- Tauri Backend (`engine/intent_ir/`)
-- Frontend (`src/`)
-- Config (`config/`)
-- Experiments (`experiments/`)
+## 1. What is currently checked in
 
-### 2. .vscode/settings.json
-- C++ IntelliSense configuration
-- CMake integration
-- Python interpreter settings
-- Rust analyzer configuration
-- File associations
-- Format on save
+Workspace/editor configuration currently present:
+- `KmiDi.code-workspace`
+- `.vscode/settings.json`
+- `.vscode/tasks.json`
+- `.vscode/launch.json`
+- `.vscode/extensions.json`
 
-### 3. .vscode/tasks.json
-Build and development tasks:
-- **CMake: Configure** - Configure CMake build
-- **CMake: Build** - Build project (default)
-- **CMake: Clean** - Clean build directory
-- **Tauri: Dev** - Run Tauri development server
-- **Tauri: Build** - Build Tauri application
-- **Python: Install Dependencies** - Install Python packages
-- **Run Tests** - Execute test suite
+Use these as convenience tooling around the canonical repo.
+Do not infer product architecture from them.
 
-### 4. .vscode/launch.json
-Debug configurations:
-- **Debug KellyCore** - Debug C++ core library
-- **Debug Tauri App** - Debug Tauri application
-- **Debug Plugin** - Debug VST3/CLAP plugin
+## 2. Opening the workspace
 
-### 5. .vscode/extensions.json
-Recommended extensions:
-- C/C++ (ms-vscode.cpptools)
-- CMake Tools (ms-vscode.cmake-tools)
-- Rust Analyzer (rust-lang.rust-analyzer)
-- Tauri (tauri-apps.tauri-vscode)
-- Python (ms-python.python)
-- ESLint, Prettier, Markdown support
+In VS Code or Cursor:
+1. File -> Open Workspace from File...
+2. choose `KmiDi.code-workspace`
 
-## Usage
+If you prefer opening the repo directly instead of the workspace file, that is also fine; the `.vscode/` folder still applies.
 
-### Opening the Workspace
-1. Open Cursor/VS Code
-2. File → Open Workspace from File...
-3. Select `KmiDi.code-workspace`
+## 3. What the current VS Code tasks actually do
 
-### Building the Project
-- **Keyboard:** `Cmd+Shift+B` (macOS) or `Ctrl+Shift+B` (Windows/Linux)
-- **Command Palette:** `Tasks: Run Build Task`
-- **Terminal:** `cmake -B build && cmake --build build`
+The checked-in tasks are native/debug oriented, not full-stack app launchers.
+Current task labels in `.vscode/tasks.json` are:
+- `cmake-configure-debug`
+- `cmake-build-rt-harness-debug`
+- `cmake-configure-asan`
+- `cmake-build-rt-harness-asan`
+- `cmake-configure-tsan`
+- `cmake-build-rt-harness-tsan`
+- `build-debug`
 
-### Running Development Server
-- **Command Palette:** `Tasks: Run Task` → `Tauri: Dev`
-- **Terminal:** `npm run tauri dev`
+What they correspond to:
+- `cmake-configure-debug` -> `cmake --preset ninja-debug`
+- `cmake-build-rt-harness-debug` -> build RT harness with the debug preset
+- `cmake-configure-asan` -> `cmake --preset ninja-asan`
+- `cmake-build-rt-harness-asan` -> build RT harness with ASan
+- `cmake-configure-tsan` -> `cmake --preset ninja-tsan`
+- `cmake-build-rt-harness-tsan` -> build RT harness with TSan
+- `build-debug` -> build a scratch single-file C++ program from `.cxx-scratch/`
 
-### Debugging
-- **Keyboard:** `F5` to start debugging
-- Select configuration from dropdown (KellyCore, Tauri App, or Plugin)
+What is not currently present in checked-in tasks:
+- no `Tauri: Dev` task
+- no combined React + API launch task
+- no generic “build everything” task
 
-## Project Structure
+For app/service bring-up, use terminal commands from `docs/DEVELOPMENT.md` instead.
 
+## 4. What the current debug launch configs actually do
+
+Current launch entries in `.vscode/launch.json` are intended for C++/RT-harness debugging:
+- `Debug rt_harness (clangd)`
+- `Debug rt_harness ASan (LLDB)`
+- `Debug rt_harness TSan (LLDB)`
+- `Debug single-file app (LLDB)`
+
+Operational notes:
+- the launch file is native-focused
+- it is not a frontend/API debug setup
+- if you need browser or API debugging, use the normal web/browser and Python workflows outside these launch configs
+
+Caveat:
+- `.vscode/launch.json` appears to contain at least one malformed line near the first configuration (`type` is damaged). Treat the file as partially stale until repaired. This guide documents intent and checked-in contents, not guaranteed editor correctness.
+
+## 5. Extensions currently recommended
+
+`.vscode/extensions.json` currently recommends only:
+- `llvm-vs-code-extensions.vscode-clangd`
+
+That means the repo is not presently asserting a broad extension pack.
+Install other tools as needed for your workflow, for example:
+- Python support
+- rust-analyzer
+- CMake tooling
+- Markdown support
+
+But those are personal/editor choices unless the repo later checks them in explicitly.
+
+## 6. CMake presets that pair with workspace tasks
+
+The editor tasks rely on `CMakePresets.json`.
+Current configure presets:
+- `xcode-debug`
+- `xcode-release`
+- `ninja-debug`
+- `ninja-asan`
+- `ninja-tsan`
+
+Current build presets:
+- `xcode-debug`
+- `xcode-release`
+- `ninja-debug-rt-harness`
+- `ninja-asan-rt-harness`
+- `ninja-tsan-rt-harness`
+
+If you use the workspace for native work, prefer these presets over ad hoc editor-specific CMake settings.
+
+## 7. Recommended practical usage
+
+### Frontend/API work
+Use the terminal, not the checked-in workspace tasks:
+
+```bash
+npm run dev:all
 ```
-KmiDi/
-├── src/                    # Source code (436 files)
-│   ├── plugin/            # VST3/CLAP plugins
-│   ├── gui/               # Desktop GUI
-│   ├── bridge/            # FFI bridge
-│   ├── core/              # Core engine
-│   ├── audio/             # Audio processing
-│   ├── biometric/          # Biometric input
-│   ├── music_theory/       # Music theory engines
-│   ├── ml/                # Machine learning
-│   ├── midi/              # MIDI processing
-│   ├── harmony/           # Harmony analysis
-│   ├── groove/            # Groove processing
-│   ├── prrot/             # PRROT engine
-│   ├── KellyML/           # Kelly ML components
-│   └── ...                # Other components
-├── include/                # Header files (57 files)
-│   ├── penta/             # Penta-core headers
-│   ├── kmidi/             # KmiDi headers
-│   └── daiw/              # DAW headers
-├── src_penta-core/        # Penta-core library (21 files)
-├── build/                 # Build output
-├── cmake/                 # CMake configuration
-├── scripts/               # Build and utility scripts
-├── tests/                 # Test suite
-├── docs/                  # Documentation
-├── config/                # Configuration files
-├── engine/intent_ir/             # Tauri backend (Rust)
-└── experiments/           # Experimental code
+
+Or separately:
+
+```bash
+npm run dev
+npm run dev:python
 ```
 
-## Next Steps
+### Native runtime work
+Use the checked-in preset/task flow:
 
-1. **Install Recommended Extensions:**
-   - Open Command Palette (`Cmd+Shift+P`)
-   - Run: `Extensions: Show Recommended Extensions`
-   - Install all recommended extensions
+```bash
+cmake --preset ninja-debug
+cmake --build --preset ninja-debug-rt-harness
+```
 
-2. **Configure CMake:**
-   - Open Command Palette
-   - Run: `CMake: Configure`
-   - Select your preferred generator
+For sanitizer work:
 
-3. **Build the Project:**
-   - Press `Cmd+Shift+B` to build
-   - Or run: `Tasks: Run Build Task`
+```bash
+cmake --preset ninja-asan
+cmake --build --preset ninja-asan-rt-harness
+```
 
-4. **Start Development:**
-   - Run: `Tasks: Run Task` → `Tauri: Dev`
-   - Or: `npm run tauri dev`
+### Scratch C++ experiments
+Put a source file under `.cxx-scratch/` and use the `build-debug` task.
+This is an isolated convenience path, not a production target workflow.
 
-## Troubleshooting
+## 8. Workspace interpretation rules
 
-### CMake Not Found
-- Install CMake: `brew install cmake` (macOS)
-- Or download from: https://cmake.org/download/
+When workspace files and docs disagree, prefer:
+1. actual commands in `package.json`
+2. actual commands in `CMakePresets.json`
+3. architecture authority docs for ownership and boundaries
+4. older workspace narratives last
 
-### C++ IntelliSense Issues
-- Run: `C/C++: Reset IntelliSense Database`
-- Check `.vscode/settings.json` for include paths
+Examples of older assumptions that should not be reintroduced automatically:
+- “Tauri is the canonical app shell”
+- “workspace tasks launch the whole stack”
+- “the workspace debug profiles are the main way to run the product”
 
-### Build Errors
-- Check `CMakeLists.txt` for dependencies
-- Verify JUCE and src_penta-core are present
-- Check build logs in `build/` directory
+## 9. Known drift
 
-## Status
+These facts matter for future cleanup:
+- older workspace documentation claimed Tauri tasks and broader extension recommendations that are not present now
+- the checked-in launch config is partially malformed and should be repaired before being treated as a dependable default debug surface
+- current checked-in workspace assets are much more native/RT-harness oriented than product/app oriented
 
-✅ **Workspace ready for development**
-- All configuration files created
-- Build tasks configured
-- Debug configurations ready
-- Recommended extensions listed
+## 10. Related docs
 
-**Ready to start building and developing!**
+- `docs/DEVELOPMENT.md`
+- `docs/BOOT.md`
+- `BUILD.md`
+- `AGENTS.md`

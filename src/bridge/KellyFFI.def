@@ -1,0 +1,79 @@
+; KellyFFI.def — curated Windows export surface for the KellyFFI DLL.
+;
+; On unix the C ABI is exported via default symbol visibility; MSVC exports
+; nothing without __declspec(dllexport) or a module-definition file. Zero
+; exports means link.exe emits no KellyFFI.lib import library, and every
+; consumer (runtime_contract_tests, KellyFFIBenchmark, ctypes hosts) dies
+; with LNK1181. This file is both the export mechanism and the narrow-ABI
+; policy (docs/handoffs/20260609_034047_caca5b.md, Pass F) made
+; machine-enforced on Windows: a symbol absent from this list is not
+; exported, period.
+;
+; Keep in sync with:
+;   src/bridge/kelly_ffi.h       — kelly_*      (impl kelly_ffi.cpp, in the DLL)
+;   src/bridge/intent_ir_ffi.h   — intent_ir_*  (impl intent_ir_ffi.cpp, in KellyCore)
+;   engine/intent_ir/src/ffi.rs  — Rust staticlib C exports, re-exported
+;                                  through the DLL for FFI consumers
+;
+; ABI additions are human-review-required (Pass F). Never replace this with
+; WINDOWS_EXPORT_ALL_SYMBOLS: KellyFFI statically embeds JUCE + KellyCore +
+; penta and would blow the 64K DLL export limit while abandoning the
+; narrow-ABI rule.
+
+EXPORTS
+    ; ---- kelly_ffi.h: KellyBrain C ABI ----
+    kelly_brain_create
+    kelly_brain_initialize
+    kelly_brain_is_initialized
+    kelly_brain_destroy
+    kelly_brain_from_text
+    kelly_brain_from_emotion
+    kelly_brain_from_journey
+    kelly_brain_from_wound
+    kelly_brain_generate_midi
+    kelly_brain_generate_midi_with_params
+    kelly_brain_get_emotion_state
+    kelly_brain_get_parameters
+    kelly_brain_get_available_emotions
+    kelly_brain_set_emotion_parameters
+    kelly_brain_update_parameters
+    kelly_brain_register_callback
+    kelly_brain_unregister_callback
+    kelly_brain_get_rt_state
+    kelly_brain_push_rt_param
+    kelly_free_string
+    kelly_get_error_message
+    kelly_get_last_error
+    kelly_get_version
+    kelly_check_data_files
+
+    ; ---- intent_ir_ffi.h: Intent IR manager ----
+    ; Implementation lives in KellyCore.lib (intent_ir_ffi.obj); these
+    ; entries double as link roots that pull the object into the DLL.
+    intent_ir_initialize
+    intent_ir_validate_and_store
+    intent_ir_clamp_and_store
+    intent_ir_get_snapshot
+    intent_ir_get_c_snapshot
+    intent_ir_is_valid
+    intent_ir_get_current_intent_id
+    intent_ir_get_current_session_id
+    intent_ir_new_session_id
+    intent_ir_new_intent_id
+    intent_ir_update_emotion
+    intent_ir_update_music
+    intent_ir_get_error_message
+    intent_ir_get_last_error
+
+    ; ---- engine/intent_ir/src/ffi.rs: Rust intent_ir staticlib ----
+    validate_intent_frame_ffi
+    clamp_intent_frame_ffi
+    intent_frame_version_supported_ffi
+    create_intent_frame_builder
+    IntentFrameBuilder_free
+    IntentFrameBuilder_set_emotion
+    IntentFrameBuilder_set_musical_intent
+    IntentFrameBuilder_set_time_scope
+    IntentFrameBuilder_set_constraints
+    IntentFrameBuilder_set_provenance
+    IntentFrameBuilder_build

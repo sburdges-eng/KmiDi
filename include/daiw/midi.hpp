@@ -22,6 +22,7 @@
 #include <array>
 #include <functional>
 #include <cstring>
+#include <algorithm>
 
 namespace daiw {
 namespace midi {

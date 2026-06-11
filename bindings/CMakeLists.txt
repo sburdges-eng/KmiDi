@@ -14,6 +14,9 @@ pybind11_add_module(penta_core_native
 
 target_link_libraries(penta_core_native PRIVATE
     penta_core
+    # prrot_bindings.cpp binds prrot::*; the subsystem lives in its own
+    # archive and KellyCore is optional here (BUILD_KELLY_CORE=OFF lanes).
+    prrot_core
     # JUCE is linked PRIVATE by penta_core — do NOT re-link here.
     # Direct juce:: linkage was removed to prevent duplicate JUCE / ODR
     # violation / allocator mismatch in the Python process.

@@ -1,5 +1,10 @@
 # UI Boundary Rules
 
+Historical note
+- This boundary guide was written during a Tauri-era UI interpretation.
+- The boundary intent is still useful, but the document is not the top authority for current architecture ownership.
+- When there is a conflict, follow `docs/ARCHITECTURE.md`, `docs/REPO_MODULE_MAP.md`, `docs/NATIVE_RUNTIME_OWNERSHIP.md`, and `docs/JUCE_RT_RULES.md`.
+
 **Date:** January 18, 2026  
 **Purpose:** Define what UI can and cannot access from DSP/audio systems  
 **Reference:** Architectural Boundary Compliance Report, Layout & Navigation Specs

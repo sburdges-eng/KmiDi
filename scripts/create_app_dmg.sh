@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Build Kelly - iDAW (Tauri) and create a macOS DMG installer
+# Historical Tauri shell helper: build Kelly - iDAW (Tauri) and create a macOS DMG installer
 # =============================================================================
-# Runs: npm run tauri build (with dmg bundle).
+# Runs: npm run tauri build (with dmg bundle) if that historical script is present.
 # Output: engine/intent_ir/target/release/bundle/dmg/*.dmg
 #
 # Usage:
@@ -45,7 +45,19 @@ if [ ! -f "package.json" ] || [ ! -d "engine/intent_ir" ]; then
   exit 1
 fi
 
-echo -e "${YELLOW}Building Tauri app (frontend + Rust) and DMG...${NC}"
+if ! python3 - <<'PY'
+import json, pathlib, sys
+scripts = json.loads(pathlib.Path('package.json').read_text()).get('scripts', {})
+sys.exit(0 if 'tauri' in scripts else 1)
+PY
+then
+  echo -e "${YELLOW}Historical Tauri DMG path is not available in the current repo state.${NC}"
+  echo "package.json does not define npm run tauri build."
+  echo "Use the current frontend/native build flows instead of this legacy packaging helper."
+  exit 1
+fi
+
+echo -e "${YELLOW}Building guarded historical Tauri app path (frontend + Rust) and DMG...${NC}"
 npm run tauri build -- --bundles dmg
 
 BUNDLE_DIR="engine/intent_ir/target/release/bundle"

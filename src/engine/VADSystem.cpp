@@ -5,6 +5,7 @@
 #include <ctime>
 #include <numeric>
 #include <cmath>
+#include <optional>
 
 namespace kelly {
 
@@ -18,7 +19,11 @@ VADSystem::VADSystem(const EmotionThesaurus* thesaurus)
     auto now = std::chrono::system_clock::now();
     auto time_t = std::chrono::system_clock::to_time_t(now);
     std::tm localTime_buf;
+#if defined(_WIN32)
+    localtime_s(&localTime_buf, &time_t);  // MSVC spelling, args swapped
+#else
     localtime_r(&time_t, &localTime_buf);
+#endif
     currentHour_ = localTime_buf.tm_hour;
     currentDayOfWeek_ = localTime_buf.tm_wday;
 }

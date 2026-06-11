@@ -1,7 +1,11 @@
 # Source Directory Index
 
-**Status:** ACTIVE DEVELOPMENT
-**Last Updated:** 2026-03-03
+**Status:** HISTORICAL INDEX WITH ACTIVE FILE REFERENCES
+**Last Updated:** 2026-06-08
+
+Historical note
+- This index preserves older source-layout and shell assumptions and is not architecture authority.
+- When it conflicts with the current repo architecture, follow `docs/ARCHITECTURE.md` and `docs/REPO_MODULE_MAP.md`.
 
 ## Directory Structure
 
@@ -19,10 +23,11 @@ legacy/ui/            [DEPRECATED] Legacy UI surfaces (per ADR 001)
 └── appkit_shell/     Legacy macOS AppKit shell
 ```
 
-## Primary UI Surface (V1)
+## Historical note on primary UI wording
 
-The only supported V1 desktop shell is **Tauri + React** at `engine/intent_ir/`.
-The Qt GUI has been moved to `legacy/ui/qt_gui/` per ADR 001.
+This section reflects an older Tauri-centered shell description.
+Current repo authority is plugin-first / engine-separable and is documented in `docs/ARCHITECTURE.md` and `docs/REPO_MODULE_MAP.md`.
+Do not use this file alone to infer the canonical product shell.
 
 ## Plugin Files (`src/plugin/`)
 

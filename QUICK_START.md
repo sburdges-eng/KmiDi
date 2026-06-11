@@ -1,12 +1,65 @@
 # Quick Start
 
-## Repo build and dev (canonical)
+Status: current quick-start reference aligned to actual repo scripts
+Last updated: 2026-06-08
+
+## Repo build and dev
 
 From the KmiDi repo root:
 
-1. **Setup:** `./scripts/dev-setup.sh`
-2. **Run:** `npm run dev:all` (React + Tauri + Music Brain API), or run separately: `npm run dev`, `npm run dev:tauri`, `npm run dev:python`
-3. **Full builds:** See [README.md](README.md) for the two V1 pipelines (penta_core + PyInstaller vs KellyFFI + Tauri) and [docs/FULL_STACK_BUILD.md](docs/FULL_STACK_BUILD.md) for native integration.
+1. Setup:
+
+```bash
+./scripts/dev-setup.sh
+```
+
+2. Run the active combined stack:
+
+```bash
+npm run dev:all
+```
+
+This starts:
+- React frontend on `http://localhost:1420`
+- Music Brain API on `http://localhost:8000`
+
+3. Or run services separately:
+
+```bash
+npm run dev
+npm run dev:python
+```
+
+4. Verify basic health:
+
+```bash
+npx tsc --noEmit
+python3 -m pytest tests/unit/test_api_schema.py
+```
+
+Important clarification:
+- `package.json` does not currently define `npm run dev:tauri`.
+- Treat older references to that command as historical/legacy drift, not current runnable truth.
+
+## Native/plugin builds
+
+For KellyFFI / plugin / native work, see:
+- `BUILD.md`
+- `docs/FULL_STACK_BUILD.md`
+- `docs/DEVELOPMENT.md`
+
+Minimal example:
+
+```bash
+cmake -S . -B build -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_KELLY_CORE=ON \
+  -DBUILD_KELLY_FFI=ON \
+  -DKMIDI_BUILD_JUCE_UI=ON \
+  -DBUILD_PLUGINS=ON
+
+cmake --build build --target KellyFFI -j8
+```
 
 ---
 
@@ -78,35 +131,4 @@ import json
 # Load emotion data
 with open(EMOTIONS_DIR / "joy.json") as f:
     joy_data = json.load(f)
-
-# Load chord progressions
-with open(CHORDS_DIR / "chord_progressions.json") as f:
-    progressions = json.load(f)
 ```
-
-## Available Engines
-
-1. **ArrangementEngine** - Song arrangement
-2. **BassEngine** - Bass line generation
-3. **CounterMelodyEngine** - Counter-melody
-4. **DynamicsEngine** - Dynamic control
-5. **FillEngine** - Fills and transitions
-6. **MelodyEngine** - Melody generation
-7. **Orchestration** - Orchestration
-8. **PadEngine** - Pad textures
-9. **RhythmEngine** - Rhythm patterns
-10. **StringEngine** - String arrangements
-11. **TensionEngine** - Tension/resolution
-12. **TransitionEngine** - Transitions
-13. **VariationEngine** - Variations
-
-## Available Data
-
-- **Emotions:** anger.json, joy.json, sad.json, fear.json, disgust.json, surprise.json
-- **Chords:** chord_progressions.json, chord_progression_families.json, etc.
-- **Genres:** genre_pocket_maps.json, genre_mix_fingerprints.json
-- **Intent:** song_intent_examples.json, song_intent_schema.yaml
-
-## Documentation
-
-See `COMPLETE_MIGRATION_SUMMARY.md` for full details.
